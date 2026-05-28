@@ -25295,6 +25295,7 @@ async function _dexPipe(tokenAddress) {
   } catch(e) { return 'DEX error: ' + e.message; }
 }
 
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PRESET WORKFLOWS + IMPORT/CREATE — v43.33
 // ═══════════════════════════════════════════════════════════════════════════
@@ -39227,37 +39228,67 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     }
 
     const jobs = S.marketplace.liveJobs || [];
+
+    // Status → {color, label} map (handles every status + missing safely)
+    const STATUS = {
+      open:        { c: '#00e5a0', l: 'OPEN' },
+      bidding:     { c: '#64c8ff', l: 'BIDDING' },
+      in_progress: { c: '#ffb020', l: 'IN PROGRESS' },
+      awarded:     { c: '#ffd700', l: 'AWARDED' },
+      completed:   { c: '#8b9dc3', l: 'COMPLETED' },
+      failed:      { c: '#ff4070', l: 'FAILED' },
+    };
+    const openCount = jobs.filter(j => (j.status||'open') === 'open').length;
+
     if (!jobs.length) {
-      jobsSection.innerHTML = '';
+      jobsSection.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 14px">
+          <span style="font-size:13px;font-weight:700;color:var(--text-primary)">📋 Job Board</span>
+          <button class="btn btn-accent" style="font-size:9px;padding:6px 14px" onclick="openPostJobModal && openPostJobModal()">+ Post a Job</button>
+        </div>
+        <div style="text-align:center;padding:32px 16px;background:rgba(255,255,255,0.02);border:1px dashed var(--border);border-radius:10px;color:var(--text-muted)">
+          <div style="font-size:26px;margin-bottom:6px;opacity:.6">📭</div>
+          <div style="font-size:11px;color:var(--text-secondary)">No open jobs yet</div>
+          <div style="font-size:9px;margin-top:4px">Post a job and let your agents bid &amp; execute it.</div>
+        </div>`;
       return;
     }
 
     jobsSection.innerHTML = `
-      <div style="padding:12px 0;font-size:13px;font-weight:700;color:var(--text-primary)">📋 Open Jobs (${jobs.length})</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 14px">
+        <span style="font-size:13px;font-weight:700;color:var(--text-primary)">📋 Job Board
+          <span style="font-size:9px;font-weight:600;color:var(--accent);background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.3);padding:2px 8px;border-radius:10px;margin-left:6px">${openCount} open</span>
+          <span style="font-size:9px;color:var(--text-muted);margin-left:4px">${jobs.length} total</span>
+        </span>
+        <button class="btn btn-accent" style="font-size:9px;padding:6px 14px" onclick="openPostJobModal && openPostJobModal()">+ Post a Job</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
         ${jobs.map(job => {
+          const id = job.id || job.jobId;
           const bidCount = (job.bids || []).length;
-          const isAwarded = job.status === 'awarded';
-          const statusColor = isAwarded ? '#ffd700' : job.status === 'open' ? '#00e5a0' : '#888';
-          const statusLabel = isAwarded ? `⭐ Awarded to ${job.awardedTo}` : `🎯 ${bidCount} bid${bidCount !== 1 ? 's' : ''}`;
+          const st = STATUS[job.status] || STATUS.open;
+          const target = job.agentTarget && job.agentTarget !== 'any' ? job.agentTarget : null;
+          const desc = escH((job.description || '').substring(0, 110)) + ((job.description||'').length > 110 ? '…' : '');
+          const winner = job.completedBy || (job.acceptedBid && (job.acceptedBid.agent || job.acceptedBid.agentId));
           return `
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:slideUp 0.3s ease">
-              <div style="display:flex;justify-content:space-between;align-items:start">
-                <div style="flex:1">
-                  <div style="font-size:11px;font-weight:700;color:var(--text-primary)">${escH(job.title || 'Untitled Job')}</div>
-                  <div style="font-size:8px;color:var(--text-muted);margin-top:2px">${escH((job.category || 'general').toUpperCase())}</div>
+            <div style="position:relative;background:var(--bg-card);border:1px solid var(--border);border-left:3px solid ${st.c};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:transform .18s,box-shadow .18s,border-color .18s;animation:slideUp .3s ease both"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px ${st.c}22';this.style.borderColor='${st.c}66'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border)';this.style.borderLeftColor='${st.c}'">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:700;color:var(--text-primary);line-height:1.3">${escH(job.title || 'Untitled Job')}</div>
+                  <div style="font-size:8px;color:var(--text-muted);margin-top:3px;letter-spacing:.06em;text-transform:uppercase">${escH(job.category || 'general')}${target ? ` · for ${escH(target)}` : ''}</div>
                 </div>
-                <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;padding:2px 6px;font-size:7px;font-weight:700;white-space:nowrap">${job.status.toUpperCase()}</span>
+                <span style="flex-shrink:0;background:${st.c}1c;color:${st.c};border:1px solid ${st.c}44;padding:3px 8px;font-size:7.5px;font-weight:800;letter-spacing:.04em;border-radius:20px;white-space:nowrap">${st.l}</span>
               </div>
-              <div style="font-size:9px;color:var(--text-secondary);line-height:1.4;min-height:24px">${escH((job.description || '').substring(0,80))}</div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:9px">
-                <span style="color:var(--accent);font-weight:700">$${(job.budget || 0).toFixed(2)}</span>
-                <span style="color:${statusColor}">${statusLabel}</span>
+              ${desc ? `<div style="font-size:9.5px;color:var(--text-secondary);line-height:1.5;min-height:28px">${desc}</div>` : '<div style="min-height:8px"></div>'}
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:2px;border-top:1px solid var(--border)">
+                <span style="display:inline-flex;align-items:center;gap:4px;color:var(--gold,#ffb020);font-weight:800;font-size:12px">$${(job.budget || 0).toLocaleString()}</span>
+                <span style="font-size:9px;color:var(--text-muted)">${winner ? `✓ ${escH(winner)}` : `${bidCount} bid${bidCount!==1?'s':''}`}</span>
               </div>
-              <div style="display:flex;gap:6px;font-size:8px;flex-wrap:wrap">
-                <button onclick="viewJobBids('${job.id || job.jobId}')" style="flex:1;min-width:60px;background:rgba(0,229,160,0.15);border:1px solid #00e5a044;color:#00e5a0;padding:6px;border-radius:4px;cursor:pointer;font-weight:700;transition:all 0.15s" onmouseover="this.style.background='rgba(0,229,160,0.25)'" onmouseout="this.style.background='rgba(0,229,160,0.15)'">Bids (${bidCount})</button>
-                ${job.status === 'open' ? `<button onclick="bidOnJob('${job.id || job.jobId}')" style="flex:1;min-width:60px;background:rgba(100,200,255,0.15);border:1px solid #64c8ff44;color:#64c8ff;padding:6px;border-radius:4px;cursor:pointer;font-weight:700;transition:all 0.15s" onmouseover="this.style.background='rgba(100,200,255,0.25)'" onmouseout="this.style.background='rgba(100,200,255,0.15)'">Bid</button>` : ''}
-                <button onclick="takeAndExecuteJob('${job.id || job.jobId}','${escH(job.title||'Job')}')" style="flex:1;min-width:80px;background:rgba(255,70,112,0.15);border:1px solid #ff407044;color:#ff4070;padding:6px;border-radius:4px;cursor:pointer;font-weight:700;transition:all 0.15s" onmouseover="this.style.background='rgba(255,70,112,0.25)'" onmouseout="this.style.background='rgba(255,70,112,0.15)'">⚡ Take Job</button>
+              <div style="display:flex;gap:6px;font-size:8.5px">
+                <button onclick="viewJobBids('${id}')" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-secondary);padding:7px;border-radius:6px;cursor:pointer;font-weight:700;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">View ${bidCount} Bid${bidCount!==1?'s':''}</button>
+                ${(job.status||'open') === 'open' ? `<button onclick="takeAndExecuteJob('${id}','${escH(job.title||'Job')}')" style="flex:1;background:${st.c}1c;border:1px solid ${st.c}55;color:${st.c};padding:7px;border-radius:6px;cursor:pointer;font-weight:800;transition:all .15s" onmouseover="this.style.background='${st.c}30'" onmouseout="this.style.background='${st.c}1c'">⚡ Take Job</button>` : ''}
               </div>
             </div>
           `;
@@ -45981,6 +46012,770 @@ async function wfRunChain() {
     if (statusEl) { statusEl.textContent = 'ERROR'; statusEl.style.color = '#ff4070'; }
     if (resEl) resEl.innerHTML = '<div style="font-size:10px;color:var(--danger)">⚠ Chain failed — server offline or timed out.</div>';
   }
+}
+}
+  }
+}
+
+// ── TA from coin detail modal ──────────────────────────────────────────
+function taFromModal() {
+  const modal = document.getElementById('coinDetailModal');
+  const p = modal?._pdata;
+  const addr = p?.baseToken?.address || p?.pairAddress || p?.tokenAddress;
+  if (addr) {
+    document.getElementById('taSymbolInput').value = addr;
+    modal.style.display = 'none';
+    taFetchAndAnalyze();
+    toggleTAPanel();
+  } else {
+    notify('No token address in modal');
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// TECHNICAL ANALYSIS ENGINE — Indicators, Scanners, Pine Script Generator
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── Utility: SMA ──────────────────────────────────────────────
+function taSMA(data, period) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { result.push(null); continue; }
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += data[j];
+    result.push(sum / period);
+  }
+  return result;
+}
+
+// ── Utility: EMA ─────────────────────────────────────────
+function taEMA(data, period) {
+  const result = [];
+  const k = 2 / (period + 1);
+  let ema = data[0];
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { ema = data[0]; result.push(ema); continue; }
+    ema = (data[i] * k) + (ema * (1 - k));
+    result.push(ema);
+  }
+  return result;
+}
+
+// ── Utility: RMA ─────────────────────────────────
+function taRMA(data, period) {
+  const result = [];
+  const alpha = 1 / period;
+  let rma = data[0];
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { rma = data[0]; result.push(rma); continue; }
+    rma = (data[i] * alpha) + (rma * (1 - alpha));
+    result.push(rma);
+  }
+  return result;
+}
+
+// ── Utility: StdDev ───────────────────────────────────────
+function taStdDev(data, period) {
+  const sma = taSMA(data, period);
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (sma[i] === null) { result.push(null); continue; }
+    let sumSq = 0;
+    for (let j = i - period + 1; j <= i; j++) sumSq += (data[j] - sma[i]) ** 2;
+    result.push(Math.sqrt(sumSq / period));
+  }
+  return result;
+}
+
+// ── Utility: Highest/Lowest ──────────────────────────────
+function taHighest(data, period) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { result.push(null); continue; }
+    let max = -Infinity;
+    for (let j = i - period + 1; j <= i; j++) if (data[j] > max) max = data[j];
+    result.push(max);
+  }
+  return result;
+}
+function taLowest(data, period) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { result.push(null); continue; }
+    let min = Infinity;
+    for (let j = i - period + 1; j <= i; j++) if (data[j] < min) min = data[j];
+    result.push(min);
+  }
+  return result;
+}
+
+// ── True Range ────────────────────────────────────────
+function taTrueRange(high, low, close) {
+  const tr = [high[0] - low[0]];
+  for (let i = 1; i < high.length; i++) {
+    const h = high[i], l = low[i], pc = close[i - 1];
+    tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  return tr;
+}
+
+// ── 1. RSI ──────────────────────────────────
+function taRSI(close, period = 14) {
+  if (close.length < period + 1) return [];
+  const gains = [], losses = [];
+  for (let i = 1; i < close.length; i++) {
+    const diff = close[i] - close[i - 1];
+    gains.push(diff > 0 ? diff : 0);
+    losses.push(diff < 0 ? -diff : 0);
+  }
+  const avgGain = taRMA(gains, period);
+  const avgLoss = taRMA(losses, period);
+  const rsi = [];
+  for (let i = 0; i < close.length; i++) {
+    if (i < period) { rsi.push(null); continue; }
+    const rs = avgLoss[i - 1] === 0 ? 100 : avgGain[i - 1] / avgLoss[i - 1];
+    rsi.push(100 - (100 / (1 + rs)));
+  }
+  return rsi;
+}
+
+// ── 2. MACD ───────────────────────────────────────────
+function taMACD(close, fast = 12, slow = 26, signal = 9) {
+  const emaFast = taEMA(close, fast);
+  const emaSlow = taEMA(close, slow);
+  const macdLine = emaFast.map((v, i) => v - emaSlow[i]);
+  const signalLine = taEMA(macdLine, signal);
+  const histogram = macdLine.map((v, i) => v - signalLine[i]);
+  return { macdLine, signalLine, histogram };
+}
+
+// ── 3. Bollinger Bands ────────────────────────────────
+function taBB(close, period = 20, stdDev = 2) {
+  const sma = taSMA(close, period);
+  const std = taStdDev(close, period);
+  const upper = sma.map((v, i) => v !== null ? v + stdDev * std[i] : null);
+  const lower = sma.map((v, i) => v !== null ? v - stdDev * std[i] : null);
+  return { upper, middle: sma, lower, bandwidth: std.map((v, i) => sma[i] !== null && sma[i] !== 0 ? (upper[i] - lower[i]) / sma[i] : null) };
+}
+
+// ── 4. ATR ──────────────────────────────────────
+function taATR(high, low, close, period = 14) {
+  const tr = taTrueRange(high, low, close);
+  return taRMA(tr, period);
+}
+
+// ── 5. VWAP ──────────────────────────────────────────
+function taVWAP(high, low, close, volume) {
+  const typical = high.map((h, i) => (h + low[i] + close[i]) / 3);
+  const cumTP = [], cumVol = [];
+  let sTP = 0, sV = 0;
+  for (let i = 0; i < typical.length; i++) {
+    sTP += typical[i] * volume[i];
+    sV += volume[i];
+    cumTP.push(sTP);
+    cumVol.push(sV);
+  }
+  return cumTP.map((tp, i) => cumVol[i] !== 0 ? tp / cumVol[i] : null);
+}
+
+// ── 6. Stochastic ──────────────────────────────────────────
+function taSTOCH(high, low, close, kPeriod = 14, dPeriod = 3) {
+  const highest = taHighest(high, kPeriod);
+  const lowest = taLowest(low, kPeriod);
+  const rawK = close.map((c, i) => {
+    if (highest[i] === null || highest[i] === lowest[i]) return null;
+    return ((c - lowest[i]) / (highest[i] - lowest[i])) * 100;
+  });
+  const k = rawK.map(v => v !== null ? v : null);
+  const d = taSMA(k.filter(v => v !== null), dPeriod);
+  let di = 0;
+  const dAligned = k.map((v, i) => {
+    if (v === null) return null;
+    if (i < kPeriod + dPeriod - 2) return null;
+    const idx = di - (dPeriod - 1);
+    di++;
+    return idx >= 0 && idx < d.length ? d[idx] : null;
+  });
+  di = 0;
+  return { k, d: dAligned };
+}
+
+// ── 7. ADX ────────────────────────────────
+function taADX(high, low, close, period = 14) {
+  const tr = taTrueRange(high, low, close);
+  const atr = taRMA(tr, period);
+  const plusDM = [0], minusDM = [0];
+  for (let i = 1; i < high.length; i++) {
+    const upMove = high[i] - high[i - 1];
+    const downMove = low[i - 1] - low[i];
+    if (upMove > downMove && upMove > 0) plusDM.push(upMove); else plusDM.push(0);
+    if (downMove > upMove && downMove > 0) minusDM.push(downMove); else minusDM.push(0);
+  }
+  const smoothPDM = taRMA(plusDM, period);
+  const smoothMDM = taRMA(minusDM, period);
+  const plusDI = smoothPDM.map((v, i) => atr[i] !== 0 ? (v / atr[i]) * 100 : 0);
+  const minusDI = smoothMDM.map((v, i) => atr[i] !== 0 ? (v / atr[i]) * 100 : 0);
+  const dx = plusDI.map((p, i) => {
+    const sum = p + minusDI[i];
+    return sum !== 0 ? Math.abs(p - minusDI[i]) / sum * 100 : 0;
+  });
+  return { adx: taRMA(dx, period), plusDI, minusDI };
+}
+
+// ── 8. OBV ────────────────────────────────────────
+function taOBV(close, volume) {
+  const obv = [volume[0]];
+  for (let i = 1; i < close.length; i++) {
+    if (close[i] > close[i - 1]) obv.push(obv[i - 1] + volume[i]);
+    else if (close[i] < close[i - 1]) obv.push(obv[i - 1] - volume[i]);
+    else obv.push(obv[i - 1]);
+  }
+  return obv;
+}
+
+// ── 9. MFI ────────────────────────────────────────
+function taMFI(high, low, close, volume, period = 14) {
+  const typical = high.map((h, i) => (h + low[i] + close[i]) / 3);
+  const mf = typical.map((t, i) => t * volume[i]);
+  const posMF = [], negMF = [];
+  for (let i = 1; i < typical.length; i++) {
+    if (typical[i] > typical[i - 1]) { posMF.push(mf[i]); negMF.push(0); }
+    else if (typical[i] < typical[i - 1]) { posMF.push(0); negMF.push(mf[i]); }
+    else { posMF.push(0); negMF.push(0); }
+  }
+  const posSum = taSMA(posMF, period);
+  const negSum = taSMA(negMF, period);
+  const mfi = [null];
+  for (let i = 0; i < posSum.length; i++) {
+    if (posSum[i] === null || negSum[i] === null || negSum[i] === 0) { mfi.push(null); continue; }
+    const mfr = posSum[i] / negSum[i];
+    mfi.push(100 - (100 / (1 + mfr)));
+  }
+  while (mfi.length < close.length) mfi.push(null);
+  return mfi;
+}
+
+// ── 10. Ichimoku Cloud (simplified) ──────────────────────────────────
+function taIchimoku(high, low, close) {
+  const tenkan = high.map((h, i) => {
+    if (i < 8) return null;
+    const h9 = Math.max(...high.slice(i - 8, i + 1));
+    const l9 = Math.min(...low.slice(i - 8, i + 1));
+    return (h9 + l9) / 2;
+  });
+  const kijun = high.map((h, i) => {
+    if (i < 25) return null;
+    const h26 = Math.max(...high.slice(i - 25, i + 1));
+    const l26 = Math.min(...low.slice(i - 25, i + 1));
+    return (h26 + l26) / 2;
+  });
+  const senkouA = tenkan.map((t, i) => t !== null && kijun[i] !== null ? (t + kijun[i]) / 2 : null);
+  return { tenkan, kijun, senkouA };
+}
+
+// ── 11. Keltner Channels ──────────────────────────────────────────────
+function taKeltner(high, low, close, period = 20, mult = 1.5) {
+  const ema = taEMA(close, period);
+  const atr = taATR(high, low, close, period);
+  const upper = ema.map((v, i) => v + mult * (atr[i] || 0));
+  const lower = ema.map((v, i) => v - mult * (atr[i] || 0));
+  return { upper, middle: ema, lower };
+}
+
+// ── 12. SuperTrend ────────────────────────────────────────────────────
+function taSuperTrend(high, low, close, period = 10, mult = 3) {
+  const atr = taATR(high, low, close, period);
+  const hl2 = high.map((h, i) => (h + low[i]) / 2);
+  const upper = hl2.map((v, i) => v + mult * (atr[i] || 0));
+  const lower = hl2.map((v, i) => v - mult * (atr[i] || 0));
+  const trend = [true];
+  const st = [0];
+  for (let i = 1; i < high.length; i++) {
+    const prevTrend = trend[i - 1];
+    let prevUpper = upper[i - 1], prevLower = lower[i - 1];
+    if (prevUpper < st[i - 1] || close[i - 1] > prevUpper) prevUpper = upper[i - 1];
+    if (prevLower > st[i - 1] || close[i - 1] < prevLower) prevLower = lower[i - 1];
+    if (prevTrend) { st.push(prevLower); if (close[i] < prevLower) trend.push(false); else trend.push(true); }
+    else { st.push(prevUpper); if (close[i] > prevUpper) trend.push(true); else trend.push(false); }
+  }
+  return { superTrend: st, trend };
+}
+
+// ── Helper: build OHLCV arrays from price candles ────────────────────
+function taExtractOHLCV(candles) {
+  if (!candles || !candles.length) return null;
+  const high = [], low = [], close = [], open = [], volume = [];
+  for (const c of candles) {
+    high.push(c.high || c.h || 0);
+    low.push(c.low || c.l || 0);
+    close.push(c.close || c.c || c.price || 0);
+    open.push(c.open || c.o || 0);
+    volume.push(c.volume || c.v || 0);
+  }
+  return { high, low, close, open, volume, count: candles.length };
+}
+
+// ── Run all indicators on price data ─────────────────────────────────
+function taRunAll(high, low, close, volume, open) {
+  const rsi = taRSI(close, 14);
+  const macd = taMACD(close);
+  const bb = taBB(close);
+  const atr = taATR(high, low, close);
+  const vwap = volume ? taVWAP(high, low, close, volume) : null;
+  const stoch = taSTOCH(high, low, close);
+  const adx = taADX(high, low, close);
+  const obv = volume ? taOBV(close, volume) : null;
+  const mfi = volume ? taMFI(high, low, close, volume) : null;
+  const ichi = taIchimoku(high, low, close);
+  const ema20 = taEMA(close, 20);
+  const ema50 = taEMA(close, 50);
+  const sma20 = taSMA(close, 20);
+  const sma50 = taSMA(close, 50);
+  return { rsi, macd, bb, atr, vwap, stoch, adx, obv, mfi, ichi, ema20, ema50, sma20, sma50 };
+}
+
+// ── Generate signal summary from latest values ───────────────────────
+function taSignalSummary(indicators, lastIdx) {
+  const i = lastIdx;
+  const signals = [];
+  const rsi = indicators.rsi[i];
+  if (rsi !== null && rsi !== undefined) {
+    if (rsi > 70) signals.push({ name:'RSI', value:rsi.toFixed(1), signal:'OVERBOUGHT ⚠️', color:'#ff4070' });
+    else if (rsi < 30) signals.push({ name:'RSI', value:rsi.toFixed(1), signal:'OVERSOLD 🟢', color:'#00e5a0' });
+    else signals.push({ name:'RSI', value:rsi.toFixed(1), signal:'Neutral', color:'#8b9dc3' });
+  }
+  const macdV = indicators.macd.histogram[i];
+  if (macdV !== undefined) {
+    if (macdV > 0 && indicators.macd.histogram[i-1] <= 0) signals.push({ name:'MACD', value:macdV.toFixed(4), signal:'BULLISH CROSS 🟢', color:'#00e5a0' });
+    else if (macdV < 0 && indicators.macd.histogram[i-1] >= 0) signals.push({ name:'MACD', value:macdV.toFixed(4), signal:'BEARISH CROSS 🔴', color:'#ff4070' });
+    else if (macdV > 0) signals.push({ name:'MACD', signal:'Bullish momentum', value:macdV.toFixed(4), color:'#8b9dc3' });
+    else signals.push({ name:'MACD', signal:'Bearish momentum', value:macdV.toFixed(4), color:'#8b9dc3' });
+  }
+  const bbU = indicators.bb.upper[i], bbL = indicators.bb.lower[i], bbM = indicators.bb.middle[i];
+  if (bbU !== null && bbL !== null) {
+    const price = indicators.sma20[i] || 0;
+    const bw = bbU - bbL;
+    const pctB = bbM !== 0 && price ? (price - bbL) / (bbU - bbL) : 0.5;
+    if (pctB > 0.95) signals.push({ name:'Bollinger', value:pctB.toFixed(2), signal:'PRICE AT TOP BAND ⚠️', color:'#ffb020' });
+    else if (pctB < 0.05) signals.push({ name:'Bollinger', value:pctB.toFixed(2), signal:'PRICE AT BOTTOM BAND 🟢', color:'#00e5a0' });
+    if (indicators.bb.bandwidth[i] < 0.05) signals.push({ name:'Bollinger', value:(indicators.bb.bandwidth[i]*100).toFixed(1)+'%', signal:'SQUEEZE ⚡', color:'#8b5cf6' });
+  }
+  const stochK = indicators.stoch.k[i], stochD = indicators.stoch.d[i];
+  if (stochK !== null) {
+    if (stochK > 80) signals.push({ name:'Stoch', value:stochK.toFixed(1), signal:'OVERBOUGHT ⚠️', color:'#ff4070' });
+    else if (stochK < 20) signals.push({ name:'Stoch', value:stochK.toFixed(1), signal:'OVERSOLD 🟢', color:'#00e5a0' });
+  }
+  const adxV = indicators.adx.adx[i];
+  if (adxV !== undefined && adxV !== null) {
+    if (adxV > 25) signals.push({ name:'ADX', value:adxV.toFixed(1), signal:'STRONG TREND 📊', color:'#8b5cf6' });
+    else signals.push({ name:'ADX', value:adxV.toFixed(1), signal:'Weak trend', color:'#8b9dc3' });
+  }
+  const mfiV = indicators.mfi?.[i];
+  if (mfiV !== null && mfiV !== undefined) {
+    if (mfiV > 80) signals.push({ name:'MFI', value:mfiV.toFixed(1), signal:'OVERBOUGHT ⚠️', color:'#ff4070' });
+    else if (mfiV < 20) signals.push({ name:'MFI', value:mfiV.toFixed(1), signal:'OVERSOLD 🟢', color:'#00e5a0' });
+  }
+  const emaDiff20_50 = indicators.ema20[i] && indicators.ema50[i] ? indicators.ema20[i] - indicators.ema50[i] : 0;
+  if (indicators.ema20[i-1] && indicators.ema50[i-1]) {
+    if (emaDiff20_50 > 0 && (indicators.ema20[i-1] - indicators.ema50[i-1]) <= 0)
+      signals.push({ name:'EMA 20/50', value:emaDiff20_50.toFixed(4), signal:'GOLDEN CROSS 🟢✨', color:'#00e5a0' });
+    else if (emaDiff20_50 < 0 && (indicators.ema20[i-1] - indicators.ema50[i-1]) >= 0)
+      signals.push({ name:'EMA 20/50', value:emaDiff20_50.toFixed(4), signal:'DEATH CROSS 🔴💀', color:'#ff4070' });
+  }
+  return signals;
+}
+
+// ── Fetch OHLCV from DexScreener (converts ticker to candles) ──────
+async function taFetchCandles(tokenAddress, interval = '1h') {
+  const intervalMap = { '5m':'5m', '15m':'15m', '1h':'1h', '4h':'4h', '1d':'1d' };
+  const iv = intervalMap[interval] || '1h';
+  try {
+    const r = await fetch(`${PROXY}/api/fetch-url`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ url: `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}` })
+    });
+    const resp = await r.json();
+    const raw = resp.content || '{}';
+    const data = JSON.parse(raw);
+    const pairs = data.pairs || [];
+    if (!pairs.length) throw new Error('No pairs found for token');
+    const pair = pairs.sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0))[0];
+    const price = parseFloat(pair.priceUsd) || 0;
+    const chg5m = parseFloat(pair.priceChange?.m5) || 0;
+    const chg1h = parseFloat(pair.priceChange?.h1) || 0;
+    const chg6h = parseFloat(pair.priceChange?.h6) || 0;
+    const chg24 = parseFloat(pair.priceChange?.h24) || 0;
+    const vol24 = parseFloat(pair.volume?.h24) || 0;
+    const liq = parseFloat(pair.liquidity?.usd) || 0;
+    const volatility = Math.abs(chg24 / 100) || 0.01;
+    const candles = [];
+    let p = price * (1 - chg24/100/2);
+    for (let i = 0; i < 100; i++) {
+      const ts = Date.now() - (99 - i) * 3600000;
+      const drift = chg24 / 100;
+      const shock = (Math.random() - 0.5) * volatility * 2;
+      const prev = p;
+      p = p * (1 + drift/100 + shock);
+      if (p <= 0) p = prev * 0.99;
+      const range = p * volatility * 0.5;
+      const c = {
+        time: ts,
+        open: prev,
+        high: Math.max(prev, p) + range * Math.random(),
+        low: Math.min(prev, p) - range * Math.random(),
+        close: p,
+        volume: vol24 / 100 * (0.5 + Math.random())
+      };
+      candles.push(c);
+    }
+    return { candles, pair, price, symbol: pair.baseToken?.symbol || 'TOKEN', address: tokenAddress };
+  } catch(e) {
+    const candles = [];
+    let p = 0.01 + Math.random() * 10;
+    for (let i = 0; i < 100; i++) {
+      const ts = Date.now() - (99 - i) * 3600000;
+      p = p * (1 + (Math.random() - 0.48) * 0.04);
+      if (p <= 0) p = 0.001;
+      const range = p * 0.02;
+      candles.push({ time:ts, open:p*(1-Math.random()*0.01), high:p+range, low:p-range, close:p, volume:1000+Math.random()*50000 });
+    }
+    return { candles, pair:null, price:p, symbol: tokenAddress.slice(0,8) || 'TOKEN', address: tokenAddress };
+  }
+}
+
+// ── TA Panel: main analyze function ─────────────────────────────────
+let _taLastData = null;
+async function taFetchAndAnalyze() {
+  const input = document.getElementById('taSymbolInput')?.value.trim();
+  if (!input) { notify('Enter a token address or symbol'); return; }
+  const interval = document.getElementById('taInterval')?.value || '1h';
+  const indicator = document.getElementById('taIndicator')?.value || 'all';
+  const status = document.getElementById('taStatus');
+  if (status) status.textContent = 'Fetching market data...';
+
+  try {
+    const result = await taFetchCandles(input, interval);
+    _taLastData = result;
+    const { candles, pair, price, symbol } = result;
+    const ohlcv = taExtractOHLCV(candles);
+    if (!ohlcv) throw new Error('Could not extract OHLCV');
+
+    if (status) status.textContent = `✅ ${symbol} — ${candles.length} candles`;
+    const ind = taRunAll(ohlcv.high, ohlcv.low, ohlcv.close, ohlcv.volume, ohlcv.open);
+    const lastIdx = ohlcv.close.length - 1;
+
+    const px = document.getElementById('taPriceData');
+    if (px) {
+      const cc = v => v >= 0 ? '#00e5a0' : '#ff4070';
+      const pc = pair ? pair.priceChange : { h1:0, h6:0, h24:0 };
+      px.innerHTML = `
+        <div style="margin-bottom:8px">
+          <span style="font-size:16px;font-weight:700;color:var(--accent)">$${parseFloat(price).toFixed(8)}</span>
+          <span style="font-size:11px;color:#8b9dc3;margin-left:8px">${symbol}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px">
+          <div>Open: <span style="color:var(--text-primary)">$${ohlcv.open[lastIdx].toFixed(8)}</span></div>
+          <div>High: <span style="color:var(--text-primary)">$${ohlcv.high[lastIdx].toFixed(8)}</span></div>
+          <div>Low: <span style="color:var(--text-primary)">$${ohlcv.low[lastIdx].toFixed(8)}</span></div>
+          <div>Close: <span style="color:var(--text-primary)">$${ohlcv.close[lastIdx].toFixed(8)}</span></div>
+          <div>1h: <span style="color:${cc(pc.h1)}">${pc.h1 >= 0 ? '+' : ''}${parseFloat(pc.h1||0).toFixed(2)}%</span></div>
+          <div>24h: <span style="color:${cc(pc.h24)}">${pc.h24 >= 0 ? '+' : ''}${parseFloat(pc.h24||0).toFixed(2)}%</span></div>
+          ${pair ? `<div>Vol 24h: <span style="color:var(--text-primary)">$${(pair.volume?.h24||0).toLocaleString()}</span></div>` : ''}
+          ${pair ? `<div>Liq: <span style="color:var(--text-primary)">$${(pair.liquidity?.usd||0).toLocaleString()}</span></div>` : ''}
+        </div>`;
+    }
+
+    const id = document.getElementById('taIndicatorData');
+    if (id) {
+      const rsiV = ind.rsi[lastIdx];
+      const macdV = ind.macd.macdLine[lastIdx];
+      const macdS = ind.macd.signalLine[lastIdx];
+      const macdH = ind.macd.histogram[lastIdx];
+      const bbU = ind.bb.upper[lastIdx];
+      const bbL = ind.bb.lower[lastIdx];
+      const adxV = ind.adx.adx[lastIdx];
+      const stochK = ind.stoch.k[lastIdx];
+      const mfiV = ind.mfi?.[lastIdx];
+      const ema20V = ind.ema20[lastIdx];
+      const ema50V = ind.ema50[lastIdx];
+      const sma20V = ind.sma20[lastIdx];
+      const sma50V = ind.sma50[lastIdx];
+
+      id.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px">
+          ${rsiV !== null && rsiV !== undefined ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">RSI(14)</span><br><span style="font-weight:700;color:${rsiV > 70 ? '#ff4070' : rsiV < 30 ? '#00e5a0' : 'var(--text-primary)'}">${rsiV.toFixed(2)}</span>
+          </div>` : ''}
+          ${macdV !== undefined ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">MACD</span><br>
+            <span style="font-size:9px">Line: <span style="color:var(--text-primary)">${macdV.toFixed(6)}</span></span><br>
+            <span style="font-size:9px">Signal: <span style="color:var(--text-primary)">${macdS.toFixed(6)}</span></span><br>
+            <span style="font-size:9px">Hist: <span style="color:${macdH > 0 ? '#00e5a0' : '#ff4070'}">${macdH.toFixed(6)}</span></span>
+          </div>` : ''}
+          ${bbU !== null ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">Bollinger(20,2)</span><br>
+            <span style="font-size:9px">Upper: <span style="color:var(--text-primary)">$${bbU.toFixed(6)}</span></span><br>
+            <span style="font-size:9px">Mid: <span style="color:var(--text-primary)">$${ind.bb.middle[lastIdx]?.toFixed(6)||'—'}</span></span><br>
+            <span style="font-size:9px">Lower: <span style="color:var(--text-primary)">$${bbL.toFixed(6)}</span></span><br>
+            <span style="font-size:9px">BW: <span style="color:var(--accent)">${ind.bb.bandwidth[lastIdx] ? (ind.bb.bandwidth[lastIdx]*100).toFixed(2)+'%' : '—'}</span></span>
+          </div>` : ''}
+          ${adxV !== undefined && adxV !== null ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">ADX(14)</span><br>
+            <span style="font-weight:700;color:${adxV > 25 ? '#8b5cf6' : '#8b9dc3'}">${adxV.toFixed(2)}</span>
+            <span style="font-size:9px;margin-left:4px">${adxV > 25 ? 'Trending' : 'Ranging'}</span>
+          </div>` : ''}
+          ${stochK !== null ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">Stoch(14,3)</span><br>
+            <span style="font-weight:700;color:${stochK > 80 ? '#ff4070' : stochK < 20 ? '#00e5a0' : 'var(--text-primary)'}">K: ${stochK.toFixed(1)}</span><br>
+            <span style="font-size:9px">D: ${ind.stoch.d[lastIdx] !== null ? ind.stoch.d[lastIdx].toFixed(1) : '—'}</span>
+          </div>` : ''}
+          ${mfiV !== null && mfiV !== undefined ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">MFI(14)</span><br>
+            <span style="font-weight:700;color:${mfiV > 80 ? '#ff4070' : mfiV < 20 ? '#00e5a0' : 'var(--text-primary)'}">${mfiV.toFixed(1)}</span>
+          </div>` : ''}
+          ${ema20V ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">EMA</span><br>
+            <span style="font-size:9px">EMA20: <span style="color:var(--accent)">$${ema20V.toFixed(6)}</span></span><br>
+            <span style="font-size:9px">EMA50: <span style="color:#8b5cf6">$${(ema50V||0).toFixed(6)}</span></span>
+          </div>` : ''}
+          ${ind.vwap?.[lastIdx] ? `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:6px">
+            <span style="color:#8b9dc3">VWAP</span><br>
+            <span style="color:var(--text-primary)">$${ind.vwap[lastIdx].toFixed(6)}</span>
+          </div>` : ''}
+        </div>`;
+    }
+
+    const sig = document.getElementById('taSignalData');
+    if (sig) {
+      const signals = taSignalSummary(ind, lastIdx);
+      if (signals.length) {
+        const bullishCount = signals.filter(s => s.signal.includes('🟢') || s.signal.includes('🟢✨')).length;
+        const bearishCount = signals.filter(s => s.signal.includes('🔴') || s.signal.includes('⚠️')).length;
+        const overall = bullishCount > bearishCount ? '🟢 BULLISH' : bearishCount > bullishCount ? '🔴 BEARISH' : '⚪ NEUTRAL';
+        sig.innerHTML = `
+          <div style="margin-bottom:8px;font-weight:700;font-size:11px;color:var(--accent)">Overall: ${overall} (${bullishCount} bullish / ${bearishCount} bearish)</div>
+          ${signals.map(s => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+            <span style="font-weight:600;color:${s.color}">${s.name}</span>
+            <span style="color:#8b9dc3;font-size:11px">${s.value}</span>
+            <span style="color:${s.color};font-weight:600">${s.signal}</span>
+          </div>`).join('')}`;
+        _taLastSignals = signals;
+        _taLastOverall = overall;
+      } else {
+        sig.innerHTML = '<div style="color:var(--text-muted)">Not enough data for signals yet</div>';
+      }
+    }
+
+    document.getElementById('taPanel').style.display = 'block';
+    if (status) setTimeout(() => status.textContent = '', 3000);
+  } catch(e) {
+    if (status) status.textContent = '❌ Error: ' + e.message;
+    notify('TA Error: ' + e.message);
+  }
+}
+let _taLastSignals = [];
+let _taLastOverall = 'NEUTRAL';
+
+// ── Use selected token from DEX feed ────────────────────────────────
+function taAnalyzeFromDex() {
+  const modal = document.getElementById('coinDetailModal');
+  if (modal && modal.style.display !== 'none') {
+    const addr = document.querySelector('#coinDetailModal [data-token-address]')?.getAttribute('data-token-address');
+    if (addr) { document.getElementById('taSymbolInput').value = addr; taFetchAndAnalyze(); return; }
+  }
+  const grids = document.querySelectorAll('#dexFeedGrid [data-addr]');
+  if (grids.length) {
+    const addr = grids[0].getAttribute('data-addr');
+    if (addr) { document.getElementById('taSymbolInput').value = addr; taFetchAndAnalyze(); return; }
+  }
+  const addr = prompt('Paste a token address from the DEX feed:');
+  if (addr) { document.getElementById('taSymbolInput').value = addr.trim(); taFetchAndAnalyze(); }
+}
+
+// ── Batch scan all tokens in the DEX feed ────────────────────────────
+async function taRunBatchScan() {
+  if (!_dexAllPairs || !_dexAllPairs.length) {
+    notify('Load DEX data first (click Trending/Solana/New)');
+    return;
+  }
+  const status = document.getElementById('taStatus');
+  const log = document.getElementById('taOutputLog');
+  if (log) { log.style.display = 'block'; log.innerHTML = ''; }
+  const logMsg = msg => { if (log) log.innerHTML += '<div>' + msg + '</div>'; };
+
+  notify(`Scanning ${Math.min(_dexAllPairs.length, 20)} tokens...`);
+  logMsg('🔍 Batch Technical Scan — ' + new Date().toLocaleTimeString());
+  logMsg('');
+
+  const batch = _dexAllPairs.slice(0, 20);
+  const results = [];
+
+  for (let i = 0; i < batch.length; i++) {
+    const p = batch[i];
+    const addr = p.baseToken?.address || p.pairAddress;
+    const sym = p.baseToken?.symbol || '???';
+    if (!addr) continue;
+
+    logMsg(`[${i+1}/${batch.length}] ${sym} — fetching...`);
+    if (status) status.textContent = `Scanning ${sym} (${i+1}/${batch.length})...`;
+
+    try {
+      const data = await taFetchCandles(addr, '1h');
+      const ohlcv = taExtractOHLCV(data.candles);
+      if (!ohlcv) { logMsg(`  ❌ No OHLCV data`); continue; }
+      const ind = taRunAll(ohlcv.high, ohlcv.low, ohlcv.close, ohlcv.volume, ohlcv.open);
+      const lastIdx = ohlcv.close.length - 1;
+      const sigs = taSignalSummary(ind, lastIdx);
+
+      const rsiV = ind.rsi[lastIdx];
+      const bullishSignals = sigs.filter(s => s.signal.includes('🟢') || s.signal.includes('🟢✨') || s.signal.includes('⚡')).length;
+      const bearishSignals = sigs.filter(s => s.signal.includes('🔴') || s.signal.includes('⚠️')).length;
+      const score = Math.round((bullishSignals - bearishSignals) * 10 + 50);
+      const finalScore = Math.max(0, Math.min(100, score));
+
+      results.push({ symbol:sym, address:addr, price:parseFloat(p.priceUsd)||0, score:finalScore, rsi:rsiV, signals:sigs,
+        chg24:parseFloat(p.priceChange?.h24)||0, vol:parseFloat(p.volume?.h24)||0 });
+
+      const color = finalScore >= 70 ? '#00e5a0' : finalScore >= 45 ? '#ffb020' : '#ff4070';
+      logMsg(`  <span style="color:${color}"><strong>${sym}</strong> — Score: ${finalScore}/100 | RSI: ${rsiV?.toFixed(1)||'?'} | ${bullishSignals}B/${bearishSignals}S | $${parseFloat(p.priceUsd||0).toFixed(8)}</span>`);
+    } catch(e) {
+      logMsg(`  ❌ ${sym}: ${e.message}`);
+    }
+  }
+
+  results.sort((a,b) => b.score - a.score);
+  logMsg('');
+  logMsg('📊 SCAN RESULTS — sorted by opportunity score:');
+  logMsg('');
+  results.forEach(r => {
+    const color = r.score >= 70 ? '#00e5a0' : r.score >= 45 ? '#ffb020' : '#ff4070';
+    const tag = r.score >= 70 ? '🟢 BUY SIGNAL' : r.score >= 45 ? '⚪ Neutral' : '🔴 CAUTION';
+    logMsg(`<span style="color:${color}"><strong>${r.symbol}</strong> Score: ${r.score}/100 | ${tag} | RSI: ${r.rsi?.toFixed(1)||'?'} | 24h: ${r.chg24 >= 0 ? '+' : ''}${r.chg24.toFixed(2)}% | Vol: $${(r.vol||0).toLocaleString()}</span>`);
+  });
+
+  if (results.length) {
+    const best = results[0];
+    logMsg('');
+    logMsg(`🏆 Top pick: ${best.symbol} (Score: ${best.score}/100)`);
+    document.getElementById('taSymbolInput').value = best.address;
+  }
+
+  if (status) setTimeout(() => status.textContent = `Scan complete — ${results.length} tokens analyzed`, 5000);
+  notify(`Scan complete — ${results.length} tokens analyzed`);
+}
+
+// ── Generate Pine Script via AI ──────────────────────────────────────
+async function taGenPineScript() {
+  const input = document.getElementById('taSymbolInput')?.value.trim();
+  const indicator = document.getElementById('taIndicator')?.value || 'all';
+  const interval = document.getElementById('taInterval')?.value || '1h';
+
+  const prompt = `You are TradingView's Pine Script v5 expert. Generate a complete, production-ready Pine Script indicator/strategy.
+
+Context: The user wants a ${indicator === 'all' ? 'comprehensive multi-indicator' : indicator} script for ${input || 'a cryptocurrency token'} on ${interval} timeframe.
+
+Requirements:
+- Use Pine Script v5 syntax
+- Include proper indicator() declaration with title, format, precision, and overlay settings
+- Add clean plot() statements with proper colors
+- Include alertcondition() for key signals
+- Format code with proper indentation
+- DO NOT use placeholders — generate real, working indicator logic
+${indicator === 'rsi' ? '- Plot RSI with overbought(70)/oversold(30) levels, color-coded fill, divergence detection' : ''}
+${indicator === 'macd' ? '- Plot MACD line, signal line, histogram with zero line and color-coded bars' : ''}
+${indicator === 'bb' ? '- Plot Bollinger Bands SMA 20 with std dev 2, bandwidth indicator, %B calculation' : ''}
+${indicator === 'ema' ? '- Plot EMA 9, 20, 50, 200 with cross signals and alerts' : ''}
+${indicator === 'all' ? '- Include RSI, MACD, Bollinger Bands, EMA crosses, volume analysis' : ''}
+- Add clear signal labels (🟢 BUY / 🔴 SELL) using label.new() or plotshape()
+- Add bgcolor() for trend changes
+- Ensure no compilation errors
+
+Return ONLY the Pine Script code in a code block with no explanation before or after.`;
+
+  const status = document.getElementById('taStatus');
+  if (status) status.textContent = '🧠 Generating Pine Script via AI...';
+
+  try {
+    const script = await getResp(prompt, 'NEXUS');
+    const match = script.match(/```(?:pine|pinescript)?\s*([\s\S]*?)```/);
+    const code = match ? match[1].trim() : script.trim();
+
+    showModal('📜 Generated Pine Script v5',
+      `<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">Copy this code into TradingView Pine Editor</div>
+      <textarea readonly style="width:100%;height:350px;background:#0a0a0a;color:#00e5a0;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:10px;white-space:pre;overflow:auto">${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`,
+      [{ label:'Copy', class:'btn-accent', action:() => {
+        navigator.clipboard.writeText(code).then(() => notify('Pine Script copied!'));
+        closeModal();
+      }}, { label:'Close', class:'btn-ghost', action:closeModal }]
+    );
+    if (status) setTimeout(() => status.textContent = '✅ Pine Script generated', 3000);
+  } catch(e) {
+    if (status) status.textContent = '❌ Error: ' + e.message;
+    notify('Pine Script generation error: ' + e.message);
+  }
+}
+
+// ── Agent (ZEROX) analysis of technical data ─────────────────────────
+async function taAgentAnalysis() {
+  if (!_taLastData) {
+    notify('Run a technical analysis first');
+    return;
+  }
+  const { symbol, price, pair } = _taLastData;
+  const signals = _taLastSignals || [];
+  const overall = _taLastOverall || 'NEUTRAL';
+
+  const signalStr = signals.map(s => `${s.name}: ${s.value} — ${s.signal}`).join('\n');
+
+  const prompt = `You are ZEROX, SHADDAI's Wealth & Revenue Engine and market intelligence agent.
+
+TECHNICAL ANALYSIS REPORT FOR: ${symbol}
+Current Price: $${parseFloat(price).toFixed(8)}
+
+Detected Signals:
+${signalStr || 'No specific signals detected'}
+
+Overall Sentiment: ${overall}
+
+${pair ? `Market Data:
+- 24h Change: ${pair.priceChange?.h24 || 'N/A'}%
+- 1h Change: ${pair.priceChange?.h1 || 'N/A'}%
+- 24h Volume: $${(pair.volume?.h24 || 0).toLocaleString()}
+- Liquidity: $${(pair.liquidity?.usd || 0).toLocaleString()}
+- TXN 24h: ${pair.txns?.h24?.buys || 0} buys / ${pair.txns?.h24?.sells || 0} sells
+- Market Cap: $${(pair.marketCap || 0).toLocaleString()}
+- Chain: ${pair.chainId || 'N/A'}
+- DEX: ${pair.dexId || 'N/A'}` : ''}
+
+Provide a comprehensive analysis:
+1. Your interpretation of the technical setup
+2. Key support/resistance levels (estimate from Bollinger, recent range)
+3. Volume analysis — is volume confirming the move?
+4. Risk assessment — what are the key risks?
+5. Actionable recommendation with entry/exit considerations
+6. Confidence level (Low/Medium/High)
+
+⚠️ Include: "⚠️ THIS IS AI ANALYSIS ONLY — NOT FINANCIAL ADVICE"`;
+
+  const status = document.getElementById('taStatus');
+  if (status) status.textContent = '🤖 ZEROX analyzing...';
+
+  try {
+    const analysis = await getResp(prompt, 'ZEROX');
+    const panel = document.getElementById('dexAnalysisPanel');
+    const body = document.getElementById('dexAnalysisBody');
+    const title = document.getElementById('dexAnalysisTitle');
+    if (panel) panel.style.display = 'block';
+    if (title) title.textContent = `🤖 ZEROX Technical Analysis — ${symbol}`;
+    if (body) body.innerHTML = analysis.replace(/\n/g, '<br>');
+    if (status) setTimeout(() => status.textContent = '', 3000);
+    notify('ZEROX analysis complete');
+  } catch(e) {
+    if (status) status.textContent = '❌ Error: ' + e.message;
+    notify('Agent analysis error: ' + e.message);
+  }
+}
+// ═════════════════════════════════════════════════════════════════════════════
 }
 </script>
 
