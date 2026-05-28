@@ -1,0 +1,382 @@
+<!-- TURTLE Video Creation Skill Component for SHADDAI Dashboard -->
+<!-- Place this in a new tab in the SHADDAI dashboard UI -->
+
+<style>
+  .turtle-skill-panel {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #00e5a0;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 600px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .turtle-skill-panel h3 {
+    color: #00e5a0;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .skill-form-group {
+    margin-bottom: 16px;
+  }
+
+  .skill-form-group label {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .skill-form-group input,
+  .skill-form-group textarea,
+  .skill-form-group select {
+    width: 100%;
+    padding: 10px;
+    background: #0f3460;
+    border: 1px solid #00e5a0;
+    color: #fff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    box-sizing: border-box;
+  }
+
+  .skill-form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .skill-form-group input:focus,
+  .skill-form-group textarea:focus,
+  .skill-form-group select:focus {
+    outline: none;
+    border-color: #ff7b3d;
+    box-shadow: 0 0 10px rgba(0, 229, 160, 0.3);
+  }
+
+  .skill-button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .skill-btn {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, #00e5a0 0%, #00cc8a 100%);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+  }
+
+  .skill-btn:hover {
+    box-shadow: 0 0 20px rgba(0, 229, 160, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .skill-btn-secondary {
+    background: linear-gradient(135deg, #ff7b3d 0%, #ff6b2d 100%);
+    color: #fff;
+  }
+
+  .skill-btn-secondary:hover {
+    box-shadow: 0 0 20px rgba(255, 123, 61, 0.5);
+  }
+
+  .skill-progress {
+    margin-top: 20px;
+    display: none;
+  }
+
+  .skill-progress.active {
+    display: block;
+  }
+
+  .skill-progress-bar {
+    background: #0f3460;
+    border: 1px solid #00e5a0;
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .skill-progress-fill {
+    background: linear-gradient(90deg, #00e5a0 0%, #ff7b3d 100%);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .skill-status {
+    color: #00e5a0;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .skill-output {
+    margin-top: 20px;
+    display: none;
+  }
+
+  .skill-output.active {
+    display: block;
+  }
+
+  .skill-output video {
+    width: 100%;
+    border-radius: 6px;
+    border: 2px solid #00e5a0;
+    margin-top: 10px;
+    background: #000;
+  }
+
+  .skill-output a {
+    display: inline-block;
+    color: #00e5a0;
+    text-decoration: none;
+    margin-top: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .skill-output a:hover {
+    color: #ff7b3d;
+  }
+
+  .skill-range-label {
+    color: #999;
+    font-size: 10px;
+    margin-top: 6px;
+    text-align: center;
+  }
+</style>
+
+<div class="turtle-skill-panel">
+  <h3>🎬 Create Video</h3>
+
+  <form id="turtle-form">
+    <!-- Topic -->
+    <div class="skill-form-group">
+      <label>Topic (or leave blank and use script)</label>
+      <input type="text" id="turtle-topic" placeholder="e.g., The Future of AI in 2026" />
+    </div>
+
+    <!-- Script -->
+    <div class="skill-form-group">
+      <label>Script (optional - overrides topic)</label>
+      <textarea id="turtle-script" placeholder="Enter your own narration script..."></textarea>
+    </div>
+
+    <!-- Duration -->
+    <div class="skill-form-group">
+      <label>Duration: <span id="turtle-duration-value">60</span>s</label>
+      <input type="range" id="turtle-duration" min="15" max="300" value="60" />
+      <div class="skill-range-label">15 seconds - 5 minutes</div>
+    </div>
+
+    <!-- Template -->
+    <div class="skill-form-group">
+      <label>Template</label>
+      <select id="turtle-template">
+        <option value="modern">Modern (Clean & Professional)</option>
+        <option value="cinematic">Cinematic (Movie-like)</option>
+        <option value="minimal">Minimal (Simple & Focused)</option>
+        <option value="vibrant">Vibrant (Colorful & Energetic)</option>
+        <option value="tech">Tech (Startup Aesthetic)</option>
+      </select>
+    </div>
+
+    <!-- Style -->
+    <div class="skill-form-group">
+      <label>Visual Style</label>
+      <select id="turtle-style">
+        <option value="cinematic">Cinematic</option>
+        <option value="documentary">Documentary</option>
+        <option value="promotional">Promotional</option>
+        <option value="educational">Educational</option>
+        <option value="casual">Casual</option>
+      </select>
+    </div>
+
+    <!-- Language -->
+    <div class="skill-form-group">
+      <label>Narrator Language</label>
+      <select id="turtle-language">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="zh">Chinese (Simplified)</option>
+        <option value="ja">Japanese</option>
+      </select>
+    </div>
+
+    <!-- Voice -->
+    <div class="skill-form-group">
+      <label>Narrator Voice</label>
+      <select id="turtle-voice">
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+        <option value="neutral">Neutral</option>
+      </select>
+    </div>
+
+    <!-- Buttons -->
+    <div class="skill-button-group">
+      <button type="submit" class="skill-btn">Generate Video</button>
+      <button type="button" class="skill-btn skill-btn-secondary" id="turtle-cancel-btn" style="display: none;">Cancel</button>
+    </div>
+  </form>
+
+  <!-- Progress Bar -->
+  <div id="turtle-progress" class="skill-progress">
+    <div class="skill-progress-bar">
+      <div id="turtle-progress-fill" class="skill-progress-fill">0%</div>
+    </div>
+    <div class="skill-status" id="turtle-status">Initializing video generation...</div>
+  </div>
+
+  <!-- Output Video -->
+  <div id="turtle-output" class="skill-output">
+    <p style="color: #00e5a0; margin: 0 0 10px 0; font-weight: bold;">✓ Video Ready</p>
+    <video id="turtle-video" controls></video>
+    <a id="turtle-download-link" href="#" download>📥 Download Video</a>
+  </div>
+</div>
+
+<script>
+  let currentVideoId = null;
+  let statusInterval = null;
+
+  // Update duration display
+  document.getElementById('turtle-duration').addEventListener('input', (e) => {
+    document.getElementById('turtle-duration-value').textContent = e.target.value;
+  });
+
+  // Form submission
+  document.getElementById('turtle-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const topic = document.getElementById('turtle-topic').value.trim();
+    const script = document.getElementById('turtle-script').value.trim();
+    const duration = parseInt(document.getElementById('turtle-duration').value);
+    const template = document.getElementById('turtle-template').value;
+    const style = document.getElementById('turtle-style').value;
+    const language = document.getElementById('turtle-language').value;
+    const voiceGender = document.getElementById('turtle-voice').value;
+
+    if (!topic && !script) {
+      alert('Please enter a topic or script');
+      return;
+    }
+
+    try {
+      // Send generation request
+      const response = await fetch('/api/skills/turtle/create-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: topic || undefined,
+          script: script || undefined,
+          duration,
+          template,
+          style,
+          language,
+          voiceGender
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to start video generation');
+
+      const data = await response.json();
+      currentVideoId = data.videoId;
+
+      // Show progress, hide output
+      document.getElementById('turtle-progress').classList.add('active');
+      document.getElementById('turtle-output').classList.remove('active');
+      document.getElementById('turtle-cancel-btn').style.display = 'block';
+      document.getElementById('turtle-status').textContent = 'Status: queued (0%)';
+
+      // Poll status every 2 seconds
+      statusInterval = setInterval(() => pollStatus(), 2000);
+
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  });
+
+  // Poll video generation status
+  async function pollStatus() {
+    try {
+      const response = await fetch(`/api/skills/turtle/status/${currentVideoId}`);
+      if (!response.ok) throw new Error('Status check failed');
+
+      const data = response.json();
+
+      const progress = Math.round(data.progress * 100);
+      document.getElementById('turtle-progress-fill').style.width = progress + '%';
+      document.getElementById('turtle-progress-fill').textContent = progress + '%';
+      document.getElementById('turtle-status').textContent = `Status: ${data.status} (${progress}%)`;
+
+      if (data.status === 'success') {
+        clearInterval(statusInterval);
+        showOutput(data.outputUrl);
+      } else if (data.status === 'error') {
+        clearInterval(statusInterval);
+        alert('Video generation failed: ' + (data.error || 'Unknown error'));
+        resetUI();
+      }
+    } catch (error) {
+      console.error('Status poll error:', error);
+    }
+  }
+
+  // Display generated video
+  function showOutput(videoUrl) {
+    document.getElementById('turtle-progress').classList.remove('active');
+    document.getElementById('turtle-output').classList.add('active');
+    document.getElementById('turtle-video').src = videoUrl;
+    document.getElementById('turtle-download-link').href = videoUrl;
+    document.getElementById('turtle-cancel-btn').style.display = 'none';
+  }
+
+  // Reset UI
+  function resetUI() {
+    document.getElementById('turtle-progress').classList.remove('active');
+    document.getElementById('turtle-cancel-btn').style.display = 'none';
+    currentVideoId = null;
+  }
+
+  // Cancel generation
+  document.getElementById('turtle-cancel-btn').addEventListener('click', async () => {
+    if (currentVideoId) {
+      try {
+        await fetch(`/api/skills/turtle/cancel/${currentVideoId}`, { method: 'POST' });
+      } catch (error) {
+        console.error('Cancel error:', error);
+      }
+      clearInterval(statusInterval);
+      resetUI();
+    }
+  });
+</script>

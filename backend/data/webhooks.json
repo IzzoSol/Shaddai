@@ -1,0 +1,42 @@
+[
+  {
+    "id": "wh_1778812217490",
+    "name": "Test Hook",
+    "url": "http://localhost:9999/hook",
+    "events": [
+      "job:created",
+      "bid:placed"
+    ],
+    "secret": null,
+    "createdAt": "2026-05-15T02:30:17.490Z",
+    "fireCount": 0,
+    "errorCount": 10,
+    "lastError": ""
+  },
+  {
+    "id": "wh_1778815190766",
+    "name": "Test",
+    "url": "http://localhost:9998/hook",
+    "events": [
+      "job:created"
+    ],
+    "secret": null,
+    "createdAt": "2026-05-15T03:19:50.766Z",
+    "fireCount": 0,
+    "errorCount": 2,
+    "lastError": ""
+  },
+  {
+    "id": "wh_1778815651488",
+    "name": "https://httpbin.org/post",
+    "url": "https://httpbin.org/post",
+    "events": [
+      "job:created"
+    ],
+    "secret": null,
+    "createdAt": "2026-05-15T03:27:31.488Z",
+    "fireCount": 1,
+    "errorCount": 0,
+    "lastFired": "2026-05-20T20:23:38.615Z"
+  }
+]

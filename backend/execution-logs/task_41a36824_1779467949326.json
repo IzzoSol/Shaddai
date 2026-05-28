@@ -1,0 +1,89 @@
+{
+  "id": "41a36824-a2cc-4356-b624-539f7d3f8830",
+  "goal": "You're executing the skill \"bitcoin-analysis\".\n\nFull skill methodology from your knowledge base:\n=====================================\n---\nname: bitcoin-analysis\ndescription: Expert knowledge and best practices for bitcoin-analysis\ntype: md\ntrigger: \"use bitcoin-analysis\" | \"apply bitcoin-analysis\" | \"bitcoin-analysis skill\"\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  audience: general\n  workflow: local\n  agent: SHADDAI\n  version: 2.0.0\n  upgraded: 2026-04-06\n---\n\n# bitcoin-analysis\n\n## Overview\nExpert knowledge and best practices for bitcoin-analysis within the Dreamers ecosystem.\n\n## When to Use\n- When the task directly relates to bitcoin-analysis\n- When you need expert guidance in this domain\n- When quality and best practices matter\n- When you want to avoid common mistakes\n- When building something that needs to scale\n\n## Why Use This Skill\nThis skill provides structured expertise in bitcoin-analysis, ensuring consistent quality and avoiding common mistakes. It encapsulates best practices specific to SHADDAI role, making complex tasks manageable and repeatable.\n\n## Inputs Required\n- Clear description of the task or problem\n- Any existing code, data, or context\n- Specific requirements or constraints\n- Success criteria or expected outcomes\n\n## How to Use (Step-by-Step)\n1. Understand the task requirements and context\n2. Apply the skill framework systematically\n3. Validate results against best practices\n4. Iterate based on feedback\n5. Document decisions and rationale\n\n## Best Practices\n- Understand the skill fully before applying it\n- Start with small test cases\n- Document your approach and results\n- Iterate based on feedback\n- Share learnings with the team\n\n## Common Pitfalls\n- Applying the skill without understanding context\n- Skipping steps in the process\n- Not validating results\n- Ignoring edge cases\n- Failing to document decisions\n\n## Output Format\n\\\\\\\n# Structured output based on bitcoin-analysis\n- Analysis/Implementation details\n- Recommendations and next steps\n- Code examples where applicable\n- Risk assessment if relevant\n\\\\\\\n\n## Examples\n\n**Example 1: Standard Application**\nInput: \"Apply bitcoin-analysis to [specific scenario]\"\nOutput: Comprehensive analysis/implementation following the skill framework with actionable recommendations.\n\n**Example 2: Review Mode**\nInput: \"Review my [X] using bitcoin-analysis\"\nOutput: Detailed review with strengths, weaknesses, and specific improvement suggestions.\n\n## Related Skills\n- See related skills in [[../_SKILLS_INDEX]]\n\n## Agent-Specific Context\nAs SHADDAI, you are the Supreme Commander - routes tasks, orchestrates workflows, manages ec\n=====================================\n\nNow apply this methodology using your real tools. Be specific. Deliver concrete results.",
+  "agentName": "SHADDAI",
+  "status": "completed",
+  "steps": [
+    {
+      "iteration": 1,
+      "status": "tool_executed",
+      "ts": "2026-05-22T16:39:04.695Z",
+      "llm_response": "To apply the bitcoin-analysis skill, I will follow the step-by-step methodology outlined in the skill framework.\n\nFirst, I need to understand the task requirements and context. Since I don't have any specific task or problem description, I will use a general approach to demonstrate the skill.\n\nThe current task is to analyze the bitcoin market and provide a comprehensive overview.\n\nTo start, I will fetch the current price of bitcoin using the [TOOL:fetch_price] tool.\n\n[TOOL:fetch_price:{\"symbol\":\"bitcoin\"}]\n\nPlease wait while I retrieve the data... \n\nOnce I have the current price, I will use th…",
+      "tools": [
+        {
+          "name": "fetch_price",
+          "resultPreview": "{\"symbol\":\"bitcoin\",\"price\":\"$76,832\",\"change24h\":\"-0.24%\",\"marketCap\":\"$1538.61B\",\"volume24h\":\"$27.61B\"}"
+        },
+        {
+          "name": "get_fear_greed",
+          "resultPreview": "{\"today\":{\"score\":\"28\",\"label\":\"Fear\"},\"history\":[{\"score\":\"29\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":\"Fear\"},{\"score\":\"25\",\"label\":\"Extreme Fear\"},{\"score\":\"28\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":"
+        },
+        {
+          "name": "get_global_market",
+          "resultPreview": "{\"totalMarketCap\":\"$2.65T\",\"totalVolume24h\":\"$76.9B\",\"btcDominance\":\"58.1%\",\"ethDominance\":\"9.6%\",\"activeCoins\":17402,\"marketCapChange24h\":\"-0.34%\"}"
+        },
+        {
+          "name": "fetch_price",
+          "resultPreview": "{\"symbol\":\"bitcoin\",\"price\":\"$76,832\",\"change24h\":\"-0.24%\",\"marketCap\":\"$1538.61B\",\"volume24h\":\"$27.61B\"}"
+        },
+        {
+          "name": "get_fear_greed",
+          "resultPreview": "{\"today\":{\"score\":\"28\",\"label\":\"Fear\"},\"history\":[{\"score\":\"29\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":\"Fear\"},{\"score\":\"25\",\"label\":\"Extreme Fear\"},{\"score\":\"28\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":"
+        },
+        {
+          "name": "get_global_market",
+          "resultPreview": "{\"totalMarketCap\":\"$2.65T\",\"totalVolume24h\":\"$76.9B\",\"btcDominance\":\"58.1%\",\"ethDominance\":\"9.6%\",\"activeCoins\":17402,\"marketCapChange24h\":\"-0.34%\"}"
+        },
+        {
+          "name": "fetch_price",
+          "resultPreview": "{\"symbol\":\"bitcoin\",\"price\":\"$76,832\",\"change24h\":\"-0.24%\",\"marketCap\":\"$1538.61B\",\"volume24h\":\"$27.61B\"}"
+        },
+        {
+          "name": "get_fear_greed",
+          "resultPreview": "{\"today\":{\"score\":\"28\",\"label\":\"Fear\"},\"history\":[{\"score\":\"29\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":\"Fear\"},{\"score\":\"25\",\"label\":\"Extreme Fear\"},{\"score\":\"28\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":"
+        },
+        {
+          "name": "get_global_market",
+          "resultPreview": "Tool error: Request failed with status code 429"
+        },
+        {
+          "name": "fetch_price",
+          "resultPreview": "Tool error: Request failed with status code 429"
+        },
+        {
+          "name": "get_fear_greed",
+          "resultPreview": "{\"today\":{\"score\":\"28\",\"label\":\"Fear\"},\"history\":[{\"score\":\"29\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":\"Fear\"},{\"score\":\"25\",\"label\":\"Extreme Fear\"},{\"score\":\"28\",\"label\":\"Fear\"},{\"score\":\"27\",\"label\":"
+        },
+        {
+          "name": "get_global_market",
+          "resultPreview": "Tool error: Request failed with status code 429"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "ts": "2026-05-22T16:39:07.767Z",
+      "llm_response": "# Bitcoin Analysis\n\n## Analysis/Implementation Details\nBased on the current market data, the bitcoin price is $76,832. The fear and greed index is 28, indicating \"Fear\". The global market overview shows a total market capitalization of $2.65T, with bitcoin dominance at 58.1%. However, the most recent global market data could not be retrieved due to a request failure with status code 429.\n\n## Recommendations and Next Steps\nConsidering the current market conditions, it is recommended to exercise caution. The fear and greed index indicates a sentiment of fear, which may lead to decreased investor…"
+    }
+  ],
+  "result": "# Bitcoin Analysis\n\n## Analysis/Implementation Details\nBased on the current market data, the bitcoin price is $76,832. The fear and greed index is 28, indicating \"Fear\". The global market overview shows a total market capitalization of $2.65T, with bitcoin dominance at 58.1%. However, the most recent global market data could not be retrieved due to a request failure with status code 429.\n\n## Recommendations and Next Steps\nConsidering the current market conditions, it is recommended to exercise caution. The fear and greed index indicates a sentiment of fear, which may lead to decreased investor confidence. Investors should closely monitor the market and consider diversifying their portfolios to minimize potential losses.\n\n## Risk Assessment\nThe current market conditions pose significant risks to investors. The fear and greed index is in the \"Fear\" range, which may lead to increased market volatility. It is essential to develop a risk management strategy to mitigate potential losses.\n\n## Code Examples\nNo code examples are applicable in this case.\n\n## Conclusion\nIn conclusion, the current bitcoin price is $76,832, with a fear and greed index of 28, indicating \"Fear\". While the global market overview shows a total market capitalization of $2.65T, the most recent data could not be retrieved due to a request failure. Investors should exercise caution and consider developing a risk management strategy to mitigate potential losses.",
+  "error": null,
+  "startedAt": "2026-05-22T16:39:04.695Z",
+  "completedAt": "2026-05-22T16:39:09.326Z",
+  "tools_used": [
+    "fetch_price",
+    "get_fear_greed",
+    "get_global_market",
+    "fetch_price",
+    "get_fear_greed",
+    "get_global_market",
+    "fetch_price",
+    "get_fear_greed",
+    "get_global_market",
+    "fetch_price",
+    "get_fear_greed",
+    "get_global_market"
+  ],
+  "options": {}
+}

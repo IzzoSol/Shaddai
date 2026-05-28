@@ -1,0 +1,102 @@
+[
+  {
+    "id": "trade-mpixva7e",
+    "collectibleId": 4,
+    "seller": "alice",
+    "buyer": "bob",
+    "price": 100,
+    "platformFee": 10,
+    "sellerProceeds": 90,
+    "executedAt": "2026-05-23T22:47:26.570Z"
+  },
+  {
+    "id": "trade-mpiy4ltn",
+    "collectibleId": 5,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-23T22:54:41.531Z"
+  },
+  {
+    "id": "trade-mpj0tdz2",
+    "collectibleId": 6,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T00:09:56.990Z"
+  },
+  {
+    "id": "trade-mpj0v3z4",
+    "collectibleId": 7,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T00:11:17.344Z"
+  },
+  {
+    "id": "trade-mpj5xvlo",
+    "collectibleId": 8,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T02:33:24.541Z"
+  },
+  {
+    "id": "trade-mpj6c1gw",
+    "collectibleId": 9,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T02:44:25.328Z"
+  },
+  {
+    "id": "trade-mpj7kqh4",
+    "collectibleId": 10,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T03:19:10.600Z"
+  },
+  {
+    "id": "trade-mpj7nhkq",
+    "collectibleId": 11,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T03:21:19.034Z"
+  },
+  {
+    "id": "trade-mpj7qhb0",
+    "collectibleId": 12,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T03:23:38.652Z"
+  },
+  {
+    "id": "trade-mpjak8bq",
+    "collectibleId": 13,
+    "seller": "e2e-tester",
+    "buyer": "e2e-buyer",
+    "price": 250,
+    "platformFee": 25,
+    "sellerProceeds": 225,
+    "executedAt": "2026-05-24T04:42:45.926Z"
+  }
+]

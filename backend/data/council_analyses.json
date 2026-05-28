@@ -1,0 +1,537 @@
+[
+  {
+    "id": "council_1779676856924",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-25T02:40:56.924Z",
+    "quote": "LIVE MARKET DATA (as of now):\nPrice: $85.16\n24h Change: -0.76%\n7d Change: -1.31%\n24h Volume: $1.67B\nMarket Cap: $46.3B\nRank: #7\n",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ORACLE ERROR] 404 Client Error: Not Found for url: http://localhost:11434/api/chat",
+        "ts": "2026-05-25T02:41:35.029Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ZEROX ERROR] 404 Client Error: Not Found for url: http://localhost:11434/api/chat",
+        "ts": "2026-05-25T02:41:55.131Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 404",
+        "error": true,
+        "ts": "2026-05-25T02:41:55.154Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 404",
+        "error": true,
+        "ts": "2026-05-25T02:41:55.208Z"
+      }
+    ],
+    "verdict": "[SHADDAI ERROR] Chat call failed: 404 Client Error: Not Found for url: http://localhost:11434/api/chat",
+    "finished": "2026-05-25T02:43:51.746Z"
+  },
+  {
+    "id": "council_1779254399119",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T05:20:00.469Z",
+    "quote": "Live price: $84.61, 24h change: -0.39%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T05:20:06.536Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T05:20:06.552Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T05:20:06.566Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T05:20:07.673Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T05:20:07.710Z"
+  },
+  {
+    "id": "council_1779250068513",
+    "ticker": "NVDA",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T04:07:48.672Z",
+    "quote": "Live price: $220.61, 24h change: -0.08%, source: yahoo",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T04:07:48.709Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T04:07:48.724Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T04:07:48.734Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T04:07:48.751Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T04:07:48.760Z"
+  },
+  {
+    "id": "council_1779247075203",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T03:17:55.557Z",
+    "quote": "Live price: $83.93, 24h change: -1.28%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T03:17:55.591Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T03:17:55.606Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T03:17:55.623Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 503",
+        "error": true,
+        "ts": "2026-05-20T03:17:55.638Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T03:17:55.650Z"
+  },
+  {
+    "id": "council_1779238905553",
+    "ticker": "BTC",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T01:01:45.768Z",
+    "quote": "Live price: $33.94, 24h change: -5.04%, source: yahoo",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:45.793Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:45.814Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:45.836Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:45.857Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T01:01:45.880Z"
+  },
+  {
+    "id": "council_1779238893848",
+    "ticker": "BTC",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T01:01:34.249Z",
+    "quote": "Live price: $33.94, 24h change: -5.04%, source: yahoo",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:34.288Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:34.366Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:34.452Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:01:34.528Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T01:01:34.622Z"
+  },
+  {
+    "id": "council_1779238818091",
+    "ticker": "TROLL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-20T01:00:18.560Z",
+    "quote": "Live price: $0.00, 24h change: -5.06%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:00:18.892Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:00:18.930Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:00:18.965Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-20T01:00:18.990Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-20T01:00:19.015Z"
+  },
+  {
+    "id": "council_1779220861160",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-19T20:01:01.682Z",
+    "quote": "Live price: $84.29, 24h change: -0.80%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-19T20:01:02.216Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-19T20:01:02.345Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-19T20:01:02.462Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-19T20:01:02.558Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-19T20:01:02.640Z"
+  },
+  {
+    "id": "council_1779145300089",
+    "ticker": "BTC",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-05-18T23:01:40.329Z",
+    "quote": "Live price: $33.97, 24h change: -6.26%, source: yahoo",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-05-18T23:01:40.333Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-05-18T23:01:40.336Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-05-18T23:01:40.339Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-05-18T23:01:40.342Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-18T23:01:40.345Z"
+  },
+  {
+    "id": "council_1779127220184",
+    "ticker": "SOL",
+    "status": "complete",
+    "started": "2026-05-18T18:00:20.787Z",
+    "quote": "Live price: $84.31, 24h change: -2.30%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T18:00:20.829Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T18:00:20.909Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T18:00:20.954Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T18:00:21.013Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-18T18:00:21.043Z"
+  },
+  {
+    "id": "council_1779125787363",
+    "ticker": "SOL",
+    "status": "complete",
+    "started": "2026-05-18T17:36:27.881Z",
+    "quote": "Live price: $84.32, 24h change: -1.99%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T17:36:27.976Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T17:36:28.007Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T17:36:28.096Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T17:36:28.113Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-18T17:36:28.140Z"
+  },
+  {
+    "id": "council_1779070575106",
+    "ticker": "SOL",
+    "status": "complete",
+    "started": "2026-05-18T02:16:15.474Z",
+    "quote": "Live price: $85.25, 24h change: -0.80%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T02:16:15.525Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T02:16:15.553Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T02:16:15.582Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[OFFLINE] Request failed with status code 500",
+        "error": true,
+        "ts": "2026-05-18T02:16:15.606Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-18T02:16:15.632Z"
+  },
+  {
+    "id": "council_1778960702245",
+    "ticker": "TROLL",
+    "status": "complete",
+    "started": "2026-05-16T19:45:02.871Z",
+    "quote": "Live price: $0.00, 24h change: -0.40%, source: coingecko",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "As an Oracle of the SHADDAI empirical system, I synthesize market trend identifications and provide insight into TROLL stock's fundamental and macroeconomic news context. Analyzing the company's financial reports from a comprehensive perspective, I identify strengths, weaknesses, opportunities, and threats (SWOT) to inform strategies for price direction and sector positioning. The following 3-5 sentences provide an overview of TROLL stock's market context, focusing on recent news, company financials, and trend identification:\n\n- Based on recent news, STRENGTH=high/medium/low, with potential for upside or downside depending on trends in sector trends. - In the short term, TROLL stock could benefit from a pullback in the US dollar, as the currency's strength can boost the value of foreign-listed shares in domestic currencies. On the other hand, any significant decline in the US dollar would likely be followed by increased demand for TROLL stock due to its competitive edge in the cryptocurrency market. - In the long term, STRENGTH=high/medium/low, with opportunities to capitalize on potential strengths and threats if a bullish outlook prevails. Overall, I provide an analysis of TROLL stock's fundamental and macroeconomic news context to inform investment decisions in the cryptocurrency sector.",
+        "ts": "2026-05-16T19:46:54.202Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "As a research-driven and data-driven market psychologist, ZEROX analyzes the TROLL token from a market psychology + price action angle in 3-5 sentences. \n\nContext: Live price: $0.00 (unchanged), 24h change: -0.40% (negative), source: Coingecko. Foci on: momentum, sentiment, whale movements.\n\nEnd with: BIAY/BIAZ=buy in-onion/sell out-onion. This analysis suggests that while TROLL is currently trading in a negative direction due to the recent dip below $0.005, there is still room for investors to consider taking a bullish view on the coin given its strong fundamentals and potential for price appreciation based on market psychology, sentiment, and whale movements.",
+        "ts": "2026-05-16T19:48:06.332Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "As NEXUS, I'd like to analyze TROLL from a technical chart perspective. TROLL is a crypto asset traded on the Coingecko platform, and its price has been trending downwards over the past week. On the 24-hour timeframe, support and resistance zones for TROLL are visible.\n\nTrading at $0.00, the cryptoasset appears to be in a state of correction with negative divergence on the one-week RSI and MACD signals. Pattern recognition suggests that buying opportunities may exist around current support levels, which are currently marked by horizontal supports. SIGNAL=buy/sell/hold at these price points.\n\nWhile the stock remains in a bearish trend, there is a potential for a bullish reversal with a breakout of the support zone mentioned earlier. Investors can take advantage of this opportunity by selling TROLL at current levels or buying it on dips as support weakens. This could result in positive profit potential if TROLL continues to climb towards $0.01.",
+        "ts": "2026-05-16T19:48:39.437Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "Your role as PIKADON is to assess the risk of trading TROLL during this moment in time. You will analyze the current price and its movements, consider its volatility, drawdown potential, and position sizing, focusing on low, medium or high levels of risk. By doing so, you aim to provide actionable insights that may help investors make informed decisions about their trading strategies. Ultimately, your goal is to identify the most appropriate trade opportunities for maximizing returns while minimizing losses during this period of uncertainty and volatility.",
+        "ts": "2026-05-16T19:49:16.549Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-05-16T19:51:16.552Z"
+  },
+  {
+    "id": "council_1778895690175",
+    "ticker": "NVDA",
+    "status": "running",
+    "started": "2026-05-16T01:41:30.426Z",
+    "quote": "Live price: $225.32, 24h change: 4.70%, source: yahoo",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ORACLE 🔮] NVDA stock is analyzed from a fundamental and macroeconomic perspective, highlighting the company's strength in terms of financials, recent news, sector trends, and the potential for growth based on the company's strong fundamentals. The stock's current price, 24h change, and source of insight are also noted.",
+        "ts": "2026-05-16T01:42:15.872Z"
+      }
+    ],
+    "verdict": null
+  }
+]

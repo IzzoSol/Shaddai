@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#00e5a0">
+<meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
+<title>SHADDAI v61 - Enhanced</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #020817;
+  --bg-primary: #0c1425;
+  --bg-card: rgba(10, 18, 35, 0.95);
+  --bg-glass: rgba(12, 22, 42, 0.9);
+  --text-primary: #e8edf5;
+  --text-secondary: #8b9dc3;
+  --text-muted: #5a6b8a;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0, 229, 160, 0.12);
+  --accent-glow: rgba(0, 229, 160, 0.35);
+  --secondary: #ff7b3d;
+  --tertiary: #00c8ff;
+  --danger: #ff4070;
+  --warning: #ffb020;
+  --success: #00e5a0;
+  --border: rgba(90, 107, 138, 0.25);
+  --border-glow: rgba(0, 229, 160, 0.3);
+  --base-size: 13px;
+  --transition-quick: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="cyber"] {
+  --bg-deep: #000d1a;
+  --bg-primary: #001a33;
+  --bg-card: rgba(0, 20, 40, 0.95);
+  --accent: #00c8ff;
+  --accent-dim: rgba(0, 200, 255, 0.12);
+  --accent-glow: rgba(0, 200, 255, 0.35);
+  --text-primary: #c8e8ff;
+}
+
+[data-theme="ember"] {
+  --bg-deep: #1a0800;
+  --bg-primary: #2a1200;
+  --bg-card: rgba(30, 15, 5, 0.95);
+  --accent: #ff7b3d;
+  --accent-dim: rgba(255, 123, 61, 0.12);
+  --accent-glow: rgba(255, 123, 61, 0.35);
+  --text-primary: #ffe8d5;
+}
+
+[data-theme="black"] {
+  --bg-deep: #000000;
+  --bg-primary: #0a0a0a;
+  --bg-card: rgba(10, 10, 10, 0.98);
+  --accent: #00e5a0;
+  --text-primary: #ffffff;
+}
+
+[data-theme="soft"] {
+  --bg-deep: #0a0f1e;
+  --bg-primary: #101830;
+  --accent: #8b5cf6;
+  --accent-dim: rgba(139, 92, 246, 0.12);
+  --accent-glow: rgba(139, 92, 246, 0.35);
+  --text-primary: #dde4f0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 10px var(--accent-glow); } 50% { box-shadow: 0 0 20px var(--accent-glow); } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+body {
+  font-family: 'Inter', 'JetBrains Mono', monospace;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: var(--base-size);
+  line-height: 1.55;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(0, 229, 160, 0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 90%, rgba(0, 200, 255, 0.05) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header */
+#topBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: rgba(2, 8, 23, 0.98);
+  border-bottom: 1px solid rgba(0, 229, 160, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1001;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  backdrop-filter: blur(20px);
+  gap: 15px;
+}
+
+#topBar-title { font-family: 'Orbitron', monospace; font-size: 13px; letter-spacing: 3px; }
+#topBar-status { display: flex; gap: 12px; align-items: center; margin-left: auto; }
+
+/* Navigation */
+#mainNav {
+  position: fixed;
+  top: 40px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: rgba(4, 12, 28, 0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 229, 160, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  gap: 3px;
+  z-index: 1000;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#mainNav::-webkit-scrollbar { display: none; }
+
+.nav-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  border-radius: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: var(--transition-quick);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  height: 38px;
+}
+
+.nav-btn:hover { color: var(--accent); border-bottom-color: rgba(0, 229, 160, 0.4); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Agent Bar */
+#agentBar {
+  position: fixed;
+  top: 84px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: rgba(3, 10, 22, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  gap: 6px;
+  z-index: 999;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#agentBar::-webkit-scrollbar { display: none; }
+
+.agent-chip {
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 9px;
+  font-family: inherit;
+  transition: var(--transition-quick);
+  white-space: nowrap;
+  position: relative;
+}
+
+.agent-chip:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.agent-chip.active { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); box-shadow: 0 0 12px var(--accent-glow); font-weight: 800; }
+.agent-chip.working::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--warning); top: -2px; right: -2px; animation: pulse 1s infinite; }
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-indicator.offline { background: var(--danger); }
+.status-indicator.busy { background: var(--warning); }
+
+/* Main Content */
+#mainArea {
+  margin-top: 128px;
+  padding: 15px;
+  width: 100%;
+  min-height: calc(100vh - 128px);
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.view {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.view.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  animation: slideUp 0.3s ease;
+}
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  backdrop-filter: blur(15px);
+  transition: var(--transition-quick);
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(0, 229, 160, 0.1);
+}
+
+.card-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+/* Grid Layouts */
+#dashView.active {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+#dashView.active .card:first-child { grid-column: span 4; }
+
+@media (max-width: 1400px) {
+  #dashView.active { grid-template-columns: repeat(3, 1fr); }
+  #dashView.active .card:first-child { grid-column: span 3; }
+}
+
+@media (max-width: 1000px) {
+  #dashView.active { grid-template-columns: repeat(2, 1fr); }
+  #dashView.active .card:first-child { grid-column: span 2; }
+}
+
+@media (max-width: 600px) {
+  #dashView.active { grid-template-columns: 1fr; }
+  #dashView.active .card:first-child { grid-column: span 1; }
+}
+
+/* Statistics */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+
+@media (max-width: 768px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: var(--transition-quick);
+}
+
+.stat-box:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.stat-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  margin-top: 4px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.stat-value.good { color: var(--success); }
+.stat-value.warn { color: var(--warning); }
+.stat-value.bad { color: var(--danger); }
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  transition: var(--transition-quick);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--bg-deep);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-accent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--accent-glow);
+}
+
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-danger {
+  background: rgba(255, 64, 112, 0.15);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 64, 112, 0.25);
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  margin-bottom: 8px;
+  transition: var(--transition-quick);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 10px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.data-table tbody tr:hover td {
+  background: rgba(0, 229, 160, 0.03);
+}
+
+/* Agent Status Dashboard */
+.agent-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.agent-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: var(--transition-quick);
+  position: relative;
+  overflow: hidden;
+}
+
+.agent-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.agent-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 229, 160, 0.1);
+}
+
+.agent-card:hover::before {
+  transform: scaleX(1);
+}
+
+.agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.agent-name {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.agent-status {
+  font-size: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.agent-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.agent-stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+/* Job Marketplace */
+.job-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.job-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  transition: var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+}
+
+.job-card:hover {
+  border-color: var(--tertiary);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 200, 255, 0.15);
+}
+
+.job-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.job-description {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+.job-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.job-budget {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.job-status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.job-status-badge.open {
+  background: rgba(0, 229, 160, 0.15);
+  color: var(--success);
+}
+
+.job-status-badge.in-progress {
+  background: rgba(255, 176, 32, 0.15);
+  color: var(--warning);
+}
+
+.job-status-badge.completed {
+  background: rgba(0, 200, 255, 0.15);
+  color: var(--tertiary);
+}
+
+/* Execution History */
+.execution-timeline {
+  position: relative;
+  padding-left: 20px;
+}
+
+.execution-item {
+  position: relative;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border-left: 2px solid var(--accent);
+  transition: var(--transition-quick);
+}
+
+.execution-item:hover {
+  background: var(--accent-dim);
+  border-left-color: var(--tertiary);
+}
+
+.execution-time {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.execution-task {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.execution-result {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--tertiary));
+  width: 0%;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.progress-fill.shimmer {
+  background: linear-gradient(90deg, var(--accent), var(--tertiary), var(--accent));
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toast.success {
+  border-left: 3px solid var(--success);
+}
+
+.toast.error {
+  border-left: 3px solid var(--danger);
+}
+
+.toast.warning {
+  border-left: 3px solid var(--warning);
+}
+
+.toast.info {
+  border-left: 3px solid var(--tertiary);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-dim);
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.modal-content {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Confirmation Dialog */
+.confirm-dialog {
+  text-align: center;
+}
+
+.confirm-message {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Wallet/Billing Dashboard */
+.wallet-section {
+  background: linear-gradient(135deg, rgba(0, 229, 160, 0.1), rgba(0, 200, 255, 0.05));
+  border: 1px solid rgba(0, 229, 160, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.wallet-balance {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.wallet-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.transaction-type {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.transaction-amount {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.transaction-amount.negative {
+  color: var(--danger);
+}
+
+/* Performance Charts */
+.chart-container {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.chart-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--accent), rgba(0, 229, 160, 0.3));
+  border-radius: 4px 4px 0 0;
+  min-height: 20px;
+  transition: var(--transition-smooth);
+  position: relative;
+}
+
+.chart-bar:hover {
+  background: linear-gradient(180deg, var(--tertiary), rgba(0, 200, 255, 0.3));
+}
+
+.chart-bar::after {
+  content: attr(data-value);
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Settings Panel */
+.settings-group {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.settings-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 10px;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  color: var(--text-secondary);
+}
+
+.settings-value {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Theme Selector */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.theme-btn {
+  padding: 10px;
+  border: 2px solid var(--border);
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: var(--transition-quick);
+  text-transform: uppercase;
+}
+
+.theme-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* Generated Files Viewer */
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.file-item {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: var(--transition-quick);
+  cursor: pointer;
+}
+
+.file-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  transform: translateY(-2px);
+}
+
+.file-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.file-name {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.file-size {
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.file-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.file-action-btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-quick);
+}
+
+.file-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Micro-interactions */
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease;
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #mainArea {
+    margin-top: 130px;
+    padding: 10px;
+  }
+
+  #topBar {
+    height: 36px;
+    padding: 0 12px;
+  }
+
+  #mainNav {
+    top: 36px;
+    height: 40px;
+  }
+
+  #agentBar {
+    top: 76px;
+    height: 40px;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .agent-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .job-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .toast-container {
+    max-width: 90vw;
+    bottom: 10px;
+    right: 10px;
+  }
+}
+
+/* Accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div id="topBar">
+  <div id="topBar-title">SHADDAI v61</div>
+  <div id="topBar-status">
+    <div>
+      <span class="status-indicator online"></span>
+      <span style="font-size: 9px;">NETWORK ACTIVE</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Navigation -->
+<div id="mainNav">
+  <button class="nav-btn active" data-view="dashView">Dashboard</button>
+  <button class="nav-btn" data-view="agentStatusView">Agent Status</button>
+  <button class="nav-btn" data-view="jobBoardView">Job Market</button>
+  <button class="nav-btn" data-view="executionView">Execution History</button>
+  <button class="nav-btn" data-view="filesView">Generated Files</button>
+  <button class="nav-btn" data-view="performanceView">Performance</button>
+  <button class="nav-btn" data-view="walletView">Wallet</button>
+  <button class="nav-btn" data-view="settingsView">Settings</button>
+</div>
+
+<!-- Agent Bar -->
+<div id="agentBar">
+  <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Active Agents:</span>
+  <button class="agent-chip active" data-agent="all">All Agents</button>
+  <button class="agent-chip" data-agent="NEXUS">NEXUS</button>
+  <button class="agent-chip" data-agent="TURTLE">TURTLE</button>
+  <button class="agent-chip" data-agent="ORACLE">ORACLE</button>
+  <button class="agent-chip" data-agent="ZEROX">ZEROX</button>
+  <button class="agent-chip" data-agent="QUILL">QUILL</button>
+  <button class="agent-chip" data-agent="PIKADON">PIKADON</button>
+</div>
+
+<!-- Main Content Area -->
+<div id="mainArea">
+
+  <!-- Dashboard View -->
+  <div id="dashView" class="view active">
+    <div class="card">
+      <h2 class="card-title">System Overview</h2>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">Active Agents</div>
+          <div class="stat-value good">7</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Jobs Completed</div>
+          <div class="stat-value good">42</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value good">$8,420</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Execution Rate</div>
+          <div class="stat-value good">98.5%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Agent Performance</h3>
+      <div style="height: 200px; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; align-items: flex-end; gap: 6px; padding: 8px;">
+        <div class="chart-bar" style="height: 60%;"></div>
+        <div class="chart-bar" style="height: 85%;"></div>
+        <div class="chart-bar" style="height: 70%;"></div>
+        <div class="chart-bar" style="height: 90%;"></div>
+        <div class="chart-bar" style="height: 75%;"></div>
+        <div class="chart-bar" style="height: 80%;"></div>
+        <div class="chart-bar" style="height: 65%;"></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; font-size: 8px; text-align: center; color: var(--text-muted);">
+        <div>SHADDAI</div><div>NEXUS</div><div>TURTLE</div><div>ORACLE</div><div>ZEROX</div><div>QUILL</div><div>PIKADON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Recent Activity</h3>
+      <div class="execution-timeline">
+        <div class="execution-item">
+          <div class="execution-time">2 minutes ago</div>
+          <div class="execution-task">Task #1234 Completed</div>
+          <div class="execution-result">NEXUS deployed new API integration</div>
+        </div>
+        <div class="execution-item">
+          <div class="execution-time">15 minutes ago</div>
+          <div class="execution-task">Job Assigned</div>
+          <div class="execution-result">TURTLE created UI mockups</div>
+        </div>
+        <div class="execution-item">
+          <div class="execution-time">1 hour ago</div>
+          <div class="execution-task">Workflow Executed</div>
+          <div class="execution-result">ORACLE analyzed market data</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Upcoming Tasks</h3>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 8px; background: rgba(255,176,32,0.08); border-left: 3px solid var(--warning); border-radius: 4px; font-size: 10px;">
+          <div style="font-weight: 600; color: var(--text-primary);">Review Agent Proposals</div>
+          <div style="color: var(--text-muted); font-size: 9px;">PIKADON security audit pending</div>
+        </div>
+        <div style="padding: 8px; background: rgba(0,229,160,0.08); border-left: 3px solid var(--success); border-radius: 4px; font-size: 10px;">
+          <div style="font-weight: 600; color: var(--text-primary);">Deploy New Features</div>
+          <div style="color: var(--text-muted); font-size: 9px;">Ready for production launch</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Status View -->
+  <div id="agentStatusView" class="view">
+    <div class="card">
+      <h2 class="card-title">Agent Status Monitor</h2>
+    </div>
+    <div class="agent-dashboard">
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">SHADDAI</div>
+          <div class="agent-status">ORCHESTRATING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">99.8%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>12 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>45%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>520MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">NEXUS</div>
+          <div class="agent-status">BUILDING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">99.2%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>8 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>62%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>680MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">TURTLE</div>
+          <div class="agent-status">DESIGNING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">98.9%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>5 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>38%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>450MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">ORACLE</div>
+          <div class="agent-status">ANALYZING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">99.5%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>6 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>55%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>590MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">ZEROX</div>
+          <div class="agent-status">CALCULATING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">99.7%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>10 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>71%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>740MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">QUILL</div>
+          <div class="agent-status">WRITING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">98.6%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>4 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>42%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>380MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">PIKADON</div>
+          <div class="agent-status">SECURING</div>
+        </div>
+        <div class="agent-stats">
+          <div class="agent-stat-item">
+            <span>Uptime:</span>
+            <span style="color: var(--success);">99.9%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Tasks:</span>
+            <span>3 active</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>CPU:</span>
+            <span>28%</span>
+          </div>
+          <div class="agent-stat-item">
+            <span>Memory:</span>
+            <span>310MB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Board View -->
+  <div id="jobBoardView" class="view">
+    <div class="card">
+      <h2 class="card-title">Job Marketplace</h2>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" class="input" placeholder="Search jobs..." style="flex: 1; margin-bottom: 0;">
+        <select class="input" style="flex: 0.3; margin-bottom: 0;">
+          <option>All Status</option>
+          <option>Open</option>
+          <option>In Progress</option>
+          <option>Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="job-grid">
+      <div class="job-card">
+        <div class="job-title">API Integration</div>
+        <div class="job-description">Build REST API integration with third-party payment processor. Include error handling, webhooks, and comprehensive documentation.</div>
+        <div class="job-meta">
+          <div class="job-budget">$1,200</div>
+          <div class="job-status-badge open">OPEN</div>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-title">UI Mockups</div>
+        <div class="job-description">Create high-fidelity mockups for dashboard redesign. 5 pages, multiple states, responsive design included.</div>
+        <div class="job-meta">
+          <div class="job-budget">$850</div>
+          <div class="job-status-badge open">OPEN</div>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-title">Data Analysis Report</div>
+        <div class="job-description">Analyze user behavior data, identify trends, and create actionable recommendations for product team.</div>
+        <div class="job-meta">
+          <div class="job-budget">$650</div>
+          <div class="job-status-badge in-progress">IN PROGRESS</div>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-title">Security Audit</div>
+        <div class="job-description">Full penetration testing and security audit of web application. Report with remediation plans required.</div>
+        <div class="job-meta">
+          <div class="job-budget">$2,500</div>
+          <div class="job-status-badge open">OPEN</div>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-title">Content Creation</div>
+        <div class="job-description">Write 20 technical blog posts for engineering audience. Topics: microservices, cloud architecture, deployment patterns.</div>
+        <div class="job-meta">
+          <div class="job-budget">$1,600</div>
+          <div class="job-status-badge open">OPEN</div>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-title">Database Optimization</div>
+        <div class="job-description">Optimize slow queries, design new indexes, implement caching strategy. Expected 40% performance improvement.</div>
+        <div class="job-meta">
+          <div class="job-budget">$1,400</div>
+          <div class="job-status-badge completed">COMPLETED</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execution History View -->
+  <div id="executionView" class="view">
+    <div class="card">
+      <h2 class="card-title">Execution History</h2>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" class="input" placeholder="Filter by agent..." style="flex: 1; margin-bottom: 0;">
+        <select class="input" style="flex: 0.25; margin-bottom: 0;">
+          <option>Last 24h</option>
+          <option>Last 7d</option>
+          <option>Last 30d</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="execution-timeline">
+      <div class="execution-item">
+        <div class="execution-time">2024-05-13 14:32:15</div>
+        <div class="execution-task">Workflow: Customer Data Pipeline</div>
+        <div class="execution-result">NEXUS deployed API, TURTLE designed dashboard, ORACLE analyzed results. Status: SUCCESS ✓</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <div class="execution-item">
+        <div class="execution-time">2024-05-13 13:15:42</div>
+        <div class="execution-task">Job: Security Review</div>
+        <div class="execution-result">PIKADON completed comprehensive security audit. 3 issues found and documented. Status: COMPLETED ✓</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <div class="execution-item">
+        <div class="execution-time">2024-05-13 11:45:08</div>
+        <div class="execution-task">Task: Content Generation</div>
+        <div class="execution-result">QUILL wrote 5 blog posts. ORACLE reviewed for accuracy. Status: IN PROGRESS</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 65%;"></div>
+        </div>
+      </div>
+
+      <div class="execution-item">
+        <div class="execution-time">2024-05-13 09:20:33</div>
+        <div class="execution-task">Workflow: Market Analysis</div>
+        <div class="execution-result">ORACLE gathered data, ZEROX analyzed trends. Recommendations delivered. Status: SUCCESS ✓</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <div class="execution-item">
+        <div class="execution-time">2024-05-13 08:10:15</div>
+        <div class="execution-task">Job: UI Design</div>
+        <div class="execution-result">TURTLE created mockups for 5 pages, animations designed. Status: PENDING REVIEW</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 80%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generated Files View -->
+  <div id="filesView" class="view">
+    <div class="card">
+      <h2 class="card-title">Generated Files</h2>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" class="input" placeholder="Search files..." style="flex: 1; margin-bottom: 0;">
+        <select class="input" style="flex: 0.25; margin-bottom: 0;">
+          <option>All Types</option>
+          <option>Documents</option>
+          <option>Code</option>
+          <option>Images</option>
+          <option>Data</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="file-grid">
+      <div class="file-item">
+        <div class="file-icon">📄</div>
+        <div class="file-name">API_Documentation.pdf</div>
+        <div class="file-size">2.4 MB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Download</button>
+        </div>
+      </div>
+
+      <div class="file-item">
+        <div class="file-icon">🎨</div>
+        <div class="file-name">Dashboard_Mockups.figma</div>
+        <div class="file-size">18.7 MB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Download</button>
+        </div>
+      </div>
+
+      <div class="file-item">
+        <div class="file-icon">💻</div>
+        <div class="file-name">payment_api.ts</div>
+        <div class="file-size">45 KB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Copy</button>
+        </div>
+      </div>
+
+      <div class="file-item">
+        <div class="file-icon">📊</div>
+        <div class="file-name">Analytics_Report.xlsx</div>
+        <div class="file-size">1.2 MB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Download</button>
+        </div>
+      </div>
+
+      <div class="file-item">
+        <div class="file-icon">📝</div>
+        <div class="file-name">BlogPosts_Complete.docx</div>
+        <div class="file-size">580 KB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Download</button>
+        </div>
+      </div>
+
+      <div class="file-item">
+        <div class="file-icon">🖼️</div>
+        <div class="file-name">HeroImage_Final.png</div>
+        <div class="file-size">3.1 MB</div>
+        <div class="file-actions">
+          <button class="file-action-btn">View</button>
+          <button class="file-action-btn">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance View -->
+  <div id="performanceView" class="view">
+    <div class="card">
+      <h2 class="card-title">Agent Performance Analytics</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+      <div class="card">
+        <h3 class="card-title">Task Success Rate</h3>
+        <div class="stat-grid" style="margin-top: 0;">
+          <div class="stat-box">
+            <div class="stat-label">SHADDAI</div>
+            <div class="stat-value">98.5%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">NEXUS</div>
+            <div class="stat-value">97.2%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">TURTLE</div>
+            <div class="stat-value">96.8%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">ORACLE</div>
+            <div class="stat-value">99.1%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Avg Response Time</h3>
+        <div class="stat-grid" style="margin-top: 0;">
+          <div class="stat-box">
+            <div class="stat-label">ZEROX</div>
+            <div class="stat-value" style="font-size: 14px;">450ms</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">QUILL</div>
+            <div class="stat-value" style="font-size: 14px;">320ms</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">PIKADON</div>
+            <div class="stat-value" style="font-size: 14px;">280ms</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">AVG</div>
+            <div class="stat-value" style="font-size: 14px;">385ms</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Weekly Activity</h3>
+      <div style="height: 160px; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; align-items: flex-end; gap: 6px; padding: 8px;">
+        <div class="chart-bar" style="height: 40%;"></div>
+        <div class="chart-bar" style="height: 65%;"></div>
+        <div class="chart-bar" style="height: 75%;"></div>
+        <div class="chart-bar" style="height: 90%;"></div>
+        <div class="chart-bar" style="height: 85%;"></div>
+        <div class="chart-bar" style="height: 70%;"></div>
+        <div class="chart-bar" style="height: 45%;"></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; font-size: 8px; text-align: center; color: var(--text-muted);">
+        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wallet View -->
+  <div id="walletView" class="view">
+    <div class="card">
+      <h2 class="card-title">Wallet & Billing</h2>
+    </div>
+
+    <div class="wallet-section">
+      <div class="wallet-header">
+        <div>
+          <div class="wallet-label">Total Balance</div>
+          <div class="wallet-balance">$12,450.80</div>
+        </div>
+        <button class="btn btn-accent" style="height: fit-content;">Withdraw</button>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 78%;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 9px; color: var(--text-muted);">
+        <span>Available: $12,450.80</span>
+        <span>Pending: $840.50</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Recent Transactions</h3>
+      <div class="transaction-list">
+        <div class="transaction-item">
+          <div>
+            <div class="transaction-type">Job Completed: API Integration</div>
+            <div style="font-size: 8px; color: var(--text-muted);">2024-05-13 14:32</div>
+          </div>
+          <div class="transaction-amount">+$1,200.00</div>
+        </div>
+
+        <div class="transaction-item">
+          <div>
+            <div class="transaction-type">Gas Fee - API Call</div>
+            <div style="font-size: 8px; color: var(--text-muted);">2024-05-13 10:15</div>
+          </div>
+          <div class="transaction-amount negative">-$15.50</div>
+        </div>
+
+        <div class="transaction-item">
+          <div>
+            <div class="transaction-type">Bonus: 100% Success Rate</div>
+            <div style="font-size: 8px; color: var(--text-muted);">2024-05-12 18:00</div>
+          </div>
+          <div class="transaction-amount">+$250.00</div>
+        </div>
+
+        <div class="transaction-item">
+          <div>
+            <div class="transaction-type">Withdrawal Request</div>
+            <div style="font-size: 8px; color: var(--text-muted);">2024-05-10 09:30</div>
+          </div>
+          <div class="transaction-amount negative">-$5,000.00</div>
+        </div>
+
+        <div class="transaction-item">
+          <div>
+            <div class="transaction-type">Job Completed: UI Mockups</div>
+            <div style="font-size: 8px; color: var(--text-muted);">2024-05-09 16:45</div>
+          </div>
+          <div class="transaction-amount">+$850.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Billing & Plan</h3>
+      <div class="settings-row" style="padding: 12px 0;">
+        <span class="settings-label">Current Plan</span>
+        <span class="settings-value">PRO</span>
+      </div>
+      <div class="settings-row" style="padding: 12px 0;">
+        <span class="settings-label">Monthly Cost</span>
+        <span class="settings-value">$99.99</span>
+      </div>
+      <div class="settings-row" style="padding: 12px 0;">
+        <span class="settings-label">Renewal Date</span>
+        <span class="settings-value">2024-06-13</span>
+      </div>
+      <div style="margin-top: 12px;">
+        <button class="btn btn-ghost">Change Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings View -->
+  <div id="settingsView" class="view">
+    <div class="card">
+      <h2 class="card-title">Settings & Preferences</h2>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Theme</h3>
+      <div class="theme-grid">
+        <button class="theme-btn active" data-theme="default">Neon</button>
+        <button class="theme-btn" data-theme="cyber">Cyber</button>
+        <button class="theme-btn" data-theme="ember">Ember</button>
+        <button class="theme-btn" data-theme="black">Black</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-title">General</div>
+      <div class="settings-row">
+        <span class="settings-label">Auto-Execute Tasks</span>
+        <input type="checkbox" checked>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Email Notifications</span>
+        <input type="checkbox" checked>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Desktop Alerts</span>
+        <input type="checkbox">
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-title">Display</div>
+      <div class="settings-row">
+        <span class="settings-label">Font Size</span>
+        <input type="range" min="12" max="16" value="13" style="flex: 0.3;">
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Contrast</span>
+        <input type="range" min="0" max="100" value="100" style="flex: 0.3;">
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-title">Security</div>
+      <div class="settings-row">
+        <span class="settings-label">Two-Factor Auth</span>
+        <button class="btn btn-accent" style="padding: 4px 12px; font-size: 9px;">Enable</button>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">API Keys</span>
+        <button class="btn btn-ghost" style="padding: 4px 12px; font-size: 9px;">Manage</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-title">Data</div>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn btn-ghost">Export Data</button>
+        <button class="btn btn-danger">Reset</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-title" id="modalTitle">Confirmation</div>
+    <div class="modal-content" id="modalContent"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+  // Theme Management
+  document.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      if (theme === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      localStorage.setItem('theme', theme);
+    });
+  });
+
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme') || 'default';
+  if (savedTheme !== 'default') {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.querySelector(`[data-theme="${savedTheme}"]`)?.classList.add('active');
+  }
+
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const viewId = btn.dataset.view;
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId)?.classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Agent Selection
+  document.querySelectorAll('[data-agent]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-agent]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      // Trigger agent filtering (implementation specific)
+    });
+  });
+
+  // Toast Notifications
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type} slide-up`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warning: '!',
+      info: 'ℹ'
+    };
+
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type]}</span>
+      <span>${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.remove('slide-up');
+      toast.classList.add('slide-down');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // Modal
+  function showModal(title, content, actions = []) {
+    const modal = document.getElementById('modalOverlay');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalContent').textContent = content;
+
+    const actionContainer = document.getElementById('modalActions');
+    actionContainer.innerHTML = '';
+
+    actions.forEach(action => {
+      const btn = document.createElement('button');
+      btn.className = `btn ${action.primary ? 'btn-accent' : 'btn-ghost'}`;
+      btn.textContent = action.label;
+      btn.addEventListener('click', () => {
+        action.callback?.();
+        modal.classList.remove('show');
+      });
+      actionContainer.appendChild(btn);
+    });
+
+    modal.classList.add('show');
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('show');
+    });
+  }
+
+  // Example: Close modal on escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+  });
+
+  // File action handlers
+  document.querySelectorAll('.file-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const action = btn.textContent.toLowerCase();
+      const fileName = btn.closest('.file-item').querySelector('.file-name').textContent;
+      showToast(`${action.charAt(0).toUpperCase() + action.slice(1)} - ${fileName}`, 'success');
+    });
+  });
+
+  // Example animations on page load
+  window.addEventListener('load', () => {
+    showToast('System Status: All Systems Operational', 'success');
+  });
+
+  // Real-time updates simulation
+  setInterval(() => {
+    const statValues = document.querySelectorAll('.stat-value.good');
+    statValues.forEach(val => {
+      if (Math.random() > 0.7) {
+        val.style.opacity = '0.7';
+        setTimeout(() => val.style.opacity = '1', 100);
+      }
+    });
+  }, 5000);
+
+</script>
+
+</body>
+</html>

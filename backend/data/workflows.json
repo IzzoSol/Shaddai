@@ -1,0 +1,18 @@
+[
+  {
+    "id": "wf_1778815654456",
+    "name": "Test Flow",
+    "steps": [
+      {
+        "name": "Step 1",
+        "agent": "nexus",
+        "prompt": "Hello"
+      }
+    ],
+    "status": "completed",
+    "createdAt": "2026-05-15T03:27:34.456Z",
+    "runs": 1,
+    "lastRun": "2026-05-15T03:27:35.551Z",
+    "lastOutput": "How can I assist you today?"
+  }
+]

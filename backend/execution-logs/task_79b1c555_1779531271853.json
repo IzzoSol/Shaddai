@@ -1,0 +1,34 @@
+{
+  "id": "79b1c555-5b6f-41a5-9516-f700d88a1383",
+  "goal": "take a screenshot of github.com",
+  "agentName": "TURTLE",
+  "status": "completed",
+  "steps": [
+    {
+      "iteration": 1,
+      "status": "tool_executed",
+      "ts": "2026-05-23T10:14:31.261Z",
+      "llm_response": "[TOOL:screenshot_url:{\"url\":\"https://github.com\",\"width\":\"1024\"}]",
+      "tools": [
+        {
+          "name": "screenshot_url",
+          "resultPreview": "{\"success\":true,\"screenshotUrl\":\"https://image.thum.io/get/width/1024/crop/800/https%3A%2F%2Fgithub.com\",\"sourceUrl\":\"https://github.com\"}"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "ts": "2026-05-23T10:14:31.501Z",
+      "llm_response": "The screenshot of github.com is available at: https://image.thum.io/get/width/1024/crop/800/https%3A%2F%2Fgithub.com"
+    }
+  ],
+  "result": "The screenshot of github.com is available at: https://image.thum.io/get/width/1024/crop/800/https%3A%2F%2Fgithub.com",
+  "error": null,
+  "startedAt": "2026-05-23T10:14:31.261Z",
+  "completedAt": "2026-05-23T10:14:31.853Z",
+  "tools_used": [
+    "screenshot_url"
+  ],
+  "options": {}
+}

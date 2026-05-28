@@ -1,0 +1,235 @@
+================================================================================
+                    SHADDAI QUICK REFERENCE CARD
+================================================================================
+
+DOCUMENTATION LOCATION:
+  C:\Users\Brittany\SHADDAI-FINAL-BUILD\docs\
+
+START HERE:
+  → docs/INDEX.md                    (Navigation guide)
+  → docs/GETTING_STARTED.md          (5-minute quickstart)
+
+================================================================================
+DOCUMENTATION GUIDE
+================================================================================
+
+For GETTING STARTED:
+  Read: docs/GETTING_STARTED.md
+  Time: 5 minutes
+  Covers: Installation, first task, common tasks
+
+For DEVELOPERS:
+  Read: docs/API_INTEGRATION_GUIDE.md
+  Covers: All endpoints, examples (JS, Python, cURL)
+  Read: docs/AGENT_GUIDE.md
+  Covers: Each agent's capabilities and usage
+
+For DEVOPS/OPERATIONS:
+  Read: docs/DEPLOYMENT.md
+  Covers: 5 deployment strategies, HTTPS, scaling
+  Read: docs/MONITORING.md
+  Covers: Health checks, metrics, alerting
+  Read: docs/CHECKLISTS.md
+  Covers: 10 operational checklists
+
+For ARCHITECTS:
+  Read: docs/ARCHITECTURE.md
+  Covers: System design, data flow, components
+
+For TROUBLESHOOTING:
+  Read: docs/TROUBLESHOOTING.md
+  Covers: 30+ common issues with solutions
+  Read: docs/FAQ.md
+  Covers: 50+ frequently asked questions
+
+================================================================================
+QUICK COMMANDS
+================================================================================
+
+START SERVER:
+  Windows PowerShell:  .\START-SERVER.ps1
+  Windows CMD:         START-SERVER.bat
+  macOS/Linux:         npm start
+
+CHECK HEALTH:
+  curl http://localhost:3000/api/health
+
+LIST AGENTS:
+  curl http://localhost:3000/api/agents
+
+EXECUTE TASK:
+  curl -X POST http://localhost:3000/api/agents/task \
+    -H "Content-Type: application/json" \
+    -d '{"agentName":"NEXUS","task":"Build API"}'
+
+VIEW EXECUTIONS:
+  curl http://localhost:3000/api/executions?limit=10
+
+================================================================================
+IMPORTANT PORTS
+================================================================================
+
+Frontend:          3000
+SHADDAI:           8000
+ZEROX:             8001
+ORACLE:            8002
+NEXUS:             8003
+TURTLE:            8004
+QUILL:             8005
+PIKADON:           8008
+
+================================================================================
+7 AGENTS & THEIR ROLES
+================================================================================
+
+SHADDAI (8000)  - Supreme Orchestrator       (Strategy & Coordination)
+NEXUS (8003)    - Technical Architect        (APIs & Backend)
+TURTLE (8004)   - Design & Creative          (UI/UX & Components)
+QUILL (8005)    - Writing & Communication    (Docs & Copy)
+PIKADON (8008)  - Security & Compliance      (Security & Audits)
+ZEROX (8001)    - Wealth & Revenue Engine    (Billing & Business)
+ORACLE (8002)   - Research & Intelligence    (Research & Data)
+
+================================================================================
+COMMON AGENT TASKS
+================================================================================
+
+BUILD API:
+  Agent: NEXUS
+  Task: "Build a REST API with Express and PostgreSQL"
+
+DESIGN UI:
+  Agent: TURTLE
+  Task: "Design a modern login page with dark mode"
+
+WRITE DOCS:
+  Agent: QUILL
+  Task: "Write API documentation"
+
+SECURITY REVIEW:
+  Agent: PIKADON
+  Task: "Review this code for security vulnerabilities"
+
+PRICING STRATEGY:
+  Agent: ZEROX
+  Task: "Design a pricing strategy for this product"
+
+MARKET RESEARCH:
+  Agent: ORACLE
+  Task: "Research the competitive landscape"
+
+================================================================================
+API ENDPOINTS
+================================================================================
+
+GET /api/health              - Server health check
+GET /api/status              - System status & metrics
+GET /api/agents              - List all agents
+GET /api/agents/:name        - Agent details
+POST /api/agents/task        - Execute task
+GET /api/executions          - Execution history
+GET /api/executions/:id      - Execution details
+GET /api/generated-files     - List generated files
+GET /api/generated-files/:name - Download file
+GET /api/skills              - List available skills
+GET /api/jobs                - List jobs
+POST /api/jobs               - Create job
+POST /api/auth/login         - User login
+GET /api/billing/tiers       - Pricing tiers
+
+================================================================================
+IMPORTANT FILES
+================================================================================
+
+public/index.html            - Frontend (React)
+backend/server-production.js - Main server
+generated-output/            - Agent output files
+docs/                        - All documentation
+data/                        - Persistent storage
+package.json                 - Dependencies
+
+================================================================================
+DEPLOYMENT OPTIONS
+================================================================================
+
+1. LOCAL:           npm start
+2. PM2:             pm2 start ecosystem.config.js
+3. DOCKER:          docker-compose up
+4. KUBERNETES:      kubectl apply -f deployment.yaml
+5. CLOUD (AWS/GCP): Standard Node.js deployment
+
+See docs/DEPLOYMENT.md for full details.
+
+================================================================================
+PRE-DEPLOYMENT CHECKLIST
+================================================================================
+
+Code Quality:
+  ✓ No hardcoded secrets
+  ✓ Input validation enabled
+  ✓ Error handling complete
+
+Security:
+  ✓ HTTPS configured
+  ✓ JWT secrets strong
+  ✓ Rate limiting enabled
+  ✓ CORS configured
+
+Infrastructure:
+  ✓ Server capacity adequate
+  ✓ Monitoring setup
+  ✓ Backups automated
+  ✓ Firewall configured
+
+Testing:
+  ✓ All endpoints tested
+  ✓ Load testing completed
+  ✓ Disaster recovery tested
+
+See docs/CHECKLISTS.md for complete checklists.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Port 3000 in use?
+  netstat -ano | findstr :3000
+  taskkill /PID <pid> /F
+
+npm install fails?
+  npm cache clean --force
+  rm -r node_modules package-lock.json
+  npm install
+
+Agent offline?
+  Check agent running on port 8003-8008
+  Restart agent if needed
+
+API returns 500?
+  Check server logs
+  Restart server: npm start
+
+Memory usage high?
+  Check memory: curl http://localhost:3000/api/status
+  Restart: pm2 restart shaddai
+
+See docs/TROUBLESHOOTING.md for 30+ more issues.
+
+================================================================================
+SUPPORT
+================================================================================
+
+Quick answers:        docs/FAQ.md
+How-to guides:        docs/INDEX.md
+Problem solving:      docs/TROUBLESHOOTING.md
+Operational health:   docs/MONITORING.md
+System design:        docs/ARCHITECTURE.md
+Production setup:     docs/DEPLOYMENT.md
+
+================================================================================
+DOCUMENTATION CREATED: 2026-05-13
+SHADDAI VERSION: 61.0.0
+STATUS: PRODUCTION READY
+
+Start with: docs/INDEX.md or docs/GETTING_STARTED.md
+================================================================================

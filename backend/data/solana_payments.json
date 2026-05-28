@@ -1,0 +1,58 @@
+[
+  {
+    "id": "pay_1779221508994_4ibcw",
+    "item": "NEXUS — Backend Development",
+    "amount": 0.002,
+    "currency": "SOL",
+    "label": "SHADDAI · NEXUS",
+    "reference": "479KiNU7uszx2t5tSuzMWKernyNt7o6FXaj4DxmQPmNt",
+    "recipient": "11111111111111111111111111111111",
+    "url": "solana:11111111111111111111111111111111?amount=0.002&reference=479KiNU7uszx2t5tSuzMWKernyNt7o6FXaj4DxmQPmNt&label=SHADDAI+%C2%B7+NEXUS&message=Buy+NEXUS+%E2%80%94+Backend+Development+via+SHADDAI&memo=SHADDAI%3ANEXUS+%E2%80%94+Backend+Development%3A1779221508976",
+    "status": "pending",
+    "created": "2026-05-19T20:11:48.997Z"
+  },
+  {
+    "id": "pay_1779138431745_cd9a1",
+    "item": "SHADDAI — Orchestration Task",
+    "amount": 0.005,
+    "currency": "SOL",
+    "label": "SHADDAI · SHADDAI",
+    "reference": "FeEnbiKyNhzaGickYySTBzW3bZQ4vH3xSSX9Ema5DiU1",
+    "recipient": "11111111111111111111111111111111",
+    "url": "solana:11111111111111111111111111111111?amount=0.005&reference=FeEnbiKyNhzaGickYySTBzW3bZQ4vH3xSSX9Ema5DiU1&label=SHADDAI+%C2%B7+SHADDAI&message=Buy+SHADDAI+%E2%80%94+Orchestration+Task+via+SHADDAI&memo=SHADDAI%3ASHADDAI+%E2%80%94+Orchestration+Task%3A1779138431733",
+    "status": "pending",
+    "created": "2026-05-18T21:07:11.745Z"
+  },
+  {
+    "id": "pay_nl_1778893587229",
+    "item": "Coffee",
+    "amount": 0.012,
+    "currency": "SOL",
+    "label": "SHADDAI",
+    "message": "Coffee",
+    "emoji": "☕",
+    "reference": "14qvb83s3QYTn1rfjfjZeuvxVpVNinzPcnvSUky2simr",
+    "recipient": "11111111111111111111111111111111",
+    "url": "solana:11111111111111111111111111111111?amount=0.012&reference=14qvb83s3QYTn1rfjfjZeuvxVpVNinzPcnvSUky2simr&label=SHADDAI&message=%E2%98%95+Coffee&memo=SHADDAI%3ANL%3ACoffee%3A1778893587227",
+    "status": "pending",
+    "source": "nl",
+    "command": "buy a coffee with pay",
+    "created": "2026-05-16T01:06:27.230Z"
+  },
+  {
+    "id": "pay_nl_1778893196034",
+    "item": "Bottle of water",
+    "amount": 0.005,
+    "currency": "SOL",
+    "label": "SHADDAI",
+    "message": "Bottle of water",
+    "emoji": "💧",
+    "reference": "EaybUa2cbjkmFtkYKsPUEpRfnevjc3fB2SyHAXaf5fa",
+    "recipient": "11111111111111111111111111111111",
+    "url": "solana:11111111111111111111111111111111?amount=0.005&reference=EaybUa2cbjkmFtkYKsPUEpRfnevjc3fB2SyHAXaf5fa&label=SHADDAI&message=%F0%9F%92%A7+Bottle+of+water&memo=SHADDAI%3ANL%3ABottle+of+water%3A1778893196029",
+    "status": "pending",
+    "source": "nl",
+    "command": "buy some water with pay",
+    "created": "2026-05-16T00:59:56.035Z"
+  }
+]

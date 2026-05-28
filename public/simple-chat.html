@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADDAI Chat - Direct Ollama</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #020817 0%, #0c1425 100%);
+      font-family: 'JetBrains Mono', monospace;
+      color: #e8edf5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #00e5a0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #00e5a0;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      color: #8b9dc3;
+      font-size: 12px;
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      border: 2px solid #00e5a0;
+      border-radius: 8px;
+      background: rgba(12, 20, 37, 0.8);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: rgba(12, 20, 37, 0.5);
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: #00e5a0;
+      border-radius: 4px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.user .content {
+      background: linear-gradient(135deg, #00e5a0 0%, #00cc8a 100%);
+      color: #000;
+      border-radius: 8px 0 8px 8px;
+    }
+
+    .message.ai .content {
+      background: rgba(255, 123, 61, 0.2);
+      border: 1px solid #ff7b3d;
+      border-radius: 0 8px 8px 8px;
+    }
+
+    .content {
+      padding: 12px;
+      max-width: 70%;
+      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 12px;
+      background: rgba(12, 20, 37, 0.8);
+      border: 2px solid #00e5a0;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .input-area input:focus {
+      outline: none;
+      border-color: #ff7b3d;
+      box-shadow: 0 0 10px rgba(255, 123, 61, 0.3);
+    }
+
+    .input-area button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #ff7b3d 0%, #ff6b2d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+
+    .input-area button:hover {
+      box-shadow: 0 0 20px rgba(255, 123, 61, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .input-area button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #00e5a0;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🤖 SHADDAI Chat</h1>
+    <p>Powered by Ollama (Local LLM) | Real-time API Connection</p>
+  </div>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <input
+        type="text"
+        id="userInput"
+        placeholder="Ask SHADDAI anything..."
+        autocomplete="off"
+      />
+      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messagesDiv = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function addMessage(text, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'content';
+      contentDiv.textContent = text;
+
+      messageDiv.appendChild(contentDiv);
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const prompt = userInput.value.trim();
+      if (!prompt) return;
+
+      // Add user message
+      addMessage(prompt, true);
+      userInput.value = '';
+      sendBtn.disabled = true;
+
+      try {
+        // Show thinking indicator
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'message ai';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        contentDiv.innerHTML = '<div class="spinner"></div> SHADDAI is thinking...';
+        thinkingDiv.appendChild(contentDiv);
+        messagesDiv.appendChild(thinkingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // Call backend API
+        const response = await fetch('/api/ollama/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: prompt,
+            model: 'phi'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Remove thinking indicator
+        messagesDiv.removeChild(thinkingDiv);
+
+        // Add AI response
+        addMessage(data.response.trim(), false);
+
+      } catch (error) {
+        messagesDiv.removeChild(thinkingDiv);
+        addMessage(`❌ Error: ${error.message}`, false);
+      } finally {
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    // Send message on Enter key
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !sendBtn.disabled) {
+        sendMessage();
+      }
+    });
+
+    // Welcome message
+    window.addEventListener('load', () => {
+      addMessage('👋 Hello! I am SHADDAI, your AI assistant. I can help you with analysis, planning, research, and much more. What would you like to know?', false);
+    });
+  </script>
+</body>
+</html>

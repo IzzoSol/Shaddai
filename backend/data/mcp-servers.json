@@ -1,0 +1,36 @@
+{
+  "servers": [
+    {
+      "id": "filesystem",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Brittany\\SHADDAI-FINAL-BUILD\\backend\\data"],
+      "description": "Read/write files in the SHADDAI data directory",
+      "disabled": false
+    },
+    {
+      "id": "fetch",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "description": "Fetch and convert web pages to markdown",
+      "disabled": true
+    },
+    {
+      "id": "memory",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "description": "Persistent knowledge-graph memory for agents",
+      "disabled": true
+    },
+    {
+      "id": "example-http",
+      "transport": "http",
+      "url": "https://example.com/mcp",
+      "headers": {},
+      "description": "Example HTTP/SSE MCP server (replace url, then enable)",
+      "disabled": true
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "3ea83b06-3a45-441a-ab3f-1d16ce0362d9",
+    "subject": "ad-creative: Generated from Scratch",
+    "content": "Ad Creative for Coffee Brand",
+    "agent": "AGENT",
+    "ts": "2026-05-24T05:24:06.148Z",
+    "read": false
+  },
+  {
+    "id": "4a2a64de-9ca6-47d3-8cdb-8742ef7d220d",
+    "subject": "ad-creative: Generate from Scratch",
+    "content": "User input: A coffee brand",
+    "agent": "AGENT",
+    "ts": "2026-05-24T05:24:06.142Z",
+    "read": false
+  },
+  {
+    "id": "4f7b01ce-0a60-4baf-b45f-a8b2e296367b",
+    "agent": "AGENT",
+    "ts": "2026-05-24T05:05:06.702Z",
+    "read": false
+  },
+  {
+    "id": "5dccb29e-41de-4c8c-aa58-4377514a4a11",
+    "subject": "all-possibilities-routing analysis",
+    "content": "Results of analysis: deep understanding serves transformation, pattern recognition reveals truth, and sacred insight guides action.",
+    "agent": "AGENT",
+    "ts": "2026-05-22T18:30:59.306Z",
+    "read": false
+  },
+  {
+    "id": "6f960e5c-f906-4318-92a2-9274191b8b7b",
+    "subject": "AI Agent Frameworks Comparison",
+    "content": "Comparison of LangChain, CrewAI, and AutoGPT AI agent frameworks",
+    "agent": "ORACLE",
+    "ts": "2026-05-22T16:03:07.421Z",
+    "read": false
+  },
+  {
+    "id": "78abc0c4-4d31-4215-b6f5-a01ab2b95f30",
+    "subject": "AI Agent Frameworks Intelligence Brief",
+    "content": "The latest AI agent frameworks are leveraging transformer-based architectures, reinforcement learning, and multimodal interaction to improve their capabilities. These advancements have the potential to significantly impact various applications, including chatbots, virtual assistants, robotics, and autonomous systems.",
+    "agent": "ORACLE",
+    "ts": "2026-05-22T15:45:23.403Z",
+    "read": false
+  }
+]

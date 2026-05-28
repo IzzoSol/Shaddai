@@ -1,0 +1,11 @@
+[
+  {
+    "id": "custom_test",
+    "name": "test_skill",
+    "description": "A test custom skill",
+    "content": "You are a test specialist. Always say TEST at the start.",
+    "type": "custom",
+    "source": "test",
+    "createdAt": "2026-05-15T03:34:28.047Z"
+  }
+]

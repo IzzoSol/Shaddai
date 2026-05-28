@@ -1,0 +1,150 @@
+# SHADDAI Agent Regression Tests
+# Run: npx promptfoo eval --config tests/promptfoo.yaml --output tests/results.json
+# Requires: node tests/run-agent.js <agent> <prompt>
+
+description: SHADDAI 7-Agent Regression Suite
+
+defaultTest:
+  threshold: 0.7
+  options:
+    timeout: 35000
+
+providers:
+  - id: exec:node C:\Users\Brittany\SHADDAI-FINAL-BUILD\backend\tests\run-agent.js
+    label: shaddai-backend
+
+prompts:
+  - "{{prompt}}"
+
+tests:
+  # ── 1. ZEROX — Crypto Price ─────────────────────────────────────
+  - description: "ZEROX fetches live Bitcoin price"
+    vars:
+      prompt: "ZEROX What is the current price of Bitcoin?"
+    assert:
+      - type: contains-any
+        value:
+          - "$"
+          - "BTC"
+          - "bitcoin"
+          - "price"
+          - "USD"
+      - type: javascript
+        value: "output.length > 20"
+
+  # ── 2. ZEROX — Market Analysis ──────────────────────────────────
+  - description: "ZEROX analyzes crypto market conditions"
+    vars:
+      prompt: "ZEROX Analyze the current crypto Fear & Greed index and what it means for traders."
+    assert:
+      - type: contains-any
+        value:
+          - "fear"
+          - "greed"
+          - "market"
+          - "index"
+          - "sentiment"
+      - type: javascript
+        value: "output.length > 50"
+
+  # ── 3. ORACLE — Research ────────────────────────────────────────
+  - description: "ORACLE provides research on AI trends"
+    vars:
+      prompt: "ORACLE Research the current state of AI agent technology and key trends in 2025."
+    assert:
+      - type: contains-any
+        value:
+          - "AI"
+          - "agent"
+          - "model"
+          - "language"
+          - "automation"
+          - "intelligence"
+      - type: javascript
+        value: "output.length > 100"
+
+  # ── 4. QUILL — Content Writing ──────────────────────────────────
+  - description: "QUILL writes marketing copy"
+    vars:
+      prompt: "QUILL Write a short marketing description for SHADDAI, an AI agent marketplace."
+    assert:
+      - type: contains-any
+        value:
+          - "SHADDAI"
+          - "agent"
+          - "marketplace"
+          - "AI"
+          - "automate"
+          - "platform"
+      - type: javascript
+        value: "output.length > 80"
+      - type: not-contains
+        value: "I cannot"
+
+  # ── 5. NEXUS — Code Generation ──────────────────────────────────
+  - description: "NEXUS generates backend API code"
+    vars:
+      prompt: "NEXUS Write a simple Express.js GET /health endpoint that returns status ok and uptime."
+    assert:
+      - type: contains-any
+        value:
+          - "app.get"
+          - "router.get"
+          - "/health"
+          - "express"
+          - "res.json"
+          - "status"
+      - type: javascript
+        value: "output.length > 60"
+
+  # ── 6. PIKADON — Security Audit ─────────────────────────────────
+  - description: "PIKADON audits code for SQL injection"
+    vars:
+      prompt: "PIKADON Review this code for security issues: const query = 'SELECT * FROM users WHERE id = ' + userId;"
+    assert:
+      - type: contains-any
+        value:
+          - "injection"
+          - "SQL"
+          - "parameterized"
+          - "prepared"
+          - "sanitize"
+          - "vulnerability"
+          - "unsafe"
+      - type: javascript
+        value: "output.length > 80"
+
+  # ── 7. TURTLE — UI Design ───────────────────────────────────────
+  - description: "TURTLE designs a login page component"
+    vars:
+      prompt: "TURTLE Design a dark-themed login page with email and password fields. Describe the layout and CSS approach."
+    assert:
+      - type: contains-any
+        value:
+          - "login"
+          - "form"
+          - "email"
+          - "password"
+          - "button"
+          - "dark"
+          - "CSS"
+          - "color"
+      - type: javascript
+        value: "output.length > 100"
+
+  # ── 8. SHADDAI — Multi-Agent Orchestration ──────────────────────
+  - description: "SHADDAI orchestrates a multi-step task"
+    vars:
+      prompt: "SHADDAI Coordinate the team: I need a quick summary of which agents handle billing, security, and UI design."
+    assert:
+      - type: contains-any
+        value:
+          - "ZEROX"
+          - "PIKADON"
+          - "TURTLE"
+          - "billing"
+          - "security"
+          - "design"
+          - "agent"
+      - type: javascript
+        value: "output.length > 100"

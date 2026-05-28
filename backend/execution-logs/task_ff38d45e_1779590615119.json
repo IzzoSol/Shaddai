@@ -1,0 +1,36 @@
+{
+  "id": "ff38d45e-329d-42ae-a6da-6527c08a8929",
+  "goal": "BTC price?",
+  "agentName": "ZEROX",
+  "status": "completed",
+  "steps": [
+    {
+      "iteration": 1,
+      "status": "tool_executed",
+      "ts": "2026-05-24T02:43:09.290Z",
+      "llm_response": "gm, checking btc price for you 🚀💎... \n[TOOL:fetch_price:{\"symbol\":\"bitcoin\"}]",
+      "tools": [
+        {
+          "name": "fetch_price",
+          "resultPreview": "{\"symbol\":\"bitcoin\",\"price\":\"$76,729\",\"change24h\":\"1.73%\",\"marketCap\":\"$1536.63B\",\"volume24h\":\"$31.29B\"}"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "ts": "2026-05-24T02:43:22.465Z",
+      "llm_response": "the current btc price is $76,729 🚀💎. it's up 1.73% in the last 24 hours. market cap is $1,536.63B with a 24h volume of $31.29B."
+    }
+  ],
+  "result": "the current btc price is $76,729 🚀💎. it's up 1.73% in the last 24 hours. market cap is $1,536.63B with a 24h volume of $31.29B.",
+  "error": null,
+  "startedAt": "2026-05-24T02:43:09.290Z",
+  "completedAt": "2026-05-24T02:43:35.119Z",
+  "tools_used": [
+    "fetch_price"
+  ],
+  "options": {
+    "user": "e2e-tester"
+  }
+}

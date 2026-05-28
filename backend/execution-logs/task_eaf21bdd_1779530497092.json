@@ -1,0 +1,34 @@
+{
+  "id": "eaf21bdd-a2f0-4a7d-946a-50abecff9643",
+  "goal": "Get BTC price",
+  "agentName": "ZEROX",
+  "status": "completed",
+  "steps": [
+    {
+      "iteration": 1,
+      "status": "tool_executed",
+      "ts": "2026-05-23T10:01:36.303Z",
+      "llm_response": "[TOOL:fetch_price:{\"symbol\":\"bitcoin\"}]",
+      "tools": [
+        {
+          "name": "fetch_price",
+          "resultPreview": "{\"symbol\":\"bitcoin\",\"price\":\"$74,594\",\"change24h\":\"0.00%\",\"marketCap\":\"$NaNB\",\"volume24h\":\"$NaNB\"}"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "ts": "2026-05-23T10:01:36.762Z",
+      "llm_response": "The current price of Bitcoin is $74,594, with no change in the last 24 hours (0.00%)."
+    }
+  ],
+  "result": "The current price of Bitcoin is $74,594, with no change in the last 24 hours (0.00%).",
+  "error": null,
+  "startedAt": "2026-05-23T10:01:36.303Z",
+  "completedAt": "2026-05-23T10:01:37.092Z",
+  "tools_used": [
+    "fetch_price"
+  ],
+  "options": {}
+}

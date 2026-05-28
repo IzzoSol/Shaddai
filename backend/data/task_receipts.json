@@ -1,0 +1,158 @@
+[
+  {
+    "task_id": "wh_task_1779687636395",
+    "agent": "webhook",
+    "task": "[WEBHOOK] market-brief",
+    "result": "Triggered via test. Data: {}",
+    "timestamp": "2026-05-25T05:40:36.429Z"
+  },
+  {
+    "task_id": "wh_task_1779687633997",
+    "agent": "webhook",
+    "task": "[WEBHOOK] market-brief",
+    "result": "Triggered via test. Data: {}",
+    "timestamp": "2026-05-25T05:40:34.000Z"
+  },
+  {
+    "task_id": "council_1779676856924",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI ERROR] Chat call failed: 404 Client Error: Not Found for url: http://localhost:11434/api/chat",
+    "timestamp": "2026-05-25T02:43:51.919Z"
+  },
+  {
+    "task_id": "job_job_1778789142717",
+    "agent": "SHADDAI",
+    "task": "Build crypto dashboard widget",
+    "result": "**Crypto Dashboard Widget**\n\nBelow is a fully functional HTML, CSS, and JavaScript code for a live price ticker of the top 10 cryptocurrencies. This widget uses the CoinGecko API to fetch real-time data.\n\n**HTML:**\n```html\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Crypto Dashboard Widget</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <div class=\"widget-container\">\n        <h1>Top 10 Cryptocurrencies</h1>\n        <table id=\"crypto-table\">\n            <thead>\n                <tr>\n                    <th>Rank</th>\n                    <th>Coin</th>\n                    <th>Price (USD)</th>\n                    <th>24h Change</th>\n                </tr>\n            </thead>\n            <tbody id=\"crypto-data\">\n            </tbody>\n        </table>\n    </div>\n    <script src=\"script.js\"></script>\n</body>\n</html>\n```\n\n**CSS (in style.css file):**\n```css\nbody {\n    font-family: Arial, sans-serif;\n    background-color: #f0f0f0;\n}\n\n.widget-container {\n    max-width: 800px;\n    margin: 40px auto;\n    padding: 20px;\n    background-color: #fff;\n    border: 1px solid #ddd;\n    border-radius: 10px;\n    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n}\n\n#crypto-table {\n    width: 100%;\n    border-collapse: collapse;\n}\n\n#crypto-table th, #crypto-table td {\n    border: 1px solid #ddd;\n    padding: 10px;\n    text-align: left;\n}\n\n#crypto-table th {\n    background-color: #f0f0f0;\n}\n```\n\n**JavaScript (in script.js file):**\n```javascript\nconst cryptoTable = document.getElementById('crypto-table');\nconst cryptoData = document.getElementById('crypto-data');\n\nconst apiURL = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false';\n\nfetch(apiURL)\n    .then(response => response.json())\n    .then(data => {\n        data.forEach((coin, index) => {\n            const row = document.createElement('tr');\n            row.innerHTML = `\n                <td>${index + 1}</td>\n                <td>${coin.name} (${coin.symbol})</td>\n                <td>$${coin.current_price.toLocaleString()}</td>\n                <td>${coin.price_change_percentage_24h.toFixed(2)}%</td>\n            `;\n            cryptoData.appendChild(row);\n        });\n    })\n    .catch(error => console.error('Error:', error));\n\nsetInterval(() => {\n    fetch(apiURL)\n        .then(response => response.json())\n        .then(data => {\n            cryptoData.innerHTML = '';\n            data.forEach((coin, index) => {\n                const row = document.createElement('tr');\n                row.innerHTML = `\n                    <td>${index + 1}</td>\n                    <td>${coin.name} (${coin.symbol})</td>\n                    <td>$${coin.current_price.toLocaleString()}</td>\n                    <td>${coin.price_change_percentage_24h.toFixed(2)}%</td>\n                `;\n                cryptoData.appendChild(row);\n            });\n        })\n        .catch(error => console.error('Error:', error));\n}, 60000); // Update every 1 minute\n```\n\n**Example Use Case:**\n\nTo use this widget, simply save the HTML, CSS, and JavaScript code in separate files (e.g., `index.html`, `style.css`, and `script.js`) and open the `index.html` file in a web browser. The widget will display the current prices of the top 10 cryptocurrencies, along with their 24-hour price changes. The data will update every 1 minute.\n\n**Note:**\n\nThis widget uses the CoinGecko API, which has a rate limit of 50 requests per minute. If you plan to use this widget for a large number of users, you may need to consider using a paid API plan or implementing additional caching mechanisms to avoid hitting the rate limit.\n\n**Budget Breakdown:**\n\nBased on the requirements, the budget of $250 can be broken down as follows:\n\n* Development time: $200 (assuming 4 hours of development time at $50 per hour)\n* API costs: $0 (using the free CoinGecko API plan)\n* Miscellaneous (testing, debugging, etc.): $50\n\nTotal: $250\n\nPlease note that this is a rough estimate, and the actual costs may vary depending on the specific requirements and implementation details.",
+    "timestamp": "2026-05-20T06:14:59.788Z"
+  },
+  {
+    "task_id": "council_1779254399119",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T05:20:07.713Z"
+  },
+  {
+    "task_id": "council_1779250068513",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] NVDA analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T04:07:48.763Z"
+  },
+  {
+    "task_id": "council_1779247075203",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T03:17:55.654Z"
+  },
+  {
+    "task_id": "council_1779238905553",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] BTC analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T01:01:45.882Z"
+  },
+  {
+    "task_id": "council_1779238893848",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] BTC analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T01:01:34.627Z"
+  },
+  {
+    "task_id": "council_1779238818091",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] TROLL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-20T01:00:19.017Z"
+  },
+  {
+    "task_id": "council_1779220861160",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-19T20:01:02.645Z"
+  },
+  {
+    "task_id": "council_1779145300089",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] BTC analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-18T23:01:40.347Z"
+  },
+  {
+    "task_id": "council_1779127220184",
+    "agent": "council",
+    "task": "[COUNCIL] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-18T18:00:21.046Z"
+  },
+  {
+    "task_id": "council_1779125787363",
+    "agent": "council",
+    "task": "[COUNCIL] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-18T17:36:28.143Z"
+  },
+  {
+    "task_id": "council_1779070575106",
+    "agent": "council",
+    "task": "[COUNCIL] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-18T02:16:15.637Z"
+  },
+  {
+    "task_id": "council_1778960702245",
+    "agent": "council",
+    "task": "[COUNCIL] TROLL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-05-16T19:51:16.555Z"
+  },
+  {
+    "task_id": "sched_1778890925308",
+    "agent": "workflow",
+    "task": "[SCHEDULED] Test Chain",
+    "result": "\"AI agents are our guides, our companions, and our heroes.\"",
+    "timestamp": "2026-05-16T00:22:15.754Z"
+  },
+  {
+    "task_id": "task_1778890508181_mjzhd",
+    "agent": "quill",
+    "task": "Say hello in 5 words",
+    "result": "\"Quill\"",
+    "timestamp": "2026-05-16T00:15:17.958Z",
+    "model": "tinyllama"
+  },
+  {
+    "task_id": "sched_1778890117074",
+    "agent": "workflow",
+    "task": "[SCHEDULED] Test Chain",
+    "result": "\"AI agents are programmed to be AMAZING!\"",
+    "timestamp": "2026-05-16T00:08:47.575Z"
+  },
+  {
+    "task_id": "wh_task_1778887811722",
+    "agent": "webhook",
+    "task": "[WEBHOOK] revenue-intel",
+    "result": "Triggered via zapier. Data: {\"source\":\"zapier\",\"event\":\"new_signup\"}",
+    "timestamp": "2026-05-15T23:30:11.724Z"
+  },
+  {
+    "task_id": "wh_task_1778887173263",
+    "agent": "webhook",
+    "task": "[WEBHOOK] market-brief",
+    "result": "Triggered via test. Data: {}",
+    "timestamp": "2026-05-15T23:19:33.275Z"
+  },
+  {
+    "task_id": "task_1778880216180_v1yu2",
+    "agent": "quill",
+    "task": "test",
+    "result": "Here is the revised version of the announcement with updated job requirements and responsibilities:\n\nJob Title: Technical Writer for Shaddai Empiré\nJob Requirements:\n- Bachelor's degree in English, journalism, communications, or related fields.\n- Minimum of 3 years of experience as a technical writer/copywriter.\n- Proven ability to write clear and concise documentation, including API documentation, user guides, error messages, marketing copy, and technical guidebooks.\n- Demonstrated expertise in",
+    "timestamp": "2026-05-15T21:24:36.993Z",
+    "model": "tinyllama"
+  }
+]

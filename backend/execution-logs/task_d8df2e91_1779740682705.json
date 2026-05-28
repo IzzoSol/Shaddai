@@ -1,0 +1,20 @@
+{
+  "id": "d8df2e91-75f5-4380-9801-d2b9e5284d4f",
+  "goal": "say hello in 3 words",
+  "agentName": "ZEROX",
+  "status": "completed",
+  "steps": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "ts": "2026-05-25T20:23:11.688Z",
+      "llm_response": "Hello is nice"
+    }
+  ],
+  "result": "Hello is nice",
+  "error": null,
+  "startedAt": "2026-05-25T20:23:11.688Z",
+  "completedAt": "2026-05-25T20:24:42.705Z",
+  "tools_used": [],
+  "options": {}
+}

@@ -1,0 +1,72 @@
+{
+  "SHADDAI": {
+    "agent": "SHADDAI",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "ZEROX": {
+    "agent": "ZEROX",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "ORACLE": {
+    "agent": "ORACLE",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "NEXUS": {
+    "agent": "NEXUS",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "TURTLE": {
+    "agent": "TURTLE",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "QUILL": {
+    "agent": "QUILL",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  },
+  "PIKADON": {
+    "agent": "PIKADON",
+    "balance": 0,
+    "budget_daily": 0.05,
+    "budget_per_tx": 0.01,
+    "spent_today": 0,
+    "day_started": "2026-05-20",
+    "requires_approval_above": 0.005,
+    "tx_log": []
+  }
+}

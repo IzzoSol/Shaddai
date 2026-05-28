@@ -1,0 +1,1291 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SHADDAI Collectables v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;
+  --bg:#0a0a14;--card:#12121e;--card2:#16162a;--border:rgba(255,255,255,0.07);
+  --accent:#00e5a0;--text:#e0e0e0;--dim:rgba(255,255,255,0.38);--gold:#ffd700;
+  --radius:6px;--ts:0.18s cubic-bezier(0.4,0,0.2,1)}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pulseGlow{0%,100%{opacity:0.5}50%{opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes sparkle{0%,100%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1)}}
+@keyframes rarePulse{0%,100%{box-shadow:0 0 4px var(--rc,#fbbf24)}50%{box-shadow:0 0 14px var(--rc,#fbbf24),0 0 28px color-mix(in srgb,var(--rc,#fbbf24) 30%,transparent)}}
+@keyframes popIn{0%{opacity:0;transform:scale(0.88)}100%{opacity:1;transform:scale(1)}}
+@keyframes credFlash{0%,100%{color:var(--gold)}50%{color:#fff;text-shadow:0 0 10px var(--gold)}}
+@keyframes scanLine{0%{top:-4px}100%{top:100%}}
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#0d0d1e,#16162a);padding:10px 18px 8px;border-bottom:1px solid rgba(0,229,160,0.15);display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.hdr h1{font-size:13px;color:var(--accent);letter-spacing:2px;display:flex;align-items:center;gap:6px}
+.hdr h1 span{color:var(--gold)}
+.hdr .badge{font-size:6.5px;color:var(--dim);letter-spacing:1px;padding:2px 7px;border:1px solid rgba(255,215,0,0.18);border-radius:2px;background:rgba(255,215,0,0.05)}
+.stats{margin-left:auto;display:flex;gap:14px;align-items:center}
+.stat{text-align:center}
+.stat .v{font-size:13px;font-weight:700;color:var(--accent)}
+.stat .l{font-size:6.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.credits-chip{display:flex;align-items:center;gap:5px;padding:4px 11px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.22);border-radius:20px;font-size:8px;font-weight:700;color:var(--gold);cursor:pointer;transition:all var(--ts);user-select:none}
+.credits-chip:hover{background:rgba(255,215,0,0.14);border-color:rgba(255,215,0,0.4);box-shadow:0 0 10px rgba(255,215,0,0.12)}
+.credits-chip .cr-val{font-size:11px}
+/* ── NAV ── */
+nav{display:flex;gap:1px;padding:4px 18px 0;border-bottom:1px solid var(--border);overflow-x:auto;background:linear-gradient(to bottom,#0e0e1e,var(--bg))}
+nav::-webkit-scrollbar{height:2px}
+nav::-webkit-scrollbar-thumb{background:var(--accent)44;border-radius:2px}
+nav button{padding:6px 14px;font-size:8px;letter-spacing:0.5px;background:transparent;border:1px solid transparent;border-bottom:none;color:var(--dim);cursor:pointer;border-radius:4px 4px 0 0;white-space:nowrap;transition:all var(--ts);font-family:'Share Tech Mono',monospace}
+nav button:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+nav button.active{color:var(--accent);border-color:var(--border);background:var(--card);box-shadow:inset 0 -2px 0 var(--accent)}
+/* ── CONTENT ── */
+.content{padding:12px 16px;max-width:1500px;margin:0 auto}
+.tab{display:none}.tab.active{display:block;animation:popIn 0.2s ease}
+/* ── FILTERS ── */
+.filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filters button{padding:3px 9px;font-size:7.5px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:3px;transition:all var(--ts);font-family:'Share Tech Mono',monospace}
+.filters button:hover{border-color:rgba(255,255,255,0.2);color:var(--text);background:rgba(255,255,255,0.07)}
+.filters button.active{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,0.08);box-shadow:0 0 8px rgba(0,229,160,0.15)}
+.filters .search{margin-left:auto}
+.filters .search input{background:rgba(0,0,0,0.4);border:1px solid var(--border);padding:3px 8px;font-size:8px;color:var(--text);border-radius:3px;width:120px;font-family:'Share Tech Mono',monospace;transition:all var(--ts)}
+.filters .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 8px rgba(0,229,160,0.12);width:160px}
+/* ── GRID ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;transition:all var(--ts);cursor:pointer;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.035),transparent);transition:left 0.55s;pointer-events:none}
+.card:hover::before{left:100%}
+.card:hover{border-color:rgba(255,255,255,0.19);transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.65)}
+.card .preview{display:flex;justify-content:center;margin-bottom:7px;min-height:60px;align-items:center;position:relative}
+.card .preview .glow-ring{position:absolute;width:54px;height:54px;border-radius:50%;opacity:0;transition:opacity var(--ts);pointer-events:none}
+.card:hover .preview .glow-ring{opacity:1}
+.card .name{font-size:9px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.3px}
+.card .desc{font-size:7.5px;color:var(--dim);line-height:1.45;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .tags{font-size:6.5px;display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px}
+.card .tags span{padding:2px 5px;border-radius:2px;border:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.28);letter-spacing:0.3px}
+.card .footer{display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:1px solid rgba(255,255,255,0.05)}
+.owned-tag{font-size:7px;color:var(--accent);font-weight:700;text-shadow:0 0 7px rgba(0,229,160,0.4)}
+.price-tag{font-size:7px;color:var(--gold);font-weight:700}
+.card.owned{border-color:rgba(0,229,160,0.18);background:linear-gradient(135deg,var(--card),rgba(0,229,160,0.045))}
+/* Rarity tiers */
+.card-T1{border-left:3px solid #9ca3af}.card-T1 .preview{background:radial-gradient(circle,rgba(156,163,175,0.07),transparent)}
+.card-T2{border-left:3px solid #4ade80}.card-T2 .preview{background:radial-gradient(circle,rgba(74,222,128,0.09),transparent)}
+.card-T3{border-left:3px solid #60a5fa}.card-T3 .preview{background:radial-gradient(circle,rgba(96,165,250,0.09),transparent)}
+.card-T4{border-left:3px solid #a78bfa}.card-T4 .preview{background:radial-gradient(circle,rgba(167,139,250,0.1),transparent)}
+.card-T5{border-left:3px solid #fbbf24;--rc:#fbbf2488;animation:rarePulse 3.2s ease-in-out infinite}.card-T5 .preview{background:radial-gradient(circle,rgba(251,191,36,0.12),transparent)}
+.card-T6{border-left:3px solid #ff6b35;--rc:#ff6b3580;animation:rarePulse 2.6s ease-in-out infinite}.card-T6 .preview{background:radial-gradient(circle,rgba(255,107,53,0.14),transparent)}
+.card-T7{border-left:3px solid #ff4444;--rc:#ff444488;animation:rarePulse 2s ease-in-out infinite;box-shadow:0 0 20px rgba(255,68,68,0.1)}.card-T7 .preview{background:radial-gradient(circle,rgba(255,68,68,0.17),transparent)}
+/* Buy button */
+.buy-btn{display:block;width:100%;margin-top:5px;padding:5px 0;font-size:8px;font-family:'Share Tech Mono',monospace;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.22);color:var(--gold);border-radius:3px;cursor:pointer;transition:all var(--ts);letter-spacing:0.3px}
+.buy-btn:hover{background:rgba(255,215,0,0.18);border-color:rgba(255,215,0,0.42);box-shadow:0 0 10px rgba(255,215,0,0.2)}
+.buy-btn:active{transform:scale(0.97)}
+/* ── WARDROBE / SLOTS ── */
+.agent-strip{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.agent-btn{display:flex;align-items:center;gap:4px;padding:4px 10px;font-size:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--dim);transition:all var(--ts)}
+.agent-btn:hover{border-color:rgba(255,255,255,0.18);color:var(--text)}
+.agent-btn.active{border-color:var(--accent);color:var(--text);background:rgba(0,229,160,0.08)}
+.agent-btn .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.outfit-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.slot-card{background:rgba(0,0,0,0.3);border:1px dashed rgba(255,255,255,0.09);border-radius:var(--radius);padding:6px;text-align:center;min-height:80px;position:relative;transition:all var(--ts)}
+.slot-card.filled{border-style:solid;border-color:rgba(255,255,255,0.15);background:rgba(0,229,160,0.03)}
+.slot-card .slot-label{font-size:6.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.slot-card .slot-name{font-size:8px}
+.slot-card .slot-remove{position:absolute;top:3px;right:5px;font-size:10px;cursor:pointer;color:rgba(255,60,60,0.65);display:none;line-height:1}
+.slot-card.filled:hover .slot-remove{display:block}
+/* ── SYNC TAB ── */
+.injector-box{background:var(--card);border:1px solid var(--gold);border-radius:var(--radius);padding:12px;margin-top:8px}
+.injector-box h3{font-size:10px;color:var(--gold);margin-bottom:4px}
+.injector-box p{font-size:8px;color:var(--dim);margin-bottom:7px;line-height:1.5}
+.injector-box textarea{width:100%;height:75px;background:#050510;border:1px solid var(--border);color:var(--accent);font-size:7px;padding:6px;border-radius:3px;resize:vertical;margin-bottom:6px;font-family:'Share Tech Mono',monospace}
+.injector-box textarea:focus{outline:none;border-color:var(--accent)}
+.sync-row{display:flex;gap:6px;align-items:center;padding:8px 12px;border-radius:var(--radius);background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.15);margin-bottom:10px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);flex-shrink:0;animation:pulseGlow 2s ease-in-out infinite}
+.sync-row span{font-size:8px;color:var(--accent)}
+.sync-btn{padding:8px 18px;font-size:9px;letter-spacing:0.5px;border-radius:3px;cursor:pointer;font-family:'Share Tech Mono',monospace;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent);transition:all var(--ts)}
+.sync-btn:hover{background:rgba(0,229,160,0.2);box-shadow:0 0 14px rgba(0,229,160,0.22);border-color:rgba(0,229,160,0.55)}
+/* ── BUTTONS ── */
+.btn{padding:4px 10px;font-size:8px;letter-spacing:0.3px;border-radius:3px;cursor:pointer;border:1px solid;font-family:'Share Tech Mono',monospace;transition:all var(--ts)}
+.btn-primary{background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.25);color:var(--accent)}
+.btn-primary:hover{background:rgba(0,229,160,0.18)}
+.btn-gold{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.25);color:var(--gold)}
+.btn-gold:hover{background:rgba(255,215,0,0.18)}
+.btn-danger{background:rgba(244,63,94,0.1);border-color:rgba(244,63,94,0.25);color:#f43f5e}
+.btn-danger:hover{background:rgba(244,63,94,0.18)}
+/* ── ITEM DETAIL MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,5,0.86);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.modal-overlay.open{display:flex;animation:popIn 0.22s ease}
+.modal-box{background:var(--card);border-radius:10px;border:1px solid var(--border);width:340px;max-width:95vw;overflow:hidden}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--border)}
+.modal-header .mh-name{font-size:12px;font-weight:700;letter-spacing:0.5px}
+.modal-header .mh-close{font-size:16px;cursor:pointer;color:var(--dim);padding:0 4px;line-height:1;transition:color var(--ts)}
+.modal-header .mh-close:hover{color:var(--text)}
+.modal-body{padding:18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.modal-art{display:flex;justify-content:center;align-items:center;padding:20px;border-radius:8px;position:relative;overflow:hidden}
+.modal-art::after{content:'';position:absolute;top:-4px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);animation:scanLine 3s linear infinite}
+.modal-desc{font-size:9.5px;color:var(--dim);line-height:1.65;text-align:center;max-width:260px}
+.modal-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.modal-tags span{padding:3px 8px;font-size:7.5px;border-radius:3px;border:1px solid rgba(255,255,255,0.07);background:rgba(0,0,0,0.3);letter-spacing:0.4px}
+.modal-actions{display:flex;gap:6px;width:100%;justify-content:center;padding-top:6px}
+.modal-actions button{flex:1;max-width:140px;padding:7px 12px;font-size:8.5px;font-family:'Share Tech Mono',monospace;border-radius:3px;cursor:pointer;border:1px solid;transition:all var(--ts);letter-spacing:0.3px}
+/* ── NOTIFICATION ── */
+.notif{position:fixed;bottom:14px;right:14px;background:var(--card);border:1px solid var(--accent);padding:9px 14px;border-radius:var(--radius);font-size:8.5px;color:var(--accent);z-index:99999;display:none;max-width:280px;box-shadow:0 4px 22px rgba(0,229,160,0.22);animation:popIn 0.2s ease}
+/* ── RESPONSIVE ── */
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.outfit-slots{grid-template-columns:repeat(2,1fr)}.hdr{padding:8px 12px}.stats{gap:8px}}
+/* ── ENHANCED UI ADDITIONS ── */
+.tooltip{position:fixed;padding:6px 10px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:7px;color:var(--text);pointer-events:none;z-index:99998;max-width:200px;box-shadow:0 4px 16px rgba(0,0,0,0.6);display:none;line-height:1.5;letter-spacing:0.2px}
+.tooltip .tt-rarity{font-size:7px;font-weight:700;margin-bottom:2px}.tooltip .tt-price{font-size:6.5px;color:var(--gold);margin-top:2px}
+.tooltip .tt-desc{font-size:6.5px;color:var(--dim)}
+.grid.list{grid-template-columns:1fr}.grid.list .card{display:flex;gap:8px;align-items:center;padding:6px 10px}.grid.list .card .preview{min-height:32px;margin-bottom:0;flex-shrink:0}.grid.list .card .info{flex:1;min-width:0}.grid.list .card .name{font-size:8px;margin-bottom:0}.grid.list .card .desc{font-size:7px;-webkit-line-clamp:1;margin-bottom:0}.grid.list .card .tags{flex-shrink:0;margin-bottom:0}.grid.list .card .footer{border-top:none;padding-top:0;flex-shrink:0}
+.view-toggle{display:flex;gap:0;margin-left:4px}.view-toggle button{width:22px;height:18px;padding:0;font-size:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--dim);cursor:pointer;transition:all var(--ts);font-family:'Share Tech Mono',monospace;line-height:1}.view-toggle button:first-child{border-radius:3px 0 0 3px}.view-toggle button:last-child{border-radius:0 3px 3px 0}.view-toggle button.active{background:rgba(0,229,160,0.07);border-color:var(--accent);color:var(--accent)}
+/* Card quick-badge for rarity shimmer */
+.card .rarity-badge{position:absolute;top:4px;right:4px;font-size:5px;padding:1px 4px;border-radius:2px;background:rgba(0,0,0,0.5);border:1px solid;letter-spacing:0.5px;opacity:0;transition:opacity var(--ts)}.card:hover .rarity-badge{opacity:1}
+/* Fav button */
+.fav-btn{position:absolute;top:3px;left:3px;font-size:9px;cursor:pointer;color:rgba(255,255,255,0.18);transition:all var(--ts);line-height:1;z-index:2;background:none;border:none;padding:2px;font-family:'Share Tech Mono',monospace}.fav-btn.active{color:#fbbf24;text-shadow:0 0 6px rgba(251,191,36,0.5)}.fav-btn:hover{color:rgba(255,255,255,0.5)}
+/* Modal image lazy load shimmer */
+.modal-art.loading::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);background-size:200% 100%;animation:shimmer 1.5s infinite}
+/* Quick equip indicator */
+.equip-indicator{display:inline-flex;align-items:center;gap:3px;font-size:6px;color:var(--accent);padding:1px 5px;border:1px solid rgba(0,229,160,0.2);border-radius:3px;background:rgba(0,229,160,0.05);margin-top:3px}
+/* Scrollbar refinement */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.15)}
+/* Skeleton loader for grids */
+.skel{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,0.04) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.8s infinite;border-radius:var(--radius);height:120px}
+/* Notification queue area */
+.notif-area{position:fixed;bottom:14px;right:14px;display:flex;flex-direction:column-reverse;gap:6px;z-index:99999;pointer-events:none}.notif-area .notif-item{display:block;max-width:280px;pointer-events:auto}
+/* Collection progress bar */
+.progress-bar{height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin:4px 0 8px}.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),#22d3ee);border-radius:2px;transition:width 0.4s ease}
+/* Category badge */
+.cat-badge{display:inline-block;padding:1px 5px;font-size:6px;border-radius:2px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--dim);letter-spacing:0.3px}
+/* Stats animation */
+.stat .v{transition:all 0.3s ease}
+/* Modal slide-in */
+.modal-box{transform:translateY(20px);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1),border-color 0.3s ease}.modal-overlay.open .modal-box{transform:translateY(0)}
+</style></head><body>
+
+<div class="hdr">
+  <div><h1>SHADDAI <span>COLLECTIBLES</span> <span class="badge">v4 — 160 ITEMS — 5-LAYER PIXEL ART</span></h1></div>
+  <div class="stats">
+    <div class="stat"><div class="v" id="totalOwned">0</div><div class="l">Owned</div></div>
+    <div class="stat"><div class="v" id="totalItems">0</div><div class="l">Total</div></div>
+    <div class="stat"><div class="v" id="totalEquipped">0</div><div class="l">Equipped</div></div>
+    <div class="progress-bar" style="width:70px" title="Collection progress"><div class="fill" id="progressFill" style="width:0%"></div></div>
+    <div class="credits-chip" onclick="addCredits()" title="Click to add 200cr (demo)">
+      <span>✦</span><span class="cr-val" id="credDisplay">0</span><span>cr</span>
+    </div>
+    <div id="earningsChip" class="credits-chip" title="Total earnings from sales" style="color:var(--accent);border-color:rgba(74,222,128,0.25);background:rgba(74,222,128,0.07)">
+      <span>💰</span><span class="cr-val" id="earnDisplay">0</span><span>earn</span>
+    </div>
+    <div id="backendStatus" title="Backend connection status" style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:20px;font-size:7px;font-weight:700;color:var(--dim);user-select:none">
+      <span id="backendDot" style="width:7px;height:7px;border-radius:50%;background:#888;box-shadow:0 0 4px #888;transition:all 0.3s"></span><span id="backendLabel">CHECKING…</span>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <button class="active" onclick="switchTab('wardrobe')">WARDROBE</button>
+  <button onclick="switchTab('shop')">SHOP</button>
+  <button onclick="switchTab('collection')">COLLECTION</button>
+  <button onclick="switchTab('marketplace')">🏷️ MARKETPLACE</button>
+  <button onclick="switchTab('decor')">DECOR</button>
+  <button onclick="switchTab('injector')">SYNC</button>
+</nav>
+
+<div class="content">
+<div class="tab active" id="tab-wardrobe">
+  <div style="font-size:6px;color:var(--dim);margin-bottom:6px">Equip head/body/accent/hand per agent. Inject to apply.</div>
+  <div id="wardrobeAgentSelector" class="agent-strip"></div>
+  <div id="wardrobeSlots" class="outfit-slots"></div>
+  <div id="wardrobeSuggestions" style="margin-top:6px">
+    <div style="font-size:6px;color:var(--dim);margin-bottom:3px">Available — click to equip:</div>
+    <div id="wardrobeItemList" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(100px,1fr))"></div>
+  </div>
+</div>
+<div class="tab" id="tab-shop">
+  <div class="filters">
+    <button class="active" onclick="filterShop('all',this)">ALL</button>
+    <button onclick="filterShop('head',this)">HEAD</button><button onclick="filterShop('body',this)">BODY</button><button onclick="filterShop('accent',this)">ACCENT</button><button onclick="filterShop('hand',this)">HAND</button>
+    <button onclick="filterShop('pet',this)">PET</button><button onclick="filterShop('effect',this)">EFFECT</button><button onclick="filterShop('mount',this)">MOUNT</button>
+    <button onclick="filterShop('desk',this)">DESK</button><button onclick="filterShop('decor',this)">DECOR</button><button onclick="filterShop('wallpaper',this)">WALL</button><button onclick="filterShop('floor',this)">FLOOR</button>
+    <button onclick="filterShop('treasure',this)">TREASURE</button><button onclick="filterShop('lighting',this)">LIGHT</button>
+    <button onclick="sortShopCycle()" id="sortBtn" style="border-color:rgba(255,215,0,0.2);color:var(--gold)" title="Cycle sort: tier/price/name/category">TIER</button>
+    <div class="view-toggle">
+      <button class="active" onclick="setView('grid',this)" title="Grid view">⊞</button>
+      <button onclick="setView('list',this)" title="List view">≡</button>
+    </div>
+    <div class="search"><input id="shopSearch" placeholder="Search..." oninput="filterShopDebounced()"></div>
+  </div>
+  <div id="shopGrid" class="grid"></div>
+</div>
+<div class="tab" id="tab-collection">
+  <div class="filters">
+    <button class="active" onclick="filterCollection('all',this)">ALL</button>
+    <button onclick="filterCollection('head',this)">HEAD</button><button onclick="filterCollection('body',this)">BODY</button><button onclick="filterCollection('accent',this)">ACCENT</button><button onclick="filterCollection('hand',this)">HAND</button>
+    <button onclick="filterCollection('pet',this)">PET</button><button onclick="filterCollection('effect',this)">EFFECT</button><button onclick="filterCollection('mount',this)">MOUNT</button>
+    <button onclick="filterCollection('desk',this)">DESK</button><button onclick="filterCollection('decor',this)">DECOR</button><button onclick="filterCollection('wallpaper',this)">WALL</button><button onclick="filterCollection('floor',this)">FLOOR</button>
+    <button onclick="filterCollection('treasure',this)">TREASURE</button><button onclick="filterCollection('lighting',this)">LIGHT</button>
+  </div>
+  <div id="collectionGrid" class="grid"></div>
+</div>
+<div class="tab" id="tab-marketplace">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+    <div style="font-size:7px;color:var(--dim)">Live listings from backend. Mint, list, and trade verified collectibles.</div>
+    <button onclick="loadMarketplace()" style="font-size:7px;padding:4px 10px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:var(--accent);border-radius:4px;cursor:pointer;font-family:inherit">↻ REFRESH</button>
+  </div>
+  <div id="marketplaceGrid" class="grid">
+    <div style="grid-column:1/-1;padding:28px;text-align:center;font-size:8px;color:var(--dim)">Loading marketplace…</div>
+  </div>
+</div>
+<div class="tab" id="tab-decor">
+  <div style="font-size:6px;color:var(--dim);margin-bottom:6px">Place desk/decor/wall/floor/lighting items per agent room.</div>
+  <div id="decorAgentSelector" class="agent-strip"></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+    <div style="flex:1;min-width:160px">
+      <div style="font-size:6px;color:var(--dim);margin-bottom:3px">Placed:</div>
+      <div id="decorPlaced" style="display:flex;gap:3px;flex-wrap:wrap;min-height:30px;padding:4px;background:rgba(0,0,0,0.2);border-radius:4px;border:1px dashed var(--border)"></div>
+    </div>
+    <div style="flex:2;min-width:200px">
+      <div style="font-size:6px;color:var(--dim);margin-bottom:3px">Collection — click to place:</div>
+      <div id="decorAvailable" style="display:flex;gap:3px;flex-wrap:wrap"></div>
+    </div>
+  </div>
+</div>
+<div class="tab" id="tab-injector">
+  <div style="margin-bottom:10px">
+    <div class="sync-row">
+      <div class="sync-dot"></div>
+      <span>Live sync via shared localStorage — changes appear in SHADDAI instantly</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="sync-btn" onclick="syncToShaddai()">⚡ SYNC TO SHADDAI NOW</button>
+      <button class="btn btn-danger" onclick="resetAllData()" style="margin-left:auto">RESET ALL</button>
+    </div>
+    <div id="syncStatusMsg" style="font-size:8px;color:var(--dim);margin-bottom:10px"></div>
+  </div>
+  <div class="injector-box">
+    <h3>MANUAL INJECT (fallback)</h3>
+    <p>If auto-sync doesn't work: open FINAL-SHADDAI-78.0.html → F12 Console → paste → Enter.</p>
+    <textarea id="injectorCode" readonly></textarea>
+    <div style="display:flex;gap:5px">
+      <button class="btn btn-primary" onclick="generateInjectorCode()">REFRESH</button>
+      <button class="btn btn-gold" onclick="copyInjectorCode()">COPY CODE</button>
+    </div>
+  </div>
+  <div style="margin-top:8px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:4px;font-size:7.5px;color:var(--dim);line-height:1.65">
+    Auto-sync writes to <code style="color:var(--accent)">shd_collectibles</code>, <code style="color:var(--accent)">shd_exp_equipped</code>, and <code style="color:var(--accent)">shd_room_items_*</code> keys — the same keys SHADDAI reads. No console needed.
+  </div>
+</div>
+</div>
+<!-- Item Detail Modal -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal-box" id="itemModalBox">
+    <div class="modal-header">
+      <div class="mh-name" id="modalName">—</div>
+      <div class="mh-close" onclick="closeItemModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-art" id="modalArt"></div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <div class="modal-tags" id="modalTags"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+<div class="notif-area" id="notifArea"></div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+var R = {common:'#9ca3af',uncommon:'#4ade80',rare:'#60a5fa',epic:'#a78bfa',legendary:'#fbbf24',mythic:'#ff6b35',transcendent:'#ff4444'};
+var RO = ['common','uncommon','rare','epic','legendary','mythic','transcendent'];
+var AG = [{id:'shaddai',name:'SHADDAI',color:'#ff6b35'},{id:'nexus',name:'NEXUS',color:'#00c4ff'},{id:'zerox',name:'ZEROX',color:'#ffd700'},{id:'oracle',name:'ORACLE',color:'#a78bfa'},{id:'turtle',name:'TURTLE',color:'#00e5a0'},{id:'quill',name:'QUILL',color:'#fb923c'},{id:'pikadon',name:'PIKADON',color:'#f43f5e'}];
+var ALL=[];function I(id,n,d,s,r,c,p,px,a,g){ALL.push({id:id,name:n,desc:d,slot:s,rarity:r,cat:c||'misc',price:p||0,px:px||[],agentOnly:a||null,glow:g||0})}
+// ───── 300+ ITEMS on 32x32 grid — 5-layer pixel art (shadow/base/highlight/rim/glow) ─────
+// HEAD — crowns, masks, helmets — 20 items with deep shading and detail
+I('crown_gold','Gold Crown','Three-point sovereign crown with ruby focus','head','legendary','royal',500,
+[[11,-2,10,1,'#ffd70033'],[12,-2,8,1,'#ffffff22'],[10,0,2,1,'#b8860b'],[20,0,2,1,'#b8860b'],[11,0,2,1,'#daa520'],[19,0,2,1,'#daa520'],[12,0,8,1,'#ffd700'],[12,1,8,2,'#ffed4a'],[13,1,6,1,'#ffffff44'],[10,2,2,1,'#b8860b'],[20,2,2,1,'#b8860b'],[10,3,12,1,'#daa520'],[11,3,10,1,'#ffd700'],[12,3,8,1,'#ffed4a'],[14,-1,4,1,'#8b0000'],[15,-1,2,1,'#ff4444'],[15,0,2,1,'#ff6666'],[14,0,4,1,'#cc0000'],[10,-1,2,2,'#b8860b'],[20,-1,2,2,'#b8860b'],[11,-1,2,2,'#daa520'],[19,-1,2,2,'#daa520'],[14,1,4,1,'#ff444422'],[15,2,2,1,'#ffffff44'],[13,4,6,1,'#b8860b'],[14,4,4,1,'#daa520'],[15,5,2,1,'#ffd700'],[13,-2,6,1,'#ffd70022'],[16,-2,2,1,'#ffffff44'],[12,-3,2,1,'#ffd70011']],2);
+
+I('crown_void','Void Crown','Shadow crystal drinking all light','head','mythic','dark',1500,
+[[10,-2,12,2,'#a78bfa22'],[9,-1,14,1,'#a78bfa44'],[9,0,2,1,'#1a0030'],[21,0,2,1,'#1a0030'],[10,0,12,1,'#a78bfa'],[11,1,10,2,'#a78bfa88'],[10,2,12,2,'#1a003088'],[9,3,2,1,'#a78bfa66'],[21,3,2,1,'#a78bfa66'],[10,4,12,1,'#a78bfa44'],[11,4,10,1,'#000000'],[12,5,8,1,'#a78bfa22'],[13,-1,6,1,'#ffffff44'],[14,0,4,1,'#ffffff22'],[15,-3,2,1,'#a78bfa33'],[16,-2,2,1,'#ffffff33'],[13,4,6,1,'#a78bfa33'],[14,5,4,1,'#000000'],[11,6,10,1,'#a78bfa11'],[12,6,8,1,'#a78bfa22'],[13,7,6,1,'#000000'],[9,-2,2,1,'#a78bfa33'],[21,-2,2,1,'#a78bfa33'],[14,-3,4,1,'#a78bfa22'],[12,-4,8,1,'#a78bfa11']],2);
+
+I('crown_solar','Solar Diadem','Radiant gold. Eyes cannot look directly.','head','transcendent','royal',3500,
+[[8,-3,16,2,'#ffd70044'],[9,-2,14,2,'#ffffff33'],[10,-1,12,1,'#ffd70066'],[9,0,2,1,'#b8860b'],[21,0,2,1,'#b8860b'],[10,0,12,2,'#ffffff'],[11,0,10,1,'#ffed4a'],[12,1,8,2,'#ffd700'],[13,1,6,1,'#ffffff88'],[14,0,4,2,'#ffffff44'],[10,2,12,2,'#ffd70088'],[11,2,10,1,'#ffed4a'],[12,3,8,1,'#ffd700'],[10,4,12,1,'#b8860b'],[11,5,10,1,'#daa520'],[12,5,8,1,'#ffd70066'],[13,6,6,1,'#ffd70044'],[9,-1,2,2,'#b8860b'],[21,-1,2,2,'#b8860b'],[8,-2,16,1,'#ffd70022'],[7,-4,18,1,'#ffd70011'],[15,-1,2,1,'#ffffff88'],[12,-3,8,1,'#ffffff22'],[13,-4,6,1,'#ffd70011']],3);
+
+I('crown_flame','Inferno Crown','Wreathed in eternal digital flame','head','legendary','elemental',900,
+[[11,-2,10,2,'#ff6b3544'],[10,-1,12,1,'#ff4444'],[9,0,2,2,'#8b0000'],[21,0,2,2,'#8b0000'],[10,0,12,2,'#ff6b35'],[11,0,10,1,'#ff8c42'],[12,1,8,2,'#ffd700'],[13,1,6,1,'#ffffff44'],[10,2,12,1,'#ff6b3588'],[11,3,10,1,'#ff4444'],[9,3,2,2,'#ff6b3566'],[21,3,2,2,'#ff6b3566'],[10,4,12,1,'#8b0000'],[11,5,10,1,'#ff6b3566'],[12,5,8,1,'#ff444444'],[13,6,6,1,'#ff6b3533'],[8,-2,3,2,'#ffd70033'],[21,-2,3,2,'#ffd70033'],[7,-3,3,2,'#ff6b3522'],[22,-3,3,2,'#ff6b3522'],[9,-1,2,1,'#ffd70044'],[21,-1,2,1,'#ffd70044'],[12,2,8,1,'#ffffff22'],[14,4,4,1,'#ffd70033'],[11,-3,10,1,'#ff6b3511']],2);
+
+I('crown_ice','Frost Diadem','Permafrost that never melts','head','legendary','elemental',800,
+[[11,-2,10,2,'#60a5fa44'],[10,-1,12,1,'#93c5fd'],[9,0,2,2,'#1e3a8a'],[21,0,2,2,'#1e3a8a'],[10,0,12,2,'#60a5fa'],[11,0,10,1,'#93c5fd'],[12,1,8,2,'#bfdbfe'],[13,1,6,1,'#ffffff88'],[10,2,12,1,'#60a5fa88'],[11,3,10,1,'#93c5fd66'],[9,3,2,2,'#60a5fa66'],[21,3,2,2,'#60a5fa66'],[10,4,12,1,'#1e3a8a'],[11,5,10,1,'#60a5fa66'],[12,5,8,1,'#93c5fd44'],[15,-1,2,1,'#ffffff66'],[10,-1,2,1,'#ffffff33'],[20,-1,2,1,'#ffffff33'],[13,4,6,1,'#ffffff33'],[14,5,4,1,'#ffffff22'],[9,-3,2,1,'#60a5fa22'],[21,-3,2,1,'#60a5fa22'],[12,-3,8,1,'#ffffff11']],1);
+
+I('crown_mech','Mech Crown','Titan-forged with targeting matrix','head','rare','tech',350,
+[[10,-2,12,2,'#00c4ff33'],[9,-1,14,1,'#7dd3fc'],[9,0,2,2,'#0369a1'],[21,0,2,2,'#0369a1'],[10,0,12,2,'#00c4ff'],[11,0,10,1,'#38bdf8'],[12,1,8,2,'#7dd3fc'],[13,1,6,1,'#ffffff66'],[10,2,12,2,'#00c4ff88'],[11,3,10,2,'#0284c7'],[10,4,12,1,'#0369a1'],[11,5,10,1,'#00c4ff66'],[14,0,4,1,'#ef4444'],[15,0,2,1,'#fca5a5'],[14,1,4,1,'#dc2626'],[15,-1,2,1,'#ef444466'],[10,-1,2,1,'#ffffff44'],[20,-1,2,1,'#ffffff44'],[11,4,4,1,'#38bdf844'],[17,4,4,1,'#38bdf844'],[12,6,8,1,'#00c4ff33'],[13,-2,6,1,'#00c4ff22']],1);
+
+I('crown_dark','Shadow Crown','Wraithbone. Whispering legacies.','head','epic','dark',500,
+[[10,-2,12,2,'#a78bfa22'],[9,-1,14,1,'#000000'],[9,0,2,2,'#1a0030'],[21,0,2,2,'#1a0030'],[10,0,12,2,'#2a0a3a'],[11,0,10,1,'#3a1a4a'],[10,2,12,2,'#2a0a3a88'],[11,3,10,2,'#1a003066'],[10,4,12,1,'#0a001a'],[9,3,2,2,'#3a1a4a66'],[21,3,2,2,'#3a1a4a66'],[10,-1,2,1,'#a78bfa44'],[20,-1,2,1,'#a78bfa44'],[11,4,10,1,'#a78bfa33'],[13,5,6,1,'#a78bfa22'],[12,-1,8,1,'#a78bfa22'],[14,0,4,1,'#a78bfa33'],[15,1,2,1,'#a78bfa44'],[11,-3,10,1,'#a78bfa11'],[12,-4,8,1,'#a78bfa08']],1);
+
+I('crown_laurel','Laurel Wreath','Golden victory leaves','head','rare','royal',280,
+[[8,-1,3,2,'#b8860b'],[21,-1,3,2,'#b8860b'],[8,0,3,2,'#daa520'],[21,0,3,2,'#daa520'],[9,1,14,2,'#ffd700'],[8,2,3,2,'#daa520'],[21,2,3,2,'#daa520'],[10,2,12,2,'#ffed4a'],[9,3,14,2,'#b8860b'],[8,4,3,2,'#daa520'],[21,4,3,2,'#daa520'],[10,4,12,2,'#ffd70066'],[11,3,10,2,'#ffd70088'],[12,5,8,2,'#ffd70044'],[9,0,2,1,'#ffed4a66'],[21,0,2,1,'#ffed4a66'],[8,-1,2,1,'#b8860b66'],[22,-1,2,1,'#b8860b66'],[13,3,6,1,'#ffffff33'],[14,4,4,1,'#ffd70033']],0);
+
+I('mask_oni','Oni Mask','Demon visage. Intimidating.','head','epic','warrior',550,
+[[9,0,14,1,'#330000'],[8,1,16,1,'#550000'],[9,2,14,10,'#8b0000'],[8,3,16,8,'#aa0000'],[10,3,12,1,'#cc2222'],[11,4,4,2,'#ffffff'],[17,4,4,2,'#ffffff'],[12,5,8,2,'#000000'],[11,4,2,1,'#ffffff88'],[19,4,2,1,'#ffffff88'],[10,6,12,2,'#550000'],[9,7,14,2,'#8b000088'],[8,8,16,2,'#660000'],[9,9,14,1,'#440000'],[10,10,12,1,'#330000'],[11,3,10,1,'#ffd700'],[10,2,2,1,'#ffd700'],[20,2,2,1,'#ffd700'],[13,6,6,1,'#ef444444'],[14,5,4,1,'#fca5a544'],[9,5,2,1,'#ffffff22'],[21,5,2,1,'#ffffff22'],[10,8,4,1,'#00000033'],[18,8,4,1,'#00000033'],[9,1,2,2,'#ffd70044'],[21,1,2,2,'#ffd70044']],1);
+
+I('mask_phantom','Phantom Mask','Cracked porcelain. Hollow gaze.','head','rare','dark',320,
+[[9,1,14,1,'#888888'],[8,2,16,1,'#aaaaaa'],[9,3,14,8,'#e0e0e0'],[8,4,16,6,'#f0f0f0'],[10,5,2,2,'#111111'],[18,5,2,2,'#111111'],[14,5,4,2,'#111111'],[12,6,8,2,'#d0d0d0'],[9,8,14,2,'#c0c0c0'],[11,4,10,1,'#e0e0e0'],[8,6,2,3,'#666666'],[22,6,2,3,'#666666'],[8,5,2,1,'#888888'],[22,5,2,1,'#888888'],[10,4,2,1,'#e0e0e044'],[20,4,2,1,'#e0e0e044'],[13,3,6,1,'#ef444433'],[14,7,4,1,'#11111133'],[9,2,2,1,'#aaaaaa'],[21,2,2,1,'#aaaaaa'],[10,9,12,1,'#aaaaaa'],[11,10,10,1,'#888888']],0);
+
+I('mask_cyber','Cyber Visor','Full neon face veil. Identity off.','head','epic','tech',500,
+[[8,1,16,1,'#001a0a'],[7,2,18,1,'#00331a'],[8,3,16,8,'#0a0a1e'],[8,3,16,2,'#00e5a0'],[8,10,16,2,'#00e5a0'],[9,5,14,5,'#001a0a'],[10,6,12,3,'#00331a'],[11,7,10,1,'#004d26'],[12,6,8,2,'#00e5a066'],[9,4,2,5,'#00e5a044'],[21,4,2,5,'#00e5a044'],[10,9,12,1,'#00e5a033'],[8,12,16,1,'#001a0a'],[11,5,10,1,'#00e5a088'],[13,6,6,1,'#00e5a044'],[14,7,4,1,'#00e5a022'],[9,3,2,1,'#00e5a066'],[21,3,2,1,'#00e5a066'],[10,2,12,1,'#00e5a022'],[12,4,8,1,'#00e5a044']],2);
+
+I('mask_tactical','Tactical Goggles','Thermal HUD. Mission ready.','head','rare','tech',350,
+[[7,2,18,2,'#0a0a1e'],[8,3,16,6,'#1a1a2e'],[8,3,16,2,'#00c4ff'],[8,8,16,1,'#00c4ff'],[9,5,14,3,'#111'],[10,6,4,2,'#ef4444'],[16,6,4,2,'#22c55e'],[7,5,2,3,'#1a1a2e'],[23,5,2,3,'#1a1a2e'],[9,2,14,1,'#00c4ff22'],[10,1,12,1,'#00c4ff33'],[11,2,10,1,'#00c4ff44'],[8,4,2,1,'#00c4ff66'],[22,4,2,1,'#00c4ff66'],[9,6,2,2,'#1a1a2e88'],[21,6,2,2,'#1a1a2e88'],[12,7,8,1,'#38bdf833'],[14,5,4,1,'#00c4ff22'],[8,9,16,1,'#111'],[9,10,14,1,'#0a0a1e']],1);
+
+I('head_antenna','Data Antenna','Omni-frequency broadcast','head','uncommon','tech',100,
+[[14,0,2,7,'#00c4ff'],[13,0,4,2,'#38bdf8'],[13,2,4,2,'#7dd3fc'],[13,4,4,2,'#00c4ff88'],[14,-2,2,3,'#ef4444'],[13,-4,4,2,'#ffffff'],[14,-4,2,2,'#fca5a5'],[14,-5,2,1,'#ef444466'],[12,1,2,2,'#00c4ff66'],[16,1,2,2,'#00c4ff66'],[15,3,2,2,'#38bdf844'],[13,-3,4,1,'#ef444433'],[12,-4,2,1,'#ffffff44'],[16,-4,2,1,'#ffffff44'],[14,6,2,1,'#00c4ff44'],[13,7,4,1,'#00c4ff22']],1);
+
+I('beret_crimson','Crimson Beret','Elite operator headwear','head','uncommon','military',90,
+[[9,0,14,1,'#440000'],[8,1,16,1,'#660000'],[9,2,14,3,'#8b0000'],[8,3,16,2,'#aa0000'],[10,4,12,2,'#cc2222'],[9,5,14,2,'#8b000088'],[10,6,12,1,'#660000'],[11,1,10,1,'#cc2222'],[12,2,8,1,'#ff444466'],[15,2,2,2,'#ffd700'],[14,1,4,1,'#ffd70066'],[13,3,6,1,'#ff444422'],[8,4,2,1,'#8b0000'],[22,4,2,1,'#8b0000'],[10,5,2,1,'#aa0000'],[20,5,2,1,'#aa0000'],[11,6,2,1,'#8b000044'],[19,6,2,1,'#8b000044'],[12,0,8,1,'#66000044'],[13,-1,6,1,'#44000033']],0);
+
+I('helm_knight','Knight Helm','Full face visor. Honor bound.','head','rare','warrior',300,
+[[9,0,14,1,'#3a3a4a'],[8,1,16,1,'#4a4a5a'],[9,2,14,9,'#6b7280'],[8,3,16,7,'#7a8290'],[10,4,12,5,'#5a6270'],[10,5,12,1,'#9ca3af'],[11,6,10,2,'#8a92a0'],[10,8,12,1,'#4a5260'],[9,9,14,2,'#3a4250'],[13,5,6,2,'#22c55e33'],[12,6,8,1,'#22c55e22'],[14,4,4,1,'#fbbf24'],[13,3,6,1,'#fbbf2466'],[11,4,2,1,'#9ca3af88'],[19,4,2,1,'#9ca3af88'],[8,4,2,2,'#6b728088'],[22,4,2,2,'#6b728088'],[10,10,12,1,'#2a3240'],[11,11,10,1,'#2a3240'],[12,2,8,1,'#9ca3af44'],[9,1,2,2,'#5a627066'],[21,1,2,2,'#5a627066']],0);
+
+I('helm_samurai','Kabuto Crest','Crescent moon. Warrior spirit.','head','epic','warrior',450,
+[[9,-1,14,2,'#440000'],[8,1,16,1,'#660000'],[9,2,14,3,'#8b0000'],[8,3,16,4,'#aa0000'],[10,4,12,3,'#cc2222'],[9,6,14,2,'#8b000088'],[10,7,12,1,'#660000'],[10,2,12,2,'#fbbf24'],[12,0,8,2,'#fbbf24'],[13,-1,6,2,'#f59e0b'],[11,1,10,1,'#fcd34d'],[9,5,14,1,'#8b000044'],[8,5,2,1,'#aa000066'],[22,5,2,1,'#aa000066'],[14,4,4,1,'#ffffff33'],[11,5,10,1,'#8b0000'],[10,3,2,1,'#fbbf2488'],[20,3,2,1,'#fbbf2488'],[12,-2,8,1,'#f59e0b66'],[13,-3,6,1,'#fbbf2433'],[15,3,2,1,'#ffffff22'],[10,8,12,1,'#550000'],[11,9,10,1,'#440000']],1);
+
+I('crown_star','Star Crown','Seven points for seven agents','head','legendary','mystic',1000,
+[[11,-3,10,2,'#ffd70044'],[10,-2,12,1,'#ffffff33'],[9,-1,14,1,'#ffd70066'],[9,0,2,2,'#b8860b'],[21,0,2,2,'#b8860b'],[10,0,12,2,'#ffd700'],[11,0,10,1,'#ffed4a'],[12,1,8,3,'#ffffff88'],[10,2,12,2,'#f59e0b'],[11,3,10,1,'#fbbf24'],[9,3,2,2,'#daa520'],[21,3,2,2,'#daa520'],[10,4,12,1,'#b8860b'],[11,5,10,1,'#daa520'],[12,5,8,1,'#fbbf2466'],[15,-1,2,1,'#ffffff88'],[14,-2,4,1,'#ffffff44'],[8,4,2,1,'#fbbf2466'],[22,4,2,1,'#fbbf2466'],[13,4,6,1,'#fbbf2488'],[14,5,4,1,'#fbbf2444'],[12,-3,8,1,'#ffd70022'],[13,-4,6,1,'#ffffff11'],[14,5,2,2,'#ffffff33'],[16,-3,2,1,'#ffffff44']],2);
+
+I('mask_skull','Bone Mask','Bleached white. Final face.','head','uncommon','dark',140,
+[[9,1,14,1,'#888888'],[8,2,16,1,'#aaaaaa'],[9,3,14,8,'#d0d0d0'],[8,4,16,6,'#e0e0e0'],[10,5,2,2,'#111111'],[18,5,2,2,'#111111'],[14,5,4,2,'#111111'],[12,6,8,2,'#c0c0c0'],[9,8,14,2,'#b0b0b0'],[10,4,2,2,'#888888'],[20,4,2,2,'#888888'],[11,3,10,1,'#e0e0e0'],[8,5,2,1,'#aaaaaa'],[22,5,2,1,'#aaaaaa'],[10,7,12,1,'#a0a0a0'],[11,9,10,1,'#999999'],[13,4,6,1,'#e0e0e044'],[12,7,8,1,'#88888822'],[9,10,14,1,'#888888'],[10,11,12,1,'#777777']],0);
+
+I('crown_thorns','Thorn Crown','Dark vegetation. Sovereign form.','head','epic','dark',400,
+[[9,-2,14,2,'#0a1a0a'],[8,-1,16,1,'#1a2a1a'],[8,0,2,3,'#0a3a0a'],[22,0,2,3,'#0a3a0a'],[9,0,14,2,'#1a3a1a'],[10,1,12,2,'#2a4a2a'],[9,2,14,1,'#1a3a1a88'],[10,3,12,2,'#0a3a0a66'],[8,1,2,2,'#ef4444'],[22,1,2,2,'#ef4444'],[7,0,2,1,'#ef444466'],[23,0,2,1,'#ef444466'],[11,4,10,2,'#ef444433'],[12,5,8,2,'#0a4a0a44'],[9,4,2,1,'#1a3a1a'],[21,4,2,1,'#1a3a1a'],[10,5,12,1,'#0a2a0a'],[11,6,10,1,'#0a1a0a66'],[13,6,6,1,'#ef444422'],[9,-3,2,1,'#ef444411'],[21,-3,2,1,'#ef444411'],[10,-2,2,1,'#1a3a1a44'],[20,-2,2,1,'#1a3a1a44']],1);
+
+I('crown_vine','Verdant Crown','Living branches. Nature crowns.','head','rare','elemental',280,
+[[9,-2,14,2,'#166534'],[8,-1,16,1,'#15803d'],[8,0,2,3,'#16a34a'],[22,0,2,3,'#16a34a'],[9,0,14,2,'#22c55e'],[10,1,12,2,'#4ade80'],[9,2,14,1,'#22c55e88'],[10,3,12,2,'#16a34a66'],[8,0,2,1,'#86efac'],[22,0,2,1,'#86efac'],[11,4,10,2,'#4ade8033'],[12,5,8,2,'#22c55e44'],[9,3,2,1,'#16a34a'],[21,3,2,1,'#16a34a'],[10,4,12,1,'#166534'],[11,5,10,1,'#15803d66'],[13,4,6,1,'#86efac33'],[9,-3,2,1,'#86efac11'],[21,-3,2,1,'#86efac11'],[10,-2,2,1,'#22c55e44'],[20,-2,2,1,'#22c55e44'],[12,-1,8,1,'#86efac22'],[14,0,4,1,'#86efac33']],0);
+
+// ── NEW HEAD items: wizard hat, halo, VR visor, star tiara, spiked helm ──
+I('wizard_hat','Wizard Hat','Pointed. Star-speckled. Channeling.','head','rare','mystic',300,
+[[6,0,20,1,'#1a0030'],[7,1,18,2,'#2a0050'],[8,-2,16,3,'#3a0060'],[9,-4,14,1,'#2a0050'],[10,-6,12,2,'#3a0060'],[11,-8,10,1,'#2a0050'],[12,-10,8,2,'#3a006088'],[13,-11,6,2,'#4a0070'],[14,-12,4,1,'#5a0080'],[15,-13,2,1,'#6a009a'],[8,1,16,3,'#4a0070'],[9,2,14,2,'#5a0080'],[10,3,12,1,'#6a009a66'],[7,4,18,1,'#2a0050'],[8,5,16,1,'#3a006088'],[12,-7,2,1,'#fbbf24'],[16,-5,2,1,'#fbbf24'],[10,-9,2,1,'#fbbf2444'],[18,-8,2,1,'#fbbf2444'],[8,-4,2,1,'#fbbf2466'],[15,-2,2,1,'#a78bfa'],[11,-3,2,1,'#a78bfa44'],[17,-1,2,1,'#fbbf24'],[14,0,4,1,'#fbbf2444'],[13,4,6,1,'#a78bfa33'],[9,-6,2,1,'#a78bfa44'],[19,-6,2,1,'#a78bfa44'],[8,6,16,1,'#1a0030'],[10,7,12,1,'#1a003044'],[7,-3,2,1,'#c4b5fd33'],[13,-8,2,1,'#c4b5fd22'],[21,-4,2,1,'#c4b5fd22'],[14,-10,2,1,'#fbbf2422'],[9,-11,2,1,'#c4b5fd44'],[19,-10,2,1,'#c4b5fd22'],[6,-1,2,1,'#c4b5fd33'],[11,5,2,1,'#c4b5fd22'],[18,5,2,1,'#c4b5fd22'],[16,-7,2,1,'#fbbf2411'],[10,-8,2,1,'#fbbf2433']],2);
+
+I('halo_ring','Digital Halo','Light of pure data. Rests above.','head','epic','mystic',400,
+[[8,-4,16,1,'#fbbf2422'],[9,-3,14,2,'#fbbf2433'],[10,-2,12,3,'#ffd70044'],[11,-1,10,4,'#ffe4a055'],[12,0,8,4,'#ffd70088'],[13,1,6,3,'#ffe4a0'],[14,2,4,2,'#ffffff'],[15,3,2,1,'#ffffff88'],[13,0,6,1,'#fff8dc'],[12,-1,8,2,'#ffd70066'],[11,-2,10,2,'#fbbf2444'],[10,-3,12,1,'#fbbf2422'],[8,2,16,1,'#fbbf2411'],[14,-1,4,1,'#ffe4a033'],[14,3,4,1,'#ffffff44'],[12,-2,8,1,'#ffd70088'],[13,2,6,1,'#ffe4a044'],[10,1,12,1,'#fbbf2433'],[9,3,14,1,'#fbbf2422'],[11,0,10,1,'#ffd70055'],[10,-3,2,1,'#fbbf2411'],[22,-3,2,1,'#fbbf2411'],[12,4,8,1,'#ffffff22'],[14,1,4,1,'#ffffff55'],[7,-5,2,1,'#ffe4a011'],[23,-5,2,1,'#ffe4a011'],[9,-5,4,1,'#fbbf2411'],[19,-5,4,1,'#fbbf2411'],[16,-1,2,1,'#fff8dc22'],[15,-2,2,1,'#ffe4a033'],[11,-3,2,1,'#ffd70044'],[21,-3,2,1,'#ffd70044'],[8,-4,2,1,'#ffe4a022'],[22,-4,2,1,'#ffe4a022'],[13,5,6,1,'#ffffff11'],[14,0,4,1,'#fff8dc44'],[15,1,2,1,'#ffffff66'],[10,-1,2,1,'#fbbf2466'],[20,-1,2,1,'#fbbf2466']],2);
+
+I('visor_vr','VR Headset','Full immersion. Reality off.','head','uncommon','tech',150,
+[[7,2,18,1,'#050510'],[8,3,16,8,'#0a0a1e'],[9,4,14,6,'#1a1a2e'],[10,5,12,4,'#2a2a3e'],[8,3,16,2,'#22d3ee'],[8,10,16,1,'#22d3ee'],[9,5,2,4,'#22d3ee33'],[21,5,2,4,'#22d3ee33'],[10,6,12,2,'#0a0a1e'],[11,7,10,1,'#1a1a2e'],[12,6,8,2,'#22d3ee44'],[13,7,6,1,'#22d3ee22'],[7,4,2,4,'#0a0a1e'],[23,4,2,4,'#0a0a1e'],[8,2,2,2,'#22d3ee66'],[22,2,2,2,'#22d3ee66'],[9,11,14,1,'#0a0a1e'],[10,12,12,1,'#050510'],[11,5,10,1,'#22d3ee22'],[14,7,4,1,'#22d3ee33'],[8,9,16,1,'#0a0a1e'],[6,3,2,1,'#22d3ee44'],[24,3,2,1,'#22d3ee44'],[10,4,2,1,'#22d3ee55'],[20,4,2,1,'#22d3ee55'],[12,9,8,1,'#22d3ee44'],[13,8,6,1,'#22d3ee33'],[9,10,14,1,'#0a0a1e'],[11,11,10,1,'#0a0a1e'],[14,5,4,1,'#22d3ee22'],[7,8,2,1,'#22d3ee11'],[23,8,2,1,'#22d3ee11'],[12,3,8,2,'#22d3ee44'],[11,2,10,1,'#22d3ee22']],1);
+
+I('tiara_star','Star Tiara','Elegance. Seven points. Royal.','head','rare','royal',250,
+[[9,-1,14,1,'#c0c0c0'],[10,0,12,3,'#e0e0e0'],[11,1,10,2,'#ffffff'],[10,-1,2,1,'#c0c0c0'],[20,-1,2,1,'#c0c0c0'],[12,3,8,1,'#c0c0c0'],[13,4,6,1,'#e0e0e0'],[14,0,4,2,'#fbbf24'],[15,1,2,1,'#ffe4a0'],[13,-2,6,1,'#fbbf24'],[14,-3,4,1,'#ffe4a0'],[15,-4,2,1,'#ffffff'],[11,-2,2,1,'#e0e0e0'],[19,-2,2,1,'#e0e0e0'],[12,-1,8,1,'#fbbf2488'],[10,2,12,1,'#ffffff44'],[13,0,6,1,'#ffe4a044'],[14,1,4,1,'#ffffff33'],[9,2,2,1,'#c0c0c044'],[21,2,2,1,'#c0c0c044'],[10,4,12,1,'#c0c0c0'],[11,5,10,1,'#a0a0a0'],[12,-3,8,1,'#fbbf2433'],[13,-4,6,1,'#fbbf2422'],[8,-2,2,1,'#ffe4a033'],[22,-2,2,1,'#ffe4a033'],[11,-3,2,1,'#fbbf2455'],[19,-3,2,1,'#fbbf2455'],[15,-2,2,1,'#fff8dc44'],[16,-3,2,1,'#ffffff33'],[9,-5,2,1,'#ffe4a011'],[14,-4,2,1,'#fbbf2466'],[8,-1,2,1,'#ffe4a022'],[13,2,6,1,'#fbbf2422'],[14,3,4,1,'#fbbf2411'],[15,2,2,1,'#ffffff55'],[10,1,12,1,'#fbbf2433'],[11,0,10,1,'#ffe4a044']],2);
+
+I('helm_spiked','Spiked Warborn','Steel and fury. Intimidation.','head','epic','warrior',450,
+[[8,-2,16,1,'#2a2a3a'],[9,-1,14,3,'#3a3a4a'],[10,0,12,10,'#2a2a3a'],[9,1,14,8,'#4a4a5a'],[11,2,10,6,'#5a5a6a'],[10,3,12,4,'#6a6a7a'],[8,5,2,3,'#3a3a4a'],[22,5,2,3,'#3a3a4a'],[9,8,14,2,'#2a2a3a'],[10,9,12,1,'#3a3a4a'],[11,4,10,1,'#7a7a8a'],[12,4,8,1,'#ffffff22'],[13,5,6,2,'#ef444433'],[14,6,4,1,'#ef444422'],[9,0,2,1,'#ef444444'],[21,0,2,1,'#ef444444'],[8,-3,2,2,'#5a5a6a'],[22,-3,2,2,'#5a5a6a'],[10,-3,2,3,'#5a5a6a'],[20,-3,2,3,'#5a5a6a'],[12,-3,2,3,'#6a6a7a'],[18,-3,2,3,'#6a6a7a'],[14,-2,4,2,'#7a7a8a'],[15,-3,2,1,'#ef444444'],[11,-2,2,1,'#7a7a8a44'],[19,-2,2,1,'#7a7a8a44'],[10,7,12,1,'#4a4a5a'],[13,8,6,1,'#ef444422'],[12,10,8,1,'#2a2a3a'],[11,11,10,1,'#1a1a2a'],[7,-4,2,1,'#ef444433'],[23,-4,2,1,'#ef444433'],[13,-4,2,1,'#ef444466'],[17,-4,2,1,'#ef444466'],[11,-4,2,1,'#6a6a7a'],[19,-4,2,1,'#6a6a7a'],[15,-1,4,1,'#ef444455'],[14,-2,2,1,'#ffffff33'],[16,-3,2,1,'#ef444433'],[8,4,2,1,'#ef444433'],[22,4,2,1,'#ef444433'],[12,6,8,1,'#7a7a8a44'],[11,5,10,1,'#8a8a9a66'],[13,9,6,1,'#ef444411'],[14,5,4,1,'#ffffff22'],[10,1,2,1,'#ef444455'],[20,1,2,1,'#ef444455']],2);
+
+// BODY — armors, robes, jackets, suits — 18 items with layered shading and plate detail
+I('armor_dark','Dark Plate','Heavy pauldrons. Gold trim. Tower.','body','epic','warrior',500,
+[[9,0,14,1,'#0a0a1a'],[10,1,12,1,'#1a1a2e'],[9,2,14,14,'#1a1a2e'],[8,3,16,12,'#2a2a3e'],[10,3,12,1,'#ffd700'],[9,4,2,8,'#ffd70044'],[21,4,2,8,'#ffd70044'],[10,5,12,7,'#3a3a4e'],[11,6,10,1,'#4a4a5e'],[10,12,12,2,'#1a1a2e'],[9,13,14,2,'#ffd700'],[10,14,12,2,'#daa520'],[11,12,10,1,'#0a0a1a'],[12,7,8,2,'#ffffff15'],[11,3,10,1,'#ffd700'],[14,0,4,2,'#fbbf2488'],[8,2,2,1,'#ffd70066'],[22,2,2,1,'#ffd70066'],[10,10,12,2,'#2a2a3e88'],[11,15,10,1,'#1a1a2e'],[12,4,8,1,'#fbbf2433'],[13,5,6,1,'#ffffff11'],[10,16,12,1,'#0a0a1a'],[11,0,10,1,'#2a2a3e']],1);
+
+I('armor_angel','Seraphim Plate','White-gold. Feather motifs. Holy.','body','legendary','mystic',1000,
+[[9,0,14,1,'#b8860b'],[10,1,12,1,'#daa520'],[9,2,14,15,'#fbbf24'],[8,3,16,13,'#ffd700'],[10,3,12,1,'#ffffff'],[9,4,14,2,'#fff8dc'],[10,6,12,8,'#ffe4a0'],[11,7,10,6,'#ffd70088'],[9,12,14,3,'#fbbf24'],[10,14,12,2,'#daa520'],[12,5,8,1,'#ffffff88'],[11,4,10,1,'#ffffff44'],[8,2,2,1,'#ffe4a0'],[22,2,2,1,'#ffe4a0'],[9,15,14,1,'#b8860b'],[10,16,12,1,'#a07000'],[13,6,6,2,'#ffffff22'],[14,8,4,4,'#ffffff33'],[12,17,8,1,'#b8860b33'],[11,0,10,1,'#daa520']],2);
+
+I('armor_void','Void Sentinel','Abyssal armor. Light dies here.','body','transcendent','dark',3500,
+[[8,0,16,1,'#000000'],[9,1,14,17,'#000000'],[8,2,16,15,'#0a001a'],[8,2,16,2,'#a78bfa44'],[9,4,14,3,'#a78bfa66'],[8,8,16,6,'#000010'],[9,9,14,4,'#0a001a'],[10,10,12,2,'#a78bfa22'],[8,14,16,3,'#a78bfa44'],[9,16,14,2,'#a78bfa55'],[10,6,6,3,'#a78bfa55'],[16,6,6,3,'#a78bfa55'],[11,12,10,2,'#a78bfa33'],[9,5,14,1,'#a78bfa44'],[10,7,12,1,'#a78bfa33'],[11,15,10,1,'#a78bfa66'],[12,17,8,1,'#ffffff22'],[9,2,2,1,'#a78bfa55'],[21,2,2,1,'#a78bfa55'],[10,18,12,1,'#000000'],[8,18,16,1,'#0a001a44']],3);
+
+I('armor_flame','Infernal Plate','Hell-forged. Heat shimmers.','body','legendary','elemental',950,
+[[9,0,14,1,'#110000'],[10,1,12,1,'#220000'],[9,2,14,15,'#330000'],[8,3,16,13,'#4a0505'],[10,4,12,1,'#ff6b35'],[9,5,14,2,'#ff6b3566'],[10,7,12,5,'#8b0000'],[11,8,10,3,'#aa0000'],[9,10,14,3,'#ff6b3544'],[10,12,12,2,'#ff444444'],[9,14,14,2,'#ff6b3588'],[10,15,12,1,'#ff6b35'],[11,6,10,1,'#ffd70044'],[8,2,2,1,'#ff6b3533'],[22,2,2,1,'#ff6b3533'],[12,5,8,2,'#ffd70033'],[13,12,6,2,'#ff444422'],[11,16,10,1,'#8b0000'],[10,17,12,1,'#220000'],[14,4,4,1,'#ffd70044']],2);
+
+I('armor_ice','Glacial Carapace','Frozen. Cracks glow cold.','body','legendary','elemental',950,
+[[9,0,14,1,'#000a1a'],[10,1,12,1,'#001030'],[9,2,14,15,'#001845'],[8,3,16,13,'#002a5c'],[10,4,12,1,'#60a5fa'],[9,5,14,2,'#60a5fa44'],[10,7,12,3,'#0a3060'],[11,8,10,1,'#1a4080'],[9,11,14,4,'#60a5fa33'],[10,14,12,2,'#93c5fd44'],[9,15,14,2,'#60a5fa55'],[10,16,12,1,'#60a5fa66'],[11,6,10,1,'#ffffff44'],[8,2,2,1,'#60a5fa33'],[22,2,2,1,'#60a5fa33'],[12,5,8,2,'#ffffff55'],[13,12,6,2,'#93c5fd33'],[11,17,10,1,'#001845'],[10,18,12,1,'#000a1a'],[14,4,4,1,'#ffffff66']],1);
+
+I('armor_scale','Dragon Scale','Layered. Each one a shield.','body','epic','warrior',550,
+[[9,0,14,1,'#052e05'],[10,1,12,1,'#0a3a0a'],[9,2,14,15,'#0a2a0a'],[8,3,16,13,'#1a3a1a'],[10,4,12,1,'#4ade80'],[9,5,14,2,'#4ade8033'],[10,7,12,5,'#16501b'],[11,8,10,3,'#1e6b2a'],[9,11,14,4,'#4ade8044'],[10,14,12,2,'#22c55e66'],[9,15,14,2,'#4ade8077'],[11,6,10,1,'#86efac44'],[8,2,2,1,'#4ade8022'],[22,2,2,1,'#4ade8022'],[12,5,8,2,'#86efac44'],[13,12,6,2,'#22c55e33'],[11,16,10,1,'#0a2a0a'],[10,17,12,1,'#052e05'],[12,4,8,1,'#86efac33'],[14,6,4,2,'#86efac22']],1);
+
+I('robe_arcane','Arcane Robe','Constellation robes. Stars move.','body','rare','mystic',320,
+[[9,0,14,1,'#100020'],[10,1,12,1,'#1a0030'],[8,2,16,17,'#1a0030'],[9,3,14,15,'#2a0050'],[10,5,12,11,'#3a0060'],[10,6,12,1,'#4a0070'],[9,14,14,3,'#1a003088'],[11,8,10,2,'#2a005088'],[8,12,3,6,'#a78bfa22'],[21,12,3,6,'#a78bfa22'],[11,4,10,1,'#6a009a66'],[12,7,8,1,'#a78bfa33'],[13,10,6,1,'#a78bfa44'],[14,13,4,1,'#a78bfa33'],[9,17,14,1,'#100020'],[10,18,12,1,'#0a0010'],[11,3,10,1,'#4a007022'],[8,4,2,1,'#a78bfa22'],[22,4,2,1,'#a78bfa22'],[12,11,8,1,'#a78bfa22'],[13,15,6,1,'#a78bfa22']],1);
+
+I('robe_shaman','Spirit Weaver','Spirit-animal patterns.','body','epic','mystic',480,
+[[9,0,14,1,'#052e05'],[10,1,12,1,'#0a3a0a'],[8,2,16,17,'#0a2a0a'],[9,3,14,15,'#1a3a1a'],[10,5,12,11,'#1e4a1e'],[9,6,14,3,'#22c55e44'],[10,4,4,3,'#fbbf2444'],[16,4,4,3,'#fbbf2444'],[11,7,10,3,'#4ade8033'],[9,13,14,5,'#0a2a0a'],[10,14,12,3,'#22c55e33'],[12,9,8,1,'#86efac22'],[11,10,10,1,'#4ade8033'],[8,4,2,1,'#4ade8022'],[22,4,2,1,'#4ade8022'],[10,12,12,1,'#1e4a1e'],[9,17,14,1,'#052e05'],[10,18,12,1,'#031e03'],[13,5,6,1,'#86efac22'],[14,8,4,1,'#fbbf2422']],0);
+
+I('robe_void','Voidweaver','Stitched from shadow. Reality bends.','body','legendary','dark',800,
+[[9,0,14,1,'#000010'],[10,1,12,1,'#000020'],[8,2,16,17,'#000010'],[9,3,14,15,'#0a001a'],[10,5,12,11,'#15002a'],[9,6,14,3,'#a78bfa22'],[10,8,12,3,'#a78bfa33'],[11,10,10,2,'#a78bfa44'],[9,13,14,5,'#000020'],[10,14,12,3,'#a78bfa22'],[12,12,8,1,'#a78bfa33'],[8,4,2,1,'#a78bfa11'],[22,4,2,1,'#a78bfa11'],[10,18,12,1,'#000010'],[11,6,10,1,'#a78bfa44'],[13,8,6,1,'#a78bfa22'],[14,11,4,1,'#a78bfa22'],[9,17,14,1,'#000020'],[12,4,8,1,'#a78bfa22']],1);
+
+I('jacket_cyber','Cyber Jacket','Neon bomber. LED zipper.','body','rare','tech',280,
+[[9,0,14,1,'#050515'],[10,1,12,1,'#0a0a1e'],[8,2,16,15,'#0a0a1e'],[9,3,14,13,'#15152e'],[10,4,12,1,'#00c4ff'],[9,5,2,10,'#00c4ff33'],[21,5,2,10,'#00c4ff33'],[10,6,12,5,'#1a1a3e'],[11,7,10,3,'#25254e'],[9,11,14,3,'#0a0a1e'],[10,13,12,2,'#00e5a044'],[8,2,2,1,'#00c4ff66'],[22,2,2,1,'#00c4ff66'],[11,14,10,1,'#00c4ff66'],[12,5,8,2,'#00e5a066'],[13,4,6,1,'#00e5a033'],[10,16,12,1,'#0a0a1e'],[11,0,10,1,'#15152e'],[14,6,4,1,'#00c4ff22'],[9,15,14,1,'#050515']],1);
+
+I('jacket_biker','Rogue Jacket','Leather. Insignia on back.','body','rare','dark',250,
+[[9,0,14,1,'#100000'],[10,1,12,1,'#1a0505'],[8,2,16,15,'#1a0505'],[9,3,14,13,'#2a0a0a'],[10,4,12,1,'#ef4444'],[8,6,3,8,'#1a0505'],[21,6,3,8,'#1a0505'],[9,5,2,10,'#ef444422'],[22,5,2,10,'#ef444422'],[10,6,12,3,'#3a1515'],[11,7,10,1,'#4a1a1a'],[9,12,14,3,'#1a0505'],[10,14,12,2,'#fbbf2444'],[11,15,10,1,'#daa52033'],[12,5,8,2,'#ef444455'],[10,16,12,1,'#100000'],[14,4,4,1,'#ef444422'],[9,2,2,1,'#ef444433'],[22,2,2,1,'#ef444433'],[11,0,10,1,'#2a0a0a'],[13,6,6,1,'#ef444411']],0);
+
+I('suit_exec','Executive Suit','Tailored. Boardroom power.','body','uncommon','formal',140,
+[[10,0,12,1,'#05050a'],[11,1,10,1,'#0a0a14'],[9,2,14,14,'#0a0a14'],[10,3,12,12,'#1a1a2e'],[11,4,10,1,'#25253e'],[10,5,12,5,'#15152a'],[11,6,10,3,'#1a1a30'],[10,10,12,3,'#0a0a14'],[9,12,14,2,'#15152e'],[10,14,12,1,'#fbbf2444'],[11,15,10,1,'#daa52033'],[9,2,2,1,'#25253e33'],[21,2,2,1,'#25253e33'],[12,7,8,2,'#ffffff08'],[13,5,6,1,'#ffffff08'],[11,13,10,1,'#0a0a14'],[10,16,12,1,'#05050a'],[14,3,4,1,'#ffffff06'],[12,11,8,1,'#ffffff06']],0);
+
+I('suit_white','White Tux','Crystal white. Immaculate.','body','rare','formal',280,
+[[9,0,14,1,'#a0a0a0'],[10,1,12,1,'#c0c0c0'],[9,2,14,14,'#d0d0d0'],[10,3,12,12,'#e0e0e0'],[11,4,10,1,'#f0f0f0'],[10,5,12,5,'#e0e0e0'],[11,6,10,3,'#d0d0d0'],[10,10,12,3,'#e0e0e0'],[9,12,14,2,'#c0c0c0'],[10,14,12,2,'#fbbf24'],[11,15,10,1,'#daa520'],[9,2,2,1,'#ffffff44'],[21,2,2,1,'#ffffff44'],[12,7,8,2,'#c0c0c0'],[13,5,6,1,'#ffffff55'],[11,13,10,1,'#d0d0d0'],[10,16,12,1,'#a0a0a0'],[9,15,14,1,'#e0e0e0'],[12,4,8,1,'#ffffff88'],[14,6,4,1,'#ffffff44']],0);
+
+I('vest_tactical','Tactical Vest','Modular. Pockets for days.','body','uncommon','military',130,
+[[9,0,14,1,'#0a1a0a'],[10,1,12,1,'#1a2a1a'],[8,2,16,14,'#1a2a1a'],[9,3,14,12,'#2a3a2a'],[10,4,12,1,'#3a4a3a'],[9,5,2,8,'#00c4ff33'],[21,5,2,8,'#00c4ff33'],[10,6,12,4,'#3a4a3a'],[9,9,14,3,'#2a3a2a'],[10,12,12,2,'#1a2a1a'],[11,13,10,2,'#3a4a3a'],[12,5,4,2,'#38bdf866'],[16,5,4,2,'#38bdf866'],[8,2,2,1,'#3a4a3a44'],[22,2,2,1,'#3a4a3a44'],[10,14,12,1,'#1a2a1a'],[11,15,10,1,'#0a1a0a'],[13,6,6,1,'#3a4a3a44'],[14,8,4,1,'#3a4a3a33'],[12,10,8,1,'#2a3a2a']],0);
+
+I('smock_painter','Artist Smock','Every mark a story.','body','common','casual',50,
+[[9,0,14,1,'#1a0a0a'],[10,1,12,1,'#2a1a1a'],[8,2,16,17,'#2a1a1a'],[9,3,14,15,'#3a2a2a'],[10,5,12,11,'#4a3a3a'],[10,6,4,3,'#f472b644'],[16,6,4,3,'#22d3ee44'],[11,8,10,2,'#3a2a2a'],[12,5,2,2,'#fbbf2444'],[17,5,2,3,'#a78bfa44'],[10,11,12,3,'#3a2a2a'],[9,14,14,3,'#2a1a1a'],[10,16,12,2,'#3a2a2a'],[8,4,2,1,'#4a3a3a44'],[22,4,2,1,'#4a3a3a44'],[11,4,10,1,'#4a3a3a'],[12,12,8,1,'#4a3a3a44'],[10,18,12,1,'#2a1a1a'],[13,6,6,1,'#4a3a3a22'],[14,9,4,1,'#4a3a3a33']],0);
+
+I('sweater_shaddai','SHADDAI Crewneck','Empire merch. Logo on chest.','body','common','casual',30,
+[[10,0,12,1,'#0a0a1a'],[11,1,10,1,'#1a1a2e'],[9,2,14,14,'#1a1a2e'],[10,3,12,12,'#2a2a3e'],[11,4,10,1,'#3a3a4e'],[10,5,12,1,'#00e5a0'],[11,6,10,3,'#00e5a044'],[12,7,8,1,'#00e5a033'],[10,8,12,3,'#2a2a3e'],[11,9,10,1,'#3a3a4e'],[10,11,12,3,'#1a1a2e'],[11,14,10,1,'#2a2a3e'],[9,15,14,1,'#1a1a2e'],[9,2,2,1,'#3a3a4e44'],[21,2,2,1,'#3a3a4e44'],[12,4,8,2,'#00e5a044'],[13,5,6,1,'#00e5a033'],[10,16,12,1,'#0a0a1a'],[14,6,4,1,'#00e5a022']],0);
+
+I('sweater_winter','Winter Knit','Thick weave. Warm.','body','common','casual',35,
+[[9,0,14,1,'#1a0a00'],[10,1,12,1,'#2a1a0a'],[9,2,14,14,'#2a1a0a'],[10,3,12,12,'#3a2a1a'],[11,4,10,1,'#4a3a2a'],[10,5,12,3,'#3a2a1a88'],[11,6,10,2,'#4a3a2a88'],[10,8,12,3,'#3a2a1a'],[11,9,10,2,'#4a3a2a'],[10,11,12,3,'#3a2a1a88'],[11,12,10,2,'#4a3a2a88'],[9,14,14,2,'#2a1a0a'],[10,15,12,1,'#3a2a1a'],[9,2,2,1,'#4a3a2a44'],[21,2,2,1,'#4a3a2a44'],[12,5,8,2,'#5a4a3a44'],[13,7,6,2,'#5a4a3a33'],[10,16,12,1,'#1a0a00'],[14,10,4,1,'#5a4a3a33'],[11,3,10,1,'#4a3a2a']],0);
+
+I('armor_bone','Bone Armor','Stitched from digital remains.','body','rare','dark',300,
+[[9,0,14,1,'#0a0000'],[10,1,12,1,'#1a0a0a'],[9,2,14,15,'#1a0a0a'],[8,3,16,13,'#2a1a1a'],[10,4,12,1,'#3a2a2a66'],[9,5,14,2,'#e0e0e022'],[10,7,12,5,'#2a1a1a'],[11,8,10,3,'#3a2a2a'],[9,10,14,4,'#e0e0e033'],[10,13,12,2,'#2a1a1a'],[9,14,14,2,'#e0e0e044'],[10,15,12,1,'#3a2a2a'],[12,5,8,1,'#e0e0e033'],[13,9,6,1,'#e0e0e022'],[8,2,2,1,'#e0e0e011'],[22,2,2,1,'#e0e0e011'],[11,16,10,1,'#1a0a0a'],[10,17,12,1,'#0a0000'],[11,4,10,1,'#2a1a1a66'],[14,6,4,1,'#e0e0e011']],0);
+
+// ── NEW BODY items: cyber hoodie, lab coat, ninja garb, royal gown, titan plate ──
+I('hoodie_cyber','Cyber Hoodie','Street-ready. Neon-lined.','body','rare','tech',200,
+[[9,0,14,1,'#050515'],[10,1,12,1,'#0a0a1e'],[8,2,16,1,'#0a0a1e'],[9,3,14,14,'#1a1a2e'],[10,4,12,12,'#2a2a3e'],[9,5,2,8,'#22d3ee33'],[21,5,2,8,'#22d3ee33'],[10,6,12,5,'#3a3a4e'],[11,7,10,3,'#4a4a5e'],[10,11,12,3,'#2a2a3e'],[9,14,14,2,'#1a1a2e'],[10,15,12,1,'#0a0a1e'],[8,2,2,2,'#22d3ee66'],[22,2,2,2,'#22d3ee66'],[10,5,12,1,'#22d3ee44'],[12,4,8,1,'#22d3ee33'],[11,12,10,1,'#3a3a4e'],[13,6,6,2,'#22d3ee22'],[14,10,4,2,'#22d3ee11'],[9,16,14,1,'#050515'],[11,3,10,1,'#2a2a3e'],[8,6,2,4,'#22d3ee44'],[22,6,2,4,'#22d3ee44'],[10,7,12,1,'#22d3ee33'],[12,8,8,2,'#22d3ee44'],[13,9,6,1,'#22d3ee33'],[11,10,10,1,'#3a3a4e66'],[14,12,4,2,'#22d3ee22'],[9,2,2,1,'#22d3ee55'],[16,3,4,1,'#22d3ee22'],[11,13,10,1,'#2a2a3e66'],[10,14,12,1,'#1a1a2e88'],[12,6,8,1,'#4a4a5e22'],[15,4,2,1,'#22d3ee11'],[10,8,12,1,'#22d3ee22'],[8,8,2,1,'#22d3ee33'],[22,8,2,1,'#22d3ee33']],1);
+
+I('coat_lab','Lab Coat','Research grade. Pockets deep.','body','uncommon','tech',120,
+[[9,0,14,1,'#a0a0a0'],[10,1,12,1,'#c0c0c0'],[9,2,14,15,'#d0d0d0'],[10,3,12,13,'#e0e0e0'],[11,4,10,11,'#f0f0f0'],[10,5,12,1,'#ffffff'],[9,6,14,2,'#e0e0e0'],[11,7,10,1,'#f0f0f0'],[10,8,12,3,'#e0e0e0'],[9,9,14,2,'#d0d0d0'],[10,11,12,3,'#e0e0e0'],[9,14,14,2,'#c0c0c0'],[10,15,12,1,'#b0b0b0'],[9,2,2,2,'#ffffff44'],[21,2,2,2,'#ffffff44'],[11,6,10,1,'#ffffff44'],[12,10,8,1,'#e0e0e0'],[13,5,6,1,'#ffffff22'],[10,16,12,1,'#a0a0a0'],[8,3,2,10,'#d0d0d0'],[22,3,2,10,'#d0d0d0'],[7,4,2,9,'#e0e0e0'],[23,4,2,9,'#e0e0e0'],[10,4,12,1,'#f0f0f088'],[9,10,14,1,'#d0d0d0'],[11,11,10,1,'#e0e0e088'],[12,12,8,1,'#d0d0d066'],[10,13,12,1,'#c0c0c0'],[11,5,10,1,'#ffffff66'],[13,7,6,1,'#ffffff33'],[14,9,4,1,'#e0e0e088'],[9,12,14,1,'#d0d0d088'],[10,17,12,1,'#a0a0a0'],[12,8,8,1,'#f0f0f044'],[11,9,10,1,'#e0e0e044'],[10,2,12,1,'#d0d0d044']],0);
+
+I('gear_ninja','Shadow Ninja Garb','Silent. Lethal. Unseen.','body','epic','dark',500,
+[[9,0,14,1,'#000000'],[10,1,12,1,'#0a0a0a'],[8,2,16,1,'#050505'],[9,3,14,15,'#0a0a0a'],[10,4,12,13,'#1a1a1a'],[9,5,2,8,'#a78bfa33'],[21,5,2,8,'#a78bfa33'],[10,6,12,3,'#2a2a2a'],[11,7,10,1,'#3a3a3a'],[10,9,12,3,'#1a1a1a'],[11,8,10,1,'#2a2a2a'],[9,12,14,4,'#0a0a0a'],[10,14,12,2,'#1a1a1a'],[10,15,12,2,'#a78bfa33'],[9,2,2,1,'#a78bfa44'],[21,2,2,1,'#a78bfa44'],[10,5,12,1,'#a78bfa22'],[13,6,6,1,'#a78bfa33'],[12,10,8,1,'#a78bfa11'],[11,16,10,1,'#000000'],[14,4,4,2,'#a78bfa44'],[9,17,14,1,'#000000'],[8,18,16,1,'#000000'],[8,6,2,4,'#a78bfa22'],[22,6,2,4,'#a78bfa22'],[11,9,10,1,'#a78bfa33'],[12,11,8,1,'#a78bfa22'],[13,12,6,1,'#a78bfa11'],[10,10,12,1,'#1a1a1a66'],[11,13,10,1,'#0a0a0a88'],[9,14,14,1,'#0a0a0a66'],[10,7,12,1,'#2a2a2a66'],[12,8,8,1,'#3a3a3a44'],[14,6,4,2,'#a78bfa33'],[13,5,6,1,'#a78bfa44'],[11,6,10,1,'#a78bfa22'],[10,11,12,1,'#1a1a1a44'],[14,10,4,2,'#a78bfa22'],[12,14,8,1,'#a78bfa11']],1);
+
+I('gown_royal','Royal Gown','Velvet. Gold-thread. Presence.','body','epic','royal',450,
+[[9,0,14,1,'#1a0020'],[10,1,12,1,'#2a0030'],[8,2,16,1,'#2a0030'],[9,3,14,16,'#3a0050'],[10,4,12,14,'#4a0060'],[11,5,10,12,'#5a0070'],[10,6,12,1,'#fbbf24'],[9,7,14,2,'#daa52044'],[10,8,12,5,'#3a0050'],[11,9,10,3,'#4a0060'],[10,13,12,4,'#5a0070'],[9,15,14,3,'#3a005088'],[10,17,12,1,'#2a0030'],[11,18,10,1,'#1a0020'],[8,3,2,9,'#fbbf2433'],[22,3,2,9,'#fbbf2433'],[14,5,4,3,'#fbbf2444'],[13,6,6,1,'#daa52033'],[12,11,8,1,'#5a0070'],[9,18,14,1,'#1a0020'],[14,12,4,2,'#fbbf2466'],[10,0,12,1,'#3a005066'],[11,1,10,1,'#4a006066'],[12,5,8,2,'#fbbf24'],[11,6,10,1,'#daa520'],[9,9,14,1,'#3a0050'],[10,10,12,1,'#4a0060'],[11,11,10,2,'#5a0070'],[12,12,8,2,'#5a007088'],[8,6,2,6,'#fbbf2422'],[22,6,2,6,'#fbbf2422'],[13,7,6,2,'#daa52022'],[14,8,4,2,'#fbbf2433'],[10,15,12,1,'#3a005088'],[9,16,14,1,'#2a003066'],[11,17,10,1,'#1a002066'],[12,14,8,1,'#5a007066'],[10,11,12,2,'#4a006088'],[13,13,6,1,'#5a007044'],[15,6,2,2,'#fbbf2411'],[10,5,12,1,'#4a006088'],[11,4,10,1,'#5a007044']],2);
+
+I('armor_titan','Titan Plate','Massive. Unstoppable. Mythic.','body','legendary','warrior',900,
+[[9,0,14,1,'#1a1a2a'],[10,1,12,1,'#2a2a3a'],[9,2,14,16,'#3a3a4a'],[8,3,16,14,'#4a4a5a'],[10,4,12,1,'#fbbf24'],[9,5,14,2,'#daa52033'],[10,6,12,5,'#5a5a6a'],[11,7,10,3,'#6a6a7a'],[10,11,12,3,'#4a4a5a'],[9,14,14,3,'#3a3a4a'],[10,16,12,2,'#2a2a3a'],[8,5,2,8,'#38bdf833'],[22,5,2,8,'#38bdf833'],[12,5,8,2,'#38bdf855'],[13,6,6,1,'#38bdf866'],[14,8,4,3,'#38bdf833'],[11,4,10,1,'#fbbf2488'],[13,10,6,2,'#fbbf2444'],[9,2,2,1,'#5a5a6a66'],[21,2,2,1,'#5a5a6a66'],[10,17,12,1,'#1a1a2a'],[11,12,10,1,'#5a5a6a'],[12,15,8,1,'#3a3a4a88'],[8,18,16,1,'#1a1a2a'],[7,4,2,7,'#5a5a6a44'],[23,4,2,7,'#5a5a6a44'],[10,5,12,1,'#6a6a7a44'],[11,6,10,1,'#7a7a8a33'],[12,7,8,2,'#6a6a7a55'],[13,8,6,2,'#7a7a8a44'],[14,9,4,2,'#6a6a7a33'],[11,10,10,1,'#5a5a6a66'],[12,11,8,1,'#6a6a7a44'],[10,13,12,1,'#4a4a5a88'],[9,15,14,1,'#3a3a4a66'],[8,16,16,1,'#2a2a3a44'],[14,5,4,2,'#fbbf2455'],[12,6,8,1,'#38bdf888'],[13,7,6,1,'#5a5a6a44'],[15,10,2,2,'#fbbf2433'],[8,6,2,3,'#38bdf844'],[22,6,2,3,'#38bdf844'],[9,11,2,3,'#fbbf2433'],[21,11,2,3,'#fbbf2433'],[14,12,4,2,'#5a5a6a33'],[13,13,6,1,'#4a4a5a44'],[11,14,10,1,'#3a3a4a88']],2);
+
+// ACCENT — capes, wings, shields, auras — 17 items with fabric folds, feather layering, energy glow
+I('cape_royal','Royal Cape','Silk. Gold-trim. Commands.','accent','rare','royal',300,
+[[10,0,12,1,'#660000'],[10,1,12,1,'#8b0000'],[10,2,12,22,'#8b000088'],[9,3,14,20,'#aa000066'],[10,4,12,18,'#cc222244'],[11,5,10,14,'#8b000055'],[12,6,8,10,'#aa000044'],[10,16,12,7,'#ffd700'],[11,17,10,5,'#ffed4a'],[12,18,8,3,'#fff8dc'],[10,22,12,1,'#b8860b'],[14,4,4,3,'#ffd70044'],[12,3,8,2,'#ffd700'],[10,24,12,1,'#66000044'],[13,14,6,2,'#ffd70066'],[11,20,10,1,'#daa520'],[15,5,2,2,'#ffd70022'],[10,15,12,2,'#8b0000']],1);
+
+I('cape_phantom','Phantom Cloak','Translucent. Hard to track.','accent','rare','dark',280,
+[[10,0,12,1,'#a78bfa44'],[9,1,14,1,'#a78bfa33'],[9,2,14,23,'#a78bfa22'],[10,3,12,21,'#a78bfa15'],[11,4,10,19,'#a78bfa10'],[10,6,12,15,'#a78bfa18'],[11,18,10,7,'#a78bfa44'],[12,19,8,5,'#a78bfa55'],[10,24,12,1,'#a78bfa44'],[11,2,10,2,'#a78bfa66'],[11,6,10,2,'#a78bfa22'],[12,10,8,2,'#a78bfa33'],[13,14,6,2,'#a78bfa44'],[9,20,2,4,'#a78bfa22'],[21,20,2,4,'#a78bfa22'],[11,16,10,2,'#a78bfa33'],[12,22,8,2,'#a78bfa44']],1);
+
+I('cape_war','War Cape','Torn. Battle-tested.','accent','uncommon','warrior',200,
+[[10,0,12,1,'#330000'],[10,1,12,1,'#4a0000'],[10,2,12,22,'#4a000088'],[9,3,14,20,'#66000066'],[10,4,12,18,'#8b000044'],[11,5,10,14,'#4a000055'],[11,16,10,7,'#ef444444'],[12,17,8,5,'#ef444455'],[11,1,10,2,'#ef4444'],[11,4,10,2,'#4a000044'],[10,12,3,2,'#ef444422'],[19,12,3,2,'#ef444422'],[10,22,12,1,'#33000044'],[13,14,6,2,'#ef444433'],[11,20,10,2,'#4a000066'],[9,12,2,6,'#ef444411'],[21,12,2,6,'#ef444411'],[10,24,12,1,'#220000']],0);
+
+I('wings_dark','Void Wings','Shadow essence. Take flight.','accent','legendary','dark',900,
+[[2,3,7,1,'#2a0050'],[2,4,7,13,'#1a003099'],[3,4,6,11,'#2a005066'],[4,5,5,9,'#3a007044'],[3,15,5,2,'#1a0030'],[23,3,7,1,'#2a0050'],[23,4,7,13,'#1a003099'],[24,4,6,11,'#2a005066'],[25,5,5,9,'#3a007044'],[24,15,5,2,'#1a0030'],[1,5,3,10,'#1a003066'],[28,5,3,10,'#1a003066'],[2,6,2,8,'#2a005088'],[27,6,2,8,'#2a005088'],[5,2,3,2,'#a78bfa44'],[24,2,3,2,'#a78bfa44'],[3,2,2,2,'#a78bfa66'],[26,2,2,2,'#a78bfa66'],[4,1,2,2,'#a78bfa33'],[25,1,2,2,'#a78bfa33'],[2,14,3,2,'#a78bfa22'],[27,14,3,2,'#a78bfa22'],[4,6,4,4,'#a78bfa22'],[25,6,4,4,'#a78bfa22']],2);
+
+I('wings_angel','Digital Wings','Code-light. Glowing.','accent','legendary','mystic',1000,
+[[2,3,7,1,'#ffd70022'],[2,4,7,15,'#ffffff33'],[3,5,6,13,'#ffd70022'],[4,6,5,11,'#ffffff44'],[3,16,5,3,'#ffffff22'],[23,3,7,1,'#ffd70022'],[23,4,7,15,'#ffffff33'],[24,5,6,13,'#ffd70022'],[25,6,5,11,'#ffffff44'],[24,16,5,3,'#ffffff22'],[1,6,3,12,'#ffffff22'],[28,6,3,12,'#ffffff22'],[2,7,2,10,'#ffffff44'],[27,7,2,10,'#ffffff44'],[5,2,3,2,'#ffffff66'],[24,2,3,2,'#ffffff66'],[3,2,2,3,'#ffffff88'],[26,2,2,3,'#ffffff88'],[4,1,2,2,'#ffffff44'],[25,1,2,2,'#ffffff44'],[2,16,3,3,'#ffffff22'],[27,16,3,3,'#ffffff22'],[4,8,4,4,'#ffffff33'],[25,8,4,4,'#ffffff33']],2);
+
+I('wings_fire','Infernal Wings','Flame that leaves ash.','accent','legendary','elemental',950,
+[[2,3,7,1,'#ff6b3544'],[2,4,7,13,'#ff6b3544'],[3,4,6,11,'#ffd70033'],[4,5,5,9,'#ff6b3566'],[3,14,5,2,'#ef4444'],[23,3,7,1,'#ff6b3544'],[23,4,7,13,'#ff6b3544'],[24,4,6,11,'#ffd70033'],[25,5,5,9,'#ff6b3566'],[24,14,5,2,'#ef4444'],[1,5,3,10,'#ef444433'],[28,5,3,10,'#ef444433'],[2,6,2,8,'#ef444455'],[27,6,2,8,'#ef444455'],[5,2,3,2,'#ffd70055'],[24,2,3,2,'#ffd70055'],[3,2,2,2,'#ffd70066'],[26,2,2,2,'#ffd70066'],[4,1,2,2,'#ffd70044'],[25,1,2,2,'#ffd70044'],[2,16,3,2,'#ef444422'],[27,16,3,2,'#ef444422'],[4,6,4,4,'#ffd70044'],[25,6,4,4,'#ffd70044']],2);
+
+I('wings_mech','Mech Wings','Titan alloy. Propulsion.','accent','epic','tech',700,
+[[3,3,6,1,'#1a1a2e'],[3,4,6,11,'#1a1a2e66'],[4,5,5,9,'#00c4ff44'],[5,6,4,7,'#00c4ff66'],[4,13,5,2,'#1a1a2e'],[23,3,6,1,'#1a1a2e'],[23,4,6,11,'#1a1a2e66'],[24,5,5,9,'#00c4ff44'],[25,6,4,7,'#00c4ff66'],[24,13,5,2,'#1a1a2e'],[2,6,2,8,'#1a1a2e88'],[28,6,2,8,'#1a1a2e88'],[5,7,3,6,'#00c4ff88'],[25,7,3,6,'#00c4ff88'],[6,2,2,2,'#ef4444'],[24,2,2,2,'#ef4444'],[4,2,2,3,'#ef444466'],[26,2,2,3,'#ef444466'],[3,1,2,2,'#1a1a2e'],[27,1,2,2,'#1a1a2e'],[5,10,3,3,'#38bdf844'],[25,10,3,3,'#38bdf844']],1);
+
+I('shield_tower','Tower Shield','Full barrier. Hold the line.','accent','epic','warrior',550,
+[[1,0,8,1,'#1a1a2e'],[2,1,7,1,'#2a2a3e'],[2,2,7,20,'#2a2a3e'],[3,3,5,18,'#3a3a4e'],[3,2,5,20,'#2a2a3e'],[2,2,7,2,'#ffd700'],[2,20,7,2,'#ffd700'],[3,4,5,1,'#ffd70066'],[3,17,5,1,'#ffd70066'],[4,6,3,4,'#ffd70044'],[4,12,3,4,'#ffd70044'],[4,9,3,2,'#ffd70088'],[5,10,1,1,'#ffffff44'],[5,5,3,1,'#ffd70088'],[5,14,3,1,'#ffd70088'],[3,7,5,1,'#4a4a5e'],[3,11,5,1,'#4a4a5e'],[3,15,5,1,'#4a4a5e'],[2,21,7,1,'#1a1a2e'],[4,3,3,1,'#ffd70044'],[4,18,3,1,'#ffd70044']],1);
+
+I('shield_energy','Energy Shield','Holographic. Pings on hit.','accent','epic','tech',580,
+[[1,0,8,1,'#00e5a066'],[1,1,8,20,'#00e5a033'],[0,2,9,18,'#00e5a022'],[1,2,8,18,'#00e5a011'],[1,2,8,2,'#00e5a088'],[1,20,8,2,'#00e5a088'],[2,4,6,2,'#00e5a055'],[2,16,6,2,'#00e5a055'],[3,6,4,2,'#00e5a088'],[3,14,4,2,'#00e5a088'],[3,9,4,4,'#00e5a066'],[4,10,3,2,'#00e5a0'],[2,11,2,1,'#ffffff44'],[7,10,2,1,'#ffffff44'],[4,5,4,1,'#00e5a066'],[4,17,4,1,'#00e5a066'],[1,21,8,1,'#00e5a055'],[2,7,6,1,'#00e5a044'],[2,15,6,1,'#00e5a044'],[3,12,2,1,'#ffffff22']],2);
+
+I('backpack_tech','Tech Pack','Power cells. Keeps charged.','accent','uncommon','tech',110,
+[[11,2,8,1,'#0a0a1e'],[11,3,8,14,'#1a1a2e'],[11,4,8,12,'#2a2a3e'],[12,5,6,10,'#3a3a4e'],[13,6,4,4,'#00c4ff'],[14,7,2,2,'#38bdf8'],[13,12,4,4,'#00c4ff'],[14,13,2,2,'#38bdf8'],[11,15,8,2,'#ef4444'],[12,16,6,2,'#22c55e'],[12,16,2,1,'#4ade80'],[16,16,2,1,'#4ade80'],[11,17,8,1,'#1a1a2e'],[11,18,8,1,'#0a0a1e'],[14,8,2,2,'#38bdf866'],[14,14,2,2,'#38bdf866'],[12,4,2,1,'#00c4ff44'],[18,4,2,1,'#00c4ff44'],[13,10,4,2,'#00c4ff88'],[13,11,4,1,'#00c4ff66']],1);
+
+I('jetpack','Rocket Pack','Boost anywhere. Thrust.','accent','rare','tech',350,
+[[11,0,8,1,'#cc4400'],[11,1,8,11,'#ef6b35'],[11,2,8,9,'#ff8c42'],[12,3,6,7,'#ffa05e'],[13,4,4,5,'#ffd700'],[14,5,2,3,'#fff8dc'],[11,11,8,3,'#ef6b3588'],[12,12,6,3,'#ef444488'],[13,13,4,4,'#ef444444'],[13,0,4,2,'#ffffff66'],[14,0,2,1,'#ffffff88'],[11,13,8,2,'#cc440044'],[11,15,8,1,'#662200'],[12,4,2,1,'#ffd70066'],[18,4,2,1,'#ffd70066'],[13,10,4,1,'#ff8c4266'],[14,11,2,1,'#ef6b3544'],[11,3,2,3,'#ff8c4288'],[19,3,2,3,'#ff8c4288'],[13,7,4,3,'#ffd70044']],1);
+
+I('sash_merit','Merit Sash','Stars earned through service.','accent','uncommon','royal',110,
+[[7,4,18,1,'#daa520'],[6,5,20,1,'#ffd700'],[7,6,18,2,'#ffed4a'],[8,7,16,2,'#ffd70088'],[9,6,14,2,'#fff8dc66'],[8,4,2,2,'#ffffff'],[12,4,2,2,'#ffffff'],[16,4,2,2,'#ffffff'],[20,4,2,2,'#ffffff'],[6,8,20,2,'#daa52044'],[10,3,2,2,'#ffd70066'],[14,3,2,2,'#ffd70066'],[18,3,2,2,'#ffd70066'],[9,5,2,1,'#ffd70044'],[13,5,2,1,'#ffd70044'],[17,5,2,1,'#ffd70044'],[21,5,2,1,'#ffd70044'],[7,7,2,1,'#b8860b'],[21,7,2,1,'#b8860b'],[6,9,20,1,'#daa52022']],0);
+
+I('aura_fire','Fire Aura','Heat shimmer. Intimidation.','accent','epic','elemental',500,
+[[1,2,5,1,'#ef444444'],[2,3,4,12,'#ef6b3544'],[1,4,3,10,'#ffd70033'],[0,5,2,8,'#ef444422'],[2,4,4,1,'#ef6b3566'],[2,14,4,1,'#ef6b3544'],[27,2,5,1,'#ef444444'],[26,3,4,12,'#ef6b3544'],[28,4,3,10,'#ffd70033'],[30,5,2,8,'#ef444422'],[26,4,4,1,'#ef6b3566'],[26,14,4,1,'#ef6b3544'],[3,1,3,4,'#ef444444'],[26,1,3,4,'#ef444444'],[2,15,4,3,'#ef6b3522'],[26,15,4,3,'#ef6b3522'],[4,2,2,2,'#ffd70055'],[26,2,2,2,'#ffd70055'],[1,15,2,3,'#ef444411'],[29,15,2,3,'#ef444411'],[3,15,4,2,'#ffd70022'],[27,15,4,2,'#ffd70022']],1);
+
+I('aura_frost','Frost Aura','Cryogenic field. Chill.','accent','epic','elemental',500,
+[[1,2,5,1,'#93c5fd44'],[2,3,4,12,'#60a5fa44'],[1,4,3,10,'#93c5fd33'],[0,5,2,8,'#bfdbfe22'],[2,4,4,1,'#60a5fa66'],[2,14,4,1,'#60a5fa44'],[27,2,5,1,'#93c5fd44'],[26,3,4,12,'#60a5fa44'],[28,4,3,10,'#93c5fd33'],[30,5,2,8,'#bfdbfe22'],[26,4,4,1,'#60a5fa66'],[26,14,4,1,'#60a5fa44'],[3,1,3,4,'#ffffff44'],[26,1,3,4,'#ffffff44'],[2,15,4,3,'#60a5fa22'],[26,15,4,3,'#60a5fa22'],[4,2,2,2,'#ffffff55'],[26,2,2,2,'#ffffff55'],[1,15,2,3,'#93c5fd11'],[29,15,2,3,'#93c5fd11'],[3,15,4,2,'#ffffff22'],[27,15,4,2,'#ffffff22']],1);
+
+I('aura_void','Void Aura','Gravity bends around.','accent','legendary','dark',800,
+[[1,2,5,1,'#a78bfa33'],[2,3,4,12,'#a78bfa33'],[1,4,3,10,'#00000044'],[0,5,2,8,'#a78bfa22'],[2,4,4,1,'#a78bfa55'],[2,14,4,1,'#a78bfa33'],[27,2,5,1,'#a78bfa33'],[26,3,4,12,'#a78bfa33'],[28,4,3,10,'#00000044'],[30,5,2,8,'#a78bfa22'],[26,4,4,1,'#a78bfa55'],[26,14,4,1,'#a78bfa33'],[3,1,3,4,'#a78bfa55'],[26,1,3,4,'#a78bfa55'],[2,15,4,3,'#00000033'],[26,15,4,3,'#00000033'],[4,2,2,2,'#a78bfa66'],[26,2,2,2,'#a78bfa66'],[1,15,2,3,'#a78bfa11'],[29,15,2,3,'#a78bfa11'],[3,15,4,2,'#00000044'],[27,15,4,2,'#00000044']],1);
+
+I('aura_gold','Golden Aura','Midas touch field.','accent','legendary','royal',900,
+[[1,2,5,1,'#ffd70033'],[2,3,4,12,'#ffd70033'],[1,4,3,10,'#ffed4a44'],[0,5,2,8,'#fff8dc22'],[2,4,4,1,'#ffd70055'],[2,14,4,1,'#ffd70033'],[27,2,5,1,'#ffd70033'],[26,3,4,12,'#ffd70033'],[28,4,3,10,'#ffed4a44'],[30,5,2,8,'#fff8dc22'],[26,4,4,1,'#ffd70055'],[26,14,4,1,'#ffd70033'],[3,1,3,4,'#ffffff55'],[26,1,3,4,'#ffffff55'],[2,15,4,3,'#ffd70022'],[26,15,4,3,'#ffd70022'],[4,2,2,2,'#ffd70066'],[26,2,2,2,'#ffd70066'],[1,15,2,3,'#ffd70011'],[29,15,2,3,'#ffd70011'],[3,15,4,2,'#ffed4a22'],[27,15,4,2,'#ffed4a22']],2);
+
+// ── NEW ACCENT items: neon scarf, medal cluster, fox tail, holo buddy, radiant light ──
+I('scarf_neon','Neon Scarf','RGB flow. Code-woven.','accent','uncommon','tech',100,
+[[6,6,20,1,'#22d3ee44'],[5,7,22,1,'#22d3ee66'],[6,8,20,2,'#22d3ee'],[7,9,18,2,'#38bdf8'],[8,10,16,2,'#22d3ee88'],[7,11,18,1,'#22d3ee44'],[8,12,16,1,'#22d3ee33'],[7,13,18,1,'#22d3ee22'],[6,14,20,1,'#22d3ee11'],[9,8,3,1,'#ffffff44'],[13,8,3,1,'#ffffff44'],[17,8,3,1,'#ffffff44'],[21,8,3,1,'#ffffff44'],[9,9,2,2,'#ffffff33'],[19,9,2,2,'#ffffff33'],[11,10,10,1,'#22d3ee44'],[7,7,3,1,'#22d3ee88'],[22,7,3,1,'#22d3ee88'],[6,6,2,1,'#22d3ee22'],[24,6,2,1,'#22d3ee22'],[8,15,16,1,'#22d3ee11'],[5,8,2,1,'#22d3ee55'],[25,8,2,1,'#22d3ee55'],[7,9,2,1,'#ffffff55'],[23,9,2,1,'#ffffff55'],[10,10,2,1,'#38bdf866'],[20,10,2,1,'#38bdf866'],[12,11,8,1,'#22d3ee44'],[11,12,10,1,'#22d3ee33'],[9,13,14,1,'#22d3ee22'],[10,14,12,1,'#22d3ee11'],[6,15,20,1,'#22d3ee08'],[8,7,16,1,'#22d3ee88'],[13,9,6,1,'#ffffff44'],[14,10,4,1,'#22d3ee66'],[16,11,2,1,'#38bdf855'],[9,11,14,1,'#22d3ee33'],[7,14,18,1,'#22d3ee11'],[12,8,8,1,'#38bdf866']],1);
+
+I('medals_gold','Medal Cluster','Honors. Each one earned.','accent','rare','royal',250,
+[[7,4,18,1,'#1a1a2e'],[8,5,16,2,'#2a2a3e'],[9,6,14,8,'#fbbf24'],[10,7,12,6,'#ffd700'],[11,8,10,4,'#ffe4a0'],[12,9,8,2,'#ffffff44'],[8,7,2,1,'#ef4444'],[22,7,2,1,'#ef4444'],[9,10,14,2,'#daa520'],[10,11,12,1,'#b8860b'],[11,12,10,1,'#a07000'],[8,8,2,1,'#fca5a5'],[22,8,2,1,'#fca5a5'],[9,4,14,1,'#1a1a2e'],[7,10,2,2,'#daa52033'],[23,10,2,2,'#daa52033'],[10,9,2,1,'#ef444444'],[20,9,2,1,'#ef444444'],[13,7,6,2,'#fbbf2466'],[14,8,4,1,'#ffe4a044'],[8,13,16,1,'#1a1a2e'],[9,14,14,1,'#0a0a1e'],[6,5,2,1,'#1a1a2e66'],[24,5,2,1,'#1a1a2e66'],[7,6,2,1,'#2a2a3e44'],[23,6,2,1,'#2a2a3e44'],[8,9,2,1,'#fca5a566'],[22,9,2,1,'#fca5a566'],[10,10,2,1,'#fbbf2488'],[20,10,2,1,'#fbbf2488'],[11,11,10,1,'#daa52088'],[12,12,8,1,'#b8860b66'],[13,13,6,1,'#b8860b44'],[9,12,14,1,'#daa52044'],[10,13,12,1,'#b8860b33'],[11,5,10,1,'#fbbf2488'],[12,6,8,1,'#ffd70066'],[14,7,4,2,'#fbbf2455'],[15,8,2,1,'#ffe4a066'],[8,6,2,1,'#ef444444'],[22,6,2,1,'#ef444444']],2);
+
+I('tail_fox','Fox Tail','Fluffy. Digital. Mesmerizing.','accent','uncommon','elemental',80,
+[[10,8,12,1,'#ef6b3533'],[9,9,14,1,'#ef6b3566'],[10,10,12,2,'#ef6b35'],[11,11,10,2,'#ff8c42'],[12,12,8,2,'#ffa05e'],[11,13,10,2,'#ef6b3588'],[12,14,8,2,'#ef6b3566'],[13,15,6,2,'#ef6b3544'],[14,16,4,2,'#ef6b3522'],[14,17,4,2,'#ef6b3511'],[15,18,2,2,'#ef6b3508'],[10,11,2,2,'#ffffff44'],[20,11,2,2,'#ffffff44'],[11,12,2,1,'#ffffff33'],[19,12,2,1,'#ffffff33'],[12,10,8,1,'#ff8c42'],[13,14,6,1,'#ef6b3544'],[10,12,12,1,'#ef6b35'],[11,15,10,1,'#ef6b3522'],[13,17,6,1,'#ef6b3511'],[14,19,4,1,'#ef6b3508'],[9,10,2,1,'#ef6b3555'],[21,10,2,1,'#ef6b3555'],[11,10,2,1,'#ff8c4266'],[19,10,2,1,'#ff8c4266'],[12,11,8,1,'#ffa05e44'],[13,12,6,1,'#ef6b3588'],[14,13,4,2,'#ef6b3566'],[12,15,8,1,'#ef6b3544'],[13,16,6,1,'#ef6b3522'],[14,18,4,1,'#ef6b3511'],[11,14,10,1,'#ef6b3566'],[10,13,12,1,'#ef6b3588'],[15,19,2,1,'#ef6b3508'],[13,13,6,1,'#ef6b3577'],[14,15,4,1,'#ef6b3533'],[10,9,12,1,'#ef6b3544'],[12,16,8,1,'#ef6b3522'],[11,17,10,1,'#ef6b3511']],0);
+
+I('holo_buddy','Holo Buddy','Floating. Watching. Helping.','accent','rare','tech',300,
+[[10,4,12,1,'#38bdf822'],[10,5,12,10,'#38bdf844'],[11,6,10,8,'#7dd3fc44'],[12,7,8,6,'#38bdf866'],[13,8,6,4,'#7dd3fc88'],[14,9,4,2,'#38bdf8'],[15,10,2,1,'#ffffff'],[11,8,10,1,'#38bdf833'],[12,10,8,1,'#38bdf844'],[13,11,6,1,'#38bdf855'],[10,9,2,3,'#38bdf833'],[20,9,2,3,'#38bdf833'],[11,12,10,1,'#38bdf822'],[14,7,4,2,'#38bdf855'],[12,6,8,1,'#38bdf822'],[13,16,6,1,'#38bdf811'],[14,17,4,1,'#38bdf808'],[11,5,10,1,'#38bdf866'],[10,15,12,1,'#38bdf822'],[12,18,8,1,'#38bdf808'],[9,4,2,2,'#38bdf833'],[21,4,2,2,'#38bdf833'],[10,5,2,1,'#38bdf855'],[20,5,2,1,'#38bdf855'],[12,9,8,1,'#38bdf844'],[13,10,6,1,'#7dd3fc66'],[14,11,4,1,'#38bdf8aa'],[11,13,10,1,'#38bdf833'],[12,14,8,1,'#38bdf822'],[13,15,6,1,'#38bdf811'],[10,3,12,1,'#38bdf815'],[9,5,14,1,'#38bdf833'],[11,6,10,1,'#7dd3fc55'],[13,7,6,1,'#38bdf877'],[14,8,4,1,'#7dd3fcaa'],[12,12,8,1,'#38bdf844'],[10,13,12,1,'#38bdf822'],[11,14,10,1,'#38bdf811'],[12,16,8,1,'#38bdf808'],[14,10,4,1,'#ffffff55'],[15,9,2,1,'#ffffff88']],3);
+
+I('aura_light','Radiant Light','Warm glow. Purifying.','accent','epic','mystic',450,
+[[2,2,4,1,'#fbbf2444'],[2,3,4,12,'#ffe4a044'],[1,4,3,10,'#fff8dc33'],[0,5,2,8,'#ffffff22'],[2,4,4,1,'#ffe4a066'],[2,14,4,1,'#ffe4a044'],[27,2,4,1,'#fbbf2444'],[26,3,4,12,'#ffe4a044'],[28,4,3,10,'#fff8dc33'],[30,5,2,8,'#ffffff22'],[26,4,4,1,'#ffe4a066'],[26,14,4,1,'#ffe4a044'],[3,1,3,4,'#ffffff66'],[26,1,3,4,'#ffffff66'],[2,15,4,3,'#ffe4a022'],[26,15,4,3,'#ffe4a022'],[4,2,2,2,'#ffffff88'],[26,2,2,2,'#ffffff88'],[1,15,2,3,'#ffffff11'],[29,15,2,3,'#ffffff11'],[3,15,4,2,'#fff8dc22'],[27,15,4,2,'#fff8dc22'],[1,2,30,1,'#ffe4a011'],[1,13,30,1,'#ffe4a011'],[0,3,4,1,'#ffeee044'],[28,3,4,1,'#ffeee044'],[3,2,3,3,'#fff8dc55'],[26,2,3,3,'#fff8dc55'],[2,0,28,1,'#ffd70011'],[1,14,4,2,'#ffe4a033'],[27,14,4,2,'#ffe4a033'],[4,3,2,4,'#ffffff66'],[26,3,2,4,'#ffffff66'],[3,14,26,1,'#ffe4a022'],[2,12,28,1,'#fbbf2415'],[1,11,30,1,'#ffe4a011'],[0,0,32,1,'#ffd70008'],[0,16,32,1,'#ffe4a008'],[2,5,4,8,'#fff8dc44'],[26,5,4,8,'#fff8dc44'],[1,0,2,2,'#ffffff15'],[29,0,2,2,'#ffffff15'],[3,8,26,2,'#ffe4a033'],[5,6,22,2,'#fff8dc33'],[10,7,12,2,'#ffffff44'],[12,8,8,1,'#fff8dc55'],[14,9,4,1,'#ffffff33'],[2,10,28,1,'#ffd70022'],[3,11,26,1,'#ffe4a022']],2);
+
+// HAND — staves, swords, tools — 12 items with faceted crystals, blade edge highlights, grip detail
+I('staff_crystal','Crystal Staff','Focus crystal. Arcane channel.','hand','epic','mystic',420,
+[[0,0,4,26,'#6d28d9'],[1,0,3,24,'#7c3aed'],[1,4,3,18,'#8b5cf6'],[2,6,2,14,'#a78bfa'],[0,0,8,7,'#a78bfa'],[1,1,6,5,'#c4b5fd'],[2,2,4,3,'#e9d5ff'],[2,-2,4,3,'#ffffff'],[3,-1,2,1,'#ffffff88'],[2,24,4,3,'#6d28d988'],[3,23,2,1,'#a78bfa44'],[1,7,2,2,'#c4b5fd44'],[3,7,2,2,'#a78bfa44'],[1,14,2,2,'#c4b5fd44'],[3,14,2,2,'#a78bfa44'],[2,17,2,2,'#e9d5ff44'],[2,20,2,2,'#a78bfa44'],[2,12,2,2,'#ffffff22'],[1,10,2,2,'#a78bfa33'],[0,24,4,2,'#6d28d9']],2);
+
+I('staff_solar','Solar Staff','Burning light staff.','hand','legendary','elemental',800,
+[[0,0,4,26,'#b8860b'],[1,0,3,24,'#daa520'],[1,4,3,18,'#ffd700'],[2,6,2,14,'#ffed4a'],[0,0,8,7,'#ffffff'],[1,1,6,5,'#fff8dc'],[2,2,4,3,'#ffffff'],[2,-2,4,3,'#ffffff88'],[2,24,4,3,'#b8860b88'],[1,7,2,2,'#fff8dc44'],[3,7,2,2,'#ffd70044'],[1,14,2,2,'#fff8dc44'],[3,14,2,2,'#ffd70044'],[2,10,2,2,'#ffffff44'],[2,18,2,2,'#ffd70044'],[1,21,2,2,'#fff8dc33'],[0,24,4,2,'#b8860b'],[3,22,2,2,'#ffed4a33'],[2,23,2,1,'#ffd70033']],3);
+
+I('staff_void','Void Staff','Abyssal focus. Dark power.','hand','legendary','dark',750,
+[[0,0,4,26,'#000000'],[1,0,3,24,'#0a001a'],[1,4,3,18,'#15002a'],[2,6,2,14,'#a78bfa66'],[0,0,8,7,'#a78bfa88'],[2,2,4,3,'#a78bfa44'],[2,-2,4,3,'#a78bfa44'],[3,-1,2,1,'#a78bfa55'],[2,24,4,3,'#00000088'],[1,8,2,2,'#a78bfa55'],[3,8,2,2,'#a78bfa44'],[1,16,2,2,'#a78bfa55'],[3,16,2,2,'#a78bfa44'],[2,12,2,2,'#a78bfa66'],[2,20,2,2,'#a78bfa55'],[0,24,4,2,'#000000'],[1,22,2,2,'#a78bfa33'],[2,14,2,1,'#ffffff22']],2);
+
+I('sword_energy','Energy Blade','Plasma edge. Cuts code.','hand','legendary','warrior',700,
+[[0,0,3,1,'#ffffff88'],[0,1,3,17,'#22c55e'],[0,1,6,5,'#ffffff'],[1,2,4,3,'#86efac'],[1,4,2,14,'#4ade80'],[0,4,3,14,'#22c55e88'],[0,16,6,6,'#22c55e'],[0,17,6,4,'#22c55e66'],[2,18,6,4,'#22c55e44'],[1,18,6,2,'#4ade8044'],[1,5,2,2,'#ffffff44'],[2,6,2,1,'#ffffff33'],[2,10,2,1,'#ffffff33'],[1,14,2,1,'#ffffff33'],[0,20,4,2,'#22c55e'],[1,21,2,2,'#1a5e2e'],[2,22,4,4,'#1a1a2e'],[0,23,4,2,'#1a5e2e'],[1,24,2,2,'#1a1a2e']],2);
+
+I('sword_flame','Flamberge','Wavy flame-blade. Burns.','hand','epic','elemental',520,
+[[1,0,3,1,'#ffd70088'],[1,1,3,17,'#ef6b35'],[1,2,6,4,'#ffd700'],[2,3,4,3,'#ffed4a'],[0,3,2,4,'#ef4444'],[3,6,2,4,'#ef4444'],[1,9,5,4,'#ffd700'],[2,10,3,3,'#ffed4a'],[0,13,2,4,'#ef4444'],[1,14,5,5,'#ef6b35'],[2,15,3,4,'#ff8c42'],[1,16,4,2,'#ffd700'],[1,17,5,4,'#ef6b3566'],[2,4,2,2,'#ffd70066'],[2,7,2,1,'#ffd70044'],[2,12,2,1,'#ffd70044'],[0,18,3,2,'#ef6b35'],[1,19,2,2,'#cc4400'],[2,20,4,4,'#1a1a2e'],[1,21,2,2,'#662200'],[0,23,4,2,'#1a1a2e']],2);
+
+I('sword_ice','Frost Blade','Permafrost cut. Deep.','hand','epic','elemental',520,
+[[1,0,3,1,'#ffffff88'],[1,1,3,17,'#60a5fa'],[1,2,6,4,'#ffffff'],[2,3,4,3,'#bfdbfe'],[0,3,2,4,'#93c5fd'],[3,6,2,4,'#93c5fd'],[1,9,5,4,'#ffffff'],[2,10,3,3,'#bfdbfe'],[1,16,5,5,'#60a5fa'],[2,15,3,4,'#93c5fd'],[1,17,5,4,'#60a5fa66'],[2,4,2,2,'#ffffff44'],[2,7,2,1,'#ffffff33'],[2,12,2,1,'#ffffff33'],[0,18,3,2,'#60a5fa'],[1,19,2,2,'#1e3a8a'],[2,20,4,4,'#1a1a2e'],[1,21,2,2,'#1e3a8a'],[0,23,4,2,'#1a1a2e']],1);
+
+I('sword_void','Void Blade','Compressed shadow edge.','hand','legendary','dark',700,
+[[1,0,3,1,'#a78bfa66'],[1,1,3,19,'#000000'],[1,2,6,4,'#a78bfa88'],[2,3,4,3,'#a78bfa55'],[0,3,2,6,'#a78bfa44'],[3,5,2,6,'#a78bfa44'],[1,9,5,3,'#a78bfa55'],[2,10,3,2,'#a78bfa88'],[1,15,5,5,'#a78bfa44'],[2,16,3,4,'#a78bfa66'],[1,18,5,4,'#000000'],[2,19,3,2,'#00000088'],[2,4,2,2,'#a78bfa66'],[2,7,2,1,'#a78bfa33'],[2,12,2,1,'#a78bfa33'],[1,21,3,2,'#000000'],[0,22,4,2,'#000000'],[1,23,2,2,'#0a001a'],[2,24,4,4,'#1a1a2e']],2);
+
+I('katana','Blade of Empire','Curved steel. Wraparound grip.','hand','epic','warrior',550,
+[[0,0,3,1,'#ffffff88'],[0,1,3,23,'#c0c0c0'],[0,1,6,5,'#ffffff'],[0,1,6,4,'#fbbf24'],[1,2,4,3,'#fff8dc'],[0,4,3,18,'#e0e0e0'],[1,5,2,16,'#d0d0d0'],[0,18,6,3,'#1a1a2e'],[0,20,6,2,'#2a2a3e'],[0,22,6,3,'#1a1a2e88'],[0,24,6,2,'#0a0a14'],[1,5,2,2,'#ffffff44'],[2,8,2,1,'#ffffff33'],[2,14,2,1,'#ffffff33'],[1,18,2,1,'#ffffff22'],[3,20,2,1,'#fbbf2444'],[3,22,2,1,'#2a2a3e'],[0,23,6,2,'#1a1a2e'],[1,19,4,1,'#1a1a2e66'],[2,21,3,1,'#1a1a2e44']],1);
+
+I('book_tome','Ancient Tome','Leather. Sigils glow.','hand','uncommon','mystic',90,
+[[4,3,10,1,'#2a0a00'],[4,4,10,14,'#3a1a0a'],[5,5,8,12,'#4a2a1a'],[4,4,10,2,'#5a2a1a'],[4,16,10,2,'#5a2a1a'],[5,7,8,8,'#2a0a00'],[6,9,6,4,'#1a0000'],[7,10,4,2,'#000000'],[6,8,3,2,'#fbbf2444'],[8,12,3,2,'#fbbf2444'],[6,13,3,2,'#a78bfa44'],[9,8,4,1,'#fbbf2466'],[8,14,4,1,'#a78bfa66'],[6,6,8,1,'#6b3a1a'],[5,15,8,1,'#3a1a0a'],[7,11,6,1,'#2a0a00'],[6,17,8,1,'#3a1a0a44'],[7,18,6,1,'#2a0a0022']],1);
+
+I('lantern','Soul Lantern','Eternal flame. Dark iron.','hand','rare','dark',250,
+[[7,3,8,1,'#0a0a14'],[7,4,8,12,'#1a1a2e'],[8,5,6,10,'#2a2a3e'],[7,4,8,2,'#3a3a4e'],[7,15,8,2,'#3a3a4e'],[8,6,6,8,'#ef6b35'],[9,7,4,6,'#ffd700'],[10,8,2,4,'#ffffff'],[10,9,2,2,'#fff8dc'],[7,3,2,2,'#1a1a2e'],[13,3,2,2,'#1a1a2e'],[8,2,2,2,'#1a1a2e'],[12,2,2,2,'#1a1a2e'],[9,1,4,2,'#1a1a2e'],[10,0,2,2,'#1a1a2e'],[10,14,2,2,'#ef6b3544'],[11,15,2,1,'#ef6b3522'],[9,16,4,1,'#1a1a2e'],[10,17,2,1,'#0a0a14'],[8,4,2,1,'#4a4a5e'],[12,4,2,1,'#4a4a5e']],2);
+
+I('wrench','Omni-Wrench','Adjusts everything. Blunt.','hand','common','tech',45,
+[[2,0,4,1,'#9ca3af'],[2,1,4,3,'#9ca3af'],[1,1,6,3,'#b0b0b0'],[3,2,2,1,'#ffffff44'],[2,4,4,14,'#6b7280'],[3,5,2,12,'#7a8290'],[2,5,2,11,'#6b7280'],[1,15,6,2,'#6b7280'],[1,16,6,2,'#5a6270'],[1,17,6,2,'#4b5563'],[0,17,7,2,'#4b5563'],[1,18,6,1,'#3a4250'],[3,4,2,2,'#9ca3af44'],[2,3,2,2,'#b0b0b0'],[3,1,2,1,'#c0c0c0'],[3,14,2,2,'#7a829044'],[2,19,4,1,'#3a4250'],[2,4,2,1,'#9ca3af22']],0);
+
+// ── NEW HAND items: shadow dagger, empire spear, laser pistol, ancient scroll, shield gauntlet ──
+I('dagger_shadow','Shadow Dagger','Silent edge. Between worlds.','hand','epic','dark',380,
+[[1,0,2,2,'#a78bfa55'],[1,1,2,8,'#a78bfa88'],[2,2,2,6,'#a78bfa'],[3,4,2,4,'#c4b5fd'],[4,6,2,2,'#e9d5ff44'],[1,8,2,8,'#1a1a2e'],[2,9,2,7,'#2a2a3e'],[3,10,2,5,'#3a3a4e'],[4,11,2,3,'#4a4a5e'],[1,15,2,1,'#0a0a1e'],[1,16,2,4,'#0a0a1e'],[2,17,2,3,'#0a0a1e'],[3,18,2,2,'#0a0a1e'],[4,19,2,1,'#0a0a1e'],[2,1,2,1,'#c4b5fd'],[3,3,2,1,'#c4b5fd66'],[1,4,2,1,'#a78bfa22'],[1,14,2,1,'#2a2a3e'],[2,16,2,1,'#a78bfa33'],[3,20,2,1,'#0a0a1e'],[0,1,2,1,'#a78bfa44'],[0,6,2,1,'#a78bfa33'],[4,5,2,1,'#c4b5fd55'],[3,7,2,1,'#c4b5fd44'],[2,10,2,1,'#3a3a4e88'],[3,11,2,2,'#4a4a5e66'],[2,14,2,1,'#2a2a3e88'],[3,15,2,1,'#3a3a4e66'],[4,16,2,1,'#4a4a5e44'],[1,0,2,1,'#c4b5fd44'],[2,0,2,1,'#a78bfa55'],[0,-1,2,2,'#a78bfa22'],[4,1,2,1,'#c4b5fd22'],[4,8,2,2,'#a78bfa44'],[3,12,2,1,'#3a3a4e55'],[2,13,2,1,'#2a2a3e66'],[1,12,2,1,'#1a1a2e88'],[4,17,2,1,'#4a4a5e22'],[5,9,1,1,'#a78bfa11']],2);
+
+I('spear_empire','Empire Spear','Long reach. Imperial will.','hand','rare','royal',260,
+[[0,0,2,22,'#3a3a4a'],[1,0,2,20,'#4a4a5a'],[1,2,2,18,'#5a5a6a'],[2,4,2,16,'#6a6a7a'],[3,6,2,14,'#7a7a8a'],[2,7,2,2,'#ffffff44'],[1,10,2,2,'#ffffff22'],[0,14,2,2,'#ffffff11'],[3,18,2,4,'#8a8a9a'],[2,22,2,2,'#fbbf24'],[1,23,2,1,'#ffd700'],[2,24,2,1,'#ffe4a044'],[1,21,2,1,'#4a4a5a'],[0,-2,2,3,'#5a5a6a'],[1,-2,2,2,'#6a6a7a'],[1,0,2,1,'#ffffff22'],[3,20,2,2,'#7a7a8a'],[2,-1,2,1,'#ffffff33'],[1,5,2,1,'#8a8a9a'],[0,18,2,4,'#4a4a5a'],[0,0,2,1,'#ffffff22'],[1,1,2,1,'#8a8a9a44'],[2,3,2,1,'#ffffff33'],[3,5,2,1,'#7a7a8a66'],[2,6,2,1,'#8a8a9a55'],[1,9,2,1,'#5a5a6a88'],[0,11,2,1,'#4a4a5a66'],[2,12,2,1,'#6a6a7a55'],[1,14,2,1,'#5a5a6a77'],[0,16,2,1,'#3a3a4a88'],[3,17,2,2,'#8a8a9a66'],[2,19,2,1,'#6a6a7a55'],[1,22,2,1,'#5a5a6a44'],[0,24,2,1,'#4a4a5a33'],[3,15,2,2,'#7a7a8a44'],[1,13,2,1,'#5a5a6a66'],[2,16,2,1,'#6a6a7a44'],[3,12,2,1,'#7a7a8a33'],[1,18,2,1,'#4a4a5a77'],[2,21,2,1,'#6a6a7a44']],1);
+
+I('pistol_laser','Laser Pistol','Sidearm. Energy core.','hand','rare','tech',300,
+[[0,4,4,1,'#0a0a1e'],[0,5,4,8,'#1a1a2e'],[1,6,2,6,'#2a2a3e'],[0,6,4,1,'#22d3ee'],[1,5,2,1,'#22d3ee66'],[0,8,4,1,'#22d3ee44'],[2,9,2,2,'#22d3ee22'],[0,12,4,1,'#22d3ee44'],[2,13,2,2,'#22d3ee22'],[1,14,2,2,'#2a2a3e'],[0,1,4,4,'#1a1a2e'],[1,0,2,2,'#0a0a1e'],[0,2,2,2,'#0a0a1e'],[3,2,2,2,'#0a0a1e'],[1,3,2,1,'#3a3a4e'],[1,7,2,1,'#22d3ee88'],[0,9,4,1,'#1a1a2e'],[0,12,4,1,'#22d3ee44'],[1,11,2,1,'#22d3ee88'],[0,-2,4,4,'#1a1a2e'],[1,-1,2,2,'#2a2a3e'],[0,4,2,1,'#22d3ee55'],[3,4,2,1,'#22d3ee33'],[0,7,4,1,'#22d3ee66'],[2,8,2,1,'#22d3ee44'],[0,10,4,1,'#22d3ee33'],[1,10,2,1,'#22d3ee55'],[0,11,4,1,'#22d3ee33'],[1,15,2,1,'#1a1a2e'],[0,3,4,1,'#0a0a1e'],[1,4,2,1,'#3a3a4e44'],[2,5,2,1,'#22d3ee77'],[0,-1,4,2,'#1a1a2e'],[1,-2,2,2,'#2a2a3e'],[2,-1,2,2,'#3a3a4e'],[3,1,2,3,'#0a0a1e'],[3,4,2,3,'#0a0a1e'],[1,2,2,1,'#1a1a2e66'],[0,5,4,1,'#1a1a2e88'],[1,8,2,1,'#22d3ee77'],[2,11,2,1,'#22d3ee55'],[1,12,2,1,'#22d3ee44']],1);
+
+I('scroll_ancient','Ancient Scroll','Sealed knowledge. Timeless.','hand','common','mystic',50,
+[[2,0,4,1,'#e0c080'],[1,1,6,1,'#e8c890'],[1,2,6,18,'#d4b878'],[2,3,4,16,'#dcc080'],[3,4,2,14,'#e8c890'],[1,5,6,1,'#c8a860'],[1,10,6,1,'#c8a860'],[2,11,4,2,'#d4b878'],[1,15,6,1,'#c8a860'],[2,16,4,3,'#d4b878'],[1,19,6,1,'#c8a860'],[2,20,4,1,'#b89850'],[0,2,2,16,'#c8a860'],[6,2,2,16,'#c8a860'],[4,5,2,2,'#a07830'],[3,7,2,2,'#a07830'],[4,9,2,2,'#a07830'],[3,12,2,2,'#a07830'],[4,14,2,2,'#a07830'],[2,2,4,2,'#f0d8a0'],[2,18,4,2,'#e0c080'],[2,-1,4,1,'#e0c080'],[2,21,4,1,'#b89850'],[0,0,2,2,'#e0c080'],[6,0,2,2,'#e0c080'],[1,0,6,1,'#d4b878'],[2,1,4,1,'#dcc080'],[0,18,2,2,'#c8a86066'],[6,18,2,2,'#c8a86066'],[1,20,6,1,'#c8a860'],[2,21,4,1,'#b89850'],[3,6,2,1,'#a0783044'],[4,8,2,1,'#a0783033'],[3,11,2,1,'#a0783044'],[4,13,2,1,'#a0783033'],[1,17,6,1,'#c8a86088'],[2,19,4,1,'#d4b87866'],[2,22,4,1,'#a07830'],[1,3,6,1,'#e8c89088'],[2,4,4,1,'#dcc08066'],[3,5,2,1,'#e8c89055']],0);
+
+I('gauntlet_shield','Shield Gauntlet','Heavy arm. Unbreakable.','hand','legendary','warrior',800,
+[[0,0,4,1,'#2a2a3a'],[0,1,4,18,'#3a3a4a'],[1,2,2,16,'#4a4a5a'],[0,3,4,1,'#fbbf24'],[0,5,4,1,'#fbbf2466'],[0,8,4,1,'#fbbf2444'],[0,12,4,1,'#fbbf2455'],[0,15,4,1,'#fbbf2433'],[1,3,2,2,'#ffd70044'],[1,9,2,2,'#ffd70022'],[1,13,2,2,'#ffd70033'],[0,18,4,1,'#2a2a3a'],[1,19,2,1,'#1a1a2a'],[0,-1,4,2,'#3a3a4a'],[1,-1,2,1,'#4a4a5a'],[0,20,4,1,'#0a0a1a'],[1,6,2,1,'#38bdf844'],[2,4,2,2,'#ffffff22'],[2,10,2,2,'#ffffff11'],[2,16,2,2,'#ffffff11'],[1,2,2,1,'#5a5a6a'],[0,0,2,1,'#3a3a4a66'],[0,2,4,1,'#4a4a5a44'],[1,4,2,1,'#5a5a6a55'],[0,6,4,1,'#4a4a5a66'],[1,7,2,1,'#5a5a6a44'],[0,10,4,1,'#3a3a4a77'],[1,11,2,1,'#4a4a5a55'],[0,14,4,1,'#3a3a4a66'],[1,16,2,1,'#4a4a5a44'],[0,17,4,1,'#2a2a3a88'],[1,18,2,1,'#3a3a4a66'],[0,-2,4,2,'#2a2a3a44'],[1,-2,2,1,'#3a3a4a33'],[2,8,2,1,'#fbbf2444'],[2,14,2,1,'#fbbf2433'],[1,0,2,1,'#5a5a6a88'],[0,4,4,1,'#fbbf2455'],[0,7,4,1,'#fbbf2433'],[0,9,4,1,'#fbbf2433'],[0,11,4,1,'#fbbf2455'],[1,12,2,1,'#fbbf2444'],[0,13,4,1,'#fbbf2433'],[1,14,2,1,'#fbbf2444'],[0,16,4,1,'#fbbf2422'],[2,6,2,1,'#38bdf855'],[1,5,2,1,'#fbbf2466'],[2,12,2,1,'#fbbf2444']],2);
+
+// PETS — 8 detailed creatures with eye catchlights, fur/scales, shadow bases, glow effects
+I('pet_drone','Data Drone','Floating eye. Reports everything.','pet','rare','tech',350,
+[[10,7,12,1,'#0a0a1e'],[10,8,12,8,'#1a1a2e'],[10,8,12,2,'#00c4ff'],[10,14,12,2,'#00c4ff'],[11,9,10,5,'#2a2a3e'],[12,10,8,3,'#0a0a1e'],[13,11,6,1,'#00c4ff44'],[14,12,4,1,'#00c4ff'],[11,10,2,2,'#ef4444'],[19,10,2,2,'#22c55e'],[12,16,8,2,'#1a1a2e'],[13,17,6,2,'#ef444488'],[14,18,4,4,'#ef444444'],[10,15,12,1,'#1a1a2e'],[11,8,2,1,'#38bdf866'],[19,8,2,1,'#38bdf866'],[11,17,10,1,'#1a1a2e'],[13,10,6,1,'#00c4ff22'],[12,12,8,1,'#0a0a1e'],[14,11,4,1,'#00c4ff66']],2);
+
+I('pet_cat','Pixel Cat','Digital feline. Aloof. Loyal.','pet','epic','misc',450,
+[[5,10,22,1,'#111111'],[6,11,20,2,'#1a1a1a'],[8,10,16,2,'#2a2a2a'],[7,12,18,11,'#1a1a1a'],[5,13,22,9,'#2a2a2a'],[10,14,4,2,'#4ade80'],[18,14,4,2,'#4ade80'],[14,14,4,1,'#ffffff'],[15,15,2,1,'#86efac'],[13,12,2,2,'#444444'],[17,12,2,2,'#444444'],[8,13,2,2,'#333333'],[22,13,2,2,'#333333'],[6,15,2,8,'#1a1a1a'],[24,15,2,8,'#1a1a1a'],[4,22,3,2,'#1a1a1a'],[24,22,3,2,'#1a1a1a'],[5,23,22,1,'#111111'],[10,20,12,1,'#222222'],[12,16,8,2,'#333333'],[14,18,4,2,'#222222'],[9,12,2,1,'#444444'],[21,12,2,1,'#444444']],1);
+
+I('pet_owl','Holo Owl','Wisdom projection. Silent watcher.','pet','epic','mystic',500,
+[[10,5,12,1,'#6d28d9'],[9,6,14,2,'#7c3aed'],[10,7,12,18,'#8b5cf6'],[9,8,14,16,'#a78bfa'],[11,9,10,14,'#7c3aed'],[12,10,8,2,'#fbbf24'],[13,11,6,1,'#fcd34d'],[14,10,4,2,'#ffffff'],[15,11,2,1,'#ffffff88'],[13,13,6,2,'#a78bfa44'],[10,14,4,2,'#7c3aed66'],[18,14,4,2,'#7c3aed66'],[11,17,10,2,'#6d28d9'],[12,19,8,2,'#6d28d988'],[13,20,6,2,'#6d28d944'],[9,5,2,2,'#a78bfa66'],[21,5,2,2,'#a78bfa66'],[11,16,10,1,'#8b5cf6'],[12,12,8,1,'#a78bfa33'],[10,22,12,1,'#5b21b6'],[11,23,10,1,'#4c1d95'],[14,21,4,1,'#5b21b644']],2);
+
+I('pet_fox','Neon Fox','Bioluminescent. Quick.','pet','rare','elemental',380,
+[[8,9,16,1,'#cc4400'],[7,10,18,2,'#ef6b35'],[8,11,16,14,'#ef6b35'],[7,12,18,12,'#ff8c42'],[9,13,14,10,'#ef6b3566'],[10,14,12,1,'#ff8c42'],[12,15,8,2,'#ffffff'],[13,16,6,1,'#ffe4d6'],[14,15,4,2,'#fbbf24'],[10,16,4,2,'#ef6b3588'],[18,16,4,2,'#ef6b3588'],[9,21,14,2,'#ef6b35'],[7,22,18,2,'#cc4400'],[8,11,2,4,'#ffffff'],[22,11,2,4,'#ffffff'],[12,11,8,2,'#ff8c42'],[10,20,12,1,'#ef6b3544'],[8,23,16,1,'#cc4400'],[11,18,10,2,'#ef6b3544'],[15,20,2,1,'#ffffff22']],2);
+
+I('pet_orb','Sentient Orb','Pulses with data. Follows.','pet','uncommon','tech',180,
+[[11,6,10,1,'#00c4ff44'],[11,7,10,10,'#00c4ff22'],[12,8,8,8,'#00c4ff11'],[11,7,10,2,'#38bdf866'],[11,15,10,2,'#38bdf866'],[12,9,8,6,'#00c4ff11'],[13,10,6,4,'#00c4ff22'],[14,11,4,2,'#00c4ff'],[15,12,2,1,'#38bdf8'],[12,10,8,1,'#00c4ff33'],[13,12,6,1,'#00c4ff44'],[16,11,1,1,'#ffffff'],[13,9,6,1,'#00c4ff11'],[14,13,4,1,'#00c4ff22'],[12,11,2,1,'#ffffff22'],[18,11,2,1,'#ffffff22'],[11,16,10,1,'#00c4ff33'],[12,17,8,1,'#00c4ff11']],2);
+
+I('pet_dragon','Micro Dragon','Tiny terror. Breathes code.','pet','legendary','elemental',900,
+[[10,4,12,1,'#660000'],[9,5,14,2,'#8b0000'],[10,6,12,20,'#8b0000'],[9,7,14,18,'#aa0000'],[11,8,10,16,'#cc2222'],[12,10,8,3,'#fbbf24'],[13,11,6,2,'#fcd34d'],[14,10,4,3,'#ffffff44'],[15,11,2,2,'#ffffff88'],[10,11,2,3,'#8b000088'],[20,11,2,3,'#8b000088'],[11,16,10,2,'#8b000066'],[12,19,8,3,'#660000'],[13,20,6,2,'#66000088'],[14,21,4,3,'#66000044'],[9,5,14,2,'#cc2222'],[8,6,16,2,'#8b0000'],[11,14,10,1,'#aa0000'],[12,17,8,1,'#8b000044'],[10,23,12,1,'#550000'],[11,24,10,1,'#440000'],[14,8,4,1,'#fbbf2444']],2);
+
+I('pet_robot','Mech Pup','Steel companion. Wags tail.','pet','uncommon','tech',220,
+[[9,13,14,1,'#3a3a4a'],[8,14,16,2,'#5a6270'],[9,15,14,10,'#6b7280'],[8,16,16,8,'#7a8290'],[10,17,12,6,'#5a6270'],[12,19,8,2,'#38bdf844'],[13,19,6,2,'#00c4ff66'],[14,20,4,1,'#38bdf8'],[11,21,10,2,'#4a5260'],[10,23,12,2,'#5a6270'],[9,15,2,4,'#9ca3af'],[21,15,2,4,'#9ca3af'],[14,15,4,2,'#9ca3af'],[10,21,12,1,'#5a6270'],[11,22,10,1,'#4a5260'],[9,22,14,1,'#3a3a4a'],[12,18,8,1,'#5a6270'],[11,20,10,1,'#4a526044'],[13,16,6,1,'#7a829044'],[8,24,16,1,'#3a3a4a']],0);
+
+I('pet_crow','Void Crow','Three-eyed observer.','pet','rare','dark',340,
+[[10,5,12,1,'#000000'],[9,6,14,2,'#0a0a0a'],[10,7,12,18,'#0a0a0a'],[9,8,14,16,'#1a1a1a'],[11,9,10,14,'#0a0a0a'],[12,11,8,2,'#ef4444'],[13,12,6,1,'#fca5a5'],[14,11,4,2,'#ef444488'],[13,14,6,2,'#a78bfa44'],[11,15,4,2,'#00000066'],[17,15,4,2,'#00000066'],[11,19,10,2,'#1a1a1a'],[10,6,12,2,'#0a0a0a'],[13,8,6,2,'#000000'],[12,17,8,1,'#0a0a0a'],[9,22,14,1,'#000000'],[10,23,12,1,'#000000'],[14,10,4,1,'#ef444444'],[11,12,10,1,'#0a0a0a'],[12,20,8,1,'#000000']],1);
+
+// ── NEW PETS: spirit wolf, crystal snake, data phoenix, void bunny, mech scorpion ──
+I('pet_spirit_wolf','Spirit Wolf','Ethereal pack leader. Ghost.','pet','legendary','mystic',800,
+[[10,5,12,1,'#a78bfa22'],[9,6,14,1,'#a78bfa44'],[10,7,12,2,'#a78bfa66'],[9,8,14,3,'#a78bfa88'],[10,9,12,4,'#a78bfa'],[11,10,10,4,'#c4b5fd'],[12,11,8,4,'#e9d5ff'],[13,12,6,3,'#ffffff66'],[10,12,12,2,'#a78bfa44'],[11,13,10,2,'#a78bfa33'],[12,14,8,2,'#a78bfa22'],[10,8,12,1,'#a78bfa'],[11,9,10,1,'#c4b5fd'],[13,10,6,1,'#ffffff44'],[14,11,4,1,'#ffffff88'],[9,12,2,1,'#a78bfa33'],[21,12,2,1,'#a78bfa33'],[10,14,12,1,'#a78bfa22'],[11,15,10,1,'#a78bfa11'],[12,16,8,1,'#a78bfa08'],[10,5,2,1,'#9ca3af33'],[20,5,2,1,'#9ca3af33'],[11,6,10,1,'#a78bfa88'],[13,8,6,1,'#c4b5fd44'],[12,10,8,1,'#e9d5ff44'],[8,7,2,2,'#a78bfa55'],[22,7,2,2,'#a78bfa55'],[10,6,12,1,'#a78bfa77'],[11,8,10,1,'#c4b5fd88'],[12,9,8,1,'#e9d5ff66'],[14,10,4,2,'#ffffff66'],[9,11,2,1,'#a78bfa55'],[21,11,2,1,'#a78bfa55'],[11,12,10,1,'#a78bfa55'],[12,13,8,1,'#a78bfa44'],[13,14,6,1,'#a78bfa33'],[10,15,12,1,'#a78bfa22'],[11,16,10,1,'#a78bfa11'],[13,5,6,2,'#a78bfa55'],[14,6,4,2,'#c4b5fd44'],[15,7,2,2,'#ffffff33'],[10,10,12,1,'#c4b5fd55'],[12,12,8,1,'#a78bfa44'],[9,13,14,1,'#a78bfa33'],[10,16,12,1,'#a78bfa11'],[11,17,10,1,'#a78bfa08']],3);
+
+I('pet_crystal_snake','Crystal Snake','Faceted. Moves unseen.','pet','rare','mystic',320,
+[[10,6,12,1,'#6d28d922'],[9,7,14,1,'#7c3aed44'],[10,8,12,2,'#8b5cf666'],[11,9,10,3,'#a78bfa88'],[12,10,8,4,'#c4b5fd'],[13,11,6,4,'#e9d5ff'],[14,12,4,4,'#ffffff44'],[11,12,10,2,'#8b5cf666'],[12,13,8,2,'#a78bfa44'],[13,14,6,2,'#8b5cf622'],[12,15,8,2,'#7c3aed22'],[11,16,10,2,'#6d28d922'],[10,17,12,2,'#5b21b622'],[9,18,14,2,'#4c1d9522'],[10,19,12,2,'#3b076422'],[10,8,12,1,'#a78bfa66'],[12,9,8,1,'#c4b5fd66'],[13,10,6,1,'#e9d5ff44'],[11,11,10,1,'#a78bfa44'],[14,12,4,1,'#ffffff66'],[10,14,12,1,'#8b5cf644'],[11,18,10,1,'#4c1d9522'],[12,20,8,1,'#3b076411'],[13,6,6,1,'#7c3aed22'],[12,7,8,1,'#8b5cf644'],[11,8,10,2,'#7c3aed55'],[10,9,12,2,'#8b5cf677'],[9,10,14,2,'#a78bfa88'],[13,12,6,2,'#c4b5fd88'],[12,11,8,2,'#e9d5ff66'],[11,10,10,2,'#a78bfaaa'],[13,8,6,1,'#e9d5ff88'],[14,9,4,1,'#ffffff88'],[15,10,2,1,'#ffffffcc'],[12,4,8,2,'#7c3aed33'],[14,6,4,2,'#a78bfa44'],[10,7,2,2,'#8b5cf688'],[20,7,2,2,'#8b5cf688'],[13,16,6,1,'#5b21b644'],[14,17,4,1,'#4c1d9533'],[11,19,10,1,'#3b076433'],[15,11,2,1,'#ffffff55'],[9,12,2,2,'#8b5cf644'],[21,12,2,2,'#8b5cf644'],[13,5,6,1,'#a78bfa33'],[14,7,4,2,'#e9d5ff55'],[10,10,12,1,'#c4b5fd77'],[11,13,10,1,'#a78bfa55'],[12,14,8,1,'#8b5cf644'],[13,15,6,1,'#7c3aed33'],[12,18,8,1,'#5b21b622'],[10,20,12,1,'#3b076422']],2);
+
+I('pet_phoenix','Data Phoenix','Burning binary. Reborn.','pet','legendary','tech',950,
+[[10,3,12,1,'#ef4444'],[9,4,14,2,'#dc2626'],[10,5,12,3,'#ef6b35'],[11,6,10,4,'#ffd700'],[12,7,8,5,'#ffe4a0'],[13,8,6,5,'#ffffff44'],[10,9,12,3,'#ef444488'],[11,10,10,3,'#dc262666'],[12,11,8,3,'#ff450044'],[13,12,6,3,'#ef6b3522'],[14,13,4,3,'#ffd70022'],[13,14,6,2,'#ef444422'],[12,15,8,2,'#dc262611'],[11,5,10,1,'#ef6b3588'],[10,7,12,1,'#ef4444'],[12,8,8,1,'#ffd70066'],[14,9,4,2,'#ffe4a044'],[11,4,10,1,'#fbbf2444'],[13,6,6,1,'#ff450066'],[10,10,12,1,'#ef444433'],[11,16,10,1,'#dc262611'],[9,17,14,1,'#ef444408'],[8,18,16,1,'#ef444408'],[12,4,8,2,'#ff6b3566'],[13,5,6,2,'#ffd70088'],[14,6,4,2,'#ffe4a088'],[15,7,2,2,'#ffffff88'],[11,8,10,2,'#ef4444aa'],[10,6,2,2,'#ef6b3577'],[20,6,2,2,'#ef6b3577'],[9,8,2,3,'#dc262688'],[21,8,2,3,'#dc262688'],[12,9,8,2,'#ef4444aa'],[13,10,6,2,'#ff450088'],[14,11,4,2,'#ef6b3566'],[11,12,10,2,'#dc262688'],[10,13,12,2,'#ef444466'],[9,14,14,2,'#dc262644'],[12,16,8,2,'#cc222244'],[11,17,10,2,'#aa222233'],[13,3,6,1,'#fbbf2455'],[14,4,4,1,'#ffe4a066'],[15,5,2,1,'#ffffff88'],[10,2,2,1,'#ff6b3544'],[20,2,2,1,'#ff6b3544'],[12,18,8,1,'#cc222222'],[10,19,12,1,'#aa222211'],[14,7,4,1,'#ffffff55'],[13,9,6,1,'#ffe4a077'],[11,11,10,1,'#ff450066'],[12,12,8,1,'#ef6b3544'],[10,15,12,1,'#dc262633'],[8,16,16,1,'#cc222222'],[9,19,14,1,'#99111111']],3);
+
+I('pet_void_bunny','Void Bunny','Small. Quiet. Hungry.','pet','epic','dark',480,
+[[10,7,12,1,'#0a0010'],[9,8,14,2,'#1a0020'],[10,9,12,3,'#2a0030'],[11,10,10,4,'#3a0040'],[12,11,8,4,'#4a0050'],[13,12,6,4,'#5a0060'],[14,13,4,4,'#6a0070'],[12,9,8,1,'#a78bfa44'],[13,10,6,1,'#c4b5fd44'],[11,12,10,1,'#3a004066'],[12,13,8,1,'#4a005088'],[14,14,4,2,'#a78bfa44'],[13,15,6,2,'#c4b5fd22'],[12,16,8,2,'#a78bfa22'],[11,17,10,2,'#4a005022'],[10,18,12,2,'#2a003022'],[9,19,14,2,'#1a002011'],[10,7,12,1,'#c4b5fd33'],[14,10,4,1,'#a78bfa66'],[13,11,6,1,'#a78bfa44'],[11,13,10,1,'#3a004044'],[10,20,12,1,'#1a002011'],[8,21,16,1,'#0a001008'],[11,8,10,1,'#a78bfa33'],[12,10,8,1,'#a78bfa22'],[9,7,2,2,'#2a003044'],[21,7,2,2,'#2a003044'],[10,8,2,2,'#3a004055'],[20,8,2,2,'#3a004055'],[11,9,2,2,'#4a005066'],[19,9,2,2,'#4a005066'],[12,10,2,2,'#5a006077'],[18,10,2,2,'#5a006077'],[13,11,2,2,'#6a007088'],[17,11,2,2,'#6a007088'],[11,14,10,1,'#4a005066'],[10,15,12,1,'#3a004055'],[9,16,14,1,'#2a003044'],[8,17,16,1,'#1a002033'],[12,18,8,1,'#4a005033'],[13,19,6,1,'#3a004022'],[11,20,10,1,'#2a003022'],[15,10,2,2,'#a78bfa77'],[16,11,2,2,'#a78bfa66'],[14,12,4,2,'#a78bfa88'],[13,13,6,2,'#c4b5fd44'],[12,6,8,2,'#6a007066'],[14,7,4,2,'#a78bfa55'],[10,10,12,1,'#a78bfa44'],[11,5,10,1,'#c4b5fd33'],[13,17,6,1,'#3a004033'],[9,22,14,1,'#0a001008'],[10,21,12,1,'#1a002011']],2);
+
+I('pet_mech_scorpion','Mech Scorpion','Stinger armed. Patrol mode.','pet','epic','tech',500,
+[[9,6,14,1,'#1a1a2a'],[8,7,16,2,'#2a2a3a'],[10,8,12,3,'#3a3a4a'],[11,9,10,4,'#4a4a5a'],[12,10,8,4,'#5a5a6a'],[13,11,6,4,'#6a6a7a'],[14,12,4,4,'#7a7a8a'],[15,13,2,4,'#22d3ee'],[12,7,8,1,'#22d3ee44'],[13,8,6,1,'#38bdf866'],[11,10,10,1,'#3a3a4a66'],[13,12,6,1,'#5a5a6a88'],[14,14,4,2,'#22d3ee44'],[12,15,8,2,'#38bdf822'],[11,16,10,2,'#22d3ee22'],[10,17,12,2,'#4a4a5a22'],[9,18,14,2,'#2a2a3a22'],[8,19,16,2,'#1a1a2a11'],[10,5,2,2,'#22d3ee44'],[20,5,2,2,'#22d3ee44'],[11,6,10,1,'#22d3ee66'],[12,8,8,1,'#38bdf844'],[14,10,4,2,'#22d3ee66'],[13,16,6,1,'#22d3ee11'],[8,20,16,1,'#1a1a2a11'],[9,21,14,1,'#0a0a1a08'],[8,6,2,3,'#2a2a3a55'],[22,6,2,3,'#2a2a3a55'],[10,7,2,3,'#3a3a4a66'],[20,7,2,3,'#3a3a4a66'],[11,8,2,3,'#4a4a5a77'],[19,8,2,3,'#4a4a5a77'],[12,9,2,3,'#5a5a6a88'],[18,9,2,3,'#5a5a6a88'],[13,10,2,3,'#6a6a7a99'],[17,10,2,3,'#6a6a7a99'],[6,8,2,2,'#22d3ee33'],[24,8,2,2,'#22d3ee33'],[7,9,2,2,'#38bdf844'],[23,9,2,2,'#38bdf844'],[5,10,2,2,'#22d3ee22'],[25,10,2,2,'#22d3ee22'],[9,11,2,2,'#22d3ee55'],[21,11,2,2,'#22d3ee55'],[11,12,10,1,'#5a5a6a77'],[10,13,12,1,'#4a4a5a66'],[9,14,14,1,'#3a3a4a55'],[7,15,18,1,'#2a2a3a44'],[6,16,20,1,'#1a1a2a33'],[14,8,4,2,'#22d3ee88'],[15,9,2,2,'#38bdf8aa'],[12,11,8,2,'#6a6a7a88'],[10,12,12,1,'#22d3ee44'],[11,14,10,1,'#22d3ee33'],[13,17,6,1,'#22d3ee11'],[14,18,4,1,'#22d3ee08'],[12,19,8,1,'#1a1a2a11'],[10,20,12,1,'#0a0a1a08']],2);
+
+// EFFECTS — 7 animated trails with layered bands, spark details, glow pulses
+I('effect_fire','Fire Trail','Leaves burning footprints.','effect','rare','elemental',350,
+[[2,0,28,1,'#ef444444'],[2,1,28,3,'#ef6b3544'],[4,2,24,2,'#ffd70033'],[8,1,16,2,'#ef444433'],[12,0,8,1,'#ffd70055'],[3,5,26,2,'#ef6b3522'],[6,6,20,1,'#ef444422'],[10,7,12,1,'#ef6b3511'],[14,8,4,2,'#ef444422'],[7,0,4,1,'#ffd70044'],[21,0,4,1,'#ffd70044'],[5,3,6,1,'#ffd70033'],[15,4,6,1,'#ffd70033'],[9,6,8,1,'#ef6b3515'],[2,8,24,2,'#ef6b3522']],1);
+
+I('effect_frost','Frost Step','Freezes ground beneath.','effect','rare','elemental',350,
+[[2,0,28,1,'#93c5fd44'],[2,1,28,3,'#60a5fa44'],[4,2,24,2,'#93c5fd33'],[8,1,16,2,'#ffffff44'],[12,0,8,1,'#ffffff55'],[3,5,26,2,'#60a5fa22'],[6,6,20,1,'#93c5fd22'],[10,7,12,1,'#60a5fa11'],[14,8,4,2,'#ffffff22'],[7,0,4,1,'#ffffff44'],[21,0,4,1,'#ffffff44'],[5,3,6,1,'#bfdbfe33'],[15,4,6,1,'#bfdbfe33'],[9,6,8,1,'#60a5fa15'],[2,8,24,2,'#60a5fa22']],1);
+
+
+
+I('effect_spark','Spark Trail','Digital embers. Code dust.','effect','uncommon','tech',150,
+[[3,0,26,1,'#38bdf844'],[3,1,26,2,'#00c4ff44'],[6,1,20,2,'#22d3ee33'],[10,2,12,2,'#38bdf844'],[14,3,4,2,'#22d3ee55'],[5,3,22,2,'#00c4ff22'],[8,4,16,1,'#00c4ff11'],[12,0,8,1,'#38bdf866'],[4,5,24,1,'#22d3ee22'],[7,6,18,1,'#00c4ff11'],[11,7,10,1,'#22d3ee22'],[13,8,6,1,'#00c4ff33']],1);
+
+I('effect_gold','Gold Rush','Coins scatter behind.','effect','rare','royal',400,
+[[2,0,28,1,'#ffd70044'],[2,1,28,3,'#fbbf2444'],[4,2,24,2,'#ffed4a33'],[8,1,16,2,'#ffd70055'],[12,0,8,1,'#ffffff44'],[3,5,26,2,'#ffd70022'],[6,6,20,1,'#fbbf2422'],[10,7,12,1,'#ffd70011'],[14,8,4,2,'#ffd70066'],[7,0,4,1,'#ffe4a044'],[21,0,4,1,'#ffe4a044'],[5,3,6,1,'#ffed4a33'],[15,4,6,1,'#ffed4a33'],[9,6,8,1,'#ffd70015'],[2,8,24,2,'#ffd70022']],1);
+
+I('effect_glitch','Glitch Wave','Digital distortion. Breaks sight.','effect','epic','tech',500,
+[[1,0,30,1,'#22d3ee44'],[1,1,30,3,'#22d3ee33'],[3,2,26,2,'#ef444433'],[7,1,18,2,'#38bdf844'],[11,0,10,1,'#ef444455'],[5,3,22,2,'#22d3ee22'],[9,4,14,1,'#ef444422'],[13,5,6,2,'#38bdf833'],[1,7,30,1,'#ef444433'],[4,8,24,1,'#22d3ee22'],[8,9,16,1,'#38bdf833'],[12,10,8,1,'#ef444444'],[6,2,8,1,'#ef444455'],[18,2,6,1,'#ef444444'],[10,6,12,1,'#38bdf844'],[14,11,4,1,'#22d3ee33']],1);
+
+I('effect_flower','Bloom Path','Flowers sprout underfoot.','effect','uncommon','elemental',150,
+[[3,0,26,1,'#4ade8044'],[3,1,26,2,'#22c55e44'],[6,1,20,2,'#4ade8033'],[10,2,12,2,'#86efac44'],[14,3,4,2,'#4ade8055'],[5,3,22,2,'#22c55e22'],[8,4,16,1,'#4ade8011'],[12,0,8,1,'#86efac66'],[4,5,24,1,'#22c55e22'],[7,6,18,1,'#4ade8011'],[11,7,10,1,'#22c55e22'],[13,8,6,1,'#4ade8033'],[6,3,4,1,'#86efac44'],[16,4,4,1,'#86efac44'],[9,5,4,1,'#4ade8033'],[19,4,4,1,'#4ade8033']],0);
+
+// ── NEW EFFECTS: void step, electric arc, healing glow ──
+I('effect_void','Void Step','Reality tears. Darkness follows.','effect','epic','dark',450,
+[[2,0,28,1,'#a78bfa22'],[2,1,28,3,'#7c3aed33'],[4,2,24,2,'#5b21b644'],[8,1,16,2,'#a78bfa22'],[12,0,8,1,'#c4b5fd44'],[3,5,26,2,'#6d28d922'],[6,6,20,1,'#5b21b611'],[10,7,12,1,'#6d28d908'],[14,8,4,2,'#a78bfa11'],[7,0,4,1,'#c4b5fd33'],[21,0,4,1,'#c4b5fd33'],[5,3,6,1,'#a78bfa22'],[15,4,6,1,'#a78bfa22'],[9,6,8,1,'#6d28d915'],[2,8,24,2,'#5b21b611'],[8,2,16,2,'#c4b5fd22'],[11,3,10,1,'#7c3aed33'],[6,4,20,1,'#a78bfa22'],[4,0,8,2,'#7c3aed44'],[12,2,8,2,'#a78bfa55'],[16,1,8,2,'#7c3aed33'],[3,4,6,2,'#6d28d933'],[13,5,8,2,'#a78bfa44'],[9,3,14,2,'#c4b5fd55'],[7,5,18,2,'#6d28d944'],[11,2,10,1,'#c4b5fd66'],[10,4,12,1,'#a78bfa55'],[14,6,4,2,'#c4b5fd33'],[5,7,22,1,'#5b21b622'],[8,0,16,1,'#c4b5fd44'],[13,1,6,1,'#a78bfa66'],[12,6,8,1,'#7c3aed44'],[9,8,14,1,'#5b21b633']],1);
+
+I('effect_arc','Electric Arc','Crackling energy. Wild surge.','effect','rare','tech',350,
+[[2,0,28,1,'#38bdf833'],[2,1,28,3,'#22d3ee44'],[4,2,24,2,'#00c4ff33'],[8,1,16,2,'#38bdf822'],[12,0,8,1,'#7dd3fc55'],[3,5,26,2,'#22d3ee22'],[6,6,20,1,'#38bdf811'],[10,7,12,1,'#00c4ff11'],[14,8,4,2,'#38bdf822'],[7,0,4,1,'#7dd3fc44'],[21,0,4,1,'#7dd3fc44'],[5,3,6,1,'#38bdf833'],[15,4,6,1,'#38bdf833'],[9,6,8,1,'#00c4ff15'],[2,8,24,2,'#22d3ee22'],[4,3,8,1,'#7dd3fc44'],[12,3,8,1,'#7dd3fc44'],[8,4,16,2,'#22d3ee33'],[6,5,20,1,'#38bdf822'],[10,2,12,1,'#7dd3fc33'],[3,1,6,2,'#22d3ee55'],[11,1,10,2,'#38bdf866'],[18,2,6,2,'#22d3ee55'],[5,4,10,2,'#7dd3fc66'],[14,5,6,2,'#38bdf844'],[7,2,18,2,'#22d3ee44'],[9,3,14,2,'#38bdf855'],[12,4,8,1,'#7dd3fcaa'],[8,6,16,1,'#22d3ee33'],[10,5,12,1,'#38bdf877'],[16,3,4,1,'#7dd3fc66'],[4,6,8,2,'#22d3ee44'],[13,2,6,1,'#7dd3fc88'],[11,7,10,1,'#22d3ee55'],[6,8,20,1,'#00c4ff22'],[14,3,4,2,'#38bdf8aa'],[5,0,10,1,'#7dd3fc55'],[19,1,6,1,'#7dd3fc55']],2);
+
+I('effect_heal','Healing Glow','Warm radiance. Restorative.','effect','rare','mystic',300,
+[[2,0,28,1,'#fbbf2433'],[2,1,28,3,'#ffd70044'],[4,2,24,2,'#ffe4a033'],[8,1,16,2,'#fbbf2422'],[12,0,8,1,'#fff8dc55'],[3,5,26,2,'#ffd70022'],[6,6,20,1,'#fbbf2411'],[10,7,12,1,'#ffe4a011'],[14,8,4,2,'#fbbf2422'],[7,0,4,1,'#fff8dc44'],[21,0,4,1,'#fff8dc44'],[5,3,6,1,'#ffd70033'],[15,4,6,1,'#ffd70033'],[9,6,8,1,'#ffe4a015'],[2,8,24,2,'#ffd70022'],[4,2,8,1,'#fff8dc44'],[12,2,8,1,'#fff8dc44'],[8,3,16,2,'#fbbf2433'],[6,4,20,1,'#ffd70022'],[10,5,12,1,'#ffe4a044'],[3,1,6,2,'#ffe4a055'],[11,1,10,2,'#fbbf2466'],[18,2,6,2,'#ffe4a044'],[5,4,10,2,'#fff8dc66'],[14,5,6,2,'#fbbf2455'],[7,2,18,2,'#ffd70044'],[9,3,14,2,'#ffe4a066'],[12,4,8,1,'#fff8dcbb'],[8,6,16,1,'#ffd70033'],[10,6,12,1,'#ffe4a088'],[16,3,4,1,'#fff8dc77'],[4,6,8,2,'#ffe4a044'],[13,2,6,1,'#fff8dc99'],[11,7,10,1,'#ffd70055'],[6,8,20,1,'#fbbf2422'],[14,3,4,2,'#fff8dcbb'],[5,0,10,1,'#fff8dc55'],[19,1,6,1,'#fff8dc55'],[15,6,2,2,'#ffffff88'],[9,4,14,1,'#ffe4a077']],2);
+
+// MOUNTS — 7 rideable items with metallic/energy shading, shadow bases, detail highlights
+I('mount_hover','Hover Board','Magnetic. Silent. Smooth.','mount','rare','tech',400,
+[[2,16,28,1,'#0a0a1e'],[3,17,26,5,'#1a1a2e'],[2,18,28,4,'#2a2a3e'],[3,19,26,2,'#3a3a4e'],[4,20,24,2,'#0a0a1e'],[5,21,22,1,'#1a1a2e'],[8,19,4,2,'#ef4444'],[12,19,4,2,'#22c55e'],[18,19,4,2,'#38bdf8'],[22,19,4,2,'#fbbf24'],[1,18,2,2,'#38bdf833'],[29,18,2,2,'#38bdf833'],[3,17,2,2,'#38bdf866'],[27,17,2,2,'#38bdf866'],[5,18,2,2,'#00c4ff44'],[25,18,2,2,'#00c4ff44'],[4,22,24,1,'#0a0a1e'],[6,23,20,1,'#0a0a1e'],[3,16,26,1,'#0a0a1e'],[7,19,6,1,'#00c4ff33']],1);
+
+I('mount_cyber','Cyber Bike','Two wheels. Pure speed.','mount','epic','tech',650,
+[[2,15,28,1,'#0a0a1e'],[1,16,30,7,'#1a1a2e'],[2,17,28,5,'#2a2a3e'],[3,18,26,3,'#3a3a4e'],[4,18,24,1,'#00c4ff44'],[5,16,6,4,'#ef6b35'],[7,17,4,4,'#ef6b3588'],[19,16,6,4,'#38bdf8'],[21,17,4,4,'#38bdf888'],[4,14,4,2,'#1a1a2e'],[24,14,4,2,'#1a1a2e'],[6,20,20,2,'#22d3ee22'],[8,10,4,6,'#1a1a2e'],[20,10,4,6,'#1a1a2e'],[0,22,8,2,'#1a1a2e'],[24,22,8,2,'#1a1a2e'],[2,15,28,1,'#1a1a2e'],[2,11,3,5,'#1a1a2e'],[27,11,3,5,'#1a1a2e'],[5,22,22,1,'#1a1a2e'],[12,15,8,2,'#00c4ff44'],[13,20,6,1,'#00c4ff22']],1);
+
+I('mount_dragon','Dragon Lord','Ride the sky. Burn the earth.','mount','legendary','elemental',1200,
+[[2,5,28,1,'#440000'],[1,6,30,17,'#660000'],[2,7,28,15,'#8b0000'],[3,8,26,13,'#aa0000'],[4,9,24,11,'#cc2222'],[5,11,22,4,'#fbbf24'],[6,12,20,3,'#fcd34d'],[14,11,4,2,'#ffffff44'],[4,15,4,4,'#8b000088'],[24,15,4,4,'#8b000088'],[5,19,22,4,'#660000'],[6,20,20,2,'#550000'],[8,22,16,2,'#66000088'],[10,7,12,2,'#cc2222'],[12,6,8,2,'#ef6b3555'],[13,5,6,2,'#ffd70044'],[14,10,4,1,'#ffd70055'],[15,14,2,2,'#ef444444'],[3,12,2,5,'#8b000088'],[27,12,2,5,'#8b000088'],[6,17,20,2,'#aa000066'],[7,21,18,1,'#660000'],[10,4,12,1,'#8b0000'],[11,3,10,1,'#660000']],2);
+
+I('mount_cloud','Cloud Drift','Floats on data currents.','mount','rare','mystic',380,
+[[4,13,24,1,'#a78bfa33'],[3,14,26,8,'#a78bfa22'],[4,15,24,6,'#c4b5fd33'],[5,16,22,4,'#e9d5ff22'],[7,17,18,2,'#a78bfa44'],[10,18,12,1,'#c4b5fd44'],[6,13,4,2,'#a78bfa44'],[22,13,4,2,'#a78bfa44'],[12,12,8,2,'#a78bfa33'],[8,15,16,2,'#a78bfa22'],[9,14,14,1,'#c4b5fd22'],[5,19,22,1,'#a78bfa22'],[11,19,10,1,'#a78bfa33'],[6,12,4,1,'#a78bfa44'],[22,12,4,1,'#a78bfa44'],[14,18,4,1,'#e9d5ff44'],[7,20,18,1,'#a78bfa11'],[10,21,12,1,'#a78bfa11']],1);
+
+I('mount_beast','Metal Beast','Titan war machine. Stomp.','mount','epic','warrior',700,
+[[2,13,28,1,'#2a2a3a'],[1,14,30,9,'#3a3a4a'],[2,15,28,7,'#4a4a5a'],[3,16,26,5,'#5a5a6a'],[5,18,22,2,'#fbbf2444'],[8,14,4,2,'#ef4444'],[10,14,2,2,'#fca5a5'],[18,14,4,2,'#38bdf8'],[20,14,2,2,'#7dd3fc'],[4,12,4,6,'#3a3a4a'],[24,12,4,6,'#3a3a4a'],[5,13,22,1,'#4a4a5a'],[0,22,32,2,'#2a2a3a'],[2,17,28,1,'#6a6a7a'],[6,18,4,1,'#ef444444'],[20,18,4,1,'#38bdf844'],[4,20,8,2,'#3a3a4a'],[20,20,8,2,'#3a3a4a'],[10,16,12,2,'#4a4a5a44'],[12,19,8,1,'#5a5a6a33']],0);
+
+I('mount_speeder','Sky Speeder','Sleek. Fast. Low profile.','mount','rare','tech',450,
+[[2,17,28,1,'#0a0a1e'],[1,18,30,5,'#1a1a2e'],[2,19,28,3,'#2a2a3e'],[3,20,26,2,'#0a0a1e'],[4,21,24,1,'#1a1a2e'],[6,18,4,2,'#ef6b35'],[8,18,2,2,'#ef6b3588'],[20,18,4,2,'#38bdf8'],[22,18,2,2,'#38bdf888'],[5,16,4,2,'#1a1a2e'],[23,16,4,2,'#1a1a2e'],[4,22,24,2,'#22d3ee22'],[0,22,4,2,'#1a1a2e'],[28,22,4,2,'#1a1a2e'],[3,18,26,1,'#00c4ff33'],[12,19,8,1,'#00c4ff44'],[14,20,4,2,'#00c4ff22'],[7,17,18,1,'#1a1a2e'],[4,23,24,1,'#0a0a1e'],[6,20,6,1,'#00c4ff33'],[20,20,6,1,'#00c4ff33']],1);
+
+// TREASURES — 7 valuable items with gem faceting, metallic shading, glow effects
+I('treasure_skull','Crystal Skull','Ancient. Pulses with data.','treasure','legendary','mystic',800,
+[[8,1,16,1,'#6d28d9'],[7,2,18,2,'#7c3aed'],[8,3,16,18,'#8b5cf6'],[7,4,18,16,'#a78bfa'],[9,5,14,14,'#8b5cf688'],[10,6,12,2,'#111111'],[11,7,10,1,'#000000'],[12,6,8,2,'#000000'],[13,7,6,2,'#111111'],[10,11,12,2,'#ffffff44'],[11,12,10,1,'#ffffff22'],[11,15,10,2,'#6d28d9'],[12,16,8,1,'#5b21b6'],[13,19,6,2,'#5b21b688'],[14,20,4,2,'#5b21b644'],[9,8,2,6,'#a78bfa44'],[21,8,2,6,'#a78bfa44'],[11,10,10,1,'#a78bfa33'],[12,14,8,1,'#a78bfa22'],[10,17,12,1,'#7c3aed'],[8,19,16,2,'#6d28d9'],[9,21,14,1,'#5b21b6']],2);
+
+I('treasure_chest','Data Chest','Locked. Full of secrets.','treasure','epic','royal',600,
+[[6,4,20,1,'#6b5b3e'],[5,5,22,2,'#8B7355'],[6,6,20,12,'#8B7355'],[5,7,22,10,'#A0895E'],[7,8,18,8,'#6b5b3e'],[8,14,16,2,'#fbbf24'],[9,15,14,1,'#fcd34d'],[10,9,12,2,'#fbbf2444'],[11,10,10,1,'#fbbf2433'],[12,11,8,2,'#6b5b3e88'],[13,12,6,1,'#6b5b3e66'],[9,7,14,2,'#fbbf24'],[10,8,12,1,'#daa520'],[4,18,24,2,'#8B7355'],[5,19,22,2,'#6b5b3e'],[0,20,32,2,'#1a1a2e'],[14,10,4,2,'#fbbf2466'],[8,16,16,1,'#A0895E'],[7,17,18,2,'#6b5b3e88'],[11,13,10,1,'#6b5b3e'],[5,20,22,1,'#6b5b3e44'],[6,21,20,1,'#1a1a2e']],1);
+
+I('treasure_gem','Massive Gem','Floating. Faceted. Priceless.','treasure','legendary','royal',900,
+[[9,1,14,1,'#cc4400'],[8,2,16,2,'#ef6b35'],[9,3,14,18,'#ef6b35'],[8,4,16,16,'#ff8c42'],[10,5,12,14,'#ef6b3566'],[12,6,8,2,'#fbbf24'],[13,7,6,2,'#fcd34d'],[14,7,4,2,'#ffffff'],[15,8,2,1,'#ffffff88'],[11,11,10,2,'#ef6b3588'],[12,12,8,1,'#ef6b3566'],[13,14,6,2,'#fbbf2466'],[14,19,4,2,'#ef6b3588'],[10,20,12,2,'#1a1a2e'],[9,9,2,6,'#ff8c4244'],[21,9,2,6,'#ff8c4244'],[11,10,10,1,'#ef6b3533'],[12,16,8,1,'#ef6b3522'],[10,18,12,1,'#ef6b3544'],[13,5,6,1,'#ffd70044'],[15,11,2,1,'#ffffff22']],2);
+
+I('treasure_orb','Elder Orb','Ancient consciousness within.','treasure','mythic','mystic',1800,
+[[8,0,16,1,'#a78bfa33'],[7,1,18,2,'#a78bfa44'],[8,2,16,18,'#a78bfa22'],[7,3,18,16,'#a78bfa33'],[9,4,14,14,'#a78bfa44'],[10,5,12,12,'#a78bfa55'],[11,6,10,10,'#a78bfa66'],[12,7,8,8,'#c4b5fd44'],[13,8,6,6,'#e9d5ff44'],[14,9,4,4,'#ffffff33'],[15,10,2,2,'#ffffff'],[12,4,8,2,'#a78bfa66'],[10,16,12,2,'#6d28d944'],[8,17,16,2,'#5b21b633'],[9,20,14,1,'#4c1d9522'],[11,19,10,1,'#6d28d933'],[13,11,6,2,'#ffffff22'],[14,13,4,2,'#e9d5ff33'],[13,15,6,1,'#c4b5fd44'],[10,6,12,1,'#a78bfa88'],[11,12,10,1,'#a78bfa44'],[12,14,8,1,'#c4b5fd33']],3);
+
+I('treasure_ring','Master Ring','Forged in the core. Binds all.','treasure','mythic','royal',2000,
+[[11,4,10,1,'#b8860b'],[10,5,12,2,'#daa520'],[11,6,10,8,'#fbbf24'],[10,7,12,6,'#ffd700'],[12,8,8,4,'#ffed4a'],[13,9,6,2,'#fff8dc'],[14,10,4,1,'#ffffff'],[11,11,10,3,'#b8860b'],[12,12,8,2,'#daa520'],[13,13,6,1,'#b8860b88'],[14,14,4,1,'#b8860b44'],[10,13,12,2,'#a07000'],[10,15,12,1,'#b8860b44'],[12,7,8,2,'#ffd70088'],[13,8,6,1,'#ffe4a066'],[11,5,2,1,'#ffed4a44'],[19,5,2,1,'#ffed4a44'],[15,9,2,1,'#ffffff44'],[12,14,8,1,'#a0700044'],[14,11,4,1,'#daa52033'],[11,15,10,1,'#b8860b22'],[13,10,6,1,'#ffd70044']],3);
+
+I('treasure_idol','Golden Idol','Ancient. Smiling. Knowing.','treasure','epic','mystic',600,
+[[9,2,14,1,'#b8860b'],[8,3,16,2,'#daa520'],[9,4,14,16,'#fbbf24'],[8,5,16,14,'#ffd700'],[10,6,12,12,'#fbbf2488'],[11,7,10,2,'#000000'],[12,8,8,1,'#000000'],[13,7,6,2,'#000000'],[13,11,6,2,'#fbbf2466'],[12,12,8,1,'#fbbf2444'],[11,14,10,2,'#b8860b'],[12,15,8,1,'#a07000'],[12,18,8,2,'#a0700088'],[13,19,6,2,'#a0700044'],[10,8,2,5,'#ffd70044'],[20,8,2,5,'#ffd70044'],[11,10,10,1,'#ffd70033'],[10,16,12,1,'#daa520'],[9,17,14,2,'#b8860b'],[12,5,8,1,'#ffe4a044'],[14,10,4,1,'#ffe4a033'],[10,19,12,1,'#a07000']],2);
+
+// ── NEW MOUNTS: phantom stallion, void cruiser, crystal turtle ──
+I('mount_phantom','Phantom Stallion','Ghostly steed. Silent hooves.','mount','epic','mystic',550,
+[[2,6,28,2,'#a78bfa22'],[1,7,30,5,'#a78bfa44'],[2,8,28,6,'#a78bfa66'],[3,9,26,6,'#c4b5fd44'],[4,10,24,6,'#e9d5ff33'],[5,11,22,6,'#a78bfa44'],[6,12,20,6,'#a78bfa33'],[7,13,18,6,'#a78bfa22'],[8,14,16,6,'#a78bfa11'],[5,10,8,2,'#ffffff33'],[19,10,8,2,'#ffffff33'],[10,15,12,4,'#a78bfa08'],[4,12,2,6,'#ffffff22'],[26,12,2,6,'#ffffff22'],[6,7,20,2,'#c4b5fd44'],[8,6,16,1,'#e9d5ff22'],[12,18,8,1,'#a78bfa08'],[14,19,4,1,'#a78bfa08'],[3,8,2,6,'#ffffff11'],[27,8,2,6,'#ffffff11'],[9,5,14,2,'#c4b5fd55'],[10,6,12,2,'#e9d5ff66'],[7,8,18,2,'#c4b5fd55'],[6,9,20,2,'#a78bfa66'],[9,11,14,2,'#c4b5fd44'],[8,12,16,2,'#a78bfa55'],[7,10,18,2,'#ffffff22'],[11,13,10,2,'#a78bfa44'],[12,14,8,2,'#a78bfa33'],[10,16,12,2,'#a78bfa22'],[9,17,14,2,'#a78bfa11'],[11,8,10,1,'#e9d5ff88'],[13,9,6,1,'#ffffff55'],[14,10,4,1,'#ffffff88'],[13,12,6,1,'#a78bfa55'],[12,7,8,1,'#c4b5fd88'],[7,6,3,1,'#a78bfa33'],[22,6,3,1,'#a78bfa33'],[4,11,2,2,'#ffffff33'],[26,11,2,2,'#ffffff33'],[5,15,22,2,'#a78bfa22'],[9,19,14,1,'#a78bfa08'],[11,20,10,1,'#a78bfa08']],2);
+
+I('mount_void_cruiser','Void Cruiser','Dark matter engine. Glides.','mount','legendary','dark',900,
+[[1,14,30,2,'#1a001a'],[0,15,32,5,'#2a002a'],[1,16,30,5,'#3a003a'],[2,17,28,5,'#4a004a'],[3,18,26,5,'#5a005a'],[4,19,24,5,'#6a006a'],[5,20,22,5,'#7a007a'],[6,21,20,5,'#8a008a'],[7,22,18,5,'#a78bfa44'],[4,17,8,2,'#a78bfa88'],[20,17,8,2,'#a78bfa88'],[8,23,16,4,'#a78bfa22'],[10,24,12,3,'#a78bfa11'],[12,25,8,2,'#a78bfa08'],[3,16,2,6,'#a78bfa44'],[27,16,2,6,'#a78bfa44'],[5,15,22,2,'#a78bfa33'],[6,14,20,1,'#c4b5fd33'],[9,18,14,2,'#a78bfa55'],[7,20,18,2,'#a78bfa44'],[8,14,16,2,'#3a003a66'],[9,15,14,2,'#4a004a77'],[10,16,12,2,'#5a005a88'],[11,17,10,2,'#6a006a99'],[12,18,8,2,'#7a007aaa'],[13,19,6,2,'#a78bfa66'],[14,20,4,2,'#a78bfa55'],[7,19,18,2,'#7a007a88'],[5,22,22,2,'#6a006a44'],[8,16,16,2,'#a78bfa44'],[6,18,20,2,'#a78bfa33'],[10,20,12,2,'#8a008a88'],[11,21,10,2,'#a78bfa55'],[12,22,8,2,'#a78bfa44'],[9,23,14,2,'#a78bfa33'],[11,24,10,2,'#a78bfa22'],[7,14,3,2,'#a78bfa55'],[22,14,3,2,'#a78bfa55'],[8,13,16,1,'#c4b5fd44'],[4,14,4,2,'#a78bfa66'],[24,14,4,2,'#a78bfa66'],[2,15,2,2,'#c4b5fd33'],[28,15,2,2,'#c4b5fd33'],[13,16,6,2,'#a78bfa88'],[12,19,8,2,'#a78bfa55'],[14,22,4,2,'#a78bfa33'],[6,23,20,2,'#5a005a44']],3);
+
+I('mount_crystal_turtle','Crystal Turtle','Ancient. Armored. Wise.','mount','rare','elemental',350,
+[[3,6,26,2,'#166534'],[2,7,28,4,'#15803d'],[3,8,26,7,'#16a34a'],[4,9,24,8,'#22c55e'],[5,10,22,8,'#4ade80'],[6,11,20,8,'#86efac'],[7,12,18,8,'#4ade8066'],[8,13,16,8,'#22c55e44'],[9,14,14,8,'#16a34a33'],[10,15,12,8,'#15803d22'],[11,16,10,8,'#16653411'],[12,17,8,6,'#16653408'],[6,9,8,2,'#86efac88'],[18,9,8,2,'#86efac88'],[8,8,16,2,'#4ade8088'],[10,7,12,1,'#86efac66'],[14,19,4,4,'#16a34a11'],[5,20,22,2,'#15803d11'],[7,21,18,1,'#15803d08'],[9,5,14,2,'#16a34a55'],[10,6,12,2,'#22c55e66'],[11,7,10,2,'#4ade8077'],[12,8,8,2,'#86efac88'],[13,9,6,2,'#4ade8099'],[14,10,4,2,'#22c55e88'],[7,10,18,2,'#4ade8055'],[8,11,16,2,'#22c55e44'],[9,12,14,2,'#16a34a33'],[10,13,12,2,'#15803d22'],[11,14,10,2,'#16653422'],[12,15,8,2,'#16653411'],[4,7,4,2,'#22c55e66'],[22,7,4,2,'#22c55e66'],[5,12,2,4,'#4ade8044'],[25,12,2,4,'#4ade8044'],[13,10,6,2,'#86efacaa'],[14,11,4,2,'#4ade8088'],[9,16,14,2,'#16653422'],[10,18,12,2,'#16653411'],[6,19,20,1,'#16653408'],[11,20,10,1,'#16653408'],[12,11,8,1,'#86efac77'],[13,12,6,1,'#4ade8066']],1);
+
+// ── NEW TREASURES: arcane tome, star shard, dragon egg ──
+I('treasure_tome','Arcane Tome','Bound in shadow. Glows.','treasure','legendary','mystic',850,
+[[6,2,20,2,'#2a0030'],[5,3,22,16,'#3a0050'],[6,4,20,14,'#4a0060'],[7,5,18,12,'#5a0070'],[8,6,16,10,'#a78bfa'],[9,7,14,8,'#c4b5fd'],[10,8,12,6,'#e9d5ff'],[11,9,10,4,'#ffffff44'],[12,10,8,2,'#ffffff22'],[8,8,16,2,'#a78bfa88'],[8,15,16,2,'#5a0070'],[7,16,18,2,'#4a0060'],[6,17,20,2,'#3a0050'],[9,12,14,2,'#a78bfa66'],[10,13,12,1,'#c4b5fd44'],[7,6,2,6,'#c4b5fd44'],[23,6,2,6,'#c4b5fd44'],[9,10,14,1,'#e9d5ff22'],[11,14,10,1,'#a78bfa33'],[8,18,16,1,'#2a0030'],[6,19,20,1,'#1a0020'],[5,20,22,1,'#0a0010'],[9,4,14,2,'#4a006077'],[10,5,12,2,'#5a007088'],[11,6,10,2,'#a78bfa99'],[12,7,8,2,'#c4b5fd88'],[13,8,6,2,'#e9d5ff66'],[14,9,4,2,'#ffffff55'],[6,10,20,2,'#3a005066'],[7,11,18,2,'#4a006055'],[11,12,10,2,'#a78bfa77'],[12,13,8,2,'#c4b5fd66'],[5,14,22,2,'#3a005044'],[10,15,12,2,'#5a007066'],[9,18,14,2,'#2a003044'],[7,19,18,2,'#1a002033'],[6,20,20,2,'#0a001022'],[14,5,4,2,'#c4b5fd55'],[15,6,2,2,'#e9d5ff44'],[8,4,2,2,'#5a007055'],[22,4,2,2,'#5a007055'],[9,9,2,4,'#c4b5fd55'],[21,9,2,4,'#c4b5fd55'],[11,10,10,2,'#a78bfa88'],[10,14,12,1,'#a78bfa44'],[12,11,8,1,'#e9d5ff44'],[13,12,6,1,'#ffffff33'],[10,16,12,1,'#5a007044'],[7,17,18,1,'#3a005033']],2);
+
+I('treasure_star','Star Shard','Celestial fragment. Wishes.','treasure','mythic','mystic',1500,
+[[8,1,16,1,'#fbbf2433'],[7,2,18,2,'#ffd70044'],[8,3,16,16,'#ffe4a022'],[9,4,14,14,'#fff8dc33'],[10,5,12,12,'#ffffff44'],[11,6,10,10,'#fff8dc55'],[12,7,8,8,'#ffd70066'],[13,8,6,6,'#fbbf2488'],[14,9,4,4,'#ffe4a0'],[15,10,2,2,'#ffffff'],[9,6,14,2,'#fff8dc88'],[10,12,12,2,'#ffd70044'],[11,14,10,2,'#fbbf2433'],[8,16,16,2,'#ffd70022'],[7,17,18,2,'#fbbf2411'],[10,5,12,1,'#ffffff66'],[12,8,8,1,'#ffd70088'],[13,9,6,1,'#ffe4a0aa'],[14,10,4,1,'#ffffffcc'],[9,18,14,1,'#fbbf2408'],[11,11,10,1,'#fff8dc44'],[12,13,8,1,'#fbbf2433'],[8,2,4,2,'#ffe4a044'],[13,5,6,2,'#fff8dc66'],[10,7,12,2,'#ffffff77'],[11,8,10,2,'#fff8dc88'],[12,9,8,2,'#ffd70099'],[13,10,6,2,'#fbbf2488'],[14,11,4,2,'#ffe4a077'],[9,12,14,2,'#ffd70055'],[10,13,12,2,'#fbbf2444'],[11,15,10,2,'#ffe4a033'],[8,17,16,2,'#ffd70022'],[15,8,2,2,'#ffffffaa'],[16,9,2,2,'#ffe4a088'],[14,12,4,2,'#fbbf2466'],[13,13,6,2,'#ffd70055'],[10,10,12,1,'#ffffff99'],[11,5,10,1,'#fff8dc77'],[9,14,14,1,'#ffe4a044'],[8,15,16,1,'#ffd70033'],[7,16,18,1,'#fbbf2422'],[12,4,8,2,'#ffd70077'],[13,6,6,2,'#fff8dcaa'],[14,7,4,2,'#ffffffcc'],[6,18,20,1,'#ffe4a011'],[10,19,12,1,'#fbbf2408']],3);
+
+I('treasure_egg','Dragon Egg','Warm. Scales shift. Waiting.','treasure','legendary','elemental',950,
+[[8,3,16,2,'#440000'],[7,4,18,4,'#660000'],[8,5,16,8,'#8b0000'],[9,6,14,10,'#aa0000'],[10,7,12,10,'#cc2222'],[11,8,10,10,'#ef4444'],[12,9,8,10,'#fca5a5'],[13,10,6,10,'#ffffff44'],[9,9,2,6,'#fbbf2466'],[21,9,2,6,'#fbbf2466'],[10,11,12,4,'#cc2222aa'],[11,12,10,3,'#ef444488'],[12,13,8,2,'#fca5a566'],[8,14,16,4,'#8b0000'],[7,15,18,3,'#660000'],[8,16,16,2,'#440000'],[9,17,14,1,'#440000'],[11,7,10,2,'#fca5a588'],[12,6,8,2,'#ef444466'],[14,8,4,2,'#ffffff33'],[10,15,12,1,'#66000066'],[12,10,8,1,'#fca5a5aa'],[9,4,2,2,'#66000055'],[21,4,2,2,'#66000055'],[10,5,2,2,'#8b000066'],[20,5,2,2,'#8b000066'],[11,6,2,2,'#aa000077'],[19,6,2,2,'#aa000077'],[12,7,2,2,'#cc222288'],[18,7,2,2,'#cc222288'],[13,8,2,2,'#ef444499'],[17,8,2,2,'#ef444499'],[12,5,8,2,'#ef444477'],[13,6,6,2,'#fca5a588'],[14,7,4,2,'#ffffff55'],[11,10,10,2,'#cc2222bb'],[10,9,12,2,'#aa000099'],[9,11,14,2,'#cc222288'],[8,12,16,2,'#8b000077'],[10,13,12,2,'#aa000066'],[9,15,14,2,'#66000055'],[8,17,16,1,'#44000033'],[13,11,6,2,'#fca5a577'],[14,12,4,2,'#ffffff44'],[11,14,10,2,'#8b000055'],[7,6,2,2,'#66000044'],[23,6,2,2,'#66000044'],[10,16,12,1,'#55000044'],[11,18,10,1,'#33000022']],2);
+
+// LIGHTING — 7 items with glow layers, fixture detail, ambient color bands
+I('light_ceiling','Ceiling Panel','Overhead. Clean light.','lighting','common','decor',25,
+[[4,0,24,4,'#2a2a3e'],[4,0,24,1,'#3a3a4e'],[4,3,24,1,'#3a3a4e'],[5,1,2,2,'#ffffff'],[9,1,2,2,'#ffffff'],[13,1,2,2,'#ffffff'],[17,1,2,2,'#ffffff'],[21,1,2,2,'#ffffff'],[25,1,2,2,'#ffffff'],[6,2,2,1,'#ffffff44'],[14,2,2,1,'#ffffff44'],[22,2,2,1,'#ffffff44'],[8,0,16,1,'#4a4a5e'],[7,4,18,1,'#2a2a3e'],[5,5,22,1,'#1a1a2e']],0);
+
+I('light_lava','Lava Lamp','Retro. Mesmerizing. Warm.','lighting','uncommon','decor',80,
+[[10,1,12,1,'#0a0a1e'],[10,2,12,16,'#1a1a2e'],[10,2,12,2,'#2a2a3e'],[10,17,12,2,'#2a2a3e'],[11,4,10,12,'#ef6b35'],[12,5,8,10,'#ff8c42'],[13,6,6,8,'#ffa05e'],[14,7,4,6,'#ffd700'],[15,8,2,4,'#ffffff44'],[11,15,10,2,'#ef6b3566'],[12,13,8,2,'#ffd70044'],[14,11,4,2,'#ffffff22'],[11,3,10,2,'#3a3a4e'],[11,18,10,1,'#1a1a2e'],[12,19,8,1,'#0a0a1e'],[13,9,6,1,'#ff8c4244'],[15,10,2,2,'#ffffff22']],2);
+
+I('light_neon','Neon Strip','RGB strip. Syncs to mood.','lighting','common','decor',20,
+[[2,0,28,2,'#1a1a2e'],[2,0,7,2,'#22d3ee'],[9,0,7,2,'#ef6b35'],[16,0,7,2,'#fbbf24'],[23,0,7,2,'#38bdf8'],[2,1,7,1,'#22d3ee88'],[9,1,7,1,'#ef6b3588'],[16,1,7,1,'#fbbf2488'],[23,1,7,1,'#38bdf888'],[5,2,2,1,'#ffffff44'],[12,2,2,1,'#ffffff44'],[19,2,2,1,'#ffffff44'],[26,2,2,1,'#ffffff44'],[0,-1,32,1,'#22d3ee22'],[2,-1,7,1,'#22d3ee44'],[9,-1,7,1,'#ef6b3544'],[16,-1,7,1,'#fbbf2444'],[23,-1,7,1,'#38bdf844']],1);
+
+I('light_fireplace','Holo Fireplace','Digital warmth. Ambience.','lighting','rare','decor',200,
+[[4,3,24,1,'#0a0a1e'],[4,4,24,16,'#1a1a2e'],[4,4,24,2,'#2a2a3e'],[4,19,24,2,'#2a2a3e'],[6,6,20,11,'#0a0a1e'],[7,7,18,9,'#000000'],[8,8,16,7,'#ef6b3522'],[10,10,12,5,'#fbbf2433'],[12,12,8,3,'#ef444444'],[14,14,4,1,'#ffffff44'],[6,15,20,2,'#ef6b3522'],[8,17,16,1,'#ef6b3511'],[9,9,14,2,'#fbbf2422'],[11,11,10,2,'#ef444433'],[13,13,6,1,'#ffffff22'],[5,20,22,2,'#1a1a2e'],[7,22,18,1,'#0a0a1e']],2);
+
+I('light_laser','Laser Grid','Security beams. Stylish.','lighting','rare','tech',250,
+[[0,0,32,2,'#ef444444'],[0,3,32,2,'#ef444433'],[0,6,32,2,'#ef444422'],[0,9,32,2,'#ef444411'],[4,0,2,2,'#ef4444'],[12,0,2,2,'#ef4444'],[20,0,2,2,'#ef4444'],[28,0,2,2,'#ef4444'],[0,1,32,1,'#fca5a522'],[0,4,32,1,'#fca5a511'],[0,7,32,1,'#fca5a511'],[3,-1,2,2,'#ef444466'],[11,-1,2,2,'#ef444466'],[19,-1,2,2,'#ef444466'],[27,-1,2,2,'#ef444466'],[6,1,2,1,'#ef444433'],[14,1,2,1,'#ef444433'],[22,1,2,1,'#ef444433'],[30,1,2,1,'#ef444433']],1);
+
+I('light_blacklight','Blacklight','UV. Posters glow.','lighting','uncommon','decor',60,
+[[4,0,24,3,'#1a1a2e'],[4,-1,24,1,'#a78bfa44'],[4,0,24,2,'#a78bfa66'],[4,2,24,1,'#a78bfa44'],[8,0,4,2,'#a78bfa88'],[14,0,4,2,'#a78bfa88'],[20,0,4,2,'#a78bfa88'],[6,1,20,1,'#a78bfa22'],[10,-1,4,1,'#c4b5fd44'],[16,-1,4,1,'#c4b5fd44'],[22,-1,4,1,'#c4b5fd44'],[5,3,22,1,'#a78bfa22'],[8,4,16,1,'#a78bfa11']],1);
+
+I('light_spot','Spotlight','Follows the main character.','lighting','rare','decor',180,
+[[0,-2,32,1,'#ffd70044'],[0,-1,32,2,'#ffd70033'],[2,0,28,2,'#fbbf2444'],[4,1,24,2,'#ffd70022'],[8,2,16,2,'#ffe4a044'],[12,3,8,2,'#fbbf2455'],[14,4,4,3,'#fbbf2466'],[15,5,2,2,'#ffffff44'],[0,2,32,1,'#ffd70011'],[2,3,28,1,'#fbbf2422'],[6,4,20,1,'#ffe4a033'],[10,6,12,1,'#fbbf2444'],[13,7,6,2,'#fbbf2455'],[14,8,4,2,'#ffffff33'],[16,9,2,2,'#ffffff22']],1);
+
+// ── NEW LIGHTING: plasma tube, starlight chandelier, edge strip ──
+I('light_plasma','Plasma Tube','Ionized. Humming. Bright.','lighting','rare','decor',200,
+[[8,0,16,2,'#0a0a1e'],[8,1,16,14,'#1a1a2e'],[8,1,16,2,'#a78bfa'],[8,14,16,2,'#a78bfa'],[9,2,14,12,'#7c3aed'],[10,3,12,10,'#8b5cf6'],[11,4,10,8,'#a78bfa'],[12,5,8,6,'#c4b5fd'],[13,6,6,4,'#e9d5ff'],[14,7,4,2,'#ffffff44'],[15,8,2,1,'#ffffff'],[9,6,2,5,'#a78bfa55'],[21,6,2,5,'#a78bfa55'],[11,7,10,1,'#c4b5fd66'],[12,12,8,1,'#7c3aed44'],[10,5,12,1,'#a78bfa88'],[13,10,6,1,'#e9d5ff33'],[8,15,16,1,'#0a0a1e'],[9,16,14,1,'#0a0a1e'],[7,1,2,2,'#7c3aed44'],[23,1,2,2,'#7c3aed44'],[6,2,2,3,'#a78bfa33'],[24,2,2,3,'#a78bfa33'],[10,4,12,2,'#8b5cf688'],[11,3,10,2,'#7c3aed77'],[12,6,8,2,'#a78bfa99'],[13,7,6,2,'#c4b5fd88'],[14,8,4,2,'#e9d5ff66'],[9,9,14,2,'#8b5cf655'],[10,10,12,2,'#a78bfa44'],[11,11,10,2,'#7c3aed55'],[12,8,8,1,'#c4b5fd99'],[13,9,6,1,'#e9d5ff77'],[14,10,4,1,'#ffffff55'],[9,11,14,1,'#8b5cf644'],[10,12,12,1,'#7c3aed33'],[8,13,16,1,'#6d28d933'],[11,5,10,1,'#a78bfa99'],[12,10,8,1,'#c4b5fd77'],[7,0,2,2,'#a78bfa22'],[23,0,2,2,'#a78bfa22'],[14,11,4,1,'#ffffff33'],[9,14,14,1,'#5b21b622']],2);
+
+I('light_chandelier','Starlight Chandelier','Crystal drops. Elegant.','lighting','epic','decor',450,
+[[4,0,24,3,'#1a0a00'],[4,0,24,1,'#2a1a0a'],[4,2,24,1,'#2a1a0a'],[5,1,22,1,'#fbbf24'],[6,2,20,1,'#fbbf2466'],[8,-1,16,3,'#fbbf2444'],[10,-2,12,3,'#fbbf2422'],[12,-3,8,3,'#fbbf2411'],[6,3,20,1,'#fbbf2444'],[8,4,16,1,'#ffe4a044'],[10,5,12,1,'#ffffff33'],[14,6,4,1,'#ffffff22'],[3,3,2,3,'#fbbf2422'],[27,3,2,3,'#fbbf2422'],[5,-1,2,2,'#fbbf2433'],[25,-1,2,2,'#fbbf2433'],[8,3,2,2,'#ffe4a055'],[22,3,2,2,'#ffe4a055'],[13,4,6,1,'#ffe4a044'],[10,7,12,1,'#fbbf2411'],[14,8,4,1,'#fbbf2408'],[4,6,24,2,'#1a0a00'],[6,8,20,2,'#0a0000'],[2,1,2,2,'#2a1a0a44'],[28,1,2,2,'#2a1a0a44'],[1,2,2,2,'#1a0a0033'],[29,2,2,2,'#1a0a0033'],[5,0,2,2,'#fbbf2455'],[25,0,2,2,'#fbbf2455'],[7,2,2,2,'#fbbf2477'],[23,2,2,2,'#fbbf2477'],[9,3,2,2,'#ffe4a066'],[21,3,2,2,'#ffe4a066'],[11,4,10,2,'#ffe4a055'],[12,5,8,2,'#ffffff44'],[13,6,6,2,'#ffffff33'],[7,6,18,2,'#fbbf2422'],[5,7,22,2,'#ffe4a033'],[8,8,16,2,'#fbbf2411'],[16,-1,4,2,'#fbbf2433'],[18,-2,2,2,'#fbbf2411'],[11,0,10,1,'#ffe4a077'],[12,1,8,1,'#ffffff55'],[13,2,6,1,'#fbbf2466'],[14,3,4,1,'#ffe4a088'],[15,4,2,1,'#ffffff55']],2);
+
+I('light_edge','Edge Strip','Under-lit. Clean line.','lighting','common','decor',18,
+[[0,0,32,3,'#1a1a2e'],[0,0,32,1,'#22d3ee'],[0,1,32,1,'#22d3ee66'],[0,2,32,1,'#22d3ee44'],[4,3,24,1,'#1a1a2e'],[0,-1,32,1,'#22d3ee22'],[8,0,2,1,'#7dd3fc44'],[16,0,2,1,'#7dd3fc44'],[24,0,2,1,'#7dd3fc44'],[12,1,8,1,'#22d3ee44'],[6,2,20,1,'#22d3ee22'],[0,3,32,1,'#0a0a1e'],[8,4,16,1,'#0a0a1e'],[2,0,6,1,'#7dd3fc55'],[10,0,6,1,'#7dd3fc55'],[18,0,6,1,'#7dd3fc55'],[26,0,6,1,'#7dd3fc55'],[4,1,6,1,'#22d3ee55'],[12,1,4,1,'#22d3ee55'],[20,1,6,1,'#22d3ee55'],[28,1,4,1,'#22d3ee55'],[6,-1,8,1,'#22d3ee33'],[14,-1,8,1,'#22d3ee33'],[22,-1,8,1,'#22d3ee33'],[4,2,24,1,'#22d3ee33'],[2,3,28,1,'#22d3ee22'],[0,4,32,1,'#0a0a1e'],[6,5,20,1,'#050510'],[12,3,8,1,'#7dd3fc33'],[8,2,16,1,'#22d3ee44'],[16,1,4,1,'#7dd3fc33'],[18,2,2,1,'#22d3ee22']],1);
+
+// DESK — 12 items with functional details, screen glow, aluminum/matte shading
+I('desk_ultrawide','Curved Ultrawide','49-inch. Trading essential.','desk','rare','desk',240,
+[[2,0,28,1,'#050510'],[2,1,28,11,'#0a0a1e'],[2,1,28,2,'#38bdf8'],[2,10,28,2,'#38bdf8'],[3,2,26,8,'#001a2e'],[4,3,24,6,'#0a2a4e'],[7,4,6,2,'#38bdf8'],[17,4,6,2,'#38bdf8'],[10,7,10,2,'#22d3ee'],[6,9,20,2,'#38bdf833'],[8,5,4,1,'#7dd3fc66'],[18,5,4,1,'#7dd3fc66'],[11,8,8,1,'#22d3ee44'],[5,3,22,1,'#38bdf822'],[4,11,24,1,'#0a0a1e'],[13,6,6,2,'#38bdf855'],[2,12,28,1,'#050510'],[5,11,22,1,'#001a2e']],1);
+
+I('desk_dual','Dual Monitors','Two screens. Chaos + charts.','desk','epic','desk',500,
+[[1,1,14,1,'#050510'],[17,1,14,1,'#050510'],[1,2,14,10,'#0a0a1e'],[17,2,14,10,'#0a0a1e'],[1,2,14,2,'#38bdf8'],[17,2,14,2,'#38bdf8'],[1,11,14,2,'#38bdf8'],[17,11,14,2,'#38bdf8'],[3,4,10,6,'#001a2e'],[19,4,10,6,'#001a2e'],[4,5,8,4,'#0a2a4e'],[20,5,8,4,'#0a2a4e'],[5,5,4,2,'#22d3ee'],[21,5,4,2,'#ef6b35'],[7,8,4,2,'#38bdf8'],[23,8,4,2,'#fbbf24'],[3,3,10,1,'#38bdf844'],[19,3,10,1,'#38bdf844'],[6,6,2,1,'#22d3ee44'],[22,6,2,1,'#ef6b3544'],[8,9,2,1,'#38bdf844'],[24,9,2,1,'#fbbf2444'],[8,10,6,1,'#38bdf833'],[24,10,6,1,'#38bdf833'],[1,12,14,1,'#050510'],[17,12,14,1,'#050510'],[9,4,4,1,'#22d3ee33'],[23,4,4,1,'#ef6b3533']],1);
+
+I('desk_bonsai','Digital Bonsai','Low maintenance. High class.','desk','common','desk',30,
+[[10,5,11,1,'#2a1a0a'],[10,6,11,8,'#3a2a1a'],[12,5,7,2,'#3a2a1a'],[10,1,11,6,'#22c55e'],[9,2,13,5,'#4ade80'],[12,1,7,2,'#86efac'],[11,3,9,3,'#16a34a'],[12,3,7,2,'#86efac44'],[14,5,3,2,'#86efac'],[10,7,11,2,'#4a3a2a'],[11,8,9,3,'#3a2a1a'],[15,9,3,2,'#3a2a1a'],[11,2,2,2,'#22c55e66'],[17,2,2,2,'#22c55e66'],[13,6,5,1,'#4ade8033'],[12,4,2,1,'#86efac44'],[10,6,2,1,'#22c55e'],[18,6,2,1,'#22c55e'],[16,10,2,1,'#2a1a0a'],[13,11,4,1,'#2a1a0a']],0);
+
+I('desk_coffee','Infinite Espresso','Bottomless. Empire fuel.','desk','common','desk',20,
+[[9,2,14,1,'#0a0000'],[9,3,14,10,'#1a0505'],[9,3,14,2,'#3a1515'],[9,12,14,2,'#3a1515'],[11,2,10,2,'#ffffff'],[12,1,8,2,'#f0f0f0'],[11,5,10,7,'#3a1515'],[12,6,8,5,'#5a2525'],[10,10,4,2,'#ffffff44'],[11,8,10,2,'#4a1a1a'],[13,4,6,1,'#ffffff44'],[10,3,2,1,'#4a2020'],[20,3,2,1,'#4a2020'],[11,11,10,1,'#3a1515'],[12,13,8,1,'#1a0505'],[13,14,6,1,'#0a0000'],[10,7,12,1,'#4a1a1a44'],[11,9,10,1,'#4a252544']],0);
+
+I('desk_trophy_gold','Gold Trophy','Agent of the Year.','desk','epic','desk',500,
+[[10,1,12,1,'#b8860b'],[10,2,12,12,'#fbbf24'],[10,2,12,2,'#ffd700'],[12,1,8,2,'#ffed4a'],[12,0,8,2,'#ffffff'],[13,1,6,1,'#ffe4a0'],[11,13,12,2,'#b8860b'],[9,13,14,2,'#b8860b88'],[10,14,12,2,'#a07000'],[14,5,4,2,'#ffffff66'],[13,4,6,1,'#ffe4a044'],[11,3,10,1,'#ffe4a022'],[12,6,8,3,'#fbbf2466'],[11,10,10,1,'#fbbf2444'],[12,11,8,1,'#fbbf2433'],[13,8,6,1,'#ffffff33'],[10,0,12,1,'#b8860b66'],[11,-1,10,1,'#fbbf2433']],2);
+
+I('desk_trophy_silver','Silver Star','Second place. Still epic.','desk','rare','desk',220,
+[[10,1,12,1,'#888888'],[10,2,12,12,'#b0b0b0'],[10,2,12,2,'#d0d0d0'],[12,1,8,2,'#e0e0e0'],[12,0,8,2,'#ffffff'],[11,12,12,2,'#a0a0a0'],[9,12,14,2,'#a0a0a088'],[10,13,12,2,'#888888'],[14,5,4,2,'#ffffff55'],[13,4,6,1,'#ffffff33'],[11,3,10,1,'#ffffff22'],[12,6,8,3,'#c0c0c066'],[11,10,10,1,'#c0c0c044'],[12,11,8,1,'#c0c0c033'],[13,8,6,1,'#ffffff33'],[10,0,12,1,'#88888833'],[11,13,10,1,'#a0a0a044']],1);
+
+I('desk_crystal','Focus Crystal','Geometric amplifier.','desk','uncommon','desk',90,
+[[10,0,12,1,'#6d28d9'],[10,1,12,12,'#8b5cf6'],[10,1,12,2,'#a78bfa'],[10,11,12,2,'#6d28d9'],[11,2,10,10,'#a78bfa88'],[12,3,8,8,'#a78bfa66'],[12,3,8,3,'#c4b5fd44'],[13,5,6,4,'#e9d5ff'],[14,6,4,3,'#ffffff'],[14,5,4,2,'#ffffff88'],[11,4,2,6,'#a78bfa44'],[19,4,2,6,'#a78bfa44'],[13,2,6,1,'#c4b5fd66'],[13,9,6,1,'#7c3aed44'],[11,10,10,1,'#7c3aed33'],[12,7,8,1,'#e9d5ff44'],[11,12,10,1,'#6d28d9'],[11,13,10,1,'#5b21b6']],2);
+
+I('desk_terminal','Dev Terminal','Always logging. Always.','desk','rare','desk',220,
+[[2,1,28,1,'#050510'],[2,2,28,12,'#0a0a1e'],[2,2,28,2,'#22d3ee'],[2,12,28,2,'#22d3ee'],[3,3,26,9,'#001a0a'],[4,4,24,4,'#22d3ee44'],[4,9,24,4,'#22d3ee44'],[6,10,20,2,'#22d3ee88'],[6,5,16,2,'#22d3ee88'],[5,6,22,1,'#22d3ee33'],[8,7,16,1,'#4ade8033'],[10,11,12,1,'#4ade8022'],[7,8,18,1,'#22d3ee22'],[4,5,2,1,'#22d3ee55'],[26,5,2,1,'#22d3ee55'],[5,4,22,1,'#22d3ee22'],[2,13,28,1,'#050510'],[6,3,20,1,'#22d3ee11']],1);
+
+I('desk_lamp','Neon Task Lamp','Articulated. RGB.','desk','uncommon','desk',70,
+[[10,0,12,1,'#0a0a1e'],[10,1,12,4,'#1a1a2e'],[10,0,3,2,'#ffffff'],[19,0,3,2,'#ffffff'],[9,4,14,2,'#2a2a3e'],[7,5,18,2,'#2a2a3e'],[7,6,18,4,'#2a2a3e'],[9,6,14,2,'#1a1a2e'],[10,8,12,2,'#1a1a2e'],[11,1,10,2,'#3a3a4e'],[10,2,2,1,'#ffffff44'],[20,2,2,1,'#ffffff44'],[13,5,10,1,'#1a1a2e'],[8,4,2,1,'#2a2a3e'],[22,4,2,1,'#2a2a3e'],[10,9,12,1,'#0a0a1e'],[11,10,10,1,'#0a0a1e'],[12,4,8,2,'#22d3ee44'],[13,3,6,1,'#22d3ee33'],[14,7,4,1,'#22d3ee22']],1);
+
+I('desk_holo','Holo Projector','3D data sphere. Silent.','desk','rare','desk',200,
+[[6,1,20,1,'#050510'],[6,2,20,12,'#0a0a1e'],[6,2,20,2,'#38bdf8'],[6,12,20,2,'#38bdf8'],[7,3,18,9,'#001a2e'],[8,4,16,7,'#0a2a4e'],[11,5,10,6,'#38bdf844'],[12,6,8,4,'#38bdf866'],[13,7,6,2,'#38bdf8'],[15,8,2,1,'#ffffff'],[14,7,4,1,'#7dd3fc'],[9,6,14,1,'#38bdf822'],[10,9,12,1,'#38bdf833'],[11,10,10,1,'#38bdf844'],[7,4,18,1,'#38bdf822'],[14,5,4,1,'#38bdf855'],[6,13,20,1,'#050510'],[8,14,16,1,'#050510']],2);
+
+I('desk_numpad','Macro Numpad','One press. One empire.','desk','common','desk',35,
+[[5,1,22,1,'#050510'],[5,2,22,14,'#1a1a2e'],[5,2,22,2,'#2a2a3e'],[5,15,22,2,'#2a2a3e'],[7,4,5,4,'#22d3ee44'],[16,4,5,4,'#22d3ee44'],[7,9,5,4,'#22d3ee44'],[16,9,5,4,'#22d3ee44'],[10,12,12,2,'#22d3ee'],[11,13,10,1,'#22d3ee88'],[8,5,3,2,'#22d3ee66'],[17,5,3,2,'#22d3ee66'],[8,10,3,2,'#22d3ee66'],[17,10,3,2,'#22d3ee66'],[6,4,2,1,'#2a2a3e44'],[24,4,2,1,'#2a2a3e44'],[7,14,18,1,'#1a1a2e'],[9,8,14,1,'#1a1a2e'],[12,14,8,1,'#1a1a2e44'],[5,16,22,1,'#050510']],0);
+
+I('desk_orb','Data Orb','Pulses with network.','desk','epic','desk',400,
+[[8,0,16,1,'#38bdf844'],[8,1,16,14,'#00c4ff22'],[8,1,16,2,'#38bdf866'],[8,13,16,2,'#38bdf866'],[9,2,14,12,'#00c4ff11'],[10,3,12,10,'#38bdf822'],[11,4,10,8,'#38bdf844'],[12,5,8,6,'#38bdf866'],[13,6,6,4,'#38bdf8'],[14,7,4,2,'#7dd3fc'],[15,8,2,1,'#ffffff'],[11,6,10,1,'#38bdf822'],[12,10,8,1,'#38bdf833'],[13,9,6,1,'#38bdf855'],[9,4,2,5,'#38bdf822'],[21,4,2,5,'#38bdf822'],[10,11,12,1,'#00c4ff11'],[8,15,16,1,'#38bdf822'],[11,12,10,1,'#00c4ff22'],[14,8,4,1,'#7dd3fc44']],2);
+
+// ── NEW DESK items: tablet stand, snack stash, crypto ticker, charging dock ──
+I('desk_tablet','Tablet Stand','Angled. Charged. Ready.','desk','uncommon','desk',70,
+[[6,2,20,1,'#0a0a1e'],[6,3,20,12,'#1a1a2e'],[6,3,20,2,'#2a2a3e'],[6,14,20,2,'#2a2a3e'],[7,4,18,10,'#0a0a1e'],[8,5,16,8,'#1a1a2e'],[9,6,14,6,'#38bdf844'],[10,7,12,4,'#38bdf866'],[11,8,10,2,'#38bdf8'],[12,9,8,1,'#7dd3fc'],[13,10,6,1,'#ffffff44'],[10,5,2,4,'#38bdf855'],[20,5,2,4,'#38bdf855'],[9,4,14,1,'#2a2a3e'],[7,6,18,1,'#38bdf822'],[8,12,16,1,'#0a0a1e'],[6,15,20,1,'#050510'],[11,11,10,1,'#38bdf833'],[8,4,2,2,'#2a2a3e66'],[22,4,2,2,'#2a2a3e66'],[5,5,2,3,'#1a1a2e55'],[25,5,2,3,'#1a1a2e55'],[7,7,2,4,'#38bdf844'],[23,7,2,4,'#38bdf844'],[9,8,2,4,'#38bdf855'],[21,8,2,4,'#38bdf855'],[10,9,2,3,'#38bdf866'],[20,9,2,3,'#38bdf866'],[11,10,10,2,'#38bdf877'],[12,11,8,2,'#7dd3fc66'],[13,12,6,2,'#ffffff33'],[4,13,24,1,'#1a1a2e44'],[9,5,14,2,'#2a2a3e77'],[10,6,12,2,'#38bdf8aa'],[11,7,10,2,'#7dd3fc88'],[12,8,8,2,'#38bdf899'],[13,9,6,2,'#7dd3fc77'],[14,10,4,2,'#38bdf855'],[8,11,16,2,'#38bdf844'],[7,12,18,1,'#1a1a2e44'],[8,13,16,1,'#0a0a1e']],1);
+
+I('desk_snacks','Snack Stash','Fuel for late night coding.','desk','common','desk',25,
+[[8,4,16,1,'#ef6b35'],[8,5,16,2,'#ff8c42'],[9,6,14,3,'#f97316'],[10,7,12,2,'#fb923c'],[8,8,16,2,'#ea580c'],[9,9,14,2,'#c2410c'],[8,10,16,2,'#fbbf24'],[9,11,14,2,'#fcd34d'],[8,12,16,1,'#22c55e'],[9,13,14,2,'#4ade80'],[8,14,16,2,'#16a34a'],[10,6,4,1,'#ffffff44'],[12,7,8,1,'#ffffff33'],[11,10,10,1,'#fbbf2488'],[10,12,4,1,'#22c55e66'],[12,13,8,1,'#4ade8044'],[8,3,16,1,'#ef6b35'],[9,15,14,1,'#0a0010'],[10,16,12,1,'#0a0010'],[12,5,8,1,'#ff8c4266'],[7,4,2,2,'#ef6b3566'],[23,4,2,2,'#ef6b3566'],[6,5,2,3,'#ff8c4255'],[24,5,2,3,'#ff8c4255'],[8,6,2,3,'#f9731666'],[22,6,2,3,'#f9731666'],[9,7,2,3,'#fb923c77'],[21,7,2,3,'#fb923c77'],[10,8,2,3,'#ea580c88'],[20,8,2,3,'#ea580c88'],[11,9,2,3,'#c2410c99'],[19,9,2,3,'#c2410c99'],[12,10,2,3,'#fbbf2488'],[18,10,2,3,'#fbbf2488'],[13,11,2,3,'#fcd34d77'],[17,11,2,3,'#fcd34d77'],[11,12,10,2,'#22c55e77'],[10,13,12,2,'#4ade8066'],[9,14,14,2,'#16a34a55'],[7,15,18,1,'#0a001022'],[11,4,10,2,'#ff8c4277'],[10,5,12,2,'#f9731688'],[9,8,14,1,'#ea580c66'],[10,9,12,1,'#c2410c55'],[13,12,6,1,'#22c55e55'],[14,13,4,1,'#4ade8044'],[9,16,14,1,'#0a0010']],0);
+
+I('desk_ticker','Crypto Ticker','Green. Red. Repeat.','desk','rare','desk',220,
+[[1,1,30,1,'#050510'],[1,2,30,10,'#0a0a1e'],[1,2,30,2,'#22d3ee'],[1,11,30,2,'#22d3ee'],[2,3,28,8,'#001a0a'],[3,4,26,3,'#22c55e88'],[4,5,6,2,'#22c55e'],[11,5,6,2,'#ef4444'],[18,5,6,2,'#22c55e'],[3,8,9,2,'#22c55e44'],[14,8,9,2,'#ef444444'],[24,8,9,2,'#22c55e44'],[5,7,22,1,'#22d3ee33'],[7,4,3,1,'#22c55e66'],[14,4,3,1,'#ef444466'],[21,4,3,1,'#22c55e66'],[3,9,26,1,'#0a0a1e'],[2,4,28,1,'#22d3ee44'],[1,12,30,1,'#050510'],[4,6,24,1,'#22c55e33'],[2,2,4,2,'#22d3ee55'],[8,2,4,2,'#22d3ee55'],[15,2,4,2,'#22d3ee55'],[22,2,4,2,'#22d3ee55'],[3,3,4,2,'#22c55e44'],[10,3,4,2,'#ef444444'],[17,3,4,2,'#22c55e44'],[5,5,6,2,'#4ade8066'],[12,5,6,2,'#fca5a566'],[19,5,6,2,'#4ade8066'],[4,6,6,2,'#22c55e55'],[11,6,6,2,'#ef444455'],[18,6,6,2,'#22c55e55'],[3,7,9,2,'#22c55e44'],[13,7,9,2,'#ef444444'],[22,7,9,2,'#22c55e44'],[2,10,28,1,'#22d3ee44'],[5,2,22,1,'#22d3ee22'],[6,8,20,1,'#22c55e44'],[7,9,18,1,'#22c55e33'],[8,10,16,1,'#22c55e22'],[5,10,22,1,'#22c55e11']],1);
+
+I('desk_dock','Charging Dock','Power up. All devices.','desk','uncommon','desk',60,
+[[4,3,24,1,'#0a0a1e'],[4,4,24,10,'#1a1a2e'],[4,4,24,2,'#2a2a3e'],[4,12,24,2,'#2a2a3e'],[5,5,22,7,'#0a0a1e'],[6,6,20,5,'#1a1a2e'],[7,7,18,3,'#2a2a3e'],[8,10,16,2,'#22d3ee44'],[9,11,14,1,'#22d3ee33'],[6,6,6,2,'#38bdf822'],[15,6,6,2,'#38bdf822'],[12,8,8,1,'#22d3ee66'],[11,9,10,1,'#22d3ee44'],[7,5,4,1,'#22d3ee'],[16,5,4,1,'#22d3ee'],[9,7,14,1,'#22d3ee22'],[8,12,16,1,'#0a0a1e'],[4,13,24,1,'#050510'],[3,4,2,3,'#1a1a2e55'],[27,4,2,3,'#1a1a2e55'],[5,5,2,3,'#0a0a1e66'],[25,5,2,3,'#0a0a1e66'],[6,6,2,3,'#1a1a2e77'],[24,6,2,3,'#1a1a2e77'],[7,7,2,3,'#2a2a3e88'],[23,7,2,3,'#2a2a3e88'],[5,8,4,2,'#22d3ee44'],[23,8,4,2,'#22d3ee44'],[8,9,4,2,'#22d3ee55'],[20,9,4,2,'#22d3ee55'],[9,10,14,2,'#22d3ee66'],[10,11,12,2,'#38bdf844'],[11,12,10,2,'#22d3ee33'],[6,13,20,1,'#050510'],[7,5,18,2,'#2a2a3e44'],[8,6,16,2,'#22d3ee33'],[9,8,14,1,'#22d3ee55'],[10,9,12,1,'#38bdf866'],[11,10,10,1,'#22d3ee77'],[12,7,8,1,'#38bdf844'],[13,8,6,1,'#22d3ee55']],1);
+
+// DECOR — 13 items with surface texture, depth shading, ambient glow
+I('decor_poster','HODL Poster','Never sell.','decor','common','decor',20,
+[[3,0,26,1,'#0a0a14'],[4,1,24,14,'#1a1a2e'],[4,1,24,2,'#fbbf24'],[4,14,24,2,'#fbbf24'],[5,2,22,12,'#0a0a14'],[6,3,20,10,'#111122'],[9,5,14,3,'#fbbf24'],[10,6,12,2,'#ffd700'],[11,7,10,1,'#fff8dc'],[8,4,3,2,'#fbbf2444'],[21,4,3,2,'#fbbf2444'],[10,5,12,1,'#fbbf2488'],[7,9,18,2,'#111122'],[8,10,16,1,'#0a0a14'],[9,12,14,1,'#fbbf2422'],[5,15,22,1,'#0a0a14'],[6,16,20,1,'#0a0a14']],0);
+
+I('decor_rug','Empire Rug','SHADDAI woven in.','decor','uncommon','decor',40,
+[[1,0,30,4,'#1a1a2e'],[2,0,28,4,'#2a2a3e'],[3,0,26,4,'#3a3a4e'],[8,0,5,4,'#fbbf24'],[13,0,6,4,'#22d3ee'],[20,0,5,4,'#fbbf24'],[7,1,3,2,'#fbbf2488'],[19,1,3,2,'#fbbf2488'],[14,1,4,2,'#22d3ee88'],[6,2,2,1,'#fbbf2455'],[18,2,2,1,'#fbbf2455'],[12,2,2,1,'#22d3ee55'],[22,2,2,1,'#fbbf2455'],[4,3,24,1,'#2a2a3e'],[5,0,1,4,'#4a4a5e'],[25,0,1,4,'#4a4a5e'],[10,1,2,2,'#ffffff22'],[16,1,2,2,'#ffffff22']],0);
+
+I('decor_neon','Neon Sign','SHADDAI glows.','decor','rare','decor',180,
+[[1,0,30,6,'#1a1a2e'],[1,-1,30,1,'#22d3ee44'],[2,0,28,6,'#22d3ee44'],[3,1,26,4,'#22d3ee'],[4,2,24,2,'#ffffff'],[4,2,6,2,'#ffffff44'],[22,2,6,2,'#ffffff44'],[5,3,22,1,'#22d3ee88'],[12,4,8,1,'#ffffff22'],[3,-1,3,2,'#22d3ee66'],[25,-1,3,2,'#22d3ee66'],[1,4,30,2,'#22d3ee22'],[8,1,16,1,'#22d3ee55'],[10,5,12,1,'#22d3ee44'],[6,0,20,1,'#22d3ee33'],[14,3,4,1,'#ffffff33']],2);
+
+I('decor_screens','Wall of Screens','Full surveillance.','decor','epic','decor',420,
+[[1,0,15,10,'#0a0a1e'],[16,0,15,10,'#0a0a1e'],[1,0,15,2,'#38bdf8'],[16,0,15,2,'#38bdf8'],[2,2,13,7,'#001a2e'],[17,2,13,7,'#001a2e'],[3,3,11,5,'#0a2a4e'],[18,3,11,5,'#0a2a4e'],[4,4,9,4,'#38bdf844'],[19,4,9,4,'#22d3ee44'],[6,5,5,3,'#38bdf866'],[21,5,5,3,'#22d3ee66'],[7,6,3,2,'#38bdf888'],[22,6,3,2,'#22d3ee88'],[1,9,15,1,'#0a0a1e'],[16,9,15,1,'#0a0a1e'],[4,3,9,1,'#38bdf833'],[19,3,9,1,'#22d3ee33'],[6,4,5,1,'#38bdf855'],[21,4,5,1,'#22d3ee55'],[1,10,30,1,'#0a0a1e'],[2,11,28,1,'#050510']],1);
+
+I('decor_statue','Agent Statue','Marble bust. Legendary.','decor','legendary','decor',600,
+[[7,0,18,1,'#a0a0a0'],[7,1,18,14,'#d0d0d0'],[7,1,18,3,'#e8e8e8'],[8,3,16,10,'#c8c8c8'],[9,4,14,8,'#d8d8d8'],[11,5,10,5,'#c0c0c0'],[12,6,8,3,'#e0e0e0'],[13,7,6,2,'#f0f0f0'],[8,10,16,2,'#b8b8b8'],[7,13,18,2,'#a8a8a8'],[9,14,14,2,'#a0a0a0'],[8,4,2,5,'#e0e0e044'],[22,4,2,5,'#e0e0e044'],[10,6,2,3,'#e0e0e055'],[20,6,2,3,'#e0e0e055'],[13,5,6,1,'#f0f0f055'],[11,11,10,1,'#d0d0d0'],[12,12,8,1,'#c8c8c8'],[7,15,18,1,'#a0a0a0'],[8,16,16,1,'#909090']],1);
+
+I('decor_bookshelf','Digital Library','Every decision archived.','decor','rare','decor',220,
+[[2,0,28,1,'#1a0a00'],[2,1,28,13,'#2a1a0a'],[2,1,28,2,'#3a2a1a'],[2,12,28,2,'#3a2a1a'],[3,2,7,10,'#2a1a0a'],[11,2,7,10,'#2a1a0a'],[19,2,7,10,'#2a1a0a'],[4,3,5,8,'#ef6b3588'],[12,3,5,8,'#38bdf888'],[20,3,5,8,'#a78bfa88'],[5,4,3,6,'#ef6b35'],[13,4,3,6,'#38bdf8'],[21,4,3,6,'#a78bfa'],[8,9,6,2,'#3a2a1a'],[16,9,6,2,'#3a2a1a'],[4,5,5,1,'#ef6b3544'],[12,5,5,1,'#38bdf844'],[20,5,5,1,'#a78bfa44'],[6,11,20,1,'#2a1a0a'],[3,10,26,2,'#1a0a00'],[3,13,26,1,'#1a0a00']],1);
+
+I('decor_bookshelf_dark','Occult Shelf','Forbidden texts glow.','decor','epic','dark',380,
+[[2,0,28,1,'#000000'],[2,1,28,13,'#0a000a'],[2,1,28,2,'#1a001a'],[2,12,28,2,'#1a001a'],[3,2,7,10,'#0a000a'],[11,2,7,10,'#0a000a'],[19,2,7,10,'#0a000a'],[4,3,5,8,'#8b000088'],[12,3,5,8,'#a78bfa88'],[20,3,5,8,'#ef6b3588'],[5,4,3,6,'#8b0000'],[13,4,3,6,'#a78bfa'],[21,4,3,6,'#ef6b35'],[8,9,6,2,'#1a001a'],[16,9,6,2,'#1a001a'],[4,5,5,1,'#8b000044'],[12,5,5,1,'#a78bfa44'],[20,5,5,1,'#ef6b3544'],[6,11,20,1,'#0a000a'],[3,10,26,2,'#000000'],[3,13,26,1,'#000000'],[14,8,4,1,'#a78bfa22']],1);
+
+I('decor_globe','Data Globe','Network hologram.','decor','epic','decor',350,
+[[5,0,22,1,'#38bdf844'],[5,1,22,12,'#00c4ff22'],[5,1,22,2,'#38bdf8'],[5,11,22,2,'#38bdf8'],[6,2,20,9,'#00c4ff11'],[7,3,18,7,'#38bdf822'],[9,4,14,5,'#38bdf855'],[10,5,12,3,'#38bdf8'],[11,6,10,2,'#7dd3fc'],[12,7,8,1,'#ffffff'],[13,6,6,2,'#7dd3fc44'],[7,6,3,1,'#38bdf844'],[22,6,3,1,'#38bdf844'],[8,8,16,1,'#38bdf833'],[5,12,22,1,'#38bdf822'],[6,13,20,1,'#38bdf811'],[14,5,4,2,'#38bdf866'],[10,8,12,1,'#38bdf844']],2);
+
+I('decor_led','RGB Strip','Under-desk glow.','decor','common','decor',15,
+[[1,-1,30,1,'#ef6b3522'],[1,0,30,2,'#1a1a1e'],[1,0,8,2,'#ef6b35'],[9,0,8,2,'#fbbf24'],[17,0,8,2,'#22d3ee'],[25,0,7,2,'#38bdf8'],[1,0,8,1,'#ef6b3588'],[9,0,8,1,'#fbbf2488'],[17,0,8,1,'#22d3ee88'],[25,0,7,1,'#38bdf888'],[4,1,3,1,'#ef6b3555'],[12,1,3,1,'#fbbf2455'],[20,1,3,1,'#22d3ee55'],[28,1,2,1,'#38bdf855'],[1,-1,8,1,'#ef6b3544'],[9,-1,8,1,'#fbbf2444'],[17,-1,8,1,'#22d3ee44'],[25,-1,7,1,'#38bdf844'],[0,2,32,1,'#ef6b3522']],1);
+
+I('decor_fountain','Desk Fountain','Trickling. Meditative.','decor','rare','decor',200,
+[[8,2,16,1,'#050510'],[8,3,16,11,'#0a1a2a'],[8,3,16,2,'#38bdf8'],[8,12,16,2,'#38bdf8'],[9,4,14,8,'#0a2a4e'],[11,5,10,6,'#38bdf844'],[12,6,8,4,'#38bdf866'],[13,7,6,2,'#ffffff44'],[14,8,4,1,'#ffffff'],[10,10,12,2,'#0a1a2a'],[8,13,16,2,'#0a1a2a'],[9,5,2,4,'#38bdf855'],[21,5,2,4,'#38bdf855'],[11,8,10,1,'#38bdf822'],[13,6,6,1,'#38bdf888'],[10,11,12,1,'#0a1a2a'],[9,14,14,1,'#050510'],[12,7,8,1,'#ffffff33']],1);
+
+I('decor_clock','Binary Clock','Time in ones and zeros.','decor','uncommon','decor',80,
+[[5,0,22,1,'#050510'],[5,1,22,10,'#0a0a1e'],[5,1,22,2,'#22d3ee'],[5,9,22,2,'#22d3ee'],[6,2,20,7,'#001a0a'],[7,3,18,5,'#0a2a0a'],[9,4,14,4,'#22d3ee33'],[11,5,10,2,'#22d3ee88'],[11,6,10,2,'#22d3ee44'],[8,5,4,2,'#4ade8044'],[18,5,4,2,'#4ade8044'],[6,4,20,1,'#22d3ee22'],[7,7,18,1,'#22d3ee11'],[10,8,12,1,'#22d3ee22'],[5,10,22,1,'#0a0a1e'],[6,11,20,1,'#050510'],[8,6,4,1,'#22d3ee66'],[17,6,4,1,'#22d3ee66']],1);
+
+I('decor_tapestry','Agent Tapestry','Woven empire history.','decor','legendary','decor',550,
+[[1,0,30,1,'#1a0a00'],[1,1,30,15,'#1a0a00'],[1,1,30,2,'#fbbf24'],[1,14,30,2,'#fbbf24'],[2,2,28,12,'#2a1a0a'],[3,3,26,10,'#3a2a1a'],[4,4,24,8,'#4a3a2a'],[5,5,22,6,'#fbbf2422'],[6,6,20,4,'#ffd70033'],[7,7,18,3,'#fbbf2444'],[8,8,16,2,'#ffd70055'],[9,9,14,1,'#fbbf2466'],[10,10,12,1,'#ffd70077'],[11,11,10,1,'#fff8dc44'],[12,12,8,1,'#fbbf2488'],[5,5,22,1,'#fbbf2415'],[6,12,20,1,'#3a2a1a'],[7,13,18,1,'#2a1a0a'],[4,15,24,1,'#1a0a00'],[3,16,26,1,'#0a0000']],1);
+
+// ── NEW DECOR: wall art, floating shelf, crystal cluster, champion banner ──
+I('decor_wall_art','Fractal Canvas','Infinite detail. Gaze long.','decor','epic','decor',320,
+[[2,0,28,1,'#050510'],[2,1,28,14,'#0a0a1e'],[2,1,28,2,'#a78bfa'],[2,13,28,2,'#a78bfa'],[3,2,26,11,'#1a0030'],[4,3,24,9,'#2a0040'],[5,4,22,7,'#3a0050'],[6,5,20,5,'#4a0060'],[7,6,18,3,'#5a0070'],[8,7,16,2,'#6a0080'],[9,8,14,1,'#7a0090'],[10,9,12,1,'#a78bfa'],[11,10,10,1,'#c4b5fd'],[12,11,8,1,'#e9d5ff44'],[7,5,4,3,'#a78bfa33'],[18,5,4,3,'#a78bfa33'],[10,6,12,2,'#a78bfa44'],[6,7,20,1,'#a78bfa22'],[10,10,12,1,'#6a008044'],[3,14,26,1,'#050510'],[6,8,20,1,'#5a007066'],[9,9,14,1,'#7a009044'],[4,2,4,2,'#2a004055'],[24,2,4,2,'#2a004055'],[5,3,4,2,'#3a005066'],[23,3,4,2,'#3a005066'],[6,4,4,2,'#4a006077'],[22,4,4,2,'#4a006077'],[7,5,4,2,'#5a007088'],[21,5,4,2,'#5a007088'],[8,6,4,2,'#6a008099'],[20,6,4,2,'#6a008099'],[9,7,4,2,'#7a0090aa'],[19,7,4,2,'#7a0090aa'],[10,8,12,2,'#a78bfabb'],[11,9,10,2,'#c4b5fd88'],[5,10,22,2,'#3a005044'],[6,11,20,2,'#4a006033'],[7,12,18,2,'#5a007022'],[13,7,6,1,'#c4b5fd66'],[14,8,4,1,'#e9d5ff44'],[11,5,10,1,'#a78bfa55'],[12,6,8,1,'#c4b5fd44'],[10,11,12,1,'#5a007044'],[9,12,14,1,'#4a006033'],[8,13,16,1,'#3a005022']],2);
+
+I('decor_shelf','Floating Shelf','Hovering. Minimal.','decor','rare','decor',200,
+[[1,8,30,2,'#2a2a3e'],[1,8,30,1,'#3a3a4e'],[1,9,30,1,'#2a2a3e'],[3,7,4,2,'#1a1a2e'],[25,7,4,2,'#1a1a2e'],[5,6,4,3,'#22d3ee44'],[23,6,4,3,'#22d3ee44'],[8,6,16,3,'#1a1a2e'],[10,5,12,2,'#a78bfa44'],[11,5,4,2,'#c4b5fd44'],[12,4,8,2,'#a78bfa22'],[14,3,4,2,'#a78bfa11'],[3,10,4,2,'#1a1a2e'],[25,10,4,2,'#1a1a2e'],[6,11,20,2,'#1a1a2e'],[8,9,16,1,'#2a2a3e'],[7,8,18,1,'#3a3a4e'],[5,12,22,1,'#0a0a1e'],[9,6,14,2,'#a78bfa33'],[13,8,6,1,'#2a2a3e'],[2,7,4,2,'#2a2a3e44'],[26,7,4,2,'#2a2a3e44'],[4,6,4,2,'#1a1a2e55'],[24,6,4,2,'#1a1a2e55'],[6,7,4,2,'#22d3ee33'],[22,7,4,2,'#22d3ee33'],[7,5,18,2,'#1a1a2e44'],[9,4,14,2,'#2a2a3e33'],[11,3,10,2,'#a78bfa33'],[12,2,8,2,'#a78bfa22'],[14,1,4,2,'#a78bfa11'],[10,7,12,2,'#22d3ee44'],[11,8,10,2,'#a78bfa55'],[12,9,8,2,'#c4b5fd44'],[13,10,6,2,'#a78bfa33'],[4,11,24,2,'#1a1a2e66'],[7,10,18,2,'#2a2a3e55'],[9,9,14,1,'#3a3a4e44'],[10,8,12,1,'#22d3ee55'],[11,6,10,1,'#c4b5fd66'],[12,7,8,1,'#a78bfa77']],1);
+
+I('decor_crystals','Crystal Cluster','Geometric growth. Natural.','decor','rare','decor',250,
+[[7,2,18,1,'#6d28d922'],[7,3,18,12,'#7c3aed44'],[8,4,16,10,'#8b5cf666'],[9,5,14,8,'#a78bfa'],[10,6,12,6,'#c4b5fd'],[11,7,10,4,'#e9d5ff'],[12,8,8,2,'#ffffff44'],[13,9,6,1,'#ffffff'],[9,6,4,3,'#a78bfa33'],[16,7,4,2,'#a78bfa22'],[11,4,4,3,'#7c3aed55'],[14,5,4,2,'#7c3aed44'],[8,11,16,2,'#6d28d988'],[9,12,14,1,'#5b21b666'],[10,13,12,1,'#4c1d9544'],[7,14,18,1,'#3b076422'],[12,6,8,3,'#c4b5fd66'],[14,7,4,2,'#e9d5ff44'],[10,9,12,1,'#a78bfa44'],[8,15,16,1,'#3b076411'],[6,3,2,3,'#6d28d944'],[24,3,2,3,'#6d28d944'],[8,4,2,3,'#7c3aed55'],[22,4,2,3,'#7c3aed55'],[9,5,2,3,'#8b5cf666'],[21,5,2,3,'#8b5cf666'],[10,6,2,3,'#a78bfa77'],[20,6,2,3,'#a78bfa77'],[11,7,2,3,'#c4b5fd88'],[19,7,2,3,'#c4b5fd88'],[12,8,2,3,'#e9d5ff99'],[18,8,2,3,'#e9d5ff99'],[13,9,6,2,'#ffffff66'],[14,10,4,2,'#ffffff44'],[7,10,18,2,'#6d28d966'],[8,9,16,2,'#7c3aed55'],[9,8,14,2,'#8b5cf644'],[10,7,12,2,'#a78bfa33'],[11,6,10,2,'#c4b5fd44'],[12,5,8,2,'#e9d5ff55'],[13,10,6,1,'#ffffff88'],[9,13,14,1,'#5b21b655'],[7,12,18,1,'#6d28d977'],[11,11,10,1,'#7c3aed66'],[10,12,12,1,'#6d28d955']],2);
+
+I('decor_banner','Champion Banner','A name in lights. Yours.','decor','legendary','decor',600,
+[[1,0,30,1,'#050510'],[1,1,30,18,'#0a0a1e'],[1,1,30,2,'#fbbf24'],[1,17,30,2,'#fbbf24'],[2,2,28,15,'#1a0a00'],[3,3,26,13,'#2a1a0a'],[4,4,24,11,'#3a2a1a'],[5,5,22,9,'#fbbf2433'],[6,6,20,7,'#ffd70044'],[7,7,18,5,'#fbbf2455'],[8,8,16,3,'#ffd70066'],[9,9,14,1,'#fbbf2477'],[10,10,12,1,'#fff8dc44'],[11,11,10,1,'#fbbf2488'],[8,5,16,2,'#fbbf2415'],[9,12,14,2,'#3a2a1a'],[10,13,12,1,'#2a1a0a'],[5,15,22,2,'#1a0a00'],[4,16,24,1,'#0a0000'],[7,6,18,2,'#fbbf2444'],[11,7,10,1,'#ffd70055'],[13,10,6,1,'#fbbf2488'],[6,14,20,1,'#2a1a0a'],[12,12,8,1,'#3a2a1a'],[2,1,4,2,'#fbbf2455'],[26,1,4,2,'#fbbf2455'],[3,2,4,2,'#fbbf2466'],[25,2,4,2,'#fbbf2466'],[4,3,4,2,'#fbbf2477'],[24,3,4,2,'#fbbf2477'],[5,4,4,2,'#fbbf2488'],[23,4,4,2,'#fbbf2488'],[6,5,4,2,'#ffd70099'],[22,5,4,2,'#ffd70099'],[7,6,4,2,'#fbbf24aa'],[21,6,4,2,'#fbbf24aa'],[8,7,4,2,'#ffd700bb'],[20,7,4,2,'#ffd700bb'],[9,8,4,2,'#fbbf24cc'],[19,8,4,2,'#fbbf24cc'],[10,9,12,2,'#fff8dc88'],[11,10,10,2,'#fbbf2499'],[12,11,8,2,'#ffd70077'],[8,12,16,2,'#3a2a1a44'],[7,13,18,2,'#2a1a0a33'],[5,14,22,2,'#1a0a0022'],[3,15,26,1,'#1a0a0011'],[14,9,4,2,'#fff8dc66'],[15,10,2,2,'#fbbf2488'],[13,11,6,2,'#ffd70066'],[9,14,14,1,'#2a1a0a44'],[10,15,12,1,'#1a0a0033']],2);
+
+// WALLPAPER — 8 surface patterns with depth, texture, parallax-style bands
+I('wall_cyber','Cyber Grid','Neon infinity.','wallpaper','uncommon','wallpaper',80,
+[[0,0,32,1,'#22d3ee11'],[0,4,32,1,'#22d3ee11'],[0,8,32,1,'#22d3ee11'],[0,12,32,1,'#22d3ee11'],[0,16,32,1,'#22d3ee11'],[0,20,32,1,'#22d3ee11'],[0,24,32,1,'#22d3ee11'],[0,2,32,2,'#22d3ee22'],[0,6,32,2,'#22d3ee22'],[0,10,32,2,'#22d3ee22'],[0,14,32,2,'#22d3ee22'],[0,18,32,2,'#22d3ee22'],[0,22,32,2,'#22d3ee22'],[15,0,2,32,'#22d3ee15'],[7,0,2,32,'#22d3ee08'],[23,0,2,32,'#22d3ee08'],[0,0,32,1,'#22d3ee33'],[0,24,32,1,'#22d3ee33']],0);
+
+I('wall_matrix','Matrix Rain','Green code falls.','wallpaper','rare','wallpaper',180,
+[[4,0,2,6,'#22c55e33'],[10,3,2,8,'#22c55e33'],[16,1,2,10,'#22c55e33'],[22,5,2,6,'#22c55e33'],[7,12,2,7,'#22c55e22'],[17,14,2,6,'#22c55e22'],[27,8,2,5,'#22c55e33'],[1,10,2,6,'#22c55e22'],[13,0,2,4,'#22c55e22'],[25,1,2,8,'#22c55e22'],[4,16,2,5,'#22c55e11'],[16,20,2,4,'#22c55e11'],[22,18,2,3,'#22c55e11'],[10,0,2,3,'#22c55e22'],[19,6,2,5,'#22c55e22'],[0,6,2,3,'#22c55e33'],[29,10,2,4,'#22c55e33'],[7,20,2,4,'#22c55e11']],1);
+
+I('wall_stars','Deep Space','Nebula starfield.','wallpaper','epic','wallpaper',380,
+[[2,1,2,2,'#ffffff44'],[9,0,2,2,'#ffffff66'],[19,3,2,2,'#ffffff33'],[6,9,2,2,'#ffffff55'],[15,7,2,2,'#ffffff44'],[23,11,2,2,'#ffffff33'],[4,15,2,2,'#ffffff55'],[13,13,2,2,'#ffffff44'],[21,17,2,2,'#ffffff33'],[7,21,2,2,'#ffffff44'],[17,19,2,2,'#ffffff33'],[25,1,2,2,'#ffffff22'],[0,4,1,1,'#ffffff33'],[31,8,1,1,'#ffffff33'],[11,22,1,1,'#ffffff33'],[26,14,1,1,'#ffffff22'],[4,24,1,1,'#ffffff22'],[30,22,1,1,'#ffffff22'],[14,5,1,1,'#ffffff33'],[28,20,1,1,'#ffffff22'],[8,3,1,1,'#ffffff44'],[22,6,1,1,'#ffffff33']],0);
+
+I('wall_brick','Digital Brick','Monochrome. Gritty.','wallpaper','common','wallpaper',20,
+[[0,0,16,4,'#2a2a2a'],[16,0,16,4,'#222222'],[0,4,16,4,'#222222'],[16,4,16,4,'#2a2a2a'],[0,8,16,4,'#2a2a2a'],[16,8,16,4,'#222222'],[0,12,16,4,'#222222'],[16,12,16,4,'#2a2a2a'],[0,16,16,4,'#2a2a2a'],[16,16,16,4,'#222222'],[0,20,16,4,'#222222'],[16,20,16,4,'#2a2a2a'],[0,24,16,4,'#2a2a2a'],[16,24,16,4,'#222222'],[0,28,16,4,'#222222'],[16,28,16,4,'#2a2a2a'],[4,2,4,2,'#33333344'],[12,2,4,2,'#33333344'],[4,6,4,2,'#33333344'],[12,6,4,2,'#33333344'],[4,10,4,2,'#33333344'],[12,10,4,2,'#33333344'],[4,14,4,2,'#33333344'],[12,14,4,2,'#33333344'],[4,18,4,2,'#33333344'],[12,18,4,2,'#33333344'],[4,22,4,2,'#33333344'],[12,22,4,2,'#33333344']],0);
+
+I('wall_circuit','Circuit Board','Traces everywhere.','wallpaper','rare','wallpaper',220,
+[[0,0,8,2,'#22d3ee33'],[8,4,12,2,'#22d3ee33'],[0,10,16,2,'#22d3ee33'],[5,14,20,2,'#22d3ee33'],[12,18,12,2,'#22d3ee33'],[0,22,10,2,'#22d3ee33'],[20,0,2,12,'#22d3ee22'],[16,10,2,10,'#22d3ee22'],[26,14,2,6,'#22d3ee22'],[4,2,2,2,'#22d3ee44'],[18,4,2,2,'#22d3ee44'],[10,12,2,2,'#22d3ee44'],[22,16,2,2,'#22d3ee44'],[0,16,4,2,'#22d3ee22'],[28,8,4,2,'#22d3ee22'],[6,20,4,2,'#22d3ee22'],[15,0,2,4,'#22d3ee33'],[12,24,4,2,'#22d3ee22']],1);
+
+I('wall_fire','Inferno','Digital flames.','wallpaper','legendary','wallpaper',600,
+[[0,0,32,16,'#1a0000'],[0,0,32,6,'#ef6b3544'],[4,3,24,6,'#fbbf2433'],[0,10,32,6,'#ef6b3522'],[8,14,16,4,'#ef444422'],[2,16,28,4,'#ef6b3511'],[2,0,4,3,'#fbbf2455'],[26,0,4,3,'#fbbf2455'],[0,5,2,2,'#fbbf2444'],[30,5,2,2,'#fbbf2444'],[4,2,2,2,'#ef6b3566'],[26,2,2,2,'#ef6b3566'],[12,4,8,2,'#fbbf2433'],[0,12,2,4,'#ef6b3533'],[30,12,2,4,'#ef6b3533'],[6,16,20,2,'#ef444411'],[4,18,24,2,'#ef6b3511'],[2,20,28,2,'#ef6b3515']],2);
+
+I('wall_ocean','Abyssal Deep','Pressure changes.','wallpaper','epic','wallpaper',400,
+[[0,0,32,16,'#000a1a'],[0,0,32,4,'#00306044'],[0,4,32,4,'#00509033'],[0,8,32,4,'#00306022'],[0,12,32,4,'#00509022'],[0,16,32,4,'#00306033'],[0,20,32,4,'#00103044'],[10,13,12,4,'#00509022'],[2,22,28,4,'#00103033'],[4,14,24,3,'#00306022'],[8,7,16,3,'#0060b033'],[12,9,8,2,'#0070c044'],[14,10,4,1,'#0080d055'],[6,18,20,2,'#00408033'],[9,20,14,2,'#00509033'],[16,23,6,1,'#00509055'],[13,25,8,1,'#00306044']],0);
+
+I('wall_hex','Hex Grid','Honeycomb. Efficient.','wallpaper','uncommon','wallpaper',110,
+[[2,0,8,5,'#22d3ee15'],[14,0,8,5,'#22d3ee15'],[0,5,5,5,'#22d3ee15'],[10,5,8,5,'#22d3ee15'],[22,5,5,5,'#22d3ee15'],[4,10,5,5,'#22d3ee15'],[14,10,8,5,'#22d3ee15'],[0,15,8,5,'#22d3ee15'],[12,15,8,5,'#22d3ee15'],[8,15,4,5,'#22d3ee15'],[20,15,4,5,'#22d3ee15'],[4,20,8,5,'#22d3ee15'],[16,20,8,5,'#22d3ee15'],[8,25,16,5,'#22d3ee15'],[2,2,8,1,'#22d3ee25'],[14,2,8,1,'#22d3ee25'],[0,7,5,1,'#22d3ee25'],[10,7,8,1,'#22d3ee25'],[4,12,5,1,'#22d3ee25'],[14,12,8,1,'#22d3ee25'],[12,17,8,1,'#22d3ee25'],[4,22,8,1,'#22d3ee25'],[8,27,16,1,'#22d3ee25']],0);
+
+I('wall_glitch','Glitch Wall','Corrupted reality.','wallpaper','mythic','tech',1200,
+[[0,0,32,16,'#000010'],[0,2,16,2,'#ef444444'],[0,6,12,2,'#22d3ee33'],[18,4,8,2,'#22d3ee44'],[4,8,12,2,'#38bdf833'],[24,9,8,2,'#ef444433'],[0,12,20,2,'#a78bfa22'],[16,0,8,2,'#ef444433'],[8,5,16,2,'#38bdf822'],[22,1,6,2,'#22d3ee44'],[14,10,10,2,'#a78bfa33'],[5,15,12,2,'#ef444422'],[2,18,8,2,'#22d3ee33'],[20,16,6,2,'#38bdf833'],[10,20,12,2,'#ef444422'],[1,22,10,2,'#a78bfa33'],[24,21,6,2,'#22d3ee33'],[15,22,6,2,'#38bdf822'],[4,25,20,2,'#ef444433'],[8,27,16,2,'#a78bfa22'],[0,29,32,2,'#000010']],1);
+
+// ── NEW WALLPAPER: cyber wave, neon grid ──
+I('wall_cyber_wave','Cyber Wave','Retro wave. Synth vibes.','wallpaper','epic','wallpaper',350,
+[[0,0,32,8,'#000010'],[0,8,32,8,'#110020'],[0,16,32,8,'#220030'],[0,24,32,8,'#110020'],[4,2,8,4,'#ff6b3544'],[18,4,10,4,'#ff6b3533'],[6,10,12,4,'#a78bfa44'],[20,12,10,4,'#a78bfa33'],[8,18,16,4,'#22d3ee44'],[12,20,8,2,'#22d3ee66'],[2,26,6,4,'#fbbf2444'],[22,26,8,4,'#fbbf2433'],[10,6,12,2,'#ff6b3522'],[14,14,4,2,'#a78bfa22'],[16,22,8,2,'#22d3ee22'],[4,28,24,2,'#fbbf2411'],[0,0,32,1,'#ff6b3511'],[0,16,32,1,'#a78bfa11'],[0,24,32,1,'#22d3ee11'],[10,0,12,1,'#ff6b3515'],[2,2,6,2,'#ff6b3533'],[22,2,6,2,'#ff6b3533'],[8,4,16,2,'#ff6b3544'],[4,12,8,2,'#a78bfa33'],[16,12,8,2,'#a78bfa33'],[6,14,12,2,'#a78bfa44'],[10,16,12,2,'#22d3ee33'],[14,18,4,2,'#22d3ee44'],[2,20,6,2,'#22d3ee22'],[24,20,6,2,'#22d3ee22'],[4,22,8,2,'#22d3ee33'],[20,22,8,2,'#22d3ee33'],[6,24,12,2,'#fbbf2422'],[14,24,12,2,'#fbbf2422'],[8,26,16,2,'#fbbf2433'],[10,28,12,2,'#fbbf2422'],[0,4,32,1,'#ff6b3522'],[0,12,32,1,'#a78bfa22'],[0,20,32,1,'#22d3ee22'],[12,22,8,2,'#22d3ee44'],[4,6,8,2,'#ff6b3522'],[20,6,8,2,'#ff6b3522']],1);
+
+I('wall_neon_grid','Neon Grid','Cities of light below.','wallpaper','rare','wallpaper',250,
+[[0,0,32,16,'#050510'],[0,16,32,16,'#0a0a1e'],[0,4,32,1,'#22d3ee33'],[0,8,32,1,'#22d3ee33'],[0,12,32,1,'#22d3ee33'],[0,16,32,1,'#22d3ee44'],[0,20,32,1,'#22d3ee33'],[0,24,32,1,'#22d3ee33'],[0,28,32,1,'#22d3ee33'],[8,0,1,16,'#22d3ee22'],[16,0,1,16,'#22d3ee22'],[24,0,1,16,'#22d3ee22'],[4,16,1,16,'#22d3ee22'],[12,16,1,16,'#22d3ee22'],[20,16,1,16,'#22d3ee22'],[28,16,1,16,'#22d3ee22'],[3,17,5,2,'#ef6b3544'],[11,17,5,2,'#38bdf844'],[19,17,5,2,'#ef6b3544'],[27,17,5,2,'#38bdf844'],[6,19,6,2,'#fbbf2444'],[14,19,6,2,'#fbbf2444'],[22,19,6,2,'#fbbf2444'],[8,21,16,2,'#22d3ee44'],[12,23,8,2,'#22d3ee66'],[10,25,12,2,'#22d3ee44'],[14,27,4,1,'#22d3ee33'],[0,30,32,2,'#22d3ee08'],[0,31,32,1,'#22d3ee11'],[0,2,32,1,'#22d3ee22'],[0,6,32,1,'#22d3ee22'],[0,10,32,1,'#22d3ee22'],[0,14,32,1,'#22d3ee22'],[0,18,32,1,'#22d3ee33'],[0,22,32,1,'#22d3ee22'],[0,26,32,1,'#22d3ee22'],[2,0,1,16,'#22d3ee11'],[6,0,1,16,'#22d3ee11'],[10,0,1,16,'#22d3ee11'],[14,0,1,16,'#22d3ee11'],[18,0,1,16,'#22d3ee11'],[22,0,1,16,'#22d3ee11'],[26,0,1,16,'#22d3ee11'],[30,0,1,16,'#22d3ee11'],[2,18,5,2,'#22d3ee33'],[10,19,5,2,'#22d3ee33'],[18,18,5,2,'#22d3ee33'],[26,19,5,2,'#22d3ee33'],[5,22,6,2,'#22d3ee55'],[13,22,6,2,'#22d3ee55'],[21,22,6,2,'#22d3ee55'],[9,24,14,2,'#22d3ee55'],[11,26,10,2,'#22d3ee44'],[13,28,6,1,'#22d3ee33']],1);
+
+// FLOOR — 10 surfaces with tile patterns, grid depth, material texture
+I('floor_metal','Grille','Perforated steel.','floor','common','floor',20,
+[[0,0,32,3,'#2a2a3e'],[0,3,32,3,'#32324e'],[0,6,32,3,'#2a2a3e'],[0,9,32,3,'#32324e'],[0,12,32,3,'#2a2a3e'],[0,15,32,3,'#32324e'],[0,18,32,3,'#2a2a3e'],[0,21,32,3,'#32324e'],[0,24,32,3,'#2a2a3e'],[0,27,32,3,'#32324e'],[0,30,32,2,'#2a2a3e'],[4,0,2,2,'#3a3a4e22'],[12,0,2,2,'#3a3a4e22'],[20,0,2,2,'#3a3a4e22'],[28,0,2,2,'#3a3a4e22'],[4,6,2,2,'#3a3a4e22'],[12,6,2,2,'#3a3a4e22'],[20,6,2,2,'#3a3a4e22'],[28,6,2,2,'#3a3a4e22'],[4,12,2,2,'#3a3a4e22'],[12,12,2,2,'#3a3a4e22'],[20,12,2,2,'#3a3a4e22'],[28,12,2,2,'#3a3a4e22'],[4,18,2,2,'#3a3a4e22'],[12,18,2,2,'#3a3a4e22'],[20,18,2,2,'#3a3a4e22'],[28,18,2,2,'#3a3a4e22'],[4,24,2,2,'#3a3a4e22'],[12,24,2,2,'#3a3a4e22'],[20,24,2,2,'#3a3a4e22'],[28,24,2,2,'#3a3a4e22']],0);
+
+I('floor_marble','Marble','Polished stone.','floor','rare','floor',180,
+[[0,0,32,4,'#e0e0e0'],[0,4,32,4,'#d0d0d0'],[0,8,32,4,'#e0e0e0'],[0,12,32,4,'#d0d0d0'],[0,16,32,4,'#e0e0e0'],[0,20,32,4,'#d0d0d0'],[0,24,32,4,'#e0e0e0'],[0,28,32,4,'#d0d0d0'],[4,0,4,3,'#c0c0c044'],[16,4,4,3,'#c0c0c044'],[10,8,4,3,'#c0c0c044'],[22,12,4,3,'#c0c0c044'],[6,16,4,3,'#c0c0c044'],[18,20,4,3,'#c0c0c044'],[12,24,4,3,'#c0c0c044'],[24,28,4,3,'#c0c0c044'],[0,1,2,2,'#ffffff22'],[30,5,2,2,'#ffffff22'],[8,9,2,2,'#ffffff22'],[20,13,2,2,'#ffffff22'],[14,17,2,2,'#ffffff22'],[2,21,2,2,'#ffffff22'],[26,25,2,2,'#ffffff22'],[0,6,2,2,'#ffffff22'],[30,14,2,2,'#ffffff22'],[8,22,2,2,'#ffffff22']],0);
+
+I('floor_neon','Neon Grid','Glowing pathways.','floor','legendary','floor',550,
+[[0,0,32,16,'#0a0a1e'],[0,0,32,4,'#22d3ee08'],[0,4,32,4,'#22d3ee08'],[0,8,32,3,'#22d3ee44'],[0,11,32,3,'#22d3ee33'],[0,14,32,4,'#22d3ee08'],[0,18,32,4,'#22d3ee08'],[0,22,32,4,'#22d3ee08'],[0,26,32,4,'#22d3ee08'],[15,0,2,32,'#22d3ee22'],[0,8,32,1,'#22d3ee55'],[0,12,32,1,'#22d3ee33'],[15,0,1,32,'#22d3ee44'],[7,0,1,12,'#22d3ee11'],[23,0,1,12,'#22d3ee11'],[7,12,1,20,'#22d3ee08'],[23,12,1,20,'#22d3ee08'],[2,9,12,2,'#22d3ee55'],[18,9,12,2,'#22d3ee55'],[0,10,32,1,'#22d3ee22'],[14,5,2,3,'#22d3ee55'],[14,12,2,3,'#22d3ee33']],1);
+
+I('floor_water','Shallow Digital','Walk on code.','floor','rare','floor',220,
+[[0,0,32,5,'#38bdf833'],[0,5,32,5,'#38bdf822'],[0,10,32,5,'#38bdf833'],[0,15,32,5,'#38bdf822'],[0,20,32,5,'#38bdf833'],[0,25,32,5,'#38bdf822'],[0,30,32,2,'#38bdf833'],[4,1,4,2,'#ffffff33'],[18,5,4,2,'#ffffff33'],[10,12,4,2,'#ffffff33'],[24,18,4,2,'#ffffff33'],[6,23,4,2,'#ffffff33'],[20,27,4,2,'#ffffff33'],[14,3,2,1,'#ffffff44'],[28,7,2,1,'#ffffff44'],[8,14,2,1,'#ffffff44'],[22,20,2,1,'#ffffff44'],[4,28,2,1,'#ffffff44'],[0,2,32,1,'#38bdf844'],[0,12,32,1,'#38bdf844'],[0,22,32,1,'#38bdf844']],0);
+
+I('floor_circuit','Circuit Floor','Walk the system.','floor','rare','floor',200,
+[[0,0,32,2,'#22d3ee33'],[0,5,32,2,'#22d3ee33'],[0,10,32,3,'#22d3ee22'],[0,15,32,2,'#22d3ee33'],[0,20,32,2,'#22d3ee33'],[0,25,32,2,'#22d3ee22'],[0,30,32,2,'#22d3ee33'],[6,0,2,5,'#22d3ee44'],[20,0,2,5,'#22d3ee44'],[12,10,2,5,'#22d3ee44'],[24,10,2,5,'#22d3ee44'],[8,15,2,5,'#22d3ee44'],[22,15,2,5,'#22d3ee44'],[4,20,2,5,'#22d3ee44'],[18,20,2,5,'#22d3ee44'],[14,25,2,5,'#22d3ee44'],[28,25,2,5,'#22d3ee44'],[0,0,4,2,'#22d3ee55'],[28,5,4,2,'#22d3ee55'],[8,10,4,3,'#22d3ee55'],[24,15,4,2,'#22d3ee55'],[4,25,4,2,'#22d3ee55'],[16,20,4,2,'#22d3ee55'],[10,30,4,2,'#22d3ee55']],0);
+
+I('floor_lava','Molten Core','Burning rock.','floor','legendary','elemental',600,
+[[0,0,32,16,'#1a0000'],[0,0,32,6,'#ef6b3544'],[4,3,24,6,'#fbbf2433'],[0,9,32,7,'#ef444433'],[8,13,16,5,'#fbbf2422'],[2,22,28,4,'#ef6b3544'],[2,0,4,3,'#fbbf2466'],[26,0,4,3,'#fbbf2466'],[4,5,24,2,'#fbbf2444'],[0,14,4,4,'#ef6b3533'],[28,14,4,4,'#ef6b3533'],[6,17,20,4,'#ef444422'],[4,19,24,4,'#ef6b3522'],[0,27,32,4,'#ef6b3544'],[10,6,12,4,'#fbbf2466'],[12,7,8,2,'#fff8dc33'],[16,22,4,2,'#fbbf2444'],[8,24,16,2,'#ef6b3533']],2);
+
+I('floor_ice','Glacial Floor','Slippery. Cold.','floor','epic','elemental',350,
+[[0,0,32,16,'#000a1a'],[0,0,32,4,'#60a5fa33'],[0,4,32,4,'#93c5fd22'],[0,8,32,4,'#60a5fa44'],[0,12,32,4,'#93c5fd22'],[0,16,32,4,'#60a5fa33'],[0,20,32,4,'#93c5fd22'],[0,24,32,4,'#60a5fa33'],[0,28,32,4,'#93c5fd22'],[6,1,4,2,'#ffffff44'],[20,5,4,2,'#ffffff44'],[14,10,4,2,'#ffffff44'],[28,15,4,2,'#ffffff44'],[8,18,4,2,'#ffffff44'],[22,22,4,2,'#ffffff44'],[4,27,4,2,'#ffffff44'],[16,30,4,2,'#ffffff44'],[10,3,2,1,'#ffffff33'],[24,7,2,1,'#ffffff33'],[18,12,2,1,'#ffffff33'],[6,16,2,1,'#ffffff33'],[12,23,2,1,'#ffffff33']],1);
+
+I('floor_hex','Hex Tile','Geometric. Decisive.','floor','uncommon','floor',80,
+[[0,0,8,4,'#2a2a3e'],[8,0,12,4,'#1a1a2e'],[20,0,12,4,'#2a2a3e'],[0,4,5,4,'#2a2a3e'],[5,4,12,4,'#1a1a2e'],[17,4,15,4,'#2a2a3e'],[0,8,8,4,'#1a1a2e'],[8,8,12,4,'#2a2a3e'],[20,8,12,4,'#1a1a2e'],[0,12,5,4,'#2a2a3e'],[5,12,12,4,'#1a1a2e'],[17,12,15,4,'#2a2a3e'],[0,16,8,4,'#1a1a2e'],[8,16,12,4,'#2a2a3e'],[20,16,12,4,'#1a1a2e'],[0,20,5,4,'#2a2a3e'],[5,20,12,4,'#1a1a2e'],[17,20,15,4,'#2a2a3e'],[0,24,8,4,'#1a1a2e'],[8,24,12,4,'#2a2a3e'],[20,24,12,4,'#1a1a2e'],[0,28,5,4,'#2a2a3e'],[5,28,12,4,'#1a1a2e'],[17,28,15,4,'#2a2a3e'],[2,2,4,1,'#3a3a4e22'],[10,2,8,1,'#2a2a3e22'],[22,2,8,1,'#3a3a4e22'],[2,6,4,1,'#3a3a4e22'],[10,6,8,1,'#2a2a3e22'],[22,6,8,1,'#3a3a4e22'],[2,10,4,1,'#2a2a3e22'],[10,10,8,1,'#3a3a4e22'],[22,10,8,1,'#2a2a3e22'],[2,14,4,1,'#3a3a4e22'],[10,14,8,1,'#2a2a3e22'],[22,14,8,1,'#3a3a4e22']],0);
+
+I('floor_glass','Glass Platform','Transparent. LED edge.','floor','epic','floor',320,
+[[0,0,32,16,'#38bdf811'],[0,0,32,3,'#38bdf844'],[0,3,32,3,'#38bdf822'],[0,8,32,3,'#38bdf833'],[0,11,32,3,'#38bdf815'],[0,16,32,3,'#38bdf844'],[0,19,32,3,'#38bdf822'],[0,24,32,3,'#38bdf833'],[0,27,32,3,'#38bdf815'],[0,30,32,2,'#38bdf844'],[15,0,2,32,'#38bdf822'],[7,0,2,8,'#38bdf833'],[23,0,2,8,'#38bdf833'],[7,16,2,8,'#38bdf833'],[23,16,2,8,'#38bdf833'],[4,11,8,2,'#38bdf844'],[18,11,8,2,'#38bdf844'],[4,27,8,2,'#38bdf844'],[18,27,8,2,'#38bdf844'],[10,4,12,2,'#38bdf855'],[10,20,12,2,'#38bdf855'],[0,0,32,1,'#38bdf855'],[0,31,32,1,'#38bdf855']],1);
+
+// ── NEW FLOOR: carpet, hologrid, stone tile ──
+I('floor_carpet','Empire Carpet','Woven sigils. Soft step.','floor','rare','floor',200,
+[[0,0,32,16,'#2a1a0a'],[0,16,32,16,'#1a0a00'],[2,2,28,4,'#fbbf2444'],[2,8,28,4,'#fbbf2444'],[2,14,28,4,'#fbbf2444'],[2,20,28,4,'#fbbf2444'],[2,26,28,4,'#fbbf2444'],[8,0,2,2,'#fbbf2466'],[22,0,2,2,'#fbbf2466'],[8,14,2,2,'#fbbf2466'],[22,14,2,2,'#fbbf2466'],[8,28,2,2,'#fbbf2466'],[22,28,2,2,'#fbbf2466'],[4,5,8,2,'#fbbf2455'],[12,5,8,2,'#fbbf2455'],[20,5,8,2,'#fbbf2455'],[4,11,8,2,'#fbbf2455'],[12,11,8,2,'#fbbf2455'],[20,11,8,2,'#fbbf2455'],[4,17,8,2,'#fbbf2455'],[12,17,8,2,'#fbbf2455'],[20,17,8,2,'#fbbf2455'],[4,23,8,2,'#fbbf2455'],[12,23,8,2,'#fbbf2455'],[20,23,8,2,'#fbbf2455'],[6,0,4,2,'#fbbf2433'],[18,0,4,2,'#fbbf2433'],[6,14,4,2,'#fbbf2433'],[18,14,4,2,'#fbbf2433'],[6,29,4,2,'#fbbf2433'],[18,29,4,2,'#fbbf2433'],[1,3,30,2,'#fbbf2422'],[1,9,30,2,'#fbbf2422'],[1,15,30,2,'#fbbf2422'],[1,21,30,2,'#fbbf2422'],[1,27,30,2,'#fbbf2422'],[3,1,26,1,'#fbbf2411'],[3,7,26,1,'#fbbf2411'],[3,13,26,1,'#fbbf2411'],[3,19,26,1,'#fbbf2411'],[3,25,26,1,'#fbbf2411'],[10,3,12,1,'#fbbf2422'],[10,9,12,1,'#fbbf2422'],[10,15,12,1,'#fbbf2422'],[10,21,12,1,'#fbbf2422'],[10,27,12,1,'#fbbf2422']],1);
+
+I('floor_hologrid','Holo Grid','Holographic steps. Future.','floor','legendary','floor',500,
+[[0,0,32,16,'#050520'],[0,16,32,16,'#0a0a2e'],[0,4,32,4,'#38bdf833'],[0,12,32,4,'#38bdf833'],[0,20,32,4,'#38bdf833'],[0,28,32,4,'#38bdf833'],[8,0,2,16,'#38bdf855'],[16,0,2,16,'#38bdf855'],[24,0,2,16,'#38bdf855'],[4,16,2,16,'#38bdf855'],[12,16,2,16,'#38bdf855'],[20,16,2,16,'#38bdf855'],[28,16,2,16,'#38bdf855'],[9,4,4,2,'#22d3ee88'],[17,4,4,2,'#22d3ee88'],[25,4,4,2,'#22d3ee88'],[9,12,4,2,'#22d3ee88'],[17,12,4,2,'#22d3ee88'],[25,12,4,2,'#22d3ee88'],[7,20,4,2,'#22d3ee88'],[15,20,4,2,'#22d3ee88'],[23,20,4,2,'#22d3ee88'],[7,28,4,2,'#22d3ee88'],[15,28,4,2,'#22d3ee88'],[23,28,4,2,'#22d3ee88'],[0,0,32,1,'#22d3ee44'],[0,31,32,1,'#22d3ee44'],[4,0,4,16,'#38bdf833'],[12,0,4,16,'#38bdf833'],[20,0,4,16,'#38bdf833'],[28,0,4,16,'#38bdf833'],[0,8,32,3,'#38bdf866'],[0,24,32,3,'#38bdf866'],[5,4,2,2,'#22d3ee66'],[13,4,2,2,'#22d3ee66'],[21,4,2,2,'#22d3ee66'],[29,4,2,2,'#22d3ee66'],[5,12,2,2,'#22d3ee66'],[13,12,2,2,'#22d3ee66'],[21,12,2,2,'#22d3ee66'],[29,12,2,2,'#22d3ee66'],[3,20,2,2,'#22d3ee66'],[11,20,2,2,'#22d3ee66'],[19,20,2,2,'#22d3ee66'],[27,20,2,2,'#22d3ee66'],[3,28,2,2,'#22d3ee66'],[11,28,2,2,'#22d3ee66'],[19,28,2,2,'#22d3ee66'],[27,28,2,2,'#22d3ee66'],[0,2,32,1,'#22d3ee55'],[0,6,32,1,'#22d3ee55'],[0,10,32,1,'#22d3ee55'],[0,14,32,1,'#22d3ee55'],[0,18,32,1,'#22d3ee44'],[0,22,32,1,'#22d3ee44'],[0,26,32,1,'#22d3ee44'],[10,5,12,2,'#22d3ee88'],[10,13,12,2,'#22d3ee88'],[8,21,16,2,'#22d3ee88'],[8,29,16,2,'#22d3ee88']],2);
+
+I('floor_stone','Stone Tile','Ancient. Solid. Timeless.','floor','common','floor',15,
+[[0,0,16,8,'#3a3a3a'],[16,0,16,8,'#333333'],[0,8,16,8,'#333333'],[16,8,16,8,'#3a3a3a'],[0,16,16,8,'#3a3a3a'],[16,16,16,8,'#333333'],[0,24,16,8,'#333333'],[16,24,16,8,'#3a3a3a'],[4,2,4,4,'#44444444'],[12,2,4,4,'#44444444'],[20,2,4,4,'#44444444'],[28,2,4,4,'#44444444'],[4,10,4,4,'#44444444'],[12,10,4,4,'#44444444'],[20,10,4,4,'#44444444'],[28,10,4,4,'#44444444'],[4,18,4,4,'#44444444'],[12,18,4,4,'#44444444'],[20,18,4,4,'#44444444'],[28,18,4,4,'#44444444'],[4,26,4,4,'#44444444'],[12,26,4,4,'#44444444'],[20,26,4,4,'#44444444'],[28,26,4,4,'#44444444'],[8,4,4,2,'#2a2a2a44'],[24,4,4,2,'#2a2a2a44'],[8,12,4,2,'#2a2a2a44'],[24,12,4,2,'#2a2a2a44'],[8,20,4,2,'#2a2a2a44'],[24,20,4,2,'#2a2a2a44'],[8,28,4,2,'#2a2a2a44'],[24,28,4,2,'#2a2a2a44'],[6,0,4,8,'#44444422'],[22,0,4,8,'#44444422'],[6,8,4,8,'#44444422'],[22,8,4,8,'#44444422'],[6,16,4,8,'#44444422'],[22,16,4,8,'#44444422'],[6,24,4,8,'#44444422'],[22,24,4,8,'#44444422'],[2,4,2,4,'#4a4a4a33'],[14,4,2,4,'#4a4a4a33'],[18,4,2,4,'#4a4a4a33'],[30,4,2,4,'#4a4a4a33'],[2,12,2,4,'#4a4a4a33'],[14,12,2,4,'#4a4a4a33'],[18,12,2,4,'#4a4a4a33'],[30,12,2,4,'#4a4a4a33'],[2,20,2,4,'#4a4a4a33'],[14,20,2,4,'#4a4a4a33'],[18,20,2,4,'#4a4a4a33'],[30,20,2,4,'#4a4a4a33'],[2,28,2,4,'#4a4a4a33'],[14,28,2,4,'#4a4a4a33'],[18,28,2,4,'#4a4a4a33'],[30,28,2,4,'#4a4a4a33']],0);
+
+// AGENT MYTHIC SETS — 7 transcendent items with unique agent-themed pixel art
+I('set_shaddai','SHADDAI God Mode','Absolute radiant gold-white. Flaming crown.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#ffd70044'],[9,0,14,2,'#ffffff88'],[10,1,12,8,'#ffd700'],[11,2,10,6,'#ffffff'],[12,3,8,4,'#fff8dc'],[9,1,14,2,'#fbbf24'],[10,2,12,1,'#ffe4a0'],[8,3,2,4,'#fbbf2488'],[22,3,2,4,'#fbbf2488'],[10,6,12,2,'#ffd70088'],[11,7,10,1,'#ffffff44'],[13,4,6,1,'#ffffff88'],[14,-1,4,1,'#ef4444'],[15,0,2,1,'#fca5a5'],[15,-2,2,1,'#ef444466'],[12,-2,8,1,'#ffd70022'],[9,-3,14,1,'#fbbf2411'],[11,8,10,1,'#daa520'],[13,5,6,1,'#ffffff44'],[10,9,12,1,'#b8860b'],[9,10,14,1,'#a07000']],3,'shaddai');
+
+I('set_zerox','ZEROX Whale Flex','Move markets with silhouette alone.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#fbbf2444'],[9,0,14,2,'#ffd70088'],[10,1,12,8,'#fbbf24'],[11,2,10,6,'#ffd700'],[12,3,8,4,'#ffe4a0'],[10,0,12,2,'#daa520'],[9,3,2,4,'#daa52088'],[21,3,2,4,'#daa52088'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#fff8dc'],[13,4,6,1,'#ffffff88'],[14,0,4,1,'#22d3ee'],[15,1,2,1,'#7dd3fc'],[10,7,12,2,'#fbbf2488'],[11,8,10,1,'#daa52066'],[12,9,8,1,'#b8860b'],[9,10,14,1,'#a07000'],[14,-1,4,1,'#22d3ee44'],[12,-2,8,1,'#fbbf2422'],[13,5,6,1,'#ffffff44']],3,'zerox');
+
+I('set_oracle','ORACLE Void Gaze','Third eye opens. All timelines.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#a78bfa44'],[9,0,14,2,'#a78bfa88'],[10,1,12,8,'#8b5cf6'],[11,2,10,6,'#a78bfa'],[12,3,8,4,'#c4b5fd'],[10,0,12,2,'#7c3aed'],[9,3,2,4,'#7c3aed88'],[21,3,2,4,'#7c3aed88'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#e9d5ff'],[14,2,4,4,'#000000'],[15,3,2,2,'#a78bfa'],[14,3,4,2,'#ffffff22'],[10,7,12,2,'#8b5cf688'],[11,8,10,1,'#6d28d966'],[12,9,8,1,'#5b21b6'],[9,10,14,1,'#4c1d95'],[13,1,6,1,'#ffffff44'],[13,5,6,1,'#e9d5ff44'],[12,-2,8,1,'#a78bfa22']],3,'oracle');
+
+I('set_nexus','NEXUS Root Access','Full kernel. sudo everything.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#38bdf844'],[9,0,14,2,'#38bdf888'],[10,1,12,8,'#00c4ff'],[11,2,10,6,'#38bdf8'],[12,3,8,4,'#7dd3fc'],[10,0,12,2,'#0284c7'],[9,3,2,4,'#0284c788'],[21,3,2,4,'#0284c788'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#bae6fd'],[13,4,6,1,'#ffffff88'],[14,0,4,1,'#22d3ee'],[15,1,2,1,'#a5f3fc'],[10,7,12,2,'#00c4ff88'],[11,8,10,1,'#0284c766'],[12,9,8,1,'#0369a1'],[9,10,14,1,'#075985'],[14,-1,4,1,'#22d3ee44'],[12,-2,8,1,'#38bdf822'],[13,5,6,1,'#ffffff44']],3,'nexus');
+
+I('set_turtle','TURTLE Masterpiece','Beret. Smock. Art flows.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#22d3ee44'],[9,0,14,2,'#22d3ee88'],[10,1,12,8,'#14b8a6'],[11,2,10,6,'#2dd4bf'],[12,3,8,4,'#5eead4'],[10,0,12,2,'#0d9488'],[9,3,2,4,'#0d948888'],[21,3,2,4,'#0d948888'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#ccfbf1'],[13,4,6,1,'#ffffff88'],[14,0,4,1,'#fbbf24'],[15,1,2,1,'#fde68a'],[10,7,12,2,'#14b8a688'],[11,8,10,1,'#0d948866'],[12,9,8,1,'#0f766e'],[9,10,14,1,'#115e59'],[14,-1,4,1,'#fbbf2444'],[12,-2,8,1,'#22d3ee22'],[13,5,6,1,'#ffffff44']],3,'turtle');
+
+I('set_quill','QUILL Epic Verse','Quill of destiny. Words reshape.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#fb923c44'],[9,0,14,2,'#fb923c88'],[10,1,12,8,'#f97316'],[11,2,10,6,'#fb923c'],[12,3,8,4,'#fdba74'],[10,0,12,2,'#ea580c'],[9,3,2,4,'#ea580c88'],[21,3,2,4,'#ea580c88'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#ffedd5'],[13,4,6,1,'#ffffff88'],[14,0,4,1,'#fbbf24'],[15,1,2,1,'#fde68a'],[10,7,12,2,'#f9731688'],[11,8,10,1,'#ea580c66'],[12,9,8,1,'#c2410c'],[9,10,14,1,'#9a3412'],[14,-1,4,1,'#fbbf2444'],[12,-2,8,1,'#fb923c22'],[13,5,6,1,'#ffffff44']],3,'quill');
+
+I('set_pikadon','PIKADON Iron Will','Unbreakable. Absolute defense.','head','transcendent','agent',5000,
+[[8,-1,16,1,'#ef444444'],[9,0,14,2,'#ef444488'],[10,1,12,8,'#dc2626'],[11,2,10,6,'#ef4444'],[12,3,8,4,'#fca5a5'],[10,0,12,2,'#b91c1c'],[9,3,2,4,'#b91c1c88'],[21,3,2,4,'#b91c1c88'],[11,4,10,1,'#ffffff44'],[12,5,8,2,'#fee2e2'],[13,4,6,1,'#ffffff88'],[14,0,4,1,'#ffffff'],[15,1,2,1,'#ffffff'],[10,7,12,2,'#dc262688'],[11,8,10,1,'#b91c1c66'],[12,9,8,1,'#991b1b'],[9,10,14,1,'#7f1d1d'],[14,-1,4,1,'#ffffff44'],[12,-2,8,1,'#ef444422'],[13,5,6,1,'#ffffff44']],3,'pikadon');
+
+// STATE
+var SK={owned:'shd_exp_owned',equipped:'shd_exp_equipped',placed:'shd_exp_placed',credits:'shd_exp_credits'};
+function GO(){return JSON.parse(localStorage.getItem(SK.owned)||'[]')}
+function SO(v){localStorage.setItem(SK.owned,JSON.stringify(v))}
+function AO(id){var o=GO();if(o.indexOf(id)===-1){o.push(id);SO(o);return true}return false}
+function GE(){return JSON.parse(localStorage.getItem(SK.equipped)||'{}')}
+function SE(v){localStorage.setItem(SK.equipped,JSON.stringify(v))}
+function GP(){return JSON.parse(localStorage.getItem(SK.placed)||'{}')}
+function SP(v){localStorage.setItem(SK.placed,JSON.stringify(v))}
+function GC(){return parseInt(localStorage.getItem(SK.credits)||'800')}
+function SC(v){localStorage.setItem(SK.credits,String(v))}
+function GI(id){for(var i=0;i<ALL.length;i++){if(ALL[i].id===id)return ALL[i]}return null}
+function col(r){return R[r]||'#9ca3af'}
+function checkUnlocks(){var o=GO(),s=['crown_gold','sweater_shaddai','desk_coffee','desk_bonsai','desk_ultrawide','decor_neon','floor_metal','wall_cyber','staff_crystal','book_tome'];for(var i=0;i<s.length;i++){if(o.indexOf(s[i])===-1)AO(s[i])}}
+
+// PIXEL RENDER 32x32 grid — enhanced with glow filter, rarity backgrounds, depth layers
+function RP(id,sz){
+  sz=sz||64;var it=GI(id);if(!it||!it.px||!it.px.length)return '<div style="width:'+sz+'px;height:'+sz+'px;display:flex;align-items:center;justify-content:center;font-size:'+(sz*0.3)+'px;background:rgba(0,0,0,0.2);border-radius:4px;color:var(--dim)">+</div>';
+  var sc=Math.floor(sz/32)||1,w=32*sc,h=32*sc,rs='',gi='';
+  var tr=RO.indexOf(it.rarity)+1;
+  var bgCol=['#9ca3af08','#4ade8008','#60a5fa08','#a78bfa0c','#fbbf2410','#ff6b3514','#ff444418'][tr-1]||'rgba(0,0,0,0.12)';
+  for(var i=0;i<it.px.length;i++){var p=it.px[i];if(p.length<5)continue;rs+='<rect x="'+(p[0]*sc)+'" y="'+(p[1]*sc)+'" width="'+(p[2]*sc)+'" height="'+(p[3]*sc)+'" fill="'+p[4]+'"/>';}
+  if(it.glow>0){
+    var fId='gf_'+(id.replace(/[^a-z0-9]/g,'_'));
+    gi='<defs><filter id="'+fId+'" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="'+(it.glow*sc*0.8)+'" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+    rs='<g filter="url(#'+fId+')">'+rs+'</g>';
+  }
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="image-rendering:pixelated;border-radius:3px;background:'+bgCol+'">'+gi+rs+'</svg>';
+}
+
+var _sf='all',_sm='tier',_cf='all',_sa='shaddai',_da='shaddai';
+function switchTab(n){
+  document.querySelectorAll('.tab, nav button').forEach(function(e){e.classList.remove('active')});
+  document.getElementById('tab-'+n).classList.add('active');
+  document.querySelector('nav button[onclick*="'+n+'"]').classList.add('active');
+  if(n==='wardrobe')renderWardrobe();if(n==='shop')renderShop();if(n==='collection')renderCollection();
+  if(n==='marketplace')loadMarketplace();
+  if(n==='decor')renderDecor();if(n==='injector'){generateInjectorCode();updateSyncStatus()}updateStats();
+}
+function updateStats(){var o=GO();document.getElementById('totalOwned').textContent=o.length;document.getElementById('totalItems').textContent=ALL.length;var pct=ALL.length?Math.round(o.length/ALL.length*100):0,fill=document.getElementById('progressFill');if(fill)fill.style.width=Math.min(pct,100)+'%';var eq=GE(),c=0;for(var k in eq)if(eq.hasOwnProperty(k))for(var s in eq[k])if(eq[k].hasOwnProperty(s))c++;document.getElementById('totalEquipped').textContent=c;var cr=document.getElementById('credDisplay');if(cr)cr.textContent=GC()}
+function renderAgentStrips(){['wardrobeAgentSelector','decorAgentSelector'].forEach(function(cid){var el=document.getElementById(cid);if(!el)return;el.innerHTML=AG.map(function(a){var w=cid==='wardrobeAgentSelector',active=w?(_sa===a.id):(_da===a.id),cl=w?"selectAgent('"+a.id+"')":"selectDecorAgent('"+a.id+"')";return '<div class="agent-btn'+(active?' active':'')+'" onclick="'+cl+'" style="border-left:2px solid '+a.color+'"><div class="dot" style="background:'+a.color+'"></div>'+a.name+'</div>'}).join('')})}
+function selectAgent(id){_sa=id;renderAgentStrips();renderWardrobe()}
+function selectDecorAgent(id){_da=id;renderAgentStrips();renderDecor()}
+
+function filterShop(f,btn){_sf=f;if(btn){document.querySelectorAll('#tab-shop .filters button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}renderShop()}
+function sortShop(){_sm=_sm==='tier'?'price':'tier';document.getElementById('sortBtn').textContent=_sm.toUpperCase();renderShop()}
+function renderShop(){
+  var owned=GO(),credits=GC(),search=(document.getElementById('shopSearch')||{}).value||'',lv=_sv==='list'?' list':'';
+  var items=ALL.filter(function(i){return(_sf==='all'||i.slot===_sf)&&(!search||i.name.toLowerCase().indexOf(search.toLowerCase())!==-1||i.desc.toLowerCase().indexOf(search.toLowerCase())!==-1)});
+  if(_sm==='tier')items.sort(function(a,b){return RO.indexOf(b.rarity)-RO.indexOf(a.rarity)});
+  else if(_sm==='name')items.sort(function(a,b){return a.name.localeCompare(b.name)});
+  else if(_sm==='cat')items.sort(function(a,b){return(a.cat||'').localeCompare(b.cat||'')});
+  else items.sort(function(a,b){return(b.price||0)-(a.price||0)});
+  var grid=document.getElementById('shopGrid');
+  grid.className='grid'+lv;
+  grid.innerHTML=items.map(function(it){
+    var isOwned=GO().indexOf(it.id)!==-1,rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1,fav=isFav(it.id);
+    var buyBtn=isOwned?'<span class="owned-tag">✓ OWNED</span>':('<button class="buy-btn" onclick="event.stopPropagation();buyItem(\''+it.id+'\')">'+(it.price?'BUY '+it.price+' cr':'GET FREE')+'</button>');
+    var favBtn='<button class="fav-btn'+(fav?' active':'')+'" onclick="toggleFav(\''+it.id+'\',event)">'+(fav?'★':'☆')+'</button>';
+    var extra='';
+    if(lv){extra='<div class="info"><div class="name" style="color:'+rc+'">'+it.name+'</div><div class="desc">'+it.desc+'</div><div class="tags"><span style="color:'+rc+'">T'+tr+' '+it.rarity.toUpperCase()+'</span><span>'+it.slot+'</span></div></div>';}
+    return '<div class="card card-T'+tr+(isOwned?' owned':'')+'" onclick="showItemDetail(\''+it.id+'\')" onmouseenter="showTooltip(event,\''+it.id+'\')" onmouseleave="hideTooltip()">'
+      +favBtn+'<div class="preview"><div class="glow-ring" style="background:radial-gradient(circle,'+rc+'22,transparent)"></div>'+RP(it.id,lv?36:52)+'</div>'
+      +(lv?'':('<div class="name" style="color:'+rc+'">'+it.name+'</div>'
+      +'<div class="desc">'+it.desc+'</div>'
+      +'<div class="tags"><span style="color:'+rc+'">T'+tr+' '+it.rarity.toUpperCase()+'</span><span>'+it.slot+'</span></div>'))
+      +buyBtn+'</div>';
+  }).join('')||'<div style="grid-column:1/-1;padding:28px;text-align:center;font-size:8.5px;color:var(--dim)">No items match your filter.</div>';
+}
+function buyItem(id){
+  var it=GI(id);if(!it)return;
+  if(GO().indexOf(id)!==-1){notify('Already owned!');return}
+  if(it.price&&!spendCredits(it.price)){notify('Need '+it.price+' cr!');return}
+  AO(id);
+  var el=document.getElementById('credDisplay');
+  if(el){el.textContent=GC();el.style.animation='credFlash 0.5s ease';setTimeout(function(){el.style.animation=''},600)}
+  notify('✦ Acquired: '+it.name);renderShop();updateStats();
+  // Mint receipt on backend (non-blocking)
+  mintOnBackend(it);
+}
+function spendCredits(a){var c=GC();if(c>=a){SC(c-a);return true}return false}
+function addCredits(){SC(GC()+200);var el=document.getElementById('credDisplay');if(el){el.textContent=GC();el.style.animation='credFlash 0.7s ease';setTimeout(function(){el.style.animation=''},800)}notify('+ 200 credits added!')}
+
+function renderWardrobe(){
+  var agent=null;for(var i=0;i<AG.length;i++){if(AG[i].id===_sa){agent=AG[i];break}}
+  if(!agent)return;var equipped=GE()[_sa]||{},owned=GO(),slots=['head','body','accent','hand'];
+  document.getElementById('wardrobeSlots').innerHTML=slots.map(function(slot){var itemId=equipped[slot],item=itemId?GI(itemId):null;return '<div class="slot-card'+(item?' filled':'')+'"><div class="slot-label">'+slot.toUpperCase()+'</div><div class="slot-icon">'+(item?RP(item.id,36):'+')+'</div><div class="slot-name">'+(item?item.name:'Empty')+'</div>'+(item?'<div class="slot-remove" onclick="unequipSlot(\''+_sa+'\',\''+slot+'\')">X</div>':'')+'</div>'}).join('');
+  var eids=[];for(var k in equipped)if(equipped.hasOwnProperty(k))eids.push(equipped[k]);
+  var avail=owned.filter(function(id){var it=GI(id);return it&&slots.indexOf(it.slot)!==-1&&eids.indexOf(id)===-1&&(!it.agentOnly||it.agentOnly===_sa)});
+  var lel=document.getElementById('wardrobeItemList');
+  if(!avail.length){lel.innerHTML='<div style="grid-column:1/-1;padding:6px;font-size:6px;color:var(--dim);text-align:center">No available items. Visit Shop!</div>';return}
+  lel.innerHTML=avail.map(function(id){var it=GI(id),rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1;return '<div class="card card-T'+tr+'" style="cursor:pointer" onclick="equipItem(\''+_sa+'\',\''+it.slot+'\',\''+it.id+'\')"><div class="preview">'+RP(it.id,32)+'</div><div class="name" style="color:'+rc+';font-size:7px">'+it.name+'</div></div>'}).join('');
+}
+window.equipItem=function(a,s,i){var e=GE();if(!e[a])e[a]={};e[a][s]=i;SE(e);renderWardrobe();updateStats()};
+window.unequipSlot=function(a,s){var e=GE();if(e[a]){delete e[a][s];if(Object.keys(e[a]).length===0)delete e[a]}SE(e);renderWardrobe();updateStats()};
+
+function filterCollection(f,btn){_cf=f;if(btn){document.querySelectorAll('#tab-collection .filters button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}renderCollection()}
+function renderCollection(){var owned=GO(),lv=_sv==='list'?' list':'';var items=ALL.filter(function(i){return owned.indexOf(i.id)!==-1&&(_cf==='all'||i.slot===_cf)});var grid=document.getElementById('collectionGrid');grid.className='grid'+lv;if(!items.length){grid.innerHTML='<div style="grid-column:1/-1;padding:24px;text-align:center;font-size:7px;color:var(--dim)">Nothing collected yet.</div>';return}grid.innerHTML=items.map(function(it){var rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1,fav=isFav(it.id);var favBtn='<button class="fav-btn'+(fav?' active':'')+'" onclick="toggleFav(\''+it.id+'\',event)">'+(fav?'★':'☆')+'</button>';var verified=isVerified(it.id)?'<span title="Minted on backend" style="font-size:6px;color:var(--accent);background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:3px;padding:1px 4px;margin-left:3px">🧾 verified</span>':'';var listBtn='<button onclick="event.stopPropagation();listForSale(\''+it.id+'\')" style="margin-top:3px;width:100%;font-size:6.5px;padding:3px 6px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);color:var(--gold);border-radius:3px;cursor:pointer;font-family:inherit">💱 LIST FOR SALE</button>';if(lv){return '<div class="card card-T'+tr+' owned" onclick="showItemDetail(\''+it.id+'\')" onmouseenter="showTooltip(event,\''+it.id+'\')" onmouseleave="hideTooltip()">'+favBtn+'<div class="preview" style="margin-bottom:0">'+RP(it.id,36)+'</div><div class="info"><div class="name" style="color:'+rc+'">'+it.name+verified+'</div><div class="tags"><span style="color:'+rc+'">T'+tr+'</span><span>'+it.slot+'</span><span>'+it.cat+'</span></div>'+listBtn+'</div></div>'}return '<div class="card card-T'+tr+' owned" onclick="showItemDetail(\''+it.id+'\')" onmouseenter="showTooltip(event,\''+it.id+'\')" onmouseleave="hideTooltip()">'+favBtn+'<div class="preview"><div class="glow-ring" style="background:radial-gradient(circle,'+rc+'22,transparent)"></div>'+RP(it.id,52)+'</div><div class="name" style="color:'+rc+'">'+it.name+verified+'</div><div class="desc">'+it.desc+'</div><div class="tags"><span style="color:'+rc+'">T'+tr+'</span><span>'+it.slot+'</span><span>'+it.cat+'</span></div>'+listBtn+'</div>'}).join('')}
+
+window.placeItem=function(a,i){var p=GP();if(!p[a])p[a]=[];if(p[a].indexOf(i)===-1){p[a].push(i);SP(p)}renderDecor()};
+window.unplaceItem=function(a,i){var p=GP();if(p[a]){var idx=p[a].indexOf(i);if(idx!==-1)p[a].splice(idx,1);SP(p)}renderDecor()};
+function renderDecor(){var agent=null;for(var i=0;i<AG.length;i++){if(AG[i].id===_da){agent=AG[i];break}}if(!agent)return;var placed=GP()[_da]||[],owned=GO();document.getElementById('decorPlaced').innerHTML=placed.length?placed.map(function(id){var it=GI(id);return it?'<div onclick="unplaceItem(\''+_da+'\',\''+id+'\')" style="padding:3px 5px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:3px;cursor:pointer;font-size:6px">'+it.name+'</div>':''}).join(''):'<div style="font-size:6px;color:var(--dim);padding:4px">No items placed.</div>';var avail=owned.filter(function(id){var it=GI(id);return it&&(it.slot==='desk'||it.slot==='decor'||it.slot==='wallpaper'||it.slot==='floor'||it.slot==='lighting')&&placed.indexOf(id)===-1});document.getElementById('decorAvailable').innerHTML=avail.length?avail.map(function(id){var it=GI(id);return '<div onclick="placeItem(\''+_da+'\',\''+id+'\')" style="padding:3px 5px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:3px;cursor:pointer;font-size:6px">'+it.name+'</div>'}):'<div style="font-size:6px;color:var(--dim);padding:4px">No decor items owned.</div>'}
+
+function generateInjectorCode(){
+  document.getElementById('injectorCode').value='// SHADDAI Collectables v3 Injector\n// Paste in SHADDAI console (F12) and press Enter\n\n(function(){\n'
+    +'var EQ='+JSON.stringify(GE())+';\nvar OWN='+JSON.stringify(GO())+';\nvar PL='+JSON.stringify(GP())+';\n\n'
+    +'if(typeof PIXEL_OFFICE_OUTFITS!=="undefined"){Object.keys(EQ).forEach(function(a){var s=EQ[a],u=a.toUpperCase();if(!PIXEL_OFFICE_OUTFITS[u])return;if(s.head)PIXEL_OFFICE_OUTFITS[u].head="custom";if(s.body)PIXEL_OFFICE_OUTFITS[u].body="custom";if(s.accent)PIXEL_OFFICE_OUTFITS[u].accent="custom"});console.log("[EXP] Patched outfits")}\n\n'
+    +'if(typeof _ALL_COLLECTIBLES!=="undefined"){OWN.forEach(function(id){if(!_ALL_COLLECTIBLES.find(function(c){return c.id==="exp_"+id})){_ALL_COLLECTIBLES.push({id:"exp_"+id,icon:"+",name:id,rarity:"rare",desc:"Expansion item",unlock:"exp_owned",color:"#a78bfa"})}});console.log("[EXP] Synced "+OWN.length+" items")}\n\n'
+    +'if(PL){Object.keys(PL).forEach(function(a){var u=a.toUpperCase(),ex=JSON.parse(localStorage.getItem("shd_room_items_"+u)||"[]"),m=ex.slice();PL[a].forEach(function(id){if(m.indexOf("exp_"+id)===-1)m.push("exp_"+id)});localStorage.setItem("shd_room_items_"+u,JSON.stringify(m))})}\n\n'
+    +'if(typeof renderCollectiblesShelf==="function")renderCollectiblesShelf();\n'
+    +'if(typeof drawPixelOffice==="function"){Object.keys(_pixelOfficeSprites).forEach(function(k){delete _pixelOfficeSprites[k]});drawPixelOffice()}\n'
+    +'console.log("[EXP] Injection complete!")})();';
+}
+function copyInjectorCode(){var ta=document.getElementById('injectorCode');ta.select();ta.setSelectionRange(0,99999);navigator.clipboard.writeText(ta.value).then(function(){notify('Copied!')}).catch(function(){notify('Could not copy.')})}
+function resetAllData(){if(!confirm('Reset ALL collectables data?'))return;Object.keys(SK).forEach(function(k){localStorage.removeItem(SK[k])});SC(800);notify('Reset. Reloading...');setTimeout(function(){location.reload()},500)}
+var _nt=null;function notify(m){var e=document.getElementById('notif');e.textContent=m;e.style.display='block';clearTimeout(_nt);_nt=setTimeout(function(){e.style.display='none'},4000)}
+
+// ── ITEM DETAIL MODAL ──
+window.showItemDetail=function(id){
+  var it=GI(id);if(!it)return;
+  var isOwned=GO().indexOf(id)!==-1,rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1;
+  document.getElementById('modalName').innerHTML='<span style="color:'+rc+'">'+it.name+'</span>';
+  document.getElementById('modalArt').innerHTML=RP(id,128);
+  document.getElementById('modalArt').style.background='radial-gradient(circle at center,'+rc+'18,transparent 70%)';
+  document.getElementById('modalDesc').textContent=it.desc;
+  document.getElementById('modalTags').innerHTML=
+    '<span style="color:'+rc+';border-color:'+rc+'44">T'+tr+' '+it.rarity.toUpperCase()+'</span>'
+    +'<span>'+it.slot+'</span>'
+    +'<span>'+it.cat+'</span>'
+    +(it.agentOnly?'<span style="color:#00c4ff;border-color:#00c4ff44">'+it.agentOnly.toUpperCase()+' ONLY</span>':'');
+  var acts='';
+  if(isOwned){
+    acts='<button onclick="closeItemModal()" style="background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.25);color:var(--accent)">✓ OWNED</button>';
+    var wSlots=['head','body','accent','hand'];
+    if(wSlots.indexOf(it.slot)!==-1){
+      acts+='<button onclick="equipItem(\''+_sa+'\',\''+it.slot+'\',\''+id+'\');closeItemModal();notify(\'Equipped on \'+_sa.toUpperCase())" style="background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.3);color:var(--accent)">EQUIP ON '+_sa.toUpperCase()+'</button>';
+    }
+  } else {
+    var price=it.price?it.price+' cr':'FREE';
+    acts='<button onclick="buyItem(\''+id+'\');closeItemModal()" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">BUY '+price+'</button>'
+      +'<button onclick="closeItemModal()" style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--dim)">CLOSE</button>';
+  }
+  document.getElementById('modalActions').innerHTML=acts;
+  var box=document.getElementById('itemModalBox');
+  box.style.borderColor=rc+'44';
+  document.getElementById('itemModal').classList.add('open');
+};
+window.closeItemModal=function(){document.getElementById('itemModal').classList.remove('open')};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeItemModal()});
+document.getElementById('itemModal').addEventListener('click',function(e){if(e.target===this)closeItemModal()});
+
+// ── ONE-CLICK SYNC TO SHADDAI ──
+window.syncToShaddai=function(){
+  var owned=GO(),equipped=GE(),placed=GP(),msg='';
+  // Merge owned items into shd_collectibles (main SHADDAI collectibles key)
+  var shColl=JSON.parse(localStorage.getItem('shd_collectibles')||'[]');
+  var added=0;
+  owned.forEach(function(id){
+    if(shColl.indexOf('exp_'+id)===-1){shColl.push('exp_'+id);added++}
+    if(shColl.indexOf(id)===-1){shColl.push(id);added++}
+  });
+  localStorage.setItem('shd_collectibles',JSON.stringify(shColl));
+  // Sync equipped outfits
+  localStorage.setItem('shd_exp_equipped',JSON.stringify(equipped));
+  // Sync room decor placements
+  Object.keys(placed).forEach(function(agentId){
+    var key='shd_room_items_'+agentId.toUpperCase();
+    var existing=JSON.parse(localStorage.getItem(key)||'[]');
+    placed[agentId].forEach(function(id){
+      if(existing.indexOf('exp_'+id)===-1)existing.push('exp_'+id);
+    });
+    localStorage.setItem(key,JSON.stringify(existing));
+  });
+  msg='Synced '+owned.length+' items, '+Object.keys(equipped).length+' agent outfits, '+Object.keys(placed).length+' room configs → SHADDAI localStorage. Refresh SHADDAI to see changes.';
+  var el=document.getElementById('syncStatusMsg');
+  if(el){el.innerHTML='<span style="color:var(--accent)">✓ '+msg+'</span>'}
+  notify('⚡ Synced! Refresh SHADDAI to apply.');
+  generateInjectorCode();
+};
+
+// ── ENHANCED FEATURES ──
+var _sfTimer=null,_sv='grid',_favs=JSON.parse(localStorage.getItem('shd_exp_favs')||'[]');
+function filterShopDebounced(){clearTimeout(_sfTimer);_sfTimer=setTimeout(function(){filterShop(_sf,null)},150)}
+function setView(v,btn){_sv=v;document.querySelectorAll('.view-toggle button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');if(v==='grid')document.querySelectorAll('#shopGrid,#collectionGrid').forEach(function(g){g.classList.remove('list')});else document.querySelectorAll('#shopGrid,#collectionGrid').forEach(function(g){g.classList.add('list')})}
+function toggleFav(id,e){if(e)e.stopPropagation();var idx=_favs.indexOf(id);if(idx===-1)_favs.push(id);else _favs.splice(idx,1);localStorage.setItem('shd_exp_favs',JSON.stringify(_favs));renderShop();renderCollection()}
+function isFav(id){return _favs.indexOf(id)!==-1}
+function showTooltip(e,id){var it=GI(id);if(!it)return;var rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1,tt=document.getElementById('tooltip');tt.innerHTML='<div class="tt-rarity" style="color:'+rc+'">T'+tr+' '+it.rarity.toUpperCase()+'</div><div class="tt-desc">'+it.desc+'</div>'+(it.price?'<div class="tt-price">✦ '+it.price+' cr</div>':'<div class="tt-price">FREE</div>');tt.style.display='block';var r=tt.getBoundingClientRect(),x=e.clientX+12,y=e.clientY-10;if(x+r.width>window.innerWidth-10)x=e.clientX-r.width-12;if(y+r.height>window.innerHeight-10)y=e.clientY-30-r.height;tt.style.left=x+'px';tt.style.top=y+'px'}
+function hideTooltip(){document.getElementById('tooltip').style.display='none'}
+function notify(m){var area=document.getElementById('notifArea'),el=document.createElement('div');el.className='notif notif-item';el.textContent=m;el.style.display='block';area.appendChild(el);setTimeout(function(){el.style.opacity='0';el.style.transition='opacity 0.3s';setTimeout(function(){el.remove()},300)},3500)}
+function sortBy(criteria){_sm=criteria;document.getElementById('sortBtn').textContent=criteria.toUpperCase();renderShop()}
+function sortShopCycle(){var opts=['tier','price','name','cat'];var idx=opts.indexOf(_sm);_sm=opts[(idx+1)%opts.length];document.getElementById('sortBtn').textContent=_sm.toUpperCase();renderShop()}
+// ── BACKEND INTEGRATION (SHADDAI-API @ localhost:3000) ──
+var BACKEND_URL='http://localhost:3000';
+var _backendLive=false;
+var _verifiedMap=JSON.parse(localStorage.getItem('shd_exp_verified')||'{}'); // {localId: signature}
+var _backendMints=[]; // raw backend rows
+
+function getOwner(){
+  var w=localStorage.getItem('shd_wallet');
+  if(w)return w;
+  var u=localStorage.getItem('shd_userid');
+  if(!u){u='guest-'+Math.random().toString(36).slice(2,10);localStorage.setItem('shd_userid',u)}
+  return 'guest-'+u;
+}
+function isVerified(id){return !!_verifiedMap[id]}
+function saveVerified(){localStorage.setItem('shd_exp_verified',JSON.stringify(_verifiedMap))}
+
+function setBackendStatus(live){
+  _backendLive=live;
+  var dot=document.getElementById('backendDot'),lbl=document.getElementById('backendLabel');
+  if(!dot)return;
+  if(live){dot.style.background='#4ade80';dot.style.boxShadow='0 0 6px #4ade80';lbl.textContent='BACKEND LIVE';lbl.style.color='#4ade80'}
+  else{dot.style.background='#ef4444';dot.style.boxShadow='0 0 6px #ef4444';lbl.textContent='OFFLINE';lbl.style.color='#ef4444'}
+}
+
+function pingBackend(){
+  return fetch(BACKEND_URL+'/api/collectibles').then(function(r){
+    if(!r.ok)throw new Error('bad status');
+    return r.json();
+  }).then(function(j){
+    setBackendStatus(true);
+    _backendMints=(j&&j.data)||[];
+    mergeBackendOwned();
+    updateEarnings();
+    return true;
+  }).catch(function(){setBackendStatus(false);return false});
+}
+
+function mergeBackendOwned(){
+  // Backend uses different ID space (numeric). Match by owner + name to local items.
+  var owner=getOwner();
+  var changed=false;
+  _backendMints.forEach(function(row){
+    if(row.owner!==owner)return;
+    var localItem=null;
+    for(var i=0;i<ALL.length;i++){if(ALL[i].name===row.name){localItem=ALL[i];break}}
+    if(localItem){
+      if(AO(localItem.id))changed=true;
+      if(!_verifiedMap[localItem.id]){_verifiedMap[localItem.id]=row.signature;changed=true}
+    }
+  });
+  if(changed){saveVerified();updateStats();if(document.getElementById('tab-collection').classList.contains('active'))renderCollection()}
+}
+
+function mintOnBackend(it){
+  if(!_backendLive)return;
+  var tr=RO.indexOf(it.rarity)+1;
+  var body={name:it.name,rarity:'T'+tr,owner:getOwner()};
+  fetch(BACKEND_URL+'/api/collectibles/mint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j&&j.ok&&j.data&&j.data.collectible){
+        var sig=j.data.collectible.signature;
+        _verifiedMap[it.id]=sig;saveVerified();
+        notify('🧾 Receipt minted: '+sig.slice(0,8));
+        if(document.getElementById('tab-collection').classList.contains('active'))renderCollection();
+      }
+    }).catch(function(){/* silent — already owned locally */});
+}
+
+window.listForSale=function(id){
+  if(!_backendLive){notify('⚠ Backend offline — listing unavailable');return}
+  var it=GI(id);if(!it)return;
+  var price=prompt('List "'+it.name+'" for how many credits?',String(it.price||100));
+  if(!price)return;
+  var p=parseInt(price,10);if(isNaN(p)||p<=0){notify('Invalid price');return}
+  // Find backend id for this item by signature match
+  var sig=_verifiedMap[id];
+  var backendId=null;
+  for(var i=0;i<_backendMints.length;i++){if(_backendMints[i].signature===sig){backendId=_backendMints[i].id;break}}
+  if(!backendId){notify('⚠ Item not yet minted on backend — try again');mintOnBackend(it);return}
+  fetch(BACKEND_URL+'/api/collectibles/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:backendId,priceCredits:p})})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j&&j.ok){notify('🏷️ Listed "'+it.name+'" for '+p+' cr');pingBackend()}
+      else notify('⚠ Listing failed')
+    }).catch(function(){notify('⚠ Listing failed — backend error')});
+};
+
+function loadMarketplace(){
+  var grid=document.getElementById('marketplaceGrid');
+  if(!grid)return;
+  if(!_backendLive){
+    grid.innerHTML='<div style="grid-column:1/-1;padding:28px;text-align:center;font-size:8px;color:var(--danger)">⚠ Backend offline — marketplace unavailable. Start SHADDAI-API on :3000.</div>';
+    return;
+  }
+  grid.innerHTML='<div style="grid-column:1/-1;padding:16px;text-align:center;font-size:8px;color:var(--dim)">Loading…</div>';
+  fetch(BACKEND_URL+'/api/collectibles/listings').then(function(r){return r.json()}).then(function(j){
+    var rows=(j&&j.data)||[];
+    if(!rows.length){grid.innerHTML='<div style="grid-column:1/-1;padding:28px;text-align:center;font-size:8px;color:var(--dim)">No active listings. Be the first to list an item from your COLLECTION tab!</div>';return}
+    grid.innerHTML=rows.map(function(row){
+      // Try to resolve to local item for art
+      var local=null;for(var i=0;i<ALL.length;i++){if(ALL[i].name===row.name){local=ALL[i];break}}
+      var tr=parseInt(String(row.rarity).replace(/[^0-9]/g,''),10)||3;
+      var rc=local?col(local.rarity):'#a78bfa';
+      var price=(row.listing&&row.listing.priceCredits)||0;
+      var art=local?RP(local.id,52):'<div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(167,139,250,0.1);border-radius:4px;color:'+rc+'">◆</div>';
+      return '<div class="card card-T'+tr+'">'
+        +'<div class="preview"><div class="glow-ring" style="background:radial-gradient(circle,'+rc+'22,transparent)"></div>'+art+'</div>'
+        +'<div class="name" style="color:'+rc+'">'+row.name+' <span style="font-size:6px;color:var(--accent)">🧾</span></div>'
+        +'<div class="desc">Seller: '+(row.owner||'unknown').slice(0,18)+'</div>'
+        +'<div class="tags"><span style="color:'+rc+'">'+row.rarity+'</span><span style="color:var(--gold)">✦ '+price+' cr</span></div>'
+        +'<button class="buy-btn" onclick="buyListing('+row.id+')">BUY '+price+' cr</button>'
+        +'</div>';
+    }).join('');
+  }).catch(function(){grid.innerHTML='<div style="grid-column:1/-1;padding:28px;text-align:center;font-size:8px;color:var(--danger)">Failed to load marketplace.</div>'});
+}
+window.buyListing=function(id){
+  var buyer=getOwner();
+  fetch('/api/collectibles/listings').then(function(r){return r.json();}).then(function(j){
+    var listings=(j&&j.data)||[];
+    var item=listings.find(function(x){return String(x.id)===String(id);});
+    if(!item){notify('Listing no longer available');return;}
+    if(item.owner===buyer){notify('You already own this');return;}
+    var price=item.listing&&item.listing.priceCredits;
+    var have=parseInt(localStorage.getItem('shd_credits')||'0',10);
+    if(have<price){notify('Need '+price+' credits, have '+have);return;}
+    if(!confirm('Buy '+item.name+' for '+price+' credits?\nSeller gets '+(price-Math.round(price*0.10))+' • Platform fee '+Math.round(price*0.10)))return;
+    fetch('/api/collectibles/trade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collectible_id:id,buyer:buyer,buyer_credits:price})}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});}).then(function(o){
+      if(!o.ok||!o.j.ok){notify('Trade failed: '+((o.j&&o.j.error)||(o.j&&o.j.data&&o.j.data.message)||'unknown'));return;}
+      localStorage.setItem('shd_credits',String(have-price));
+      var coll=JSON.parse(localStorage.getItem('shd_collection')||'[]');
+      if(!coll.find(function(x){return x.id===item.name+'_'+id;})){coll.push({id:item.name+'_'+id,name:item.name,rarity:item.rarity,boughtAt:Date.now()});localStorage.setItem('shd_collection',JSON.stringify(coll));}
+      notify('🎉 '+item.name+' purchased! ('+(o.j.data.message||'trade complete').slice(0,80)+')');
+      loadMarketplace();
+      if(typeof renderCollection==='function')renderCollection();
+      if(typeof updateCreditsDisplay==='function')updateCreditsDisplay();
+    }).catch(function(){notify('Trade request failed (backend unreachable)');});
+  });
+};
+
+function updateEarnings(){
+  // Sum priceCredits of items owned by current owner where listing.soldAt exists (placeholder for now)
+  var owner=getOwner(),total=0;
+  _backendMints.forEach(function(row){
+    if(row.owner===owner&&row.listing&&row.listing.soldAt&&row.listing.priceCredits)total+=row.listing.priceCredits;
+  });
+  var el=document.getElementById('earnDisplay');if(el)el.textContent=total;
+}
+
+function updateSyncStatus(){
+  var el=document.getElementById('syncStatusMsg');if(!el)return;
+  if(_backendLive)el.innerHTML='<span style="color:#4ade80">✅ Auto-synced via backend</span> — manual inject below is only needed for offline mode.';
+  else el.innerHTML='<span style="color:#ef4444">⚠ Backend offline</span> — use the manual injector below to sync to SHADDAI.';
+}
+
+function init(){
+  checkUnlocks();
+  updateStats();
+  renderAgentStrips();
+  renderShop();
+  renderCollection();
+  renderWardrobe();
+  renderDecor();
+  generateInjectorCode();
+  selectAgent('shaddai');
+  selectDecorAgent('shaddai');
+  // Update credits display
+  var el=document.getElementById('credDisplay');
+  if(el)el.textContent=GC();
+  // Keyboard shortcut: press 'f' to focus search
+  document.addEventListener('keydown',function(e){
+    if(e.key==='f'&&!e.ctrlKey&&!e.metaKey&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){
+      e.preventDefault();var inp=document.getElementById('shopSearch');if(inp)inp.focus()
+    }
+  });
+}
+init();
+// Kick off backend connection check after DOM ready
+pingBackend();
+setInterval(pingBackend,30000); // refresh every 30s
+</script>
+</body></html>

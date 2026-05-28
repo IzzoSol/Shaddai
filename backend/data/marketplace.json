@@ -1,0 +1,14 @@
+[
+  {
+    "id": "job-mpj0v4wj",
+    "title": "E2E test job",
+    "description": "Write a tweet about SHADDAI",
+    "budget": 75,
+    "agentTarget": "QUILL",
+    "deadline": null,
+    "postedBy": "e2e-poster",
+    "status": "open",
+    "bids": [],
+    "postedAt": "2026-05-24T00:11:18.547Z"
+  }
+]
