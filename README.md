@@ -1,385 +1,261 @@
-# SHADDAI Production Build v80
+<div align="center">
 
-**SHADDAI** is a production-ready AI Agent Marketplace platform that orchestrates autonomous agents to execute real work, generate code, write documentation, and manage complex workflows.
+# ⚡ SHADDAI v80 — Sovereign AI Command
+
+**A local-first, multi-agent AI command center.** Seven specialized agents that autonomously
+research, analyze, write, code, watch markets, and build — using 133 real tools, connecting to
+any MCP server, running free on your own machine.
+
+`Local-first (Ollama) · Cloud-optional · Token-efficient · No subscriptions required`
+
+</div>
+
+---
+
+## 📖 Table of Contents
+1. [What is SHADDAI?](#-what-is-shaddai)
+2. [The 7 Agents](#-the-7-agents)
+3. [Key Features](#-key-features)
+4. [Architecture](#-architecture)
+5. [Token Tracking & Savings (AURA)](#-token-tracking--savings)
+6. [The 133-Tool Catalog](#-the-tool-catalog)
+7. [Quick Start](#-quick-start)
+8. [Project Structure](#-project-structure)
+9. [API Reference](#-api-reference)
+10. [Security](#-security)
+11. [Status & Roadmap](#-status--roadmap)
+
+---
+
+## 🌌 What is SHADDAI?
+
+SHADDAI is a single-file dashboard (`FINAL-SHADDAI-V80.html`) backed by a Node.js engine and an
+optional Python token-saver. You give an agent a goal; it runs an **autonomous tool-use loop** —
+the LLM picks tools → tools fetch *real* data → results feed back → it reasons → delivers an
+answer (up to 5 iterations).
+
+It is **local-first**: the default brain is **Ollama** (free, on your machine). Cloud models
+(Groq, Gemini, Claude, etc.) are optional fallbacks you add with a key — you never *need* them.
+The goal is a real, autonomous agent platform that costs **$0 to run**.
+
+**Who it's for:** creators, crypto/Web3 users, solo founders, devs, and tinkerers who want their
+own AI team instead of a generic chatbot.
+
+---
+
+## 🤖 The 7 Agents
+
+Each agent has a role, a persona, and a curated tool set. They run individually, in workflow
+chains, or as a delegating council led by SHADDAI.
+
+| Agent | Role | What it does |
+|---|---|---|
+| **🜲 SHADDAI** | Supreme Orchestrator | Coordinates & delegates to specialists, synthesizes results, makes the call |
+| **💰 ZEROX** | Wealth & Revenue | Live crypto/forex/markets, whale scan, DeFi TVL, funding rates, position sizing |
+| **🔮 ORACLE** | Research & Intelligence | Web/Wikipedia/arXiv/Reddit research, geocoding, sentiment, summarization |
+| **⚙️ NEXUS** | Technical Architect | Runs JS/Python, GitHub/npm, code analysis, security scans, diagrams |
+| **🎨 TURTLE** | UI/UX & Creative | Image generation, color palettes, QR codes, mermaid diagrams |
+| **✍️ QUILL** | Writing & Comms | Tweets, blogs, emails, threads, scripts, translation, grammar |
+| **🛡️ PIKADON** | Security & Compliance | Code/password audits, validation, vulnerability scanning |
+
+---
+
+## ✨ Key Features
+
+- **133 real tools** across crypto, research, dev, web, files, media, geocoding, forex, marketplace, and more — all calling real APIs (keyless/free wherever possible).
+- **Provider Gateway** — one engine-agnostic endpoint (`/api/model/chat`). The UI never picks a vendor; it runs Ollama-first with automatic cloud fallback. Swap engines with zero UI changes.
+- **AURA token-saver** — a cache-first router that answers from cache/compute/local-LLM *before* spending tokens (see [below](#-token-tracking--savings)).
+- **MCP client** — connect agents to any [Model Context Protocol](https://modelcontextprotocol.io) server (filesystem, GitHub, Postgres, Slack…) and use its tools natively.
+- **Skill system** — 3,022 skills with semantic TF-IDF search + a Skill Debugger that shows *why* a skill matched.
+- **Skill marketplace** — 8 installable skill packs (one per agent) that override an agent's behavior.
+- **Collectibles & marketplace** — mint (HMAC-signed receipts), list, and trade collectibles (10% platform fee); post / bid / complete jobs.
+- **Guarded machine payments** — agents can pay for premium APIs via `pay.sh` behind a hard spending cap + daily budget + human-approval gate (disabled by default).
+- **Token Efficiency dashboard** — Chart.js views for cache hit rate, LLM calls by provider, and cost-vs-saved.
+- **Pixel agent office** — agents sit at desks with live work/learn/break/analyze states.
+- **BYOK tier gating** — free / builder / pro / alpha API-key permissions.
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────── Dashboard (single HTML) ───────────────────────────┐
+│  Chat · Agents · Skills · Marketplace · Collectibles · Token Efficiency · Office │
+└───────────────────────────────────┬────────────────────────────────────────────┘
+                                     │  one engine-agnostic call
+                          ┌──────────▼───────────┐
+                          │   PROVIDER GATEWAY    │  /api/model/chat · /api/model/health
+                          │   (Ollama → cloud)    │
+                          └──────────┬───────────┘
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+┌───────▼────────┐         ┌─────────▼──────────┐       ┌─────────▼─────────┐
+│  AGENT ENGINE  │         │   AURA (port 8010) │       │   MCP CLIENT      │
+│ 7 agents · 133 │         │ cache-first token  │       │ connect external  │
+│ tools · loop   │         │ saver (Flask)      │       │ MCP servers       │
+└───────┬────────┘         └────────────────────┘       └───────────────────┘
+        │
+┌───────▼───────────────────────────────────────────────────────────────────┐
+│  llm-tracer (cost/tokens) · cache-analytics · skill-embeddings · event-bus  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Backend:** Node.js + Express (`backend/server-production.js`, port **3000**) — 322 routes.
+- **Engine:** `backend/agent-engine.js` — agents, tool registry, tool-use loop, gateway.
+- **Token saver:** `aura/` — Python Flask service (port **8010**), SQLite semantic cache.
+- **LLM:** Ollama (`llama3.2:1b` default) primary; Groq/Gemini/Claude/OpenRouter optional fallbacks.
+
+---
+
+## 📊 Token Tracking & Savings
+
+SHADDAI has **two complementary systems** so you always know what you're using and how much you're saving.
+
+### 1. AURA — the token **saver** (`aura/`, port 8010)
+Before any LLM call, AURA's router tries the cheapest path first (cheapest → most expensive):
+
+| Step | Method | Cost |
+|---|---|---|
+| 1 | **FETCH** — exact cache hit | **0 tokens, instant** |
+| 2 | **QUERY** — similar cached answer (cosine similarity ≥ 0.82) | **0 tokens** |
+| 3 | **COMPUTE** — math / date / unit-convert / format / count solved locally | **0 tokens** |
+| 4 | **LLM** — only now call a model (Ollama free first, cloud fallback) | tokens used |
+
+Every time AURA answers from steps 1–3, that's an LLM call you **didn't pay for**. The dashboard's
+AURA panel shows **Tokens Saved**, **Cache Hits**, and **Cost Saved** (the $ you'd have paid had
+those calls gone to a paid cloud model). Cache TTLs: market 5 min, search 15 min, agent 1 hr, default 24 hr.
+
+### 2. llm-tracer — the token **tracker** (`backend/llm-tracer.js`)
+Every *actual* model call is logged with **real** token counts and cost:
+- **Input/output tokens** come from the provider's real numbers — Ollama's `prompt_eval_count` / `eval_count`, Groq's `usage` — not a character estimate. (`exact: true` in a trace means real counts.)
+- **Cost** — local providers (Ollama, LM Studio, etc.) are correctly **$0**; cloud models use a per-model rate table.
+- Exposed at `GET /api/llm/traces` and visualized in the **Token Efficiency** Chart.js card (cache-hit doughnut, calls-by-provider bar, cost-vs-saved bar).
+
+> **Bottom line:** running local on Ollama, your real cost is **$0**. AURA's "Cost Saved" shows the
+> value of every call it served without touching a paid model. The tracker proves the numbers are accurate.
+
+---
+
+## 🧰 The Tool Catalog
+
+133 tools, every one assigned to ≥1 agent. Highlights by category:
+
+- **Crypto / Finance:** `fetch_price`, `get_fear_greed`, `whale_scan`, `get_defi_tvl`, `get_dominance`, `get_funding_rates`, `calculate_position_size`, `jupiter_quote`, `get_crypto_backup` (CoinPaprika), `get_forex_rate` (Frankfurter), `binance_orderbook`, `get_top_gainers` …
+- **Research / Web:** `search_web`, `wikipedia_search`, `get_arxiv_papers`, `get_reddit_posts`, `get_hackernews`, `fetch_url_clean`, `geocode_address` (OpenStreetMap), `get_news_headlines`, `summarize_text` …
+- **Dev / Code:** `run_js`, `run_python`, `get_github_repo`, `search_npm`, `analyze_code_complexity`, `validate_json`, `check_security`, `generate_mermaid`, `diff_texts` …
+- **Creative / Media:** `generate_image`, `get_color_palette`, `get_qr_code`, `markdown_to_html` …
+- **Marketplace / Agentic:** `mint_collectible`, `list_collectible`, `execute_trade`, `bid_on_job`, `complete_job`, `create_skill_pack`, `install_skill_pack`, `run_workflow_chain`, `pay_api_call` (guarded) …
+- **Memory / Utility:** `save_memory`, `remember_fact`, `set_agent_room_state`, `translate_text`, `hash_text`, `format_as_table` …
+- **MCP tools:** any tool from a connected MCP server appears as `mcp__<server>__<tool>`.
+
+---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 16+ 
-- npm/yarn
-- Port 3000 available
+### Easiest — one click
+Double-click **`START-SHADDAI.bat`**. It starts Ollama + the backend (+ AURA if Python is installed)
+and opens the dashboard. `STOP-SHADDAI.bat` shuts it down.
 
-### Installation & Run
-
-**Windows (PowerShell):**
-```powershell
-.\START-SERVER.ps1
-```
-
-**Windows (Command Prompt):**
-```cmd
-START-SERVER.bat
-```
-
-**macOS/Linux:**
+### Manual
 ```bash
+# 1. Prereqs: Node.js 18+, Ollama (https://ollama.com)
+ollama pull llama3.2:1b
+ollama serve
+
+# 2. Backend (port 3000)
+cd backend
 npm install
-npm start
+node server-production.js
+
+# 3. (Optional) AURA token-saver (port 8010)
+cd ../aura
+pip install -r requirements.txt
+python aura_server.py
+
+# 4. Open the dashboard
+#    → http://localhost:3000   (served)   or open FINAL-SHADDAI-V80.html
 ```
 
-The server will start on `http://localhost:3000` and serve the SHADDAI dashboard.
+**Optional — add a free cloud key** for speed/reliability (no local RAM pressure): put a Groq key
+(https://console.groq.com/keys) in `backend/.env` as `GROQ_KEY=...`. See `backend/.env.example`.
+
+Full details: **[HOW-TO-RUN.md](HOW-TO-RUN.md)**.
+
+> 💡 **Low-RAM tip (8GB):** keep only one dashboard window open and don't run extra services you
+> don't need — the backend + Ollama are enough; AURA is optional.
 
 ---
 
-## 📋 System Architecture
+## 📁 Project Structure
 
 ```
-SHADDAI Production Build
-│
-├─ Frontend (index.html)
-│  └─ React-based dashboard, multi-theme UI
-│     • Agent management interface
-│     • Job posting & bidding system
-│     • Real-time execution monitoring
-│     • Generated files viewer
-│
-├─ Backend Services
-│  ├─ Express Server (server-production.js)
-│  │  └─ REST API endpoints
-│  │     • /api/agents - Agent management
-│  │     • /api/agents/task - Task execution
-│  │     • /api/executions - Execution history
-│  │     • /api/jobs - Job management
-│  │
-│  ├─ Agent Orchestrator
-│  │  └─ Coordinates 7 specialized agents
-│  │     • SHADDAI - Supreme Orchestrator
-│  │     • NEXUS - Technical Architect
-│  │     • TURTLE - UI/UX & Creative
-│  │     • PIKADON - Security & Compliance
-│  │     • QUILL - Writing & Communication
-│  │     • ZEROX - Wealth & Revenue Engine
-│  │     • ORACLE - Research & Intelligence
-│  │
-│  ├─ Skill Execution System
-│  │  ├─ SkillExecutorReal - Calls real agents via HTTP
-│  │  ├─ SkillOrchestrator - Manages skill execution
-│  │  ├─ SkillOptimizer - Optimizes skill performance
-│  │  └─ SkillRouter - Routes tasks intelligently
-│  │
-│  ├─ Data Persistence
-│  │  └─ DatabaseReal
-│  │     • Execution history
-│  │     • Skill metrics
-│  │     • Agent performance stats
-│  │     • Memory management
-│  │
-│  └─ Support Services
-│     ├─ AuthService - User authentication
-│     ├─ BillingService - Subscription management
-│     └─ SecurityHardening - CORS, helmet, JWT
-│
-└─ Generated Output
-   └─ /generated-output
-      • API code (from NEXUS)
-      • UI components (from TURTLE)
-      • Security audits (from PIKADON)
-      • Documentation (from QUILL)
-      • Project coordination reports (from SHADDAI)
+SHADDAI/
+├── FINAL-SHADDAI-V80.html     # The dashboard (single-file UI)
+├── public/index.html          # Same dashboard, served by the backend
+├── START-SHADDAI.bat          # One-click launcher
+├── STOP-SHADDAI.bat           # Stop services
+├── HOW-TO-RUN.md              # Step-by-step run guide
+├── backend/                   # Node.js engine + REST API
+│   ├── server-production.js   #   Express server (port 3000)
+│   ├── agent-engine.js        #   7 agents, 133 tools, tool-loop, gateway
+│   ├── api-proxy-routes.js    #   322 API routes
+│   ├── mcp-client.js          #   MCP client (stdio + HTTP)
+│   ├── pay-guard.js           #   guarded pay.sh payments
+│   ├── llm-tracer.js          #   token/cost tracking
+│   ├── cache-analytics.js     #   tool-result cache
+│   ├── skill-embeddings.js    #   TF-IDF semantic skill search
+│   ├── audit-*.js             #   reusable audit scripts
+│   └── data/                  #   skills catalog, packs, marketplace, etc.
+└── aura/                      # Python token-saver (Flask, port 8010)
+    ├── aura_server.py · aura_router.py · aura_cache.py · aura_llm.py …
 ```
 
 ---
 
-## 📡 API Endpoints
+## 🔌 API Reference (key endpoints)
 
-### Health & Status
-```
-GET /api/health                 - Server health check
-GET /api/status                 - Detailed system status
-```
-
-### Agent Management
-```
-GET  /api/agents                - List all agents
-GET  /api/agents/:name          - Get agent details
-POST /api/agents/task           - Execute agent task
-```
-
-### Skill Execution
-```
-GET  /api/skills                - List available skills
-POST /api/agents/task           - Execute a skill
-  {
-    "agentName": "NEXUS",
-    "task": "Build a REST API",
-    "context": {}
-  }
-```
-
-### Job Management
-```
-GET  /api/jobs                  - List all jobs
-POST /api/jobs                  - Create new job
-  {
-    "title": "Build Login Page",
-    "description": "Create React login component",
-    "targetAgents": ["TURTLE"],
-    "reward": 100
-  }
-```
-
-### Execution History
-```
-GET  /api/executions            - List all executions
-GET  /api/executions/:id        - Get execution details
-GET  /api/executions?agent=NEXUS&limit=10
-```
-
-### Generated Files
-```
-GET  /api/generated-files       - List generated files
-GET  /api/generated-files/:name - Download specific file
-```
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/model/chat` | **Provider Gateway** — engine-agnostic chat |
+| `GET /api/model/health` | Which engines/keys are available |
+| `POST /api/agent/run` | Run an agent task (async, poll `/api/agent/task/:id`) |
+| `GET /api/agent/stats` | Per-agent task stats |
+| `GET /api/skills/semantic-search?q=` | Ranked skill search (TF-IDF) |
+| `POST /api/skills/run` | Execute a skill (async) |
+| `GET /api/llm/traces` | Token/cost trace stats |
+| `GET /api/cache/stats` | Cache hit rate |
+| `GET/POST /api/collectibles/*` | Mint / list / trade collectibles |
+| `POST /api/marketplace/jobs/post` | Post a job (+ bid / accept) |
+| `GET/POST /api/mcp/*` | List / connect MCP servers, call tools |
+| `POST /api/byok/set` | Store an API key (tier-gated) |
+| `*/aura/*` (port 8010) | AURA cache / chat / health / stats |
 
 ---
 
-## 🔧 How It Works
+## 🔒 Security
 
-### 1. Task Execution Flow
-
-```
-User → POST /api/agents/task
-  ↓
-SkillExecutor → Validates request
-  ↓
-Agent HTTP Call → Connects to real agent (port 8000-8008)
-  ↓
-Agent Executes → Generates real output
-  ↓
-Response Saved → Persisted in DatabaseReal
-  ↓
-Files Written → Saved to /generated-output
-  ↓
-Response Sent → Back to user
-```
-
-### 2. Example: Have NEXUS Build an API
-
-```bash
-curl -X POST http://localhost:3000/api/agents/task \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agentName": "NEXUS",
-    "task": "Build a REST API with Express, PostgreSQL, JWT auth",
-    "context": {
-      "framework": "Express",
-      "database": "PostgreSQL",
-      "authType": "JWT"
-    }
-  }'
-```
-
-Response:
-```json
-{
-  "status": "SUCCESS",
-  "outputs": {
-    "apiCode": "const express = require('express')...",
-    "filePath": "/generated-output/api-server.js",
-    "fileSize": 2048,
-    "timestamp": "2026-05-13T10:30:45Z"
-  }
-}
-```
-
-### 3. Example: Have TURTLE Design a Login Page
-
-```bash
-curl -X POST http://localhost:3000/api/agents/task \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agentName": "TURTLE",
-    "task": "Design a beautiful, accessible login page with dark mode",
-    "context": {
-      "framework": "React",
-      "theme": "modern",
-      "colors": ["#6366f1", "#f97316"]
-    }
-  }'
-```
+- **API keys are server-side only** (`backend/.env`, gitignored — never committed, never sent to the browser). The backend reports key *presence* as a boolean, never the value.
+- **pay.sh is disabled by default** with a per-call cap, daily budget, and human-approval gate; agent-supplied URLs are validated against shell-injection.
+- **Audit scripts** (`backend/audit-connectivity.js`, `audit-dashboard.js`, `audit-tools.js`, `test-e2e.js`) verify connectivity, dead handlers, and tool health any time.
+- For local single-user use the backend is unauthenticated; **add auth before exposing it to the internet.**
 
 ---
 
-## 📂 Directory Structure
+## 📈 Status & Roadmap
 
-```
-SHADDAI-FINAL-BUILD/
-├── public/
-│   └── index.html              - Main frontend (1.6MB)
-│
-├── backend/
-│   ├── server-production.js    - Main Express server
-│   ├── skill-executor-real.js  - Real agent executor
-│   ├── skill-orchestrator.js   - Orchestration logic
-│   ├── skill-bridge.js         - Agent communication
-│   ├── database-real.js        - Persistent storage
-│   ├── background-jobs.js      - Auto-optimization
-│   ├── auth-service.js         - Authentication
-│   ├── billing-service.js      - Billing system
-│   ├── agents/                 - Agent definitions
-│   └── skills/                 - Skill library
-│
-├── generated-output/           - Files generated by agents
-├── docs/                       - Documentation
-├── package.json                - Dependencies
-├── START-SERVER.ps1            - PowerShell start script
-├── START-SERVER.bat            - Batch start script
-└── README.md                   - This file
-```
+**Status:** Fully audited — 0 connectivity problems, 133 tools wired, 46/46 backend files clean,
+dashboard handlers + IDs clean. Provider Gateway live and verified.
+
+**Next (optional polish):**
+- Retire the legacy per-vendor chat path entirely (route everything through the gateway)
+- Server-side session auth for multi-user / hosted deployment
+- Per-agent model registry (default model per agent)
+- Real on-chain collectible minting (Metaplex) + live Solana Pay subscriptions
 
 ---
 
-## 🔌 Real Agent Integration
+<div align="center">
 
-SHADDAI connects to 7 real agents running locally on dedicated ports:
+*SHADDAI v80 — built local-first, token-efficient, and yours.*
 
-| Agent | Port | Role |
-|-------|------|------|
-| SHADDAI | 8000 | Supreme Orchestrator |
-| ZEROX | 8001 | Wealth & Revenue Engine |
-| ORACLE | 8002 | Research & Intelligence |
-| NEXUS | 8003 | Technical Architect |
-| TURTLE | 8004 | UI/UX & Creative |
-| QUILL | 8005 | Writing & Communication |
-| PIKADON | 8008 | Security & Compliance |
-
-**To run all agents locally:**
-
-```bash
-# Terminal 1: Start all agents
-python agent_wrapper.py --all
-
-# Terminal 2: Start SHADDAI server
-npm start
-```
-
----
-
-## 📊 Generated Outputs
-
-All agent work is saved to `/generated-output/`:
-
-- **api-server.js** - Complete REST API (from NEXUS)
-- **LoginPage.tsx** - React component (from TURTLE)
-- **SECURITY-AUDIT.md** - Security review (from PIKADON)
-- **API-DOCUMENTATION.md** - Full docs (from QUILL)
-- **PROJECT-COORDINATION.md** - Project report (from SHADDAI)
-
-Access via API:
-```
-GET /api/generated-files
-GET /api/generated-files/api-server.js
-```
-
----
-
-## 🛡️ Security Features
-
-- ✅ CORS configured
-- ✅ Helmet security headers
-- ✅ Input validation & sanitization
-- ✅ JWT token support
-- ✅ Rate limiting ready
-- ✅ HTTPS support available
-
----
-
-## 🚀 Deployment
-
-### Local Testing
-```bash
-npm start
-```
-
-### Production (with PM2)
-```bash
-npm install -g pm2
-pm2 start backend/server-production.js --name "shaddai"
-pm2 save
-pm2 startup
-```
-
-### Docker
-```dockerfile
-FROM node:16
-WORKDIR /app
-COPY . .
-RUN npm install
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```bash
-docker build -t shaddai .
-docker run -p 3000:3000 shaddai
-```
-
----
-
-## 📈 Performance
-
-- **Response Time**: < 200ms for API calls
-- **Concurrent Agents**: Up to 7 parallel executions
-- **Database**: In-memory with persistence
-- **File Generation**: Real output, not mocked
-
----
-
-## 🔍 Monitoring
-
-Check server status:
-```bash
-curl http://localhost:3000/api/health
-```
-
-View execution history:
-```bash
-curl http://localhost:3000/api/executions?limit=20
-```
-
----
-
-## 🤝 Contributing
-
-To extend SHADDAI:
-
-1. Add new skills in `/backend/skills/`
-2. Create agent-specific endpoints
-3. Update database schema as needed
-4. Test with real agents before deployment
-
----
-
-## 📞 Support
-
-**Configuration Files:**
-- `.env` - Environment variables (optional)
-- `backend/server-production.js` - Main server config
-
-**Troubleshooting:**
-- Ensure port 3000 is available
-- Check Node.js version (16+)
-- Verify agents are running on expected ports
-- Check browser console for frontend errors
-
----
-
-## 📜 License
-
-SHADDAI v80 - Production Ready
-
----
-
-**Built with multi-agent AI orchestration for real, autonomous work.**
-
-Last Updated: 2026-05-13
+</div>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' https: http://localhost:* ws://localhost:* wss: https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self'  ws://localhost:3000 http://localhost:8000 http://localhost:8001 http://localhost:8002 http://localhost:8003 http://localhost:8004 http://localhost:8005 http://localhost:8008 http://localhost:8010 http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI v80 · Sovereign AI Command</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="manifest" href="data:application/json,{%22name%22:%22SHADDAI%20Agent%20Empire%22,%22short_name%22:%22SHADDAI%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23020817%22,%22theme_color%22:%22%2300e5a0%22}">
@@ -8008,7 +8008,7 @@ body.ly-focus .card{border-radius:10px}
 
       <div class="settings-section">
         <div class="settings-title">AI Backend</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">Ollama runs locally (no cost). Claude requires an API key and uses the local server proxy at <code style="color:var(--accent)">http://localhost:3000</code>.</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">Ollama runs locally (no cost). Claude requires an API key and uses the local server proxy at <code style="color:var(--accent)"></code>.</div>
         <div class="settings-row">
           <span class="settings-label">Claude API Key</span>
           <div style="display:flex;gap:6px;align-items:center">
@@ -9129,8 +9129,7 @@ body.ly-focus .card{border-radius:10px}
 
 // ================== STATE ==================
 // ── API base constants ─────────────────────────────────────────────────────────
-window.PROXY = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '' ? (window.location.port ? window.location.origin : 'http://localhost:3000') : window.location.origin;
-var PROXY = window.PROXY;
+const PROXY = '';
 
 const S = {
   ver: '80.0',
@@ -11489,7 +11488,7 @@ function initEventStream() {
   }
 
   const channels = 'job:*,bid:*,leaderboard:*,review:*,marketplace:*';
-  const url = `/api/events/stream?channels=${encodeURIComponent(channels)}`;
+  const url = `${PROXY}/api/events/stream?channels=${encodeURIComponent(channels)}`;
 
   try {
     _eventStream = new EventSource(url);
@@ -11556,7 +11555,7 @@ function updateJobBidDisplay(jobId) {
   if (jobCard) {
     const bidsEl = jobCard.querySelector('.job-bid-count');
     if (bidsEl) {
-      getResp(`/api/marketplace/jobs/${jobId}/bids`, null, 'GET')
+      getResp(`${PROXY}/api/marketplace/jobs/${jobId}/bids`, null, 'GET')
         .then(r => {
           if (r && r.bids) {
             bidsEl.textContent = `${r.bids.length} bid${r.bids.length !== 1 ? 's' : ''}`;
@@ -11573,12 +11572,12 @@ async function loadAdminPanel() {
   let analytics = null;
 
   try {
-    const sr = await fetch(`/api/full-status`, { signal: AbortSignal.timeout(5000) });
+    const sr = await fetch(`${PROXY}/api/full-status`, { signal: AbortSignal.timeout(5000) });
     stats = await sr.json();
   } catch(_) {}
 
   try {
-    const ar = await fetch(`/api/admin/analytics`, { signal: AbortSignal.timeout(5000) });
+    const ar = await fetch(`${PROXY}/api/admin/analytics`, { signal: AbortSignal.timeout(5000) });
     analytics = await ar.json();
   } catch(_) {}
 
@@ -11650,7 +11649,7 @@ async function loadAdminPanel() {
 
 async function downloadBackup() {
   try {
-    const r = await fetch(`/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`${PROXY}/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
     const backup = await r.json();
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -11667,7 +11666,7 @@ async function downloadBackup() {
 
 async function viewBackupInfo() {
   try {
-    const r = await fetch(`/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`${PROXY}/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
     const backup = await r.json();
     const info = {
       'Users': (backup.users || []).length,
@@ -11708,14 +11707,14 @@ async function loadUserDashboard() {
   // Fetch wallet earnings if connected
   if (WALLET.address) {
     try {
-      const wr = await fetch(`/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
+      const wr = await fetch(`${PROXY}/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
       walletStats = await wr.json();
     } catch(_) {}
   }
 
   // Fetch user's jobs from backend
   try {
-    const jr = await fetch(`/api/marketplace/jobs?clientId=${S.user.id || 'user'}`, { signal: AbortSignal.timeout(5000) });
+    const jr = await fetch(`${PROXY}/api/marketplace/jobs?clientId=${S.user.id || 'user'}`, { signal: AbortSignal.timeout(5000) });
     const jd = await jr.json();
     userJobs = jd.jobs || [];
   } catch(_) {}
@@ -11898,7 +11897,7 @@ function _clearAllNotifs() {
 
 // ================== STREAMING CHAT HELPER ==================
 async function streamOllamaResponse(prompt, onToken, onComplete) {
-  const url = `/api/ollama/stream`;
+  const url = `${PROXY}/api/ollama/stream`;
   const body = { prompt, stream: true, model: S.settings?.ollamaModel || 'llama3.2:1b' };
 
   try {
@@ -17085,7 +17084,7 @@ function hideTyping() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
-  const PROXY = proxyBase || window.PROXY || 'http://localhost:3000';
+  const PROXY = proxyBase || window.PROXY || '';
   let retries = 0;
   const maxRetries = 5;
   let es = null;
@@ -17109,7 +17108,7 @@ function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
     settle(() => {}); // mark settled, cleanup SSE
     const pollInterval = setInterval(async () => {
       try {
-        const r = await fetch(`/api/agent/task/${taskId}`);
+        const r = await fetch(`${PROXY}/api/agent/task/${taskId}`);
         const t = await r.json();
         if (t.status === 'completed' && t.result) { clearInterval(pollInterval); onDone(t.result, 'poll'); }
         else if (t.status === 'done'      && t.result) { clearInterval(pollInterval); onDone(t.result, 'poll'); }
@@ -17123,7 +17122,7 @@ function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
 
   function connect() {
     if (settled) return;
-    es = new EventSource(`/api/agent/stream/${taskId}`);
+    es = new EventSource(`${PROXY}/api/agent/stream/${taskId}`);
 
     es.onmessage = (e) => {
       if (settled) return;
@@ -17172,14 +17171,14 @@ function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.runAutonomousTask = async function runAutonomousTask(goal, agentName) {
-  const PROXY = window.PROXY || 'http://localhost:3000';
+  const PROXY = window.PROXY || '';
   const _agent = agentName || (typeof _autoRouteAgent === 'function' ? _autoRouteAgent(goal) : 'SHADDAI');
 
   if (typeof addSysMsg === 'function') addSysMsg(`[${_agent}] 🚀 Task submitted to backend engine...`);
 
   // ── BACKEND ENGINE PATH (real server-side tools) ─────────────────────────
   try {
-    const submitResp = await fetch(`/api/agent/run`, {
+    const submitResp = await fetch(`${PROXY}/api/agent/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ goal, agent: _agent }),
@@ -17544,8 +17543,8 @@ async function getResp(q, agentNameRaw) {
     const query = q.substring(6).trim();
     if (!query) return `Usage: /find <query> — searches all 5,678 skills`;
     try {
-      const PROXY = window.PROXY || 'http://localhost:3000';
-      const r = await fetch(`/api/skills/find?query=${encodeURIComponent(query)}&limit=8`);
+      const PROXY = window.PROXY || '';
+      const r = await fetch(`${PROXY}/api/skills/find?query=${encodeURIComponent(query)}&limit=8`);
       const d = await r.json();
       if (!d.skills?.length) return `No skills matched "${query}"`;
       const list = d.skills.map((s,i) => `${i+1}. **${s.id}** [${s.type}] (${s.agent}) — ${s.description?.slice(0,80)||''}`).join('\n');
@@ -18735,7 +18734,7 @@ async function callAgentAPI(agentName, query, conn) {
   // Route through server proxy to avoid CORS; forward auth headers via body.headers
   const proxyBody = { url, headers };
   if (conn.method === 'POST') { proxyBody.method = 'POST'; proxyBody.body = JSON.stringify({ query }); }
-  const proxyRes = await fetch(`/api/fetch-url`, {
+  const proxyRes = await fetch(`${PROXY}/api/fetch-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(proxyBody),
@@ -21134,7 +21133,7 @@ async function assignTaskToAgent(agentId) {
   }
 
   try {
-    const resp = await fetch(`/api/shaddai/chat`, {
+    const resp = await fetch(`${PROXY}/api/shaddai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -23797,7 +23796,7 @@ async function pipeRefreshWallet() {
 
   try {
     // Use server proxy to call Helius (avoids CORS, keeps API key server-side)
-    const r = await fetch(`/api/helius-tokens`, {
+    const r = await fetch(`${PROXY}/api/helius-tokens`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ address: pipeWallet }),
       signal: AbortSignal.timeout(15000)
@@ -23811,14 +23810,14 @@ async function pipeRefreshWallet() {
     // Get SOL price from Jupiter
     let solPrice = 0;
     try {
-      const jpR = await fetch(`/api/jupiter/price?ids=SOL`, {signal: AbortSignal.timeout(8000)});
+      const jpR = await fetch(`${PROXY}/api/jupiter/price?ids=SOL`, {signal: AbortSignal.timeout(8000)});
       const jpData = await jpR.json();
       solPrice = jpData.data?.SOL?.price || 0;
     } catch(_) {}
     // fallback: DexScreener
     if (!solPrice) {
       try {
-        const dsR = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=SOL` }), signal: AbortSignal.timeout(8000) });
+        const dsR = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=SOL` }), signal: AbortSignal.timeout(8000) });
         const dsData = JSON.parse((await dsR.json()).content || '{}');
         const solPair = (dsData.pairs||[]).find(p => p.chainId === 'solana' && p.baseToken?.symbol === 'SOL');
         solPrice = parseFloat(solPair?.priceUsd || '0');
@@ -24069,7 +24068,7 @@ function dexRenderPairs(pairs, label) {
 }
 
 async function dexProxyFetch(url) {
-  const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }), signal: AbortSignal.timeout(12000) });
+  const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }), signal: AbortSignal.timeout(12000) });
   const resp = await r.json();
   const raw = resp.content || '{}';
   try {
@@ -24234,7 +24233,7 @@ async function dexSearchTokens() {
   const grid = document.getElementById('dexFeedGrid');
   grid.innerHTML = `<div style="color:var(--text-muted);font-size:10px;padding:20px;text-align:center;grid-column:1/-1">Searching "${escH(q)}"...</div>`;
   try {
-    const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=${encodeURIComponent(q)}` }), signal: AbortSignal.timeout(12000) });
+    const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=${encodeURIComponent(q)}` }), signal: AbortSignal.timeout(12000) });
     const data = JSON.parse((await r.json()).content || '{}');
     const pairs = (data.pairs || []).slice(0,12);
     if (!pairs.length) { grid.innerHTML = `<div style="color:var(--text-muted);font-size:10px;padding:20px;text-align:center;grid-column:1/-1">No pairs found for "${escH(q)}"</div>`; return; }
@@ -25283,7 +25282,7 @@ async function _ollamaPipe(prompt) {
 // ── _dexPipe — pipeline step for DexScreener ─────────────────────────────────
 async function _dexPipe(tokenAddress) {
   try {
-    const r = await fetch(`/api/fetch-url`, {
+    const r = await fetch(`${PROXY}/api/fetch-url`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/tokens/${tokenAddress}` }),
@@ -25410,7 +25409,7 @@ function openTraderPanel(pairAddress, symbol) {
 
   // Load token stats in background
   if (pairAddress) {
-    fetch(`/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`}),signal:AbortSignal.timeout(10000)})
+    fetch(`${PROXY}/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`}),signal:AbortSignal.timeout(10000)})
       .then(r=>r.json()).then(resp=>{
         const d = JSON.parse(resp.content||'{}');
         const p = d.pair || d.pairs?.[0];
@@ -25438,7 +25437,7 @@ function openTraderPanel(pairAddress, symbol) {
 
 // ── SHADDAI Agent Server state ─────────────────────────────────
 // All agents now route through the gateway (Python agents may be offline)
-const GATEWAY = window.PROXY;
+const GATEWAY = '';
 const SHADDAI_AGENT = GATEWAY + '/api/shaddai';
 const XEROX_AGENT   = GATEWAY + '/api/zerox';
 const ORACLE_AGENT  = GATEWAY + '/api/oracle';
@@ -25492,12 +25491,12 @@ async function loadSkillsFromServer() {
 }
 
 async function runSkill(skillName, action, params) {
-  const PROXY = window.PROXY || 'http://localhost:3000';
+  const PROXY = window.PROXY || '';
   // ── Primary: new agentic engine /api/skills/run (recipes + MD + 5329 Obsidian) ──
   try {
     const input = (params && typeof params === 'object') ? { ...params } : {};
     if (action) input.action = action;
-    const r = await fetch(`/api/skills/run`, {
+    const r = await fetch(`${PROXY}/api/skills/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ skillId: skillName, input }),
@@ -25512,7 +25511,7 @@ async function runSkill(skillName, action, params) {
       while (Date.now() - started < 180000) { // poll up to 3 min
         await new Promise(res => setTimeout(res, 2500));
         try {
-          const pr = await fetch(`/api/agent/task/${d.taskId}`, { signal: AbortSignal.timeout(8000) });
+          const pr = await fetch(`${PROXY}/api/agent/task/${d.taskId}`, { signal: AbortSignal.timeout(8000) });
           if (!pr.ok) continue;
           const td = await pr.json();
           const t = td.task || td;
@@ -25533,7 +25532,7 @@ async function runSkill(skillName, action, params) {
   } catch(eEngine) {
     // ── Fallback 1: legacy /api/shaddai/skill route (older Python agents) ──
     try {
-      const url = action ? `/api/shaddai/skill/${skillName}/${action}` : `/api/shaddai/skill/${skillName}`;
+      const url = action ? `${PROXY}/api/shaddai/skill/${skillName}/${action}` : `${PROXY}/api/shaddai/skill/${skillName}`;
       const r = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ params: params || {}, task: params?.task || params?.prompt || '' }),
@@ -25554,9 +25553,9 @@ async function runSkill(skillName, action, params) {
 
 // Quick auto-match a query to the best skill and run it
 async function runSkillByQuery(query, input) {
-  const PROXY = window.PROXY || 'http://localhost:3000';
+  const PROXY = window.PROXY || '';
   try {
-    const r = await fetch(`/api/skills/auto`, {
+    const r = await fetch(`${PROXY}/api/skills/auto`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, input: input || {} }),
       signal: AbortSignal.timeout(90000)
@@ -25706,7 +25705,7 @@ async function quickBriefing() {
 async function quickTrendingScan() {
   notify('Scanning trending tokens...');
   try {
-    const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: 'https://api.dexscreener.com/token-boosts/top/v1' }), signal: AbortSignal.timeout(12000) });
+    const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: 'https://api.dexscreener.com/token-boosts/top/v1' }), signal: AbortSignal.timeout(12000) });
     const data = JSON.parse((await r.json()).content || '[]');
     const tokens = (Array.isArray(data) ? data : []).slice(0, 10);
     const chatEl = document.getElementById('chatMsgsFull');
@@ -26002,7 +26001,7 @@ async function sendTrendingAlertsToTelegram() {
 async function postToX(text) {
   try {
     const truncated = text.length > 280 ? text.substring(0, 277) + '...' : text;
-    const res = await fetch(`/api/social/post`, {
+    const res = await fetch(`${PROXY}/api/social/post`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: truncated, platform: 'x' }),
       signal: AbortSignal.timeout(8000)
@@ -28873,7 +28872,7 @@ function connectWallet() {
       const token = localStorage.getItem('shaddai_auth_token');
       if (token) {
         try {
-          await fetch(`/api/auth/link-wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ walletAddress: pubkey }), signal: AbortSignal.timeout(10000) });
+          await fetch(`${PROXY}/api/auth/link-wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ walletAddress: pubkey }), signal: AbortSignal.timeout(10000) });
         } catch(_) {}
       }
       // Pull live data
@@ -29001,7 +29000,7 @@ async function fetchWalletNFTs() {
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px;font-size:9px">Loading NFTs...</div>';
   
   try {
-    const resp = await fetch(`/api/helius-nfts?address=${WALLET.address}`, {signal: AbortSignal.timeout(15000)});
+    const resp = await fetch(`${PROXY}/api/helius-nfts?address=${WALLET.address}`, {signal: AbortSignal.timeout(15000)});
     const data = await resp.json();
     cachedNFTs = data.nfts || [];
     renderNFTs();
@@ -29193,7 +29192,7 @@ async function fetchTxHistory() {
   el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:11px">Loading transactions...</div>';
   
   try {
-    const resp = await fetch(`/api/helius-txs?address=${WALLET.address}&limit=20`, {signal: AbortSignal.timeout(15000)});
+    const resp = await fetch(`${PROXY}/api/helius-txs?address=${WALLET.address}&limit=20`, {signal: AbortSignal.timeout(15000)});
     const data = await resp.json();
     cachedTxHistory = data.transactions || [];
     renderTxHistory();
@@ -29388,7 +29387,7 @@ async function getSwapQuote() {
   if (quoteEl) quoteEl.innerHTML = '<span style="color:var(--text-muted)">Getting quote...</span>';
   try {
     // Route through gateway to avoid CORS
-    const r = await fetch(`/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountRaw}&slippageBps=50`, { signal: AbortSignal.timeout(15000) });
+    const r = await fetch(`${PROXY}/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountRaw}&slippageBps=50`, { signal: AbortSignal.timeout(15000) });
     const data = await r.json();
     if (data.error) throw new Error(data.error);
     // Jupiter v6: quote is returned directly (not in data.data[])
@@ -29423,7 +29422,7 @@ async function executeSwap() {
     if (!window._currentSwapQuote) throw new Error('Could not get swap quote. Check your connection.');
 
     notify('🔄 Building swap transaction...');
-    const r = await fetch(`/api/jupiter-swap`, {
+    const r = await fetch(`${PROXY}/api/jupiter-swap`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ quote: window._currentSwapQuote, userPublicKey: WALLET.address }),
       signal: AbortSignal.timeout(30000)
@@ -29479,7 +29478,7 @@ async function executeStake() {
 
   try {
     notify('🔄 Building stake transaction via Jupiter...');
-    const r = await fetch(`/api/solana/stake`, {
+    const r = await fetch(`${PROXY}/api/solana/stake`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ amount, pool, userPublicKey: WALLET.address }),
       signal: AbortSignal.timeout(30000)
@@ -29562,7 +29561,7 @@ async function executeTrade() {
   notify(`🤖 ${agent} analyzing strategy...`);
 
   try {
-    const r = await fetch(`/api/trade/analyze`, {
+    const r = await fetch(`${PROXY}/api/trade/analyze`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ strategy, agent, symbol: document.getElementById('tradingStrategy')?.dataset?.symbol }),
       signal: AbortSignal.timeout(60000)
@@ -29602,7 +29601,7 @@ async function renderAgentEarnings() {
   // Pull live leaderboard from gateway
   let liveData = {};
   try {
-    const r = await fetch(`/api/marketplace/leaderboard?period=all`, { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(`${PROXY}/api/marketplace/leaderboard?period=all`, { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     (d.leaderboard || []).forEach(e => { liveData[e.agentId] = e; });
   } catch(_) {}
@@ -29611,7 +29610,7 @@ async function renderAgentEarnings() {
   let walletStats = null;
   if (WALLET.address) {
     try {
-      const wr = await fetch(`/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
+      const wr = await fetch(`${PROXY}/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
       walletStats = await wr.json();
       WALLET.earnings = walletStats.totalEarned || 0;
       WALLET.jobs = walletStats.jobsCompleted || 0;
@@ -32960,7 +32959,7 @@ async function _solPayCreate(command, overrides) {
       ? { item: overrides.item, amount: overrides.amount, label: overrides.label || 'SHADDAI', currency: 'SOL' }
       : { command };
     const endpoint = overrides ? '/api/pay/create' : '/api/pay/nl';
-    const r = await fetch((window.PROXY || 'http://localhost:3000') + endpoint, {
+    const r = await fetch('' + endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(overrides ? body : { command }),
       signal: AbortSignal.timeout(8000)
@@ -33184,7 +33183,7 @@ let _skillsLibrary = [];
 let _skillsFilter = { agent: 'all', category: 'all', search: '', sort: 'name', view: 'grid' };
 
 async function runSkillDebugger() {
-  const PROXY = window.PROXY || 'http://localhost:3000';
+  const PROXY = window.PROXY || '';
   const q = (document.getElementById('skillDebugQuery')?.value || '').trim();
   const agent = document.getElementById('skillDebugAgent')?.value || '';
   const out = document.getElementById('skillDebugResults');
@@ -33193,7 +33192,7 @@ async function runSkillDebugger() {
   out.innerHTML = '<div style="color:var(--text-muted);padding:10px">⏳ Matching…</div>';
   const colors = { SHADDAI:'#ffd700', ZEROX:'#00c8ff', ORACLE:'#b06aff', NEXUS:'#00e5a0', TURTLE:'#ff7b3d', QUILL:'#ffb020', PIKADON:'#ff4070' };
   try {
-    const url = `/api/skills/semantic-search?q=${encodeURIComponent(q)}&k=8${agent ? '&agent=' + agent : ''}`;
+    const url = `${PROXY}/api/skills/semantic-search?q=${encodeURIComponent(q)}&k=8${agent ? '&agent=' + agent : ''}`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     const results = d.results || d.data || [];
@@ -34600,7 +34599,7 @@ async function loadOhlcChart() {
   if (labelEl) labelEl.textContent = `${ticker} · ${days}D`;
 
   try {
-    const r = await fetch(`/api/prices/ohlc?symbol=${encodeURIComponent(ticker)}&days=${days}`,
+    const r = await fetch(`${PROXY}/api/prices/ohlc?symbol=${encodeURIComponent(ticker)}&days=${days}`,
       { signal: AbortSignal.timeout(12000) });
     if (!r.ok) {
       const e = await r.json().catch(() => ({}));
@@ -35432,7 +35431,7 @@ async function postSignalToTelegram() {
   const content = `📊 *SHADDAI Trade Signals*\n${new Date().toLocaleString()}\n\n${signals}\n\n_via SHADDAI Agent Empire_`;
   notify('📱 Sending to Telegram...');
   try {
-    const r = await fetch(`/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'telegram', content }), signal:AbortSignal.timeout(10000) });
+    const r = await fetch(`${PROXY}/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'telegram', content }), signal:AbortSignal.timeout(10000) });
     const d = await r.json();
     if (d.status === 'sent') notify('✅ Signals posted to Telegram!');
     else notify('📱 ' + (d.message || 'Add TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID to .env'));
@@ -35444,7 +35443,7 @@ async function postSignalToDiscord() {
   const content = `📊 **SHADDAI Trade Signals** — ${new Date().toLocaleString()}\n${signals}`;
   notify('💬 Sending to Discord...');
   try {
-    const r = await fetch(`/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'discord', content }), signal:AbortSignal.timeout(10000) });
+    const r = await fetch(`${PROXY}/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'discord', content }), signal:AbortSignal.timeout(10000) });
     const d = await r.json();
     if (d.status === 'sent') notify('✅ Signals posted to Discord!');
     else notify('💬 ' + (d.message || 'Add DISCORD_WEBHOOK_URL to .env'));
@@ -35900,10 +35899,10 @@ async function auraHealthCheck() {
 window._effCharts = {};
 async function renderEfficiencyCharts() {
   if (typeof Chart === 'undefined') return; // CDN not loaded
-  const PROXY = window.PROXY || 'http://localhost:3000';
+  const PROXY = window.PROXY || '';
   let cache = {}, traces = {};
-  try { cache = await (await fetch(`/api/cache/stats`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
-  try { traces = await (await fetch(`/api/llm/traces`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
+  try { cache = await (await fetch(`${PROXY}/api/cache/stats`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
+  try { traces = await (await fetch(`${PROXY}/api/llm/traces`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
 
   const accent = '#00e5a0', blue = '#00c8ff', gold = '#ffb020', red = '#ff4070', dim = '#5a6b8a';
   const baseOpts = { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: dim, font: { size: 9 } } } } };
@@ -39299,7 +39298,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   }
 
   function viewJobBids(jobId) {
-    fetch(`/api/marketplace/jobs/${jobId}`, { signal: AbortSignal.timeout(5000) })
+    fetch(`${PROXY}/api/marketplace/jobs/${jobId}`, { signal: AbortSignal.timeout(5000) })
       .then(r => r.json()).then(d => {
         const job = d.data || d.job || d;
         const bids = (job && job.bids) || [];
@@ -39328,7 +39327,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   window.acceptJobBid = async function(jobId, bidIndex) {
     try {
-      const r = await fetch(`/api/marketplace/jobs/${jobId}/accept-bid`, {
+      const r = await fetch(`${PROXY}/api/marketplace/jobs/${jobId}/accept-bid`, {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ bidIndex }),
         signal: AbortSignal.timeout(8000)
@@ -39367,7 +39366,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         const statusEl = document.getElementById('bidStatus');
         if (statusEl) statusEl.textContent = 'Placing bid...';
         try {
-          const r = await fetch(`/api/marketplace/jobs/${jobId}/bid`, {
+          const r = await fetch(`${PROXY}/api/marketplace/jobs/${jobId}/bid`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ agentId: 'user-agent', amount, timestamp: new Date().toISOString() }),
             signal: AbortSignal.timeout(15000)
@@ -39749,7 +39748,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (btn) { btn.textContent = '⏳ Fetching...'; btn.disabled = true; }
 
     try {
-      const r = await fetch(`/api/scrape`, {
+      const r = await fetch(`${PROXY}/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, maxChars: 6000 }),
@@ -39808,7 +39807,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     const out = document.getElementById(targetOutputId);
     if (out) out.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:8px">⏳ Researching...</div>';
     try {
-      const r = await fetch(`/api/scrape`, {
+      const r = await fetch(`${PROXY}/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, maxChars: 6000 }),
@@ -39865,7 +39864,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         // Post job to real backend AND auto-execute with wallet credit
         let createdJobId = null;
         try {
-          const r = await fetch(`/api/marketplace/jobs`, {
+          const r = await fetch(`${PROXY}/api/marketplace/jobs`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: 'Hire: ' + a.name, description: task, category: (a.listing&&a.listing.category)||'content_creation', budget: Math.max(20, a.listing&&a.listing.price||20), clientId: WALLET.address || 'user', deadline: new Date(Date.now()+86400000).toISOString() }),
             signal: AbortSignal.timeout(15000)
@@ -39876,7 +39875,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             if (statusEl) statusEl.innerHTML = '<span style="color:var(--accent)">Job #' + job.jobId.slice(0,8) + ' posted. Triggering agent bids...</span>';
 
             // Trigger agent auto-bidding
-            fetch(`/api/marketplace/jobs/${job.jobId}/auto-bid`, {
+            fetch(`${PROXY}/api/marketplace/jobs/${job.jobId}/auto-bid`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({}),
               signal: AbortSignal.timeout(20000)
@@ -39889,7 +39888,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             });
 
             // Auto-execute and credit wallet earnings
-            fetch(`/api/marketplace/jobs/${job.jobId}/auto-execute`, {
+            fetch(`${PROXY}/api/marketplace/jobs/${job.jobId}/auto-execute`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ walletAddress: WALLET.address || null }),
               signal: AbortSignal.timeout(60000)
@@ -41280,7 +41279,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       suno: { status: 'operational', lastCheck: Date.now(), endpoint: 'https://api.suno.ai' },
       kling: { status: 'operational', lastCheck: Date.now(), endpoint: 'https://api.klingai.com' },
       pollinations: { status: 'operational', lastCheck: Date.now(), endpoint: 'https://api.pollinations.ai' },
-      'local-api': { status: 'operational', lastCheck: Date.now(), endpoint: 'http://localhost:3000' }
+      'local-api': { status: 'operational', lastCheck: Date.now(), endpoint: '' }
     };
   }
 
@@ -44081,7 +44080,7 @@ window.pushStandbyNotif = pushStandbyNotif;
 //  v76 FOUR MISSING FRONTEND SYSTEMS
 // ═══════════════════════════════════════════════════════════════════════
 
-var PROXY='http://localhost:3000';
+var PROXY='';
 
 // ── 1. WORKFLOW RUNNER ───────────────────────────────────────────────
 async function runWorkflowFromUI() {
@@ -46391,7 +46390,7 @@ async function taFetchCandles(tokenAddress, interval = '1h') {
   const intervalMap = { '5m':'5m', '15m':'15m', '1h':'1h', '4h':'4h', '1d':'1d' };
   const iv = intervalMap[interval] || '1h';
   try {
-    const r = await fetch(`/api/fetch-url`, {
+    const r = await fetch(`${PROXY}/api/fetch-url`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ url: `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}` })
     });

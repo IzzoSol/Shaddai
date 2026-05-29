@@ -1,0 +1,25 @@
+# Render Blueprint for SHADDAI — single Node web service.
+# Render auto-detects this on deploy. The dashboard is served by the same
+# service (same-origin), so no CORS config is needed.
+#
+# After first deploy, set the secret env vars in the Render dashboard
+# (Environment tab): GROQ_API_KEY is the important one (free at
+# https://console.groq.com/keys). OpenRouter is an optional extra fallback.
+services:
+  - type: web
+    name: shaddai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/model/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: GROQ_API_KEY
+        sync: false        # set in Render dashboard (secret) — free at console.groq.com/keys
+      - key: OPENROUTER_API_KEY
+        sync: false        # optional extra fallback (free models) — openrouter.ai/keys
+      - key: NODE_ENV
+        value: production

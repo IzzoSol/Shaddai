@@ -44,10 +44,12 @@ const MEMORY_FILE = path.join(__dirname, 'data', 'agent-memory.json');
   try { fs.mkdirSync(d, { recursive: true }); } catch {}
 });
 
-const GROQ_KEY     = process.env.GROQ_API_KEY || '';
+const GROQ_KEY     = process.env.GROQ_API_KEY || process.env.GROQ_KEY || '';
 const OLLAMA_URL   = process.env.OLLAMA_API_URL || 'http://localhost:11434';
 const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 const OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
 // HTTP helper — axios with default timeout
 const http = (url, opts = {}) => axios.get(url, { timeout: 10000, ...opts });
@@ -2601,19 +2603,19 @@ const AGENTS = {
     keywords: ['plan','coordinate','overview','strategy','all agents','orchestrate','manage','what should','help me','summary','delegate','remember','recall','compress','room','mood','workflow','chain','skill pack']
   },
   NEXUS: {
-    name: 'NEXUS', role: 'Technical Architect', port: 8003,
+    name: 'NEXUS', role: 'Technical Architect', port: 8003, preferredProvider: 'openrouter',
     goal: 'Build and review code. Design APIs. Solve technical problems. Ship working solutions.',
     tools: ['delegate_to_agent','run_js','run_python','write_file','read_file','list_files','search_web','wikipedia_search','get_github_repo','get_github_trending','search_npm','check_security','calculate','count_tokens','hash_text','base64_codec','encode_base64','decode_base64','regex_test','markdown_to_html','random_user','save_to_inbox','save_memory','get_memory','read_obsidian_skill','check_port','get_public_apis','get_uuid','get_arxiv_papers','grammar_check','analyze_code_complexity','validate_json','convert_units','get_package_info','search_github_repos','diff_texts','generate_uuid','generate_code_template','format_as_table','generate_mermaid','run_local_llm','list_open_jobs','bid_on_job','complete_job','pay_api_call','geocode_address'],
     keywords: ['code','build','api','backend','function','refactor','debug','script','implement','architecture','npm','package','python','javascript','node','github','repo','bug','test','lint','regex','hash','port','encode','decode','diagram','mermaid','json','validate','complexity','template']
   },
   ZEROX: {
-    name: 'ZEROX', role: 'Wealth & Revenue Engine', port: 8001,
+    name: 'ZEROX', role: 'Wealth & Revenue Engine', port: 8001, preferredProvider: 'groq',
     goal: 'Analyze markets, track prices, spot opportunities. Deliver actionable financial intelligence.',
     tools: ['fetch_price','get_fear_greed','get_trending','get_ohlcv','get_global_market','get_token_info','whale_scan','get_defi_tvl','get_sol_balance','get_eth_balance','get_exchange_rates','jupiter_quote','get_nft_floor','get_stock_quote','get_crypto_news','get_gas_price','calculate','analyze_sentiment','extract_keywords','save_to_inbox','save_memory','get_memory','read_obsidian_skill','dex_price','binance_price','binance_orderbook','get_eth_gas','get_top_gainers','get_stablecoin_data','get_protocol_revenue','get_fear_greed_history','calculate_position_size','get_sol_token_info','get_onchain_activity','get_funding_rates','get_dominance','format_as_table','mint_collectible','list_collectible','browse_listings','list_open_jobs','bid_on_job','complete_job','execute_trade','pay_api_call','get_forex_rate','get_crypto_backup'],
     keywords: ['price','market','crypto','trading','whale','revenue','finance','coin','token','sol','btc','eth','defi','tvl','wallet','balance','exchange','rate','profit','invest','swap','jupiter','stock','nft','gas','news','dominance','funding','stablecoin','orderbook']
   },
   ORACLE: {
-    name: 'ORACLE', role: 'Research & Intelligence', port: 8002,
+    name: 'ORACLE', role: 'Research & Intelligence', port: 8002, preferredProvider: 'openrouter',
     goal: 'Research any topic deeply. Synthesize data. Produce intelligence briefs.',
     tools: ['search_web','wikipedia_search','get_wikipedia_summary','fetch_url','screenshot_url','get_hackernews','get_rss_feed','get_reddit_posts','get_arxiv_papers','fetch_price','get_fear_greed','get_github_trending','get_weather','weather_live','get_country_info','get_ip_info','get_history_today','get_moon_phase','get_timezone','analyze_sentiment','extract_keywords','count_tokens','format_data','translate_text','save_to_inbox','save_memory','get_memory','read_obsidian_skill','fetch_url_clean','get_news_headlines','get_product_hunt','get_github_issues','search_web_ddg','get_stackoverflow','get_medium_articles','get_hacker_news_comments','get_trending_topics','get_word_definition','detect_language','summarize_text','extract_entities','format_as_table','browse_listings','list_open_jobs','bid_on_job','complete_job','pay_api_call','geocode_address','get_forex_rate','get_crypto_backup'],
     keywords: ['research','analyze','investigate','find','news','trends','intelligence','report','data','what is','who is','explain','summarize','brief','translate','keywords','reddit','arxiv','country','history','timezone','medium','stackoverflow','product hunt','word','definition','language']
@@ -2814,66 +2816,73 @@ ${toolBlock}`
 
   const allMsgs = trimMessages([system, ...messages], 8000);
 
-  // Ollama is PRIMARY — free, local, no rate limits. Groq is emergency fallback only.
-  try {
-    const ollamaModel2 = OLLAMA_MODEL;
-    const ollamaUrl2 = OLLAMA_URL + '/api/chat';
-    const ollamaResp2 = await fetch(ollamaUrl2, {
+  // ── PROVIDER CHAIN ──────────────────────────────────────────────────────────
+  // Try providers in order until one returns content. An agent's optional
+  // `preferredProvider` goes FIRST, so different agents can run on different
+  // providers concurrently — no single provider's rate limit bottlenecks all 7.
+  // Default order is Ollama (free/local) → Groq → OpenRouter. In the cloud
+  // (no Ollama) it auto-skips to the cloud providers.
+  async function pOllama() {
+    const r = await fetch(OLLAMA_URL + '/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: ollamaModel2, messages: allMsgs, stream: false, options: { num_ctx: 4096, num_predict: 800 } }),
+      body: JSON.stringify({ model: OLLAMA_MODEL, messages: allMsgs, stream: false, options: { num_ctx: 4096, num_predict: 800 } }),
       signal: AbortSignal.timeout(90000)
     });
-    if (ollamaResp2.ok) {
-      const ollamaData2 = await ollamaResp2.json();
-      const content2 = ollamaData2.message?.content;
-      if (content2) {
-        // Use Ollama's REAL token counts when present (prompt_eval_count = input,
-        // eval_count = output); fall back to a char/4 estimate only if absent.
-        const inTok = ollamaData2.prompt_eval_count ?? Math.ceil(JSON.stringify(allMsgs).length / 4);
-        const outTok = ollamaData2.eval_count ?? Math.ceil(content2.length / 4);
-        llmTracer.trace({ provider: 'ollama', model: ollamaModel2, agentName, inputTokens: inTok, outputTokens: outTok, durationMs: Date.now() - t0, success: true, exact: ollamaData2.eval_count != null });
-        return content2;
-      }
-    }
-  } catch { /* Ollama unavailable — fall through to Groq */ }
-
-  // Groq fallback — only used when Ollama is unavailable
-  const groqModels = [GROQ_MODEL, 'llama-3.1-8b-instant'];
-  if (GROQ_KEY) {
-    for (const model of groqModels) {
+    if (!r.ok) throw new Error('ollama HTTP ' + r.status);
+    const d = await r.json();
+    const c = d.message?.content;
+    if (!c) throw new Error('ollama empty response');
+    llmTracer.trace({ provider: 'ollama', model: OLLAMA_MODEL, agentName,
+      inputTokens: d.prompt_eval_count ?? Math.ceil(JSON.stringify(allMsgs).length / 4),
+      outputTokens: d.eval_count ?? Math.ceil(c.length / 4),
+      durationMs: Date.now() - t0, success: true, exact: d.eval_count != null });
+    return c;
+  }
+  // OpenAI-compatible providers (Groq, OpenRouter both use this shape)
+  async function pOpenAICompatible(name, url, key, models) {
+    if (!key) throw new Error(name + ' no key');
+    let lastErr;
+    for (const model of models) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-            model, messages: allMsgs, max_tokens: 1500, temperature: 0.6
-          }, { headers: { Authorization: `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' }, timeout: 30000 });
-          llmTracer.trace({ provider: 'groq', model, agentName, inputTokens: r.data.usage?.prompt_tokens || 0, outputTokens: r.data.usage?.completion_tokens || 0, durationMs: Date.now() - t0, success: true });
+          const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+          if (name === 'openrouter') { headers['HTTP-Referer'] = 'https://shaddai.app'; headers['X-Title'] = 'SHADDAI'; }
+          const r = await axios.post(url, { model, messages: allMsgs, max_tokens: 1500, temperature: 0.6 }, { headers, timeout: 30000 });
+          llmTracer.trace({ provider: name, model, agentName,
+            inputTokens: r.data.usage?.prompt_tokens || 0, outputTokens: r.data.usage?.completion_tokens || 0,
+            durationMs: Date.now() - t0, success: true });
           return r.data.choices[0].message.content;
-        } catch(e) {
-          const errMsg = e.response?.data?.error?.message || e.message;
-          const isRateLimit = e.response?.status === 429 || /rate limit|TPM|Limit/i.test(errMsg);
-          console.warn(`[ENGINE] Groq ${model} attempt ${attempt+1}: ${errMsg.slice(0,120)}`);
-          if (isRateLimit && attempt === 0) {
-            // Extract wait time from error message ("try again in 2.845s")
-            const waitMatch = errMsg.match(/in ([\d.]+)s/);
-            const waitMs = Math.min(8000, Math.ceil((waitMatch ? parseFloat(waitMatch[1]) : 3) * 1000) + 500);
-            await new Promise(r => setTimeout(r, waitMs));
+        } catch (e) {
+          lastErr = e;
+          const msg = e.response?.data?.error?.message || e.message;
+          const rl = e.response?.status === 429 || /rate limit|TPM|Limit/i.test(msg);
+          console.warn(`[ENGINE] ${name} ${model} attempt ${attempt + 1}: ${String(msg).slice(0, 120)}`);
+          if (rl && attempt === 0) {
+            const w = String(msg).match(/in ([\d.]+)s/);
+            await new Promise(res => setTimeout(res, Math.min(8000, Math.ceil((w ? parseFloat(w[1]) : 3) * 1000) + 500)));
             continue;
           }
-          break;  // Try next model
+          break; // next model
         }
       }
     }
+    throw lastErr || new Error(name + ' failed');
   }
-
-  // Final fallback: Ollama (longer timeout — slow hardware / big prompts)
-  try {
-    const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-      model: OLLAMA_MODEL, messages: allMsgs, stream: false, options: { num_ctx: 4096, num_predict: 800 }
-    }, { timeout: 120000 });
-    return r.data.message?.content || r.data.response || '';
-  } catch(e) {
-    throw new Error(`All LLMs unavailable. Groq key set: ${!!GROQ_KEY}. Ollama error: ${e.message}`);
+  const PROVIDERS = {
+    ollama: pOllama,
+    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [GROQ_MODEL, 'llama-3.1-8b-instant']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [OPENROUTER_MODEL, 'mistralai/mistral-7b-instruct:free']),
+  };
+  const pref = (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
+  const order = [...new Set([pref, 'ollama', 'groq', 'openrouter'].filter(Boolean))];
+  let lastError;
+  for (const pname of order) {
+    const fn = PROVIDERS[pname];
+    if (!fn) continue;
+    try { const out = await fn(); if (out) return out; }
+    catch (e) { lastError = e; console.warn(`[ENGINE] provider ${pname} unavailable: ${String(e.message || '').slice(0, 100)}`); }
   }
+  throw new Error(`All LLM providers failed (tried ${order.join(', ')}). Last: ${lastError?.message || 'unknown'}. Set GROQ_API_KEY or OPENROUTER_API_KEY, or run Ollama locally.`);
 }
 
 // ═══════════════════════════════════════════════════════════════════

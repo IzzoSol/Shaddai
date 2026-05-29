@@ -4,7 +4,9 @@
  * Port: 3000
  */
 
-require('dotenv').config();
+// Load env from backend/.env (next to this file) regardless of where node is launched.
+// On Render, env vars come from the dashboard and are already in process.env.
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 const express = require('express');
 const http = require('http');
