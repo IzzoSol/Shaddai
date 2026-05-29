@@ -1108,7 +1108,7 @@ function notify(m){var area=document.getElementById('notifArea'),el=document.cre
 function sortBy(criteria){_sm=criteria;document.getElementById('sortBtn').textContent=criteria.toUpperCase();renderShop()}
 function sortShopCycle(){var opts=['tier','price','name','cat'];var idx=opts.indexOf(_sm);_sm=opts[(idx+1)%opts.length];document.getElementById('sortBtn').textContent=_sm.toUpperCase();renderShop()}
 // ── BACKEND INTEGRATION (SHADDAI-API @ localhost:3000) ──
-var BACKEND_URL='http://localhost:3000';
+var BACKEND_URL=window.PROXY||'http://localhost:3000';
 var _backendLive=false;
 var _verifiedMap=JSON.parse(localStorage.getItem('shd_exp_verified')||'{}'); // {localId: signature}
 var _backendMints=[]; // raw backend rows

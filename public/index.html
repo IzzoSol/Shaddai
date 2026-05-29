@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' http://localhost:3000 ws://localhost:3000 http://localhost:8000 http://localhost:8001 http://localhost:8002 http://localhost:8003 http://localhost:8004 http://localhost:8005 http://localhost:8008 http://localhost:8010 http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' https: http://localhost:* ws://localhost:* wss: https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI v80 · Sovereign AI Command</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="manifest" href="data:application/json,{%22name%22:%22SHADDAI%20Agent%20Empire%22,%22short_name%22:%22SHADDAI%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23020817%22,%22theme_color%22:%22%2300e5a0%22}">
@@ -4555,7 +4555,7 @@ body.ly-focus .card{border-radius:10px}
           <div class="card" style="padding:12px;border-color:rgba(0,200,255,0.2)">
             <div style="font-size:9px;font-weight:700;font-family:'Rajdhani',sans-serif;color:#00c8ff;margin-bottom:8px">YOUR WEBHOOK ENDPOINT</div>
             <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(0,200,255,0.15);padding:8px;border-radius:4px;margin-bottom:8px">
-              <div style="font-size:7px;color:#00c8ff;font-family:'Share Tech Mono',monospace;word-break:break-all" id="webhookUrlDisplay">http://localhost:3000/api/webhook/trigger</div>
+              <div style="font-size:7px;color:#00c8ff;font-family:'Share Tech Mono',monospace;word-break:break-all" id="webhookUrlDisplay">/api/webhook/trigger</div>
             </div>
             <div style="font-size:8px;color:var(--text-muted);margin-bottom:8px">POST <code style="color:#00c8ff">{"workflow":"market-brief","trigger":"external","data":{}}</code></div>
             <div style="display:flex;gap:6px">
@@ -9129,7 +9129,8 @@ body.ly-focus .card{border-radius:10px}
 
 // ================== STATE ==================
 // ── API base constants ─────────────────────────────────────────────────────────
-const PROXY = 'http://localhost:3000';
+window.PROXY = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '' ? (window.location.port ? window.location.origin : 'http://localhost:3000') : window.location.origin;
+var PROXY = window.PROXY;
 
 const S = {
   ver: '80.0',
@@ -10750,7 +10751,7 @@ const AGENT_CONTROLLER = {
     
     try {
       // Route through gateway proxy (avoids CORS issues with direct Ollama calls)
-      const response = await fetch('http://localhost:3000/api/ollama', {
+      const response = await fetch('/api/ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -11184,7 +11185,7 @@ function loadOfficeKanban() {
 
 async function updateOfficeHUD() {
   try {
-    const r = await fetch('http://localhost:3000/api/tasks/receipts?limit=100', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/tasks/receipts?limit=100', { signal: AbortSignal.timeout(4000) });
     if (r.ok) {
       const d = await r.json();
       const count = d.count || d.receipts?.length || 0;
@@ -11488,7 +11489,7 @@ function initEventStream() {
   }
 
   const channels = 'job:*,bid:*,leaderboard:*,review:*,marketplace:*';
-  const url = `${PROXY}/api/events/stream?channels=${encodeURIComponent(channels)}`;
+  const url = `/api/events/stream?channels=${encodeURIComponent(channels)}`;
 
   try {
     _eventStream = new EventSource(url);
@@ -11555,7 +11556,7 @@ function updateJobBidDisplay(jobId) {
   if (jobCard) {
     const bidsEl = jobCard.querySelector('.job-bid-count');
     if (bidsEl) {
-      getResp(`${PROXY}/api/marketplace/jobs/${jobId}/bids`, null, 'GET')
+      getResp(`/api/marketplace/jobs/${jobId}/bids`, null, 'GET')
         .then(r => {
           if (r && r.bids) {
             bidsEl.textContent = `${r.bids.length} bid${r.bids.length !== 1 ? 's' : ''}`;
@@ -11572,12 +11573,12 @@ async function loadAdminPanel() {
   let analytics = null;
 
   try {
-    const sr = await fetch(`${PROXY}/api/full-status`, { signal: AbortSignal.timeout(5000) });
+    const sr = await fetch(`/api/full-status`, { signal: AbortSignal.timeout(5000) });
     stats = await sr.json();
   } catch(_) {}
 
   try {
-    const ar = await fetch(`${PROXY}/api/admin/analytics`, { signal: AbortSignal.timeout(5000) });
+    const ar = await fetch(`/api/admin/analytics`, { signal: AbortSignal.timeout(5000) });
     analytics = await ar.json();
   } catch(_) {}
 
@@ -11649,7 +11650,7 @@ async function loadAdminPanel() {
 
 async function downloadBackup() {
   try {
-    const r = await fetch(`${PROXY}/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
     const backup = await r.json();
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -11666,7 +11667,7 @@ async function downloadBackup() {
 
 async function viewBackupInfo() {
   try {
-    const r = await fetch(`${PROXY}/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`/api/admin/backup`, { signal: AbortSignal.timeout(10000) });
     const backup = await r.json();
     const info = {
       'Users': (backup.users || []).length,
@@ -11707,14 +11708,14 @@ async function loadUserDashboard() {
   // Fetch wallet earnings if connected
   if (WALLET.address) {
     try {
-      const wr = await fetch(`${PROXY}/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
+      const wr = await fetch(`/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
       walletStats = await wr.json();
     } catch(_) {}
   }
 
   // Fetch user's jobs from backend
   try {
-    const jr = await fetch(`${PROXY}/api/marketplace/jobs?clientId=${S.user.id || 'user'}`, { signal: AbortSignal.timeout(5000) });
+    const jr = await fetch(`/api/marketplace/jobs?clientId=${S.user.id || 'user'}`, { signal: AbortSignal.timeout(5000) });
     const jd = await jr.json();
     userJobs = jd.jobs || [];
   } catch(_) {}
@@ -11897,7 +11898,7 @@ function _clearAllNotifs() {
 
 // ================== STREAMING CHAT HELPER ==================
 async function streamOllamaResponse(prompt, onToken, onComplete) {
-  const url = `${PROXY}/api/ollama/stream`;
+  const url = `/api/ollama/stream`;
   const body = { prompt, stream: true, model: S.settings?.ollamaModel || 'llama3.2:1b' };
 
   try {
@@ -12105,7 +12106,7 @@ Characters: Simple, expressive, customizable
   // Add file to library if not there, loading from server
   if (!S.files.find(f => f.name === FILE_NAME)) {
     try {
-      const res = await fetch('http://localhost:3000/api/read-file', {
+      const res = await fetch('/api/read-file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filePath: FILE_PATH }),
@@ -12526,7 +12527,7 @@ async function testElevenLabs() {
   if (!key) { if (stat) stat.textContent = 'No key — enter above'; notify('Enter ElevenLabs key first'); return; }
   if (stat) stat.textContent = 'Testing...';
   try {
-    const r = await fetch('http://localhost:3000/api/elevenlabs/voices', {
+    const r = await fetch('/api/elevenlabs/voices', {
       headers: { 'xi-api-key': key },
       signal: AbortSignal.timeout(10000)
     });
@@ -12554,7 +12555,7 @@ async function speakWithElevenLabs(text, voiceId) {
   const voice = voiceId || S.settings.elevenVoice || '21m00Tcm4TlvDq8ikWAM';
   notify('Generating voiceover...');
   try {
-    const r = await fetch('http://localhost:3000/api/elevenlabs/tts', {
+    const r = await fetch('/api/elevenlabs/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey: key, voiceId: voice, text: cleanText }),
@@ -12618,7 +12619,7 @@ async function checkOpenClawStatus() {
   const stat = document.getElementById('vaultOCStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const res = await fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(8000) });
+    const res = await fetch('/api/openclaw-status', { signal: AbortSignal.timeout(8000) });
     const data = await res.json();
     const online = data?.status === 'online' || res.ok;
     if (stat) { stat.textContent = online ? '✓ Online' : '✗ Offline'; stat.style.color = online ? 'var(--accent)' : 'var(--danger)'; }
@@ -12635,7 +12636,7 @@ async function testOpenClaw() {
   const statusEl = document.getElementById('openClawStatus');
   if (statusEl) statusEl.textContent = 'Testing...';
   try {
-    const res = await fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(5000) });
+    const res = await fetch('/api/openclaw-status', { signal: AbortSignal.timeout(5000) });
     const data = await res.json();
     if (res.ok) {
       if (statusEl) { statusEl.textContent = '✓ Online'; statusEl.style.color = 'var(--accent)'; }
@@ -12653,7 +12654,7 @@ async function askOpenClaw(prompt) {
   const agent = S.settings.openClawModel || 'main';
   const claudeKey = _apiAuthValues['claude_key'] || '';
   try {
-    const res = await fetch('http://localhost:3000/api/openclaw', {
+    const res = await fetch('/api/openclaw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent, apiKey: claudeKey, messages: [{ role: 'user', content: prompt }] }),
@@ -12712,7 +12713,7 @@ function getSmartPriority() {
 
 // ─── Gemini CLI integration ──────────────────────────────────────────────
 async function tryGeminiCLI(messages, systemPrompt) {
-  const res = await fetch('http://localhost:3000/api/gemini', {
+  const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages, systemPrompt }),
@@ -12741,7 +12742,7 @@ async function checkDevStack() {
   const ocBadge = document.getElementById('dsc-openclaw-status');
   if (ocBadge) { ocBadge.textContent = 'Checking...'; ocBadge.style.background = 'rgba(100,100,100,0.3)'; ocBadge.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/devstack-status', { signal: AbortSignal.timeout(20000) });
+    const r = await fetch('/api/devstack-status', { signal: AbortSignal.timeout(20000) });
     const data = await r.json();
     Object.entries(cardMap).forEach(([key, cardId]) => {
       const info = data[key];
@@ -12762,7 +12763,7 @@ async function checkDevStack() {
   }
   // Check OpenClaw separately
   try {
-    const ocr = await fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(8000) });
+    const ocr = await fetch('/api/openclaw-status', { signal: AbortSignal.timeout(8000) });
     const ocd = await ocr.json();
     if (ocBadge) {
       ocBadge.textContent = ocd.ok ? 'Online' : 'Offline';
@@ -12893,7 +12894,7 @@ async function testRegisteredApi(id) {
   const headers = {};
   if (api.key) headers['Authorization'] = 'Bearer ' + api.key;
   try {
-    const r = await fetch('http://localhost:3000/api/proxy', {
+    const r = await fetch('/api/proxy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, method: 'GET', headers }),
       signal: AbortSignal.timeout(10000)
@@ -12914,7 +12915,7 @@ async function callRegisteredApi(id) {
   const headers = {};
   if (api.key) headers['Authorization'] = 'Bearer ' + api.key;
   try {
-    const r = await fetch('http://localhost:3000/api/proxy', {
+    const r = await fetch('/api/proxy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, method: 'GET', headers }),
       signal: AbortSignal.timeout(15000)
@@ -13053,7 +13054,7 @@ async function ollamaTestPrompt() {
   if (out) { out.style.display = 'block'; out.textContent = 'Sending to Ollama...'; }
   try {
     const model = S.models.length ? (S.models[0]) : 'llama3.2:3b';
-    const r = await fetch('http://localhost:3000/api/ollama', {
+    const r = await fetch('/api/ollama', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages:[{role:'user', content: prompt}], stream: false }),
@@ -13272,7 +13273,7 @@ async function vaultTestClaude() {
   // Save key first
   saveClaudeKey(key);
   try {
-    const res = await fetch('http://localhost:3000/api/claude', {
+    const res = await fetch('/api/claude', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ apiKey: key, model: 'claude-haiku-4-5-20251001', max_tokens: 10, messages: [{ role:'user', content:'Say OK' }] }),
       signal: AbortSignal.timeout(15000)
@@ -13292,7 +13293,7 @@ async function vaultTestHelius() {
   const stat = document.getElementById('vaultHeliusStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/fetch-url', {
+    const r = await fetch('/api/fetch-url', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ url: `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, method: 'POST', body: JSON.stringify({ jsonrpc:'2.0',id:1,method:'getSlot',params:[] }) }),
       signal: AbortSignal.timeout(10000)
@@ -13315,7 +13316,7 @@ async function vaultTestGemini() {
   const stat = document.getElementById('vaultGeminiStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/gemini-key', {
+    const r = await fetch('/api/gemini-key', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ prompt: 'Say OK in one word' }),
       signal: AbortSignal.timeout(15000)
@@ -13362,7 +13363,7 @@ async function vaultTestSerpApi() {
   const stat = document.getElementById('vaultSerpApiStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/serpapi', {
+    const r = await fetch('/api/serpapi', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ query: 'test', apiKey: _apiAuthValues['serpapi_key'] || '' }),
       signal: AbortSignal.timeout(15000)
@@ -13381,7 +13382,7 @@ async function vaultTestCoinLore() {
   const stat = document.getElementById('vaultCoinLoreStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/coinlore/global/', { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/coinlore/global/', { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     if (!d || d.error) throw new Error(d?.error || 'No data');
     const mc = d[0]?.total_mcap;
@@ -13398,7 +13399,7 @@ async function coinloreGlobal() {
   const el = document.getElementById('clGlobalResult');
   if (el) el.innerHTML = '<span style="color:var(--warning)">Loading...</span>';
   try {
-    const r = await fetch('http://localhost:3000/api/coinlore/global/', { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/coinlore/global/', { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     if (!d?.[0]) throw new Error('No data');
     const g = d[0];
@@ -13413,7 +13414,7 @@ async function coinloreTop100() {
   const el = document.getElementById('clTop100Result');
   if (el) el.innerHTML = '<span style="color:var(--warning)">Loading...</span>';
   try {
-    const r = await fetch('http://localhost:3000/api/coinlore/tickers/?start=0&limit=25', { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/coinlore/tickers/?start=0&limit=25', { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     if (!d?.data?.length) throw new Error('No data');
     const rows = d.data.map(c => `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
@@ -13433,7 +13434,7 @@ async function coinloreSearch() {
   if (el) el.innerHTML = '<span style="color:var(--warning)">Searching...</span>';
   try {
     // CoinLore doesn't have search by name — fetch top 100 and filter
-    const r = await fetch('http://localhost:3000/api/coinlore/tickers/?start=0&limit=100', { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/coinlore/tickers/?start=0&limit=100', { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     const matches = (d?.data || []).filter(c => c.symbol.toLowerCase().includes(q.toLowerCase()) || c.name.toLowerCase().includes(q.toLowerCase()));
     if (!matches.length) { if (el) el.innerHTML = '<span style="color:var(--text-muted)">No matches in top 100</span>'; return; }
@@ -13454,7 +13455,7 @@ async function serpApiSearch() {
   if (!q) { if (el) el.innerHTML = '<span style="color:var(--warning)">Enter a search query</span>'; return; }
   if (el) el.innerHTML = '<span style="color:var(--warning)">Searching Google via SerpApi...</span>';
   try {
-    const r = await fetch('http://localhost:3000/api/serpapi', {
+    const r = await fetch('/api/serpapi', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ query: q, apiKey: _apiAuthValues['serpapi_key'] || '' }),
       signal: AbortSignal.timeout(20000)
@@ -13509,8 +13510,8 @@ async function zeroxMarketPulse() {
   if (el) el.innerHTML = '<span style="color:var(--warning)">ZEROX scanning markets...</span>';
   try {
     const [globalR, topR] = await Promise.all([
-      fetch('http://localhost:3000/api/coinlore/global/', { signal: AbortSignal.timeout(10000) }).then(r => r.json()),
-      fetch('http://localhost:3000/api/coinlore/tickers/?start=0&limit=10', { signal: AbortSignal.timeout(10000) }).then(r => r.json())
+      fetch('/api/coinlore/global/', { signal: AbortSignal.timeout(10000) }).then(r => r.json()),
+      fetch('/api/coinlore/tickers/?start=0&limit=10', { signal: AbortSignal.timeout(10000) }).then(r => r.json())
     ]);
     const g = globalR?.[0];
     const top = topR?.data || [];
@@ -13524,7 +13525,7 @@ async function zeroxMarketPulse() {
     });
     // Try to get news via SerpApi
     try {
-      const newsR = await fetch('http://localhost:3000/api/serpapi', {
+      const newsR = await fetch('/api/serpapi', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ query: 'crypto market today', engine: 'google_news', apiKey: _apiAuthValues['serpapi_key'] || '' }),
         signal: AbortSignal.timeout(15000)
@@ -13546,7 +13547,7 @@ async function vaultTestMiroFish() {
   const stat = document.getElementById('vaultMiroFishStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/mirofish/', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/mirofish/', { signal: AbortSignal.timeout(5000) });
     if (r.ok) {
       if (stat) { stat.textContent = '✓ Online'; stat.style.color = 'var(--accent)'; }
       const tile = document.getElementById('ast-mirofish');
@@ -13566,7 +13567,7 @@ async function vaultTestAltFins() {
     // Try Python agent first, then ZEROX trending as fallback
     let r, d;
     try { r = await fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(4000) }); d = await r.json(); } catch(_) { r = null; }
-    if (!r?.ok) { r = await fetch('http://localhost:3000/api/zerox/trending', { signal: AbortSignal.timeout(8000) }); d = await r.json(); }
+    if (!r?.ok) { r = await fetch('/api/zerox/trending', { signal: AbortSignal.timeout(8000) }); d = await r.json(); }
     if (r.ok) {
       if (stat) { stat.textContent = '✓ ' + (d.signals?.length || d.length || 'OK'); stat.style.color = 'var(--accent)'; }
       const tile = document.getElementById('ast-altfins');
@@ -13583,7 +13584,7 @@ async function vaultTestCryptoPanic() {
   const stat = document.getElementById('vaultCryptoPanicStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/news/cryptopanic', { signal: AbortSignal.timeout(12000) });
+    const r = await fetch('/api/news/cryptopanic', { signal: AbortSignal.timeout(12000) });
     const d = await r.json();
     if (r.ok) {
       if (stat) { stat.textContent = '✓ ' + (d.results?.length || 'OK'); stat.style.color = 'var(--accent)'; }
@@ -13600,7 +13601,7 @@ async function vaultTestActuallyRelevant() {
   const stat = document.getElementById('vaultActuallyRelevantStat');
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/news/actually-relevant', { signal: AbortSignal.timeout(20000) });
+    const r = await fetch('/api/news/actually-relevant', { signal: AbortSignal.timeout(20000) });
     const d = await r.json();
     if (r.ok) {
       if (stat) { stat.textContent = '✓ ' + (d.articles?.length || 'OK'); stat.style.color = 'var(--accent)'; }
@@ -13663,7 +13664,7 @@ async function vaultTestCoinGecko() {
   if (stat) { stat.textContent = 'Testing...'; stat.style.color = 'var(--text-muted)'; }
   try {
     // Use gateway CoinLore as CoinGecko alternative (BTC id=90)
-    const r = await fetch('http://localhost:3000/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(8000) });
+    const r = await fetch('/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     if (r.ok && d?.[0]?.price_usd) {
       const btc = d[0];
@@ -13706,27 +13707,27 @@ async function testAllAPIs() {
   if (bodyEl) bodyEl.innerHTML = '<div style="color:var(--warning)">Running tests...</div>';
 
   const tests = [
-    { name: '🦙 Ollama', test: () => fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(d => `${d.models?.length||0} models`) },
+    { name: '🦙 Ollama', test: () => fetch('/api/ollama-tags', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(d => `${d.models?.length||0} models`) },
     { name: '🤖 Claude', test: () => { const k = _apiAuthValues['claude_key']; if(!k) throw new Error('No key set'); return Promise.resolve('Key configured'); } },
-    { name: '♊ Gemini', test: () => fetch('http://localhost:3000/api/gemini-key', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt:'Say OK'}), signal: AbortSignal.timeout(15000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error); return d.choices?.[0]?.message?.content?.slice(0,30) || 'OK'; }) },
-    { name: '🐾 OpenClaw', test: () => fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d.status === 'online' ? 'Online' : 'Offline') },
-    { name: '◎ Helius', test: () => fetch('http://localhost:3000/api/fetch-url', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url:`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSlot',params:[]})}), signal: AbortSignal.timeout(10000) }).then(r=>r.json()).then(d => { const inner = JSON.parse(d.content||'{}'); return inner.result ? 'Slot '+inner.result : 'Error'; }) },
-    { name: '🔍 Groq', test: () => fetch('http://localhost:3000/api/groq', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages:[{role:'user',content:'Say OK'}],max_tokens:10}), signal: AbortSignal.timeout(10000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error?.message||d.error); return d.choices?.[0]?.message?.content?.slice(0,20) || 'OK'; }) },
-    { name: '⚡ SHADDAI :8000', test: () => fetch('http://localhost:3000/api/shaddai/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(d => d.status || 'Online') },
-    { name: '📊 ZEROX :8001', test: () => fetch('http://localhost:3000/api/zerox/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
-    { name: '🌙 ORACLE :8002', test: () => fetch('http://localhost:3000/api/oracle/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
-    { name: '🕸 NEXUS :8003', test: () => fetch('http://localhost:3000/api/network/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
-    { name: '🐢 TURTLE :8004', test: () => fetch('http://localhost:3000/api/turtle/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
-    { name: '🐟 MiroFish :5001', test: () => fetch('http://localhost:3000/api/mirofish/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
-    { name: '₿ CoinLore', test: () => fetch('http://localhost:3000/api/coinlore/global/', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d?.[0]?.total_mcap ? 'MC $'+(d[0].total_mcap/1e12).toFixed(2)+'T' : 'OK') },
-    { name: '🔍 SerpApi', test: () => fetch('http://localhost:3000/api/serpapi', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:'test'}), signal:AbortSignal.timeout(15000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error); return (d.organic_results?.length||0)+' results'; }) },
+    { name: '♊ Gemini', test: () => fetch('/api/gemini-key', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt:'Say OK'}), signal: AbortSignal.timeout(15000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error); return d.choices?.[0]?.message?.content?.slice(0,30) || 'OK'; }) },
+    { name: '🐾 OpenClaw', test: () => fetch('/api/openclaw-status', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d.status === 'online' ? 'Online' : 'Offline') },
+    { name: '◎ Helius', test: () => fetch('/api/fetch-url', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url:`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSlot',params:[]})}), signal: AbortSignal.timeout(10000) }).then(r=>r.json()).then(d => { const inner = JSON.parse(d.content||'{}'); return inner.result ? 'Slot '+inner.result : 'Error'; }) },
+    { name: '🔍 Groq', test: () => fetch('/api/groq', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages:[{role:'user',content:'Say OK'}],max_tokens:10}), signal: AbortSignal.timeout(10000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error?.message||d.error); return d.choices?.[0]?.message?.content?.slice(0,20) || 'OK'; }) },
+    { name: '⚡ SHADDAI :8000', test: () => fetch('/api/shaddai/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(d => d.status || 'Online') },
+    { name: '📊 ZEROX :8001', test: () => fetch('/api/zerox/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
+    { name: '🌙 ORACLE :8002', test: () => fetch('/api/oracle/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
+    { name: '🕸 NEXUS :8003', test: () => fetch('/api/network/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
+    { name: '🐢 TURTLE :8004', test: () => fetch('/api/turtle/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
+    { name: '🐟 MiroFish :5001', test: () => fetch('/api/mirofish/', { signal: AbortSignal.timeout(5000) }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return 'Online'; }) },
+    { name: '₿ CoinLore', test: () => fetch('/api/coinlore/global/', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d?.[0]?.total_mcap ? 'MC $'+(d[0].total_mcap/1e12).toFixed(2)+'T' : 'OK') },
+    { name: '🔍 SerpApi', test: () => fetch('/api/serpapi', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:'test'}), signal:AbortSignal.timeout(15000) }).then(r=>r.json()).then(d => { if(d.error) throw new Error(d.error); return (d.organic_results?.length||0)+' results'; }) },
     { name: '🎬 JSON2Video', test: () => { const k = _apiAuthValues['json2video_key'] || localStorage.getItem('shaddai_json2video_key') || ''; if(!k) throw new Error('No key'); return Promise.resolve('Key configured'); } },
     { name: '📈 AltFins', test: () => fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d.signals?.length ? d.signals.length+' signals' : 'OK') },
-    { name: '📰 CryptoPanic', test: () => fetch('http://localhost:3000/api/news/cryptopanic', { signal: AbortSignal.timeout(12000) }).then(r=>r.json()).then(d => (d.results?.length||d.articles?.length) ? (d.results?.length||d.articles?.length)+' articles' : 'OK') },
-    { name: '🧠 Actually Relevant', test: () => fetch('http://localhost:3000/api/news/actually-relevant', { signal: AbortSignal.timeout(20000) }).then(r=>r.json()).then(d => d.articles?.length ? d.articles.length+' insights' : 'OK') },
+    { name: '📰 CryptoPanic', test: () => fetch('/api/news/cryptopanic', { signal: AbortSignal.timeout(12000) }).then(r=>r.json()).then(d => (d.results?.length||d.articles?.length) ? (d.results?.length||d.articles?.length)+' articles' : 'OK') },
+    { name: '🧠 Actually Relevant', test: () => fetch('/api/news/actually-relevant', { signal: AbortSignal.timeout(20000) }).then(r=>r.json()).then(d => d.articles?.length ? d.articles.length+' insights' : 'OK') },
     { name: '✈️ Telegram', test: () => { const t = _apiAuthValues['tg_token'] || localStorage.getItem('shaddai_tg_token') || ''; if(!t) throw new Error('No token'); return fetch('https://api.telegram.org/bot'+t+'/getMe', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d.ok ? '@'+d.result.username : 'Failed'); } },
     { name: '💬 Discord', test: () => { const w = _apiAuthValues['discord_webhook'] || localStorage.getItem('shaddai_discord_webhook') || ''; if(!w) throw new Error('No webhook'); return fetch(w, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:'Test'}), signal:AbortSignal.timeout(8000) }).then(r => r.ok||r.status===204 ? 'OK' : 'HTTP '+r.status); } },
-    { name: '🦎 CoinGecko/CoinLore', test: () => fetch('http://localhost:3000/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d?.[0]?.price_usd ? 'BTC $'+parseFloat(d[0].price_usd).toLocaleString('en-US',{maximumFractionDigits:0}) : 'OK') },
+    { name: '🦎 CoinGecko/CoinLore', test: () => fetch('/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(8000) }).then(r=>r.json()).then(d => d?.[0]?.price_usd ? 'BTC $'+parseFloat(d[0].price_usd).toLocaleString('en-US',{maximumFractionDigits:0}) : 'OK') },
     { name: '🎨 Puter.js', test: () => { if(typeof puter==='undefined') throw new Error('Not loaded'); return Promise.resolve('Available'); } },
   ];
 
@@ -13763,11 +13764,11 @@ async function checkAllApiStatus() {
   // Ollama — try direct first, then via proxy
   Promise.any([
     fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(4000) }).then(r => { if (!r.ok) throw new Error(); return r; }),
-    fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(6000) }).then(r => { if (!r.ok) throw new Error(); return r; })
+    fetch('/api/ollama-tags', { signal: AbortSignal.timeout(6000) }).then(r => { if (!r.ok) throw new Error(); return r; })
   ]).then(() => { setTile('ollama', true); S.ollamaOn = true; }).catch(() => { setTile('ollama', false); S.ollamaOn = false; });
 
   // SHADDAI Agent Server (port 8000) — via proxy
-  fetch('http://localhost:3000/api/shaddai/', { signal: AbortSignal.timeout(5000) })
+  fetch('/api/shaddai/', { signal: AbortSignal.timeout(5000) })
     .then(r => r.json())
     .then(d => {
       const ok = d?.status === 'ONLINE';
@@ -13779,13 +13780,13 @@ async function checkAllApiStatus() {
 
   // All agent endpoints via proxy
   ['zerox','oracle','turtle','network','mirofish'].forEach(agent => {
-    fetch(`http://localhost:3000/api/${agent}/`, { signal: AbortSignal.timeout(5000) })
+    fetch(`/api/${agent}/`, { signal: AbortSignal.timeout(5000) })
       .then(r => { setTile(agent, r.ok); })
       .catch(() => { setTile(agent, false); });
   });
 
   // Gemini REST API (key-based, not CLI)
-  fetch('http://localhost:3000/api/gemini-key', {
+  fetch('/api/gemini-key', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ prompt: 'Say OK' }),
     signal: AbortSignal.timeout(15000)
@@ -13794,7 +13795,7 @@ async function checkAllApiStatus() {
     .catch(() => setTile('gemini', false));
 
   // OpenClaw
-  fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(5000) })
+  fetch('/api/openclaw-status', { signal: AbortSignal.timeout(5000) })
     .then(r => r.ok ? r.json() : null)
     .then(d => setTile('openclaw', d?.status === 'online'))
     .catch(() => setTile('openclaw', false));
@@ -13812,7 +13813,7 @@ async function checkAllApiStatus() {
       const rDirect = await fetch(url, { signal: AbortSignal.timeout(6000) }).catch(() => null);
       if (rDirect?.ok) { setTile(service, true); return; }
       // Proxy fallback
-      const r = await fetch('http://localhost:3000/api/fetch-url', {
+      const r = await fetch('/api/fetch-url', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ url }), signal: AbortSignal.timeout(8000)
       });
@@ -13828,12 +13829,12 @@ async function checkAllApiStatus() {
       if (hs && ht?.classList.contains('ok')) { hs.textContent = '✓ Active'; hs.style.color = 'var(--accent)'; }
     }).catch(()=>{}),
     checkUrl('dexscreener', 'https://api.dexscreener.com/token-boosts/top/v1'),
-    fetch('http://localhost:3000/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(6000) })
+    fetch('/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(6000) })
       .then(r => setTile('jupiter', r.ok)).catch(() => setTile('jupiter', false)),
   ]);
 
   // CoinLore (free, no key)
-  fetch('http://localhost:3000/api/coinlore/global/', { signal: AbortSignal.timeout(8000) })
+  fetch('/api/coinlore/global/', { signal: AbortSignal.timeout(8000) })
     .then(r => { setTile('coinlore', r.ok); }).catch(() => setTile('coinlore', false));
 
   // SerpApi
@@ -13849,14 +13850,14 @@ async function checkAllApiStatus() {
   // AltFins — try Python agent, fallback to ZEROX trending
   fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(4000) })
     .then(r => setTile('altfins', r.ok))
-    .catch(() => fetch('http://localhost:3000/api/zerox/trending', { signal: AbortSignal.timeout(6000) }).then(r => setTile('altfins', r.ok)).catch(() => setTile('altfins', false)));
+    .catch(() => fetch('/api/zerox/trending', { signal: AbortSignal.timeout(6000) }).then(r => setTile('altfins', r.ok)).catch(() => setTile('altfins', false)));
 
   // CryptoPanic
-  fetch('http://localhost:3000/api/news/cryptopanic', { signal: AbortSignal.timeout(10000) })
+  fetch('/api/news/cryptopanic', { signal: AbortSignal.timeout(10000) })
     .then(r => setTile('cryptopanic', r.ok)).catch(() => setTile('cryptopanic', false));
 
   // Actually Relevant
-  fetch('http://localhost:3000/api/news/actually-relevant', { signal: AbortSignal.timeout(15000) })
+  fetch('/api/news/actually-relevant', { signal: AbortSignal.timeout(15000) })
     .then(r => setTile('actuallyrelevant', r.ok)).catch(() => setTile('actuallyrelevant', false));
 
   // Telegram
@@ -13871,7 +13872,7 @@ async function checkAllApiStatus() {
   setTile('discord', !!discordWebhook);
 
   // CoinGecko — use gateway CoinLore
-  fetch('http://localhost:3000/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(6000) })
+  fetch('/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(6000) })
     .then(r => setTile('coingecko', r.ok)).catch(() => setTile('coingecko', false));
 
   // Puter.js
@@ -13916,7 +13917,7 @@ async function testAPI(name) {
         setResult(r.ok); break;
       }
       case 'jupiter': {
-        const r = await fetch('http://localhost:3000/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(6000) });
+        const r = await fetch('/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(6000) });
         setResult(r.ok); break;
       }
       case 'claude': {
@@ -13924,7 +13925,7 @@ async function testAPI(name) {
         setResult(!!ck); break;
       }
       case 'openclaw': {
-        const r = await fetch('http://localhost:3000/api/openclaw-status', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/openclaw-status', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'gemini': {
@@ -13932,27 +13933,27 @@ async function testAPI(name) {
         setResult(!!gk); break;
       }
       case 'shaddai-agent': {
-        const r = await fetch('http://localhost:3000/api/shaddai/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/shaddai/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'mirofish': {
-        const r = await fetch('http://localhost:3000/api/mirofish/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/mirofish/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'zerox': {
-        const r = await fetch('http://localhost:3000/api/zerox/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/zerox/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'oracle': {
-        const r = await fetch('http://localhost:3000/api/oracle/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/oracle/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'turtle': {
-        const r = await fetch('http://localhost:3000/api/turtle/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/turtle/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'network': {
-        const r = await fetch('http://localhost:3000/api/network/', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch('/api/network/', { signal: AbortSignal.timeout(5000) });
         setResult(r.ok); break;
       }
       case 'coinlore': {
@@ -13971,15 +13972,15 @@ async function testAPI(name) {
         // AltFins requires Python agent :8000 — fallback to CoinLore trending data
         let ok = false;
         try { const r = await fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(4000) }); ok = r.ok; } catch(_) {}
-        if (!ok) { try { const r = await fetch('http://localhost:3000/api/zerox/trending', { signal: AbortSignal.timeout(6000) }); ok = r.ok; } catch(_) {} }
+        if (!ok) { try { const r = await fetch('/api/zerox/trending', { signal: AbortSignal.timeout(6000) }); ok = r.ok; } catch(_) {} }
         setResult(ok); break;
       }
       case 'cryptopanic': {
-        const r = await fetch('http://localhost:3000/api/news/cryptopanic', { signal: AbortSignal.timeout(10000) });
+        const r = await fetch('/api/news/cryptopanic', { signal: AbortSignal.timeout(10000) });
         setResult(r.ok); break;
       }
       case 'actuallyrelevant': {
-        const r = await fetch('http://localhost:3000/api/news/actually-relevant', { signal: AbortSignal.timeout(15000) });
+        const r = await fetch('/api/news/actually-relevant', { signal: AbortSignal.timeout(15000) });
         setResult(r.ok); break;
       }
       case 'telegram': {
@@ -13995,7 +13996,7 @@ async function testAPI(name) {
       case 'coingecko': {
         // Try gateway CoinGecko proxy first, then Python agent, then direct
         let cgOk = false;
-        try { const r = await fetch('http://localhost:3000/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(6000) }); cgOk = r.ok; } catch(_) {}
+        try { const r = await fetch('/api/coinlore/ticker/?id=90', { signal: AbortSignal.timeout(6000) }); cgOk = r.ok; } catch(_) {}
         if (!cgOk) { try { const r = await fetch('http://localhost:8000/chart/coingecko/bitcoin', { signal: AbortSignal.timeout(6000) }); cgOk = r.ok; } catch(_) {} }
         setResult(cgOk); break;
       }
@@ -14025,7 +14026,7 @@ async function testClaudeKey() {
 
   if (statusEl) statusEl.textContent = 'Testing...';
   try {
-    const res = await fetch('http://localhost:3000/api/claude', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -14125,7 +14126,7 @@ function renderDash() {
   document.getElementById('statUptime').textContent = Math.floor((Date.now() - S.start) / 60000) + 'm';
 
   // Pull live backend metrics in background
-  fetch('http://localhost:3000/api/dashboard/metrics', { signal: AbortSignal.timeout(3000) })
+  fetch('/api/dashboard/metrics', { signal: AbortSignal.timeout(3000) })
     .then(r => r.ok ? r.json() : null)
     .then(d => {
       if (!d) return;
@@ -14267,7 +14268,7 @@ async function renderAgentWallets() {
   if (!el) return;
   el.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:8px;text-align:center">Loading wallets...</div>';
   try {
-    const r = await fetch('http://localhost:3000/api/agent-wallet', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/agent-wallet', { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     const wallets = d.wallets || {};
     const agentColors = {SHADDAI:'#ffd700',ZEROX:'#00c8ff',ORACLE:'#b06aff',NEXUS:'#00e5a0',TURTLE:'#ff7b3d',QUILL:'#ffb020',PIKADON:'#ff4070'};
@@ -14304,7 +14305,7 @@ async function updateAgentWallet(name) {
   if (!budgetEl) return;
   const budget_daily = parseFloat(budgetEl.value) || 0.05;
   try {
-    const r = await fetch(`http://localhost:3000/api/agent-wallet/${encodeURIComponent(name)}/config`, {
+    const r = await fetch(`/api/agent-wallet/${encodeURIComponent(name)}/config`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ budget_daily }),
       signal: AbortSignal.timeout(5000)
@@ -14316,11 +14317,11 @@ async function updateAgentWallet(name) {
 
 async function approveAllAgentTx(name) {
   try {
-    const r = await fetch(`http://localhost:3000/api/agent-wallet/${encodeURIComponent(name)}`, { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(`/api/agent-wallet/${encodeURIComponent(name)}`, { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     const pending = (d.wallet?.tx_log||[]).filter(t=>t.status==='pending_approval');
     for (const tx of pending) {
-      await fetch(`http://localhost:3000/api/agent-wallet/${encodeURIComponent(name)}/approve/${tx.id}`, {
+      await fetch(`/api/agent-wallet/${encodeURIComponent(name)}/approve/${tx.id}`, {
         method: 'POST', signal: AbortSignal.timeout(5000)
       });
     }
@@ -14361,7 +14362,7 @@ async function approveAllAgentTx(name) {
 const _agentImageCache = {};
 async function generateAgentImage(agentName, apiKey) {
   try {
-    const r = await fetch(`http://localhost:3000/api/image/agent/${agentName}`, {
+    const r = await fetch(`/api/image/agent/${agentName}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'nano-banana-2', apiKey }),
@@ -14398,7 +14399,7 @@ async function generateAllAgentImages(apiKey) {
 
 async function loadAgentImagesFromServer() {
   try {
-    const r = await fetch('http://localhost:3000/api/image/agents/all', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/image/agents/all', { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     (d.agents || []).forEach(a => {
       if (a.hasImage && a.image_url) _agentImageCache[a.name] = a.image_url;
@@ -14418,7 +14419,7 @@ let _availableAPIs = [];
 
 async function loadAgentAPIConnections() {
   try {
-    const r = await fetch('http://localhost:3000/api/apis/available', { signal: AbortSignal.timeout(8000) });
+    const r = await fetch('/api/apis/available', { signal: AbortSignal.timeout(8000) });
     const data = await r.json();
     _availableAPIs = data.apis || [];
   } catch {}
@@ -14426,7 +14427,7 @@ async function loadAgentAPIConnections() {
   const agents = ['shaddai','zerox','oracle','nexus','turtle','quill','pikadon'];
   await Promise.allSettled(agents.map(async name => {
     try {
-      const r = await fetch(`http://localhost:3000/api/agent/${name}/apis`, { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`/api/agent/${name}/apis`, { signal: AbortSignal.timeout(5000) });
       const d = await r.json();
       _agentAPIConnections[name] = d.connected || [];
     } catch {}
@@ -14584,7 +14585,7 @@ async function toggleAPIConnection(agentKey, apiId, isAvailable) {
 
   try {
     const body = isOn ? { disconnect: apiId } : { connect: apiId };
-    const r = await fetch(`http://localhost:3000/api/agent/${agentKey}/apis`, {
+    const r = await fetch(`/api/agent/${agentKey}/apis`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -14706,7 +14707,7 @@ async function saveAgentCustomization(agentName) {
 
   // Persist to server
   try {
-    await fetch('http://localhost:3000/api/agents/custom', {
+    await fetch('/api/agents/custom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, role, emoji, color, systemPrompt, avatarUrl }),
@@ -14764,7 +14765,7 @@ let _currentBrainLevel = 2; // default
 
 async function detectBrainLevel() {
   try {
-    const r = await fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/ollama-tags', { signal: AbortSignal.timeout(5000) });
     const data = await r.json();
     const models = (data.models || []).map(m => m.name?.toLowerCase() || '');
 
@@ -14864,7 +14865,7 @@ async function runNanoBananaGeneration() {
     if (barEl) barEl.style.width = '40%';
 
     try {
-      const r = await fetch(`http://localhost:3000/api/image/agent/${name}`, {
+      const r = await fetch(`/api/image/agent/${name}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey }),
@@ -15223,7 +15224,7 @@ async function pingAgentEndpoint(name, url) {
   if(el) el.style.color = 'var(--warning)';
   try {
     const proxyName = name.toLowerCase();
-    const proxyUrl = `http://localhost:3000/api/${proxyName}/`;
+    const proxyUrl = `/api/${proxyName}/`;
     const start = performance.now();
     const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
     const ms = Math.round(performance.now() - start);
@@ -15949,7 +15950,7 @@ async function runScheduleNow(id) {
   if (!sched?.backendId) { notify('No backend ID — running locally'); getResp(sched.task, sched.agent).then(r => { sched.lastRun = new Date().toISOString(); save(); addMsg({ id: Date.now(), text: r, sender: sched.agent, type: 'agent', time: new Date().toISOString() }); notify('Schedule ran'); }); return; }
   notify(`Running "${sched.task.substring(0,30)}..." via gateway`);
   try {
-    const r = await fetch(`http://localhost:3000/api/workflow/${sched.backendId}/run`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(60000) });
+    const r = await fetch(`/api/workflow/${sched.backendId}/run`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(60000) });
     const d = await r.json();
     if (d.error) throw new Error(d.error);
     sched.lastRun = new Date().toISOString();
@@ -16553,7 +16554,7 @@ async function sendPanelMsg() {
 async function streamAgentChat(agentKey, message, bubbleEl) {
   const SHADDAI_AGENTS = { SHADDAI:'shaddai',ZEROX:'zerox',ORACLE:'oracle',NEXUS:'nexus',TURTLE:'turtle',QUILL:'quill',PIKADON:'pikadon' };
   const key = SHADDAI_AGENTS[agentKey?.toUpperCase()] || 'shaddai';
-  const endpoint = `http://localhost:3000/api/agent/${key}/stream`;
+  const endpoint = `/api/agent/${key}/stream`;
 
   return new Promise(async (resolve) => {
     let full = '';
@@ -16679,7 +16680,7 @@ async function sendMsgFull() {
 
     await Promise.allSettled([
       runAndUpdate('bc_ollama',
-        () => fetch('http://localhost:3000/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'},
+        () => fetch('/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ model: ollamaModel, messages:[{role:'system',content:sysP},{role:'user',content:txt}], stream:false }),
           signal: AbortSignal.timeout(120000) })
           .then(r => r.json())
@@ -16687,7 +16688,7 @@ async function sendMsgFull() {
         'OLLAMA'),
 
       runAndUpdate('bc_claude',
-        () => fetch('http://localhost:3000/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
+        () => fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ apiKey: claudeKey, model: S.settings.claudeModel||'claude-haiku-4-5-20251001', max_tokens:1024, system:sysP, messages:[{role:'user',content:txt}] }),
             signal: AbortSignal.timeout(60000) })
             .then(r => r.json())
@@ -16695,7 +16696,7 @@ async function sendMsgFull() {
         'CLAUDE'),
 
       runAndUpdate('bc_openclaw',
-        () => fetch('http://localhost:3000/api/openclaw', { method:'POST', headers:{'Content-Type':'application/json'},
+        () => fetch('/api/openclaw', { method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ agent:'main', apiKey:claudeKey, messages:[{role:'system',content:sysP},{role:'user',content:txt}] }),
           signal: AbortSignal.timeout(120000) })
           .then(r => r.json())
@@ -16703,7 +16704,7 @@ async function sendMsgFull() {
         'OPENCLAW'),
 
       runAndUpdate('bc_gemini',
-        () => fetch('http://localhost:3000/api/gemini', { method:'POST', headers:{'Content-Type':'application/json'},
+        () => fetch('/api/gemini', { method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ prompt: txt }),
           signal: AbortSignal.timeout(60000) })
           .then(r => r.json())
@@ -16711,7 +16712,7 @@ async function sendMsgFull() {
         'GEMINI'),
 
       runAndUpdate('bc_shaddai',
-        () => fetch('http://localhost:3000/api/shaddai/chat', { method:'POST', headers:{'Content-Type':'application/json'},
+        () => fetch('/api/shaddai/chat', { method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ message: txt, model: 'llama3.2:3b' }),
           signal: AbortSignal.timeout(120000) })
           .then(r => { if (!r.ok) throw new Error('SHADDAI Agent Server offline — run START SHADDAI.bat'); return r.json(); })
@@ -16732,7 +16733,7 @@ async function sendMsgFull() {
     showTyping();
     try {
       const history = (S.msgs[key] || []).slice(-6);
-      const r = await fetch(`http://localhost:3000/api/agents/custom/${encodeURIComponent(S.agent)}/chat`, {
+      const r = await fetch(`/api/agents/custom/${encodeURIComponent(S.agent)}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: txt, history }),
@@ -16781,7 +16782,7 @@ async function sendMsgFull() {
 
     const _chatT0 = Date.now();
     try {
-      const r = await fetch(`http://localhost:3000/api/agent/${agentKey}/task`, {
+      const r = await fetch(`/api/agent/${agentKey}/task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: txt, sessionApis: _agentAPIConnections[agentKey] || [] }),
@@ -16929,7 +16930,7 @@ async function sendPopoutMsg() {
 
   // Try Ollama first
   try {
-    const res = await fetch('http://localhost:3000/api/ollama', {
+    const res = await fetch('/api/ollama', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages, stream: false }),
@@ -16944,7 +16945,7 @@ async function sendPopoutMsg() {
   // Fallback: Groq API (free, fast, cloud)
   if (!response) {
     try {
-      const res = await fetch('http://localhost:3000/api/groq', {
+      const res = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, model: 'llama-3.3-70b-versatile', max_tokens: 2048 }),
@@ -16963,7 +16964,7 @@ async function sendPopoutMsg() {
     try {
       const gemKey = _apiAuthValues?.['gemini_key'] || localStorage.getItem('shaddai_gemini_key') || '';
       if (!gemKey) throw new Error('No Gemini API key configured');
-      const res = await fetch('http://localhost:3000/api/gemini-key', {
+      const res = await fetch('/api/gemini-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, apiKey: gemKey }),
@@ -16980,7 +16981,7 @@ async function sendPopoutMsg() {
   // Fallback: SHADDAI Agent Server
   if (!response) {
     try {
-      const res = await fetch('http://localhost:3000/api/shaddai/chat', {
+      const res = await fetch('/api/shaddai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: txt, model: 'llama3.2:3b' }),
@@ -17108,7 +17109,7 @@ function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
     settle(() => {}); // mark settled, cleanup SSE
     const pollInterval = setInterval(async () => {
       try {
-        const r = await fetch(`${PROXY}/api/agent/task/${taskId}`);
+        const r = await fetch(`/api/agent/task/${taskId}`);
         const t = await r.json();
         if (t.status === 'completed' && t.result) { clearInterval(pollInterval); onDone(t.result, 'poll'); }
         else if (t.status === 'done'      && t.result) { clearInterval(pollInterval); onDone(t.result, 'poll'); }
@@ -17122,7 +17123,7 @@ function createReliableStream(taskId, { onTool, onDone, onError }, proxyBase) {
 
   function connect() {
     if (settled) return;
-    es = new EventSource(`${PROXY}/api/agent/stream/${taskId}`);
+    es = new EventSource(`/api/agent/stream/${taskId}`);
 
     es.onmessage = (e) => {
       if (settled) return;
@@ -17178,7 +17179,7 @@ window.runAutonomousTask = async function runAutonomousTask(goal, agentName) {
 
   // ── BACKEND ENGINE PATH (real server-side tools) ─────────────────────────
   try {
-    const submitResp = await fetch(`${PROXY}/api/agent/run`, {
+    const submitResp = await fetch(`/api/agent/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ goal, agent: _agent }),
@@ -17544,7 +17545,7 @@ async function getResp(q, agentNameRaw) {
     if (!query) return `Usage: /find <query> — searches all 5,678 skills`;
     try {
       const PROXY = window.PROXY || 'http://localhost:3000';
-      const r = await fetch(`${PROXY}/api/skills/find?query=${encodeURIComponent(query)}&limit=8`);
+      const r = await fetch(`/api/skills/find?query=${encodeURIComponent(query)}&limit=8`);
       const d = await r.json();
       if (!d.skills?.length) return `No skills matched "${query}"`;
       const list = d.skills.map((s,i) => `${i+1}. **${s.id}** [${s.type}] (${s.agent}) — ${s.description?.slice(0,80)||''}`).join('\n');
@@ -17833,7 +17834,7 @@ async function getResp(q, agentNameRaw) {
   // ── tryShaddaiAgent — Local Python agent server fallback (port 8000) ────────
   async function tryShaddaiAgent() {
     try {
-      const res = await fetch('http://localhost:3000/api/shaddai/chat', {
+      const res = await fetch('/api/shaddai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: contextWithMemory, model: 'llama3.2:3b' }),
@@ -17851,7 +17852,7 @@ async function getResp(q, agentNameRaw) {
 
   // ── tryPerplexity — Web-connected AI via SHADDAI Agent Server ──────────────
   async function tryPerplexity(forceSearch = false) {
-    const endpoint = forceSearch ? 'http://localhost:3000/api/shaddai/search' : 'http://localhost:3000/api/shaddai/perplexity';
+    const endpoint = forceSearch ? '/api/shaddai/search' : '/api/shaddai/perplexity';
     const body = forceSearch
       ? JSON.stringify({ query: contextWithMemory, context: systemPrompt.substring(0, 300) })
       : JSON.stringify({ message: contextWithMemory, system: systemPrompt.substring(0, 500), model: 'sonar', max_tokens: 1500 });
@@ -17911,7 +17912,7 @@ async function getResp(q, agentNameRaw) {
         { role: 'user', content: contextWithMemory }
       ]
     };
-    const res = await fetch('http://localhost:3000/api/openclaw', {
+    const res = await fetch('/api/openclaw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -17949,7 +17950,7 @@ async function getResp(q, agentNameRaw) {
     // All Ollama calls go through Node proxy (avoids CORS from any port, forces stream:false)
     let res;
     try {
-      res = await fetch('http://localhost:3000/api/ollama', {
+      res = await fetch('/api/ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload), // proxy forces stream:false internally
@@ -18009,7 +18010,7 @@ async function getResp(q, agentNameRaw) {
     let res;
     let proxyFailed = false;
     try {
-      res = await fetch('http://localhost:3000/api/claude', {
+      res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey, ...requestBody }),
@@ -18211,7 +18212,7 @@ async function getResp(q, agentNameRaw) {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: contextWithMemory }
     ];
-    const res = await fetch('http://localhost:3000/api/gemini-key', {
+    const res = await fetch('/api/gemini-key', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: gemMsgs, apiKey: gemKey }),
@@ -18267,7 +18268,7 @@ async function getResp(q, agentNameRaw) {
       { role: 'user', content: contextWithMemory }
     ];
     const _callGroq = async (msgs) => {
-      const r = await fetch('http://localhost:3000/api/groq', {
+      const r = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: msgs, model: 'llama-3.3-70b-versatile', max_tokens: 2048, temperature: 0.7 }),
@@ -18688,7 +18689,7 @@ async function analyzeFile(f, agentName) {
       const model = a?.model || S.models[0];
       const preview = f.content.substring(0, 2000);
 
-      const res = await fetch('http://localhost:3000/api/ollama', {
+      const res = await fetch('/api/ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -18734,7 +18735,7 @@ async function callAgentAPI(agentName, query, conn) {
   // Route through server proxy to avoid CORS; forward auth headers via body.headers
   const proxyBody = { url, headers };
   if (conn.method === 'POST') { proxyBody.method = 'POST'; proxyBody.body = JSON.stringify({ query }); }
-  const proxyRes = await fetch(`${PROXY}/api/fetch-url`, {
+  const proxyRes = await fetch(`/api/fetch-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(proxyBody),
@@ -18775,7 +18776,7 @@ async function checkOllama() {
     // Try Node proxy first, fall back to direct
     let res;
     try {
-      res = await fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(10000) });
+      res = await fetch('/api/ollama-tags', { signal: AbortSignal.timeout(10000) });
     } catch (_) {
       res = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(10000) });
     }
@@ -19190,7 +19191,7 @@ async function scanLocalFolder() {
   if (statusEl) statusEl.textContent = 'Scanning ' + folderPath + '...';
 
   try {
-    const res = await fetch('http://localhost:3000/api/scan-folder', {
+    const res = await fetch('/api/scan-folder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folderPath }),
@@ -20669,7 +20670,7 @@ async function addSchedule() {
 
   // Persist to backend gateway so it fires even when browser is closed
   try {
-    const r = await fetch('http://localhost:3000/api/workflow/create', {
+    const r = await fetch('/api/workflow/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: task.substring(0, 60), cronExpr: intervalToCron(interval), steps: [{ agent, prompt: task }] }),
@@ -20700,7 +20701,7 @@ async function deleteSchedule(id) {
   renderSchedules();
   save();
   if (sched?.backendId) {
-    try { await fetch(`http://localhost:3000/api/workflow/${sched.backendId}`, { method: 'DELETE', signal: AbortSignal.timeout(5000) }); } catch (_) {}
+    try { await fetch(`/api/workflow/${sched.backendId}`, { method: 'DELETE', signal: AbortSignal.timeout(5000) }); } catch (_) {}
   }
 }
 
@@ -20772,7 +20773,7 @@ function createCustomAgent() {
   log(`Custom agent created: ${name}`, 'ok', 'SHADDAI');
 
   // Register with backend so the agent can actually receive and respond to messages
-  fetch('http://localhost:3000/api/agents/custom', {
+  fetch('/api/agents/custom', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, role: newAgent.role, domain, color, systemPrompt: newAgent.systemPrompt, caps: newAgent.caps }),
@@ -21133,7 +21134,7 @@ async function assignTaskToAgent(agentId) {
   }
 
   try {
-    const resp = await fetch(`${PROXY}/api/shaddai/chat`, {
+    const resp = await fetch(`/api/shaddai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -21331,7 +21332,7 @@ async function initFileSidebar() {
   if (!tree) return;
   tree.innerHTML = '<div style="padding:12px;font-size:10px;color:var(--text-muted)">Loading folders...</div>';
   try {
-    const resp = await fetch('http://localhost:3000/api/scan-folders', {
+    const resp = await fetch('/api/scan-folders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folders: FILE_FOLDERS.map(f => f.path) }),
@@ -21400,7 +21401,7 @@ async function openFile(path) {
   const ec = extColors[ext] || '#888';
   showModal('📄 ' + escH(fname), `<div style="text-align:center;padding:24px;color:var(--text-muted)"><div style="font-size:24px;margin-bottom:8px">⏳</div>Loading file content…</div>`, [{ label: 'Close', class: 'btn-ghost', action: closeModal }]);
   try {
-    const r = await fetch('http://localhost:3000/api/read-file?path=' + encodeURIComponent(path), { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/read-file?path=' + encodeURIComponent(path), { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     if (!d.content && !d.data) throw new Error(d.error || 'Empty response');
     const rawContent = d.content || d.data || '';
@@ -21899,7 +21900,7 @@ async function aiScheduleTasks() {
 async function refreshOllamaModels() {
   try {
     let r;
-    try { r = await fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(8000) }); }
+    try { r = await fetch('/api/ollama-tags', { signal: AbortSignal.timeout(8000) }); }
     catch (_) { r = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(8000) }); }
     if (r.ok) {
       const data = await r.json();
@@ -22180,7 +22181,7 @@ function addScheduleTemplate(template) {
   S.schedules.push(sched);
   save(); renderSchedules(); notify(`Schedule "${template}" added`);
   // Sync to backend gateway
-  fetch('http://localhost:3000/api/workflow/create', {
+  fetch('/api/workflow/create', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: t.task.substring(0, 60), cronExpr: intervalToCron(t.interval), steps: [{ agent: t.agent, prompt: t.task }] })
   }).then(r => r.ok ? r.json() : null).then(d => { if (d?.id) { sched.backendId = d.id; save(); } }).catch(() => {});
@@ -22203,7 +22204,7 @@ async function testAllAPIsLegacy() {
   notify('Testing API connections...');
   const lines = [];
   try {
-    const r = await fetch('http://localhost:3000/api/ollama-tags', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/ollama-tags', { signal: AbortSignal.timeout(5000) });
     lines.push('Ollama: ' + (r.ok ? '✅ ONLINE' : '❌ HTTP ' + r.status));
   } catch(e) { lines.push('Ollama: ❌ ' + e.message); }
   try {
@@ -22281,7 +22282,7 @@ function autoFetchUrl() {
   const url = input.value.trim();
   if (!url) { notify('Enter a URL'); return; }
   _autoShowOutput('autoResearchOut', 'Fetching ' + url + '...');
-  fetch('http://localhost:3000/api/fetch-url', {
+  fetch('/api/fetch-url', {
     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url })
   }).then(r => r.json()).then(async data => {
     if (data.error) { _autoShowOutput('autoResearchOut', 'Fetch error: ' + data.error); return; }
@@ -22661,7 +22662,7 @@ Write all ${scenes} complete scenes. Be specific, cinematic, and creative. Start
     // Use backend route directly for faster, uncensored creative response
     let result = '';
     try {
-      const rr = await fetch('http://localhost:3000/api/agents/route', {
+      const rr = await fetch('/api/agents/route', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({message: prompt, agentName:'TURTLE', history:[]}),
         signal: AbortSignal.timeout(30000)
@@ -22997,7 +22998,7 @@ async function scheduleJob(workflowId, trigger) {
       'security-audit': [{step:1,agent:'pikadon',prompt:'List top 5 security vulnerabilities for a Node.js AI agent marketplace.'},{step:2,agent:'nexus',prompt:'For these issues: {step1}\nTop 3 architectural fixes?'},{step:3,agent:'quill',prompt:'Write an executive security summary from: {step2}'}],
       'revenue-intel': [{step:1,agent:'zerox',prompt:'Build a $0→$1000/month roadmap for an AI agent marketplace.'},{step:2,agent:'oracle',prompt:'Based on: {step1}\nWhat are 3 competitors doing better?'},{step:3,agent:'shaddai',prompt:'From: {step2}\nWhat is the #1 strategic decision for this week?'}]
     };
-    const r = await fetch('http://localhost:3000/api/jobs/scheduled', {
+    const r = await fetch('/api/jobs/scheduled', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ name, trigger, steps: prebuilt[workflowId] || [], output:'inbox' }),
       signal: AbortSignal.timeout(5000)
@@ -23021,7 +23022,7 @@ async function loadScheduledJobs() {
     if (badge) { badge.textContent = trigger.toUpperCase(); badge.style.color = '#ffb020'; badge.style.borderColor = 'rgba(255,176,32,0.4)'; }
   };
   try {
-    const r = await fetch('http://localhost:3000/api/jobs/scheduled', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/jobs/scheduled', { signal: AbortSignal.timeout(4000) });
     const d = await r.json();
     if (d.jobs?.length) {
       d.jobs.forEach(j => { if (j.name?.includes('Market')) update('market-brief',j.trigger); else if (j.name?.includes('Security')) update('security-audit',j.trigger); else if (j.name?.includes('Revenue')) update('revenue-intel',j.trigger); });
@@ -23042,7 +23043,7 @@ async function runScheduledJob(id) {
   // Find local job to get its workflow info
   const localJob = _localScheduledJobs.find(j => String(j.id) === String(id));
   try {
-    const r = await fetch(`http://localhost:3000/api/jobs/scheduled/${id}/run`, { method:'POST', signal: AbortSignal.timeout(6000) });
+    const r = await fetch(`/api/jobs/scheduled/${id}/run`, { method:'POST', signal: AbortSignal.timeout(6000) });
     const d = await r.json();
     if (d.success) { notify('✓ Job triggered — result in receipts'); return; }
     throw new Error('Server returned failure');
@@ -23059,7 +23060,7 @@ async function runScheduledJob(id) {
 
 async function deleteScheduledJob(id) {
   try {
-    await fetch(`http://localhost:3000/api/jobs/scheduled/${id}`, { method:'DELETE', signal: AbortSignal.timeout(4000) });
+    await fetch(`/api/jobs/scheduled/${id}`, { method:'DELETE', signal: AbortSignal.timeout(4000) });
     notify('✓ Job removed'); loadScheduledJobs();
   } catch(e) { notify('Could not delete: ' + e.message); }
 }
@@ -23068,7 +23069,7 @@ async function testWebhook() {
   const logEl = document.getElementById('webhookLog');
   if (logEl) logEl.innerHTML = `<div style="color:#ffb020;padding:4px 0">⏳ Sending test ping...</div>`;
   try {
-    const r = await fetch('http://localhost:3000/api/webhook/trigger', {
+    const r = await fetch('/api/webhook/trigger', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ workflow:'market-brief', trigger:'test', data:{} }),
       signal: AbortSignal.timeout(6000)
@@ -23088,7 +23089,7 @@ async function loadWebhookLog() {
   const logEl = document.getElementById('webhookLog');
   if (!logEl) return;
   try {
-    const r = await fetch('http://localhost:3000/api/webhook/log', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/webhook/log', { signal: AbortSignal.timeout(4000) });
     if (!r.ok) return;
     const d = await r.json();
     if (!d.log || !d.log.length) {
@@ -23796,7 +23797,7 @@ async function pipeRefreshWallet() {
 
   try {
     // Use server proxy to call Helius (avoids CORS, keeps API key server-side)
-    const r = await fetch(`${PROXY}/api/helius-tokens`, {
+    const r = await fetch(`/api/helius-tokens`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ address: pipeWallet }),
       signal: AbortSignal.timeout(15000)
@@ -23810,14 +23811,14 @@ async function pipeRefreshWallet() {
     // Get SOL price from Jupiter
     let solPrice = 0;
     try {
-      const jpR = await fetch(`${PROXY}/api/jupiter/price?ids=SOL`, {signal: AbortSignal.timeout(8000)});
+      const jpR = await fetch(`/api/jupiter/price?ids=SOL`, {signal: AbortSignal.timeout(8000)});
       const jpData = await jpR.json();
       solPrice = jpData.data?.SOL?.price || 0;
     } catch(_) {}
     // fallback: DexScreener
     if (!solPrice) {
       try {
-        const dsR = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=SOL` }), signal: AbortSignal.timeout(8000) });
+        const dsR = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=SOL` }), signal: AbortSignal.timeout(8000) });
         const dsData = JSON.parse((await dsR.json()).content || '{}');
         const solPair = (dsData.pairs||[]).find(p => p.chainId === 'solana' && p.baseToken?.symbol === 'SOL');
         solPrice = parseFloat(solPair?.priceUsd || '0');
@@ -23875,7 +23876,7 @@ function dexCard(p) {
       .replace('https://gateway.pinata.cloud/ipfs/', 'https://cloudflare-ipfs.com/ipfs/')
       .replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
   };
-  const proxyImg = u => u ? `http://localhost:3000/api/proxy-image?url=${encodeURIComponent(normalizeImg(u))}` : '';
+  const proxyImg = u => u ? `/api/proxy-image?url=${encodeURIComponent(normalizeImg(u))}` : '';
   const logoHtml = imgUrl
     ? `<img src="${proxyImg(imgUrl)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0"><div style="display:none;width:64px;height:64px;border-radius:50%;background:var(--bg-tertiary);border:2px solid var(--border);align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0">${(p.baseToken?.symbol||'?')[0]}</div>`
     : `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--bg-tertiary),rgba(0,200,128,0.15));border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;color:var(--accent)">${(p.baseToken?.symbol||'?')[0]}</div>`;
@@ -24068,7 +24069,7 @@ function dexRenderPairs(pairs, label) {
 }
 
 async function dexProxyFetch(url) {
-  const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }), signal: AbortSignal.timeout(12000) });
+  const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }), signal: AbortSignal.timeout(12000) });
   const resp = await r.json();
   const raw = resp.content || '{}';
   try {
@@ -24155,7 +24156,7 @@ async function dexLoadNew() {
     if (!pairs.length) {
       // Show profiles as simplified cards
       grid.innerHTML = profiles.slice(0,12).map(p => `<div class="pipe-card" style="min-width:0">
-        ${p.icon ? `<img src="http://localhost:3000/api/proxy-image?url=${encodeURIComponent(p.icon)}" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:50%;margin-bottom:6px">` : ''}
+        ${p.icon ? `<img src="/api/proxy-image?url=${encodeURIComponent(p.icon)}" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:50%;margin-bottom:6px">` : ''}
         <div style="font-size:11px;font-weight:700">${p.tokenAddress?.slice(0,8)}...${p.tokenAddress?.slice(-4)||''}</div>
         <div style="font-size:9px;color:var(--text-muted)">${p.chainId || 'unknown'}</div>
         ${p.description ? `<div style="font-size:9px;color:var(--text-secondary);margin-top:4px;max-height:40px;overflow:hidden">${p.description.slice(0,80)}</div>` : ''}
@@ -24181,7 +24182,7 @@ function dexOpenDetail(encodedOrStr) {
   const imgUrl=p.info?.imageUrl||p._pumpImg||'';
   const headerUrl=p.info?.header||p._pumpImg||'';
   const _normImg=u=>{if(!u)return '';return u.replace('https://ipfs.io/ipfs/','https://cloudflare-ipfs.com/ipfs/').replace('https://gateway.ipfs.io/ipfs/','https://cloudflare-ipfs.com/ipfs/').replace('ipfs://','https://cloudflare-ipfs.com/ipfs/');};
-  const _pImg=u=>u?`http://localhost:3000/api/proxy-image?url=${encodeURIComponent(_normImg(u))}`:'';
+  const _pImg=u=>u?`/api/proxy-image?url=${encodeURIComponent(_normImg(u))}`:'';
   const mint=p._pumpMint||p.baseToken?.address||p.pairAddress;
   const chain=p.chainId||'solana';
   const dexUrl=p.url||`https://dexscreener.com/${chain}/${p.pairAddress}`;
@@ -24233,7 +24234,7 @@ async function dexSearchTokens() {
   const grid = document.getElementById('dexFeedGrid');
   grid.innerHTML = `<div style="color:var(--text-muted);font-size:10px;padding:20px;text-align:center;grid-column:1/-1">Searching "${escH(q)}"...</div>`;
   try {
-    const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=${encodeURIComponent(q)}` }), signal: AbortSignal.timeout(12000) });
+    const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/search?q=${encodeURIComponent(q)}` }), signal: AbortSignal.timeout(12000) });
     const data = JSON.parse((await r.json()).content || '{}');
     const pairs = (data.pairs || []).slice(0,12);
     if (!pairs.length) { grid.innerHTML = `<div style="color:var(--text-muted);font-size:10px;padding:20px;text-align:center;grid-column:1/-1">No pairs found for "${escH(q)}"</div>`; return; }
@@ -24254,7 +24255,7 @@ async function dexAnalyzePair(pairAddr, name, price, change, vol, liq) {
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
   const prompt = `You are a crypto trading analyst. Analyze this DEX pair and give a concise risk assessment + recommendation:\n\nPair: ${name}\nCurrent Price: $${price}\n24h Change: ${change}\n24h Volume: ${vol}\nLiquidity: ${liq}\n\nGive:\n1. Risk level (LOW/MEDIUM/HIGH) with reason\n2. Bullish/Bearish signal\n3. One-sentence trade recommendation\nKeep total response under 100 words.`;
   try {
-    const r = await fetch('http://localhost:3000/api/ollama', {
+    const r = await fetch('/api/ollama', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -24678,7 +24679,7 @@ async function chartAiReading() {
   const prompt = `As Shaddai, an ancient esoteric astrologer versed in Western, Vedic, and Kemetic systems, give a birth chart reading for ${name} born as a ${sign.name} Sun (${sign.el} sign, ruled by ${sign.planet}). Current moon is ${moon.name}. Include: personality traits, spiritual mission, chakra correlations, planetary guidance, and ancestral gifts. Reference Kemetic and Vedic traditions. 8-10 sentences.`;
   out.innerHTML += `<div id="chartAiOut" style="margin-top:10px;padding:12px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-left:3px solid #9b6fff;border-radius:6px;font-size:10px;line-height:1.8;white-space:pre-wrap"><div style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto"></div></div>`;
   try {
-    const r = await fetch('http://localhost:3000/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(30000)});
+    const r = await fetch('/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(30000)});
     if (r.ok) { const d=await r.json(); document.getElementById('chartAiOut').textContent=d.message?.content||d.response; }
     else throw new Error();
   } catch { document.getElementById('chartAiOut').textContent=`${sign.name} ${sign.sym}: As a ${sign.el} sign ruled by ${sign.planet}, you carry the qualities of ${sign.name} — ${sign.el==='Fire'?'passion, leadership, and divine will':sign.el==='Earth'?'groundedness, mastery, and abundance':sign.el==='Air'?'intellect, communication, and vision':'depth, intuition, and emotional wisdom'}. Your soul chose this vessel to master the lessons of ${sign.planet}. In Kemetic astrology, ${sign.name} corresponds to specific Neter (divine principles) that govern your life path and spiritual mission.`; }
@@ -24859,7 +24860,7 @@ async function runLibraryScan() {
   const agent = document.getElementById('esotericAgent')?.value || 'SHADDAI';
   const prompt = `As ${agent}, an ancient esoteric scholar, analyze this text and extract all esoteric correlations. Format your response with sections for:\n1. CHAKRA REFERENCES (which chakras are mentioned or implied)\n2. PLANETARY ALIGNMENTS (planets, stars, cosmic bodies)\n3. SACRED GEOMETRY (geometric patterns or mathematical principles)\n4. NUMEROLOGY (sacred numbers and their meanings)\n5. DNA/MELANIN CORRELATIONS (biological or energetic body references)\n6. CALENDAR SYSTEMS (time cycles, calendar references)\n7. SPIRITUAL PRACTICES (rituals, breathwork, meditation)\n8. KEY QUOTES (most esoteric statements in the text)\n\nText to analyze:\n${input.substring(0,3000)}`;
   try {
-    const r = await fetch('http://localhost:3000/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(60000)});
+    const r = await fetch('/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(60000)});
     if (r.ok) {
       const d = await r.json();
       const responseText = d.message?.content||d.response||'';
@@ -24950,7 +24951,7 @@ async function runTaskNow(taskId, row) {
   msgEl.textContent='Working...';
   row.parentElement?.appendChild(msgEl);
   try {
-    const r = await fetch('http://localhost:3000/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(60000)});
+    const r = await fetch('/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(60000)});
     if (r.ok) {
       const d=await r.json();
       msgEl.textContent='';
@@ -24981,7 +24982,7 @@ async function fetchCoinGecko(tokenId) {
   const el = document.getElementById('cgResult');
   if (el) el.textContent = 'Fetching...';
   try {
-    const res = await fetch(`http://localhost:3000/api/coingecko/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd&include_24hr_change=true`, { signal: AbortSignal.timeout(15000) });
+    const res = await fetch(`/api/coingecko/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd&include_24hr_change=true`, { signal: AbortSignal.timeout(15000) });
     const parsed = await res.json();
     const token = parsed[id];
     if (!token) throw new Error('Token not found: ' + id);
@@ -24999,7 +25000,7 @@ async function fetchCoinGecko(tokenId) {
 async function fetchJupiterPrice(tokenInput) {
   const id = tokenInput || 'SOL';
   try {
-    const res = await fetch('http://localhost:3000/api/jupiter/price?ids=' + encodeURIComponent(id), { signal: AbortSignal.timeout(8000) });
+    const res = await fetch('/api/jupiter/price?ids=' + encodeURIComponent(id), { signal: AbortSignal.timeout(8000) });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     const prices = data.data || {};
@@ -25041,7 +25042,7 @@ async function fetchCoreResearch(query) {
   const el = document.getElementById('coreResult');
   if (el) el.textContent = 'Searching papers...';
   try {
-    const res = await fetch('http://localhost:3000/api/core-research', {
+    const res = await fetch('/api/core-research', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: q, limit: 5 }),
       signal: AbortSignal.timeout(30000)
@@ -25071,7 +25072,7 @@ async function postToTelegraph(titleOverride, contentOverride) {
     // Step 1: Create account (or reuse stored token)
     let accessToken = localStorage.getItem('telegraph_token');
     if (!accessToken) {
-      const accRes = await fetch('http://localhost:3000/api/telegraph', {
+      const accRes = await fetch('/api/telegraph', {
         method: 'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ action: 'create-account', accountName: 'SHADDAI', authorName: 'SHADDAI Agent' }),
         signal: AbortSignal.timeout(10000)
@@ -25082,7 +25083,7 @@ async function postToTelegraph(titleOverride, contentOverride) {
       localStorage.setItem('telegraph_token', accessToken);
     }
     // Step 2: Create page — uses proper POST body via server
-    const pageRes = await fetch('http://localhost:3000/api/telegraph', {
+    const pageRes = await fetch('/api/telegraph', {
       method: 'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         action: 'create-page',
@@ -25120,7 +25121,7 @@ async function fetchSolanaBalance() {
   if (el) el.textContent = 'Checking...';
   for (const rpc of SOLANA_RPCS) {
     try {
-      const res = await fetch('http://localhost:3000/api/fetch-url', {
+      const res = await fetch('/api/fetch-url', {
         method: 'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ url: rpc, method: 'POST', body: JSON.stringify({
           jsonrpc:'2.0', id:1, method:'getBalance', params:[addr]
@@ -25217,7 +25218,7 @@ async function testPipeline() {
       else if (step.type === 'telegraph') result = await postToTelegraph(input, context);
       else if (step.type === 'ollama') result = await getResp(input || context, S.primaryAgent || 'SHADDAI');
       else if (step.type === 'dexscreener') {
-        const r = await fetch(`http://localhost:3000/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/tokens/${input}`}), signal: AbortSignal.timeout(10000)});
+        const r = await fetch(`/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/tokens/${input}`}), signal: AbortSignal.timeout(10000)});
         const d = JSON.parse((await r.json()).content||'{}');
         result = d.pairs?.[0] ? `${d.pairs[0].baseToken.symbol}: $${d.pairs[0].priceUsd} (${d.pairs[0].priceChange?.h24}% 24h)` : 'No pair found';
       }
@@ -25282,7 +25283,7 @@ async function _ollamaPipe(prompt) {
 // ── _dexPipe — pipeline step for DexScreener ─────────────────────────────────
 async function _dexPipe(tokenAddress) {
   try {
-    const r = await fetch(`${PROXY}/api/fetch-url`, {
+    const r = await fetch(`/api/fetch-url`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `${DEX_BASE}/latest/dex/tokens/${tokenAddress}` }),
@@ -25409,7 +25410,7 @@ function openTraderPanel(pairAddress, symbol) {
 
   // Load token stats in background
   if (pairAddress) {
-    fetch(`${PROXY}/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`}),signal:AbortSignal.timeout(10000)})
+    fetch(`/api/fetch-url`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:`https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`}),signal:AbortSignal.timeout(10000)})
       .then(r=>r.json()).then(resp=>{
         const d = JSON.parse(resp.content||'{}');
         const p = d.pair || d.pairs?.[0];
@@ -25437,7 +25438,7 @@ function openTraderPanel(pairAddress, symbol) {
 
 // ── SHADDAI Agent Server state ─────────────────────────────────
 // All agents now route through the gateway (Python agents may be offline)
-const GATEWAY = 'http://localhost:3000';
+const GATEWAY = window.PROXY;
 const SHADDAI_AGENT = GATEWAY + '/api/shaddai';
 const XEROX_AGENT   = GATEWAY + '/api/zerox';
 const ORACLE_AGENT  = GATEWAY + '/api/oracle';
@@ -25451,7 +25452,7 @@ async function initShaddaiAgentServer() {
   const statusTxt = document.getElementById('shaddai-agent-status-txt');
   if (statusTxt) { statusTxt.textContent = 'Connecting...'; statusTxt.style.color = 'var(--text-muted)'; }
   try {
-    const r = await fetch('http://localhost:3000/api/shaddai/', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/shaddai/', { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     _shaddaiOnline = ['online','ONLINE','ok'].includes(d.status);
     if (_shaddaiOnline) {
@@ -25471,12 +25472,12 @@ async function initShaddaiAgentServer() {
 
 async function loadSkillsFromServer() {
   try {
-    const r = await fetch('http://localhost:3000/api/shaddai/skills', { signal: AbortSignal.timeout(15000) });
+    const r = await fetch('/api/shaddai/skills', { signal: AbortSignal.timeout(15000) });
     const d = await r.json();
     _skillsCache = d.skills || [];
     // Merge in any custom skills saved on the server
     try {
-      const cr = await fetch('http://localhost:3000/api/shaddai/skills/custom', { signal: AbortSignal.timeout(5000) });
+      const cr = await fetch('/api/shaddai/skills/custom', { signal: AbortSignal.timeout(5000) });
       const cd = await cr.json();
       if (cd.skills && cd.skills.length) {
         const existingNames = new Set(_skillsCache.map(s => s.name));
@@ -25496,7 +25497,7 @@ async function runSkill(skillName, action, params) {
   try {
     const input = (params && typeof params === 'object') ? { ...params } : {};
     if (action) input.action = action;
-    const r = await fetch(`${PROXY}/api/skills/run`, {
+    const r = await fetch(`/api/skills/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ skillId: skillName, input }),
@@ -25511,7 +25512,7 @@ async function runSkill(skillName, action, params) {
       while (Date.now() - started < 180000) { // poll up to 3 min
         await new Promise(res => setTimeout(res, 2500));
         try {
-          const pr = await fetch(`${PROXY}/api/agent/task/${d.taskId}`, { signal: AbortSignal.timeout(8000) });
+          const pr = await fetch(`/api/agent/task/${d.taskId}`, { signal: AbortSignal.timeout(8000) });
           if (!pr.ok) continue;
           const td = await pr.json();
           const t = td.task || td;
@@ -25532,7 +25533,7 @@ async function runSkill(skillName, action, params) {
   } catch(eEngine) {
     // ── Fallback 1: legacy /api/shaddai/skill route (older Python agents) ──
     try {
-      const url = action ? `${PROXY}/api/shaddai/skill/${skillName}/${action}` : `${PROXY}/api/shaddai/skill/${skillName}`;
+      const url = action ? `/api/shaddai/skill/${skillName}/${action}` : `/api/shaddai/skill/${skillName}`;
       const r = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ params: params || {}, task: params?.task || params?.prompt || '' }),
@@ -25555,7 +25556,7 @@ async function runSkill(skillName, action, params) {
 async function runSkillByQuery(query, input) {
   const PROXY = window.PROXY || 'http://localhost:3000';
   try {
-    const r = await fetch(`${PROXY}/api/skills/auto`, {
+    const r = await fetch(`/api/skills/auto`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, input: input || {} }),
       signal: AbortSignal.timeout(90000)
@@ -25705,7 +25706,7 @@ async function quickBriefing() {
 async function quickTrendingScan() {
   notify('Scanning trending tokens...');
   try {
-    const r = await fetch(`${PROXY}/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: 'https://api.dexscreener.com/token-boosts/top/v1' }), signal: AbortSignal.timeout(12000) });
+    const r = await fetch(`/api/fetch-url`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: 'https://api.dexscreener.com/token-boosts/top/v1' }), signal: AbortSignal.timeout(12000) });
     const data = JSON.parse((await r.json()).content || '[]');
     const tokens = (Array.isArray(data) ? data : []).slice(0, 10);
     const chatEl = document.getElementById('chatMsgsFull');
@@ -25935,7 +25936,7 @@ async function sendDailyBriefingToTelegram() {
 async function sendMarketAlertToTelegram() {
   notify('Fetching market data...');
   try {
-    const solPrice = await fetch('http://localhost:3000/api/fetch-url', {
+    const solPrice = await fetch('/api/fetch-url', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true'}),
@@ -25955,7 +25956,7 @@ async function sendDexScreenerAlertToTelegram(tokenAddr) {
   const addr = tokenAddr || document.getElementById('cgToken')?.value?.trim() || 'DJafFPLc9KLCcXLDcpSJsMKYsL6o1iEkfY7Y2ZfLZnJM';
   notify('Fetching DexScreener data...');
   try {
-    const res = await fetch('http://localhost:3000/api/fetch-url', {
+    const res = await fetch('/api/fetch-url', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({url: `https://api.dexscreener.com/latest/dex/tokens/solana/${addr}`}),
@@ -25975,7 +25976,7 @@ async function sendDexScreenerAlertToTelegram(tokenAddr) {
 async function sendTrendingAlertsToTelegram() {
   notify('Fetching trending tokens...');
   try {
-    const res = await fetch('http://localhost:3000/api/fetch-url', {
+    const res = await fetch('/api/fetch-url', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({url: 'https://api.coingecko.com/api/v3/search/trending'}),
@@ -26001,7 +26002,7 @@ async function sendTrendingAlertsToTelegram() {
 async function postToX(text) {
   try {
     const truncated = text.length > 280 ? text.substring(0, 277) + '...' : text;
-    const res = await fetch(`${PROXY}/api/social/post`, {
+    const res = await fetch(`/api/social/post`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: truncated, platform: 'x' }),
       signal: AbortSignal.timeout(8000)
@@ -26126,7 +26127,7 @@ async function runMirofishPredict() {
 
   try {
     // Step 1: Upload seed text
-    const seedResp = await fetch('http://localhost:3000/api/mirofish/api/upload_seed', {
+    const seedResp = await fetch('/api/mirofish/api/upload_seed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: seedText, source_type: 'manual', source_id: 'shaddai-dashboard' }),
@@ -26138,7 +26139,7 @@ async function runMirofishPredict() {
     if (outputEl) outputEl.textContent = '✅ Seed uploaded. Starting simulation...';
 
     // Step 2: Start simulation
-    const simResp = await fetch('http://localhost:3000/api/mirofish/api/simulations', {
+    const simResp = await fetch('/api/mirofish/api/simulations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ seed_ids: [seedId], max_rounds: 5 }),
@@ -26152,10 +26153,10 @@ async function runMirofishPredict() {
     let report = null;
     for (let i = 0; i < 30; i++) {
       await new Promise(r => setTimeout(r, 3000));
-      const statusResp = await fetch(`http://localhost:3000/api/mirofish/api/simulations/${simId}`, { signal: AbortSignal.timeout(10000) });
+      const statusResp = await fetch(`/api/mirofish/api/simulations/${simId}`, { signal: AbortSignal.timeout(10000) });
       const status = await statusResp.json();
       if (status.status === 'completed' || status.status === 'done') {
-        const reportResp = await fetch(`http://localhost:3000/api/mirofish/api/simulations/${simId}/report`, { signal: AbortSignal.timeout(10000) });
+        const reportResp = await fetch(`/api/mirofish/api/simulations/${simId}/report`, { signal: AbortSignal.timeout(10000) });
         report = await reportResp.json();
         break;
       }
@@ -26187,7 +26188,7 @@ async function checkExtendedApiStatus() {
   if (agentTile) {
     const dot = agentTile.querySelector('.ast-dot');
     try {
-      const r = await fetch('http://localhost:3000/api/shaddai/', { signal: AbortSignal.timeout(5000) });
+      const r = await fetch('/api/shaddai/', { signal: AbortSignal.timeout(5000) });
       if (r.ok) { dot.style.background='#0f0'; agentTile.style.opacity='1'; }
       else { dot.style.background='#f00'; agentTile.style.opacity='0.6'; }
     } catch { dot.style.background='#f00'; agentTile.style.opacity='0.6'; }
@@ -26197,7 +26198,7 @@ async function checkExtendedApiStatus() {
   if (mfTile) {
     const dot = mfTile.querySelector('.ast-dot');
     try {
-      const r = await fetch('http://localhost:3000/api/mirofish/api/health', { signal: AbortSignal.timeout(5000) });
+      const r = await fetch('/api/mirofish/api/health', { signal: AbortSignal.timeout(5000) });
       if (r.ok) { dot.style.background='#0f0'; mfTile.style.opacity='1'; }
       else { dot.style.background='#f90'; mfTile.style.opacity='0.8'; }
     } catch { dot.style.background='#f00'; mfTile.style.opacity='0.6'; }
@@ -26253,7 +26254,7 @@ async function routeToAgent(task, preferredAgent) {
 
   // Try preferred agent's port first (via server proxy)
   try {
-    const r = await fetch(`http://localhost:3000/api/${agent.toLowerCase()}/chat`, {
+    const r = await fetch(`/api/${agent.toLowerCase()}/chat`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({model: meta.aiPrefs[0]?.split(':')?.[1] || 'llama3.2:3b', messages:[{role:'user',content:task}]}),
       signal: AbortSignal.timeout(10000)
@@ -26267,7 +26268,7 @@ async function routeToAgent(task, preferredAgent) {
 }
 
 function agentUrl(name, path='') {
-  return `http://localhost:3000/api/${name.toLowerCase()}${path}`;
+  return `/api/${name.toLowerCase()}${path}`;
 }
 
 async function agentFetch(name, path, opts={}) {
@@ -26316,7 +26317,7 @@ async function pingZerox()  { try { await agentFetch('ZEROX','/ping'); setAgentB
 async function pingOracle() { try { await agentFetch('ORACLE','/ping'); setAgentBadge('oracle-status-badge',true); } catch { setAgentBadge('oracle-status-badge',false); } }
 async function pingTurtle() { try { await agentFetch('TURTLE','/ping'); setAgentBadge('turtle-status-badge',true); } catch { setAgentBadge('turtle-status-badge',false); } }
 
-function openZeroxDocs() { window.open('http://localhost:3000/api/zerox/docs','_blank'); }
+function openZeroxDocs() { window.open('/api/zerox/docs','_blank'); }
 
 // ── ZEROX FUNCTIONS ────────────────────────────────────────────────
 async function loadZeroxPulse() {
@@ -26734,7 +26735,7 @@ async function runAlphaWorkflow() {
       // Use Ollama to write the post
       if (out) out.textContent += '\n\nStep 2: SHADDAI writing post via Ollama...';
       const prompt = `You are an alpha caller. Based on this token analysis:\n${JSON.stringify(analysis,null,2).substring(0,500)}\n\nWrite a compelling alpha group post for ${token}. Include entry, targets, risk level.`;
-      const resp = await fetch('http://localhost:3000/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
+      const resp = await fetch('/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
       const r = await resp.json();
       if (out) out.textContent += '\n\n📊 ALPHA GROUP POST:\n\n' + (r.message?.content||r.response||'No response');
       notify('✅ Alpha post generated!');
@@ -26760,7 +26761,7 @@ async function runWorldToMarketWorkflow() {
     if (out) out.textContent += '\n\n⚠️ Network offline. Running via Ollama...';
     try {
       const prompt = `You are both a world intelligence analyst and crypto market expert. Analyze this world event: "${event}" and identify: 1) Key macro implications, 2) Which crypto sectors will be affected, 3) Specific tokens/plays to watch, 4) Timeline for the trade. Be specific and actionable.`;
-      const resp = await fetch('http://localhost:3000/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
+      const resp = await fetch('/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
       const r = await resp.json();
       if (out) out.textContent += '\n\n🌍 WORLD→MARKET ANALYSIS:\n\n' + (r.message?.content||r.response||'No response');
       notify('Analysis complete via Ollama');
@@ -26787,7 +26788,7 @@ async function runContentWorkflow() {
     if (out) out.textContent += '\n\n⚠️ Network offline. Running via Ollama...';
     try {
       const prompt = `You are Izzo — artist, alpha caller, entrepreneur. Create a ${platform} post about: "${topic}". Make it authentic, high-value, spiritually grounded, and engaging. Include any relevant market or world context.`;
-      const resp = await fetch('http://localhost:3000/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
+      const resp = await fetch('/api/ollama', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages:[{role:'user',content:prompt}], stream:false }), signal: AbortSignal.timeout(120000) });
       const r = await resp.json();
       if (out) out.textContent += '\n\n📝 CONTENT OUTPUT:\n\n' + (r.message?.content||r.response||'No response');
       notify('Content generated via Ollama');
@@ -27162,7 +27163,7 @@ async function pipeRefreshWallet() {
   const pubkey = window._walletPubkey || pipeWallet;
   if (!pubkey) return;
   try {
-    const res = await fetch('http://localhost:3000/api/helius-tokens', {
+    const res = await fetch('/api/helius-tokens', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ address: pubkey }),
       signal: AbortSignal.timeout(15000)
@@ -27178,7 +27179,7 @@ async function pipeRefreshWallet() {
 
     // Get SOL price for USD
     try {
-      const priceRes = await fetch('http://localhost:3000/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(8000) });
+      const priceRes = await fetch('/api/jupiter/price?ids=SOL', { signal: AbortSignal.timeout(8000) });
       const priceData = await priceRes.json();
       const solPrice = priceData?.data?.SOL?.price || 0;
       const usdEl = document.getElementById('pipeWalletUSD');
@@ -27235,7 +27236,7 @@ async function executeAgentTrade(side) {
       // Search for token by symbol
       if (resultEl) resultEl.textContent += `> Searching for token symbol: ${tokenInput}\n`;
       try {
-        const searchRes = await fetch(`http://localhost:3000/api/dexscreener/search?q=${encodeURIComponent(tokenInput)}`, { signal: AbortSignal.timeout(10000) });
+        const searchRes = await fetch(`/api/dexscreener/search?q=${encodeURIComponent(tokenInput)}`, { signal: AbortSignal.timeout(10000) });
         const searchData = await searchRes.json();
         const pair = searchData?.pairs?.find(p => p.chainId === 'solana' && p.baseToken?.symbol?.toLowerCase() === tokenInput.toLowerCase());
         if (pair) {
@@ -27259,7 +27260,7 @@ async function executeAgentTrade(side) {
 
     if (resultEl) resultEl.textContent += `> Getting Jupiter quote: ${inputMint.slice(0,8)}... → ${outputMint.slice(0,8)}...\n`;
 
-    const quoteRes = await fetch(`http://localhost:3000/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${side === 'buy' ? lamports : quoteAmount}&slippageBps=${slippage}`, { signal: AbortSignal.timeout(10000) });
+    const quoteRes = await fetch(`/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${side === 'buy' ? lamports : quoteAmount}&slippageBps=${slippage}`, { signal: AbortSignal.timeout(10000) });
     const quoteData = await quoteRes.json();
 
     if (quoteData.error) throw new Error(quoteData.error);
@@ -27542,17 +27543,17 @@ function runSecurityScan() {
 async function checkAPIEndpoints() {
   const endpoints = [
     { name: 'Ollama',        url: 'http://localhost:11434/api/tags',               method: 'GET' },
-    { name: 'Gateway :3000', url: 'http://localhost:3000/api/ollama-tags',          method: 'GET' },
-    { name: 'SHADDAI Agent', url: 'http://localhost:3000/api/shaddai/health',       method: 'GET' },
-    { name: 'ZEROX Agent',   url: 'http://localhost:3000/api/zerox/health',         method: 'GET' },
-    { name: 'ORACLE Agent',  url: 'http://localhost:3000/api/oracle/health',        method: 'GET' },
-    { name: 'NEXUS Agent',   url: 'http://localhost:3000/api/nexus/health',         method: 'GET' },
-    { name: 'TURTLE Agent',  url: 'http://localhost:3000/api/turtle/health',        method: 'GET' },
-    { name: 'QUILL Agent',   url: 'http://localhost:3000/api/quill/health',         method: 'GET' },
-    { name: 'PIKADON Agent', url: 'http://localhost:3000/api/pikadon/health',       method: 'GET' },
-    { name: 'CoinLore',      url: 'http://localhost:3000/api/coinlore/global/',     method: 'GET' },
-    { name: 'Workflow API',  url: 'http://localhost:3000/api/workflow/list',        method: 'GET' },
-    { name: 'Skills API',    url: 'http://localhost:3000/api/shaddai/skills',       method: 'GET' },
+    { name: 'Gateway :3000', url: '/api/ollama-tags',          method: 'GET' },
+    { name: 'SHADDAI Agent', url: '/api/shaddai/health',       method: 'GET' },
+    { name: 'ZEROX Agent',   url: '/api/zerox/health',         method: 'GET' },
+    { name: 'ORACLE Agent',  url: '/api/oracle/health',        method: 'GET' },
+    { name: 'NEXUS Agent',   url: '/api/nexus/health',         method: 'GET' },
+    { name: 'TURTLE Agent',  url: '/api/turtle/health',        method: 'GET' },
+    { name: 'QUILL Agent',   url: '/api/quill/health',         method: 'GET' },
+    { name: 'PIKADON Agent', url: '/api/pikadon/health',       method: 'GET' },
+    { name: 'CoinLore',      url: '/api/coinlore/global/',     method: 'GET' },
+    { name: 'Workflow API',  url: '/api/workflow/list',        method: 'GET' },
+    { name: 'Skills API',    url: '/api/shaddai/skills',       method: 'GET' },
   ];
   const logEl = document.getElementById('securityLog');
   for (const ep of endpoints) {
@@ -28872,7 +28873,7 @@ function connectWallet() {
       const token = localStorage.getItem('shaddai_auth_token');
       if (token) {
         try {
-          await fetch(`${PROXY}/api/auth/link-wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ walletAddress: pubkey }), signal: AbortSignal.timeout(10000) });
+          await fetch(`/api/auth/link-wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ walletAddress: pubkey }), signal: AbortSignal.timeout(10000) });
         } catch(_) {}
       }
       // Pull live data
@@ -29000,7 +29001,7 @@ async function fetchWalletNFTs() {
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px;font-size:9px">Loading NFTs...</div>';
   
   try {
-    const resp = await fetch(`${PROXY}/api/helius-nfts?address=${WALLET.address}`, {signal: AbortSignal.timeout(15000)});
+    const resp = await fetch(`/api/helius-nfts?address=${WALLET.address}`, {signal: AbortSignal.timeout(15000)});
     const data = await resp.json();
     cachedNFTs = data.nfts || [];
     renderNFTs();
@@ -29015,7 +29016,7 @@ async function loadTxHistory() {
   if (!el) return;
   el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:12px;font-size:8px">Loading history...</div>';
   try {
-    const r = await fetch(`http://localhost:3000/api/solana/history?address=${WALLET.address}&limit=20`, { signal: AbortSignal.timeout(15000) });
+    const r = await fetch(`/api/solana/history?address=${WALLET.address}&limit=20`, { signal: AbortSignal.timeout(15000) });
     const data = await r.json();
     const sigs = data.signatures || [];
     if (!sigs.length) { el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:12px;font-size:8px">No transactions found</div>'; return; }
@@ -29192,7 +29193,7 @@ async function fetchTxHistory() {
   el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:11px">Loading transactions...</div>';
   
   try {
-    const resp = await fetch(`${PROXY}/api/helius-txs?address=${WALLET.address}&limit=20`, {signal: AbortSignal.timeout(15000)});
+    const resp = await fetch(`/api/helius-txs?address=${WALLET.address}&limit=20`, {signal: AbortSignal.timeout(15000)});
     const data = await resp.json();
     cachedTxHistory = data.transactions || [];
     renderTxHistory();
@@ -29244,7 +29245,7 @@ function checkTransactionLimit(amountUSD) {
 
 async function fetchWalletBalance(address) {
   try {
-    const r = await fetch('http://localhost:3000/api/helius-tokens?address=' + address, { signal: AbortSignal.timeout(15000) });
+    const r = await fetch('/api/helius-tokens?address=' + address, { signal: AbortSignal.timeout(15000) });
     const data = await r.json();
     const sol = data.sol || 0; // gateway now returns SOL (not lamports)
     const el = document.getElementById('walletBalance');
@@ -29387,7 +29388,7 @@ async function getSwapQuote() {
   if (quoteEl) quoteEl.innerHTML = '<span style="color:var(--text-muted)">Getting quote...</span>';
   try {
     // Route through gateway to avoid CORS
-    const r = await fetch(`${PROXY}/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountRaw}&slippageBps=50`, { signal: AbortSignal.timeout(15000) });
+    const r = await fetch(`/api/jupiter/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountRaw}&slippageBps=50`, { signal: AbortSignal.timeout(15000) });
     const data = await r.json();
     if (data.error) throw new Error(data.error);
     // Jupiter v6: quote is returned directly (not in data.data[])
@@ -29422,7 +29423,7 @@ async function executeSwap() {
     if (!window._currentSwapQuote) throw new Error('Could not get swap quote. Check your connection.');
 
     notify('🔄 Building swap transaction...');
-    const r = await fetch(`${PROXY}/api/jupiter-swap`, {
+    const r = await fetch(`/api/jupiter-swap`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ quote: window._currentSwapQuote, userPublicKey: WALLET.address }),
       signal: AbortSignal.timeout(30000)
@@ -29478,7 +29479,7 @@ async function executeStake() {
 
   try {
     notify('🔄 Building stake transaction via Jupiter...');
-    const r = await fetch(`${PROXY}/api/solana/stake`, {
+    const r = await fetch(`/api/solana/stake`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ amount, pool, userPublicKey: WALLET.address }),
       signal: AbortSignal.timeout(30000)
@@ -29561,7 +29562,7 @@ async function executeTrade() {
   notify(`🤖 ${agent} analyzing strategy...`);
 
   try {
-    const r = await fetch(`${PROXY}/api/trade/analyze`, {
+    const r = await fetch(`/api/trade/analyze`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ strategy, agent, symbol: document.getElementById('tradingStrategy')?.dataset?.symbol }),
       signal: AbortSignal.timeout(60000)
@@ -29601,7 +29602,7 @@ async function renderAgentEarnings() {
   // Pull live leaderboard from gateway
   let liveData = {};
   try {
-    const r = await fetch(`${PROXY}/api/marketplace/leaderboard?period=all`, { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(`/api/marketplace/leaderboard?period=all`, { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     (d.leaderboard || []).forEach(e => { liveData[e.agentId] = e; });
   } catch(_) {}
@@ -29610,7 +29611,7 @@ async function renderAgentEarnings() {
   let walletStats = null;
   if (WALLET.address) {
     try {
-      const wr = await fetch(`${PROXY}/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
+      const wr = await fetch(`/api/wallet/earnings?address=${WALLET.address}`, { signal: AbortSignal.timeout(5000) });
       walletStats = await wr.json();
       WALLET.earnings = walletStats.totalEarned || 0;
       WALLET.jobs = walletStats.jobsCompleted || 0;
@@ -30571,7 +30572,7 @@ async function generateStudioImage() {
     statusEl.textContent = 'Generating prompt with agent...';
     btn.disabled = true;
     try {
-      const resp = await fetch('http://localhost:3000/api/shaddai/chat', {
+      const resp = await fetch('/api/shaddai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'Create a detailed image generation prompt: ' + fullPrompt, agent: 'TURTLE', model: S.settings?.ollamaModel || 'llama3.2:1b' }),
@@ -31924,7 +31925,7 @@ async function startBoardroomDiscussion() {
     const _brT0 = Date.now();
     try {
       // Route through gateway proxy
-      const res = await fetch('http://localhost:3000/api/ollama', {
+      const res = await fetch('/api/ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -32029,7 +32030,7 @@ function uploadSkillFile() {
         skill.id = `custom_${Date.now()}`;
         skill.imported = new Date().toISOString();
         // Save to server
-        const r = await fetch('http://localhost:3000/api/shaddai/skills/custom', {
+        const r = await fetch('/api/shaddai/skills/custom', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ skill }),
           signal: AbortSignal.timeout(5000)
@@ -32060,7 +32061,7 @@ async function importSkillFromURL() {
     skill.id = `custom_${Date.now()}`;
     skill.imported = new Date().toISOString();
     // Save to server
-    const r = await fetch('http://localhost:3000/api/shaddai/skills/custom', {
+    const r = await fetch('/api/shaddai/skills/custom', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ skill }),
       signal: AbortSignal.timeout(5000)
@@ -32095,7 +32096,7 @@ async function assignSkillToAgent() {
   const agent = document.getElementById('swapAgentSelect')?.value;
   if (!skillId || !agent) { notify('⚠ Select skill and agent'); return; }
   try {
-    const r = await fetch('http://localhost:3000/api/shaddai/skills/assign', {
+    const r = await fetch('/api/shaddai/skills/assign', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ skillId, agent }),
       signal: AbortSignal.timeout(5000)
@@ -32135,7 +32136,7 @@ async function learnNewSkill() {
     imported: new Date().toISOString()
   };
   try {
-    const r = await fetch('http://localhost:3000/api/shaddai/skills/custom', {
+    const r = await fetch('/api/shaddai/skills/custom', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ skill, assignTo: agent }),
       signal: AbortSignal.timeout(5000)
@@ -32959,7 +32960,7 @@ async function _solPayCreate(command, overrides) {
       ? { item: overrides.item, amount: overrides.amount, label: overrides.label || 'SHADDAI', currency: 'SOL' }
       : { command };
     const endpoint = overrides ? '/api/pay/create' : '/api/pay/nl';
-    const r = await fetch('http://localhost:3000' + endpoint, {
+    const r = await fetch((window.PROXY || 'http://localhost:3000') + endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(overrides ? body : { command }),
       signal: AbortSignal.timeout(8000)
@@ -33035,7 +33036,7 @@ async function _solPayCreate(command, overrides) {
 
 async function checkSolPayStatus(reference, payId, silent) {
   try {
-    const r = await fetch('http://localhost:3000/api/pay/status/' + encodeURIComponent(reference), { signal: AbortSignal.timeout(8000) });
+    const r = await fetch('/api/pay/status/' + encodeURIComponent(reference), { signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     const badge = document.getElementById('solPayStatusBadge_' + payId);
     if (d.status === 'paid') {
@@ -33097,7 +33098,7 @@ async function triggerAgentPayCall() {
   if (btn) { btn.textContent = '⏳ Calling...'; btn.disabled = true; }
   const entry = { ts: new Date().toISOString(), agent, url, label, price, status: 'pending' };
   try {
-    const r = await fetch('http://localhost:3000/api/agent-pay/api', {
+    const r = await fetch('/api/agent-pay/api', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent, api_url: url, api_method: 'GET', price_sol: price, label }),
       signal: AbortSignal.timeout(30000)
@@ -33127,7 +33128,7 @@ async function loadPaymentList() {
   if (!el) return;
   try {
     const filter = document.getElementById('solPayFilter')?.value || 'all';
-    const r = await fetch('http://localhost:3000/api/pay/list', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/pay/list', { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     const all = d.payments || [];
     // Update stats
@@ -33192,7 +33193,7 @@ async function runSkillDebugger() {
   out.innerHTML = '<div style="color:var(--text-muted);padding:10px">⏳ Matching…</div>';
   const colors = { SHADDAI:'#ffd700', ZEROX:'#00c8ff', ORACLE:'#b06aff', NEXUS:'#00e5a0', TURTLE:'#ff7b3d', QUILL:'#ffb020', PIKADON:'#ff4070' };
   try {
-    const url = `${PROXY}/api/skills/semantic-search?q=${encodeURIComponent(q)}&k=8${agent ? '&agent=' + agent : ''}`;
+    const url = `/api/skills/semantic-search?q=${encodeURIComponent(q)}&k=8${agent ? '&agent=' + agent : ''}`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     const results = d.results || d.data || [];
@@ -33224,7 +33225,7 @@ async function loadSkillsLibrary() {
   if (!grid) return;
   grid.innerHTML = '<div style="color:var(--text-muted);font-size:10px;text-align:center;padding:40px;grid-column:1/-1">⏳ Loading skills...</div>';
   try {
-    const r = await fetch('http://localhost:3000/api/shaddai/skills', { signal: AbortSignal.timeout(15000) });
+    const r = await fetch('/api/shaddai/skills', { signal: AbortSignal.timeout(15000) });
     const d = await r.json();
     _skillsLibrary = d.skills || [];
     const countEl = document.getElementById('skillsLibraryCount');
@@ -33358,7 +33359,7 @@ async function openSkillDetail(skillName) {
     { label: 'Close', class: 'btn-ghost', action: closeModal },
   ]);
   try {
-    const r = await fetch('http://localhost:3000/api/skills/content/' + encodeURIComponent(skillName), { signal: AbortSignal.timeout(8000) });
+    const r = await fetch('/api/skills/content/' + encodeURIComponent(skillName), { signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     if (!d.content) {
       document.getElementById('modalContent').innerHTML = `<div style="color:#ff6060;padding:20px;text-align:center">Skill content not available.${d.error ? '<br><span style="font-size:9px">' + sanitizeText(d.error) + '</span>' : ''}</div>`;
@@ -33531,7 +33532,7 @@ async function _saveSkillToObsidian() {
   if (!name) { if (stat) stat.textContent = '✗ Name required'; return; }
   if (stat) { stat.textContent = '⏳ Saving to Obsidian vault...'; stat.style.color = '#ffb020'; }
   try {
-    const r = await fetch('http://localhost:3000/api/write-file', {
+    const r = await fetch('/api/write-file', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         filePath: `C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN\\Agents\\${agent}\\${name}.md`,
@@ -34434,7 +34435,7 @@ async function generateSignalNow() {
   loading.textContent = '⏳ ORACLE scanning market via CoinGecko...';
   board.insertBefore(loading, board.firstChild);
   try {
-    const r = await fetch('http://localhost:3000/api/market/trending', { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/market/trending', { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     loading.remove();
     // CoinGecko trending returns { coins: [{ item: {...} }] }
@@ -34599,7 +34600,7 @@ async function loadOhlcChart() {
   if (labelEl) labelEl.textContent = `${ticker} · ${days}D`;
 
   try {
-    const r = await fetch(`${PROXY}/api/prices/ohlc?symbol=${encodeURIComponent(ticker)}&days=${days}`,
+    const r = await fetch(`/api/prices/ohlc?symbol=${encodeURIComponent(ticker)}&days=${days}`,
       { signal: AbortSignal.timeout(12000) });
     if (!r.ok) {
       const e = await r.json().catch(() => ({}));
@@ -34893,7 +34894,7 @@ async function loadQuote() {
   if (chgEl) chgEl.textContent = '...';
   if (srcEl) srcEl.textContent = '—';
   try {
-    const r = await fetch('http://localhost:3000/api/quote/' + sym, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch('/api/quote/' + sym, { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
     if (d.error || !d.price) {
       if (priceEl) priceEl.textContent = '—';
@@ -34947,7 +34948,7 @@ async function runCouncilAnalysis() {
     const COIN_IDS = { BTC:'90', ETH:'80', SOL:'48543', BNB:'2710', DOGE:'2', ADA:'257', XRP:'58', AVAX:'12559' };
     const coinId = COIN_IDS[ticker];
     if (coinId) {
-      const priceR = await fetch(`http://localhost:3000/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(5000) });
+      const priceR = await fetch(`/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(5000) });
       const pd = await priceR.json();
       const c = pd && pd[0];
       if (c) {
@@ -34967,7 +34968,7 @@ Rank: #${c.rank || 'N/A'}
       }
     } else {
       // Try DexScreener for DEX tokens
-      const dsR = await fetch(`http://localhost:3000/api/dexscreener/search?q=${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(5000) });
+      const dsR = await fetch(`/api/dexscreener/search?q=${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(5000) });
       const dsd = await dsR.json();
       const pair = dsd?.pairs?.[0];
       if (pair) {
@@ -34993,7 +34994,7 @@ Liquidity: $${parseFloat(pair.liquidity?.usd||0) >= 1e6 ? (parseFloat(pair.liqui
     progList.innerHTML += `<div id="prog_${name}" style="display:flex;align-items:center;gap:8px;color:var(--text-muted)"><span style="color:${colors[name]};min-width:80px;font-weight:700">${name}</span><span>⏸ waiting...</span></div>`;
   });
   try {
-    const r = await fetch('http://localhost:3000/api/council/analyze', {
+    const r = await fetch('/api/council/analyze', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ ticker, provider: cfg.provider, model: cfg.model, apiKey: cfg.apiKey, marketContext }),
       signal: AbortSignal.timeout(10000)
@@ -35009,7 +35010,7 @@ Liquidity: $${parseFloat(pair.liquidity?.usd||0) >= 1e6 ? (parseFloat(pair.liqui
     let lastPerspectiveCount = 0;
     const poll = async () => {
       try {
-        const rr = await fetch('http://localhost:3000/api/council/run/' + d.run_id, { signal: AbortSignal.timeout(5000) });
+        const rr = await fetch('/api/council/run/' + d.run_id, { signal: AbortSignal.timeout(5000) });
         const rd = await rr.json();
         const run = rd.run;
         if (!run) return;
@@ -35091,7 +35092,7 @@ window.addEventListener('DOMContentLoaded', () => {
 let _jupiterTokens = null;
 async function _getJupiterTokens() {
   if (_jupiterTokens) return _jupiterTokens;
-  try { const r = await fetch('http://localhost:3000/api/jupiter/tokens', { signal: AbortSignal.timeout(10000) }); _jupiterTokens = await r.json(); return _jupiterTokens; } catch { return {}; }
+  try { const r = await fetch('/api/jupiter/tokens', { signal: AbortSignal.timeout(10000) }); _jupiterTokens = await r.json(); return _jupiterTokens; } catch { return {}; }
 }
 
 async function getJupiterQuote() {
@@ -35109,7 +35110,7 @@ async function getJupiterQuote() {
     // Convert amount to lamports/atomic units (SOL=9, USDC=6, etc.)
     const decimals = { SOL:9, USDC:6, USDT:6, BONK:5, JUP:6, WIF:6 };
     const atomic = Math.floor(amount * Math.pow(10, decimals[fromSym] || 9));
-    const r = await fetch(`http://localhost:3000/api/jupiter/quote?inputMint=${inMint}&outputMint=${outMint}&amount=${atomic}&slippageBps=50`, { signal: AbortSignal.timeout(8000) });
+    const r = await fetch(`/api/jupiter/quote?inputMint=${inMint}&outputMint=${outMint}&amount=${atomic}&slippageBps=50`, { signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     if (d.error) { out.innerHTML = '<span style="color:#ff6060">' + sanitizeText(d.error) + '</span>'; return; }
     const outAmount = parseFloat(d.outAmount) / Math.pow(10, decimals[toSym] || 6);
@@ -35131,7 +35132,7 @@ async function checkAlpacaStatus() {
   const badge = document.getElementById('alpacaStatusBadge');
   if (!badge) return;
   try {
-    const r = await fetch('http://localhost:3000/api/alpaca/account', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/alpaca/account', { signal: AbortSignal.timeout(4000) });
     const d = await r.json();
     if (d.configured) {
       const cash = d.account?.cash ? parseFloat(d.account.cash).toLocaleString() : '?';
@@ -35151,7 +35152,7 @@ async function placeAlpacaOrder(side) {
   if (!sym || !qty) { notify('Enter symbol + qty'); return; }
   if (out) out.innerHTML = '<span style="color:#ffd700">⏳ Placing ' + side + ' ' + qty + ' ' + sym + '...</span>';
   try {
-    const r = await fetch('http://localhost:3000/api/alpaca/paper-order', {
+    const r = await fetch('/api/alpaca/paper-order', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ symbol: sym, qty, side }),
       signal: AbortSignal.timeout(10000)
@@ -35262,7 +35263,7 @@ async function _autoExecuteOnVerdict(verdict, ticker, exchange) {
   } else {
     _autoTradeLog(`⚡ Auto-execute: ${action} ${stockQty}x ${ticker} via Alpaca paper — confidence ${conf}/10`);
     try {
-      const r = await fetch('http://localhost:3000/api/alpaca/paper-order', {
+      const r = await fetch('/api/alpaca/paper-order', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ symbol: ticker, qty: stockQty, side: action.toLowerCase() }),
         signal: AbortSignal.timeout(10000)
@@ -35291,7 +35292,7 @@ async function checkTAStatus() {
   const badge = document.getElementById('taStatusBadge');
   if (!badge) return;
   try {
-    const r = await fetch('http://localhost:3000/api/tradingagents/status', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/tradingagents/status', { signal: AbortSignal.timeout(4000) });
     const d = await r.json();
     if (d.installed) {
       badge.textContent = '✓ INSTALLED · ' + (d.runs || 0) + ' runs';
@@ -35310,7 +35311,7 @@ async function checkTAStatus() {
 async function showTASetup() {
   if (typeof showModal !== 'function') { notify('Modal system not loaded'); return; }
   try {
-    const r = await fetch('http://localhost:3000/api/tradingagents/setup', { method:'POST', signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/tradingagents/setup', { method:'POST', signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     if (d.success) { notify('✓ TradingAgents already installed!'); checkTAStatus(); return; }
     const cmds = (d.commands || []).join('\n');
@@ -35345,7 +35346,7 @@ async function runTradingAgents() {
   out.style.display = 'block';
   out.innerHTML = `<div style="text-align:center;padding:16px"><div style="color:#00c8ff;font-size:11px;font-weight:700;margin-bottom:6px">⏳ Multi-agent analysis running...</div><div style="color:var(--text-muted);font-size:9px">Fundamentals · Sentiment · News · Technical → Bull/Bear debate → Trader → Risk Manager<br><br>This takes 1-5 minutes with local Ollama models. Coffee time ☕</div></div>`;
   try {
-    const r = await fetch('http://localhost:3000/api/tradingagents/analyze', {
+    const r = await fetch('/api/tradingagents/analyze', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ ticker, date, provider: 'ollama', model }),
       signal: AbortSignal.timeout(15000)
@@ -35360,7 +35361,7 @@ async function runTradingAgents() {
     const startTime = Date.now();
     const poll = async () => {
       try {
-        const rr = await fetch('http://localhost:3000/api/tradingagents/run/' + d.run_id, { signal: AbortSignal.timeout(5000) });
+        const rr = await fetch('/api/tradingagents/run/' + d.run_id, { signal: AbortSignal.timeout(5000) });
         const rd = await rr.json();
         if (!rd.run) return;
         const run = rd.run;
@@ -35406,7 +35407,7 @@ async function loadTARuns() {
   const list = document.getElementById('taRunsList');
   if (!list) return;
   try {
-    const r = await fetch('http://localhost:3000/api/tradingagents/runs', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('/api/tradingagents/runs', { signal: AbortSignal.timeout(4000) });
     const d = await r.json();
     if (!d.runs || !d.runs.length) {
       list.innerHTML = '<div style="color:var(--text-muted);font-size:9px;text-align:center;padding:8px">No analysis runs yet</div>';
@@ -35431,7 +35432,7 @@ async function postSignalToTelegram() {
   const content = `📊 *SHADDAI Trade Signals*\n${new Date().toLocaleString()}\n\n${signals}\n\n_via SHADDAI Agent Empire_`;
   notify('📱 Sending to Telegram...');
   try {
-    const r = await fetch(`${PROXY}/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'telegram', content }), signal:AbortSignal.timeout(10000) });
+    const r = await fetch(`/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'telegram', content }), signal:AbortSignal.timeout(10000) });
     const d = await r.json();
     if (d.status === 'sent') notify('✅ Signals posted to Telegram!');
     else notify('📱 ' + (d.message || 'Add TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID to .env'));
@@ -35443,7 +35444,7 @@ async function postSignalToDiscord() {
   const content = `📊 **SHADDAI Trade Signals** — ${new Date().toLocaleString()}\n${signals}`;
   notify('💬 Sending to Discord...');
   try {
-    const r = await fetch(`${PROXY}/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'discord', content }), signal:AbortSignal.timeout(10000) });
+    const r = await fetch(`/api/social/post`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ platform:'discord', content }), signal:AbortSignal.timeout(10000) });
     const d = await r.json();
     if (d.status === 'sent') notify('✅ Signals posted to Discord!');
     else notify('💬 ' + (d.message || 'Add DISCORD_WEBHOOK_URL to .env'));
@@ -35709,7 +35710,7 @@ function _setWalletConnected(provider, addr) {
 }
 async function _refreshWalletBalance(addr) {
   try {
-    const r = await fetch('http://localhost:3000/api/solana/balance?address=' + addr, { signal: AbortSignal.timeout(5000) });
+    const r = await fetch('/api/solana/balance?address=' + addr, { signal: AbortSignal.timeout(5000) });
     const d = await r.json();
     const bal = (d.balance || 0).toFixed(4);
     const balEl = document.getElementById('walletBalance');
@@ -35901,8 +35902,8 @@ async function renderEfficiencyCharts() {
   if (typeof Chart === 'undefined') return; // CDN not loaded
   const PROXY = window.PROXY || 'http://localhost:3000';
   let cache = {}, traces = {};
-  try { cache = await (await fetch(`${PROXY}/api/cache/stats`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
-  try { traces = await (await fetch(`${PROXY}/api/llm/traces`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
+  try { cache = await (await fetch(`/api/cache/stats`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
+  try { traces = await (await fetch(`/api/llm/traces`, { signal: AbortSignal.timeout(6000) })).json(); } catch {}
 
   const accent = '#00e5a0', blue = '#00c8ff', gold = '#ffb020', red = '#ff4070', dim = '#5a6b8a';
   const baseOpts = { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: dim, font: { size: 9 } } } } };
@@ -37730,7 +37731,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
     // Try backend server first (fast path if running)
     try {
-      const r = await fetch('http://localhost:3000/api/agents/route', {
+      const r = await fetch('/api/agents/route', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({message:task, agent:agentId, context:'Pixel Office HQ dispatch. Task: '+task}),
         signal: AbortSignal.timeout(12000)
@@ -38841,7 +38842,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   window._BACKEND_LISTINGS     = window._BACKEND_LISTINGS     || [];
   window._fetchBackendCollectibles = async function() {
     try {
-      const r = await fetch('http://localhost:3000/api/collectibles', { signal: AbortSignal.timeout(3000) });
+      const r = await fetch('/api/collectibles', { signal: AbortSignal.timeout(3000) });
       if (!r.ok) return;
       const j = await r.json();
       if (j && j.ok && Array.isArray(j.data)) {
@@ -39020,7 +39021,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     // Mint receipt NFT certificate on the backend
     try {
       const owner = (window.currentWalletAddress) || (S.user && S.user.wallet) || 'guest';
-      const r = await fetch('http://localhost:3000/api/collectibles/mint', {
+      const r = await fetch('/api/collectibles/mint', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ name: c?.name || id, rarity: c?.rarity || 'common', owner }),
         signal: AbortSignal.timeout(4000)
@@ -39052,14 +39053,14 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     try {
       // First, mint a backend record for this local collectible so it has a numeric id
       const owner = (window.currentWalletAddress) || (S.user && S.user.wallet) || 'guest';
-      const mintR = await fetch('http://localhost:3000/api/collectibles/mint', {
+      const mintR = await fetch('/api/collectibles/mint', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ name, rarity, owner })
       });
       const mintJ = await mintR.json();
       if (!mintJ || !mintJ.ok) { notify('Mint failed: '+(mintJ&&mintJ.error||'unknown')); return; }
       const backendId = mintJ.data.collectible.id;
-      const listR = await fetch('http://localhost:3000/api/collectibles/list', {
+      const listR = await fetch('/api/collectibles/list', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ id: backendId, priceCredits })
       });
@@ -39106,7 +39107,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     // Fetch live jobs in background without blocking render
     function _fetchMarketplaceJobs() {
       // File-backed marketplace.json (created via /post endpoint)
-      fetch('http://localhost:3000/api/marketplace/jobs/open', { signal: AbortSignal.timeout(3000) })
+      fetch('/api/marketplace/jobs/open', { signal: AbortSignal.timeout(3000) })
         .then(r => r.ok ? r.json() : null).then(d => {
           if (d && d.ok && Array.isArray(d.data)) {
             // Merge: file-backed jobs take precedence by id
@@ -39119,7 +39120,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           }
         }).catch(()=>{});
       // Legacy in-memory route
-      fetch('http://localhost:3000/api/marketplace/jobs?status=open', { signal: AbortSignal.timeout(3000) })
+      fetch('/api/marketplace/jobs?status=open', { signal: AbortSignal.timeout(3000) })
         .then(r => r.ok ? r.json() : null).then(d => { if (d && d.jobs && d.jobs.length) { const existing = S.marketplace.liveJobs || []; const ids = new Set(existing.map(j=>j.id)); d.jobs.forEach(j => { if (!ids.has(j.id)) existing.push(j); }); S.marketplace.liveJobs = existing; save(); renderAgentDesks(); renderMarketplaceJobs(); } }).catch(()=>{});
     }
     _fetchMarketplaceJobs();
@@ -39298,7 +39299,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   }
 
   function viewJobBids(jobId) {
-    fetch(`${PROXY}/api/marketplace/jobs/${jobId}`, { signal: AbortSignal.timeout(5000) })
+    fetch(`/api/marketplace/jobs/${jobId}`, { signal: AbortSignal.timeout(5000) })
       .then(r => r.json()).then(d => {
         const job = d.data || d.job || d;
         const bids = (job && job.bids) || [];
@@ -39327,7 +39328,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   window.acceptJobBid = async function(jobId, bidIndex) {
     try {
-      const r = await fetch(`${PROXY}/api/marketplace/jobs/${jobId}/accept-bid`, {
+      const r = await fetch(`/api/marketplace/jobs/${jobId}/accept-bid`, {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ bidIndex }),
         signal: AbortSignal.timeout(8000)
@@ -39366,7 +39367,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         const statusEl = document.getElementById('bidStatus');
         if (statusEl) statusEl.textContent = 'Placing bid...';
         try {
-          const r = await fetch(`${PROXY}/api/marketplace/jobs/${jobId}/bid`, {
+          const r = await fetch(`/api/marketplace/jobs/${jobId}/bid`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ agentId: 'user-agent', amount, timestamp: new Date().toISOString() }),
             signal: AbortSignal.timeout(15000)
@@ -39748,7 +39749,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (btn) { btn.textContent = '⏳ Fetching...'; btn.disabled = true; }
 
     try {
-      const r = await fetch(`${PROXY}/api/scrape`, {
+      const r = await fetch(`/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, maxChars: 6000 }),
@@ -39807,7 +39808,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     const out = document.getElementById(targetOutputId);
     if (out) out.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:8px">⏳ Researching...</div>';
     try {
-      const r = await fetch(`${PROXY}/api/scrape`, {
+      const r = await fetch(`/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, maxChars: 6000 }),
@@ -39864,7 +39865,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         // Post job to real backend AND auto-execute with wallet credit
         let createdJobId = null;
         try {
-          const r = await fetch(`${PROXY}/api/marketplace/jobs`, {
+          const r = await fetch(`/api/marketplace/jobs`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: 'Hire: ' + a.name, description: task, category: (a.listing&&a.listing.category)||'content_creation', budget: Math.max(20, a.listing&&a.listing.price||20), clientId: WALLET.address || 'user', deadline: new Date(Date.now()+86400000).toISOString() }),
             signal: AbortSignal.timeout(15000)
@@ -39875,7 +39876,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             if (statusEl) statusEl.innerHTML = '<span style="color:var(--accent)">Job #' + job.jobId.slice(0,8) + ' posted. Triggering agent bids...</span>';
 
             // Trigger agent auto-bidding
-            fetch(`${PROXY}/api/marketplace/jobs/${job.jobId}/auto-bid`, {
+            fetch(`/api/marketplace/jobs/${job.jobId}/auto-bid`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({}),
               signal: AbortSignal.timeout(20000)
@@ -39888,7 +39889,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             });
 
             // Auto-execute and credit wallet earnings
-            fetch(`${PROXY}/api/marketplace/jobs/${job.jobId}/auto-execute`, {
+            fetch(`/api/marketplace/jobs/${job.jobId}/auto-execute`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ walletAddress: WALLET.address || null }),
               signal: AbortSignal.timeout(60000)
@@ -39919,7 +39920,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           const agentKey = (a.name||'shaddai').toLowerCase().replace(/[^a-z]/g,'');
           const validAgents = ['shaddai','zerox','oracle','nexus','turtle','quill','pikadon'];
           const routeTo = validAgents.includes(agentKey) ? agentKey : 'shaddai';
-          const chatResp = await fetch('http://localhost:3000/api/shaddai/chat', {
+          const chatResp = await fetch('/api/shaddai/chat', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ agent: routeTo, message: task, model: S.settings?.ollamaModel || 'llama3.2:1b' }),
             signal: AbortSignal.timeout(60000)
@@ -39986,7 +39987,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     try {
       const PAIR_IDS = { BTC:'90', ETH:'80', SOL:'48543', BNB:'2710', DOGE:'2' };
       const coinId = PAIR_IDS[pair.toUpperCase()] || PAIR_IDS.SOL;
-      const r = await fetch(`http://localhost:3000/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(8000) });
+      const r = await fetch(`/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(8000) });
       const d = await r.json();
       const c = d && d[0];
       if (!c) throw new Error('no data');
@@ -40013,7 +40014,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (grid) grid.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:10px;text-align:center;grid-column:1/-1">Asking agents...</div>';
     let votes, consensus, weightedScore;
     try {
-      const r = await fetch(`http://localhost:3000/api/council/consensus?ticker=${encodeURIComponent(pair)}`, { signal: AbortSignal.timeout(30000) });
+      const r = await fetch(`/api/council/consensus?ticker=${encodeURIComponent(pair)}`, { signal: AbortSignal.timeout(30000) });
       const d = await r.json();
       votes = d.votes;
       consensus = d.consensus;
@@ -40111,12 +40112,12 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     // Get consensus from last vote or fetch fresh
     let votes = [], consensus = 'HOLD', weightedScore = 0;
     try {
-      const r = await fetch(`http://localhost:3000/api/council/consensus?ticker=${encodeURIComponent(pair)}`, { signal: AbortSignal.timeout(12000) });
+      const r = await fetch(`/api/council/consensus?ticker=${encodeURIComponent(pair)}`, { signal: AbortSignal.timeout(12000) });
       const d = await r.json();
       votes = d.votes || []; consensus = d.consensus || 'HOLD'; weightedScore = d.weightedScore || 0;
       const md = d.marketData || {};
       // Post signal with fresh data
-      const pr = await fetch('http://localhost:3000/api/signals/post', {
+      const pr = await fetch('/api/signals/post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -40237,7 +40238,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (scoreEl && !scoreEl.dataset.loading) {
       scoreEl.dataset.loading = '1';
       scoreEl.textContent = '…';
-      const _fgFetch = () => fetch('http://localhost:3000/api/market/fear-greed', { signal: AbortSignal.timeout(6000) })
+      const _fgFetch = () => fetch('/api/market/fear-greed', { signal: AbortSignal.timeout(6000) })
         .then(r => r.ok ? r.json() : null).catch(() => null)
         .then(d => d ? d : fetch('https://api.alternative.me/fng/?limit=1', { signal: AbortSignal.timeout(8000) }).then(r => r.ok ? r.json() : null).catch(() => null));
       _fgFetch().then(d => {
@@ -40271,7 +40272,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (tickerEl && !tickerEl.dataset.fetching) {
       tickerEl.dataset.fetching = '1';
       tickerEl.innerHTML = '<span style="color:var(--text-muted);font-size:8px">Loading prices...</span>';
-      const _tickerFetch = () => fetch('http://localhost:3000/api/coinlore/tickers/?start=0&limit=10', { signal: AbortSignal.timeout(5000) })
+      const _tickerFetch = () => fetch('/api/coinlore/tickers/?start=0&limit=10', { signal: AbortSignal.timeout(5000) })
         .then(r => r.ok ? r.json() : null).catch(() => null)
         .then(async d => {
           if (d && d.data) return { source: 'coinlore', data: d.data };
@@ -40305,7 +40306,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       statsEl.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:6px">Loading live data...</div>';
       const _CGLOOKUP = { BTC:'bitcoin', ETH:'ethereum', SOL:'solana', BNB:'binancecoin', SHIB:'shiba-inu' };
       const _cgId = _CGLOOKUP[pair] || 'solana';
-      const _pairFetch = () => fetch(`http://localhost:3000/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(5000) })
+      const _pairFetch = () => fetch(`/api/coinlore/ticker/?id=${coinId}`, { signal: AbortSignal.timeout(5000) })
         .then(r => r.ok ? r.json() : null).catch(() => null)
         .then(async d => {
           if (d && d[0]) return d[0];
@@ -40342,7 +40343,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (whaleEl && !whaleEl.dataset.loading) {
       whaleEl.dataset.loading = '1';
       whaleEl.innerHTML = '<div style="color:var(--text-muted);font-size:9px;padding:8px;text-align:center">Scanning whale activity...</div>';
-      const _whaleFetch = () => fetch('http://localhost:3000/api/dexscreener/search?q=SOL', { signal: AbortSignal.timeout(6000) })
+      const _whaleFetch = () => fetch('/api/dexscreener/search?q=SOL', { signal: AbortSignal.timeout(6000) })
         .then(r => r.ok ? r.json() : null).catch(() => null)
         .then(d => d ? d : fetch('https://api.dexscreener.com/latest/dex/search?q=SOL', { signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null).catch(() => null));
       _whaleFetch().then(d => {
@@ -40544,7 +40545,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     notify('Generating music concept via AI...');
     // Generate lyrics/concept via QUILL agent, then link to Suno
     try {
-      const r = await fetch('http://localhost:3000/api/content/generate', {
+      const r = await fetch('/api/content/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'song lyrics', prompt, style, agent: 'quill' }),
         signal: AbortSignal.timeout(60000)
@@ -40579,7 +40580,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     renderContentQueue(); save();
     notify('Generating image via Pollinations.ai...');
     try {
-      const r = await fetch('http://localhost:3000/api/image/generate', {
+      const r = await fetch('/api/image/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, model: model === 'nano-banana-pro' ? 'flux' : model, width: 512, height: 512 }),
         signal: AbortSignal.timeout(30000)
@@ -40635,7 +40636,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     notify('Generating video script via AI...');
     // Generate a video script via TURTLE agent, then link to Kling
     try {
-      const r = await fetch('http://localhost:3000/api/content/generate', {
+      const r = await fetch('/api/content/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'video script', prompt, style: duration + ' second short video', agent: 'turtle' }),
         signal: AbortSignal.timeout(60000)
@@ -41873,7 +41874,7 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
         const statusEl = document.getElementById('stripeCheckoutStatus');
         if (statusEl) statusEl.innerHTML = '<span style="color:var(--accent)">Opening Stripe checkout...</span>';
         try {
-          const r = await fetch('http://localhost:3000/api/billing/checkout', {
+          const r = await fetch('/api/billing/checkout', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tier, successUrl: window.location.href + '?billing=success&tier=' + tier, cancelUrl: window.location.href + '?billing=cancel' }),
             signal: AbortSignal.timeout(8000)
@@ -41894,7 +41895,7 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
     if (!meta) return;
     // Try Stripe checkout via backend
     try {
-      const r = await fetch('http://localhost:3000/api/billing/checkout', {
+      const r = await fetch('/api/billing/checkout', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ tier: tier + '_annual', billing: 'annual', successUrl: window.location.href + '?billing=success&tier=' + tier + '_annual', cancelUrl: window.location.href }),
         signal: AbortSignal.timeout(5000)
@@ -42011,7 +42012,7 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
         const amount = parseFloat((document.getElementById('topupAmt')||{}).value||5);
         // Try real Stripe checkout for top-up
         try {
-          const r = await fetch('http://localhost:3000/api/billing/checkout', {
+          const r = await fetch('/api/billing/checkout', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tier: 'builder', successUrl: window.location.href + '?credits=' + credits, cancelUrl: window.location.href }),
             signal: AbortSignal.timeout(5000)
@@ -42331,7 +42332,7 @@ async function dispatchContentTool(tool, backendUrl, backendBody, agentMsg, outp
   if (mode === 'task') {
     renderContentCard(`<div style="padding:14px;color:#ffb020;font-size:10px">📋 Submitting to Task Queue for background execution...</div>`, outputEl);
     try {
-      const r = await fetch('http://localhost:3000/api/tasks/create', {
+      const r = await fetch('/api/tasks/create', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ task_type:'content_generate', agent: meta.name.toLowerCase(), payload: { tool, ...backendBody }, priority:'normal' }),
         signal: AbortSignal.timeout(6000)
@@ -42376,7 +42377,7 @@ async function runThreadBuilder() {
   try {
     const agentMsg = `Write a ${count}-tweet Twitter thread about: "${text}". Tone: ${tone}. Number each tweet 1/ 2/ 3/ etc. Each tweet max 280 chars. Make it compelling and shareable.`;
     const bBody = { topic: text.length < 200 ? text : null, text: text.length >= 200 ? text : null, tweetCount: parseInt(count), tone };
-    const dispatched = await dispatchContentTool('thread', 'http://localhost:3000/api/content/thread', bBody, agentMsg, 'threadOutput');
+    const dispatched = await dispatchContentTool('thread', '/api/content/thread', bBody, agentMsg, 'threadOutput');
     if (dispatched?._queued) return;
 
     let data;
@@ -42385,7 +42386,7 @@ async function runThreadBuilder() {
       const tweets = raw.split(/\n\d+\/\s*|\n\d+\.\s*/).filter(t => t.trim().length > 10).slice(0, parseInt(count));
       data = { tweets, count: tweets.length, model: dispatched.model };
     } else {
-      const backendR = await fetch('http://localhost:3000/api/content/thread', {
+      const backendR = await fetch('/api/content/thread', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bBody), signal: AbortSignal.timeout(15000)
       }).catch(() => null);
@@ -42446,14 +42447,14 @@ async function runEmailWriter() {
   try {
     const agentMsg = `Write a ${tone} email. Subject: "${subject}". To: ${to || 'recipient'}. About: ${context || subject}. Include subject line, greeting, body, and sign-off.`;
     const bBody = { subject, to, context, tone };
-    const dispatched = await dispatchContentTool('email', 'http://localhost:3000/api/content/email', bBody, agentMsg, 'emailOutput');
+    const dispatched = await dispatchContentTool('email', '/api/content/email', bBody, agentMsg, 'emailOutput');
     if (dispatched?._queued) return;
 
     let data;
     if (dispatched?._rawAgent) {
       data = { email: dispatched.response || 'No response', model: dispatched.model };
     } else {
-      const backendR = await fetch('http://localhost:3000/api/content/email', {
+      const backendR = await fetch('/api/content/email', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bBody), signal: AbortSignal.timeout(12000)
       }).catch(() => null);
@@ -42494,14 +42495,14 @@ async function runLyricsWriter() {
   try {
     const agentMsg = `Write original ${genre} lyrics with a ${mood} mood about: "${theme}". Include: [Verse 1], [Chorus], [Verse 2], [Bridge]. Make it ready for Suno AI.`;
     const bBody = { theme, genre, mood };
-    const dispatched = await dispatchContentTool('lyrics', 'http://localhost:3000/api/content/lyrics', bBody, agentMsg, 'lyricsOutput');
+    const dispatched = await dispatchContentTool('lyrics', '/api/content/lyrics', bBody, agentMsg, 'lyricsOutput');
     if (dispatched?._queued) return;
 
     let data;
     if (dispatched?._rawAgent) {
       data = { lyrics: dispatched.response || 'No response', sunoPrompt: `${genre}, ${mood}, about ${theme}`, model: dispatched.model };
     } else {
-      const backendR = await fetch('http://localhost:3000/api/content/lyrics', {
+      const backendR = await fetch('/api/content/lyrics', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bBody), signal: AbortSignal.timeout(12000)
       }).catch(() => null);
@@ -42557,14 +42558,14 @@ async function runInsights() {
     }
     const agentMsg = `${question || 'What are the current market trends?'}${priceContext ? '\n\nCurrent data:' + priceContext : ''}${coins.length ? '\n\nFocus on: ' + coins.join(', ') : ''}`;
     const bBody = { coins, question };
-    const dispatched = await dispatchContentTool('insights', 'http://localhost:3000/api/content/insights', bBody, agentMsg, 'insightsOutput');
+    const dispatched = await dispatchContentTool('insights', '/api/content/insights', bBody, agentMsg, 'insightsOutput');
     if (dispatched?._queued) return;
 
     let data;
     if (dispatched?._rawAgent) {
       data = { insights: dispatched.response || 'No insights', dataSources: priceContext ? 1 : 0, model: dispatched.model };
     } else {
-      const backendR = await fetch('http://localhost:3000/api/content/insights', {
+      const backendR = await fetch('/api/content/insights', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bBody), signal: AbortSignal.timeout(12000)
       }).catch(() => null);
@@ -42612,7 +42613,7 @@ async function runStudioImageGen() {
   try {
     const agentMsg = `Create an image with this description: "${prompt}". Style: digital art, high quality. Model: ${model}.`;
     const bBody = { prompt, model, apiKey };
-    const dispatched = await dispatchContentTool('image', 'http://localhost:3000/api/image/generate', bBody, agentMsg, 'studioImageOutput');
+    const dispatched = await dispatchContentTool('image', '/api/image/generate', bBody, agentMsg, 'studioImageOutput');
     if (dispatched?._queued) return;
     if (dispatched?._rawAgent) {
       renderContentCard(`<div style="padding:14px;font-size:10px"><div style="color:#ff4ecd;font-weight:700;margin-bottom:6px">🎨 TURTLE's Image Concept</div><div style="white-space:pre-wrap;line-height:1.6;color:var(--text)">${dispatched.response}</div></div>`, 'studioImageOutput');
@@ -42620,7 +42621,7 @@ async function runStudioImageGen() {
     }
     if (!apiKey) { notify('Enter your AceDataCloud API token'); return; }
 
-    const r = await fetch('http://localhost:3000/api/image/generate', {
+    const r = await fetch('/api/image/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, model, apiKey }),
@@ -43331,7 +43332,7 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
     requestAnimationFrame(function(){
       var b=document.getElementById('lyBar');if(b)b.style.width='100%';
     });
-    fetch('http://localhost:3000/api/market/fear-greed',{signal:AbortSignal.timeout(4000)})
+    fetch('/api/market/fear-greed',{signal:AbortSignal.timeout(4000)})
       .then(function(r){return r.json();}).then(function(d){
         var el=document.getElementById('lyFG');
         if(el&&d.value!=null){
@@ -43691,7 +43692,7 @@ async function _callAgentDirect(agentName,message,history){
       ...(history||[]).slice(-4),
       {role:'user',content:message}
     ];
-    var r2=await fetch('http://localhost:3000/api/ollama',{
+    var r2=await fetch('/api/ollama',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({messages:msgs}),
       signal:AbortSignal.timeout(60000)
@@ -43710,7 +43711,7 @@ async function sendAgenticMessage(agentName,message,bubbleEl){
 
   // Try /api/agents/route (30s — Ollama 8s cap then Groq fallback ~3s)
   try{
-    var r=await fetch('http://localhost:3000/api/agents/route',{
+    var r=await fetch('/api/agents/route',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message:message,agentName:agentName,history:history}),
       signal:AbortSignal.timeout(30000)
@@ -46390,7 +46391,7 @@ async function taFetchCandles(tokenAddress, interval = '1h') {
   const intervalMap = { '5m':'5m', '15m':'15m', '1h':'1h', '4h':'4h', '1d':'1d' };
   const iv = intervalMap[interval] || '1h';
   try {
-    const r = await fetch(`${PROXY}/api/fetch-url`, {
+    const r = await fetch(`/api/fetch-url`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ url: `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}` })
     });

@@ -1461,10 +1461,12 @@ process.on('SIGTERM', () => {
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
-  logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
+// Only listen when run directly (not when imported by Vercel serverless)
+if (!process.env.VERCEL_ENV) {
+  server.listen(PORT, () => {
+    logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
 
-  console.log(`
+    console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  SHADDAI PRODUCTION SERVER v62                        ║
 ║  Port: ${PORT}                                             ║
@@ -1473,35 +1475,36 @@ server.listen(PORT, () => {
 ║  Caching: Enabled                                     ║
 ║  Status: ONLINE                                       ║
 ╚════════════════════════════════════════════════════════╝
-  `);
+    `);
 
-  console.log('\n✓ Services initialized:');
-  console.log('  • Frontend server');
-  console.log('  • Agent orchestration');
-  console.log('  • Skill executor');
-  console.log('  • Database persistence');
-  console.log('  • WebSocket real-time updates');
-  console.log('  • Request/Response compression');
-  console.log('  • Caching layer (TTL-based)');
-  console.log('  • Structured logging');
-  console.log('  • Batch job processing');
+    console.log('\n✓ Services initialized:');
+    console.log('  • Frontend server');
+    console.log('  • Agent orchestration');
+    console.log('  • Skill executor');
+    console.log('  • Database persistence');
+    console.log('  • WebSocket real-time updates');
+    console.log('  • Request/Response compression');
+    console.log('  • Caching layer (TTL-based)');
+    console.log('  • Structured logging');
+    console.log('  • Batch job processing');
 
-  console.log('\n✓ API Endpoints (Premium Features):');
-  console.log('  GET  /api/agents/:name/history');
-  console.log('  GET  /api/jobs/:jobId/bids');
-  console.log('  POST /api/jobs/:jobId/award');
-  console.log('  GET  /api/marketplace');
-  console.log('  GET  /api/analytics/dashboard');
-  console.log('  POST /api/batch/jobs');
-  console.log('  GET  /api/batch/jobs/:jobId');
+    console.log('\n✓ API Endpoints (Premium Features):');
+    console.log('  GET  /api/agents/:name/history');
+    console.log('  GET  /api/jobs/:jobId/bids');
+    console.log('  POST /api/jobs/:jobId/award');
+    console.log('  GET  /api/marketplace');
+    console.log('  GET  /api/analytics/dashboard');
+    console.log('  POST /api/batch/jobs');
+    console.log('  GET  /api/batch/jobs/:jobId');
 
-  console.log('\n✓ WebSocket Events:');
-  console.log('  • execution (real-time task updates)');
-  console.log('  • job_created');
-  console.log('  • bid_submitted');
-  console.log('  • job_awarded');
+    console.log('\n✓ WebSocket Events:');
+    console.log('  • execution (real-time task updates)');
+    console.log('  • job_created');
+    console.log('  • bid_submitted');
+    console.log('  • job_awarded');
 
-  logger.info('SERVER', 'All services ready');
-});
+    logger.info('SERVER', 'All services ready');
+  });
+}
 
 module.exports = { app, server, wss, logger, cache, requestTracker };
