@@ -116,7 +116,7 @@ const PARAMS = {
   get_memory: { key: 'audit_key' },
   remember_fact: { key: 'audit_fact', value: 'remembered', agent: 'TEST' },
   recall_memory: { key: 'audit_fact', agent: 'TEST' },
-  read_obsidian_skill: { skill: 'market-brief' },
+  read_obsidian_skill: { skill: 'ad-creative' },
   mint_collectible: { name: 'Audit Gem', rarity: 'T3', owner: 'auditor' },
   browse_listings: {},
   list_skill_packs: {},

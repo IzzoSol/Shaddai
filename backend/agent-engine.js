@@ -1150,11 +1150,25 @@ const TOOLS = {
     description: 'Fetch top posts from any subreddit — real community discussion',
     schema: { subreddit: 'string — e.g. cryptocurrency, technology, ArtificialIntelligence' },
     execute: async ({ subreddit }) => {
-      const r = await fetch(`https://www.reddit.com/r/${subreddit}/top.json?limit=5&t=day`, { headers: { 'User-Agent': 'Mozilla/5.0 SHADDAI/1.0' }, signal: AbortSignal.timeout(20000) });
-      if (!r.ok) throw new Error(`Reddit returned ${r.status}`);
-      const d = await r.json();
-      if (!d.data?.children?.length) return `No posts found in r/${subreddit}`;
-      return d.data.children.map((p,i) => `${i+1}. ${p.data.title} (${p.data.score} upvotes, ${p.data.num_comments} comments)`).join('\n');
+      const sub = String(subreddit || 'technology').replace(/[^a-zA-Z0-9_]/g, '');
+      const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+      // Reddit increasingly 403s data-center IPs; try multiple hosts, then fall back gracefully.
+      for (const host of ['https://www.reddit.com', 'https://old.reddit.com']) {
+        try {
+          const r = await fetch(`${host}/r/${sub}/top.json?limit=5&t=day`, { headers: { 'User-Agent': UA, 'Accept': 'application/json' }, signal: AbortSignal.timeout(15000) });
+          if (!r.ok) continue;
+          const d = await r.json();
+          const posts = d.data?.children || [];
+          if (posts.length) return `r/${sub} top posts:\n` + posts.map((p, i) => `${i+1}. ${p.data.title} (${p.data.score}↑, ${p.data.num_comments} comments)`).join('\n');
+        } catch {}
+      }
+      // Fallback: HackerNews search for the topic (keyless, reliable) so the agent still gets community signal
+      try {
+        const r = await fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(sub)}&tags=story&hitsPerPage=5`, { signal: AbortSignal.timeout(10000) });
+        const d = await r.json();
+        if (d.hits?.length) return `Reddit blocked automated access; here are related Hacker News discussions for "${sub}":\n` + d.hits.map((h, i) => `${i+1}. ${h.title} (${h.points || 0} pts)`).join('\n');
+      } catch {}
+      return `r/${sub}: Reddit is blocking automated access (common from cloud IPs). Try a different source.`;
     }
   },
 
@@ -1880,16 +1894,24 @@ const TOOLS = {
     description: 'Get latest Medium articles on any topic via RSS.',
     params: ['topic', 'limit'],
     execute: async (params) => {
-      const topic = encodeURIComponent(params.topic || 'artificial-intelligence');
+      const rawTopic = params.topic || 'artificial-intelligence';
+      const topic = encodeURIComponent(rawTopic);
       const limit = params.limit || 6;
-      const r = await fetch(`https://medium.com/feed/tag/${topic}`, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
-      const xml = await r.text();
-      const titles = [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)].slice(1, limit+1).map(m => m[1]);
-      if (!titles.length) {
-        const t2 = [...xml.matchAll(/<title>(.*?)<\/title>/g)].slice(1, limit+1).map(m => m[1]);
-        return `Medium — "${params.topic}":\n` + t2.join('\n');
-      }
-      return `Medium — "${params.topic}":\n` + titles.join('\n');
+      // 1) Medium RSS
+      try {
+        const r = await fetch(`https://medium.com/feed/tag/${topic}`, { headers: { 'User-Agent': 'Mozilla/5.0 SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
+        const xml = await r.text();
+        let titles = [...xml.matchAll(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/g)].slice(1, limit + 1).map(m => m[1].trim()).filter(Boolean);
+        if (titles.length) return `Medium articles — "${rawTopic}":\n` + titles.map((t, i) => `${i+1}. ${t}`).join('\n');
+      } catch {}
+      // 2) dev.to API fallback (keyless, reliable)
+      try {
+        const tag = String(rawTopic).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const r = await fetch(`https://dev.to/api/articles?tag=${tag}&per_page=${limit}`, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
+        const arts = await r.json();
+        if (Array.isArray(arts) && arts.length) return `Articles on "${rawTopic}" (dev.to):\n` + arts.map((a, i) => `${i+1}. ${a.title} (${a.positive_reactions_count}♥, ${a.comments_count} comments)`).join('\n');
+      } catch {}
+      return `No articles found for "${rawTopic}" on Medium or dev.to right now.`;
     }
   },
 
@@ -2519,19 +2541,27 @@ const TOOLS = {
     execute: async (params) => {
       const source = params.source || 'all';
       const results = [];
+      // Each source isolated — one failing source never kills the whole tool.
       if (source === 'all' || source === 'hn') {
-        const r = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
-        const ids = (await r.json()).slice(0,5);
-        const stories = await Promise.all(ids.map(id => fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json())));
-        results.push('HackerNews Top:\n' + stories.map(s=>`  - ${s.title}`).join('\n'));
+        try {
+          const r = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', { signal: AbortSignal.timeout(10000) });
+          const ids = (await r.json()).slice(0, 5);
+          const stories = await Promise.all(ids.map(id => fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`, { signal: AbortSignal.timeout(8000) }).then(r => r.json()).catch(() => null)));
+          results.push('HackerNews Top:\n' + stories.filter(Boolean).map(s => `  - ${s.title}`).join('\n'));
+        } catch {}
       }
-      if (source === 'all' || source === 'reddit') {
-        const r = await fetch('https://www.reddit.com/r/technology/hot.json?limit=5', { headers: { 'User-Agent': 'SHADDAI:v2.0' } });
-        const d = await r.json();
-        const posts = (d.data?.children||[]).map(p=>p.data.title);
-        results.push('Reddit/technology:\n' + posts.map(t=>`  - ${t}`).join('\n'));
+      if (source === 'all' || source === 'github') {
+        try {
+          const r = await fetch('https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=5', { headers: { 'User-Agent': 'SHADDAI/2.0', 'Accept': 'application/vnd.github.v3+json' }, signal: AbortSignal.timeout(10000) });
+          const d = await r.json();
+          if (Array.isArray(d.items)) results.push('Trending GitHub repos:\n' + d.items.map(x => `  - ${x.full_name} (${x.stargazers_count.toLocaleString()}★)`).join('\n'));
+        } catch {}
       }
-      return results.join('\n\n');
+      if (source === 'reddit') {
+        // Reddit-only requested — reuse the resilient reddit tool path
+        try { results.push(await TOOLS.get_reddit_posts.execute({ subreddit: 'technology' })); } catch {}
+      }
+      return results.length ? results.join('\n\n') : 'Trending sources temporarily unavailable.';
     }
   },
 
