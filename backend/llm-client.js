@@ -355,7 +355,12 @@ const PROVIDER_CHAIN = [
 async function callLLM(messages, options = {}) {
   const errors = [];
 
-  for (const provider of PROVIDER_CHAIN) {
+  // brains.js may request a specific provider first (per-agent brain); still fall back through the chain.
+  const chain = options.provider
+    ? [...PROVIDER_CHAIN].sort((a, b) => (a.name === options.provider ? -1 : b.name === options.provider ? 1 : 0))
+    : PROVIDER_CHAIN;
+
+  for (const provider of chain) {
     if (!provider.enabled()) continue;
 
     try {
