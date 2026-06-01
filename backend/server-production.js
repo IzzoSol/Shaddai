@@ -658,6 +658,8 @@ app.get('/api/polymarket/prices', async (req, res) => {
 // ============================================
 
 app.use('/api', apiProxyRoutes);
+// MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
+app.use('/api/moonpay', require('./moonpay-agent'));
 
 // ============================================
 // AGENTS API
