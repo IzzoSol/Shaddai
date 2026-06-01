@@ -5084,7 +5084,7 @@ router.post('/content/thread', async (req, res) => {
     }
     if (!thread) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-        model: 'phi:latest',
+        model: process.env.OLLAMA_MODEL || 'llama3.2:1b',
         messages: [{ role: 'user', content: prompt }],
         stream: false
       }, { timeout: 90000 });
@@ -5122,7 +5122,7 @@ router.post('/content/email', async (req, res) => {
     }
     if (!email) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-        model: 'phi:latest', messages: [{ role: 'user', content: prompt }], stream: false
+        model: process.env.OLLAMA_MODEL || 'llama3.2:1b', messages: [{ role: 'user', content: prompt }], stream: false
       }, { timeout: 90000 });
       email = r.data.message?.content || '';
     }
@@ -5168,7 +5168,7 @@ router.post('/content/lyrics', async (req, res) => {
     }
     if (!lyrics) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-        model: 'phi:latest', messages: [{ role: 'user', content: prompt }], stream: false
+        model: process.env.OLLAMA_MODEL || 'llama3.2:1b', messages: [{ role: 'user', content: prompt }], stream: false
       }, { timeout: 90000 });
       lyrics = r.data.message?.content || '';
     }
@@ -5218,7 +5218,7 @@ router.post('/content/insights', async (req, res) => {
     }
     if (!insights) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-        model: 'phi:latest', messages: [{ role: 'user', content: prompt }], stream: false
+        model: process.env.OLLAMA_MODEL || 'llama3.2:1b', messages: [{ role: 'user', content: prompt }], stream: false
       }, { timeout: 120000 });
       insights = r.data.message?.content || '';
     }
@@ -6020,9 +6020,9 @@ router.get('/model/health', async (req, res) => {
     out.providers.ollama = { online: r.ok, models: (d.models || []).map(m => m.name) };
   } catch { out.providers.ollama = { online: false, models: [] }; }
   // Cloud keys configured? (presence only — never expose the key)
-  out.providers.groq = { configured: !!process.env.GROQ_KEY };
+  out.providers.groq = { configured: !!process.env.GROQ_API_KEY };
   out.providers.gemini = { configured: !!process.env.GEMINI_KEY };
-  out.providers.openrouter = { configured: !!process.env.OPENROUTER_KEY };
+  out.providers.openrouter = { configured: !!process.env.OPENROUTER_API_KEY };
   out.primary = out.providers.ollama.online ? 'ollama' : (out.providers.groq.configured ? 'groq' : 'none');
   res.json(out);
 });
