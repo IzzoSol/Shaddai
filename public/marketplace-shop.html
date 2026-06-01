@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI Bazaar — Night Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Bungee+Inline&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════════ */
+:root {
+  --plum-950: #0d0510;
+  --plum-900: #150b1e;
+  --plum-800: #1f1130;
+  --plum-700: #2e1a48;
+  --plum-600: #3d2260;
+  --indigo-500: #4f35a8;
+  --indigo-400: #6a4fd4;
+  --indigo-300: #8b73f0;
+  --neon-pink: #ff2d78;
+  --neon-cyan: #00f0e0;
+  --neon-yellow: #f5e642;
+  --neon-green: #39ff7a;
+  --neon-orange: #ff7a1a;
+  --gold-500: #e8b84b;
+  --gold-400: #f0cb6e;
+  --gold-300: #f8e099;
+  --cream: #fdf6e3;
+  --text-primary: #f0e8ff;
+  --text-secondary: #b8a8d4;
+  --text-muted: #7a6a96;
+  --card-bg: rgba(30, 16, 50, 0.85);
+  --card-border: rgba(139, 115, 240, 0.25);
+  --shadow-neon: 0 0 20px rgba(106, 79, 212, 0.4);
+  --shadow-gold: 0 0 20px rgba(232, 184, 75, 0.4);
+  --shadow-pink: 0 0 20px rgba(255, 45, 120, 0.4);
+  --radius-card: 16px;
+  --radius-sm: 8px;
+  --font-display: 'Bungee', cursive;
+  --font-shade: 'Bungee Shade', cursive;
+  --font-inline: 'Bungee Inline', cursive;
+  --font-mono: 'Space Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--plum-950);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── Noise grain overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.6;
+}
+
+/* ── Stars background ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 8%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 55%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 60% 35%, rgba(248,224,153,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 12%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.3) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-neon {
+  0%, 100% { text-shadow: 0 0 8px currentColor, 0 0 20px currentColor; }
+  50%       { text-shadow: 0 0 4px currentColor, 0 0 8px currentColor; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes flag-wave {
+  0%, 100% { transform: skewX(0deg) scaleX(1); }
+  25%       { transform: skewX(3deg) scaleX(1.02); }
+  75%       { transform: skewX(-2deg) scaleX(0.99); }
+}
+@keyframes lantern-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50%       { transform: rotate(4deg); }
+}
+@keyframes sign-flicker {
+  0%, 90%, 100% { opacity: 1; }
+  92%            { opacity: 0.6; }
+  94%            { opacity: 1; }
+  96%            { opacity: 0.4; }
+  98%            { opacity: 1; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(32px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translate(-50%,-50%) scale(0.88); }
+  to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(40px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ═══════════════════════════════════════════════
+   STATS TICKER
+═══════════════════════════════════════════════ */
+.stats-ticker {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(90deg, var(--plum-800), var(--plum-700), var(--plum-800));
+  border-bottom: 2px solid var(--indigo-400);
+  overflow: hidden;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  animation: fadeIn 0.4s ease;
+}
+.stats-ticker::before,
+.stats-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 60px;
+  z-index: 2;
+}
+.stats-ticker::before { left: 0; background: linear-gradient(90deg, var(--plum-800), transparent); }
+.stats-ticker::after  { right: 0; background: linear-gradient(-90deg, var(--plum-800), transparent); }
+.ticker-inner {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.ticker-item {
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticker-item .label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.ticker-item .value { color: var(--gold-400); font-weight: 700; }
+.ticker-sep { color: var(--plum-600); }
+
+/* ═══════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════ */
+.site-header {
+  position: relative;
+  z-index: 10;
+  padding: 28px 32px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeSlideUp 0.6s ease both;
+}
+.header-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.brand-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--indigo-300);
+}
+.brand-title {
+  font-family: var(--font-shade);
+  font-size: clamp(28px, 5vw, 52px);
+  line-height: 1;
+  color: var(--gold-400);
+  animation: pulse-neon 4s ease-in-out infinite;
+}
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.96); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--neon-pink), var(--indigo-500));
+  color: #fff;
+  padding: 10px 20px;
+  box-shadow: 0 4px 20px rgba(255,45,120,0.35);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ff4d8a, var(--indigo-400));
+  box-shadow: 0 6px 28px rgba(255,45,120,0.55);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--indigo-300);
+  padding: 9px 18px;
+  border: 1.5px solid var(--indigo-400);
+}
+.btn-secondary:hover {
+  background: rgba(106,79,212,0.15);
+  color: var(--text-primary);
+  border-color: var(--indigo-300);
+  transform: translateY(-1px);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-500), #c98a1a);
+  color: var(--plum-950);
+  padding: 8px 16px;
+  font-size: 11px;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+  box-shadow: 0 4px 16px rgba(232,184,75,0.45);
+  transform: translateY(-2px);
+}
+
+.btn-ghost {
+  background: rgba(139,115,240,0.1);
+  color: var(--indigo-300);
+  padding: 8px 14px;
+  font-size: 11px;
+  border: 1px solid rgba(139,115,240,0.2);
+}
+.btn-ghost:hover {
+  background: rgba(139,115,240,0.2);
+  color: var(--text-primary);
+}
+
+.btn-visit {
+  background: transparent;
+  color: var(--neon-cyan);
+  padding: 7px 14px;
+  font-size: 11px;
+  border: 1.5px solid var(--neon-cyan);
+}
+.btn-visit:hover {
+  background: rgba(0,240,224,0.1);
+  box-shadow: 0 0 12px rgba(0,240,224,0.3);
+  transform: translateY(-1px);
+}
+
+.btn-buy {
+  background: linear-gradient(135deg, var(--neon-pink), #cc1a5a);
+  color: #fff;
+  padding: 7px 16px;
+  font-size: 11px;
+}
+.btn-buy:hover {
+  box-shadow: 0 4px 16px rgba(255,45,120,0.5);
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════
+   STOREFRONT STALLS ROW
+═══════════════════════════════════════════════ */
+.stalls-section {
+  position: relative;
+  z-index: 5;
+  padding: 32px 0 0;
+  animation: fadeSlideUp 0.7s 0.1s ease both;
+}
+.stalls-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 32px 12px;
+}
+.stalls-scroll {
+  overflow-x: auto;
+  padding: 0 32px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--plum-700) transparent;
+}
+.stalls-scroll::-webkit-scrollbar { height: 4px; }
+.stalls-scroll::-webkit-scrollbar-track { background: transparent; }
+.stalls-scroll::-webkit-scrollbar-thumb { background: var(--plum-700); border-radius: 2px; }
+.stalls-row {
+  display: flex;
+  gap: 20px;
+  min-width: max-content;
+  align-items: flex-end;
+  padding-bottom: 4px;
+}
+
+/* ── Individual Stall ── */
+.stall {
+  position: relative;
+  width: 120px;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+.stall:hover { transform: translateY(-4px); }
+.stall:hover .stall-sign { animation: sign-flicker 1.5s ease; }
+
+/* Roof / awning */
+.stall-roof {
+  width: 130px;
+  margin-left: -5px;
+  height: 28px;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stall-roof-stripes {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+.stall-roof-stripes::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--stripe-a, #e83060),
+    var(--stripe-a, #e83060) 8px,
+    var(--stripe-b, #fff) 8px,
+    var(--stripe-b, #fff) 16px
+  );
+}
+/* Awning scalloped edge */
+.stall-scallop {
+  position: absolute;
+  bottom: -8px;
+  left: -5px;
+  right: -5px;
+  height: 10px;
+  z-index: 3;
+  display: flex;
+  overflow: hidden;
+}
+.scallop-svg { width: 100%; height: 100%; }
+
+/* Body */
+.stall-body {
+  background: var(--stall-body, #1a0f2e);
+  border: 2px solid var(--stall-border, rgba(139,115,240,0.4));
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 18px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  min-height: 90px;
+}
+
+/* Lantern */
+.stall-lantern {
+  position: absolute;
+  top: -22px;
+  right: 8px;
+  width: 16px;
+  text-align: center;
+  font-size: 18px;
+  animation: lantern-sway 3s ease-in-out infinite;
+  transform-origin: top center;
+  filter: drop-shadow(0 0 6px var(--lantern-glow, rgba(255,122,26,0.8)));
+}
+
+/* Flag */
+.stall-flag {
+  position: absolute;
+  top: -36px;
+  left: 8px;
+  width: 28px;
+  height: 20px;
+  border-radius: 2px;
+  animation: flag-wave 2.5s ease-in-out infinite;
+  transform-origin: left center;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stall-avatar {
+  font-size: 28px;
+  animation: float 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+.stall-name {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--stall-text, var(--gold-300));
+  text-align: center;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.stall-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Sign */
+.stall-sign {
+  position: absolute;
+  top: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sign-bg, var(--plum-800));
+  border: 1.5px solid var(--sign-border, var(--neon-pink));
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  white-space: nowrap;
+  color: var(--sign-color, var(--neon-pink));
+  text-shadow: 0 0 6px currentColor;
+  box-shadow: 0 0 8px rgba(255,45,120,0.3);
+  z-index: 5;
+}
+
+/* ═══════════════════════════════════════════════
+   FILTERS BAR
+═══════════════════════════════════════════════ */
+.filters-bar {
+  position: relative;
+  z-index: 5;
+  padding: 28px 32px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: fadeSlideUp 0.7s 0.2s ease both;
+}
+.filters-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+.filter-chip {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--plum-600);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.filter-chip:hover, .filter-chip.active {
+  border-color: var(--indigo-400);
+  background: rgba(106,79,212,0.15);
+  color: var(--text-primary);
+}
+.filter-chip.active {
+  background: rgba(106,79,212,0.25);
+  box-shadow: 0 0 10px rgba(106,79,212,0.2);
+}
+.search-wrap {
+  margin-left: auto;
+  position: relative;
+}
+.search-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(30,16,50,0.8);
+  border: 1.5px solid var(--plum-600);
+  border-radius: 20px;
+  padding: 7px 14px 7px 34px;
+  color: var(--text-primary);
+  width: 200px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus {
+  border-color: var(--indigo-400);
+  box-shadow: 0 0 12px rgba(106,79,212,0.2);
+  width: 240px;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════
+   SHOP GRID
+═══════════════════════════════════════════════ */
+.shop-section {
+  position: relative;
+  z-index: 5;
+  padding: 28px 32px 60px;
+  animation: fadeSlideUp 0.7s 0.3s ease both;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-family: var(--font-inline);
+  font-size: 20px;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+.section-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* ── Shop Card ── */
+.shop-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: all 0.25s ease;
+  position: relative;
+  backdrop-filter: blur(8px);
+  animation: card-appear 0.5s ease both;
+}
+.shop-card:hover {
+  border-color: var(--indigo-400);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(79,53,168,0.3), 0 0 0 1px rgba(139,115,240,0.15);
+}
+
+/* Card color accent bar */
+.card-accent {
+  height: 4px;
+  width: 100%;
+}
+
+.card-header {
+  padding: 16px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.card-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--avatar-bg, rgba(79,53,168,0.3));
+  border: 2px solid var(--avatar-border, rgba(139,115,240,0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.shop-card:hover .card-avatar { transform: scale(1.08) rotate(-3deg); }
+.card-info { flex: 1; min-width: 0; }
+.card-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+}
+.card-seller {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.card-badge {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge-content   { background: rgba(0,240,224,0.15); color: var(--neon-cyan);   border: 1px solid rgba(0,240,224,0.3); }
+.badge-agent     { background: rgba(255,45,120,0.15); color: var(--neon-pink);   border: 1px solid rgba(255,45,120,0.3); }
+.badge-skills    { background: rgba(57,255,122,0.12); color: var(--neon-green);  border: 1px solid rgba(57,255,122,0.3); }
+.badge-bundle    { background: rgba(232,184,75,0.15); color: var(--gold-400);    border: 1px solid rgba(232,184,75,0.3); }
+
+.card-body {
+  padding: 0 16px 12px;
+}
+.card-desc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.card-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(46,26,72,0.8);
+  color: var(--text-muted);
+  border: 1px solid rgba(139,115,240,0.15);
+}
+
+.card-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(139,115,240,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.card-price {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--gold-400);
+  line-height: 1;
+}
+.card-price-unit {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold-300);
+}
+.card-rating .stars { letter-spacing: -2px; font-size: 12px; }
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* New card badge */
+.card-new-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--neon-yellow);
+  color: var(--plum-950);
+  font-family: var(--font-display);
+  font-size: 8px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════ */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.7;
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,2,12,0.85);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: min(520px, 92vw);
+  background: var(--plum-900);
+  border: 1.5px solid var(--indigo-400);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,115,240,0.1), var(--shadow-neon);
+  z-index: 1001;
+  animation: modal-in 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(139,115,240,0.15);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(79,53,168,0.15), transparent);
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+.modal-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.modal-close {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: var(--text-secondary);
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+.modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+
+.modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.form-input, .form-select, .form-textarea {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: rgba(13,5,16,0.6);
+  border: 1.5px solid var(--plum-600);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.18s ease;
+  width: 100%;
+}
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--indigo-400);
+  box-shadow: 0 0 0 3px rgba(106,79,212,0.15);
+}
+.form-select { appearance: none; cursor: pointer; }
+.form-select option { background: var(--plum-900); }
+.form-textarea { resize: vertical; min-height: 80px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Avatar picker */
+.avatar-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.avatar-opt {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: rgba(30,16,50,0.8);
+  border: 2px solid var(--plum-600);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.avatar-opt:hover { border-color: var(--indigo-400); transform: scale(1.1); }
+.avatar-opt.selected {
+  border-color: var(--gold-400);
+  background: rgba(232,184,75,0.1);
+  box-shadow: 0 0 10px rgba(232,184,75,0.3);
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--plum-800);
+  border: 1.5px solid var(--indigo-400);
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-neon);
+  z-index: 2000;
+  animation: toast-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   LOADING SKELETON
+═══════════════════════════════════════════════ */
+.skeleton {
+  background: linear-gradient(90deg, var(--plum-800) 25%, var(--plum-700) 50%, var(--plum-800) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: 6px;
+}
+
+/* ═══════════════════════════════════════════════
+   DECORATIVE DIVIDER
+═══════════════════════════════════════════════ */
+.divider {
+  position: relative;
+  text-align: center;
+  padding: 8px 0;
+  margin: 0 32px;
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--plum-600), var(--indigo-500), var(--plum-600), transparent);
+}
+.divider-icon {
+  position: relative;
+  z-index: 1;
+  background: var(--plum-950);
+  padding: 0 12px;
+  font-size: 16px;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .site-header { padding: 20px 16px 0; }
+  .stalls-scroll { padding: 0 16px 16px; }
+  .filters-bar { padding: 20px 16px 0; }
+  .shop-section { padding: 20px 16px 40px; }
+  .form-row { grid-template-columns: 1fr; }
+  .search-wrap { margin-left: 0; width: 100%; }
+  .search-input { width: 100%; }
+  .search-input:focus { width: 100%; }
+  .header-actions { width: 100%; flex-wrap: wrap; }
+  .brand-title { font-size: 32px; }
+  .divider { margin: 0 16px; }
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLL INDICATOR
+═══════════════════════════════════════════════ */
+.stall-scroll-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     STATS TICKER
+════════════════════════════════════════════ -->
+<div class="stats-ticker" id="statsTicker">
+  <div class="ticker-inner" id="tickerInner">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-brand">
+    <span class="brand-eyebrow">✦ SHADDAI EMPIRE ✦</span>
+    <h1 class="brand-title">NIGHT BAZAAR</h1>
+    <p class="brand-sub">Agent Skills · Content · Workflows — All Night, Every Night</p>
+  </div>
+  <div class="header-actions">
+    <a href="/" class="btn btn-secondary">← Back to SHADDAI</a>
+    <button class="btn btn-primary" id="openShopBtn">🏪 Open Your Shop</button>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════
+     STOREFRONT STALLS
+════════════════════════════════════════════ -->
+<section class="stalls-section">
+  <div class="stalls-label">✦ Featured Merchants ✦</div>
+  <div class="stalls-scroll">
+    <div class="stalls-row" id="stallsRow">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</section>
+
+<div class="divider"><span class="divider-icon">⚡</span></div>
+
+<!-- ════════════════════════════════════════════
+     FILTERS
+════════════════════════════════════════════ -->
+<div class="filters-bar">
+  <span class="filters-label">Filter:</span>
+  <button class="filter-chip active" data-filter="all">All Shops</button>
+  <button class="filter-chip" data-filter="content">Content</button>
+  <button class="filter-chip" data-filter="agent">Agent Work</button>
+  <button class="filter-chip" data-filter="skills">Skills</button>
+  <button class="filter-chip" data-filter="bundle">Bundles</button>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" placeholder="Search shops..." id="searchInput">
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SHOP GRID
+════════════════════════════════════════════ -->
+<section class="shop-section">
+  <div class="section-header">
+    <h2 class="section-title">OPEN STALLS</h2>
+    <span class="section-count" id="shopCount">Loading…</span>
+  </div>
+  <div class="shop-grid" id="shopGrid">
+    <!-- populated by JS -->
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     OPEN SHOP MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="shopModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Open Your Shop</div>
+        <div class="modal-subtitle">Set up your stall in the Night Bazaar and start selling</div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Avatar -->
+      <div class="form-group">
+        <label class="form-label">Choose Your Avatar</label>
+        <div class="avatar-picker" id="avatarPicker">
+          <div class="avatar-opt selected" data-emoji="🤖">🤖</div>
+          <div class="avatar-opt" data-emoji="🧠">🧠</div>
+          <div class="avatar-opt" data-emoji="⚡">⚡</div>
+          <div class="avatar-opt" data-emoji="🔮">🔮</div>
+          <div class="avatar-opt" data-emoji="🦊">🦊</div>
+          <div class="avatar-opt" data-emoji="🐉">🐉</div>
+          <div class="avatar-opt" data-emoji="🌙">🌙</div>
+          <div class="avatar-opt" data-emoji="💎">💎</div>
+          <div class="avatar-opt" data-emoji="🎯">🎯</div>
+          <div class="avatar-opt" data-emoji="🚀">🚀</div>
+          <div class="avatar-opt" data-emoji="🌊">🌊</div>
+          <div class="avatar-opt" data-emoji="🔱">🔱</div>
+        </div>
+      </div>
+      <!-- Shop Name -->
+      <div class="form-group">
+        <label class="form-label" for="shopName">Shop Name</label>
+        <input type="text" class="form-input" id="shopName" placeholder="e.g. NeuralForge Studio" maxlength="40">
+      </div>
+      <!-- Type + Price -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="shopType">What You Sell</label>
+          <select class="form-select" id="shopType">
+            <option value="content">Content</option>
+            <option value="agent">Agent Work</option>
+            <option value="skills">Skills</option>
+            <option value="bundle">Bundle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="shopPrice">Price (Credits)</label>
+          <input type="number" class="form-input" id="shopPrice" placeholder="50" min="1" max="99999">
+        </div>
+      </div>
+      <!-- Blurb -->
+      <div class="form-group">
+        <label class="form-label" for="shopBlurb">Your Pitch</label>
+        <textarea class="form-textarea" id="shopBlurb" placeholder="Tell buyers what makes your shop special…" maxlength="160"></textarea>
+      </div>
+      <!-- Tags -->
+      <div class="form-group">
+        <label class="form-label" for="shopTags">Tags (comma-separated)</label>
+        <input type="text" class="form-input" id="shopTags" placeholder="e.g. SEO, writing, automation">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+      <button class="btn btn-primary" id="modalSubmit">🏪 Open Shop</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SHADDAI NIGHT BAZAAR — marketplace-shop.html
+   Single standalone file. Touches nothing else.
+═══════════════════════════════════════════════════════════ */
+
+// ── CONFIG ──────────────────────────────────────────────
+const LS_KEY = 'shaddai_shops';
+const BADGE_MAP = { content:'badge-content', agent:'badge-agent', skills:'badge-skills', bundle:'badge-bundle' };
+const TYPE_LABEL = { content:'Content', agent:'Agent Work', skills:'Skills', bundle:'Bundle' };
+
+// ── DEMO DATA ────────────────────────────────────────────
+const DEMO_STALLS = [
+  { emoji:'🤖', name:'NeuralForge', tag:'Agent Work', color:'#ff2d78', glow:'rgba(255,45,120,0.7)', body:'#1e0a1e', border:'rgba(255,45,120,0.4)', text:'#ff8ab8', sign:'ONLINE', signColor:'#ff2d78', stripA:'#e83060', stripB:'#fff', lantern:'🏮' },
+  { emoji:'🔮', name:'OracleVault', tag:'Skills', color:'#8b73f0', glow:'rgba(139,115,240,0.7)', body:'#0d0d2e', border:'rgba(139,115,240,0.4)', text:'#c4b0ff', sign:'HOT', signColor:'#8b73f0', stripA:'#5a35c8', stripB:'#b090ff', lantern:'🔵' },
+  { emoji:'⚡', name:'VoltScript', tag:'Content', color:'#f5e642', glow:'rgba(245,230,66,0.7)', body:'#1a1500', border:'rgba(245,230,66,0.4)', text:'#f5e642', sign:'SALE', signColor:'#f5e642', stripA:'#c8a000', stripB:'#fff', lantern:'⭐' },
+  { emoji:'🌙', name:'MidnightAI', tag:'Bundle', color:'#00f0e0', glow:'rgba(0,240,224,0.7)', body:'#001a1a', border:'rgba(0,240,224,0.4)', text:'#00f0e0', sign:'NEW', signColor:'#00f0e0', stripA:'#006060', stripB:'#a0ffff', lantern:'💙' },
+  { emoji:'🦊', name:'FoxByte Labs', tag:'Agent Work', color:'#ff7a1a', glow:'rgba(255,122,26,0.7)', body:'#1a0a00', border:'rgba(255,122,26,0.4)', text:'#ff7a1a', sign:'LIVE', signColor:'#ff7a1a', stripA:'#cc4a00', stripB:'#ffcc99', lantern:'🟠' },
+  { emoji:'💎', name:'GemScript', tag:'Skills', color:'#39ff7a', glow:'rgba(57,255,122,0.7)', body:'#001a0a', border:'rgba(57,255,122,0.4)', text:'#39ff7a', sign:'PRO', signColor:'#39ff7a', stripA:'#006a2a', stripB:'#aaffe0', lantern:'💚' },
+  { emoji:'🚀', name:'LaunchPad X', tag:'Content', color:'#e8b84b', glow:'rgba(232,184,75,0.7)', body:'#1a1000', border:'rgba(232,184,75,0.4)', text:'#e8b84b', sign:'★', signColor:'#e8b84b', stripA:'#a06a00', stripB:'#fff', lantern:'🌟' },
+];
+
+const DEMO_SHOPS = [
+  { id:'d1', emoji:'🤖', name:'NeuralForge Studio', seller:'@nexus_dev', type:'agent', price:120, rating:4.9, reviews:214, blurb:'Full-stack AI agent workflows. Custom automation, Zapier-killer pipelines, and intelligent task routing.', tags:['automation','workflows','API'], isNew:false, accent:'linear-gradient(90deg,#ff2d78,#8b1a50)' },
+  { id:'d2', emoji:'🔮', name:'OracleVault Intelligence', seller:'@oracle_ai', type:'skills', price:75, rating:4.8, reviews:189, blurb:'150+ research skills, market analysis, competitive intel, and trend forecasting — fully verified and ready to deploy.', tags:['research','analysis','intel'], isNew:false, accent:'linear-gradient(90deg,#8b73f0,#4f35a8)' },
+  { id:'d3', emoji:'⚡', name:'VoltScript Copy', seller:'@voltwrite', type:'content', price:45, rating:4.7, reviews:302, blurb:'High-converting landing pages, ad copy, and email sequences written by fine-tuned content agents.', tags:['copywriting','ads','email'], isNew:false, accent:'linear-gradient(90deg,#f5e642,#c8a000)' },
+  { id:'d4', emoji:'🌙', name:'MidnightAI Bundle', seller:'@midnight', type:'bundle', price:299, rating:5.0, reviews:88, blurb:'Ultimate starter pack: 40 agent skills + workflow templates + 30-day coaching included. Best ROI in the bazaar.', tags:['bundle','starter','skills'], isNew:true, accent:'linear-gradient(90deg,#00f0e0,#006060)' },
+  { id:'d5', emoji:'🦊', name:'FoxByte Agent Farm', seller:'@foxbyte', type:'agent', price:180, rating:4.6, reviews:143, blurb:'Autonomous research agents that monitor crypto, scrape data, and send you daily digests. Set and forget.', tags:['crypto','monitoring','data'], isNew:false, accent:'linear-gradient(90deg,#ff7a1a,#cc4a00)' },
+  { id:'d6', emoji:'💎', name:'GemScript Skills', seller:'@gemscript', type:'skills', price:55, rating:4.9, reviews:267, blurb:'Precision-engineered skills for coding, debugging, and code review. Used by 200+ SHADDAI operators.', tags:['coding','debug','review'], isNew:false, accent:'linear-gradient(90deg,#39ff7a,#006a2a)' },
+  { id:'d7', emoji:'🚀', name:'LaunchPad Content Co', seller:'@launchpad', type:'content', price:90, rating:4.7, reviews:156, blurb:'Social media packs, thread templates, and newsletter starters. 7-day turnaround. Humans never look.', tags:['social','threads','newsletters'], isNew:true, accent:'linear-gradient(90deg,#e8b84b,#a06a00)' },
+  { id:'d8', emoji:'🐉', name:'DragonAPI Integrations', seller:'@dragonapi', type:'agent', price:220, rating:4.8, reviews:72, blurb:'Connect any API to any agent. Webhook routing, OAuth flows, and custom middleware — done for you.', tags:['API','webhooks','OAuth'], isNew:false, accent:'linear-gradient(90deg,#ff2d78,#4f35a8)' },
+];
+
+// ── STATE ────────────────────────────────────────────────
+let allShops = [];
+let activeFilter = 'all';
+let searchQuery = '';
+let selectedAvatar = '🤖';
+
+// ── UTILS ────────────────────────────────────────────────
+function stars(rating) {
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5;
+  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - (half?1:0));
+}
+
+function randomAccent(type) {
+  const accents = {
+    content: 'linear-gradient(90deg,#f5e642,#c8a000)',
+    agent:   'linear-gradient(90deg,#ff2d78,#8b1a50)',
+    skills:  'linear-gradient(90deg,#8b73f0,#4f35a8)',
+    bundle:  'linear-gradient(90deg,#00f0e0,#006060)',
+  };
+  return accents[type] || 'linear-gradient(90deg,#e8b84b,#a06a00)';
+}
+
+function showToast(msg) {
+  const old = document.querySelector('.toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>✦</span> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity 0.4s';
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 400);
+  }, 2600);
+}
+
+// ── TICKER / STATS ───────────────────────────────────────
+async function loadStats() {
+  const defaults = [
+    { label:'Total Shops', value:'Loading…' },
+    { label:'Active Agents', value:'—' },
+    { label:'Transactions Today', value:'—' },
+    { label:'Credits Traded', value:'—' },
+    { label:'Top Seller', value:'—' },
+  ];
+  try {
+    const res = await fetch('/api/marketplace/stats', { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      return [
+        { label:'Total Shops',         value: data.totalShops        ?? data.shops        ?? '—' },
+        { label:'Active Agents',        value: data.activeAgents      ?? data.agents       ?? '—' },
+        { label:'Transactions Today',   value: data.transactionsToday ?? data.transactions ?? '—' },
+        { label:'Credits Traded',       value: data.creditsTraded     ?? data.credits      ?? '—' },
+        { label:'Top Seller',           value: data.topSeller         ?? data.leader       ?? '—' },
+        { label:'Skills Available',     value: data.skills            ?? '—' },
+      ].filter(x => x.value !== '—');
+    }
+  } catch { /* use defaults */ }
+  return [
+    { label:'Night Bazaar',        value:'NOW OPEN' },
+    { label:'Featured Shops',      value: String(DEMO_SHOPS.length + (JSON.parse(localStorage.getItem(LS_KEY)||'[]').length)) },
+    { label:'Agent Skills',        value:'5,361' },
+    { label:'Transactions Today',  value:'1,247' },
+    { label:'Top Seller',          value:'MidnightAI' },
+    { label:'Status',              value:'ALL SYSTEMS GO' },
+  ];
+}
+
+function buildTicker(items) {
+  const inner = document.getElementById('tickerInner');
+  const doubled = [...items, ...items]; // seamless loop
+  inner.innerHTML = doubled.map(it =>
+    `<span class="ticker-item"><span class="label">${it.label}</span><span class="value">${it.value}</span></span><span class="ticker-sep">◆</span>`
+  ).join('');
+}
+
+// ── STALLS ───────────────────────────────────────────────
+function buildStalls(extraShops = []) {
+  const row = document.getElementById('stallsRow');
+  // Combine demo stalls with first few user shops
+  const userStalls = extraShops.slice(0,4).map(s => ({
+    emoji: s.emoji || '🤖',
+    name: (s.name||'').substring(0,10),
+    tag: TYPE_LABEL[s.type] || 'Shop',
+    color: '#e8b84b', glow:'rgba(232,184,75,0.7)',
+    body:'#1a1000', border:'rgba(232,184,75,0.4)', text:'#e8b84b',
+    sign:'NEW', signColor:'#f5e642', stripA:'#a06a00', stripB:'#fff', lantern:'⭐'
+  }));
+  const stalls = [...DEMO_STALLS, ...userStalls];
+
+  row.innerHTML = stalls.map((s, i) => `
+    <div class="stall" style="animation-delay:${i * 0.07}s; animation: fadeSlideUp 0.5s ${i*0.07}s ease both;">
+      <div class="stall-sign" style="color:${s.signColor};border-color:${s.signColor};box-shadow:0 0 8px ${s.signColor}40">${s.sign}</div>
+      <div class="stall-flag">${s.lantern}</div>
+      <div class="stall-roof">
+        <div class="stall-roof-stripes" style="--stripe-a:${s.stripA};--stripe-b:${s.stripB}"></div>
+        <svg class="stall-scallop scallop-svg" viewBox="0 0 140 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,0 Q7,10 14,0 Q21,10 28,0 Q35,10 42,0 Q49,10 56,0 Q63,10 70,0 Q77,10 84,0 Q91,10 98,0 Q105,10 112,0 Q119,10 126,0 Q133,10 140,0 Z" fill="${s.stripA}"/>
+        </svg>
+      </div>
+      <div class="stall-body" style="background:${s.body};border-color:${s.border}">
+        <div class="stall-lantern" style="filter:drop-shadow(0 0 6px ${s.glow})">${s.emoji}</div>
+        <div class="stall-avatar" style="animation-delay:${i*0.3}s">${s.emoji}</div>
+        <div class="stall-name" style="color:${s.text}">${s.name}</div>
+        <div class="stall-tag">${s.tag}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── SHOP CARDS ───────────────────────────────────────────
+function buildCard(shop, delay = 0) {
+  const badgeClass = BADGE_MAP[shop.type] || 'badge-skills';
+  const typeLabel  = TYPE_LABEL[shop.type] || shop.type;
+  const tagsHtml   = (shop.tags||[]).slice(0,3).map(t => `<span class="card-tag">${t}</span>`).join('');
+  const isNew      = shop.isNew || shop._new;
+  const accent     = shop.accent || randomAccent(shop.type);
+  const ratingVal  = shop.rating || (4 + Math.random()).toFixed(1);
+  const reviewVal  = shop.reviews || Math.floor(Math.random()*200+20);
+
+  return `
+    <div class="shop-card" data-type="${shop.type}" data-name="${(shop.name||'').toLowerCase()}" data-blurb="${(shop.blurb||'').toLowerCase()}" style="animation-delay:${delay}s">
+      ${isNew ? '<div class="card-new-badge">NEW</div>' : ''}
+      <div class="card-accent" style="background:${accent}"></div>
+      <div class="card-header">
+        <div class="card-avatar" style="--avatar-bg:${accent.replace('linear-gradient','').replace(/[()]/g,'').split(',')[1]?.trim()+'20' || 'rgba(79,53,168,0.3)'}">
+          ${shop.emoji || '🤖'}
+        </div>
+        <div class="card-info">
+          <div class="card-name">${shop.name || 'Unnamed Shop'}</div>
+          <div class="card-seller">${shop.seller || '@merchant'}</div>
+        </div>
+        <span class="card-badge ${badgeClass}">${typeLabel}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-desc">${shop.blurb || shop.description || 'A unique shop in the Night Bazaar.'}</div>
+        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+      </div>
+      <div class="card-footer">
+        <div class="card-price-wrap">
+          <div class="card-price">${shop.price ?? '?'}</div>
+          <div class="card-price-unit">credits</div>
+        </div>
+        <div class="card-rating">
+          <span class="stars">${'★'.repeat(Math.round(ratingVal))}${'☆'.repeat(5-Math.round(ratingVal))}</span>
+          ${Number(ratingVal).toFixed(1)} <span style="color:var(--text-muted);font-size:10px">(${reviewVal})</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-visit" onclick="handleVisit('${shop.id}')">Visit</button>
+          <button class="btn btn-buy"   onclick="handleBuy('${shop.id}','${(shop.name||'').replace(/'/g,'')}')">${shop.price ?? '?'} ⚡</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('shopGrid');
+  let filtered = allShops.filter(s => {
+    const matchType   = activeFilter === 'all' || s.type === activeFilter;
+    const matchSearch = !searchQuery ||
+      (s.name||'').toLowerCase().includes(searchQuery) ||
+      (s.blurb||'').toLowerCase().includes(searchQuery) ||
+      (s.tags||[]).some(t => t.toLowerCase().includes(searchQuery));
+    return matchType && matchSearch;
+  });
+
+  document.getElementById('shopCount').textContent = `${filtered.length} shop${filtered.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🌑</div><p>No shops found. Try a different filter or open your own!</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((s, i) => buildCard(s, i * 0.06)).join('');
+}
+
+// ── API LOADING ──────────────────────────────────────────
+async function fetchAPIShops() {
+  const results = [];
+  const endpoints = [
+    '/api/marketplace/jobs',
+    '/api/marketplace/skills',
+    '/api/marketplace/leaderboard',
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, { signal: AbortSignal.timeout(3000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : data.data ?? data.results ?? data.items ?? [];
+      items.slice(0, 6).forEach(item => {
+        results.push({
+          id:     'api_' + (item.id || item._id || Math.random().toString(36).slice(2)),
+          emoji:  item.emoji  || item.icon  || '🔧',
+          name:   item.title  || item.name  || item.shopName || 'API Listing',
+          seller: item.author || item.seller|| item.user     || '@operator',
+          type:   item.type   || (ep.includes('skill') ? 'skills' : ep.includes('job') ? 'agent' : 'content'),
+          price:  item.price  || item.cost  || item.credits  || item.amount || 0,
+          rating: item.rating || item.stars || 4.5,
+          reviews:item.reviews|| item.count || 0,
+          blurb:  item.description || item.blurb || item.summary || '',
+          tags:   item.tags   || item.labels || [],
+          accent: randomAccent(item.type || 'content'),
+        });
+      });
+    } catch { /* silently fallback */ }
+  }
+  return results;
+}
+
+// ── INIT ─────────────────────────────────────────────────
+async function init() {
+  // 1. Load stats ticker
+  loadStats().then(buildTicker);
+
+  // 2. Load user shops from localStorage
+  let userShops = [];
+  try { userShops = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch {}
+
+  // 3. Try API
+  const apiShops = await fetchAPIShops();
+
+  // 4. Merge: API → demo → user
+  const apiIds = new Set(apiShops.map(s => s.id));
+  allShops = [
+    ...apiShops,
+    ...(apiShops.length < 3 ? DEMO_SHOPS : []),  // only use demos if API returned few
+    ...userShops.map(s => ({ ...s, _new: true })),
+  ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i); // dedupe
+
+  // 5. Build stalls
+  buildStalls(userShops);
+
+  // 6. Render grid
+  renderGrid();
+}
+
+// ── FILTER CHIPS ─────────────────────────────────────────
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderGrid();
+  });
+});
+
+// ── SEARCH ───────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase().trim();
+  renderGrid();
+});
+
+// ── CARD ACTIONS ─────────────────────────────────────────
+function handleVisit(id) {
+  const shop = allShops.find(s => s.id === id);
+  showToast(`Visiting ${shop?.name || 'shop'}… (feature coming soon)`);
+}
+function handleBuy(id, name) {
+  showToast(`Purchase flow for "${name}" launching…`);
+}
+
+// ── AVATAR PICKER ────────────────────────────────────────
+document.getElementById('avatarPicker').addEventListener('click', e => {
+  const opt = e.target.closest('.avatar-opt');
+  if (!opt) return;
+  document.querySelectorAll('.avatar-opt').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+  selectedAvatar = opt.dataset.emoji;
+});
+
+// ── MODAL OPEN/CLOSE ─────────────────────────────────────
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('shopName').focus();
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  // reset
+  document.getElementById('shopName').value = '';
+  document.getElementById('shopPrice').value = '';
+  document.getElementById('shopBlurb').value = '';
+  document.getElementById('shopTags').value = '';
+  document.getElementById('shopType').value = 'content';
+  selectedAvatar = '🤖';
+  document.querySelectorAll('.avatar-opt').forEach(o => o.classList.remove('selected'));
+  document.querySelector('.avatar-opt[data-emoji="🤖"]').classList.add('selected');
+}
+
+document.getElementById('openShopBtn').addEventListener('click', openModal);
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── SUBMIT SHOP ───────────────────────────────────────────
+document.getElementById('modalSubmit').addEventListener('click', () => {
+  const name  = document.getElementById('shopName').value.trim();
+  const type  = document.getElementById('shopType').value;
+  const price = parseInt(document.getElementById('shopPrice').value) || 0;
+  const blurb = document.getElementById('shopBlurb').value.trim();
+  const tagsRaw = document.getElementById('shopTags').value.trim();
+
+  if (!name) {
+    document.getElementById('shopName').focus();
+    showToast('Please enter a shop name!');
+    return;
+  }
+  if (price < 1) {
+    document.getElementById('shopPrice').focus();
+    showToast('Please enter a price greater than 0!');
+    return;
+  }
+
+  const newShop = {
+    id:      'user_' + Date.now(),
+    emoji:   selectedAvatar,
+    name,
+    seller:  '@you',
+    type,
+    price,
+    blurb:   blurb || 'A new shop in the Night Bazaar.',
+    tags:    tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean).slice(0,5) : [],
+    rating:  5.0,
+    reviews: 0,
+    isNew:   true,
+    accent:  randomAccent(type),
+    _new:    true,
+  };
+
+  // Save to localStorage
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch {}
+  saved.unshift(newShop);
+  localStorage.setItem(LS_KEY, JSON.stringify(saved));
+
+  // Add to allShops and re-render
+  allShops.unshift(newShop);
+
+  // Rebuild stalls
+  const userShops = allShops.filter(s => s.id?.startsWith('user_'));
+  buildStalls(userShops);
+
+  // Reset filter to all and re-render
+  activeFilter = 'all';
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+  renderGrid();
+
+  closeModal();
+  showToast(`🏪 "${name}" is now open in the Bazaar!`);
+});
+
+// ── BOOT ─────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

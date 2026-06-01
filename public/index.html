@@ -4886,11 +4886,14 @@ body.ly-focus .card{border-radius:10px}
       @media(max-width:820px){#operatorForge .of-grid{grid-template-columns:1fr}}
       /* swivel stage */
       #operatorForge .of-stage{padding:18px;border-right:1px solid rgba(34,211,238,0.12);display:flex;flex-direction:column;align-items:center;background:radial-gradient(80% 60% at 50% 30%,rgba(34,211,238,0.06),transparent)}
-      #operatorForge .of-scene{perspective:700px;width:200px;height:210px;cursor:grab}
+      #operatorForge .of-scene{perspective:700px;width:200px;height:210px;cursor:grab;position:relative}
       #operatorForge .of-scene:active{cursor:grabbing}
       #operatorForge .of-rotor{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(8deg) rotateY(0deg);animation:ofSpin 14s linear infinite}
       #operatorForge.dragging .of-rotor{animation:none}
       @keyframes ofSpin{to{transform:rotateX(8deg) rotateY(360deg)}}
+      /* glow-pulse overlay on operator */
+      #operatorForge .of-glow-ring{position:absolute;inset:-12px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 0 var(--of-glow,#22d3ee);animation:ofGlowPulse 2.8s ease-in-out infinite;opacity:.65;z-index:2}
+      @keyframes ofGlowPulse{0%,100%{box-shadow:0 0 18px 3px var(--of-glow,#22d3ee)}50%{box-shadow:0 0 42px 12px var(--of-glow,#22d3ee)}}
       #operatorForge .of-holo{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:90px;height:130px}
       #operatorForge .of-body{position:absolute;left:50%;top:0;transform:translateX(-50%);width:54px;height:90px;border-radius:26px 26px 18px 18px;background:linear-gradient(180deg,var(--of-glow,#22d3ee),rgba(10,16,32,0.6));box-shadow:0 0 26px var(--of-glow,#22d3ee),inset 0 2px 8px rgba(255,255,255,0.25);opacity:.92}
       #operatorForge .of-head3{position:absolute;left:50%;top:-22px;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--of-glow,#22d3ee));box-shadow:0 0 22px var(--of-glow,#22d3ee)}
@@ -4907,6 +4910,11 @@ body.ly-focus .card{border-radius:10px}
       #operatorForge .of-bars i.on{background:linear-gradient(180deg,var(--of-cy),rgba(34,211,238,0.2));box-shadow:0 0 12px var(--of-cy)}
       #operatorForge .of-bars i.over{background:linear-gradient(180deg,#ff5470,rgba(255,84,112,0.2));box-shadow:0 0 12px #ff5470;border-color:#ff5470}
       #operatorForge .of-read{font-size:10px;margin-top:6px;color:#cfe9ff}#operatorForge .of-read .warn{color:#ff7a90}
+      /* archetype presets */
+      #operatorForge .of-presets-row{display:flex;gap:7px;padding:10px 18px 0;flex-wrap:wrap;border-top:1px solid rgba(34,211,238,0.08)}
+      #operatorForge .of-presets-row .of-preset-lbl{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.35);align-self:center;margin-right:4px;white-space:nowrap}
+      #operatorForge .of-preset{font-size:9px;letter-spacing:1px;padding:5px 11px;border-radius:20px;border:1px solid rgba(255,176,32,0.3);color:rgba(255,176,32,0.8);background:rgba(255,176,32,0.05);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+      #operatorForge .of-preset:hover{border-color:var(--of-am);color:var(--of-am);background:rgba(255,176,32,0.12);box-shadow:0 0 12px rgba(255,176,32,0.25)}
       /* panel */
       #operatorForge .of-panel{padding:18px;display:flex;flex-direction:column;gap:12px}
       #operatorForge .of-panel label{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px}
@@ -4927,15 +4935,42 @@ body.ly-focus .card{border-radius:10px}
       #operatorForge #ofTest{background:linear-gradient(180deg,var(--of-am),#b26a00);color:#1a0e00;box-shadow:0 4px 0 #5e3800,0 0 18px rgba(255,176,32,0.35)}
       #operatorForge #ofForge:active,#operatorForge #ofTest:active{transform:translateY(3px);box-shadow:none}
       #operatorForge .of-console{font-size:10px;color:#7fffd0;background:#02060a;border:1px solid rgba(34,211,238,0.15);border-radius:8px;padding:10px;min-height:40px;max-height:150px;overflow-y:auto;white-space:pre-wrap;line-height:1.5}
+      /* forged-agents gallery */
+      #operatorForge .of-gallery-wrap{border-top:1px solid rgba(34,211,238,0.1);padding:12px 18px 14px}
+      #operatorForge .of-gallery-hd{font-size:9px;letter-spacing:3px;color:var(--of-cy);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+      #operatorForge .of-gallery-hd .of-gallery-count{font-size:8px;color:rgba(255,255,255,0.35);letter-spacing:1px}
+      #operatorForge .of-gallery{display:flex;flex-wrap:wrap;gap:8px}
+      #operatorForge .of-agent-card{position:relative;min-width:100px;padding:9px 12px;border-radius:10px;border:1px solid rgba(34,211,238,0.18);background:linear-gradient(160deg,rgba(6,8,13,0.9),rgba(10,16,32,0.8));cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:4px}
+      #operatorForge .of-agent-card:hover{border-color:var(--of-cy);box-shadow:0 0 14px rgba(34,211,238,0.2);transform:translateY(-2px)}
+      #operatorForge .of-agent-card.custom-agent{border-color:rgba(255,176,32,0.35)}
+      #operatorForge .of-agent-card.custom-agent:hover{border-color:var(--of-am);box-shadow:0 0 14px rgba(255,176,32,0.25)}
+      #operatorForge .of-agent-card .ag-name{font-size:11px;letter-spacing:2px;color:#eaf6ff;font-weight:700}
+      #operatorForge .of-agent-card .ag-brain{font-size:8px;letter-spacing:1px;padding:2px 7px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);width:fit-content}
+      #operatorForge .of-agent-card .ag-brain.custom{border-color:rgba(255,176,32,0.4);color:rgba(255,176,32,0.7)}
+      #operatorForge .of-agent-card .ag-run{position:absolute;top:7px;right:8px;font-size:9px;color:rgba(34,211,238,0.5);opacity:0;transition:opacity .15s;cursor:pointer;background:none;border:none;font-family:inherit;padding:2px 4px}
+      #operatorForge .of-agent-card:hover .ag-run{opacity:1}
+      #operatorForge .of-gallery-empty{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:1px;padding:4px 0}
     </style>
     <div id="operatorForge">
       <div class="of-head"><span>⬡ OPERATOR <b>FORGE</b> — build your own agent</span><span class="tag">NON-CUSTODIAL · LIVE</span></div>
+      <!-- Archetype Presets Row -->
+      <div class="of-presets-row">
+        <span class="of-preset-lbl">ARCHETYPE:</span>
+        <button class="of-preset" data-archetype="analyst">📊 ANALYST</button>
+        <button class="of-preset" data-archetype="trader">⚡ TRADER</button>
+        <button class="of-preset" data-archetype="creator">🎨 CREATOR</button>
+        <button class="of-preset" data-archetype="researcher">🔬 RESEARCHER</button>
+        <button class="of-preset" data-archetype="guardian">🛡 GUARDIAN</button>
+      </div>
       <div class="of-grid">
         <div class="of-stage">
-          <div class="of-scene" id="ofScene"><div class="of-rotor" id="ofRotor">
-            <div class="of-ring"></div><div class="of-ring r2"></div>
-            <div class="of-holo"><div class="of-head3"></div><div class="of-visor"></div><div class="of-body"></div></div>
-          </div></div>
+          <div class="of-scene" id="ofScene">
+            <div class="of-glow-ring" id="ofGlowRing"></div>
+            <div class="of-rotor" id="ofRotor">
+              <div class="of-ring"></div><div class="of-ring r2"></div>
+              <div class="of-holo"><div class="of-head3"></div><div class="of-visor"></div><div class="of-body"></div></div>
+            </div>
+          </div>
           <div class="of-hint">⟳ DRAG TO ROTATE</div>
           <div class="of-core">
             <div class="lbl">⚡ COMPUTE CORE</div>
@@ -4958,66 +4993,231 @@ body.ly-focus .card{border-radius:10px}
           <div class="of-console" id="ofConsole">// forge an operator, equip skills, pick a brain, then TEST RUN.</div>
         </div>
       </div>
+      <!-- Forged-Agents Gallery -->
+      <div class="of-gallery-wrap">
+        <div class="of-gallery-hd">⬡ FORGED AGENTS <span class="of-gallery-count" id="ofGalleryCount">— loading</span></div>
+        <div class="of-gallery" id="ofGallery"><span class="of-gallery-empty">scanning registry…</span></div>
+      </div>
     </div>
     <script>
     (function(){
       const $=id=>document.getElementById(id);
       const cap={light:3,balanced:8,heavy:99}, tierPow={light:2,balanced:4,heavy:6};
-      let tier='light', brainAvail={}, skills=new Set();
+      let tier='light', brainAvail={}, skills=new Set(), allToolNames=[];
+
+      /* archetype definitions */
+      const ARCHETYPES={
+        analyst:{name:'ANALYST',tier:'balanced',brain:'groq-70b',persona:'You are ANALYST, a precision data intelligence operator. Your mission: extract signal from noise, surface trends, and deliver data-driven insights with zero fluff. Tone: concise, factual, clinical.',skills:['fetch_price','search_web','whale_scan','run_python','schedule_task']},
+        trader:{name:'TRADER',tier:'heavy',brain:'claude-premium',persona:'You are TRADER, a high-frequency alpha-seeker. You monitor markets, execute rapid analysis, spot arbitrage, and never hold emotion. Tone: decisive, fast, ruthless.',skills:['fetch_price','whale_scan','dex_scan','schedule_task','run_python']},
+        creator:{name:'CREATOR',tier:'light',brain:'ollama-local',persona:'You are CREATOR, a generative content engine. You write, imagine, and produce: copy, prompts, images, music briefs. Tone: imaginative, expressive, bold.',skills:['generate_image','search_web','run_python']},
+        researcher:{name:'RESEARCHER',tier:'balanced',brain:'groq-70b',persona:'You are RESEARCHER, a deep-dive knowledge operative. You synthesize papers, threads, and data into actionable intelligence. Tone: thorough, skeptical, structured.',skills:['search_web','fetch_price','run_python','schedule_task']},
+        guardian:{name:'GUARDIAN',tier:'heavy',brain:'claude-premium',persona:'You are GUARDIAN, a security and compliance sentinel. You audit code, flag anomalies, enforce rules, and protect assets. Tone: vigilant, precise, uncompromising.',skills:['run_python','schedule_task','whale_scan']}
+      };
+
       async function j(u,o){try{const r=await fetch(u,o);return await r.json()}catch(e){return{ok:false,error:String(e)}}}
       function hue(s){let h=0;for(const c of (s||'op'))h=(h*31+c.charCodeAt(0))%360;return h}
-      function paint(){const f=$('ofConsole');const name=$('ofName').value||'operator';
-        const col=`hsl(${hue(name)},85%,60%)`; $('operatorForge').style.setProperty('--of-glow',col);
-        // compute bars: base power by tier + load from skills
+
+      function paint(){
+        const name=$('ofName').value||'operator';
+        const col=`hsl(${hue(name)},85%,60%)`;
+        $('operatorForge').style.setProperty('--of-glow',col);
         const pow=tierPow[tier], load=skills.size, c=cap[tier];
         const bars=$('ofBars'); bars.innerHTML='';
         for(let i=0;i<6;i++){const b=document.createElement('i');b.style.height=(30+i*12)+'%';if(i<pow)b.className='on';bars.appendChild(b);}
         const over=load>c;
-        $('ofRead').innerHTML = over
-          ? `<span class="warn">⚠ ${load}/${c} skills — OVERLOADED. Upgrade compute tier.</span>`
-          : `${tier.toUpperCase()} · ${load}/${c} skills · pow ${pow}/6`;
+        $('ofRead').innerHTML=over
+          ?`<span class="warn">⚠ ${load}/${c} skills — OVERLOADED. Upgrade compute tier.</span>`
+          :`${tier.toUpperCase()} · ${load}/${c} skills · pow ${pow}/6`;
         if(over){[...bars.children].forEach(b=>{if(b.classList.contains('on'))b.classList.add('over')})}
         $('ofSkillCount').textContent=skills.size;
       }
-      // tier buttons
+
+      /* --- localStorage skill persistence --- */
+      function lsKey(name){return'of_skills_'+name.trim().toUpperCase()}
+      function saveSkills(name){if(!name)return;try{localStorage.setItem(lsKey(name),JSON.stringify([...skills]))}catch(e){}}
+      function restoreSkills(name){
+        if(!name)return;
+        try{
+          const stored=localStorage.getItem(lsKey(name));
+          if(stored){
+            const arr=JSON.parse(stored);
+            skills=new Set(arr);
+            $('ofSkills').querySelectorAll('.of-chip').forEach(c=>{
+              c.classList.toggle('on',skills.has(c.textContent));
+            });
+            paint();
+          }
+        }catch(e){}
+      }
+
+      /* tier buttons */
       $('ofTiers').querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
-        tier=btn.dataset.tier; $('ofTiers').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b===btn)); paint();
+        tier=btn.dataset.tier;
+        $('ofTiers').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b===btn));
+        paint();
       });
       $('ofTiers').querySelector('[data-tier="light"]').classList.add('sel');
       $('ofName').oninput=paint;
-      // drag-to-swivel
-      const scene=$('ofScene'),rotor=$('ofRotor'),wrap=$('operatorForge');let down=false,sx=0,ry=0;
-      scene.addEventListener('pointerdown',e=>{down=true;sx=e.clientX;wrap.classList.add('dragging');scene.setPointerCapture(e.pointerId)});
-      scene.addEventListener('pointermove',e=>{if(!down)return;ry+=(e.clientX-sx)*0.6;sx=e.clientX;rotor.style.transform=`rotateX(8deg) rotateY(${ry}deg)`});
-      scene.addEventListener('pointerup',()=>{down=false});
-      // load brains availability + tools
+      $('ofName').addEventListener('change',()=>restoreSkills($('ofName').value));
+
+      /* drag-to-swivel with momentum */
+      const scene=$('ofScene'),rotor=$('ofRotor'),wrap=$('operatorForge');
+      let down=false,sx=0,ry=0,vel=0,lastX=0,rafId=null;
+      function momentumStep(){
+        if(Math.abs(vel)<0.05){vel=0;return}
+        vel*=0.93;ry+=vel;
+        rotor.style.transform=`rotateX(8deg) rotateY(${ry}deg)`;
+        rafId=requestAnimationFrame(momentumStep);
+      }
+      scene.addEventListener('pointerdown',e=>{
+        down=true;sx=e.clientX;lastX=e.clientX;vel=0;
+        if(rafId){cancelAnimationFrame(rafId);rafId=null}
+        wrap.classList.add('dragging');scene.setPointerCapture(e.pointerId);
+      });
+      scene.addEventListener('pointermove',e=>{
+        if(!down)return;
+        const dx=e.clientX-sx;
+        vel=(e.clientX-lastX)*0.6;
+        ry+=dx*0.6;sx=e.clientX;lastX=e.clientX;
+        rotor.style.transform=`rotateX(8deg) rotateY(${ry}deg)`;
+      });
+      scene.addEventListener('pointerup',()=>{
+        down=false;wrap.classList.remove('dragging');
+        rafId=requestAnimationFrame(momentumStep);
+      });
+
+      /* archetype presets */
+      document.querySelectorAll('#operatorForge .of-preset').forEach(btn=>{
+        btn.onclick=()=>{
+          const arc=ARCHETYPES[btn.dataset.archetype]; if(!arc)return;
+          $('ofName').value=arc.name;
+          $('ofPersona').value=arc.persona;
+          /* set tier */
+          tier=arc.tier;
+          $('ofTiers').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.tier===tier));
+          /* equip skills */
+          skills=new Set();
+          $('ofSkills').querySelectorAll('.of-chip').forEach(c=>{
+            const on=arc.skills.includes(c.textContent);
+            c.classList.toggle('on',on);
+            if(on)skills.add(c.textContent);
+          });
+          saveSkills(arc.name);
+          paint();
+          $('ofConsole').textContent=`⬡ ARCHETYPE "${arc.name}" loaded · ${skills.size} skills pre-equipped.`;
+        };
+      });
+
+      /* gallery */
+      async function loadGallery(){
+        const res=await j('/api/brains');
+        const gallery=$('ofGallery');
+        gallery.innerHTML='';
+        let agents={};
+        if(res&&res.agents){agents=res.agents}
+        else if(res&&res.brains&&Array.isArray(res.brains)){
+          res.brains.forEach(x=>{agents[x.id||x.name]={label:x.label||x.name||x.id,brain:x.id||x.brain||'',custom:!!x.custom}});
+        }
+        const keys=Object.keys(agents);
+        $('ofGalleryCount').textContent=`— ${keys.length} registered`;
+        if(!keys.length){gallery.innerHTML='<span class="of-gallery-empty">no forged agents yet — create one above</span>';return}
+        keys.forEach(name=>{
+          const a=agents[name];
+          const isCustom=a.custom||false;
+          const card=document.createElement('div');
+          card.className='of-agent-card'+(isCustom?' custom-agent':'');
+          const brainLabel=a.brain||name;
+          card.innerHTML=`<span class="ag-name">${(a.label||name).toUpperCase()}</span><span class="ag-brain${isCustom?' custom':''}">${brainLabel}</span><button class="ag-run" title="Quick test run">▶ RUN</button>`;
+          /* click card → load into editor */
+          card.onclick=e=>{
+            if(e.target.classList.contains('ag-run'))return;
+            $('ofName').value=(a.label||name).toUpperCase();
+            /* restore persisted skills if any */
+            restoreSkills((a.label||name).toUpperCase());
+            /* match tier if possible */
+            const brain=a.brain||'';
+            if(brain.includes('ollama')||brain.includes('local'))tier='light';
+            else if(brain.includes('groq')||brain.includes('openrouter'))tier='balanced';
+            else if(brain.includes('claude')||brain.includes('premium'))tier='heavy';
+            $('ofTiers').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.tier===tier));
+            paint();
+            $('ofConsole').textContent=`⬡ Loaded "${(a.label||name).toUpperCase()}" — edit and FORGE to update, or TEST RUN.`;
+            /* scroll to panel */
+            $('operatorForge').scrollIntoView({behavior:'smooth',block:'nearest'});
+          };
+          /* quick run button */
+          card.querySelector('.ag-run').onclick=async(e)=>{
+            e.stopPropagation();
+            const agentName=(a.label||name).toUpperCase();
+            $('ofConsole').textContent=`⟳ quick-running ${agentName}…`;
+            const r=await j('/api/brains/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:agentName,prompt:'Introduce yourself in 2 sentences and state your top skill.'})});
+            $('ofConsole').textContent=r.ok?`▶ ${agentName} [${r.brain||''}]:\n${r.content}`:'⚠ '+(r.error||'run failed');
+          };
+          gallery.appendChild(card);
+        });
+      }
+
+      /* load brains availability + tools */
       async function load(){
         const b=await j('/api/brains');
-        if(b&&b.brains){b.brains.forEach(x=>brainAvail[x.id]=x.available);
-          $('ofTiers').querySelectorAll('button').forEach(btn=>{const ok=brainAvail[btn.dataset.brain]; if(ok===false)btn.classList.add('dim');});}
-        const t=await j('/api/agent/tools'); const arr=(t&&(t.tools||t.data))||[]; const names=(Array.isArray(arr)?arr:Object.values(arr)).map(x=>x.name||x.id||x).filter(Boolean);
-        const box=$('ofSkills'); box.innerHTML=''; (names.length?names:['fetch_price','search_web','generate_image','whale_scan','schedule_task','run_python']).slice(0,60).forEach(n=>{
-          const c=document.createElement('span');c.className='of-chip';c.textContent=n;c.onclick=()=>{c.classList.toggle('on');c.classList.contains('on')?skills.add(n):skills.delete(n);paint()};box.appendChild(c);
+        if(b&&b.brains&&Array.isArray(b.brains)){
+          b.brains.forEach(x=>brainAvail[x.id]=x.available);
+          $('ofTiers').querySelectorAll('button').forEach(btn=>{
+            const ok=brainAvail[btn.dataset.brain];
+            if(ok===false)btn.classList.add('dim');
+          });
+        }
+        const t=await j('/api/agent/tools');
+        const arr=(t&&(t.tools||t.data))||[];
+        const names=(Array.isArray(arr)?arr:Object.values(arr)).map(x=>x.name||x.id||x).filter(Boolean);
+        allToolNames=names.length?names:['fetch_price','search_web','generate_image','whale_scan','schedule_task','run_python','dex_scan','run_workflow','send_email','post_social'];
+        const box=$('ofSkills'); box.innerHTML='';
+        allToolNames.slice(0,60).forEach(n=>{
+          const c=document.createElement('span');c.className='of-chip';c.textContent=n;
+          c.onclick=()=>{
+            c.classList.toggle('on');
+            c.classList.contains('on')?skills.add(n):skills.delete(n);
+            saveSkills($('ofName').value);
+            paint();
+          };
+          box.appendChild(c);
         });
         paint();
+        /* restore skills for default name if any */
+        restoreSkills($('ofName').value);
+        await loadGallery();
       }
+
       function chosenBrain(){const btn=$('ofTiers').querySelector('[data-tier="'+tier+'"]');return btn?btn.dataset.brain:'ollama-local'}
       function personaFull(){const p=$('ofPersona').value||('You are '+($('ofName').value||'an operator')+', a SHADDAI agent.');return skills.size?p+'\nEquipped skills: '+[...skills].join(', ')+'.':p}
-      async function forge(silent){const name=$('ofName').value.trim();if(!name){$('ofConsole').textContent='⚠ give your operator a CODENAME first.';return false}
+
+      async function forge(silent){
+        const name=$('ofName').value.trim();
+        if(!name){$('ofConsole').textContent='⚠ give your operator a CODENAME first.';return false}
         const r=await j('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona:personaFull(),brainId:chosenBrain()})});
-        if(!silent)$('ofConsole').textContent = r.ok? `⬡ FORGED "${name}" · brain=${chosenBrain()} · ${skills.size} skills equipped.` : '⚠ '+(r.error||'forge failed');
+        if(!silent){
+          $('ofConsole').textContent=r.ok?`⬡ FORGED "${name}" · brain=${chosenBrain()} · ${skills.size} skills equipped.`:'⚠ '+(r.error||'forge failed');
+          if(r.ok)await loadGallery();
+        }
         return r.ok;
       }
+
       $('ofForge').onclick=()=>forge(false);
-      $('ofTest').onclick=async()=>{const name=$('ofName').value.trim();if(!name){$('ofConsole').textContent='⚠ CODENAME required.';return}
-        $('ofConsole').textContent='⟳ forging + running on '+chosenBrain()+'…'; await forge(true);
+      $('ofTest').onclick=async()=>{
+        const name=$('ofName').value.trim();
+        if(!name){$('ofConsole').textContent='⚠ CODENAME required.';return}
+        $('ofConsole').textContent='⟳ forging + running on '+chosenBrain()+'…';
+        await forge(true);
         const r=await j('/api/brains/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:name,prompt:'Introduce yourself in 2 sentences and state your top skill.'})});
-        $('ofConsole').textContent = r.ok? `▶ ${name} [${r.brain||chosenBrain()}/${r.provider||''}]:\n${r.content}` : '⚠ '+(r.error||'run failed (is the brain available?)');
+        $('ofConsole').textContent=r.ok?`▶ ${name} [${r.brain||chosenBrain()}/${r.provider||''}]:\n${r.content}`:'⚠ '+(r.error||'run failed (is the brain available?)');
       };
-      // init when Skills view first shown (and on load)
-      let inited=false; function init(){if(inited)return;inited=true;load();}
+
+      /* init when Skills view first shown */
+      let inited=false;
+      function init(){if(inited)return;inited=true;load();}
       document.addEventListener('DOMContentLoaded',()=>setTimeout(init,800));
-      const navHook=window.showView; if(typeof navHook==='function'){window.showView=function(v){const r=navHook.apply(this,arguments);if(v==='skills')init();return r}}
+      const navHook=window.showView;
+      if(typeof navHook==='function'){window.showView=function(v){const r=navHook.apply(this,arguments);if(v==='skills')init();return r}}
     })();
     </script>
     <!-- ════════ /OPERATOR FORGE ════════ -->
