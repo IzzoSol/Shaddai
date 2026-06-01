@@ -95,4 +95,54 @@ router.post('/intent', json, (req, res) => {
 // Intent ledger for the UI panel.
 router.get('/intents', (req, res) => res.json({ ok: true, intents: state.intents.slice(0, 50) }));
 
+// --------------------------------------------------------------------------
+// AGENT ECONOMY: pay a SHADDAI agent (in stablecoin) for completing a task.
+// This is the user/ZEROX -> agent payment leg. Same safety model: kill-switch
+// gated, paper-first, NON-custodial (the user signs the transfer in local mp).
+// `earnings` is an in-memory tally for the dashboard; real settlement is the
+// stablecoin transfer the user signs locally.
+// --------------------------------------------------------------------------
+const earnings = {}; // agentName -> total USD paid (paper or real)
+
+router.post('/pay-agent', json, (req, res) => {
+  if (state.killSwitch) {
+    return res.status(423).json({ ok: false, blocked: true, reason: 'PIKADON kill-switch is ON — agent payments disabled.' });
+  }
+  const b = req.body || {};
+  if (!b.agent || !(Number(b.amountUsd) > 0)) {
+    return res.status(400).json({ ok: false, error: 'pay-agent requires { agent, amountUsd, task?, token?, chain?, toAddress? }' });
+  }
+  const token = b.token || 'usdc';
+  const chain = b.chain || 'solana';
+  const amount = Number(b.amountUsd);
+  const payment = {
+    id: 'mpp_' + Date.now().toString(36),
+    ts: Date.now(),
+    type: 'agent-payment',
+    payTo: b.agent,
+    task: b.task || '',
+    amountUsd: amount,
+    token, chain,
+    toAddress: b.toAddress || '<agent-wallet-address>',
+    paper: state.paperMode,
+    // Stablecoin transfer the USER signs in their local @moonpay/cli (keys never leave their machine).
+    // NOTE: verify exact transfer syntax with `mp tools` — based on the CLI's transfer support.
+    cliCommand: `mp token transfer --wallet main --chain ${chain} --token ${token} --amount ${amount} --to ${b.toAddress || '<agent-wallet-address>'}`,
+    status: state.paperMode ? 'paper-paid' : 'awaiting-user-signature'
+  };
+  earnings[b.agent] = (earnings[b.agent] || 0) + amount;
+  state.intents.unshift(payment);
+  state.intents = state.intents.slice(0, 100);
+  state.updated = Date.now();
+  res.json({
+    ok: true, payment, agentEarningsUsd: earnings[b.agent],
+    note: state.paperMode
+      ? 'Paper payment recorded — no funds moved.'
+      : 'Sign payment.cliCommand in your local @moonpay/cli to send the stablecoin to the agent wallet.'
+  });
+});
+
+// Per-agent earnings tally for the dashboard.
+router.get('/earnings', (req, res) => res.json({ ok: true, earnings }));
+
 module.exports = router;
