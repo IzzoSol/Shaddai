@@ -1716,14 +1716,20 @@ const TOOLS = {
     description: 'Get DeFi protocol revenue data from DeFiLlama.',
     params: ['protocol'],
     execute: async (params) => {
-      if (params.protocol) {
-        const r = await fetch(`https://api.llama.fi/protocol/${params.protocol}`);
+      try {
+        if (params.protocol) {
+          const r = await fetch(`https://api.llama.fi/protocol/${params.protocol}`, { signal: AbortSignal.timeout(12000) });
+          const d = await r.json();
+          if (!d || !d.name) return `Protocol "${params.protocol}" not found on DeFiLlama`;
+          return `${d.name} Revenue: TVL $${(d.tvl/1e9||0).toFixed(2)}B | Category: ${d.category} | Chain: ${d.chain}`;
+        }
+        const r = await fetch('https://api.llama.fi/protocols', { signal: AbortSignal.timeout(12000) });
         const d = await r.json();
-        return `${d.name} Revenue: TVL $${(d.tvl/1e9||0).toFixed(2)}B | Category: ${d.category} | Chain: ${d.chain}`;
+        if (!Array.isArray(d)) return JSON.stringify({ success: false, error: 'Unexpected response from DeFiLlama' });
+        return 'Top Protocols by Revenue:\n' + d.slice(0,8).map(p => `${p.name}: $${(p.tvl/1e9).toFixed(2)}B TVL | ${p.category}`).join('\n');
+      } catch (e) {
+        return JSON.stringify({ success: false, error: e.message });
       }
-      const r = await fetch('https://api.llama.fi/protocols');
-      const d = await r.json();
-      return 'Top Protocols by Revenue:\n' + d.slice(0,8).map(p => `${p.name}: $${(p.tvl/1e9).toFixed(2)}B TVL | ${p.category}`).join('\n');
     }
   },
 
