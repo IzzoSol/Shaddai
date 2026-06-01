@@ -353,45 +353,51 @@ async function checkAPIs() {
 
   // Check Ollama
   try {
-    await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 3000 });
+    await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 5000 });
     status.ollama = true;
   } catch (e) {
-    console.warn('[HEALTH] Ollama unavailable');
+    console.warn('[HEALTH] Ollama unavailable:', e.message);
   }
 
-  // Check DexScreener
+  // Check DexScreener — probe a known-good search endpoint (bare /latest returns 404)
   try {
-    await axios.get(DEXSCREENER_URL, { timeout: 3000 });
-    status.dexscreener = true;
+    const dsProbe = await axios.get(
+      'https://api.dexscreener.com/latest/dex/search?q=BTC',
+      { timeout: 5000 }
+    );
+    status.dexscreener = dsProbe.status === 200;
   } catch (e) {
-    console.warn('[HEALTH] DexScreener unavailable');
+    console.warn('[HEALTH] DexScreener unavailable:', e.message);
   }
 
   // Check CoinGecko
   try {
-    await axios.get(`${COINGECKO_URL}/ping`, { timeout: 3000 });
+    await axios.get(`${COINGECKO_URL}/ping`, { timeout: 5000 });
     status.coingecko = true;
   } catch (e) {
-    console.warn('[HEALTH] CoinGecko unavailable');
+    console.warn('[HEALTH] CoinGecko unavailable:', e.message);
   }
 
-  // Check Helius
-  try {
-    await axios.post(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
-      { jsonrpc: '2.0', id: 1, method: 'getSlot', params: [] },
-      { timeout: 3000 }
-    );
-    status.helius = true;
-  } catch (e) {
-    console.warn('[HEALTH] Helius unavailable');
+  // Check Helius — requires a valid API key; no key means false is correct
+  if (HELIUS_KEY) {
+    try {
+      await axios.post(
+        `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
+        { jsonrpc: '2.0', id: 1, method: 'getSlot', params: [] },
+        { timeout: 5000 }
+      );
+      status.helius = true;
+    } catch (e) {
+      console.warn('[HEALTH] Helius unavailable:', e.message);
+    }
   }
 
   // Check Polymarket
   try {
-    await axios.get('https://clob.polymarket.com/markets?limit=1', { timeout: 3000 });
+    await axios.get('https://clob.polymarket.com/markets?limit=1', { timeout: 5000 });
     status.polymarket = true;
   } catch (e) {
-    console.warn('[HEALTH] Polymarket unavailable');
+    console.warn('[HEALTH] Polymarket unavailable:', e.message);
   }
 
   return status;
