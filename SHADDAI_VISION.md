@@ -71,3 +71,32 @@ One user · one owned agent · customize (collectible) → do a real job (workfl
 4. What's the **defensibility** once others copy the parts? (network effects? the owned-agent identity + secondary market? the data/skill memory?)
 5. **AI music/content resale** — what are the licensing landmines (Suno/Sora/etc. ToS) and how do we stay clean?
 6. What are we **missing** entirely from a model like this (reputation, disputes, refunds, agent verification, output provenance)?
+
+---
+
+## 10. Agentic Commerce + MoonCard (Pillar 2 expansion)
+
+Extend "agent moves money" from trading into **commerce** — backed by MoonPay's agent product (`@moonpay/cli` + MoonCard, the non-custodial stablecoin card). The agent doesn't just trade; it **spends on your behalf, within limits you approve**:
+
+- **Shopping & errands** — agent finds, compares, and buys within a set budget.
+- **Travel booking** — "book my trip to London next month" → flights, hotels, transfers.
+- **Subscriptions & recurring spend** — manage renewals, find better deals, only spend what's approved.
+- **Business purchasing** — team purchases with an automatic, full transaction log.
+- **MoonCard** — backed by your on-chain stablecoins, **non-custodial (always your funds)**, freeze/unfreeze, full card details on demand (PAN/CVV/expiry), transaction history.
+
+**Architecture:** same non-custodial pattern as the trading loop — MoonPay funds/cash-out + card, agent acts, **user approves each spend** (per-tx approval + hard daily caps + PIKADON kill-switch + freeze). This is the highest-risk surface (real money on real purchases) → ship paper/sandbox first, approval-gated always. Card + agentic shopping/travel likely require a higher MoonPay tier/API (verify dev.moonpay.com).
+
+## 11. Packaging — App / PWA / Chrome
+
+- **PWA (do first):** add a web manifest + service worker → "Install SHADDAI" on phone/desktop. Builds directly on the mobile/onboarding work already shipped. Lowest effort, real "it's an app" feel.
+- **Chrome extension:** the right home for **agentic shopping / price-comparison** (an extension can read & act on the page you're browsing). Separate, focused build — not a port of the whole dashboard.
+- **App stores:** wrap the PWA later (Capacitor / TWA) for iOS/Android.
+
+## 12. The discipline (so "agentic everything" doesn't become clutter)
+
+Three pillars, **one clean surface each**, ship the magic loop before widening any:
+1. **Agent does work** — council + tools (content/media incl. video clipper, background remover; analytics).
+2. **Agent moves money** — MoonPay Agents: trade + pay-agents + MoonCard/commerce.
+3. **The world/economy** — marketplace, user-owned 2D shops, collectibles, agent rooms.
+
+"All-in-one agentic everything" = these three working *together*, not ten half-built features scattered across tabs.
