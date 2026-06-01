@@ -67,7 +67,7 @@ Agents are invocable individually or as a council; a router dispatches tasks; th
 **What exists:** UI for subscription tiers, a credits/wallet display, "connect Phantom" wallet button, Stripe/MoonPay/Coinbase checkout entry points, `billing-service.js` + `billing-routes.js` + `pay-guard.js`.
 
 **What's NOT real (we want guidance here):**
-- 🔴 No live **MoonPay** integration (no API key, no webhook, no on/off-ramp settlement).
+- 🔴 No live **MoonPay** integration *yet* — but the chosen path is now **MoonPay Agents via `@moonpay/cli`** (see §6.5), which replaces the dead widgets entirely.
 - 🔴 No real **Solana wallet** money flow — Phantom connects but there's no actual transfer/settlement/escrow, no treasury wallet, no SPL token for "agent money."
 - 🔴 **Agent money / credits** are simulated numbers, not backed by real balance or ledger.
 - 🔴 Stripe is referenced but not confirmed live (no verified webhook/price IDs).
@@ -79,17 +79,24 @@ Agents are invocable individually or as a council; a router dispatches tasks; th
 3. Compliance: KYC/AML obligations if we touch fiat on/off-ramps? Does staying credits-only (no cash-out) avoid money-transmitter issues?
 4. Minimum viable real billing to charge the first paying customer this month?
 
-### 6.5 Proposed direction — "MoonPay Agents" (current owner vision)
+### 6.5 Payment & trading engine — MoonPay Agents via `@moonpay/cli` (CHOSEN DIRECTION)
 
-Consolidate the **three non-working wallet widgets** (Jupiter, raw Solana wallet, MoonPay) into **one coherent system**. Vision: AI **"MoonPay Agents"** that can **buy / sell / trade crypto** on the user's behalf, driven by the analytics SHADDAI already computes (Whale Watch, on-chain scans, RSI/volume). The user tells an agent what to do (or sets a strategy) and it executes; remove any widget that doesn't actually work.
+MoonPay shipped a purpose-built **agent-money product** (CLI `@moonpay/cli` v1.71, published **2026-05-30**; site **moonpay.com/agents**; tagline *"how agents move money"*). It is **one tool** that covers everything we previously thought required three separate widgets — so we **replace the dead Jupiter / Solana / MoonPay widgets with a single MoonPay-Agents integration.**
 
-**Mechanics reality-check (reviewer input wanted — this is the crux):**
-- **MoonPay = fiat↔crypto on/off-ramp** (hosted checkout; Apple Pay / Google Pay / card / bank). It is **not** a programmatic trading or DEX API. It can *fund* a wallet and *cash out*; it **cannot itself trade positions**.
-- **Programmatic SOL/SPL trading** needs a **DEX (e.g. Jupiter swap API)** or a CEX API. Ironically, **Jupiter — the widget the owner wants to drop — is the piece that actually enables on-chain trading.** Recommendation: *keep* a DEX/Jupiter as the **execution** layer, use **MoonPay only as the funding/cash-out** layer, and present the whole thing under one "MoonPay Agents" UX so the user never sees the plumbing.
-- **Likely flow:** MoonPay (fund) → wallet → agent strategy (uses SHADDAI analytics) → Jupiter/DEX swap (execute) → MoonPay (cash out).
-- **Custody & compliance (must decide):** agents auto-trading user funds raises custody, suitability, and possibly money-transmitter / investment-advice concerns. **Non-custodial (agent *proposes*, user *signs each tx* in Phantom)** is far safer than custodial auto-execution. Start with **paper-trading / simulation mode** + hard risk limits + a kill-switch (PIKADON-owned).
+What the CLI provides (verified from its README):
+- **Non-custodial wallets** — keys encrypted **locally** (`~/.config/moonpay/wallets.json`), never leave the machine. Multi-chain: **Solana, Ethereum, Polygon, Bitcoin, TON**; Ledger hardware support.
+- **Market data / research** — `mp token trending`, `mp token search`, `mp token retrieve` (feeds agent decisions alongside SHADDAI's Whale Watch / on-chain / RSI analytics).
+- **Trading (execution)** — `mp token swap` (same-chain, e.g. SOL→USDC, routed via swaps.xyz) and `mp token bridge` (cross-chain). This *is* the execution layer — no separate Jupiter UI needed.
+- **Fiat on/off-ramp** — `mp buy`, plus a **virtual account** and **zero-fee stablecoin on-ramps**.
+- **Agent integration** — ships **Skills** (`mp skill install` for Claude Code / Desktop / any MCP agent) and an **MCP server** (`mp mcp`). SHADDAI agents can drive it directly.
 
-**Decisions needed:** custodial vs sign-each-trade · execution venue (Jupiter vs CEX) · paper-trade first? · per-trade & daily risk caps · who holds keys.
+**SHADDAI flow:** user funds via `mp buy` → agent reads `mp token` market data + SHADDAI analytics → agent proposes/executes `mp token swap`/`bridge` → cash out via MoonPay. Surface it all as **"MoonPay Agents"** in the dashboard.
+
+**Open integration questions (reviewer input wanted):**
+1. **Hosted-app auth:** CLI login is **interactive** (`mp consent accept`, `mp login --email`, email code). For SHADDAI on Render, is there a **server-side API key / non-interactive auth** (see dev.moonpay.com + moonpay.com/SKILL.md), or is the intended model *"each user runs the MCP/CLI locally and SHADDAI orchestrates"*? This decides whether trading runs **server-side vs client-side** — and who holds keys.
+2. **Custody:** non-custodial is great, but a *hosted server* that creates wallets would hold keys → custody risk. Strongly prefer **keys on the user's machine** (local MCP server) with SHADDAI sending intents.
+3. **Fees / limits / sandbox:** confirm via dev.moonpay.com.
+4. **Compliance:** MoonPay handles KYC for the fiat ramp; offering **auto-trading** still raises suitability/advice questions → ship **paper-trade mode + sign-each-trade + risk caps + PIKADON kill-switch** first.
 
 ## 7. Known bugs / gaps 🔴
 
@@ -97,7 +104,7 @@ Consolidate the **three non-working wallet widgets** (Jupiter, raw Solana wallet
 - **Billing/marketplace** — mock (see §6).
 - **Mobile** — looks good but needs simplification + onboarding (see §8).
 - **Render** — `render.yaml` present; deploy needs secrets set and a verified green deploy (health check `/api/model/health`).
-- **Dead wallet widgets** — Jupiter / Solana / MoonPay widgets are shown but non-functional. Decision (per §6.5): remove the dead ones and consolidate into a single working "MoonPay Agents" flow (MoonPay = fund/cash-out, DEX/Jupiter = execute).
+- **Dead wallet widgets** — Jupiter / Solana / MoonPay widgets are shown but non-functional. Decision (per §6.5): remove all three and replace with one **MoonPay Agents** integration via `@moonpay/cli` (one engine: wallet + swap + bridge + fiat ramp + market data + MCP).
 - Multiple near-duplicate HTML builds in repo (`public/index.html`, `FINAL-SHADDAI-V80.html`, `-MCPO`, `-CLEAN`, `73.x`) — needs a single canonical source.
 
 ## 8. Mobile 🔴 (wants direction)
@@ -106,7 +113,7 @@ The dashboard reportedly **looks great on mobile** already. Goals: **simplicity*
 
 ## 9. Specific asks for Grok / Copilot
 
-1. **Billing/payments + "MoonPay Agents" (§6, §6.5):** Is the MoonPay-funds + DEX/Jupiter-executes split the right architecture for agent-driven trading? What's the simplest *real* monetization to ship first, and what are the compliance landmines (custody, money-transmitter, investment-advice)? Should v1 be non-custodial sign-each-trade + paper-trading only?
+1. **MoonPay Agents (`@moonpay/cli`) integration (§6.5):** For a hosted Node app on Render, what's the server-side / non-interactive auth model (vs each user running the local MCP)? Where should wallet keys live (server = custody risk vs user machine)? What's the simplest *real* monetization to ship first, and the compliance landmines (custody, money-transmitter, investment-advice)? Should v1 be paper-trade + sign-each-trade only?
 2. **Architecture:** is a 2.7 MB single HTML file + Node monolith the right call, or should we split the frontend? What breaks at scale?
 3. **Mobile activation:** concrete onboarding pattern to get people *using* it on mobile.
 4. **What's missing entirely** from a marketplace like this (ratings/reputation, disputes, refunds, agent verification, output licensing, etc.)?
