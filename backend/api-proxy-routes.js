@@ -4375,6 +4375,7 @@ const AVAILABLE_APIS = [
   { id: 'ollama',      name: 'Ollama (Local AI)',  category: 'ai',       icon: '🖥', description: 'Your local AI models — phi, llama3, gemma',            free: true  },
   { id: 'gemini',      name: 'Gemini',             category: 'ai',       icon: '✨', description: 'Google Gemini Flash / Pro',                            free: false, envKey: 'GEMINI_API_KEY'         },
   { id: 'groq',        name: 'Groq (70B)',         category: 'ai',       icon: '⚡', description: 'Ultra-fast 70B model inference',                       free: false, envKey: 'GROQ_API_KEY'           },
+  { id: 'openrouter',  name: 'OpenRouter',         category: 'ai',       icon: '🛰', description: 'Multi-model fallback (free + paid)',                   free: false, envKey: 'OPENROUTER_API_KEY'     },
   { id: 'claude',      name: 'Claude API',         category: 'ai',       icon: '🤖', description: 'Claude Haiku, Sonnet, Opus',                           free: false, envKey: 'ANTHROPIC_API_KEY'      },
   { id: 'suno',        name: 'Suno Music',         category: 'creative', icon: '🎵', description: 'Generate music tracks and write song lyrics',          free: false, envKey: 'SUNO_API_KEY'           },
   { id: 'twitter_x',  name: 'X / Twitter',        category: 'social',   icon: '𝕏',  description: 'Stage posts, threads, and optimal timing',             free: false, envKey: 'X_API_KEY'              },

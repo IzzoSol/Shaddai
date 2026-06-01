@@ -1393,7 +1393,7 @@ app.post('/api/shaddai/orchestrate', async (req, res) => {
 
 app.post('/api/pikadon/audit', async (req, res) => {
   try {
-    const { jobData } = req.body;
+    const { jobData = { id: 'adhoc-' + Date.now(), title: 'Ad-hoc audit', payload: (req.body || {}) } } = req.body || {};
     const result = await agentIntegration.pikadonSecurityAudit(jobData);
     res.json(result);
   } catch (error) {
