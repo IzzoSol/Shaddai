@@ -660,6 +660,10 @@ app.get('/api/polymarket/prices', async (req, res) => {
 app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/moonpay', require('./moonpay-agent'));
+// Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
+app.use('/api/brains', require('./brains').router);
+// Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
+app.use('/api/billing', require('./billing-routes').router);
 
 // ============================================
 // AGENTS API

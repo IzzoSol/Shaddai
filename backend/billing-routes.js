@@ -1,27 +1,51 @@
 /**
- * SHADDAI Billing Routes v1.0
- * Express routes for subscription management and billing
+ * SHADDAI Billing Routes v2.0
+ * Express routes for subscription management, credit ledger, and usage metering.
  *
- * Endpoints:
- * - POST /billing/customer - Create customer record
- * - POST /billing/subscribe - Create subscription
- * - GET /billing/subscription - Get current subscription
- * - POST /billing/upgrade - Change subscription tier
- * - POST /billing/cancel - Cancel subscription
- * - GET /billing/invoices - List invoices
- * - POST /billing/payment-method - Update payment method
- * - GET /billing/usage - Get usage stats vs tier limits
- * - POST /billing/webhook - Stripe webhook endpoint
+ * All routes mount under the prefix the server applies (e.g. /api/billing).
+ * Existing route shapes are preserved; new endpoints are additive.
+ *
+ * Endpoints (relative to mount prefix):
+ *
+ *  Customer / profile
+ *    POST   /customer              — register a billing record
+ *    GET    /subscription          — full subscription + credit info
+ *    GET    /balance               — quick credit balance check
+ *    GET    /tiers                 — all tier definitions (replaces api-proxy version)
+ *
+ *  Subscription lifecycle
+ *    POST   /subscribe             — create subscription (Stripe or stub)
+ *    POST   /subscribe/confirm     — confirm after Stripe payment intent
+ *    POST   /upgrade               — change tier
+ *    POST   /cancel                — cancel subscription
+ *
+ *  Invoices & payments
+ *    GET    /invoices              — Stripe invoices or ledger credits
+ *    POST   /payment-method        — update Stripe payment method
+ *    POST   /checkout              — Stripe checkout session (or stub)
+ *    GET    /providers             — configured payment provider status
+ *
+ *  Usage / ledger
+ *    GET    /usage                 — current usage vs tier limits
+ *    GET    /transactions          — credit ledger history
+ *
+ *  Webhooks
+ *    POST   /webhook               — Stripe webhook (raw body)
+ *
+ *  Admin (internal — guard with IP or secret in production)
+ *    POST   /admin/credit          — manually credit a user
+ *    POST   /admin/set-tier        — manually set user tier
  */
 
-const express = require('express');
-const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+'use strict';
+
+const express        = require('express');
+const router         = express.Router();
 const billingService = require('./billing-service');
 const { v4: uuidv4 } = require('uuid');
-const winston = require('winston');
+const winston        = require('winston');
 
-// ── LOGGER ──────────────────────────────────────────────────
+// ── LOGGER ───────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -36,563 +60,528 @@ const logger = winston.createLogger({
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.printf(({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`)
+        winston.format.printf(({ timestamp, level, message }) =>
+          `[${timestamp}] ${level}: ${message}`)
       )
     })
   ]
 });
 
-// ── MIDDLEWARE ──────────────────────────────────────────────
+// ── MIDDLEWARE ────────────────────────────────────────────────────────────────
+
 /**
- * Authenticate user from Authorization header or context
- * In production, this would validate Firebase JWT or similar
+ * authenticateUser — extracts userId from header, query, or body.
+ * In production: validate a Firebase/JWT token here.
  */
 function authenticateUser(req, res, next) {
   try {
-    // Check for Authorization header (Firebase token)
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      // In production: validate Firebase token
-      // For now, extract userId if present
-      req.userId = req.body.userId || req.query.userId || req.headers['x-user-id'];
-    }
-
-    // Fallback to direct userId header
-    if (!req.userId) {
-      req.userId = req.headers['x-user-id'] || req.body.userId;
-    }
+    req.userId =
+      req.headers['x-user-id'] ||
+      req.body.userId           ||
+      req.query.userId          ||
+      null;
 
     if (!req.userId) {
       return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'User ID required in header (X-User-ID) or body (userId)'
+        error:   'Unauthorized',
+        message: 'userId required (X-User-ID header, body.userId, or ?userId=...)'
       });
     }
-
     next();
   } catch (err) {
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: err.message
-    });
+    res.status(401).json({ error: 'Authentication failed', message: err.message });
   }
 }
 
-/**
- * Validate request body fields
- */
+/** Validate required body fields. */
 function validateFields(fields) {
   return (req, res, next) => {
-    const missing = fields.filter(field => !req.body[field]);
-    if (missing.length > 0) {
+    const missing = fields.filter(f => req.body[f] == null || req.body[f] === '');
+    if (missing.length) {
       return res.status(400).json({
-        error: 'Missing fields',
+        error:   'Missing fields',
         missing,
-        message: `Required fields: ${missing.join(', ')}`
+        message: `Required: ${missing.join(', ')}`
       });
     }
     next();
   };
 }
 
+/** Simple error wrapper to keep route handlers tidy. */
+function handle(fn) {
+  return async (req, res) => {
+    try {
+      await fn(req, res);
+    } catch (err) {
+      logger.error(err.message);
+      res.status(500).json({ error: err.message });
+    }
+  };
+}
+
 // Apply authentication to all billing routes
 router.use(authenticateUser);
 
-// ══════════════════════════════════════════════════════════════
-// ═══ CUSTOMER MANAGEMENT ═══
-// ══════════════════════════════════════════════════════════════
+// ── TIER DEFINITIONS (public, no auth needed — but auth is already applied above) ──
 
 /**
- * POST /billing/customer
- * Create a Stripe customer record for a user
- * Body: { email, name }
+ * GET /tiers
+ * Returns all tier definitions with credits, model access, features, and pricing.
  */
-router.post('/customer', validateFields(['email', 'name']), async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    const userId = req.userId;
-
-    logger.info(`Creating customer for user ${userId}`);
-
-    // Check if customer already exists
-    const existing = billingService.getCustomer(userId);
-    if (existing) {
-      return res.status(200).json({
-        status: 'success',
-        message: 'Customer already exists',
-        customer: existing
-      });
-    }
-
-    const customer = await billingService.createCustomer(userId, email, name);
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Customer created',
-      customer
-    });
-  } catch (err) {
-    logger.error('Customer creation error:', err.message);
-    res.status(500).json({
-      error: 'Customer creation failed',
-      message: err.message
-    });
-  }
+router.get('/tiers', (req, res) => {
+  const tiers = Object.entries(billingService.TIER_CONFIG).map(([key, cfg]) => ({
+    tier:           key,
+    name:           cfg.name,
+    price:          cfg.price,
+    currency:       cfg.currency,
+    interval:       cfg.interval,
+    monthlyCredits: cfg.monthlyCredits,
+    modelTiers:     cfg.modelTiers,
+    maxAgents:      cfg.maxAgents,
+    rateLimit:      cfg.rateLimit,
+    features:       cfg.features,
+    description:    cfg.description
+  }));
+  res.json({ tiers });
 });
 
-// ══════════════════════════════════════════════════════════════
-// ═══ SUBSCRIPTION MANAGEMENT ═══
-// ══════════════════════════════════════════════════════════════
+// ── CUSTOMER MANAGEMENT ───────────────────────────────────────────────────────
 
 /**
- * POST /billing/subscribe
- * Create a subscription for a customer
+ * POST /customer
+ * Body: { email, name, tier? }
+ * Registers a billing record (no live charge).
+ */
+router.post('/customer', validateFields(['email', 'name']), handle(async (req, res) => {
+  const { email, name, tier } = req.body;
+  const userId = req.userId;
+  logger.info(`Creating customer for user ${userId}`);
+
+  const existing = billingService.getCustomer(userId);
+  if (existing) {
+    return res.status(200).json({ status: 'exists', message: 'Customer already registered', customer: existing });
+  }
+
+  const customer = await billingService.createCustomer(userId, email, name, { tier });
+  res.status(201).json({ status: 'created', customer });
+}));
+
+// ── SUBSCRIPTION ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /subscription
+ * Full subscription info: tier, credits, usage, limits.
+ */
+router.get('/subscription', handle(async (req, res) => {
+  const info = await billingService.getSubscriptionInfo(req.userId);
+  if (!info) {
+    // Auto-create a free record so the FE always gets a response
+    await billingService.getOrCreateCustomer(req.userId);
+    const freshInfo = await billingService.getSubscriptionInfo(req.userId);
+    return res.json({ status: 'success', subscription: freshInfo });
+  }
+  res.json({ status: 'success', subscription: info });
+}));
+
+/**
+ * GET /balance
+ * Quick balance check — returns credits remaining + tier.
+ * Designed to be called frequently (e.g. before each LLM call from the FE).
+ */
+router.get('/balance', handle(async (req, res) => {
+  await billingService.getOrCreateCustomer(req.userId);
+  const cust = billingService.getCustomer(req.userId);
+  const tc   = billingService.TIER_CONFIG[cust.tier] || billingService.TIER_CONFIG.free;
+  res.json({
+    userId:           req.userId,
+    tier:             cust.tier,
+    tierName:         tc.name,
+    creditsRemaining: cust.creditsRemaining,
+    creditsMonthly:   cust.creditsMonthly,
+    status:           cust.status
+  });
+}));
+
+/**
+ * POST /subscribe
  * Body: { tier, email?, name? }
- * Returns: { subscriptionId, clientSecret, ...subscription details }
+ * Creates a Stripe subscription (or returns a stub if Stripe is not configured).
+ * Returns clientSecret for Stripe.js confirmation when live.
  */
-router.post('/subscribe', validateFields(['tier']), async (req, res) => {
-  try {
-    const { tier, email, name } = req.body;
-    const userId = req.userId;
+router.post('/subscribe', validateFields(['tier']), handle(async (req, res) => {
+  const { tier, email, name } = req.body;
+  const userId = req.userId;
 
-    logger.info(`Creating subscription for user ${userId} - tier: ${tier}`);
+  const validTiers = Object.keys(billingService.TIER_CONFIG);
+  if (!validTiers.includes(tier)) {
+    return res.status(400).json({ error: `Invalid tier. Valid: ${validTiers.join(', ')}` });
+  }
 
-    // Validate tier
-    if (!['starter', 'pro', 'enterprise'].includes(tier)) {
-      return res.status(400).json({
-        error: 'Invalid tier',
-        message: 'Tier must be: starter, pro, or enterprise'
-      });
-    }
+  // Ensure billing record exists
+  await billingService.getOrCreateCustomer(userId, email, name);
 
-    // Get or create customer
-    let customer = billingService.getCustomer(userId);
-    if (!customer) {
-      if (!email || !name) {
-        return res.status(400).json({
-          error: 'Customer not found',
-          message: 'Email and name required to create new customer'
-        });
-      }
-      customer = await billingService.createCustomer(userId, email, name);
-    }
+  const subscription = await billingService.createSubscription(userId, tier);
 
-    // Create subscription
-    const subscription = await billingService.createSubscription(
-      customer.stripeCustomerId,
-      tier
-    );
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Subscription created - confirm payment to activate',
-      subscription,
-      nextStep: 'Use clientSecret with Stripe.js to confirm payment'
-    });
-  } catch (err) {
-    logger.error('Subscription creation error:', err.message);
-    res.status(500).json({
-      error: 'Subscription creation failed',
-      message: err.message
+  if (!subscription.configured) {
+    return res.status(200).json({
+      status:  'stub',
+      message: subscription.message,
+      tier,
+      subscription
     });
   }
-});
+
+  res.status(201).json({
+    status:      'pending_payment',
+    message:     'Subscription created — use clientSecret with Stripe.js to confirm.',
+    subscription
+  });
+}));
 
 /**
- * POST /billing/subscribe/confirm
- * Confirm subscription after successful payment
+ * POST /subscribe/confirm
  * Body: { subscriptionId, tier }
  */
-router.post('/subscribe/confirm', validateFields(['subscriptionId', 'tier']), async (req, res) => {
-  try {
-    const { subscriptionId, tier } = req.body;
-    const userId = req.userId;
-
-    logger.info(`Confirming subscription for user ${userId}`);
-
-    const confirmed = await billingService.confirmSubscription(userId, subscriptionId, tier);
-
-    res.status(200).json({
-      status: 'success',
-      message: `Subscription confirmed - welcome to ${tier} tier!`,
-      customer: confirmed
-    });
-  } catch (err) {
-    logger.error('Subscription confirmation error:', err.message);
-    res.status(500).json({
-      error: 'Subscription confirmation failed',
-      message: err.message
-    });
-  }
-});
+router.post('/subscribe/confirm', validateFields(['subscriptionId', 'tier']), handle(async (req, res) => {
+  const confirmed = await billingService.confirmSubscription(
+    req.userId, req.body.subscriptionId, req.body.tier
+  );
+  res.json({
+    status:   'success',
+    message:  `Welcome to ${req.body.tier} tier!`,
+    customer: confirmed
+  });
+}));
 
 /**
- * GET /billing/subscription
- * Get current subscription details
- */
-router.get('/subscription', async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    logger.info(`Getting subscription for user ${userId}`);
-
-    const subscriptionInfo = await billingService.getSubscriptionInfo(userId);
-
-    if (!subscriptionInfo) {
-      return res.status(404).json({
-        error: 'No subscription found',
-        message: `User ${userId} has no active subscription`
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      subscription: subscriptionInfo
-    });
-  } catch (err) {
-    logger.error('Get subscription error:', err.message);
-    res.status(500).json({
-      error: 'Failed to retrieve subscription',
-      message: err.message
-    });
-  }
-});
-
-/**
- * POST /billing/upgrade
- * Upgrade or downgrade subscription tier
+ * POST /upgrade
  * Body: { newTier }
  */
-router.post('/upgrade', validateFields(['newTier']), async (req, res) => {
-  try {
-    const { newTier } = req.body;
-    const userId = req.userId;
+router.post('/upgrade', validateFields(['newTier']), handle(async (req, res) => {
+  const { newTier } = req.body;
+  const validTiers  = Object.keys(billingService.TIER_CONFIG);
 
-    logger.info(`Upgrading subscription for user ${userId} to ${newTier}`);
-
-    // Validate tier
-    if (!['starter', 'pro', 'enterprise'].includes(newTier)) {
-      return res.status(400).json({
-        error: 'Invalid tier',
-        message: 'Tier must be: starter, pro, or enterprise'
-      });
-    }
-
-    // Get current subscription
-    const customer = billingService.getCustomer(userId);
-    if (!customer || !customer.subscriptionId) {
-      return res.status(404).json({
-        error: 'No active subscription',
-        message: 'User must have an active subscription to upgrade'
-      });
-    }
-
-    // Prevent downgrading (optional - adjust based on product policy)
-    const currentTierOrder = { starter: 1, pro: 2, enterprise: 3 };
-    if (currentTierOrder[newTier] < currentTierOrder[customer.tier]) {
-      logger.warn(`Downgrade attempt blocked: ${customer.tier} -> ${newTier}`);
-      // Uncomment to enforce upgrade-only:
-      // return res.status(400).json({
-      //   error: 'Downgrade not allowed',
-      //   message: 'Contact support to downgrade your plan'
-      // });
-    }
-
-    const updated = await billingService.updateSubscription(customer.subscriptionId, newTier);
-
-    res.status(200).json({
-      status: 'success',
-      message: `Subscription upgraded to ${newTier}`,
-      subscription: updated
-    });
-  } catch (err) {
-    logger.error('Subscription upgrade error:', err.message);
-    res.status(500).json({
-      error: 'Subscription upgrade failed',
-      message: err.message
-    });
+  if (!validTiers.includes(newTier)) {
+    return res.status(400).json({ error: `Invalid tier. Valid: ${validTiers.join(', ')}` });
   }
-});
+
+  const updated = await billingService.updateSubscription(req.userId, newTier);
+  res.json({ status: 'success', message: `Tier updated to ${newTier}`, customer: updated });
+}));
 
 /**
- * POST /billing/cancel
- * Cancel subscription
+ * POST /cancel
  * Body: { reason? }
  */
-router.post('/cancel', async (req, res) => {
-  try {
-    const { reason } = req.body;
-    const userId = req.userId;
+router.post('/cancel', handle(async (req, res) => {
+  const result = await billingService.cancelSubscription(req.userId);
+  res.json({ status: 'success', result });
+}));
 
-    logger.info(`Cancelling subscription for user ${userId}. Reason: ${reason || 'Not provided'}`);
-
-    const customer = billingService.getCustomer(userId);
-    if (!customer || !customer.subscriptionId) {
-      return res.status(404).json({
-        error: 'No active subscription',
-        message: 'User has no active subscription to cancel'
-      });
-    }
-
-    const cancelled = await billingService.cancelSubscription(customer.subscriptionId);
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Subscription cancelled',
-      subscription: cancelled
-    });
-  } catch (err) {
-    logger.error('Subscription cancellation error:', err.message);
-    res.status(500).json({
-      error: 'Subscription cancellation failed',
-      message: err.message
-    });
-  }
-});
-
-// ══════════════════════════════════════════════════════════════
-// ═══ INVOICES & PAYMENTS ═══
-// ══════════════════════════════════════════════════════════════
+// ── INVOICES & PAYMENTS ───────────────────────────────────────────────────────
 
 /**
- * GET /billing/invoices
- * Get all invoices for current user
- * Query: { limit? }
+ * GET /invoices
+ * Returns Stripe invoices (if configured) or synthetic ledger entries.
  */
-router.get('/invoices', async (req, res) => {
-  try {
-    const userId = req.userId;
-    const customer = billingService.getCustomer(userId);
-
-    if (!customer) {
-      return res.status(404).json({
-        error: 'Customer not found',
-        message: `No customer record for user ${userId}`
-      });
-    }
-
-    logger.info(`Getting invoices for user ${userId}`);
-
-    const invoices = await billingService.getInvoices(customer.stripeCustomerId);
-
-    res.status(200).json({
-      status: 'success',
-      count: invoices.length,
-      invoices
-    });
-  } catch (err) {
-    logger.error('Get invoices error:', err.message);
-    res.status(500).json({
-      error: 'Failed to retrieve invoices',
-      message: err.message
-    });
-  }
-});
+router.get('/invoices', handle(async (req, res) => {
+  const result = await billingService.getInvoices(req.userId);
+  res.json({ status: 'success', ...result });
+}));
 
 /**
- * POST /billing/payment-method
- * Update payment method for customer
+ * POST /payment-method
  * Body: { paymentMethodId }
+ * Updates default Stripe payment method.
  */
-router.post('/payment-method', validateFields(['paymentMethodId']), async (req, res) => {
-  try {
-    const { paymentMethodId } = req.body;
-    const userId = req.userId;
+router.post('/payment-method', validateFields(['paymentMethodId']), handle(async (req, res) => {
+  const cust   = billingService.getCustomer(req.userId);
+  const stripe = billingService.getStripe();
 
-    const customer = billingService.getCustomer(userId);
-    if (!customer) {
-      return res.status(404).json({
-        error: 'Customer not found',
-        message: `No customer record for user ${userId}`
-      });
-    }
-
-    logger.info(`Updating payment method for user ${userId}`);
-
-    const updated = await billingService.updatePaymentMethod(
-      customer.stripeCustomerId,
-      paymentMethodId
-    );
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Payment method updated',
-      result: updated
-    });
-  } catch (err) {
-    logger.error('Payment method update error:', err.message);
-    res.status(500).json({
-      error: 'Payment method update failed',
-      message: err.message
-    });
+  if (!stripe) {
+    return res.json({ configured: false, message: 'Stripe not configured. Set STRIPE_SECRET_KEY in .env.' });
   }
-});
+  if (!cust || !cust.stripeCustomerId) {
+    return res.status(404).json({ error: 'No Stripe customer record found.' });
+  }
 
-// ══════════════════════════════════════════════════════════════
-// ═══ USAGE & LIMITS ═══
-// ══════════════════════════════════════════════════════════════
+  await stripe.customers.update(cust.stripeCustomerId, {
+    invoice_settings: { default_payment_method: req.body.paymentMethodId }
+  });
+  res.json({ status: 'success', message: 'Payment method updated.' });
+}));
 
 /**
- * GET /billing/usage
- * Get current usage vs tier limits
+ * POST /checkout
+ * Body: { tier, successUrl?, cancelUrl? }
+ * Creates a Stripe Checkout session (or returns stub with instructions).
  */
-router.get('/usage', async (req, res) => {
-  try {
-    const userId = req.userId;
+router.post('/checkout', validateFields(['tier']), handle(async (req, res) => {
+  const { tier, successUrl, cancelUrl } = req.body;
+  const validTiers = Object.keys(billingService.TIER_CONFIG).filter(t => t !== 'free');
 
-    logger.info(`Getting usage for user ${userId}`);
+  if (!validTiers.includes(tier)) {
+    return res.status(400).json({ error: `Checkout tier must be one of: ${validTiers.join(', ')}` });
+  }
 
-    const subscriptionInfo = await billingService.getSubscriptionInfo(userId);
+  const stripe   = billingService.getStripe();
+  const priceId  = billingService.STRIPE_PRICES[tier];
 
-    if (!subscriptionInfo) {
-      return res.status(404).json({
-        error: 'No subscription',
-        message: 'User has no active subscription'
-      });
-    }
-
-    const { tier, usage, tierLimits } = subscriptionInfo;
-
-    res.status(200).json({
-      status: 'success',
+  if (!stripe || !priceId) {
+    return res.json({
+      configured: false,
       tier,
-      usage: {
-        ...usage,
-        requestsPercentage: Math.round(
-          (usage.requestsThisMinute / tierLimits.rateLimit) * 100
-        ),
-        requestsRemaining: tierLimits.rateLimit - usage.requestsThisMinute
-      },
-      limits: {
-        maxAgents: tierLimits.maxAgents,
-        rateLimit: tierLimits.rateLimit,
-        scheduling: tierLimits.scheduling,
-        batching: tierLimits.batching
-      },
-      warning:
-        usage.requestsThisMinute > tierLimits.rateLimit * 0.8
-          ? `Usage at ${Math.round((usage.requestsThisMinute / tierLimits.rateLimit) * 100)}% of limit`
-          : null
-    });
-  } catch (err) {
-    logger.error('Get usage error:', err.message);
-    res.status(500).json({
-      error: 'Failed to retrieve usage',
-      message: err.message
+      message:    `Stripe not fully configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_${tier.toUpperCase()} in .env.`,
+      url:        null
+      // TODO: once keys are added this returns a real Stripe Checkout URL
     });
   }
-});
 
-// ══════════════════════════════════════════════════════════════
-// ═══ WEBHOOKS ═══
-// ══════════════════════════════════════════════════════════════
+  // Ensure billing record + Stripe customer exist
+  const cust = await billingService.getOrCreateCustomer(req.userId);
+  let stripeCustomerId = cust.stripeCustomerId;
+  if (!stripeCustomerId) {
+    const sc = await stripe.customers.create({
+      email:    cust.email,
+      metadata: { userId: req.userId }
+    });
+    stripeCustomerId = sc.id;
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer:             stripeCustomerId,
+    payment_method_types: ['card'],
+    line_items:           [{ price: priceId, quantity: 1 }],
+    mode:                 'subscription',
+    success_url:          successUrl || `${req.protocol}://${req.get('host')}/?billing=success`,
+    cancel_url:           cancelUrl  || `${req.protocol}://${req.get('host')}/?billing=cancel`,
+    metadata:             { tier, userId: req.userId }
+  });
+
+  res.json({ configured: true, url: session.url, sessionId: session.id });
+}));
 
 /**
- * POST /billing/webhook
- * Stripe webhook endpoint - must be raw body (not JSON parsed)
+ * GET /providers
+ * Returns which payment providers are configured.
+ */
+router.get('/providers', (req, res) => {
+  const stripeConfigured  = !!process.env.STRIPE_SECRET_KEY;
+  const moonpayStatus     = billingService.getMoonpayStatus();
+  res.json({
+    stripe: {
+      configured: stripeConfigured,
+      message:    stripeConfigured
+        ? 'Stripe is configured.'
+        : 'Stripe not configured. Set STRIPE_SECRET_KEY in .env.',
+      pricingConfigured: {
+        pro:   !!process.env.STRIPE_PRICE_PRO,
+        elite: !!process.env.STRIPE_PRICE_ELITE
+      }
+    },
+    moonpay: moonpayStatus
+  });
+});
+
+// ── USAGE & LEDGER ────────────────────────────────────────────────────────────
+
+/**
+ * GET /usage
+ * Current usage vs tier limits, credit consumption, and rate-limit status.
+ */
+router.get('/usage', handle(async (req, res) => {
+  await billingService.getOrCreateCustomer(req.userId);
+  const info = await billingService.getSubscriptionInfo(req.userId);
+
+  if (!info) {
+    return res.status(404).json({ error: 'Billing record not found.' });
+  }
+
+  const { credits, tierLimits, usage, subscription } = info;
+  const nearLimit = credits.pct >= 80;
+
+  res.json({
+    status:   'success',
+    tier:     subscription.tier,
+    credits,
+    usage,
+    limits: {
+      monthlyCredits: tierLimits.monthlyCredits,
+      modelTiers:     tierLimits.modelTiers,
+      rateLimit:      tierLimits.rateLimit,
+      features:       tierLimits.features
+    },
+    warning: nearLimit
+      ? `Credit usage at ${credits.pct}% — consider upgrading.`
+      : null
+  });
+}));
+
+/**
+ * GET /transactions
+ * Query: { limit? }
+ * Returns the credit ledger for this user (newest first).
+ */
+router.get('/transactions', handle(async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 50, 500);
+  const txns  = billingService.getTransactionHistory(req.userId, limit);
+  res.json({ status: 'success', count: txns.length, transactions: txns });
+}));
+
+// ── STRIPE WEBHOOK ────────────────────────────────────────────────────────────
+
+/**
+ * POST /webhook
+ * Raw body required — do NOT apply JSON middleware to this route.
+ * Mount with express.raw before the router-level JSON parser if needed.
  */
 router.post(
   '/webhook',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    const sig = req.headers['stripe-signature'];
+    const sig   = req.headers['stripe-signature'];
+    const stripe = billingService.getStripe();
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!stripe || !secret) {
+      // Accept the call but skip signature verification (dev mode)
+      logger.warn('Stripe webhook received but STRIPE_WEBHOOK_SECRET not set — skipping verification');
+      try {
+        const event  = JSON.parse(req.body.toString());
+        const result = await billingService.handleWebhook(event);
+        return res.json({ received: true, result });
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
 
     try {
-      // Verify webhook signature
-      const event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-
-      logger.info(`Received webhook: ${event.type} (ID: ${event.id})`);
-
-      // Process webhook
+      const event  = stripe.webhooks.constructEvent(req.body, sig, secret);
+      logger.info(`Webhook: ${event.type} (${event.id})`);
       const result = await billingService.handleWebhook(event);
-
-      res.json({
-        received: true,
-        eventId: event.id,
-        result
-      });
+      res.json({ received: true, eventId: event.id, result });
     } catch (err) {
       logger.error('Webhook error:', err.message);
-      res.status(400).json({
-        error: 'Webhook processing failed',
-        message: err.message
-      });
+      res.status(400).json({ error: err.message });
     }
   }
 );
 
-// ══════════════════════════════════════════════════════════════
-// ═══ TIER ENFORCEMENT MIDDLEWARE ═══
-// ══════════════════════════════════════════════════════════════
+// ── ADMIN ROUTES ──────────────────────────────────────────────────────────────
+// TODO: protect with an admin secret header or IP allowlist before deploying publicly.
 
 /**
- * Middleware to enforce subscription tier limits
- * Use with main API routes to rate limit based on subscription
- * Usage: app.use('/api/agents', enforceSubscriptionTier, agentRoutes)
+ * POST /admin/credit
+ * Body: { targetUserId, amount, reason }
+ * Manually credit a user's balance (e.g. after MoonPay confirmation).
+ */
+router.post('/admin/credit', validateFields(['targetUserId', 'amount']), handle(async (req, res) => {
+  const { targetUserId, amount, reason } = req.body;
+  const parsedAmount = Number(amount);
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    return res.status(400).json({ error: 'amount must be a positive number' });
+  }
+  // Ensure target user exists
+  billingService._ensureUserRecord(targetUserId, { tier: 'free' });
+  const balance = billingService.credit(targetUserId, parsedAmount, reason || 'admin_credit');
+  res.json({ status: 'success', targetUserId, credited: parsedAmount, balance });
+}));
+
+/**
+ * POST /admin/set-tier
+ * Body: { targetUserId, tier }
+ * Directly sets a user's tier (e.g. after manual payment verification).
+ */
+router.post('/admin/set-tier', validateFields(['targetUserId', 'tier']), handle(async (req, res) => {
+  const { targetUserId, tier } = req.body;
+  const validTiers = Object.keys(billingService.TIER_CONFIG);
+  if (!validTiers.includes(tier)) {
+    return res.status(400).json({ error: `tier must be one of: ${validTiers.join(', ')}` });
+  }
+  billingService._ensureUserRecord(targetUserId, { tier: 'free' });
+  const updated = await billingService.updateSubscription(targetUserId, tier);
+  res.json({ status: 'success', customer: updated });
+}));
+
+// ── TIER ENFORCEMENT MIDDLEWARE (export for use in other routers) ─────────────
+
+/**
+ * enforceSubscriptionTier
+ * Express middleware — blocks the request if the user's tier/credits don't allow it.
+ *
+ * Attaches to req:
+ *   req.billing.tier, req.billing.credits, req.billing.rateLimit
+ *
+ * Usage:
+ *   app.use('/api/agents', enforceSubscriptionTier, agentRoutes)
+ *   router.post('/generate', enforceSubscriptionTier, handler)
+ *
+ * Optional query/header:
+ *   req.query.requiredModel — 'cheap'|'standard'|'premium'
+ *     If set, blocks if user's tier doesn't allow that model tier.
  */
 async function enforceSubscriptionTier(req, res, next) {
   try {
-    const userId = req.headers['x-user-id'] || req.body?.userId;
+    const userId = req.headers['x-user-id'] || req.body && req.body.userId || req.query.userId;
+    if (!userId) return next(); // anonymous — let downstream decide
 
-    if (!userId) {
-      // No user ID - allow but log
-      return next();
+    // Ensure record exists
+    await billingService.getOrCreateCustomer(userId);
+    const cust = billingService.getCustomer(userId);
+    const tc   = billingService.TIER_CONFIG[cust.tier] || billingService.TIER_CONFIG.free;
+
+    // Credit gate
+    if (cust.creditsRemaining <= 0) {
+      return res.status(402).json({
+        error:    'Insufficient credits',
+        message:  `Your ${tc.name} plan has 0 credits remaining. Upgrade or wait for your billing cycle to reset.`,
+        code:     'NO_CREDITS',
+        tier:     cust.tier,
+        upgrade:  '/api/billing/checkout'
+      });
     }
 
-    const customer = billingService.getCustomer(userId);
-
-    if (!customer || !customer.tier) {
+    // Model tier gate
+    const requiredModel = req.query.requiredModel || (req.body && req.body.requiredModel);
+    if (requiredModel && !tc.modelTiers.includes(requiredModel)) {
       return res.status(403).json({
-        error: 'No subscription',
-        message: 'User must have an active subscription to access this resource',
-        action: 'Create a subscription at /billing/subscribe'
+        error:   'Model tier not permitted',
+        message: `Your ${tc.name} plan allows models: ${tc.modelTiers.join(', ')}. Requested: ${requiredModel}.`,
+        code:    'MODEL_TIER_DENIED',
+        tier:    cust.tier,
+        upgrade: '/api/billing/checkout'
       });
     }
 
-    // Check rate limits
-    const rateCheckResult = await billingService.enforceRateLimit(userId, customer.tier);
-
-    if (!rateCheckResult.allowed) {
+    // Rate limit gate
+    const rl = await billingService.enforceRateLimit(userId, cust.tier);
+    if (!rl.allowed) {
       return res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: rateCheckResult.error,
-        retryAfter: rateCheckResult.retryAfter,
-        tier: customer.tier,
-        usage: {
-          current: rateCheckResult.current,
-          limit: rateCheckResult.limit,
-          resetTime: rateCheckResult.resetTime
-        }
+        error:      'Rate limit exceeded',
+        message:    rl.error,
+        retryAfter: rl.retryAfter,
+        tier:       cust.tier
       });
     }
 
-    // Attach usage info to request
-    req.rateLimit = rateCheckResult;
-    req.subscription = {
-      tier: customer.tier,
-      stripeCustomerId: customer.stripeCustomerId,
-      status: customer.status
+    // Attach billing context for downstream handlers
+    req.billing = {
+      userId,
+      tier:             cust.tier,
+      tierConfig:       tc,
+      creditsRemaining: cust.creditsRemaining,
+      rateLimit:        rl
     };
 
     next();
   } catch (err) {
-    logger.error('Tier enforcement error:', err.message);
-    res.status(500).json({
-      error: 'Rate limit check failed',
-      message: err.message
-    });
+    logger.error('enforceSubscriptionTier error:', err.message);
+    res.status(500).json({ error: 'Billing check failed', message: err.message });
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// ═══ EXPORTS ═══
-// ══════════════════════════════════════════════════════════════
-
+// ── EXPORTS ───────────────────────────────────────────────────────────────────
 module.exports = {
   router,
   enforceSubscriptionTier

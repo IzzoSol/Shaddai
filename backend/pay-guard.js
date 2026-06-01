@@ -112,6 +112,20 @@ function runPayCurl(cli, url, method, body) {
   });
 }
 
+// Internal helper used inside guardedCall (defined before the function so it hoists cleanly).
+// The exported _debitBillingCredits is a duplicate for external/test use.
+function _debitBillingCreditsLocal(userId, costUsd) {
+  if (!userId) return;
+  try {
+    const billing = require('./billing-service');
+    if (typeof billing.recordUsage === 'function') {
+      billing.recordUsage({ userId, agent: 'pay-guard', brain: 'pay.sh', tokens: 0, costUsd });
+    }
+  } catch {
+    // billing-service unavailable — skip
+  }
+}
+
 /**
  * Guarded paid API call. Returns a structured result describing what happened —
  * executed, refused (with reason), or pending approval.
@@ -188,10 +202,32 @@ async function guardedCall(a = {}) {
   }
 
   const dayTotal = recordSpend({ url, cost_usd: cost, method: a.method || 'GET' });
+  // Mirror spend into the subscription credit ledger (non-blocking, non-fatal)
+  _debitBillingCreditsLocal(a.userId, cost);
   return { ok: true, output: res.output, cost_usd: cost, spent_today: dayTotal, daily_budget: cfg.daily_budget_usd };
+}
+
+// ── BILLING INTEGRATION HOOK ─────────────────────────────────────────────────
+// When a pay.sh call succeeds, optionally debit billing credits for the userId
+// so the cost shows up in the subscription ledger alongside LLM usage.
+//
+// Usage: set a.userId on the guardedCall argument to enable this.
+// The hook is a no-op if billing-service is unavailable or userId is absent.
+function _debitBillingCredits(userId, costUsd) {
+  if (!userId) return;
+  try {
+    // Lazy-require to avoid circular deps and startup failures
+    const billing = require('./billing-service');
+    if (typeof billing.recordUsage === 'function') {
+      billing.recordUsage({ userId, agent: 'pay-guard', brain: 'pay.sh', tokens: 0, costUsd });
+    }
+  } catch {
+    // billing-service not available — silently skip
+  }
 }
 
 module.exports = {
   getConfig, setConfig, getLedger, spentToday,
-  getPending, resolvePending, guardedCall, DEFAULT_CONFIG
+  getPending, resolvePending, guardedCall, DEFAULT_CONFIG,
+  _debitBillingCredits // exported for tests; not intended for direct external use
 };

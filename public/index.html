@@ -2993,6 +2993,149 @@ body[data-theme="dark"]::before {
   from { opacity: 0; letter-spacing: 0.4em; }
   to   { opacity: 1; letter-spacing: 0.22em; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SHADDAI MOBILE RESPONSIVE — v80 mobile layer
+   All rules scoped to max-width:768px so desktop is untouched
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Top bar ── */
+  #topBar {
+    padding: 0 10px;
+    gap: 6px;
+    height: 44px;
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+  #topBar > div { flex-shrink: 1; min-width: 0; overflow: hidden; }
+
+  /* ── Main nav: horizontal scroll pill strip ── */
+  #mainNav {
+    top: 44px;
+    height: 40px;
+    padding: 0 8px;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-btn {
+    padding: 0 10px;
+    font-size: 9px;
+    height: 34px;
+    min-height: 40px;   /* tap target */
+    white-space: nowrap;
+  }
+
+  /* ── Agent bar ── */
+  #agentBar {
+    top: 84px;
+    height: 40px;
+    padding: 0 8px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .agent-chip {
+    padding: 5px 10px;
+    font-size: 9px;
+    min-height: 34px;
+  }
+  .all-chip {
+    padding: 5px 8px;
+    font-size: 9px;
+    min-height: 34px;
+  }
+  #statusBar { display: none; }   /* too cramped on phone; collapsed by default */
+
+  /* ── Main content area ── */
+  #mainArea {
+    margin-top: 124px;
+    padding: 8px 8px 80px 8px;
+  }
+
+  /* ── Prevent horizontal overflow globally on mobile ── */
+  body { overflow-x: hidden; }
+  #mainArea, .view, .card, .grid, [class*="col"] {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* ── Cards: single-column stacking ── */
+  .card {
+    width: 100% !important;
+    margin-bottom: 10px;
+    padding: 12px !important;
+  }
+  .grid, .cards-grid, .dash-grid, .metrics-grid,
+  .agent-grid, .skill-grid, .market-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  /* ── Typography scale-down ── */
+  .card-head { font-size: 11px !important; }
+  .metric-value, .res-value { font-size: 14px !important; }
+
+  /* ── Sidebar: hide on mobile (uses top nav instead) ── */
+  #sbNav, #fileSidebar, #fileSidebarToggle { display: none !important; }
+  #mainArea.sidebar-active { margin-left: 0 !important; }
+
+  /* ── Modals: full-width on mobile ── */
+  .modal-box {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    margin: 0 auto;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  /* ── Mobile Quick-Action Grid (shown on dashView on mobile) ── */
+  #mobileQuickActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0 16px 0;
+  }
+  .mqa-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glow);
+    border-radius: 10px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px 8px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    min-height: 72px;
+    transition: background 0.18s, border-color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mqa-btn:active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+  }
+  .mqa-btn .mqa-icon { font-size: 22px; line-height: 1; }
+  .mqa-btn .mqa-label { color: var(--text-secondary); }
+
+  /* ── "?" onboarding re-open button (always visible on mobile) ── */
+  #shdOnboardBtn {
+    display: flex;
+  }
+}
+
+/* Desktop: hide mobile-only elements */
+@media (min-width: 769px) {
+  #mobileQuickActions { display: none !important; }
+  #shdOnboardBtn { display: none !important; }
+  #shdOnboardOverlay { display: none !important; }
+}
 </style>
 <!-- pdf.js — client-side PDF text extraction, zero backend needed -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -3127,6 +3270,58 @@ body.ly-focus .card{border-radius:10px}
   <button class="nav-btn" onclick="showView('chainRunner')" style="color:#00c8ff;font-weight:700">🔗 Chain</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
+
+<!-- ═══ SHADDAI ONBOARDING OVERLAY — mobile first-run ═══ -->
+<div id="shdOnboardOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(2,8,23,0.96);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:16px;max-width:360px;width:100%;padding:28px 22px 22px;position:relative;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:900;color:var(--accent);letter-spacing:0.15em;">SHADDAI</div>
+      <div style="color:var(--text-secondary);font-size:10px;margin-top:4px;letter-spacing:2px;text-transform:uppercase;">Your AI Agent Empire</div>
+    </div>
+    <div id="shdOnboardSteps">
+      <!-- Step 1 -->
+      <div class="shd-step" data-step="1">
+        <div style="font-size:2rem;text-align:center;margin-bottom:10px;">🤖</div>
+        <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:8px;text-align:center;">Step 1 — Pick an Agent</div>
+        <div style="color:var(--text-secondary);font-size:11px;line-height:1.6;text-align:center;">Tap <strong>Agents</strong> in the nav or the agent bar above. Each agent is a specialist: ZEROX handles money, NEXUS builds tech, ORACLE researches, TURTLE designs.</div>
+      </div>
+      <!-- Step 2 -->
+      <div class="shd-step" data-step="2" style="display:none">
+        <div style="font-size:2rem;text-align:center;margin-bottom:10px;">💬</div>
+        <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:8px;text-align:center;">Step 2 — Give It a Job</div>
+        <div style="color:var(--text-secondary);font-size:11px;line-height:1.6;text-align:center;">Open <strong>Chat</strong>, select an agent, and type what you need — "Research Bitcoin trends", "Write a product description", "Build a workflow". The agent responds with real AI output.</div>
+      </div>
+      <!-- Step 3 -->
+      <div class="shd-step" data-step="3" style="display:none">
+        <div style="font-size:2rem;text-align:center;margin-bottom:10px;">⚡</div>
+        <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:8px;text-align:center;">Step 3 — Run a Workflow</div>
+        <div style="color:var(--text-secondary);font-size:11px;line-height:1.6;text-align:center;">Chain agents together in <strong>Workflow</strong>. One agent's output feeds the next — automate research → writing → posting in one click.</div>
+      </div>
+      <!-- Step 4 -->
+      <div class="shd-step" data-step="4" style="display:none">
+        <div style="font-size:2rem;text-align:center;margin-bottom:10px;">💰</div>
+        <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:8px;text-align:center;">Step 4 — Earn & Grow</div>
+        <div style="color:var(--text-secondary);font-size:11px;line-height:1.6;text-align:center;">Check <strong>Markets</strong> for live crypto data, <strong>Marketplace</strong> to buy/sell agent skills, and <strong>Wallet</strong> to track earnings. This is your sovereign AI command center.</div>
+      </div>
+    </div>
+    <!-- Progress dots -->
+    <div style="display:flex;justify-content:center;gap:7px;margin:18px 0 16px;">
+      <span class="shd-dot" data-dot="1" style="width:8px;height:8px;border-radius:50%;background:var(--accent);transition:background 0.2s;"></span>
+      <span class="shd-dot" data-dot="2" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></span>
+      <span class="shd-dot" data-dot="3" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></span>
+      <span class="shd-dot" data-dot="4" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></span>
+    </div>
+    <!-- Buttons -->
+    <div style="display:flex;gap:8px;">
+      <button id="shdOnboardSkip" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:inherit;font-size:11px;cursor:pointer;font-weight:600;">Skip</button>
+      <button id="shdOnboardNext" style="flex:2;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#020817;font-family:inherit;font-size:11px;cursor:pointer;font-weight:800;letter-spacing:0.5px;">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- "?" button to re-open onboarding — only rendered on mobile via CSS -->
+<button id="shdOnboardBtn" onclick="shdOnboardOpen()" title="What is SHADDAI?" style="display:none;position:fixed;bottom:20px;right:16px;z-index:1500;width:42px;height:42px;border-radius:50%;background:var(--accent);border:none;color:#020817;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 0 16px var(--accent-glow);align-items:center;justify-content:center;">?</button>
+
 <div id="agentBar">
   <button class="agent-chip active" onclick="pickAgent('SHADDAI')" style="border-color:#000000;color:#000000">SHADDAI</button>
   <button class="agent-chip" onclick="pickAgent('ZEROX');showView('agents')" style="border-color:#00ff88;color:#00ff88" title="ZEROX — Wealth Engine">ZEROX</button>
@@ -3197,6 +3392,33 @@ body.ly-focus .card{border-radius:10px}
 <main id="mainArea">
   <!-- Dashboard -->
   <div id="dashView" class="view active">
+    <!-- Mobile Quick-Action Grid — hidden on desktop via CSS, visible only on mobile -->
+    <div id="mobileQuickActions">
+      <button class="mqa-btn" onclick="showView('chat')">
+        <span class="mqa-icon">💬</span>
+        <span class="mqa-label">Chat Agent</span>
+      </button>
+      <button class="mqa-btn" onclick="showView('workflow')">
+        <span class="mqa-icon">⚡</span>
+        <span class="mqa-label">Workflow</span>
+      </button>
+      <button class="mqa-btn" onclick="showView('pipeline')">
+        <span class="mqa-icon">📈</span>
+        <span class="mqa-label">Markets</span>
+      </button>
+      <button class="mqa-btn" onclick="showView('marketplace')">
+        <span class="mqa-icon">🛒</span>
+        <span class="mqa-label">Marketplace</span>
+      </button>
+      <button class="mqa-btn" onclick="showView('wallet')">
+        <span class="mqa-icon">💰</span>
+        <span class="mqa-label">Wallet</span>
+      </button>
+      <button class="mqa-btn" onclick="showView('agents')">
+        <span class="mqa-icon">🤖</span>
+        <span class="mqa-label">Agents</span>
+      </button>
+    </div>
     <div class="card">
       <div class="mission-banner">
         <div class="scan-line"></div>
@@ -46792,6 +47014,72 @@ Provide a comprehensive analysis:
 }
 // ═════════════════════════════════════════════════════════════════════════════
 }
+</script>
+
+<!-- ═══ SHADDAI MOBILE ONBOARDING — self-contained JS ═══ -->
+<script>
+(function() {
+  var ONBOARD_FLAG = 'shaddai_onboarded';
+  var currentStep = 1;
+  var totalSteps = 4;
+
+  function shdOnboardShow() {
+    var el = document.getElementById('shdOnboardOverlay');
+    if (el) { el.style.display = 'flex'; }
+    shdOnboardGoTo(1);
+  }
+
+  function shdOnboardHide() {
+    var el = document.getElementById('shdOnboardOverlay');
+    if (el) { el.style.display = 'none'; }
+    localStorage.setItem(ONBOARD_FLAG, '1');
+  }
+
+  function shdOnboardGoTo(step) {
+    currentStep = step;
+    var steps = document.querySelectorAll('.shd-step');
+    steps.forEach(function(s) {
+      s.style.display = (parseInt(s.getAttribute('data-step')) === step) ? 'block' : 'none';
+    });
+    var dots = document.querySelectorAll('.shd-dot');
+    dots.forEach(function(d) {
+      d.style.background = (parseInt(d.getAttribute('data-dot')) === step)
+        ? 'var(--accent)'
+        : 'var(--border, rgba(90,107,138,0.25))';
+    });
+    var nextBtn = document.getElementById('shdOnboardNext');
+    if (nextBtn) {
+      nextBtn.textContent = (step >= totalSteps) ? 'Get Started ✓' : 'Next →';
+    }
+  }
+
+  function shdOnboardNext() {
+    if (currentStep < totalSteps) {
+      shdOnboardGoTo(currentStep + 1);
+    } else {
+      shdOnboardHide();
+    }
+  }
+
+  // Expose re-open function globally for the "?" button
+  window.shdOnboardOpen = shdOnboardShow;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Wire buttons
+    var skipBtn = document.getElementById('shdOnboardSkip');
+    var nextBtn = document.getElementById('shdOnboardNext');
+    if (skipBtn) skipBtn.addEventListener('click', shdOnboardHide);
+    if (nextBtn) nextBtn.addEventListener('click', shdOnboardNext);
+
+    // Only show on mobile (max-width 768px) and only on first visit
+    var isMobile = window.innerWidth <= 768;
+    var alreadyOnboarded = localStorage.getItem(ONBOARD_FLAG);
+    if (isMobile && !alreadyOnboarded) {
+      // Small delay so the rest of the page can load first
+      setTimeout(shdOnboardShow, 600);
+    }
+  });
+})();
 </script>
 
 </body>
