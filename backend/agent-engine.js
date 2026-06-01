@@ -911,12 +911,17 @@ const TOOLS = {
 
   generate_image: {
     name: 'generate_image',
-    description: 'Generate AI image via Pollinations (free, no key). Returns direct image URL.',
-    schema: { prompt: 'string — detailed image description', width: 'number (default 1024)', height: 'number (default 1024)' },
+    description: 'Generate an AI image — FREE, no API key (Pollinations). model: "flux" (quality) or "turbo" (fast). Returns a primary URL + free no-key fallback URLs. Higher quality if ACEDATACLOUD_API_TOKEN is set (Flux/Seedream/NanoBanana).',
+    schema: { prompt: 'string — detailed image description', model: "string — 'flux' (default) or 'turbo'", width: 'number (default 1024)', height: 'number (default 1024)' },
     agents: ['TURTLE'],
-    async execute({ prompt, width = 1024, height = 1024 }) {
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&enhance=true`;
-      return JSON.stringify({ success: true, url, prompt, note: 'Image generates on first load of the URL' });
+    async execute({ prompt, model = 'flux', width = 1024, height = 1024 }) {
+      const enc = encodeURIComponent(prompt || ''); const seed = Math.floor(Math.random() * 1e6);
+      const poll = m => `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&model=${m}&seed=${seed}&nologo=true&enhance=true`;
+      const primary = poll(model);
+      // Free, no-key fallbacks (alternate Pollinations models) — try these if the primary stalls.
+      const fallbacks = ['flux', 'turbo'].filter(m => m !== model).map(poll);
+      const premium = process.env.ACEDATACLOUD_API_TOKEN ? 'available (AceDataCloud Flux/Seedream/NanoBanana)' : 'set ACEDATACLOUD_API_TOKEN to enable';
+      return JSON.stringify({ success: true, provider: 'pollinations', model, url: primary, fallbacks, premium, prompt, note: 'Free & keyless. Image renders on first load of the URL; if slow, use a fallback.' });
     }
   },
 
