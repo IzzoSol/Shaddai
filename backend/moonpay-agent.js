@@ -13,6 +13,8 @@
 const express = require('express');
 const router = express.Router();
 const json = express.json();
+const { rateLimit, requireAdmin } = require('./auth-guard');
+router.use(rateLimit({ max: 80 })); // PIKADON: abuse protection
 
 const state = {
   killSwitch: true,   // PIKADON: ON = block ALL execution. Default = safe.
@@ -37,7 +39,7 @@ function snapshot() {
 router.get('/status', (req, res) => res.json({ ok: true, ...snapshot() }));
 
 // PIKADON kill-switch. Body {on:true|false} (omit to toggle).
-router.post('/killswitch', json, (req, res) => {
+router.post('/killswitch', requireAdmin, json, (req, res) => {
   state.killSwitch = (req.body && typeof req.body.on === 'boolean') ? req.body.on : !state.killSwitch;
   state.updated = Date.now();
   res.json({ ok: true, killSwitch: state.killSwitch, by: 'PIKADON' });

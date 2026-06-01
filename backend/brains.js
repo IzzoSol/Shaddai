@@ -91,6 +91,8 @@ async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard
 // --- HTTP API for the Workstation UI -----------------------------------------
 const router = express.Router();
 const json = express.json();
+const { rateLimit, softAuth, requireAdmin } = require('./auth-guard');
+router.use(rateLimit({ max: 80 }), softAuth); // PIKADON: abuse protection + caller id (hard-auth in prod via REQUIRE_AUTH)
 
 router.get('/', (req, res) => {
   res.json({
@@ -102,7 +104,7 @@ router.get('/', (req, res) => {
 });
 
 // Set an agent's brain. Body { agent, brainId }
-router.post('/agent', json, (req, res) => {
+router.post('/agent', requireAdmin, json, (req, res) => {
   const { agent, brainId } = req.body || {};
   if (!agent || !BRAINS[brainId]) return res.status(400).json({ ok: false, error: 'need { agent, brainId in registry }' });
   agentBrainOverride[agent] = brainId;
@@ -110,7 +112,7 @@ router.post('/agent', json, (req, res) => {
 });
 
 // Add a custom user agent. Body { name, persona, brainId? }
-router.post('/custom', json, (req, res) => {
+router.post('/custom', requireAdmin, json, (req, res) => {
   const { name, persona, brainId } = req.body || {};
   if (!name || !persona) return res.status(400).json({ ok: false, error: 'need { name, persona, brainId? }' });
   customAgents[name] = { label: name, persona, defaultBrain: BRAINS[brainId] ? brainId : 'groq-70b' };
