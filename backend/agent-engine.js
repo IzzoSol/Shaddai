@@ -920,6 +920,37 @@ const TOOLS = {
     }
   },
 
+  schedule_task: {
+    name: 'schedule_task',
+    description: 'Schedule a task or reminder for a future time. Persists it for the background job runner. Accepts ISO datetime or relative ("in 2 hours", "in 3 days").',
+    schema: { when: 'string — ISO datetime or relative like "in 2 hours"', action: 'string — what to do', agent: 'string — agent to run it (optional)' },
+    agents: ['SHADDAI', 'ORACLE', 'QUILL'],
+    async execute({ when, action, agent = 'SHADDAI' }) {
+      const fs = require('fs'), path = require('path');
+      const dir = path.join(__dirname, '..', 'data'), file = path.join(dir, 'scheduled-tasks.json');
+      const now = Date.now(); let whenISO = when;
+      const m = String(when || '').match(/in\s+(\d+)\s*(min|hour|day)/i);
+      if (m) { const n = +m[1], u = m[2].toLowerCase(); whenISO = new Date(now + (u.startsWith('min') ? n * 6e4 : u.startsWith('hour') ? n * 36e5 : n * 864e5)).toISOString(); }
+      else { const d = new Date(when); if (!isNaN(d.getTime())) whenISO = d.toISOString(); }
+      const task = { id: 'sch_' + now.toString(36), when: whenISO, action: action || '', agent, status: 'scheduled', created: new Date().toISOString() };
+      try { fs.mkdirSync(dir, { recursive: true }); let arr = []; try { arr = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) {} arr.push(task); fs.writeFileSync(file, JSON.stringify(arr, null, 2)); }
+      catch (e) { return JSON.stringify({ success: false, error: 'could not persist: ' + e.message }); }
+      return JSON.stringify({ success: true, scheduled: task, note: 'Saved to data/scheduled-tasks.json — background job runner executes due tasks.' });
+    }
+  },
+
+  list_scheduled_tasks: {
+    name: 'list_scheduled_tasks',
+    description: 'List scheduled tasks / reminders.',
+    schema: {},
+    agents: ['SHADDAI', 'ORACLE', 'QUILL'],
+    async execute() {
+      const fs = require('fs'), path = require('path');
+      try { const arr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'scheduled-tasks.json'), 'utf8')); return JSON.stringify({ success: true, count: arr.length, tasks: arr.slice(-20) }); }
+      catch (_) { return JSON.stringify({ success: true, count: 0, tasks: [] }); }
+    }
+  },
+
   analyze_sentiment: {
     name: 'analyze_sentiment',
     description: 'Analyze sentiment of any text. Returns score (-1 to +1), label, and key terms.',
