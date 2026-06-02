@@ -44,6 +44,7 @@ const router         = express.Router();
 const billingService = require('./billing-service');
 const { v4: uuidv4 } = require('uuid');
 const winston        = require('winston');
+const { verifyFirebaseToken, requireAdmin } = require('./auth-guard');
 
 // ── LOGGER ───────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
@@ -70,27 +71,51 @@ const logger = winston.createLogger({
 // ── MIDDLEWARE ────────────────────────────────────────────────────────────────
 
 /**
- * authenticateUser — extracts userId from header, query, or body.
- * In production: validate a Firebase/JWT token here.
+ * authenticateUser — verifies the caller via Firebase ID token when credentials
+ * are configured, or falls back to the x-user-id header in dev mode.
+ *
+ * In production (FIREBASE_SERVICE_ACCOUNT set + REQUIRE_AUTH=true):
+ *   - Requires a valid Firebase ID token in Authorization: Bearer <token>.
+ *   - Rejects requests with no/invalid token → 401.
+ *
+ * In local dev (no Firebase creds configured):
+ *   - Falls back to x-user-id header or body/query userId (non-breaking).
+ *
+ * This function is kept as a named wrapper around verifyFirebaseToken so that
+ * router.use(authenticateUser) continues to work unchanged, and legacy callers
+ * that import authenticateUser by name are not broken.
  */
-function authenticateUser(req, res, next) {
-  try {
-    req.userId =
-      req.headers['x-user-id'] ||
-      req.body.userId           ||
-      req.query.userId          ||
-      null;
+async function authenticateUser(req, res, next) {
+  // Promote body/query userId to x-user-id header so the fallback path inside
+  // verifyFirebaseToken can still pick it up when Firebase is not configured.
+  if (!req.headers['x-user-id']) {
+    const fallback = (req.body && req.body.userId) || req.query.userId;
+    if (fallback) req.headers['x-user-id'] = fallback;
+  }
 
-    if (!req.userId) {
-      return res.status(401).json({
-        error:   'Unauthorized',
-        message: 'userId required (X-User-ID header, body.userId, or ?userId=...)'
-      });
+  // Delegate to the real token-verifying middleware.
+  await verifyFirebaseToken(req, res, (err) => {
+    if (err) return next(err);
+    // Ensure req.userId is always set (verifyFirebaseToken always sets it on next()).
+    if (!req.userId || req.userId === 'local') {
+      // In strict mode verifyFirebaseToken would have already sent 401;
+      // reaching here means dev-permissive mode — keep legacy error shape.
+      if (process.env.REQUIRE_AUTH !== 'true') {
+        // Still no uid even after fallback — preserve old 401 message for API consumers.
+        if (!req.userId || req.userId === 'local') {
+          const hasBody = req.body && req.body.userId;
+          const hasQuery = req.query.userId;
+          if (!hasBody && !hasQuery && !req.headers['x-user-id']) {
+            return res.status(401).json({
+              error:   'Unauthorized',
+              message: 'userId required (Authorization: Bearer <token>, X-User-ID header, body.userId, or ?userId=...)'
+            });
+          }
+        }
+      }
     }
     next();
-  } catch (err) {
-    res.status(401).json({ error: 'Authentication failed', message: err.message });
-  }
+  });
 }
 
 /** Validate required body fields. */
@@ -475,8 +500,9 @@ router.post(
  * POST /admin/credit
  * Body: { targetUserId, amount, reason }
  * Manually credit a user's balance (e.g. after MoonPay confirmation).
+ * Requires valid ADMIN_TOKEN in x-shaddai-admin header (when set in env).
  */
-router.post('/admin/credit', validateFields(['targetUserId', 'amount']), handle(async (req, res) => {
+router.post('/admin/credit', requireAdmin, validateFields(['targetUserId', 'amount']), handle(async (req, res) => {
   const { targetUserId, amount, reason } = req.body;
   const parsedAmount = Number(amount);
   if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
@@ -492,8 +518,9 @@ router.post('/admin/credit', validateFields(['targetUserId', 'amount']), handle(
  * POST /admin/set-tier
  * Body: { targetUserId, tier }
  * Directly sets a user's tier (e.g. after manual payment verification).
+ * Requires valid ADMIN_TOKEN in x-shaddai-admin header (when set in env).
  */
-router.post('/admin/set-tier', validateFields(['targetUserId', 'tier']), handle(async (req, res) => {
+router.post('/admin/set-tier', requireAdmin, validateFields(['targetUserId', 'tier']), handle(async (req, res) => {
   const { targetUserId, tier } = req.body;
   const validTiers = Object.keys(billingService.TIER_CONFIG);
   if (!validTiers.includes(tier)) {

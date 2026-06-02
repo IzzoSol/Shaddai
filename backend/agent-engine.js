@@ -537,36 +537,72 @@ const TOOLS = {
     schema: { code: 'string — JavaScript code to execute' },
     agents: ['NEXUS','SHADDAI'],
     async execute({ code }) {
-      const logs = [];
-      const sandbox = {
-        result: undefined,
-        console: { log: (...a) => logs.push(a.join(' ')), error: (...a) => logs.push('ERR: '+a.join(' ')), warn: (...a) => logs.push('WARN: '+a.join(' ')) },
-        Math, JSON, Array, Object, String, Number, Date, parseInt, parseFloat, isNaN, isFinite,
-        setTimeout: undefined, setInterval: undefined, fetch: undefined  // block network
-      };
+      // PRODUCTION: replace with isolated-vm or a container for true isolation.
+      // vm.runInNewContext is NOT a security boundary — prototype-pollution or
+      // this.constructor.constructor tricks can still escape to real Node globals.
+      // This interim hardening removes all dangerous globals from the sandbox and
+      // caps input length to limit trivial abuse until a proper isolate is in place.
+
+      const MAX_CODE_LENGTH = 10000;
+      if (typeof code !== 'string' || code.length > MAX_CODE_LENGTH) {
+        return JSON.stringify({ success: false, error: `code must be a string ≤ ${MAX_CODE_LENGTH} characters` });
+      }
+
+      const output = [];
+
+      // STRICT sandbox — no require, no process, no global, no fetch, no timers.
+      // Only safe primitives are exposed.
+      const sandbox = Object.create(null);
+      sandbox.Math      = Math;
+      sandbox.JSON      = JSON;
+      sandbox.parseInt  = parseInt;
+      sandbox.parseFloat = parseFloat;
+      sandbox.isNaN     = isNaN;
+      sandbox.isFinite  = isFinite;
+      sandbox.output    = output;  // captured output array — write here to return values
+      sandbox.console   = Object.freeze({
+        log:   (...a) => output.push(a.map(String).join(' ')),
+        error: (...a) => output.push('ERR: '  + a.map(String).join(' ')),
+        warn:  (...a) => output.push('WARN: ' + a.map(String).join(' ')),
+      });
+
       try {
-        const ctx = vm.createContext(sandbox);
-        vm.runInContext(code, ctx, { timeout: 5000 });
-        return JSON.stringify({ result: sandbox.result, logs, error: null });
-      } catch(e) {
-        return JSON.stringify({ result: null, logs, error: e.message });
+        vm.runInNewContext(code, sandbox, { timeout: 3000 });
+        return JSON.stringify({ success: true, output, error: null });
+      } catch (e) {
+        return JSON.stringify({ success: false, output, error: e.message });
       }
     }
   },
 
   run_python: {
     name: 'run_python',
-    description: 'Execute Python code via system Python. Returns stdout. Sandboxed to 10 second timeout.',
+    description: 'Execute Python code via system Python. Returns stdout. Requires ALLOW_PYTHON_EXEC=true env var; disabled by default for security.',
     schema: { code: 'string — Python code to run' },
     agents: ['NEXUS','SHADDAI'],
     async execute({ code }) {
+      // Gate: disabled unless the operator explicitly opts in.
+      // PRODUCTION: route through Docker (--network none --memory 128m --cpus 0.5)
+      // or a sandboxed runner (E2B, Firecracker) — never exec arbitrary Python on
+      // the shared server process. See SPEC_security-hardening.md Issue 3.
+      if (process.env.ALLOW_PYTHON_EXEC !== 'true') {
+        return JSON.stringify({
+          success: false,
+          error: 'python exec disabled — set ALLOW_PYTHON_EXEC=true and use a sandboxed runner (Docker --network none)'
+        });
+      }
+
       return new Promise((resolve) => {
         const tmpFile = path.join(OUTPUT_DIR, `tmp_py_${Date.now()}.py`);
-        fs.writeFileSync(tmpFile, code, 'utf8');
-        exec(`python "${tmpFile}"`, { timeout: 10000, maxBuffer: 50000 }, (err, stdout, stderr) => {
+        try { fs.writeFileSync(tmpFile, code, 'utf8'); } catch (writeErr) {
+          return resolve(JSON.stringify({ success: false, error: `failed to write temp file: ${writeErr.message}`, stdout: '' }));
+        }
+        // Timeout set to 8 s. For true isolation wrap with:
+        // docker run --rm --network none --memory 128m --cpus 0.5 python:3.11-slim python -c "<code>"
+        exec(`python "${tmpFile}"`, { timeout: 8000, maxBuffer: 50000 }, (err, stdout, stderr) => {
           try { fs.unlinkSync(tmpFile); } catch {}
-          if (err && !stdout) return resolve(JSON.stringify({ error: stderr?.slice(0,500) || err.message, stdout: '' }));
-          resolve(JSON.stringify({ stdout: stdout.slice(0,2000), stderr: stderr?.slice(0,500) || '', exitCode: err?.code || 0 }));
+          if (err && !stdout) return resolve(JSON.stringify({ success: false, error: stderr?.slice(0,500) || err.message, stdout: '' }));
+          resolve(JSON.stringify({ success: true, stdout: stdout.slice(0,2000), stderr: stderr?.slice(0,500) || '', exitCode: err?.code || 0 }));
         });
       });
     }

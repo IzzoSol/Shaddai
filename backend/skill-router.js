@@ -1106,7 +1106,40 @@ Remember: Store in secure password manager, enable 2FA`;
   }
 };
 
+// ─── SKILL EXECUTOR INTEGRATION (additive — does not rename or remove anything) ───
+// Lazy-load skill-executor so a missing module never breaks existing behavior.
+let _skillExecutor = null;
+function getSkillExecutor() {
+  if (_skillExecutor) return _skillExecutor;
+  try {
+    _skillExecutor = require('./skill-executor');
+  } catch (e) {
+    console.warn('[SKILL_ROUTER] skill-executor not available:', e.message);
+    _skillExecutor = false; // cache the failure so we don't retry on every call
+  }
+  return _skillExecutor || null;
+}
+
 async function executeSkill(agent, skill, message) {
+  // ── NEW: Try skill-executor first (real tools + LLM fallback) ──────────────
+  const executor = getSkillExecutor();
+  if (executor && typeof executor.executeSkill === 'function') {
+    const agentId = agent.name.toLowerCase();
+    const skillName = skill.name;
+    // Only route through executor when there is an explicit tool binding.
+    // For unmapped skills we let the legacy handlers run first (preserves existing behavior).
+    const hasBinding = !!(executor.SKILL_TOOL_MAP && executor.SKILL_TOOL_MAP[`${agentId}/${skillName}`]);
+    if (hasBinding) {
+      try {
+        const result = await executor.executeSkill(skillName, agentId, message);
+        if (result && result.trim().length > 0) return result;
+      } catch (e) {
+        console.warn(`[SKILL_ROUTER] skill-executor failed for ${agentId}/${skillName}:`, e.message);
+        // Fall through to legacy handler below
+      }
+    }
+  }
+  // ── EXISTING: Legacy SKILL_HANDLERS (unchanged) ────────────────────────────
   const handler = SKILL_HANDLERS[skill.fn];
   if (handler) {
     try {
