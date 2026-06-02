@@ -27802,7 +27802,7 @@ function toggleChatRoutingPanel() {
 
 // Demo key — replace in Settings > API Keys with your own from openrouter.ai/keys
 if (!localStorage.getItem('shaddai_openrouter_key')) {
-  localStorage.setItem('shaddai_openrouter_key', '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');
+  localStorage.removeItem('shaddai_openrouter_key'); /* SECURITY: hardcoded provider key removed — LLM now routes server-side via POST /api/llm/chat (keys live only in backend/.env). Rotate the old key at openrouter.ai. */
 }
 // Ensure model has a default
 if (!localStorage.getItem('shaddai_openrouter_model')) {

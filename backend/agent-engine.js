@@ -3361,4 +3361,6 @@ async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
   };
 }
 
+// Merge the extra tool catalog (scrape/pdf/csv/pwned/pubmed + keyed stubs) into the registry
+try { Object.assign(TOOLS, require('./tools-extra').TOOLS_EXTRA); } catch (e) { console.warn('[tools-extra] not loaded:', e.message); }
 module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };

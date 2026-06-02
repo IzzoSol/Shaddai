@@ -1,0 +1,105 @@
+# .gitleaks.toml — SHADDAI secret-scan configuration
+# Spec source: docs/specs/SPEC_security-hardening.md, Issue 5
+# Used by: gitleaks CLI and .github/workflows/secret-scan.yml
+
+title = "SHADDAI Gitleaks Config"
+
+# ---------------------------------------------------------------------------
+# Custom rules — provider-specific key patterns
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id          = "openrouter-api-key"
+description = "OpenRouter API key"
+regex       = '''sk-or-v1-[0-9a-f]{64}'''
+tags        = ["api-key", "openrouter"]
+severity    = "CRITICAL"
+
+[[rules]]
+id          = "anthropic-api-key"
+description = "Anthropic / Claude API key"
+regex       = '''sk-ant-[A-Za-z0-9\-]{20,}'''
+tags        = ["api-key", "anthropic"]
+severity    = "CRITICAL"
+
+[[rules]]
+id          = "groq-api-key"
+description = "Groq API key"
+regex       = '''gsk_[A-Za-z0-9]{20,}'''
+tags        = ["api-key", "groq"]
+severity    = "HIGH"
+
+[[rules]]
+id          = "google-api-key"
+description = "Google / Firebase API key"
+regex       = '''AIza[0-9A-Za-z_\-]{35}'''
+tags        = ["api-key", "google", "firebase"]
+severity    = "HIGH"
+
+[[rules]]
+id          = "aws-access-key-id"
+description = "AWS access key ID"
+regex       = '''AKIA[0-9A-Z]{16}'''
+tags        = ["api-key", "aws"]
+severity    = "CRITICAL"
+
+[[rules]]
+id          = "aws-secret-access-key"
+description = "AWS secret access key (high-entropy 40-char value following known assignment patterns)"
+regex       = '''(?i)aws.{0,20}secret.{0,20}[=:]["']?[A-Za-z0-9/+]{40}["']?'''
+tags        = ["api-key", "aws"]
+severity    = "CRITICAL"
+
+[[rules]]
+id          = "github-pat-classic"
+description = "GitHub personal access token (classic)"
+regex       = '''ghp_[A-Za-z0-9]{36}'''
+tags        = ["api-key", "github"]
+severity    = "CRITICAL"
+
+[[rules]]
+id          = "github-pat-fine-grained"
+description = "GitHub fine-grained personal access token"
+regex       = '''github_pat_[A-Za-z0-9_]{82}'''
+tags        = ["api-key", "github"]
+severity    = "CRITICAL"
+
+# ---------------------------------------------------------------------------
+# Global allowlist — never flag these paths or patterns
+# ---------------------------------------------------------------------------
+
+[allowlist]
+description = "Allowlist for example files, placeholders, and test fixtures"
+
+# Files that are explicitly allowed to contain key-shaped strings
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.sample$''',
+  '''\.env\.template$''',
+  '''.*\.example$''',
+  '''.*\.sample$''',
+  '''.*\.template$''',
+  '''docs/.*''',
+  '''README.*''',
+  '''SPEC_.*\.md$''',
+  '''.*_AUDIT\.md$''',
+  '''.*_SECURITY.*\.md$''',
+  '''backend/test[s]?/.*''',
+  '''scripts/install-hooks.*''',
+]
+
+# Strings that are clearly placeholders — never treat as real secrets
+regexes = [
+  '''YOUR_[A-Z0-9_]+''',
+  '''(?i)xxxx+''',
+  '''(?i)REDACTED''',
+  '''(?i)placeholder''',
+  '''(?i)<your[_\-]?.*key>''',
+  '''(?i)<replace[_\-]?.*>''',
+  '''sk-ant-api\.\.\.|sk-ant-\.\.\.''',
+  '''gsk_\.\.\.|gsk_XXXX''',
+  '''AIza\.\.\.''',
+  '''ghp_\.\.\.|github_pat_\.\.\. ''',
+  # Inline HTML placeholder attributes (not real keys)
+  '''placeholder\s*=\s*["'][^"']*sk-''',
+]
