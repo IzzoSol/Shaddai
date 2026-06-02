@@ -3945,84 +3945,308 @@ body.ly-focus .card{border-radius:10px}
       <div id="councilResult" style="display:none"></div>
     </div>
 
-    <!-- ROW: AUTONOMOUS EXECUTION STACK — Trade · Pay · Onramp -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">
+    <!-- MoonPay Agents · ZEROX — Full Dashboard Section -->
+    <div id="moonpayAgentsCard" style="margin-top:14px;border:1px solid rgba(123,90,254,0.35);background:rgba(123,90,254,0.05);border-radius:12px;padding:0;overflow:hidden">
 
-      <!-- Jupiter Swap (free, Solana DEX) -->
-      <div class="card" style="border:1px solid rgba(20,241,149,0.3);background:rgba(20,241,149,0.04)">
-        <div class="card-head" style="border-bottom:1px solid rgba(20,241,149,0.2)">
-          <span class="card-title" style="color:#14f195;font-size:12px">💱 Jupiter Swap</span>
-          <span style="font-size:7px;color:#14f195;background:rgba(20,241,149,0.1);border:1px solid rgba(20,241,149,0.3);padding:2px 6px;border-radius:4px">LIVE</span>
+      <!-- ── SECTION HEADER ── -->
+      <div style="background:linear-gradient(135deg,rgba(123,90,254,0.18),rgba(167,139,250,0.08));border-bottom:1px solid rgba(123,90,254,0.25);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:15px;font-weight:800;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px">🌙 MoonPay Agents <span style="color:#7b5afe">·</span> ZEROX</span>
+          <span id="mpKillBadge" style="font-size:8px;color:#ff6b6b;background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.35);padding:3px 9px;border-radius:20px;font-weight:700;letter-spacing:.5px">KILL-SWITCH: ON 🔒</span>
+          <span style="font-size:8px;color:var(--text-muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:3px 9px;border-radius:20px">NON-CUSTODIAL · keys stay local</span>
         </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px">Step 1: Get a real-time price quote via Jupiter API. Step 2: Complete swap on jup.ag with your Phantom wallet.</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;gap:4px;align-items:center">
-            <select id="jupFrom" class="select" style="flex:1;font-size:10px;padding:6px 8px">
-              <option value="SOL">SOL</option><option value="USDC">USDC</option><option value="USDT">USDT</option><option value="BONK">BONK</option><option value="JUP">JUP</option><option value="WIF">WIF</option>
-            </select>
-            <span style="font-size:14px;color:#14f195">⇄</span>
-            <select id="jupTo" class="select" style="flex:1;font-size:10px;padding:6px 8px">
-              <option value="USDC">USDC</option><option value="SOL">SOL</option><option value="USDT">USDT</option><option value="BONK">BONK</option><option value="JUP">JUP</option><option value="WIF">WIF</option>
-            </select>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <!-- Chain selector used to fill example commands below -->
+          <select id="mpChain" class="select" style="font-size:10px;padding:5px 10px;border-color:rgba(123,90,254,0.4);background:rgba(123,90,254,0.08);color:#a78bfa;min-width:110px" onchange="mpUpdateChainExamples()">
+            <option value="solana">Solana</option>
+            <option value="ethereum">Ethereum</option>
+            <option value="polygon">Polygon</option>
+            <option value="bitcoin">Bitcoin</option>
+            <option value="ton">TON</option>
+          </select>
+          <button id="mpKillBtn" class="btn" style="font-size:10px;padding:6px 14px;background:linear-gradient(135deg,#ff6b6b,#d14c3f);color:#fff;border:none;font-weight:700" onclick="mpToggleKill()">Enable trading</button>
+          <label style="font-size:9px;color:var(--text-muted);display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap"><input type="checkbox" id="mpPaper" checked onchange="mpTogglePaper()"> Paper-trade only</label>
+        </div>
+      </div>
+
+      <!-- ── BODY GRID ── -->
+      <div style="padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        <!-- LEFT COLUMN -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- ── ZEROX PROPOSALS LEDGER ── -->
+          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:700;color:#14d27a;letter-spacing:.5px">🤖 ZEROX Proposals Ledger</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost" style="font-size:9px;padding:3px 9px" onclick="mpProposeDemo()">+ Test Proposal</button>
+                <button class="btn btn-ghost" style="font-size:9px;padding:3px 9px" onclick="mpLoadIntents()">↻ Refresh</button>
+              </div>
+            </div>
+            <div id="mpIntents" style="font-size:9px;color:var(--text-muted);line-height:1.6;max-height:160px;overflow-y:auto;padding-right:4px">No proposals yet. ZEROX posts trade ideas here; execute them in your local <code>mp</code>.</div>
+            <div style="font-size:8px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);line-height:1.5">Proposals are non-custodial intents only. You run the <code>mp</code> command locally to sign and execute. SHADDAI never touches your keys or funds.</div>
           </div>
-          <input id="jupAmount" class="input" type="number" placeholder="Amount" value="0.1" step="0.01" style="font-size:11px;padding:6px 8px">
-          <button class="btn btn-accent" style="font-size:10px;padding:7px;background:#14f195;color:#000;border:none;font-weight:700" onclick="getJupiterQuote()">📊 Get Live Quote</button>
-          <div id="jupQuoteResult" style="font-size:9px;color:var(--text-muted);min-height:30px;padding:6px;background:rgba(0,0,0,0.3);border-radius:3px"></div>
-          <button class="btn" style="font-size:10px;padding:7px;background:linear-gradient(135deg,#14f195,#00c8ff);color:#000;border:none;font-weight:700;width:100%" onclick="openJupiterFull()">⚡ Swap on Jupiter ↗</button>
-          <div style="font-size:8px;color:var(--text-muted);line-height:1.4">Opens jup.ag with your pair pre-filled. Connect Phantom there to execute.</div>
+
+          <!-- ── MARKET SIGNAL ── -->
+          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:700;color:#a78bfa">📈 Market Signal</span>
+              <button class="btn btn-ghost" style="font-size:9px;padding:3px 9px" onclick="mpLoadMarket()">↻ Refresh</button>
+            </div>
+            <div id="mpMarket" style="font-size:9px;color:var(--text-muted);line-height:1.6">Run <code>mp token trending --chain solana</code> locally, or use the DEX Screener feed below — ZEROX uses both to decide.</div>
+          </div>
+
+          <!-- ── PAY AN AGENT FORM ── -->
+          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:4px">💸 Agent Economy — Pay a SHADDAI Agent</div>
+            <div style="font-size:8px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Sends a payment intent to <code>/api/moonpay/pay-agent</code>. Returns the <code>mp</code> CLI command to run locally. Non-custodial — no funds leave your machine until you run the command.</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <div style="flex:1;min-width:100px">
+                  <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px;font-weight:600">Agent name</div>
+                  <select id="mpPayAgent" class="select" style="width:100%;font-size:10px;padding:6px 8px">
+                    <option value="ZEROX">ZEROX</option>
+                    <option value="ORACLE">ORACLE</option>
+                    <option value="NEXUS">NEXUS</option>
+                    <option value="TURTLE">TURTLE</option>
+                    <option value="QUILL">QUILL</option>
+                    <option value="PIKADON">PIKADON</option>
+                    <option value="SHADDAI">SHADDAI</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:80px">
+                  <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px;font-weight:600">Amount (USD)</div>
+                  <input id="mpPayAmount" class="input" type="number" placeholder="5.00" value="5" min="0.01" step="0.01" style="width:100%;font-size:10px;padding:6px 8px">
+                </div>
+              </div>
+              <div>
+                <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px;font-weight:600">Task description</div>
+                <input id="mpPayTask" class="input" type="text" placeholder="e.g. Analyze SOL/USDC 4h chart" style="width:100%;font-size:10px;padding:6px 8px">
+              </div>
+              <button class="btn" style="font-size:10px;padding:7px;background:linear-gradient(135deg,#7b5afe,#a78bfa);color:#fff;border:none;font-weight:700" onclick="mpPayAgent()">⚡ Generate Payment Command</button>
+              <div id="mpPayResult" style="font-size:9px;color:#14d27a;background:rgba(0,0,0,0.35);border-radius:6px;padding:8px;display:none;word-break:break-all;line-height:1.6"></div>
+            </div>
+          </div>
+
+        </div><!-- /LEFT COLUMN -->
+
+        <!-- RIGHT COLUMN -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- ── CLI COMMAND REFERENCE ── -->
+          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:2px">🖥 MoonPay CLI Reference — <code style="font-size:10px;color:#7b5afe">mp</code> commands</div>
+            <div style="font-size:8px;color:var(--text-muted);margin-bottom:10px">All commands run locally. Keys never leave your machine. Selected chain: <span id="mpChainLabel" style="color:#a78bfa;font-weight:700">solana</span></div>
+
+            <!-- Setup group -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#7b5afe;border-radius:2px"></span>Setup</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">npm i -g @moonpay/cli</td><td style="padding:4px 6px;color:var(--text-muted)">Install MoonPay CLI globally</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp consent accept</td><td style="padding:4px 6px;color:var(--text-muted)">Accept terms of service</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp login</td><td style="padding:4px 6px;color:var(--text-muted)">Authenticate with MoonPay account</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp mcp</td><td style="padding:4px 6px;color:var(--text-muted)">Start MCP server for AI agent integration</td></tr>
+              </table>
+            </div>
+
+            <!-- Wallet group -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#7b5afe;border-radius:2px"></span>Wallet (non-custodial · keys local)</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp wallet create</td><td style="padding:4px 6px;color:var(--text-muted)">Create a new local wallet</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp wallet list</td><td style="padding:4px 6px;color:var(--text-muted)">List all local wallets</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp wallet retrieve &lt;id&gt;</td><td style="padding:4px 6px;color:var(--text-muted)">Show wallet details by ID</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp wallet export &lt;id&gt;</td><td style="padding:4px 6px;color:var(--text-muted)">Export wallet private key (use with care)</td></tr>
+              </table>
+            </div>
+
+            <!-- Balances group -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#7b5afe;border-radius:2px"></span>Balances</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap" id="mpCmdTokenBal">mp token balance list --wallet &lt;addr&gt; --chain solana</td><td style="padding:4px 6px;color:var(--text-muted)">List all token balances on chain</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp bitcoin balance retrieve</td><td style="padding:4px 6px;color:var(--text-muted)">BTC balance (Bitcoin chain only)</td></tr>
+              </table>
+            </div>
+
+            <!-- Market data group -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#7b5afe;border-radius:2px"></span>Market Data</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap" id="mpCmdTrending">mp token trending --chain solana</td><td style="padding:4px 6px;color:var(--text-muted)">Trending tokens on selected chain</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp token search --query &lt;symbol&gt;</td><td style="padding:4px 6px;color:var(--text-muted)">Search for token by name or symbol</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp token retrieve --token &lt;id&gt;</td><td style="padding:4px 6px;color:var(--text-muted)">Full token metadata, price, and metrics</td></tr>
+              </table>
+            </div>
+
+            <!-- Trade group -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#a78bfa;border-radius:2px"></span>Trade</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap" id="mpCmdSwap">mp token swap --from SOL --to USDC --chain solana</td><td style="padding:4px 6px;color:var(--text-muted)">Same-chain swap (e.g. SOL → USDC)</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap" id="mpCmdBridge">mp token bridge --from solana --to ethereum --token USDC</td><td style="padding:4px 6px;color:var(--text-muted)">Cross-chain bridge (requires both chains)</td></tr>
+              </table>
+            </div>
+
+            <!-- Fiat ramp group -->
+            <div>
+              <div style="font-size:8px;font-weight:700;color:#7b5afe;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:10px;background:#7b5afe;border-radius:2px"></span>Fiat On/Off Ramp</div>
+              <table style="width:100%;border-collapse:collapse;font-size:9px">
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp buy --token sol --amount 100</td><td style="padding:4px 6px;color:var(--text-muted)">Fiat-to-crypto on-ramp (USD → SOL)</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp sell --token sol --amount 0.5</td><td style="padding:4px 6px;color:var(--text-muted)">Crypto-to-fiat off-ramp</td></tr>
+                <tr style="border-bottom:1px solid rgba(123,90,254,0.1)"><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp virtual-account create</td><td style="padding:4px 6px;color:var(--text-muted)">Create virtual bank account for deposits</td></tr>
+                <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp buy --token usdc --zero-fee</td><td style="padding:4px 6px;color:var(--text-muted)">Zero-fee stablecoin on-ramp (USDC/USDT)</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── MOONCARD ROADMAP ── -->
+          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-size:11px;font-weight:700;color:#a78bfa">💳 MoonCard &amp; Agentic Commerce</span>
+              <span style="font-size:7px;color:#ffd84d;background:rgba(255,216,77,0.1);border:1px solid rgba(255,216,77,0.3);padding:2px 8px;border-radius:20px;font-weight:700">ROADMAP</span>
+            </div>
+            <div style="font-size:8px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Requires MoonPay agent-commerce API access. All items below are planned — not yet available. ZEROX and SHADDAI will use these autonomously once live.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:rgba(123,90,254,0.06);border:1px solid rgba(123,90,254,0.15);border-radius:8px;padding:9px">
+                <div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:5px">🛒 Shopping &amp; Errands</div>
+                <div style="font-size:8px;color:var(--text-muted);line-height:1.5">Agent browses, selects, and checks out on your behalf using MoonCard. Covers everyday purchases, groceries, and delivery services.</div>
+              </div>
+              <div style="background:rgba(123,90,254,0.06);border:1px solid rgba(123,90,254,0.15);border-radius:8px;padding:9px">
+                <div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:5px">✈️ Travel Booking</div>
+                <div style="font-size:8px;color:var(--text-muted);line-height:1.5">Flights, hotels, and car rentals booked autonomously. Agent confirms within your budget policy before committing.</div>
+              </div>
+              <div style="background:rgba(123,90,254,0.06);border:1px solid rgba(123,90,254,0.15);border-radius:8px;padding:9px">
+                <div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:5px">🔄 Subscriptions</div>
+                <div style="font-size:8px;color:var(--text-muted);line-height:1.5">Auto-renew or cancel SaaS subscriptions based on usage metrics. ZEROX audits value vs. cost monthly.</div>
+              </div>
+              <div style="background:rgba(123,90,254,0.06);border:1px solid rgba(123,90,254,0.15);border-radius:8px;padding:9px">
+                <div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:5px">🏢 Business Purchasing</div>
+                <div style="font-size:8px;color:var(--text-muted);line-height:1.5">NEXUS requisitions infrastructure (APIs, servers, domains). PIKADON enforces spend limits and approval gates.</div>
+              </div>
+            </div>
+            <!-- MoonCard details -->
+            <div style="margin-top:10px;background:linear-gradient(135deg,rgba(123,90,254,0.12),rgba(167,139,250,0.06));border:1px solid rgba(123,90,254,0.25);border-radius:8px;padding:10px">
+              <div style="font-size:10px;font-weight:700;color:#a78bfa;margin-bottom:6px">💳 MoonCard — Non-Custodial Stablecoin Card</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:8px;color:var(--text-muted);line-height:1.6">
+                <div>· Backed by USDC/USDT in your local wallet</div>
+                <div>· Full card details (PAN, CVV) on demand</div>
+                <div>· Freeze / unfreeze instantly via <code>mp</code></div>
+                <div>· Transaction history &amp; spending analytics</div>
+                <div>· Works anywhere Mastercard is accepted</div>
+                <div>· Zero-fee stablecoin top-up at any time</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /RIGHT COLUMN -->
+
+      </div><!-- /BODY GRID -->
+
+      <!-- ── FOOTER STRIP ── -->
+      <div style="background:rgba(0,0,0,0.2);border-top:1px solid rgba(123,90,254,0.15);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-size:8px;color:var(--text-muted);line-height:1.6">
+          <span style="color:#a78bfa;font-weight:700">Setup:</span> <code>npm i -g @moonpay/cli</code> → <code>mp consent accept</code> → <code>mp login</code> → <code>mp mcp</code>
+          &nbsp;·&nbsp; SHADDAI never holds funds. All signing happens locally via <code>mp</code>.
+        </div>
+        <div style="display:flex;gap:6px">
+          <a href="https://docs.moonpay.com/moonpay/developer-resources/moonpay-cli" target="_blank" class="btn btn-ghost" style="font-size:9px;padding:4px 10px;text-decoration:none;color:#a78bfa;border-color:rgba(123,90,254,0.35)">CLI Docs ↗</a>
+          <a href="https://dashboard.moonpay.com" target="_blank" class="btn btn-ghost" style="font-size:9px;padding:4px 10px;text-decoration:none;color:var(--text-muted)">Dashboard ↗</a>
         </div>
       </div>
 
-      <!-- $Qryptic affiliate slot (replaces Alpaca paper trading) -->
-      <div class="card" style="border:1px solid rgba(0,229,160,0.3);background:rgba(0,229,160,0.04)">
-        <div class="card-head" style="border-bottom:1px solid rgba(0,229,160,0.2)">
-          <span class="card-title" style="color:#00e5a0;font-size:12px">⚡ $Qryptic</span>
-          <span style="font-size:7px;color:var(--text-muted)">affiliate · coming soon</span>
-        </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Solana-native trading affiliate. Integration slot reserved — add your $Qryptic referral link/widget here.</div>
-        <button class="btn btn-ghost" style="width:100%;font-size:10px;padding:8px" onclick="notify('$Qryptic affiliate integration coming soon')">🔗 $Qryptic (soon)</button>
-      </div>
+    </div><!-- /#moonpayAgentsCard -->
 
-      <!-- MoonPay Agents · ZEROX (non-custodial, replaces the old MoonPay/Jupiter/Solana wallet widgets) -->
-      <div class="card" id="moonpayAgentsCard" style="border:1px solid rgba(123,90,254,0.35);background:rgba(123,90,254,0.05)">
-        <div class="card-head" style="border-bottom:1px solid rgba(123,90,254,0.2)">
-          <span class="card-title" style="color:#a78bfa;font-size:12px">🌙 MoonPay Agents · ZEROX</span>
-          <span id="mpKillBadge" style="font-size:7px;color:#ff6b6b;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);padding:2px 6px;border-radius:4px">KILL-SWITCH: ON 🔒</span>
-        </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">Non-custodial — keys stay in your local <b>@moonpay/cli</b> wallet; SHADDAI never holds funds. ZEROX reads market data + on-chain analytics, proposes trades; <b>you sign locally with <code>mp</code></b>. One engine: market data → decision → execute → fund/cash-out.</div>
-        <!-- PIKADON kill-switch + paper mode -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px">
-          <span style="font-size:10px;font-weight:700">🛡 PIKADON</span>
-          <button id="mpKillBtn" class="btn" style="font-size:10px;padding:5px 12px;background:linear-gradient(135deg,#ff6b6b,#d14c3f);color:#fff;border:none;font-weight:700" onclick="mpToggleKill()">Enable trading</button>
-          <label style="font-size:9px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="mpPaper" checked onchange="mpTogglePaper()"> paper-trade only</label>
-        </div>
-        <!-- market data guidance -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:10px;font-weight:700;color:#a78bfa">📈 Signal</span>
-          <button class="btn btn-ghost" style="font-size:9px;padding:3px 8px" onclick="mpLoadMarket()">↻ Refresh</button>
-        </div>
-        <div id="mpMarket" style="font-size:9px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">Run <code>mp token trending --chain solana</code> locally, or use the DEX Screener feed below — ZEROX uses both to decide.</div>
-        <!-- ZEROX proposals -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:10px;font-weight:700;color:#14d27a">🤖 ZEROX proposals</span>
-          <button class="btn btn-ghost" style="font-size:9px;padding:3px 8px" onclick="mpProposeDemo()">+ test proposal</button>
-        </div>
-        <div id="mpIntents" style="font-size:9px;color:var(--text-muted);line-height:1.5;max-height:120px;overflow-y:auto">No proposals yet. ZEROX posts trade ideas here; execute them in your local <code>mp</code>.</div>
-        <div style="font-size:8px;color:var(--text-muted);line-height:1.4;margin-top:8px;border-top:1px solid var(--border);padding-top:6px">Fund / cash-out: <code>mp buy --token sol --amount 1 --wallet &lt;addr&gt;</code> · Setup: <code>npm i -g @moonpay/cli</code> → <code>mp login</code> → <code>mp mcp</code>.</div>
-      </div>
-      <script>
-      (function(){
-        async function j(u,o){try{const r=await fetch(u,o);return await r.json()}catch(e){return{ok:false,error:String(e)}}}
-        window.mpAgentsRefresh=async function(){const s=await j('/api/moonpay/status');if(!s||s.ok===false)return;const b=document.getElementById('mpKillBadge'),btn=document.getElementById('mpKillBtn'),p=document.getElementById('mpPaper');const on=!!s.killSwitch;if(b){b.textContent='KILL-SWITCH: '+(on?'ON 🔒':'OFF ⚡');b.style.color=on?'#ff6b6b':'#14d27a';b.style.borderColor=on?'rgba(255,107,107,0.3)':'rgba(20,210,122,0.3)';b.style.background=on?'rgba(255,107,107,0.1)':'rgba(20,210,122,0.1)'}if(btn){btn.textContent=on?'⚡ Enable trading':'🛑 STOP (kill)';btn.style.background=on?'linear-gradient(135deg,#14d27a,#0c8a55)':'linear-gradient(135deg,#ff6b6b,#d14c3f)'}if(p)p.checked=!!s.paperMode;mpLoadIntents()};
-        window.mpToggleKill=async function(){const s=await j('/api/moonpay/status');const next=!(s&&s.killSwitch);await j('/api/moonpay/killswitch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:next})});if(window.notify)notify('PIKADON kill-switch '+(next?'ON — trading blocked':'OFF — trading ALLOWED'));mpAgentsRefresh()};
-        window.mpTogglePaper=async function(){const p=document.getElementById('mpPaper');await j('/api/moonpay/paper',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:p.checked})})};
-        window.mpLoadMarket=function(){const el=document.getElementById('mpMarket');if(el)el.innerHTML='Run <code>mp token trending --chain solana</code> locally (live data stays on your machine, non-custodial), or use the DEX Screener feed below. ZEROX combines MoonPay market data with SHADDAI Whale Watch / on-chain analytics.';};
-        window.mpLoadIntents=async function(){const r=await j('/api/moonpay/intents');const el=document.getElementById('mpIntents');if(!el||!r.ok)return;if(!r.intents||!r.intents.length){el.innerHTML='No proposals yet. ZEROX posts trade ideas here; execute them in your local <code>mp</code>.';return}el.innerHTML=r.intents.map(function(i){return '<div style="border-bottom:1px solid var(--border);padding:4px 0"><b style="color:#14d27a">'+i.agent+'</b> '+i.action+' '+i.amount+' '+i.fromToken+'→'+i.toToken+' <span style="color:'+(i.paper?'#a78bfa':'#ffd84d')+'">['+(i.paper?'paper':'live')+']</span><br><code style="font-size:8px">'+i.cliCommand+'</code></div>';}).join('')};
-        window.mpProposeDemo=async function(){const r=await j('/api/moonpay/intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:'ZEROX',action:'swap',fromToken:'SOL',toToken:'USDC',amount:0.1,chain:'solana',rationale:'demo: rotate into stable on weakness'})});if(r.blocked){if(window.notify)notify('Blocked — PIKADON kill-switch is ON. Enable trading first.');return}mpLoadIntents()};
-        document.addEventListener('DOMContentLoaded',mpAgentsRefresh);setTimeout(mpAgentsRefresh,1800);
-      })();
-      </script>
-    </div>
+    <script>
+    (function(){
+      async function j(u,o){try{var r=await fetch(u,o);return await r.json()}catch(e){return{ok:false,error:String(e)}}}
+
+      window.mpAgentsRefresh=async function(){
+        var s=await j('/api/moonpay/status');
+        if(!s||s.ok===false)return;
+        var b=document.getElementById('mpKillBadge'),btn=document.getElementById('mpKillBtn'),p=document.getElementById('mpPaper');
+        var on=!!s.killSwitch;
+        if(b){b.textContent='KILL-SWITCH: '+(on?'ON 🔒':'OFF ⚡');b.style.color=on?'#ff6b6b':'#14d27a';b.style.borderColor=on?'rgba(255,107,107,0.3)':'rgba(20,210,122,0.3)';b.style.background=on?'rgba(255,107,107,0.12)':'rgba(20,210,122,0.12)';}
+        if(btn){btn.textContent=on?'⚡ Enable trading':'🛑 STOP (kill)';btn.style.background=on?'linear-gradient(135deg,#14d27a,#0c8a55)':'linear-gradient(135deg,#ff6b6b,#d14c3f)';}
+        if(p)p.checked=!!s.paperMode;
+        mpLoadIntents();
+      };
+
+      window.mpToggleKill=async function(){
+        var s=await j('/api/moonpay/status');
+        var next=!(s&&s.killSwitch);
+        await j('/api/moonpay/killswitch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:next})});
+        if(window.notify)notify('PIKADON kill-switch '+(next?'ON — trading blocked':'OFF — trading ALLOWED'));
+        mpAgentsRefresh();
+      };
+
+      window.mpTogglePaper=async function(){
+        var p=document.getElementById('mpPaper');
+        await j('/api/moonpay/paper',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:p.checked})});
+      };
+
+      window.mpLoadMarket=function(){
+        var el=document.getElementById('mpMarket');
+        var chain=(document.getElementById('mpChain')||{}).value||'solana';
+        if(el)el.innerHTML='Run <code>mp token trending --chain '+chain+'</code> locally (live data stays on your machine, non-custodial). ZEROX combines MoonPay market data with SHADDAI Whale Watch / on-chain analytics.';
+      };
+
+      window.mpLoadIntents=async function(){
+        var r=await j('/api/moonpay/intents');
+        var el=document.getElementById('mpIntents');
+        if(!el||!r.ok)return;
+        if(!r.intents||!r.intents.length){el.innerHTML='No proposals yet. ZEROX posts trade ideas here; execute them in your local <code>mp</code>.';return;}
+        el.innerHTML=r.intents.map(function(i){
+          return '<div style="border-bottom:1px solid var(--border);padding:5px 0"><b style="color:#14d27a">'+i.agent+'</b> '+i.action+' '+i.amount+' '+i.fromToken+'→'+i.toToken+' <span style="color:'+(i.paper?'#a78bfa':'#ffd84d')+'">['+(i.paper?'paper':'live')+']</span><br><code style="font-size:8px;word-break:break-all">'+i.cliCommand+'</code></div>';
+        }).join('');
+      };
+
+      window.mpProposeDemo=async function(){
+        var r=await j('/api/moonpay/intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:'ZEROX',action:'swap',fromToken:'SOL',toToken:'USDC',amount:0.1,chain:'solana',rationale:'demo: rotate into stable on weakness'})});
+        if(r.blocked){if(window.notify)notify('Blocked — PIKADON kill-switch is ON. Enable trading first.');return;}
+        mpLoadIntents();
+      };
+
+      window.mpPayAgent=async function(){
+        var agent=document.getElementById('mpPayAgent').value;
+        var amount=parseFloat(document.getElementById('mpPayAmount').value)||5;
+        var task=document.getElementById('mpPayTask').value||'(no task specified)';
+        var res=document.getElementById('mpPayResult');
+        res.style.display='none';
+        var r=await j('/api/moonpay/pay-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:agent,amountUsd:amount,task:task})});
+        res.style.display='block';
+        if(r.cliCommand){
+          res.innerHTML='<b style="color:#14d27a">CLI command to run locally:</b><br><code style="word-break:break-all;font-size:9px">'+r.cliCommand+'</code><br><span style="color:var(--text-muted);font-size:8px">Copy and run this in your terminal. Payment will be signed locally by your wallet.</span>';
+        } else if(r.blocked){
+          res.innerHTML='<span style="color:#ff6b6b">Blocked — PIKADON kill-switch is ON.</span>';
+        } else {
+          res.innerHTML='<span style="color:#ff6b6b">Error: '+(r.error||'Unknown error')+'</span>';
+        }
+      };
+
+      window.mpUpdateChainExamples=function(){
+        var chain=(document.getElementById('mpChain')||{}).value||'solana';
+        var label=document.getElementById('mpChainLabel');
+        if(label)label.textContent=chain;
+        var t=document.getElementById('mpCmdTrending');
+        if(t)t.textContent='mp token trending --chain '+chain;
+        var b=document.getElementById('mpCmdTokenBal');
+        if(b)b.textContent='mp token balance list --wallet <addr> --chain '+chain;
+        var s=document.getElementById('mpCmdSwap');
+        if(s){
+          if(chain==='bitcoin')s.textContent='mp bitcoin balance retrieve  (BTC is balance-only)';
+          else s.textContent='mp token swap --from SOL --to USDC --chain '+chain;
+        }
+        var br=document.getElementById('mpCmdBridge');
+        if(br)br.textContent='mp token bridge --from '+chain+' --to ethereum --token USDC';
+        mpLoadMarket();
+      };
+
+      document.addEventListener('DOMContentLoaded',mpAgentsRefresh);
+      setTimeout(mpAgentsRefresh,1800);
+    })();
+    </script>
 
     <!-- DEX Screener Live Feed -->
     <div class="card cyber-card cyber-dex" style="margin-top:14px">

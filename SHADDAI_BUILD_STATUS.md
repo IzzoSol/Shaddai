@@ -1,0 +1,40 @@
+# SHADDAI — Build Status & Session Log (master index)
+
+*Single source of truth for what's built, what's verified, what's left. Repo: `IzzoIzzoIzzo/Shaddai` (private, branch `main`).*
+
+## Run / deploy
+- **Local:** `npm install` → `npm start` (serves frontend + API on `$PORT`, default 3000). Open `/`.
+- **Deploy:** `render.yaml` → Render web service (`npm start` → `backend/server-production.js`, health `/api/model/health`, Node 20). Set secrets in Render dashboard: `GROQ_API_KEY` (free), `OPENROUTER_API_KEY` (free). Local keys live in `backend/.env` (gitignored).
+- **Served frontend:** `public/index.html` (the v80 build).
+
+## ✅ Built / fixed this session
+- **Brains & personas** (`backend/brains.js`, `/api/brains`) — per-agent model routing (Ollama/Groq/OpenRouter/Claude tiers), 7 council personas + **custom agents**, `agentLLM()` + usage metering hook. `llm-client.js` honors per-agent brain choice with fallback.
+- **Billing de-mocked** (`billing-service/routes`, `pay-guard`) — real free/pro/elite tiers, credit ledger, `recordUsage` chokepoint, tier-gating, Stripe lazy-loaded, MoonPay → `/api/moonpay`.
+- **MoonPay Agents** (`backend/moonpay-agent.js`, `/api/moonpay`) — non-custodial (Option A: keys in user's local `@moonpay/cli`), PIKADON kill-switch (default ON), paper-trade, ZEROX trade intents, **`pay-agent`** (agent-economy: pay a SHADDAI agent for work). Frontend MoonPay Agents section (Markets).
+- **Operator Forge** (Skills tab) — build-your-own-agent UI: swivel 3D operator, COMPUTE-CORE meter (brain tier = compute), equip real tools, FORGE/TEST RUN → `/api/brains`; gallery of forged agents, archetype presets, localStorage skills.
+- **2D Bazaar** (`public/marketplace-shop.html`) — user-owned shops, shop builder, `/api/marketplace/*`, top-bar 🏪 BAZAAR link.
+- **Mobile** — responsive `@media`, quick-actions grid, first-run onboarding overlay.
+- **PIKADON safety gate** (`backend/auth-guard.js`) — rate-limit on `/api/brains` + `/api/moonpay`; create-agent + kill-switch behind `ADMIN_TOKEN` (permissive locally, enforced in prod via `ADMIN_TOKEN`/`REQUIRE_AUTH`).
+- **Tools:** calendar (`schedule_task`/`list_scheduled_tasks`), `generate_image` model choice + free no-key Pollinations fallbacks; OpenRouter added to registry; `/api/pikadon/audit` empty-body crash fixed; health env-var bug fixed; 7× `phi:latest` → installed model.
+
+## 🔬 Verified (empirical, this session)
+- **Tools: 135/135 pass** (`scripts/tool-audit.js`). 7 skipped (need keys/local: Discord/Telegram/GitHub/Solana-pay/local-LLM).
+- **Workflows hardened** — pre-validation, per-step isolation (no break-on-failure), failed steps recorded, Groq fallback, `completed/partial/failed` status.
+- **Connections:** DexScreener health fixed (was a 404 probe path) → 8/14 live; keys validated (Groq + OpenRouter configured, Suno lyric-gen returns real lyrics, `/api/market/*` live).
+- **Build-your-own-agent** proven end-to-end (created + ran custom agent "SCOUT" on its model).
+
+## ⚠️ Known gaps / TODO (honest)
+1. **🔴 CRITICAL — client key leak:** a live OpenRouter key is hardcoded in `public/index.html` (~line 27235). ROTATE it + route all LLM calls through the server (keys never in the browser). See `SHADDAI_PIKADON_AUDIT.md`.
+2. **🔴 CRITICAL — billing auth:** `authenticateUser` trusts `x-user-id` header (no token verify); `/admin/*` unauth. Add Firebase JWT verify + protect admin before multi-user launch.
+3. **⚠️ skill→tool binding:** `skill-router` "skills" return canned text, NOT wired to the 133 real tools. Connecting them is a real, focused task (a one-shot agent attempt failed). 
+4. **HIGH:** sandbox `run_js`/`run_python`; escape user-supplied strings before `innerHTML` (XSS).
+5. Many near-duplicate HTML builds in repo → pick one canonical (`public/index.html`).
+
+## 📚 Docs in this repo (also mirrored to Obsidian)
+- `SHADDAI_WHITEPAPER.md` — technical state for external review
+- `SHADDAI_VISION.md` — vision + revenue model + agentic commerce/MoonCard + PWA
+- `SHADDAI_PIKADON_AUDIT.md` — security audit (2 CRITICAL, fixes ordered)
+- `SHADDAI_REVIEW_QUESTIONS.md` — questions for Grok/Perplexity/Copilot
+- `SHADDAI_TOOLS_AGENTS_COMPLETION_PLAN.md` — tools/agents review + roadmap
+- `ZEROX_MOONPAY_AGENT_SKILL.md` — ZEROX MoonPay playbook
+- `SHADDAI_BUILD_STATUS.md` — this file

@@ -29,3 +29,13 @@ Thumbs.db
 
 # ── Local backups (already in OneDrive) ────────────────────
 *-BACKUP.html
+
+# runtime artifacts (not part of the build)
+generated-output/
+/data/
+backend/data/customers.json
+backend/data/ledger.json
+backend/data/usage.json
+backend/data/scheduled-tasks.json
+*_backup*.html
+SHADDAI-index_*.html
