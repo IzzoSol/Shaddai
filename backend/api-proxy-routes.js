@@ -2861,9 +2861,21 @@ router.post('/workflows/run', async (req, res) => {
   }
   if (!workflowDef) return res.status(404).json({ error: 'Workflow not found. Built-ins: research-to-build, market-analysis, idea-to-product, full-audit' });
 
+  // Pre-run validation — catch broken definitions before the SSE stream opens
+  const VALID_AGENTS_SET = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+  const validationErrors = [];
+  (workflowDef.steps || []).forEach((s, idx) => {
+    if (!s.agent) validationErrors.push(`Step ${idx + 1}: missing agent`);
+    else if (!VALID_AGENTS_SET.has(s.agent.toUpperCase())) validationErrors.push(`Step ${idx + 1}: unknown agent "${s.agent}"`);
+    if (!s.task || !String(s.task).trim()) validationErrors.push(`Step ${idx + 1}: missing task text`);
+  });
+  if (!workflowDef.steps || workflowDef.steps.length === 0) validationErrors.push('Workflow has no steps');
+  if (validationErrors.length) return res.status(400).json({ error: 'Workflow validation failed', details: validationErrors });
+
   const runId = `wf_${Date.now()}`;
   const results = [];
   let prevOutput = '';
+  let failedCount = 0;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -2878,20 +2890,28 @@ router.post('/workflows/run', async (req, res) => {
     send({ type: 'step_start', step: i + 1, total: workflowDef.steps.length, agent: step.agent });
     try {
       const output = await runWorkflowStep(step.agent, step.task, input, prevOutput);
-      results.push({ step: i + 1, agent: step.agent, output });
-      prevOutput = output;
-      send({ type: 'step_done', step: i + 1, agent: step.agent, output });
+      // Record even empty/null output so the results array is always complete
+      const stepOutput = output || '';
+      results.push({ step: i + 1, agent: step.agent, status: 'completed', output: stepOutput });
+      prevOutput = stepOutput || prevOutput; // keep last good output if step returned nothing
+      send({ type: 'step_done', step: i + 1, agent: step.agent, output: stepOutput });
     } catch (e) {
+      failedCount++;
+      // Record the failure so results[] is always length === steps.length
+      results.push({ step: i + 1, agent: step.agent, status: 'failed', error: e.message, output: null });
       send({ type: 'step_error', step: i + 1, agent: step.agent, error: e.message });
+      // Do NOT break — continue to next step so the workflow completes as much as possible
     }
   }
 
+  const overallStatus = failedCount === 0 ? 'completed' : failedCount === workflowDef.steps.length ? 'failed' : 'partial';
+
   // Save run to history
   const history = loadJSON(path.join(DATA_DIR, 'workflow_runs.json'), []);
-  history.unshift({ runId, workflow: workflowDef.name, input: input.slice(0, 200), steps: results.length, completedAt: new Date().toISOString(), output: prevOutput.slice(0, 500) });
+  history.unshift({ runId, workflow: workflowDef.name, input: input.slice(0, 200), steps: results.length, failedSteps: failedCount, status: overallStatus, completedAt: new Date().toISOString(), output: prevOutput.slice(0, 500) });
   saveJSON(path.join(DATA_DIR, 'workflow_runs.json'), history.slice(0, 100));
 
-  send({ type: 'complete', runId, finalOutput: prevOutput, steps: results });
+  send({ type: 'complete', runId, status: overallStatus, finalOutput: prevOutput, steps: results });
   res.end();
 });
 
@@ -3271,6 +3291,19 @@ router.post('/workflow/:id/run', async (req, res) => {
   const wf = _workflows.find(w => w.id === req.params.id);
   if (!wf) return res.status(404).json({ error: 'Workflow not found' });
 
+  // Pre-run validation — catch bad steps before we fire off background work
+  const steps = wf.steps || [];
+  if (!steps.length) return res.status(400).json({ error: 'Workflow has no steps' });
+  const VALID_AGENTS_RUN = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+  const stepErrors = [];
+  steps.forEach((s, idx) => {
+    const taskText = s.task || s.prompt || '';
+    if (!s.agent) stepErrors.push(`Step ${idx + 1}: missing agent`);
+    else if (!VALID_AGENTS_RUN.has((s.agent || '').toUpperCase())) stepErrors.push(`Step ${idx + 1}: unknown agent "${s.agent}"`);
+    if (!taskText.trim()) stepErrors.push(`Step ${idx + 1}: missing task/prompt text`);
+  });
+  if (stepErrors.length) return res.status(400).json({ error: 'Workflow validation failed', details: stepErrors });
+
   wf.runs = (wf.runs || 0) + 1;
   wf.lastRun = new Date().toISOString();
   wf.status = 'running';
@@ -3282,42 +3315,82 @@ router.post('/workflow/:id/run', async (req, res) => {
   // Return immediately — execution runs async in background
   res.json({ status: 'running', workflowId: wf.id, runId, message: 'Workflow executing — watch /events/stream for progress' });
 
-  // Execute steps asynchronously
+  // Execute steps asynchronously — per-step try/catch so one failure never aborts the chain
   setImmediate(async () => {
-    const steps = wf.steps || [];
     let prevOutput = '';
-    let allSucceeded = true;
+    let failedCount = 0;
+    const stepResults = [];
 
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      const agent = (step.agent || 'shaddai').toLowerCase();
-      const task = (step.task || step.prompt || '').replace('{prev_output}', prevOutput.slice(0, 2000));
+      const agentName = (step.agent || 'SHADDAI').toUpperCase();
+      const agentLower = agentName.toLowerCase();
+      const rawTask = (step.task || step.prompt || '').trim();
+      // Substitute context placeholder — support both naming conventions
+      const task = rawTask
+        .replace(/\{prev_output\}/g, prevOutput.slice(0, 2000))
+        .replace(/\{prev\}/g, prevOutput.slice(0, 2000));
 
-      broadcastEvent('workflow:step:start', { runId, workflowId: wf.id, step: i, agent, task: task.slice(0, 100) });
+      broadcastEvent('workflow:step:start', { runId, workflowId: wf.id, step: i, agent: agentLower, task: task.slice(0, 100) });
+
+      let stepOutput = '';
+      let stepStatus = 'completed';
+      let stepError = null;
 
       try {
-        const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-          model: DEFAULT_OLLAMA_MODEL,
-          messages: [
-            { role: 'system', content: `You are ${agent.toUpperCase()}, an expert AI agent. Complete the task concisely.` },
-            { role: 'user', content: task }
-          ],
-          stream: false
-        }, { timeout: 120000 });
+        // Try Ollama first (local/free)
+        let ollamaOk = false;
+        try {
+          const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
+            model: DEFAULT_OLLAMA_MODEL,
+            messages: [
+              { role: 'system', content: `You are ${agentName}, an expert AI agent. Complete the task concisely.` },
+              { role: 'user', content: task }
+            ],
+            stream: false
+          }, { timeout: 90000 });
+          stepOutput = r.data.message?.content || '';
+          ollamaOk = true;
+        } catch (ollamaErr) {
+          console.warn(`[workflow:${runId}] Step ${i + 1} Ollama failed: ${ollamaErr.message} — trying Groq fallback`);
+        }
 
-        prevOutput = r.data.message?.content || '';
-        broadcastEvent('workflow:step:done', { runId, workflowId: wf.id, step: i, agent, output: prevOutput.slice(0, 300) });
+        // Groq fallback if Ollama failed and key is available
+        if (!ollamaOk && process.env.GROQ_API_KEY) {
+          const gr = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: `You are ${agentName}, an expert AI agent. Complete the task concisely.` },
+              { role: 'user', content: task }
+            ],
+            max_tokens: 1500, temperature: 0.7
+          }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
+          stepOutput = gr.data.choices[0]?.message?.content || '';
+          ollamaOk = true; // Groq succeeded
+        }
+
+        if (!ollamaOk) throw new Error('All LLM providers failed for this step (Ollama unreachable and no GROQ_API_KEY)');
+
+        prevOutput = stepOutput || prevOutput; // keep last good output if step returned nothing
+        stepResults.push({ step: i, agent: agentLower, status: stepStatus, output: stepOutput });
+        broadcastEvent('workflow:step:done', { runId, workflowId: wf.id, step: i, agent: agentLower, output: stepOutput.slice(0, 300) });
       } catch (e) {
-        allSucceeded = false;
-        broadcastEvent('workflow:step:error', { runId, workflowId: wf.id, step: i, agent, error: e.message });
-        break;
+        failedCount++;
+        stepStatus = 'failed';
+        stepError = e.message;
+        // Record failure but do NOT break — continue executing remaining steps
+        stepResults.push({ step: i, agent: agentLower, status: 'failed', error: e.message, output: null });
+        broadcastEvent('workflow:step:error', { runId, workflowId: wf.id, step: i, agent: agentLower, error: e.message });
+        console.error(`[workflow:${runId}] Step ${i + 1} (${agentName}) failed: ${e.message} — continuing workflow`);
       }
     }
 
-    wf.status = allSucceeded ? 'completed' : 'failed';
+    wf.status = failedCount === 0 ? 'completed' : failedCount === steps.length ? 'failed' : 'partial';
     wf.lastOutput = prevOutput.slice(0, 1000);
+    wf.lastRunId = runId;
+    wf.failedSteps = failedCount;
     saveWorkflows();
-    broadcastEvent('workflow:complete', { runId, workflowId: wf.id, status: wf.status, output: prevOutput.slice(0, 500) });
+    broadcastEvent('workflow:complete', { runId, workflowId: wf.id, status: wf.status, failedSteps: failedCount, output: prevOutput.slice(0, 500), steps: stepResults });
   });
 });
 
