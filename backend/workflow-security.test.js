@@ -183,10 +183,9 @@ describe('Workflow Security Module', () => {
         result = testLimiter.check('user-1', 'test', 1);
         expect(result.allowed).toBe(true);
         testLimiter.destroy();
+        CONFIG.RATE_LIMIT_WINDOW_MS = 3600000; // Restore AFTER the reset check (was synchronous → false failure)
         done();
       }, shortWindow + 50);
-
-      CONFIG.RATE_LIMIT_WINDOW_MS = 3600000; // Restore
     });
 
     test('tracks remaining attempts', () => {
