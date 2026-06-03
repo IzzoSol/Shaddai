@@ -5,7 +5,15 @@
 ## Run / deploy
 - **Local:** `npm install` → `npm start` (serves frontend + API on `$PORT`, default 3000). Open `/`.
 - **Deploy:** `render.yaml` → Render web service (`npm start` → `backend/server-production.js`, health `/api/model/health`, Node 20). Set secrets in Render dashboard: `GROQ_API_KEY` (free), `OPENROUTER_API_KEY` (free). Local keys live in `backend/.env` (gitignored).
-- **Served frontend:** `public/index.html` (the v80 build).
+- **Served frontend:** `public/index.html` (the v80 build) — the **single canonical build**. Retired builds live in `archive/` (not served). `public/` keeps only `index.html` + linked sub-pages (`marketplace-shop.html`, `SHADDAI-Collectables.html`).
+
+## Build & backup topology (2026-06-03)
+- **DEV** = this repo + `backend/.env` (your real keys; gitignored) — run/test locally anytime.
+- **SHIP** = `ship/` — 2 keyless snapshots (`SHADDAI-latest.html`, rotate prev on each ship) tracking exactly what we deploy.
+- **GitHub** = private `IzzoIzzoIzzo/Shaddai`; `.env` gitignored; secret-scan CI blocks any committed key.
+- **Render** = keys set in the dashboard only (never in code). See `render.yaml`.
+- **Obsidian** = docs/spec mirror (second backup).
+- **Ironclad rule:** secrets live ONLY in `backend/.env` + Render dashboard — never in a build file, ship copy, GitHub, or Obsidian.
 
 ## ✅ Built / fixed this session
 - **Brains & personas** (`backend/brains.js`, `/api/brains`) — per-agent model routing (Ollama/Groq/OpenRouter/Claude tiers), 7 council personas + **custom agents**, `agentLLM()` + usage metering hook. `llm-client.js` honors per-agent brain choice with fallback.
