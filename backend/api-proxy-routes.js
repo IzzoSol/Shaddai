@@ -6,6 +6,8 @@
 
 const express = require('express');
 const router = express.Router();
+const { softAuth, requireAdmin } = require('./auth-guard');
+router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=true
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -1171,7 +1173,7 @@ router.post('/shaddai/skills/custom', (req, res) => {
 });
 
 // DELETE /api/shaddai/skills/custom/:id — remove a custom skill
-router.delete('/shaddai/skills/custom/:id', (req, res) => {
+router.delete('/shaddai/skills/custom/:id', requireAdmin, (req, res) => {
   const before = _customSkills.length;
   _customSkills = _customSkills.filter(s => s.id !== req.params.id && s.name !== req.params.id);
   saveCustomSkills();
@@ -1241,7 +1243,7 @@ router.get('/skill-packs/installed/:user', (req, res) => {
 });
 
 // DELETE /api/skill-packs/installed/:user/:pack_id — uninstall pack
-router.delete('/skill-packs/installed/:user/:pack_id', (req, res) => {
+router.delete('/skill-packs/installed/:user/:pack_id', requireAdmin, (req, res) => {
   const { user, pack_id } = req.params;
   const installs = _readInstalls();
   installs[user] = (installs[user] || []).filter(id => id !== pack_id);
@@ -2205,7 +2207,7 @@ router.delete('/rag/files/:fileId', (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // CODE EXECUTION (sandboxed JS via Node vm, Python via child_process)
 // ─────────────────────────────────────────────────────────────
-router.post('/execute-code', async (req, res) => {
+router.post('/execute-code', requireAdmin, async (req, res) => {
   // OWASP API4: rate-limit code execution — max 10 runs/min per IP
   const ip = req.ip || req.connection?.remoteAddress || 'unknown';
   if (!checkRateLimit(ip, 10, 60000)) {
@@ -2757,7 +2759,7 @@ router.get('/marketplace/jobs/:id/result', (req, res) => {
 
 const WORKFLOWS_PATH = path.join(DATA_DIR, 'workflows.json');
 function loadWorkflows() { return loadJSON(WORKFLOWS_PATH, []); }
-function saveWorkflows(ws) { saveJSON(WORKFLOWS_PATH, ws); }
+function saveWorkflowsList(ws) { saveJSON(WORKFLOWS_PATH, ws); }
 
 // Built-in workflow templates
 const BUILTIN_WORKFLOWS = {
@@ -2920,13 +2922,13 @@ router.post('/workflows/create', (req, res) => {
   const wf = { id: `wf_${Date.now()}`, name, description: description || '', steps, createdAt: new Date().toISOString() };
   const all = loadWorkflows();
   all.push(wf);
-  saveWorkflows(all);
+  saveWorkflowsList(all);
   res.json({ success: true, workflow: wf });
 });
 
 router.delete('/workflows/:id', (req, res) => {
   const all = loadWorkflows().filter(w => w.id !== req.params.id);
-  saveWorkflows(all);
+  saveWorkflowsList(all);
   res.json({ success: true });
 });
 

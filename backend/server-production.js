@@ -24,6 +24,7 @@ const DatabaseReal = require('./database-real');
 const SkillOrchestrator = require('./skill-orchestrator');
 const SkillExecutorReal = require('./skill-executor-real');
 const AuthService = require('./auth-service');
+const { softAuth } = require('./auth-guard');
 const BillingService = require('./billing-service');
 const SecurityHardening = require('./security-hardening');
 
@@ -724,7 +725,7 @@ app.get('/api/agents/:name/history', (req, res) => {
 // SKILL EXECUTION
 // ============================================
 
-app.post('/api/agents/task', async (req, res) => {
+app.post('/api/agents/task', softAuth, async (req, res) => {
   try {
     const { agentName, task, context = {} } = req.body;
 
@@ -1252,7 +1253,7 @@ app.post('/api/database/export', async (req, res) => {
 // ============================================
 
 // Invoke an agent skill
-app.post('/api/agents/:agentName/invoke/:skillName', async (req, res) => {
+app.post('/api/agents/:agentName/invoke/:skillName', softAuth, async (req, res) => {
   try {
     const { agentName, skillName } = req.params;
     const { inputs = {}, maxRetries, timeout } = req.body;

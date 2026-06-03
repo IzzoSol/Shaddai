@@ -13,7 +13,7 @@
 const express = require('express');
 const router = express.Router();
 const json = express.json();
-const { rateLimit, requireAdmin } = require('./auth-guard');
+const { rateLimit, requireAdmin, verifyFirebaseToken } = require('./auth-guard');
 router.use(rateLimit({ max: 80 })); // PIKADON: abuse protection
 
 const state = {
@@ -53,7 +53,7 @@ router.post('/paper', json, (req, res) => {
 });
 
 // ZEROX proposes a trade. Gated by the kill-switch. NEVER executes real funds here.
-router.post('/intent', json, (req, res) => {
+router.post('/intent', verifyFirebaseToken, json, (req, res) => {
   if (state.killSwitch) {
     return res.status(423).json({
       ok: false, blocked: true,
@@ -106,7 +106,7 @@ router.get('/intents', (req, res) => res.json({ ok: true, intents: state.intents
 // --------------------------------------------------------------------------
 const earnings = {}; // agentName -> total USD paid (paper or real)
 
-router.post('/pay-agent', json, (req, res) => {
+router.post('/pay-agent', verifyFirebaseToken, json, (req, res) => {
   if (state.killSwitch) {
     return res.status(423).json({ ok: false, blocked: true, reason: 'PIKADON kill-switch is ON — agent payments disabled.' });
   }
