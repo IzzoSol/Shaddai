@@ -6,7 +6,7 @@
 1. **Strip hardcoded API key from `public/index.html`** (~line 27235, a live OpenRouter key) + **rotate it**. Route ALL browser LLM/API calls through the server; keys live only in `backend/.env` / Render.
 2. **Real billing auth** — replace header-trust `authenticateUser` with Firebase ID-token verify; protect `/api/billing/admin/*`.
 3. **Turn the gate ON in prod** — set `ADMIN_TOKEN` + `REQUIRE_AUTH=true` (auth-guard already supports it).
-4. **Sandbox `run_js` / `run_python`** (isolated-vm / worker / container) — agents (incl. user-made) execute code.
+4. **Sandbox `run_js` / `run_python`** — ⚠️ PARTIAL (2026-06-03): JS now routes through `backend/lib/sandbox.js` (hardened `vm`, null-proto, timeout). `isolated-vm` could NOT build here (no VS C++ toolchain + Node v25). FOLLOW-UP: replace `vm` with a container/isolate runner before opening code-exec to non-admins; until then `/execute-code` is admin-gated and `run_python` stays off (`ALLOW_PYTHON_EXEC`).
 5. **Escape user/agent strings** before `innerHTML` (personas, shop names, listings) — stored XSS.
 6. **Secret-scan CI** — fail commits containing `sk-or-v1-`, `sk-ant-`, `gsk_`, `AIza`.
 
