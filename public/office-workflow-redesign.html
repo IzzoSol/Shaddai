@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · Mission Control — Office & Workflow (TURTLE redesign)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10; --bg2:#0e1117; --panel:#12161e; --panel2:#161b25;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --txt:#e8ecf2; --mut:#5e6b7e; --mut2:#8593a6;
+  --gold:#ffd23f; --cyan:#33d6ff; --green:#1fe6a0; --red:#ff4d6d; --violet:#a98bff; --orange:#ff8a3d;
+  --shadow:0 18px 50px -12px rgba(0,0,0,.7);
+  --disp:'Chakra Petch',sans-serif; --mono:'Share Tech Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--disp);
+  overflow:hidden; letter-spacing:.01em;
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(51,214,255,.07), transparent 60%),
+    radial-gradient(900px 500px at -5% 110%, rgba(255,210,63,.06), transparent 55%),
+    radial-gradient(700px 700px at 50% 50%, rgba(31,230,160,.03), transparent 70%);
+}
+/* grain + scanline atmosphere */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:.5;
+  background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.18) 3px 4px);mix-blend-mode:multiply;}
+
+/* ── shell ── */
+.app{height:100vh;display:flex;flex-direction:column;padding:18px 22px 14px;position:relative;z-index:1}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:14px}
+.sigil{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line2);
+  background:linear-gradient(135deg,rgba(255,210,63,.16),rgba(51,214,255,.06));color:var(--gold);
+  font-weight:700;font-size:17px;clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.22em}
+.brand h1 b{color:var(--gold)}
+.brand .sub{font-family:var(--mono);font-size:8.5px;color:var(--mut);letter-spacing:.32em;margin-top:1px}
+.clock{font-family:var(--mono);font-size:10px;color:var(--mut2);letter-spacing:.2em;text-align:right}
+.clock .live{color:var(--green)}
+
+/* ── tab switch ── */
+.tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--line);width:max-content;
+  background:var(--panel);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.tab{font-family:var(--disp);font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  padding:9px 26px;color:var(--mut2);background:transparent;border:none;cursor:pointer;position:relative;transition:.2s}
+.tab+.tab{border-left:1px solid var(--line)}
+.tab .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--mut);margin-right:8px;vertical-align:middle}
+.tab:hover{color:var(--txt)}
+.tab.on{color:var(--bg);background:var(--gold)}
+.tab.on .dot{background:var(--bg);box-shadow:0 0 0 3px rgba(10,12,16,.25)}
+.tab.wf.on{background:var(--cyan)}
+
+/* ── panels ── */
+.screen{flex:1;min-height:0;display:none;overflow:auto}
+.screen.on{display:block;animation:fade .5s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.panel{background:var(--panel);border:1px solid var(--line);position:relative;padding:13px}
+.panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;opacity:.6}
+.panel::before{top:-1px;left:-1px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold)}
+.panel::after{bottom:-1px;right:-1px;border-bottom:1.5px solid var(--gold);border-right:1.5px solid var(--gold)}
+.panel.cy::before,.panel.cy::after{border-color:var(--cyan)}
+.lab{font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+  display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.lab::before{content:"▸";color:inherit;font-size:8px}
+.lab.cy{color:var(--cyan)} .lab.mut{color:var(--mut2)}
+
+/* reveal stagger */
+.rv{opacity:0;animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ── OFFICE: HUD ── */
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stat{background:var(--panel);border:1px solid var(--line);padding:12px 14px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold)}
+.stat.g::after{background:var(--green)} .stat.c::after{background:var(--cyan)} .stat.v::after{background:var(--violet)}
+.stat .v{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1;color:var(--gold)}
+.stat.g .v{color:var(--green)} .stat.c .v{color:var(--cyan)} .stat.v .v{color:var(--violet)}
+.stat .l{font-size:8.5px;letter-spacing:.14em;color:var(--mut2);margin-top:6px;text-transform:uppercase}
+.stat .spark{font-family:var(--mono);font-size:9px;color:var(--mut);margin-top:4px}
+
+.grid3{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:12px}
+
+/* kanban */
+.kan{display:flex;gap:7px;height:100%}
+.kcol{flex:1;background:var(--bg2);border:1px solid var(--line);padding:8px;min-width:0}
+.khead{font-size:8.5px;letter-spacing:.12em;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between}
+.card-mini{background:var(--panel2);border:1px solid var(--line);border-left:2px solid var(--mut);
+  padding:7px 8px;margin-bottom:6px;font-size:9.5px;cursor:grab;transition:.15s}
+.card-mini:hover{transform:translateX(2px);border-left-color:var(--gold);background:#1a2030}
+.card-mini .who{font-family:var(--mono);font-size:7.5px;color:var(--mut2);letter-spacing:.1em;margin-top:4px}
+.card-mini.run{border-left-color:var(--orange)} .card-mini.done{border-left-color:var(--green);opacity:.78}
+
+/* dispatch */
+.field{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--txt);font-family:var(--disp);
+  font-size:11px;padding:9px;resize:none;outline:none;transition:.15s}
+.field:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,210,63,.08)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chip{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;padding:4px 9px;border:1px solid var(--line2);
+  color:var(--mut2);cursor:pointer;user-select:none;transition:.15s}
+.chip:hover{color:var(--txt);border-color:var(--mut2)}
+.chip.on{color:var(--bg);font-weight:600}
+.btn{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  padding:10px;width:100%;border:none;cursor:pointer;background:var(--gold);color:#1a1206;transition:.18s;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.btn:hover{filter:brightness(1.12);letter-spacing:.2em}
+.btn.cy{background:var(--cyan);color:#04212b}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--mut2)}
+.btn.ghost:hover{color:var(--txt);border-color:var(--gold)}
+
+/* revenue */
+.rev-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.rev-nums .b{text-align:center;padding:8px;background:var(--bg2);border:1px solid var(--line)}
+.rev-nums .n{font-family:var(--mono);font-size:20px;font-weight:700}
+.rev-nums .t{font-size:7.5px;letter-spacing:.12em;color:var(--mut2);margin-top:3px}
+.bar{height:7px;background:rgba(255,255,255,.06);overflow:hidden;margin:8px 0 4px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));width:0;animation:fill 1.6s ease forwards .4s}
+@keyframes fill{to{width:var(--w,62%)}}
+.bar-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:7.5px;color:var(--mut)}
+
+/* agent roster */
+.roster{display:flex;flex-direction:column;gap:6px}
+.ag{display:flex;align-items:center;gap:9px;padding:7px 8px;background:var(--bg2);border:1px solid var(--line);transition:.15s}
+.ag:hover{border-color:var(--line2);transform:translateX(2px)}
+.ag .pip{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.8s infinite}
+.ag .pip.busy{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.ag .pip.idle{background:var(--mut);box-shadow:none;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.ag .nm{font-family:var(--mono);font-size:10px;letter-spacing:.08em;flex:1}
+.ag .st{font-size:8px;color:var(--mut2);letter-spacing:.08em;text-transform:uppercase}
+.ag .ld{width:34px;height:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.ag .ld>i{display:block;height:100%;background:var(--cyan)}
+
+/* system log */
+.term{background:#070a0e;border:1px solid var(--line);padding:9px;font-family:var(--mono);font-size:8.5px;
+  line-height:1.7;max-height:120px;overflow:auto}
+.term .ln{color:var(--mut2)} .term .ln b{color:var(--cyan)} .term .ok{color:var(--green)} .term .gd{color:var(--gold)}
+
+.qa{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.qa button{font-family:var(--disp);font-weight:600;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:7px 13px;border:1px solid var(--line);background:transparent;color:var(--mut2);cursor:pointer;transition:.15s}
+.qa button:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,63,.05)}
+
+/* ── WORKFLOW screen ── */
+.wf-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:12px}
+/* chain runner */
+.chain{display:flex;align-items:stretch;gap:0;margin:6px 0 4px;overflow-x:auto;padding-bottom:4px}
+.node{flex:0 0 auto;min-width:128px;background:var(--bg2);border:1px solid var(--line);padding:10px;position:relative}
+.node .agn{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--cyan);margin-bottom:5px}
+.node .desc{font-size:9.5px;color:var(--mut2);line-height:1.4}
+.node .num{position:absolute;top:-9px;left:-9px;width:18px;height:18px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:9px;background:var(--cyan);color:#04212b;font-weight:700}
+.node.done{border-color:rgba(31,230,160,.4)} .node.done .num{background:var(--green)} .node.done .agn{color:var(--green)}
+.node.active{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(51,214,255,.1)}
+.node.active::after{content:"";position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;
+  background:var(--cyan);animation:pulse 1s infinite}
+.arrow{flex:0 0 26px;display:grid;place-items:center;color:var(--mut);font-size:14px}
+.arrow.flow{color:var(--cyan);animation:slide 1.1s infinite}
+@keyframes slide{0%,100%{transform:translateX(-2px);opacity:.5}50%{transform:translateX(2px);opacity:1}}
+.wf-out{background:#070a0e;border:1px solid var(--line);padding:10px;font-family:var(--mono);font-size:9px;
+  line-height:1.7;max-height:150px;overflow:auto;margin-top:8px}
+.wf-out .ok{color:var(--green)} .wf-out .cy{color:var(--cyan)} .wf-out .gd{color:var(--gold)} .wf-out .mut{color:var(--mut2)}
+.pill{font-family:var(--mono);font-size:8px;letter-spacing:.12em;padding:3px 9px;border:1px solid var(--line2);color:var(--mut2)}
+.pill.run{color:var(--cyan);border-color:var(--cyan)}
+
+/* task list */
+.task{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--bg2);border:1px solid var(--line);
+  border-left:2px solid var(--mut);margin-bottom:6px;transition:.15s}
+.task:hover{transform:translateX(2px);background:#161c28}
+.task.hi{border-left-color:var(--red)} .task.done{border-left-color:var(--green);opacity:.72}
+.task .ck{width:14px;height:14px;border:1px solid var(--mut2);flex:0 0 auto;cursor:pointer;display:grid;place-items:center;font-size:9px}
+.task.done .ck{background:var(--green);border-color:var(--green);color:#04212b}
+.task .tt{flex:1;font-size:11px} .task.done .tt{text-decoration:line-through;color:var(--mut2)}
+.task .mt{font-family:var(--mono);font-size:7.5px;color:var(--mut2);letter-spacing:.08em;text-transform:uppercase}
+.task .pr{font-family:var(--mono);font-size:7.5px;padding:2px 6px;border:1px solid var(--line2);color:var(--mut2)}
+.task .pr.hi{color:var(--red);border-color:var(--red)}
+
+.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.tcell{background:var(--bg2);border:1px solid var(--line);padding:10px}
+.tcell .h{font-size:8.5px;letter-spacing:.12em;color:var(--mut2);text-transform:uppercase;margin-bottom:7px}
+.tcell .r{font-size:9px;color:var(--mut2);margin-bottom:5px}
+.tcell .r b{font-family:var(--mono)}
+.auth-off{color:var(--red)} .auth-on{color:var(--green)}
+
+.hint{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:8px;
+  letter-spacing:.18em;color:var(--mut);z-index:5}
+.hint b{color:var(--gold)}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:var(--line2)}::-webkit-scrollbar-track{background:transparent}
+/* ── Simple/Pro toggle ── */
+.mode-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);background:var(--panel)}
+.seg button{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:8px 20px;background:transparent;border:none;color:var(--mut2);cursor:pointer;transition:.18s}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--cyan);color:#04212b}
+.mode-note{font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:.06em}
+/* ── Simple wizard ── */
+.wiz{max-width:780px;margin:6px auto 0}
+.wiz-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:22px}
+.wiz-steps .b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;border:1px solid var(--line2);color:var(--mut2);transition:.2s}
+.wiz-steps .b.on{background:var(--green);color:#04212b;border-color:var(--green);transform:scale(1.1)}
+.wiz-steps .b.done{background:var(--green);color:#04212b;border-color:var(--green);opacity:.55}
+.wiz-steps .bar{width:54px;height:2px;background:var(--line2)}
+.wiz-q{text-align:center;font-size:23px;font-weight:600;margin-bottom:4px}
+.wiz-sub{text-align:center;font-size:12.5px;color:var(--mut2);margin-bottom:22px;line-height:1.5}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.opt{background:var(--panel);border:1px solid var(--line);padding:22px 14px;text-align:center;cursor:pointer;transition:.18s}
+.opt:hover{transform:translateY(-3px);border-color:var(--gold)}
+.opt.on{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,230,160,.14)}
+.opt .ico{font-size:34px;margin-bottom:10px}
+.opt .ti{font-size:14px;font-weight:600}
+.opt .ds{font-size:10px;color:var(--mut2);margin-top:4px;line-height:1.4}
+.opt.feat{grid-column:1/-1;border-color:var(--gold);background:linear-gradient(135deg,rgba(255,210,63,.09),transparent)}
+.wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px}
+.big-go{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.2em;text-transform:uppercase;padding:17px 46px;border:none;cursor:pointer;background:var(--green);color:#04212b;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);transition:.18s}
+.big-go:hover{filter:brightness(1.13);letter-spacing:.3em}
+.summary{text-align:center;font-size:16px;line-height:1.9;margin-bottom:6px}
+.summary b{color:var(--green)}
+.run-card{text-align:center;padding:34px 10px}
+.run-card .big{font-size:46px;margin-bottom:14px}
+/* ── walkthrough modal ── */
+.modal{position:fixed;inset:0;background:rgba(5,7,10,.86);backdrop-filter:blur(4px);z-index:10000;display:none;place-items:center}
+.modal.on{display:grid;animation:fade .3s}
+.wt{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line2);position:relative;padding:36px 32px 26px}
+.wt::before{content:"";position:absolute;top:-1px;left:-1px;width:14px;height:14px;border-top:2px solid var(--gold);border-left:2px solid var(--gold)}
+.wt::after{content:"";position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-bottom:2px solid var(--gold);border-right:2px solid var(--gold)}
+.wt .skip{position:absolute;top:13px;right:15px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--mut);background:none;border:none;cursor:pointer}
+.wt .skip:hover{color:var(--txt)}
+.wt .ico{font-size:50px;text-align:center;margin-bottom:14px}
+.wt .ti{text-align:center;font-size:21px;font-weight:700;margin-bottom:11px}
+.wt .bd{text-align:center;font-size:13.5px;line-height:1.75;color:var(--mut2)}
+.wt .bd b{color:var(--txt)}
+.wt .an{display:block;margin-top:13px;font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:.03em;line-height:1.5}
+.wt-dots{display:flex;justify-content:center;gap:6px;margin:22px 0}
+.wt-dots i{width:7px;height:7px;border-radius:50%;background:var(--line2);transition:.2s}
+.wt-dots i.on{background:var(--gold);width:20px;border-radius:4px}
+.wt-nav{display:flex;justify-content:space-between;gap:10px}
+.help-btn{font-family:var(--mono);font-size:12px;width:28px;height:28px;border:1px solid var(--line2);background:transparent;color:var(--mut2);cursor:pointer;transition:.15s}
+.help-btn:hover{color:var(--gold);border-color:var(--gold)}
+@media(max-width:860px){.grid3,.wf-grid,.opts{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar rv" style="animation-delay:.02s">
+    <div class="brand">
+      <div class="sigil">◈</div>
+      <div>
+        <h1>SHADD<b>A</b>I · MISSION CONTROL</h1>
+        <div class="sub">7-AGENT COUNCIL // OPS TERMINAL v80</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <button class="help-btn" onclick="wtOpen()" title="How SHADDAI works (web2 → web3)">?</button>
+      <div class="clock">
+        <div id="clk">--:--:--</div>
+        <div><span class="live">●</span> ALL SYSTEMS NOMINAL</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs rv" style="animation-delay:.06s">
+    <button class="tab on" id="tabOffice" onclick="swap('office')"><span class="dot"></span>Office</button>
+    <button class="tab wf" id="tabWf" onclick="swap('wf')"><span class="dot"></span>Workflow</button>
+  </div>
+
+  <!-- ════════ OFFICE ════════ -->
+  <section class="screen on" id="scOffice">
+    <div class="hud">
+      <div class="stat rv" style="animation-delay:.10s"><div class="v" id="hRev">$1,170</div><div class="l">Est. Monthly Rev</div><div class="spark">▲ 12% wk</div></div>
+      <div class="stat c rv" style="animation-delay:.14s"><div class="v">04</div><div class="l">Active Jobs</div><div class="spark">2 queued</div></div>
+      <div class="stat g rv" style="animation-delay:.18s"><div class="v">137</div><div class="l">Tasks Complete</div><div class="spark">+18 today</div></div>
+      <div class="stat v rv" style="animation-delay:.22s"><div class="v" style="font-size:15px;letter-spacing:.1em">●●●●●●●</div><div class="l">Agent Status</div><div class="spark">7 / 7 online</div></div>
+    </div>
+
+    <div class="grid3">
+      <!-- mission board -->
+      <div class="rv" style="animation-delay:.26s">
+        <div class="lab">Mission Board</div>
+        <div class="panel" style="height:calc(100% - 26px)">
+          <div class="kan">
+            <div class="kcol">
+              <div class="khead" style="color:var(--mut2)"><span>QUEUED</span><span>2</span></div>
+              <div class="card-mini">Audit Q3 token metrics<div class="who">⊳ ORACLE</div></div>
+              <div class="card-mini">Draft launch thread<div class="who">⊳ QUILL</div></div>
+            </div>
+            <div class="kcol">
+              <div class="khead" style="color:var(--orange)"><span>IN PROGRESS</span><span>2</span></div>
+              <div class="card-mini run">Scan whale wallets<div class="who">⊳ ZEROX · 60%</div></div>
+              <div class="card-mini run">Render NFT preview<div class="who">⊳ TURTLE · 30%</div></div>
+            </div>
+            <div class="kcol">
+              <div class="khead" style="color:var(--green)"><span>DONE</span><span>3</span></div>
+              <div class="card-mini done">Security sweep<div class="who">⊳ PIKADON ✓</div></div>
+              <div class="card-mini done">Price feed wired<div class="who">⊳ NEXUS ✓</div></div>
+              <div class="card-mini done">Strategy memo<div class="who">⊳ SHADDAI ✓</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- dispatch + revenue -->
+      <div class="rv" style="animation-delay:.30s">
+        <div class="lab">Task Dispatch</div>
+        <div class="panel">
+          <textarea class="field" rows="3" placeholder="Describe the mission for your agents…"></textarea>
+          <div class="chips" id="dispChips"></div>
+          <button class="btn" onclick="dispatch()">⟫ Dispatch Mission</button>
+        </div>
+        <div class="lab" style="margin-top:12px">Revenue Command</div>
+        <div class="panel">
+          <div class="rev-nums">
+            <div class="b"><div class="n" style="color:var(--gold)">$1,170</div><div class="t">EST MRR</div></div>
+            <div class="b"><div class="n" style="color:var(--green)">∞</div><div class="t">ROI</div></div>
+          </div>
+          <div style="font-size:8px;letter-spacing:.1em;color:var(--mut2);text-transform:uppercase">Road to $1K / mo</div>
+          <div class="bar"><i style="--w:100%"></i></div>
+          <div class="bar-x"><span>$0</span><span style="color:var(--green)">117%</span><span>$1,000</span></div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--mut);margin-top:9px;line-height:1.7">
+            <span style="color:var(--green)">●</span> 20× Builder $19 = $380<br>
+            <span style="color:var(--cyan)">●</span> 8× Pro $49 = $392<br>
+            <span style="color:var(--gold)">●</span> 2× Alpha $199 = $398
+          </div>
+        </div>
+      </div>
+
+      <!-- roster + log -->
+      <div class="rv" style="animation-delay:.34s">
+        <div class="lab">Agent Status</div>
+        <div class="panel"><div class="roster" id="roster"></div></div>
+        <div class="lab mut" style="margin-top:12px">System Log</div>
+        <div class="term" id="term">
+          <div class="ln"><b>[SYS]</b> SHADDAI v80 online</div>
+          <div class="ln"><span class="ok">[OK]</span> 7 agents connected</div>
+          <div class="ln"><span class="gd">[ZEROX]</span> BTC feed live · $75,840</div>
+          <div class="ln"><span class="ok">[PIKADON]</span> auth gate armed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa rv" style="animation-delay:.40s">
+      <button>⚡ New Job</button><button>📥 Export CSV</button><button>🤖 Agent HQ</button>
+      <button>⚙ Skills Vault</button><button>💳 Billing</button>
+      <button style="margin-left:auto;color:var(--gold);border-color:var(--gold)">📍 Pixel Office</button>
+    </div>
+  </section>
+
+  <!-- ════════ WORKFLOW ════════ -->
+  <section class="screen" id="scWf">
+
+    <div class="mode-row rv">
+      <div class="seg">
+        <button id="mSimple" class="on" onclick="wfMode('simple')">Simple</button>
+        <button id="mPro" onclick="wfMode('pro')">Pro</button>
+      </div>
+      <span class="mode-note" id="modeNote">Simple mode — anyone can use it. No jargon.</span>
+    </div>
+
+    <!-- SIMPLE: 3-step wizard (anyone, 10 to 100) -->
+    <div id="wfSimple" class="wiz rv">
+      <div class="wiz-steps" id="wizSteps"></div>
+      <div id="wizBody"></div>
+    </div>
+
+    <!-- PRO: full ops view -->
+    <div id="wfPro" style="display:none">
+    <!-- workflow runner -->
+    <div class="rv">
+      <div class="lab cy" style="display:flex;justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:6px">Workflow Runner</span>
+        <span class="pill run" id="wfStatus">● IDLE</span>
+      </div>
+      <div class="panel cy">
+        <div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn cy" style="width:auto;padding:9px 18px" onclick="runChain()">▶ Run Chain</button>
+          <button class="btn ghost" style="width:auto;padding:9px 18px" onclick="resetChain()">↺ Reset</button>
+        </div>
+        <div class="chain" id="chain"></div>
+        <div class="wf-out" id="wfOut"><div class="mut">// chain output appears here — press Run Chain</div></div>
+      </div>
+    </div>
+
+    <div class="wf-grid" style="margin-top:12px">
+      <!-- task board -->
+      <div class="rv" style="animation-delay:.06s">
+        <div class="lab">Task Management</div>
+        <div class="panel">
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn ghost" style="width:auto;padding:6px 12px;font-size:8.5px" onclick="addTask()">+ Add</button>
+            <button class="btn ghost" style="width:auto;padding:6px 12px;font-size:8.5px">AI: Generate</button>
+            <button class="btn ghost" style="width:auto;padding:6px 12px;font-size:8.5px">AI: Prioritize</button>
+          </div>
+          <div id="tasks"></div>
+        </div>
+      </div>
+
+      <!-- trading engine -->
+      <div class="rv" style="animation-delay:.10s">
+        <div class="lab">Agent Trading Engine</div>
+        <div class="panel">
+          <div class="trade-grid">
+            <div class="tcell">
+              <div class="h">Auth Status</div>
+              <div class="r auth-off" id="authSt">🔴 Not Authorized</div>
+              <button class="btn ghost" style="font-size:8px;padding:6px;margin-top:6px" onclick="authTrade()">Authorize</button>
+            </div>
+            <div class="tcell">
+              <div class="h">Risk Limits</div>
+              <div class="r">Max Trade <b style="color:var(--cyan)">1000</b> SOL</div>
+              <div class="r">Daily Loss <b style="color:var(--cyan)">500</b> SOL</div>
+              <div class="r">Positions <b style="color:var(--cyan)">0</b></div>
+            </div>
+          </div>
+          <div class="h" style="font-size:8.5px;letter-spacing:.12em;color:var(--mut2);text-transform:uppercase;margin-bottom:7px">Delegate To</div>
+          <div class="chips" id="tradeChips"></div>
+          <textarea class="field" rows="2" placeholder="Describe trading strategy…" style="margin-top:6px"></textarea>
+          <button class="btn cy" style="margin-top:8px" onclick="analyzeStrat()">⊹ Analyze Strategy</button>
+        </div>
+      </div>
+    </div>
+    </div><!-- /wfPro -->
+  </section>
+
+  <!-- ── web2 → web3 walkthrough (Settings + first-visit auto) ── -->
+  <div class="modal" id="wtModal">
+    <div class="wt">
+      <button class="skip" onclick="wtClose()">SKIP ✕</button>
+      <div id="wtBody"></div>
+      <div class="wt-dots" id="wtDots"></div>
+      <div class="wt-nav">
+        <button class="btn ghost" id="wtPrev" style="width:auto;padding:9px 22px" onclick="wtPrev()">⟵ Back</button>
+        <button class="btn" id="wtNext" style="width:auto;padding:9px 22px" onclick="wtNext()">Next ⟶</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="hint">TURTLE redesign · <b>OFFICE</b> + <b>WORKFLOW</b> · self-contained prototype — ports into index.html on approval</div>
+
+<script>
+const AGENTS=[
+  {k:'SHADDAI',c:'--green',s:'STRATEGIZING',st:'busy',ld:70},
+  {k:'ZEROX',c:'--orange',s:'TRADING',st:'busy',ld:60},
+  {k:'ORACLE',c:'--violet',s:'RESEARCHING',st:'busy',ld:45},
+  {k:'NEXUS',c:'--cyan',s:'ROUTING',st:'',ld:20},
+  {k:'TURTLE',c:'--red',s:'RENDERING',st:'busy',ld:30},
+  {k:'QUILL',c:'--gold',s:'IDLE',st:'idle',ld:0},
+  {k:'PIKADON',c:'--red',s:'GUARDING',st:'',ld:15},
+];
+// dispatch chips
+const dc=document.getElementById('dispChips');
+AGENTS.forEach((a,i)=>{const e=document.createElement('span');e.className='chip'+(i===0?' on':'');
+  e.style.cssText=`--cc:var(${a.c})`;e.textContent=a.k.slice(0,3);
+  e.onclick=()=>{e.classList.toggle('on');paint(e,a.c)};paint(e,a.c,i===0);dc.appendChild(e);});
+function paint(el,c,on){const v=getComputedStyle(document.documentElement).getPropertyValue(c).trim();
+  if(el.classList.contains('on')){el.style.background=v;el.style.borderColor=v;}else{el.style.background='';el.style.borderColor='';}}
+// trade chips
+const tc=document.getElementById('tradeChips');
+['ZEROX','NEXUS','ORACLE','TURTLE'].forEach(k=>{const e=document.createElement('span');e.className='chip';
+  e.textContent=k;e.onclick=()=>{e.classList.toggle('on');const v=getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();
+  e.style.background=e.classList.contains('on')?v:'';e.style.color=e.classList.contains('on')?'#04212b':'';e.style.borderColor=e.classList.contains('on')?v:'';};tc.appendChild(e);});
+// roster
+const rt=document.getElementById('roster');
+AGENTS.forEach(a=>{const v=getComputedStyle(document.documentElement).getPropertyValue(a.c).trim();
+  const e=document.createElement('div');e.className='ag';
+  e.innerHTML=`<span class="pip ${a.st}"></span><span class="nm" style="color:${v}">${a.k}</span><span class="st">${a.s}</span><span class="ld"><i style="width:${a.ld}%;background:${v}"></i></span>`;
+  rt.appendChild(e);});
+// tasks
+const TASKS=[
+  {t:'Wire collectibles → Solana NFT mint',a:'NEXUS',p:'HI',d:0},
+  {t:'Compose launch anthem (Suno)',a:'TURTLE',p:'MED',d:0},
+  {t:'Draft Pro-tier pricing page',a:'QUILL',p:'MED',d:0},
+  {t:'Security sweep: code-exec sandbox',a:'PIKADON',p:'HI',d:1},
+  {t:'Seed boardroom demo dialogue',a:'SHADDAI',p:'LOW',d:1},
+];
+const tl=document.getElementById('tasks');
+function renderTasks(){tl.innerHTML='';TASKS.forEach((x,i)=>{const e=document.createElement('div');
+  e.className='task'+(x.d?' done':'')+(x.p==='HI'&&!x.d?' hi':'');
+  e.innerHTML=`<div class="ck" onclick="toggle(${i})">${x.d?'✓':''}</div><div class="tt">${x.t}</div><span class="mt">⊳ ${x.a}</span><span class="pr ${x.p==='HI'?'hi':''}">${x.p}</span>`;
+  tl.appendChild(e);});}
+window.toggle=i=>{TASKS[i].d=TASKS[i].d?0:1;renderTasks();};
+window.addTask=()=>{TASKS.unshift({t:'New task — click to edit',a:'SHADDAI',p:'MED',d:0});renderTasks();};
+renderTasks();
+// chain
+const STEPS=[
+  {a:'ORACLE',d:'Research market signals'},
+  {a:'ZEROX',d:'Model trade thesis'},
+  {a:'NEXUS',d:'Build execution plan'},
+  {a:'PIKADON',d:'Risk + safety gate'},
+  {a:'QUILL',d:'Write the report'},
+];
+const ch=document.getElementById('chain');
+function renderChain(active=-1){ch.innerHTML='';STEPS.forEach((s,i)=>{
+  const n=document.createElement('div');n.className='node'+(i<active?' done':'')+(i===active?' active':'');
+  n.innerHTML=`<div class="num">${i+1}</div><div class="agn">${s.a}</div><div class="desc">${s.d}</div>`;ch.appendChild(n);
+  if(i<STEPS.length-1){const ar=document.createElement('div');ar.className='arrow'+(i===active?' flow':'');ar.textContent='⟶';ch.appendChild(ar);}});}
+renderChain();
+const wfOut=document.getElementById('wfOut'),wfSt=document.getElementById('wfStatus');
+window.resetChain=()=>{renderChain();wfOut.innerHTML='<div class="mut">// chain output appears here — press Run Chain</div>';wfSt.textContent='● IDLE';wfSt.className='pill run';};
+window.runChain=async()=>{wfOut.innerHTML='';wfSt.textContent='● RUNNING';
+  for(let i=0;i<STEPS.length;i++){renderChain(i);
+    wfOut.innerHTML+=`<div><span class="cy">▸ ${STEPS[i].a}</span> <span class="mut">${STEPS[i].d}…</span></div>`;wfOut.scrollTop=wfOut.scrollHeight;
+    await new Promise(r=>setTimeout(r,650));
+    wfOut.innerHTML+=`<div><span class="ok">✓ done</span> <span class="mut">step ${i+1}/${STEPS.length}</span></div>`;}
+  renderChain(STEPS.length);wfSt.textContent='● COMPLETE';wfSt.style.color='var(--green)';wfSt.style.borderColor='var(--green)';
+  wfOut.innerHTML+='<div class="gd">⊹ chain complete — 5 steps, 0 failures</div>';wfOut.scrollTop=wfOut.scrollHeight;};
+// misc
+window.dispatch=()=>{const t=document.getElementById('term');
+  t.innerHTML+='<div class="ln"><span class="gd">[DISPATCH]</span> mission queued → agents notified</div>';t.scrollTop=t.scrollHeight;};
+window.authTrade=()=>{const s=document.getElementById('authSt');s.textContent='🟢 Authorized';s.className='r auth-on';};
+window.analyzeStrat=()=>{document.getElementById('wfOut').innerHTML='<div><span class="cy">▸ ZEROX</span> <span class="mut">analyzing strategy…</span></div>';swap('wf');};
+/* ── Simple wizard (What → Who → GO) ── */
+const GOALS=[
+  {ic:'🎵',ti:'Make a song',ds:'Lyrics + real audio',ag:'TURTLE'},
+  {ic:'🖼️',ti:'Make a picture',ds:'AI image from your idea',ag:'TURTLE'},
+  {ic:'🔎',ti:'Research a coin',ds:'Price, news & sentiment',ag:'ORACLE'},
+  {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL'},
+  {ic:'📊',ti:'Check the market',ds:'Live prices & trends',ag:'ZEROX'},
+  {ic:'🛡️',ti:'Is this safe?',ds:'Quick security check',ag:'PIKADON'},
+];
+const FRIENDLY={SHADDAI:'the boss — plans things',ZEROX:'money & markets',ORACLE:'research & facts',NEXUS:'tech & building',TURTLE:'art, music & design',QUILL:'writing',PIKADON:'safety & security'};
+let wz={step:1,goal:null,agent:'AUTO'};
+function wizSteps(){const s=document.getElementById('wizSteps');let h='';for(let n=1;n<=3;n++){
+  h+=`<div class="b ${wz.step===n?'on':(wz.step>n?'done':'')}">${wz.step>n?'✓':n}</div>`;if(n<3)h+='<div class="bar"></div>';}s.innerHTML=h;}
+function wizRender(){wizSteps();const b=document.getElementById('wizBody');
+  if(wz.step===1){
+    b.innerHTML=`<div class="wiz-q">What do you want done?</div><div class="wiz-sub">Tap one. That's it.</div><div class="opts">`+
+      GOALS.map((g,i)=>`<div class="opt ${wz.goal===i?'on':''}" onclick="pickGoal(${i})"><div class="ico">${g.ic}</div><div class="ti">${g.ti}</div><div class="ds">${g.ds}</div></div>`).join('')+
+      `</div><div class="wiz-nav"><span></span><button class="btn cy" style="width:auto;padding:11px 28px;${wz.goal===null?'opacity:.35;pointer-events:none':''}" onclick="wizNext()">Next ⟶</button></div>`;
+  }else if(wz.step===2){const p=GOALS[wz.goal];
+    b.innerHTML=`<div class="wiz-q">Who should do it?</div><div class="wiz-sub">Not sure? Let SHADDAI choose — that's the easy button.</div><div class="opts">`+
+      `<div class="opt feat ${wz.agent==='AUTO'?'on':''}" onclick="pickAgent('AUTO')"><div class="ico">✨</div><div class="ti">Let SHADDAI choose (recommended)</div><div class="ds">We'll pick the best one for "${p.ti.toLowerCase()}" — probably ${p.ag}</div></div>`+
+      Object.keys(FRIENDLY).map(k=>`<div class="opt ${wz.agent===k?'on':''}" onclick="pickAgent('${k}')"><div class="ti">${k}</div><div class="ds">${FRIENDLY[k]}</div></div>`).join('')+
+      `</div><div class="wiz-nav"><button class="btn ghost" style="width:auto;padding:11px 28px" onclick="wizBack()">⟵ Back</button><button class="btn cy" style="width:auto;padding:11px 28px" onclick="wizNext()">Next ⟶</button></div>`;
+  }else{const p=GOALS[wz.goal];const who=wz.agent==='AUTO'?p.ag:wz.agent;
+    b.innerHTML=`<div class="wiz-q">Ready?</div><div class="summary"><b>${who}</b> will <b>${p.ti.toLowerCase()}</b> for you.</div><div class="run-card"><button class="big-go" onclick="wizGo('${who}','${p.ti}')">▶ GO</button></div><div class="wiz-nav"><button class="btn ghost" style="width:auto;padding:11px 28px" onclick="wizBack()">⟵ Back</button><span></span></div>`;}
+}
+window.pickGoal=i=>{wz.goal=i;wizRender();};
+window.pickAgent=a=>{wz.agent=a;wizRender();};
+window.wizNext=()=>{if(wz.step===1&&wz.goal===null)return;if(wz.step<3){wz.step++;wizRender();}};
+window.wizBack=()=>{if(wz.step>1){wz.step--;wizRender();}};
+window.wizGo=(who,what)=>{const b=document.getElementById('wizBody');
+  b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="goMsg">Connecting to the right tool…</div></div>`;
+  const msgs=['Connecting to the right tool…','Working on "'+what.toLowerCase()+'"…','Almost done…'];let i=0;
+  const t=setInterval(()=>{i++;if(i>=msgs.length){clearInterval(t);
+    b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub">${who} finished "${what.toLowerCase()}".<br>(In the real app, your result shows here.)</div><div style="margin-top:18px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Do another</button></div></div>`;return;}
+    document.getElementById('goMsg').textContent=msgs[i];},850);};
+window.wzReset=()=>{wz={step:1,goal:null,agent:'AUTO'};wizRender();};
+window.wfMode=m=>{const s=m==='simple';
+  document.getElementById('wfSimple').style.display=s?'':'none';
+  document.getElementById('wfPro').style.display=s?'none':'';
+  document.getElementById('mSimple').classList.toggle('on',s);
+  document.getElementById('mPro').classList.toggle('on',!s);
+  document.getElementById('modeNote').textContent=s?'Simple mode — anyone can use it. No jargon.':'Pro mode — full control: build agent chains step by step.';};
+wizRender();
+
+/* ── web2 → web3 walkthrough ── */
+const WT=[
+  {ic:'👋',ti:'Welcome to SHADDAI',bd:'SHADDAI is your own <b>team of 7 AI workers</b> that get things done for you — music, art, research, writing and more.',an:'Think: hiring a small crew, but instant.'},
+  {ic:'🤖',ti:'Meet the council',bd:'Each agent is great at one thing — <b>ZEROX</b> money, <b>ORACLE</b> research, <b>TURTLE</b> art & music, <b>QUILL</b> writing, <b>NEXUS</b> tech, <b>PIKADON</b> safety — led by <b>SHADDAI</b>.',an:'Like coworkers with different jobs.'},
+  {ic:'🔑',ti:'What’s a wallet?',bd:'A wallet is just a <b>login that only you control</b> — like a username + password no company can reset or take.',an:'Web2 = an account. Web3 = an account only you hold the key to.'},
+  {ic:'🛡️',ti:'“Non-custodial” = your money stays yours',bd:'We <b>never hold or touch your money</b>. Any payment is approved by your own wallet, on your device.',an:'Like cash in your pocket — not in our bank.'},
+  {ic:'🎟️',ti:'Credits = arcade tokens',bd:'Credits are only spent when an agent does <b>real paid work</b> (like generating a song). Everyday stuff stays free.',an:'Like arcade tokens — only used on the big machines.'},
+  {ic:'🖼️',ti:'Collectibles → things you truly own',bd:'Items you collect can become <b>NFTs</b> — digital things you genuinely own and can trade, not just borrow.',an:'Like a trading card that’s provably yours.'},
+  {ic:'🚀',ti:'You’re ready!',bd:'Open <b>Workflow</b>, tap what you want, press <b>GO</b>. That’s the whole thing.',an:'Reopen this anytime from the “?” button up top.'},
+];
+let wi=0;const wtModal=document.getElementById('wtModal');
+function wtRender(){const s=WT[wi];
+  document.getElementById('wtBody').innerHTML=`<div class="ico">${s.ic}</div><div class="ti">${s.ti}</div><div class="bd">${s.bd}<span class="an">↳ ${s.an}</span></div>`;
+  document.getElementById('wtDots').innerHTML=WT.map((_,i)=>`<i class="${i===wi?'on':''}"></i>`).join('');
+  document.getElementById('wtPrev').style.visibility=wi===0?'hidden':'visible';
+  document.getElementById('wtNext').textContent=wi===WT.length-1?'Start ⟶':'Next ⟶';}
+window.wtOpen=()=>{wi=0;wtRender();wtModal.classList.add('on');};
+window.wtClose=()=>{wtModal.classList.remove('on');try{localStorage.setItem('shaddai_wt_seen','1');}catch(e){}};
+window.wtPrev=()=>{if(wi>0){wi--;wtRender();}};
+window.wtNext=()=>{if(wi<WT.length-1){wi++;wtRender();}else{wtClose();}};
+try{if(!localStorage.getItem('shaddai_wt_seen'))setTimeout(wtOpen,650);}catch(e){}
+
+window.swap=v=>{const o=v==='office';
+  document.getElementById('scOffice').classList.toggle('on',o);document.getElementById('scWf').classList.toggle('on',!o);
+  document.getElementById('tabOffice').classList.toggle('on',o);document.getElementById('tabWf').classList.toggle('on',!o);};
+// clock
+setInterval(()=>{const d=new Date();document.getElementById('clk').textContent=d.toTimeString().slice(0,8)+' UTC';},1000);
+</script>
+</body>
+</html>
