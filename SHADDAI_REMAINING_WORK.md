@@ -7,7 +7,7 @@
 2. **Real billing auth** — replace header-trust `authenticateUser` with Firebase ID-token verify; protect `/api/billing/admin/*`.
 3. **Turn the gate ON in prod** — set `ADMIN_TOKEN` + `REQUIRE_AUTH=true` (auth-guard already supports it).
 4. **Sandbox `run_js` / `run_python`** — ⚠️ PARTIAL (2026-06-03): JS now routes through `backend/lib/sandbox.js` (hardened `vm`, null-proto, timeout). `isolated-vm` could NOT build here (no VS C++ toolchain + Node v25). FOLLOW-UP: replace `vm` with a container/isolate runner before opening code-exec to non-admins; until then `/execute-code` is admin-gated and `run_python` stays off (`ALLOW_PYTHON_EXEC`).
-5. **Escape user/agent strings** before `innerHTML` (personas, shop names, listings) — stored XSS.
+5. **Escape user/agent strings** before `innerHTML` (personas, shop names, listings) — stored XSS. ✅ PARTIAL (2026-06-03): the 3 confirmed user-controlled MoonPay sinks now use `sanitizeText()` (already used 79× in index.html). FOLLOW-UP: do a browser-verified sweep of remaining innerHTML sinks fed by custom-agent names / shop names / listings.
 6. **Secret-scan CI** — fail commits containing `sk-or-v1-`, `sk-ant-`, `gsk_`, `AIza`.
 
 ## ⚙️ P1 — Core functionality gaps

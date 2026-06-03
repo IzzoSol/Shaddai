@@ -4198,7 +4198,7 @@ body.ly-focus .card{border-radius:10px}
         if(!el||!r.ok)return;
         if(!r.intents||!r.intents.length){el.innerHTML='No proposals yet. ZEROX posts trade ideas here; execute them in your local <code>mp</code>.';return;}
         el.innerHTML=r.intents.map(function(i){
-          return '<div style="border-bottom:1px solid var(--border);padding:5px 0"><b style="color:#14d27a">'+i.agent+'</b> '+i.action+' '+i.amount+' '+i.fromToken+'→'+i.toToken+' <span style="color:'+(i.paper?'#a78bfa':'#ffd84d')+'">['+(i.paper?'paper':'live')+']</span><br><code style="font-size:8px;word-break:break-all">'+i.cliCommand+'</code></div>';
+          return '<div style="border-bottom:1px solid var(--border);padding:5px 0"><b style="color:#14d27a">'+sanitizeText(i.agent)+'</b> '+sanitizeText(i.action)+' '+sanitizeText(i.amount)+' '+sanitizeText(i.fromToken)+'→'+sanitizeText(i.toToken)+' <span style="color:'+(i.paper?'#a78bfa':'#ffd84d')+'">['+(i.paper?'paper':'live')+']</span><br><code style="font-size:8px;word-break:break-all">'+sanitizeText(i.cliCommand)+'</code></div>';
         }).join('');
       };
 
@@ -4217,11 +4217,11 @@ body.ly-focus .card{border-radius:10px}
         var r=await j('/api/moonpay/pay-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:agent,amountUsd:amount,task:task})});
         res.style.display='block';
         if(r.cliCommand){
-          res.innerHTML='<b style="color:#14d27a">CLI command to run locally:</b><br><code style="word-break:break-all;font-size:9px">'+r.cliCommand+'</code><br><span style="color:var(--text-muted);font-size:8px">Copy and run this in your terminal. Payment will be signed locally by your wallet.</span>';
+          res.innerHTML='<b style="color:#14d27a">CLI command to run locally:</b><br><code style="word-break:break-all;font-size:9px">'+sanitizeText(r.cliCommand)+'</code><br><span style="color:var(--text-muted);font-size:8px">Copy and run this in your terminal. Payment will be signed locally by your wallet.</span>';
         } else if(r.blocked){
           res.innerHTML='<span style="color:#ff6b6b">Blocked — PIKADON kill-switch is ON.</span>';
         } else {
-          res.innerHTML='<span style="color:#ff6b6b">Error: '+(r.error||'Unknown error')+'</span>';
+          res.innerHTML='<span style="color:#ff6b6b">Error: '+sanitizeText(r.error||'Unknown error')+'</span>';
         }
       };
 
