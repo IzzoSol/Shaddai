@@ -8,6 +8,7 @@
 
 const axios   = require('axios');
 const vm      = require('vm');
+const { runSandboxedJs } = require('./lib/sandbox');
 const fs      = require('fs');
 const path    = require('path');
 const crypto  = require('crypto');
@@ -537,41 +538,10 @@ const TOOLS = {
     schema: { code: 'string — JavaScript code to execute' },
     agents: ['NEXUS','SHADDAI'],
     async execute({ code }) {
-      // PRODUCTION: replace with isolated-vm or a container for true isolation.
-      // vm.runInNewContext is NOT a security boundary — prototype-pollution or
-      // this.constructor.constructor tricks can still escape to real Node globals.
-      // This interim hardening removes all dangerous globals from the sandbox and
-      // caps input length to limit trivial abuse until a proper isolate is in place.
-
-      const MAX_CODE_LENGTH = 10000;
-      if (typeof code !== 'string' || code.length > MAX_CODE_LENGTH) {
-        return JSON.stringify({ success: false, error: `code must be a string ≤ ${MAX_CODE_LENGTH} characters` });
-      }
-
-      const output = [];
-
-      // STRICT sandbox — no require, no process, no global, no fetch, no timers.
-      // Only safe primitives are exposed.
-      const sandbox = Object.create(null);
-      sandbox.Math      = Math;
-      sandbox.JSON      = JSON;
-      sandbox.parseInt  = parseInt;
-      sandbox.parseFloat = parseFloat;
-      sandbox.isNaN     = isNaN;
-      sandbox.isFinite  = isFinite;
-      sandbox.output    = output;  // captured output array — write here to return values
-      sandbox.console   = Object.freeze({
-        log:   (...a) => output.push(a.map(String).join(' ')),
-        error: (...a) => output.push('ERR: '  + a.map(String).join(' ')),
-        warn:  (...a) => output.push('WARN: ' + a.map(String).join(' ')),
-      });
-
-      try {
-        vm.runInNewContext(code, sandbox, { timeout: 3000 });
-        return JSON.stringify({ success: true, output, error: null });
-      } catch (e) {
-        return JSON.stringify({ success: false, output, error: e.message });
-      }
+      // Routed through the shared sandbox module (backend/lib/sandbox.js).
+      // Preserves the { success, output[], error } JSON contract callers expect.
+      const r = await runSandboxedJs(code, { timeoutMs: 3000 });
+      return JSON.stringify(r);
     }
   },
 

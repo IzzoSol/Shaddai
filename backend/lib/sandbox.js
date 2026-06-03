@@ -29,6 +29,7 @@ async function runSandboxedJs(code, { timeoutMs = 3000 } = {}) {
   sandbox.parseFloat = parseFloat;
   sandbox.isNaN = isNaN;
   sandbox.isFinite = isFinite;
+  sandbox.output = output;   // skills push return values here; included in result.output
   sandbox.console = Object.freeze({
     log:   (...a) => output.push(a.map(String).join(' ')),
     error: (...a) => output.push('ERR: '  + a.map(String).join(' ')),

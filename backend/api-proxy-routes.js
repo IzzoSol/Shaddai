@@ -2225,24 +2225,17 @@ router.post('/execute-code', async (req, res) => {
   }
 
   if (language === 'javascript') {
-    const vm = require('vm');
-    const output = [];
-    const sandbox = {
-      console: { log: (...args) => output.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')), error: (...args) => output.push('ERR: ' + args.join(' ')), warn: (...args) => output.push('WARN: ' + args.join(' ')) },
-      Math, JSON, Date, Array, Object, String, Number, Boolean, parseInt, parseFloat, isNaN, isFinite,
-      setTimeout: undefined, setInterval: undefined, clearTimeout: undefined, clearInterval: undefined
-    };
-    try {
-      // Wrap in IIFE if code uses 'return' so it's valid top-level JS
-      const wrappedCode = /\breturn\b/.test(code) ? `(function(){\n${code}\n})()` : code;
-      const script = new vm.Script(wrappedCode);
-      const ctx = vm.createContext(sandbox);
-      const result = script.runInContext(ctx, { timeout: 5000 });
-      if (result !== undefined && result !== null) output.push(String(typeof result === 'object' ? JSON.stringify(result, null, 2) : result));
-      res.json({ status: 'ok', language, output: output.join('\n').substring(0, 3000) || '(no output)' });
-    } catch (e) {
-      res.json({ status: 'error', language, output: e.message.substring(0, 500) });
-    }
+    const { runSandboxedJs } = require('./lib/sandbox');
+    // Preserve top-level `return` support: wrap so the return value lands in output[].
+    const wrapped = /\breturn\b/.test(code)
+      ? `output.push((function(){\n${code}\n})())`
+      : code;
+    const r = await runSandboxedJs(wrapped, { timeoutMs: 5000 });
+    res.json({
+      status: r.success ? 'ok' : 'error',
+      language,
+      output: (r.success ? r.output.map(String).join('\n') : r.error).substring(0, 3000) || '(no output)'
+    });
   } else if (language === 'python') {
     const { execFileSync } = require('child_process');
     try {
