@@ -12,6 +12,8 @@ class AgentEventBus extends EventEmitter {
     super();
     this.setMaxListeners(100); // support many concurrent streams
     this._subscribers = new Map(); // taskId -> [callback, ...]
+    this._history = [];            // ring buffer for replay/debugging (three.ws pattern)
+    this._maxHistory = 200;
   }
 
   /**
@@ -20,8 +22,25 @@ class AgentEventBus extends EventEmitter {
    */
   emitEvent(taskId, type, data = {}) {
     const event = { taskId, type, timestamp: Date.now(), ...data };
+    // Ring buffer (keep last _maxHistory events) for replay/debugging.
+    this._history.push(event);
+    if (this._history.length > this._maxHistory) this._history.shift();
     this.emit('task-event', event);
     this.emit(`task:${taskId}`, event);
+  }
+
+  /** Full event history (copy), oldest→newest. Optionally filter by taskId. */
+  history(taskId) {
+    return taskId ? this._history.filter(e => e.taskId === taskId) : this._history.slice();
+  }
+
+  /** Last n events of a given type (newest→oldest). */
+  recent(type, n = 10) {
+    const out = [];
+    for (let i = this._history.length - 1; i >= 0 && out.length < n; i--) {
+      if (this._history[i].type === type) out.push(this._history[i]);
+    }
+    return out;
   }
 
   /**
