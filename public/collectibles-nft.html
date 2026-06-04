@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · The Vault — Collectibles → NFTs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b0a07; --ink2:#14110b; --card:#161208; --line:rgba(212,175,55,.18); --line2:rgba(212,175,55,.4);
+  --gold:#d4af37; --gold2:#f4d77a; --cream:#efe7d2; --mut:#8a8164; --green:#1fe6a0; --violet:#b79cff;
+  --disp:'Fraunces',Georgia,serif; --mono:'Share Tech Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);color:var(--cream);font-family:var(--disp);min-height:100vh;
+  background-image:radial-gradient(900px 500px at 50% -8%,rgba(212,175,55,.10),transparent 60%),
+    radial-gradient(700px 700px at 100% 100%,rgba(183,156,255,.05),transparent 55%);}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.wrap{max-width:1100px;margin:0 auto;padding:34px 26px 80px;position:relative;z-index:1}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:8px}
+.brand .eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.42em;color:var(--gold);text-transform:uppercase}
+h1{font-family:var(--disp);font-weight:900;font-size:46px;line-height:.95;letter-spacing:-.01em;margin-top:6px}
+h1 em{font-style:italic;color:var(--gold2)}
+.lede{font-size:14px;color:var(--mut);margin-top:8px;max-width:520px;line-height:1.5;font-weight:400}
+.wallet{text-align:right}
+.netbadge{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--green);border:1px solid rgba(31,230,160,.3);padding:3px 10px;border-radius:20px}
+.connect{font-family:var(--mono);font-size:11px;letter-spacing:.1em;margin-top:10px;padding:11px 20px;background:transparent;border:1px solid var(--line2);color:var(--gold2);cursor:pointer;transition:.2s}
+.connect:hover{background:rgba(212,175,55,.08)}
+.connect.on{border-color:var(--green);color:var(--green)}
+.bar{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--mut);display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 26px;text-transform:uppercase}
+.bar b{color:var(--cream)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.piece{background:linear-gradient(180deg,var(--card),var(--ink2));border:1px solid var(--line);position:relative;padding:0;overflow:hidden;transition:.25s;opacity:0;animation:rise .6s forwards}
+@keyframes rise{to{opacity:1;transform:none}}.piece{transform:translateY(14px)}
+.piece:hover{border-color:var(--line2);transform:translateY(-4px);box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
+.frame{aspect-ratio:1/1;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(212,175,55,.12),transparent 70%);border-bottom:1px solid var(--line);position:relative}
+.frame .glyph{font-size:64px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.6))}
+.rar{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;padding:3px 8px;border:1px solid var(--line2);color:var(--gold2);text-transform:uppercase;background:rgba(0,0,0,.4)}
+.rar.legendary{color:var(--gold2);border-color:var(--gold2)} .rar.t6,.rar.t5{color:var(--violet);border-color:rgba(183,156,255,.5)}
+.body{padding:14px 16px 16px}
+.pname{font-size:18px;font-weight:600;line-height:1.15}
+.owner{font-family:var(--mono);font-size:8.5px;color:var(--mut);margin-top:5px;letter-spacing:.06em}
+.mintbtn{font-family:var(--mono);font-size:10px;letter-spacing:.12em;width:100%;margin-top:13px;padding:10px;background:linear-gradient(135deg,var(--gold),#b8902a);color:#1a1405;border:none;cursor:pointer;text-transform:uppercase;font-weight:700;transition:.18s}
+.mintbtn:hover{filter:brightness(1.1)} .mintbtn:disabled{opacity:.55;cursor:wait}
+.mintbtn.minted{background:transparent;border:1px solid var(--green);color:var(--green)}
+.result{font-family:var(--mono);font-size:8.5px;line-height:1.6;margin-top:9px;color:var(--mut);word-break:break-all}
+.result a{color:var(--green)}
+.empty{grid-column:1/-1;text-align:center;color:var(--mut);font-style:italic;padding:50px;font-size:15px}
+.note{margin-top:30px;font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:.06em;line-height:1.7;border-top:1px solid var(--line);padding-top:16px}
+.note b{color:var(--gold2)}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--line2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="eyebrow">SHADDAI · The Vault</div>
+      <h1>Collectibles, <em>minted</em><br>as you own them.</h1>
+      <div class="lede">Your agent collectibles, forged into real Solana NFTs — provably yours, tradeable, with royalties. Not borrowed. Owned.</div>
+    </div>
+    <div class="wallet">
+      <span class="netbadge" id="net">◎ DEVNET</span>
+      <br><button class="connect" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span>Pieces · <b id="count">—</b></span>
+    <span>Owner · <b id="ownerAddr">not connected</b></span>
+    <span>Chain · <b>Solana (devnet)</b></span>
+    <span>Standard · <b>Metaplex Core</b></span>
+  </div>
+
+  <div class="grid" id="grid"><div class="empty">Loading the vault…</div></div>
+
+  <div class="note">
+    🔒 <b>Non-custodial.</b> We never see your keys or seed phrase — connecting shares only your public address (to receive the NFT). Minting runs on <b>devnet</b> by default; mainnet only on explicit confirmation.
+    Minting requires the platform mint key + Metaplex Core libs (`SOLANA_MINT_SECRET` + `npm i @metaplex-foundation/mpl-core @metaplex-foundation/umi-bundle-defaults`); until then the flow shows a clean setup message — no fakes.
+  </div>
+</div>
+
+<script>
+const esc = s => String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const GLYPH = {legendary:'👑',t6:'💎',t5:'🔮',t4:'⚜️',t3:'🎖️'};
+let wallet = null;
+
+async function connectWallet(){
+  const btn=document.getElementById('connectBtn');
+  // Wallet-standard / Phantom injected provider (address only — non-custodial).
+  const prov = window.solana || (window.phantom && window.phantom.solana);
+  if(!prov || !prov.connect){ btn.textContent='Install Phantom ↗'; btn.onclick=()=>window.open('https://phantom.app/','_blank'); return; }
+  try{
+    const r = await prov.connect();
+    wallet = (r && r.publicKey ? r.publicKey.toString() : (prov.publicKey && prov.publicKey.toString())) || null;
+    if(wallet){ btn.textContent='◎ '+wallet.slice(0,4)+'…'+wallet.slice(-4); btn.classList.add('on');
+      document.getElementById('ownerAddr').textContent = wallet.slice(0,4)+'…'+wallet.slice(-4); }
+  }catch(e){ btn.textContent='Connect Wallet'; }
+}
+
+async function loadVault(){
+  const grid=document.getElementById('grid');
+  try{
+    const r = await fetch('/api/collectibles');
+    const data = await r.json();
+    const items = Array.isArray(data) ? data : (data.collectibles || data.items || []);
+    document.getElementById('count').textContent = items.length;
+    if(!items.length){ grid.innerHTML='<div class="empty">The vault is empty — mint or collect a piece first.</div>'; return; }
+    grid.innerHTML='';
+    items.forEach((it,i)=>{
+      const rar = String(it.rarity||'t3').toLowerCase();
+      const el=document.createElement('div');el.className='piece';el.style.animationDelay=(i*0.05)+'s';
+      el.innerHTML =
+        '<div class="frame"><span class="rar '+esc(rar)+'">'+esc(it.rarity||'T3')+'</span><span class="glyph">'+(GLYPH[rar]||'🏆')+'</span></div>'+
+        '<div class="body"><div class="pname">'+esc(it.name||('Collectible #'+(it.id??i)))+'</div>'+
+        '<div class="owner">owner · '+esc(it.owner||'unclaimed')+(it.signature?' · '+esc(String(it.signature).slice(0,8)):'')+'</div>'+
+        '<button class="mintbtn" id="mb'+i+'" onclick="mintNft('+JSON.stringify(it.id??i)+','+i+',this)">⛓ Mint as NFT</button>'+
+        '<div class="result" id="rs'+i+'"></div></div>';
+      grid.appendChild(el);
+    });
+  }catch(e){ grid.innerHTML='<div class="empty">Could not load the vault ('+esc(e.message)+'). Is the server running?</div>'; }
+}
+
+async function mintNft(id, i, btn){
+  const rs=document.getElementById('rs'+i);
+  btn.disabled=true; btn.textContent='Minting on devnet…'; rs.textContent='';
+  try{
+    const r = await fetch('/api/collectibles/'+encodeURIComponent(id)+'/mint-nft',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ owner: wallet || null })
+    });
+    const d = await r.json();
+    if(d.success && d.mintAddress){
+      btn.textContent='✓ Minted'; btn.classList.add('minted');
+      rs.innerHTML='mint · '+esc(d.mintAddress.slice(0,10))+'… '+(d.explorer?'· <a href="'+encodeURI(d.explorer)+'" target="_blank" rel="noopener">view ↗</a>':'');
+    }else{
+      btn.disabled=false; btn.textContent='⛓ Mint as NFT';
+      rs.textContent = esc(d.error || 'mint unavailable');
+    }
+  }catch(e){ btn.disabled=false; btn.textContent='⛓ Mint as NFT'; rs.textContent=esc(e.message); }
+}
+
+// auto-detect already-connected wallet (silent)
+(function(){ const p=window.solana||(window.phantom&&window.phantom.solana); if(p&&p.isConnected&&p.publicKey){ wallet=p.publicKey.toString(); const b=document.getElementById('connectBtn'); b.textContent='◎ '+wallet.slice(0,4)+'…'+wallet.slice(-4); b.classList.add('on'); document.getElementById('ownerAddr').textContent=wallet.slice(0,4)+'…'+wallet.slice(-4);} })();
+loadVault();
+</script>
+</body>
+</html>

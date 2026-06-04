@@ -1079,6 +1079,21 @@ router.post('/agents/:name/avatar', (req, res) => {
 // GET /api/x402/discover — x402 billable-endpoint discovery (alias of /.well-known/x402.json)
 router.get('/x402/discover', (req, res) => res.json(require('./lib/x402').discovery()));
 
+// POST /api/collectibles/:id/mint-nft — mint a collectible as a real Solana NFT (devnet-first).
+// Uses the mint_nft tool; returns the clean needs-key/needs-libs message if not configured.
+router.post('/collectibles/:id/mint-nft', async (req, res) => {
+  try {
+    const tool = agentEngine.TOOLS && agentEngine.TOOLS.mint_nft;
+    if (!tool) return res.status(501).json({ error: 'mint_nft tool not available' });
+    const b = req.body || {};
+    const name = b.name || ('SHADDAI Collectible #' + req.params.id);
+    const out = await tool.execute({ name, collectibleId: req.params.id, uri: b.uri, description: b.description });
+    res.json(typeof out === 'string' ? JSON.parse(out) : out);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/agents/:name/skill/:skillId — return a specific skill from an agent's MD file
 router.get('/agents/:name/skill/:skillId', (req, res) => {
   try {
