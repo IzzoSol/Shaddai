@@ -1052,7 +1052,25 @@ router.get('/agents/:name/manifest', (req, res) => {
     const tools = (agentEngine.AGENTS && agentEngine.AGENTS[name] && agentEngine.AGENTS[name].tools) || [];
     const manifest = buildManifest(name, { tools });
     if (!manifest) return res.status(404).json({ error: 'Unknown agent', name });
+    // Merge a generated portrait if one exists (additive — never overwrites collectibles).
+    try {
+      const av = require('./lib/agent-avatars').getAvatar(name);
+      if (av && av.uri) manifest.avatar.uri = av.uri;
+    } catch (_) { /* avatar layer optional */ }
     res.json(manifest);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/agents/:name/avatar — generate+persist a portrait (body: { prompt? }).
+// Additive: writes data/agent-avatars.json only; does NOT touch collectibles/rooms.
+router.post('/agents/:name/avatar', (req, res) => {
+  try {
+    const { generateAvatar } = require('./lib/agent-avatars');
+    const name = String(req.params.name || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
+    const entry = generateAvatar(name, (req.body && req.body.prompt) || null);
+    res.json({ ok: true, agent: name, ...entry });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
