@@ -1044,6 +1044,20 @@ router.get('/agents/:name/docs', (req, res) => {
   }
 });
 
+// GET /api/agents/:name/manifest — portable Agent Manifest (spec v1.0, see specs/AGENT_MANIFEST.md)
+router.get('/agents/:name/manifest', (req, res) => {
+  try {
+    const { buildManifest } = require('./lib/agent-manifest');
+    const name = String(req.params.name || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
+    const tools = (agentEngine.AGENTS && agentEngine.AGENTS[name] && agentEngine.AGENTS[name].tools) || [];
+    const manifest = buildManifest(name, { tools });
+    if (!manifest) return res.status(404).json({ error: 'Unknown agent', name });
+    res.json(manifest);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/agents/:name/skill/:skillId — return a specific skill from an agent's MD file
 router.get('/agents/:name/skill/:skillId', (req, res) => {
   try {
