@@ -257,6 +257,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
+      <select id="themeSel" onchange="applyTheme(this.value)" title="Theme"
+        style="background:var(--panel);color:var(--mut2);border:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:6px 8px;cursor:pointer">
+        <option value="mission">◈ MISSION GOLD</option>
+        <option value="emerald">◈ EMERALD</option>
+        <option value="ember">◈ EMBER</option>
+        <option value="royal">◈ ROYAL</option>
+      </select>
       <button class="help-btn" onclick="wtOpen()" title="How SHADDAI works (web2 → web3)">?</button>
       <div class="clock">
         <div id="clk">--:--:--</div>
@@ -545,12 +552,29 @@ window.pickGoal=i=>{wz.goal=i;wizRender();};
 window.pickAgent=a=>{wz.agent=a;wizRender();};
 window.wizNext=()=>{if(wz.step===1&&wz.goal===null)return;if(wz.step<3){wz.step++;wizRender();}};
 window.wizBack=()=>{if(wz.step>1){wz.step--;wizRender();}};
-window.wizGo=(who,what)=>{const b=document.getElementById('wizBody');
-  b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="goMsg">Connecting to the right tool…</div></div>`;
-  const msgs=['Connecting to the right tool…','Working on "'+what.toLowerCase()+'"…','Almost done…'];let i=0;
-  const t=setInterval(()=>{i++;if(i>=msgs.length){clearInterval(t);
-    b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub">${who} finished "${what.toLowerCase()}".<br>(In the real app, your result shows here.)</div><div style="margin-top:18px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Do another</button></div></div>`;return;}
-    document.getElementById('goMsg').textContent=msgs[i];},850);};
+window.wizGo=async(who,what)=>{const b=document.getElementById('wizBody');
+  const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
+  b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="goMsg">Connecting to ${who} via the SHADDAI engine…</div></div>`;
+  try{
+    // REAL agent run — same-origin call to the live backend.
+    const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal:what,agent:who})});
+    const d=await r.json();
+    if(!d.taskId){throw new Error(d.error||'engine did not start a task');}
+    const gm=()=>document.getElementById('goMsg');
+    let result=null;
+    for(let i=0;i<20;i++){
+      await new Promise(s=>setTimeout(s,1500));
+      const t=await (await fetch('/api/agent/task/'+d.taskId)).json();
+      if(gm())gm().textContent=`${who} working… (${t.status||'running'})`;
+      if(t.status&&/complete|done|fail|error/i.test(t.status)){result=t;break;}
+    }
+    let text='(still working — try again in a moment)';
+    if(result){ text=result.result || (result.steps&&result.steps.length&&result.steps[result.steps.length-1].llm_response) || JSON.stringify(result).slice(0,400); }
+    b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div><div style="margin-top:18px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Do another</button></div></div>`;
+  }catch(e){
+    b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}<br>Make sure the SHADDAI server is running (npm start).</div><div style="margin-top:14px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Try again</button></div></div>`;
+  }
+};
 window.wzReset=()=>{wz={step:1,goal:null,agent:'AUTO'};wizRender();};
 window.wfMode=m=>{const s=m==='simple';
   document.getElementById('wfSimple').style.display=s?'':'none';
@@ -585,6 +609,18 @@ try{if(!localStorage.getItem('shaddai_wt_seen'))setTimeout(wtOpen,650);}catch(e)
 window.swap=v=>{const o=v==='office';
   document.getElementById('scOffice').classList.toggle('on',o);document.getElementById('scWf').classList.toggle('on',!o);
   document.getElementById('tabOffice').classList.toggle('on',o);document.getElementById('tabWf').classList.toggle('on',!o);};
+// ── theme system (swaps accent palette; persists) ──
+const THEMES={
+  mission:{gold:'#ffd23f',cyan:'#33d6ff',green:'#1fe6a0'},
+  emerald:{gold:'#1fe6a0',cyan:'#33d6ff',green:'#ffd23f'},
+  ember:{gold:'#ff8a3d',cyan:'#ffd23f',green:'#1fe6a0'},
+  royal:{gold:'#a98bff',cyan:'#33d6ff',green:'#1fe6a0'}
+};
+window.applyTheme=function(name){const t=THEMES[name]||THEMES.mission;const r=document.documentElement.style;
+  r.setProperty('--gold',t.gold);r.setProperty('--cyan',t.cyan);r.setProperty('--green',t.green);r.setProperty('--accent',t.gold);
+  try{localStorage.setItem('shaddai_theme',name);}catch(e){}};
+try{const savedT=localStorage.getItem('shaddai_theme');if(savedT){const sel=document.getElementById('themeSel');if(sel)sel.value=savedT;applyTheme(savedT);}}catch(e){}
+
 // clock
 setInterval(()=>{const d=new Date();document.getElementById('clk').textContent=d.toTimeString().slice(0,8)+' UTC';},1000);
 </script>
