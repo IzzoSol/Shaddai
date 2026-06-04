@@ -69,7 +69,7 @@ Expected: Jest executes; existing security tests pass (or run). Confirms harness
 Run from repo root:
 ```bash
 cd "C:/Users/Brittany/Shaddai-clone"
-git grep -n "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"
+git grep -n "sk-or-v1-<LEAKED_KEY_REDACTED>"
 ```
 Expected: lists the exact files containing the **real** key (recon found `public/shaddai.html:20834`). Record the full list — every file listed here must be deleted or scrubbed.
 
@@ -637,7 +637,7 @@ Leave in `public/`: `index.html` (served), `marketplace-shop.html`, `SHADDAI-Col
 - [ ] **Step 2: Verify nothing key-bearing remains outside archive, and archive has no REAL key**
 
 ```bash
-git grep -n "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"
+git grep -n "sk-or-v1-<LEAKED_KEY_REDACTED>"
 ```
 Expected: **no matches** (the only real-key file was deleted in Task 1). If a match appears in `archive/`, `git rm` that file too.
 
