@@ -56,6 +56,16 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
 .tab.on{color:var(--bg);background:var(--gold)}
 .tab.on .dot{background:var(--bg);box-shadow:0 0 0 3px rgba(10,12,16,.25)}
 .tab.wf.on{background:var(--cyan)}
+/* ── side-nav Simple mode (left rail + right work area) ── */
+.layout{display:flex;gap:16px;flex:1;min-height:0}
+.siderail{display:flex;flex-direction:column;gap:6px;width:152px;flex:0 0 152px;border:1px solid var(--line);background:var(--panel);padding:8px;height:max-content}
+.srbtn{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:11px 12px;background:transparent;border:none;color:var(--mut2);cursor:pointer;text-align:left;transition:.16s;border-left:2px solid transparent}
+.srbtn .sric{font-size:16px}
+.srbtn:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.srbtn.on{color:var(--gold);border-left-color:var(--gold);background:rgba(255,210,63,.06)}
+.srbtn.wf.on{color:var(--cyan);border-left-color:var(--cyan);background:rgba(51,214,255,.06)}
+.workarea{flex:1;min-width:0;overflow:auto}
+@media(max-width:760px){.layout{flex-direction:column}.siderail{flex-direction:row;width:auto;flex:0 0 auto}.srbtn{flex:1;justify-content:center}}
 
 /* ── panels ── */
 .screen{flex:1;min-height:0;display:none;overflow:auto}
@@ -272,10 +282,12 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
     </div>
   </div>
 
-  <div class="tabs rv" style="animation-delay:.06s">
-    <button class="tab on" id="tabOffice" onclick="swap('office')"><span class="dot"></span>Office</button>
-    <button class="tab wf" id="tabWf" onclick="swap('wf')"><span class="dot"></span>Workflow</button>
-  </div>
+  <div class="layout rv" style="animation-delay:.06s">
+    <nav class="siderail">
+      <button class="srbtn on" id="tabOffice" onclick="swap('office')"><span class="sric">🏢</span><span>Office</span></button>
+      <button class="srbtn wf" id="tabWf" onclick="swap('wf')"><span class="sric">⚡</span><span>Workflow</span></button>
+    </nav>
+    <div class="workarea">
 
   <!-- ════════ OFFICE ════════ -->
   <section class="screen on" id="scOffice">
@@ -433,6 +445,9 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
     </div>
     </div><!-- /wfPro -->
   </section>
+
+    </div><!-- /workarea -->
+  </div><!-- /layout -->
 
   <!-- ── web2 → web3 walkthrough (Settings + first-visit auto) ── -->
   <div class="modal" id="wtModal">
