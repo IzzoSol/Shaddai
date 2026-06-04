@@ -1,0 +1,2020 @@
+[
+  {
+    "name": "analyze_code_complexity",
+    "description": "Analyze code complexity: count lines, functions, nested depth, and flag issues.",
+    "schema": {
+      "code": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "analyze_sentiment",
+    "description": "Analyze sentiment of any text. Returns score (-1 to +1), label, and key terms.",
+    "schema": {
+      "text": "string — text to analyze"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "append_google_sheet",
+    "description": "Append rows to a Google Sheet. Requires GOOGLE_SERVICE_ACCOUNT_JSON.",
+    "schema": {
+      "spreadsheet_id": "string",
+      "sheet_name": "string",
+      "rows": "array of arrays"
+    },
+    "agents": [
+      "ZEROX",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "base64_codec",
+    "description": "Base64 encode or decode a string. Useful for JWTs, data URIs, basic auth.",
+    "schema": {
+      "input": "string — text to encode or base64 to decode",
+      "mode": "string — \"encode\" or \"decode\""
+    },
+    "agents": [
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "bid_on_job",
+    "description": "Place a bid on an open marketplace job. Appends to job.bids array.",
+    "schema": {
+      "jobId": "string — job id",
+      "agent": "string — bidding agent",
+      "bidCredits": "number — bid amount",
+      "eta": "string — estimated delivery"
+    },
+    "agents": [
+      "ZEROX",
+      "NEXUS",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "binance_orderbook",
+    "description": "Get Binance order book depth to see buy/sell pressure.",
+    "schema": {
+      "symbol": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "binance_price",
+    "description": "Get live spot price from Binance. Fastest price data available, no auth needed.",
+    "schema": {
+      "symbol": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "browse_listings",
+    "description": "Browse all currently-listed collectibles on the marketplace.",
+    "schema": {},
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "calculate",
+    "description": "Safely evaluate math expressions. Supports +,-,*,/,**,sqrt,log,sin,cos,PI,E,floor,ceil.",
+    "schema": {
+      "expression": "string — math expression e.g. \"sqrt(144) * 2 + log(100)\""
+    },
+    "agents": [
+      "NEXUS",
+      "ZEROX",
+      "SHADDAI",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "calculate_position_size",
+    "description": "Calculate safe position size based on account size and risk percentage.",
+    "schema": {
+      "account_size": "string",
+      "risk_percent": "string",
+      "entry_price": "string",
+      "stop_loss_price": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "check_password_strength",
+    "description": "Analyze password strength — length, entropy, suggestions",
+    "schema": {
+      "password": "string — password to analyze (never stored or logged)"
+    },
+    "agents": []
+  },
+  {
+    "name": "check_port",
+    "description": "Check if a TCP port is open on a host",
+    "schema": {
+      "host": "string — hostname or IP",
+      "port": "number — port number"
+    },
+    "agents": []
+  },
+  {
+    "name": "check_pwned",
+    "description": "Check if an email address appears in known data breaches using the HaveIBeenPwned k-anonymity range API. Completely keyless — uses SHA1 prefix matching so the full email is never sent.",
+    "schema": {
+      "email": "string — email address to check"
+    },
+    "agents": [
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "check_security",
+    "description": "PIKADON security audit: SQL injection, XSS, hardcoded secrets, eval, path traversal, CORS, CSRF, insecure deps.",
+    "schema": {
+      "code": "string — code snippet or file content to audit"
+    },
+    "agents": [
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "complete_job",
+    "description": "Mark a marketplace job as completed, store deliverable, and credit the agent earnings.",
+    "schema": {
+      "jobId": "string — job id",
+      "agent": "string — completing agent",
+      "deliverable": "string — work output"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "compress_prompt",
+    "description": "Compress a long prompt to use fewer tokens while preserving meaning.",
+    "schema": {
+      "text": "string",
+      "target_tokens": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "convert_units",
+    "description": "Convert between units: temperature (C/F/K), length (m/ft/mi/km), weight (kg/lb), data (B/KB/MB/GB).",
+    "schema": {
+      "value": "string",
+      "from": "string",
+      "to": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "count_tokens",
+    "description": "Count words, characters, and estimate LLM tokens (~4 chars per token) for any text.",
+    "schema": {
+      "text": "string — text to count"
+    },
+    "agents": [
+      "NEXUS",
+      "QUILL",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "create_airtable_record",
+    "description": "Add a record to an Airtable base. Requires AIRTABLE_API_KEY.",
+    "schema": {
+      "base_id": "string",
+      "table_name": "string",
+      "fields": "object"
+    },
+    "agents": [
+      "NEXUS",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "create_calendar_event",
+    "description": "Create a Google Calendar event via OAuth. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+    "schema": {
+      "title": "string",
+      "start": "string ISO8601",
+      "end": "string ISO8601",
+      "description": "string (optional)",
+      "attendees": "array of email strings (optional)"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "create_github_issue",
+    "description": "Create a GitHub issue in any repository. Requires GITHUB_TOKEN env var.",
+    "schema": {
+      "owner": "string",
+      "repo": "string",
+      "title": "string",
+      "body": "string",
+      "labels": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "create_google_doc",
+    "description": "Create a new Google Doc with content. Requires GOOGLE_SERVICE_ACCOUNT_JSON.",
+    "schema": {
+      "title": "string",
+      "content_markdown": "string"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "create_hubspot_contact",
+    "description": "Create or update a HubSpot CRM contact. Requires HUBSPOT_API_KEY.",
+    "schema": {
+      "email": "string",
+      "name": "string",
+      "properties": "object (optional)"
+    },
+    "agents": [
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "create_notion_page",
+    "description": "Create a Notion page in a database. Requires NOTION_API_KEY.",
+    "schema": {
+      "database_id": "string",
+      "title": "string",
+      "content": "string",
+      "properties": "object (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "create_skill_pack",
+    "description": "Create a new skill pack with custom system prompt for an agent. Saves to backend/data/skill-packs.json.",
+    "schema": {
+      "name": "string",
+      "author": "string",
+      "target_agent": "string — agent name",
+      "system_prompt": "string",
+      "price_credits": "number",
+      "tools": "array of tool names"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "QUILL",
+      "TURTLE"
+    ]
+  },
+  {
+    "name": "create_stripe_checkout",
+    "description": "Generate a Stripe Checkout session URL for a payment. Requires STRIPE_SECRET_KEY.",
+    "schema": {
+      "amount_cents": "number — amount in cents (e.g. 2999 = $29.99)",
+      "currency": "string — e.g. usd",
+      "description": "string",
+      "success_url": "string",
+      "cancel_url": "string"
+    },
+    "agents": [
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "csv_query",
+    "description": "Load CSV text (or fetch from URL) and run a simple filter+aggregate. Supports filter (field=value or field>number), select (comma-separated column names), sum (column to sum), and limit.",
+    "schema": {
+      "source": "string — raw CSV text OR a https:// URL pointing to a CSV file",
+      "filter": "string — optional: \"field=value\" or \"field>123\" or \"field<123\"",
+      "select": "string — optional: comma-separated column names to include",
+      "sum": "string — optional: column name to sum (returns total)",
+      "limit": "number — max rows to return (default 50)"
+    },
+    "agents": [
+      "ZEROX",
+      "NEXUS",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "decode_base64",
+    "description": "Decode Base64 string back to plain text",
+    "schema": {
+      "encoded": "string — Base64 string to decode"
+    },
+    "agents": []
+  },
+  {
+    "name": "defi_chains_tvl",
+    "description": "TVL ranked by blockchain across all of DeFi via DeFiLlama (keyless, https://api.llama.fi/v2/chains). Returns the top chains by total value locked in USD.",
+    "schema": {
+      "limit": "number — max chains to return (default 15, max 50)"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "defi_token_price",
+    "description": "Live token price, liquidity, and 24h change via DexScreener (keyless). Accepts a token contract address (any chain) or a symbol/name to search. Returns the most-liquid trading pair: price in USD, 24h price change %, liquidity, volume, chain and DEX.",
+    "schema": {
+      "query": "string — token contract address (0x... / mint) OR a symbol/name to search, e.g. \"SPA\", \"PEPE\""
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "defi_tvl",
+    "description": "Total Value Locked (TVL) for a DeFi protocol via DeFiLlama (keyless). Returns current total TVL in USD plus a per-chain breakdown. Pass the protocol slug, e.g. \"aave\", \"uniswap\", \"lido\", \"makerdao\".",
+    "schema": {
+      "protocol": "string — DeFiLlama protocol slug, e.g. \"aave\", \"uniswap\", \"lido\""
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "defi_yields",
+    "description": "Top DeFi yield/farming pools by APY via DeFiLlama Yields (keyless). Optionally filter by chain (e.g. \"Ethereum\", \"Arbitrum\") and/or project (e.g. \"aave-v3\", \"lido\"). Returns symbol, chain, project, apy, and tvlUsd for the top pools.",
+    "schema": {
+      "chain": "string — optional: filter by chain, e.g. \"Ethereum\", \"Arbitrum\", \"Solana\"",
+      "project": "string — optional: filter by project slug, e.g. \"aave-v3\", \"lido\"",
+      "limit": "number — max pools to return (default 10, max 50)"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "delegate_to_agent",
+    "description": "Delegate a sub-task to another agent. SHADDAI uses this to coordinate. Returns sub-task result.",
+    "schema": {
+      "agent": "string — agent name (NEXUS, ZEROX, ORACLE, TURTLE, QUILL, PIKADON)",
+      "task": "string — what they should do"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "deploy_to_vercel",
+    "description": "Trigger a Vercel deployment via API. Requires VERCEL_TOKEN.",
+    "schema": {
+      "project_id": "string",
+      "env": "object (optional)"
+    },
+    "agents": [
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "detect_language",
+    "description": "Detect the programming language of a code snippet.",
+    "schema": {
+      "code": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "dex_price",
+    "description": "Get real-time DEX price for any token via DexScreener. No API key needed.",
+    "schema": {
+      "symbol": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "diff_texts",
+    "description": "Compare two texts and show what changed (added/removed lines).",
+    "schema": {
+      "text1": "string",
+      "text2": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "encode_base64",
+    "description": "Encode any text to Base64",
+    "schema": {
+      "text": "string — text to encode"
+    },
+    "agents": []
+  },
+  {
+    "name": "execute_trade",
+    "description": "Execute a collectibles trade: buyer pays priceCredits, ownership transfers, platform takes 10% fee.",
+    "schema": {
+      "collectible_id": "string|number — collectible id",
+      "buyer": "string — buyer wallet/name",
+      "buyer_credits": "number — credits buyer is paying"
+    },
+    "agents": [
+      "SHADDAI",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "extract_entities",
+    "description": "Extract named entities (people, orgs, locations, dates, amounts) from text.",
+    "schema": {
+      "text": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "extract_keywords",
+    "description": "Extract top keywords from text by frequency. Strips common stop words.",
+    "schema": {
+      "text": "string — text to analyze",
+      "limit": "number — keywords to return (default 10)"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "extract_links",
+    "description": "Fetch a URL and extract all hyperlinks (href values). Optionally filter to only external links or links matching a pattern.",
+    "schema": {
+      "url": "string — full https:// URL to scan",
+      "external_only": "boolean — if true, return only off-domain links (default false)",
+      "pattern": "string — optional: return only links containing this substring"
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "extract_pdf",
+    "description": "Download a PDF from a URL and extract its text using pdf-parse. Returns text and page count.",
+    "schema": {
+      "url": "string — full https:// URL of the PDF",
+      "max_pages": "number — stop after this many pages (default: all, max 50)"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "fetch_price",
+    "description": "Live crypto price from CoinGecko. Returns USD price, 24h change %, market cap, volume.",
+    "schema": {
+      "symbol": "string — coin id e.g. bitcoin, ethereum, solana, dogecoin"
+    },
+    "agents": [
+      "SHADDAI",
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "fetch_url",
+    "description": "Fetch full text from any URL. Strips HTML, returns clean readable text (first 3000 chars).",
+    "schema": {
+      "url": "string — full https:// URL"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL",
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "fetch_url_clean",
+    "description": "Fetch a URL and extract clean readable text (strips HTML tags and scripts).",
+    "schema": {
+      "url": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "format_as_table",
+    "description": "Format JSON array data as a readable ASCII table.",
+    "schema": {
+      "data": "string",
+      "columns": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "format_data",
+    "description": "Format raw data as markdown table, JSON, CSV, or bullet list. Clean output for reports.",
+    "schema": {
+      "data": "string — raw data (JSON string or text)",
+      "format": "string — \"markdown_table\", \"csv\", \"bullets\", \"json_pretty\""
+    },
+    "agents": [
+      "QUILL",
+      "NEXUS",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "generate_code_template",
+    "description": "Generate a code boilerplate template for common patterns.",
+    "schema": {
+      "language": "string",
+      "pattern": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "generate_image",
+    "description": "Generate an AI image — FREE, no API key (Pollinations). model: \"flux\" (quality) or \"turbo\" (fast). Returns a primary URL + free no-key fallback URLs. Higher quality if ACEDATACLOUD_API_TOKEN is set (Flux/Seedream/NanoBanana).",
+    "schema": {
+      "prompt": "string — detailed image description",
+      "model": "string — 'flux' (default) or 'turbo'",
+      "width": "number (default 1024)",
+      "height": "number (default 1024)"
+    },
+    "agents": [
+      "TURTLE"
+    ]
+  },
+  {
+    "name": "generate_image_free",
+    "description": "Generate an AI image for free using Pollinations.ai. No API key needed.",
+    "schema": {
+      "prompt": "string",
+      "width": "string",
+      "height": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "generate_mermaid",
+    "description": "Generate a Mermaid diagram definition for flowcharts, sequences, or mind maps.",
+    "schema": {
+      "type": "string",
+      "description": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "generate_uuid",
+    "description": "Generate a UUID v4 (or multiple UUIDs).",
+    "schema": {
+      "count": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "geocode_address",
+    "description": "Geocode any place/address to coordinates via OpenStreetMap Nominatim (free, no key).",
+    "schema": {
+      "query": "string — address or place name, e.g. \"Eiffel Tower\" or \"Tokyo, Japan\""
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_agent_mood",
+    "description": "Read an agent room state and mood from persistent storage.",
+    "schema": {
+      "agent": "string — agent name"
+    },
+    "agents": [
+      "SHADDAI",
+      "ORACLE",
+      "NEXUS",
+      "ZEROX",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "get_arxiv_papers",
+    "description": "Search arXiv for research papers by topic",
+    "schema": {
+      "query": "string — search terms e.g. large language models"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_color_palette",
+    "description": "Generate a harmonious color palette from a seed color",
+    "schema": {
+      "hex": "string — hex color without # e.g. FF6B35",
+      "mode": "string — analogic, complement, triad (default: analogic)"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_country_info",
+    "description": "Country facts: population, capital, currency, languages, flag",
+    "schema": {
+      "country": "string — country name e.g. Japan, Brazil, Germany"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_crypto_backup",
+    "description": "Crypto price from CoinPaprika (free, no key) — resilient backup when CoinGecko rate-limits.",
+    "schema": {
+      "symbol": "string — coin symbol or name e.g. BTC, ETH, SOL"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_crypto_news",
+    "description": "Latest cryptocurrency headlines. Keyless by default — pulls live public crypto RSS feeds (CoinDesk, CoinTelegraph, Decrypt) returning title/url/source/publishedAt. If NEWSAPI_API_KEY is set, NewsAPI crypto headlines are merged in as an enhancement. Optional query filters headlines client-side.",
+    "schema": {
+      "query": "string — optional keyword to filter headlines (matches title/body, case-insensitive)",
+      "limit": "number — max headlines to return (default 10, max 50)"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_defi_tvl",
+    "description": "DeFi Total Value Locked data from DeFiLlama. Top protocols by TVL.",
+    "schema": {
+      "limit": "number — how many protocols to return (default 10)"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_dominance",
+    "description": "Get Bitcoin and Ethereum market dominance percentages.",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_eth_balance",
+    "description": "Get ETH balance of any Ethereum wallet. Uses Cloudflare public RPC (no key needed).",
+    "schema": {
+      "address": "string — Ethereum address (0x...)"
+    },
+    "agents": [
+      "ZEROX",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "get_eth_gas",
+    "description": "Get current Ethereum gas price in Gwei (keyless public RPC).",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_exchange_rates",
+    "description": "Live fiat currency exchange rates (USD base). Free, no key required.",
+    "schema": {
+      "currencies": "string — comma-separated currency codes e.g. EUR,GBP,JPY,CAD"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_fear_greed",
+    "description": "Crypto Fear & Greed Index (0=Extreme Fear, 100=Extreme Greed). Also returns 7-day history.",
+    "schema": {},
+    "agents": [
+      "ZEROX",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_fear_greed_history",
+    "description": "Get historical Fear & Greed index data (last 7 days).",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_forex_rate",
+    "description": "Live fiat currency exchange rates from Frankfurter (ECB data, free, no key, very reliable).",
+    "schema": {
+      "from": "string — base currency code e.g. USD",
+      "to": "string — target code(s) e.g. EUR or \"EUR,GBP,JPY\"",
+      "amount": "number — optional amount to convert"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_funding_rates",
+    "description": "Get crypto perpetual futures funding rates from Binance.",
+    "schema": {
+      "symbol": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_gas_price",
+    "description": "Current Ethereum gas prices (slow/standard/fast in Gwei)",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_github_issues",
+    "description": "Get open issues from any public GitHub repository.",
+    "schema": {
+      "owner": "string",
+      "repo": "string",
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_github_repo",
+    "description": "GitHub repository details: stars, forks, issues, language, recent activity. No auth needed.",
+    "schema": {
+      "repo": "string — owner/repo e.g. microsoft/vscode"
+    },
+    "agents": [
+      "NEXUS",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_github_trending",
+    "description": "Recently trending GitHub repos (sorted by stars, pushed in last 7 days). Uses public GitHub API.",
+    "schema": {
+      "language": "string — language filter e.g. javascript (optional)",
+      "topic": "string — topic e.g. llm, agents (optional)"
+    },
+    "agents": [
+      "NEXUS",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_global_market",
+    "description": "Global crypto market overview: total market cap, BTC dominance, 24h volume, active coins.",
+    "schema": {},
+    "agents": [
+      "ZEROX",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_hacker_news_comments",
+    "description": "Get top comments from a Hacker News story.",
+    "schema": {
+      "story_id": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_hackernews",
+    "description": "Top Hacker News stories right now. Returns titles, URLs, scores, comment counts.",
+    "schema": {
+      "limit": "number — stories to return (default 10, max 20)"
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "get_history_today",
+    "description": "Historical events that happened on today's date throughout history",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_ip_info",
+    "description": "Geolocate an IP address — country, city, ISP, coordinates",
+    "schema": {
+      "ip": "string — IPv4 address e.g. 8.8.8.8"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_joke",
+    "description": "Get a programming or tech joke",
+    "schema": {
+      "category": "string — Programming, Misc, Dark, Pun (default: Programming)"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_linkedin_profile",
+    "description": "Fetch LinkedIn public profile data via Proxycurl. Requires PROXYCURL_API_KEY.",
+    "schema": {
+      "url": "string — LinkedIn profile URL"
+    },
+    "agents": [
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_market_news",
+    "description": "Crypto market news filtered to a specific coin or topic (e.g. \"ethereum\", \"regulation\", \"ETF\"). Searches the keyless public crypto RSS feeds client-side and returns matching headlines with title/url/source/publishedAt.",
+    "schema": {
+      "topic": "string — coin name, ticker, or topic to filter by (e.g. \"bitcoin\", \"BTC\", \"regulation\")",
+      "limit": "number — max headlines to return (default 10, max 50)"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_medium_articles",
+    "description": "Get latest Medium articles on any topic via RSS.",
+    "schema": {
+      "topic": "string",
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_memory",
+    "description": "Retrieve a previously saved memory by key. Returns the stored value.",
+    "schema": {
+      "key": "string — memory key (with or without agent prefix)",
+      "agent": "string — agent name (optional)"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "get_moon_phase",
+    "description": "Current moon phase and next full/new moon dates",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_news_headlines",
+    "description": "Get latest news headlines from multiple sources via RSS.",
+    "schema": {
+      "topic": "string",
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_nft_floor",
+    "description": "MagicEden Solana NFT collection floor price and stats",
+    "schema": {
+      "symbol": "string — collection symbol e.g. okay_bears, degods"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_ohlcv",
+    "description": "Price history (OHLCV candles) for a coin over last N days from CoinGecko.",
+    "schema": {
+      "symbol": "string — coin id e.g. bitcoin",
+      "days": "number — 1, 7, 14, 30, 90"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_onchain_activity",
+    "description": "Get recent on-chain activity metrics for Solana.",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_package_info",
+    "description": "Get npm package information: version, description, downloads, dependencies.",
+    "schema": {
+      "package": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_product_hunt",
+    "description": "Get top products from Product Hunt today.",
+    "schema": {
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_protocol_revenue",
+    "description": "Get DeFi protocol revenue data from DeFiLlama.",
+    "schema": {
+      "protocol": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_public_apis",
+    "description": "Search a directory of free public APIs by topic",
+    "schema": {
+      "query": "string — topic to search e.g. weather, finance, music, crypto"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_qr_code",
+    "description": "Generate a QR code image URL for any text or URL",
+    "schema": {
+      "data": "string — text or URL to encode"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_random_quote",
+    "description": "Get an inspiring or interesting random quote",
+    "schema": {
+      "tag": "string — optional topic e.g. success, technology, wisdom"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_reddit_posts",
+    "description": "Fetch top posts from any subreddit — real community discussion",
+    "schema": {
+      "subreddit": "string — e.g. cryptocurrency, technology, ArtificialIntelligence"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_rss_feed",
+    "description": "Fetch and parse any RSS/Atom feed URL. Returns latest items with title, link, summary.",
+    "schema": {
+      "url": "string — RSS feed URL",
+      "limit": "number — items to return (default 8)"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "get_sol_balance",
+    "description": "Get SOL balance of any Solana wallet address. Uses mainnet-beta public RPC.",
+    "schema": {
+      "address": "string — Solana wallet address (base58)"
+    },
+    "agents": [
+      "ZEROX",
+      "PIKADON",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_sol_token_info",
+    "description": "Get Solana token info from DexScreener by contract address or symbol.",
+    "schema": {
+      "address": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_stablecoin_data",
+    "description": "Get stablecoin market cap and peg data from DeFiLlama.",
+    "schema": {},
+    "agents": []
+  },
+  {
+    "name": "get_stackoverflow",
+    "description": "Get top Stack Overflow questions for any programming topic.",
+    "schema": {
+      "tag": "string",
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_stock_quote",
+    "description": "Real-time stock price from Yahoo Finance — works for any ticker (AAPL, TSLA, NVDA, etc.)",
+    "schema": {
+      "symbol": "string — stock ticker e.g. AAPL, TSLA, NVDA, SPY"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_timezone",
+    "description": "Current time and date in any timezone worldwide",
+    "schema": {
+      "timezone": "string — e.g. America/New_York, Europe/London, Asia/Tokyo"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_token_info",
+    "description": "Detailed coin data from CoinGecko: description, categories, links, ATH, supply.",
+    "schema": {
+      "symbol": "string — coin id e.g. solana"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "get_top_gainers",
+    "description": "Get top gaining and losing cryptocurrencies in the last 24 hours.",
+    "schema": {
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_trending",
+    "description": "Top 7 trending crypto coins on CoinGecko right now.",
+    "schema": {},
+    "agents": [
+      "ZEROX",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_trending_topics",
+    "description": "Trending crypto coins/topics right now. Keyless — uses the CoinGecko /search/trending endpoint. Returns a ranked list of trending coins with name, symbol, market cap rank, and CoinGecko link.",
+    "schema": {
+      "limit": "number — max trending items to return (default 10, max 25)"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "get_uuid",
+    "description": "Generate unique IDs, tokens, or random strings",
+    "schema": {
+      "count": "number — how many UUIDs to generate (1-10)"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_weather",
+    "description": "Current weather for any city. Returns temp, conditions, humidity, wind.",
+    "schema": {
+      "city": "string — city name e.g. \"New York\", \"London\", \"Tokyo\""
+    },
+    "agents": [
+      "ORACLE",
+      "SHADDAI",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "get_wikipedia_summary",
+    "description": "Get a clean Wikipedia summary paragraph for any topic",
+    "schema": {
+      "topic": "string — topic to look up"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_word_definition",
+    "description": "Dictionary definition, pronunciation, and example usage for any English word",
+    "schema": {
+      "word": "string — the word to define"
+    },
+    "agents": []
+  },
+  {
+    "name": "get_x_profile",
+    "description": "Fetch an X/Twitter user profile by @username via API v2 (GET /2/users/by/username/:name). App-only bearer token works. Returns name, bio, follower/following counts and verified status.",
+    "schema": {
+      "username": "string — handle without the @, e.g. \"jack\""
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "grammar_check",
+    "description": "Check text for grammar and spelling errors using LanguageTool (free)",
+    "schema": {
+      "text": "string — text to check",
+      "language": "string — language code e.g. en-US, es, fr (default: en-US)"
+    },
+    "agents": []
+  },
+  {
+    "name": "hash_text",
+    "description": "Hash a string with SHA256, SHA1, or MD5. Useful for fingerprinting, checksums.",
+    "schema": {
+      "text": "string — text to hash",
+      "algorithm": "string — sha256, sha1, md5 (default sha256)"
+    },
+    "agents": [
+      "NEXUS",
+      "PIKADON",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "install_skill_pack",
+    "description": "Purchase and install a skill pack — applies its system prompt override to the target agent. Tracks installations.",
+    "schema": {
+      "pack_id": "string — skill pack ID",
+      "user": "string — installer name/wallet"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "jupiter_quote",
+    "description": "Get Jupiter aggregator swap quote for SOL ecosystem. Best-price route across all DEXes.",
+    "schema": {
+      "inputMint": "string — input token mint address",
+      "outputMint": "string — output token mint",
+      "amount": "number — input amount in atomic units"
+    },
+    "agents": [
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "list_collectible",
+    "description": "List a collectible on the marketplace at a credit price.",
+    "schema": {
+      "id": "number — collectible id",
+      "priceCredits": "number — listing price"
+    },
+    "agents": [
+      "ZEROX",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "list_files",
+    "description": "List all files in generated-output/ with size and modification time.",
+    "schema": {},
+    "agents": [
+      "NEXUS",
+      "QUILL",
+      "PIKADON",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "list_open_jobs",
+    "description": "List all open jobs from the marketplace (backend/data/marketplace.json).",
+    "schema": {},
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "list_scheduled_tasks",
+    "description": "List scheduled tasks / reminders.",
+    "schema": {},
+    "agents": [
+      "SHADDAI",
+      "ORACLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "list_skill_packs",
+    "description": "List all available skill packs in the marketplace. Optionally filter by target agent.",
+    "schema": {
+      "target_agent": "string — optional agent filter"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "make_music",
+    "description": "Generate a real AI music clip and return a playable audio URL. Uses AceDataCloud Suno API (ACEDATACLOUD_API_TOKEN) if set, otherwise the official Suno API (SUNO_API_KEY). Async providers are polled up to ~60s.",
+    "schema": {
+      "prompt": "string — describe the song to generate",
+      "lyrics": "string (optional) — your own lyrics; enables custom mode",
+      "instrumental": "boolean (optional) — true for an instrumental-only track",
+      "style": "string (optional) — style/genre tags, e.g. \"Synthwave, Electronic\""
+    },
+    "agents": [
+      "TURTLE"
+    ]
+  },
+  {
+    "name": "markdown_to_html",
+    "description": "Convert markdown to HTML. Supports headings, bold, italic, lists, links, code blocks.",
+    "schema": {
+      "markdown": "string — markdown text"
+    },
+    "agents": [
+      "QUILL",
+      "TURTLE",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "mint_collectible",
+    "description": "Mint a new collectible NFT-style receipt. Persists to backend/data/collectibles.json with HMAC signature.",
+    "schema": {
+      "name": "string — collectible name",
+      "rarity": "string — common|rare|epic|legendary",
+      "owner": "string — owner agent or user"
+    },
+    "agents": [
+      "ZEROX",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "moonpay_quote",
+    "description": "Get a MoonPay crypto buy quote. Requires MOONPAY_API_KEY.",
+    "schema": {
+      "amount": "number",
+      "currency_in": "string — e.g. usd",
+      "currency_out": "string — e.g. btc"
+    },
+    "agents": [
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "ocr_image",
+    "description": "Extract text from an image URL via OCR.space. Requires OCR_SPACE_API_KEY.",
+    "schema": {
+      "image_url": "string"
+    },
+    "agents": [
+      "ORACLE",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "open_github_issue",
+    "description": "Create a GitHub issue via the GitHub API. Requires GITHUB_TOKEN.",
+    "schema": {
+      "repo": "string — owner/repo",
+      "title": "string",
+      "body": "string",
+      "labels": "array of strings (optional)"
+    },
+    "agents": [
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "open_github_pr",
+    "description": "Open a GitHub pull request. Requires GITHUB_TOKEN.",
+    "schema": {
+      "repo": "string — owner/repo",
+      "title": "string",
+      "body": "string",
+      "head": "string",
+      "base": "string"
+    },
+    "agents": [
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "pay_api_call",
+    "description": "Pay-per-use API call via pay.sh (Solana). GUARDED: per-call cap, daily budget, and human approval above a threshold. Spends real money — use only when a free tool cannot do the job.",
+    "schema": {
+      "url": "string — pay.sh service URL or FQN to call",
+      "method": "string — GET/POST (default GET)",
+      "body": "object — optional request body",
+      "est_cost_usd": "number — your best estimate of the call cost in USD (for pre-checks)"
+    },
+    "agents": [
+      "SHADDAI",
+      "ZEROX",
+      "ORACLE",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "post_discord",
+    "description": "Post to Discord via webhook. Requires DISCORD_WEBHOOK_URL in .env.",
+    "schema": {
+      "message": "string",
+      "title": "string (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "post_to_telegram",
+    "description": "Send a message to a Telegram chat/channel via the Bot API (POST /bot<token>/sendMessage). Requires TELEGRAM_BOT_TOKEN; chat_id comes from the arg or TELEGRAM_CHAT_ID. Supports HTML/Markdown parse modes.",
+    "schema": {
+      "message": "string — message text to send",
+      "chat_id": "string — optional chat/channel id; falls back to TELEGRAM_CHAT_ID",
+      "parse_mode": "string — optional: HTML, Markdown, or MarkdownV2"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "post_to_x",
+    "description": "Post a tweet to X/Twitter (POST /2/tweets). Posting requires OAuth1.0a USER context: X_API_KEY + X_API_SECRET + X_ACCESS_TOKEN + X_ACCESS_SECRET. Without the user tokens it returns a clean needsAuth error and never fakes a post.",
+    "schema": {
+      "text": "string — tweet content (max 280 chars)",
+      "reply_to": "string — optional tweet ID to reply to"
+    },
+    "agents": [
+      "QUILL",
+      "TURTLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "post_twitter",
+    "description": "Post a tweet via Twitter API v2. Requires TWITTER_BEARER_TOKEN.",
+    "schema": {
+      "text": "string — tweet content (max 280 chars)",
+      "reply_to": "string — tweet ID to reply to (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "TURTLE"
+    ]
+  },
+  {
+    "name": "post_webhook",
+    "description": "Send data to any HTTP webhook URL via POST.",
+    "schema": {
+      "url": "string",
+      "data": "string",
+      "method": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "price_compare",
+    "description": "Compare product prices across retailers via SerpAPI. Requires SERP_API_KEY.",
+    "schema": {
+      "product_query": "string",
+      "country": "string (optional)"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "pubmed_search",
+    "description": "Search PubMed (NCBI) for biomedical/medical research papers. Returns titles, authors, abstracts, PMIDs and PubMed links. Completely free, no API key required.",
+    "schema": {
+      "query": "string — search query e.g. \"CRISPR gene editing cancer\"",
+      "limit": "number — max results (default 5, max 10)"
+    },
+    "agents": [
+      "ORACLE",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "random_user",
+    "description": "Generate fake user data for testing (name, email, address). Uses randomuser.me.",
+    "schema": {
+      "count": "number — how many users (default 1, max 10)"
+    },
+    "agents": [
+      "NEXUS",
+      "TURTLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "read_file",
+    "description": "Read a file from generated-output/ by filename. Returns content up to 5000 chars.",
+    "schema": {
+      "filename": "string — filename only (no path)"
+    },
+    "agents": [
+      "QUILL",
+      "NEXUS",
+      "ORACLE",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "read_obsidian_skill",
+    "description": "Read the full SKILL.md content from Obsidian vault by skill name. Returns step-by-step methodology.",
+    "schema": {
+      "skill": "string — skill name e.g. market-brief, security-audit"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "recall_memory",
+    "description": "Retrieve a previously saved fact from agent memory.",
+    "schema": {
+      "key": "string",
+      "agent": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "regex_test",
+    "description": "Test a regex pattern against text. Returns matches, groups, and count.",
+    "schema": {
+      "pattern": "string — regex pattern (no flags)",
+      "flags": "string — regex flags e.g. gi",
+      "text": "string — text to test"
+    },
+    "agents": [
+      "NEXUS",
+      "PIKADON",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "remember_fact",
+    "description": "Save a fact or result to agent memory for future use (persists across sessions).",
+    "schema": {
+      "key": "string",
+      "value": "string",
+      "agent": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "run_js",
+    "description": "Execute JavaScript in a sandboxed Node.js vm. Returns console output and result value.",
+    "schema": {
+      "code": "string — JavaScript code to execute"
+    },
+    "agents": [
+      "NEXUS",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "run_local_llm",
+    "description": "Send a prompt directly to local Ollama LLM. Free, private, no API key needed.",
+    "schema": {
+      "prompt": "string",
+      "model": "string",
+      "system": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "run_python",
+    "description": "Execute Python code via system Python. Returns stdout. Requires ALLOW_PYTHON_EXEC=true env var; disabled by default for security.",
+    "schema": {
+      "code": "string — Python code to run"
+    },
+    "agents": [
+      "NEXUS",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "run_workflow_chain",
+    "description": "Run a multi-step workflow chain. Each step is {agent, goal}. Output of step N is fed as context to step N+1.",
+    "schema": {
+      "steps": "array of {agent: string, goal: string} objects",
+      "stopOnFail": "boolean — default false"
+    },
+    "agents": [
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "save_memory",
+    "description": "Persist a key-value pair to agent memory. Survives across tasks. Use to remember important facts.",
+    "schema": {
+      "key": "string — memory key",
+      "value": "string — value to store",
+      "agent": "string — which agent owns this"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "save_room_layout",
+    "description": "Save an agent room layout (placed collectible IDs). Max 5 items per room.",
+    "schema": {
+      "agent": "string",
+      "items": "array of collectible IDs (max 5)"
+    },
+    "agents": [
+      "SHADDAI",
+      "TURTLE",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "save_to_inbox",
+    "description": "Save agent output to SHADDAI inbox. User sees it in dashboard inbox tab.",
+    "schema": {
+      "subject": "string",
+      "content": "string",
+      "agent": "string"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "scan_dependencies",
+    "description": "Scan a package.json content string for known CVEs using the OSV.dev API (free, no key). Returns vulnerability count and details per package.",
+    "schema": {
+      "package_json_content": "string — full content of package.json (as text)"
+    },
+    "agents": [
+      "PIKADON",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "scan_url_virustotal",
+    "description": "Check URL reputation via VirusTotal. Requires VIRUSTOTAL_API_KEY.",
+    "schema": {
+      "url": "string"
+    },
+    "agents": [
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "schedule_task",
+    "description": "Schedule a task or reminder for a future time. Persists it for the background job runner. Accepts ISO datetime or relative (\"in 2 hours\", \"in 3 days\").",
+    "schema": {
+      "when": "string — ISO datetime or relative like \"in 2 hours\"",
+      "action": "string — what to do",
+      "agent": "string — agent to run it (optional)"
+    },
+    "agents": [
+      "SHADDAI",
+      "ORACLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "scrape_site",
+    "description": "Fetch a URL and return clean stripped text (HTML tags removed). Optional CSS selector substring to focus on a section. Uses AbortSignal for hard timeout.",
+    "schema": {
+      "url": "string — full https:// URL to scrape",
+      "selector": "string — optional: keyword that must appear in a tag's class/id (case-insensitive)",
+      "max_chars": "number — max characters to return (default 4000)"
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "screenshot_url",
+    "description": "Capture a screenshot of any webpage. Returns image URL. Uses thum.io (free, no key).",
+    "schema": {
+      "url": "string — full https:// URL to screenshot",
+      "width": "number — width in px (default 1024)"
+    },
+    "agents": [
+      "TURTLE",
+      "ORACLE",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "search_github_repos",
+    "description": "Search GitHub for repositories matching a query.",
+    "schema": {
+      "query": "string",
+      "language": "string",
+      "limit": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "search_notion",
+    "description": "Search across a Notion workspace. Requires NOTION_API_KEY.",
+    "schema": {
+      "query": "string",
+      "filter": "object (optional)"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "search_npm",
+    "description": "Search npm registry for packages. Returns name, version, description, weekly downloads.",
+    "schema": {
+      "query": "string — package name or keyword",
+      "limit": "number — results (default 5)"
+    },
+    "agents": [
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "search_twitter",
+    "description": "Search Twitter/X via API v2. Requires TWITTER_BEARER_TOKEN.",
+    "schema": {
+      "query": "string",
+      "limit": "number (optional)",
+      "since_id": "string (optional)"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "search_web",
+    "description": "Web search — tries Google News RSS (great for recent news) then DuckDuckGo Instant Answer. Returns titles, snippets, URLs.",
+    "schema": {
+      "query": "string — search query"
+    },
+    "agents": [
+      "ORACLE",
+      "SHADDAI",
+      "QUILL",
+      "NEXUS",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "search_web_ddg",
+    "description": "Search the web using DuckDuckGo instant answers API. No API key needed.",
+    "schema": {
+      "query": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "search_x",
+    "description": "Search recent (last ~7 days) tweets on X/Twitter via API v2 (GET /2/tweets/search/recent). App-only bearer token works for read. Returns top matching tweets with text, author and metrics.",
+    "schema": {
+      "query": "string — X search query, e.g. \"solana airdrop -is:retweet lang:en\"",
+      "limit": "number — max results 10-100 (default 10)"
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "send_email",
+    "description": "Send a transactional email via SendGrid or Resend. Requires SENDGRID_API_KEY or RESEND_API_KEY.",
+    "schema": {
+      "to": "string",
+      "subject": "string",
+      "body": "string",
+      "html": "string (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "send_slack",
+    "description": "Post a message to a Slack channel via Incoming Webhook. Requires SLACK_WEBHOOK_URL.",
+    "schema": {
+      "channel": "string",
+      "message": "string",
+      "blocks": "array (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "send_sms",
+    "description": "Send an SMS via Twilio. Requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM.",
+    "schema": {
+      "to": "string — E.164 phone number",
+      "message": "string"
+    },
+    "agents": [
+      "SHADDAI",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "send_telegram",
+    "description": "Post a message to a Telegram bot/channel. Requires TELEGRAM_BOT_TOKEN.",
+    "schema": {
+      "chat_id": "string",
+      "message": "string",
+      "parse_mode": "string — HTML or Markdown (optional)"
+    },
+    "agents": [
+      "QUILL",
+      "SHADDAI",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "send_webhook",
+    "description": "POST any JSON payload to any webhook URL. No external API key required. Supports custom headers.",
+    "schema": {
+      "url": "string — full https:// webhook endpoint",
+      "payload": "object — JSON payload to POST",
+      "headers": "object — optional extra HTTP headers"
+    },
+    "agents": [
+      "NEXUS",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "set_agent_room_state",
+    "description": "Update an agent room state (sleeping/idle/working/completed). Persists to backend/data/agent-rooms.json.",
+    "schema": {
+      "agent": "string — agent name",
+      "state": "string — sleeping|idle|working|completed",
+      "mood": "string — optional mood label"
+    },
+    "agents": [
+      "SHADDAI",
+      "NEXUS",
+      "ZEROX",
+      "ORACLE",
+      "TURTLE",
+      "QUILL",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "shorten_url",
+    "description": "Shorten any long URL using TinyURL",
+    "schema": {
+      "url": "string — the URL to shorten"
+    },
+    "agents": []
+  },
+  {
+    "name": "summarize_text",
+    "description": "Extractive summarization of long text — picks the most important sentences. No LLM needed.",
+    "schema": {
+      "text": "string",
+      "sentences": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "summarize_url",
+    "description": "Fetch a URL and return a structured summary: title, meta description, word count, first 600 chars of body text, and all extracted links count.",
+    "schema": {
+      "url": "string — full https:// URL to summarize"
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "text_to_speech",
+    "description": "Convert text to an audio file URL. Requires ELEVENLABS_API_KEY.",
+    "schema": {
+      "text": "string",
+      "voice": "string (optional)",
+      "speed": "number (optional)"
+    },
+    "agents": [
+      "TURTLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "transcribe_audio",
+    "description": "Transcribe an audio file URL to text via Whisper. Requires OPENAI_API_KEY.",
+    "schema": {
+      "audio_url": "string",
+      "language": "string (optional)"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL"
+    ]
+  },
+  {
+    "name": "translate_text",
+    "description": "Translate text to another language. Uses MyMemory (free, no key, 5k chars/day).",
+    "schema": {
+      "text": "string — text to translate",
+      "target": "string — target language code (es, fr, de, ja, zh, etc.)",
+      "source": "string — source code (default auto)"
+    },
+    "agents": [
+      "QUILL",
+      "ORACLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "validate_json",
+    "description": "Validate JSON string and return structure info or errors.",
+    "schema": {
+      "json_string": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "validate_json_schema",
+    "description": "Validate a JSON data object against a JSON Schema (draft-07 compatible). No external dep — uses built-in structural checks: required fields, types, enum, min/max, pattern, minLength/maxLength.",
+    "schema": {
+      "schema": "object — JSON Schema object",
+      "data": "object or any — the data to validate"
+    },
+    "agents": [
+      "NEXUS",
+      "PIKADON"
+    ]
+  },
+  {
+    "name": "validate_jwt",
+    "description": "Decode and structurally validate a JWT token — checks format, expiry, issuer, algorithm. Does NOT verify signature (no secret needed). Returns decoded header+payload and validation status.",
+    "schema": {
+      "token": "string — JWT token (three base64url parts separated by dots)"
+    },
+    "agents": [
+      "PIKADON",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "weather_live",
+    "description": "Get live weather for any city using Open-Meteo. Free, no API key needed.",
+    "schema": {
+      "city": "string",
+      "lat": "string",
+      "lon": "string"
+    },
+    "agents": []
+  },
+  {
+    "name": "whale_scan",
+    "description": "DexScreener whale data: top pairs, liquidity, 24h volume for any token.",
+    "schema": {
+      "query": "string — token name, symbol, or contract address"
+    },
+    "agents": [
+      "ZEROX",
+      "ORACLE"
+    ]
+  },
+  {
+    "name": "wikipedia_search",
+    "description": "Search Wikipedia. Reliable for facts, people, concepts, technology. Returns article summary.",
+    "schema": {
+      "query": "string — topic to look up on Wikipedia"
+    },
+    "agents": [
+      "ORACLE",
+      "QUILL",
+      "SHADDAI",
+      "NEXUS"
+    ]
+  },
+  {
+    "name": "wolfram_query",
+    "description": "Computational knowledge from Wolfram Alpha (math, unit conversions, science facts, etc.).",
+    "schema": {
+      "query": "string — any question or computation e.g. \"integrate x^2 dx\", \"distance Earth to Mars\""
+    },
+    "agents": [
+      "ORACLE",
+      "ZEROX"
+    ]
+  },
+  {
+    "name": "write_file",
+    "description": "Write content to a file in generated-output/. Safe filename auto-generated. Returns path.",
+    "schema": {
+      "filename": "string — desired filename with extension",
+      "content": "string — file content"
+    },
+    "agents": [
+      "QUILL",
+      "NEXUS",
+      "TURTLE",
+      "SHADDAI"
+    ]
+  },
+  {
+    "name": "xml_to_json",
+    "description": "Fetch an XML/RSS/Atom URL and parse it into structured JSON using a lightweight built-in regex parser.",
+    "schema": {
+      "url": "string — full https:// URL of the XML or RSS feed"
+    },
+    "agents": [
+      "ORACLE",
+      "NEXUS"
+    ]
+  }
+]

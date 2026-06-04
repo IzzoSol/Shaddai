@@ -3373,4 +3373,5 @@ try { Object.assign(TOOLS, require('./tools-extra').TOOLS_EXTRA); } catch (e) { 
 try { Object.assign(TOOLS, require('./tools-social')); } catch (e) { console.warn('[tools-social] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-news').TOOLS_NEWS); } catch (e) { console.warn('[tools-news] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-defi').TOOLS_DEFI); } catch (e) { console.warn('[tools-defi] not loaded:', e.message); }
+try { Object.assign(TOOLS, require('./lib/nft-mint')); } catch (e) { console.warn('[nft-mint] not loaded:', e.message); }
 module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };
