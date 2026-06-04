@@ -984,10 +984,184 @@ const TOOLS_EXTRA = {
 
   make_music: {
     name: 'make_music',
-    description: 'Generate an AI music clip URL via Suno API. Requires SUNO_API_KEY.',
-    schema: { prompt: 'string', style: 'string (optional)', duration: 'number seconds (optional)' },
+    description: 'Generate a real AI music clip and return a playable audio URL. Uses AceDataCloud Suno API (ACEDATACLOUD_API_TOKEN) if set, otherwise the official Suno API (SUNO_API_KEY). Async providers are polled up to ~60s.',
+    schema: {
+      prompt: 'string — describe the song to generate',
+      lyrics: 'string (optional) — your own lyrics; enables custom mode',
+      instrumental: 'boolean (optional) — true for an instrumental-only track',
+      style: 'string (optional) — style/genre tags, e.g. "Synthwave, Electronic"'
+    },
     agents: ['TURTLE'],
-    execute: stubExecute('SUNO_API_KEY')
+    async execute({ prompt, lyrics, instrumental, style } = {}) {
+      const aceToken = process.env.ACEDATACLOUD_API_TOKEN;
+      const sunoKey  = process.env.SUNO_API_KEY;
+
+      // No key → clean, actionable, non-crashing message (matches stub shape).
+      if (!aceToken && !sunoKey) {
+        return JSON.stringify({
+          success: false,
+          error: 'Real music needs SUNO_API_KEY or ACEDATACLOUD_API_TOKEN in backend/.env — get one at acedatacloud.com or suno.ai',
+          needsKey: true
+        });
+      }
+
+      if (!prompt && !lyrics) {
+        return JSON.stringify({ success: false, error: 'prompt (or lyrics) is required' });
+      }
+
+      // ── Provider 1 (preferred): AceDataCloud Suno API ─────────────
+      if (aceToken) {
+        try {
+          const headers = {
+            Authorization: `Bearer ${aceToken}`,
+            'Content-Type': 'application/json'
+          };
+          const body = {
+            model: 'chirp-v5-5',
+            instrumental: !!instrumental
+          };
+          if (lyrics) {
+            body.custom = true;
+            body.lyric = lyrics;
+            if (prompt) body.title = String(prompt).slice(0, 80);
+            if (style)  body.style = style;
+          } else {
+            body.prompt = prompt;
+            if (style) body.style = style;
+          }
+
+          // Submit async generation task.
+          const submit = await withTimeout(
+            axios.post('https://api.acedata.cloud/suno/audios', body, { headers, timeout: 30000 }),
+            32000
+          );
+          const data = submit.data || {};
+
+          // Pull a finished audio URL out of an AceData response object.
+          const pickAudio = (d) => {
+            const arr = d && (d.data || d.audios || d.results);
+            if (Array.isArray(arr)) {
+              const done = arr.find(a => a && (a.audio_url || a.audioUrl) &&
+                (!a.state || a.state === 'complete' || a.state === 'succeeded'));
+              if (done) return done.audio_url || done.audioUrl;
+            }
+            return null;
+          };
+
+          // Sometimes a complete result comes back immediately.
+          let audioUrl = pickAudio(data);
+          const taskId = data.task_id || data.taskId ||
+            (Array.isArray(data.data) && data.data[0] && data.data[0].task_id);
+
+          // Poll the task up to ~60s if not yet complete.
+          const deadline = Date.now() + 60000;
+          while (!audioUrl && taskId && Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 4000));
+            const poll = await withTimeout(
+              axios.post('https://api.acedata.cloud/suno/tasks',
+                { task_id: taskId, action: 'retrieve' }, { headers, timeout: 20000 }),
+              22000
+            );
+            const pd = poll.data || {};
+            const state = pd.state || (pd.data && pd.data.state);
+            audioUrl = pickAudio(pd) || pickAudio(pd.data || {});
+            if (!audioUrl && (state === 'failed' || state === 'error')) {
+              return JSON.stringify({ success: false, provider: 'acedatacloud-suno', error: `generation ${state}`, taskId });
+            }
+          }
+
+          if (!audioUrl) {
+            return JSON.stringify({
+              success: false, provider: 'acedatacloud-suno',
+              error: 'music generation still pending after 60s — retry the task later',
+              taskId: taskId || null
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            provider: 'acedatacloud-suno',
+            audioUrl,
+            prompt: prompt || null,
+            instrumental: !!instrumental,
+            taskId: taskId || null
+          });
+        } catch (err) {
+          const detail = err.response && err.response.data ? err.response.data : err.message;
+          return JSON.stringify({ success: false, provider: 'acedatacloud-suno', error: typeof detail === 'string' ? detail : JSON.stringify(detail) });
+        }
+      }
+
+      // ── Provider 2: official Suno API (api.sunoapi.org style) ──────
+      try {
+        const headers = {
+          Authorization: `Bearer ${sunoKey}`,
+          'Content-Type': 'application/json'
+        };
+        const body = {
+          customMode: !!lyrics,
+          instrumental: !!instrumental,
+          model: 'V4',
+          prompt: lyrics || prompt
+        };
+        if (style)  body.style = style;
+        if (lyrics && prompt) body.title = String(prompt).slice(0, 80);
+
+        const submit = await withTimeout(
+          axios.post('https://api.sunoapi.org/api/v1/generate', body, { headers, timeout: 30000 }),
+          32000
+        );
+        const sd = submit.data || {};
+        const taskId = (sd.data && (sd.data.taskId || sd.data.task_id)) || sd.taskId || sd.task_id;
+
+        const pickAudio = (d) => {
+          const arr = d && (d.data || (d.data && d.data.data) || d.results || d.sunoData);
+          const list = Array.isArray(arr) ? arr : (arr && Array.isArray(arr.sunoData) ? arr.sunoData : null);
+          if (list) {
+            const done = list.find(a => a && (a.audioUrl || a.audio_url || a.streamAudioUrl));
+            if (done) return done.audioUrl || done.audio_url || done.streamAudioUrl;
+          }
+          return null;
+        };
+
+        let audioUrl = pickAudio(sd);
+        const deadline = Date.now() + 60000;
+        while (!audioUrl && taskId && Date.now() < deadline) {
+          await new Promise(r => setTimeout(r, 4000));
+          const poll = await withTimeout(
+            axios.get(`https://api.sunoapi.org/api/v1/generate/record-info?taskId=${encodeURIComponent(taskId)}`,
+              { headers, timeout: 20000 }),
+            22000
+          );
+          const pd = poll.data || {};
+          const status = pd.data && pd.data.status;
+          audioUrl = pickAudio(pd.data && pd.data.response ? pd.data.response : pd.data || {}) || pickAudio(pd);
+          if (!audioUrl && status && /FAILED|ERROR/i.test(status)) {
+            return JSON.stringify({ success: false, provider: 'suno', error: `generation status ${status}`, taskId });
+          }
+        }
+
+        if (!audioUrl) {
+          return JSON.stringify({
+            success: false, provider: 'suno',
+            error: 'music generation still pending after 60s — retry the task later',
+            taskId: taskId || null
+          });
+        }
+
+        return JSON.stringify({
+          success: true,
+          provider: 'suno',
+          audioUrl,
+          prompt: prompt || null,
+          instrumental: !!instrumental,
+          taskId: taskId || null
+        });
+      } catch (err) {
+        const detail = err.response && err.response.data ? err.response.data : err.message;
+        return JSON.stringify({ success: false, provider: 'suno', error: typeof detail === 'string' ? detail : JSON.stringify(detail) });
+      }
+    }
   },
 
   moonpay_quote: {

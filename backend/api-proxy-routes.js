@@ -1761,7 +1761,58 @@ router.post('/content/generate', async (req, res) => {
 });
 
 router.post('/image/generate', async (req, res) => {
-  res.json({ status: 'unavailable', message: 'Image generation requires DALL-E or Stable Diffusion API key. Add OPENAI_API_KEY to .env.', url: null });
+  const { prompt, model = 'flux', width = 1024, height = 1024, aspect_ratio = '1:1', resolution = '1K', callback_url, apiKey } = req.body || {};
+  if (!prompt || !String(prompt).trim()) {
+    return res.status(400).json({ error: 'prompt required' });
+  }
+
+  // Opt-in premium path: NanoBanana / AceDataCloud (requires a key). Only used
+  // when the caller explicitly asks for a nano-banana model AND a key is available.
+  const wantsPremium = typeof model === 'string' && model.startsWith('nano-banana');
+  const premiumKey = apiKey || process.env.ACEDATACLOUD_API_TOKEN || process.env.NANO_BANANA_KEY || '';
+  if (wantsPremium && premiumKey) {
+    try {
+      const body = { action: 'generate', prompt, model, aspect_ratio, resolution };
+      if (callback_url) body.callback_url = callback_url;
+      const result = await nanoBananaRequest(body, premiumKey);
+      let imageUrl = result.image_url || result.url;
+      let taskId = result.id;
+      if (taskId && !imageUrl) {
+        const final = await pollTask(taskId, premiumKey);
+        imageUrl = final.image_url || final.url;
+      }
+      if (imageUrl) {
+        return res.json({ success: true, status: 'completed', url: imageUrl, image_url: imageUrl, source: 'NanoBanana', task_id: taskId, prompt, model });
+      }
+      // fall through to Pollinations if premium returned nothing usable
+    } catch (e) {
+      // premium failed — fall through to the always-works default below
+    }
+  }
+
+  // Optional DALL·E path if explicitly requested and a key is configured.
+  if (typeof model === 'string' && model.toLowerCase().includes('dall') && process.env.OPENAI_API_KEY) {
+    try {
+      const r = await axios.post('https://api.openai.com/v1/images/generations', {
+        model: 'dall-e-3', prompt, n: 1, size: '1024x1024'
+      }, {
+        headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        timeout: 60000
+      });
+      const imageUrl = r.data?.data?.[0]?.url;
+      if (imageUrl) {
+        return res.json({ success: true, status: 'completed', url: imageUrl, image_url: imageUrl, source: 'DALL-E', prompt, model: 'dall-e-3' });
+      }
+    } catch (e) {
+      // fall through to Pollinations
+    }
+  }
+
+  // Always-works keyless default: Pollinations.ai (returns a real image URL, no key).
+  const w = parseInt(width, 10) || 1024;
+  const h = parseInt(height, 10) || 1024;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&model=flux`;
+  res.json({ success: true, status: 'completed', url, image_url: url, source: 'Pollinations.ai', prompt, model: 'flux' });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -4344,8 +4395,12 @@ async function pollTask(taskId, apiKey, maxWait = 120000) {
   throw new Error('Image generation timed out after 2 minutes');
 }
 
-// POST /api/image/generate
-router.post('/image/generate', async (req, res) => {
+// POST /api/image/generate-premium
+// NOTE: The canonical POST /api/image/generate route is defined earlier in this
+// file (keyless Pollinations default + optional NanoBanana/DALL-E). This route
+// was a duplicate that shadowed nothing now — renamed so it no longer collides.
+// It is the dedicated premium NanoBanana/AceData endpoint.
+router.post('/image/generate-premium', async (req, res) => {
   const { prompt, model = 'nano-banana-2', aspect_ratio = '1:1', resolution = '1K', callback_url, apiKey } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
   try {
