@@ -2952,7 +2952,8 @@ ${toolBlock}`
     openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [OPENROUTER_MODEL, 'mistralai/mistral-7b-instruct:free']),
   };
   const pref = (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
-  const order = [...new Set([pref, 'ollama', 'groq', 'openrouter'].filter(Boolean))];
+  // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
+  const order = [...new Set([pref, 'groq', 'openrouter', 'ollama'].filter(Boolean))];
   let lastError;
   for (const pname of order) {
     const fn = PROVIDERS[pname];

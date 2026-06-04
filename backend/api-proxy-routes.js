@@ -4090,25 +4090,25 @@ router.post('/llm/chat', async (req, res) => {
     } else if (provider === 'claude') {
       result = await tryClaude();
     } else {
-      // 'auto' — try in order: Ollama (free/local) → Gemini (free tier) → suggest API key
-      try {
-        result = await tryOllama();
-        result.fallbackUsed = false;
-      } catch {
-        try {
-          result = await tryGemini();
-          result.fallbackUsed = true;
-          result.fallbackFrom = 'ollama';
-        } catch {
-          return res.json({
-            response: null,
-            provider: null,
-            error: 'All providers failed. Ollama may be offline and no Gemini key configured.',
-            suggestApiKey: true,
-            availableProviders: ['ollama (local)', 'gemini', 'groq', 'claude'],
-            hint: 'Add GEMINI_API_KEY, GROQ_API_KEY, or ANTHROPIC_API_KEY to .env, or start Ollama.'
-          });
-        }
+      // 'auto' — prefer FAST cloud (Groq) when keyed, then Gemini/Claude, then local Ollama.
+      // (Ollama is the free local fallback only — it is ~20s on llama3.2:1b, so never first.)
+      const attempts = [];
+      if (process.env.GROQ_API_KEY)      attempts.push(['groq',   tryGroq]);
+      if (process.env.GEMINI_API_KEY)    attempts.push(['gemini', tryGemini]);
+      if (process.env.ANTHROPIC_API_KEY) attempts.push(['claude', tryClaude]);
+      attempts.push(['ollama', tryOllama]); // free local fallback, last
+      let lastErr;
+      for (let i = 0; i < attempts.length; i++) {
+        try { result = await attempts[i][1](); result.fallbackUsed = i > 0; if (i > 0) result.fallbackFrom = attempts[0][0]; break; }
+        catch (e) { lastErr = e; }
+      }
+      if (!result) {
+        return res.json({
+          response: null, provider: null,
+          error: 'All providers failed: ' + (lastErr && lastErr.message),
+          suggestApiKey: true,
+          hint: 'Add GROQ_API_KEY (free at console.groq.com/keys) to backend/.env, or start Ollama.'
+        });
       }
     }
 

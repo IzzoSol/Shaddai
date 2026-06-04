@@ -28,7 +28,7 @@
 // ─── Default models per provider ─────────────────────────────────────────────
 const DEFAULTS = {
   ollama:      { model: process.env.OLLAMA_MODEL      || 'llama3.2:1b' },
-  groq:        { model: process.env.GROQ_MODEL        || 'llama-3.1-70b-versatile' },
+  groq:        { model: process.env.GROQ_MODEL        || 'llama-3.3-70b-versatile' },
   openrouter:  { model: process.env.OPENROUTER_MODEL  || 'meta-llama/llama-3.1-8b-instruct:free' },
   anthropic:   { model: process.env.ANTHROPIC_MODEL   || 'claude-haiku-4-5-20251001' },
   openai:      { model: process.env.OPENAI_MODEL      || 'gpt-4o-mini' }
@@ -304,12 +304,10 @@ async function callOpenAI(messages, options) {
  *   enabled  — function returning bool (based on env vars)
  *   call     — async function(messages, options) → LLMResult
  */
+// Order = speed/quality priority. Fast cloud providers (when keyed) win;
+// Ollama is LAST — the free local fallback used only when no cloud key works.
+// This makes responses sub-second instead of 20s+ on local llama3.2:1b.
 const PROVIDER_CHAIN = [
-  {
-    name:    'ollama',
-    enabled: () => true, // always try Ollama (free local); fails fast if not running
-    call:    callOllama
-  },
   {
     name:    'groq',
     enabled: () => Boolean(process.env.GROQ_API_KEY),
@@ -329,6 +327,11 @@ const PROVIDER_CHAIN = [
     name:    'openai',
     enabled: () => Boolean(process.env.OPENAI_API_KEY),
     call:    callOpenAI
+  },
+  {
+    name:    'ollama',
+    enabled: () => true, // free local fallback — only reached if no cloud provider succeeds
+    call:    callOllama
   }
 ];
 

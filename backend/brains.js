@@ -23,7 +23,7 @@ function meter(usage) {
 const BRAINS = {
   'ollama-local':   { provider: 'ollama',     model: process.env.OLLAMA_MODEL     || 'llama3.2:1b',                              tier: 'free',     label: 'Ollama · local (free)' },
   'openrouter-free':{ provider: 'openrouter', model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',   tier: 'free',     label: 'OpenRouter · free' },
-  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.1-70b-versatile',                 tier: 'standard', label: 'Groq · Llama 70B (fast)' },
+  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.3-70b-versatile',                 tier: 'standard', label: 'Groq · Llama 70B (fast)' },
   'claude-haiku':   { provider: 'anthropic',  model: process.env.ANTHROPIC_MODEL  || 'claude-haiku-4-5-20251001',               tier: 'standard', label: 'Claude · Haiku 4.5' },
   'claude-premium': { provider: 'anthropic',  model: process.env.ANTHROPIC_PREMIUM_MODEL || 'claude-haiku-4-5-20251001',        tier: 'premium',  label: 'Claude · premium' }
 };
