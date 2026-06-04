@@ -51,6 +51,12 @@ const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 const OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY || '';
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
+const OPENAI_KEY     = process.env.OPENAI_API_KEY || '';
+const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
 // HTTP helper — axios with default timeout
 const http = (url, opts = {}) => axios.get(url, { timeout: 10000, ...opts });
@@ -2946,15 +2952,49 @@ ${toolBlock}`
     }
     throw lastErr || new Error(name + ' failed');
   }
+  // Anthropic (paid, reliable — different API shape: system separate, x-api-key).
+  async function pAnthropic() {
+    if (!ANTHROPIC_KEY) throw new Error('anthropic no key');
+    const sys = allMsgs.find(m => m.role === 'system');
+    const userMsgs = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content || '' }));
+    if (!userMsgs.length) userMsgs.push({ role: 'user', content: 'Hello' });
+    const model = (options.provider === 'anthropic' && options.model) || ANTHROPIC_MODEL;
+    const r = await axios.post('https://api.anthropic.com/v1/messages',
+      { model, max_tokens: 1500, temperature: 0.6, ...(sys ? { system: sys.content } : {}), messages: userMsgs },
+      { headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
+    const c = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    if (!c) throw new Error('anthropic empty');
+    llmTracer.trace({ provider: 'anthropic', model, agentName, inputTokens: r.data.usage?.input_tokens || 0, outputTokens: r.data.usage?.output_tokens || 0, durationMs: Date.now() - t0, success: true });
+    return c;
+  }
+  // Gemini (free, generous, SEPARATE quota from groq/openrouter — different API shape).
+  async function pGemini() {
+    if (!GEMINI_KEY) throw new Error('gemini no key');
+    const sys = allMsgs.find(m => m.role === 'system');
+    const contents = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content || '' }] }));
+    if (!contents.length) contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
+    const model = (options.provider === 'gemini' && options.model) || GEMINI_MODEL;
+    const body = { contents, ...(sys ? { systemInstruction: { parts: [{ text: sys.content }] } } : {}), generationConfig: { maxOutputTokens: 1500, temperature: 0.6 } };
+    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, body, { timeout: 35000 });
+    const c = (r.data.candidates?.[0]?.content?.parts || []).map(p => p.text).join('');
+    if (!c) throw new Error('gemini empty');
+    llmTracer.trace({ provider: 'gemini', model, agentName, inputTokens: 0, outputTokens: Math.ceil(c.length / 4), durationMs: Date.now() - t0, success: true });
+    return c;
+  }
   const PROVIDERS = {
     ollama: pOllama,
+    gemini: pGemini,
     groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'mistralai/mistral-7b-instruct:free']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
+    anthropic: pAnthropic,
+    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', OPENAI_KEY, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
   // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
-  const order = [...new Set([pref, 'groq', 'openrouter', 'ollama'].filter(Boolean))];
+  // free/fast first (groq, openrouter) → paid+reliable (anthropic, openai) catch
+  // free-tier rate limits → ollama local last. So a chain never dies on a 429.
+  const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
   let lastError;
   for (const pname of order) {
     const fn = PROVIDERS[pname];
@@ -3375,4 +3415,11 @@ try { Object.assign(TOOLS, require('./tools-social')); } catch (e) { console.war
 try { Object.assign(TOOLS, require('./tools-news').TOOLS_NEWS); } catch (e) { console.warn('[tools-news] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-defi').TOOLS_DEFI); } catch (e) { console.warn('[tools-defi] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./lib/nft-mint')); } catch (e) { console.warn('[nft-mint] not loaded:', e.message); }
+// Upgrade legacy stub names → the REAL implementations (dedup; callers of the old
+// names now hit real tools instead of "needs key" stubs). No breakage.
+try {
+  if (TOOLS.search_x)         TOOLS.search_twitter = TOOLS.search_x;
+  if (TOOLS.post_to_x)        TOOLS.post_twitter   = TOOLS.post_to_x;
+  if (TOOLS.post_to_telegram) TOOLS.send_telegram  = TOOLS.post_to_telegram;
+} catch (e) {}
 module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };
