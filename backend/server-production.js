@@ -490,6 +490,9 @@ function handleWebSocketMessage(clientId, data, ws) {
 // HEALTH & STATUS
 // ============================================
 
+// x402 payment discovery (HTTP 402 micropayments — primary rail; free unless X402_ENABLED)
+app.get('/.well-known/x402.json', (req, res) => res.json(require('./lib/x402').discovery()));
+
 app.get('/api/health', (req, res) => {
   const health = {
     status: 'operational',

@@ -1076,6 +1076,9 @@ router.post('/agents/:name/avatar', (req, res) => {
   }
 });
 
+// GET /api/x402/discover — x402 billable-endpoint discovery (alias of /.well-known/x402.json)
+router.get('/x402/discover', (req, res) => res.json(require('./lib/x402').discovery()));
+
 // GET /api/agents/:name/skill/:skillId — return a specific skill from an agent's MD file
 router.get('/agents/:name/skill/:skillId', (req, res) => {
   try {
