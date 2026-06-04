@@ -39,3 +39,8 @@ backend/data/usage.json
 backend/data/scheduled-tasks.json
 *_backup*.html
 SHADDAI-index_*.html
+
+# runtime artifacts
+backend/execution-logs/
+backend/agent-logs/
+backend/logs/
