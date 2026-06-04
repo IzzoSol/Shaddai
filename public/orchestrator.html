@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · Orchestrator — multi-agent, multi-API chains</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10;--bg2:#0e1117;--panel:#12161e;--panel2:#161b25;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);
+  --txt:#e8ecf2;--mut:#5e6b7e;--mut2:#8593a6;
+  --gold:#ffd23f;--cyan:#33d6ff;--green:#1fe6a0;--red:#ff4d6d;--violet:#a98bff;--orange:#ff8a3d;
+  --disp:'Chakra Petch',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--disp);min-height:100vh;letter-spacing:.01em;
+  background-image:radial-gradient(1100px 560px at 85% -10%,rgba(51,214,255,.07),transparent 60%),
+    radial-gradient(820px 480px at -5% 110%,rgba(255,210,63,.06),transparent 55%);}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 22px 60px;position:relative;z-index:1}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.brand{display:flex;align-items:center;gap:13px}
+.sigil{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line2);color:var(--gold);font-size:17px;font-weight:700;
+  background:linear-gradient(135deg,rgba(255,210,63,.16),rgba(51,214,255,.06));clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+h1{font-size:15px;letter-spacing:.2em;font-weight:700}h1 b{color:var(--gold)}
+.sub{font-family:var(--mono);font-size:8.5px;color:var(--mut);letter-spacing:.28em;margin-top:1px}
+.tagline{font-size:12px;color:var(--mut2);margin:10px 0 20px;max-width:680px;line-height:1.5}
+.tagline b{color:var(--txt)}
+.lab{font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:6px;margin:0 0 10px}
+.lab::before{content:"▸"}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.preset{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;padding:9px 14px;border:1px solid var(--line2);background:var(--panel);color:var(--mut2);cursor:pointer;transition:.15s;text-align:left}
+.preset:hover{color:var(--txt);border-color:var(--gold);transform:translateY(-2px)}
+.preset b{color:var(--cyan);display:block;font-family:var(--disp);font-weight:600;font-size:11px;letter-spacing:.06em;margin-bottom:3px}
+
+/* chain */
+.chain{display:flex;flex-direction:column;gap:0;margin-bottom:18px}
+.node{background:var(--panel);border:1px solid var(--line);position:relative;padding:14px 14px 14px 46px}
+.node::before,.node::after{content:"";position:absolute;width:9px;height:9px}
+.node::before{top:-1px;left:-1px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold)}
+.node::after{bottom:-1px;right:-1px;border-bottom:1.5px solid var(--gold);border-right:1.5px solid var(--gold)}
+.node.run{border-color:var(--cyan)}.node.run::before,.node.run::after{border-color:var(--cyan)}
+.node.done{border-color:rgba(31,230,160,.4)}
+.num{position:absolute;left:13px;top:14px;width:22px;height:22px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--gold);color:#10131a}
+.node.run .num{background:var(--cyan);color:#04212b;animation:pulse 1s infinite}
+.node.done .num{background:var(--green);color:#04212b}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.node .row1{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+select,input,textarea{font-family:var(--disp);background:var(--bg2);color:var(--txt);border:1px solid var(--line);outline:none;font-size:12px;padding:7px 9px}
+select:focus,input:focus,textarea:focus{border-color:var(--gold)}
+.ag-sel{font-family:var(--mono);font-size:10px;letter-spacing:.06em;min-width:120px}
+.bind-sel{font-family:var(--mono);font-size:9.5px;color:var(--cyan);min-width:150px}
+.instr{width:100%;resize:vertical;min-height:38px;font-size:12px;line-height:1.4}
+.rm{margin-left:auto;background:none;border:1px solid var(--line);color:var(--mut);width:24px;height:24px;cursor:pointer;font-size:12px}
+.rm:hover{color:var(--red);border-color:var(--red)}
+.connector{height:18px;width:2px;background:var(--line2);margin:0 auto;position:relative}
+.connector::after{content:"▼";position:absolute;bottom:-4px;left:-5px;color:var(--mut);font-size:9px}
+.connector.flow{background:var(--cyan)}.connector.flow::after{color:var(--cyan);animation:pulse .8s infinite}
+.out{font-family:var(--mono);font-size:10px;color:var(--green);margin-top:8px;padding:8px;background:#070a0e;border:1px solid var(--line);white-space:pre-wrap;max-height:140px;overflow:auto;display:none}
+.out.show{display:block}
+
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.btn{font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase;border:none;cursor:pointer;transition:.16s}
+.btn.add{font-size:10px;padding:9px 16px;background:transparent;border:1px solid var(--line2);color:var(--mut2)}
+.btn.add:hover{color:var(--txt);border-color:var(--cyan)}
+.btn.run{font-size:14px;padding:14px 34px;background:var(--green);color:#04212b;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn.run:hover{filter:brightness(1.12);letter-spacing:.24em}
+.btn.run:disabled{opacity:.5;cursor:wait;letter-spacing:.16em}
+.status{font-family:var(--mono);font-size:10px;color:var(--mut2);letter-spacing:.06em}
+.final{border:1px solid var(--green);background:linear-gradient(135deg,rgba(31,230,160,.06),transparent);padding:16px;margin-top:8px;display:none}
+.final.show{display:block;animation:rise .5s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.final .h{font-size:10px;letter-spacing:.16em;color:var(--green);text-transform:uppercase;margin-bottom:8px}
+.final .body{font-size:13px;line-height:1.6;white-space:pre-wrap}
+.hint{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:8px;letter-spacing:.16em;color:var(--mut);z-index:5}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:var(--line2)}
+@media(max-width:640px){.node{padding-left:14px}.num{position:static;margin-bottom:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="sigil">◈</div>
+      <div><h1>SHADD<b>A</b>I · ORCHESTRATOR</h1><div class="sub">MULTI-AGENT // MULTI-API CHAINS</div></div>
+    </div>
+    <div class="sub" id="clock">--:--:--</div>
+  </div>
+  <div class="tagline">Assemble your council into a <b>chain</b>: each agent does one step, its result feeds the next.
+    <b>Bind</b> a tool/API to each (DexScreener, Suno, image, X, Telegram). Press <b>Run Chain</b> — they work together, live.</div>
+
+  <div class="lab">Quick chains</div>
+  <div class="presets" id="presets"></div>
+
+  <div class="lab">Your chain</div>
+  <div class="chain" id="chain"></div>
+
+  <div class="controls">
+    <button class="btn add" onclick="addStep()">+ Add step</button>
+    <button class="btn run" id="runBtn" onclick="runChain()">▶ Run Chain</button>
+    <span class="status" id="status">idle</span>
+  </div>
+
+  <div class="final" id="final">
+    <div class="h">⊹ Final output</div>
+    <div class="body" id="finalBody"></div>
+  </div>
+</div>
+<div class="hint">SHADDAI Orchestrator · connected to /api/agent/run · the chain three.ws can't do</div>
+
+<script>
+const AGENTS=['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+// Bind = a tool hint appended to the step's instruction so the agent uses that API.
+const BINDS={
+  auto:{label:'⚙ Auto (agent decides)',hint:''},
+  trending:{label:'📈 Trending/News',hint:' (use the get_trending_topics and get_crypto_news tools)'},
+  defi:{label:'🦙 DeFi (DeFiLlama/DexScreener)',hint:' (use the defi_yields, defi_token_price and defi_chains_tvl tools)'},
+  price:{label:'💹 Live price',hint:' (use the fetch_price tool)'},
+  music:{label:'🎵 Suno (music)',hint:' (use the make_music tool to generate a real track)'},
+  image:{label:'🖼️ Image gen',hint:' (use the generate_image tool to create the image)'},
+  web:{label:'🔎 Web search',hint:' (use the search_web tool)'},
+  postx:{label:'🐦 Post to X',hint:' (use the post_to_x tool to publish it)'},
+  tg:{label:'✈️ Post to Telegram',hint:' (use the post_to_telegram tool)'}
+};
+const PRESETS=[
+  {name:'🏆 Alpha Hunt → Content',desc:'find token → song → image → post',
+   steps:[
+    {agent:'ORACLE',bind:'trending',instr:'Find the single most interesting trending crypto token right now and explain why in 2 sentences.'},
+    {agent:'TURTLE',bind:'music',instr:'Write a short hype song about that token.'},
+    {agent:'TURTLE',bind:'image',instr:'Generate a bold cover image for that token.'},
+    {agent:'QUILL',bind:'postx',instr:'Write a punchy tweet announcing it (no financial advice).'}
+   ]},
+  {name:'📊 Market Brief',desc:'DeFi scan → analysis → report',
+   steps:[
+    {agent:'ZEROX',bind:'defi',instr:'Scan top DeFi yields and chains by TVL; list the 3 most notable.'},
+    {agent:'ORACLE',bind:'trending',instr:'Add current market sentiment + any relevant news.'},
+    {agent:'QUILL',bind:'auto',instr:'Write a tight 1-paragraph morning market brief from the above.'}
+   ]},
+  {name:'✍️ Research → Write',desc:'research → draft → polish',
+   steps:[
+    {agent:'ORACLE',bind:'web',instr:'Research the topic and gather 3 key facts.'},
+    {agent:'QUILL',bind:'auto',instr:'Draft a short, engaging post from the research.'}
+   ]}
+];
+let steps=[];
+function agentColor(a){return {SHADDAI:'--green',ZEROX:'--orange',ORACLE:'--violet',NEXUS:'--cyan',TURTLE:'--red',QUILL:'--gold',PIKADON:'--red'}[a]||'--gold';}
+
+function render(){
+  const c=document.getElementById('chain');c.innerHTML='';
+  steps.forEach((s,i)=>{
+    const node=document.createElement('div');node.className='node';node.id='node'+i;
+    node.innerHTML=
+      '<div class="num">'+(i+1)+'</div>'+
+      '<div class="row1">'+
+        '<select class="ag-sel" onchange="steps['+i+'].agent=this.value">'+AGENTS.map(a=>'<option '+(a===s.agent?'selected':'')+'>'+a+'</option>').join('')+'</select>'+
+        '<select class="bind-sel" onchange="steps['+i+'].bind=this.value">'+Object.keys(BINDS).map(k=>'<option value="'+k+'" '+(k===s.bind?'selected':'')+'>'+BINDS[k].label+'</option>').join('')+'</select>'+
+        '<button class="rm" onclick="rmStep('+i+')" title="remove">✕</button>'+
+      '</div>'+
+      '<textarea class="instr" oninput="steps['+i+'].instr=this.value" placeholder="What should this agent do?">'+(s.instr||'')+'</textarea>'+
+      '<div class="out" id="out'+i+'"></div>';
+    c.appendChild(node);
+    if(i<steps.length-1){const con=document.createElement('div');con.className='connector';con.id='con'+i;c.appendChild(con);}
+  });
+}
+window.addStep=()=>{steps.push({agent:'SHADDAI',bind:'auto',instr:''});render();};
+window.rmStep=(i)=>{steps.splice(i,1);render();};
+function loadPreset(p){steps=p.steps.map(s=>({...s}));render();document.getElementById('final').classList.remove('show');}
+
+// presets UI
+const pc=document.getElementById('presets');
+PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.className='preset';b.innerHTML='<b>'+p.name+'</b>'+p.desc;b.onclick=()=>loadPreset(p);pc.appendChild(b);});
+loadPreset(PRESETS[0]);
+
+window.runChain=async()=>{
+  if(!steps.length)return;
+  const btn=document.getElementById('runBtn'),st=document.getElementById('status');
+  btn.disabled=true;document.getElementById('final').classList.remove('show');
+  // reset visuals
+  steps.forEach((_,i)=>{const n=document.getElementById('node'+i);n.className='node';const o=document.getElementById('out'+i);o.className='out';o.textContent='';const con=document.getElementById('con'+i);if(con)con.className='connector';});
+  // build workflow payload: instruction + bind hint
+  const workflow=steps.map(s=>({agent:s.agent,goal:(s.instr||'do your part').trim()+(BINDS[s.bind]?BINDS[s.bind].hint:'')}));
+  st.textContent='dispatching chain…';
+  try{
+    const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'orchestrator'},body:JSON.stringify({workflow})});
+    const d=await r.json();
+    if(d.error){st.textContent='error: '+d.error;btn.disabled=false;return;}
+    // runWorkflow returns synchronously with steps[]+finalOutput
+    const res=d.steps||[];
+    for(let i=0;i<steps.length;i++){
+      const n=document.getElementById('node'+i);n.className='node run';
+      const con=i>0?document.getElementById('con'+(i-1)):null;if(con)con.className='connector flow';
+      st.textContent='step '+(i+1)+'/'+steps.length+' · '+steps[i].agent+' working…';
+      await new Promise(s=>setTimeout(s,500)); // pacing for the flow animation
+      const sr=res[i];
+      n.className='node done';if(con)con.className='connector';
+      const o=document.getElementById('out'+i);
+      o.className='out show';o.textContent=(sr&&(sr.result||sr.status))?String(sr.result||sr.status).slice(0,600):'(no output)';
+    }
+    st.textContent='✓ chain complete · '+res.length+' steps';
+    const f=document.getElementById('final');document.getElementById('finalBody').textContent=(d.finalOutput||'(no final output)');f.classList.add('show');
+  }catch(e){st.textContent='⚠ '+e.message+' — is the server running?';}
+  btn.disabled=false;
+};
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toTimeString().slice(0,8)+' UTC';},1000);
+</script>
+</body>
+</html>
