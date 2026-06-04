@@ -75,6 +75,23 @@ h1 em{font-style:italic;color:var(--gold2)}
     <span>Standard · <b>Metaplex Core</b></span>
   </div>
 
+  <div id="setupCard" style="display:none;border:1px solid var(--line2);background:linear-gradient(180deg,rgba(212,175,55,.07),transparent);padding:18px 20px;margin-bottom:24px">
+    <div style="font-family:var(--disp);font-size:19px;font-weight:600;color:var(--gold2);margin-bottom:6px">✨ One-time setup — turn on minting (free, ~30 seconds)</div>
+    <div style="font-size:13px;color:var(--mut);line-height:1.55;margin-bottom:14px">Minting uses a free <b style="color:var(--cream)">test wallet</b> on <b style="color:var(--cream)">devnet</b> — pretend money, zero real cost. Give it a little free test-SOL once and you're live. No crypto knowledge needed.</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <code id="authAddr" style="font-family:var(--mono);font-size:11px;background:#0b0a07;border:1px solid var(--line);padding:9px 11px;color:var(--cream);word-break:break-all"></code>
+      <button class="connect" style="margin:0;padding:9px 14px" onclick="copyAuth()">📋 Copy</button>
+      <a class="connect" style="margin:0;padding:9px 14px;text-decoration:none;display:inline-block" href="https://faucet.solana.com" target="_blank" rel="noopener">🚰 Open faucet ↗</a>
+      <button class="connect" style="margin:0;padding:9px 14px" onclick="checkFunded()">✓ I did it — check</button>
+    </div>
+    <ol style="font-size:12px;color:var(--mut);line-height:1.8;margin:12px 0 0 18px">
+      <li><b>Copy</b> the address above.</li>
+      <li><b>Open faucet</b> → choose <b>Devnet</b> → paste → request ~1 SOL.</li>
+      <li>Come back, click <b>I did it — check</b>. That's it — mint away.</li>
+    </ol>
+    <div id="fundMsg" style="font-family:var(--mono);font-size:10.5px;color:var(--gold2);margin-top:12px;min-height:14px"></div>
+  </div>
+
   <div class="grid" id="grid"><div class="empty">Loading the vault…</div></div>
 
   <div class="note">
@@ -145,6 +162,22 @@ async function mintNft(id, i, btn){
 
 // auto-detect already-connected wallet (silent)
 (function(){ const p=window.solana||(window.phantom&&window.phantom.solana); if(p&&p.isConnected&&p.publicKey){ wallet=p.publicKey.toString(); const b=document.getElementById('connectBtn'); b.textContent='◎ '+wallet.slice(0,4)+'…'+wallet.slice(-4); b.classList.add('on'); document.getElementById('ownerAddr').textContent=wallet.slice(0,4)+'…'+wallet.slice(-4);} })();
+// ── beginner-friendly minter funding helper ──
+async function loadAuthority(){
+  try{ const r=await fetch('/api/nft/mint-authority'); const d=await r.json();
+    const card=document.getElementById('setupCard');
+    if(d.configured && !d.funded){ window._auth=d.authority; document.getElementById('authAddr').textContent=d.authority; card.style.display='block'; }
+    else { card.style.display='none'; }
+  }catch(e){}
+}
+window.copyAuth=()=>{ const a=window._auth||document.getElementById('authAddr').textContent; navigator.clipboard&&navigator.clipboard.writeText(a); document.getElementById('fundMsg').textContent='Address copied ✓ — now open the faucet.'; };
+window.checkFunded=async()=>{ const m=document.getElementById('fundMsg'); m.textContent='Checking…';
+  try{ const r=await fetch('/api/nft/mint-authority'); const d=await r.json();
+    if(d.funded){ m.textContent='✅ Funded ('+d.balanceSol+' test-SOL) — minting is LIVE!'; setTimeout(()=>{document.getElementById('setupCard').style.display='none';},1800); }
+    else { m.textContent='Not funded yet ('+(d.balanceSol||0)+' SOL). Give it ~10s after the faucet, then check again.'; }
+  }catch(e){ m.textContent='check failed: '+e.message; }
+};
+loadAuthority();
 loadVault();
 </script>
 </body>

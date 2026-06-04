@@ -1079,6 +1079,30 @@ router.post('/agents/:name/avatar', (req, res) => {
 // GET /api/x402/discover — x402 billable-endpoint discovery (alias of /.well-known/x402.json)
 router.get('/x402/discover', (req, res) => res.json(require('./lib/x402').discovery()));
 
+// GET /api/nft/mint-authority — beginner-friendly: the minter's address + balance + funded?
+router.get('/nft/mint-authority', async (req, res) => {
+  try {
+    const { Keypair, Connection, clusterApiUrl } = require('@solana/web3.js');
+    const secret = (process.env.SOLANA_MINT_SECRET || '').trim();
+    if (!secret.startsWith('[')) {
+      return res.json({ configured: false, error: 'Minter not set up yet (run scripts/setup-devnet-mint.js).' });
+    }
+    let kp;
+    try { kp = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret))); }
+    catch (e) { return res.json({ configured: false, error: 'Minter key unreadable.' }); }
+    const network = process.env.SOLANA_NETWORK === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+    let lamports = 0;
+    try { lamports = await new Connection(clusterApiUrl(network), 'confirmed').getBalance(kp.publicKey); } catch (_) {}
+    res.json({
+      configured: true, network,
+      authority: kp.publicKey.toString(),
+      balanceSol: +(lamports / 1e9).toFixed(4),
+      funded: lamports >= 5000000,
+      faucet: 'https://faucet.solana.com'
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/collectibles/:id/mint-nft — mint a collectible as a real Solana NFT (devnet-first).
 // Uses the mint_nft tool; returns the clean needs-key/needs-libs message if not configured.
 router.post('/collectibles/:id/mint-nft', async (req, res) => {
