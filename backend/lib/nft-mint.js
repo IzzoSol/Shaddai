@@ -25,7 +25,7 @@
  */
 
 // @solana/web3.js IS in the repo root package.json — safe to require at top.
-const { Keypair, clusterApiUrl } = require('@solana/web3.js');
+const { Keypair, Connection, clusterApiUrl } = require('@solana/web3.js');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -34,13 +34,18 @@ function resolveNetwork() {
   return process.env.SOLANA_NETWORK === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
 }
 
-/** Resolve the RPC endpoint for the active network. */
+/** Resolve the RPC endpoint for the active network.
+ *  SAFETY: when on devnet we only honor a custom RPC if it is *explicitly* a
+ *  devnet endpoint — a mainnet HELIUS_RPC_URL must never be used for a devnet
+ *  mint (and vice-versa). Otherwise fall back to the canonical cluster URL. */
 function resolveRpc(network) {
-  return (
-    process.env.HELIUS_RPC_URL ||
-    process.env.SOLANA_RPC_URL ||
-    clusterApiUrl(network)
-  );
+  const custom = process.env.SOLANA_RPC_URL || process.env.HELIUS_RPC_URL || '';
+  if (network === 'mainnet-beta') {
+    return (custom && !/devnet|testnet/i.test(custom)) ? custom : clusterApiUrl('mainnet-beta');
+  }
+  // devnet: only use a custom URL that is itself devnet; else canonical devnet RPC.
+  if (custom && /devnet/i.test(custom)) return custom;
+  return clusterApiUrl('devnet');
 }
 
 /** Cluster query-string suffix for Solana Explorer links. */
@@ -144,22 +149,35 @@ const mint_nft = {
       const umi = createUmi(rpc);
 
       // Build the signer keypair from SOLANA_MINT_SECRET (never a seed phrase).
-      let umiKeypair;
+      let umiKeypair, web3kp;
       if (typeof secret === 'string') {
         // base58 — convert via web3.js Keypair, then into umi.
         const bs58 = require('bs58');
         const decoded =
           (bs58.decode ? bs58.decode(secret) : bs58.default.decode(secret));
-        const web3kp = Keypair.fromSecretKey(Uint8Array.from(decoded));
+        web3kp = Keypair.fromSecretKey(Uint8Array.from(decoded));
         umiKeypair = umi.eddsa.createKeypairFromSecretKey(web3kp.secretKey);
       } else {
         // JSON byte array → web3.js Keypair → umi keypair.
-        const web3kp = Keypair.fromSecretKey(secret);
+        web3kp = Keypair.fromSecretKey(secret);
         umiKeypair = umi.eddsa.createKeypairFromSecretKey(web3kp.secretKey);
       }
 
       const signer = createSignerFromKeypair(umi, umiKeypair);
       umi.use(signerIdentity(signer));
+
+      // ── Pre-flight: the mint authority needs SOL for rent + fees ──────────────
+      try {
+        const lamports = await new Connection(rpc, 'confirmed').getBalance(web3kp.publicKey);
+        if (lamports < 5000000) { // ~0.005 SOL
+          return JSON.stringify({
+            success: false, needsFunds: true, network,
+            authority: web3kp.publicKey.toString(),
+            error: `Mint authority has ${(lamports / 1e9).toFixed(4)} SOL — needs devnet SOL for rent/fees. ` +
+                   `Fund it at https://faucet.solana.com (devnet) → ${web3kp.publicKey.toString()} , then mint again.`
+          });
+        }
+      } catch (_) { /* best-effort; proceed to create */ }
 
       // Fresh asset address for this mint.
       const asset = generateSigner(umi);
