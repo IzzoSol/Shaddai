@@ -88,7 +88,13 @@ select:focus,input:focus,textarea:focus{border-color:var(--gold)}
       <div class="sigil">◈</div>
       <div><h1>SHADD<b>A</b>I · ORCHESTRATOR</h1><div class="sub">MULTI-AGENT // MULTI-API CHAINS</div></div>
     </div>
-    <div class="sub" id="clock">--:--:--</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <select id="themeSel" onchange="applyTheme(this.value)" title="Theme"
+        style="background:var(--panel);color:var(--mut2);border:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:5px 7px;cursor:pointer">
+        <option value="mission">◈ MISSION</option><option value="emerald">◈ EMERALD</option><option value="ember">◈ EMBER</option><option value="royal">◈ ROYAL</option><option value="mono">◈ MONO</option>
+      </select>
+      <div class="sub" id="clock">--:--:--</div>
+    </div>
   </div>
   <div class="tagline">Assemble your council into a <b>chain</b>: each agent does one step, its result feeds the next.
     <b>Bind</b> a tool/API to each (DexScreener, Suno, image, X, Telegram). Press <b>Run Chain</b> — they work together, live.</div>
@@ -101,6 +107,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--gold)}
 
   <div class="controls">
     <button class="btn add" onclick="addStep()">+ Add step</button>
+    <button class="btn add" onclick="addCustomApi()">+ API</button>
     <button class="btn run" id="runBtn" onclick="runChain()">▶ Run Chain</button>
     <span class="status" id="status">idle</span>
   </div>
@@ -110,7 +117,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--gold)}
     <div class="body" id="finalBody"></div>
   </div>
 </div>
-<div class="hint">SHADDAI Orchestrator · connected to /api/agent/run · the chain three.ws can't do</div>
+<div class="hint">SHADDAI Orchestrator · multi-agent chains · connected live</div>
 
 <script>
 const AGENTS=['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
@@ -126,6 +133,23 @@ const BINDS={
   postx:{label:'🐦 Post to X',hint:' (use the post_to_x tool to publish it)'},
   tg:{label:'✈️ Post to Telegram',hint:' (use the post_to_telegram tool)'}
 };
+// Per-step model/provider (threaded to the backend → real different models).
+const MODELS={
+  auto:{label:'⚙ Default model',provider:null,model:null},
+  groq70:{label:'⚡ Groq 70B',provider:'groq',model:'llama-3.3-70b-versatile'},
+  groq8:{label:'⚡ Groq 8B (fast)',provider:'groq',model:'llama-3.1-8b-instant'},
+  orfree:{label:'🌐 OpenRouter free',provider:'openrouter',model:'meta-llama/llama-3.1-8b-instruct:free'},
+  ollama:{label:'🖥 Ollama local',provider:'ollama',model:null}
+};
+window.setModel=(i,k)=>{const m=MODELS[k]||MODELS.auto;steps[i].provider=m.provider;steps[i].model=m.model;steps[i].model_key=k;};
+// Themes (customizable accent palette; persists)
+const THEMES={mission:{gold:'#ffd23f',cyan:'#33d6ff',green:'#1fe6a0'},emerald:{gold:'#1fe6a0',cyan:'#33d6ff',green:'#ffd23f'},ember:{gold:'#ff8a3d',cyan:'#ffd23f',green:'#1fe6a0'},royal:{gold:'#a98bff',cyan:'#33d6ff',green:'#1fe6a0'},mono:{gold:'#e8ecf2',cyan:'#9aa7b8',green:'#1fe6a0'}};
+window.applyTheme=(n)=>{const t=THEMES[n]||THEMES.mission;const r=document.documentElement.style;r.setProperty('--gold',t.gold);r.setProperty('--cyan',t.cyan);r.setProperty('--green',t.green);try{localStorage.setItem('shaddai_theme',n);}catch(e){}};
+// Custom APIs — user adds their own tool/API binds (persisted)
+function loadBinds(){try{const c=JSON.parse(localStorage.getItem('shaddai_custom_binds')||'{}');Object.assign(BINDS,c);}catch(e){}}
+window.addCustomApi=()=>{const name=prompt('API / tool name (shown in the per-step dropdown):');if(!name)return;const hint=prompt('Instruction hint appended to the step (e.g. "(use the my_tool tool)"):')||('(use '+name+')');const key='custom_'+Date.now();BINDS[key]={label:'➕ '+name,hint:' '+hint};try{const c=JSON.parse(localStorage.getItem('shaddai_custom_binds')||'{}');c[key]=BINDS[key];localStorage.setItem('shaddai_custom_binds',JSON.stringify(c));}catch(e){}render();};
+loadBinds();
+
 const PRESETS=[
   {name:'🏆 Alpha Hunt → Content',desc:'find token → song → image → post',
    steps:[
@@ -158,6 +182,7 @@ function render(){
       '<div class="row1">'+
         '<select class="ag-sel" onchange="steps['+i+'].agent=this.value">'+AGENTS.map(a=>'<option '+(a===s.agent?'selected':'')+'>'+a+'</option>').join('')+'</select>'+
         '<select class="bind-sel" onchange="steps['+i+'].bind=this.value">'+Object.keys(BINDS).map(k=>'<option value="'+k+'" '+(k===s.bind?'selected':'')+'>'+BINDS[k].label+'</option>').join('')+'</select>'+
+        '<select class="bind-sel" title="model" onchange="setModel('+i+',this.value)">'+Object.keys(MODELS).map(k=>'<option value="'+k+'" '+((s.model_key||'auto')===k?'selected':'')+'>'+MODELS[k].label+'</option>').join('')+'</select>'+
         '<button class="rm" onclick="rmStep('+i+')" title="remove">✕</button>'+
       '</div>'+
       '<textarea class="instr" oninput="steps['+i+'].instr=this.value" placeholder="What should this agent do?">'+(s.instr||'')+'</textarea>'+
@@ -174,6 +199,7 @@ function loadPreset(p){steps=p.steps.map(s=>({...s}));render();document.getEleme
 const pc=document.getElementById('presets');
 PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.className='preset';b.innerHTML='<b>'+p.name+'</b>'+p.desc;b.onclick=()=>loadPreset(p);pc.appendChild(b);});
 loadPreset(PRESETS[0]);
+try{const st=localStorage.getItem('shaddai_theme');if(st){const sel=document.getElementById('themeSel');if(sel)sel.value=st;applyTheme(st);}}catch(e){}
 
 window.runChain=async()=>{
   if(!steps.length)return;

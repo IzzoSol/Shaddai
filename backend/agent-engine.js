@@ -2948,10 +2948,11 @@ ${toolBlock}`
   }
   const PROVIDERS = {
     ollama: pOllama,
-    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [OPENROUTER_MODEL, 'mistralai/mistral-7b-instruct:free']),
+    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'mistralai/mistral-7b-instruct:free']),
   };
-  const pref = (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
+  // Per-step override (options.provider) wins, else the agent's preferredProvider.
+  const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
   // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
   const order = [...new Set([pref, 'groq', 'openrouter', 'ollama'].filter(Boolean))];
   let lastError;
@@ -3049,7 +3050,7 @@ async function runAgentLoop(taskId) {
       const step = { iteration: iter + 1, status: 'thinking', ts: new Date().toISOString() };
       task.steps.push(step);
 
-      const response = await callLLM(messages, task.agentName, { user: task.options?.user || task.user });
+      const response = await callLLM(messages, task.agentName, { user: task.options?.user || task.user, provider: task.options?.provider, model: task.options?.model });
       step.llm_response = response.slice(0, 600) + (response.length > 600 ? '…' : '');
 
       const toolResults = await extractAndRunTools(response, task.agentName, task.id);
@@ -3106,7 +3107,7 @@ async function runWorkflow(steps, options = {}) {
     const goal = prevOutput
       ? `${step.goal}\n\nContext from previous step:\n${prevOutput.slice(0, 1200)}`
       : step.goal;
-    const task = createTask(goal, step.agent);
+    const task = createTask(goal, step.agent, { provider: step.provider, model: step.model });
     await runAgentLoop(task.id);
     const t = getTask(task.id);
     results.push({ step: i+1, agent: t.agentName, goal: step.goal, result: t.result, status: t.status, tools: t.tools_used });
