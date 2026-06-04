@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>&lt;shaddai-agent&gt; embed demo</title>
+<style>
+  body{margin:0;background:#070a0e;color:#e8ecf2;font-family:'Segoe UI',system-ui,sans-serif;padding:40px}
+  h1{font-size:20px;letter-spacing:.04em}code{background:#12161e;padding:2px 6px;border-radius:5px;font-size:13px;color:#ffd23f}
+  .grid{display:flex;gap:28px;flex-wrap:wrap;margin-top:24px;align-items:flex-start}
+  .note{color:#7c8aa0;font-size:13px;max-width:640px;line-height:1.6}
+</style></head>
+<body>
+  <h1>◈ &lt;shaddai-agent&gt; — one-line embed</h1>
+  <p class="note">Drop <code>&lt;script src="/embed/shaddai-agent.js"&gt;&lt;/script&gt;</code> then
+  <code>&lt;shaddai-agent agent="ORACLE"&gt;&lt;/shaddai-agent&gt;</code> on any page. Loads the agent's
+  manifest, chats via the SHADDAI API. Below: an inline ORACLE and a floating ZEROX (bottom-right).</p>
+
+  <div class="grid">
+    <shaddai-agent agent="ORACLE" mode="inline" title="ORACLE · Research"></shaddai-agent>
+    <shaddai-agent agent="NEXUS" mode="inline" title="NEXUS · Architect"></shaddai-agent>
+  </div>
+
+  <shaddai-agent agent="ZEROX" mode="floating"></shaddai-agent>
+
+  <script src="/embed/shaddai-agent.js"></script>
+  <script>
+    // Demonstrate the public API + events
+    document.querySelector('shaddai-agent').addEventListener('shaddai:ready', e => {
+      console.log('agent ready:', e.detail.manifest.name);
+    });
+  </script>
+</body></html>
