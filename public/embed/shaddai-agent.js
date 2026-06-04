@@ -13,6 +13,7 @@
  *   mode      — inline (default) | floating | fullscreen
  *   width/height — inline size (default 380x520)
  *   title     — header label override
+ *   shop      — Bazaar/agent-shop URL opened by the "🏪 Shop" button (default /marketplace-shop.html)
  *
  * Public API (on the element):
  *   .say(text) / .ask(text)→Promise<string> / .clearConversation()
@@ -164,6 +165,11 @@
           input{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;font-size:13px;outline:none}
           input:focus{border-color:var(--accent)}
           button{background:var(--accent);color:#10131a;border:none;border-radius:9px;padding:0 14px;font-weight:700;cursor:pointer;font-size:13px}
+          .bazaar{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;border-top:1px solid var(--line);background:var(--panel)}
+          .shopbtn{display:inline-flex;align-items:center;gap:5px;text-decoration:none;background:transparent;color:var(--accent);
+                   border:1px solid var(--accent);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;
+                   font-family:'Segoe UI',system-ui,sans-serif;letter-spacing:.02em;transition:background .15s,color .15s}
+          .shopbtn:hover{background:var(--accent);color:#10131a}
           .credit{text-align:center;font-size:8px;color:var(--mut);padding:4px;font-family:ui-monospace,monospace;letter-spacing:.1em}
           ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--line)}
         </style>
@@ -178,9 +184,18 @@
             <input type="text" placeholder="Ask…" />
             <button>Send</button>
           </div>
+          <div class="bazaar">
+            <a class="shopbtn" target="_blank" rel="noopener">🏪 Shop</a>
+          </div>
           <div class="credit">⊳ POWERED BY SHADDAI</div>
         </div>`;
       this._applyMode();
+      const shopUrl = this.getAttribute('shop') || '/marketplace-shop.html';
+      const shop = this.shadowRoot.querySelector('.shopbtn');
+      if (shop) {
+        try { shop.href = new URL(shopUrl, this._endpoint || location.origin).href; }
+        catch (e) { shop.href = shopUrl; }
+      }
       const input = this.shadowRoot.querySelector('input');
       const btn = this.shadowRoot.querySelector('button');
       const go = () => { const v = input.value; input.value = ''; if (v.trim()) this._send(v); };

@@ -13,7 +13,8 @@ const PRICED = {
   'chat.premium':   { path: '/api/llm/chat',        priceUsd: 0.001, description: 'Premium-model chat (Claude/GPT/Groq-70B)', mimeType: 'application/json' },
   'image.premium':  { path: '/api/image/generate',  priceUsd: 0.004, description: 'Premium image (Flux/NanoBanana/DALL·E)',   mimeType: 'image/*' },
   'music.make':     { path: '/api/agent/run',       priceUsd: 0.05,  description: 'AI music generation (Suno)',               mimeType: 'audio/*' },
-  'voice.tts':      { path: '/api/agent/run',        priceUsd: 0.01, description: 'Voice synthesis / cloning (ElevenLabs)',   mimeType: 'audio/*' }
+  'voice.tts':      { path: '/api/agent/run',        priceUsd: 0.01, description: 'Voice synthesis / cloning (ElevenLabs)',   mimeType: 'audio/*' },
+  'agent.hire':     { path: '/api/x402/agent',       priceUsd: 0.02,  description: 'Hire a SHADDAI agent to run a task',      mimeType: 'application/json' }
 };
 
 const X402_VERSION = 1;
@@ -40,6 +41,19 @@ function paymentRequirements(key, resourceUrl) {
     maxTimeoutSeconds: 60,
     asset: asset()
   };
+}
+
+/**
+ * Build a PaymentRequirements object for hiring a specific agent.
+ * Reuses the 'exact' scheme via paymentRequirements but overrides amount/description
+ * so each agent + price can be advertised individually.
+ */
+function agentPaymentRequirements(agentName, priceUsd, resourceUrl) {
+  const base = paymentRequirements('agent.hire', resourceUrl);
+  return Object.assign({}, base, {
+    maxAmountRequired: usdToAtomic(priceUsd == null ? PRICED['agent.hire'].priceUsd : priceUsd),
+    description: `Hire agent ${agentName}`
+  });
 }
 
 /** Discovery document — what's billable, discoverable before calling. */
@@ -101,4 +115,4 @@ function requirePayment(key) {
   };
 }
 
-module.exports = { discovery, paymentRequirements, requirePayment, verifyPayment, PRICED, X402_VERSION, enabled };
+module.exports = { discovery, paymentRequirements, agentPaymentRequirements, requirePayment, verifyPayment, PRICED, X402_VERSION, enabled };
