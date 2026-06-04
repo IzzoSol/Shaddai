@@ -3,7 +3,7 @@
 # ⚡ SHADDAI v80 — Sovereign AI Command
 
 **A local-first, multi-agent AI command center.** Seven specialized agents that autonomously
-research, analyze, write, code, watch markets, and build — using 133 real tools, connecting to
+research, analyze, write, code, watch markets, and build — using 180+ real tools, connecting to
 any MCP server, running free on your own machine.
 
 `Local-first (Ollama) · Cloud-optional · Token-efficient · No subscriptions required`
@@ -18,7 +18,7 @@ any MCP server, running free on your own machine.
 3. [Key Features](#-key-features)
 4. [Architecture](#-architecture)
 5. [Token Tracking & Savings (AURA)](#-token-tracking--savings)
-6. [The 133-Tool Catalog](#-the-tool-catalog)
+6. [The Tool Catalog (180+)](#-the-tool-catalog)
 7. [Quick Start](#-quick-start)
 8. [Project Structure](#-project-structure)
 9. [API Reference](#-api-reference)
@@ -62,7 +62,7 @@ chains, or as a delegating council led by SHADDAI.
 
 ## ✨ Key Features
 
-- **133 real tools** across crypto, research, dev, web, files, media, geocoding, forex, marketplace, and more — all calling real APIs (keyless/free wherever possible).
+- **180+ real tools** across crypto, research, dev, web, files, media, geocoding, forex, marketplace, and more — all calling real APIs (keyless/free wherever possible).
 - **Provider Gateway** — one engine-agnostic endpoint (`/api/model/chat`). The UI never picks a vendor; it runs Ollama-first with automatic cloud fallback. Swap engines with zero UI changes.
 - **AURA token-saver** — a cache-first router that answers from cache/compute/local-LLM *before* spending tokens (see [below](#-token-tracking--savings)).
 - **MCP client** — connect agents to any [Model Context Protocol](https://modelcontextprotocol.io) server (filesystem, GitHub, Postgres, Slack…) and use its tools natively.
@@ -91,7 +91,7 @@ chains, or as a delegating council led by SHADDAI.
         │                            │                            │
 ┌───────▼────────┐         ┌─────────▼──────────┐       ┌─────────▼─────────┐
 │  AGENT ENGINE  │         │   AURA (port 8010) │       │   MCP CLIENT      │
-│ 7 agents · 133 │         │ cache-first token  │       │ connect external  │
+│ 7 agents · 180+ │         │ cache-first token  │       │ connect external  │
 │ tools · loop   │         │ saver (Flask)      │       │ MCP servers       │
 └───────┬────────┘         └────────────────────┘       └───────────────────┘
         │
@@ -138,7 +138,7 @@ Every *actual* model call is logged with **real** token counts and cost:
 
 ## 🧰 The Tool Catalog
 
-133 tools, every one assigned to ≥1 agent. Highlights by category:
+180+ tools, every one assigned to ≥1 agent. Highlights by category:
 
 - **Crypto / Finance:** `fetch_price`, `get_fear_greed`, `whale_scan`, `get_defi_tvl`, `get_dominance`, `get_funding_rates`, `calculate_position_size`, `jupiter_quote`, `get_crypto_backup` (CoinPaprika), `get_forex_rate` (Frankfurter), `binance_orderbook`, `get_top_gainers` …
 - **Research / Web:** `search_web`, `wikipedia_search`, `get_arxiv_papers`, `get_reddit_posts`, `get_hackernews`, `fetch_url_clean`, `geocode_address` (OpenStreetMap), `get_news_headlines`, `summarize_text` …
@@ -197,7 +197,7 @@ SHADDAI/
 ├── HOW-TO-RUN.md              # Step-by-step run guide
 ├── backend/                   # Node.js engine + REST API
 │   ├── server-production.js   #   Express server (port 3000)
-│   ├── agent-engine.js        #   7 agents, 133 tools, tool-loop, gateway
+│   ├── agent-engine.js        #   7 agents, 180+ tools, tool-loop, gateway
 │   ├── api-proxy-routes.js    #   322 API routes
 │   ├── mcp-client.js          #   MCP client (stdio + HTTP)
 │   ├── pay-guard.js           #   guarded pay.sh payments
@@ -232,18 +232,22 @@ SHADDAI/
 
 ---
 
-## 🔒 Security
+## 🔒 Security — Foundation Hardening
 
-- **API keys are server-side only** (`backend/.env`, gitignored — never committed, never sent to the browser). The backend reports key *presence* as a boolean, never the value.
-- **pay.sh is disabled by default** with a per-call cap, daily budget, and human-approval gate; agent-supplied URLs are validated against shell-injection.
-- **Audit scripts** (`backend/audit-connectivity.js`, `audit-dashboard.js`, `audit-tools.js`, `test-e2e.js`) verify connectivity, dead handlers, and tool health any time.
-- For local single-user use the backend is unauthenticated; **add auth before exposing it to the internet.**
+SHADDAI runs on an **audited security base** so it's safe to open to the public. Full write-up: **[`docs/FOUNDATION_HARDENING.md`](docs/FOUNDATION_HARDENING.md)**.
+
+- **Secrets** live only in `backend/.env` (gitignored) + the Render dashboard — never in code or the browser. A **gitleaks CI** blocks any key on push; the backend reports key *presence* as a boolean, never the value.
+- **Authentication** — sensitive routes (agent run, skill ops, code-exec, money movement) are Firebase-verified + admin-gated; dev-permissive locally, enforced in production via `REQUIRE_AUTH`/`ADMIN_TOKEN`.
+- **Code execution** is routed through a hardened sandbox and gated; `run_python` is off by default.
+- **XSS** — user/agent-controlled strings are escaped (`sanitizeText`) before the DOM.
+- **Payments** — x402 is non-custodial and disabled until `X402_ENABLED`; MoonPay intents are signed locally; per-call caps + kill-switch on any money movement.
+- **Verified continuously** — 90-test suite, an endpoint-integrity auditor (0 broken links), and a tool audit (180+ live tools).
 
 ---
 
 ## 📈 Status & Roadmap
 
-**Status:** Fully audited — 0 connectivity problems, 133 tools wired, 46/46 backend files clean,
+**Status:** Fully audited — 0 connectivity problems, 180+ tools wired, 46/46 backend files clean,
 dashboard handlers + IDs clean. Provider Gateway live and verified.
 
 **Next (optional polish):**
