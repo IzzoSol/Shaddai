@@ -667,6 +667,9 @@ app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
 app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
+app.use('/api/aura', require('./lib/aura').router);              // AURA token-saver (cache/compute-first) stats+route
+app.use('/api/security', require('./lib/security-scan').router); // PIKADON real scans (url/code/skill)
+app.use('/api/vault', require('./lib/api-vault').router);        // BYOK API key vault (password-locked)
 // Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
 app.use('/api/brains', require('./brains').router);
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)

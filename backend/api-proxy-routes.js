@@ -4155,6 +4155,14 @@ router.post('/llm/chat', async (req, res) => {
   const { message, provider = 'auto', model, apiKey, systemPrompt } = req.body;
   if (!message) return res.status(400).json({ error: 'message required' });
 
+  // AURA token-saver: answer free from cache/compute before spending an LLM call.
+  try {
+    const a = require('./lib/aura').route(message);
+    if (a && a.hit) {
+      return res.json({ response: a.answer, provider: 'aura-' + a.method, model: 'cache', latencyMs: 0, savedTokensEst: a.savedTokensEst, fallbackUsed: false });
+    }
+  } catch (_) {}
+
   // Rate limit
   if (!checkRateLimit(req.ip || req.connection.remoteAddress)) {
     return res.status(429).json({ error: 'Rate limit exceeded. Try again in a minute.' });
@@ -4237,6 +4245,7 @@ router.post('/llm/chat', async (req, res) => {
       }
     }
 
+    try { if (result && result.response) require('./lib/aura').recordAnswer(message, result.response); } catch (_) {}
     res.json({ ...result, fallbackUsed: result.fallbackUsed || false });
   } catch (e) {
     res.status(500).json({ error: e.message, provider });
