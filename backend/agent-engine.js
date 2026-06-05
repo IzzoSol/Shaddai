@@ -2898,6 +2898,18 @@ Tools (one call per line, no markdown fences):
 ${toolBlock}`
   };
 
+  // Agent SOUL — inject the agent's identity doc (data/agents/NAME.md) so personality
+  // truly shapes behavior (cached per agent; trimmed to keep the prompt lean).
+  try {
+    callLLM._soul = callLLM._soul || {};
+    const key = String(agentName).toUpperCase();
+    if (!(key in callLLM._soul)) {
+      const sp = path.join(__dirname, 'data', 'agents', key + '.md');
+      callLLM._soul[key] = fs.existsSync(sp) ? fs.readFileSync(sp, 'utf8').slice(0, 900) : '';
+    }
+    if (callLLM._soul[key]) system.content += '\n\n[YOUR IDENTITY]\n' + callLLM._soul[key];
+  } catch (_) {}
+
   // Per-customer memory — agents "learn/grow" with each user (widget passes options.user).
   try {
     if (options.user) {
