@@ -3190,6 +3190,9 @@ body.ly-focus .card{border-radius:10px}
 /* ── nav position (top default · bottom bar · left sidebar=ly-sb · right sidebar) ── */
 body.navpos-bottom #mainNav{top:auto!important;bottom:0!important;border-top:1px solid rgba(0,229,160,0.14)!important;border-bottom:none!important}
 body.navpos-bottom #mainArea{padding-bottom:56px}
+/* when the top nav is moved away (side/bottom), collapse its empty 44px top slot so #agentBar pins flush under the top bar */
+body.ly-sb #agentBar,body.ly-sb-right #agentBar,body.navpos-bottom #agentBar{top:38px!important}
+body.ly-sb #mainArea,body.ly-sb-right #mainArea,body.navpos-bottom #mainArea{margin-top:82px!important}
 body.ly-sb-right #mainNav{display:none!important}
 body.ly-sb-right #sbNav{display:flex!important;left:auto!important;right:0!important}
 body.ly-sb-right #mainArea{margin-right:210px!important;width:auto!important}
