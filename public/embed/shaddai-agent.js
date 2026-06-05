@@ -32,6 +32,27 @@
   }
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+  // Stable per-visitor id so the backend can attach per-customer memory across visits.
+  function getVisitorId() {
+    const KEY = 'shaddai_visitor_id';
+    try {
+      let id = localStorage.getItem(KEY);
+      if (!id) {
+        id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(KEY, id);
+      }
+      return id;
+    } catch (e) {
+      // localStorage unavailable (private mode / sandboxed): fall back to an in-memory id.
+      if (!getVisitorId._mem) {
+        getVisitorId._mem = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      }
+      return getVisitorId._mem;
+    }
+  }
+
   class ShaddaiAgent extends HTMLElement {
     constructor() {
       super();
@@ -44,6 +65,8 @@
     connectedCallback() {
       this._endpoint = (this.getAttribute('endpoint') || defaultEndpoint()).replace(/\/$/, '');
       this._mode = this.getAttribute('mode') || 'inline';
+      this._visitorId = getVisitorId();
+      this._pay = this.getAttribute('pay');
       this._renderShell();
       this._loadManifest();
     }
@@ -89,12 +112,31 @@
       this._emit('shaddai:message', { role: 'user', text });
       const typing = this._push('agent', '…', true);
       try {
-        const r = await fetch(`${this._endpoint}/api/llm/chat`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, agent: (this.manifest && this.manifest.name) || this.getAttribute('agent') || 'SHADDAI' })
-        });
-        const data = await r.json();
-        const reply = data.response || data.error || '(no response)';
+        const agentName = (this.manifest && this.manifest.name) || this.getAttribute('agent') || 'SHADDAI';
+        let reply;
+        if (this._pay) {
+          // Premium / x402 pay-to-use: hire the agent for this task.
+          const r = await fetch(`${this._endpoint}/api/x402/agent/${encodeURIComponent(agentName)}/hire`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task: text, user: this._visitorId })
+          });
+          const data = await r.json().catch(() => ({}));
+          if (r.status === 402) {
+            // Payment required — surface the x402 offer cleanly instead of crashing.
+            const offer = (data && Array.isArray(data.accepts) && data.accepts[0]) || {};
+            const amount = offer.maxAmountRequired || offer.amount || offer.price || data.error || ('$' + this._pay);
+            reply = 'Payment required — ' + amount;
+          } else {
+            reply = data.result || data.error || '(no response)';
+          }
+        } else {
+          const r = await fetch(`${this._endpoint}/api/llm/chat`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, agent: agentName, user: this._visitorId })
+          });
+          const data = await r.json();
+          reply = data.response || data.error || '(no response)';
+        }
         typing.querySelector('.bubble').textContent = reply;
         typing.classList.remove('typing');
         this._history.push({ role: 'agent', text: reply });
@@ -171,6 +213,8 @@
                    font-family:'Segoe UI',system-ui,sans-serif;letter-spacing:.02em;transition:background .15s,color .15s}
           .shopbtn:hover{background:var(--accent);color:#10131a}
           .credit{text-align:center;font-size:8px;color:var(--mut);padding:4px;font-family:ui-monospace,monospace;letter-spacing:.1em}
+          .premium{display:none;align-items:center;gap:6px;justify-content:center;padding:6px 10px;font-size:10px;font-weight:700;
+                   color:var(--accent);background:rgba(255,210,63,.08);border-bottom:1px solid var(--line);letter-spacing:.02em}
           ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--line)}
         </style>
         <div class="wrap">
@@ -179,6 +223,7 @@
             <div class="meta"><div class="title">SHADDAI Agent</div><div class="sub">loading…</div></div>
             <div class="dot"></div>
           </div>
+          <div class="premium"></div>
           <div class="log"></div>
           <div class="foot">
             <input type="text" placeholder="Ask…" />
@@ -190,6 +235,13 @@
           <div class="credit">⊳ POWERED BY SHADDAI</div>
         </div>`;
       this._applyMode();
+      if (this._pay) {
+        const pEl = this.shadowRoot.querySelector('.premium');
+        if (pEl) {
+          pEl.textContent = '💎 Premium agent · $' + this._pay + ' per message (x402)';
+          pEl.style.display = 'flex';
+        }
+      }
       const shopUrl = this.getAttribute('shop') || '/marketplace-shop.html';
       const shop = this.shadowRoot.querySelector('.shopbtn');
       if (shop) {
