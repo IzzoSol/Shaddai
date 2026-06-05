@@ -2898,6 +2898,13 @@ Tools (one call per line, no markdown fences):
 ${toolBlock}`
   };
 
+  // Per-customer memory — agents "learn/grow" with each user (widget passes options.user).
+  try {
+    if (options.user) {
+      const memCtx = require('./lib/agent-memory').contextString(options.user, agentName);
+      if (memCtx) system.content += '\n\n' + memCtx;
+    }
+  } catch (_) {}
   const allMsgs = trimMessages([system, ...messages], 8000);
 
   // ── PROVIDER CHAIN ──────────────────────────────────────────────────────────

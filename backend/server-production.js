@@ -665,6 +665,8 @@ app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
+app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
+app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
 // Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
 app.use('/api/brains', require('./brains').router);
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)

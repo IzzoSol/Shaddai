@@ -1467,6 +1467,548 @@ output.push('Total: ' + deps.length + ' dependencies');
       lines.push('\nPlatforms: Twitter, LinkedIn, Blog, YouTube | Cadence: Daily short + Weekly deep');
       return lines.join('\n');
     }
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // ── EXPANSION BATCH 2 — 28 new tool-backed skills across all 7 agents ─────────
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // ── ZEROX (5 new) ─────────────────────────────────────────────────────────────
+
+  /** defi-yield-hunter: live DeFi yield pools + TVL */
+  'zerox/defi-yield-hunter': {
+    tools: ['defi_yields', 'get_defi_tvl'],
+    argMap(prompt) {
+      const txt = prompt.toLowerCase();
+      const chain = ['ethereum', 'solana', 'arbitrum', 'base', 'polygon'].find(c => txt.includes(c));
+      return [
+        { tool: 'defi_yields',  args: { chain: chain || '', limit: 10 } },
+        { tool: 'get_defi_tvl', args: { limit: 8 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ZEROX DeFi Yield Hunter', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 500)}`);
+      }
+      lines.push('\nReminder: higher APY usually means higher smart-contract / IL risk. Verify audits before deploying capital.');
+      return lines.join('\n');
+    }
+  },
+
+  /** position-sizer: deterministic position sizing from account + risk params */
+  'zerox/position-sizer': {
+    tools: ['calculate_position_size', 'fetch_price'],
+    argMap(prompt) {
+      const nums = (prompt.match(/[\d.]+/g) || []).map(Number);
+      const sym = extractSymbol(prompt) || 'bitcoin';
+      return [
+        { tool: 'calculate_position_size', args: {
+            account_size: nums[0] || 1000,
+            risk_percent: nums[1] || 2,
+            entry_price: nums[2] || 100,
+            stop_loss_price: nums[3] || 95
+        } },
+        { tool: 'fetch_price', args: { symbol: sym } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ZEROX Position Sizer', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 400)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** funding-rate-watch: perp funding rates + top gainers for momentum */
+  'zerox/funding-rate-watch': {
+    tools: ['get_funding_rates', 'get_top_gainers'],
+    argMap(prompt) {
+      const m = prompt.toUpperCase().match(/\b(BTC|ETH|SOL|XRP|DOGE|BNB|ADA)\b/);
+      return [
+        { tool: 'get_funding_rates', args: { symbol: m ? m[1] : 'BTC' } },
+        { tool: 'get_top_gainers',   args: { limit: 8 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ZEROX Funding Rate Watch', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 450)}`);
+      }
+      lines.push('\nSignal: persistent positive funding = crowded longs (squeeze risk); negative = crowded shorts.');
+      return lines.join('\n');
+    }
+  },
+
+  /** dominance-tracker: BTC/ETH dominance + global market context */
+  'zerox/dominance-tracker': {
+    tools: ['get_dominance', 'get_global_market'],
+    argMap() {
+      return [
+        { tool: 'get_dominance',     args: {} },
+        { tool: 'get_global_market', args: {} }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ZEROX Dominance Tracker', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 400)}`);
+      }
+      lines.push('\nRead: rising BTC dominance often signals risk-off rotation out of alts.');
+      return lines.join('\n');
+    }
+  },
+
+  /** forex-desk: live fiat exchange rates */
+  'zerox/forex-desk': {
+    tools: ['get_forex_rate'],
+    argMap(prompt) {
+      const codes = (prompt.toUpperCase().match(/\b[A-Z]{3}\b/g) || []).filter(c => /^(USD|EUR|GBP|JPY|CAD|AUD|CHF|CNY|INR|MXN|BRL|ZAR|SEK|NOK|NZD|SGD|HKD)$/.test(c));
+      const from = codes[0] || 'USD';
+      const to = codes.slice(1).join(',') || 'EUR,GBP,JPY,CAD';
+      const amt = (prompt.match(/[\d,.]+/) || [])[0];
+      return [{ tool: 'get_forex_rate', args: { from, to, amount: amt ? Number(amt.replace(/,/g, '')) : undefined } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `ZEROX Forex Desk:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `ZEROX Forex Desk\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  // ── ORACLE (5 new) ────────────────────────────────────────────────────────────
+
+  /** weather-oracle: live weather for a city + timezone */
+  'oracle/weather-oracle': {
+    tools: ['get_weather', 'get_timezone'],
+    argMap(prompt) {
+      const m = prompt.match(/(?:in|for|at)\s+([A-Z][A-Za-z .'-]+?)(?:[?.,]|$)/);
+      const city = m ? m[1].trim() : (prompt.split(/\s+/).slice(-2).join(' ') || 'New York');
+      return [
+        { tool: 'get_weather',  args: { city } },
+        { tool: 'get_timezone', args: { timezone: 'UTC' } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ORACLE Weather Oracle', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 350)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** academic-research: arXiv papers + Wikipedia + web */
+  'oracle/academic-research': {
+    tools: ['get_arxiv_papers', 'wikipedia_search', 'search_web'],
+    argMap(prompt) {
+      const q = extractQuery(prompt);
+      return [
+        { tool: 'get_arxiv_papers',  args: { query: q } },
+        { tool: 'wikipedia_search',  args: { query: q } },
+        { tool: 'search_web',        args: { query: q } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ORACLE Academic Research', `Query: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 450)}`);
+        lines.push('');
+      }
+      return lines.join('\n').trim();
+    }
+  },
+
+  /** community-pulse: Reddit + trending topics across sources */
+  'oracle/community-pulse': {
+    tools: ['get_reddit_posts', 'get_trending_topics'],
+    argMap(prompt) {
+      const m = prompt.match(/r\/([A-Za-z0-9_]+)/) || prompt.match(/\b(cryptocurrency|technology|artificial|programming|science|worldnews|stocks)\b/i);
+      const subreddit = m ? (m[1] || m[0]) : 'technology';
+      return [
+        { tool: 'get_reddit_posts',   args: { subreddit } },
+        { tool: 'get_trending_topics', args: { limit: 10 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ORACLE Community Pulse', `Topic: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 450)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** geo-locator: geocode a place + country facts */
+  'oracle/geo-locator': {
+    tools: ['geocode_address', 'get_country_info'],
+    argMap(prompt) {
+      const q = extractQuery(prompt);
+      const countryMatch = prompt.match(/\b(Japan|Brazil|Germany|France|India|China|Canada|Mexico|Egypt|Kenya|Australia|Spain|Italy|Nigeria|Norway|Sweden)\b/i);
+      return [
+        { tool: 'geocode_address',  args: { query: q } },
+        { tool: 'get_country_info', args: { country: countryMatch ? countryMatch[0] : (q.split(',').pop() || '').trim() } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ORACLE Geo Locator', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 400)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** news-intelligence: market + general news headlines */
+  'oracle/news-intelligence': {
+    tools: ['get_market_news', 'get_news_headlines'],
+    argMap(prompt) {
+      const q = extractQuery(prompt).split(/\s+/).slice(0, 3).join(' ') || 'technology';
+      return [
+        { tool: 'get_market_news',   args: { topic: q, limit: 6 } },
+        { tool: 'get_news_headlines', args: { topic: q, limit: 6 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['ORACLE News Intelligence', `Topic: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 450)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  // ── NEXUS (4 new) ─────────────────────────────────────────────────────────────
+
+  /** trend-scout: trending GitHub repos + dev trending topics */
+  'nexus/trend-scout': {
+    tools: ['get_github_trending', 'get_trending_topics'],
+    argMap(prompt) {
+      const langMatch = prompt.toLowerCase().match(/\b(javascript|typescript|python|rust|go|java|c\+\+|ruby|swift)\b/);
+      const topicMatch = prompt.toLowerCase().match(/\b(llm|agents|ai|web3|crypto|ml|devops)\b/);
+      return [
+        { tool: 'get_github_trending', args: { language: langMatch ? langMatch[0] : '', topic: topicMatch ? topicMatch[0] : '' } },
+        { tool: 'get_trending_topics',  args: { limit: 10 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['NEXUS Trend Scout', `Request: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 450)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** diagram-architect: generate Mermaid diagram for system design */
+  'nexus/diagram-architect': {
+    tools: ['generate_mermaid'],
+    argMap(prompt) {
+      const txt = prompt.toLowerCase();
+      const type = txt.includes('sequence') ? 'sequence' : txt.includes('mind') ? 'mindmap' : 'flowchart';
+      return [{ tool: 'generate_mermaid', args: { type, description: extractQuery(prompt) } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `NEXUS Diagram Architect:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `NEXUS Diagram Architect\nRequest: ${prompt}\n\n${results[0].result}\n\nRender at mermaid.live or in any Mermaid-enabled markdown viewer.`;
+    }
+  },
+
+  /** lang-detector: detect language of a code snippet + complexity context */
+  'nexus/lang-detector': {
+    tools: ['detect_language', 'extract_entities'],
+    argMap(prompt) {
+      const code = extractCode(prompt);
+      return [
+        { tool: 'detect_language', args: { code } },
+        { tool: 'extract_entities', args: { text: prompt } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['NEXUS Language Detector', `Input: "${prompt.slice(0, 60)}"`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 350)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** unit-converter: deterministic unit conversion engine */
+  'nexus/unit-converter': {
+    tools: ['convert_units'],
+    argMap(prompt) {
+      const num = (prompt.match(/[\d.]+/) || ['1'])[0];
+      // "convert 10 km to mi" / "10 C to F"
+      const m = prompt.match(/([a-zA-Z°]+)\s*(?:to|->|in|→)\s*([a-zA-Z°]+)/i);
+      const from = m ? m[1].replace(/°/g, '') : 'C';
+      const to = m ? m[2].replace(/°/g, '') : 'F';
+      return [{ tool: 'convert_units', args: { value: Number(num), from, to } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `NEXUS Unit Converter:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `NEXUS Unit Converter\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  // ── PIKADON (4 new) ───────────────────────────────────────────────────────────
+
+  /** breach-checker: check if an email appears in known data breaches */
+  'pikadon/breach-checker': {
+    tools: ['check_pwned'],
+    argMap(prompt) {
+      const m = prompt.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
+      return [{ tool: 'check_pwned', args: { email: m ? m[0] : '' } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `PIKADON Breach Checker:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `PIKADON Breach Checker\nRequest: ${prompt}\n\n${results[0].result}\n\nIf breached: rotate the password everywhere it was reused and enable 2FA immediately.`;
+    }
+  },
+
+  /** url-reputation: scan a URL via VirusTotal + screenshot evidence */
+  'pikadon/url-reputation': {
+    tools: ['scan_url_virustotal'],
+    argMap(prompt) {
+      const url = extractUrl(prompt) || prompt.trim();
+      return [{ tool: 'scan_url_virustotal', args: { url } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `PIKADON URL Reputation:\n[Unavailable: ${results[0].error}]\nTarget: ${extractUrl(prompt) || prompt}`;
+      return `PIKADON URL Reputation Scan\nTarget: ${extractUrl(prompt) || prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  /** password-auditor: analyze password strength (never stored) */
+  'pikadon/password-auditor': {
+    tools: ['check_password_strength'],
+    argMap(prompt) {
+      // Take the last token as the candidate password, or the whole prompt if single token
+      const tokens = prompt.trim().split(/\s+/);
+      const candidate = tokens.length > 1 ? tokens[tokens.length - 1] : prompt.trim();
+      return [{ tool: 'check_password_strength', args: { password: candidate } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `PIKADON Password Auditor:\n[Unavailable: ${results[0].error}]`;
+      return `PIKADON Password Auditor\n\n${results[0].result}\n\nUse a 16+ char passphrase from a manager; never reuse across sites.`;
+    }
+  },
+
+  /** code-complexity-guard: detect language + run static security check */
+  'pikadon/code-complexity-guard': {
+    tools: ['detect_language', 'check_security'],
+    argMap(prompt) {
+      const code = extractCode(prompt);
+      return [
+        { tool: 'detect_language', args: { code } },
+        { tool: 'check_security',  args: { code } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['PIKADON Code Complexity Guard', `Target: ${prompt.slice(0, 60)}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        if (r.tool === 'check_security') return composeSecurityReport([r], prompt) + '\n\n' + lines.join('\n');
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 300)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  // ── QUILL (4 new) ─────────────────────────────────────────────────────────────
+
+  /** translator: translate text to a target language */
+  'quill/translator': {
+    tools: ['translate_text', 'detect_language'],
+    argMap(prompt) {
+      const langMap = { spanish: 'es', french: 'fr', german: 'de', japanese: 'ja', chinese: 'zh', italian: 'it', portuguese: 'pt', russian: 'ru', korean: 'ko', arabic: 'ar', hindi: 'hi', dutch: 'nl' };
+      const txt = prompt.toLowerCase();
+      let target = 'es';
+      for (const [name, code] of Object.entries(langMap)) {
+        if (txt.includes(name) || new RegExp(`\\b${code}\\b`).test(txt)) { target = code; break; }
+      }
+      // text after "translate" or the full prompt
+      const m = prompt.match(/translate[^:]*[:]?\s*["']?([\s\S]+?)["']?\s*(?:to|into)\s+\w+/i);
+      const text = m ? m[1].trim() : prompt;
+      return [{ tool: 'translate_text', args: { text: text.slice(0, 1000), target } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `QUILL Translator:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `QUILL Translator\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  /** summarizer: extractive summary of long text + key entities */
+  'quill/summarizer': {
+    tools: ['summarize_text', 'extract_entities'],
+    argMap(prompt) {
+      const text = extractCode(prompt) !== prompt ? extractCode(prompt) : prompt;
+      return [
+        { tool: 'summarize_text',  args: { text, sentences: 3 } },
+        { tool: 'extract_entities', args: { text } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['QUILL Summarizer', ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        if (r.tool === 'summarize_text') lines.push(`Summary:\n${String(r.result).slice(0, 600)}`);
+        else lines.push(`\nKey Entities:\n${String(r.result).slice(0, 300)}`);
+      }
+      return lines.join('\n');
+    }
+  },
+
+  /** dictionary: word definition + usage */
+  'quill/dictionary': {
+    tools: ['get_word_definition'],
+    argMap(prompt) {
+      const m = prompt.match(/define\s+["']?([A-Za-z-]+)/i) || prompt.match(/\b([A-Za-z]{3,})\b\s*$/);
+      const tokens = prompt.trim().split(/\s+/);
+      const word = m ? m[1] : tokens[tokens.length - 1];
+      return [{ tool: 'get_word_definition', args: { word: (word || 'lexicon').replace(/[^A-Za-z-]/g, '') } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `QUILL Dictionary:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `QUILL Dictionary\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  /** markdown-formatter: convert markdown copy to clean HTML */
+  'quill/markdown-formatter': {
+    tools: ['markdown_to_html'],
+    argMap(prompt) {
+      const md = extractCode(prompt) !== prompt ? extractCode(prompt) : prompt;
+      return [{ tool: 'markdown_to_html', args: { markdown: md } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `QUILL Markdown Formatter:\n[Unavailable: ${results[0].error}]`;
+      return `QUILL Markdown Formatter\n\nHTML Output:\n${String(results[0].result).slice(0, 1200)}`;
+    }
+  },
+
+  // ── TURTLE (3 new) ────────────────────────────────────────────────────────────
+
+  /** music-producer: generate AI music from a text prompt */
+  'turtle/music-producer': {
+    tools: ['make_music'],
+    argMap(prompt) {
+      const instrumental = /instrumental|no vocals|no lyrics|beat only/i.test(prompt);
+      const styleMatch = prompt.match(/\b(lofi|hip[- ]?hop|jazz|rock|edm|ambient|classical|pop|synthwave|trap|orchestral)\b/i);
+      return [{ tool: 'make_music', args: { prompt, instrumental, style: styleMatch ? styleMatch[0] : '' } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `TURTLE Music Producer:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `TURTLE Music Producer\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  /** qr-designer: generate a branded QR code image */
+  'turtle/qr-designer': {
+    tools: ['get_qr_code'],
+    argMap(prompt) {
+      const data = extractUrl(prompt) || extractQuery(prompt);
+      return [{ tool: 'get_qr_code', args: { data } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `TURTLE QR Designer:\n[Unavailable: ${results[0].error}]\nEncoded: ${extractUrl(prompt) || prompt}`;
+      return `TURTLE QR Designer\nEncoded: ${extractUrl(prompt) || prompt.slice(0, 80)}\n\n${results[0].result}`;
+    }
+  },
+
+  /** logo-concept: generate a logo concept image */
+  'turtle/logo-concept': {
+    tools: ['generate_image', 'get_color_palette'],
+    argMap(prompt) {
+      const hex = extractHex(prompt);
+      return [
+        { tool: 'generate_image',    args: { prompt: `minimalist vector logo, ${prompt}, flat design, clean, professional brand mark, white background`, model: 'flux', width: 1024, height: 1024 } },
+        { tool: 'get_color_palette', args: { hex, mode: 'analogic' } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['TURTLE Logo Concept', `Brief: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        if (r.tool === 'generate_image') {
+          let parsed; try { parsed = JSON.parse(r.result); } catch { parsed = null; }
+          lines.push(`Logo Concept: ${parsed?.url || String(r.result).slice(0, 200)}`);
+        } else {
+          lines.push(`\nBrand Palette:\n${String(r.result).slice(0, 400)}`);
+        }
+      }
+      return lines.join('\n');
+    }
+  },
+
+  // ── SHADDAI (3 new) ───────────────────────────────────────────────────────────
+
+  /** macro-briefing: global market + dominance + market news for executive briefing */
+  'shaddai/macro-briefing': {
+    tools: ['get_global_market', 'get_dominance', 'get_market_news'],
+    argMap(prompt) {
+      const q = extractQuery(prompt).split(/\s+/).slice(0, 3).join(' ') || 'markets';
+      return [
+        { tool: 'get_global_market', args: {} },
+        { tool: 'get_dominance',     args: {} },
+        { tool: 'get_market_news',   args: { topic: q, limit: 5 } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['SHADDAI Macro Briefing', `Focus: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        lines.push(`${r.tool}:\n${String(r.result).slice(0, 400)}`);
+      }
+      lines.push('\nDecision lens: protect runway, double down where signal is strongest, cut what is not compounding.');
+      return lines.join('\n');
+    }
+  },
+
+  /** stock-watch: real-time stock quote for equity exposure decisions */
+  'shaddai/stock-watch': {
+    tools: ['get_stock_quote'],
+    argMap(prompt) {
+      const m = prompt.toUpperCase().match(/\b[A-Z]{1,5}\b/);
+      return [{ tool: 'get_stock_quote', args: { symbol: m ? m[0] : 'SPY' } }];
+    },
+    compose(results, prompt) {
+      if (results[0]?.error) return `SHADDAI Stock Watch:\n[Unavailable: ${results[0].error}]\nRequest: ${prompt}`;
+      return `SHADDAI Stock Watch\nRequest: ${prompt}\n\n${results[0].result}`;
+    }
+  },
+
+  /** decision-diagram: turn a strategic question into a Mermaid decision flow */
+  'shaddai/decision-diagram': {
+    tools: ['generate_mermaid', 'search_web'],
+    argMap(prompt) {
+      return [
+        { tool: 'generate_mermaid', args: { type: 'flowchart', description: extractQuery(prompt) } },
+        { tool: 'search_web',       args: { query: extractQuery(prompt) } }
+      ];
+    },
+    compose(results, prompt) {
+      const lines = ['SHADDAI Decision Diagram', `Question: ${prompt}`, ''];
+      for (const r of results) {
+        if (r.error) { lines.push(`[${r.tool} unavailable: ${r.error}]`); continue; }
+        if (r.tool === 'generate_mermaid') lines.push(`Decision Flow:\n${String(r.result).slice(0, 600)}`);
+        else {
+          let parsed; try { parsed = JSON.parse(r.result); } catch { parsed = null; }
+          if (Array.isArray(parsed)) { lines.push('\nSupporting Evidence:'); parsed.slice(0, 3).forEach((it, i) => lines.push(`  ${i + 1}. ${it.title}`)); }
+        }
+      }
+      return lines.join('\n');
+    }
   }
 };
 
