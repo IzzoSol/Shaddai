@@ -3286,7 +3286,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
-  <button class="nav-btn" onclick="showView('chainRunner')" style="color:#00c8ff;font-weight:700">🔗 Chain</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
 
@@ -5394,13 +5393,25 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
             /* scroll to panel */
             $('operatorForge').scrollIntoView({behavior:'smooth',block:'nearest'});
           };
-          /* quick run button */
+          /* quick run button — REAL tool loop so equipped skills actually fire */
           card.querySelector('.ag-run').onclick=async(e)=>{
             e.stopPropagation();
             const agentName=(a.label||name).toUpperCase();
-            $('ofConsole').textContent=`⟳ quick-running ${agentName}…`;
-            const r=await j('/api/brains/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:agentName,prompt:'Introduce yourself in 2 sentences and state your top skill.'})});
-            $('ofConsole').textContent=r.ok?`▶ ${agentName} [${r.brain||''}]:\n${r.content}`:'⚠ '+(r.error||'run failed');
+            $('ofConsole').textContent=`⟳ running ${agentName} (real tool loop)…`;
+            try{
+              const run=await j('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:'Introduce yourself in one sentence, then use one of your equipped tools and report the result.',agent:agentName})});
+              if(!run||!run.taskId){$('ofConsole').textContent='⚠ '+((run&&run.error)||'run failed');return;}
+              for(let i=0;i<20;i++){
+                await new Promise(s=>setTimeout(s,1500));
+                const t=await j('/api/agent/task/'+run.taskId);
+                if(t&&t.status&&/complete|done|fail|error/i.test(t.status)){
+                  const used=(t.tools_used&&t.tools_used.length)?'\n⚡ tools used: '+[...new Set(t.tools_used)].join(', '):'\n(no tools used this run)';
+                  $('ofConsole').textContent=`▶ ${agentName}:\n${(t.result||t.error||'(no output)')}${used}`;return;
+                }
+                $('ofConsole').textContent=`⟳ ${agentName}… (${(t&&t.status)||'running'})`;
+              }
+              $('ofConsole').textContent='⚠ still running — try again in a moment';
+            }catch(err){$('ofConsole').textContent='⚠ '+err.message;}
           };
           gallery.appendChild(card);
         });
@@ -5443,7 +5454,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
       async function forge(silent){
         const name=$('ofName').value.trim();
         if(!name){$('ofConsole').textContent='⚠ give your operator a CODENAME first.';return false}
-        const r=await j('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona:personaFull(),brainId:chosenBrain()})});
+        const r=await j('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona:personaFull(),brainId:chosenBrain(),tools:[...skills]})});
         if(!silent){
           $('ofConsole').textContent=r.ok?`⬡ FORGED "${name}" · brain=${chosenBrain()} · ${skills.size} skills equipped.`:'⚠ '+(r.error||'forge failed');
           if(r.ok)await loadGallery();

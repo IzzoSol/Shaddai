@@ -113,10 +113,30 @@ router.post('/agent', requireAdmin, json, (req, res) => {
 
 // Add a custom user agent. Body { name, persona, brainId? }
 router.post('/custom', requireAdmin, json, (req, res) => {
-  const { name, persona, brainId } = req.body || {};
+  const { name, persona, brainId, tools } = req.body || {};
   if (!name || !persona) return res.status(400).json({ ok: false, error: 'need { name, persona, brainId? }' });
-  customAgents[name] = { label: name, persona, defaultBrain: BRAINS[brainId] ? brainId : 'groq-70b' };
-  res.json({ ok: true, agent: name });
+  const brain = BRAINS[brainId] ? brainId : 'groq-70b';
+  const id = String(name).toUpperCase();
+  // Keep ONLY real tools that exist in the engine registry, so equipped skills actually work.
+  let realTools = [];
+  let registered = false;
+  try {
+    const eng = require('./agent-engine');
+    const reg = (eng && eng.TOOLS) || {};
+    realTools = (Array.isArray(tools) ? tools : []).filter(t => typeof t === 'string' && reg[t]);
+    if (eng && eng.AGENTS) {
+      // Register the forged agent so /api/agent/run gives it these REAL tools in the tool-loop.
+      eng.AGENTS[id] = {
+        name: id, role: 'Custom Operator', goal: persona,
+        tools: realTools,
+        preferredProvider: (BRAINS[brain] && BRAINS[brain].provider) || 'groq',
+        custom: true
+      };
+      registered = true;
+    }
+  } catch (_) {}
+  customAgents[name] = { label: name, persona, defaultBrain: brain, tools: realTools };
+  res.json({ ok: true, agent: name, tools: realTools.length, equipped: realTools, registered });
 });
 
 // Quick test of an agent's brain. Body { agent, prompt }

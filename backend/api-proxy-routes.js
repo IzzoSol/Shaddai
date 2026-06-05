@@ -1049,8 +1049,13 @@ router.get('/agents/:name/manifest', (req, res) => {
   try {
     const { buildManifest } = require('./lib/agent-manifest');
     const name = String(req.params.name || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    const tools = (agentEngine.AGENTS && agentEngine.AGENTS[name] && agentEngine.AGENTS[name].tools) || [];
-    const manifest = buildManifest(name, { tools });
+    const ae = (agentEngine.AGENTS && agentEngine.AGENTS[name]) || null;
+    const tools = (ae && ae.tools) || [];
+    let manifest = buildManifest(name, { tools });
+    // Custom/forged agents aren't in PERSONAS — build their manifest from the engine entry.
+    if (!manifest && ae) {
+      manifest = buildManifest(name, { tools, custom: { label: ae.name || name, persona: ae.goal || ('You are ' + name + ', a SHADDAI operator.'), defaultBrain: 'groq-70b' } });
+    }
     if (!manifest) return res.status(404).json({ error: 'Unknown agent', name });
     // Merge a generated portrait if one exists (additive — never overwrites collectibles).
     try {
