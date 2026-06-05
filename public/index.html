@@ -622,6 +622,9 @@ body::after {
   font-size: 10px;
   cursor: pointer;
 }
+/* dropdown contrast fix — options were white-on-white on some themes/browsers */
+select option, .select option, optgroup { background:#0e1117 !important; color:#e8ecf2 !important; }
+select:not(.select){ background: var(--bg-deep,#0e1117); color: var(--text,#e8ecf2); border:1px solid var(--border,#1f2630); border-radius:4px; padding:6px 10px; font-size:10px; }
 
 /* Dashboard */
 #dashView.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -16046,7 +16049,7 @@ function renderSettingsPanel() {
   const cw = document.getElementById('settingsCostWeek'); if(cw) cw.textContent = '$' + (S.costs?.week?.toFixed(4)||'0.00');
   const ca = document.getElementById('settingsCostAll'); if(ca) ca.textContent = '$' + (S.costs?.total?.toFixed(4)||'0.00');
   // Version display
-  const v = document.querySelector('#settingsView .settings-value'); if(v && v.textContent.startsWith('v')) v.textContent = 'v43.33';
+  const v = document.querySelector('#settingsView .settings-value'); if(v && v.textContent.startsWith('v')) v.textContent = 'v80';
 }
 
 async function pingAgentEndpoint(name, url) {
