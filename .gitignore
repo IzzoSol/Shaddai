@@ -44,3 +44,12 @@ SHADDAI-index_*.html
 backend/execution-logs/
 backend/agent-logs/
 backend/logs/
+
+# runtime data (regenerable — keep out of git)
+backend/data/aura-cache.json
+backend/data/aura-stats.json
+backend/data/api-vault.json
+backend/data/skill-market.json
+backend/data/skill-market-purchases.json
+backend/data/executions/
+backend/data/agent-memory.json
