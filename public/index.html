@@ -21740,13 +21740,20 @@ function showView(v) {
     mainArea.style.paddingBottom = isOutside ? '0' : '';
     mainArea.style.marginBottom = isOutside ? '0' : '';
     if (isOutside) {
+      // Respect the side rail (210px) so the view isn't hidden behind the nav when tabs are docked left/right.
+      const sbL = document.body.classList.contains('ly-sb');
+      const sbR = document.body.classList.contains('ly-sb-right');
       viewEl.style.marginTop = '126px';
       viewEl.style.padding = '0 20px 20px 20px';
-      viewEl.style.width = '100%';
+      viewEl.style.marginLeft = sbL ? '210px' : '';
+      viewEl.style.marginRight = sbR ? '210px' : '';
+      viewEl.style.width = (sbL || sbR) ? 'calc(100% - 210px)' : '100%';
       viewEl.style.boxSizing = 'border-box';
     } else {
       viewEl.style.marginTop = '';
       viewEl.style.padding = '';
+      viewEl.style.marginLeft = '';
+      viewEl.style.marginRight = '';
       viewEl.style.width = '';
       viewEl.style.boxSizing = '';
     }
@@ -47795,7 +47802,12 @@ Provide a comprehensive analysis:
 window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-sb-right','navpos-bottom');
   if(p==='left')b.classList.add('ly-sb');else if(p==='right')b.classList.add('ly-sb-right');else if(p==='bottom')b.classList.add('navpos-bottom');
   try{localStorage.setItem('shaddai_navpos',p);}catch(e){}
-  document.querySelectorAll('#navPosPicker button').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-np')===p);});};
+  document.querySelectorAll('#navPosPicker button').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-np')===p);});
+  // If an "outside #mainArea" view is currently open, re-apply the side-rail offset live so it doesn't get covered.
+  try{var av=document.querySelector('.view.active');var ma=document.getElementById('mainArea');
+    if(av&&ma&&!ma.contains(av)){var L=p==='left',R=p==='right';
+      av.style.marginLeft=L?'210px':'';av.style.marginRight=R?'210px':'';av.style.width=(L||R)?'calc(100% - 210px)':'100%';}
+  }catch(e){}};
 try{ setNavPos(localStorage.getItem('shaddai_navpos')||'top'); }catch(e){}
 
 // ⚡ Simple Mode — 3-step wizard (What → Who → GO), real /api/agent/run engine (restored from the office redesign).
