@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
-<title>SHADDAI v82 · Sovereign AI Command</title>
+<title>SHADDAI v83 · Sovereign AI Command</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
 <script src="/pwa-register.js" defer></script>
@@ -2818,7 +2818,7 @@ body[data-theme="dark"]::before {
   font-size: 18px !important;
 }
 /* ════════════════════════════════════════════════════════
-   SHADDAI v82 — SOVEREIGN BOOT OVERLAY
+   SHADDAI v83 — SOVEREIGN BOOT OVERLAY
    Visible immediately from first body paint. No JS needed
    to show it — JS only populates it + triggers teardown.
    ════════════════════════════════════════════════════════ */
@@ -3203,6 +3203,9 @@ body.ly-sb #mainArea,body.ly-sb-right #mainArea,body.navpos-bottom #mainArea{mar
 body.ly-sb-right #mainNav{display:none!important}
 body.ly-sb-right #sbNav{display:flex!important;left:auto!important;right:0!important}
 body.ly-sb-right #mainArea{margin-right:210px!important;width:auto!important}
+/* Bulletproof: the "outside #mainArea" late views must clear the side rail too (Marketplace, Sentiment, Billing, etc.) */
+body.ly-sb #commandCenterView,body.ly-sb #agentStatusView,body.ly-sb #tradeSignalsView,body.ly-sb #jobBoardView,body.ly-sb #earningsView,body.ly-sb #my-agentsView,body.ly-sb #marketplaceView,body.ly-sb #sentimentView,body.ly-sb #content-studioView,body.ly-sb #documentsView,body.ly-sb #chainRunnerView,body.ly-sb #billingView{margin-left:210px!important;margin-right:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
+body.ly-sb-right #commandCenterView,body.ly-sb-right #agentStatusView,body.ly-sb-right #tradeSignalsView,body.ly-sb-right #jobBoardView,body.ly-sb-right #earningsView,body.ly-sb-right #my-agentsView,body.ly-sb-right #marketplaceView,body.ly-sb-right #sentimentView,body.ly-sb-right #content-studioView,body.ly-sb-right #documentsView,body.ly-sb-right #chainRunnerView,body.ly-sb-right #billingView{margin-right:210px!important;margin-left:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
 body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePanel{right:210px!important;left:0!important}
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00e5a0;background:rgba(0,229,160,.12)}
@@ -3229,7 +3232,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v82</span>
+  <span>SHADDAI v83</span>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3365,7 +3368,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v82</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v83</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3384,7 +3387,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
     <button class="sbt" onclick="showView('wallet');lySetSb(this)"><span class="ic">💰</span>Wallet</button>
-    <button class="sbt" onclick="showView('settings');lySetSb(this);setTimeout(()=>{const el=document.getElementById('settingsPlanSection');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},200)"><span class="ic">💳</span>Plan</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
     <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);margin-top:auto" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
@@ -3451,7 +3453,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
         </div>
         <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v82 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v83 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
         <div class="mission-text">SHADDAI (commander) · ZEROX (wealth) · ORACLE (research) · NEXUS (backend) · TURTLE (design) · QUILL (writing) · PIKADON (security) · 5,361 skills · Workflow Chains · Scheduled Jobs · Webhooks · Agent Sparklines</div>
         <!-- Agent online dots — populated by initSovereignTerminal() -->
         <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
@@ -3846,7 +3848,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div>
           <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT / TOPIC</div>
-          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v82 launch strategy'">
+          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v83 launch strategy'">
         </div>
       </div>
       <button class="btn btn-accent" style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#00c8ff,#00e5a0);color:#000;border:none;font-weight:700;letter-spacing:0.05em" onclick="runWorkflowFromUI()">▶ RUN WORKFLOW</button>
@@ -4700,7 +4702,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <!-- System Log -->
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:2px">▸ SYSTEM LOG</div>
           <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:8px;max-height:80px;overflow-y:auto" id="officeSystemLog">
-            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v82 online</div>
+            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v83 online</div>
           </div>
         </div>
 
@@ -11904,7 +11906,7 @@ function init() {
   setTimeout(() => { if (typeof _syncCreditsDisplay === 'function') _syncCreditsDisplay(); }, 500); // sync credit displays on load
   setTimeout(checkAllApiStatus, 3000);  // auto-check all services on load
   setTimeout(initEventStream, 1000);    // subscribe to gateway live events
-  log('SHADDAI v82 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
+  log('SHADDAI v83 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
   setInterval(save, S.settings.autoSave * 1000);
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
@@ -12172,7 +12174,7 @@ function exportOfficeReport() {
 
   lines.push('');
   lines.push(`─────────────────────────────────────────────────────────────`);
-  lines.push(`SHADDAI v82 · cloudzncrownz@gmail.com · ${ts}`);
+  lines.push(`SHADDAI v83 · cloudzncrownz@gmail.com · ${ts}`);
 
   downloadText(lines.join('\n'), `shaddai-report-${Date.now()}.txt`, 'text/plain');
   officeLog('[EXPORT] Full operations report downloaded');
@@ -32769,7 +32771,7 @@ function loadWebhookConfig() {
 function testOutboundWebhook() {
   const url = document.getElementById('webhookUrl')?.value || localStorage.getItem('shaddai_webhook') && JSON.parse(localStorage.getItem('shaddai_webhook')).url;
   if (!url) { notify('⚠ No webhook URL configured'); return; }
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v82', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v83', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
     .then(r => { if (r.ok) notify('✓ Outbound webhook test successful'); else notify('⚠ Webhook returned ' + r.status); })
     .catch(e => notify('✗ Webhook failed: ' + e.message));
 }
@@ -33794,7 +33796,7 @@ setInterval(() => {
   if (document.getElementById('dispatchWorkloadContainer')) updateDispatchUI();
 }, 3000);
 
-console.log('✅ SHADDAI v82 Enhancements Loaded');
+console.log('✅ SHADDAI v83 Enhancements Loaded');
 console.log('🎛️ Command Center dispatch system active');
 console.log('📍 SHADDAI desk & agent workload tracking ready');
 
@@ -39000,7 +39002,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (!overlay) { overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
     overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden';
 
-    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v82`,`▶ ALL SYSTEMS OK`];
+    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v83`,`▶ ALL SYSTEMS OK`];
     const _boardHtml=[..._boardItems,..._boardItems].map(t=>`<div style="padding:3px 4px;color:rgba(${a.glow},0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:5.5px">${t}</div>`).join('');
     overlay.innerHTML = `
       <style>
