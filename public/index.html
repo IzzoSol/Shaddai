@@ -3668,6 +3668,31 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 
   <!-- Tasks -->
   <div id="workflowView" class="view">
+    <!-- ⚡ SIMPLE MODE — pick an agent, say what you need, it just does it (real /api/agent/run engine) -->
+    <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
+      <div class="card-head">
+        <span class="card-title">⚡ Simple Mode</span>
+        <span style="font-size:9px;color:var(--text-muted)">Pick an agent · say what you need · it does it (equipped tools run automatically)</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
+        <select id="smAgent" class="input" style="max-width:200px">
+          <option value="SHADDAI">SHADDAI · Orchestrator</option>
+          <option value="ORACLE">ORACLE · Research</option>
+          <option value="ZEROX">ZEROX · Markets/Revenue</option>
+          <option value="NEXUS">NEXUS · Code/Backend</option>
+          <option value="TURTLE">TURTLE · Design/Media</option>
+          <option value="QUILL">QUILL · Writing</option>
+          <option value="PIKADON">PIKADON · Security</option>
+        </select>
+        <button class="btn btn-accent" id="smGo" onclick="simpleRun()">▶ GO</button>
+      </div>
+      <textarea id="smGoal" class="input" rows="2" placeholder="What do you need? e.g. 'Get the BTC price and tell me the trend' · 'Write a tweet announcing SHADDAI' · 'Scan this contract for risks'" style="width:100%;resize:vertical"></textarea>
+      <div id="smOut" style="margin-top:10px;font-size:11px;display:none">
+        <div id="smStatus" style="color:var(--text-muted);margin-bottom:6px"></div>
+        <div id="smResult" style="white-space:pre-wrap;line-height:1.5"></div>
+        <div id="smTools" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">Task Management</span>
@@ -47762,6 +47787,36 @@ window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-
   try{localStorage.setItem('shaddai_navpos',p);}catch(e){}
   document.querySelectorAll('#navPosPicker button').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-np')===p);});};
 try{ setNavPos(localStorage.getItem('shaddai_navpos')||'top'); }catch(e){}
+
+// ⚡ Simple Mode — run a real agent task end-to-end (create → poll → show result + tools used).
+window.simpleRun=async function(){
+  var agent=(document.getElementById('smAgent')||{}).value||'SHADDAI';
+  var goal=((document.getElementById('smGoal')||{}).value||'').trim();
+  var out=document.getElementById('smOut'),st=document.getElementById('smStatus'),
+      res=document.getElementById('smResult'),tl=document.getElementById('smTools'),go=document.getElementById('smGo');
+  if(!goal){ if(st){out.style.display='block';st.textContent='Type what you need first.';} return; }
+  out.style.display='block'; res.textContent=''; tl.textContent=''; go.disabled=true;
+  st.textContent='⟳ '+agent+' is working…';
+  try{
+    var r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:goal,agent:agent})});
+    var d=await r.json();
+    if(!d.taskId){ st.textContent='⚠ '+(d.error||'could not start'); go.disabled=false; return; }
+    var id=d.taskId, tries=0;
+    var poll=setInterval(async function(){
+      tries++;
+      try{
+        var tr=await fetch('/api/agent/task/'+id); var t=await tr.json();
+        st.textContent='⟳ '+agent+' · '+(t.status||'running')+' (step '+(t.iterations||tries)+')';
+        if(t.status==='completed'||t.status==='done'||t.status==='failed'||tries>50){
+          clearInterval(poll); go.disabled=false;
+          st.textContent=(t.status==='failed'?'⚠ failed':'✅ done')+' · '+agent;
+          res.textContent=t.result||t.error||'(no output)';
+          if(t.tools_used&&t.tools_used.length) tl.textContent='🔧 tools used: '+t.tools_used.join(', ');
+        }
+      }catch(e){ clearInterval(poll); go.disabled=false; st.textContent='⚠ '+e.message; }
+    },1300);
+  }catch(e){ st.textContent='⚠ '+e.message; go.disabled=false; }
+};
 </script>
 
 </body>

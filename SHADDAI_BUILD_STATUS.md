@@ -1,6 +1,16 @@
 # SHADDAI — Build Status & Session Log (master index)
 
-*Single source of truth for what's built, what's verified, what's left. Repo: `IzzoIzzoIzzo/Shaddai` (private, branch `main`).*
+*Single source of truth for what's built, what's verified, what's left. Repo: `IzzoIzzoIzzo/Shaddai` (private, branch `foundation-hardening`).*
+
+## 🗺️ THE THREAD (2026-06-05) — read this first if lost
+
+**DONE + pushed + tested (90/90):** security foundation · LLM groq-first+6-provider fallback (chat ~300ms) · 182 real tools · 73 skill→tool bindings · **Forge gives agents REAL tools** (fakes filtered) · **agent SOUL** (`data/agents/*.md` injected) · **AURA token-saver** (live: "5×5"→free) · **Security scans** (`/api/security`) · **BYOK vault** (`/api/vault`) · **News** (`/api/news`) · **Collectible-rewards** (`/api/collectibles/rewards`, earn-by-work+perks) · Orchestrator · The Vault (NFT mint, devnet-ready) · embeddable `<shaddai-agent>` (x402 pay + per-customer memory) · marketplace backend · nav side-fit fix · agent-bar pin · version/dropdown fixes · port-label cleanup · Chain tab removed.
+
+**PENDING (serial `index.html` UI work — the big overhaul list):**
+office commands do real work · agent-room buttons + decorate flow · **Collectables own tab** (swap Plan; Vault+minting+earn UI) · Bazaar (theme/emojis/names, back-button bug) · help-`?` remove-button+themed UI · **MoonPay→Wallet** (relocate + full x402/moonpay orchestration view) · Sentiment→Markets · **Media/Creation suite** (clickable modules → simple connected tools) · Tools/work modules bigger · **API tab** (curated catalog + BYOK password-lock, surface the vault) · surface AURA savings + Security tab → `/api/security` · agent-port tiles repoint (no ports on Render) · API-usage expander removal · arrows + SHADDAI button moveable/hideable · SHADDAI-menu redesign (pick agent+tools) · Social Command reorganize · News tab UI · Workflow + Office **Simple mode** · agents scan+write documents · x402 buy/sell everyday items.
+
+**PENDING (design, awaiting decision):** the 7-layer **Cognitive Architecture** spec (soul/HD/cognition/knowledge/memory/tools) + Human Design charts + esoteric corpus — one open question: lean prompt-assembler (recommended) vs all-layers-always.
+
 
 ## Run / deploy
 - **Local:** `npm install` → `npm start` (serves frontend + API on `$PORT`, default 3000). Open `/`.
