@@ -3085,6 +3085,10 @@ body[data-theme="dark"]::before {
   /* ── Sidebar: hide on mobile (uses top nav instead) ── */
   #sbNav, #fileSidebar, #fileSidebarToggle { display: none !important; }
   #mainArea.sidebar-active { margin-left: 0 !important; }
+  /* Safety: on mobile, always show the top nav even if side-nav was chosen, and drop the rail offset. */
+  body.ly-sb #mainNav, body.ly-sb-right #mainNav { display: flex !important; }
+  body.ly-sb #mainArea, body.ly-sb-right #mainArea { margin-left: 0 !important; margin-right: 0 !important; width: auto !important; }
+  body.ly-sb #topBar, body.ly-sb-right #topBar, body.ly-sb #agentBar, body.ly-sb-right #agentBar { left: 0 !important; right: 0 !important; }
 
   /* ── Modals: full-width on mobile ── */
   .modal-box {
@@ -3361,7 +3365,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v75.0</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v82</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3369,6 +3373,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('marketplace');lySetSb(this)"><span class="ic">🛒</span>Marketplace</button>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
+    <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
     <button class="sbt" onclick="showView('media');lySetSb(this)"><span class="ic">🎵</span>Media</button>
     <button class="sbt" onclick="showView('social');lySetSb(this)"><span class="ic">📱</span>Social</button>
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
@@ -47825,7 +47830,8 @@ window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-
     if(av&&ma&&!ma.contains(av)){var L=p==='left',R=p==='right';
       av.style.marginLeft=L?'210px':'';av.style.marginRight=R?'210px':'';av.style.width=(L||R)?'calc(100% - 210px)':'100%';}
   }catch(e){}};
-try{ setNavPos(localStorage.getItem('shaddai_navpos')||'top'); }catch(e){}
+// Default: dashboard NEXT TO the tabs (left side-nav) on desktop; top nav on mobile. Respects a saved choice.
+try{ var _sp=localStorage.getItem('shaddai_navpos'); setNavPos(_sp||((window.innerWidth>768)?'left':'top')); }catch(e){ try{setNavPos('top');}catch(_){} }
 
 // ⚡ Simple Mode — 3-step wizard (What → Who → GO), real /api/agent/run engine (restored from the office redesign).
 (function(){
