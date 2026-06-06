@@ -3284,6 +3284,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444">Security</button>
   <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🛒 Marketplace</button>
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
+  <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
@@ -7443,6 +7444,21 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   </div>
 
   <!-- Media / Creative Studio -->
+  <div id="newsView" class="view">
+    <div class="card cyber-card">
+      <div class="card-head">
+        <span class="card-title">📰 News</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="font-size:9px" onclick="renderNews()">↻ Refresh</button>
+          <button class="btn btn-accent" style="font-size:9px" onclick="analyzeNews()">📊 Analyze Sentiment</button>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Live, free, keyless sources (Google News · CryptoCompare · CoinDesk · CoinTelegraph). Sentiment runs locally — no tokens used.</div>
+      <div id="newsSentiment" style="display:none;font-size:11px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:10px"></div>
+      <div id="newsList" style="display:flex;flex-direction:column;gap:8px"><div style="color:var(--text-muted);font-size:11px">Loading headlines…</div></div>
+    </div>
+  </div>
+
   <div id="mediaView" class="view" style="overflow-y:auto;max-height:80vh;scroll-behavior:smooth">
 
     <!-- MEDIA HUD HEADER -->
@@ -21760,6 +21776,7 @@ function showView(v) {
   }
   if (v === 'dash')         { renderDash(); if (typeof updateMissionMRR === 'function') updateMissionMRR(); }
   if (v === 'media')        renderMedia();
+  if (v === 'news')         renderNews();
   // Note: pixel office init happens in switchOfficeTab('pixel'), not here
   if (v === 'agents')       renderAgents();
   if (v === 'workflow')     renderTasks();
@@ -47862,6 +47879,33 @@ try{ setNavPos(localStorage.getItem('shaddai_navpos')||'top'); }catch(e){}
   };
   try{ if($('wizBody')) window.smReset(); }catch(e){}
 })();
+
+// 📰 News tab — live free headlines + local (token-free) sentiment.
+window.renderNews=async function(){
+  const list=document.getElementById('newsList'); if(!list) return;
+  const esc=s=>String(s==null?'':s).replace(/[<>]/g,'');
+  list.innerHTML='<div style="color:var(--text-muted);font-size:11px">Loading headlines…</div>';
+  try{
+    const r=await fetch('/api/news?limit=20'); const d=await r.json();
+    const items=d.news||d.items||d.articles||(Array.isArray(d)?d:[]);
+    if(!items.length){ list.innerHTML='<div style="color:var(--text-muted);font-size:11px">No headlines right now — try Refresh.</div>'; return; }
+    list.innerHTML=items.map(n=>`<a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="display:block;text-decoration:none;padding:9px 11px;border:1px solid var(--border);border-radius:6px;transition:.15s" onmouseover="this.style.borderColor='#22d3ee'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:12px;color:var(--text,#e8ecf2);line-height:1.35">${esc(n.title||'(untitled)')}</div>
+      <div style="font-size:9px;color:var(--text-muted);margin-top:4px">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleString()):''}</div>
+    </a>`).join('');
+  }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:11px">⚠ '+esc(e.message)+'</div>'; }
+};
+window.analyzeNews=async function(){
+  const box=document.getElementById('newsSentiment'); if(!box) return;
+  box.style.display='block'; box.innerHTML='Analyzing sentiment locally (0 tokens)…';
+  try{
+    const r=await fetch('/api/news/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit:20})});
+    const d=await r.json();
+    const col=d.overallSentiment==='bullish'?'#22c55e':d.overallSentiment==='bearish'?'#ef4444':'#eab308';
+    box.style.borderColor=col;
+    box.innerHTML=`<b style="color:${col};text-transform:uppercase">${(d.overallSentiment||'neutral')}</b> · score ${(d.score!=null?d.score:0)} · 🟢 ${d.bullishCount||0} bullish / 🔴 ${d.bearishCount||0} bearish / ⚪ ${d.neutralCount||0} neutral<br><span style="color:var(--text-muted);font-size:10px">${String(d.summary||'').replace(/[<>]/g,'')}</span>`;
+  }catch(e){ box.innerHTML='<span style="color:#ef4444">⚠ '+String(e.message).replace(/[<>]/g,'')+'</span>'; }
+};
 </script>
 
 </body>

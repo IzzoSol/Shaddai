@@ -1,196 +1,258 @@
 /**
  * security-scan.js — SHADDAI Security Engine (PIKADON)
- * Self-contained. Protects the dashboard AND the agents.
+ * Self-contained, PURE, defensive. Protects the dashboard AND the agents/skills.
  *
  *   const { scanUrl, scanCode, scanSkill, router } = require('./lib/security-scan');
  *   app.use('/api/security', require('./lib/security-scan').router);
  *
- * Deps: node built-ins + axios (already a dependency). No new deps.
+ * Deps: node built-ins + express only. No network calls (real local heuristics).
+ * Every function is pure + defensive: bad input becomes a finding, never a throw.
+ *
+ * Finding shape (uniform across all scanners):
+ *   { severity: 'low'|'medium'|'high'|'critical', code: 'STABLE_CODE', message: 'human text', line?: number }
+ *
+ * Result shapes:
+ *   scanUrl(url)     -> { url, findings, score, verdict }
+ *   scanCode(code)   -> { findings, score, verdict }
+ *   scanSkill(skill) -> { name, findings, score, verdict, risk }
  */
 
 'use strict';
 
-const url = require('url');
+const nodeUrl = require('url');
 const express = require('express');
-let axios;
-try { axios = require('axios'); } catch { axios = null; }
 
-// ───────────────────────────── helpers ─────────────────────────────
+// ───────────────────────────── scoring / verdict ─────────────────────────────
 
-const SUSPICIOUS_TLDS = ['.zip', '.mov', '.xyz', '.top', '.gq', '.tk', '.ml', '.cf', '.work', '.click', '.country', '.kim'];
-const BAD_KEYWORDS = [
-  'login-verify', 'account-update', 'secure-login', 'verify-account', 'confirm-account',
-  'webscr', 'signin-update', 'wallet-connect', 'seed-phrase', 'private-key', 'airdrop-claim',
-  'metamask', 'free-crypto', 'double-your', 'bonus-claim', 'reset-password-now'
-];
+const SEV_POINTS = { critical: 40, high: 25, medium: 12, low: 5 };
 
-function clampVerdictFromScore(score, lowMax, midMax) {
-  // higher score = more dangerous
-  if (score >= midMax) return 'dangerous';
-  if (score >= lowMax) return 'suspicious';
+// score -> verdict. higher score = more dangerous.
+function verdictFromScore(score, findings) {
+  if (findings.some(f => f.severity === 'critical' || f.severity === 'high')) return 'dangerous';
+  if (score >= 45) return 'dangerous';
+  if (score >= 15 || findings.some(f => f.severity === 'medium')) return 'suspicious';
   return 'safe';
 }
 
+// ───────────────────────────── shared net helpers ─────────────────────────────
+
+const SUSPICIOUS_TLDS = [
+  '.zip', '.mov', '.xyz', '.top', '.gq', '.tk', '.ml', '.cf',
+  '.work', '.click', '.country', '.kim', '.cam', '.rest', '.fit'
+];
+
+// phishing / scam keyword fragments commonly seen in malicious URLs
+const BAD_URL_KEYWORDS = [
+  'login-verify', 'account-update', 'secure-login', 'verify-account', 'confirm-account',
+  'webscr', 'signin-update', 'wallet-connect', 'seed-phrase', 'private-key', 'airdrop-claim',
+  'metamask', 'free-crypto', 'double-your', 'bonus-claim', 'reset-password-now', 'claim-reward'
+];
+
+// URL shorteners / open redirectors — chained risk + obscured destination
+const REDIRECTORS = [
+  'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly', 'is.gd', 'buff.ly',
+  'rebrand.ly', 'cutt.ly', 'shorturl.at', 'rb.gy', 'lnkd.in', 'tiny.cc', 'soo.gd'
+];
+
 function isRawIpHost(host) {
   if (!host) return false;
-  // IPv4
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
-  // bracketed IPv6
-  if (/^\[?[0-9a-f:]+\]?$/i.test(host) && host.includes(':')) return true;
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;          // IPv4
+  if (host.includes(':') && /^\[?[0-9a-f:]+\]?$/i.test(host)) return true; // IPv6
   return false;
+}
+
+// Detect private / loopback / link-local / reserved hosts — SSRF risk.
+function privateHostReason(host) {
+  if (!host) return null;
+  const h = host.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+
+  if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal')) {
+    return 'resolves to a local/internal host';
+  }
+
+  // IPv6 loopback / link-local / unique-local
+  if (h === '::1' || h === '0:0:0:0:0:0:0:1') return 'IPv6 loopback (::1)';
+  if (/^fe80:/i.test(h)) return 'IPv6 link-local (fe80::/10)';
+  if (/^f[cd][0-9a-f]{2}:/i.test(h)) return 'IPv6 unique-local (fc00::/7)';
+
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const o = m.slice(1).map(Number);
+    if (o.some(n => n > 255)) return null;
+    if (o[0] === 127) return 'loopback (127.0.0.0/8)';
+    if (o[0] === 10) return 'private network (10.0.0.0/8)';
+    if (o[0] === 192 && o[1] === 168) return 'private network (192.168.0.0/16)';
+    if (o[0] === 172 && o[1] >= 16 && o[1] <= 31) return 'private network (172.16.0.0/12)';
+    if (o[0] === 169 && o[1] === 254) return 'link-local / cloud metadata (169.254.0.0/16)';
+    if (o[0] === 0) return 'reserved "this network" (0.0.0.0/8)';
+    if (o[0] >= 224) return 'multicast / reserved address space';
+  }
+  return null;
 }
 
 // ───────────────────────────── scanUrl ─────────────────────────────
 
-async function scanUrl(rawUrl) {
+function scanUrl(rawUrl) {
   const findings = [];
   let score = 0;
-  const add = (severity, msg, pts) => { findings.push({ severity, msg }); score += pts; };
+  const add = (severity, code, message) => {
+    findings.push({ severity, code, message });
+    score += SEV_POINTS[severity] || 5;
+  };
 
   if (!rawUrl || typeof rawUrl !== 'string') {
-    return { url: rawUrl, verdict: 'dangerous', score: 100, findings: [{ severity: 'high', msg: 'No URL provided' }] };
+    return { url: rawUrl == null ? null : String(rawUrl), score: 100, verdict: 'dangerous',
+      findings: [{ severity: 'high', code: 'URL_MISSING', message: 'No URL string provided' }] };
   }
+
+  const trimmed = rawUrl.trim();
 
   let parsed;
   try {
-    parsed = new url.URL(rawUrl);
+    parsed = new nodeUrl.URL(trimmed);
   } catch {
-    return { url: rawUrl, verdict: 'suspicious', score: 50, findings: [{ severity: 'medium', msg: 'URL could not be parsed' }] };
+    return { url: rawUrl, score: 50, verdict: 'suspicious',
+      findings: [{ severity: 'medium', code: 'URL_UNPARSEABLE', message: 'URL could not be parsed as a valid URL' }] };
   }
 
   const host = (parsed.hostname || '').toLowerCase();
 
-  // ── VirusTotal path (if key present) ──
-  const vtKey = process.env.VIRUSTOTAL_API_KEY;
-  if (vtKey && axios) {
-    try {
-      // VT v3: url id is base64url of the url, no padding
-      const id = Buffer.from(rawUrl).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      const resp = await axios.get(`https://www.virustotal.com/api/v3/urls/${id}`, {
-        headers: { 'x-apikey': vtKey },
-        timeout: 8000,
-        validateStatus: () => true
-      });
-      const stats = resp.data && resp.data.data && resp.data.data.attributes && resp.data.data.attributes.last_analysis_stats;
-      if (stats) {
-        const malicious = stats.malicious || 0;
-        const suspicious = stats.suspicious || 0;
-        if (malicious > 0) add('high', `VirusTotal: ${malicious} engines flagged this URL as malicious`, 60 + malicious * 5);
-        if (suspicious > 0) add('medium', `VirusTotal: ${suspicious} engines flagged this URL as suspicious`, 20 + suspicious * 3);
-        if (malicious === 0 && suspicious === 0) add('low', 'VirusTotal: no engines flagged this URL', 0);
-      } else {
-        add('low', 'VirusTotal: no existing report for this URL (unscanned)', 5);
-      }
-    } catch {
-      add('low', 'VirusTotal lookup failed — fell back to heuristics', 0);
-    }
-    // continue to heuristics too — defense in depth
+  // ── TLS / protocol ──
+  if (parsed.protocol === 'http:') {
+    add('medium', 'NO_TLS', 'Connection is plaintext HTTP (no TLS) — vulnerable to interception/MITM');
+  } else if (parsed.protocol !== 'https:') {
+    add('high', 'UNUSUAL_SCHEME', `Non-web protocol "${parsed.protocol}" — review intent (file/ftp/data/javascript schemes are risky)`);
+  }
+  if (/^javascript:/i.test(trimmed) || /^data:/i.test(trimmed)) {
+    add('critical', 'SCRIPT_SCHEME', 'javascript:/data: URI — can execute arbitrary code in a client context');
   }
 
-  // ── Heuristic checks ──
-  if (parsed.protocol !== 'https:') {
-    if (parsed.protocol === 'http:') add('medium', 'Connection is not HTTPS (plaintext / MITM risk)', 20);
-    else add('medium', `Unusual protocol "${parsed.protocol}"`, 25);
+  // ── SSRF / private hosts ──
+  const privateReason = privateHostReason(host);
+  if (privateReason) {
+    add('high', 'SSRF_PRIVATE_HOST', `Targets a non-public host — ${privateReason} (SSRF risk if fetched server-side)`);
   }
 
-  if (isRawIpHost(host)) add('medium', 'URL uses a raw IP address instead of a domain name', 25);
+  // ── raw IP host ──
+  if (isRawIpHost(host) && !privateReason) {
+    add('medium', 'RAW_IP_HOST', 'URL uses a raw IP address instead of a domain name');
+  } else if (isRawIpHost(host)) {
+    add('low', 'RAW_IP_HOST', 'URL uses a raw IP address instead of a domain name');
+  }
 
+  // ── userinfo (user:pass@host) ──
+  if (parsed.username || parsed.password) {
+    add('high', 'URL_USERINFO', 'URL embeds credentials/userinfo before "@" — classic phishing obfuscation');
+  } else if (/^[a-z][a-z0-9+.\-]*:\/\/[^/?#]*@/i.test(trimmed)) {
+    add('high', 'URL_USERINFO', 'URL contains an "@" in the authority — possible host-spoofing obfuscation');
+  }
+
+  // ── suspicious TLD ──
   for (const tld of SUSPICIOUS_TLDS) {
-    if (host.endsWith(tld)) { add('medium', `Suspicious top-level domain "${tld}"`, 20); break; }
+    if (host.endsWith(tld)) { add('medium', 'SUSPICIOUS_TLD', `Suspicious / abuse-prone top-level domain "${tld}"`); break; }
   }
 
-  if (parsed.username || parsed.password || rawUrl.split('?')[0].includes('@')) {
-    add('high', 'URL contains userinfo ("@") — common phishing obfuscation', 30);
+  // ── punycode / homograph ──
+  if (/(^|\.)xn--/.test(host)) {
+    add('medium', 'PUNYCODE_HOST', 'Punycode (xn--) label in host — possible IDN homograph spoofing');
   }
 
-  if (host.includes('xn--') || /xn--/.test(rawUrl)) {
-    add('medium', 'Punycode (xn--) in host — possible homograph/IDN spoofing', 25);
+  // ── open redirector / shortener ──
+  if (REDIRECTORS.includes(host)) {
+    add('medium', 'URL_SHORTENER', `Known URL shortener/redirector "${host}" — true destination is hidden`);
+  }
+  // chained redirect params pointing off-site
+  const redirParam = /(?:[?&])(?:url|redirect|redirect_uri|next|dest|destination|continue|return|returnurl|goto|out|target)=https?(?:%3a|:)/i;
+  if (redirParam.test(trimmed)) {
+    add('medium', 'OPEN_REDIRECT_PARAM', 'Query parameter carries another http(s) URL — open-redirect / redirector chain');
   }
 
-  const subCount = host.split('.').length;
-  if (!isRawIpHost(host) && subCount > 4) {
-    add('low', `Excessive subdomains (${subCount} labels) — possible obfuscation`, 12);
+  // ── excessive subdomains (obfuscation) ──
+  const labelCount = host.split('.').filter(Boolean).length;
+  if (!isRawIpHost(host) && labelCount > 4) {
+    add('low', 'EXCESSIVE_SUBDOMAINS', `Excessive subdomain depth (${labelCount} labels) — common obfuscation tactic`);
   }
 
-  const lowerUrl = rawUrl.toLowerCase();
-  for (const kw of BAD_KEYWORDS) {
-    if (lowerUrl.includes(kw)) { add('high', `Known-bad / phishing keyword in URL: "${kw}"`, 25); break; }
+  // ── encoded/percent-heavy or overlong URL ──
+  if (((trimmed.match(/%[0-9a-f]{2}/gi) || []).length) >= 8) {
+    add('low', 'HEAVY_ENCODING', 'Heavy percent-encoding in URL — possible filter evasion/obfuscation');
+  }
+  if (trimmed.length > 2000) {
+    add('low', 'OVERLONG_URL', `Unusually long URL (${trimmed.length} chars) — possible obfuscation or payload smuggling`);
   }
 
-  // ── Live header check (best-effort, never throws) ──
-  if (axios) {
-    try {
-      const resp = await axios.request({
-        url: rawUrl,
-        method: 'head',
-        timeout: 5000,
-        maxRedirects: 3,
-        validateStatus: () => true
-      });
-      const h = {};
-      Object.keys(resp.headers || {}).forEach(k => { h[k.toLowerCase()] = resp.headers[k]; });
-
-      if (!h['content-security-policy']) add('low', 'Missing Content-Security-Policy header', 8);
-      if (!h['x-frame-options'] && !(h['content-security-policy'] || '').includes('frame-ancestors')) {
-        add('low', 'Missing X-Frame-Options header (clickjacking risk)', 8);
-      }
-      if (parsed.protocol === 'https:' && !h['strict-transport-security']) {
-        add('low', 'Missing Strict-Transport-Security (HSTS) header', 8);
-      }
-    } catch (e) {
-      add('low', `Could not reach URL for header inspection (${e.code || e.message || 'error'})`, 5);
-    }
+  // ── known-bad phishing keywords ──
+  const lowerUrl = trimmed.toLowerCase();
+  for (const kw of BAD_URL_KEYWORDS) {
+    if (lowerUrl.includes(kw)) { add('high', 'PHISHING_KEYWORD', `Known phishing/scam keyword in URL: "${kw}"`); break; }
   }
 
-  if (!findings.length) findings.push({ severity: 'low', msg: 'No issues detected by heuristics' });
+  if (!findings.length) {
+    findings.push({ severity: 'low', code: 'CLEAN', message: 'No issues detected by URL heuristics' });
+  }
 
-  return { url: rawUrl, verdict: clampVerdictFromScore(score, 15, 45), score, findings };
+  return { url: rawUrl, findings, score, verdict: verdictFromScore(score, findings) };
 }
 
 // ───────────────────────────── scanCode ─────────────────────────────
 
-// [regex, severity, message]
+// [regex, severity, code, message]
 const CODE_CHECKS = [
-  // RCE / dynamic exec
-  [/\beval\s*\(/,                                    'critical', 'eval() — arbitrary code execution'],
-  [/\bnew\s+Function\s*\(/,                          'critical', 'new Function() — dynamic code execution'],
-  [/\bexec(Sync)?\s*\(\s*[`'"][^`'"]*\$\{/,          'critical', 'Command injection — interpolated value in exec()'],
-  [/\b(require\(\s*['"]child_process['"]\)|child_process)/, 'high', 'child_process usage — can run shell commands'],
-  [/\b(exec|execSync|spawn|spawnSync|execFile)\s*\(/,'high',     'Process execution call (exec/spawn) — review command source'],
+  // ── dynamic code execution / RCE ──
+  [/\beval\s*\(/,                                       'critical', 'EVAL',            'eval() — arbitrary code execution'],
+  [/\bnew\s+Function\s*\(/,                             'critical', 'NEW_FUNCTION',    'new Function() — dynamic code construction/execution'],
+  [/\b(setTimeout|setInterval)\s*\(\s*['"`]/,           'high',     'STRING_TIMER',    'setTimeout/setInterval called with a string — implicit eval'],
+  [/\b(exec|execSync)\s*\(\s*[`'"][^`'"]*\$\{/,         'critical', 'EXEC_INJECTION',  'Interpolated value passed to exec() — command injection'],
+  [/require\(\s*['"]child_process['"]\s*\)/,            'high',     'CHILD_PROCESS',   'child_process imported — can spawn shell commands'],
+  [/\b(execSync|exec|spawnSync|spawn|execFileSync|execFile)\s*\(/, 'high', 'PROCESS_EXEC', 'Process execution call (exec/spawn) — review command source'],
+  [/\bimport\s*\(\s*[`'"]?\s*\$\{/,                     'high',     'DYNAMIC_IMPORT',  'Dynamic import() with interpolated specifier — code-loading risk'],
 
-  // fs writes
-  [/\bfs\.(write|append|unlink|rm|rmdir|mkdir|chmod|rename)[A-Za-z]*\s*\(/, 'high', 'Filesystem write/delete operation'],
-  [/\brequire\(\s*['"]fs['"]\s*\)/,                  'low',      'fs module imported — verify file operations are scoped'],
+  // ── filesystem ──
+  [/\bfs\.(write|append|unlink|rm|rmdir|mkdir|chmod|chown|rename|truncate)[A-Za-z]*\s*\(/, 'high', 'FS_WRITE', 'Filesystem write/delete/permission operation (verify it is sandboxed)'],
+  [/require\(\s*['"]fs(\/promises)?['"]\s*\)/,          'low',      'FS_IMPORT',       'fs module imported — confirm file access is scoped to a sandbox'],
+  [/\.\.[\\/]/,                                         'high',     'PATH_TRAVERSAL',  'Path traversal sequence ("../") — may escape the sandbox'],
 
-  // hardcoded secrets
-  [/\bsk-[A-Za-z0-9_\-]{8,}/,                        'critical', 'Hardcoded API secret (sk-... key pattern)'],
-  [/\bAKIA[0-9A-Z]{12,}/,                            'critical', 'Hardcoded AWS access key (AKIA...)'],
-  [/\b(api[_-]?key|secret|password|token)\s*[:=]\s*['"][^'"]{12,}['"]/i, 'critical', 'Hardcoded credential assigned to a secret-named variable'],
-  [/['"][0-9a-f]{40,}['"]/i,                         'high',     'Long hex literal — possible hardcoded secret/hash'],
-  [/['"][A-Za-z0-9+/]{40,}={0,2}['"]/,               'medium',   'Long base64-like literal — possible embedded secret/blob'],
+  // ── hardcoded secrets ──
+  [/\bsk-[A-Za-z0-9_\-]{16,}/,                          'critical', 'SECRET_OPENAI',   'Hardcoded API secret (sk-... key pattern)'],
+  [/\bAKIA[0-9A-Z]{12,}/,                               'critical', 'SECRET_AWS',      'Hardcoded AWS access key id (AKIA...)'],
+  [/-----BEGIN(?:\s+\w+)?\s+PRIVATE KEY-----/,          'critical', 'PRIVATE_KEY',     'Embedded PEM private key block'],
+  [/\bgh[pousr]_[A-Za-z0-9]{20,}/,                      'critical', 'SECRET_GITHUB',   'Hardcoded GitHub token (ghp_/gho_/... pattern)'],
+  [/\bxox[baprs]-[A-Za-z0-9-]{10,}/,                    'critical', 'SECRET_SLACK',    'Hardcoded Slack token (xox...)'],
+  [/\b(api[_-]?key|apikey|secret|password|passwd|token|access[_-]?token|private[_-]?key)\s*[:=]\s*['"][^'"]{8,}['"]/i, 'critical', 'SECRET_ASSIGNMENT', 'Credential hardcoded into a secret-named variable'],
+  // BIP-39 style seed phrase (12+ lowercase words in a quoted string)
+  [/['"`](?:\s*[a-z]{3,8}\b){11,}['"`]/i,               'critical', 'SEED_PHRASE',     'Possible mnemonic seed phrase (long sequence of words) hardcoded'],
 
-  // network exfil
-  [/\b(fetch|axios|https?\.request|http\.get)\b[\s\S]{0,120}?(process\.env|apiKey|secret|token|password|privateKey)/i, 'high', 'Network call referencing a secret — possible data exfiltration'],
+  // ── obfuscation ──
+  [/['"`][A-Za-z0-9+/]{60,}={0,2}['"`]/,                'medium',   'BASE64_BLOB',     'Long base64-like literal — possible embedded payload/secret'],
+  [/['"`](?:0x)?[0-9a-f]{48,}['"`]/i,                   'medium',   'HEX_BLOB',        'Long hex literal — possible embedded payload/secret/hash'],
+  [/(?:\\x[0-9a-f]{2}){8,}/i,                           'high',     'HEX_ESCAPE_OBFUSCATION', 'Run of \\xNN escape sequences — obfuscated string/payload'],
+  [/(?:\\u[0-9a-f]{4}){8,}/i,                           'medium',   'UNICODE_ESCAPE_OBFUSCATION', 'Run of \\uXXXX escape sequences — obfuscated string'],
+  [/String\.fromCharCode\s*\(\s*(?:\d+\s*,\s*){6,}/,    'high',     'FROMCHARCODE_OBFUSCATION', 'String.fromCharCode with many codes — obfuscated string assembly'],
+  [/\b(atob|unescape)\s*\(/,                            'low',      'DECODE_CALL',     'atob()/unescape() — decodes data at runtime (often paired with eval)'],
 
-  // SQL injection (string concatenation into a query)
-  [/(SELECT|INSERT|UPDATE|DELETE)[\s\S]{0,80}?['"`]\s*\+/i,    'critical', 'SQL built via string concatenation — injection risk'],
-  [/['"`]\s*\+[\s\S]{0,40}?(WHERE|VALUES|FROM)\b/i,           'critical', 'SQL fragment concatenated with a variable — injection risk'],
-  [/\.query\s*\(\s*[`'"][^`'"]*\$\{/,                          'critical', 'Template literal interpolated into .query() — SQL injection'],
+  // ── prototype pollution ──
+  [/\[\s*['"]__proto__['"]\s*\]/,                       'high',     'PROTO_POLLUTION', 'Bracket access to "__proto__" — prototype pollution risk'],
+  [/\b__proto__\s*[:=]/,                                'high',     'PROTO_POLLUTION', 'Assignment to __proto__ — prototype pollution risk'],
+  [/(constructor\s*\.\s*prototype|\[\s*['"](?:constructor|prototype)['"]\s*\])/, 'medium', 'PROTO_CHAIN_ACCESS', 'Access to constructor/prototype — review for prototype pollution'],
 
-  // path traversal
-  [/\.\.[\\/]/,                                       'high',     'Path traversal sequence ("../") detected'],
+  // ── network exfiltration ──
+  [/\b(fetch|axios|https?\.request|http\.get|XMLHttpRequest|navigator\.sendBeacon)\b[\s\S]{0,160}?(process\.env|apiKey|api_key|secret|token|password|privateKey|mnemonic|seed)/i, 'high', 'EXFIL_SECRET', 'Network call referencing a secret/env value — possible data exfiltration'],
 
-  // XSS
-  [/\.innerHTML\s*=\s*[^;]*\+/,                       'high',     'innerHTML assigned via concatenation — XSS risk'],
-  [/\.(outerHTML|innerHTML)\s*=\s*.*(\$\{|req\.|input|user)/i, 'high', 'innerHTML/outerHTML built from user input — XSS risk'],
-  [/document\.write\s*\(/,                            'medium',   'document.write() — XSS risk'],
+  // ── SQL injection ──
+  [/(SELECT|INSERT|UPDATE|DELETE)\b[\s\S]{0,80}?['"`]\s*\+/i,  'critical', 'SQL_CONCAT', 'SQL statement built via string concatenation — injection risk'],
+  [/['"`]\s*\+[\s\S]{0,40}?\b(WHERE|VALUES|FROM|SET)\b/i,      'critical', 'SQL_CONCAT', 'SQL fragment concatenated with a variable — injection risk'],
+  [/\.query\s*\(\s*[`'"][^`'"]*\$\{/,                          'critical', 'SQL_TEMPLATE', 'Template literal interpolated into .query() — SQL injection'],
 
-  // misc hardening
-  [/rejectUnauthorized\s*:\s*false/,                 'high',     'TLS certificate validation disabled (rejectUnauthorized:false)'],
-  [/process\.env\.[A-Z_]{3,}\s*=(?!=)/,              'medium',   'Overwriting an environment variable at runtime'],
+  // ── XSS ──
+  [/\.(innerHTML|outerHTML)\s*=\s*[^;]*(\+|\$\{|req\.|input|user)/i, 'high', 'XSS_HTML_SINK', 'innerHTML/outerHTML built from concatenation or user input — XSS risk'],
+  [/document\.write\s*\(/,                              'medium',   'DOCUMENT_WRITE',  'document.write() — XSS risk'],
+  [/\$\([^)]*\)\.html\s*\(\s*[^)]*(\+|\$\{|input|user)/i, 'high',   'JQUERY_HTML_SINK','jQuery .html() built from user input — XSS risk'],
+
+  // ── TLS / hardening ──
+  [/rejectUnauthorized\s*:\s*false/,                    'high',     'TLS_DISABLED',    'TLS certificate validation disabled (rejectUnauthorized:false)'],
+  [/NODE_TLS_REJECT_UNAUTHORIZED\s*[:=]\s*['"]?0/,      'high',     'TLS_DISABLED',    'TLS verification globally disabled (NODE_TLS_REJECT_UNAUTHORIZED=0)'],
+  [/process\.env\.[A-Z0-9_]{3,}\s*=(?!=)/,              'medium',   'ENV_OVERWRITE',   'Overwriting an environment variable at runtime'],
 ];
-
-const SEV_POINTS = { critical: 40, high: 25, medium: 12, low: 5 };
 
 function lineOf(code, index) {
   if (index == null || index < 0) return undefined;
@@ -201,129 +263,158 @@ function scanCode(code) {
   const findings = [];
   let score = 0;
 
-  if (!code || typeof code !== 'string') {
-    return { verdict: 'safe', score: 0, findings: [{ severity: 'low', msg: 'No code provided' }] };
+  if (typeof code !== 'string' || !code.length) {
+    return { findings: [{ severity: 'low', code: 'NO_CODE', message: 'No code string provided to scan' }], score: 0, verdict: 'safe' };
   }
 
-  for (const [re, severity, msg] of CODE_CHECKS) {
-    const m = re.exec(code);
+  for (const [re, severity, code_, message] of CODE_CHECKS) {
+    let m;
+    try { m = re.exec(code); } catch { m = null; }
     if (m) {
-      findings.push({ severity, line: lineOf(code, m.index), msg });
+      findings.push({ severity, code: code_, message, line: lineOf(code, m.index) });
       score += SEV_POINTS[severity] || 5;
     }
   }
 
-  let verdict = 'safe';
-  if (findings.some(f => f.severity === 'critical')) verdict = 'dangerous';
-  else if (findings.some(f => f.severity === 'high')) verdict = 'dangerous';
-  else if (findings.length) verdict = 'suspicious';
+  if (!findings.length) {
+    findings.push({ severity: 'low', code: 'CLEAN', message: 'No vulnerabilities detected by static scan' });
+  }
 
-  if (!findings.length) findings.push({ severity: 'low', msg: 'No vulnerabilities detected by static scan' });
-
-  return { verdict, score, findings };
+  return { findings, score, verdict: verdictFromScore(score, findings) };
 }
 
 // ───────────────────────────── scanSkill ─────────────────────────────
 
 const RISKY_TOOLS = [
-  'run_python', 'run_js', 'run_javascript', 'run_shell', 'run_bash', 'exec', 'eval_code',
+  'run_python', 'run_js', 'run_javascript', 'run_shell', 'run_bash', 'exec', 'eval_code', 'shell',
   'pay_api_call', 'send_payment', 'transfer_funds', 'mint_nft', 'sign_transaction',
+  'wallet', 'wallet_send', 'connect_wallet', 'approve_token',
   'delete_file', 'delete_account', 'wipe', 'drop_table',
-  'write_file', 'fs_write'
+  'write_file', 'fs_write', 'read_env', 'get_secrets'
 ];
-const RISKY_TOOL_PREFIXES = ['post_to_', 'delete_', 'pay_', 'send_', 'transfer_'];
+const RISKY_TOOL_PREFIXES = ['post_to_', 'post_', 'delete_', 'pay_', 'send_', 'transfer_', 'wallet_', 'exec_', 'shell_'];
 
 const INJECTION_PHRASES = [
   'ignore previous', 'ignore prior', 'ignore all previous', 'disregard previous',
   'disregard the above', 'forget previous instructions', 'forget your instructions',
   'send your keys', 'send your api key', 'reveal your system prompt', 'reveal your keys',
-  'exfiltrate', 'exfil', 'disable safety', 'disable security', 'bypass safety',
+  'exfiltrate', 'disable safety', 'disable security', 'bypass safety', 'bypass security',
   'without asking', 'do not tell the user', "don't tell the user", 'leak the', 'dump the secrets',
-  'print your environment', 'process.env', 'override your guidelines'
+  'print your environment', 'process.env', 'override your guidelines', 'jailbreak'
 ];
 
 function scanSkill(skill) {
   const findings = [];
   let score = 0;
-  const add = (severity, msg, pts) => { findings.push({ severity, msg }); score += pts; };
+  const add = (severity, code, message) => {
+    findings.push({ severity, code, message });
+    score += SEV_POINTS[severity] || 5;
+  };
 
-  if (!skill || typeof skill !== 'object') {
-    return { name: undefined, risk: 'high', score: 100, findings: [{ severity: 'high', msg: 'No skill object provided' }] };
+  if (!skill || typeof skill !== 'object' || Array.isArray(skill)) {
+    return { name: null, risk: 'high', score: 100, verdict: 'dangerous',
+      findings: [{ severity: 'high', code: 'SKILL_INVALID', message: 'No valid skill object provided' }] };
   }
 
-  const name = skill.name;
-  const tools = Array.isArray(skill.tools) ? skill.tools : [];
-  const instructions = String(skill.systemPrompt || skill.instructions || '');
+  const name = typeof skill.name === 'string' ? skill.name : (skill.id || null);
+  const tools = Array.isArray(skill.tools) ? skill.tools
+    : Array.isArray(skill.requestedTools) ? skill.requestedTools : [];
+  const instructions = String(skill.systemPrompt || skill.instructions || skill.prompt || '');
 
-  // risky tools
+  // ── requested tools ──
   for (const t of tools) {
-    const tool = String(t || '').toLowerCase();
+    const tool = String((t && (t.name || t.id || t)) || '').toLowerCase();
+    if (!tool) continue;
     if (RISKY_TOOLS.includes(tool)) {
-      add('high', `Skill requests high-risk tool: "${t}"`, 25);
+      add('high', 'RISKY_TOOL', `Skill requests high-risk tool: "${tool}" (code-exec / wallet / destructive)`);
     } else if (RISKY_TOOL_PREFIXES.some(p => tool.startsWith(p))) {
-      add('medium', `Skill requests sensitive tool: "${t}"`, 12);
+      add('medium', 'SENSITIVE_TOOL', `Skill requests sensitive tool: "${tool}" (posting / payment / wallet)`);
     }
   }
 
-  // prompt injection / exfil phrases
+  // ── prompt injection / exfil in instructions ──
   const lower = instructions.toLowerCase();
   for (const phrase of INJECTION_PHRASES) {
     if (lower.includes(phrase)) {
-      add('high', `Prompt-injection / exfil phrase in instructions: "${phrase}"`, 30);
+      add('high', 'PROMPT_INJECTION', `Prompt-injection / exfil phrase in instructions: "${phrase}"`);
+      break; // one is enough to flag; avoid noisy duplicates
     }
   }
 
-  // handler code
+  // ── code / handler static scan ──
+  const codeSources = [];
   if (skill.handler != null) {
-    const handlerCode = typeof skill.handler === 'function' ? skill.handler.toString() : String(skill.handler);
-    const codeScan = scanCode(handlerCode);
+    codeSources.push(typeof skill.handler === 'function' ? skill.handler.toString() : String(skill.handler));
+  }
+  if (typeof skill.code === 'string') codeSources.push(skill.code);
+  if (typeof skill.script === 'string') codeSources.push(skill.script);
+
+  for (const src of codeSources) {
+    const codeScan = scanCode(src);
     for (const f of codeScan.findings) {
-      if (f.severity === 'low' && /No vulnerabilities/.test(f.msg)) continue;
-      add(f.severity, `Handler code: ${f.msg}${f.line ? ` (line ${f.line})` : ''}`, SEV_POINTS[f.severity] || 5);
+      if (f.code === 'CLEAN' || f.code === 'NO_CODE') continue;
+      add(f.severity, `CODE_${f.code}`, `Skill code: ${f.message}${f.line ? ` (line ${f.line})` : ''}`);
     }
   }
 
-  let risk = 'low';
-  if (findings.some(f => f.severity === 'critical' || f.severity === 'high')) risk = 'high';
-  else if (findings.length) risk = 'medium';
+  // ── provenance ──
+  const hasProvenance =
+    skill.author || skill.publisher || skill.source || skill.signature ||
+    skill.verified === true || skill.origin || skill.provenance;
+  if (!hasProvenance) {
+    add('medium', 'NO_PROVENANCE', 'Skill has no author/publisher/source/signature — unverified provenance');
+  } else if (skill.verified !== true && !skill.signature) {
+    add('low', 'UNSIGNED', 'Skill is not cryptographically signed/verified — provenance is self-declared');
+  }
 
-  if (!findings.length) findings.push({ severity: 'low', msg: 'No risk indicators detected' });
+  if (!findings.length) {
+    findings.push({ severity: 'low', code: 'CLEAN', message: 'No risk indicators detected in skill' });
+  }
 
-  return { name, risk, score, findings };
+  const verdict = verdictFromScore(score, findings);
+  // legacy "risk" field kept for existing UI consumers
+  const risk = verdict === 'dangerous' ? 'high' : verdict === 'suspicious' ? 'medium' : 'low';
+
+  return { name, findings, score, verdict, risk };
 }
 
 // ───────────────────────────── router ─────────────────────────────
 
 const router = express.Router();
 
-router.post('/scan-url', async (req, res) => {
+router.post('/scan-url', (req, res) => {
   try {
     const u = req.body && req.body.url;
-    if (!u || typeof u !== 'string') return res.status(400).json({ error: 'Body must include a string "url"' });
-    const result = await scanUrl(u);
-    return res.status(200).json(result);
+    if (typeof u !== 'string' || !u.trim()) {
+      return res.status(400).json({ error: 'Body must include a non-empty string "url"' });
+    }
+    return res.status(200).json(scanUrl(u));
   } catch (e) {
-    return res.status(200).json({ error: e.message || 'scan failed' });
+    return res.status(200).json({ error: e.message || 'scan failed', verdict: 'unknown' });
   }
 });
 
 router.post('/scan-code', (req, res) => {
   try {
     const code = req.body && req.body.code;
-    if (typeof code !== 'string') return res.status(400).json({ error: 'Body must include a string "code"' });
+    if (typeof code !== 'string') {
+      return res.status(400).json({ error: 'Body must include a string "code"' });
+    }
     return res.status(200).json(scanCode(code));
   } catch (e) {
-    return res.status(200).json({ error: e.message || 'scan failed' });
+    return res.status(200).json({ error: e.message || 'scan failed', verdict: 'unknown' });
   }
 });
 
 router.post('/scan-skill', (req, res) => {
   try {
     const skill = req.body && req.body.skill;
-    if (!skill || typeof skill !== 'object') return res.status(400).json({ error: 'Body must include a "skill" object' });
+    if (!skill || typeof skill !== 'object') {
+      return res.status(400).json({ error: 'Body must include a "skill" object' });
+    }
     return res.status(200).json(scanSkill(skill));
   } catch (e) {
-    return res.status(200).json({ error: e.message || 'scan failed' });
+    return res.status(200).json({ error: e.message || 'scan failed', verdict: 'unknown' });
   }
 });
 
