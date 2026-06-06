@@ -22607,7 +22607,9 @@ function renderMedia() {
         <span class="media-item-type ${item.type === '3d' ? 't3d' : item.type}">${item.type.toUpperCase()}</span>
         <span class="media-item-meta">${new Date(item.time).toLocaleDateString()}</span>
       </div>
-      <div class="media-item-content">${esc(item.content.substring(0, 300))}${item.content.length > 300 ? '...' : ''}</div>
+      ${((item.type === 'image' || item.type === 'pixel') && /^https?:\/\//.test(item.content))
+        ? `<img src="${esc(item.content)}" alt="${esc(item.prompt||'')}" style="width:100%;border-radius:6px;border:1px solid var(--border);display:block;margin:4px 0" loading="lazy" />${item.prompt ? `<div class="media-item-content" style="font-size:9px">${esc(item.prompt)}</div>` : ''}`
+        : `<div class="media-item-content">${esc(item.content.substring(0, 300))}${item.content.length > 300 ? '...' : ''}</div>`}
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="copyMediaItem(${item.id})">Copy</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="saveMediaItemToNote(${item.id})">→ Notes</button>
@@ -45461,14 +45463,14 @@ function launchMediaModule(key){
 function _openImageOverlay(){
   expandModule({title:'🎨 AI IMAGE GENERATOR',accentColor:'#00e5a0',content:
     '<div style="display:flex;flex-direction:column;gap:12px">'+
-    '<div style="font-size:9px;color:rgba(255,255,255,0.5)">TURTLE crafts Midjourney / Stable Diffusion prompts. Describe your concept — the more detail, the better the prompt.</div>'+
+    '<div style="font-size:9px;color:rgba(255,255,255,0.5)">Describe your image and hit <b style="color:#00e5a0">Generate</b> — it renders right here. The free engine needs no key; premium engines use your saved BYOK key.</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">STYLE</label>'+
     '<select id="ovI_style" class="select" style="font-size:10px;width:100%"><option>Photorealistic</option><option>Cinematic</option><option>Digital Art</option><option>Oil Painting</option><option>Anime</option><option>Concept Art</option><option>3D Render</option><option>Watercolor</option><option>Pixel Art</option><option>Neon Futuristic</option></select></div>'+
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">RATIO</label>'+
     '<select id="ovI_ratio" class="select" style="font-size:10px;width:100%"><option>16:9 Landscape</option><option>9:16 Portrait</option><option>1:1 Square</option><option>4:3</option><option>21:9 Ultrawide</option></select></div>'+
-    '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">AGENT</label>'+
-    '<select id="ovI_agent" class="select" style="font-size:10px;width:100%"><option value="TURTLE">TURTLE</option><option value="SHADDAI">SHADDAI</option><option value="QUILL">QUILL</option></select></div>'+
+    '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">ENGINE</label>'+
+    '<select id="ovI_engine" class="select" style="font-size:10px;width:100%"><option value="flux">⚡ Flux · Free</option><option value="nano-banana">🍌 Nano Banana · Premium</option><option value="dall-e-3">🎨 DALL·E 3 · Premium</option></select></div>'+
     '</div>'+
     '<textarea id="ovI_subject" class="input" rows="3" placeholder="Describe your image: subject, mood, lighting, environment, colors, details..."></textarea>'+
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">NEGATIVE PROMPT (optional)</label>'+
@@ -45477,16 +45479,45 @@ function _openImageOverlay(){
     ['blurry','low quality','watermark','deformed','extra limbs','bad anatomy'].map(function(t){return'<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="(function(){var el=document.getElementById(\'ovI_neg\');el.value=(el.value?el.value+\', \':\'\')+\''+t+'\'})()">'+t+'</button>';}).join('')+
     '</div>'+
     '<div style="display:flex;gap:8px">'+
-    '<button class="btn btn-accent" style="flex:1;background:#00e5a0;color:#000;border:none;font-weight:700" onclick="ovBuildImage()">🎨 Generate Prompt</button>'+
-    '<button class="btn btn-ghost" onclick="(function(){var t=document.getElementById(\'ovI_out\')?.textContent||\'empty\';navigator.clipboard&&navigator.clipboard.writeText(t);notify(\'Copied\')})()">Copy</button>'+
+    '<button class="btn btn-accent" style="flex:2;background:#00e5a0;color:#000;border:none;font-weight:700;font-size:12px" onclick="ovGenerateImage()">✨ Generate Image</button>'+
+    '<button class="btn btn-ghost" style="flex:1;font-size:9px" onclick="ovBuildImage()" title="Have TURTLE craft a detailed prompt first">📝 Craft Prompt</button>'+
     '</div>'+
+    '<div id="ovI_imgWrap" style="display:none"></div>'+
     '<div id="ovI_out" style="display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(0,229,160,0.3);border-radius:8px;padding:14px;font-size:10px;line-height:1.7;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>'+
-    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'+
-    [['Stable Diffusion','https://stablediffusionweb.com'],['Leonardo AI','https://leonardo.ai'],['Midjourney','https://midjourney.com'],['Adobe Firefly','https://firefly.adobe.com'],['ComfyUI','https://www.comfyui.org']].map(function(x){return'<button class="btn btn-ghost" style="font-size:8px;padding:3px 4px;border-color:rgba(0,229,160,0.3)" onclick="openExternalTool(\''+x[1]+'\')">'+x[0]+'</button>';}).join('')+
-    '</div>'+
     '</div>'
   });
 }
+
+// Real in-app image generation → POST /api/image/generate → render the actual image + save/download.
+window.ovGenerateImage=async function(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value:'';};
+  var subj=(g('ovI_subject')||'').trim();
+  if(!subj){notify('Describe your image first');return;}
+  var style=g('ovI_style'),ratio=g('ovI_ratio'),engine=g('ovI_engine')||'flux',neg=g('ovI_neg');
+  var prompt=subj+(style?', '+style.toLowerCase()+' style':'')+(neg?'. Avoid: '+neg:'');
+  var DIM={'16:9 Landscape':[1280,720],'9:16 Portrait':[720,1280],'1:1 Square':[1024,1024],'4:3':[1024,768],'21:9 Ultrawide':[1280,548]};
+  var d=DIM[ratio]||[1024,1024];
+  var wrap=document.getElementById('ovI_imgWrap');if(!wrap)return;
+  wrap.style.display='block';
+  wrap.innerHTML='<div style="text-align:center;padding:30px;color:#00e5a0;font-size:11px;border:1px dashed rgba(0,229,160,.3);border-radius:8px">⚙️ Generating with '+engine+'… (premium engines need a saved key; falls back to free Flux)</div>';
+  try{
+    var r=await fetch('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,model:engine,width:d[0],height:d[1]})});
+    var data=await r.json();
+    var url=data.url||data.image_url;
+    if(!url)throw new Error(data.error||'no image returned');
+    var safeUrl=String(url).replace(/'/g,'%27');
+    var label=prompt.replace(/[<>'"]/g,'').slice(0,70);
+    wrap.innerHTML='<img src="'+safeUrl+'" alt="generated" style="width:100%;border-radius:8px;border:1px solid rgba(0,229,160,.35);display:block" />'+
+      '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">'+
+      '<button class="btn btn-ghost" style="font-size:9px" onclick="window.open(\''+safeUrl+'\',\'_blank\')">⬇ Open / Download</button>'+
+      '<button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveImageToGallery(\''+safeUrl+'\',\''+label+'\')">💾 Save to Gallery</button>'+
+      '<span style="font-size:8px;color:rgba(255,255,255,.4)">source: '+(data.source||engine)+'</span></div>';
+  }catch(e){ wrap.innerHTML='<div style="color:#ff6b6b;font-size:11px;padding:14px">⚠ '+String(e.message).replace(/[<>]/g,'')+'</div>'; }
+};
+window.ovSaveImageToGallery=function(url,label){
+  try{ S.media=S.media||[]; S.media.unshift({id:Date.now(),type:'image',content:url,prompt:label||'',time:new Date().toISOString()}); if(typeof save==='function')save(); if(typeof renderMedia==='function')renderMedia(); notify('Saved to Gallery'); }
+  catch(e){ notify('Could not save'); }
+};
 
 function _openVideoOverlay(){
   expandModule({title:'🎬 VIDEO STUDIO',accentColor:'#00c8ff',content:
