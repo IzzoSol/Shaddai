@@ -3668,31 +3668,41 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 
   <!-- Tasks -->
   <div id="workflowView" class="view">
-    <!-- ⚡ SIMPLE MODE — pick an agent, say what you need, it just does it (real /api/agent/run engine) -->
+    <!-- ⚡ SIMPLE MODE — 3-step wizard (What → Who → GO), real /api/agent/run engine -->
     <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
         <span class="card-title">⚡ Simple Mode</span>
-        <span style="font-size:9px;color:var(--text-muted)">Pick an agent · say what you need · it does it (equipped tools run automatically)</span>
+        <span style="font-size:9px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
-        <select id="smAgent" class="input" style="max-width:200px">
-          <option value="SHADDAI">SHADDAI · Orchestrator</option>
-          <option value="ORACLE">ORACLE · Research</option>
-          <option value="ZEROX">ZEROX · Markets/Revenue</option>
-          <option value="NEXUS">NEXUS · Code/Backend</option>
-          <option value="TURTLE">TURTLE · Design/Media</option>
-          <option value="QUILL">QUILL · Writing</option>
-          <option value="PIKADON">PIKADON · Security</option>
-        </select>
-        <button class="btn btn-accent" id="smGo" onclick="simpleRun()">▶ GO</button>
-      </div>
-      <textarea id="smGoal" class="input" rows="2" placeholder="What do you need? e.g. 'Get the BTC price and tell me the trend' · 'Write a tweet announcing SHADDAI' · 'Scan this contract for risks'" style="width:100%;resize:vertical"></textarea>
-      <div id="smOut" style="margin-top:10px;font-size:11px;display:none">
-        <div id="smStatus" style="color:var(--text-muted);margin-bottom:6px"></div>
-        <div id="smResult" style="white-space:pre-wrap;line-height:1.5"></div>
-        <div id="smTools" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
-      </div>
+      <div id="smWizard"><div class="wiz-steps" id="wizSteps"></div><div id="wizBody"></div></div>
     </div>
+    <style>
+      #smWizard{max-width:780px;margin:6px auto 0}
+      #smWizard .wiz-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
+      #smWizard .wiz-steps .b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:1px solid var(--border);color:var(--text-muted);transition:.2s}
+      #smWizard .wiz-steps .b.on{background:var(--accent,#00e5a0);color:#04212b;border-color:var(--accent,#00e5a0);transform:scale(1.1)}
+      #smWizard .wiz-steps .b.done{background:var(--accent,#00e5a0);color:#04212b;opacity:.55}
+      #smWizard .wiz-steps .bar{width:54px;height:2px;background:var(--border)}
+      #smWizard .wiz-q{text-align:center;font-size:22px;font-weight:600;margin-bottom:4px;color:var(--text,#e8ecf2)}
+      #smWizard .wiz-sub{text-align:center;font-size:12.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5}
+      #smWizard .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+      #smWizard .opt{background:var(--bg,#0e1117);border:1px solid var(--border);padding:20px 14px;text-align:center;cursor:pointer;transition:.18s;border-radius:8px}
+      #smWizard .opt:hover{transform:translateY(-3px);border-color:#ffd23f}
+      #smWizard .opt.on{border-color:var(--accent,#00e5a0);box-shadow:0 0 0 3px rgba(0,229,160,.14)}
+      #smWizard .opt .ico{font-size:32px;margin-bottom:10px}
+      #smWizard .opt .ti{font-size:14px;font-weight:600;color:var(--text,#e8ecf2)}
+      #smWizard .opt .ds{font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4}
+      #smWizard .opt.feat{grid-column:1/-1;border-color:#ffd23f;background:linear-gradient(135deg,rgba(255,210,63,.09),transparent)}
+      #smWizard .wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
+      #smWizard .big-go{font-weight:700;font-size:17px;letter-spacing:.2em;text-transform:uppercase;padding:16px 44px;border:none;cursor:pointer;background:var(--accent,#00e5a0);color:#04212b;border-radius:6px;transition:.18s}
+      #smWizard .big-go:hover{filter:brightness(1.13);letter-spacing:.3em}
+      #smWizard .summary{text-align:center;font-size:16px;line-height:1.9;margin-bottom:6px;color:var(--text,#e8ecf2)}
+      #smWizard .summary b{color:var(--accent,#00e5a0)}
+      #smWizard .run-card{text-align:center;padding:30px 10px}
+      #smWizard .run-card .big{font-size:44px;margin-bottom:14px}
+      #smWizard .pill{display:inline-block;font-size:9px;padding:3px 9px;border:1px solid var(--border);border-radius:20px;color:var(--text-muted)}
+      @media(max-width:860px){#smWizard .opts{grid-template-columns:1fr}}
+    </style>
     <div class="card">
       <div class="card-head">
         <span class="card-title">Task Management</span>
@@ -47788,35 +47798,58 @@ window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-
   document.querySelectorAll('#navPosPicker button').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-np')===p);});};
 try{ setNavPos(localStorage.getItem('shaddai_navpos')||'top'); }catch(e){}
 
-// ⚡ Simple Mode — run a real agent task end-to-end (create → poll → show result + tools used).
-window.simpleRun=async function(){
-  var agent=(document.getElementById('smAgent')||{}).value||'SHADDAI';
-  var goal=((document.getElementById('smGoal')||{}).value||'').trim();
-  var out=document.getElementById('smOut'),st=document.getElementById('smStatus'),
-      res=document.getElementById('smResult'),tl=document.getElementById('smTools'),go=document.getElementById('smGo');
-  if(!goal){ if(st){out.style.display='block';st.textContent='Type what you need first.';} return; }
-  out.style.display='block'; res.textContent=''; tl.textContent=''; go.disabled=true;
-  st.textContent='⟳ '+agent+' is working…';
-  try{
-    var r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:goal,agent:agent})});
-    var d=await r.json();
-    if(!d.taskId){ st.textContent='⚠ '+(d.error||'could not start'); go.disabled=false; return; }
-    var id=d.taskId, tries=0;
-    var poll=setInterval(async function(){
-      tries++;
-      try{
-        var tr=await fetch('/api/agent/task/'+id); var t=await tr.json();
-        st.textContent='⟳ '+agent+' · '+(t.status||'running')+' (step '+(t.iterations||tries)+')';
-        if(t.status==='completed'||t.status==='done'||t.status==='failed'||tries>50){
-          clearInterval(poll); go.disabled=false;
-          st.textContent=(t.status==='failed'?'⚠ failed':'✅ done')+' · '+agent;
-          res.textContent=t.result||t.error||'(no output)';
-          if(t.tools_used&&t.tools_used.length) tl.textContent='🔧 tools used: '+t.tools_used.join(', ');
-        }
-      }catch(e){ clearInterval(poll); go.disabled=false; st.textContent='⚠ '+e.message; }
-    },1300);
-  }catch(e){ st.textContent='⚠ '+e.message; go.disabled=false; }
-};
+// ⚡ Simple Mode — 3-step wizard (What → Who → GO), real /api/agent/run engine (restored from the office redesign).
+(function(){
+  const SM_GOALS=[
+    {ic:'🎵',ti:'Make a song',ds:'Lyrics + real audio',ag:'TURTLE'},
+    {ic:'🖼️',ti:'Make a picture',ds:'AI image from your idea',ag:'TURTLE'},
+    {ic:'🔎',ti:'Research a coin',ds:'Price, news & sentiment',ag:'ORACLE'},
+    {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL'},
+    {ic:'📊',ti:'Check the market',ds:'Live prices & trends',ag:'ZEROX'},
+    {ic:'🛡️',ti:'Is this safe?',ds:'Quick security check',ag:'PIKADON'}
+  ];
+  const SM_FRIENDLY={SHADDAI:'the boss — plans things',ZEROX:'money & markets',ORACLE:'research & facts',NEXUS:'tech & building',TURTLE:'art, music & design',QUILL:'writing',PIKADON:'safety & security'};
+  let sw={step:1,goal:null,agent:'AUTO'};
+  const $=id=>document.getElementById(id);
+  function steps(){const s=$('wizSteps');if(!s)return;let h='';for(let n=1;n<=3;n++){h+=`<div class="b ${sw.step===n?'on':(sw.step>n?'done':'')}">${sw.step>n?'✓':n}</div>`;if(n<3)h+='<div class="bar"></div>';}s.innerHTML=h;}
+  function render(){steps();const b=$('wizBody');if(!b)return;
+    if(sw.step===1){
+      b.innerHTML=`<div class="wiz-q">What do you want done?</div><div class="wiz-sub">Tap one. That's it.</div><div class="opts">`+
+        SM_GOALS.map((g,i)=>`<div class="opt ${sw.goal===i?'on':''}" onclick="smPickGoal(${i})"><div class="ico">${g.ic}</div><div class="ti">${g.ti}</div><div class="ds">${g.ds}</div></div>`).join('')+
+        `</div><div class="wiz-nav"><span></span><button class="big-go" style="font-size:13px;padding:11px 28px;${sw.goal===null?'opacity:.35;pointer-events:none':''}" onclick="smNext()">Next ⟶</button></div>`;
+    }else if(sw.step===2){const p=SM_GOALS[sw.goal];
+      b.innerHTML=`<div class="wiz-q">Who should do it?</div><div class="wiz-sub">Not sure? Let SHADDAI choose — the easy button.</div><div class="opts">`+
+        `<div class="opt feat ${sw.agent==='AUTO'?'on':''}" onclick="smPickAgent('AUTO')"><div class="ico">✨</div><div class="ti">Let SHADDAI choose (recommended)</div><div class="ds">Best one for "${p.ti.toLowerCase()}" — probably ${p.ag}</div></div>`+
+        Object.keys(SM_FRIENDLY).map(k=>`<div class="opt ${sw.agent===k?'on':''}" onclick="smPickAgent('${k}')"><div class="ti">${k}</div><div class="ds">${SM_FRIENDLY[k]}</div></div>`).join('')+
+        `</div><div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><button class="big-go" style="font-size:13px;padding:11px 28px" onclick="smNext()">Next ⟶</button></div>`;
+    }else{const p=SM_GOALS[sw.goal];const who=sw.agent==='AUTO'?p.ag:sw.agent;
+      b.innerHTML=`<div class="wiz-q">Ready?</div><div class="summary"><b>${who}</b> will <b>${p.ti.toLowerCase()}</b> for you.</div><div class="run-card"><button class="big-go" onclick="smRun('${who}','${p.ti.replace(/'/g,'')}')">▶ GO</button></div><div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><span></span></div>`;}
+  }
+  window.smPickGoal=i=>{sw.goal=i;render();};
+  window.smPickAgent=a=>{sw.agent=a;render();};
+  window.smNext=()=>{if(sw.step===1&&sw.goal===null)return;if(sw.step<3){sw.step++;render();}};
+  window.smBack=()=>{if(sw.step>1){sw.step--;render();}};
+  window.smReset=()=>{sw={step:1,goal:null,agent:'AUTO'};render();};
+  window.smRun=async(who,what)=>{const b=$('wizBody');const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
+    b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="smMsg">Connecting to ${who} via the SHADDAI engine…</div></div>`;
+    try{
+      const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal:what,agent:who})});
+      const d=await r.json();if(!d.taskId)throw new Error(d.error||'engine did not start');
+      const gm=()=>$('smMsg');let result=null;
+      for(let i=0;i<40;i++){await new Promise(s=>setTimeout(s,1300));
+        const t=await(await fetch('/api/agent/task/'+d.taskId)).json();
+        if(gm())gm().textContent=`${who} working… (${t.status||'running'}${t.iterations?` · step ${t.iterations}`:''})`;
+        if(t.status==='completed'||t.status==='failed'){result=t;break;}}
+      if(!result)throw new Error('timed out — try again');
+      if(result.status==='failed')throw new Error(result.result||result.error||'agent reported a failure');
+      const text=result.result||JSON.stringify(result).slice(0,400);
+      const tools=Array.isArray(result.tools_used)?result.tools_used:[];
+      const th=tools.length?`<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">`+tools.map(t=>`<span class="pill">🛠 ${safe(t)}</span>`).join('')+`</div>`:'';
+      b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div>${th}<div style="margin-top:18px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Do another</button></div></div>`;
+    }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;}
+  };
+  try{ if($('wizBody')) window.smReset(); }catch(e){}
+})();
 </script>
 
 </body>
