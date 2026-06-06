@@ -9,15 +9,19 @@
  *   app.use('/api/news', require('./news-routes'));
  *
  * Routes (all keyless, never throw to the client):
- *   GET /              — latest crypto news        ?q=<query>&limit=<n>  -> { items, ... }
- *   GET /trending      — trending coins/topics                          -> { trending, categories, ... }
- *   GET /topic/:topic  — market news for a coin/topic  ?limit=<n>        -> { items, ... }
+ *   GET  /             — latest crypto news        ?q=<query>&limit=<n>  -> { items, ... }
+ *   GET  /trending     — trending coins/topics                          -> { trending, categories, ... }
+ *   GET  /topic/:topic — market news for a coin/topic  ?limit=<n>        -> { items, ... }
+ *   POST /analyze      — LOCAL (keyless, no-LLM) sentiment read over headlines.
+ *                        body { items:[{title,summary}] }  OR  { topic:"btc", limit }
+ *                        -> { overallSentiment, score, bullishCount, bearishCount,
+ *                             perItem, topMovers, summary }
  */
 
 const express = require('express');
 const router = express.Router();
 
-const { TOOLS_NEWS } = require('./tools-news');
+const { TOOLS_NEWS, analyzeSentiment } = require('./tools-news');
 
 // ─── tiny in-memory cache (~5 min) ────────────────────────────────────────────
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -131,6 +135,61 @@ router.get('/topic/:topic', async (req, res) => {
     return res.json(setCached(cacheKey, payload));
   } catch (err) {
     return res.json({ items: [], error: err.message });
+  }
+});
+
+// ─── POST /analyze — keyless, no-LLM sentiment + market read ──────────────────
+// Body: { items: [{title, summary}, ...] }  → analyze the supplied headlines.
+//   OR: { topic: "bitcoin", limit?: n }      → fetch market news for topic first.
+//   OR: {} / { limit }                       → fetch latest crypto news first.
+// Always returns 200 with a sentiment object; never throws to the client.
+router.post('/analyze', async (req, res) => {
+  try {
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    let items = Array.isArray(body.items) ? body.items : null;
+
+    // No items supplied → pull headlines from the keyless feed ourselves.
+    if (!items || items.length === 0) {
+      const limit = clampLimit(body.limit, 20, 50);
+      const topic = body.topic ? String(body.topic) : '';
+      const raw = topic
+        ? await TOOLS_NEWS.get_market_news.execute({ topic, limit })
+        : await TOOLS_NEWS.get_crypto_news.execute({ limit });
+      const parsed = parseToolResult(raw);
+      items = (parsed && parsed.success !== false && Array.isArray(parsed.results))
+        ? parsed.results
+        : [];
+    }
+
+    const analysis = analyzeSentiment(items);
+
+    return res.json({
+      success: true,
+      analyzed: analysis.total,
+      overallSentiment: analysis.overallSentiment,
+      score: analysis.score,
+      bullishCount: analysis.bullishCount,
+      bearishCount: analysis.bearishCount,
+      neutralCount: analysis.neutralCount,
+      topMovers: analysis.topMovers,
+      perItem: analysis.perItem,
+      summary: analysis.summary
+    });
+  } catch (err) {
+    // Graceful empty result — surface a neutral signal rather than an error page.
+    return res.json({
+      success: false,
+      error: err.message,
+      analyzed: 0,
+      overallSentiment: 'neutral',
+      score: 0,
+      bullishCount: 0,
+      bearishCount: 0,
+      neutralCount: 0,
+      topMovers: [],
+      perItem: [],
+      summary: 'Sentiment analysis unavailable.'
+    });
   }
 });
 

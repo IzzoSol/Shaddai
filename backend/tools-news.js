@@ -25,7 +25,7 @@ const axios = require('axios');
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 /** Wrap a promise so it rejects after `ms` milliseconds. */
-function withTimeout(promise, ms = 12000) {
+function withTimeout(promise, ms = 8000) {
   return Promise.race([
     promise,
     new Promise((_, reject) =>
@@ -34,14 +34,22 @@ function withTimeout(promise, ms = 12000) {
   ]);
 }
 
+// Per-source fetch budget. 8s hard cap so one slow feed never blocks the response.
+const FETCH_TIMEOUT_MS = 8000;
+
 const UA = 'Mozilla/5.0 SHADDAI-Agent/2.0 (shaddai.ai)';
 
 // Public, keyless crypto news RSS feeds (tried in order, all merged).
 const RSS_FEEDS = [
   { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
   { url: 'https://cointelegraph.com/rss',                   source: 'CoinTelegraph' },
-  { url: 'https://decrypt.co/feed',                         source: 'Decrypt' }
+  { url: 'https://decrypt.co/feed',                         source: 'Decrypt' },
+  // Google News RSS (keyless) — broad crypto coverage, very reliable uptime.
+  { url: 'https://news.google.com/rss/search?q=cryptocurrency+OR+bitcoin+OR+ethereum&hl=en-US&gl=US&ceid=US:en', source: 'Google News' }
 ];
+
+// CryptoCompare free news endpoint — keyless JSON, used as a resilient fallback/merge.
+const CRYPTOCOMPARE_NEWS_URL = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
 
 /** Strip HTML/CDATA noise from an RSS text fragment. */
 function clean(s) {
@@ -89,27 +97,65 @@ function normalizeNewsApi(a) {
   };
 }
 
+/** Normalise a CryptoCompare news item (keyless JSON feed) into our shape. */
+function normalizeCryptoCompare(a) {
+  let publishedAt = '';
+  if (a && a.published_on) {
+    const d = new Date(Number(a.published_on) * 1000);
+    if (!isNaN(d.getTime())) publishedAt = d.toISOString();
+  }
+  return {
+    title: clean(a && a.title),
+    url: (a && a.url) || (a && a.guid) || '',
+    source: (a && a.source_info && a.source_info.name) || (a && a.source) || 'CryptoCompare',
+    publishedAt,
+    body: clean(a && a.body).slice(0, 300),
+    categories: clean(a && a.categories)
+  };
+}
+
+/** Fetch CryptoCompare's keyless news feed → array of normalized articles ([] on failure). */
+async function fetchCryptoCompare() {
+  try {
+    const resp = await withTimeout(
+      axios.get(CRYPTOCOMPARE_NEWS_URL, {
+        timeout: FETCH_TIMEOUT_MS,
+        headers: { 'User-Agent': UA }
+      }),
+      FETCH_TIMEOUT_MS
+    );
+    const data = (resp.data && resp.data.Data) || [];
+    return data.map(normalizeCryptoCompare).filter(a => a.title && a.url);
+  } catch (_) {
+    return [];
+  }
+}
+
 /**
  * Fetch the keyless crypto news feeds. Returns an array of normalized articles.
  * Feeds are fetched in parallel and merged; individual feed failures are tolerated.
  * Throws only if EVERY feed fails (so callers can surface a clean error).
  */
 async function fetchNewsFeed() {
-  const settled = await Promise.allSettled(
-    RSS_FEEDS.map(f =>
-      withTimeout(
-        axios.get(f.url, { timeout: 10000, responseType: 'text', headers: { 'User-Agent': UA } }),
-        12000
-      ).then(resp => parseRss(resp.data, f.source))
-    )
+  // Each source has its own 8s budget and its own try/catch (Promise.allSettled),
+  // so one dead/slow feed can never break or stall the combined response.
+  const rssTasks = RSS_FEEDS.map(f =>
+    withTimeout(
+      axios.get(f.url, { timeout: FETCH_TIMEOUT_MS, responseType: 'text', headers: { 'User-Agent': UA } }),
+      FETCH_TIMEOUT_MS
+    ).then(resp => parseRss(resp.data, f.source))
   );
+  // CryptoCompare keyless JSON feed merged alongside the RSS sources.
+  const tasks = rssTasks.concat([fetchCryptoCompare()]);
+
+  const settled = await Promise.allSettled(tasks);
 
   const articles = [];
   const seen = new Set();
   let anyOk = false;
   for (const r of settled) {
-    if (r.status === 'fulfilled') {
-      anyOk = true;
+    if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+      if (r.value.length) anyOk = true;
       for (const a of r.value) {
         if (a.url && !seen.has(a.url)) { seen.add(a.url); articles.push(a); }
       }
@@ -117,6 +163,119 @@ async function fetchNewsFeed() {
   }
   if (!anyOk) throw new Error('All crypto news feeds are unreachable');
   return articles;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sentiment analysis (LOCAL lexicon — no LLM, no tokens, no API key)
+// Honors the AURA token-saving priority: a fast keyword scan over headlines.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Bullish lexicon (each phrase counts +1 toward a bullish read).
+const BULLISH_WORDS = [
+  'surge', 'surges', 'surging', 'rally', 'rallies', 'rallying', 'soar', 'soars', 'soaring',
+  'ath', 'all-time high', 'record high', 'breakout', 'bullish', 'bull', 'gain', 'gains',
+  'jump', 'jumps', 'climb', 'climbs', 'rise', 'rises', 'rising', 'spike', 'spikes', 'pump',
+  'adopt', 'adoption', 'adopts', 'partnership', 'partner', 'approve', 'approved', 'approval',
+  'inflow', 'inflows', 'upgrade', 'upgraded', 'launch', 'launches', 'integration', 'integrate',
+  'institutional', 'etf approval', 'buy', 'buying', 'accumulate', 'accumulation', 'milestone',
+  'green', 'outperform', 'boom', 'momentum', 'support', 'optimistic', 'recovery', 'rebound',
+  'demand', 'upside', 'breaks above', 'tops', 'beat', 'beats', 'record', 'surpass'
+];
+
+// Bearish lexicon (each phrase counts +1 toward a bearish read).
+const BEARISH_WORDS = [
+  'crash', 'crashes', 'crashing', 'plunge', 'plunges', 'plunging', 'slump', 'slumps',
+  'dump', 'dumps', 'dumping', 'tumble', 'tumbles', 'drop', 'drops', 'dropping', 'fall', 'falls',
+  'falling', 'sink', 'sinks', 'decline', 'declines', 'declining', 'selloff', 'sell-off',
+  'bearish', 'bear', 'hack', 'hacked', 'exploit', 'exploited', 'breach', 'scam', 'fraud',
+  'ban', 'banned', 'bans', 'lawsuit', 'sue', 'sued', 'sec charges', 'charged', 'fine', 'fined',
+  'outflow', 'outflows', 'liquidation', 'liquidated', 'collapse', 'collapses', 'bankruptcy',
+  'bankrupt', 'rug', 'rugpull', 'rug pull', 'fear', 'panic', 'sell', 'selling', 'downturn',
+  'red', 'losses', 'loss', 'warning', 'warns', 'risk', 'crackdown', 'halt', 'halts',
+  'delay', 'delayed', 'rejected', 'reject', 'downgrade', 'downgraded', 'breaks below', 'slides'
+];
+
+/** Score a single piece of text. Returns { sentiment, score, bullishHits, bearishHits }. */
+function scoreText(text) {
+  const t = ` ${String(text || '').toLowerCase()} `;
+  let bull = 0, bear = 0;
+  for (const w of BULLISH_WORDS) { if (t.includes(w)) bull++; }
+  for (const w of BEARISH_WORDS) { if (t.includes(w)) bear++; }
+  const score = bull - bear; // positive = bullish, negative = bearish
+  let sentiment = 'neutral';
+  if (score > 0) sentiment = 'bullish';
+  else if (score < 0) sentiment = 'bearish';
+  return { sentiment, score, bullishHits: bull, bearishHits: bear };
+}
+
+/**
+ * Analyze an array of news items (each may have title/summary/body) and produce a
+ * market sentiment signal. Pure local computation — no network, no LLM.
+ * Returns { overallSentiment, score, bullishCount, bearishCount, neutralCount,
+ *           perItem, topMovers, summary, total }.
+ */
+function analyzeSentiment(items) {
+  const list = Array.isArray(items) ? items : [];
+  const perItem = [];
+  let bullishCount = 0, bearishCount = 0, neutralCount = 0, totalScore = 0;
+
+  for (const it of list) {
+    const title = String((it && (it.title || it.headline)) || '').trim();
+    const summary = String((it && (it.summary || it.body || it.description)) || '');
+    if (!title && !summary) continue;
+    const r = scoreText(`${title} ${summary}`);
+    if (r.sentiment === 'bullish') bullishCount++;
+    else if (r.sentiment === 'bearish') bearishCount++;
+    else neutralCount++;
+    totalScore += r.score;
+    perItem.push({ title: title || summary.slice(0, 80), sentiment: r.sentiment, score: r.score });
+  }
+
+  const total = perItem.length;
+  // Normalized overall score in [-1, 1]: net bullish-vs-bearish share.
+  const norm = total ? Number(((bullishCount - bearishCount) / total).toFixed(3)) : 0;
+
+  let overallSentiment = 'neutral';
+  if (norm > 0.15) overallSentiment = 'bullish';
+  else if (norm < -0.15) overallSentiment = 'bearish';
+
+  // topMovers = strongest-signal headlines (largest absolute score), bull/bear only.
+  const topMovers = perItem
+    .filter(p => p.score !== 0)
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+    .slice(0, 5);
+
+  // Plain-language market read derived purely from the counts.
+  let summary;
+  if (total === 0) {
+    summary = 'No headlines to analyze — sentiment signal unavailable.';
+  } else {
+    const pct = Math.round((Math.max(bullishCount, bearishCount) / total) * 100);
+    if (overallSentiment === 'bullish') {
+      summary = `Market news skews BULLISH: ${bullishCount} of ${total} headlines lean positive (~${pct}%). ` +
+        `Tone favors upside — momentum, inflows or adoption stories dominate the feed.`;
+    } else if (overallSentiment === 'bearish') {
+      summary = `Market news skews BEARISH: ${bearishCount} of ${total} headlines lean negative (~${pct}%). ` +
+        `Tone is risk-off — sell-offs, regulatory or security stories dominate the feed.`;
+    } else {
+      summary = `Market news is MIXED/NEUTRAL across ${total} headlines ` +
+        `(${bullishCount} bullish, ${bearishCount} bearish, ${neutralCount} neutral). ` +
+        `No clear directional bias in the current news flow.`;
+    }
+  }
+
+  return {
+    overallSentiment,
+    score: norm,
+    rawScore: totalScore,
+    bullishCount,
+    bearishCount,
+    neutralCount,
+    total,
+    perItem,
+    topMovers,
+    summary
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,10 +309,10 @@ const TOOLS_NEWS = {
                   sortBy: 'publishedAt',
                   pageSize: n
                 },
-                timeout: 10000,
+                timeout: FETCH_TIMEOUT_MS,
                 headers: { 'User-Agent': UA, 'X-Api-Key': newsApiKey }
               }),
-              12000
+              FETCH_TIMEOUT_MS
             );
             const naArticles = ((resp.data && resp.data.articles) || [])
               .map(normalizeNewsApi)
@@ -179,7 +338,8 @@ const TOOLS_NEWS = {
           title: a.title,
           url: a.url,
           source: a.source,
-          publishedAt: a.publishedAt
+          publishedAt: a.publishedAt,
+          summary: a.body || ''
         }));
 
         return JSON.stringify({
@@ -223,7 +383,8 @@ const TOOLS_NEWS = {
           title: a.title,
           url: a.url,
           source: a.source,
-          publishedAt: a.publishedAt
+          publishedAt: a.publishedAt,
+          summary: a.body || ''
         }));
 
         return JSON.stringify({
@@ -251,10 +412,10 @@ const TOOLS_NEWS = {
       try {
         const resp = await withTimeout(
           axios.get('https://api.coingecko.com/api/v3/search/trending', {
-            timeout: 10000,
+            timeout: FETCH_TIMEOUT_MS,
             headers: { 'User-Agent': UA }
           }),
-          12000
+          FETCH_TIMEOUT_MS
         );
 
         const coins = (resp.data && resp.data.coins) || [];
@@ -291,4 +452,4 @@ const TOOLS_NEWS = {
 
 };
 
-module.exports = { TOOLS_NEWS };
+module.exports = { TOOLS_NEWS, analyzeSentiment, scoreText, fetchNewsFeed };

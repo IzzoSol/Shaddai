@@ -9,10 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0a0c10; --bg2:#0e1117; --panel:#12161e; --panel2:#161b25;
-  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
-  --txt:#e8ecf2; --mut:#5e6b7e; --mut2:#8593a6;
-  --gold:#ffd23f; --cyan:#33d6ff; --green:#1fe6a0; --red:#ff4d6d; --violet:#a98bff; --orange:#ff8a3d;
+  /* ── canonical SHADDAI dashboard tokens (set by applyTheme via _THEMES) ──
+     These mirror index.html exactly so this page inherits the user's picked theme. */
+  --bg-deep:#020817; --bg-primary:#0c1425; --bg-card:#0a1223;
+  --accent:#00e5a0; --text-primary:#e8edf5; --text-muted:#5a6b8a;
+  --accent-dim:rgba(0,229,160,.12); --accent-glow:rgba(0,229,160,.35);
+  --border:rgba(0,229,160,.10);
+
+  /* ── local aliases mapped onto the canonical tokens above ──
+     Local UI keeps its names but pulls color from the active theme. */
+  --bg:var(--bg-deep); --bg2:var(--bg-primary); --panel:var(--bg-card);
+  --panel2:var(--bg-primary);
+  --line:var(--border); --line2:var(--accent-glow);
+  --txt:var(--text-primary); --mut:var(--text-muted); --mut2:var(--text-muted);
+  /* accent family — driven by the theme accent so highlights match the dashboard */
+  --gold:var(--accent); --cyan:#33d6ff; --green:#1fe6a0; --red:#ff4d6d; --violet:#a98bff; --orange:#ff8a3d;
   --shadow:0 18px 50px -12px rgba(0,0,0,.7);
   --disp:'Chakra Petch',sans-serif; --mono:'Share Tech Mono',monospace;
 }
@@ -255,7 +266,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
 @media(max-width:860px){.grid3,.wf-grid,.opts{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
-<body>
+<body data-theme="dark">
 <div class="app">
 
   <div class="topbar rv" style="animation-delay:.02s">
@@ -269,10 +280,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;o
     <div style="display:flex;align-items:center;gap:14px">
       <select id="themeSel" onchange="applyTheme(this.value)" title="Theme"
         style="background:var(--panel);color:var(--mut2);border:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:6px 8px;cursor:pointer">
-        <option value="mission">◈ MISSION GOLD</option>
-        <option value="emerald">◈ EMERALD</option>
-        <option value="ember">◈ EMBER</option>
-        <option value="royal">◈ ROYAL</option>
+        <option value="dark">🌙 Dark</option>
+        <option value="midnight">🌌 Midnight</option>
+        <option value="ocean">🌊 Ocean</option>
+        <option value="crimson">🔴 Crimson</option>
+        <option value="forest">🌿 Forest</option>
+        <option value="solar">🌅 Solar</option>
+        <option value="light">☀️ Light</option>
       </select>
       <button class="help-btn" onclick="wtOpen()" title="How SHADDAI works (web2 → web3)">?</button>
       <div class="clock">
@@ -572,20 +586,26 @@ window.wizGo=async(who,what)=>{const b=document.getElementById('wizBody');
   b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="goMsg">Connecting to ${who} via the SHADDAI engine…</div></div>`;
   try{
     // REAL agent run — same-origin call to the live backend.
+    // POST /api/agent/run {goal, agent} -> {taskId}
     const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal:what,agent:who})});
     const d=await r.json();
     if(!d.taskId){throw new Error(d.error||'engine did not start a task');}
     const gm=()=>document.getElementById('goMsg');
     let result=null;
-    for(let i=0;i<20;i++){
-      await new Promise(s=>setTimeout(s,1500));
+    // poll GET /api/agent/task/<id> every ~1300ms until status is completed/failed
+    for(let i=0;i<30;i++){
+      await new Promise(s=>setTimeout(s,1300));
       const t=await (await fetch('/api/agent/task/'+d.taskId)).json();
-      if(gm())gm().textContent=`${who} working… (${t.status||'running'})`;
-      if(t.status&&/complete|done|fail|error/i.test(t.status)){result=t;break;}
+      if(gm())gm().textContent=`${who} working… (${t.status||'running'}${t.iterations?` · step ${t.iterations}`:''})`;
+      if(t.status==='completed'||t.status==='failed'){result=t;break;}
     }
-    let text='(still working — try again in a moment)';
-    if(result){ text=result.result || (result.steps&&result.steps.length&&result.steps[result.steps.length-1].llm_response) || JSON.stringify(result).slice(0,400); }
-    b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div><div style="margin-top:18px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Do another</button></div></div>`;
+    if(!result){throw new Error('timed out waiting for the agent — try again');}
+    if(result.status==='failed'){throw new Error(result.result||result.error||'the agent reported a failure');}
+    const text=result.result || JSON.stringify(result).slice(0,400);
+    const tools=Array.isArray(result.tools_used)?result.tools_used:[];
+    const toolsHtml=tools.length?`<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">`+
+      tools.map(t=>`<span class="pill">🛠 ${safe(t)}</span>`).join('')+`</div>`:'';
+    b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div>${toolsHtml}<div style="margin-top:18px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Do another</button></div></div>`;
   }catch(e){
     b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}<br>Make sure the SHADDAI server is running (npm start).</div><div style="margin-top:14px"><button class="btn cy" style="width:auto;padding:11px 26px" onclick="wzReset()">↺ Try again</button></div></div>`;
   }
@@ -624,17 +644,43 @@ try{if(!localStorage.getItem('shaddai_wt_seen'))setTimeout(wtOpen,650);}catch(e)
 window.swap=v=>{const o=v==='office';
   document.getElementById('scOffice').classList.toggle('on',o);document.getElementById('scWf').classList.toggle('on',!o);
   document.getElementById('tabOffice').classList.toggle('on',o);document.getElementById('tabWf').classList.toggle('on',!o);};
-// ── theme system (swaps accent palette; persists) ──
-const THEMES={
-  mission:{gold:'#ffd23f',cyan:'#33d6ff',green:'#1fe6a0'},
-  emerald:{gold:'#1fe6a0',cyan:'#33d6ff',green:'#ffd23f'},
-  ember:{gold:'#ff8a3d',cyan:'#ffd23f',green:'#1fe6a0'},
-  royal:{gold:'#a98bff',cyan:'#33d6ff',green:'#1fe6a0'}
+// ── theme system — IDENTICAL palette + mechanism to index.html ──
+// Mirrors index.html's _THEMES so this page renders the exact same theme.
+const _THEMES={
+  dark:     { bg:'#020817', bgPrimary:'#0c1425', bgCard:'#0a1223', accent:'#00e5a0', text:'#e8edf5', textMuted:'#5a6b8a' },
+  midnight: { bg:'#0a0515', bgPrimary:'#15082a', bgCard:'#1a0f35', accent:'#8b5cf6', text:'#d5c5ff', textMuted:'#7a5fa8' },
+  ocean:    { bg:'#051020', bgPrimary:'#0a1f3a', bgCard:'#0f2a45', accent:'#00c8ff', text:'#b0d8ff', textMuted:'#5a8aa8' },
+  crimson:  { bg:'#120308', bgPrimary:'#200a0e', bgCard:'#2a0e14', accent:'#ff4a6a', text:'#ffd5de', textMuted:'#a85070' },
+  forest:   { bg:'#030e08', bgPrimary:'#071a0d', bgCard:'#0a2214', accent:'#22c55e', text:'#c8f0d8', textMuted:'#4a8a60' },
+  solar:    { bg:'#0f0800', bgPrimary:'#1e1000', bgCard:'#2a1800', accent:'#f59e0b', text:'#ffe8b0', textMuted:'#9a7030' },
+  light:    { bg:'#f0f5fa', bgPrimary:'#ffffff', bgCard:'#f8fbff', accent:'#0070cc', text:'#1a1f35', textMuted:'#6a7a9a' },
 };
-window.applyTheme=function(name){const t=THEMES[name]||THEMES.mission;const r=document.documentElement.style;
-  r.setProperty('--gold',t.gold);r.setProperty('--cyan',t.cyan);r.setProperty('--green',t.green);r.setProperty('--accent',t.gold);
-  try{localStorage.setItem('shaddai_theme',name);}catch(e){}};
-try{const savedT=localStorage.getItem('shaddai_theme');if(savedT){const sel=document.getElementById('themeSel');if(sel)sel.value=savedT;applyTheme(savedT);}}catch(e){}
+// Persist into the SAME store index.html uses: localStorage['shaddai_v99'].settings.ui.theme
+function _saveTheme(name){try{
+  const raw=localStorage.getItem('shaddai_v99');const d=raw?JSON.parse(raw):{};
+  d.settings=d.settings||{};d.settings.ui=d.settings.ui||{};d.settings.ui.theme=name;
+  localStorage.setItem('shaddai_v99',JSON.stringify(d));
+}catch(e){}}
+window.applyTheme=function(name){const t=_THEMES[name]||_THEMES.dark;const r=document.documentElement.style;
+  // same CSS vars index.html sets
+  r.setProperty('--bg-deep',t.bg);
+  r.setProperty('--bg-primary',t.bgPrimary);
+  r.setProperty('--bg-card',t.bgCard);
+  r.setProperty('--accent',t.accent);
+  r.setProperty('--text-primary',t.text);
+  r.setProperty('--text-muted',t.textMuted);
+  r.setProperty('--accent-dim',t.accent+'20');
+  r.setProperty('--accent-glow',t.accent+'59');
+  r.setProperty('--border',t.accent+'1a');
+  document.body.setAttribute('data-theme',name);
+  const sel=document.getElementById('themeSel');if(sel&&sel.value!==name)sel.value=name;
+  _saveTheme(name);};
+// Read whatever theme the user picked in the main dashboard (same key, same shape).
+function _readSavedTheme(){try{
+  const raw=localStorage.getItem('shaddai_v99');
+  if(raw){const p=JSON.parse(raw);const k=p&&p.settings&&p.settings.ui&&p.settings.ui.theme;if(k&&_THEMES[k])return k;}
+}catch(e){}return 'dark';}
+applyTheme(_readSavedTheme());
 
 // clock
 setInterval(()=>{const d=new Date();document.getElementById('clk').textContent=d.toTimeString().slice(0,8)+' UTC';},1000);

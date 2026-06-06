@@ -51,6 +51,23 @@ h1 em{font-style:italic;color:var(--gold2)}
 .empty{grid-column:1/-1;text-align:center;color:var(--mut);font-style:italic;padding:50px;font-size:15px}
 .note{margin-top:30px;font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:.06em;line-height:1.7;border-top:1px solid var(--line);padding-top:16px}
 .note b{color:var(--gold2)}
+/* ── friendly "what is this?" explainer ── */
+.explain{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(212,175,55,.06),rgba(11,10,7,.4));padding:22px 24px;margin-bottom:26px;border-radius:4px}
+.explain h2{font-family:var(--disp);font-size:24px;font-weight:900;color:var(--gold2);line-height:1.1}
+.explain h2 .q{font-size:13px;font-family:var(--mono);letter-spacing:.2em;color:var(--gold);display:block;text-transform:uppercase;margin-bottom:6px;font-weight:400}
+.explain p.intro{font-size:15px;color:var(--cream);line-height:1.6;margin-top:10px;max-width:760px}
+.explain .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px}
+.explain .col{background:rgba(0,0,0,.28);border:1px solid var(--line);padding:14px 15px;border-radius:4px}
+.explain .col h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:8px}
+.explain .col p{font-size:13px;color:var(--cream);line-height:1.55;opacity:.92}
+.explain .col p b{color:var(--gold2)}
+.explain .perks{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.explain .perks h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:10px}
+.explain .perks .vision{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--mut);border:1px solid var(--line);padding:2px 7px;border-radius:20px;margin-left:8px;text-transform:uppercase}
+.explain .perks ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 18px}
+.explain .perks li{font-size:13px;color:var(--cream);line-height:1.5;padding-left:20px;position:relative}
+.explain .perks li::before{content:"◆";position:absolute;left:0;color:var(--green);font-size:10px;top:3px}
+.explain .perks li b{color:var(--green)}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--line2)}
 </style>
 </head>
@@ -73,6 +90,37 @@ h1 em{font-style:italic;color:var(--gold2)}
     <span>Owner · <b id="ownerAddr">not connected</b></span>
     <span>Chain · <b>Solana (devnet)</b></span>
     <span>Standard · <b>Metaplex Core</b></span>
+  </div>
+
+  <div class="explain">
+    <h2><span class="q">New here? Read this first</span>What is The Vault?</h2>
+    <p class="intro">The Vault is <b style="color:var(--gold2)">your collection of SHADDAI collectibles</b> — digital trophies that prove the real work your AI agents have done for you. Each collectible can be "minted" as an NFT, which simply means it gets a permanent, tamper-proof receipt recorded on the blockchain (we use <b style="color:var(--gold2)">Solana devnet</b> — a free test network — for now). No crypto experience needed to start.</p>
+
+    <div class="cols">
+      <div class="col">
+        <h3>💎 What's a collectible?</h3>
+        <p>A unique digital item you own. <b>Minting it as an NFT</b> records proof on the blockchain that the work behind it really happened and that it belongs to you — provable, yours, and tradeable.</p>
+      </div>
+      <div class="col">
+        <h3>🛠 How you earn them</h3>
+        <p>Two ways: by <b>creating an agent</b>, or by <b>completing tasks</b> with your agents. In short — <b>work = collectibles</b>. The more your agents do, the more your Vault fills up.</p>
+      </div>
+      <div class="col">
+        <h3>⛓ Why the blockchain?</h3>
+        <p>It's a public ledger nobody can secretly edit. Minting writes a permanent record so your collectible's authenticity and ownership can always be verified — no middleman required.</p>
+      </div>
+    </div>
+
+    <div class="perks">
+      <h3>👑 Holder perks <span class="vision">the vision</span></h3>
+      <ul>
+        <li><b>Early token entry</b> — holders get in first when the SHADDAI token launches.</li>
+        <li><b>Revenue airdrops</b> — a share of platform revenue sent to holders.</li>
+        <li><b>Free credits &amp; compute</b> — collectibles unlock free agent work.</li>
+        <li><b>More holder rewards</b> — added as the ecosystem grows.</li>
+      </ul>
+      <div id="perksLive" style="font-family:var(--mono);font-size:10px;color:var(--gold2);margin-top:12px;min-height:14px"></div>
+    </div>
   </div>
 
   <div id="setupCard" style="display:none;border:1px solid var(--line2);background:linear-gradient(180deg,rgba(212,175,55,.07),transparent);padding:18px 20px;margin-bottom:24px">
@@ -114,8 +162,31 @@ async function connectWallet(){
     const r = await prov.connect();
     wallet = (r && r.publicKey ? r.publicKey.toString() : (prov.publicKey && prov.publicKey.toString())) || null;
     if(wallet){ btn.textContent='◎ '+wallet.slice(0,4)+'…'+wallet.slice(-4); btn.classList.add('on');
-      document.getElementById('ownerAddr').textContent = wallet.slice(0,4)+'…'+wallet.slice(-4); }
+      document.getElementById('ownerAddr').textContent = wallet.slice(0,4)+'…'+wallet.slice(-4);
+      loadPerks(); }
   }catch(e){ btn.textContent='Connect Wallet'; }
+}
+
+// Pull live holder perks for the current user (wallet if connected, else guest).
+// Backend: GET /api/collectibles/rewards/perks?user=  -> { ok, count, tokenEarlyEntry, freeCredits, airdropEligible, tier }
+async function loadPerks(){
+  const el = document.getElementById('perksLive');
+  if(!el) return;
+  const user = wallet || 'guest';
+  try{
+    const r = await fetch('/api/collectibles/rewards/perks?user='+encodeURIComponent(user));
+    const d = await r.json();
+    if(!d || d.ok === false){ el.textContent = ''; return; }
+    const count = Number(d.count||0);
+    if(!count){ el.textContent='You hold 0 collectibles yet — earn your first to unlock perks.'; return; }
+    const bits = [];
+    bits.push('You hold '+count+' collectible'+(count===1?'':'s'));
+    if(d.tier && d.tier!=='none') bits.push('tier: '+esc(d.tier));
+    if(d.freeCredits) bits.push(esc(d.freeCredits)+' free credits');
+    if(d.tokenEarlyEntry) bits.push('early token entry ✓');
+    if(d.airdropEligible) bits.push('airdrop eligible ✓');
+    el.textContent = bits.join(' · ');
+  }catch(e){ el.textContent=''; }
 }
 
 async function loadVault(){
@@ -123,7 +194,10 @@ async function loadVault(){
   try{
     const r = await fetch('/api/collectibles');
     const data = await r.json();
-    const items = Array.isArray(data) ? data : (data.collectibles || data.items || []);
+    // backend returns { ok:true, data:[...] }; tolerate a few legacy shapes too
+    const items = Array.isArray(data) ? data
+      : (Array.isArray(data.data) ? data.data
+      : (data.collectibles || data.items || []));
     document.getElementById('count').textContent = items.length;
     if(!items.length){ grid.innerHTML='<div class="empty">The vault is empty — mint or collect a piece first.</div>'; return; }
     grid.innerHTML='';
