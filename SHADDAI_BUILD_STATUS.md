@@ -2,6 +2,29 @@
 
 *Single source of truth for what's built, what's verified, what's left. Repo: `IzzoIzzoIzzo/Shaddai` (private, branch `foundation-hardening`).*
 
+## 🗺️ THE THREAD (2026-06-07, v83) — read this first if lost
+
+**APPROACH (locked):** keep the single-file build, NO rewrite (see memory `shaddai-build-approach`). Launch-first → Render beta → 10-100 users → revenue → token. Backup before risky work (`v83.33` tag exists). Push to `main` for Render auto-deploy. Pollinations BANNED.
+
+**SHIPPED THIS SESSION (v83, all pushed to `main`, verified live — no mock):**
+- Simple Mode 3-step wizard (What→Who→GO) in Workflow — real `/api/agent/run` (verified NEXUS→calculate→144)
+- **Human Design souls** for all 7 agents (Type/Strategy/Authority/Profile) injected into agent loop AND `/api/llm/chat` (verified PIKADON speaks as Splenic Projector) · esoteric corpus folder `backend/data/esoteric/`
+- News tab: live free feeds + token-free sentiment + per-headline **AI Post/Summary → Save to Notes** (real QUILL)
+- Real PIKADON security scanner (scanUrl/scanCode/scanSkill)
+- Multi-engine image gen: **HuggingFace FLUX default** (free token) + fal/NanoBanana/DALL-E BYOK; **Pollinations REMOVED**; in-app render + Save-to-Gallery
+- Layout: dashboard sits BESIDE left tabs (bulletproof CSS for all 12 outside views) · default side-nav on desktop, top-nav mobile · Plan tab removed (in Settings)
+- Office agent status from unified backend (all 7 ONLINE, no `:800X` port pings)
+- Marketplace: honest "● NEW / No runs yet" (removed fake 4.9★/1847-deployments/VERIFIED/3 fiction bots) · test-job spam purged (server + localStorage)
+- **Production fetch-shim**: rewrites hardcoded `localhost:PORT`→same-origin on live host (Render works for beta); AURA panel→same-origin
+- Vercel removed (`vercel.json` deleted — Render is the real host)
+- `main` brought current (was 4 days stale)
+
+**NEXT UP (cooking now):** x402 everyday-commerce (storefront view + make x402 the visible primary rail; backend `lib/x402.js` already real). Then: Office command-floor overhaul + agent movement · Skills-made-real + Forge upgrade · content-calendar AI-fill · Social-tab Notes reader · real video gen (BYOK only — no free API).
+
+**Render env to set (free):** `GROQ_API_KEY` (instant agents), `HF_TOKEN` (free FLUX images), optional `ADMIN_TOKEN` (locks admin routes).
+
+---
+
 ## 🗺️ THE THREAD (2026-06-05) — read this first if lost
 
 **DONE + pushed + tested (90/90):** security foundation · LLM groq-first+6-provider fallback (chat ~300ms) · 182 real tools · 73 skill→tool bindings · **Forge gives agents REAL tools** (fakes filtered) · **agent SOUL** (`data/agents/*.md` injected) · **AURA token-saver** (live: "5×5"→free) · **Security scans** (`/api/security`) · **BYOK vault** (`/api/vault`) · **News** (`/api/news`) · **Collectible-rewards** (`/api/collectibles/rewards`, earn-by-work+perks) · Orchestrator · The Vault (NFT mint, devnet-ready) · embeddable `<shaddai-agent>` (x402 pay + per-customer memory) · marketplace backend · nav side-fit fix · agent-bar pin · version/dropdown fixes · port-label cleanup · Chain tab removed.
