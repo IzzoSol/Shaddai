@@ -10034,6 +10034,23 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 // ================== STATE ==================
 // ── API base constants ─────────────────────────────────────────────────────────
 const PROXY = '';
+// ── PRODUCTION SHIM: on a live host (Render), rewrite any hardcoded http://localhost:PORT
+// call to same-origin so the deployed site works. On localhost dev, leave everything as-is.
+(function(){
+  try{
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '') return; // dev: untouched
+    var RE = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+/i;
+    var _f = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      try{
+        if (typeof input === 'string' && RE.test(input)) input = input.replace(RE, '');
+        else if (input && input.url && RE.test(input.url)) input = new Request(input.url.replace(RE, ''), input);
+      }catch(e){}
+      return _f(input, init);
+    };
+  }catch(e){}
+})();
 
 const S = {
   ver: '80.0',
@@ -36693,7 +36710,7 @@ console.log('✓ V72 missing handlers loaded — all onclick refs resolved');
      ██████████████████████████████████████████████████ -->
 <script>
 // ── AURA Client Module ────────────────────────────────────────────────────────
-const AURA_BASE = 'http://localhost:8010';
+const AURA_BASE = '/api';  // same-origin: AURA is served by the unified backend at /api/aura/* (works on Render)
 let _auraTokensSaved = 0;
 let _auraCacheHits   = 0;
 let _auraCostSaved   = 0;
