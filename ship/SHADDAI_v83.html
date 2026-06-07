@@ -5474,19 +5474,27 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         }
         const t=await j('/api/agent/tools');
         const arr=(t&&(t.tools||t.data))||[];
-        const names=(Array.isArray(arr)?arr:Object.values(arr)).map(x=>x.name||x.id||x).filter(Boolean);
+        const toolList=(Array.isArray(arr)?arr:Object.values(arr)).filter(x=>x&&(x.name||x.id));
+        const toolDesc={}; toolList.forEach(x=>{ toolDesc[x.name||x.id]=x.description||''; });
+        const names=toolList.map(x=>x.name||x.id).filter(Boolean);
         allToolNames=names.length?names:['fetch_price','search_web','generate_image','whale_scan','schedule_task','run_python','dex_scan','run_workflow','send_email','post_social'];
+        // Live search box so all 182 real skills are discoverable (not just first 60).
         const box=$('ofSkills'); box.innerHTML='';
-        allToolNames.slice(0,60).forEach(n=>{
-          const c=document.createElement('span');c.className='of-chip';c.textContent=n;
-          c.onclick=()=>{
-            c.classList.toggle('on');
-            c.classList.contains('on')?skills.add(n):skills.delete(n);
-            saveSkills($('ofName').value);
-            paint();
-          };
-          box.appendChild(c);
-        });
+        const search=document.createElement('input');
+        search.placeholder='🔎 search '+allToolNames.length+' real skills…';
+        search.style.cssText='width:100%;margin:0 0 8px;padding:6px 9px;font-size:10px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;color:var(--text)';
+        const chipWrap=document.createElement('div'); chipWrap.style.cssText='display:flex;flex-wrap:wrap;gap:5px;max-height:170px;overflow-y:auto';
+        function paintChips(filter){
+          chipWrap.innerHTML='';
+          allToolNames.filter(n=>!filter||n.toLowerCase().includes(filter)||(toolDesc[n]||'').toLowerCase().includes(filter)).slice(0,120).forEach(n=>{
+            const c=document.createElement('span');c.className='of-chip'+(skills.has(n)?' on':'');c.textContent=n;
+            c.title=toolDesc[n]||n; // hover shows what the skill does
+            c.onclick=()=>{ c.classList.toggle('on'); c.classList.contains('on')?skills.add(n):skills.delete(n); saveSkills($('ofName').value); paint(); };
+            chipWrap.appendChild(c);
+          });
+        }
+        search.oninput=()=>paintChips(search.value.trim().toLowerCase());
+        box.appendChild(search); box.appendChild(chipWrap); paintChips('');
         paint();
         /* restore skills for default name if any */
         restoreSkills($('ofName').value);
