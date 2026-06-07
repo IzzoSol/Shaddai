@@ -17,29 +17,52 @@ const PRICED = {
   'agent.hire':     { path: '/api/x402/agent',       priceUsd: 0.02,  description: 'Hire a SHADDAI agent to run a task',      mimeType: 'application/json' }
 };
 
-const X402_VERSION = 1;
+const X402_VERSION = 1; // x402 protocol version (v2 spec; field name `x402Version`)
+
+// Default USDC asset contract addresses per network (overridable via X402_ASSET_ADDRESS).
+const USDC_ADDRESS = {
+  base:           '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+  solana:         'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+};
+
 function enabled()   { return process.env.X402_ENABLED === 'true'; }
-function network()   { return process.env.X402_NETWORK || 'base'; }       // base | solana
-function asset()     { return process.env.X402_ASSET   || 'USDC'; }
+function network()   { return process.env.X402_NETWORK || 'base'; }       // base | base-sepolia | solana
+function asset()     { return process.env.X402_ASSET   || 'USDC'; }       // human-readable symbol
+function assetAddress() {                                                 // v2 `asset` = token contract/mint address
+  return process.env.X402_ASSET_ADDRESS || USDC_ADDRESS[network()] || USDC_ADDRESS.base;
+}
 function payTo()     { return process.env.X402_PAY_TO  || ''; }            // merchant wallet
 function facilitator(){ return process.env.X402_FACILITATOR_URL || ''; }
 
 // USDC has 6 decimals → atomic units string (x402 expects atomic amounts).
 function usdToAtomic(usd) { return String(Math.round(Number(usd) * 1e6)); }
 
-/** Build a single PaymentRequirements object (x402 'exact' scheme). */
+/**
+ * Scheme-specific `extra` block (x402 v2). For EIP-3009/`exact` on EVM the
+ * facilitator needs the ERC-20 token `name`/`version` for the EIP-712 domain.
+ */
+function extraFor() {
+  const net = network();
+  if (net === 'solana') return { feePayer: facilitator() || undefined };
+  // EVM (base / base-sepolia): USDC EIP-712 domain hints.
+  return { name: asset() === 'USDC' ? 'USD Coin' : asset(), version: '2' };
+}
+
+/** Build a single PaymentRequirements object (x402 v2 'exact' scheme). */
 function paymentRequirements(key, resourceUrl) {
   const p = PRICED[key] || { priceUsd: 0.001, description: key, mimeType: 'application/json' };
   return {
     scheme: 'exact',
     network: network(),
     maxAmountRequired: usdToAtomic(p.priceUsd),
-    resource: resourceUrl,
+    resource: resourceUrl || '',
     description: p.description,
     mimeType: p.mimeType,
     payTo: payTo(),
     maxTimeoutSeconds: 60,
-    asset: asset()
+    asset: assetAddress(),
+    extra: extraFor()
   };
 }
 
@@ -62,12 +85,15 @@ function discovery() {
     x402Version: X402_VERSION,
     enabled: enabled(),
     network: network(),
-    asset: asset(),
     payTo: payTo() || null,
     facilitator: facilitator() || null,
+    asset: asset(),
+    assetAddress: assetAddress(),
     endpoints: Object.entries(PRICED).map(([key, p]) => ({
       resource: key, path: p.path, price: `$${p.priceUsd}`, priceUsd: p.priceUsd,
-      network: network(), asset: asset(), description: p.description
+      maxAmountRequired: usdToAtomic(p.priceUsd),
+      network: network(), asset: asset(), assetAddress: assetAddress(),
+      mimeType: p.mimeType, description: p.description
     }))
   };
 }
