@@ -1,1 +1,0 @@
-The market brief has been successfully written to a file. The file path is C:\\Users\\Brittany\\SHADDAI-FINAL-BUILD\\generated-output\\1779724858280_market_brief.txt, and the file name is 1779724858280_market_brief.txt. The file size is 563 bytes.
