@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
-<title>SHADDAI v86 · Sovereign AI Command</title>
+<title>SHADDAI v87 · Sovereign AI Command</title>
 <!-- ── Firebase Auth (optional sign-in; local-first still works without it) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2842,7 +2842,7 @@ body[data-theme="dark"]::before {
   font-size: 18px !important;
 }
 /* ════════════════════════════════════════════════════════
-   SHADDAI v86 — SOVEREIGN BOOT OVERLAY
+   SHADDAI v87 — SOVEREIGN BOOT OVERLAY
    Visible immediately from first body paint. No JS needed
    to show it — JS only populates it + triggers teardown.
    ════════════════════════════════════════════════════════ */
@@ -3256,7 +3256,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v86</span>
+  <span>SHADDAI v87</span>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3393,7 +3393,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v86</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v87</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3479,7 +3479,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
         </div>
         <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v86 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v87 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
         <div class="mission-text">SHADDAI (commander) · ZEROX (wealth) · ORACLE (research) · NEXUS (backend) · TURTLE (design) · QUILL (writing) · PIKADON (security) · 5,361 skills · Workflow Chains · Scheduled Jobs · Webhooks · Agent Sparklines</div>
         <!-- Agent online dots — populated by initSovereignTerminal() -->
         <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
@@ -3705,10 +3705,32 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <!-- ⚡ SIMPLE MODE — 3-step wizard (What → Who → GO), real /api/agent/run engine -->
     <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
-        <span class="card-title">⚡ Simple Mode</span>
-        <span style="font-size:9px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
+        <span class="card-title" id="wfModeTitle">⚡ Simple Mode</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="wfModeNote" style="font-size:9px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
+          <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <button id="wfTabSimple" onclick="wfMode('simple')" style="font-size:9px;font-weight:700;letter-spacing:.06em;padding:5px 12px;background:var(--accent,#00e5a0);color:#04212b;border:none;cursor:pointer">SIMPLE</button>
+            <button id="wfTabPro" onclick="wfMode('pro')" style="font-size:9px;font-weight:700;letter-spacing:.06em;padding:5px 12px;background:transparent;color:var(--text-muted);border:none;cursor:pointer">PRO</button>
+          </div>
+        </div>
       </div>
+      <!-- SIMPLE: 4-step wizard (unchanged) -->
       <div id="smWizard"><div class="wiz-steps" id="wizSteps"></div><div id="wizBody"></div></div>
+      <!-- PRO: multi-agent chain builder (from the Orchestrator) -->
+      <div id="proChain" style="display:none">
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">Assemble a <b style="color:var(--accent,#00e5a0)">chain</b>: each agent does one step, its result feeds the next. Pick the agent, bind a tool/API, choose a model, write the instruction — then <b>Run Chain</b>.</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;color:#ffd23f;margin-bottom:6px">▸ QUICK CHAINS</div>
+        <div id="proPresets" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;color:#ffd23f;margin-bottom:6px">▸ YOUR CHAIN</div>
+        <div id="proSteps" style="display:flex;flex-direction:column;gap:0;margin-bottom:14px"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="font-size:10px" onclick="proAddStep()">+ Add step</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="proAddApi()">+ API</button>
+          <button class="btn btn-accent" id="proRunBtn" style="font-size:12px;font-weight:700;letter-spacing:.1em" onclick="proRunChain()">▶ RUN CHAIN</button>
+          <span id="proStatus" style="font-size:10px;color:var(--text-muted)">idle</span>
+        </div>
+        <div id="proFinal" style="display:none;border:1px solid var(--accent,#00e5a0);background:rgba(0,229,160,.06);border-radius:8px;padding:14px;margin-top:12px"><div style="font-size:10px;letter-spacing:.12em;color:var(--accent,#00e5a0);text-transform:uppercase;margin-bottom:6px">⊹ Final output</div><div id="proFinalBody" style="font-size:12px;line-height:1.6;white-space:pre-wrap"></div></div>
+      </div>
     </div>
     <style>
       #smWizard{max-width:780px;margin:6px auto 0}
@@ -3874,7 +3896,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div>
           <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT / TOPIC</div>
-          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v86 launch strategy'">
+          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v87 launch strategy'">
         </div>
       </div>
       <button class="btn btn-accent" style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#00c8ff,#00e5a0);color:#000;border:none;font-weight:700;letter-spacing:0.05em" onclick="runWorkflowFromUI()">▶ RUN WORKFLOW</button>
@@ -4729,7 +4751,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <!-- System Log -->
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:2px">▸ SYSTEM LOG</div>
           <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:8px;max-height:80px;overflow-y:auto" id="officeSystemLog">
-            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v86 online</div>
+            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v87 online</div>
           </div>
         </div>
 
@@ -12054,7 +12076,7 @@ function init() {
   setTimeout(() => { if (typeof _syncCreditsDisplay === 'function') _syncCreditsDisplay(); }, 500); // sync credit displays on load
   setTimeout(checkAllApiStatus, 3000);  // auto-check all services on load
   setTimeout(initEventStream, 1000);    // subscribe to gateway live events
-  log('SHADDAI v86 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
+  log('SHADDAI v87 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
   setInterval(save, S.settings.autoSave * 1000);
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
@@ -12349,7 +12371,7 @@ function exportOfficeReport() {
 
   lines.push('');
   lines.push(`─────────────────────────────────────────────────────────────`);
-  lines.push(`SHADDAI v86 · cloudzncrownz@gmail.com · ${ts}`);
+  lines.push(`SHADDAI v87 · cloudzncrownz@gmail.com · ${ts}`);
 
   downloadText(lines.join('\n'), `shaddai-report-${Date.now()}.txt`, 'text/plain');
   officeLog('[EXPORT] Full operations report downloaded');
@@ -32992,7 +33014,7 @@ function loadWebhookConfig() {
 function testOutboundWebhook() {
   const url = document.getElementById('webhookUrl')?.value || localStorage.getItem('shaddai_webhook') && JSON.parse(localStorage.getItem('shaddai_webhook')).url;
   if (!url) { notify('⚠ No webhook URL configured'); return; }
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v86', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v87', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
     .then(r => { if (r.ok) notify('✓ Outbound webhook test successful'); else notify('⚠ Webhook returned ' + r.status); })
     .catch(e => notify('✗ Webhook failed: ' + e.message));
 }
@@ -34017,7 +34039,7 @@ setInterval(() => {
   if (document.getElementById('dispatchWorkloadContainer')) updateDispatchUI();
 }, 3000);
 
-console.log('✅ SHADDAI v86 Enhancements Loaded');
+console.log('✅ SHADDAI v87 Enhancements Loaded');
 console.log('🎛️ Command Center dispatch system active');
 console.log('📍 SHADDAI desk & agent workload tracking ready');
 
@@ -39220,7 +39242,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (!overlay) { overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
     overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden';
 
-    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v86`,`▶ ALL SYSTEMS OK`];
+    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v87`,`▶ ALL SYSTEMS OK`];
     const _boardHtml=[..._boardItems,..._boardItems].map(t=>`<div style="padding:3px 4px;color:rgba(${a.glow},0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:5.5px">${t}</div>`).join('');
     overlay.innerHTML = `
       <style>
@@ -48179,7 +48201,7 @@ try{
       ]},
     {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL',kind:'agent',
       fields:[
-        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v86'},
+        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v87'},
         {k:'platform',label:'Platform',type:'sel',opts:['X / Twitter','Instagram caption','LinkedIn','TikTok script','Blog intro','Telegram']},
         {k:'tone',label:'Tone',type:'sel',opts:['Punchy','Professional','Casual','Inspirational','Bold/FOMO','Educational']}
       ]},
@@ -48312,6 +48334,97 @@ try{
   // ↻ Re-pull image engines so a newly-added API key shows up without a page reload.
   window.smRefreshEngines=function(){ try{ if(sw.step===2){ captureDetails(); render(); } if(typeof notify==='function') notify('Engines refreshed'); }catch(e){} };
   try{ if($('wizBody')) window.smReset(); }catch(e){}
+})();
+
+// ── PRO chain builder (merged from the Orchestrator) — multi-agent, multi-API chains ──
+(function(){
+  const AG=['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+  const BINDS={
+    auto:{label:'⚙ Auto (agent decides)',hint:''},
+    trending:{label:'📈 Trending/News',hint:' (use the get_trending_topics and get_crypto_news tools)'},
+    defi:{label:'🦙 DeFi (DeFiLlama/DexScreener)',hint:' (use the defi_yields, defi_token_price and defi_chains_tvl tools)'},
+    price:{label:'💹 Live price',hint:' (use the fetch_price tool)'},
+    music:{label:'🎵 Suno (music)',hint:' (use the make_music tool to generate a real track)'},
+    image:{label:'🖼️ Image gen',hint:' (use the generate_image tool to create the image)'},
+    web:{label:'🔎 Web search',hint:' (use the search_web tool)'},
+    postx:{label:'🐦 Post to X',hint:' (use the post_to_x tool to publish it)'},
+    tg:{label:'✈️ Post to Telegram',hint:' (use the post_to_telegram tool)'}
+  };
+  function loadBinds(){ try{ Object.assign(BINDS, JSON.parse(localStorage.getItem('shaddai_custom_binds')||'{}')); }catch(e){} }
+  loadBinds();
+  const PRESETS=[
+    {name:'🏆 Alpha Hunt → Content',desc:'find token → song → image → post',steps:[
+      {agent:'ORACLE',bind:'trending',instr:'Find the single most interesting trending crypto token right now and explain why in 2 sentences.'},
+      {agent:'TURTLE',bind:'music',instr:'Write a short hype song about that token.'},
+      {agent:'TURTLE',bind:'image',instr:'Generate a bold cover image for that token.'},
+      {agent:'QUILL',bind:'postx',instr:'Write a punchy tweet announcing it (no financial advice).'}]},
+    {name:'📊 Market Brief',desc:'DeFi scan → sentiment → report',steps:[
+      {agent:'ZEROX',bind:'defi',instr:'Scan top DeFi yields and chains by TVL; list the 3 most notable.'},
+      {agent:'ORACLE',bind:'trending',instr:'Add current market sentiment + any relevant news.'},
+      {agent:'QUILL',bind:'auto',instr:'Write a tight 1-paragraph morning market brief from the above.'}]},
+    {name:'✍️ Research → Write',desc:'research → draft',steps:[
+      {agent:'ORACLE',bind:'web',instr:'Research the topic and gather 3 key facts.'},
+      {agent:'QUILL',bind:'auto',instr:'Draft a short, engaging post from the research.'}]}
+  ];
+  let psteps=[];
+  const $=id=>document.getElementById(id);
+  function renderPro(){
+    var c=$('proSteps'); if(!c) return; c.innerHTML='';
+    psteps.forEach(function(s,i){
+      var node=document.createElement('div'); node.id='pnode'+i;
+      node.style.cssText='background:var(--bg,#0e1117);border:1px solid var(--border);border-radius:8px;padding:12px 12px 12px 40px;position:relative;margin-bottom:0';
+      node.innerHTML='<div style="position:absolute;left:10px;top:12px;width:20px;height:20px;display:grid;place-items:center;font-size:10px;font-weight:700;background:#ffd23f;color:#10131a;border-radius:4px" id="pnum'+i+'">'+(i+1)+'</div>'+
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">'+
+          '<select onchange="proSet('+i+',\'agent\',this.value)" style="font-size:10px">'+AG.map(function(a){return '<option '+(a===s.agent?'selected':'')+'>'+a+'</option>';}).join('')+'</select>'+
+          '<select onchange="proSet('+i+',\'bind\',this.value)" style="font-size:9px;color:#33d6ff">'+Object.keys(BINDS).map(function(k){return '<option value="'+k+'" '+(k===s.bind?'selected':'')+'>'+BINDS[k].label+'</option>';}).join('')+'</select>'+
+          '<button onclick="proRm('+i+')" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;border-radius:4px;cursor:pointer">✕</button>'+
+        '</div>'+
+        '<textarea oninput="proSet('+i+',\'instr\',this.value)" placeholder="What should this agent do?" style="width:100%;min-height:40px;font-size:12px;resize:vertical">'+(s.instr||'')+'</textarea>'+
+        '<div id="pout'+i+'" style="display:none;font-size:10px;color:var(--accent,#00e5a0);margin-top:6px;padding:7px;background:rgba(0,0,0,.3);border-radius:5px;white-space:pre-wrap;max-height:140px;overflow:auto"></div>';
+      c.appendChild(node);
+      if(i<psteps.length-1){ var con=document.createElement('div'); con.id='pcon'+i; con.style.cssText='height:16px;width:2px;background:var(--border);margin:0 auto'; c.appendChild(con); }
+    });
+  }
+  window.proSet=function(i,k,v){ if(psteps[i]) psteps[i][k]=v; };
+  window.proAddStep=function(){ psteps.push({agent:'SHADDAI',bind:'auto',instr:''}); renderPro(); };
+  window.proRm=function(i){ psteps.splice(i,1); renderPro(); };
+  window.proAddApi=function(){ var n=prompt('API / tool name:'); if(!n)return; var hint=prompt('Instruction hint (e.g. "(use the my_tool tool)"):')||('(use '+n+')'); var key='custom_'+Date.now(); BINDS[key]={label:'➕ '+n,hint:' '+hint}; try{var c=JSON.parse(localStorage.getItem('shaddai_custom_binds')||'{}');c[key]=BINDS[key];localStorage.setItem('shaddai_custom_binds',JSON.stringify(c));}catch(e){} renderPro(); };
+  function loadPreset(p){ psteps=p.steps.map(function(s){return Object.assign({},s);}); renderPro(); var f=$('proFinal'); if(f)f.style.display='none'; }
+  window.proRunChain=async function(){
+    if(!psteps.length){ if(typeof notify==='function')notify('Add a step first'); return; }
+    var btn=$('proRunBtn'), st=$('proStatus'); btn.disabled=true; var f=$('proFinal'); if(f)f.style.display='none';
+    psteps.forEach(function(_,i){ var o=$('pout'+i); if(o){o.style.display='none';o.textContent='';} var n=$('pnum'+i); if(n)n.style.background='#ffd23f'; });
+    var workflow=psteps.map(function(s){ return {agent:s.agent, goal:(s.instr||'do your part').trim()+(BINDS[s.bind]?BINDS[s.bind].hint:'')}; });
+    st.textContent='dispatching chain…';
+    try{
+      var r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'pro-chain'},body:JSON.stringify({workflow:workflow})});
+      var d=await r.json();
+      if(d.error){ st.textContent='error: '+d.error; btn.disabled=false; return; }
+      var res=d.steps||[];
+      for(var i=0;i<psteps.length;i++){
+        var n=$('pnum'+i); if(n)n.style.background='#33d6ff';
+        st.textContent='step '+(i+1)+'/'+psteps.length+' · '+psteps[i].agent+'…';
+        try{ window.setAgentActivity && window.setAgentActivity(psteps[i].agent,'working',psteps[i].instr); }catch(e){}
+        await new Promise(function(s){setTimeout(s,400);});
+        if(n)n.style.background='#1fe6a0';
+        var sr=res[i]; var o=$('pout'+i); if(o){ o.style.display='block'; o.textContent=(sr&&(sr.result||sr.status))?String(sr.result||sr.status).slice(0,600):'(no output)'; }
+        try{ window.setAgentActivity && window.setAgentActivity(psteps[i].agent,'idle'); }catch(e){}
+      }
+      st.textContent='✓ chain complete · '+res.length+' steps';
+      if(f){ $('proFinalBody').textContent=(d.finalOutput||'(no final output)'); f.style.display='block'; }
+    }catch(e){ st.textContent='⚠ '+e.message; }
+    btn.disabled=false;
+  };
+  window.wfMode=function(m){
+    var simple=m!=='pro';
+    var sw=$('smWizard'), pc=$('proChain'), ts=$('wfTabSimple'), tp=$('wfTabPro'), title=$('wfModeTitle'), note=$('wfModeNote');
+    if(sw)sw.style.display=simple?'':'none'; if(pc)pc.style.display=simple?'none':'';
+    if(ts){ ts.style.background=simple?'var(--accent,#00e5a0)':'transparent'; ts.style.color=simple?'#04212b':'var(--text-muted)'; }
+    if(tp){ tp.style.background=simple?'transparent':'var(--accent,#00e5a0)'; tp.style.color=simple?'var(--text-muted)':'#04212b'; }
+    if(title)title.textContent=simple?'⚡ Simple Mode':'🔗 Pro — Agent Chains';
+    if(note)note.textContent=simple?'Anyone can use it — tap what you want, pick who, GO.':'Multi-agent chains: each step feeds the next.';
+    if(!simple && !psteps.length){ var pp=$('proPresets'); if(pp&&!pp.childElementCount){ PRESETS.forEach(function(p){ var b=document.createElement('button'); b.className='preset'; b.style.cssText='font-size:9.5px;text-align:left;padding:9px 12px;border:1px solid var(--border);background:var(--bg,#0e1117);color:var(--text-muted);cursor:pointer;border-radius:6px'; b.innerHTML='<b style="display:block;color:#33d6ff;font-size:11px;margin-bottom:2px">'+p.name+'</b>'+p.desc; b.onclick=function(){loadPreset(p);}; pp.appendChild(b); }); } loadPreset(PRESETS[0]); }
+  };
 })();
 
 // 📰 News tab — live free headlines + local (token-free) sentiment.
