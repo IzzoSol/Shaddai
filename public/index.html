@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
-<title>SHADDAI v83 · Sovereign AI Command</title>
+<title>SHADDAI v84 · Sovereign AI Command</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
 <script src="/pwa-register.js" defer></script>
@@ -2818,7 +2818,7 @@ body[data-theme="dark"]::before {
   font-size: 18px !important;
 }
 /* ════════════════════════════════════════════════════════
-   SHADDAI v83 — SOVEREIGN BOOT OVERLAY
+   SHADDAI v84 — SOVEREIGN BOOT OVERLAY
    Visible immediately from first body paint. No JS needed
    to show it — JS only populates it + triggers teardown.
    ════════════════════════════════════════════════════════ */
@@ -3232,7 +3232,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v83</span>
+  <span>SHADDAI v84</span>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3292,7 +3292,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🛒 Marketplace</button>
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
-  <button class="nav-btn" onclick="showView('commerce')" style="color:#00e5a0;font-weight:700">⚡ Commerce</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
@@ -3369,7 +3368,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v83</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v84</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3378,7 +3377,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
-    <button class="sbt" onclick="showView('commerce');lySetSb(this)"><span class="ic">⚡</span>Commerce</button>
     <button class="sbt" onclick="showView('media');lySetSb(this)"><span class="ic">🎵</span>Media</button>
     <button class="sbt" onclick="showView('social');lySetSb(this)"><span class="ic">📱</span>Social</button>
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
@@ -3455,7 +3453,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
         </div>
         <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v83 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v84 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
         <div class="mission-text">SHADDAI (commander) · ZEROX (wealth) · ORACLE (research) · NEXUS (backend) · TURTLE (design) · QUILL (writing) · PIKADON (security) · 5,361 skills · Workflow Chains · Scheduled Jobs · Webhooks · Agent Sparklines</div>
         <!-- Agent online dots — populated by initSovereignTerminal() -->
         <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
@@ -3850,7 +3848,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div>
           <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT / TOPIC</div>
-          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v83 launch strategy'">
+          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v84 launch strategy'">
         </div>
       </div>
       <button class="btn btn-accent" style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#00c8ff,#00e5a0);color:#000;border:none;font-weight:700;letter-spacing:0.05em" onclick="runWorkflowFromUI()">▶ RUN WORKFLOW</button>
@@ -4704,7 +4702,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <!-- System Log -->
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:2px">▸ SYSTEM LOG</div>
           <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:8px;max-height:80px;overflow-y:auto" id="officeSystemLog">
-            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v83 online</div>
+            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v84 online</div>
           </div>
         </div>
 
@@ -11972,7 +11970,7 @@ function init() {
   setTimeout(() => { if (typeof _syncCreditsDisplay === 'function') _syncCreditsDisplay(); }, 500); // sync credit displays on load
   setTimeout(checkAllApiStatus, 3000);  // auto-check all services on load
   setTimeout(initEventStream, 1000);    // subscribe to gateway live events
-  log('SHADDAI v83 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
+  log('SHADDAI v84 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
   setInterval(save, S.settings.autoSave * 1000);
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
@@ -12267,7 +12265,7 @@ function exportOfficeReport() {
 
   lines.push('');
   lines.push(`─────────────────────────────────────────────────────────────`);
-  lines.push(`SHADDAI v83 · cloudzncrownz@gmail.com · ${ts}`);
+  lines.push(`SHADDAI v84 · cloudzncrownz@gmail.com · ${ts}`);
 
   downloadText(lines.join('\n'), `shaddai-report-${Date.now()}.txt`, 'text/plain');
   officeLog('[EXPORT] Full operations report downloaded');
@@ -21877,7 +21875,6 @@ function showView(v) {
   if (v === 'dash')         { renderDash(); if (typeof updateMissionMRR === 'function') updateMissionMRR(); }
   if (v === 'media')        renderMedia();
   if (v === 'news')         renderNews();
-  if (v === 'commerce')     renderCommerce();
   // Note: pixel office init happens in switchOfficeTab('pixel'), not here
   if (v === 'agents')       renderAgents();
   if (v === 'workflow')     renderTasks();
@@ -32910,7 +32907,7 @@ function loadWebhookConfig() {
 function testOutboundWebhook() {
   const url = document.getElementById('webhookUrl')?.value || localStorage.getItem('shaddai_webhook') && JSON.parse(localStorage.getItem('shaddai_webhook')).url;
   if (!url) { notify('⚠ No webhook URL configured'); return; }
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v83', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v84', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
     .then(r => { if (r.ok) notify('✓ Outbound webhook test successful'); else notify('⚠ Webhook returned ' + r.status); })
     .catch(e => notify('✗ Webhook failed: ' + e.message));
 }
@@ -33935,7 +33932,7 @@ setInterval(() => {
   if (document.getElementById('dispatchWorkloadContainer')) updateDispatchUI();
 }, 3000);
 
-console.log('✅ SHADDAI v83 Enhancements Loaded');
+console.log('✅ SHADDAI v84 Enhancements Loaded');
 console.log('🎛️ Command Center dispatch system active');
 console.log('📍 SHADDAI desk & agent workload tracking ready');
 
@@ -39138,7 +39135,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (!overlay) { overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
     overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden';
 
-    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v83`,`▶ ALL SYSTEMS OK`];
+    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v84`,`▶ ALL SYSTEMS OK`];
     const _boardHtml=[..._boardItems,..._boardItems].map(t=>`<div style="padding:3px 4px;color:rgba(${a.glow},0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:5.5px">${t}</div>`).join('');
     overlay.innerHTML = `
       <style>
@@ -40278,6 +40275,15 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       jobsSection = section;
     }
 
+    // Purge stale test/demo jobs that linger in localStorage (E2E/Test/etc.) — never show them.
+    if (Array.isArray(S.marketplace.liveJobs)) {
+      const before = S.marketplace.liveJobs.length;
+      S.marketplace.liveJobs = S.marketplace.liveJobs.filter(j => {
+        const t = ((j && (j.title||'')) + ' ' + (j && (j.description||''))).toLowerCase();
+        return !/\b(e2e|test job|testing|^test$|\btest\b)\b/i.test(t) && (j.poster!=='test' && j.postedBy!=='e2e-poster');
+      });
+      if (S.marketplace.liveJobs.length !== before) { try{ save(); }catch(e){} }
+    }
     const jobs = S.marketplace.liveJobs || [];
 
     // Status → {color, label} map (handles every status + missing safely)
@@ -48055,41 +48061,109 @@ try{
 
 // ⚡ Simple Mode — 3-step wizard (What → Who → GO), real /api/agent/run engine (restored from the office redesign).
 (function(){
+  // Each goal = a "sandwich": kind (how it runs) + detail fields + optional engine/API picker.
   const SM_GOALS=[
-    {ic:'🎵',ti:'Make a song',ds:'Lyrics + real audio',ag:'TURTLE'},
-    {ic:'🖼️',ti:'Make a picture',ds:'AI image from your idea',ag:'TURTLE'},
-    {ic:'🔎',ti:'Research a coin',ds:'Price, news & sentiment',ag:'ORACLE'},
-    {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL'},
-    {ic:'📊',ti:'Check the market',ds:'Live prices & trends',ag:'ZEROX'},
-    {ic:'🛡️',ti:'Is this safe?',ds:'Quick security check',ag:'PIKADON'}
+    {ic:'🖼️',ti:'Make a picture',ds:'Real AI image',ag:'TURTLE',kind:'image',
+      fields:[
+        {k:'subject',label:'What should it show?',type:'text',ph:'a neon owl over a cyberpunk city at dusk'},
+        {k:'style',label:'Style',type:'sel',opts:['Photorealistic','Cinematic','Digital Art','Anime','3D Render','Watercolor','Pixel Art','Neon Futuristic']},
+        {k:'ratio',label:'Shape',type:'sel',opts:['1:1 Square','16:9 Landscape','9:16 Portrait']}
+      ],
+      engine:{label:'Image engine (API)',opts:[['huggingface','⚡ Flux · Free (HuggingFace key)'],['fal','🚀 fal.ai FLUX · key'],['nano-banana','🍌 Nano Banana · key'],['dall-e-3','🎨 DALL·E 3 · key']]}},
+    {ic:'🎵',ti:'Make a song',ds:'Lyrics + audio prompt',ag:'TURTLE',kind:'agent',
+      fields:[
+        {k:'topic',label:'What is the song about?',type:'text',ph:'rising from nothing, building an empire'},
+        {k:'genre',label:'Genre',type:'sel',opts:['Hip-Hop / Trap','Pop','Cinematic Orchestral','Lo-fi','EDM','Rock','R&B','Country']},
+        {k:'mood',label:'Mood',type:'sel',opts:['Triumphant','Dark','Chill','Energetic','Emotional','Hype']}
+      ]},
+    {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL',kind:'agent',
+      fields:[
+        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v84'},
+        {k:'platform',label:'Platform',type:'sel',opts:['X / Twitter','Instagram caption','LinkedIn','TikTok script','Blog intro','Telegram']},
+        {k:'tone',label:'Tone',type:'sel',opts:['Punchy','Professional','Casual','Inspirational','Bold/FOMO','Educational']}
+      ]},
+    {ic:'🔎',ti:'Research a coin',ds:'Price, news & sentiment',ag:'ORACLE',kind:'agent',
+      fields:[{k:'topic',label:'Which coin / token?',type:'text',ph:'SOL'},{k:'angle',label:'Focus',type:'sel',opts:['Full overview','Should I watch it?','Recent news','Risks']}]},
+    {ic:'📊',ti:'Check the market',ds:'Live prices & trends',ag:'ZEROX',kind:'agent',
+      fields:[{k:'topic',label:'Market / pair / question',type:'text',ph:'BTC and ETH today'},{k:'angle',label:'Focus',type:'sel',opts:['Quick read','Trend & momentum','Key levels']}]},
+    {ic:'🛡️',ti:'Is this safe?',ds:'Security check',ag:'PIKADON',kind:'agent',
+      fields:[{k:'topic',label:'Paste a URL, address, or code',type:'text',ph:'https://… or a token address'}]}
   ];
   const SM_FRIENDLY={SHADDAI:'the boss — plans things',ZEROX:'money & markets',ORACLE:'research & facts',NEXUS:'tech & building',TURTLE:'art, music & design',QUILL:'writing',PIKADON:'safety & security'};
-  let sw={step:1,goal:null,agent:'AUTO'};
+  const SM_DIM={'1:1 Square':[1024,1024],'16:9 Landscape':[1280,720],'9:16 Portrait':[720,1280]};
+  let sw={step:1,goal:null,agent:'AUTO',details:{},engine:null};
   const $=id=>document.getElementById(id);
-  function steps(){const s=$('wizSteps');if(!s)return;let h='';for(let n=1;n<=3;n++){h+=`<div class="b ${sw.step===n?'on':(sw.step>n?'done':'')}">${sw.step>n?'✓':n}</div>`;if(n<3)h+='<div class="bar"></div>';}s.innerHTML=h;}
+  const NSTEPS=4;
+  function steps(){const s=$('wizSteps');if(!s)return;let h='';for(let n=1;n<=NSTEPS;n++){h+=`<div class="b ${sw.step===n?'on':(sw.step>n?'done':'')}">${sw.step>n?'✓':n}</div>`;if(n<NSTEPS)h+='<div class="bar"></div>';}s.innerHTML=h;}
+  function captureDetails(){ // read step-2 inputs into sw.details/engine
+    const p=SM_GOALS[sw.goal]; if(!p)return;
+    (p.fields||[]).forEach(f=>{const el=$('smf_'+f.k); if(el) sw.details[f.k]=el.value;});
+    const eng=$('smf_engine'); if(eng) sw.engine=eng.value;
+  }
   function render(){steps();const b=$('wizBody');if(!b)return;
     if(sw.step===1){
-      b.innerHTML=`<div class="wiz-q">What do you want done?</div><div class="wiz-sub">Tap one. That's it.</div><div class="opts">`+
+      b.innerHTML=`<div class="wiz-q">What do you want done?</div><div class="wiz-sub">Tap one — then we'll fine-tune it.</div><div class="opts">`+
         SM_GOALS.map((g,i)=>`<div class="opt ${sw.goal===i?'on':''}" onclick="smPickGoal(${i})"><div class="ico">${g.ic}</div><div class="ti">${g.ti}</div><div class="ds">${g.ds}</div></div>`).join('')+
         `</div><div class="wiz-nav"><span></span><button class="big-go" style="font-size:13px;padding:11px 28px;${sw.goal===null?'opacity:.35;pointer-events:none':''}" onclick="smNext()">Next ⟶</button></div>`;
     }else if(sw.step===2){const p=SM_GOALS[sw.goal];
+      const field=f=>{
+        const val=sw.details[f.k]||'';
+        if(f.type==='sel')return `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${f.label}</span><select id="smf_${f.k}" class="input" style="width:100%">${f.opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select></label>`;
+        return `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${f.label}</span><input id="smf_${f.k}" class="input" style="width:100%" value="${String(val).replace(/"/g,'&quot;')}" placeholder="${f.ph||''}"></label>`;
+      };
+      const engHtml=p.engine?`<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${p.engine.label}</span><select id="smf_engine" class="input" style="width:100%">${p.engine.opts.map(o=>`<option value="${o[0]}" ${sw.engine===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>`:'';
+      b.innerHTML=`<div class="wiz-q">${p.ic} ${p.ti} — the details</div><div class="wiz-sub">Build it like a sandwich. Pick your options, then continue.</div>`+
+        `<div style="max-width:460px;margin:0 auto">`+(p.fields||[]).map(field).join('')+engHtml+`</div>`+
+        `<div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><button class="big-go" style="font-size:13px;padding:11px 28px" onclick="smNext()">Next ⟶</button></div>`;
+    }else if(sw.step===3){const p=SM_GOALS[sw.goal];
       b.innerHTML=`<div class="wiz-q">Who should do it?</div><div class="wiz-sub">Not sure? Let SHADDAI choose — the easy button.</div><div class="opts">`+
         `<div class="opt feat ${sw.agent==='AUTO'?'on':''}" onclick="smPickAgent('AUTO')"><div class="ico">✨</div><div class="ti">Let SHADDAI choose (recommended)</div><div class="ds">Best one for "${p.ti.toLowerCase()}" — probably ${p.ag}</div></div>`+
         Object.keys(SM_FRIENDLY).map(k=>`<div class="opt ${sw.agent===k?'on':''}" onclick="smPickAgent('${k}')"><div class="ti">${k}</div><div class="ds">${SM_FRIENDLY[k]}</div></div>`).join('')+
         `</div><div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><button class="big-go" style="font-size:13px;padding:11px 28px" onclick="smNext()">Next ⟶</button></div>`;
     }else{const p=SM_GOALS[sw.goal];const who=sw.agent==='AUTO'?p.ag:sw.agent;
-      b.innerHTML=`<div class="wiz-q">Ready?</div><div class="summary"><b>${who}</b> will <b>${p.ti.toLowerCase()}</b> for you.</div><div class="run-card"><button class="big-go" onclick="smRun('${who}','${p.ti.replace(/'/g,'')}')">▶ GO</button></div><div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><span></span></div>`;}
+      const recap=(p.fields||[]).map(f=>sw.details[f.k]).filter(Boolean).join(' · ')+(sw.engine?' · '+sw.engine:'');
+      b.innerHTML=`<div class="wiz-q">Ready?</div><div class="summary"><b>${who}</b> will <b>${p.ti.toLowerCase()}</b>.</div>`+
+        (recap?`<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px">${String(recap).replace(/[<>]/g,'')}</div>`:'')+
+        `<div class="run-card"><button class="big-go" onclick="smRun()">▶ GO</button></div><div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><span></span></div>`;}
   }
   window.smPickGoal=i=>{sw.goal=i;render();};
   window.smPickAgent=a=>{sw.agent=a;render();};
-  window.smNext=()=>{if(sw.step===1&&sw.goal===null)return;if(sw.step<3){sw.step++;render();}};
+  window.smNext=()=>{if(sw.step===1&&sw.goal===null)return; if(sw.step===2)captureDetails(); if(sw.step<NSTEPS){sw.step++;render();}};
   window.smBack=()=>{if(sw.step>1){sw.step--;render();}};
-  window.smReset=()=>{sw={step:1,goal:null,agent:'AUTO'};render();};
-  window.smRun=async(who,what)=>{const b=$('wizBody');const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
-    b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="smMsg">Connecting to ${who} via the SHADDAI engine…</div></div>`;
-    try{ window.setAgentActivity && window.setAgentActivity(who,'working',what); }catch(e){}
+  window.smReset=()=>{sw={step:1,goal:null,agent:'AUTO',details:{},engine:null};render();};
+  function buildPrompt(p){
+    const d=sw.details;
+    if(p.ti==='Make a song')return `Write a complete ${d.genre||'song'} with a ${d.mood||'strong'} mood about: ${d.topic||'an epic journey'}. Include a title, full lyrics (verses + chorus), and a one-line audio/production prompt for Suno/Udio.`;
+    if(p.ti==='Write a post')return `Write a ${d.tone||'punchy'} ${d.platform||'social'} post about: ${d.topic||'SHADDAI'}. Output only the post, ready to publish, with relevant hashtags.`;
+    if(p.ti==='Research a coin')return `Research ${d.topic||'this coin'} — ${d.angle||'full overview'}. Use live price + news/sentiment tools and give a clear verdict. Not financial advice.`;
+    if(p.ti==='Check the market')return `Check the market: ${d.topic||'BTC/ETH'} — ${d.angle||'quick read'}. Use live data and summarize the trend. Not financial advice.`;
+    if(p.ti==='Is this safe?')return `Security check this: ${d.topic||''}. Scan for risks and give a clear safe/caution/danger verdict with reasons.`;
+    return d.topic||p.ti;
+  }
+  window.smRun=async()=>{const b=$('wizBody');const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
+    const p=SM_GOALS[sw.goal]; const who=sw.agent==='AUTO'?p.ag:sw.agent;
+    // IMAGE goal → real image render via chosen engine (honest needs-key if no key).
+    if(p.kind==='image'){
+      const d=sw.details, dim=SM_DIM[d.ratio||'1:1 Square']||[1024,1024];
+      const prompt=(d.subject||'an abstract artwork')+(d.style?', '+d.style.toLowerCase()+' style':'');
+      b.innerHTML=`<div class="run-card"><div class="big">🎨</div><div class="wiz-q">Generating your image…</div><div class="wiz-sub">engine: ${safe(sw.engine||'huggingface')}</div></div>`;
+      try{ window.setAgentActivity && window.setAgentActivity('TURTLE','working','image: '+(d.subject||'')); }catch(e){}
+      try{
+        const r=await fetch('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,model:sw.engine||'huggingface',width:dim[0],height:dim[1]})});
+        if(r.status===503){const n=await r.json();b.innerHTML=`<div class="run-card"><div class="big">🔑</div><div class="wiz-q">Add a key to generate</div><div class="wiz-sub">${safe(n.error||'This engine needs an API key — add it in the API vault, or pick a different engine.')}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try another</button></div></div>`;try{window.setAgentActivity&&window.setAgentActivity('TURTLE','idle');}catch(_){}return;}
+        const data=await r.json();const url=data.url||data.image_url;if(!url)throw new Error(data.error||'no image');
+        const su=String(url).replace(/'/g,'%27');
+        b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><img src="${su}" style="max-width:100%;border-radius:10px;border:1px solid var(--border);margin:6px 0"/><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:9px" onclick="window.open('${su}','_blank')">⬇ Open</button><button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveImageToGallery&&ovSaveImageToGallery('${su}','${safe(prompt).slice(0,50)}')">💾 Gallery</button><button class="big-go" style="font-size:13px;padding:9px 22px" onclick="smReset()">↺ Do another</button></div><div style="font-size:8px;color:var(--text-muted);margin-top:6px">source: ${safe(data.source||sw.engine)}</div></div>`;
+      }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't generate</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;}
+      try{ window.setAgentActivity && window.setAgentActivity('TURTLE','idle'); }catch(e){}
+      return;
+    }
+    // AGENT goals → run the real loop with a rich prompt built from the sandwich.
+    const goal=buildPrompt(p);
+    b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="smMsg">Connecting to ${who}…</div></div>`;
+    try{ window.setAgentActivity && window.setAgentActivity(who,'working',goal.slice(0,50)); }catch(e){}
     try{
-      const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal:what,agent:who})});
+      const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal,agent:who})});
       const d=await r.json();if(!d.taskId)throw new Error(d.error||'engine did not start');
       const gm=()=>$('smMsg');let result=null;
       for(let i=0;i<40;i++){await new Promise(s=>setTimeout(s,1300));
