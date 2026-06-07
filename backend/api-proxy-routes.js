@@ -4205,8 +4205,21 @@ router.post('/workflow/chain', async (req, res) => {
 // Returns: { response, provider, model, latencyMs, fallbackUsed }
 // ─────────────────────────────────────────────────────────────
 router.post('/llm/chat', async (req, res) => {
-  const { message, provider = 'auto', model, apiKey, systemPrompt } = req.body;
+  const { message, provider = 'auto', model, apiKey, systemPrompt, agent } = req.body;
   if (!message) return res.status(400).json({ error: 'message required' });
+
+  // Apply the agent's SOUL (identity + Human Design) so chat stays in character — same souls used by the agent engine.
+  let sysPrompt = systemPrompt || '';
+  if (!sysPrompt && agent) {
+    try {
+      const fs = require('fs'), path = require('path');
+      const sp = path.join(__dirname, 'data', 'agents', String(agent).toUpperCase() + '.md');
+      if (fs.existsSync(sp)) {
+        const soul = fs.readFileSync(sp, 'utf8').slice(0, 1200);
+        sysPrompt = 'You ARE ' + String(agent).toUpperCase() + ', a SHADDAI agent. Stay fully in character per this identity — let your Human Design (Type/Strategy/Authority/Profile) shape your voice and how you decide. Never say you are a generic AI assistant.\n\n' + soul;
+      }
+    } catch (_) {}
+  }
 
   // AURA token-saver: answer free from cache/compute before spending an LLM call.
   try {
@@ -4222,7 +4235,7 @@ router.post('/llm/chat', async (req, res) => {
   }
 
   const messages = [
-    ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+    ...(sysPrompt ? [{ role: 'system', content: sysPrompt }] : []),
     { role: 'user', content: message }
   ];
 
@@ -4237,7 +4250,7 @@ router.post('/llm/chat', async (req, res) => {
 
   async function tryGemini(key) {
     const t0 = Date.now();
-    const response = await callGemini(message, key || apiKey || process.env.GEMINI_API_KEY);
+    const response = await callGemini(sysPrompt ? (sysPrompt + '\n\n---\nUser: ' + message) : message, key || apiKey || process.env.GEMINI_API_KEY);
     return { response, provider: 'gemini', model: 'gemini-2.0-flash-lite', latencyMs: Date.now() - t0 };
   }
 
@@ -4258,7 +4271,7 @@ router.post('/llm/chat', async (req, res) => {
     const useModel = model || 'claude-haiku-4-5-20251001';
     const r = await axios.post('https://api.anthropic.com/v1/messages', {
       model: useModel, max_tokens: 2048,
-      ...(systemPrompt ? { system: systemPrompt } : {}),
+      ...(sysPrompt ? { system: sysPrompt } : {}),
       messages: [{ role: 'user', content: message }]
     }, { headers: { 'x-api-key': useKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 30000 });
     return { response: r.data.content?.[0]?.text || '', provider: 'claude', model: useModel, latencyMs: Date.now() - t0 };
