@@ -7190,7 +7190,12 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
             <option value="TURTLE">TURTLE — Creative</option>
           </select>
         </div>
-        <textarea id="socialTopic" class="input" rows="3" placeholder="Topic, product, event, or message — the AI will craft platform-optimized content..." style="margin-bottom:10px"></textarea>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <span style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;font-family:'Rajdhani',sans-serif">📒 FROM NOTES:</span>
+          <select class="select" id="socialNotePick" style="font-size:10px;max-width:260px" onchange="loadNoteIntoComposer(this.value)"><option value="">— pick a saved note —</option></select>
+          <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="populateSocialNotes()">↻</button>
+        </div>
+        <textarea id="socialTopic" class="input" rows="3" placeholder="Topic, product, event, or message — or load a saved Note above. The AI crafts platform-optimized content..." style="margin-bottom:10px"></textarea>
         <div id="socialOutput" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:250px;overflow-y:auto;min-height:60px;margin-bottom:10px">Generate content above...</div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <span id="socCharCount" style="font-size:9px;color:var(--text-muted)">0 chars</span>
@@ -21878,7 +21883,7 @@ function showView(v) {
   if (v === 'workflow')     renderTasks();
   if (v === 'library-notes'){ renderLibrary(); renderNotes(); if (typeof renderRagFileList === 'function') setTimeout(renderRagFileList, 200); }
   if (v === 'projects')     renderProjects();
-  if (v === 'social')       { renderSocial(); renderSchedules(); }
+  if (v === 'social')       { renderSocial(); renderSchedules(); try{ populateSocialNotes(); }catch(e){} }
   if (v === 'pipeline')     { renderDeals(); renderPipeline(); if (typeof loadTickerData === 'function') setTimeout(loadTickerData, 200); }
   if (v === 'settings')     renderSettingsPanel();
   if (v === 'wallet')     { if (window._walletPubkey) { document.getElementById('walletNotConnected').style.display='none'; document.getElementById('walletConnected').style.display='block'; } if (typeof loadPaymentList === 'function') loadPaymentList(); if (typeof renderAgentEarnings === 'function') renderAgentEarnings(); }
@@ -23035,6 +23040,22 @@ function sortNotes(order) {
 
 // ================== v10.0 SOCIAL ENHANCEMENTS ==================
 
+// 📒 Social ← Notes: surface saved notes (News→Save + S.notes) so AI can write a post from them.
+window._socNoteCache = [];
+window.populateSocialNotes = function(){
+  var sel=document.getElementById('socialNotePick'); if(!sel) return;
+  var notes=[];
+  try{ notes = notes.concat((window.getNotes?window.getNotes():JSON.parse(localStorage.getItem('shaddai_notes')||'[]')).map(function(n){return {title:n.title||'Note',body:n.content||n.text||''};})); }catch(e){}
+  try{ if(window.S&&Array.isArray(S.notes)) notes=notes.concat(S.notes.map(function(n){return {title:(n.text||'').slice(0,40),body:n.text||''};})); }catch(e){}
+  window._socNoteCache=notes;
+  sel.innerHTML='<option value="">— pick a saved note ('+notes.length+') —</option>'+notes.map(function(n,i){return '<option value="'+i+'">'+String(n.title||'Note').replace(/[<>"]/g,'').slice(0,50)+'</option>';}).join('');
+};
+window.loadNoteIntoComposer = function(i){
+  if(i===''||i==null) return;
+  var n=(window._socNoteCache||[])[i]; if(!n) return;
+  var ta=document.getElementById('socialTopic'); if(ta){ ta.value=n.body||n.title||''; ta.focus(); }
+  if(typeof notify==='function') notify('Note loaded — pick platform/tone and hit Generate');
+};
 async function generateSocialPost() {
   const topic    = document.getElementById('socialTopic')?.value?.trim();
   const platform = document.getElementById('socialPlatform')?.value || 'Twitter/X thread';
