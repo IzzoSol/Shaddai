@@ -1869,6 +1869,35 @@ router.post('/image/generate', async (req, res) => {
     }
   }
 
+  // Together AI — FLUX.1 [schnell] (real Flux, free tier). Used when model=together/flux-free,
+  // or as the upgraded default for plain "flux" when a Together key is present.
+  const togetherKey = apiKey || process.env.TOGETHER_API_KEY || '';
+  const wantsTogether = typeof model === 'string' && /together|flux-free|schnell/i.test(model);
+  if ((wantsTogether || (model === 'flux' && togetherKey)) && togetherKey) {
+    try {
+      const r = await axios.post('https://api.together.xyz/v1/images/generations', {
+        model: 'black-forest-labs/FLUX.1-schnell-Free', prompt,
+        width: parseInt(width, 10) || 1024, height: parseInt(height, 10) || 1024, n: 1, steps: 4
+      }, { headers: { Authorization: `Bearer ${togetherKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+      const item = (r.data && r.data.data && r.data.data[0]) || {};
+      const imageUrl = item.url || (item.b64_json ? `data:image/png;base64,${item.b64_json}` : '');
+      if (imageUrl) return res.json({ success: true, status: 'completed', url: imageUrl, image_url: imageUrl, source: 'Together FLUX.1-schnell', prompt, model: 'flux-schnell' });
+    } catch (e) { /* fall through to next engine */ }
+  }
+
+  // fal.ai — FLUX schnell (fastest, premium quality). model=fal / fal-ai.
+  const falKey = apiKey || process.env.FAL_KEY || process.env.FAL_API_KEY || '';
+  if (typeof model === 'string' && /^fal/i.test(model) && falKey) {
+    try {
+      const wI = parseInt(width, 10) || 1024, hI = parseInt(height, 10) || 1024;
+      const image_size = wI > hI ? 'landscape_16_9' : (wI === hI ? 'square_hd' : 'portrait_16_9');
+      const r = await axios.post('https://fal.run/fal-ai/flux/schnell', { prompt, image_size, num_images: 1 },
+        { headers: { Authorization: `Key ${falKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+      const imageUrl = r.data && r.data.images && r.data.images[0] && r.data.images[0].url;
+      if (imageUrl) return res.json({ success: true, status: 'completed', url: imageUrl, image_url: imageUrl, source: 'fal.ai FLUX', prompt, model: 'fal-flux' });
+    } catch (e) { /* fall through to next engine */ }
+  }
+
   // Optional DALL·E path if explicitly requested and a key is configured.
   if (typeof model === 'string' && model.toLowerCase().includes('dall') && process.env.OPENAI_API_KEY) {
     try {
