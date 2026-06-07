@@ -669,6 +669,7 @@ app.use('/api/market', require('./skill-market-routes')); // skill + agent marke
 app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
 app.use('/api/aura', require('./lib/aura').router);
 app.use('/api/news', require('./news-routes'));
+app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling)
 app.use('/api/collectibles/rewards', require('./lib/collectible-rewards').router);              // AURA token-saver (cache/compute-first) stats+route
 app.use('/api/security', require('./lib/security-scan').router); // PIKADON real scans (url/code/skill)
 app.use('/api/vault', require('./lib/api-vault').router);        // BYOK API key vault (password-locked)
