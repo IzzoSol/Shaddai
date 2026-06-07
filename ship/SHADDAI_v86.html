@@ -5,8 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI v86 · Sovereign AI Command</title>
+<!-- ── Firebase Auth (optional sign-in; local-first still works without it) ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+(function(){
+  // Public web config (safe to embed — Firebase web keys are not secret).
+  var firebaseConfig={apiKey:"AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw",authDomain:"shaddai999.firebaseapp.com",projectId:"shaddai999",storageBucket:"shaddai999.firebasestorage.app",messagingSenderId:"706335788411",appId:"1:706335788411:web:6b64d985f6b0c1bf8441de",measurementId:"G-66EFRNVWQ5"};
+  window.SHD_AUTH={ user:null, token:null, ready:false };
+  try{
+    if(window.firebase&&firebase.initializeApp){
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().onAuthStateChanged(async function(u){
+        window.SHD_AUTH.user=u||null;
+        window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;
+        window.SHD_AUTH.ready=true;
+        if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();
+      });
+    }
+  }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
+  // Sign-in (Google popup) / sign-out helpers.
+  window.shdSignIn=async function(){ try{ var p=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(p); if(typeof notify==='function')notify('Signed in'); }catch(e){ if(typeof notify==='function')notify('Sign-in: '+(e.code||e.message)); } };
+  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); }catch(e){} };
+})();
+</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
 <script src="/pwa-register.js" defer></script>
@@ -10129,6 +10153,30 @@ const PROXY = '';
       try{
         if (typeof input === 'string' && RE.test(input)) input = input.replace(RE, '');
         else if (input && input.url && RE.test(input.url)) input = new Request(input.url.replace(RE, ''), input);
+      }catch(e){}
+      return _f(input, init);
+    };
+  }catch(e){}
+})();
+
+// ── AUTH SHIM: when signed in, attach the Firebase ID token + uid to same-origin /api calls
+// so the backend (softAuth/verifyFirebaseToken) can identify the user. No-op when signed out.
+(function(){
+  try{
+    var _f = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      try{
+        var a = window.SHD_AUTH;
+        if (a && a.token) {
+          var url = (typeof input === 'string') ? input : (input && input.url) || '';
+          if (url && (url.charAt(0) === '/' || url.indexOf(location.origin) === 0) && url.indexOf('/api/') !== -1) {
+            init = init || {};
+            var hdrs = new Headers((init && init.headers) || (typeof input!=='string' && input.headers) || {});
+            if (!hdrs.has('Authorization')) hdrs.set('Authorization', 'Bearer ' + a.token);
+            if (!hdrs.has('x-user-id') && a.user) hdrs.set('x-user-id', a.user.uid);
+            init.headers = hdrs;
+          }
+        }
       }catch(e){}
       return _f(input, init);
     };
@@ -48070,6 +48118,20 @@ Provide a comprehensive analysis:
 </script>
 
 <!-- ── nav position picker (top/left/right/bottom) ── -->
+<div id="shdAuthChip" style="position:fixed;top:6px;right:10px;z-index:10001;font-size:10px"></div>
+<script>
+window.shdRenderAuth=function(){
+  var el=document.getElementById('shdAuthChip'); if(!el) return;
+  var a=window.SHD_AUTH||{};
+  if(a.user){
+    var nm=(a.user.displayName||a.user.email||'account').split('@')[0];
+    el.innerHTML='<span style="color:#00e5a0">●</span> '+String(nm).replace(/[<>]/g,'').slice(0,18)+' <button onclick="shdSignOut()" style="background:none;border:1px solid var(--border,#333);color:var(--text-muted,#888);border-radius:5px;font-size:9px;padding:2px 7px;cursor:pointer;margin-left:4px">sign out</button>';
+  } else {
+    el.innerHTML='<button onclick="shdSignIn()" style="background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.4);color:#00e5a0;border-radius:5px;font-size:10px;padding:3px 10px;cursor:pointer;font-weight:700">🔑 Sign in</button>';
+  }
+};
+try{ document.addEventListener('DOMContentLoaded', window.shdRenderAuth); setTimeout(window.shdRenderAuth, 1200); }catch(e){}
+</script>
 <div id="navPosPicker" title="Move the navigation"
   style="position:fixed;bottom:16px;right:16px;z-index:99990;display:flex;gap:2px;background:rgba(4,12,28,0.95);border:1px solid rgba(0,229,160,0.2);border-radius:8px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.5)">
   <button title="Nav: Top" onclick="setNavPos('top')" data-np="top">⬆</button>
