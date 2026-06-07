@@ -1916,11 +1916,30 @@ router.post('/image/generate', async (req, res) => {
     }
   }
 
-  // Always-works keyless default: Pollinations.ai (returns a real image URL, no key).
-  const w = parseInt(width, 10) || 1024;
-  const h = parseInt(height, 10) || 1024;
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&model=flux`;
-  res.json({ success: true, status: 'completed', url, image_url: url, source: 'Pollinations.ai', prompt, model: 'flux' });
+  // Default free engine: Hugging Face FLUX.1-schnell (free token, no credit card).
+  // Returns raw image bytes → encode as a data URI so the browser renders it directly.
+  const hfKey = apiKey || process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || '';
+  if (hfKey) {
+    try {
+      const r = await axios.post(
+        'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+        { inputs: prompt },
+        { headers: { Authorization: `Bearer ${hfKey}`, 'Content-Type': 'application/json', Accept: 'image/png' },
+          responseType: 'arraybuffer', timeout: 90000 }
+      );
+      const b64 = Buffer.from(r.data).toString('base64');
+      const dataUri = `data:image/png;base64,${b64}`;
+      return res.json({ success: true, status: 'completed', url: dataUri, image_url: dataUri, source: 'HuggingFace FLUX.1-schnell', prompt, model: 'flux-schnell' });
+    } catch (e) { /* fall through to the honest no-key response */ }
+  }
+
+  // No engine key available — be honest, no silent low-quality fallback.
+  return res.status(503).json({
+    success: false,
+    error: 'No image engine configured. Add a free Hugging Face token (HF_TOKEN) in the API vault — or a Together / fal.ai / OpenAI key — to generate images.',
+    needsKey: true,
+    suggested: ['huggingface', 'fal', 'dall-e-3']
+  });
 });
 
 // ─────────────────────────────────────────────────────────────
