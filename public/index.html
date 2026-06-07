@@ -12052,31 +12052,31 @@ async function renderOfficeAgentStatusBoard() {
     html += `<div class="agent-status-row">
       <div class="agt-dot" id="oss_dot_${ag.code}" style="background:#333"></div>
       <div class="agt-name" style="color:${ag.color}">${ag.name}</div>
-      <div class="agt-port">:${ag.port}</div>
-      <div class="agt-last" id="oss_last_${ag.code}">pinging...</div>
+      <div class="agt-port" style="color:var(--accent)">● live</div>
+      <div class="agt-last" id="oss_last_${ag.code}">checking…</div>
     </div>`;
   }
   board.innerHTML = html;
   // Ping all agents
   const hudEl = document.getElementById('officeHudHealth');
+  // Agents run on the UNIFIED backend now (no per-port services). One health check = all online.
   let onlineCount = 0;
-  await Promise.all(OFFICE_AGENTS.map(async ag => {
+  let backendUp = false;
+  try { const r = await fetch('/api/health', { signal: AbortSignal.timeout(4000) }); backendUp = r.ok; } catch {}
+  OFFICE_AGENTS.forEach(ag => {
     const dot = document.getElementById(`oss_dot_${ag.code}`);
     const last = document.getElementById(`oss_last_${ag.code}`);
-    try {
-      const r = await fetch(`http://localhost:${ag.port}/health`, { signal: AbortSignal.timeout(3000) });
-      if (r.ok) {
-        _officeAgentStatus[ag.code] = 'online';
-        onlineCount++;
-        if (dot) { dot.style.background = ag.color; dot.classList.add('pulse-dot'); }
-        if (last) last.textContent = 'ONLINE';
-      } else throw new Error();
-    } catch {
+    if (backendUp) {
+      _officeAgentStatus[ag.code] = 'online';
+      onlineCount++;
+      if (dot) { dot.style.background = ag.color; dot.classList.add('pulse-dot'); }
+      if (last) { last.textContent = 'ONLINE'; last.style.color = ''; }
+    } else {
       _officeAgentStatus[ag.code] = 'offline';
       if (dot) { dot.style.background = '#333'; }
       if (last) { last.textContent = 'OFFLINE'; last.style.color = '#ff4070'; }
     }
-  }));
+  });
   if (hudEl) {
     const dots = OFFICE_AGENTS.map(ag => `<span style="color:${_officeAgentStatus[ag.code]==='online'?ag.color:'#333'}">●</span>`).join('');
     hudEl.innerHTML = dots;
