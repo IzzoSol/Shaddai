@@ -11,6 +11,7 @@ router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=tru
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const keys = require('./lib/keys');
 const skillsLoader = require('./skills-loader');
 const agentEngine = require('./agent-engine');
 const ragIndex = require('./rag-index');
@@ -20,8 +21,8 @@ const agentEventBus = require('./agent-event-bus');
 const OBSIDIAN_ROOT = process.env.OBSIDIAN_ROOT || 'C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN';
 
 const OLLAMA_URL = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
-const HELIUS_KEY = process.env.HELIUS_API_KEY || '';
+const GEMINI_KEY = keys.get('GEMINI_API_KEY') || keys.get('GOOGLE_API_KEY') || '';
+const HELIUS_KEY = keys.get('HELIUS_API_KEY') || '';
 
 // Named constants — avoids magic numbers scattered through route handlers
 const DEFAULT_OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
@@ -370,7 +371,7 @@ router.post('/gemini-key', async (req, res) => {
 router.post('/groq', async (req, res) => {
   try {
     const { messages, max_tokens, model, apiKey } = req.body;
-    const key = apiKey || process.env.GROQ_API_KEY || '';
+    const key = apiKey || keys.get('GROQ_API_KEY');
     if (!key) return res.status(400).json({ error: 'No Groq API key. Add GROQ_API_KEY to .env or paste key in Settings.' });
 
     const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
@@ -788,7 +789,7 @@ router.get('/news/cryptopanic', async (req, res) => {
 
 router.get('/news/actually-relevant', async (req, res) => {
   // NewsAPI if key present
-  const key = process.env.NEWSAPI_API_KEY || '';
+  const key = keys.get('NEWSAPI_API_KEY');
   if (key) {
     try {
       const r = await axios.get(
@@ -823,7 +824,7 @@ router.get('/news/actually-relevant', async (req, res) => {
 router.post('/serpapi', async (req, res) => {
   try {
     const { query } = req.body;
-    const key = process.env.SERPAPI_KEY || process.env.SERPAPI_API_KEY || '';
+    const key = keys.get('SERPAPI_KEY') || keys.get('SERPAPI_API_KEY');
     if (!key) return res.status(400).json({ error: 'No SerpAPI key. Add SERPAPI_KEY to .env', organic_results: [] });
 
     const r = await axios.get('https://serpapi.com/search', {
@@ -1509,7 +1510,7 @@ router.post('/workflow/create', (req, res) => {
 // ELEVENLABS TTS
 // ─────────────────────────────────────────────────────────────
 router.get('/elevenlabs/voices', async (req, res) => {
-  const key = process.env.ELEVENLABS_API_KEY || '';
+  const key = keys.get('ELEVENLABS_API_KEY');
   if (!key) return res.json({ voices: [] });
   try {
     const r = await axios.get('https://api.elevenlabs.io/v1/voices', {
@@ -1520,7 +1521,7 @@ router.get('/elevenlabs/voices', async (req, res) => {
 });
 
 router.post('/elevenlabs/tts', async (req, res) => {
-  const key = process.env.ELEVENLABS_API_KEY || '';
+  const key = keys.get('ELEVENLABS_API_KEY');
   const { text, voice_id = 'pNInz6obpgDQGcFmaJgB' } = req.body;
   if (!key) return res.status(400).json({ error: 'No ElevenLabs API key' });
   try {
@@ -1849,7 +1850,7 @@ router.post('/image/generate', async (req, res) => {
   // Opt-in premium path: NanoBanana / AceDataCloud (requires a key). Only used
   // when the caller explicitly asks for a nano-banana model AND a key is available.
   const wantsPremium = typeof model === 'string' && model.startsWith('nano-banana');
-  const premiumKey = apiKey || process.env.ACEDATACLOUD_API_TOKEN || process.env.NANO_BANANA_KEY || '';
+  const premiumKey = apiKey || keys.get('ACEDATACLOUD_API_TOKEN') || keys.get('NANO_BANANA_KEY');
   if (wantsPremium && premiumKey) {
     try {
       const body = { action: 'generate', prompt, model, aspect_ratio, resolution };
@@ -1872,7 +1873,7 @@ router.post('/image/generate', async (req, res) => {
 
   // Together AI — FLUX.1 [schnell] (real Flux, free tier). Used when model=together/flux-free,
   // or as the upgraded default for plain "flux" when a Together key is present.
-  const togetherKey = apiKey || process.env.TOGETHER_API_KEY || '';
+  const togetherKey = apiKey || keys.get('TOGETHER_API_KEY');
   const wantsTogether = typeof model === 'string' && /together|flux-free|schnell/i.test(model);
   if ((wantsTogether || (model === 'flux' && togetherKey)) && togetherKey) {
     try {
@@ -1887,7 +1888,7 @@ router.post('/image/generate', async (req, res) => {
   }
 
   // fal.ai — FLUX schnell (fastest, premium quality). model=fal / fal-ai.
-  const falKey = apiKey || process.env.FAL_KEY || process.env.FAL_API_KEY || '';
+  const falKey = apiKey || keys.get('FAL_KEY') || keys.get('FAL_API_KEY');
   if (typeof model === 'string' && /^fal/i.test(model) && falKey) {
     try {
       const wI = parseInt(width, 10) || 1024, hI = parseInt(height, 10) || 1024;
@@ -1900,12 +1901,12 @@ router.post('/image/generate', async (req, res) => {
   }
 
   // Optional DALL·E path if explicitly requested and a key is configured.
-  if (typeof model === 'string' && model.toLowerCase().includes('dall') && process.env.OPENAI_API_KEY) {
+  if (typeof model === 'string' && model.toLowerCase().includes('dall') && keys.get('OPENAI_API_KEY')) {
     try {
       const r = await axios.post('https://api.openai.com/v1/images/generations', {
         model: 'dall-e-3', prompt, n: 1, size: '1024x1024'
       }, {
-        headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${keys.get('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
         timeout: 60000
       });
       const imageUrl = r.data?.data?.[0]?.url;
@@ -1919,7 +1920,7 @@ router.post('/image/generate', async (req, res) => {
 
   // Default free engine: Hugging Face FLUX.1-schnell (free token, no credit card).
   // Returns raw image bytes → encode as a data URI so the browser renders it directly.
-  const hfKey = apiKey || process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || '';
+  const hfKey = apiKey || keys.get('HF_TOKEN') || keys.get('HUGGINGFACE_API_KEY');
   if (hfKey) {
     try {
       const r = await axios.post(
@@ -2053,7 +2054,7 @@ router.post('/social/post', async (req, res) => {
 
   // Telegram: works if TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set in .env
   if (platform === 'telegram') {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN || token;
+    const botToken = keys.get('TELEGRAM_BOT_TOKEN') || token;
     const chatId   = process.env.TELEGRAM_CHAT_ID;
     if (botToken && chatId) {
       try {
@@ -2745,13 +2746,13 @@ router.post('/marketplace/jobs/:id/execute', async (req, res) => {
     const prompt = `Execute this marketplace job completely and deliver the full result:\n\nTitle: ${job.title}\nDescription: ${job.description || ''}\nBudget: $${job.budget || 0}`;
     let output = null;
     // Try Groq first (fast)
-    if (process.env.GROQ_API_KEY) {
+    if (keys.get('GROQ_API_KEY')) {
       try {
         const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
           model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'system', content: 'You are SHADDAI, expert AI job executor. Deliver complete, professional results.' }, { role: 'user', content: prompt }],
           max_tokens: 2048
-        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
+        }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
         output = r.data.choices[0]?.message?.content;
       } catch(e) { console.warn('[execute] Groq failed:', e.message); }
     }
@@ -2885,13 +2886,13 @@ Deliver a complete, professional result now.`;
   setImmediate(async () => {
     let output = null;
     // Try Groq first (fast, 70B quality)
-    if (process.env.GROQ_API_KEY) {
+    if (keys.get('GROQ_API_KEY')) {
       try {
         const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
           model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: jobPrompt }],
           max_tokens: 2500, temperature: 0.7
-        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
+        }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
         output = r.data.choices[0]?.message?.content;
       } catch (e) { console.warn('[job:take] Groq failed:', e.message); }
     }
@@ -2997,13 +2998,13 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
   const systemPrompt = agentPrompts[agentName] || agentPrompts.SHADDAI;
 
   // Try Groq first
-  if (process.env.GROQ_API_KEY) {
+  if (keys.get('GROQ_API_KEY')) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: task }],
         max_tokens: 1500, temperature: 0.7
-      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
+      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
       return r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[workflow] Groq step failed:', e.message); }
   }
@@ -3198,13 +3199,13 @@ Perform a complete technical analysis. Use this exact format:
   const systemPrompt = 'You are ORACLE, an elite technical analyst with 20 years of chart reading experience. You read price action, volume, and indicators with surgical precision. Give real analysis — not hedged disclaimers.';
 
   let response = '';
-  if (process.env.GROQ_API_KEY) {
+  if (keys.get('GROQ_API_KEY')) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000, temperature: 0.5
-      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
+      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 30000 });
       response = r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[chart] Groq failed:', e.message); }
   }
@@ -3344,13 +3345,13 @@ ${apiData}
 Analyze this data and answer the user's question with specific insights. Reference actual values from the data.`;
 
   let response = '';
-  if (process.env.GROQ_API_KEY) {
+  if (keys.get('GROQ_API_KEY')) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000
-      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
+      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 30000 });
       response = r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[user-api:use] Groq failed:', e.message); }
   }
@@ -3530,7 +3531,7 @@ router.post('/workflow/:id/run', async (req, res) => {
         }
 
         // Groq fallback if Ollama failed and key is available
-        if (!ollamaOk && process.env.GROQ_API_KEY) {
+        if (!ollamaOk && keys.get('GROQ_API_KEY')) {
           const gr = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
             model: 'llama-3.3-70b-versatile',
             messages: [
@@ -3538,7 +3539,7 @@ router.post('/workflow/:id/run', async (req, res) => {
               { role: 'user', content: task }
             ],
             max_tokens: 1500, temperature: 0.7
-          }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
+          }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
           stepOutput = gr.data.choices[0]?.message?.content || '';
           ollamaOk = true; // Groq succeeded
         }
@@ -4251,13 +4252,13 @@ router.post('/llm/chat', async (req, res) => {
 
   async function tryGemini(key) {
     const t0 = Date.now();
-    const response = await callGemini(sysPrompt ? (sysPrompt + '\n\n---\nUser: ' + message) : message, key || apiKey || process.env.GEMINI_API_KEY);
+    const response = await callGemini(sysPrompt ? (sysPrompt + '\n\n---\nUser: ' + message) : message, key || apiKey || keys.get('GEMINI_API_KEY'));
     return { response, provider: 'gemini', model: 'gemini-2.0-flash-lite', latencyMs: Date.now() - t0 };
   }
 
   async function tryGroq(key) {
     const t0 = Date.now();
-    const useKey = key || apiKey || process.env.GROQ_API_KEY;
+    const useKey = key || apiKey || keys.get('GROQ_API_KEY');
     if (!useKey) throw new Error('No Groq API key');
     const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
       model: model || 'llama-3.3-70b-versatile', messages, max_tokens: 2048
@@ -4267,7 +4268,7 @@ router.post('/llm/chat', async (req, res) => {
 
   async function tryClaude(key) {
     const t0 = Date.now();
-    const useKey = key || apiKey || process.env.ANTHROPIC_API_KEY;
+    const useKey = key || apiKey || keys.get('ANTHROPIC_API_KEY');
     if (!useKey) throw new Error('No Claude API key');
     const useModel = model || 'claude-haiku-4-5-20251001';
     const r = await axios.post('https://api.anthropic.com/v1/messages', {
@@ -4293,9 +4294,9 @@ router.post('/llm/chat', async (req, res) => {
       // 'auto' — prefer FAST cloud (Groq) when keyed, then Gemini/Claude, then local Ollama.
       // (Ollama is the free local fallback only — it is ~20s on llama3.2:1b, so never first.)
       const attempts = [];
-      if (process.env.GROQ_API_KEY)      attempts.push(['groq',   tryGroq]);
-      if (process.env.GEMINI_API_KEY)    attempts.push(['gemini', tryGemini]);
-      if (process.env.ANTHROPIC_API_KEY) attempts.push(['claude', tryClaude]);
+      if (keys.get('GROQ_API_KEY'))      attempts.push(['groq',   tryGroq]);
+      if (keys.get('GEMINI_API_KEY'))    attempts.push(['gemini', tryGemini]);
+      if (keys.get('ANTHROPIC_API_KEY')) attempts.push(['claude', tryClaude]);
       attempts.push(['ollama', tryOllama]); // free local fallback, last
       let lastErr;
       for (let i = 0; i < attempts.length; i++) {
@@ -4518,7 +4519,7 @@ const AGENT_IMAGE_PROMPTS = {
 };
 
 async function nanoBananaRequest(body, apiKey) {
-  const key = apiKey || process.env.ACEDATACLOUD_API_TOKEN || process.env.NANO_BANANA_KEY || '';
+  const key = apiKey || keys.get('ACEDATACLOUD_API_TOKEN') || keys.get('NANO_BANANA_KEY');
   if (!key) throw new Error('ACEDATACLOUD_API_TOKEN not set. Add it to .env');
   const r = await axios.post(NANO_BANANA_URL, body, {
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -4528,7 +4529,7 @@ async function nanoBananaRequest(body, apiKey) {
 }
 
 async function pollTask(taskId, apiKey, maxWait = 120000) {
-  const key = apiKey || process.env.ACEDATACLOUD_API_TOKEN || '';
+  const key = apiKey || keys.get('ACEDATACLOUD_API_TOKEN');
   const deadline = Date.now() + maxWait;
   while (Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 3000));
@@ -4833,11 +4834,11 @@ router.post('/agent/:name/task', async (req, res) => {
   const port = AGENT_PORTS[agentKey];
   let response = '', usedModel = 'unknown';
 
-  if (connectedAPIs.includes('claude') && process.env.ANTHROPIC_API_KEY) {
+  if (connectedAPIs.includes('claude') && keys.get('ANTHROPIC_API_KEY')) {
     try {
       const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
       if (Anthropic) {
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
         const msg = await client.messages.create({
           model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
           max_tokens: 2048,
@@ -4849,8 +4850,8 @@ router.post('/agent/:name/task', async (req, res) => {
     } catch {}
   }
 
-  if (!response && connectedAPIs.includes('gemini') && process.env.GEMINI_API_KEY) {
-    try { response = await callGemini(enrichedTask, process.env.GEMINI_API_KEY); usedModel = 'gemini'; } catch {}
+  if (!response && connectedAPIs.includes('gemini') && keys.get('GEMINI_API_KEY')) {
+    try { response = await callGemini(enrichedTask, keys.get('GEMINI_API_KEY')); usedModel = 'gemini'; } catch {}
   }
 
   if (!response && port) {
@@ -5152,7 +5153,7 @@ RESPONSE FORMAT:
 Be direct, structured, and specific. No filler. Format clearly with headers and bullets where it helps. Answer the actual question asked.`,
 };
 
-const GROQ_API_KEY_ROUTE = process.env.GROQ_API_KEY || '';
+const GROQ_API_KEY_ROUTE = keys.get('GROQ_API_KEY');
 const GROQ_MODEL_ROUTE = 'llama-3.3-70b-versatile';
 
 async function callGroqRoute(systemPrompt, message, history = []) {
@@ -5339,11 +5340,11 @@ router.post('/content/thread', async (req, res) => {
   try {
     // Try Claude first, then Gemini, then Ollama
     let thread = '';
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (keys.get('ANTHROPIC_API_KEY')) {
       try {
         const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
         if (Anthropic) {
-          const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+          const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
           const msg = await client.messages.create({
             model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
             max_tokens: 2000,
@@ -5353,8 +5354,8 @@ router.post('/content/thread', async (req, res) => {
         }
       } catch {}
     }
-    if (!thread && process.env.GEMINI_API_KEY) {
-      try { thread = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
+    if (!thread && keys.get('GEMINI_API_KEY')) {
+      try { thread = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
     }
     if (!thread) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5391,8 +5392,8 @@ router.post('/content/email', async (req, res) => {
 
   try {
     let email = '';
-    if (process.env.GEMINI_API_KEY) {
-      try { email = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
+    if (keys.get('GEMINI_API_KEY')) {
+      try { email = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
     }
     if (!email) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5423,11 +5424,11 @@ router.post('/content/lyrics', async (req, res) => {
 
   try {
     let lyrics = '';
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (keys.get('ANTHROPIC_API_KEY')) {
       try {
         const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
         if (Anthropic) {
-          const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+          const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
           const msg = await client.messages.create({
             model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
             max_tokens: 1500,
@@ -5437,8 +5438,8 @@ router.post('/content/lyrics', async (req, res) => {
         }
       } catch {}
     }
-    if (!lyrics && process.env.GEMINI_API_KEY) {
-      try { lyrics = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
+    if (!lyrics && keys.get('GEMINI_API_KEY')) {
+      try { lyrics = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
     }
     if (!lyrics) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5487,8 +5488,8 @@ router.post('/content/insights', async (req, res) => {
 
   try {
     let insights = '';
-    if (process.env.GEMINI_API_KEY) {
-      try { insights = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
+    if (keys.get('GEMINI_API_KEY')) {
+      try { insights = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
     }
     if (!insights) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -7067,7 +7068,7 @@ ${targetLine}${noteLine}
   const results = {};
 
   // Post to Telegram
-  const tgToken  = process.env.TELEGRAM_SIGNAL_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
+  const tgToken  = process.env.TELEGRAM_SIGNAL_BOT_TOKEN || keys.get('TELEGRAM_BOT_TOKEN');
   const tgChatId = process.env.TELEGRAM_SIGNAL_CHAT_ID   || process.env.TELEGRAM_CHAT_ID   || '';
   if (tgToken && tgChatId) {
     try {
@@ -7251,7 +7252,7 @@ router.post('/clip/transcribe', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
 
-  const GROQ_KEY_LOCAL = process.env.GROQ_API_KEY || '';
+  const GROQ_KEY_LOCAL = keys.get('GROQ_API_KEY');
   if (!GROQ_KEY_LOCAL) return res.status(503).json({
     error: 'GROQ_API_KEY not set in .env — needed for Whisper transcription. Get a free key at groq.com'
   });

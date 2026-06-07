@@ -21,6 +21,7 @@
  */
 
 const axios = require('axios');
+const keys = require('./lib/keys');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,7 @@ const TOOLS_NEWS = {
         let articles = await fetchNewsFeed();
 
         // Optional enhancement: merge NewsAPI if a key is configured.
-        const newsApiKey = process.env.NEWSAPI_API_KEY;
+        const newsApiKey = keys.get('NEWSAPI_API_KEY');
         if (newsApiKey) {
           try {
             const resp = await withTimeout(
