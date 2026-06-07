@@ -23071,12 +23071,39 @@ async function aiGenerateSocialContent() {
 }
 
 async function aiSocialCalendar() {
-  notify('QUILL building content calendar...');
-  const projects = S.projects.slice(0, 3).map(p => p.name).join(', ') || 'general business content';
+  notify('QUILL drafting 7 days of posts…');
+  const projects = S.projects.slice(0, 3).map(p => p.name).join(', ') || 'SHADDAI — an AI agent workstation & marketplace';
   try {
-    const result = await getResp(`Create a 30-day social media content calendar for: ${projects}\nInclude: platform, content type, topic, best posting time, hashtags for each day. Format as a table.`, 'QUILL');
-    S.notes.unshift({ id: Date.now(), text: `[30-DAY SOCIAL CALENDAR — ${new Date().toLocaleDateString()}]\n\n${result}`, cat: 'ref', agent: 'QUILL', time: new Date().toISOString() });
-    save(); renderNotes(); notify('Calendar saved to Notes');
+    // Ask QUILL for ONE concise post per day, pipe-delimited so we can fill the calendar cells.
+    const prompt = `You are planning a 7-day social content calendar for: ${projects}.\nReturn EXACTLY 7 lines, one per day, NO numbering, NO preamble. Each line format:\nPLATFORM | HOOK/TOPIC (max 12 words) | #hashtag1 #hashtag2\nPlatforms vary across X, Instagram, LinkedIn, Telegram.`;
+    const result = await getResp(prompt, 'QUILL');
+    const lines = String(result).split('\n').map(s => s.trim()).filter(s => s && s.includes('|')).slice(0, 7);
+    if (!lines.length) { notify('QUILL returned no usable rows — try again'); return; }
+    // Stage them as DRAFTS in the post queue (prepared for you — NOT auto-posted).
+    const queue = JSON.parse(localStorage.getItem('shaddai_post_queue') || '[]');
+    const today = new Date();
+    lines.forEach((line, i) => {
+      const parts = line.split('|').map(s => s.trim());
+      const platform = (parts[0] || 'X').replace(/[^A-Za-z/ ]/g, '').slice(0, 14) || 'X';
+      const topic = parts[1] || line;
+      const tags = parts[2] || '';
+      const d = new Date(today); d.setDate(today.getDate() + i);
+      queue.push({
+        id: Date.now() + i,
+        date: d.toISOString().slice(0, 10),
+        platform,
+        content: (topic + (tags ? '\n\n' + tags : '')),
+        status: 'draft',         // ← draft, never auto-sent
+        source: 'ai-fill'
+      });
+    });
+    localStorage.setItem('shaddai_post_queue', JSON.stringify(queue));
+    // Also keep the full plan in Notes for reference.
+    S.notes.unshift({ id: Date.now(), text: `[7-DAY CONTENT PLAN — ${new Date().toLocaleDateString()}]\n\n${lines.join('\n')}`, cat: 'ref', agent: 'QUILL', time: new Date().toISOString() });
+    save();
+    if (typeof renderSocCalendar === 'function') renderSocCalendar();
+    if (typeof renderNotes === 'function') renderNotes();
+    notify('✅ 7 days drafted into your calendar (review & publish yourself — nothing auto-posted)');
   } catch(e) { notify('Error: ' + e.message); }
 }
 
