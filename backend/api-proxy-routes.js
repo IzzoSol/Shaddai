@@ -1116,7 +1116,8 @@ router.post('/collectibles/:id/mint-nft', async (req, res) => {
     if (!tool) return res.status(501).json({ error: 'mint_nft tool not available' });
     const b = req.body || {};
     const name = b.name || ('SHADDAI Collectible #' + req.params.id);
-    const out = await tool.execute({ name, collectibleId: req.params.id, uri: b.uri, description: b.description });
+    // W009: preview unless the request explicitly confirms (body.confirm === true).
+    const out = await tool.execute({ name, collectibleId: req.params.id, uri: b.uri, description: b.description, confirm: b.confirm === true });
     res.json(typeof out === 'string' ? JSON.parse(out) : out);
   } catch (e) {
     res.status(500).json({ error: e.message });

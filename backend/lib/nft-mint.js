@@ -95,16 +95,41 @@ const mint_nft = {
     name: 'string — NFT display name (required)',
     uri: 'string — optional: metadata JSON URI (off-chain). Defaults to an empty data URI.',
     description: 'string — optional: human description of the collectible',
-    collectibleId: 'string — optional: SHADDAI collectible id to tag the mint'
+    collectibleId: 'string — optional: SHADDAI collectible id to tag the mint',
+    confirm: 'boolean — must be true to actually sign+send. Omitted/false → returns a preview summary only (W009 safety).'
   },
   agents: ['NEXUS', 'ZEROX', 'TURTLE', 'SHADDAI'],
-  async execute({ name, uri, description, collectibleId } = {}) {
+  async execute({ name, uri, description, collectibleId, confirm } = {}) {
     if (!name || typeof name !== 'string' || !name.trim()) {
       return JSON.stringify({ success: false, error: 'name is required' });
     }
 
     const network = resolveNetwork();
     const rpc = resolveRpc(network);
+
+    // ── W009 SAFETY GATE: never sign/send without explicit confirmation.
+    // Default (no confirm) → return a transaction summary for the user to approve.
+    if (confirm !== true) {
+      return JSON.stringify({
+        success: true,
+        preview: true,
+        requiresConfirmation: true,
+        action: 'mint_nft',
+        summary: {
+          name: name.slice(0, 64),
+          network,
+          rpc,
+          standard: 'Metaplex Core (mpl-core)',
+          metadataUri: (uri && String(uri).trim()) || '(auto data: URI)',
+          collectibleId: collectibleId || null,
+          estCostSol: '~0.005 (rent + fee)',
+          feePayer: 'SOLANA_MINT_SECRET authority (server-side, non-custodial of user funds)'
+        },
+        note: network === 'mainnet-beta'
+          ? '⚠ MAINNET mint — real SOL will be spent. Re-call with confirm:true ONLY after the user approves.'
+          : 'Devnet mint (no real value). Re-call with confirm:true to sign + send.'
+      });
+    }
 
     // ── Guardrail 1: signer must be configured ──────────────────────────────
     const secret = parseSecret(process.env.SOLANA_MINT_SECRET);
