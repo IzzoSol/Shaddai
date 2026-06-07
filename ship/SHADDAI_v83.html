@@ -38382,16 +38382,13 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   // Seed demo marketplace listings so the tab isn't empty on first open
   const _DEMO_AGENTS = [
-    { id:'demo-1', name:'ORACLE — Market Intelligence', role:'Research & Data Analyst', domain:'RESEARCH', color:'#b06aff', listing:{ listed:true, category:'RESEARCH', description:'Deep-dive market research: competitive analysis, trend spotting, crypto thesis generation. Powered by 5,361 skills.', price:2.50, subscription:29, rating:4.9, launches:1847 } },
-    { id:'demo-2', name:'ZEROX — Revenue Engine', role:'Billing & Business Strategist', domain:'FINANCE', color:'#00c8ff', listing:{ listed:true, category:'FINANCE', description:'Unit economics, pricing strategy, SaaS MRR modeling, Stripe integration review. Grows your revenue.', price:3.00, subscription:39, rating:4.8, launches:923 } },
-    { id:'demo-3', name:'NEXUS — Backend Architect', role:'API & Infrastructure Expert', domain:'BACKEND', color:'#00e5a0', listing:{ listed:true, category:'CODE', description:'REST APIs, Node.js microservices, database schema design, deployment configs. Production-grade code.', price:4.00, subscription:49, rating:4.9, launches:2341 } },
-    { id:'demo-4', name:'TURTLE — UI/UX Designer', role:'Frontend & Visual Design', domain:'DESIGN', color:'#ff9f43', listing:{ listed:true, category:'DESIGN', description:'Beautiful dashboards, landing pages, component systems, dark-mode UIs, brand-consistent interfaces.', price:3.50, subscription:39, rating:5.0, launches:1562 } },
-    { id:'demo-5', name:'QUILL — Content Studio', role:'Writer & Documentation Lead', domain:'WRITING', color:'#54a0ff', listing:{ listed:true, category:'CONTENT', description:'Blog posts, API docs, product copy, email sequences, technical guides. 100% original, SEO-ready.', price:2.00, subscription:24, rating:4.7, launches:3102 } },
-    { id:'demo-6', name:'PIKADON — Security Auditor', role:'Cybersecurity & Compliance', domain:'SECURITY', color:'#ff4070', listing:{ listed:true, category:'SECURITY', description:'Code audits, OWASP top-10 review, secret scanning, pen-test reports, GDPR/SOC2 gap analysis.', price:5.00, subscription:59, rating:4.9, launches:671 } },
-    { id:'demo-7', name:'SHADDAI — Supreme Orchestrator', role:'Strategy & Coordination Lead', domain:'STRATEGY', color:'#ffd700', listing:{ listed:true, category:'STRATEGY', description:'Multi-agent task orchestration, product roadmap, architecture decisions, executive summaries.', price:7.00, subscription:79, rating:5.0, launches:489 } },
-    { id:'demo-8', name:'DexScan Alpha', role:'Solana DEX Signal Bot', domain:'CRYPTO', color:'#9b59b6', listing:{ listed:true, category:'CRYPTO', description:'Real-time DexScreener + Birdeye scanning, new token alerts, LP sniping signals, rug-pull detection.', price:1.50, subscription:19, rating:4.6, launches:4218 } },
-    { id:'demo-9', name:'ContentFlow Pro', role:'Automated Publishing Agent', domain:'AUTOMATION', color:'#1abc9c', listing:{ listed:true, category:'CONTENT', description:'Schedule and publish to Twitter/X, LinkedIn, Telegram, Substack from a single command. Full thread support.', price:1.00, subscription:14, rating:4.5, launches:5891 } },
-    { id:'demo-10', name:'SolanaPayBot', role:'Crypto Payment Processor', domain:'PAYMENTS', color:'#e67e22', listing:{ listed:true, category:'PAYMENTS', description:'Solana Pay QR generation, payment monitoring, webhook callbacks, multi-wallet support. Zero custodial risk.', price:0.50, subscription:9, rating:4.8, launches:2207 } }
+    { id:'demo-1', name:'ORACLE — Market Intelligence', role:'Research & Data Analyst', domain:'RESEARCH', color:'#b06aff', listing:{ listed:true, category:'RESEARCH', description:'Deep-dive market research: competitive analysis, trend spotting, crypto thesis generation.', price:2.50, subscription:29, rating:0, launches:0 } },
+    { id:'demo-2', name:'ZEROX — Revenue Engine', role:'Billing & Business Strategist', domain:'FINANCE', color:'#00c8ff', listing:{ listed:true, category:'FINANCE', description:'Unit economics, pricing strategy, SaaS MRR modeling, Stripe integration review.', price:3.00, subscription:39, rating:0, launches:0 } },
+    { id:'demo-3', name:'NEXUS — Backend Architect', role:'API & Infrastructure Expert', domain:'BACKEND', color:'#00e5a0', listing:{ listed:true, category:'CODE', description:'REST APIs, Node.js microservices, database schema design, deployment configs.', price:4.00, subscription:49, rating:0, launches:0 } },
+    { id:'demo-4', name:'TURTLE — UI/UX Designer', role:'Frontend & Visual Design', domain:'DESIGN', color:'#ff9f43', listing:{ listed:true, category:'DESIGN', description:'Beautiful dashboards, landing pages, component systems, dark-mode UIs.', price:3.50, subscription:39, rating:0, launches:0 } },
+    { id:'demo-5', name:'QUILL — Content Studio', role:'Writer & Documentation Lead', domain:'WRITING', color:'#54a0ff', listing:{ listed:true, category:'CONTENT', description:'Blog posts, API docs, product copy, email sequences, technical guides.', price:2.00, subscription:24, rating:0, launches:0 } },
+    { id:'demo-6', name:'PIKADON — Security Auditor', role:'Cybersecurity & Compliance', domain:'SECURITY', color:'#ff4070', listing:{ listed:true, category:'SECURITY', description:'Code audits, OWASP top-10 review, secret scanning, vulnerability reports.', price:5.00, subscription:59, rating:0, launches:0 } },
+    { id:'demo-7', name:'SHADDAI — Supreme Orchestrator', role:'Strategy & Coordination Lead', domain:'STRATEGY', color:'#ffd700', listing:{ listed:true, category:'STRATEGY', description:'Multi-agent task orchestration, product roadmap, architecture decisions, executive summaries.', price:7.00, subscription:79, rating:0, launches:0 } }
   ];
 
   let _mktRefreshInterval = null;
@@ -40127,13 +40124,14 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               ${sub ? `<span style="margin-left:6px;font-size:8px;color:var(--text-muted);opacity:0.7">· $${sub.toFixed(2)}/mo</span>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:3px">
-              <span style="color:#ffd700;font-size:10px;letter-spacing:1px">${'★'.repeat(Math.max(0,stars))}${'☆'.repeat(Math.max(0,5-stars))}</span>
-              <span style="font-size:8px;color:var(--text-muted);margin-left:2px">${(a.listing&&a.listing.rating||0).toFixed(1)}</span>
+              ${(a.listing&&a.listing.rating>0)
+                ? `<span style="color:#ffd700;font-size:10px;letter-spacing:1px">${'★'.repeat(Math.max(0,stars))}${'☆'.repeat(Math.max(0,5-stars))}</span><span style="font-size:8px;color:var(--text-muted);margin-left:2px">${(a.listing.rating||0).toFixed(1)}</span>`
+                : `<span style="font-size:8px;color:var(--accent,#00e5a0);font-weight:700;letter-spacing:.06em">● NEW</span>`}
             </div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--text-muted);margin-bottom:5px">
-            <span>${launches.toLocaleString()} deployments</span>
-            <span style="color:${color};font-weight:700;letter-spacing:0.04em;font-size:7.5px">VERIFIED ✓</span>
+            <span>${launches>0 ? launches.toLocaleString()+' runs' : 'No runs yet'}</span>
+            <span style="color:var(--text-muted);font-weight:700;letter-spacing:0.04em;font-size:7.5px">SHADDAI agent</span>
           </div>
           <div style="height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden">
             <div style="height:100%;width:${depPct}%;background:linear-gradient(90deg,${color}88,${color});border-radius:2px;transition:width 1.2s ease"></div>
@@ -47883,6 +47881,14 @@ window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-
   }catch(e){}};
 // Default: dashboard NEXT TO the tabs (left side-nav) on desktop; top nav on mobile. Respects a saved choice.
 try{ var _sp=localStorage.getItem('shaddai_navpos'); setNavPos(_sp||((window.innerWidth>768)?'left':'top')); }catch(e){ try{setNavPos('top');}catch(_){} }
+// One-time cleanup: remove leftover test/demo jobs from a user's saved Job Board so beta testers see a clean board.
+try{
+  var _jb=JSON.parse(localStorage.getItem('shaddai_jobs')||'[]');
+  if(Array.isArray(_jb)&&_jb.length){
+    var _clean=_jb.filter(function(j){ return !/\b(test|e2e|testing)\b/i.test(((j&&(j.title||'')+' '+(j&&j.description||''))||'')); });
+    if(_clean.length!==_jb.length) localStorage.setItem('shaddai_jobs', JSON.stringify(_clean));
+  }
+}catch(e){}
 
 // ⚡ Simple Mode — 3-step wizard (What → Who → GO), real /api/agent/run engine (restored from the office redesign).
 (function(){
