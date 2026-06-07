@@ -6153,6 +6153,16 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <!-- APIs -->
   <div id="apisView" class="view">
 
+    <!-- ── CONNECT YOUR APIs — paste once, powers every tool ── -->
+    <div class="card cyber-card" style="border:1px solid rgba(0,229,160,.35);margin-bottom:12px">
+      <div class="card-head">
+        <span class="card-title">🔑 Connect Your APIs</span>
+        <span style="font-size:9px;color:var(--text-muted)">Paste a key once — it powers every matching tool across the dashboard. Free ones are marked 🆓.</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">Keys are stored on your server (never sent to the browser) and used as a fallback over <code>.env</code>. Start with the <b style="color:#00e5a0">🆓 free</b> ones (Groq, HuggingFace, Gemini) — they unlock instant agents + free image gen.</div>
+      <div id="apiKeysList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px">Loading providers…</div>
+    </div>
+
     <!-- ── API SWIVEL CAROUSEL ─────────────────────────────────────── -->
     <div class="card" style="overflow:visible;margin-bottom:12px">
       <div class="card-head">
@@ -21994,7 +22004,7 @@ function showView(v) {
   if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; }
   if (v === 'chat')       { updateChatRoutingDisplay(); }
   if (v === 'skills')     { try { renderCarousel(); } catch(e) {} setTimeout(() => { try { renderCarousel(); } catch(e) {} if (typeof loadSkillsLibrary === 'function') loadSkillsLibrary(); }, 80); }
-  if (v === 'apis')       { renderAPIs(); if (typeof renderApiCarousel === 'function') renderApiCarousel(); }
+  if (v === 'apis')       { renderAPIs(); if (typeof renderApiCarousel === 'function') renderApiCarousel(); if (typeof renderApiKeysPanel === 'function') renderApiKeysPanel(); }
   if (v === 'media')      { if (typeof setMediaViewMode === 'function') setMediaViewMode(localStorage.getItem('shaddai_media_view') || 'modules'); }
   if (v === 'my-agents')  renderMyAgents();
   if (v === 'marketplace') renderMarketplace();
@@ -48492,6 +48502,42 @@ window.saveNote=function(title, content){
   }catch(e){ if(typeof notify==='function') notify('Could not save note'); }
 };
 window.getNotes=function(){ try{ return JSON.parse(localStorage.getItem('shaddai_notes')||'[]'); }catch(e){ return []; } };
+
+// 🔑 Connect Your APIs — one panel, paste a key → it powers every matching tool (via backend resolver).
+window.renderApiKeysPanel=async function(){
+  var box=document.getElementById('apiKeysList'); if(!box) return;
+  try{
+    var d=await (await fetch('/api/keys/catalog')).json();
+    var ps=(d&&d.providers)||[];
+    // group by category
+    var byCat={}; ps.forEach(function(p){ (byCat[p.category]=byCat[p.category]||[]).push(p); });
+    var esc=function(s){return String(s==null?'':s).replace(/[<>"]/g,'');};
+    box.innerHTML=ps.map(function(p){
+      var dot=p.connected?'<span style="color:#00e5a0">● connected</span>':'<span style="color:var(--text-muted)">○ not set</span>';
+      return '<div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:'+(p.connected?'rgba(0,229,160,.05)':'transparent')+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+          '<span style="font-size:11px;font-weight:700;color:var(--text,#e8ecf2)">'+(p.free?'🆓 ':'')+esc(p.label)+'</span>'+
+          '<span style="font-size:8px">'+dot+'</span>'+
+        '</div>'+
+        '<div style="font-size:8px;color:var(--text-muted);margin-bottom:6px">'+esc(p.category)+' · '+esc(p.help)+'</div>'+
+        '<div style="display:flex;gap:5px">'+
+          '<input id="apik_'+p.env+'" type="password" placeholder="'+(p.connected?'•••••••• (saved) — paste to replace':'paste '+esc(p.env))+'" style="flex:1;font-size:10px;padding:5px 8px;background:var(--bg,#0e1117);border:1px solid var(--border);border-radius:5px;color:var(--text)">'+
+          '<button class="btn btn-accent" style="font-size:9px;padding:5px 10px" onclick="saveApiKeyPanel(\''+p.env+'\')">Save</button>'+
+          (p.connected?'<button class="btn btn-ghost" style="font-size:9px;padding:5px 8px" onclick="saveApiKeyPanel(\''+p.env+'\',true)" title="Remove">✕</button>':'')+
+        '</div></div>';
+    }).join('');
+  }catch(e){ box.innerHTML='<div style="color:#ef4444;font-size:11px">⚠ '+String(e.message).replace(/[<>]/g,'')+'</div>'; }
+};
+window.saveApiKeyPanel=async function(env, clear){
+  var inp=document.getElementById('apik_'+env); var val=clear?'':(inp?inp.value.trim():'');
+  if(!clear && !val){ if(typeof notify==='function')notify('Paste a key first'); return; }
+  try{
+    var r=await fetch('/api/keys/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({env:env,value:val})});
+    var d=await r.json();
+    if(d.ok){ if(typeof notify==='function')notify(clear?'Removed '+env:'✅ '+env+' connected — now powers its tools'); renderApiKeysPanel(); }
+    else { if(typeof notify==='function')notify(d.error||'save failed'); }
+  }catch(e){ if(typeof notify==='function')notify('⚠ '+e.message); }
+};
 
 // ⚡ Commerce — full x402 economy: prepaid balance (ledger) + live pricing + hire (debits balance → runs agent).
 const X402_ACCT='commerce-ui';
