@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
-<title>SHADDAI v84 · Sovereign AI Command</title>
+<title>SHADDAI v85 · Sovereign AI Command</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
 <script src="/pwa-register.js" defer></script>
@@ -2818,7 +2818,7 @@ body[data-theme="dark"]::before {
   font-size: 18px !important;
 }
 /* ════════════════════════════════════════════════════════
-   SHADDAI v84 — SOVEREIGN BOOT OVERLAY
+   SHADDAI v85 — SOVEREIGN BOOT OVERLAY
    Visible immediately from first body paint. No JS needed
    to show it — JS only populates it + triggers teardown.
    ════════════════════════════════════════════════════════ */
@@ -3232,7 +3232,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v84</span>
+  <span>SHADDAI v85</span>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3369,7 +3369,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v84</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v85</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3455,7 +3455,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
         </div>
         <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v84 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v85 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
         <div class="mission-text">SHADDAI (commander) · ZEROX (wealth) · ORACLE (research) · NEXUS (backend) · TURTLE (design) · QUILL (writing) · PIKADON (security) · 5,361 skills · Workflow Chains · Scheduled Jobs · Webhooks · Agent Sparklines</div>
         <!-- Agent online dots — populated by initSovereignTerminal() -->
         <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
@@ -3850,7 +3850,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div>
           <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT / TOPIC</div>
-          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v84 launch strategy'">
+          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v85 launch strategy'">
         </div>
       </div>
       <button class="btn btn-accent" style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#00c8ff,#00e5a0);color:#000;border:none;font-weight:700;letter-spacing:0.05em" onclick="runWorkflowFromUI()">▶ RUN WORKFLOW</button>
@@ -4705,7 +4705,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <!-- System Log -->
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:2px">▸ SYSTEM LOG</div>
           <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:8px;max-height:80px;overflow-y:auto" id="officeSystemLog">
-            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v84 online</div>
+            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v85 online</div>
           </div>
         </div>
 
@@ -12002,7 +12002,7 @@ function init() {
   setTimeout(() => { if (typeof _syncCreditsDisplay === 'function') _syncCreditsDisplay(); }, 500); // sync credit displays on load
   setTimeout(checkAllApiStatus, 3000);  // auto-check all services on load
   setTimeout(initEventStream, 1000);    // subscribe to gateway live events
-  log('SHADDAI v84 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
+  log('SHADDAI v85 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
   setInterval(save, S.settings.autoSave * 1000);
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
@@ -12297,7 +12297,7 @@ function exportOfficeReport() {
 
   lines.push('');
   lines.push(`─────────────────────────────────────────────────────────────`);
-  lines.push(`SHADDAI v84 · cloudzncrownz@gmail.com · ${ts}`);
+  lines.push(`SHADDAI v85 · cloudzncrownz@gmail.com · ${ts}`);
 
   downloadText(lines.join('\n'), `shaddai-report-${Date.now()}.txt`, 'text/plain');
   officeLog('[EXPORT] Full operations report downloaded');
@@ -32940,7 +32940,7 @@ function loadWebhookConfig() {
 function testOutboundWebhook() {
   const url = document.getElementById('webhookUrl')?.value || localStorage.getItem('shaddai_webhook') && JSON.parse(localStorage.getItem('shaddai_webhook')).url;
   if (!url) { notify('⚠ No webhook URL configured'); return; }
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v84', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v85', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
     .then(r => { if (r.ok) notify('✓ Outbound webhook test successful'); else notify('⚠ Webhook returned ' + r.status); })
     .catch(e => notify('✗ Webhook failed: ' + e.message));
 }
@@ -33965,7 +33965,7 @@ setInterval(() => {
   if (document.getElementById('dispatchWorkloadContainer')) updateDispatchUI();
 }, 3000);
 
-console.log('✅ SHADDAI v84 Enhancements Loaded');
+console.log('✅ SHADDAI v85 Enhancements Loaded');
 console.log('🎛️ Command Center dispatch system active');
 console.log('📍 SHADDAI desk & agent workload tracking ready');
 
@@ -39168,7 +39168,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (!overlay) { overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
     overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden';
 
-    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v84`,`▶ ALL SYSTEMS OK`];
+    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v85`,`▶ ALL SYSTEMS OK`];
     const _boardHtml=[..._boardItems,..._boardItems].map(t=>`<div style="padding:3px 4px;color:rgba(${a.glow},0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:5.5px">${t}</div>`).join('');
     overlay.innerHTML = `
       <style>
@@ -48113,7 +48113,7 @@ try{
       ]},
     {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL',kind:'agent',
       fields:[
-        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v84'},
+        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v85'},
         {k:'platform',label:'Platform',type:'sel',opts:['X / Twitter','Instagram caption','LinkedIn','TikTok script','Blog intro','Telegram']},
         {k:'tone',label:'Tone',type:'sel',opts:['Punchy','Professional','Casual','Inspirational','Bold/FOMO','Educational']}
       ]},
@@ -48146,7 +48146,7 @@ try{
         if(f.type==='sel')return `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${f.label}</span><select id="smf_${f.k}" class="input" style="width:100%">${f.opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select></label>`;
         return `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${f.label}</span><input id="smf_${f.k}" class="input" style="width:100%" value="${String(val).replace(/"/g,'&quot;')}" placeholder="${f.ph||''}"></label>`;
       };
-      const engHtml=p.engine?`<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">${p.engine.label}</span><select id="smf_engine" class="input" style="width:100%">${p.engine.opts.map(o=>`<option value="${o[0]}" ${sw.engine===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>`:'';
+      const engHtml=p.engine?`<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between;margin-bottom:3px">${p.engine.label}<button type="button" onclick="smRefreshEngines()" style="background:none;border:none;color:var(--accent,#00e5a0);font-size:9px;cursor:pointer">↻ refresh APIs</button></span><select id="smf_engine" class="input" style="width:100%">${p.engine.opts.map(o=>`<option value="${o[0]}" ${sw.engine===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>`:'';
       b.innerHTML=`<div class="wiz-q">${p.ic} ${p.ti} — the details</div><div class="wiz-sub">Build it like a sandwich. Pick your options, then continue.</div>`+
         `<div style="max-width:460px;margin:0 auto">`+(p.fields||[]).map(field).join('')+engHtml+`</div>`+
         `<div class="wiz-nav"><button class="btn btn-ghost" onclick="smBack()">⟵ Back</button><button class="big-go" style="font-size:13px;padding:11px 28px" onclick="smNext()">Next ⟶</button></div>`;
@@ -48210,11 +48210,41 @@ try{
       const text=result.result||JSON.stringify(result).slice(0,400);
       const tools=Array.isArray(result.tools_used)?result.tools_used:[];
       const th=tools.length?`<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">`+tools.map(t=>`<span class="pill">🛠 ${safe(t)}</span>`).join('')+`</div>`:'';
-      b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div>${th}<div style="margin-top:18px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Do another</button></div></div>`;
+      // REVIEW-BEFORE-POST: for social posts, show an editable box + post buttons (nothing auto-sends).
+      if(p.ti==='Write a post'){
+        window._smPostDraft = text;
+        b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Review before you post</div>`+
+          `<div class="wiz-sub">Edit it, then choose where to publish. Nothing is sent until you click a Post button.</div>`+
+          `<textarea id="smPostText" class="input" style="width:100%;max-width:580px;margin:0 auto;display:block;min-height:120px;text-align:left">${safe(text)}</textarea>`+
+          `<div id="smPostStatus" style="font-size:10px;color:var(--text-muted);margin-top:6px;min-height:14px"></div>`+
+          `<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">`+
+            `<button class="btn btn-ghost" style="font-size:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('smPostText').value);notify&&notify('Copied')">📋 Copy</button>`+
+            `<button class="btn btn-ghost" style="font-size:10px" onclick="saveNote&&saveNote('Post draft',document.getElementById('smPostText').value)">📒 Save to Notes</button>`+
+            `<button class="btn btn-accent" style="font-size:10px" onclick="smPost('twitter')">𝕏 Post to X</button>`+
+            `<button class="btn btn-accent" style="font-size:10px;background:#0088cc;border:none" onclick="smPost('telegram')">✈️ Post to Telegram</button>`+
+          `</div>`+
+          `<div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:9px 22px" onclick="smReset()">↺ Do another</button></div></div>`;
+      } else {
+        b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div>${th}<div style="margin-top:18px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Do another</button></div></div>`;
+      }
       try{ window.setAgentActivity && window.setAgentActivity(who,'idle'); }catch(e){}
     }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;
       try{ window.setAgentActivity && window.setAgentActivity(who,'idle'); }catch(_){}}
   };
+  // Post the reviewed draft to a real social channel (only on click — review-before-post).
+  window.smPost=async function(platform){
+    var ta=document.getElementById('smPostText'); var st=document.getElementById('smPostStatus');
+    var content=ta?ta.value.trim():''; if(!content){ if(st)st.textContent='Nothing to post.'; return; }
+    if(st)st.textContent='Posting to '+platform+'…';
+    try{
+      var r=await fetch('/api/social/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:platform,content:content})});
+      var d=await r.json();
+      if(d.status==='sent'||d.ok){ if(st)st.innerHTML='<span style="color:#00e5a0">✅ posted to '+platform+'</span>'; }
+      else { if(st)st.innerHTML='<span style="color:#ffb020">'+String(d.message||('Add '+platform+' keys in the Social tab to enable live posting — your text is ready to copy.')).replace(/[<>]/g,'')+'</span>'; }
+    }catch(e){ if(st)st.textContent='⚠ '+e.message; }
+  };
+  // ↻ Re-pull image engines so a newly-added API key shows up without a page reload.
+  window.smRefreshEngines=function(){ try{ if(sw.step===2){ captureDetails(); render(); } if(typeof notify==='function') notify('Engines refreshed'); }catch(e){} };
   try{ if($('wizBody')) window.smReset(); }catch(e){}
 })();
 
