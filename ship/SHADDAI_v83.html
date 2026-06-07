@@ -12070,6 +12070,21 @@ const OFFICE_AGENTS = [
 ];
 let _officeAgentStatus = {};
 
+// ── Live agent activity: what each agent is DOING right now (drives status board + pixel office movement) ──
+window._agentActivity = window._agentActivity || {}; // CODE -> { state:'working'|'idle', task, since }
+window.setAgentActivity = function(name, state, task){
+  try{
+    var code = String(name||'').toUpperCase().slice(0,3); // SHADDAI->SHA etc. matched below
+    // map full name → OFFICE_AGENTS code
+    var match = (typeof OFFICE_AGENTS!=='undefined') ? OFFICE_AGENTS.find(function(a){return a.name===String(name).toUpperCase()||a.code===code;}) : null;
+    var key = match ? match.code : code;
+    window._agentActivity[key] = { state: state||'idle', task: (task||'').slice(0,60), since: Date.now() };
+    // refresh the board + pixel office if visible
+    if (typeof renderOfficeAgentStatusBoard === 'function' && document.getElementById('officeAgentStatusBoard')) renderOfficeAgentStatusBoard();
+    if (typeof drawPixelOffice === 'function' && document.getElementById('officePixel') && document.getElementById('officePixel').style.display!=='none') { try{ drawPixelOffice(); }catch(e){} }
+  }catch(e){}
+};
+
 function initOfficeWorkBoard() {
   renderOfficeAgentStatusBoard();
   loadOfficeKanban();
@@ -12106,7 +12121,12 @@ async function renderOfficeAgentStatusBoard() {
       _officeAgentStatus[ag.code] = 'online';
       onlineCount++;
       if (dot) { dot.style.background = ag.color; dot.classList.add('pulse-dot'); }
-      if (last) { last.textContent = 'ONLINE'; last.style.color = ''; }
+      // Show live activity if the agent is working a task, else ONLINE/idle.
+      var act = (window._agentActivity || {})[ag.code];
+      if (last) {
+        if (act && act.state === 'working') { last.textContent = '⚙ ' + (act.task || 'working…'); last.style.color = ag.color; }
+        else { last.textContent = 'ONLINE'; last.style.color = ''; }
+      }
     } else {
       _officeAgentStatus[ag.code] = 'offline';
       if (dot) { dot.style.background = '#333'; }
@@ -47961,6 +47981,7 @@ try{
   window.smReset=()=>{sw={step:1,goal:null,agent:'AUTO'};render();};
   window.smRun=async(who,what)=>{const b=$('wizBody');const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
     b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="smMsg">Connecting to ${who} via the SHADDAI engine…</div></div>`;
+    try{ window.setAgentActivity && window.setAgentActivity(who,'working',what); }catch(e){}
     try{
       const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'simple-ui'},body:JSON.stringify({goal:what,agent:who})});
       const d=await r.json();if(!d.taskId)throw new Error(d.error||'engine did not start');
@@ -47975,7 +47996,9 @@ try{
       const tools=Array.isArray(result.tools_used)?result.tools_used:[];
       const th=tools.length?`<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">`+tools.map(t=>`<span class="pill">🛠 ${safe(t)}</span>`).join('')+`</div>`:'';
       b.innerHTML=`<div class="run-card"><div class="big">✅</div><div class="wiz-q">Done!</div><div class="wiz-sub" style="white-space:pre-wrap;text-align:left;max-width:580px;margin:0 auto">${safe(text)}</div>${th}<div style="margin-top:18px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Do another</button></div></div>`;
-    }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;}
+      try{ window.setAgentActivity && window.setAgentActivity(who,'idle'); }catch(e){}
+    }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;
+      try{ window.setAgentActivity && window.setAgentActivity(who,'idle'); }catch(_){}}
   };
   try{ if($('wizBody')) window.smReset(); }catch(e){}
 })();
@@ -48068,6 +48091,7 @@ window.hireAgentX402=async function(){
   if(!task){ if(st){out.style.display='block';st.textContent='Describe the task first.';} return; }
   out.style.display='block'; res.textContent=''; tl.textContent=''; go.disabled=true;
   st.textContent='⚡ hiring '+agent+' via x402…';
+  try{ window.setAgentActivity && window.setAgentActivity(agent,'working',task); }catch(e){}
   try{
     var r=await fetch('/api/x402/agent/'+encodeURIComponent(agent)+'/hire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:task,user:'commerce-ui'})});
     if(r.status===402){
@@ -48081,6 +48105,7 @@ window.hireAgentX402=async function(){
     var tools=(d.steps||[]).flatMap(function(s){return (s.tools_used||s.tool? [s.tool||(s.tools_used||[]).join(',')] : []);}).filter(Boolean);
     if(tools.length) tl.textContent='🔧 '+tools.join(', ');
   }catch(e){ st.textContent='⚠ '+e.message; }
+  try{ window.setAgentActivity && window.setAgentActivity(agent,'idle'); }catch(e){}
   go.disabled=false;
 };
 </script>
