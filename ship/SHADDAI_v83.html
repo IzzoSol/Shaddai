@@ -45672,6 +45672,26 @@ window.ovSaveImageToGallery=function(url,label){
   catch(e){ notify('Could not save'); }
 };
 
+// 🎥 Real video generation via BYOK backend (/api/video). Honest needs-key; polls to completion.
+window.ovGenerateVideo=async function(){
+  var subj=(document.getElementById('ovV_subject')||{}).value||'';
+  var engine=(document.getElementById('ovV_engine')||{}).value||'pika';
+  var wrap=document.getElementById('ovV_vidWrap'); if(!wrap) return;
+  subj=subj.trim(); if(!subj){ wrap.style.display='block'; wrap.innerHTML='<div style="color:#ffb020;font-size:10px">Type your video topic above first.</div>'; return; }
+  wrap.style.display='block'; wrap.innerHTML='<div style="color:#00c8ff;font-size:10px;padding:10px;border:1px dashed rgba(0,200,255,.3);border-radius:6px">⚙️ Requesting '+engine+'…</div>';
+  try{
+    var r=await fetch('/api/video/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:subj,provider:engine,duration:10})});
+    if(r.status===503){ var n=await r.json(); wrap.innerHTML='<div style="color:#ffb020;font-size:10px;padding:10px;border:1px solid rgba(255,176,32,.3);border-radius:6px">🔑 '+String(n.error||'Add this engine\'s API key in the API vault to generate video.').replace(/[<>]/g,'')+'</div>'; return; }
+    var d=await r.json(); if(!d.jobId){ throw new Error(d.error||'no job returned'); }
+    for(var i=0;i<40;i++){ await new Promise(s=>setTimeout(s,4000));
+      var t=await (await fetch('/api/video/status/'+d.jobId)).json();
+      wrap.innerHTML='<div style="color:#00c8ff;font-size:10px">⟳ '+engine+' · '+(t.status||'processing')+' '+(t.progress?('· '+t.progress+'%'):'')+'</div>';
+      if(t.status==='completed'&&t.videoUrl){ wrap.innerHTML='<video src="'+String(t.videoUrl).replace(/"/g,'')+'" controls style="width:100%;border-radius:8px;border:1px solid rgba(0,200,255,.35)"></video><div style="margin-top:6px"><button class="btn btn-ghost" style="font-size:8px" onclick="window.open(\''+String(t.videoUrl).replace(/'/g,'')+'\',\'_blank\')">⬇ Open</button></div>'; return; }
+      if(t.status==='error'||t.status==='failed'){ wrap.innerHTML='<div style="color:#ff6b6b;font-size:10px">⚠ '+String(t.error||'generation failed').replace(/[<>]/g,'')+'</div>'; return; }
+    }
+    wrap.innerHTML='<div style="color:#ffb020;font-size:10px">Still rendering — check back shortly.</div>';
+  }catch(e){ wrap.innerHTML='<div style="color:#ff6b6b;font-size:10px">⚠ '+String(e.message).replace(/[<>]/g,'')+'</div>'; }
+};
 function _openVideoOverlay(){
   expandModule({title:'🎬 VIDEO STUDIO',accentColor:'#00c8ff',content:
     '<div style="display:flex;flex-direction:column;gap:12px">'+
@@ -45690,6 +45710,16 @@ function _openVideoOverlay(){
     '<button class="btn btn-ghost" style="font-size:9px" onclick="(function(){var t=document.getElementById(\'ovV_out\')?.textContent||\'empty\';navigator.clipboard&&navigator.clipboard.writeText(t);notify(\'Copied\')})()">Copy</button>'+
     '<button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveTextToGallery(\'ovV_out\',\'video\',\'Video Script\')">💾</button></div>'+
     '<div id="ovV_out" style="display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.3);border-radius:8px;padding:14px;font-size:10px;line-height:1.7;white-space:pre-wrap;max-height:280px;overflow-y:auto"></div>'+
+    // ── REAL video generation (BYOK) — actually renders a video via /api/video ──
+    '<div style="border-top:1px solid rgba(0,200,255,0.18);margin-top:6px;padding-top:10px">'+
+    '<div style="font-size:9px;color:rgba(0,200,255,0.85);font-weight:700;margin-bottom:6px">🎥 GENERATE REAL VIDEO <span style="color:var(--text-muted);font-weight:400">— uses your saved key (Pika/Runway/Kling/HeyGen)</span></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+    '<select id="ovV_engine" class="select" style="font-size:9px"><option value="pika">Pika</option><option value="runway">Runway</option><option value="kling">Kling</option><option value="heygen">HeyGen</option></select>'+
+    '<button class="btn btn-accent" style="font-size:9px;background:#00c8ff;color:#000;border:none;font-weight:700" onclick="ovGenerateVideo()">🎥 Generate Video</button>'+
+    '<span style="font-size:8px;color:var(--text-muted)">uses the text above as the prompt</span>'+
+    '</div>'+
+    '<div id="ovV_vidWrap" style="display:none;margin-top:8px"></div>'+
+    '</div>'+
     '</div>'+
     '<div id="ovV_p1" style="display:none;flex-direction:column;gap:10px">'+
     '<div style="display:flex;gap:8px;align-items:center">'+
