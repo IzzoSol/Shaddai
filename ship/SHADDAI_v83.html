@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://pollinations.ai https://image.pollinations.ai https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI v83 · Sovereign AI Command</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
@@ -10034,6 +10034,23 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 // ================== STATE ==================
 // ── API base constants ─────────────────────────────────────────────────────────
 const PROXY = '';
+// ── PRODUCTION SHIM: on a live host (Render), rewrite any hardcoded http://localhost:PORT
+// call to same-origin so the deployed site works. On localhost dev, leave everything as-is.
+(function(){
+  try{
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '') return; // dev: untouched
+    var RE = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+/i;
+    var _f = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      try{
+        if (typeof input === 'string' && RE.test(input)) input = input.replace(RE, '');
+        else if (input && input.url && RE.test(input.url)) input = new Request(input.url.replace(RE, ''), input);
+      }catch(e){}
+      return _f(input, init);
+    };
+  }catch(e){}
+})();
 
 const S = {
   ver: '80.0',
@@ -12035,31 +12052,31 @@ async function renderOfficeAgentStatusBoard() {
     html += `<div class="agent-status-row">
       <div class="agt-dot" id="oss_dot_${ag.code}" style="background:#333"></div>
       <div class="agt-name" style="color:${ag.color}">${ag.name}</div>
-      <div class="agt-port">:${ag.port}</div>
-      <div class="agt-last" id="oss_last_${ag.code}">pinging...</div>
+      <div class="agt-port" style="color:var(--accent)">● live</div>
+      <div class="agt-last" id="oss_last_${ag.code}">checking…</div>
     </div>`;
   }
   board.innerHTML = html;
   // Ping all agents
   const hudEl = document.getElementById('officeHudHealth');
+  // Agents run on the UNIFIED backend now (no per-port services). One health check = all online.
   let onlineCount = 0;
-  await Promise.all(OFFICE_AGENTS.map(async ag => {
+  let backendUp = false;
+  try { const r = await fetch('/api/health', { signal: AbortSignal.timeout(4000) }); backendUp = r.ok; } catch {}
+  OFFICE_AGENTS.forEach(ag => {
     const dot = document.getElementById(`oss_dot_${ag.code}`);
     const last = document.getElementById(`oss_last_${ag.code}`);
-    try {
-      const r = await fetch(`http://localhost:${ag.port}/health`, { signal: AbortSignal.timeout(3000) });
-      if (r.ok) {
-        _officeAgentStatus[ag.code] = 'online';
-        onlineCount++;
-        if (dot) { dot.style.background = ag.color; dot.classList.add('pulse-dot'); }
-        if (last) last.textContent = 'ONLINE';
-      } else throw new Error();
-    } catch {
+    if (backendUp) {
+      _officeAgentStatus[ag.code] = 'online';
+      onlineCount++;
+      if (dot) { dot.style.background = ag.color; dot.classList.add('pulse-dot'); }
+      if (last) { last.textContent = 'ONLINE'; last.style.color = ''; }
+    } else {
       _officeAgentStatus[ag.code] = 'offline';
       if (dot) { dot.style.background = '#333'; }
       if (last) { last.textContent = 'OFFLINE'; last.style.color = '#ff4070'; }
     }
-  }));
+  });
   if (hudEl) {
     const dots = OFFICE_AGENTS.map(ag => `<span style="color:${_officeAgentStatus[ag.code]==='online'?ag.color:'#333'}">●</span>`).join('');
     hudEl.innerHTML = dots;
@@ -36693,7 +36710,7 @@ console.log('✓ V72 missing handlers loaded — all onclick refs resolved');
      ██████████████████████████████████████████████████ -->
 <script>
 // ── AURA Client Module ────────────────────────────────────────────────────────
-const AURA_BASE = 'http://localhost:8010';
+const AURA_BASE = '/api';  // same-origin: AURA is served by the unified backend at /api/aura/* (works on Render)
 let _auraTokensSaved = 0;
 let _auraCacheHits   = 0;
 let _auraCostSaved   = 0;
@@ -45470,8 +45487,8 @@ function _openImageOverlay(){
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">RATIO</label>'+
     '<select id="ovI_ratio" class="select" style="font-size:10px;width:100%"><option>16:9 Landscape</option><option>9:16 Portrait</option><option>1:1 Square</option><option>4:3</option><option>21:9 Ultrawide</option></select></div>'+
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">ENGINE</label>'+
-    '<select id="ovI_engine" class="select" style="font-size:10px;width:100%"><option value="together">⚡ Flux schnell · Free (Together)</option><option value="fal">🚀 fal.ai FLUX · Premium</option><option value="nano-banana">🍌 Nano Banana · Premium</option><option value="dall-e-3">🎨 DALL·E 3 · Premium</option><option value="flux">🌐 Pollinations · Free (fallback)</option></select></div>'+
-    '<div style="grid-column:1/-1;font-size:8px;color:rgba(255,255,255,0.4)">Premium engines use your saved key (API vault). Free Together key: together.ai — best quality at $0.</div>'+
+    '<select id="ovI_engine" class="select" style="font-size:10px;width:100%"><option value="huggingface">⚡ Flux schnell · Free (HuggingFace)</option><option value="fal">🚀 fal.ai FLUX · Premium</option><option value="nano-banana">🍌 Nano Banana · Premium</option><option value="dall-e-3">🎨 DALL·E 3 · Premium</option></select></div>'+
+    '<div style="grid-column:1/-1;font-size:8px;color:rgba(255,255,255,0.4)">Engines use your own key. Free Flux: a HuggingFace token (huggingface.co — no card), added in the API vault.</div>'+
     '</div>'+
     '<textarea id="ovI_subject" class="input" rows="3" placeholder="Describe your image: subject, mood, lighting, environment, colors, details..."></textarea>'+
     '<div><label style="font-size:9px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">NEGATIVE PROMPT (optional)</label>'+
@@ -47929,10 +47946,18 @@ window.renderNews=async function(){
     const r=await fetch('/api/news?limit=20'); const d=await r.json();
     const items=d.news||d.items||d.articles||(Array.isArray(d)?d:[]);
     if(!items.length){ list.innerHTML='<div style="color:var(--text-muted);font-size:11px">No headlines right now — try Refresh.</div>'; return; }
-    list.innerHTML=items.map(n=>`<a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="display:block;text-decoration:none;padding:9px 11px;border:1px solid var(--border);border-radius:6px;transition:.15s" onmouseover="this.style.borderColor='#22d3ee'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:12px;color:var(--text,#e8ecf2);line-height:1.35">${esc(n.title||'(untitled)')}</div>
-      <div style="font-size:9px;color:var(--text-muted);margin-top:4px">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleString()):''}</div>
-    </a>`).join('');
+    window._newsItems = items;
+    list.innerHTML=items.map((n,i)=>`<div style="padding:9px 11px;border:1px solid var(--border);border-radius:6px">
+      <a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none;font-size:12px;color:var(--text,#e8ecf2);line-height:1.35;display:block">${esc(n.title||'(untitled)')}</a>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px">
+        <span style="font-size:9px;color:var(--text-muted)">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleDateString()):''}</span>
+        <span style="display:flex;gap:5px">
+          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'post')">✨ AI Post</button>
+          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'summary')">📝 Summary</button>
+        </span>
+      </div>
+      <div id="newsAIout_${i}" style="display:none;margin-top:6px;font-size:10px;line-height:1.55;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:5px;padding:8px"></div>
+    </div>`).join('');
   }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:11px">⚠ '+esc(e.message)+'</div>'; }
 };
 window.analyzeNews=async function(){
@@ -47946,6 +47971,37 @@ window.analyzeNews=async function(){
     box.innerHTML=`<b style="color:${col};text-transform:uppercase">${(d.overallSentiment||'neutral')}</b> · score ${(d.score!=null?d.score:0)} · 🟢 ${d.bullishCount||0} bullish / 🔴 ${d.bearishCount||0} bearish / ⚪ ${d.neutralCount||0} neutral<br><span style="color:var(--text-muted);font-size:10px">${String(d.summary||'').replace(/[<>]/g,'')}</span>`;
   }catch(e){ box.innerHTML='<span style="color:#ef4444">⚠ '+String(e.message).replace(/[<>]/g,'')+'</span>'; }
 };
+// 📰→✍️ Click a headline → QUILL writes a post or summary (real /api/llm/chat) → save to Notes.
+window.newsAI=async function(i, mode){
+  var items=window._newsItems||[]; var n=items[i]; if(!n) return;
+  var out=document.getElementById('newsAIout_'+i); if(!out) return;
+  out.style.display='block'; out.textContent='⟳ '+(mode==='post'?'QUILL is writing a post…':'Summarizing…');
+  var headline=String(n.title||'');
+  var prompt = mode==='post'
+    ? 'Write a short, engaging social media post (2-3 sentences + 2 relevant hashtags) about this headline. Output ONLY the post, no preamble:\n"'+headline+'"'
+    : 'Summarize what this headline means in 3 short bullet points for a general reader. Output ONLY the bullets, no preamble:\n"'+headline+'"';
+  try{
+    var r=await fetch('/api/llm/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:prompt,agent:'QUILL'})});
+    var d=await r.json(); var text=String(d.response||d.error||'(no response)');
+    var safe=text.replace(/[<>]/g,'');
+    var titleSafe=(((mode==='post')?'Post: ':'Summary: ')+headline).replace(/[<>'"]/g,'').slice(0,60);
+    out.innerHTML='<div style="white-space:pre-wrap">'+safe+'</div>'+
+      '<div style="display:flex;gap:6px;margin-top:6px">'+
+      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.parentElement.previousElementSibling.textContent);notify&&notify(\'Copied\')">Copy</button>'+
+      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="saveNote(\''+titleSafe+'\',this.parentElement.previousElementSibling.textContent)">📒 Save to Notes</button>'+
+      '</div>';
+  }catch(e){ out.textContent='⚠ '+e.message; }
+};
+// Notes store (separate from Documents) — used by News + Social.
+window.saveNote=function(title, content){
+  try{
+    var notes=JSON.parse(localStorage.getItem('shaddai_notes')||'[]');
+    notes.unshift({ id:Date.now(), title:title||'Note', content:content||'', source:'news', time:new Date().toISOString() });
+    localStorage.setItem('shaddai_notes', JSON.stringify(notes.slice(0,200)));
+    if(typeof notify==='function') notify('Saved to Notes ('+notes.length+')');
+  }catch(e){ if(typeof notify==='function') notify('Could not save note'); }
+};
+window.getNotes=function(){ try{ return JSON.parse(localStorage.getItem('shaddai_notes')||'[]'); }catch(e){ return []; } };
 </script>
 
 </body>
