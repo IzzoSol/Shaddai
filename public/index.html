@@ -4101,10 +4101,10 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         <!-- RIGHT COLUMN -->
         <div style="display:flex;flex-direction:column;gap:14px">
 
-          <!-- ── CLI COMMAND REFERENCE ── -->
-          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
-            <div style="font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:2px">🖥 MoonPay CLI Reference — <code style="font-size:10px;color:#7b5afe">mp</code> commands</div>
-            <div style="font-size:8px;color:var(--text-muted);margin-bottom:10px">All commands run locally. Keys never leave your machine. Selected chain: <span id="mpChainLabel" style="color:#a78bfa;font-weight:700">solana</span></div>
+          <!-- ── CLI COMMAND REFERENCE (collapsed by default — keeps the section clean) ── -->
+          <details style="background:rgba(0,0,0,0.25);border:1px solid rgba(123,90,254,0.2);border-radius:10px;padding:12px">
+            <summary style="cursor:pointer;list-style:none;font-size:11px;font-weight:700;color:#a78bfa">🖥 MoonPay CLI Reference — <code style="font-size:10px;color:#7b5afe">mp</code> commands <span style="font-size:8px;color:var(--text-muted);font-weight:400">▸ click to expand</span></summary>
+            <div style="font-size:8px;color:var(--text-muted);margin:8px 0 10px">All commands run locally. Keys never leave your machine. Selected chain: <span id="mpChainLabel" style="color:#a78bfa;font-weight:700">solana</span></div>
 
             <!-- Setup group -->
             <div style="margin-bottom:10px">
@@ -4166,15 +4166,16 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
                 <tr><td style="padding:4px 6px;color:#e2d9ff;font-family:monospace;white-space:nowrap">mp buy --token usdc --zero-fee</td><td style="padding:4px 6px;color:var(--text-muted)">Zero-fee stablecoin on-ramp (USDC/USDT)</td></tr>
               </table>
             </div>
-          </div>
+          </details>
 
-          <!-- ── MOONCARD ROADMAP ── -->
-          <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:12px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <!-- ── MOONCARD ROADMAP (collapsed — it's future, not live) ── -->
+          <details style="background:rgba(0,0,0,0.25);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:12px">
+            <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">
               <span style="font-size:11px;font-weight:700;color:#a78bfa">💳 MoonCard &amp; Agentic Commerce</span>
               <span style="font-size:7px;color:#ffd84d;background:rgba(255,216,77,0.1);border:1px solid rgba(255,216,77,0.3);padding:2px 8px;border-radius:20px;font-weight:700">ROADMAP</span>
-            </div>
-            <div style="font-size:8px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Requires MoonPay agent-commerce API access. All items below are planned — not yet available. ZEROX and SHADDAI will use these autonomously once live.</div>
+              <span style="font-size:8px;color:var(--text-muted);font-weight:400">▸ expand</span>
+            </summary>
+            <div style="font-size:8px;color:var(--text-muted);margin:8px 0 10px;line-height:1.5">Requires MoonPay agent-commerce API access. All items below are planned — not yet available. ZEROX and SHADDAI will use these autonomously once live.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div style="background:rgba(123,90,254,0.06);border:1px solid rgba(123,90,254,0.15);border-radius:8px;padding:9px">
                 <div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:5px">🛒 Shopping &amp; Errands</div>
@@ -4205,7 +4206,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
                 <div>· Zero-fee stablecoin top-up at any time</div>
               </div>
             </div>
-          </div>
+          </details>
 
         </div><!-- /RIGHT COLUMN -->
 
