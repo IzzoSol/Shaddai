@@ -19,7 +19,18 @@
 - Vercel removed (`vercel.json` deleted — Render is the real host)
 - `main` brought current (was 4 days stale)
 
-**NEXT UP (cooking now):** x402 everyday-commerce (storefront view + make x402 the visible primary rail; backend `lib/x402.js` already real). Then: Office command-floor overhaul + agent movement · Skills-made-real + Forge upgrade · content-calendar AI-fill · Social-tab Notes reader · real video gen (BYOK only — no free API).
+**BACKLOG — ALL COMPLETE (v83, verified, no mock):**
+- ✅ x402 Commerce storefront (live discovery + hire-an-agent, verified QUILL completed)
+- ✅ Office command-floor: live agent-activity pills (pulse=working) + polished Mission-Control HUD; unified-backend status (no `:800X` ports)
+- ✅ Skills-made-real + Forge: searchable across all 182 real skills w/ descriptions; verified forge filters fakes → equips real tools → run fires them (PRICEBOT→fetch_price→live BTC $62,516)
+- ✅ Content-calendar AI-fill: QUILL drafts 7 real per-day posts into the calendar as DRAFTS (never auto-posts; verified 7 usable rows)
+- ✅ Social-tab Notes reader: "From Notes" picker → load saved note → AI writes the post
+- ✅ Video gen: BYOK UI (Pika/Runway/Kling/HeyGen) → /api/video, honest 503 needsKey when no key (verified)
+- ✅ Frontend-design: Gilded-Vault (The Vault) + Mission-Control Night Bazaar (marketplace)
+- ✅ Solana W009: mint previews + requires explicit confirm (verified devnet preview)
+- ✅ Human Design souls (7 agents) + esoteric corpus (6 docs)
+
+**REMAINING (polish / future):** drop your esoteric texts into `backend/data/esoteric/` · Office 3D (Babylon.js — optional, current pixel office works) · wallet-connected x402 settlement (needs X402_ENABLED + facilitator) · paid keys in Render for instant agents.
 
 **Render env to set (free):** `GROQ_API_KEY` (instant agents), `HF_TOKEN` (free FLUX images), optional `ADMIN_TOKEN` (locks admin routes).
 
