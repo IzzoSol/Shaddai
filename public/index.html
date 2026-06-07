@@ -47946,10 +47946,18 @@ window.renderNews=async function(){
     const r=await fetch('/api/news?limit=20'); const d=await r.json();
     const items=d.news||d.items||d.articles||(Array.isArray(d)?d:[]);
     if(!items.length){ list.innerHTML='<div style="color:var(--text-muted);font-size:11px">No headlines right now — try Refresh.</div>'; return; }
-    list.innerHTML=items.map(n=>`<a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="display:block;text-decoration:none;padding:9px 11px;border:1px solid var(--border);border-radius:6px;transition:.15s" onmouseover="this.style.borderColor='#22d3ee'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:12px;color:var(--text,#e8ecf2);line-height:1.35">${esc(n.title||'(untitled)')}</div>
-      <div style="font-size:9px;color:var(--text-muted);margin-top:4px">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleString()):''}</div>
-    </a>`).join('');
+    window._newsItems = items;
+    list.innerHTML=items.map((n,i)=>`<div style="padding:9px 11px;border:1px solid var(--border);border-radius:6px">
+      <a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none;font-size:12px;color:var(--text,#e8ecf2);line-height:1.35;display:block">${esc(n.title||'(untitled)')}</a>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px">
+        <span style="font-size:9px;color:var(--text-muted)">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleDateString()):''}</span>
+        <span style="display:flex;gap:5px">
+          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'post')">✨ AI Post</button>
+          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'summary')">📝 Summary</button>
+        </span>
+      </div>
+      <div id="newsAIout_${i}" style="display:none;margin-top:6px;font-size:10px;line-height:1.55;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:5px;padding:8px"></div>
+    </div>`).join('');
   }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:11px">⚠ '+esc(e.message)+'</div>'; }
 };
 window.analyzeNews=async function(){
@@ -47963,6 +47971,37 @@ window.analyzeNews=async function(){
     box.innerHTML=`<b style="color:${col};text-transform:uppercase">${(d.overallSentiment||'neutral')}</b> · score ${(d.score!=null?d.score:0)} · 🟢 ${d.bullishCount||0} bullish / 🔴 ${d.bearishCount||0} bearish / ⚪ ${d.neutralCount||0} neutral<br><span style="color:var(--text-muted);font-size:10px">${String(d.summary||'').replace(/[<>]/g,'')}</span>`;
   }catch(e){ box.innerHTML='<span style="color:#ef4444">⚠ '+String(e.message).replace(/[<>]/g,'')+'</span>'; }
 };
+// 📰→✍️ Click a headline → QUILL writes a post or summary (real /api/llm/chat) → save to Notes.
+window.newsAI=async function(i, mode){
+  var items=window._newsItems||[]; var n=items[i]; if(!n) return;
+  var out=document.getElementById('newsAIout_'+i); if(!out) return;
+  out.style.display='block'; out.textContent='⟳ '+(mode==='post'?'QUILL is writing a post…':'Summarizing…');
+  var headline=String(n.title||'');
+  var prompt = mode==='post'
+    ? 'Write a short, engaging social media post (2-3 sentences + 2 relevant hashtags) about this headline. Output ONLY the post, no preamble:\n"'+headline+'"'
+    : 'Summarize what this headline means in 3 short bullet points for a general reader. Output ONLY the bullets, no preamble:\n"'+headline+'"';
+  try{
+    var r=await fetch('/api/llm/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:prompt,agent:'QUILL'})});
+    var d=await r.json(); var text=String(d.response||d.error||'(no response)');
+    var safe=text.replace(/[<>]/g,'');
+    var titleSafe=(((mode==='post')?'Post: ':'Summary: ')+headline).replace(/[<>'"]/g,'').slice(0,60);
+    out.innerHTML='<div style="white-space:pre-wrap">'+safe+'</div>'+
+      '<div style="display:flex;gap:6px;margin-top:6px">'+
+      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.parentElement.previousElementSibling.textContent);notify&&notify(\'Copied\')">Copy</button>'+
+      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="saveNote(\''+titleSafe+'\',this.parentElement.previousElementSibling.textContent)">📒 Save to Notes</button>'+
+      '</div>';
+  }catch(e){ out.textContent='⚠ '+e.message; }
+};
+// Notes store (separate from Documents) — used by News + Social.
+window.saveNote=function(title, content){
+  try{
+    var notes=JSON.parse(localStorage.getItem('shaddai_notes')||'[]');
+    notes.unshift({ id:Date.now(), title:title||'Note', content:content||'', source:'news', time:new Date().toISOString() });
+    localStorage.setItem('shaddai_notes', JSON.stringify(notes.slice(0,200)));
+    if(typeof notify==='function') notify('Saved to Notes ('+notes.length+')');
+  }catch(e){ if(typeof notify==='function') notify('Could not save note'); }
+};
+window.getNotes=function(){ try{ return JSON.parse(localStorage.getItem('shaddai_notes')||'[]'); }catch(e){ return []; } };
 </script>
 
 </body>
