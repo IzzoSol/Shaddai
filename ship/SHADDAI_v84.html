@@ -3292,6 +3292,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🛒 Marketplace</button>
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
+  <button class="nav-btn" onclick="showView('commerce')" style="color:#00e5a0;font-weight:700">⚡ Commerce</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
@@ -3377,6 +3378,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
+    <button class="sbt" onclick="showView('commerce');lySetSb(this)"><span class="ic">⚡</span>Commerce</button>
     <button class="sbt" onclick="showView('media');lySetSb(this)"><span class="ic">🎵</span>Media</button>
     <button class="sbt" onclick="showView('social');lySetSb(this)"><span class="ic">📱</span>Social</button>
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
@@ -7481,36 +7483,65 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   </div>
 
   <div id="commerceView" class="view">
+    <!-- STEP 0 — What x402 is, in one plain line -->
     <div class="card cyber-card" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
-        <span class="card-title">⚡ Commerce — x402 Agent Economy</span>
+        <span class="card-title">⚡ Commerce — the x402 Agent Economy</span>
         <span id="x402Status" style="font-size:9px;color:var(--text-muted)">checking rail…</span>
       </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
-        <b style="color:#00e5a0">x402</b> is SHADDAI's primary payment rail — agents get hired and pay each other in stablecoin over the open HTTP 402 standard. Non-custodial: nothing touches your funds without your signature. While the rail is in beta (<b>X402_ENABLED=false</b>) hires run <b>free</b> so you can test the full flow.
+      <div style="font-size:11px;color:var(--text-secondary);line-height:1.7">
+        Pay agents to do work — and let agents pay each other — over <b style="color:#00e5a0">x402</b>, the open HTTP-402 stablecoin standard (USDC on Base or Solana). <b>Non-custodial:</b> nothing leaves your wallet without your signature.
+        <br><b style="color:#00e5a0">How it works:</b> ① top up a prepaid balance → ② hire an agent for a task → ③ the cost is debited from your balance and the agent runs. (Beta: top-ups are simulated until you connect a wallet.)
       </div>
-      <div id="x402Pricing" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px"></div>
     </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:14px;align-items:start">
+      <!-- LEFT: wallet / prepaid balance -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">💰 Your x402 Balance</span></div>
+        <div style="text-align:center;padding:14px 0">
+          <div id="x402Balance" style="font-size:32px;font-weight:800;color:#00e5a0;font-family:'Share Tech Mono',monospace">$0.00</div>
+          <div style="font-size:9px;color:var(--text-muted);letter-spacing:.08em">PREPAID · USDC</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">
+          <button class="btn btn-ghost" style="font-size:10px" onclick="x402TopUp(5)">+ $5</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="x402TopUp(20)">+ $20</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="x402TopUp(100)">+ $100</button>
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);text-align:center;margin-bottom:10px">Top-up is simulated in beta. Real funding = MoonPay on-ramp (Wallet tab) → USDC.</div>
+        <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:4px">▸ LEDGER</div>
+        <div id="x402Ledger" style="font-size:9px;color:var(--text-muted);max-height:140px;overflow-y:auto;line-height:1.7">No transactions yet.</div>
+      </div>
+
+      <!-- RIGHT: hire an agent (debits balance) -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">🤝 Hire an Agent</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
+          <select id="hireAgent" class="input" style="max-width:230px" onchange="x402SyncPrice()">
+            <option value="ORACLE" data-price="2.50">ORACLE · Research — $2.50</option>
+            <option value="QUILL" data-price="2.00">QUILL · Writing — $2.00</option>
+            <option value="ZEROX" data-price="3.00">ZEROX · Markets — $3.00</option>
+            <option value="TURTLE" data-price="3.50">TURTLE · Design — $3.50</option>
+            <option value="NEXUS" data-price="4.00">NEXUS · Code — $4.00</option>
+            <option value="PIKADON" data-price="5.00">PIKADON · Security — $5.00</option>
+            <option value="SHADDAI" data-price="7.00">SHADDAI · Orchestrator — $7.00</option>
+          </select>
+          <span style="font-size:10px;color:var(--text-muted)">cost: <b id="hirePrice" style="color:#00e5a0">$2.50</b></span>
+          <button class="btn btn-accent" id="hireGo" onclick="hireAgentX402()">⚡ Hire &amp; Run</button>
+        </div>
+        <textarea id="hireTask" class="input" rows="3" placeholder="What should this agent do? e.g. 'Research the SOL/USDC trend and give me a clear verdict'" style="width:100%;resize:vertical"></textarea>
+        <div id="hireOut" style="margin-top:10px;font-size:11px;display:none">
+          <div id="hireStatus" style="color:var(--text-muted);margin-bottom:6px"></div>
+          <div id="hireResult" style="white-space:pre-wrap;line-height:1.5"></div>
+          <div id="hireTools" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billable services (live from x402 discovery) -->
     <div class="card">
-      <div class="card-head"><span class="card-title">🤝 Hire an Agent</span></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
-        <select id="hireAgent" class="input" style="max-width:200px">
-          <option value="SHADDAI">SHADDAI · Orchestrator ($7)</option>
-          <option value="ORACLE">ORACLE · Research ($2.50)</option>
-          <option value="ZEROX">ZEROX · Markets ($3)</option>
-          <option value="NEXUS">NEXUS · Code ($4)</option>
-          <option value="TURTLE">TURTLE · Design ($3.50)</option>
-          <option value="QUILL">QUILL · Writing ($2)</option>
-          <option value="PIKADON">PIKADON · Security ($5)</option>
-        </select>
-        <button class="btn btn-accent" id="hireGo" onclick="hireAgentX402()">⚡ Hire & Run</button>
-      </div>
-      <textarea id="hireTask" class="input" rows="2" placeholder="What should this agent do? e.g. 'Research the SOL/USDC trend and give me a verdict'" style="width:100%;resize:vertical"></textarea>
-      <div id="hireOut" style="margin-top:10px;font-size:11px;display:none">
-        <div id="hireStatus" style="color:var(--text-muted);margin-bottom:6px"></div>
-        <div id="hireResult" style="white-space:pre-wrap;line-height:1.5"></div>
-        <div id="hireTools" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
-      </div>
+      <div class="card-head"><span class="card-title">🏷️ Billable Services <span style="font-size:9px;color:var(--text-muted);font-weight:400">— live from x402 discovery</span></span></div>
+      <div id="x402Pricing" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
     </div>
   </div>
 
@@ -21876,6 +21907,7 @@ function showView(v) {
   if (v === 'dash')         { renderDash(); if (typeof updateMissionMRR === 'function') updateMissionMRR(); }
   if (v === 'media')        renderMedia();
   if (v === 'news')         renderNews();
+  if (v === 'commerce')     renderCommerce();
   // Note: pixel office init happens in switchOfficeTab('pixel'), not here
   if (v === 'agents')       renderAgents();
   if (v === 'workflow')     renderTasks();
@@ -40153,6 +40185,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     checkCollectibleUnlocks();
     // Fetch live jobs in background without blocking render
     function _fetchMarketplaceJobs() {
+      // SERVER IS SOURCE OF TRUTH — drop any stale localStorage jobs (old test/demo data) before re-fetching.
+      S.marketplace.liveJobs = [];
       // File-backed marketplace.json (created via /post endpoint)
       fetch('/api/marketplace/jobs/open', { signal: AbortSignal.timeout(3000) })
         .then(r => r.ok ? r.json() : null).then(d => {
@@ -48250,42 +48284,67 @@ window.saveNote=function(title, content){
 };
 window.getNotes=function(){ try{ return JSON.parse(localStorage.getItem('shaddai_notes')||'[]'); }catch(e){ return []; } };
 
-// ⚡ Commerce — x402 discovery + hire-an-agent (real /.well-known/x402.json + /api/x402/agent/:name/hire).
+// ⚡ Commerce — full x402 economy: prepaid balance (ledger) + live pricing + hire (debits balance → runs agent).
+const X402_ACCT='commerce-ui';
+const X402_PRICE={ORACLE:2.5,QUILL:2,ZEROX:3,TURTLE:3.5,NEXUS:4,PIKADON:5,SHADDAI:7};
+window.x402SyncPrice=function(){
+  var sel=document.getElementById('hireAgent'); var el=document.getElementById('hirePrice');
+  if(sel&&el){ var p=X402_PRICE[sel.value]||2.5; el.textContent='$'+p.toFixed(2); }
+};
+async function x402LoadBalance(){
+  try{ var d=await (await fetch('/api/x402/ledger/balance/'+X402_ACCT)).json(); var b=document.getElementById('x402Balance'); if(b)b.textContent='$'+(Number(d.balance)||0).toFixed(2); return Number(d.balance)||0; }catch(e){ return 0; }
+}
+async function x402LoadLedger(){
+  try{ var d=await (await fetch('/api/x402/ledger/history/'+X402_ACCT+'?limit=12')).json(); var h=d.history||[]; var el=document.getElementById('x402Ledger'); if(!el)return;
+    el.innerHTML=h.length? h.map(function(e){var pos=e.type==='credit';return '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05);padding:2px 0"><span>'+(pos?'＋':'－')+' '+String(e.ref||e.type).replace(/[<>]/g,'').slice(0,22)+'</span><span style="color:'+(pos?'#00e5a0':'#ff7b7b')+'">$'+Number(e.amount).toFixed(2)+'</span></div>';}).join('') : 'No transactions yet.';
+  }catch(e){}
+}
+window.x402TopUp=async function(amt){
+  try{ await fetch('/api/x402/ledger/credit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:X402_ACCT,amount:amt,ref:'top-up $'+amt})});
+    if(typeof notify==='function')notify('Added $'+amt+' (simulated)'); await x402LoadBalance(); await x402LoadLedger();
+  }catch(e){ if(typeof notify==='function')notify('Top-up failed'); }
+};
 window.renderCommerce=async function(){
   var st=document.getElementById('x402Status'), grid=document.getElementById('x402Pricing');
-  if(!grid) return;
+  x402SyncPrice(); x402LoadBalance(); x402LoadLedger();
   try{
     var d=await (await fetch('/.well-known/x402.json')).json();
-    if(st) st.textContent=(d.enabled?'🟢 LIVE · ':'🧪 beta (free) · ')+(d.network||'base')+' · '+(d.asset||'USDC');
+    if(st) st.textContent=(d.enabled?'🟢 LIVE · ':'🧪 beta (free) · ')+(d.network||'base')+' · USDC';
     var eps=d.endpoints||[];
-    grid.innerHTML=eps.map(function(e){return '<div style="border:1px solid var(--border);border-radius:8px;padding:11px">'+
+    if(grid) grid.innerHTML=eps.map(function(e){return '<div style="border:1px solid var(--border);border-radius:8px;padding:11px;background:rgba(0,229,160,.03)">'+
       '<div style="font-size:11px;font-weight:700;color:var(--text,#e8ecf2)">'+String(e.resource).replace(/[<>]/g,'')+'</div>'+
       '<div style="font-size:9px;color:var(--text-muted);margin:4px 0;min-height:24px">'+String(e.description||'').replace(/[<>]/g,'')+'</div>'+
       '<div style="font-size:13px;font-weight:800;color:#00e5a0">'+String(e.price||'').replace(/[<>]/g,'')+'</div></div>';}).join('');
-  }catch(e){ if(st) st.textContent='⚠ rail offline'; grid.innerHTML='<div style="color:#ef4444;font-size:11px">'+String(e.message).replace(/[<>]/g,'')+'</div>'; }
+  }catch(e){ if(st) st.textContent='⚠ rail offline'; if(grid) grid.innerHTML='<div style="color:#ef4444;font-size:11px">'+String(e.message).replace(/[<>]/g,'')+'</div>'; }
 };
 window.hireAgentX402=async function(){
   var agent=(document.getElementById('hireAgent')||{}).value||'ORACLE';
   var task=((document.getElementById('hireTask')||{}).value||'').trim();
+  var price=X402_PRICE[agent]||2.5;
   var out=document.getElementById('hireOut'),st=document.getElementById('hireStatus'),
       res=document.getElementById('hireResult'),tl=document.getElementById('hireTools'),go=document.getElementById('hireGo');
   if(!task){ if(st){out.style.display='block';st.textContent='Describe the task first.';} return; }
   out.style.display='block'; res.textContent=''; tl.textContent=''; go.disabled=true;
-  st.textContent='⚡ hiring '+agent+' via x402…';
+  // STEP 1 — debit the prepaid balance via the x402 ledger.
+  st.textContent='💳 charging $'+price.toFixed(2)+' from your x402 balance…';
+  try{
+    var dr=await fetch('/api/x402/ledger/debit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:X402_ACCT,amount:price,ref:'hire '+agent})});
+    if(dr.status===402){ var ins=await dr.json(); st.innerHTML='💳 <b>Insufficient balance</b> — need $'+(ins.needed||price).toFixed(2)+', you have $'+(Number(ins.balance)||0).toFixed(2)+'. Top up above, then try again.'; go.disabled=false; return; }
+    await x402LoadBalance(); await x402LoadLedger();
+  }catch(e){ st.textContent='⚠ ledger error: '+e.message; go.disabled=false; return; }
+  // STEP 2 — run the agent (x402 hire route → real tool loop).
+  st.textContent='⚡ '+agent+' hired — working…';
   try{ window.setAgentActivity && window.setAgentActivity(agent,'working',task); }catch(e){}
   try{
-    var r=await fetch('/api/x402/agent/'+encodeURIComponent(agent)+'/hire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:task,user:'commerce-ui'})});
-    if(r.status===402){
-      var off=await r.json(); var a=(off.accepts&&off.accepts[0])||{};
-      st.textContent='💳 Payment required: '+(a.maxAmountRequired||a.price||('$'+ (off.error||'')))+' '+(a.asset||'')+' — connect a wallet to pay.';
-      go.disabled=false; return;
-    }
+    var r=await fetch('/api/x402/agent/'+encodeURIComponent(agent)+'/hire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:task,user:X402_ACCT})});
     var d=await r.json();
-    st.textContent=(d.status==='failed'?'⚠ failed':'✅ done')+' · '+agent;
+    st.textContent=(d.status==='failed'?'⚠ failed (refunding)':'✅ done · paid $'+price.toFixed(2))+' · '+agent;
     res.textContent=d.result||d.error||JSON.stringify(d).slice(0,400);
-    var tools=(d.steps||[]).flatMap(function(s){return (s.tools_used||s.tool? [s.tool||(s.tools_used||[]).join(',')] : []);}).filter(Boolean);
-    if(tools.length) tl.textContent='🔧 '+tools.join(', ');
-  }catch(e){ st.textContent='⚠ '+e.message; }
+    var tools=(d.steps||[]).flatMap(function(s){return (s.tool? [s.tool] : (s.tools_used||[]));}).filter(Boolean);
+    if(tools.length) tl.textContent='🔧 tools: '+[...new Set(tools)].join(', ');
+    // refund on failure
+    if(d.status==='failed'){ try{ await fetch('/api/x402/ledger/credit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:X402_ACCT,amount:price,ref:'refund '+agent})}); await x402LoadBalance(); await x402LoadLedger(); }catch(_){} }
+  }catch(e){ st.textContent='⚠ '+e.message+' (refunding)'; try{ await fetch('/api/x402/ledger/credit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:X402_ACCT,amount:price,ref:'refund '+agent})}); await x402LoadBalance(); }catch(_){} }
   try{ window.setAgentActivity && window.setAgentActivity(agent,'idle'); }catch(e){}
   go.disabled=false;
 };
