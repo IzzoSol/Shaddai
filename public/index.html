@@ -38029,6 +38029,33 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px;border-color:rgba(255,215,0,0.4);color:#ffd700" onclick="showPaymentStructureModal()">📋 Setup Guide</button>
       </div>
     </div>
+    <!-- ── ACCOUNT BALANCE & ADD CREDITS (the top-up hub — real Stripe checkout) ── -->
+    <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin:14px 0 18px">
+      <div style="border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:16px;text-align:center;background:rgba(0,229,160,.04)">
+        <div style="font-size:9px;color:var(--text-muted);letter-spacing:.08em">YOUR BALANCE</div>
+        <div id="billingBalance" style="font-size:34px;font-weight:800;color:var(--accent);font-family:'Share Tech Mono',monospace;line-height:1.2">$0.00</div>
+        <div style="font-size:8px;color:var(--text-muted)">prepaid credits · USD</div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px">💳 Add Credits</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:12px" id="billingPayNote">Pay by card (Stripe). Credits fund agent hires, image/video/voice, and premium models across the dashboard.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn btn-ghost" onclick="billingTopUp(10)" style="font-size:12px">+ $10</button>
+          <button class="btn btn-ghost" onclick="billingTopUp(25)" style="font-size:12px">+ $25</button>
+          <button class="btn btn-ghost" onclick="billingTopUp(50)" style="font-size:12px">+ $50</button>
+          <button class="btn btn-ghost" onclick="billingTopUp(100)" style="font-size:12px">+ $100</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:10px;color:var(--text-muted)">Custom $</span>
+          <input id="billingCustomAmt" type="number" min="1" step="1" placeholder="amount" class="input" style="max-width:120px;font-size:11px">
+          <button class="btn btn-accent" onclick="billingTopUp(parseFloat((document.getElementById('billingCustomAmt')||{}).value||0))" style="font-size:11px">⚡ Add Credits</button>
+        </div>
+        <div id="billingTopupStatus" style="font-size:9px;color:var(--text-muted);margin-top:8px;min-height:12px"></div>
+        <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin:10px 0 4px">▸ RECENT</div>
+        <div id="billingLedger" style="font-size:9px;color:var(--text-muted);max-height:96px;overflow-y:auto;line-height:1.7">No transactions yet.</div>
+      </div>
+    </div>
+
     <!-- Brain Upgrade Economy — Hero Section -->
     <div style="padding:14px 0 16px;margin-bottom:2px">
       <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">🧠 Upgrade Your Agents' Intelligence</div>
@@ -42976,8 +43003,27 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
     document.querySelectorAll('.settings-plan-card').forEach(el=>{ const t=el.getAttribute('data-tier'); el.style.opacity = t===tier?'1':'0.55'; el.style.transform = t===tier?'scale(1.04)':'scale(1)'; });
   }
 
+  // Billing top-up hub — load balance + ledger, and pay-by-card via the real Stripe checkout.
+  async function billingLoadBalance(){
+    try{ var d=await (await fetch('/api/x402/ledger/balance/commerce-ui')).json(); var b=document.getElementById('billingBalance'); if(b)b.textContent='$'+(Number(d.balance)||0).toFixed(2); }catch(e){}
+    try{ var h=(await (await fetch('/api/x402/ledger/history/commerce-ui?limit=10')).json()).history||[]; var el=document.getElementById('billingLedger'); if(el) el.innerHTML=h.length?h.map(function(e){var pos=e.type==='credit';return '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05);padding:2px 0"><span>'+(pos?'＋':'－')+' '+String(e.ref||e.type).replace(/[<>]/g,'').slice(0,24)+'</span><span style="color:'+(pos?'#00e5a0':'#ff7b7b')+'">$'+Number(e.amount).toFixed(2)+'</span></div>';}).join(''):'No transactions yet.'; }catch(e){}
+  }
+  window.billingTopUp=async function(amt){
+    amt=Number(amt); var st=document.getElementById('billingTopupStatus');
+    if(!amt||amt<1){ if(st)st.textContent='Enter an amount of $1 or more.'; return; }
+    if(st)st.textContent='Opening secure Stripe checkout for $'+amt.toFixed(2)+'…';
+    try{
+      var cfg=await (await fetch('/api/stripe/config')).json();
+      if(!cfg.enabled){ if(st)st.textContent='Card payments not enabled yet — add a Stripe key in APIs → Connect Your APIs.'; return; }
+      var r=await fetch('/api/stripe/create-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:'commerce-ui',amountUsd:amt})});
+      var d=await r.json();
+      if(d.url){ if(st)st.textContent='Redirecting to Stripe…'; window.location.href=d.url; }
+      else { if(st)st.textContent=d.error||'Could not start checkout.'; }
+    }catch(e){ if(st)st.textContent='⚠ '+e.message; }
+  };
   function renderBillingView() {
     if (!S.billing) S.billing = { subscription: { tier: 'free' }, credits: { balance: 200 }, usage: {}, invoices: [], payouts: [] };
+    try{ billingLoadBalance(); }catch(e){}
     // Sync live data in background without blocking render
     fetch(PROXY+'/api/billing/status', { signal: AbortSignal.timeout(4000) })
       .then(r => r.ok ? r.json() : null).then(d => { if (d) { if (d.tier) S.billing.subscription.tier = d.tier; if (d.credits != null) S.billing.credits.balance = d.credits; save(); renderBillingView(); } }).catch(()=>{});
