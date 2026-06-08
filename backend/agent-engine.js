@@ -2905,7 +2905,7 @@ ${toolBlock}`
     const key = String(agentName).toUpperCase();
     if (!(key in callLLM._soul)) {
       const sp = path.join(__dirname, 'data', 'agents', key + '.md');
-      callLLM._soul[key] = fs.existsSync(sp) ? fs.readFileSync(sp, 'utf8').slice(0, 900) : '';
+      callLLM._soul[key] = fs.existsSync(sp) ? fs.readFileSync(sp, 'utf8').slice(0, 1800) : '';
     }
     if (callLLM._soul[key]) system.content += '\n\n[YOUR IDENTITY]\n' + callLLM._soul[key];
   } catch (_) {}
