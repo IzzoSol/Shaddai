@@ -7535,8 +7535,26 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
       </div>
       <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Live, free, keyless sources (Google News · CryptoCompare · CoinDesk · CoinTelegraph). Sentiment runs locally — no tokens used.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <input id="newsTopic" class="input" placeholder="Filter by topic — e.g. bitcoin, AI, solana…" style="flex:1;min-width:160px;font-size:10px;padding:6px 9px" onkeydown="if(event.key==='Enter')renderNews()">
+        <button class="btn btn-ghost" style="font-size:9px" onclick="renderNews()">🔎 Go</button>
+        <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <button id="newsViewSwivel" onclick="newsSetView('swivel')" style="font-size:11px;padding:5px 10px;background:var(--accent,#22d3ee);color:#04212b;border:none;cursor:pointer" title="Swivel cards">🎠</button>
+          <button id="newsViewList" onclick="newsSetView('list')" style="font-size:11px;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer" title="List">☰</button>
+        </div>
+      </div>
       <div id="newsSentiment" style="display:none;font-size:11px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:10px"></div>
-      <div id="newsList" style="display:flex;flex-direction:column;gap:8px"><div style="color:var(--text-muted);font-size:11px">Loading headlines…</div></div>
+      <!-- Swivel stage (cover-flow) -->
+      <div id="newsSwivelWrap" style="position:relative;height:300px;display:flex;align-items:center;justify-content:center;perspective:1400px;margin-bottom:6px">
+        <button onclick="newsSwivel(-1)" style="position:absolute;left:6px;z-index:5;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);color:#22d3ee;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px">◀</button>
+        <div id="newsSwivelStage" style="width:100%;max-width:560px;height:280px;position:relative;transform-style:preserve-3d"></div>
+        <button onclick="newsSwivel(1)" style="position:absolute;right:6px;z-index:5;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);color:#22d3ee;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px">▶</button>
+      </div>
+      <div id="newsSwivelMeta" style="text-align:center;font-size:9px;color:var(--text-muted);margin-bottom:8px"></div>
+      <!-- List view -->
+      <div id="newsList" style="display:none;flex-direction:column;gap:8px"></div>
+      <!-- Action output (summary/analysis appears here) -->
+      <div id="newsActionOut" style="display:none;margin-top:10px;border:1px solid rgba(34,211,238,.3);border-radius:8px;padding:12px;background:rgba(34,211,238,.05)"></div>
     </div>
   </div>
 
@@ -48545,60 +48563,125 @@ try{
   };
 })();
 
-// 📰 News tab — live free headlines + local (token-free) sentiment.
-window.renderNews=async function(){
-  const list=document.getElementById('newsList'); if(!list) return;
-  const esc=s=>String(s==null?'':s).replace(/[<>]/g,'');
-  list.innerHTML='<div style="color:var(--text-muted);font-size:11px">Loading headlines…</div>';
-  try{
-    const r=await fetch('/api/news?limit=20'); const d=await r.json();
-    const items=d.news||d.items||d.articles||(Array.isArray(d)?d:[]);
-    if(!items.length){ list.innerHTML='<div style="color:var(--text-muted);font-size:11px">No headlines right now — try Refresh.</div>'; return; }
-    window._newsItems = items;
-    list.innerHTML=items.map((n,i)=>`<div style="padding:9px 11px;border:1px solid var(--border);border-radius:6px">
-      <a href="${esc(n.url||'#')}" target="_blank" rel="noopener" style="text-decoration:none;font-size:12px;color:var(--text,#e8ecf2);line-height:1.35;display:block">${esc(n.title||'(untitled)')}</a>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px">
-        <span style="font-size:9px;color:var(--text-muted)">${esc(n.source||'')}${n.publishedAt?' · '+esc(new Date(n.publishedAt).toLocaleDateString()):''}</span>
-        <span style="display:flex;gap:5px">
-          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'post')">✨ AI Post</button>
-          <button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="newsAI(${i},'summary')">📝 Summary</button>
-        </span>
-      </div>
-      <div id="newsAIout_${i}" style="display:none;margin-top:6px;font-size:10px;line-height:1.55;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:5px;padding:8px"></div>
-    </div>`).join('');
-  }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:11px">⚠ '+esc(e.message)+'</div>'; }
+// 📰 News tab — swivel/list of live headlines, each with Read · Analyze · Summarize(len) · Post.
+window._newsItems=[]; window._newsIdx=0; window._newsView='swivel';
+function _newsEsc(s){return String(s==null?'':s).replace(/[<>]/g,'');}
+window.newsSetView=function(v){
+  window._newsView=v;
+  var sw=document.getElementById('newsSwivelWrap'), wm=document.getElementById('newsSwivelMeta'), li=document.getElementById('newsList');
+  var bS=document.getElementById('newsViewSwivel'), bL=document.getElementById('newsViewList');
+  var on='background:var(--accent,#22d3ee);color:#04212b', off='background:transparent;color:var(--text-muted)';
+  if(v==='list'){ if(sw)sw.style.display='none'; if(wm)wm.style.display='none'; if(li)li.style.display='flex'; if(bS)bS.style.cssText='font-size:11px;padding:5px 10px;border:none;cursor:pointer;'+off; if(bL)bL.style.cssText='font-size:11px;padding:5px 10px;border:none;cursor:pointer;'+on; renderNewsList(); }
+  else { if(sw)sw.style.display='flex'; if(wm)wm.style.display='block'; if(li)li.style.display='none'; if(bS)bS.style.cssText='font-size:11px;padding:5px 10px;border:none;cursor:pointer;'+on; if(bL)bL.style.cssText='font-size:11px;padding:5px 10px;border:none;cursor:pointer;'+off; renderNewsSwivel(); }
 };
+function newsActionsHTML(i){
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:8px">'+
+    '<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="newsRead('+i+')">📖 Read</button>'+
+    '<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="newsAct('+i+',\'analyze\')">🔬 Analyze</button>'+
+    '<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="newsSummarizeMenu('+i+')">📝 Summarize</button>'+
+    '<button class="btn btn-accent" style="font-size:9px;padding:4px 9px" onclick="newsAct('+i+',\'post\')">🐦 Post</button>'+
+  '</div>';
+}
+function renderNewsSwivel(){
+  var stage=document.getElementById('newsSwivelStage'), meta=document.getElementById('newsSwivelMeta');
+  var items=window._newsItems||[]; if(!stage) return;
+  if(!items.length){ stage.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:11px;padding-top:120px">No headlines — try Refresh.</div>'; return; }
+  var idx=window._newsIdx;
+  stage.innerHTML=items.map(function(n,i){
+    var off=i-idx; var abs=Math.abs(off);
+    if(abs>2) return '';
+    var tx=off*180, rot=off*-22, sc=1-abs*0.16, op=1-abs*0.32, z=10-abs;
+    var active=off===0;
+    return '<div onclick="window._newsIdx='+i+';renderNewsSwivel()" style="position:absolute;top:0;left:50%;width:300px;height:260px;margin-left:-150px;cursor:pointer;'+
+      'transform:translateX('+tx+'px) rotateY('+rot+'deg) scale('+sc+');opacity:'+op+';z-index:'+z+';transition:.35s;'+
+      'background:linear-gradient(160deg,rgba(34,211,238,.08),rgba(10,14,20,.96));border:1px solid '+(active?'rgba(34,211,238,.6)':'var(--border)')+';border-radius:12px;padding:16px;box-shadow:'+(active?'0 8px 36px rgba(34,211,238,.18)':'none')+';overflow:hidden">'+
+      '<div style="font-size:8px;letter-spacing:.1em;color:#22d3ee;text-transform:uppercase">'+_newsEsc(n.source||'news')+'</div>'+
+      '<div style="font-size:13px;font-weight:700;color:var(--text,#e8ecf2);line-height:1.4;margin:8px 0;max-height:120px;overflow:hidden">'+_newsEsc(n.title||'(untitled)')+'</div>'+
+      '<div style="font-size:8px;color:var(--text-muted)">'+(n.publishedAt?_newsEsc(new Date(n.publishedAt).toLocaleDateString()):'')+'</div>'+
+      (active?newsActionsHTML(i):'')+'</div>';
+  }).join('');
+  if(meta) meta.textContent=(idx+1)+' / '+items.length+' · click a card or ◀ ▶ to swivel';
+}
+window.newsSwivel=function(dir){ var n=(window._newsItems||[]).length; if(!n)return; window._newsIdx=(window._newsIdx+dir+n)%n; renderNewsSwivel(); };
+function renderNewsList(){
+  var list=document.getElementById('newsList'); var items=window._newsItems||[]; if(!list)return;
+  list.innerHTML=items.map(function(n,i){return '<div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px">'+
+    '<div style="font-size:8px;letter-spacing:.08em;color:#22d3ee;text-transform:uppercase">'+_newsEsc(n.source||'news')+(n.publishedAt?' · '+_newsEsc(new Date(n.publishedAt).toLocaleDateString()):'')+'</div>'+
+    '<div style="font-size:12px;color:var(--text,#e8ecf2);line-height:1.4;margin:4px 0">'+_newsEsc(n.title||'(untitled)')+'</div>'+
+    newsActionsHTML(i)+'</div>';}).join('');
+}
+window.renderNews=async function(){
+  var topic=((document.getElementById('newsTopic')||{}).value||'').trim();
+  var stage=document.getElementById('newsSwivelStage'); if(stage) stage.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:11px;padding-top:120px">Loading headlines…</div>';
+  try{
+    var url='/api/news?limit=20'+(topic?('&topic='+encodeURIComponent(topic)+'&q='+encodeURIComponent(topic)):'');
+    var d=await (await fetch(url)).json();
+    var items=d.news||d.items||d.articles||(Array.isArray(d)?d:[]);
+    window._newsItems=items; window._newsIdx=0;
+    newsSetView(window._newsView||'swivel');
+  }catch(e){ if(stage) stage.innerHTML='<div style="color:#ef4444;font-size:11px;text-align:center;padding-top:120px">⚠ '+_newsEsc(e.message)+'</div>'; }
+};
+window.newsRead=function(i){ var n=(window._newsItems||[])[i]; if(n&&n.url) window.open(n.url,'_blank'); };
 window.analyzeNews=async function(){
-  const box=document.getElementById('newsSentiment'); if(!box) return;
+  var box=document.getElementById('newsSentiment'); if(!box) return;
   box.style.display='block'; box.innerHTML='Analyzing sentiment locally (0 tokens)…';
   try{
-    const r=await fetch('/api/news/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit:20})});
-    const d=await r.json();
-    const col=d.overallSentiment==='bullish'?'#22c55e':d.overallSentiment==='bearish'?'#ef4444':'#eab308';
+    var d=await (await fetch('/api/news/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit:20})})).json();
+    var col=d.overallSentiment==='bullish'?'#22c55e':d.overallSentiment==='bearish'?'#ef4444':'#eab308';
     box.style.borderColor=col;
-    box.innerHTML=`<b style="color:${col};text-transform:uppercase">${(d.overallSentiment||'neutral')}</b> · score ${(d.score!=null?d.score:0)} · 🟢 ${d.bullishCount||0} bullish / 🔴 ${d.bearishCount||0} bearish / ⚪ ${d.neutralCount||0} neutral<br><span style="color:var(--text-muted);font-size:10px">${String(d.summary||'').replace(/[<>]/g,'')}</span>`;
-  }catch(e){ box.innerHTML='<span style="color:#ef4444">⚠ '+String(e.message).replace(/[<>]/g,'')+'</span>'; }
+    box.innerHTML='<b style="color:'+col+';text-transform:uppercase">'+(d.overallSentiment||'neutral')+'</b> · score '+(d.score!=null?d.score:0)+' · 🟢 '+(d.bullishCount||0)+' / 🔴 '+(d.bearishCount||0)+' / ⚪ '+(d.neutralCount||0)+'<br><span style="color:var(--text-muted);font-size:10px">'+_newsEsc(d.summary||'')+'</span>';
+  }catch(e){ box.innerHTML='<span style="color:#ef4444">⚠ '+_newsEsc(e.message)+'</span>'; }
 };
-// 📰→✍️ Click a headline → QUILL writes a post or summary (real /api/llm/chat) → save to Notes.
-window.newsAI=async function(i, mode){
-  var items=window._newsItems||[]; var n=items[i]; if(!n) return;
-  var out=document.getElementById('newsAIout_'+i); if(!out) return;
-  out.style.display='block'; out.textContent='⟳ '+(mode==='post'?'QUILL is writing a post…':'Summarizing…');
-  var headline=String(n.title||'');
-  var prompt = mode==='post'
-    ? 'Write a short, engaging social media post (2-3 sentences + 2 relevant hashtags) about this headline. Output ONLY the post, no preamble:\n"'+headline+'"'
-    : 'Summarize what this headline means in 3 short bullet points for a general reader. Output ONLY the bullets, no preamble:\n"'+headline+'"';
+// Summarize with a LENGTH choice (short / medium / lengthy)
+window.newsSummarizeMenu=function(i){
+  var out=document.getElementById('newsActionOut'); if(!out) return;
+  var n=(window._newsItems||[])[i]||{};
+  out.style.display='block';
+  out.innerHTML='<div style="font-size:11px;font-weight:700;color:#22d3ee;margin-bottom:6px">📝 Summarize: '+_newsEsc((n.title||'').slice(0,70))+'</div>'+
+    '<div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Choose a length:</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+    '<button class="btn btn-ghost" style="font-size:10px" onclick="newsAct('+i+',\'sum_short\')">Short</button>'+
+    '<button class="btn btn-ghost" style="font-size:10px" onclick="newsAct('+i+',\'sum_med\')">Medium</button>'+
+    '<button class="btn btn-ghost" style="font-size:10px" onclick="newsAct('+i+',\'sum_long\')">Lengthy</button>'+
+    '</div>';
+};
+// Run an AI action on a headline (analyze / post / summary-length) → QUILL/ORACLE → then post/copy/save.
+window.newsAct=async function(i, mode){
+  var n=(window._newsItems||[])[i]; if(!n) return;
+  var out=document.getElementById('newsActionOut'); if(!out) return;
+  var headline=String(n.title||''); var src=String(n.source||'');
+  var agent='QUILL', label='Working…', prompt='';
+  if(mode==='analyze'){ agent='ORACLE'; label='ORACLE analyzing…'; prompt='Analyze this headline: what it means, why it matters, and the likely impact. 4-5 sentences. No preamble:\n"'+headline+'" ('+src+')'; }
+  else if(mode==='post'){ agent='QUILL'; label='QUILL writing a post…'; prompt='Write an engaging social post (2-3 sentences + 2 hashtags) about this headline. Output ONLY the post:\n"'+headline+'"'; }
+  else if(mode==='sum_short'){ label='Summarizing (short)…'; prompt='Summarize this headline in ONE punchy sentence. Output only it:\n"'+headline+'"'; }
+  else if(mode==='sum_med'){ label='Summarizing (medium)…'; prompt='Summarize what this headline means in 3 concise bullet points. Output only the bullets:\n"'+headline+'"'; }
+  else if(mode==='sum_long'){ label='Summarizing (lengthy)…'; prompt='Write a thorough ~150-word explainer of this headline for a general reader — context, what happened, why it matters. No preamble:\n"'+headline+'"'; }
+  out.style.display='block';
+  out.innerHTML='<div style="font-size:10px;color:var(--text-muted)">⟳ '+label+'</div>';
   try{
-    var r=await fetch('/api/llm/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:prompt,agent:'QUILL'})});
-    var d=await r.json(); var text=String(d.response||d.error||'(no response)');
-    var safe=text.replace(/[<>]/g,'');
-    var titleSafe=(((mode==='post')?'Post: ':'Summary: ')+headline).replace(/[<>'"]/g,'').slice(0,60);
-    out.innerHTML='<div style="white-space:pre-wrap">'+safe+'</div>'+
-      '<div style="display:flex;gap:6px;margin-top:6px">'+
-      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.parentElement.previousElementSibling.textContent);notify&&notify(\'Copied\')">Copy</button>'+
-      '<button class="btn btn-ghost" style="font-size:8px;padding:2px 7px" onclick="saveNote(\''+titleSafe+'\',this.parentElement.previousElementSibling.textContent)">📒 Save to Notes</button>'+
-      '</div>';
-  }catch(e){ out.textContent='⚠ '+e.message; }
+    var d=await (await fetch('/api/llm/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:prompt,agent:agent})})).json();
+    var text=String(d.response||d.error||'(no response)');
+    window._newsActText=text;
+    var titleSafe=(headline).replace(/[<>'"]/g,'').slice(0,55);
+    out.innerHTML='<div style="font-size:10px;font-weight:700;color:#22d3ee;margin-bottom:6px">'+(mode==='analyze'?'🔬 Analysis':mode==='post'?'🐦 Draft Post':'📝 Summary')+' · '+_newsEsc(titleSafe)+'</div>'+
+      '<div id="newsActBody" style="white-space:pre-wrap;font-size:11px;line-height:1.6;color:var(--text,#e8ecf2)">'+_newsEsc(text)+'</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+
+        '<button class="btn btn-ghost" style="font-size:9px" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById(\'newsActBody\').textContent);notify&&notify(\'Copied\')">📋 Copy</button>'+
+        '<button class="btn btn-ghost" style="font-size:9px" onclick="saveNote(\''+titleSafe+'\',document.getElementById(\'newsActBody\').textContent)">📒 Save to Notes</button>'+
+        '<button class="btn btn-accent" style="font-size:9px" onclick="newsPostChannel(\'twitter\')">𝕏 Post to X</button>'+
+        '<button class="btn btn-accent" style="font-size:9px;background:#0088cc;border:none" onclick="newsPostChannel(\'telegram\')">✈️ Telegram</button>'+
+      '</div><div id="newsPostStatus" style="font-size:9px;color:var(--text-muted);margin-top:6px"></div>';
+  }catch(e){ out.innerHTML='<div style="color:#ef4444;font-size:10px">⚠ '+_newsEsc(e.message)+'</div>'; }
+};
+window.newsPostChannel=async function(platform){
+  var body=document.getElementById('newsActBody'); var st=document.getElementById('newsPostStatus');
+  var content=body?body.textContent.trim():''; if(!content){ if(st)st.textContent='Nothing to post.'; return; }
+  if(st)st.textContent='Posting to '+platform+'…';
+  try{
+    var d=await (await fetch('/api/social/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:platform,content:content})})).json();
+    if(d.status==='sent'||d.ok){ if(st)st.innerHTML='<span style="color:#00e5a0">✅ posted to '+platform+'</span>'; }
+    else { if(st)st.innerHTML='<span style="color:#ffb020">'+_newsEsc(d.message||('Add '+platform+' keys in the Social tab to post live — your text is ready to copy.'))+'</span>'; }
+  }catch(e){ if(st)st.textContent='⚠ '+e.message; }
 };
 // Notes store (separate from Documents) — used by News + Social.
 window.saveNote=function(title, content){
