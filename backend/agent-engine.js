@@ -3434,6 +3434,9 @@ try { Object.assign(TOOLS, require('./tools-social')); } catch (e) { console.war
 try { Object.assign(TOOLS, require('./tools-news').TOOLS_NEWS); } catch (e) { console.warn('[tools-news] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-defi').TOOLS_DEFI); } catch (e) { console.warn('[tools-defi] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./lib/nft-mint')); } catch (e) { console.warn('[nft-mint] not loaded:', e.message); }
+try { Object.assign(TOOLS, require('./tools-ta')); } catch (e) { console.warn('[tools-ta] not loaded:', e.message); }
+// Grant the TA indicator tools to the market agents.
+try { const _ta = Object.keys(require('./tools-ta')); ['ZEROX','ORACLE'].forEach(function(a){ if (AGENTS[a] && Array.isArray(AGENTS[a].tools)) { _ta.forEach(function(t){ if (!AGENTS[a].tools.includes(t)) AGENTS[a].tools.push(t); }); } }); } catch (e) {}
 // Upgrade legacy stub names → the REAL implementations (dedup; callers of the old
 // names now hit real tools instead of "needs key" stubs). No breakage.
 try {

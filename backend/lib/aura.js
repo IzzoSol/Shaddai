@@ -421,9 +421,42 @@ function stats() {
 }
 
 // ---------------------------------------------------------------------------
+// AURA local capabilities (what COMPUTE can solve without an LLM).
+// Surfaced via GET /tools so the dashboard can list AURA's offline powers.
+// ---------------------------------------------------------------------------
+const CAPABILITIES = [
+  'fetch-cache',     // exact normalized cache hit
+  'fuzzy-cache',     // word-overlap similarity cache hit
+  'math',            // safe arithmetic evaluator
+  'unit-convert',    // length / weight / temperature
+  'base64',          // encode / decode
+  'word-count',      // count words in text
+  'text-format',     // uppercase / lowercase / reverse
+  'date-time'        // current date / time
+];
+
+// Extract the user message from a flexible chat/task body shape.
+function extractMessage(body) {
+  if (!body || typeof body !== 'object') return '';
+  if (typeof body.message === 'string' && body.message.trim()) return body.message;
+  if (typeof body.task === 'string' && body.task.trim()) return body.task;
+  if (typeof body.prompt === 'string' && body.prompt.trim()) return body.prompt;
+  if (Array.isArray(body.messages) && body.messages.length) {
+    const last = body.messages[body.messages.length - 1];
+    if (last && typeof last.content === 'string') return last.content;
+    if (typeof last === 'string') return last;
+  }
+  return '';
+}
+
+// ---------------------------------------------------------------------------
 // Express router — lazy-require express so this module has ZERO hard deps.
 // GET  /stats  -> stats()
 // POST /route  -> body { prompt } -> route() result
+// GET  /health -> liveness + stats
+// POST /chat   -> body { message | messages } -> route() result (cache/compute or miss)
+// POST /task   -> body { task | message } -> route() result
+// GET  /tools  -> AURA local capability names
 // ---------------------------------------------------------------------------
 function buildRouter() {
   let express;
@@ -437,6 +470,79 @@ function buildRouter() {
   r.post('/route', (req, res) => {
     const prompt = (req.body && req.body.prompt) || '';
     res.json(route(prompt, (req.body && req.body.opts) || {}));
+  });
+
+  // Liveness — lets the dashboard confirm AURA is mounted and alive.
+  r.get('/health', (req, res) => {
+    try {
+      res.json({ ok: true, enabled: true, stats: stats() });
+    } catch (_) {
+      res.json({ ok: true, enabled: true, stats: null });
+    }
+  });
+
+  // Chat — try a no-LLM answer; on miss, tell caller to use the LLM.
+  // AURA NEVER calls an LLM itself; the main app handles that on a miss.
+  r.post('/chat', (req, res) => {
+    try {
+      const message = extractMessage(req.body);
+      const opts = (req.body && req.body.opts) || {};
+      const result = route(message, opts);
+      if (result && result.hit) {
+        res.json({
+          ok: true,
+          source: 'aura-' + result.method,
+          response: result.answer,
+          savedTokensEst: result.savedTokensEst,
+          hit: true
+        });
+      } else {
+        res.json({
+          ok: true,
+          hit: false,
+          source: 'miss',
+          note: 'no cache/compute hit — caller should use the LLM'
+        });
+      }
+    } catch (_) {
+      res.json({ ok: true, hit: false, source: 'miss', note: 'no cache/compute hit — caller should use the LLM' });
+    }
+  });
+
+  // Task — same idea as /chat; treat the task text as the message.
+  r.post('/task', (req, res) => {
+    try {
+      const message = extractMessage(req.body);
+      const opts = (req.body && req.body.opts) || {};
+      const result = route(message, opts);
+      if (result && result.hit) {
+        res.json({
+          ok: true,
+          source: 'aura-' + result.method,
+          response: result.answer,
+          savedTokensEst: result.savedTokensEst,
+          hit: true
+        });
+      } else {
+        res.json({
+          ok: true,
+          hit: false,
+          source: 'miss',
+          note: 'no cache/compute hit — caller should use the LLM'
+        });
+      }
+    } catch (_) {
+      res.json({ ok: true, hit: false, source: 'miss', note: 'no cache/compute hit — caller should use the LLM' });
+    }
+  });
+
+  // Tools — AURA's offline capability list (non-404 so the panel renders).
+  r.get('/tools', (req, res) => {
+    try {
+      res.json({ ok: true, tools: CAPABILITIES.slice() });
+    } catch (_) {
+      res.json({ ok: true, tools: [] });
+    }
   });
 
   return r;
