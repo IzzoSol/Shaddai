@@ -108,6 +108,36 @@ router.post('/create-checkout', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /verify?session_id=… — called on return from Checkout. Stripe confirms
+// the payment was actually 'paid', then we credit the ledger (idempotent —
+// safe even if the webhook also fires). Makes top-ups work WITHOUT a webhook.
+// ---------------------------------------------------------------------------
+router.get('/verify', async (req, res) => {
+  try {
+    const s = getStripe();
+    if (!s) return res.status(503).json({ ok: false, error: 'Stripe not configured', needsKey: true });
+    const sid = req.query.session_id;
+    if (!sid) return res.status(400).json({ ok: false, error: 'session_id required' });
+    const sess = await s.checkout.sessions.retrieve(String(sid));
+    if (!sess || sess.payment_status !== 'paid') {
+      return res.json({ ok: false, status: (sess && sess.payment_status) || 'unknown' });
+    }
+    const account = (sess.metadata && sess.metadata.account) || 'commerce-ui';
+    const amount = Number(sess.metadata && sess.metadata.amountUsd) || (sess.amount_total ? sess.amount_total / 100 : 0);
+    const ledger = require('./lib/x402-ledger');
+    const ref = 'stripe ' + sess.id;
+    const hist = (ledger.history && ledger.history(account, 300)) || [];
+    if (hist.some(e => e.ref === ref)) {
+      return res.json({ ok: true, already: true, balance: ledger.getBalance(account) });
+    }
+    ledger.credit(account, amount, ref);
+    return res.json({ ok: true, credited: amount, balance: ledger.getBalance(account) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: (e && e.message) || String(e) });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /webhook — Stripe sends raw body; verify signature when a webhook
 // secret is set. On checkout.session.completed, credit the x402 ledger.
 // express.raw is applied to THIS route only so signature verification works.

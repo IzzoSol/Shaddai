@@ -43036,6 +43036,20 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
       else { if(st)st.textContent=d.error||'Could not start checkout.'; }
     }catch(e){ if(st)st.textContent='⚠ '+e.message; }
   };
+  // On return from Stripe Checkout (?stripe=success&session_id=…), verify + credit the balance.
+  (function shdStripeReturn(){
+    try{
+      var p=new URLSearchParams(location.search);
+      if(p.get('stripe')==='success' && p.get('session_id')){
+        fetch('/api/stripe/verify?session_id='+encodeURIComponent(p.get('session_id'))).then(function(r){return r.json();}).then(function(d){
+          if(d.ok){ if(typeof notify==='function') notify(d.already?'Payment already credited · balance $'+(Number(d.balance)||0).toFixed(2):'✅ Payment received — +$'+(Number(d.credited)||0).toFixed(2)+' credited'); }
+          else if(typeof notify==='function'){ notify('Payment status: '+(d.status||d.error||'pending')); }
+          try{ if(typeof billingLoadBalance==='function') billingLoadBalance(); }catch(e){}
+          try{ history.replaceState({}, '', location.pathname); }catch(e){}
+        }).catch(function(){});
+      } else if(p.get('stripe')==='cancel'){ if(typeof notify==='function') notify('Checkout canceled'); try{ history.replaceState({}, '', location.pathname); }catch(e){} }
+    }catch(e){}
+  })();
   function renderBillingView() {
     if (!S.billing) S.billing = { subscription: { tier: 'free' }, credits: { balance: 200 }, usage: {}, invoices: [], payouts: [] };
     try{ billingLoadBalance(); }catch(e){}
