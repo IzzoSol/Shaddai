@@ -6208,8 +6208,9 @@ router.post('/agent/run', async (req, res) => {
   const task = agentEngine.createTask(goal, agent, options || {});
   res.json({ success: true, taskId: task.id, agentName: task.agentName, status: 'pending' });
 
-  // Run in background
-  agentEngine.runAgentLoop(task.id).catch(e =>
+  // Run in background — bind THIS user so the agent's tools use the user's BYOK keys.
+  const _uid = req.userId;
+  require('./lib/keys').runWithUser(_uid, () => agentEngine.runAgentLoop(task.id)).catch(e =>
     console.error('[ROUTE /agent/run] task failed:', e.message)
   );
 });
@@ -6461,7 +6462,8 @@ router.post('/agent/skill/:agentName/:skillId', async (req, res) => {
   const goal = `Execute skill "${skillDesc}" for agent ${agentName}.${input ? '\n\nUser input: ' + input : ''}${context ? '\n\nContext: ' + context : ''}`;
   const task = agentEngine.createTask(goal, agentName);
   res.json({ success: true, taskId: task.id, agentName, skillId, goal });
-  agentEngine.runAgentLoop(task.id).catch(e => console.error('[skill route]', e.message));
+  const _uid = req.userId;
+  require('./lib/keys').runWithUser(_uid, () => agentEngine.runAgentLoop(task.id)).catch(e => console.error('[skill route]', e.message));
 });
 
 // GET /api/agent/inbox — Get inbox messages saved by agents
