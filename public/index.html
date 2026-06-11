@@ -38071,6 +38071,13 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       </div>
     </div>
 
+    <!-- ── SUBSCRIBE TO A PLAN (recurring, via Stripe) ── -->
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px">📅 Subscribe to a Plan</div>
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:12px">Monthly subscription — each renewal grants that plan's value as usage credits (pay $19 → $19 of agent credits). Card billing via Stripe.</div>
+      <div id="billingPlans" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">Loading plans…</div>
+    </div>
+
     <!-- Brain Upgrade Economy — Hero Section -->
     <div style="padding:14px 0 16px;margin-bottom:2px">
       <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">🧠 Upgrade Your Agents' Intelligence</div>
@@ -43023,6 +43030,29 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
     try{ var d=await (await fetch('/api/x402/ledger/balance/commerce-ui')).json(); var b=document.getElementById('billingBalance'); if(b)b.textContent='$'+(Number(d.balance)||0).toFixed(2); }catch(e){}
     try{ var h=(await (await fetch('/api/x402/ledger/history/commerce-ui?limit=10')).json()).history||[]; var el=document.getElementById('billingLedger'); if(el) el.innerHTML=h.length?h.map(function(e){var pos=e.type==='credit';return '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05);padding:2px 0"><span>'+(pos?'＋':'－')+' '+String(e.ref||e.type).replace(/[<>]/g,'').slice(0,24)+'</span><span style="color:'+(pos?'#00e5a0':'#ff7b7b')+'">$'+Number(e.amount).toFixed(2)+'</span></div>';}).join(''):'No transactions yet.'; }catch(e){}
   }
+  // Load subscription plans from Stripe → render Subscribe buttons.
+  window.billingLoadPlans=async function(){
+    var box=document.getElementById('billingPlans'); if(!box) return;
+    try{
+      var d=await (await fetch('/api/stripe/plans')).json();
+      if(!d.enabled){ box.innerHTML='<div style="font-size:9px;color:var(--text-muted)">Add a Stripe key (APIs → Connect Your APIs) to enable subscriptions.</div>'; return; }
+      var plans=d.plans||[];
+      if(!plans.length){ box.innerHTML='<div style="font-size:9px;color:var(--text-muted)">No plans found in Stripe yet.</div>'; return; }
+      box.innerHTML=plans.map(function(p){return '<div style="border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text)">'+String(p.name).replace(/[<>]/g,'')+'</div>'+
+        '<div style="font-size:18px;font-weight:800;color:var(--accent);font-family:\'Share Tech Mono\',monospace">$'+p.amount.toFixed(2)+'</div>'+
+        '<div style="font-size:8px;color:var(--text-muted);margin-bottom:8px">/ '+p.interval+'</div>'+
+        '<button class="btn btn-accent" style="font-size:10px;width:100%" onclick="billingSubscribe(\''+p.priceId+'\')">Subscribe</button></div>';}).join('');
+    }catch(e){ box.innerHTML='<div style="color:#ef4444;font-size:9px">⚠ '+String(e.message).replace(/[<>]/g,'')+'</div>'; }
+  };
+  window.billingSubscribe=async function(priceId){
+    try{
+      var r=await fetch('/api/stripe/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account:'commerce-ui',priceId:priceId})});
+      var d=await r.json();
+      if(d.url){ window.open(d.url,'_blank'); if(typeof notify==='function') notify('Subscription checkout opened in a new tab'); }
+      else { if(typeof notify==='function') notify(d.error||'Could not start subscription'); }
+    }catch(e){ if(typeof notify==='function') notify('⚠ '+e.message); }
+  };
   window.billingTopUp=async function(amt){
     amt=Number(amt); var st=document.getElementById('billingTopupStatus');
     if(!amt||amt<1){ if(st)st.textContent='Enter an amount of $1 or more.'; return; }
@@ -43053,6 +43083,7 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
   function renderBillingView() {
     if (!S.billing) S.billing = { subscription: { tier: 'free' }, credits: { balance: 200 }, usage: {}, invoices: [], payouts: [] };
     try{ billingLoadBalance(); }catch(e){}
+    try{ billingLoadPlans(); }catch(e){}
     // Sync live data in background without blocking render
     fetch(PROXY+'/api/billing/status', { signal: AbortSignal.timeout(4000) })
       .then(r => r.ok ? r.json() : null).then(d => { if (d) { if (d.tier) S.billing.subscription.tier = d.tier; if (d.credits != null) S.billing.credits.balance = d.credits; save(); renderBillingView(); } }).catch(()=>{});
@@ -48619,10 +48650,37 @@ window.saveApiKeyPanel=async function(env, clear){
 // ⚡ Commerce — full x402 economy: prepaid balance (ledger) + live pricing + hire (debits balance → runs agent).
 const X402_ACCT='commerce-ui';
 const X402_PRICE={ORACLE:2.5,QUILL:2,ZEROX:3,TURTLE:3.5,NEXUS:4,PIKADON:5,SHADDAI:7};
+// Curated tool options: friendly label + the REAL underlying tool name + the hint appended to force it.
+window._HIRE_TOOLS=[
+  {tool:'fetch_price',label:'💹 fetch_price — live crypto price',hint:' (use the fetch_price tool)'},
+  {tool:'search_web',label:'🔎 search_web — web search',hint:' (use the search_web tool)'},
+  {tool:'get_trending_topics',label:'📈 trending + crypto news',hint:' (use the get_trending_topics and get_crypto_news tools)'},
+  {tool:'defi_yields',label:'🦙 DeFi yields / TVL',hint:' (use the defi_yields and defi_chains_tvl tools)'},
+  {tool:'generate_image',label:'🖼️ generate_image',hint:' (use the generate_image tool)'},
+  {tool:'make_music',label:'🎵 make_music (Suno)',hint:' (use the make_music tool)'},
+  {tool:'wikipedia_search',label:'📚 wikipedia_search',hint:' (use the wikipedia_search tool)'},
+  {tool:'post_to_x',label:'🐦 post_to_x',hint:' (use the post_to_x tool to publish it)'},
+  {tool:'post_to_telegram',label:'✈️ post_to_telegram',hint:' (use the post_to_telegram tool)'},
+  {tool:'check_security',label:'🛡 check_security',hint:' (use the check_security tool)'}
+];
 window.x402SyncPrice=function(){
   var sel=document.getElementById('hireAgent'); var el=document.getElementById('hirePrice');
   if(sel&&el){ var p=X402_PRICE[sel.value]||2.5; el.textContent='$'+p.toFixed(2); }
+  if(sel) x402FilterTools(sel.value); // show only THIS agent's real tools
 };
+// Filter the tool dropdown to only the tools the selected agent actually has (from its manifest).
+async function x402FilterTools(agent){
+  var ts=document.getElementById('hireTool'); if(!ts) return;
+  var keep='<option value="">🛠 Tool: let the agent decide</option>';
+  try{
+    var m=await (await fetch('/api/agents/'+encodeURIComponent(agent)+'/manifest')).json();
+    var have=new Set((m&&m.tools)||[]);
+    var opts=window._HIRE_TOOLS.filter(function(o){ return have.has(o.tool); });
+    ts.innerHTML=keep + (opts.length
+      ? opts.map(function(o){return '<option value="'+o.hint+'">'+o.label+'</option>';}).join('')
+      : '<option value="" disabled>(this agent has no force-able tools — it decides)</option>');
+  }catch(e){ /* leave default */ ts.innerHTML=keep+window._HIRE_TOOLS.map(function(o){return '<option value="'+o.hint+'">'+o.label+'</option>';}).join(''); }
+}
 async function x402LoadBalance(){
   try{ var d=await (await fetch('/api/x402/ledger/balance/'+X402_ACCT)).json(); var b=document.getElementById('x402Balance'); if(b)b.textContent='$'+(Number(d.balance)||0).toFixed(2); return Number(d.balance)||0; }catch(e){ return 0; }
 }

@@ -123,9 +123,13 @@ router.get('/verify', async (req, res) => {
       return res.json({ ok: false, status: (sess && sess.payment_status) || 'unknown' });
     }
     const account = (sess.metadata && sess.metadata.account) || 'commerce-ui';
-    const amount = Number(sess.metadata && sess.metadata.amountUsd) || (sess.amount_total ? sess.amount_total / 100 : 0);
+    const isSub = (sess.metadata && sess.metadata.kind) === 'subscription';
+    // subscription → grant the plan's value as credits; one-off → grant amountUsd
+    const amount = isSub
+      ? (Number(sess.metadata && sess.metadata.monthlyCredits) || (sess.amount_total ? sess.amount_total / 100 : 0))
+      : (Number(sess.metadata && sess.metadata.amountUsd) || (sess.amount_total ? sess.amount_total / 100 : 0));
     const ledger = require('./lib/x402-ledger');
-    const ref = 'stripe ' + sess.id;
+    const ref = (isSub ? 'sub ' + (sess.metadata.tier || 'plan') + ' ' : 'stripe ') + sess.id;
     const hist = (ledger.history && ledger.history(account, 300)) || [];
     if (hist.some(e => e.ref === ref)) {
       return res.json({ ok: true, already: true, balance: ledger.getBalance(account) });
@@ -134,6 +138,58 @@ router.get('/verify', async (req, res) => {
     return res.json({ ok: true, credited: amount, balance: ledger.getBalance(account) });
   } catch (e) {
     res.status(500).json({ ok: false, error: (e && e.message) || String(e) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /plans — list your active recurring prices (the Builder/Pro/Max products).
+// ---------------------------------------------------------------------------
+router.get('/plans', async (req, res) => {
+  try {
+    const s = getStripe();
+    if (!s) return res.json({ ok: false, enabled: false, plans: [] });
+    const prices = await s.prices.list({ active: true, type: 'recurring', expand: ['data.product'], limit: 50 });
+    const plans = (prices.data || [])
+      .filter(p => p.product && p.product.active !== false)
+      .map(p => ({
+        priceId: p.id,
+        name: (p.product && p.product.name) || 'Plan',
+        amount: (p.unit_amount || 0) / 100,
+        interval: (p.recurring && p.recurring.interval) || 'month'
+      }))
+      .sort((a, b) => a.amount - b.amount);
+    res.json({ ok: true, enabled: true, plans });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: (e && e.message) || String(e) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /subscribe — start a recurring subscription Checkout for a priceId.
+// On return, /verify grants that plan's value as ledger credits (pay $19 → $19 usage).
+// ---------------------------------------------------------------------------
+router.post('/subscribe', async (req, res) => {
+  try {
+    const s = getStripe();
+    if (!s) return res.status(503).json({ error: 'Stripe not configured. Set STRIPE_SECRET_KEY.', needsKey: true });
+    const body = req.body || {};
+    const account = body.account || 'commerce-ui';
+    const priceId = body.priceId;
+    if (!priceId) return res.status(400).json({ error: 'priceId required' });
+    const base = baseUrlFrom(req);
+    // fetch the price so we know the $ value to grant as credits
+    let amount = 0, planName = 'Subscription';
+    try { const pr = await s.prices.retrieve(priceId, { expand: ['product'] }); amount = (pr.unit_amount || 0) / 100; planName = (pr.product && pr.product.name) || planName; } catch (_) {}
+    const session = await s.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${base}/?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/?stripe=cancel`,
+      metadata: { account: String(account), tier: planName, monthlyCredits: String(amount), kind: 'subscription' }
+    });
+    res.json({ url: session.url });
+  } catch (e) {
+    res.status(500).json({ error: 'subscribe_failed', detail: (e && e.message) || String(e) });
   }
 });
 
