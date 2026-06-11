@@ -19830,11 +19830,11 @@ async function runWorkflow(name, input) {
   // Otherwise prompt user for input then run
   showModal('Run Workflow: ' + name, `
     <div style="font-size:11px;margin-bottom:8px;color:var(--text-muted)">What topic or input should this workflow use?</div>
-    <textarea id="wfInput" class="input" style="width:100%;height:60px;resize:vertical;font-size:10px" placeholder="Enter topic or context for the workflow..."></textarea>
+    <textarea id="wfInputModal" class="input" style="width:100%;height:60px;resize:vertical;font-size:10px" placeholder="Enter topic or context for the workflow..."></textarea>
   `, [
     { label: 'Cancel', class: 'btn-ghost', action: closeModal },
     { label: '▶ Run', class: 'btn-accent', action: async () => {
-      const val = (document.getElementById('wfInput')||{}).value?.trim();
+      const val = (document.getElementById('wfInputModal')||{}).value?.trim();
       if (!val) { notify('Enter a topic first'); return; }
       closeModal();
       await runWorkflowChain(name, val);
@@ -40619,18 +40619,18 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <div style="font-size:10px">
         <div style="margin-bottom:10px">
           <label style="display:block;margin-bottom:4px;font-weight:700">Bid Amount ($)</label>
-          <input id="bidAmount" class="input" type="number" min="0" step="0.01" placeholder="e.g. 25.00" style="width:100%">
+          <input id="bidAmountModal" class="input" type="number" min="0" step="0.01" placeholder="e.g. 25.00" style="width:100%">
         </div>
         <div style="margin-bottom:10px">
           <label style="display:block;margin-bottom:4px;font-weight:700">Agent (Optional)</label>
-          <input id="bidAgent" class="input" type="text" placeholder="Agent name or ID" style="width:100%;opacity:0.6" disabled>
+          <input id="bidAgentModal" class="input" type="text" placeholder="Agent name or ID" style="width:100%;opacity:0.6" disabled>
         </div>
         <div id="bidStatus" style="color:var(--text-muted);font-size:9px;margin-top:10px"></div>
       </div>
     `, [
       { label: 'Cancel', class: 'btn-ghost', action: closeModal },
       { label: 'Place Bid', class: 'btn-accent', action: async () => {
-        const amount = parseFloat((document.getElementById('bidAmount')||{}).value || 0);
+        const amount = parseFloat((document.getElementById('bidAmountModal')||{}).value || 0);
         if (!amount || amount <= 0) { notify('Enter a valid bid amount'); return; }
         const statusEl = document.getElementById('bidStatus');
         if (statusEl) statusEl.textContent = 'Placing bid...';
@@ -41121,13 +41121,13 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         Hire <strong style="color:var(--accent)">${escH(a.name)}</strong><br>
         <span style="color:var(--text-muted)">Cost: <strong style="color:var(--text-primary)">$${(a.listing&&a.listing.price||0).toFixed(2)}</strong> per call</span><br>
         <textarea id="hirePrompt" class="input" style="width:100%;height:60px;resize:vertical;font-size:9px;margin-top:10px" placeholder="What do you need this agent to do?"></textarea>
-        <div id="hireStatus" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
+        <div id="hireStatusModal" style="margin-top:8px;font-size:9px;color:var(--text-muted)"></div>
       </div>`, [
       { label: 'Cancel', class: 'btn-ghost', action: closeModal },
       { label: 'Hire & Execute', class: 'btn-accent', action: async () => {
         const task = (document.getElementById('hirePrompt')||{}).value||'';
         if (!task) { notify('Please describe the task'); return; }
-        const statusEl = document.getElementById('hireStatus');
+        const statusEl = document.getElementById('hireStatusModal');
         if (statusEl) statusEl.innerHTML = '<span style="color:var(--accent)">Posting job to marketplace...</span>';
 
         // Post job to real backend AND auto-execute with wallet credit
