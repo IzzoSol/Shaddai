@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
-<title>SHADDAI v90 · Sovereign AI Command</title>
+<title>SHADDAI v91 · Sovereign AI Command</title>
 <!-- ── Firebase Auth (optional sign-in; local-first still works without it) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2842,7 +2842,7 @@ body[data-theme="dark"]::before {
   font-size: 18px !important;
 }
 /* ════════════════════════════════════════════════════════
-   SHADDAI v90 — SOVEREIGN BOOT OVERLAY
+   SHADDAI v91 — SOVEREIGN BOOT OVERLAY
    Visible immediately from first body paint. No JS needed
    to show it — JS only populates it + triggers teardown.
    ════════════════════════════════════════════════════════ */
@@ -3256,7 +3256,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v90</span>
+  <span>SHADDAI v91</span>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3319,6 +3319,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('commerce')" style="color:#00e5a0;font-weight:700">⚡ Commerce</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
+  <button class="nav-btn" id="navAuthBtn" onclick="shdAuthClick()" style="color:#00e5a0;font-weight:700">🔑 Sign in</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
 
@@ -3393,7 +3394,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 </div>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v90</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v91</span></div>
   <div class="sb-list">
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
@@ -3415,7 +3416,8 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('wallet');lySetSb(this)"><span class="ic">💰</span>Wallet</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
-    <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);margin-top:auto" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
+    <button class="sbt" id="navAuthBtnSb" onclick="shdAuthClick()" style="color:#00e5a0;margin-top:auto"><span class="ic">🔑</span>Sign in</button>
+    <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3)" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
   </div>
   <div class="sb-foot">OLLAMA → GROQ → GEMINI<br>7 AGENTS ONLINE</div>
 </div>
@@ -3479,7 +3481,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
         </div>
         <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v90 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">v91 · SOVEREIGN AI COMMAND · 7 AGENTS DEPLOYED</div>
         <div class="mission-text">SHADDAI (commander) · ZEROX (wealth) · ORACLE (research) · NEXUS (backend) · TURTLE (design) · QUILL (writing) · PIKADON (security) · 5,361 skills · Workflow Chains · Scheduled Jobs · Webhooks · Agent Sparklines</div>
         <!-- Agent online dots — populated by initSovereignTerminal() -->
         <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
@@ -3896,7 +3898,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div>
           <div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT / TOPIC</div>
-          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v90 launch strategy'">
+          <input id="wfInput" class="input" style="width:100%;font-size:10px;margin:0" placeholder="e.g. 'SHADDAI v91 launch strategy'">
         </div>
       </div>
       <button class="btn btn-accent" style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#00c8ff,#00e5a0);color:#000;border:none;font-weight:700;letter-spacing:0.05em" onclick="runWorkflowFromUI()">▶ RUN WORKFLOW</button>
@@ -4751,7 +4753,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           <!-- System Log -->
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:2px">▸ SYSTEM LOG</div>
           <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:8px;max-height:80px;overflow-y:auto" id="officeSystemLog">
-            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v90 online</div>
+            <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)">[SYS] SHADDAI v91 online</div>
           </div>
         </div>
 
@@ -12099,7 +12101,7 @@ function init() {
   setTimeout(() => { if (typeof _syncCreditsDisplay === 'function') _syncCreditsDisplay(); }, 500); // sync credit displays on load
   setTimeout(checkAllApiStatus, 3000);  // auto-check all services on load
   setTimeout(initEventStream, 1000);    // subscribe to gateway live events
-  log('SHADDAI v90 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
+  log('SHADDAI v91 SOVEREIGN TERMINAL initialized', 'ok', 'SYSTEM');
   setInterval(save, S.settings.autoSave * 1000);
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
@@ -12394,7 +12396,7 @@ function exportOfficeReport() {
 
   lines.push('');
   lines.push(`─────────────────────────────────────────────────────────────`);
-  lines.push(`SHADDAI v90 · cloudzncrownz@gmail.com · ${ts}`);
+  lines.push(`SHADDAI v91 · cloudzncrownz@gmail.com · ${ts}`);
 
   downloadText(lines.join('\n'), `shaddai-report-${Date.now()}.txt`, 'text/plain');
   officeLog('[EXPORT] Full operations report downloaded');
@@ -33037,7 +33039,7 @@ function loadWebhookConfig() {
 function testOutboundWebhook() {
   const url = document.getElementById('webhookUrl')?.value || localStorage.getItem('shaddai_webhook') && JSON.parse(localStorage.getItem('shaddai_webhook')).url;
   if (!url) { notify('⚠ No webhook URL configured'); return; }
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v90', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, source: 'SHADDAI v91', timestamp: Date.now() }), signal: AbortSignal.timeout(10000) })
     .then(r => { if (r.ok) notify('✓ Outbound webhook test successful'); else notify('⚠ Webhook returned ' + r.status); })
     .catch(e => notify('✗ Webhook failed: ' + e.message));
 }
@@ -34062,7 +34064,7 @@ setInterval(() => {
   if (document.getElementById('dispatchWorkloadContainer')) updateDispatchUI();
 }, 3000);
 
-console.log('✅ SHADDAI v90 Enhancements Loaded');
+console.log('✅ SHADDAI v91 Enhancements Loaded');
 console.log('🎛️ Command Center dispatch system active');
 console.log('📍 SHADDAI desk & agent workload tracking ready');
 
@@ -39292,7 +39294,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (!overlay) { overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
     overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden';
 
-    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v90`,`▶ ALL SYSTEMS OK`];
+    const _boardItems=[`▶ ${a.name} ${moodLabel}`,`▶ JOBS: ${txCount}`,`▶ EARNED: $${earnings.toFixed(0)}`,`▶ ${a.trait}: ${a.traitVal}`,`▶ ${a.quirk}`,`▶ SHADDAI v91`,`▶ ALL SYSTEMS OK`];
     const _boardHtml=[..._boardItems,..._boardItems].map(t=>`<div style="padding:3px 4px;color:rgba(${a.glow},0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:5.5px">${t}</div>`).join('');
     overlay.innerHTML = `
       <style>
@@ -48209,18 +48211,20 @@ Provide a comprehensive analysis:
 </script>
 
 <!-- ── nav position picker (top/left/right/bottom) ── -->
-<div id="shdAuthChip" style="position:fixed;bottom:10px;left:10px;z-index:9998;font-size:10px;opacity:.92"></div>
 <script>
+// Sign-in lives INSIDE the nav (top tab + side rail) — no floating element.
 window.shdRenderAuth=function(){
-  var el=document.getElementById('shdAuthChip'); if(!el) return;
   var a=window.SHD_AUTH||{};
-  if(a.user){
-    var nm=(a.user.displayName||a.user.email||'account').split('@')[0];
-    el.innerHTML='<span style="color:#00e5a0">●</span> '+String(nm).replace(/[<>]/g,'').slice(0,18)+' <button onclick="shdSignOut()" style="background:none;border:1px solid var(--border,#333);color:var(--text-muted,#888);border-radius:5px;font-size:9px;padding:2px 7px;cursor:pointer;margin-left:4px">sign out</button>';
-  } else {
-    el.innerHTML='<button onclick="shdSignIn()" style="background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.4);color:#00e5a0;border-radius:5px;font-size:10px;padding:3px 10px;cursor:pointer;font-weight:700">🔑 Sign in</button>';
-  }
+  var signedIn=!!a.user;
+  var nm=signedIn?String(a.user.displayName||a.user.email||'account').split('@')[0].slice(0,14):'';
+  ['navAuthBtn','navAuthBtnSb'].forEach(function(id){
+    var b=document.getElementById(id); if(!b) return;
+    var sb=(id==='navAuthBtnSb');
+    if(signedIn){ b.innerHTML=(sb?'<span class="ic">✓</span>':'✓ ')+nm; b.title='Signed in — click to sign out'; }
+    else { b.innerHTML=(sb?'<span class="ic">🔑</span>Sign in':'🔑 Sign in'); b.title='Sign in with Google'; }
+  });
 };
+window.shdAuthClick=function(){ var a=window.SHD_AUTH||{}; if(a.user){ if(typeof shdSignOut==='function') shdSignOut(); } else { if(typeof shdSignIn==='function') shdSignIn(); } };
 try{ document.addEventListener('DOMContentLoaded', window.shdRenderAuth); setTimeout(window.shdRenderAuth, 1200); }catch(e){}
 </script>
 <div id="navPosPicker" title="Move the navigation"
@@ -48270,7 +48274,7 @@ try{
       ]},
     {ic:'✍️',ti:'Write a post',ds:'Tweet, blog or caption',ag:'QUILL',kind:'agent',
       fields:[
-        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v90'},
+        {k:'topic',label:'What about?',type:'text',ph:'we just shipped SHADDAI v91'},
         {k:'platform',label:'Platform',type:'sel',opts:['X / Twitter','Instagram caption','LinkedIn','TikTok script','Blog intro','Telegram']},
         {k:'tone',label:'Tone',type:'sel',opts:['Punchy','Professional','Casual','Inspirational','Bold/FOMO','Educational']}
       ]},
