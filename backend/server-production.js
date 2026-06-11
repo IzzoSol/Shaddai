@@ -328,6 +328,33 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// ── Per-user identity + key context ──────────────────────────────────────────
+// Identify the caller (Firebase token → uid) and bind it to the async context so
+// keys.get() resolves THIS user's BYOK keys everywhere. Enforces REQUIRE_AUTH on
+// /api/* only; page loads, health, the Stripe webhook, and x402 discovery stay
+// public so users can always load the app to sign in.
+const { verifyFirebaseToken } = require('./auth-guard');
+const _keys = require('./lib/keys');
+const _AUTH_EXEMPT = [
+  '/api/health', '/api/model/health',
+  '/api/stripe/webhook',     // Stripe calls this with no user token
+  '/api/keys/catalog',       // public provider list (booleans only, no secrets)
+];
+app.use((req, res, next) => {
+  const bind = () => _keys.userContext(req, res, next);
+  const isApi = req.path.startsWith('/api/');
+  const exempt = !isApi
+    || req.path.startsWith('/.well-known')
+    || _AUTH_EXEMPT.some(p => req.path === p || req.path.startsWith(p));
+  if (exempt) {
+    // identify best-effort, never block (page loads, health, public APIs)
+    req.userId = req.headers['x-user-id'] || 'local';
+    return bind();
+  }
+  // protected /api/* → verify token (enforces REQUIRE_AUTH when set), then bind
+  return verifyFirebaseToken(req, res, bind);
+});
+
 // Request tracking middleware
 app.use((req, res, next) => {
   const requestId = crypto.randomBytes(8).toString('hex');

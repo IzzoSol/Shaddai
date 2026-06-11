@@ -12,8 +12,18 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { AsyncLocalStorage } = require('async_hooks');
+const userKeys = require('./user-keys');
 
 const FILE = path.join(__dirname, '..', 'data', 'runtime-keys.json');
+
+// Request-scoped current user — set by middleware so keys.get() resolves THAT
+// user's keys without changing the 35 tool call-sites that call keys.get('NAME').
+const als = new AsyncLocalStorage();
+function runWithUser(userId, fn) { return als.run({ userId: userId || null }, fn); }
+function currentUser() { const s = als.getStore(); return s && s.userId; }
+// Express middleware: bind req.userId (set by softAuth) to the async context.
+function userContext(req, _res, next) { als.run({ userId: (req && req.userId) || null }, next); }
 
 let _cache = null;
 function load() {
@@ -30,18 +40,31 @@ function save() {
   } catch (_) { /* best-effort */ }
 }
 
-/** Get a key by env-style name (e.g. 'GROQ_API_KEY'). Runtime store wins, then env. */
-function get(name) {
+/**
+ * Get a key by env-style name (e.g. 'GROQ_API_KEY').
+ * Resolution order:
+ *   1) THIS user's encrypted BYOK key (per-user — the user who made the request)
+ *   2) global runtime store (local-dev / future platform default)
+ *   3) process.env[NAME] (Render/.env fallback)
+ * `userId` is optional — defaults to the current request's user (AsyncLocalStorage).
+ */
+function get(name, userId) {
   if (!name) return '';
-  const store = load();
-  const v = store[name];
+  const uid = userId || currentUser();
+  if (uid && uid !== 'local') {
+    const uk = userKeys.getKey(uid, name);
+    if (uk) return uk;
+  }
+  const v = load()[name];
   if (typeof v === 'string' && v.trim()) return v.trim();
   return process.env[name] || '';
 }
 
-/** Set (or clear, with empty value) a key at runtime. Never logs the value. */
-function set(name, value) {
+/** Set a key. With a userId → that user's encrypted BYOK store; without → global runtime store. */
+function set(name, value, userId) {
   if (!name || typeof name !== 'string') return false;
+  const uid = userId || currentUser();
+  if (uid && uid !== 'local') return userKeys.setKey(uid, name, value);
   const store = load();
   if (value == null || String(value).trim() === '') delete store[name];
   else store[name] = String(value).trim();
@@ -49,10 +72,10 @@ function set(name, value) {
   return true;
 }
 
-/** Booleans only — is each provider key present (runtime OR env)? Never reveals values. */
-function status(names) {
+/** Booleans only — is each provider key present for this user (or env)? Never reveals values. */
+function status(names, userId) {
   const out = {};
-  (names || []).forEach(n => { out[n] = Boolean(get(n)); });
+  (names || []).forEach(n => { out[n] = Boolean(get(n, userId)); });
   return out;
 }
 
@@ -82,24 +105,24 @@ const CATALOG = [
   { id:'helius',      label:'Helius (Solana RPC)',    env:'HELIUS_API_KEY',      category:'Crypto',    free:true,  help:'helius.dev — free tier' },
   { id:'stripe',      label:'Stripe (card payments)', env:'STRIPE_SECRET_KEY',   category:'Payments',  free:false, help:'dashboard.stripe.com/apikeys' }
 ];
-function catalog() {
-  return CATALOG.map(p => ({ ...p, connected: Boolean(get(p.env)) }));
+function catalog(userId) {
+  return CATALOG.map(p => ({ ...p, connected: Boolean(get(p.env, userId)) }));
 }
 
-// ── Express router: /api/keys ──
+// ── Express router: /api/keys (per-user — uses req.userId from auth) ──
 function router() {
   const express = require('express');
   const r = express.Router();
   const json = express.json();
-  r.get('/catalog', (_req, res) => res.json({ ok: true, providers: catalog() }));
-  r.get('/status', (_req, res) => res.json({ ok: true, status: status(CATALOG.map(p => p.env)) }));
+  r.get('/catalog', (req, res) => res.json({ ok: true, providers: catalog(req.userId), user: req.userId || 'local' }));
+  r.get('/status', (req, res) => res.json({ ok: true, status: status(CATALOG.map(p => p.env), req.userId) }));
   r.post('/set', json, (req, res) => {
     const { env, value } = req.body || {};
     if (!env || !CATALOG.find(p => p.env === env)) return res.status(400).json({ ok: false, error: 'unknown provider env' });
-    set(env, value);
-    res.json({ ok: true, env, connected: Boolean(get(env)) });
+    set(env, value, req.userId);                    // saves under THIS user
+    res.json({ ok: true, env, connected: Boolean(get(env, req.userId)) });
   });
   return r;
 }
 
-module.exports = { get, set, status, listRuntime, catalog, CATALOG, router };
+module.exports = { get, set, status, listRuntime, catalog, CATALOG, router, userContext, runWithUser, currentUser };
