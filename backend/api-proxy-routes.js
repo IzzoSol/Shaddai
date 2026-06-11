@@ -2584,7 +2584,7 @@ router.post('/scrape', async (req, res) => {
 // The stub was removed — Express first-match means it permanently shadowed
 // the enhanced analytics handler defined later in this file.
 
-router.post('/admin/backup', (req, res) => {
+router.post('/admin/backup', requireAdmin, (req, res) => {
   res.json({ status: 'ok', message: 'Backup triggered', timestamp: new Date().toISOString() });
 });
 
@@ -4000,7 +4000,7 @@ router.get('/session/:token/jobs', (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // ENHANCED ADMIN ANALYTICS — real data from stored state
 // ─────────────────────────────────────────────────────────────
-router.get('/admin/analytics', (req, res) => {
+router.get('/admin/analytics', requireAdmin, (req, res) => {
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;

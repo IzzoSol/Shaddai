@@ -1456,6 +1456,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('*', (req, res) => {
+  // Unmatched API routes must return a JSON 404 — never the SPA shell.
+  // Otherwise a client typo or renamed endpoint silently "succeeds" with
+  // 200 + 2.8MB of HTML, masking bugs (especially as we scale clients).
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'not_found', path: req.path });
+  }
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
