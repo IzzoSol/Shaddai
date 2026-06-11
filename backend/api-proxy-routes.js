@@ -47,8 +47,23 @@ function loadJSON(filePath, fallback = []) {
 }
 
 function saveJSON(filePath, data) {
-  try { fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {
-    console.error('[STORAGE] Failed to save:', filePath, e.message);
+  // Atomic write: serialize to temp file then rename over the target.
+  // rename() is atomic on the same volume, so readers never see a partial/
+  // corrupt file even if two writes race — the loser simply overwrites a
+  // fully-formed file (no interleaved bytes). Signature unchanged (sync).
+  const tmp = filePath + '.tmp.' + process.pid;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmp, filePath);
+  } catch (e) {
+    // Best-effort cleanup of the temp file, then fall back to a direct write
+    // so behavior is never worse than before.
+    try { fs.unlinkSync(tmp); } catch (_) {}
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e2) {
+      console.error('[STORAGE] Failed to save:', filePath, e2.message);
+    }
   }
 }
 
@@ -881,7 +896,7 @@ function safePath(inputPath) {
   return resolved;
 }
 
-router.post('/read-file', (req, res) => {
+router.post('/read-file', requireAdmin, (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     if (!filePath) return res.status(400).json({ error: 'filePath required', content: '' });
@@ -896,7 +911,7 @@ router.post('/read-file', (req, res) => {
 });
 
 // Write a file (sandboxed to HOME_DIR — for skill editing)
-router.post('/write-file', (req, res) => {
+router.post('/write-file', requireAdmin, (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     const content  = req.body.content;
@@ -2602,6 +2617,8 @@ router.post('/auth/link-wallet', (req, res) => {
 
 // Load from disk on startup
 let _jobs = loadJSON(JOBS_FILE, []);
+// One-time memory guard: cap runaway arrays to the most recent 5000 entries.
+if (Array.isArray(_jobs) && _jobs.length > 10000) _jobs = _jobs.slice(-5000);
 
 function saveJobs() { saveJSON(JOBS_FILE, _jobs); }
 
@@ -2610,7 +2627,14 @@ router.get('/marketplace/jobs', (req, res) => {
   let filtered = _jobs;
   if (status) filtered = filtered.filter(j => j.status === status);
   if (clientId) filtered = filtered.filter(j => j.clientId === clientId);
-  res.json({ jobs: filtered, total: filtered.length });
+  // Pagination: ?offset (default 0) & ?limit (default 50, max 100)
+  let offset = parseInt(req.query.offset, 10);
+  if (!Number.isFinite(offset) || offset < 0) offset = 0;
+  let limit = parseInt(req.query.limit, 10);
+  if (!Number.isFinite(limit) || limit <= 0) limit = 50;
+  if (limit > 100) limit = 100;
+  const paged = filtered.slice(offset, offset + limit);
+  res.json({ jobs: paged, total: filtered.length, offset, limit });
 });
 
 router.post('/marketplace/jobs', (req, res) => {
@@ -3441,6 +3465,8 @@ router.post('/marketplace/skills/buy', (req, res) => {
 // WORKFLOW LIST + RUN + DELETE — persistent storage
 // ─────────────────────────────────────────────────────────────
 let _workflows = loadJSON(WORKFLOWS_FILE, []);
+// One-time memory guard: cap runaway arrays to the most recent 5000 entries.
+if (Array.isArray(_workflows) && _workflows.length > 10000) _workflows = _workflows.slice(-5000);
 
 function saveWorkflows() { saveJSON(WORKFLOWS_FILE, _workflows); }
 

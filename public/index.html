@@ -12,6 +12,32 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 (function(){
+  // ── localStorage quota hardening (scale guard) ──────────────────────────
+  // The browser caps localStorage at ~5MB. Without this, a single setItem that
+  // overflows throws QuotaExceededError and can break the dashboard mid-action.
+  // We wrap setItem ONCE at the prototype level so all ~111 call-sites are safe:
+  // on overflow we evict the largest disposable cache keys and retry once, then
+  // fail silently rather than crashing the UI.
+  try{
+    var _set = Storage.prototype.setItem;
+    // keys we must never evict (auth/session/critical state)
+    var KEEP = /^(shd_auth|shd_session|firebase|stripe|x402|shd_user)/i;
+    Storage.prototype.setItem = function(k, v){
+      try { return _set.call(this, k, v); }
+      catch(e){
+        if (!(e && (e.name==='QuotaExceededError' || e.code===22 || e.code===1014))) throw e;
+        try{
+          // evict largest disposable keys until the write fits (one pass)
+          var ent=[]; for (var i=0;i<this.length;i++){ var kk=this.key(i); if(kk && !KEEP.test(kk)){ ent.push([kk,(this.getItem(kk)||'').length]); } }
+          ent.sort(function(a,b){return b[1]-a[1];});
+          for (var j=0;j<ent.length;j++){ this.removeItem(ent[j][0]); try{ return _set.call(this,k,v); }catch(_){} }
+        }catch(_){}
+        try{ console.warn('[storage] quota full — dropped write for', k); }catch(_){}
+        return; // never throw to callers
+      }
+    };
+  }catch(_){ /* private-mode / non-DOM — ignore */ }
+
   // Public web config (safe to embed — Firebase web keys are not secret).
   var firebaseConfig={apiKey:"AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw",authDomain:"shaddai999.firebaseapp.com",projectId:"shaddai999",storageBucket:"shaddai999.firebasestorage.app",messagingSenderId:"706335788411",appId:"1:706335788411:web:6b64d985f6b0c1bf8441de",measurementId:"G-66EFRNVWQ5"};
   window.SHD_AUTH={ user:null, token:null, ready:false };
