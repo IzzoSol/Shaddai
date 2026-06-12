@@ -3283,6 +3283,18 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 
 <div id="topBar">
   <span>SHADDAI v91</span>
+  <style>
+    #topBar .tb-meter{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font:700 9px/1 'Share Tech Mono',monospace;color:#ffce63;background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(255,176,32,.03));border:1px solid rgba(255,176,32,.28);cursor:pointer;white-space:nowrap;transition:.2s;user-select:none}
+    #topBar .tb-meter:hover{border-color:rgba(255,176,32,.6);box-shadow:0 0 16px rgba(255,176,32,.22)}
+    #topBar .tb-meter .dot{width:5px;height:5px;border-radius:50%;background:#ffce63;box-shadow:0 0 7px #ffce63;animation:tbpulse 1.7s infinite}
+    @keyframes tbpulse{0%,100%{opacity:1}50%{opacity:.3}}
+    #topBar .tb-strip{display:flex;align-items:center;height:30px;background:rgba(10,16,28,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+    #topBar .tb-seg{position:relative;background:transparent;border:none;height:100%;padding:0 11px;display:flex;align-items:center;gap:4px;cursor:pointer;font:700 8.5px/1 'Rajdhani',sans-serif;letter-spacing:.05em;color:#aeb7c4;text-decoration:none;transition:.16s;white-space:nowrap}
+    #topBar .tb-seg + .tb-seg{border-left:1px solid rgba(255,255,255,.07)}
+    #topBar .tb-seg:hover{background:rgba(255,255,255,.07);color:#fff}
+    #topBar .tb-seg .ic{font-size:13px;line-height:1}
+    #topBar .tb-seg:hover .ic{filter:drop-shadow(0 0 6px currentColor)}
+  </style>
   <!-- Phantom Wallet Widget -->
   <div id="phantomTopWidget" style="display:flex;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
     <div id="walletConnectStatus" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showWalletPanel()">
@@ -3296,8 +3308,8 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   </div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
     <!-- Token cost pill — collapsed by default, expands on hover -->
-    <div id="tokenMeterBar" onclick="this.classList.toggle('expanded')" title="Click to expand API usage breakdown" style="display:flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(255,176,32,0.07);border:1px solid rgba(255,176,32,0.18);border-radius:20px;font-size:8.5px;font-weight:700;color:var(--warning);cursor:pointer;font-family:monospace;white-space:nowrap;transition:all 0.2s;user-select:none">
-      <span style="opacity:0.7;font-size:9px">⚡</span>
+    <div id="tokenMeterBar" class="tb-meter" onclick="this.classList.toggle('expanded')" title="API usage — click to expand">
+      <span class="dot"></span>
       <span id="totalCostTxt">$0.0000</span>
       <div id="tokenMeterDetails" style="display:none;align-items:center;gap:6px;margin-left:2px;padding-left:6px;border-left:1px solid rgba(255,176,32,0.2)">
         <span title="Claude tokens"><span style="color:var(--accent)">C</span> <span id="claudeTokenTxt">0</span></span>
@@ -3305,17 +3317,16 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         <span title="OpenClaw"><span style="color:#9945ff">🐾</span> <span id="ocCallTxt">0</span></span>
       </div>
     </div>
-    <!-- Unified action strip -->
-    <div style="display:flex;align-items:center;height:26px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:6px;overflow:hidden">
-      <button onclick="loadUserDashboard()" id="dashBtn" title="Profile & earnings" style="background:transparent;border:none;border-right:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:13px;cursor:pointer;color:#8b5cf6;transition:background 0.15s;display:flex;align-items:center">👤</button>
-      <button onclick="openNotificationCenter()" id="notifBtn" title="Notifications" style="position:relative;background:transparent;border:none;border-right:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:13px;cursor:pointer;color:var(--tertiary);transition:background 0.15s;display:flex;align-items:center">
-        🔔<span id="notifCount" style="position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;border-radius:50%;width:14px;height:14px;font-size:7px;align-items:center;justify-content:center;font-weight:700;display:none;line-height:14px;text-align:center">0</span>
-      </button>
-      <button id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="background:transparent;border:none;border-right:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:8px;cursor:pointer;color:var(--warning);font-weight:800;letter-spacing:0.5px;white-space:nowrap;transition:background 0.15s;display:flex;align-items:center;gap:3px"><span style="font-size:10px">◉</span>ALL</button>
-      <button onclick="showApiCostBreakdown()" title="API cost breakdown" style="display:none"><span id="apiCostWidget" style="font-size:8px">$0.0000</span></button>
-      <button onclick="openCollectiblesShop()" title="Credits balance — click to open shop" style="background:transparent;border:none;border-left:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:8px;cursor:pointer;color:#ffd700;font-weight:700;transition:background 0.15s;display:flex;align-items:center;gap:3px;white-space:nowrap">💳 <span id="topbarCredits" style="font-size:8px">—</span> cr</button>
-      <a href="marketplace-shop.html" target="_blank" title="Open the 2D Bazaar — set up your shop, sell content & agent work" style="background:transparent;border:none;border-left:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:8px;cursor:pointer;color:#e8b84b;font-weight:700;transition:background 0.15s;display:flex;align-items:center;gap:3px;white-space:nowrap;text-decoration:none">🏪 Bazaar</a><a href="SHADDAI-Collectables.html" target="_blank" title="Open the full Collectables studio (wardrobe, shop, marketplace)" style="background:transparent;border:none;border-left:1px solid rgba(255,255,255,0.07);padding:0 9px;height:100%;font-size:8px;cursor:pointer;color:#a78bfa;font-weight:700;transition:background 0.15s;display:flex;align-items:center;gap:3px;white-space:nowrap;text-decoration:none">🎨 Collectables</a>
-      <button onclick="toggleFullscreen()" id="fsBtn" title="Toggle fullscreen" style="background:transparent;border:none;padding:0 9px;height:100%;font-size:12px;cursor:pointer;color:var(--text-muted);transition:background 0.15s;display:flex;align-items:center">⛶</button>
+    <!-- Unified action strip (Mission-Control glass) -->
+    <div class="tb-strip">
+      <button class="tb-seg" onclick="loadUserDashboard()" id="dashBtn" title="Profile & earnings" style="color:#a78bfa"><span class="ic">👤</span></button>
+      <button class="tb-seg" onclick="openNotificationCenter()" id="notifBtn" title="Notifications" style="color:#22d3ee"><span class="ic">🔔</span><span id="notifCount" style="position:absolute;top:3px;right:4px;background:var(--danger);color:#fff;border-radius:50%;width:13px;height:13px;font-size:7px;font-weight:700;display:none;line-height:13px;text-align:center">0</span></button>
+      <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="color:#ffb020"><span class="ic">◉</span>ALL</button>
+      <button onclick="showApiCostBreakdown()" title="API cost breakdown" style="display:none"><span id="apiCostWidget">$0.0000</span></button>
+      <button class="tb-seg" onclick="openCollectiblesShop()" title="Credits balance — click to open shop" style="color:#ffd700"><span class="ic">💳</span><span id="topbarCredits">—</span></button>
+      <a class="tb-seg" href="marketplace-shop.html" target="_blank" title="Open the 2D Bazaar — set up your shop, sell content & agent work" style="color:#e8b84b"><span class="ic">🏪</span>Bazaar</a>
+      <a class="tb-seg" href="SHADDAI-Collectables.html" target="_blank" title="Open the full Collectables studio (wardrobe, shop, marketplace)" style="color:#a78bfa"><span class="ic">🎨</span>Collect</a>
+      <button class="tb-seg" onclick="toggleFullscreen()" id="fsBtn" title="Toggle fullscreen" style="color:#8593a6"><span class="ic">⛶</span></button>
     </div>
   </div>
 </div>
