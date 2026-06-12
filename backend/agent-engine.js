@@ -57,6 +57,11 @@ const OPENAI_KEY     = process.env.OPENAI_API_KEY || '';
 const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+// More FREE providers (no credit card): Cerebras (fast, free tier) + GitHub Models (free with a GitHub token).
+const CEREBRAS_KEY   = process.env.CEREBRAS_API_KEY || process.env.CEREBRAS_KEY || '';
+const CEREBRAS_MODEL = process.env.CEREBRAS_MODEL || 'llama-3.3-70b';
+const GITHUB_MODELS_KEY   = process.env.GITHUB_MODELS_TOKEN || process.env.GITHUB_TOKEN || '';
+const GITHUB_MODELS_MODEL = process.env.GITHUB_MODELS_MODEL || 'gpt-4o-mini';
 
 // HTTP helper — axios with default timeout
 const http = (url, opts = {}) => axios.get(url, { timeout: 10000, ...opts });
@@ -3005,6 +3010,8 @@ ${toolBlock}`
     gemini: pGemini,
     groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
     openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
+    cerebras: () => pOpenAICompatible('cerebras', 'https://api.cerebras.ai/v1/chat/completions', CEREBRAS_KEY, [(options.provider === 'cerebras' && options.model) || CEREBRAS_MODEL, 'llama3.1-8b']),
+    github: () => pOpenAICompatible('github', 'https://models.inference.ai.azure.com/chat/completions', GITHUB_MODELS_KEY, [(options.provider === 'github' && options.model) || GITHUB_MODELS_MODEL, 'Meta-Llama-3.1-8B-Instruct']),
     anthropic: pAnthropic,
     openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', OPENAI_KEY, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
   };
@@ -3013,7 +3020,7 @@ ${toolBlock}`
   // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
   // free/fast first (groq, openrouter) → paid+reliable (anthropic, openai) catch
   // free-tier rate limits → ollama local last. So a chain never dies on a 429.
-  const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
+  const order = [...new Set([pref, 'groq', 'cerebras', 'gemini', 'openrouter', 'github', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
   let lastError;
   for (const pname of order) {
     const fn = PROVIDERS[pname];

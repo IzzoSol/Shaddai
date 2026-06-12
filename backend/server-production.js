@@ -697,6 +697,7 @@ app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-custo
 app.use('/api/aura', require('./lib/aura').router);
 app.use('/api/news', require('./news-routes'));
 app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling)
+app.use('/api/clips', require('./clips-routes')); // streaming proxy → Clips ENGINE (CLIPS_ENGINE_URL)
 app.use('/api/x402/ledger', require('./x402-ledger-routes')); // prepaid balance ledger (pre-fund → spend down)
 app.get('/api/pricing', (_req, res) => { try { res.json(require('./lib/pricing').priceTable()); } catch(e){ res.status(500).json({error:String(e.message||e)}); } }); // real compute-cost agent pricing
 app.use('/api/stripe', require('./stripe-routes')); // Stripe Checkout → credits top-up (gated on STRIPE_SECRET_KEY)
