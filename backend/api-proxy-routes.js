@@ -1039,7 +1039,8 @@ router.get('/skills/catalog', (req, res) => {
       items = recipes.concat(baked);
       if (agent) items = items.filter(s => String(s.agent || '').toUpperCase() === agent.toUpperCase());
     }
-    items = items.map(s => ({ ...s, executable: s.type === 'recipe' }));  // recipes invoke real tools
+    // Mark executable, then enrich with kind/useCase/model/estCost (rules-derived, not hand-written)
+    items = items.map(s => skillIndex.enrichSkill({ ...s, executable: s.type === 'recipe' }));
     const total = items.length;
     res.json({ ok: true, total, offset, limit, count: Math.min(limit, Math.max(0, total - offset)),
       skills: items.slice(offset, offset + limit), source: 'baked+recipes (no obsidian)' });

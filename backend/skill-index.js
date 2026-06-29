@@ -1360,6 +1360,79 @@ function resolvePath(expr, input, steps) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// CATALOG ENRICHMENT — derive kind / useCase / model / estCost
+//
+// Rules are derived by code — NOT hand-written per skill.
+// Call enrichSkill(item) before serving any catalog entry.
+//
+// Fields added:
+//   kind      — 'tool' (recipe, actually runs tools) | 'skill' (methodology)
+//   useCase   — plain-language one-liner from description
+//   model     — 'light' | 'balanced' | 'heavy' (recommended reasoning depth)
+//   estCost   — rough per-run cost estimate string
+// ═══════════════════════════════════════════════════════════════════
+
+const _HEAVY_AGENTS   = new Set(['PIKADON', 'SHADDAI']);
+const _HEAVY_KEYWORDS = ['security','audit','strategy','thesis','regime','analysis','report',
+  'review','deep','full','comprehensive','intelligence','evaluation','complex','invest'];
+// Recipes that are pure data transforms — no LLM synthesis needed
+const _LIGHT_RECIPE_IDS = new Set([
+  'hash-string','base64-encode','base64-decode','regex-test','math-calc',
+  'count-words','md-to-html','remember','recall',
+]);
+
+function enrichSkill(item) {
+  const recipe = (item.type === 'recipe') ? RECIPES[item.id] : null;
+
+  // ── kind ──────────────────────────────────────────────────────────
+  const kind = (item.type === 'recipe') ? 'tool' : 'skill';
+
+  // ── useCase ───────────────────────────────────────────────────────
+  // Derive from description; trim gracefully to ≤140 chars.
+  const rawDesc = (item.description || item.name || '').trim();
+  const useCase = rawDesc.length > 140
+    ? rawDesc.slice(0, 137) + '...'
+    : (rawDesc || `${item.agent || 'Agent'} ${item.id || item.name} entry.`);
+
+  // ── model ─────────────────────────────────────────────────────────
+  let model;
+  if (kind === 'tool' && recipe) {
+    const hasSynth = !!recipe.synthesize;
+    const nSteps   = (recipe.steps || []).length;
+    const id       = item.id || '';
+    const isLight  = !hasSynth || _LIGHT_RECIPE_IDS.has(id);
+    const isHeavy  = hasSynth && (
+      nSteps >= 5 ||
+      _HEAVY_AGENTS.has(String(item.agent || '').toUpperCase()) ||
+      _HEAVY_KEYWORDS.some(w => id.includes(w))
+    );
+    model = isLight ? 'light' : isHeavy ? 'heavy' : 'balanced';
+  } else {
+    // methodology skill — derive from agent + text signals
+    const agentUpper = String(item.agent || '').toUpperCase();
+    const text = `${item.name || ''} ${item.description || ''}`.toLowerCase();
+    model = (_HEAVY_AGENTS.has(agentUpper) || _HEAVY_KEYWORDS.some(w => text.includes(w)))
+      ? 'heavy'
+      : 'balanced';
+  }
+
+  // ── estCost ───────────────────────────────────────────────────────
+  let estCost;
+  if (kind === 'skill') {
+    estCost = '$0 (methodology only — no tool calls)';
+  } else if (!recipe || !recipe.synthesize) {
+    estCost = '$0 (free data API only — no LLM call)';
+  } else {
+    const nSteps = (recipe.steps || []).length;
+    if (nSteps <= 2)      estCost = '~$0.001 (1–2 API calls + small LLM synthesis)';
+    else if (nSteps <= 5) estCost = '~$0.003 (3–5 API calls + LLM synthesis)';
+    else                  estCost = '~$0.01 (6+ API calls + heavy LLM synthesis)';
+  }
+
+  return { ...item, kind, useCase, model, estCost };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // EXPORTS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1369,6 +1442,7 @@ module.exports = {
   findSkills,
   interpolate,
   loadSkillContent,
+  enrichSkill,
   getRecipe: (id) => RECIPES[id],
   listRecipes: () => Object.entries(RECIPES).map(([id, r]) => ({
     id, agent: r.agent, description: r.description, params: r.params || [], stepCount: r.steps.length

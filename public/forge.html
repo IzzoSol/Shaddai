@@ -109,6 +109,18 @@
   #scroll{ grid-column:1/3; border-top:1px solid var(--bd); background:#0a0704; padding:11px 26px; min-height:46px;
     font-family:var(--mono); font-size:12px; color:var(--gold2); display:flex; align-items:center; gap:12px; }
   #scroll .glyph{ color:var(--ember); }
+  /* skill kind badges + filter + detail */
+  .filt{ display:flex; gap:6px; margin-bottom:8px; }
+  .filt button{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:5px 11px; border:1px solid var(--bd);
+    background:#0d0905; color:var(--ash); border-radius:2px; cursor:pointer; transition:.15s; }
+  .filt button.on{ border-color:var(--gold); color:var(--gold2); background:linear-gradient(180deg,rgba(240,180,41,.12),transparent); }
+  .rune .kb{ font-size:9px; opacity:.85; margin-right:5px; }
+  .rune.tool{ border-color:#5a4a1e; }
+  .rune.tool.on{ border-color:var(--gold); }
+  .rune.know{ border-style:dashed; opacity:.82; }
+  #skillDetail{ font-family:var(--mono); font-size:10.5px; line-height:1.5; color:var(--ash); margin-top:8px; min-height:30px;
+    border-left:2px solid var(--bd); padding:3px 0 3px 10px; }
+  #skillDetail b{ color:var(--gold2); } #skillDetail .pill{ color:var(--rune); }
   /* page-load reveal */
   .reveal{ opacity:0; transform:translateY(10px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
   @keyframes rise{ to{ opacity:1; transform:none; } }
@@ -164,8 +176,13 @@
     </div>
     <div class="reveal" style="animation-delay:.4s">
       <div class="lab">Skills &amp; Tools <span id="eqCount" style="color:var(--ash)">— 0 bound</span></div>
-      <input id="skillSearch" class="f" placeholder="search 3,400+ real skills — ⚙ = invokes a real tool" />
+      <div class="filt">
+        <button id="fTools" class="on" title="Skills that actually DO something — they call real tools (prices, web, code, security…)">⚙ Tools that run</button>
+        <button id="fAll" title="Includes knowledge skills — these guide the agent's thinking but don't execute">＋ All skills</button>
+      </div>
+      <input id="skillSearch" class="f" placeholder="search — ⚙ runs a real tool · 📖 guides the agent" />
       <div id="skills">drawing the runes…</div>
+      <div id="skillDetail">hover a skill to see what it does, the model it needs, and rough cost.</div>
       <div id="equipped"></div>
     </div>
     <div class="reveal" style="animation-delay:.45s">
@@ -281,18 +298,30 @@ $('cores').querySelectorAll('.core').forEach(el=> el.onclick=()=>{ core=el.datas
 const capOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).cap;
 const brainOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).brain;
 
-// ── skills ──
-let _all=[];
+// ── skills (tool-vs-knowledge, use-case / model / cost) ──
+let _all=[], _toolsOnly=true;
+const MODEL_LABEL={ light:'⚡ Light model', balanced:'⚙ Balanced model', heavy:'🔥 Heavy model' };
 async function loadSkills(q){
-  try{ const d=await (await fetch('/api/skills/catalog?limit=70'+(q?('&q='+encodeURIComponent(q)):''))).json(); _all=d.skills||[]; renderSkills(); }
+  try{ const d=await (await fetch('/api/skills/catalog?limit=90'+(q?('&q='+encodeURIComponent(q)):''))).json(); _all=d.skills||[]; renderSkills(); }
   catch(e){ $('skills').textContent='could not summon skills'; }
 }
+const _isTool=s=> s.kind==='tool' || s.executable;
 function renderSkills(){
-  if(!_all.length){ $('skills').textContent='no runes match'; return; }
-  $('skills').innerHTML=_all.map(s=>{ const on=skills.has(s.name); const x=s.executable?'<span class="x">⚙</span>':'';
-    return `<button class="rune${on?' on':''}" data-n="${encodeURIComponent(s.name)}" title="${(s.description||'').replace(/"/g,'&quot;')}">${x}${s.name}</button>`; }).join('');
-  $('skills').querySelectorAll('.rune').forEach(b=> b.onclick=()=>toggle(decodeURIComponent(b.dataset.n)));
+  let list=_all.slice(); if(_toolsOnly) list=list.filter(_isTool);
+  list.sort((a,b)=>(_isTool(b)?1:0)-(_isTool(a)?1:0));
+  if(!list.length){ $('skills').textContent=_toolsOnly?'no runnable tools match — try ＋ All skills':'no runes match'; return; }
+  $('skills').innerHTML=list.map(s=>{ const on=skills.has(s.name); const tool=_isTool(s);
+    const kb=tool?'<span class="kb">⚙</span>':'<span class="kb">📖</span>';
+    return `<button class="rune ${tool?'tool':'know'}${on?' on':''}" data-n="${encodeURIComponent(s.name)}">${kb}${s.name}</button>`; }).join('');
+  $('skills').querySelectorAll('.rune').forEach(b=>{ const n=decodeURIComponent(b.dataset.n);
+    b.onclick=()=>toggle(n); b.onmouseenter=()=>detail(_all.find(x=>x.name===n)); });
 }
+function detail(s){ if(!s)return; const tool=_isTool(s);
+  $('skillDetail').innerHTML='<b>'+(tool?'⚙ TOOL — actually runs':'📖 KNOWLEDGE — guides the agent')+'</b><br>'+
+    ((s.useCase||s.description||'').slice(0,150))+'<br>'+
+    '<span class="pill">'+(MODEL_LABEL[s.model]||'⚙ Balanced model')+'</span> · <span class="pill">'+(s.estCost||'~$0.001')+'</span>'; }
+$('fTools').onclick=()=>{ _toolsOnly=true; $('fTools').classList.add('on'); $('fAll').classList.remove('on'); renderSkills(); };
+$('fAll').onclick=()=>{ _toolsOnly=false; $('fAll').classList.add('on'); $('fTools').classList.remove('on'); renderSkills(); };
 function toggle(n){ if(skills.has(n))skills.delete(n); else { if(skills.size>=capOf()){ log('⛔ '+core+' core holds '+capOf()+' skills — raise the core or unbind one.','var(--ember)'); return; } skills.add(n); }
   $('eqCount').textContent='— '+skills.size+' bound'; $('equipped').textContent=skills.size?('bound: '+[...skills].join(' · ')):''; renderSkills(); }
 let _t; $('skillSearch').oninput=e=>{ clearTimeout(_t); _t=setTimeout(()=>loadSkills(e.target.value.trim()),250); };

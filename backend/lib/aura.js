@@ -5,9 +5,10 @@
  * AURA tries to answer prompts WITHOUT calling an LLM, cheapest path first:
  *   1. FETCH   — exact cache hit (normalized prompt -> sha256 key).
  *   2. QUERY   — fuzzy cache hit (word-overlap cosine similarity >= 0.82).
- *   3. COMPUTE — solve locally for pure math / date / unit-convert / base64 /
- *                word-count / simple casing (regex-detected; math uses a SAFE
- *                tokenizing evaluator — NEVER eval()/Function()).
+ *   3. COMPUTE — solve locally: math / date / unit-convert (length, weight,
+ *                data-size, time, speed, temperature) / base64 / word-count /
+ *                casing / statistics / string-ops / roman numerals / number-
+ *                theory (prime/gcd/lcm/factorial) / base conversion.
  *
  * If none apply, route() returns { hit:false } and the caller should hit the LLM,
  * then feed the answer back via recordAnswer() so future calls are free.
@@ -26,18 +27,16 @@ const crypto = require('crypto');
 // ---------------------------------------------------------------------------
 // Config + persistence paths
 // ---------------------------------------------------------------------------
-// Shared cache: set AURA_HOME to point the dashboard at the SAME cache the `aura` CLI
-// uses (~/.shaddai-aura) so savings compound across the terminal tool and the app.
-// Defaults to the in-repo backend/data dir when AURA_HOME is unset.
 const DATA_DIR     = process.env.AURA_HOME || path.join(__dirname, '..', 'data');
 const CACHE_FILE   = path.join(DATA_DIR, 'aura-cache.json');
 const STATS_FILE   = path.join(DATA_DIR, 'aura-stats.json');
 
-const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-const MAX_ENTRIES    = 1000;                 // cap; evict oldest beyond this
-const SIM_THRESHOLD  = 0.82;                 // fuzzy match cutoff
-const COST_PER_1K    = 0.0005;               // ~$ per 1k tokens (rough blended)
-const CHARS_PER_TOK  = 4;                     // crude tokens ≈ chars / 4
+const DEFAULT_TTL_MS   = 24 * 60 * 60 * 1000; // 24h
+const MAX_ENTRIES      = 1000;                 // cap; evict oldest beyond this
+const SIM_THRESHOLD    = 0.82;                 // fuzzy match cutoff
+const COST_PER_1K      = 0.0005;              // ~$ per 1k tokens (rough blended)
+const CHARS_PER_TOK    = 4;                    // crude tokens ≈ chars / 4
+const MAX_RECENT_SAVES = 50;                   // rolling activity log cap
 
 // ---------------------------------------------------------------------------
 // Tiny JSON file helpers (resilient — never throw outward)
@@ -67,12 +66,17 @@ function writeJson(file, obj) {
 // Stats tracking (cumulative, persisted)
 // ---------------------------------------------------------------------------
 function loadStats() {
-  return readJson(STATS_FILE, {
+  const s = readJson(STATS_FILE, {
     hits: 0,
     misses: 0,
     tokensSaved: 0,
-    byMethod: { fetch: 0, query: 0, compute: 0 }
+    byMethod: { fetch: 0, query: 0, compute: 0 },
+    recentSaves: []
   });
+  // Back-compat: ensure all fields exist even in old stat files
+  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0 };
+  if (!s.recentSaves) s.recentSaves = [];
+  return s;
 }
 function bumpStats(mut) {
   try {
@@ -154,7 +158,7 @@ function safeMath(expr) {
   let prevType = null; // 'num' | 'op' | '(' | ')'
 
   for (let i = 0; i < m.length; i++) {
-    let t = m[i];
+    const t = m[i];
     if (/^(\d|\.)/.test(t)) {
       out.push(parseFloat(t));
       prevType = 'num';
@@ -204,29 +208,58 @@ function safeMath(expr) {
     st.push(r);
   }
   if (st.length !== 1 || !isFinite(st[0])) return null;
-  // Trim float noise
   return String(Math.round(st[0] * 1e10) / 1e10);
 }
 
-// --- unit conversions (length / weight / temperature) ---
+// ---------------------------------------------------------------------------
+// Unit conversions — all dimensions merged into UNIT_FACTORS.
+// Each value is relative to the dimension's base unit:
+//   length -> metres | weight -> grams | data -> bytes |
+//   time -> seconds  | speed -> m/s
+// ---------------------------------------------------------------------------
 const UNIT_FACTORS = {
-  // length -> meters
+  // — length -> metres —
   mm: 0.001, cm: 0.01, m: 1, km: 1000,
   in: 0.0254, inch: 0.0254, inches: 0.0254,
   ft: 0.3048, foot: 0.3048, feet: 0.3048,
   yd: 0.9144, yard: 0.9144, yards: 0.9144,
   mi: 1609.344, mile: 1609.344, miles: 1609.344,
-  // weight -> grams
-  mg: 0.001, g: 1, gram: 1, grams: 1, kg: 1000, kilogram: 1000, kilograms: 1000,
+  // — weight -> grams —
+  mg: 0.001, g: 1, gram: 1, grams: 1,
+  kg: 1000, kilogram: 1000, kilograms: 1000,
   oz: 28.3495, ounce: 28.3495, ounces: 28.3495,
-  lb: 453.592, lbs: 453.592, pound: 453.592, pounds: 453.592
+  lb: 453.592, lbs: 453.592, pound: 453.592, pounds: 453.592,
+  // — data size -> bytes (1024-based) —
+  byte: 1, bytes: 1,
+  kb: 1024, kilobyte: 1024, kilobytes: 1024,
+  mb: 1048576, megabyte: 1048576, megabytes: 1048576,
+  gb: 1073741824, gigabyte: 1073741824, gigabytes: 1073741824,
+  tb: 1099511627776, terabyte: 1099511627776, terabytes: 1099511627776,
+  pb: 1125899906842624, petabyte: 1125899906842624, petabytes: 1125899906842624,
+  // — time -> seconds —
+  sec: 1, second: 1, seconds: 1,
+  min: 60, minute: 60, minutes: 60,
+  hr: 3600, hour: 3600, hours: 3600,
+  day: 86400, days: 86400,
+  week: 604800, weeks: 604800,
+  // — speed -> m/s —
+  mps: 1,
+  fps: 0.3048,
+  mph: 0.44704,
+  kph: 1 / 3.6, kmh: 1 / 3.6,
+  knot: 0.514444, knots: 0.514444
 };
-const LENGTH = new Set(['mm', 'cm', 'm', 'km', 'in', 'inch', 'inches', 'ft', 'foot', 'feet', 'yd', 'yard', 'yards', 'mi', 'mile', 'miles']);
-const WEIGHT = new Set(['mg', 'g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds']);
+
+const LENGTH    = new Set(['mm', 'cm', 'm', 'km', 'in', 'inch', 'inches', 'ft', 'foot', 'feet', 'yd', 'yard', 'yards', 'mi', 'mile', 'miles']);
+const WEIGHT    = new Set(['mg', 'g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds']);
+const DATA_SIZE = new Set(['byte', 'bytes', 'kb', 'kilobyte', 'kilobytes', 'mb', 'megabyte', 'megabytes', 'gb', 'gigabyte', 'gigabytes', 'tb', 'terabyte', 'terabytes', 'pb', 'petabyte', 'petabytes']);
+const TIME_DIM  = new Set(['sec', 'second', 'seconds', 'min', 'minute', 'minutes', 'hr', 'hour', 'hours', 'day', 'days', 'week', 'weeks']);
+const SPEED     = new Set(['mps', 'fps', 'mph', 'kph', 'kmh', 'knot', 'knots']);
 
 function convertUnits(prompt) {
-  // e.g. "convert 10 km to miles" / "10 kg in lbs"
-  const m = prompt.toLowerCase().match(/(-?\d+\.?\d*)\s*([a-z]+)\s*(?:to|in|into)\s*([a-z]+)/);
+  // e.g. "convert 10 km to miles" / "10 kg in lbs" / "3 hours in minutes"
+  const p = prompt.toLowerCase();
+  const m = p.match(/(-?\d+\.?\d*)\s*([a-z]+)\s*(?:to|in|into)\s*([a-z]+)/);
   if (!m) return null;
   const val = parseFloat(m[1]), from = m[2], to = m[3];
 
@@ -242,14 +275,20 @@ function convertUnits(prompt) {
   }
 
   if (!UNIT_FACTORS[from] || !UNIT_FACTORS[to]) return null;
-  const sameDim = (LENGTH.has(from) && LENGTH.has(to)) || (WEIGHT.has(from) && WEIGHT.has(to));
+  const sameDim =
+    (LENGTH.has(from)    && LENGTH.has(to))    ||
+    (WEIGHT.has(from)    && WEIGHT.has(to))    ||
+    (DATA_SIZE.has(from) && DATA_SIZE.has(to)) ||
+    (TIME_DIM.has(from)  && TIME_DIM.has(to))  ||
+    (SPEED.has(from)     && SPEED.has(to));
   if (!sameDim) return null;
   const r = (val * UNIT_FACTORS[from]) / UNIT_FACTORS[to];
+  if (!isFinite(r)) return null;
   return `${Math.round(r * 1e6) / 1e6} ${to}`;
 }
 
+// --- base64 encode/decode ---
 function base64Op(prompt) {
-  // "base64 encode hello" / "base64 decode aGVsbG8="
   let m = prompt.match(/base64\s+encode\s+(.+)/i);
   if (m) return Buffer.from(m[1].trim(), 'utf8').toString('base64');
   m = prompt.match(/base64\s+decode\s+(.+)/i);
@@ -259,18 +298,27 @@ function base64Op(prompt) {
   return null;
 }
 
+// --- word count ---
 function wordCountOp(prompt) {
-  // "word count of: the quick brown fox" / "how many words in <text>"
-  let m = prompt.match(/(?:word count(?:\s+of)?|how many words(?:\s+(?:are\s+)?in)?)\s*:?\s*(.+)/i);
+  const m = prompt.match(/(?:word count(?:\s+of)?|how many words(?:\s+(?:are\s+)?in)?)\s*:?\s*(.+)/i);
   if (!m) return null;
   const txt = m[1].trim().replace(/^["']|["']$/g, '');
   if (!txt) return null;
   return String(txt.split(/\s+/).filter(Boolean).length);
 }
 
+// --- character count ---
+function charCountOp(prompt) {
+  // "character count of: hello world" / "count characters in 'abc'"
+  const m = prompt.match(/(?:char(?:acter)?\s+count(?:\s+of)?|count\s+char(?:acter)?s(?:\s+in)?)\s*:?\s*(.+)/i);
+  if (!m) return null;
+  const txt = m[1].trim().replace(/^["']|["']$/g, '');
+  return String(txt.length);
+}
+
+// --- string format ops: uppercase / lowercase / reverse ---
 function formatOp(prompt) {
-  // "uppercase: hello" / "lowercase hello" / "reverse: abc"
-  let m = prompt.match(/^\s*(uppercase|lowercase|reverse)\s*:?\s*(.+)/i);
+  const m = prompt.match(/^\s*(uppercase|lowercase|reverse)\s*:?\s*(.+)/i);
   if (!m) return null;
   const op = m[1].toLowerCase(), txt = m[2].trim().replace(/^["']|["']$/g, '');
   if (op === 'uppercase') return txt.toUpperCase();
@@ -279,6 +327,43 @@ function formatOp(prompt) {
   return null;
 }
 
+// --- slugify ---
+function slugifyOp(prompt) {
+  const m = prompt.match(/^slugify\s*:?\s*(.+)/i);
+  if (!m) return null;
+  return m[1].trim()
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// --- title case ---
+const TITLE_SMALL = new Set(['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'by', 'in', 'of', 'up', 'as', 'is', 'vs']);
+function titleCaseOp(prompt) {
+  const m = prompt.match(/^title[\s-]?case\s*:?\s*(.+)/i);
+  if (!m) return null;
+  const txt = m[1].trim().replace(/^["']|["']$/g, '');
+  return txt.split(/\s+/).map((w, i) => {
+    const lo = w.toLowerCase();
+    return (i > 0 && TITLE_SMALL.has(lo)) ? lo : lo.charAt(0).toUpperCase() + lo.slice(1);
+  }).join(' ');
+}
+
+// --- count occurrences ---
+function countOccurrencesOp(prompt) {
+  // "count occurrences of 'e' in 'the elephant entered'"
+  const m = prompt.match(/count\s+(?:occurrences?|instances?)\s+of\s+["']?(.+?)["']?\s+in\s+["'](.+?)["']/i);
+  if (!m) return null;
+  const needle = m[1], haystack = m[2];
+  if (!needle) return null;
+  let count = 0, pos = 0;
+  while ((pos = haystack.indexOf(needle, pos)) !== -1) { count++; pos += needle.length; }
+  return String(count);
+}
+
+// --- date ops ---
 function dateOp(prompt) {
   const p = prompt.toLowerCase();
   if (/\b(today'?s? date|what(?:'s| is) (?:the |today'?s? )?date|current date)\b/.test(p)) {
@@ -290,12 +375,267 @@ function dateOp(prompt) {
   return null;
 }
 
-/**
- * Try to compute an answer locally. Returns a string answer or null.
- * Ordered so cheap/specific detectors run before generic math.
- */
-// --- parametric templates: recognize a recurring SHAPE and solve any instance, free forever.
+// --- date math ("days between X and Y", "N days from today", "N days ago") ---
+function _localDateStr(d) {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${dy}`;
+}
+function dateMathOp(prompt) {
+  const p = prompt.toLowerCase();
+
+  // "days between 2024-01-01 and 2024-12-31" / "how many days between X and Y"
+  let m = p.match(/(?:how many\s+)?days\s+between\s+(\d{4}-\d{2}-\d{2})\s+and\s+(\d{4}-\d{2}-\d{2})/);
+  if (m) {
+    const d1 = new Date(m[1]), d2 = new Date(m[2]);
+    if (isNaN(d1) || isNaN(d2)) return null;
+    return String(Math.abs(Math.round((d2 - d1) / 86400000)));
+  }
+
+  // "what day is 30 days from today" / "30 days from today"
+  m = p.match(/(\d+)\s+days?\s+from\s+(?:now|today)/);
+  if (m) {
+    const n = parseInt(m[1]);
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return _localDateStr(d);
+  }
+
+  // "30 days ago"
+  m = p.match(/(\d+)\s+days?\s+ago/);
+  if (m) {
+    const n = parseInt(m[1]);
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return _localDateStr(d);
+  }
+
+  // "N weeks from today"
+  m = p.match(/(\d+)\s+weeks?\s+from\s+(?:now|today)/);
+  if (m) {
+    const n = parseInt(m[1]);
+    const d = new Date();
+    d.setDate(d.getDate() + n * 7);
+    return _localDateStr(d);
+  }
+
+  // "what day of the week is YYYY-MM-DD"
+  m = p.match(/(?:what\s+day(?:\s+of\s+(?:the\s+)?week)?\s+is\s+)(\d{4}-\d{2}-\d{2})/);
+  if (m) {
+    const d = new Date(m[1]);
+    if (isNaN(d)) return null;
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[d.getUTCDay()];
+  }
+
+  return null;
+}
+
+// --- statistics (average/sum/min/max/median/range/count of a number list) ---
+function statsOp(prompt) {
+  const p = prompt.trim();
+  // Find a stats keyword
+  const opMatch = p.match(/\b(average|avg|mean|sum|total|min(?:imum)?|max(?:imum)?|median|range|count)\b/i);
+  if (!opMatch) return null;
+  const keyword = opMatch[0].toLowerCase();
+  const op = keyword.replace('imum', ''); // "minimum" -> "min", "maximum" -> "max"
+
+  // Extract numbers from everything after the keyword position
+  const afterKw = p.slice(p.toLowerCase().indexOf(keyword) + keyword.length);
+  const nums = afterKw.match(/-?\d+(?:\.\d+)?/g);
+  if (!nums || nums.length < 2) return null; // require at least 2 numbers (avoids "5 min in hours" etc.)
+
+  const arr = nums.map(Number);
+  if (arr.some(isNaN)) return null;
+  const sorted = [...arr].sort((a, b) => a - b);
+
+  switch (op) {
+    case 'average': case 'avg': case 'mean': {
+      const s = arr.reduce((a, b) => a + b, 0);
+      return String(Math.round((s / arr.length) * 1e10) / 1e10);
+    }
+    case 'sum': case 'total':
+      return String(arr.reduce((a, b) => a + b, 0));
+    case 'min':
+      return String(sorted[0]);
+    case 'max':
+      return String(sorted[sorted.length - 1]);
+    case 'median': {
+      const mid = Math.floor(sorted.length / 2);
+      return String(sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2);
+    }
+    case 'range':
+      return String(sorted[sorted.length - 1] - sorted[0]);
+    case 'count':
+      return String(arr.length);
+    default: return null;
+  }
+}
+
+// --- roman numerals ---
+function toRoman(n) {
+  if (!Number.isInteger(n) || n < 1 || n > 3999) return null;
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+  let r = '';
+  for (let i = 0; i < vals.length; i++) {
+    while (n >= vals[i]) { r += syms[i]; n -= vals[i]; }
+  }
+  return r;
+}
+function fromRoman(s) {
+  const map = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+  let n = 0;
+  const u = s.toUpperCase();
+  for (let i = 0; i < u.length; i++) {
+    const cur = map[u[i]], nxt = map[u[i + 1]];
+    if (cur === undefined) return null;
+    n += (nxt && nxt > cur) ? -cur : cur;
+  }
+  return n > 0 ? n : null;
+}
+function romanOp(prompt) {
+  const p = prompt.trim();
+
+  // Integer -> Roman numeral
+  const toRomMatch =
+    p.match(/roman\s+numeral\s+(?:for|of)\s+(\d+)/i) ||
+    p.match(/(\d+)\s+(?:in|to|as)\s+roman(?:\s+numeral)?s?/i) ||
+    p.match(/convert\s+(\d+)\s+to\s+roman(?:\s+numeral)?s?/i);
+  if (toRomMatch) {
+    const n = parseInt(toRomMatch[1]);
+    return toRoman(n);
+  }
+
+  // Roman numeral -> integer
+  const fromRomMatch =
+    p.match(/what\s+(?:number\s+is|is)\s+([IVXLCDM]+)\s*\??$/i) ||
+    p.match(/([IVXLCDM]+)\s+(?:in|to|as)\s+(?:decimal|number|arabic)/i) ||
+    p.match(/convert\s+([IVXLCDM]+)\s+to\s+(?:decimal|number|arabic)/i) ||
+    p.match(/roman\s+numeral\s+([IVXLCDM]+)\s+(?:to|in)\s+(?:decimal|number)/i);
+  if (fromRomMatch) {
+    const sym = fromRomMatch[1];
+    if (!/^[IVXLCDMivxlcdm]+$/.test(sym)) return null;
+    const n = fromRoman(sym);
+    return n !== null ? String(n) : null;
+  }
+
+  return null;
+}
+
+// --- prime check ---
+function isPrime(n) {
+  if (!Number.isInteger(n) || n < 2) return false;
+  if (n === 2 || n === 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  if (n > 1e9) return false; // cap: sqrt(1e9)≈31623 → fast
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+  }
+  return true;
+}
+function primeOp(prompt) {
+  const m = prompt.match(/(?:is\s+)?(\d+)\s+(?:a\s+)?prime(?:\s+number)?\s*\??/i);
+  if (!m) return null;
+  const n = parseInt(m[1]);
+  if (n > 1e9) return null;
+  return isPrime(n)
+    ? `Yes, ${n} is prime`
+    : `No, ${n} is not prime`;
+}
+
+// --- gcd/lcm/factorial ---
+function _gcd(a, b) { return b === 0 ? a : _gcd(b, a % b); }
+
+function gcdOp(prompt) {
+  const m = prompt.match(/\bgcd\s+(?:of\s+)?(\d+)\s+(?:and\s+)?(\d+)/i);
+  if (!m) return null;
+  const a = parseInt(m[1]), b = parseInt(m[2]);
+  return String(_gcd(a, b));
+}
+
+function lcmOp(prompt) {
+  const m = prompt.match(/\blcm\s+(?:of\s+)?(\d+)\s+(?:and\s+)?(\d+)/i);
+  if (!m) return null;
+  const a = parseInt(m[1]), b = parseInt(m[2]);
+  if (a > 1e9 || b > 1e9) return null;
+  const g = _gcd(a, b);
+  if (g === 0) return '0';
+  const result = Math.abs(a / g * b);
+  if (!isFinite(result) || result > Number.MAX_SAFE_INTEGER) return null;
+  return String(result);
+}
+
+function factorialOp(prompt) {
+  const p = prompt.trim();
+  let n;
+  // "5!" (bare exclamation)
+  const bangM = p.match(/^(\d+)\s*!$/);
+  if (bangM) {
+    n = parseInt(bangM[1]);
+  } else {
+    // "factorial of 5" / "factorial(5)" / "5 factorial"
+    const m = p.match(/(?:factorial\s*(?:of\s*)?(\d+)|(\d+)\s+factorial)/i);
+    if (!m) return null;
+    n = parseInt(m[1] !== undefined ? m[1] : m[2]);
+  }
+  if (isNaN(n) || n < 0 || n > 18) return null; // 18! ≤ MAX_SAFE_INTEGER
+  let r = 1;
+  for (let i = 2; i <= n; i++) r *= i;
+  return String(r);
+}
+
+// --- base conversion (hex / binary / octal / decimal) ---
+function baseConvertOp(prompt) {
+  const p = prompt.trim().toLowerCase();
+
+  // "0xff in decimal" / "0b1010 to binary" / "0o17 to decimal"
+  const prefixM = p.match(/\b(0x[0-9a-f]+|0b[01]+|0o[0-7]+)\s+(?:in|to|as)\s+(decimal|dec(?:imal)?|hex(?:adecimal)?|binary|bin(?:ary)?|octal|oct(?:al)?)\b/);
+  if (prefixM) {
+    const raw = prefixM[1], target = prefixM[2];
+    let n;
+    if (raw.startsWith('0x')) n = parseInt(raw, 16);
+    else if (raw.startsWith('0b')) n = parseInt(raw.slice(2), 2);
+    else n = parseInt(raw.slice(2), 8); // strip "0o" prefix before octal parse
+    if (isNaN(n) || n < 0) return null;
+    if (target === 'decimal' || target === 'dec') return String(n);
+    if (target.startsWith('hex')) return '0x' + n.toString(16).toUpperCase();
+    if (target === 'binary' || target === 'bin') return '0b' + n.toString(2);
+    if (target === 'octal' || target === 'oct') return '0o' + n.toString(8);
+  }
+
+  // "255 in hex" / "255 to binary" / "convert 255 to hex"
+  const decM = p.match(/\b(\d+)\s+(?:in|to|as)\s+(hex(?:adecimal)?|binary|bin(?:ary)?|octal|oct(?:al)?|decimal|dec(?:imal)?)\b/);
+  if (decM) {
+    const n = parseInt(decM[1]);
+    const target = decM[2];
+    if (isNaN(n) || n < 0) return null;
+    if (target === 'decimal' || target === 'dec') return String(n);
+    if (target.startsWith('hex')) return '0x' + n.toString(16).toUpperCase();
+    if (target === 'binary' || target === 'bin') return '0b' + n.toString(2);
+    if (target === 'octal' || target === 'oct') return '0o' + n.toString(8);
+  }
+
+  return null;
+}
+
+// --- number formatting (add commas) ---
+function numberFormatOp(prompt) {
+  const m = prompt.match(/(?:format\s+|add\s+commas?\s+to\s+)(-?\d+(?:\.\d+)?)(?:\s+with\s+commas?)?/i)
+         || prompt.match(/(-?\d+(?:\.\d+)?)\s+with\s+commas?/i);
+  if (!m) return null;
+  const raw = m[1];
+  const neg = raw.startsWith('-');
+  const abs = neg ? raw.slice(1) : raw;
+  const parts = abs.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (neg ? '-' : '') + parts.join('.');
+}
+
+// --- parametric templates: recognize a recurring SHAPE and solve any instance ---
 const _r2 = (n) => Math.round(n * 100) / 100;
+
 function _percentOf(p) { // "15% of 240"
   const m = p.toLowerCase().match(/(-?\d+\.?\d*)\s*(?:%|percent)\s+of\s+(-?\d+\.?\d*)/);
   return m ? String(_r2((parseFloat(m[1]) / 100) * parseFloat(m[2]))) : null;
@@ -321,34 +661,59 @@ function _percentChange(p) { // "percent change from 80 to 100"
   return a === 0 ? null : `${_r2(((b - a) / Math.abs(a)) * 100)}%`;
 }
 
+/**
+ * Try to compute an answer locally. Returns a string answer or null.
+ * Ordered so cheap/specific detectors run before generic math.
+ */
 function compute(prompt) {
   const raw = String(prompt || '').trim();
   if (!raw) return null;
 
-  // Parametric templates first (specific shapes the generic math can't parse).
-  const pof = _percentOf(raw);     if (pof !== null) return pof;
-  const poff = _percentOff(raw);   if (poff !== null) return poff;
-  const tip = _tipCalc(raw);       if (tip !== null) return tip;
-  const pch = _percentChange(raw); if (pch !== null) return pch;
+  // 1. Parametric templates (specific shapes the generic math can't parse).
+  const pof  = _percentOf(raw);     if (pof  !== null) return pof;
+  const poff = _percentOff(raw);    if (poff !== null) return poff;
+  const tip  = _tipCalc(raw);       if (tip  !== null) return tip;
+  const pch  = _percentChange(raw); if (pch  !== null) return pch;
 
-  // Non-math specialized solvers (they have keywords).
-  const date = dateOp(raw);        if (date !== null) return date;
-  const b64 = base64Op(raw);       if (b64 !== null) return b64;
-  const wc = wordCountOp(raw);     if (wc !== null) return wc;
-  const fmt = formatOp(raw);       if (fmt !== null) return fmt;
-  const conv = convertUnits(raw);  if (conv !== null) return conv;
+  // 2. Date / time
+  const date = dateOp(raw);         if (date !== null) return date;
+  const dm   = dateMathOp(raw);     if (dm   !== null) return dm;
 
-  // Math: strip a leading natural-language wrapper, keep the arithmetic core.
+  // 3. Encoding
+  const b64  = base64Op(raw);       if (b64  !== null) return b64;
+
+  // 4. Text / string ops
+  const wc   = wordCountOp(raw);    if (wc   !== null) return wc;
+  const cc   = charCountOp(raw);    if (cc   !== null) return cc;
+  const fmt  = formatOp(raw);       if (fmt  !== null) return fmt;
+  const slug = slugifyOp(raw);      if (slug !== null) return slug;
+  const tc   = titleCaseOp(raw);    if (tc   !== null) return tc;
+  const occ  = countOccurrencesOp(raw); if (occ !== null) return occ;
+
+  // 5. Number / statistics
+  const stat = statsOp(raw);        if (stat !== null) return stat;
+  const rom  = romanOp(raw);        if (rom  !== null) return rom;
+  const pr   = primeOp(raw);        if (pr   !== null) return pr;
+  const gcdR = gcdOp(raw);          if (gcdR !== null) return gcdR;
+  const lcmR = lcmOp(raw);          if (lcmR !== null) return lcmR;
+  const fact = factorialOp(raw);    if (fact !== null) return fact;
+  const base = baseConvertOp(raw);  if (base !== null) return base;
+  const numf = numberFormatOp(raw); if (numf !== null) return numf;
+
+  // 6. Unit conversions (length/weight/data/time/speed/temperature)
+  const conv = convertUnits(raw);   if (conv !== null) return conv;
+
+  // 7. Generic arithmetic — strip natural-language wrapper then evaluate.
   let mathSrc = raw
     .replace(/^\s*(what(?:'s| is)|calculate|compute|solve|eval(?:uate)?|how much is)\b/i, '')
     .replace(/[?=]/g, '')
-    .replace(/\bx\b/gi, '*')   // "3 x 4" -> "3 * 4"
+    .replace(/\bx\b/gi, '*')
     .trim();
-  // Only attempt if it looks purely arithmetic (digits + operators/parens).
   if (/^[\d\s+\-*/%^().]+$/.test(mathSrc) && /\d/.test(mathSrc)) {
     const r = safeMath(mathSrc);
     if (r !== null) return r;
   }
+
   return null;
 }
 
@@ -368,16 +733,40 @@ function route(prompt, opts = {}) {
 
     const cache = pruneCache(loadCache());
 
-    // 1) FETCH — exact normalized match
+    // 1) FETCH — exact normalized match (O(1) hash lookup — always cheapest first)
     const key = hashKey(p);
     const exact = cache[key];
     if (exact && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
       const saved = estTokens(p) + estTokens(exact.answer);
-      bumpStats((s) => { s.hits++; s.byMethod.fetch++; s.tokensSaved += saved; });
+      bumpStats((s) => {
+        s.hits++; s.byMethod.fetch++; s.tokensSaved += saved;
+        s.recentSaves.unshift({ ts: Date.now(), method: 'fetch', snippet: p.slice(0, 60), tokens: saved });
+        if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+      });
       return { hit: true, method: 'fetch', answer: exact.answer, savedTokensEst: saved };
     }
 
-    // 2) QUERY — fuzzy match over cached prompts
+    // 2) COMPUTE — solve locally before fuzzy search.
+    // Running COMPUTE before QUERY is critical: it prevents a cached "min of N..."
+    // result from being returned for a "max of N..." query via cosine similarity.
+    // Compute gives the exact answer for THIS prompt; QUERY is only for LLM answers.
+    const computed = compute(p);
+    if (computed !== null) {
+      const saved = estTokens(p) + estTokens(computed);
+      bumpStats((s) => {
+        s.hits++; s.byMethod.compute++; s.tokensSaved += saved;
+        s.recentSaves.unshift({ ts: Date.now(), method: 'compute', snippet: p.slice(0, 60), tokens: saved });
+        if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+      });
+      // Cache compute results so identical future prompts get an O(1) FETCH hit.
+      try { recordAnswer(p, computed, opts); } catch (_) { /* ignore */ }
+      return { hit: true, method: 'compute', answer: computed, savedTokensEst: saved };
+    }
+
+    // 3) QUERY — fuzzy match over cached LLM answers.
+    // Only reached when COMPUTE returned null (non-computable prompt).
+    // Cached compute results are in the pool but won't match different prompts
+    // incorrectly because those prompts would have hit COMPUTE directly first.
     let best = null, bestSim = 0;
     for (const k of Object.keys(cache)) {
       const e = cache[k];
@@ -387,26 +776,19 @@ function route(prompt, opts = {}) {
     }
     if (best && bestSim >= SIM_THRESHOLD) {
       const saved = estTokens(p) + estTokens(best.answer);
-      bumpStats((s) => { s.hits++; s.byMethod.query++; s.tokensSaved += saved; });
+      bumpStats((s) => {
+        s.hits++; s.byMethod.query++; s.tokensSaved += saved;
+        s.recentSaves.unshift({ ts: Date.now(), method: 'query', snippet: p.slice(0, 60), tokens: saved, similarity: Math.round(bestSim * 1000) / 1000 });
+        if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+      });
       return { hit: true, method: 'query', answer: best.answer, savedTokensEst: saved, similarity: Math.round(bestSim * 1000) / 1000 };
-    }
-
-    // 3) COMPUTE — solve locally
-    const computed = compute(p);
-    if (computed !== null) {
-      const saved = estTokens(p) + estTokens(computed);
-      bumpStats((s) => { s.hits++; s.byMethod.compute++; s.tokensSaved += saved; });
-      // Cache compute results too (cheap future fetch hits).
-      try { recordAnswer(p, computed, opts); } catch (_) { /* ignore */ }
-      return { hit: true, method: 'compute', answer: computed, savedTokensEst: saved };
     }
 
     // Miss — caller should hit the LLM.
     bumpStats((s) => { s.misses++; });
     return { hit: false };
   } catch (_) {
-    // Resilient: any failure = treat as miss (caller falls back to LLM).
-    try { bumpStats((s) => { s.misses++; }); } catch (_) {}
+    try { bumpStats((s) => { s.misses++; }); } catch (_2) {}
     return { hit: false };
   }
 }
@@ -427,7 +809,7 @@ function recordAnswer(prompt, answer, opts = {}) {
       ts: Date.now(),
       ttl: Number(opts.ttlMs) > 0 ? Number(opts.ttlMs) : DEFAULT_TTL_MS
     };
-    pruneCache(cache); // re-cap after insert
+    pruneCache(cache);
     return writeJson(CACHE_FILE, cache);
   } catch (_) {
     return false;
@@ -436,6 +818,7 @@ function recordAnswer(prompt, answer, opts = {}) {
 
 /**
  * stats() — cumulative savings summary. Never throws.
+ * Backward-compatible: all original fields present; recentSaves is new.
  */
 function stats() {
   try {
@@ -449,10 +832,12 @@ function stats() {
       hitRate: Math.round(hitRate * 1000) / 1000,
       tokensSaved: s.tokensSaved,
       costSavedUsd: Math.round(costSavedUsd * 1e6) / 1e6,
-      byMethod: s.byMethod
+      byMethod: s.byMethod,
+      recentSaves: s.recentSaves || []  // new field — rolling activity log
     };
   } catch (_) {
-    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, byMethod: { fetch: 0, query: 0, compute: 0 } };
+    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0,
+      byMethod: { fetch: 0, query: 0, compute: 0 }, recentSaves: [] };
   }
 }
 
