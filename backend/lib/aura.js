@@ -70,12 +70,14 @@ function loadStats() {
     hits: 0,
     misses: 0,
     tokensSaved: 0,
+    volatileSkips: 0,
     byMethod: { fetch: 0, query: 0, compute: 0 },
     recentSaves: []
   });
   // Back-compat: ensure all fields exist even in old stat files
   if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0 };
   if (!s.recentSaves) s.recentSaves = [];
+  if (typeof s.volatileSkips !== 'number') s.volatileSkips = 0;
   return s;
 }
 function bumpStats(mut) {
@@ -810,7 +812,7 @@ function recordAnswer(prompt, answer, opts = {}) {
   try {
     const p = String(prompt || '');
     if (!p.trim() || answer === undefined || answer === null) return false;
-    if (isVolatile(p)) return false;   // never store time-sensitive answers (prices/news/weather…)
+    if (isVolatile(p)) { bumpStats((s) => { s.volatileSkips = (s.volatileSkips || 0) + 1; }); return false; }   // kept fresh on purpose
     const cache = pruneCache(loadCache());
     const key = hashKey(p);
     cache[key] = {
@@ -836,17 +838,26 @@ function stats() {
     const total = s.hits + s.misses;
     const hitRate = total ? s.hits / total : 0;
     const costSavedUsd = (s.tokensSaved / 1000) * COST_PER_1K;
+    let cacheEntries = 0; try { cacheEntries = Object.keys(loadCache()).length; } catch (_) {}
+    // crude monthly projection from the running average $/hit, extrapolated to ~30 hits/day
+    const perHit = s.hits ? costSavedUsd / s.hits : 0;
+    const projMonthlyUsd = Math.round(perHit * 30 * 30 * 1e4) / 1e4;
     return {
       hits: s.hits,
       misses: s.misses,
       hitRate: Math.round(hitRate * 1000) / 1000,
       tokensSaved: s.tokensSaved,
       costSavedUsd: Math.round(costSavedUsd * 1e6) / 1e6,
+      volatileSkips: s.volatileSkips || 0,   // time-sensitive answers kept fresh (never cached)
+      cacheEntries,                           // live cached prompts
+      avgTokensPerHit: s.hits ? Math.round(s.tokensSaved / s.hits) : 0,
+      projMonthlyUsd,                         // rough extrapolated monthly saving
       byMethod: s.byMethod,
-      recentSaves: s.recentSaves || []  // new field — rolling activity log
+      recentSaves: s.recentSaves || []
     };
   } catch (_) {
-    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0,
+    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, volatileSkips: 0,
+      cacheEntries: 0, avgTokensPerHit: 0, projMonthlyUsd: 0,
       byMethod: { fetch: 0, query: 0, compute: 0 }, recentSaves: [] };
   }
 }

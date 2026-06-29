@@ -7,56 +7,88 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#04080a; --panel:#0a141a; --bd:#143038; --txt:#cdeef0; --mut:#5d8088; --cy:#27e0ff; --grn:#22e3a0; --amber:#ffce4a; --mag:#ff5db1; }
+  :root{ --bg:#04080a; --panel:#0a141a; --panel2:#0c1820; --bd:#143038; --txt:#cdeef0; --mut:#5d8088; --cy:#27e0ff; --grn:#22e3a0; --amber:#ffce4a; --mag:#ff5db1; --vio:#9b8cff; }
   *{ box-sizing:border-box; }
-  body{ margin:0; min-height:100vh; background:
+  body{ margin:0; min-height:100vh; color:var(--txt); font-family:'JetBrains Mono',monospace;
+    background:
       radial-gradient(800px 500px at 80% -10%, #07262b 0%, transparent 55%),
       linear-gradient(180deg, rgba(4,8,10,.84), rgba(4,8,10,.95)),
       url('/assets/ui/aura-field.png') center / cover no-repeat fixed,
       repeating-linear-gradient(0deg, transparent 0 2px, rgba(39,224,255,.012) 2px 3px),
-      #04080a;
-    color:var(--txt); font-family:'JetBrains Mono',monospace; }
-  .wrap{ max-width:1000px; margin:0 auto; padding:26px 20px 50px; }
+      #04080a; }
+  .wrap{ max-width:1060px; margin:0 auto; padding:26px 20px 60px; }
   .top{ display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--bd); padding-bottom:14px; }
-  h1{ font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.22em; font-size:22px; margin:0; color:var(--cy); }
-  h1 small{ display:block; font-family:'JetBrains Mono'; font-size:10px; letter-spacing:.3em; color:var(--mut); margin-top:3px; }
+  h1{ font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.22em; font-size:23px; margin:0; color:var(--cy); }
+  h1 small{ display:block; font-size:10px; letter-spacing:.3em; color:var(--mut); margin-top:3px; }
   .top a{ font-size:11px; color:var(--mut); text-decoration:none; border:1px solid var(--bd); padding:6px 12px; border-radius:3px; }
-  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0; }
+  .live{ font-size:10px; color:var(--grn); margin-top:8px; } .live::before{ content:'●'; margin-right:5px; animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 50%{ opacity:.3; } }
+  /* hero stats */
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0 12px; }
   .card{ background:var(--panel); border:1px solid var(--bd); border-radius:6px; padding:16px; position:relative; overflow:hidden; }
   .card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cy); }
-  .card.g::before{ background:var(--grn);} .card.a::before{ background:var(--amber);} .card.m::before{ background:var(--mag); }
+  .card.g::before{ background:var(--grn);} .card.a::before{ background:var(--amber);} .card.m::before{ background:var(--mag);} .card.v::before{ background:var(--vio); }
   .card .k{ font-size:9px; letter-spacing:.2em; color:var(--mut); text-transform:uppercase; }
-  .card .v{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:34px; line-height:1.1; margin-top:6px; }
-  .card.g .v{ color:var(--grn);} .card.a .v{ color:var(--amber);} .card.m .v{ color:var(--mag);} .card .v{ color:var(--cy); }
+  .card .vv{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:34px; line-height:1.1; margin-top:6px; color:var(--cy); }
+  .card.g .vv{ color:var(--grn);} .card.a .vv{ color:var(--amber);} .card.m .vv{ color:var(--mag);} .card.v .vv{ color:var(--vio); }
   .card .s{ font-size:10px; color:var(--mut); margin-top:4px; }
+  /* sub metrics */
+  .sub{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  .mini{ background:var(--panel2); border:1px solid var(--bd); border-radius:6px; padding:11px 14px; }
+  .mini .k{ font-size:9px; letter-spacing:.16em; color:var(--mut); text-transform:uppercase; }
+  .mini .vv{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; margin-top:3px; }
+  /* try-it */
+  .box{ background:var(--panel); border:1px solid var(--bd); border-radius:6px; padding:16px; margin-bottom:14px; }
+  .box h2{ font-family:'Rajdhani',sans-serif; font-size:15px; letter-spacing:.14em; color:var(--cy); margin:0 0 4px; }
+  .box .h-sub{ font-size:11px; color:var(--mut); margin-bottom:12px; }
+  .tryrow{ display:flex; gap:8px; }
+  #tryIn{ flex:1; background:#06121a; border:1px solid var(--bd); color:var(--txt); border-radius:4px; padding:11px 13px; font-family:'JetBrains Mono'; font-size:13px; }
+  #tryIn:focus{ outline:none; border-color:var(--cy); }
+  #tryBtn{ background:linear-gradient(180deg,var(--cy),#159fc0); color:#02141a; border:none; border-radius:4px; padding:0 18px; font-weight:800; cursor:pointer; font-family:'JetBrains Mono'; }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .chip{ font-size:11px; border:1px solid var(--bd); color:var(--mut); background:#06121a; border-radius:14px; padding:4px 11px; cursor:pointer; transition:.15s; }
+  .chip:hover{ border-color:var(--grn); color:var(--grn); }
+  #tryOut{ margin-top:13px; font-size:12.5px; line-height:1.6; min-height:46px; border-left:2px solid var(--bd); padding:4px 0 4px 12px; }
+  #tryOut .free{ color:var(--grn); font-weight:600; } #tryOut .paid{ color:var(--amber); font-weight:600; }
+  #tryOut .ans{ color:var(--txt); } #tryOut .meta{ color:var(--mut); font-size:11px; }
   .cols{ display:grid; grid-template-columns:1fr 1.4fr; gap:14px; }
-  .box{ background:var(--panel); border:1px solid var(--bd); border-radius:6px; padding:16px; }
-  .box h2{ font-family:'Rajdhani',sans-serif; font-size:14px; letter-spacing:.14em; color:var(--cy); margin:0 0 12px; }
   .meth{ margin-bottom:11px; } .meth .lbl{ display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; }
-  .bar{ height:8px; background:#0c1c22; border-radius:4px; overflow:hidden; } .bar i{ display:block; height:100%; }
+  .bar{ height:8px; background:#0c1c22; border-radius:4px; overflow:hidden; } .bar i{ display:block; height:100%; transition:width .5s; }
   .feed{ max-height:300px; overflow-y:auto; }
   .ev{ display:flex; gap:10px; align-items:baseline; font-size:11px; padding:6px 0; border-bottom:1px solid #0c1c22; }
-  .ev .m{ font-weight:600; width:62px; } .ev .m.fetch{ color:var(--cy);} .ev .m.compute{ color:var(--grn);} .ev .m.query{ color:var(--amber); }
-  .ev .sn{ flex:1; color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ev .tk{ color:var(--txt); }
-  .note{ font-size:10px; color:var(--mut); margin-top:18px; line-height:1.6; }
-  .live{ font-size:10px; color:var(--grn); } .live::before{ content:'●'; margin-right:5px; animation:pulse 1.6s infinite; }
-  @keyframes pulse{ 50%{ opacity:.3; } }
-  @media(max-width:760px){ .grid{ grid-template-columns:1fr 1fr; } .cols{ grid-template-columns:1fr; } }
+  .ev .mm{ font-weight:600; width:62px; } .ev .mm.fetch{ color:var(--cy);} .ev .mm.compute{ color:var(--grn);} .ev .mm.query{ color:var(--amber); }
+  .ev .sn{ flex:1; color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .ev .tk{ color:var(--txt); }
+  .note{ font-size:10px; color:var(--mut); margin-top:14px; line-height:1.6; }
+  @media(max-width:760px){ .grid,.sub{ grid-template-columns:1fr 1fr; } .cols{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <h1>AURA<small>token-saver · live monitor</small></h1>
-    <div style="text-align:right"><a href="/">← dashboard</a><div class="live" id="live" style="margin-top:8px">refreshing every 5s</div></div>
+    <div style="text-align:right"><a href="/">← dashboard</a><div class="live" id="liveT">refreshing every 5s</div></div>
   </div>
 
   <div class="grid">
-    <div class="card g"><div class="k">Hit rate</div><div class="v" id="rate">—</div><div class="s">answers served without an LLM</div></div>
-    <div class="card"><div class="k">Tokens saved</div><div class="v" id="tok">—</div><div class="s" id="usd">—</div></div>
-    <div class="card a"><div class="k">Cache hits</div><div class="v" id="hits">—</div><div class="s">free answers delivered</div></div>
-    <div class="card m"><div class="k">Misses</div><div class="v" id="miss">—</div><div class="s">went to the LLM</div></div>
+    <div class="card g"><div class="k">Hit rate</div><div class="vv" id="rate">—</div><div class="s">answers served with no LLM</div></div>
+    <div class="card"><div class="k">Tokens saved</div><div class="vv" id="tok">—</div><div class="s" id="usd">—</div></div>
+    <div class="card a"><div class="k">Cache hits</div><div class="vv" id="hits">—</div><div class="s">free answers delivered</div></div>
+    <div class="card v"><div class="k">Projected / mo</div><div class="vv" id="proj">—</div><div class="s">at this rate (~30/day)</div></div>
+  </div>
+  <div class="sub">
+    <div class="mini"><div class="k">Cached prompts</div><div class="vv" id="entries" style="color:var(--cy)">—</div></div>
+    <div class="mini"><div class="k">Kept fresh (volatile)</div><div class="vv" id="vol" style="color:var(--amber)">—</div></div>
+    <div class="mini"><div class="k">Avg tokens / hit</div><div class="vv" id="avg" style="color:var(--grn)">—</div></div>
+    <div class="mini"><div class="k">LLM misses</div><div class="vv" id="miss" style="color:var(--mag)">—</div></div>
+  </div>
+
+  <!-- TRY IT -->
+  <div class="box">
+    <h2>TRY AURA</h2>
+    <div class="h-sub">Type anything. If AURA can answer it free (cache or local compute) you'll see a <span style="color:var(--grn)">FREE</span> result — otherwise it's a <span style="color:var(--amber)">PAID</span> miss that would hit the LLM. Time-sensitive prompts always pass through.</div>
+    <div class="tryrow"><input id="tryIn" placeholder="e.g.  average of 12, 18, 30   ·   255 in hex   ·   what is the current BTC price" /><button id="tryBtn">RUN</button></div>
+    <div class="chips" id="chips"></div>
+    <div id="tryOut">awaiting a prompt…</div>
   </div>
 
   <div class="cols">
@@ -65,7 +97,7 @@
       <div class="meth"><div class="lbl"><span style="color:var(--cy)">⌕ FETCH — exact cache</span><span id="mf">0</span></div><div class="bar"><i id="bf" style="background:var(--cy)"></i></div></div>
       <div class="meth"><div class="lbl"><span style="color:var(--grn)">∑ COMPUTE — solved locally</span><span id="mc">0</span></div><div class="bar"><i id="bc" style="background:var(--grn)"></i></div></div>
       <div class="meth"><div class="lbl"><span style="color:var(--amber)">≈ QUERY — fuzzy match</span><span id="mq">0</span></div><div class="bar"><i id="bq" style="background:var(--amber)"></i></div></div>
-      <div class="note">FETCH = same prompt seen before. COMPUTE = math/date/units solved with zero AI. QUERY = a close paraphrase reused. Time-sensitive prompts (prices, weather, news) are <b style="color:var(--txt)">never cached</b> so answers stay fresh.</div>
+      <div class="note">FETCH = identical prompt seen before. COMPUTE = math/stats/date/units/roman/base solved with <b style="color:var(--txt)">zero AI</b>. QUERY = a close paraphrase reused. Prices, weather, news &amp; "live/current" prompts are <b style="color:var(--txt)">never cached</b>.</div>
     </div>
     <div class="box">
       <h2>RECENT SAVES</h2>
@@ -79,23 +111,42 @@
 <script>
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString();
+const EXAMPLES=['average of 12, 18, 30','255 in hex','roman numeral for 2025','3 hours in minutes','20% off 80','days between 2024-01-01 and 2024-12-31','what is the current BTC price'];
+$('chips').innerHTML=EXAMPLES.map(e=>`<span class="chip">${e}</span>`).join('');
+$('chips').querySelectorAll('.chip').forEach(c=> c.onclick=()=>{ $('tryIn').value=c.textContent; runTry(); });
+
+async function runTry(){
+  const prompt=$('tryIn').value.trim(); if(!prompt){ return; }
+  $('tryOut').innerHTML='<span class="meta">routing…</span>';
+  try{
+    const r=await (await fetch('/api/aura/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})})).json();
+    if(r.hit){
+      $('tryOut').innerHTML=`<span class="free">✓ FREE — ${r.method.toUpperCase()}</span> · <span class="meta">~${r.savedTokensEst} tokens saved, $0</span><br><span class="ans">${String(r.answer).replace(/</g,'&lt;').slice(0,300)}</span>`;
+    }else{
+      $('tryOut').innerHTML=`<span class="paid">→ PAID — would hit the LLM</span><br><span class="meta">AURA can't answer this for free (it's not cached, not locally computable, or it's time-sensitive and must stay fresh).</span>`;
+    }
+    setTimeout(tick,400);
+  }catch(e){ $('tryOut').innerHTML='<span class="meta">error: '+e.message+'</span>'; }
+}
+$('tryBtn').onclick=runTry; $('tryIn').addEventListener('keydown',e=>{ if(e.key==='Enter')runTry(); });
+
 async function tick(){
-  let s; try{ s=await (await fetch('/api/aura/stats')).json(); }catch(e){ $('live').textContent='offline'; return; }
+  let s; try{ s=await (await fetch('/api/aura/stats')).json(); }catch(e){ $('liveT').textContent='offline'; return; }
   $('rate').textContent=Math.round((s.hitRate||0)*100)+'%';
-  $('tok').textContent=fmt(s.tokensSaved);
-  $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
-  $('hits').textContent=fmt(s.hits);
-  $('miss').textContent=fmt(s.misses);
+  $('tok').textContent=fmt(s.tokensSaved); $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
+  $('hits').textContent=fmt(s.hits); $('proj').textContent='$'+(s.projMonthlyUsd||0).toFixed(2);
+  $('entries').textContent=fmt(s.cacheEntries); $('vol').textContent=fmt(s.volatileSkips);
+  $('avg').textContent=fmt(s.avgTokensPerHit); $('miss').textContent=fmt(s.misses);
   const bm=s.byMethod||{fetch:0,compute:0,query:0}; const max=Math.max(1,bm.fetch,bm.compute,bm.query);
   $('mf').textContent=fmt(bm.fetch); $('bf').style.width=(bm.fetch/max*100)+'%';
   $('mc').textContent=fmt(bm.compute); $('bc').style.width=(bm.compute/max*100)+'%';
   $('mq').textContent=fmt(bm.query); $('bq').style.width=(bm.query/max*100)+'%';
   const rec=s.recentSaves||[];
-  $('feed').innerHTML = rec.length ? rec.map(r=>`<div class="ev"><span class="m ${r.method}">${(r.method||'').toUpperCase()}</span><span class="sn">${(r.snippet||'').replace(/</g,'&lt;')||'—'}</span><span class="tk">+${fmt(r.tokens)}t</span></div>`).join('')
-    : '<div class="ev"><span class="sn">no saves yet — run agents and they\'ll appear here</span></div>';
-  $('foot').textContent='AURA caches every agent run; identical prompts return instantly at $0. Stats persist across restarts.';
+  $('feed').innerHTML=rec.length?rec.map(r=>`<div class="ev"><span class="mm ${r.method}">${(r.method||'').toUpperCase()}</span><span class="sn">${(r.snippet||'').replace(/</g,'&lt;')||'—'}</span><span class="tk">+${fmt(r.tokens)}t</span></div>`).join('')
+    :'<div class="ev"><span class="sn">no saves yet — run agents or try a prompt above</span></div>';
+  $('foot').textContent='AURA caches every agent run; identical prompts return instantly at $0. '+fmt(s.cacheEntries)+' prompts cached · '+fmt(s.volatileSkips)+' kept fresh. Stats persist across restarts.';
 }
-tick(); setInterval(tick, 5000);
+tick(); setInterval(tick,5000);
 </script>
 </body>
 </html>
