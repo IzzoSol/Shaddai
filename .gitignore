@@ -93,3 +93,6 @@ backend/data/runtime-keys.json
 *.obj
 *.zip
 *.spz
+
+# payment links/keys (paste yours; keep private)
+backend/data/payment-config.json

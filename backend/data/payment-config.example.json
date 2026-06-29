@@ -1,0 +1,14 @@
+{
+  "_README": "Copy this file to payment-config.json (same folder) and paste your hosted checkout links. payment-config.json is gitignored. EASIEST path to real money: create Stripe Payment Links (dashboard.stripe.com > Payment Links, ~2 min each, no code, no secret key) — or Lemon Squeezy / Gumroad product links — and paste the URLs below. The Upgrade/Buy buttons then redirect buyers straight to checkout. Leave a value blank to keep that item 'coming soon'.",
+  "mode": "links",
+  "publishableKey": "",
+  "links": {
+    "builder": "",
+    "pro": "",
+    "alpha": "",
+    "credits_10": "",
+    "credits_25": "",
+    "credits_50": "",
+    "credits_100": ""
+  }
+}

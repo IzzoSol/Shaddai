@@ -688,6 +688,10 @@ app.use('/api/operatives', require('./lib/operatives-routes'));
 app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
 app.use('/api/billing', require('./billing-routes').router);
+// Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
+// (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
+try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }
+catch (e) { console.warn('[prod] stripe-routes failed:', e.message); }
 // Server-side LLM proxy — browser calls this so provider keys never ship to the client
 app.use('/api/llm', require('./llm-proxy-routes'));
 // ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)

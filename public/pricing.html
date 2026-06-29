@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI — Plans & Pricing</title>
+<style>
+  :root{ --bg:#05070e; --panel:#0a0e1a; --bd:#16233b; --txt:#dbeafe; --mut:#8298ba; --cy:#27e0ff; --gold:#ffcf4a; --grn:#00e5a0; --mag:#ff2bd6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(1100px 650px at 50% -8%,#0d1936,#05070e 62%); color:var(--txt); font-family:'Segoe UI',system-ui,sans-serif; }
+  a{ color:inherit; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:30px 20px 60px; }
+  .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .top .brand{ font-size:15px; letter-spacing:3px; color:var(--cy); text-transform:uppercase; font-weight:700; }
+  .top a.back{ font-size:12px; color:var(--mut); text-decoration:none; border:1px solid var(--bd); padding:6px 12px; border-radius:8px; }
+  .hero{ text-align:center; padding:18px 0 26px; }
+  .hero h1{ font-size:34px; margin:6px 0 8px; line-height:1.15; }
+  .hero h1 b{ color:var(--gold); }
+  .hero p{ color:var(--mut); font-size:15px; max-width:620px; margin:0 auto; }
+  #status{ text-align:center; font-size:12px; margin:8px 0 0; min-height:18px; }
+  /* tiers */
+  .tiers{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:26px 0; }
+  .tier{ background:var(--panel); border:1px solid var(--bd); border-radius:16px; padding:22px 20px; display:flex; flex-direction:column; position:relative; }
+  .tier.hot{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 12px 40px rgba(255,207,74,.12); }
+  .tier .pop{ position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--gold); color:#1a1200; font-size:10px; font-weight:800; letter-spacing:1px; padding:3px 12px; border-radius:20px; }
+  .tier h3{ font-size:17px; margin:2px 0 2px; letter-spacing:1px; }
+  .tier .blurb{ color:var(--mut); font-size:12px; min-height:32px; }
+  .tier .price{ font-size:38px; font-weight:800; margin:8px 0 0; }
+  .tier .price span{ font-size:13px; color:var(--mut); font-weight:500; }
+  .tier ul{ list-style:none; padding:0; margin:14px 0 18px; flex:1; }
+  .tier li{ font-size:13px; padding:5px 0 5px 22px; position:relative; color:#cfe0f5; }
+  .tier li::before{ content:'✦'; position:absolute; left:0; color:var(--grn); }
+  .buy{ width:100%; padding:12px; border:none; border-radius:10px; font-weight:800; letter-spacing:.5px; font-size:14px; cursor:pointer;
+        background:linear-gradient(135deg,var(--cy),var(--grn)); color:#021019; }
+  .tier.hot .buy{ background:linear-gradient(135deg,var(--gold),#ff9d2e); color:#1a1200; }
+  .buy:hover{ filter:brightness(1.08); }
+  /* credits */
+  .credits{ background:var(--panel); border:1px solid var(--bd); border-radius:16px; padding:20px; margin-top:6px; }
+  .credits h2{ font-size:16px; margin:0 0 4px; }
+  .credits p{ color:var(--mut); font-size:12px; margin:0 0 14px; }
+  .packs{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .pack{ background:#0c1424; border:1px solid var(--bd); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:.15s; }
+  .pack:hover{ border-color:var(--cy); }
+  .pack b{ font-size:20px; } .pack span{ display:block; font-size:10px; color:var(--mut); margin-top:2px; }
+  /* proof */
+  .proof{ margin-top:26px; }
+  .proof h2{ font-size:15px; color:var(--mut); text-align:center; letter-spacing:1px; margin-bottom:12px; }
+  .proofgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+  .p{ background:var(--panel); border:1px solid var(--bd); border-radius:10px; padding:12px 14px; }
+  .p b{ color:var(--cy); font-size:13px; } .p span{ display:block; font-size:11px; color:var(--mut); margin-top:3px; }
+  .note{ text-align:center; color:var(--mut); font-size:11px; margin-top:24px; }
+  @media(max-width:760px){ .tiers,.packs{ grid-template-columns:1fr; } .hero h1{ font-size:26px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">⬡ SHADDAI</div>
+    <a class="back" href="/">← Dashboard</a>
+  </div>
+
+  <div class="hero">
+    <h1>Put a council of <b>AI agents</b> to work.</h1>
+    <p>Forge custom agents, chain them into workflows, and let them run real tasks with real tools — markets, research, writing, security, code, design. Pick a plan and start shipping.</p>
+    <div id="status"></div>
+  </div>
+
+  <div class="tiers" id="tiers">loading plans…</div>
+
+  <div class="credits">
+    <h2>⚡ Pay-as-you-go credits</h2>
+    <p>Top up to run premium agent tasks (premium brains, image/clip generation) without a subscription.</p>
+    <div class="packs" id="packs"></div>
+  </div>
+
+  <div class="proof">
+    <h2>WHAT YOU GET — already live</h2>
+    <div class="proofgrid">
+      <div class="p"><b>7 council agents + custom forge</b><span>Build agents with real FLUX art + rigged 3D models</span></div>
+      <div class="p"><b>3,400+ real skills</b><span>Executable tool-chains: prices, web, files, security…</span></div>
+      <div class="p"><b>Workflow chains</b><span>Agent → agent, output feeds the next, real engine</span></div>
+      <div class="p"><b>Live market + news data</b><span>BTC/ETH/SOL, Fear&Greed, trending, headlines</span></div>
+      <div class="p"><b>3D world</b><span>Walk the grid, your agents stand in it</span></div>
+      <div class="p"><b>AURA token-saver</b><span>Caches LLM calls — real $ saved per request</span></div>
+    </div>
+  </div>
+
+  <div class="note" id="note"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const userId = (function(){ try { return JSON.parse(localStorage.getItem('shaddai_user')||'{}').email || 'guest'; } catch { return 'guest'; } })();
+let CFG = { enabled:false, mode:'off' };
+
+async function boot(){
+  try { CFG = await (await fetch('/api/stripe/config')).json(); } catch(e){}
+  if(!CFG.enabled){ $('status').innerHTML = '<span style="color:#ffcf4a">⚙ Checkout is being set up — buttons preview the flow.</span>'; }
+  let plans;
+  try { plans = await (await fetch('/api/stripe/plans')).json(); }
+  catch(e){ $('tiers').textContent = 'Could not load plans.'; return; }
+  renderTiers(plans.tiers||[]);
+  renderPacks(plans.credits||[]);
+  $('note').textContent = CFG.enabled
+    ? 'Secure checkout. Cancel anytime.'
+    : 'Owner: paste hosted checkout links in backend/data/payment-config.json to go live (Stripe Payment Links / Lemon Squeezy / Gumroad — no code).';
+}
+function renderTiers(tiers){
+  $('tiers').innerHTML = tiers.map(t => `
+    <div class="tier ${t.highlight?'hot':''}">
+      ${t.highlight?'<div class="pop">MOST POPULAR</div>':''}
+      <h3>${t.name}</h3>
+      <div class="blurb">${t.blurb||''}</div>
+      <div class="price">$${t.price}<span>/${t.interval}</span></div>
+      <ul>${(t.features||[]).map(f=>`<li>${f}</li>`).join('')}</ul>
+      <button class="buy" onclick="buy('${t.id}','${t.name}')">${t.checkout?'Get '+t.name:'Get '+t.name}</button>
+    </div>`).join('');
+}
+function renderPacks(packs){
+  $('packs').innerHTML = packs.map(c => `
+    <div class="pack" onclick="buy('${c.id}','${c.label}')">
+      <b>$${c.usd}</b><span>${c.label.replace('$'+c.usd+' ','')}</span>
+    </div>`).join('');
+}
+async function buy(item, label){
+  $('status').textContent = '⟳ opening checkout for ' + label + '…';
+  try{
+    const r = await fetch('/api/stripe/create-checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ item, userId }) });
+    const d = await r.json();
+    if(d.url){ window.location.href = d.url; return; }                // real hosted checkout
+    $('status').innerHTML = '<span style="color:#ffcf4a">🔔 '+label+' checkout isn\'t live yet — '+(d.message||'coming soon')+'</span>';
+  }catch(e){ $('status').innerHTML = '<span style="color:#ff6b81">Checkout error: '+e.message+'</span>'; }
+}
+boot();
+</script>
+</body>
+</html>
