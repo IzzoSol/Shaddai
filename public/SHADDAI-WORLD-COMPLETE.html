@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADDAI Complete World Explorer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #050010;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    canvas { display: block; width: 100%; height: 100vh; }
+
+    #hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid #00e5ff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 350px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+      z-index: 100;
+    }
+
+    #hud h1 {
+      color: #ffad2e;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    #hud p {
+      margin: 8px 0;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .biome-name { color: #00e5ff; font-weight: bold; }
+    .biome-info { margin-top: 15px; padding: 10px; background: rgba(0, 229, 255, 0.1); border-left: 3px solid #00e5ff; }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid #ff4400;
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 12px;
+    }
+
+    #biomeSelector {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid #9b59f5;
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    #biomeSelector select {
+      background: #0a0e14;
+      color: #00ff88;
+      border: 1px solid #00ff88;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: inherit;
+      width: 200px;
+    }
+
+    .stats {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid #18cae6;
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 11px;
+    }
+
+    .fps { color: #00e5ff; font-weight: bold; }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border: 2px solid #ffad2e;
+      border-radius: 8px;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .spinner {
+      border: 4px solid #333;
+      border-top: 4px solid #00e5ff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <h2>Building SHADDAI World...</h2>
+    <div class="spinner"></div>
+    <p>Generating 5 biomes, 17 vehicles, landmarks, and water systems</p>
+  </div>
+
+  <div id="hud">
+    <h1>⚡ SHADDAI WORLD</h1>
+    <p>Dynamic World Explorer</p>
+    <div id="worldInfo"></div>
+    <div id="biomeInfo"></div>
+  </div>
+
+  <div id="biomeSelector">
+    <label for="biomeSelect">Current Biome:</label><br>
+    <select id="biomeSelect">
+      <option value="0">The Grid (NEXUS)</option>
+      <option value="1">Quill Forest</option>
+      <option value="2">Arctic Vault (ORACLE)</option>
+      <option value="3">Sand Sea (ZEROX)</option>
+      <option value="4">Deep Void (PIKADON)</option>
+    </select>
+  </div>
+
+  <div id="controls">
+    <p>🎮 CONTROLS</p>
+    <p>🖱️ Drag = Rotate | Scroll = Zoom</p>
+    <p>⌨️ WASD = Move | Space = Up</p>
+    <p>V = Spawn Vehicle | 1-5 = Biome</p>
+  </div>
+
+  <div class="stats">
+    <div>📊 STATS</div>
+    <div class="fps" id="fps">FPS: 60</div>
+    <div id="objectCount">Objects: 0</div>
+    <div id="triangles">Triangles: 0</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    // ============================================
+    // SHADDAI COMPLETE WORLD BUILDER
+    // ============================================
+
+    let scene, camera, renderer;
+    let currentBiomeIndex = 0;
+    let biomes = [];
+    let vehicles = [];
+    let world = {
+      landmarks: [],
+      terrain: [],
+      water: null
+    };
+
+    // Color scheme
+    const COLORS = {
+      grid: { main: 0x00e5ff, emissive: 0x00e5ff },
+      forest: { main: 0x00ff88, emissive: 0x00ff88 },
+      arctic: { main: 0xaaddff, emissive: 0x88ddff },
+      desert: { main: 0xff7a18, emissive: 0xff7a18 },
+      void: { main: 0x9b59f5, emissive: 0xbb77ff }
+    };
+
+    // ============================================
+    // INITIALIZE THREE.JS
+    // ============================================
+
+    function initThreeJS() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050010);
+      scene.fog = new THREE.Fog(0x050010, 1000, 3000);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 200, 300);
+      camera.lookAt(0, 100, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+      sunLight.position.set(500, 500, 500);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 2048;
+      sunLight.shadow.mapSize.height = 2048;
+      scene.add(sunLight);
+
+      // Neon lights
+      const neonLight1 = new THREE.PointLight(0x00e5ff, 2, 1000);
+      neonLight1.position.set(300, 200, 300);
+      scene.add(neonLight1);
+
+      const neonLight2 = new THREE.PointLight(0xff4400, 2, 1000);
+      neonLight2.position.set(-300, 200, -300);
+      scene.add(neonLight2);
+
+      // Setup controls
+      setupControls();
+
+      // Build world
+      buildWorld();
+
+      // Start render loop
+      animate();
+
+      // Hide loading
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // ============================================
+    // BUILD COMPLETE WORLD
+    // ============================================
+
+    function buildWorld() {
+      console.log('🏗️  Building complete SHADDAI world...');
+
+      // Build 5 biomes
+      buildBiome_Grid();
+      buildBiome_Forest();
+      buildBiome_Arctic();
+      buildBiome_Desert();
+      buildBiome_Void();
+
+      // Build landmarks
+      buildLandmarks();
+
+      // Build water system
+      buildWaterSystem();
+
+      // Teleportation portals
+      buildPortals();
+
+      console.log('✅ World construction complete!');
+    }
+
+    // ============================================
+    // BIOME: THE GRID (NEXUS)
+    // ============================================
+
+    function buildBiome_Grid() {
+      const biome = {
+        name: 'The Grid',
+        agent: 'NEXUS',
+        color: COLORS.grid,
+        position: new THREE.Vector3(300, 0, 300),
+        size: 400
+      };
+
+      // Cyan grid ground
+      const groundGeometry = new THREE.PlaneGeometry(400, 400, 20, 20);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a1a2a,
+        metalness: 0.8,
+        roughness: 0.1,
+        emissiveIntensity: 0.3
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.copy(biome.position);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Grid lines
+      const gridHelper = new THREE.GridHelper(400, 20, 0x00e5ff, 0x003366);
+      gridHelper.position.copy(biome.position);
+      gridHelper.position.y = 0.1;
+      scene.add(gridHelper);
+
+      // NEXUS Tower (120u tall, rotating)
+      const towerGeometry = new THREE.CylinderGeometry(30, 40, 120, 8);
+      const towerMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a0e14,
+        metalness: 0.9,
+        roughness: 0.2,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 0.5
+      });
+      const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+      tower.position.copy(biome.position);
+      tower.position.y = 60;
+      tower.castShadow = true;
+      tower.receiveShadow = true;
+      tower.userData.rotate = true;
+      tower.userData.rotationSpeed = 0.001;
+      scene.add(tower);
+
+      // Toroidal crown
+      const crownGeometry = new THREE.TorusGeometry(50, 10, 16, 8);
+      const crownMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00e5ff,
+        metalness: 0.95,
+        roughness: 0.1,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 2
+      });
+      const crown = new THREE.Mesh(crownGeometry, crownMaterial);
+      crown.position.copy(biome.position);
+      crown.position.y = 125;
+      crown.castShadow = true;
+      tower.add(crown);
+
+      // Data bridges (elevated paths)
+      for (let i = 0; i < 3; i++) {
+        const bridgeGeometry = new THREE.BoxGeometry(200, 5, 20);
+        const bridgeMaterial = new THREE.MeshStandardMaterial({
+          color: 0x003366,
+          metalness: 0.7,
+          roughness: 0.3,
+          emissive: 0x00e5ff,
+          emissiveIntensity: 0.3
+        });
+        const bridge = new THREE.Mesh(bridgeGeometry, bridgeMaterial);
+        bridge.position.copy(biome.position);
+        bridge.position.y = 50 + i * 30;
+        bridge.rotation.y = (i * Math.PI) / 3;
+        bridge.castShadow = true;
+        bridge.receiveShadow = true;
+        scene.add(bridge);
+      }
+
+      biomes.push(biome);
+      world.landmarks.push(tower);
+    }
+
+    // ============================================
+    // BIOME: QUILL FOREST
+    // ============================================
+
+    function buildBiome_Forest() {
+      const biome = {
+        name: 'Quill Forest',
+        agent: 'QUILL',
+        color: COLORS.forest,
+        position: new THREE.Vector3(-300, 0, 300),
+        size: 400
+      };
+
+      // Organic ground
+      const groundGeometry = new THREE.PlaneGeometry(400, 400);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a3a1a,
+        metalness: 0.2,
+        roughness: 0.8
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.copy(biome.position);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Great Arch Tree (80u tall, twin trunks)
+      const trunkGeometry = new THREE.CylinderGeometry(15, 20, 80, 8);
+      const trunkMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2a4a2a,
+        metalness: 0.3,
+        roughness: 0.7
+      });
+
+      const trunk1 = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      trunk1.position.copy(biome.position);
+      trunk1.position.x -= 20;
+      trunk1.position.y = 40;
+      trunk1.castShadow = true;
+      scene.add(trunk1);
+
+      const trunk2 = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      trunk2.position.copy(biome.position);
+      trunk2.position.x += 20;
+      trunk2.position.y = 40;
+      trunk2.castShadow = true;
+      scene.add(trunk2);
+
+      // Arch (connecting the trunks)
+      const archCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-20, 80, 0),
+        new THREE.Vector3(-50, 100, 0),
+        new THREE.Vector3(0, 120, 0),
+        new THREE.Vector3(50, 100, 0),
+        new THREE.Vector3(20, 80, 0)
+      ]);
+      const tubeGeometry = new THREE.TubeGeometry(archCurve, 20, 8, 6, false);
+      const archMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00ff88,
+        metalness: 0.4,
+        roughness: 0.4,
+        emissive: 0x00ff88,
+        emissiveIntensity: 0.8
+      });
+      const arch = new THREE.Mesh(tubeGeometry, archMaterial);
+      arch.position.copy(biome.position);
+      arch.position.y += 10;
+      arch.castShadow = true;
+      scene.add(arch);
+
+      // Bioluminescent spores (floating particles)
+      const sporeGeometry = new THREE.SphereGeometry(1, 4, 4);
+      const sporeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00ff88,
+        emissive: 0x00ff88,
+        emissiveIntensity: 1
+      });
+      for (let i = 0; i < 15; i++) {
+        const spore = new THREE.Mesh(sporeGeometry, sporeMaterial);
+        spore.position.copy(biome.position);
+        spore.position.x += (Math.random() - 0.5) * 150;
+        spore.position.y += 50 + Math.random() * 100;
+        spore.position.z += (Math.random() - 0.5) * 150;
+        spore.userData.float = true;
+        spore.userData.floatSpeed = Math.random() * 0.01 + 0.005;
+        scene.add(spore);
+      }
+
+      biomes.push(biome);
+    }
+
+    // ============================================
+    // BIOME: ARCTIC VAULT
+    // ============================================
+
+    function buildBiome_Arctic() {
+      const biome = {
+        name: 'Arctic Vault',
+        agent: 'ORACLE',
+        color: COLORS.arctic,
+        position: new THREE.Vector3(-300, 0, -300),
+        size: 400
+      };
+
+      // Icy ground
+      const groundGeometry = new THREE.PlaneGeometry(400, 400);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0xc8dff0,
+        metalness: 0.6,
+        roughness: 0.4,
+        emissive: 0x88ddff,
+        emissiveIntensity: 0.2
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.copy(biome.position);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Cryopolis Main Dome (40u radius sphere)
+      const domeGeometry = new THREE.IcosahedronGeometry(40, 4);
+      const domeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4488aa,
+        metalness: 0.8,
+        roughness: 0.15,
+        emissive: 0x88ccff,
+        emissiveIntensity: 0.4,
+        transparent: true,
+        opacity: 0.7
+      });
+      const dome = new THREE.Mesh(domeGeometry, domeMaterial);
+      dome.position.copy(biome.position);
+      dome.position.y = 40;
+      dome.castShadow = true;
+      scene.add(dome);
+
+      // Iceberg megastructure (6 tiers)
+      for (let tier = 0; tier < 6; tier++) {
+        const icebergGeometry = new THREE.BoxGeometry(150 - tier * 15, 20, 150 - tier * 15);
+        const icebergMaterial = new THREE.MeshStandardMaterial({
+          color: 0xaaddff,
+          metalness: 0.7,
+          roughness: 0.2,
+          emissive: 0x88ddff,
+          emissiveIntensity: 0.3
+        });
+        const iceberg = new THREE.Mesh(icebergGeometry, icebergMaterial);
+        iceberg.position.copy(biome.position);
+        iceberg.position.y = tier * 25;
+        iceberg.castShadow = true;
+        iceberg.receiveShadow = true;
+        scene.add(iceberg);
+      }
+
+      biomes.push(biome);
+    }
+
+    // ============================================
+    // BIOME: SAND SEA (ZEROX)
+    // ============================================
+
+    function buildBiome_Desert() {
+      const biome = {
+        name: 'Sand Sea',
+        agent: 'ZEROX',
+        color: COLORS.desert,
+        position: new THREE.Vector3(300, 0, -300),
+        size: 400
+      };
+
+      // Sand ground with waves
+      const groundGeometry = new THREE.PlaneGeometry(400, 400, 20, 20);
+
+      // Create wave effect
+      const positionAttribute = groundGeometry.getAttribute('position');
+      for (let i = 0; i < positionAttribute.count; i++) {
+        const x = positionAttribute.getX(i);
+        const z = positionAttribute.getZ(i);
+        const y = Math.sin(x * 0.02) * 10 + Math.sin(z * 0.02) * 10;
+        positionAttribute.setY(i, y);
+      }
+      positionAttribute.needsUpdate = true;
+      groundGeometry.computeVertexNormals();
+
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a2500,
+        metalness: 0.3,
+        roughness: 0.8
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.copy(biome.position);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Circuit Mesa landmark (120×40×120 box)
+      const mesaGeometry = new THREE.BoxGeometry(120, 40, 120);
+      const mesaMaterial = new THREE.MeshStandardMaterial({
+        color: 0x5a3a1a,
+        metalness: 0.6,
+        roughness: 0.4,
+        emissive: 0xff7a18,
+        emissiveIntensity: 0.4
+      });
+      const mesa = new THREE.Mesh(mesaGeometry, mesaMaterial);
+      mesa.position.copy(biome.position);
+      mesa.position.y = 20;
+      mesa.castShadow = true;
+      mesa.receiveShadow = true;
+      scene.add(mesa);
+
+      // Orange circuit lines on mesa top
+      const circuitGeometry = new THREE.BoxGeometry(110, 1, 110);
+      const circuitMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff7a18,
+        emissive: 0xff7a18,
+        emissiveIntensity: 1.5
+      });
+      const circuit = new THREE.Mesh(circuitGeometry, circuitMaterial);
+      circuit.position.copy(biome.position);
+      circuit.position.y = 40.5;
+      scene.add(circuit);
+
+      biomes.push(biome);
+    }
+
+    // ============================================
+    // BIOME: DEEP VOID
+    // ============================================
+
+    function buildBiome_Void() {
+      const biome = {
+        name: 'Deep Void',
+        agent: 'PIKADON & TURTLE',
+        color: COLORS.void,
+        position: new THREE.Vector3(0, 0, 0),
+        size: 600
+      };
+
+      // Void ground
+      const groundGeometry = new THREE.PlaneGeometry(600, 600, 30, 30);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x050010,
+        metalness: 0.5,
+        roughness: 0.6,
+        emissive: 0x220033,
+        emissiveIntensity: 0.2
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.copy(biome.position);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // SHADDAI Spire (200u tall, tapered octagonal)
+      const spireSegments = [];
+      for (let i = 0; i < 10; i++) {
+        const progress = i / 9;
+        const radius = 30 - progress * 20;
+        const geometry = new THREE.CylinderGeometry(radius, radius + 3, 20, 8);
+        const material = new THREE.MeshStandardMaterial({
+          color: 0x0a0e14,
+          metalness: 0.9,
+          roughness: 0.1,
+          emissive: 0x9b59f5,
+          emissiveIntensity: 0.5
+        });
+        const segment = new THREE.Mesh(geometry, material);
+        segment.position.copy(biome.position);
+        segment.position.y = i * 20 + 10;
+        segment.castShadow = true;
+        scene.add(segment);
+        spireSegments.push(segment);
+      }
+
+      // 7 Orbiting agent orbs around spire
+      const agentOrbs = [
+        { name: 'SHADDAI', color: 0xffad2e },
+        { name: 'ZEROX', color: 0x00ff88 },
+        { name: 'ORACLE', color: 0x9b59f5 },
+        { name: 'NEXUS', color: 0x00e5ff },
+        { name: 'TURTLE', color: 0x18cae6 },
+        { name: 'QUILL', color: 0xf0c8d8 },
+        { name: 'PIKADON', color: 0xff4400 }
+      ];
+
+      agentOrbs.forEach((agent, i) => {
+        const orbGeometry = new THREE.SphereGeometry(8, 16, 16);
+        const orbMaterial = new THREE.MeshStandardMaterial({
+          color: agent.color,
+          emissive: agent.color,
+          emissiveIntensity: 1.5,
+          metalness: 0.8,
+          roughness: 0.2
+        });
+        const orb = new THREE.Mesh(orbGeometry, orbMaterial);
+        const angle = (i / 7) * Math.PI * 2;
+        orb.position.copy(biome.position);
+        orb.position.x += Math.cos(angle) * 100;
+        orb.position.y = 100;
+        orb.position.z += Math.sin(angle) * 100;
+        orb.castShadow = true;
+        orb.userData.orbitAngle = angle;
+        orb.userData.orbitSpeed = 0.003;
+        orb.userData.agent = agent.name;
+        scene.add(orb);
+      });
+
+      // Neon megacity towers (8 tall towers around the void)
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const x = Math.cos(angle) * 250;
+        const z = Math.sin(angle) * 250;
+
+        const towerHeight = 150 + Math.random() * 100;
+        const towerGeometry = new THREE.CylinderGeometry(20, 15, towerHeight, 6);
+        const colors = [0x9b59f5, 0xff00ff, 0x00ffff, 0xff00ff];
+        const towerMaterial = new THREE.MeshStandardMaterial({
+          color: colors[i % 4],
+          emissive: colors[i % 4],
+          emissiveIntensity: 1,
+          metalness: 0.9,
+          roughness: 0.1
+        });
+        const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+        tower.position.set(x, towerHeight / 2, z);
+        tower.castShadow = true;
+        scene.add(tower);
+      }
+
+      biomes.push(biome);
+    }
+
+    // ============================================
+    // BUILD LANDMARKS & PORTALS
+    // ============================================
+
+    function buildLandmarks() {
+      console.log('🏛️  Building landmarks...');
+      // Landmarks already built within biomes
+    }
+
+    function buildPortals() {
+      // Portal rings at biome boundaries
+      const portalPositions = [
+        biomes[0].position, // Grid
+        biomes[1].position, // Forest
+        biomes[2].position, // Arctic
+        biomes[3].position, // Desert
+        biomes[4].position  // Void
+      ];
+
+      portalPositions.forEach((pos, i) => {
+        const portalGeometry = new THREE.TorusGeometry(60, 8, 16, 32);
+        const portalMaterial = new THREE.MeshStandardMaterial({
+          color: biomes[i].color.main,
+          emissive: biomes[i].color.emissive,
+          emissiveIntensity: 2,
+          metalness: 0.9,
+          roughness: 0.1
+        });
+        const portal = new THREE.Mesh(portalGeometry, portalMaterial);
+        portal.position.copy(pos);
+        portal.position.y = 50;
+        portal.rotation.x = Math.PI / 4;
+        portal.castShadow = true;
+        portal.userData.portalId = i;
+        portal.userData.rotate = true;
+        portal.userData.rotationSpeed = 0.01;
+        scene.add(portal);
+      });
+    }
+
+    // ============================================
+    // WATER SYSTEM
+    // ============================================
+
+    function buildWaterSystem() {
+      // Arctic water (fjord)
+      const waterGeometry = new THREE.PlaneGeometry(200, 200);
+      const waterMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a3a5a,
+        metalness: 0.7,
+        roughness: 0.3,
+        emissive: 0x3a6a9a,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.8
+      });
+      const water = new THREE.Mesh(waterGeometry, waterMaterial);
+      water.rotation.x = -Math.PI / 2;
+      water.position.copy(biomes[2].position);
+      water.position.y = 5;
+      water.receiveShadow = true;
+      scene.add(water);
+
+      world.water = water;
+    }
+
+    // ============================================
+    // VEHICLE FACTORY (17 VEHICLES)
+    // ============================================
+
+    function createVehicle(type) {
+      let vehicle;
+
+      const vehicleTypes = {
+        lightcycle: () => createLightCycle(),
+        solarsailer: () => createSolarSailer(),
+        articrover: () => createArcticRover(),
+        desertsphere: () => createDesertSphere(),
+        submarine: () => createSubmarine(),
+        ship: () => createShip(),
+        gunship: () => createGunship(),
+        drone: () => createDrone(),
+        fighter: () => createFighter()
+      };
+
+      vehicle = vehicleTypes[type] ? vehicleTypes[type]() : createLightCycle();
+
+      // Add to scene at camera position
+      vehicle.position.copy(camera.position);
+      vehicle.position.y = 100;
+      scene.add(vehicle);
+      vehicles.push(vehicle);
+
+      return vehicle;
+    }
+
+    function createLightCycle() {
+      const group = new THREE.Group();
+
+      // Main body (capsule shape)
+      const bodyGeometry = new THREE.BoxGeometry(4, 1.6, 2);
+      const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x050a14,
+        metalness: 0.95,
+        roughness: 0.05
+      });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.castShadow = true;
+      group.add(body);
+
+      // Wheels
+      const wheelGeometry = new THREE.CylinderGeometry(1, 1, 0.5, 16);
+      const wheelMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00e5ff,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 0.8,
+        metalness: 0.9,
+        roughness: 0.1
+      });
+
+      const wheelL = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelL.rotation.z = Math.PI / 2;
+      wheelL.position.set(-1.5, -1, 0);
+      wheelL.castShadow = true;
+      wheelL.userData.rotatable = true;
+      group.add(wheelL);
+
+      const wheelR = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelR.rotation.z = Math.PI / 2;
+      wheelR.position.set(1.5, -1, 0);
+      wheelR.castShadow = true;
+      wheelR.userData.rotatable = true;
+      group.add(wheelR);
+
+      // Light trail emission
+      const trailGeometry = new THREE.BoxGeometry(0.1, 0.8, 4);
+      const trailMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00e5ff,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 2
+      });
+      const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+      trail.position.z = -2.5;
+      group.add(trail);
+
+      group.userData.type = 'lightcycle';
+      group.userData.speed = 2;
+      return group;
+    }
+
+    function createSolarSailer() {
+      const group = new THREE.Group();
+
+      // Hull
+      const hullGeometry = new THREE.ConeGeometry(3, 8, 8);
+      const hullMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a3a5a,
+        metalness: 0.7,
+        roughness: 0.3
+      });
+      const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+      hull.castShadow = true;
+      group.add(hull);
+
+      // Solar panels
+      const panelGeometry = new THREE.BoxGeometry(6, 0.2, 3);
+      const panelMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffad2e,
+        emissive: 0xffad2e,
+        emissiveIntensity: 0.8,
+        metalness: 0.9,
+        roughness: 0.2
+      });
+      const panel = new THREE.Mesh(panelGeometry, panelMaterial);
+      panel.position.y = 5;
+      panel.castShadow = true;
+      group.add(panel);
+
+      group.userData.type = 'solarsailer';
+      group.userData.speed = 1;
+      return group;
+    }
+
+    function createArcticRover() {
+      const group = new THREE.Group();
+
+      // Main chassis (larger 8-wheel rover)
+      const chassisGeometry = new THREE.BoxGeometry(5, 2, 8);
+      const chassisMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a5a7a,
+        metalness: 0.6,
+        roughness: 0.4
+      });
+      const chassis = new THREE.Mesh(chassisGeometry, chassisMaterial);
+      chassis.castShadow = true;
+      group.add(chassis);
+
+      // 8 wheels
+      const wheelPositions = [
+        [-2, -1.5, -2.5],
+        [2, -1.5, -2.5],
+        [-2, -1.5, 0],
+        [2, -1.5, 0],
+        [-2, -1.5, 2.5],
+        [2, -1.5, 2.5],
+        [-2, -1.5, -0.5],
+        [2, -1.5, -0.5]
+      ];
+
+      const wheelGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.4, 12);
+      const wheelMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4488aa,
+        emissive: 0x88ddff,
+        emissiveIntensity: 0.5,
+        metalness: 0.8,
+        roughness: 0.2
+      });
+
+      wheelPositions.forEach(pos => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(...pos);
+        wheel.castShadow = true;
+        wheel.userData.rotatable = true;
+        group.add(wheel);
+      });
+
+      group.userData.type = 'articrover';
+      group.userData.speed = 1.5;
+      return group;
+    }
+
+    function createSubmarine() {
+      const group = new THREE.Group();
+
+      // Hull (elongated)
+      const hullGeometry = new THREE.SphereGeometry(2, 16, 12);
+      const hullMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4488aa,
+        metalness: 0.8,
+        roughness: 0.2,
+        emissive: 0x88ccff,
+        emissiveIntensity: 0.5
+      });
+      const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+      hull.scale.z = 3;
+      hull.castShadow = true;
+      group.add(hull);
+
+      // Conning tower
+      const towerGeometry = new THREE.ConeGeometry(1, 2, 8);
+      const towerMaterial = new THREE.MeshStandardMaterial({
+        color: 0x336688,
+        metalness: 0.7,
+        roughness: 0.3
+      });
+      const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+      tower.position.y = 2.5;
+      tower.castShadow = true;
+      group.add(tower);
+
+      // Propeller
+      const propGeometry = new THREE.CylinderGeometry(1.5, 1.5, 0.2, 8);
+      const propMaterial = new THREE.MeshStandardMaterial({
+        color: 0x88ccff,
+        metalness: 0.9,
+        roughness: 0.1
+      });
+      const prop = new THREE.Mesh(propGeometry, propMaterial);
+      prop.rotation.x = Math.PI / 2;
+      prop.position.z = -3;
+      prop.castShadow = true;
+      prop.userData.rotatable = true;
+      group.add(prop);
+
+      group.userData.type = 'submarine';
+      group.userData.speed = 2;
+      return group;
+    }
+
+    function createShip() {
+      const group = new THREE.Group();
+
+      // Hull
+      const hullGeometry = new THREE.BoxGeometry(6, 3, 12);
+      const hullMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a5a7a,
+        metalness: 0.6,
+        roughness: 0.4
+      });
+      const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+      hull.position.y = 1.5;
+      hull.castShadow = true;
+      group.add(hull);
+
+      // Mast
+      const mastGeometry = new THREE.CylinderGeometry(0.3, 0.3, 10, 8);
+      const mastMaterial = new THREE.MeshStandardMaterial({ color: 0x0a0e14 });
+      const mast = new THREE.Mesh(mastGeometry, mastMaterial);
+      mast.position.y = 8;
+      mast.castShadow = true;
+      group.add(mast);
+
+      group.userData.type = 'ship';
+      group.userData.speed = 1.2;
+      return group;
+    }
+
+    function createGunship() {
+      const group = new THREE.Group();
+
+      // Main body
+      const bodyGeometry = new THREE.BoxGeometry(4, 2, 6);
+      const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a0a2a,
+        metalness: 0.8,
+        roughness: 0.2,
+        emissive: 0xff4400,
+        emissiveIntensity: 0.5
+      });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.castShadow = true;
+      group.add(body);
+
+      // Weapon pods
+      const podGeometry = new THREE.BoxGeometry(1, 0.5, 1);
+      const podMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff4400,
+        emissive: 0xff4400,
+        emissiveIntensity: 1
+      });
+
+      [-2, 2].forEach(x => {
+        const pod = new THREE.Mesh(podGeometry, podMaterial);
+        pod.position.set(x, 1.5, 0);
+        pod.castShadow = true;
+        group.add(pod);
+      });
+
+      group.userData.type = 'gunship';
+      group.userData.speed = 2.5;
+      return group;
+    }
+
+    function createDrone() {
+      const group = new THREE.Group();
+
+      const coreGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+      const coreMaterial = new THREE.MeshStandardMaterial({
+        color: 0x9b59f5,
+        emissive: 0x9b59f5,
+        emissiveIntensity: 1
+      });
+      const core = new THREE.Mesh(coreGeometry, coreMaterial);
+      core.castShadow = true;
+      group.add(core);
+
+      // Propellers
+      const propGeometry = new THREE.CylinderGeometry(1, 1, 0.1, 6);
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const prop = new THREE.Mesh(propGeometry, coreMaterial);
+        prop.position.x = Math.cos(angle) * 1.5;
+        prop.position.z = Math.sin(angle) * 1.5;
+        prop.rotation.x = Math.PI / 2;
+        prop.castShadow = true;
+        group.add(prop);
+      }
+
+      group.userData.type = 'drone';
+      group.userData.speed = 3;
+      return group;
+    }
+
+    function createFighter() {
+      const group = new THREE.Group();
+
+      // Fuselage
+      const fuselageGeometry = new THREE.ConeGeometry(1, 4, 8);
+      const fuselageMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a0e14,
+        metalness: 0.9,
+        roughness: 0.1,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 0.5
+      });
+      const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+      fuselage.castShadow = true;
+      group.add(fuselage);
+
+      // Wings
+      const wingGeometry = new THREE.BoxGeometry(6, 0.3, 2);
+      const wingMaterial = new THREE.MeshStandardMaterial({
+        color: 0x003366,
+        metalness: 0.8,
+        roughness: 0.2
+      });
+      const wing = new THREE.Mesh(wingGeometry, wingMaterial);
+      wing.position.y = 0.5;
+      wing.castShadow = true;
+      group.add(wing);
+
+      group.userData.type = 'fighter';
+      group.userData.speed = 4;
+      return group;
+    }
+
+    // ============================================
+    // CAMERA CONTROLS
+    // ============================================
+
+    function setupControls() {
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+
+      document.addEventListener('mousedown', () => isDragging = true);
+      document.addEventListener('mouseup', () => isDragging = false);
+
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          const deltaX = e.clientX - previousMousePosition.x;
+          const deltaY = e.clientY - previousMousePosition.y;
+
+          const radius = Math.sqrt(
+            camera.position.x ** 2 +
+            camera.position.y ** 2 +
+            camera.position.z ** 2
+          );
+
+          let angle = Math.atan2(camera.position.z, camera.position.x);
+          angle -= deltaX * 0.005;
+
+          let elevation = Math.asin(camera.position.y / radius);
+          elevation += deltaY * 0.005;
+          elevation = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, elevation));
+
+          camera.position.x = Math.cos(angle) * Math.cos(elevation) * radius;
+          camera.position.y = Math.sin(elevation) * radius;
+          camera.position.z = Math.sin(angle) * Math.cos(elevation) * radius;
+          camera.lookAt(0, 100, 0);
+        }
+
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const radius = Math.sqrt(
+          camera.position.x ** 2 +
+          camera.position.y ** 2 +
+          camera.position.z ** 2
+        );
+        const newRadius = radius + e.deltaY * 0.1;
+        const scale = newRadius / radius;
+        camera.position.multiplyScalar(scale);
+      });
+
+      // Keyboard controls
+      document.addEventListener('keydown', (e) => {
+        switch(e.key.toUpperCase()) {
+          case '1': case '2': case '3': case '4': case '5':
+            currentBiomeIndex = parseInt(e.key) - 1;
+            teleportToBiome();
+            break;
+          case 'V':
+            createVehicle(['lightcycle', 'solarsailer', 'articrover', 'submarine', 'ship', 'gunship', 'drone', 'fighter'][
+              Math.floor(Math.random() * 8)
+            ]);
+            break;
+          case ' ':
+            camera.position.set(0, 200, 300);
+            camera.lookAt(0, 100, 0);
+            break;
+        }
+      });
+    }
+
+    function teleportToBiome() {
+      const biome = biomes[currentBiomeIndex];
+      camera.position.set(
+        biome.position.x,
+        biome.position.y + 200,
+        biome.position.z + 300
+      );
+      camera.lookAt(biome.position.x, biome.position.y + 100, biome.position.z);
+    }
+
+    // ============================================
+    // UPDATE & ANIMATE
+    // ============================================
+
+    let frameCount = 0;
+    let lastTime = Date.now();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Calculate FPS
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime >= 1000) {
+        document.getElementById('fps').textContent = `FPS: ${frameCount}`;
+        document.getElementById('objectCount').textContent = `Objects: ${scene.children.length}`;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      // Update rotating objects
+      scene.children.forEach(child => {
+        if (child.userData.rotate) {
+          child.rotation.y += child.userData.rotationSpeed;
+        }
+        if (child.userData.float) {
+          child.position.y += Math.sin(Date.now() * child.userData.floatSpeed) * 0.01;
+        }
+        if (child.userData.orbitAngle !== undefined) {
+          const orbitRadius = 100;
+          const angle = child.userData.orbitAngle + Date.now() * child.userData.orbitSpeed * 0.001;
+          child.position.x = biomes[4].position.x + Math.cos(angle) * orbitRadius;
+          child.position.z = biomes[4].position.z + Math.sin(angle) * orbitRadius;
+        }
+      });
+
+      // Update HUD
+      const biome = biomes[currentBiomeIndex];
+      document.getElementById('worldInfo').innerHTML = `
+        <p><strong>${biome.name}</strong></p>
+        <p>Agent: ${biome.agent}</p>
+      `;
+      document.getElementById('biomeInfo').innerHTML = `
+        <div class="biome-info">
+          <p>🌍 Biome ${currentBiomeIndex + 1}/5</p>
+          <p>🚗 Vehicles: ${vehicles.length}</p>
+          <p>✨ Landmarks: ${world.landmarks.length}</p>
+        </div>
+      `;
+
+      renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Biome selector
+    document.getElementById('biomeSelect').addEventListener('change', (e) => {
+      currentBiomeIndex = parseInt(e.target.value);
+      teleportToBiome();
+    });
+
+    // Start
+    window.addEventListener('load', initThreeJS);
+  </script>
+</body>
+</html>

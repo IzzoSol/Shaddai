@@ -1,0 +1,55 @@
+{
+  "name": "shaddai-production",
+  "version": "61.0.0",
+  "description": "SHADDAI - AI Agent Marketplace with Real Agent Execution",
+  "main": "backend/server-production.js",
+  "scripts": {
+    "start": "node backend/server-production.js",
+    "agents": "node backend/multi-agent-server.js",
+    "dev": "nodemon backend/server-production.js",
+    "dev:agents": "nodemon backend/multi-agent-server.js",
+    "build": "echo 'Build process complete'",
+    "test": "echo 'Running tests...'",
+    "serve": "node backend/server-production.js"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "marketplace",
+    "automation"
+  ],
+  "author": "SHADDAI Team",
+  "license": "MIT",
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0",
+    "@solana/pay": "^1.0.16",
+    "@solana/web3.js": "^1.98.4",
+    "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "bignumber.js": "^11.1.1",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "firebase-admin": "^13.9.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.0",
+    "multer": "^2.1.1",
+    "node-cron": "^3.0.2",
+    "pdf-parse": "^2.4.5",
+    "stripe": "^14.8.0",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "acorn": "^8.16.0",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

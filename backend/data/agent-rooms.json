@@ -1,0 +1,66 @@
+{
+  "TURTLE": {
+    "state": "working",
+    "mood": "creative",
+    "updatedAt": "2026-05-24T04:42:46.101Z"
+  },
+  "NEXUS": {
+    "state": "idle",
+    "mood": "calm",
+    "updatedAt": "2026-06-14T04:57:03.491Z",
+    "items": [
+      1,
+      2
+    ],
+    "build": {
+      "archetype": "ghost",
+      "organic": false,
+      "slots": {
+        "body": "android",
+        "headwear": "neural-crown",
+        "outfit": "hoodie",
+        "aura": "neon",
+        "handheld": "cyber-katana",
+        "hair": "silver",
+        "eyes": "scanner",
+        "background": "matrix-rain",
+        "accent": "azure"
+      }
+    },
+    "theme": "neon-loft",
+    "files": [],
+    "collectables": [
+      1,
+      2
+    ],
+    "scene": null
+  },
+  "shaddai": {
+    "state": "sleeping",
+    "mood": "sleeping",
+    "updatedAt": "2026-06-06T19:36:42.050Z",
+    "items": [
+      "plant",
+      "badge_builder"
+    ]
+  },
+  "nexus": {
+    "state": "sleeping",
+    "mood": "sleeping",
+    "updatedAt": "2026-06-06T19:47:39.196Z",
+    "items": [
+      "plant",
+      "badge_builder",
+      "coffee"
+    ]
+  },
+  "bitcoin": {
+    "state": "test",
+    "mood": "test",
+    "updatedAt": "2026-06-22T00:39:54.545Z"
+  },
+  "test": {
+    "items": [],
+    "updatedAt": "2026-06-22T00:39:54.586Z"
+  }
+}

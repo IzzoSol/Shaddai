@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI · Operator Forge</title>
+<style>
+  :root{ --neon:#27e0ff; --gold:#ffcf4a; --mag:#ff2bd6; --green:#00e5a0; --bg:#05070e; --panel:#0a0e1a; --bd:#16233b; --txt:#dbeafe; --mut:#7f93b3; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(1200px 700px at 50% -10%,#0c1630,#05070e 60%); color:var(--txt); font-family:'Segoe UI',system-ui,sans-serif; height:100vh; overflow:hidden; }
+  #app{ display:grid; grid-template-columns:1.1fr 1fr; grid-template-rows:auto 1fr auto; height:100vh; gap:10px; padding:12px; }
+  header{ grid-column:1/3; display:flex; align-items:center; justify-content:space-between; }
+  header h1{ font-size:16px; letter-spacing:3px; margin:0; color:var(--neon); text-transform:uppercase; }
+  header .sub{ font-size:10px; color:var(--mut); letter-spacing:1px; }
+  .pill{ font-size:9px; padding:3px 9px; border-radius:20px; border:1px solid var(--bd); color:var(--mut); }
+  /* ── LEFT: 3D swivel stage ── */
+  #stageWrap{ position:relative; background:var(--panel); border:1px solid var(--bd); border-radius:14px; overflow:hidden; min-height:0; }
+  #stage{ position:absolute; inset:0; }
+  #fallback{ position:absolute; inset:0; display:none; background-size:cover; background-position:center top; }
+  #stageBadge{ position:absolute; top:10px; left:12px; font-size:10px; color:var(--neon); text-shadow:0 0 8px #000; letter-spacing:1px; z-index:3; }
+  #rarityBadge{ position:absolute; top:10px; right:12px; font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:6px; z-index:3; }
+  #hint{ position:absolute; bottom:10px; left:0; right:0; text-align:center; font-size:10px; color:var(--mut); z-index:3; pointer-events:none; }
+  /* model carousel */
+  #carousel{ position:absolute; bottom:32px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:14px; z-index:4; }
+  #carousel button{ background:#0e1830cc; border:1px solid var(--bd); color:var(--neon); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px; }
+  #carousel button:hover{ border-color:var(--neon); }
+  #modelName{ min-width:160px; text-align:center; }
+  #modelName b{ font-size:14px; letter-spacing:1px; }
+  #modelName span{ display:block; font-size:9px; color:var(--mut); }
+  /* ── RIGHT: controls ── */
+  #panel{ background:var(--panel); border:1px solid var(--bd); border-radius:14px; padding:14px; overflow:auto; }
+  .lab{ font-size:10px; color:var(--mut); letter-spacing:1px; text-transform:uppercase; margin:12px 0 5px; }
+  .lab:first-child{ margin-top:0; }
+  input.t,textarea.t{ width:100%; background:#0e1526; border:1px solid var(--bd); border-radius:8px; color:var(--txt); padding:9px 11px; font-size:13px; }
+  textarea.t{ resize:vertical; min-height:54px; font-family:inherit; }
+  .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+  .tier{ border:1px solid var(--bd); border-radius:9px; padding:8px; cursor:pointer; text-align:center; transition:.15s; background:#0c1424; }
+  .tier:hover{ border-color:var(--neon); }
+  .tier.on{ border-color:var(--gold); box-shadow:0 0 12px rgba(255,207,74,.25); }
+  .tier b{ font-size:12px; } .tier span{ display:block; font-size:8px; color:var(--mut); margin-top:2px; }
+  #skillSearch{ margin-bottom:7px; }
+  #skillList{ display:flex; flex-wrap:wrap; gap:5px; max-height:150px; overflow:auto; padding:2px; }
+  .chip{ font-size:10px; padding:4px 8px; border-radius:14px; border:1px solid var(--bd); color:var(--txt); background:#0c1424; cursor:pointer; transition:.12s; white-space:nowrap; }
+  .chip:hover{ border-color:var(--neon); }
+  .chip.on{ background:var(--neon); color:#021019; border-color:var(--neon); font-weight:700; }
+  .chip .x{ color:var(--green); font-weight:700; margin-right:3px; }
+  #equipped{ font-size:10px; color:var(--mut); margin-top:6px; }
+  #forgeBtn{ width:100%; margin-top:14px; padding:13px; border:none; border-radius:10px; cursor:pointer; font-weight:800; letter-spacing:1px; font-size:13px; background:linear-gradient(135deg,var(--neon),var(--green)); color:#021019; }
+  #forgeBtn:disabled{ opacity:.5; cursor:wait; }
+  #console{ grid-column:1/3; background:#070b14; border:1px solid var(--bd); border-radius:10px; padding:8px 12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--green); min-height:34px; display:flex; align-items:center; }
+  /* roster */
+  #rosterWrap{ grid-column:1/3; }
+  #rosterHd{ font-size:10px; color:var(--gold); letter-spacing:1px; margin-bottom:6px; }
+  #roster{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .rc{ flex:0 0 96px; background:var(--panel); border:1px solid var(--bd); border-radius:9px; overflow:hidden; position:relative; }
+  .rc .img{ height:84px; background-size:cover; background-position:center top; background-color:#0c1424; }
+  .rc .nm{ font-size:9px; font-weight:700; padding:4px 5px 1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rc .meta{ font-size:8px; color:var(--mut); padding:0 5px 5px; }
+  .rc .del{ position:absolute; top:3px; right:3px; background:#000a; border:1px solid #ff5a6e55; color:#ff8a98; border-radius:4px; font-size:9px; cursor:pointer; padding:0 4px; }
+  .rib{ position:absolute; top:3px; left:3px; font-size:7px; font-weight:700; padding:1px 4px; border-radius:3px; background:#000a; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three":"https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div><h1>⬡ Operator Forge</h1><div class="sub">pick a model · equip skills · send to Shaddai World</div></div>
+    <div><span class="pill" id="catPill">skills: …</span> <span class="pill" style="border-color:#1b5">live · backend wired</span></div>
+  </header>
+
+  <div id="stageWrap">
+    <div id="stage"></div>
+    <div id="fallback"></div>
+    <div id="stageBadge">3D MODEL</div>
+    <div id="rarityBadge"></div>
+    <div id="carousel">
+      <button id="prevBtn">◀</button>
+      <div id="modelName"><b>—</b><span>—</span></div>
+      <button id="nextBtn">▶</button>
+    </div>
+    <div id="hint">drag to swivel · scroll to zoom</div>
+  </div>
+
+  <div id="panel">
+    <div class="lab">Codename</div>
+    <input id="name" class="t" placeholder="e.g. SCOUT" maxlength="24" />
+    <div class="lab">Personality core (optional)</div>
+    <textarea id="persona" class="t" placeholder="Who is this agent? Tone, mission, rules…"></textarea>
+    <div class="lab">Compute brain</div>
+    <div class="tiers" id="tiers"></div>
+    <div class="lab">Skill loadout — <span id="skillCount">0</span> equipped <span id="capNote" style="color:var(--mut)"></span></div>
+    <input id="skillSearch" class="t" placeholder="🔎 search 3,400+ real skills…" />
+    <div id="skillList">loading…</div>
+    <div id="equipped"></div>
+    <button id="forgeBtn">⬡ FORGE → SEND TO SHADDAI WORLD</button>
+  </div>
+
+  <div id="console">// pick a model, name it, equip skills, then FORGE.</div>
+
+  <div id="rosterWrap">
+    <div id="rosterHd">⬡ YOUR FORGED AGENTS</div>
+    <div id="roster">scanning…</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── the 8 preset models we ship ──
+const ARCHES = [
+  { id:'vanguard',     name:'Vanguard',     role:'Guardian / Tank',   color:'#27e0ff' },
+  { id:'ghost',        name:'Ghost',        role:'Stealth / Recon',   color:'#9b8cff' },
+  { id:'artisan',      name:'Artisan',      role:'Creator / Design',  color:'#1fd6c4' },
+  { id:'oracle',       name:'Oracle',       role:'Seer / Research',   color:'#c084fc' },
+  { id:'street-deity', name:'Street Deity', role:'Hustler / Markets', color:'#ffcf4a' },
+  { id:'gaia-link',    name:'Gaia-Link',    role:'Nature / Bio',      color:'#3ddc84' },
+  { id:'psionic',      name:'Psionic',      role:'Mind / Logic',      color:'#ff5db1' },
+  { id:'harvester',    name:'Harvester',    role:'Reaper / Ops',      color:'#ff5a6e' },
+];
+const TIERS = [
+  { id:'light',    label:'⚡ Light',    brain:'ollama-local', cap:3,  hint:'free · basics' },
+  { id:'balanced', label:'⚙ Balanced', brain:'groq-70b',     cap:8,  hint:'multi-step' },
+  { id:'heavy',    label:'🔥 Heavy',    brain:'claude-haiku', cap:20, hint:'deep work' },
+];
+const presetImg = id => '/api/forge/art/arch-' + id + '.png';
+
+let idx = 0, tier = 'light';
+const skills = new Set();
+const $ = id => document.getElementById(id);
+const owner = 'demo';
+function log(m, color){ const c=$('console'); c.textContent=m; c.style.color=color||'var(--green)'; }
+
+// ── three.js stage ──
+const stage = $('stage');
+let renderer, scene, camera, controls, mixer, current, clock;
+let webgl = true;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(1.8, window.devicePixelRatio));
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+  stage.appendChild(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(42, stage.clientWidth/stage.clientHeight, 0.05, 100);
+  camera.position.set(0, 1.1, 4.2);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.target.set(0,1,0); controls.minDistance=1.6; controls.maxDistance=8;
+  controls.autoRotate = true; controls.autoRotateSpeed = 1.6;
+  scene.add(new THREE.HemisphereLight(0xcfe9ff, 0x101830, 1.2));
+  const k=new THREE.DirectionalLight(0xffffff,1.7); k.position.set(3,6,4); scene.add(k);
+  const rim=new THREE.DirectionalLight(0xff2bd6,0.7); rim.position.set(-4,2,-3); scene.add(rim);
+  const grid=new THREE.GridHelper(12,24,0x14304a,0x0d1a2c); grid.position.y=0; scene.add(grid);
+  clock = new THREE.Clock();
+  (function animate(){ requestAnimationFrame(animate); if(mixer)mixer.update(clock.getDelta()); controls.update(); renderer.render(scene,camera); })();
+} catch(e){ webgl=false; console.warn('WebGL unavailable, using preset images', e); }
+
+const loader = webgl ? new GLTFLoader() : null;
+
+function showFallback(id){
+  const fb=$('fallback'); fb.style.display='block'; fb.style.backgroundImage=`url('${presetImg(id)}')`;
+  if(renderer) renderer.domElement.style.display='none';
+  $('stageBadge').textContent='PRESET IMAGE';
+}
+function hideFallback(){ $('fallback').style.display='none'; if(renderer) renderer.domElement.style.display='block'; $('stageBadge').textContent='3D MODEL'; }
+
+function loadModel(){
+  const a = ARCHES[idx];
+  $('modelName').innerHTML = `<b style="color:${a.color}">${a.name}</b><span>${a.role}</span>`;
+  document.documentElement.style.setProperty('--neon', a.color);
+  if(!webgl){ showFallback(a.id); return; }
+  hideFallback();
+  // prefer the animated walk model; fall back to static, then to preset image
+  const tryUrls = [`/assets/forge-models/${a.id}-walk.glb?v=3`, `/assets/forge-models/${a.id}.glb?v=3`];
+  const attempt = (i) => {
+    if(i>=tryUrls.length){ showFallback(a.id); return; }
+    loader.load(tryUrls[i], (g)=>{
+      if(current){ scene.remove(current); }
+      if(mixer){ mixer.stopAllAction(); mixer=null; }
+      current = g.scene;
+      if(g.animations && g.animations.length){ mixer=new THREE.AnimationMixer(current); mixer.clipAction(g.animations[0]).play(); }
+      // normalize: scale to ~2 units tall, feet on grid, centered
+      const box=new THREE.Box3().setFromObject(current); const size=new THREE.Vector3(); box.getSize(size);
+      const s = 2.0/(size.y||1); current.scale.setScalar(s);
+      const b2=new THREE.Box3().setFromObject(current); const c2=new THREE.Vector3(); b2.getCenter(c2);
+      current.position.x -= c2.x; current.position.z -= c2.z; current.position.y -= b2.min.y;
+      current.traverse(m=>{ if(m.isMesh){ m.castShadow=true; if(m.material){ (Array.isArray(m.material)?m.material:[m.material]).forEach(mt=>{ if(mt.color)mt.color.set(0xffffff); }); } } });
+      scene.add(current);
+    }, undefined, ()=> attempt(i+1));
+  };
+  attempt(0);
+}
+
+// ── carousel ──
+function step(d){ idx=(idx+d+ARCHES.length)%ARCHES.length; loadModel(); }
+$('prevBtn').onclick=()=>step(-1);
+$('nextBtn').onclick=()=>step(1);
+
+// ── brain tiers ──
+$('tiers').innerHTML = TIERS.map(t=>`<div class="tier${t.id==='light'?' on':''}" data-t="${t.id}"><b>${t.label}</b><span>${t.hint} · ${t.cap} skills</span></div>`).join('');
+$('tiers').querySelectorAll('.tier').forEach(el=> el.onclick=()=>{ tier=el.dataset.t; $('tiers').querySelectorAll('.tier').forEach(x=>x.classList.toggle('on',x===el)); updateCap(); });
+function capOf(){ return (TIERS.find(t=>t.id===tier)||TIERS[0]).cap; }
+function updateCap(){ const cap=capOf(); $('capNote').textContent=`/ ${cap} max (${tier})`; }
+
+// ── skills (real catalog, no Obsidian) ──
+let _allSkills = [];
+async function loadSkills(q){
+  try{
+    const r = await fetch('/api/skills/catalog?limit=80' + (q?('&q='+encodeURIComponent(q)):''));
+    const d = await r.json();
+    _allSkills = d.skills || [];
+    if(!q){ $('catPill').textContent = `skills: ${d.total||_allSkills.length} wired`; }
+    renderSkills();
+  }catch(e){ $('skillList').textContent='⚠ skills failed: '+e.message; }
+}
+function renderSkills(){
+  const list=$('skillList');
+  if(!_allSkills.length){ list.textContent='no matches'; return; }
+  list.innerHTML = _allSkills.map(s=>{
+    const on = skills.has(s.name);
+    const exec = s.executable ? '<span class="x" title="runs real tools">⚙</span>' : '';
+    return `<button class="chip${on?' on':''}" data-n="${encodeURIComponent(s.name)}" title="${(s.description||'').replace(/"/g,'&quot;')}">${exec}${s.name}</button>`;
+  }).join('');
+  list.querySelectorAll('.chip').forEach(c=> c.onclick=()=>toggleSkill(decodeURIComponent(c.dataset.n)));
+}
+function toggleSkill(n){
+  if(skills.has(n)) skills.delete(n);
+  else { if(skills.size>=capOf()){ log(`⛔ ${tier} tier holds ${capOf()} skills — upgrade the brain or remove one.`, '#ff8a98'); return; } skills.add(n); }
+  $('skillCount').textContent=skills.size;
+  $('equipped').textContent = skills.size ? ('equipped: '+[...skills].join(', ')) : '';
+  renderSkills();
+}
+let _t; $('skillSearch').oninput = e=>{ clearTimeout(_t); _t=setTimeout(()=>loadSkills(e.target.value.trim()), 250); };
+
+// ── forge → shaddai world ──
+$('forgeBtn').onclick = async () => {
+  const name = $('name').value.trim();
+  if(!name){ log('⚠ give your operator a CODENAME first.', '#ffcf4a'); $('name').focus(); return; }
+  const a = ARCHES[idx];
+  const btn=$('forgeBtn'); btn.disabled=true;
+  log('⟳ forging "'+name+'" ('+a.name+') → rendering portrait…');
+  // 1) real custom portrait (falls back to the preset image if HF/render unavailable)
+  let portrait = presetImg(a.id), rarity='rare', buildHash=null;
+  try{
+    const fr = await (await fetch('/api/forge', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ archetype:a.id, owner, name }) })).json();
+    if(fr && fr.ok){ portrait = fr.image || portrait; if(fr.metadata){ rarity=fr.metadata.rarity||rarity; buildHash=fr.metadata.buildHash; } }
+    else { log('⚠ custom render unavailable — using preset art. Saving agent…', '#ffcf4a'); }
+  }catch(e){ log('⚠ render skipped ('+e.message+') — using preset art. Saving…', '#ffcf4a'); }
+  // 2) brain registration (best-effort)
+  const brainId = (TIERS.find(t=>t.id===tier)||TIERS[0]).brain;
+  const persona = $('persona').value.trim() || ('You are '+name+', a SHADDAI '+a.name+' operative.');
+  try{ await fetch('/api/brains/custom', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ name, persona, brainId, tools:[...skills], look:a.id, portrait, rarity }) }); }catch(e){}
+  // 3) the unified operative record — this is what spawns it into Shaddai World
+  try{
+    const op = await (await fetch('/api/operatives', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ owner, codename:name, archetype:a.id, rarity, portrait, look:{archetype:a.id}, brain:{tier, brainId, persona}, tools:[...skills], buildHash }) })).json();
+    if(op && op.operative){ log('✅ FORGED "'+name+'" → sent to Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills.', 'var(--green)'); $('name').value=''; skills.clear(); $('skillCount').textContent='0'; $('equipped').textContent=''; renderSkills(); loadRoster(); }
+    else { log('⚠ save failed: '+((op&&op.error)||'unknown'), '#ff8a98'); }
+  }catch(e){ log('⚠ save failed: '+e.message, '#ff8a98'); }
+  btn.disabled=false;
+};
+
+// ── roster ──
+function rosterArt(o){ if(o.portrait) return o.portrait; const ids=ARCHES.map(a=>a.id); let id=String(o.archetype||'').toLowerCase(); if(!ids.includes(id)){ let h=0,s=String(o.codename||'op'); for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0; id=ids[h%ids.length]; } return presetImg(id); }
+async function loadRoster(){
+  const el=$('roster');
+  try{
+    const d = await (await fetch('/api/operatives?owner='+owner)).json();
+    const ops = (d.operatives||[]).filter(o=>!o._brainOnly);
+    if(!ops.length){ el.innerHTML='<span style="color:var(--mut);font-size:11px">no agents yet — forge one above.</span>'; return; }
+    el.innerHTML = ops.map(o=>{
+      const rar=(o.rarity||'common').toUpperCase(); const tools=Array.isArray(o.tools)?o.tools.length:0;
+      return `<div class="rc"><div class="img" style="background-image:url('${rosterArt(o)}'),url('${presetImg('ghost')}')"></div>
+        <span class="rib" style="color:var(--gold)">${rar}</span>
+        <button class="del" data-id="${o.id}" title="remove">✕</button>
+        <div class="nm">${(o.codename||'OP')}</div><div class="meta">${o.archetype||'operative'} · ⚙${tools}</div></div>`;
+    }).join('');
+    el.querySelectorAll('.del').forEach(b=> b.onclick=async()=>{ if(!confirm('Remove this agent?'))return; await fetch('/api/operatives/'+b.dataset.id+'?user='+owner,{method:'DELETE'}); loadRoster(); });
+  }catch(e){ el.innerHTML='<span style="color:#ff8a98;font-size:11px">roster failed: '+e.message+'</span>'; }
+}
+
+// resize
+addEventListener('resize', ()=>{ if(!renderer)return; renderer.setSize(stage.clientWidth, stage.clientHeight); camera.aspect=stage.clientWidth/stage.clientHeight; camera.updateProjectionMatrix(); });
+
+// boot
+updateCap(); loadModel(); loadSkills(); loadRoster();
+</script>
+</body>
+</html>

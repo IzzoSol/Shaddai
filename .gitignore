@@ -1,0 +1,95 @@
+# ── Secrets — NEVER commit ─────────────────────────────────
+.env
+backend/.env
+aura/.env
+*.key
+backend/data/byok-keys.json
+backend/data/pay-config.json
+backend/data/pay-ledger.json
+backend/data/pay-pending.json
+
+# ── Dependencies (regenerated with npm install) ────────────
+node_modules/
+backend/node_modules/
+aura/__pycache__/
+**/__pycache__/
+
+# ── Logs & runtime state ───────────────────────────────────
+backend/logs/
+*.log
+backend/data/llm-traces.jsonl
+backend/data/agent-memory.json
+backend/data/active_tasks.json
+
+# ── OS / editor junk ───────────────────────────────────────
+Thumbs.db
+.DS_Store
+*.bak
+*.html.bak
+
+# ── Local backups (already in OneDrive) ────────────────────
+*-BACKUP.html
+
+# runtime artifacts (not part of the build)
+generated-output/
+/data/
+backend/data/customers.json
+backend/data/ledger.json
+backend/data/usage.json
+backend/data/scheduled-tasks.json
+*_backup*.html
+SHADDAI-index_*.html
+
+# runtime artifacts
+backend/execution-logs/
+backend/agent-logs/
+backend/logs/
+
+# runtime data (regenerable — keep out of git)
+backend/data/aura-cache.json
+backend/data/aura-stats.json
+backend/data/api-vault.json
+backend/data/skill-market.json
+backend/data/skill-market-purchases.json
+backend/data/executions/
+backend/data/agent-memory.json
+x402-ledger.json
+
+.server-out.log
+.server-err.log
+
+# commit the 7 LIVE agent bodies (needed for Render); ignore the heavy backups/candidates
+public/assets/agents/*_hires.glb
+public/assets/agents/*_fal.glb
+public/assets/agents/*_trellis.glb
+public/assets/agents/*_candidate*.glb
+
+public/assets/models/*.glb
+
+_archive_world_builds/
+
+public/assets/worldlabs/*.spz
+
+# asset regeneration backups
+public/assets/**/_orig_backup/
+public/assets/**/*_grey_backup.glb
+public/assets/**/*_basic_backup.glb
+public/assets/**/_candidate_*.glb
+
+# exploratory animation clip downloads (deciding which pack to standardize on)
+public/assets/anim-clips/
+
+# ── CRITICAL: secrets (the old repo missed these) ──
+backend/data/runtime-keys.json
+.env.local
+.env.*
+*_KEY.txt
+
+# ── keep this LOCAL code repo small: do NOT commit large 3D models ──
+# (they bloated the old repo to 3.7GB; models live on disk + the deploy pipeline)
+*.glb
+*.fbx
+*.blend
+*.obj
+*.zip
+*.spz

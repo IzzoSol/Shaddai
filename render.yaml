@@ -1,0 +1,38 @@
+# Render Blueprint for SHADDAI — single Node web service.
+# Render auto-detects this on deploy. The dashboard is served by the same
+# service (same-origin), so no CORS config is needed.
+#
+# After first deploy, set the secret env vars in the Render dashboard
+# (Environment tab): GROQ_API_KEY is the important one (free at
+# https://console.groq.com/keys). OpenRouter is an optional extra fallback.
+services:
+  - type: web
+    name: shaddai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/model/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: GROQ_API_KEY
+        sync: false        # set in Render dashboard (secret) — free at console.groq.com/keys
+      - key: OPENROUTER_API_KEY
+        sync: false        # optional extra fallback (free models) — openrouter.ai/keys (ROTATED 2026-06-03)
+      - key: NODE_ENV
+        value: production
+      # ── Security (optional now; the app boots dev-permissive without them) ──
+      # Flip REQUIRE_AUTH to "true" + set the two below to enforce real auth.
+      - key: REQUIRE_AUTH
+        value: "false"      # set "true" to enforce Firebase/admin auth on protected routes
+      - key: ADMIN_TOKEN
+        sync: false         # secret — gates admin ops + /execute-code (send as x-shaddai-admin)
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false         # secret — Firebase service-account JSON; enables ID-token verify
+      # ── Optional creation/commerce keys (leave unset for free tiers) ──
+      - key: STRIPE_SECRET_KEY
+        sync: false         # subscriptions (lazy-loaded; unset = billing in free/credit mode)
+      - key: SUNO_API_KEY
+        sync: false         # real music generation (unset = lyrics-only)

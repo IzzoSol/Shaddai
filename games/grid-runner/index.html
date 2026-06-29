@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GRID RUNNER · SHADDAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{ --gold:#ffcf4a; --cyan:#27e0ff; --void:#04060d; --green:#00e5a0; }
+  *{margin:0;padding:0;box-sizing:border-box;user-select:none}
+  html,body{height:100%;overflow:hidden;background:radial-gradient(circle at 50% 40%,#0a1430,#04060d 75%);color:#eaf2ff;font-family:'Share Tech Mono',monospace}
+  #arena{position:fixed;inset:0;cursor:crosshair}
+  .hud{position:fixed;z-index:5;font-family:'Orbitron',sans-serif;pointer-events:none}
+  #title{top:18px;left:24px;font-weight:900;letter-spacing:5px;font-size:18px;color:#fff;text-shadow:0 0 18px var(--cyan)}
+  #title b{color:var(--cyan)}
+  #stats{top:18px;right:24px;text-align:right;font-size:13px;letter-spacing:2px}
+  #stats .s{color:var(--gold)} #stats .t{color:var(--cyan)}
+  #node{position:absolute;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,var(--cyan),rgba(39,224,255,.1));box-shadow:0 0 26px var(--cyan);cursor:pointer;display:none;transform:translate(-50%,-50%)}
+  .panel{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(2,5,10,.78);backdrop-filter:blur(6px)}
+  .panel.hidden{display:none}
+  .big{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(28px,6vw,56px);letter-spacing:8px;color:#fff;text-shadow:0 0 30px var(--cyan)}
+  .big b{color:var(--gold)}
+  .sub{margin-top:14px;font-size:13px;letter-spacing:2px;color:#aebbd6;max-width:420px;line-height:1.6}
+  button{margin-top:26px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:3px;color:#04060d;background:linear-gradient(90deg,var(--cyan),var(--gold));border:none;border-radius:9px;padding:14px 32px;cursor:pointer;box-shadow:0 0 28px rgba(39,224,255,.5)}
+  .ghost{background:none;color:#aebbd6;border:1px solid rgba(174,187,214,.4);box-shadow:none;margin-top:12px;padding:10px 24px;font-size:11px}
+  #board{margin-top:18px;font-size:12px;color:#cfe9ff;text-align:left;max-width:360px}
+  #board .row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
+</style>
+</head>
+<body>
+<canvas id="arena"></canvas>
+<div class="hud" id="title">GRID <b>RUNNER</b></div>
+<div class="hud" id="stats"><span class="s" id="score">0</span> pts · <span class="t" id="time">20</span>s · ⚡<span id="bal">—</span></div>
+<div id="node"></div>
+
+<div class="panel" id="start">
+  <div class="big">GRID <b>RUNNER</b></div>
+  <div class="sub">Click the glowing data-nodes before they fade. 20 seconds. Beat <b>40</b> and SHADDAI pays you out in SHAD-Credits.<br><span id="buyinNote"></span></div>
+  <button id="playBtn">▶ PLAY</button>
+  <button class="ghost" id="exitBtn">EXIT TO WORLD</button>
+</div>
+
+<div class="panel hidden" id="over">
+  <div class="big" id="overTitle">RUN <b>OVER</b></div>
+  <div class="sub" id="overMsg"></div>
+  <div id="board"></div>
+  <button id="againBtn">▶ PLAY AGAIN</button>
+  <button class="ghost" id="exitBtn2">EXIT TO WORLD</button>
+</div>
+
+<script>
+(function(){
+  // ── Shaddai bridge ──
+  const SH = { user:'guest', tier:'free', credits:null, parent: (window.parent && window.parent!==window) };
+  function send(type, extra){ if(SH.parent) window.parent.postMessage(Object.assign({type:type, game:'grid-runner'}, extra||{}), '*'); }
+  window.addEventListener('message', e=>{ const m=e.data||{};
+    if(m.type==='shaddai:init'){ SH.user=m.user||'guest'; SH.tier=m.tier||'free'; SH.credits=m.credits; updBal(); }
+    if(m.type==='shaddai:charge:ok'){ SH.credits=m.balance; updBal(); }
+    if(m.type==='shaddai:charge:402'){ /* insufficient — play free */ }
+    if(m.type==='shaddai:reward:ok'){ SH.credits=m.balance; updBal(); }
+  });
+  function updBal(){ document.getElementById('bal').textContent = (SH.credits==null?'—':SH.credits); }
+  // standalone fallback (opened directly, no world)
+  if(!SH.parent){ fetch('/api/x402/balance?user=guest').then(r=>r.json()).then(d=>{ if(d&&d.ok){SH.credits=d.balance;updBal();} }).catch(()=>{}); }
+  send('shaddai:ready');
+
+  // ── game ──
+  const cv=document.getElementById('arena'), ctx=cv.getContext('2d');
+  const node=document.getElementById('node');
+  let W,H; function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; } resize(); addEventListener('resize',resize);
+  let score=0, timeLeft=20, running=false, nodeTimer=null, tickTimer=null, fadeAt=0;
+  const PAYOUT_THRESHOLD=40, BUYIN=0;
+
+  function placeNode(){
+    const m=80; const x=m+Math.random()*(W-2*m), y=120+Math.random()*(H-220);
+    node.style.left=x+'px'; node.style.top=y+'px'; node.style.display='block';
+    node.style.transition='none'; node.style.opacity='1'; node.style.transform='translate(-50%,-50%) scale(1)';
+    requestAnimationFrame(()=>{ node.style.transition='opacity 1.05s linear, transform 1.05s linear'; node.style.opacity='0'; node.style.transform='translate(-50%,-50%) scale(.4)'; });
+    fadeAt=Date.now()+1100;
+    clearTimeout(nodeTimer); nodeTimer=setTimeout(()=>{ if(running) placeNode(); }, 1150);
+  }
+  node.addEventListener('pointerdown', e=>{ if(!running) return; e.preventDefault();
+    const left=Date.now()<fadeAt; score += left?2:1; document.getElementById('score').textContent=score;
+    flash(parseFloat(node.style.left), parseFloat(node.style.top));
+    clearTimeout(nodeTimer); placeNode();
+  });
+  const flashes=[];
+  function flash(x,y){ flashes.push({x,y,r:8,a:1}); }
+  (function draw(){ ctx.clearRect(0,0,W,H);
+    for(let i=flashes.length-1;i>=0;i--){ const f=flashes[i]; f.r+=4; f.a-=0.06; if(f.a<=0){flashes.splice(i,1);continue;}
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.strokeStyle='rgba(0,229,160,'+f.a+')'; ctx.lineWidth=3; ctx.stroke(); }
+    requestAnimationFrame(draw); })();
+
+  function start(){
+    score=0; timeLeft=20; running=true;
+    document.getElementById('score').textContent='0'; document.getElementById('time').textContent='20';
+    document.getElementById('start').classList.add('hidden'); document.getElementById('over').classList.add('hidden');
+    if(BUYIN>0) send('shaddai:charge',{amount:BUYIN,reason:'grid-runner buy-in'});
+    placeNode();
+    clearInterval(tickTimer); tickTimer=setInterval(()=>{ timeLeft--; document.getElementById('time').textContent=timeLeft; if(timeLeft<=0) end(); }, 1000);
+  }
+  function end(){
+    running=false; clearInterval(tickTimer); clearTimeout(nodeTimer); node.style.display='none';
+    const won=score>=PAYOUT_THRESHOLD; const reward=won?Math.round((score-PAYOUT_THRESHOLD)/4)+10:0;
+    document.getElementById('overTitle').innerHTML = won?'YOU <b>WIN</b>':'RUN <b>OVER</b>';
+    document.getElementById('overMsg').innerHTML = 'Score: <b style="color:#ffcf4a">'+score+'</b>'+(won?(' · payout <b style="color:#00e5a0">+'+reward+' SHAD</b>'):' · beat 40 to win SHAD-Credits');
+    // submit score (bridge if in world, else direct)
+    if(SH.parent){ send('shaddai:score',{score:score}); if(won) send('shaddai:reward',{amount:reward,reason:'grid-runner win'}); }
+    else { fetch('/api/games/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'grid-runner',user:SH.user,score:score})}).catch(()=>{}); }
+    loadBoard();
+    document.getElementById('over').classList.remove('hidden');
+  }
+  function loadBoard(){ fetch('/api/games/leaderboard?game=grid-runner&limit=5').then(r=>r.json()).then(d=>{
+    const b=document.getElementById('board'); const t=(d&&d.top)||[];
+    b.innerHTML = '<div style="color:#7e8aa3;letter-spacing:2px;margin-bottom:4px">LEADERBOARD</div>'+(t.length?t.map((e,i)=>'<div class="row"><span>'+(i+1)+'. '+e.user+'</span><span style="color:#ffcf4a">'+e.score+'</span></div>').join(''):'<div style="color:#7e8aa3">no scores yet — be first</div>');
+  }).catch(()=>{}); }
+
+  document.getElementById('playBtn').onclick=start;
+  document.getElementById('againBtn').onclick=start;
+  document.getElementById('exitBtn').onclick=()=>{ send('shaddai:exit'); if(!SH.parent) location.href='/world3d'; };
+  document.getElementById('exitBtn2').onclick=document.getElementById('exitBtn').onclick;
+  document.getElementById('buyinNote').textContent = BUYIN>0?('Buy-in: '+BUYIN+' SHAD-Credits.'):'Free to play.';
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+name: Daily Report
+version: "1.0"
+author: SHADDAI Council
+description: ORACLE gathers the day's signals, QUILL writes a crisp morning brief for the owner.
+
+inputs:
+  - name: user_id
+    type: string
+    required: true
+  - name: topic
+    type: string
+    required: false
+    default: "AI agents and crypto markets"
+
+steps:
+  - id: research
+    agent: ORACLE
+    skill: web_search
+    params:
+      query: "latest news on {topic}"
+      limit: 5
+    output: findings
+
+  - id: write
+    agent: QUILL
+    skill: summarize
+    depends_on: research
+    params:
+      text: "{findings}"
+      style: "concise morning brief, 3 bullet points, for {user_id}"
+    output: brief
+
+outputs:
+  - name: report
+    value: "{brief}"
+    format: markdown
+  - name: raw_findings
+    value: "{findings}"
+    format: text

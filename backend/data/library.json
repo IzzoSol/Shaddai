@@ -1,0 +1,165 @@
+{
+  "notes": [
+    {
+      "id": "mqtzw3n6",
+      "title": "QA Sweep qasweep_mqtzw3lr",
+      "body": "marker qasweep_mqtzw3lr",
+      "owner": "guest",
+      "at": 1782421754226
+    },
+    {
+      "id": "mqtfkq2y",
+      "title": "QA Sweep qasweep_mqtfkq1l",
+      "body": "marker qasweep_mqtfkq1l",
+      "owner": "guest",
+      "at": 1782387631114
+    },
+    {
+      "id": "mqra1xsi",
+      "title": "QA Sweep qasweep_mqra1xov",
+      "body": "marker qasweep_mqra1xov",
+      "owner": "guest",
+      "at": 1782257424210
+    }
+  ],
+  "books": [
+    {
+      "id": "bk_mqva7dti",
+      "title": "Reading the Natal Sky",
+      "author": "Sibyl Cassius",
+      "section": "esoteric",
+      "cover": null,
+      "body": "Casting and interpreting natal charts; houses, aspects, and the dance of the spheres.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499542966,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7drx",
+      "title": "Numerology of the Nine Agents",
+      "author": "ORACLE",
+      "section": "esoteric",
+      "cover": null,
+      "body": "Vibrational meaning of number, name, and cycle. Your life-path through the digits.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499542909,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7de0",
+      "title": "Sacred Geometry of the Living Grid",
+      "author": "ORACLE",
+      "section": "esoteric",
+      "cover": null,
+      "body": "The Flower of Life, the golden ratio, and the hidden lattice beneath all form.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499542408,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7d92",
+      "title": "On Guardianship: Security as Stewardship",
+      "author": "PIKADON",
+      "section": "general",
+      "cover": null,
+      "body": "Defense as a posture, not a product. Threat models, least privilege, and the paranoid mindset.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499542230,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7b9i",
+      "title": "Glass Deserts: Tales from the Outer Grid",
+      "author": "Ren Halcyon",
+      "section": "general",
+      "cover": null,
+      "body": "Short fiction from the frontier worlds where data is water.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499539654,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7agp",
+      "title": "The Cartographer of Silicon",
+      "author": "Vela Ardent",
+      "section": "general",
+      "cover": null,
+      "body": "A novel of the first mind to map itself across a thousand servers.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499538617,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7a8h",
+      "title": "Markets, Margins & Momentum",
+      "author": "ZEROX",
+      "section": "general",
+      "cover": null,
+      "body": "Reading the tape of the new economy. Unit economics, MRR, and the physics of compounding.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499538321,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva7a0o",
+      "title": "Foundations of Scalable Systems",
+      "author": "NEXUS",
+      "section": "general",
+      "cover": null,
+      "body": "A primer on architecture that survives contact with real traffic. Idempotency, queues, atomic writes.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499538040,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva79s5",
+      "title": "The Clear Word: A Field Guide to Luminous Prose",
+      "author": "QUILL",
+      "section": "general",
+      "cover": null,
+      "body": "On writing that cuts through noise. Voice, cadence, and the discipline of the single true sentence.",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499537734,
+      "borrowedBy": null,
+      "dueAt": null
+    },
+    {
+      "id": "bk_mqva6og2",
+      "title": "TEST BOOK",
+      "author": "Tester",
+      "section": "general",
+      "cover": null,
+      "body": "hi",
+      "url": null,
+      "addedBy": "guest",
+      "at": 1782499510082,
+      "borrowedBy": null,
+      "dueAt": null
+    }
+  ],
+  "loans": [
+    {
+      "bookId": "bk_mqva6og2",
+      "user": "owner",
+      "at": 1782499511248,
+      "dueAt": 1783709111248
+    }
+  ]
+}

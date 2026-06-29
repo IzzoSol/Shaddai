@@ -1,0 +1,77 @@
+{
+  "nextTokenId": 6,
+  "operatives": [
+    {
+      "tokenId": 1,
+      "codename": "DAITEST",
+      "owner": "demo",
+      "rarity": "legendary",
+      "archetype": null,
+      "buildHash": "36cbc419",
+      "build": {
+        "archetype": null,
+        "slots": {
+          "body": "cyborg",
+          "headwear": "oni-mask",
+          "outfit": "hoodie",
+          "aura": "sprouting-vines",
+          "handheld": "mage-staff",
+          "hair": "green",
+          "eyes": "glowing",
+          "background": "matrix-rain",
+          "accent": "gold"
+        }
+      },
+      "image": "/api/forge/image/forge-1.png",
+      "at": 1781465106063
+    },
+    {
+      "tokenId": 2,
+      "codename": "DAITEST",
+      "owner": "demo",
+      "rarity": "legendary",
+      "archetype": null,
+      "buildHash": "36cbc419",
+      "build": {
+        "archetype": null,
+        "slots": {
+          "body": "cyborg",
+          "headwear": "oni-mask",
+          "outfit": "hoodie",
+          "aura": "sprouting-vines",
+          "handheld": "mage-staff",
+          "hair": "green",
+          "eyes": "glowing",
+          "background": "matrix-rain",
+          "accent": "gold"
+        }
+      },
+      "image": "/api/forge/image/forge-2.png",
+      "at": 1781465111243
+    },
+    {
+      "tokenId": 3,
+      "codename": "GUARDIAN",
+      "owner": "demo",
+      "rarity": "epic",
+      "archetype": "ghost",
+      "buildHash": "11e8a06c",
+      "build": {
+        "archetype": "ghost",
+        "slots": {
+          "body": "android",
+          "headwear": "neural-crown",
+          "outfit": "hoodie",
+          "aura": "neon",
+          "handheld": "cyber-katana",
+          "hair": "silver",
+          "eyes": "scanner",
+          "background": "matrix-rain",
+          "accent": "azure"
+        }
+      },
+      "image": "/api/forge/image/forge-3.png",
+      "at": 1781484376399
+    }
+  ]
+}

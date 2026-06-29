@@ -1,0 +1,42 @@
+{
+  "ORACLE": {
+    "uri": "https://image.pollinations.ai/prompt/violet%20mystic%20researcher%20AI%2C%20constellation%20eyes%2C%20data%20streams%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=ORACLE",
+    "prompt": "violet mystic researcher AI, constellation eyes, data streams, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-07T16:11:52.715Z"
+  },
+  "NEXUS": {
+    "uri": "https://image.pollinations.ai/prompt/custom%20cyan%20robot?width=512&height=512&nologo=true&model=flux&seed=NEXUS",
+    "prompt": "custom cyan robot",
+    "generatedAt": "2026-06-07T16:11:52.754Z"
+  },
+  "SCOUT": {
+    "uri": "https://image.pollinations.ai/prompt/SCOUT%20AI%20agent%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=SCOUT",
+    "prompt": "SCOUT AI agent, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-07T16:11:52.757Z"
+  },
+  "SHADDAI": {
+    "uri": "https://image.pollinations.ai/prompt/regal%20golden%20AI%20sovereign%2C%20glowing%20crown%2C%20command%20throne%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=SHADDAI",
+    "prompt": "regal golden AI sovereign, glowing crown, command throne, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-04T07:48:33.140Z"
+  },
+  "ZEROX": {
+    "uri": "https://image.pollinations.ai/prompt/orange%20cyber%20trader%20agent%2C%20holographic%20market%20charts%2C%20neon%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=ZEROX",
+    "prompt": "orange cyber trader agent, holographic market charts, neon, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-04T07:48:33.232Z"
+  },
+  "TURTLE": {
+    "uri": "https://image.pollinations.ai/prompt/magenta%20creative%20artist%20agent%2C%20paint%20and%20music%20notes%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=TURTLE",
+    "prompt": "magenta creative artist agent, paint and music notes, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-04T07:48:33.525Z"
+  },
+  "QUILL": {
+    "uri": "https://image.pollinations.ai/prompt/gold%20scribe%20AI%20with%20glowing%20quill%20and%20scrolls%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=QUILL",
+    "prompt": "gold scribe AI with glowing quill and scrolls, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-04T07:48:33.610Z"
+  },
+  "PIKADON": {
+    "uri": "https://image.pollinations.ai/prompt/red%20guardian%20security%20AI%2C%20shield%20and%20lock%2C%20alert%20aura%2C%20pixel-art%20portrait%2C%20dark%20background?width=512&height=512&nologo=true&model=flux&seed=PIKADON",
+    "prompt": "red guardian security AI, shield and lock, alert aura, pixel-art portrait, dark background",
+    "generatedAt": "2026-06-04T07:48:33.698Z"
+  }
+}

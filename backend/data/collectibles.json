@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1,
+    "name": "Cosmic Crown",
+    "rarity": "legendary",
+    "owner": "test-buyer",
+    "mintedAt": "2026-05-23T19:39:30.104Z",
+    "signature": "e8af66c615fbab2e",
+    "tradedAt": "2026-06-04T14:41:18.310Z"
+  },
+  {
+    "id": 2,
+    "name": "Test Item",
+    "rarity": "T3",
+    "owner": "test",
+    "mintedAt": "2026-05-23T19:40:10.853Z",
+    "signature": "ca15964e443094c4"
+  },
+  {
+    "id": 3,
+    "name": "Verify Test",
+    "rarity": "T5",
+    "owner": "bitcoin",
+    "mintedAt": "2026-05-23T19:43:09.877Z",
+    "signature": "7c56fa17b4548e5b",
+    "tradedAt": "2026-06-22T00:39:21.779Z"
+  },
+  {
+    "id": 4,
+    "name": "Trade Test",
+    "rarity": "T6",
+    "owner": "bob",
+    "mintedAt": "2026-05-23T22:47:25.887Z",
+    "signature": "2f2a91962edd4feb",
+    "tradedAt": "2026-05-23T22:47:26.570Z"
+  },
+  {
+    "id": 5,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-23T22:54:41.514Z",
+    "signature": "1056641e2287f98d",
+    "tradedAt": "2026-05-23T22:54:41.531Z"
+  },
+  {
+    "id": 6,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T00:09:56.964Z",
+    "signature": "4fb4ae3147456339",
+    "tradedAt": "2026-05-24T00:09:56.990Z"
+  },
+  {
+    "id": 7,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T00:11:17.309Z",
+    "signature": "b000d673937ae77e",
+    "tradedAt": "2026-05-24T00:11:17.344Z"
+  },
+  {
+    "id": 8,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T02:33:24.516Z",
+    "signature": "1970f5dc04eb1e36",
+    "tradedAt": "2026-05-24T02:33:24.541Z"
+  },
+  {
+    "id": 9,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T02:44:25.303Z",
+    "signature": "bd4a2487edaa664d",
+    "tradedAt": "2026-05-24T02:44:25.328Z"
+  },
+  {
+    "id": 10,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T03:19:10.578Z",
+    "signature": "af0b46af8c43be1a",
+    "tradedAt": "2026-05-24T03:19:10.600Z"
+  },
+  {
+    "id": 11,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T03:21:19.011Z",
+    "signature": "7a963089c16677f7",
+    "tradedAt": "2026-05-24T03:21:19.034Z"
+  },
+  {
+    "id": 12,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T03:23:38.636Z",
+    "signature": "5e4a0bea4f3e1107",
+    "tradedAt": "2026-05-24T03:23:38.652Z"
+  },
+  {
+    "id": 13,
+    "name": "E2E Test Item",
+    "rarity": "T4",
+    "owner": "e2e-buyer",
+    "mintedAt": "2026-05-24T04:42:45.904Z",
+    "signature": "081d5151e1d287f8",
+    "tradedAt": "2026-05-24T04:42:45.926Z"
+  },
+  {
+    "id": 14,
+    "name": "Crystal Turtle",
+    "rarity": "T3",
+    "owner": "guest-guest-dkb8iedg",
+    "mintedAt": "2026-05-24T05:21:08.860Z",
+    "signature": "2e563683368dca6f"
+  },
+  {
+    "id": 15,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-03T18:59:14.894Z",
+    "signature": "9bf3ebd319c5f883"
+  },
+  {
+    "id": 16,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-04T08:22:30.208Z",
+    "signature": "092260acb3a329d0"
+  },
+  {
+    "id": 17,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-04T14:41:18.306Z",
+    "signature": "a2c452343a13cfc9"
+  },
+  {
+    "id": 18,
+    "name": "SHADDAI God Mode",
+    "rarity": "T7",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:27:25.601Z",
+    "signature": "afb953022ed8f538"
+  },
+  {
+    "id": 19,
+    "name": "Seraphim Plate",
+    "rarity": "T5",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:01.993Z",
+    "signature": "310cbe84dc8d9d18"
+  },
+  {
+    "id": 20,
+    "name": "Data Phoenix",
+    "rarity": "T5",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:06.277Z",
+    "signature": "34fed0977c1af5f7"
+  },
+  {
+    "id": 21,
+    "name": "Gold Rush",
+    "rarity": "T3",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:12.902Z",
+    "signature": "f799d3567ac161dd"
+  },
+  {
+    "id": 22,
+    "name": "ZEROX Whale Flex",
+    "rarity": "T7",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:29:09.060Z",
+    "signature": "ecd4a85daba3629a"
+  },
+  {
+    "id": 23,
+    "name": "bitcoin",
+    "rarity": "test",
+    "owner": "test",
+    "mintedAt": "2026-06-22T00:39:21.764Z",
+    "signature": "a3e640398c79b0a0"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "wh_1779687636215",
+    "workflow": "market-brief",
+    "trigger": "test",
+    "data": {},
+    "received": "2026-05-25T05:40:36.215Z",
+    "ip": "::1"
+  },
+  {
+    "id": "wh_1779687633984",
+    "workflow": "market-brief",
+    "trigger": "test",
+    "data": {},
+    "received": "2026-05-25T05:40:33.984Z",
+    "ip": "::1"
+  },
+  {
+    "id": "wh_1778887811721",
+    "workflow": "revenue-intel",
+    "trigger": "zapier",
+    "data": {
+      "source": "zapier",
+      "event": "new_signup"
+    },
+    "received": "2026-05-15T23:30:11.721Z",
+    "ip": "::1"
+  },
+  {
+    "id": "wh_1778887173262",
+    "workflow": "market-brief",
+    "trigger": "test",
+    "data": {},
+    "received": "2026-05-15T23:19:33.262Z",
+    "ip": "::1"
+  }
+]

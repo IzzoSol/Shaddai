@@ -1,0 +1,1 @@
+SHADDAI is an AI agent marketplace with 7 specialized agents. NEXUS handles backend architecture. ZEROX manages revenue. ORACLE does research. TURTLE designs UI. QUILL writes content. PIKADON handles security. The platform runs on Node.js with Ollama for local LLM inference.

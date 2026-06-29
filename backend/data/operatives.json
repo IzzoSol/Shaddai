@@ -1,0 +1,85 @@
+{
+  "nextTokenId": 14,
+  "operatives": {
+    "op_36cbc419_1782689365331": {
+      "id": "op_36cbc419_1782689365331",
+      "tokenId": 10,
+      "owner": "demo",
+      "codename": "DAITEST",
+      "archetype": null,
+      "rarity": "legendary",
+      "look": null,
+      "portrait": "/api/forge/image/forge-1.png",
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": null
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 90,
+        "power": 90,
+        "iq": 95
+      },
+      "createdAt": 1782689365331,
+      "updatedAt": 1782689365331
+    },
+    "op_11e8a06c_1782689365439": {
+      "id": "op_11e8a06c_1782689365439",
+      "tokenId": 11,
+      "owner": "demo",
+      "codename": "GUARDIAN",
+      "archetype": "ghost",
+      "rarity": "epic",
+      "look": {
+        "archetype": "ghost"
+      },
+      "portrait": "/api/forge/image/forge-3.png",
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "ghost"
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 70,
+        "power": 70,
+        "iq": 70
+      },
+      "createdAt": 1782689365439,
+      "updatedAt": 1782689365439
+    }
+  }
+}
