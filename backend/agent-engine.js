@@ -63,6 +63,22 @@ const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
+// BYOK helper — reads backend/data/byok-keys.json and returns the stored key for a
+// given provider (any tier, highest-permission first). Returns '' when nothing stored.
+// Called inside callLLM() so each invocation gets the freshest key without a restart.
+const _BYOK_FILE = path.join(__dirname, 'data', 'byok-keys.json');
+function getBYOKKey(provider) {
+  try {
+    const raw = fs.readFileSync(_BYOK_FILE, 'utf8');
+    const store = JSON.parse(raw);
+    for (const tier of ['alpha', 'pro', 'builder']) {
+      const entry = store[`${tier}:${provider}`];
+      if (entry && typeof entry.key === 'string' && entry.key.length > 8) return entry.key;
+    }
+  } catch (_) { /* file absent or parse error — fall back to env key */ }
+  return '';
+}
+
 // HTTP helper — axios with default timeout
 const http = (url, opts = {}) => axios.get(url, { timeout: 10000, ...opts });
 
@@ -3108,16 +3124,25 @@ Use tools for real data, then give a concise final answer.` };
     }
     throw lastErr || new Error(name + ' failed');
   }
+  // Effective API keys: BYOK (user's stored key from /api/byok/set) wins over the
+  // server env key so the user's own quota is consumed, not the shared pool.
+  // Note: 'claude' is the BYOK provider name for Anthropic.
+  const _bGroq      = getBYOKKey('groq')      || GROQ_KEY;
+  const _bRouter    = getBYOKKey('openrouter') || OPENROUTER_KEY;
+  const _bOpenAI    = getBYOKKey('openai')     || OPENAI_KEY;
+  const _bAnthropic = getBYOKKey('claude')     || ANTHROPIC_KEY;
+  const _bGemini    = getBYOKKey('gemini')     || GEMINI_KEY;
+
   // Anthropic (paid, reliable — different API shape: system separate, x-api-key).
   async function pAnthropic() {
-    if (!ANTHROPIC_KEY) throw new Error('anthropic no key');
+    if (!_bAnthropic) throw new Error('anthropic no key');
     const sys = allMsgs.find(m => m.role === 'system');
     const userMsgs = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content || '' }));
     if (!userMsgs.length) userMsgs.push({ role: 'user', content: 'Hello' });
     const model = (options.provider === 'anthropic' && options.model) || ANTHROPIC_MODEL;
     const r = await axios.post('https://api.anthropic.com/v1/messages',
       { model, max_tokens: 1500, temperature: 0.6, ...(sys ? { system: sys.content } : {}), messages: userMsgs },
-      { headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
+      { headers: { 'x-api-key': _bAnthropic, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
     const c = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
     if (!c) throw new Error('anthropic empty');
     llmTracer.trace({ provider: 'anthropic', model, agentName, inputTokens: r.data.usage?.input_tokens || 0, outputTokens: r.data.usage?.output_tokens || 0, durationMs: Date.now() - t0, success: true });
@@ -3125,13 +3150,13 @@ Use tools for real data, then give a concise final answer.` };
   }
   // Gemini (free, generous, SEPARATE quota from groq/openrouter — different API shape).
   async function pGemini() {
-    if (!GEMINI_KEY) throw new Error('gemini no key');
+    if (!_bGemini) throw new Error('gemini no key');
     const sys = allMsgs.find(m => m.role === 'system');
     const contents = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content || '' }] }));
     if (!contents.length) contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
     const model = (options.provider === 'gemini' && options.model) || GEMINI_MODEL;
     const body = { contents, ...(sys ? { systemInstruction: { parts: [{ text: sys.content }] } } : {}), generationConfig: { maxOutputTokens: 1500, temperature: 0.6 } };
-    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, body, { timeout: 35000 });
+    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${_bGemini}`, body, { timeout: 35000 });
     const c = (r.data.candidates?.[0]?.content?.parts || []).map(p => p.text).join('');
     if (!c) throw new Error('gemini empty');
     llmTracer.trace({ provider: 'gemini', model, agentName, inputTokens: 0, outputTokens: Math.ceil(c.length / 4), durationMs: Date.now() - t0, success: true });
@@ -3140,10 +3165,10 @@ Use tools for real data, then give a concise final answer.` };
   const PROVIDERS = {
     ollama: pOllama,
     gemini: pGemini,
-    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
+    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
     anthropic: pAnthropic,
-    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', OPENAI_KEY, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
+    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
@@ -3152,6 +3177,23 @@ Use tools for real data, then give a concise final answer.` };
   // free-tier rate limits → ollama local last. So a chain never dies on a 429.
   const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
   const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL };
+  // ── AURA CACHE — attempt a free answer before any paid provider call ────────
+  // aura.route() is synchronous and never throws; it returns {hit:false} on any miss.
+  // Only cache single-turn prompts (not multi-turn tool-result messages) to avoid
+  // caching partial tool-injection contexts that won't match future queries.
+  const _aura = require('./lib/aura');
+  const _lastUserMsg = messages.slice().reverse().find(m => m && m.role === 'user' && typeof m.content === 'string');
+  const _auraPrompt = (_lastUserMsg && messages.filter(m => m.role === 'user').length === 1)
+    ? _lastUserMsg.content : '';
+  if (_auraPrompt) {
+    const _hit = _aura.route(_auraPrompt);
+    if (_hit.hit) {
+      console.log(`[AURA] Cache hit (${_hit.method}, ~${_hit.savedTokensEst} tokens saved) — skipping LLM call`);
+      return _hit.answer;
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   let lastError;
   for (const pname of order) {
     const fn = PROVIDERS[pname];
@@ -3161,6 +3203,10 @@ Use tools for real data, then give a concise final answer.` };
       if (out) {
         const provider = pname, model = (options.provider === pname && options.model) || MODEL_OF[pname];
         console.log('[LLM] provider=' + provider + ' model=' + model);
+        // Record in AURA cache for future reuse (skip Ollama — it's already free/local).
+        if (_auraPrompt && pname !== 'ollama') {
+          try { _aura.recordAnswer(_auraPrompt, out); } catch (_) {}
+        }
         return out;
       }
     }

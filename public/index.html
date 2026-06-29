@@ -5649,7 +5649,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
                   `<div class="of-ac-stat"><b>SPD</b><div class="of-ac-bar"><i style="width:${st.speed}%"></i></div></div>`+
                 `</div>`+
                 `<div class="of-ac-meta"><span>${sanitizeText(op.archetype||'operative')}</span><span class="tools">⚙ ${tools} tools</span></div>`+
-                `<div class="of-ac-tray"><button class="run">▶ RUN</button><button class="dep-office">🏢 OFFICE</button><button class="dep-market">🛒 MARKET</button><button class="dep-room">🚪 ROOM</button></div>`+
+                `<div class="of-ac-tray"><button class="run">▶ RUN</button><button class="dep-office">🏢 OFFICE</button><button class="dep-market">🛒 MARKET</button><button class="dep-room">🚪 ROOM</button><button class="rm-op" style="background:rgba(255,60,60,.15);color:#ff6b6b;border:1px solid rgba(255,60,60,.35);margin-left:auto">✕ REMOVE</button></div>`+
               `</div>`;
           }
           /* click card → load into editor */
@@ -5684,6 +5684,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           const ob=card.querySelector('.dep-office');if(ob)ob.onclick=e=>{e.stopPropagation();deployOperative(op,'office',ob);};
           const mb=card.querySelector('.dep-market');if(mb)mb.onclick=e=>{e.stopPropagation();deployOperative(op,'marketplace',mb);};
           const rb=card.querySelector('.dep-room');if(rb)rb.onclick=e=>{e.stopPropagation();deployOperative(op,'room',rb);};
+          const rmb=card.querySelector('.rm-op');if(rmb)rmb.onclick=async e=>{e.stopPropagation();if(!confirm('Remove "'+codename+'" permanently?'))return;rmb.textContent='…';rmb.disabled=true;try{await j('/api/operatives/'+op.id+'?user='+(op.owner||'demo'),{method:'DELETE'});$('ofConsole').textContent='✕ Removed "'+codename+'".';}catch(err){$('ofConsole').textContent='⚠ remove failed: '+err.message;}loadGallery();};
           gallery.appendChild(card);
         });
       }
@@ -49647,7 +49648,7 @@ window.hireAgentX402=async function(){
 </div>
 
 <style>
-#gridView.active { display:block !important; }
+#gridView.active { display:block !important; position:fixed !important; inset:0 !important; width:100% !important; height:100% !important; margin:0 !important; padding:0 !important; z-index:1200 !important; overflow:hidden !important; }
 #worldPortal .wp-sun,#worldPortal .wp-moon,#worldPortal .wp-ring,#worldPortal .wp-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #worldPortal .wp-sun{width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffd24a 22%,#ff7b3d 55%,rgba(255,80,30,0) 72%);filter:blur(2px);animation:wpSun 3.4s ease-out forwards}
 #worldPortal .wp-moon{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#eaf2ff 0%,#9fb6e0 45%,rgba(60,90,160,0) 72%);filter:blur(1px);animation:wpMoon 3.4s ease-out forwards}
