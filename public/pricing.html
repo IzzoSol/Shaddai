@@ -7,7 +7,12 @@
 <style>
   :root{ --bg:#05070e; --panel:#0a0e1a; --bd:#16233b; --txt:#dbeafe; --mut:#8298ba; --cy:#27e0ff; --gold:#ffcf4a; --grn:#00e5a0; --mag:#ff2bd6; }
   *{ box-sizing:border-box; }
-  body{ margin:0; background:radial-gradient(1100px 650px at 50% -8%,#0d1936,#05070e 62%); color:var(--txt); font-family:'Segoe UI',system-ui,sans-serif; }
+  body{ margin:0; color:var(--txt); font-family:'Segoe UI',system-ui,sans-serif;
+    background:
+      linear-gradient(180deg, rgba(5,7,14,.62) 0%, rgba(5,7,14,.92) 52%, #05070e 78%),
+      url('/assets/ui/hero-nexus.png') top center / cover no-repeat,
+      radial-gradient(1100px 650px at 50% -8%,#0d1936,#05070e 62%);
+    background-attachment: scroll, fixed, fixed; }
   a{ color:inherit; }
   .wrap{ max-width:1080px; margin:0 auto; padding:30px 20px 60px; }
   .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
