@@ -3203,8 +3203,10 @@ Use tools for real data, then give a concise final answer.` };
       if (out) {
         const provider = pname, model = (options.provider === pname && options.model) || MODEL_OF[pname];
         console.log('[LLM] provider=' + provider + ' model=' + model);
-        // Record in AURA cache for future reuse (skip Ollama — it's already free/local).
-        if (_auraPrompt && pname !== 'ollama') {
+        // Record in AURA cache for future reuse — on EVERY provider (incl. Ollama). Even when the
+        // local model is "free", caching makes the repeat instant (vs 40s) AND, if the user later
+        // binds a paid BYOK key, the same prompt is served free from cache. This is the savings loop.
+        if (_auraPrompt) {
           try { _aura.recordAnswer(_auraPrompt, out); } catch (_) {}
         }
         return out;
