@@ -718,6 +718,14 @@ function compute(prompt) {
 }
 
 // ===========================================================================
+// VOLATILE detection — time-sensitive answers must NEVER be served from cache
+// (a cached "BTC price" from yesterday is a WRONG answer). Excluded from
+// FETCH/QUERY hits and never stored. COMPUTE (math/date) stays allowed.
+// ===========================================================================
+const VOLATILE_RE = /\b(price|prices|worth|market\s*cap|volume|gas\s*price|exchange\s*rate|stock|ticker|quote|weather|temperature|forecast|news|headlines?|trending|latest|current(?:ly)?|live|real[\s-]?time|right\s*now|fear\s*(?:and|&)\s*greed|standings|balance|funding\s*rate|dominance|floor\s*price|\btvl\b|\bapr\b|\bapy\b|yield)\b/i;
+function isVolatile(prompt) { try { return VOLATILE_RE.test(String(prompt || '')); } catch (_) { return false; } }
+
+// ===========================================================================
 // PUBLIC API
 // ===========================================================================
 
@@ -732,11 +740,12 @@ function route(prompt, opts = {}) {
     if (!p.trim()) return { hit: false };
 
     const cache = pruneCache(loadCache());
+    const volatile = isVolatile(p);   // time-sensitive → never serve a cached LLM answer
 
     // 1) FETCH — exact normalized match (O(1) hash lookup — always cheapest first)
     const key = hashKey(p);
     const exact = cache[key];
-    if (exact && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
+    if (!volatile && exact && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
       const saved = estTokens(p) + estTokens(exact.answer);
       bumpStats((s) => {
         s.hits++; s.byMethod.fetch++; s.tokensSaved += saved;
@@ -774,7 +783,7 @@ function route(prompt, opts = {}) {
       const sim = cosineSim(p, e.prompt);
       if (sim > bestSim) { bestSim = sim; best = e; }
     }
-    if (best && bestSim >= SIM_THRESHOLD) {
+    if (!volatile && best && bestSim >= SIM_THRESHOLD) {
       const saved = estTokens(p) + estTokens(best.answer);
       bumpStats((s) => {
         s.hits++; s.byMethod.query++; s.tokensSaved += saved;
@@ -801,6 +810,7 @@ function recordAnswer(prompt, answer, opts = {}) {
   try {
     const p = String(prompt || '');
     if (!p.trim() || answer === undefined || answer === null) return false;
+    if (isVolatile(p)) return false;   // never store time-sensitive answers (prices/news/weather…)
     const cache = pruneCache(loadCache());
     const key = hashKey(p);
     cache[key] = {

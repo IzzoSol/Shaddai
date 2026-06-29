@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AURA · Token-Saver Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#04080a; --panel:#0a141a; --bd:#143038; --txt:#cdeef0; --mut:#5d8088; --cy:#27e0ff; --grn:#22e3a0; --amber:#ffce4a; --mag:#ff5db1; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-height:100vh; background:
+      radial-gradient(800px 500px at 80% -10%, #07262b 0%, transparent 55%),
+      repeating-linear-gradient(0deg, transparent 0 2px, rgba(39,224,255,.012) 2px 3px),
+      #04080a;
+    color:var(--txt); font-family:'JetBrains Mono',monospace; }
+  .wrap{ max-width:1000px; margin:0 auto; padding:26px 20px 50px; }
+  .top{ display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--bd); padding-bottom:14px; }
+  h1{ font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.22em; font-size:22px; margin:0; color:var(--cy); }
+  h1 small{ display:block; font-family:'JetBrains Mono'; font-size:10px; letter-spacing:.3em; color:var(--mut); margin-top:3px; }
+  .top a{ font-size:11px; color:var(--mut); text-decoration:none; border:1px solid var(--bd); padding:6px 12px; border-radius:3px; }
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0; }
+  .card{ background:var(--panel); border:1px solid var(--bd); border-radius:6px; padding:16px; position:relative; overflow:hidden; }
+  .card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cy); }
+  .card.g::before{ background:var(--grn);} .card.a::before{ background:var(--amber);} .card.m::before{ background:var(--mag); }
+  .card .k{ font-size:9px; letter-spacing:.2em; color:var(--mut); text-transform:uppercase; }
+  .card .v{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:34px; line-height:1.1; margin-top:6px; }
+  .card.g .v{ color:var(--grn);} .card.a .v{ color:var(--amber);} .card.m .v{ color:var(--mag);} .card .v{ color:var(--cy); }
+  .card .s{ font-size:10px; color:var(--mut); margin-top:4px; }
+  .cols{ display:grid; grid-template-columns:1fr 1.4fr; gap:14px; }
+  .box{ background:var(--panel); border:1px solid var(--bd); border-radius:6px; padding:16px; }
+  .box h2{ font-family:'Rajdhani',sans-serif; font-size:14px; letter-spacing:.14em; color:var(--cy); margin:0 0 12px; }
+  .meth{ margin-bottom:11px; } .meth .lbl{ display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; }
+  .bar{ height:8px; background:#0c1c22; border-radius:4px; overflow:hidden; } .bar i{ display:block; height:100%; }
+  .feed{ max-height:300px; overflow-y:auto; }
+  .ev{ display:flex; gap:10px; align-items:baseline; font-size:11px; padding:6px 0; border-bottom:1px solid #0c1c22; }
+  .ev .m{ font-weight:600; width:62px; } .ev .m.fetch{ color:var(--cy);} .ev .m.compute{ color:var(--grn);} .ev .m.query{ color:var(--amber); }
+  .ev .sn{ flex:1; color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ev .tk{ color:var(--txt); }
+  .note{ font-size:10px; color:var(--mut); margin-top:18px; line-height:1.6; }
+  .live{ font-size:10px; color:var(--grn); } .live::before{ content:'●'; margin-right:5px; animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 50%{ opacity:.3; } }
+  @media(max-width:760px){ .grid{ grid-template-columns:1fr 1fr; } .cols{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>AURA<small>token-saver · live monitor</small></h1>
+    <div style="text-align:right"><a href="/">← dashboard</a><div class="live" id="live" style="margin-top:8px">refreshing every 5s</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card g"><div class="k">Hit rate</div><div class="v" id="rate">—</div><div class="s">answers served without an LLM</div></div>
+    <div class="card"><div class="k">Tokens saved</div><div class="v" id="tok">—</div><div class="s" id="usd">—</div></div>
+    <div class="card a"><div class="k">Cache hits</div><div class="v" id="hits">—</div><div class="s">free answers delivered</div></div>
+    <div class="card m"><div class="k">Misses</div><div class="v" id="miss">—</div><div class="s">went to the LLM</div></div>
+  </div>
+
+  <div class="cols">
+    <div class="box">
+      <h2>HOW IT SAVED</h2>
+      <div class="meth"><div class="lbl"><span style="color:var(--cy)">⌕ FETCH — exact cache</span><span id="mf">0</span></div><div class="bar"><i id="bf" style="background:var(--cy)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--grn)">∑ COMPUTE — solved locally</span><span id="mc">0</span></div><div class="bar"><i id="bc" style="background:var(--grn)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--amber)">≈ QUERY — fuzzy match</span><span id="mq">0</span></div><div class="bar"><i id="bq" style="background:var(--amber)"></i></div></div>
+      <div class="note">FETCH = same prompt seen before. COMPUTE = math/date/units solved with zero AI. QUERY = a close paraphrase reused. Time-sensitive prompts (prices, weather, news) are <b style="color:var(--txt)">never cached</b> so answers stay fresh.</div>
+    </div>
+    <div class="box">
+      <h2>RECENT SAVES</h2>
+      <div class="feed" id="feed"><div class="ev"><span class="sn">waiting for activity…</span></div></div>
+    </div>
+  </div>
+
+  <div class="note" id="foot"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString();
+async function tick(){
+  let s; try{ s=await (await fetch('/api/aura/stats')).json(); }catch(e){ $('live').textContent='offline'; return; }
+  $('rate').textContent=Math.round((s.hitRate||0)*100)+'%';
+  $('tok').textContent=fmt(s.tokensSaved);
+  $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
+  $('hits').textContent=fmt(s.hits);
+  $('miss').textContent=fmt(s.misses);
+  const bm=s.byMethod||{fetch:0,compute:0,query:0}; const max=Math.max(1,bm.fetch,bm.compute,bm.query);
+  $('mf').textContent=fmt(bm.fetch); $('bf').style.width=(bm.fetch/max*100)+'%';
+  $('mc').textContent=fmt(bm.compute); $('bc').style.width=(bm.compute/max*100)+'%';
+  $('mq').textContent=fmt(bm.query); $('bq').style.width=(bm.query/max*100)+'%';
+  const rec=s.recentSaves||[];
+  $('feed').innerHTML = rec.length ? rec.map(r=>`<div class="ev"><span class="m ${r.method}">${(r.method||'').toUpperCase()}</span><span class="sn">${(r.snippet||'').replace(/</g,'&lt;')||'—'}</span><span class="tk">+${fmt(r.tokens)}t</span></div>`).join('')
+    : '<div class="ev"><span class="sn">no saves yet — run agents and they\'ll appear here</span></div>';
+  $('foot').textContent='AURA caches every agent run; identical prompts return instantly at $0. Stats persist across restarts.';
+}
+tick(); setInterval(tick, 5000);
+</script>
+</body>
+</html>
