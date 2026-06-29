@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI — Forge a council of AI agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#060710; --void2:#0b0d1a; --panel:#0e1124; --line:#1b2140;
+    --electrum:#ead8a0; --gold:#f0c560; --cy:#5ee9ff; --plasma:#ff4d8d; --vio:#9b8cff;
+    --ink:#edeefb; --mut:#8b90b4;
+    --disp:'Fraunces',serif; --body:'Familjen Grotesk',sans-serif; --mono:'Space Mono',monospace;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--void); color:var(--ink); font-family:var(--body); line-height:1.55; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+  body::after{ content:''; position:fixed; inset:0; pointer-events:none; z-index:200; opacity:.04; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  a{ color:inherit; text-decoration:none; }
+  .mono{ font-family:var(--mono); }
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--cy); }
+  /* nav */
+  nav{ position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between;
+    padding:18px 5vw; backdrop-filter:blur(10px); background:linear-gradient(180deg,rgba(6,7,16,.7),transparent); }
+  nav .brand{ font-family:var(--disp); font-weight:900; font-size:20px; letter-spacing:.16em; }
+  nav .brand b{ color:var(--electrum); }
+  nav .links{ display:flex; gap:26px; align-items:center; font-size:14px; }
+  nav .links a{ color:var(--mut); transition:.2s; } nav .links a:hover{ color:var(--ink); }
+  nav .enter{ font-family:var(--mono); font-size:12px; letter-spacing:.1em; color:var(--void); background:var(--electrum);
+    padding:9px 16px; border-radius:2px; transition:.2s; } nav .enter:hover{ background:var(--cy); }
+  @media(max-width:780px){ nav .links a:not(.enter){ display:none; } }
+  /* hero */
+  .hero{ position:relative; min-height:100vh; display:flex; align-items:center; padding:0 5vw; overflow:hidden; }
+  .hero .bg{ position:absolute; inset:0; z-index:0;
+    background:linear-gradient(105deg, rgba(6,7,16,.96) 18%, rgba(6,7,16,.5) 60%, rgba(6,7,16,.85) 100%),
+      url('/assets/ui/hero-nexus.png') center right / cover no-repeat; }
+  .hero .bg::after{ content:''; position:absolute; inset:0; background:radial-gradient(900px 500px at 12% 80%, rgba(94,233,255,.10), transparent 60%); }
+  .hero .inner{ position:relative; z-index:1; max-width:920px; }
+  .hero h1{ font-family:var(--disp); font-weight:900; font-size:clamp(44px,7.4vw,104px); line-height:.96; letter-spacing:-.02em; margin:18px 0 0; }
+  .hero h1 .it{ font-style:italic; font-weight:500; color:var(--electrum); }
+  .hero h1 .grad{ background:linear-gradient(100deg,var(--cy),var(--vio) 55%,var(--plasma)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p.sub{ font-size:clamp(16px,1.5vw,21px); color:var(--mut); max-width:600px; margin:26px 0 0; }
+  .hero p.sub b{ color:var(--ink); font-weight:500; }
+  .cta{ display:flex; gap:14px; margin-top:38px; flex-wrap:wrap; }
+  .btn{ font-family:var(--mono); font-size:13px; letter-spacing:.06em; padding:15px 26px; border-radius:2px; cursor:pointer; transition:.18s; display:inline-flex; align-items:center; gap:9px; }
+  .btn.p{ background:linear-gradient(100deg,var(--electrum),var(--gold)); color:#1a1404; font-weight:700; box-shadow:0 8px 30px rgba(234,216,160,.18); }
+  .btn.p:hover{ transform:translateY(-2px); box-shadow:0 12px 38px rgba(234,216,160,.28); }
+  .btn.o{ border:1px solid var(--line); color:var(--ink); } .btn.o:hover{ border-color:var(--cy); color:var(--cy); }
+  .scrollhint{ position:absolute; bottom:24px; left:5vw; z-index:1; font-family:var(--mono); font-size:10px; letter-spacing:.3em; color:var(--mut); }
+  .scrollhint::after{ content:'↓'; display:block; margin-top:6px; animation:bob 1.8s infinite; } @keyframes bob{ 50%{ transform:translateY(6px); } }
+  /* sections */
+  section{ padding:clamp(70px,10vw,140px) 5vw; position:relative; }
+  .sec-h{ font-family:var(--disp); font-weight:900; font-size:clamp(30px,4.4vw,58px); line-height:1.02; letter-spacing:-.01em; margin:10px 0 0; }
+  .sec-h .it{ font-style:italic; font-weight:500; color:var(--electrum); }
+  .lede{ color:var(--mut); max-width:560px; margin-top:16px; font-size:17px; }
+  /* the loop */
+  .loop{ background:linear-gradient(180deg,var(--void),var(--void2)); border-top:1px solid var(--line); }
+  .steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin-top:54px; background:var(--line); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .step{ background:var(--void); padding:34px 26px; position:relative; transition:.3s; }
+  .step:hover{ background:var(--panel); }
+  .step .n{ font-family:var(--mono); font-size:12px; color:var(--cy); letter-spacing:.2em; }
+  .step h3{ font-family:var(--disp); font-weight:600; font-size:25px; margin:16px 0 8px; }
+  .step p{ color:var(--mut); font-size:14.5px; margin:0; }
+  .step .ic{ font-size:24px; opacity:.85; }
+  @media(max-width:880px){ .steps{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:520px){ .steps{ grid-template-columns:1fr; } }
+  /* council */
+  .council{ background:var(--void); }
+  .marquee{ margin-top:50px; overflow:hidden; -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent); }
+  .track{ display:flex; gap:18px; width:max-content; animation:slide 42s linear infinite; }
+  .council:hover .track{ animation-play-state:paused; }
+  @keyframes slide{ to{ transform:translateX(-50%); } }
+  .agent{ width:230px; flex:0 0 230px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel); transition:.25s; }
+  .agent:hover{ transform:translateY(-6px); border-color:var(--electrum); box-shadow:0 16px 40px rgba(0,0,0,.5); }
+  .agent .img{ height:240px; background-size:cover; background-position:center top; background-color:#0a0c18; }
+  .agent .meta{ padding:13px 15px; }
+  .agent .nm{ font-family:var(--disp); font-weight:600; font-size:18px; }
+  .agent .role{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--cy); text-transform:uppercase; margin-top:3px; }
+  /* proof */
+  .proof{ background:linear-gradient(180deg,var(--void2),var(--void)); border-top:1px solid var(--line); }
+  .pgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:50px; }
+  .stat{ border-left:2px solid var(--cy); padding:6px 0 6px 18px; }
+  .stat .big{ font-family:var(--disp); font-weight:900; font-size:clamp(32px,4vw,50px); line-height:1; }
+  .stat.g .big{ color:var(--electrum); } .stat.c .big{ color:var(--cy); } .stat.v .big{ color:var(--vio); } .stat.m .big{ color:var(--plasma); }
+  .stat.g{ border-color:var(--electrum);} .stat.v{ border-color:var(--vio);} .stat.m{ border-color:var(--plasma); }
+  .stat .lbl{ color:var(--mut); font-size:13px; margin-top:8px; }
+  @media(max-width:880px){ .pgrid{ grid-template-columns:1fr 1fr; } }
+  /* cta band */
+  .band{ position:relative; text-align:center; padding:clamp(80px,12vw,160px) 5vw; overflow:hidden; }
+  .band .bg{ position:absolute; inset:0; z-index:0; background:linear-gradient(180deg,rgba(6,7,16,.82),rgba(6,7,16,.92)),url('/assets/ui/grid-deep.png') center / cover no-repeat; }
+  .band .inner{ position:relative; z-index:1; }
+  .band h2{ font-family:var(--disp); font-weight:900; font-size:clamp(34px,5.5vw,72px); line-height:1; margin:0; }
+  .band h2 .it{ font-style:italic; font-weight:500; color:var(--electrum); }
+  .band .cta{ justify-content:center; }
+  footer{ border-top:1px solid var(--line); padding:34px 5vw; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; color:var(--mut); font-size:13px; }
+  footer .brand{ font-family:var(--disp); font-weight:900; letter-spacing:.14em; color:var(--ink); }
+  /* reveal */
+  .rv{ opacity:0; transform:translateY(24px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  .rv.in{ opacity:1; transform:none; }
+  .d1{ transition-delay:.08s;} .d2{ transition-delay:.16s;} .d3{ transition-delay:.24s; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">⬡ SHA<b>DD</b>AI</div>
+  <div class="links">
+    <a href="/forge.html">The Forge</a>
+    <a href="#loop">How it works</a>
+    <a href="/pricing.html">Pricing</a>
+    <a href="/world">The World</a>
+    <a class="enter" href="/">Enter the Dashboard →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="bg"></div>
+  <div class="inner">
+    <div class="eyebrow rv in">Non-custodial · runs on your keys · live</div>
+    <h1 class="rv in d1">Forge a <span class="it">council</span><br>of <span class="grad">AI agents</span><br>that actually work.</h1>
+    <p class="sub rv in d2">Pick an archetype, bind <b>real tools</b>, connect your own API key — then put your agent to work: markets, research, content, code, security. <b>AURA</b> caches every call so you pay a fraction.</p>
+    <div class="cta rv in d3">
+      <a class="btn p" href="/forge.html">⬡ Forge your first agent</a>
+      <a class="btn o" href="/pricing.html">See plans</a>
+    </div>
+  </div>
+  <div class="scrollhint">SCROLL</div>
+</header>
+
+<!-- THE LOOP -->
+<section class="loop" id="loop">
+  <div class="eyebrow rv">The loop</div>
+  <h2 class="sec-h rv d1">Forge once. <span class="it">Earn</span> forever.</h2>
+  <p class="lede rv d2">A simple, honest pipeline — no part-by-part cosmetics, no smoke. Pick, equip, awaken, collect.</p>
+  <div class="steps">
+    <div class="step rv"><div class="ic">⬡</div><div class="n">01 · FORGE</div><h3>Pick an archetype</h3><p>Choose 1 of 8 hand-built, rigged 3D archetypes. Name it. Done.</p></div>
+    <div class="step rv d1"><div class="ic">⚙</div><div class="n">02 · EQUIP</div><h3>Bind real tools</h3><p>~190 executable tools (prices, web, code, security) — clearly marked, no larp.</p></div>
+    <div class="step rv d2"><div class="ic">🔑</div><div class="n">03 · CONNECT</div><h3>Your key, via AURA</h3><p>Run on your own API key; AURA caches calls so cost drops hard.</p></div>
+    <div class="step rv d3"><div class="ic">⚡</div><div class="n">04 · AWAKEN</div><h3>Put it to work</h3><p>Real tasks now; collectables, the 3D world & x402 next.</p></div>
+  </div>
+</section>
+
+<!-- COUNCIL -->
+<section class="council">
+  <div class="eyebrow rv">The roster</div>
+  <h2 class="sec-h rv d1">Eight <span class="it">archetypes</span>. Real rigs.</h2>
+  <p class="lede rv d2">Each forged in FLUX, modeled in 3D, and standing in the world. Hover to pause.</p>
+  <div class="marquee rv d2"><div class="track" id="track"></div></div>
+</section>
+
+<!-- PROOF -->
+<section class="proof">
+  <div class="eyebrow rv">No vaporware</div>
+  <h2 class="sec-h rv d1">What's <span class="it">already</span> real.</h2>
+  <div class="pgrid">
+    <div class="stat g rv"><div class="big">190+</div><div class="lbl">executable tools that actually fire — verified, not prompt-larp</div></div>
+    <div class="stat c rv d1"><div class="big">3D</div><div class="lbl">walkable world where your forged agents stand & move</div></div>
+    <div class="stat v rv d2"><div class="big" id="auraNum">$0</div><div class="lbl">saved by AURA so far — caches every agent call</div></div>
+    <div class="stat m rv d3"><div class="big">FLUX</div><div class="lbl">real generated art + rigged models, not stock icons</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="band">
+  <div class="bg"></div>
+  <div class="inner">
+    <div class="eyebrow rv" style="text-align:center">Start free</div>
+    <h2 class="rv d1">Build your <span class="it">first operative</span><br>in two minutes.</h2>
+    <div class="cta rv d2">
+      <a class="btn p" href="/forge.html">⬡ Open The Forge</a>
+      <a class="btn o" href="/pricing.html">Compare plans</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="brand">⬡ SHADDAI</div>
+  <div class="mono">forge · equip · awaken · earn</div>
+  <div><a href="/" style="color:var(--mut)">Dashboard</a> &nbsp;·&nbsp; <a href="/aura.html" style="color:var(--mut)">AURA monitor</a> &nbsp;·&nbsp; <a href="/world" style="color:var(--mut)">The World</a></div>
+</footer>
+
+<script>
+// council roster (archetype art) — duplicated for a seamless marquee loop
+const ARCH = [
+  ['vanguard','Guardian'],['ghost','Stealth'],['artisan','Creator'],['oracle','Seer'],
+  ['street-deity','Hustler'],['gaia-link','Bio'],['psionic','Mind'],['harvester','Reaper']
+];
+const NAMES = { 'street-deity':'Street Deity','gaia-link':'Gaia-Link' };
+const card = (id,role)=>`<a class="agent" href="/forge.html"><div class="img" style="background-image:url('/api/forge/art/arch-${id}.png')"></div>
+  <div class="meta"><div class="nm">${NAMES[id]||id.charAt(0).toUpperCase()+id.slice(1)}</div><div class="role">${role}</div></div></a>`;
+document.getElementById('track').innerHTML = (ARCH.map(a=>card(a[0],a[1])).join('')).repeat(2);
+
+// scroll reveals
+const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold:.15 });
+document.querySelectorAll('.rv:not(.in)').forEach(el=>io.observe(el));
+
+// live AURA savings in the proof stat
+fetch('/api/aura/stats').then(r=>r.json()).then(s=>{ const el=document.getElementById('auraNum');
+  if(el) el.textContent = '$'+(s.costSavedUsd!=null? Number(s.costSavedUsd).toFixed(4) : '0'); }).catch(()=>{});
+</script>
+</body>
+</html>
