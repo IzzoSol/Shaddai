@@ -141,18 +141,33 @@ async function runTry(){
 }
 $('tryBtn').onclick=runTry; $('tryIn').addEventListener('keydown',e=>{ if(e.key==='Enter')runTry(); });
 
-// VERIFY — run the live benchmark
+// VERIFY — run the live benchmark and SHOW THE WORK (checkable by eye, not just a score)
+const esc=s=>String(s==null?'':s).replace(/</g,'&lt;');
 $('verifyBtn').onclick=async()=>{
   $('verifyBtn').textContent='…running'; $('verifyBtn').disabled=true;
   $('verifyOut').innerHTML='<span style="color:var(--amber)">running benchmark…</span>';
   try{
     const b=await (await fetch('/api/aura/bench')).json();
     const sec=b.sections||{}; const pct=Math.round((b.rate||0)*100);
-    const seg=(s,col)=> s?`<span style="color:${col}">${s.label.split(' ')[0].toUpperCase()} ${s.pass}/${s.total}</span>`:'';
     const okColor = pct>=80?'var(--grn)':'var(--mag)';
-    $('verifyOut').innerHTML=`<b style="color:${okColor};font-size:14px">${pct}% (${b.pass}/${b.total})</b> &nbsp; `+
-      `${seg(sec.compute,'var(--grn)')} · ${seg(sec.safety,'var(--cy)')} · ${seg(sec.routing,'var(--vio)')}`+
-      (b.fails&&b.fails.length?`<br><span style="color:var(--mag);font-size:11px">${b.fails.length} fail(s): ${b.fails.slice(0,3).map(f=>f.replace(/</g,'&lt;')).join(' · ')}</span>`:` &nbsp; <span style="color:var(--grn)">✓ all real, nothing fabricated</span>`);
+    const row=(l,r,ok)=>`<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #0c1c22"><span style="flex:1;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l)}</span><span style="color:${ok?'var(--txt)':'var(--mag)'}">${esc(r)}</span><span style="color:${ok?'var(--grn)':'var(--mag)'};width:14px">${ok?'✓':'✗'}</span></div>`;
+    const proofs=(b.liveProofs||[]).map(p=>`<div style="display:flex;gap:8px;padding:3px 0"><span style="flex:1;color:var(--cy)">${esc(p.prompt)}</span><span style="color:var(--grn);font-weight:600">= ${esc(p.answer)}</span></div>`).join('');
+    const compute=(sec.compute&&sec.compute.cases||[]).map(c=>row(c.prompt,c.answer,c.ok)).join('');
+    const safety=(sec.safety&&sec.safety.cases||[]).map(c=>row(c.prompt, c.declined?'declined → real AI':'WRONGLY ANSWERED', c.ok)).join('');
+    const routing=(sec.routing&&sec.routing.cases||[]).map(c=>row(c.goal, c.recipe, c.ok)).join('');
+    $('verifyOut').innerHTML=
+      `<div style="font-size:14px"><b style="color:${okColor}">${pct}% (${b.pass}/${b.total})</b> — `+
+      `<span style="color:var(--grn)">EXACT ${sec.compute.pass}/${sec.compute.total}</span> · `+
+      `<span style="color:var(--cy)">DECLINED ${sec.safety.pass}/${sec.safety.total}</span> · `+
+      `<span style="color:var(--vio)">ROUTED ${sec.routing.pass}/${sec.routing.total}</span>`+
+      (b.fails&&b.fails.length?'' : ` &nbsp;<span style="color:var(--grn)">✓ all real, nothing fabricated</span>`)+`</div>`+
+      `<div style="margin-top:10px;font-size:11.5px"><b style="color:var(--grn)">⚡ Computed live, just now (novel inputs — not canned):</b>${proofs}`+
+      `<div style="color:var(--mut);margin:6px 0 2px">↑ check any with a calculator. Type your OWN numbers in TRY AURA below — it computes any input, it's not a script.</div>`+
+      `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--cy)">show all ${b.total} checks</summary>`+
+        `<div style="margin-top:6px"><b style="color:var(--grn)">EXACT — real math, no AI:</b>${compute}</div>`+
+        `<div style="margin-top:8px"><b style="color:var(--cy)">SAFETY — AURA refused to fake these (sent to the real AI):</b>${safety}</div>`+
+        `<div style="margin-top:8px"><b style="color:var(--vio)">ROUTING — goal → deterministic recipe:</b>${routing}</div>`+
+      `</details></div>`;
   }catch(e){ $('verifyOut').innerHTML='<span style="color:var(--mag)">verify error: '+e.message+'</span>'; }
   $('verifyBtn').textContent='▶ RUN BENCHMARK'; $('verifyBtn').disabled=false;
 };

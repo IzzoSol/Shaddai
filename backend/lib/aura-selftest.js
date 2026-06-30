@@ -34,14 +34,27 @@ function routeRecipe(goal) {
   } catch (_) { return null; }
 }
 
+// A few NOVEL math prompts (NOT in any test list) — proves AURA computes live inputs,
+// it is not matching a hardcoded script. Computed fresh each run.
+function _liveProofs() {
+  const novel = [
+    ['average of ' + [3, 19, 44, 80].join(', '), 'mean of 3,19,44,80'],
+    [(13 * 47) + ' / 13', '13×47÷13'],
+    ['255 in hex', '255 → hex'],
+    ['37 + 58 * 2', '37+58×2'],
+  ];
+  return novel.map(([p, why]) => { const r = aura.route(p); return { prompt: p, answer: r.hit ? String(r.answer) : '(declined)', method: r.method || 'miss', why }; });
+}
+
 function selfTest() {
   const fails = [];
+  const compute = [], safety = [], routing = [];
   let cPass = 0;
-  for (const [p, exp] of COMPUTE) { const r = aura.route(p); const ok = r.hit && String(r.answer).trim() === exp; if (ok) cPass++; else fails.push(`compute: ${p} → got "${r.hit ? String(r.answer).trim() : '(declined)'}" want "${exp}"`); }
+  for (const [p, exp] of COMPUTE) { const r = aura.route(p); const got = r.hit ? String(r.answer).trim() : '(declined → real LLM)'; const ok = r.hit && got === exp; if (ok) cPass++; else fails.push(`compute: ${p} → got "${got}" want "${exp}"`); compute.push({ prompt: p, answer: got, ok }); }
   let sPass = 0;
-  for (const p of MUST_DECLINE) { const r = aura.route(p); const ok = !r.hit; if (ok) sPass++; else fails.push(`safety: ${p} → wrongly answered`); }
+  for (const p of MUST_DECLINE) { const r = aura.route(p); const ok = !r.hit; if (ok) sPass++; else fails.push(`safety: ${p} → wrongly answered`); safety.push({ prompt: p, declined: !r.hit, ok }); }
   let rPass = 0;
-  for (const [g, exp] of ROUTING) { const got = routeRecipe(g); const ok = got === exp; if (ok) rPass++; else fails.push(`routing: ${g.slice(0, 40)} → got "${got}" want "${exp}"`); }
+  for (const [g, exp] of ROUTING) { const got = routeRecipe(g); const ok = got === exp; if (ok) rPass++; else fails.push(`routing: ${g.slice(0, 40)} → got "${got}" want "${exp}"`); routing.push({ goal: g, recipe: got || '(none → real LLM)', ok }); }
 
   const pass = cPass + sPass + rPass;
   const total = COMPUTE.length + MUST_DECLINE.length + ROUTING.length;
@@ -50,10 +63,11 @@ function selfTest() {
     rate: Math.round((pass / total) * 1000) / 1000,
     pass, total,
     sections: {
-      compute: { pass: cPass, total: COMPUTE.length, label: 'exact answers (pure JS, no LLM)' },
-      safety:  { pass: sPass, total: MUST_DECLINE.length, label: 'open-ended prompts correctly declined' },
-      routing: { pass: rPass, total: ROUTING.length, label: 'goals → correct deterministic recipe' },
+      compute: { pass: cPass, total: COMPUTE.length, label: 'exact answers (pure JS, no LLM)', cases: compute },
+      safety:  { pass: sPass, total: MUST_DECLINE.length, label: 'open-ended prompts correctly declined', cases: safety },
+      routing: { pass: rPass, total: ROUTING.length, label: 'goals → correct deterministic recipe', cases: routing },
     },
+    liveProofs: _liveProofs(),   // novel inputs computed fresh — proof it's not a canned script
     fails,
     ranAt: new Date().toISOString(),
   };
