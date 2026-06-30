@@ -3357,6 +3357,31 @@ async function runAgentLoop(taskId) {
 // iteration agent loop. Only the synthesis LLM call remains (the genuine judgment gate).
 // Saves the orchestration tokens (credited to AURA). Conservative by design.
 //   Disable with env AINL_FASTPATH=off.
+// Deterministic param extraction for the AINL fast-path. Only returns params when EVERY required
+// input is found with high confidence — otherwise null → we fall back to the LLM loop (safe).
+const _COIN = { btc:'bitcoin', bitcoin:'bitcoin', eth:'ethereum', ethereum:'ethereum', sol:'solana', solana:'solana',
+  bnb:'binancecoin', xrp:'ripple', ripple:'ripple', ada:'cardano', cardano:'cardano', doge:'dogecoin', dogecoin:'dogecoin',
+  avax:'avalanche-2', matic:'matic-network', polygon:'matic-network', dot:'polkadot', polkadot:'polkadot',
+  link:'chainlink', chainlink:'chainlink', ltc:'litecoin', litecoin:'litecoin', shib:'shiba-inu', uni:'uniswap', atom:'cosmos' };
+function _extractRecipeParams(recipe, goal) {
+  const need = Array.isArray(recipe.params) ? recipe.params : [];
+  if (!need.length) return {};
+  const out = {}; const g = ' ' + String(goal).toLowerCase() + ' ';
+  for (const p of need) {
+    if (p === 'symbol' || p === 'collection') {
+      let found = null;
+      for (const k of Object.keys(_COIN)) { if (new RegExp('\\b' + k + '\\b').test(g)) { found = _COIN[k]; break; } }
+      if (!found) return null; out[p] = found;
+    } else if (p === 'address') {
+      const m = String(goal).match(/0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44}/);
+      if (!m) return null; out[p] = m[0];
+    } else {
+      return null;  // a param type we can't extract deterministically → don't fast-path
+    }
+  }
+  return out;
+}
+
 async function tryRecipeFastPath(goal, agentName) {
   try {
     if (process.env.AINL_FASTPATH === 'off') return null;
@@ -3365,11 +3390,12 @@ async function tryRecipeFastPath(goal, agentName) {
     if (!matches.length || matches[0].type !== 'recipe' || (matches[0].score || 0) < 1.6) return null;
     const r = skillIndex.getRecipe(matches[0].id);
     if (!r) return null;
-    if (Array.isArray(r.params) && r.params.length) return null;   // needs inputs we can't extract → skip
-    const done = await runSkill(matches[0].id, {}, ag || r.agent); // deterministic — no orchestration LLM
+    const input = _extractRecipeParams(r, goal);        // {} for param-less; null if inputs can't be extracted
+    if (input === null) return null;                    // → fall back to the LLM loop (safe)
+    const done = await runSkill(matches[0].id, input, ag || r.agent);  // deterministic — no orchestration LLM
     if (!done || done.status === 'failed' || !done.result) return null;
     try { require('./lib/aura').creditDeterministic(goal, 1800); } catch (_) {}  // ~3 avoided LLM iterations
-    return { result: done.result, recipeId: matches[0].id, tools: done.tools_used || [], score: matches[0].score };
+    return { result: done.result, recipeId: matches[0].id, tools: done.tools_used || [], params: input, score: matches[0].score };
   } catch (_) { return null; }
 }
 
