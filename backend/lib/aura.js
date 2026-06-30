@@ -30,6 +30,7 @@ const crypto = require('crypto');
 const DATA_DIR     = process.env.AURA_HOME || path.join(__dirname, '..', 'data');
 const CACHE_FILE   = path.join(DATA_DIR, 'aura-cache.json');
 const STATS_FILE   = path.join(DATA_DIR, 'aura-stats.json');
+const SEED_FILE    = path.join(DATA_DIR, 'aura-seed.json');   // curated, stable knowledge base (committed)
 
 const DEFAULT_TTL_MS   = 24 * 60 * 60 * 1000; // 24h
 const MAX_ENTRIES      = 1000;                 // cap; evict oldest beyond this
@@ -71,12 +72,13 @@ function loadStats() {
     misses: 0,
     tokensSaved: 0,
     volatileSkips: 0,
-    byMethod: { fetch: 0, query: 0, compute: 0 },
+    byMethod: { fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 },
     recentSaves: []
   });
   // Back-compat: ensure all fields exist even in old stat files
-  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0, recipe: 0 };
+  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 };
   if (typeof s.byMethod.recipe !== 'number') s.byMethod.recipe = 0;
+  if (typeof s.byMethod.seed !== 'number') s.byMethod.seed = 0;
   if (!s.recentSaves) s.recentSaves = [];
   if (typeof s.volatileSkips !== 'number') s.volatileSkips = 0;
   return s;
@@ -1021,6 +1023,29 @@ function compute(prompt) {
 const VOLATILE_RE = /\b(price|prices|worth|market\s*cap|volume|gas\s*price|exchange\s*rate|stock|ticker|quote|weather|temperature|forecast|news|headlines?|trending|latest|current(?:ly)?|live|real[\s-]?time|right\s*now|fear\s*(?:and|&)\s*greed|standings|balance|funding\s*rate|dominance|floor\s*price|\btvl\b|\bapr\b|\bapy\b|yield)\b/i;
 function isVolatile(prompt) { try { return VOLATILE_RE.test(String(prompt || '')); } catch (_) { return false; } }
 
+// ── SEED knowledge base — curated, stable, TRUE answers served FREE on the FIRST ask. ──
+// Loaded once from aura-seed.json (committed, version-controlled). Each q-phrasing → one
+// keyed entry (exact-hash match) + kept in a pool for fuzzy match. Never volatile.
+let _seed = null;
+function loadSeed() {
+  if (_seed) return _seed;
+  const out = [];
+  try {
+    const raw = readJson(SEED_FILE, {});
+    const entries = Array.isArray(raw) ? raw : (raw.entries || []);
+    for (const e of entries) {
+      if (!e || !e.a) continue;
+      const phrasings = Array.isArray(e.q) ? e.q : [e.q];
+      for (const q of phrasings) {
+        if (!q) continue;
+        out.push({ prompt: String(q), answer: String(e.a), key: hashKey(String(q)) });
+      }
+    }
+  } catch (_) { /* seed optional */ }
+  _seed = out;
+  return _seed;
+}
+
 // ===========================================================================
 // PUBLIC API
 // ===========================================================================
@@ -1051,6 +1076,20 @@ function route(prompt, opts = {}) {
       return { hit: true, method: 'fetch', answer: exact.answer, savedTokensEst: saved };
     }
 
+    // 1b) SEED — curated knowledge base: stable, true facts served free on the FIRST ask.
+    if (!volatile) {
+      const seedExact = loadSeed().find((e) => e.key === key);
+      if (seedExact) {
+        const saved = estTokens(p) + estTokens(seedExact.answer);
+        bumpStats((s) => {
+          s.hits++; s.byMethod.seed = (s.byMethod.seed || 0) + 1; s.tokensSaved += saved;
+          s.recentSaves.unshift({ ts: Date.now(), method: 'seed', snippet: p.slice(0, 60), tokens: saved });
+          if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+        });
+        return { hit: true, method: 'seed', answer: seedExact.answer, savedTokensEst: saved };
+      }
+    }
+
     // 2) COMPUTE — solve locally before fuzzy search.
     // Running COMPUTE before QUERY is critical: it prevents a cached "min of N..."
     // result from being returned for a "max of N..." query via cosine similarity.
@@ -1072,21 +1111,30 @@ function route(prompt, opts = {}) {
     // Only reached when COMPUTE returned null (non-computable prompt).
     // Cached compute results are in the pool but won't match different prompts
     // incorrectly because those prompts would have hit COMPUTE directly first.
-    let best = null, bestSim = 0;
+    let best = null, bestSim = 0, bestIsSeed = false;
     for (const k of Object.keys(cache)) {
       const e = cache[k];
       if (!e) continue;
       const sim = cosineSim(p, e.prompt);
-      if (sim > bestSim) { bestSim = sim; best = e; }
+      if (sim > bestSim) { bestSim = sim; best = e; bestIsSeed = false; }
     }
-    if (!volatile && best && bestSim >= SIM_THRESHOLD) {
+    // also fuzzy-match the curated SEED (FAQ phrasings) — slightly looser cutoff since they're short + curated
+    if (!volatile) {
+      for (const e of loadSeed()) {
+        const sim = cosineSim(p, e.prompt);
+        if (sim > bestSim) { bestSim = sim; best = e; bestIsSeed = true; }
+      }
+    }
+    const cutoff = bestIsSeed ? 0.7 : SIM_THRESHOLD;
+    if (!volatile && best && bestSim >= cutoff) {
+      const method = bestIsSeed ? 'seed' : 'query';
       const saved = estTokens(p) + estTokens(best.answer);
       bumpStats((s) => {
-        s.hits++; s.byMethod.query++; s.tokensSaved += saved;
-        s.recentSaves.unshift({ ts: Date.now(), method: 'query', snippet: p.slice(0, 60), tokens: saved, similarity: Math.round(bestSim * 1000) / 1000 });
+        s.hits++; s.byMethod[method] = (s.byMethod[method] || 0) + 1; s.tokensSaved += saved;
+        s.recentSaves.unshift({ ts: Date.now(), method, snippet: p.slice(0, 60), tokens: saved, similarity: Math.round(bestSim * 1000) / 1000 });
         if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
       });
-      return { hit: true, method: 'query', answer: best.answer, savedTokensEst: saved, similarity: Math.round(bestSim * 1000) / 1000 };
+      return { hit: true, method, answer: best.answer, savedTokensEst: saved, similarity: Math.round(bestSim * 1000) / 1000 };
     }
 
     // Miss — caller should hit the LLM.

@@ -108,6 +108,7 @@
       <div class="meth"><div class="lbl"><span style="color:var(--grn)">∑ COMPUTE — solved locally</span><span id="mc">0</span></div><div class="bar"><i id="bc" style="background:var(--grn)"></i></div></div>
       <div class="meth"><div class="lbl"><span style="color:var(--amber)">≈ QUERY — fuzzy match</span><span id="mq">0</span></div><div class="bar"><i id="bq" style="background:var(--amber)"></i></div></div>
       <div class="meth"><div class="lbl"><span style="color:var(--vio)">⬡ RECIPE — deterministic (AINL)</span><span id="mr">0</span></div><div class="bar"><i id="br" style="background:var(--vio)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--mag)">📚 SEED — curated knowledge base</span><span id="ms">0</span></div><div class="bar"><i id="bs" style="background:var(--mag)"></i></div></div>
       <div class="note">FETCH = identical prompt seen before. COMPUTE = math/stats/date/units solved with <b style="color:var(--txt)">zero AI</b>. QUERY = a close paraphrase reused. <b style="color:var(--vio)">RECIPE</b> = AINL "compile-once": a known task ran its real tools deterministically with <b style="color:var(--txt)">no LLM orchestration loop</b>. Prices, news &amp; "live" prompts are <b style="color:var(--txt)">never cached</b>.</div>
     </div>
     <div class="box">
@@ -179,11 +180,12 @@ async function tick(){
   $('hits').textContent=fmt(s.hits); $('proj').textContent='$'+(s.projMonthlyUsd||0).toFixed(2);
   $('entries').textContent=fmt(s.cacheEntries); $('vol').textContent=fmt(s.volatileSkips);
   $('avg').textContent=fmt(s.avgTokensPerHit); $('miss').textContent=fmt(s.misses);
-  const bm=s.byMethod||{fetch:0,compute:0,query:0,recipe:0}; const max=Math.max(1,bm.fetch,bm.compute,bm.query,bm.recipe||0);
+  const bm=s.byMethod||{fetch:0,compute:0,query:0,recipe:0,seed:0}; const max=Math.max(1,bm.fetch,bm.compute,bm.query,bm.recipe||0,bm.seed||0);
   $('mf').textContent=fmt(bm.fetch); $('bf').style.width=(bm.fetch/max*100)+'%';
   $('mc').textContent=fmt(bm.compute); $('bc').style.width=(bm.compute/max*100)+'%';
   $('mq').textContent=fmt(bm.query); $('bq').style.width=(bm.query/max*100)+'%';
   $('mr').textContent=fmt(bm.recipe||0); $('br').style.width=((bm.recipe||0)/max*100)+'%';
+  $('ms').textContent=fmt(bm.seed||0); $('bs').style.width=((bm.seed||0)/max*100)+'%';
   const rec=s.recentSaves||[];
   $('feed').innerHTML=rec.length?rec.map(r=>`<div class="ev"><span class="mm ${r.method}">${(r.method||'').toUpperCase()}</span><span class="sn">${(r.snippet||'').replace(/</g,'&lt;')||'—'}</span><span class="tk">+${fmt(r.tokens)}t</span></div>`).join('')
     :'<div class="ev"><span class="sn">no saves yet — run agents or try a prompt above</span></div>';
