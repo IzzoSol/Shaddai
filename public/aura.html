@@ -82,6 +82,16 @@
     <div class="mini"><div class="k">LLM misses</div><div class="vv" id="miss" style="color:var(--mag)">—</div></div>
   </div>
 
+  <!-- VERIFY -->
+  <div class="box" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h2 style="margin:0">VERIFY IT'S REAL</h2>
+      <div class="h-sub" style="margin:4px 0 0">Run the live benchmark — proves every answer is real (COMPUTE), nothing is fabricated (SAFETY), and goals route to the right recipe (ROUTING).</div>
+    </div>
+    <button id="verifyBtn" style="background:linear-gradient(180deg,var(--grn),#149c70);color:#02140d;border:none;border-radius:4px;padding:11px 20px;font-weight:800;cursor:pointer;font-family:'JetBrains Mono';white-space:nowrap">▶ RUN BENCHMARK</button>
+    <div id="verifyOut" style="flex-basis:100%;font-size:12px;color:var(--mut)">not run yet — click to verify on demand.</div>
+  </div>
+
   <!-- TRY IT -->
   <div class="box">
     <h2>TRY AURA</h2>
@@ -130,6 +140,22 @@ async function runTry(){
   }catch(e){ $('tryOut').innerHTML='<span class="meta">error: '+e.message+'</span>'; }
 }
 $('tryBtn').onclick=runTry; $('tryIn').addEventListener('keydown',e=>{ if(e.key==='Enter')runTry(); });
+
+// VERIFY — run the live benchmark
+$('verifyBtn').onclick=async()=>{
+  $('verifyBtn').textContent='…running'; $('verifyBtn').disabled=true;
+  $('verifyOut').innerHTML='<span style="color:var(--amber)">running benchmark…</span>';
+  try{
+    const b=await (await fetch('/api/aura/bench')).json();
+    const sec=b.sections||{}; const pct=Math.round((b.rate||0)*100);
+    const seg=(s,col)=> s?`<span style="color:${col}">${s.label.split(' ')[0].toUpperCase()} ${s.pass}/${s.total}</span>`:'';
+    const okColor = pct>=80?'var(--grn)':'var(--mag)';
+    $('verifyOut').innerHTML=`<b style="color:${okColor};font-size:14px">${pct}% (${b.pass}/${b.total})</b> &nbsp; `+
+      `${seg(sec.compute,'var(--grn)')} · ${seg(sec.safety,'var(--cy)')} · ${seg(sec.routing,'var(--vio)')}`+
+      (b.fails&&b.fails.length?`<br><span style="color:var(--mag);font-size:11px">${b.fails.length} fail(s): ${b.fails.slice(0,3).map(f=>f.replace(/</g,'&lt;')).join(' · ')}</span>`:` &nbsp; <span style="color:var(--grn)">✓ all real, nothing fabricated</span>`);
+  }catch(e){ $('verifyOut').innerHTML='<span style="color:var(--mag)">verify error: '+e.message+'</span>'; }
+  $('verifyBtn').textContent='▶ RUN BENCHMARK'; $('verifyBtn').disabled=false;
+};
 
 async function tick(){
   let s; try{ s=await (await fetch('/api/aura/stats')).json(); }catch(e){ $('liveT').textContent='offline'; return; }

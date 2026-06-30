@@ -3363,6 +3363,12 @@ const _COIN = { btc:'bitcoin', bitcoin:'bitcoin', eth:'ethereum', ethereum:'ethe
   bnb:'binancecoin', xrp:'ripple', ripple:'ripple', ada:'cardano', cardano:'cardano', doge:'dogecoin', dogecoin:'dogecoin',
   avax:'avalanche-2', matic:'matic-network', polygon:'matic-network', dot:'polkadot', polkadot:'polkadot',
   link:'chainlink', chainlink:'chainlink', ltc:'litecoin', litecoin:'litecoin', shib:'shiba-inu', uni:'uniswap', atom:'cosmos' };
+const _LANGS = ['javascript','typescript','python','rust','go','golang','java','c++','c#','ruby','php','swift','kotlin','scala','solidity','html','css','sql','bash','shell'];
+function _cleanTopic(goal) {
+  return String(goal)
+    .replace(/^\s*(please\s+)?(can you\s+)?(research|tell me about|what(?:'s| is| are)|give me|find|look up|explain|analyze|do a deep dive on|deep research on|info on|a report on|the latest on)\b[:\s]*/i, '')
+    .replace(/[?.!]+$/, '').trim();
+}
 function _extractRecipeParams(recipe, goal) {
   const need = Array.isArray(recipe.params) ? recipe.params : [];
   if (!need.length) return {};
@@ -3375,8 +3381,20 @@ function _extractRecipeParams(recipe, goal) {
     } else if (p === 'address') {
       const m = String(goal).match(/0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44}/);
       if (!m) return null; out[p] = m[0];
+    } else if (p === 'language') {
+      const lang = _LANGS.find(l => new RegExp('\\b' + l.replace('+', '\\+').replace('#', '\\#') + '\\b', 'i').test(g));
+      if (!lang) return null; out[p] = lang;
+    } else if (p === 'repo') {
+      const m = String(goal).match(/\b([\w.-]+\/[\w.-]+)\b/);
+      if (!m) return null; out[p] = m[1];
+    } else if (p === 'city') {
+      const m = String(goal).match(/\b(?:in|for|at)\s+([A-Z][a-zA-Z]+(?:[ -][A-Z][a-zA-Z]+)?)/);
+      if (!m) return null; out[p] = m[1];
+    } else if (p === 'topic' || p === 'query' || p === 'keyword' || p === 'company' || p === 'technology' || p === 'domain') {
+      const t = _cleanTopic(goal);
+      if (t.length < 2 || t.length > 90) return null; out[p] = t;
     } else {
-      return null;  // a param type we can't extract deterministically → don't fast-path
+      return null;  // a param type we can't extract confidently → don't fast-path (falls back to LLM)
     }
   }
   return out;

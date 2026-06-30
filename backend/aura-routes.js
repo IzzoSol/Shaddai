@@ -54,6 +54,13 @@ router.post('/route', (req, res) => {
   catch (e) { res.json({ hit: false }); }
 });
 
+// GET /api/aura/bench — run the live self-test (COMPUTE/SAFETY/ROUTING) and report the success rate.
+// Powers the "Verify" button on the AURA monitor — proves the deterministic layer is real, on demand.
+router.get('/bench', (req, res) => {
+  try { res.json(require('./lib/aura-selftest').selfTest()); }
+  catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+});
+
 // GET /api/aura/health — the dashboard's AURA client pings this on load.
 router.get('/health', (req, res) => res.json({ ok: true, status: 'online', layer: 'aura', source: 'lib/aura' }));
 
