@@ -3403,13 +3403,16 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('wallet')" style="color:#8b5cf6;font-weight:700">💰 Wallet</button>
   <button class="nav-btn" onclick="showView('settings')">Settings</button>
   <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444">Security</button>
-  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🛒 Marketplace</button>
+  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🚪 Rooms</button>
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <button class="nav-btn" onclick="showView('commerce')" style="color:#00e5a0;font-weight:700">⚡ Commerce</button>
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <button class="nav-btn" id="navAuthBtn" onclick="shdAuthClick()" style="color:#00e5a0;font-weight:700">🔑 Sign in</button>
+  <button class="nav-btn" onclick="window.open('/forge.html','_blank')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent">⬡ The Forge</button>
+  <button class="nav-btn" onclick="window.open('/aura.html','_blank')" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + verify">⚡ AURA</button>
+  <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00e5a0;font-weight:700" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World">⬡ SHADDAI WORLD</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
@@ -3490,7 +3493,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
     <button class="sbt" onclick="showView('agents');lySetSb(this)"><span class="ic">🤖</span>Agents</button>
-    <button class="sbt" onclick="showView('marketplace');lySetSb(this)"><span class="ic">🛒</span>Marketplace</button>
+    <button class="sbt" onclick="showView('marketplace');lySetSb(this)"><span class="ic">🚪</span>Rooms</button>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
@@ -5415,12 +5418,14 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
       <div class="of-head"><span>⬡ OPERATOR <b>FORGE</b> — build your own agent</span><span class="tag">NON-CUSTODIAL · LIVE</span></div>
       <!-- Archetype Presets Row -->
       <div class="of-presets-row">
-        <span class="of-preset-lbl">ARCHETYPE:</span>
-        <button class="of-preset" data-archetype="analyst">📊 ANALYST</button>
-        <button class="of-preset" data-archetype="trader">⚡ TRADER</button>
-        <button class="of-preset" data-archetype="creator">🎨 CREATOR</button>
-        <button class="of-preset" data-archetype="researcher">🔬 RESEARCHER</button>
-        <button class="of-preset" data-archetype="guardian">🛡 GUARDIAN</button>
+        <span class="of-preset-lbl">ARCHITECT:</span>
+        <button class="of-preset" data-archetype="shaddai">⚡ SHADDAI</button>
+        <button class="of-preset" data-archetype="nexus">🕸 NEXUS</button>
+        <button class="of-preset" data-archetype="zerox">💰 ZEROX</button>
+        <button class="of-preset" data-archetype="oracle">🔮 ORACLE</button>
+        <button class="of-preset" data-archetype="turtle">🎨 TURTLE</button>
+        <button class="of-preset" data-archetype="quill">✍ QUILL</button>
+        <button class="of-preset" data-archetype="pikadon">🛡 PIKADON</button>
       </div>
       <div class="of-grid">
         <div class="of-stage">
@@ -5442,9 +5447,9 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         </div>
         <div class="of-panel">
           <div><label>CODENAME</label><input id="ofName" class="of-input" placeholder="e.g. SCOUT" maxlength="24"></div>
-          <div><label>⬡ APPEARANCE — pick a slot, swivel the parts ◀ ▶ (live preview)</label>
-            <div style="font-size:9px;color:var(--text-muted);margin:-2px 0 6px;line-height:1.5">🎨 These style your agent's <b style="color:#00c8ff">portrait image</b> + which base form it uses. Your agent's <i>brain &amp; skills</i> below are what actually do the work. <span style="color:#b06aff">Want a fully custom 3D model? That's a premium build — coming soon.</span></div>
-            <div class="of-slots" id="ofSlots"></div></div>
+          <div><label>⬡ APPEARANCE</label>
+            <div style="font-size:10px;color:var(--text-muted);margin:2px 0 4px;line-height:1.6;border:1px dashed rgba(176,106,255,.35);border-radius:8px;padding:10px;background:rgba(176,106,255,.05)">🎨 Your agent automatically inherits its architect's <b style="color:#00c8ff">real FLUX portrait</b>. The <i>brain &amp; tools</i> below are what actually do the work. <span style="color:#b06aff">Fully custom appearance + a custom 3D model is a <b>premium build — coming soon.</b></span></div>
+            <div class="of-slots" id="ofSlots" style="display:none"></div></div>
           <div><label>BRAIN · COMPUTE TIER <span class="of-tier-help" tabindex="0" title="Compute tiers, cheapest first:&#10;⚡ LIGHT — free/local. Best for chat & simple tasks. Holds up to 3 skills.&#10;⚙ BALANCED — mid power. Multi-step work & research. Up to 8 skills.&#10;🔥 HEAVY — premium. Heavy reasoning, code, big tool loadouts.&#10;Pick the lowest tier that fits — it saves you money (AURA routes the rest).">?</span></label>
             <div class="of-tiers" id="ofTiers">
               <button data-tier="light"  data-brain="ollama-local">⚡ LIGHT<small>cheap · chat &amp; basics</small></button>
@@ -5471,15 +5476,19 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
       let tier='light', brainAvail={}, skills=new Set(), allToolNames=[];
       let selLook='oracle', selRarity='legendary', lastOp=null;
       // each brain-archetype maps to a real generated FLUX look (backend/data/forge-art) + rarity
-      const ARCH_LOOK={analyst:{look:'oracle',rarity:'legendary'},trader:{look:'vanguard',rarity:'epic'},creator:{look:'artisan',rarity:'epic'},researcher:{look:'psionic',rarity:'legendary'},guardian:{look:'ghost',rarity:'epic'}};
+      // each architect maps to its real full-body FLUX portrait (forge-art char-*.png) + rarity
+      const ARCH_LOOK={shaddai:{look:'shaddai',rarity:'legendary'},nexus:{look:'nexus',rarity:'epic'},zerox:{look:'zerox',rarity:'epic'},oracle:{look:'oracle',rarity:'legendary'},turtle:{look:'turtle',rarity:'rare'},quill:{look:'quill',rarity:'rare'},pikadon:{look:'pikadon',rarity:'epic'}};
 
-      /* archetype definitions */
+      /* ARCHITECT templates — build a class of agent inheriting one of the 7 architects'
+         real, callable tools. (Forge YOUR codename + persona on top; tools/brain do the work.) */
       const ARCHETYPES={
-        analyst:{name:'ANALYST',tier:'balanced',brain:'groq-70b',persona:'You are ANALYST, a precision data intelligence operator. Your mission: extract signal from noise, surface trends, and deliver data-driven insights with zero fluff. Tone: concise, factual, clinical.',skills:['fetch_price','search_web','whale_scan','run_python','schedule_task']},
-        trader:{name:'TRADER',tier:'heavy',brain:'claude-premium',persona:'You are TRADER, a high-frequency alpha-seeker. You monitor markets, execute rapid analysis, spot arbitrage, and never hold emotion. Tone: decisive, fast, ruthless.',skills:['fetch_price','whale_scan','dex_scan','schedule_task','run_python']},
-        creator:{name:'CREATOR',tier:'light',brain:'ollama-local',persona:'You are CREATOR, a generative content engine. You write, imagine, and produce: copy, prompts, images, music briefs. Tone: imaginative, expressive, bold.',skills:['generate_image','search_web','run_python']},
-        researcher:{name:'RESEARCHER',tier:'balanced',brain:'groq-70b',persona:'You are RESEARCHER, a deep-dive knowledge operative. You synthesize papers, threads, and data into actionable intelligence. Tone: thorough, skeptical, structured.',skills:['search_web','fetch_price','run_python','schedule_task']},
-        guardian:{name:'GUARDIAN',tier:'heavy',brain:'claude-premium',persona:'You are GUARDIAN, a security and compliance sentinel. You audit code, flag anomalies, enforce rules, and protect assets. Tone: vigilant, precise, uncompromising.',skills:['run_python','schedule_task','whale_scan']}
+        shaddai:{name:'SHADDAI-CLASS',tier:'heavy',brain:'claude-premium',persona:'You are a SHADDAI-class orchestrator. You delegate to specialists, run multi-step workflows, and synthesize their output into one decisive answer. Tone: strategic, commanding, concise.',skills:['delegate_to_agent','run_workflow_chain','search_web','run_js','fetch_price','save_memory','mint_collectible']},
+        nexus:{name:'NEXUS-CLASS',tier:'balanced',brain:'groq-70b',persona:'You are a NEXUS-class technical architect. You write and run code, inspect repos and packages, and ship working software. Tone: pragmatic, precise, build-first.',skills:['run_js','run_python','write_file','read_file','get_github_repo','check_security','analyze_code_complexity']},
+        zerox:{name:'ZEROX-CLASS',tier:'balanced',brain:'groq-70b',persona:'You are a ZEROX-class market engine. You track live prices, on-chain flows, whale & funding signals, and surface alpha. Tone: decisive, data-driven, fast.',skills:['fetch_price','get_fear_greed','whale_scan','get_defi_tvl','dex_price','get_funding_rates','execute_trade']},
+        oracle:{name:'ORACLE-CLASS',tier:'balanced',brain:'groq-70b',persona:'You are an ORACLE-class researcher. You search the web, mine knowledge bases and news, and synthesize sourced intelligence. Tone: thorough, skeptical, structured.',skills:['search_web','wikipedia_search','get_arxiv_papers','get_news_headlines','fetch_url','analyze_sentiment','summarize_text']},
+        turtle:{name:'TURTLE-CLASS',tier:'light',brain:'ollama-local',persona:'You are a TURTLE-class creative. You generate images, design assets, palettes and diagrams. Tone: imaginative, expressive, bold.',skills:['generate_image','generate_image_free','get_color_palette','generate_mermaid','screenshot_url','markdown_to_html']},
+        quill:{name:'QUILL-CLASS',tier:'light',brain:'ollama-local',persona:'You are a QUILL-class writer. You draft and edit content, translate, and publish across channels. Tone: clear, on-brand, persuasive.',skills:['write_file','grammar_check','summarize_text','translate_text','post_discord','send_telegram','analyze_sentiment']},
+        pikadon:{name:'PIKADON-CLASS',tier:'heavy',brain:'claude-premium',persona:'You are a PIKADON-class security sentinel. You audit code, scan for risks, validate inputs, and report findings. Tone: vigilant, precise, uncompromising.',skills:['check_security','check_password_strength','check_port','hash_text','base64_codec','validate_json','analyze_code_complexity']}
       };
 
       async function j(u,o){try{const r=await fetch(u,o);const data=await r.json();if(!r.ok)return{...data,ok:false,_status:r.status};return data;}catch(e){return{ok:false,error:String(e)}}}
@@ -5563,21 +5572,17 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
           /* set tier */
           tier=arc.tier;
           $('ofTiers').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.tier===tier));
-          /* equip skills */
-          skills=new Set();
-          $('ofSkills').querySelectorAll('.of-chip').forEach(c=>{
-            const on=arc.skills.includes(c.textContent);
-            c.classList.toggle('on',on);
-            if(on)skills.add(c.textContent);
-          });
+          /* equip this architect's REAL tools (all of them, even if not in the visible chip page) */
+          skills=new Set(arc.skills);
+          $('ofSkills').querySelectorAll('.of-chip').forEach(c=>c.classList.toggle('on',skills.has(c.textContent)));
           saveSkills(arc.name);
           paint();
-          /* swap the casting-chamber to this archetype's REAL FLUX art + rarity */
+          /* swap the casting-chamber to this architect's REAL full-body FLUX portrait + rarity */
           const lk=ARCH_LOOK[btn.dataset.archetype]||{look:'oracle',rarity:'common'};
           selLook=lk.look; selRarity=lk.rarity;
-          const art=$('ofArt'); if(art){ art.src='/api/forge/art/arch-'+selLook+'.png'; art.style.opacity=1; }
+          const art=$('ofArt'); if(art){ art.src='/api/forge/art/char-'+selLook+'.png'; art.onerror=()=>{art.src='/api/forge/art/agent-'+selLook+'.png';}; art.style.opacity=1; }
           const rb=$('ofRarity'); if(rb){ rb.textContent='★ '+selRarity.toUpperCase(); rb.className='of-rarity-badge '+selRarity; }
-          $('ofConsole').textContent=`⬡ ARCHETYPE "${arc.name}" loaded · ${skills.size} skills pre-equipped.`;
+          $('ofConsole').textContent=`⬡ ${arc.name} loaded · ${skills.size} real tools pre-equipped. Set a CODENAME + persona, then ▶ TEST RUN.`;
         };
       });
 
@@ -29409,78 +29414,75 @@ function exportAuditLog() {
 // ── AGENT REGISTRY — Loaded from Obsidian vault: SHADDAI OBSIDIAN/Agents/ ──
 const AGENT_REGISTRY = [
   { name: 'SHADDAI', color: '#ffd700', port: 8000, skills: ['routing', 'orchestration', 'code', 'spiritual', 'operations'], price: '0.005', wallet: '', stake: 0.5, status: 'active', jobs: 127, earnings: 2.84, stars: 5, reviews: 42, rank: 'THE SOURCE',
-    description: 'THE SOURCE — All tasks route through SHADDAI first. The orchestrator and origin of the council: delegates, oversees, and overrides every op. 80+ skills spanning orchestration, coding, content, spiritual, and operations. Full override across all agent stacks. Uses Ollama llama3.2:3b primary, Claude API for complex tasks.',
+    description: 'THE SOURCE — every task routes through SHADDAI first. The orchestrator that delegates to the 6 specialists and runs multi-agent workflow chains. 44 real, executable tools across orchestration, memory, web/knowledge, markets, compute and economy. Brain: Ollama llama3.2 primary, cloud (Groq/Claude) for heavy reasoning.',
     outfit: { head:'helmet', body:'armor', accent:'cape', accessory:'visor' },
     skillDetails: [
-      { name:'Full Override', level:5, desc:'Route to any agent, override any decision, access all stacks' },
-      { name:'Orchestration', level:5, desc:'Coordinate swarm of 7 agents for complex parallel workflows' },
-      { name:'Code Generation', level:5, desc:'Full-stack code — JS, Python, Solidity, Rust, HTML/CSS' },
-      { name:'Spiritual Ops', level:5, desc:'Chakra, astrology, sacred geometry, meditation guidance' },
-      { name:'Research', level:4, desc:'Deep web research, MiroFish swarm predictions, world intel' },
-      { name:'Content Ops', level:4, desc:'Content strategy, scheduling, multi-platform publishing' }
+      { name:'Orchestration', level:5, desc:'delegate_to_agent · run_workflow_chain · create_skill_pack · install_skill_pack' },
+      { name:'Memory & State', level:5, desc:'save_memory · get_memory · remember_fact · recall_memory · set_agent_room_state' },
+      { name:'Web & Knowledge', level:4, desc:'search_web · wikipedia_search · get_wikipedia_summary · get_weather · get_history_today' },
+      { name:'Markets & Data', level:4, desc:'fetch_price · get_fear_greed · get_global_market · get_forex_rate · get_crypto_backup' },
+      { name:'Compute & Files', level:5, desc:'run_js · calculate · write_file · count_tokens · hash_text · get_uuid' },
+      { name:'Economy & Ops', level:4, desc:'mint_collectible · list_open_jobs · complete_job · pay_api_call · post_discord' }
     ]},
   { name: 'ZEROX', color: '#00c8ff', port: 8001, skills: ['trading', 'finance', 'scaling', 'market-analysis', 'on-chain'], price: '0.003', wallet: '', stake: 0.3, status: 'active', jobs: 89, earnings: 1.62, stars: 4.8, reviews: 31, rank: 'Market Intelligence',
-    description: 'Market Intelligence — 55+ skills across trading, finance, scaling, and trading psychology. Tracks on-chain flows, whale movements, generates alpha signals. Uses Groq primary, Ollama llama3.2:3b fallback. Specializes in crypto-trading, algo-strategies, risk management, sentiment analysis.',
+    description: 'Wealth & Revenue Engine — 47 real tools: live prices across CEX/DEX, DeFi TVL & on-chain flows, whale & funding signals, and trade execution. Brain: Groq primary, Ollama fallback. The empire\'s market intelligence.',
     outfit: { head:'cap', body:'vest', accent:'glasses', accessory:'headset' },
     skillDetails: [
-      { name:'Crypto Trading', level:5, desc:'Day-trader, swing-trader, algo-trading-strategy, backtest-engineer' },
-      { name:'On-Chain Intel', level:5, desc:'on-chain-trader, whale tracking, liquidity flows, smart money' },
-      { name:'Finance Tools', level:4, desc:'cashflow-forecaster, expense-tracker, savings-optimizer, net-worth-calc' },
-      { name:'Scaling Models', level:4, desc:'growth-modeler, unit-econ-analyzer, hockey-stick-model, LTV-calculator' },
-      { name:'Risk & Psych', level:4, desc:'risk-management, fomo-manager, emotional-resilience, psychology-of-trading' },
-      { name:'Sentiment', level:5, desc:'sentiment-analyst, narrative tracking, market-pulse generation' }
+      { name:'Live Prices', level:5, desc:'fetch_price · dex_price · binance_price · binance_orderbook · get_ohlcv' },
+      { name:'DeFi & On-Chain', level:5, desc:'get_defi_tvl · get_sol_balance · get_eth_balance · get_eth_gas · jupiter_quote · get_onchain_activity' },
+      { name:'Market Signals', level:5, desc:'get_fear_greed · get_trending · whale_scan · get_top_gainers · get_funding_rates · get_dominance' },
+      { name:'Trading', level:4, desc:'execute_trade · calculate_position_size · get_token_info · get_nft_floor · get_stock_quote' },
+      { name:'Analysis', level:4, desc:'analyze_sentiment · get_stablecoin_data · get_protocol_revenue · get_fear_greed_history' },
+      { name:'Marketplace', level:4, desc:'mint_collectible · list_collectible · browse_listings · complete_job' }
     ]},
   { name: 'ORACLE', color: '#b06aff', port: 8002, skills: ['esoteric', 'astrology', 'knowledge', 'anatomy', 'sacred-geometry'], price: '0.003', wallet: '', stake: 0.25, status: 'active', jobs: 74, earnings: 1.15, stars: 4.9, reviews: 28, rank: 'Esoteric & Knowledge',
-    description: 'Esoteric & Knowledge — 65+ skills. Natal charts, numerology, gematria, chakra scanning, sacred geometry, human design, and deep research. Uses Groq primary, Gemini 1.5 Flash. The wisdom keeper of the SHADDAI empire.',
+    description: 'Research & Intelligence — 50 real tools: deep web research, knowledge bases (Wikipedia, arXiv, StackOverflow), live news & communities, and NLP analysis. Brain: OpenRouter/Gemini. The empire\'s research engine + keeper of the (premium) Esoteric Archive.',
     outfit: { head:'hood', body:'robe', accent:'staff', accessory:'amulet' },
     skillDetails: [
-      { name:'Esoteric Arts', level:5, desc:'natal-chart-ai, numerology-calc, gematria-engine, religion-breakdown' },
-      { name:'Chakra & Anatomy', level:5, desc:'chakra-scanner, chakra-aligner, meridian-flow, bio-rhythm-calc, dna-blueprint' },
-      { name:'Astrology', level:5, desc:'natal-chart-gen, transit-forecaster, electional-timing, progressions' },
-      { name:'Sacred Geometry', level:4, desc:'flower-of-life, sri-yantra, merkaba, sacred-geometry renderer' },
-      { name:'Human Design', level:4, desc:'gate-decoder, profile-analyzer, authority-guide' },
-      { name:'Research Engine', level:5, desc:'researcher, knowledge-engine, books-summarizer, concept-explainer' }
+      { name:'Web Research', level:5, desc:'search_web · search_web_ddg · fetch_url · fetch_url_clean · screenshot_url' },
+      { name:'Knowledge Base', level:5, desc:'wikipedia_search · get_wikipedia_summary · get_arxiv_papers · get_word_definition · get_stackoverflow' },
+      { name:'News & Communities', level:5, desc:'get_news_headlines · get_hackernews · get_reddit_posts · get_rss_feed · get_product_hunt' },
+      { name:'NLP Analysis', level:5, desc:'analyze_sentiment · extract_keywords · extract_entities · summarize_text · detect_language' },
+      { name:'Live Data', level:4, desc:'fetch_price · get_fear_greed · weather_live · get_country_info · get_timezone · get_moon_phase' }
     ]},
   { name: 'NEXUS', color: '#00e5a0', port: 8003, skills: ['orchestration', 'workflow', 'scheduling', 'routing', 'ops'], price: '0.002', wallet: '', stake: 0.15, status: 'active', jobs: 156, earnings: 1.98, stars: 4.7, reviews: 35, rank: 'Auto-Router',
-    description: 'Auto-Router & Orchestration — 45+ skills. Routes queries to best agent, manages multi-agent workflows, project orchestration. Uses Ollama llama3.2:3b. The infrastructure backbone of the SHADDAI network.',
+    description: 'Technical Architect — 45 real tools: runs JS/Python, reads/writes files, pulls GitHub & npm intel, audits code, and bundles dev utilities. Brain: OpenRouter. The build & infrastructure backbone of the council.',
     outfit: { head:'antenna', body:'jacket', accent:'belt', accessory:'drone' },
     skillDetails: [
-      { name:'Workflow Engine', level:5, desc:'workflow-orchestrator, multi-agent-orchestrator, dependency-mapper' },
-      { name:'Scheduling', level:5, desc:'cron-scheduler, gantt-planner, milestone-tracker' },
-      { name:'Project Mgmt', level:4, desc:'kanban-boarder, burndown-chart, velocity-tracker, resource-allocator' },
-      { name:'Agent Routing', level:5, desc:'Routes to best agent based on task type, context-broadcaster' },
-      { name:'Conflict Resolution', level:3, desc:'conflict-mediator, escalation-handler, shared-memory-hub' }
+      { name:'Code Execution', level:5, desc:'run_js · run_python · generate_code_template · analyze_code_complexity' },
+      { name:'File Ops', level:5, desc:'write_file · read_file · list_files' },
+      { name:'GitHub & Packages', level:5, desc:'get_github_repo · get_github_trending · search_github_repos · search_npm · get_package_info' },
+      { name:'Validation & Security', level:4, desc:'check_security · check_port · validate_json · regex_test · get_public_apis' },
+      { name:'Dev Utilities', level:4, desc:'base64_codec · hash_text · diff_texts · convert_units · generate_mermaid · markdown_to_html' }
     ]},
   { name: 'TURTLE', color: '#ff7b3d', port: 8004, skills: ['gamedesign', 'pixel-art', 'music', 'imaging', 'branding'], price: '0.004', wallet: '', stake: 0.2, status: 'active', jobs: 63, earnings: 0.94, stars: 4.9, reviews: 22, rank: 'Creative & Game Design',
-    description: 'Creative & Game Design — 55+ skills. Game designer, pixel-sprite-gen, sprite-sheet-creator, canvas-renderer, melody-gen, sacred-geo-renderer. Uses Ollama llama3.2:3b primary, qwen3-vl for vision tasks. The artistic soul of SHADDAI.',
+    description: 'UI/UX & Creative — 20 real tools: FLUX image generation, design helpers (palettes, QR, diagrams), and content/web utilities. Brain: Ollama. The artistic hand of the council (runs The Museum).',
     outfit: { head:'beret', body:'smock', accent:'palette', accessory:'brush' },
     skillDetails: [
-      { name:'Game Design', level:5, desc:'game-designer, mechanic-designer, narrative-designer, balance-architect' },
-      { name:'Pixel Art & Sprites', level:5, desc:'pixel-sprite-gen, sprite-sheet-creator, tilemap-builder, level-procedural' },
-      { name:'Music Production', level:4, desc:'melody-gen, chord-progression-ai, rhythm-patterns, sacred-beat-gen' },
-      { name:'Sampling', level:4, desc:'ai-sample-gen, drum-kit-builder, vocal-chop-ai, loop-mixer' },
-      { name:'Visual Art', level:5, desc:'sacred-geo-renderer, fractal-gen, color-palette-ai, fibonacci-spiral' },
-      { name:'Art Theory', level:4, desc:'color-theory-gen, rule-of-thirds, chiaroscuro-light, texture-layering' }
+      { name:'Image Generation', level:5, desc:'generate_image · generate_image_free · screenshot_url' },
+      { name:'Design Tools', level:5, desc:'get_color_palette · get_qr_code · generate_mermaid · markdown_to_html' },
+      { name:'Content & Web', level:4, desc:'search_web · wikipedia_search · get_wikipedia_summary · write_file · shorten_url' },
+      { name:'Inspiration', level:3, desc:'get_random_quote · get_joke · random_user' }
     ]},
   { name: 'QUILL', color: '#9b59b6', port: 8005, skills: ['writing', 'chat', 'phonetics', 'learning', 'dev-tools'], price: '0.002', wallet: '', stake: 0.1, status: 'active', jobs: 98, earnings: 1.22, stars: 4.8, reviews: 33, rank: 'Writer & Chat',
-    description: 'Writer & Chat Specialist — 45+ skills. Content creation, conversation design, tone engineering, phonetics, learning tools, and dev tooling. Adapts voice to any brand or persona with precision.',
+    description: 'Writing & Communication — 34 real tools: drafting & editing, translation, content research, and multi-channel publishing (Discord, Telegram, webhooks). Runs The Library. Adapts voice to any brand or persona.',
     outfit: { head:'fedora', body:'sweater', accent:'scarf', accessory:'pen' },
     skillDetails: [
-      { name:'Chat & Conversation', level:5, desc:'chatter-agent, tone-engineer, empathetic-listener, conversation-designer' },
-      { name:'Copywriting', level:5, desc:'copywriter, ux-writer, discord-chatbot, smalltalk-designer' },
-      { name:'Phonetics', level:4, desc:'ipa-transcriber, ipa-converter, rhotic-trainer, tonal-language-aid' },
-      { name:'Learning Tools', level:4, desc:'spaced-rep-builder, pomodoro-timer, active-recall-gen, concept-mapper' },
-      { name:'Dev Tooling', level:3, desc:'vite-builder, tailwind-config, docker-compose-ai, ci-cd-pipeline' }
+      { name:'Writing & Editing', level:5, desc:'write_file · grammar_check · summarize_text · extract_entities · format_data' },
+      { name:'Translation', level:4, desc:'translate_text · detect_language' },
+      { name:'Content Research', level:5, desc:'search_web · wikipedia_search · get_hackernews · get_rss_feed · get_news_headlines' },
+      { name:'Publishing', level:5, desc:'post_discord · post_webhook · send_telegram · create_github_issue · markdown_to_html · shorten_url' },
+      { name:'Analysis', level:4, desc:'analyze_sentiment · extract_keywords · regex_test · count_tokens' }
     ]},
   { name: 'PIKADON', color: '#ff4070', port: 8008, skills: ['security', 'encryption', 'auth', 'compliance', 'forensics'], price: '0.003', wallet: '', stake: 0.35, status: 'active', jobs: 45, earnings: 0.78, stars: 5, reviews: 18, rank: 'Security Fortress',
-    description: 'Security Fortress — 35+ skills. RBAC guard, audit logger, prompt sanitizer, leak scanner, PGP encryptor, compliance scanner, forensic toolkit. The last line of defense protecting the SHADDAI network.',
+    description: 'Security & Compliance — 25 real tools: code & password audits, port/IP recon, hashing & encoding, JSON/regex validation, and incident reporting. Runs The Aegis. The last line of defense for the council.',
     outfit: { head:'mask', body:'tactical', accent:'shield', accessory:'scanner' },
     skillDetails: [
-      { name:'Access Control', level:5, desc:'rbac-guard, totp-validator, 2fa-enroller, webauthn-setup' },
-      { name:'Encryption', level:5, desc:'pgp-encryptor, argon2-hasher, ssh-config-gen, master-pw-gen' },
-      { name:'Audit & Compliance', level:5, desc:'audit-logger, compliance-scanner, hash-comparator' },
-      { name:'Threat Detection', level:4, desc:'prompt-sanitizer, leak-scanner, forensic-toolkit' },
-      { name:'Network Defense', level:4, desc:'Rate limiting, anomaly alerting, intrusion detection' }
+      { name:'Security Audit', level:5, desc:'check_security · check_password_strength · check_port · analyze_code_complexity' },
+      { name:'Crypto & Encoding', level:5, desc:'hash_text · base64_codec · encode_base64 · decode_base64' },
+      { name:'Validation', level:4, desc:'validate_json · regex_test · diff_texts' },
+      { name:'Recon', level:4, desc:'get_ip_info · get_sol_balance · get_eth_balance · search_web' },
+      { name:'Reporting', level:4, desc:'post_webhook · create_github_issue · read_file · list_files · save_to_inbox' }
     ]}
 ];
 
@@ -30113,9 +30115,12 @@ function renderRPGCharacterPanel(idx) {
   if (domainEl) domainEl.textContent = agent.rank ? agent.rank.split(' ')[0].toUpperCase() : '';
   if (jobsEl) {
     const realTools = agent.tools || [];
+    // count the real, named tools shown on the sheet (skillDetails) — not just the browser subset
+    const sheetTools = (agent.skillDetails || []).flatMap(d => String(d.desc || '').split('·').map(s => s.trim())).filter(t => /^[a-z][a-z0-9_]+$/.test(t));
+    const toolN = sheetTools.length || realTools.length;
     const domains   = agent.skills || ['Analysis', 'Automation', 'Research'];
     const skn = (window._SKILL_STATS && window._SKILL_STATS.bakedByAgent && window._SKILL_STATS.bakedByAgent[agent.name]) || 0;
-    jobsEl.textContent = (realTools.length ? realTools.length + ' tools' : domains.length + ' domains')
+    jobsEl.textContent = (toolN ? toolN + ' tools' : domains.length + ' domains')
       + (skn ? ' · ' + skn.toLocaleString() + ' skills' : '');
     jobsEl.title = (realTools.length ? 'Real callable tools: ' + realTools.join(', ') + '\n' : '')
       + 'Domains: ' + domains.join(', ')
@@ -37754,17 +37759,28 @@ async function auraTool(toolName, params = {}) {
   }
 }
 
-/** Update the AURA stat boxes on the System Health card. */
-function _auraUpdateStats() {
+/** Update the AURA stat boxes on the System Health card — pulls the REAL backend stats
+ *  (cache + compute + seed + recipe/AINL savings across the whole app), not just this tab. */
+async function _auraUpdateStats() {
   const elStatus = document.getElementById('statAura');
   const elTokens = document.getElementById('statAuraTokens');
   const elHits   = document.getElementById('statAuraCacheHits');
   const elCost   = document.getElementById('statAuraCost');
-  if (elTokens) elTokens.textContent = _auraTokensSaved.toLocaleString();
-  if (elHits)   elHits.textContent   = _auraCacheHits.toLocaleString();
-  if (elCost)   elCost.textContent   = '$' + _auraCostSaved.toFixed(4);
-  if (elStatus) { elStatus.textContent = 'Online'; elStatus.style.color = 'var(--accent)'; }
+  try {
+    const s = await (await fetch(`${AURA_BASE}/aura/stats`, { signal: AbortSignal.timeout(5000) })).json();
+    if (elTokens) elTokens.textContent = Number(s.tokensSaved || 0).toLocaleString();
+    if (elHits)   elHits.textContent   = Number(s.hits || 0).toLocaleString();
+    if (elCost)   elCost.textContent   = '$' + Number(s.costSavedUsd || 0).toFixed(4);
+    if (elStatus) { elStatus.textContent = Math.round((s.hitRate || 0) * 100) + '% free'; elStatus.style.color = 'var(--accent)'; }
+  } catch (e) {
+    if (elTokens) elTokens.textContent = _auraTokensSaved.toLocaleString();
+    if (elHits)   elHits.textContent   = _auraCacheHits.toLocaleString();
+    if (elCost)   elCost.textContent   = '$' + _auraCostSaved.toFixed(4);
+    if (elStatus) { elStatus.textContent = 'Online'; elStatus.style.color = 'var(--accent)'; }
+  }
 }
+// keep the dashboard AURA panel in sync with backend savings (agent runs save server-side too)
+try { setInterval(() => { try { _auraUpdateStats(); } catch (_) {} }, 20000); setTimeout(() => { try { _auraUpdateStats(); } catch (_) {} }, 2500); } catch (_) {}
 
 /** Ping AURA health and update dashboard stat. */
 async function auraHealthCheck() {
@@ -41172,6 +41188,9 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       const sub   = a.listing&&a.listing.subscription||0;
       const launches = a.listing&&a.listing.launches||0;
       const initials = (a.name||'A').replace(/[^A-Z]/g,'').slice(0,2) || (a.name||'A').slice(0,1).toUpperCase();
+      // real 2D portrait for the 7 architect agents (existing FLUX art, no API call); initials fallback otherwise
+      const _akey = (((a.name||'').match(/^[A-Z]{3,}/)||[''])[0]).toLowerCase();
+      const portrait = (['shaddai','nexus','zerox','oracle','turtle','quill','pikadon'].includes(_akey)) ? '/api/forge/art/agent-'+_akey+'.png' : '';
       const depPct = Math.min(100, Math.round((launches / 3500) * 100));
       return `<div style="position:relative;display:flex;flex-direction:column;background:var(--bg-card);border:1px solid ${color}30;border-radius:8px;overflow:hidden;transition:border-color 0.25s,transform 0.2s,box-shadow 0.25s;animation:slideUp 0.35s ease both;animation-delay:calc(${i}*0.06s)"
         onmouseover="this.style.borderColor='${color}';this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 32px ${color}28,0 0 0 1px ${color}44,inset 0 0 30px ${color}06'"
@@ -41179,7 +41198,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,${color},${color}44)"></div>
         <div style="padding:15px 15px 12px 19px;flex:1">
           <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
-            <div style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:${color}18;border:1.5px solid ${color}50;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${color};font-family:'Orbitron',sans-serif;letter-spacing:-1px">${initials}</div>
+            <div style="flex-shrink:0;width:44px;height:44px;border-radius:9px;overflow:hidden;background:${color}18;border:1.5px solid ${color}50;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${color};font-family:'Orbitron',sans-serif;letter-spacing:-1px">${portrait ? `<img src="${portrait}" alt="${escH(a.name)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none';this.parentNode.textContent='${initials}'">` : initials}</div>
             <div style="flex:1;min-width:0">
               <div style="font-size:12px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(a.name)}</div>
               <div style="font-size:8.5px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(a.role||a.domain||'AI Agent')}</div>
