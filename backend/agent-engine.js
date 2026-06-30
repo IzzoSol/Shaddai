@@ -3351,6 +3351,28 @@ async function runAgentLoop(taskId) {
 // WORKFLOW ENGINE — sequential multi-step with context chaining
 // ═══════════════════════════════════════════════════════════════════
 
+// ── AINL FAST-PATH (compile-once, run-many) ──────────────────────────────────
+// If a goal strongly + unambiguously matches a param-LESS recipe, run that recipe's
+// REAL tool steps deterministically (zero LLM orchestration) instead of the multi-
+// iteration agent loop. Only the synthesis LLM call remains (the genuine judgment gate).
+// Saves the orchestration tokens (credited to AURA). Conservative by design.
+//   Disable with env AINL_FASTPATH=off.
+async function tryRecipeFastPath(goal, agentName) {
+  try {
+    if (process.env.AINL_FASTPATH === 'off') return null;
+    const ag = (agentName && AGENTS[String(agentName).toUpperCase()]) ? String(agentName).toUpperCase() : undefined;
+    const matches = skillIndex.findSkills(goal, { agent: ag, includeRecipes: true, includeMd: false, includeObsidian: false, limit: 1 });
+    if (!matches.length || matches[0].type !== 'recipe' || (matches[0].score || 0) < 1.6) return null;
+    const r = skillIndex.getRecipe(matches[0].id);
+    if (!r) return null;
+    if (Array.isArray(r.params) && r.params.length) return null;   // needs inputs we can't extract → skip
+    const done = await runSkill(matches[0].id, {}, ag || r.agent); // deterministic — no orchestration LLM
+    if (!done || done.status === 'failed' || !done.result) return null;
+    try { require('./lib/aura').creditDeterministic(goal, 1800); } catch (_) {}  // ~3 avoided LLM iterations
+    return { result: done.result, recipeId: matches[0].id, tools: done.tools_used || [], score: matches[0].score };
+  } catch (_) { return null; }
+}
+
 async function runWorkflow(steps, options = {}) {
   const workflowId = crypto.randomUUID();
   const results = [];
@@ -3358,6 +3380,15 @@ async function runWorkflow(steps, options = {}) {
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
+    // AINL: deterministic recipe fast-path when the goal clearly matches one (no chained-context yet).
+    if (!prevOutput) {
+      const fp = await tryRecipeFastPath(step.goal, step.agent);
+      if (fp) {
+        results.push({ step: i+1, agent: step.agent, goal: step.goal, result: fp.result, status: 'completed', tools: fp.tools, via: 'ainl-recipe:' + fp.recipeId });
+        prevOutput = fp.result || prevOutput;
+        continue;
+      }
+    }
     const goal = prevOutput
       ? `${step.goal}\n\nContext from previous step:\n${prevOutput.slice(0, 1200)}`
       : step.goal;
@@ -3636,4 +3667,4 @@ try {
   if (TOOLS.post_to_x)        TOOLS.post_twitter   = TOOLS.post_to_x;
   if (TOOLS.post_to_telegram) TOOLS.send_telegram  = TOOLS.post_to_telegram;
 } catch (e) {}
-module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };
+module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };

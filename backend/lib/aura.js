@@ -75,7 +75,8 @@ function loadStats() {
     recentSaves: []
   });
   // Back-compat: ensure all fields exist even in old stat files
-  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0 };
+  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0, recipe: 0 };
+  if (typeof s.byMethod.recipe !== 'number') s.byMethod.recipe = 0;
   if (!s.recentSaves) s.recentSaves = [];
   if (typeof s.volatileSkips !== 'number') s.volatileSkips = 0;
   return s;
@@ -851,6 +852,7 @@ function stats() {
       volatileSkips: s.volatileSkips || 0,   // time-sensitive answers kept fresh (never cached)
       cacheEntries,                           // live cached prompts
       avgTokensPerHit: s.hits ? Math.round(s.tokensSaved / s.hits) : 0,
+      recipeFastPaths: (s.byMethod && s.byMethod.recipe) || 0,  // AINL deterministic runs (no LLM orchestration)
       projMonthlyUsd,                         // rough extrapolated monthly saving
       byMethod: s.byMethod,
       recentSaves: s.recentSaves || []
@@ -884,4 +886,23 @@ function buildRouter() {
   return r;
 }
 
-module.exports = { route, recordAnswer, stats, router: buildRouter() };
+/**
+ * creditDeterministic(prompt, savedTokens) — AINL "compile once, run many".
+ * Call this when a task was answered by a DETERMINISTIC recipe (real tool steps, no LLM
+ * orchestration loop). Credits the saved orchestration tokens to AURA so the monitor shows it.
+ * Never throws.
+ */
+function creditDeterministic(prompt, savedTokens) {
+  try {
+    const tk = Math.max(0, Number(savedTokens) || 0);
+    bumpStats((s) => {
+      s.hits++; s.tokensSaved += tk;
+      s.byMethod.recipe = (s.byMethod.recipe || 0) + 1;
+      s.recentSaves.unshift({ ts: Date.now(), method: 'recipe', snippet: String(prompt || '').slice(0, 60), tokens: tk });
+      if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+    });
+    return true;
+  } catch (_) { return false; }
+}
+
+module.exports = { route, recordAnswer, creditDeterministic, isVolatile, stats, router: buildRouter() };
