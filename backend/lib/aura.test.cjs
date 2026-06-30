@@ -234,10 +234,170 @@ console.log('\n=== STATS STRUCTURE ===');
 }
 
 // ============================================================
+console.log('\n=== PARAMETRIC: MARKUP ===');
+checkHit('20% markup on 50',       route('20% markup on 50'),     '60 (markup 10)');
+checkHit('10% markup on 200',      route('10% markup on 200'),    '220 (markup 20)');
+
+// ============================================================
+console.log('\n=== STATISTICS: MODE ===');
+checkHit('mode of 1 2 2 3',        route('mode of 1, 2, 2, 3'),   '2');
+checkHit('mode of 1 1 2 3 3',      route('mode of 1, 1, 2, 3, 3'), '1, 3');
+
+// ============================================================
+console.log('\n=== STANDARD DEVIATION / VARIANCE ===');
+checkHit('stddev of 2 4 4 4 5 5 7 9', route('stddev of 2, 4, 4, 4, 5, 5, 7, 9'), '2');
+checkHit('variance of 2 4 6',      route('variance of 2, 4, 6'),  '2.6666666667');
+checkHit('standard deviation of 1 2 3 4 5', route('standard deviation of 1, 2, 3, 4, 5'), '1.4142135624');
+
+// ============================================================
+console.log('\n=== RATIO SIMPLIFY ===');
+checkHit('simplify ratio 12:8',    route('simplify ratio 12:8'),  '3:2');
+checkHit('simplify ratio 100:25',  route('simplify ratio 100:25'), '4:1');
+checkHit('ratio 6:4 in simplest form', route('6:4 in simplest form'), '3:2');
+
+// ============================================================
+console.log('\n=== ROUND TO DECIMAL PLACES ===');
+checkHit('round 3.14159 to 2 decimal places', route('round 3.14159 to 2 decimal places'), '3.14');
+checkHit('round 2.5 to 0 decimal places',     route('round 2.5 to 0 decimal places'),     '3');
+checkHit('round 1.23456 to 4 decimal places', route('round 1.23456 to 4 decimal places'), '1.2346');
+
+// ============================================================
+console.log('\n=== X OUT OF Y AS PERCENT ===');
+checkHit('3 out of 4 as a percent',   route('3 out of 4 as a percent'),     '75%');
+checkHit('1 out of 8 as a percent',   route('1 out of 8 as a percent'),     '12.5%');
+checkHit('what percent is 7 out of 10', route('what percent is 7 out of 10'), '70%');
+
+// ============================================================
+console.log('\n=== COMPOUND INTEREST ===');
+checkHit('compound interest on 1000 at 10% for 2 years',
+  route('compound interest on 1000 at 10% for 2 years'), '1210');
+checkHit('compound interest on 5000 at 5% for 1 years',
+  route('compound interest on 5000 at 5% for 1 years'), '5250');
+
+// ============================================================
+console.log('\n=== LOAN MONTHLY PAYMENT ===');
+{
+  const r = route('monthly payment on 120000 at 6% for 30 years');
+  check('loan payment hit', r.hit, true);
+  // PMT ≈ 719.46; just verify it's a string ending /month
+  check('loan payment format', r.hit && r.answer.endsWith('/month'), true);
+}
+
+// ============================================================
+console.log('\n=== ORDINAL ===');
+checkHit('ordinal of 1',   route('ordinal of 1'),   '1st');
+checkHit('ordinal of 2',   route('ordinal of 2'),   '2nd');
+checkHit('ordinal of 3',   route('ordinal of 3'),   '3rd');
+checkHit('ordinal of 11',  route('ordinal of 11'),  '11th');
+checkHit('ordinal of 21',  route('ordinal of 21'),  '21st');
+checkHit('ordinal of 22',  route('ordinal of 22'),  '22nd');
+checkHit('ordinal of 113', route('ordinal of 113'), '113th');
+checkHit('42 in ordinal',  route('42 in ordinal'),  '42nd');
+
+// ============================================================
+console.log('\n=== NUMBER TO WORDS ===');
+checkHit('0 in words',       route('0 in words'),       'zero');
+checkHit('1 in words',       route('1 in words'),       'one');
+checkHit('21 in words',      route('21 in words'),      'twenty-one');
+checkHit('100 in words',     route('100 in words'),     'one hundred');
+checkHit('123 in words',     route('123 in words'),     'one hundred twenty-three');
+checkHit('1000 in words',    route('1000 in words'),    'one thousand');
+checkHit('999999 in words',  route('999999 in words'),  'nine hundred ninety-nine thousand nine hundred ninety-nine');
+
+// ============================================================
+console.log('\n=== COUNT VOWELS ===');
+checkHit('count vowels in hello',       route("count vowels in 'hello'"),        '2');
+checkHit('count vowels in hello world', route("count vowels in 'hello world'"),  '3');
+checkHit('how many vowels in aeiou',    route("how many vowels in 'aeiou'"),     '5');
+
+// ============================================================
+console.log('\n=== HASH ===');
+{
+  const r = route("sha256 of 'hello'");
+  check('sha256 hit', r.hit, true);
+  check('sha256 length 64', r.hit && r.answer.length, 64);
+  check('sha256 known value', r.hit && r.answer,
+    '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
+}
+{
+  const r = route("md5 of 'hello'");
+  check('md5 hit', r.hit, true);
+  check('md5 known value', r.hit && r.answer, '5d41402abc4b2a76b9719d911017c592');
+}
+
+// ============================================================
+console.log('\n=== URL ENCODE / DECODE ===');
+checkHit('url encode hello world',  route('url encode hello world'),        'hello%20world');
+checkHit('url decode hello%20world', route('url decode hello%20world'),     'hello world');
+checkHit('url encode hello@example.com', route('url encode hello@example.com'), 'hello%40example.com');
+
+// ============================================================
+console.log('\n=== JSON MINIFY / PRETTIFY ===');
+checkHit('json minify {"a":1}',  route('json minify {"a":1}'),  '{"a":1}');
+{
+  const r = route('json prettify {"a":1}');
+  check('json prettify hit', r.hit, true);
+  check('json prettify has newline', r.hit && r.answer.includes('\n'), true);
+}
+
+// ============================================================
+console.log('\n=== UNIX TIMESTAMP ===');
+checkHit('unix timestamp for 2024-01-01',
+  route('unix timestamp for 2024-01-01'), '1704067200');
+{
+  const r = route('timestamp 1704067200 to date');
+  check('timestamp to date hit', r.hit, true);
+  check('timestamp to date value', r.hit && r.answer, '2024-01-01');
+}
+checkHit('2024-06-15 to unix timestamp',
+  route('2024-06-15 to unix timestamp'), '1718409600');
+
+// ============================================================
+console.log('\n=== HEX COLOR <-> RGB ===');
+checkHit('#FF5733 to rgb',      route('#FF5733 to rgb'),        'rgb(255, 87, 51)');
+checkHit('#000000 to rgb',      route('#000000 to rgb'),        'rgb(0, 0, 0)');
+checkHit('#FFFFFF to rgb',      route('#FFFFFF to rgb'),        'rgb(255, 255, 255)');
+checkHit('rgb 255 87 51 to hex', route('rgb(255, 87, 51) to hex'), '#FF5733');
+checkHit('rgb 0 0 0 to hex',    route('rgb(0, 0, 0) to hex'),  '#000000');
+
+// ============================================================
+console.log('\n=== CLAMP ===');
+checkHit('clamp 150 between 0 and 100', route('clamp 150 between 0 and 100'), '100');
+checkHit('clamp -5 between 0 and 100',  route('clamp -5 between 0 and 100'),  '0');
+checkHit('clamp 50 between 0 and 100',  route('clamp 50 between 0 and 100'),  '50');
+
+// ============================================================
+console.log('\n=== DATE MATH: days until / months from ===');
+{
+  const r = route('days until 2099-01-01');
+  check('days until is a hit', r.hit, true);
+  check('days until is a number string', r.hit && /^-?\d+$/.test(r.answer), true);
+}
+{
+  const r = route('3 months from today');
+  check('3 months from today hit', r.hit, true);
+  check('3 months from today is YYYY-MM-DD', r.hit && /^\d{4}-\d{2}-\d{2}$/.test(r.answer), true);
+}
+
+// ============================================================
+console.log('\n=== NEW UNIT CONVERSIONS: area / volume / pressure / bits ===');
+checkHit('1 hectare to sqm',  route('1 hectare to sqm'),  '10000 sqm');
+checkHit('1 acre to sqft',    route('1 acre to sqft'),    '43560.057264 sqft');
+checkHit('1 gallon to liters', route('1 gallon to liters'), '3.78541 liters');
+checkHit('500 ml to liters',  route('500 ml to liters'),  '0.5 liters');
+checkHit('1 atm to pa',       route('1 atm to pa'),       '101325 pa');
+checkHit('1 bar to psi',      route('1 bar to psi'),      '14.503768 psi');
+checkHit('8 bits to bytes',   route('8 bits to bytes'),   '1 bytes');
+checkHit('1 kb to bits',      route('1 kb to bits'),      '8192 bits');
+
+// ============================================================
 console.log('\n=== MISS CASES (should not false-positive) ===');
 checkMiss('what is the meaning of life (open question)', route('what is the meaning of life'));
 checkMiss('write me a poem about SHADDAI', route('write me a poem about SHADDAI'));
 checkMiss('explain blockchain to a 5 year old', route('explain blockchain to a 5 year old'));
+checkMiss('write a poem about standard deviation', route('write a poem about standard deviation'));
+checkMiss('how do I simplify my codebase architecture', route('how do I simplify my codebase architecture'));
+checkMiss('what is compound interest as a concept', route('what is compound interest as a concept'));
 
 // ============================================================
 // Cleanup temp dir

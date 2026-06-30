@@ -1202,6 +1202,321 @@ const RECIPES = {
       { tool: 'get_fear_greed', params: {} }
     ],
     synthesize: 'Calculate portfolio value: {{input.btc_amount}} BTC, {{input.eth_amount}} ETH, {{input.sol_amount}} SOL at current prices. Show total USD value, 24h change per asset, portfolio-level P&L. Add sentiment context from Fear & Greed index.'
+  },
+
+  // ── ZEROX — additional market intelligence ────────────────────────────────
+
+  'stock-market-snapshot': {
+    agent: 'ZEROX',
+    description: 'Live snapshot of top US stocks SPY NVDA AAPL TSLA plus crypto Fear and Greed sentiment.',
+    steps: [
+      { tool: 'get_stock_quote', params: { symbol: 'SPY' } },
+      { tool: 'get_stock_quote', params: { symbol: 'NVDA' } },
+      { tool: 'get_stock_quote', params: { symbol: 'AAPL' } },
+      { tool: 'get_stock_quote', params: { symbol: 'TSLA' } },
+      { tool: 'get_fear_greed',  params: {} }
+    ],
+    synthesize: 'Report today\'s US stock market pulse: SPY (market direction), NVDA (AI sentiment), AAPL (big tech), TSLA (risk appetite). Cross-reference with crypto Fear & Greed to identify whether risk-on or risk-off mood dominates across all markets.'
+  },
+
+  'sol-network-health': {
+    agent: 'ZEROX',
+    description: 'Solana network performance: live TPS, SOL price, and top DeFi protocols by TVL.',
+    steps: [
+      { tool: 'get_onchain_activity', params: {} },
+      { tool: 'fetch_price',          params: { symbol: 'solana' } },
+      { tool: 'get_defi_tvl',         params: { limit: 5 } }
+    ],
+    synthesize: 'Assess the health of the Solana network. Report current TPS and slot performance, SOL token price, and top DeFi protocols by TVL. Is the network congested or running smoothly? Is DeFi TVL growing?'
+  },
+
+  'binance-depth-read': {
+    agent: 'ZEROX',
+    description: 'Binance order book depth analysis to gauge buy/sell pressure for any token.',
+    params: ['symbol'],
+    steps: [
+      { tool: 'binance_orderbook', params: { symbol: '{{input.symbol}}' } },
+      { tool: 'binance_price',     params: { symbol: '{{input.symbol}}' } },
+      { tool: 'get_fear_greed',    params: {} }
+    ],
+    synthesize: 'Analyze the {{input.symbol}} order book. Are buyers or sellers dominant? Calculate bid/ask imbalance. Cross-reference with Fear & Greed sentiment. What is the short-term price direction signal?'
+  },
+
+  'crypto-arb-check': {
+    agent: 'ZEROX',
+    description: 'Scan for price discrepancies between DEX and Binance for any token.',
+    params: ['symbol'],
+    steps: [
+      { tool: 'dex_price',     params: { symbol: '{{input.symbol}}' } },
+      { tool: 'binance_price', params: { symbol: '{{input.symbol}}' } },
+      { tool: 'fetch_price',   params: { symbol: '{{input.symbol}}' } }
+    ],
+    synthesize: 'Arbitrage analysis for {{input.symbol}}: compare DEX price, Binance spot price, and CoinGecko price. Is there a spread worth acting on? Account for gas costs and slippage. Flag any significant price discrepancy between venues.'
+  },
+
+  // ── ORACLE — additional research recipes ──────────────────────────────────
+
+  'hn-story-deep-dive': {
+    agent: 'ORACLE',
+    description: 'Get top Hacker News stories and read community comments on the most popular one.',
+    steps: [
+      { tool: 'get_hackernews',           params: { limit: 3 } },
+      { tool: 'get_hacker_news_comments', params: {} }
+    ],
+    synthesize: 'Deep dive into today\'s top Hacker News story. What is it about? What are the most insightful community comments? What does the developer community think, disagree on, or find most interesting? Provide a 3-paragraph synthesis.'
+  },
+
+  'world-news-pulse': {
+    agent: 'ORACLE',
+    description: 'World, tech, and economy news headlines with overall sentiment analysis.',
+    steps: [
+      { tool: 'get_news_headlines', params: { topic: 'world news' } },
+      { tool: 'get_news_headlines', params: { topic: 'technology AI' } },
+      { tool: 'get_news_headlines', params: { topic: 'economy finance' } },
+      { tool: 'analyze_sentiment',  params: { text: 'world news technology economy markets growth risk' } }
+    ],
+    synthesize: 'Synthesize today\'s world, tech, and economic news. What are the 3 biggest stories? What is the overall sentiment across categories? Is the news cycle positive, negative, or mixed? Highlight any stories that could impact markets or tech decisions.'
+  },
+
+  'country-profile': {
+    agent: 'ORACLE',
+    description: 'Complete profile for any country: facts, current weather, and Wikipedia overview.',
+    params: ['country'],
+    steps: [
+      { tool: 'get_country_info', params: { country: '{{input.country}}' } },
+      { tool: 'get_weather',      params: { city: '{{input.country}}' } },
+      { tool: 'wikipedia_search', params: { query: '{{input.country}}' } }
+    ],
+    synthesize: 'Build a complete profile for {{input.country}}: population, capital, currency, languages, current weather in the capital, and a historical/political overview from Wikipedia. Format as a concise country brief.'
+  },
+
+  'dev-community-pulse': {
+    agent: 'ORACLE',
+    description: 'What the developer community is building and struggling with right now.',
+    steps: [
+      { tool: 'get_stackoverflow',   params: { tag: 'javascript', limit: 5 } },
+      { tool: 'get_medium_articles', params: { topic: 'programming', limit: 5 } },
+      { tool: 'get_github_trending', params: { language: 'javascript' } }
+    ],
+    synthesize: 'Developer community pulse report. Top Stack Overflow pain points, popular Medium tutorials, trending GitHub repos. Identify the 3 biggest themes. What skills are hot? What tools are gaining traction? What problems are developers stuck on?'
+  },
+
+  // ── NEXUS — additional developer utility recipes ──────────────────────────
+
+  'uuid-batch': {
+    agent: 'NEXUS',
+    description: 'Generate 5 unique UUIDs instantly for use as IDs, tokens, or keys.',
+    steps: [
+      { tool: 'get_uuid', params: { count: 5 } }
+    ],
+    synthesize: 'List the 5 generated UUIDs and suggest a use case for each: primary keys, session tokens, request IDs, file names, correlation IDs.'
+  },
+
+  'test-data-pack': {
+    agent: 'NEXUS',
+    description: 'Generate realistic test users and UUIDs for development and QA.',
+    steps: [
+      { tool: 'random_user', params: { count: 5 } },
+      { tool: 'get_uuid',    params: { count: 5 } }
+    ],
+    synthesize: 'Format as a ready-to-use test data set. Pair each user with a UUID as their ID. Present as a JSON-ready array with names, emails, phones, locations, and IDs. Add a note about using fake data safely in tests.'
+  },
+
+  'mermaid-diagram': {
+    agent: 'NEXUS',
+    description: 'Generate a Mermaid flowchart or sequence diagram from a plain text description.',
+    params: ['type', 'description'],
+    steps: [
+      { tool: 'generate_mermaid', params: { type: '{{input.type}}', description: '{{input.description}}' } }
+    ],
+    synthesize: 'Present the Mermaid diagram code. Explain what each node and connection represents. Add usage instructions: paste into mermaid.live to render.'
+  },
+
+  'code-intelligence': {
+    agent: 'NEXUS',
+    description: 'Detect language, analyze complexity, and count tokens for any code snippet.',
+    params: ['code'],
+    steps: [
+      { tool: 'detect_language',         params: { code: '{{input.code}}' } },
+      { tool: 'analyze_code_complexity', params: { code: '{{input.code}}' } },
+      { tool: 'count_tokens',            params: { text: '{{input.code}}' } }
+    ],
+    synthesize: 'Code intelligence report: detected language and confidence, complexity assessment (lines, functions, nesting depth, TODOs), and token/character counts. What does this code likely do based on its structure? What refactoring would improve it?'
+  },
+
+  'unit-convert': {
+    agent: 'NEXUS',
+    description: 'Convert between units: temperature (C/F/K), length, weight, or data sizes.',
+    params: ['value', 'from', 'to'],
+    steps: [
+      { tool: 'convert_units', params: { value: '{{input.value}}', from: '{{input.from}}', to: '{{input.to}}' } }
+    ],
+    synthesize: 'Show the conversion result clearly with context. Supported: C/F/K, m/ft/km/mi, kg/lb, GB/MB/KB.'
+  },
+
+  // ── QUILL — additional writing recipes ────────────────────────────────────
+
+  'text-full-analysis': {
+    agent: 'QUILL',
+    description: 'Complete text analysis: word count, tokens, reading time, keywords, entities, and summary.',
+    params: ['text'],
+    steps: [
+      { tool: 'count_tokens',     params: { text: '{{input.text}}' } },
+      { tool: 'extract_keywords', params: { text: '{{input.text}}', limit: 10 } },
+      { tool: 'extract_entities', params: { text: '{{input.text}}' } },
+      { tool: 'summarize_text',   params: { text: '{{input.text}}', sentences: 3 } }
+    ],
+    synthesize: 'Complete text analysis report: reading stats (words, tokens, estimated reading time), top 10 keywords by frequency, entities found (prices, dates, URLs, emails), and a 3-sentence extractive summary of the key points.'
+  },
+
+  'grammar-polish': {
+    agent: 'QUILL',
+    description: 'Grammar check, keyword extraction, and reading stats for any text.',
+    params: ['text'],
+    steps: [
+      { tool: 'grammar_check',    params: { text: '{{input.text}}', language: 'en-US' } },
+      { tool: 'extract_keywords', params: { text: '{{input.text}}', limit: 8 } },
+      { tool: 'count_tokens',     params: { text: '{{input.text}}' } }
+    ],
+    synthesize: 'Grammar and style report: list all grammar/spelling issues found with specific corrections. List the top 8 keywords. Give an overall writing quality score out of 10 with 2-3 concrete improvement suggestions.'
+  },
+
+  'content-translate-pack': {
+    agent: 'QUILL',
+    description: 'Translate content to any language and extract key terms from the original.',
+    params: ['text', 'target'],
+    steps: [
+      { tool: 'translate_text',   params: { text: '{{input.text}}', target: '{{input.target}}' } },
+      { tool: 'extract_keywords', params: { text: '{{input.text}}' } },
+      { tool: 'count_tokens',     params: { text: '{{input.text}}' } }
+    ],
+    synthesize: 'Show the translation to {{input.target}}. List the key terms from the original text. Note reading stats. Flag any terms that may not translate cleanly and suggest alternatives.'
+  },
+
+  // ── PIKADON — additional security recipes ─────────────────────────────────
+
+  'password-security-check': {
+    agent: 'PIKADON',
+    description: 'Analyze password strength, hash it safely, and suggest secure alternatives.',
+    params: ['password'],
+    steps: [
+      { tool: 'check_password_strength', params: { password: '{{input.password}}' } },
+      { tool: 'hash_text',               params: { text: '{{input.password}}', algorithm: 'sha256' } },
+      { tool: 'get_uuid',                params: { count: 3 } }
+    ],
+    synthesize: 'Password security report: strength rating, entropy bits, what is missing. Show the SHA256 hash as proof of concept (never store plaintext). Provide 3 UUID-based secure token examples as alternatives. Recommend a passphrase strategy with an example.'
+  },
+
+  'full-code-security-scan': {
+    agent: 'PIKADON',
+    description: 'Comprehensive security scan: OWASP vulnerabilities, language, hardcoded secrets, and complexity risk.',
+    params: ['code'],
+    steps: [
+      { tool: 'check_security',          params: { code: '{{input.code}}' } },
+      { tool: 'detect_language',         params: { code: '{{input.code}}' } },
+      { tool: 'analyze_code_complexity', params: { code: '{{input.code}}' } },
+      { tool: 'regex_test',              params: { pattern: '(password|secret|api[_-]?key|token)\\s*[=:]\\s*["\'][^"\']{4,}', text: '{{input.code}}', flags: 'gi' } }
+    ],
+    synthesize: 'Comprehensive security scan. Report: (1) Language detected with confidence, (2) OWASP vulnerabilities found with severity (Critical/High/Medium/Low), (3) Hardcoded secrets/credentials detected, (4) Code complexity risk, (5) Security score /10, (6) Top 3 fixes to apply immediately with code examples.'
+  },
+
+  'json-security-validate': {
+    agent: 'PIKADON',
+    description: 'Validate JSON structure and scan for hardcoded secrets or security misconfigurations.',
+    params: ['config'],
+    steps: [
+      { tool: 'validate_json',    params: { json_string: '{{input.config}}' } },
+      { tool: 'check_security',   params: { code: '{{input.config}}' } },
+      { tool: 'extract_entities', params: { text: '{{input.config}}' } }
+    ],
+    synthesize: 'JSON security validation: Is the JSON valid? What keys are present? Any hardcoded secrets, debug flags, or insecure values detected by OWASP scan? Any exposed URLs, tokens, or credentials found? Provide a safe configuration checklist with pass/fail for each item.'
+  },
+
+  // ── TURTLE — additional creative recipes ──────────────────────────────────
+
+  'color-scheme-from-hex': {
+    agent: 'TURTLE',
+    description: 'Generate three complete color schemes from a seed hex color: analogic, complement, and triad.',
+    params: ['hex'],
+    steps: [
+      { tool: 'get_color_palette', params: { hex: '{{input.hex}}', mode: 'analogic' } },
+      { tool: 'get_color_palette', params: { hex: '{{input.hex}}', mode: 'complement' } },
+      { tool: 'get_color_palette', params: { hex: '{{input.hex}}', mode: 'triad' } }
+    ],
+    synthesize: 'Three color schemes from seed #{{input.hex}}:\n1. Analogic (harmonious, calm)\n2. Complement (high contrast, bold)\n3. Triad (balanced, vibrant)\n\nFor each: list colors with hex codes and CSS variables. Recommend which scheme fits best for: a tech dashboard, a marketing landing page, and a mobile app UI.'
+  },
+
+  'creative-daily-spark': {
+    agent: 'TURTLE',
+    description: 'Daily creative inspiration: an inspiring quote, a historical event today, and an AI art image link.',
+    steps: [
+      { tool: 'get_random_quote',    params: { tag: 'success' } },
+      { tool: 'get_history_today',   params: {} },
+      { tool: 'generate_image_free', params: { prompt: 'abstract digital art creative inspiration light particles flowing' } }
+    ],
+    synthesize: 'Daily creative spark for the SHADDAI Empire: (1) Today\'s inspiring quote with context, (2) A fascinating historical event that happened on this date — connect it to modern tech or design, (3) AI-generated image link for visual inspiration. Wrap with a one-line creative intention for the day.'
+  },
+
+  'world-clock-brief': {
+    agent: 'TURTLE',
+    description: 'Current time in 5 major global timezones for scheduling and team coordination.',
+    steps: [
+      { tool: 'get_timezone', params: { timezone: 'America/New_York' } },
+      { tool: 'get_timezone', params: { timezone: 'Europe/London' } },
+      { tool: 'get_timezone', params: { timezone: 'Asia/Tokyo' } },
+      { tool: 'get_timezone', params: { timezone: 'Asia/Singapore' } },
+      { tool: 'get_timezone', params: { timezone: 'America/Los_Angeles' } }
+    ],
+    synthesize: 'World clock for global team coordination. Show current time in: New York (ET), London (GMT/BST), Tokyo (JST), Singapore (SGT), Los Angeles (PT). Flag which locations are in business hours, outside hours, or asleep. Suggest the best 1-hour window for a global team call.'
+  },
+
+  // ── SHADDAI — additional command and orchestration recipes ────────────────
+
+  'quick-market-ping': {
+    agent: 'SHADDAI',
+    description: 'Instant 30-second market check: BTC price, Fear and Greed index, and top trending coin.',
+    steps: [
+      { tool: 'fetch_price',    params: { symbol: 'bitcoin' } },
+      { tool: 'get_fear_greed', params: {} },
+      { tool: 'get_trending',   params: {} }
+    ],
+    synthesize: 'Quick market ping — three lines max: BTC price + 24h change, Fear & Greed number + label, #1 trending coin right now. Close with one word: hot, cold, or sideways.'
+  },
+
+  'agent-status-board': {
+    agent: 'SHADDAI',
+    description: 'Check the live status of all agents and list open marketplace jobs.',
+    steps: [
+      { tool: 'get_agent_mood', params: { agent: 'ZEROX' } },
+      { tool: 'get_agent_mood', params: { agent: 'NEXUS' } },
+      { tool: 'get_agent_mood', params: { agent: 'ORACLE' } },
+      { tool: 'get_agent_mood', params: { agent: 'PIKADON' } },
+      { tool: 'list_open_jobs', params: {} }
+    ],
+    synthesize: 'SHADDAI Empire status board. Which agents are working, idle, or sleeping? List all open marketplace jobs. For each open job, recommend the best agent to handle it based on their specialization (ZEROX=finance, NEXUS=dev, ORACLE=research, PIKADON=security, TURTLE=design, QUILL=writing) and current status.'
+  },
+
+  'marketplace-pulse': {
+    agent: 'SHADDAI',
+    description: 'Overview of the SHADDAI marketplace: collectibles for sale, open jobs, and skill packs.',
+    steps: [
+      { tool: 'browse_listings',  params: {} },
+      { tool: 'list_open_jobs',   params: {} },
+      { tool: 'list_skill_packs', params: {} }
+    ],
+    synthesize: 'SHADDAI Marketplace pulse report. What collectibles are listed for sale and at what prices? What jobs are open for agent bids? What skill packs are available? Highlight best deals, most urgent jobs, and most popular skill packs. Give a 1-line marketplace health verdict.'
+  },
+
+  'this-day-intel': {
+    agent: 'SHADDAI',
+    description: 'Intelligence brief: historical events today, wisdom quote, moon phase, and tech headlines.',
+    steps: [
+      { tool: 'get_history_today', params: {} },
+      { tool: 'get_random_quote',  params: { tag: 'technology' } },
+      { tool: 'get_moon_phase',    params: {} },
+      { tool: 'get_hackernews',    params: { limit: 3 } }
+    ],
+    synthesize: 'SHADDAI daily intelligence brief. What happened on this date in history (pick the 2 most fascinating)? A relevant technology quote for today. Current moon phase and next major phase. Top 3 HN stories the tech world is discussing. Close with a one-line SHADDAI Empire directive for the day.'
   }
 
 };

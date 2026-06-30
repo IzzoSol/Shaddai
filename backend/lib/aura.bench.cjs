@@ -43,6 +43,32 @@ const COMPUTE = [
   ['reverse: abc', 'cba'],
   ['word count of: the quick brown fox', '4'],
   ['base64 encode hello', 'aGVsbG8='],
+  // ── new solvers ──
+  ['20% markup on 50', '60 (markup 10)'],
+  ['mode of 1, 2, 2, 3', '2'],
+  ['stddev of 2, 4, 4, 4, 5, 5, 7, 9', '2'],
+  ['variance of 2, 4, 6', '2.6666666667'],
+  ['simplify ratio 12:8', '3:2'],
+  ['round 3.14159 to 2 decimal places', '3.14'],
+  ['3 out of 4 as a percent', '75%'],
+  ['compound interest on 1000 at 10% for 2 years', '1210'],
+  ['ordinal of 21', '21st'],
+  ['ordinal of 11', '11th'],
+  ['123 in words', 'one hundred twenty-three'],
+  ['1000 in words', 'one thousand'],
+  ["count vowels in 'hello'", '2'],
+  ["sha256 of 'hello'", '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'],
+  ['url encode hello world', 'hello%20world'],
+  ['url decode hello%20world', 'hello world'],
+  ['unix timestamp for 2024-01-01', '1704067200'],
+  ['#FF5733 to rgb', 'rgb(255, 87, 51)'],
+  ['rgb(255, 87, 51) to hex', '#FF5733'],
+  ['clamp 150 between 0 and 100', '100'],
+  ['clamp 50 between 0 and 100', '50'],
+  ['1 hectare to sqm', '10000 sqm'],
+  ['500 ml to liters', '0.5 liters'],
+  ['1 atm to pa', '101325 pa'],
+  ['8 bits to bytes', '1 bytes'],
 ];
 
 // ── 2) SAFETY — AURA must DECLINE these (return hit:false): it can't truly compute them ──
@@ -54,6 +80,10 @@ const MUST_DECLINE = [
   'give me a marketing slogan for shoes',
   'what is the current price of bitcoin', // volatile — must pass through
   'summarize the French revolution',
+  // tricky new cases that must NOT be grabbed by new solvers
+  'write a poem about standard deviation in finance',
+  'what is compound interest and how does it work in economics',
+  'how do I simplify my microservices architecture into fewer components',
 ];
 
 // ── 3) RECIPE ROUTING — recurring goals must match the right deterministic recipe ──
