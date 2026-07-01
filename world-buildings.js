@@ -78,8 +78,7 @@ export function buildShaddaiBuildings(THREE, scene, opts = {}) {
       addBox(W, 0.6, side, stoneLt, 0, y,  (ah+side/2), g, true);   // south band
       addBox(side, 0.6, ATRIUM, stoneLt, -(ah+side/2), y, 0, g, true); // west band
       addBox(side, 0.6, ATRIUM, stoneLt,  (ah+side/2), y, 0, g, true); // east band
-      // glowing atrium-edge trim + railings
-      [[-ah,0,0,ATRIUM],[ah,0,0,ATRIUM],[0,0,-ah,W- (W-ATRIUM)],[0,0,ah,W-(W-ATRIUM)]].forEach(()=>{});
+      // glowing atrium-edge railings
       const railMat = glow(accent, 0.5);
       [[0,-ah],[0,ah]].forEach(([_,z])=>{ const r=addBox(ATRIUM,1.2,0.25, railMat, 0, y+0.9, z, g); });
       [[-ah,0],[ah,0]].forEach(([x])=>{ addBox(0.25,1.2,ATRIUM, railMat, x, y+0.9, 0, g); });
@@ -92,28 +91,21 @@ export function buildShaddaiBuildings(THREE, scene, opts = {}) {
     const cols = 6;
     for (let lv=0; lv<LEVELS; lv++){
       const y = lv*FLOOR_H;
-      for (let i=0;i<=cols;i++){ for (const sgn of [-1,1]){
+      for (let i=0;i<=cols;i++){
         const x = -half + (i*(W/cols));
         [[x,-half],[x,half]].forEach(([px,pz])=>{
           if (lv>0 && Math.abs(px)<ah && Math.abs(pz)<ah) return;
           const col = new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,FLOOR_H-0.6,12), stone); col.position.set(px, y+FLOOR_H/2-0.3, pz); g.add(col);
           const ring = new THREE.Mesh(new THREE.TorusGeometry(1.35,0.12,8,24), neon(accent)); ring.rotation.x=Math.PI/2; ring.position.set(px, y+FLOOR_H-1.2, pz); g.add(ring);
         });
-      }}
+      }
       // side columns (east/west rows)
       for (let j=1;j<cols;j++){ const z=-half+(j*(D/cols)); for (const px of [-half,half]){
         const col=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,FLOOR_H-0.6,12), stone); col.position.set(px,y+FLOOR_H/2-0.3,z); g.add(col); }}
     }
 
-    // GRAND STAIRCASES — switchback flights linking each level (climbable: rise 0.45, run 0.9)
-    function flight(x0, z0, dir, y0) {
-      const steps=Math.round(FLOOR_H/0.45), rise=FLOOR_H/steps, run=0.9, w=8;
-      for (let s=0;s<steps;s++){ addBox(dir==='z'?w:run, rise, dir==='z'?run:w, stone,
-        dir==='z'? x0 : x0 + dir*(s*run+run/2)*0 , y0+s*rise+rise/2,
-        dir==='z'? z0 + (s*run+run/2) : z0, g, true);
-      }
-    }
-    // a simpler, reliable two-flight switchback in the SE quadrant of each level
+    // GRAND STAIRCASES — two-flight switchback in the SE quadrant of each level
+    // (climbable: rise ~0.45, run ~0.95)
     function switchback(y0) {
       const steps=Math.round((FLOOR_H/2)/0.45), rise=(FLOOR_H/2)/steps, run=0.95, w=7, sx=half-12, sz=ah+4;
       for (let s=0;s<steps;s++){ addBox(w,rise,run, stone, sx, y0+s*rise+rise/2, sz+s*run, g, true); }       // flight up to landing

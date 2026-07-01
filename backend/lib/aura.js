@@ -4,11 +4,16 @@
  *
  * AURA tries to answer prompts WITHOUT calling an LLM, cheapest path first:
  *   1. FETCH   — exact cache hit (normalized prompt -> sha256 key).
- *   2. QUERY   — fuzzy cache hit (word-overlap cosine similarity >= 0.82).
- *   3. COMPUTE — solve locally: math / date / unit-convert (length, weight,
- *                data-size, time, speed, temperature) / base64 / word-count /
- *                casing / statistics / string-ops / roman numerals / number-
- *                theory (prime/gcd/lcm/factorial) / base conversion.
+ *   2. SEED    — curated, stable knowledge base (aura-seed.json), free on the FIRST ask.
+ *   3. COMPUTE — solve locally (~45 deterministic solvers): arithmetic, percentages,
+ *                finance (tip/markup/compound-interest/loan), date math, unit & base
+ *                conversion, statistics/stddev, number theory (prime/gcd/lcm/factorial/
+ *                fibonacci/nCr/nPr/modulo), geometry (circle/hypotenuse/bmi), text ops,
+ *                encoding/hashing, colors. Cached so the identical prompt later FETCHes.
+ *   4. QUERY   — fuzzy cache/seed hit (word-overlap cosine similarity >= 0.82).
+ *   (RECIPE — deterministic agent tool-chains — is credited via creditDeterministic().)
+ *
+ * Time-sensitive prompts (prices/news/"live") are detected and NEVER cached or fuzzy-served.
  *
  * If none apply, route() returns { hit:false } and the caller should hit the LLM,
  * then feed the answer back via recordAnswer() so future calls are free.
@@ -17,7 +22,7 @@
  *
  * Uses ONLY node built-ins (fs, path, crypto). Never throws to the caller.
  *
- * Exports: { route, recordAnswer, stats, router }
+ * Exports: { route, recordAnswer, creditDeterministic, isVolatile, stats, router }
  */
 
 const fs = require('fs');
@@ -72,6 +77,7 @@ function loadStats() {
     misses: 0,
     tokensSaved: 0,
     volatileSkips: 0,
+    firstTs: Date.now(),   // when tracking began — anchors the HONEST monthly projection
     byMethod: { fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 },
     recentSaves: []
   });
@@ -81,6 +87,7 @@ function loadStats() {
   if (typeof s.byMethod.seed !== 'number') s.byMethod.seed = 0;
   if (!s.recentSaves) s.recentSaves = [];
   if (typeof s.volatileSkips !== 'number') s.volatileSkips = 0;
+  if (typeof s.firstTs !== 'number') s.firstTs = Date.now();
   return s;
 }
 function bumpStats(mut) {
@@ -941,6 +948,118 @@ function clampOp(prompt) {
   return String(Math.min(Math.max(n, lo), hi));
 }
 
+// --- square root ("sqrt of 144" / "square root of 144") ---
+function sqrtOp(prompt) {
+  const m = prompt.match(/(?:sqrt|square\s+root)\s+(?:of\s+)?(-?\d+\.?\d*)/i);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  if (isNaN(n) || n < 0) return null;
+  return String(Math.round(Math.sqrt(n) * 1e10) / 1e10);
+}
+
+// --- natural-language powers ("2 to the power of 10", "5 squared", "3 cubed") ---
+function powerOp(prompt) {
+  const p = prompt.toLowerCase();
+  let m = p.match(/(-?\d+\.?\d*)\s*(?:to\s+the\s+power\s+of|raised\s+to(?:\s+the\s+power\s+of)?|\*\*)\s*(-?\d+\.?\d*)/);
+  if (m) { const r = Math.pow(parseFloat(m[1]), parseFloat(m[2])); return isFinite(r) ? String(Math.round(r * 1e10) / 1e10) : null; }
+  m = p.match(/(-?\d+\.?\d*)\s+squared\b/);
+  if (m) { const r = Math.pow(parseFloat(m[1]), 2); return isFinite(r) ? String(Math.round(r * 1e10) / 1e10) : null; }
+  m = p.match(/(-?\d+\.?\d*)\s+cubed\b/);
+  if (m) { const r = Math.pow(parseFloat(m[1]), 3); return isFinite(r) ? String(Math.round(r * 1e10) / 1e10) : null; }
+  return null;
+}
+
+// --- modulo ("17 mod 5", "17 modulo 5", "remainder of 17 divided by 5") ---
+function moduloOp(prompt) {
+  let m = prompt.match(/(-?\d+)\s*(?:mod|modulo)\s*(-?\d+)/i);
+  if (!m) m = prompt.match(/remainder\s+(?:of\s+)?(-?\d+)\s+divided\s+by\s+(-?\d+)/i);
+  if (!m) return null;
+  const a = parseInt(m[1]), b = parseInt(m[2]);
+  if (b === 0) return null;
+  return String(a % b);
+}
+
+// --- ceil / floor / round / abs ("round up 4.2", "ceil 4.2", "floor 4.8", "abs of -5", "round 4.6") ---
+function roundingOp(prompt) {
+  const p = prompt.trim();
+  let m = p.match(/(?:round\s+up|ceil(?:ing)?)\s+(?:of\s+)?(-?\d+\.?\d*)/i);
+  if (m) return String(Math.ceil(parseFloat(m[1])));
+  m = p.match(/(?:round\s+down|floor)\s+(?:of\s+)?(-?\d+\.?\d*)/i);
+  if (m) return String(Math.floor(parseFloat(m[1])));
+  m = p.match(/abs(?:olute\s+value)?\s+(?:of\s+)?(-?\d+\.?\d*)/i);
+  if (m) return String(Math.abs(parseFloat(m[1])));
+  m = p.match(/^round\s+(-?\d+\.?\d*)\s*$/i);   // "round 4.6" → nearest int (roundToOp handles "to N places" first)
+  if (m) return String(Math.round(parseFloat(m[1])));
+  return null;
+}
+
+// --- combinations / permutations ("10 choose 3", "nCr 10 3", "permutations of 10 and 3") ---
+function combPermOp(prompt) {
+  const p = prompt.toLowerCase();
+  let m = p.match(/(\d+)\s+choose\s+(\d+)/) || p.match(/\bncr\s+(\d+)\s+(\d+)/) || p.match(/combinations?\s+(?:of\s+)?(\d+)\s+(?:choose\s+|and\s+)?(\d+)/);
+  if (m) {
+    const n = parseInt(m[1]), r = parseInt(m[2]);
+    if (isNaN(n) || isNaN(r) || r > n || n > 170 || r < 0) return null;
+    let res = 1; for (let i = 0; i < r; i++) res = res * (n - i) / (i + 1);
+    return String(Math.round(res));
+  }
+  m = p.match(/\bnpr\s+(\d+)\s+(\d+)/) || p.match(/permutations?\s+(?:of\s+)?(\d+)\s+(?:and\s+)?(\d+)/);
+  if (m) {
+    const n = parseInt(m[1]), r = parseInt(m[2]);
+    if (isNaN(n) || isNaN(r) || r > n || n > 170 || r < 0) return null;
+    let res = 1; for (let i = 0; i < r; i++) res *= (n - i);
+    if (!isFinite(res) || res > Number.MAX_SAFE_INTEGER) return null;
+    return String(res);
+  }
+  return null;
+}
+
+// --- fibonacci ("10th fibonacci number", "fibonacci of 10") — 1-indexed: fib(1)=1, fib(2)=1 ---
+function fibonacciOp(prompt) {
+  const m = prompt.match(/(\d+)(?:st|nd|rd|th)?\s+fibonacci/i) || prompt.match(/fibonacci\s+(?:number\s+)?(?:of\s+)?(\d+)/i);
+  if (!m) return null;
+  const n = parseInt(m[1]);
+  if (isNaN(n) || n < 1 || n > 78) return null;   // fib(78) within MAX_SAFE_INTEGER
+  let a = 0, b = 1;
+  for (let i = 1; i < n; i++) { const t = a + b; a = b; b = t; }
+  return String(b);
+}
+
+// --- leap year ("is 2024 a leap year") ---
+function leapYearOp(prompt) {
+  const m = prompt.match(/\bis\s+(\d{1,4})\s+a\s+leap\s+year/i);
+  if (!m) return null;
+  const y = parseInt(m[1]);
+  const leap = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+  return leap ? `Yes, ${y} is a leap year` : `No, ${y} is not a leap year`;
+}
+
+// --- circle area / circumference ("area of a circle with radius 5") ---
+function circleOp(prompt) {
+  const p = prompt.toLowerCase();
+  let m = p.match(/area\s+of\s+(?:a\s+)?circle\s+(?:with\s+)?radius\s+(-?\d+\.?\d*)/);
+  if (m) { const r = parseFloat(m[1]); if (r < 0) return null; return String(Math.round(Math.PI * r * r * 1e6) / 1e6); }
+  m = p.match(/circumference\s+of\s+(?:a\s+)?circle\s+(?:with\s+)?radius\s+(-?\d+\.?\d*)/);
+  if (m) { const r = parseFloat(m[1]); if (r < 0) return null; return String(Math.round(2 * Math.PI * r * 1e6) / 1e6); }
+  return null;
+}
+
+// --- hypotenuse ("hypotenuse of 3 and 4") ---
+function hypotenuseOp(prompt) {
+  const m = prompt.match(/hypotenuse\s+(?:of\s+)?(-?\d+\.?\d*)\s+and\s+(-?\d+\.?\d*)/i);
+  if (!m) return null;
+  return String(Math.round(Math.hypot(parseFloat(m[1]), parseFloat(m[2])) * 1e6) / 1e6);
+}
+
+// --- BMI ("bmi for 70 kg and 1.8 m") ---
+function bmiOp(prompt) {
+  const m = prompt.match(/bmi\s+(?:for\s+|of\s+)?(-?\d+\.?\d*)\s*(?:kg)?\s+(?:and\s+)?(-?\d+\.?\d*)\s*m\b/i);
+  if (!m) return null;
+  const w = parseFloat(m[1]), h = parseFloat(m[2]);
+  if (w <= 0 || h <= 0) return null;
+  return String(Math.round(w / (h * h) * 10) / 10);
+}
+
 /**
  * Try to compute an answer locally. Returns a string answer or null.
  * Ordered so cheap/specific detectors run before generic math.
@@ -994,6 +1113,16 @@ function compute(prompt) {
   const ord  = ordinalOp(raw);        if (ord  !== null) return ord;
   const n2w  = numberToWordsOp(raw);  if (n2w  !== null) return n2w;
   const clmp = clampOp(raw);          if (clmp !== null) return clmp;
+  const sqrtR = sqrtOp(raw);          if (sqrtR !== null) return sqrtR;
+  const powR  = powerOp(raw);         if (powR  !== null) return powR;
+  const modR  = moduloOp(raw);        if (modR  !== null) return modR;
+  const rndg  = roundingOp(raw);      if (rndg  !== null) return rndg;
+  const cp    = combPermOp(raw);      if (cp    !== null) return cp;
+  const fib   = fibonacciOp(raw);     if (fib   !== null) return fib;
+  const leap  = leapYearOp(raw);      if (leap  !== null) return leap;
+  const circ  = circleOp(raw);        if (circ  !== null) return circ;
+  const hyp   = hypotenuseOp(raw);    if (hyp   !== null) return hyp;
+  const bmi   = bmiOp(raw);           if (bmi   !== null) return bmi;
 
   // 6. Colors
   const hxc  = hexColorOp(raw);       if (hxc  !== null) return hxc;
@@ -1181,9 +1310,10 @@ function stats() {
     const hitRate = total ? s.hits / total : 0;
     const costSavedUsd = (s.tokensSaved / 1000) * COST_PER_1K;
     let cacheEntries = 0; try { cacheEntries = Object.keys(loadCache()).length; } catch (_) {}
-    // crude monthly projection from the running average $/hit, extrapolated to ~30 hits/day
-    const perHit = s.hits ? costSavedUsd / s.hits : 0;
-    const projMonthlyUsd = Math.round(perHit * 30 * 30 * 1e4) / 1e4;
+    // HONEST monthly projection: actual $ saved / actual days elapsed × 30.
+    // Day count floored at 1 so a few minutes of data can't wildly over-extrapolate.
+    const elapsedDays = Math.max(1, (Date.now() - (s.firstTs || Date.now())) / 86400000);
+    const projMonthlyUsd = Math.round((costSavedUsd / elapsedDays) * 30 * 1e4) / 1e4;
     return {
       hits: s.hits,
       misses: s.misses,
@@ -1193,7 +1323,7 @@ function stats() {
       volatileSkips: s.volatileSkips || 0,   // time-sensitive answers kept fresh (never cached)
       cacheEntries,                           // live cached prompts
       avgTokensPerHit: s.hits ? Math.round(s.tokensSaved / s.hits) : 0,
-      recipeFastPaths: (s.byMethod && s.byMethod.recipe) || 0,  // AINL deterministic runs (no LLM orchestration)
+      recipeFastPaths: (s.byMethod && s.byMethod.recipe) || 0,  // deterministic recipe runs (no LLM orchestration)
       projMonthlyUsd,                         // rough extrapolated monthly saving
       byMethod: s.byMethod,
       recentSaves: s.recentSaves || []
@@ -1228,8 +1358,8 @@ function buildRouter() {
 }
 
 /**
- * creditDeterministic(prompt, savedTokens) — AINL "compile once, run many".
- * Call this when a task was answered by a DETERMINISTIC recipe (real tool steps, no LLM
+ * creditDeterministic(prompt, savedTokens) — credit a DETERMINISTIC recipe run.
+ * Call this when a task was answered by real tool steps in a fixed order (no LLM
  * orchestration loop). Credits the saved orchestration tokens to AURA so the monitor shows it.
  * Never throws.
  */

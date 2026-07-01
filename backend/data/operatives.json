@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 14,
+  "nextTokenId": 15,
   "operatives": {
     "op_36cbc419_1782689365331": {
       "id": "op_36cbc419_1782689365331",
@@ -80,6 +80,49 @@
       },
       "createdAt": 1782689365439,
       "updatedAt": 1782689365439
+    },
+    "op_7d48e2d0_1782753930904": {
+      "id": "op_7d48e2d0_1782753930904",
+      "tokenId": 14,
+      "owner": "test",
+      "codename": "TESTOP",
+      "archetype": "vanguard",
+      "rarity": "epic",
+      "look": {
+        "archetype": "vanguard"
+      },
+      "portrait": "/api/forge/image/forge-6.png",
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "vanguard"
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 70,
+        "power": 70,
+        "iq": 70
+      },
+      "createdAt": 1782753930904,
+      "updatedAt": 1782754679361,
+      "deployedTo": "office"
     }
   }
 }

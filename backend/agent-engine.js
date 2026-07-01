@@ -2981,7 +2981,17 @@ async function callLLM(messages, agentName, options = {}) {
   if (mcpClient) {
     try { mcpTools = Object.values(mcpClient.getAgentTools()); } catch {}
   }
-  const toolBlock = [...ownTools, ...mcpTools]
+  // Selective tool injection — advertise only the tools most RELEVANT to this goal
+  // (ranked by lib/tool-selector) so the prompt carries fewer tool descriptions per call,
+  // and a capped list can't drop the relevant tool to an arbitrary slice. ownTools stays the
+  // allow-set (execution is unrestricted); BASE_TOOLS are always kept so capability is preserved.
+  let _promptTools = [...ownTools, ...mcpTools];
+  try {
+    const { selectTools } = require('./lib/tool-selector');
+    const _goal = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+    _promptTools = selectTools(_goal, _promptTools, { max: 22, min: 6, always: BASE_TOOLS, agent: agentName });
+  } catch (_) { /* fall back to full list */ }
+  const toolBlock = _promptTools
     .map(t => `[TOOL:${t.name}:${JSON.stringify(t.schema)}] — ${String(t.description || '').slice(0, 60)}`)  // trim desc → leaner prompt for small local models
     .join('\n');
 
@@ -3071,7 +3081,7 @@ ${toolBlock}`
     // schema) makes a 1–3B model's prompt-eval crawl → it blows the timeout and the run "fails".
     // Here we give Ollama a compact prompt: persona + a capped list of tool NAMES (no schemas) +
     // any short skill context, trimmed tight. Cloud providers below still get the full prompt.
-    const leanTools = [...ownTools, ...mcpTools].slice(0, 14)
+    const leanTools = _promptTools.slice(0, 14)   // already ranked by goal relevance — the 14 kept are the most relevant
       .map(t => `[TOOL:${t.name}] ${String(t.description || '').slice(0, 40)}`).join('\n');
     const leanSystem = { role: 'system', content:
 `You are ${agent.name}, ${agent.role} of SHADDAI. ${agent.goal}${skillContext ? '\n' + skillContext.slice(0, 500) : ''}
@@ -3299,10 +3309,44 @@ async function runAgentLoop(taskId) {
   const messages = [{ role: 'user', content: task.goal }];
 
   try {
+    const grounding = require('./lib/grounding');
     const maxIter = task.options?.maxIter || 5;
+
+    // ── GUARD: PRE-FLIGHT GROUNDING ──────────────────────────────────────────────
+    // For live-data goals, run a matching DETERMINISTIC recipe first (real tools, no
+    // weak-model guessing). If it yields an answer, use it and skip the loop entirely —
+    // so a weak model never gets the chance to invent data it was supposed to fetch.
+    if (grounding.needsRealData(task.goal) && process.env.RECIPE_FASTPATH !== 'off') {
+      try {
+        const fp = await tryRecipeFastPath(task.goal, task.agentName);
+        if (fp && fp.result) {
+          task.result = fp.result;
+          task.tools_used.push(...(fp.tools || []));
+          task.steps.push({ iteration: 1, status: 'completed', grounded: true, recipe: fp.recipeId, tools: fp.tools || [] });
+          task.status = 'completed';
+          task.completedAt = new Date().toISOString();
+          try { fs.writeFileSync(path.join(LOGS_DIR, `task_${taskId.slice(0,8)}_${Date.now()}.json`), JSON.stringify(task, null, 2), 'utf8'); } catch (_) {}
+          agentEventBus.taskDone(taskId, task.result || '', task.agentName);
+          return task;
+        }
+      } catch (_) { /* no recipe matched → normal loop */ }
+    }
+
     for (let iter = 0; iter < maxIter; iter++) {
       const step = { iteration: iter + 1, status: 'thinking', ts: new Date().toISOString() };
       task.steps.push(step);
+
+      // Compact accumulated history before re-sending — keeps the goal, latest instruction, and
+      // recent turns full while compressing OLDER large tool outputs. Shrinks the paid prompt on
+      // iterations 2+ (the same big JSON blobs were otherwise re-sent verbatim every iteration).
+      try {
+        const cc = require('./lib/context-compress');
+        const r = cc.compactHistory(messages, { budget: 4000, keepRecent: 3, maxChars: 700 });
+        if (r.saved > 0) {
+          messages.length = 0; messages.push(...r.messages);
+          step.compacted_tokens = r.saved;
+        }
+      } catch (_) { /* compaction is best-effort */ }
 
       const response = await callLLM(messages, task.agentName, { user: task.options?.user || task.user, provider: task.options?.provider, model: task.options?.model, tools: task.options?.tools });
       step.llm_response = response.slice(0, 600) + (response.length > 600 ? '…' : '');
@@ -3310,7 +3354,18 @@ async function runAgentLoop(taskId) {
       const toolResults = await extractAndRunTools(response, task.agentName, task.id, task.options?.tools);
 
       if (toolResults.length === 0) {
-        task.result = response;
+        // ── GUARD: ANTI-LARP ──────────────────────────────────────────────────────
+        // The model gave a final answer. If this is a live-data goal, the answer asserts
+        // specific figures, and NO tool was used the whole run → the model fabricated it.
+        // Refuse to ship fake numbers: rescue with a real recipe, else say so honestly.
+        if (grounding.looksFabricated(response, task.tools_used.length, task.goal)) {
+          let rescued = null;
+          try { const fp = await tryRecipeFastPath(task.goal, task.agentName); if (fp && fp.result) rescued = fp; } catch (_) {}
+          if (rescued) { task.result = rescued.result; task.tools_used.push(...(rescued.tools || [])); step.grounded = true; }
+          else { task.result = grounding.honestUnverified(task.goal); step.fabrication_blocked = true; }
+        } else {
+          task.result = response;
+        }
         task.status = 'completed';
         task.completedAt = new Date().toISOString();
         step.status = 'completed';
@@ -3356,7 +3411,7 @@ async function runAgentLoop(taskId) {
 // REAL tool steps deterministically (zero LLM orchestration) instead of the multi-
 // iteration agent loop. Only the synthesis LLM call remains (the genuine judgment gate).
 // Saves the orchestration tokens (credited to AURA). Conservative by design.
-//   Disable with env AINL_FASTPATH=off.
+//   Disable with env RECIPE_FASTPATH=off.
 // Deterministic param extraction for the AINL fast-path. Only returns params when EVERY required
 // input is found with high confidence — otherwise null → we fall back to the LLM loop (safe).
 const _COIN = { btc:'bitcoin', bitcoin:'bitcoin', eth:'ethereum', ethereum:'ethereum', sol:'solana', solana:'solana',
@@ -3402,7 +3457,7 @@ function _extractRecipeParams(recipe, goal) {
 
 async function tryRecipeFastPath(goal, agentName) {
   try {
-    if (process.env.AINL_FASTPATH === 'off') return null;
+    if (process.env.RECIPE_FASTPATH === 'off') return null;
     const ag = (agentName && AGENTS[String(agentName).toUpperCase()]) ? String(agentName).toUpperCase() : undefined;
     const matches = skillIndex.findSkills(goal, { agent: ag, includeRecipes: true, includeMd: false, includeObsidian: false, limit: 1 });
     if (!matches.length || matches[0].type !== 'recipe' || (matches[0].score || 0) < 1.6) return null;
@@ -3428,7 +3483,7 @@ async function runWorkflow(steps, options = {}) {
     if (!prevOutput) {
       const fp = await tryRecipeFastPath(step.goal, step.agent);
       if (fp) {
-        results.push({ step: i+1, agent: step.agent, goal: step.goal, result: fp.result, status: 'completed', tools: fp.tools, via: 'ainl-recipe:' + fp.recipeId });
+        results.push({ step: i+1, agent: step.agent, goal: step.goal, result: fp.result, status: 'completed', tools: fp.tools, via: 'recipe:' + fp.recipeId });
         prevOutput = fp.result || prevOutput;
         continue;
       }
@@ -3617,19 +3672,30 @@ async function runSkill(skillId, input = {}, agentOverride) {
       const dataBlock = stepResults.map(s =>
         `[${s.tool}] ${s.error ? 'ERROR: ' + s.error : s.result}`
       ).join('\n\n');
+      const _grounding = require('./lib/grounding');
+      const _deterministic = _grounding.formatToolData(stepResults, { title: skillId.replace(/-/g, ' ') });
       if (r.synthesize) {
         const synthPrompt = skillIndex.interpolate(r.synthesize, input, stepResults);
         try {
-          const synth = await callLLM([
-            { role: 'user', content: `Data collected for skill "${skillId}":\n\n${dataBlock}\n\nTask: ${synthPrompt}` }
-          ], agentName);
+          // Bound synthesis so a slow model can't hang the task — on timeout we use the
+          // deterministic summary (real data, instant) instead of waiting out the full LLM timeout.
+          const synth = await Promise.race([
+            callLLM([
+              { role: 'user', content: `Data collected for skill "${skillId}":\n\n${dataBlock}\n\nTask: ${synthPrompt}\n\nUse ONLY the figures above — do not invent any number.` }
+            ], agentName),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('synthesis timeout (25s)')), 25000))
+          ]);
           const cleaned = stripToolCalls(synth);
-          // If synthesis came back empty, fall back to the raw data we already gathered
-          task.result = cleaned && cleaned.length > 2 ? cleaned : `${skillId} results:\n\n${dataBlock}`;
+          // Accept LLM synthesis ONLY if it's non-trivial AND its numbers are grounded in the real
+          // tool data (this catches weak-model garble / drift / hallucination). Otherwise ship the
+          // deterministic real-data summary — always correct, instant, never garbled.
+          task.result = (cleaned && cleaned.length > 15 && _grounding.synthesisGrounded(cleaned, dataBlock))
+            ? cleaned
+            : _deterministic;
         } catch (synthErr) {
-          // LLM synthesis failed/timed out — still deliver the real tool data we collected
-          console.warn(`[SKILL-RUNNER] ${skillId} synthesis failed (${synthErr.message}); returning raw tool data`);
-          task.result = `${skillId} — data collected (synthesis unavailable):\n\n${dataBlock}`;
+          // LLM synthesis failed/timed out — deliver the deterministic real-data summary.
+          console.warn(`[SKILL-RUNNER] ${skillId} synthesis failed (${synthErr.message}); using deterministic summary`);
+          task.result = _deterministic;
         }
       } else {
         // No synthesis — return raw structured results
@@ -3711,4 +3777,13 @@ try {
   if (TOOLS.post_to_x)        TOOLS.post_twitter   = TOOLS.post_to_x;
   if (TOOLS.post_to_telegram) TOOLS.send_telegram  = TOOLS.post_to_telegram;
 } catch (e) {}
+
+// Wrap every tool's execute() with the short-TTL result cache so repeated/concurrent
+// API pulls (same tool + same params within its freshness window) cost one real call,
+// not N. Mutating tools (post/mint/deploy/…) are auto-excluded by policy. TOOL_CACHE=off disables.
+try {
+  const wrapped = require('./lib/tool-cache').wrapAll(TOOLS);
+  console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
+} catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
+
 module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };

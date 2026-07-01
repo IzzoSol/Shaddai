@@ -113,6 +113,13 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     tmpColor.setRGB(wr / wsum, wg / wsum, wb / wsum);
     const shade = THREE.MathUtils.clamp(0.5 + (y / MAX_H) * 0.5, 0.25, 1.1);
     tmpColor.multiplyScalar(shade);
+
+    // ── low-frequency large-scale blotch: breaks up flat biome fills so the
+    //    ground reads as weathered terrain (patches of lighter / darker soil) ──
+    const blotch =
+        (valueNoise(x * 0.006 + 11.3, z * 0.006 - 7.1) - 0.5) * 0.85
+      + (valueNoise(x * 0.018 - 3.7, z * 0.018 + 5.9) - 0.5) * 0.35;
+    tmpColor.multiplyScalar(1 + blotch * 0.18);
     const dCore = Math.hypot(x, z);
     if (dCore <= GRID_FLAT_R) {
       // grid plaza core stays a dark digital floor (blends out to the biome ring)
@@ -128,29 +135,118 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
   geo.computeVertexNormals();
 
   // ── tiled surface-detail texture (procedural, so the ground reads as a real surface) ──
-  function makeDetailTex() {
-    const c = document.createElement('canvas'); c.width = c.height = 256;
-    const g = c.getContext('2d');
-    g.fillStyle = '#cdcdcd'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 11000; i++) { const v = 175 + (Math.random() * 70 | 0); g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5); }
-    g.strokeStyle = 'rgba(150,165,180,0.22)'; g.lineWidth = 1;
-    for (let i = 0; i < 5; i++) { const p = (Math.random() * 256) | 0; g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 256); g.moveTo(0, p); g.lineTo(256, p); g.stroke(); }
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(80, 80); return t;
+  // Higher-res, seamless multi-octave grain so the ground reads as a fine material
+  // (subtle speckle + soft mottling) instead of muddy noise. Cheap: built once.
+  // Shared seamless height field for BOTH the detail (albedo) and normal map, so
+  // the lit relief lines up with the visible grain. Built once, tileable on S.
+  const TAU = Math.PI * 2;
+  function detailField(u, v) {
+    // integer wave numbers => perfectly wrap at the tile edge (no visible seam)
+    let n =
+      Math.sin(u * TAU * 2) * 0.50 +
+      Math.cos(v * TAU * 3) * 0.35 +
+      Math.sin((u + v) * TAU * 5) * 0.20 +
+      Math.cos((u * 2 - v) * TAU * 7) * 0.12 +
+      Math.sin((u * 3 + v * 2) * TAU * 11) * 0.07 + // higher octave = finer grit
+      Math.cos((u - v * 3) * TAU * 13) * 0.05;
+    return (n / 1.29) * 0.5 + 0.5;        // -> 0..1
   }
+
+  function makeDetailTex() {
+    const S = 512;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+
+    const img = g.createImageData(S, S);
+    const d = img.data;
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        const n = detailField(x / S, y / S);
+        const base = 198 + (n - 0.5) * 46; // crisper mottle (wider range than before)
+        const i = (y * S + x) * 4;
+        d[i] = d[i + 1] = d[i + 2] = base;
+        d[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+
+    // two-scale speckle for material micro-grain — bright grit + dark pits
+    for (let i = 0; i < 14000; i++) {
+      const v = 180 + (Math.random() * 60 | 0);
+      g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.5)';
+      g.fillRect((Math.random() * S) | 0, (Math.random() * S) | 0, 1, 1);
+    }
+    for (let i = 0; i < 2600; i++) {
+      g.fillStyle = 'rgba(60,60,60,0.28)';
+      g.fillRect((Math.random() * S) | 0, (Math.random() * S) | 0, 2, 2);
+    }
+
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(60, 60);
+    t.anisotropy = 8;
+    if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Procedural tangent-space normal map derived from the SAME field, giving the
+  // flat ground subtle surface relief under the scene lights (no extra geometry).
+  function makeNormalTex() {
+    const S = 256;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+    const img = g.createImageData(S, S);
+    const d = img.data;
+    const e = 1 / S;          // sample step
+    const STR = 1.7;          // bump strength
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        const u = x / S, v = y / S;
+        // central differences on the seamless field (wrap via +1 modulo)
+        const hL = detailField((u - e + 1) % 1, v);
+        const hR = detailField((u + e) % 1, v);
+        const hD = detailField(u, (v - e + 1) % 1);
+        const hU = detailField(u, (v + e) % 1);
+        let nx = (hL - hR) * STR;
+        let ny = (hD - hU) * STR;
+        let nz = 1;
+        const inv = 1 / Math.hypot(nx, ny, nz);
+        nx *= inv; ny *= inv; nz *= inv;
+        const i = (y * S + x) * 4;
+        d[i]     = (nx * 0.5 + 0.5) * 255;
+        d[i + 1] = (ny * 0.5 + 0.5) * 255;
+        d[i + 2] = (nz * 0.5 + 0.5) * 255;
+        d[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(60, 60);
+    t.anisotropy = 8;
+    return t; // normal maps stay in linear space (no colorSpace set)
+  }
+
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
     map: makeDetailTex(),                  // tiled detail multiplies the biome vertex color
+    normalMap: makeNormalTex(),            // procedural micro-relief under light
     flatShading: false,
     roughness: 0.82,
     metalness: 0.08,
     emissive: new THREE.Color(0x0a1726),  // faint cool glow so valleys never read pure black
     emissiveIntensity: 0.5,
   });
+  if (mat.normalScale) mat.normalScale.set(0.6, 0.6);
 
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   mesh.name = 'world-terrain';
   scene.add(mesh);
+
+  // Expose the height query globally so sibling modules (e.g. world-biomes trees)
+  // can seat props exactly on the surface without a new exported signature.
+  window.WORLD_HEIGHT_AT = function (x, z) { return elevation(x, z); };
 
   return {
     mesh,

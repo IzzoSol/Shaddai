@@ -391,7 +391,48 @@ checkHit('8 bits to bytes',   route('8 bits to bytes'),   '1 bytes');
 checkHit('1 kb to bits',      route('1 kb to bits'),      '8192 bits');
 
 // ============================================================
+console.log('\n=== SQUARE ROOT ===');
+checkHit('sqrt of 144',            route('sqrt of 144'),                 '12');
+checkHit('square root of 169',     route('square root of 169'),          '13');
+
+console.log('\n=== POWERS (natural language) ===');
+checkHit('2 to the power of 10',   route('2 to the power of 10'),        '1024');
+checkHit('5 squared',              route('5 squared'),                   '25');
+checkHit('3 cubed',                route('3 cubed'),                     '27');
+
+console.log('\n=== MODULO ===');
+checkHit('17 mod 5',               route('17 mod 5'),                    '2');
+checkHit('remainder 17 div by 5',  route('remainder of 17 divided by 5'),'2');
+
+console.log('\n=== CEIL / FLOOR / ROUND / ABS ===');
+checkHit('round up 4.2',           route('round up 4.2'),                '5');
+checkHit('ceil 4.2',               route('ceil 4.2'),                    '5');
+checkHit('floor 4.8',              route('floor 4.8'),                   '4');
+checkHit('abs of -5',              route('abs of -5'),                   '5');
+checkHit('round 4.6',              route('round 4.6'),                   '5');
+
+console.log('\n=== COMBINATIONS / PERMUTATIONS ===');
+checkHit('10 choose 3',            route('10 choose 3'),                 '120');
+checkHit('permutations of 5 and 2',route('permutations of 5 and 2'),     '20');
+
+console.log('\n=== FIBONACCI ===');
+checkHit('10th fibonacci',         route('10th fibonacci number'),       '55');
+checkHit('fibonacci of 7',         route('fibonacci of 7'),              '13');
+
+console.log('\n=== LEAP YEAR ===');
+checkHit('is 2024 a leap year',    route('is 2024 a leap year'),         'Yes, 2024 is a leap year');
+checkHit('is 2023 a leap year',    route('is 2023 a leap year'),         'No, 2023 is not a leap year');
+checkHit('is 1900 a leap year',    route('is 1900 a leap year'),         'No, 1900 is not a leap year');
+
+console.log('\n=== GEOMETRY ===');
+checkHit('area of circle r=5',     route('area of a circle with radius 5'),        '78.539816');
+checkHit('circumference r=5',      route('circumference of a circle with radius 5'),'31.415927');
+checkHit('hypotenuse of 3 and 4',  route('hypotenuse of 3 and 4'),       '5');
+checkHit('bmi 70kg 1.8m',          route('bmi for 70 kg and 1.8 m'),     '21.6');
+
 console.log('\n=== MISS CASES (should not false-positive) ===');
+checkMiss('what is a leap year (no year)',   route('what is a leap year'));
+checkMiss('explain the fibonacci sequence',  route('explain the fibonacci sequence'));
 checkMiss('what is the meaning of life (open question)', route('what is the meaning of life'));
 checkMiss('write me a poem about SHADDAI', route('write me a poem about SHADDAI'));
 checkMiss('explain blockchain to a 5 year old', route('explain blockchain to a 5 year old'));

@@ -37760,7 +37760,7 @@ async function auraTool(toolName, params = {}) {
 }
 
 /** Update the AURA stat boxes on the System Health card — pulls the REAL backend stats
- *  (cache + compute + seed + recipe/AINL savings across the whole app), not just this tab. */
+ *  (cache + compute + seed + recipe savings across the whole app), not just this tab. */
 async function _auraUpdateStats() {
   const elStatus = document.getElementById('statAura');
   const elTokens = document.getElementById('statAuraTokens');

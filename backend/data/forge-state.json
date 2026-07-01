@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 6,
+  "nextTokenId": 7,
   "operatives": [
     {
       "tokenId": 1,
@@ -72,6 +72,31 @@
       },
       "image": "/api/forge/image/forge-3.png",
       "at": 1781484376399
+    },
+    {
+      "tokenId": 6,
+      "codename": "TESTOP",
+      "owner": "test",
+      "rarity": "epic",
+      "archetype": "vanguard",
+      "buildHash": "7d48e2d0",
+      "build": {
+        "archetype": "vanguard",
+        "organic": false,
+        "slots": {
+          "body": "cyborg",
+          "headwear": "neural-crown",
+          "outfit": "plate-armor",
+          "aura": "flames",
+          "handheld": "cyber-katana",
+          "hair": "violet",
+          "eyes": "glowing",
+          "background": "void",
+          "accent": "magenta"
+        }
+      },
+      "image": "/api/forge/image/forge-6.png",
+      "at": 1782753571185
     }
   ]
 }

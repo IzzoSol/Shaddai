@@ -1,0 +1,1 @@
+[SolanaPay] CRITICAL: SHADDAI_MERCHANT_WALLET not set — /api/pay/create is BLOCKED to prevent fund loss. Set your Solana wallet address in .env

@@ -108,9 +108,43 @@ router.post('/mcp/tools/call', json, (req, res) => {
 });
 
 // ── Portal registry (in-world gateways to other worlds, §4) ──
+// Curated native portals live in portal-registry.json (never mutated here).
+// Community portals — the ones users "connect" behind NEXUS — live in community-portals.json.
+const COMMUNITY_FILE = path.join(__dirname, 'community-portals.json');
+function readCommunity() {
+  try { const d = JSON.parse(fs.readFileSync(COMMUNITY_FILE, 'utf8')); return Array.isArray(d.portals) ? d.portals : []; }
+  catch (e) { return []; }
+}
+function slugId(s) { return String(s || 'portal').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'portal'; }
+
 router.get('/api/grid/portals', (req, res) => {
-  try { res.json(JSON.parse(fs.readFileSync(path.join(__dirname, 'portal-registry.json'), 'utf8'))); }
-  catch (e) { res.json({ portals: [] }); }
+  let base = { portals: [] };
+  try { base = JSON.parse(fs.readFileSync(path.join(__dirname, 'portal-registry.json'), 'utf8')); } catch (e) {}
+  const community = readCommunity();
+  res.json({ portals: (base.portals || []).concat(community) });
+});
+
+// POST /api/grid/portals/register — a user connects their own portal (shows in the ring behind NEXUS).
+// Body: { name, url, owner?, color?, tags? }  → appended to community-portals.json (capped, sanitized).
+router.post('/api/grid/portals/register', json, (req, res) => {
+  try {
+    const b = req.body || {};
+    const name = String(b.name || '').trim().slice(0, 48);
+    let url = String(b.url || '').trim().slice(0, 300);
+    if (!name || !url) return res.status(400).json({ ok: false, error: 'name and url are required' });
+    // only allow http(s) or in-world relative paths — block javascript:/data: etc.
+    if (!/^https?:\/\//i.test(url) && !/^\//.test(url)) return res.status(400).json({ ok: false, error: 'url must be http(s):// or a /path' });
+    const color = /^#[0-9a-fA-F]{6}$/.test(b.color || '') ? b.color : '#8b5cf6';
+    const tags = Array.isArray(b.tags) ? b.tags.slice(0, 6).map(t => String(t).slice(0, 24)) : [];
+    const list = readCommunity();
+    if (list.length >= 60) return res.status(429).json({ ok: false, error: 'community portal limit reached' });
+    let id = slugId(name); if (list.find(p => p.id === id)) id = id + '-' + Math.random().toString(36).slice(2, 6);
+    const portal = { id, name, operator: String(b.owner || 'a SHADDAI user').slice(0, 40), url,
+      position: [0, 0, 0], color, entry_fee_usdc: 0, type: 'community', tags, created: Date.now() };
+    list.push(portal);
+    fs.writeFileSync(COMMUNITY_FILE, JSON.stringify({ portals: list }, null, 2));
+    res.json({ ok: true, portal });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
 });
 
 module.exports = router;

@@ -102,6 +102,25 @@
       ctx.fillText(fmtPrice(v), padL + plotW + 6, y);
     }
 
+    // time axis (X) — a few labels spread across the bottom
+    var tLabels = 5;
+    ctx.fillStyle = '#5a7384';
+    ctx.font = "10px 'Share Tech Mono', monospace";
+    ctx.textBaseline = 'top';
+    for (var t = 0; t <= tLabels; t++) {
+      var idx = Math.min(candles.length - 1, Math.round((candles.length - 1) * t / tLabels));
+      var ts = candles[idx] && candles[idx].t;
+      if (ts == null) continue;
+      var lx = padL + (plotW * t) / tLabels;
+      var d = new Date(ts);
+      var hh = ('0' + d.getHours()).slice(-2);
+      var mm = ('0' + d.getMinutes()).slice(-2);
+      ctx.textAlign = t === 0 ? 'left' : (t === tLabels ? 'right' : 'center');
+      ctx.fillText(hh + ':' + mm, lx, cssH - padB + 6);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
     var n = candles.length;
     var slot = plotW / n;
     var bw = Math.max(1, Math.min(slot * 0.62, 14));
@@ -125,6 +144,34 @@
       var top = Math.min(yO, yC);
       var bh = Math.max(1, Math.abs(yC - yO));
       ctx.fillRect(cx - bw / 2, top, bw, bh);
+    }
+
+    // last-price marker line + tag (sits on top of the candles)
+    var last = candles[n - 1];
+    if (last) {
+      var lastUp = last.c >= last.o;
+      var lc = lastUp ? '#26d07c' : '#ff5a6e';
+      var ly = yOf(last.c);
+      ctx.save();
+      ctx.strokeStyle = lc;
+      ctx.globalAlpha = 0.8;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padL, ly);
+      ctx.lineTo(padL + plotW, ly);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      // price tag in the right gutter
+      var tag = fmtPrice(last.c);
+      ctx.font = "10px 'Share Tech Mono', monospace";
+      var tw = ctx.measureText(tag).width + 8;
+      ctx.fillStyle = lc;
+      ctx.fillRect(padL + plotW + 2, ly - 8, Math.min(tw, padR - 4), 16);
+      ctx.fillStyle = '#04060d';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tag, padL + plotW + 6, ly);
+      ctx.restore();
     }
   }
 
@@ -185,10 +232,10 @@
           return r.json();
         })
         .then(function (j) {
-          if (current !== j.symbol && j.symbol) {
-            // stale response for a previous symbol; ignore
-            if (j.symbol !== current) return;
-          }
+          // ignore stale responses for a previously-selected symbol.
+          // NOTE: the API returns the symbol uppercase ("BTC"), current is lowercase ("btc"),
+          // so compare case-insensitively — otherwise we would always bail out and never draw.
+          if (j.symbol && String(j.symbol).toLowerCase() !== current) return;
           if (!j.ok) throw new Error(j.error || 'bad response');
           elPrice.textContent = '$' + fmtPrice(j.price);
           var chg = Number(j.change24h) || 0;

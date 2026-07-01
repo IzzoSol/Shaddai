@@ -63,35 +63,84 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     group.add(L);
   }
 
+  // height query from the terrain module (seats props exactly on the surface)
+  const heightAt = (typeof window !== 'undefined' && window.WORLD_HEIGHT_AT)
+    ? window.WORLD_HEIGHT_AT
+    : function () { return 0; };
+
   // ════════════════════════════ FOREST ════════════════════════════
   (function buildForest() {
     const b = biome('forest'); if (!b) return;
-    const trunkGeo = track(new THREE.CylinderGeometry(0.7, 1.1, 9, 6));
+
+    // --- gather valid, organized tree positions inside the forest circle ---
+    // Rules: inside forest radius, NOT in the central flat plaza (<130 from origin),
+    // not on top of an agent sector, and not overlapping another tree.
+    const PLAZA_R = 130;       // keep the flat central plaza clear
+    const TREE_GAP = 11;       // min spacing so the grove reads as organized, not clumped
+    const placed = [];         // [x, z]
+    const target = 96;         // tree count goal (instanced -> cheap)
+    const cx = b.center[0], cz = b.center[1];
+
+    function farEnough(x, z) {
+      for (let i = 0; i < placed.length; i++) {
+        const dx = x - placed[i][0], dz = z - placed[i][1];
+        if (dx * dx + dz * dz < TREE_GAP * TREE_GAP) return false;
+      }
+      return true;
+    }
+    for (let tries = 0; placed.length < target && tries < target * 24; tries++) {
+      const a = rand() * Math.PI * 2;
+      const d = Math.sqrt(rand()) * (b.radius - 8);   // margin from biome edge
+      const x = cx + Math.cos(a) * d;
+      const z = cz + Math.sin(a) * d;
+      if (Math.hypot(x, z) < PLAZA_R) continue;        // not in the flat plaza
+      if (blocked(x, z)) continue;                     // not on world center / a sector
+      if (!farEnough(x, z)) continue;                  // spacing
+      placed.push([x, z]);
+    }
+    const COUNT = placed.length;
+
+    // --- low-poly tree = trunk (cylinder) + 2 leaf tiers (cones), all instanced ---
+    // Bake the base to y=0 so an instance matrix's Y == terrain height seats it perfectly.
+    const trunkGeo = track(new THREE.CylinderGeometry(0.55, 1.0, 9, 6));
+    trunkGeo.translate(0, 4.5, 0);                     // base at y=0
     const trunkMat = track(new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 1 }));
-    const leafGeo = track(new THREE.ConeGeometry(4.2, 8, 7));
+
+    const leafGeoLo = track(new THREE.ConeGeometry(4.4, 8, 7));
+    leafGeoLo.translate(0, 11, 0);                     // lower leaf tier sits on the trunk
+    const leafGeoHi = track(new THREE.ConeGeometry(3.1, 6.5, 7));
+    leafGeoHi.translate(0, 15.5, 0);                   // upper tier
     const leafMat = track(new THREE.MeshStandardMaterial({
       color: 0x1f7a45, emissive: 0x3ddc84, emissiveIntensity: 0.35, roughness: 0.8, flatShading: true,
     }));
     pulsers.push({ mat: leafMat, base: 0.35, amp: 0.18, speed: 0.8 });
 
-    for (let i = 0; i < 40; i++) {
-      const p = scatter(b, 8); if (!p) continue;
+    const trunks  = new THREE.InstancedMesh(trunkGeo,  trunkMat, COUNT);
+    const leavesL = new THREE.InstancedMesh(leafGeoLo, leafMat,  COUNT);
+    const leavesH = new THREE.InstancedMesh(leafGeoHi, leafMat,  COUNT);
+    trunks.castShadow = leavesL.castShadow = leavesH.castShadow = true;
+    trunks.name = 'forest-trunks';
+
+    const _m = new THREE.Matrix4();
+    const _pos = new THREE.Vector3();
+    const _quat = new THREE.Quaternion();
+    const _up = new THREE.Vector3(0, 1, 0);
+    const _scl = new THREE.Vector3();
+    for (let i = 0; i < COUNT; i++) {
+      const x = placed[i][0], z = placed[i][1];
       const s = rrange(0.7, 1.5);
-      const tree = new THREE.Group();
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 4.5 * s; trunk.scale.setScalar(s);
-      tree.add(trunk);
-      const tiers = rand() < 0.5 ? 1 : 2;
-      for (let k = 0; k < tiers; k++) {
-        const cone = new THREE.Mesh(leafGeo, leafMat);
-        cone.scale.setScalar(s * (1 - k * 0.3));
-        cone.position.y = (9 + k * 5) * s;
-        tree.add(cone);
-      }
-      tree.position.set(p[0], 0, p[1]);
-      tree.rotation.y = rand() * Math.PI * 2;
-      group.add(tree);
+      _pos.set(x, heightAt(x, z) - 0.2, z);            // base on the terrain (slight sink)
+      _quat.setFromAxisAngle(_up, rand() * Math.PI * 2);
+      _scl.set(s, s, s);
+      _m.compose(_pos, _quat, _scl);
+      trunks.setMatrixAt(i, _m);
+      leavesL.setMatrixAt(i, _m);
+      leavesH.setMatrixAt(i, _m);
     }
+    trunks.instanceMatrix.needsUpdate = true;
+    leavesL.instanceMatrix.needsUpdate = true;
+    leavesH.instanceMatrix.needsUpdate = true;
+    group.add(trunks, leavesL, leavesH);
 
     // floating spore points
     const N = 120, pos = new Float32Array(N * 3);
@@ -128,33 +177,69 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
       group.add(m);
     }
 
-    // translucent animated WATER plane centered on arctic biome at y≈0
-    const SEG = 48, SIZE = 220;
+    // translucent animated WATER plane centered on arctic biome at y≈0.
+    // Layered-sine (gerstner-ish) ripples + fresnel-tinted vertex colors +
+    // soft foam where the water meets land at the plane's edge.
+    const SEG = 64, SIZE = 220, HALF = SIZE / 2;
     const wgeo = track(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG));
     wgeo.rotateX(-Math.PI / 2);
+    const wpos = wgeo.attributes.position;
+    const vN = wpos.count;
+    const base = new Float32Array(wpos.array.length);
+    base.set(wpos.array);
+
+    // ── static vertex colors: deep teal in the basin, pale foam at the rim ──
+    const deep = new THREE.Color(0x0c4f7a);   // open-water blue
+    const shallow = new THREE.Color(0x3aa6d6); // lighter near the surface
+    const foam = new THREE.Color(0xcdeeff);    // pale foam tint at the land edge
+    const wcol = new Float32Array(vN * 3);
+    const _c = new THREE.Color();
+    for (let i = 0; i < vN; i++) {
+      const x = base[i * 3], z = base[i * 3 + 2];
+      // edge factor: 0 in the centre, 1 right at the square boundary (= shoreline)
+      const edge = Math.max(Math.abs(x), Math.abs(z)) / HALF;
+      const foamAmt = Math.max(0, (edge - 0.78) / 0.22); // last ~22% is foam band
+      _c.copy(deep).lerp(shallow, edge * 0.6);
+      _c.lerp(foam, Math.min(1, foamAmt * foamAmt));
+      wcol[i * 3] = _c.r; wcol[i * 3 + 1] = _c.g; wcol[i * 3 + 2] = _c.b;
+    }
+    wgeo.setAttribute('color', new THREE.BufferAttribute(wcol, 3));
+
     const wmat = track(new THREE.MeshStandardMaterial({
-      color: 0x1f7fc4, emissive: 0x0a3358, emissiveIntensity: 0.45,
-      roughness: 0.06, metalness: 0.85, transparent: true, opacity: 0.78,
+      vertexColors: true,
+      color: 0xffffff,
+      emissive: 0x0a3358, emissiveIntensity: 0.4,
+      roughness: 0.12, metalness: 0.6,
+      transparent: true, opacity: 0.82,
+      envMapIntensity: 1.4,
     }));
     const wmesh = new THREE.Mesh(wgeo, wmat);
     wmesh.position.set(b.center[0], 0.05, b.center[1]);
+    wmesh.receiveShadow = true;
     group.add(wmesh);
-    const wpos = wgeo.attributes.position;
-    const base = new Float32Array(wpos.array.length);
-    base.set(wpos.array);
+
     water = {
       mesh: wmesh, geo: wgeo, base,
       update(t) {
         const arr = wpos.array;
+        // layered directional ripples (cheap: only Y is rewritten, no allocation)
         for (let i = 0; i < arr.length; i += 3) {
           const x = base[i], z = base[i + 2];
-          arr[i + 1] = base[i + 1]
-            + Math.sin(x * 0.08 + t * 1.5) * 0.55
-            + Math.cos(z * 0.07 - t * 1.2) * 0.5
-            + Math.sin((x + z) * 0.15 + t * 2.3) * 0.22;   // finer chop
+          // damp the swell near the shoreline so foam reads as flatter wash
+          const edge = Math.max(Math.abs(x), Math.abs(z)) / HALF;
+          const damp = edge > 0.8 ? Math.max(0.25, 1 - (edge - 0.8) * 3.0) : 1;
+          arr[i + 1] = base[i + 1] + damp * (
+              Math.sin(x * 0.075 + t * 1.4) * 0.55
+            + Math.cos(z * 0.065 - t * 1.1) * 0.50
+            + Math.sin((x + z) * 0.140 + t * 2.2) * 0.22   // cross chop
+            + Math.cos((x - z) * 0.190 - t * 2.8) * 0.12   // fine glints
+          );
         }
         wpos.needsUpdate = true;
         wgeo.computeVertexNormals();
+        // gentle specular sparkle: breathe the sheen so highlights twinkle
+        wmat.emissiveIntensity = 0.40 + Math.sin(t * 1.7) * 0.12;
+        wmat.roughness = 0.12 + (Math.sin(t * 0.9) * 0.5 + 0.5) * 0.06;
       },
     };
     addBiomeLight(b, 1.0, 320);

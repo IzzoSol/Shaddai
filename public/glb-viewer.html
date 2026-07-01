@@ -33,6 +33,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const params = new URLSearchParams(location.search);
 const url = params.get('model') || '/assets/agents/_unassigned_3B3B8DCD.glb';
@@ -46,7 +47,14 @@ camera.position.set(0, 1.4, 4);
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 document.body.appendChild(renderer.domElement);
+
+// Environment map: PBR metal armor needs something to reflect or it renders black/flat.
+const _pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = _pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 scene.add(new THREE.HemisphereLight(0xbfe9ff, 0x0a0c12, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3,6,4); scene.add(key);

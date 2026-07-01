@@ -475,72 +475,87 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
   </div>
 </div>
 
-<!-- OPEN SHOP MODAL -->
+<!-- OPEN SHOP MODAL — big, bold, step-by-step -->
+<style>
+  #modalOverlay .modal{ width:min(620px,96vw); border:1.5px solid #27e0ff; border-radius:18px; box-shadow:0 0 60px rgba(39,224,255,.25), inset 0 0 60px rgba(39,224,255,.04); background:linear-gradient(180deg,#080d18,#05080f); }
+  #modalOverlay .modal-title{ font-size:26px; font-weight:900; letter-spacing:1px; color:#fff; text-shadow:0 0 18px rgba(39,224,255,.5); }
+  #modalOverlay .modal-subtitle{ font-size:13px; color:#7fd0ff; }
+  .shop-step{ margin-bottom:24px; }
+  .shop-step-h{ display:flex; align-items:center; gap:10px; font-size:16px; font-weight:900; letter-spacing:.5px; color:#eaf2ff; margin-bottom:4px; }
+  .shop-step-n{ flex-shrink:0; width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#27e0ff,#0a7ea8); color:#04060d; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; box-shadow:0 0 14px rgba(39,224,255,.5); }
+  .shop-step-tip{ font-size:12.5px; color:#8aa3bf; margin:0 0 12px 40px; }
+  #avatarPicker{ display:grid; grid-template-columns:repeat(8,1fr); gap:10px; }
+  #avatarPicker .avatar-opt{ font-size:30px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.04); border:2px solid rgba(255,255,255,.1); border-radius:12px; cursor:pointer; transition:all .15s; }
+  #avatarPicker .avatar-opt:hover{ background:rgba(39,224,255,.12); transform:translateY(-2px); }
+  #avatarPicker .avatar-opt.selected{ border-color:#27e0ff; background:rgba(39,224,255,.18); box-shadow:0 0 16px rgba(39,224,255,.5); }
+  #modalOverlay .form-input, #modalOverlay .form-select, #modalOverlay .form-textarea{ font-size:16px; padding:14px 16px; border-radius:10px; border:2px solid rgba(39,224,255,.25); background:rgba(0,0,0,.35); color:#eaf2ff; width:100%; }
+  #modalOverlay .form-select{ font-size:18px; }
+  #modalSubmit{ font-size:18px; font-weight:900; letter-spacing:1px; padding:16px; border-radius:12px; }
+  #modalCancel{ font-size:14px; padding:16px 22px; }
+</style>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-header">
       <div>
-        <div class="modal-title">Open Your Shop</div>
-        <div class="modal-subtitle">Set up your stall in the Night Bazaar and start selling</div>
+        <div class="modal-title">🏪 OPEN YOUR SHOP</div>
+        <div class="modal-subtitle">Set up your stall in the Night Bazaar — just follow the steps.</div>
       </div>
       <button class="modal-close" id="modalClose">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Choose Your Avatar</label>
+
+      <div class="shop-step">
+        <div class="shop-step-h"><span class="shop-step-n">1</span> PICK YOUR LOOK</div>
+        <div class="shop-step-tip">Tap the symbol for your shop.</div>
         <div class="avatar-picker" id="avatarPicker">
-          <div class="avatar-opt selected" data-emoji="🤖">🤖</div>
-          <div class="avatar-opt" data-emoji="🧠">🧠</div>
-          <div class="avatar-opt" data-emoji="⚡">⚡</div>
-          <div class="avatar-opt" data-emoji="🔮">🔮</div>
-          <div class="avatar-opt" data-emoji="🦊">🦊</div>
-          <div class="avatar-opt" data-emoji="🐉">🐉</div>
-          <div class="avatar-opt" data-emoji="🌙">🌙</div>
-          <div class="avatar-opt" data-emoji="💎">💎</div>
-          <div class="avatar-opt" data-emoji="🎯">🎯</div>
-          <div class="avatar-opt" data-emoji="🚀">🚀</div>
-          <div class="avatar-opt" data-emoji="🌊">🌊</div>
-          <div class="avatar-opt" data-emoji="🔱">🔱</div>
-          <div class="avatar-opt" data-emoji="🎵">🎵</div>
-          <div class="avatar-opt" data-emoji="🎨">🎨</div>
-          <div class="avatar-opt" data-emoji="📊">📊</div>
-          <div class="avatar-opt" data-emoji="🦁">🦁</div>
+          <div class="avatar-opt selected" data-emoji="🤖">🤖</div><div class="avatar-opt" data-emoji="🧠">🧠</div>
+          <div class="avatar-opt" data-emoji="⚡">⚡</div><div class="avatar-opt" data-emoji="🔮">🔮</div>
+          <div class="avatar-opt" data-emoji="🦊">🦊</div><div class="avatar-opt" data-emoji="🐉">🐉</div>
+          <div class="avatar-opt" data-emoji="🌙">🌙</div><div class="avatar-opt" data-emoji="💎">💎</div>
+          <div class="avatar-opt" data-emoji="🎯">🎯</div><div class="avatar-opt" data-emoji="🚀">🚀</div>
+          <div class="avatar-opt" data-emoji="🌊">🌊</div><div class="avatar-opt" data-emoji="🔱">🔱</div>
+          <div class="avatar-opt" data-emoji="🎵">🎵</div><div class="avatar-opt" data-emoji="🎨">🎨</div>
+          <div class="avatar-opt" data-emoji="📊">📊</div><div class="avatar-opt" data-emoji="🦁">🦁</div>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label" for="shopName">Shop Name</label>
+
+      <div class="shop-step">
+        <div class="shop-step-h"><span class="shop-step-n">2</span> NAME YOUR SHOP</div>
+        <div class="shop-step-tip">What should buyers call it?</div>
         <input type="text" class="form-input" id="shopName" placeholder="e.g. NeuralForge Studio" maxlength="40">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="shopType">Category</label>
-          <select class="form-select" id="shopType">
-            <option value="music">🎵 Music</option>
-            <option value="art">🎨 Art</option>
-            <option value="agent">🤖 Agent Work</option>
-            <option value="skills">⚡ Skills</option>
-            <option value="data">📊 Data</option>
-            <option value="content">✍️ Content</option>
-            <option value="bundle">📦 Bundle</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="shopPrice">Price (Credits)</label>
-          <input type="number" class="form-input" id="shopPrice" placeholder="50" min="1" max="99999">
-        </div>
+
+      <div class="shop-step">
+        <div class="shop-step-h"><span class="shop-step-n">3</span> WHAT DO YOU SELL?</div>
+        <div class="shop-step-tip">Pick the kind of thing you'll offer.</div>
+        <select class="form-select" id="shopType">
+          <option value="music">🎵 Music</option>
+          <option value="art">🎨 Art</option>
+          <option value="agent">🤖 Agent Work</option>
+          <option value="skills">⚡ Skills</option>
+          <option value="data">📊 Data</option>
+          <option value="content">✍️ Content</option>
+          <option value="bundle">📦 Bundle</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label class="form-label" for="shopBlurb">Your Pitch</label>
+
+      <div class="shop-step">
+        <div class="shop-step-h"><span class="shop-step-n">4</span> SET YOUR PRICE</div>
+        <div class="shop-step-tip">How many credits per item?</div>
+        <input type="number" class="form-input" id="shopPrice" placeholder="50" min="1" max="99999">
+      </div>
+
+      <div class="shop-step">
+        <div class="shop-step-h"><span class="shop-step-n">5</span> TELL YOUR STORY</div>
+        <div class="shop-step-tip">One or two lines on what makes your shop special.</div>
         <textarea class="form-textarea" id="shopBlurb" placeholder="Tell buyers what makes your shop special…" maxlength="200"></textarea>
+        <input type="text" class="form-input" id="shopTags" placeholder="tags: beats, lo-fi, automation" style="margin-top:10px">
       </div>
-      <div class="form-group">
-        <label class="form-label" for="shopTags">Tags (comma-separated)</label>
-        <input type="text" class="form-input" id="shopTags" placeholder="e.g. beats, lo-fi, automation">
-      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="modalCancel">Cancel</button>
-      <button class="btn btn-primary" id="modalSubmit">🏪 Open Shop</button>
+      <button class="btn btn-primary" id="modalSubmit">🏪 OPEN MY SHOP</button>
     </div>
   </div>
 </div>

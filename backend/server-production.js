@@ -1459,6 +1459,8 @@ try { app.use(require('./games-routes')); console.log('[prod] games leaderboard 
 catch (e) { console.warn('[prod] games failed:', e.message); }
 try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
 catch (e) { console.warn('[prod] bazaar failed:', e.message); }
+try { app.use(require('./gallery-routes')); console.log('[prod] creator gallery mounted'); }
+catch (e) { console.warn('[prod] gallery failed:', e.message); }
 try { app.use(require('./skills-market-routes')); console.log('[prod] skills market mounted'); }
 catch (e) { console.warn('[prod] skills market failed:', e.message); }
 try { app.use(require('./ainl-routes')); console.log('[prod] AINL workflows mounted'); }

@@ -1,0 +1,71 @@
+[2026-06-30 19:48:42] [32minfo[39m: Loaded customerDatabase
+[2026-06-30 19:48:42] [32minfo[39m: Loaded ledger
+[2026-06-30 19:48:42] [32minfo[39m: Loaded usageDatabase
+[ENGINE] extra-tools merged: 17
+[tool-cache] wrapped 197 tools with TTL result cache
+[DB] Loaded 2 executions, 2 jobs in 6ms
+[prod] plug-in payments (/api/stripe) mounted
+✓ Higgs physics engine initialized
+[prod] federation (A2A + MCP + portals) mounted
+[prod] districts mounted
+[prod] museum mounted
+[prod] x402 ledger mounted
+[prod] markets mounted
+[prod] admin privileges mounted
+[prod] games leaderboard mounted
+[prod] bazaar marketplace mounted
+[prod] creator gallery mounted
+[prod] skills market mounted
+[prod] AINL workflows mounted
+[prod] neocortex memory mounted
+[prod] x402-v2 wallet mounted
+[prod] agent hire mounted
+[prod] analytics mounted
+[INFO] [SERVER] SHADDAI Production Server v62 started on port 8099 {}
+
+╔════════════════════════════════════════════════════════╗
+║  SHADDAI PRODUCTION SERVER v62                        ║
+║  Port: 8099                                             ║
+║  WebSocket: Enabled                                   ║
+║  Compression: Enabled                                 ║
+║  Caching: Enabled                                     ║
+║  Status: ONLINE                                       ║
+╚════════════════════════════════════════════════════════╝
+    
+
+✓ Services initialized:
+  • Frontend server
+  • Agent orchestration
+  • Skill executor
+  • Database persistence
+  • WebSocket real-time updates
+  • Request/Response compression
+  • Caching layer (TTL-based)
+  • Structured logging
+  • Batch job processing
+  • 🌍 World Labs integration (dynamic worlds)
+
+✓ API Endpoints (Premium Features):
+  GET  /api/agents/:name/history
+  GET  /api/jobs/:jobId/bids
+  POST /api/jobs/:jobId/award
+  GET  /api/marketplace
+  GET  /api/analytics/dashboard
+  POST /api/batch/jobs
+  GET  /api/batch/jobs/:jobId
+
+✓ World Labs API Endpoints:
+  POST /api/worlds/create (generate world)
+  GET  /api/worlds/:id (fetch world)
+  GET  /api/worlds (list all)
+  POST /api/worlds/:id/physics (update physics)
+  POST /api/worlds/:id/seed (add entities)
+  POST /api/worlds/:id/districts/visit (navigate)
+  → Viewer: http://localhost:8099/worlds-viewer.html
+
+✓ WebSocket Events:
+  • execution (real-time task updates)
+  • job_created
+  • bid_submitted
+  • job_awarded
+[INFO] [SERVER] All services ready {}

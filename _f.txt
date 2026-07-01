@@ -1,0 +1,57 @@
+[15384:18528:0629/235238.905:INFO:components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc:239] No machine level policy manager exists.
+[15384:20468:0629/235239.451:WARNING:chrome\browser\extensions\external_pref_loader.cc:294] You are using an old-style extension deployment method (external_extensions.json), which will soon be deprecated. (see http://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions)
+[15384:18528:0629/235239.656:WARNING:chrome\browser\extensions\external_registry_loader_win.cc:236] Error observing HKLM: Access is denied. (0x5)
+[15384:18528:0629/235243.733:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235247.022:INFO:CONSOLE:34700] "✅ SHADDAI v91 Enhancements Loaded", source: http://localhost:8099/ (34700)
+[15384:18528:0629/235247.022:INFO:CONSOLE:34701] "🎛️ Command Center dispatch system active", source: http://localhost:8099/ (34701)
+[15384:18528:0629/235247.023:INFO:CONSOLE:34702] "📍 SHADDAI desk & agent workload tracking ready", source: http://localhost:8099/ (34702)
+[15384:18528:0629/235247.023:INFO:CONSOLE:37675] "✓ V72 missing handlers loaded — all onclick refs resolved", source: http://localhost:8099/ (37675)
+[15384:18528:0629/235247.087:INFO:CONSOLE:37858] "[AURA] Client module loaded — /api/aura · token saving active", source: http://localhost:8099/ (37858)
+[15384:18528:0629/235248.118:INFO:CONSOLE:2] "%c * Tone.js v14.8.49 *  background: #000; color: #fff", source: https://unpkg.com/tone@14.8.49/build/Tone.js (2)
+[15384:18528:0629/235248.541:INFO:CONSOLE:2] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: https://unpkg.com/tone@14.8.49/build/Tone.js (2)
+[15384:18528:0629/235248.543:INFO:CONSOLE:2] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: https://unpkg.com/tone@14.8.49/build/Tone.js (2)
+[15384:18528:0629/235248.568:INFO:CONSOLE:34707] "✓ ZEROX DEX enhancements ready", source: http://localhost:8099/ (34707)
+[15384:18528:0629/235248.568:INFO:CONSOLE:34708] "✓ Signal history: 0 records", source: http://localhost:8099/ (34708)
+[15384:18528:0629/235248.735:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235249.270:INFO:CONSOLE:49639] "Unrecognized feature: 'pointer-lock'.", source: http://localhost:8099/ (49639)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235249.527:INFO:CONSOLE:0] "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o", source: http://localhost:8099/ (0)
+[15384:18528:0629/235253.736:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235258.737:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235303.754:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235308.765:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235313.770:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235318.773:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235338.374:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235338.815:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235343.820:WARNING:chrome\browser\performance_manager\policies\page_discarding_helper.cc:153] Discarding multiple pages with target (kb): 0, discard_protected_tabs: 0
+[15384:18528:0629/235404.469:INFO:CONSOLE:0] "Error while trying to use the following icon from the Manifest: http://localhost:8099/icon-192.png (Download error or resource isn't a valid image)", source: http://localhost:8099/ (0)
+[15384:18528:0629/235411.934:ERROR:components\headless\command_handler\headless_command_handler.cc:395] Abnormal renderer termination.
+[15384:18528:0629/235411.962:ERROR:content\browser\gpu\gpu_process_host.cc:1005] GPU process exited unexpectedly: exit_code=1
+[15384:18528:0629/235411.962:WARNING:content\browser\gpu\gpu_process_host.cc:1447] The GPU process has crashed 1 time(s)

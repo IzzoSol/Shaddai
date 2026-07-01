@@ -29334,78 +29334,75 @@ function exportAuditLog() {
 // ── AGENT REGISTRY — Loaded from Obsidian vault: SHADDAI OBSIDIAN/Agents/ ──
 const AGENT_REGISTRY = [
   { name: 'SHADDAI', color: '#ffd700', port: 8000, skills: ['routing', 'orchestration', 'code', 'spiritual', 'operations'], price: '0.005', wallet: '', stake: 0.5, status: 'active', jobs: 127, earnings: 2.84, stars: 5, reviews: 42, rank: 'THE SOURCE',
-    description: 'THE SOURCE — All tasks route through SHADDAI first. The orchestrator and origin of the council: delegates, oversees, and overrides every op. 80+ skills spanning orchestration, coding, content, spiritual, and operations. Full override across all agent stacks. Uses Ollama llama3.2:3b primary, Claude API for complex tasks.',
+    description: 'THE SOURCE — every task routes through SHADDAI first. The orchestrator that delegates to the 6 specialists and runs multi-agent workflow chains. 44 real, executable tools across orchestration, memory, web/knowledge, markets, compute and economy. Brain: Ollama llama3.2 primary, cloud (Groq/Claude) for heavy reasoning.',
     outfit: { head:'helmet', body:'armor', accent:'cape', accessory:'visor' },
     skillDetails: [
-      { name:'Full Override', level:5, desc:'Route to any agent, override any decision, access all stacks' },
-      { name:'Orchestration', level:5, desc:'Coordinate swarm of 7 agents for complex parallel workflows' },
-      { name:'Code Generation', level:5, desc:'Full-stack code — JS, Python, Solidity, Rust, HTML/CSS' },
-      { name:'Spiritual Ops', level:5, desc:'Chakra, astrology, sacred geometry, meditation guidance' },
-      { name:'Research', level:4, desc:'Deep web research, MiroFish swarm predictions, world intel' },
-      { name:'Content Ops', level:4, desc:'Content strategy, scheduling, multi-platform publishing' }
+      { name:'Orchestration', level:5, desc:'delegate_to_agent · run_workflow_chain · create_skill_pack · install_skill_pack' },
+      { name:'Memory & State', level:5, desc:'save_memory · get_memory · remember_fact · recall_memory · set_agent_room_state' },
+      { name:'Web & Knowledge', level:4, desc:'search_web · wikipedia_search · get_wikipedia_summary · get_weather · get_history_today' },
+      { name:'Markets & Data', level:4, desc:'fetch_price · get_fear_greed · get_global_market · get_forex_rate · get_crypto_backup' },
+      { name:'Compute & Files', level:5, desc:'run_js · calculate · write_file · count_tokens · hash_text · get_uuid' },
+      { name:'Economy & Ops', level:4, desc:'mint_collectible · list_open_jobs · complete_job · pay_api_call · post_discord' }
     ]},
   { name: 'ZEROX', color: '#00c8ff', port: 8001, skills: ['trading', 'finance', 'scaling', 'market-analysis', 'on-chain'], price: '0.003', wallet: '', stake: 0.3, status: 'active', jobs: 89, earnings: 1.62, stars: 4.8, reviews: 31, rank: 'Market Intelligence',
-    description: 'Market Intelligence — 55+ skills across trading, finance, scaling, and trading psychology. Tracks on-chain flows, whale movements, generates alpha signals. Uses Groq primary, Ollama llama3.2:3b fallback. Specializes in crypto-trading, algo-strategies, risk management, sentiment analysis.',
+    description: 'Wealth & Revenue Engine — 47 real tools: live prices across CEX/DEX, DeFi TVL & on-chain flows, whale & funding signals, and trade execution. Brain: Groq primary, Ollama fallback. The empire\'s market intelligence.',
     outfit: { head:'cap', body:'vest', accent:'glasses', accessory:'headset' },
     skillDetails: [
-      { name:'Crypto Trading', level:5, desc:'Day-trader, swing-trader, algo-trading-strategy, backtest-engineer' },
-      { name:'On-Chain Intel', level:5, desc:'on-chain-trader, whale tracking, liquidity flows, smart money' },
-      { name:'Finance Tools', level:4, desc:'cashflow-forecaster, expense-tracker, savings-optimizer, net-worth-calc' },
-      { name:'Scaling Models', level:4, desc:'growth-modeler, unit-econ-analyzer, hockey-stick-model, LTV-calculator' },
-      { name:'Risk & Psych', level:4, desc:'risk-management, fomo-manager, emotional-resilience, psychology-of-trading' },
-      { name:'Sentiment', level:5, desc:'sentiment-analyst, narrative tracking, market-pulse generation' }
+      { name:'Live Prices', level:5, desc:'fetch_price · dex_price · binance_price · binance_orderbook · get_ohlcv' },
+      { name:'DeFi & On-Chain', level:5, desc:'get_defi_tvl · get_sol_balance · get_eth_balance · get_eth_gas · jupiter_quote · get_onchain_activity' },
+      { name:'Market Signals', level:5, desc:'get_fear_greed · get_trending · whale_scan · get_top_gainers · get_funding_rates · get_dominance' },
+      { name:'Trading', level:4, desc:'execute_trade · calculate_position_size · get_token_info · get_nft_floor · get_stock_quote' },
+      { name:'Analysis', level:4, desc:'analyze_sentiment · get_stablecoin_data · get_protocol_revenue · get_fear_greed_history' },
+      { name:'Marketplace', level:4, desc:'mint_collectible · list_collectible · browse_listings · complete_job' }
     ]},
   { name: 'ORACLE', color: '#b06aff', port: 8002, skills: ['esoteric', 'astrology', 'knowledge', 'anatomy', 'sacred-geometry'], price: '0.003', wallet: '', stake: 0.25, status: 'active', jobs: 74, earnings: 1.15, stars: 4.9, reviews: 28, rank: 'Esoteric & Knowledge',
-    description: 'Esoteric & Knowledge — 65+ skills. Natal charts, numerology, gematria, chakra scanning, sacred geometry, human design, and deep research. Uses Groq primary, Gemini 1.5 Flash. The wisdom keeper of the SHADDAI empire.',
+    description: 'Research & Intelligence — 50 real tools: deep web research, knowledge bases (Wikipedia, arXiv, StackOverflow), live news & communities, and NLP analysis. Brain: OpenRouter/Gemini. The empire\'s research engine + keeper of the (premium) Esoteric Archive.',
     outfit: { head:'hood', body:'robe', accent:'staff', accessory:'amulet' },
     skillDetails: [
-      { name:'Esoteric Arts', level:5, desc:'natal-chart-ai, numerology-calc, gematria-engine, religion-breakdown' },
-      { name:'Chakra & Anatomy', level:5, desc:'chakra-scanner, chakra-aligner, meridian-flow, bio-rhythm-calc, dna-blueprint' },
-      { name:'Astrology', level:5, desc:'natal-chart-gen, transit-forecaster, electional-timing, progressions' },
-      { name:'Sacred Geometry', level:4, desc:'flower-of-life, sri-yantra, merkaba, sacred-geometry renderer' },
-      { name:'Human Design', level:4, desc:'gate-decoder, profile-analyzer, authority-guide' },
-      { name:'Research Engine', level:5, desc:'researcher, knowledge-engine, books-summarizer, concept-explainer' }
+      { name:'Web Research', level:5, desc:'search_web · search_web_ddg · fetch_url · fetch_url_clean · screenshot_url' },
+      { name:'Knowledge Base', level:5, desc:'wikipedia_search · get_wikipedia_summary · get_arxiv_papers · get_word_definition · get_stackoverflow' },
+      { name:'News & Communities', level:5, desc:'get_news_headlines · get_hackernews · get_reddit_posts · get_rss_feed · get_product_hunt' },
+      { name:'NLP Analysis', level:5, desc:'analyze_sentiment · extract_keywords · extract_entities · summarize_text · detect_language' },
+      { name:'Live Data', level:4, desc:'fetch_price · get_fear_greed · weather_live · get_country_info · get_timezone · get_moon_phase' }
     ]},
   { name: 'NEXUS', color: '#00e5a0', port: 8003, skills: ['orchestration', 'workflow', 'scheduling', 'routing', 'ops'], price: '0.002', wallet: '', stake: 0.15, status: 'active', jobs: 156, earnings: 1.98, stars: 4.7, reviews: 35, rank: 'Auto-Router',
-    description: 'Auto-Router & Orchestration — 45+ skills. Routes queries to best agent, manages multi-agent workflows, project orchestration. Uses Ollama llama3.2:3b. The infrastructure backbone of the SHADDAI network.',
+    description: 'Technical Architect — 45 real tools: runs JS/Python, reads/writes files, pulls GitHub & npm intel, audits code, and bundles dev utilities. Brain: OpenRouter. The build & infrastructure backbone of the council.',
     outfit: { head:'antenna', body:'jacket', accent:'belt', accessory:'drone' },
     skillDetails: [
-      { name:'Workflow Engine', level:5, desc:'workflow-orchestrator, multi-agent-orchestrator, dependency-mapper' },
-      { name:'Scheduling', level:5, desc:'cron-scheduler, gantt-planner, milestone-tracker' },
-      { name:'Project Mgmt', level:4, desc:'kanban-boarder, burndown-chart, velocity-tracker, resource-allocator' },
-      { name:'Agent Routing', level:5, desc:'Routes to best agent based on task type, context-broadcaster' },
-      { name:'Conflict Resolution', level:3, desc:'conflict-mediator, escalation-handler, shared-memory-hub' }
+      { name:'Code Execution', level:5, desc:'run_js · run_python · generate_code_template · analyze_code_complexity' },
+      { name:'File Ops', level:5, desc:'write_file · read_file · list_files' },
+      { name:'GitHub & Packages', level:5, desc:'get_github_repo · get_github_trending · search_github_repos · search_npm · get_package_info' },
+      { name:'Validation & Security', level:4, desc:'check_security · check_port · validate_json · regex_test · get_public_apis' },
+      { name:'Dev Utilities', level:4, desc:'base64_codec · hash_text · diff_texts · convert_units · generate_mermaid · markdown_to_html' }
     ]},
   { name: 'TURTLE', color: '#ff7b3d', port: 8004, skills: ['gamedesign', 'pixel-art', 'music', 'imaging', 'branding'], price: '0.004', wallet: '', stake: 0.2, status: 'active', jobs: 63, earnings: 0.94, stars: 4.9, reviews: 22, rank: 'Creative & Game Design',
-    description: 'Creative & Game Design — 55+ skills. Game designer, pixel-sprite-gen, sprite-sheet-creator, canvas-renderer, melody-gen, sacred-geo-renderer. Uses Ollama llama3.2:3b primary, qwen3-vl for vision tasks. The artistic soul of SHADDAI.',
+    description: 'UI/UX & Creative — 20 real tools: FLUX image generation, design helpers (palettes, QR, diagrams), and content/web utilities. Brain: Ollama. The artistic hand of the council (runs The Museum).',
     outfit: { head:'beret', body:'smock', accent:'palette', accessory:'brush' },
     skillDetails: [
-      { name:'Game Design', level:5, desc:'game-designer, mechanic-designer, narrative-designer, balance-architect' },
-      { name:'Pixel Art & Sprites', level:5, desc:'pixel-sprite-gen, sprite-sheet-creator, tilemap-builder, level-procedural' },
-      { name:'Music Production', level:4, desc:'melody-gen, chord-progression-ai, rhythm-patterns, sacred-beat-gen' },
-      { name:'Sampling', level:4, desc:'ai-sample-gen, drum-kit-builder, vocal-chop-ai, loop-mixer' },
-      { name:'Visual Art', level:5, desc:'sacred-geo-renderer, fractal-gen, color-palette-ai, fibonacci-spiral' },
-      { name:'Art Theory', level:4, desc:'color-theory-gen, rule-of-thirds, chiaroscuro-light, texture-layering' }
+      { name:'Image Generation', level:5, desc:'generate_image · generate_image_free · screenshot_url' },
+      { name:'Design Tools', level:5, desc:'get_color_palette · get_qr_code · generate_mermaid · markdown_to_html' },
+      { name:'Content & Web', level:4, desc:'search_web · wikipedia_search · get_wikipedia_summary · write_file · shorten_url' },
+      { name:'Inspiration', level:3, desc:'get_random_quote · get_joke · random_user' }
     ]},
   { name: 'QUILL', color: '#9b59b6', port: 8005, skills: ['writing', 'chat', 'phonetics', 'learning', 'dev-tools'], price: '0.002', wallet: '', stake: 0.1, status: 'active', jobs: 98, earnings: 1.22, stars: 4.8, reviews: 33, rank: 'Writer & Chat',
-    description: 'Writer & Chat Specialist — 45+ skills. Content creation, conversation design, tone engineering, phonetics, learning tools, and dev tooling. Adapts voice to any brand or persona with precision.',
+    description: 'Writing & Communication — 34 real tools: drafting & editing, translation, content research, and multi-channel publishing (Discord, Telegram, webhooks). Runs The Library. Adapts voice to any brand or persona.',
     outfit: { head:'fedora', body:'sweater', accent:'scarf', accessory:'pen' },
     skillDetails: [
-      { name:'Chat & Conversation', level:5, desc:'chatter-agent, tone-engineer, empathetic-listener, conversation-designer' },
-      { name:'Copywriting', level:5, desc:'copywriter, ux-writer, discord-chatbot, smalltalk-designer' },
-      { name:'Phonetics', level:4, desc:'ipa-transcriber, ipa-converter, rhotic-trainer, tonal-language-aid' },
-      { name:'Learning Tools', level:4, desc:'spaced-rep-builder, pomodoro-timer, active-recall-gen, concept-mapper' },
-      { name:'Dev Tooling', level:3, desc:'vite-builder, tailwind-config, docker-compose-ai, ci-cd-pipeline' }
+      { name:'Writing & Editing', level:5, desc:'write_file · grammar_check · summarize_text · extract_entities · format_data' },
+      { name:'Translation', level:4, desc:'translate_text · detect_language' },
+      { name:'Content Research', level:5, desc:'search_web · wikipedia_search · get_hackernews · get_rss_feed · get_news_headlines' },
+      { name:'Publishing', level:5, desc:'post_discord · post_webhook · send_telegram · create_github_issue · markdown_to_html · shorten_url' },
+      { name:'Analysis', level:4, desc:'analyze_sentiment · extract_keywords · regex_test · count_tokens' }
     ]},
   { name: 'PIKADON', color: '#ff4070', port: 8008, skills: ['security', 'encryption', 'auth', 'compliance', 'forensics'], price: '0.003', wallet: '', stake: 0.35, status: 'active', jobs: 45, earnings: 0.78, stars: 5, reviews: 18, rank: 'Security Fortress',
-    description: 'Security Fortress — 35+ skills. RBAC guard, audit logger, prompt sanitizer, leak scanner, PGP encryptor, compliance scanner, forensic toolkit. The last line of defense protecting the SHADDAI network.',
+    description: 'Security & Compliance — 25 real tools: code & password audits, port/IP recon, hashing & encoding, JSON/regex validation, and incident reporting. Runs The Aegis. The last line of defense for the council.',
     outfit: { head:'mask', body:'tactical', accent:'shield', accessory:'scanner' },
     skillDetails: [
-      { name:'Access Control', level:5, desc:'rbac-guard, totp-validator, 2fa-enroller, webauthn-setup' },
-      { name:'Encryption', level:5, desc:'pgp-encryptor, argon2-hasher, ssh-config-gen, master-pw-gen' },
-      { name:'Audit & Compliance', level:5, desc:'audit-logger, compliance-scanner, hash-comparator' },
-      { name:'Threat Detection', level:4, desc:'prompt-sanitizer, leak-scanner, forensic-toolkit' },
-      { name:'Network Defense', level:4, desc:'Rate limiting, anomaly alerting, intrusion detection' }
+      { name:'Security Audit', level:5, desc:'check_security · check_password_strength · check_port · analyze_code_complexity' },
+      { name:'Crypto & Encoding', level:5, desc:'hash_text · base64_codec · encode_base64 · decode_base64' },
+      { name:'Validation', level:4, desc:'validate_json · regex_test · diff_texts' },
+      { name:'Recon', level:4, desc:'get_ip_info · get_sol_balance · get_eth_balance · search_web' },
+      { name:'Reporting', level:4, desc:'post_webhook · create_github_issue · read_file · list_files · save_to_inbox' }
     ]}
 ];
 
@@ -30038,9 +30035,12 @@ function renderRPGCharacterPanel(idx) {
   if (domainEl) domainEl.textContent = agent.rank ? agent.rank.split(' ')[0].toUpperCase() : '';
   if (jobsEl) {
     const realTools = agent.tools || [];
+    // count the real, named tools shown on the sheet (skillDetails) — not just the browser subset
+    const sheetTools = (agent.skillDetails || []).flatMap(d => String(d.desc || '').split('·').map(s => s.trim())).filter(t => /^[a-z][a-z0-9_]+$/.test(t));
+    const toolN = sheetTools.length || realTools.length;
     const domains   = agent.skills || ['Analysis', 'Automation', 'Research'];
     const skn = (window._SKILL_STATS && window._SKILL_STATS.bakedByAgent && window._SKILL_STATS.bakedByAgent[agent.name]) || 0;
-    jobsEl.textContent = (realTools.length ? realTools.length + ' tools' : domains.length + ' domains')
+    jobsEl.textContent = (toolN ? toolN + ' tools' : domains.length + ' domains')
       + (skn ? ' · ' + skn.toLocaleString() + ' skills' : '');
     jobsEl.title = (realTools.length ? 'Real callable tools: ' + realTools.join(', ') + '\n' : '')
       + 'Domains: ' + domains.join(', ')

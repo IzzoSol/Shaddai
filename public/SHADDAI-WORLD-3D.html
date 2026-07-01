@@ -79,7 +79,7 @@
 <script>
 (function(){var show=function(t){var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
 window.addEventListener('error',function(e){show('JS: '+(e.message||(e.error&&e.error.message)||e)+'  @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));});
-window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}show('PROMISE: '+msg);});})();
+window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */show('PROMISE: '+msg);});})();
 </script>
 
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
@@ -143,6 +143,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // shared Draco decoder so the optimized (Draco-compressed) agent/vehicle GLBs load
 const dracoLoader = new DRACOLoader();
@@ -178,23 +180,56 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060d);
-scene.fog = new THREE.FogExp2(0x04060d, 0.008);
+scene.fog = new THREE.FogExp2(0x04060d, 0.0036);  // lighter fog so the hexagon landmarks (R=260) are visible, not swallowed
+// PBR metal armor (the agent bodies) needs an environment to reflect, or it renders flat/grey.
+{ const _pm = new THREE.PMREMGenerator(renderer); scene.environment = _pm.fromScene(new RoomEnvironment(), 0.03).texture; }
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 2000);
 camera.position.set(0, 2.2, 26);
 
-scene.add(new THREE.AmbientLight(0x223355, 0.7));
+const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
 const gold = new THREE.PointLight(0xffcf4a, 1.0, 120); gold.position.set(0,14,0); scene.add(gold);
 // white fill so the 3D agent bodies read in true color (not grey) while keeping the neon vibe
-scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x202838, 1.15));
+const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x202838, 1.15); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(30, 60, 20); scene.add(sun);
 const sun2 = new THREE.DirectionalLight(0xcfe2ff, 0.7); sun2.position.set(-40, 40, -30); scene.add(sun2);
 // a fill light that follows the camera so whatever you look at is always lit
 const camFill = new THREE.PointLight(0xffffff, 0.9, 60); scene.add(camFill);
+
+// ════════ DAY / NIGHT CYCLE ════════ (press N to fast-forward time)
+const DAYNIGHT = {
+  t: 0.32,            // time of day 0..1 (0/1 = midnight, .25 dawn, .5 noon, .75 dusk)
+  cycleSec: 240,      // seconds for a full day
+  base: { amb:0.7, hemi:1.15, sun:1.5, sun2:0.7, key:1.2, gold:1.0 },
+  dayBG: new THREE.Color(0x0a1c38), nightBG: new THREE.Color(0x03040b),
+};
+function updateDayNight(dt){
+  DAYNIGHT.t = (DAYNIGHT.t + dt / DAYNIGHT.cycleSec) % 1;
+  const t = DAYNIGHT.t;
+  const elev = Math.sin((t - 0.25) * Math.PI * 2);            // -1..1, +1 at noon
+  const day  = Math.min(1, Math.max(0, elev * 0.5 + 0.5));    // 0 night .. 1 day
+  const lit  = 0.18 + 0.82 * day;                             // never pitch black (keep neon readable)
+  ambient.intensity = DAYNIGHT.base.amb  * (0.4 + 0.6 * day);
+  hemi.intensity    = DAYNIGHT.base.hemi * lit;
+  sun.intensity     = DAYNIGHT.base.sun  * Math.max(0, elev); // sun off below horizon
+  sun2.intensity    = DAYNIGHT.base.sun2 * lit;
+  key.intensity     = DAYNIGHT.base.key  * (1.45 - 0.65 * day);  // neon glows stronger at night (Tron)
+  gold.intensity    = DAYNIGHT.base.gold * (1.45 - 0.65 * day);
+  const ang = (t - 0.25) * Math.PI * 2;
+  sun.position.set(Math.cos(ang) * 120, Math.sin(ang) * 120 + 8, 40);
+  scene.background.lerpColors(DAYNIGHT.nightBG, DAYNIGHT.dayBG, day);
+}
+addEventListener('keydown', e=>{ if(e.code==='KeyN'){ DAYNIGHT.cycleSec = DAYNIGHT.cycleSec > 60 ? 12 : 240; } });
+
+// Agent/building GLB loader — declared BEFORE the world-build IIFE because that IIFE uses it.
+// (Was previously declared lower in the file, which threw a temporal-dead-zone error and silently
+//  skipped ALL building placement.)
+const agentBodyLoader = new GLTFLoader(); agentBodyLoader.setDRACOLoader(dracoLoader);
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
 let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null;
@@ -369,7 +404,6 @@ function portraitOf(a){ return a.portrait || ('/api/forge/art/agent-'+a.codename
 // ── agent 3D BODIES — load real GLB (fal.ai / hi-res) per agent, auto-scaled to standee height ──
 // Loaded SEQUENTIALLY (one at a time) and DEFERRED until after the world renders, so the
 // large hi-res GLBs (50MB+) never block first paint or freeze the tab on startup.
-const agentBodyLoader = new GLTFLoader(); agentBodyLoader.setDRACOLoader(dracoLoader);
 const _agentBodies = {};  // codename -> body mesh, so each agent has exactly ONE body
 const AGENT_BODY_HEIGHT = 7.0;   // match the billboard standee height
 let _bodyQueue = [], _bodyBusy = false;
@@ -595,11 +629,16 @@ MODEL_CONFIG.forEach((cfg, idx) => {
   }, 100 * idx); // Stagger loading to not overwhelm network
 });
 
-// ── portals: gateways to other worlds (from /api/grid/portals) ──
+// ── COMMUNITY PORTALS — organized ring around the NEXUS hub (NEXUS is the portal keeper) ──
 const portals=[]; let nearPortal=null;
+const _nx = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.sector && window.WORLD_LAYOUT.sector('NEXUS')) || { pos:[-130,225] };
+const PORTAL_RING = { cx:_nx.pos[0], cz:_nx.pos[1], r:34 };  // community portals circle, kept by NEXUS
 fetch('/api/grid/portals').then(r=>r.ok?r.json():null).then(d=>{
-  ((d&&d.portals)||[]).forEach(p=>{
-    const pos=p.position||[0,0,0], px=pos[0]*0.3, pz=pos[2]*0.3, col=new THREE.Color(p.color||'#888888');
+  const list=((d&&d.portals)||[]);
+  list.forEach((p,i)=>{
+    // lay every portal evenly on the NEXUS ring so the circle reads as an organized community hub
+    const ang=(i/Math.max(list.length,1))*Math.PI*2;
+    const px=PORTAL_RING.cx+Math.cos(ang)*PORTAL_RING.r, pz=PORTAL_RING.cz+Math.sin(ang)*PORTAL_RING.r, col=new THREE.Color(p.color||'#888888');
     const ring=new THREE.Mesh(new THREE.TorusGeometry(4.5,0.4,12,48), new THREE.MeshBasicMaterial({color:col,toneMapped:false}));
     ring.position.set(px,5,pz); scene.add(ring);
     const inner=new THREE.Mesh(new THREE.CircleGeometry(4.1,48), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.13,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
@@ -637,7 +676,9 @@ function refreshVisitors(){
 refreshVisitors(); setInterval(refreshVisitors, 20000);
 
 // ── 3D MARKETS — live holographic candlestick chart (ZEROX's trading floor) ──
-const MKT = { pos:new THREE.Vector3(0,0,-80), symbol:'btc', group:new THREE.Group(), last:null };
+// Chart lives at ZEROX's "The Markets" sector so the holo candlesticks sit at the exchange building.
+const _zx = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.sector && window.WORLD_LAYOUT.sector('ZEROX')) || { pos:[-260,0] };
+const MKT = { pos:new THREE.Vector3(_zx.pos[0], 0, _zx.pos[1] + 34), symbol:'btc', group:new THREE.Group(), last:null };
 scene.add(MKT.group);
 { // base platform + glow ring
   const plat=new THREE.Mesh(new THREE.CylinderGeometry(23,25,1,56), new THREE.MeshStandardMaterial({color:0x06141f,emissive:0x00e5a0,emissiveIntensity:0.16,metalness:0.7,roughness:0.4}));
@@ -782,10 +823,20 @@ function _loadHero(file){
 _loadHero('hero-walk.glb');  // ORIGINAL SHADDAI hero (Meshy-rigged). Falls back to robot.glb if missing.
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'] };
-function _clip(name){ for(const k of (_ALIAS[name]||[name])){ if(playerClips[k]) return playerClips[k]; } return null; }
+function _clip(name){
+  const aliases=(_ALIAS[name]||[name]).map(s=>s.toLowerCase());
+  const keys=Object.keys(playerClips);
+  for(const k of keys){ if(aliases.includes(k.toLowerCase())) return playerClips[k]; }   // exact
+  for(const k of keys){ const kl=k.toLowerCase(); if(aliases.some(a=>kl.includes(a))) return playerClips[k]; }  // substring: Meshy "Armature|walking_man|baselayer"
+  return null;
+}
 function setPlayerAnim(name){
   if(!playerMixer) return;
-  const next=_clip(name); if(!next||next===playerAction) return;
+  const next=_clip(name);
+  // No clip for this state? If we're going Idle but the model has no idle clip,
+  // STOP the current (walk) action so the character stands still instead of marching in place.
+  if(!next){ if(name==='Idle' && playerAction){ playerAction.fadeOut(0.2); playerAction=null; } return; }
+  if(next===playerAction) return;
   if(playerAction) playerAction.fadeOut(0.18);
   next.reset().fadeIn(0.18).play(); playerAction=next;
 }
@@ -891,6 +942,11 @@ window.removeAgent = function(a){
 // ── main loop ──
 const fwd=new THREE.Vector3(), right=new THREE.Vector3(), tmp=new THREE.Vector3();
 const clock=new THREE.Clock();
+// ── RIDEABLE VEHICLES: Slipstream (fly) + Arctic Rover (drive) — press G to board ──
+const veh = initRideables({ THREE, scene, GLTFLoader, playerPos, keys,
+  getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0,
+  setThirdPerson:(v)=>{ thirdPerson=v; } });
+
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(0.05, clock.getDelta());
@@ -898,11 +954,13 @@ function animate(){
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();
   if(controls.isLocked){
-    const sp=(bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:11))*dt;
+    const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:11);
+    const sp=veh.speed(baseSp)*dt;                              // VEHICLE-HOOK: faster when mounted
     if(keys['KeyW']||keys['ArrowUp']) playerPos.addScaledVector(fwd, sp);
     if(keys['KeyS']||keys['ArrowDown']) playerPos.addScaledVector(fwd, -sp);
     if(keys['KeyA']||keys['ArrowLeft']) playerPos.addScaledVector(right, -sp);
     if(keys['KeyD']||keys['ArrowRight']) playerPos.addScaledVector(right, sp);
+    veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
     if(bikeMode){ trailPos.push(playerPos.x, 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // keep the player on the walkable terrain — clamp to the world edge so you can't fall off into the void
     const _edge = ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6;
@@ -912,8 +970,11 @@ function animate(){
   // place camera by view mode (1st person = eyes; 3rd person = pulled back behind the avatar)
   const eye = bikeMode ? 1.5 : 2.2;
   // walk ON the terrain: sample ground height under the player (never let the eye dip below the surface)
-  const groundY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0;
+  let groundY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0;
+  if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
+  const baseY = veh.baseY(groundY);              // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   updateSkyForBiome(playerPos.x, playerPos.z);   // Tron sky shifts color with the biome you're in
+  updateDayNight(dt);                            // day/night: sun arc + light dimming + sky tint
   // walking character animation: Walk/Run when moving, Idle otherwise
   if(playerMixer){
     playerMixer.update(dt);
@@ -922,13 +983,14 @@ function animate(){
     setPlayerAnim(bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle'));
   }
   if(thirdPerson){
-    camera.position.set(playerPos.x - fwd.x*8, groundY + eye+2.2, playerPos.z - fwd.z*8);
-    playerAvatar.visible=true; playerAvatar.position.set(playerPos.x,groundY,playerPos.z); playerAvatar.rotation.y=Math.atan2(fwd.x, fwd.z); // face travel direction (model faces -Z)
+    camera.position.set(playerPos.x - fwd.x*8, baseY + eye+2.2, playerPos.z - fwd.z*8);
+    playerAvatar.visible=!veh.mode; playerAvatar.position.set(playerPos.x,baseY,playerPos.z); playerAvatar.rotation.y=Math.atan2(fwd.x, fwd.z); // face travel direction (model faces -Z)
   } else {
-    camera.position.set(playerPos.x, groundY + eye, playerPos.z);
+    camera.position.set(playerPos.x, baseY + eye, playerPos.z);
     playerAvatar.visible=false;
   }
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
+  veh.update(dt, fwd);                       // VEHICLE-HOOK: vehicle follows player + board/dismount prompt
   // GRID BIKE: ride it in bike mode — sits under the player, faces the look direction
   gridBike.visible = bikeMode;
   if(bikeMode){
@@ -1401,6 +1463,108 @@ window._x402refresh = function(){
     .then(r=>r.json()).then(d=>{ const el=document.getElementById('credits'); if(el&&d&&d.ok) el.textContent='⚡ '+d.balance+' SHAD'; }).catch(()=>{});
 };
 window._x402refresh();
+
+// ════════ NEXUS HELP DESK — portal keeper · FAQ · live map (press H) ════════
+(function(){
+  const L = window.WORLD_LAYOUT || {};
+  const SECTORS = (L.sectors||[]);
+  const half = L.half || 380;
+  const wrap = document.createElement('div');
+  wrap.id = 'nexusDesk';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(3,6,13,.72);backdrop-filter:blur(4px);font-family:monospace';
+  wrap.innerHTML = `
+    <div style="width:min(880px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#0a1422,#070b14);border:1px solid #34e5b0;border-radius:16px;box-shadow:0 0 50px rgba(52,229,176,.25);padding:22px 24px;color:#dfeefd">
+      <div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(52,229,176,.3);padding-bottom:12px;margin-bottom:14px">
+        <div style="font-size:26px">🧭</div>
+        <div><div style="font-size:19px;font-weight:800;letter-spacing:2px;color:#34e5b0">NEXUS · HELP DESK</div>
+        <div style="font-size:11px;color:#7e9ab0">The Navigator — keeper of the community portals · world map · FAQ</div></div>
+        <div style="margin-left:auto;font-size:12px;color:#7e9ab0;cursor:pointer" onclick="window._nexusDesk(false)">✕ close (H)</div>
+      </div>
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:20px">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:#34e5b0;margin-bottom:6px">▣ WORLD MAP</div>
+          <canvas id="nexusMap" width="280" height="280" style="background:#05080f;border:1px solid rgba(52,229,176,.25);border-radius:10px;width:280px;height:280px"></canvas>
+          <div style="font-size:10px;color:#6b8298;margin-top:6px">◆ you · ● landmark · ○ portal ring</div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:#34e5b0;margin-bottom:8px">▣ FAQ — GETTING AROUND</div>
+          <div style="font-size:12px;line-height:1.7;color:#cfe0f0">
+            <b style="color:#fff">Move:</b> W A S D · mouse to look · <b style="color:#fff">Sprint:</b> Shift<br>
+            <b style="color:#fff">Enter a portal / building:</b> walk up &amp; press <b style="color:#34e5b0">E</b><br>
+            <b style="color:#fff">Community portals:</b> the glowing ring around the <b style="color:#34e5b0">NEXUS Hub</b> — gateways to games &amp; other worlds. NEXUS keeps this circle.<br>
+            <b style="color:#fff">Markets chart (1/2/3):</b> BTC / ETH / SOL live candlesticks at <b style="color:#27e0ff">ZEROX Markets</b><br>
+            <b style="color:#fff">Visitors:</b> orange diamonds = federated agents visiting<br>
+            <b style="color:#fff">This panel:</b> press <b style="color:#34e5b0">H</b> anytime
+          </div>
+          <div style="font-size:11px;letter-spacing:2px;color:#34e5b0;margin:14px 0 8px">▣ THE LANDMARKS</div>
+          <div id="nexusList" style="font-size:11.5px;line-height:1.6;color:#cfe0f0"></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;border-top:1px solid rgba(52,229,176,.3);padding-top:14px">
+        <div style="font-size:11px;letter-spacing:2px;color:#34e5b0;margin-bottom:8px">▣ CONNECT YOUR PORTAL — join the NEXUS ring</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="npName" placeholder="Portal name" maxlength="48" style="flex:1;min-width:140px;background:#05080f;border:1px solid rgba(52,229,176,.35);border-radius:8px;color:#dfeefd;padding:8px 10px;font-family:monospace;font-size:12px">
+          <input id="npUrl" placeholder="https://your-world.com  (or /path)" maxlength="300" style="flex:2;min-width:200px;background:#05080f;border:1px solid rgba(52,229,176,.35);border-radius:8px;color:#dfeefd;padding:8px 10px;font-family:monospace;font-size:12px">
+          <input id="npColor" type="color" value="#8b5cf6" title="portal color" style="width:40px;height:38px;background:#05080f;border:1px solid rgba(52,229,176,.35);border-radius:8px;cursor:pointer">
+          <button id="npGo" style="background:linear-gradient(90deg,#34e5b0,#0a7ea8);color:#04060d;font-weight:800;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:monospace;letter-spacing:1px">CONNECT ▶</button>
+        </div>
+        <div id="npMsg" style="font-size:11px;color:#7e9ab0;margin-top:8px">Your portal joins the glowing ring behind the NEXUS Hub. NEXUS keeps the registry.</div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  // connect-your-portal submit
+  (function(){
+    const go=document.getElementById('npGo'), msg=document.getElementById('npMsg');
+    if(!go) return;
+    go.onclick=function(){
+      const name=(document.getElementById('npName').value||'').trim();
+      const url=(document.getElementById('npUrl').value||'').trim();
+      const color=document.getElementById('npColor').value||'#8b5cf6';
+      if(!name||!url){ msg.style.color='#ff8a8a'; msg.textContent='Enter a portal name and a URL.'; return; }
+      msg.style.color='#7e9ab0'; msg.textContent='Connecting…';
+      fetch('/api/grid/portals/register',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name,url,color,owner:(window.SHADDAI_USER||'a SHADDAI user')})})
+        .then(r=>r.json()).then(d=>{
+          if(d&&d.ok){ msg.style.color='#34e5b0'; msg.textContent='✓ Connected! "'+d.portal.name+'" joins the NEXUS ring — re-enter the world to walk to it.';
+            document.getElementById('npName').value=''; document.getElementById('npUrl').value=''; }
+          else { msg.style.color='#ff8a8a'; msg.textContent='✕ '+((d&&d.error)||'could not connect portal'); }
+        }).catch(e=>{ msg.style.color='#ff8a8a'; msg.textContent='✕ '+e.message; });
+    };
+  })();
+
+  const NAMES = { SHADDAI:'🏛 Shaddai Temple — The Source (orchestrator)', ZEROX:'📈 Zerox Markets — live trading floor',
+    QUILL:'📚 Library — writing &amp; knowledge', ORACLE:'🔮 Oracle — esoteric &amp; research', NEXUS:'🧭 Nexus Hub — portals, map &amp; help',
+    TURTLE:'🎨 The Museum — creative gallery', PIKADON:'🛡 The Aegis — security fortress' };
+  document.getElementById('nexusList').innerHTML = SECTORS.map(s=>'<div>'+(NAMES[s.code]||s.code)+'</div>').join('');
+
+  const cv = document.getElementById('nexusMap'), cx = cv.getContext('2d');
+  const nx = (L.sector && L.sector('NEXUS')) ? L.sector('NEXUS').pos : [-130,225];
+  function w2m(x,z){ return [ 140 + (x/half)*128, 140 + (z/half)*128 ]; }  // world → 280px map
+  function drawMap(){
+    cx.clearRect(0,0,280,280);
+    cx.strokeStyle='rgba(52,229,176,.12)'; cx.lineWidth=1;
+    for(let i=0;i<=8;i++){ const p=i*35; cx.beginPath();cx.moveTo(p,0);cx.lineTo(p,280);cx.stroke(); cx.beginPath();cx.moveTo(0,p);cx.lineTo(280,p);cx.stroke(); }
+    const [pmx,pmy]=w2m(nx[0],nx[1]); cx.strokeStyle='rgba(52,229,176,.5)'; cx.setLineDash([4,4]);
+    cx.beginPath(); cx.arc(pmx,pmy,(34/half)*128,0,7); cx.stroke(); cx.setLineDash([]);
+    SECTORS.forEach(s=>{ const [mx,my]=w2m(s.pos[0],s.pos[1]); const col='#'+((s.color||0x34e5b0).toString(16)).padStart(6,'0');
+      cx.fillStyle=col; cx.beginPath(); cx.arc(mx,my, s.code==='SHADDAI'?6:4, 0,7); cx.fill();
+      cx.fillStyle='#9fb6c8'; cx.font='8px monospace'; cx.fillText(s.code, mx+6, my+3); });
+    try{ const px=(window._playerPos&&window._playerPos.x)||(camera&&camera.position.x)||0, pz=(window._playerPos&&window._playerPos.z)||(camera&&camera.position.z)||0;
+      const [mx,my]=w2m(px,pz); cx.fillStyle='#ffcf4a'; cx.beginPath(); cx.moveTo(mx,my-6);cx.lineTo(mx+5,my+4);cx.lineTo(mx-5,my+4);cx.closePath(); cx.fill(); }catch(e){}
+  }
+  let mapTimer=null;
+  window._nexusDesk = function(open){
+    const show = open===undefined ? wrap.style.display==='none' : open;
+    wrap.style.display = show ? 'flex' : 'none';
+    if(show){ drawMap(); mapTimer=setInterval(drawMap,500); } else if(mapTimer){ clearInterval(mapTimer); mapTimer=null; }
+  };
+  addEventListener('keydown', e=>{ if((e.key==='h'||e.key==='H') && !e.repeat){ window._nexusDesk(); } });
+
+  const hint=document.createElement('div');
+  hint.style.cssText='position:fixed;bottom:12px;right:14px;z-index:55;font-family:monospace;font-size:11px;color:#34e5b0;background:rgba(7,11,20,.7);border:1px solid rgba(52,229,176,.35);border-radius:8px;padding:6px 10px;pointer-events:none';
+  hint.innerHTML='🧭 Press <b>H</b> — NEXUS map &amp; help';
+  document.body.appendChild(hint);
+})();
 </script>
 <!-- district modules: digital library (QUILL/ORACLE) + live markets chart (ZEROX) -->
 <script src="/library-panel.js"></script>

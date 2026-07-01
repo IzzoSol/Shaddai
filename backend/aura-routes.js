@@ -43,9 +43,19 @@ router.post('/record', (req, res) => {
 });
 
 // GET /api/aura/stats — savings summary for the Settings "Cost & AURA" panel.
+// Includes the live tool-result cache (real API pulls avoided), if loaded.
 router.get('/stats', (req, res) => {
-  try { res.json({ ok: true, ...aura.stats() }); }
-  catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+  try {
+    let toolCache = null;
+    try { toolCache = require('./lib/tool-cache').getStats(); } catch (_) {}
+    res.json({ ok: true, ...aura.stats(), toolCache });
+  } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+});
+
+// GET /api/aura/tools — live API-pull cache stats on their own (powers the monitor's cache panel).
+router.get('/tools', (req, res) => {
+  try { res.json(require('./lib/tool-cache').getStats()); }
+  catch (e) { res.json({ enabled: false, error: String(e && e.message || e) }); }
 });
 
 // POST /api/aura/route { prompt } — raw cache/compute check (used by automation/sentiment).
