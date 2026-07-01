@@ -3289,6 +3289,8 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00e5a0;background:rgba(0,229,160,.12)}
 </style>
+<!-- ATELIER — global editorial theme (override layer). Remove this one line to revert. -->
+<link rel="stylesheet" href="/theme-atelier.css?v=1">
 </head>
 <body data-theme="dark">
 <script>
@@ -3378,7 +3380,7 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
       <button onclick="showApiCostBreakdown()" title="API cost breakdown" style="display:none"><span id="apiCostWidget">$0.0000</span></button>
       <button class="tb-seg" onclick="openCollectiblesShop()" title="Credits balance — click to open shop" style="color:#ffd700"><span class="ic">💳</span><span id="topbarCredits">—</span></button>
       <a class="tb-seg" href="marketplace-shop.html" target="_blank" title="Open the 2D Bazaar — set up your shop, sell content & agent work" style="color:#e8b84b"><span class="ic">🏪</span>Bazaar</a>
-      <a class="tb-seg" href="SHADDAI-Collectables.html" target="_blank" title="Open the full Collectables studio (wardrobe, shop, marketplace)" style="color:#a78bfa"><span class="ic">🎨</span>Collect</a>
+      <a class="tb-seg" href="achievements.html" target="_blank" title="Achievements & NFT Collection — your 100 operative cards, unlocks & progress" style="color:#ffcf4a"><span class="ic">🏆</span>Achievements</a>
       <button class="tb-seg" onclick="toggleFullscreen()" id="fsBtn" title="Toggle fullscreen" style="color:#8593a6"><span class="ic">⛶</span></button>
     </div>
   </div>
@@ -3400,18 +3402,18 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
   <button class="nav-btn" onclick="showView('automation')">Automation</button>
   <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700">Skills</button>
   <!-- Registry tab removed -->
-  <button class="nav-btn" onclick="showView('wallet')" style="color:#8b5cf6;font-weight:700">💰 Wallet</button>
+  <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">Settings</button>
   <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444">Security</button>
   <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🚪 Rooms</button>
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
-  <button class="nav-btn" onclick="showView('commerce')" style="color:#00e5a0;font-weight:700">⚡ Commerce</button>
+  <!-- Commerce tab removed -->
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <button class="nav-btn" id="navAuthBtn" onclick="shdAuthClick()" style="color:#00e5a0;font-weight:700">🔑 Sign in</button>
   <button class="nav-btn" onclick="window.open('/forge.html','_blank')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent">⬡ The Forge</button>
-  <button class="nav-btn" onclick="window.open('/aura.html','_blank')" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + verify">⚡ AURA</button>
+  <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP">⚡ AURA</button>
   <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00e5a0;font-weight:700" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World">⬡ SHADDAI WORLD</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
@@ -3497,7 +3499,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
-    <button class="sbt" onclick="showView('commerce');lySetSb(this)"><span class="ic">⚡</span>Commerce</button>
     <button class="sbt" onclick="showView('media');lySetSb(this)"><span class="ic">🎵</span>Media</button>
     <button class="sbt" onclick="showView('social');lySetSb(this)"><span class="ic">📱</span>Social</button>
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
@@ -3507,7 +3508,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     <button class="sbt" onclick="showView('library-notes');lySetSb(this)"><span class="ic">📚</span>Library</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
-    <button class="sbt" onclick="showView('wallet');lySetSb(this)"><span class="ic">💰</span>Wallet</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
     <button class="sbt" id="navAuthBtnSb" onclick="shdAuthClick()" style="color:#00e5a0;margin-top:auto"><span class="ic">🔑</span>Sign in</button>
@@ -3558,10 +3558,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
       <button class="mqa-btn" onclick="showView('marketplace')">
         <span class="mqa-icon">🛒</span>
         <span class="mqa-label">Marketplace</span>
-      </button>
-      <button class="mqa-btn" onclick="showView('wallet')">
-        <span class="mqa-icon">💰</span>
-        <span class="mqa-label">Wallet</span>
       </button>
       <button class="mqa-btn" onclick="showView('agents')">
         <span class="mqa-icon">🤖</span>
@@ -8819,6 +8815,73 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
     </div>
   </div><!-- /mediaClassicCards -->
   </div><!-- /mediaView -->
+
+  <!-- ═══════════ AURA TOKEN SAVER VIEW ═══════════ -->
+  <div id="auraView" class="view" style="overflow-y:auto;max-height:86vh">
+    <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+
+      <!-- Hero -->
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid rgba(39,224,255,0.15);padding-bottom:14px">
+        <div style="font-size:34px">⚡</div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff;letter-spacing:0.08em">AURA</div>
+          <div style="font-size:11px;color:#27e0ff;font-weight:700;letter-spacing:.14em">TOKEN SAVER</div>
+        </div>
+        <div style="flex:1;min-width:220px;font-size:11px;color:var(--text-muted);line-height:1.6">Answers recurring prompts for <b style="color:#27e0ff">free</b> — from cache, saved skills, or deterministic compute — before any paid model call. Open source (MIT). It's the same engine powering this dashboard.</div>
+      </div>
+
+      <!-- Live stats -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+        <div class="stat-box" style="border-color:rgba(39,224,255,0.3)"><div class="stat-label" style="color:#27e0ff">TOKENS SAVED</div><div class="stat-value" id="auraTokens" style="color:#27e0ff">—</div></div>
+        <div class="stat-box"><div class="stat-label">EST. $ SAVED</div><div class="stat-value" id="auraDollars">—</div></div>
+        <div class="stat-box"><div class="stat-label">CACHE HITS</div><div class="stat-value" id="auraHits">—</div></div>
+        <div class="stat-box"><div class="stat-label">HIT RATE</div><div class="stat-value" id="auraHitRate">—</div></div>
+      </div>
+
+      <!-- MCP card -->
+      <div class="card" style="border:1px solid rgba(39,224,255,0.25)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:16px">🔌</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:800;color:#fff;letter-spacing:.05em">USE AURA IN YOUR OWN AI TOOLS (MCP)</span>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);line-height:1.7;margin-bottom:14px">AURA ships an <b>MCP server</b>. Add it to Claude Desktop, Claude Code, or Cursor and it saves tokens automatically — answering repeat prompts for free before your model spends anything.</div>
+
+        <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE CODE — one line</div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
+          <code id="auraMcpCC" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">claude mcp add aura -- npx -y -p @shaddai/aura aura-mcp</code>
+          <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpCC')">⧉ Copy</button>
+        </div>
+
+        <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE DESKTOP / CURSOR — config JSON</div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
+          <code id="auraMcpJson" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">{ "mcpServers": { "aura": { "command": "npx", "args": ["-y","-p","@shaddai/aura","aura-mcp"] } } }</code>
+          <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpJson')">⧉ Copy</button>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-accent" style="background:#27e0ff;color:#001018;border:none;font-weight:700;font-size:10px" onclick="window.open('https://github.com/IzzoIzzoIzzo/aura','_blank')">★ AURA on GitHub</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="window.open('/aura.html','_blank')">Open live monitor / tester</button>
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);margin-top:10px">Three tools: <b style="color:#8fdcff">aura_ask</b> (free answer first) · <b style="color:#8fdcff">aura_remember</b> (cache it) · <b style="color:#8fdcff">aura_stats</b> (savings). Zero dependencies, MIT.</div>
+      </div>
+
+    </div>
+  </div>
+  <script>
+  window._auraCopy = function(id){ var el=document.getElementById(id); if(!el) return; var t=el.innerText||el.textContent; try{ if(navigator.clipboard) navigator.clipboard.writeText(t); }catch(e){} try{ notify('Copied to clipboard'); }catch(e){} };
+  window.loadAuraTab = async function(){
+    var g=function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+    try{
+      var base=(typeof AURA_BASE!=='undefined')?AURA_BASE:'/api';
+      var s=await (await fetch(base+'/aura/stats',{signal:AbortSignal.timeout(5000)})).json();
+      g('auraTokens', Number(s.tokensSaved||0).toLocaleString());
+      g('auraDollars', '$'+Number(s.costSavedUsd||0).toFixed(2));
+      g('auraHits', Number(s.hits||0).toLocaleString());
+      g('auraHitRate', Math.round((s.hitRate||0)*100)+'%');
+    }catch(e){ /* leave dashes if offline */ }
+  };
+  </script>
+  <!-- ═══════════ /AURA VIEW ═══════════ -->
 
   <!-- Audit -->
   <!-- Automation Hub -->
@@ -38285,7 +38348,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           <button style="font-size:8px;padding:3px 10px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace" onclick="showRevenueBreakdown()">💰 Revenue</button>
           <button style="font-size:8px;padding:3px 10px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);color:#ffd700;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace" onclick="openCollectiblesShop()">🏪 Shop</button>
           <button style="font-size:9px;padding:4px 12px;font-weight:700;background:linear-gradient(135deg,#e8b84b,#ff8a3d);color:#1a1206;border:none;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace" onclick="window.open('marketplace-shop.html','_blank')" title="Open the 2D Bazaar — your shop, sell content & agent work">🏬 OPEN BAZAAR</button>
-          <button style="font-size:9px;padding:4px 12px;font-weight:700;background:linear-gradient(135deg,#d4af37,#b8902a);color:#1a1405;border:none;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace" onclick="window.open('collectibles-nft.html','_blank')" title="The Vault — mint collectibles as Solana NFTs (devnet)">💎 THE VAULT</button>
+          <button style="font-size:9px;padding:4px 12px;font-weight:700;background:linear-gradient(135deg,#d4af37,#b8902a);color:#1a1405;border:none;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace" onclick="window.open('achievements.html','_blank')" title="The Vault — your 100 NFT operative cards, achievements & unlocks">💎 THE VAULT</button>
           <button style="font-size:8px;padding:3px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--text-muted);border-radius:4px;cursor:pointer" onclick="openOfficeCustomizer()">🎨 Customize</button>
         </div>
       </div>
