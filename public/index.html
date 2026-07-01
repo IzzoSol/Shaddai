@@ -3289,8 +3289,6 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00e5a0;background:rgba(0,229,160,.12)}
 </style>
-<!-- ATELIER — global editorial theme (override layer). Remove this one line to revert. -->
-<link rel="stylesheet" href="/theme-atelier.css?v=1">
 </head>
 <body data-theme="dark">
 <script>
@@ -8848,13 +8846,13 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 
         <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE CODE — one line</div>
         <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
-          <code id="auraMcpCC" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">claude mcp add aura -- npx -y -p @shaddai/aura aura-mcp</code>
+          <code id="auraMcpCC" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">claude mcp add aura -- npx -y -p shaddai-aura aura-mcp</code>
           <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpCC')">⧉ Copy</button>
         </div>
 
         <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE DESKTOP / CURSOR — config JSON</div>
         <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
-          <code id="auraMcpJson" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">{ "mcpServers": { "aura": { "command": "npx", "args": ["-y","-p","@shaddai/aura","aura-mcp"] } } }</code>
+          <code id="auraMcpJson" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">{ "mcpServers": { "aura": { "command": "npx", "args": ["-y","-p","shaddai-aura","aura-mcp"] } } }</code>
           <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpJson')">⧉ Copy</button>
         </div>
 
@@ -38394,16 +38392,15 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         <div id="agentDesksRow" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px"></div>
       </div>
 
-      <!-- COLLECTIBLES SHELF -->
-      <div style="position:relative;padding:12px 14px;border-top:1px solid rgba(255,107,53,0.15)">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
-          ▸ YOUR COLLECTION
-          <div style="flex:1;height:1px;background:rgba(255,215,0,0.1)"></div>
-          <span id="collectCount" style="color:rgba(255,215,0,0.4);font-size:7px">0 items</span>
+      <!-- COLLECTIBLES — COMING SOON (real system to be built separately for room decoration) -->
+      <div style="position:relative;padding:16px 14px;border-top:1px solid rgba(255,107,53,0.15)">
+        <div style="border:1px dashed rgba(255,215,0,0.32);border-radius:10px;padding:20px;text-align:center;background:rgba(255,215,0,0.04)">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:#ffd700;margin-bottom:7px">✦ COLLECTIBLES · COMING SOON ✦</div>
+          <div style="font-size:10.5px;color:var(--text-secondary);line-height:1.7;max-width:440px;margin:0 auto">Earn unique collectibles to <b style="color:#ffd700">decorate your agents' rooms</b>. A dedicated collectibles system is on its way — build your collection, then style every room your own way.</div>
         </div>
-        <div id="collectiblesShelf" style="display:flex;gap:10px;flex-wrap:wrap;min-height:56px;align-items:flex-start;padding:6px 2px;overflow:visible">
-          <div style="font-size:8px;color:rgba(255,255,255,0.2);font-family:'Share Tech Mono',monospace">Complete jobs and hit milestones to unlock collectibles...</div>
-        </div>
+        <!-- kept hidden so existing render code still has its targets (no JS breakage) -->
+        <div id="collectiblesShelf" style="display:none"></div>
+        <span id="collectCount" style="display:none">0</span>
       </div>
     </div>
 
@@ -39719,9 +39716,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         <!-- Room item badge (top-left if placed) -->
         ${topItem ? `<div style="position:absolute;top:6px;left:7px;font-size:11px;filter:drop-shadow(0 0 4px rgba(${a.glow},0.5))">${topItem}</div>` : ''}
 
-        <!-- Agent sprite — full humanoid pixel art character -->
-        <div style="position:relative;margin:4px 0 2px;display:inline-flex;align-items:flex-end;justify-content:center">
-          ${_buildAgentSprite(a.icon, a.color, a.glow, mood, a.id)}
+        <!-- Agent body — REAL full-body FLUX art standing in the room (falls back to portrait, then sprite) -->
+        <div style="position:relative;margin:2px 0;display:flex;align-items:flex-end;justify-content:center;height:98px">
+          <img src="/api/forge/art/char-${a.id}.png" alt="${a.name}" loading="lazy"
+            style="height:98px;width:auto;object-fit:contain;filter:drop-shadow(0 7px 16px rgba(${a.glow},0.55));${mood==='sleeping'?'opacity:.55;':''}"
+            onerror="this.onerror=null;this.src='/assets/agents/${a.name}-portrait.png';this.style.borderRadius='8px'">
         </div>
 
         <!-- Name + role -->
@@ -40132,8 +40131,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       quill:[['Clarity',98,a.color],['Precision',94,'#ffd700'],['Depth',88,'#a78bfa']],
       pikadon:[['Defense',99,a.color],['Vigilance',96,'#fbbf24'],['Trust',100,'#00e5a0']],
     }[agentId]||[['Skill',80,a.color],['Speed',75,a.color],['Accuracy',85,a.color]];
-    // Use the shared sprite builder (proper humanoid character design, agent-specific)
-    const spriteHtml = _buildAgentSprite(a.icon, a.color, a.glow, mood, agentId);
+    // REAL full-body FLUX art of the agent standing in its room (portrait fallback, then sprite)
+    const spriteHtml = `<img src="/api/forge/art/char-${agentId}.png" alt="${a.name}"
+        style="height:200px;width:auto;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(${a.glow},0.6));${mood==='sleeping'?'opacity:.6;':''}"
+        onerror="this.onerror=null;this.src='/assets/agents/${a.name}-portrait.png';this.style.borderRadius='12px';this.style.height='180px'">`;
 
     const roomItemsHtml = roomItems.length
       ? roomItems.map(id=>{
