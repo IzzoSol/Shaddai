@@ -399,7 +399,7 @@ const loader = new THREE.TextureLoader();
 const agentSprites = [];
 const labelEls = [];
 const labelLayer = document.getElementById('labels');
-function portraitOf(a){ return a.portrait || ('/api/forge/art/agent-'+a.codename.toLowerCase()+'.png'); }
+function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpperCase()+'-portrait.png'); }
 
 // ── agent 3D BODIES — load real GLB (fal.ai / hi-res) per agent, auto-scaled to standee height ──
 // Loaded SEQUENTIALLY (one at a time) and DEFERRED until after the world renders, so the

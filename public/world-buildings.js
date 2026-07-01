@@ -62,27 +62,30 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     tex.anisotropy = 4; tex.needsUpdate = true;
     const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
     spr.scale.set(44, 11, 1);
-    spr.position.set(x, gy(x, z) + (y || 70), z);
+    // `y` is the ABSOLUTE world height (top of the actual building), not an offset.
+    spr.position.set(x, (typeof y === 'number' ? y : gy(x, z) + 70), z);
     spr.renderOrder = 5;
     scene.add(spr);
     labelSprites.push({ spr, baseY: spr.position.y, phase: Math.random() * Math.PI * 2 });
     return spr;
   }
 
-  // decorate a placed building with its landmark ring + floating name
-  function decorate(x, z, color, displayName, footprint) {
+  // ring on the ground + name label sitting on top of the ACTUAL building.
+  // topY = absolute world height of the building's roof (so the label never floats).
+  function decorate(x, z, color, displayName, footprint, topY) {
     groundMarker(x, z, color, (footprint || 50) * 0.62);
-    nameLabel(x, z, color, displayName, (footprint || 50) * 0.95 + 12);  // sit just above the roof, not floating in the sky
+    if (displayName) nameLabel(x, z, color, displayName, topY + 6);
   }
 
-  function fallback(x, z, color) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(20, 34, 20),
+  function fallback(x, z, color, displayName, footprint) {
+    const H = 34;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(20, H, 20),
       new THREE.MeshStandardMaterial({ color: 0x141a24, emissive: color || 0x27e0ff, emissiveIntensity: 0.3, metalness: 0.7, roughness: 0.4 }));
-    m.position.set(x, gy(x, z) + 17, z); m.castShadow = true; scene.add(m);
+    m.position.set(x, gy(x, z) + H / 2, z); m.castShadow = true; scene.add(m);
+    decorate(x, z, color, displayName, footprint, gy(x, z) + H);
   }
   function placeGLB(file, footprint, x, z, color, displayName) {
-    if (displayName) decorate(x, z, color, displayName, footprint);   // procedural landmark always shows
-    if (!loader) { fallback(x, z, color); return; }
+    if (!loader) { fallback(x, z, color, displayName, footprint); return; }
     loader.load('/assets/buildings/' + file + '.glb?v=2', (g) => {  // v2 = intricate inscribed regen
       try {
         const m = g.scene;
@@ -91,8 +94,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
         const b2 = new THREE.Box3().setFromObject(m); m.position.set(x, gy(x, z) - b2.min.y, z);
         m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
         scene.add(m);
-      } catch (e) { fallback(x, z, color); }
-    }, undefined, () => fallback(x, z, color));
+        // label + ring placed on the REAL building top, only after it actually loads
+        decorate(x, z, color, displayName, footprint, gy(x, z) + (b2.max.y - b2.min.y));
+      } catch (e) { fallback(x, z, color, displayName, footprint); }
+    }, undefined, () => fallback(x, z, color, displayName, footprint));
   }
 
   // building GLB + LARGE footprint per sector (real cathedral/fantasy-scale structures)
