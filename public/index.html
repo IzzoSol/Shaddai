@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#00e5a0">
 <meta name="description" content="SHADDAI Agent Empire - Autonomous Intelligence Organization">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI v91 · Sovereign AI Command</title>
 <!-- ── Shaddai World (Grid) — Three.js module map. unpkg is CSP-allowed (see script-src above). ── -->
 <script type="importmap">
@@ -8144,8 +8144,8 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
         <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,70,112,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO CLIPPER</div>
-        <div style="font-size:9px;color:rgba(255,70,112,0.7);margin-top:2px">YouTube · TikTok · Twitter · Instagram</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Paste URL → download MP4 or MP3</div>
+        <div style="font-size:9px;color:rgba(255,70,112,0.7);margin-top:2px">Long video → captioned vertical shorts</div>
+        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">SHADDAI engine · ffmpeg + Whisper · TikTok/Reels</div>
         <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,70,112,0.15);border:1px solid rgba(255,70,112,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
@@ -46871,7 +46871,66 @@ function _openGalleryOverlay(){
   expandModule({title:'🖼 MEDIA GALLERY',accentColor:'#ffd700',content:html});
 }
 
+// Engine URL: localhost in dev, the clipper's Render service in production.
+// After deploying the clipper to Render, set this to its real URL (or window.CLIP_ENGINE).
+var CLIP_ENGINE = (window.CLIP_ENGINE) ||
+  ((location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.protocol==='file:')
+    ? 'http://localhost:8787'
+    : 'https://shaddai-clipper.onrender.com');
 function _openClipperOverlay(){
+  // Pro-tier feature — gate before embedding (matches the app's tier model).
+  var _ct = (typeof S!=='undefined' && S.billing && S.billing.subscription && S.billing.subscription.tier) || 'free';
+  var _tn = {free:0,builder:1,pro:2,alpha:3};
+  if((_tn[_ct]||0) < 2){
+    expandModule({title:'✂️ VIDEO CLIPPER — Pro',accentColor:'#64b5f6',icon:'✂️',content:
+      '<div style="text-align:center;padding:20px 10px;display:flex;flex-direction:column;gap:14px;align-items:center">'+
+      '<div style="font-size:40px">✂️</div>'+
+      '<div style="font-family:\'Rajdhani\',sans-serif;font-size:18px;font-weight:800;color:#fff">Video Clipper is a Pro feature</div>'+
+      '<div style="font-size:11px;color:rgba(255,255,255,0.6);max-width:380px;line-height:1.7">Turn long videos into captioned vertical shorts — auto-transcribed, highlight-detected, ready for TikTok / Reels / Shorts. Included with <b style="color:#64b5f6">Pro ($49/mo)</b> and above.</div>'+
+      '<button class="btn btn-accent" style="background:#64b5f6;border:none;color:#fff;font-weight:700;font-size:12px;padding:10px 22px" onclick="document.getElementById(\'shd-module-overlay\').remove();showView(\'billing\')">⚡ Upgrade to Pro</button>'+
+      '<div style="font-size:8px;color:rgba(255,255,255,0.3)">Your plan: '+String(_ct).toUpperCase()+'</div>'+
+      '</div>'
+    });
+    return;
+  }
+  expandModule({title:'✂️ VIDEO CLIPPER — SHADDAI Engine',accentColor:'#ff4070',icon:'✂️',content:
+    '<div id="ov_clipperWrap" style="display:flex;flex-direction:column;gap:10px;min-height:58vh">'+
+      '<div style="display:flex;align-items:center;gap:10px;font-size:10px;color:rgba(255,255,255,0.6)">'+
+      '<div style="width:14px;height:14px;border:2px solid #ff4070;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>'+
+      'Connecting to clip engine…</div>'+
+    '</div>'
+  });
+  _clipperProbe();
+}
+window._clipperProbe=function(){
+  var wrap=document.getElementById('ov_clipperWrap'); if(!wrap) return;
+  fetch(CLIP_ENGINE+'/api/clips/v1/health',{signal:AbortSignal.timeout(4500)})
+    .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(){
+      wrap.innerHTML=
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-size:9px;color:#28c840">● Engine online — drop a long video in, get captioned vertical clips out.</div>'+
+          '<div style="display:flex;gap:6px">'+
+            '<button class="btn btn-ghost" style="font-size:8px" onclick="window.open(CLIP_ENGINE,\'_blank\')">↗ Open full</button>'+
+            '<button class="btn btn-ghost" style="font-size:8px" onclick="_openClipperLegacy()">URL downloader</button>'+
+          '</div>'+
+        '</div>'+
+        '<iframe src="'+CLIP_ENGINE+'/clips" style="width:100%;height:68vh;border:1px solid rgba(255,70,112,0.25);border-radius:8px;background:#0A0E1A" allow="clipboard-write; fullscreen"></iframe>';
+    })
+    .catch(function(){
+      wrap.innerHTML=
+        '<div style="background:rgba(255,70,112,0.06);border:1px solid rgba(255,70,112,0.25);border-radius:10px;padding:18px;font-size:11px;line-height:1.7;color:rgba(255,255,255,0.85)">'+
+          '<div style="font-weight:700;color:#ff4070;margin-bottom:6px;font-size:13px">Clip engine isn\'t reachable</div>'+
+          'The hosted clip engine may be starting up (Render cold start) or offline. Wait a moment and retry.'+
+          '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+
+            '<button class="btn btn-accent" style="background:#ff4070;border:none;font-size:10px;font-weight:700" onclick="_clipperProbe()">↻ Retry connection</button>'+
+            '<button class="btn btn-ghost" style="font-size:10px" onclick="_openClipperLegacy()">Use the URL downloader instead</button>'+
+          '</div>'+
+        '</div>';
+    });
+};
+
+function _openClipperLegacy(){
   expandModule({title:'✂️ VIDEO CLIPPER',accentColor:'#ff4070',content:
     '<div style="display:flex;flex-direction:column;gap:12px">'+
     '<div style="background:rgba(255,70,112,0.06);border:1px solid rgba(255,70,112,0.2);border-radius:8px;padding:10px 14px;font-size:9px;color:rgba(255,255,255,0.7);line-height:1.6">'+
