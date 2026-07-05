@@ -3679,6 +3679,7 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
   <button class="nav-btn" onclick="showView('content-studio')" style="color:#00e5ff;font-weight:700" title="Content Studio — news→post pipeline">🎬 Studio</button>
   <button class="nav-btn" onclick="showView('automation')">Automation</button>
   <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700">Skills</button>
+  <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠 Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">Settings</button>
@@ -23242,6 +23243,7 @@ function showView(v) {
   if (v === 'documents')      { if (typeof ragLoadDocs === 'function') ragLoadDocs(); }
   if (v === 'chainRunner')    { if (typeof wfRenderRunner === 'function') wfRenderRunner(); }
   if (v === 'billing')       renderBillingView();
+  if (v === 'toolbrowser')   { if (typeof tbLoad === 'function') tbLoad(false); }
   if (v === 'commandCenter') switchCommandTab('agents');
   if (v === 'earnings')      { renderEarningsDashboard(); _renderEarningsPanel(); }
   if (v === 'jobBoard')      _renderStandaloneJobBoard();
@@ -39550,6 +39552,199 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   </div>
 
   <!-- ════════════════════════════════════════════════════════════════
+       TOOL BROWSER VIEW — real frontend for all 219 backend tools
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div id="toolbrowserView" class="view">
+    <div class="tab-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="tab-header-title" style="color:var(--accent)">🛠 Tools</span>
+        <span id="tbStat" style="font-size:8px;font-weight:700;padding:2px 8px;background:rgba(0,229,160,0.12);border:1px solid var(--accent);color:var(--accent)">loading…</span>
+      </div>
+      <div class="tab-header-actions" style="display:flex;gap:8px;align-items:center">
+        <input id="tbSearch" placeholder="Search tools by name or description…" style="font-size:11px;padding:5px 10px;min-width:240px;background:var(--bg-card,#0a0e17);border:1px solid var(--border);color:var(--text);border-radius:6px" autocomplete="off">
+        <button class="btn btn-ghost" id="tbReload" style="font-size:9px;padding:4px 10px">↺ Reload</button>
+      </div>
+    </div>
+    <div id="tbChips" style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0"></div>
+    <div id="tbGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding-bottom:40px"></div>
+  </div>
+
+  <script>
+  /* ═══ TOOL BROWSER — real UI over /api/agent/tools + /api/tools/run ═══
+     NOTE: this dashboard is served with CSP `script-src-attr 'none'`, which BLOCKS
+     inline on* handlers. So every interaction below is wired via DELEGATED
+     addEventListener + data-* attributes (inline <script> blocks are still allowed
+     by `script-src 'unsafe-inline'`). Do not add inline onclick/oninput here. */
+  (function(){
+    var TB = { tools:null, loaded:false, agent:null };
+    var AGENTS = ['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+    window.tbLoad = function(force){
+      if (TB.loaded && !force) { return; }
+      var grid = document.getElementById('tbGrid');
+      var stat = document.getElementById('tbStat');
+      if (stat) stat.textContent = 'loading…';
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);font-size:11px;padding:20px">Loading tools…</div>';
+      fetch('/api/agent/tools').then(function(r){ return r.json(); }).then(function(data){
+        var tools = Array.isArray(data) ? data : (data && data.tools) || [];
+        TB.tools = tools; TB.loaded = true;
+        if (stat) stat.textContent = tools.length + ' real tools · audited live';
+        tbRenderChips();
+        tbRenderGrid();
+        tbFilter();
+      }).catch(function(e){
+        if (stat) stat.textContent = 'error';
+        if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--danger,#ef4444);font-size:11px;padding:20px">Failed to load tools: ' + esc(e && e.message) + '</div>';
+      });
+    };
+
+    function tbRenderChips(){
+      var box = document.getElementById('tbChips'); if(!box) return;
+      var counts = {}; AGENTS.forEach(function(a){counts[a]=0;});
+      (TB.tools||[]).forEach(function(t){ (t.agents||[]).forEach(function(a){ if(counts[a]!=null) counts[a]++; }); });
+      var html = '<button class="tb-chip" data-tbchip="" style="' + chipStyle(TB.agent==='' || TB.agent==null) + '">All ('+(TB.tools||[]).length+')</button>';
+      AGENTS.forEach(function(a){
+        html += '<button class="tb-chip" data-tbchip="'+a+'" style="'+chipStyle(TB.agent===a)+'">'+a+' ('+counts[a]+')</button>';
+      });
+      box.innerHTML = html;
+    }
+    function chipStyle(active){
+      return 'font-size:9px;font-weight:700;padding:4px 10px;border-radius:14px;cursor:pointer;'+
+        'border:1px solid '+(active?'var(--accent)':'var(--border)')+';'+
+        'background:'+(active?'rgba(0,229,160,0.15)':'transparent')+';'+
+        'color:'+(active?'var(--accent)':'var(--text-muted)')+';';
+    }
+    window.tbSetAgent = function(a){ TB.agent = a; tbRenderChips(); tbFilter(); };
+
+    function tbRenderGrid(){
+      var grid = document.getElementById('tbGrid'); if(!grid) return;
+      var frag = document.createDocumentFragment();
+      (TB.tools||[]).forEach(function(t){
+        var card = document.createElement('div');
+        card.className = 'tb-card';
+        card.setAttribute('data-name', (t.name||'').toLowerCase());
+        card.setAttribute('data-desc', (t.description||'').toLowerCase());
+        card.setAttribute('data-agents', (t.agents||[]).join(',').toUpperCase());
+        card.setAttribute('data-tool', t.name||'');
+        card.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg-card,rgba(255,255,255,0.02));display:flex;flex-direction:column;gap:8px';
+        var badges = (t.agents||[]).map(function(a){
+          return '<span style="font-size:7px;font-weight:700;padding:1px 6px;border-radius:8px;border:1px solid var(--border);color:var(--text-muted)">'+esc(a)+'</span>';
+        }).join('');
+        var schema = t.schema || {};
+        var keys = Object.keys(schema);
+        var formInputs = keys.map(function(k){
+          return '<label style="display:block;font-size:8px;color:var(--text-muted);margin:6px 0 2px">'+esc(k)+'</label>'+
+                 '<input class="tb-arg" data-key="'+esc(k)+'" placeholder="'+esc(schema[k])+'" '+
+                 'style="width:100%;box-sizing:border-box;font-size:10px;padding:5px 8px;background:var(--bg-deep,#06080f);border:1px solid var(--border);color:var(--text);border-radius:5px">';
+        }).join('');
+        card.innerHTML =
+          '<div style="font-family:\'Share Tech Mono\',monospace;font-size:12px;font-weight:700;color:var(--accent);word-break:break-word">'+esc(t.name)+'</div>'+
+          '<div style="font-size:9px;color:var(--text-muted);line-height:1.4;flex:1">'+esc(t.description)+'</div>'+
+          '<div style="display:flex;gap:4px;flex-wrap:wrap">'+badges+'</div>'+
+          '<button class="btn btn-ghost tb-run-toggle" data-tbtoggle="1" style="font-size:9px;padding:4px 10px;align-self:flex-start">Run &#9656;</button>'+
+          '<div class="tb-form" style="display:none;border-top:1px solid var(--border);padding-top:8px">'+
+            formInputs+
+            '<button class="btn tb-go" data-tbrun="1" style="font-size:9px;padding:5px 14px;margin-top:8px;background:var(--accent);color:#04060d;border:none;border-radius:5px;cursor:pointer;font-weight:700">Run</button>'+
+            '<div class="tb-result" style="margin-top:8px"></div>'+
+          '</div>';
+        frag.appendChild(card);
+      });
+      grid.innerHTML = '';
+      grid.appendChild(frag);
+    }
+
+    function tbToggle(btn){
+      var form = btn.parentNode.querySelector('.tb-form');
+      if(!form) return;
+      var open = form.style.display !== 'none';
+      form.style.display = open ? 'none' : 'block';
+      btn.innerHTML = open ? 'Run &#9656;' : 'Run &#9662;';
+    }
+
+    window.tbFilter = function(){
+      var sb = document.getElementById('tbSearch');
+      var q = ((sb&&sb.value)||'').toLowerCase().trim();
+      var ag = TB.agent || '';
+      var cards = document.querySelectorAll('#tbGrid .tb-card');
+      var shown = 0;
+      cards.forEach(function(c){
+        var okQ = !q || c.getAttribute('data-name').indexOf(q)>=0 || c.getAttribute('data-desc').indexOf(q)>=0;
+        var okA = !ag || c.getAttribute('data-agents').split(',').indexOf(ag)>=0;
+        var vis = okQ && okA;
+        c.style.display = vis ? 'flex' : 'none';
+        if(vis) shown++;
+      });
+      var stat = document.getElementById('tbStat');
+      if(stat && TB.tools){ stat.textContent = (q||ag ? shown+' / '+TB.tools.length : TB.tools.length+' real tools · audited live'); }
+    };
+
+    function tbRun(btn){
+      var card = btn.closest('.tb-card');
+      var name = card.getAttribute('data-tool');
+      var form = btn.closest('.tb-form');
+      var resBox = form.querySelector('.tb-result');
+      var args = {};
+      form.querySelectorAll('.tb-arg').forEach(function(inp){
+        var v = inp.value;
+        if(v !== '') args[inp.getAttribute('data-key')] = v;
+      });
+      btn.disabled = true; var old = btn.textContent; btn.textContent = 'Running…';
+      resBox.innerHTML = '<div style="font-size:9px;color:var(--text-muted)">⏳ running '+esc(name)+'…</div>';
+      fetch('/api/tools/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tool:name, args:args }) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          btn.disabled=false; btn.textContent=old;
+          if (d && d.ok) {
+            var out = (typeof d.result === 'string') ? d.result : JSON.stringify(d.result, null, 2);
+            resBox.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+              '<span style="font-size:8px;color:var(--accent);font-weight:700">✓ result</span>'+
+              '<button class="btn btn-ghost" data-tbcopy="1" style="font-size:8px;padding:2px 6px">copy</button></div>'+
+              '<pre class="tb-out" style="max-height:240px;overflow:auto;font-size:10px;background:var(--bg-deep,#06080f);border:1px solid var(--border);border-radius:5px;padding:8px;margin:0;white-space:pre-wrap;word-break:break-word;color:var(--text)">'+esc(out)+'</pre>';
+          } else if (d && d.needsAuth) {
+            resBox.innerHTML = '<div style="font-size:9px;color:var(--warning,#f0b429);border:1px solid var(--warning,#f0b429);border-radius:5px;padding:8px">🔑 Needs API keys — set them in Content Studio / Settings.'+(d.error?'<br><span style="color:var(--text-muted)">'+esc(d.error)+'</span>':'')+'</div>';
+          } else {
+            resBox.innerHTML = '<div style="font-size:9px;color:var(--danger,#ef4444);border:1px solid var(--danger,#ef4444);border-radius:5px;padding:8px">✕ '+esc((d&&d.error)||'Unknown error')+'</div>';
+          }
+        })
+        .catch(function(e){
+          btn.disabled=false; btn.textContent=old;
+          resBox.innerHTML = '<div style="font-size:9px;color:var(--danger,#ef4444)">✕ '+esc(e&&e.message)+'</div>';
+        });
+    }
+
+    function tbCopy(btn){
+      var pre = btn.closest('.tb-result').querySelector('.tb-out');
+      if(!pre) return;
+      try { navigator.clipboard.writeText(pre.textContent); btn.textContent='copied'; setTimeout(function(){btn.textContent='copy';},1200); } catch(e){}
+    }
+
+    /* ── Single delegated click handler (CSP-safe, replaces all inline onclick) ── */
+    document.addEventListener('click', function(e){
+      var el = e.target;
+      if (!el || !el.closest) return;
+      // nav button → open the view (works even if inline onclick is CSP-blocked)
+      var nav = el.closest('[data-tbnav]');
+      if (nav) { if (typeof showView === 'function') showView('toolbrowser'); return; }
+      var reload = el.closest('#tbReload');
+      if (reload) { tbLoad(true); return; }
+      var chip = el.closest('[data-tbchip]');
+      if (chip) { tbSetAgent(chip.getAttribute('data-tbchip')); return; }
+      var tog = el.closest('[data-tbtoggle]');
+      if (tog) { tbToggle(tog); return; }
+      var run = el.closest('[data-tbrun]');
+      if (run) { tbRun(run); return; }
+      var cp = el.closest('[data-tbcopy]');
+      if (cp) { tbCopy(cp); return; }
+    });
+    /* ── Delegated input handler for the search box (CSP-safe, replaces oninput) ── */
+    document.addEventListener('input', function(e){
+      if (e.target && e.target.id === 'tbSearch') tbFilter();
+    });
+  })();
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════════════
        PHASE 5: BILLING VIEW
   ═══════════════════════════════════════════════════════════════════ -->
   <div id="billingView" class="view">
@@ -40722,6 +40917,104 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       + '</div>';
   }
 
+  // ── REAL agent-tool inventory loader (GET /api/agent/tools) — cached, no fake numbers ──
+  window._ensureRoomTools = function(){
+    if (window._ROOM_AGENT_TOOLS && window._ROOM_AGENT_TOOLS.length) return Promise.resolve(window._ROOM_AGENT_TOOLS);
+    if (window._roomToolsPromise) return window._roomToolsPromise;
+    window._roomToolsPromise = fetch('/api/agent/tools', { signal: AbortSignal.timeout(8000) })
+      .then(r => r.json())
+      .then(j => { window._ROOM_AGENT_TOOLS = (j && (j.tools || j)) || []; return window._ROOM_AGENT_TOOLS; })
+      .catch(() => { window._ROOM_AGENT_TOOLS = []; return []; });
+    return window._roomToolsPromise;
+  };
+  // Prefetch in the background so the card usually has live data on first open
+  try { window._ensureRoomTools(); } catch(_){}
+
+  // ── Lightweight Three.js GLB viewer (hover + auto-rotate + drag-to-spin). One renderer, disposed on close. ──
+  window._roomViewer = (function(){
+    let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host;
+    let modsPromise = null;
+    function loadMods(){
+      if (!modsPromise) {
+        modsPromise = Promise.all([
+          import('three'),
+          import('three/addons/loaders/GLTFLoader.js'),
+          import('three/addons/controls/OrbitControls.js')
+        ]).then(([T, G, O]) => ({ THREE: T, GLTFLoader: G.GLTFLoader, OrbitControls: O.OrbitControls }));
+      }
+      return modsPromise;
+    }
+    function showPortrait(){ // fallback: keep the masked portrait already inside the host
+      try { const img = host && host.querySelector('img'); if (img) img.style.display = ''; } catch(_){}
+    }
+    async function init(container, code, glow){
+      dispose();
+      host = container;
+      let M; try { M = await loadMods(); } catch(e){ showPortrait(); return false; }
+      if (!container || !document.body.contains(container)) return false;
+      const { THREE, GLTFLoader, OrbitControls } = M;
+      const w = container.clientWidth || 300, h = container.clientHeight || 320;
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
+      camera.position.set(0, 1.15, 3.4);
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      renderer.setSize(w, h);
+      renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
+      container.appendChild(renderer.domElement);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+      const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(2.5, 4, 3); scene.add(key);
+      const rgb = (glow || '255,107,53').split(',').map(Number);
+      const rim = new THREE.PointLight((rgb[0] << 16) + (rgb[1] << 8) + rgb[2], 1.4, 20); rim.position.set(-3, 2, -2); scene.add(rim);
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableZoom = false; controls.enablePan = false;
+      controls.autoRotate = true; controls.autoRotateSpeed = 2.4;
+      controls.minPolarAngle = Math.PI * 0.18; controls.maxPolarAngle = Math.PI * 0.62;
+      controls.target.set(0, 1.0, 0);
+      const loader = new GLTFLoader();
+      loader.load('/assets/agents/' + code + '.glb', (gltf) => {
+        if (!renderer) return; // disposed meanwhile
+        const obj = gltf.scene;
+        let box = new THREE.Box3().setFromObject(obj);
+        const size = box.getSize(new THREE.Vector3());
+        const scl = 1.7 / Math.max(size.x, size.y, size.z || 1);
+        obj.scale.setScalar(scl);
+        box = new THREE.Box3().setFromObject(obj);
+        const c = box.getCenter(new THREE.Vector3());
+        obj.position.x -= c.x; obj.position.z -= c.z;
+        obj.position.y -= box.min.y; // stand on floor
+        baseY = obj.position.y;
+        controls.target.set(0, (box.max.y - box.min.y) * 0.5, 0);
+        camera.position.set(0, (box.max.y - box.min.y) * 0.55, 3.4);
+        scene.add(obj); current = obj;
+        const img = container.querySelector('img'); if (img) img.style.display = 'none'; // hide portrait, GLB is live
+      }, undefined, () => { showPortrait(); }); // GLB failed → keep masked portrait fallback
+      try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
+      (function animate(){
+        raf = requestAnimationFrame(animate);
+        try { controls && controls.update(); } catch(_){}
+        if (current) current.position.y = baseY + Math.sin(performance.now() / 720) * 0.07; // gentle hover
+        try { renderer && renderer.render(scene, camera); } catch(_){}
+      })();
+      return true;
+    }
+    function dispose(){
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      try { ro && ro.disconnect(); } catch(_){} ro = null;
+      try { controls && controls.dispose(); } catch(_){}
+      try { if (renderer) { renderer.forceContextLoss && renderer.forceContextLoss(); renderer.dispose(); renderer.domElement && renderer.domElement.remove(); } } catch(_){}
+      scene = camera = controls = renderer = current = host = null;
+    }
+    return { init, dispose };
+  })();
+
+  // Close the agent room overlay AND dispose the 3D renderer (avoids leaked WebGL contexts)
+  window._closeAgentRoom = function(){
+    const o = document.getElementById('agentRoomOverlay');
+    if (o) o.style.display = 'none';
+    try { window._roomViewer && window._roomViewer.dispose(); } catch(_){}
+  };
+
   window.openAgentRoom = function(agentId) {
     const ADEFS = {
       shaddai:{name:'SHADDAI',icon:'👑',role:'Supreme Orchestrator',color:'#ff6b35',glow:'255,107,53',
@@ -40788,28 +41081,32 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       quill:['Copy','Docs','SEO','Voice','Clarity'],
       pikadon:['Security','Auth','Audits','Compliance','Secrets'],
     }[agentId]||['AI','Agents','SHADDAI'];
-    // REAL attributes derived from the live skill catalog (/api/skills/stats) — no hardcoded numbers.
-    const _ss = (window._SKILL_STATS && window._SKILL_STATS.bakedByAgent) || {};
-    const _mine = _ss[a.name] || 0;
-    const _max = Math.max(1, ...Object.values(_ss));
-    const _sorted = Object.entries(_ss).sort((x,y)=>y[1]-x[1]);
-    const _rankIdx = _sorted.findIndex(([n])=>n===a.name);
-    const _nAgents = _sorted.length || 7;
-    const _recipes = (window._SKILL_STATS && window._SKILL_STATS.recipes) || 126;
-    const _rankNum = _rankIdx < 0 ? _nAgents : _rankIdx + 1;
-    const traitBars = _mine ? [
-      ['Skills mastered',       Math.round(_mine / _max * 100),                 a.color,   _mine.toLocaleString()],
-      ['Rank by skills',        Math.round((1 - (_rankNum - 1) / _nAgents) * 100), '#ffd700', '#' + _rankNum + ' / ' + _nAgents],
-      ['Deterministic recipes', 100,                                            '#00ff88', String(_recipes)],
+    // REAL tool inventory — count tools whose `agents` array includes THIS agent's code (GET /api/agent/tools). No fake/inflated numbers.
+    const CODE = a.name; // uppercase code, e.g. SHADDAI
+    const _AGENT_CODES = ['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
+    const _allTools = (window._ROOM_AGENT_TOOLS || []);
+    const _toolsFor = (code) => _allTools.filter(t => Array.isArray(t.agents) && t.agents.includes(code));
+    const _myTools = _toolsFor(CODE);
+    const _toolCount = _myTools.length;
+    const _maxToolCount = Math.max(1, ..._AGENT_CODES.map(n => _toolsFor(n).length));
+    const _lv = 3 + txCount;
+    const _toolsReady = _allTools.length > 0;
+    const traitBars = _toolsReady ? [
+      ['Real tools', Math.round(_toolCount / _maxToolCount * 100), a.color,    String(_toolCount)],
+      ['Level',      Math.min(100, _lv * 4),                       '#ffd700',  'LV ' + _lv],
+      ['Jobs done',  Math.min(100, txCount * 10),                  '#00ff88',  String(txCount)],
     ] : [
-      ['Skills mastered', 6, a.color, 'loading…'],
-      ['Rank by skills', 6, '#ffd700', '…'],
-      ['Deterministic recipes', 100, '#00ff88', String(_recipes)],
+      ['Real tools', 6,                      a.color,   '…'],
+      ['Level',      Math.min(100, _lv * 4), '#ffd700', 'LV ' + _lv],
+      ['Jobs done',  Math.min(100, txCount * 10), '#00ff88', String(txCount)],
     ];
-    // REAL full-body FLUX art of the agent standing in its room (portrait fallback, then sprite)
-    const spriteHtml = `<img src="/api/forge/art/char-${agentId}.png" alt="${a.name}"
-        style="height:200px;width:auto;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(${a.glow},0.6));${mood==='sleeping'?'opacity:.6;':''}"
-        onerror="this.onerror=null;this.src='/assets/agents/${a.name}-portrait.png';this.style.borderRadius='12px';this.style.height='180px'">`;
+    // 3D GLB VIEWER container (hover + auto-rotate + drag-to-spin). Masked portrait sits inside as instant fallback
+    // (background softened via radial mask so it isn't a hard rectangle). _roomViewer.init() is called after mount.
+    const spriteHtml = `<div id="roomModel3D_${agentId}" style="width:300px;height:330px;position:relative;display:flex;align-items:center;justify-content:center;cursor:grab;${mood==='sleeping'?'opacity:.75;':''}" title="Drag to spin">
+        <img src="/assets/agents/${a.name}-portrait.png" alt="${a.name}"
+          style="max-height:300px;max-width:100%;object-fit:contain;-webkit-mask-image:radial-gradient(ellipse 62% 72% at 50% 44%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 62% 72% at 50% 44%,#000 58%,transparent 100%);filter:drop-shadow(0 10px 22px rgba(${a.glow},0.6))"
+          onerror="this.onerror=null;this.src='/api/forge/art/char-${agentId}.png'">
+      </div>`;
 
     const roomItemsHtml = roomItems.length
       ? roomItems.map(id=>{
@@ -40881,7 +41178,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <!-- ══ HEADER BAR ══ -->
       <div style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,0.75);backdrop-filter:blur(18px);border-bottom:1px solid rgba(${a.glow},0.38)">
         <div style="display:flex;align-items:center;gap:12px">
-          <button onclick="document.getElementById('agentRoomOverlay').style.display='none'"
+          <button onclick="_closeAgentRoom()"
             style="padding:5px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);border-radius:5px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:all 0.15s"
             onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">← BACK</button>
           <div style="display:flex;align-items:baseline;gap:9px">
@@ -40895,9 +41192,6 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             <div style="width:7px;height:7px;border-radius:50%;background:${moodColor};box-shadow:0 0 9px ${moodColor}"></div>
             <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:${moodColor}">${moodLabel}</span>
           </div>
-          <button onclick="openRoomCustomizer('${agentId}')"
-            style="padding:6px 14px;background:rgba(${a.glow},0.08);border:1px solid rgba(${a.glow},0.32);border-radius:5px;color:${a.color};cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:all 0.15s"
-            onmouseover="this.style.background='rgba(${a.glow},0.18)'" onmouseout="this.style.background='rgba(${a.glow},0.08)'">🎨 DECORATE</button>
           <button onclick="openAgentHireModal('${agentId}')"
             style="padding:7px 20px;background:linear-gradient(135deg,${a.color},rgba(${a.glow},0.5));border:none;border-radius:5px;color:#000;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;font-weight:700;box-shadow:0 0 18px rgba(${a.glow},0.55),0 3px 8px rgba(0,0,0,0.5);transition:all 0.15s"
             onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 0 28px rgba(${a.glow},0.75),0 5px 12px rgba(0,0,0,0.55)'"
@@ -41076,23 +41370,19 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               </div>
             </div>
 
-            <!-- Skill tags -->
+            <!-- REAL TOOLS — live from /api/agent/tools, filtered to this agent's code. Click a chip to run it or open the Tool Browser. -->
             <div>
-              <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(${a.glow},0.5);letter-spacing:2px;margin-bottom:7px">▸ SKILLS</div>
-              <div style="display:flex;flex-wrap:wrap;gap:5px">
-                ${skillTags.map(tag=>`<div style="padding:3px 9px;background:rgba(${a.glow},0.1);border:1px solid rgba(${a.glow},0.28);border-radius:12px;font-family:'Share Tech Mono',monospace;font-size:6.5px;color:rgba(${a.glow},0.85)">${tag}</div>`).join('')}
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(${a.glow},0.5);letter-spacing:2px">▸ REAL TOOLS (${_toolsReady ? _toolCount : '…'})</div>
+                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('toolbrowser')"
+                  style="padding:3px 8px;background:rgba(${a.glow},0.1);border:1px solid rgba(${a.glow},0.3);border-radius:4px;color:${a.color};cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:6.5px;transition:all 0.15s"
+                  onmouseover="this.style.background='rgba(${a.glow},0.2)'" onmouseout="this.style.background='rgba(${a.glow},0.1)'">🛠 Browser</button>
               </div>
-            </div>
-
-            <!-- Collectibles decoration panel -->
-            <div id="roomDecor_${agentId}">
-              <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(${a.glow},0.5);letter-spacing:2px;margin-bottom:6px">▸ DECORATE (${roomItems.length}/5)</div>
-              ${roomItems.length>=5
-                ? '<div style="font-size:7.5px;color:rgba(255,255,255,0.28);font-family:\'Share Tech Mono\',monospace;line-height:1.55">Room full! Click an item on the shelf below to remove it.</div>'
-                : placeableItems
-                  ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${placeableItems}</div><div style="font-size:6.5px;color:rgba(255,255,255,0.18);margin-top:5px;font-family:'Share Tech Mono',monospace">↑ Click to place in this room</div>`
-                  : '<div style="font-size:7.5px;color:rgba(255,255,255,0.24);font-family:\'Share Tech Mono\',monospace">Earn collectibles to decorate!</div>'
-              }
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                ${_toolsReady
+                  ? (_myTools.slice(0,28).map(t=>`<div title="${(t.description||t.name).replace(/"/g,'&quot;')} — click to open in Tool Browser" onclick="_closeAgentRoom();if(typeof showView==='function')showView('toolbrowser')" style="padding:3px 9px;background:rgba(${a.glow},0.1);border:1px solid rgba(${a.glow},0.28);border-radius:12px;font-family:'Share Tech Mono',monospace;font-size:6.5px;color:rgba(${a.glow},0.85);cursor:pointer">${t.name}</div>`).join('') + (_myTools.length>28?`<div style="padding:3px 9px;font-family:'Share Tech Mono',monospace;font-size:6.5px;color:rgba(255,255,255,0.35)">+${_myTools.length-28} more…</div>`:''))
+                  : `<div style="font-size:7px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace">Loading live tool inventory…</div>`}
+              </div>
             </div>
 
             <!-- Action buttons -->
@@ -41103,18 +41393,14 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
                   style="padding:10px 12px;background:linear-gradient(135deg,rgba(${a.glow},0.2),rgba(${a.glow},0.06));border:1px solid rgba(${a.glow},0.42);border-radius:6px;color:${a.color};cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='linear-gradient(135deg,rgba(${a.glow},0.3),rgba(${a.glow},0.1))';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='linear-gradient(135deg,rgba(${a.glow},0.2),rgba(${a.glow},0.06))';this.style.transform=''">⚡ Assign Task to ${a.name}</button>
-                <button onclick="document.getElementById('agentRoomOverlay').style.display='none';setTimeout(()=>{if(typeof switchTab==='function')switchTab('chat')},100)"
+                <button onclick="_closeAgentRoom();if(typeof chatWithAgent==='function')chatWithAgent('${a.name}')"
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">💬 Chat with ${a.name}</button>
-                <button onclick="openRoomCustomizer('${agentId}')"
+                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('marketplace')"
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
-                  onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">🎨 Customize Room</button>
-                <button onclick="openCollectiblesShop()"
-                  style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
-                  onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
-                  onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">🏪 Open Shop</button>
+                  onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">🏪 Open Marketplace</button>
               </div>
             </div>
 
@@ -41123,6 +41409,23 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       </div><!-- end main grid -->
     `;
     overlay.style.display = 'flex';
+    overlay.dataset.agent = agentId;
+
+    // Mount the spinnable 3D GLB viewer (falls back to masked portrait inside the container on any failure)
+    try {
+      const _mc = document.getElementById('roomModel3D_' + agentId);
+      if (_mc && window._roomViewer) window._roomViewer.init(_mc, a.name, a.glow);
+    } catch(_){}
+
+    // If live tool inventory wasn't cached yet, fetch it then re-render this card once with the REAL numbers
+    if (!_toolsReady) {
+      window._ensureRoomTools().then(() => {
+        const ov = document.getElementById('agentRoomOverlay');
+        if (ov && ov.style.display !== 'none' && ov.dataset.agent === agentId && (window._ROOM_AGENT_TOOLS||[]).length) {
+          window.openAgentRoom(agentId);
+        }
+      });
+    }
   };
 
   function _patchRoomItems(agentId) {
