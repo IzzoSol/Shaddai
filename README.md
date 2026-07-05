@@ -6,14 +6,15 @@
 
 **Seven minds. Five thousand skills. One key that's yours.**
 
-Forge your own AI operatives, run autonomous workflows, and walk a living 3D world —
-all powered by *your* free API key. No lock-in. No rented intelligence.
+Forge your own AI operatives, chain them into autonomous workflows, and walk a living 3D world —
+all running on *your* free API key. No lock-in. No rented intelligence. No middleman between you
+and the model.
 
 <br>
 
 [![Status](https://img.shields.io/badge/status-live-00ff88?style=for-the-badge)](https://github.com/IzzoIzzoIzzo/Shaddai)
 [![Agents](https://img.shields.io/badge/agents-7-00b4d8?style=for-the-badge)](#-the-council)
-[![Skills](https://img.shields.io/badge/skills-5%2C000%2B-9b5de5?style=for-the-badge)](#-what-it-does)
+[![Skills](https://img.shields.io/badge/skills-5%2C000%2B-9b5de5?style=for-the-badge)](#-what-you-can-do)
 [![Inference](https://img.shields.io/badge/inference-BYOK%20·%20%240-f77f00?style=for-the-badge)](#-bring-your-own-key)
 [![License](https://img.shields.io/badge/license-proprietary-64748b?style=for-the-badge)](#-license)
 
@@ -23,52 +24,118 @@ all powered by *your* free API key. No lock-in. No rented intelligence.
 
 ---
 
-## ✦ What it is
+## ✦ The short version
 
-SHADDAI is a **sovereign AI agent marketplace** — a council of seven specialized agents that
-research, build, design, write, secure, and ship. You bring a free API key (Groq, Gemini,
-OpenRouter…), and the empire runs on *your* terms: forge custom operatives, chain them into
-autonomous workflows, trade skills in the Bazaar, and explore it all inside a real-time 3D world.
+SHADDAI is a **sovereign AI agent platform**. Where most tools give you one assistant behind a
+paywalled meter, SHADDAI gives you a **council of seven specialized agents**, a **forge** to build
+more, a **3D world** they live in, and a simple promise underneath all of it: the intelligence runs
+on *your* key, so the marginal cost of thinking is **zero**.
 
-> Not a chatbot wrapper. A full agentic operating layer — with a body, a world, and a will.
+It is not a chatbot with a nice skin. It's an agentic operating layer — with a body, a world, and a
+will of its own.
+
+---
+
+## ✦ Why it exists
+
+Every AI product today rents you intelligence by the token. You pour work into prompts, context, and
+workflows — and the moment you stop paying, all of it evaporates. Your agents were never yours. They
+were tenants in someone else's model.
+
+SHADDAI is built on the opposite premise: **you already have access to frontier models for free.**
+Groq, Google, OpenRouter, and others hand out generous free keys to Llama-3.3-70B and its peers.
+SHADDAI simply gives that raw capability a *structure* — memory, tools, personalities, a marketplace,
+and a world — and then gets out of the way of your key.
+
+The result is an empire you own outright. Fork it, host it, forge inside it. Nothing here is holding
+your work hostage.
 
 ---
 
 ## ✦ The Council
 
-| Agent | Domain | Role |
-|-------|--------|------|
-| 👑 **SHADDAI** | Orchestration | Supreme strategist — coordinates the council, makes the final call |
-| 🛰️ **NEXUS** | Backend & Infra | Architects APIs, scaling, the tool registry, the workflow engine |
-| 💰 **ZEROX** | Revenue | Billing, pricing, unit economics, subscription flows |
-| 🔮 **ORACLE** | Research | Market intel, trends, competitive analysis, observability |
-| 🎨 **TURTLE** | Design | UI/UX, frontend, animation, the feel of everything |
-| ✍️ **QUILL** | Writing | Docs, copy, guides, error messages, clarity |
-| 🛡️ **PIKADON** | Security | Audits, PII, secrets, approval gates, compliance |
+Seven agents, each a specialist with its own mandate, memory, and voice. They collaborate, disagree,
+and reach consensus — you can summon one, or convene them all.
+
+| Agent | Domain | What they own |
+|-------|--------|---------------|
+| 👑 **SHADDAI** | Orchestration | The final call. Strategy, prioritization, and quality before anything ships. Lives in the floating sky temple. |
+| 🛰️ **NEXUS** | Backend & Infra | APIs, scaling, the tool registry, the workflow engine. Favors simple, testable solutions over clever ones. |
+| 💰 **ZEROX** | Revenue | Billing, pricing, unit economics, subscriptions. Thinks in MRR, LTV, and margin. |
+| 🔮 **ORACLE** | Research | Market intelligence, trends, competitive analysis, observability. Connects dots and questions assumptions. |
+| 🎨 **TURTLE** | Design | UI/UX, frontend, motion, the *feel* of everything. Cares about flow and delight. |
+| ✍️ **QUILL** | Writing | Docs, copy, guides, error messages. Obsessed with the person on the other end reading it. |
+| 🛡️ **PIKADON** | Security | Audits, PII, secrets, approval gates, compliance. Assumes worst-case, checks every assumption. |
+
+Ask them by name — *"NEXUS, build the billing router"*, *"PIKADON, review this for holes"* — and each
+answers from its own expertise.
 
 ---
 
-## ✦ What it does
+## ✦ What you can do
 
-- **🔨 The Forge** — summon custom AI operatives with real 3D models, equip skills & tools, awaken them
-- **🔗 Workflows** — chain agents into autonomous, repeatable pipelines
-- **🌐 SHADDAI World** — a living 3D city: walk among your agents, enter their halls, meet SHADDAI in the floating sky temple
-- **🛒 The Bazaar** — trade skills, services, and forged operatives
-- **🎬 Media Studio** — the built-in **[SHADDAI Clipper](https://github.com/IzzoIzzoIzzo/Shaddai-Clipper-Feature-)**, AI writer, voice/TTS, and more
-- **🧠 5,000+ real skills** — executable tools, not prompts, wired into every agent
-- **💾 [AURA](https://github.com/IzzoIzzoIzzo/aura)** — a dependency-free token-saver that answers recurring prompts for free
+**🔨 Forge operatives.** The Forge is a real agent builder: pick an archetype, give it a 3D body,
+equip skills and tools, and awaken it. Forged agents wear the model you chose and join your roster.
+
+**🔗 Chain workflows.** Compose agents into autonomous, repeatable pipelines — research → draft →
+review → publish — that run without you babysitting each step.
+
+**🌐 Walk SHADDAI World.** A living 3D city rendered in Three.js. Each agent has a hall you can enter;
+skills and stats are real, pulled live from the backend. Ride the Grand Lift and skybridge up to meet
+SHADDAI in the temple floating above the Sky Nexus.
+
+**🛒 Trade in the Bazaar.** List and buy skills, services, and forged operatives, settled through an
+on-platform credit ledger.
+
+**🎬 Create in the Media Studio.** The built-in [SHADDAI Clipper](https://github.com/IzzoIzzoIzzo/Shaddai-Clipper-Feature-)
+turns long video into captioned vertical shorts; alongside it sit an AI writer, voice/TTS, and more.
+
+**🧠 Run 5,000+ real skills.** These are executable tools wired into every agent — not prompt
+templates. They fetch live data, run computations, hit real APIs, and return real results.
+
+**💾 Save tokens with [AURA](https://github.com/IzzoIzzoIzzo/aura).** A dependency-free layer that
+answers recurring prompts for free — from cache, computation, and skill recipes — before a single
+token is spent.
 
 ---
 
-## ✦ Bring Your Own Key
+## ✦ How it actually works
 
-SHADDAI never rents you intelligence. Drop in a **free** key from Groq / Gemini / OpenRouter and
-the council routes to **Llama-3.3-70B** (and friends) at **$0 inference cost**. Your key, your
-data, your empire.
+```
+  your free key
+       │
+       ▼
+  ┌─────────────┐   routes to    ┌────────────────────┐
+  │  Agent      │───────────────▶│  Llama-3.3-70B      │
+  │  Engine     │◀───────────────│  (Groq / Gemini /   │
+  └─────────────┘   4-iter loop  │   OpenRouter …)     │
+       │                          └────────────────────┘
+       │ calls
+       ▼
+  ┌─────────────┐   ┌──────────┐   ┌───────────┐
+  │ 5,000+ real │   │ episodic │   │  the      │
+  │   skills    │   │  memory  │   │  Bazaar   │
+  └─────────────┘   └──────────┘   └───────────┘
+```
+
+Each agent runs a short reasoning loop: read the task, decide which skill to call, execute it against
+real data, and iterate. Groq is tried first for speed; if a key is missing or a call fails, the engine
+falls back gracefully so the empire never goes dark. Memory persists across sessions, so agents learn
+your context instead of starting cold every time.
+
+---
+
+## ✦ Bring your own key
+
+SHADDAI never sells you inference. Drop a **free** key into `backend/.env` and the council routes to
+70B-class models at **$0 marginal cost**:
 
 ```
 Free tier  →  your own key  →  full 70B agents, forever
 ```
+
+Your key. Your data. Your empire. When you outgrow the free tiers, swap in a paid key — the routing
+doesn't change, and neither does who's in control.
 
 ---
 
@@ -78,35 +145,37 @@ Free tier  →  your own key  →  full 70B agents, forever
 # 1. install
 cd backend && npm install
 
-# 2. configure (never commit this file)
+# 2. configure — never commit this file (it's gitignored)
 echo "GROQ_API_KEY=your_free_groq_key" > backend/.env
 
 # 3. launch
 npm start                      # serves on http://localhost:3000
 ```
 
-Then open **http://localhost:3000** — the Codex landing. Enter the dashboard, forge an
-operative, and step into the 3D world.
+Open **http://localhost:3000** — you land on the **Codex**, the ornate front gate. Step through to the
+dashboard, forge your first operative, and walk into the world.
 
-**Deploy:** push to `main` → auto-deploys on Render. Set `GROQ_API_KEY`, `ADMIN_TOKEN`,
-and `SHADDAI_MERCHANT_WALLET` in the dashboard env.
+**Deploy:** push to `main` and Render auto-deploys. Set `GROQ_API_KEY`, `ADMIN_TOKEN`, and
+`SHADDAI_MERCHANT_WALLET` in the Render dashboard (never in the repo).
 
 ---
 
 ## ✦ The SHADDAI Family
 
-| Repo | What |
-|------|------|
-| **[Shaddai](https://github.com/IzzoIzzoIzzo/Shaddai)** | This empire — the full agent platform |
-| **[aura](https://github.com/IzzoIzzoIzzo/aura)** | Open-source LLM token-saver · CLI + MCP + library (`npx shaddai-aura`) |
-| **[Shaddai-Clipper-Feature-](https://github.com/IzzoIzzoIzzo/Shaddai-Clipper-Feature-)** | Long video → captioned vertical shorts (ffmpeg + Whisper) |
+Three repositories, one lineage. The empire is proprietary; the tools it's built on are open.
+
+| Repo | What it is |
+|------|-----------|
+| **[Shaddai](https://github.com/IzzoIzzoIzzo/Shaddai)** | This empire — the full seven-agent platform, forge, world, and marketplace |
+| **[aura](https://github.com/IzzoIzzoIzzo/aura)** | Open-source LLM token-saver · CLI + MCP server + library · `npx shaddai-aura` · MIT |
+| **[Shaddai-Clipper-Feature-](https://github.com/IzzoIzzoIzzo/Shaddai-Clipper-Feature-)** | Long video → captioned vertical shorts (ffmpeg + Whisper) · MIT |
 
 ---
 
 ## ✦ License
 
-Proprietary — © SHADDAI. The open-source components (**aura**, **clipper**) ship under MIT
-in their own repositories.
+Proprietary — © SHADDAI. The open-source components (**aura**, **clipper**) ship under MIT in their
+own repositories.
 
 <div align="center">
 <br>
