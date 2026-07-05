@@ -348,7 +348,7 @@ window.__worldBuilt = false;
         scene.updateMatrixWorld(true);                 // ensure matrixWorld is current before measuring
         const ROUND   = { NEXUS:true, ORACLE:true };   // round buildings → circle collider (dome / spires)
         const ASSIGN  = 130;                           // a mesh belongs to a building if its center is within this of the sector center
-        const BAND_LO = 1.5, BAND_HI = 10;             // player ground-level collision band (world Y) — only geometry crossing this counts
+        const BAND_LO = 4.0, BAND_HI = 10;             // player collision band (world Y): start ABOVE low foundation/base slabs + steps so they aren't measured as walls (that inflated the collider into a "force field" you couldn't approach). Only true upright walls (which rise through y4-10) size the collider now.
         const CORE_R  = 60;                            // round buildings: only meshes centered within this of the sector size the radius (core dome, not satellites)
         const acc = {};
         L.sectors.forEach(s=>{ if(s && s.code && s.code!=='SHADDAI' && s.pos) acc[s.code] = { cx:s.pos[0], cz:s.pos[1], minX:Infinity, maxX:-Infinity, minZ:Infinity, maxZ:-Infinity, coreR:0, anyR:0, n:0 }; });
@@ -1062,7 +1062,7 @@ if (window.buildWorldInteriors) {
     (function(){
       var PANELS = {
         ZEROX:  [ { label:'📈 LIVE CHART',      url:'/zerox-chart.html' },
-                  { label:'🐟 MARKET TERMINAL', url:'/tufish.html' } ],
+                  { label:'🐟 TUFISH · RESEARCH+AI', url:'/tufish.html' } ],
         ORACLE: [ { label:'🔭 OBSERVATORY',     url:'/oracle-sky.html' } ]
       };
       var ov=document.createElement('div');

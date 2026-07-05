@@ -51,7 +51,7 @@
     ZEROX   : { shape: 'box', hx: 92,  hz: 92 }  // The Markets exchange (was 65)
   };
   var DEFAULT_BOX = 50;   // fallback half-extent for an unknown building type
-  var PLAYER_BUF  = 2.5;  // stop the player this far OUTSIDE the wall so the 1st-person camera never clips INTO it
+  var PLAYER_BUF  = 1.2;  // stop the player just outside the wall (tighter — lets you get right up to the building; was 2.5 which felt like a force field)
 
   /* ── MEASURED FOOTPRINTS (real geometry) ─────────────────────────────────
    * When SHADDAI-WORLD-3D.html finishes building the world it measures each
