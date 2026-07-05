@@ -175,6 +175,17 @@
 }
 #shaddaiHome .hh-tile:hover .hh-tile-icon { transform: scale(1.12); }
 
+/* HuggingFace-generated tile art (replaces the emoji glyph when available) */
+#shaddaiHome .hh-tile-art {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--hh-accent) 30%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hh-cyan) 22%, transparent);
+}
+
 /* Tile label — uppercase mono */
 #shaddaiHome .hh-tile-label {
   font-family: 'Share Tech Mono', monospace;

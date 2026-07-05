@@ -102,3 +102,7 @@ _backups/
 *.bak
 *.bak-*
 *.bak_*
+
+# runtime server logs
+backend/_srvlog*.txt
+_srvlog*.txt

@@ -338,6 +338,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.static(path.join(__dirname, '../public'), {
+  index: false,   // don't auto-serve index.html for '/' — the '/' route serves the Codex landing; '/dashboard' serves the app
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -1506,8 +1507,20 @@ app.use('/games', express.static(path.join(__dirname, '..', 'games')));
 // Self-heal the 7 council character images on boot (forge-art is gitignored → regenerate from HF env keys)
 try { require('./lib/char-gen').ensureCouncilChars(); } catch (e) { console.warn('[prod] council self-heal skipped:', e.message); }
 
+// Landing page = the Codex (The Celestial Almanac). The full dashboard app lives at /dashboard.
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/codex.html'));
+});
+app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// API 404 GUARD — any unmatched /api/* path returns JSON, never the SPA HTML.
+// Without this the catch-all below serves index.html for a missing endpoint, and the
+// client's res.json() blows up with "Unexpected token '<', <!DOCTYPE...". This keeps
+// failed fetches as clean JSON 404s (e.g. the 3D world loading inside the dashboard).
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.path, method: req.method });
 });
 
 app.get('*', (req, res) => {

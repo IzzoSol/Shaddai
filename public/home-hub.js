@@ -19,27 +19,30 @@
     };
   }
 
+  /* Each tile prefers a HuggingFace-generated art PNG (served from /api/forge/art/<art>.png,
+     the same pre-generated set the Forge + Media tabs use). The emoji is kept as an automatic
+     fallback if the image ever fails to load, so tiles never render blank. */
   var REGISTRY = {
-    agents:      { icon: '🤖', label: 'Agents',       action: go('agents') },
-    forge:       { icon: '⬡',  label: 'Forge',        action: go('forge') },
-    workflow:    { icon: '🔗', label: 'Workflows',    action: go('workflow') },
-    marketplace: { icon: '🛒', label: 'Bazaar',       action: go('marketplace') },
-    chat:        { icon: '💬', label: 'Chat',         action: go('chat') },
-    pipeline:    { icon: '📈', label: 'Markets',      action: go('pipeline') },
-    skills:      { icon: '🧠', label: 'Skills',       action: go('skills') },
-    world:       { icon: '🌐', label: 'World',        action: function () {
+    agents:      { icon: '🤖', art: 'agent-shaddai',       label: 'Agents',       action: go('agents') },
+    forge:       { icon: '⬡',  art: 'arch-vanguard',       label: 'Forge',        action: go('forge') },
+    workflow:    { icon: '🔗', art: 'module-triggers',     label: 'Workflows',    action: go('workflow') },
+    marketplace: { icon: '🛒', art: 'module-gallery',      label: 'Bazaar',       action: go('marketplace') },
+    chat:        { icon: '💬', art: 'module-aiwriter',     label: 'Chat',         action: go('chat') },
+    pipeline:    { icon: '📈', art: 'module-pipeline',     label: 'Markets',      action: go('pipeline') },
+    skills:      { icon: '🧠', art: 'arch-psionic',        label: 'Skills',       action: go('skills') },
+    world:       { icon: '🌐', art: 'hero-light-cycle',    label: 'World',        action: function () {
                     try { window.open('/SHADDAI-WORLD-3D.html', '_blank'); } catch (e) {}
                   } },
-    office:      { icon: '🏢', label: 'Orchestrator', action: go('office') },
+    office:      { icon: '🏢', art: 'module-automation',   label: 'Orchestrator', action: go('office') },
     settings:    { icon: '⚙',  label: 'Settings',     action: go('settings') },
     /* Extra views that can be added back via the Add menu */
-    media:       { icon: '🎬', label: 'Media',        action: go('media') },
-    projects:    { icon: '📁', label: 'Projects',     action: go('projects') },
-    apis:        { icon: '🔌', label: 'APIs',         action: go('apis') },
-    social:      { icon: '📣', label: 'Social',       action: go('social') },
-    automation:  { icon: '⚡', label: 'Automation',   action: go('automation') },
+    media:       { icon: '🎬', art: 'module-videostudio',  label: 'Media',        action: go('media') },
+    projects:    { icon: '📁', art: 'module-contentseries',label: 'Projects',     action: go('projects') },
+    apis:        { icon: '🔌', art: 'module-chartsignal',  label: 'APIs',         action: go('apis') },
+    social:      { icon: '📣', art: 'module-musicaudio',   label: 'Social',       action: go('social') },
+    automation:  { icon: '⚡', art: 'module-scheduler',    label: 'Automation',   action: go('automation') },
     billing:     { icon: '💳', label: 'Billing',      action: go('billing') },
-    'library-notes': { icon: '📚', label: 'Library',  action: go('library-notes') }
+    'library-notes': { icon: '📚', art: 'module-imagegen', label: 'Library',  action: go('library-notes') }
   };
 
   var DEFAULT_LAYOUT = [
@@ -91,7 +94,19 @@
     var tile = el('div', 'hh-tile');
     tile.setAttribute('data-tile', id);
 
-    var icon = el('div', 'hh-tile-icon', meta.icon);
+    var icon = el('div', 'hh-tile-icon');
+    if (meta.art) {
+      // HuggingFace-generated tile art; if it fails to load, drop back to the emoji glyph.
+      var img = document.createElement('img');
+      img.className = 'hh-tile-art';
+      img.alt = meta.label;
+      img.loading = 'lazy';
+      img.src = '/api/forge/art/' + meta.art + '.png';
+      img.onerror = function () { icon.textContent = meta.icon; img.remove(); };
+      icon.appendChild(img);
+    } else {
+      icon.textContent = meta.icon;
+    }
     var label = el('div', 'hh-tile-label', meta.label);
     tile.appendChild(icon);
     tile.appendChild(label);

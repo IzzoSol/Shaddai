@@ -45699,6 +45699,12 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
 
   // ── STAT CARDS ──
   function injectStats() {
+    // DISABLED: the KPI stat bar was injected as the first child of #dashView, above the
+    // COMMAND HUB — the ~97px "gap right above ⚡ COMMAND HUB" the owner kept flagging.
+    // The COMMAND HUB now sits flush at the top. (Re-enable by removing this return if the
+    // Total Agents / Tasks / Credits / Plan cards are wanted — place them AFTER the hub.)
+    return;
+    /* eslint-disable no-unreachable */
     const dash = document.getElementById('dashView');
     if (!dash) return;
     if (document.getElementById('shaddai-stat-bar')) return;
