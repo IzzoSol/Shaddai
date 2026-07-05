@@ -77,6 +77,12 @@
                           // circle:{ box:false, cx, cz, r, r2 }
   var _built     = false;
 
+  /* Buildings are NO LONGER solid. Design change (owner): remove the collider
+   * "force field" entirely — the player walks freely up to, under, and through the
+   * building footprints. Buildings sit elevated (on pillars) and you go INSIDE via
+   * the elevator, not by bumping a wall. Set this true to restore solid walls. */
+  var BUILDINGS_SOLID = false;
+
   /* ── Builder ────────────────────────────────────────────────────────────── */
   function buildWorldCollision(layout) {
     _colliders = [];
@@ -85,6 +91,13 @@
     if (!layout) {
       console.warn('[world-collision] No layout provided — collisions disabled.');
       return null;
+    }
+
+    if (!BUILDINGS_SOLID) {
+      // No building colliders. __hubColliders (bazaar stalls) still apply via _pushOut.
+      _built = true;
+      console.log('[world-collision] Building colliders DISABLED — free movement (buildings on pillars, enter via elevator).');
+      return { colliders: _colliders };
     }
 
     var sectors = (layout.sectors && Array.isArray(layout.sectors)) ? layout.sectors : [];
