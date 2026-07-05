@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Building Preview</title>
+<style>
+  html,body{margin:0;height:100%;background:#04060d;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#cfe6ff}
+  #c{display:block;width:100vw;height:100vh}
+  #ui{position:fixed;top:12px;left:12px;z-index:10;background:rgba(6,10,20,.72);border:1px solid rgba(39,224,255,.35);
+      border-radius:10px;padding:10px 12px;max-width:min(92vw,560px);backdrop-filter:blur(6px)}
+  #ui .t{color:#8fefff;letter-spacing:2px;font-weight:bold;margin-bottom:4px}
+  #ui .h{opacity:.7;font-size:12px;margin-bottom:8px}
+  #ui button{background:rgba(39,224,255,.10);border:1px solid rgba(39,224,255,.45);color:#8fefff;font-family:inherit;
+      font-size:12px;letter-spacing:1px;padding:6px 10px;margin:3px 4px 0 0;border-radius:7px;cursor:pointer}
+  #ui button:hover{background:rgba(39,224,255,.22)}
+  #err{position:fixed;bottom:0;left:0;right:0;background:rgba(120,0,0,.92);color:#fff;font:12px/1.5 monospace;
+      padding:8px 12px;white-space:pre-wrap;display:none;z-index:20}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div class="t">SHADDAI · BUILDING PREVIEW</div>
+  <div class="h">Drag = orbit · scroll = zoom · right-drag = pan. Click a building to fly to its DOOR (center-facing side).</div>
+  <div id="buttons"></div>
+</div>
+<div id="err"></div>
+
+<!-- the REAL modules the world uses -->
+<script src="/world-layout.js"></script>
+<script src="/world-buildings.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const errBox = document.getElementById('err');
+function err(m){ errBox.style.display='block'; errBox.textContent += m + '\n'; }
+window.addEventListener('error', e => err('JS: '+(e.message||e)+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||'?')));
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0f18);
+scene.fog = new THREE.FogExp2(0x0a0f18, 0.0016);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 6000);
+camera.position.set(150, 110, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 25, 0); controls.enableDamping = true; controls.dampingFactor = 0.08; controls.update();
+
+// lighting close to the world's
+scene.add(new THREE.AmbientLight(0x445566, 0.85));
+scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x202838, 1.15));
+const sun  = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(90, 180, 70);  scene.add(sun);
+const sun2 = new THREE.DirectionalLight(0xcfe2ff, 0.6); sun2.position.set(-90, 110, -70); scene.add(sun2);
+
+// simple ground + grid so buildings read as grounded
+const ground = new THREE.Mesh(new THREE.CircleGeometry(900, 72),
+  new THREE.MeshStandardMaterial({ color:0x0c1119, roughness:0.95, metalness:0.02 }));
+ground.rotation.x = -Math.PI/2; ground.position.y = -0.15; scene.add(ground);
+scene.add(new THREE.GridHelper(1800, 72, 0x1b3a55, 0x0f1c28));
+
+// BUILD THE REAL BUILDINGS via the actual module
+const layout = window.WORLD_LAYOUT;
+const loaderStub = { load(){}, setDRACOLoader(){} };
+let built = null;
+try {
+  if (!layout) throw new Error('WORLD_LAYOUT not loaded');
+  built = window.buildWorldBuildings(THREE, scene, layout, (x,z)=>0, loaderStub);
+} catch (e) { err('BUILD FAILED: ' + (e && e.message) + '\n' + ((e && e.stack)||'').split('\n').slice(1,5).join('\n')); }
+
+// fly-to-door buttons per building
+const S = (layout && layout.sectors) || [];
+const bwrap = document.getElementById('buttons');
+function addBtn(label, cx, cz){
+  const b = document.createElement('button'); b.textContent = label;
+  b.onclick = () => flyToDoor(cx, cz); bwrap.appendChild(b);
+}
+S.forEach(s => addBtn(s.code, s.pos[0], s.pos[1]));
+const bz = layout && layout.landmark && layout.landmark('bazaar'); if (bz && bz.pos) addBtn('BAZAAR', bz.pos[0], bz.pos[1]);
+addBtn('◎ ALL', 0, 0);
+
+const _from = new THREE.Vector3(), _to = new THREE.Vector3(); let _fly = 0;
+function flyToDoor(cx, cz){
+  const len = Math.hypot(cx, cz);
+  // frontDir = toward world-center (matches where the real door faces); SHADDAI (center) faces -Z
+  const dnx = len < 1 ? 0 : -cx/len, dnz = len < 1 ? -1 : -cz/len;
+  if (cx === 0 && cz === 0 && len < 1 && bwrap.lastChild && false) {}
+  if (arguments.length && cx===0 && cz===0) { // ◎ ALL
+    _to.set(150,110,200); controls.target.set(0,25,0);
+  } else {
+    // stand outside the wall on the door side, looking at the doorway
+    const standX = cx + dnx*135, standZ = cz + dnz*135;
+    _to.set(standX, 42, standZ);
+    controls.target.set(cx + dnx*45, 26, cz + dnz*45);
+  }
+  _from.copy(camera.position); _fly = 1;
+}
+
+function loop(){
+  requestAnimationFrame(loop);
+  if (_fly > 0){ _fly = Math.max(0, _fly - 0.04); camera.position.lerpVectors(_to, _from, _fly); }
+  controls.update();
+  renderer.render(scene, camera);
+}
+loop();
+addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+</script>
+</body>
+</html>

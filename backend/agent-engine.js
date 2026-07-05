@@ -47,8 +47,13 @@ const MEMORY_FILE = path.join(__dirname, 'data', 'agent-memory.json');
 
 const GROQ_KEY     = process.env.GROQ_API_KEY || process.env.GROQ_KEY || '';
 const OLLAMA_URL   = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile';
+const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
+// Local-model tuning (env-overridable). Defaults raised so the tool-laden system prompt fits the
+// context window (the old num_ctx:4096 overflowed → Ollama hung the full timeout → agent runs failed).
+const OLLAMA_NUM_CTX     = parseInt(process.env.OLLAMA_NUM_CTX || '8192', 10);
+const OLLAMA_NUM_PREDICT = parseInt(process.env.OLLAMA_NUM_PREDICT || '512', 10);
+const OLLAMA_TIMEOUT_MS  = parseInt(process.env.OLLAMA_TIMEOUT_MS || '120000', 10);
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY || '';
@@ -57,11 +62,22 @@ const OPENAI_KEY     = process.env.OPENAI_API_KEY || '';
 const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
-// More FREE providers (no credit card): Cerebras (fast, free tier) + GitHub Models (free with a GitHub token).
-const CEREBRAS_KEY   = process.env.CEREBRAS_API_KEY || process.env.CEREBRAS_KEY || '';
-const CEREBRAS_MODEL = process.env.CEREBRAS_MODEL || 'llama-3.3-70b';
-const GITHUB_MODELS_KEY   = process.env.GITHUB_MODELS_TOKEN || process.env.GITHUB_TOKEN || '';
-const GITHUB_MODELS_MODEL = process.env.GITHUB_MODELS_MODEL || 'gpt-4o-mini';
+
+// BYOK helper — reads backend/data/byok-keys.json and returns the stored key for a
+// given provider (any tier, highest-permission first). Returns '' when nothing stored.
+// Called inside callLLM() so each invocation gets the freshest key without a restart.
+const _BYOK_FILE = path.join(__dirname, 'data', 'byok-keys.json');
+function getBYOKKey(provider) {
+  try {
+    const raw = fs.readFileSync(_BYOK_FILE, 'utf8');
+    const store = JSON.parse(raw);
+    for (const tier of ['alpha', 'pro', 'builder']) {
+      const entry = store[`${tier}:${provider}`];
+      if (entry && typeof entry.key === 'string' && entry.key.length > 8) return entry.key;
+    }
+  } catch (_) { /* file absent or parse error — fall back to env key */ }
+  return '';
+}
 
 // HTTP helper — axios with default timeout
 const http = (url, opts = {}) => axios.get(url, { timeout: 10000, ...opts });
@@ -1136,6 +1152,7 @@ const TOOLS = {
     schema: { markdown: 'string — markdown text' },
     agents: ['QUILL','TURTLE','NEXUS'],
     async execute({ markdown }) {
+      if (typeof markdown !== 'string' || !markdown.trim()) return JSON.stringify({ error: 'markdown_to_html needs a non-empty "markdown" string', example: { markdown: '# Title\n\nSome **bold** text.' } });
       let html = markdown
         .replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -1193,6 +1210,95 @@ const TOOLS = {
       const skill = skillIndex.getBakedSkill(id);
       if (!skill) return `Skill "${id}" not found in catalog. Use /find to search.`;
       return `Skill: ${skill.name}\nAgent: ${skill.agent}\nCategory: ${skill.category}\n\n${(skill.methodology || skill.description || 'No methodology available.').slice(0, 2000)}`;
+    }
+  },
+
+  run_skill: {
+    name: 'run_skill',
+    description: 'Execute one of the 3,437 SHADDAI skills by name or intent. For RECIPE skills, runs all tool steps deterministically and returns combined results. For MD/baked skills, returns the methodology so you can apply it. Prefer your own agent\'s skills first.',
+    schema: {
+      skill:  'string — skill name (e.g. "daily-market-snapshot") or a natural-language description of what you want (e.g. "analyze BTC dominance")',
+      input:  'object — optional input params passed to recipe {{input.X}} placeholders (e.g. {"symbol":"bitcoin","address":"abc"})',
+      agent:  'string — optional: restrict search to a specific agent\'s skills (ZEROX, ORACLE, NEXUS, TURTLE, QUILL, PIKADON, SHADDAI)'
+    },
+    agents: ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'],
+    execute: async ({ skill: skillQuery = '', input: inputParams = {}, agent: preferAgent } = {}) => {
+      const _runSkillDepth = (TOOLS.run_skill.execute._depth || 0);
+      if (_runSkillDepth >= 1) {
+        return `[run_skill] Recursion blocked: run_skill cannot be called from inside a run_skill execution. Use individual tools (fetch_price, search_web, etc.) directly instead.`;
+      }
+      TOOLS.run_skill.execute._depth = _runSkillDepth + 1;
+      const STEP_TIMEOUT_MS = 8000;
+      try {
+        if (!skillQuery || !skillQuery.trim()) {
+          return '[run_skill] Error: "skill" param is required. Provide a skill name or description.';
+        }
+        let skillMeta = null, skillContent = null;
+        const { RECIPES, loadSkillContent, findSkills } = skillIndex;
+        if (RECIPES[skillQuery]) {
+          skillMeta = { id: skillQuery, type: 'recipe' };
+          skillContent = { type: 'recipe', recipe: RECIPES[skillQuery] };
+        }
+        if (!skillContent) {
+          const searchAgent = preferAgent || undefined;
+          const matches = findSkills(skillQuery, { agent: searchAgent, limit: 1 });
+          if (matches.length === 0) {
+            const wideMatches = searchAgent ? findSkills(skillQuery, { limit: 1 }) : [];
+            if (wideMatches.length === 0) {
+              return `[run_skill] No skill found matching "${skillQuery}". Try a different description or use read_obsidian_skill to browse by name.`;
+            }
+            skillMeta = wideMatches[0];
+          } else {
+            skillMeta = matches[0];
+          }
+          skillContent = loadSkillContent(skillMeta.id, { type: skillMeta.type });
+          if (!skillContent) {
+            return `[run_skill] Skill "${skillMeta.id}" found in index but content could not be loaded.`;
+          }
+        }
+        const resolvedId = (skillMeta && skillMeta.id) || skillQuery;
+        if (skillContent.type === 'recipe') {
+          const recipe = skillContent.recipe;
+          const stepResults = [];
+          for (let i = 0; i < recipe.steps.length; i++) {
+            const step = recipe.steps[i];
+            if (step.tool === 'run_skill') {
+              stepResults.push({ tool: step.tool, result: '[blocked: run_skill cannot call itself]', error: true });
+              continue;
+            }
+            const resolvedParams = {};
+            Object.entries(step.params || {}).forEach(([k, v]) => {
+              resolvedParams[k] = skillIndex.interpolate(String(v), inputParams, stepResults);
+            });
+            const tool = resolveTool(step.tool);
+            if (!tool) {
+              stepResults.push({ tool: step.tool, result: `Unknown tool: ${step.tool}`, error: true });
+              continue;
+            }
+            try {
+              const result = await Promise.race([
+                tool.execute(resolvedParams),
+                new Promise((_, rej) => setTimeout(() => rej(new Error(`timeout after ${STEP_TIMEOUT_MS}ms`)), STEP_TIMEOUT_MS))
+              ]);
+              stepResults.push({ tool: step.tool, result: String(result).slice(0, 800) });
+            } catch (stepErr) {
+              stepResults.push({ tool: step.tool, result: `Error: ${stepErr.message}`, error: true });
+            }
+          }
+          const dataBlock = stepResults.map(s => `[${s.tool}]${s.error ? ' ERROR' : ''}: ${s.result}`).join('\n\n');
+          const note = recipe.synthesize
+            ? `\n\n[run_skill note] This skill has a suggested synthesis prompt — apply it to the data above:\n"${skillIndex.interpolate(recipe.synthesize, inputParams, stepResults).slice(0, 300)}..."`
+            : '';
+          return `Skill "${resolvedId}" — ${recipe.description || ''}\nAgent: ${recipe.agent}\nSteps executed: ${stepResults.length}\n\n${dataBlock}${note}`;
+        }
+        const s = skillContent.skill;
+        const content = skillContent.content || (s && s.methodology) || (s && s.description) || 'No methodology available.';
+        const agentLabel = (s && s.agent) || (skillMeta && skillMeta.agent) || 'SHADDAI';
+        const category = (s && s.category) ? `\nCategory: ${s.category}` : '';
+        return `Skill: ${(s && s.name) || resolvedId}\nAgent: ${agentLabel}${category}\nType: ${skillContent.type} (methodology — apply yourself)\n\n${content.slice(0, 2000)}`;
+      } finally {
+        TOOLS.run_skill.execute._depth = Math.max(0, (TOOLS.run_skill.execute._depth || 1) - 1);
+      }
     }
   },
 
@@ -1473,6 +1579,7 @@ const TOOLS = {
     description: 'Check if a TCP port is open on a host',
     schema: { host: 'string — hostname or IP', port: 'number — port number' },
     execute: async ({ host, port }) => {
+      if (!host || port == null || isNaN(Number(port))) return `check_port needs "host" and a numeric "port" — e.g. { "host": "example.com", "port": 443 }.`;
       return new Promise((resolve) => {
         const net = require('net');
         const socket = new net.Socket();
@@ -1545,6 +1652,7 @@ const TOOLS = {
     description: 'Analyze password strength — length, entropy, suggestions',
     schema: { password: 'string — password to analyze (never stored or logged)' },
     execute: async ({ password }) => {
+      if (typeof password !== 'string' || !password) return 'check_password_strength needs a "password" string to analyze (never stored or logged).';
       const checks = {
         length: password.length >= 12,
         uppercase: /[A-Z]/.test(password),
@@ -1581,8 +1689,10 @@ const TOOLS = {
     description: 'Get a clean Wikipedia summary paragraph for any topic',
     schema: { topic: 'string — topic to look up' },
     execute: async ({ topic }) => {
-      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/ /g,'_'))}`, { signal: AbortSignal.timeout(10000) });
-      const d = await r.json();
+      if (!topic || typeof topic !== 'string') return 'get_wikipedia_summary needs a "topic" string.';
+      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/ /g,'_'))}`, { headers: { 'User-Agent': 'SHADDAI/2.0 (https://shaddai.ai)', 'Accept': 'application/json' }, signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return `Wikipedia summary unavailable for "${topic}" (HTTP ${r.status}). Try wikipedia_search instead.`;
+      let d; try { d = await r.json(); } catch (_) { return `Wikipedia returned a non-JSON response for "${topic}". Try wikipedia_search instead.`; }
       if (d.type === 'https://mediawiki.org/wiki/HyperSwitch/errors/not_found') return `No Wikipedia article found for "${topic}"`;
       return `${d.title}: ${d.extract}`;
     }
@@ -2684,6 +2794,9 @@ function findSkillFile(dir, skillName) {
 // AGENT DEFINITIONS — 7 agents with upgraded tool grants
 // ═══════════════════════════════════════════════════════════════════
 
+// Merge the free, no-key extra tools (SHADDAI_MEGA_BUILD_SPEC §2) into the registry.
+try { Object.assign(TOOLS, require('./extra-tools')); console.log('[ENGINE] extra-tools merged:', Object.keys(require('./extra-tools')).length); } catch (e) { console.warn('[ENGINE] extra-tools failed:', e.message); }
+
 const AGENTS = {
   SHADDAI: {
     name: 'SHADDAI', role: 'Supreme Commander', port: 8000,
@@ -2728,6 +2841,26 @@ const AGENTS = {
     keywords: ['security','audit','vulnerability','hack','exploit','owasp','scan','review','compliance','protect','safe','risk','threat','pentest','password','port','ip','domain','json','validate','complexity']
   }
 };
+
+// Prune confirmed-flaky tools from agents + grant each agent its new working extra-tools (§2).
+(function(){
+  const FLAKY = ['get_color_palette','get_country_info','get_funding_rates','weather_live','get_crypto_news','get_ohlcv','get_protocol_revenue','grammar_check'];
+  const EXTRA = {
+    ORACLE: ['semantic_scholar_search','wayback_snapshot','open_library_search','hn_algolia_search','coingecko_trending','rss_fetch'],
+    ZEROX:  ['defillama_tvl','defillama_yields','coingecko_trending','jupiter_token_price','svg_chart'],
+    NEXUS:  ['npm_package_info','bundlephobia_size','cve_lookup','semantic_scholar_search','svg_chart'],
+    TURTLE: ['svg_chart','color_palette','font_pairing','tweet_thread'],
+    QUILL:  ['readability_score','tweet_thread','rss_fetch','open_library_search','font_pairing'],
+    PIKADON:['cve_lookup','wayback_snapshot'],
+    SHADDAI:['semantic_scholar_search','npm_package_info','defillama_tvl','svg_chart']
+  };
+  for (const [nm, a] of Object.entries(AGENTS)) {
+    if (Array.isArray(a.tools)) {
+      a.tools = a.tools.filter(t => !FLAKY.includes(t));
+      (EXTRA[nm] || []).forEach(t => { if (TOOLS[t] && !a.tools.includes(t)) a.tools.push(t); });
+    }
+  }
+})();
 
 // ═══════════════════════════════════════════════════════════════════
 // WORKFLOW TEMPLATES — Battle-tested multi-agent flows
@@ -2833,20 +2966,57 @@ function trimMessages(msgs, maxChars = 8000) {
   return out.concat(tail);
 }
 
+// ── BASE TOOLS: every agent (council AND forged) always gets these — research, compute,
+//    memory, skill search, and full skill execution. run_skill bridges all 3,437 skills, so a
+//    forged agent is genuinely useful out of the box and gains its domain via run_skill.
+const BASE_TOOLS = ['search_web','run_js','save_memory','search_skills','read_obsidian_skill','run_skill'];
+
 async function callLLM(messages, agentName, options = {}) {
   const agent = AGENTS[agentName] || AGENTS.SHADDAI;
   const t0 = Date.now();
   const user = options.user || 'guest';
 
-  // Build tool instruction block — only this agent's tools
-  const ownTools = agent.tools.map(n => TOOLS[n]).filter(Boolean);
+  // Build tool instruction block — this agent's tools, OR an explicit custom loadout.
+  // Forged/custom agents pass their equipped skills via options.tools so the skills the
+  // owner picked in the Forge are EXACTLY the tools the agent is offered + allowed to call.
+  const customTools = (Array.isArray(options.tools) && options.tools.length) ? options.tools : null;
+  // Resolve the equipped loadout. Raw tool names stay as-is; equipped *recipe* skills from
+  // the Forge catalog (e.g. "daily-market-snapshot") are EXPANDED into the concrete step-tools
+  // they run — otherwise they resolve to nothing and a forged agent ends up with no tools.
+  // run_skill (in BASE_TOOLS) still lets it execute the whole recipe by name.
+  const _loadout = customTools || agent.tools || [];
+  const _equippedSkills = [];
+  const _resolved = [];
+  for (const n of _loadout) {
+    if (TOOLS[n]) { _resolved.push(n); continue; }
+    const r = (skillIndex.getRecipe && skillIndex.getRecipe(n)) || null;
+    if (r && Array.isArray(r.steps)) {
+      _equippedSkills.push(n);
+      r.steps.forEach(s => { if (s.tool && TOOLS[s.tool]) _resolved.push(s.tool); });
+    }
+  }
+  const ownTools = [...new Set([...BASE_TOOLS, ..._resolved])].map(n => TOOLS[n]).filter(Boolean);
+  // Tell the agent exactly which named skills it was forged with, so it runs them via run_skill.
+  const equippedNote = _equippedSkills.length
+    ? `\n\nEQUIPPED SKILLS — you were forged with these ready-to-run skills: ${_equippedSkills.join(', ')}. When the task matches one, CALL run_skill with that exact skill name — it executes real tools and returns live data. Never claim you lack data before trying run_skill or your other tools.`
+    : '';
   // Append any currently-connected MCP tools (available to every agent)
   let mcpTools = [];
   if (mcpClient) {
     try { mcpTools = Object.values(mcpClient.getAgentTools()); } catch {}
   }
-  const toolBlock = [...ownTools, ...mcpTools]
-    .map(t => `[TOOL:${t.name}:${JSON.stringify(t.schema)}] — ${t.description}`)
+  // Selective tool injection — advertise only the tools most RELEVANT to this goal
+  // (ranked by lib/tool-selector) so the prompt carries fewer tool descriptions per call,
+  // and a capped list can't drop the relevant tool to an arbitrary slice. ownTools stays the
+  // allow-set (execution is unrestricted); BASE_TOOLS are always kept so capability is preserved.
+  let _promptTools = [...ownTools, ...mcpTools];
+  try {
+    const { selectTools } = require('./lib/tool-selector');
+    const _goal = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+    _promptTools = selectTools(_goal, _promptTools, { max: 22, min: 6, always: BASE_TOOLS, agent: agentName });
+  } catch (_) { /* fall back to full list */ }
+  const toolBlock = _promptTools
+    .map(t => `[TOOL:${t.name}:${JSON.stringify(t.schema)}] — ${String(t.description || '').slice(0, 60)}`)  // trim desc → leaner prompt for small local models
     .join('\n');
 
   // Inject matching skill methodology so the agent actually knows the topic deeply
@@ -2885,13 +3055,13 @@ async function callLLM(messages, agentName, options = {}) {
   const system = options.plainChat ? {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-${agent.goal}${skillPackPrompt}
+${agent.goal}${skillPackPrompt}${equippedNote}
 
 Respond conversationally and helpfully. Do NOT output tool syntax or code unless asked. Be concise and clear.`
   } : {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-Goal: ${agent.goal}${skillContext}${skillPackPrompt}
+Goal: ${agent.goal}${skillContext}${skillPackPrompt}${equippedNote}
 
 TOOL SYSTEM — call tools by writing EXACTLY:
 [TOOL:tool_name:{"param":"value"}]
@@ -2910,7 +3080,7 @@ ${toolBlock}`
     const key = String(agentName).toUpperCase();
     if (!(key in callLLM._soul)) {
       const sp = path.join(__dirname, 'data', 'agents', key + '.md');
-      callLLM._soul[key] = fs.existsSync(sp) ? fs.readFileSync(sp, 'utf8').slice(0, 1800) : '';
+      callLLM._soul[key] = fs.existsSync(sp) ? fs.readFileSync(sp, 'utf8').slice(0, 900) : '';
     }
     if (callLLM._soul[key]) system.content += '\n\n[YOUR IDENTITY]\n' + callLLM._soul[key];
   } catch (_) {}
@@ -2931,17 +3101,29 @@ ${toolBlock}`
   // Default order is Ollama (free/local) → Groq → OpenRouter. In the cloud
   // (no Ollama) it auto-skips to the cloud providers.
   async function pOllama() {
+    // LEAN prompt for the small local model. The full schema-laden tool block (25+ tools × JSON
+    // schema) makes a 1–3B model's prompt-eval crawl → it blows the timeout and the run "fails".
+    // Here we give Ollama a compact prompt: persona + a capped list of tool NAMES (no schemas) +
+    // any short skill context, trimmed tight. Cloud providers below still get the full prompt.
+    const leanTools = _promptTools.slice(0, 14)   // already ranked by goal relevance — the 14 kept are the most relevant
+      .map(t => `[TOOL:${t.name}] ${String(t.description || '').slice(0, 40)}`).join('\n');
+    const leanSystem = { role: 'system', content:
+`You are ${agent.name}, ${agent.role} of SHADDAI. ${agent.goal}${skillContext ? '\n' + skillContext.slice(0, 500) : ''}
+To call a tool, output [TOOL:name:{"param":"value"}] on its own line, then stop. Available tools:
+${leanTools}
+Use tools for real data, then give a concise final answer.` };
+    const ollamaMsgs = trimMessages([leanSystem, ...messages], 4000);
     const r = await fetch(OLLAMA_URL + '/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: OLLAMA_MODEL, messages: allMsgs, stream: false, options: { num_ctx: 4096, num_predict: 800 } }),
-      signal: AbortSignal.timeout(90000)
+      body: JSON.stringify({ model: OLLAMA_MODEL, messages: ollamaMsgs, stream: false, options: { num_ctx: OLLAMA_NUM_CTX, num_predict: OLLAMA_NUM_PREDICT } }),
+      signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS)
     });
     if (!r.ok) throw new Error('ollama HTTP ' + r.status);
     const d = await r.json();
     const c = d.message?.content;
     if (!c) throw new Error('ollama empty response');
     llmTracer.trace({ provider: 'ollama', model: OLLAMA_MODEL, agentName,
-      inputTokens: d.prompt_eval_count ?? Math.ceil(JSON.stringify(allMsgs).length / 4),
+      inputTokens: d.prompt_eval_count ?? Math.ceil(JSON.stringify(ollamaMsgs).length / 4),
       outputTokens: d.eval_count ?? Math.ceil(c.length / 4),
       durationMs: Date.now() - t0, success: true, exact: d.eval_count != null });
     return c;
@@ -2976,16 +3158,25 @@ ${toolBlock}`
     }
     throw lastErr || new Error(name + ' failed');
   }
+  // Effective API keys: BYOK (user's stored key from /api/byok/set) wins over the
+  // server env key so the user's own quota is consumed, not the shared pool.
+  // Note: 'claude' is the BYOK provider name for Anthropic.
+  const _bGroq      = getBYOKKey('groq')      || GROQ_KEY;
+  const _bRouter    = getBYOKKey('openrouter') || OPENROUTER_KEY;
+  const _bOpenAI    = getBYOKKey('openai')     || OPENAI_KEY;
+  const _bAnthropic = getBYOKKey('claude')     || ANTHROPIC_KEY;
+  const _bGemini    = getBYOKKey('gemini')     || GEMINI_KEY;
+
   // Anthropic (paid, reliable — different API shape: system separate, x-api-key).
   async function pAnthropic() {
-    if (!ANTHROPIC_KEY) throw new Error('anthropic no key');
+    if (!_bAnthropic) throw new Error('anthropic no key');
     const sys = allMsgs.find(m => m.role === 'system');
     const userMsgs = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content || '' }));
     if (!userMsgs.length) userMsgs.push({ role: 'user', content: 'Hello' });
     const model = (options.provider === 'anthropic' && options.model) || ANTHROPIC_MODEL;
     const r = await axios.post('https://api.anthropic.com/v1/messages',
       { model, max_tokens: 1500, temperature: 0.6, ...(sys ? { system: sys.content } : {}), messages: userMsgs },
-      { headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
+      { headers: { 'x-api-key': _bAnthropic, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
     const c = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
     if (!c) throw new Error('anthropic empty');
     llmTracer.trace({ provider: 'anthropic', model, agentName, inputTokens: r.data.usage?.input_tokens || 0, outputTokens: r.data.usage?.output_tokens || 0, durationMs: Date.now() - t0, success: true });
@@ -2993,13 +3184,13 @@ ${toolBlock}`
   }
   // Gemini (free, generous, SEPARATE quota from groq/openrouter — different API shape).
   async function pGemini() {
-    if (!GEMINI_KEY) throw new Error('gemini no key');
+    if (!_bGemini) throw new Error('gemini no key');
     const sys = allMsgs.find(m => m.role === 'system');
     const contents = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content || '' }] }));
     if (!contents.length) contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
     const model = (options.provider === 'gemini' && options.model) || GEMINI_MODEL;
     const body = { contents, ...(sys ? { systemInstruction: { parts: [{ text: sys.content }] } } : {}), generationConfig: { maxOutputTokens: 1500, temperature: 0.6 } };
-    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, body, { timeout: 35000 });
+    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${_bGemini}`, body, { timeout: 35000 });
     const c = (r.data.candidates?.[0]?.content?.parts || []).map(p => p.text).join('');
     if (!c) throw new Error('gemini empty');
     llmTracer.trace({ provider: 'gemini', model, agentName, inputTokens: 0, outputTokens: Math.ceil(c.length / 4), durationMs: Date.now() - t0, success: true });
@@ -3008,24 +3199,53 @@ ${toolBlock}`
   const PROVIDERS = {
     ollama: pOllama,
     gemini: pGemini,
-    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', GROQ_KEY, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', OPENROUTER_KEY, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
-    cerebras: () => pOpenAICompatible('cerebras', 'https://api.cerebras.ai/v1/chat/completions', CEREBRAS_KEY, [(options.provider === 'cerebras' && options.model) || CEREBRAS_MODEL, 'llama3.1-8b']),
-    github: () => pOpenAICompatible('github', 'https://models.inference.ai.azure.com/chat/completions', GITHUB_MODELS_KEY, [(options.provider === 'github' && options.model) || GITHUB_MODELS_MODEL, 'Meta-Llama-3.1-8B-Instruct']),
+    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
     anthropic: pAnthropic,
-    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', OPENAI_KEY, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
+    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
   // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
   // free/fast first (groq, openrouter) → paid+reliable (anthropic, openai) catch
   // free-tier rate limits → ollama local last. So a chain never dies on a 429.
-  const order = [...new Set([pref, 'groq', 'cerebras', 'gemini', 'openrouter', 'github', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
+  const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
+  const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL };
+  // ── AURA CACHE — attempt a free answer before any paid provider call ────────
+  // aura.route() is synchronous and never throws; it returns {hit:false} on any miss.
+  // Only cache single-turn prompts (not multi-turn tool-result messages) to avoid
+  // caching partial tool-injection contexts that won't match future queries.
+  const _aura = require('./lib/aura');
+  const _lastUserMsg = messages.slice().reverse().find(m => m && m.role === 'user' && typeof m.content === 'string');
+  const _auraPrompt = (_lastUserMsg && messages.filter(m => m.role === 'user').length === 1)
+    ? _lastUserMsg.content : '';
+  if (_auraPrompt) {
+    const _hit = _aura.route(_auraPrompt);
+    if (_hit.hit) {
+      console.log(`[AURA] Cache hit (${_hit.method}, ~${_hit.savedTokensEst} tokens saved) — skipping LLM call`);
+      return _hit.answer;
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   let lastError;
   for (const pname of order) {
     const fn = PROVIDERS[pname];
     if (!fn) continue;
-    try { const out = await fn(); if (out) return out; }
+    try {
+      const out = await fn();
+      if (out) {
+        const provider = pname, model = (options.provider === pname && options.model) || MODEL_OF[pname];
+        console.log('[LLM] provider=' + provider + ' model=' + model);
+        // Record in AURA cache for future reuse — on EVERY provider (incl. Ollama). Even when the
+        // local model is "free", caching makes the repeat instant (vs 40s) AND, if the user later
+        // binds a paid BYOK key, the same prompt is served free from cache. This is the savings loop.
+        if (_auraPrompt) {
+          try { _aura.recordAnswer(_auraPrompt, out); } catch (_) {}
+        }
+        return out;
+      }
+    }
     catch (e) { lastError = e; console.warn(`[ENGINE] provider ${pname} unavailable: ${String(e.message || '').slice(0, 100)}`); }
   }
   throw new Error(`All LLM providers failed (tried ${order.join(', ')}). Last: ${lastError?.message || 'unknown'}. Set GROQ_API_KEY or OPENROUTER_API_KEY, or run Ollama locally.`);
@@ -3035,7 +3255,7 @@ ${toolBlock}`
 // TOOL EXECUTOR — extract and run [TOOL:name:{params}]
 // ═══════════════════════════════════════════════════════════════════
 
-async function extractAndRunTools(text, agentName, taskId = null) {
+async function extractAndRunTools(text, agentName, taskId = null, allowed = null) {
   // Match [TOOL:name:{...}] — allow MCP-prefixed names (mcp__server__tool), digits, hyphens
   const re = /\[TOOL:([a-zA-Z0-9_-]+):(\{(?:[^{}]|\{[^{}]*\})*\})\]/g;
   const results = [];
@@ -3050,7 +3270,9 @@ async function extractAndRunTools(text, agentName, taskId = null) {
     if (!tool) { results.push({ tool: toolName, result: `Unknown tool: ${toolName}.` }); continue; }
     const agentDef = AGENTS[agentName];
     const isMcp = toolName.startsWith('mcp__');  // MCP tools are available to all agents
-    if (!isMcp && agentDef && !agentDef.tools.includes(toolName)) {
+    // Allow-list: an explicit custom loadout (forged agents) takes precedence over the built-in agent's list.
+    const allowList = [...new Set([...BASE_TOOLS, ...((Array.isArray(allowed) && allowed.length) ? allowed : (agentDef && agentDef.tools) || [])])];
+    if (!isMcp && allowList && !allowList.includes(toolName)) {
       results.push({ tool: toolName, result: `${agentName} does not have access to ${toolName}` });
       continue;
     }
@@ -3111,18 +3333,63 @@ async function runAgentLoop(taskId) {
   const messages = [{ role: 'user', content: task.goal }];
 
   try {
+    const grounding = require('./lib/grounding');
     const maxIter = task.options?.maxIter || 5;
+
+    // ── GUARD: PRE-FLIGHT GROUNDING ──────────────────────────────────────────────
+    // For live-data goals, run a matching DETERMINISTIC recipe first (real tools, no
+    // weak-model guessing). If it yields an answer, use it and skip the loop entirely —
+    // so a weak model never gets the chance to invent data it was supposed to fetch.
+    if (grounding.needsRealData(task.goal) && process.env.RECIPE_FASTPATH !== 'off') {
+      try {
+        const fp = await tryRecipeFastPath(task.goal, task.agentName);
+        if (fp && fp.result) {
+          task.result = fp.result;
+          task.tools_used.push(...(fp.tools || []));
+          task.steps.push({ iteration: 1, status: 'completed', grounded: true, recipe: fp.recipeId, tools: fp.tools || [] });
+          task.status = 'completed';
+          task.completedAt = new Date().toISOString();
+          try { fs.writeFileSync(path.join(LOGS_DIR, `task_${taskId.slice(0,8)}_${Date.now()}.json`), JSON.stringify(task, null, 2), 'utf8'); } catch (_) {}
+          agentEventBus.taskDone(taskId, task.result || '', task.agentName);
+          return task;
+        }
+      } catch (_) { /* no recipe matched → normal loop */ }
+    }
+
     for (let iter = 0; iter < maxIter; iter++) {
       const step = { iteration: iter + 1, status: 'thinking', ts: new Date().toISOString() };
       task.steps.push(step);
 
-      const response = await callLLM(messages, task.agentName, { user: task.options?.user || task.user, provider: task.options?.provider, model: task.options?.model });
+      // Compact accumulated history before re-sending — keeps the goal, latest instruction, and
+      // recent turns full while compressing OLDER large tool outputs. Shrinks the paid prompt on
+      // iterations 2+ (the same big JSON blobs were otherwise re-sent verbatim every iteration).
+      try {
+        const cc = require('./lib/context-compress');
+        const r = cc.compactHistory(messages, { budget: 4000, keepRecent: 3, maxChars: 700 });
+        if (r.saved > 0) {
+          messages.length = 0; messages.push(...r.messages);
+          step.compacted_tokens = r.saved;
+        }
+      } catch (_) { /* compaction is best-effort */ }
+
+      const response = await callLLM(messages, task.agentName, { user: task.options?.user || task.user, provider: task.options?.provider, model: task.options?.model, tools: task.options?.tools });
       step.llm_response = response.slice(0, 600) + (response.length > 600 ? '…' : '');
 
-      const toolResults = await extractAndRunTools(response, task.agentName, task.id);
+      const toolResults = await extractAndRunTools(response, task.agentName, task.id, task.options?.tools);
 
       if (toolResults.length === 0) {
-        task.result = response;
+        // ── GUARD: ANTI-LARP ──────────────────────────────────────────────────────
+        // The model gave a final answer. If this is a live-data goal, the answer asserts
+        // specific figures, and NO tool was used the whole run → the model fabricated it.
+        // Refuse to ship fake numbers: rescue with a real recipe, else say so honestly.
+        if (grounding.looksFabricated(response, task.tools_used.length, task.goal)) {
+          let rescued = null;
+          try { const fp = await tryRecipeFastPath(task.goal, task.agentName); if (fp && fp.result) rescued = fp; } catch (_) {}
+          if (rescued) { task.result = rescued.result; task.tools_used.push(...(rescued.tools || [])); step.grounded = true; }
+          else { task.result = grounding.honestUnverified(task.goal); step.fabrication_blocked = true; }
+        } else {
+          task.result = response;
+        }
         task.status = 'completed';
         task.completedAt = new Date().toISOString();
         step.status = 'completed';
@@ -3163,6 +3430,72 @@ async function runAgentLoop(taskId) {
 // WORKFLOW ENGINE — sequential multi-step with context chaining
 // ═══════════════════════════════════════════════════════════════════
 
+// ── AINL FAST-PATH (compile-once, run-many) ──────────────────────────────────
+// If a goal strongly + unambiguously matches a param-LESS recipe, run that recipe's
+// REAL tool steps deterministically (zero LLM orchestration) instead of the multi-
+// iteration agent loop. Only the synthesis LLM call remains (the genuine judgment gate).
+// Saves the orchestration tokens (credited to AURA). Conservative by design.
+//   Disable with env RECIPE_FASTPATH=off.
+// Deterministic param extraction for the AINL fast-path. Only returns params when EVERY required
+// input is found with high confidence — otherwise null → we fall back to the LLM loop (safe).
+const _COIN = { btc:'bitcoin', bitcoin:'bitcoin', eth:'ethereum', ethereum:'ethereum', sol:'solana', solana:'solana',
+  bnb:'binancecoin', xrp:'ripple', ripple:'ripple', ada:'cardano', cardano:'cardano', doge:'dogecoin', dogecoin:'dogecoin',
+  avax:'avalanche-2', matic:'matic-network', polygon:'matic-network', dot:'polkadot', polkadot:'polkadot',
+  link:'chainlink', chainlink:'chainlink', ltc:'litecoin', litecoin:'litecoin', shib:'shiba-inu', uni:'uniswap', atom:'cosmos' };
+const _LANGS = ['javascript','typescript','python','rust','go','golang','java','c++','c#','ruby','php','swift','kotlin','scala','solidity','html','css','sql','bash','shell'];
+function _cleanTopic(goal) {
+  return String(goal)
+    .replace(/^\s*(please\s+)?(can you\s+)?(research|tell me about|what(?:'s| is| are)|give me|find|look up|explain|analyze|do a deep dive on|deep research on|info on|a report on|the latest on)\b[:\s]*/i, '')
+    .replace(/[?.!]+$/, '').trim();
+}
+function _extractRecipeParams(recipe, goal) {
+  const need = Array.isArray(recipe.params) ? recipe.params : [];
+  if (!need.length) return {};
+  const out = {}; const g = ' ' + String(goal).toLowerCase() + ' ';
+  for (const p of need) {
+    if (p === 'symbol' || p === 'collection') {
+      let found = null;
+      for (const k of Object.keys(_COIN)) { if (new RegExp('\\b' + k + '\\b').test(g)) { found = _COIN[k]; break; } }
+      if (!found) return null; out[p] = found;
+    } else if (p === 'address') {
+      const m = String(goal).match(/0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44}/);
+      if (!m) return null; out[p] = m[0];
+    } else if (p === 'language') {
+      const lang = _LANGS.find(l => new RegExp('\\b' + l.replace('+', '\\+').replace('#', '\\#') + '\\b', 'i').test(g));
+      if (!lang) return null; out[p] = lang;
+    } else if (p === 'repo') {
+      const m = String(goal).match(/\b([\w.-]+\/[\w.-]+)\b/);
+      if (!m) return null; out[p] = m[1];
+    } else if (p === 'city') {
+      const m = String(goal).match(/\b(?:in|for|at)\s+([A-Z][a-zA-Z]+(?:[ -][A-Z][a-zA-Z]+)?)/);
+      if (!m) return null; out[p] = m[1];
+    } else if (p === 'topic' || p === 'query' || p === 'keyword' || p === 'company' || p === 'technology' || p === 'domain') {
+      const t = _cleanTopic(goal);
+      if (t.length < 2 || t.length > 90) return null; out[p] = t;
+    } else {
+      return null;  // a param type we can't extract confidently → don't fast-path (falls back to LLM)
+    }
+  }
+  return out;
+}
+
+async function tryRecipeFastPath(goal, agentName) {
+  try {
+    if (process.env.RECIPE_FASTPATH === 'off') return null;
+    const ag = (agentName && AGENTS[String(agentName).toUpperCase()]) ? String(agentName).toUpperCase() : undefined;
+    const matches = skillIndex.findSkills(goal, { agent: ag, includeRecipes: true, includeMd: false, includeObsidian: false, limit: 1 });
+    if (!matches.length || matches[0].type !== 'recipe' || (matches[0].score || 0) < 1.6) return null;
+    const r = skillIndex.getRecipe(matches[0].id);
+    if (!r) return null;
+    const input = _extractRecipeParams(r, goal);        // {} for param-less; null if inputs can't be extracted
+    if (input === null) return null;                    // → fall back to the LLM loop (safe)
+    const done = await runSkill(matches[0].id, input, ag || r.agent);  // deterministic — no orchestration LLM
+    if (!done || done.status === 'failed' || !done.result) return null;
+    try { require('./lib/aura').creditDeterministic(goal, 1800); } catch (_) {}  // ~3 avoided LLM iterations
+    return { result: done.result, recipeId: matches[0].id, tools: done.tools_used || [], params: input, score: matches[0].score };
+  } catch (_) { return null; }
+}
+
 async function runWorkflow(steps, options = {}) {
   const workflowId = crypto.randomUUID();
   const results = [];
@@ -3170,6 +3503,15 @@ async function runWorkflow(steps, options = {}) {
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
+    // AINL: deterministic recipe fast-path when the goal clearly matches one (no chained-context yet).
+    if (!prevOutput) {
+      const fp = await tryRecipeFastPath(step.goal, step.agent);
+      if (fp) {
+        results.push({ step: i+1, agent: step.agent, goal: step.goal, result: fp.result, status: 'completed', tools: fp.tools, via: 'recipe:' + fp.recipeId });
+        prevOutput = fp.result || prevOutput;
+        continue;
+      }
+    }
     const goal = prevOutput
       ? `${step.goal}\n\nContext from previous step:\n${prevOutput.slice(0, 1200)}`
       : step.goal;
@@ -3354,19 +3696,30 @@ async function runSkill(skillId, input = {}, agentOverride) {
       const dataBlock = stepResults.map(s =>
         `[${s.tool}] ${s.error ? 'ERROR: ' + s.error : s.result}`
       ).join('\n\n');
+      const _grounding = require('./lib/grounding');
+      const _deterministic = _grounding.formatToolData(stepResults, { title: skillId.replace(/-/g, ' ') });
       if (r.synthesize) {
         const synthPrompt = skillIndex.interpolate(r.synthesize, input, stepResults);
         try {
-          const synth = await callLLM([
-            { role: 'user', content: `Data collected for skill "${skillId}":\n\n${dataBlock}\n\nTask: ${synthPrompt}` }
-          ], agentName);
+          // Bound synthesis so a slow model can't hang the task — on timeout we use the
+          // deterministic summary (real data, instant) instead of waiting out the full LLM timeout.
+          const synth = await Promise.race([
+            callLLM([
+              { role: 'user', content: `Data collected for skill "${skillId}":\n\n${dataBlock}\n\nTask: ${synthPrompt}\n\nUse ONLY the figures above — do not invent any number.` }
+            ], agentName),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('synthesis timeout (25s)')), 25000))
+          ]);
           const cleaned = stripToolCalls(synth);
-          // If synthesis came back empty, fall back to the raw data we already gathered
-          task.result = cleaned && cleaned.length > 2 ? cleaned : `${skillId} results:\n\n${dataBlock}`;
+          // Accept LLM synthesis ONLY if it's non-trivial AND its numbers are grounded in the real
+          // tool data (this catches weak-model garble / drift / hallucination). Otherwise ship the
+          // deterministic real-data summary — always correct, instant, never garbled.
+          task.result = (cleaned && cleaned.length > 15 && _grounding.synthesisGrounded(cleaned, dataBlock))
+            ? cleaned
+            : _deterministic;
         } catch (synthErr) {
-          // LLM synthesis failed/timed out — still deliver the real tool data we collected
-          console.warn(`[SKILL-RUNNER] ${skillId} synthesis failed (${synthErr.message}); returning raw tool data`);
-          task.result = `${skillId} — data collected (synthesis unavailable):\n\n${dataBlock}`;
+          // LLM synthesis failed/timed out — deliver the deterministic real-data summary.
+          console.warn(`[SKILL-RUNNER] ${skillId} synthesis failed (${synthErr.message}); using deterministic summary`);
+          task.result = _deterministic;
         }
       } else {
         // No synthesis — return raw structured results
@@ -3441,9 +3794,6 @@ try { Object.assign(TOOLS, require('./tools-social')); } catch (e) { console.war
 try { Object.assign(TOOLS, require('./tools-news').TOOLS_NEWS); } catch (e) { console.warn('[tools-news] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-defi').TOOLS_DEFI); } catch (e) { console.warn('[tools-defi] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./lib/nft-mint')); } catch (e) { console.warn('[nft-mint] not loaded:', e.message); }
-try { Object.assign(TOOLS, require('./tools-ta')); } catch (e) { console.warn('[tools-ta] not loaded:', e.message); }
-// Grant the TA indicator tools to the market agents.
-try { const _ta = Object.keys(require('./tools-ta')); ['ZEROX','ORACLE'].forEach(function(a){ if (AGENTS[a] && Array.isArray(AGENTS[a].tools)) { _ta.forEach(function(t){ if (!AGENTS[a].tools.includes(t)) AGENTS[a].tools.push(t); }); } }); } catch (e) {}
 // Upgrade legacy stub names → the REAL implementations (dedup; callers of the old
 // names now hit real tools instead of "needs key" stubs). No breakage.
 try {
@@ -3451,4 +3801,13 @@ try {
   if (TOOLS.post_to_x)        TOOLS.post_twitter   = TOOLS.post_to_x;
   if (TOOLS.post_to_telegram) TOOLS.send_telegram  = TOOLS.post_to_telegram;
 } catch (e) {}
-module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };
+
+// Wrap every tool's execute() with the short-TTL result cache so repeated/concurrent
+// API pulls (same tool + same params within its freshness window) cost one real call,
+// not N. Mutating tools (post/mint/deploy/…) are auto-excluded by policy. TOOL_CACHE=off disables.
+try {
+  const wrapped = require('./lib/tool-cache').wrapAll(TOOLS);
+  console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
+} catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
+
+module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };

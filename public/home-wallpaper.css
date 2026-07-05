@@ -1,0 +1,282 @@
+/*!
+ * SHADDAI Home Hub — Wallpaper System (styles)
+ * Scoped under #shdWallpaperModal and #shaddaiHome to avoid leakage.
+ * Theme: black / neon-green #00ff88 / cyan #00f0ff.
+ * Pairs with: home-wallpaper.js
+ */
+
+/* ============================================================
+ * #shaddaiHome — wallpaper host + readability scrim
+ * ============================================================ */
+#shaddaiHome.shd-has-wallpaper {
+  position: relative;
+  isolation: isolate; /* new stacking context so scrim/tiles behave */
+}
+
+/* Dedicated scrim child managed by JS (#shdHomeScrim).
+ * Sits above the background image, BELOW the tiles. */
+#shaddaiHome #shdHomeScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;          /* never intercept clicks */
+  transition: opacity .35s ease, background .35s ease;
+  border-radius: inherit;
+}
+
+/* Keep interactive content above the scrim & background image.
+ * The grid + tiles must paint above z-index:0 scrim. */
+#shaddaiHome.shd-wp-active .hh-grid,
+#shaddaiHome.shd-wp-active > *:not(#shdHomeScrim) {
+  position: relative;
+  z-index: 1;
+}
+
+#shaddaiHome.shd-wp-active .hh-tile {
+  position: relative;
+  z-index: 2;                     /* tiles clickable above scrim */
+}
+
+/* ============================================================
+ * #shdWallpaperModal — picker overlay
+ * ============================================================ */
+#shdWallpaperModal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+}
+#shdWallpaperModal.shd-wp-open { display: flex; }
+
+#shdWallpaperModal .shd-wp-panel {
+  width: min(560px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: linear-gradient(180deg, #05070a 0%, #0a0f14 100%);
+  border: 1px solid var(--accent, #00ff88);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, .18),
+    0 0 40px rgba(0, 255, 136, .22),
+    0 24px 60px rgba(0, 0, 0, .7);
+  padding: 18px 18px 16px;
+  color: #cfeee0;
+}
+
+/* Header */
+#shdWallpaperModal .shd-wp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 255, 136, .22);
+}
+#shdWallpaperModal .shd-wp-title {
+  font-family: 'Orbitron', 'Share Tech Mono', sans-serif;
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 15px;
+  color: var(--accent, #00ff88);
+  text-shadow: 0 0 12px rgba(0, 255, 136, .5);
+}
+#shdWallpaperModal .shd-wp-x {
+  background: transparent;
+  border: 1px solid rgba(0, 240, 255, .4);
+  color: #00f0ff;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all .18s ease;
+}
+#shdWallpaperModal .shd-wp-x:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, .55);
+  color: #fff;
+}
+
+/* Preset grid */
+#shdWallpaperModal .shd-wp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+#shdWallpaperModal .shd-wp-thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(0, 255, 136, .3);
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  background-color: #05070a;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  transition: transform .15s ease, box-shadow .18s ease, border-color .18s ease;
+}
+#shdWallpaperModal .shd-wp-thumb:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent, #00ff88);
+  box-shadow: 0 0 18px rgba(0, 255, 136, .4);
+}
+#shdWallpaperModal .shd-wp-thumb.shd-wp-sel {
+  border-color: #00f0ff;
+  box-shadow: 0 0 0 2px #00f0ff, 0 0 20px rgba(0, 240, 255, .55);
+}
+#shdWallpaperModal .shd-wp-thumb-label {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 4px 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #eafff5;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.82) 100%);
+  text-align: left;
+}
+#shdWallpaperModal .shd-wp-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(45deg, #0a0f14 0 8px, #05070a 8px 16px);
+}
+#shdWallpaperModal .shd-wp-none .shd-wp-thumb-label {
+  position: static;
+  background: none;
+  font-size: 12px;
+  color: #7fffcf;
+  text-align: center;
+}
+
+/* Rows: URL / upload / dim */
+#shdWallpaperModal .shd-wp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+#shdWallpaperModal .shd-wp-lbl {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #7fffcf;
+}
+#shdWallpaperModal .shd-wp-row-in {
+  display: flex;
+  gap: 8px;
+}
+#shdWallpaperModal .shd-wp-input,
+#shdWallpaperModal .shd-wp-file {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #05070a;
+  border: 1px solid rgba(0, 240, 255, .3);
+  border-radius: 8px;
+  color: #eafff5;
+  padding: 9px 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  outline: none;
+}
+#shdWallpaperModal .shd-wp-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, .35);
+}
+#shdWallpaperModal .shd-wp-file {
+  padding: 7px 10px;
+  color: #9fe;
+}
+#shdWallpaperModal .shd-wp-file::file-selector-button {
+  background: transparent;
+  border: 1px solid rgba(0, 255, 136, .4);
+  color: var(--accent, #00ff88);
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-right: 10px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Buttons */
+#shdWallpaperModal .shd-wp-btn {
+  background: linear-gradient(180deg, rgba(0,255,136,.16), rgba(0,255,136,.06));
+  border: 1px solid var(--accent, #00ff88);
+  color: var(--accent, #00ff88);
+  border-radius: 8px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-family: 'Orbitron', 'Share Tech Mono', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all .18s ease;
+}
+#shdWallpaperModal .shd-wp-btn:hover {
+  background: linear-gradient(180deg, rgba(0,255,136,.28), rgba(0,255,136,.12));
+  box-shadow: 0 0 16px rgba(0, 255, 136, .45);
+  color: #fff;
+}
+
+/* Dim slider */
+#shdWallpaperModal .shd-wp-dimval {
+  color: #00f0ff;
+  font-weight: 700;
+  margin-left: 4px;
+}
+#shdWallpaperModal .shd-wp-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #00ff88, #00f0ff);
+  outline: none;
+  cursor: pointer;
+}
+#shdWallpaperModal .shd-wp-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #05070a;
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, .7);
+  cursor: pointer;
+}
+#shdWallpaperModal .shd-wp-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #05070a;
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, .7);
+  cursor: pointer;
+}
+
+/* Footer */
+#shdWallpaperModal .shd-wp-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 255, 136, .22);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  #shdWallpaperModal .shd-wp-grid { grid-template-columns: repeat(2, 1fr); }
+}

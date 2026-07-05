@@ -1,0 +1,265 @@
+<!--
+  collectables-panel.html
+  ----------------------------------------------------------------------------
+  Self-contained Collectables gallery fragment for the SHADDAI dashboard.
+
+  HOW TO INLINE (into SHADDAI-DASHBOARD-v92.html):
+    1. Paste this entire fragment (the <div id="collectablesPanel"> + its
+       <style> + <script>) into the dashboard wherever the Collectables tab
+       content should live.
+    2. When the Collectables tab becomes visible, call:  window.collectablesPanelInit();
+       (safe to call repeatedly — it re-fetches).
+    3. Optionally set the owner first:  window.collectablesPanelInit('user@example.com');
+       Defaults to window.SHADDAI_USER / localStorage 'shaddai_user' / 'demo'.
+
+  Talks to the relative backend routes mounted at /api/collectables/* .
+  ALL ids/classes are scoped with the `cp` prefix to avoid collisions.
+-->
+<div id="collectablesPanel" data-owner="">
+  <style>
+    #collectablesPanel {
+      --cp-bg:#0a0e1a; --cp-panel:#121830; --cp-ink:#e8ecff; --cp-mute:#9fb0e0;
+      --cp-teal:#22d3ee; --cp-teal2:#27e0d0; --cp-gold:#d4af37; --cp-gold2:#b8860b;
+      --cp-line:#2a335c; --cp-line2:#1c2547;
+      font-family:'Share Tech Mono', ui-monospace, monospace;
+      color:var(--cp-ink);
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.10), transparent 60%),
+        radial-gradient(900px 500px at 90% 110%, rgba(212,175,55,.07), transparent 60%),
+        var(--cp-bg);
+      padding:22px; border-radius:14px;
+      border:1px solid var(--cp-line);
+      box-sizing:border-box;
+    }
+    #collectablesPanel * { box-sizing:border-box; }
+
+    /* header / casting-chamber feel */
+    .cp-head { display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px; margin-bottom:18px; }
+    .cp-title { font-size:22px; letter-spacing:3px; text-transform:uppercase;
+      color:var(--cp-teal);
+      text-shadow:0 0 14px rgba(34,211,238,.45);
+      margin:0; }
+    .cp-title b { color:var(--cp-gold); text-shadow:0 0 14px rgba(212,175,55,.4); }
+    .cp-sub { color:var(--cp-mute); font-size:12px; letter-spacing:1px; margin-top:4px; }
+
+    .cp-progwrap { margin-left:auto; min-width:240px; }
+    .cp-progrow { display:flex; justify-content:space-between; font-size:12px;
+      color:var(--cp-mute); letter-spacing:1px; margin-bottom:6px; }
+    .cp-progrow b { color:var(--cp-gold); }
+    .cp-bar { height:10px; border-radius:8px; background:var(--cp-line2);
+      border:1px solid var(--cp-line); overflow:hidden; }
+    .cp-bar > i { display:block; height:100%; width:0%;
+      background:linear-gradient(90deg, var(--cp-teal), var(--cp-teal2));
+      box-shadow:0 0 12px rgba(34,211,238,.6); transition:width .5s ease; }
+
+    /* grid */
+    .cp-grid { display:grid; gap:16px;
+      grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); }
+
+    /* card */
+    .cp-card { position:relative; border-radius:12px; overflow:hidden;
+      background:linear-gradient(180deg, var(--cp-panel), #0d1226);
+      border:1px solid var(--cp-line);
+      display:flex; flex-direction:column;
+      transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+    .cp-card.cp-earned:hover { transform:translateY(-4px);
+      border-color:var(--cp-teal);
+      box-shadow:0 8px 28px rgba(34,211,238,.25); }
+    .cp-card.cp-locked { filter:grayscale(1) brightness(.55); opacity:.92; }
+    .cp-card.cp-locked:hover { filter:grayscale(.85) brightness(.7); }
+
+    .cp-art { position:relative; aspect-ratio:1/1; background:#070a14;
+      display:flex; align-items:center; justify-content:center; }
+    .cp-art img { width:100%; height:100%; object-fit:cover; display:block; }
+    .cp-lockchip { position:absolute; inset:auto 8px 8px 8px;
+      background:rgba(7,10,20,.82); border:1px solid var(--cp-line);
+      color:var(--cp-mute); font-size:10px; line-height:1.3; letter-spacing:.3px;
+      padding:6px 8px; border-radius:8px; }
+    .cp-lockchip b { color:var(--cp-teal); }
+
+    .cp-rar { position:absolute; top:8px; left:8px; font-size:9px;
+      text-transform:uppercase; letter-spacing:1.5px; padding:3px 7px;
+      border-radius:20px; border:1px solid; background:rgba(7,10,20,.7); }
+    .cp-rar.r-genesis   { color:#fff; border-color:var(--cp-gold); box-shadow:0 0 10px rgba(212,175,55,.5); background:linear-gradient(90deg,rgba(212,175,55,.35),rgba(184,134,11,.25)); }
+    .cp-rar.r-legendary { color:var(--cp-gold); border-color:var(--cp-gold2); }
+    .cp-rar.r-epic      { color:#c084fc; border-color:#7c3aed; }
+    .cp-rar.r-rare      { color:var(--cp-teal); border-color:#1f7a8c; }
+    .cp-rar.r-common    { color:var(--cp-mute); border-color:var(--cp-line); }
+
+    .cp-ed { position:absolute; top:8px; right:8px; font-size:9px;
+      color:var(--cp-gold); background:rgba(7,10,20,.7);
+      border:1px solid var(--cp-line); padding:3px 7px; border-radius:20px;
+      letter-spacing:.5px; }
+
+    .cp-meta { padding:10px 11px 12px; }
+    .cp-name { font-size:13px; letter-spacing:1px; color:var(--cp-ink);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cp-fac { font-size:10px; color:var(--cp-mute); margin-top:2px;
+      letter-spacing:.5px; }
+
+    .cp-mint { margin-top:9px; width:100%; cursor:pointer;
+      font-family:inherit; font-size:11px; letter-spacing:1px;
+      padding:7px 8px; border-radius:8px;
+      color:var(--cp-bg); border:none;
+      background:linear-gradient(90deg, var(--cp-gold), var(--cp-gold2));
+      opacity:.95; transition:filter .15s ease; }
+    .cp-mint:hover { filter:brightness(1.12); }
+    .cp-mint:disabled { cursor:not-allowed; opacity:.4;
+      background:var(--cp-line); color:var(--cp-mute); }
+
+    .cp-state { padding:30px 10px; text-align:center; color:var(--cp-mute);
+      letter-spacing:1px; grid-column:1/-1; }
+    .cp-toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%);
+      background:var(--cp-panel); border:1px solid var(--cp-teal);
+      color:var(--cp-ink); padding:12px 18px; border-radius:10px;
+      font-family:'Share Tech Mono', monospace; font-size:13px; letter-spacing:.5px;
+      box-shadow:0 0 24px rgba(34,211,238,.35); z-index:99999;
+      opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .cp-toast.cp-show { opacity:1; }
+  </style>
+
+  <div class="cp-head">
+    <div>
+      <h2 class="cp-title">Collectables <b>Chamber</b></h2>
+      <div class="cp-sub">Earn cards by doing real work · locked cards reveal how to unlock</div>
+    </div>
+    <div class="cp-progwrap">
+      <div class="cp-progrow"><span>UNLOCKED</span><b id="cpProgLabel">0 / 100</b></div>
+      <div class="cp-bar"><i id="cpProgFill"></i></div>
+    </div>
+  </div>
+
+  <div class="cp-grid" id="cpGrid">
+    <div class="cp-state">Loading the casting chamber…</div>
+  </div>
+
+  <div class="cp-toast" id="cpToast"></div>
+
+  <script>
+  (function () {
+    var API = '/api/collectables';
+
+    function esc(s){ return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function owner() {
+      var el = document.getElementById('collectablesPanel');
+      var o = (el && el.getAttribute('data-owner')) || '';
+      if (o) return o;
+      o = window.SHADDAI_USER ||
+          (window.localStorage && localStorage.getItem('shaddai_user')) ||
+          'demo';
+      return o;
+    }
+
+    function toast(msg) {
+      var t = document.getElementById('cpToast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('cp-show');
+      clearTimeout(t._t);
+      t._t = setTimeout(function(){ t.classList.remove('cp-show'); }, 2600);
+    }
+
+    function cardHtml(c) {
+      var locked = !c.earned;
+      var rar = String(c.rarity || 'common').toLowerCase();
+      var ed = c.edition != null ? ('#' + c.edition) : (c.serial || '');
+      var lockChip = locked
+        ? '<div class="cp-lockchip">🔒 unlock by:<br><b>' + esc(c.unlockText || 'complete work') + '</b>'
+          + (c.threshold > 1 ? '<br>' + esc(String(c.progress||0)) + ' / ' + esc(String(c.threshold)) : '')
+          + '</div>'
+        : '';
+      var mintBtn = locked
+        ? '<button class="cp-mint" disabled>🔒 Locked</button>'
+        : '<button class="cp-mint" data-mint="' + esc(c.id) + '">Mint (soon)</button>';
+      return ''
+        + '<div class="cp-card ' + (locked ? 'cp-locked' : 'cp-earned') + '">'
+        +   '<div class="cp-art">'
+        +     '<span class="cp-rar r-' + esc(rar) + '">' + esc(rar) + '</span>'
+        +     (ed ? '<span class="cp-ed">' + esc(ed) + '</span>' : '')
+        +     '<img loading="lazy" src="' + esc(c.imageUrl) + '" alt="' + esc(c.name) + '"/>'
+        +     lockChip
+        +   '</div>'
+        +   '<div class="cp-meta">'
+        +     '<div class="cp-name">' + esc(c.name) + '</div>'
+        +     '<div class="cp-fac">' + esc(c.faction || '') + (c.kind ? ' · ' + esc(c.kind) : '') + '</div>'
+        +     mintBtn
+        +   '</div>'
+        + '</div>';
+    }
+
+    function render(payload) {
+      var grid = document.getElementById('cpGrid');
+      if (!grid) return;
+      var cards = (payload && payload.cards) || [];
+      if (!cards.length) {
+        grid.innerHTML = '<div class="cp-state">No collectables found.</div>';
+        return;
+      }
+      grid.innerHTML = cards.map(cardHtml).join('');
+
+      var earned = payload.earned || 0, total = payload.total || cards.length;
+      var lbl = document.getElementById('cpProgLabel');
+      var fill = document.getElementById('cpProgFill');
+      if (lbl) lbl.textContent = earned + ' / ' + total;
+      if (fill) fill.style.width = (total ? Math.round(earned / total * 100) : 0) + '%';
+
+      grid.querySelectorAll('[data-mint]').forEach(function (btn) {
+        btn.addEventListener('click', function () { mint(btn.getAttribute('data-mint')); });
+      });
+    }
+
+    function load() {
+      var grid = document.getElementById('cpGrid');
+      fetch(API + '/list?owner=' + encodeURIComponent(owner()))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) throw new Error((d && d.error) || 'list failed');
+          render(d);
+        })
+        .catch(function (e) {
+          if (grid) grid.innerHTML = '<div class="cp-state">⚠ ' + esc(e.message) + '</div>';
+        });
+    }
+
+    function mint(id) {
+      fetch(API + '/mint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner: owner(), id: id }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          toast((d && d.message) ? '⛓ ' + d.message : 'Mint coming soon');
+        })
+        .catch(function () { toast('⛓ On-chain mint arrives in a later phase'); });
+    }
+
+    // Global init hook the dashboard calls when the tab opens.
+    window.collectablesPanelInit = function (ownerOverride) {
+      var el = document.getElementById('collectablesPanel');
+      if (ownerOverride && el) el.setAttribute('data-owner', String(ownerOverride));
+      load();
+    };
+
+    // Expose a helper so other dashboard code can report a real action and
+    // refresh the gallery on new unlocks (e.g. after a clip is produced).
+    window.collectablesReportAction = function (action, n) {
+      return fetch(API + '/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner: owner(), action: action, n: n || 1 }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok && d.newlyUnlocked && d.newlyUnlocked.length) {
+            d.newlyUnlocked.forEach(function (c) { toast('🏆 Unlocked: ' + c.name); });
+            load();
+          }
+          return d;
+        });
+    };
+  })();
+  </script>
+</div>

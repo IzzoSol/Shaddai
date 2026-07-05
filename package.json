@@ -21,6 +21,8 @@
   "author": "SHADDAI Team",
   "license": "MIT",
   "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0",
     "@solana/pay": "^1.0.16",
     "@solana/web3.js": "^1.98.4",
     "axios": "^1.6.2",

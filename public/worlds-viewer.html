@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADDAI Worlds Viewer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #050010;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border: 2px solid #00e5ff;
+      border-radius: 8px;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+    }
+
+    #hud h1 {
+      color: #ffad2e;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    #hud p {
+      margin: 8px 0;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    #hud .world-name {
+      color: #00e5ff;
+      font-weight: bold;
+    }
+
+    #districts {
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .district {
+      padding: 8px;
+      margin: 5px 0;
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 3px solid;
+      font-size: 11px;
+      border-radius: 4px;
+    }
+
+    .district-name {
+      font-weight: bold;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border: 2px solid #ff4400;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    #worldSelector {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border: 2px solid #9b59f5;
+      border-radius: 8px;
+    }
+
+    #worldSelector select {
+      background: #0a0e14;
+      color: #00ff88;
+      border: 1px solid #00ff88;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: inherit;
+      width: 200px;
+    }
+
+    .stats {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border: 2px solid #18cae6;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .fps {
+      color: #00e5ff;
+      font-weight: bold;
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 30px;
+      border: 2px solid #ffad2e;
+      border-radius: 8px;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .loading h2 {
+      color: #ffad2e;
+      margin-bottom: 10px;
+    }
+
+    .spinner {
+      border: 3px solid #333;
+      border-top: 3px solid #00e5ff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas"></div>
+
+  <div id="worldSelector">
+    <label for="worldSelect">Select World:</label><br>
+    <select id="worldSelect">
+      <option value="0">SHADDAI Prime</option>
+      <option value="1">Grid City</option>
+      <option value="2">Emerald Forest</option>
+      <option value="3">Void Harbor</option>
+      <option value="4">Diamond Citadel</option>
+    </select>
+  </div>
+
+  <div id="hud">
+    <h1>⚡ SHADDAI WORLDS</h1>
+    <p>World Labs + Higgs Physics + Hugging Face</p>
+    <p id="worldInfo"></p>
+    <div id="districts"></div>
+  </div>
+
+  <div id="controls">
+    <p>🎮 Controls:</p>
+    <p>🖱️ Drag to rotate | Scroll to zoom</p>
+    <p>Arrow Keys: Pan | Space: Reset view</p>
+  </div>
+
+  <div class="stats">
+    <div>📊 Rendering Stats</div>
+    <div class="fps" id="fps">FPS: 60</div>
+    <div id="entityCount">Entities: 7</div>
+    <div id="triangles">Triangles: 125K</div>
+  </div>
+
+  <div id="loading" class="loading" style="display: none;">
+    <h2>Creating World...</h2>
+    <div class="spinner"></div>
+    <p>Generating districts and terrain textures</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    // World data (from demo)
+    const WORLDS = [
+      {
+        id: '5TXKGXNXT',
+        name: 'SHADDAI Prime',
+        prompt: 'A neon sci-fi civilization with 7 glowing agent district hubs',
+        created: '2026-06-25T21:16:44.438Z'
+      },
+      {
+        id: '73K2X4MWI',
+        name: 'Grid City',
+        prompt: 'A perfect geometric city built on data streams',
+        created: '2026-06-25T21:16:44.444Z'
+      },
+      {
+        id: 'LFJ07PBI0',
+        name: 'Emerald Forest',
+        prompt: 'A bioluminescent forest where 7 agent trees grow together',
+        created: '2026-06-25T21:16:44.444Z'
+      },
+      {
+        id: 'NRLPJIFUN',
+        name: 'Void Harbor',
+        prompt: 'A deep space station orbiting a black hole',
+        created: '2026-06-25T21:16:44.445Z'
+      },
+      {
+        id: 'WJFUHCON7',
+        name: 'Diamond Citadel',
+        prompt: 'An ultra-advanced AI fortress made of crystalline structures',
+        created: '2026-06-25T21:16:44.445Z'
+      }
+    ];
+
+    const DISTRICTS = [
+      { id: 'shaddai', name: 'SHADDAI', color: '#ffad2e', angle: 0 },
+      { id: 'zerox', name: 'ZEROX', color: '#00ff88', angle: Math.PI * 2 / 7 },
+      { id: 'oracle', name: 'ORACLE', color: '#9b59f5', angle: Math.PI * 4 / 7 },
+      { id: 'nexus', name: 'NEXUS', color: '#00e5ff', angle: Math.PI * 6 / 7 },
+      { id: 'turtle', name: 'TURTLE', color: '#18cae6', angle: Math.PI * 8 / 7 },
+      { id: 'quill', name: 'QUILL', color: '#f0c8d8', angle: Math.PI * 10 / 7 },
+      { id: 'pikadon', name: 'PIKADON', color: '#ff4400', angle: Math.PI * 12 / 7 }
+    ];
+
+    let currentWorldIndex = 0;
+    let scene, camera, renderer;
+    let controls;
+    let frameCount = 0;
+    let lastTime = Date.now();
+
+    function initThreeJS() {
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050010);
+      scene.fog = new THREE.Fog(0x050010, 500, 2000);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+      );
+      camera.position.set(0, 150, 200);
+      camera.lookAt(0, 0, 0);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      document.getElementById('canvas').appendChild(renderer.domElement);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      const pointLight1 = new THREE.PointLight(0x00e5ff, 1.5, 500);
+      pointLight1.position.set(100, 150, 100);
+      scene.add(pointLight1);
+
+      const pointLight2 = new THREE.PointLight(0xff4400, 1.5, 500);
+      pointLight2.position.set(-100, 150, -100);
+      scene.add(pointLight2);
+
+      // Ground plane
+      const groundGeometry = new THREE.PlaneGeometry(800, 800);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a0e14,
+        metalness: 0.3,
+        roughness: 0.8
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -1;
+      scene.add(ground);
+
+      // Basic orbit controls
+      setupControls();
+
+      // Load first world
+      loadWorld(0);
+
+      // Animation loop
+      animate();
+
+      // Handle window resize
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function setupControls() {
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+
+      document.addEventListener('mousedown', (e) => {
+        isDragging = true;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          const deltaX = e.clientX - previousMousePosition.x;
+          const deltaY = e.clientY - previousMousePosition.y;
+
+          const radius = Math.sqrt(
+            camera.position.x ** 2 +
+            camera.position.z ** 2
+          );
+
+          let angle = Math.atan2(camera.position.z, camera.position.x);
+          angle -= deltaX * 0.005;
+
+          camera.position.x = Math.cos(angle) * radius;
+          camera.position.z = Math.sin(angle) * radius;
+          camera.lookAt(0, 50, 0);
+        }
+
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const radius = Math.sqrt(
+          camera.position.x ** 2 +
+          camera.position.y ** 2 +
+          camera.position.z ** 2
+        );
+        const newRadius = radius + e.deltaY * 0.1;
+        const scale = newRadius / radius;
+
+        camera.position.multiplyScalar(scale);
+        camera.lookAt(0, 50, 0);
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          camera.position.set(0, 150, 200);
+          camera.lookAt(0, 0, 0);
+        }
+      });
+    }
+
+    function loadWorld(index) {
+      // Clear existing districts
+      scene.children = scene.children.filter(
+        child => !(child.userData && child.userData.isDistrict)
+      );
+
+      const world = WORLDS[index];
+      currentWorldIndex = index;
+
+      // Update HUD
+      document.getElementById('worldInfo').innerHTML = `
+        <p><span class="world-name">${world.name}</span></p>
+        <p>ID: ${world.id}</p>
+        <p>Created: ${new Date(world.created).toLocaleDateString()}</p>
+      `;
+
+      // Add districts
+      const districtsHTML = DISTRICTS.map(district => {
+        const angle = district.angle;
+        const x = Math.cos(angle) * 100;
+        const z = Math.sin(angle) * 100;
+
+        // Create district cylinder
+        const geometry = new THREE.CylinderGeometry(50, 50, 2, 32);
+        const material = new THREE.MeshStandardMaterial({
+          color: district.color,
+          emissive: district.color,
+          emissiveIntensity: 0.5,
+          metalness: 0.8,
+          roughness: 0.2
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, 1, z);
+        mesh.userData.isDistrict = true;
+        mesh.userData.districtId = district.id;
+        scene.add(mesh);
+
+        // Add label
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 64;
+        ctx.fillStyle = district.color;
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(district.name, 128, 40);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(50, 12.5, 1);
+        sprite.position.set(x, 30, z);
+        sprite.userData.isDistrict = true;
+        scene.add(sprite);
+
+        return `
+          <div class="district" style="border-color: ${district.color}">
+            <div class="district-name" style="color: ${district.color}">${district.name}</div>
+            <div>Position: [${x.toFixed(1)}, 0, ${z.toFixed(1)}]</div>
+            <div>Status: Online ✓</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('districts').innerHTML = districtsHTML;
+
+      // Update world selector
+      document.getElementById('worldSelect').value = index;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Calculate FPS
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime >= 1000) {
+        document.getElementById('fps').textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+
+    // Event listeners
+    document.getElementById('worldSelect').addEventListener('change', (e) => {
+      loadWorld(parseInt(e.target.value));
+    });
+
+    // Initialize
+    window.addEventListener('load', initThreeJS);
+  </script>
+</body>
+</html>

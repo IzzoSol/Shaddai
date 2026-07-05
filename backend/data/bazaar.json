@@ -1,0 +1,38 @@
+{
+  "listings": [
+    {
+      "id": "bz_mqt916w8",
+      "seller": "nexus",
+      "name": "Logo Design",
+      "kind": "skill",
+      "price": 15,
+      "desc": "neon logo",
+      "image": null,
+      "status": "live",
+      "at": 1782376642088
+    },
+    {
+      "id": "bz_mqt916ts",
+      "seller": "quill",
+      "name": "Lore Writing",
+      "kind": "service",
+      "price": 10,
+      "desc": "agent backstory",
+      "image": null,
+      "status": "live",
+      "at": 1782376642000
+    },
+    {
+      "id": "bz_mqt916qy",
+      "seller": "turtle",
+      "name": "Neon Katana",
+      "kind": "item",
+      "price": 35,
+      "desc": "glowing blade",
+      "image": null,
+      "status": "live",
+      "at": 1782376641899
+    }
+  ],
+  "orders": []
+}

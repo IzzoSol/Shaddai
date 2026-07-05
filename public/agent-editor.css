@@ -1,0 +1,79 @@
+/* agent-editor.css — scoped modal for re-editing a forged operative's tools.
+   Dependency-free. Everything lives under #shdAgentEditor so it never bleeds
+   into the host page (forge.html OR the dashboard). Black / neon-green / cyan. */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
+
+#shdAgentEditor{
+  position:fixed; inset:0; z-index:99999; display:none;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.78); backdrop-filter:blur(3px);
+  font-family:'Share Tech Mono',ui-monospace,monospace; color:#cfeee0;
+}
+#shdAgentEditor.shd-open{ display:flex; }
+#shdAgentEditor *{ box-sizing:border-box; }
+
+#shdAgentEditor .shd-card{
+  width:min(560px,94vw); max-height:88vh; overflow:hidden; display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#05100b,#020604);
+  border:1px solid #00ff88; border-radius:8px;
+  box-shadow:0 0 40px rgba(0,255,136,.25), inset 0 0 0 1px rgba(0,255,136,.08);
+}
+#shdAgentEditor .shd-hd{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:14px 18px; border-bottom:1px solid rgba(0,255,136,.28);
+  font-family:'Orbitron',sans-serif; font-weight:900; letter-spacing:.14em;
+  color:#00ff88; text-shadow:0 0 14px rgba(0,255,136,.5); font-size:14px;
+}
+#shdAgentEditor .shd-hd .shd-sub{ display:block; font-family:'Share Tech Mono',monospace;
+  font-weight:400; letter-spacing:.12em; font-size:10px; color:#5fe0c8; margin-top:3px; }
+#shdAgentEditor .shd-x{
+  cursor:pointer; border:1px solid rgba(0,255,136,.4); background:transparent; color:#00ff88;
+  width:30px; height:30px; border-radius:5px; font-size:16px; line-height:1; flex:0 0 auto;
+}
+#shdAgentEditor .shd-x:hover{ background:rgba(0,255,136,.12); }
+
+#shdAgentEditor .shd-body{ padding:16px 18px; overflow-y:auto; }
+#shdAgentEditor .shd-lab{ font-family:'Orbitron',sans-serif; letter-spacing:.2em; font-size:10px;
+  color:#54d6df; text-transform:uppercase; margin:2px 0 8px; }
+#shdAgentEditor .shd-count{ float:right; color:#00ff88; }
+#shdAgentEditor .shd-count.shd-full{ color:#ff5a5a; }
+
+#shdAgentEditor .shd-tools{ display:flex; flex-wrap:wrap; gap:6px; min-height:34px; margin-bottom:6px; }
+#shdAgentEditor .shd-chip{
+  display:inline-flex; align-items:center; gap:7px; padding:5px 8px 5px 10px;
+  border:1px solid #00ff88; border-radius:4px; background:rgba(0,255,136,.08);
+  color:#d6ffee; font-size:12px; white-space:nowrap;
+}
+#shdAgentEditor .shd-chip .shd-rm{ cursor:pointer; color:#ff6a6a; font-weight:700; }
+#shdAgentEditor .shd-chip .shd-rm:hover{ color:#ff2a2a; }
+#shdAgentEditor .shd-empty{ color:#5fe0c8; font-size:12px; opacity:.7; }
+
+#shdAgentEditor input.shd-search, #shdAgentEditor select.shd-pick{
+  width:100%; background:#02100a; border:1px solid rgba(0,255,136,.35); border-radius:4px;
+  color:#cfeee0; padding:9px 11px; font-family:'Share Tech Mono',monospace; font-size:13px; margin-top:10px;
+}
+#shdAgentEditor input.shd-search:focus, #shdAgentEditor select.shd-pick:focus{
+  outline:none; border-color:#00ff88; box-shadow:0 0 0 3px rgba(0,255,136,.12); }
+#shdAgentEditor .shd-picker{ max-height:190px; overflow-y:auto; margin-top:8px;
+  border:1px solid rgba(0,255,136,.18); border-radius:4px; }
+#shdAgentEditor .shd-opt{ padding:8px 11px; cursor:pointer; border-bottom:1px solid rgba(0,255,136,.08);
+  font-size:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#shdAgentEditor .shd-opt:hover{ background:rgba(0,255,136,.1); }
+#shdAgentEditor .shd-opt.shd-on{ color:#00ff88; }
+#shdAgentEditor .shd-opt small{ color:#5fe0c8; opacity:.7; font-size:10px; max-width:55%;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+#shdAgentEditor .shd-ft{ display:flex; align-items:center; gap:10px; padding:14px 18px;
+  border-top:1px solid rgba(0,255,136,.28); }
+#shdAgentEditor .shd-msg{ flex:1; font-size:11px; color:#5fe0c8; min-height:14px; }
+#shdAgentEditor .shd-msg.shd-err{ color:#ff5a5a; }
+#shdAgentEditor .shd-msg.shd-ok{ color:#00ff88; }
+#shdAgentEditor button.shd-cancel, #shdAgentEditor button.shd-save{
+  cursor:pointer; font-family:'Orbitron',sans-serif; font-weight:700; letter-spacing:.1em;
+  font-size:12px; padding:10px 16px; border-radius:5px; }
+#shdAgentEditor button.shd-cancel{ background:transparent; border:1px solid rgba(0,255,136,.4); color:#9fe8d4; }
+#shdAgentEditor button.shd-cancel:hover{ background:rgba(0,255,136,.08); }
+#shdAgentEditor button.shd-save{ border:none; color:#012; background:linear-gradient(180deg,#7dffc4,#00ff88);
+  box-shadow:0 0 18px rgba(0,255,136,.4); }
+#shdAgentEditor button.shd-save:hover{ filter:brightness(1.08); }
+#shdAgentEditor button.shd-save:disabled{ filter:grayscale(.6) brightness(.7); cursor:wait; }

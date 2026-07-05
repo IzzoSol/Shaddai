@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SHADDAI WORLD · Neon Exchange</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#ffcf4a; --gold-deep:#d99b1c;
+  --cyan:#27e0ff; --cyan-deep:#0a90b8;
+  --void:#04060d; --void2:#070b18;
+  --ink:#aebbd6; --line:rgba(39,224,255,.16);
+  --hud:'Share Tech Mono',monospace; --disp:'Orbitron',sans-serif; --alt:'Chakra Petch',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--void);color:#eaf2ff;font-family:var(--hud);cursor:none}
+#world{position:fixed;inset:0;display:block}
+/* ───────── atmosphere overlays ───────── */
+.scan{position:fixed;inset:0;pointer-events:none;z-index:30;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.16) 2px 3px);mix-blend-mode:multiply;opacity:.5}
+.vig{position:fixed;inset:0;pointer-events:none;z-index:29;
+  background:radial-gradient(120% 90% at 50% 42%,transparent 38%,rgba(2,4,10,.55) 78%,rgba(2,4,10,.95) 100%)}
+.grain{position:fixed;inset:-50%;pointer-events:none;z-index:31;opacity:.05;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  animation:grain 1.2s steps(3) infinite}
+@keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-4%,3%)}66%{transform:translate(3%,-2%)}100%{transform:translate(0,0)}}
+/* corner brackets */
+.bracket{position:fixed;width:46px;height:46px;z-index:28;pointer-events:none;border:2px solid rgba(255,207,74,.55);filter:drop-shadow(0 0 6px rgba(255,207,74,.4))}
+.bracket.tl{top:16px;left:16px;border-right:0;border-bottom:0}
+.bracket.tr{top:16px;right:16px;border-left:0;border-bottom:0}
+.bracket.bl{bottom:16px;left:16px;border-right:0;border-top:0}
+.bracket.br{bottom:16px;right:16px;border-left:0;border-top:0}
+/* ───────── HUD ───────── */
+.hud{position:fixed;z-index:40;pointer-events:none}
+#topbar{top:0;left:0;right:0;padding:20px 30px;display:flex;align-items:flex-start;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:3px}
+.brand h1{font-family:var(--disp);font-weight:900;font-size:26px;letter-spacing:7px;color:#fff;line-height:1;
+  text-shadow:0 0 18px rgba(255,207,74,.6),0 0 40px rgba(255,207,74,.25);position:relative}
+.brand h1 .w{color:var(--gold)}
+.brand .sub{font-size:9px;letter-spacing:5px;color:var(--cyan);text-transform:uppercase;opacity:.85}
+.brand .sub b{color:var(--gold);opacity:.9}
+.stat-row{display:flex;gap:10px;align-items:center;text-align:right}
+.chip{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:6px 11px;border:1px solid rgba(39,224,255,.35);
+  background:linear-gradient(180deg,rgba(39,224,255,.08),rgba(39,224,255,.02));color:var(--cyan);border-radius:3px;backdrop-filter:blur(4px)}
+.chip.gold{border-color:rgba(255,207,74,.45);color:var(--gold);background:linear-gradient(180deg,rgba(255,207,74,.1),rgba(255,207,74,.02))}
+.chip b{color:#fff}
+/* control hint */
+#hint{bottom:24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--ink);text-align:center;opacity:.8}
+#hint .k{display:inline-block;padding:2px 8px;margin:0 2px;border:1px solid rgba(174,187,214,.3);border-radius:4px;color:#fff;background:rgba(255,255,255,.04)}
+/* minimap */
+#mini{position:fixed;left:20px;bottom:20px;z-index:40;width:148px;height:148px;border:1px solid rgba(39,224,255,.3);
+  border-radius:8px;background:rgba(4,8,18,.7);backdrop-filter:blur(6px);box-shadow:0 0 24px rgba(0,0,0,.6),inset 0 0 24px rgba(39,224,255,.05)}
+#mini .lbl{position:absolute;top:6px;left:9px;font-size:7px;letter-spacing:3px;color:var(--cyan);opacity:.7}
+/* nearest prompt */
+#near{position:fixed;right:22px;bottom:26px;z-index:40;font-size:11px;letter-spacing:2px;color:var(--gold);opacity:0;transition:opacity .2s;
+  border:1px solid rgba(255,207,74,.4);padding:8px 14px;border-radius:4px;background:rgba(8,8,16,.7);backdrop-filter:blur(4px)}
+#near.on{opacity:1}
+#near .e{display:inline-block;border:1px solid var(--gold);border-radius:4px;padding:1px 7px;margin-right:6px;color:#fff}
+/* ───────── agent panel ───────── */
+#panel{position:fixed;z-index:45;left:50%;bottom:74px;transform:translate(-50%,30px);width:min(560px,92vw);
+  opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.2,.9,.25,1),opacity .35s}
+#panel.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.card{position:relative;display:flex;gap:0;border:1px solid var(--pc,#27e0ff);border-radius:14px;overflow:hidden;
+  background:linear-gradient(160deg,rgba(8,12,22,.96),rgba(5,8,16,.98));box-shadow:0 0 0 1px rgba(0,0,0,.4),0 18px 60px rgba(0,0,0,.7),0 0 40px color-mix(in srgb,var(--pc,#27e0ff) 28%,transparent)}
+.card .por{flex:0 0 150px;height:188px;position:relative;overflow:hidden;border-right:1px solid color-mix(in srgb,var(--pc) 40%,transparent)}
+.card .por img{width:100%;height:100%;object-fit:cover;display:block}
+.card .por .rib{position:absolute;top:9px;left:9px;font-family:var(--hud);font-size:7px;letter-spacing:2px;color:#04060d;
+  background:var(--pc);padding:2px 8px;border-radius:3px;font-weight:700}
+.card .body{flex:1;padding:16px 18px;display:flex;flex-direction:column;min-width:0}
+.card .nm{font-family:var(--disp);font-weight:900;font-size:21px;letter-spacing:3px;color:var(--pc);text-shadow:0 0 16px color-mix(in srgb,var(--pc) 60%,transparent)}
+.card .role{font-size:8.5px;letter-spacing:3px;text-transform:uppercase;color:var(--ink);margin-top:3px}
+.card .chips{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}
+.card .sk{font-family:var(--alt);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;
+  color:var(--pc);background:color-mix(in srgb,var(--pc) 12%,transparent);border:1px solid color-mix(in srgb,var(--pc) 30%,transparent)}
+.card .price{margin-top:auto;display:flex;align-items:baseline;gap:8px;font-family:var(--hud)}
+.card .price b{font-size:20px;color:#fff}.card .price small{font-size:9px;color:var(--ink)}
+.card .acts{display:flex;gap:8px;margin-top:12px}
+.card button{flex:1;font-family:var(--disp);font-weight:700;font-size:10px;letter-spacing:2px;padding:10px;border-radius:7px;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);background:color-mix(in srgb,var(--pc) 12%,transparent);color:#fff;transition:.15s}
+.card button.hire{background:linear-gradient(180deg,var(--pc),color-mix(in srgb,var(--pc) 60%,#000));color:#04060d;border:none}
+.card button:hover{filter:brightness(1.18);transform:translateY(-1px)}
+.card .x{position:absolute;top:10px;right:12px;font-family:var(--hud);font-size:14px;color:var(--ink);cursor:pointer;background:none;border:none;padding:4px}
+/* ───────── intro ───────── */
+#intro{position:fixed;inset:0;z-index:80;background:radial-gradient(circle at 50% 45%,#0a1426,#04060d 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .8s}
+#intro.gone{opacity:0;pointer-events:none}
+#intro .big{font-family:var(--disp);font-weight:900;font-size:clamp(28px,6vw,64px);letter-spacing:14px;color:#fff;
+  text-shadow:0 0 30px rgba(255,207,74,.7);animation:flick 2.4s infinite}
+#intro .big .w{color:var(--gold)}
+#intro .ld{font-size:10px;letter-spacing:6px;color:var(--cyan);text-transform:uppercase}
+#intro .bar{width:min(340px,70vw);height:3px;background:rgba(39,224,255,.15);border-radius:3px;overflow:hidden}
+#intro .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--gold));box-shadow:0 0 12px var(--cyan);animation:load 2.2s cubic-bezier(.5,0,.2,1) forwards}
+@keyframes load{to{width:100%}}
+@keyframes flick{0%,18%,22%,100%{opacity:1}20%{opacity:.55}}
+/* custom cursor */
+#cur{position:fixed;z-index:90;width:22px;height:22px;margin:-11px 0 0 -11px;pointer-events:none;
+  border:1.5px solid var(--gold);border-radius:50%;box-shadow:0 0 12px rgba(255,207,74,.6);transition:transform .08s}
+#cur::after{content:'';position:absolute;inset:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan)}
+@media (max-width:640px){.brand h1{font-size:18px;letter-spacing:4px}#mini{width:104px;height:104px}}
+</style>
+</head>
+<body>
+<canvas id="world"></canvas>
+
+<div class="scan"></div><div class="vig"></div><div class="grain"></div>
+<span class="bracket tl"></span><span class="bracket tr"></span><span class="bracket bl"></span><span class="bracket br"></span>
+
+<div class="hud" id="topbar">
+  <div class="brand">
+    <h1>SHADDAI <span class="w">WORLD</span></h1>
+    <div class="sub">Neon Exchange · Sector <b>01</b> · the agent marketplace</div>
+  </div>
+  <div class="stat-row">
+    <div class="chip">AGENTS <b id="agCount">—</b></div>
+    <div class="chip gold" id="tierChip">FREE TIER</div>
+    <div class="chip" id="coords">X 0 · Y 0</div>
+  </div>
+</div>
+
+<canvas id="mini" width="296" height="296"></canvas><span class="hud" style="left:30px;bottom:154px;font-size:7px;letter-spacing:3px;color:var(--cyan);opacity:.7;z-index:41">EXCHANGE MAP</span>
+
+<div class="hud" id="hint"><span class="k">W A S D</span> / <span class="k">◀ ▲ ▶ ▼</span> move &nbsp;·&nbsp; <span class="k">E</span> interact &nbsp;·&nbsp; walk up to an agent</div>
+<div id="near"><span class="e">E</span><span id="nearName">AGENT</span></div>
+
+<div id="panel"><div class="card" id="card"></div></div>
+
+<div id="intro">
+  <div class="big">SHADDAI <span class="w">WORLD</span></div>
+  <div class="ld" id="ldtext">initializing neon exchange…</div>
+  <div class="bar"><i></i></div>
+</div>
+<div id="cur"></div>
+
+<script>
+(function(){
+  const cv=document.getElementById('world'), ctx=cv.getContext('2d');
+  const mini=document.getElementById('mini'), mctx=mini.getContext('2d');
+  let W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
+  function resize(){ W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
+  addEventListener('resize',resize); resize();
+
+  // ── colors per rarity / agent ──
+  const RC={legendary:'#ffcf4a',epic:'#c084fc',rare:'#27e0ff',common:'#9fb0e0'};
+  const COUNCIL=[
+    {codename:'SHADDAI',color:'#ffcf4a',archetype:'orchestrator',rarity:'legendary',price:5,portrait:'/api/forge/art/agent-shaddai.png',skills:['orchestrate','route_task','search_web','run_js','draft_post','code_gen','save_memory','full_override']},
+    {codename:'ZEROX',color:'#27e0ff',archetype:'revenue',rarity:'epic',price:3,portrait:'/api/forge/art/agent-zerox.png',skills:['fetch_price','fear_greed','trending','on_chain','sentiment','risk_mgmt','search_web']},
+    {codename:'ORACLE',color:'#c084fc',archetype:'intel',rarity:'legendary',price:3,portrait:'/api/forge/art/agent-oracle.png',skills:['research','natal_chart','numerology','chakra_scan','sacred_geometry','fetch_price','search_web']},
+    {codename:'NEXUS',color:'#34e5b0',archetype:'architect',rarity:'epic',price:2,portrait:'/api/forge/art/agent-nexus.png',skills:['route','workflow','schedule','run_js','search_skills','save_memory','search_web']},
+    {codename:'TURTLE',color:'#1fd6c4',archetype:'creative',rarity:'rare',price:4,portrait:'/api/forge/art/agent-turtle.png',skills:['pixel_sprite','melody_gen','game_design','color_palette','draft_post','save_memory']},
+    {codename:'QUILL',color:'#b98cff',archetype:'writer',rarity:'rare',price:2,portrait:'/api/forge/art/agent-quill.png',skills:['copywrite','tone_engineer','phonetics','docs','draft_post','search_web']},
+    {codename:'PIKADON',color:'#ff5a6e',archetype:'security',rarity:'epic',price:3,portrait:'/api/forge/art/agent-pikadon.png',skills:['check_security','rbac_guard','pgp_encrypt','audit_log','leak_scan','run_js']},
+  ];
+
+  // ── world / camera / player ──
+  const CELL=92;                 // grid cell px (world units)
+  const cam={x:0,y:0};
+  const player={x:0,y:0,vx:0,vy:0,face:1,bob:0};
+  const keys={};
+  let agents=[], imgs={}, nearest=null, t0=performance.now();
+
+  function hashPos(seed,i,n){
+    // stable plaza layout: concentric rings around origin
+    const ring=Math.floor((Math.sqrt(8*i+1)-1)/2);           // triangular-ish ring index
+    const inRing=i-2*ring*(ring+1)/2;
+    const count=Math.max(1,ring*6);
+    const ang=(inRing/count)*Math.PI*2 + (ring%2?0.4:0);
+    const rad=(ring+1)*CELL*2.2;
+    return {x:Math.cos(ang)*rad, y:Math.sin(ang)*rad};
+  }
+
+  function loadImg(src){ if(imgs[src])return imgs[src]; const im=new Image(); im.src=src; im.onerror=()=>{im._bad=true;}; imgs[src]=im; return im; }
+  function portraitOf(a){ return a.portrait || (a.archetype?('/api/forge/art/arch-'+a.archetype+'.png'):'/api/forge/art/arch-oracle.png'); }
+
+  async function loadAgents(){
+    let list=[];
+    try{
+      const r=await fetch('/api/operatives'); const d=await r.json();
+      const ops=(d&&d.operatives)||[];
+      list=ops.map(o=>({codename:(o.codename||'AGENT').toUpperCase(),color:RC[(o.rarity||'common')]||'#9fb0e0',
+        archetype:o.archetype||'oracle',rarity:o.rarity||'common',price:(o.listing&&o.listing.pricePerCall)||2,
+        portrait:o.portrait||('/api/forge/art/arch-'+(o.archetype||'oracle')+'.png'),
+        skills:(o.tools||[]).slice(0,3)}));
+    }catch(e){}
+    // Always include the 7 council so the world is never empty (MMO-shaped crowd).
+    const have=new Set(list.map(a=>a.codename));
+    COUNCIL.forEach(c=>{ if(!have.has(c.codename)) list.push(c); });
+    agents=list.map((a,i)=>{ const p=hashPos(a.codename,i,list.length); a.x=p.x; a.y=p.y; a.hx=p.x; a.hy=p.y; a.wx=p.x; a.wy=p.y; a.wt=0; a.bob=Math.random()*6.28; loadImg(portraitOf(a)); return a; });
+    document.getElementById('agCount').textContent=agents.length;
+  }
+
+  // ── input ──
+  addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E'){ if(nearest) openPanel(nearest); } if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault(); });
+  addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+  // cursor
+  const cur=document.getElementById('cur');
+  addEventListener('mousemove',e=>{ cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'; });
+  addEventListener('mousedown',()=>cur.style.transform='scale(.7)'); addEventListener('mouseup',()=>cur.style.transform='scale(1)');
+
+  // ── panel ──
+  const panel=document.getElementById('panel'), cardEl=document.getElementById('card');
+  function openPanel(a){
+    cardEl.style.setProperty('--pc',a.color);
+    cardEl.innerHTML=
+      '<button class="x" onclick="this.closest(\'#panel\').classList.remove(\'on\')">✕</button>'+
+      '<div class="por"><span class="rib">'+(a.rarity||'common').toUpperCase()+'</span><img src="'+portraitOf(a)+'" alt=""></div>'+
+      '<div class="body"><div class="nm">'+a.codename+'</div><div class="role">'+(a.archetype||'operative')+' · neon exchange</div>'+
+      '<div class="chips">'+(a.skills&&a.skills.length?a.skills.map(s=>'<span class="sk">'+s+'</span>').join(''):'<span class="sk">general</span>')+'</div>'+
+      '<div class="price"><small>HIRE RATE</small><b>$'+(a.price||2)+'</b><small>/call · x402</small></div>'+
+      '<div class="acts"><button class="hire" onclick="alert(\'x402 hire flow → Sub-project C\')">⚡ HIRE</button>'+
+      '<button onclick="this.closest(\'#panel\').classList.remove(\'on\')">VIEW DOSSIER</button></div></div>';
+    panel.classList.add('on');
+  }
+  document.getElementById('panel').classList.remove('on');
+
+  // ── drawing ──
+  // real skill counts per agent (from the 3,437-skill index) shown above each agent
+  let skillCounts={};
+  fetch('/api/skills/stats').then(function(r){return r.ok?r.json():null;}).then(function(d){ if(d&&d.bakedByAgent){ for(var k in d.bakedByAgent){ skillCounts[k.toUpperCase()]=d.bakedByAgent[k]; } } }).catch(function(){});
+  // atmospheric backdrop: parallax starfield + nebula glow + drifting motes (drawn over the dark floor, under booths)
+  const STARS = Array.from({length:220},()=>({x:Math.random(),y:Math.random(),z:Math.random()*0.8+0.2,s:Math.random()*1.6+0.4}));
+  const MOTES = Array.from({length:34},()=>({x:Math.random(),y:Math.random(),sp:Math.random()*0.00005+0.000015,ph:Math.random()*6.28,r:Math.random()*1.5+0.6}));
+  function drawAtmosphere(now){
+    const nx=-cam.x*0.02*DPR, ny=-cam.y*0.02*DPR;
+    const clouds=[['rgba(39,224,255,0.06)',W*0.28+nx,H*0.32+ny,Math.max(W,H)*0.55],
+                  ['rgba(255,207,74,0.05)',W*0.74+nx,H*0.62+ny,Math.max(W,H)*0.5],
+                  ['rgba(176,106,255,0.05)',W*0.52+nx,H*0.18+ny,Math.max(W,H)*0.42]];
+    for(const c of clouds){ const rg=ctx.createRadialGradient(c[1],c[2],0,c[1],c[2],c[3]); rg.addColorStop(0,c[0]); rg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=rg; ctx.fillRect(0,0,W,H); }
+    for(const st of STARS){
+      const px=(((st.x*W - cam.x*st.z*0.12*DPR)%W)+W)%W, py=(((st.y*H - cam.y*st.z*0.12*DPR)%H)+H)%H;
+      const tw=0.55+0.45*Math.sin(now*0.002+st.x*40);
+      ctx.fillStyle='rgba(200,230,255,'+((0.2+st.z*0.5)*tw).toFixed(3)+')';
+      ctx.fillRect(px,py,st.s*DPR,st.s*DPR);
+    }
+    for(const m of MOTES){
+      const px=((m.x + now*m.sp)%1)*W, py=((m.y + Math.sin(now*0.0003+m.ph)*0.03+1)%1)*H;
+      ctx.fillStyle='rgba(39,224,255,'+(0.1+0.08*Math.sin(now*0.001+m.ph)).toFixed(3)+')';
+      ctx.beginPath(); ctx.arc(px,py,m.r*DPR,0,6.29); ctx.fill();
+    }
+  }
+  // central SHADDAI monument (the Source) at world origin
+  function drawMonument(now){
+    const s=worldToScreen(0,0);
+    const mh=78*DPR, mw=15*DPR;
+    const mg=ctx.createLinearGradient(0,s.y-mh,0,s.y); mg.addColorStop(0,'rgba(255,210,74,0)'); mg.addColorStop(1,'rgba(255,210,74,0.4)');
+    ctx.save(); ctx.fillStyle=mg; ctx.fillRect(s.x-mw/2,s.y-mh,mw,mh);
+    const dy=s.y-mh*0.9+Math.sin(now/600)*4*DPR;
+    ctx.strokeStyle='#ffe9a8'; ctx.fillStyle='rgba(255,210,74,0.22)'; ctx.shadowColor='#ffd24a'; ctx.shadowBlur=28*DPR; ctx.lineWidth=2*DPR;
+    ctx.beginPath(); ctx.moveTo(s.x,dy-17*DPR); ctx.lineTo(s.x+12*DPR,dy); ctx.lineTo(s.x,dy+17*DPR); ctx.lineTo(s.x-12*DPR,dy); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=8*DPR; ctx.fillStyle='rgba(255,233,168,.9)'; ctx.font='700 '+(8*DPR)+'px Orbitron'; ctx.textAlign='center'; ctx.fillText('THE SOURCE', s.x, s.y+13*DPR);
+    ctx.restore();
+  }
+  function drawGrid(){
+    const cx=W/2-cam.x*DPR, cy=H/2-cam.y*DPR, step=CELL*DPR;
+    // floor wash
+    const g=ctx.createRadialGradient(W/2,H*0.46,0,W/2,H*0.46,Math.max(W,H)*0.7);
+    g.addColorStop(0,'rgba(18,30,54,.9)'); g.addColorStop(.5,'rgba(7,11,24,.95)'); g.addColorStop(1,'#04060d');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // grid lines
+    ctx.lineWidth=1*DPR;
+    const ox=((cx%step)+step)%step, oy=((cy%step)+step)%step;
+    for(let x=ox;x<W;x+=step){ const d=Math.abs(x-W/2)/(W/2); ctx.strokeStyle='rgba(39,224,255,'+(0.16*(1-d*0.7))+')'; ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+    for(let y=oy;y<H;y+=step){ const d=Math.abs(y-H*0.46)/(H*0.6); ctx.strokeStyle='rgba(39,224,255,'+(0.16*(1-d*0.6))+')'; ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+    // origin plaza glow (gold)
+    const px=cx, py=cy;
+    const og=ctx.createRadialGradient(px,py,0,px,py,260*DPR);
+    og.addColorStop(0,'rgba(255,207,74,.16)'); og.addColorStop(1,'rgba(255,207,74,0)');
+    ctx.fillStyle=og; ctx.beginPath();ctx.arc(px,py,260*DPR,0,6.29);ctx.fill();
+  }
+
+  function worldToScreen(wx,wy){ return {x:W/2+(wx-cam.x)*DPR, y:H/2+(wy-cam.y)*DPR}; }
+
+  function drawBooth(a,now){
+    const s=worldToScreen(a.x,a.y); if(s.x<-160*DPR||s.x>W+160*DPR||s.y<-220*DPR||s.y>H+160*DPR) return;
+    const depth=1+(s.y/H-0.5)*0.35;                  // subtle 2.5D: lower = bigger
+    const bob=Math.sin(now/700+a.bob)*5*DPR;
+    const col=a.color, active=(nearest===a);
+    // ground ring
+    ctx.save();
+    ctx.strokeStyle=col; ctx.globalAlpha=active?.9:.5; ctx.lineWidth=2*DPR*depth; ctx.shadowColor=col; ctx.shadowBlur=(active?26:12)*DPR;
+    ctx.beginPath(); ctx.ellipse(s.x,s.y, 46*DPR*depth, 16*DPR*depth, 0, 0, 6.29); ctx.stroke();
+    ctx.globalAlpha=active?.22:.12; ctx.fillStyle=col; ctx.fill();
+    ctx.restore();
+    // light beam
+    const bh=150*DPR*depth, bw=14*DPR*depth;
+    const bg=ctx.createLinearGradient(0,s.y-bh,0,s.y);
+    bg.addColorStop(0,'rgba(0,0,0,0)'); bg.addColorStop(1,col+'55');
+    ctx.fillStyle=bg; ctx.globalAlpha=active?.5:.28; ctx.fillRect(s.x-bw/2,s.y-bh,bw,bh); ctx.globalAlpha=1;
+    // holo portrait frame
+    const fw=92*DPR*depth, fh=116*DPR*depth, fy=s.y-bh-fh*0.16+bob;
+    const im=loadImg(portraitOf(a));
+    ctx.save();
+    roundRect(s.x-fw/2,fy,fw,fh,10*DPR);
+    ctx.shadowColor=col; ctx.shadowBlur=(active?30:16)*DPR; ctx.fillStyle='#06080d'; ctx.fill(); ctx.shadowBlur=0;
+    ctx.clip();
+    if(im.complete&&!im._bad&&im.naturalWidth){ const ar=im.naturalWidth/im.naturalHeight, fr=fw/fh; let dw=fw,dh=fh,dx=s.x-fw/2,dy=fy; if(ar>fr){dh=fh;dw=fh*ar;dx=s.x-dw/2;}else{dw=fw;dh=fw/ar;dy=fy-(dh-fh)/2;} ctx.globalAlpha=active?1:.86; ctx.drawImage(im,dx,dy,dw,dh); ctx.globalAlpha=1; }
+    else { ctx.fillStyle=col; ctx.globalAlpha=.18; ctx.fillRect(s.x-fw/2,fy,fw,fh); ctx.globalAlpha=1; ctx.fillStyle=col; ctx.font='700 '+(20*depth)+'px Orbitron'; ctx.textAlign='center'; ctx.fillText(a.codename[0],s.x,fy+fh/2); }
+    ctx.restore();
+    ctx.lineWidth=(active?2.4:1.6)*DPR; ctx.strokeStyle=col; ctx.shadowColor=col; ctx.shadowBlur=(active?20:8)*DPR;
+    roundRect(s.x-fw/2,fy,fw,fh,10*DPR); ctx.stroke(); ctx.shadowBlur=0;
+    // nameplate
+    const ny=fy+fh+15*DPR;
+    ctx.font='700 '+(11*depth*DPR)+'px Orbitron'; ctx.textAlign='center';
+    const lw=ctx.measureText(a.codename).width+18*DPR;
+    ctx.fillStyle='rgba(6,9,16,.85)'; roundRect(s.x-lw/2,ny-12*DPR,lw,17*DPR,5*DPR); ctx.fill();
+    ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8*DPR; ctx.fillText(a.codename,s.x,ny); ctx.shadowBlur=0;
+    // price chip
+    ctx.font=(8*DPR)+'px "Share Tech Mono"'; ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.fillText('⚡ $'+(a.price||2)+' /call', s.x, ny+13*DPR);
+    // real skill count (from the live skill index)
+    var _skc=skillCounts[(a.codename||'').toUpperCase()];
+    if(_skc){ ctx.font='700 '+(7.5*DPR)+'px "Share Tech Mono"'; ctx.fillStyle=col; ctx.globalAlpha=active?1:.8; ctx.fillText('✦ '+_skc.toLocaleString()+' skills', s.x, ny+24*DPR); ctx.globalAlpha=1; }
+  }
+
+  function drawPlayer(now){
+    const x=W/2, y=H/2, col='#ffcf4a';
+    const bob=Math.sin(now/220)*2*DPR;
+    // shadow
+    ctx.save(); ctx.fillStyle='rgba(0,0,0,.5)'; ctx.beginPath(); ctx.ellipse(x,y,22*DPR,8*DPR,0,0,6.29); ctx.fill(); ctx.restore();
+    // pulse ring
+    const pr=(28+Math.sin(now/360)*4)*DPR; ctx.strokeStyle='rgba(255,207,74,.5)'; ctx.lineWidth=2*DPR; ctx.shadowColor=col; ctx.shadowBlur=18*DPR;
+    ctx.beginPath();ctx.ellipse(x,y,pr,pr*0.4,0,0,6.29);ctx.stroke(); ctx.shadowBlur=0;
+    // body (neon figure)
+    ctx.save(); ctx.translate(x,y-26*DPR+bob); ctx.shadowColor=col; ctx.shadowBlur=16*DPR;
+    ctx.fillStyle=col;
+    // torso
+    roundRect(-9*DPR,-2*DPR,18*DPR,26*DPR,7*DPR); ctx.fill();
+    // head
+    ctx.beginPath(); ctx.arc(0,-12*DPR,9*DPR,0,6.29); ctx.fillStyle='#fff7df'; ctx.fill();
+    ctx.fillStyle=col; ctx.fillRect(-6*DPR,-14*DPR,12*DPR,4*DPR); // visor
+    ctx.restore();
+  }
+
+  function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+
+  function drawMini(){
+    mctx.clearRect(0,0,296,296); mctx.fillStyle='rgba(4,8,18,.6)'; mctx.fillRect(0,0,296,296);
+    const sc=0.045, cx=148, cy=148;
+    mctx.strokeStyle='rgba(39,224,255,.15)'; for(let i=0;i<=296;i+=37){mctx.beginPath();mctx.moveTo(i,0);mctx.lineTo(i,296);mctx.moveTo(0,i);mctx.lineTo(296,i);mctx.stroke();}
+    agents.forEach(a=>{ const mx=cx+(a.x-player.x)*sc, my=cy+(a.y-player.y)*sc; if(mx<4||mx>292||my<4||my>292)return;
+      mctx.fillStyle=a.color; mctx.shadowColor=a.color; mctx.shadowBlur=6; mctx.beginPath();mctx.arc(mx,my,3.2,0,6.29);mctx.fill(); mctx.shadowBlur=0; });
+    mctx.fillStyle='#ffcf4a'; mctx.shadowColor='#ffcf4a'; mctx.shadowBlur=10; mctx.beginPath();mctx.arc(cx,cy,4,0,6.29);mctx.fill(); mctx.shadowBlur=0;
+  }
+
+  function update(now){
+    const dt=Math.min(2.5,(now-(update._t||now))/16.67); update._t=now;   // frame-rate independent
+    let dx=0,dy=0;
+    if(keys['w']||keys['arrowup'])dy-=1; if(keys['s']||keys['arrowdown'])dy+=1;
+    if(keys['a']||keys['arrowleft'])dx-=1; if(keys['d']||keys['arrowright'])dx+=1;
+    const len=Math.hypot(dx,dy)||1; const sp=4.6*((keys['shift'])?2.1:1);   // hold Shift to run
+    player.vx+=( (dx/len)*sp - player.vx)*Math.min(1,0.25*dt); player.vy+=( (dy/len)*sp - player.vy)*Math.min(1,0.25*dt);
+    player.x+=player.vx*dt; player.y+=player.vy*dt;
+    cam.x+=((player.x+player.vx*8)-cam.x)*Math.min(1,0.12*dt); cam.y+=((player.y+player.vy*8)-cam.y)*Math.min(1,0.12*dt);  // look-ahead
+    // nearest
+    let best=null,bd=130*130; agents.forEach(a=>{ const d=(a.x-player.x)**2+(a.y-player.y)**2; if(d<bd){bd=d;best=a;} });
+    if(best!==nearest){ nearest=best; const nE=document.getElementById('near'); if(nearest){ document.getElementById('nearName').textContent=nearest.codename; nE.classList.add('on'); } else nE.classList.remove('on'); }
+    document.getElementById('coords').textContent='X '+(player.x|0)+' · Y '+(player.y|0);
+  }
+
+  // agents roam on their own — drift within their home area, pause to talk when you're near
+  function moveAgents(now){
+    for(const a of agents){
+      if(nearest===a) continue;                              // stop to talk when the player is close
+      if(now > (a.wt||0)){
+        const ang=Math.random()*6.28, rad=20+Math.random()*70;
+        a.wx=(a.hx||a.x)+Math.cos(ang)*rad; a.wy=(a.hy||a.y)+Math.sin(ang)*rad;
+        a.wt=now+3000+Math.random()*4000;                    // new wander target every 3–7s
+      }
+      a.x+=(a.wx-a.x)*0.012; a.y+=(a.wy-a.y)*0.012;           // ease toward target
+    }
+  }
+  function frame(now){
+    update(now);
+    moveAgents(now);
+    ctx.clearRect(0,0,W,H);
+    drawGrid();
+    drawAtmosphere(now);
+    drawMonument(now);
+    const list=agents.slice().sort((a,b)=>a.y-b.y);
+    let drewPlayer=false;
+    for(const a of list){ if(!drewPlayer && a.y>player.y){ drawPlayer(now); drewPlayer=true; } drawBooth(a,now); }
+    if(!drewPlayer) drawPlayer(now);
+    drawMini();
+    requestAnimationFrame(frame);
+  }
+
+  // ── boot ──
+  loadAgents().then(()=>{
+    setTimeout(()=>document.getElementById('intro').classList.add('gone'),2200);
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

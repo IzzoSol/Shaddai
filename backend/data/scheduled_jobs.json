@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "job_1783120413388",
+    "name": "Weekly Security Audit",
+    "trigger": "weekly",
+    "steps": [
+      {
+        "step": 1,
+        "agent": "pikadon",
+        "prompt": "List top 5 security vulnerabilities for a Node.js AI agent marketplace."
+      },
+      {
+        "step": 2,
+        "agent": "nexus",
+        "prompt": "For these issues: {step1}\nTop 3 architectural fixes?"
+      },
+      {
+        "step": 3,
+        "agent": "quill",
+        "prompt": "Write an executive security summary from: {step2}"
+      }
+    ],
+    "output": "inbox",
+    "enabled": true,
+    "created": "2026-07-03T23:13:33.388Z",
+    "lastRun": null,
+    "runCount": 0
+  }
+]

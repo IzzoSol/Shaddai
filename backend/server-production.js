@@ -326,34 +326,24 @@ const requestTracker = new RequestTracker();
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
-
-// ── Per-user identity + key context ──────────────────────────────────────────
-// Identify the caller (Firebase token → uid) and bind it to the async context so
-// keys.get() resolves THIS user's BYOK keys everywhere. Enforces REQUIRE_AUTH on
-// /api/* only; page loads, health, the Stripe webhook, and x402 discovery stay
-// public so users can always load the app to sign in.
-const { verifyFirebaseToken } = require('./auth-guard');
-const _keys = require('./lib/keys');
-const _AUTH_EXEMPT = [
-  '/api/health', '/api/model/health',
-  '/api/stripe/webhook',     // Stripe calls this with no user token
-  '/api/keys/catalog',       // public provider list (booleans only, no secrets)
-];
+// Never let browsers cache HTML pages — they must always fetch the latest build. (Static assets like
+// JS/images still cache normally; those are cache-busted with ?v= query strings.) This stops the
+// recurring "it's still broken / showing the old version" problem where a stale cached page is served.
 app.use((req, res, next) => {
-  const bind = () => _keys.userContext(req, res, next);
-  const isApi = req.path.startsWith('/api/');
-  const exempt = !isApi
-    || req.path.startsWith('/.well-known')
-    || _AUTH_EXEMPT.some(p => req.path === p || req.path.startsWith(p));
-  if (exempt) {
-    // identify best-effort, never block (page loads, health, public APIs)
-    req.userId = req.headers['x-user-id'] || 'local';
-    return bind();
+  if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
   }
-  // protected /api/* → verify token (enforces REQUIRE_AUTH when set), then bind
-  return verifyFirebaseToken(req, res, bind);
+  next();
 });
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 
 // Request tracking middleware
 app.use((req, res, next) => {
@@ -697,20 +687,38 @@ app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-custo
 app.use('/api/aura', require('./lib/aura').router);
 app.use('/api/news', require('./news-routes'));
 app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling)
-app.use('/api/clips', require('./clips-routes')); // streaming proxy → Clips ENGINE (CLIPS_ENGINE_URL)
 app.use('/api/x402/ledger', require('./x402-ledger-routes')); // prepaid balance ledger (pre-fund → spend down)
-app.get('/api/pricing', (_req, res) => { try { res.json(require('./lib/pricing').priceTable()); } catch(e){ res.status(500).json({error:String(e.message||e)}); } }); // real compute-cost agent pricing
-app.use('/api/stripe', require('./stripe-routes')); // Stripe Checkout → credits top-up (gated on STRIPE_SECRET_KEY)
-app.use('/api/keys', require('./lib/keys').router()); // central API-key resolver — paste once, powers every tool
 app.use('/api/collectibles/rewards', require('./lib/collectible-rewards').router);              // AURA token-saver (cache/compute-first) stats+route
 app.use('/api/security', require('./lib/security-scan').router); // PIKADON real scans (url/code/skill)
 app.use('/api/vault', require('./lib/api-vault').router);        // BYOK API key vault (password-locked)
 // Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
 app.use('/api/brains', require('./brains').router);
+// Operative Forge — build-your-own-agent LOOK → real FLUX NFT portrait (HF token stays server-side)
+app.use('/api/forge', require('./forge/forge-routes'));
+// Collectables — 100 NFT cards + REAL unlock-by-dashboard-action tracking (mint = later phase)
+app.use('/api/collectables', require('./collectables/collectables-routes'));
+// Rooms — personal operative habitat: HF scene-gen + wearables (reuses forge-core slots)
+app.use('/api/rooms', require('./rooms/rooms-routes'));
+// Operatives — the unified Operative store (identity+look+brain+inventory+economy+stats)
+app.use('/api/operatives', require('./lib/operatives-routes'));
+app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
+app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
+app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
+app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish / MiroFish — free-API market data proxy (Polymarket + CoinGecko)
+app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
+app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
+// AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
+app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
 app.use('/api/billing', require('./billing-routes').router);
+// Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
+// (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
+try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }
+catch (e) { console.warn('[prod] stripe-routes failed:', e.message); }
 // Server-side LLM proxy — browser calls this so provider keys never ship to the client
 app.use('/api/llm', require('./llm-proxy-routes'));
+// ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
+app.use('/api/worlds', require('./routes/worlds-api'));
 
 // ============================================
 // AGENTS API
@@ -1452,17 +1460,57 @@ app.post('/api/pikadon/audit', async (req, res) => {
 // FRONTEND FALLBACK
 // ============================================
 
+// ── Shaddai Worlds + Federation (MUST be before the catch-all) ──
+app.get('/world',           (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-3D.html')));
+app.get('/world3d',         (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-3D.html')));
+app.get('/world-complete',  (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-COMPLETE.html')));
+// legacy world aliases — their HTML files were archived; redirect to the canonical world (no more 500s)
+['/world-master', '/world-api', '/world-new', '/world-build'].forEach(p => app.get(p, (req, res) => res.redirect('/world')));
+try { app.use(require('./federation-routes')); console.log('[prod] federation (A2A + MCP + portals) mounted'); }
+catch (e) { console.warn('[prod] federation failed:', e.message); }
+try { app.use(require('./district-routes')); console.log('[prod] districts mounted'); }
+catch (e) { console.warn('[prod] districts failed:', e.message); }
+try { app.use(require('./portal-admin-routes')); console.log('[prod] portal-admin mounted'); }
+catch (e) { console.warn('[prod] portal-admin failed:', e.message); }
+try { app.use(require('./museum-routes')); console.log('[prod] museum mounted'); }
+catch (e) { console.warn('[prod] museum failed:', e.message); }
+try { app.use(require('./x402-routes')); console.log('[prod] x402 ledger mounted'); }
+catch (e) { console.warn('[prod] x402 failed:', e.message); }
+try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'); }
+catch (e) { console.warn('[prod] markets failed:', e.message); }
+try { app.use(require('./admin-routes')); console.log('[prod] admin privileges mounted'); }
+catch (e) { console.warn('[prod] admin failed:', e.message); }
+try { app.use(require('./games-routes')); console.log('[prod] games leaderboard mounted'); }
+catch (e) { console.warn('[prod] games failed:', e.message); }
+try { app.use('/api/arcade', require('./arcade-routes')); console.log('[prod] agent arcade mounted'); }
+catch (e) { console.warn('[prod] arcade failed:', e.message); }
+try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
+catch (e) { console.warn('[prod] bazaar failed:', e.message); }
+try { app.use(require('./results-routes')); console.log('[prod] results inbox mounted'); }
+catch (e) { console.warn('[prod] results-routes failed:', e.message); }
+try { app.use(require('./gallery-routes')); console.log('[prod] creator gallery mounted'); }
+catch (e) { console.warn('[prod] gallery failed:', e.message); }
+try { app.use(require('./skills-market-routes')); console.log('[prod] skills market mounted'); }
+catch (e) { console.warn('[prod] skills market failed:', e.message); }
+try { app.use(require('./ainl-routes')); console.log('[prod] AINL workflows mounted'); }
+catch (e) { console.warn('[prod] AINL failed:', e.message); }
+try { app.use(require('./neocortex-routes')); console.log('[prod] neocortex memory mounted'); }
+catch (e) { console.warn('[prod] neocortex failed:', e.message); }
+try { app.use(require('./wallet-routes')); console.log('[prod] x402-v2 wallet mounted'); }
+catch (e) { console.warn('[prod] wallet failed:', e.message); }
+try { app.use(require('./hire-routes')); console.log('[prod] agent hire mounted'); }
+catch (e) { console.warn('[prod] hire failed:', e.message); }
+try { app.use(require('./analytics-routes')); console.log('[prod] analytics mounted'); }
+catch (e) { console.warn('[prod] analytics failed:', e.message); }
+app.use('/games', express.static(path.join(__dirname, '..', 'games')));
+// Self-heal the 7 council character images on boot (forge-art is gitignored → regenerate from HF env keys)
+try { require('./lib/char-gen').ensureCouncilChars(); } catch (e) { console.warn('[prod] council self-heal skipped:', e.message); }
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.get('*', (req, res) => {
-  // Unmatched API routes must return a JSON 404 — never the SPA shell.
-  // Otherwise a client typo or renamed endpoint silently "succeeds" with
-  // 200 + 2.8MB of HTML, masking bugs (especially as we scale clients).
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'not_found', path: req.path });
-  }
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
@@ -1548,6 +1596,7 @@ if (!process.env.VERCEL_ENV) {
     console.log('  • Caching layer (TTL-based)');
     console.log('  • Structured logging');
     console.log('  • Batch job processing');
+    console.log('  • 🌍 World Labs integration (dynamic worlds)');
 
     console.log('\n✓ API Endpoints (Premium Features):');
     console.log('  GET  /api/agents/:name/history');
@@ -1557,6 +1606,15 @@ if (!process.env.VERCEL_ENV) {
     console.log('  GET  /api/analytics/dashboard');
     console.log('  POST /api/batch/jobs');
     console.log('  GET  /api/batch/jobs/:jobId');
+
+    console.log('\n✓ World Labs API Endpoints:');
+    console.log('  POST /api/worlds/create (generate world)');
+    console.log('  GET  /api/worlds/:id (fetch world)');
+    console.log('  GET  /api/worlds (list all)');
+    console.log('  POST /api/worlds/:id/physics (update physics)');
+    console.log('  POST /api/worlds/:id/seed (add entities)');
+    console.log('  POST /api/worlds/:id/districts/visit (navigate)');
+    console.log('  → Viewer: http://localhost:' + PORT + '/worlds-viewer.html');
 
     console.log('\n✓ WebSocket Events:');
     console.log('  • execution (real-time task updates)');

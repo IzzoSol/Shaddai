@@ -1,0 +1,316 @@
+/* =====================================================================
+   SHADDAI DEPTH LAYER  —  shaddai-depth.css
+   ---------------------------------------------------------------------
+   Purpose : Adds atmospheric DEPTH + GLOWING EDGES to the existing dark
+             neon dashboard. Purely visual (shadows, backgrounds, borders,
+             transitions, tiny hover transforms). Does NOT touch layout,
+             positioning, widths, display or flex.
+   Link    : This file is loaded LAST, so !important is used to win the
+             cascade over inline / earlier styles.
+   Theme   : pure black #000, neon green #00ff88, cyan #00f0ff.
+   Fonts   : Orbitron, 'Share Tech Mono' (already loaded).
+   SAFE    : Never targets #world, #worldCanvas, canvas or iframe.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   0. THEME TOKENS
+   ------------------------------------------------------------------- */
+:root {
+  --sd-black:      #000000;
+  --sd-green:      #00ff88;
+  --sd-cyan:       #00f0ff;
+  --sd-green-dim:  rgba(0, 255, 136, 0.35);
+  --sd-green-soft: rgba(0, 255, 136, 0.15);
+  --sd-cyan-soft:  rgba(0, 240, 255, 0.12);
+  --sd-border:     rgba(0, 255, 136, 0.22);
+}
+
+/* ---------------------------------------------------------------------
+   1. ATMOSPHERIC DEPTH BACKGROUND
+   ---------------------------------------------------------------------
+   Layered, top -> bottom:
+     a) dark overlay gradient (keeps text readable over any image)
+     b) radial green glow (depth / vignette from center)
+     c) the nebula photo (cover, fixed) — if it 404s, the layers above
+        + the solid CSS gradient below still render, so this fails safe.
+   background-color stays pure black as the ultimate fallback.
+   ------------------------------------------------------------------- */
+html {
+  background-color: var(--sd-black) !important;
+}
+
+body {
+  background-color: var(--sd-black) !important;
+  /* CSS-gradient fallback lives in the color layers; image is last so a
+     missing file simply reveals the gradients + black beneath it. */
+  background-image:
+    /* a) dark readability overlay */
+    linear-gradient(180deg,
+        rgba(0, 0, 0, 0.92) 0%,
+        rgba(0, 0, 0, 0.86) 45%,
+        rgba(0, 0, 0, 0.94) 100%),
+    /* b) radial green depth glow / vignette */
+    radial-gradient(ellipse 120% 90% at 50% 12%,
+        rgba(0, 255, 136, 0.10) 0%,
+        rgba(0, 40, 25, 0.05) 38%,
+        rgba(0, 0, 0, 0.00) 70%),
+    /* c) subtle cyan counter-glow bottom-right for dimensionality */
+    radial-gradient(ellipse 90% 70% at 85% 95%,
+        rgba(0, 240, 255, 0.06) 0%,
+        rgba(0, 0, 0, 0.00) 60%),
+    /* d) the nebula image (darkened by the layers above) */
+    url('/assets/ui/bg-nebula.jpg') !important;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat !important;
+  background-position: center, center, center, center !important;
+  background-size: cover, cover, cover, cover !important;
+  background-attachment: fixed, fixed, fixed, fixed !important;
+}
+
+/* ---------------------------------------------------------------------
+   1b. SCANLINE + GRAIN OVERLAY
+   ---------------------------------------------------------------------
+   One fixed, full-screen, non-interactive pseudo-element. Low opacity so
+   it reads as texture, not noise. z-index 5 keeps it above content but
+   below modals/overlays. pointer-events:none so clicks pass through.
+   ------------------------------------------------------------------- */
+body::after {
+  content: "" !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+  opacity: 0.05 !important;
+  /* fine horizontal scanlines + a faint diagonal grain hatch */
+  background-image:
+    repeating-linear-gradient(
+        0deg,
+        rgba(0, 255, 136, 0.35) 0px,
+        rgba(0, 255, 136, 0.35) 1px,
+        rgba(0, 0, 0, 0.00) 1px,
+        rgba(0, 0, 0, 0.00) 3px),
+    repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 0px,
+        rgba(255, 255, 255, 0.04) 1px,
+        rgba(0, 0, 0, 0.00) 1px,
+        rgba(0, 0, 0, 0.00) 2px) !important;
+  background-size: 100% 3px, 2px 100% !important;
+  mix-blend-mode: screen !important;
+}
+
+/* ---------------------------------------------------------------------
+   2. KEYFRAMES
+   ------------------------------------------------------------------- */
+
+/* Slow breathing border/glow pulse for cards & stat cards. */
+@keyframes sd-border-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px var(--sd-border),
+      0 6px 22px rgba(0, 0, 0, 0.75),
+      0 0 14px rgba(0, 255, 136, 0.10),
+      inset 0 1px 0 rgba(0, 255, 136, 0.18),
+      inset 0 0 26px rgba(0, 0, 0, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(0, 255, 136, 0.40),
+      0 6px 22px rgba(0, 0, 0, 0.75),
+      0 0 26px rgba(0, 255, 136, 0.22),
+      inset 0 1px 0 rgba(0, 255, 136, 0.30),
+      inset 0 0 26px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* Brighter animated glow used on hover of interactive edges. */
+@keyframes sd-hover-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 255, 136, 0.55),
+      0 8px 26px rgba(0, 0, 0, 0.80),
+      0 0 26px rgba(0, 255, 136, 0.35),
+      inset 0 1px 0 rgba(0, 255, 136, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.55),
+      0 8px 30px rgba(0, 0, 0, 0.80),
+      0 0 38px rgba(0, 255, 136, 0.55),
+      inset 0 1px 0 rgba(0, 240, 255, 0.40);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   3. PANEL DEPTH  —  cards, stat boxes, stat cards
+   ---------------------------------------------------------------------
+   Subtle near-black gradient, green-tinted 1px border, a bright inset
+   top edge (the thin highlight line), outer neon glow + inset shadow.
+   Layout untouched — only paint. position:relative is added so the
+   ::before top-edge line can anchor; it does not move flow layout.
+   ------------------------------------------------------------------- */
+.card,
+.stat-box,
+.shaddai-stat-card,
+#shaddai-stat-bar .shaddai-stat-card {
+  position: relative !important;
+  background-image:
+    linear-gradient(160deg,
+        rgba(10, 16, 12, 0.96) 0%,
+        rgba(2, 5, 3, 0.98) 55%,
+        rgba(0, 0, 0, 1.00) 100%) !important;
+  border: 1px solid var(--sd-border) !important;
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.75),          /* drop shadow / depth      */
+    0 0 14px rgba(0, 255, 136, 0.10),        /* soft outer neon glow     */
+    inset 0 1px 0 rgba(0, 255, 136, 0.18),   /* bright top edge highlight */
+    inset 0 0 26px rgba(0, 0, 0, 0.55) !important; /* inner vignette      */
+  transition:
+    box-shadow 0.35s ease,
+    border-color 0.35s ease,
+    transform 0.25s ease,
+    background-color 0.35s ease !important;
+}
+
+/* Thin bright top-edge highlight line (extra crispness above the inset). */
+.card::before,
+.shaddai-stat-card::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 8% !important;
+  right: 8% !important;
+  height: 1px !important;
+  pointer-events: none !important;
+  background: linear-gradient(90deg,
+      rgba(0, 255, 136, 0.00) 0%,
+      rgba(0, 255, 136, 0.55) 50%,
+      rgba(0, 255, 136, 0.00) 100%) !important;
+}
+
+/* Slow breathing glow on the headline cards. */
+.card,
+.shaddai-stat-card {
+  animation: sd-border-glow 6s ease-in-out infinite !important;
+}
+
+/* Hover: brighter glow + gentle lift. */
+.card:hover,
+.stat-box:hover,
+.shaddai-stat-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(0, 255, 136, 0.55) !important;
+  animation: sd-hover-glow 1.6s ease-in-out infinite !important;
+}
+
+/* ---------------------------------------------------------------------
+   4. TOP NAV BUTTONS  —  #mainNav .nav-btn
+   ---------------------------------------------------------------------
+   Layered glow + inset dark, smooth transition, hover lift + brighter
+   animated glow. Active tab gets a strong outer glow and an under-glow
+   bleed via ::after.
+   ------------------------------------------------------------------- */
+#mainNav .nav-btn {
+  position: relative !important;
+  background-image:
+    linear-gradient(180deg,
+        rgba(8, 14, 10, 0.90) 0%,
+        rgba(0, 0, 0, 0.96) 100%) !important;
+  border: 1px solid var(--sd-border) !important;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.70),
+    0 0 10px rgba(0, 255, 136, 0.08),
+    inset 0 1px 0 rgba(0, 255, 136, 0.15) !important;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.2s ease,
+    color 0.3s ease !important;
+}
+
+#mainNav .nav-btn:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(0, 255, 136, 0.60) !important;
+  animation: sd-hover-glow 1.6s ease-in-out infinite !important;
+}
+
+/* Active nav tab — strong outer glow. */
+#mainNav .nav-btn.active {
+  border-color: var(--sd-green) !important;
+  color: var(--sd-green) !important;
+  box-shadow:
+    0 0 0 1px var(--sd-green),
+    0 4px 16px rgba(0, 0, 0, 0.80),
+    0 0 22px rgba(0, 255, 136, 0.45),
+    0 0 44px rgba(0, 255, 136, 0.25),
+    inset 0 1px 0 rgba(0, 255, 136, 0.40),
+    inset 0 -6px 14px rgba(0, 255, 136, 0.12) !important;
+}
+
+/* Soft green under-glow bleed beneath the active tab. */
+#mainNav .nav-btn.active::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 12% !important;
+  right: 12% !important;
+  bottom: -8px !important;
+  height: 10px !important;
+  pointer-events: none !important;
+  border-radius: 50% !important;
+  background: radial-gradient(ellipse at center,
+      rgba(0, 255, 136, 0.55) 0%,
+      rgba(0, 255, 136, 0.00) 70%) !important;
+  filter: blur(2px) !important;
+}
+
+/* ---------------------------------------------------------------------
+   5. LEFT RAIL TABS  —  .sbt  (active = .sbt.active or .sbt.on)
+   ---------------------------------------------------------------------
+   Lighter treatment (many of these, keep it cheap): thin border, gentle
+   inset highlight, hover glow. Active state gets a left accent bar glow.
+   ------------------------------------------------------------------- */
+.sbt {
+  position: relative !important;
+  border: 1px solid transparent !important;
+  box-shadow:
+    inset 0 1px 0 rgba(0, 255, 136, 0.06) !important;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    transform 0.2s ease !important;
+}
+
+.sbt:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(0, 255, 136, 0.30) !important;
+  box-shadow:
+    0 0 14px rgba(0, 255, 136, 0.18),
+    inset 0 1px 0 rgba(0, 255, 136, 0.15) !important;
+}
+
+.sbt.active,
+.sbt.on {
+  border-color: rgba(0, 255, 136, 0.45) !important;
+  box-shadow:
+    inset 3px 0 0 var(--sd-green),                 /* left accent bar    */
+    0 0 18px rgba(0, 255, 136, 0.28),              /* outer glow         */
+    inset 0 1px 0 rgba(0, 255, 136, 0.25) !important;
+}
+
+/* ---------------------------------------------------------------------
+   6. SAFETY GUARDS  —  never restyle the 3D world / media surfaces
+   ------------------------------------------------------------------- */
+#world,
+#worldCanvas,
+canvas,
+iframe {
+  background: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+  filter: none !important;
+}
+
+/* End of shaddai-depth.css */

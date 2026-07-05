@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · The Bazaar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#03050c;--deep:#05070f;--panel:rgba(12,20,38,.72);--panel-solid:#0a1120;
+  --line:rgba(0,229,255,.16);--line-v:rgba(160,116,255,.18);--line-soft:rgba(255,255,255,.06);
+  --cyan:#00e5ff;--jade:#00e5a0;--violet:#a074ff;--gold:#ffcf6b;--magenta:#ff4d9d;--amber:#ff9d3d;--red:#ff5a6e;
+  --txt:#e6f0ff;--dim:#9fb0d4;--muted:#63739a;--ink:#020409;
+  --disp:'Orbitron',sans-serif;--head:'Chakra Petch',sans-serif;--body:'Rajdhani',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1200px 640px at 50% -10%,rgba(0,229,255,.13),transparent 60%),radial-gradient(820px 520px at 90% 14%,rgba(160,116,255,.14),transparent 55%),radial-gradient(760px 520px at 6% 44%,rgba(0,229,160,.09),transparent 55%),linear-gradient(180deg,#05070f,#03050c 55%,#020308);
+  color:var(--txt);font-family:var(--body);min-height:100vh;overflow-x:hidden;font-size:15px}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.45;
+  background-image:linear-gradient(rgba(0,229,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.06) 1px,transparent 1px);background-size:44px 44px;
+  -webkit-mask:radial-gradient(120% 78% at 50% 0%,#000 18%,transparent 74%);mask:radial-gradient(120% 78% at 50% 0%,#000 18%,transparent 74%);
+  transform:perspective(560px) rotateX(60deg) translateY(40%) scale(2.6);transform-origin:top center;animation:floor 26s linear infinite}
+@keyframes floor{to{background-position:0 44px}}
+body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.045;mix-blend-mode:overlay;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+.stars{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.star{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:drift linear infinite}
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-100vh)}}
+.wrap{position:relative;z-index:4;max-width:1360px;margin:0 auto;padding:0 24px 130px}
+
+/* ── status bar ── */
+.statusbar{display:flex;align-items:center;gap:0;height:34px;margin:0 -24px;border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(0,229,255,.06),transparent);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);overflow:hidden}
+.statusbar .seg{padding:0 16px;height:100%;display:flex;align-items:center;gap:7px;border-right:1px solid var(--line-soft);white-space:nowrap}
+.statusbar .k{color:var(--cyan)}.statusbar .on{color:var(--jade)}.statusbar .on::before{content:"● ";animation:pulse 1.4s infinite}
+.ticker{flex:1;overflow:hidden;position:relative;height:100%}
+.ticker .run{position:absolute;white-space:nowrap;display:flex;gap:34px;align-items:center;height:100%;animation:tick 34s linear infinite;color:var(--dim)}
+.ticker b{color:var(--gold)}.ticker .s{color:var(--muted)}
+@keyframes tick{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ── header ── */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;padding-top:26px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.42em;color:var(--muted);text-transform:uppercase}
+.eyebrow b{color:var(--cyan)}.eyebrow i{color:var(--violet);font-style:normal}
+.title{font-family:var(--disp);font-weight:900;font-size:clamp(40px,7.4vw,88px);line-height:.9;margin:.1em 0 0;letter-spacing:.03em;position:relative;color:#eaf6ff}
+.title .g{background:linear-gradient(92deg,var(--cyan),var(--violet) 70%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+.title::after{content:"THE BAZAAR";position:absolute;left:0;top:0;font-family:var(--disp);font-weight:900;letter-spacing:.03em;
+  color:transparent;-webkit-text-stroke:1px rgba(0,229,255,.22);z-index:-1;transform:translate(3px,3px)}
+.tagline{font-family:var(--head);font-weight:600;font-size:clamp(13px,1.7vw,16px);letter-spacing:.04em;color:var(--dim);margin-top:10px;max-width:52ch}
+.hactions{display:flex;flex-direction:column;align-items:flex-end;gap:11px}
+.wallet{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;font-family:var(--mono);
+  background:linear-gradient(135deg,rgba(255,207,107,.12),rgba(10,17,32,.9));border:1px solid rgba(255,207,107,.32);box-shadow:0 0 24px rgba(255,207,107,.12)}
+.wallet .amt{font-weight:800;font-size:17px;color:var(--gold)}.wallet .lb{font-size:9px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.hactions .row{display:flex;gap:9px}
+.btn{font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.04em;border-radius:9px;padding:11px 15px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--txt);transition:.16s}
+.btn:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,229,255,.26);transform:translateY(-1px)}
+.btn-ghost{color:var(--dim)}
+.btn-cta{background:linear-gradient(135deg,var(--cyan),var(--violet));color:var(--ink);border:none;font-weight:800;box-shadow:0 6px 20px rgba(0,229,255,.34)}
+.btn-cta:hover{filter:brightness(1.09);box-shadow:0 10px 28px rgba(0,229,255,.5)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--amber));color:var(--ink);border:none;font-weight:800}
+
+/* ── section header ── */
+.sec{display:flex;align-items:baseline;gap:14px;margin:46px 0 20px}
+.sec .no{font-family:var(--mono);font-size:11px;color:var(--violet);opacity:.8}
+.sec .lbl{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:.22em;color:#fff;text-transform:uppercase}
+.sec .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);align-self:center}
+.sec .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em}
+
+/* ── FEATURED ── */
+.feat{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line-v);background:var(--panel);backdrop-filter:blur(10px);
+  display:grid;grid-template-columns:46% 1fr;box-shadow:0 34px 90px rgba(0,0,0,.6),inset 0 0 60px rgba(160,116,255,.05)}
+.feat .media{position:relative;min-height:320px;background:var(--panel-solid)}
+.feat .media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.94}
+.feat .media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 42%,var(--panel)),linear-gradient(0deg,rgba(3,5,12,.55),transparent 55%)}
+.feat .rib{position:absolute;top:16px;left:16px;z-index:2;font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.16em;padding:6px 12px;border-radius:6px;background:linear-gradient(135deg,var(--gold),var(--amber));color:var(--ink);box-shadow:0 4px 16px rgba(255,157,61,.5)}
+.feat .info{padding:34px;display:flex;flex-direction:column;justify-content:center}
+.feat .seller{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--violet);margin-bottom:10px}
+.feat .av{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,var(--violet),var(--magenta));display:grid;place-items:center;font-size:13px}
+.feat .vf{color:var(--jade);font-size:12px}
+.fname{font-family:var(--disp);font-weight:900;font-size:31px;line-height:1;color:#fff;text-shadow:0 0 26px rgba(160,116,255,.4)}
+.fdesc{color:var(--dim);font-size:15px;line-height:1.55;max-width:56ch;margin:14px 0}
+.fmeta{display:flex;gap:26px;margin:8px 0 20px}
+.fmeta .m b{font-family:var(--mono);display:block;font-size:19px;color:var(--cyan)}.fmeta .m span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.fbuy{display:flex;align-items:center;gap:16px}
+.fprice{font-family:var(--mono);font-weight:800;font-size:30px;color:var(--gold)}.fprice small{display:block;font-size:9px;color:var(--muted);letter-spacing:.14em}
+
+/* ── filters ── */
+.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 22px}
+.chip{font-family:var(--mono);font-size:11px;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--muted);transition:.15s;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.chip:hover{color:var(--txt);border-color:var(--cyan)}
+.chip.on{background:linear-gradient(135deg,var(--cyan),var(--violet));color:var(--ink);border-color:transparent;font-weight:700;box-shadow:0 4px 14px rgba(0,229,255,.32)}
+.chip .n{font-family:var(--mono);font-size:9px;opacity:.7}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.03);min-width:220px}
+.search input{background:none;border:none;outline:none;color:var(--txt);font-family:var(--body);font-size:15px;width:100%}
+.search input::placeholder{color:var(--muted)}
+
+/* ── BENTO grid ── */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;grid-auto-flow:dense}
+.shop{grid-column:span 4;position:relative;border-radius:15px;overflow:hidden;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(7px);
+  box-shadow:0 16px 44px rgba(0,0,0,.42);transition:.24s;opacity:0;transform:translateY(16px);animation:in .55s forwards;display:flex;flex-direction:column}
+.shop.wide{grid-column:span 6}
+@media(max-width:1080px){.shop{grid-column:span 6}.shop.wide{grid-column:span 12}}
+@media(max-width:680px){.shop,.shop.wide{grid-column:span 12}.feat{grid-template-columns:1fr}.feat .media{min-height:200px}}
+@keyframes in{to{opacity:1;transform:none}}
+.shop .banner{height:150px;position:relative;overflow:hidden;background:var(--panel-solid);flex:0 0 auto}
+.shop.wide .banner{height:184px}
+.shop .banner img{width:100%;height:100%;object-fit:cover;opacity:.88;transition:.5s}
+.shop:hover .banner img{transform:scale(1.07);opacity:1}
+.shop .banner::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--panel) 4%,transparent 55%)}
+.shop .scan{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,transparent,rgba(0,229,255,.16),transparent);transform:translateY(-120%);transition:.55s}
+.shop:hover .scan{transform:translateY(180%)}
+.shop .toprow{position:absolute;top:10px;left:10px;right:10px;z-index:3;display:flex;justify-content:space-between;align-items:flex-start}
+.shop .cat{font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:5px;background:rgba(3,5,12,.72);color:var(--sc,var(--cyan));border:1px solid currentColor}
+.shop .live{font-family:var(--mono);font-size:8px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:5px;background:rgba(3,5,12,.72);color:var(--jade);border:1px solid var(--jade)}
+.shop .live::before{content:"● ";animation:pulse 1.4s infinite}
+.shop .price-fly{position:absolute;bottom:-1px;right:12px;z-index:3;font-family:var(--mono);font-weight:800;font-size:22px;color:var(--gold);text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.shop .price-fly small{font-size:8px;color:var(--dim);letter-spacing:.12em}
+.shop .body{padding:14px 16px 0;flex:1;display:flex;flex-direction:column}
+.shop .seller{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.shop .av{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--sc,var(--cyan)) 70%,#111),#0a1120);border:1px solid color-mix(in srgb,var(--sc,var(--cyan)) 40%,transparent)}
+.shop .sname{font-family:var(--disp);font-weight:800;font-size:15px;color:#fff;line-height:1}
+.shop .shandle{font-family:var(--mono);font-size:10px;color:var(--sc,var(--cyan));display:flex;align-items:center;gap:5px;margin-top:2px}
+.shop .vf{color:var(--jade)}
+.shop .sdesc{color:var(--dim);font-size:13.5px;line-height:1.45;margin:2px 0 12px;flex:1}
+.shop .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.shop .tag{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:5px;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--line-soft)}
+.shop .stats{display:flex;align-items:center;gap:14px;padding:11px 16px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;color:var(--dim)}
+.shop .stats .rate{color:var(--gold)}.shop .stats .spark{margin-left:auto;display:flex;align-items:flex-end;gap:2px;height:20px}
+.shop .stats .spark i{width:3px;background:linear-gradient(0deg,var(--sc,var(--cyan)),transparent);border-radius:2px;opacity:.8}
+.shop .acts{display:flex;gap:8px;padding:12px 16px 15px}
+.shop .acts .btn{flex:1;justify-content:center;font-size:11px;padding:9px}
+.shop .buy{background:linear-gradient(135deg,var(--sc,var(--cyan)),var(--violet));color:var(--ink);border:none;font-weight:800}
+.shop:hover{transform:translateY(-7px);border-color:var(--sc,var(--cyan));box-shadow:0 28px 60px rgba(0,0,0,.62),0 0 36px color-mix(in srgb,var(--sc,var(--cyan)) 26%,transparent)}
+.shop .newflag{position:absolute;top:18px;left:-32px;transform:rotate(-45deg);z-index:4;background:linear-gradient(90deg,var(--jade),var(--cyan));color:var(--ink);font-family:var(--mono);font-weight:800;font-size:8.5px;letter-spacing:.14em;padding:3px 34px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.shop.hide{display:none}
+.foot{text-align:center;font-family:var(--disp);font-weight:600;letter-spacing:.3em;color:var(--muted);margin-top:58px;font-size:11px;text-transform:uppercase}
+
+/* ── Open Your Shop modal ── */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(2,4,10,.82);backdrop-filter:blur(8px)}
+.modal.open{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.msheet{width:min(94vw,760px);max-height:90vh;overflow:auto;border-radius:18px;border:1px solid var(--line-v);background:linear-gradient(180deg,#0b1122,#070b16);box-shadow:0 40px 100px rgba(0,0,0,.7),inset 0 0 60px rgba(160,116,255,.05)}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line-soft)}
+.mhead .t{font-family:var(--disp);font-weight:900;font-size:20px;color:#fff;letter-spacing:.06em}
+.mhead .x{cursor:pointer;font-family:var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 11px}
+.mhead .x:hover{color:var(--red);border-color:var(--red)}
+.mbody{padding:24px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+@media(max-width:640px){.mbody{grid-template-columns:1fr}}
+.field{margin-bottom:16px}
+.field label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase;display:block;margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:9px;padding:11px 13px;color:var(--txt);font-family:var(--body);font-size:15px;outline:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.2)}
+.field textarea{resize:vertical;min-height:74px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.preview-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+/* how-to steps */
+.howto{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 20px}
+@media(max-width:640px){.howto{grid-template-columns:1fr 1fr}}
+.step{border:1px solid var(--line);border-radius:10px;padding:12px;background:rgba(0,229,255,.03);position:relative}
+.step .sn{font-family:var(--mono);font-size:10px;color:var(--cyan);font-weight:800}
+.step .sh{font-family:var(--head);font-weight:700;font-size:13px;color:#fff;margin:4px 0 3px}
+.step .sd{font-size:12px;color:var(--dim);line-height:1.35}
+/* template + pricing quick picks */
+.picks{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
+.pick{cursor:pointer;font-family:var(--mono);font-size:11px;padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--dim);transition:.15s}
+.pick:hover{color:#fff;border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.2)}
+.pick.on{background:linear-gradient(135deg,var(--violet),var(--cyan));color:var(--ink);border-color:transparent;font-weight:700}
+.pick b{color:var(--gold)}
+.tierrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.tier{cursor:pointer;border:1px solid var(--line);border-radius:9px;padding:10px 8px;text-align:center;transition:.15s;background:rgba(255,255,255,.02)}
+.tier:hover,.tier.on{border-color:var(--gold);background:rgba(255,207,107,.08)}
+.tier .tn{font-family:var(--head);font-weight:700;font-size:12px;color:#fff}
+.tier .tp{font-family:var(--mono);font-weight:800;font-size:15px;color:var(--gold)}
+.tier .ts{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em}
+/* wallet chip */
+.wchip{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;font-family:var(--mono);font-size:12px;
+  border:1px solid rgba(160,116,255,.4);background:linear-gradient(135deg,rgba(160,116,255,.14),rgba(10,17,32,.9));color:var(--violet);cursor:pointer;transition:.16s}
+.wchip:hover{box-shadow:0 0 16px rgba(160,116,255,.3)}
+.wchip.conn{border-color:rgba(0,229,160,.5);color:var(--jade);background:linear-gradient(135deg,rgba(0,229,160,.12),rgba(10,17,32,.9))}
+.wchip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.wchip .bal{color:var(--gold)}
+.paysol{background:linear-gradient(135deg,#9945FF,#14F195)!important;color:#050b05!important;border:none!important;font-weight:800}
+.conf-sum{font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--dim);background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:6px 0 14px}
+.conf-sum .k{color:var(--muted)}.conf-sum b{color:var(--jade)}.conf-sum .net{color:var(--amber)}
+</style>
+<!-- Solana web3.js at the boundary (IIFE global: window.solanaWeb3). Devnet-first. -->
+<script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+
+  <!-- header -->
+  <div class="head">
+    <div>
+      <div class="eyebrow">SHADDAI EMPIRE · <b>MISSION CONTROL</b> · <i>MERCHANT GRID</i></div>
+      <h1 class="title">THE <span class="g">BAZAAR</span></h1>
+      <div class="tagline">A living marketplace of operator-run shops — deploy agents, buy skills, license workflows and datasets. Every stall is a real operator. The grid never sleeps.</div>
+    </div>
+    <div class="hactions">
+      <div class="wallet">⚡ <div><span class="amt" id="credN">2,450</span> <span class="lb">credits</span></div></div>
+      <div class="row">
+        <a class="btn btn-ghost" href="/" onclick="if(window.self!==window.top){history.back();return false}">← SHADDAI</a>
+        <div class="wchip" id="walletChip" onclick="connectWallet()"><span class="dot"></span> Connect Wallet</div>
+        <button class="btn btn-cta" onclick="openShop()">▣ Build a Pack</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- featured -->
+  <div class="sec"><span class="no">01 /</span><span class="lbl">Featured Operator</span><span class="ln"></span><span class="meta">PRIORITY CHANNEL · ROTATES HOURLY</span></div>
+  <div class="feat" id="feat"></div>
+
+  <!-- filters + grid -->
+  <div class="sec"><span class="no">02 /</span><span class="lbl">Open Shops</span><span class="ln"></span><span class="meta"><span id="liveCount">11</span> LIVE · SORTED BY HEAT</span></div>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="foot">▣ The grid never sleeps · SHADDAI Bazaar · v94.44</div>
+</div>
+
+<!-- Open Your Shop modal -->
+<div class="modal" id="shopModal">
+  <div class="msheet" style="width:min(96vw,940px)">
+    <div class="mhead"><div class="t">▣ BUILD YOUR PACK</div><div class="x" onclick="closeShop()">✕ CLOSE</div></div>
+
+    <!-- HOW TO -->
+    <div style="padding:20px 24px 4px">
+      <div class="preview-lbl">How it works — list a pack in 4 steps</div>
+      <div class="howto">
+        <div class="step"><div class="sn">STEP 1</div><div class="sh">Pick a template</div><div class="sd">Start from a proven pack type — we pre-fill the structure.</div></div>
+        <div class="step"><div class="sn">STEP 2</div><div class="sh">Add your goods</div><div class="sd">Bundle skills, agents, workflows or data. 3–40 items.</div></div>
+        <div class="step"><div class="sn">STEP 3</div><div class="sh">Set a price tier</div><div class="sd">One tap. We suggest credits + a live SOL price.</div></div>
+        <div class="step"><div class="sn">STEP 4</div><div class="sh">Publish</div><div class="sd">Goes live on the grid instantly. Get paid in credits or SOL.</div></div>
+      </div>
+    </div>
+
+    <div class="mbody" style="grid-template-columns:1fr 320px">
+      <div>
+        <div class="field"><label>1 · Start from a template</label>
+          <div class="picks" id="tplPicks"></div></div>
+        <div class="field"><label>Pack Name</label><input id="fShopName" placeholder="e.g. Neon Automation Starter" oninput="prevShop()"></div>
+        <div class="two">
+          <div class="field"><label>Handle</label><input id="fHandle" placeholder="@yourhandle" oninput="prevShop()"></div>
+          <div class="field"><label>Category</label><select id="fCat" onchange="prevShop()"><option>Agent Work</option><option>Skills</option><option>Content</option><option>Data</option><option>Music</option><option>Art</option><option>Bundle</option></select></div>
+        </div>
+        <div class="field"><label>2 · What's inside (pitch)</label><textarea id="fDesc" placeholder="One sharp sentence: what the buyer gets and why it's worth it." oninput="prevShop()"></textarea></div>
+        <div class="field"><label>Tags (comma-sep)</label><input id="fTags" placeholder="automation, API, workflows" oninput="prevShop()"></div>
+
+        <div class="field"><label>3 · Pricing — pick a tier (or set your own)</label>
+          <div class="tierrow" id="tiers"></div>
+          <div class="two" style="margin-top:12px">
+            <div class="field" style="margin:0"><label>Credits</label><input id="fPrice" type="number" value="75" oninput="prevShop();syncSol()"></div>
+            <div class="field" style="margin:0"><label>≈ SOL price</label><input id="fSol" value="—" readonly style="color:var(--jade)"></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:6px">SHADDAI take: 5% · you keep 95%. Buyers pay in credits or SOL.</div>
+        </div>
+
+        <button class="btn btn-gold" style="width:100%;justify-content:center;padding:13px;font-size:13px" onclick="launchShop()">🚀 Publish Pack to the Grid</button>
+      </div>
+      <div>
+        <div class="preview-lbl">Live Preview</div>
+        <div class="grid" style="display:block"><div class="shop" id="prevCard" style="grid-column:auto;opacity:1;transform:none"></div></div>
+        <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7">
+          <div style="color:var(--cyan);letter-spacing:.14em;margin-bottom:6px">PRICING TIPS</div>
+          • <b style="color:var(--gold)">Lite</b> (single skill): 20–50 cr<br>
+          • <b style="color:var(--gold)">Standard</b> (small bundle): 60–120 cr<br>
+          • <b style="color:var(--gold)">Pro</b> (full kit + support): 140–250 cr<br>
+          • <b style="color:var(--gold)">Bundle</b> (everything): 280+ cr<br>
+          Undercut similar packs by ~10% for your first 10 sales to climb the heat rank.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pay with SOL confirm modal -->
+<div class="modal" id="payModal">
+  <div class="msheet" style="width:min(94vw,440px)">
+    <div class="mhead"><div class="t">◎ CONFIRM PAYMENT</div><div class="x" onclick="closePay()">✕</div></div>
+    <div style="padding:22px 24px">
+      <div class="conf-sum" id="paySum"></div>
+      <div style="font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:14px">Your wallet will open to review and approve. Nothing is sent until you sign. <span class="net">Cluster: devnet (test SOL)</span>.</div>
+      <button class="btn paysol" style="width:100%;justify-content:center;padding:13px;font-size:13px" onclick="doPaySol()" id="payBtn">◎ Pay with SOL</button>
+      <div id="payStatus" style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;margin-top:12px;min-height:16px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHOPS=[
+  {slug:'neuralforge',icon:'🤖',name:'NeuralForge Studio',handle:'@nexus_dev',cat:'Agent Work',sc:'--cyan',v:true,badge:'ONLINE',desc:'Full-stack AI agent workflows. Custom automation, Zapier-killer pipelines, intelligent task routing.',tags:['automation','workflows','API'],price:120,stars:4.9,revs:214,sold:38,new:false,wide:true},
+  {slug:'oraclevault',icon:'🔮',name:'OracleVault Intelligence',handle:'@oracle_ai',cat:'Skills',sc:'--violet',v:true,badge:'HOT',desc:'150+ research skills, market analysis, competitive intel and trend forecasting — verified, deploy-ready.',tags:['research','analysis','intel'],price:75,stars:4.8,revs:189,sold:22,new:false},
+  {slug:'voltscript',icon:'⚡',name:'VoltScript Copy',handle:'@voltwrite',cat:'Content',sc:'--amber',v:false,badge:'SALE',desc:'High-converting landing pages, ad copy and email sequences by fine-tuned content agents.',tags:['copywriting','ads','email'],price:45,stars:4.7,revs:302,sold:51,new:false},
+  {slug:'midnightai',icon:'🌙',name:'MidnightAI Bundle',handle:'@midnight',cat:'Bundle',sc:'--magenta',v:true,badge:'FEATURED',desc:'Ultimate starter pack: 40 agent skills + workflow templates + 30-day coaching. Best ROI in the bazaar.',tags:['bundle','starter','skills'],price:299,stars:5.0,revs:88,sold:12,new:true},
+  {slug:'foxbyte',icon:'🦊',name:'FoxByte Agent Farm',handle:'@foxbyte',cat:'Agent Work',sc:'--amber',v:false,badge:'LIVE',desc:'Autonomous research agents that monitor crypto, scrape data and send daily digests. Set and forget.',tags:['crypto','monitoring','data'],price:180,stars:4.6,revs:143,sold:19,new:false,wide:true},
+  {slug:'gemscript',icon:'💎',name:'GemScript Skills',handle:'@gemscript',cat:'Skills',sc:'--jade',v:true,badge:'PRO',desc:'Precision skills for coding, debugging and code review. Used by 200+ SHADDAI operators.',tags:['coding','debug','review'],price:55,stars:4.9,revs:267,sold:44,new:false},
+  {slug:'launchpad',icon:'🚀',name:'LaunchPad Content',handle:'@launchpad',cat:'Content',sc:'--cyan',v:false,badge:'★',desc:'Social packs, thread templates, newsletter starters. 7-day turnaround. Humans never look.',tags:['social','threads','news'],price:90,stars:4.7,revs:156,sold:27,new:true},
+  {slug:'beatforge',icon:'🎵',name:'BeatForge Music Lab',handle:'@beatforge',cat:'Music',sc:'--magenta',v:true,badge:'FIRE',desc:'AI-composed beats, lo-fi packs and stem files. Royalty-free, commercially licensed, instant download.',tags:['beats','lo-fi','royalty'],price:85,stars:4.8,revs:312,sold:63,new:false},
+  {slug:'pixelden',icon:'🎨',name:'PixelDen Art Studio',handle:'@pixelden',cat:'Art',sc:'--violet',v:true,badge:'RARE',desc:'Generative art, NFT-ready PNGs and custom illustration packs across 12 distinct visual styles.',tags:['generative','NFT','art'],price:60,stars:4.9,revs:198,sold:35,new:true},
+  {slug:'datanexus',icon:'📊',name:'DataNexus Intel',handle:'@datanexus',cat:'Data',sc:'--jade',v:false,badge:'LIVE',desc:'Curated datasets, scraping pipelines and market intelligence. Updated daily. CSV/JSON/API.',tags:['datasets','scraping','reports'],price:140,stars:4.7,revs:95,sold:14,new:false},
+  {slug:'dragonapi',icon:'🐉',name:'DragonAPI',handle:'@dragonapi',cat:'Agent Work',sc:'--amber',v:true,badge:'PRO',desc:'Connect any API to any agent. Webhook routing, OAuth flows and custom middleware — done for you.',tags:['API','webhooks','OAuth'],price:220,stars:4.8,revs:72,sold:9,new:false},
+];
+const IMG=(s)=>'/assets/shops/'+s+'.jpg?v=2';
+const FB="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='220'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%230a1428'/><stop offset='1' stop-color='%23050912'/></linearGradient></defs><rect width='100%25' height='100%25' fill='url(%23g)'/></svg>";
+function img(slug){return `<img src="${IMG(slug)}" onerror="this.onerror=null;this.src='${FB}'" alt="">`;}
+function spark(seed){let h='';for(let i=0;i<12;i++){const v=6+((Math.sin(seed*3+i*1.7)+1)/2)*14;h+=`<i style="height:${v}px"></i>`;}return h;}
+function stars5(n){const f=Math.round(n);return '★'.repeat(f)+'☆'.repeat(5-f);}
+
+/* stars bg */
+(function(){const S=document.getElementById('stars');for(let i=0;i<44;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDuration=(15+Math.random()*22)+'s';s.style.animationDelay=(-Math.random()*30)+'s';s.style.opacity=(.15+Math.random()*.5);S.appendChild(s);}})();
+
+/* featured */
+(function(){const f=SHOPS.find(s=>s.badge==='FEATURED')||SHOPS[3];
+  document.getElementById('feat').innerHTML=`
+  <div class="media">${img(f.slug)}<span class="rib">✦ TOP PICK OF THE EPOCH</span></div>
+  <div class="info">
+    <div class="seller"><span class="av">${f.icon}</span> ${f.handle} ${f.v?'<span class="vf">✔ verified operator</span>':''}</div>
+    <div class="fname">${f.name}</div>
+    <div class="fdesc">${f.desc}</div>
+    <div class="fmeta"><div class="m"><b>${f.revs}</b><span>Sales</span></div><div class="m"><b>${f.stars.toFixed(1)}★</b><span>Rating</span></div><div class="m"><b>${f.sold}</b><span>This week</span></div><div class="m"><b>12</b><span>Items</span></div></div>
+    <div class="fbuy"><div class="fprice">${f.price}<small>CREDITS</small></div><a class="btn btn-cta" href="#">Deploy Now ⚡</a><a class="btn btn-ghost" href="#">Visit Shop →</a></div>
+  </div>`;})();
+
+/* filters */
+const CATS=['all','Agent Work','Skills','Content','Data','Music','Art','Bundle'];
+const CICON={all:'◇','Agent Work':'🤖',Skills:'⚡',Content:'✍️',Data:'📊',Music:'🎵',Art:'🎨',Bundle:'📦'};
+(function(){const F=document.getElementById('filters');
+  CATS.forEach((c,i)=>{const n=c==='all'?SHOPS.length:SHOPS.filter(s=>s.cat===c).length;const el=document.createElement('div');el.className='chip'+(i===0?' on':'');el.dataset.cat=c;
+    el.innerHTML=`${CICON[c]} ${c==='all'?'ALL':c} <span class="n">${n}</span>`;F.appendChild(el);});
+  const sr=document.createElement('div');sr.className='search';sr.innerHTML='🔍 <input id="search" placeholder="Search the grid…">';F.appendChild(sr);
+  document.getElementById('search').addEventListener('input',apply);})();
+
+/* grid */
+const grid=document.getElementById('grid');
+function cardHTML(s,i){return `
+  <div class="banner">${img(s.slug)}<div class="scan"></div>
+    <div class="toprow"><span class="cat">${s.cat}</span><span class="live">${s.badge}</span></div>
+    ${s.new?'<div class="newflag">NEW</div>':''}
+    <div class="price-fly">${s.price}<small> CR</small></div></div>
+  <div class="body">
+    <div class="seller"><span class="av">${s.icon}</span><div><div class="sname">${s.name}</div><div class="shandle">${s.handle} ${s.v?'<span class="vf">✔</span>':''}</div></div></div>
+    <div class="sdesc">${s.desc}</div>
+    <div class="tags">${s.tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+  </div>
+  <div class="stats"><span class="rate">${stars5(s.stars)}</span> ${s.stars.toFixed(1)} <span style="color:var(--muted)">(${s.revs})</span> · <span>${s.sold} sold/wk</span><span class="spark">${spark(i+1)}</span></div>
+  <div class="acts"><a class="btn" href="#">Visit Shop</a><a class="btn buy" href="#" onclick="payShop(${i});return false">Buy ⚡</a><button class="bzbuy-btn" data-buy-item="bz_${s.slug}" data-buy-method="credits">Buy ${s.price} cr</button></div>`;}
+SHOPS.forEach((s,i)=>{const c=document.createElement('div');c.className='shop'+(s.wide?' wide':'');c.style.setProperty('--sc','var('+s.sc+')');c.style.animationDelay=(i*45)+'ms';
+  c.dataset.cat=s.cat;c.dataset.q=(s.name+' '+s.handle+' '+s.tags.join(' ')).toLowerCase();c.innerHTML=cardHTML(s,i);grid.appendChild(c);});
+
+/* filter+search */
+let cat='all';
+document.getElementById('filters').addEventListener('click',e=>{const ch=e.target.closest('.chip');if(!ch)return;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');cat=ch.dataset.cat;apply();});
+function apply(){const q=(document.getElementById('search').value||'').toLowerCase().trim();let n=0;
+  document.querySelectorAll('.grid > .shop').forEach(c=>{if(c.id==='prevCard')return;const ok=(cat==='all'||c.dataset.cat===cat)&&(!q||c.dataset.q.includes(q));c.classList.toggle('hide',!ok);if(ok)n++;});
+  document.getElementById('liveCount').textContent=n;}
+
+/* Open Your Shop modal */
+function openShop(){document.getElementById('shopModal').classList.add('open');prevShop();}
+function closeShop(){document.getElementById('shopModal').classList.remove('open');}
+document.getElementById('shopModal').addEventListener('click',e=>{if(e.target.id==='shopModal')closeShop();});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeShop();});
+function prevShop(){
+  const g=id=>document.getElementById(id).value;
+  const s={slug:'midnightai',icon:'🛠️',name:g('fShopName')||'Your Shop Name',handle:g('fHandle')||'@you',cat:g('fCat'),sc:'--cyan',v:false,badge:'NEW',
+    desc:g('fDesc')||'Your one-line pitch appears here — make it sharp.',tags:(g('fTags')||'tag').split(',').map(t=>t.trim()).filter(Boolean).slice(0,3),price:+g('fPrice')||0,stars:5.0,revs:0,sold:0,new:true};
+  document.getElementById('prevCard').style.setProperty('--sc','var('+s.sc+')');
+  document.getElementById('prevCard').innerHTML=cardHTML(s,7);}
+function launchShop(){const n=document.getElementById('fShopName').value||'Your Shop';closeShop();
+  const t=document.createElement('div');t.textContent='✓ '+n+' launched on the grid';
+  t.style.cssText='position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:300;font-family:var(--mono);font-size:13px;color:#020409;background:linear-gradient(135deg,var(--jade),var(--cyan));padding:12px 22px;border-radius:10px;box-shadow:0 10px 30px rgba(0,229,160,.4)';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
+
+/* ── Build-a-Pack: templates + pricing tiers + SOL ── */
+const CR_PER_SOL=1000; // demo peg: 1 SOL ≈ 1000 credits
+const TEMPLATES=[
+  {label:'⚡ Skill Pack',cat:'Skills',price:45,desc:'A focused set of ready-to-run skills for one job. Verified, deploy in a click.',tags:'skills,verified,ready'},
+  {label:'🤖 Agent Bundle',cat:'Agent Work',price:120,desc:'A working agent plus its workflows and tools, wired and tested end to end.',tags:'agent,automation,workflows'},
+  {label:'🔗 Workflow Kit',cat:'Content',price:90,desc:'Multi-step automations you can drop into your stack today.',tags:'workflow,automation,templates'},
+  {label:'📊 Data Pack',cat:'Data',price:140,desc:'Curated dataset plus a refresh pipeline. CSV / JSON / API, updated daily.',tags:'dataset,api,reports'},
+  {label:'📦 Mega Bundle',cat:'Bundle',price:299,desc:'Everything: skills + agents + workflows + 30-day support. Best ROI.',tags:'bundle,starter,everything'},
+];
+const TIERS=[['Lite',35],['Standard',90],['Pro',180],['Bundle',299]];
+(function(){const P=document.getElementById('tplPicks');
+  TEMPLATES.forEach(t=>{const el=document.createElement('div');el.className='pick';el.textContent=t.label;el.onclick=()=>applyTpl(t,el);P.appendChild(el);});
+  const T=document.getElementById('tiers');
+  TIERS.forEach(([n,p])=>{const el=document.createElement('div');el.className='tier';el.innerHTML=`<div class="tn">${n}</div><div class="tp">${p}</div><div class="ts">CREDITS</div>`;
+    el.onclick=()=>{document.querySelectorAll('.tier').forEach(x=>x.classList.remove('on'));el.classList.add('on');document.getElementById('fPrice').value=p;prevShop();syncSol();};T.appendChild(el);});})();
+function applyTpl(t,el){document.querySelectorAll('#tplPicks .pick').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+  document.getElementById('fCat').value=t.cat;document.getElementById('fDesc').value=t.desc;document.getElementById('fTags').value=t.tags;document.getElementById('fPrice').value=t.price;prevShop();syncSol();}
+function syncSol(){const cr=+document.getElementById('fPrice').value||0;const el=document.getElementById('fSol');if(el)el.value=(cr/CR_PER_SOL).toFixed(3)+' SOL';}
+try{syncSol();}catch(e){}
+
+/* ── Solana wallet (injected provider, devnet) ── */
+let WALLET=null,WPUB=null;const DEVNET='https://api.devnet.solana.com';
+const TREASURY='11111111111111111111111111111111'; // TODO: set your real receiving address
+function getProvider(){return (window.phantom&&window.phantom.solana)||(window.solana&&window.solana.isPhantom?window.solana:null)||window.solflare||window.backpack||window.solana||null;}
+async function connectWallet(){const chip=document.getElementById('walletChip');const p=getProvider();
+  if(!p){window.open('https://phantom.app/','_blank');chip.innerHTML='<span class="dot"></span> Install a wallet →';return;}
+  try{const res=await p.connect();WALLET=p;WPUB=(res&&res.publicKey?res.publicKey:p.publicKey).toString();
+    chip.classList.add('conn');chip.innerHTML=`<span class="dot"></span> ${WPUB.slice(0,4)}…${WPUB.slice(-4)} <span class="bal" id="wbal">·</span>`;refreshBal();
+  }catch(e){chip.innerHTML='<span class="dot"></span> Connect Wallet';}}
+async function refreshBal(){if(!WPUB)return;try{const r=await fetch(DEVNET,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[WPUB]})});const j=await r.json();const b=document.getElementById('wbal');if(b)b.textContent='◎ '+((j.result&&j.result.value||0)/1e9).toFixed(2);}catch(e){}}
+
+/* ── Pay with SOL (devnet · summary · wallet approval) ── */
+let PAY=null;
+function payShop(i){payWithSol(SHOPS[i]);}
+function payWithSol(shop){if(!WALLET||!WPUB){connectWallet();return;}PAY=shop;const sol=(shop.price/CR_PER_SOL).toFixed(3);
+  document.getElementById('paySum').innerHTML=`<div><span class="k">Item</span>&nbsp; ${shop.name}</div><div><span class="k">Seller</span>&nbsp; ${shop.handle}</div><div><span class="k">Amount</span>&nbsp; <b>${sol} SOL</b> <span style="color:var(--muted)">(${shop.price} cr)</span></div><div><span class="k">Network</span>&nbsp; <span class="net">devnet</span></div>`;
+  document.getElementById('payStatus').textContent='';document.getElementById('payModal').classList.add('open');}
+function closePay(){document.getElementById('payModal').classList.remove('open');}
+document.getElementById('payModal').addEventListener('click',e=>{if(e.target.id==='payModal')closePay();});
+async function doPaySol(){const st=document.getElementById('payStatus');const btn=document.getElementById('payBtn');
+  if(!window.solanaWeb3){st.textContent='wallet library loading — try again in a moment';return;}
+  try{btn.disabled=true;st.textContent='building transaction…';const w=window.solanaWeb3;const conn=new w.Connection(DEVNET,'confirmed');
+    const from=new w.PublicKey(WPUB);let to;try{to=new w.PublicKey(TREASURY);}catch(_){to=from;}
+    const lamports=Math.round((PAY.price/CR_PER_SOL)*1e9);
+    const tx=new w.Transaction().add(w.SystemProgram.transfer({fromPubkey:from,toPubkey:to,lamports}));
+    tx.feePayer=from;tx.recentBlockhash=(await conn.getLatestBlockhash()).blockhash;
+    st.textContent='simulating…';await conn.simulateTransaction(tx).catch(()=>{});
+    st.textContent='approve in your wallet…';const sig=await WALLET.signAndSendTransaction(tx);
+    st.innerHTML='✓ sent · <span style="color:var(--jade)">'+String(sig.signature||sig).slice(0,12)+'…</span>';refreshBal();
+  }catch(e){st.textContent='✕ '+(e.message||'cancelled');}finally{btn.disabled=false;}}
+</script>
+<link rel="stylesheet" href="/bazaar-buy.css">
+<script defer src="/bazaar-buy.js"></script>
+</body>
+</html>

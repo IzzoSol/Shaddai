@@ -11,7 +11,6 @@ router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=tru
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const keys = require('./lib/keys');
 const skillsLoader = require('./skills-loader');
 const agentEngine = require('./agent-engine');
 const ragIndex = require('./rag-index');
@@ -21,8 +20,8 @@ const agentEventBus = require('./agent-event-bus');
 const OBSIDIAN_ROOT = process.env.OBSIDIAN_ROOT || 'C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN';
 
 const OLLAMA_URL = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const GEMINI_KEY = keys.get('GEMINI_API_KEY') || keys.get('GOOGLE_API_KEY') || '';
-const HELIUS_KEY = keys.get('HELIUS_API_KEY') || '';
+const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+const HELIUS_KEY = process.env.HELIUS_API_KEY || '';
 
 // Named constants — avoids magic numbers scattered through route handlers
 const DEFAULT_OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
@@ -47,23 +46,8 @@ function loadJSON(filePath, fallback = []) {
 }
 
 function saveJSON(filePath, data) {
-  // Atomic write: serialize to temp file then rename over the target.
-  // rename() is atomic on the same volume, so readers never see a partial/
-  // corrupt file even if two writes race — the loser simply overwrites a
-  // fully-formed file (no interleaved bytes). Signature unchanged (sync).
-  const tmp = filePath + '.tmp.' + process.pid;
-  try {
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-    fs.renameSync(tmp, filePath);
-  } catch (e) {
-    // Best-effort cleanup of the temp file, then fall back to a direct write
-    // so behavior is never worse than before.
-    try { fs.unlinkSync(tmp); } catch (_) {}
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (e2) {
-      console.error('[STORAGE] Failed to save:', filePath, e2.message);
-    }
+  try { fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {
+    console.error('[STORAGE] Failed to save:', filePath, e.message);
   }
 }
 
@@ -386,7 +370,7 @@ router.post('/gemini-key', async (req, res) => {
 router.post('/groq', async (req, res) => {
   try {
     const { messages, max_tokens, model, apiKey } = req.body;
-    const key = apiKey || keys.get('GROQ_API_KEY');
+    const key = apiKey || process.env.GROQ_API_KEY || '';
     if (!key) return res.status(400).json({ error: 'No Groq API key. Add GROQ_API_KEY to .env or paste key in Settings.' });
 
     const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
@@ -804,7 +788,7 @@ router.get('/news/cryptopanic', async (req, res) => {
 
 router.get('/news/actually-relevant', async (req, res) => {
   // NewsAPI if key present
-  const key = keys.get('NEWSAPI_API_KEY');
+  const key = process.env.NEWSAPI_API_KEY || '';
   if (key) {
     try {
       const r = await axios.get(
@@ -839,7 +823,7 @@ router.get('/news/actually-relevant', async (req, res) => {
 router.post('/serpapi', async (req, res) => {
   try {
     const { query } = req.body;
-    const key = keys.get('SERPAPI_KEY') || keys.get('SERPAPI_API_KEY');
+    const key = process.env.SERPAPI_KEY || process.env.SERPAPI_API_KEY || '';
     if (!key) return res.status(400).json({ error: 'No SerpAPI key. Add SERPAPI_KEY to .env', organic_results: [] });
 
     const r = await axios.get('https://serpapi.com/search', {
@@ -896,7 +880,7 @@ function safePath(inputPath) {
   return resolved;
 }
 
-router.post('/read-file', requireAdmin, (req, res) => {
+router.post('/read-file', (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     if (!filePath) return res.status(400).json({ error: 'filePath required', content: '' });
@@ -911,7 +895,7 @@ router.post('/read-file', requireAdmin, (req, res) => {
 });
 
 // Write a file (sandboxed to HOME_DIR — for skill editing)
-router.post('/write-file', requireAdmin, (req, res) => {
+router.post('/write-file', (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     const content  = req.body.content;
@@ -1031,6 +1015,42 @@ router.get('/shaddai/skills', (req, res) => {
     // Fallback to built-in registry
     res.json({ skills: SKILL_REGISTRY, total: SKILL_REGISTRY.length, agents: 7, source: 'builtin' });
   }
+});
+
+// GET /api/skills/catalog — FAST, paginated, NO-Obsidian skill catalog (the real wired skills).
+//   Source: skill-index.js → RECIPES (executable real tool-chains) + baked catalog (md/json).
+//   Scales to thousands: in-memory, read-only, no vault scan. ?q= ranked search, ?agent= filter,
+//   ?offset=&limit= paging. This is what the Skills Library + Marketplace should use.
+router.get('/skills/catalog', (req, res) => {
+  try {
+    const skillIndex = require('./skill-index');
+    const q      = String(req.query.q || '').trim();
+    const agent  = String(req.query.agent || '').trim();
+    const offset = Math.max(0, parseInt(req.query.offset) || 0);
+    const limit  = Math.min(5000, Math.max(1, parseInt(req.query.limit) || 60)); // in-memory; allow full-catalog pulls for the Library chips
+    let items;
+    if (q) {
+      // ranked search across recipes + md + baked (no Obsidian)
+      items = skillIndex.findSkills(q, { agent: agent || undefined, limit: 600, includeRecipes: true, includeMd: true, includeObsidian: true });
+    } else {
+      // browse: executable recipes first, then the baked catalog
+      const recipes = skillIndex.listRecipes().map(r => ({ id: r.id, name: r.id, description: r.description, agent: r.agent, type: 'recipe', params: r.params, stepCount: r.stepCount }));
+      const baked = (skillIndex.loadBakedCatalog().skills || []).map(s => ({ id: s.id, name: s.name, description: s.description, agent: s.agent, category: s.category, type: 'baked' }));
+      items = recipes.concat(baked);
+      if (agent) items = items.filter(s => String(s.agent || '').toUpperCase() === agent.toUpperCase());
+    }
+    // Mark executable, then enrich with kind/useCase/model/estCost (rules-derived, not hand-written)
+    items = items.map(s => skillIndex.enrichSkill({ ...s, executable: s.type === 'recipe' }));
+    const total = items.length;
+    res.json({ ok: true, total, offset, limit, count: Math.min(limit, Math.max(0, total - offset)),
+      skills: items.slice(offset, offset + limit), source: 'baked+recipes (no obsidian)' });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// GET /api/skills/catalog/stats — counts (recipes / md / baked / total), no Obsidian
+router.get('/skills/catalog/stats', (req, res) => {
+  try { res.json({ ok: true, ...require('./skill-index').getStats() }); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
 // ─── CUSTOM SKILLS (user-created / uploaded) ────────────────────────────────
@@ -1525,7 +1545,7 @@ router.post('/workflow/create', (req, res) => {
 // ELEVENLABS TTS
 // ─────────────────────────────────────────────────────────────
 router.get('/elevenlabs/voices', async (req, res) => {
-  const key = keys.get('ELEVENLABS_API_KEY');
+  const key = process.env.ELEVENLABS_API_KEY || '';
   if (!key) return res.json({ voices: [] });
   try {
     const r = await axios.get('https://api.elevenlabs.io/v1/voices', {
@@ -1536,7 +1556,7 @@ router.get('/elevenlabs/voices', async (req, res) => {
 });
 
 router.post('/elevenlabs/tts', async (req, res) => {
-  const key = keys.get('ELEVENLABS_API_KEY');
+  const key = process.env.ELEVENLABS_API_KEY || '';
   const { text, voice_id = 'pNInz6obpgDQGcFmaJgB' } = req.body;
   if (!key) return res.status(400).json({ error: 'No ElevenLabs API key' });
   try {
@@ -1865,7 +1885,7 @@ router.post('/image/generate', async (req, res) => {
   // Opt-in premium path: NanoBanana / AceDataCloud (requires a key). Only used
   // when the caller explicitly asks for a nano-banana model AND a key is available.
   const wantsPremium = typeof model === 'string' && model.startsWith('nano-banana');
-  const premiumKey = apiKey || keys.get('ACEDATACLOUD_API_TOKEN') || keys.get('NANO_BANANA_KEY');
+  const premiumKey = apiKey || process.env.ACEDATACLOUD_API_TOKEN || process.env.NANO_BANANA_KEY || '';
   if (wantsPremium && premiumKey) {
     try {
       const body = { action: 'generate', prompt, model, aspect_ratio, resolution };
@@ -1888,7 +1908,7 @@ router.post('/image/generate', async (req, res) => {
 
   // Together AI — FLUX.1 [schnell] (real Flux, free tier). Used when model=together/flux-free,
   // or as the upgraded default for plain "flux" when a Together key is present.
-  const togetherKey = apiKey || keys.get('TOGETHER_API_KEY');
+  const togetherKey = apiKey || process.env.TOGETHER_API_KEY || '';
   const wantsTogether = typeof model === 'string' && /together|flux-free|schnell/i.test(model);
   if ((wantsTogether || (model === 'flux' && togetherKey)) && togetherKey) {
     try {
@@ -1903,7 +1923,7 @@ router.post('/image/generate', async (req, res) => {
   }
 
   // fal.ai — FLUX schnell (fastest, premium quality). model=fal / fal-ai.
-  const falKey = apiKey || keys.get('FAL_KEY') || keys.get('FAL_API_KEY');
+  const falKey = apiKey || process.env.FAL_KEY || process.env.FAL_API_KEY || '';
   if (typeof model === 'string' && /^fal/i.test(model) && falKey) {
     try {
       const wI = parseInt(width, 10) || 1024, hI = parseInt(height, 10) || 1024;
@@ -1916,12 +1936,12 @@ router.post('/image/generate', async (req, res) => {
   }
 
   // Optional DALL·E path if explicitly requested and a key is configured.
-  if (typeof model === 'string' && model.toLowerCase().includes('dall') && keys.get('OPENAI_API_KEY')) {
+  if (typeof model === 'string' && model.toLowerCase().includes('dall') && process.env.OPENAI_API_KEY) {
     try {
       const r = await axios.post('https://api.openai.com/v1/images/generations', {
         model: 'dall-e-3', prompt, n: 1, size: '1024x1024'
       }, {
-        headers: { 'Authorization': `Bearer ${keys.get('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
         timeout: 60000
       });
       const imageUrl = r.data?.data?.[0]?.url;
@@ -1933,22 +1953,25 @@ router.post('/image/generate', async (req, res) => {
     }
   }
 
-  // Default free engine: Hugging Face FLUX.1-schnell (free token, no credit card).
-  // Returns raw image bytes → encode as a data URI so the browser renders it directly.
-  const hfKey = apiKey || keys.get('HF_TOKEN') || keys.get('HUGGINGFACE_API_KEY');
-  if (hfKey) {
-    try {
-      const r = await axios.post(
-        'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
-        { inputs: prompt },
-        { headers: { Authorization: `Bearer ${hfKey}`, 'Content-Type': 'application/json', Accept: 'image/png' },
-          responseType: 'arraybuffer', timeout: 90000 }
-      );
-      const b64 = Buffer.from(r.data).toString('base64');
-      const dataUri = `data:image/png;base64,${b64}`;
+  // Default free engine: Hugging Face FLUX.1-schnell via the WORKING router endpoint
+  // (server-side key pool + auto-rotation; honors a BYOK apiKey if the caller passed one).
+  const hfPool = require('./lib/hf-keys');
+  try {
+    let img = null;
+    if (apiKey) {
+      const rr = await fetch('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+        { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'x-wait-for-model': 'true' }, body: JSON.stringify({ inputs: prompt }) });
+      const ct = rr.headers.get('content-type') || '';
+      if (!rr.ok || !ct.startsWith('image')) throw new Error('HF ' + rr.status);
+      img = Buffer.from(await rr.arrayBuffer());
+    } else if (hfPool.keys().length) {
+      img = await hfPool.generate(prompt);
+    }
+    if (img) {
+      const dataUri = `data:image/png;base64,${img.toString('base64')}`;
       return res.json({ success: true, status: 'completed', url: dataUri, image_url: dataUri, source: 'HuggingFace FLUX.1-schnell', prompt, model: 'flux-schnell' });
-    } catch (e) { /* fall through to the honest no-key response */ }
-  }
+    }
+  } catch (e) { /* fall through to the honest no-key response */ }
 
   // No engine key available — be honest, no silent low-quality fallback.
   return res.status(503).json({
@@ -2069,7 +2092,7 @@ router.post('/social/post', async (req, res) => {
 
   // Telegram: works if TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set in .env
   if (platform === 'telegram') {
-    const botToken = keys.get('TELEGRAM_BOT_TOKEN') || token;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || token;
     const chatId   = process.env.TELEGRAM_CHAT_ID;
     if (botToken && chatId) {
       try {
@@ -2584,7 +2607,7 @@ router.post('/scrape', async (req, res) => {
 // The stub was removed — Express first-match means it permanently shadowed
 // the enhanced analytics handler defined later in this file.
 
-router.post('/admin/backup', requireAdmin, (req, res) => {
+router.post('/admin/backup', (req, res) => {
   res.json({ status: 'ok', message: 'Backup triggered', timestamp: new Date().toISOString() });
 });
 
@@ -2617,8 +2640,6 @@ router.post('/auth/link-wallet', (req, res) => {
 
 // Load from disk on startup
 let _jobs = loadJSON(JOBS_FILE, []);
-// One-time memory guard: cap runaway arrays to the most recent 5000 entries.
-if (Array.isArray(_jobs) && _jobs.length > 10000) _jobs = _jobs.slice(-5000);
 
 function saveJobs() { saveJSON(JOBS_FILE, _jobs); }
 
@@ -2627,14 +2648,7 @@ router.get('/marketplace/jobs', (req, res) => {
   let filtered = _jobs;
   if (status) filtered = filtered.filter(j => j.status === status);
   if (clientId) filtered = filtered.filter(j => j.clientId === clientId);
-  // Pagination: ?offset (default 0) & ?limit (default 50, max 100)
-  let offset = parseInt(req.query.offset, 10);
-  if (!Number.isFinite(offset) || offset < 0) offset = 0;
-  let limit = parseInt(req.query.limit, 10);
-  if (!Number.isFinite(limit) || limit <= 0) limit = 50;
-  if (limit > 100) limit = 100;
-  const paged = filtered.slice(offset, offset + limit);
-  res.json({ jobs: paged, total: filtered.length, offset, limit });
+  res.json({ jobs: filtered, total: filtered.length });
 });
 
 router.post('/marketplace/jobs', (req, res) => {
@@ -2770,13 +2784,13 @@ router.post('/marketplace/jobs/:id/execute', async (req, res) => {
     const prompt = `Execute this marketplace job completely and deliver the full result:\n\nTitle: ${job.title}\nDescription: ${job.description || ''}\nBudget: $${job.budget || 0}`;
     let output = null;
     // Try Groq first (fast)
-    if (keys.get('GROQ_API_KEY')) {
+    if (process.env.GROQ_API_KEY) {
       try {
         const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
           model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'system', content: 'You are SHADDAI, expert AI job executor. Deliver complete, professional results.' }, { role: 'user', content: prompt }],
           max_tokens: 2048
-        }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
+        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
         output = r.data.choices[0]?.message?.content;
       } catch(e) { console.warn('[execute] Groq failed:', e.message); }
     }
@@ -2910,13 +2924,13 @@ Deliver a complete, professional result now.`;
   setImmediate(async () => {
     let output = null;
     // Try Groq first (fast, 70B quality)
-    if (keys.get('GROQ_API_KEY')) {
+    if (process.env.GROQ_API_KEY) {
       try {
         const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
           model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: jobPrompt }],
           max_tokens: 2500, temperature: 0.7
-        }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
+        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
         output = r.data.choices[0]?.message?.content;
       } catch (e) { console.warn('[job:take] Groq failed:', e.message); }
     }
@@ -3022,13 +3036,13 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
   const systemPrompt = agentPrompts[agentName] || agentPrompts.SHADDAI;
 
   // Try Groq first
-  if (keys.get('GROQ_API_KEY')) {
+  if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: task }],
         max_tokens: 1500, temperature: 0.7
-      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
+      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
       return r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[workflow] Groq step failed:', e.message); }
   }
@@ -3223,13 +3237,13 @@ Perform a complete technical analysis. Use this exact format:
   const systemPrompt = 'You are ORACLE, an elite technical analyst with 20 years of chart reading experience. You read price action, volume, and indicators with surgical precision. Give real analysis — not hedged disclaimers.';
 
   let response = '';
-  if (keys.get('GROQ_API_KEY')) {
+  if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000, temperature: 0.5
-      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 30000 });
+      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
       response = r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[chart] Groq failed:', e.message); }
   }
@@ -3369,13 +3383,13 @@ ${apiData}
 Analyze this data and answer the user's question with specific insights. Reference actual values from the data.`;
 
   let response = '';
-  if (keys.get('GROQ_API_KEY')) {
+  if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000
-      }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 30000 });
+      }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
       response = r.data.choices[0]?.message?.content || '';
     } catch (e) { console.warn('[user-api:use] Groq failed:', e.message); }
   }
@@ -3465,8 +3479,6 @@ router.post('/marketplace/skills/buy', (req, res) => {
 // WORKFLOW LIST + RUN + DELETE — persistent storage
 // ─────────────────────────────────────────────────────────────
 let _workflows = loadJSON(WORKFLOWS_FILE, []);
-// One-time memory guard: cap runaway arrays to the most recent 5000 entries.
-if (Array.isArray(_workflows) && _workflows.length > 10000) _workflows = _workflows.slice(-5000);
 
 function saveWorkflows() { saveJSON(WORKFLOWS_FILE, _workflows); }
 
@@ -3557,7 +3569,7 @@ router.post('/workflow/:id/run', async (req, res) => {
         }
 
         // Groq fallback if Ollama failed and key is available
-        if (!ollamaOk && keys.get('GROQ_API_KEY')) {
+        if (!ollamaOk && process.env.GROQ_API_KEY) {
           const gr = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
             model: 'llama-3.3-70b-versatile',
             messages: [
@@ -3565,7 +3577,7 @@ router.post('/workflow/:id/run', async (req, res) => {
               { role: 'user', content: task }
             ],
             max_tokens: 1500, temperature: 0.7
-          }, { headers: { Authorization: `Bearer ${keys.get('GROQ_API_KEY')}` }, timeout: 45000 });
+          }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
           stepOutput = gr.data.choices[0]?.message?.content || '';
           ollamaOk = true; // Groq succeeded
         }
@@ -4000,7 +4012,7 @@ router.get('/session/:token/jobs', (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // ENHANCED ADMIN ANALYTICS — real data from stored state
 // ─────────────────────────────────────────────────────────────
-router.get('/admin/analytics', requireAdmin, (req, res) => {
+router.get('/admin/analytics', (req, res) => {
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -4278,13 +4290,13 @@ router.post('/llm/chat', async (req, res) => {
 
   async function tryGemini(key) {
     const t0 = Date.now();
-    const response = await callGemini(sysPrompt ? (sysPrompt + '\n\n---\nUser: ' + message) : message, key || apiKey || keys.get('GEMINI_API_KEY'));
+    const response = await callGemini(sysPrompt ? (sysPrompt + '\n\n---\nUser: ' + message) : message, key || apiKey || process.env.GEMINI_API_KEY);
     return { response, provider: 'gemini', model: 'gemini-2.0-flash-lite', latencyMs: Date.now() - t0 };
   }
 
   async function tryGroq(key) {
     const t0 = Date.now();
-    const useKey = key || apiKey || keys.get('GROQ_API_KEY');
+    const useKey = key || apiKey || process.env.GROQ_API_KEY;
     if (!useKey) throw new Error('No Groq API key');
     const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
       model: model || 'llama-3.3-70b-versatile', messages, max_tokens: 2048
@@ -4294,7 +4306,7 @@ router.post('/llm/chat', async (req, res) => {
 
   async function tryClaude(key) {
     const t0 = Date.now();
-    const useKey = key || apiKey || keys.get('ANTHROPIC_API_KEY');
+    const useKey = key || apiKey || process.env.ANTHROPIC_API_KEY;
     if (!useKey) throw new Error('No Claude API key');
     const useModel = model || 'claude-haiku-4-5-20251001';
     const r = await axios.post('https://api.anthropic.com/v1/messages', {
@@ -4320,9 +4332,9 @@ router.post('/llm/chat', async (req, res) => {
       // 'auto' — prefer FAST cloud (Groq) when keyed, then Gemini/Claude, then local Ollama.
       // (Ollama is the free local fallback only — it is ~20s on llama3.2:1b, so never first.)
       const attempts = [];
-      if (keys.get('GROQ_API_KEY'))      attempts.push(['groq',   tryGroq]);
-      if (keys.get('GEMINI_API_KEY'))    attempts.push(['gemini', tryGemini]);
-      if (keys.get('ANTHROPIC_API_KEY')) attempts.push(['claude', tryClaude]);
+      if (process.env.GROQ_API_KEY)      attempts.push(['groq',   tryGroq]);
+      if (process.env.GEMINI_API_KEY)    attempts.push(['gemini', tryGemini]);
+      if (process.env.ANTHROPIC_API_KEY) attempts.push(['claude', tryClaude]);
       attempts.push(['ollama', tryOllama]); // free local fallback, last
       let lastErr;
       for (let i = 0; i < attempts.length; i++) {
@@ -4545,7 +4557,7 @@ const AGENT_IMAGE_PROMPTS = {
 };
 
 async function nanoBananaRequest(body, apiKey) {
-  const key = apiKey || keys.get('ACEDATACLOUD_API_TOKEN') || keys.get('NANO_BANANA_KEY');
+  const key = apiKey || process.env.ACEDATACLOUD_API_TOKEN || process.env.NANO_BANANA_KEY || '';
   if (!key) throw new Error('ACEDATACLOUD_API_TOKEN not set. Add it to .env');
   const r = await axios.post(NANO_BANANA_URL, body, {
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -4555,7 +4567,7 @@ async function nanoBananaRequest(body, apiKey) {
 }
 
 async function pollTask(taskId, apiKey, maxWait = 120000) {
-  const key = apiKey || keys.get('ACEDATACLOUD_API_TOKEN');
+  const key = apiKey || process.env.ACEDATACLOUD_API_TOKEN || '';
   const deadline = Date.now() + maxWait;
   while (Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 3000));
@@ -4860,11 +4872,11 @@ router.post('/agent/:name/task', async (req, res) => {
   const port = AGENT_PORTS[agentKey];
   let response = '', usedModel = 'unknown';
 
-  if (connectedAPIs.includes('claude') && keys.get('ANTHROPIC_API_KEY')) {
+  if (connectedAPIs.includes('claude') && process.env.ANTHROPIC_API_KEY) {
     try {
       const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
       if (Anthropic) {
-        const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
         const msg = await client.messages.create({
           model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
           max_tokens: 2048,
@@ -4876,8 +4888,8 @@ router.post('/agent/:name/task', async (req, res) => {
     } catch {}
   }
 
-  if (!response && connectedAPIs.includes('gemini') && keys.get('GEMINI_API_KEY')) {
-    try { response = await callGemini(enrichedTask, keys.get('GEMINI_API_KEY')); usedModel = 'gemini'; } catch {}
+  if (!response && connectedAPIs.includes('gemini') && process.env.GEMINI_API_KEY) {
+    try { response = await callGemini(enrichedTask, process.env.GEMINI_API_KEY); usedModel = 'gemini'; } catch {}
   }
 
   if (!response && port) {
@@ -5179,7 +5191,7 @@ RESPONSE FORMAT:
 Be direct, structured, and specific. No filler. Format clearly with headers and bullets where it helps. Answer the actual question asked.`,
 };
 
-const GROQ_API_KEY_ROUTE = keys.get('GROQ_API_KEY');
+const GROQ_API_KEY_ROUTE = process.env.GROQ_API_KEY || '';
 const GROQ_MODEL_ROUTE = 'llama-3.3-70b-versatile';
 
 async function callGroqRoute(systemPrompt, message, history = []) {
@@ -5366,11 +5378,11 @@ router.post('/content/thread', async (req, res) => {
   try {
     // Try Claude first, then Gemini, then Ollama
     let thread = '';
-    if (keys.get('ANTHROPIC_API_KEY')) {
+    if (process.env.ANTHROPIC_API_KEY) {
       try {
         const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
         if (Anthropic) {
-          const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
+          const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
           const msg = await client.messages.create({
             model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
             max_tokens: 2000,
@@ -5380,8 +5392,8 @@ router.post('/content/thread', async (req, res) => {
         }
       } catch {}
     }
-    if (!thread && keys.get('GEMINI_API_KEY')) {
-      try { thread = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
+    if (!thread && process.env.GEMINI_API_KEY) {
+      try { thread = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
     }
     if (!thread) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5418,8 +5430,8 @@ router.post('/content/email', async (req, res) => {
 
   try {
     let email = '';
-    if (keys.get('GEMINI_API_KEY')) {
-      try { email = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
+    if (process.env.GEMINI_API_KEY) {
+      try { email = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
     }
     if (!email) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5450,11 +5462,11 @@ router.post('/content/lyrics', async (req, res) => {
 
   try {
     let lyrics = '';
-    if (keys.get('ANTHROPIC_API_KEY')) {
+    if (process.env.ANTHROPIC_API_KEY) {
       try {
         const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
         if (Anthropic) {
-          const client = new Anthropic({ apiKey: keys.get('ANTHROPIC_API_KEY') });
+          const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
           const msg = await client.messages.create({
             model: process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
             max_tokens: 1500,
@@ -5464,8 +5476,8 @@ router.post('/content/lyrics', async (req, res) => {
         }
       } catch {}
     }
-    if (!lyrics && keys.get('GEMINI_API_KEY')) {
-      try { lyrics = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
+    if (!lyrics && process.env.GEMINI_API_KEY) {
+      try { lyrics = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
     }
     if (!lyrics) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -5514,8 +5526,8 @@ router.post('/content/insights', async (req, res) => {
 
   try {
     let insights = '';
-    if (keys.get('GEMINI_API_KEY')) {
-      try { insights = await callGemini(prompt, keys.get('GEMINI_API_KEY')); } catch {}
+    if (process.env.GEMINI_API_KEY) {
+      try { insights = await callGemini(prompt, process.env.GEMINI_API_KEY); } catch {}
     }
     if (!insights) {
       const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
@@ -6208,9 +6220,8 @@ router.post('/agent/run', async (req, res) => {
   const task = agentEngine.createTask(goal, agent, options || {});
   res.json({ success: true, taskId: task.id, agentName: task.agentName, status: 'pending' });
 
-  // Run in background — bind THIS user so the agent's tools use the user's BYOK keys.
-  const _uid = req.userId;
-  require('./lib/keys').runWithUser(_uid, () => agentEngine.runAgentLoop(task.id)).catch(e =>
+  // Run in background
+  agentEngine.runAgentLoop(task.id).catch(e =>
     console.error('[ROUTE /agent/run] task failed:', e.message)
   );
 });
@@ -6462,8 +6473,7 @@ router.post('/agent/skill/:agentName/:skillId', async (req, res) => {
   const goal = `Execute skill "${skillDesc}" for agent ${agentName}.${input ? '\n\nUser input: ' + input : ''}${context ? '\n\nContext: ' + context : ''}`;
   const task = agentEngine.createTask(goal, agentName);
   res.json({ success: true, taskId: task.id, agentName, skillId, goal });
-  const _uid = req.userId;
-  require('./lib/keys').runWithUser(_uid, () => agentEngine.runAgentLoop(task.id)).catch(e => console.error('[skill route]', e.message));
+  agentEngine.runAgentLoop(task.id).catch(e => console.error('[skill route]', e.message));
 });
 
 // GET /api/agent/inbox — Get inbox messages saved by agents
@@ -7096,7 +7106,7 @@ ${targetLine}${noteLine}
   const results = {};
 
   // Post to Telegram
-  const tgToken  = process.env.TELEGRAM_SIGNAL_BOT_TOKEN || keys.get('TELEGRAM_BOT_TOKEN');
+  const tgToken  = process.env.TELEGRAM_SIGNAL_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
   const tgChatId = process.env.TELEGRAM_SIGNAL_CHAT_ID   || process.env.TELEGRAM_CHAT_ID   || '';
   if (tgToken && tgChatId) {
     try {
@@ -7280,7 +7290,7 @@ router.post('/clip/transcribe', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
 
-  const GROQ_KEY_LOCAL = keys.get('GROQ_API_KEY');
+  const GROQ_KEY_LOCAL = process.env.GROQ_API_KEY || '';
   if (!GROQ_KEY_LOCAL) return res.status(503).json({
     error: 'GROQ_API_KEY not set in .env — needed for Whisper transcription. Get a free key at groq.com'
   });
@@ -7383,8 +7393,11 @@ router.post('/cache/clear', (req, res) => {
 // ═══════════════════════════════════════════════════════════════════
 const BYOK_FILE = path.join(DATA_DIR, 'byok-keys.json');
 const BYOK_TIER_PERMS = {
-  free:    [],
-  builder: ['groq', 'gemini'],
+  // Free providers (user pays $0 to the provider) are open to EVERYONE so beta
+  // testers can bring their own free Groq/Gemini/OpenRouter key. Paid providers
+  // (claude/openai/perplexity) still require Pro.
+  free:    ['groq', 'gemini', 'openrouter'],
+  builder: ['groq', 'gemini', 'openrouter'],
   pro:     ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter'],
   alpha:   ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter']
 };

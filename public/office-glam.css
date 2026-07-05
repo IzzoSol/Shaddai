@@ -1,0 +1,295 @@
+/* ============================================================================
+   office-glam.css  —  SHADDAI "Office / Command Floor" premium glow-up layer
+   ----------------------------------------------------------------------------
+   SELF-CONTAINED visual enhancement. Loaded LAST. Everything is scoped under
+   #officeView so nothing leaks to other tabs. Visual only: no layout / display /
+   position / width / flex changes that would move or break the canvas or panels.
+
+   Palette: pure black · neon green #00ff88 · cyan #00f0ff · gold #ffd700
+   Fonts already loaded by the page: Orbitron, Share Tech Mono, Rajdhani.
+   Theme-aware via var(--accent, #00ff88).
+   ----------------------------------------------------------------------------
+   DO NOT restyle here: #operatorForge, #world, #worldCanvas, global canvas,
+   or .nav-btn. The pixel-office <canvas id="officeCanvas"> is drawn by JS and
+   is left completely untouched.
+   ========================================================================== */
+
+/* Local tokens (scoped — cannot leak) ------------------------------------- */
+#officeView {
+  --og-accent: var(--accent, #00ff88);
+  --og-cyan: #00f0ff;
+  --og-gold: #ffd700;
+  --og-line: rgba(0, 255, 136, 0.22);
+  --og-glass-top: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================================
+   1. SURVEILLANCE MONITOR  —  frame the canvas wrapper as a real feed
+   The wrapper is the inline-styled div that directly contains #officeCanvas.
+   We enhance it (bezel + glow) and use its child .cam-frame for scanlines,
+   never touching the canvas element itself.
+   ========================================================================== */
+#officeView #officePixel > div:has(> #officeCanvas) {
+  border-color: var(--og-line) !important;
+  border-radius: 4px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(0, 255, 136, 0.08), transparent 60%),
+    #050a14 !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.10),
+    0 0 34px rgba(0, 255, 136, 0.10),
+    0 0 40px rgba(0, 0, 0, 0.7) inset,
+    0 14px 40px rgba(0, 0, 0, 0.55) !important;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+#officeView #officePixel > div:has(> #officeCanvas):hover {
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.18),
+    0 0 48px rgba(0, 255, 136, 0.16),
+    0 0 40px rgba(0, 0, 0, 0.7) inset,
+    0 16px 46px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Scanline + vignette overlay — painted on the existing .cam-frame overlay
+   (inset:0, pointer-events:none, z-index:2) so the canvas stays pristine. */
+#officeView .cam-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 255, 136, 0.035) 0px,
+      rgba(0, 255, 136, 0.035) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+#officeView .cam-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    130% 130% at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+}
+
+/* Corner brackets: brighten to accent + faint glow */
+#officeView .cam-corner {
+  border-color: var(--og-accent) !important;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 136, 0.5));
+}
+#officeView .cam-timecode {
+  color: rgba(0, 255, 136, 0.6) !important;
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+}
+
+/* ============================================================================
+   2. OPS FEED / SURVEILLANCE HEADER  —  sharp glitch module
+   ========================================================================== */
+#officeView .ops-feed-header {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.06), rgba(0, 0, 0, 0.55)) !important;
+  border-bottom: 1px solid var(--og-line) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+}
+/* animated luminous underline sweep */
+#officeView .ops-feed-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--og-accent),
+    var(--og-cyan),
+    transparent
+  );
+  opacity: 0.5;
+  animation: og-sweep 5.5s linear infinite;
+  background-size: 220% 100%;
+}
+#officeView .ops-feed-id {
+  color: var(--og-accent) !important;
+  font-family: "Orbitron", "Share Tech Mono", monospace !important;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+@keyframes og-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================================
+   3. OFFICE PANELS  —  office-room · sbo-panel · kanban modules
+   ========================================================================== */
+
+/* Card-style office rooms (Boardroom / Library / Safety wrappers) */
+#officeView .office-room .card {
+  background:
+    linear-gradient(180deg, rgba(10, 16, 26, 0.9), rgba(4, 8, 14, 0.95)) !important;
+  border: 1px solid var(--og-line) !important;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 10px 30px rgba(0, 0, 0, 0.45);
+}
+#officeView .office-room .card-title {
+  font-family: "Orbitron", sans-serif !important;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.28);
+}
+
+/* System-boot / sbo panels */
+#officeView .sbo-panel-box {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 28, 0.92), rgba(3, 6, 12, 0.96)) !important;
+  border: 1px solid var(--og-line) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+#officeView .sbo-panel-box:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 255, 136, 0.4) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 0 22px rgba(0, 255, 136, 0.14),
+    0 12px 30px rgba(0, 0, 0, 0.5);
+}
+/* corner accent tick, top-right */
+#officeView .sbo-panel-box::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--og-accent);
+  border-right: 2px solid var(--og-accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+#officeView .sbo-panel-head {
+  font-family: "Orbitron", sans-serif !important;
+  letter-spacing: 0.05em;
+  color: var(--og-accent) !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+/* ============================================================================
+   4. HUD COCKPIT STRIP  —  add depth + accent
+   ========================================================================== */
+#officeView .hud-strip {
+  border: 1px solid var(--og-line) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+}
+#officeView .hud-val {
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+/* ============================================================================
+   5. KANBAN / MISSION BOARD COLUMNS  —  cohesive module treatment
+   ========================================================================== */
+#officeView .kanban-col {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(10, 16, 26, 0.85), rgba(3, 6, 12, 0.92)) !important;
+  border: 1px solid var(--og-line) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease, box-shadow 0.25s ease;
+}
+#officeView .kanban-col:hover {
+  border-color: rgba(0, 255, 136, 0.32) !important;
+  box-shadow:
+    inset 0 1px 0 var(--og-glass-top),
+    0 0 18px rgba(0, 255, 136, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.5);
+}
+#officeView .kanban-col-head {
+  font-family: "Orbitron", "Rajdhani", sans-serif !important;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================================================
+   6. COMMAND BAR  —  add depth to the RUN WORKFLOW / MODE strip
+   (already styled inline; we only layer glow + a framing edge, no layout)
+   ========================================================================== */
+#officeView #officeCmdBar {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.045), rgba(0, 0, 0, 0)) !important;
+  border-bottom-color: var(--og-line) !important;
+  box-shadow: inset 0 1px 0 var(--og-glass-top);
+  border-radius: 4px 4px 0 0;
+}
+#officeView #officeCmdBar .ocmd-lbl {
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.35);
+}
+#officeView #officeCmdBar .ocmd.run {
+  box-shadow:
+    inset 0 1px 0 rgba(0, 255, 136, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.35);
+}
+#officeView #officeCmdBar .ocmd.run:hover {
+  box-shadow:
+    0 0 18px rgba(0, 255, 136, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============================================================================
+   7. OPERATIVE STATUS STRIP  —  richer chips, keep clip-path shape
+   ========================================================================== */
+#officeView .ops-op {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.4)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+#officeView .ops-op:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.5);
+}
+#officeView .ops-op-name {
+  text-shadow: 0 0 6px currentColor;
+}
+#officeView .ops-op-dot {
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* ============================================================================
+   8. Tighter focus ring for the office tab subnav buttons (subtle, no layout)
+   Scoped to #officeView so global .nav-btn is untouched.
+   ========================================================================== */
+#officeView > div > .nav-btn.active {
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.18);
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  #officeView .ops-feed-header::after { animation: none; }
+  #officeView .cam-frame::before { opacity: 0.35; }
+}

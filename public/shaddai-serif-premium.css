@@ -1,0 +1,239 @@
+/* ══════════════════════════════════════════════════════════════════
+   SHADDAI — PREMIUM SERIF (theme upgrade, from v5-premium-serif.html)
+   Art direction: Craft/editorial. Warm cream, forest-green accent,
+   Zodiak italic serif display + General Sans body, soft layered
+   shadows, tabular serif numbers, pill badges, dark "north-star" hero.
+
+   SCOPED entirely under html[data-theme-skin="serif"] so it only applies
+   to the Serif theme — and the attribute selector out-specifies the
+   glitch !important layers, reclaiming the light look. Loaded LAST.
+   ══════════════════════════════════════════════════════════════════ */
+
+html[data-theme-skin="serif"] {
+  --sp-cream:#f8f6f0; --sp-s0:#fdfcf9; --sp-s1:#ffffff; --sp-s2:#f2ede4; --sp-s3:#ece7dc;
+  --sp-border:rgba(38,28,8,.10); --sp-b2:rgba(38,28,8,.16);
+  --sp-text:#1c1710; --sp-muted:#6b5f4e; --sp-faint:#b8ac9a;
+  --sp-accent:#26614a; --sp-accent-lite:rgba(38,97,74,.10);
+  --sp-red:#a02828; --sp-amber:#8a5500; --sp-blue:#1e4080;
+  --sp-disp:"Zodiak", Georgia, serif; --sp-fn:"General Sans", system-ui, sans-serif;
+  --sp-sh:0 1px 4px rgba(38,28,8,.06), 0 6px 20px rgba(38,28,8,.05);
+  --sp-sh2:0 2px 8px rgba(38,28,8,.08), 0 14px 36px rgba(38,28,8,.07);
+}
+
+/* ── Canvas: warm cream, kill the dark nebula + scanline overlay ── */
+html[data-theme-skin="serif"] body {
+  background:var(--sp-cream) !important;
+  background-image:
+    radial-gradient(1000px 560px at 50% -10%, rgba(38,97,74,.05), transparent 60%),
+    linear-gradient(180deg, #faf8f2, var(--sp-cream)) !important;
+  color:var(--sp-text) !important;
+  font-family:var(--sp-fn) !important;
+}
+html[data-theme-skin="serif"] body::after,
+html[data-theme-skin="serif"] body::before { display:none !important; content:none !important; }
+
+/* ── Display typography: italic Zodiak on titles + big numbers ── */
+html[data-theme-skin="serif"] .card-title,
+html[data-theme-skin="serif"] .mission-title,
+html[data-theme-skin="serif"] .section-title,
+html[data-theme-skin="serif"] .modal-section-title,
+html[data-theme-skin="serif"] h1,
+html[data-theme-skin="serif"] h2,
+html[data-theme-skin="serif"] h3 {
+  font-family:var(--sp-disp) !important;
+  font-style:italic !important;
+  font-weight:600 !important;
+  letter-spacing:-.4px !important;
+  text-transform:none !important;
+  color:var(--sp-text) !important;
+  text-shadow:none !important;
+}
+html[data-theme-skin="serif"] .shaddai-stat-number,
+html[data-theme-skin="serif"] .stat-value,
+html[data-theme-skin="serif"] .kv {
+  font-family:var(--sp-disp) !important;
+  font-weight:700 !important;
+  font-variant-numeric:tabular-nums !important;
+  letter-spacing:-1.2px !important;
+  color:var(--sp-accent) !important;
+  text-shadow:none !important;
+}
+html[data-theme-skin="serif"] .shaddai-stat-label,
+html[data-theme-skin="serif"] .stat-label {
+  font-family:var(--sp-fn) !important; font-weight:600 !important;
+  text-transform:uppercase !important; letter-spacing:.08em !important;
+  color:var(--sp-muted) !important;
+}
+
+/* ── Top nav → clean editorial bar with green active pill ── */
+html[data-theme-skin="serif"] #topBar,
+html[data-theme-skin="serif"] #mainNav,
+html[data-theme-skin="serif"] #agentBar {
+  background:var(--sp-s0) !important;
+  border-bottom:1px solid var(--sp-border) !important;
+  box-shadow:0 1px 3px rgba(38,28,8,.04) !important;
+  backdrop-filter:none !important;
+}
+html[data-theme-skin="serif"] #mainNav .nav-btn {
+  font-family:var(--sp-fn) !important; text-transform:none !important;
+  letter-spacing:0 !important; font-weight:600 !important;
+  color:var(--sp-muted) !important; background:transparent !important;
+  border:1px solid transparent !important; border-radius:8px !important;
+  clip-path:none !important; box-shadow:none !important; background-image:none !important;
+}
+html[data-theme-skin="serif"] #mainNav .nav-btn:hover {
+  color:var(--sp-text) !important; background:var(--sp-s2) !important;
+  border-color:transparent !important; text-shadow:none !important; box-shadow:none !important;
+}
+html[data-theme-skin="serif"] #mainNav .nav-btn.active {
+  color:var(--sp-accent) !important; background:var(--sp-accent-lite) !important;
+  border-color:transparent !important; box-shadow:none !important;
+  background-image:none !important; text-shadow:none !important; font-weight:700 !important;
+}
+html[data-theme-skin="serif"] #mainNav .nav-btn.active::after { display:none !important; }
+
+/* ── Cards / panels → white, soft layered shadow, gentle lift ── */
+html[data-theme-skin="serif"] .card,
+html[data-theme-skin="serif"] .stat-box,
+html[data-theme-skin="serif"] .cyber-card,
+html[data-theme-skin="serif"] .run-card,
+html[data-theme-skin="serif"] .workflow-card,
+html[data-theme-skin="serif"] .studio-panel,
+html[data-theme-skin="serif"] .agent-endpoint-card,
+html[data-theme-skin="serif"] .settings-section,
+html[data-theme-skin="serif"] .modal-section,
+html[data-theme-skin="serif"] .shaddai-stat-card {
+  background:var(--sp-s1) !important;
+  border:1px solid var(--sp-border) !important;
+  border-radius:12px !important;
+  box-shadow:var(--sp-sh) !important;
+  color:var(--sp-text) !important;
+  transition:box-shadow .18s cubic-bezier(.16,1,.3,1), transform .18s cubic-bezier(.16,1,.3,1) !important;
+}
+html[data-theme-skin="serif"] .card::before,
+html[data-theme-skin="serif"] .stat-box::before,
+html[data-theme-skin="serif"] .shaddai-stat-card::before { display:none !important; content:none !important; }
+html[data-theme-skin="serif"] .card:hover,
+html[data-theme-skin="serif"] .cyber-card:hover,
+html[data-theme-skin="serif"] .shaddai-stat-card:hover {
+  box-shadow:var(--sp-sh2) !important; transform:translateY(-1px) !important;
+}
+html[data-theme-skin="serif"] .card-head {
+  background:transparent !important;
+  border-bottom:1px solid var(--sp-border) !important;
+}
+
+/* ── The mission banner becomes the premium dark "north-star" hero ── */
+html[data-theme-skin="serif"] .mission-banner {
+  background:linear-gradient(160deg,#231d14,#1c1710) !important;
+  border-radius:14px !important; color:#fff !important;
+  border:1px solid rgba(38,28,8,.2) !important; box-shadow:var(--sp-sh2) !important;
+  padding:22px !important;
+}
+html[data-theme-skin="serif"] .mission-banner .mission-title { color:#fff !important; }
+html[data-theme-skin="serif"] .mission-banner .mission-text,
+html[data-theme-skin="serif"] .mission-banner span { color:rgba(255,255,255,.6) !important; }
+html[data-theme-skin="serif"] .mission-banner .scan-line { display:none !important; }
+
+/* ── Buttons → craft style (dark primary, green ghost) ── */
+html[data-theme-skin="serif"] .btn,
+html[data-theme-skin="serif"] button.btn,
+html[data-theme-skin="serif"] .qa-btn,
+html[data-theme-skin="serif"] .qs-btn {
+  font-family:var(--sp-fn) !important; font-weight:600 !important;
+  text-transform:none !important; letter-spacing:0 !important;
+  border-radius:8px !important; background-image:none !important;
+  background:var(--sp-s1) !important; color:var(--sp-text) !important;
+  border:1px solid var(--sp-b2) !important;
+  box-shadow:0 1px 2px rgba(38,28,8,.05) !important;
+}
+html[data-theme-skin="serif"] .btn:hover,
+html[data-theme-skin="serif"] .qa-btn:hover {
+  transform:translateY(-1px) !important; background:var(--sp-s2) !important;
+  filter:none !important; box-shadow:var(--sp-sh) !important;
+}
+html[data-theme-skin="serif"] .btn.primary,
+html[data-theme-skin="serif"] .btn.btn-primary,
+html[data-theme-skin="serif"] .qa-btn {
+  background:var(--sp-text) !important; background-image:none !important;
+  color:#fff !important; border-color:var(--sp-text) !important;
+  box-shadow:var(--sp-sh) !important;
+}
+
+/* ── Inputs → clean light ── */
+html[data-theme-skin="serif"] input,
+html[data-theme-skin="serif"] textarea,
+html[data-theme-skin="serif"] select {
+  background:var(--sp-s1) !important; color:var(--sp-text) !important;
+  border:1px solid var(--sp-b2) !important; border-radius:8px !important;
+  caret-color:var(--sp-accent) !important; box-shadow:none !important;
+}
+html[data-theme-skin="serif"] input:focus,
+html[data-theme-skin="serif"] textarea:focus {
+  border-color:var(--sp-accent) !important;
+  box-shadow:0 0 0 3px var(--sp-accent-lite) !important;
+}
+
+/* ── Chips / pills / badges → rounded editorial ── */
+html[data-theme-skin="serif"] .skill-chip,
+html[data-theme-skin="serif"] .all-chip,
+html[data-theme-skin="serif"] .agent-chip,
+html[data-theme-skin="serif"] .badge,
+html[data-theme-skin="serif"] .pill,
+html[data-theme-skin="serif"] .tag {
+  font-family:var(--sp-fn) !important; border-radius:99px !important;
+  background:var(--sp-s2) !important; color:var(--sp-muted) !important;
+  border:1px solid var(--sp-border) !important; box-shadow:none !important;
+  text-transform:none !important; letter-spacing:0 !important;
+}
+html[data-theme-skin="serif"] .skill-chip.active,
+html[data-theme-skin="serif"] .all-chip.active,
+html[data-theme-skin="serif"] .all-chip.on,
+html[data-theme-skin="serif"] .agent-chip.active,
+html[data-theme-skin="serif"] .agent-chip.on {
+  background:var(--sp-accent-lite) !important; color:var(--sp-accent) !important;
+  border-color:transparent !important; font-weight:600 !important;
+}
+
+/* ── Scrollbar → subtle warm ── */
+html[data-theme-skin="serif"] ::-webkit-scrollbar-thumb {
+  background:var(--sp-s3) !important; border:2px solid var(--sp-cream) !important;
+}
+html[data-theme-skin="serif"] ::-webkit-scrollbar-thumb:hover { background:#d8cfbe !important; }
+
+/* ── LEGIBILITY: dark, readable body text inside the light serif cards ──
+   Text was inheriting the glitch layer's light neon colors (light-on-cream
+   = invisible). Force dark text inside cards, but NOT the dark hero banner
+   and NOT the glass Command Hub (#shaddaiHome, which keeps its own light text). */
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) span,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) div,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) p,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) li,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) td,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) label,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) .stat-value {
+  color: var(--sp-text) !important;
+}
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) .text-muted,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) .muted,
+html[data-theme-skin="serif"] #mainArea .card:not(.mission-banner) .stat-label {
+  color: var(--sp-muted) !important;
+}
+/* protect the dark hero banner (keep its text light on the dark card) */
+html[data-theme-skin="serif"] .mission-banner,
+html[data-theme-skin="serif"] .mission-banner span,
+html[data-theme-skin="serif"] .mission-banner div { color: rgba(255,255,255,.82) !important; }
+html[data-theme-skin="serif"] .mission-banner .mission-title { color: #ffffff !important; }
+
+/* ── In-view sub-tabs ── */
+html[data-theme-skin="serif"] .panel-tab,
+html[data-theme-skin="serif"] .proj-section-tab {
+  font-family:var(--sp-fn) !important; text-transform:none !important; letter-spacing:0 !important;
+  background-image:none !important; box-shadow:none !important; color:var(--sp-muted) !important;
+}
+html[data-theme-skin="serif"] .panel-tab.active,
+html[data-theme-skin="serif"] .panel-tab.on,
+html[data-theme-skin="serif"] .proj-section-tab.active {
+  color:var(--sp-accent) !important; background:var(--sp-accent-lite) !important;
+  border-bottom-color:var(--sp-accent) !important; box-shadow:none !important;
+}

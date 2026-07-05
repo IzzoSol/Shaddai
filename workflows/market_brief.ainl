@@ -1,0 +1,50 @@
+name: Market Brief
+version: "1.0"
+author: SHADDAI Council
+description: ZEROX pulls live prices and DeFi signals, ORACLE adds context, SHADDAI delivers a strategic call.
+
+inputs:
+  - name: asset
+    type: string
+    required: false
+    default: "BTC"
+  - name: depth
+    type: string
+    required: false
+    default: "summary"
+
+steps:
+  - id: prices
+    agent: ZEROX
+    skill: finance_summary
+    params:
+      symbol: "{asset}"
+      detail: "{depth}"
+    output: market_data
+
+  - id: context
+    agent: ORACLE
+    skill: web_search
+    params:
+      query: "{asset} market sentiment and catalysts this week"
+      limit: 4
+    output: sentiment
+
+  - id: call
+    agent: SHADDAI
+    skill: summarize
+    depends_on:
+      - prices
+      - context
+    params:
+      text: "Market data:\n{market_data}\n\nSentiment:\n{sentiment}"
+      style: "strategic brief for {asset}: bias (bull/bear/neutral), key levels, 1 actionable call"
+    output: brief
+
+outputs:
+  - name: brief
+    value: "{brief}"
+    format: markdown
+  - name: market_data
+    value: "{market_data}"
+    format: text

@@ -18,6 +18,11 @@ const AGENT_SKILLS = {
     color: '#ffd700',
     domain: ['strategy', 'orchestration', 'code', 'operations'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'full-override': {
         desc: 'Route to any agent, override decisions',
         fn: 'orchestrateAgents',
@@ -57,6 +62,11 @@ const AGENT_SKILLS = {
     color: '#00c8ff',
     domain: ['trading', 'finance', 'market-analysis', 'on-chain'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'crypto-trading': {
         desc: 'Day-trading, swing-trading, algo strategies',
         fn: 'analyzeCryptoTrading',
@@ -106,6 +116,11 @@ const AGENT_SKILLS = {
     color: '#b06aff',
     domain: ['esoteric', 'astrology', 'knowledge', 'anatomy'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'natal-chart': {
         desc: 'Natal chart generation and interpretation',
         fn: 'generateNatalChart',
@@ -161,6 +176,11 @@ const AGENT_SKILLS = {
     color: '#00e5a0',
     domain: ['orchestration', 'workflow', 'scheduling', 'routing'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'workflow-orchestrator': {
         desc: 'Multi-agent workflow coordination',
         fn: 'orchestrateWorkflow',
@@ -210,6 +230,11 @@ const AGENT_SKILLS = {
     color: '#ff7b3d',
     domain: ['gamedesign', 'pixel-art', 'music', 'imaging', 'branding'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'game-designer': {
         desc: 'Game mechanics, narrative, balance design',
         fn: 'designGame',
@@ -270,6 +295,11 @@ const AGENT_SKILLS = {
     color: '#9b59b6',
     domain: ['writing', 'chat', 'phonetics', 'learning'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'copywriter': {
         desc: 'Professional copywriting and headlines',
         fn: 'writeCopy',
@@ -324,6 +354,11 @@ const AGENT_SKILLS = {
     color: '#ff4070',
     domain: ['security', 'encryption', 'auth', 'compliance', 'forensics'],
     skills: {
+      'arcade-play': {
+        desc: 'Play a SHADDAI arcade game and post the score',
+        fn: 'playArcade',
+        confidence: 88
+      },
       'rbac-guard': {
         desc: 'Role-based access control design',
         fn: 'designRBAC',
@@ -389,7 +424,8 @@ const TASK_KEYWORDS = {
   astrology: ['astrology', 'natal', 'birth chart', 'moon', 'zodiac', 'transit', 'horoscope', 'planetary'],
   esoteric: ['chakra', 'numerology', 'sacred geometry', 'gematria', 'human design', 'enlightenment', 'spiritual'],
   research: ['research', 'investigate', 'analyze', 'study', 'find', 'learn', 'explain', 'understand', 'knowledge'],
-  workflow: ['schedule', 'plan', 'organize', 'manage', 'workflow', 'project', 'timeline', 'gantt', 'kanban', 'coordinate']
+  workflow: ['schedule', 'plan', 'organize', 'manage', 'workflow', 'project', 'timeline', 'gantt', 'kanban', 'coordinate'],
+  arcade: ['arcade', 'play', 'game', 'basketball', 'football', 'dodgeball', 'shooter', 'sigil', 'hoops', 'gridiron']
 };
 
 function detectTaskType(message) {
@@ -1103,6 +1139,46 @@ Remember: Store in secure password manager, enable 2FA`;
 
   contentStrategy: async (prompt) => {
     return `SHADDAI Content Strategy:\n\nPlatforms: Twitter, LinkedIn, Blog, YouTube\nFrequency: Daily posts, weekly deep-dives\nContent pillars: Insights, tutorials, community\n\nStrategy for: ${prompt}`;
+  },
+
+  // ── SHADDAI Agent Arcade: agent plays a game, score is recorded, leaderboard rank returned ──
+  playArcade: async (prompt) => {
+    const sim = require('./lib/arcade-sim');
+    const store = require('./lib/arcade-store');
+    const text = String(prompt || '');
+    const lc = text.toLowerCase();
+
+    // parse a game id from the prompt (ids + friendly names), else pick a random game
+    const GAME_ALIASES = {
+      basketball: ['basketball', 'hoops', 'neon hoops'],
+      football: ['football', 'gridiron', 'grid gridiron'],
+      dodgeball: ['dodgeball', 'grid dodgeball'],
+      'sigil-storm': ['sigil-storm', 'sigil storm', 'sigil', 'shooter']
+    };
+    let game = null;
+    for (const id of sim.GAMES) {
+      if ((GAME_ALIASES[id] || [id]).some(a => lc.includes(a))) { game = id; break; }
+    }
+    if (!game) game = sim.GAMES[Math.floor(Math.random() * sim.GAMES.length)];
+
+    // determine the acting agent — the handler only gets message text, so scan it for a
+    // known agent name; default to SHADDAI.
+    const AGENTS = ['SHADDAI', 'NEXUS', 'ORACLE', 'ZEROX', 'TURTLE', 'QUILL', 'PIKADON'];
+    let agent = AGENTS.find(a => lc.includes(a.toLowerCase())) || 'SHADDAI';
+
+    const result = sim.play(game, agent);
+    let rank = null, best = null;
+    try {
+      const rec = store.record({ game: result.game, agent: result.agent, score: result.score, win: result.win });
+      rank = rec.rank; best = rec.best;
+    } catch (e) { /* recording best-effort */ }
+
+    return `SHADDAI Arcade — ${result.agent} played ${result.game}:\n\n` +
+      `${result.summary}\n` +
+      `Score: ${result.score}\n` +
+      `Result: ${result.win ? 'WIN' : 'loss'}\n` +
+      `Leaderboard rank: ${rank != null ? '#' + rank : 'n/a'}` +
+      (best != null ? `\n${result.agent}'s best on ${result.game}: ${best}` : '');
   }
 };
 

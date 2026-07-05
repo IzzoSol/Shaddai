@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · NFT Collection (100)</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--cy:#27e0ff;--gold:#ffcf4a}
+  *{box-sizing:border-box;margin:0}
+  body{background:radial-gradient(circle at 50% -10%,#0c1830,#05080f 70%);color:#eaf2ff;font-family:'Share Tech Mono',monospace;min-height:100vh;padding:28px 22px 60px}
+  .hd{text-align:center;margin-bottom:6px}
+  .hd h1{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:5px;font-size:30px;color:#fff;text-shadow:0 0 24px rgba(39,224,255,.5)}
+  .hd .sub{font-size:11px;letter-spacing:3px;color:var(--cy);margin-top:6px}
+  .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 24px}
+  .bar button{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;padding:8px 14px;border-radius:20px;border:1px solid rgba(39,224,255,.3);background:rgba(39,224,255,.06);color:#cfe9ff;cursor:pointer}
+  .bar button.on{background:linear-gradient(90deg,var(--cy),#0a7ea8);color:#04060d;border-color:var(--cy)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:16px;max-width:1320px;margin:0 auto}
+  .card{background:linear-gradient(180deg,#0b1322,#070b14);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;transition:transform .15s,box-shadow .2s,border-color .2s;position:relative}
+  .card:hover{transform:translateY(-4px)}
+  .card .imgwrap{aspect-ratio:1;background:#05080f;position:relative;overflow:hidden}
+  .card img{width:100%;height:100%;object-fit:cover;display:block}
+  .card .serial{position:absolute;top:8px;left:8px;font-size:8px;letter-spacing:1px;color:#fff;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:4px}
+  .card .rar{position:absolute;top:8px;right:8px;font-size:7px;letter-spacing:1px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase}
+  .card .meta{padding:10px 11px}
+  .card .nm{font-family:'Orbitron',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px}
+  .card .un{font-size:9px;color:#8aa3bf;margin-top:3px;min-height:12px}
+  .r-genesis{border-color:var(--gold);box-shadow:0 0 16px rgba(255,207,74,.12)} .r-genesis .rar{background:var(--gold);color:#04060d}
+  .r-legendary{border-color:#ff9b3d} .r-legendary .rar{background:#ff9b3d;color:#04060d}
+  .r-epic{border-color:#b06aff} .r-epic .rar{background:#b06aff;color:#fff}
+  .r-rare{border-color:#27e0ff} .r-rare .rar{background:#27e0ff;color:#04060d}
+  .r-common .rar{background:#5a6a82;color:#fff}
+  .earned{position:absolute;bottom:8px;right:8px;font-size:8px;background:rgba(0,229,160,.85);color:#04060d;padding:2px 7px;border-radius:4px;font-weight:700}
+  #status{text-align:center;color:#8aa3bf;font-size:12px;margin-top:30px}
+</style></head>
+<body>
+<div class="hd"><h1>SHADDAI · NFT COLLECTION</h1><div class="sub" id="sub">loading…</div></div>
+<div class="bar" id="filters"></div>
+<div class="grid" id="grid"></div>
+<div id="status"></div>
+<script>
+const grid=document.getElementById('grid'), sub=document.getElementById('sub'), filters=document.getElementById('filters');
+let CARDS=[], rar='ALL';
+const imgFor = c => c.imageUrl || ('/api/collectables/image/'+c.id+'.png');
+function render(){
+  const list = rar==='ALL'?CARDS:CARDS.filter(c=>(c.rarity||'common').toLowerCase()===rar.toLowerCase());
+  grid.innerHTML = list.map(c=>{
+    const r=(c.rarity||'common').toLowerCase();
+    return `<div class="card r-${r}">
+      <div class="imgwrap">
+        <img src="${imgFor(c)}" alt="${c.name||c.id}" loading="lazy" onerror="this.style.opacity=0.15">
+        <span class="serial">${c.serial||''}</span>
+        <span class="rar">${r}</span>
+        ${c.earned?'<span class="earned">✓ OWNED</span>':''}
+      </div>
+      <div class="meta"><div class="nm">${c.name||c.id}</div><div class="un">${c.unlockText||c.faction||''}</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('status').textContent = list.length+' shown';
+}
+fetch('/api/collectables/list').then(r=>r.json()).then(d=>{
+  CARDS = d.cards||[];
+  sub.textContent = `${d.total||CARDS.length} CARDS · ${d.earned||0} OWNED · genesis → common`;
+  const rars=['ALL',...[...new Set(CARDS.map(c=>(c.rarity||'common')))]];
+  filters.innerHTML = rars.map(x=>`<button data-r="${x}" class="${x==='ALL'?'on':''}">${x.toUpperCase()}</button>`).join('');
+  filters.querySelectorAll('button').forEach(b=>b.onclick=()=>{ rar=b.dataset.r; filters.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+  render();
+}).catch(e=>{ sub.textContent='failed to load collection: '+e.message; });
+</script>
+</body></html>

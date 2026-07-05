@@ -1,0 +1,312 @@
+/* ============================================================================
+ * SHADDAI · rooms-plus.css  —  Premium themed agent Room styling
+ * ----------------------------------------------------------------------------
+ * Scoped entirely under `.rmx-*` and `#modalBox.rmx-enhanced` so nothing leaks
+ * into the rest of the dashboard. Pairs with rooms-plus.js. Additive only.
+ *
+ * Per-archetype accents are driven by CSS custom properties set inline by the
+ * JS (--rmx-accent, --rmx-accent2, --rmx-bg); archetype-specific pattern
+ * overlays are layered via [data-rmx-archetype="…"].
+ * ==========================================================================*/
+
+/* Give the enhanced customizer modal a touch more room + a faint accent frame */
+#modalBox.rmx-enhanced {
+  border: 1px solid color-mix(in srgb, var(--rmx-accent, #ff6b35) 45%, transparent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4),
+              0 24px 60px rgba(0, 0, 0, 0.55),
+              0 0 42px color-mix(in srgb, var(--rmx-accent, #ff6b35) 22%, transparent);
+}
+
+/* ── Premium panel ──────────────────────────────────────────────────────── */
+.rmx-panel {
+  --rmx-accent: #ff6b35;
+  --rmx-accent2: #ffd700;
+  --rmx-bg: radial-gradient(ellipse at 25% 25%, rgba(255, 107, 53, 0.16), transparent 60%), #08060c;
+  position: relative;
+  margin: 0 0 16px;
+  padding: 14px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--rmx-bg);
+  border: 1px solid color-mix(in srgb, var(--rmx-accent) 40%, rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  color: rgba(255, 255, 255, 0.85);
+  isolation: isolate;
+}
+
+/* Subtle animated sheen sweep along the top accent edge */
+.rmx-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rmx-accent), var(--rmx-accent2), transparent);
+  opacity: 0.9;
+}
+
+/* Faint dot-grid texture overlay (archetypes add their own pattern below) */
+.rmx-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--rmx-accent) 22%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.20;
+}
+
+.rmx-panel > * { position: relative; z-index: 1; }
+
+/* ── Banner: portrait + title ───────────────────────────────────────────── */
+.rmx-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rmx-portrait-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--rmx-accent) 30%, #000) 0%,
+      color-mix(in srgb, var(--rmx-accent2) 18%, #000) 100%);
+  border: 2px solid color-mix(in srgb, var(--rmx-accent) 70%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--rmx-accent) 40%, transparent),
+              inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+
+.rmx-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+  display: block;
+}
+
+/* Fallback monogram shown when portrait art is missing */
+.rmx-portrait-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--rmx-accent2);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rmx-accent) 60%, transparent);
+}
+.rmx-portrait-frame.rmx-noimg .rmx-portrait-fallback { display: grid; }
+
+.rmx-banner-txt { min-width: 0; }
+
+.rmx-room-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.25;
+  color: #fff;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--rmx-accent) 55%, transparent);
+}
+
+.rmx-vibe {
+  margin-top: 4px;
+  font-size: 8.5px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.rmx-motifs {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.rmx-chip {
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--rmx-accent2) 85%, #fff);
+  background: color-mix(in srgb, var(--rmx-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rmx-accent) 45%, transparent);
+  white-space: nowrap;
+}
+
+/* ── Auto-Generate button ───────────────────────────────────────────────── */
+.rmx-autogen {
+  display: block;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #08060c;
+  background: linear-gradient(135deg, var(--rmx-accent), var(--rmx-accent2));
+  border: 1px solid color-mix(in srgb, var(--rmx-accent2) 80%, #fff);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--rmx-accent) 40%, transparent);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.rmx-autogen:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--rmx-accent) 55%, transparent);
+}
+.rmx-autogen:active { transform: translateY(0); }
+
+/* ── Collectable + Trophy shelves ───────────────────────────────────────── */
+.rmx-shelves {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 420px) {
+  .rmx-shelves { grid-template-columns: 3fr 2fr; }
+}
+
+.rmx-shelf {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 -14px 20px rgba(0, 0, 0, 0.35);
+}
+
+.rmx-shelf-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--rmx-accent2) 70%, rgba(255, 255, 255, 0.5));
+  margin-bottom: 9px;
+}
+
+.rmx-plinths,
+.rmx-trophies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rmx-plinth,
+.rmx-trophy {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: color-mix(in srgb, var(--rmx-accent) 55%, rgba(255, 255, 255, 0.3));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%),
+    radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--rmx-accent) 22%, transparent), transparent 70%),
+    rgba(0, 0, 0, 0.3);
+  border: 1px dashed color-mix(in srgb, var(--rmx-accent) 35%, rgba(255, 255, 255, 0.14));
+  position: relative;
+}
+
+/* little pedestal base under each slot */
+.rmx-plinth::after,
+.rmx-trophy::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--rmx-accent) 40%, transparent);
+  opacity: 0.6;
+}
+
+.rmx-slot-glyph {
+  font-size: 15px;
+  opacity: 0.5;
+  filter: grayscale(0.4);
+}
+
+/* ── Flash feedback on Auto-Generate ────────────────────────────────────── */
+.rmx-flash { animation: rmxFlash 0.55s ease; }
+@keyframes rmxFlash {
+  0%   { box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45); }
+  35%  { box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45),
+                     0 0 0 3px color-mix(in srgb, var(--rmx-accent) 60%, transparent),
+                     0 0 40px color-mix(in srgb, var(--rmx-accent) 55%, transparent); }
+  100% { box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45); }
+}
+
+/* ==========================================================================
+ * Per-archetype pattern overlays — each character gets a distinct motif on
+ * top of its accent-driven base. Layered on the panel ::after backdrop.
+ * ==========================================================================*/
+
+/* SHADDAI — gilded citadel weave */
+.rmx-panel[data-rmx-archetype="SHADDAI"]::after {
+  background-image:
+    radial-gradient(color-mix(in srgb, var(--rmx-accent2) 26%, transparent) 1px, transparent 1px),
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--rmx-accent2) 8%, transparent) 0 2px, transparent 2px 16px);
+  background-size: 22px 22px, auto;
+  opacity: 0.22;
+}
+
+/* NEXUS — blueprint grid */
+.rmx-panel[data-rmx-archetype="NEXUS"]::after {
+  background-image:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--rmx-accent) 16%, transparent) 0 1px, transparent 1px 20px),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--rmx-accent) 16%, transparent) 0 1px, transparent 1px 20px);
+  background-size: auto;
+  opacity: 0.28;
+}
+
+/* ZEROX — falling ticker rain */
+.rmx-panel[data-rmx-archetype="ZEROX"]::after {
+  background-image:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--rmx-accent) 14%, transparent) 0 1px, transparent 1px 26px);
+  opacity: 0.30;
+}
+
+/* ORACLE — starfield */
+.rmx-panel[data-rmx-archetype="ORACLE"]::after {
+  background-image:
+    radial-gradient(color-mix(in srgb, var(--rmx-accent2) 40%, transparent) 1px, transparent 1px),
+    radial-gradient(color-mix(in srgb, var(--rmx-accent) 30%, transparent) 1px, transparent 1px);
+  background-size: 34px 34px, 19px 19px;
+  background-position: 0 0, 9px 12px;
+  opacity: 0.30;
+}
+
+/* TURTLE — hex/organic mesh */
+.rmx-panel[data-rmx-archetype="TURTLE"]::after {
+  background-image:
+    repeating-linear-gradient(60deg, color-mix(in srgb, var(--rmx-accent) 12%, transparent) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(-60deg, color-mix(in srgb, var(--rmx-accent) 12%, transparent) 0 1px, transparent 1px 16px);
+  opacity: 0.26;
+}
+
+/* QUILL — ruled notebook lines */
+.rmx-panel[data-rmx-archetype="QUILL"]::after {
+  background-image:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--rmx-accent) 16%, transparent) 0 1px, transparent 1px 18px);
+  opacity: 0.28;
+}
+
+/* PIKADON — alert diagonal hazard bands */
+.rmx-panel[data-rmx-archetype="PIKADON"]::after {
+  background-image:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--rmx-accent) 14%, transparent) 0 6px, transparent 6px 20px);
+  opacity: 0.24;
+}

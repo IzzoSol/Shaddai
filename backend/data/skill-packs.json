@@ -144,5 +144,65 @@
     "purchases": 0,
     "rating": 4.8,
     "createdAt": "2026-05-24T00:00:00.000Z"
+  },
+  {
+    "id": "pack-mpyfl0z4",
+    "name": "Test Pack",
+    "author": "Audit",
+    "target_agent": "NEXUS",
+    "system_prompt": "You are helpful.",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-06-03T18:59:53.776Z"
+  },
+  {
+    "id": "pack-mpz89yww",
+    "name": "Test Pack",
+    "author": "Audit",
+    "target_agent": "NEXUS",
+    "system_prompt": "You are helpful.",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-06-04T08:23:06.752Z"
+  },
+  {
+    "id": "pack-mpzlszb5",
+    "name": "Test Pack",
+    "author": "Audit",
+    "target_agent": "NEXUS",
+    "system_prompt": "You are helpful.",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-06-04T14:41:48.737Z"
+  },
+  {
+    "id": "pack-mqohnmfj",
+    "name": "bitcoin",
+    "author": "test",
+    "target_agent": "console.log(1)",
+    "system_prompt": "bitcoin",
+    "price_credits": 3,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-06-22T00:39:54.704Z"
+  },
+  {
+    "id": "pack-mr2cstef",
+    "name": "react",
+    "author": "anonymous",
+    "target_agent": "SHADDAI",
+    "system_prompt": "",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-07-01T17:32:45.399Z"
   }
 ]

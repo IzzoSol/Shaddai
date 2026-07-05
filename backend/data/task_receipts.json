@@ -1,5 +1,12 @@
 [
   {
+    "task_id": "council_1780580843409",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-06-04T13:47:28.308Z"
+  },
+  {
     "task_id": "wh_task_1779687636395",
     "agent": "webhook",
     "task": "[WEBHOOK] market-brief",

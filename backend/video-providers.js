@@ -19,7 +19,6 @@
  */
 
 const axios = require('axios');
-const keys = require('./lib/keys');
 
 const TIMEOUT_MS = 30000;
 
@@ -31,7 +30,7 @@ function estimateCost(costPerSecond, duration) {
 
 /** Read an env key or throw a clean, client-safe Error. */
 function requireKey(envName) {
-  const val = keys.get(envName);
+  const val = process.env[envName];
   if (!val || !String(val).trim()) {
     throw new Error(`${envName} not set`);
   }
@@ -342,7 +341,7 @@ const PROVIDERS = { pika, runway, heygen, kling };
 function isConfigured(name) {
   const p = PROVIDERS[name];
   if (!p) return false;
-  const val = keys.get(p.envKey);
+  const val = process.env[p.envKey];
   return Boolean(val && String(val).trim());
 }
 

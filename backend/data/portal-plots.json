@@ -1,0 +1,21 @@
+{
+  "plots": {
+    "nexus-world": {
+      "id": "nexus-world",
+      "name": "NEXUS Portal World",
+      "agentCode": "NEXUS",
+      "pos": [
+        -165,
+        286
+      ],
+      "status": "available",
+      "rentPrice": 29,
+      "buyPrice": 299,
+      "owner": null,
+      "rentedAt": null,
+      "expiresAt": null,
+      "soldAt": null,
+      "updatedAt": null
+    }
+  }
+}

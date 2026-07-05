@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GLB Viewer</title>
+<style>
+  html,body{margin:0;height:100%;background:#04060d;color:#cfe9ff;font-family:monospace;overflow:hidden}
+  #hud{position:fixed;top:12px;left:12px;background:rgba(0,0,0,.7);border:1px solid #27e0ff;border-radius:8px;padding:10px 14px;font-size:12px;z-index:10}
+  #hud b{color:#ffcf4a}
+  #pick{position:fixed;bottom:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap;z-index:10}
+  #pick a{font-size:11px;color:#04060d;background:#27e0ff;padding:6px 10px;border-radius:6px;text-decoration:none}
+  canvas{display:block}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="hud">Loading… <span id="info"></span><div style="margin-top:4px;color:#7e8aa3">drag = rotate · scroll = zoom</div></div>
+<div id="pick">
+  <a href="?model=/assets/agents/_unassigned_3B3B8DCD.glb">UNASSIGNED (staged)</a>
+  <a href="?model=/assets/agents/QUILL.glb">QUILL (fal)</a>
+  <a href="?model=/assets/agents/PIKADON.glb">PIKADON (fal)</a>
+  <a href="?model=/assets/agents/SHADDAI.glb">SHADDAI</a>
+  <a href="?model=/assets/agents/ORACLE.glb">ORACLE</a>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const params = new URLSearchParams(location.search);
+const url = params.get('model') || '/assets/agents/_unassigned_3B3B8DCD.glb';
+const info = document.getElementById('info');
+document.getElementById('hud').firstChild.textContent = 'Model: ' + url + '  ';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04060d);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.01, 1000);
+camera.position.set(0, 1.4, 4);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+
+// Environment map: PBR metal armor needs something to reflect or it renders black/flat.
+const _pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = _pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+scene.add(new THREE.HemisphereLight(0xbfe9ff, 0x0a0c12, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3,6,4); scene.add(key);
+const rim = new THREE.DirectionalLight(0x27e0ff, 0.8); rim.position.set(-4,2,-3); scene.add(rim);
+scene.add(new THREE.GridHelper(10, 20, 0x27e0ff, 0x123)) ;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.target.set(0,1,0);
+
+const _draco = new DRACOLoader(); _draco.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
+const _gl = new GLTFLoader(); _gl.setDRACOLoader(_draco);
+_gl.load(url, (gltf)=>{
+  const m = gltf.scene;
+  const box = new THREE.Box3().setFromObject(m);
+  const size = new THREE.Vector3(); box.getSize(size);
+  const ctr = new THREE.Vector3(); box.getCenter(ctr);
+  const h = size.y || 1; const s = 2.2/h; m.scale.setScalar(s);
+  const box2 = new THREE.Box3().setFromObject(m); const c2 = new THREE.Vector3(); box2.getCenter(c2);
+  m.position.sub(c2); m.position.y -= box2.min.y - c2.y; // feet ~0
+  scene.add(m);
+  controls.target.set(0, 1.1, 0);
+  info.innerHTML = '<b>loaded</b> · ' + size.x.toFixed(1)+'×'+size.y.toFixed(1)+'×'+size.z.toFixed(1);
+}, (p)=>{ info.textContent = Math.round(p.loaded/p.total*100)+'%'; }, (e)=>{ info.innerHTML='<span style="color:#ff5a6e">load failed: '+(e.message||e)+'</span>'; });
+
+addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+</script>
+</body>
+</html>

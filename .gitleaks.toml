@@ -91,8 +91,6 @@ paths = [
 # Strings that are clearly placeholders — never treat as real secrets
 regexes = [
   '''YOUR_[A-Z0-9_]+''',
-  '''AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw''',
-  '''shaddai999\.(firebaseapp\.com|firebasestorage\.app)''',
   '''(?i)xxxx+''',
   '''(?i)REDACTED''',
   '''(?i)placeholder''',

@@ -20,7 +20,6 @@
 
 const axios  = require('axios');
 const crypto = require('crypto');
-const keys   = require('./lib/keys');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -318,7 +317,7 @@ module.exports = {
     },
     agents: ['QUILL', 'SHADDAI', 'PIKADON'],
     async execute({ message, chat_id, parse_mode } = {}) {
-      const token = keys.get('TELEGRAM_BOT_TOKEN');
+      const token = process.env.TELEGRAM_BOT_TOKEN;
       if (!token) {
         return JSON.stringify({
           success: false,

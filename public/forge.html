@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI · The Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Spectral:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Part B: re-editable agent tools (dependency-free, mountable on forge.html OR the dashboard) -->
+<link rel="stylesheet" href="/agent-editor.css">
+<script defer src="/agent-editor.js"></script>
+<style>
+  :root{
+    --obsidian:#0b0805; --obsidian2:#16100a; --panel:#171009; --bd:#3a2a14;
+    --gold:#f0b429; --gold2:#ffe39a; --ember:#ff6a2b; --rune:#54d6df; --crimson:#c2410c;
+    --ash:#a8957a; --parch:#ece0c8;
+    --disp:'Cinzel',serif; --body:'Spectral',Georgia,serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; color:var(--parch); font-family:var(--body); overflow:hidden;
+    background:
+      radial-gradient(900px 600px at 28% 30%, #241809 0%, transparent 60%),
+      radial-gradient(700px 700px at 78% 75%, #1a0f06 0%, transparent 55%),
+      linear-gradient(160deg,#0c0805,#070504 70%);
+  }
+  /* film grain */
+  body::after{ content:''; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  #app{ display:grid; grid-template-columns:1.05fr .95fr; grid-template-rows:auto 1fr auto; height:100vh; gap:0; }
+  /* ── header ── */
+  header{ grid-column:1/3; display:flex; align-items:center; justify-content:space-between; padding:16px 26px 8px; }
+  header .mark{ font-family:var(--disp); font-weight:900; letter-spacing:.32em; font-size:14px; color:var(--gold);
+    text-shadow:0 0 18px rgba(240,180,41,.35); }
+  header .mark small{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:.3em; color:var(--ash); margin-top:3px; }
+  header a.back{ font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--ash); text-decoration:none;
+    border:1px solid var(--bd); padding:7px 14px; border-radius:2px; transition:.2s; }
+  header a.back:hover{ color:var(--gold); border-color:var(--gold); }
+  /* ── summoning stage ── */
+  #stageWrap{ position:relative; overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(11,8,5,.72), rgba(7,5,4,.9)),
+      url('/assets/ui/forge-ember.png') center / cover no-repeat; }
+  #stage{ position:absolute; inset:0; z-index:2; }
+  #fallback{ position:absolute; inset:0; z-index:2; display:none; background-size:contain; background-repeat:no-repeat; background-position:center 60%; }
+  /* sacred-geometry summoning circle */
+  .sigil{ position:absolute; left:50%; bottom:9%; transform:translateX(-50%); width:min(62%,520px); aspect-ratio:1; z-index:1; opacity:.5;
+    animation:spin 70s linear infinite; }
+  .sigil.inner{ width:min(40%,330px); bottom:16%; animation:spin 48s linear infinite reverse; opacity:.7; }
+  @keyframes spin{ to{ transform:translateX(-50%) rotate(360deg); } }
+  .glowfloor{ position:absolute; left:50%; bottom:8%; transform:translateX(-50%); width:70%; height:120px; z-index:0;
+    background:radial-gradient(ellipse at center, rgba(255,106,43,.28), rgba(240,180,41,.06) 45%, transparent 70%); filter:blur(8px); }
+  #stageName{ position:absolute; left:0; right:0; bottom:20px; text-align:center; z-index:3; pointer-events:none; }
+  #stageName .nm{ font-family:var(--disp); font-weight:700; font-size:30px; letter-spacing:.12em; color:var(--gold2);
+    text-shadow:0 0 24px rgba(255,106,43,.4); }
+  #stageName .role{ font-family:var(--mono); font-size:11px; letter-spacing:.32em; color:var(--ash); margin-top:4px; text-transform:uppercase; }
+  #stageTag{ position:absolute; top:14px; left:18px; z-index:3; font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:var(--rune); opacity:.7; }
+  /* archetype rail */
+  #rail{ position:absolute; top:14px; right:16px; z-index:4; display:flex; flex-direction:column; gap:7px; }
+  .rbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--bd); background:#0e0a05cc; cursor:pointer;
+    background-size:cover; background-position:center top; filter:grayscale(.5) brightness(.7); transition:.2s; }
+  .rbtn:hover{ filter:none; border-color:var(--gold); }
+  .rbtn.on{ filter:none; border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 16px rgba(240,180,41,.5); transform:scale(1.08); }
+  .navarrow{ position:absolute; bottom:80px; z-index:4; width:42px; height:42px; border-radius:50%; border:1px solid var(--bd);
+    background:#100a05cc; color:var(--gold); font-size:18px; cursor:pointer; }
+  /* group both arrows bottom-left so #next never overlaps the right-side archetype rail */
+  #prev{ left:20px; } #next{ left:70px; }
+  .navarrow:hover{ border-color:var(--gold); box-shadow:0 0 14px rgba(240,180,41,.4); }
+  /* ── grimoire panel ── */
+  #panel{ border-left:1px solid var(--bd); background:linear-gradient(180deg,#140e07,#0c0805); overflow-y:auto; padding:8px 26px 26px; }
+  #panel::-webkit-scrollbar{ width:8px; } #panel::-webkit-scrollbar-thumb{ background:#3a2a14; border-radius:4px; }
+  .lab{ font-family:var(--mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold);
+    margin:20px 0 8px; display:flex; align-items:center; gap:10px; }
+  .lab::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--bd),transparent); }
+  .lab:first-child{ margin-top:10px; }
+  input.f,textarea.f{ width:100%; background:#0c0805; border:1px solid var(--bd); border-radius:2px; color:var(--parch);
+    padding:11px 13px; font-family:var(--body); font-size:15px; transition:.2s; }
+  input.f:focus,textarea.f:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(240,180,41,.1); }
+  textarea.f{ resize:vertical; min-height:50px; }
+  .row{ display:flex; gap:8px; }
+  /* brain tiers */
+  .cores{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .core{ border:1px solid var(--bd); border-radius:2px; padding:11px 8px; text-align:center; cursor:pointer; background:#0d0905; transition:.2s; }
+  .core:hover{ border-color:var(--ember); }
+  .core.on{ border-color:var(--gold); background:linear-gradient(180deg,rgba(240,180,41,.12),transparent); box-shadow:0 0 14px rgba(240,180,41,.18); }
+  .core .g{ font-family:var(--disp); font-weight:700; font-size:13px; color:var(--gold2); }
+  .core .h{ font-family:var(--mono); font-size:8.5px; color:var(--ash); margin-top:3px; letter-spacing:.05em; }
+  /* skills */
+  #skillSearch{ margin-bottom:8px; }
+  #skills{ display:flex; flex-wrap:wrap; gap:6px; max-height:160px; overflow-y:auto; padding:2px; }
+  .rune{ font-family:var(--mono); font-size:11px; padding:5px 10px; border-radius:2px; border:1px solid var(--bd); color:var(--parch);
+    background:#0d0905; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .rune:hover{ border-color:var(--ember); color:var(--gold2); }
+  .rune.on{ border-color:var(--gold); background:linear-gradient(180deg,rgba(240,180,41,.18),rgba(255,106,43,.06)); color:var(--gold2); }
+  .rune .x{ color:var(--ember); margin-right:4px; }
+  #equipped{ font-family:var(--mono); font-size:10px; color:var(--ash); margin-top:8px; }
+  /* byok vault */
+  .vault{ border:1px solid var(--bd); border-radius:3px; padding:13px; background:linear-gradient(180deg,#120c06,#0b0805); }
+  .vault .hd{ font-family:var(--disp); font-weight:700; font-size:13px; color:var(--gold2); display:flex; align-items:center; gap:8px; }
+  .vault .sub{ font-family:var(--body); font-style:italic; font-size:12px; color:var(--ash); margin:4px 0 10px; }
+  select.f{ background:#0c0805; border:1px solid var(--bd); color:var(--parch); padding:10px; border-radius:2px; font-family:var(--mono); font-size:12px; }
+  .vstatus{ font-family:var(--mono); font-size:10px; margin-top:8px; color:var(--rune); }
+  /* actions */
+  .acts{ display:flex; gap:10px; margin-top:22px; }
+  button.forge{ flex:2; padding:15px; border:none; border-radius:2px; cursor:pointer; font-family:var(--disp); font-weight:900;
+    letter-spacing:.18em; font-size:14px; color:#1a0d02; background:linear-gradient(180deg,var(--gold2),var(--gold) 40%,var(--ember));
+    box-shadow:0 6px 24px rgba(255,106,43,.3), inset 0 1px 0 rgba(255,255,255,.4); transition:.15s; }
+  button.forge:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  button.forge:disabled{ filter:grayscale(.6) brightness(.7); cursor:wait; }
+  button.awaken{ flex:1; padding:15px; border:1px solid var(--gold); border-radius:2px; cursor:pointer; background:transparent;
+    color:var(--gold2); font-family:var(--disp); font-weight:700; letter-spacing:.12em; font-size:13px; transition:.15s; }
+  button.awaken:hover{ background:rgba(240,180,41,.08); box-shadow:0 0 18px rgba(240,180,41,.2); }
+  /* console */
+  #scroll{ grid-column:1/3; border-top:1px solid var(--bd); background:#0a0704; padding:11px 26px; min-height:46px;
+    font-family:var(--mono); font-size:12px; color:var(--gold2); display:flex; align-items:center; gap:12px; }
+  #scroll .glyph{ color:var(--ember); }
+  /* skill kind badges + filter + detail */
+  .filt{ display:flex; gap:6px; margin-bottom:8px; }
+  .filt button{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:5px 11px; border:1px solid var(--bd);
+    background:#0d0905; color:var(--ash); border-radius:2px; cursor:pointer; transition:.15s; }
+  .filt button.on{ border-color:var(--gold); color:var(--gold2); background:linear-gradient(180deg,rgba(240,180,41,.12),transparent); }
+  .rune .kb{ font-size:9px; opacity:.85; margin-right:5px; }
+  .rune.tool{ border-color:#5a4a1e; }
+  .rune.tool.on{ border-color:var(--gold); }
+  .rune.know{ border-style:dashed; opacity:.82; }
+  #skillDetail{ font-family:var(--mono); font-size:10.5px; line-height:1.5; color:var(--ash); margin-top:8px; min-height:30px;
+    border-left:2px solid var(--bd); padding:3px 0 3px 10px; }
+  #skillDetail b{ color:var(--gold2); } #skillDetail .pill{ color:var(--rune); }
+  /* page-load reveal */
+  .reveal{ opacity:0; transform:translateY(10px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+  @media(max-width:880px){ #app{ grid-template-columns:1fr; grid-template-rows:auto 44vh auto auto; } #panel{ border-left:0; border-top:1px solid var(--bd);} }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three":"https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="app">
+  <header class="reveal" style="animation-delay:.05s">
+    <div class="mark">⬡ THE&nbsp;FORGE<small>summon · equip · awaken</small></div>
+    <a class="back" href="/" target="_top">⟵ return to dashboard</a>
+  </header>
+
+  <!-- summoning stage -->
+  <div id="stageWrap" class="reveal" style="animation-delay:.15s">
+    <div class="glowfloor"></div>
+    <svg class="sigil" viewBox="0 0 200 200" fill="none" stroke="#f0b429" stroke-width="0.5" opacity="0.5">
+      <circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="78"/>
+      <polygon points="100,8 180,146 20,146"/><polygon points="100,192 20,54 180,54"/>
+      <circle cx="100" cy="100" r="40" stroke="#ff6a2b"/>
+    </svg>
+    <svg class="sigil inner" viewBox="0 0 200 200" fill="none" stroke="#54d6df" stroke-width="0.4" opacity="0.6">
+      <polygon points="100,20 169,60 169,140 100,180 31,140 31,60"/><circle cx="100" cy="100" r="64"/>
+    </svg>
+    <div id="stage"></div>
+    <div id="fallback"></div>
+    <div id="stageTag">▣ 3D ARCHETYPE</div>
+    <div id="rail"></div>
+    <button id="prev" class="navarrow">‹</button>
+    <button id="next" class="navarrow">›</button>
+    <div id="stageName"><div class="nm">—</div><div class="role">—</div></div>
+  </div>
+
+  <!-- grimoire -->
+  <div id="panel">
+    <div class="reveal" style="animation-delay:.25s">
+      <div class="lab">True Name</div>
+      <input id="name" class="f" placeholder="name your operative…" maxlength="24" />
+    </div>
+    <div class="reveal" style="animation-delay:.3s">
+      <div class="lab">Purpose <span style="color:var(--ash);font-family:var(--body);font-style:italic;text-transform:none;letter-spacing:0">— its mission &amp; voice</span></div>
+      <textarea id="persona" class="f" placeholder="What is it for? Tone, rules, mission…"></textarea>
+    </div>
+    <div class="reveal" style="animation-delay:.35s">
+      <div class="lab">Compute Core</div>
+      <div class="cores" id="cores"></div>
+    </div>
+    <div class="reveal" style="animation-delay:.4s">
+      <div class="lab">Tools <span id="eqCount" style="color:var(--ash)">— 0 bound</span></div>
+      <div style="font-family:var(--body);font-style:italic;font-size:12px;color:var(--ash);margin:-2px 0 8px">Only real, runnable tools — each one works when your operative runs in the dashboard.</div>
+      <input id="skillSearch" class="f" placeholder="search tools…" />
+      <div id="skills">drawing the runes…</div>
+      <div id="skillDetail">hover a tool to see what it does, the model it needs, and rough cost.</div>
+      <div id="equipped"></div>
+    </div>
+    <div class="reveal" style="animation-delay:.45s">
+      <div class="lab">Key Vault</div>
+      <div class="vault">
+        <div class="hd">🔑 Connect your own API key</div>
+        <div class="sub">Routed through <b style="color:var(--gold2)">AURA</b> — your agent runs on your key while AURA caches calls so you pay far less. Keys are stored server-side and never shown again.</div>
+        <div class="row">
+          <select id="provider" class="f" style="flex:0 0 120px">
+            <option value="groq">Groq</option><option value="gemini">Gemini</option>
+            <option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="openrouter">OpenRouter</option>
+          </select>
+          <input id="apikey" class="f" type="password" placeholder="paste API key…" style="flex:1" />
+          <button id="bindKey" class="awaken" style="flex:0 0 auto;padding:11px 16px">BIND</button>
+        </div>
+        <div class="vstatus" id="vstatus">checking vault…</div>
+      </div>
+    </div>
+    <div class="acts reveal" style="animation-delay:.5s">
+      <button class="forge" id="forgeBtn">⬡ FORGE</button>
+      <button class="awaken" id="awakenBtn">⚡ AWAKEN</button>
+    </div>
+  </div>
+
+  <div id="scroll"><span class="glyph">✦</span> Choose an archetype, name it, bind skills &amp; your key — then FORGE. AWAKEN to test it on a real task.</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const ARCHES = [
+  { id:'vanguard',     name:'Vanguard',     role:'Guardian · Tank' },
+  { id:'ghost',        name:'Ghost',        role:'Stealth · Recon' },
+  { id:'artisan',      name:'Artisan',      role:'Creator · Design' },
+  { id:'oracle',       name:'Oracle',       role:'Seer · Research' },
+  { id:'street-deity', name:'Street Deity', role:'Hustler · Markets' },
+  { id:'gaia-link',    name:'Gaia-Link',    role:'Nature · Bio' },
+  { id:'psionic',      name:'Psionic',      role:'Mind · Logic' },
+  { id:'harvester',    name:'Harvester',    role:'Reaper · Ops' },
+];
+const CORES = [
+  { id:'light',    g:'⚡ Light',    brain:'ollama-local', cap:3,  h:'free · basics' },
+  { id:'balanced', g:'⚙ Balanced', brain:'groq-70b',     cap:8,  h:'multi-step' },
+  { id:'heavy',    g:'🔥 Heavy',    brain:'claude-haiku', cap:20, h:'deep work' },
+];
+// use the art rendered from the SAME model that walks on stage, so the circle
+// thumbnails and the fallback match the GLB character (not the separate arch-* set)
+const presetImg = id => '/assets/forge-models/' + id + '-art.jpg';
+const fullImg   = id => '/assets/forge-models/' + id + '.png';
+const $ = id => document.getElementById(id);
+const owner = (()=>{ try{ return JSON.parse(localStorage.getItem('shaddai_user')||'{}').email || 'demo'; }catch{ return 'demo'; } })();
+let idx = 0, core = 'light';
+const skills = new Set();
+function log(m, c){ const s=$('scroll'); s.innerHTML = '<span class="glyph">✦</span> ' + m; s.style.color = c || 'var(--gold2)'; }
+
+// ── three.js summoning stage ──
+const stage = $('stage');
+let renderer, scene, camera, controls, mixer, current, clock, webgl = true;
+try{
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(1.8, devicePixelRatio));
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+  stage.appendChild(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(40, stage.clientWidth/stage.clientHeight, .05, 100);
+  camera.position.set(0, 1.15, 4.4);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.target.set(0,1,0); controls.minDistance=2; controls.maxDistance=7; controls.enablePan=false;
+  controls.autoRotate = true; controls.autoRotateSpeed = 1.4;
+  scene.add(new THREE.HemisphereLight(0xffe6b0, 0x140a04, 1.0));
+  const key=new THREE.DirectionalLight(0xffd27a,2.0); key.position.set(2,5,3); scene.add(key);
+  const ember=new THREE.PointLight(0xff6a2b,2.4,12); ember.position.set(0,.6,2.2); scene.add(ember);
+  const rim=new THREE.DirectionalLight(0x54d6df,.5); rim.position.set(-4,2,-3); scene.add(rim);
+  clock = new THREE.Clock();
+  (function loop(){ requestAnimationFrame(loop); if(mixer)mixer.update(clock.getDelta()); controls.update(); renderer.render(scene,camera); })();
+}catch(e){ webgl=false; }
+const loader = webgl ? new GLTFLoader() : null;
+
+function showFallback(id){ const f=$('fallback'); f.style.display='block'; f.style.backgroundImage=`url('${fullImg(id)}')`; if(renderer)renderer.domElement.style.display='none'; $('stageTag').textContent='▣ ARCHETYPE ART'; }
+function hideFallback(){ $('fallback').style.display='none'; if(renderer)renderer.domElement.style.display='block'; $('stageTag').textContent='▣ 3D ARCHETYPE'; }
+
+function loadModel(){
+  const a = ARCHES[idx];
+  $('stageName').innerHTML = `<div class="nm">${a.name}</div><div class="role">${a.role}</div>`;
+  document.querySelectorAll('.rbtn').forEach((b,i)=>b.classList.toggle('on', i===idx));
+  if(!webgl){ showFallback(a.id); return; }
+  hideFallback();
+  const urls=[`/assets/forge-models/${a.id}-walk.glb?v=3`,`/assets/forge-models/${a.id}.glb?v=3`];
+  const tryUrl=(i)=>{ if(i>=urls.length){ showFallback(a.id); return; }
+    loader.load(urls[i], g=>{
+      if(current) scene.remove(current); if(mixer){ mixer.stopAllAction(); mixer=null; }
+      current=g.scene;
+      const b=new THREE.Box3().setFromObject(current), s=new THREE.Vector3(); b.getSize(s);
+      const sc=2.0/(s.y||1); current.scale.setScalar(sc);
+      const b2=new THREE.Box3().setFromObject(current), c=new THREE.Vector3(); b2.getCenter(c);
+      current.position.x-=c.x; current.position.z-=c.z; current.position.y-=b2.min.y;
+      current.traverse(m=>{ if(m.isMesh&&m.material){ (Array.isArray(m.material)?m.material:[m.material]).forEach(mt=>{ if(mt.color)mt.color.set(0xffffff); }); } });
+      if(g.animations&&g.animations.length){ mixer=new THREE.AnimationMixer(current); mixer.clipAction(g.animations[0]).play(); }
+      scene.add(current);
+    }, undefined, ()=>tryUrl(i+1));
+  };
+  tryUrl(0);
+}
+// rail thumbnails
+$('rail').innerHTML = ARCHES.map((a,i)=>`<button class="rbtn" data-i="${i}" title="${a.name}" style="background-image:url('${presetImg(a.id)}')"></button>`).join('');
+$('rail').querySelectorAll('.rbtn').forEach(b=> b.onclick=()=>{ idx=+b.dataset.i; loadModel(); });
+$('prev').onclick=()=>{ idx=(idx-1+ARCHES.length)%ARCHES.length; loadModel(); };
+$('next').onclick=()=>{ idx=(idx+1)%ARCHES.length; loadModel(); };
+addEventListener('resize', ()=>{ if(!renderer)return; renderer.setSize(stage.clientWidth,stage.clientHeight); camera.aspect=stage.clientWidth/stage.clientHeight; camera.updateProjectionMatrix(); });
+
+// ── compute cores ──
+$('cores').innerHTML = CORES.map(c=>`<div class="core${c.id==='light'?' on':''}" data-c="${c.id}"><div class="g">${c.g}</div><div class="h">${c.h} · ${c.cap}</div></div>`).join('');
+$('cores').querySelectorAll('.core').forEach(el=> el.onclick=()=>{ core=el.dataset.c; $('cores').querySelectorAll('.core').forEach(x=>x.classList.toggle('on',x===el));
+  // clear any "core full" warning and show the new capacity
+  updCount();
+  log('◈ '+coreName()+' core — holds up to '+capOf()+' tools · '+skills.size+' bound.', skills.size>capOf()?'var(--ember)':'var(--gold2)'); });
+const capOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).cap;
+const brainOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).brain;
+
+// ── tools only — real, runnable tool-chains (recipes). knowledge skills are excluded
+//    so everything you bind actually executes when the operative runs in the dashboard.
+let _all=[];
+const MODEL_LABEL={ light:'⚡ Light model', balanced:'⚙ Balanced model', heavy:'🔥 Heavy model' };
+const _isTool=s=> s.kind==='tool' || s.executable;
+async function loadSkills(q){
+  try{ const d=await (await fetch('/api/skills/catalog?limit=200'+(q?('&q='+encodeURIComponent(q)):''))).json();
+    _all=(d.skills||[]).filter(_isTool); renderSkills(); }
+  catch(e){ $('skills').textContent='could not summon tools'; }
+}
+function renderSkills(){
+  const list=_all.slice();
+  if(!list.length){ $('skills').textContent='no runnable tools match'; return; }
+  $('skills').innerHTML=list.map(s=>{ const on=skills.has(s.name);
+    return `<button class="rune tool${on?' on':''}" data-n="${encodeURIComponent(s.name)}"><span class="kb">⚙</span>${s.name}</button>`; }).join('');
+  $('skills').querySelectorAll('.rune').forEach(b=>{ const n=decodeURIComponent(b.dataset.n);
+    b.onclick=()=>toggle(n); b.onmouseenter=()=>detail(_all.find(x=>x.name===n)); });
+}
+function detail(s){ if(!s)return;
+  $('skillDetail').innerHTML='<b>⚙ '+s.name+' — runs a real tool</b><br>'+
+    ((s.useCase||s.description||'').slice(0,150))+'<br>'+
+    '<span class="pill">'+(MODEL_LABEL[s.model]||'⚙ Balanced model')+'</span> · <span class="pill">'+(s.estCost||'~$0.001')+'</span>'; }
+const coreName=()=> core.charAt(0).toUpperCase()+core.slice(1);
+function updCount(){ const el=$('eqCount'); if(!el)return; el.textContent='— '+skills.size+' / '+capOf()+' tools'; el.style.color = skills.size>=capOf()?'var(--ember)':'var(--ash)'; }
+function toggle(n){ if(skills.has(n))skills.delete(n); else { if(skills.size>=capOf()){ log('⛔ '+coreName()+' core holds '+capOf()+' tools — upgrade the core for more.','var(--ember)'); return; } skills.add(n); }
+  updCount(); $('equipped').textContent=skills.size?('bound: '+[...skills].join(' · ')):''; renderSkills(); }
+let _t; $('skillSearch').oninput=e=>{ clearTimeout(_t); _t=setTimeout(()=>loadSkills(e.target.value.trim()),250); };
+
+// ── BYOK key vault ──
+async function vaultStatus(){
+  try{ const s=await (await fetch('/api/byok/status')).json(); const live=Object.keys(s).filter(k=>s[k]);
+    $('vstatus').textContent = live.length ? ('🔓 keys bound: '+live.join(', ')+' — AURA is saving you cost') : '○ no key bound yet (optional — uses SHADDAI compute until you add one)';
+  }catch(e){ $('vstatus').textContent=''; }
+}
+$('bindKey').onclick=async()=>{
+  const key=$('apikey').value.trim(), provider=$('provider').value;
+  if(!key){ log('paste an API key first.','var(--ember)'); return; }
+  $('bindKey').textContent='…';
+  try{ const r=await (await fetch('/api/byok/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tier:'pro',provider,key})})).json();
+    if(r.ok){ $('apikey').value=''; log('🔑 '+provider+' key bound — routed through AURA.','var(--gold2)'); }
+    else log('⚠ '+(r.error||'could not bind key'),'var(--ember)');
+  }catch(e){ log('⚠ '+e.message,'var(--ember)'); }
+  $('bindKey').textContent='BIND'; vaultStatus();
+};
+
+// ── FORGE ──
+$('forgeBtn').onclick=async()=>{
+  const name=$('name').value.trim(); if(!name){ log('give your operative a True Name first.','var(--ember)'); $('name').focus(); return; }
+  const a=ARCHES[idx]; const btn=$('forgeBtn'); btn.disabled=true;
+  log('⟳ forging "'+name+'" ('+a.name+')… casting its likeness');
+  let portrait=presetImg(a.id), rarity='rare', buildHash=null;
+  try{ const fr=await (await fetch('/api/forge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archetype:a.id,owner,name})})).json();
+    if(fr&&fr.ok){ portrait=fr.image||portrait; if(fr.metadata){ rarity=fr.metadata.rarity||rarity; buildHash=fr.metadata.buildHash; } } }catch(e){}
+  const persona=$('persona').value.trim()||('You are '+name+', a SHADDAI '+a.name+' operative.');
+  try{ await fetch('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona,brainId:brainOf(),tools:[...skills],look:a.id,portrait,rarity})}); }catch(e){}
+  try{ const op=await (await fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,codename:name,archetype:a.id,rarity,portrait,look:{archetype:a.id},brain:{tier:core,brainId:brainOf(),persona},tools:[...skills],buildHash})})).json();
+    if(op&&op.operative){ log('✦ FORGED — "'+name+'" walks into Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills. Press ⚡ AWAKEN to put it to work.','var(--gold2)'); offerEditTools(op.operative); }
+    else log('⚠ '+((op&&op.error)||'forge failed'),'var(--ember)');
+  }catch(e){ log('⚠ '+e.message,'var(--ember)'); }
+  btn.disabled=false;
+};
+
+// ── AWAKEN (test run on a real task) ──
+$('awakenBtn').onclick=async()=>{
+  const name=$('name').value.trim()||ARCHES[idx].name;
+  const goal=$('persona').value.trim()
+    ? 'Introduce yourself in one line, then do this: '+$('persona').value.trim()
+    : 'Introduce yourself in one line, then use one of your tools to fetch something real and report it.';
+  log('⚡ awakening '+name+' — running a real task (this is live, ~15-25s)…');
+  try{
+    const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ workflow:[{ goal, agent:name }] })});
+    const d=await r.json(); const s=(d.steps&&d.steps[0])||{};
+    if(s.result){ log('🜂 '+name+': '+String(s.result).slice(0,220)+(s.tools&&s.tools.length?'   ⚙['+s.tools.join(',')+']':''),'var(--gold2)'); }
+    else log('⚠ awaken failed: '+(s.error||d.error||'no output'),'var(--ember)');
+  }catch(e){ log('⚠ '+e.message,'var(--ember)'); }
+};
+
+// boot
+loadModel(); loadSkills(); vaultStatus(); updCount();
+
+// ── Part B: expose an "Edit Tools" affordance for the just-forged operative.
+//    forge.html has no forged-agents list, so we surface a one-off button in the
+//    console after a successful forge; the dashboard wires its own buttons later.
+//    Requires agent-editor.{js,css} to be included on the host page.
+window.SHADDAI_FORGE_LAST = window.SHADDAI_FORGE_LAST || null;
+function offerEditTools(op){
+  try{
+    if(!op || !op.id) return;
+    window.SHADDAI_FORGE_LAST = op;
+    const s=$('scroll'); if(!s) return;
+    let b=document.getElementById('editToolsBtn');
+    if(!b){ b=document.createElement('button'); b.id='editToolsBtn'; b.className='awaken';
+      b.style.cssText='flex:0 0 auto;padding:6px 12px;font-size:11px;margin-left:auto';
+      s.appendChild(b); }
+    b.textContent='✎ Edit Tools';
+    b.onclick=()=>{ if(window.SHADDAI_AGENT_EDITOR&&window.SHADDAI_AGENT_EDITOR.open){ window.SHADDAI_AGENT_EDITOR.open(op.id, capOf()); }
+      else log('tool editor not loaded on this page — open it from the dashboard.','var(--ember)'); };
+  }catch(e){}
+}
+</script>
+</body>
+</html>

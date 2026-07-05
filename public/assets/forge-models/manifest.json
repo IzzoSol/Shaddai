@@ -1,0 +1,44 @@
+{
+  "archetypes": {
+    "vanguard": {
+      "glb": "/assets/forge-models/vanguard.glb",
+      "thumb": "/assets/forge-models/vanguard.png",
+      "name": "Vanguard"
+    },
+    "ghost": {
+      "glb": "/assets/forge-models/ghost.glb",
+      "thumb": "/assets/forge-models/ghost.png",
+      "name": "Ghost"
+    },
+    "artisan": {
+      "glb": "/assets/forge-models/artisan.glb",
+      "thumb": "/assets/forge-models/artisan.png",
+      "name": "Artisan"
+    },
+    "oracle": {
+      "glb": "/assets/forge-models/oracle.glb",
+      "thumb": "/assets/forge-models/oracle.png",
+      "name": "Oracle"
+    },
+    "street-deity": {
+      "glb": "/assets/forge-models/street-deity.glb",
+      "thumb": "/assets/forge-models/street-deity.png",
+      "name": "Street-Deity"
+    },
+    "gaia-link": {
+      "glb": "/assets/forge-models/gaia-link.glb",
+      "thumb": "/assets/forge-models/gaia-link.png",
+      "name": "Gaia-Link"
+    },
+    "psionic": {
+      "glb": "/assets/forge-models/psionic.glb",
+      "thumb": "/assets/forge-models/psionic.png",
+      "name": "Psionic"
+    },
+    "harvester": {
+      "glb": "/assets/forge-models/harvester.glb",
+      "thumb": "/assets/forge-models/harvester.png",
+      "name": "Harvester"
+    }
+  }
+}

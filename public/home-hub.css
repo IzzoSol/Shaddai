@@ -1,0 +1,293 @@
+/* ============================================================
+   SHADDAI — Home Hub styling  (home-hub.css)
+   Scope: #shaddaiHome only. Pure-black base, neon green + cyan.
+   Fonts already loaded: 'Orbitron' (display), 'Share Tech Mono' (mono)
+   Uses var(--accent,#00ff88) so it adapts to other dashboard themes.
+   ============================================================ */
+
+/* ---- Local theme tokens (fall back to neon green/cyan) ---- */
+#shaddaiHome {
+  --hh-accent: var(--accent, #00ff88);   /* primary neon (green)  */
+  --hh-cyan:   #00f0ff;                    /* secondary neon (cyan) */
+  --hh-glass:  rgba(10, 14, 12, 0.55);     /* semi-transparent dark */
+  --hh-glass-hi: rgba(18, 26, 22, 0.72);   /* brighter glass (hover)*/
+  --hh-radius: 14px;
+
+  position: relative;
+  display: block;
+  padding: 18px;
+  color: #e8fff4;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+}
+
+/* ============================================================
+   HEADER BAR
+   ============================================================ */
+#shaddaiHome .hh-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--hh-accent) 22%, transparent);
+}
+
+/* Title — Orbitron display font with layered neon glow */
+#shaddaiHome .hh-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 6px  color-mix(in srgb, var(--hh-accent) 80%, transparent),
+    0 0 18px color-mix(in srgb, var(--hh-accent) 45%, transparent),
+    0 0 36px color-mix(in srgb, var(--hh-cyan)   25%, transparent);
+}
+
+/* Small glassy header buttons (Edit Layout, Wallpaper, Add Tile) */
+#shaddaiHome .hh-btn {
+  appearance: none;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #cffff0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--hh-accent) 35%, transparent);
+  background: var(--hh-glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: transform .18s ease, border-color .18s ease,
+              box-shadow .18s ease, color .18s ease, background .18s ease;
+}
+#shaddaiHome .hh-btn:hover {
+  color: #001b12;
+  background: var(--hh-accent);
+  border-color: var(--hh-accent);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--hh-accent) 55%, transparent),
+    0 0 28px color-mix(in srgb, var(--hh-accent) 30%, transparent);
+}
+#shaddaiHome .hh-btn:active { transform: translateY(0); }
+
+/* ============================================================
+   TILE GRID
+   ============================================================ */
+#shaddaiHome .hh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* ============================================================
+   LAUNCH TILE — glassmorphism + neon depth
+   ============================================================ */
+#shaddaiHome .hh-tile {
+  position: relative;
+  overflow: hidden;                 /* clip the animated sheen        */
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 128px;
+  padding: 22px 16px;
+  border-radius: var(--hh-radius);
+  border: 1px solid color-mix(in srgb, var(--hh-accent) 28%, transparent);
+  background:
+    linear-gradient(160deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.00) 45%),
+    var(--hh-glass);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  /* Layered outer depth + soft inner accent glow */
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.55),
+    0 2px 6px  rgba(0, 0, 0, 0.4),
+    inset 0 0 22px color-mix(in srgb, var(--hh-accent) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform .22s cubic-bezier(.2, .8, .2, 1),
+              border-color .22s ease, box-shadow .22s ease, background .22s ease;
+  /* Staggered entrance (delay set per :nth-child below) */
+  opacity: 0;
+  animation: hhTileIn .5s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+
+/* Animated gradient sheen — hidden until hover, then sweeps across */
+#shaddaiHome .hh-tile::before {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--hh-cyan) 22%, transparent) 47%,
+    color-mix(in srgb, var(--hh-accent) 30%, transparent) 50%,
+    transparent 68%);
+  transform: translateX(-120%);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+/* HOVER: lift, brighter border, stronger glow, sheen sweep */
+#shaddaiHome .hh-tile:hover {
+  transform: translateY(-4px);
+  background:
+    linear-gradient(160deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.00) 45%),
+    var(--hh-glass-hi);
+  border-color: color-mix(in srgb, var(--hh-accent) 75%, transparent);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.6),
+    0 0 18px color-mix(in srgb, var(--hh-accent) 45%, transparent),
+    0 0 40px color-mix(in srgb, var(--hh-accent) 22%, transparent),
+    inset 0 0 26px color-mix(in srgb, var(--hh-accent) 14%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+#shaddaiHome .hh-tile:hover::before {
+  opacity: 1;
+  animation: hhSheen .9s ease forwards;
+}
+#shaddaiHome .hh-tile:active { transform: translateY(-1px) scale(.99); }
+
+/* Big centered emoji icon with a soft neon drop-shadow glow */
+#shaddaiHome .hh-tile-icon {
+  font-size: 34px;
+  line-height: 1;
+  filter:
+    drop-shadow(0 0 8px color-mix(in srgb, var(--hh-accent) 60%, transparent))
+    drop-shadow(0 0 16px color-mix(in srgb, var(--hh-cyan) 30%, transparent));
+  transition: transform .22s ease;
+}
+#shaddaiHome .hh-tile:hover .hh-tile-icon { transform: scale(1.12); }
+
+/* Tile label — uppercase mono */
+#shaddaiHome .hh-tile-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  color: #d6fff0;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hh-accent) 30%, transparent);
+}
+
+/* ---- Staggered entrance delays (first ~12 tiles) ---- */
+#shaddaiHome .hh-tile:nth-child(1)  { animation-delay: .03s; }
+#shaddaiHome .hh-tile:nth-child(2)  { animation-delay: .06s; }
+#shaddaiHome .hh-tile:nth-child(3)  { animation-delay: .09s; }
+#shaddaiHome .hh-tile:nth-child(4)  { animation-delay: .12s; }
+#shaddaiHome .hh-tile:nth-child(5)  { animation-delay: .15s; }
+#shaddaiHome .hh-tile:nth-child(6)  { animation-delay: .18s; }
+#shaddaiHome .hh-tile:nth-child(7)  { animation-delay: .21s; }
+#shaddaiHome .hh-tile:nth-child(8)  { animation-delay: .24s; }
+#shaddaiHome .hh-tile:nth-child(9)  { animation-delay: .27s; }
+#shaddaiHome .hh-tile:nth-child(10) { animation-delay: .30s; }
+#shaddaiHome .hh-tile:nth-child(11) { animation-delay: .33s; }
+#shaddaiHome .hh-tile:nth-child(12) { animation-delay: .36s; }
+
+/* ============================================================
+   EDIT MODE
+   ============================================================ */
+/* Gentle infinite wobble on tiles while editing */
+#shaddaiHome.hh-editing .hh-tile {
+  animation: hhWobble 0.6s ease-in-out infinite;
+  cursor: grab;
+}
+#shaddaiHome.hh-editing .hh-tile:active { cursor: grabbing; }
+/* Slightly de-sync wobble on alternating tiles for a lively feel */
+#shaddaiHome.hh-editing .hh-tile:nth-child(even) {
+  animation-delay: .15s;
+}
+
+/* Remove (×) button — hidden by default */
+#shaddaiHome .hh-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  color: #ff9a9a;
+  background: rgba(40, 8, 8, 0.75);
+  border: 1px solid color-mix(in srgb, #ff4d4d 55%, transparent);
+  box-shadow: 0 0 10px rgba(255, 60, 60, 0.35);
+  /* hidden unless editing */
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.7);
+  transition: opacity .18s ease, transform .18s ease,
+              background .18s ease, color .18s ease;
+}
+/* Reveal remove button in edit mode */
+#shaddaiHome.hh-editing .hh-remove {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+#shaddaiHome .hh-remove:hover {
+  color: #fff;
+  background: #ff3b3b;
+  box-shadow: 0 0 16px rgba(255, 60, 60, 0.7);
+}
+
+/* ---- Dragging state ---- */
+#shaddaiHome .hh-tile.hh-dragging {
+  opacity: 0.5;
+  transform: scale(0.96);
+  cursor: grabbing;
+  animation: none;                  /* stop wobble while dragging */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--hh-cyan) 60%, transparent),
+    0 0 24px color-mix(in srgb, var(--hh-cyan) 40%, transparent);
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes hhTileIn {
+  from { opacity: 0; transform: translateY(14px) scale(.94); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+
+@keyframes hhSheen {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(120%);  }
+}
+
+@keyframes hhWobble {
+  0%   { transform: rotate(-0.9deg); }
+  50%  { transform: rotate(0.9deg);  }
+  100% { transform: rotate(-0.9deg); }
+}
+
+/* ============================================================
+   ACCESSIBILITY — respect reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  #shaddaiHome .hh-tile { opacity: 1; animation: none; }
+  #shaddaiHome.hh-editing .hh-tile { animation: none; }
+  #shaddaiHome .hh-tile:hover::before { animation: none; }
+}

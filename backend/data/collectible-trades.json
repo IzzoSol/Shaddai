@@ -98,5 +98,45 @@
     "platformFee": 25,
     "sellerProceeds": 225,
     "executedAt": "2026-05-24T04:42:45.926Z"
+  },
+  {
+    "id": "trade-mpyfk6zb",
+    "collectibleId": 1,
+    "seller": "test",
+    "buyer": "test-buyer",
+    "price": 10,
+    "platformFee": 1,
+    "sellerProceeds": 9,
+    "executedAt": "2026-06-03T18:59:14.903Z"
+  },
+  {
+    "id": "trade-mpz896q0",
+    "collectibleId": 1,
+    "seller": "test-buyer",
+    "buyer": "test-buyer",
+    "price": 10,
+    "platformFee": 1,
+    "sellerProceeds": 9,
+    "executedAt": "2026-06-04T08:22:30.216Z"
+  },
+  {
+    "id": "trade-mpzlsbty",
+    "collectibleId": 1,
+    "seller": "test-buyer",
+    "buyer": "test-buyer",
+    "price": 10,
+    "platformFee": 1,
+    "sellerProceeds": 9,
+    "executedAt": "2026-06-04T14:41:18.310Z"
+  },
+  {
+    "id": "trade-mqohmx0z",
+    "collectibleId": 3,
+    "seller": "guest-verify",
+    "buyer": "bitcoin",
+    "price": 3,
+    "platformFee": 0,
+    "sellerProceeds": 3,
+    "executedAt": "2026-06-22T00:39:21.779Z"
   }
 ]

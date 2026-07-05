@@ -54,5 +54,51 @@ backend/data/skill-market-purchases.json
 backend/data/executions/
 backend/data/agent-memory.json
 x402-ledger.json
-runtime-keys.json
-user-keys.json
+
+.server-out.log
+.server-err.log
+
+# commit the 7 LIVE agent bodies (needed for Render); ignore the heavy backups/candidates
+public/assets/agents/*_hires.glb
+public/assets/agents/*_fal.glb
+public/assets/agents/*_trellis.glb
+public/assets/agents/*_candidate*.glb
+
+public/assets/models/*.glb
+
+_archive_world_builds/
+
+public/assets/worldlabs/*.spz
+
+# asset regeneration backups
+public/assets/**/_orig_backup/
+public/assets/**/*_grey_backup.glb
+public/assets/**/*_basic_backup.glb
+public/assets/**/_candidate_*.glb
+
+# exploratory animation clip downloads (deciding which pack to standardize on)
+public/assets/anim-clips/
+
+# ── CRITICAL: secrets (the old repo missed these) ──
+backend/data/runtime-keys.json
+.env.local
+.env.*
+*_KEY.txt
+
+# ── keep this LOCAL code repo small: do NOT commit large 3D models ──
+# (they bloated the old repo to 3.7GB; models live on disk + the deploy pipeline)
+*.glb
+*.fbx
+*.blend
+*.obj
+*.zip
+*.spz
+
+# payment links/keys (paste yours; keep private)
+backend/data/payment-config.json
+
+# backups (local only)
+_backups/
+*.bak
+*.bak-*
+*.bak_*

@@ -1,5 +1,5 @@
 /* SHADDAI service worker — minimal, safe. */
-const CACHE = 'shaddai-v1';
+const CACHE = 'shaddai-v3-glitch';
 
 // Cache-first only for these static, same-origin asset types.
 const STATIC_RE = /\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|eot)$/i;

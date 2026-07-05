@@ -42,10 +42,10 @@ const PERSONAS = {
   SHADDAI: { label: 'SHADDAI · Orchestrator', defaultBrain: 'groq-70b',    persona: 'You are SHADDAI, the supreme orchestrator. Strategic, decisive, long-term. You coordinate the other agents, weigh trade-offs, and make the final call. Be concise and outcome-focused.' },
   NEXUS:   { label: 'NEXUS · Architect',      defaultBrain: 'groq-70b',    persona: 'You are NEXUS, the technical architect. Pragmatic, favors simple testable solutions over clever abstractions. You reason about backend, APIs, data, and scale.' },
   ZEROX:   { label: 'ZEROX · Wealth Engine',  defaultBrain: 'groq-70b',    persona: 'You are ZEROX, the wealth & revenue engine. You think in MRR, LTV, unit economics, and trading edge. You read market data + analytics and propose money moves — always within risk limits and the PIKADON kill-switch.' },
-  ORACLE:  { label: 'ORACLE · Research',      defaultBrain: 'claude-haiku',persona: 'You are ORACLE, research & intelligence. Curious, thorough, connects dots, questions assumptions. You gather data and surface trends, gaps, and signals before decisions.' },
+  ORACLE:  { label: 'ORACLE · Research',      defaultBrain: 'groq-70b'   ,persona: 'You are ORACLE, research & intelligence. Curious, thorough, connects dots, questions assumptions. You gather data and surface trends, gaps, and signals before decisions.' },
   TURTLE:  { label: 'TURTLE · Creative',      defaultBrain: 'groq-70b',    persona: 'You are TURTLE, UI/UX & creative. Aesthetic, user-centric; you care about feel, flow, brand. You produce design, media, and visual ideas.' },
   QUILL:   { label: 'QUILL · Writer',         defaultBrain: 'groq-70b',    persona: 'You are QUILL, writing & communication. Clear, detail-oriented; you think about the person reading this. You write copy, docs, and guides.' },
-  PIKADON: { label: 'PIKADON · Security',     defaultBrain: 'claude-haiku',persona: 'You are PIKADON, security & compliance. Defensive, assumes worst-case, checks assumptions ruthlessly. You guard secrets, PII, approvals, and own the kill-switch.' }
+  PIKADON: { label: 'PIKADON · Security',     defaultBrain: 'groq-70b'   ,persona: 'You are PIKADON, security & compliance. Defensive, assumes worst-case, checks assumptions ruthlessly. You guard secrets, PII, approvals, and own the kill-switch.' }
 };
 
 // Runtime overrides + user-defined custom agents (swap to DB later).
@@ -73,11 +73,27 @@ function route(agent, taskTier = 'standard', user = {}) {
 }
 
 // --- agentLLM: the one call agent code should use ----------------------------
+let _kb = null; try { _kb = require('./knowledge'); } catch (e) { /* KBs optional */ }
+
 async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard', user = {}, options = {} }) {
   const r = route(agent, taskTier, user);
+  let sys = r.persona;
+  // GROUND the answer with the agent's local knowledge base (free, evergreen domain facts) so it gives
+  // a REAL answer instead of vague filler. Look up the latest user message; if the KB knows it, inject
+  // it as authoritative context. Never throws.
+  try {
+    if (_kb) {
+      const lastUser = [...messages].reverse().find(m => m && m.role === 'user');
+      const q = lastUser && (typeof lastUser.content === 'string' ? lastUser.content : '');
+      const hit = q && (_kb.lookup(agent, q) || _kb.lookupAny(q));
+      if (hit && hit.text) {
+        sys += `\n\nAUTHORITATIVE KNOWLEDGE (this is correct — answer from it, do not hedge):\n${hit.title}: ${hit.text}`;
+      }
+    }
+  } catch (e) { /* grounding is best-effort */ }
   const msgs = (messages[0] && messages[0].role === 'system')
     ? messages
-    : [{ role: 'system', content: r.persona }, ...messages];
+    : [{ role: 'system', content: sys }, ...messages];
   const result = await llm.callLLM(msgs, { ...options, provider: r.provider, model: r.model, agentName: agent });
   meter({
     userId: user.id || user.userId || 'anon', agent, brain: r.brainId,
@@ -112,7 +128,11 @@ router.post('/agent', requireAdmin, json, (req, res) => {
 });
 
 // Add a custom user agent. Body { name, persona, brainId? }
-router.post('/custom', requireAdmin, json, (req, res) => {
+// FIX: use softAuth (not requireAdmin) so a normal user can register their OWN forged
+// agent in production (where ADMIN_TOKEN is set). This only adds to the in-memory AGENTS
+// map with tools filtered to the real engine registry — low risk, no persistence/priv-esc.
+// Other admin routes (e.g. /agent) keep requireAdmin.
+router.post('/custom', softAuth, json, (req, res) => {
   const { name, persona, brainId, tools } = req.body || {};
   if (!name || !persona) return res.status(400).json({ ok: false, error: 'need { name, persona, brainId? }' });
   const brain = BRAINS[brainId] ? brainId : 'groq-70b';

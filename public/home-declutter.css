@@ -1,0 +1,30 @@
+/* ============================================================
+   home-declutter.css
+   Hides "vanity / larp" cards on the dashboard home view (#dashView).
+   Scoped to #dashView so nothing else on the site is affected.
+
+   NOTE: These rules use the modern CSS :has() selector, which
+   requires a recent browser (Chromium 105+, Firefox 121+, Safari 15.4+).
+   All target environments here are fine. In an unsupported browser
+   the rules simply no-op and the cards remain visible (safe fallback).
+
+   This file ONLY hides the four cards below. It changes nothing else.
+   ============================================================ */
+
+/* System Health card (contains #statAgents, #statOllama, #statMemory, #statBackendMemory) */
+#dashView .card:has(#statAgents) { display: none !important; }
+
+/* SHADDAI Value Meter card (contains #vmTasksDone, #vmROI, #vmHrsSaved) */
+#dashView .card:has(#vmTasksDone) { display: none !important; }
+
+/* Task Receipts / Proof of Work card (contains #taskReceiptsList) */
+#dashView .card:has(#taskReceiptsList) { display: none !important; }
+
+/* Recent Activity card (contains #recentRows) */
+#dashView .card:has(#recentRows) { display: none !important; }
+
+/* Agent Recommendations card (was hardcoded fake tips — larp) */
+#dashView .card:has(#agentRecs) { display: none !important; }
+
+/* Left visible on purpose: .mission-banner, Agent Status (#agentRows),
+   Quick Actions (#quickRows). */

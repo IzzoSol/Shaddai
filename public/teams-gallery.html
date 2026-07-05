@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Forge Teams</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#000;color:#daffe9;font-family:'Share Tech Mono',monospace;
+  background-image:radial-gradient(900px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.05;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.5) 2px,rgba(0,0,0,.5) 4px)}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 22px 90px;position:relative;z-index:4}
+h1{font-family:'Orbitron',sans-serif;font-weight:900;font-size:34px;letter-spacing:.1em;margin:0;color:#fff;text-shadow:0 0 24px rgba(0,255,136,.4)}
+.sub{color:#7fb79c;font-size:12px;letter-spacing:.14em;margin:8px 0 26px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{background:#050505;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;transition:.2s;position:relative}
+.card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.crest{aspect-ratio:1;position:relative;background:#04060a;overflow:hidden}
+.crest img{width:100%;height:100%;object-fit:cover;display:block}
+.crest::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#050505,transparent 55%)}
+.info{padding:14px 16px 16px;position:relative;z-index:2;margin-top:-30px}
+.nm{font-family:'Orbitron',sans-serif;font-weight:800;font-size:17px;color:#fff}
+.mt{font-size:11px;color:#9fb0d4;font-style:italic;margin:5px 0 12px;min-height:30px}
+.chips{display:flex;gap:6px;align-items:center}
+.chip{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.15)}
+.js{margin-left:auto;font-size:9px;letter-spacing:.1em;color:#5a7d6c;text-transform:uppercase;border:1px solid rgba(255,255,255,.1);padding:3px 8px;border-radius:6px}
+a.back{color:#7fb79c;text-decoration:none;font-size:12px;border:1px solid rgba(255,255,255,.12);padding:7px 12px;border-radius:8px}
+a.back:hover{color:#00ff88;border-color:#00ff88}
+</style></head><body>
+<div class="wrap">
+  <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><h1>FORGE <span style="color:#00ff88">TEAMS</span></h1><a class="back" href="/">← SHADDAI</a></div>
+  <div class="sub">8 archetype teams · consistent identity across Shaddai World + Shaddai Center · HF-forged crests</div>
+  <div class="grid" id="grid"></div>
+</div>
+<script src="/teams.js"></script>
+<script>
+var T = window.SHADDAI_TEAMS || [];
+var g = document.getElementById('grid');
+T.forEach(function(t){
+  var el = document.createElement('div'); el.className='card';
+  el.innerHTML =
+    '<div class="crest"><img src="/assets/teams/'+t.id+'.jpg" alt="" onerror="this.style.display=\'none\'"></div>'+
+    '<div class="info"><div class="nm" style="color:'+t.primary+'">'+t.name+'</div>'+
+    '<div class="mt">'+(t.motto||'')+'</div>'+
+    '<div class="chips"><span class="chip" style="background:'+t.primary+'"></span>'+
+    '<span class="chip" style="background:'+t.secondary+'"></span>'+
+    '<span class="chip" style="background:'+t.accent+'"></span>'+
+    '<span class="js">'+(t.jersey||'')+'</span></div></div>';
+  g.appendChild(el);
+});
+if(!T.length){ g.innerHTML='<div style="color:#7fb79c">teams.js not loaded</div>'; }
+</script>
+</body></html>

@@ -1,0 +1,91 @@
+/* bazaar-buy.css — SHADDAI Bazaar purchase UI.
+   Theme: black / neon-green #00ff88 / cyan / Solana purple #9945ff.
+   Fonts: Orbitron (titles/buttons), Share Tech Mono (body/mono).
+   All rules scoped under .bzbuy- so it never leaks into the host page. */
+
+.bzbuy-btn {
+  --bz-green: #00ff88;
+  --bz-cyan: #22e0ff;
+  --bz-sol: #9945ff;
+  font-family: 'Orbitron', 'Share Tech Mono', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #001a10;
+  background: linear-gradient(135deg, #00ff88, #22e0ff);
+  border: 1px solid #00ff88;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  box-shadow: 0 0 12px rgba(0, 255, 136, .35), inset 0 0 6px rgba(255, 255, 255, .25);
+  transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
+}
+.bzbuy-btn:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(0, 255, 136, .6); filter: brightness(1.08); }
+.bzbuy-btn:active { transform: translateY(0); }
+.bzbuy-btn:disabled { opacity: .5; cursor: not-allowed; }
+.bzbuy-btn[data-buy-method="sol"] {
+  color: #fff;
+  background: linear-gradient(135deg, #9945ff, #6d28d9);
+  border-color: #9945ff;
+  box-shadow: 0 0 12px rgba(153, 69, 255, .45);
+}
+.bzbuy-btn[data-buy-method="sol"]:hover { box-shadow: 0 0 20px rgba(153, 69, 255, .7); }
+
+/* ── result / payment panel ── */
+.bzbuy-panel {
+  position: relative;
+  margin-top: 12px;
+  max-width: 360px;
+  font-family: 'Share Tech Mono', 'Orbitron', monospace;
+  color: #d7ffe9;
+  background: radial-gradient(120% 120% at 0% 0%, #06110c 0%, #000 70%);
+  border: 1px solid rgba(0, 255, 136, .35);
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 0 24px rgba(0, 255, 136, .18), inset 0 0 24px rgba(0, 0, 0, .6);
+  animation: bzbuy-in .18s ease-out;
+}
+@keyframes bzbuy-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.bzbuy-panel[data-state="error"]   { border-color: rgba(255, 70, 90, .5); box-shadow: 0 0 24px rgba(255, 70, 90, .2); }
+.bzbuy-panel[data-state="pending"] { border-color: rgba(153, 69, 255, .55); box-shadow: 0 0 24px rgba(153, 69, 255, .22); }
+.bzbuy-panel[data-state="success"] { border-color: rgba(0, 255, 136, .6); }
+
+.bzbuy-close {
+  position: absolute; top: 6px; right: 8px;
+  background: none; border: none; color: #6effc0;
+  font-size: 20px; line-height: 1; cursor: pointer; opacity: .7;
+}
+.bzbuy-close:hover { opacity: 1; }
+
+.bzbuy-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700; letter-spacing: .05em;
+  font-size: 14px; text-transform: uppercase;
+  margin-bottom: 8px; color: #22e0ff;
+}
+.bzbuy-title.bzbuy-ok  { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, .5); }
+.bzbuy-title.bzbuy-err { color: #ff5a6e; }
+.bzbuy-title.bzbuy-sol { color: #b98bff; text-shadow: 0 0 10px rgba(153, 69, 255, .5); }
+
+.bzbuy-line { font-size: 13px; line-height: 1.5; margin: 4px 0; color: #cdeede; }
+.bzbuy-line b { color: #fff; }
+.bzbuy-wait { color: #8fb8a8; font-size: 11px; letter-spacing: .04em; }
+.bzbuy-mono { font-size: 11px; color: #6bd6ff; margin-top: 6px; word-break: break-all; }
+
+.bzbuy-solbtn {
+  display: inline-block; margin: 10px 0 4px;
+  font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px;
+  letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  color: #fff; background: linear-gradient(135deg, #9945ff, #6d28d9);
+  padding: 9px 16px; border-radius: 8px; border: 1px solid #9945ff;
+  box-shadow: 0 0 14px rgba(153, 69, 255, .5);
+  transition: box-shadow .2s ease, transform .12s ease;
+}
+.bzbuy-solbtn:hover { box-shadow: 0 0 22px rgba(153, 69, 255, .8); transform: translateY(-1px); }
+
+.bzbuy-panel[data-state="loading"] .bzbuy-title::after {
+  content: ' ▚'; animation: bzbuy-blink .8s steps(2) infinite;
+}
+@keyframes bzbuy-blink { 50% { opacity: .2; } }

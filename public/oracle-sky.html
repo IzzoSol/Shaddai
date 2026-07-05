@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE · OBSERVATORY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06040d;
+    --panel:#100a1f;
+    --violet:#c084fc;
+    --gold:#ffcf4a;
+    --line:rgba(192,132,252,.20);
+    --text:#eadfff;
+    --dim:#9a8bbf;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1000px 600px at 85% -5%, rgba(192,132,252,.12), transparent 60%),
+      radial-gradient(800px 500px at 5% 105%, rgba(255,207,74,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    overflow-x:hidden;overflow-y:auto;
+    display:flex;flex-direction:column;min-height:100%;
+  }
+  /* starfield */
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .topbar{
+    position:relative;z-index:5;
+    display:flex;align-items:center;gap:16px;padding:12px 20px;
+    background:linear-gradient(180deg, rgba(16,10,31,.95), rgba(16,10,31,.7));
+    border-bottom:1px solid var(--line);box-shadow:0 4px 30px rgba(0,0,0,.6);
+  }
+  .brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .mark{
+    width:38px;height:38px;border-radius:9px;flex:none;
+    background:linear-gradient(135deg,var(--violet),#6b3fa0);
+    display:grid;place-items:center;font-family:'Orbitron';font-weight:900;color:#160a24;
+    box-shadow:0 0 18px rgba(192,132,252,.5);
+  }
+  .title{font-family:'Orbitron';font-weight:900;letter-spacing:2px;font-size:16px;color:#fff}
+  .title small{display:block;font-family:'Share Tech Mono';font-weight:400;letter-spacing:3px;color:var(--violet);font-size:11px}
+  .close-btn{
+    border:1px solid rgba(255,207,74,.5);background:rgba(255,207,74,.06);color:var(--gold);
+    font-family:'Orbitron';font-weight:700;letter-spacing:1px;padding:9px 16px;border-radius:8px;
+    cursor:pointer;font-size:12px;transition:.15s;
+  }
+  .close-btn:hover{background:var(--gold);color:#1a1400;box-shadow:0 0 18px rgba(255,207,74,.5)}
+
+  .clockbar{
+    position:relative;z-index:5;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;
+    padding:12px;border-bottom:1px solid var(--line);background:rgba(6,4,13,.55);
+  }
+  .clockbar .c{font-family:'Orbitron';font-size:22px;color:var(--gold);letter-spacing:2px}
+  .clockbar .d{color:var(--dim);letter-spacing:2px;align-self:center}
+
+  .grid{
+    position:relative;z-index:5;flex:1;
+    display:grid;gap:16px;padding:18px;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    max-width:1200px;margin:0 auto;width:100%;
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(16,10,31,.9), rgba(10,6,20,.9));
+    border:1px solid var(--line);border-radius:14px;padding:20px;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);position:relative;overflow:hidden;
+  }
+  .card h3{
+    font-family:'Orbitron';font-weight:700;letter-spacing:2px;font-size:13px;
+    color:var(--violet);text-transform:uppercase;margin-bottom:14px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h3 .ic{font-size:16px}
+  .big-val{font-family:'Orbitron';font-weight:900;font-size:26px;color:#fff;letter-spacing:1px}
+  .sub{color:var(--dim);font-size:12px;margin-top:6px;line-height:1.6}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(192,132,252,.12);font-size:13px}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--dim)}
+  .row .v{color:var(--text);font-weight:bold}
+  .accent{color:var(--gold)}
+
+  /* moon card layout */
+  .moon-wrap{display:flex;align-items:center;gap:20px}
+  #moonCanvas{width:120px;height:120px;flex:none;border-radius:50%;
+    box-shadow:0 0 30px rgba(192,132,252,.35), inset 0 0 20px rgba(0,0,0,.6);background:#05030a}
+  .moon-info{flex:1;min-width:0}
+  .illum-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden}
+  .illum-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--gold));width:0%;transition:width .6s}
+
+  .zodiac-glyph{font-size:52px;line-height:1;text-align:center;margin:4px 0;filter:drop-shadow(0 0 10px rgba(192,132,252,.6))}
+
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;border:1px solid var(--line);
+    color:var(--violet);font-size:11px;letter-spacing:1px;margin-top:8px}
+  .api-note{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:10px;opacity:.7}
+
+  .foot{position:relative;z-index:5;padding:8px 20px 16px;color:var(--dim);font-size:10px;
+    letter-spacing:1.5px;text-align:center;text-transform:uppercase}
+  .foot b{color:var(--violet)}
+</style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">O</div>
+      <div class="title">ORACLE OBSERVATORY<small>ASTRONOMY · ASTROLOGY CONSOLE</small></div>
+    </div>
+    <button class="close-btn" onclick="closePanel()">✕ CLOSE</button>
+  </div>
+
+  <div class="clockbar">
+    <div class="c" id="clock">--:--:--</div>
+    <div class="d" id="datestr">— — —</div>
+  </div>
+
+  <div class="grid">
+    <!-- MOON -->
+    <div class="card">
+      <h3><span class="ic">🌙</span> Lunar Phase</h3>
+      <div class="moon-wrap">
+        <canvas id="moonCanvas" width="120" height="120"></canvas>
+        <div class="moon-info">
+          <div class="big-val" id="moonName">—</div>
+          <div class="sub"><span id="illumPct">—</span>% illuminated · <span id="moonAgeTxt">—</span> days old</div>
+          <div class="illum-bar"><div class="illum-fill" id="illumFill"></div></div>
+          <div class="sub">Moon in <span class="accent" id="moonSign">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUN SIGN -->
+    <div class="card">
+      <h3><span class="ic">☀️</span> Sun Sign · Today</h3>
+      <div class="zodiac-glyph" id="zGlyph">♒</div>
+      <div class="big-val" style="text-align:center" id="zName">—</div>
+      <div class="sub" style="text-align:center" id="zDates">—</div>
+      <div class="sub" id="zBlurb" style="margin-top:12px">—</div>
+      <div style="text-align:center"><span class="badge" id="zElement">—</span></div>
+    </div>
+
+    <!-- SUN + SEASON -->
+    <div class="card">
+      <h3><span class="ic">🌌</span> Sky &amp; Season</h3>
+      <div class="row"><span class="k">Sun in</span><span class="v accent" id="sunSign">—</span></div>
+      <div class="row"><span class="k">Moon in</span><span class="v" id="moonSign2">—</span></div>
+      <div class="row"><span class="k">Season</span><span class="v" id="season">—</span></div>
+      <div class="row"><span class="k">Day length</span><span class="v" id="daylen">—</span></div>
+      <div class="row"><span class="k">Planetary hour</span><span class="v accent" id="planHour">—</span></div>
+      <div class="row"><span class="k">Day ruler</span><span class="v" id="dayRuler">—</span></div>
+      <div class="api-note" id="apiNote">◇ computed locally · no api key required</div>
+    </div>
+  </div>
+
+  <div class="foot">ORACLE · RESEARCH &amp; INTELLIGENCE — all celestial values computed <b>on-device</b> · offline-capable · no api key</div>
+
+<script>
+/* ============ STARFIELD ============ */
+(function(){
+  var cv=document.getElementById('stars'),ctx=cv.getContext('2d'),stars=[];
+  function resize(){cv.width=innerWidth;cv.height=innerHeight;stars=[];
+    for(var i=0;i<140;i++){stars.push({x:Math.random()*cv.width,y:Math.random()*cv.height,
+      r:Math.random()*1.4+.2,t:Math.random()*6.28,s:Math.random()*.02+.005});}}
+  function draw(){ctx.clearRect(0,0,cv.width,cv.height);
+    for(var i=0;i<stars.length;i++){var st=stars[i];st.t+=st.s;
+      var a=.4+.6*Math.abs(Math.sin(st.t));
+      ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,6.28);
+      ctx.fillStyle='rgba(200,180,255,'+a+')';ctx.fill();}
+    requestAnimationFrame(draw);}
+  addEventListener('resize',resize);resize();draw();
+})();
+
+/* ============ CLOSE ============ */
+function closePanel(){
+  try{ window.parent.postMessage({type:'shaddai-close-panel'}, '*'); }catch(e){}
+  if(window.parent === window){
+    if(history.length>1){history.back();} else {document.body.style.display='none';}
+  }
+}
+window.addEventListener('message',function(ev){
+  if(ev.data && ev.data.type==='shaddai-request-close'){closePanel();}
+});
+
+/* ============ ASTRONOMY MATH ============ */
+var ZODIAC=[
+  {name:'Aries',glyph:'♈',el:'Fire',start:[3,21],end:[4,19],blurb:'Bold, pioneering, driven. The spark that begins all things.'},
+  {name:'Taurus',glyph:'♉',el:'Earth',start:[4,20],end:[5,20],blurb:'Grounded, patient, sensual. Builds lasting value with steady hands.'},
+  {name:'Gemini',glyph:'♊',el:'Air',start:[5,21],end:[6,20],blurb:'Curious, quick, communicative. Two minds trading ideas at light speed.'},
+  {name:'Cancer',glyph:'♋',el:'Water',start:[6,21],end:[7,22],blurb:'Intuitive, protective, deep. Ruled by the tides of the Moon.'},
+  {name:'Leo',glyph:'♌',el:'Fire',start:[7,23],end:[8,22],blurb:'Radiant, generous, regal. Born to lead and to shine.'},
+  {name:'Virgo',glyph:'♍',el:'Earth',start:[8,23],end:[9,22],blurb:'Precise, analytical, devoted. Perfects the craft others overlook.'},
+  {name:'Libra',glyph:'♎',el:'Air',start:[9,23],end:[10,22],blurb:'Balanced, diplomatic, fair. Seeks harmony in every exchange.'},
+  {name:'Scorpio',glyph:'♏',el:'Water',start:[10,23],end:[11,21],blurb:'Intense, magnetic, transformative. Sees what lies beneath.'},
+  {name:'Sagittarius',glyph:'♐',el:'Fire',start:[11,22],end:[12,21],blurb:'Adventurous, philosophical, free. The archer aims at truth.'},
+  {name:'Capricorn',glyph:'♑',el:'Earth',start:[12,22],end:[1,19],blurb:'Ambitious, disciplined, enduring. Climbs the mountain stone by stone.'},
+  {name:'Aquarius',glyph:'♒',el:'Air',start:[1,20],end:[2,18],blurb:'Visionary, independent, humane. Broadcasts the future to the world.'},
+  {name:'Pisces',glyph:'♓',el:'Water',start:[2,19],end:[3,20],blurb:'Dreamy, empathic, boundless. Dissolves the line between worlds.'}
+];
+
+function signForDate(m,d){ // m=1..12
+  for(var i=0;i<ZODIAC.length;i++){
+    var z=ZODIAC[i], s=z.start, e=z.end;
+    if(s[0]===e[0]){ if(m===s[0]&&d>=s[1]&&d<=e[1]) return z; }
+    else { // spans month boundary
+      if((m===s[0]&&d>=s[1])||(m===e[0]&&d<=e[1])) return z;
+    }
+  }
+  return ZODIAC[9]; // Capricorn wrap (Dec22-Jan19)
+}
+
+/* Sign from ecliptic longitude (0=Aries 0°) */
+var SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+function signFromLongitude(lon){
+  lon=((lon%360)+360)%360;
+  return SIGN_NAMES[Math.floor(lon/30)];
+}
+
+/* Julian day */
+function toJulian(date){ return date.getTime()/86400000 + 2440587.5; }
+
+/* Sun ecliptic longitude (low precision, ~0.01deg) */
+function sunLongitude(jd){
+  var n=jd-2451545.0;
+  var L=(280.460+0.9856474*n)%360;
+  var g=((357.528+0.9856003*n)%360)*Math.PI/180;
+  var lon=L+1.915*Math.sin(g)+0.020*Math.sin(2*g);
+  return ((lon%360)+360)%360;
+}
+
+/* Moon ecliptic longitude (low precision) */
+function moonLongitude(jd){
+  var T=(jd-2451545.0)/36525.0;
+  var Lp=218.316+481267.8813*T;            // mean longitude
+  var M=134.963+477198.8676*T;             // mean anomaly
+  var D=297.850+445267.1115*T;             // mean elongation
+  var Mp=357.529+35999.0503*T;             // sun mean anomaly
+  var F=93.272+483202.0175*T;              // argument of latitude
+  var d2r=Math.PI/180;
+  var lon=Lp
+    +6.289*Math.sin(M*d2r)
+    -1.274*Math.sin((2*D-M)*d2r)
+    +0.658*Math.sin(2*D*d2r)
+    +0.214*Math.sin(2*M*d2r)
+    -0.186*Math.sin(Mp*d2r)
+    -0.114*Math.sin(2*F*d2r);
+  return ((lon%360)+360)%360;
+}
+
+/* Moon phase from Sun/Moon elongation */
+function moonPhase(date){
+  var jd=toJulian(date);
+  var sun=sunLongitude(jd);
+  var moon=moonLongitude(jd);
+  var elong=((moon-sun)%360+360)%360;      // 0=new,180=full
+  var illum=(1-Math.cos(elong*Math.PI/180))/2; // 0..1
+  var age=elong/360*29.530588853;
+  var name, emoji;
+  if(elong<11.25||elong>=348.75){name='New Moon';emoji='🌑';}
+  else if(elong<78.75){name='Waxing Crescent';emoji='🌒';}
+  else if(elong<101.25){name='First Quarter';emoji='🌓';}
+  else if(elong<168.75){name='Waxing Gibbous';emoji='🌔';}
+  else if(elong<191.25){name='Full Moon';emoji='🌕';}
+  else if(elong<258.75){name='Waning Gibbous';emoji='🌖';}
+  else if(elong<281.25){name='Last Quarter';emoji='🌗';}
+  else {name='Waning Crescent';emoji='🌘';}
+  var waxing = elong<180;
+  return {name:name,emoji:emoji,illum:illum,age:age,elong:elong,waxing:waxing,moonLon:moon,sunLon:sun};
+}
+
+/* Season (Northern Hemisphere) from sun longitude */
+function seasonFromSunLon(lon){
+  if(lon<90) return 'Spring';
+  if(lon<180) return 'Summer';
+  if(lon<270) return 'Autumn';
+  return 'Winter';
+}
+
+/* Chaldean planetary hours */
+var CHALDEAN=['Saturn','Jupiter','Mars','Sun','Venus','Mercury','Moon'];
+var DAY_RULERS=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']; // Sun..Sat (getDay 0..6)
+function planetaryHour(date){
+  var dow=date.getDay();
+  var dayRuler=DAY_RULERS[dow];
+  // simplified equal-hours from local midnight (approx, no key)
+  var startIdx=CHALDEAN.indexOf(dayRuler);
+  var hoursSinceMidnight=date.getHours(); // approx equal hours
+  var idx=(startIdx+hoursSinceMidnight)%7;
+  return {ruler:CHALDEAN[idx],dayRuler:dayRuler};
+}
+
+/* Approx daylight length from sun declination at ~40N */
+function dayLength(jd, latDeg){
+  var lon=sunLongitude(jd)*Math.PI/180;
+  var obliq=23.4397*Math.PI/180;
+  var dec=Math.asin(Math.sin(obliq)*Math.sin(lon));
+  var lat=(latDeg||40)*Math.PI/180;
+  var cosH=-Math.tan(lat)*Math.tan(dec);
+  if(cosH<=-1) return 24; if(cosH>=1) return 0;
+  var H=Math.acos(cosH); // half-day angle
+  return 2*H*180/Math.PI/15; // hours
+}
+
+/* ============ DRAW MOON ============ */
+function drawMoon(phase){
+  var cv=document.getElementById('moonCanvas'),ctx=cv.getContext('2d');
+  var w=cv.width,h=cv.height,cx=w/2,cy=h/2,r=w/2-6;
+  ctx.clearRect(0,0,w,h);
+  // dark disc
+  ctx.beginPath();ctx.arc(cx,cy,r,0,6.28);ctx.fillStyle='#151022';ctx.fill();
+  // lit portion via terminator ellipse
+  var illum=phase.illum; // 0..1
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,6.28);ctx.clip();
+  // Build lit region: draw full lit disc then carve shadow
+  var grad=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r);
+  grad.addColorStop(0,'#fff8e0');grad.addColorStop(1,'#d9c98f');
+  // terminator: x offset of ellipse
+  // phase fraction along elongation determines curvature
+  var k=Math.cos(phase.elong*Math.PI/180); // 1 new .. -1 full
+  ctx.beginPath();
+  // draw lit semicircle on correct side
+  if(phase.waxing){
+    // lit on right
+    ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false);
+  } else {
+    // lit on left
+    ctx.arc(cx,cy,r,Math.PI/2,-Math.PI/2,false);
+  }
+  // terminator ellipse
+  ctx.ellipse(cx,cy,Math.abs(r*k),r,0,phase.waxing?Math.PI/2:-Math.PI/2,phase.waxing?-Math.PI/2:Math.PI/2, (k>=0)===phase.waxing? false:true);
+  ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.restore();
+  // subtle craters on lit side omitted for clarity; outline glow
+  ctx.beginPath();ctx.arc(cx,cy,r,0,6.28);
+  ctx.strokeStyle='rgba(192,132,252,.4)';ctx.lineWidth=2;ctx.stroke();
+}
+
+/* ============ RENDER ============ */
+function pad(n){return (n<10?'0':'')+n;}
+function fmtHours(h){var hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh+'h '+pad(mm)+'m';}
+
+function render(){
+  var now=new Date();
+  var jd=toJulian(now);
+  // clock
+  document.getElementById('clock').textContent=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+  var days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  var mons=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('datestr').textContent=days[now.getDay()]+' · '+now.getDate()+' '+mons[now.getMonth()]+' '+now.getFullYear();
+
+  // moon
+  var ph=moonPhase(now);
+  document.getElementById('moonName').textContent=ph.emoji+' '+ph.name;
+  document.getElementById('illumPct').textContent=Math.round(ph.illum*100);
+  document.getElementById('moonAgeTxt').textContent=ph.age.toFixed(1);
+  document.getElementById('illumFill').style.width=(ph.illum*100).toFixed(0)+'%';
+  var moonSign=signFromLongitude(ph.moonLon);
+  document.getElementById('moonSign').textContent=moonSign;
+  document.getElementById('moonSign2').textContent=moonSign;
+  drawMoon(ph);
+
+  // sun sign (calendar-based for "today")
+  var z=signForDate(now.getMonth()+1,now.getDate());
+  document.getElementById('zGlyph').textContent=z.glyph;
+  document.getElementById('zName').textContent=z.name;
+  document.getElementById('zBlurb').textContent=z.blurb;
+  document.getElementById('zElement').textContent=z.el+' sign';
+  var sd=z.start,ed=z.end;
+  document.getElementById('zDates').textContent=mons[sd[0]-1]+' '+sd[1]+' — '+mons[ed[0]-1]+' '+ed[1];
+
+  // sky/season
+  document.getElementById('sunSign').textContent=signFromLongitude(ph.sunLon);
+  document.getElementById('season').textContent=seasonFromSunLon(ph.sunLon)+' (N. Hemi)';
+  document.getElementById('daylen').textContent=fmtHours(dayLength(jd,40));
+  var pl=planetaryHour(now);
+  document.getElementById('planHour').textContent=pl.ruler;
+  document.getElementById('dayRuler').textContent=pl.dayRuler;
+}
+
+render();
+setInterval(render,1000);
+
+/* ============ OPTIONAL FREE NO-KEY ENRICHMENT ============ */
+/* Try a public no-key API; degrade silently to local math on any failure. */
+(function tryEnrich(){
+  try{
+    // Sunrise-Sunset.org is a free, keyless public API. Uses approx coords.
+    var lat=40.0,lng=-74.0;
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(function(pos){
+        lat=pos.coords.latitude;lng=pos.coords.longitude;fetchSun(lat,lng);
+      },function(){ fetchSun(lat,lng); },{timeout:4000});
+    } else { fetchSun(lat,lng); }
+  }catch(e){ /* keep local values */ }
+
+  function fetchSun(lat,lng){
+    try{
+      var url='https://api.sunrise-sunset.org/json?lat='+lat+'&lng='+lng+'&formatted=0';
+      fetch(url).then(function(r){ return r.json(); }).then(function(j){
+        if(j && j.status==='OK' && j.results){
+          var sr=new Date(j.results.sunrise), ss=new Date(j.results.sunset);
+          var dl=(ss-sr)/3600000;
+          if(dl>0 && dl<=24){
+            document.getElementById('daylen').textContent=fmtHours(dl);
+            document.getElementById('apiNote').textContent='◇ daylight refined via sunrise-sunset.org (free · no key)';
+          }
+        }
+      }).catch(function(){ /* silent — local math already shown */ });
+    }catch(e){ /* silent */ }
+  }
+})();
+</script>
+</body>
+</html>

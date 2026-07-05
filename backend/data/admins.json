@@ -1,0 +1,10 @@
+{
+  "worlds": {
+    "shaddai": {
+      "owner": "owner",
+      "admins": [
+        "friend"
+      ]
+    }
+  }
+}

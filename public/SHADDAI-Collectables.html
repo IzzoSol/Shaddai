@@ -974,6 +974,7 @@ function renderShop(){
   grid.innerHTML=items.map(function(it){
     var isOwned=GO().indexOf(it.id)!==-1,rc=col(it.rarity),tr=RO.indexOf(it.rarity)+1,fav=isFav(it.id);
     var buyBtn=isOwned?'<span class="owned-tag">✓ OWNED</span>':('<button class="buy-btn" onclick="event.stopPropagation();buyItem(\''+it.id+'\')">'+(it.price?'BUY '+it.price+' cr':'GET FREE')+'</button>');
+    if(!isOwned)buyBtn+='<button class="bzbuy-btn" onclick="event.stopPropagation()" data-buy-item="col_'+it.id+'" data-buy-method="credits">Buy'+(it.price?' '+it.price+' cr':'')+'</button>';
     var favBtn='<button class="fav-btn'+(fav?' active':'')+'" onclick="toggleFav(\''+it.id+'\',event)">'+(fav?'★':'☆')+'</button>';
     var extra='';
     if(lv){extra='<div class="info"><div class="name" style="color:'+rc+'">'+it.name+'</div><div class="desc">'+it.desc+'</div><div class="tags"><span style="color:'+rc+'">T'+tr+' '+it.rarity.toUpperCase()+'</span><span>'+it.slot+'</span></div></div>';}
@@ -1288,4 +1289,6 @@ init();
 pingBackend();
 setInterval(pingBackend,30000); // refresh every 30s
 </script>
+<link rel="stylesheet" href="/bazaar-buy.css">
+<script defer src="/bazaar-buy.js"></script>
 </body></html>

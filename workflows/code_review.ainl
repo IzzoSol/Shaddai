@@ -1,0 +1,51 @@
+name: Code Review
+version: "1.0"
+author: SHADDAI Council
+description: NEXUS reviews a code snippet for correctness, PIKADON audits it for security, QUILL writes the verdict.
+
+inputs:
+  - name: code
+    type: string
+    required: true
+  - name: language
+    type: string
+    required: false
+    default: "javascript"
+
+steps:
+  - id: review
+    agent: NEXUS
+    skill: code_review
+    params:
+      code: "{code}"
+      language: "{language}"
+    output: review_notes
+
+  - id: security
+    agent: PIKADON
+    skill: check_security
+    params:
+      code: "{code}"
+    output: security_notes
+
+  - id: verdict
+    agent: QUILL
+    skill: summarize
+    depends_on:
+      - review
+      - security
+    params:
+      text: "Correctness review:\n{review_notes}\n\nSecurity audit:\n{security_notes}"
+      style: "engineering verdict: ship / fix / block, with top issues"
+    output: verdict
+
+outputs:
+  - name: verdict
+    value: "{verdict}"
+    format: markdown
+  - name: review_notes
+    value: "{review_notes}"
+    format: text
+  - name: security_notes
+    value: "{security_notes}"
+    format: text

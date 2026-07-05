@@ -1,0 +1,192 @@
+/* ============================================================================
+   office-consistency.css  —  SHADDAI "Office" tab CONSISTENCY refinement layer
+   ----------------------------------------------------------------------------
+   SELF-CONTAINED. Loaded LAST (after office-glam.css). Everything is scoped
+   under #officeView so nothing can leak to other tabs.
+
+   PURPOSE: office-glam.css already frames the surveillance monitor + main
+   modules (.office-room .card, .sbo-panel-box, .hud-strip, .kanban-col,
+   #officeCmdBar, .ops-op). THIS layer closes the remaining "patchwork" gaps so
+   every panel / title / button inside the Office tab reads as one family:
+     · the inline-styled EYEBROW section labels (▸ MISSION BOARD, ▸ TASK
+       DISPATCH, ▸ REVENUE COMMAND, ▸ AGENT STATUS, ▸ BUILD A CHAIN …) become
+       the same Orbitron-uppercase-with-glow treatment as .card-title.
+     · the inline rgba(0,0,0,0.2)/(0.3) module boxes (Task Dispatch, Revenue
+       Command, Agent Status board, System Log, Boardroom sub-panels) get ONE
+       shared module skin: dark gradient · 1px accent border · sharp 3px radius
+       · layered shadow · thin top highlight — matching the .card / kanban look.
+     · .qa-btn / .btn-ghost chips get the sharp mono glitch button treatment.
+
+   Palette: pure black · neon green var(--accent,#00ff88) · cyan #00f0ff · gold.
+   Fonts already loaded by the page: Orbitron, Share Tech Mono, Rajdhani.
+   Theme-aware via var(--accent) (adapts to glitch / terminal / void / amber).
+
+   HARD SCOPE: VISUAL ONLY. No display / position / width / flex / grid-flow
+   changes. Never restyles #officeCanvas (JS-drawn), #operatorForge, #world,
+   #worldCanvas, canvas, iframe, or the global .nav-btn. Inline-styled targets
+   require !important to win over the element's style attribute — used sparingly
+   and only for color / font / background / border / shadow (never layout).
+   ========================================================================== */
+
+/* Local tokens (scoped — cannot leak). Theme-aware line color with fallback. */
+#officeView {
+  --oc-accent: var(--accent, #00ff88);
+  --oc-cyan: #00f0ff;
+  --oc-gold: #ffd700;
+  --oc-line: rgba(0, 255, 136, 0.22);
+  --oc-line-hi: rgba(0, 255, 136, 0.40);
+  --oc-top: rgba(255, 255, 255, 0.05);
+  --oc-fill: rgba(0, 255, 136, 0.06);
+}
+@supports (color: color-mix(in srgb, red, blue)) {
+  #officeView {
+    --oc-line: color-mix(in srgb, var(--accent, #00ff88) 22%, transparent);
+    --oc-line-hi: color-mix(in srgb, var(--accent, #00ff88) 42%, transparent);
+    --oc-fill: color-mix(in srgb, var(--accent, #00ff88) 7%, transparent);
+  }
+}
+
+/* ============================================================================
+   1. HEADERS / TITLES  —  one Orbitron-uppercase-with-glow voice
+   ---------------------------------------------------------------------------
+   (a) .card-title already goes Orbitron globally; reinforce the accent glow so
+       it matches the rest of the dashboard's section-title treatment.
+   (b) The inline gold "eyebrow" labels use Rajdhani + letter-spacing 0.1/0.12em.
+       Normalize them to Orbitron uppercase + a soft self-color glow. currentColor
+       keeps each eyebrow's own hue (gold / muted) but unifies the typeface.
+   ========================================================================== */
+#officeView .card-title {
+  font-family: "Orbitron", "Share Tech Mono", monospace !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.28);
+}
+#officeView [style*="letter-spacing:0.12em"],
+#officeView [style*="letter-spacing: 0.12em"],
+#officeView [style*="letter-spacing:0.1em"],
+#officeView [style*="letter-spacing: 0.1em"],
+#officeView [style*="letter-spacing:0.08em"][style*="Rajdhani"] {
+  font-family: "Orbitron", "Rajdhani", sans-serif !important;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* Workflow-tab lead heading (🔗 WORKFLOW CHAINS) → same display voice */
+#officeView #officeWorkflows [style*="font-size:15px"] {
+  font-family: "Orbitron", "Rajdhani", sans-serif !important;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+/* ============================================================================
+   2. UNIFIED MODULE SKIN  —  the inline rgba(0,0,0,0.2)/(0.3) panels
+   ---------------------------------------------------------------------------
+   These are the ad-hoc boxes (Task Dispatch, Revenue Command, Agent Status,
+   System Log, Boardroom sub-panels, Workflow inner boxes). Give them the SAME
+   module treatment as .card / .kanban-col so nothing looks bolted on.
+   Only paint properties are overridden — no layout/flex/size changes.
+   ========================================================================== */
+#officeView [style*="rgba(0,0,0,0.2)"],
+#officeView [style*="rgba(0,0,0,0.3)"],
+#officeView [style*="rgba(0, 0, 0, 0.2)"],
+#officeView [style*="rgba(0, 0, 0, 0.3)"] {
+  background:
+    linear-gradient(180deg, rgba(10, 16, 26, 0.90), rgba(4, 8, 14, 0.95)) !important;
+  border: 1px solid var(--oc-line) !important;
+  border-radius: 3px !important;
+  box-shadow:
+    inset 0 1px 0 var(--oc-top),
+    0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  transition: border-color 0.2s ease, box-shadow 0.25s ease !important;
+}
+#officeView [style*="rgba(0,0,0,0.2)"]:hover,
+#officeView [style*="rgba(0,0,0,0.3)"]:hover,
+#officeView [style*="rgba(0, 0, 0, 0.2)"]:hover,
+#officeView [style*="rgba(0, 0, 0, 0.3)"]:hover {
+  border-color: var(--oc-line-hi) !important;
+  box-shadow:
+    inset 0 1px 0 var(--oc-top),
+    0 0 18px rgba(0, 255, 136, 0.12),
+    0 10px 26px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Boardroom / Library / Safety .card wrappers — match radius + top highlight
+   to the shared module (glam sets gradient+border; here we sharpen the radius
+   so cards are siblings of the kanban/module boxes, not softer outliers). */
+#officeView .office-room .card,
+#officeView .sbo-panel-box,
+#officeView .hud-strip,
+#officeView .kanban-col {
+  border-radius: 3px !important;
+}
+
+/* Cyan "new here?" explainer keeps its hue but joins the module rhythm */
+#officeView [style*="rgba(0,200,255,0.06)"] {
+  border-color: rgba(0, 240, 255, 0.28) !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ============================================================================
+   3. BUTTONS / CHIPS  —  sharp mono glitch consistency
+   ---------------------------------------------------------------------------
+   .qa-btn (quick-action strip) + .btn-ghost inside the Office tab adopt the
+   mono typeface, sharp radius and accent-aware hover glow used by #officeCmdBar
+   .ocmd, so every clickable chip in the tab feels like the same control.
+   (Global .nav-btn and .btn-accent chevron are intentionally left untouched.)
+   ========================================================================== */
+#officeView .qa-btn {
+  font-family: "Share Tech Mono", "Rajdhani", monospace !important;
+  border-radius: 3px !important;
+  transition: all 0.15s ease !important;
+}
+#officeView .qa-btn:hover {
+  border-color: var(--oc-accent) !important;
+  color: var(--oc-accent) !important;
+  background: var(--oc-fill) !important;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.18);
+}
+#officeView .btn-ghost {
+  font-family: "Share Tech Mono", "Rajdhani", monospace !important;
+  border-radius: 3px !important;
+  border-color: var(--oc-line) !important;
+  transition: all 0.15s ease !important;
+}
+#officeView .btn-ghost:hover {
+  border-color: var(--oc-line-hi) !important;
+  color: var(--oc-accent) !important;
+  box-shadow: inset 0 1px 0 var(--oc-top), 0 0 12px rgba(0, 255, 136, 0.14);
+}
+
+/* Selects / inputs inside the Office tab: sharp radius to match the modules */
+#officeView .input,
+#officeView .select,
+#officeView select,
+#officeView textarea.input {
+  border-radius: 3px !important;
+}
+
+/* ============================================================================
+   4. SPACING / RHYTHM  —  gentle, non-layout tidy-up
+   Consistent breathing room under eyebrow labels; consistent inner padding on
+   the shared module boxes. No display/position/flex changes.
+   ========================================================================== */
+#officeView [style*="letter-spacing:0.12em"],
+#officeView [style*="letter-spacing:0.1em"] {
+  margin-bottom: 6px !important;
+}
+#officeView .quick-action-strip {
+  gap: 6px;
+}
+
+/* ============================================================================
+   5. Reduced-motion / defensive resets
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  #officeView .qa-btn,
+  #officeView .btn-ghost,
+  #officeView [style*="rgba(0,0,0,0.2)"],
+  #officeView [style*="rgba(0,0,0,0.3)"] {
+    transition: none !important;
+  }
+}

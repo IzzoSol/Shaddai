@@ -3,9 +3,10 @@
     "id": 1,
     "name": "Cosmic Crown",
     "rarity": "legendary",
-    "owner": "test",
+    "owner": "test-buyer",
     "mintedAt": "2026-05-23T19:39:30.104Z",
-    "signature": "e8af66c615fbab2e"
+    "signature": "e8af66c615fbab2e",
+    "tradedAt": "2026-06-04T14:41:18.310Z"
   },
   {
     "id": 2,
@@ -19,9 +20,10 @@
     "id": 3,
     "name": "Verify Test",
     "rarity": "T5",
-    "owner": "guest-verify",
+    "owner": "bitcoin",
     "mintedAt": "2026-05-23T19:43:09.877Z",
-    "signature": "7c56fa17b4548e5b"
+    "signature": "7c56fa17b4548e5b",
+    "tradedAt": "2026-06-22T00:39:21.779Z"
   },
   {
     "id": 4,
@@ -120,5 +122,77 @@
     "owner": "guest-guest-dkb8iedg",
     "mintedAt": "2026-05-24T05:21:08.860Z",
     "signature": "2e563683368dca6f"
+  },
+  {
+    "id": 15,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-03T18:59:14.894Z",
+    "signature": "9bf3ebd319c5f883"
+  },
+  {
+    "id": 16,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-04T08:22:30.208Z",
+    "signature": "092260acb3a329d0"
+  },
+  {
+    "id": 17,
+    "name": "Audit Gem",
+    "rarity": "common",
+    "owner": "NEXUS",
+    "mintedAt": "2026-06-04T14:41:18.306Z",
+    "signature": "a2c452343a13cfc9"
+  },
+  {
+    "id": 18,
+    "name": "SHADDAI God Mode",
+    "rarity": "T7",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:27:25.601Z",
+    "signature": "afb953022ed8f538"
+  },
+  {
+    "id": 19,
+    "name": "Seraphim Plate",
+    "rarity": "T5",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:01.993Z",
+    "signature": "310cbe84dc8d9d18"
+  },
+  {
+    "id": 20,
+    "name": "Data Phoenix",
+    "rarity": "T5",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:06.277Z",
+    "signature": "34fed0977c1af5f7"
+  },
+  {
+    "id": 21,
+    "name": "Gold Rush",
+    "rarity": "T3",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:28:12.902Z",
+    "signature": "f799d3567ac161dd"
+  },
+  {
+    "id": 22,
+    "name": "ZEROX Whale Flex",
+    "rarity": "T7",
+    "owner": "guest-guest-hr13vjr3",
+    "mintedAt": "2026-06-05T06:29:09.060Z",
+    "signature": "ecd4a85daba3629a"
+  },
+  {
+    "id": 23,
+    "name": "bitcoin",
+    "rarity": "test",
+    "owner": "test",
+    "mintedAt": "2026-06-22T00:39:21.764Z",
+    "signature": "a3e640398c79b0a0"
   }
 ]

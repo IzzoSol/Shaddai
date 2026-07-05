@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SHADDAI — Team Identity Preview</title>
+<style>
+  :root { --bg:#07060b; --panel:#100e18; --edge:#221c33; --ink:#e9e6f5; --dim:#8a83b0; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:radial-gradient(1200px 600px at 50% -10%, #14101f 0%, var(--bg) 60%);
+    color:var(--ink); font-family:'Segoe UI',system-ui,Arial,sans-serif; padding:28px 18px 60px;
+  }
+  h1 {
+    text-align:center; font-size:26px; letter-spacing:4px; margin:6px 0 2px; text-transform:uppercase;
+    background:linear-gradient(90deg,#12d9e6,#ff2fb0,#ffd54a); -webkit-background-clip:text;
+    background-clip:text; color:transparent; text-shadow:0 0 24px rgba(255,47,176,.25);
+  }
+  .sub { text-align:center; color:var(--dim); font-size:12px; letter-spacing:2px; margin-bottom:26px; }
+  .grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;
+    max-width:1080px; margin:0 auto;
+  }
+  .card {
+    background:linear-gradient(180deg,var(--panel),#0b0912); border:1px solid var(--edge);
+    border-radius:14px; padding:16px 14px 14px; position:relative; overflow:hidden;
+    box-shadow:0 8px 26px rgba(0,0,0,.5);
+  }
+  .card::before {
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:.06;
+    background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);
+    mix-blend-mode:overlay;
+  }
+  .row { display:flex; align-items:center; gap:12px; }
+  canvas { display:block; }
+  .name { font-size:18px; font-weight:700; letter-spacing:1px; }
+  .id { font-size:10px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+  .motto { font-style:italic; color:var(--dim); font-size:12px; margin:10px 0 12px; min-height:30px; }
+  .chips { display:flex; gap:8px; align-items:center; }
+  .chip { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:8px; color:var(--dim); letter-spacing:1px; }
+  .sw { width:34px; height:16px; border-radius:4px; border:1px solid rgba(255,255,255,.15); }
+  .pill {
+    margin-left:auto; font-size:9px; letter-spacing:1px; text-transform:uppercase;
+    padding:3px 8px; border-radius:999px; border:1px solid var(--edge); color:var(--dim);
+  }
+  footer { text-align:center; color:var(--dim); font-size:11px; margin-top:30px; }
+</style>
+</head>
+<body>
+  <h1>SHADDAI Teams</h1>
+  <div class="sub">SHARED IDENTITY · WORLD + SPORTS · /teams.js</div>
+  <div class="grid" id="grid"></div>
+  <footer id="err"></footer>
+
+  <script src="/teams.js"></script>
+  <script>
+    (function () {
+      var grid = document.getElementById('grid');
+      if (!window.SHADDAI_TEAMS) {
+        document.getElementById('err').textContent =
+          'Could not load /teams.js — open this page from the server root.';
+        return;
+      }
+      var DPR = window.devicePixelRatio || 1;
+
+      function mkCanvas(w, h) {
+        var c = document.createElement('canvas');
+        c.width = w * DPR; c.height = h * DPR;
+        c.style.width = w + 'px'; c.style.height = h + 'px';
+        c.getContext('2d').scale(DPR, DPR);
+        return c;
+      }
+
+      window.SHADDAI_TEAMS.forEach(function (t, i) {
+        var card = document.createElement('div');
+        card.className = 'card';
+
+        // top row: crest + jersey + name
+        var row = document.createElement('div');
+        row.className = 'row';
+
+        var crestC = mkCanvas(72, 72);
+        window.drawTeamCrest(crestC.getContext('2d'), t.id, 36, 36, 72);
+
+        var jerseyC = mkCanvas(56, 62);
+        window.drawJersey(jerseyC.getContext('2d'), t.id, 28, 31, 46, 52, i + 1);
+
+        var names = document.createElement('div');
+        names.innerHTML = '<div class="name">' + t.name + '</div>' +
+                          '<div class="id">' + t.id + '</div>';
+
+        row.appendChild(crestC);
+        row.appendChild(jerseyC);
+        row.appendChild(names);
+        card.appendChild(row);
+
+        var motto = document.createElement('div');
+        motto.className = 'motto';
+        motto.textContent = '“' + t.motto + '”';
+        card.appendChild(motto);
+
+        var chips = document.createElement('div');
+        chips.className = 'chips';
+        [['PRIMARY', t.primary], ['SECONDARY', t.secondary], ['ACCENT', t.accent]].forEach(function (p) {
+          var chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.innerHTML = '<span class="sw" style="background:' + p[1] + '"></span>' +
+                           '<span>' + p[1] + '</span>';
+          chips.appendChild(chip);
+        });
+        var pill = document.createElement('span');
+        pill.className = 'pill';
+        pill.textContent = t.jersey;
+        chips.appendChild(pill);
+        card.appendChild(chips);
+
+        grid.appendChild(card);
+      });
+    })();
+  </script>
+</body>
+</html>
