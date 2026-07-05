@@ -241,7 +241,13 @@
     ].join(';');
     document.body.appendChild(_hud);
     var _hudLast = '';
+    // NOTE (2026-07-05): the host page (SHADDAI-WORLD-3D.html) draws its OWN lift
+    // prompt (_liftPrompt) — a single "▸ Press R to ride" / "RIDING" banner. This
+    // internal _hud duplicated it and stacked a second box on screen, so it is now
+    // suppressed (kept as a no-op to preserve the call sites / API shape).
+    var _HUD_ENABLED = false;
     function _setHud(text) {
+      if (!_HUD_ENABLED) return;
       if (_hudLast === text) return;
       _hudLast = text;
       if (text) { _hud.textContent = text; _hud.style.display = 'block'; }
@@ -669,8 +675,16 @@
     function buildCustomLift(cfg) {
       var padX = cfg.padX, padZ = cfg.padZ;
       var gy   = cfg.baseY;
-      var lowY = cfg.lowY, highY = cfg.highY;
-      var colHeight = (highY - gy) + 2.2;
+      // MULTI-STOP support: cfg.stops = ascending [y0, y1, y2 …] floors the lift
+      // visits in sequence (dwelling at each). lowY/highY derive from the extremes
+      // so the shared platform fields + ride-detection stay identical to a 2-point lift.
+      var stops = (cfg.stops && cfg.stops.length >= 2) ? cfg.stops.slice() : null;
+      var lowY  = stops ? stops[0]            : cfg.lowY;
+      var highY = stops ? stops[stops.length - 1] : cfg.highY;
+      // Visible rail-column height can be capped (cfg.colHeight) so a tall multi-stop
+      // shaft doesn't spear the whole building — the pad rides on beyond the columns
+      // as a glowing disc. Defaults to spanning the full run.
+      var colHeight = (cfg.colHeight != null) ? cfg.colHeight : ((highY - gy) + 2.2);
 
       var columnData = [];
       for (var i = 0; i < 3; i++) {
@@ -690,7 +704,8 @@
       var startYNorm = (cfg.startYNorm != null) ? cfg.startYNorm : 0;
       var startDir   = (cfg.startDir   != null) ? cfg.startDir   : 1;
       var eY0        = smoother(startYNorm);
-      var startY     = lowY + (highY - lowY) * eY0;
+      // Multi-stop lifts always spawn docked at the lowest floor (stop 0).
+      var startY     = stops ? stops[0] : (lowY + (highY - lowY) * eY0);
 
       var curPos  = new THREE.Vector3(padX, startY, padZ);
       var prevPos = new THREE.Vector3(padX, startY, padZ);
@@ -710,6 +725,11 @@
         highY:     highY,
         yNorm:     startYNorm,
         dir:       startDir,
+        // ── MULTI-STOP fields (null for a plain 2-point lift) ──────────────
+        stops:     stops,     // ascending floor Ys, e.g. [ground, interior, observatory]
+        curStop:   0,         // index of the floor currently rested at / departing from
+        segNorm:   0,         // 0..1 progress within the active stop→stop segment
+        stopPause: (cfg.stopPause != null) ? cfg.stopPause : ELEV_PAUSE, // dwell at each floor
         // Locked lift stays parked at lowY forever (huge dwell never elapses).
         pauseT:    cfg.locked ? 1e9 : ((cfg.startPause != null) ? cfg.startPause : ELEV_PAUSE),
         isRiding:  false,
@@ -788,126 +808,56 @@
     // stripped out. The deck is now a clean, sacred AGENTS' SUMMIT: the temples
     // and their glowing roads carry the space, not market/party furniture.
 
-    // ── TOP SKYBRIDGES + PER-BUILDING LANDINGS (Parts 4 & 5) ───────────────
-    // For EVERY agent building we build, up at Nexus level, a small LANDING deck
-    // out in that building's direction and a well-lit, WALKABLE neon bridge that
-    // connects the landing back to the main Nexus deck. On the GROUND directly
-    // below each landing we plant an ELEVATOR (buildCustomLift) that rides the
-    // player straight up from beside the building onto its landing — so each
-    // building has its own lift → landing → bridge → Nexus. Neon-accented, with a
-    // slow-pulsing "moving-walkway" light seam for that agentic-city feel.
-    var LAND_R      = 190;                    // preferred landing radius — pushes each ground lift out to sit right
-                                              // NEXT TO its building's approach wall (still capped by reachMax below)
-    var LAND_DISC_R = 13;                     // landing disc radius
-    var BR_IN       = PLAZA_STAND_R - 6;      // bridge starts just inside the deck rail (~138)
-    // Real building COLLIDER radii (must match SHADDAI-WORLD-3D.html _BLDG_R) so a
-    // ground lift is always placed OUTSIDE the building the player can't walk into.
-    var BLDG_COLL   = { SHADDAI: 76, NEXUS: 63, QUILL: 118, PIKADON: 65, TURTLE: 63, ZEROX: 65, ORACLE: 62 };
-    var _skywayLifts = [];                    // collected for reference/debug
-    sectors.forEach(function (s) {
-      if (s.code === 'SHADDAI') return;              // centre is the open forum — no lift here
-      var ang  = Math.atan2(s.pos[1], s.pos[0]);   // direction of this building (x=cos, z=sin)
-      var cA   = Math.cos(ang), sA = Math.sin(ang);
-      var col  = (s.color != null) ? s.color : SKY_CY;
-      var bR   = Math.hypot(s.pos[0], s.pos[1]) || 260;             // building distance from centre
-      var coll = BLDG_COLL[s.code] || 60;
-      // Lift must land OUTSIDE the building collider (reachable on foot). Max usable
-      // landing radius = building distance − collider − margin.
-      var reachMax = bR - coll - 20;
-      var landR    = Math.min(LAND_R, reachMax);
-      // Does the landing sit far enough OUT to warrant its own deck+bridge? If the
-      // building is huge (e.g. QUILL) landR falls inside the main deck, so the lift
-      // simply tops straight onto the main Nexus floor (no separate landing needed).
-      var hasBridge = (landR >= PLAZA_STAND_R + 6);
-      if (!hasBridge) landR = Math.min(reachMax, PLAZA_STAND_R - 12); // top onto main deck
-      var lx = cA * landR, lz = sA * landR;
+    // ── (RETIRED 2026-07-05) PER-BUILDING GROUND SKY-LIFTS ─────────────────
+    // This loop used to build a SECOND elevator per building — a ground SKY-LIFT
+    // out beside the building that rode straight to the Sky Nexus, plus its own
+    // Nexus landing + bridge + ground station. That made TWO lifts per building
+    // (this one + the lounge lift). Per the owner's single-shaft flow, the two are
+    // now UNIFIED into ONE multi-stop lift (lounge → interior → observatory), built
+    // in the PILLAR-PAVILION loop below — which now also builds each building's
+    // Sky-Nexus landing + bridge (at the lounge-lift XZ, so its top stop lands on
+    // solid floor). Nothing is placed here anymore. `_buildLoungeObsLanding()` and
+    // the unified lift replace everything this block used to do.
 
-      if (hasBridge) {
-        // LANDING DISC (solid, walkable) at Nexus level in the building's direction.
-        var _land = new THREE.Mesh(
-          new THREE.CylinderGeometry(LAND_DISC_R, LAND_DISC_R + 2, 1.0, 40, 1), _skyFloorMat);
-        _land.position.set(lx, -0.5, lz);
-        _plaza.add(_land);
-        var _landRim = new THREE.Mesh(new THREE.TorusGeometry(LAND_DISC_R, 0.32, 8, 56), rimMat(col));
-        _landRim.rotation.x = Math.PI / 2; _landRim.position.set(lx, 0.4, lz);
-        _plaza.add(_landRim);
-        // Small illuminated arch marking the landing (neon accent).
-        var _landArch = new THREE.Mesh(new THREE.TorusGeometry(4.6, 0.3, 8, 40), rimMat(col));
-        _landArch.position.set(lx, 5.2, lz); _landArch.rotation.y = -ang;
-        _plaza.add(_landArch);
-        deckList.push({ x: lx, z: lz, y: PLAZA_Y, r2: (LAND_DISC_R - 1) * (LAND_DISC_R - 1) });
-
-        // WELL-LIT WALKABLE BRIDGE from the deck edge out to the landing.
-        var brOut = landR - (LAND_DISC_R - 5);
-        var midR  = (BR_IN + brOut) * 0.5;
-        var len   = brOut - BR_IN;
-        var floor = new THREE.Mesh(new THREE.BoxGeometry(len, 0.7, 7.0), _skyFloorMat);
-        floor.position.set(cA * midR, -0.35, sA * midR); floor.rotation.y = -ang;
-        _plaza.add(floor);
-        // Glowing centre seam (neon) — the "moving walkway" light.
-        var seam = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, 2.0), haloMat(col));
-        seam.position.set(cA * midR, 0.1, sA * midR); seam.rotation.y = -ang;
-        _plaza.add(seam);
-        // Neon side rails (offset perpendicular to the radial direction).
-        for (var rr = 0; rr < 2; rr++) {
-          var off  = (rr === 0 ? -1 : 1) * 3.2;
-          var rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.9, 0.3), rimMat(col));
-          rail.position.set(cA * midR - sA * off, 0.6, sA * midR + cA * off);
-          rail.rotation.y = -ang;
-          _plaza.add(rail);
-        }
-        // Register the whole bridge span as walkable deck patches.
-        var steps = Math.max(2, Math.round(len / 10));
-        for (var st = 0; st <= steps; st++) {
-          var rAt = BR_IN + (len * st / steps);
-          deckList.push({ x: cA * rAt, z: sA * rAt, y: PLAZA_Y, r2: 4.0 * 4.0 });
-        }
+    // helper — a building's Sky-Nexus arrival landing + a walkable neon bridge back
+    // to the main deck, both parented to _plaza (local XZ == world XZ; local y 0 ==
+    // world PLAZA_Y). Registers walkable deckList patches at y=PLAZA_Y so the rider
+    // steps off the unified lift's TOP stop onto solid floor and walks in to the Nexus.
+    var OBS_LAND_R = 14;                       // per-building observatory landing radius
+    function _buildLoungeObsLanding(lx, lz, col) {
+      var az   = Math.atan2(lz, lx);           // azimuth of this building's shaft
+      var cA   = Math.cos(az), sA = Math.sin(az);
+      var outR = Math.hypot(lx, lz);           // landing sits directly above the lounge lift
+      var inR  = PLAZA_STAND_R - 6;            // bridge meets the main deck just inside its rail
+      // LANDING DISC (solid, walkable) floating above the building at Nexus height.
+      var _land = new THREE.Mesh(
+        new THREE.CylinderGeometry(OBS_LAND_R, OBS_LAND_R + 2, 1.0, 40, 1), _skyFloorMat);
+      _land.position.set(lx, -0.5, lz); _plaza.add(_land);
+      var _lRim = new THREE.Mesh(new THREE.TorusGeometry(OBS_LAND_R, 0.34, 8, 56), rimMat(col));
+      _lRim.rotation.x = Math.PI / 2; _lRim.position.set(lx, 0.4, lz); _plaza.add(_lRim);
+      var _lArch = new THREE.Mesh(new THREE.TorusGeometry(4.8, 0.3, 8, 40), rimMat(col));
+      _lArch.position.set(lx, 5.4, lz); _lArch.rotation.y = -az; _plaza.add(_lArch);
+      deckList.push({ x: lx, z: lz, y: PLAZA_Y, r2: (OBS_LAND_R - 1) * (OBS_LAND_R - 1) });
+      // WELL-LIT WALKABLE BRIDGE from the main deck edge out to this landing.
+      var brOut = outR - (OBS_LAND_R - 5);
+      var midR  = (inR + brOut) * 0.5;
+      var len   = Math.max(6, brOut - inR);
+      var floor = new THREE.Mesh(new THREE.BoxGeometry(len, 0.7, 7.0), _skyFloorMat);
+      floor.position.set(cA * midR, -0.35, sA * midR); floor.rotation.y = -az; _plaza.add(floor);
+      var seam = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, 2.0), haloMat(col));
+      seam.position.set(cA * midR, 0.1, sA * midR); seam.rotation.y = -az; _plaza.add(seam);
+      for (var rr = 0; rr < 2; rr++) {
+        var off  = (rr === 0 ? -1 : 1) * 3.2;
+        var rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.9, 0.3), rimMat(col));
+        rail.position.set(cA * midR - sA * off, 0.6, sA * midR + cA * off);
+        rail.rotation.y = -az; _plaza.add(rail);
       }
-
-      // BUILDING SKY-LIFT: the building's OWN outside elevator. It stands on the
-      // GROUND right next to the building (radius `landR`, on the world-center-facing
-      // approach side, clear of the collider) and rides straight UP to the building's
-      // landing (or the main deck for huge buildings) at the Sky Nexus. It is now
-      // WALK-UP BOARDABLE again (interiorOnly:false): the player walks up, gets the
-      // [E]/step-on prompt, and rides up. The interior hand-off forceBoardBuilding()
-      // still works too (harmless) — this is just the primary, obvious path.
-      var baseY = (getGroundY(lx, lz) || 0);
-      var _bl = buildCustomLift({
-        code:      s.code + '-SKYLIFT',
-        padX:      lx, padZ: lz, baseY: baseY,
-        lowY:      baseY + 0.08, highY: PLAZA_Y,
-        colorHex:  col,
-        label:     s.code + ' SKY-LIFT',
-        destLabel: 'THE SKY NEXUS',
-        rideLabel: 'RIDE UP TO THE SKY NEXUS',
-        locked:    false,
-        interiorOnly: false,          // OUTSIDE the building — walk up & board it directly
-        startYNorm: 0, startDir: 1,
-      });
-      _buildingLifts[String(s.code).toUpperCase()] = _bl;
-      _skywayLifts.push(_bl);
-
-      // GROUND BOARDING STATION — a lit ring + flanking pylons + overhead neon arch
-      // + beacon so the outside elevator reads as a real, premium lift beside the
-      // building. Purely static/decorative; fully guarded so it can never break load.
-      try {
-        var _skRim = new THREE.Mesh(new THREE.TorusGeometry(6.6, 0.26, 8, 60), rimMat(col));
-        _skRim.rotation.x = Math.PI / 2; _skRim.position.set(lx, baseY + 0.2, lz); scene.add(_skRim);
-        var _skPylonGeo = new THREE.CylinderGeometry(0.42, 0.58, 7.4, 10, 1);
-        for (var _sp2 = 0; _sp2 < 2; _sp2++) {
-          var _side = (_sp2 === 0 ? -1 : 1) * 5.4;      // flank the pad perpendicular to the approach
-          var _pyl = new THREE.Mesh(_skPylonGeo, MAT.column);
-          _pyl.position.set(lx - Math.sin(ang) * _side, baseY + 3.7, lz + Math.cos(ang) * _side);
-          scene.add(_pyl);
-        }
-        var _skArch = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.34, 8, 48), rimMat(col));
-        _skArch.position.set(lx, baseY + 7.6, lz); _skArch.rotation.y = -ang; scene.add(_skArch);
-        var _skArchGlow = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.85, 6, 48), haloMat(col));
-        _skArchGlow.position.set(lx, baseY + 7.6, lz); _skArchGlow.rotation.y = -ang; scene.add(_skArchGlow);
-        var _skBeacon = new THREE.Mesh(new THREE.SphereGeometry(1.15, 16, 12), capOrbMat(col));
-        _skBeacon.position.set(lx, baseY + 14.0, lz); scene.add(_skBeacon);
-      } catch (_e) { /* decor is optional — never block world load */ }
-    });
+      var steps = Math.max(2, Math.round(len / 10));
+      for (var st = 0; st <= steps; st++) {
+        var rAt = inR + (len * st / steps);
+        deckList.push({ x: cA * rAt, z: sA * rAt, y: PLAZA_Y, r2: 4.0 * 4.0 });
+      }
+    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // PILLAR-PAVILION LOUNGE LIFTS (2026-07-05) — ONE clean lift per building.
@@ -930,31 +880,54 @@
       // Direction toward world-centre (the entrance faces this) + its tangent (the side).
       var toC = Math.atan2(-bz, -bx);
       var tx  = -Math.sin(toC), tz = Math.cos(toC);       // unit tangent
-      var lx  = bx + tx * (fp * 0.28);                    // pad offset to ONE SIDE inside the lounge
-      var lz  = bz + tz * (fp * 0.28);
+      // Pad offset to ONE SIDE inside the lounge, pushed further out (0.28→0.38 fp,
+      // min 34u) so the lift NEVER sits on the agent's talk spot. The agent stands
+      // at the building centre (world-dialogue TALK_RADIUS=14u); this keeps the lift
+      // pad + its [R]-to-ride zone well clear of that talk zone (no prompt collision).
+      var SIDE = Math.max(34, fp * 0.38);
+      var lx  = bx + tx * SIDE;
+      var lz  = bz + tz * SIDE;
       var gY  = (getGroundY(lx, lz) || 0);
-      var topY = gY + BUILD_LIFT;                          // elevated building floor level
+      var interiorY = gY + BUILD_LIFT;                     // elevated building floor level (stop 2)
+      var obsY      = PLAZA_Y;                             // Sky Nexus / observatory level (stop 3)
 
-      // Register the whole elevated footprint as a SOLID walkable floor (the building's
-      // upper deck) so a rider steps off the lift onto real ground at the top.
-      deckList.push({ x: bx, z: bz, y: topY, r2: (fp * 0.42) * (fp * 0.42) });
+      // STOP-2 landing: the whole elevated footprint is a SOLID walkable floor (the
+      // building's upper deck) so a rider steps off the lift onto real ground there.
+      deckList.push({ x: bx, z: bz, y: interiorY, r2: (fp * 0.42) * (fp * 0.42) });
+      // STOP-3 landing + bridge: a walkable disc floating above the building at Nexus
+      // height, joined to the main deck by a neon bridge (so the top stop lands solid).
+      _buildLoungeObsLanding(lx, lz, col);
 
-      buildCustomLift({
-        code:      code + '-LOUNGE',
+      // ── THE ONE UNIFIED LIFT — three stops on ONE shaft ──────────────────
+      //   stop 0  ground / lounge      (board here, talk to the agents)
+      //   stop 1  building interior    (elevated floor deck — step off to explore)
+      //   stop 2  observatory / Nexus  (continue up the SAME lift to the Sky Nexus)
+      // It dwells at every floor, so you ride lounge→interior, step off, then re-board
+      // to continue interior→observatory. Rail columns are capped near the interior
+      // level (colHeight) so the shaft doesn't spear the building; the pad rides on up
+      // to the observatory as a glowing disc. Registered as the building's lift so the
+      // interiors hand-off (forceBoardBuilding) drives this same shaft.
+      var _ul = buildCustomLift({
+        code:      code + '-LIFT',
         padX:      lx, padZ: lz, baseY: gY,
-        lowY:      gY + 0.08, highY: topY,
+        stops:     [gY + 0.08, interiorY, obsY],
+        stopPause: 3.6,                                    // generous dwell → easy step-off at each floor
+        colHeight: BUILD_LIFT + 8,                         // visible shaft ≈ lounge→interior only
         colorHex:  col,
-        label:     code + ' LOUNGE LIFT',
-        destLabel: code + ' — UPPER FLOOR',
+        label:     code + ' LIFT',
+        destLabel: code + ' — INTERIOR / OBSERVATORY',
         rideLabel: 'RIDE UP INTO ' + code,
         locked:    false, interiorOnly: false,
-        startYNorm: 0, startDir: 1,
       });
+      _buildingLifts[code] = _ul;
 
-      // Small visible landing rim + a ground beacon so the lift reads as a real lift.
+      // Small visible landing rims (interior + ground) + a ground beacon so the shaft
+      // reads as a real, premium lift within the lounge.
       try {
         var _lrim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.22, 8, 48), rimMat(col));
-        _lrim.rotation.x = Math.PI / 2; _lrim.position.set(lx, topY + 0.2, lz); scene.add(_lrim);
+        _lrim.rotation.x = Math.PI / 2; _lrim.position.set(lx, interiorY + 0.2, lz); scene.add(_lrim);
+        var _grim = new THREE.Mesh(new THREE.TorusGeometry(6.6, 0.24, 8, 56), rimMat(col));
+        _grim.rotation.x = Math.PI / 2; _grim.position.set(lx, gY + 0.2, lz); scene.add(_grim);
         var _lbea = new THREE.Mesh(new THREE.SphereGeometry(0.9, 14, 10), capOrbMat(col));
         _lbea.position.set(lx, gY + 3.0, lz); scene.add(_lbea);
       } catch (_e) { /* decor is optional — never block world load */ }
@@ -1518,6 +1491,35 @@
         // ── Move the platform ─────────────────────────────────────────────
 
         if (p.type === 'elev') {
+          if (p.stops) {
+            // ── MULTI-STOP LIFT: ride stop→stop, DWELL at each floor ─────────
+            // One shaft visits every floor in sequence (…ground→interior→
+            // observatory→interior→ground…). It pauses at EVERY stop — including
+            // the middle interior floor — so a rider can step off there, then
+            // re-board to continue up on the SAME lift. smootherstep eases each
+            // segment (zero start/stop velocity) so the carried camera is smooth.
+            var _st = p.stops, _n = _st.length;
+            if (p.pauseT > 0) {
+              p.pauseT -= dt;
+            } else {
+              var _toI = p.curStop + p.dir;
+              var _seg = Math.abs(_st[_toI] - _st[p.curStop]);
+              var _mrate = (_seg > 0.001) ? (ELEV_SPEED * dt / _seg) : 1;
+              p.segNorm += _mrate;
+              if (p.segNorm >= 1) {
+                p.segNorm = 0;
+                p.curStop = _toI;
+                if (p.curStop >= _n - 1)      p.dir = -1;   // reached top → head down
+                else if (p.curStop <= 0)      p.dir = 1;    // reached bottom → head up
+                p.pauseT  = p.stopPause;                    // dwell at this floor
+              }
+            }
+            // Eased position within the current segment (dir already reversed at
+            // the ends, so curStop+dir is always a valid neighbouring floor).
+            var _fY = _st[p.curStop];
+            var _nY = _st[p.curStop + p.dir];
+            p.curPos.y = _fY + (_nY - _fY) * smoother(p.segNorm);
+          } else {
           // Vertical elevator: rise/lower between lowY ↔ highY.
           // Progress advances linearly in yNorm; a smoothstep ease maps it to
           // the actual Y so the pad accelerates off each end and decelerates
@@ -1543,6 +1545,7 @@
           // zero acceleration at both ends → no abrupt start/stop jolt).
           var eY = smoother(p.yNorm);
           p.curPos.y = p.lowY + span * eY;
+          }
 
           // Subtle idle float — SUPPRESSED while a rider is aboard so the ride
           // (and the carried camera) is perfectly smooth with zero micro-jitter.
@@ -1595,7 +1598,13 @@
         // so they are never boardable by walking over them out in the plaza.
         var boardable = !p.locked && (!p.interiorOnly || p.armed);
         var wasRiding = p.isRiding;
-        p.isRiding    = boardable && inXZ && inY;
+        // BOARD ONLY VIA [R] (2026-07-05): the player no longer AUTO-rides by
+        // walking over a pad — that whisked people up unexpectedly and made the
+        // lift collide with the agent talk spot. tryBoard()/forceBoardBuilding()
+        // (driven by the R key / interior hand-off) set isRiding=true and snap
+        // the rider onto the pad; update() then only KEEPS that ride alive while
+        // they stay on the pad (wasRiding gate). No wasRiding ⇒ never latches here.
+        p.isRiding    = boardable && inXZ && inY && wasRiding;
 
         // Stepped off the top of a building sky-shaft → relock it so it can't be
         // re-boarded from the deck (it stays a private, interior-entered shaft).
@@ -1801,6 +1810,7 @@
       p.yNorm   = 0;
       p.dir     = 1;
       p.pauseT  = 0;
+      if (p.stops) { p.curStop = 0; p.segNorm = 0; }   // reset multi-stop traveller to ground
       p.curPos.x = p.px; p.curPos.z = p.pz; p.curPos.y = p.lowY;
       p.prevPos.copy(p.curPos);
       // Snap the player onto the pad so ride detection latches this frame + next.

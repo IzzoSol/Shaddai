@@ -2147,6 +2147,19 @@
       if (doorsBuilt) return;
       doorsBuilt = true;
       if (!scene || !THREE || !THREE.Group) return;
+      /* ── ORPHANED-DOOR REMOVAL (2026-07-05) ────────────────────────────────
+         The buildings are now LIFTED ~46u onto pillars (world-buildings.js
+         AGENT_LIFT), with an open walk-through lounge underneath and an
+         elevator up. These twin-leaf outdoor doors were built at GROUND height
+         (baseY = terrain), so once the building rose onto its pillars each door
+         was left standing alone in the open lounge — a frame + two leaves that
+         "open in the middle" of nowhere as you walk up (no wall behind them).
+         Entry is now via the lounge ELEVATOR (press R), not a ground door, so
+         we no longer build these floating doors. nearestDoor()/enter() still
+         work off the `doors` proximity table (unchanged) for the [E] interior
+         entry; only the orphaned VISUAL door geometry is gone. */
+      return;
+      /* eslint-disable no-unreachable */
       for (var i = 0; i < doors.length; i++) {
         try {
           var d      = doors[i];

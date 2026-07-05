@@ -48,11 +48,17 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
   const biome = (id) => layout.biomes.find((b) => b.id === id);
 
   // ── clearance: skip sectors + world centre so props don't bury buildings ──
-  const CLEAR = 25;
+  // (2026-07-05) The old 25u ring was far smaller than a building's footprint
+  // (half-widths ~62-78u) and its ground lounge, so cacti/rocks/bones scattered
+  // straight INTO TURTLE's lounge and the like. Widened: SECTOR_CLEAR keeps every
+  // prop well outside each building + its walk-through lounge, and a bigger
+  // world-centre ring keeps the plaza/temple approach clear of terrain clutter.
+  const CLEAR        = 60;   // world centre (temple + inner plaza rings)
+  const SECTOR_CLEAR = 96;   // each agent building + its elevated lounge footprint
   function blocked(x, z) {
     if (Math.hypot(x, z) < CLEAR) return true;
     for (const s of layout.sectors) {
-      if (Math.hypot(x - s.pos[0], z - s.pos[1]) < CLEAR) return true;
+      if (Math.hypot(x - s.pos[0], z - s.pos[1]) < SECTOR_CLEAR) return true;
     }
     return false;
   }
@@ -573,18 +579,25 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     const b = biome('desert'); if (!b) return;
 
     // ── DUNES (instanced oblate spheroids) ────────────────────────────
-    const DUNE = 24;
+    // Owner polish (2026-07-05): the desert used to also spawn spiky "rock
+    // spikes" (tan cones) and cacti, plus BIG bright-yellow dunes — the owner
+    // disliked those "cactus and big yellow rocks" from the start (they read as
+    // janky/obtrusive and could clip TURTLE's lounge). The cacti + rock spikes
+    // are REMOVED entirely; the dunes are kept but toned WAY down: fewer, much
+    // smaller, and a muted sand tone (not the loud yellow) so they sit quietly
+    // as low ground swells instead of dominating as "big yellow rocks".
+    const DUNE = 10;
     const duneGeo = track(new THREE.SphereGeometry(1, 10, 6));
     const duneMat = track(new THREE.MeshStandardMaterial({
-      color: 0xe8a445, roughness: 1, flatShading: true,
+      color: 0xc79a5c, roughness: 1, flatShading: true,   // muted sand (was loud 0xe8a445)
     }));
     const dunes = new THREE.InstancedMesh(duneGeo, duneMat, DUNE);
     let dunec = 0;
     for (let i = 0; dunec < DUNE && i < DUNE * 8; i++) {
       const p = scatter(b, 4); if (!p) continue;
-      const w = rrange(10, 26), h = rrange(2, 5);
+      const w = rrange(7, 14), h = rrange(1.4, 2.8);       // smaller, low swells (was 10-26 wide, 2-5 high)
       setInst(dunes, dunec,
-        p[0], heightAt(p[0], p[1]) + h * 0.18, p[1],
+        p[0], heightAt(p[0], p[1]) + h * 0.12, p[1],
         0, rand() * Math.PI, 0,
         w, h, w * rrange(0.7, 1.2));
       dunec++;
@@ -593,58 +606,9 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     dunes.instanceMatrix.needsUpdate = true;
     group.add(dunes);
 
-    // ── ROCK SPIKES (instanced cones) ─────────────────────────────────
-    const SPIKE = 18;
-    const spkGeo = track(new THREE.ConeGeometry(1.6, 7, 5));
-    const spkMat = track(new THREE.MeshStandardMaterial({
-      map: _rockTex, color: 0xb08a5a, roughness: 1, flatShading: true,
-    }));
-    const spikes = new THREE.InstancedMesh(spkGeo, spkMat, SPIKE);
-    let spkc = 0;
-    for (let i = 0; spkc < SPIKE && i < SPIKE * 8; i++) {
-      const p = scatter(b, 6); if (!p) continue;
-      const s = rrange(0.8, 1.8);
-      setInst(spikes, spkc,
-        p[0], heightAt(p[0], p[1]) + 3.5 * s, p[1],
-        0, rand() * Math.PI * 2, rrange(-0.2, 0.2),
-        s, s, s);
-      spkc++;
-    }
-    spikes.count = spkc;
-    spikes.instanceMatrix.needsUpdate = true;
-    group.add(spikes);
-
-    // ── CACTI (instanced body + two arm cylinders, shared material) ───
-    const CACT = 22;
-    const cBodyGeo = track(new THREE.CylinderGeometry(0.55, 0.70, 8, 6));
-    cBodyGeo.translate(0, 4, 0);
-    const cArmLGeo = track(new THREE.CylinderGeometry(0.32, 0.38, 4, 5));
-    cArmLGeo.rotateZ(Math.PI / 2.2);
-    cArmLGeo.translate(-3.0, 4.5, 0);
-    const cArmRGeo = track(new THREE.CylinderGeometry(0.32, 0.38, 4, 5));
-    cArmRGeo.rotateZ(-Math.PI / 2.2);
-    cArmRGeo.translate(3.0, 5.5, 0);
-    const cMat = track(new THREE.MeshStandardMaterial({
-      color: 0x3a7a30, emissive: 0x1a4a18, emissiveIntensity: 0.08, roughness: 0.95,
-    }));
-    const cBody = new THREE.InstancedMesh(cBodyGeo, cMat, CACT);
-    const cArmL = new THREE.InstancedMesh(cArmLGeo, cMat, CACT);
-    const cArmR = new THREE.InstancedMesh(cArmRGeo, cMat, CACT);
-    let cc = 0;
-    for (let i = 0; cc < CACT && i < CACT * 12; i++) {
-      const p = scatter(b, 6); if (!p) continue;
-      const s = rrange(0.6, 1.4);
-      setInst(cBody, cc, p[0], heightAt(p[0], p[1]), p[1],
-              0, rand() * Math.PI * 2, 0, s, s, s);
-      cArmL.setMatrixAt(cc, _m);
-      cArmR.setMatrixAt(cc, _m);
-      cc++;
-    }
-    cBody.count = cArmL.count = cArmR.count = cc;
-    cBody.instanceMatrix.needsUpdate = true;
-    cArmL.instanceMatrix.needsUpdate = true;
-    cArmR.instanceMatrix.needsUpdate = true;
-    group.add(cBody, cArmL, cArmR);
+    // (REMOVED 2026-07-05) ROCK SPIKES (tan cones) + CACTI — the "cactus and big
+    // yellow rocks" the owner disliked. Deleted for a cleaner, less-cluttered
+    // desert. Bleached bones + drifting sand motes below still carry the biome.
 
     // ── BLEACHED BONES / ROCKS (instanced small pale shapes) ──────────
     const BONE = 30;

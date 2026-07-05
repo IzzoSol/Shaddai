@@ -1112,7 +1112,7 @@ try { if(window.buildPortalDome && window.PORTALS_REGISTRY && window.PORTALS_REG
 let _elevators=null;
 try { if(window.buildWorldElevators && window.WORLD_LAYOUT) _elevators = window.buildWorldElevators({ THREE, scene, layout: window.WORLD_LAYOUT, playerPos, getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0 }); } catch(e){ console.warn('elevators init', e && e.message); }
 const _liftPrompt = document.createElement('div');
-_liftPrompt.style.cssText='position:fixed;bottom:140px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#8fefff;border:1px solid rgba(39,224,255,0.5);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
+_liftPrompt.style.cssText='position:fixed;bottom:178px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#8fefff;border:1px solid rgba(39,224,255,0.5);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
 document.body.appendChild(_liftPrompt);
 
 // ── CHAT: realm-wide + per-room. Built hidden; opens ONLY via the 💬 button (click). ──
@@ -1130,7 +1130,7 @@ try { if(window.buildWorldChat){ window.__shaddaiChat = window.buildWorldChat();
 
 // "[T] Talk" prompt element (near the "[E] Enter" one)
 const _talkPrompt = document.createElement('div');
-_talkPrompt.style.cssText='position:fixed;bottom:118px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(255,207,74,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(255,207,74,0.6)';
+_talkPrompt.style.cssText='position:fixed;bottom:137px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(255,207,74,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(255,207,74,0.6)';
 document.body.appendChild(_talkPrompt);
 
 // hotkeys: M=map · R=Shaddai Radio · T=talk · K=mute
@@ -1141,6 +1141,8 @@ addEventListener('keydown', function(e){
   // else if(e.code==='KeyR' && _radio){ _radio.toggle(); }   // disabled: R was popping the radio up unexpectedly (owner). Re-add a button if wanted.
   else if(e.code==='KeyK' && _audio){ _audio.setEnabled(!_audio.isEnabled()); }
   else if(e.code==='KeyT' && _dialogue){ if(_dialogue.isOpen()){ _dialogue.close(); } else { const ag=_dialogue.nearestAgent(playerPos.x, playerPos.z, playerPos.y); if(ag) _dialogue.open(ag.code); } }
+  // R = RIDE the nearby lift (clear, deliberate keybind — no more auto step-on). tryBoard() no-ops if out of range.
+  else if(e.code==='KeyR' && controls.isLocked && _elevators && _elevators.tryBoard && !(_interiors && _interiors.isInside())){ _elevators.tryBoard(playerPos.x, playerPos.z); }
 });
 
 const avatarMat = new THREE.MeshStandardMaterial({ color:0x1a1405, emissive:0xffcf4a, emissiveIntensity:0.75, roughness:0.4, metalness:0.7 });
@@ -1252,8 +1254,7 @@ addEventListener('click', ()=>{
   if(targeted){ openDossier(targeted.a); }
 });
 addEventListener('keydown', e=>{
-  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); else if(nearPortal) enterPortal(nearPortal);
-    else if(_elevators && _elevators.tryBoard && !(_interiors && !_interiors.isInside() && _interiors.nearestDoor(playerPos.x, playerPos.z))) _elevators.tryBoard(playerPos.x, playerPos.z); }  // E also boards a nearby elevator (building door takes priority)
+  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); else if(nearPortal) enterPortal(nearPortal); }  // E = talk/open agent · enter portal. (Lift boarding moved to R — see hotkeys block.)
   if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
   if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
@@ -1923,7 +1924,7 @@ function animate(){
   if(_elevators){
     if(_elevators.isRiding()){ _liftPrompt.style.display='block'; _liftPrompt.textContent='◘ RIDING — walk off the pad to step off'; }
     else if(_elevators.nearestInfo){ const _ni=_elevators.nearestInfo(playerPos.x, playerPos.z);
-      if(_ni && _ni.label){ _liftPrompt.style.display='block'; _liftPrompt.textContent='[ E ]  '+_ni.label; } else _liftPrompt.style.display='none';
+      if(_ni && _ni.label){ _liftPrompt.style.display='block'; _liftPrompt.textContent='▸ Press R to ride  ·  '+_ni.label; } else _liftPrompt.style.display='none';
     } else _liftPrompt.style.display='none';
   }
   const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
