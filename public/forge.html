@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Spectral:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Part B: re-editable agent tools (dependency-free, mountable on forge.html OR the dashboard) -->
+<link rel="stylesheet" href="/agent-editor.css">
+<script defer src="/agent-editor.js"></script>
 <style>
   :root{
     --obsidian:#0b0805; --obsidian2:#16100a; --panel:#171009; --bd:#3a2a14;
@@ -62,7 +65,8 @@
   .rbtn.on{ filter:none; border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 16px rgba(240,180,41,.5); transform:scale(1.08); }
   .navarrow{ position:absolute; bottom:80px; z-index:4; width:42px; height:42px; border-radius:50%; border:1px solid var(--bd);
     background:#100a05cc; color:var(--gold); font-size:18px; cursor:pointer; }
-  #prev{ left:20px; } #next{ right:20px; }
+  /* group both arrows bottom-left so #next never overlaps the right-side archetype rail */
+  #prev{ left:20px; } #next{ left:70px; }
   .navarrow:hover{ border-color:var(--gold); box-shadow:0 0 14px rgba(240,180,41,.4); }
   /* ── grimoire panel ── */
   #panel{ border-left:1px solid var(--bd); background:linear-gradient(180deg,#140e07,#0c0805); overflow-y:auto; padding:8px 26px 26px; }
@@ -140,7 +144,7 @@
 <div id="app">
   <header class="reveal" style="animation-delay:.05s">
     <div class="mark">⬡ THE&nbsp;FORGE<small>summon · equip · awaken</small></div>
-    <a class="back" href="/">⟵ return to dashboard</a>
+    <a class="back" href="/" target="_top">⟵ return to dashboard</a>
   </header>
 
   <!-- summoning stage -->
@@ -178,14 +182,11 @@
       <div class="cores" id="cores"></div>
     </div>
     <div class="reveal" style="animation-delay:.4s">
-      <div class="lab">Skills &amp; Tools <span id="eqCount" style="color:var(--ash)">— 0 bound</span></div>
-      <div class="filt">
-        <button id="fTools" class="on" title="Skills that actually DO something — they call real tools (prices, web, code, security…)">⚙ Tools that run</button>
-        <button id="fAll" title="Includes knowledge skills — these guide the agent's thinking but don't execute">＋ All skills</button>
-      </div>
-      <input id="skillSearch" class="f" placeholder="search — ⚙ runs a real tool · 📖 guides the agent" />
+      <div class="lab">Tools <span id="eqCount" style="color:var(--ash)">— 0 bound</span></div>
+      <div style="font-family:var(--body);font-style:italic;font-size:12px;color:var(--ash);margin:-2px 0 8px">Only real, runnable tools — each one works when your operative runs in the dashboard.</div>
+      <input id="skillSearch" class="f" placeholder="search tools…" />
       <div id="skills">drawing the runes…</div>
-      <div id="skillDetail">hover a skill to see what it does, the model it needs, and rough cost.</div>
+      <div id="skillDetail">hover a tool to see what it does, the model it needs, and rough cost.</div>
       <div id="equipped"></div>
     </div>
     <div class="reveal" style="animation-delay:.45s">
@@ -233,7 +234,10 @@ const CORES = [
   { id:'balanced', g:'⚙ Balanced', brain:'groq-70b',     cap:8,  h:'multi-step' },
   { id:'heavy',    g:'🔥 Heavy',    brain:'claude-haiku', cap:20, h:'deep work' },
 ];
-const presetImg = id => '/api/forge/art/arch-' + id + '.png';
+// use the art rendered from the SAME model that walks on stage, so the circle
+// thumbnails and the fallback match the GLB character (not the separate arch-* set)
+const presetImg = id => '/assets/forge-models/' + id + '-art.jpg';
+const fullImg   = id => '/assets/forge-models/' + id + '.png';
 const $ = id => document.getElementById(id);
 const owner = (()=>{ try{ return JSON.parse(localStorage.getItem('shaddai_user')||'{}').email || 'demo'; }catch{ return 'demo'; } })();
 let idx = 0, core = 'light';
@@ -263,7 +267,7 @@ try{
 }catch(e){ webgl=false; }
 const loader = webgl ? new GLTFLoader() : null;
 
-function showFallback(id){ const f=$('fallback'); f.style.display='block'; f.style.backgroundImage=`url('${presetImg(id)}')`; if(renderer)renderer.domElement.style.display='none'; $('stageTag').textContent='▣ ARCHETYPE ART'; }
+function showFallback(id){ const f=$('fallback'); f.style.display='block'; f.style.backgroundImage=`url('${fullImg(id)}')`; if(renderer)renderer.domElement.style.display='none'; $('stageTag').textContent='▣ ARCHETYPE ART'; }
 function hideFallback(){ $('fallback').style.display='none'; if(renderer)renderer.domElement.style.display='block'; $('stageTag').textContent='▣ 3D ARCHETYPE'; }
 
 function loadModel(){
@@ -297,36 +301,39 @@ addEventListener('resize', ()=>{ if(!renderer)return; renderer.setSize(stage.cli
 
 // ── compute cores ──
 $('cores').innerHTML = CORES.map(c=>`<div class="core${c.id==='light'?' on':''}" data-c="${c.id}"><div class="g">${c.g}</div><div class="h">${c.h} · ${c.cap}</div></div>`).join('');
-$('cores').querySelectorAll('.core').forEach(el=> el.onclick=()=>{ core=el.dataset.c; $('cores').querySelectorAll('.core').forEach(x=>x.classList.toggle('on',x===el)); });
+$('cores').querySelectorAll('.core').forEach(el=> el.onclick=()=>{ core=el.dataset.c; $('cores').querySelectorAll('.core').forEach(x=>x.classList.toggle('on',x===el));
+  // clear any "core full" warning and show the new capacity
+  updCount();
+  log('◈ '+coreName()+' core — holds up to '+capOf()+' tools · '+skills.size+' bound.', skills.size>capOf()?'var(--ember)':'var(--gold2)'); });
 const capOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).cap;
 const brainOf=()=> (CORES.find(c=>c.id===core)||CORES[0]).brain;
 
-// ── skills (tool-vs-knowledge, use-case / model / cost) ──
-let _all=[], _toolsOnly=true;
+// ── tools only — real, runnable tool-chains (recipes). knowledge skills are excluded
+//    so everything you bind actually executes when the operative runs in the dashboard.
+let _all=[];
 const MODEL_LABEL={ light:'⚡ Light model', balanced:'⚙ Balanced model', heavy:'🔥 Heavy model' };
-async function loadSkills(q){
-  try{ const d=await (await fetch('/api/skills/catalog?limit=90'+(q?('&q='+encodeURIComponent(q)):''))).json(); _all=d.skills||[]; renderSkills(); }
-  catch(e){ $('skills').textContent='could not summon skills'; }
-}
 const _isTool=s=> s.kind==='tool' || s.executable;
+async function loadSkills(q){
+  try{ const d=await (await fetch('/api/skills/catalog?limit=200'+(q?('&q='+encodeURIComponent(q)):''))).json();
+    _all=(d.skills||[]).filter(_isTool); renderSkills(); }
+  catch(e){ $('skills').textContent='could not summon tools'; }
+}
 function renderSkills(){
-  let list=_all.slice(); if(_toolsOnly) list=list.filter(_isTool);
-  list.sort((a,b)=>(_isTool(b)?1:0)-(_isTool(a)?1:0));
-  if(!list.length){ $('skills').textContent=_toolsOnly?'no runnable tools match — try ＋ All skills':'no runes match'; return; }
-  $('skills').innerHTML=list.map(s=>{ const on=skills.has(s.name); const tool=_isTool(s);
-    const kb=tool?'<span class="kb">⚙</span>':'<span class="kb">📖</span>';
-    return `<button class="rune ${tool?'tool':'know'}${on?' on':''}" data-n="${encodeURIComponent(s.name)}">${kb}${s.name}</button>`; }).join('');
+  const list=_all.slice();
+  if(!list.length){ $('skills').textContent='no runnable tools match'; return; }
+  $('skills').innerHTML=list.map(s=>{ const on=skills.has(s.name);
+    return `<button class="rune tool${on?' on':''}" data-n="${encodeURIComponent(s.name)}"><span class="kb">⚙</span>${s.name}</button>`; }).join('');
   $('skills').querySelectorAll('.rune').forEach(b=>{ const n=decodeURIComponent(b.dataset.n);
     b.onclick=()=>toggle(n); b.onmouseenter=()=>detail(_all.find(x=>x.name===n)); });
 }
-function detail(s){ if(!s)return; const tool=_isTool(s);
-  $('skillDetail').innerHTML='<b>'+(tool?'⚙ TOOL — actually runs':'📖 KNOWLEDGE — guides the agent')+'</b><br>'+
+function detail(s){ if(!s)return;
+  $('skillDetail').innerHTML='<b>⚙ '+s.name+' — runs a real tool</b><br>'+
     ((s.useCase||s.description||'').slice(0,150))+'<br>'+
     '<span class="pill">'+(MODEL_LABEL[s.model]||'⚙ Balanced model')+'</span> · <span class="pill">'+(s.estCost||'~$0.001')+'</span>'; }
-$('fTools').onclick=()=>{ _toolsOnly=true; $('fTools').classList.add('on'); $('fAll').classList.remove('on'); renderSkills(); };
-$('fAll').onclick=()=>{ _toolsOnly=false; $('fAll').classList.add('on'); $('fTools').classList.remove('on'); renderSkills(); };
-function toggle(n){ if(skills.has(n))skills.delete(n); else { if(skills.size>=capOf()){ log('⛔ '+core+' core holds '+capOf()+' skills — raise the core or unbind one.','var(--ember)'); return; } skills.add(n); }
-  $('eqCount').textContent='— '+skills.size+' bound'; $('equipped').textContent=skills.size?('bound: '+[...skills].join(' · ')):''; renderSkills(); }
+const coreName=()=> core.charAt(0).toUpperCase()+core.slice(1);
+function updCount(){ const el=$('eqCount'); if(!el)return; el.textContent='— '+skills.size+' / '+capOf()+' tools'; el.style.color = skills.size>=capOf()?'var(--ember)':'var(--ash)'; }
+function toggle(n){ if(skills.has(n))skills.delete(n); else { if(skills.size>=capOf()){ log('⛔ '+coreName()+' core holds '+capOf()+' tools — upgrade the core for more.','var(--ember)'); return; } skills.add(n); }
+  updCount(); $('equipped').textContent=skills.size?('bound: '+[...skills].join(' · ')):''; renderSkills(); }
 let _t; $('skillSearch').oninput=e=>{ clearTimeout(_t); _t=setTimeout(()=>loadSkills(e.target.value.trim()),250); };
 
 // ── BYOK key vault ──
@@ -357,7 +364,7 @@ $('forgeBtn').onclick=async()=>{
   const persona=$('persona').value.trim()||('You are '+name+', a SHADDAI '+a.name+' operative.');
   try{ await fetch('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona,brainId:brainOf(),tools:[...skills],look:a.id,portrait,rarity})}); }catch(e){}
   try{ const op=await (await fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,codename:name,archetype:a.id,rarity,portrait,look:{archetype:a.id},brain:{tier:core,brainId:brainOf(),persona},tools:[...skills],buildHash})})).json();
-    if(op&&op.operative){ log('✦ FORGED — "'+name+'" walks into Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills. Press ⚡ AWAKEN to put it to work.','var(--gold2)'); }
+    if(op&&op.operative){ log('✦ FORGED — "'+name+'" walks into Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills. Press ⚡ AWAKEN to put it to work.','var(--gold2)'); offerEditTools(op.operative); }
     else log('⚠ '+((op&&op.error)||'forge failed'),'var(--ember)');
   }catch(e){ log('⚠ '+e.message,'var(--ember)'); }
   btn.disabled=false;
@@ -379,7 +386,27 @@ $('awakenBtn').onclick=async()=>{
 };
 
 // boot
-loadModel(); loadSkills(); vaultStatus();
+loadModel(); loadSkills(); vaultStatus(); updCount();
+
+// ── Part B: expose an "Edit Tools" affordance for the just-forged operative.
+//    forge.html has no forged-agents list, so we surface a one-off button in the
+//    console after a successful forge; the dashboard wires its own buttons later.
+//    Requires agent-editor.{js,css} to be included on the host page.
+window.SHADDAI_FORGE_LAST = window.SHADDAI_FORGE_LAST || null;
+function offerEditTools(op){
+  try{
+    if(!op || !op.id) return;
+    window.SHADDAI_FORGE_LAST = op;
+    const s=$('scroll'); if(!s) return;
+    let b=document.getElementById('editToolsBtn');
+    if(!b){ b=document.createElement('button'); b.id='editToolsBtn'; b.className='awaken';
+      b.style.cssText='flex:0 0 auto;padding:6px 12px;font-size:11px;margin-left:auto';
+      s.appendChild(b); }
+    b.textContent='✎ Edit Tools';
+    b.onclick=()=>{ if(window.SHADDAI_AGENT_EDITOR&&window.SHADDAI_AGENT_EDITOR.open){ window.SHADDAI_AGENT_EDITOR.open(op.id, capOf()); }
+      else log('tool editor not loaded on this page — open it from the dashboard.','var(--ember)'); };
+  }catch(e){}
+}
 </script>
 </body>
 </html>

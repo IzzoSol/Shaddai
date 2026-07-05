@@ -7,19 +7,33 @@
  *   // t.update(time) -> per-frame shimmer (cheap, optional)
  *
  * Design goals:
- *   - ONE merged ground mesh (~820x820, ~220x220 segs), rotateX(-PI/2) onto XZ plane.
+ *   - ONE merged ground mesh (~820x820, ~140x140 segs), rotateX(-PI/2) onto XZ plane.
  *   - The GRID biome center (~within 120u of origin) stays FLAT (height ~ 0) so the
  *     plaza/agents/buildings sit level. Elevation ramps up smoothly OUTSIDE the grid.
  *   - heightAt(x,z) shares the SAME elevation() the geometry uses, so the surface and
  *     the height query are identical (no drift).
  */
 window.buildWorldTerrain = function (THREE, scene, layout) {
+  var _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const SIZE = 820;          // world units across (X and Z)
-  const SEGS = 220;          // grid resolution
+  // PERF: SEGS 220→140. The vertex-build loop is the dominant load cost (heavy
+  // per-vertex work × vertexCount). 221²=48,841 → 141²=19,881 verts (~59% fewer).
+  // Shortest terrain feature wavelength ≈ 2π/0.09 ≈ 70u; at 140 segs a cell is
+  // 820/140 ≈ 5.9u (~12 samples/wave) so the visible silhouette is unchanged.
+  // heightAt() is a SEPARATE analytic function — its VALUES are not affected.
+  const SEGS = 140;          // grid resolution (visual mesh only)
   const MAX_H = 8;           // modest max amplitude (~ +/- 8)
 
   const GRID_FLAT_R = 120;   // fully flat radius around grid center
   const GRID_RAMP   = 70;    // smooth ramp-out distance past the flat radius
+
+  // PERF: precomputed squared thresholds so gridMask() can cull with cheap
+  // squared-distance compares (avoids a Math.hypot/sqrt on the hot heightAt path
+  // for the common flat-plaza case). Identical results — sqrt is still taken only
+  // inside the narrow ramp band where the actual distance is needed.
+  const GRID_FLAT_R2 = GRID_FLAT_R * GRID_FLAT_R;
+  const GRID_OUTER   = GRID_FLAT_R + GRID_RAMP;
+  const GRID_OUTER2  = GRID_OUTER * GRID_OUTER;
 
   // ── cheap deterministic value noise (no allocation, no external assets) ──
   function hash2(x, z) {
@@ -38,15 +52,15 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
 
   // Smooth 0..1 weight that is 0 inside the flat grid zone and 1 once fully outside.
   function gridMask(x, z) {
-    const d = Math.hypot(x, z); // grid center is [0,0]
-    if (d <= GRID_FLAT_R) return 0;
-    if (d >= GRID_FLAT_R + GRID_RAMP) return 1;
+    const d2 = x * x + z * z;             // grid center is [0,0]; squared → no sqrt yet
+    if (d2 <= GRID_FLAT_R2) return 0;     // flat core (identical to d <= GRID_FLAT_R)
+    if (d2 >= GRID_OUTER2)  return 1;     // fully outside (identical to d >= outer)
+    const d = Math.sqrt(d2);              // sqrt only inside the ramp band
     return smooth((d - GRID_FLAT_R) / GRID_RAMP);
   }
 
-  // ── THE shared elevation function (geometry + heightAt both call this) ──
-  // Returns a Y height in world units. Flat (~0) in the grid core; biome-flavored hills out.
-  function elevation(x, z) {
+  // ── Raw terrain elevation (no building pads) — biome noise + grid mask only ──
+  function rawElevation(x, z) {
     const mask = gridMask(x, z);
     if (mask <= 0) return 0;
 
@@ -84,6 +98,69 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     return h * mask; // ramp in smoothly from the flat grid edge
   }
 
+  // ── Building foundation pads ─────────────────────────────────────────────────
+  // Each building (7 agent sectors + bazaar) gets a level clearing carved into the
+  // terrain. Within PAD_R the ground is forced to the natural height AT the pad
+  // center (so the pad follows the landscape "grade" rather than hard-cutting to 0).
+  // From PAD_R to PAD_R+PAD_RAMP a smooth (S-curve) ramp blends back to natural
+  // terrain — no cliffs, no seams. Both geometry vertices and heightAt() call the
+  // same elevation() so they stay perfectly in sync.
+  const PAD_R    = 55;  // flat inner radius around each building (world units)
+  const PAD_RAMP = 22;  // blend-out distance past PAD_R before returning to nature
+  // PERF: squared outer cull radius so the per-vertex/per-query pad loop rejects
+  // out-of-range pads with a squared-distance compare (no sqrt). Same result set.
+  const PAD_LIM   = PAD_R + PAD_RAMP;
+  const PAD_LIM2  = PAD_LIM * PAD_LIM;
+
+  // Precompute pad list once — cheap per-vertex O(N) where N ≤ 9.
+  const _pads = (function () {
+    var list = [];
+
+    function addPad(cx, cz) {
+      list.push({ cx: cx, cz: cz, h: rawElevation(cx, cz) });
+    }
+
+    // 7 agent sectors (pos = [x, z])
+    if (layout && Array.isArray(layout.sectors)) {
+      for (var si = 0; si < layout.sectors.length; si++) {
+        var s = layout.sectors[si];
+        if (s.pos) addPad(s.pos[0], s.pos[1]);
+      }
+    }
+
+    // Bazaar landmark (pos = [x, z])
+    if (layout && typeof layout.landmark === 'function') {
+      var baz = layout.landmark('bazaar');
+      if (baz && baz.pos) addPad(baz.pos[0], baz.pos[1]);
+    }
+
+    return list;
+  }());
+
+  // ── THE shared elevation function (geometry + heightAt both call this) ──────
+  // Returns a Y height in world units. Flat (~0) in the grid core; biome hills out;
+  // foundation pads are level clearings around every building.
+  function elevation(x, z) {
+    const rawH = rawElevation(x, z);
+
+    // Find the highest pad influence at (x, z) — take max so overlapping pads merge.
+    var maxInf = 0;
+    var padH   = 0;
+    for (var pi = 0; pi < _pads.length; pi++) {
+      var p = _pads[pi];
+      var ddx = x - p.cx, ddz = z - p.cz;
+      var d2 = ddx * ddx + ddz * ddz;
+      if (d2 >= PAD_LIM2) continue;                 // cheap squared cull (no sqrt)
+      var d = Math.sqrt(d2);                         // sqrt only for in-range pads
+      var inf = d <= PAD_R ? 1 : 1 - smooth((d - PAD_R) / PAD_RAMP);
+      if (inf > maxInf) { maxInf = inf; padH = p.h; }
+    }
+
+    if (maxInf <= 0) return rawH;
+    // Blend: influence=1 → pad height; influence=0 → natural terrain
+    return rawH + (padH - rawH) * maxInf;
+  }
+
   // ── build geometry ──
   const geo = new THREE.PlaneGeometry(SIZE, SIZE, SEGS, SEGS);
   geo.rotateX(-Math.PI / 2); // plane now lies on XZ, normals up
@@ -94,7 +171,8 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
 
   const tmpColor = new THREE.Color();
   const biomeColor = new THREE.Color();
-  const coreColor = new THREE.Color(0.06, 0.13, 0.18);  // dark digital plaza floor
+  const coreColor       = new THREE.Color(0.06, 0.13, 0.18);  // dark digital plaza floor
+  const foundationColor = new THREE.Color(0.19, 0.16, 0.12);  // packed-earth / stone clearing
 
   for (let i = 0; i < vCount; i++) {
     const x = pos.getX(i);
@@ -102,28 +180,107 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     const y = elevation(x, z);
     pos.setY(i, y);
 
-    // ── vertex color: SMOOTHLY blend ALL biome colors by inverse-distance (no hard seams = transitions) ──
+    // ── BIOME COLOR: Gaussian weights so the nearest biome dominates ──────────
+    // (Old: 1/(d²k+c) averaged ALL biomes → muddy grey-brown. Fix: exp(-d²·k)
+    //  keeps each vertex solidly in its biome's hue family while still blending
+    //  smoothly at district boundaries.)
     let wr = 0, wg = 0, wb = 0, wsum = 0;
     for (const bb of layout.biomes) {
       const dx = x - bb.center[0], dz = z - bb.center[1];
-      const w = 1 / (((dx * dx + dz * dz) * 0.00045) + 0.6);  // soft falloff -> smooth blends
+      const w = Math.exp(-(dx * dx + dz * dz) * 0.0000185); // Gaussian σ≈230u
       biomeColor.setHex(bb.color);
       wr += biomeColor.r * w; wg += biomeColor.g * w; wb += biomeColor.b * w; wsum += w;
     }
-    tmpColor.setRGB(wr / wsum, wg / wsum, wb / wsum);
-    const shade = THREE.MathUtils.clamp(0.5 + (y / MAX_H) * 0.5, 0.25, 1.1);
-    tmpColor.multiplyScalar(shade);
+    if (wsum > 0) { wr /= wsum; wg /= wsum; wb /= wsum; }
 
-    // ── low-frequency large-scale blotch: breaks up flat biome fills so the
-    //    ground reads as weathered terrain (patches of lighter / darker soil) ──
-    const blotch =
-        (valueNoise(x * 0.006 + 11.3, z * 0.006 - 7.1) - 0.5) * 0.85
-      + (valueNoise(x * 0.018 - 3.7, z * 0.018 + 5.9) - 0.5) * 0.35;
-    tmpColor.multiplyScalar(1 + blotch * 0.18);
+    // ── MULTI-SCALE NOISE (shared across several passes, compute once) ────────
+    const cn1 = valueNoise(x * 0.007 + 3.1,  z * 0.007 - 8.3);   // large patches
+    const cn2 = valueNoise(x * 0.023 + 17.4, z * 0.023 + 2.7);   // medium mottling
+    const cn3 = valueNoise(x * 0.057 - 6.8,  z * 0.057 + 11.2);  // fine grain
+
+    // ── BIOME-SPECIFIC HUE DRIFT ─────────────────────────────────────────────
+    // Each biome gets a secondary color push within its hue family so the ground
+    // reads as real material variation (not a solid color fill).
+    const biome = layout.biomeAt(x, z);
+    let dr = 0, dg = 0, db = 0;
+    switch (biome.id) {
+      case 'forest': {
+        // warm leaf-litter patches vs cooler moss shadows
+        const t = cn2 * 0.75 + cn3 * 0.25;
+        dr = (t - 0.5) * 0.12; dg = (t - 0.5) * 0.07; db = -(t - 0.5) * 0.04;
+        break;
+      }
+      case 'arctic': {
+        // frost-blue veins vs bare grey rock
+        const t = valueNoise(x * 0.014 + 99.1, z * 0.009 - 40.2);
+        db = (t - 0.5) * 0.14; dr = -(t - 0.5) * 0.05;
+        break;
+      }
+      case 'desert': {
+        // directional dune bands: rust-orange crest vs pale-sand trough
+        const band = Math.sin(x * 0.04 + z * 0.015) * 0.5 + 0.5;
+        dr = (band - 0.5) * 0.14; dg = (band - 0.5) * 0.05; db = -(band - 0.5) * 0.08;
+        break;
+      }
+      case 'void': {
+        // deep-purple flicker vs muted-blue swells
+        const t = cn1 * 0.6 + cn3 * 0.4;
+        dr = (t - 0.5) * 0.08; db = (t - 0.5) * 0.14;
+        break;
+      }
+      default: break;
+    }
+
+    // ── ELEVATION SHADE: valleys darken, ridge crests lighten ────────────────
+    const elevShade = THREE.MathUtils.clamp(0.68 + (y / MAX_H) * 0.38, 0.40, 1.12);
+
+    // ── LARGE-SCALE BLOTCH: soil-patch color variation (stronger than before) ─
+    // Range ±0.425 → multiplier 1 ± 0.119  (was ±0.85 → mult 1 ± 0.153 but
+    // at original 0.18 scale = 1 ± 0.027 — extremely subtle). New: ±0.28 scale.
+    const blotch = (cn1 - 0.5) * 0.60 + (cn2 - 0.5) * 0.25; // ≈ ±0.425
+
+    // ── SLOPE DARKENING: cliff/steep faces read darker (build-time only) ──────
+    // 4 extra elevation() samples per vertex — cheap at build time, zero cost in update().
+    const SP = 3.8;
+    const sL = elevation(x - SP, z), sR = elevation(x + SP, z);
+    const sD = elevation(x, z - SP), sU = elevation(x, z + SP);
+    const slope = Math.hypot(sR - sL, sU - sD) / (2 * SP);
+    const slopeDarken = THREE.MathUtils.clamp(1 - slope * 0.16, 0.54, 1.0);
+
+    tmpColor.setRGB(
+      THREE.MathUtils.clamp(wr + dr, 0, 1),
+      THREE.MathUtils.clamp(wg + dg, 0, 1),
+      THREE.MathUtils.clamp(wb + db, 0, 1)
+    );
+    tmpColor.multiplyScalar(elevShade * (1 + blotch * 0.28) * slopeDarken);
+
+    // ── GRID PLAZA CORE: clean dark digital floor (smooth eased blend) ────────
     const dCore = Math.hypot(x, z);
     if (dCore <= GRID_FLAT_R) {
-      // grid plaza core stays a dark digital floor (blends out to the biome ring)
-      tmpColor.lerp(coreColor, 1 - (dCore / GRID_FLAT_R) * 0.55);
+      // smooth() on the weight gives an eased ramp instead of a linear smear
+      const cw = smooth(1 - (dCore / GRID_FLAT_R) * 0.55);
+      tmpColor.lerp(coreColor, cw);
+    }
+
+    // ── BUILDING FOUNDATION PADS: subtle packed-earth clearing tint ──────────
+    // Gives each building pad an intentional "cleared ground" read without being
+    // jarring — a gentle desaturated warm-stone shift that fades with the ramp.
+    {
+      var _maxPadInf = 0;
+      for (var _pi = 0; _pi < _pads.length; _pi++) {
+        var _p = _pads[_pi];
+        var _ddx = x - _p.cx, _ddz = z - _p.cz;
+        var _d2 = _ddx * _ddx + _ddz * _ddz;
+        if (_d2 >= PAD_LIM2) continue;               // squared cull (no sqrt)
+        var _d = Math.sqrt(_d2);
+        var _inf = _d <= PAD_R ? 1 : 1 - smooth((_d - PAD_R) / PAD_RAMP);
+        if (_inf > _maxPadInf) _maxPadInf = _inf;
+      }
+      if (_maxPadInf > 0) {
+        // Subtle blend: at full influence only push 35% toward the foundation tone
+        // so biome colour still reads through (not a solid grey stamp).
+        tmpColor.lerp(foundationColor, _maxPadInf * 0.35);
+      }
     }
 
     colors[i * 3 + 0] = tmpColor.r;
@@ -153,7 +310,11 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
   }
 
   function makeDetailTex() {
-    const S = 512;
+    // PERF: S 512→256. This tex tiles 60× across the world (each tile <14px on
+    // screen) and is usually replaced async by ground-stone.png, so a 256²
+    // procedural fallback is visually indistinguishable while cutting the build
+    // pixel loop 4× (262k→65k px). Speckle counts scaled to keep the same density.
+    const S = 256;
     const c = document.createElement('canvas'); c.width = c.height = S;
     const g = c.getContext('2d');
 
@@ -162,21 +323,27 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     for (let y = 0; y < S; y++) {
       for (let x = 0; x < S; x++) {
         const n = detailField(x / S, y / S);
-        const base = 198 + (n - 0.5) * 46; // crisper mottle (wider range than before)
+        // Wider range than before (163–221) for more surface contrast.
+        // Slight warm-R / cool-B split gives the detail map subtle color temperature
+        // variation so the ground surface reads as real material (not a grey wash).
+        const base = 192 + (n - 0.5) * 58;
         const i = (y * S + x) * 4;
-        d[i] = d[i + 1] = d[i + 2] = base;
+        d[i]     = Math.min(255, base + 6);  // R: slightly warm (soil warmth)
+        d[i + 1] = base;                      // G: neutral
+        d[i + 2] = Math.max(0,   base - 7);  // B: slightly cool (shadowed pores)
         d[i + 3] = 255;
       }
     }
     g.putImageData(img, 0, 0);
 
     // two-scale speckle for material micro-grain — bright grit + dark pits
-    for (let i = 0; i < 14000; i++) {
+    // (counts scaled to the 256² canvas to preserve the original grain density)
+    for (let i = 0; i < 3500; i++) {
       const v = 180 + (Math.random() * 60 | 0);
       g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.5)';
       g.fillRect((Math.random() * S) | 0, (Math.random() * S) | 0, 1, 1);
     }
-    for (let i = 0; i < 2600; i++) {
+    for (let i = 0; i < 650; i++) {
       g.fillStyle = 'rgba(60,60,60,0.28)';
       g.fillRect((Math.random() * S) | 0, (Math.random() * S) | 0, 2, 2);
     }
@@ -192,13 +359,17 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
   // Procedural tangent-space normal map derived from the SAME field, giving the
   // flat ground subtle surface relief under the scene lights (no extra geometry).
   function makeNormalTex() {
-    const S = 256;
+    // PERF: S 256→128. Each pixel evaluates the 6-term detailField 4× (central
+    // differences), so this is the priciest build texture. 128² cuts it 4×
+    // (65k→16k px × 24 trig terms). Tiled 60× and used only for subtle micro-
+    // relief under light → the look is unchanged.
+    const S = 128;
     const c = document.createElement('canvas'); c.width = c.height = S;
     const g = c.getContext('2d');
     const img = g.createImageData(S, S);
     const d = img.data;
     const e = 1 / S;          // sample step
-    const STR = 1.7;          // bump strength
+    const STR = 2.3;          // bump strength (raised from 1.7 → more tactile micro-relief)
     for (let y = 0; y < S; y++) {
       for (let x = 0; x < S; x++) {
         const u = x / S, v = y / S;
@@ -227,30 +398,389 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     return t; // normal maps stay in linear space (no colorSpace set)
   }
 
+  // ── procedural Tron/neon grid texture (client-side canvas, zero deps) ──
+  // Used as a guaranteed fallback when /assets/textures/tron/albedo.png is
+  // not yet generated by the HF FLUX script. Emits a seamless tileable dark
+  // floor with glowing cyan grid lines that reads as a Tron sim surface.
+  function makeTronTex() {
+    const S = 512;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+
+    // near-black background
+    g.fillStyle = '#00040a';
+    g.fillRect(0, 0, S, S);
+
+    // primary cyan grid (every 32px → ~16 cells across → tiles seamlessly at S)
+    const CELL = 32;
+    g.strokeStyle = '#00d4e8';
+    g.lineWidth = 1;
+    g.shadowColor = '#00e5ff';
+    g.shadowBlur = 5;
+    for (let i = 0; i <= S; i += CELL) {
+      g.beginPath(); g.moveTo(i, 0); g.lineTo(i, S); g.stroke();
+      g.beginPath(); g.moveTo(0, i); g.lineTo(S, i); g.stroke();
+    }
+
+    // brighter sub-grid (every 8px, very dim)
+    g.strokeStyle = 'rgba(0,180,200,0.18)';
+    g.shadowBlur = 0;
+    g.lineWidth = 0.5;
+    const SUB = 8;
+    for (let i = SUB; i < S; i += SUB) {
+      if (i % CELL === 0) continue;
+      g.beginPath(); g.moveTo(i, 0); g.lineTo(i, S); g.stroke();
+      g.beginPath(); g.moveTo(0, i); g.lineTo(S, i); g.stroke();
+    }
+
+    // bright intersection nodes
+    g.shadowColor = '#00ffff';
+    g.shadowBlur = 10;
+    g.fillStyle = '#00ffff';
+    for (let ix = 0; ix <= S; ix += CELL) {
+      for (let iy = 0; iy <= S; iy += CELL) {
+        g.beginPath(); g.arc(ix, iy, 2, 0, Math.PI * 2); g.fill();
+      }
+    }
+
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(60, 60);
+    t.anisotropy = 8;
+    if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
     map: makeDetailTex(),                  // tiled detail multiplies the biome vertex color
     normalMap: makeNormalTex(),            // procedural micro-relief under light
     flatShading: false,
-    roughness: 0.82,
-    metalness: 0.08,
+    roughness: 0.78,      // slight drop (0.82→0.78): more light play, still non-metallic
+    metalness: 0.04,      // reduced (0.08→0.04): ground is organic, not conductive
     emissive: new THREE.Color(0x0a1726),  // faint cool glow so valleys never read pure black
-    emissiveIntensity: 0.5,
+    emissiveIntensity: 0.22, // CRITICAL drop (0.5→0.22): was washing out all terrain shadow
   });
-  if (mat.normalScale) mat.normalScale.set(0.6, 0.6);
+  if (mat.normalScale) mat.normalScale.set(0.85, 0.85); // raised (0.6→0.85): more tactile depth
+
+  // ── cached originals for 'grid' revert ──
+  var _origDetailTex  = mat.map;
+  var _origNormalTex  = mat.normalMap;
+
+  // ── FLUX-baked GROUND STONE albedo (weathered plaza paving) ─────────────────
+  // Loaded ONCE, async, shared. Replaces the procedural detail map as the main
+  // ground albedo. vertexColors stay ON so the per-biome ground colours still
+  // multiply through the stone → the paving reads cohesive with each district
+  // (subtle tint toward the existing ground colour) instead of a flat photo.
+  // Fine tiling (repeat 64) keeps the stone grain crisp across the 820u world.
+  // On error the procedural detail texture is kept, so the ground never blanks.
+  (function loadGroundStone() {
+    new THREE.TextureLoader().load(
+      '/assets/textures/ground-stone.png',
+      function (tex) {
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(64, 64);                 // fine tile across the world
+        tex.anisotropy = 8;
+        if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+        mat.map = tex;
+        _origDetailTex = tex;                   // keep stone through 'grid' revert
+        // gentle warm-neutral tint so vertex-colour biome hues still lead and the
+        // paving never reads as a flat pasted image (cohesion with existing ground)
+        mat.color.setRGB(0.92, 0.90, 0.86);
+        mat.needsUpdate = true;
+      },
+      undefined,
+      function (/* err */) { /* keep procedural detail map on failure */ }
+    );
+  }());
 
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   mesh.name = 'world-terrain';
+  // PERF: the ground never moves — stop three.js recomposing its local matrix
+  // from position/quat/scale on every frame. Bake the identity matrix once.
+  mesh.matrixAutoUpdate = false;
+  mesh.updateMatrix();
   scene.add(mesh);
 
   // Expose the height query globally so sibling modules (e.g. world-biomes trees)
   // can seat props exactly on the surface without a new exported signature.
   window.WORLD_HEIGHT_AT = function (x, z) { return elevation(x, z); };
 
+  // ── FOUNDATION PLAZAS + APPROACH PATHS (static, visuals-only) ───────────────
+  // Each building gets a stone plaza disc DRAPED flush on the existing terrain
+  // height (read via elevation(), never modified) plus a paved approach walkway
+  // leading from the plaza edge toward world-center on the building's ENTRANCE
+  // (frontDir) side. Neon edge trim + inlay rings in each agent's colour.
+  //
+  // PERF: everything is baked ONCE here into just TWO merged meshes —
+  //   • one MeshStandardMaterial "stone" mesh  (all plaza discs + all paths)
+  //   • one MeshBasicMaterial   "neon"  mesh   (all edge/inlay rings + path lines)
+  // => 2 static draw calls total, shared geometry/material, zero per-frame work.
+  (function buildFoundations() {
+    var TAU2 = Math.PI * 2;
+
+    // Building collision half-widths (facade at footprint*0.46). Plaza extends
+    // ~15u beyond this so the building reads as founded on a real base plaza.
+    var HALF = {
+      SHADDAI: 76, NEXUS: 63, QUILL: 78, PIKADON: 65,
+      TURTLE: 63, ZEROX: 63, ORACLE: 62,
+    };
+    var PLAZA_MARGIN = 15;   // plaza radius = half + margin
+    var PATH_LEN     = 40;   // approach walkway length past the plaza rim
+    var PATH_HALF    = 12;   // approach walkway half-width
+
+    // draped surface offsets (tiny — flush, never block walking; heightAt untouched)
+    var Y_PLAZA = 0.10;
+    var Y_PATH  = 0.15;
+    var Y_NEON  = 0.24;
+
+    // ── merged buffers ──
+    var sPos = [], sIdx = [];                 // stone (plaza + path)
+    var nPos = [], nCol = [], nIdx = [];      // neon  (rings + path lines)
+
+    // Drape a triangle-fan DISC onto the terrain surface.
+    function addDisc(cx, cz, r, segs, yOff) {
+      var base = sPos.length / 3;
+      sPos.push(cx, elevation(cx, cz) + yOff, cz);      // center vertex
+      for (var i = 0; i <= segs; i++) {
+        var a = i / segs * TAU2;
+        var x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+        sPos.push(x, elevation(x, z) + yOff, z);
+      }
+      for (var k = 1; k <= segs; k++) sIdx.push(base, base + k, base + k + 1);
+    }
+
+    // Drape a thin ANNULUS (ring) onto the terrain — neon trim/inlay.
+    function addRing(cx, cz, rIn, rOut, segs, yOff, col) {
+      var base = nPos.length / 3;
+      for (var i = 0; i <= segs; i++) {
+        var a = i / segs * TAU2, ca = Math.cos(a), sa = Math.sin(a);
+        var xi = cx + ca * rIn,  zi = cz + sa * rIn;
+        var xo = cx + ca * rOut, zo = cz + sa * rOut;
+        nPos.push(xi, elevation(xi, zi) + yOff, zi);
+        nPos.push(xo, elevation(xo, zo) + yOff, zo);
+        nCol.push(col.r, col.g, col.b, col.r, col.g, col.b);
+      }
+      for (var s = 0; s < segs; s++) {
+        var b = base + s * 2;
+        nIdx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
+      }
+    }
+
+    // Drape a subdivided QUAD STRIP from A→B (follows terrain) into a buffer set.
+    // target = 'stone' (paved path) or 'neon' (center light strip).
+    function addStrip(x0, z0, x1, z1, halfW, yOff, target, col) {
+      var dx = x1 - x0, dz = z1 - z0;
+      var len = Math.hypot(dx, dz) || 1;
+      var ux = dx / len, uz = dz / len;      // along
+      var px = -uz, pz = ux;                 // perpendicular
+      var along = Math.max(2, Math.round(len / 6));
+      var across = 4, cols = across + 1;
+      var toNeon = (target === 'neon');
+      var pArr = toNeon ? nPos : sPos;
+      var iArr = toNeon ? nIdx : sIdx;
+      var base = pArr.length / 3;
+      for (var i = 0; i <= along; i++) {
+        var t = i / along, mx = x0 + dx * t, mz = z0 + dz * t;
+        for (var j = 0; j <= across; j++) {
+          var off = (j / across - 0.5) * (halfW * 2);
+          var x = mx + px * off, z = mz + pz * off;
+          pArr.push(x, elevation(x, z) + yOff, z);
+          if (toNeon) nCol.push(col.r, col.g, col.b);
+        }
+      }
+      for (var a = 0; a < along; a++) {
+        for (var b2 = 0; b2 < across; b2++) {
+          var c0 = base + a * cols + b2;
+          iArr.push(c0, c0 + cols, c0 + 1, c0 + 1, c0 + cols, c0 + cols + 1);
+        }
+      }
+    }
+
+    var col = new THREE.Color();
+    var sectors = (layout && Array.isArray(layout.sectors)) ? layout.sectors : [];
+    for (var si = 0; si < sectors.length; si++) {
+      var sec = sectors[si];
+      if (!sec.pos || !(sec.code in HALF)) continue;
+      var cx = sec.pos[0], cz = sec.pos[1];
+      var plazaR = HALF[sec.code] + PLAZA_MARGIN;
+
+      // agent neon colour (bright, saturated for the unlit neon mesh)
+      col.setHex(sec.color || 0x27e0ff);
+
+      // frontDir = from building toward world-center [0,0]; SHADDAI(center) faces -Z.
+      var fx = -cx, fz = -cz, fl = Math.hypot(fx, fz);
+      if (fl < 1e-3) { fx = 0; fz = -1; } else { fx /= fl; fz /= fl; }
+
+      // 1) foundation plaza disc (stone)
+      addDisc(cx, cz, plazaR, 48, Y_PLAZA);
+
+      // outer edge trim + inner inlay ring (neon)
+      addRing(cx, cz, plazaR - 3.0, plazaR - 0.4, 48, Y_NEON, col);
+      addRing(cx, cz, plazaR * 0.52, plazaR * 0.52 + 1.4, 48, Y_NEON, col);
+
+      // 2) approach walkway from plaza rim outward toward center (entrance side)
+      var ax = cx + fx * (plazaR - 2), az = cz + fz * (plazaR - 2);
+      var bx = cx + fx * (plazaR + PATH_LEN), bz = cz + fz * (plazaR + PATH_LEN);
+      addStrip(ax, az, bx, bz, PATH_HALF, Y_PATH, 'stone', col);
+      // 3) center light strip down the walkway (neon accent)
+      addStrip(ax, az, bx, bz, 1.1, Y_NEON, 'neon', col);
+    }
+
+    if (sIdx.length) {
+      var sGeo = new THREE.BufferGeometry();
+      sGeo.setAttribute('position', new THREE.Float32BufferAttribute(sPos, 3));
+      sGeo.setIndex(sIdx);
+      sGeo.computeVertexNormals();
+      var sMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1e26, roughness: 0.86, metalness: 0.06,
+        emissive: 0x05070c, emissiveIntensity: 0.35,
+        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+      });
+      var sMesh = new THREE.Mesh(sGeo, sMat);
+      sMesh.receiveShadow = true;
+      sMesh.name = 'world-foundations';
+      sMesh.matrixAutoUpdate = false; sMesh.updateMatrix(); // static plaza/paths
+      scene.add(sMesh);
+    }
+
+    if (nIdx.length) {
+      var nGeo = new THREE.BufferGeometry();
+      nGeo.setAttribute('position', new THREE.Float32BufferAttribute(nPos, 3));
+      nGeo.setAttribute('color', new THREE.Float32BufferAttribute(nCol, 3));
+      nGeo.setIndex(nIdx);
+      var nMat = new THREE.MeshBasicMaterial({
+        vertexColors: true, transparent: true, opacity: 0.9,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+      });
+      if ('toneMapped' in nMat) nMat.toneMapped = false; // keep neon vivid
+      var nMesh = new THREE.Mesh(nGeo, nMat);
+      nMesh.name = 'world-foundation-neon';
+      nMesh.matrixAutoUpdate = false; nMesh.updateMatrix(); // static neon trim/paths
+      scene.add(nMesh);
+    }
+  }());
+
+  // ── applyGround(ground) — shared contract for world-themes.js ──────────────
+  // ground = { type:'pbr'|'tron'|'grid', dir?:string, color?:number, tint?:number }
+  //
+  // 'pbr'  → load <dir>/albedo.jpg + normal.jpg + rough.jpg from Poly Haven
+  //           sets into mat.map / normalMap / roughnessMap; repeat=60; SRGB on albedo.
+  // 'tron' → load /assets/textures/tron/albedo.png (FLUX baked) or fall back to
+  //           procedural canvas; cyan-on-black emissive floor look.
+  // 'grid' → restore original procedural makeDetailTex/makeNormalTex + vertex colors.
+  //
+  // All loading is LAZY/ASYNC (TextureLoader). On error the previous texture is
+  // kept so the ground never goes blank. Does NOT block first paint.
+  function applyGround(ground) {
+    var REPEAT = 60;
+    var loader = new THREE.TextureLoader();
+
+    // helper: load a texture async; resolve(null) on error → caller keeps previous
+    function loadTex(url, isSRGB) {
+      return new Promise(function (resolve) {
+        loader.load(
+          url,
+          function (tex) {
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(REPEAT, REPEAT);
+            tex.anisotropy = 8;
+            if (isSRGB && THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+            resolve(tex);
+          },
+          undefined,
+          function (/* err */) { resolve(null); } // guard: keep previous on error
+        );
+      });
+    }
+
+    // ── 'grid' → true revert to original procedural look ───────────────────
+    if (ground.type === 'grid') {
+      mat.vertexColors = true;
+      mat.map           = _origDetailTex;
+      mat.normalMap     = _origNormalTex;
+      mat.roughnessMap  = null;
+      mat.color.setHex(0xffffff);
+      mat.roughness        = 0.78;   // matches tuned init value
+      mat.metalness        = 0.04;   // matches tuned init value
+      mat.emissive.setHex(0x0a1726);
+      mat.emissiveIntensity = 0.22;  // matches tuned init value
+      if (mat.normalScale) mat.normalScale.set(0.85, 0.85); // matches tuned init value
+      mat.needsUpdate = true;
+      return;
+    }
+
+    // ── 'pbr' → Poly Haven photoreal set ────────────────────────────────────
+    if (ground.type === 'pbr') {
+      var dir  = ground.dir  || '/assets/textures/grass';
+      var tint = (ground.tint !== undefined) ? ground.tint : 0xffffff;
+
+      mat.roughness        = 0.80;
+      mat.metalness        = 0.04;
+      mat.emissive.setHex(0x0a1726);
+      mat.emissiveIntensity = 0.18;
+      if (mat.normalScale) mat.normalScale.set(0.8, 0.8);
+
+      // albedo (SRGB color space)
+      loadTex(dir + '/albedo.jpg', true).then(function (tex) {
+        if (tex) {
+          mat.map = tex;
+          mat.color.setHex(tint);   // white = show albedo true; tint = multiply
+        }
+        mat.needsUpdate = true;
+      });
+
+      // normal map (stays linear)
+      loadTex(dir + '/normal.jpg', false).then(function (tex) {
+        if (tex) mat.normalMap = tex;
+        mat.needsUpdate = true;
+      });
+
+      // roughness map (linear)
+      loadTex(dir + '/rough.jpg', false).then(function (tex) {
+        if (tex) mat.roughnessMap = tex;
+        mat.needsUpdate = true;
+      });
+
+      return;
+    }
+
+    // ── 'tron' → neon cyan grid floor ───────────────────────────────────────
+    if (ground.type === 'tron') {
+      mat.vertexColors      = false;
+      mat.roughness         = 0.25;
+      mat.metalness         = 0.65;
+      mat.roughnessMap      = null;
+      mat.emissive.setHex(0x001a2e);
+      mat.emissiveIntensity = 0.75;
+      mat.color.setHex(0x00e5ff);          // cyan tint over the dark albedo
+      if (mat.normalScale) mat.normalScale.set(0.35, 0.35);
+
+      // try FLUX-baked albedo; guaranteed procedural fallback on error
+      loadTex('/assets/textures/tron/albedo.png', true).then(function (tex) {
+        mat.map = tex || makeTronTex();    // never null: always get a floor
+        mat.needsUpdate = true;
+      });
+
+      // optional normal map (generated alongside albedo by the script)
+      loadTex('/assets/textures/tron/normal.jpg', false).then(function (tex) {
+        if (tex) { mat.normalMap = tex; mat.needsUpdate = true; }
+        // no normal = fine; existing procedural normal still set from mat init
+      });
+
+      return;
+    }
+
+    // unknown type → no-op (safe default)
+  }
+
+  console.log('[BENCH] world-terrain built in', Math.round(((performance || Date).now() - _t0)), 'ms');
+
   return {
     mesh,
     heightAt: function (x, z) { return elevation(x, z); },
     update: function (/* t */) { /* no-op; surface is static. */ },
+    applyGround: applyGround,
   };
 };

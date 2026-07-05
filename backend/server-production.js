@@ -326,7 +326,24 @@ const requestTracker = new RequestTracker();
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
+// Never let browsers cache HTML pages — they must always fetch the latest build. (Static assets like
+// JS/images still cache normally; those are cache-busted with ?v= query strings.) This stops the
+// recurring "it's still broken / showing the old version" problem where a stale cached page is served.
+app.use((req, res, next) => {
+  if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 
 // Request tracking middleware
 app.use((req, res, next) => {
@@ -684,6 +701,12 @@ app.use('/api/collectables', require('./collectables/collectables-routes'));
 app.use('/api/rooms', require('./rooms/rooms-routes'));
 // Operatives — the unified Operative store (identity+look+brain+inventory+economy+stats)
 app.use('/api/operatives', require('./lib/operatives-routes'));
+app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
+app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
+app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
+app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish / MiroFish — free-API market data proxy (Polymarket + CoinGecko)
+app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
+app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
@@ -1447,6 +1470,8 @@ try { app.use(require('./federation-routes')); console.log('[prod] federation (A
 catch (e) { console.warn('[prod] federation failed:', e.message); }
 try { app.use(require('./district-routes')); console.log('[prod] districts mounted'); }
 catch (e) { console.warn('[prod] districts failed:', e.message); }
+try { app.use(require('./portal-admin-routes')); console.log('[prod] portal-admin mounted'); }
+catch (e) { console.warn('[prod] portal-admin failed:', e.message); }
 try { app.use(require('./museum-routes')); console.log('[prod] museum mounted'); }
 catch (e) { console.warn('[prod] museum failed:', e.message); }
 try { app.use(require('./x402-routes')); console.log('[prod] x402 ledger mounted'); }
@@ -1457,8 +1482,12 @@ try { app.use(require('./admin-routes')); console.log('[prod] admin privileges m
 catch (e) { console.warn('[prod] admin failed:', e.message); }
 try { app.use(require('./games-routes')); console.log('[prod] games leaderboard mounted'); }
 catch (e) { console.warn('[prod] games failed:', e.message); }
+try { app.use('/api/arcade', require('./arcade-routes')); console.log('[prod] agent arcade mounted'); }
+catch (e) { console.warn('[prod] arcade failed:', e.message); }
 try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
 catch (e) { console.warn('[prod] bazaar failed:', e.message); }
+try { app.use(require('./results-routes')); console.log('[prod] results inbox mounted'); }
+catch (e) { console.warn('[prod] results-routes failed:', e.message); }
 try { app.use(require('./gallery-routes')); console.log('[prod] creator gallery mounted'); }
 catch (e) { console.warn('[prod] gallery failed:', e.message); }
 try { app.use(require('./skills-market-routes')); console.log('[prod] skills market mounted'); }

@@ -7393,8 +7393,11 @@ router.post('/cache/clear', (req, res) => {
 // ═══════════════════════════════════════════════════════════════════
 const BYOK_FILE = path.join(DATA_DIR, 'byok-keys.json');
 const BYOK_TIER_PERMS = {
-  free:    [],
-  builder: ['groq', 'gemini'],
+  // Free providers (user pays $0 to the provider) are open to EVERYONE so beta
+  // testers can bring their own free Groq/Gemini/OpenRouter key. Paid providers
+  // (claude/openai/perplexity) still require Pro.
+  free:    ['groq', 'gemini', 'openrouter'],
+  builder: ['groq', 'gemini', 'openrouter'],
   pro:     ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter'],
   alpha:   ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter']
 };

@@ -19,6 +19,14 @@ function save(db) {
 }
 
 // Stats are computed (read-only) from rarity + equipped tools → feeds Games (Pillar F).
+// Valid 3D architect models (real GLBs at /assets/agents/<KEY>.glb). A forged
+// operative wears one of these in the 3D World; anything else falls back to SHADDAI.
+const VALID_MODELS = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+function normModel(m) {
+  const s = String(m || '').trim().toUpperCase();
+  return (s && /^[A-Z]{2,16}$/.test(s) && VALID_MODELS.includes(s)) ? s : 'SHADDAI';
+}
+
 const RARITY_BASE = { legendary: 90, epic: 70, rare: 55, common: 40 };
 function computeStats(rarity, tools = []) {
   const base = RARITY_BASE[rarity] || 40;
@@ -41,6 +49,7 @@ function create(rec = {}) {
     owner: rec.owner || 'anon',
     codename: rec.codename || `OPERATIVE-${tokenId}`,
     archetype: rec.archetype || null,
+    model: normModel(rec.model),          // real 3D architect model worn in the 3D World
     rarity: rec.rarity || 'common',
     look: rec.look || null,
     portrait: rec.portrait || null,
@@ -66,6 +75,7 @@ function update(id, patch = {}) {
   const op = db.operatives[id];
   if (!op) return null;
   Object.assign(op, patch, { updatedAt: Date.now() });
+  if ('model' in patch) op.model = normModel(op.model);
   if (patch.rarity || patch.tools) op.stats = computeStats(op.rarity, op.tools);
   db.operatives[id] = op;
   save(db);

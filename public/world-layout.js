@@ -50,6 +50,35 @@
       ['QUILL', 'ORACLE'],
     ],
 
+    // ── SPAWN PORTALS — one per area (GTA-style sky-dive drop points). ──
+    // SHADDAI = the Source at center (default spawn = inside the temple);
+    // the 6 agents sit on the exact hexagon vertices (same coords as their sectors).
+    // Each portal = { code, name, pos:[x,z], color, inside } where `inside` marks the
+    // default drop that lands the player INSIDE that building (SHADDAI temple).
+    spawnPortals: [
+      { code: 'SHADDAI', name: 'The Source Temple', pos: [0, 0],  color: 0xffcf4a, inside: true, isDefault: true },
+      { code: 'NEXUS',   name: 'The Navigator',     pos: FRONT_L, color: 0x34e5b0 },
+      { code: 'QUILL',   name: 'The Library',       pos: FRONT_R, color: 0xb98cff },
+      { code: 'ORACLE',  name: 'The Esoteric Wing', pos: SIDE_R,  color: 0xc084fc },
+      { code: 'TURTLE',  name: 'The Museum',        pos: BACK_R,  color: 0x1fd6c4 },
+      { code: 'PIKADON', name: 'The Aegis',         pos: BACK_L,  color: 0xff5a6e },
+      { code: 'ZEROX',   name: 'The Markets',       pos: SIDE_L,  color: 0x27e0ff },
+    ],
+
+    // ── LANDMARKS — non-agent structures placed on exact geometry (no hand-typed magic coords). ──
+    // Bazaar (the walkable green ring & arch) sits SOUTH-WEST: −X=west, +Z=south. This mirrors the
+    // 3D BAZAAR zone (SHADDAI-WORLD-3D.html) so the minimap 'B' marker points at the real bazaar.
+    landmarks: [
+      { id: 'bazaar', name: 'The Bazaar', pos: [-100, 100], color: 0x00e5a0, footprint: 46, building: 'bazaar' },
+      { id: 'emblem', name: 'SH Emblem',  pos: [0, 0],   color: 0xffcf4a },
+    ],
+
+    // sky-dive drop framing (shared by world-spawn.js): camera start altitude + descent seconds
+    skydive: { altitude: 380, descendSec: 2.0, lookDown: true },
+
+    portal: function (code) { return this.spawnPortals.find(function (p) { return p.code === code; }); },
+    landmark: function (id) { return this.landmarks.find(function (l) { return l.id === id; }); },
+
     biomeAt: function (x, z) {
       var best = this.biomes[0], bd = Infinity;
       for (var i = 0; i < this.biomes.length; i++) {

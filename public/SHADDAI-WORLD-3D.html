@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>SHADDAI WORLD · 3D</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&family=Michroma&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
@@ -35,16 +36,50 @@
   .lbl .sk{font-family:'Share Tech Mono',monospace;font-size:8px;color:#cfe9ff;opacity:.85;margin-top:1px}
   .lbl .tag{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--gold);margin-top:1px;opacity:0}
   .lbl.near .tag{opacity:1}
-  /* galaxy intro */
-  #intro{position:fixed;inset:0;z-index:60;background:radial-gradient(circle at 50% 50%,#0a1430,#04060d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1s}
+  /* ── CINEMATIC INTRO ── */
+  #intro{position:fixed;inset:0;z-index:60;background:radial-gradient(120% 90% at 50% 42%,#0a1024 0%,#060a17 34%,#04060d 66%,#02030a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.7s ease-out;will-change:opacity;isolation:isolate}
+  #intro::before{content:'';position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.10) 3px,rgba(0,0,0,.10) 4px);pointer-events:none;mix-blend-mode:multiply}
+  #intro::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(130% 100% at 50% 50%,transparent 52%,rgba(3,5,14,.55) 82%,rgba(2,3,9,.92) 100%)}
   #intro.gone{opacity:0;pointer-events:none}
   #portalCv{position:absolute;inset:0;width:100%;height:100%}
-  #introInner{position:relative;z-index:2;text-align:center}
-  #introInner .big{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(30px,7vw,72px);letter-spacing:14px;color:#fff;text-shadow:0 0 40px rgba(255,207,74,.7)}
-  #introInner .big b{color:var(--gold)}
-  #enterBtn{margin-top:30px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:4px;color:#04060d;background:linear-gradient(90deg,var(--cyan),var(--gold));border:none;border-radius:8px;padding:14px 34px;cursor:pointer;box-shadow:0 0 30px rgba(39,224,255,.5);opacity:0;transition:opacity .6s;pointer-events:auto}
+  /* No box — content floats in the warp field. Two diagonal HUD corner-brackets frame it deliberately (never an accidental square). */
+  #introInner{position:relative;z-index:2;text-align:center;padding:52px 74px;--hud:rgba(39,224,255,.30)}
+  #introInner::before,#introInner::after{content:'';position:absolute;width:38px;height:38px;pointer-events:none;animation:iHud 3.6s ease-in-out infinite}
+  #introInner::before{top:0;left:8px;border-top:2px solid var(--hud);border-left:2px solid var(--hud);filter:drop-shadow(-1px -1px 6px rgba(39,224,255,.35))}
+  #introInner::after{bottom:0;right:8px;border-bottom:2px solid var(--hud);border-right:2px solid var(--hud);filter:drop-shadow(1px 1px 6px rgba(255,207,74,.22))}
+  #iBootLines{font-family:'JetBrains Mono','Share Tech Mono',monospace;font-weight:500;font-size:9px;letter-spacing:3.5px;color:rgba(120,236,255,.68);margin-bottom:22px;height:14px;overflow:hidden;opacity:0;text-transform:uppercase;animation:iFadeIn .5s ease .25s forwards;text-shadow:0 0 10px rgba(39,224,255,.4)}
+  #iBootLines::after{content:'_';margin-left:2px;animation:iCaret 1s steps(1) infinite}
+  /* Display title: gradient fill (top layer) + stroked outline layer + chromatic split copy = real depth */
+  #introInner .big{position:relative;display:inline-block;font-family:'Michroma','Orbitron',sans-serif;font-weight:400;font-size:clamp(28px,7vw,84px);letter-spacing:.17em;line-height:1.06;background:linear-gradient(100deg,#27e0ff 0%,#8fefff 20%,#ffffff 40%,#ffcf4a 60%,#c08cff 82%,#27e0ff 100%);background-size:230% auto;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 22px rgba(39,224,255,.5)) drop-shadow(0 0 58px rgba(255,207,74,.22)) drop-shadow(0 3px 2px rgba(0,0,0,.55));animation:iAssemble 1.9s cubic-bezier(.16,1,.3,1) both,iSheen 6.5s linear infinite,iGlitch 9s 3s infinite}
+  #introInner .big b{font-weight:400}
+  #introInner .big::before,#introInner .big::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;height:100%;letter-spacing:inherit;line-height:inherit;pointer-events:none}
+  /* neon-stroke outline sitting behind the fill = carved / embossed depth */
+  #introInner .big::before{-webkit-text-fill-color:transparent;color:transparent;-webkit-text-stroke:1.5px rgba(39,224,255,.40);z-index:-2;filter:drop-shadow(0 0 3px rgba(39,224,255,.45))}
+  /* chromatic-aberration ghost copy, drifts subtly */
+  #introInner .big::after{-webkit-text-fill-color:rgba(255,60,140,.28);color:rgba(255,60,140,.28);mix-blend-mode:screen;z-index:-1;animation:iChroma 3.4s ease-in-out infinite}
+  .bigtag{position:relative;font-family:'Chakra Petch','Share Tech Mono',monospace;font-weight:600;font-size:clamp(8px,1.35vw,13px);letter-spacing:6px;background:linear-gradient(90deg,#27e0ff,#c08cff 55%,#ffcf4a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;margin-top:20px;opacity:0;animation:iTag 1.3s cubic-bezier(.16,1,.3,1) 1.55s forwards,iSheen 8s linear 2.9s infinite;text-transform:uppercase;filter:drop-shadow(0 0 8px rgba(39,224,255,.3))}
+  /* thin luminous divider that draws itself in beneath the tagline */
+  .bigtag::after{content:'';position:absolute;left:50%;bottom:-11px;width:0;height:1px;background:linear-gradient(90deg,transparent,rgba(39,224,255,.7),rgba(255,207,74,.7),transparent);transform:translateX(-50%);box-shadow:0 0 8px rgba(39,224,255,.5);animation:iRule 1.1s cubic-bezier(.16,1,.3,1) 2.1s forwards}
+  @keyframes iRule{0%{width:0;opacity:0}100%{width:min(340px,60vw);opacity:1}}
+  #enterBtn{position:relative;margin-top:42px;font-family:'Chakra Petch','Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:7px;text-transform:uppercase;color:#03040c;background:linear-gradient(90deg,#27e0ff,#8fefff 28%,#ffcf4a 55%,#c08cff 78%,#27e0ff);background-size:220% 100%;border:none;border-radius:0;padding:19px 72px;clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,20px 100%,0 50%);cursor:pointer;opacity:0;transition:opacity .9s,transform .18s ease,filter .18s;pointer-events:auto;filter:drop-shadow(0 0 14px rgba(39,224,255,.5)) drop-shadow(0 0 34px rgba(255,207,74,.18));text-shadow:0 1px 0 rgba(255,255,255,.35);animation:iBtnShift 2.4s linear infinite,iBtnPulse 2s ease-in-out infinite}
+  #enterBtn::before{content:'';position:absolute;inset:-2px;clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,20px 100%,0 50%);padding:2px;background:linear-gradient(120deg,#27e0ff,#ffcf4a,#c08cff,#27e0ff);background-size:300% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:iBtnShift 2.4s linear infinite reverse;opacity:.9}
   #enterBtn.show{opacity:1}
-  #loadNote{margin-top:18px;font-size:10px;letter-spacing:3px;color:var(--cyan);opacity:.7}
+  #enterBtn.show:hover{transform:scale(1.06) translateY(-1px);filter:brightness(1.15) saturate(1.15)}
+  #enterBtn.show:active{transform:scale(1.02)}
+  #loadNote{margin-top:16px;font-size:9px;letter-spacing:4px;color:#9fe9ff;opacity:.6;text-transform:uppercase;font-family:'JetBrains Mono','Share Tech Mono',monospace}
+  @keyframes iFadeIn{0%{opacity:0}100%{opacity:1}}
+  @keyframes iCaret{0%,50%{opacity:1}51%,100%{opacity:0}}
+  /* HUD brackets breathe softly (opacity/scale) — deliberate, alive, never a static square */
+  @keyframes iHud{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:.8;transform:scale(1.05)}}
+  /* chromatic ghost drift */
+  @keyframes iChroma{0%,100%{transform:translate(-2px,1.5px)}50%{transform:translate(2px,-1.5px)}}
+  /* Title assembles from a blurred, wide, sunken state → snaps into crisp neon */
+  @keyframes iAssemble{0%{opacity:0;letter-spacing:.62em;transform:translateY(14px) scale(.94);filter:blur(16px) drop-shadow(0 0 26px rgba(39,224,255,.7))}45%{opacity:.85;letter-spacing:.30em;transform:translateY(3px) scale(.99);filter:blur(4px) drop-shadow(0 0 24px rgba(39,224,255,.55))}72%{letter-spacing:.145em;transform:translateY(0) scale(1.012);filter:blur(.5px) drop-shadow(0 0 30px rgba(255,207,74,.5))}100%{opacity:1;letter-spacing:.17em;transform:translateY(0) scale(1);filter:blur(0) drop-shadow(0 0 22px rgba(39,224,255,.5)) drop-shadow(0 0 58px rgba(255,207,74,.22)) drop-shadow(0 3px 2px rgba(0,0,0,.55))}}
+  @keyframes iSheen{0%{background-position:0% 50%}100%{background-position:230% 50%}}
+  @keyframes iGlitch{0%,86%,92%,100%{filter:drop-shadow(0 0 24px rgba(39,224,255,.45)) drop-shadow(0 0 62px rgba(255,207,74,.20));transform:translate(0,0) skewX(0)}87%{filter:drop-shadow(-5px 0 rgba(39,224,255,.85)) drop-shadow(5px 0 rgba(255,55,90,.8));transform:translate(2px,-1px) skewX(-3deg)}89%{filter:drop-shadow(5px 0 rgba(255,207,74,.9)) drop-shadow(-5px 0 rgba(39,224,255,.85));transform:translate(-2px,1px) skewX(3deg)}91%{filter:drop-shadow(-3px 0 rgba(192,132,252,.8)) drop-shadow(3px 0 rgba(39,224,255,.8));transform:translate(1px,0) skewX(-1deg)}}
+  @keyframes iTag{0%{opacity:0;letter-spacing:12px}100%{opacity:.9;letter-spacing:6px}}
+  @keyframes iBtnShift{0%{background-position:0% 0}100%{background-position:220% 0}}
+  @keyframes iBtnPulse{0%,100%{box-shadow:0 0 42px rgba(39,224,255,.45),0 0 90px rgba(39,224,255,.12),0 4px 24px rgba(0,0,0,.5)}50%{box-shadow:0 0 84px rgba(39,224,255,.9),0 0 170px rgba(255,207,74,.24),0 0 230px rgba(192,132,252,.12),0 4px 24px rgba(0,0,0,.5)}}
   /* dossier */
   #dossier{position:fixed;z-index:40;right:-460px;top:0;height:100%;width:420px;background:linear-gradient(180deg,rgba(8,12,22,.97),rgba(4,7,14,.98));backdrop-filter:blur(12px);border-left:1px solid var(--pc,#27e0ff);box-shadow:-30px 0 80px -30px #000;transition:right .4s cubic-bezier(.2,.8,.2,1);padding:0;overflow-y:auto}
   #dossier.open{right:0}
@@ -78,6 +113,7 @@
 <div id="errBox" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(120,0,0,.95);color:#fff;font:12px/1.5 monospace;padding:10px 14px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto">⚠ <b>WORLD ERROR</b> — tell this to Claude:<br><span id="errMsg"></span></div>
 <script>
 (function(){var show=function(t){var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
+window.__reportErr=show;   // let other code surface caught (swallowed) errors to the on-screen box
 window.addEventListener('error',function(e){show('JS: '+(e.message||(e.error&&e.error.message)||e)+'  @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));});
 window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */show('PROMISE: '+msg);});})();
 </script>
@@ -104,9 +140,15 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div id="intro">
   <canvas id="portalCv"></canvas>
   <div id="introInner">
-    <div class="big">SHADDAI <b>WORLD</b></div>
-    <button id="enterBtn">⬡ ENTER THE GRID</button>
-    <div id="loadNote">warping in…</div>
+    <div id="iBootLines">▸ SHADDAI GRID · BOOT SEQUENCE INITIATED</div>
+    <div class="big" data-text="SHADDAI WORLD">SHADDAI <b>WORLD</b></div>
+    <div class="bigtag">SEVEN MINDS · ONE GRID · BREACH THE THRESHOLD</div>
+    <button id="enterBtn">◈ ENTER THE GRID ◈</button>
+    <div id="loadNote">scanning neural pathways…</div>
+    <div id="loadBarWrap" style="position:relative;margin:20px auto 0;width:min(440px,74vw);height:5px;background:rgba(255,255,255,.08);border:1px solid rgba(39,224,255,.14);border-radius:4px;overflow:hidden;box-shadow:inset 0 0 10px rgba(0,0,0,.6)">
+      <div id="loadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#27e0ff,#8fefff 40%,#c08cff 70%,#ffcf4a);background-size:200% 100%;transition:width .3s ease;box-shadow:0 0 14px rgba(39,224,255,.7),0 0 26px rgba(192,132,252,.35)"></div>
+    </div>
+    <div id="loadPct" style="margin-top:10px;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-weight:500;font-size:11px;letter-spacing:3px;color:#8fefff;opacity:.9;text-shadow:0 0 12px rgba(39,224,255,.5)">0%</div>
   </div>
 </div>
 
@@ -130,12 +172,26 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
-<script src="/world-layout.js"></script>
-<script src="/world-terrain.js"></script>
-<script src="/world-biomes.js"></script>
-<script src="/world-vehicles.js"></script>
-<script src="/world-buildings.js"></script>
-<script src="/world-markets-screen.js"></script>
+<script src="/world-layout.js?v=20260703e"></script>
+<script src="/world-terrain.js?v=20260704u"></script>
+<script src="/world-biomes.js?v=20260704u"></script>
+<script src="/world-buildings.js?v=20260704w"></script>
+<script src="/world-collision.js?v=20260704solid"></script>
+<script src="/world-spawn.js?v=20260704s"></script>
+<script src="/world-themes.js?v=20260703h"></script>
+<script src="/world-interiors.js?v=20260704r"></script>
+<script src="/world-cutscene.js?v=20260704d"></script>
+<script src="/world-npcs.js?v=20260703g"></script>
+<script src="/world-elevators.js?v=20260704y"></script>
+<script src="/world-chat.js?v=20260703e"></script>
+<script src="/world-markets-screen.js?v=20260703d"></script>
+<script src="/world-minimap.js?v=20260704q"></script>
+<script src="/world-audio.js?v=20260703d"></script>
+<script src="/world-dialogue.js?v=20260703d"></script>
+<script src="/world-radio.js?v=20260703d"></script>
+<script src="/portals/portals-registry.js?v=20260703d"></script>
+<script src="/portals/portal-plots.js?v=20260703d"></script>
+<script src="/portals/portal-dome.js?v=20260703d"></script>
 <script type="module">
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
@@ -149,6 +205,8 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // shared Draco decoder so the optimized (Draco-compressed) agent/vehicle GLBs load
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
+// Enable Three.js binary cache so repeated loads of the same URL skip the network round-trip
+THREE.Cache.enabled = true;
 
 // ── Agent roster (7 council; real portraits + hardcoded real tools + creator) ──
 const AGENTS = [
@@ -167,7 +225,7 @@ fetch('/api/operatives').then(r=>r.ok?r.json():null).then(d=>{
   const ops=(d&&d.operatives)||[];
   ops.slice(0,8).forEach(o=>{
     if(AGENTS.find(a=>a.codename===(o.codename||'').toUpperCase())) return;
-    AGENTS.push({ codename:(o.codename||'OP').toUpperCase(), color:'#9fb0e0', rarity:(o.rarity||'common').toUpperCase(), role:(o.archetype||'operative')+' · forged', creator:o.creator||o.owner||'a SHADDAI user', price:(o.listing&&o.listing.pricePerCall)||2, skills:(o.tools||['run_skill']).slice(0,7), portrait:o.portrait, id:o.id, owner:o.owner, isOperative:true });
+    AGENTS.push({ codename:(o.codename||'OP').toUpperCase(), color:'#9fb0e0', rarity:(o.rarity||'common').toUpperCase(), role:(o.archetype||'operative')+' · forged', creator:o.creator||o.owner||'a SHADDAI user', price:(o.listing&&o.listing.pricePerCall)||2, skills:(o.tools||['run_skill']).slice(0,7), portrait:o.portrait, id:o.id, owner:o.owner, isOperative:true, model:(o.model||'SHADDAI') });
   });
   if(world.ready) world.placeAgents(); // re-place if world already built
 }).catch(()=>{});
@@ -176,10 +234,10 @@ const world = { ready:false, placeAgents:()=>{} };
 
 // ── Three.js scene ──
 const canvas = document.getElementById('c3d');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -188,8 +246,8 @@ scene.fog = new THREE.FogExp2(0x04060d, 0.0036);  // lighter fog so the hexagon 
 // PBR metal armor (the agent bodies) needs an environment to reflect, or it renders flat/grey.
 { const _pm = new THREE.PMREMGenerator(renderer); scene.environment = _pm.fromScene(new RoomEnvironment(), 0.03).texture; }
 
-const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 2000);
-camera.position.set(0, 2.2, 26);
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 1500);  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
+camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
 
 const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
@@ -199,7 +257,7 @@ const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x202838, 1.15); scene.add(hemi
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(30, 60, 20); scene.add(sun);
 const sun2 = new THREE.DirectionalLight(0xcfe2ff, 0.7); sun2.position.set(-40, 40, -30); scene.add(sun2);
 // a fill light that follows the camera so whatever you look at is always lit
-const camFill = new THREE.PointLight(0xffffff, 0.9, 60); scene.add(camFill);
+const camFill = new THREE.PointLight(0xffffff, 0.5, 40); scene.add(camFill); // reduced: was (0.9, 60) — smaller range = fewer fragments lit per frame
 
 // ════════ DAY / NIGHT CYCLE ════════ (press N to fast-forward time)
 const DAYNIGHT = {
@@ -208,6 +266,7 @@ const DAYNIGHT = {
   base: { amb:0.7, hemi:1.15, sun:1.5, sun2:0.7, key:1.2, gold:1.0 },
   dayBG: new THREE.Color(0x0a1c38), nightBG: new THREE.Color(0x03040b),
 };
+let _dnAccum = 0;   // PERF: accumulates dt between throttled updateDayNight() calls (~7.5Hz)
 function updateDayNight(dt){
   DAYNIGHT.t = (DAYNIGHT.t + dt / DAYNIGHT.cycleSec) % 1;
   const t = DAYNIGHT.t;
@@ -222,38 +281,121 @@ function updateDayNight(dt){
   gold.intensity    = DAYNIGHT.base.gold * (1.45 - 0.65 * day);
   const ang = (t - 0.25) * Math.PI * 2;
   sun.position.set(Math.cos(ang) * 120, Math.sin(ang) * 120 + 8, 40);
-  scene.background.lerpColors(DAYNIGHT.nightBG, DAYNIGHT.dayBG, day);
+  if(!window._themeLocked) scene.background.lerpColors(DAYNIGHT.nightBG, DAYNIGHT.dayBG, day);
 }
 addEventListener('keydown', e=>{ if(e.code==='KeyN'){ DAYNIGHT.cycleSec = DAYNIGHT.cycleSec > 60 ? 12 : 240; } });
 
 // Agent/building GLB loader — declared BEFORE the world-build IIFE because that IIFE uses it.
 // (Was previously declared lower in the file, which threw a temporal-dead-zone error and silently
 //  skipped ALL building placement.)
-const agentBodyLoader = new GLTFLoader(); agentBodyLoader.setDRACOLoader(dracoLoader);
+// ── SHARED LOADING MANAGER: drives the boot progress bar + gates entry until the world is ready ──
+const __loadMgr = new THREE.LoadingManager();
+window.__assetsReady = false;
+__loadMgr.onProgress = function(url, loaded, total){
+  var pct = total ? Math.round(loaded / total * 100) : 0;
+  var bar = document.getElementById('loadBar'); if(bar) bar.style.width = pct + '%';
+  var pl  = document.getElementById('loadPct'); if(pl)  pl.textContent  = pct + '%';
+};
+__loadMgr.onLoad = function(){ window.__assetsReady = true; };
+const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader);
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
-let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null;
+let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null;
+window.__worldBuilt = false;
 (function(){
+  const L = window.WORLD_LAYOUT;
   try{
-    const L = window.WORLD_LAYOUT;
+    // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
     if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
     if(L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);
-    if(L && window.buildWorldVehicles) worldVehicles = window.buildWorldVehicles(THREE, scene, L);  // flying ship, snow rover, jet
-    if(L && window.buildWorldBuildings) worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader);  // real textured GLB buildings, large
-    // ── user-provided world models: Squarescape floor + SH emblem (center) + voyagers ──
-    (function(){
-      const fit=(m,target,useY)=>{ const b=new THREE.Box3().setFromObject(m); const s=new THREE.Vector3(); b.getSize(s); const d=useY?Math.max(s.x,s.y,s.z):Math.max(s.x,s.z); if(d) m.scale.setScalar(target/d); };
-      const ground=(m,y)=>{ const b=new THREE.Box3().setFromObject(m); m.position.y=(y||0)-b.min.y; };
-      const load=(file,fn)=> agentBodyLoader.load('/assets/world-models/'+file,(g)=>{ try{ fn(g.scene); scene.add(g.scene);}catch(e){console.warn('wm',file,e.message);} }, undefined, ()=>console.warn('wm miss',file));
-      load('squarescape.glb', m=>{ fit(m,150,false); ground(m,0.05); m.traverse(c=>{if(c.isMesh)c.receiveShadow=true;}); });          // the square-tile floor
-      load('ground-chromatic.glb', m=>{ const sec=(L.sector&&L.sector('SHADDAI'))||{pos:[0,18]}; fit(m,92,false); m.position.set(sec.pos[0],0,sec.pos[1]); ground(m,0.08); m.traverse(c=>{if(c.isMesh)c.receiveShadow=true;}); }); // mosaic ground for SHADDAI's section
-      load('emblem.glb',      m=>{ const sec=(L.sector&&L.sector('SHADDAI'))||{pos:[0,18]}; fit(m,38,false); m.position.set(sec.pos[0], 0, sec.pos[1]); ground(m, 0.15); }); // big SH emblem on SHADDAI's section floor
-      load('slipstream-voyager.glb', m=>{ fit(m,11,true); m.position.set(-22,1.5,42); m.rotation.y=0.6; });
-      load('arctic-voyager.glb',     m=>{ fit(m,13,true); m.position.set(22,1.5,42); m.rotation.y=-0.6; });
-    })();
-    if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
-    console.log('✅ world modules:', { terrain:!!worldTerrain, biomes:!!worldBiomes, vehicles:!!worldVehicles, markets:!!worldMarkets });
-  }catch(e){ console.warn('world module build failed:', e && e.message); }
+    // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
+    // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
+  }catch(e){ console.warn('world core build failed:', e && e.message); }
+  // HEAVY GEOMETRY (buildings + NPCs) is built a couple frames LATER so the boot/loading screen paints
+  // and animates SMOOTHLY instead of freezing on one giant synchronous build. Nothing outside the render
+  // loop touches these two synchronously, so deferring is safe. ENTER stays locked until __worldBuilt
+  // (the loading gate waits for it). REMOVED here: ambient blimps/cars + the old squarescape/emblem
+  // ground GLBs (owner: "sloppy") — terrain is the single ground source now.
+  const _defer = window.requestAnimationFrame || function(f){ setTimeout(f,16); };
+  _defer(function(){ _defer(function(){
+    try{ if(L && window.buildWorldBuildings) worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader); }catch(e){ console.warn('buildings build failed:', e && e.message); try{ window.__reportErr && window.__reportErr('BUILDINGS BUILD FAILED: '+(e&&e.message)+'\n'+(((e&&e.stack)||'').split('\n').slice(1,5).join('\n'))); }catch(_){}}
+    // Paint the FLUX-generated stone onto the buildings (free HF texture). Marble on all facades; the
+    // dedicated library-facade art on QUILL. Loaded once, tiled, sRGB.
+    try{ if(worldBuildings && worldBuildings.applyFacadeTexture){
+      const _tl=new THREE.TextureLoader();
+      const _mk=(url,rep)=>{ const t=_tl.load(url); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t; };
+      const _marble=_mk('/assets/textures/marble-facade.png?v=1',4);
+      ['nexus-hub','aegis','museum','markets-exchange','oracle-spire','source-spire'].forEach(c=>{ try{ worldBuildings.applyFacadeTexture(c,_marble); }catch(_){} });
+      try{ worldBuildings.applyFacadeTexture('library', _mk('/assets/textures/library-facade.png?v=1',3)); }catch(_){}
+    } }catch(e){ console.warn('facade texture', e && e.message); }
+    // ── MEASURE REAL BUILDING FOOTPRINTS → collision becomes the building's TRUE solid silhouette ──
+    // Removes the abstract "barrier": we measure each building's ACTUAL solid mass from the scene meshes it
+    // just built and hand the result to world-collision.js (THREE only exists here, in module scope).
+    //
+    // The key idea: collision happens at the PLAYER'S feet, so we only measure geometry that occupies the
+    // player's ground-level height band. This is what makes the collider hug the visible WALLS instead of a
+    // forcefield or a walk-in gap:
+    //   • y-band [BAND_LO..BAND_HI]  → keeps walls / towers / plinths (they cross the player's body),
+    //                                   DROPS high roof caps, entablatures, floating banners, and the huge
+    //                                   flat terrain/plaza slab (all outside the band) so the plaza stays open.
+    //   • skip InstancedMesh         → a ring of colonnade/greeble instances has ONE box spanning the whole
+    //                                   ring (the old forcefield); the solid core is regular Meshes.
+    //   • skip PlaneGeometry         → flat banners / holo-screens / decals are not walls.
+    // Round buildings (NEXUS dome, ORACLE spires) become a CIRCLE sized from the CORE mesh (centered on the
+    // sector) so off-center decorative satellites don't balloon the radius. Runs ONCE, before NPCs build.
+    try{
+      if(L && L.sectors && window.setBuildingFootprints && window.buildWorldCollision){
+        scene.updateMatrixWorld(true);                 // ensure matrixWorld is current before measuring
+        const ROUND   = { NEXUS:true, ORACLE:true };   // round buildings → circle collider (dome / spires)
+        const ASSIGN  = 130;                           // a mesh belongs to a building if its center is within this of the sector center
+        const BAND_LO = 1.5, BAND_HI = 10;             // player ground-level collision band (world Y) — only geometry crossing this counts
+        const CORE_R  = 60;                            // round buildings: only meshes centered within this of the sector size the radius (core dome, not satellites)
+        const acc = {};
+        L.sectors.forEach(s=>{ if(s && s.code && s.code!=='SHADDAI' && s.pos) acc[s.code] = { cx:s.pos[0], cz:s.pos[1], minX:Infinity, maxX:-Infinity, minZ:Infinity, maxZ:-Infinity, coreR:0, anyR:0, n:0 }; });
+        const _b=new THREE.Box3(), _c=new THREE.Vector3(), _sz=new THREE.Vector3();
+        scene.traverse(o=>{
+          if(!o.isMesh || !o.geometry) return;
+          if(o.isInstancedMesh) return;                                  // ring-spanning box → skip
+          if((o.geometry.type||'') === 'PlaneGeometry') return;          // flat banner / screen / decal → not a wall
+          _b.setFromObject(o);
+          if(!isFinite(_b.min.x) || !isFinite(_b.max.x)) return;
+          _b.getSize(_sz);
+          if(_sz.x > 480 || _sz.z > 480) return;                         // terrain / giant slab → never a wall
+          if(_b.max.y < BAND_LO || _b.min.y > BAND_HI) return;           // outside the player's ground band (high roof / banner / flat floor) → walk under/over it
+          _b.getCenter(_c);
+          let best=null, bd=ASSIGN;
+          for(const code in acc){ const a=acc[code]; const d=Math.hypot(_c.x-a.cx, _c.z-a.cz); if(d<bd){ bd=d; best=code; } }
+          if(!best) return;
+          const a=acc[best];
+          if(_b.min.x<a.minX) a.minX=_b.min.x; if(_b.max.x>a.maxX) a.maxX=_b.max.x;
+          if(_b.min.z<a.minZ) a.minZ=_b.min.z; if(_b.max.z>a.maxZ) a.maxZ=_b.max.z;
+          // circle radius = center-distance + mesh horizontal half-size; core meshes (centered on the sector) only
+          const rr = Math.hypot(_c.x-a.cx, _c.z-a.cz) + 0.5*Math.max(_sz.x, _sz.z);
+          if(rr > a.anyR) a.anyR = rr;
+          if(bd < CORE_R && rr > a.coreR) a.coreR = rr;
+          a.n++;
+        });
+        const fp={};
+        for(const code in acc){ const a=acc[code]; if(a.n<1 || !isFinite(a.minX)) continue;
+          if(ROUND[code]){
+            const r = a.coreR > 0 ? a.coreR : a.anyR;                    // prefer the core dome radius; fall back to full spread
+            fp[code] = { shape:'circle', cx:a.cx, cz:a.cz, r:Math.round(r) };
+          } else {
+            fp[code] = { shape:'box', minX:Math.round(a.minX), maxX:Math.round(a.maxX), minZ:Math.round(a.minZ), maxZ:Math.round(a.maxZ) };
+          }
+        }
+        window.__measuredFootprints = fp;              // exposed for the headless diagnostic
+        window.setBuildingFootprints(fp);
+        window.buildWorldCollision(L);                 // rebuild colliders from the REAL geometry
+        console.log('[SOLID-FOOTPRINTS] measured '+Object.keys(fp).length+' buildings from real ground-band geometry', fp);
+      }
+    }catch(e){ console.warn('footprint measure failed:', e && e.message); }
+    _defer(function(){
+      try{ if(window.buildWorldNPCs) worldNPCs = window.buildWorldNPCs(THREE, scene, agentBodyLoader, worldTerrain && worldTerrain.heightAt, { count: 6 }); }catch(e){ console.warn('npc build failed:', e && e.message); }
+      window.__worldBuilt = true;
+      console.log('✅ world built (heavy geo deferred for a smooth loader)');
+    });
+  }); });
 })();
 
 // ── terrain presets (environment toggle) ──
@@ -320,7 +462,7 @@ const gGeo=new THREE.PlaneGeometry(800,800,100,100); gGeo.rotateX(-Math.PI/2);
 { const p=gGeo.attributes.position; for(let i=0;i<p.count;i++){ p.setY(i, _tnoise(p.getX(i), p.getZ(i))); } gGeo.computeVertexNormals(); }
 const ground=new THREE.Mesh(gGeo, new THREE.MeshStandardMaterial({ color:0xcfe0f0, roughness:0.92, metalness:0.04, flatShading:true })); ground.position.y=-0.3; ground.visible=false; scene.add(ground);
 // real terrain textures (HF-generated), tiled across the ground
-const _texL=new THREE.TextureLoader();
+const _texL=new THREE.TextureLoader(__loadMgr);
 function _terrainTex(name){ const t=_texL.load('/api/forge/art/'+name+'.png'); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(28,28); return t; }
 const GROUND_TEX={ meadow:_terrainTex('tex-grass'), snow:_terrainTex('tex-snow'), desert:_terrainTex('tex-sand') };
 
@@ -365,13 +507,17 @@ scene.add(skyDome);
 const _skyHorizon = skyMat.uniforms.horizon.value;
 const _skyGlow = skyMat.uniforms.glow.value;
 const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e4a18, void:0x3a1a6e };
+// Pre-allocated colors — eliminate 3 `new THREE.Color()` allocations per frame
+const _skyC1 = new THREE.Color(), _skyC2 = new THREE.Color(), _skyFogC = new THREE.Color();
 function updateSkyForBiome(x, z){
+  if(window._themeLocked) return;   // a global theme owns the sky/fog — don't fight it
   if(!window.WORLD_LAYOUT || !window.WORLD_LAYOUT.biomeAt) return;
   const b = window.WORLD_LAYOUT.biomeAt(x, z);
-  const target = new THREE.Color(_biomeSky[b.id] || 0x163a6e);
-  _skyHorizon.lerp(target, 0.04);
-  _skyGlow.lerp(new THREE.Color(b.color).multiplyScalar(0.4), 0.04);
-  if(scene.fog) scene.fog.color.lerp(new THREE.Color(b.fog || 0x04060d), 0.04);
+  _skyC1.set(_biomeSky[b.id] || 0x163a6e);
+  _skyHorizon.lerp(_skyC1, 0.04);
+  _skyC2.set(b.color).multiplyScalar(0.4);
+  _skyGlow.lerp(_skyC2, 0.04);
+  if(scene.fog){ _skyFogC.set(b.fog || 0x04060d); scene.fog.color.lerp(_skyFogC, 0.04); }
 }
 // open up the fog so the distant biomes/sky are visible (was 0.008 — swallowed everything past ~200u)
 scene.fog.density = 0.0022;
@@ -391,15 +537,29 @@ const monument = new THREE.Group();
 // post-processing bloom
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.7, 0.5, 0.55); // higher threshold so only neon blooms, portraits stay clear
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
 composer.addPass(bloom);
 
 // ── agent billboards ──
-const loader = new THREE.TextureLoader();
+const loader = new THREE.TextureLoader(__loadMgr);
 const agentSprites = [];
 const labelEls = [];
 const labelLayer = document.getElementById('labels');
 function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpperCase()+'-portrait.png'); }
+
+// ── PLAYER CHARACTER GLB PRELOAD CACHE ──
+// Kick off downloads during the sky-dive (900ms before picker opens) so the GLB is already
+// parsed+cached by the time the player picks a portal. setPlayerCharacter() then just clones
+// the cached scene — the expensive parse NEVER hits the main thread during descent.
+const _pcCache = {};   // UPPERCASE code → Promise<gltf>
+function _pcPreload(code){
+  if(!code) return;
+  code = String(code).toUpperCase();
+  if(_pcCache[code]) return _pcCache[code];
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=7';
+  _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
+  return _pcCache[code];
+}
 
 // ── agent 3D BODIES — load real GLB (fal.ai / hi-res) per agent, auto-scaled to standee height ──
 // Loaded SEQUENTIALLY (one at a time) and DEFERRED until after the world renders, so the
@@ -409,24 +569,34 @@ const AGENT_BODY_HEIGHT = 7.0;   // match the billboard standee height
 let _bodyQueue = [], _bodyBusy = false;
 function queueAgentBody(entry){ _bodyQueue.push(entry); if(!_bodyBusy) setTimeout(_nextAgentBody, 1500); }
 function _nextAgentBody(){
+  // Don't parse body GLBs while the spawn animation is running — the parse blocks the main
+  // thread for 100-400ms and causes the ENTER-press and portal-descent freezes.
+  if(worldSpawn && worldSpawn.isAnimating()){ setTimeout(_nextAgentBody, 600); return; }
   const entry = _bodyQueue.shift();
   if(!entry){ _bodyBusy = false; return; }
   _bodyBusy = true;
   const code = (entry.a.codename||'').toUpperCase();
-  const url = '/assets/agents/' + encodeURIComponent(code) + '.glb?v=7';  // v7 = textured + gltf-transform optimized (1024 tex, ~-75% size)
+  // Council agents load their own <CODENAME>.glb. Forged operatives wear the real
+  // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
+  // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
+  const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=7';  // v7 = textured + gltf-transform optimized (1024 tex, ~-75% size)
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
       body.traverse(c=>{
         if(c.isMesh){
           c.castShadow=true; c.receiveShadow=true;
-          // SHOW THE REAL TEXTURE COLORS from the user's model files — do NOT tint/override material.color.
+          // Kill the white self-glow + mirror-sheen, and tint toward the agent's color so untextured
+          // Meshy bodies read as colored characters instead of glowing white blobs.
+          const _acc = new THREE.Color((entry.a && entry.a.color) || '#9fb0e0');
           const mats = Array.isArray(c.material) ? c.material : [c.material];
           mats.forEach(m=>{ if(!m) return;
-            if(m.color) m.color.set(0xffffff);              // white = let the diffuse texture show true colors
-            if('emissiveIntensity' in m) m.emissiveIntensity = Math.min(m.emissiveIntensity||0, 0.05);
-            if('metalness' in m) m.metalness = Math.min(m.metalness ?? 0.5, 0.35);  // less metal = truer color
-            if('roughness' in m) m.roughness = Math.max(m.roughness ?? 0.5, 0.6);
+            if(m.color){ m.color.set(0xffffff); m.color.lerp(_acc, m.map ? 0.16 : 0.6); } // textured=gentle, plain=strong
+            if('emissiveIntensity' in m) m.emissiveIntensity = 0;   // no self-glow
+            if(m.emissive) m.emissive.setRGB(0,0,0);
+            if('metalness' in m) m.metalness = Math.min(m.metalness ?? 0.5, 0.12);  // stop mirroring the white sky
+            if('roughness' in m) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
             m.needsUpdate = true;
           });
         }
@@ -441,8 +611,9 @@ function _nextAgentBody(){
       const c2 = new THREE.Vector3(); box2.getCenter(c2);
       body.position.x = entry.x - c2.x;
       body.position.z = entry.z - c2.z;
-      const _gy = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(entry.x, entry.z) : 0;
-      body.position.y = -box2.min.y + _gy;      // feet on the terrain at this sector
+      // SHADDAI stands on his floating sky-temple island (entry.yBase); everyone else on terrain.
+      const _gy = entry.yBase ? entry.yBase : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(entry.x, entry.z) : 0);
+      body.position.y = -box2.min.y + _gy;      // feet on the terrain (or temple island) at this sector
       body.userData.agent = entry.a;            // clickable like the sprite
       body.rotation.y = Math.atan2(-entry.x, -entry.z); // face world center, stand still
       if(_agentBodies[code]) scene.remove(_agentBodies[code]);  // ONE body per agent (kill duplicates)
@@ -490,8 +661,19 @@ world.placeAgents = function(){
     // place each council agent in its WORLD_LAYOUT sector (markets/library/aegis/museum/center);
     // forged operatives (not a council sector) fall back to a tidy ring.
     const _sec = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.sector) ? window.WORLD_LAYOUT.sector((a.codename||'').toUpperCase()) : null;
-    let x, z;
-    if(_sec){ x = _sec.pos[0]; z = _sec.pos[1]; const d=Math.hypot(x,z)||1; x-=(x/d)*42; z-=(z/d)*42; } // stand IN FRONT of the building (toward center)
+    let x, z, yBase = 0;
+    if(_sec){ x = _sec.pos[0]; z = _sec.pos[1]; const d=Math.hypot(x,z);
+      if(d<1){
+        // SHADDAI (THE SOURCE) is no longer a body standing in the open center forum.
+        // His temple floated up to the sky island off The Sky Nexus, so he stands IN it —
+        // ride the Grand Lift + skybridge up to meet him. Coords come from the elevator
+        // module (window.SHADDAI_SKY); fall back to the known temple spot if not ready yet.
+        const _sky = window.SHADDAI_SKY;
+        x = (_sky && isFinite(_sky.templeX)) ? _sky.templeX : 0;
+        z = (_sky && isFinite(_sky.templeZ)) ? _sky.templeZ : -250;
+        yBase = (_sky && isFinite(_sky.templeY)) ? _sky.templeY : 216;
+      } else { x-=(x/d)*74; z-=(z/d)*74; } // stand clearly IN FRONT of the door, not inside a pillar
+    }
     else { const ang=(i/n)*Math.PI*2+((i%2)?0.22:-0.22); const R=34+(i%3)*11; x=Math.cos(ang)*R; z=Math.sin(ang)*R; }
     const col = new THREE.Color(a.color);
     // portrait sprite (billboard)
@@ -501,22 +683,22 @@ world.placeAgents = function(){
     const charMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
     loader.load('/api/forge/art/char-' + a.codename.toLowerCase() + '.png', t2 => { charMat.map = t2; charMat.needsUpdate = true; });
     const spr = new THREE.Sprite(charMat);
-    spr.scale.set(7.4, 7.4, 1); spr.position.set(x, 4.0, z); spr.userData.agent = a; scene.add(spr);
+    spr.scale.set(7.4, 7.4, 1); spr.position.set(x, yBase+4.0, z); spr.userData.agent = a; scene.add(spr);
     // soft color glow behind the character
     const frame = new THREE.Sprite(new THREE.SpriteMaterial({ color:col, transparent:true, opacity:.14, blending:THREE.AdditiveBlending }));
-    frame.scale.set(8.4,8.4,1); frame.position.set(x,4.0,z); scene.add(frame);
+    frame.scale.set(8.4,8.4,1); frame.position.set(x,yBase+4.0,z); scene.add(frame);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(2.3,0.1,8,40), new THREE.MeshBasicMaterial({color:col,toneMapped:false}));
-    ring.rotation.x=Math.PI/2; ring.position.set(x,0.05,z); scene.add(ring);
+    ring.rotation.x=Math.PI/2; ring.position.set(x,yBase+0.05,z); scene.add(ring);
     // light beam
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.06,1.6,7,12,1,true), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.12,side:THREE.DoubleSide,toneMapped:false,blending:THREE.AdditiveBlending}));
-    beam.position.set(x,3.5,z); scene.add(beam);
+    beam.position.set(x,yBase+3.5,z); scene.add(beam);
     // ── aura ring of light + rarity crown (build-plan §2) ──
     const rc = RARITY_CONFIG[String(a.rarity||'common').toLowerCase()] || RARITY_CONFIG.common;
-    const aura = createAura(a.color, new THREE.Vector3(x,2.5,z));
+    const aura = createAura(a.color, new THREE.Vector3(x,yBase+2.5,z));
     let crown=null;
     if(rc.crown){ crown=new THREE.Mesh(new THREE.TorusGeometry(1.5,0.12,10,40), new THREE.MeshBasicMaterial({color:rc.crown,toneMapped:false,transparent:true,opacity:0.9}));
-      crown.position.set(x,8.4,z); crown.rotation.x=Math.PI/2.4; scene.add(crown); }
-    const entry = { sprite:spr, frame, ring, beam, a, x, z, bob:Math.random()*6.28, aura, crown, auraSpeed:rc.speed, body:null };
+      crown.position.set(x,yBase+8.4,z); crown.rotation.x=Math.PI/2.4; scene.add(crown); }
+    const entry = { sprite:spr, frame, ring, beam, a, x, z, yBase, bob:Math.random()*6.28, aura, crown, auraSpeed:rc.speed, body:null };
     agentSprites.push(entry);
     queueAgentBody(entry);   // stream in the real 3D body (sequential, deferred)
     // HTML label
@@ -531,7 +713,7 @@ world.ready=true; world.placeAgents();
 // (Removed the duplicate shader plane that was orphaned at [400,0,0] after the sacred-geometry relayout.)
 
 // ── LOAD GLB MODELS (REAL 3D ASSETS) ──
-const gltfLoader = new GLTFLoader(); gltfLoader.setDRACOLoader(dracoLoader);
+const gltfLoader = new GLTFLoader(__loadMgr); gltfLoader.setDRACOLoader(dracoLoader);
 const models = {};
 // Removed: the random-colored capsule placeholders ("floating purple pills") + basic cars.
 // Real vehicles now come from world-vehicles.js; agent bodies come from world-layout sectors.
@@ -736,7 +918,7 @@ refreshNews(); setInterval(refreshNews, 300000);
 setInterval(()=>{ if(NEWS.items.length){ NEWS.idx++; renderNewsLabel(); } }, 6000);
 
 // ── THE BAZAAR — a walkable 3D marketplace zone (stalls you walk to; [F] to buy) ──
-const BAZAAR = { pos:new THREE.Vector3(-100,0,-100), stalls:[], near:null };
+const BAZAAR = { pos:new THREE.Vector3(-100,0,100), stalls:[], near:null };   // SOUTH-WEST (−X=west, +Z=south) — matches the UI note "the green ring & arch, south-west". Was (-100,-100) = NW, which rendered "at the top". Floor/ring/arch/stalls all derive from BAZAAR.pos so they move together.
 { // zone floor + glow ring + entrance arch
   const floor=new THREE.Mesh(new THREE.CircleGeometry(34,48), new THREE.MeshStandardMaterial({color:0x0a1810,emissive:0x00e5a0,emissiveIntensity:0.09,roughness:0.85}));
   floor.rotation.x=-Math.PI/2; floor.position.set(BAZAAR.pos.x,0.05,BAZAAR.pos.z); scene.add(floor);
@@ -776,19 +958,191 @@ function enterPortal(p){
 
 // ── controls: pointer lock + WASD ──
 const controls = new PointerLockControls(camera, document.body);
+// BUG FIX (pointer lock): lock() can throw / reject if the browser rejects the request
+// (needs a fresh user gesture, or fires too soon after an exit). Wrap every lock attempt so
+// a transient failure never breaks look-controls — the unhandledrejection guard (top of file)
+// already silences the async "pointer lock was already requested" rejection. Clicking the
+// canvas simply tries again, so a dropped lock always re-engages on the next click.
+function _safeLock(){ try{ if(!controls.isLocked) controls.lock(); }catch(e){} }
 const keys = {};
 addEventListener('keydown', e=>{ keys[e.code]=true; });
 addEventListener('keyup', e=>{ keys[e.code]=false; });
 
 const raycaster = new THREE.Raycaster();
 const center = new THREE.Vector2(0,0);
+// per-frame caches (avoid rebuilding/allocating every frame)
+let _animFrame = 0;                 // frame counter for throttled work
+let _rayTargets = [], _rayTargetsFrame = -999;   // raycast target list, rebuilt only every few frames
+let _monCore = null, _monCoreChecked = false;    // cached monument core (was getObjectByName every frame)
+let _coordsEl = null, _coordsLast = '';          // cached coords element + last value (skip redundant writes)
+let _introEl = null, _introGone = false;         // cached intro gate
 let targeted = null;
 
 // ── player avatar + 1st/3rd person (press V) ──
-const playerPos = new THREE.Vector3(0, 0, 26);
+// BUG FIX (spawn): (0,26) sat INSIDE the SHADDAI temple (~r55) and trapped the player.
+// Spawn on the open plaza between the Source and the front agents: (0,200) is clear of
+// every building — SHADDAI[0,0]r55 (dist 200), bazaar[0,130]r40 (dist 70), NEXUS/QUILL
+// [±130,225]r44 (dist ~132) — with wide margins. Default camera faces -Z → toward center.
+const playerPos = new THREE.Vector3(0, 0, 200);
 // NEXUS can teleport you to any sector (called from the NEXUS directory panel)
 window.teleportTo = function(x, z){ playerPos.x = x; playerPos.z = (z||0) + 14; if(window.closeDistrict) window.closeDistrict(); };
 let thirdPerson = false;
+
+// ── GTA-style SKY-DIVE SPAWN + per-area portals (world-spawn.js) ──
+let worldSpawn = null;
+if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
+  worldSpawn = window.buildWorldSpawn({
+    THREE, scene, camera, controls, playerPos,
+    layout: window.WORLD_LAYOUT,
+    // Who you can play as — the 7 council operatives (each has a real GLB body + portrait).
+    characters: AGENTS.map(function(a){ return {
+      code: a.codename,
+      name: a.role || a.codename,
+      color: (typeof a.color==='string' ? parseInt(a.color.replace('#',''),16) : a.color),
+      portrait: portraitOf(a)
+    }; }),
+    onArrive: function(code, charCode){
+      try{ if(charCode && window.setPlayerCharacter) window.setPlayerCharacter(charCode); }catch(e){}
+      try{ thirdPerson = true; }catch(e){}   // 3rd-person so you SEE the operative you're walking around as
+      try{ _safeLock(); }catch(e){}          // BUG FIX: grab the mouse for look-controls the moment you land (click re-locks if browser defers)
+      try{ console.log('🌀 spawned at', code, 'as', charCode); }catch(e){}
+    }
+  });
+}
+
+// ── ONE-BUTTON THEME ENGINE (world-themes.js): snow / desert / tron / ocean whole-world snap ──
+let _themes = null;
+if (window.buildWorldThemes) {
+  try {
+    _themes = window.buildWorldThemes({ THREE, scene, refs: {
+      fog: scene.fog,
+      lights: { key, gold, sun, hemi, ambient },
+      skyUniforms: { top: skyMat.uniforms.top.value, mid: skyMat.uniforms.mid.value, horizon: skyMat.uniforms.horizon.value, glow: skyMat.uniforms.glow.value },
+      grids: [g1, g2],
+      terrain: worldTerrain,
+    }});
+    // Once a global theme is active, stop the per-frame biome-sky + day/night BG lerp from fighting it.
+    if (_themes.onAfterTheme) _themes.onAfterTheme(function(name){ window._themeLocked = (name != null); });
+    window.applyTheme = function(name){ _themes.applyTheme(name); };
+    // redirect the existing ⚙ panel buttons (applyTerrain) → the theme engine
+    const _TMAP = { grid:'tron', snow:'snow', desert:'desert', void:'void', neon:'neon', meadow:'meadow' };
+    window.applyTerrain = function(k){ _themes.applyTheme(_TMAP[k] || k); };
+  } catch(e){ console.warn('theme engine init failed:', e && e.message); }
+}
+
+// ── BUILDING INTERIORS (world-interiors.js): walk up to a building + press E to go inside ──
+let _interiors = null;
+if (window.buildWorldInteriors) {
+  try {
+    _interiors = window.buildWorldInteriors({ THREE, scene, camera, controls, playerPos, layout: window.WORLD_LAYOUT });
+    const _doorPrompt = document.createElement('div');
+    _doorPrompt.style.cssText = 'position:fixed;bottom:96px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(39,224,255,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
+    document.body.appendChild(_doorPrompt);
+    window._doorPrompt = _doorPrompt;
+    const _cutscene = (window.buildWorldCutscene && window.buildWorldCutscene()) || null;
+    const _sectorOf = (code)=> (window.WORLD_LAYOUT && window.WORLD_LAYOUT.sector && window.WORLD_LAYOUT.sector(code)) || { name:code, color:0x27e0ff };
+    addEventListener('keydown', e=>{
+      if(e.code!=='KeyE' || !_interiors) return;
+      if(_cutscene && _cutscene.isPlaying()) return;
+      if(_interiors.isInside()){
+        // cinematic wipe, teleport OUT at midpoint
+        if(_cutscene) _cutscene.play({ name:'THE GRID', color:0x27e0ff, kind:'exit' }, function(){ _interiors.exit(); window._currentInterior=null; window._updateZeroxTerminal&&window._updateZeroxTerminal(); if(window.__shaddaiChat)window.__shaddaiChat.setRoom("lobby"); });
+        else { _interiors.exit(); window._currentInterior=null; window._updateZeroxTerminal&&window._updateZeroxTerminal(); if(window.__shaddaiChat)window.__shaddaiChat.setRoom("lobby"); }
+      } else {
+        const d=_interiors.nearestDoor(playerPos.x, playerPos.z); if(!d) return;
+        const s=_sectorOf(d.code);
+        if(_cutscene) _cutscene.play({ name:(s.name||d.code).toUpperCase(), color:s.color, kind:'enter', ready:(_interiors&&_interiors.roomReady) }, function(){ _interiors.enter(d.code); window._currentInterior=d.code; window._updateZeroxTerminal&&window._updateZeroxTerminal(); if(window.__shaddaiChat)window.__shaddaiChat.setRoom((d.code||"lobby").toLowerCase()); });
+        else { _interiors.enter(d.code); window._currentInterior=d.code; window._updateZeroxTerminal&&window._updateZeroxTerminal(); if(window.__shaddaiChat)window.__shaddaiChat.setRoom((d.code||"lobby").toLowerCase()); }
+      }
+    });
+
+    // ── TEMPLE PANELS: each agent's FREE-API tools live in their temple. When you're inside a room,
+    //    button(s) appear to open a full-screen live panel — TradingView chart in ZEROX, astronomy
+    //    observatory in ORACLE, etc. Panels post {type:'shaddai-close-panel'} to close. Extensible per room. ──
+    (function(){
+      var PANELS = {
+        ZEROX:  [ { label:'📈 LIVE CHART',      url:'/zerox-chart.html' },
+                  { label:'🐟 MARKET TERMINAL', url:'/tufish.html' } ],
+        ORACLE: [ { label:'🔭 OBSERVATORY',     url:'/oracle-sky.html' } ]
+      };
+      var ov=document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;z-index:100000;display:none;background:#04060d';
+      ov.innerHTML='<button id="_panelClose" style="position:absolute;top:14px;right:16px;z-index:2;background:rgba(39,224,255,0.12);border:1px solid #27e0ff;color:#27e0ff;font-family:Orbitron,sans-serif;font-size:11px;padding:8px 16px;border-radius:6px;cursor:pointer">✕ CLOSE</button><iframe id="_panelFrame" title="panel" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>';
+      document.body.appendChild(ov);
+      var frame=ov.querySelector('#_panelFrame');
+      function closePanel(){ ov.style.display='none'; frame.src='about:blank'; }
+      window.SHADDAI_openPanel=function(url){ frame.src=url; ov.style.display='block'; try{if(document.exitPointerLock)document.exitPointerLock();}catch(_){}};
+      ov.querySelector('#_panelClose').onclick=closePanel;
+      window.addEventListener('message', function(e){ if(e.data && e.data.type==='shaddai-close-panel') closePanel(); });
+      window.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.style.display==='block') closePanel(); });
+      var bar=document.createElement('div');
+      bar.style.cssText='position:fixed;bottom:70px;left:50%;transform:translateX(-50%);display:none;z-index:40;flex-wrap:wrap;justify-content:center;max-width:92vw';
+      document.body.appendChild(bar);
+      var _btns=[];
+      // (kept the name _updateZeroxTerminal — the enter/exit flow already calls it) refresh temple buttons per room
+      window._updateZeroxTerminal=function(){
+        var list=(window._currentInterior && PANELS[window._currentInterior]) || null;
+        _btns.forEach(function(b){ b.remove(); }); _btns=[];
+        if(!list){ bar.style.display='none'; return; }
+        bar.style.display='flex';
+        list.forEach(function(p){ var b=document.createElement('button'); b.textContent=p.label;
+          b.style.cssText='margin:4px;background:linear-gradient(90deg,#0a2a3a,#0a1a2a);color:#27e0ff;border:1px solid #27e0ff;border-radius:8px;padding:10px 18px;font-family:Orbitron,sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;box-shadow:0 0 22px rgba(39,224,255,0.30)';
+          b.onclick=function(){ window.SHADDAI_openPanel(p.url); };
+          bar.appendChild(b); _btns.push(b);
+        });
+      };
+    })();
+  } catch(e){ console.warn('interiors init failed:', e && e.message); }
+}
+
+// ── NEW WORLD SYSTEMS: minimap · ambient audio · in-world dialogue · Shaddai Radio · rentable portal-plots ──
+let _minimap=null, _audio=null, _dialogue=null, _radio=null, _portalPlots=null, _minimapVis=true;
+const _mmDir = new THREE.Vector3();
+try { if(window.buildWorldMinimap) _minimap = window.buildWorldMinimap({ layout: window.WORLD_LAYOUT, getPlayer: function(){ camera.getWorldDirection(_mmDir); return { x: playerPos.x, z: playerPos.z, angle: Math.atan2(_mmDir.x, -_mmDir.z) }; } }); } catch(e){ console.warn('minimap init', e && e.message); }
+try { if(window.buildWorldAudio) _audio = window.buildWorldAudio(); } catch(e){ console.warn('audio init', e && e.message); }
+try { if(window.buildWorldDialogue) _dialogue = window.buildWorldDialogue({
+  agents: AGENTS.map(function(a){ return { code:a.codename, name:a.codename, role:a.role, color:a.color, skills:a.skills||[], portrait: portraitOf(a) }; }),
+  getPlayer: function(){ return { x: playerPos.x, z: playerPos.z }; },
+  onHire: function(code){ try{ const s=agentSprites.find(function(s){ return (s.a && s.a.codename)===code; }); if(s && typeof openDossier==='function') openDossier(s.a); }catch(e){} }
+}); } catch(e){ console.warn('dialogue init', e && e.message); }
+try { if(window.buildShaddaiRadio){ _radio = window.buildShaddaiRadio(); window._radio=_radio; } } catch(e){ console.warn('radio init', e && e.message); }
+try { if(window.buildPortalPlots) _portalPlots = window.buildPortalPlots({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalPlots init', e && e.message); }
+let _portalDome=null;
+try { if(window.buildPortalDome && window.PORTALS_REGISTRY && window.PORTALS_REGISTRY.dome) _portalDome = window.buildPortalDome({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalDome init', e && e.message); }
+let _elevators=null;
+try { if(window.buildWorldElevators && window.WORLD_LAYOUT) _elevators = window.buildWorldElevators({ THREE, scene, layout: window.WORLD_LAYOUT, playerPos, getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0 }); } catch(e){ console.warn('elevators init', e && e.message); }
+const _liftPrompt = document.createElement('div');
+_liftPrompt.style.cssText='position:fixed;bottom:140px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#8fefff;border:1px solid rgba(39,224,255,0.5);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
+document.body.appendChild(_liftPrompt);
+
+// ── CHAT: realm-wide + per-room. Built hidden; opens ONLY via the 💬 button (click). ──
+try { if(window.buildWorldChat){ window.__shaddaiChat = window.buildWorldChat(); window.__shaddaiChat.start(); } } catch(e){ console.warn('chat init', e && e.message); }
+
+// ── 💬 CHAT button: the only way to open chat (name is asked on first open, never on load) ──
+(function(){
+  var btn=document.createElement('button');
+  btn.textContent='💬 CHAT';
+  btn.title='Open chat';
+  btn.style.cssText='position:fixed;top:58px;left:70px;z-index:26;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#8fefff;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:8px;cursor:pointer';
+  document.body.appendChild(btn);
+  btn.onclick=function(){ try{ if(window.__shaddaiChat) window.__shaddaiChat.toggle(); }catch(_){} };
+})();
+
+// "[T] Talk" prompt element (near the "[E] Enter" one)
+const _talkPrompt = document.createElement('div');
+_talkPrompt.style.cssText='position:fixed;bottom:118px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(255,207,74,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(255,207,74,0.6)';
+document.body.appendChild(_talkPrompt);
+
+// hotkeys: M=map · R=Shaddai Radio · T=talk · K=mute
+addEventListener('keydown', function(e){
+  if(e.repeat) return;
+  if(/input|textarea|select/i.test((document.activeElement||{}).tagName||'')) return;
+  if(e.code==='KeyM' && _minimap){ _minimapVis=!_minimapVis; _minimap.setVisible(_minimapVis); }
+  // else if(e.code==='KeyR' && _radio){ _radio.toggle(); }   // disabled: R was popping the radio up unexpectedly (owner). Re-add a button if wanted.
+  else if(e.code==='KeyK' && _audio){ _audio.setEnabled(!_audio.isEnabled()); }
+  else if(e.code==='KeyT' && _dialogue){ if(_dialogue.isOpen()){ _dialogue.close(); } else { const ag=_dialogue.nearestAgent(playerPos.x, playerPos.z, playerPos.y); if(ag) _dialogue.open(ag.code); } }
+});
+
 const avatarMat = new THREE.MeshStandardMaterial({ color:0x1a1405, emissive:0xffcf4a, emissiveIntensity:0.75, roughness:0.4, metalness:0.7 });
 const playerAvatar = new THREE.Group();
 { const t=new THREE.Mesh(new THREE.CapsuleGeometry(0.6,1.7,6,12),avatarMat); t.position.y=1.85; playerAvatar.add(t);
@@ -821,6 +1175,55 @@ function _loadHero(file){
   }, undefined, ()=>{ if(file!=='robot.glb') _loadHero('robot.glb'); else console.warn('player model failed; capsule avatar kept'); });
 }
 _loadHero('hero-walk.glb');  // ORIGINAL SHADDAI hero (Meshy-rigged). Falls back to robot.glb if missing.
+
+// ── PLAY AS A CHOSEN OPERATIVE: swap the player body for that agent's real GLB (from the spawn picker) ──
+// Uses _pcCache — the GLB was preloaded during sky-dive, so .then() fires after the next microtask
+// (no main-thread parse stall at the critical moment of descent).
+window.setPlayerCharacter = function(code){
+  if(!code) return;
+  code = String(code).toUpperCase();
+  // If not yet in cache, kick off the load now (late preload — better late than never).
+  const glbPromise = _pcCache[code] || _pcPreload(code);
+  glbPromise.then(function(g){
+    while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]);
+    // Clone the cached scene so we don't consume the gltf.scene singleton;
+    // clone() is ~5ms vs. 200-500ms for a fresh parse.
+    const m = g.scene.clone(true);
+    const box=new THREE.Box3().setFromObject(m); const sz=new THREE.Vector3(); box.getSize(sz);
+    m.scale.setScalar(3.6/(sz.y||1));
+    const b2=new THREE.Box3().setFromObject(m); m.position.y=-b2.min.y;
+    const _pa = AGENTS.find(a=>(a.codename||'').toUpperCase()===code);
+    const _pacc = new THREE.Color((_pa && _pa.color) || '#9fb0e0');
+    m.traverse(function(c){ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false;
+      // Clone materials before mutating so the cached original stays clean for future clones
+      const rawMats = Array.isArray(c.material) ? c.material : [c.material];
+      const clonedMats = rawMats.map(function(mm){ return mm ? mm.clone() : mm; });
+      c.material = Array.isArray(c.material) ? clonedMats : (clonedMats[0]||c.material);
+      clonedMats.forEach(function(mm){ if(!mm) return;
+        if(mm.color){ mm.color.set(0xffffff); mm.color.lerp(_pacc, mm.map ? 0.16 : 0.6); }
+        if('emissiveIntensity' in mm) mm.emissiveIntensity = 0;
+        if(mm.emissive) mm.emissive.setRGB(0,0,0);
+        if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.12);
+        if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.7);
+        mm.needsUpdate = true;
+      });
+    }});
+    playerAvatar.add(m);
+    // PRE-WARM the picked operative's freshly-cloned + recolored materials NOW. They are brand-new objects
+    // (cloned from the cached GLB and mutated above), so the boot-time renderer.compile never saw them —
+    // meaning they'd otherwise compile on the FIRST frame the avatar becomes visible = right when you land,
+    // which is the entry stutter. Compiling here (avatar still hidden during the sky-dive) moves that cost
+    // off the landing frame.
+    try { renderer.compile(scene, camera); } catch(_){}
+    for(const k in playerClips) delete playerClips[k];
+    playerMixer = (g.animations&&g.animations.length) ? new THREE.AnimationMixer(m) : null;
+    if(playerMixer)(g.animations||[]).forEach(function(cl){ playerClips[cl.name]=playerMixer.clipAction(cl); });
+    playerAction = _clip('Idle')||_clip('Walk')||(Object.values(playerClips)[0]||null);
+    if(playerAction) playerAction.play();
+    window._playerCharacter = code;
+    console.log('🎮 now playing as', code, '· clips:', Object.keys(playerClips).join(',')||'(static pose)');
+  }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— keeping current body'); });
+};
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'] };
 function _clip(name){
@@ -845,12 +1248,14 @@ addEventListener('keydown', e=>{ if(e.code==='KeyV') thirdPerson=!thirdPerson; }
 addEventListener('click', ()=>{
   const d=document.getElementById('dossier');
   if(d.classList.contains('open')) return;          // let dossier buttons handle their own clicks
-  if(!controls.isLocked){ controls.lock(); return; } // click canvas to (re)enter first-person — no more lock-out
+  if(!controls.isLocked){ _safeLock(); return; } // click canvas to (re)enter first-person — no more lock-out
   if(targeted){ openDossier(targeted.a); }
 });
 addEventListener('keydown', e=>{
-  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); else if(nearPortal) enterPortal(nearPortal); }
-  if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier
+  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); else if(nearPortal) enterPortal(nearPortal);
+    else if(_elevators && _elevators.tryBoard && !(_interiors && !_interiors.isInside() && _interiors.nearestDoor(playerPos.x, playerPos.z))) _elevators.tryBoard(playerPos.x, playerPos.z); }  // E also boards a nearby elevator (building door takes priority)
+  if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
+  if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
   if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
 });
 
@@ -908,73 +1313,684 @@ window.removeAgent = function(a){
     .catch(()=>alert('Remove failed (network).'));
 };
 
-// ── galaxy portal intro ──
+// ── CINEMATIC portal intro (performance-tuned: locked 60fps, zero per-frame allocs) ──
 (function(){
-  const cv=document.getElementById('portalCv'), x=cv.getContext('2d');
-  let w,h; function sz(){ w=cv.width=innerWidth; h=cv.height=innerHeight; } sz(); addEventListener('resize',sz);
-  const N=520, st=[]; for(let i=0;i<N;i++) st.push({a:Math.random()*6.28,r:Math.random(),z:Math.random()});
-  const t0=performance.now(); let raf;
-  function fr(now){ const t=(now-t0)/1000; const sp=0.0006+t*t*0.0018;
-    x.fillStyle='rgba(4,6,13,0.25)'; x.fillRect(0,0,w,h);
-    const cx=w/2,cy=h/2;
-    for(const s of st){ s.r+=sp*(0.4+s.z); if(s.r>1.25){s.r=0;s.a=Math.random()*6.28;}
-      const rr=s.r*Math.max(w,h)*0.75, px=cx+Math.cos(s.a)*rr, py=cy+Math.sin(s.a)*rr;
-      const pr=(s.r-sp*30)*Math.max(w,h)*0.75, qx=cx+Math.cos(s.a)*pr, qy=cy+Math.sin(s.a)*pr;
-      x.strokeStyle=(s.z>0.5?'rgba(39,224,255,':'rgba(255,207,74,')+(s.r)+')'; x.lineWidth=Math.max(0.5,s.z*2.4);
-      x.beginPath(); x.moveTo(qx,qy); x.lineTo(px,py); x.stroke();
+  var cv=document.getElementById('portalCv'), x=cv.getContext('2d');
+
+  // === SIZING: cap DPR at 1.5 so 4K/Retina laptops don't choke ===
+  var DPR=Math.min(window.devicePixelRatio||1, 1.5);
+  var W,H,CX,CY,glowGrad,vortGrad,MR,RING,glowR,dashOuter,dashInner,dashMid,rszT;
+  var PI2=6.283185307;
+
+  // Grid horizon: NGRID converging lines + NCROSS horizontal cross-lines.
+  // Stored as flat [x1,y1,x2,y2, ...] — recomputed in sz(), never inside RAF.
+  var NGRID=16, NCROSS=6, gridBuf=[];
+
+  function sz(){
+    W=innerWidth; H=innerHeight; CX=W/2; CY=H/2;
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+    cv.style.width=W+'px'; cv.style.height=H+'px';
+    var CXD=CX*DPR, CYD=CY*DPR;
+
+    // Center glow gradient (pre-built — never allocate inside RAF)
+    var gr=Math.min(W,H)*0.26*DPR;
+    glowGrad=x.createRadialGradient(CXD,CYD,0,CXD,CYD,gr);
+    glowGrad.addColorStop(0,'rgba(255,226,130,0.68)');
+    glowGrad.addColorStop(0.22,'rgba(39,224,255,0.32)');
+    glowGrad.addColorStop(0.65,'rgba(192,132,252,0.07)');
+    glowGrad.addColorStop(1,'rgba(0,0,0,0)');
+
+    // Vortex dark-core gradient
+    var vr=Math.min(W,H)*0.13*DPR;
+    vortGrad=x.createRadialGradient(CXD,CYD,0,CXD,CYD,vr);
+    vortGrad.addColorStop(0,'rgba(2,3,8,0.98)');
+    vortGrad.addColorStop(0.5,'rgba(4,6,13,0.82)');
+    vortGrad.addColorStop(1,'rgba(0,0,0,0)');
+
+    MR=Math.max(W,H)*0.80*DPR;
+    RING=Math.max(1, Math.min(W,H)*0.285*DPR);   // guard: never let a bad/zero canvas size produce a negative arc radius (crash)
+    glowR=Math.max(1, Math.min(W,H)*0.22*DPR);
+    // setLineDash arrays pre-allocated here — no array creation inside RAF
+    dashOuter=[RING*0.28, RING*0.06];
+    dashInner=[RING*0.16, RING*0.05];
+    dashMid=[RING*0.06, RING*0.04];
+
+    // Pre-compute perspective grid lines (converge to vanishing point just above center)
+    gridBuf.length=0;
+    var VX=CXD, VY=CYD*0.64;
+    var bW=W*DPR, bH=H*DPR;
+    for(var gi=0;gi<NGRID;gi++){
+      var u=(gi/(NGRID-1))*1.5-0.25; // spread 25% beyond each edge
+      gridBuf.push(VX, VY, u*bW, bH*1.02);
     }
-    // central swirl glow
-    const gg=x.createRadialGradient(cx,cy,0,cx,cy,140+Math.sin(now*0.003)*30);
-    gg.addColorStop(0,'rgba(255,233,168,0.5)'); gg.addColorStop(.5,'rgba(39,224,255,0.18)'); gg.addColorStop(1,'rgba(0,0,0,0)');
-    x.fillStyle=gg; x.beginPath(); x.arc(cx,cy,180,0,6.29); x.fill();
+    for(var gi=0;gi<NCROSS;gi++){
+      var ft=Math.pow((gi+1)/NCROSS, 1.8);
+      var py=VY+(bH-VY)*ft;
+      var hw=(0.55+ft*0.5)*bW*0.5;
+      gridBuf.push(VX-hw, py, VX+hw, py);
+    }
+  }
+  sz();
+  // Throttled resize — not every frame
+  addEventListener('resize',function(){clearTimeout(rszT);rszT=setTimeout(sz,200);});
+
+  // === PRE-ALLOCATE EVERYTHING — zero `new` inside the RAF loop ===
+
+  // Warp streaks: 160 total (96 cyan / 44 gold / 20 white-core near-center)
+  // All cyan → ONE path, all gold → ONE path, all white → ONE path = 3 stroke() calls, not 160
+  var NWARP=160, st=[];
+  for(var i=0;i<NWARP;i++){
+    var sc=i<96?0:(i<140?1:2); // 0=cyan 1=gold 2=white
+    // All start at r=0 → clean "power-on" from center; staggered by z for depth variety
+    st.push({a:Math.random()*PI2, r:0, z:0.15+Math.random()*0.85, c:sc});
+  }
+
+  // Expanding pulse rings: 6 pre-allocated (cycle 3 colors: cyan / purple / gold)
+  var NPLSR=6, pls=[];
+  for(var i=0;i<NPLSR;i++) pls.push({r:i/NPLSR, c:i%3});
+
+  // Plasma arcs on portal ring: 8 bezier curves
+  var NARC=8, arcs=[];
+  for(var i=0;i<NARC;i++) arcs.push({
+    a1:Math.random()*PI2, a2:Math.random()*PI2,
+    d1:(Math.random()-.5)*0.013, d2:(Math.random()-.5)*0.013,
+    al:0.22+Math.random()*0.50
+  });
+
+  // Energy nodes on outer ring: 8 angle offsets (positions computed each frame from RING+rot)
+  var NNODE=8, nodeOff=[];
+  for(var i=0;i<NNODE;i++) nodeOff.push(i*PI2/NNODE);
+
+  // Floating dust: 50 normalized particles — two color buckets (c=2 → gold, rest → cyan)
+  var NDUST=50, dust=[];
+  for(var i=0;i<NDUST;i++) dust.push({
+    x:Math.random(), y:Math.random(),
+    vx:(Math.random()-.5)*0.00028, vy:(Math.random()-.5)*0.00028,
+    al:0.2+Math.random()*0.55, c:i%3
+  });
+
+  // Shockwave: 1 pre-allocated ring — fires when button reveals
+  var shock={r:0, al:0, active:false};
+
+  // Pre-built color string constants — V8 interns literals so zero per-frame alloc
+  var COL_CYAN='rgba(39,224,255,1)', COL_GOLD='rgba(255,207,74,1)',
+      COL_WHITE='rgba(255,255,255,1)', COL_PURP='rgba(192,132,252,1)';
+  var STROKE_CYAN='rgba(39,224,255,0.78)', STROKE_GOLD='rgba(255,207,74,0.62)',
+      STROKE_WHITE='rgba(255,255,255,0.55)';
+
+  var t0=performance.now(), raf;
+
+  // Fire shockwave the moment button reveals — keeps it in sync with the setTimeout below
+  setTimeout(function(){ shock.r=0; shock.al=1.0; shock.active=true; }, 2600);
+
+  var _introLast=0;
+  function fr(now){
     raf=requestAnimationFrame(fr);
+    if(now-_introLast < 32) return;   // cap the boot swirl at ~30fps — imperceptible, leaves CPU/GPU for loading the world
+    _introLast=now;
+    var t=Math.max(0,(now-t0)*0.001);   // CLAMP ≥0: a negative elapsed (rAF-timestamp vs start-time edge case) made coreR/arc radii go negative → IndexSizeError crash
+    // Warp speed: starts near-zero, accelerates through power-up, caps in ready phase
+    var sp=Math.min(0.00048+t*t*0.00165, 0.013);
+    // Phase alpha: 0 at t=0 → 1.0 by t=1.5s (drives fade-in of grid, rings, dust)
+    var pa=t<1.5?t/1.5:1.0;
+    var CXD=CX*DPR, CYD=CY*DPR;
+
+    // ── 1. TRAIL FADE — semi-transparent fill creates motion-blur warp; no full clear ──
+    x.globalAlpha=0.18; x.fillStyle='#04060d'; x.fillRect(0,0,cv.width,cv.height); x.globalAlpha=1;
+
+    // ── 2. PERSPECTIVE GRID HORIZON — fades in with pa, stays subtle ──
+    var gridAl=pa*0.15;
+    if(gridAl>0.005){
+      x.globalAlpha=gridAl; x.strokeStyle=COL_CYAN; x.lineWidth=DPR*0.7;
+      x.beginPath();
+      for(var i=0,n=gridBuf.length;i<n;i+=4){
+        x.moveTo(gridBuf[i],gridBuf[i+1]); x.lineTo(gridBuf[i+2],gridBuf[i+3]);
+      }
+      x.stroke(); x.globalAlpha=1;
+    }
+
+    // ── 3. WARP STREAKS — 3 batched passes = 3 stroke() calls total ──
+    x.lineWidth=DPR*1.5;
+
+    // Cyan pass (all 96 in one path)
+    x.beginPath();
+    for(var i=0;i<NWARP;i++){
+      var s=st[i]; if(s.c!==0) continue;
+      s.r+=sp*(0.50+s.z*0.56); if(s.r>1.08){s.r=0.01;s.a=Math.random()*PI2;}
+      var r1=s.r*MR, r0=(s.r-sp*26)*MR; if(r0<0) r0=0;
+      x.moveTo(CXD+Math.cos(s.a)*r0, CYD+Math.sin(s.a)*r0);
+      x.lineTo(CXD+Math.cos(s.a)*r1, CYD+Math.sin(s.a)*r1);
+    }
+    x.strokeStyle=STROKE_CYAN; x.stroke();
+
+    // Gold pass (44 in one path)
+    x.beginPath();
+    for(var i=0;i<NWARP;i++){
+      var s=st[i]; if(s.c!==1) continue;
+      s.r+=sp*(0.50+s.z*0.56); if(s.r>1.08){s.r=0.01;s.a=Math.random()*PI2;}
+      var r1=s.r*MR, r0=(s.r-sp*26)*MR; if(r0<0) r0=0;
+      x.moveTo(CXD+Math.cos(s.a)*r0, CYD+Math.sin(s.a)*r0);
+      x.lineTo(CXD+Math.cos(s.a)*r1, CYD+Math.sin(s.a)*r1);
+    }
+    x.strokeStyle=STROKE_GOLD; x.stroke();
+
+    // White-core pass — near-center only (resets at r=0.38 → always short, tunnel-depth look)
+    x.beginPath();
+    for(var i=0;i<NWARP;i++){
+      var s=st[i]; if(s.c!==2) continue;
+      s.r+=sp*(0.50+s.z*0.56); if(s.r>0.38){s.r=0.01;s.a=Math.random()*PI2;}
+      var r1=s.r*MR, r0=(s.r-sp*20)*MR; if(r0<0) r0=0;
+      x.moveTo(CXD+Math.cos(s.a)*r0, CYD+Math.sin(s.a)*r0);
+      x.lineTo(CXD+Math.cos(s.a)*r1, CYD+Math.sin(s.a)*r1);
+    }
+    x.strokeStyle=STROKE_WHITE; x.stroke();
+
+    // ── 4. FLOATING DUST — two color passes (cyan then gold) ──
+    var dustAl=pa*0.52;
+    if(dustAl>0.02){
+      x.fillStyle=COL_CYAN;
+      for(var i=0;i<NDUST;i++){
+        var d=dust[i]; if(d.c===2) continue;
+        d.x+=d.vx*(1+sp*55); d.y+=d.vy*(1+sp*55);
+        if(d.x<0)d.x=1; if(d.x>1)d.x=0; if(d.y<0)d.y=1; if(d.y>1)d.y=0;
+        x.globalAlpha=dustAl*d.al;
+        x.fillRect(d.x*W*DPR, d.y*H*DPR, DPR, DPR);
+      }
+      x.fillStyle=COL_GOLD;
+      for(var i=0;i<NDUST;i++){
+        var d=dust[i]; if(d.c!==2) continue;
+        d.x+=d.vx*(1+sp*55); d.y+=d.vy*(1+sp*55);
+        if(d.x<0)d.x=1; if(d.x>1)d.x=0; if(d.y<0)d.y=1; if(d.y>1)d.y=0;
+        x.globalAlpha=dustAl*d.al;
+        x.fillRect(d.x*W*DPR, d.y*H*DPR, DPR, DPR);
+      }
+      x.globalAlpha=1;
+    }
+
+    // ── 5. PULSE RINGS — 3 color buckets, each ring pre-allocated ──
+    for(var i=0;i<NPLSR;i++){
+      var p=pls[i]; p.r+=sp*3.0; if(p.r>1.15) p.r=0;
+      var rr=p.r*MR*0.55, al=(1-p.r)*0.44*pa; if(al<0) al=0;
+      var lw=DPR*(3.0-p.r*2.2); if(lw<0.4) lw=0.4;
+      x.globalAlpha=al; x.lineWidth=lw;
+      if(p.c===0) x.strokeStyle=COL_CYAN;
+      else if(p.c===1) x.strokeStyle=COL_PURP;
+      else x.strokeStyle=COL_GOLD;
+      x.beginPath(); x.arc(CXD,CYD,rr,0,PI2); x.stroke();
+    }
+    x.globalAlpha=1;
+
+    // ── 6. PORTAL RING — 3 concentric rings; outer gold, mid cyan counter-spin, inner purple ──
+    var ringAl=Math.min(t/1.0,1.0);
+    var rot=t*0.44;
+    x.save(); x.translate(CXD,CYD); x.globalAlpha=ringAl;
+
+    // Faint violet aurora halo (breathing) — adds depth behind the rings
+    var au=0.10+0.06*Math.sin(t*1.3);
+    x.setLineDash([]);
+    x.beginPath(); x.arc(0,0,RING*1.10,0,PI2);
+    x.strokeStyle='rgba(160,107,255,'+au.toFixed(3)+')'; x.lineWidth=DPR*16; x.stroke();
+
+    // Outer ring (gold dashes, slow spin)
+    x.rotate(rot);
+    x.setLineDash(dashOuter);
+    x.beginPath(); x.arc(0,0,RING,0,PI2);
+    x.strokeStyle='rgba(255,207,74,0.26)'; x.lineWidth=DPR*10; x.stroke(); // wide soft halo
+    x.strokeStyle='rgba(255,224,140,0.82)'; x.lineWidth=DPR*2.6; x.stroke(); // bright warm rim
+
+    // Mid ring (cyan, counter-spin) — glow + crisp rim
+    x.rotate(-rot*2.6);
+    x.setLineDash(dashInner);
+    x.beginPath(); x.arc(0,0,RING*0.72,0,PI2);
+    x.strokeStyle='rgba(39,224,255,0.22)'; x.lineWidth=DPR*6; x.stroke();
+    x.strokeStyle='rgba(143,239,255,0.66)'; x.lineWidth=DPR*1.9; x.stroke();
+
+    // Inner ring (violet, faster spin)
+    x.rotate(rot*3.8);
+    x.setLineDash(dashMid);
+    x.beginPath(); x.arc(0,0,RING*0.50,0,PI2);
+    x.strokeStyle='rgba(192,132,252,0.55)'; x.lineWidth=DPR*1.4; x.stroke();
+
+    x.setLineDash([]); x.restore();
+
+    // ── 7. ENERGY NODES on outer ring — 8 pulsing white dots that ride the ring ──
+    if(ringAl>0.2){
+      for(var i=0;i<NNODE;i++){
+        var na=nodeOff[i]+rot;
+        var nx=CXD+Math.cos(na)*RING, ny=CYD+Math.sin(na)*RING;
+        var pulse=0.35+0.65*Math.abs(Math.sin(t*3.5+i*0.785));
+        // colored aura (alternating cyan/gold) under a bright white core
+        x.globalAlpha=ringAl*pulse*0.35;
+        x.fillStyle=i%2===0?'rgba(39,224,255,1)':'rgba(255,207,74,1)';
+        x.beginPath(); x.arc(nx,ny,DPR*(3.2+pulse*4.5),0,PI2); x.fill();
+        x.globalAlpha=ringAl*pulse*0.92;
+        x.fillStyle=COL_WHITE;
+        x.beginPath(); x.arc(nx,ny,DPR*(1.2+pulse*1.8),0,PI2); x.fill();
+      }
+      x.globalAlpha=1;
+    }
+
+    // ── 8. PLASMA ARCS — phase-in after t=0.6s ──
+    var arcPh=t<0.6?0:(t<1.6?(t-0.6):1.0);
+    if(arcPh>0.01){
+      x.lineWidth=DPR*1.5;
+      for(var i=0;i<NARC;i++){
+        var ar=arcs[i]; ar.a1+=ar.d1; ar.a2+=ar.d2;
+        var x1=CXD+Math.cos(ar.a1)*RING, y1=CYD+Math.sin(ar.a1)*RING;
+        var x2=CXD+Math.cos(ar.a2)*RING, y2=CYD+Math.sin(ar.a2)*RING;
+        var mx=(x1+x2)/2, my=(y1+y2)/2;
+        var cpx=CXD+(mx-CXD)*0.18, cpy=CYD+(my-CYD)*0.18;
+        x.strokeStyle=i%2===0?COL_PURP:COL_CYAN;
+        var ga=arcPh*ar.al*(0.4+0.6*Math.sin(t*3.4+i*1.8));
+        x.globalAlpha=ga<0?0:ga;
+        x.beginPath(); x.moveTo(x1,y1); x.quadraticCurveTo(cpx,cpy,x2,y2); x.stroke();
+      }
+    }
+    x.globalAlpha=1;
+
+    // ── 9. CENTRAL GLOW — pre-built gradient, zero allocs ──
+    x.beginPath(); x.arc(CXD,CYD,glowR,0,PI2); x.fillStyle=glowGrad; x.fill();
+
+    // ── 10. VORTEX CORE — dark eye that deepens as warp spins up ──
+    var coreR=RING*(0.16+Math.min(t/5.0,0.18));
+    x.globalAlpha=Math.min(t/1.2,0.92);
+    x.beginPath(); x.arc(CXD,CYD,coreR,0,PI2); x.fillStyle=vortGrad; x.fill();
+    x.globalAlpha=1;
+
+    // ── 11. SHOCKWAVE — fires once at button reveal ──
+    if(shock.active){
+      shock.r+=0.038; shock.al*=0.945;
+      if(shock.al<0.012){ shock.active=false; }
+      else {
+        var sw=DPR*(3.5-shock.r*1.0); if(sw<0.4) sw=0.4;
+        x.globalAlpha=shock.al;
+        x.strokeStyle=COL_WHITE; x.lineWidth=sw;
+        x.beginPath(); x.arc(CXD,CYD,RING*(0.30+shock.r*3.0),0,PI2); x.stroke();
+        x.strokeStyle=COL_CYAN; x.lineWidth=DPR*1.2; x.globalAlpha=shock.al*0.50;
+        x.beginPath(); x.arc(CXD,CYD,RING*(0.50+shock.r*2.4),0,PI2); x.stroke();
+        x.globalAlpha=1;
+      }
+    }
   }
   raf=requestAnimationFrame(fr);
-  setTimeout(()=>{ document.getElementById('enterBtn').classList.add('show'); document.getElementById('loadNote').textContent='the grid awaits'; }, 2600);
-  if(location.search.indexOf('peek')>=0){ setTimeout(()=>{ const I=document.getElementById('intro'); I.classList.add('gone'); setTimeout(()=>{cancelAnimationFrame(raf);I.style.display='none';},1100); }, 1600); }
-  document.getElementById('enterBtn').addEventListener('click', ()=>{
-    document.getElementById('intro').classList.add('gone');
-    setTimeout(()=>{ cancelAnimationFrame(raf); document.getElementById('intro').style.display='none'; }, 1100);
-    controls.lock();
+
+  // Cycle loading messages every 750ms, then reveal button + shockwave at 2.6s
+  var msgs=[
+    'scanning neural pathways…',
+    'initializing agent grid…',
+    'synchronizing operatives…',
+    'calibrating the void…',
+    'loading seven minds…',
+    'breach protocol active…'
+  ];
+  var mi=0, ln=document.getElementById('loadNote');
+  var msgI=setInterval(function(){ mi=(mi+1)%msgs.length; ln.textContent=msgs[mi]; }, 750);
+  // REAL LOADING GATE: don't reveal JACK IN until every asset is loaded AND shaders are pre-compiled,
+  // so you drop into a fully-built, stutter-free world — never a half-loaded one.
+  var _t0 = Date.now(), _warmed = false;
+  (function _tryReady(){
+    var elapsed = Date.now() - _t0;
+    // ready when assets are in AND we've held ~1.2s (so the bar reads); hard 9s fallback so a
+    // missing/stuck asset can never trap you on the loading screen.
+    if((window.__assetsReady && window.__worldBuilt && elapsed > 1200) || elapsed > 9000){
+      clearInterval(msgI);
+      if(!_warmed){
+        _warmed = true;
+        ln.textContent='compiling the grid…';
+        // WARM-UP: compile all shaders + render one frame NOW (behind the intro) so the first
+        // frame after you jack in is instant — this is what removes the entry stutter.
+        try { renderer.compile(scene, camera); composer.render(); } catch(e){ console.warn('warmup', e && e.message); }
+      }
+      var bar=document.getElementById('loadBar'); if(bar) bar.style.width='100%';
+      var pl=document.getElementById('loadPct'); if(pl) pl.textContent='100%';
+      document.getElementById('enterBtn').classList.add('show');
+      ln.textContent='GRID ONLINE · OPERATIVE STANDING BY';
+      return;
+    }
+    // keep the bar visibly creeping even if onProgress is quiet (slow first byte)
+    var bar=document.getElementById('loadBar');
+    if(bar && (parseFloat(bar.style.width)||0) < 90){ var creep=Math.min(90, Math.round(elapsed/9000*90)); if(creep>(parseFloat(bar.style.width)||0)){ bar.style.width=creep+'%'; var pl2=document.getElementById('loadPct'); if(pl2) pl2.textContent=creep+'%'; } }
+    setTimeout(_tryReady, 200);
+  })();
+
+  // Coming from the dashboard portal (?peek): auto-fire the ENTER flow so you STILL get the GTA
+  // sky-dive + portal picker (previously it skipped straight in with no sky-dive).
+  if(location.search.indexOf('peek')>=0){ (function _waitEnter(){ var b=document.getElementById('enterBtn'); if(b && b.classList.contains('show')){ b.click(); } else setTimeout(_waitEnter, 200); })(); }
+
+  // ── GRID → DIMENSION WARP: neon grid erupts from the button, forms, then rushes forward through a
+  //    dimensional gate. Pure 2D canvas (cheap). The world is already loaded + shader-warmed by now,
+  //    so when the warp clears you drop straight into a finished world — no pop-in, no stutter. ──
+  function _dimensionWarp(done){
+    var cv=document.createElement('canvas');
+    cv.style.cssText='position:fixed;inset:0;z-index:99999;pointer-events:none';
+    document.body.appendChild(cv);
+    var ctx=cv.getContext('2d');
+    var W,H,cx,cy; function size(){ W=cv.width=innerWidth; H=cv.height=innerHeight; cx=W/2; cy=H/2; } size();
+    var t0=performance.now(), DUR=1500, raf2=0;
+    function frame(now){
+      var p=Math.min(1,(now-t0)/DUR);
+      var form=Math.min(1, p/0.55);                 // 0..1 grid forms (first 55%)
+      var open=p>0.55 ? (p-0.55)/0.45 : 0;          // then the gate rushes open
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle='rgba(2,4,9,'+(0.25+0.55*form)+')'; ctx.fillRect(0,0,W,H);
+      var maxR=Math.hypot(W,H)*0.60*form;
+      ctx.save(); ctx.translate(cx,cy);
+      // concentric neon squares expanding from the button — the grid "opening"
+      ctx.rotate(open*0.14);                          // slight twist as the gate opens = more energy
+      var N=15;
+      for(var i=1;i<=N;i++){
+        var f=i/N, s=(f*maxR)*(1+open*2.6*f);        // on open, rings fly outward = tunnel rush toward you
+        var a=Math.max(0,(1-f)*0.85)*(0.35+0.65*form);
+        ctx.lineWidth=1.6+open*2.6;
+        // forming = cyan→violet gradient of depth; opening = hot gold/white rush
+        ctx.strokeStyle= open>0 ? 'rgba(255,'+(190+Math.round(60*(1-f)))+','+(110+Math.round(90*open))+','+a+')'
+                                : 'rgba('+(39+Math.round(120*f))+','+(224-Math.round(70*f))+',255,'+a+')';
+        ctx.strokeRect(-s,-s,s*2,s*2);
+      }
+      // radial spokes lock the grid together, then stretch on open
+      for(var k=0;k<16;k++){
+        var ang=k/16*Math.PI*2, rr=maxR*(1+open*3.0);
+        ctx.lineWidth=1+open*1.2;
+        ctx.strokeStyle= open>0 ? 'rgba(255,224,150,'+(0.30*form)+')' : 'rgba(120,180,255,'+(0.24*form)+')';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(ang)*rr, Math.sin(ang)*rr); ctx.stroke();
+      }
+      ctx.restore();
+      // violet bloom rising through the forming grid (adds depth before the gate blows open)
+      if(form>0.05 && open<0.6){
+        var vb=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.5);
+        var va=0.10*form*(1-open);
+        vb.addColorStop(0,'rgba(160,107,255,'+va+')'); vb.addColorStop(0.55,'rgba(90,60,200,'+(va*0.5)+')'); vb.addColorStop(1,'rgba(90,60,200,0)');
+        ctx.fillStyle=vb; ctx.fillRect(0,0,W,H);
+      }
+      // dimensional flash blowing out from the center as the gate opens
+      if(p>0.72){
+        var fl=(p-0.72)/0.28;
+        var g=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*(0.15+0.6*fl));
+        g.addColorStop(0,'rgba(255,250,235,'+fl+')'); g.addColorStop(0.45,'rgba(255,224,150,'+(fl*0.55)+')'); g.addColorStop(0.75,'rgba(120,230,255,'+(fl*0.4)+')'); g.addColorStop(1,'rgba(120,230,255,0)');
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      }
+      if(p<1){ raf2=requestAnimationFrame(frame); }
+      else { try{cv.remove();}catch(_){} done&&done(); }
+    }
+    raf2=requestAnimationFrame(frame);
+  }
+
+  document.getElementById('enterBtn').addEventListener('click', function(){
+    var btn=this; if(btn._used) return; btn._used=true;   // ignore double-clicks
+    cancelAnimationFrame(raf);                             // stop the intro canvas — no competing frames
+    btn.style.transition='transform .18s,opacity .3s'; btn.style.transform='scale(1.35)'; btn.style.opacity='0';
+    // Kick off audio + STAGGERED character preloads NOW (during the ~1.5s warp) so they're ready on landing.
+    AGENTS.forEach(function(a, i){ setTimeout(function(){ _pcPreload(a.codename); }, i * 500); });
+    try{ if(_audio){ _audio.start(); _audio.playSFX('warp'); } }catch(e){}
+    try{ if(_radio) _radio.start(); }catch(e){}
+    // fade the boot text out under the forming grid
+    setTimeout(function(){ var ii=document.getElementById('introInner'); if(ii){ ii.style.transition='opacity .45s'; ii.style.opacity='0'; } }, 300);
+    // run the grid→dimension transition, THEN drop into the already-loaded world
+    _dimensionWarp(function(){
+      var intro=document.getElementById('intro'); intro.classList.add('gone');
+      setTimeout(function(){ intro.style.display='none'; }, 500);
+      if(worldSpawn){ worldSpawn.startSkydive(); setTimeout(function(){ worldSpawn.openPicker(); }, 650); }
+      else { _safeLock(); }
+    });
   });
 })();
 
+// ── SOLID BUILDING COLLISION (BUG FIX) ──────────────────────────────────────
+// The shared world-collision.js used radii (SHADDAI 34 / agents 24 / bazaar 22) that are
+// far smaller than the real footprints, so the player walked through most of each building.
+// Build correctly-sized circle colliders ONCE from WORLD_LAYOUT: SHADDAI temple r55,
+// each of the 6 agent buildings r44, the bazaar r40.
+// Collider radii sized to the ACTUAL (now bigger) building walls (footprint * ~0.34), so you can no
+// longer walk through walls. Each collider also stores a DOOR direction (pointing toward world-center,
+// which is the side you approach & spawn from) — the resolver leaves that arc open so you can walk
+// straight up to the entrance and get the [E] prompt instead of bouncing off an invisible circle.
+// radii = footprint * 0.46 (the actual facade distance) so the wall is SOLID right where you see it —
+// no more walking through the visible wall before the collider catches you.
+const _BLDG_R = { SHADDAI:76, NEXUS:63, QUILL:118, PIKADON:65, TURTLE:63, ZEROX:65, ORACLE:62 };  // QUILL library enlarged 1.5× → collider now faceR=258·0.46≈118 (was 78) so the bigger walls stay solid
+const _CYL_BLDG = { NEXUS:true, ORACLE:true };   // these two are ROUND (cylinder) — everything else is a BOX
+const _bldgColliders = (function(){
+  const list=[]; const L=window.WORLD_LAYOUT;
+  if(L && Array.isArray(L.sectors)){
+    L.sectors.forEach(function(s){ if(!s || !s.pos) return;
+      if(s.code==='SHADDAI') return;   // center is now the OPEN community forum (temple moved up to its own island off The Sky Nexus) — no collider
+      const cx=s.pos[0], cz=s.pos[1];
+      const cl=Math.hypot(cx,cz);
+      // door faces world-center; SHADDAI sits AT center so its door faces -z (matches the temple front)
+      const dnx = cl<1 ? 0 : -cx/cl, dnz = cl<1 ? -1 : -cz/cl;
+      list.push({ cx:cx, cz:cz, r:(_BLDG_R[s.code]||50), dnx:dnx, dnz:dnz, box:!_CYL_BLDG[s.code] });
+    });
+  }
+  // (old standalone bazaar collider removed — the bazaar now lives in the central hub; its stalls are
+  //  solid via window.__hubColliders, handled in _resolveBuildingCollision.)
+  return list;
+})();
+// SHAPE-AWARE solid collision with a real door opening:
+//  • BOX buildings → axis-aligned box (blocks flat faces AND corners correctly — no "barrier at the face
+//    but walk-through at the corner" any more); pushed out along the axis of least penetration (slides).
+//  • ROUND buildings (NEXUS/ORACLE) → circle.
+//  Buildings are now FULLY SOLID — no door gap. You can never walk through a wall. To go inside you walk
+//  up to the door (the "[E] ENTER" prompt fires at the wall) and press E → cutscene → the interior room.
+//  Cheap: a few compares, no allocations.
+function _resolveBuildingCollision(){
+  const BUF=3.0;   // player radius — stop this far OUTSIDE the wall so the camera never clips INTO the building (the "I disappear" bug)
+  for(let i=0;i<_bldgColliders.length;i++){
+    const c=_bldgColliders[i];
+    const dx=playerPos.x-c.cx, dz=playerPos.z-c.cz;
+    if(c.box){
+      const h=c.r, hb=h+BUF;
+      if(Math.abs(dx)<hb && Math.abs(dz)<hb){               // within the buffered box → push out to hb (outside the wall)
+        const penX=hb-Math.abs(dx), penZ=hb-Math.abs(dz);
+        if(penX<penZ) playerPos.x = c.cx + (dx<0?-hb:hb);
+        else          playerPos.z = c.cz + (dz<0?-hb:hb);
+      }
+    } else {
+      const rb=c.r+BUF, d2=dx*dx+dz*dz;
+      if(d2 < rb*rb){                                       // within the buffered circle → push out to rb
+        const d=Math.sqrt(d2)||0.0001;
+        playerPos.x = c.cx + (dx/d)*rb;
+        playerPos.z = c.cz + (dz/d)*rb;
+      }
+    }
+  }
+  // CENTRAL BAZAAR stalls + fountain are solid too — window.__hubColliders = [{cx,cz,r},...] set when the
+  // bazaar center builds. Simple solid circles (you walk the aisles, not through the stalls).
+  const hc = window.__hubColliders;
+  if(hc){ for(let i=0;i<hc.length;i++){ const c=hc[i];
+    const dx=playerPos.x-c.cx, dz=playerPos.z-c.cz, d2=dx*dx+dz*dz;
+    if(d2 < c.r*c.r){ const d=Math.sqrt(d2)||0.0001; playerPos.x=c.cx+(dx/d)*c.r; playerPos.z=c.cz+(dz/d)*c.r; } } }
+}
+
 // ── main loop ──
-const fwd=new THREE.Vector3(), right=new THREE.Vector3(), tmp=new THREE.Vector3();
+const fwd=new THREE.Vector3(), right=new THREE.Vector3(), tmp=new THREE.Vector3(), _dv=new THREE.Vector3();
+// smooth-movement scratch (pooled, no per-frame alloc)
+const _vel=new THREE.Vector3(), _moveDir=new THREE.Vector3(), _targetVel=new THREE.Vector3(), _camTarget=new THREE.Vector3();
+let _smoothBaseY;   // eased camera ground height — kills the vertical jitter from raw per-frame terrain sampling
+let _avatarYaw=0, _avatarYawInit=false;   // eased character facing — turns smoothly instead of snapping
+// shortest-path angle interpolation (handles the ±π wrap so turning never spins the long way)
+function _lerpAngle(a, b, t){ let d=b-a; while(d>Math.PI)d-=6.283185307; while(d<-Math.PI)d+=6.283185307; return a+d*t; }
 const clock=new THREE.Clock();
-// ── RIDEABLE VEHICLES: Slipstream (fly) + Arctic Rover (drive) — press G to board ──
-const veh = initRideables({ THREE, scene, GLTFLoader, playerPos, keys,
-  getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0,
-  setThirdPerson:(v)=>{ thirdPerson=v; } });
+// RIDEABLE VOYAGERS REMOVED (owner: "there's a car and a space vehicle under shaddai ... sloppy").
+// Keep a no-op `veh` stub so the movement hooks (speed/baseY/flyControl/update/mode) still work — this
+// spawns NO craft into the world. (Was initRideables(...) which parked a Slipstream + Arctic Rover.)
+const veh = { mode:false, speed:function(s){ return s; }, baseY:function(g){ return g; }, flyControl:function(){}, update:function(){} };
+
+// ══════════════════════════════════════════════════════════════════════════
+// FPS-ADAPTIVE QUALITY GOVERNOR — auto-tunes render quality to hold 50-60fps
+// Inspect with: console.log(window.__quality) or window.__quality in devtools
+// ══════════════════════════════════════════════════════════════════════════
+const _Q = {
+  // 4 tiers: LOW → MEDIUM → HIGH → ULTRA
+  // Each tier defines: pixelRatio cap, bloom strength (0=off), prop/NPC cull radius
+  tiers: [
+    { name:'POTATO', pr:0.55, bloomStr:0,    cullR:75   },  // weak GPUs settle here — still playable
+    { name:'LOW',    pr:0.75, bloomStr:0,    cullR:110  },
+    { name:'MEDIUM', pr:1.0,  bloomStr:0.14, cullR:220  },
+    { name:'HIGH',   pr:1.2,  bloomStr:0.22, cullR:360  },
+    { name:'ULTRA',  pr:1.5,  bloomStr:0.28, cullR:9999 },
+  ],
+  tier:    1,    // start at LOW — smooth first impression; governor climbs within seconds if the machine is fast
+  fps:     55,   // EMA fps estimate (seeded at 55 to avoid false-fast on first few frames)
+  below45: 0,    // accumulated seconds spent below 45 fps (triggers step-down)
+  above58: 0,    // accumulated seconds spent above 58 fps (triggers step-up)
+  cooldown:0,    // seconds before next tier change is allowed (hysteresis)
+};
+window.__quality = _Q.tiers[_Q.tier].name;
+
+function _applyQualityTier(idx){
+  if(idx < 0) idx = 0;
+  if(idx >= _Q.tiers.length) idx = _Q.tiers.length - 1;
+  const t = _Q.tiers[idx];
+  const pr = Math.min(devicePixelRatio, t.pr);
+  renderer.setPixelRatio(pr);
+  renderer.setSize(innerWidth, innerHeight);
+  // Size composer to physical pixel count so bloom renders at correct resolution
+  composer.setSize(Math.round(innerWidth * pr), Math.round(innerHeight * pr));
+  bloom.strength = t.bloomStr;
+  bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
+  _Q.tier = idx;
+  window.__quality = t.name;
+  // At the low tiers, hide the agents' additive aura/crown particles — they're pure eye-candy and the
+  // heaviest transparent OVERDRAW in the scene. Restored automatically when the governor climbs back up.
+  try {
+    if (typeof agentSprites !== 'undefined' && agentSprites.length){
+      const _fx = (t.name !== 'POTATO');   // only the absolute lowest tier hides auras; everywhere else they stay on
+      for (let _i=0;_i<agentSprites.length;_i++){ const _s=agentSprites[_i];
+        if(_s.aura && _s.aura.points) _s.aura.points.visible=_fx; else if(_s.aura && _s.aura.visible!==undefined) _s.aura.visible=_fx;
+        if(_s.crown) _s.crown.visible=_fx;
+      }
+    }
+  } catch(e){}
+  console.log('[SHADDAI quality] tier →', t.name,
+    '| pixelRatio:', pr.toFixed(2),
+    '| bloom:', t.bloomStr,
+    '| cullR:', t.cullR);
+}
+
+function _updateGovernor(dt){
+  const instantFps = dt > 0 ? 1 / dt : 60;
+  // EMA fps: alpha 0.18 — reacts over ~5 frames (was 0.12/~8) so dynamic-res responds to a fill-rate stall quickly
+  _Q.fps = _Q.fps * 0.82 + instantFps * 0.18;
+  if(_Q.cooldown > 0){ _Q.cooldown -= dt; return; }
+  // HARD FLOOR: a single very bad frame band (<30fps EMA) drops a tier immediately — no accumulation.
+  // This is the "measure rolling FPS, step DOWN when it stays below threshold" fast path for real stalls.
+  if(_Q.fps < 30 && _Q.tier > 0){
+    _applyQualityTier(_Q.tier - 1);
+    _Q.below45 = 0; _Q.above58 = 0; _Q.cooldown = 2.5;
+    return;
+  }
+  if(_Q.fps < 50){   // threshold raised 45→50: react before it feels laggy, not after
+    // Running slow: accumulate and step down after 0.6s sustained (was 1.0s) — snappier downshift
+    _Q.below45 += dt; _Q.above58 = 0;
+    if(_Q.below45 > 0.6 && _Q.tier > 0){
+      _applyQualityTier(_Q.tier - 1);
+      _Q.below45 = 0; _Q.cooldown = 2.5;
+    }
+  } else {
+    _Q.below45 = Math.max(0, _Q.below45 - dt * 0.5); // bleed off slowly
+  }
+  if(_Q.fps > 58){
+    // Running fast: accumulate and step up after 6s sustained (longer hysteresis going up)
+    _Q.above58 += dt; _Q.below45 = 0;
+    if(_Q.above58 > 6.0 && _Q.tier < _Q.tiers.length - 1){
+      _applyQualityTier(_Q.tier + 1);
+      _Q.above58 = 0; _Q.cooldown = 8.0;
+    }
+  } else {
+    _Q.above58 = Math.max(0, _Q.above58 - dt * 0.3);
+  }
+}
+
+// Apply initial tier now (sets pixelRatio + composer size correctly from the start)
+_applyQualityTier(_Q.tier);
 
 function animate(){
   requestAnimationFrame(animate);
+  // INTRO PERF: while the intro overlay is still up (before ENTER), do NOT run the heavy 3D
+  // updates + render — the intro covers the canvas, so rendering the whole world behind it was
+  // wasting the frame budget and making the intro laggy/janky. Resume once ENTER adds '.gone'.
+  // INTRO gate: once the intro is gone, stop touching the DOM every frame (cache + flag).
+  if(!_introGone){
+    if(!_introEl) _introEl=document.getElementById('intro');
+    if(_introEl && _introEl.style.display!=='none' && !_introEl.classList.contains('gone')){ return; }
+    _introGone = true;   // never check again
+  }
+  _animFrame++;
   const dt=Math.min(0.05, clock.getDelta());
+  _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
+  // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
+  if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);
+  if(_elevators) _elevators.update(dt, clock.elapsedTime);   // moving platforms carry the player + set elevator groundY
+  if(_elevators){
+    if(_elevators.isRiding()){ _liftPrompt.style.display='block'; _liftPrompt.textContent='◘ RIDING — walk off the pad to step off'; }
+    else if(_elevators.nearestInfo){ const _ni=_elevators.nearestInfo(playerPos.x, playerPos.z);
+      if(_ni && _ni.label){ _liftPrompt.style.display='block'; _liftPrompt.textContent='[ E ]  '+_ni.label; } else _liftPrompt.style.display='none';
+    } else _liftPrompt.style.display='none';
+  }
+  const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
   // movement (manual, relative to camera yaw)
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();
-  if(controls.isLocked){
+  const _uiOpen = (_dialogue&&_dialogue.isOpen()) || (_radio&&_radio.isOpen&&_radio.isOpen());
+  if(controls.isLocked && !_uiOpen){
+    const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
     const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:11);
-    const sp=veh.speed(baseSp)*dt;                              // VEHICLE-HOOK: faster when mounted
-    if(keys['KeyW']||keys['ArrowUp']) playerPos.addScaledVector(fwd, sp);
-    if(keys['KeyS']||keys['ArrowDown']) playerPos.addScaledVector(fwd, -sp);
-    if(keys['KeyA']||keys['ArrowLeft']) playerPos.addScaledVector(right, -sp);
-    if(keys['KeyD']||keys['ArrowRight']) playerPos.addScaledVector(right, sp);
+    const _maxSp = veh.speed(baseSp);                          // VEHICLE-HOOK: faster when mounted
+    // Build the desired move direction from input, then ease VELOCITY toward it (accel/decel) instead of
+    // snapping speed 0↔max every frame — makes walking + start/stop feel smooth, not robotic.
+    _moveDir.set(0,0,0);
+    if(keys['KeyW']||keys['ArrowUp'])    _moveDir.add(fwd);
+    if(keys['KeyS']||keys['ArrowDown'])  _moveDir.sub(fwd);
+    if(keys['KeyA']||keys['ArrowLeft'])  _moveDir.sub(right);
+    if(keys['KeyD']||keys['ArrowRight']) _moveDir.add(right);
+    if(_moveDir.lengthSq() > 1e-6) _moveDir.normalize();
+    _targetVel.copy(_moveDir).multiplyScalar(_maxSp);
+    const _acc = 1 - Math.exp(-14*dt);                          // ~14/s: responsive but smooth (frame-rate independent)
+    _vel.x += (_targetVel.x - _vel.x) * _acc;
+    _vel.z += (_targetVel.z - _vel.z) * _acc;
+    playerPos.x += _vel.x * dt;
+    playerPos.z += _vel.z * dt;
     veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
     if(bikeMode){ trailPos.push(playerPos.x, 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
-    // keep the player on the walkable terrain — clamp to the world edge so you can't fall off into the void
-    const _edge = ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6;
-    playerPos.x = Math.max(-_edge, Math.min(_edge, playerPos.x));
-    playerPos.z = Math.max(-_edge, Math.min(_edge, playerPos.z));
+    // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the
+    // world-edge clamp and outdoor building collision so they can walk freely in the room.
+    if(!(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())){
+      const _edge = ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6;
+      playerPos.x = Math.max(-_edge, Math.min(_edge, playerPos.x));
+      playerPos.z = Math.max(-_edge, Math.min(_edge, playerPos.z));
+      // building collision: single source of truth — right-sized solid walls WITH a door gap.
+      // Use world-collision.js as the single source of truth (fully-solid, shape-aware colliders
+      // built from WORLD_LAYOUT). Entry is via door + cutscene, not walking through the wall.
+      if (window.WORLD_RESOLVE_POS) window.WORLD_RESOLVE_POS(playerPos); else _resolveBuildingCollision();
+    }
+  } else {
+    _vel.x *= Math.max(0, 1 - dt*12);   // no input / not locked: coast to a stop, don't freeze mid-stride
+    _vel.z *= Math.max(0, 1 - dt*12);
   }
   // place camera by view mode (1st person = eyes; 3rd person = pulled back behind the avatar)
   const eye = bikeMode ? 1.5 : 2.2;
   // walk ON the terrain: sample ground height under the player (never let the eye dip below the surface)
-  let groundY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0;
+  let groundY;
+  { const _ey = _elevators ? _elevators.groundY() : null;
+    groundY = (_ey!=null) ? _ey : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0); }
   if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
-  const baseY = veh.baseY(groundY);              // VEHICLE-HOOK: flight altitude when flying the craft, else ground
-  updateSkyForBiome(playerPos.x, playerPos.z);   // Tron sky shifts color with the biome you're in
-  updateDayNight(dt);                            // day/night: sun arc + light dimming + sky tint
+  if(_interiors && _interiors.isInside()) groundY = 0;   // interior rooms have a flat floor at y=0
+  const _rawBaseY = veh.baseY(groundY);          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
+  // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
+  // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
+  if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (_elevators && _elevators.isRiding()) ||
+     (_interiors && _interiors.isInside()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
+    _smoothBaseY = _rawBaseY;
+  } else {
+    _smoothBaseY += (_rawBaseY - _smoothBaseY) * Math.min(1, dt*16);
+  }
+  const baseY = _smoothBaseY;
+  if(_animFrame%2===0) updateSkyForBiome(playerPos.x, playerPos.z);   // biome sky lerps at 0.04 — 30Hz is imperceptible, saves a spatial lookup/frame
+  // PERF: day/night recomputes 7 light intensities + sun arc + bg lerp. Over a 240s cycle this is
+  // glacially slow, so running it every frame is wasteful. Accumulate dt and apply every 8th frame
+  // (~7.5Hz). Passing the ACCUMULATED dt keeps the cycle advancing at the exact same real-time rate,
+  // and the per-step change is so tiny (≈0.03° of sun arc) that it's visually indistinguishable.
+  _dnAccum += dt;
+  if(_animFrame % 8 === 0){ updateDayNight(_dnAccum); _dnAccum = 0; }
   // walking character animation: Walk/Run when moving, Idle otherwise
   if(playerMixer){
     playerMixer.update(dt);
@@ -982,66 +1998,148 @@ function animate(){
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
     setPlayerAnim(bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle'));
   }
-  if(thirdPerson){
-    camera.position.set(playerPos.x - fwd.x*8, baseY + eye+2.2, playerPos.z - fwd.z*8);
-    playerAvatar.visible=!veh.mode; playerAvatar.position.set(playerPos.x,baseY,playerPos.z); playerAvatar.rotation.y=Math.atan2(fwd.x, fwd.z); // face travel direction (model faces -Z)
+  if(_spawnBusy){
+    // sky-dive / descent controls the camera this frame — skip normal placement
+    playerAvatar.visible=false;
+  } else if(thirdPerson){
+    // smooth follow-cam: glide toward the behind-player position instead of hard-setting it every frame.
+    // This turns the landing hand-off (descent-end → 3rd-person pull-back) into a smooth swoop, and makes
+    // walking feel less rigid. SNAP on big jumps (interior teleport / respawn) so we never slide the map.
+    _camTarget.set(playerPos.x - fwd.x*8, baseY + eye+2.2, playerPos.z - fwd.z*8);
+    if(camera.position.distanceToSquared(_camTarget) > 1600) camera.position.copy(_camTarget);   // >40u = teleport → snap
+    else camera.position.lerp(_camTarget, 1 - Math.exp(-9*dt));
+    playerAvatar.visible=!veh.mode; playerAvatar.position.set(playerPos.x,baseY,playerPos.z);
+    { const _yt=Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
+      if(!_avatarYawInit){ _avatarYaw=_yt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _yt, 1-Math.exp(-11*dt));
+      playerAvatar.rotation.y=_avatarYaw; }
+    // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway
+    if(!playerMixer && playerAvatar.visible){
+      const _mv2 = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
+      const _wt2 = clock.elapsedTime * ((keys['ShiftLeft']||keys['ShiftRight']) ? 15 : 10);
+      if(_mv2){ playerAvatar.position.y = baseY + Math.abs(Math.sin(_wt2))*0.35; playerAvatar.rotation.z = Math.sin(_wt2)*0.06; }
+      else { playerAvatar.position.y = baseY + Math.sin(clock.elapsedTime*2)*0.05; playerAvatar.rotation.z = 0; }
+    }
   } else {
     camera.position.set(playerPos.x, baseY + eye, playerPos.z);
     playerAvatar.visible=false;
   }
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
+  skyDome.position.copy(camera.position);   // PERF: sky follows the camera (standard skybox trick) so the r=1400 dome is always centred on the viewer → the tightened far plane (1500) never clips it. Gradient is direction-based so the look is identical.
   veh.update(dt, fwd);                       // VEHICLE-HOOK: vehicle follows player + board/dismount prompt
   // GRID BIKE: ride it in bike mode — sits under the player, faces the look direction
   gridBike.visible = bikeMode;
   if(bikeMode){
+    const _byt=Math.atan2(fwd.x, fwd.z);   // smooth the bike's heading too (banks into turns instead of snapping)
+    if(!_avatarYawInit){ _avatarYaw=_byt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _byt, 1-Math.exp(-9*dt));
     gridBike.position.set(playerPos.x, groundY, playerPos.z);
-    gridBike.rotation.y = Math.atan2(fwd.x, fwd.z);
+    gridBike.rotation.y = _avatarYaw;
     playerAvatar.visible = true;   // show the rider on the bike
     playerAvatar.position.set(playerPos.x, groundY+0.6, playerPos.z);
-    playerAvatar.rotation.y = Math.atan2(fwd.x, fwd.z);
+    playerAvatar.rotation.y = _avatarYaw;
   }
   const t=clock.elapsedTime;
-  // drive the organized-world modules
-  if(worldVehicles) worldVehicles.update(dt, t);
-  if(worldBiomes)   worldBiomes.update(t);
-  if(worldTerrain)  worldTerrain.update(t);
-  if(worldMarkets)  worldMarkets.update(t);
-  if(worldBuildings) worldBuildings.update(t);
-  // monument spin
-  const core=monument.getObjectByName('core'); if(core){ core.rotation.y+=dt*0.6; core.rotation.x+=dt*0.2; core.position.y=20+Math.sin(t*1.4)*0.5; }
-  // agent bob + targeting via center raycast
-  raycaster.setFromCamera(center, camera);
-  // raycast against whichever representation is live (3D body if loaded, else billboard)
-  const targets = agentSprites.map(s=> (s.body && s.sprite && !s.sprite.visible) ? s.body : s.sprite);
-  const hit = raycaster.intersectObjects(targets, true)[0];
-  targeted = null;
-  if(hit && hit.distance < 26){
-    let o = hit.object; while(o && !o.userData.agent) o = o.parent;
-    const ag = o && o.userData.agent;
-    if(ag) targeted = agentSprites.find(s=>s.a===ag);
+  // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
+  // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
+  // cheap so the fall is buttery. Everything resumes the instant you land.
+  if(_spawnBusy){
+    // Enter low-res spawn mode ONCE, not every frame. renderer.setPixelRatio() reallocates the WebGL
+    // drawing buffer on every call, so firing it each descent frame was itself a per-frame hitch during
+    // the exact "coming into the world is laggy" window. Downshift a single time on spawn entry.
+    if(!window.__spawnWasLo){
+      renderer.setPixelRatio(0.7);
+      if(bloom){ bloom.strength = 0; bloom.enabled = false; }   // skip the whole bloom pass during the fall
+      window.__spawnWasLo = true;
+    }
+  } else {
+    if(window.__spawnWasLo){ _applyQualityTier(_Q.tier); window.__spawnWasLo = false; }  // restore full quality the instant we land
+    // drive the organized-world modules (only when NOT mid-spawn)
+    if(worldBiomes)   worldBiomes.update(t);
+    if(worldTerrain)  worldTerrain.update(t);
+    if(worldMarkets)  worldMarkets.update(t);
+    if(worldBuildings) worldBuildings.update(t);
+    // NPC AI is background — run it at 30Hz (accumulated dt keeps walk speed identical), halving its cost.
+    if(worldNPCs && _animFrame%2===0) worldNPCs.update(dt*2);
+    if(_themes) _themes.update(dt);                // theme particle animation (snow/sand/etc.)
+    if(_interiors){                                // interiors: animate props + show "Press E" door prompt
+      _interiors.update(dt, t);
+      if(window._doorPrompt){
+        let _dpTxt='';   // desired prompt text ('' = hidden)
+        if(_interiors.isInside()) _dpTxt='[ E ]  EXIT';
+        else { const _d=_interiors.nearestDoor(playerPos.x, playerPos.z); if(_d) _dpTxt='[ E ]  ENTER '+_d.code; }
+        if(_dpTxt!==window._doorPromptLast){   // only touch the DOM when the prompt actually changes
+          window._doorPromptLast=_dpTxt;
+          if(_dpTxt){ window._doorPrompt.style.display='block'; window._doorPrompt.textContent=_dpTxt;
+            // EXIT prompt sits at the TOP (out of the way); ENTER prompt stays at the bottom
+            var _ins=_interiors.isInside();
+            window._doorPrompt.style.top = _ins ? '14px' : 'auto';
+            window._doorPrompt.style.bottom = _ins ? 'auto' : '96px'; }
+          else window._doorPrompt.style.display='none';
+        }
+      }
+    }
+    if(_minimap && _animFrame%3===0) _minimap.update();   // minimap redraws a full 2D canvas — 20Hz is plenty
   }
-  agentSprites.forEach((s,i)=>{
-    s.sprite.position.y = 4.0 + Math.sin(t*1.0 + s.bob)*0.12;
+  if(_portalPlots) _portalPlots.update(dt, t);
+  if(_portalDome) _portalDome.update(dt, t);
+  if(_dialogue){
+    _dialogue.update(dt);
+    if(_dialogue.isOpen()){ _talkPrompt.style.display='none'; }
+    else if(controls.isLocked && !(_interiors&&_interiors.isInside())){
+      const _ta=_dialogue.nearestAgent(playerPos.x, playerPos.z, playerPos.y);
+      if(_ta){ _talkPrompt.style.display='block'; _talkPrompt.textContent='[ T ]  Talk to '+_ta.name; } else { _talkPrompt.style.display='none'; }
+    } else { _talkPrompt.style.display='none'; }
+  }
+  // monument spin (core cached once — was a scene-graph getObjectByName every frame)
+  if(!_monCoreChecked){ _monCore=monument.getObjectByName('core'); _monCoreChecked=true; }
+  if(_monCore){ _monCore.rotation.y+=dt*0.6; _monCore.rotation.x+=dt*0.2; _monCore.position.y=20+Math.sin(t*1.4)*0.5; }
+  // TARGETING: a recursive raycast against full 3D agent bodies is the single most expensive per-frame
+  // CPU op here. A reticle doesn't need 60Hz — run it every 3rd frame (~20Hz). `targeted` persists in
+  // between, so highlighting stays responsive at a fraction of the cost.
+  if(_animFrame % 3 === 0){
+    raycaster.setFromCamera(center, camera);
+    if(_animFrame - _rayTargetsFrame >= 12){   // rebuild target list ~5×/sec (bodies stream in slowly)
+      _rayTargets.length = 0;
+      for(let i=0;i<agentSprites.length;i++){ const s=agentSprites[i]; _rayTargets.push((s.body && s.sprite && !s.sprite.visible) ? s.body : s.sprite); }
+      _rayTargetsFrame = _animFrame;
+    }
+    const hit = raycaster.intersectObjects(_rayTargets, true)[0];
+    targeted = null;
+    if(hit && hit.distance < 26){
+      let o = hit.object; while(o && !o.userData.agent) o = o.parent;
+      const ag = o && o.userData.agent;
+      if(ag) targeted = agentSprites.find(s=>s.a===ag);
+    }
+  }
+  // PERF: plain indexed for-loop instead of agentSprites.forEach((s,i)=>{...}) — the arrow callback was a
+  // fresh closure allocated every frame (GC pressure in the hot path). Body is unchanged; return→continue.
+  for(let i=0;i<agentSprites.length;i++){ const s=agentSprites[i];
+    const _yb = s.yBase || 0;   // SHADDAI floats on his sky-temple island; everyone else at 0
+    s.sprite.position.y = _yb + 4.0 + Math.sin(t*1.0 + s.bob)*0.12;
     s.frame.position.y = s.sprite.position.y;
     // 3D body: stands still (faces center), only a subtle breathing bob
     if(s.body){ s.body.position.y = (s.bodyBaseY||0) + Math.sin(t*0.8 + s.bob)*0.05; }
-    if(s.aura) s.aura.update(t, s.auraSpeed);
-    if(s.crown){ s.crown.rotation.z += dt*0.6; s.crown.position.y = 8.4 + Math.sin(t*1.2 + s.bob)*0.2; }
+    // Distance-cull aura particles: skip update for agents beyond the tier's cull radius (cheap visibility guard)
+    const _sd2=(s.x-playerPos.x)**2+(s.z-playerPos.z)**2, _cr=_Q.tiers[_Q.tier].cullR;
+    if(s.aura && _sd2 < _cr*_cr) s.aura.update(t, s.auraSpeed);
+    if(s.crown){ s.crown.rotation.z += dt*0.6; s.crown.position.y = _yb + 8.4 + Math.sin(t*1.2 + s.bob)*0.2; }
     s.ring.material.opacity = (targeted===s)?1:0.6;
     s.ring.scale.setScalar((targeted===s)?1.15:1);
     // project label to screen
-    tmp.set(s.x, 8.4, s.z); tmp.project(camera);
-    const el=labelEls[i]; if(!el) return;
-    if(tmp.z>1 || tmp.z<-1){ el.style.opacity='0'; return; }
+    tmp.set(s.x, _yb + 8.4, s.z); tmp.project(camera);
+    const el=labelEls[i]; if(!el) continue;
+    if(tmp.z>1 || tmp.z<-1){ el.style.opacity='0'; continue; }
     const sx=(tmp.x*0.5+0.5)*innerWidth, sy=(-tmp.y*0.5+0.5)*innerHeight;
-    el.style.left=sx+'px'; el.style.top=sy+'px';
-    const dist=camera.position.distanceTo(new THREE.Vector3(s.x,3,s.z));
+    el.style.transform='translate(-50%,-100%) translate3d('+sx+'px,'+sy+'px,0)';  // transform, not left/top → GPU composite, no layout reflow
+    _dv.set(s.x,3,s.z); const dist=camera.position.distanceTo(_dv); // _dv: pre-allocated, no per-frame alloc
     el.style.opacity = dist<70 ? String(Math.max(0.15, 1-dist/90)) : '0';
     el.classList.toggle('near', targeted===s);
-    const sk=document.getElementById('sk_'+i); if(sk){ const c=SKILLCOUNTS[s.a.codename]; sk.textContent = c? ('✦ '+c.toLocaleString()+' skills'):''; }
-  });
+    // skill count never changes — write it ONCE, not every frame (was ~7 DOM writes/frame of churn)
+    if(!s._skSet){ const sk=document.getElementById('sk_'+i); if(sk){ const c=SKILLCOUNTS[s.a.codename]; sk.textContent = c? ('✦ '+c.toLocaleString()+' skills'):''; s._skSet=true; } }
+  }
   // coords
-  document.getElementById('coords').textContent = 'X '+playerPos.x.toFixed(0)+' · Z '+playerPos.z.toFixed(0);
+  // coords: cache the element + only write when the rounded value actually changes (was a DOM write every frame)
+  if(!_coordsEl) _coordsEl=document.getElementById('coords');
+  if(_coordsEl){ const _cs='X '+playerPos.x.toFixed(0)+' · Z '+playerPos.z.toFixed(0); if(_cs!==_coordsLast){ _coordsEl.textContent=_cs; _coordsLast=_cs; } }
   // portals: spin, proximity (press E to enter), label projection
   nearPortal=null; let _npd=18*18;
   for(const p of portals){
@@ -1050,7 +2148,7 @@ function animate(){
     if(d2 < _npd){ _npd=d2; nearPortal=p; }
     tmp.set(p.px, 10, p.pz); tmp.project(camera);
     if(tmp.z>1||tmp.z<-1){ p.el.style.opacity='0'; }
-    else { p.el.style.left=((tmp.x*0.5+0.5)*innerWidth)+'px'; p.el.style.top=((-tmp.y*0.5+0.5)*innerHeight)+'px';
+    else { p.el.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
       const dist=Math.sqrt(d2); p.el.style.opacity = dist<150 ? String(Math.max(0.2,1-dist/180)) : '0'; }
   }
   for(const p of portals) p.el.classList.toggle('near', nearPortal===p);
@@ -1060,18 +2158,18 @@ function animate(){
     v.mesh.position.y = 3.2 + Math.sin(t*1.3 + v.spin)*0.3;
     tmp.set(v.x, 6, v.z); tmp.project(camera);
     if(tmp.z>1||tmp.z<-1){ v.el.style.opacity='0'; }
-    else { v.el.style.left=((tmp.x*0.5+0.5)*innerWidth)+'px'; v.el.style.top=((-tmp.y*0.5+0.5)*innerHeight)+'px';
-      const dist=camera.position.distanceTo(new THREE.Vector3(v.x,3,v.z)); v.el.style.opacity = dist<120 ? String(Math.max(0.2,1-dist/150)) : '0'; }
+    else { v.el.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
+      _dv.set(v.x,3,v.z); const dist=camera.position.distanceTo(_dv); v.el.style.opacity = dist<120 ? String(Math.max(0.2,1-dist/150)) : '0'; }
   }
   // markets chart: project the floating price label
   tmp.set(MKT.pos.x, 21, MKT.pos.z); tmp.project(camera);
   if(tmp.z>1||tmp.z<-1){ mktLabel.style.opacity='0'; }
-  else { mktLabel.style.left=((tmp.x*0.5+0.5)*innerWidth)+'px'; mktLabel.style.top=((-tmp.y*0.5+0.5)*innerHeight)+'px';
+  else { mktLabel.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
     const md=camera.position.distanceTo(MKT.pos); mktLabel.style.opacity = md<150 ? String(Math.max(0.2,1-md/190)) : '0'; }
   // news kiosk label
   tmp.set(NEWS.pos.x, 22, NEWS.pos.z); tmp.project(camera);
   if(tmp.z>1||tmp.z<-1){ newsLabel.style.opacity='0'; }
-  else { newsLabel.style.left=((tmp.x*0.5+0.5)*innerWidth)+'px'; newsLabel.style.top=((-tmp.y*0.5+0.5)*innerHeight)+'px';
+  else { newsLabel.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
     const nd=camera.position.distanceTo(NEWS.pos); newsLabel.style.opacity = nd<150 ? String(Math.max(0.2,1-nd/190)) : '0'; }
   // THE BAZAAR — spin item displays, find nearest stall, project stall labels + [F] buy prompt
   BAZAAR.near=null; let _nbd=11*11;
@@ -1082,9 +2180,14 @@ function animate(){
   for(const s of BAZAAR.stalls){
     tmp.set(s.x,4.8,s.z); tmp.project(camera);
     if(tmp.z>1||tmp.z<-1||!s.listing){ s.el.style.opacity='0'; continue; }
-    s.el.style.left=((tmp.x*0.5+0.5)*innerWidth)+'px'; s.el.style.top=((-tmp.y*0.5+0.5)*innerHeight)+'px';
+    s.el.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
     const dist=Math.sqrt((playerPos.x-s.x)**2+(playerPos.z-s.z)**2);
-    s.el.innerHTML='<div class="nm" style="color:#00e5a0;font-size:11px">'+s.listing.name+'</div><div class="sk">·'+s.listing.kind+'· ⚡'+s.listing.price+'</div>'+(BAZAAR.near===s?'<div class="tag" style="opacity:1;color:#ffcf4a">[F] BUY</div>':'');
+    // innerHTML only changes when the [F] BUY prompt toggles — rebuild it then, not every frame (was re-parsing HTML per stall per frame)
+    const _near=(BAZAAR.near===s);
+    if(s._elNear!==_near || !s._elBuilt){
+      s.el.innerHTML='<div class="nm" style="color:#00e5a0;font-size:11px">'+s.listing.name+'</div><div class="sk">·'+s.listing.kind+'· ⚡'+s.listing.price+'</div>'+(_near?'<div class="tag" style="opacity:1;color:#ffcf4a">[F] BUY</div>':'');
+      s._elNear=_near; s._elBuilt=true;
+    }
     s.el.style.opacity = dist<70 ? String(Math.max(0.2,1-dist/90)) : '0';
     s.el.classList.toggle('near', BAZAAR.near===s);
   }
@@ -1176,7 +2279,7 @@ animate();
 // dev: overhead camera for screenshots — ?overhead=tx,tz overrides to a top-down view of that point
 { const _oh=new URLSearchParams(location.search).get('overhead'); if(_oh){ const p=_oh.split(',').map(Number); (function ohLoop(){ requestAnimationFrame(ohLoop); camera.position.set(p[0]||0, 95, (p[1]||0)+34); camera.lookAt(p[0]||0, 0, p[1]||0); })(); } }
 
-addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight); });
+addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); _applyQualityTier(_Q.tier); }); // _applyQualityTier calls renderer.setSize + composer.setSize at the correct physical resolution for the current tier
 </script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Achievements & NFT Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--cy:#27e0ff;--gold:#ffcf4a}
+  *{box-sizing:border-box;margin:0}
+  body{background:radial-gradient(circle at 50% -10%,#0c1830,#05080f 70%);color:#eaf2ff;font-family:'Share Tech Mono',monospace;min-height:100vh;padding:24px 22px 60px}
+  .top{max-width:1320px;margin:0 auto 20px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .top h1{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:4px;font-size:24px;color:#fff;text-shadow:0 0 24px rgba(39,224,255,.5)}
+  .top .tag{font-size:11px;letter-spacing:2px;color:var(--cy)}
+  .ring{--p:0;width:78px;height:78px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p)*1%),rgba(255,255,255,.08) 0);display:grid;place-items:center;flex:0 0 auto}
+  .ring i{width:62px;height:62px;border-radius:50%;background:#070b14;display:grid;place-items:center;font-style:normal;font-family:'Orbitron';font-weight:800;font-size:15px;color:var(--gold)}
+  .stats{display:flex;gap:26px;margin-left:auto;flex-wrap:wrap}
+  .stat{text-align:center}
+  .stat b{display:block;font-family:'Orbitron';font-size:22px;color:#fff}
+  .stat span{font-size:9px;letter-spacing:2px;color:#8aa3bf}
+  .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:1320px;margin:0 auto 22px}
+  .bar button{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;padding:8px 14px;border-radius:20px;border:1px solid rgba(39,224,255,.3);background:rgba(39,224,255,.06);color:#cfe9ff;cursor:pointer}
+  .bar button.on{background:linear-gradient(90deg,var(--cy),#0a7ea8);color:#04060d;border-color:var(--cy)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:16px;max-width:1320px;margin:0 auto}
+  .card{background:linear-gradient(180deg,#0b1322,#070b14);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;position:relative;transition:transform .15s}
+  .card:hover{transform:translateY(-4px)}
+  .card .imgwrap{aspect-ratio:1;background:#05080f;position:relative;overflow:hidden}
+  .card img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .2s}
+  .card.locked img{filter:grayscale(1) brightness(.4)}
+  .card .serial{position:absolute;top:8px;left:8px;font-size:8px;letter-spacing:1px;color:#fff;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:4px}
+  .card .rar{position:absolute;top:8px;right:8px;font-size:7px;letter-spacing:1px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase}
+  .card .lockico{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:30px;opacity:.8}
+  .card .earnedico{position:absolute;bottom:8px;right:8px;font-size:8px;background:rgba(0,229,160,.9);color:#04060d;padding:2px 7px;border-radius:4px;font-weight:700}
+  .card .meta{padding:10px 11px}
+  .card .nm{font-family:'Orbitron',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.5px}
+  .card .un{font-size:9px;color:#8aa3bf;margin-top:3px;min-height:22px;line-height:1.4}
+  .prog{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:6px}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--cy),var(--gold))}
+  .pnum{font-size:8px;color:#6b8298;margin-top:3px}
+  .r-genesis{border-color:var(--gold)} .r-genesis .rar{background:var(--gold);color:#04060d}
+  .r-legendary{border-color:#ff9b3d} .r-legendary .rar{background:#ff9b3d;color:#04060d}
+  .r-epic{border-color:#b06aff} .r-epic .rar{background:#b06aff;color:#fff}
+  .r-rare{border-color:#27e0ff} .r-rare .rar{background:#27e0ff;color:#04060d}
+  .r-common .rar{background:#5a6a82;color:#fff}
+  #status{text-align:center;color:#8aa3bf;font-size:12px;margin-top:28px}
+</style></head>
+<body>
+<div class="top">
+  <div class="ring" id="ring"><i id="ringp">0%</i></div>
+  <div>
+    <h1>ACHIEVEMENTS</h1>
+    <div class="tag" id="sub">loading your collection…</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="stEarned">0</b><span>UNLOCKED</span></div>
+    <div class="stat"><b id="stTotal">100</b><span>TOTAL</span></div>
+    <div class="stat"><b id="stPoints">0</b><span>POINTS</span></div>
+  </div>
+</div>
+<div class="bar" id="filters"></div>
+<div class="grid" id="grid"></div>
+<div id="status"></div>
+<script>
+const qs=new URLSearchParams(location.search);
+const OWNER = qs.get('owner') || localStorage.getItem('shaddai_user') || 'owner';
+const RWEIGHT={genesis:100,legendary:50,epic:25,rare:10,common:5};
+const grid=document.getElementById('grid'), sub=document.getElementById('sub'), filters=document.getElementById('filters');
+let CARDS=[], mode='ALL';
+const imgFor = c => c.imageUrl || ('/api/collectables/image/'+c.id+'.png');
+function render(){
+  let list=CARDS.slice();
+  if(mode==='EARNED') list=list.filter(c=>c.earned);
+  else if(mode==='LOCKED') list=list.filter(c=>!c.earned);
+  else if(mode!=='ALL') list=list.filter(c=>(c.rarity||'common').toLowerCase()===mode.toLowerCase());
+  grid.innerHTML=list.map(c=>{
+    const r=(c.rarity||'common').toLowerCase();
+    const thr=c.threshold||0, pr=Math.min(c.progress||0, thr||1);
+    const pct=thr?Math.min(100,Math.round((pr/thr)*100)):(c.earned?100:0);
+    const showProg = !c.earned && thr>0;
+    return `<div class="card r-${r} ${c.earned?'':'locked'}">
+      <div class="imgwrap">
+        <img src="${imgFor(c)}" alt="${c.name||c.id}" loading="lazy" onerror="this.style.opacity=.12">
+        <span class="serial">${c.serial||''}</span><span class="rar">${r}</span>
+        ${c.earned?'<span class="earnedico">✓ UNLOCKED</span>':'<span class="lockico">🔒</span>'}
+      </div>
+      <div class="meta"><div class="nm">${c.name||c.id}</div>
+        <div class="un">${c.unlockText||c.faction||''}</div>
+        ${showProg?`<div class="prog"><i style="width:${pct}%"></i></div><div class="pnum">${pr} / ${thr}</div>`:''}
+      </div></div>`;
+  }).join('');
+  document.getElementById('status').textContent=list.length+' shown';
+}
+function computeStats(){
+  const earned=CARDS.filter(c=>c.earned);
+  const points=earned.reduce((s,c)=>s+(RWEIGHT[(c.rarity||'common').toLowerCase()]||5),0);
+  const pct=CARDS.length?Math.round(earned.length/CARDS.length*100):0;
+  document.getElementById('stEarned').textContent=earned.length;
+  document.getElementById('stTotal').textContent=CARDS.length;
+  document.getElementById('stPoints').textContent=points;
+  document.getElementById('ring').style.setProperty('--p',pct);
+  document.getElementById('ringp').textContent=pct+'%';
+  sub.textContent=`${earned.length} of ${CARDS.length} unlocked · ${OWNER}`;
+}
+fetch('/api/collectables/list?owner='+encodeURIComponent(OWNER)).then(r=>r.json()).then(d=>{
+  CARDS=d.cards||[];
+  computeStats();
+  const rars=[...new Set(CARDS.map(c=>(c.rarity||'common')))];
+  const tabs=['ALL','EARNED','LOCKED',...rars];
+  filters.innerHTML=tabs.map(x=>`<button data-m="${x}" class="${x==='ALL'?'on':''}">${x.toUpperCase()}</button>`).join('');
+  filters.querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;filters.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();});
+  render();
+}).catch(e=>{ sub.textContent='failed to load: '+e.message; });
+</script>
+</body></html>

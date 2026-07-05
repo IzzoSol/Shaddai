@@ -96,3 +96,9 @@ backend/data/runtime-keys.json
 
 # payment links/keys (paste yours; keep private)
 backend/data/payment-config.json
+
+# backups (local only)
+_backups/
+*.bak
+*.bak-*
+*.bak_*

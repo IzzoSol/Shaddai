@@ -1152,6 +1152,7 @@ const TOOLS = {
     schema: { markdown: 'string — markdown text' },
     agents: ['QUILL','TURTLE','NEXUS'],
     async execute({ markdown }) {
+      if (typeof markdown !== 'string' || !markdown.trim()) return JSON.stringify({ error: 'markdown_to_html needs a non-empty "markdown" string', example: { markdown: '# Title\n\nSome **bold** text.' } });
       let html = markdown
         .replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -1578,6 +1579,7 @@ const TOOLS = {
     description: 'Check if a TCP port is open on a host',
     schema: { host: 'string — hostname or IP', port: 'number — port number' },
     execute: async ({ host, port }) => {
+      if (!host || port == null || isNaN(Number(port))) return `check_port needs "host" and a numeric "port" — e.g. { "host": "example.com", "port": 443 }.`;
       return new Promise((resolve) => {
         const net = require('net');
         const socket = new net.Socket();
@@ -1650,6 +1652,7 @@ const TOOLS = {
     description: 'Analyze password strength — length, entropy, suggestions',
     schema: { password: 'string — password to analyze (never stored or logged)' },
     execute: async ({ password }) => {
+      if (typeof password !== 'string' || !password) return 'check_password_strength needs a "password" string to analyze (never stored or logged).';
       const checks = {
         length: password.length >= 12,
         uppercase: /[A-Z]/.test(password),
@@ -1686,8 +1689,10 @@ const TOOLS = {
     description: 'Get a clean Wikipedia summary paragraph for any topic',
     schema: { topic: 'string — topic to look up' },
     execute: async ({ topic }) => {
-      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/ /g,'_'))}`, { signal: AbortSignal.timeout(10000) });
-      const d = await r.json();
+      if (!topic || typeof topic !== 'string') return 'get_wikipedia_summary needs a "topic" string.';
+      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/ /g,'_'))}`, { headers: { 'User-Agent': 'SHADDAI/2.0 (https://shaddai.ai)', 'Accept': 'application/json' }, signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return `Wikipedia summary unavailable for "${topic}" (HTTP ${r.status}). Try wikipedia_search instead.`;
+      let d; try { d = await r.json(); } catch (_) { return `Wikipedia returned a non-JSON response for "${topic}". Try wikipedia_search instead.`; }
       if (d.type === 'https://mediawiki.org/wiki/HyperSwitch/errors/not_found') return `No Wikipedia article found for "${topic}"`;
       return `${d.title}: ${d.extract}`;
     }
@@ -2975,7 +2980,26 @@ async function callLLM(messages, agentName, options = {}) {
   // Forged/custom agents pass their equipped skills via options.tools so the skills the
   // owner picked in the Forge are EXACTLY the tools the agent is offered + allowed to call.
   const customTools = (Array.isArray(options.tools) && options.tools.length) ? options.tools : null;
-  const ownTools = [...new Set([...BASE_TOOLS, ...(customTools || agent.tools || [])])].map(n => TOOLS[n]).filter(Boolean);
+  // Resolve the equipped loadout. Raw tool names stay as-is; equipped *recipe* skills from
+  // the Forge catalog (e.g. "daily-market-snapshot") are EXPANDED into the concrete step-tools
+  // they run — otherwise they resolve to nothing and a forged agent ends up with no tools.
+  // run_skill (in BASE_TOOLS) still lets it execute the whole recipe by name.
+  const _loadout = customTools || agent.tools || [];
+  const _equippedSkills = [];
+  const _resolved = [];
+  for (const n of _loadout) {
+    if (TOOLS[n]) { _resolved.push(n); continue; }
+    const r = (skillIndex.getRecipe && skillIndex.getRecipe(n)) || null;
+    if (r && Array.isArray(r.steps)) {
+      _equippedSkills.push(n);
+      r.steps.forEach(s => { if (s.tool && TOOLS[s.tool]) _resolved.push(s.tool); });
+    }
+  }
+  const ownTools = [...new Set([...BASE_TOOLS, ..._resolved])].map(n => TOOLS[n]).filter(Boolean);
+  // Tell the agent exactly which named skills it was forged with, so it runs them via run_skill.
+  const equippedNote = _equippedSkills.length
+    ? `\n\nEQUIPPED SKILLS — you were forged with these ready-to-run skills: ${_equippedSkills.join(', ')}. When the task matches one, CALL run_skill with that exact skill name — it executes real tools and returns live data. Never claim you lack data before trying run_skill or your other tools.`
+    : '';
   // Append any currently-connected MCP tools (available to every agent)
   let mcpTools = [];
   if (mcpClient) {
@@ -3031,13 +3055,13 @@ async function callLLM(messages, agentName, options = {}) {
   const system = options.plainChat ? {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-${agent.goal}${skillPackPrompt}
+${agent.goal}${skillPackPrompt}${equippedNote}
 
 Respond conversationally and helpfully. Do NOT output tool syntax or code unless asked. Be concise and clear.`
   } : {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-Goal: ${agent.goal}${skillContext}${skillPackPrompt}
+Goal: ${agent.goal}${skillContext}${skillPackPrompt}${equippedNote}
 
 TOOL SYSTEM — call tools by writing EXACTLY:
 [TOOL:tool_name:{"param":"value"}]

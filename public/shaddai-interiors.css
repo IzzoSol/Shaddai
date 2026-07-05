@@ -1,0 +1,148 @@
+/* ══════════════════════════════════════════════════════════════════
+   SHADDAI — INTERIOR RESTYLE (option "B")
+   Restyles the SHARED VIEW-INTERIOR components that were hardcoded and
+   never wired to any theme — so the CONTENT areas (skills, settings,
+   modals, chips, sub-cards) finally take on the glitch/terminal look.
+   Loaded LAST + !important so it wins. Visual-only: no display/position/
+   width/margin/flex changes → layout is untouched. Never targets #world,
+   canvas, iframe, or the scoped #operatorForge internals.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --si-green: #00ff88;
+  --si-cyan:  #00f0ff;
+  --si-black: #000000;
+  --si-panel: #070a08;
+  --si-border: rgba(0, 255, 136, 0.16);
+  --si-border-hi: rgba(0, 255, 136, 0.42);
+  --si-mono: 'Share Tech Mono', monospace;
+  --si-disp: 'Orbitron', 'Share Tech Mono', monospace;
+}
+
+/* ── Card headers / titles ─────────────────────────────────────────── */
+.card-head {
+  border-bottom: 1px solid var(--si-border) !important;
+  background: linear-gradient(180deg, rgba(0,255,136,0.05), rgba(0,0,0,0)) !important;
+}
+.card-title, .modal-section-title, .sbo-panel-head {
+  font-family: var(--si-disp) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #d9ffe8 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.25) !important;
+}
+
+/* ── Sub-cards across views (sharp glitch modules) ─────────────────── */
+.cyber-card, .run-card, .workflow-card, .studio-panel, .agent-endpoint-card,
+.api-status-tile, .media-tile, .media-extra-card, .pipe-card, .settings-plan-card,
+.sbo-panel-box, .res-item {
+  border-radius: 3px !important;
+  border: 1px solid var(--si-border) !important;
+  background: linear-gradient(158deg, var(--si-panel), #030503) !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.55), inset 0 1px 0 rgba(0,255,136,0.05) !important;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease !important;
+}
+.cyber-card:hover, .run-card:hover, .workflow-card:hover, .studio-panel:hover,
+.agent-endpoint-card:hover, .api-status-tile:hover, .media-tile:hover,
+.media-extra-card:hover, .pipe-card:hover, .res-item:hover {
+  border-color: var(--si-border-hi) !important;
+  box-shadow: 0 0 18px rgba(0,255,136,0.14), inset 0 1px 0 rgba(0,255,136,0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── Settings panels + rows ────────────────────────────────────────── */
+.settings-section {
+  border-radius: 3px !important;
+  border: 1px solid var(--si-border) !important;
+  background: linear-gradient(158deg, var(--si-panel), #030503) !important;
+  box-shadow: inset 0 1px 0 rgba(0,255,136,0.05) !important;
+}
+.settings-section > *:first-child, .settings-title {
+  font-family: var(--si-disp) !important;
+  letter-spacing: 0.1em !important;
+  color: #d9ffe8 !important;
+}
+.settings-row {
+  border-bottom: 1px solid rgba(0, 255, 136, 0.08) !important;
+  transition: background .15s ease !important;
+}
+.settings-row:hover {
+  background: rgba(0, 255, 136, 0.04) !important;
+}
+
+/* ── Chips / pills / tags (skills, agents, categories) ─────────────── */
+.skill-chip, .all-chip, .op-chips > *, .agent-chip {
+  font-family: var(--si-mono) !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 2px !important;
+  border: 1px solid var(--si-border) !important;
+  background: rgba(0, 255, 136, 0.05) !important;
+  color: #bfefd6 !important;
+  transition: all .14s ease !important;
+}
+.skill-chip:hover, .all-chip:hover, .agent-chip:hover {
+  border-color: var(--si-green) !important;
+  color: var(--si-green) !important;
+  background: rgba(0, 255, 136, 0.10) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.25) !important;
+}
+.skill-chip.active, .all-chip.active, .all-chip.on, .agent-chip.active, .agent-chip.on {
+  border-color: var(--si-green) !important;
+  color: #001b10 !important;
+  background: linear-gradient(180deg, var(--si-green), #00c46a) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.4) !important;
+}
+
+/* ── In-view sub-tabs (panel-tab / proj-section-tab / panel-btn) ───── */
+.panel-tab, .proj-section-tab, .panel-btn, .sbt {
+  font-family: var(--si-mono) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  border-radius: 0 !important;
+  transition: all .14s ease !important;
+}
+.panel-tab:hover, .proj-section-tab:hover, .panel-btn:hover {
+  color: var(--si-green) !important;
+  background: rgba(0, 255, 136, 0.06) !important;
+}
+.panel-tab.active, .panel-tab.on, .proj-section-tab.active, .proj-section-tab.on,
+.panel-btn.active, .panel-btn.on {
+  color: var(--si-green) !important;
+  background: rgba(0, 255, 136, 0.12) !important;
+  border-bottom: 2px solid var(--si-green) !important;
+  box-shadow: inset 0 0 14px rgba(0, 255, 136, 0.1) !important;
+}
+
+/* ── Panel view containers ─────────────────────────────────────────── */
+.panel-view {
+  background: transparent !important;
+}
+
+/* ── Kill the empty gap above the top of EVERY view (dashboard, agents, …) ─── */
+#mainArea { padding-top: 2px !important; }
+.view.active, #dashView { padding-top: 0 !important; margin-top: 0 !important; }
+.view.active > *:first-child { margin-top: 0 !important; }
+#agentsView { padding-top: 0 !important; margin-top: 0 !important; }
+#agentsView > .card:first-child { margin-top: 0 !important; }
+#dashView > *:first-child { margin-top: 0 !important; }
+/* Command Hub sits flush under the agent bar (kill its top padding gap) */
+#dashView #shaddaiHome { margin-top: 0 !important; padding-top: 2px !important; }
+#dashView #shaddaiHome .hh-bar { margin-top: 0 !important; }
+#mainArea { padding-top: 0 !important; }
+/* injected KPI bar sits right above the banner — remove its dead space */
+#shaddai-stat-bar { padding: 0 0 8px 0 !important; margin: 0 !important; }
+#dashView .card:first-of-type,
+#dashView > .card:first-of-type,
+#dashView .mission-banner { margin-top: 0 !important; }
+#dashView .mission-banner { margin-top: 0 !important; padding-top: 12px !important; }
+
+/* ── Modal sections ────────────────────────────────────────────────── */
+.modal-section {
+  border-radius: 3px !important;
+  border: 1px solid var(--si-border) !important;
+  background: linear-gradient(158deg, var(--si-panel), #030503) !important;
+}
+.modal-stat-row, .status-row, .status-item, .quick-row, .wf-step-row {
+  border-bottom: 1px solid rgba(0, 255, 136, 0.07) !important;
+}

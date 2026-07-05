@@ -1,0 +1,203 @@
+/* ============================================================
+   SHADDAI CONTROLS — Glitch depth + neon glow layer
+   Scope: BUTTONS (class-based), INPUTS, SECTION HEADERS, BADGES
+   Theme: #000 black / #00ff88 green / #00f0ff cyan
+   Fonts: Orbitron (display), 'Share Tech Mono' (mono)
+   Linked LAST — uses !important. Visual only (no layout changes).
+   ------------------------------------------------------------
+   HARD EXCLUSIONS (not styled here): #operatorForge, #world,
+   #worldCanvas, canvas, iframe, .nav-btn, .sbt, bare button/input.
+   ============================================================ */
+
+:root {
+  --sc-black: #000000;
+  --sc-green: #00ff88;
+  --sc-cyan: #00f0ff;
+  --sc-green-dim: rgba(0, 255, 136, 0.35);
+  --sc-green-faint: rgba(0, 255, 136, 0.12);
+}
+
+/* ============================================================
+   1. BUTTONS  (class-based only: .btn, .qa-btn, .qs-btn)
+   ============================================================ */
+.btn,
+button.btn,
+.qa-btn,
+.qs-btn {
+  font-family: 'Share Tech Mono', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  border-radius: 2px !important;
+  border: 1px solid var(--sc-green) !important;
+  color: var(--sc-green) !important;
+  background: linear-gradient(180deg, #0a120e 0%, #050705 100%) !important;
+  box-shadow:
+    0 0 6px rgba(0, 255, 136, 0.25),
+    inset 0 0 0 1px rgba(0, 255, 136, 0.05) !important;
+  text-shadow: 0 0 4px rgba(0, 255, 136, 0.4) !important;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.08s ease,
+    background 0.12s ease,
+    color 0.12s ease !important;
+}
+
+.btn:hover,
+button.btn:hover,
+.qa-btn:hover,
+.qs-btn:hover {
+  transform: translateY(-1px) !important;
+  color: #ffffff !important;
+  border-color: var(--sc-green) !important;
+  background: linear-gradient(180deg, #10201a 0%, #08120d 100%) !important;
+  box-shadow:
+    0 0 14px rgba(0, 255, 136, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(0, 255, 136, 0.35),
+    inset 0 -8px 14px rgba(0, 255, 136, 0.08) !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.9) !important;
+}
+
+.btn:active,
+button.btn:active,
+.qa-btn:active,
+.qs-btn:active {
+  transform: translateY(1px) !important;
+  box-shadow:
+    0 0 8px rgba(0, 255, 136, 0.4),
+    inset 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.btn:focus-visible,
+button.btn:focus-visible,
+.qa-btn:focus-visible,
+.qs-btn:focus-visible {
+  outline: none !important;
+  box-shadow:
+    0 0 0 2px rgba(0, 240, 255, 0.5),
+    0 0 14px rgba(0, 255, 136, 0.5) !important;
+}
+
+/* --- Primary / accent buttons: filled neon-green, black text --- */
+.btn.primary,
+button.btn.primary,
+.qa-btn {
+  background: linear-gradient(180deg, #00ff88 0%, #00cc6d 100%) !important;
+  color: #000000 !important;
+  border-color: #00ff88 !important;
+  text-shadow: none !important;
+  font-weight: 700 !important;
+  box-shadow:
+    0 0 10px rgba(0, 255, 136, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.btn.primary:hover,
+button.btn.primary:hover,
+.qa-btn:hover {
+  color: #000000 !important;
+  background: linear-gradient(180deg, #33ffa0 0%, #00e07a 100%) !important;
+  box-shadow:
+    0 0 20px rgba(0, 255, 136, 0.8),
+    0 2px 10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  text-shadow: none !important;
+}
+
+/* ============================================================
+   2. INPUTS / SELECT / TEXTAREA  (explicit types only)
+   ============================================================ */
+input[type=text],
+input[type=search],
+input[type=email],
+input[type=password],
+input[type=number],
+input[type=url],
+input:not([type]),
+textarea,
+select {
+  background: #000000 !important;
+  color: var(--sc-green) !important;
+  border: 1px solid var(--sc-green-dim) !important;
+  border-radius: 2px !important;
+  caret-color: var(--sc-green) !important;
+  font-family: 'Share Tech Mono', monospace !important;
+  box-shadow: inset 0 0 6px rgba(0, 255, 136, 0.06) !important;
+  transition: box-shadow 0.14s ease, border-color 0.14s ease !important;
+}
+
+input[type=text]::placeholder,
+input[type=search]::placeholder,
+input[type=email]::placeholder,
+input[type=password]::placeholder,
+input[type=number]::placeholder,
+input[type=url]::placeholder,
+input:not([type])::placeholder,
+textarea::placeholder {
+  color: rgba(0, 255, 136, 0.35) !important;
+}
+
+input[type=text]:focus,
+input[type=search]:focus,
+input[type=email]:focus,
+input[type=password]:focus,
+input[type=number]:focus,
+input[type=url]:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--sc-green) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.4),
+    0 0 12px rgba(0, 255, 136, 0.45),
+    inset 0 0 6px rgba(0, 255, 136, 0.1) !important;
+}
+
+/* ============================================================
+   3. SECTION HEADERS / TITLES
+   ============================================================ */
+.section-title,
+.card-title,
+.view h2,
+.view h3,
+.panel-title {
+  font-family: 'Orbitron', sans-serif !important;
+  letter-spacing: 2px !important;
+  color: #eafff5 !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.35) !important;
+  position: relative !important;
+}
+
+.section-title::before,
+.card-title::before,
+.view h2::before,
+.view h3::before,
+.panel-title::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 4px !important;
+  height: 0.85em !important;
+  margin-right: 10px !important;
+  vertical-align: -1px !important;
+  background: linear-gradient(180deg, var(--sc-green), var(--sc-cyan)) !important;
+  border-radius: 1px !important;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.9) !important;
+}
+
+/* ============================================================
+   4. BADGES / PILLS / TAGS
+   ============================================================ */
+.badge,
+.pill,
+.tag {
+  font-family: 'Share Tech Mono', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  border-radius: 2px !important;
+  border: 1px solid var(--sc-green-dim) !important;
+  color: var(--sc-green) !important;
+  background: var(--sc-green-faint) !important;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.2) !important;
+  text-shadow: 0 0 4px rgba(0, 255, 136, 0.35) !important;
+}

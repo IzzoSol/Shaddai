@@ -213,6 +213,37 @@ router.get('/progress', (req, res) => {
   }
 });
 
+// GET /summary?owner= -> achievement rollup for the dashboard header / Achievements view.
+// Prepared for wiring: earned/total, points (rarity-weighted), per-rarity + per-faction tallies.
+const RARITY_POINTS = { genesis: 100, legendary: 50, epic: 25, rare: 10, common: 5 };
+router.get('/summary', (req, res) => {
+  try {
+    const owner = (req.query.owner || '').toString();
+    const store = loadStore();
+    const counters = owner ? (ownerState(store, owner).counters) : {};
+    const unlocked = new Set(unlockedIdsFor(counters));
+    const byRarity = {}, byFaction = {};
+    let points = 0, earned = 0;
+    cardRules().forEach(({ card }) => {
+      const rar = (card.rarity || 'common').toLowerCase();
+      byRarity[rar] = byRarity[rar] || { total: 0, earned: 0 };
+      byRarity[rar].total++;
+      if (unlocked.has(card.id)) {
+        earned++; points += (RARITY_POINTS[rar] || 5);
+        byRarity[rar].earned++;
+        const f = card.faction || 'none';
+        byFaction[f] = (byFaction[f] || 0) + 1;
+      }
+    });
+    const total = cardRules().length;
+    res.json({ ok: true, owner: owner || null, earned, total,
+      percent: total ? Math.round((earned / total) * 100) : 0,
+      points, byRarity, byFaction });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String((err && err.message) || err) });
+  }
+});
+
 // POST /unlock { owner, action, n? } -> REAL unlock tracking
 // Increments owner's counter for `action` by n (default 1), persists, and
 // returns any cards newly unlocked by this event. Idempotent re: already-

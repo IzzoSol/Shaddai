@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZEROX · LIVE MARKETS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070c;
+    --panel:#0a0f18;
+    --cyan:#27e0ff;
+    --gold:#ffcf4a;
+    --line:rgba(39,224,255,.18);
+    --text:#dfefff;
+    --dim:#7d93a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(39,224,255,.08), transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, rgba(255,207,74,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  /* Top bar */
+  .topbar{
+    display:flex;align-items:center;gap:16px;
+    padding:12px 20px;
+    background:linear-gradient(180deg, rgba(10,15,24,.95), rgba(10,15,24,.75));
+    border-bottom:1px solid var(--line);
+    box-shadow:0 4px 30px rgba(0,0,0,.6);
+    z-index:5;
+  }
+  .brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .mark{
+    width:38px;height:38px;border-radius:9px;flex:none;
+    background:linear-gradient(135deg,var(--cyan),#0a7fa0);
+    display:grid;place-items:center;
+    font-family:'Orbitron';font-weight:900;color:#03121a;
+    box-shadow:0 0 18px rgba(39,224,255,.5);
+  }
+  .title{font-family:'Orbitron';font-weight:900;letter-spacing:2px;font-size:16px;color:#fff}
+  .title small{display:block;font-family:'Share Tech Mono';font-weight:400;letter-spacing:3px;color:var(--cyan);font-size:11px}
+  .close-btn{
+    border:1px solid rgba(255,207,74,.5);
+    background:rgba(255,207,74,.06);
+    color:var(--gold);
+    font-family:'Orbitron';font-weight:700;letter-spacing:1px;
+    padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;
+    transition:.15s;
+  }
+  .close-btn:hover{background:var(--gold);color:#1a1400;box-shadow:0 0 18px rgba(255,207,74,.5)}
+
+  /* Watchlist row */
+  .controls{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 20px;border-bottom:1px solid var(--line);
+    background:rgba(5,7,12,.6);
+  }
+  .lbl{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+  .sym{
+    border:1px solid var(--line);background:rgba(39,224,255,.04);
+    color:var(--text);padding:7px 14px;border-radius:20px;cursor:pointer;
+    font-family:'Share Tech Mono';font-size:13px;letter-spacing:1px;transition:.15s;
+  }
+  .sym:hover{border-color:var(--cyan);color:var(--cyan)}
+  .sym.active{background:var(--cyan);color:#03121a;border-color:var(--cyan);font-weight:bold;box-shadow:0 0 14px rgba(39,224,255,.4)}
+  .spacer{flex:1}
+
+  .exec-btn{
+    position:relative;
+    border:1px dashed rgba(255,207,74,.55);
+    background:repeating-linear-gradient(45deg,rgba(255,207,74,.05),rgba(255,207,74,.05) 6px,transparent 6px,transparent 12px);
+    color:var(--gold);opacity:.75;cursor:not-allowed;
+    font-family:'Orbitron';font-weight:700;letter-spacing:1px;font-size:12px;
+    padding:9px 16px;border-radius:8px;
+  }
+  .exec-btn:hover .tip{opacity:1;transform:translateY(0)}
+  .exec-btn .lock{margin-right:6px}
+  .tip{
+    position:absolute;top:calc(100% + 8px);right:0;width:250px;
+    background:#0c1420;border:1px solid var(--line);border-radius:8px;
+    padding:10px 12px;font-family:'Share Tech Mono';font-size:11px;color:var(--dim);
+    letter-spacing:.3px;line-height:1.5;opacity:0;pointer-events:none;
+    transform:translateY(-4px);transition:.18s;z-index:20;
+    box-shadow:0 8px 30px rgba(0,0,0,.6);text-align:left;
+  }
+  .tip b{color:var(--gold)}
+
+  /* Chart area */
+  .chartwrap{position:relative;flex:1;min-height:0;margin:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  #tv_container{position:absolute;inset:0}
+  .tradingview-widget-container,.tradingview-widget-container__widget{height:100%!important;width:100%!important}
+  .fallback{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;
+  }
+  .fallback.show{display:flex}
+  .fallback h2{font-family:'Orbitron';color:var(--gold);letter-spacing:2px}
+  .fallback p{color:var(--dim);max-width:440px;line-height:1.6}
+  .fallback .big{font-size:52px}
+  .foot{padding:6px 20px 12px;color:var(--dim);font-size:10px;letter-spacing:1.5px;text-align:center;text-transform:uppercase}
+  .foot b{color:var(--cyan)}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">Z</div>
+      <div class="title">ZEROX TERMINAL<small>LIVE MARKETS · REAL-TIME CHART</small></div>
+    </div>
+    <button class="close-btn" onclick="closePanel()">✕ CLOSE</button>
+  </div>
+
+  <div class="controls">
+    <span class="lbl">Watchlist</span>
+    <button class="sym active" data-sym="BINANCE:BTCUSDT" onclick="switchSym(this)">BTC</button>
+    <button class="sym" data-sym="BINANCE:ETHUSDT" onclick="switchSym(this)">ETH</button>
+    <button class="sym" data-sym="BINANCE:SOLUSDT" onclick="switchSym(this)">SOL</button>
+    <div class="spacer"></div>
+    <div class="exec-btn" title="Coming soon">
+      <span class="lock">🔒</span>▸ EXECUTE TRADE
+      <div class="tip"><b>Coming with Pro / linked wallet.</b> On-chain trade execution routes through your connected non-custodial wallet. Currently a preview — no live orders are placed.</div>
+    </div>
+  </div>
+
+  <div class="chartwrap">
+    <div id="tv_container"></div>
+    <div class="fallback" id="fallback">
+      <div class="big">📡</div>
+      <h2>MARKET FEED OFFLINE</h2>
+      <p>The live TradingView chart could not be reached (you may be offline or the widget is blocked). Reconnect to the network and reopen this terminal to view real-time <b>BTC / ETH / SOL</b> price action.</p>
+      <button class="sym" onclick="loadWidget(currentSym)" style="border-color:var(--cyan);color:var(--cyan)">⟳ RETRY FEED</button>
+    </div>
+  </div>
+
+  <div class="foot">ZEROX · WEALTH &amp; REVENUE ENGINE — data via <b>TradingView</b> public widget · no api key · free feed</div>
+
+<script>
+  var currentSym = 'BINANCE:BTCUSDT';
+  var loadTimer = null;
+
+  function closePanel(){
+    try{ window.parent.postMessage({type:'shaddai-close-panel'}, '*'); }catch(e){}
+    // standalone fallback
+    if(window.parent === window){
+      if(history.length > 1){ history.back(); }
+      else { document.body.style.display='none'; }
+    }
+  }
+
+  function switchSym(btn){
+    document.querySelectorAll('.sym.active').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentSym = btn.getAttribute('data-sym');
+    loadWidget(currentSym);
+  }
+
+  function showFallback(){ document.getElementById('fallback').classList.add('show'); }
+  function hideFallback(){ document.getElementById('fallback').classList.remove('show'); }
+
+  function loadWidget(sym){
+    hideFallback();
+    var container = document.getElementById('tv_container');
+    container.innerHTML = '';
+    // rebuild the TradingView required container structure
+    var wrap = document.createElement('div');
+    wrap.className = 'tradingview-widget-container';
+    var widget = document.createElement('div');
+    widget.className = 'tradingview-widget-container__widget';
+    wrap.appendChild(widget);
+    container.appendChild(wrap);
+
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.async = true;
+    s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    s.innerHTML = JSON.stringify({
+      "autosize": true,
+      "symbol": sym,
+      "interval": "60",
+      "timezone": "Etc/UTC",
+      "theme": "dark",
+      "style": "1",
+      "locale": "en",
+      "backgroundColor": "rgba(10, 15, 24, 1)",
+      "gridColor": "rgba(39, 224, 255, 0.06)",
+      "hide_side_toolbar": false,
+      "allow_symbol_change": true,
+      "details": true,
+      "hotlist": true,
+      "calendar": false,
+      "support_host": "https://www.tradingview.com"
+    });
+    s.onerror = function(){ showFallback(); };
+    wrap.appendChild(s);
+
+    // Watchdog: if the widget iframe never appears, show fallback
+    if(loadTimer){ clearTimeout(loadTimer); }
+    loadTimer = setTimeout(function(){
+      var iframe = container.querySelector('iframe');
+      if(!iframe){ showFallback(); }
+    }, 6000);
+  }
+
+  // Detect if TradingView host is unreachable early
+  window.addEventListener('load', function(){ loadWidget(currentSym); });
+  // Listen for close requests forwarded from parent (optional symmetry)
+  window.addEventListener('message', function(ev){
+    if(ev.data && ev.data.type === 'shaddai-request-close'){ closePanel(); }
+  });
+</script>
+</body>
+</html>

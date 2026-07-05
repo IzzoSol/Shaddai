@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Solana Pay</title>
+<!--
+  Reusable NON-CUSTODIAL Solana payment panel for SHADDAI.
+  Serves BOTH: Pro-tier / in-world purchases AND portal-plot rentals.
+  Wallet-standard signing (Phantom / Solflare / Backpack) — this app NEVER sees a private key.
+  DEFAULT CLUSTER = devnet. Never mainnet unless ?cluster=mainnet-beta is explicitly passed.
+  Query params:
+    ?purpose=pro|portal|item   (what you're paying for; shown to the user)
+    ?amount=0.05               (SOL amount)
+    ?to=<treasuryPubkey>       (recipient; falls back to a placeholder devnet address)
+    ?label=Pro%20Tier          (human label)
+    ?ref=<opaque id>           (e.g. plotId / itemId — echoed back on success)
+    ?cluster=devnet            (devnet default; mainnet-beta requires this explicit value)
+  On success it posts to the opener:
+    window.parent.postMessage({type:'shaddai-pay-success', purpose, amount, ref, signature, payer, cluster}, '*')
+  Close button posts {type:'shaddai-close-panel'}.
+-->
+<style>
+  :root{--cy:#27e0ff;--gold:#ffcf4a;--vi:#c08cff;--bg:#04060d}
+  html,body{margin:0;height:100%;background:radial-gradient(120% 120% at 50% -10%,#0a1226,#04060d 60%,#02030a);color:#dce8ff;font-family:'Share Tech Mono',ui-monospace,monospace;overflow:auto}
+  .wrap{max-width:520px;margin:0 auto;padding:26px 20px 40px}
+  h1{font-family:'Orbitron',sans-serif;letter-spacing:4px;font-size:18px;color:#fff;text-shadow:0 0 18px rgba(39,224,255,.5);margin:6px 0 2px}
+  .sub{opacity:.7;font-size:12px;margin-bottom:20px}
+  .card{background:rgba(8,14,26,.72);border:1px solid rgba(39,224,255,.32);border-radius:14px;padding:18px;backdrop-filter:blur(8px);box-shadow:0 0 40px rgba(39,224,255,.08)}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px}
+  .row:last-child{border-bottom:none}
+  .row .k{opacity:.65}
+  .row .v{color:#fff;font-weight:bold}
+  .amt{font-family:'Orbitron',sans-serif;font-size:30px;color:var(--gold);text-shadow:0 0 20px rgba(255,207,74,.4)}
+  .cluster{display:inline-block;font-size:11px;letter-spacing:2px;padding:3px 9px;border-radius:20px;border:1px solid var(--cy);color:var(--cy);text-transform:uppercase}
+  .cluster.main{border-color:#ff5a6e;color:#ff5a6e}
+  button{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;border:none;border-radius:10px;padding:14px 20px;cursor:pointer;width:100%;margin-top:12px;color:#03040c;background:linear-gradient(90deg,var(--cy),var(--gold));transition:transform .15s,filter .15s;font-weight:800}
+  button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
+  button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.25);color:#cfe6ff}
+  #status{margin-top:16px;font-size:12px;line-height:1.6;min-height:20px;white-space:pre-wrap}
+  .ok{color:#4ade80}.err{color:#ff7a7a}.warn{color:var(--gold)}
+  a{color:var(--cy)}
+  .close{position:fixed;top:12px;right:14px;width:auto;margin:0;padding:8px 14px;background:rgba(39,224,255,.1);border:1px solid var(--cy);color:var(--cy);font-size:11px;border-radius:8px}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+</head>
+<body>
+<button class="close" id="closeBtn">✕ CLOSE</button>
+<div class="wrap">
+  <h1>◈ SHADDAI · SOLANA PAY</h1>
+  <div class="sub">Non-custodial — your wallet holds the keys. <span class="cluster" id="clusterTag">devnet</span></div>
+  <div class="card">
+    <div class="row"><span class="k">Paying for</span><span class="v" id="vLabel">—</span></div>
+    <div class="row"><span class="k">Amount</span><span class="amt" id="vAmount">— SOL</span></div>
+    <div class="row"><span class="k">To (treasury)</span><span class="v" id="vTo" style="font-size:11px">—</span></div>
+    <div class="row"><span class="k">From (you)</span><span class="v" id="vFrom" style="font-size:11px">not connected</span></div>
+    <div class="row" id="rowRef" style="display:none"><span class="k">Reference</span><span class="v" id="vRef" style="font-size:11px">—</span></div>
+
+    <button id="connectBtn">CONNECT WALLET</button>
+    <button id="payBtn" disabled>REVIEW &amp; PAY</button>
+    <button class="ghost" id="disconnectBtn" style="display:none">Disconnect</button>
+    <div id="status"></div>
+  </div>
+  <div class="sub" style="margin-top:14px">Devnet SOL is free — get some at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>. This never touches mainnet unless explicitly configured.</div>
+</div>
+
+<script>
+(function(){
+  var W3 = window.solanaWeb3;
+  var $ = function(id){ return document.getElementById(id); };
+  var status = function(msg, cls){ var s=$('status'); s.className=cls||''; s.textContent=msg||''; };
+
+  // ---- config from query ----
+  var q = new URLSearchParams(location.search);
+  var CLUSTER = (q.get('cluster')||'devnet').toLowerCase();
+  if (CLUSTER !== 'devnet' && CLUSTER !== 'testnet' && CLUSTER !== 'mainnet-beta') CLUSTER = 'devnet';
+  var PURPOSE = q.get('purpose') || 'item';
+  var LABEL   = q.get('label') || ({pro:'SHADDAI Pro Tier', portal:'Portal Plot Rental', item:'In-world Purchase'})[PURPOSE] || 'Purchase';
+  var AMOUNT  = Math.max(0, parseFloat(q.get('amount')||'0.05')) || 0.05;
+  var REF     = q.get('ref') || '';
+  // Treasury: prefer ?to=, else a placeholder devnet address (OWNER: replace with your real treasury pubkey).
+  var TREASURY = q.get('to') || 'SysvarC1ock11111111111111111111111111111111'; // ⚠ PLACEHOLDER — set ?to=<your treasury> or edit this
+  var toPk, conn, wallet, payerPk;
+
+  try { toPk = new W3.PublicKey(TREASURY); } catch(e){ /* validated on pay */ }
+
+  // ---- render summary ----
+  $('vLabel').textContent = LABEL;
+  $('vAmount').textContent = AMOUNT + ' SOL';
+  $('vTo').textContent = TREASURY.slice(0,6)+'…'+TREASURY.slice(-6);
+  $('clusterTag').textContent = CLUSTER;
+  if (CLUSTER === 'mainnet-beta') $('clusterTag').className = 'cluster main';
+  if (REF){ $('rowRef').style.display='flex'; $('vRef').textContent = REF; }
+
+  function rpc(){
+    // devnet by default; only the explicit mainnet-beta value ever points at mainnet
+    return new W3.Connection(W3.clusterApiUrl(CLUSTER), 'confirmed');
+  }
+
+  function getProvider(){
+    // Wallet-standard injected providers (Phantom / Solflare / Backpack)
+    if (window.phantom && window.phantom.solana && window.phantom.solana.isPhantom) return window.phantom.solana;
+    if (window.solflare && window.solflare.isSolflare) return window.solflare;
+    if (window.backpack && window.backpack.isBackpack) return window.backpack;
+    if (window.solana) return window.solana;
+    return null;
+  }
+
+  $('connectBtn').onclick = async function(){
+    try{
+      if (!W3){ status('Solana library failed to load (offline?). Try again with a connection.', 'err'); return; }
+      wallet = getProvider();
+      if (!wallet){ status('No Solana wallet found. Install Phantom or Solflare (browser extension), then reload.', 'err'); return; }
+      status('Opening wallet…', 'warn');
+      var res = await wallet.connect();
+      payerPk = new W3.PublicKey((res && res.publicKey ? res.publicKey : wallet.publicKey).toString());
+      conn = rpc();
+      $('vFrom').textContent = payerPk.toString().slice(0,6)+'…'+payerPk.toString().slice(-6);
+      $('connectBtn').style.display='none';
+      $('disconnectBtn').style.display='block';
+      $('payBtn').disabled = false;
+      // show balance
+      try{ var bal = await conn.getBalance(payerPk); status('Connected. Balance: '+(bal/W3.LAMPORTS_PER_SOL).toFixed(4)+' SOL on '+CLUSTER+'.', 'ok'); }
+      catch(_){ status('Connected on '+CLUSTER+'.', 'ok'); }
+    }catch(e){ status('Connect failed: '+(e&&e.message||e), 'err'); }
+  };
+
+  $('disconnectBtn').onclick = async function(){
+    try{ if (wallet && wallet.disconnect) await wallet.disconnect(); }catch(_){}
+    payerPk=null; $('vFrom').textContent='not connected'; $('connectBtn').style.display='block'; $('disconnectBtn').style.display='none'; $('payBtn').disabled=true; status('');
+  };
+
+  $('payBtn').onclick = async function(){
+    try{
+      if (!payerPk || !conn){ status('Connect a wallet first.', 'err'); return; }
+      if (!toPk){ status('Treasury address is invalid — pass ?to=<pubkey>.', 'err'); return; }
+      if (CLUSTER === 'mainnet-beta' && !confirm('This is a REAL mainnet payment of '+AMOUNT+' SOL. Continue?')) return;
+      $('payBtn').disabled = true;
+      status('Building transaction…', 'warn');
+
+      var lamports = Math.round(AMOUNT * W3.LAMPORTS_PER_SOL);
+      var tx = new W3.Transaction().add(
+        W3.SystemProgram.transfer({ fromPubkey: payerPk, toPubkey: toPk, lamports: lamports })
+      );
+      // memo so the payment is identifiable on-chain (purpose + ref)
+      try{
+        var memo = 'shaddai:'+PURPOSE+(REF?(':'+REF):'');
+        tx.add(new W3.TransactionInstruction({ keys:[], programId: new W3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'), data: new TextEncoder().encode(memo) }));
+      }catch(_){}
+      var bh = await conn.getLatestBlockhash('confirmed');
+      tx.recentBlockhash = bh.blockhash;
+      tx.feePayer = payerPk;
+
+      // SIMULATE before asking to sign (surface any error to the user)
+      status('Simulating…', 'warn');
+      try{
+        var sim = await conn.simulateTransaction(tx);
+        if (sim && sim.value && sim.value.err){ status('Simulation failed: '+JSON.stringify(sim.value.err)+'\n(likely insufficient devnet SOL — use the faucet).', 'err'); $('payBtn').disabled=false; return; }
+      }catch(se){ /* some wallets/RPC block sim; proceed to wallet review */ }
+
+      status('Approve in your wallet…', 'warn');
+      var sig;
+      if (wallet.signAndSendTransaction){
+        var out = await wallet.signAndSendTransaction(tx);
+        sig = out.signature || out;
+      } else {
+        var signed = await wallet.signTransaction(tx);
+        sig = await conn.sendRawTransaction(signed.serialize());
+      }
+      status('Confirming ('+sig.slice(0,8)+'…)…', 'warn');
+      await conn.confirmTransaction({ signature: sig, blockhash: bh.blockhash, lastValidBlockHeight: bh.lastValidBlockHeight }, 'confirmed');
+
+      var exp = 'https://explorer.solana.com/tx/'+sig+(CLUSTER!=='mainnet-beta'?('?cluster='+CLUSTER):'');
+      var s=$('status'); s.className='ok';
+      s.innerHTML = '✅ PAID '+AMOUNT+' SOL for '+LABEL+'.\nTx: <a href="'+exp+'" target="_blank" rel="noopener">'+sig.slice(0,10)+'…</a>';
+      try{ window.parent.postMessage({ type:'shaddai-pay-success', purpose:PURPOSE, amount:AMOUNT, ref:REF, signature:sig, payer:payerPk.toString(), cluster:CLUSTER }, '*'); }catch(_){}
+    }catch(e){
+      status('Payment failed / rejected: '+(e&&e.message||e), 'err'); $('payBtn').disabled=false;
+    }
+  };
+
+  $('closeBtn').onclick = function(){ try{ window.parent.postMessage({type:'shaddai-close-panel'}, '*'); }catch(_){} try{ window.close(); }catch(_){} };
+})();
+</script>
+</body>
+</html>

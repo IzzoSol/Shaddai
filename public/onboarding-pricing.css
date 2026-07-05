@@ -1,0 +1,201 @@
+/* onboarding-pricing.css
+   Expandable "What can I do?" value / pricing panel for the #shdOnboard intro overlay.
+   Every selector scoped under #shdOb-value so nothing leaks into the host dashboard. */
+
+#shdOb-value {
+  --sv-accent: var(--accent, #00ff88);
+  --sv-cyan: #00f0ff;
+  margin: 14px 0 4px;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  color: #d6ffe9;
+}
+
+#shdOb-value * {
+  box-sizing: border-box;
+}
+
+/* ---- Toggle button ---- */
+#shdOb-value .sv-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  border-radius: 10px;
+  color: var(--sv-accent);
+  font-family: 'Orbitron', 'Share Tech Mono', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#shdOb-value .sv-toggle:hover {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: var(--sv-accent);
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.25);
+}
+
+#shdOb-value .sv-toggle:focus-visible {
+  outline: 2px solid var(--sv-cyan);
+  outline-offset: 2px;
+}
+
+#shdOb-value .sv-chevron {
+  display: inline-block;
+  transition: transform 0.28s ease;
+  font-size: 11px;
+  color: var(--sv-cyan);
+}
+
+#shdOb-value.sv-open .sv-chevron {
+  transform: rotate(180deg);
+}
+
+/* ---- Collapsible panel ---- */
+#shdOb-value .sv-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.35s ease, margin 0.3s ease;
+  margin-top: 0;
+}
+
+#shdOb-value.sv-open .sv-panel {
+  max-height: 1600px;
+  opacity: 1;
+  margin-top: 12px;
+}
+
+/* ---- Tier cards ---- */
+#shdOb-value .sv-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+#shdOb-value .sv-card {
+  position: relative;
+  background: rgba(0, 8, 6, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: 12px;
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#shdOb-value .sv-card.sv-founding {
+  border-color: var(--sv-accent);
+  background: rgba(0, 255, 136, 0.07);
+  box-shadow: 0 0 22px rgba(0, 255, 136, 0.18);
+}
+
+#shdOb-value .sv-badge {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  background: var(--sv-accent);
+  color: #001208;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+#shdOb-value .sv-tier {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #eafff5;
+  letter-spacing: 0.03em;
+}
+
+#shdOb-value .sv-price {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--sv-accent);
+  line-height: 1.1;
+}
+
+#shdOb-value .sv-founding .sv-price {
+  color: var(--sv-accent);
+}
+
+#shdOb-value .sv-sub {
+  font-size: 10.5px;
+  color: #7fdcb8;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+
+#shdOb-value .sv-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#shdOb-value .sv-list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #cdeede;
+}
+
+#shdOb-value .sv-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--sv-cyan);
+}
+
+/* ---- Founding CTA ---- */
+#shdOb-value .sv-cta {
+  margin-top: auto;
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--sv-accent);
+  color: #001208;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+#shdOb-value .sv-cta:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.45);
+}
+
+#shdOb-value .sv-cta:focus-visible {
+  outline: 2px solid var(--sv-cyan);
+  outline-offset: 2px;
+}
+
+/* ---- Reassurance line ---- */
+#shdOb-value .sv-note {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--sv-cyan);
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}

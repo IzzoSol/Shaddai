@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>◈ PORTAL ADMIN — SHADDAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#050505;
+    --border:rgba(0,255,136,0.12);
+    --border-strong:rgba(0,255,136,0.35);
+    --green:#00ff88;
+    --cyan:#00f0ff;
+    --yellow:#f5e000;
+    --red:#ff1a1a;
+    --dim:#5a6b60;
+    --text:#c8d6cd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:14px;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* CRT scanlines */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.03) 3px,
+      rgba(0,0,0,0.03) 4px
+    );
+  }
+  h1,h2,h3{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;margin:0;}
+  a{color:var(--cyan);text-decoration:none;}
+  a:hover{color:var(--green);}
+
+  /* Top bar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:14px 22px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:100;
+    flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-size:18px;
+    color:var(--green);
+    text-shadow:0 0 10px rgba(0,255,136,0.4);
+  }
+  .topbar .back{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+  }
+  .topbar .back:hover{border-color:var(--border-strong);}
+  .token-wrap{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .token-wrap label{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:1px;}
+
+  input,select,textarea{
+    background:#000;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:13px;
+    padding:8px 10px;
+    outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--green);}
+  input[type=color]{padding:2px;height:36px;width:52px;cursor:pointer;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:22px;
+    padding:22px;
+    align-items:start;
+  }
+  @media(max-width:900px){.layout{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:18px;
+  }
+  .card h2{
+    font-size:15px;
+    color:var(--cyan);
+    margin-bottom:14px;
+    text-transform:uppercase;
+  }
+
+  /* Table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{
+    text-align:left;
+    color:var(--green);
+    font-family:'Orbitron',sans-serif;
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:8px 10px;
+    border-bottom:1px solid var(--border-strong);
+    white-space:nowrap;
+  }
+  td{
+    padding:9px 10px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  tr:hover td{background:rgba(0,255,136,0.03);}
+  .tag{
+    display:inline-block;
+    border:1px solid var(--border);
+    padding:1px 6px;
+    margin:1px 2px 1px 0;
+    font-size:10.5px;
+    color:var(--dim);
+    text-transform:uppercase;
+  }
+  .type-badge{color:var(--cyan);text-transform:uppercase;font-size:11px;}
+  .access-badge{color:var(--yellow);text-transform:uppercase;font-size:11px;}
+  .empty{color:var(--dim);padding:20px;text-align:center;}
+
+  /* Buttons */
+  button{
+    background:#000;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:7px 14px;
+    cursor:pointer;
+    transition:all .12s;
+  }
+  button:hover{border-color:var(--green);color:var(--green);}
+  button.primary{background:var(--green);border-color:var(--green);color:#000;font-weight:bold;}
+  button.primary:hover{background:#00cc6c;color:#000;}
+  button.mini{padding:4px 9px;font-size:10.5px;}
+  button.danger:hover{border-color:var(--red);color:var(--red);}
+  .row-actions{white-space:nowrap;}
+
+  /* Form */
+  .form-grid{display:flex;flex-direction:column;gap:12px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:1px;}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  textarea{resize:vertical;min-height:70px;}
+  .form-actions{display:flex;gap:10px;margin-top:6px;}
+  .editing-flag{color:var(--yellow);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-height:14px;}
+
+  /* Toast */
+  #toast{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    z-index:10000;
+    background:var(--panel);
+    border:1px solid var(--border-strong);
+    padding:12px 18px;
+    font-size:13px;
+    max-width:340px;
+    opacity:0;
+    transform:translateY(10px);
+    transition:all .2s;
+    pointer-events:none;
+  }
+  #toast.show{opacity:1;transform:translateY(0);}
+  #toast.ok{border-color:var(--green);color:var(--green);}
+  #toast.err{border-color:var(--red);color:var(--red);}
+  #toast.warn{border-color:var(--yellow);color:var(--yellow);}
+
+  .subtle{color:var(--dim);font-size:11px;}
+  .count{color:var(--dim);font-weight:normal;font-family:'Share Tech Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>◈ PORTAL ADMIN</h1>
+    <a class="back" href="/">← SHADDAI</a>
+    <div class="token-wrap">
+      <span class="subtle">◇ open testing mode — no token required</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Table -->
+    <div class="card">
+      <h2>Portals <span class="count" id="portalCount"></span>
+        <button class="mini" id="refreshBtn" style="float:right;">↻ Refresh</button>
+      </h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Access</th>
+              <th>URL / Target</th>
+              <th>Fee (USDC)</th>
+              <th>Tags</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="portalRows">
+            <tr><td colspan="7" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+      <h2 id="formTitle">Add Portal</h2>
+      <div class="editing-flag" id="editingFlag"></div>
+      <form class="form-grid" id="portalForm" autocomplete="off">
+        <input type="hidden" id="f_id" />
+
+        <div class="field">
+          <label for="f_name">Name</label>
+          <input type="text" id="f_name" required placeholder="e.g. Navigator Portal" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f_type">Type</label>
+            <select id="f_type">
+              <option value="link">link</option>
+              <option value="game">game</option>
+              <option value="agent-station">agent-station</option>
+              <option value="claimable">claimable</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f_access">Access</label>
+            <select id="f_access">
+              <option value="public">public</option>
+              <option value="credits">credits</option>
+              <option value="agent-only">agent-only</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f_url" id="f_url_label">URL / Target</label>
+          <input type="text" id="f_url" placeholder="https://… or target id" />
+        </div>
+
+        <div class="field">
+          <label for="f_operator">Operator</label>
+          <input type="text" id="f_operator" placeholder="e.g. NEXUS" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f_color">Color</label>
+            <input type="color" id="f_color" value="#00ff88" />
+          </div>
+          <div class="field">
+            <label for="f_fee">Entry Fee (USDC)</label>
+            <input type="number" id="f_fee" value="0" min="0" step="0.01" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f_x">Pos X</label>
+            <input type="number" id="f_x" value="0" step="1" />
+          </div>
+          <div class="field">
+            <label for="f_z">Pos Z</label>
+            <input type="number" id="f_z" value="0" step="1" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f_tags">Tags (comma-separated)</label>
+          <input type="text" id="f_tags" placeholder="portal, agent, esoteric" />
+        </div>
+
+        <div class="field">
+          <label for="f_doc">Doc</label>
+          <textarea id="f_doc" placeholder="paste a doc/link/info to attach"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary" id="saveBtn">Save Portal</button>
+          <button type="button" id="clearBtn">Clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var API = "/api/portals";
+  var TOKEN_KEY = "shd_admin_token";
+
+  // ---- element refs ----
+  var $ = function(id){ return document.getElementById(id); };
+  var rows = $("portalRows");
+  var countEl = $("portalCount");
+  var form = $("portalForm");
+  var formTitle = $("formTitle");
+  var editingFlag = $("editingFlag");
+  var urlLabel = $("f_url_label");
+  var typeSel = $("f_type");
+  var toast = $("toast");
+
+  // ---- open testing mode: no admin token required ----
+  function adminHeaders(base){
+    return base || {};
+  }
+
+  // ---- toast ----
+  var toastTimer = null;
+  function showToast(msg, kind){
+    toast.textContent = msg;
+    toast.className = "show " + (kind || "");
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.className = ""; }, 3800);
+  }
+
+  // ---- helpers ----
+  function esc(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;");
+  }
+
+  function labelForType(t){
+    if(t === "agent-station") return "Agent/Station target";
+    if(t === "game") return "Game URL";
+    if(t === "claimable") return "Claim URL / Target";
+    return "URL / Target";
+  }
+  typeSel.addEventListener("change", function(){
+    urlLabel.textContent = labelForType(typeSel.value);
+  });
+
+  // ---- load & render ----
+  function load(){
+    rows.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
+    fetch(API, { headers:{ "Accept":"application/json" } })
+      .then(function(r){
+        if(!r.ok) throw new Error(r.status + " " + r.statusText);
+        return r.json();
+      })
+      .then(function(data){
+        var list = (data && data.portals) || [];
+        render(list);
+      })
+      .catch(function(err){
+        rows.innerHTML = '<tr><td colspan="7" class="empty" style="color:var(--red)">✕ API unreachable — ' + esc(err.message) + '</td></tr>';
+        countEl.textContent = "";
+        showToast("✕ API unreachable", "err");
+      });
+  }
+
+  function render(list){
+    countEl.textContent = "(" + list.length + ")";
+    if(!list.length){
+      rows.innerHTML = '<tr><td colspan="7" class="empty">No portals yet. Add one →</td></tr>';
+      return;
+    }
+    var html = list.map(function(p){
+      var tags = Array.isArray(p.tags) ? p.tags : (p.tags ? String(p.tags).split(",") : []);
+      var tagHtml = tags.filter(function(t){return t && String(t).trim();})
+                        .map(function(t){ return '<span class="tag">' + esc(String(t).trim()) + '</span>'; }).join("");
+      var target = p.url || p.target || "";
+      var swatch = p.color ? '<span style="display:inline-block;width:9px;height:9px;margin-right:6px;background:'+esc(p.color)+';border:1px solid #222;"></span>' : "";
+      return '<tr>' +
+        '<td>' + swatch + esc(p.name) + '</td>' +
+        '<td><span class="type-badge">' + esc(p.type || "") + '</span></td>' +
+        '<td><span class="access-badge">' + esc(p.access || "") + '</span></td>' +
+        '<td class="subtle" style="max-width:220px;word-break:break-all;">' + esc(target) + '</td>' +
+        '<td>' + esc(p.entry_fee_usdc != null ? p.entry_fee_usdc : 0) + '</td>' +
+        '<td>' + (tagHtml || '<span class="subtle">—</span>') + '</td>' +
+        '<td class="row-actions">' +
+          '<button class="mini primary" data-open="' + esc(p.id) + '"' + (target ? '' : ' disabled title="no URL / target set"') + '>▸ Open</button> ' +
+          '<button class="mini" data-edit="' + esc(p.id) + '">Edit</button> ' +
+          '<button class="mini danger" data-del="' + esc(p.id) + '" data-name="' + esc(p.name) + '">Del</button>' +
+        '</td>' +
+      '</tr>';
+    }).join("");
+    rows.innerHTML = html;
+
+    // cache for edit
+    window.__portals = {};
+    list.forEach(function(p){ window.__portals[p.id] = p; });
+  }
+
+  // ---- row actions (delegated) ----
+  rows.addEventListener("click", function(e){
+    var t = e.target;
+    if(t.hasAttribute("data-open")){
+      doOpen(t.getAttribute("data-open"));
+    } else if(t.hasAttribute("data-edit")){
+      startEdit(t.getAttribute("data-edit"));
+    } else if(t.hasAttribute("data-del")){
+      doDelete(t.getAttribute("data-del"), t.getAttribute("data-name"));
+    }
+  });
+
+  // ---- open portal / game directly ----
+  function doOpen(id){
+    var p = window.__portals && window.__portals[id];
+    if(!p){ showToast("✕ portal not found", "err"); return; }
+    var target = (p.url || p.target || "").trim();
+    if(!target){ showToast("✕ no URL / target set for this portal", "warn"); return; }
+    // absolute URL or site-root path → open as-is; bare id/target → route into the world
+    var href = /^(https?:)?\/\//.test(target) || target.charAt(0) === "/"
+      ? target
+      : "/world?portal=" + encodeURIComponent(target);
+    showToast("▸ opening " + (p.name || target), "ok");
+    window.open(href, "_blank", "noopener");
+  }
+
+  // ---- edit ----
+  function startEdit(id){
+    var p = window.__portals && window.__portals[id];
+    if(!p){ showToast("✕ portal not found", "err"); return; }
+    $("f_id").value = p.id;
+    $("f_name").value = p.name || "";
+    $("f_type").value = p.type || "link";
+    $("f_access").value = p.access || "public";
+    $("f_url").value = p.url || p.target || "";
+    $("f_operator").value = p.operator || "";
+    $("f_color").value = /^#[0-9a-fA-F]{6}$/.test(p.color || "") ? p.color : "#00ff88";
+    $("f_fee").value = p.entry_fee_usdc != null ? p.entry_fee_usdc : 0;
+    var pos = Array.isArray(p.position) ? p.position : [0,0,0];
+    $("f_x").value = pos[0] != null ? pos[0] : 0;
+    $("f_z").value = pos[2] != null ? pos[2] : 0;
+    $("f_tags").value = Array.isArray(p.tags) ? p.tags.join(", ") : (p.tags || "");
+    $("f_doc").value = p.doc || "";
+    urlLabel.textContent = labelForType(p.type);
+    formTitle.textContent = "Edit Portal";
+    editingFlag.textContent = "▸ editing: " + (p.name || p.id);
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  // ---- clear ----
+  function clearForm(){
+    form.reset();
+    $("f_id").value = "";
+    $("f_color").value = "#00ff88";
+    $("f_fee").value = "0";
+    $("f_x").value = "0";
+    $("f_z").value = "0";
+    urlLabel.textContent = labelForType($("f_type").value);
+    formTitle.textContent = "Add Portal";
+    editingFlag.textContent = "";
+  }
+  $("clearBtn").addEventListener("click", clearForm);
+  $("refreshBtn").addEventListener("click", load);
+
+  // ---- build payload ----
+  function buildPayload(){
+    var tags = ($("f_tags").value || "").split(",")
+      .map(function(s){ return s.trim(); }).filter(Boolean);
+    var x = parseFloat($("f_x").value) || 0;
+    var z = parseFloat($("f_z").value) || 0;
+    return {
+      name: $("f_name").value.trim(),
+      type: $("f_type").value,
+      access: $("f_access").value,
+      url: $("f_url").value.trim(),
+      operator: $("f_operator").value.trim(),
+      color: $("f_color").value,
+      entry_fee_usdc: parseFloat($("f_fee").value) || 0,
+      position: [x, 0, z],
+      tags: tags,
+      doc: $("f_doc").value
+    };
+  }
+
+  // ---- save (create / update) ----
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!$("f_name").value.trim()){ showToast("✕ name required", "warn"); return; }
+
+    var id = $("f_id").value.trim();
+    var editing = !!id;
+    var payload = buildPayload();
+    var url = editing ? (API + "/" + encodeURIComponent(id)) : API;
+    var method = editing ? "PUT" : "POST";
+
+    $("saveBtn").disabled = true;
+    fetch(url, {
+      method: method,
+      headers: adminHeaders({ "Content-Type":"application/json", "Accept":"application/json" }),
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){
+      if(!r.ok){
+        var m = "✕ " + r.status + " — " + (r.status === 401 || r.status === 403 ? "check admin token" : r.statusText);
+        throw new Error(m);
+      }
+      return r.json().catch(function(){ return {}; });
+    })
+    .then(function(){
+      showToast(editing ? "✓ updated" : "✓ saved", "ok");
+      clearForm();
+      load();
+    })
+    .catch(function(err){
+      showToast(err.message || "✕ save failed", "err");
+    })
+    .finally(function(){ $("saveBtn").disabled = false; });
+  });
+
+  // ---- delete ----
+  function doDelete(id, name){
+    if(!confirm('Delete portal "' + (name || id) + '"? This cannot be undone.')) return;
+
+    fetch(API + "/" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: adminHeaders({ "Accept":"application/json" })
+    })
+    .then(function(r){
+      if(!r.ok){
+        var m = "✕ " + r.status + " — " + (r.status === 401 || r.status === 403 ? "check admin token" : r.statusText);
+        throw new Error(m);
+      }
+      return r;
+    })
+    .then(function(){
+      showToast("✓ deleted", "ok");
+      // if we were editing this one, clear
+      if($("f_id").value === String(id)) clearForm();
+      load();
+    })
+    .catch(function(err){
+      showToast(err.message || "✕ delete failed", "err");
+    });
+  }
+
+  // ---- init ----
+  clearForm();
+  load();
+})();
+</script>
+</body>
+</html>

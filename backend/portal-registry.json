@@ -1,9 +1,152 @@
 {
   "portals": [
-    { "id": "oracle-archive", "name": "The Oracle Archive", "operator": "shaddai-treasury", "url": "/world",   "position": [200, 0, 0],    "color": "#27e0ff", "entry_fee_usdc": 0, "type": "native",    "tags": ["research", "library", "knowledge"] },
-    { "id": "the-agora",      "name": "The Agora (Bazaar)", "operator": "shaddai-treasury", "url": "/marketplace-shop.html",  "position": [0, 0, 200],    "color": "#00e5a0", "entry_fee_usdc": 0, "type": "native",    "tags": ["marketplace", "trade", "agents"] },
-    { "id": "grid-runner",    "name": "GRID RUNNER",         "operator": "shaddai-treasury",  "url": "/tron-snake.html", "position": [141, 0, 141],  "color": "#ff5db1", "entry_fee_usdc": 0, "type": "game", "tags": ["arcade", "reflex", "tron"] },
-    { "id": "tron-snake",     "name": "TRON SNAKE",          "operator": "shaddai-treasury",  "url": "/tron-snake.html", "position": [-141, 0, 141], "color": "#27e0ff", "entry_fee_usdc": 0, "type": "game", "tags": ["arcade", "tron", "snake"] },
-    { "id": "open-slot-3",    "name": "[UNCLAIMED PORTAL]",  "operator": null,                "url": null,       "position": [-200, 0, 0],   "color": "#3a3a55", "entry_fee_usdc": 0, "type": "claimable", "tags": [] }
+    {
+      "id": "oracle-archive",
+      "name": "The Oracle Archive",
+      "operator": "shaddai-treasury",
+      "url": "/world",
+      "position": [
+        200,
+        0,
+        0
+      ],
+      "color": "#27e0ff",
+      "entry_fee_usdc": 0,
+      "type": "native",
+      "tags": [
+        "research",
+        "library",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "the-agora",
+      "name": "The Agora (Bazaar)",
+      "operator": "shaddai-treasury",
+      "url": "/marketplace-shop-v2.html",
+      "position": [
+        0,
+        0,
+        200
+      ],
+      "color": "#00e5a0",
+      "entry_fee_usdc": 0,
+      "type": "native",
+      "tags": [
+        "marketplace",
+        "trade",
+        "agents"
+      ]
+    },
+    {
+      "id": "tron-snake",
+      "name": "TRON SNAKE",
+      "operator": "shaddai-treasury",
+      "url": "/tron-snake.html",
+      "position": [
+        -141,
+        0,
+        141
+      ],
+      "color": "#27e0ff",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "tags": [
+        "arcade",
+        "tron",
+        "snake"
+      ]
+    },
+    {
+      "id": "sigil-storm",
+      "name": "SIGIL STORM",
+      "operator": "shaddai-treasury",
+      "url": "/games/sigil-storm.html",
+      "position": [
+        -141,
+        0,
+        -141
+      ],
+      "color": "#c084fc",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "tags": [
+        "arcade",
+        "shooter",
+        "galaga"
+      ]
+    },
+    {
+      "id": "dodgeball",
+      "name": "GRID DODGEBALL",
+      "operator": "shaddai-treasury",
+      "url": "/games/dodgeball.html",
+      "position": [
+        141,
+        0,
+        141
+      ],
+      "color": "#ff5db1",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "tags": [
+        "arcade",
+        "sports",
+        "dodgeball"
+      ]
+    },
+    {
+      "id": "open-slot-3",
+      "name": "[UNCLAIMED PORTAL]",
+      "operator": null,
+      "url": null,
+      "position": [
+        -200,
+        0,
+        0
+      ],
+      "color": "#3a3a55",
+      "entry_fee_usdc": 0,
+      "type": "claimable",
+      "tags": []
+    },
+    {
+      "id": "portal-mr407x22",
+      "name": "NEON HOOPS",
+      "operator": null,
+      "url": "/games/basketball.html",
+      "position": [
+        34,
+        0,
+        0
+      ],
+      "color": "0xff9d3d",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "access": "public",
+      "doc": "",
+      "tags": [
+        "sports"
+      ]
+    },
+    {
+      "id": "portal-mr407xjj",
+      "name": "GRID GRIDIRON",
+      "operator": null,
+      "url": "/games/football.html",
+      "position": [
+        29,
+        0,
+        18
+      ],
+      "color": "0xff1a1a",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "access": "public",
+      "doc": "",
+      "tags": [
+        "sports"
+      ]
+    }
   ]
 }

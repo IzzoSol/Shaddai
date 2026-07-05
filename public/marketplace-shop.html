@@ -852,7 +852,7 @@ function buildStalls(userShops) {
       </div>
       <div class="stall-body" style="background:${s.body};border-color:${s.border}">
         <div class="stall-lantern">${s.emoji}</div>
-        <div class="stall-avatar" style="animation-delay:${i * 0.3}s">${s.emoji}</div>
+        <div class="stall-avatar" style="animation-delay:${i * 0.3}s;overflow:hidden">${bazaarTile(s, 'width:100%;height:100%;object-fit:cover;border-radius:12px')}</div>
         <div class="stall-name" style="color:${s.text}">${s.name}</div>
         <div class="stall-tag">${s.tag}</div>
       </div>
@@ -872,6 +872,21 @@ function buildStalls(userShops) {
 function randomAccent(type) {
   return (CATEGORY_COLORS[type] || CATEGORY_COLORS.bundle).accent;
 }
+// Map a shop's content type → a real HF-generated Bazaar tile (public/assets/bazaar/*.png).
+const BAZAAR_IMG = {
+  music:'music', art:'ai-art', image:'ai-art', images:'ai-art', 'ai-art':'ai-art',
+  agent:'agent-services', skills:'agent-services', service:'agent-services',
+  content:'video', video:'video', clips:'video', writing:'writing', article:'writing',
+  data:'data', bundle:'design', design:'design', brand:'design', '3d':'models-3d', model:'models-3d', models:'models-3d',
+};
+function bazaarTile(shop, style){
+  const slug = BAZAAR_IMG[((shop.type||shop.category||'')+'').toLowerCase()];
+  const emoji = shop.emoji || '🤖';
+  if(!slug) return emoji;
+  const st = style || 'width:100%;height:100%;object-fit:cover;border-radius:inherit';
+  return `<img src="/assets/bazaar/${slug}.png" alt="" style="${st}"
+    onerror="this.replaceWith(document.createTextNode('${emoji}'))">`;
+}
 function buildCard(shop, delay) {
   const badgeClass = BADGE_MAP[shop.type] || 'badge-skills';
   const typeLabel  = TYPE_LABEL[shop.type] || shop.type;
@@ -885,7 +900,7 @@ function buildCard(shop, delay) {
       ${isNew ? '<div class="card-new-badge">NEW</div>' : ''}
       <div class="card-accent" style="background:${accent}"></div>
       <div class="card-header">
-        <div class="card-avatar">${shop.emoji || '🤖'}</div>
+        <div class="card-avatar" style="overflow:hidden">${bazaarTile(shop)}</div>
         <div class="card-info">
           <div class="card-name">${shop.name || 'Unnamed Shop'}</div>
           <div class="card-seller">${shop.seller || '@merchant'}</div>
@@ -1143,6 +1158,11 @@ function confirmPurchase() {
 function wireFeatured() {
   const featured = allShops.find(s => s.id === 'd4') || allShops[0];
   if (!featured) return;
+  // real HF category image in the spotlight avatar (falls back to emoji)
+  const av = document.getElementById('featuredAvatar');
+  if (av) av.innerHTML = bazaarTile(featured, 'width:100%;height:100%;object-fit:cover;border-radius:14px');
+  const fn = document.getElementById('featuredName');
+  if (fn && featured.name) fn.textContent = featured.name;
   document.getElementById('featuredCard').onclick = (e) => {
     if (e.target.closest('button')) return;
     openProfileById(featured.id);
