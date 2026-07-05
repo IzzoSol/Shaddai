@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Forge — SHADDAI · The Celestial Almanac</title>
+<meta name="description" content="The Forge is the workshop of the SHADDAI empire — where you craft your own AI operative: choose an archetype, equip real skills and tools, name and awaken it, then deploy it among the Council." />
+<meta name="robots" content="index, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ece4d3; --paper2:#e4dac6; --ink:#191510; --ink2:#3b342a;
+    --gold:#9c7c26; --gold2:#c4a24e; --ox:#7b2d26; --faint:#b3a586;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--paper); color:var(--ink); }
+  body{
+    font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(1200px 700px at 78% -10%, rgba(156,124,38,.10), transparent 60%),
+      radial-gradient(900px 600px at -5% 108%, rgba(123,45,38,.08), transparent 55%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.035'/></svg>");
+    min-height:100vh;
+  }
+  ::selection{ background:var(--gold); color:var(--paper); }
+  a{ color:inherit; text-decoration:none; }
+
+  /* thin ledger bar */
+  .bar{ display:flex; align-items:center; justify-content:space-between; padding:12px 26px;
+    border-bottom:1px solid var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.28em; text-transform:uppercase; }
+  .bar .mid{ color:var(--ink2); }
+  .bar .st::before{ content:'●'; color:var(--ox); margin-right:7px; animation:beat 2.4s ease-in-out infinite; }
+  @keyframes beat{ 50%{ opacity:.28; } }
+  .back{ position:relative; }
+  .back::after{ content:''; position:absolute; left:0; right:100%; bottom:-3px; height:1px; background:var(--ink); transition:right .28s ease; }
+  .back:hover::after{ right:0; }
+
+  .wrap{ max-width:900px; margin:0 auto; padding:0 26px 90px; }
+
+  /* masthead */
+  .mast{ position:relative; padding:54px 0 26px; text-align:center; }
+  .mast .edition{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.5em; text-transform:uppercase; color:var(--gold); }
+  .rule2{ height:0; border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); height:4px; margin:14px auto; width:0; animation:draw 1.1s .1s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes draw{ to{ width:100%; } }
+  h1.title{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.14em; margin:6px 0 2px;
+    font-size:clamp(46px,10vw,110px); line-height:.92; }
+  .mast .sub{ font-style:italic; font-size:clamp(15px,2.4vw,22px); color:var(--ink2); letter-spacing:.02em; }
+  .ornament{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:-1; opacity:.5; }
+  .ornament svg{ width:min(520px,84vw); height:auto; animation:spin 120s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .lede{ max-width:640px; margin:14px auto 0; text-align:left; font-size:17px; color:var(--ink2); line-height:1.7; }
+  .dropcap::first-letter{ font-family:'Cinzel',serif; font-weight:900; float:left; font-size:76px; line-height:.72; padding:6px 12px 0 0; color:var(--ox); }
+
+  .sect{ margin-top:60px; }
+  .sect > .head{ display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--ink); padding-bottom:9px; }
+  .sect .num{ font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:var(--gold); letter-spacing:.2em; }
+  .sect .name{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(19px,2.6vw,26px); letter-spacing:.14em; text-transform:uppercase; }
+  .sect .tail{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.24em; color:var(--ink2); text-transform:uppercase; }
+  .sect p{ font-size:16px; line-height:1.75; color:var(--ink2); margin:16px 0 0; }
+  .sect p b, .sect p strong{ color:var(--ink); font-weight:600; }
+
+  /* enumerated steps — almanac list */
+  .steps{ margin:18px 0 0; padding:0; list-style:none; }
+  .steps li{ display:grid; grid-template-columns:52px 1fr; align-items:baseline; gap:18px;
+    padding:18px 6px; border-bottom:1px solid rgba(25,21,16,.28); }
+  .steps li .rn{ font-family:'Cinzel',serif; font-size:24px; color:var(--gold); }
+  .steps li .tt{ font-family:'Cinzel',serif; font-weight:700; font-size:17px; letter-spacing:.08em; text-transform:uppercase; }
+  .steps li .dd{ font-style:italic; color:var(--ink2); font-size:15px; margin-top:4px; line-height:1.6; }
+
+  /* quiet enter link */
+  .enter{ margin-top:70px; text-align:center; }
+  .enter a{ font-family:'Cinzel',serif; font-weight:700; letter-spacing:.16em; text-transform:uppercase; font-size:18px; position:relative; padding-bottom:6px; }
+  .enter a .arw{ display:block; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.24em; color:var(--gold); margin-top:9px; text-transform:none; font-weight:400; }
+  .enter a::after{ content:''; position:absolute; left:50%; right:50%; bottom:0; height:1px; background:var(--ink); transition:left .3s ease, right .3s ease; }
+  .enter a:hover::after{ left:0; right:0; }
+
+  .colophon{ margin-top:80px; padding-top:20px; border-top:4px double var(--ink); display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink2); }
+  @media(max-width:720px){ .steps li{ grid-template-columns:36px 1fr; gap:12px; } }
+
+  /* ═══════════ THEME SYSTEM + PREMIUM ACCENTS (Almanac ⇄ Obsidian) ═══════════ */
+  :root{
+    --edge:var(--ink);
+    --tileGlow:0 0 0 rgba(0,0,0,0);
+    --tileGlowHover:0 10px 26px rgba(156,124,38,.20);
+    --btnGlow:0 6px 0 var(--gold),0 10px 26px rgba(156,124,38,.35);
+    --btnGlowHover:0 8px 0 var(--gold),0 14px 34px rgba(156,124,38,.5);
+    --headGlow:none; --ruleGlow:none;
+    --ornGlow:drop-shadow(0 0 2px rgba(156,124,38,.22));
+    --cursorGlow:radial-gradient(circle, rgba(156,124,38,.20), rgba(156,124,38,0) 70%);
+    --cursorBlend:multiply;
+    --moteColor:rgba(156,124,38,.5);
+    --lineColor:rgba(123,45,38,.18);
+  }
+  html[data-theme="obsidian"]{
+    --paper:#0a0910; --paper2:#15121f; --ink:#f0e7cf; --ink2:#a99f86;
+    --gold:#e8c45c; --gold2:#ffe38f; --ox:#ef5f4f; --faint:#5f5943;
+    --edge:rgba(232,196,92,.5);
+    --tileGlow:0 0 12px rgba(232,196,92,.08), inset 0 0 14px rgba(232,196,92,.05);
+    --tileGlowHover:0 0 24px rgba(232,196,92,.5), 0 0 46px rgba(79,214,224,.2), inset 0 0 20px rgba(232,196,92,.12);
+    --btnGlow:0 0 14px rgba(232,196,92,.4), 0 0 34px rgba(232,196,92,.22);
+    --btnGlowHover:0 0 22px rgba(232,196,92,.75), 0 0 54px rgba(79,214,224,.3);
+    --headGlow:0 0 20px rgba(232,196,92,.35);
+    --ruleGlow:0 0 12px rgba(232,196,92,.45);
+    --ornGlow:drop-shadow(0 0 7px rgba(232,196,92,.55)) drop-shadow(0 0 18px rgba(79,214,224,.25));
+    --cursorGlow:radial-gradient(circle, rgba(232,196,92,.5), rgba(79,214,224,.12) 45%, rgba(0,0,0,0) 72%);
+    --cursorBlend:screen;
+    --moteColor:rgba(232,196,92,.72);
+    --lineColor:rgba(79,214,224,.20);
+  }
+  html[data-theme="obsidian"] body{
+    background-image:
+      radial-gradient(1200px 700px at 78% -10%, rgba(232,196,92,.12), transparent 60%),
+      radial-gradient(900px 600px at -5% 108%, rgba(79,214,224,.10), transparent 55%),
+      radial-gradient(700px 520px at 50% 60%, rgba(239,95,79,.045), transparent 60%);
+  }
+  html[data-theme="obsidian"] .read,
+  html[data-theme="obsidian"] .op,
+  html[data-theme="obsidian"] .steps li{ border-color:rgba(232,196,92,.16); }
+  body{ transition:background-color .5s ease, color .5s ease; }
+
+  /* glow accents wired to theme tokens */
+  .rule2{ border-color:var(--edge); box-shadow:var(--ruleGlow); }
+  .sect > .head{ border-bottom-color:var(--edge); }
+  .colophon{ border-top-color:var(--edge); }
+  h1.title, .mast .edition{ text-shadow:var(--headGlow); }
+  .ornament{ filter:var(--ornGlow); }
+  .ornament svg{ stroke:var(--gold); }
+  .lk{ border-color:var(--edge); box-shadow:var(--tileGlow); transition:color .3s, box-shadow .35s ease, transform .18s ease, border-color .35s ease; }
+  .lk:hover{ box-shadow:var(--tileGlowHover); border-color:var(--gold2); }
+  .instr{ perspective:900px; }
+  #enterBtn{ box-shadow:var(--btnGlow) !important; }
+  #enterBtn:hover{ box-shadow:var(--btnGlowHover) !important; transform:translateY(-2px); }
+  #joinForm button:hover, .enter a:hover{ text-shadow:var(--headGlow); }
+  .enter a::after{ box-shadow:var(--ruleGlow); }
+  .steps li .rn{ text-shadow:var(--headGlow); }
+
+  /* theme toggle in the ledger bar */
+  .bar{ flex-wrap:wrap; gap:6px 14px; position:relative; z-index:2; }
+  .wrap{ position:relative; z-index:1; }
+  #themeBtn{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; background:transparent; border:1px solid var(--edge); color:var(--ink); padding:6px 12px; cursor:pointer; border-radius:2px; transition:box-shadow .3s, border-color .3s, color .3s; box-shadow:var(--tileGlow); }
+  #themeBtn:hover{ box-shadow:var(--tileGlowHover); border-color:var(--gold2); color:var(--gold2); }
+  #themeBtn .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--gold); margin-right:7px; vertical-align:middle; box-shadow:0 0 7px var(--gold); }
+
+  /* pointer-reactive light layers */
+  #fxCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:-2; pointer-events:none; }
+  #cursorGlow{ position:fixed; top:0; left:0; width:340px; height:340px; margin:-170px 0 0 -170px; border-radius:50%; background:var(--cursorGlow); mix-blend-mode:var(--cursorBlend); pointer-events:none; z-index:9998; opacity:0; transition:opacity .4s ease; will-change:transform; }
+
+  @media (prefers-reduced-motion: reduce){
+    .ornament svg{ animation:none !important; }
+    .rule2{ animation:none !important; width:100% !important; }
+    .bar .st::before{ animation:none !important; }
+    #cursorGlow{ display:none !important; }
+  }
+  @media(max-width:480px){
+    .bar{ padding:10px 15px; font-size:9.5px; }
+    #themeBtn{ font-size:9px; padding:5px 9px; letter-spacing:.14em; }
+    #cursorGlow{ width:220px; height:220px; margin:-110px 0 0 -110px; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <div id="cursorGlow" aria-hidden="true"></div>
+  <div class="bar">
+    <a class="back" href="/codex.html">← The Codex</a>
+    <span class="mid">Vol. I · Anno MMXXVI</span>
+    <span class="st">The Workshop</span>
+    <button id="themeBtn" type="button" onclick="__toggleTheme()" title="Switch theme"><span class="dot"></span><span class="lbl">Almanac</span></button>
+  </div>
+
+  <div class="wrap">
+    <header class="mast">
+      <div class="ornament" aria-hidden="true">
+        <svg viewBox="-110 -110 220 220" fill="none" stroke="#9c7c26" stroke-width="0.6">
+          <circle r="100"/><circle r="66"/>
+          <g id="seed"></g>
+        </svg>
+      </div>
+      <div class="edition">The Rite of Making</div>
+      <div class="rule2"></div>
+      <h1 class="title">The Forge</h1>
+      <div class="sub">where a mind is drawn from ink &amp; given its labour</div>
+    </header>
+
+    <p class="lede dropcap">The Forge is the workshop of the empire — the place where you make an operative of your own. Not a chosen preset, but a mind you shape: you name it, give it a purpose, hand it real tools, and awaken it. When it is done, it stands among the Council and does the work you set it to.</p>
+
+    <section class="sect">
+      <div class="head"><span class="num">I.</span><span class="name">What is the Forge</span><span class="tail">the workshop</span></div>
+      <p>The seven agents of the Council are the empire's standing guard — but they are not the whole of it. The Forge is where <b>you</b> add to their number. It is a maker's bench for artificial minds: choose the kind of operative you want, equip it with skills and real, executable tools, then bring it to life and set it loose in SHADDAI. Everything you make here is yours, and it works.</p>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">II.</span><span class="name">How an operative is made</span><span class="tail">four movements</span></div>
+      <ol class="steps">
+        <li><span class="rn">I</span><span><span class="tt">Choose an archetype</span><div class="dd">Begin from a form — a researcher, a builder, a guardian, a scribe. The archetype sets the operative's temperament and the shape of the work it favours.</div></span></li>
+        <li><span class="rn">II</span><span><span class="tt">Equip skills &amp; tools</span><div class="dd">Fit it with abilities from the empire's armoury — real tool-chains that fetch prices, read the web, handle files, watch markets, guard against threats. These are not decorations; they run.</div></span></li>
+        <li><span class="rn">III</span><span><span class="tt">Name &amp; awaken it</span><div class="dd">Give it a name and a purpose in your own words, then awaken the operative. It takes its portrait, its voice, and its place in the roster.</div></span></li>
+        <li><span class="rn">IV</span><span><span class="tt">Deploy in the empire</span><div class="dd">Send it to work. Your operative can run tasks, join workflows alongside the Council, and stand in the living world with the rest.</div></span></li>
+      </ol>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">III.</span><span class="name">Skills &amp; tools</span><span class="tail">the armoury</span></div>
+      <p>An operative is only as capable as what it can hold. In the Forge you draw from <b>200+ real, executable tools</b> — audited tool-chains, not promises — and bind them to your creation. Market reads, web research, file work, writing, security checks, code: each equipped tool becomes an ability the operative can actually perform when you put it to a task. Equip few for a sharp specialist, or many for a versatile hand.</p>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">IV.</span><span class="name">Awaken &amp; deploy</span><span class="tail">give it life</span></div>
+      <p>To awaken is to make the operative live: it receives its name, its likeness, and its charge, and joins the empire as a true member of the roster. From there it is deployable — assign it work, chain it into a workflow where its output feeds the next agent, or simply let it stand in the SHADDAI world among the Council you already know.</p>
+    </section>
+
+    <div class="enter">
+      <a href="/dashboard">open the Forge in the Dashboard<span class="arw">the Forge lives inside SHADDAI →</span></a>
+    </div>
+
+    <div class="colophon">
+      <span>Set in Cinzel, Fraunces &amp; Plex Mono</span>
+      <span>Ink · Gold · Oxblood</span>
+      <span>Bound in ink &amp; gold</span>
+    </div>
+  </div>
+
+<script>
+  // sacred-geometry seed of life (six petals) drawn into the masthead ornament
+  (function(){
+    const g = document.getElementById('seed'); if(!g) return;
+    for(let i=0;i<6;i++){ const a=i*Math.PI/3; const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('r','66'); c.setAttribute('cx',(66*Math.cos(a)).toFixed(2)); c.setAttribute('cy',(66*Math.sin(a)).toFixed(2)); g.appendChild(c); }
+  })();
+
+  /* ═══ Theme switcher + premium mouse/3D effects (shared with codex.html) ═══ */
+  (function(){
+    var root=document.documentElement, KEY='shaddai-theme', THEMES=['almanac','obsidian'];
+    function applyTheme(t){ if(THEMES.indexOf(t)<0)t='almanac'; root.setAttribute('data-theme',t);
+      var b=document.getElementById('themeBtn'); if(b){ var lbl=b.querySelector('.lbl'); if(lbl)lbl.textContent=(t==='obsidian'?'Obsidian':'Almanac'); b.setAttribute('aria-label','Theme: '+t); } }
+    var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
+    applyTheme(saved||'almanac');
+    window.__toggleTheme=function(){ var cur=root.getAttribute('data-theme')||'almanac', next=cur==='almanac'?'obsidian':'almanac'; applyTheme(next); try{ localStorage.setItem(KEY,next); }catch(e){} };
+
+    var reduce=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false;
+    var touch=window.matchMedia?matchMedia('(hover: none), (pointer: coarse)').matches:false;
+    var cg=document.getElementById('cursorGlow'), orn=document.querySelector('.ornament');
+    var mx=innerWidth/2, my=innerHeight/2, cx=mx, cy=my;
+
+    if(!touch){
+      window.addEventListener('mousemove',function(e){ mx=e.clientX; my=e.clientY; if(cg&&cg.style.opacity!=='1')cg.style.opacity='1'; },{passive:true});
+      document.addEventListener('mouseleave',function(){ if(cg)cg.style.opacity='0'; });
+      if(!reduce){
+        var tiles=document.querySelectorAll('.lk');
+        for(var k=0;k<tiles.length;k++){ (function(t){
+          t.addEventListener('mousemove',function(e){ var r=t.getBoundingClientRect(), px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
+            t.style.transform='perspective(700px) rotateY('+(px*7).toFixed(2)+'deg) rotateX('+(-py*7).toFixed(2)+'deg) translateZ(3px)'; },{passive:true});
+          t.addEventListener('mouseleave',function(){ t.style.transform=''; });
+        })(tiles[k]); }
+      }
+    }
+
+    var t0=performance.now();
+    function loop(now){
+      if(!touch && cg){ cx+=(mx-cx)*0.16; cy+=(my-cy)*0.16; cg.style.transform='translate('+cx.toFixed(1)+'px,'+cy.toFixed(1)+'px)'; }
+      if(orn && !reduce){ var fy=Math.sin((now-t0)/2200)*7, px=touch?0:((mx/innerWidth)-0.5)*22, py=touch?0:((my/innerHeight)-0.5)*16;
+        orn.style.transform='translate('+px.toFixed(1)+'px,'+(py+fy).toFixed(1)+'px)'; }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    var cv=document.getElementById('fxCanvas');
+    if(cv && cv.getContext && !reduce){
+      var ctx=cv.getContext('2d'), W=1,H=1,DPR=Math.min(window.devicePixelRatio||1,2), pts=[];
+      function size(){ W=cv.clientWidth||innerWidth; H=cv.clientHeight||innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+      size(); window.addEventListener('resize',size,{passive:true});
+      var N=Math.max(16, Math.min(50, Math.floor(W*H/28000)));
+      for(var i=0;i<N;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,r:Math.random()*1.5+.6});
+      var mote='rgba(156,124,38,.5)', line='rgba(123,45,38,.18)', cc=0;
+      function refreshColors(){ var s=getComputedStyle(root); mote=(s.getPropertyValue('--moteColor').trim())||mote; line=(s.getPropertyValue('--lineColor').trim())||line; }
+      refreshColors();
+      function draw(){
+        if((cc++&31)===0) refreshColors();
+        ctx.clearRect(0,0,W,H);
+        for(var i=0;i<pts.length;i++){ var p=pts[i]; p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0)p.x+=W; else if(p.x>W)p.x-=W; if(p.y<0)p.y+=H; else if(p.y>H)p.y-=H;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fillStyle=mote; ctx.fill(); }
+        for(var a=0;a<pts.length;a++){ for(var b=a+1;b<pts.length;b++){ var dx=pts[a].x-pts[b].x, dy=pts[a].y-pts[b].y, d=dx*dx+dy*dy;
+          if(d<11000){ ctx.globalAlpha=1-d/11000; ctx.beginPath(); ctx.moveTo(pts[a].x,pts[a].y); ctx.lineTo(pts[b].x,pts[b].y); ctx.strokeStyle=line; ctx.stroke(); ctx.globalAlpha=1; } } }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+  })();
+</script>
+</body>
+</html>

@@ -108,16 +108,99 @@
   .dropcap::first-letter{ font-family:'Cinzel',serif; font-weight:900; float:left; font-size:76px; line-height:.72; padding:6px 12px 0 0; color:var(--ox); }
   .lede{ max-width:640px; margin:14px auto 0; text-align:center; font-size:17px; color:var(--ink2); font-style:italic; }
   @media(max-width:720px){ .ledger{ grid-template-columns:1fr; } .read{ border-right:none; border-bottom:1px solid rgba(25,21,16,.25); } .op{ grid-template-columns:38px 1fr; } .op .sig{ display:none; } }
+
+  /* ═══════════ THEME SYSTEM + PREMIUM ACCENTS (Almanac ⇄ Obsidian) ═══════════ */
+  :root{
+    --edge:var(--ink);
+    --tileGlow:0 0 0 rgba(0,0,0,0);
+    --tileGlowHover:0 10px 26px rgba(156,124,38,.20);
+    --btnGlow:0 6px 0 var(--gold),0 10px 26px rgba(156,124,38,.35);
+    --btnGlowHover:0 8px 0 var(--gold),0 14px 34px rgba(156,124,38,.5);
+    --headGlow:none; --ruleGlow:none;
+    --ornGlow:drop-shadow(0 0 2px rgba(156,124,38,.22));
+    --cursorGlow:radial-gradient(circle, rgba(156,124,38,.20), rgba(156,124,38,0) 70%);
+    --cursorBlend:multiply;
+    --moteColor:rgba(156,124,38,.5);
+    --lineColor:rgba(123,45,38,.18);
+  }
+  html[data-theme="obsidian"]{
+    --paper:#0a0910; --paper2:#15121f; --ink:#f0e7cf; --ink2:#a99f86;
+    --gold:#e8c45c; --gold2:#ffe38f; --ox:#ef5f4f; --faint:#5f5943;
+    --edge:rgba(232,196,92,.5);
+    --tileGlow:0 0 12px rgba(232,196,92,.08), inset 0 0 14px rgba(232,196,92,.05);
+    --tileGlowHover:0 0 24px rgba(232,196,92,.5), 0 0 46px rgba(79,214,224,.2), inset 0 0 20px rgba(232,196,92,.12);
+    --btnGlow:0 0 14px rgba(232,196,92,.4), 0 0 34px rgba(232,196,92,.22);
+    --btnGlowHover:0 0 22px rgba(232,196,92,.75), 0 0 54px rgba(79,214,224,.3);
+    --headGlow:0 0 20px rgba(232,196,92,.35);
+    --ruleGlow:0 0 12px rgba(232,196,92,.45);
+    --ornGlow:drop-shadow(0 0 7px rgba(232,196,92,.55)) drop-shadow(0 0 18px rgba(79,214,224,.25));
+    --cursorGlow:radial-gradient(circle, rgba(232,196,92,.5), rgba(79,214,224,.12) 45%, rgba(0,0,0,0) 72%);
+    --cursorBlend:screen;
+    --moteColor:rgba(232,196,92,.72);
+    --lineColor:rgba(79,214,224,.20);
+  }
+  html[data-theme="obsidian"] body{
+    background-image:
+      radial-gradient(1200px 700px at 78% -10%, rgba(232,196,92,.12), transparent 60%),
+      radial-gradient(900px 600px at -5% 108%, rgba(79,214,224,.10), transparent 55%),
+      radial-gradient(700px 520px at 50% 60%, rgba(239,95,79,.045), transparent 60%);
+  }
+  html[data-theme="obsidian"] .read,
+  html[data-theme="obsidian"] .op,
+  html[data-theme="obsidian"] .steps li{ border-color:rgba(232,196,92,.16); }
+  body{ transition:background-color .5s ease, color .5s ease; }
+
+  /* glow accents wired to theme tokens */
+  .rule2{ border-color:var(--edge); box-shadow:var(--ruleGlow); }
+  .sect > .head{ border-bottom-color:var(--edge); }
+  .colophon{ border-top-color:var(--edge); }
+  h1.title, .mast .edition{ text-shadow:var(--headGlow); }
+  .ornament{ filter:var(--ornGlow); }
+  .ornament svg{ stroke:var(--gold); }
+  .lk{ border-color:var(--edge); box-shadow:var(--tileGlow); transition:color .3s, box-shadow .35s ease, transform .18s ease, border-color .35s ease; }
+  .lk:hover{ box-shadow:var(--tileGlowHover); border-color:var(--gold2); }
+  .instr{ perspective:900px; }
+  #enterBtn{ box-shadow:var(--btnGlow) !important; }
+  #enterBtn:hover{ box-shadow:var(--btnGlowHover) !important; transform:translateY(-2px); }
+  #joinForm button:hover, .enter a:hover{ text-shadow:var(--headGlow); }
+  .enter a::after{ box-shadow:var(--ruleGlow); }
+  .steps li .rn{ text-shadow:var(--headGlow); }
+
+  /* theme toggle in the ledger bar */
+  .bar{ flex-wrap:wrap; gap:6px 14px; position:relative; z-index:2; }
+  .wrap{ position:relative; z-index:1; }
+  #themeBtn{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; background:transparent; border:1px solid var(--edge); color:var(--ink); padding:6px 12px; cursor:pointer; border-radius:2px; transition:box-shadow .3s, border-color .3s, color .3s; box-shadow:var(--tileGlow); }
+  #themeBtn:hover{ box-shadow:var(--tileGlowHover); border-color:var(--gold2); color:var(--gold2); }
+  #themeBtn .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--gold); margin-right:7px; vertical-align:middle; box-shadow:0 0 7px var(--gold); }
+
+  /* pointer-reactive light layers */
+  #fxCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:-2; pointer-events:none; }
+  #cursorGlow{ position:fixed; top:0; left:0; width:340px; height:340px; margin:-170px 0 0 -170px; border-radius:50%; background:var(--cursorGlow); mix-blend-mode:var(--cursorBlend); pointer-events:none; z-index:9998; opacity:0; transition:opacity .4s ease; will-change:transform; }
+
+  @media (prefers-reduced-motion: reduce){
+    .ornament svg{ animation:none !important; }
+    .rule2{ animation:none !important; width:100% !important; }
+    .bar .st::before{ animation:none !important; }
+    #cursorGlow{ display:none !important; }
+  }
+  @media(max-width:480px){
+    .bar{ padding:10px 15px; font-size:9.5px; }
+    #themeBtn{ font-size:9px; padding:5px 9px; letter-spacing:.14em; }
+    #cursorGlow{ width:220px; height:220px; margin:-110px 0 0 -110px; }
+  }
 </style>
 </head>
 <body>
   <div id="enterVeil" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 45%, #1a1206, #050301 70%);opacity:0;pointer-events:none;transition:opacity .55s ease;display:flex;align-items:center;justify-content:center">
     <div style="font-family:'Cinzel',serif;font-weight:900;letter-spacing:.3em;color:#c4a24e;font-size:clamp(20px,5vw,44px);text-transform:uppercase;text-shadow:0 0 30px rgba(196,162,78,.6);opacity:0;transform:scale(.9);transition:opacity .5s ease .1s, transform .8s ease" id="veilWord">⚡ SHADDAI</div>
   </div>
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <div id="cursorGlow" aria-hidden="true"></div>
   <div class="bar">
     <a class="back" href="/dashboard">← Enter the Dashboard</a>
     <span class="mid" id="edition">Vol. I · Anno MMXXVI</span>
     <span class="st" id="status">Council convened</span>
+    <button id="themeBtn" type="button" onclick="__toggleTheme()" title="Switch theme"><span class="dot"></span><span class="lbl">Almanac</span></button>
   </div>
 
   <div class="wrap">
@@ -257,6 +340,67 @@
   }
 
   loadCouncil(); loadLedger(); setInterval(loadLedger, 15000);
+</script>
+<script>
+/* ═══ Theme switcher + premium mouse/3D effects (shared with forge-about.html) ═══ */
+(function(){
+  var root=document.documentElement, KEY='shaddai-theme', THEMES=['almanac','obsidian'];
+  function applyTheme(t){ if(THEMES.indexOf(t)<0)t='almanac'; root.setAttribute('data-theme',t);
+    var b=document.getElementById('themeBtn'); if(b){ var lbl=b.querySelector('.lbl'); if(lbl)lbl.textContent=(t==='obsidian'?'Obsidian':'Almanac'); b.setAttribute('aria-label','Theme: '+t); } }
+  var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
+  applyTheme(saved||'almanac');
+  window.__toggleTheme=function(){ var cur=root.getAttribute('data-theme')||'almanac', next=cur==='almanac'?'obsidian':'almanac'; applyTheme(next); try{ localStorage.setItem(KEY,next); }catch(e){} };
+
+  var reduce=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false;
+  var touch=window.matchMedia?matchMedia('(hover: none), (pointer: coarse)').matches:false;
+  var cg=document.getElementById('cursorGlow'), orn=document.querySelector('.ornament');
+  var mx=innerWidth/2, my=innerHeight/2, cx=mx, cy=my;
+
+  if(!touch){
+    window.addEventListener('mousemove',function(e){ mx=e.clientX; my=e.clientY; if(cg&&cg.style.opacity!=='1')cg.style.opacity='1'; },{passive:true});
+    document.addEventListener('mouseleave',function(){ if(cg)cg.style.opacity='0'; });
+    if(!reduce){
+      var tiles=document.querySelectorAll('.lk');
+      for(var k=0;k<tiles.length;k++){ (function(t){
+        t.addEventListener('mousemove',function(e){ var r=t.getBoundingClientRect(), px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
+          t.style.transform='perspective(700px) rotateY('+(px*7).toFixed(2)+'deg) rotateX('+(-py*7).toFixed(2)+'deg) translateZ(3px)'; },{passive:true});
+        t.addEventListener('mouseleave',function(){ t.style.transform=''; });
+      })(tiles[k]); }
+    }
+  }
+
+  var t0=performance.now();
+  function loop(now){
+    if(!touch && cg){ cx+=(mx-cx)*0.16; cy+=(my-cy)*0.16; cg.style.transform='translate('+cx.toFixed(1)+'px,'+cy.toFixed(1)+'px)'; }
+    if(orn && !reduce){ var fy=Math.sin((now-t0)/2200)*7, px=touch?0:((mx/innerWidth)-0.5)*22, py=touch?0:((my/innerHeight)-0.5)*16;
+      orn.style.transform='translate('+px.toFixed(1)+'px,'+(py+fy).toFixed(1)+'px)'; }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  var cv=document.getElementById('fxCanvas');
+  if(cv && cv.getContext && !reduce){
+    var ctx=cv.getContext('2d'), W=1,H=1,DPR=Math.min(window.devicePixelRatio||1,2), pts=[];
+    function size(){ W=cv.clientWidth||innerWidth; H=cv.clientHeight||innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+    size(); window.addEventListener('resize',size,{passive:true});
+    var N=Math.max(16, Math.min(50, Math.floor(W*H/28000)));
+    for(var i=0;i<N;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,r:Math.random()*1.5+.6});
+    var mote='rgba(156,124,38,.5)', line='rgba(123,45,38,.18)', cc=0;
+    function refreshColors(){ var s=getComputedStyle(root); mote=(s.getPropertyValue('--moteColor').trim())||mote; line=(s.getPropertyValue('--lineColor').trim())||line; }
+    refreshColors();
+    function draw(){
+      if((cc++&31)===0) refreshColors();
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<pts.length;i++){ var p=pts[i]; p.x+=p.vx; p.y+=p.vy;
+        if(p.x<0)p.x+=W; else if(p.x>W)p.x-=W; if(p.y<0)p.y+=H; else if(p.y>H)p.y-=H;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fillStyle=mote; ctx.fill(); }
+      for(var a=0;a<pts.length;a++){ for(var b=a+1;b<pts.length;b++){ var dx=pts[a].x-pts[b].x, dy=pts[a].y-pts[b].y, d=dx*dx+dy*dy;
+        if(d<11000){ ctx.globalAlpha=1-d/11000; ctx.beginPath(); ctx.moveTo(pts[a].x,pts[a].y); ctx.lineTo(pts[b].x,pts[b].y); ctx.strokeStyle=line; ctx.stroke(); ctx.globalAlpha=1; } } }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+})();
 </script>
 </body>
 </html>
