@@ -39085,6 +39085,25 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
        PHASE 3: SENTIMENT ENGINE VIEW — NEURAL HUD
   ═══════════════════════════════════════════════════════════════════ -->
   <div id="sentimentView" class="view">
+    <!-- Beginner-friendly "Bigger/Simple" mode: zoom scales the whole panel (incl. inline styles),
+         and simple mode hides the most advanced/jargon sections. Toggled by #sentSimpleBtn, persisted. -->
+    <style>
+      #sentimentView.sent-simple { zoom: 1.28; }
+      #sentimentView.sent-simple #whaleWatchList, #sentimentView.sent-simple .sent-adv { display:none !important; }
+    </style>
+    <script>
+      window.toggleSentSimple = function(){
+        var v = document.getElementById('sentimentView'); if(!v) return;
+        var on = !v.classList.contains('sent-simple');
+        v.classList.toggle('sent-simple', on);
+        try{ localStorage.setItem('shd_sentSimple', on ? '1':'0'); }catch(e){}
+        var b = document.getElementById('sentSimpleBtn'); if(b) b.innerHTML = on ? '🔎 Normal' : '🔍 Bigger';
+      };
+      (function(){ try{ if(localStorage.getItem('shd_sentSimple')==='1'){
+        var apply=function(){ var v=document.getElementById('sentimentView'); if(v){ v.classList.add('sent-simple'); var b=document.getElementById('sentSimpleBtn'); if(b) b.innerHTML='🔎 Normal'; } };
+        if(document.readyState!=='loading') apply(); else document.addEventListener('DOMContentLoaded', apply);
+      } }catch(e){} })();
+    </script>
 
     <!-- ── NEURAL HUD HEADER ──────────────────────────────────────── -->
     <div style="position:relative;background:linear-gradient(135deg,rgba(139,92,246,0.15) 0%,rgba(0,200,255,0.06) 50%,rgba(0,229,160,0.08) 100%);border:1px solid rgba(139,92,246,0.35);border-radius:10px;padding:10px 16px;margin-bottom:14px;overflow:hidden">
@@ -39102,9 +39121,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="tickerItems" style="display:flex;gap:14px;font-size:8.5px;white-space:nowrap;overflow:hidden;max-width:450px"></span>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px;border-color:rgba(139,92,246,0.4)" onclick="renderSentimentView()">↺ SYNC</button>
-            <button style="font-size:9px;padding:5px 14px;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;border-radius:6px;cursor:pointer;letter-spacing:1px;font-family:'Share Tech Mono',monospace" onclick="sentimentAnalyzeWithCouncil()">⬡ COUNCIL</button>
+          <div style="display:flex;gap:8px">
+            <button id="sentSimpleBtn" class="btn btn-ghost" style="font-size:11px;padding:7px 14px;border-color:rgba(0,229,160,0.5);color:#00ff88;font-weight:700" onclick="toggleSentSimple()" title="Make everything bigger + simpler — great for beginners">🔍 Bigger</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:7px 14px;border-color:rgba(139,92,246,0.4)" onclick="renderSentimentView()">↺ Sync</button>
+            <button style="font-size:12px;padding:8px 18px;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;border-radius:6px;cursor:pointer;letter-spacing:1px;font-family:'Share Tech Mono',monospace" onclick="sentimentAnalyzeWithCouncil()">⬡ Council</button>
           </div>
         </div>
       </div>
