@@ -369,10 +369,18 @@ app.use(helmet({
         "https://cdnjs.cloudflare.com",
         "https://unpkg.com",
         "https://s3.tradingview.com",
-        "https://s.tradingview.com"
+        "https://s.tradingview.com",
+        "https://www.gstatic.com",   // Firebase SDK
+        "https://apis.google.com"    // Google / Firebase auth
       ],
+      // The dashboard UI is built on inline event handlers (onclick=, onchange=, …).
+      // Helmet's default is scriptSrcAttr:'none', which SILENTLY BLOCKS all of them —
+      // making buttons/chat/SEND appear "dead". Explicitly allow inline handlers so the
+      // existing UI actually works. (Consistent with scriptSrc 'unsafe-inline' above.)
+      scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: [
-        "'self'",
+        "'self'", "wss:",
+        "https://*.googleapis.com", "https://*.firebaseapp.com",
         "http://localhost:3000", "ws://localhost:3000",
         "http://localhost:8000", "http://localhost:8001", "http://localhost:8002",
         "http://localhost:8003", "http://localhost:8004", "http://localhost:8005",
@@ -398,12 +406,24 @@ app.use(helmet({
         "https://api.minimax.chat",
         "https://api.together.xyz",
         "https://api.openweathermap.org",
-        "https://newsapi.org"
+        "https://newsapi.org",
+        // Firebase auth
+        "https://www.googleapis.com",
+        "https://securetoken.googleapis.com",
+        "https://identitytoolkit.googleapis.com",
+        "https://shaddai999.firebaseapp.com",
+        // SHADDAI Clipper engine (local + Render)
+        "http://localhost:8787", "http://127.0.0.1:8787", "https://shaddai-clipper.onrender.com",
+        // Fontshare CSS
+        "https://api.fontshare.com"
       ],
       imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-      frameSrc: ["'self'", "https://calendly.com", "https://calendar.google.com", "https://s.tradingview.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
+      styleSrcElem: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://api.fontshare.com", "https://cdn.fontshare.com"],
+      frameSrc: ["'self'", "https://calendly.com", "https://calendar.google.com", "https://s.tradingview.com",
+        "https://shaddai999.firebaseapp.com", "https://accounts.google.com",
+        "http://localhost:8787", "https://shaddai-clipper.onrender.com"],
       mediaSrc: ["'self'", "blob:", "data:"],
       workerSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"]
@@ -685,7 +705,11 @@ app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
 app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
-app.use('/api/aura', require('./lib/aura').router);
+// NOTE: the full AURA HTTP surface is mounted below via ./aura-routes (line ~712).
+// The bare lib/aura.router only exposes /stats + /route and — because it is mounted
+// FIRST — used to SHADOW aura-routes' richer /stats (which adds the live tool-cache
+// block `toolCache`). That left the monitor's "LIVE API-PULL CACHE" panel permanently
+// blank. Mount aura-routes as the single source of truth for /api/aura instead.
 app.use('/api/news', require('./news-routes'));
 app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling)
 app.use('/api/x402/ledger', require('./x402-ledger-routes')); // prepaid balance ledger (pre-fund → spend down)
@@ -1485,6 +1509,8 @@ try { app.use(require('./games-routes')); console.log('[prod] games leaderboard 
 catch (e) { console.warn('[prod] games failed:', e.message); }
 try { app.use('/api/arcade', require('./arcade-routes')); console.log('[prod] agent arcade mounted'); }
 catch (e) { console.warn('[prod] arcade failed:', e.message); }
+try { app.use('/api/realms', require('./realms-routes')); console.log('[prod] shaddai realms mounted'); }
+catch (e) { console.warn('[prod] realms failed:', e.message); }
 try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
 catch (e) { console.warn('[prod] bazaar failed:', e.message); }
 try { app.use(require('./results-routes')); console.log('[prod] results inbox mounted'); }
@@ -1504,6 +1530,12 @@ catch (e) { console.warn('[prod] hire failed:', e.message); }
 try { app.use(require('./analytics-routes')); console.log('[prod] analytics mounted'); }
 catch (e) { console.warn('[prod] analytics failed:', e.message); }
 app.use('/games', express.static(path.join(__dirname, '..', 'games')));
+
+// ── Shaddai Realms — 2.5D isometric RPG (Vite/Phaser SPA), served static (MUST be before the catch-all) ──
+const REALMS_DIST = path.join(__dirname, '../public/realms');
+app.use('/realms', express.static(REALMS_DIST, { maxAge: '1d', index: 'index.html' }));
+// SPA fallback: any /realms/* sub-path that isn't a static asset resolves to index.html.
+app.get('/realms/*', (req, res) => res.sendFile(path.join(REALMS_DIST, 'index.html')));
 // Self-heal the 7 council character images on boot (forge-art is gitignored → regenerate from HF env keys)
 try { require('./lib/char-gen').ensureCouncilChars(); } catch (e) { console.warn('[prod] council self-heal skipped:', e.message); }
 
