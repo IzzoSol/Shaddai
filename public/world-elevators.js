@@ -909,6 +909,57 @@
       } catch (_e) { /* decor is optional — never block world load */ }
     });
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // PILLAR-PAVILION LOUNGE LIFTS (2026-07-05) — ONE clean lift per building.
+    // Each agent building now stands lifted on huge pillars (world-buildings.js
+    // AGENT_LIFT=46) with an open walk-through lounge under it at ground level.
+    // This lift stands to the SIDE inside that lounge (never in the doorway axis)
+    // and rides the player straight UP from the lounge onto the building's elevated
+    // floor — a walkable deck spanning the footprint — landing them at the entrance.
+    // Separate from the SKY-LIFTS above (those go all the way to the Sky Nexus).
+    // Interiors (tool/game rooms on the elevated floor) are a later pass.
+    // ═══════════════════════════════════════════════════════════════════════
+    var BUILD_LIFT = 46;                                  // MUST match world-buildings.js AGENT_LIFT
+    var LOUNGE_FP  = { NEXUS: 140, QUILL: 258, PIKADON: 145, TURTLE: 140, ZEROX: 145, ORACLE: 138 };
+    sectors.forEach(function (s) {
+      var code = String(s.code).toUpperCase();
+      if (code === 'SHADDAI') return;                     // sky temple — no ground building
+      var bx = s.pos[0], bz = s.pos[1];
+      var fp = LOUNGE_FP[code] || 140;
+      var col = (s.color != null) ? s.color : SKY_CY;
+      // Direction toward world-centre (the entrance faces this) + its tangent (the side).
+      var toC = Math.atan2(-bz, -bx);
+      var tx  = -Math.sin(toC), tz = Math.cos(toC);       // unit tangent
+      var lx  = bx + tx * (fp * 0.28);                    // pad offset to ONE SIDE inside the lounge
+      var lz  = bz + tz * (fp * 0.28);
+      var gY  = (getGroundY(lx, lz) || 0);
+      var topY = gY + BUILD_LIFT;                          // elevated building floor level
+
+      // Register the whole elevated footprint as a SOLID walkable floor (the building's
+      // upper deck) so a rider steps off the lift onto real ground at the top.
+      deckList.push({ x: bx, z: bz, y: topY, r2: (fp * 0.42) * (fp * 0.42) });
+
+      buildCustomLift({
+        code:      code + '-LOUNGE',
+        padX:      lx, padZ: lz, baseY: gY,
+        lowY:      gY + 0.08, highY: topY,
+        colorHex:  col,
+        label:     code + ' LOUNGE LIFT',
+        destLabel: code + ' — UPPER FLOOR',
+        rideLabel: 'RIDE UP INTO ' + code,
+        locked:    false, interiorOnly: false,
+        startYNorm: 0, startDir: 1,
+      });
+
+      // Small visible landing rim + a ground beacon so the lift reads as a real lift.
+      try {
+        var _lrim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.22, 8, 48), rimMat(col));
+        _lrim.rotation.x = Math.PI / 2; _lrim.position.set(lx, topY + 0.2, lz); scene.add(_lrim);
+        var _lbea = new THREE.Mesh(new THREE.SphereGeometry(0.9, 14, 10), capOrbMat(col));
+        _lbea.position.set(lx, gY + 3.0, lz); scene.add(_lbea);
+      } catch (_e) { /* decor is optional — never block world load */ }
+    });
+
     _plaza.position.set(0, PLAZA_Y, 0);
     scene.add(_plaza);
 

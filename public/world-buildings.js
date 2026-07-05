@@ -37,6 +37,13 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   const landmarks = [];
   const trimRings = [];
 
+  // ── PILLAR-PAVILION LIFT (2026-07-05) ──────────────────────────────────────
+  // Every agent building's mass is raised this many units so it stands HIGH on
+  // huge pillars, with an open walk-through themed LOUNGE underneath at ground
+  // level. Must match BUILD_LIFT in world-elevators.js (the lounge lift rides the
+  // player from the ground lounge up to the building's elevated floor at this Y).
+  const AGENT_LIFT = 46;
+
   // ── SHARED SCENE LIGHTS (one-time cost, all buildings) ───────────────────
   const _bldHemi = new THREE.HemisphereLight(0x2a3a5a, 0x050406, 0.22);
   scene.add(_bldHemi);
@@ -1660,8 +1667,11 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   // columns. The old _boldDoorway() glowing-plane + beacon was redundant with that portal
   // and clashed on the same frontDir wall, so it was removed for one cohesive doorway.
 
-  function decorate(x, z, color, displayName, footprint, topY, frontDir, faceR, buildingCode) {
-    const baseY   = gy(x, z);
+  function decorate(x, z, color, displayName, footprint, topY, frontDir, faceR, buildingCode, liftBaseY) {
+    // liftBaseY: when the building mass is raised onto pillars (PILLAR PAVILION),
+    // the podium / entrance / windows / relief must build at that SAME elevated
+    // level — otherwise they'd stay at ground while the tower floats above them.
+    const baseY   = (liftBaseY != null) ? liftBaseY : gy(x, z);
     const palette = buildPalette(color);
     const fp      = footprint || 50;
 
@@ -3655,10 +3665,247 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PILLAR PAVILION — legs down to the ground + walk-through themed LOUNGE.
+  // The building mass is lifted by AGENT_LIFT in buildProceduralBuilding(); here we
+  // build 6 fat pillars from the ground up to the building's podium underside and an
+  // open, aesthetic lounge between them (floor + rug + seating + themed props + a
+  // centre feature + an agent sign + a soft lit underside). Everything is static /
+  // instanced and frozen by the matrix-freeze pass at the end of build(); no per-
+  // frame allocation. No colliders are added (buildings are non-solid) so the whole
+  // lounge is freely walkable. Only material.opacity of a few accents is pulsed via
+  // the shared `landmarks` list (same mechanism the rest of the world uses).
+  // ═══════════════════════════════════════════════════════════════════════════
+  const LOUNGE_THEME = {
+    'markets-exchange': { title: 'ZEROX · TRADING FLOOR', prop: 'desk',     center: 'ticker' },
+    'library':          { title: 'QUILL · READING ROOM',  prop: 'shelf',    center: 'medal'  },
+    'nexus-hub':        { title: 'NEXUS · ARCADE',         prop: 'arcade',   center: 'medal'  },
+    'oracle-spire':     { title: 'ORACLE · MYSTIC HALL',   prop: 'obelisk',  center: 'orb'    },
+    'museum':           { title: 'TURTLE · GALLERY',       prop: 'pedestal', center: 'medal'  },
+    'aegis':            { title: 'PIKADON · VAULT',        prop: 'crate',    center: 'vault'  },
+  };
+
+  function _buildPillarPavilion(x, z, groundY, baseY, fp, pal, frontDir, code, color, faceR) {
+    const theme      = LOUNGE_THEME[code] || { title: code, prop: 'pedestal', center: 'medal' };
+    const undersideY = baseY - 1.2;                       // meet the elevated podium underside
+    const H          = Math.max(20, undersideY - groundY);
+    const faceAng    = Math.atan2(frontDir.x, frontDir.z);
+
+    // ── SHARED MATERIALS ─────────────────────────────────────────────────────
+    const pillarMat = new THREE.MeshStandardMaterial({
+      color: pal.body.clone().lerp(pal.structural, 0.30),
+      emissive: pal.primary.clone(), emissiveIntensity: 0.03,
+      roughness: 0.80, metalness: 0.16,
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: pal.secondary.clone().lerp(pal.structural, 0.24),
+      emissive: pal.trim.clone(), emissiveIntensity: 0.14,
+      roughness: 0.56, metalness: 0.24,
+    });
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.20),
+      transparent: true, opacity: 0.42,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+
+    // ── 1) PILLARS — 6 fat tapered columns (foot + shaft + capital + glow band) ─
+    const NP   = 6;
+    const rP   = fp * 0.40;                                // ring radius — near the footprint edge
+    const rS   = Math.max(3.4, fp * 0.052);               // fat shaft radius ("legs")
+    const angO = Math.PI / NP + faceAng;                  // offset off the entrance axis
+    const shaftIM = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 0.82, rS, H, 14), pillarMat, NP);
+    const footIM  = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.50, rS * 1.75, 2.2, 14), trimMat, NP);
+    const capIM   = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.70, rS * 1.25, 2.6, 14), trimMat, NP);
+    const bandIM  = new THREE.InstancedMesh(new THREE.TorusGeometry(rS * 1.14, rS * 0.12, 6, 20), glowMat, NP);
+    shaftIM.castShadow = footIM.castShadow = capIM.castShadow = true;
+    bandIM.renderOrder = 3;
+    {
+      const d = new THREE.Object3D();
+      for (let i = 0; i < NP; i++) {
+        const a  = angO + (i / NP) * Math.PI * 2;
+        const px = x + Math.cos(a) * rP, pz = z + Math.sin(a) * rP;
+        d.rotation.set(0, 0, 0);
+        d.position.set(px, groundY + H * 0.5, pz);   d.updateMatrix(); shaftIM.setMatrixAt(i, d.matrix);
+        d.position.set(px, groundY + 1.1, pz);       d.updateMatrix(); footIM.setMatrixAt(i, d.matrix);
+        d.position.set(px, undersideY - 1.3, pz);    d.updateMatrix(); capIM.setMatrixAt(i, d.matrix);
+        d.rotation.set(-Math.PI / 2, 0, 0);
+        d.position.set(px, groundY + H * 0.66, pz);  d.updateMatrix(); bandIM.setMatrixAt(i, d.matrix);
+      }
+      shaftIM.instanceMatrix.needsUpdate = true; scene.add(shaftIM);
+      footIM.instanceMatrix.needsUpdate  = true; scene.add(footIM);
+      capIM.instanceMatrix.needsUpdate   = true; scene.add(capIM);
+      bandIM.instanceMatrix.needsUpdate  = true; scene.add(bandIM);
+    }
+
+    // ── 2) LOUNGE FLOOR — themed slab + accent rug rings ─────────────────────
+    const rL = fp * 0.46;
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: pal.body.clone().lerp(new THREE.Color(0x0a0d14), 0.50),
+      emissive: pal.primary.clone(), emissiveIntensity: 0.05,
+      roughness: 0.70, metalness: 0.20,
+    });
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(rL, rL, 0.5, 44), floorMat);
+    floor.position.set(x, groundY + 0.05, z); floor.receiveShadow = true; scene.add(floor);
+    for (let k = 0; k < 2; k++) {
+      const rr = new THREE.Mesh(
+        new THREE.RingGeometry(rL * (0.30 + k * 0.28), rL * (0.36 + k * 0.28), 48),
+        new THREE.MeshBasicMaterial({
+          color: pal.trim, transparent: true, opacity: 0.16,
+          side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,
+        }));
+      rr.rotation.x = -Math.PI / 2; rr.position.set(x, groundY + 0.32, z); rr.renderOrder = 2; scene.add(rr);
+    }
+
+    // ── 3) LIT UNDERSIDE — soft downward emissive glow so the lounge reads as lit ─
+    const ceil = new THREE.Mesh(
+      new THREE.CircleGeometry(rL * 0.94, 40),
+      new THREE.MeshBasicMaterial({
+        color: pal.trim, transparent: true, opacity: 0.10,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      }));
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.set(x, undersideY - 0.4, z); ceil.renderOrder = 2; scene.add(ceil);
+    landmarks.push({ mat: ceil.material, baseOpacity: 0.10, phase: 1.7 });
+
+    // ── 4) PERIMETER SEATING — benches ringing the lounge ────────────────────
+    const NB = 6, rB = rL * 0.80;
+    const benchIM = new THREE.InstancedMesh(new THREE.BoxGeometry(fp * 0.11, 1.6, fp * 0.028), trimMat, NB);
+    benchIM.castShadow = true;
+    {
+      const d = new THREE.Object3D();
+      for (let i = 0; i < NB; i++) {
+        const a = faceAng + Math.PI + (i / NB) * Math.PI * 2;
+        d.rotation.set(0, a + Math.PI / 2, 0);
+        d.position.set(x + Math.cos(a) * rB, groundY + 0.8, z + Math.sin(a) * rB);
+        d.updateMatrix(); benchIM.setMatrixAt(i, d.matrix);
+      }
+      benchIM.instanceMatrix.needsUpdate = true; scene.add(benchIM);
+    }
+
+    // ── 5/6) THEME FURNITURE + CENTRE FEATURE + AGENT SIGN ───────────────────
+    _loungeProps (x, z, groundY, rL, fp, theme.prop, pal, faceAng);
+    _loungeCenter(x, z, groundY, undersideY, fp, theme.center, pal);
+    _loungeSign  (x, z, groundY, fp, frontDir, faceAng, theme.title, pal);
+  }
+
+  // Themed furniture ring — 2 InstancedMesh (body + emissive accent) per lounge.
+  function _loungeProps(x, z, groundY, rL, fp, kind, pal, faceAng) {
+    const N  = 6, rR = rL * 0.52;
+    const spec = ({
+      desk:     { w: fp * 0.10,  h: 3.2, d: fp * 0.050, topH: 0.5, top: 'screen' },
+      shelf:    { w: fp * 0.090, h: 6.5, d: fp * 0.035, topH: 0.4, top: 'band'   },
+      arcade:   { w: fp * 0.060, h: 4.6, d: fp * 0.050, topH: 1.6, top: 'screen' },
+      obelisk:  { w: fp * 0.050, h: 7.0, d: fp * 0.050, topH: 1.0, top: 'point'  },
+      pedestal: { w: fp * 0.055, h: 3.4, d: fp * 0.055, topH: 1.2, top: 'cube'   },
+      crate:    { w: fp * 0.080, h: 3.0, d: fp * 0.080, topH: 0.4, top: 'band'   },
+    })[kind] || { w: fp * 0.06, h: 3.4, d: fp * 0.06, topH: 1.0, top: 'cube' };
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: pal.body.clone().lerp(pal.structural, 0.18),
+      emissive: pal.primary.clone(), emissiveIntensity: 0.03, roughness: 0.74, metalness: 0.20,
+    });
+    const accMat = new THREE.MeshBasicMaterial({
+      color: pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.20),
+      transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const bodyIM = new THREE.InstancedMesh(new THREE.BoxGeometry(spec.w, spec.h, spec.d), bodyMat, N);
+    bodyIM.castShadow = true;
+    const accGeo = (spec.top === 'point')
+      ? new THREE.ConeGeometry(spec.w * 0.6, spec.w * 1.4, 6)
+      : (spec.top === 'cube')
+        ? new THREE.BoxGeometry(spec.w * 0.8, spec.topH, spec.d * 0.8)
+        : new THREE.BoxGeometry(spec.w * 0.9, spec.topH, spec.d * 0.55);
+    const accIM = new THREE.InstancedMesh(accGeo, accMat, N);
+    accIM.renderOrder = 3;
+    const d = new THREE.Object3D();
+    for (let i = 0; i < N; i++) {
+      const a  = faceAng + Math.PI / N + (i / N) * Math.PI * 2;
+      const px = x + Math.cos(a) * rR, pz = z + Math.sin(a) * rR;
+      d.rotation.set(0, -a, 0);
+      d.position.set(px, groundY + spec.h * 0.5, pz);  d.updateMatrix(); bodyIM.setMatrixAt(i, d.matrix);
+      const accY = groundY + spec.h + (spec.top === 'point' ? spec.w * 0.7 : spec.topH * 0.5);
+      d.position.set(px, accY, pz);                    d.updateMatrix(); accIM.setMatrixAt(i, d.matrix);
+    }
+    bodyIM.instanceMatrix.needsUpdate = true; scene.add(bodyIM);
+    accIM.instanceMatrix.needsUpdate  = true; scene.add(accIM);
+  }
+
+  // Centre feature — a low dais plus a per-theme signature (orb / vault / ticker / medallion).
+  function _loungeCenter(x, z, groundY, undersideY, fp, kind, pal) {
+    const daisMat = new THREE.MeshStandardMaterial({
+      color: pal.structural.clone().lerp(pal.secondary, 0.20),
+      emissive: pal.primary.clone(), emissiveIntensity: 0.04, roughness: 0.70, metalness: 0.20,
+    });
+    const dais = new THREE.Mesh(new THREE.CylinderGeometry(fp * 0.12, fp * 0.14, 1.2, 32), daisMat);
+    dais.position.set(x, groundY + 0.6, z); dais.receiveShadow = true; scene.add(dais);
+    const emMat = () => new THREE.MeshBasicMaterial({
+      color: pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.30),
+      transparent: true, opacity: 0.70, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    if (kind === 'orb') {
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(fp * 0.05, 20, 14), emMat());
+      orb.position.set(x, groundY + fp * 0.09, z); orb.renderOrder = 3; scene.add(orb);
+      landmarks.push({ mat: orb.material, baseOpacity: 0.70, phase: 0.4 });
+      const rune = new THREE.Mesh(new THREE.TorusGeometry(fp * 0.16, 0.4, 6, 40), emMat());
+      rune.rotation.x = -Math.PI / 2; rune.position.set(x, groundY + 0.30, z); rune.renderOrder = 2; scene.add(rune);
+    } else if (kind === 'vault') {
+      const door = new THREE.Mesh(new THREE.CylinderGeometry(fp * 0.10, fp * 0.10, 1.0, 32),
+        new THREE.MeshStandardMaterial({
+          color: pal.secondary.clone().lerp(pal.structural, 0.30),
+          emissive: pal.trim.clone(), emissiveIntensity: 0.12, roughness: 0.50, metalness: 0.50,
+        }));
+      door.position.set(x, groundY + 1.3, z); door.castShadow = true; scene.add(door);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(fp * 0.07, fp * 0.012, 8, 32), emMat());
+      ring.position.set(x, groundY + 1.85, z); ring.renderOrder = 3; scene.add(ring);
+      landmarks.push({ mat: ring.material, baseOpacity: 0.70, phase: 0.9 });
+    } else if (kind === 'ticker') {
+      const N = 8, tIM = new THREE.InstancedMesh(new THREE.BoxGeometry(fp * 0.05, fp * 0.04, 0.3), emMat(), N);
+      tIM.renderOrder = 3;
+      const d = new THREE.Object3D();
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        d.rotation.set(0, -a, 0);
+        d.position.set(x + Math.cos(a) * fp * 0.12, groundY + fp * 0.08, z + Math.sin(a) * fp * 0.12);
+        d.updateMatrix(); tIM.setMatrixAt(i, d.matrix);
+      }
+      tIM.instanceMatrix.needsUpdate = true; scene.add(tIM);
+      landmarks.push({ mat: tIM.material, baseOpacity: 0.60, phase: 0.2 });
+    } else {
+      const medal = new THREE.Mesh(new THREE.CircleGeometry(fp * 0.11, 40),
+        new THREE.MeshBasicMaterial({
+          map: _seedOfLifeTexture(), color: pal.trim.clone(),
+          transparent: true, opacity: 0.50, blending: THREE.AdditiveBlending,
+          depthWrite: false, side: THREE.DoubleSide,
+        }));
+      medal.rotation.x = -Math.PI / 2; medal.position.set(x, groundY + 0.35, z); medal.renderOrder = 2; scene.add(medal);
+      landmarks.push({ mat: medal.material, baseOpacity: 0.50, phase: 1.1 });
+    }
+  }
+
+  // Illuminated agent marquee sign hung on the lounge's entrance side (canvas text).
+  function _loungeSign(x, z, groundY, fp, frontDir, faceAng, title, pal) {
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96;
+    const g  = cv.getContext('2d');
+    const hex = hexColor(pal.trim.getHex());
+    g.fillStyle = 'rgba(6,9,20,0.92)'; g.fillRect(0, 0, 512, 96);
+    g.strokeStyle = hex; g.lineWidth = 5; g.strokeRect(4, 4, 504, 88);
+    g.fillStyle = hex; g.font = 'bold 34px Orbitron, Arial, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(title, 256, 50);
+    const tex = new THREE.CanvasTexture(cv); tex.needsUpdate = true;
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(fp * 0.34, fp * 0.064),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+    const sr = fp * 0.34;
+    sign.position.set(x + frontDir.x * sr, groundY + fp * 0.075, z + frontDir.z * sr);
+    sign.rotation.y = faceAng; sign.renderOrder = 3; scene.add(sign);
+  }
+
   // ── PROCEDURAL BUILDING PLACER ────────────────────────────────────────────
   function buildProceduralBuilding(buildingCode, fp, x, z, color, displayName) {
-    const baseY = gy(x, z) - 0.6;   // sink the whole building slightly into the ground (buried base courses hide the seam)
-    const pal   = buildPalette(color);
+    const groundY = gy(x, z) - 0.6;   // true ground foot (buried base courses hide the seam)
+    // PILLAR PAVILION: raise the whole building mass up onto pillars; a walk-through
+    // themed lounge is then built between the pillars at ground level (below).
+    const baseY   = groundY + AGENT_LIFT;
+    const pal     = buildPalette(color);
 
     const dx  = -x, dz = -z, len = Math.sqrt(dx * dx + dz * dz);
     const frontDir = (len < 0.1) ? { x: 0, z: -1 } : { x: dx / len, z: dz / len };
@@ -3677,13 +3924,14 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     // frontDir passed through so builders can align entrances/colonnades to world-centre.
     const { topY, faceR } = builder(x, z, baseY, pal, fp, buildingCode, frontDir);
 
-    // Door recess uses the actual face radius (no floating slot) and seats on the
-    // socle top course (baseY + SOCLE_RISE) so the portal, entrance columns, plaque
-    // and threshold all sit together on the foundation landing.
+    // Door recess + full decoration suite build at the ELEVATED baseY so the podium,
+    // entrance, plaque, ribs, recessed windows, mullions and relief travel up with
+    // the tower (liftBaseY = baseY) instead of staying stranded on the ground.
     _doorRecess(x, z, baseY + SOCLE_RISE, pal, fp, frontDir, faceR);
+    decorate(x, z, color, displayName, fp, topY, frontDir, faceR, buildingCode, baseY);
 
-    // Full decoration suite: apron, columns+arch, plaque, ribs, recessed windows, mullions, conduits
-    decorate(x, z, color, displayName, fp, topY, frontDir, faceR, buildingCode);
+    // Huge pillars down to the ground + an open walk-through themed lounge beneath.
+    _buildPillarPavilion(x, z, groundY, baseY, fp, pal, frontDir, buildingCode, color, faceR);
   }
 
   // ── QUILL'S STUDY — a small, cozy scholar's office beside the grand Library ─
