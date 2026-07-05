@@ -1551,6 +1551,19 @@ input[type="range"]::-moz-range-track {
   white-space: nowrap;
 }
 #popoutQuickBtns button:hover { border-color: var(--accent); color: var(--accent); }
+.popout-mini-btn {
+  background: rgba(0,0,0,.3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.popout-mini-btn:hover { border-color: var(--accent); color: var(--accent); }
 .popout-input-area {
   padding: 10px 12px;
   border-top: 1px solid var(--border);
@@ -11123,25 +11136,15 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
     </div>
   </div>
 
-  <!-- Quick Action Buttons -->
-  <div id="popoutQuickBtns">
-    <button onclick="popoutQuick('What can I do TODAY to make money this week? Be specific.')">💰 Income Now</button>
-    <button onclick="popoutQuick('Build my optimal daily schedule for today based on my goals as an artist, entrepreneur, and father.')">📅 Daily Plan</button>
-    <button onclick="popoutQuick('What is the next most important action for the Dreamers Ecosystem?')">🌀 Dreamers</button>
-    <button onclick="popoutQuick('Give me 3 content ideas for X/Twitter that could go viral given my niche and audience.')">📣 Content</button>
-    <button onclick="popoutQuick('What Web3 opportunities or alpha should I be watching right now?')">⚡ Web3 Alpha</button>
-    <button onclick="popoutQuick('I need motivation. Remind me why I am building this and what is at stake.')">🔥 Fuel Me</button>
-  </div>
-  <!-- Command Buttons (from dock) -->
-  <div id="popoutCmdBar" style="display:flex;gap:4px;padding:6px 10px 0;flex-wrap:wrap;border-top:1px solid rgba(0,229,160,0.1)">
-    <button onclick="cmdWork()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);color:var(--accent);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Work</button>
-    <button onclick="cmdLearn()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);color:var(--accent);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Learn</button>
-    <button onclick="cmdBreak()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);color:var(--accent);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Break</button>
-    <button onclick="cmdAnalyze()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--secondary);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Analyze</button>
-    <button onclick="cmdResearch()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--secondary);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Research</button>
-    <button onclick="cmdBrainstorm()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--secondary);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Brainstorm</button>
-    <button onclick="cmdAudit()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--secondary);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Audit</button>
-    <button onclick="cmdReport()" style="flex:1;min-width:60px;padding:5px 4px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--secondary);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Report</button>
+  <!-- Quick Action Buttons (lean, high-value) + collapse toggle -->
+  <div id="popoutQuickRow" style="display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:rgba(0,0,0,.15)">
+    <div id="popoutQuickBtns" style="border-bottom:none;background:transparent;flex:1">
+      <button onclick="popoutQuick('What can I do TODAY to make money this week? Be specific, list concrete steps.')">💰 Income Now</button>
+      <button onclick="popoutQuick('Build my optimal daily schedule for today based on my goals as an artist, entrepreneur, and father.')">📅 Daily Plan</button>
+      <button onclick="popoutImagePrompt()">🖼 Image</button>
+      <button onclick="popoutPricePrompt()">💹 Price</button>
+    </div>
+    <button id="popoutQuickToggle" onclick="togglePopoutQuick()" title="Hide quick actions" style="background:transparent;border:none;border-left:1px solid var(--border);color:var(--text-muted);width:26px;cursor:pointer;font-size:11px;flex-shrink:0">⋯</button>
   </div>
 
   <!-- Messages -->
@@ -11154,7 +11157,9 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
   <div class="popout-input-area">
     <textarea id="popoutIn" placeholder="Ask Shaddai anything — income ideas, strategy, daily plan, Dreamers, spiritual guidance..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPopoutMsg();}"></textarea>
     <div class="popout-input-row">
-      <span class="popout-model-tag" id="popoutModelTag">llama3.2:3b</span>
+      <span class="popout-model-tag" id="popoutModelTag">llama-3.3-70b ●</span>
+      <button class="popout-mini-btn" onclick="popoutScreenshot()" title="Screenshot this screen → Gallery">📸</button>
+      <button class="popout-mini-btn" id="popoutRecBtn" onclick="popoutToggleRecord()" title="Record screen → Gallery">🎥</button>
       <span style="flex:1"></span>
       <span style="font-size:9px;color:var(--text-muted)">Enter to send · Shift+Enter for newline</span>
       <button class="popout-send" id="popoutSendBtn" onclick="sendPopoutMsg()">SEND ▶</button>
@@ -16612,7 +16617,11 @@ function showAgentFullDetail(agentName) {
   const m = DOSSIER_META[agentName] || { color:'#00ff88', rank:'Agent', emoji:'🤖', port:8000, domain:'General' };
   const c = m.color;
   const mem = a.mem || [];
-  const skills = (_skillsLibrary || []).filter(s => s.agent === agentName);
+  // Honest count: the REAL, callable tools this agent has in the tool registry
+  // (not the whole Obsidian skill library, which inflated the number into the thousands).
+  const _TREG = (typeof _AGENT_TOOLS_REGISTRY !== 'undefined') ? _AGENT_TOOLS_REGISTRY : {};
+  const realTools = Object.keys(_TREG).filter(k => (_TREG[k].agents || []).includes(agentName));
+  const skills = realTools.map(name => ({ name }));
   const apiConnections = _agentAPIConnections?.[agentName.toLowerCase()] || [];
   const completedTasks = (AgentOrchestrator?.completedTasks || []).filter(t => t.agentName === agentName);
   const imgUrl = _agentImageCache[agentName];
@@ -16629,7 +16638,7 @@ function showAgentFullDetail(agentName) {
         </div>
         <div style="font-size:9px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px">${m.domain}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <div class="stat-box" style="border-color:${c}33"><div class="stat-label">Skills</div><div class="stat-value" style="color:${c}">${skills.length}</div></div>
+          <div class="stat-box" style="border-color:${c}33"><div class="stat-label">Real Tools</div><div class="stat-value" style="color:${c}">${skills.length}</div></div>
           <div class="stat-box" style="border-color:${c}33"><div class="stat-label">Memory</div><div class="stat-value">${mem.length}</div></div>
           <div class="stat-box" style="border-color:${c}33"><div class="stat-label">APIs</div><div class="stat-value">${apiConnections.length}</div></div>
           <div class="stat-box" style="border-color:${c}33"><div class="stat-label">Tasks Done</div><div class="stat-value good">${completedTasks.length}</div></div>
@@ -16653,9 +16662,9 @@ function showAgentFullDetail(agentName) {
     </div>
     <!-- Skills section -->
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-      <div style="font-size:9px;font-weight:700;color:${c};margin-bottom:6px;letter-spacing:0.08em">SKILLS (${skills.length})</div>
+      <div style="font-size:9px;font-weight:700;color:${c};margin-bottom:6px;letter-spacing:0.08em">REAL TOOLS (${skills.length}) <span style="color:var(--text-muted);font-weight:400">· 200+ across the platform</span></div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;max-height:80px;overflow-y:auto">
-        ${skills.length ? skills.slice(0,20).map(s => `<span onclick="openSkillDetail(${JSON.stringify(s.name).replace(/"/g,'&quot;')})" style="font-size:8px;padding:2px 7px;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text-secondary);border-radius:10px;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='${c}'" onmouseout="this.style.borderColor='var(--border)'">${escH(s.name)}</span>`).join('') : '<div style="font-size:8px;color:var(--text-muted)">Load Skills Library first</div>'}
+        ${skills.length ? skills.slice(0,20).map(s => `<span style="font-size:8px;padding:2px 7px;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text-secondary);border-radius:10px">${escH(s.name)}</span>`).join('') : '<div style="font-size:8px;color:var(--text-muted)">No tools assigned</div>'}
         ${skills.length > 20 ? `<span style="font-size:8px;color:var(--text-muted)">+${skills.length-20} more</span>` : ''}
       </div>
     </div>
@@ -19050,54 +19059,76 @@ We thrive together or not at all.`;
 // Independent popout conversation history
 const popoutHistory = [];
 
+function _prettyModel(m){
+  if(!m) return 'agent';
+  m = String(m);
+  if(/groq/i.test(m)) return 'llama-3.3-70b';
+  if(/gemini/i.test(m)) return 'gemini-2.0-flash';
+  return m.replace(/^ollama:/i,'');
+}
+
 async function sendPopoutMsg() {
   const inp = document.getElementById('popoutIn');
   const txt = inp.value.trim();
   if (!txt) return;
   inp.value = '';
 
+  // ── Inline superpowers: image generation & live price, one step ──
+  if (/^\s*\/?(img|image)\b/i.test(txt) ||
+      /\b(generate|create|make|draw|render|design)\b[^.?!]*\b(image|picture|art|logo|photo|illustration|wallpaper|banner)\b/i.test(txt)) {
+    return _popoutRenderImage(txt.replace(/^\s*\/?(img|image)\s*[:\-]?\s*/i,'').trim() || txt);
+  }
+  const priceMatch = txt.match(/(?:price|worth|value|cost)\s+(?:of\s+)?([a-z][a-z0-9 .-]{1,24})/i)
+                  || txt.match(/^\/?price\s+([a-z0-9 .-]{2,24})/i)
+                  || txt.match(/^([a-z]{2,12})\s+price\b/i);
+  if (/\bprice\b|\bworth\b|how much is\b/i.test(txt) && priceMatch) {
+    return _popoutRenderPrice((priceMatch[1] || 'bitcoin').trim());
+  }
+
   const sendBtn = document.getElementById('popoutSendBtn');
   const msgs = document.getElementById('popoutMsgs');
   const modelTag = document.getElementById('popoutModelTag');
   if (sendBtn) sendBtn.disabled = true;
+
+  // Build history BEFORE pushing the current turn (avoids duplicating it with `message`)
+  const sel = document.getElementById('popoutAgentSelect');
+  const agentName = (sel && sel.value) || S.agent || 'SHADDAI';
+  const history = popoutHistory.slice(-8).map(m => ({ role: m.role, content: m.content }));
 
   addPopoutMsg('user', txt);
   popoutHistory.push({ role: 'user', content: txt });
 
   const typingId = 'pt_' + Date.now();
   if (msgs) {
-    msgs.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="sys-msg" style="color:var(--accent)">SHADDAI is thinking...</div>`);
+    msgs.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="sys-msg" style="color:var(--accent)">${escH(agentName)} is thinking...</div>`);
     msgs.scrollTop = msgs.scrollHeight;
   }
 
-  const now = new Date();
-  const cosmicCtx = `Current time: ${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})} at ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-
-  const agent = S.agents?.find(a => a.name === 'SHADDAI');
-  const model = agent?.model || 'llama3.2:3b';
-  const sysContent = (typeof SHADDAI_PRIME !== 'undefined' ? SHADDAI_PRIME : '') + '\n\n' + cosmicCtx;
-  const messages = [{ role: 'system', content: sysContent }, ...popoutHistory.slice(-8)];
-
   let response = null;
-  let usedModel = model;
+  let usedModel = null;
 
-  // Try Ollama first
+  // PRIMARY: real agentic backend — routes Ollama → Groq (llama-3.3-70b) with live tools
   try {
-    const res = await fetch('/api/ollama', {
+    const res = await fetch('/api/agents/route', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages, stream: false }),
-      signal: AbortSignal.timeout(120000)
+      body: JSON.stringify({ message: txt, agentName, history }),
+      signal: AbortSignal.timeout(30000)
     });
     const data = await res.json();
     if (res.ok && !data.error) {
-      response = data.message?.content || data.response || null;
+      response = data.response || null;
+      usedModel = data.model || 'agent';
     }
   } catch (_) {}
 
-  // Fallback: Groq API (free, fast, cloud)
+  // Fallback: Groq direct
   if (!response) {
     try {
+      const now = new Date();
+      const sysContent = (typeof SHADDAI_PRIME !== 'undefined' ? SHADDAI_PRIME : 'You are SHADDAI, a decisive AI orchestrator.') +
+        `\n\nCurrent time: ${now.toLocaleString()}`;
+      const messages = [{ role: 'system', content: sysContent }, ...history, { role: 'user', content: txt }];
       const res = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -19112,57 +19143,178 @@ async function sendPopoutMsg() {
     } catch (_) {}
   }
 
-  // Fallback: Gemini API (free tier)
+  // Last resort
   if (!response) {
-    try {
-      const gemKey = _apiAuthValues?.['gemini_key'] || localStorage.getItem('shaddai_gemini_key') || '';
-      if (!gemKey) throw new Error('No Gemini API key configured');
-      const res = await fetch('/api/gemini-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, apiKey: gemKey }),
-        signal: AbortSignal.timeout(30000)
-      });
-      const data = await res.json();
-      if (res.ok && !data.error) {
-        response = data.choices?.[0]?.message?.content || null;
-        if (response) usedModel = 'gemini-2.0-flash';
-      }
-    } catch (_) {}
-  }
-
-  // Fallback: SHADDAI Agent Server
-  if (!response) {
-    try {
-      const res = await fetch('/api/shaddai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: txt, model: 'llama3.2:3b' }),
-        signal: AbortSignal.timeout(60000)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        response = data.response || data.output || null;
-        if (response) usedModel = 'shaddai-agent';
-      }
-    } catch (_) {}
-  }
-
-  // Last resort: offline fallback
-  if (!response) {
-    response = `All AI backends are offline. Check Ollama, API keys, and server status.`;
+    response = `All AI backends are offline. Confirm the server is running and a Groq key is set.`;
     usedModel = 'offline';
   }
 
   document.getElementById(typingId)?.remove();
-
-  if (modelTag) modelTag.textContent = usedModel === model ? model + ' ●' : usedModel + ' (fallback)';
+  if (modelTag) modelTag.textContent = _prettyModel(usedModel) + ' ●';
 
   addPopoutMsg('shaddai', response);
   popoutHistory.push({ role: 'assistant', content: response });
 
   if (sendBtn) sendBtn.disabled = false;
   if (msgs) msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── Raw-HTML SHADDAI bubble (for inline images / price cards) ──
+function addPopoutHTML(html) {
+  const msgs = document.getElementById('popoutMsgs');
+  if (!msgs) return;
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  msgs.insertAdjacentHTML('beforeend',
+    `<div class="shaddai-msg"><div style="font-size:8px;color:var(--accent);font-weight:700;margin-bottom:4px;letter-spacing:1px">SHADDAI · ${time}</div>${html}</div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── Inline image generation → /api/image/generate → render + save-to-gallery ──
+async function _popoutRenderImage(promptText) {
+  const msgs = document.getElementById('popoutMsgs');
+  addPopoutMsg('user', '🖼 ' + promptText);
+  const id = 'pimg_' + Date.now();
+  if (msgs) { msgs.insertAdjacentHTML('beforeend', `<div id="${id}" class="sys-msg" style="color:var(--accent)">Generating image…</div>`); msgs.scrollTop = msgs.scrollHeight; }
+  try {
+    const r = await fetch('/api/image/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText, model: 'huggingface', width: 768, height: 768 }),
+      signal: AbortSignal.timeout(90000)
+    });
+    const d = await r.json();
+    document.getElementById(id)?.remove();
+    const url = d.url || d.image_url;
+    if (!url) throw new Error(d.error || 'no image returned');
+    const safe = String(url).replace(/"/g, '&quot;');
+    const label = promptText.replace(/[<>'"]/g, '').slice(0, 80);
+    addPopoutHTML(
+      `<img src="${safe}" alt="generated" style="max-width:100%;border-radius:8px;border:1px solid rgba(0,229,160,.35);display:block">` +
+      `<div style="margin-top:6px"><button class="popout-mini-btn" data-u="${safe}" data-l="${label.replace(/"/g,'&quot;')}" onclick="ovSaveImageToGallery(this.getAttribute('data-u'),this.getAttribute('data-l'))">💾 Save to Gallery</button></div>`
+    );
+  } catch (e) {
+    document.getElementById(id)?.remove();
+    addPopoutMsg('shaddai', '⚠ Image generation failed: ' + (e.message || e));
+  }
+}
+
+// ── Inline live crypto price → /api/coingecko/price/:coin ──
+async function _popoutRenderPrice(coin) {
+  const map = { btc:'bitcoin', eth:'ethereum', sol:'solana', doge:'dogecoin', ada:'cardano', xrp:'ripple', bnb:'binancecoin', matic:'matic-network', link:'chainlink', dot:'polkadot', avax:'avalanche-2', ltc:'litecoin' };
+  let c = coin.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+  c = map[c] || c;
+  const msgs = document.getElementById('popoutMsgs');
+  addPopoutMsg('user', '💹 price of ' + coin);
+  const id = 'pprc_' + Date.now();
+  if (msgs) { msgs.insertAdjacentHTML('beforeend', `<div id="${id}" class="sys-msg" style="color:var(--accent)">Fetching live price…</div>`); msgs.scrollTop = msgs.scrollHeight; }
+  try {
+    const r = await fetch('/api/coingecko/price/' + encodeURIComponent(c), { signal: AbortSignal.timeout(15000) });
+    const d = await r.json();
+    document.getElementById(id)?.remove();
+    const o = d[c] || (d && typeof d === 'object' ? d[Object.keys(d)[0]] : null);
+    if (!o || o.usd == null) throw new Error('no live data for "' + c + '" — try the full name (e.g. "bitcoin")');
+    const mc = o.usd_market_cap ? ` <span style="color:var(--text-muted)">· MC $${Number(o.usd_market_cap).toLocaleString()}</span>` : '';
+    addPopoutHTML(`<b style="color:var(--accent)">${escH(c.toUpperCase())}</b> live price: <b>$${Number(o.usd).toLocaleString()}</b>${mc} <span style="font-size:8px;color:var(--text-muted)">via CoinGecko</span>`);
+  } catch (e) {
+    document.getElementById(id)?.remove();
+    addPopoutMsg('shaddai', '⚠ Could not fetch price: ' + (e.message || e));
+  }
+}
+
+function popoutImagePrompt() {
+  const p = prompt('Describe the image to generate:');
+  if (p && p.trim()) _popoutRenderImage(p.trim());
+}
+function popoutPricePrompt() {
+  const c = prompt('Which coin? (e.g. bitcoin, ethereum, solana)', 'bitcoin');
+  if (c && c.trim()) _popoutRenderPrice(c.trim());
+}
+
+// ── Hide/show the quick-action bar (persisted) ──
+function togglePopoutQuick() {
+  const b = document.getElementById('popoutQuickBtns');
+  const t = document.getElementById('popoutQuickToggle');
+  if (!b) return;
+  const hidden = b.style.display === 'none';
+  if (hidden) { b.style.display = 'flex'; if (t) { t.textContent = '⋯'; t.title = 'Hide quick actions'; } try { localStorage.removeItem('shaddai_popoutQuickHidden'); } catch(_){} }
+  else { b.style.display = 'none'; if (t) { t.textContent = '▸'; t.title = 'Show quick actions'; } try { localStorage.setItem('shaddai_popoutQuickHidden','1'); } catch(_){} }
+}
+function _applyPopoutQuickState() {
+  try {
+    if (localStorage.getItem('shaddai_popoutQuickHidden') === '1') {
+      const b = document.getElementById('popoutQuickBtns');
+      const t = document.getElementById('popoutQuickToggle');
+      if (b) b.style.display = 'none';
+      if (t) { t.textContent = '▸'; t.title = 'Show quick actions'; }
+    }
+  } catch(_){}
+}
+
+// ── Screenshot + screen-recording → in-app Gallery (S.media) ──
+function _saveMediaLocal(type, content, label, alsoDownload) {
+  let saved = false;
+  try {
+    if (!S.media) S.media = [];
+    S.media.unshift({ id: Date.now(), type: type, content: content, prompt: label || '', time: new Date().toISOString() });
+    if (typeof save === 'function') save();
+    if (typeof renderMedia === 'function') renderMedia();
+    saved = true;
+  } catch (e) { saved = false; }
+  if (alsoDownload || !saved) {
+    try {
+      const a = document.createElement('a');
+      a.href = content;
+      a.download = (label || 'capture').replace(/[^\w]+/g, '_').slice(0, 40) + (type === 'video' ? '.webm' : '.png');
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (_) {}
+  }
+  return saved;
+}
+
+async function popoutScreenshot() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { notify('Screen capture not supported in this browser'); return; }
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    const video = document.createElement('video');
+    video.srcObject = stream; video.muted = true;
+    await video.play();
+    await new Promise(r => setTimeout(r, 300));
+    const cv = document.createElement('canvas');
+    cv.width = video.videoWidth || 1280; cv.height = video.videoHeight || 720;
+    cv.getContext('2d').drawImage(video, 0, 0, cv.width, cv.height);
+    stream.getTracks().forEach(t => t.stop());
+    const dataUrl = cv.toDataURL('image/png');
+    _saveMediaLocal('image', dataUrl, 'Screenshot ' + new Date().toLocaleString());
+    notify('📸 Screenshot saved to Gallery');
+  } catch (e) { notify('Screenshot cancelled'); }
+}
+
+var _popoutRec = null, _popoutRecChunks = [];
+async function popoutToggleRecord() {
+  const btn = document.getElementById('popoutRecBtn');
+  if (_popoutRec && _popoutRec.state === 'recording') { _popoutRec.stop(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { notify('Screen recording not supported in this browser'); return; }
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    _popoutRecChunks = [];
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    const rec = new MediaRecorder(stream, { mimeType: mime });
+    _popoutRec = rec;
+    rec.ondataavailable = e => { if (e.data && e.data.size) _popoutRecChunks.push(e.data); };
+    rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (btn) { btn.textContent = '🎥'; btn.style.color = ''; btn.title = 'Record screen → Gallery'; }
+      const blob = new Blob(_popoutRecChunks, { type: 'video/webm' });
+      const reader = new FileReader();
+      reader.onload = () => { _saveMediaLocal('video', reader.result, 'Screen recording ' + new Date().toLocaleString(), true); notify('🎥 Recording saved to Gallery + downloaded'); };
+      reader.readAsDataURL(blob);
+      _popoutRec = null;
+    };
+    // auto-stop if the user ends sharing from the browser bar
+    stream.getVideoTracks()[0].addEventListener('ended', () => { if (rec.state === 'recording') rec.stop(); });
+    rec.start();
+    if (btn) { btn.textContent = '⏹'; btn.style.color = 'var(--danger)'; btn.title = 'Stop recording'; }
+    notify('🎥 Recording… click ⏹ to stop');
+  } catch (e) { notify('Recording cancelled'); }
 }
 
 function addPopoutMsg(type, text) {
@@ -22142,7 +22294,8 @@ function openPopout() {
   const anyAI = S.ollamaOn || true; // Gemini is always available as fallback
   if (dot) dot.style.background = anyAI ? 'var(--accent)' : '#ff4070';
   const tag = document.getElementById('popoutModelTag');
-  if (tag) tag.textContent = S.ollamaOn ? 'llama3.2:3b ●' : 'gemini-2.0-flash ●';
+  if (tag) tag.textContent = S.ollamaOn ? 'ollama ●' : 'llama-3.3-70b ●';
+  _applyPopoutQuickState();
   // Update agent select — only show main agents, not subagents
   const sel = document.getElementById('popoutAgentSelect');
   if (sel && S.agents) {
@@ -23887,8 +24040,10 @@ function renderMedia() {
         <span class="media-item-type ${item.type === '3d' ? 't3d' : item.type}">${item.type.toUpperCase()}</span>
         <span class="media-item-meta">${new Date(item.time).toLocaleDateString()}</span>
       </div>
-      ${((item.type === 'image' || item.type === 'pixel') && /^https?:\/\//.test(item.content))
+      ${((item.type === 'image' || item.type === 'pixel') && /^(https?:\/\/|data:image)/.test(item.content))
         ? `<img src="${esc(item.content)}" alt="${esc(item.prompt||'')}" style="width:100%;border-radius:6px;border:1px solid var(--border);display:block;margin:4px 0" loading="lazy" />${item.prompt ? `<div class="media-item-content" style="font-size:9px">${esc(item.prompt)}</div>` : ''}`
+        : ((item.type === 'video' || item.type === 'clip') && /^(https?:\/\/|data:video|blob:)/.test(item.content))
+        ? `<video src="${esc(item.content)}" controls style="width:100%;border-radius:6px;border:1px solid var(--border);display:block;margin:4px 0"></video>${item.prompt ? `<div class="media-item-content" style="font-size:9px">${esc(item.prompt)}</div>` : ''}`
         : `<div class="media-item-content">${esc(item.content.substring(0, 300))}${item.content.length > 300 ? '...' : ''}</div>`}
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="copyMediaItem(${item.id})">Copy</button>
@@ -45824,7 +45979,7 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
       <div class="sbo-inner">
         <div class="sbo-logo-wrap">
           <div class="sbo-logo sbo-glitch" id="sboLogo">SHADDAI</div>
-          <div class="sbo-version">v80 &nbsp;·&nbsp; SOVEREIGN TERMINAL &nbsp;·&nbsp; 7 AGENTS</div>
+          <div class="sbo-version">v94 &nbsp;·&nbsp; SOVEREIGN TERMINAL &nbsp;·&nbsp; 7 AGENTS</div>
           <div class="sbo-hr"></div>
         </div>
         <div class="sbo-panels">

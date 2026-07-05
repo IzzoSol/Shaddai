@@ -2846,13 +2846,13 @@ const AGENTS = {
 (function(){
   const FLAKY = ['get_color_palette','get_country_info','get_funding_rates','weather_live','get_crypto_news','get_ohlcv','get_protocol_revenue','grammar_check'];
   const EXTRA = {
-    ORACLE: ['semantic_scholar_search','wayback_snapshot','open_library_search','hn_algolia_search','coingecko_trending','rss_fetch'],
-    ZEROX:  ['defillama_tvl','defillama_yields','coingecko_trending','jupiter_token_price','svg_chart'],
-    NEXUS:  ['npm_package_info','bundlephobia_size','cve_lookup','semantic_scholar_search','svg_chart'],
-    TURTLE: ['svg_chart','color_palette','font_pairing','tweet_thread'],
-    QUILL:  ['readability_score','tweet_thread','rss_fetch','open_library_search','font_pairing'],
-    PIKADON:['cve_lookup','wayback_snapshot'],
-    SHADDAI:['semantic_scholar_search','npm_package_info','defillama_tvl','svg_chart']
+    ORACLE: ['semantic_scholar_search','wayback_snapshot','open_library_search','hn_algolia_search','coingecko_trending','rss_fetch','get_iss_location','get_space_launches','get_public_holidays','get_trivia_questions','gutenberg_search','random_fact','get_horoscope'],
+    ZEROX:  ['defillama_tvl','defillama_yields','coingecko_trending','jupiter_token_price','svg_chart','get_btc_fees','convert_currency'],
+    NEXUS:  ['npm_package_info','bundlephobia_size','cve_lookup','semantic_scholar_search','svg_chart','github_user_info','http_headers','json_to_csv','csv_to_json','generate_password'],
+    TURTLE: ['svg_chart','color_palette','font_pairing','tweet_thread','color_contrast_check','word_synonyms'],
+    QUILL:  ['readability_score','tweet_thread','rss_fetch','open_library_search','font_pairing','word_synonyms','slugify','random_fact','gutenberg_search','json_to_csv','csv_to_json'],
+    PIKADON:['cve_lookup','wayback_snapshot','dns_lookup','rdap_domain','http_headers','generate_password','color_contrast_check'],
+    SHADDAI:['semantic_scholar_search','npm_package_info','defillama_tvl','svg_chart','get_iss_location','convert_currency','github_user_info']
   };
   for (const [nm, a] of Object.entries(AGENTS)) {
     if (Array.isArray(a.tools)) {

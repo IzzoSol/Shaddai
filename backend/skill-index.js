@@ -1517,6 +1517,84 @@ const RECIPES = {
       { tool: 'get_hackernews',    params: { limit: 3 } }
     ],
     synthesize: 'SHADDAI daily intelligence brief. What happened on this date in history (pick the 2 most fascinating)? A relevant technology quote for today. Current moon phase and next major phase. Top 3 HN stories the tech world is discussing. Close with a one-line SHADDAI Empire directive for the day.'
+  },
+
+  // ── NEW v2 tool recipes — single-tool wrappers so the new real tools appear
+  //    as equippable "runnable tools" in the Forge (kind:'tool') and run deterministically.
+  'iss-tracker': {
+    agent: 'ORACLE', description: 'Live position of the International Space Station (lat/long/altitude/velocity).',
+    steps: [{ tool: 'get_iss_location', params: {} }],
+    synthesize: 'Report the ISS current position: latitude, longitude, altitude and speed, and roughly where over Earth it is right now.'
+  },
+  'upcoming-launches': {
+    agent: 'ORACLE', description: 'Upcoming rocket launches worldwide.',
+    steps: [{ tool: 'get_space_launches', params: { limit: 5 } }],
+    synthesize: 'List the next 5 upcoming rocket launches: mission name, provider, and launch window.'
+  },
+  'holiday-lookup': {
+    agent: 'ORACLE', description: 'Public holidays for a country and year.', params: ['country', 'year'],
+    steps: [{ tool: 'get_public_holidays', params: { country: '{{input.country}}', year: '{{input.year}}' } }],
+    synthesize: 'List the public holidays with their dates for the requested country/year.'
+  },
+  'trivia-pack': {
+    agent: 'QUILL', description: 'Fresh trivia questions with answers.',
+    steps: [{ tool: 'get_trivia_questions', params: { amount: 5 } }],
+    synthesize: 'Present 5 trivia questions with their answers, grouped by category.'
+  },
+  'free-book-finder': {
+    agent: 'ORACLE', description: 'Find free public-domain books (Project Gutenberg).', params: ['query'],
+    steps: [{ tool: 'gutenberg_search', params: { query: '{{input.query}}' } }],
+    synthesize: 'List matching public-domain books: title, author, download count, and a link.'
+  },
+  'daily-horoscope': {
+    agent: 'ORACLE', description: 'Daily horoscope for a zodiac sign.', params: ['sign'],
+    steps: [{ tool: 'get_horoscope', params: { sign: '{{input.sign}}' } }],
+    synthesize: 'Deliver the daily horoscope for the requested sign in an engaging, encouraging tone.'
+  },
+  'btc-fee-check': {
+    agent: 'ZEROX', description: 'Current Bitcoin network fees by confirmation speed.',
+    steps: [{ tool: 'get_btc_fees', params: {} }],
+    synthesize: 'Report current BTC fees (sat/vB) for fastest / half-hour / hour / economy and advise which to use now.'
+  },
+  'currency-convert': {
+    agent: 'ZEROX', description: 'Convert an amount between two fiat currencies at live rates.', params: ['amount', 'from', 'to'],
+    steps: [{ tool: 'convert_currency', params: { amount: '{{input.amount}}', from: '{{input.from}}', to: '{{input.to}}' } }],
+    synthesize: 'State the converted amount, the live rate used, and the timestamp.'
+  },
+  'github-profile': {
+    agent: 'NEXUS', description: 'Public GitHub user profile summary.', params: ['username'],
+    steps: [{ tool: 'github_user_info', params: { username: '{{input.username}}' } }],
+    synthesize: 'Summarize the GitHub user: name, bio, public repos, followers, and account age.'
+  },
+  'http-header-inspect': {
+    agent: 'NEXUS', description: 'Inspect HTTP status + response headers for a URL.', params: ['url'],
+    steps: [{ tool: 'http_headers', params: { url: '{{input.url}}' } }],
+    synthesize: 'Report the HTTP status, server, content-type, and flag any missing security headers (HSTS, CSP, X-Frame-Options).'
+  },
+  'synonym-finder': {
+    agent: 'QUILL', description: 'Find synonyms for a word.', params: ['word'],
+    steps: [{ tool: 'word_synonyms', params: { word: '{{input.word}}' } }],
+    synthesize: 'List the best synonyms for the word and suggest which fit a formal vs casual tone.'
+  },
+  'dns-lookup': {
+    agent: 'PIKADON', description: 'Resolve DNS records for a domain (DNS-over-HTTPS).', params: ['name', 'type'],
+    steps: [{ tool: 'dns_lookup', params: { name: '{{input.name}}', type: '{{input.type}}' } }],
+    synthesize: 'Report the resolved DNS records for the domain and note anything unusual.'
+  },
+  'domain-whois': {
+    agent: 'PIKADON', description: 'WHOIS/RDAP registration data for a domain.', params: ['domain'],
+    steps: [{ tool: 'rdap_domain', params: { domain: '{{input.domain}}' } }],
+    synthesize: 'Report the domain registrar, status, registration/expiry dates, and nameservers.'
+  },
+  'strong-password': {
+    agent: 'PIKADON', description: 'Generate a cryptographically-strong password.', params: ['length'],
+    steps: [{ tool: 'generate_password', params: { length: '{{input.length}}' } }],
+    synthesize: 'Provide the generated password and its estimated entropy in bits.'
+  },
+  'contrast-check': {
+    agent: 'TURTLE', description: 'WCAG color contrast ratio between two colors.', params: ['fg', 'bg'],
+    steps: [{ tool: 'color_contrast_check', params: { fg: '{{input.fg}}', bg: '{{input.bg}}' } }],
+    synthesize: 'Report the contrast ratio and whether it passes WCAG AA/AAA for normal and large text.'
   }
 
 };
