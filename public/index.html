@@ -78,7 +78,21 @@
   }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
   // Sign-in (Google popup) / sign-out helpers.
   window.shdSignIn=async function(){ try{ var p=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(p); if(typeof notify==='function')notify('Signed in'); }catch(e){ if(typeof notify==='function')notify('Sign-in: '+(e.code||e.message)); } };
-  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); }catch(e){} };
+  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.removeItem('shd_mode'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
+})();
+
+// ── GUEST MODE: no memory persistence ────────────────────────────────────────
+// A guest (skipped sign-in) gets a fully working dashboard, but their app data is
+// written to sessionStorage instead of localStorage — so it is wiped when the tab
+// closes and never persists across sessions. Auth/session keys are never redirected.
+(function(){
+  var AUTH=/^(shd_auth|shd_session|firebase|stripe|x402|shd_user|shd_mode)/i;
+  var isGuest=function(){ try{ return sessionStorage.getItem('shd_guest')==='1'; }catch(e){ return false; } };
+  window.SHD_IS_GUEST=isGuest;
+  var _set=Storage.prototype.setItem, _get=Storage.prototype.getItem, _rem=Storage.prototype.removeItem;
+  Storage.prototype.setItem=function(k,v){ if(this===window.localStorage && isGuest() && !AUTH.test(k)){ try{return _set.call(window.sessionStorage,k,v);}catch(e){} } return _set.call(this,k,v); };
+  Storage.prototype.getItem=function(k){ if(this===window.localStorage && isGuest() && !AUTH.test(k)){ var s=_get.call(window.sessionStorage,k); if(s!==null) return s; } return _get.call(this,k); };
+  Storage.prototype.removeItem=function(k){ if(this===window.localStorage && isGuest() && !AUTH.test(k)){ try{_rem.call(window.sessionStorage,k);}catch(e){} } return _rem.call(this,k); };
 })();
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -4960,6 +4974,128 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
         </div>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MARKETS "TRADING ROOM" — immersive station layout (namespaced MK)
+         Re-houses the EXISTING Chart / Council / DEX / Wallet DOM into
+         focus-one-at-a-time stations with lazy-init. Classic toggle keeps
+         the original flat stacked layout. No widget logic is rewritten.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <style id="mkRoomStyles">
+      #mkToolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px;padding:8px 12px;background:linear-gradient(135deg,rgba(0,240,255,0.05),rgba(0,229,160,0.03));border:1px solid rgba(0,240,255,0.25);border-radius:10px}
+      #mkToolbar .mk-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.15em;color:#00f0ff;font-weight:900}
+      #mkToolbar .mk-sub{font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace}
+      .mk-toggle{margin-left:auto;display:flex;border:1px solid rgba(0,240,255,0.3);border-radius:8px;overflow:hidden}
+      .mk-toggle button{background:transparent;border:none;color:var(--text-muted);font-size:10px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;transition:all .2s}
+      .mk-toggle button.on{background:linear-gradient(135deg,#00f0ff,#00ff88);color:#000}
+      #mkRail{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+      .mk-railbtn{flex:1;min-width:130px;display:flex;align-items:center;gap:9px;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;transition:all .2s;font-family:inherit;color:var(--text-muted);text-align:left}
+      .mk-railbtn:hover{border-color:rgba(0,240,255,0.4);transform:translateY(-1px)}
+      .mk-railbtn.active{border-color:var(--accent);background:rgba(0,229,160,0.08);color:var(--text-primary);box-shadow:0 0 14px rgba(0,229,160,0.12)}
+      .mk-railbtn .mk-ic{font-size:17px;line-height:1}
+      .mk-railbtn .mk-nm{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--text-primary)}
+      .mk-railbtn .mk-ds{font-size:7px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase}
+      .mk-station{display:none}
+      #mkStationRoom.mk-immersive #mkStage .mk-station.active{display:block;animation:mkSwivel .42s ease}
+      #mkStationRoom.mk-immersive #mkRail{display:flex}
+      #mkStationRoom.mk-classic #mkRail{display:none}
+      #mkStationRoom.mk-classic .mk-station{display:block;margin-bottom:6px}
+      #mkStationRoom.mk-classic .mk-stagehdr{display:none}
+      @keyframes mkSwivel{from{opacity:0;transform:perspective(1200px) rotateY(9deg) translateX(26px)}to{opacity:1;transform:none}}
+      .mk-stagehdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .mk-stagehdr .mk-stagename{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.12em;font-weight:900}
+      .mk-fsbtn{background:rgba(0,0,0,0.4);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .2s}
+      .mk-fsbtn:hover{border-color:var(--accent);color:var(--accent)}
+      #mkStationRoom.mk-fullscreen{position:fixed;inset:0;z-index:9999;background:#05060a;padding:16px;overflow:auto}
+      .mk-station > .card, .mk-station > .cyber-card{background-image:linear-gradient(rgba(0,255,136,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.015) 1px,transparent 1px);background-size:40px 40px}
+      @media(max-width:760px){.mk-railbtn{min-width:calc(50% - 8px)}}
+    </style>
+    <script>
+    (function(){
+      if(window.MK) return;
+      var MK=window.MK={mode:'immersive',cur:'chart',_inited:{}};
+      var LS_MODE='shaddai_mk_layout', LS_STA='shaddai_mk_station';
+      function el(id){return document.getElementById(id);}
+      // Each station lists the EXISTING source blocks to re-house (by a known
+      // inner id -> closest .card, or a direct id) plus its lazy-init call.
+      var STATIONS=[
+        {key:'chart', ic:'📈', nm:'Chart', ds:'TradingView + OHLC',
+          src:[{inner:'mkTicker'},{inner:'tradingViewChart'},{id:'ohlcChartCard'}],
+          init:function(){ if(typeof loadTickerData==='function') loadTickerData(); }},
+        {key:'council', ic:'🧠', nm:'Council', ds:'Multi-agent analysis',
+          src:[{inner:'councilProvider'},{id:'moonpayAgentsCard'}],
+          init:function(){ if(typeof updateCouncilModelList==='function') updateCouncilModelList(); }},
+        {key:'dex', ic:'📊', nm:'DEX', ds:'Live markets',
+          src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
+          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }},
+        {key:'wallet', ic:'◎', nm:'Wallet', ds:'Solana · Phantom',
+          src:[{inner:'pipeWalletStatus'},{inner:'pipeWalletBody'}],
+          init:function(){ if(window._walletPubkey && typeof pipeRefreshWallet==='function') pipeRefreshWallet(); }}
+      ];
+      function grab(src){
+        return src.map(function(s){
+          if(s.id) return el(s.id);
+          var c=el(s.inner); return c?c.closest('.card'):null;
+        }).filter(Boolean);
+      }
+      function build(){
+        var pv=el('pipelineView'); if(!pv || el('mkStationRoom')) return;
+        var tb=document.createElement('div'); tb.id='mkToolbar';
+        tb.innerHTML='<span class="mk-title">◧ TRADING ROOM</span>'+
+          '<span class="mk-sub">stations · one focused at a time · widgets load on focus</span>'+
+          '<div class="mk-toggle"><button id="mkTgImm" onclick="MK.setMode(\'immersive\')">🎛 Immersive</button>'+
+          '<button id="mkTgCls" onclick="MK.setMode(\'classic\')">▤ Classic</button></div>';
+        var room=document.createElement('div'); room.id='mkStationRoom';
+        var rail=document.createElement('div'); rail.id='mkRail';
+        var stage=document.createElement('div'); stage.id='mkStage';
+        room.appendChild(rail); room.appendChild(stage);
+        pv.insertBefore(room, pv.firstChild);
+        pv.insertBefore(tb, room);
+        STATIONS.forEach(function(st){
+          var wrap=document.createElement('div'); wrap.className='mk-station'; wrap.id='mkStation-'+st.key; wrap.dataset.key=st.key;
+          var hdr=document.createElement('div'); hdr.className='mk-stagehdr';
+          hdr.innerHTML='<span class="mk-stagename">'+st.ic+' '+st.nm.toUpperCase()+'</span>'+
+            '<button class="mk-fsbtn" onclick="MK.toggleFull()">⛶ Fullscreen</button>';
+          wrap.appendChild(hdr);
+          grab(st.src).forEach(function(n){ wrap.appendChild(n); });
+          stage.appendChild(wrap);
+          var rb=document.createElement('button'); rb.className='mk-railbtn'; rb.id='mkRail-'+st.key; rb.type='button';
+          rb.onclick=(function(k){ return function(){ MK.focus(k); }; })(st.key);
+          rb.innerHTML='<span class="mk-ic">'+st.ic+'</span><span><span class="mk-nm">'+st.nm+'</span><br><span class="mk-ds">'+st.ds+'</span></span>';
+          rail.appendChild(rb);
+        });
+        MK.mode=localStorage.getItem(LS_MODE)||'immersive';
+        MK.cur=localStorage.getItem(LS_STA)||'chart';
+        applyMode(); focusOnly(MK.cur);
+      }
+      function applyMode(){
+        var room=el('mkStationRoom'); if(!room) return;
+        room.classList.toggle('mk-immersive', MK.mode==='immersive');
+        room.classList.toggle('mk-classic', MK.mode==='classic');
+        var i=el('mkTgImm'), c=el('mkTgCls');
+        if(i) i.classList.toggle('on', MK.mode==='immersive');
+        if(c) c.classList.toggle('on', MK.mode==='classic');
+        if(MK.mode==='classic'){ lazy('chart'); } else { lazy(MK.cur); }
+      }
+      function focusOnly(key){
+        STATIONS.forEach(function(st){
+          var w=el('mkStation-'+st.key), r=el('mkRail-'+st.key);
+          if(w) w.classList.toggle('active', st.key===key);
+          if(r) r.classList.toggle('active', st.key===key);
+        });
+      }
+      function lazy(key){
+        if(MK._inited[key]) return; MK._inited[key]=true;
+        var st=STATIONS.filter(function(s){return s.key===key;})[0];
+        if(st){ try{ st.init(); }catch(e){ console.warn('MK init',key,e); } }
+      }
+      MK.focus=function(key){ MK.cur=key; try{localStorage.setItem(LS_STA,key);}catch(e){} focusOnly(key); if(MK.mode==='immersive') lazy(key); };
+      MK.setMode=function(m){ MK.mode=m; try{localStorage.setItem(LS_MODE,m);}catch(e){} applyMode(); if(m==='immersive') focusOnly(MK.cur); };
+      MK.toggleFull=function(){ var r=el('mkStationRoom'); if(r) r.classList.toggle('mk-fullscreen'); };
+      MK.onShow=function(){ if(!el('mkStationRoom')) build(); if(MK.mode==='classic'){ lazy('chart'); } else { lazy(MK.cur); } };
+      if(document.readyState!=='loading') build(); else document.addEventListener('DOMContentLoaded',build);
+    })();
+    </script>
   </div>
 
   <!-- Office / Pixel Office -->
@@ -23226,7 +23362,7 @@ function showView(v) {
   if (v === 'library-notes'){ renderLibrary(); renderNotes(); if (typeof renderRagFileList === 'function') setTimeout(renderRagFileList, 200); }
   if (v === 'projects')     renderProjects();
   if (v === 'social')       { renderSocial(); renderSchedules(); try{ populateSocialNotes(); }catch(e){} }
-  if (v === 'pipeline')     { renderDeals(); renderPipeline(); if (typeof loadTickerData === 'function') setTimeout(loadTickerData, 200); }
+  if (v === 'pipeline')     { renderDeals(); renderPipeline(); setTimeout(function(){ if (window.MK && MK.onShow) MK.onShow(); else if (typeof loadTickerData === 'function') loadTickerData(); }, 200); }
   if (v === 'settings')     renderSettingsPanel();
   if (v === 'wallet')     { if (window._walletPubkey) { document.getElementById('walletNotConnected').style.display='none'; document.getElementById('walletConnected').style.display='block'; } if (typeof loadPaymentList === 'function') loadPaymentList(); if (typeof renderAgentEarnings === 'function') renderAgentEarnings(); }
   if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; }
