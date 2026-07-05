@@ -175,7 +175,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260703e"></script>
 <script src="/world-terrain.js?v=20260704u"></script>
 <script src="/world-biomes.js?v=20260704u"></script>
-<script src="/world-buildings.js?v=20260704w"></script>
+<script src="/world-buildings.js?v=20260705screens"></script>
 <script src="/world-collision.js?v=20260704solid"></script>
 <script src="/world-spawn.js?v=20260704s"></script>
 <script src="/world-themes.js?v=20260703h"></script>
@@ -984,6 +984,7 @@ let targeted = null;
 // every building — SHADDAI[0,0]r55 (dist 200), bazaar[0,130]r40 (dist 70), NEXUS/QUILL
 // [±130,225]r44 (dist ~132) — with wide margins. Default camera faces -Z → toward center.
 const playerPos = new THREE.Vector3(0, 0, 200);
+window._playerPos = playerPos;   // expose live player position (near-gate for world-buildings live screens; also read at ~L2656)
 // NEXUS can teleport you to any sector (called from the NEXUS directory panel)
 window.teleportTo = function(x, z){ playerPos.x = x; playerPos.z = (z||0) + 14; if(window.closeDistrict) window.closeDistrict(); };
 let thirdPerson = false;

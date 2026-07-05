@@ -37,6 +37,250 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   const landmarks = [];
   const trimRings = [];
 
+  // ── NEXUS LOUNGE LIVE SCREENS (charts + news) ──────────────────────────────
+  // A wall of 3D "screens" (canvas-textured planes) in the NEXUS lounge showing
+  // REAL data: 3 live price charts (BTC/ETH/SOL from /api/markets/ohlc) + 2
+  // vertically-scrolling news tickers (/api/news/crypto). ONE shared fetch feeds
+  // every screen (no per-screen API calls); results are cached and refreshed on a
+  // timer. Charts repaint only when fresh data lands (~every 60s); the news
+  // tickers repaint at ~10fps for smooth scroll. All work is skipped unless the
+  // player is near the lounge. If an endpoint fails the screen shows "— offline —"
+  // (honest) — prices/headlines are never invented.
+  const SCREEN_COINS = ['bitcoin', 'ethereum', 'solana'];
+  const screenState = {
+    screens:  [],                                   // [{ kind, canvas, ctx, tex, coin, scroll }]
+    pos:      null,                                 // {x,z} lounge centre (near-gate)
+    accent:   '#38e1ff',                            // themed screen accent (set at build)
+    data:     { coins: {}, news: null, newsErr: false, coinErr: {} },
+    lastFetch: -1e9,
+    lastDraw:  -1e9,
+    fetching:  false,
+  };
+
+  // Shared fetch — pulls all coin candles + news once, caches, repaints on land.
+  function _screenFetch() {
+    if (screenState.fetching || typeof fetch !== 'function') return;
+    screenState.fetching = true;
+    const jobs = SCREEN_COINS.map(id =>
+      fetch('/api/markets/ohlc?symbol=' + id)
+        .then(r => r.json())
+        .then(j => {
+          if (j && j.ok && Array.isArray(j.candles) && j.candles.length) {
+            screenState.data.coins[id] = j; screenState.data.coinErr[id] = false;
+          } else { screenState.data.coinErr[id] = true; }
+        })
+        .catch(() => { screenState.data.coinErr[id] = true; }));
+    jobs.push(
+      fetch('/api/news/crypto')
+        .then(r => r.json())
+        .then(j => {
+          if (j && j.ok && Array.isArray(j.news) && j.news.length) {
+            screenState.data.news = j.news; screenState.data.newsSource = j.source || 'CRYPTO'; screenState.data.newsErr = false;
+          } else { screenState.data.newsErr = true; }
+        })
+        .catch(() => { screenState.data.newsErr = true; }));
+    Promise.all(jobs).then(() => { screenState.fetching = false; _screenRedrawAll(); });
+  }
+
+  // Draw an "offline / loading" placeholder (never fake data).
+  function _screenPlaceholder(s, msg) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = '#5a6b82'; c.font = 'bold 26px "Share Tech Mono", monospace';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(msg, W / 2, H / 2);
+    s.tex.needsUpdate = true;
+  }
+
+  // Draw a live price chart (area+line of candle closes) onto the screen canvas.
+  function _drawChart(s) {
+    const feed = screenState.data.coins[s.coin];
+    if (!feed) { _screenPlaceholder(s, screenState.data.coinErr[s.coin] ? '— offline —' : 'loading…'); return; }
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    const closes = feed.candles.map(k => k.c);
+    let lo = Infinity, hi = -Infinity;
+    for (const v of closes) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    if (!(hi > lo)) hi = lo + 1;
+    const up = (feed.change24h || 0) >= 0;
+    const line = up ? '#39ff9e' : '#ff5d6c';
+    const padT = 84, padB = 30, padX = 18;
+    const plotW = W - padX * 2, plotH = H - padT - padB;
+    const X = i => padX + (i / (closes.length - 1)) * plotW;
+    const Y = v => padT + (1 - (v - lo) / (hi - lo)) * plotH;
+
+    // background + frame
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    // grid
+    c.strokeStyle = 'rgba(120,150,190,0.14)'; c.lineWidth = 1;
+    for (let g = 0; g <= 3; g++) { const gy2 = padT + (g / 3) * plotH; c.beginPath(); c.moveTo(padX, gy2); c.lineTo(W - padX, gy2); c.stroke(); }
+    // header
+    const fmt = n => n >= 1000 ? '$' + Math.round(n).toLocaleString('en-US')
+                   : n >= 1    ? '$' + n.toFixed(2)
+                               : '$' + n.toFixed(4);
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillStyle = screenState.accent; c.font = 'bold 34px Orbitron, monospace';
+    c.fillText((feed.symbol || s.coin).toUpperCase(), 22, 46);
+    c.fillStyle = '#eaf3ff'; c.font = 'bold 30px "Share Tech Mono", monospace';
+    c.fillText(fmt(feed.price), 22, 74);
+    c.fillStyle = line; c.font = 'bold 24px "Share Tech Mono", monospace'; c.textAlign = 'right';
+    c.fillText((up ? '▲ +' : '▼ ') + (feed.change24h || 0).toFixed(2) + '%', W - 22, 60);
+    // area fill
+    c.beginPath(); c.moveTo(X(0), Y(closes[0]));
+    for (let i = 1; i < closes.length; i++) c.lineTo(X(i), Y(closes[i]));
+    c.lineTo(X(closes.length - 1), padT + plotH); c.lineTo(X(0), padT + plotH); c.closePath();
+    const grad = c.createLinearGradient(0, padT, 0, padT + plotH);
+    grad.addColorStop(0, up ? 'rgba(57,255,158,0.34)' : 'rgba(255,93,108,0.34)');
+    grad.addColorStop(1, 'rgba(6,10,20,0.02)');
+    c.fillStyle = grad; c.fill();
+    // line
+    c.beginPath(); c.moveTo(X(0), Y(closes[0]));
+    for (let i = 1; i < closes.length; i++) c.lineTo(X(i), Y(closes[i]));
+    c.strokeStyle = line; c.lineWidth = 3; c.lineJoin = 'round'; c.stroke();
+    // last-price dot
+    const lx = X(closes.length - 1), ly = Y(closes[closes.length - 1]);
+    c.fillStyle = line; c.beginPath(); c.arc(lx, ly, 5, 0, Math.PI * 2); c.fill();
+    // footer
+    c.fillStyle = '#5a6b82'; c.font = '16px "Share Tech Mono", monospace'; c.textAlign = 'left';
+    c.fillText('LIVE · 24h · ' + closes.length + ' pts', 22, H - 12);
+    s.tex.needsUpdate = true;
+  }
+
+  // Draw the scrolling news ticker onto the screen canvas.
+  function _drawNews(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    // header band
+    c.fillStyle = 'rgba(56,225,255,0.10)'; c.fillRect(6, 6, W - 12, 54);
+    c.fillStyle = screenState.accent; c.font = 'bold 30px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillText('◈ ' + (screenState.data.newsSource || 'CRYPTO') + ' NEWS', 22, 34);
+
+    const news = screenState.data.news;
+    if (!news) { _screenPlaceholder(s, screenState.data.newsErr ? '— offline —' : 'loading…'); return; }
+
+    const top = 72, bottom = H - 10, viewH = bottom - top;
+    const rowH = 74;                                   // headline block height (2 lines)
+    const total = news.length * rowH;
+    c.save();
+    c.beginPath(); c.rect(6, top, W - 12, viewH); c.clip();
+    const off = ((s.scroll % total) + total) % total;
+    // draw two passes so the list loops seamlessly
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < news.length; i++) {
+        const y = top + i * rowH - off + pass * total;
+        if (y > bottom || y + rowH < top) continue;
+        const item = news[i];
+        c.fillStyle = screenState.accent; c.font = 'bold 22px "Share Tech Mono", monospace';
+        c.fillText('▸', 20, y + rowH / 2 - 10);
+        c.fillStyle = '#eaf3ff'; c.font = '21px "Share Tech Mono", monospace';
+        _wrapText(c, item.title || '', 44, y + 14, W - 60, 24, 2);
+      }
+    }
+    c.restore();
+    s.tex.needsUpdate = true;
+  }
+
+  // Word-wrap helper for the news ticker (max `maxLines`, ellipsis on overflow).
+  function _wrapText(c, text, x, y, maxW, lh, maxLines) {
+    const words = String(text).split(/\s+/);
+    let line = '', row = 0;
+    for (let n = 0; n < words.length; n++) {
+      const test = line ? line + ' ' + words[n] : words[n];
+      if (c.measureText(test).width > maxW && line) {
+        c.fillText(line, x, y + row * lh); line = words[n]; row++;
+        if (row === maxLines - 1) {
+          // last allowed line — squeeze the remainder + ellipsis
+          let rest = words.slice(n).join(' ');
+          while (rest && c.measureText(rest + '…').width > maxW) rest = rest.slice(0, -1);
+          c.fillText(rest + '…', x, y + row * lh); return;
+        }
+      } else { line = test; }
+    }
+    c.fillText(line, x, y + row * lh);
+  }
+
+  function _screenRedrawAll() {
+    for (const s of screenState.screens) (s.kind === 'chart' ? _drawChart : _drawNews)(s);
+  }
+
+  // Per-frame tick (called from update): near-gated + throttled screen refresh.
+  function _screenTick(t) {
+    const scr = screenState.screens;
+    if (!scr.length) return;
+    // near-gate: skip all screen work while the player is far from the lounge.
+    const p = (typeof window !== 'undefined') ? window._playerPos : null;
+    if (p && screenState.pos) {
+      const dx = p.x - screenState.pos.x, dz = p.z - screenState.pos.z;
+      if (dx * dx + dz * dz > 210 * 210) return;
+    }
+    // refresh live data every 60s (first eligible tick fires immediately).
+    if (t - screenState.lastFetch > 60) { screenState.lastFetch = t; _screenFetch(); }
+    // animate the news ticker at ~10fps (cheap 2D repaint; charts stay static).
+    if (t - screenState.lastDraw > 0.1) {
+      screenState.lastDraw = t;
+      for (const s of scr) if (s.kind === 'news') { s.scroll += 15; _drawNews(s); }
+    }
+  }
+
+  // Build the NEXUS lounge screen wall: 3 chart screens + 2 news tickers on an
+  // arc across the back of the lounge, each facing the lounge centre, framed with
+  // an emissive arcade-glow border. Called from _buildPillarPavilion for NEXUS.
+  function _buildNexusScreens(x, z, groundY, undersideY, fp, pal, faceAng) {
+    screenState.pos    = { x, z };
+    screenState.accent = hexColor(pal.trim.getHex());
+    const layoutSpec = [
+      { kind: 'chart', coin: 'bitcoin'  },
+      { kind: 'news' },
+      { kind: 'chart', coin: 'ethereum' },
+      { kind: 'news' },
+      { kind: 'chart', coin: 'solana'   },
+    ];
+    const n      = layoutSpec.length;
+    const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
+    const span   = Math.PI * 0.92;                    // ~165° arc
+    const rW     = fp * 0.40;                          // just inside the pillar ring
+    const sw     = fp * 0.150, sh = fp * 0.100;        // screen width / height
+    const clear  = undersideY - groundY;
+    const yC     = groundY + Math.min(clear * 0.56, 9.5) + sh * 0.5;   // eye-level, under the podium
+
+    const frameMat = new THREE.MeshBasicMaterial({
+      color: pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.15),
+      transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+
+    for (let i = 0; i < n; i++) {
+      const spec = layoutSpec[i];
+      const a  = backA - span / 2 + (n === 1 ? span / 2 : span * (i / (n - 1)));
+      const ox = Math.cos(a), oz = Math.sin(a);
+      const px = x + ox * rW, pz = z + oz * rW;
+      const rotY = Math.atan2(-ox, -oz);              // face the lounge centre
+
+      // emissive frame behind the screen (arcade glow)
+      const frame = new THREE.Mesh(new THREE.PlaneGeometry(sw * 1.10, sh * 1.16), frameMat);
+      frame.position.set(px + ox * 0.25, yC, pz + oz * 0.25);
+      frame.rotation.y = rotY; frame.renderOrder = 2; scene.add(frame);
+      landmarks.push({ mat: frame.material, baseOpacity: 0.5, phase: i * 0.7 });
+
+      // canvas + texture + screen plane
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = (spec.kind === 'news') ? 384 : 320;
+      const ctx = canvas.getContext('2d');
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace; tex.minFilter = THREE.LinearFilter;
+      const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(sw, sh),
+        new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+      screen.position.set(px, yC, pz); screen.rotation.y = rotY; screen.renderOrder = 3; scene.add(screen);
+
+      const s = { kind: spec.kind, coin: spec.coin, canvas, ctx, tex, scroll: 0 };
+      _screenPlaceholder(s, 'loading…');
+      screenState.screens.push(s);
+    }
+  }
+
   // ── PILLAR-PAVILION LIFT (2026-07-05) ──────────────────────────────────────
   // Every agent building's mass is raised this many units so it stands HIGH on
   // huge pillars, with an open walk-through themed LOUNGE underneath at ground
@@ -189,6 +433,26 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
     g.beginPath(); g.moveTo(0, S * 0.14); g.lineTo(S, S * 0.14); g.stroke();
     return _texCache.frieze = _finishTex(cv, false);
+  }
+
+  // Carved-stone pillar RELIEF map — a real image generated by the world's own
+  // image-gen tool (POST /api/image/generate, model:huggingface) and saved to
+  // /assets/pillar-relief.jpg. Loaded ONCE, shared by every building's pillars and
+  // tinted per-agent by the material colour. Fully guarded + silent onError so a
+  // missing file can never break world load (the procedural carving carries it).
+  function _reliefTexture() {
+    if (_texCache.relief !== undefined) return _texCache.relief;
+    _texCache.relief = null;
+    try {
+      var tl = new THREE.TextureLoader();
+      var t  = tl.load('/assets/pillar-relief.jpg', undefined, undefined, function () { /* silent */ });
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = 4;
+      t.repeat.set(2, 4);
+      if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+      _texCache.relief = t;
+    } catch (e) { _texCache.relief = null; }
+    return _texCache.relief;
   }
 
   // ── SCENE MARKERS ─────────────────────────────────────────────────────────
@@ -3708,33 +3972,126 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
 
-    // ── 1) PILLARS — 6 fat tapered columns (foot + shaft + capital + glow band) ─
+    // ── 1) PILLARS — 6 MONUMENTAL CARVED columns ────────────────────────────
+    // Each leg reads as intentional, carved architecture, not a plain cylinder:
+    //   • carved-stone RELIEF texture map (real image-gen output) on the shaft,
+    //   • vertical FLUTING (proud ridges) running the shaft,
+    //   • two carved RELIEF / GLYPH BANDS with a per-agent MOTIF,
+    //   • an ornate stepped CAPITAL (echinus + square abacus) at the top,
+    //   • a base MOLDING + square PLINTH foot anchoring it to the lounge floor.
+    // Everything is InstancedMesh + shared geometry/materials → a handful of extra
+    // draw calls per building, no per-frame allocation (frozen by the build's
+    // matrix-freeze pass). Emissive accents carry the "life"; no new lights.
     const NP   = 6;
     const rP   = fp * 0.40;                                // ring radius — near the footprint edge
     const rS   = Math.max(3.4, fp * 0.052);               // fat shaft radius ("legs")
     const angO = Math.PI / NP + faceAng;                  // offset off the entrance axis
-    const shaftIM = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 0.82, rS, H, 14), pillarMat, NP);
-    const footIM  = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.50, rS * 1.75, 2.2, 14), trimMat, NP);
-    const capIM   = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.70, rS * 1.25, 2.6, 14), trimMat, NP);
+
+    // Per-agent carved MOTIF for the relief bands (keyed by layout code).
+    const motif = ({
+      'oracle-spire':     'runes',    // ORACLE — vertical rune ticks
+      'library':          'script',   // QUILL  — horizontal script bars
+      'markets-exchange': 'circuit',  // ZEROX  — circuit/coin nodes
+      'aegis':            'shield',    // PIKADON— shield bosses
+      'museum':           'fret',      // TURTLE — Greek-key fretwork
+      'nexus-hub':        'nodes',     // NEXUS  — connected nodes
+    })[code] || 'nodes';
+
+    // Carved-stone shaft: apply the real relief image map (tinted by pillarMat's
+    // colour). Guarded — if the image is absent the shaft is still fluted stone.
+    const _relief = _reliefTexture();
+    if (_relief) { pillarMat.map = _relief; pillarMat.needsUpdate = true; }
+
+    // Extra carving materials (matte stone ridge + emissive glyph accent).
+    const ridgeMat = new THREE.MeshStandardMaterial({
+      color: pal.body.clone().lerp(pal.structural, 0.55),
+      emissive: pal.primary.clone(), emissiveIntensity: 0.02,
+      roughness: 0.90, metalness: 0.10,
+    });
+    const glyphMat = new THREE.MeshStandardMaterial({
+      color: pal.secondary.clone().lerp(pal.trim, 0.30),
+      emissive: pal.trim.clone(), emissiveIntensity: 0.34,
+      roughness: 0.46, metalness: 0.30,
+    });
+
+    const shaftIM = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 0.82, rS, H, 20), pillarMat, NP);
+    const footIM  = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.50, rS * 1.75, 2.2, 16), trimMat, NP);
+    // Ornate capital: echinus (flared collar) + square abacus slab on top.
+    const echIM   = new THREE.InstancedMesh(new THREE.CylinderGeometry(rS * 1.78, rS * 1.20, 2.8, 16), trimMat, NP);
+    const abacIM  = new THREE.InstancedMesh(new THREE.BoxGeometry(rS * 3.0, 1.1, rS * 3.0), trimMat, NP);
+    // Square plinth foot under the round base molding.
+    const plinIM  = new THREE.InstancedMesh(new THREE.BoxGeometry(rS * 3.1, 1.6, rS * 3.1), ridgeMat, NP);
     const bandIM  = new THREE.InstancedMesh(new THREE.TorusGeometry(rS * 1.14, rS * 0.12, 6, 20), glowMat, NP);
-    shaftIM.castShadow = footIM.castShadow = capIM.castShadow = true;
-    bandIM.renderOrder = 3;
+
+    // Vertical FLUTING — proud ridges running each shaft (NF per pillar).
+    const NF   = 10, flH = H * 0.84;
+    const fluteIM = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(rS * 0.16, flH, rS * 0.30), ridgeMat, NP * NF);
+
+    // Two carved RELIEF / GLYPH bands per pillar — a torus course + a ring of
+    // motif glyphs. Glyph geometry varies with the agent's motif.
+    const bandHFrac = [0.30, 0.62];
+    const NG   = 14;
+    const courseIM = new THREE.InstancedMesh(
+      new THREE.TorusGeometry(rS * 1.20, rS * 0.10, 6, 24), glyphMat, NP * bandHFrac.length);
+    const glyphGeo = (motif === 'runes')   ? new THREE.BoxGeometry(rS * 0.12, rS * 0.72, rS * 0.12)
+                   : (motif === 'script')  ? new THREE.BoxGeometry(rS * 0.86, rS * 0.12, rS * 0.12)
+                   : (motif === 'circuit') ? new THREE.BoxGeometry(rS * 0.28, rS * 0.28, rS * 0.16)
+                   : (motif === 'shield')  ? new THREE.SphereGeometry(rS * 0.22, 10, 8)
+                   : (motif === 'fret')    ? new THREE.BoxGeometry(rS * 0.52, rS * 0.24, rS * 0.14)
+                                           : new THREE.SphereGeometry(rS * 0.17, 8, 6);
+    const glyphIM = new THREE.InstancedMesh(glyphGeo, glyphMat, NP * bandHFrac.length * NG);
+
+    shaftIM.castShadow = footIM.castShadow = echIM.castShadow = abacIM.castShadow =
+      plinIM.castShadow = fluteIM.castShadow = true;
+    bandIM.renderOrder = 3; courseIM.renderOrder = 3; glyphIM.renderOrder = 3;
     {
       const d = new THREE.Object3D();
+      let fi = 0, gi = 0, ci = 0;
       for (let i = 0; i < NP; i++) {
         const a  = angO + (i / NP) * Math.PI * 2;
         const px = x + Math.cos(a) * rP, pz = z + Math.sin(a) * rP;
+        d.scale.set(1, 1, 1);
         d.rotation.set(0, 0, 0);
         d.position.set(px, groundY + H * 0.5, pz);   d.updateMatrix(); shaftIM.setMatrixAt(i, d.matrix);
         d.position.set(px, groundY + 1.1, pz);       d.updateMatrix(); footIM.setMatrixAt(i, d.matrix);
-        d.position.set(px, undersideY - 1.3, pz);    d.updateMatrix(); capIM.setMatrixAt(i, d.matrix);
+        d.position.set(px, undersideY - 1.4, pz);    d.updateMatrix(); echIM.setMatrixAt(i, d.matrix);
+        // Square abacus + plinth aligned to the pillar's radial facing.
+        d.rotation.set(0, -a, 0);
+        d.position.set(px, undersideY - 0.1, pz);    d.updateMatrix(); abacIM.setMatrixAt(i, d.matrix);
+        d.position.set(px, groundY + 0.8, pz);       d.updateMatrix(); plinIM.setMatrixAt(i, d.matrix);
+        d.rotation.set(0, 0, 0);
+        // Vertical fluting ridges around the shaft.
+        for (let f = 0; f < NF; f++) {
+          const fa = (f / NF) * Math.PI * 2;
+          d.rotation.set(0, -fa, 0);
+          d.position.set(px + Math.cos(fa) * rS * 0.98, groundY + H * 0.5, pz + Math.sin(fa) * rS * 0.98);
+          d.updateMatrix(); fluteIM.setMatrixAt(fi++, d.matrix);
+        }
+        // Glow band (kept) + carved courses + motif glyph rings at each band height.
         d.rotation.set(-Math.PI / 2, 0, 0);
         d.position.set(px, groundY + H * 0.66, pz);  d.updateMatrix(); bandIM.setMatrixAt(i, d.matrix);
+        for (let b = 0; b < bandHFrac.length; b++) {
+          const by = groundY + H * bandHFrac[b];
+          d.rotation.set(-Math.PI / 2, 0, 0);
+          d.position.set(px, by, pz);                d.updateMatrix(); courseIM.setMatrixAt(ci++, d.matrix);
+          for (let gk = 0; gk < NG; gk++) {
+            const ga = (gk / NG) * Math.PI * 2;
+            d.rotation.set(0, -ga, 0);
+            d.position.set(px + Math.cos(ga) * rS * 1.10, by, pz + Math.sin(ga) * rS * 1.10);
+            d.updateMatrix(); glyphIM.setMatrixAt(gi++, d.matrix);
+          }
+        }
       }
       shaftIM.instanceMatrix.needsUpdate = true; scene.add(shaftIM);
       footIM.instanceMatrix.needsUpdate  = true; scene.add(footIM);
-      capIM.instanceMatrix.needsUpdate   = true; scene.add(capIM);
+      echIM.instanceMatrix.needsUpdate   = true; scene.add(echIM);
+      abacIM.instanceMatrix.needsUpdate  = true; scene.add(abacIM);
+      plinIM.instanceMatrix.needsUpdate  = true; scene.add(plinIM);
+      fluteIM.instanceMatrix.needsUpdate = true; scene.add(fluteIM);
       bandIM.instanceMatrix.needsUpdate  = true; scene.add(bandIM);
+      courseIM.instanceMatrix.needsUpdate = true; scene.add(courseIM);
+      glyphIM.instanceMatrix.needsUpdate = true; scene.add(glyphIM);
     }
 
     // ── 2) LOUNGE FLOOR — themed slab + accent rug rings ─────────────────────
@@ -3786,6 +4143,9 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     _loungeProps (x, z, groundY, rL, fp, theme.prop, pal, faceAng);
     _loungeCenter(x, z, groundY, undersideY, fp, theme.center, pal);
     _loungeSign  (x, z, groundY, fp, frontDir, faceAng, theme.title, pal);
+
+    // NEXUS lounge = live market & news floor: a wall of real-data 3D screens.
+    if (code === 'nexus-hub') _buildNexusScreens(x, z, groundY, undersideY, fp, pal, faceAng);
   }
 
   // Themed furniture ring — 2 InstancedMesh (body + emissive accent) per lounge.
@@ -4194,6 +4554,11 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     'ms |', (_nMesh + _nIM), 'scene meshes (' + _nIM + ' InstancedMesh +', _nMesh, 'Mesh) |',
     _nFrozen, 'static matrices frozen (matrixAutoUpdate=false)');
 
+  try {                                                        // expose for diagnostics
+    screenState.tick = _screenTick; screenState.fetch = _screenFetch;
+    window.__nexusScreens = screenState;
+  } catch (e) {}
+
   return {
     markers,
 
@@ -4218,6 +4583,7 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       for (const s  of spinners)  s.o.rotation.y = t * s.ry;
       for (const lm of landmarks) lm.mat.opacity = lm.baseOpacity * (0.72 + 0.28 * Math.sin(t * 1.6 + lm.phase));
       for (const tr of trimRings) tr.ring.material.opacity = tr.baseOpacity * (0.75 + 0.25 * Math.sin(t * 1.8 + tr.phase));
+      _screenTick(t);   // NEXUS lounge live screens: near-gated + throttled refresh
     },
   };
 };
