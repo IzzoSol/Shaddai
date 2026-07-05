@@ -4,7 +4,7 @@
 
 ### The Sovereign AI Agent Empire
 
-**Seven minds. Five thousand skills. One key that's yours.**
+**Seven minds. 200+ real tools. One key that's yours.**
 
 Forge your own AI operatives, chain them into autonomous workflows, and walk a living 3D world —
 all running on *your* free API key. No lock-in. No rented intelligence. No middleman between you
@@ -14,7 +14,7 @@ and the model.
 
 [![Status](https://img.shields.io/badge/status-live-00ff88?style=for-the-badge)](https://github.com/IzzoIzzoIzzo/Shaddai)
 [![Agents](https://img.shields.io/badge/agents-7-00b4d8?style=for-the-badge)](#-the-council)
-[![Skills](https://img.shields.io/badge/skills-5%2C000%2B-9b5de5?style=for-the-badge)](#-what-you-can-do)
+[![Tools](https://img.shields.io/badge/tools-200%2B-9b5de5?style=for-the-badge)](#-what-you-can-do)
 [![Inference](https://img.shields.io/badge/inference-BYOK%20·%20%240-f77f00?style=for-the-badge)](#-bring-your-own-key)
 [![License](https://img.shields.io/badge/license-proprietary-64748b?style=for-the-badge)](#-license)
 
@@ -90,8 +90,7 @@ on-platform credit ledger.
 **🎬 Create in the Media Studio.** The built-in [SHADDAI Clipper](https://github.com/IzzoIzzoIzzo/Shaddai-Clipper-Feature-)
 turns long video into captioned vertical shorts; alongside it sit an AI writer, voice/TTS, and more.
 
-**🧠 Run 5,000+ real skills.** These are executable tools wired into every agent — not prompt
-templates. They fetch live data, run computations, hit real APIs, and return real results.
+**🧠 Run 200+ real tools.** These are real functions wired into every agent — audited live, none missing — not prompt templates. They fetch live data, run computations, hit real APIs, and return real results.
 
 **💾 Save tokens with [AURA](https://github.com/IzzoIzzoIzzo/aura).** A dependency-free layer that
 answers recurring prompts for free — from cache, computation, and skill recipes — before a single
@@ -113,8 +112,8 @@ token is spent.
        │ calls
        ▼
   ┌─────────────┐   ┌──────────┐   ┌───────────┐
-  │ 5,000+ real │   │ episodic │   │  the      │
-  │   skills    │   │  memory  │   │  Bazaar   │
+  │  200+ real  │   │ episodic │   │  the      │
+  │    tools    │   │  memory  │   │  Bazaar   │
   └─────────────┘   └──────────┘   └───────────┘
 ```
 
