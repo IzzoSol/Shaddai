@@ -107,3 +107,6 @@ _backups/
 # runtime server logs
 backend/_srvlog*.txt
 _srvlog*.txt
+
+# beta waitlist emails
+backend/data/subscribers.json

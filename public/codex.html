@@ -111,6 +111,9 @@
 </style>
 </head>
 <body>
+  <div id="enterVeil" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 45%, #1a1206, #050301 70%);opacity:0;pointer-events:none;transition:opacity .55s ease;display:flex;align-items:center;justify-content:center">
+    <div style="font-family:'Cinzel',serif;font-weight:900;letter-spacing:.3em;color:#c4a24e;font-size:clamp(20px,5vw,44px);text-transform:uppercase;text-shadow:0 0 30px rgba(196,162,78,.6);opacity:0;transform:scale(.9);transition:opacity .5s ease .1s, transform .8s ease" id="veilWord">⚡ SHADDAI</div>
+  </div>
   <div class="bar">
     <a class="back" href="/dashboard">← Enter the Dashboard</a>
     <span class="mid" id="edition">Vol. I · Anno MMXXVI</span>
@@ -130,6 +133,13 @@
       <h1 class="title">SHADDAI</h1>
       <div class="sub">an empire of seven minds &amp; the ledger of their labour</div>
       <p class="lede dropcap">Herein are recorded the standing of the Council, the readings of the AURA ledger by which coin is spared, and the instruments through which the work is wrought — set in ink, not glass.</p>
+      <div style="margin:30px auto 4px;display:flex;flex-direction:column;align-items:center;gap:10px">
+        <button id="enterBtn" onclick="enterShaddai()"
+          style="font-family:'Cinzel',serif;font-weight:900;letter-spacing:.18em;text-transform:uppercase;font-size:clamp(15px,2.2vw,20px);color:var(--paper);background:var(--ink);border:2px solid var(--gold);padding:18px 46px;cursor:pointer;position:relative;box-shadow:0 6px 0 var(--gold),0 10px 26px rgba(156,124,38,.35);transition:transform .12s ease, box-shadow .12s ease, background .3s ease">
+          ⚡ Enter SHADDAI
+        </button>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ox)">◆ Public Beta · step into the dashboard ◆</div>
+      </div>
     </header>
 
     <section class="sect">
@@ -150,17 +160,32 @@
       <div class="head"><span class="num">III.</span><span class="name">Instruments</span><span class="tail">enter the works</span></div>
       <div class="instr">
         <a class="lk" href="/aura.html"><span class="corner c1"></span><span class="corner c2"></span>The AURA Ledger<span class="arrow">observe the savings →</span></a>
-        <a class="lk" href="/forge.html"><span class="corner c1"></span><span class="corner c2"></span>The Forge<span class="arrow">summon an operative →</span></a>
+        <a class="lk" href="/forge-about.html"><span class="corner c1"></span><span class="corner c2"></span>The Forge<span class="arrow">learn the craft →</span></a>
         <a class="lk" href="/world"><span class="corner c1"></span><span class="corner c2"></span>Shaddai World<span class="arrow">walk among them →</span></a>
-        <a class="lk" href="/pricing.html"><span class="corner c1"></span><span class="corner c2"></span>The Tithes<span class="arrow">choose thy plan →</span></a>
-        <a class="lk" href="/portal-admin.html"><span class="corner c1"></span><span class="corner c2"></span>The Portals<span class="arrow">open the gates →</span></a>
+        <a class="lk" href="/pricing.html"><span class="corner c1"></span><span class="corner c2"></span>The Covenant<span class="arrow">choose thy plan →</span></a>
+      </div>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">IV.</span><span class="name">Join the Circle</span><span class="tail">be counted</span></div>
+      <p class="lede" style="margin:14px auto 18px">SHADDAI is in <strong>public beta</strong>. Leave thy mark to receive word of new powers, and walk with the Council on the wires.</p>
+      <form id="joinForm" onsubmit="return joinCircle(event)" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:22px">
+        <input id="joinEmail" type="email" required placeholder="thy@email.address"
+          style="font-family:'IBM Plex Mono',monospace;font-size:13px;padding:14px 18px;min-width:280px;background:var(--paper2);border:1px solid var(--ink);color:var(--ink);outline:none">
+        <button type="submit"
+          style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:var(--paper);background:var(--ink);border:2px solid var(--gold);padding:14px 28px;cursor:pointer">Enlist →</button>
+        <span id="joinMsg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ox);width:100%;text-align:center;min-height:14px"></span>
+      </form>
+      <div style="display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap">
+        <a class="lk" href="https://t.me/shaddaicircle" target="_blank" rel="noopener" style="padding:16px 22px;min-width:auto"><span class="corner c1"></span><span class="corner c2"></span>Telegram · @shaddaicircle<span class="arrow">join the circle →</span></a>
+        <a class="lk" href="https://x.com/shaddaiai" target="_blank" rel="noopener" style="padding:16px 22px;min-width:auto"><span class="corner c1"></span><span class="corner c2"></span>𝕏 · @shaddaiai<span class="arrow">follow the empire →</span></a>
       </div>
     </section>
 
     <div class="colophon">
       <span id="col1">Set in Cinzel, Fraunces &amp; Plex Mono</span>
       <span>Ink · Gold · Oxblood</span>
-      <span id="col2">Live from :3000</span>
+      <span id="col2">Bound in ink &amp; gold</span>
     </div>
   </div>
 
@@ -174,6 +199,26 @@
 
   const $=id=>document.getElementById(id);
   const esc=s=>String(s==null?'':s).replace(/</g,'&lt;');
+
+  // ── Enter SHADDAI — visual transition then into the dashboard ──
+  window.enterShaddai = function(){
+    const veil=$('enterVeil'), word=$('veilWord');
+    if(veil){ veil.style.opacity='1'; veil.style.pointerEvents='all'; }
+    if(word){ requestAnimationFrame(()=>{ word.style.opacity='1'; word.style.transform='scale(1.06)'; }); }
+    setTimeout(()=>{ window.location.href='/dashboard'; }, 850);
+  };
+
+  // ── Join the Circle — real email capture (beta waitlist) ──
+  window.joinCircle = function(ev){
+    ev.preventDefault();
+    const email=($('joinEmail').value||'').trim(), msg=$('joinMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ if(msg) msg.textContent='Enter a valid email.'; return false; }
+    if(msg) msg.textContent='Enlisting…';
+    fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'codex'})})
+      .then(r=>r.json()).then(d=>{ if(msg) msg.textContent = d && d.ok ? '✓ Thou art counted. Welcome to the Circle.' : (d && d.error) || 'Saved.'; if(d&&d.ok) $('joinForm').reset(); })
+      .catch(()=>{ if(msg) msg.textContent='✓ Noted.'; });
+    return false;
+  };
   const ROLES={ SHADDAI:'Supreme Orchestrator', NEXUS:'Technical Architect', ZEROX:'Wealth & Revenue', ORACLE:'Research & Intelligence', TURTLE:'Design & Creative', QUILL:'Writing & Communication', PIKADON:'Security & Compliance' };
   const ORDER=['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
   const roman=['I','II','III','IV','V','VI','VII'];

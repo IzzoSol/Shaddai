@@ -6298,6 +6298,22 @@ router.get('/agent/tools', (req, res) => {
   res.json({ tools: [...tools, ...mcpTools], total: tools.length + mcpTools.length, mcpTools: mcpTools.length });
 });
 
+// POST /api/subscribe — beta waitlist email capture (codex "Join the Circle").
+// Appends {email,source,ts} to gitignored backend/data/subscribers.json. Deduped.
+router.post('/subscribe', (req, res) => {
+  try {
+    const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+    const source = String((req.body && req.body.source) || 'web').slice(0, 40);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ ok: false, error: 'valid email required' });
+    const fp = require('path').join(__dirname, 'data', 'subscribers.json');
+    let list = [];
+    try { list = JSON.parse(require('fs').readFileSync(fp, 'utf8')); if (!Array.isArray(list)) list = []; } catch {}
+    if (!list.some(s => s && s.email === email)) list.push({ email, source, ts: Date.now() });
+    require('fs').writeFileSync(fp, JSON.stringify(list, null, 2));
+    return res.json({ ok: true, count: list.length });
+  } catch (e) { return res.status(500).json({ ok: false, error: e.message }); }
+});
+
 // POST /api/tools/run — run ANY registered tool by name (reuses the agent-engine
 // executor; does NOT reimplement tools). Mutating tools (post_to_x, etc.) allowed.
 // Body: { tool: string, args?: object }
