@@ -3676,6 +3676,7 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
   <button class="nav-btn" onclick="showView('apis')">APIs</button>
   <button class="nav-btn" onclick="showView('social')">Social</button>
   <button class="nav-btn" onclick="showView('media')">Media</button>
+  <button class="nav-btn" onclick="showView('content-studio')" style="color:#00e5ff;font-weight:700" title="Content Studio — news→post pipeline">🎬 Studio</button>
   <button class="nav-btn" onclick="showView('automation')">Automation</button>
   <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700">Skills</button>
   <!-- Registry tab removed -->
@@ -39248,6 +39249,86 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <!-- ALL TOOLS — single scrollable view, no sub-tabs -->
       <div style="display:flex;flex-direction:column;gap:14px">
 
+        <!-- ══════════ NEWS → POST PIPELINE (real backend) ══════════ -->
+        <div class="card" style="padding:16px;border:1px solid rgba(0,229,255,0.45);background:linear-gradient(180deg,rgba(0,229,255,0.05),rgba(0,0,0,0))">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#00e5ff;letter-spacing:0.06em;display:flex;align-items:center;gap:8px">⚡ NEWS → POST PIPELINE <span style="font-size:8px;color:var(--text-muted);font-weight:400">news · analyze · short-form · image · post — all live endpoints</span></div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="pill" id="cspXPill" style="font-size:8px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted)">𝕏: …</span>
+              <span class="pill" id="cspTgPill" style="font-size:8px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted)">Telegram: …</span>
+              <button class="btn btn-ghost" style="font-size:8px;padding:3px 9px" onclick="cspToggleKeys()">🔑 Social Keys</button>
+            </div>
+          </div>
+
+          <!-- BYOK panel (hidden until toggled or needsAuth) -->
+          <div id="cspKeysPanel" style="display:none;margin-bottom:12px;background:rgba(0,0,0,0.28);border:1px solid rgba(0,229,255,0.25);border-radius:8px;padding:12px">
+            <div style="font-size:9px;font-weight:700;color:#00e5ff;margin-bottom:8px">🔑 Bring Your Own Keys — saved to backend (POST /api/social/keys)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-size:8px;color:var(--text-muted);margin-bottom:5px;font-weight:700">𝕏 / TWITTER (OAuth 1.0a)</div>
+                <input id="cspXApiKey" class="input" style="width:100%;font-size:9px;margin-bottom:5px;box-sizing:border-box" placeholder="API Key (consumer key)">
+                <input id="cspXApiSecret" class="input" style="width:100%;font-size:9px;margin-bottom:5px;box-sizing:border-box" placeholder="API Secret (consumer secret)">
+                <input id="cspXAccessToken" class="input" style="width:100%;font-size:9px;margin-bottom:5px;box-sizing:border-box" placeholder="Access Token">
+                <input id="cspXAccessSecret" class="input" style="width:100%;font-size:9px;margin-bottom:6px;box-sizing:border-box" placeholder="Access Token Secret">
+                <button class="btn btn-accent" style="width:100%;font-size:9px" onclick="cspSaveKeys('x')">Save 𝕏 Keys</button>
+              </div>
+              <div>
+                <div style="font-size:8px;color:var(--text-muted);margin-bottom:5px;font-weight:700">TELEGRAM BOT</div>
+                <input id="cspTgToken" class="input" style="width:100%;font-size:9px;margin-bottom:5px;box-sizing:border-box" placeholder="Bot Token (from @BotFather)">
+                <input id="cspTgChatId" class="input" style="width:100%;font-size:9px;margin-bottom:6px;box-sizing:border-box" placeholder="Chat ID (e.g. @yourchannel or numeric)">
+                <button class="btn btn-accent" style="width:100%;font-size:9px" onclick="cspSaveKeys('telegram')">Save Telegram Keys</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(240px,1fr) minmax(280px,1.3fr);gap:14px">
+            <!-- LEFT: news list -->
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <button class="btn btn-accent" style="font-size:9px;padding:6px 12px" onclick="cspPullNews()" id="cspPullBtn">📰 1 · Pull News</button>
+                <span style="font-size:8px;color:var(--text-muted)" id="cspNewsMeta"></span>
+              </div>
+              <div id="cspNewsList" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;background:rgba(0,0,0,0.2)">
+                <div style="font-size:9px;color:var(--text-muted);padding:16px;text-align:center">Click "Pull News" to load live crypto headlines from /api/news/crypto</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: pipeline steps -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:8px;color:var(--text-muted)">SELECTED: <b id="cspSelTitle" style="color:#00e5ff">— none —</b></div>
+
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-ghost" style="font-size:9px;border-color:#8b5cf6;color:#8b5cf6" onclick="cspAnalyze()">🔮 2 · Analyze (ORACLE)</button>
+                <button class="btn btn-ghost" style="font-size:9px;border-color:var(--gold);color:var(--gold)" onclick="cspShortForm()">✍ 3 · Short-form</button>
+                <button class="btn btn-ghost" style="font-size:9px;border-color:#1abc9c;color:#1abc9c" onclick="cspGenImage()">🖼 4 · Image</button>
+              </div>
+
+              <div id="cspAnalysisWrap" style="display:none">
+                <div style="font-size:8px;color:#8b5cf6;font-weight:700;margin-bottom:3px">🔮 ORACLE ANALYSIS <span id="cspAnalysisModel" style="color:var(--text-muted);font-weight:400"></span></div>
+                <div id="cspAnalysis" style="font-size:9px;line-height:1.55;color:var(--text-primary);white-space:pre-wrap;max-height:150px;overflow-y:auto;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.25);border-radius:6px;padding:9px"></div>
+              </div>
+
+              <div>
+                <div style="font-size:8px;color:var(--gold);font-weight:700;margin-bottom:3px">📝 POST TEXT (editable)</div>
+                <textarea id="cspPostText" style="width:100%;min-height:90px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:10px;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Short-form post appears here — edit before posting..."></textarea>
+                <div style="font-size:8px;color:var(--text-muted);text-align:right" id="cspCharCount">0 chars</div>
+              </div>
+
+              <div id="cspImageWrap" style="display:none;text-align:center">
+                <img id="cspImage" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid rgba(26,188,156,0.4)" alt="generated">
+              </div>
+
+              <div style="display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px">
+                <button class="btn btn-accent" style="font-size:9px;flex:1;min-width:120px;background:#000;border:1px solid #fff;color:#fff" onclick="cspPost('x')">𝕏 5 · Post to X</button>
+                <button class="btn btn-accent" style="font-size:9px;flex:1;min-width:120px;background:#229ed9;border:none;color:#fff" onclick="cspPost('telegram')">✈ Post to Telegram</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ══════════ END NEWS → POST PIPELINE ══════════ -->
+
         <!-- ✍️ QUILL Quick Generate (live backend) -->
         <div class="card" style="padding:14px;border:1px solid rgba(184,134,11,0.4)">
           <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px">✍️ QUILL Quick Generate <span style="font-size:8px;color:var(--text-muted);font-weight:400">Live AI — Tweet · Blog · Email · Thread · Script</span></div>
@@ -50639,6 +50720,212 @@ window.hireAgentX402=async function(){
 <script defer src="/agents-pipeline.js"></script>
 <script defer src="/agent-editor.js"></script>
 <!-- ════════ /DEPTH + GLOW + FORGE LAYER ════════ -->
+
+<!-- ════════ CONTENT STUDIO — NEWS→POST PIPELINE (real backend) ════════ -->
+<script>
+(function(){
+  const CSP = { news: [], selected: null };
+  window._cspState = CSP;
+
+  function toast(m){ try{ notify(m); }catch(_){ console.log('[csp]', m); } }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  // ── Social status pills (GET /api/social/status) ──
+  async function cspRefreshStatus(){
+    const xp = document.getElementById('cspXPill'), tp = document.getElementById('cspTgPill');
+    try{
+      const r = await fetch('/api/social/status', { signal: AbortSignal.timeout(6000) });
+      const j = await r.json();
+      if (xp){ const on = !!j.x; xp.textContent = '𝕏: ' + (on?'connected':'needs keys'); xp.style.color = on?'#00ff88':'#ffb347'; xp.style.borderColor = on?'rgba(0,255,136,0.5)':'rgba(255,179,71,0.5)'; }
+      if (tp){ const on = !!j.telegram; tp.textContent = 'Telegram: ' + (on?'connected':'needs keys'); tp.style.color = on?'#00ff88':'#ffb347'; tp.style.borderColor = on?'rgba(0,255,136,0.5)':'rgba(255,179,71,0.5)'; }
+    }catch(e){
+      if (xp){ xp.textContent = '𝕏: offline'; }
+      if (tp){ tp.textContent = 'Telegram: offline'; }
+    }
+  }
+  window.cspRefreshStatus = cspRefreshStatus;
+
+  window.cspToggleKeys = function(){
+    const p = document.getElementById('cspKeysPanel');
+    if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+  };
+
+  // ── Save BYOK keys (POST /api/social/keys) ──
+  window.cspSaveKeys = async function(provider){
+    let keys;
+    if (provider === 'x'){
+      keys = {
+        apiKey:       (document.getElementById('cspXApiKey')||{}).value?.trim(),
+        apiSecret:    (document.getElementById('cspXApiSecret')||{}).value?.trim(),
+        accessToken:  (document.getElementById('cspXAccessToken')||{}).value?.trim(),
+        accessSecret: (document.getElementById('cspXAccessSecret')||{}).value?.trim()
+      };
+      if (!keys.apiKey || !keys.apiSecret || !keys.accessToken || !keys.accessSecret){ toast('Fill all 4 𝕏 fields'); return; }
+    } else {
+      keys = {
+        botToken: (document.getElementById('cspTgToken')||{}).value?.trim(),
+        chatId:   (document.getElementById('cspTgChatId')||{}).value?.trim()
+      };
+      if (!keys.botToken){ toast('Bot Token required'); return; }
+    }
+    try{
+      const r = await fetch('/api/social/keys', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ provider, keys }), signal: AbortSignal.timeout(8000) });
+      const j = await r.json();
+      if (j.ok){ toast((provider==='x'?'𝕏':'Telegram') + ' keys saved'); cspRefreshStatus(); }
+      else toast('Save failed: ' + (j.error||'unknown'));
+    }catch(e){ toast('Save failed: ' + e.message); }
+  };
+
+  // ── Step 1: pull news (GET /api/news/crypto) ──
+  window.cspPullNews = async function(){
+    const list = document.getElementById('cspNewsList');
+    const btn = document.getElementById('cspPullBtn');
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ Loading…'; }
+    if (list) list.innerHTML = '<div style="font-size:9px;color:var(--text-muted);padding:16px;text-align:center">Fetching live headlines…</div>';
+    try{
+      const r = await fetch('/api/news/crypto', { signal: AbortSignal.timeout(12000) });
+      const j = await r.json();
+      const items = j.news || j.items || [];
+      CSP.news = items;
+      const meta = document.getElementById('cspNewsMeta');
+      if (meta) meta.textContent = items.length + ' items · ' + (j.source||'live');
+      if (!items.length){ list.innerHTML = '<div style="font-size:9px;color:#ffb347;padding:16px;text-align:center">No news returned.</div>'; return; }
+      list.innerHTML = items.map((it,i)=>(
+        '<div class="csp-news-item" data-i="'+i+'" onclick="cspSelectNews('+i+')" style="cursor:pointer;padding:7px 9px;border-radius:6px;margin-bottom:4px;border:1px solid transparent;font-size:9px;line-height:1.4;color:var(--text-primary)">'
+        + '<div style="font-weight:600">'+esc(it.title||it.headline||'(untitled)')+'</div>'
+        + (it.date?('<div style="font-size:7px;color:var(--text-muted);margin-top:2px">'+esc(it.date)+'</div>'):'')
+        + '</div>'
+      )).join('');
+      toast('Pulled ' + items.length + ' headlines');
+    }catch(e){
+      list.innerHTML = '<div style="font-size:9px;color:#ff5470;padding:16px;text-align:center">Failed: '+esc(e.message)+'</div>';
+    }finally{
+      if (btn){ btn.disabled = false; btn.textContent = '📰 1 · Pull News'; }
+    }
+  };
+
+  window.cspSelectNews = function(i){
+    CSP.selected = CSP.news[i] || null;
+    document.querySelectorAll('.csp-news-item').forEach(el=>{ el.style.border='1px solid transparent'; el.style.background='none'; });
+    const el = document.querySelector('.csp-news-item[data-i="'+i+'"]');
+    if (el){ el.style.border='1px solid #00e5ff'; el.style.background='rgba(0,229,255,0.08)'; }
+    const t = document.getElementById('cspSelTitle');
+    if (t) t.textContent = (CSP.selected && (CSP.selected.title||CSP.selected.headline)) || '— none —';
+  };
+
+  function selText(){
+    const s = CSP.selected; if (!s) return null;
+    return (s.title||s.headline||'') + (s.link?('\nSource: '+s.link):'');
+  }
+
+  // ── Step 2: analyze via ORACLE (POST /api/agents/route) ──
+  window.cspAnalyze = async function(){
+    const txt = selText();
+    if (!txt){ toast('Select a headline first'); return; }
+    const wrap = document.getElementById('cspAnalysisWrap');
+    const out = document.getElementById('cspAnalysis');
+    if (wrap) wrap.style.display = 'block';
+    if (out) out.textContent = '🔮 ORACLE analyzing…';
+    try{
+      const r = await fetch('/api/agents/route', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ agent:'ORACLE', agentName:'ORACLE', message:'Analyze this crypto news item — significance, market impact, and a one-line takeaway:\n\n'+txt }), signal: AbortSignal.timeout(45000) });
+      const j = await r.json();
+      const resp = j.response || j.content || j.error || 'No response';
+      if (out) out.textContent = resp;
+      const m = document.getElementById('cspAnalysisModel');
+      if (m && j.model) m.textContent = '· ' + j.model;
+      toast('ORACLE analysis ready');
+    }catch(e){ if (out) out.textContent = 'Failed: ' + e.message; }
+  };
+
+  // ── Step 3: short-form via summarize_text (POST /api/tools/run), QUILL fallback ──
+  window.cspShortForm = async function(){
+    const txt = selText();
+    if (!txt){ toast('Select a headline first'); return; }
+    const ta = document.getElementById('cspPostText');
+    if (ta) ta.value = '⏳ Writing short-form…';
+    try{
+      const r = await fetch('/api/tools/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tool:'summarize_text', args:{ text: txt } }), signal: AbortSignal.timeout(30000) });
+      const j = await r.json();
+      if (j.ok){
+        let out = j.result;
+        if (out && typeof out === 'object') out = out.summary || out.text || out.result || JSON.stringify(out);
+        if (ta) ta.value = String(out).trim();
+        cspUpdateCount();
+        toast('Short-form ready (summarize_text)');
+        return;
+      }
+      // fallback → QUILL writes the post
+      if (ta) ta.value = '⏳ summarize_text unavailable — QUILL writing…';
+      const q = await fetch('/api/agents/route', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ agent:'QUILL', agentName:'QUILL', message:'Write a punchy 280-character social post about this crypto news (no hashtags spam, 1 emoji max):\n\n'+txt }), signal: AbortSignal.timeout(45000) });
+      const qj = await q.json();
+      if (ta) ta.value = (qj.response||qj.content||qj.error||'').trim();
+      cspUpdateCount();
+      toast('Short-form via QUILL');
+    }catch(e){ if (ta) ta.value = 'Failed: ' + e.message; }
+  };
+
+  function cspUpdateCount(){
+    const ta = document.getElementById('cspPostText'), c = document.getElementById('cspCharCount');
+    if (ta && c) c.textContent = ta.value.length + ' chars';
+  }
+  window.cspUpdateCount = cspUpdateCount;
+
+  // ── Step 4: image (POST /api/image/generate) ──
+  window.cspGenImage = async function(){
+    const s = CSP.selected;
+    const prompt = (s && (s.title||s.headline)) || (document.getElementById('cspPostText')||{}).value;
+    if (!prompt){ toast('Select a headline or write text first'); return; }
+    const wrap = document.getElementById('cspImageWrap'), img = document.getElementById('cspImage');
+    if (wrap) wrap.style.display = 'block';
+    if (img){ img.removeAttribute('src'); img.alt = '⏳ generating image…'; }
+    toast('Generating image…');
+    try{
+      const r = await fetch('/api/image/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: 'crypto news illustration, neon cyberpunk, ' + prompt, model:'huggingface' }), signal: AbortSignal.timeout(60000) });
+      const j = await r.json();
+      const url = j.url || j.image || j.dataUrl;
+      if (url && img){ img.src = url; img.alt = 'generated'; toast('Image ready'); }
+      else { if (img) img.alt = 'no image returned'; toast('Image failed: ' + (j.error||'no url')); }
+    }catch(e){ if (img) img.alt = 'failed'; toast('Image failed: ' + e.message); }
+  };
+
+  // ── Step 5: post (POST /api/tools/run → post_to_x / post_to_telegram) ──
+  window.cspPost = async function(provider){
+    const ta = document.getElementById('cspPostText');
+    const text = ta ? ta.value.trim() : '';
+    if (!text){ toast('Post text is empty'); return; }
+    const tool = provider === 'x' ? 'post_to_x' : 'post_to_telegram';
+    const args = provider === 'x' ? { text } : { message: text };
+    toast('Posting to ' + (provider==='x'?'𝕏':'Telegram') + '…');
+    try{
+      const r = await fetch('/api/tools/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tool, args }), signal: AbortSignal.timeout(30000) });
+      const j = await r.json();
+      if (j.ok){
+        const res = j.result || {};
+        const link = res.url || res.link || res.tweetUrl;
+        toast('Posted to ' + (provider==='x'?'𝕏':'Telegram') + (link? (' → '+link):'') + ' ✓');
+        return;
+      }
+      if (j.needsAuth){
+        toast('Add ' + (provider==='x'?'𝕏':'Telegram') + ' keys to post');
+        const p = document.getElementById('cspKeysPanel');
+        if (p) p.style.display = 'block';
+        cspRefreshStatus();
+        return;
+      }
+      toast('Post failed: ' + (j.error||'unknown'));
+    }catch(e){ toast('Post failed: ' + e.message); }
+  };
+
+  // wire char counter + refresh status when Content Studio opens
+  document.addEventListener('input', function(e){ if (e.target && e.target.id === 'cspPostText') cspUpdateCount(); });
+  const _origRCS = window.renderContentStudio;
+  window.renderContentStudio = function(){
+    try{ if (typeof _origRCS === 'function') _origRCS.apply(this, arguments); }catch(err){ console.error('[csp] renderContentStudio inner', err); }
+    try{ cspRefreshStatus(); }catch(_){}
+  };
+})();
+</script>
+<!-- ════════ /CONTENT STUDIO PIPELINE ════════ -->
 
 </body>
 </html>

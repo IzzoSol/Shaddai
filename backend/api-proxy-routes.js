@@ -6298,6 +6298,71 @@ router.get('/agent/tools', (req, res) => {
   res.json({ tools: [...tools, ...mcpTools], total: tools.length + mcpTools.length, mcpTools: mcpTools.length });
 });
 
+// POST /api/tools/run — run ANY registered tool by name (reuses the agent-engine
+// executor; does NOT reimplement tools). Mutating tools (post_to_x, etc.) allowed.
+// Body: { tool: string, args?: object }
+// → { ok:true, tool, result }  |  { ok:false, tool, error, needsAuth?:true }
+router.post('/tools/run', async (req, res) => {
+  const { tool, args = {} } = req.body || {};
+  if (!tool || typeof tool !== 'string') {
+    return res.status(400).json({ ok: false, error: 'tool (string) required' });
+  }
+  // agent-engine tools first, then any connected MCP tools.
+  let t = agentEngine.TOOLS[tool];
+  if (!t || typeof t.execute !== 'function') {
+    try { t = require('./mcp-client').getAgentTools()[tool]; } catch {}
+  }
+  if (!t || typeof t.execute !== 'function') {
+    return res.status(404).json({ ok: false, error: `unknown tool: ${tool}` });
+  }
+  try {
+    const raw = await t.execute(args || {});
+    // Tools often return a JSON string; parse so we can surface needsAuth/success honestly.
+    let parsed = raw;
+    if (typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch {} }
+    const isObj = parsed && typeof parsed === 'object';
+    const needsAuth = isObj && (parsed.needsAuth || parsed.needsKey);
+    const failed = isObj && parsed.success === false;
+    if (failed) {
+      return res.json({
+        ok: false, tool,
+        error: parsed.error || 'tool failed',
+        ...(needsAuth ? { needsAuth: true } : {}),
+        result: parsed
+      });
+    }
+    return res.json({ ok: true, tool, result: parsed });
+  } catch (e) {
+    const msg = String(e && e.message ? e.message : e);
+    const needsAuth = /\b(key|token|auth|401|403|unauthorized|forbidden|not configured|credential|api_?key)\b/i.test(msg);
+    return res.json({ ok: false, tool, error: msg, ...(needsAuth ? { needsAuth: true } : {}) });
+  }
+});
+
+// ─── SOCIAL BYOK KEY STORAGE ────────────────────────────────────────────────
+// POST /api/social/keys — save X/Telegram keys to backend/data/social-keys.json
+//   Body: { provider:'x'|'telegram', keys:{...} }
+//   x       → { apiKey, apiSecret, accessToken, accessSecret, bearer? }
+//   telegram→ { botToken, chatId? }
+router.post('/social/keys', (req, res) => {
+  try {
+    const { provider, keys } = req.body || {};
+    if (!provider || !keys || typeof keys !== 'object') {
+      return res.status(400).json({ ok: false, error: 'provider and keys required' });
+    }
+    const status = require('./social-keys').saveKeys(provider, keys);
+    res.json({ ok: true, provider: String(provider).toLowerCase(), status });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/social/status — { x:boolean, telegram:boolean } (env OR saved file)
+router.get('/social/status', (req, res) => {
+  try { res.json(require('./social-keys').status()); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
 // ─── PROVIDER GATEWAY ────────────────────────────────────────────────────────
 // One endpoint the whole UI uses for chat. It never exposes which engine runs —
 // Ollama first (free/local), cloud fallback only if configured. Returns uniform

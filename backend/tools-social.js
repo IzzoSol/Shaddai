@@ -20,6 +20,9 @@
 
 const axios  = require('axios');
 const crypto = require('crypto');
+// BYOK fallback: env vars win, then keys saved via POST /api/social/keys
+// (backend/data/social-keys.json, gitignored). Honest needsAuth when neither is set.
+const socialKeys = require('./social-keys');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -101,7 +104,7 @@ module.exports = {
     },
     agents: ['ORACLE', 'ZEROX', 'PIKADON'],
     async execute({ query, limit = 10 } = {}) {
-      const bearer = process.env.X_BEARER_TOKEN;
+      const bearer = socialKeys.getXKeys().bearer;
       if (!bearer) {
         return JSON.stringify({
           success: false,
@@ -173,7 +176,7 @@ module.exports = {
     },
     agents: ['ORACLE', 'ZEROX'],
     async execute({ username } = {}) {
-      const bearer = process.env.X_BEARER_TOKEN;
+      const bearer = socialKeys.getXKeys().bearer;
       if (!bearer) {
         return JSON.stringify({
           success: false,
@@ -234,10 +237,11 @@ module.exports = {
     },
     agents: ['QUILL', 'TURTLE', 'SHADDAI'],
     async execute({ text, reply_to } = {}) {
-      const consumerKey    = process.env.X_API_KEY;
-      const consumerSecret = process.env.X_API_SECRET;
-      const accessToken    = process.env.X_ACCESS_TOKEN;
-      const accessSecret   = process.env.X_ACCESS_SECRET;
+      const _xk = socialKeys.getXKeys();
+      const consumerKey    = _xk.apiKey;
+      const consumerSecret = _xk.apiSecret;
+      const accessToken    = _xk.accessToken;
+      const accessSecret   = _xk.accessSecret;
 
       // Posting is a USER-context action — app-only bearer cannot do it.
       if (!accessToken || !accessSecret) {
@@ -317,7 +321,8 @@ module.exports = {
     },
     agents: ['QUILL', 'SHADDAI', 'PIKADON'],
     async execute({ message, chat_id, parse_mode } = {}) {
-      const token = process.env.TELEGRAM_BOT_TOKEN;
+      const _tg = socialKeys.getTelegramKeys();
+      const token = _tg.botToken;
       if (!token) {
         return JSON.stringify({
           success: false,
@@ -326,7 +331,7 @@ module.exports = {
         });
       }
 
-      const chatId = chat_id || process.env.TELEGRAM_CHAT_ID;
+      const chatId = chat_id || _tg.chatId;
       if (!chatId) {
         return JSON.stringify({
           success: false,
