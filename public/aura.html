@@ -116,6 +116,18 @@
   .live.updated::after{ content:attr(data-age); color:var(--mut); margin-left:8px; opacity:.75; }
   @media(max-width:460px){ .grid,.sub{ grid-template-columns:1fr 1fr; } h1{ font-size:22px; } .card .vv{ font-size:32px; } }
   @media(prefers-reduced-motion:reduce){ *{ animation-duration:.001s!important; animation-iteration-count:1!important; } #fx{ display:none; } }
+  /* ── roadmap rows ── */
+  .rmap-row{ display:flex; align-items:flex-start; gap:14px; background:rgba(20,13,5,.6); backdrop-filter:blur(6px); border:1px solid var(--bd); border-radius:9px; padding:13px 16px; transition:.2s; }
+  .rmap-row:hover{ border-color:var(--cy); box-shadow:0 0 16px rgba(196,162,78,.12); }
+  .rmap-num{ font-family:'Cinzel',serif; font-weight:700; font-size:17px; color:var(--bd); flex:0 0 26px; line-height:1.25; padding-top:1px; }
+  .rmap-body{ flex:1; }
+  .rmap-title{ font-family:'Cinzel',serif; font-size:13px; font-weight:600; color:var(--cy); letter-spacing:.06em; margin-bottom:3px; text-shadow:0 0 10px rgba(196,162,78,.3); }
+  .rmap-desc{ font-size:11.5px; color:var(--mut); line-height:1.55; }
+  .rmap-tag{ font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; border-radius:4px; padding:3px 9px; flex:0 0 auto; align-self:flex-start; margin-top:2px; white-space:nowrap; }
+  .rmap-tag.next{ color:var(--cy); border:1px solid rgba(196,162,78,.5); background:rgba(196,162,78,.08); }
+  .rmap-tag.planned{ color:var(--mut); border:1px solid var(--bd); background:rgba(30,18,8,.5); }
+  .rmap-tag.live{ color:var(--grn); border:1px solid rgba(156,124,38,.55); background:rgba(156,124,38,.09); }
+  @media(max-width:540px){ .rmap-row{ flex-wrap:wrap; } .rmap-tag{ margin-top:6px; } }
 </style>
 </head>
 <body>
@@ -216,6 +228,78 @@
     <div class="box">
       <h2>RECENT SAVES</h2>
       <div class="feed" id="feed"><div class="ev"><span class="sn">waiting for activity…</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── ROADMAP ── -->
+  <div class="box" id="roadmapBox" style="margin-bottom:14px">
+    <h2>ROADMAP — HOW AURA KEEPS IMPROVING</h2>
+    <div class="h-sub">AURA improves continuously — here's what's shipping next to save more on every call.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+
+      <div class="rmap-row">
+        <div class="rmap-num">1</div>
+        <div class="rmap-body">
+          <div class="rmap-title">Semantic Caching</div>
+          <div class="rmap-desc">Embed prompts with a local model (MiniLM) and match by <em>meaning</em>, so paraphrased &amp; complex prompts hit the cache — not just exact strings.</div>
+        </div>
+        <span class="rmap-tag next">next</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">2</div>
+        <div class="rmap-body">
+          <div class="rmap-title">Knowledge-Base Seed</div>
+          <div class="rmap-desc">Load a real reference corpus so AURA answers substantive questions for free — grows the SEED method beyond zero.</div>
+        </div>
+        <span class="rmap-tag planned">planned</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">3</div>
+        <div class="rmap-body">
+          <div class="rmap-title">Native Prompt Caching</div>
+          <div class="rmap-desc">Reuse large system prompts across agent turns via <code style="color:var(--cy);font-size:11px">cache_control</code> so they aren't re-billed on every call.</div>
+        </div>
+        <span class="rmap-tag planned">planned</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">4</div>
+        <div class="rmap-body">
+          <div class="rmap-title">Cheaper-Model Routing</div>
+          <div class="rmap-desc">Send trivial prompts to a local or cheap model; reserve 70B for the hard ones — automatic cost tiering per call.</div>
+        </div>
+        <span class="rmap-tag planned">planned</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">5</div>
+        <div class="rmap-body">
+          <div class="rmap-title">OpenAI-Compatible Proxy</div>
+          <div class="rmap-desc">Point any tool (Cursor, Claude Code, your own code) at SHADDAI's endpoint and get token savings automatically — drop-in BYOK.</div>
+        </div>
+        <span class="rmap-tag planned">planned</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">6</div>
+        <div class="rmap-body">
+          <div class="rmap-title">MCP Deepening</div>
+          <div class="rmap-desc">Expose savings as an MCP resource and a <code style="color:var(--cy);font-size:11px">compress_context</code> tool so any MCP client can save on its own context window.</div>
+        </div>
+        <span class="rmap-tag planned">planned</span>
+      </div>
+
+      <div class="rmap-row">
+        <div class="rmap-num">7</div>
+        <div class="rmap-body">
+          <div class="rmap-title">Self-Learning Loop</div>
+          <div class="rmap-desc">AURA already auto-promotes recurring misses to the cache; thresholds keep tuning from live data so every repeated pattern pays off faster over time.</div>
+        </div>
+        <span class="rmap-tag live">live</span>
+      </div>
+
     </div>
   </div>
 
