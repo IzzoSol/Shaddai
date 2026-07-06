@@ -95,6 +95,94 @@
   Storage.prototype.removeItem=function(k){ if(this===window.localStorage && isGuest() && !AUTH.test(k)){ try{_rem.call(window.sessionStorage,k);}catch(e){} } return _rem.call(this,k); };
 })();
 </script>
+
+<!-- ── SIGN-IN OVERLAY (Firebase) — Google / email / skip-as-guest ── -->
+<style>
+#shdAuthGate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(1000px 600px at 50% -10%,rgba(0,255,136,.10),transparent 60%),linear-gradient(180deg,#05070a,#04060a);
+  font-family:'Rajdhani','Share Tech Mono',system-ui,sans-serif;}
+#shdAuthGate.on{display:flex;}
+#shdAuthGate .card{position:relative;width:min(420px,92vw);border-radius:18px;padding:2px;
+  background:linear-gradient(135deg,#ffd45e,rgba(0,255,136,.35) 45%,#00f0ff);box-shadow:0 0 60px rgba(0,255,136,.15);}
+#shdAuthGate .in{background:linear-gradient(160deg,#0d1420,#0a0f18);border-radius:16px;padding:30px 26px;}
+#shdAuthGate .logo{display:flex;align-items:center;gap:9px;font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:.28em;color:#e7f3ec;font-size:15px;}
+#shdAuthGate .logo .d{width:9px;height:9px;border-radius:50%;background:#00ff88;box-shadow:0 0 12px #00ff88;}
+#shdAuthGate h2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:24px;margin:16px 0 4px;color:#fff;}
+#shdAuthGate p.sub{color:#8ba0a0;font-size:14px;margin:0 0 18px;line-height:1.5;}
+#shdAuthGate button, #shdAuthGate input{width:100%;box-sizing:border-box;font-family:inherit;border-radius:11px;}
+#shdAuthGate input{background:#070b12;border:1px solid rgba(0,255,136,.16);color:#e7f3ec;padding:12px 13px;font-size:15px;margin-bottom:9px;outline:none;}
+#shdAuthGate input:focus{border-color:#ffd45e;}
+#shdAuthGate .bg{cursor:pointer;border:none;padding:13px;font-weight:700;font-size:14px;letter-spacing:.03em;margin-bottom:9px;transition:transform .15s,filter .2s;}
+#shdAuthGate .bg:hover{transform:translateY(-1px);filter:brightness(1.06);}
+#shdAuthGate .google{background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;}
+#shdAuthGate .prim{background:linear-gradient(100deg,#00ff88,#00f0ff);color:#04060a;font-family:'Orbitron',sans-serif;}
+#shdAuthGate .skip{background:transparent;border:1px solid rgba(139,160,160,.3)!important;color:#8ba0a0;}
+#shdAuthGate .skip:hover{color:#ffd45e;border-color:#ffd45e!important;}
+#shdAuthGate .or{display:flex;align-items:center;gap:10px;color:#5c6f70;font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:12px 0;}
+#shdAuthGate .or::before,#shdAuthGate .or::after{content:'';flex:1;height:1px;background:rgba(0,255,136,.12);}
+#shdAuthGate .msg{min-height:17px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ff6b6b;margin-top:4px;}
+#shdAuthGate .fine{font-size:11px;color:#5c6f70;margin-top:12px;line-height:1.5;}
+#shdGuestBadge{position:fixed;bottom:12px;left:12px;z-index:9998;display:none;align-items:center;gap:7px;background:rgba(12,17,25,.9);
+  border:1px solid rgba(255,212,94,.3);color:#ffd45e;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.1em;
+  padding:6px 11px;border-radius:100px;cursor:pointer;}
+#shdGuestBadge.on{display:flex;}
+</style>
+<div id="shdAuthGate" role="dialog" aria-modal="true">
+  <div class="card"><div class="in">
+    <div class="logo"><span class="d"></span>SHADDAI</div>
+    <h2>Enter the Council</h2>
+    <p class="sub">Sign in to save your agents, memory and work across sessions — or jump in as a guest.</p>
+    <button class="bg google" onclick="shdGate.google()">
+      <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38z"/></svg>
+      Continue with Google
+    </button>
+    <div class="or">or</div>
+    <input id="shdEmail" type="email" placeholder="you@email.com" autocomplete="email">
+    <input id="shdPass" type="password" placeholder="password" autocomplete="current-password">
+    <button class="bg prim" onclick="shdGate.email()">Sign in / Create account</button>
+    <button class="bg skip" onclick="shdGate.guest()">Skip — continue as guest →</button>
+    <div class="msg" id="shdAuthMsg"></div>
+    <div class="fine">Guest mode works fully, but your data won't be saved after you close the tab.</div>
+  </div></div>
+</div>
+<div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
+<script>
+(function(){
+  function gate(){ return document.getElementById('shdAuthGate'); }
+  function msg(t,color){ var m=document.getElementById('shdAuthMsg'); if(m){ m.textContent=t||''; m.style.color=color||'#ff6b6b'; } }
+  var G={
+    show:function(){ var g=gate(); if(g) g.classList.add('on'); },
+    hide:function(){ var g=gate(); if(g) g.classList.remove('on'); },
+    google:async function(){ try{ if(window.shdSignIn) await window.shdSignIn(); }catch(e){ msg(e.code||e.message); } },
+    email:async function(){
+      var e=(document.getElementById('shdEmail')||{}).value, p=(document.getElementById('shdPass')||{}).value;
+      if(!e||!p){ msg('Enter email and password.'); return; }
+      msg('…',' #8ba0a0');
+      try{
+        try{ await firebase.auth().signInWithEmailAndPassword(e,p); }
+        catch(err){ if(err.code==='auth/user-not-found'){ await firebase.auth().createUserWithEmailAndPassword(e,p); } else { throw err; } }
+      }catch(err){ msg((err.code||err.message||'').replace('auth/','')); }
+    },
+    guest:function(){ try{ sessionStorage.setItem('shd_guest','1'); }catch(e){} G.hide(); var b=document.getElementById('shdGuestBadge'); if(b) b.classList.add('on'); }
+  };
+  window.shdGate=G;
+  // Called by the auth IIFE on every Firebase auth-state change.
+  window.shdRenderAuth=function(){
+    var u=window.SHD_AUTH&&window.SHD_AUTH.user;
+    if(u){ try{ localStorage.setItem('shd_mode','signed'); sessionStorage.removeItem('shd_guest'); }catch(e){} G.hide();
+      var b=document.getElementById('shdGuestBadge'); if(b) b.classList.remove('on'); }
+  };
+  function decide(){
+    var signed=window.SHD_AUTH&&window.SHD_AUTH.user;
+    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(signed){ G.hide(); return; }
+    if(guest){ var b=document.getElementById('shdGuestBadge'); if(b) b.classList.add('on'); return; }
+    G.show();
+  }
+  // Wait briefly for Firebase to restore any existing session before deciding.
+  document.addEventListener('DOMContentLoaded',function(){ setTimeout(decide, 700); });
+})();
+</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffd23f">
 <script src="/pwa-register.js" defer></script>
@@ -3707,6 +3795,7 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
   <!-- Sign in (nav) removed — unwired -->
   <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent">⬡ The Forge</button>
   <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP">⚡ AURA</button>
+  <button class="nav-btn" onclick="window.open('/arcade.html','_blank')" style="color:#ff4d94;font-weight:700" title="SHADDAI Games — the Agent Arcade (beta)">🎮 Games <sup style="font-size:7px;opacity:.8">ᵦ</sup></button>
   <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World">⬡ SHADDAI WORLD</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
@@ -16490,6 +16579,19 @@ async function loadTaskReceipts() {
   }
 }
 
+// Load cloud brains from /api/brains so the per-agent dropdown lists every model whose
+// provider key is configured — they appear automatically when a key is added. Runs once.
+async function loadCloudBrains(){
+  try{
+    const r = await fetch('/api/brains'); const b = await r.json();
+    if(b && Array.isArray(b.brains)){
+      window.SHD_CLOUD_MODELS = b.brains.map(x=>({ id:x.id, label:x.label||x.id, model:x.model, available:!!x.available, provider:x.provider }));
+      if(typeof renderAgents==='function') renderAgents();
+    }
+  }catch(e){ /* offline / no backend — dropdown falls back to local models only */ }
+}
+try{ document.addEventListener('DOMContentLoaded', function(){ setTimeout(loadCloudBrains, 500); }); }catch(e){}
+
 function renderAgents() {
   // Update global model picker
   const gmp = document.getElementById('globalModelPicker');
@@ -16513,10 +16615,21 @@ function renderAgents() {
 
   const roleOpts = '<option value="">— Default —</option>' + Object.keys(AGENT_ROLES).map(r => `<option value="${r}">${r}</option>`).join('');
 
+  // Cloud brains (Groq / Ollama-Cloud / OpenRouter / Claude …) from /api/brains — shown
+  // alongside local Ollama models. Available ones (key present) are selectable; the rest
+  // appear greyed as "add key". Populated by loadCloudBrains(), refreshed on load.
+  const cloudBrains = window.SHD_CLOUD_MODELS || [];
+  const cloudOptsFor = (a) => cloudBrains.length
+    ? `<optgroup label="☁ Cloud brains">` + cloudBrains.map(b =>
+        `<option value="${escH(b.model)}" ${b.model === a.model ? 'selected' : ''} ${b.available ? '' : 'disabled'}>${escH(b.label)}${b.available ? '' : ' · add key'}</option>`
+      ).join('') + `</optgroup>`
+    : '';
+
   document.getElementById('agentTable').innerHTML = S.agents.map(a => {
-    const modelOpts = S.models.length > 0
-      ? S.models.map(m => `<option value="${m}" ${m === a.model ? 'selected' : ''}>${m}</option>`).join('')
+    const localOpts = S.models.length > 0
+      ? `<optgroup label="⬡ Local (Ollama)">` + S.models.map(m => `<option value="${m}" ${m === a.model ? 'selected' : ''}>${m}</option>`).join('') + `</optgroup>`
       : `<option value="${a.model}">${a.model}</option>`;
+    const modelOpts = localOpts + cloudOptsFor(a);
     const curRole = S.agentRoles[a.name] || '';
     const isPrimary = a.name === S.primaryAgent;
     const isRouted = S.singleAgentMode && a.name !== S.primaryAgent;
@@ -38666,11 +38779,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   <div id="commandCenterView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);padding-top:12px;padding-bottom:12px">
     <div style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:12px;overflow-x:auto;align-items:center;height:40px;min-height:40px">
-      <button class="nav-btn" onclick="switchCommandTab('agents')" id="cmdtab-agents" style="border:none;border-bottom:2px solid var(--accent);padding:8px 14px;background:linear-gradient(180deg,rgba(0,229,160,0.08) 0%,transparent);font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;flex-shrink:0">🔴 AGENTS</button>
-      <button class="nav-btn" onclick="switchCommandTab('trades')" id="cmdtab-trades" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0">⚡ TRADE SIGNALS</button>
-      <button class="nav-btn" onclick="switchCommandTab('jobs')" id="cmdtab-jobs" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0">📋 JOB BOARD</button>
-      <button class="nav-btn" onclick="switchCommandTab('earnings')" id="cmdtab-earnings" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0">💵 EARNINGS</button>
-      <button class="nav-btn" onclick="switchCommandTab('wallet')" id="cmdtab-wallet" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0">💼 WALLET</button>
+      <button class="nav-btn" onclick="switchCommandTab('agents')" id="cmdtab-agents" style="border:none;border-bottom:2px solid var(--accent);padding:8px 14px;background:linear-gradient(180deg,rgba(0,229,160,0.08) 0%,transparent);font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;flex-shrink:0"><img src="/assets/hub/agents.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">AGENTS</button>
+      <button class="nav-btn" onclick="switchCommandTab('trades')" id="cmdtab-trades" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/trades.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">TRADE SIGNALS</button>
+      <button class="nav-btn" onclick="switchCommandTab('jobs')" id="cmdtab-jobs" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/jobs.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">JOB BOARD</button>
+      <button class="nav-btn" onclick="switchCommandTab('earnings')" id="cmdtab-earnings" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/earnings.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">EARNINGS</button>
+      <button class="nav-btn" onclick="switchCommandTab('wallet')" id="cmdtab-wallet" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/wallet.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">WALLET</button>
       <span style="flex:1"></span>
       <span id="cmdTabLabel" style="font-size:9px;color:var(--accent);padding:8px 14px;white-space:nowrap;flex-shrink:0;font-weight:600;letter-spacing:0.5px"></span>
     </div>
@@ -51385,6 +51498,45 @@ window.hireAgentX402=async function(){
 })();
 </script>
 <!-- ════════ /CONTENT STUDIO PIPELINE ════════ -->
+
+<!-- ════════ MARKETS CONSOLIDATION — fold Sentiment into Markets, drop the Solana wallet ════════ -->
+<script>
+(function(){
+  // Consolidate: Sentiment lives INSIDE Markets now, the standalone Sentiment tab is gone,
+  // and the Solana Wallet widget is removed. Done at runtime so the big HTML stays untouched.
+  function consolidate(){
+    try{
+      // 1. Remove the standalone "Sentiment" nav buttons (top nav + sidebar).
+      document.querySelectorAll('.nav-btn,.sbt').forEach(function(b){
+        if(/showView\(\s*'sentiment'\s*\)/.test(b.getAttribute('onclick')||'')) b.remove();
+      });
+      // 2. Remove the Solana Wallet from the Markets (pipeline) view.
+      ['walletNetLabel','pipeWalletBody'].forEach(function(id){
+        var el=document.getElementById(id), card=el&&el.closest('.card');
+        if(card) card.remove(); else if(el) el.remove();
+      });
+      // 3. Move the Sentiment view's content INTO Markets (append to the pipeline view).
+      var pv=document.getElementById('pipelineView'), sv=document.getElementById('sentimentView');
+      if(pv&&sv&&!document.getElementById('pipelineSentiment')){
+        var wrap=document.createElement('div'); wrap.id='pipelineSentiment'; wrap.style.marginTop='16px';
+        while(sv.firstChild) wrap.appendChild(sv.firstChild);
+        pv.appendChild(wrap); sv.remove();
+      }
+    }catch(e){}
+  }
+  // 4. Route any showView('sentiment') to Markets, and populate sentiment whenever Markets opens.
+  if(typeof window.showView==='function'){
+    var _sv=window.showView;
+    window.showView=function(v){
+      if(v==='sentiment') v='pipeline';
+      var r=_sv.call(this,v);
+      if(v==='pipeline'||v==='markets'){ try{ if(typeof renderSentimentView==='function') setTimeout(renderSentimentView,250); }catch(e){} }
+      return r;
+    };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',consolidate); else consolidate();
+})();
+</script>
 
 </body>
 </html>
