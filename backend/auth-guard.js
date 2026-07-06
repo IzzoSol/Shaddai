@@ -37,18 +37,23 @@ function _getAdminAuth() {
 
     // Only initialize once even if this function is somehow re-entered.
     if (!admin.apps.length) {
+      let inited = false;
       if (serviceAccountJson) {
         // FIREBASE_SERVICE_ACCOUNT: full service-account JSON as a string.
-        const serviceAccount = JSON.parse(serviceAccountJson);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount)
-        });
-      } else {
-        // GOOGLE_APPLICATION_CREDENTIALS: path to a service-account JSON file.
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault()
-        });
+        try {
+          admin.initializeApp({ credential: admin.credential.cert(JSON.parse(serviceAccountJson)) });
+          inited = true;
+        } catch (e) {
+          // Malformed env var (common: multi-line paste truncated) — fall back to the file.
+          console.warn('[auth-guard] FIREBASE_SERVICE_ACCOUNT malformed, trying GOOGLE_APPLICATION_CREDENTIALS:', e.message);
+        }
       }
+      if (!inited && appCredsFile) {
+        // GOOGLE_APPLICATION_CREDENTIALS: path to a service-account JSON file (Render Secret File).
+        admin.initializeApp({ credential: admin.credential.applicationDefault() });
+        inited = true;
+      }
+      if (!inited) return null; // no usable credential
       console.log('[auth-guard] firebase-admin initialized');
     }
 
