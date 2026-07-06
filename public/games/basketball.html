@@ -571,6 +571,7 @@ const players = [
     facingAngle: 0,
     crossoverTimer: 0, stealTimer: 0,
     stunTimer: 0,
+    dunking: false, dunkTimer: 0, slammed: false,
     // Auto-AI state (used when game.autoMode = true)
     autoState: 'guard', autoShootTimer: 0, autoDriveTimer: 0,
   },
@@ -584,6 +585,7 @@ const players = [
     state: 'guard', facingAngle: Math.PI,
     stealTimer: 0, shootTimer: 0, driveTimer: 0,
     crossoverTimer: 0, stunTimer: 0,
+    dunking: false, dunkTimer: 0, slammed: false,
   }
 ];
 
@@ -593,6 +595,8 @@ const ball = {
   vel: new THREE.Vector3(),
   held: true, holder: 0,
   inFlight: false, bounces: 0, scored: false,
+  rimContact: false,   // RIM RULE: true once a shot clanks the ring — blocks the score until possession re-established
+  _lastDribbleSfx: 0,
 };
 
 const game = {
@@ -606,6 +610,7 @@ const game = {
   shakeTimer: 0, msgTimer: 0,
   msgEl: document.getElementById('msg'),
   autoMode: false,
+  dribblePhase: 0,   // advances faster while the ball-handler is moving (drives bounce + arm sync)
 };
 
 // GLB Animation state (per player index)
@@ -885,6 +890,7 @@ function animatePlayer(p, dt, moving, speed) {
   lArmPiv.rotation.x = -Math.sin(ph) * swing * 0.6;
   rArmPiv.rotation.x =  Math.sin(ph) * swing * 0.6;
   if (p.hasBall && game.shotCharging && p.isUser) rArmPiv.rotation.x = -Math.PI * 0.7;
+  if (p.dunking) { rArmPiv.rotation.x = -Math.PI * 0.85; lArmPiv.rotation.x = -Math.PI * 0.8; }
   if (!p.onGround) { lLegPiv.rotation.x = -0.3; rLegPiv.rotation.x = -0.3; }
   if (!p.isUser && p.state === 'shoot')  rArmPiv.rotation.x = -Math.PI * 0.6;
   if (!p.isUser && p.state === 'guard') { lLegPiv.rotation.x += 0.2; rLegPiv.rotation.x += 0.2; }
@@ -899,8 +905,8 @@ function applyProceduralBones(p, dt) {
   if (!b || !Object.keys(b).length) return; // no bones discovered — skip
 
   const lerp = THREE.MathUtils.lerp;
-  const phase = game.frameCount * 0.14; // dribble oscillation
 
+  const isDunking   = p.dunking;
   const isCharging  = p.isUser && game.shotCharging;
   const isFollowThru = (p._shootFollowThrough || 0) > 0;
   const isDefending  = !p.hasBall && !ball.inFlight && !p.isUser;
@@ -910,7 +916,16 @@ function applyProceduralBones(p, dt) {
   const lz = (bone, val, k) => { if (bone) bone.rotation.z = lerp(bone.rotation.z || 0, val, k); };
   const ly = (bone, val, k) => { if (bone) bone.rotation.y = lerp(bone.rotation.y || 0, val, k); };
 
-  if (isCharging) {
+  if (isDunking) {
+    // ── DUNK: both arms swing fully overhead to slam it down ──
+    lx(b.rarm,     -2.5, 0.30);
+    lx(b.larm,     -2.3, 0.30);
+    lx(b.rforearm, -0.35, 0.25);
+    lx(b.spine,    -0.14, 0.20);
+    lz(b.rarm,      0,    0.20);
+    lz(b.larm,      0,    0.20);
+
+  } else if (isCharging) {
     // ── SHOOT CHARGE: both arms raise progressively ──
     const raise = -game.shotPower * 1.55; // negative x = arms sweep up
     lx(b.rarm,     raise,       0.25);
@@ -930,9 +945,9 @@ function applyProceduralBones(p, dt) {
     lx(b.spine,    -0.06 * frac,0.15);
 
   } else if (p.hasBall) {
-    // ── DRIBBLE: right arm pushes down in sync with ball bounce ──
-    // sin goes 0→1→0 over half cycle; arm pushes forward (down) at bottom of bounce
-    const pushFwd = Math.max(0, Math.sin(phase)) * 0.85;
+    // ── DRIBBLE: right arm pushes down in sync with the actual ball bounce ──
+    // shares game.dribblePhase with updateBall so hand + ball stay locked together
+    const pushFwd = Math.max(0, Math.sin(game.dribblePhase)) * 0.85;
     lx(b.rarm,     pushFwd,          0.22);
     lx(b.rforearm, pushFwd * 0.45,   0.18);
     lz(b.rarm,     0,                0.10);
@@ -983,6 +998,9 @@ let camYaw = Math.PI;
 function updateUser(dt) {
   const you = players[0];
 
+  // Mid-dunk: dunk motion owns the body until landing
+  if (you.dunking) { updateDunk(you, dt); return; }
+
   // In AUTO mode, player 0 is also AI-driven
   if (game.autoMode) {
     updateAutoPlayer(you, dt);
@@ -1017,6 +1035,11 @@ function updateUser(dt) {
   }
 
   if (keys['Space'] && you.onGround) {
+    const horizToHoop = Math.sqrt((HOOP_X - you.pos.x)**2 + (HOOP_Z - you.pos.z)**2);
+    if (you.hasBall && horizToHoop < 2.5 && tryDunk(you)) {
+      animatePlayer(you, dt, false, speed);
+      return;   // dunk takes over
+    }
     you.vel.y = JUMP_VEL;
     you.onGround = false;
   }
@@ -1078,6 +1101,7 @@ function updateAutoPlayer(p, dt) {
   const opponent = players[1];
   const hoopVec = new THREE.Vector3(HOOP_X, 0, HOOP_Z);
 
+  if (p.dunking) { updateDunk(p, dt); return; }
   if (p.stunTimer > 0) { p.stunTimer -= dt; return; }
 
   const distToHoop = p.pos.distanceTo(hoopVec);
@@ -1088,6 +1112,8 @@ function updateAutoPlayer(p, dt) {
   let moveSpeed  = p.speed;
 
   if (p.hasBall) {
+    // Drive close enough? Slam it.
+    if (distToHoop < 2.2 && p.onGround && tryDunk(p)) return;
     if (distToHoop < 3.5) {
       // Shoot
       moveTarget = null;
@@ -1315,17 +1341,81 @@ function releaseShotUser() {
   else                showMsg(sInfo.type, sInfo.color, 0.50);
 }
 
-// Generic AI shot launch — uses horizontal distance for clean parabola
+// Generic AI shot launch — clean swish on a "make", deviated (rim/clank) on a "miss".
+// With the RIM RULE active, misses must scatter off-centre or they'd fall anyway.
 function launchAIShot(aiPlayer, errorMult = 0.3) {
   const startPos   = aiPlayer.pos.clone().add(new THREE.Vector3(0, 1.65, 0));
   const hdx = HOOP_X - startPos.x;
   const hdz = HOOP_Z - startPos.z;
   const horizDist  = Math.sqrt(hdx*hdx + hdz*hdz);
   const T = 0.85 + horizDist * 0.065; // flight time scales with distance
-  const vx = hdx / T + (Math.random()-0.5) * errorMult;
-  const vz = hdz / T + (Math.random()-0.5) * errorMult;
-  const vy = (HOOP_Y - startPos.y) / T - 0.5 * GRAVITY * T + (Math.random()-0.5) * errorMult * 0.6;
+
+  const makeChance = horizDist < 2.5 ? 0.60 : (horizDist < 6 ? 0.42 : 0.32);
+  let ex = 0, ez = 0, ey = 0;
+  if (Math.random() > makeChance) {
+    // MISS: deviate enough to clank the rim → live rebound (never a clean centre pass)
+    ex = (Math.random() < 0.5 ? 1 : -1) * (0.16 + Math.random() * errorMult);
+    ez = (Math.random() < 0.5 ? 1 : -1) * (0.16 + Math.random() * errorMult);
+    ey = (Math.random() - 0.5) * errorMult * 0.6;
+  }
+  const vx = hdx / T + ex;
+  const vz = hdz / T + ez;
+  const vy = (HOOP_Y - startPos.y) / T - 0.5 * GRAVITY * T + ey;
   launchBall(startPos, new THREE.Vector3(vx, vy, vz), players.indexOf(aiPlayer));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DUNK (Fix 5) — drive close to the rim, leap, slam it through for a guaranteed 2
+// ─────────────────────────────────────────────────────────────────
+function tryDunk(p) {
+  if (p.dunking || !p.hasBall || !p.onGround) return false;
+  const horiz = Math.sqrt((HOOP_X - p.pos.x)**2 + (HOOP_Z - p.pos.z)**2);
+  if (horiz > 2.5) return false;
+  p.dunking = true; p.dunkTimer = 0; p.slammed = false;
+  p.onGround = false;
+  p.vel.y = 7.6;   // explosive vertical leap
+  return true;
+}
+
+function updateDunk(p, dt) {
+  p.dunkTimer += dt;
+  // Drive horizontally to just under the rim
+  const under = new THREE.Vector3(HOOP_X, 0, HOOP_Z + 0.45);
+  const toT = under.clone().sub(p.pos); toT.y = 0;
+  const d = toT.length();
+  if (d > 0.05) {
+    toT.normalize();
+    const sp = Math.min(d / Math.max(dt, 0.001), p.speed * 1.8);
+    p.vel.x = toT.x * sp; p.vel.z = toT.z * sp;
+  } else { p.vel.x *= 0.4; p.vel.z *= 0.4; }
+  p.facingAngle = Math.atan2(HOOP_X - p.pos.x, HOOP_Z - p.pos.z);
+
+  // Vertical arc
+  p.vel.y += GRAVITY * dt;
+  p.pos.addScaledVector(p.vel, dt);
+  clampToCourt(p.pos);
+
+  const horiz = Math.sqrt((HOOP_X - p.pos.x)**2 + (HOOP_Z - p.pos.z)**2);
+  if (!p.slammed && p.pos.y > HOOP_Y - 1.25 && horiz < 1.35) {
+    p.slammed = true;
+    dunkScore(p);
+  }
+  if (p.pos.y <= 0) {
+    p.pos.y = 0; p.vel.y = 0; p.onGround = true;
+    p.dunking = false; p.slammed = true; // landed — dunk over (kept ball if it whiffed)
+  }
+
+  const moving = p.vel.x*p.vel.x + p.vel.z*p.vel.z > 0.1;
+  animatePlayer(p, dt, moving, p.speed);
+}
+
+function dunkScore(p) {
+  const team = players.indexOf(p);
+  game.possession = team;
+  ball.pos.set(HOOP_X, HOOP_Y, HOOP_Z);
+  ball.mesh.position.copy(ball.pos);
+  ball.held = false; ball.inFlight = false;
+  onScore(true);                 // guaranteed bucket, clean (bypasses rim rule) — handles fx + transfer
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1337,6 +1427,7 @@ function updateAI(dt) {
   const ai  = players[1];
   const you = players[0];
 
+  if (ai.dunking) { updateDunk(ai, dt); return; }
   if (ai.stunTimer > 0) { ai.stunTimer -= dt; return; }
 
   const ballPos   = ball.held ? players[ball.holder].pos.clone().add(new THREE.Vector3(0,1,0)) : ball.pos.clone();
@@ -1346,6 +1437,8 @@ function updateAI(dt) {
   // ── STATE TRANSITIONS ──
   if (ai.hasBall) {
     const distToHoop = ai.pos.distanceTo(new THREE.Vector3(HOOP_X, 0, HOOP_Z));
+    // Drive close enough? Attack the rim with a dunk.
+    if (distToHoop < 2.2 && ai.onGround && tryDunk(ai)) return;
     ai.state = distToHoop < 3.5 ? 'shoot' : 'drive';
   } else if (ball.inFlight && !ball.held) {
     ai.state = distToBall < 4.5 ? 'rebound' : 'guard';
@@ -1432,6 +1525,7 @@ function transferBall(playerIdx) {
   players.forEach(p => p.hasBall = false);
   ball.held = true; ball.holder = playerIdx;
   ball.inFlight = false;
+  ball.rimContact = false;   // RIM RULE: possession re-established → team may score again
   players[playerIdx].hasBall = true;
   game.possession = playerIdx;
   game.shotClock = SHOT_CLOCK_MAX;
@@ -1443,49 +1537,43 @@ function launchBall(startPos, vel, shooterIdx) {
   ball.held = false; ball.inFlight = true;
   ball.pos.copy(startPos); ball.vel.copy(vel);
   ball.scored = false; ball.bounces = 0;
+  ball.rimContact = false;   // fresh shot — clean until it clanks the rim
   game.possession = shooterIdx;
 }
 
 function updateBall(dt) {
   if (ball.held) {
     const holder = players[ball.holder];
-    const hIdx   = players.indexOf(holder);
-    const hBones = playerBones[hIdx];
-    const phase  = game.frameCount * 0.14;
     const isCharging = holder.isUser && game.shotCharging;
+    const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
+    const rt = new THREE.Vector3(fw.z, 0, -fw.x);
 
-    let placed = false;
-
-    // ── Attempt GLB hand-bone attachment ──
-    if (!isCharging && holder.glbGroup && glbLoaded[hIdx] && hBones.rhand) {
-      const hwp = new THREE.Vector3();
-      hBones.rhand.getWorldPosition(hwp);
-      // Sanity-check: hand must be above floor and near the player
-      if (hwp.y > 0.05 && hwp.distanceTo(holder.pos) < 2.8) {
-        ball.pos.copy(hwp);
-        ball.pos.y = Math.max(BALL_R + 0.02, ball.pos.y);
-        ball.mesh.position.copy(ball.pos);
-        placed = true;
+    if (holder.dunking) {
+      // ── DUNK: ball is carried high, driven toward the rim for the slam ──
+      const rim = new THREE.Vector3(HOOP_X, HOOP_Y + 0.18, HOOP_Z);
+      ball.pos.lerp(rim, 0.30);
+      ball.pos.y = Math.max(ball.pos.y, holder.pos.y + 2.0);
+    } else if (isCharging) {
+      // Ball rises from dribble height toward shooting position during charge
+      ball.pos.copy(holder.pos).addScaledVector(fw, 0.10);
+      ball.pos.y = 1.55 + game.shotPower * 0.60; // rises 1.55 → 2.15
+    } else {
+      // ── REAL DRIBBLE: ball actually bounces off the floor, synced to movement ──
+      const spd = Math.sqrt(holder.vel.x*holder.vel.x + holder.vel.z*holder.vel.z);
+      game.dribblePhase += dt * (7.5 + spd * 1.4);           // faster dribble when moving
+      const bounce   = Math.abs(Math.sin(game.dribblePhase)); // 0 = floor contact, 1 = up at the hand
+      const dribbleY = BALL_R + bounce * 0.80;                // slams down onto the boards
+      const side     = holder.team === 0 ? 0.30 : -0.30;
+      const lead     = spd > 0.4 ? 0.24 : 0.16;               // push the ball out front while moving
+      ball.pos.copy(holder.pos).addScaledVector(rt, side).addScaledVector(fw, lead);
+      ball.pos.y = dribbleY;
+      // Floor-contact bounce blip (throttled)
+      if (bounce < 0.06 && game.frameCount - (ball._lastDribbleSfx || 0) > 6) {
+        ball._lastDribbleSfx = game.frameCount;
+        sfxBounce();
       }
     }
-
-    if (!placed) {
-      if (isCharging) {
-        // Ball rises from dribble height toward shooting position during charge
-        const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
-        ball.pos.copy(holder.pos).addScaledVector(fw, 0.10);
-        ball.pos.y = 1.55 + game.shotPower * 0.60; // rises 1.55 → 2.15
-      } else {
-        // Rhythmic dribble: ball bounces beside body in sync with arm push
-        const dribbleY = 0.12 + Math.abs(Math.sin(phase)) * 0.70;
-        const side = holder.team === 0 ? 0.28 : -0.28;
-        const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
-        const rt = new THREE.Vector3(fw.z, 0, -fw.x);
-        ball.pos.copy(holder.pos).addScaledVector(rt, side).addScaledVector(fw, 0.18);
-        ball.pos.y = dribbleY;
-      }
-      ball.mesh.position.copy(ball.pos);
-    }
+    ball.mesh.position.copy(ball.pos);
     return;
   }
 
@@ -1517,6 +1605,7 @@ function updateBall(dt) {
     }
   }
 
+  checkBackboardCollision();
   checkRimCollision();
   checkScore();
 
@@ -1528,28 +1617,59 @@ function updateBall(dt) {
   }
 }
 
+// Backboard: bank/carom shots off the glass back into play (Fix 2 — rebounds)
+const BOARD_Z_FACE = -COURT_D/2 + 0.4 + 2.5;   // matches buildHoop() backboard z
+const BOARD_Y_C    = HOOP_Y + 0.48;
+const BOARD_HALF_W = 0.94, BOARD_HALF_H = 0.60;
+function checkBackboardCollision() {
+  if (ball.scored) return;
+  const frontZ = BOARD_Z_FACE - 0.04;           // court-facing glass face
+  if (ball.vel.z < 0 &&
+      ball.pos.z <= frontZ + BALL_R && ball.pos.z > BOARD_Z_FACE - 0.35 &&
+      Math.abs(ball.pos.x - HOOP_X) < BOARD_HALF_W &&
+      Math.abs(ball.pos.y - BOARD_Y_C) < BOARD_HALF_H) {
+    ball.pos.z = frontZ + BALL_R;
+    ball.vel.z = -ball.vel.z * 0.55;             // bounce back off the glass
+    ball.vel.x *= 0.85; ball.vel.y *= 0.92;
+    sfxBounce();
+  }
+}
+
 function checkRimCollision() {
   if (ball.scored) return;
   const dx = ball.pos.x - HOOP_X;
   const dz = ball.pos.z - HOOP_Z;
   const horizDist = Math.sqrt(dx*dx + dz*dz);
   const vertDist  = Math.abs(ball.pos.y - HOOP_Y);
-  if (horizDist < RIM_R + BALL_R + 0.04 && vertDist < 0.2) {
-    if (horizDist > 0.01) {
-      const nx = dx / horizDist, nz = dz / horizDist;
-      const dot = ball.vel.x*nx + ball.vel.z*nz;
-      if (dot < 0) {
-        ball.vel.x -= 2 * dot * nx * 0.55;
-        ball.vel.z -= 2 * dot * nz * 0.55;
-        ball.vel.y *= 0.65;
-        sfxBounce();
+  // Only the RING EDGE clanks. A ball passing through the centre (clean swish) is left alone.
+  const onRing = horizDist > RIM_R * 0.62 && horizDist < RIM_R + BALL_R + 0.05;
+  if (onRing && vertDist < 0.22) {
+    // ── RIM RULE ── any rim contact voids the make for this possession
+    if (!ball.rimContact) {
+      ball.rimContact = true;
+      if (horizDist > 0.01) {
+        const nx = dx / horizDist, nz = dz / horizDist;
+        const dot = ball.vel.x*nx + ball.vel.z*nz;
+        if (dot < 0) {                          // reflect the inbound component
+          ball.vel.x -= 2 * dot * nx * 0.6;
+          ball.vel.z -= 2 * dot * nz * 0.6;
+        }
+        // Kick outward + up so it caroms into a genuine loose-ball rebound
+        ball.vel.x += nx * 1.4;
+        ball.vel.z += nz * 1.4;
+        ball.vel.y  = Math.abs(ball.vel.y) * 0.4 + 1.7;
+      } else {
+        ball.vel.y = Math.abs(ball.vel.y) * 0.4 + 1.5;
       }
+      triggerNetRipple();
+      sfxBounce();
     }
   }
 }
 
 function checkScore() {
-  if (ball.scored || !ball.inFlight) return;
+  // RIM RULE: a shot that clanked the rim can never fall for a make this possession
+  if (ball.scored || !ball.inFlight || ball.rimContact) return;
   const horizDist = Math.sqrt(
     (ball.pos.x - HOOP_X)**2 + (ball.pos.z - HOOP_Z)**2
   );
@@ -1560,17 +1680,18 @@ function checkScore() {
   }
 }
 
-function onScore() {
+function onScore(isDunk = false) {
   const scorerTeam = game.possession;
   const isMine = scorerTeam === 0;
   const dist3 = ball.pos.distanceTo(new THREE.Vector3(HOOP_X, 0, HOOP_Z));
-  const pts = dist3 > 6 ? 3 : 2;
+  const pts = isDunk ? 2 : (dist3 > 6 ? 3 : 2);
+  ball.scored = true; ball.inFlight = false;
   if (isMine) {
     game.scoreYou += pts;
-    showMsg(pts === 3 ? '⚡ THREE!' : 'BUCKET!', '#37e6ff', 1.8);
+    showMsg(isDunk ? '⚡ SLAM DUNK!' : (pts === 3 ? '⚡ THREE!' : 'BUCKET!'), '#37e6ff', 1.8);
   } else {
     game.scoreAI  += pts;
-    showMsg(pts === 3 ? 'AI HITS THREE!' : 'AI SCORES!', '#ff4d94', 1.8);
+    showMsg(isDunk ? 'GHOST JAM!' : (pts === 3 ? 'AI HITS THREE!' : 'AI SCORES!'), '#ff4d94', 1.8);
   }
   game.shakeTimer = 0.4;
   sfxScore();
