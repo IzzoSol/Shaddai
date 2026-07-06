@@ -212,38 +212,46 @@
     <div class="betaChip rise" style="animation-delay:.15s">Public Beta · Pricing subject to change</div>
   </div>
 
+  <!-- ── HERO BANNER (FLUX art) ── -->
+  <div class="rise" style="animation-delay:.18s;position:relative;max-width:960px;margin:6px auto 0;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <img src="/assets/pricing/hero.png" alt="The SHADDAI council of agents" style="width:100%;display:block;">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,7,10,.15),rgba(5,7,10,.72))"></div>
+  </div>
+
   <!-- ── FOUNDERS HERO ── -->
   <div class="founders rise" style="animation-delay:.2s">
     <div class="inner">
+      <img src="/assets/pricing/founder-badge.png" alt="" aria-hidden="true" style="position:absolute;right:-34px;top:50%;transform:translateY(-50%);width:330px;max-width:44%;opacity:.16;pointer-events:none;filter:drop-shadow(0 0 30px rgba(255,212,94,.45))">
       <div class="ribbon">GENESIS</div>
-      <div class="kicker">Founders Offer · First 100 Only</div>
+      <div class="kicker">Founders Offer · First 25 Unlock Launch</div>
       <h2>Become a Founder</h2>
       <p class="lead">
-        A one-time gift for early believers: lifetime early-access to SHADDAI, locked-in founder pricing
-        forever, a Genesis badge on your profile, and a direct line to the team building it.
+        For the first believers. A one-time founding membership — we open SHADDAI to the world the moment
+        25 founders are in. Lock in founder pricing forever, claim your Genesis collectible, and help shape
+        what we build next.
       </p>
 
       <div class="priceRow">
         <span class="amt">$100</span>
-        <span class="unit">one-time · lifetime access</span>
+        <span class="unit">one-time · lifetime founder status</span>
         <div class="scarcity">
-          <div class="big">Join the first 100</div>
-          <div class="small">Limited to 100 founding members</div>
+          <div class="big">First 25 unlock launch</div>
+          <div class="small">Only 100 founders, ever</div>
         </div>
       </div>
 
       <ul class="fperks">
-        <li>Lifetime early-access to the platform</li>
-        <li>Founder pricing locked in for good</li>
-        <li>Genesis badge on your profile</li>
-        <li>Direct line to the team</li>
-        <li>Vote on the roadmap</li>
-        <li>Every future beta, first</li>
+        <li><b>$200 in dashboard credits</b> — premium agents, images &amp; clips</li>
+        <li>A <b>custom-forged agent</b> + your own private portal</li>
+        <li>A plot in the <b>Founders City</b></li>
+        <li><b>Lifetime founder discount</b> on every plan</li>
+        <li>Genesis collectible (mintable later) + profile badge</li>
+        <li>Governance vote + first access to everything</li>
       </ul>
 
       <div class="cta-block">
         <input class="email" id="fEmail" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email" />
-        <button class="btn gold" onclick="join('pricing-founders','fEmail','fMsg')">Claim Founders Spot</button>
+        <button class="btn gold" onclick="goCheckout('founder')">Claim Founder Spot</button>
       </div>
       <div class="fmsg" id="fMsg"></div>
     </div>
@@ -285,7 +293,7 @@
           <li>Premium tools: image &amp; clips</li>
           <li>3D world &amp; Bazaar access</li>
         </ul>
-        <button class="btn ghost" onclick="join('pricing-pro','fEmail','fMsg')">Notify me</button>
+        <button class="btn ghost" onclick="goCheckout('pro')">Get Pro →</button>
       </div>
 
       <div class="tier">
@@ -299,7 +307,7 @@
           <li>Priority support</li>
           <li>Team seats</li>
         </ul>
-        <button class="btn ghost" onclick="join('pricing-alpha','fEmail','fMsg')">Notify me</button>
+        <button class="btn ghost" onclick="goCheckout('alpha')">Get Alpha →</button>
       </div>
 
     </div>
@@ -315,10 +323,10 @@
     <p class="ssub">Prefer no subscription? Top up credits to run premium tasks — premium brains, image &amp; clip generation.</p>
     <div class="credits">
       <div class="packs">
-        <div class="pack" onclick="join('pricing-credits','fEmail','fMsg')"><b>$10</b><span>Starter top-up</span></div>
-        <div class="pack" onclick="join('pricing-credits','fEmail','fMsg')"><b>$25</b><span>Popular</span></div>
-        <div class="pack" onclick="join('pricing-credits','fEmail','fMsg')"><b>$50</b><span>Builder</span></div>
-        <div class="pack" onclick="join('pricing-credits','fEmail','fMsg')"><b>$100</b><span>Power</span></div>
+        <div class="pack" onclick="goCheckout('credits_10')"><b>$10</b><span>Starter top-up</span></div>
+        <div class="pack" onclick="goCheckout('credits_25')"><b>$25</b><span>Popular</span></div>
+        <div class="pack" onclick="goCheckout('credits_50')"><b>$50</b><span>Builder</span></div>
+        <div class="pack" onclick="goCheckout('credits_100')"><b>$100</b><span>Power</span></div>
       </div>
     </div>
   </section>
@@ -341,6 +349,25 @@
     </div>
   </section>
 
+  <!-- ── WHITEPAPER ── -->
+  <section class="sect">
+    <div class="shead">
+      <span class="n">04</span>
+      <h3>The Whitepaper</h3>
+      <span class="flag">The thesis</span>
+    </div>
+    <p class="ssub">Why SHADDAI exists, how the economics work, and where it's going — in plain language.</p>
+    <div class="capgrid">
+      <div class="cap"><div class="ic">⬡</div><b>An Agentic OS, not a chatbot</b><span>Persistent agents that remember, chain into workflows and run real tools — an environment, not a single model.</span></div>
+      <div class="cap"><div class="ic">✦</div><b>AURA makes it cheap</b><span>Caching, context compression and smart model routing cut API cost dramatically — real value at a fraction of the price.</span></div>
+      <div class="cap"><div class="ic">◈</div><b>Fiat-first, no token games</b><span>Simple subscriptions + credits. No token to launch, no hype — a product that works, with room to add more later.</span></div>
+      <div class="cap"><div class="ic">♛</div><b>Founders come first</b><span>Early believers earn lasting status and rewards — and are first in line for anything the ecosystem does next.</span></div>
+    </div>
+    <div style="margin-top:18px">
+      <a class="btn ghost" href="/whitepaper.html" style="display:inline-block;width:auto;padding:13px 24px">Read the full whitepaper →</a>
+    </div>
+  </section>
+
   <div class="foot">
     <span>SHADDAI · Public Beta</span>
     <span>Beta pricing — subject to change</span>
@@ -351,6 +378,15 @@
 <script>
 (function(){
   var reEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  // Redirect to real Stripe checkout for a plan/pack. Backend appends the buyer reference.
+  window.goCheckout = function(item){
+    fetch('/api/stripe/create-checkout', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ item: item, userId: (localStorage.getItem('shd_uid') || 'guest') }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d && d.url) { window.location.href = d.url; }
+        else { alert('Checkout for "' + item + '" isn\'t set up yet — check back soon.'); } })
+      .catch(function(){ alert('Could not start checkout — please try again.'); });
+  };
   window.join = function(source, inputId, msgId){
     var input = document.getElementById(inputId);
     var msg = document.getElementById(msgId);

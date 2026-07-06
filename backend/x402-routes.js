@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 const json = express.json();
+const { requireAdmin, softAuth } = require('./auth-guard');
 
 const LEDGER = path.join(__dirname, 'data', 'x402-ledger.json');
 const START_CREDITS = 100;        // every new wallet starts with demo credits
@@ -32,8 +33,11 @@ router.get('/api/x402/txns', (req, res) => {
   res.json({ ok: true, user, txns });
 });
 
-router.post('/api/x402/charge', json, (req, res) => {
-  const { user = 'guest', amount, reason, payee } = req.body || {};
+router.post('/api/x402/charge', softAuth, json, (req, res) => {
+  // Anti-drain: a signed-in caller can ONLY charge their OWN account — never name a
+  // victim in the body. body.user is a fallback for the unauthenticated demo world.
+  const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
+  const { amount, reason, payee } = req.body || {};
   const amt = Number(amount);
   if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive number' });
   const db = read(); const balance = bal(db, user);
@@ -50,7 +54,7 @@ router.post('/api/x402/charge', json, (req, res) => {
   res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx });
 });
 
-router.post('/api/x402/grant', json, (req, res) => {
+router.post('/api/x402/grant', requireAdmin, json, (req, res) => {
   const { user = 'guest', amount } = req.body || {};
   const amt = Number(amount);
   if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive number' });

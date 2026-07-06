@@ -324,6 +324,9 @@ const requestTracker = new RequestTracker();
 
 // Middleware
 app.use(compression());
+// Stripe webhook MUST see the raw body for signature verification — register it
+// BEFORE express.json() so the JSON parser doesn't consume the body first.
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), require('./stripe-webhook'));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
 // Never let browsers cache HTML pages — they must always fetch the latest build. (Static assets like
@@ -740,10 +743,18 @@ app.use('/api/billing', require('./billing-routes').router);
 // (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
 try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }
 catch (e) { console.warn('[prod] stripe-routes failed:', e.message); }
+try { app.use('/api/media', require('./media-save')); console.log('[prod] media persistence (/api/media/save) mounted'); }
+catch (e) { console.warn('[prod] media-save failed:', e.message); }
+try { app.use('/api/media-gen', require('./media-gen')); console.log('[prod] media generation (/api/media-gen: music/video/capabilities) mounted'); }
+catch (e) { console.warn('[prod] media-gen failed:', e.message); }
+try { app.use('/api/achievements', require('./achievements').router); console.log('[prod] achievements + levels (/api/achievements) mounted'); }
+catch (e) { console.warn('[prod] achievements failed:', e.message); }
 // Server-side LLM proxy — browser calls this so provider keys never ship to the client
 app.use('/api/llm', require('./llm-proxy-routes'));
 // ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
 app.use('/api/worlds', require('./routes/worlds-api'));
+// GRIDIRON PROSPECT — Game character saves, loads, and exports
+app.use('/api/gridiron', require('./routes/gridiron-routes'));
 
 // ============================================
 // AGENTS API

@@ -87,6 +87,34 @@
   .ev .sn{ flex:1; color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .ev .tk{ color:var(--txt); }
   .note{ font-size:10px; color:var(--mut); margin-top:14px; line-height:1.6; }
   @media(max-width:760px){ .grid,.sub{ grid-template-columns:1fr 1fr; } .cols{ grid-template-columns:1fr; } }
+  /* MCP setup code blocks */
+  .codeblk{ display:flex; align-items:center; gap:10px; background:#05121a; border:1px solid var(--bd); border-radius:6px; padding:11px 13px; }
+  .codeblk code{ flex:1; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--grn); word-break:break-all; line-height:1.5; }
+  .codeblk .cp{ flex:0 0 auto; background:transparent; border:1px solid var(--bd); color:var(--mut); font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:6px 12px; border-radius:5px; cursor:pointer; transition:.18s; }
+  .codeblk .cp:hover{ color:var(--cy); border-color:var(--cy); box-shadow:0 0 12px rgba(39,224,255,.22); }
+  .codeblk .cp.ok{ color:var(--grn); border-color:var(--grn); }
+  /* ── loading skeleton (first paint, before stats arrive) ── */
+  @keyframes skel{ 0%,100%{ opacity:.32; } 50%{ opacity:.9; } }
+  body.booting .vv{ color:var(--mut)!important; text-shadow:none!important; animation:skel 1.15s ease-in-out infinite; }
+  body.booting #feed .ev .sn, body.booting #tcTop{ opacity:.5; animation:skel 1.15s ease-in-out infinite; }
+  /* value flash when a number changes */
+  .vv.bumped{ animation:flash .7s ease; }
+  @keyframes flash{ 0%{ text-shadow:0 0 26px currentColor; transform:scale(1.06); } 100%{ text-shadow:inherit; transform:none; } }
+  /* ── connection banner ── */
+  #conn{ display:none; align-items:center; gap:10px; margin:16px 0 0; padding:10px 14px; border-radius:9px;
+    font-size:12px; letter-spacing:.04em; border:1px solid; }
+  #conn.show{ display:flex; }
+  #conn.off{ color:var(--amber); border-color:rgba(255,206,74,.4); background:rgba(255,206,74,.07); }
+  #conn.off::before{ content:'⚠'; }
+  /* ── honest empty-state banner (shown only when truly no activity) ── */
+  #empty{ display:none; margin:18px 0 2px; padding:13px 16px; border-radius:11px; font-size:12.5px; line-height:1.55;
+    color:var(--mut); border:1px dashed var(--bd); background:linear-gradient(180deg,rgba(10,22,30,.5),rgba(8,17,24,.5)); }
+  #empty.show{ display:block; }
+  #empty b{ color:var(--cy); }
+  #empty .cta{ color:var(--grn); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .live.updated::after{ content:attr(data-age); color:var(--mut); margin-left:8px; opacity:.75; }
+  @media(max-width:460px){ .grid,.sub{ grid-template-columns:1fr 1fr; } h1{ font-size:22px; } .card .vv{ font-size:32px; } }
+  @media(prefers-reduced-motion:reduce){ *{ animation-duration:.001s!important; animation-iteration-count:1!important; } #fx{ display:none; } }
 </style>
 </head>
 <body>
@@ -99,8 +127,11 @@
       <div class="core"><div class="ring r1"></div><div class="ring r2"></div><div class="dot"></div></div>
       <h1>AURA<small>token-saver · live monitor</small></h1>
     </div>
-    <div class="right"><a href="/">← dashboard</a><div class="live" id="liveT">streaming · 5s</div></div>
+    <div class="right"><a href="/">← dashboard</a><div class="live" id="liveT">connecting…</div></div>
   </div>
+
+  <div id="conn"><span id="connMsg"></span></div>
+  <div id="empty">No AURA activity has been recorded yet — every number below is an honest <b>0</b>. Run something in <span class="cta" id="emptyCta">TRY AURA ↓</span> or click <b>RUN BENCHMARK</b> and watch the counters move live.</div>
 
   <div class="grid">
     <div class="card g"><div class="k">Hit rate</div><div class="vv" id="rate">—</div><div class="s">answers served with no AI</div></div>
@@ -144,6 +175,15 @@
     <div id="tryOut">awaiting a prompt…</div>
   </div>
 
+  <div class="box" id="mcpBox">
+    <h2>⬡ MCP SETUP</h2>
+    <div class="h-sub">AURA is open-source and published to npm as <b style="color:var(--cy)">shaddai-aura</b> — it ships an <b>MCP server</b> that serves AURA's token-saving cache &amp; tools over the Model Context Protocol, so any MCP-capable AI client can answer repeats for free.</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:6px">Command</div>
+    <div class="codeblk"><code id="mcpCmd">npx -y -p shaddai-aura aura-mcp</code><button class="cp" data-copy="mcpCmd">copy</button></div>
+    <div style="font-size:11px;color:var(--mut);margin:14px 0 6px">Client config <span style="color:#3f5f66">— add to your MCP client's <code>mcpServers</code> block</span></div>
+    <div class="codeblk"><code id="mcpJson">{"mcpServers":{"aura":{"command":"npx","args":["-y","-p","shaddai-aura","aura-mcp"]}}}</code><button class="cp" data-copy="mcpJson">copy</button></div>
+  </div>
+
   <div class="cols">
     <div class="box">
       <h2>HOW IT SAVED</h2>
@@ -167,6 +207,8 @@
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString();
 const esc=s=>String(s==null?'':s).replace(/</g,'&lt;');
+document.body.classList.add('booting');   // skeleton until first stats arrive
+let lastOkTs=0;                            // when we last got a good /stats response
 
 // ── particle data-stream background ──
 (function(){
@@ -183,8 +225,10 @@ const esc=s=>String(s==null?'':s).replace(/</g,'&lt;');
 // ── count-up number animation ──
 function countTo(el, target, suffix, prefix){
   if(!el) return; suffix=suffix||''; prefix=prefix||'';
-  const from=parseFloat((el.dataset.v||'0')); const to=Number(target)||0; el.dataset.v=to;
+  const from=parseFloat((el.dataset.v||'0')); const to=Number(target)||0;
+  const hadValue=el.dataset.v!==undefined; el.dataset.v=to;
   if(from===to){ el.textContent=prefix+(Number.isInteger(to)?fmt(to):to.toFixed(4))+suffix; return; }
+  if(hadValue && el.classList.contains('vv')){ el.classList.remove('bumped'); void el.offsetWidth; el.classList.add('bumped'); }
   const t0=performance.now(), dur=700;
   (function step(t){ const k=Math.min(1,(t-t0)/dur); const e=1-Math.pow(1-k,3); const val=from+(to-from)*e;
     el.textContent=prefix+(Number.isInteger(to)?fmt(Math.round(val)):val.toFixed(4))+suffix; if(k<1) requestAnimationFrame(step);
@@ -235,8 +279,25 @@ $('verifyBtn').onclick=async()=>{
   $('verifyBtn').textContent='▶ RUN BENCHMARK'; $('verifyBtn').disabled=false;
 };
 
+function showConn(kind,msg){ const c=$('conn'); if(!kind){ c.className=''; return; } c.className='show '+kind; $('connMsg').textContent=msg; }
+$('emptyCta').onclick=()=>{ $('tryIn').focus(); $('tryIn').scrollIntoView({behavior:'smooth',block:'center'}); };
+
 async function tick(){
-  let s; try{ s=await (await fetch('/api/aura/stats')).json(); }catch(e){ $('liveT').textContent='offline'; return; }
+  let s;
+  try{
+    const res=await fetch('/api/aura/stats'); s=await res.json();
+    if(s && s.ok===false) throw new Error(s.error||'stats unavailable');
+  }catch(e){
+    document.body.classList.remove('booting');
+    $('liveT').classList.remove('updated'); $('liveT').textContent='offline — retrying';
+    showConn('off','AURA backend unreachable — showing last known values. Retrying every 5s.');
+    return;
+  }
+  document.body.classList.remove('booting'); showConn(null); lastOkTs=Date.now();
+  $('liveT').classList.add('updated'); $('liveT').textContent='streaming · 5s'; $('liveT').setAttribute('data-age','· updated now');
+  // honest empty-state: only when nothing at all has been recorded
+  const noActivity=!(s.hits||s.misses||s.tokensSaved);
+  $('empty').classList.toggle('show', noActivity);
   countTo($('rate'), Math.round((s.hitRate||0)*100), '%');
   countTo($('tok'), s.tokensSaved); $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
   countTo($('hits'), s.hits); countTo($('proj'), s.projMonthlyUsd||0, '', '$');
@@ -258,6 +319,21 @@ async function tick(){
   }
 }
 tick(); setInterval(tick,5000);
+// keep the "updated Ns ago" label honest between polls
+setInterval(()=>{ if(!lastOkTs) return; const a=Math.round((Date.now()-lastOkTs)/1000);
+  $('liveT').setAttribute('data-age', a<2?'· updated now':'· updated '+a+'s ago'); },1000);
+
+// ── MCP setup copy buttons ──
+document.querySelectorAll('.codeblk .cp').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const el = document.getElementById(btn.dataset.copy); if(!el) return;
+    const text = el.textContent;
+    try{ await navigator.clipboard.writeText(text); }
+    catch(e){ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); try{ document.execCommand('copy'); }catch(_){} s.removeAllRanges(); }
+    const old=btn.textContent; btn.textContent='copied'; btn.classList.add('ok');
+    setTimeout(()=>{ btn.textContent=old; btn.classList.remove('ok'); }, 1400);
+  });
+});
 </script>
 </body>
 </html>

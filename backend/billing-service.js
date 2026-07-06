@@ -205,16 +205,58 @@ function loadPersistentData() {
   });
 }
 
-function savePersistentData() {
+// ── DEBOUNCED WRITE-BEHIND ────────────────────────────────────────────────────
+// Writing 3 full JSON files synchronously on every credit/debit/recordUsage was
+// blocking the event loop (~6 sync writes per LLM call). Instead we mark data
+// dirty and flush once, at most every SAVE_DEBOUNCE_MS, off the hot path.
+// A synchronous flush on shutdown guarantees nothing is lost.
+const SAVE_DEBOUNCE_MS = 2000;
+let _dirty = false;
+let _saveTimer = null;
+
+function _writeAllSync() {
   _ensureDataDir();
   try {
     fs.writeFileSync(path.join(DATA_DIR, 'customers.json'), JSON.stringify(customerDatabase, null, 2));
     fs.writeFileSync(path.join(DATA_DIR, 'ledger.json'),    JSON.stringify(ledger, null, 2));
     fs.writeFileSync(path.join(DATA_DIR, 'usage.json'),     JSON.stringify(usageDatabase, null, 2));
+    _dirty = false;
   } catch (err) {
     logger.error('Failed to save persistent data:', err.message);
   }
 }
+
+function _scheduleSave() {
+  _dirty = true;
+  if (_saveTimer) return; // a flush is already pending
+  _saveTimer = setTimeout(() => {
+    _saveTimer = null;
+    if (_dirty) _writeAllSync();
+  }, SAVE_DEBOUNCE_MS);
+  if (_saveTimer.unref) _saveTimer.unref(); // don't keep the process alive just for this
+}
+
+// Synchronous flush — used on shutdown so no in-memory changes are lost.
+function _flushSaveSync() {
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  if (_dirty) _writeAllSync();
+}
+
+// savePersistentData() is now debounced (write-behind) for all callers.
+function savePersistentData() {
+  _scheduleSave();
+}
+
+// Flush pending writes synchronously on shutdown.
+let _shutdownHooked = false;
+function _installShutdownFlush() {
+  if (_shutdownHooked) return;
+  _shutdownHooked = true;
+  process.on('beforeExit', _flushSaveSync);
+  process.on('SIGINT',  () => { _flushSaveSync(); process.exit(0); });
+  process.on('SIGTERM', () => { _flushSaveSync(); process.exit(0); });
+}
+_installShutdownFlush();
 
 // ── CREDIT LEDGER HELPERS ────────────────────────────────────────────────────
 
@@ -315,7 +357,7 @@ function getTransactionHistory(userId, limit = 50) {
  * @param {number}  [p.costUsd]— USD cost of the call (optional; if absent, tokens*0.000001 used)
  * @returns {{ ok, creditsDebited, balance, shortfall }}
  */
-function recordUsage({ userId, agent = 'unknown', brain = 'unknown', tokens = 0, costUsd = 0 } = {}) {
+function recordUsage({ userId, agent = 'unknown', brain = 'unknown', tokens = 0, costUsd = 0, debitCredits = true } = {}) {
   if (!userId) {
     logger.warn('recordUsage called without userId — skipping');
     return { ok: false, creditsDebited: 0, balance: 0, shortfall: 0 };
@@ -330,7 +372,12 @@ function recordUsage({ userId, agent = 'unknown', brain = 'unknown', tokens = 0,
   const derivedCost = costUsd > 0 ? costUsd : tokens * 0.000001;
   const creditsToDebit = Math.max(1, Math.round(derivedCost * 1000));
 
-  const result = debit(userId, creditsToDebit, `llm:${agent}:${brain}`);
+  // debitCredits:false → record usage STATS only, no ledger debit.
+  // Used by the brain layer when charging happens via the per-action credit
+  // meter (debitForAction) instead, so we never double-charge.
+  const result = debitCredits
+    ? debit(userId, creditsToDebit, `llm:${agent}:${brain}`)
+    : { ok: true, balance: _getBalance(userId), shortfall: 0 };
 
   // Update aggregate usage stats
   if (!usageDatabase[userId]) {
@@ -363,7 +410,7 @@ function recordUsage({ userId, agent = 'unknown', brain = 'unknown', tokens = 0,
 
   return {
     ok: result.ok,
-    creditsDebited: creditsToDebit,
+    creditsDebited: debitCredits ? creditsToDebit : 0,
     balance: result.balance,
     shortfall: result.shortfall
   };
@@ -904,6 +951,11 @@ module.exports = {
 
   // Usage metering — call from LLM brain layer
   recordUsage,
+
+  // Per-action credit metering (outcome/hybrid model, see data/credit-costs.json)
+  // Re-exported from credit-meter.js. Lazy require keeps load order clean.
+  get debitForAction() { return require('./credit-meter').debitForAction; },
+  get getActionCost()  { return require('./credit-meter').getActionCost; },
 
   // Rate limiting
   enforceRateLimit,

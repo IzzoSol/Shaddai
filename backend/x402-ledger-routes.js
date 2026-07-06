@@ -4,6 +4,7 @@
 
 const router = require('express').Router();
 const ledger = require('./lib/x402-ledger');
+const { requireAdmin } = require('./auth-guard');
 
 // GET /balance/:account → { account, balance }
 router.get('/balance/:account', (req, res) => {
@@ -13,7 +14,7 @@ router.get('/balance/:account', (req, res) => {
 
 // POST /credit → body { account, amount, ref }
 // Simulates a top-up. Real on-chain settlement is out of scope here.
-router.post('/credit', (req, res) => {
+router.post('/credit', requireAdmin, (req, res) => {
   const body = req.body || {};
   const account = body.account;
   const amount = Number(body.amount);

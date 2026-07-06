@@ -25,6 +25,8 @@
 
 'use strict';
 
+const pool = require('./key-pool');
+
 // ─── Default models per provider ─────────────────────────────────────────────
 const DEFAULTS = {
   ollama:      { model: process.env.OLLAMA_MODEL      || 'llama3.2:1b' },
@@ -127,84 +129,145 @@ async function callOllama(messages, options) {
   };
 }
 
+// ── 1b. Ollama Cloud / Turbo (hosted, KEYED — big models) ─────────────────────
+// Same /api/chat shape as local Ollama, but against https://ollama.com with a
+// Bearer key. Rotates through the OLLAMA_API_KEY pool on rate-limit. This is a
+// separate provider from local Ollama (which stays keyless as the free backstop).
+async function callOllamaCloud(messages, options) {
+  const model = options.model || process.env.OLLAMA_CLOUD_MODEL || 'gpt-oss:120b';
+  const keyList = pool.keys('ollamacloud', { byok: options.byok?.ollamacloud });
+  if (!keyList.length) throw new Error('OLLAMA_API_KEY not set');
+  const baseUrl = process.env.OLLAMA_CLOUD_URL || 'https://ollama.com';
+
+  const body = {
+    model,
+    messages: trimMessages(messages),
+    stream: false,
+    options: { temperature: options.temperature ?? 0.7, num_predict: options.maxTokens || 1500 }
+  };
+
+  let lastErr;
+  for (const apiKey of keyList) {                     // rotate keys on rate-limit
+    try {
+      const data = await fetchJSON(`${baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(body)
+      }, 35000);
+
+      const content = data.message?.content;
+      if (!content) throw new Error('Ollama Cloud returned empty content');
+
+      return {
+        content,
+        provider: 'ollamacloud',
+        model,
+        tokens: { input: data.prompt_eval_count || 0, output: data.eval_count || 0 }
+      };
+    } catch (err) {
+      lastErr = err;
+      if (pool.isRateLimit(err) && keyList.length > 1) { pool.cool('ollamacloud', apiKey); continue; }
+      throw err;
+    }
+  }
+  throw lastErr || new Error('Ollama Cloud: all keys exhausted');
+}
+
 // ── 2. Groq (OpenAI-compatible) ───────────────────────────────────────────────
 async function callGroq(messages, options) {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error('GROQ_API_KEY not set');
-
   const model = options.model || DEFAULTS.groq.model;
+  const keyList = pool.keys('groq', { byok: options.byok?.groq });
+  if (!keyList.length) throw new Error('GROQ_API_KEY not set');
 
-  const data = await fetchJSON('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: trimMessages(messages),
-      max_tokens:  options.maxTokens  || 1500,
-      temperature: options.temperature ?? 0.6
-    })
-  }, 30000);
+  let lastErr;
+  for (const apiKey of keyList) {                     // rotate keys on rate-limit
+    try {
+      const data = await fetchJSON('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: trimMessages(messages),
+          max_tokens:  options.maxTokens  || 1500,
+          temperature: options.temperature ?? 0.6
+        })
+      }, 30000);
 
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Groq returned empty choices');
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('Groq returned empty choices');
 
-  return {
-    content,
-    provider: 'groq',
-    model,
-    tokens: {
-      input:  data.usage?.prompt_tokens     || 0,
-      output: data.usage?.completion_tokens || 0
+      return {
+        content,
+        provider: 'groq',
+        model,
+        tokens: {
+          input:  data.usage?.prompt_tokens     || 0,
+          output: data.usage?.completion_tokens || 0
+        }
+      };
+    } catch (err) {
+      lastErr = err;
+      if (pool.isRateLimit(err) && keyList.length > 1) { pool.cool('groq', apiKey); continue; }
+      throw err;                                       // non-quota error → let chain fall through
     }
-  };
+  }
+  throw lastErr || new Error('Groq: all keys exhausted');
 }
 
 // ── 3. OpenRouter (OpenAI-compatible, multi-model) ────────────────────────────
 async function callOpenRouter(messages, options) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
-
   const model = options.model || DEFAULTS.openrouter.model;
+  const keyList = pool.keys('openrouter', { byok: options.byok?.openrouter });
+  if (!keyList.length) throw new Error('OPENROUTER_API_KEY not set');
 
-  const data = await fetchJSON('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'HTTP-Referer': 'https://shaddai.app',
-      'X-Title': 'SHADDAI'
-    },
-    body: JSON.stringify({
-      model,
-      messages: trimMessages(messages),
-      max_tokens:  options.maxTokens  || 1500,
-      temperature: options.temperature ?? 0.7
-    })
-  }, 30000);
+  let lastErr;
+  for (const apiKey of keyList) {                     // rotate keys on rate-limit
+    try {
+      const data = await fetchJSON('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://shaddai.app',
+          'X-Title': 'SHADDAI'
+        },
+        body: JSON.stringify({
+          model,
+          messages: trimMessages(messages),
+          max_tokens:  options.maxTokens  || 1500,
+          temperature: options.temperature ?? 0.7
+        })
+      }, 30000);
 
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('OpenRouter returned empty choices');
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('OpenRouter returned empty choices');
 
-  return {
-    content,
-    provider: 'openrouter',
-    model,
-    tokens: {
-      input:  data.usage?.prompt_tokens     || 0,
-      output: data.usage?.completion_tokens || 0
+      return {
+        content,
+        provider: 'openrouter',
+        model,
+        tokens: {
+          input:  data.usage?.prompt_tokens     || 0,
+          output: data.usage?.completion_tokens || 0
+        }
+      };
+    } catch (err) {
+      lastErr = err;
+      if (pool.isRateLimit(err) && keyList.length > 1) { pool.cool('openrouter', apiKey); continue; }
+      throw err;
     }
-  };
+  }
+  throw lastErr || new Error('OpenRouter: all keys exhausted');
 }
 
 // ── 4. Anthropic/Claude (different API format) ────────────────────────────────
 async function callAnthropic(messages, options) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
-
   const model = options.model || DEFAULTS.anthropic.model;
+  const keyList = pool.keys('anthropic', { byok: options.byok?.anthropic || options.byok?.claude });
+  if (!keyList.length) throw new Error('ANTHROPIC_API_KEY not set');
 
   // Anthropic separates system prompt from the messages array
   const trimmed   = trimMessages(messages);
@@ -230,68 +293,87 @@ async function callAnthropic(messages, options) {
     requestBody.system = systemMsg.content;
   }
 
-  const data = await fetchJSON('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify(requestBody)
-  }, 35000);
+  let lastErr;
+  for (const apiKey of keyList) {                     // rotate keys on rate-limit
+    try {
+      const data = await fetchJSON('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type':      'application/json',
+          'x-api-key':         apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(requestBody)
+      }, 35000);
 
-  // Anthropic returns content as an array of blocks
-  const content = data.content
-    ?.filter(b => b.type === 'text')
-    .map(b => b.text)
-    .join('') || '';
+      // Anthropic returns content as an array of blocks
+      const content = data.content
+        ?.filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('') || '';
 
-  if (!content) throw new Error('Anthropic returned empty content');
+      if (!content) throw new Error('Anthropic returned empty content');
 
-  return {
-    content,
-    provider: 'anthropic',
-    model,
-    tokens: {
-      input:  data.usage?.input_tokens  || 0,
-      output: data.usage?.output_tokens || 0
+      return {
+        content,
+        provider: 'anthropic',
+        model,
+        tokens: {
+          input:  data.usage?.input_tokens  || 0,
+          output: data.usage?.output_tokens || 0
+        }
+      };
+    } catch (err) {
+      lastErr = err;
+      if (pool.isRateLimit(err) && keyList.length > 1) { pool.cool('anthropic', apiKey); continue; }
+      throw err;
     }
-  };
+  }
+  throw lastErr || new Error('Anthropic: all keys exhausted');
 }
 
 // ── 5. OpenAI (OpenAI-compatible) ─────────────────────────────────────────────
 async function callOpenAI(messages, options) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY not set');
-
   const model = options.model || DEFAULTS.openai.model;
+  const keyList = pool.keys('openai', { byok: options.byok?.openai });
+  if (!keyList.length) throw new Error('OPENAI_API_KEY not set');
 
-  const data = await fetchJSON('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: trimMessages(messages),
-      max_tokens:  options.maxTokens  || 1500,
-      temperature: options.temperature ?? 0.7
-    })
-  }, 30000);
+  let lastErr;
+  for (const apiKey of keyList) {                     // rotate keys on rate-limit
+    try {
+      const data = await fetchJSON('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: trimMessages(messages),
+          max_tokens:  options.maxTokens  || 1500,
+          temperature: options.temperature ?? 0.7
+        })
+      }, 30000);
 
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('OpenAI returned empty choices');
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('OpenAI returned empty choices');
 
-  return {
-    content,
-    provider: 'openai',
-    model,
-    tokens: {
-      input:  data.usage?.prompt_tokens     || 0,
-      output: data.usage?.completion_tokens || 0
+      return {
+        content,
+        provider: 'openai',
+        model,
+        tokens: {
+          input:  data.usage?.prompt_tokens     || 0,
+          output: data.usage?.completion_tokens || 0
+        }
+      };
+    } catch (err) {
+      lastErr = err;
+      if (pool.isRateLimit(err) && keyList.length > 1) { pool.cool('openai', apiKey); continue; }
+      throw err;
     }
-  };
+  }
+  throw lastErr || new Error('OpenAI: all keys exhausted');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -310,23 +392,28 @@ async function callOpenAI(messages, options) {
 const PROVIDER_CHAIN = [
   {
     name:    'groq',
-    enabled: () => Boolean(process.env.GROQ_API_KEY),
+    enabled: () => pool.envKeys('groq').length > 0,
     call:    callGroq
   },
   {
     name:    'openrouter',
-    enabled: () => Boolean(process.env.OPENROUTER_API_KEY),
+    enabled: () => pool.envKeys('openrouter').length > 0,
     call:    callOpenRouter
   },
   {
     name:    'anthropic',
-    enabled: () => Boolean(process.env.ANTHROPIC_API_KEY),
+    enabled: () => pool.envKeys('anthropic').length > 0,
     call:    callAnthropic
   },
   {
     name:    'openai',
-    enabled: () => Boolean(process.env.OPENAI_API_KEY),
+    enabled: () => pool.envKeys('openai').length > 0,
     call:    callOpenAI
+  },
+  {
+    name:    'ollamacloud',
+    enabled: () => pool.envKeys('ollamacloud').length > 0,
+    call:    callOllamaCloud
   },
   {
     name:    'ollama',

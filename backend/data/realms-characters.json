@@ -1,0 +1,28 @@
+{
+  "test1": {
+    "uid": "test1",
+    "name": "Zed",
+    "class": "Mage",
+    "gender": "male",
+    "walletAddress": null,
+    "level": 1,
+    "xp": 0,
+    "gold": 0,
+    "stats": {
+      "hp": 70,
+      "atk": 6,
+      "def": 4,
+      "spd": 9,
+      "mag": 18
+    },
+    "inventory": [],
+    "squad": [],
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "guildId": null,
+    "createdAt": 1783225739335,
+    "updatedAt": 1783225739335
+  }
+}

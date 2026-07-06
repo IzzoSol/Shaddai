@@ -1,0 +1,61 @@
+=== RUNTIME ERRORS (0) ===
+
+=== RUNTIME STATE ===
+{
+  "WORLD_RESOLVE_POS": "function",
+  "WORLD_COLLIDES": "function",
+  "WORLD_LAYOUT": true,
+  "quillPos": [
+    130,
+    225
+  ],
+  "collidesAtQuillCenter": false,
+  "collidesAtNexusCenter": false,
+  "quillResolveMoved": false,
+  "hasInteriors": "function",
+  "quillCoverage": {
+    "r60": "0/8",
+    "r90": "0/8",
+    "r118": "0/8",
+    "r140": "0/8",
+    "r165": "0/8",
+    "r190": "0/8"
+  },
+  "sceneMeshes": 1692,
+  "doorMeshes": 0,
+  "doorsAtPos": {
+    "NEXUS": 7,
+    "QUILL": 11,
+    "ORACLE": 7,
+    "TURTLE": 8,
+    "PIKADON": 9,
+    "ZEROX": 8
+  },
+  "realFootprints": {
+    "NEXUS": {
+      "extent": 163,
+      "meshes": 359
+    },
+    "QUILL": {
+      "extent": 252,
+      "meshes": 129
+    },
+    "ORACLE": {
+      "extent": 139,
+      "meshes": 119
+    },
+    "TURTLE": {
+      "extent": 211,
+      "meshes": 149
+    },
+    "PIKADON": {
+      "extent": 207,
+      "meshes": 138
+    },
+    "ZEROX": {
+      "extent": 169,
+      "meshes": 211
+    }
+  },
+  "exposedScene": true
+}

@@ -38,11 +38,15 @@ const STATS_FILE   = path.join(DATA_DIR, 'aura-stats.json');
 const SEED_FILE    = path.join(DATA_DIR, 'aura-seed.json');   // curated, stable knowledge base (committed)
 
 const DEFAULT_TTL_MS   = 24 * 60 * 60 * 1000; // 24h
+const PROMOTED_TTL_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days — promoted (frequently-missed) queries
 const MAX_ENTRIES      = 1000;                 // cap; evict oldest beyond this
 const SIM_THRESHOLD    = 0.82;                 // fuzzy match cutoff
 const COST_PER_1K      = 0.0005;              // ~$ per 1k tokens (rough blended)
 const CHARS_PER_TOK    = 4;                    // crude tokens ≈ chars / 4
 const MAX_RECENT_SAVES = 50;                   // rolling activity log cap
+const FLUSH_INTERVAL_MS = 5000;               // throttle: write disk at most every 5s
+const PROMOTE_THRESHOLD = 3;                  // misses before a query is auto-promoted
+const MAX_MISS_FREQ     = 200;                // max entries in the miss-frequency map
 
 // ---------------------------------------------------------------------------
 // Tiny JSON file helpers (resilient — never throw outward)
@@ -69,34 +73,84 @@ function writeJson(file, obj) {
 }
 
 // ---------------------------------------------------------------------------
-// Stats tracking (cumulative, persisted)
+// Stats tracking — in-memory with throttled disk persistence.
+// Counters live in _statsMem and are flushed to aura-stats.json at most
+// every FLUSH_INTERVAL_MS (5 s) and always on process exit.  This keeps
+// AURA fast (no per-request disk read) while surviving restarts cleanly.
 // ---------------------------------------------------------------------------
-function loadStats() {
-  const s = readJson(STATS_FILE, {
-    hits: 0,
-    misses: 0,
-    tokensSaved: 0,
-    volatileSkips: 0,
-    firstTs: Date.now(),   // when tracking began — anchors the HONEST monthly projection
-    byMethod: { fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 },
-    recentSaves: []
-  });
-  // Back-compat: ensure all fields exist even in old stat files
-  if (!s.byMethod) s.byMethod = { fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 };
-  if (typeof s.byMethod.recipe !== 'number') s.byMethod.recipe = 0;
-  if (typeof s.byMethod.seed !== 'number') s.byMethod.seed = 0;
-  if (!s.recentSaves) s.recentSaves = [];
-  if (typeof s.volatileSkips !== 'number') s.volatileSkips = 0;
-  if (typeof s.firstTs !== 'number') s.firstTs = Date.now();
-  return s;
+let _statsMem  = null;   // loaded once; mutated in-place
+let _statsDirty = false;
+let _statsLastFlush = 0;
+
+function _initStats() {
+  if (_statsMem) return _statsMem;
+  const s = readJson(STATS_FILE, {});
+  // Ensure all fields (back-compat + new)
+  _statsMem = {
+    hits:          typeof s.hits          === 'number' ? s.hits          : 0,
+    misses:        typeof s.misses        === 'number' ? s.misses        : 0,
+    tokensSaved:   typeof s.tokensSaved   === 'number' ? s.tokensSaved   : 0,
+    volatileSkips: typeof s.volatileSkips === 'number' ? s.volatileSkips : 0,
+    firstTs:       typeof s.firstTs       === 'number' ? s.firstTs       : Date.now(),
+    byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 }, s.byMethod || {}),
+    recentSaves: Array.isArray(s.recentSaves) ? s.recentSaves : [],
+    // self-improvement fields
+    missFreq:   (s.missFreq && typeof s.missFreq === 'object') ? s.missFreq : {},
+    promotions: typeof s.promotions === 'number' ? s.promotions : 0,
+    promoted:   (s.promoted && typeof s.promoted === 'object') ? s.promoted : {}
+  };
+  if (typeof _statsMem.byMethod.recipe !== 'number') _statsMem.byMethod.recipe = 0;
+  if (typeof _statsMem.byMethod.seed   !== 'number') _statsMem.byMethod.seed   = 0;
+  return _statsMem;
 }
-function bumpStats(mut) {
+
+/** Write in-memory stats to disk if dirty; reset dirty flag. */
+function flushStats() {
+  if (!_statsDirty || !_statsMem) return;
   try {
-    const s = loadStats();
-    mut(s);
-    writeJson(STATS_FILE, s);
+    writeJson(STATS_FILE, _statsMem);
+    _statsDirty = false;
+    _statsLastFlush = Date.now();
   } catch (_) { /* ignore */ }
 }
+
+/** Flush remaining data when the process exits (catches graceful shutdowns). */
+process.on('exit', flushStats);
+
+/** Mutate in-memory stats; flush to disk if the throttle window has elapsed. */
+function bumpStats(mut) {
+  try {
+    const s = _initStats();
+    mut(s);
+    _statsDirty = true;
+    if (Date.now() - _statsLastFlush >= FLUSH_INTERVAL_MS) flushStats();
+  } catch (_) { /* ignore */ }
+}
+
+/**
+ * learnMiss(prompt) — track a missed query for the self-improvement loop.
+ * Increments the miss-frequency counter for the normalized form of `prompt`.
+ * The miss map is bounded at MAX_MISS_FREQ entries (lowest-count evicted).
+ * Queries already promoted are silently skipped.
+ */
+function learnMiss(prompt) {
+  try {
+    const norm = normalize(prompt);
+    if (!norm) return;
+    const s = _initStats();
+    if (s.promoted[norm]) return; // already promoted — no further tracking needed
+    s.missFreq[norm] = (s.missFreq[norm] || 0) + 1;
+    // Evict lowest-count entries if map exceeds cap
+    const keys = Object.keys(s.missFreq);
+    if (keys.length > MAX_MISS_FREQ) {
+      keys.sort((a, b) => s.missFreq[a] - s.missFreq[b]);
+      for (let i = 0; i < keys.length - MAX_MISS_FREQ; i++) delete s.missFreq[keys[i]];
+    }
+    _statsDirty = true;
+    if (Date.now() - _statsLastFlush >= FLUSH_INTERVAL_MS) flushStats();
+  } catch (_) { /* ignore */ }
+}
+
 function estTokens(str) {
   return Math.max(1, Math.ceil(String(str || '').length / CHARS_PER_TOK));
 }
@@ -1268,9 +1322,10 @@ function route(prompt, opts = {}) {
 
     // Miss — caller should hit the LLM.
     bumpStats((s) => { s.misses++; });
+    learnMiss(p);
     return { hit: false };
   } catch (_) {
-    try { bumpStats((s) => { s.misses++; }); } catch (_2) {}
+    try { bumpStats((s) => { s.misses++; }); learnMiss(String(prompt || '')); } catch (_2) {}
     return { hit: false };
   }
 }

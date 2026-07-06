@@ -20,6 +20,28 @@
       ]
     },
     {
+      "id": "shaddai-realms",
+      "name": "SHADDAI REALMS · BETA",
+      "operator": "shaddai-guild",
+      "url": "/realms",
+      "position": [
+        0,
+        0,
+        -200
+      ],
+      "color": "#b06bff",
+      "entry_fee_usdc": 0,
+      "type": "game",
+      "access": "public",
+      "doc": "SHADDAI REALMS — 2.5D isometric anime open-world RPG. Join the Shaddai Guild, forge a hero, fight through to the Shadow Portal boss.",
+      "tags": [
+        "rpg",
+        "game",
+        "guild",
+        "anime"
+      ]
+    },
+    {
       "id": "the-agora",
       "name": "The Agora (Bazaar)",
       "operator": "shaddai-treasury",
@@ -146,6 +168,28 @@
       "doc": "",
       "tags": [
         "sports"
+      ]
+    },
+    {
+      "id": "tufish-temple",
+      "name": "TUFISH TEMPLE",
+      "operator": "zerox",
+      "url": "/tufish.html",
+      "position": [
+        60,
+        0,
+        200
+      ],
+      "color": "#ffd700",
+      "entry_fee_usdc": 0,
+      "type": "link",
+      "access": "public",
+      "doc": "TuFish — Yin & Yang of Research & AI. Live Wikipedia research + ZEROX AI reflection.",
+      "tags": [
+        "research",
+        "ai",
+        "zerox",
+        "markets"
       ]
     }
   ]

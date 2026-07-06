@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SHADDAI REALMS</title>
+  <meta name="description" content="SHADDAI REALMS — 2.5D isometric anime open-world RPG, part of the SHADDAI ecosystem." />
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #05050a; /* dark background so canvas letterboxing looks intentional */
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    #game-root {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 50%, #12122a 0%, #05050a 100%);
+    }
+    #game-root canvas {
+      image-rendering: pixelated;
+      box-shadow: 0 0 60px rgba(120, 90, 255, 0.25);
+    }
+    /* Fallback "no JS / loading" message, replaced once Phaser boots */
+    #boot-fallback {
+      position: absolute;
+      color: #ffd580;
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-CPa-dJeI.js"></script>
+</head>
+<body>
+  <div id="game-root">
+    <div id="boot-fallback">Summoning SHADDAI REALMS…</div>
+  </div>
+</body>
+</html>

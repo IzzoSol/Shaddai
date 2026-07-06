@@ -1936,6 +1936,10 @@ input[type="range"]::-moz-range-track {
 /* Adjust popout button when panel is side-docked */
 body:has(#bottomPanel.docked-side) #popChatBtn { right: 400px; }
 body:has(#bottomPanel.docked-side.side-minimized) #popChatBtn { right: 62px; }
+/* Minimized state (double-click) — collapses the launcher to a small ◈ dot you can tuck anywhere */
+#popChatBtn.shd-min { padding:0!important; width:48px!important; height:48px!important; border-radius:50%!important; font-size:0!important; letter-spacing:0!important; }
+#popChatBtn.shd-min::before { content:'◈'; font-size:18px; }
+#popChatBtn.shd-dragging { animation:none!important; transition:none!important; cursor:grabbing!important; }
 
 /* Notifications */
 #notify {
@@ -3771,14 +3775,12 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
   <button class="nav-btn" onclick="showView('workflow')">Workflow</button>
   <button class="nav-btn" onclick="showView('pipeline')">Markets</button>
   <button class="nav-btn" onclick="showView('office')" style="color:#ffd700;font-weight:700">🏢 Office</button>
-  <button class="nav-btn" onclick="showView('office')" style="color:#33d6ff;font-weight:700">🔗 Orchestrator</button>
   <button class="nav-btn" onclick="showView('chat')">Chat</button>
   <button class="nav-btn" onclick="showView('library-notes')">Lib & Notes</button>
   <button class="nav-btn" onclick="showView('projects')">Projects</button>
   <button class="nav-btn" onclick="showView('apis')">APIs</button>
   <button class="nav-btn" onclick="showView('social')">Social</button>
   <button class="nav-btn" onclick="showView('media')">Media</button>
-  <button class="nav-btn" onclick="showView('content-studio')" style="color:#00e5ff;font-weight:700" title="Content Studio — news→post pipeline">🎬 Studio</button>
   <button class="nav-btn" onclick="showView('automation')">Automation</button>
   <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700">Skills</button>
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠 Tools</button>
@@ -4200,52 +4202,6 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
         <button class="btn btn-ghost" style="font-size:9px;padding:3px 10px" onclick="filterTasks('done')" id="tfDone">Done</button>
         <button class="btn btn-ghost" style="font-size:9px;padding:3px 10px" onclick="filterTasks('high')" id="tfHigh">High Priority</button>
         <span style="font-size:9px;color:var(--text-muted);margin-left:8px">Agent:</span>
-    <!-- Agent Trading System -->
-    <div class="card cyber-card">
-      <div class="card-head">
-        <span class="card-title cyber-header" style="font-size:13px">🤖 Agent Trading Engine</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:9px" onclick="authorizeTrading()">🔐 Authorize</button>
-          <button class="btn btn-ghost" style="font-size:9px" onclick="monitorLivePositions()">📊 Positions</button>
-          <button class="btn btn-ghost" style="font-size:9px" onclick="showExecutionLog()">📜 Executions</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <!-- Auth Panel -->
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:rgba(0,0,0,0.3)">
-          <div style="font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:8px">AUTH STATUS</div>
-          <div id="tradingAuthStatus" style="font-size:10px;color:#ff4070;margin-bottom:10px">🔴 Not Authorized</div>
-          <input type="password" class="input" id="tradingAuthKey" placeholder="API Key" style="width:100%;margin-bottom:6px;font-size:9px;padding:4px">
-          <button class="btn btn-accent" style="width:100%;font-size:9px" onclick="authorizeTrading()">Authorize</button>
-        </div>
-        <!-- Limits Panel -->
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:rgba(0,0,0,0.3)">
-          <div style="font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:8px">RISK LIMITS</div>
-          <div style="font-size:8px;color:var(--text-muted);margin-bottom:6px">Max Trade: <span id="maxTradeSize" style="color:var(--accent)">1000</span> SOL</div>
-          <div style="font-size:8px;color:var(--text-muted);margin-bottom:6px">Daily Loss: <span id="maxDailyLoss" style="color:var(--accent)">500</span> SOL</div>
-          <div style="font-size:8px;color:var(--text-muted)">Active Positions: <span id="activePositions" style="color:var(--accent)">0</span></div>
-        </div>
-      </div>
-      <!-- Agent Delegation -->
-      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-        <div style="font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:8px">DELEGATE TO AGENTS</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
-          <button class="btn btn-ghost" style="font-size:8px" id="agentBtn-ZEROX" onclick="delegateToAgent('ZEROX')">ZEROX</button>
-          <button class="btn btn-ghost" style="font-size:8px" id="agentBtn-NEXUS" onclick="delegateToAgent('NEXUS')">NEXUS</button>
-          <button class="btn btn-ghost" style="font-size:8px" id="agentBtn-ORACLE" onclick="delegateToAgent('ORACLE')">ORACLE</button>
-          <button class="btn btn-ghost" style="font-size:8px" id="agentBtn-TURTLE" onclick="delegateToAgent('TURTLE')">TURTLE</button>
-        </div>
-        <textarea id="tradingStrategy" class="input" rows="2" placeholder="Describe trading strategy..." style="width:100%;font-size:8px"></textarea>
-        <button class="btn btn-accent" style="width:100%;margin-top:8px;font-size:9px" onclick="executeTrade()">🔭 ANALYZE STRATEGY</button>
-      </div>
-      <!-- Live Execution Log -->
-      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;max-height:150px;overflow-y:auto">
-        <div style="font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:6px">EXECUTION LOG</div>
-        <div id="tradingLog" style="font-size:7px;color:var(--text-muted);font-family:monospace;line-height:1.4">
-          <div>Waiting for trades...</div>
-        </div>
-      </div>
-    </div>
         <select class="select" id="taskAgentFilter" style="font-size:9px;padding:3px 8px" onchange="filterTasksByAgent(this.value)">
           <option value="all">All Agents</option>
           <option value="SHADDAI">SHADDAI</option>
@@ -8698,33 +8654,33 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
       </div>
 
       <!-- Music + Audio Module -->
-      <div onclick="launchMediaModule('music')" style="background:linear-gradient(135deg,rgba(255,176,32,0.06),rgba(255,123,61,0.03));border:1px solid rgba(255,176,32,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(255,176,32,0.6)';this.style.boxShadow='0 0 24px rgba(255,176,32,0.15)'" onmouseout="this.style.borderColor='rgba(255,176,32,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,176,32,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('music')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-musicaudio.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">MUSIC + AUDIO</div>
-        <div style="font-size:9px;color:rgba(255,176,32,0.7);margin-top:2px">Lyrics · Beats · Sound Design</div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Lyrics · Beats · Sound Design</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Suno · Udio · Splash · Soundraw</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,176,32,0.15);border:1px solid rgba(255,176,32,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
       <!-- Voice / TTS Module -->
-      <div onclick="launchMediaModule('voice')" style="background:linear-gradient(135deg,rgba(139,92,246,0.06),rgba(167,139,250,0.03));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(139,92,246,0.6)';this.style.boxShadow='0 0 24px rgba(139,92,246,0.15)'" onmouseout="this.style.borderColor='rgba(139,92,246,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(139,92,246,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('voice')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-voicetts.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VOICE / TTS</div>
-        <div style="font-size:9px;color:rgba(139,92,246,0.7);margin-top:2px">Clone · Generate · Script</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">ElevenLabs · PlayHT · Murf · Speechify</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Clone · Generate · Script</div>
+        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Browser Web Speech · free</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
       <!-- Content Writer Module -->
-      <div onclick="launchMediaModule('content')" style="background:linear-gradient(135deg,rgba(255,70,112,0.06),rgba(255,123,61,0.03));border:1px solid rgba(255,70,112,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(255,70,112,0.6)';this.style.boxShadow='0 0 24px rgba(255,70,112,0.15)'" onmouseout="this.style.borderColor='rgba(255,70,112,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,70,112,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('content')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-aiwriter.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">AI WRITER</div>
-        <div style="font-size:9px;color:rgba(255,70,112,0.7);margin-top:2px">Threads · Captions · Blogs · Copy</div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Threads · Captions · Blogs · Copy</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL Agent · Platform-optimized</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,70,112,0.15);border:1px solid rgba(255,70,112,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
       <!-- Gallery Module -->
@@ -8738,33 +8694,33 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
       </div>
 
       <!-- Video Clipper Module -->
-      <div onclick="launchMediaModule('clipper')" style="background:linear-gradient(135deg,rgba(255,70,112,0.06),rgba(0,200,255,0.03));border:1px solid rgba(255,70,112,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(255,70,112,0.6)';this.style.boxShadow='0 0 24px rgba(255,70,112,0.15)'" onmouseout="this.style.borderColor='rgba(255,70,112,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,70,112,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('clipper')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO CLIPPER</div>
-        <div style="font-size:9px;color:rgba(255,70,112,0.7);margin-top:2px">Long video → captioned vertical shorts</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO CLIPPER <span style="font-size:7px;color:#ffd45e;border:1px solid rgba(255,212,94,.4);border-radius:4px;padding:1px 4px;vertical-align:middle">PREMIUM</span></div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Long video → captioned vertical shorts</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">SHADDAI engine · ffmpeg + Whisper · TikTok/Reels</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,70,112,0.15);border:1px solid rgba(255,70,112,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
       <!-- Chart Signal Module -->
-      <div onclick="launchMediaModule('signal')" style="background:linear-gradient(135deg,rgba(255,176,32,0.06),rgba(0,200,255,0.03));border:1px solid rgba(255,176,32,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(255,176,32,0.6)';this.style.boxShadow='0 0 24px rgba(255,176,32,0.15)'" onmouseout="this.style.borderColor='rgba(255,176,32,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,176,32,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('signal')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-chartsignal.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CHART SIGNAL</div>
-        <div style="font-size:9px;color:rgba(255,176,32,0.7);margin-top:2px">Ticker + notes → signal post + caption</div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Ticker + notes → signal post + caption</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">ORACLE analysis · Twitter · IG · Telegram</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,176,32,0.15);border:1px solid rgba(255,176,32,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
 
       <!-- Content Series Module -->
-      <div onclick="launchMediaModule('series')" style="background:linear-gradient(135deg,rgba(139,92,246,0.06),rgba(255,70,112,0.03));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(139,92,246,0.6)';this.style.boxShadow='0 0 24px rgba(139,92,246,0.15)'" onmouseout="this.style.borderColor='rgba(139,92,246,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(139,92,246,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
+      <div onclick="launchMediaModule('series')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
+        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
         <img src="/api/forge/art/module-contentseries.png" alt="" loading="lazy" class="media-mod-icon">
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CONTENT SERIES</div>
-        <div style="font-size:9px;color:rgba(139,92,246,0.7);margin-top:2px">Topic → full day-by-day series</div>
+        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Topic → full day-by-day series</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL writes · 3–30 days · Any platform</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
       </div>
     </div>
 
@@ -11344,7 +11300,40 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
 </div>
 
 <button id="showPanel" onclick="togglePanel()">Show Panel</button>
-<button id="popChatBtn" onclick="openPopout()">◈ SHADDAI</button>
+<button id="popChatBtn" onclick="openPopout()" title="Click: open · Drag: move · Double-click: minimize">◈ SHADDAI</button>
+<script>
+(function(){
+  var btn=document.getElementById('popChatBtn'); if(!btn) return;
+  // Restore saved position + minimized state.
+  try{
+    var pos=JSON.parse(localStorage.getItem('shd_popbtn_pos')||'null');
+    if(pos&&typeof pos.left==='number'){ btn.style.left=pos.left+'px'; btn.style.top=pos.top+'px'; btn.style.right='auto'; btn.style.bottom='auto'; }
+    if(localStorage.getItem('shd_popbtn_min')==='1') btn.classList.add('shd-min');
+  }catch(e){}
+  var drag=null, sx=0, sy=0, moved=false;
+  function down(e){ var p=e.touches?e.touches[0]:e; var r=btn.getBoundingClientRect(); drag={dx:p.clientX-r.left,dy:p.clientY-r.top}; sx=p.clientX; sy=p.clientY; moved=false; }
+  function move(e){ if(!drag) return; var p=e.touches?e.touches[0]:e;
+    if(!moved && (Math.abs(p.clientX-sx)>5 || Math.abs(p.clientY-sy)>5)){ moved=true; btn.classList.add('shd-dragging'); }
+    if(!moved) return;
+    var L=Math.max(4,Math.min(window.innerWidth-btn.offsetWidth-4, p.clientX-drag.dx));
+    var T=Math.max(4,Math.min(window.innerHeight-btn.offsetHeight-4, p.clientY-drag.dy));
+    btn.style.left=L+'px'; btn.style.top=T+'px'; btn.style.right='auto'; btn.style.bottom='auto';
+    if(e.cancelable) e.preventDefault();
+  }
+  function up(){ if(!drag) return; btn.classList.remove('shd-dragging');
+    if(moved){ try{ localStorage.setItem('shd_popbtn_pos', JSON.stringify({left:parseInt(btn.style.left,10), top:parseInt(btn.style.top,10)})); }catch(e){} }
+    drag=null;
+  }
+  btn.addEventListener('mousedown',down); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  btn.addEventListener('touchstart',down,{passive:false}); document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+  // Suppress the open-popout click when the button was dragged.
+  btn.addEventListener('click',function(e){ if(moved){ e.stopImmediatePropagation(); e.preventDefault(); moved=false; } }, true);
+  // Double-click = minimize / restore (collapse to a small ◈ dot).
+  btn.addEventListener('dblclick',function(e){ e.stopImmediatePropagation(); e.preventDefault();
+    btn.classList.toggle('shd-min'); try{ localStorage.setItem('shd_popbtn_min', btn.classList.contains('shd-min')?'1':'0'); }catch(_){}
+  });
+})();
+</script>
 
 <!-- Popout Chat Window — SHADDAI Mission Control -->
 <div id="popout">
@@ -11689,11 +11678,13 @@ const WORKFLOW_TEMPLATES = {
     { agent: 'ZEROX', prompt: 'Financial analysis based on forecast: {prev}', extract: 'full' },
     { agent: 'SHADDAI', prompt: 'Strategic recommendation based on analysis: {prev}', extract: 'full' }
   ],
+  // Aligned with the canonical WF_AGENTS['idea-to-product'] chain (SHADDAI→NEXUS→TURTLE→ZEROX)
+  // so the two agent-based definitions no longer disagree on steps/order.
   'idea-to-product': [
-    { agent: 'TURTLE', prompt: 'Expand this idea into a concept: {input}', extract: 'full' },
-    { agent: 'NEXUS', prompt: 'Technical feasibility assessment for: {prev}', extract: 'full' },
-    { agent: 'ZEROX', prompt: 'Business model and monetization strategy for: {prev}', extract: 'full' },
-    { agent: 'SHADDAI', prompt: 'Final synthesis and go-to-market plan: {prev}', extract: 'full' }
+    { agent: 'SHADDAI', prompt: 'Break down this product idea into a clear MVP feature set — what to build first and why: {input}', extract: 'full' },
+    { agent: 'NEXUS', prompt: 'Architecture and tech stack for this MVP: {prev}', extract: 'full' },
+    { agent: 'TURTLE', prompt: 'User flow and UI sketch — describe screens, interactions, visual direction: {prev}', extract: 'full' },
+    { agent: 'ZEROX', prompt: 'Monetization model, pricing tiers, and path to first $1K MRR: {prev}', extract: 'full' }
   ]
 };
 
@@ -24303,6 +24294,35 @@ function renderMedia() {
         <button class="btn btn-danger" style="font-size:8px;padding:3px 8px" onclick="deleteMediaItem(${item.id})">Delete</button>
       </div>
     </div>`).join('');
+  // Persist any remote/data-URI media to disk so it survives (provider URLs expire; data-URIs blow localStorage).
+  try { _persistGallery(items); } catch (e) {}
+}
+
+// Save a generated image/video (data-URI or remote URL) to disk once, return the stable local path.
+window.persistMedia = async function (dataOrUrl, type) {
+  try {
+    const r = await fetch('/api/media/save', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: dataOrUrl, type: type || 'image' }) });
+    const j = await r.json();
+    return (j && j.ok) ? j.path : null;
+  } catch (e) { return null; }
+};
+
+// Lazy migration: on each gallery render, any image/video still on a remote/data URL is
+// downloaded to /assets/gallery/ once (guarded by _saved), then S.media is updated + re-rendered.
+async function _persistGallery(items) {
+  let changed = false;
+  for (const item of (items || [])) {
+    if (item._saved) continue;
+    const isMedia = ['image', 'pixel', 'video', 'clip'].includes(item.type);
+    if (isMedia && item.content && /^(https?:\/\/|data:)/.test(item.content) && !/\/assets\/gallery\//.test(item.content)) {
+      const saved = await window.persistMedia(item.content, item.type);
+      if (saved) { item.content = saved; item._saved = true; changed = true; }
+    } else {
+      item._saved = true; // text items or already-local — mark done so we don't re-scan
+    }
+  }
+  if (changed) { save(); renderMedia(); }
 }
 
 function copyMediaItem(id) {
@@ -31218,7 +31238,7 @@ function registerMyAgents() {
 function showAgentRegistration() {
   showModal('Register New Agent', `
     <div style="display:flex;flex-direction:column;gap:10px;padding:10px">
-      <input type="text" id="newAgentName" class="input" placeholder="Agent Name">
+      <input type="text" id="regAgentName" class="input" placeholder="Agent Name">
       <input type="text" id="newAgentSkills" class="input" placeholder="Skills (comma separated)">
       <input type="text" id="newAgentPrice" class="input" placeholder="Price in SOL (e.g. 0.01)">
       <input type="text" id="newAgentWallet" class="input" placeholder="Solana wallet address">
@@ -31228,7 +31248,7 @@ function showAgentRegistration() {
 }
 
 function registerNewAgent() {
-  const name = document.getElementById('newAgentName').value.trim();
+  const name = document.getElementById('regAgentName').value.trim();
   const skills = document.getElementById('newAgentSkills').value.split(',').map(s => s.trim());
   const price = document.getElementById('newAgentPrice').value.trim() || '0.01';
   const wallet = document.getElementById('newAgentWallet').value.trim();
@@ -32216,88 +32236,9 @@ async function executeStake() {
   }
 }
 
-// Agent Trading System
-let TRADING_STATE = {
-  authorized: false,
-  authKey: '',
-  maxTradeSize: 1000,
-  maxDailyLoss: 500,
-  dailyLoss: 0,
-  activePositions: [],
-  selectedAgent: 'ZEROX'
-};
-
-function authorizeTrading() {
-  const key = document.getElementById('tradingAuthKey').value;
-  if (!key || key.length < 8) {
-    notify('⚠️ Invalid API key');
-    return;
-  }
-  TRADING_STATE.authorized = true;
-  TRADING_STATE.authKey = key;
-  document.getElementById('tradingAuthStatus').textContent = '🟢 Authorized';
-  document.getElementById('tradingAuthStatus').style.color = '#00ff88';
-  notify('✅ Trading authorized');
-}
-
-function delegateToAgent(agent) {
-  TRADING_STATE.selectedAgent = agent;
-  ['ZEROX','NEXUS','ORACLE','TURTLE'].forEach(a => {
-    const btn = document.getElementById('agentBtn-' + a);
-    if (btn) {
-      btn.style.background = a === agent ? 'rgba(0,229,160,0.15)' : '';
-      btn.classList.toggle('btn-ghost', a !== agent);
-    }
-  });
-  notify('👁️ Delegated to ' + agent);
-}
-
-async function executeTrade() {
-  if (!TRADING_STATE.authorized) { notify('⚠️ Not authorized — enter API key above'); return; }
-  const strategy = (document.getElementById('tradingStrategy')||{}).value?.trim();
-  if (!strategy)  { notify('⚠️ Describe your strategy'); return; }
-
-  const agent   = TRADING_STATE.selectedAgent;
-  const logEl   = document.getElementById('tradingLog');
-  const addLog  = (msg, color) => {
-    if (logEl) logEl.innerHTML = `<div style="color:${color||'var(--text-secondary)'};font-size:8px;padding:2px 0">[${new Date().toLocaleTimeString()}] ${escH(msg)}</div>` + logEl.innerHTML;
-  };
-
-  addLog(`${agent}: Analyzing strategy...`, 'var(--accent)');
-  notify(`🤖 ${agent} analyzing strategy...`);
-
-  try {
-    const r = await fetch(`${PROXY}/api/trade/analyze`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ strategy, agent, symbol: document.getElementById('tradingStrategy')?.dataset?.symbol }),
-      signal: AbortSignal.timeout(60000)
-    });
-    const data = await r.json();
-    const analysis = data.analysis || 'Analysis complete';
-    addLog(`${agent}: ${analysis.slice(0, 200)}${analysis.length > 200 ? '...' : ''}`, 'var(--text-primary)');
-    if (data.marketCtx) addLog(`Market: ${data.marketCtx.slice(0, 100)}`, 'var(--text-muted)');
-    notify(`✅ ${agent} analysis complete — check trading log`);
-    // Save to agent chat
-    S.msgs = S.msgs || {};
-    S.msgs[agent] = S.msgs[agent] || [];
-    S.msgs[agent].push({ id: Date.now(), text: `Trading Analysis: ${strategy}`, sender: 'user', type: 'user', time: new Date().toISOString() });
-    S.msgs[agent].push({ id: Date.now()+1, text: analysis, sender: agent, type: 'agent', time: new Date().toISOString() });
-    save();
-    document.getElementById('tradingStrategy').value = '';
-  } catch(e) {
-    addLog(`Error: ${e.message}`, 'var(--danger)');
-    notify('❌ Analysis error: ' + e.message);
-  }
-}
-
-function monitorLivePositions() {
-  const positions = TRADING_STATE.activePositions.length;
-  notify('📊 ' + positions + ' active position' + (positions !== 1 ? 's' : ''));
-}
-
-function showExecutionLog() {
-  notify('📜 Execution log opened');
-}
+// (Removed: orphaned "Agent Trading Engine" dead code — its UI was deleted earlier;
+//  TRADING_STATE / authorizeTrading / delegateToAgent / executeTrade / monitorLivePositions /
+//  showExecutionLog had no callers or DOM elements. Confirmed by audit.)
 
 async function renderAgentEarnings() {
   const grid = document.getElementById('agentEarningsGrid');
@@ -36040,8 +35981,28 @@ function applySkillsFilter() {
       ${s.category ? `<div style="font-size:7px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.08em">▸ ${sanitizeText(s.category)}</div>` : ''}
       <div style="font-size:10px;color:var(--text-secondary);line-height:1.5;flex:1">${descShort}</div>
       ${truncated ? `<div style="font-size:8px;color:${c};font-weight:600">📖 Click to read full skill →</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:2px">
+        <button onclick="event.stopPropagation();openSkillRunner('${s.name.replace(/'/g,"\\'")}','${String(s.type||'run').replace(/'/g,"\\'")}')" style="flex:1;font-size:8px;padding:5px;background:${c}18;border:1px solid ${c}40;color:${c};border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.06em">▶ RUN</button>
+        <button onclick="event.stopPropagation();sendSkillToAgent('${s.name.replace(/'/g,"\\'")}')" style="flex:1;font-size:8px;padding:5px;background:rgba(255,212,94,.12);border:1px solid rgba(255,212,94,.35);color:#ffd45e;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.06em">→ AGENT</button>
+      </div>
     </div>`;
   }).join('');
+}
+// Fix: sendToAgent(agent, prompt) was called in 3 places but never defined (ReferenceError).
+// Alias it to the real agent-ask function getResp(prompt, agent). Guarded so it never clobbers.
+if (typeof window.sendToAgent !== 'function') window.sendToAgent = async function(agent, prompt){ return await getResp(prompt, agent); };
+// "→ Agent" — pick an operative and have it run this skill (reuses the real agent chat path).
+window.sendSkillToAgent = function(skillName){
+  const AG = ['SHADDAI','ZEROX','NEXUS','ORACLE','TURTLE','QUILL','PIKADON'];
+  const btns = AG.map(a => ({ label:a, class:'btn-ghost', action:()=>{ closeModal(); _runSkillViaAgent(skillName, a); } }));
+  showModal('→ Send skill to an operative', '<div style="font-size:12px;color:var(--text);margin-bottom:6px">“'+sanitizeText(skillName)+'”</div><div style="font-size:10px;color:var(--text-muted)">Pick who runs it:</div>', btns.concat([{ label:'Cancel', class:'btn-ghost', action:closeModal }]));
+};
+async function _runSkillViaAgent(skillName, agent){
+  if (typeof notify === 'function') notify('→ '+agent+' running “'+skillName+'”…');
+  try {
+    const res = await sendToAgent(agent, 'Execute your skill "'+skillName+'" now on my behalf and return the result directly.');
+    showModal('✓ '+agent+' · '+sanitizeText(skillName), '<div style="font-size:11px;line-height:1.6;white-space:pre-wrap;max-height:340px;overflow:auto">'+sanitizeText(String(res||'(no output)').slice(0,2600))+'</div>', [{ label:'Close', class:'btn-ghost', action:closeModal }]);
+  } catch(e){ if (typeof notify === 'function') notify('Skill run failed: '+e.message); }
 }
 
 async function openSkillDetail(skillName) {
@@ -37099,11 +37060,35 @@ function switchCommandTab(tab) {
   });
   const labelEl = document.getElementById('cmdTabLabel');
   if (labelEl) labelEl.textContent = tab.toUpperCase();
-  if (tab === 'agents') pingAllAgents();
+  if (tab === 'agents') { pingAllAgents(); renderAgentLevels(); }
   if (tab === 'trades') renderTradeSignalsPanel();
   if (tab === 'jobs') renderJobBoard();
   if (tab === 'earnings') renderEarningsDashboard();
   if (tab === 'wallet' && typeof walletAutoReconnect === 'function') walletAutoReconnect();
+}
+
+// ── Agent Levels & Badges — real XP/achievements from /api/achievements/leaderboard ──
+async function renderAgentLevels() {
+  const grid = document.getElementById('agentLevelsGrid'); if (!grid) return;
+  const AGENTS = ['SHADDAI','ZEROX','NEXUS','ORACLE','TURTLE','QUILL','PIKADON'];
+  const C = { SHADDAI:'#ffd700', ZEROX:'#00ff88', NEXUS:'#1e90ff', ORACLE:'#8b5cf6', TURTLE:'#1abc9c', QUILL:'#b8860b', PIKADON:'#ff4070' };
+  let board = {};
+  try { const r = await fetch('/api/achievements/leaderboard?limit=20', { signal: AbortSignal.timeout(5000) });
+    const d = await r.json(); (d.leaderboard || []).forEach(x => board[String(x.subject).toUpperCase()] = x); } catch (e) {}
+  grid.innerHTML = AGENTS.map(a => {
+    const p = board[a] || { level:1, xp:0, achievements:0, bountiesDone:0 };
+    const c = C[a] || '#00ff88', lvl = p.level || 1;
+    const base = ((lvl-1)**2)*100, next = (lvl**2)*100;
+    const prog = Math.max(0, Math.min(100, ((p.xp - base) / Math.max(1, next - base)) * 100)) || 0;
+    return `<div style="border:1px solid var(--border);border-left:3px solid ${c};border-radius:9px;padding:12px;background:rgba(0,0,0,.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-family:'Orbitron',sans-serif;font-weight:800;font-size:12px;color:${c}">${a}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#ffd45e;background:rgba(255,212,94,.1);border:1px solid rgba(255,212,94,.3);border-radius:5px;padding:2px 8px">◈ LVL ${lvl}</span>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:.05em">${p.xp||0} XP · ${p.bountiesDone||0} bounties · ${p.achievements||0} badges</div>
+      <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:8px;overflow:hidden"><div style="height:100%;width:${prog}%;background:linear-gradient(90deg,${c},#00f0ff);transition:width .4s"></div></div>
+    </div>`;
+  }).join('');
 }
 
 // ── Ping all 7 agents ──
@@ -38254,9 +38239,42 @@ function viewTokenChart() { window.open('https://dexscreener.com/solana', '_blan
 function renderJobBoard() {
   const panel = document.getElementById('cmd-jobs');
   if (!panel || panel.querySelector('.jobboard-content')) return;
-  panel.innerHTML = `<div class="jobboard-content card">
+  panel.innerHTML = `
+    <div class="card" style="border:1px solid rgba(255,212,94,.3);background:linear-gradient(135deg,rgba(0,229,160,.06),rgba(255,212,94,.05));margin-bottom:10px">
+      <div style="text-align:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:#fff;letter-spacing:.04em;margin-bottom:2px">THE SHADDAI MARKETPLACE</div>
+      <div style="text-align:center;font-size:9px;color:var(--text-muted);margin-bottom:12px">Request work from operatives — or offer &amp; sell your own services in the Bazaar.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="padding:4px">
+          <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:var(--accent)">🎯 REQUEST WORK</div>
+          <div style="font-size:9px;color:var(--text-muted);margin:3px 0 8px">Post a bounty — an operative does it for real.</div>
+          <button class="btn btn-accent" onclick="postJobForAgents()" style="font-size:10px;font-weight:700;width:100%">＋ Post a Bounty</button>
+          <div style="font-size:8px;color:var(--text-muted);margin:9px 0 5px;font-family:'Share Tech Mono',monospace;letter-spacing:.1em">▸ IDEAS (one click posts a starter you can edit)</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <span onclick="quickBounty('Landing page copy','Hero + 3 feature blocks + a strong CTA for my product.',120,'Content')" style="cursor:pointer;font-size:8px;padding:3px 8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);border-radius:100px;color:var(--accent)">💻 Landing copy</span>
+            <span onclick="quickBounty('Security review','Audit my smart contract / code for common vulnerabilities.',300,'Security')" style="cursor:pointer;font-size:8px;padding:3px 8px;background:rgba(255,92,114,.1);border:1px solid rgba(255,92,114,.3);border-radius:100px;color:#ff5c72">🔒 Security audit</span>
+            <span onclick="quickBounty('Market brief','1-page BTC/ETH brief — key levels, news, sentiment.',90,'Research')" style="cursor:pointer;font-size:8px;padding:3px 8px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:100px;color:#a78bfa">📊 Market brief</span>
+            <span onclick="quickBounty('X thread','Punchy 6-tweet thread on my topic, in my voice.',60,'Content')" style="cursor:pointer;font-size:8px;padding:3px 8px;background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.3);border-radius:100px;color:#00f0ff">✍️ X thread</span>
+            <span onclick="quickBounty('Build an MVP','Design the stack + scaffold a working MVP for my idea.',400,'Code')" style="cursor:pointer;font-size:8px;padding:3px 8px;background:rgba(30,144,255,.1);border:1px solid rgba(30,144,255,.3);border-radius:100px;color:#5aa9ff">🛠 Build an MVP</span>
+          </div>
+        </div>
+        <div style="padding:4px;border-left:1px solid var(--border)">
+          <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffd45e">🏬 OFFER &amp; SELL</div>
+          <div style="font-size:9px;color:var(--text-muted);margin:3px 0 8px">List your agent's services and get paid per job.</div>
+          <button class="btn" onclick="window.open('marketplace-shop-v2.html','_blank')" style="font-size:10px;font-weight:700;width:100%;background:linear-gradient(135deg,#e8b84b,#ff8a3d);color:#1a1206;border:none">🏬 Open the Bazaar →</button>
+          <div style="font-size:8px;color:var(--text-muted);margin:9px 0 5px;font-family:'Share Tech Mono',monospace;letter-spacing:.1em">▸ WHAT YOU CAN SELL</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <span style="font-size:8px;padding:3px 8px;background:rgba(255,212,94,.08);border:1px solid rgba(255,212,94,.25);border-radius:100px;color:#ffd45e">📝 Content per-post</span>
+            <span style="font-size:8px;padding:3px 8px;background:rgba(255,212,94,.08);border:1px solid rgba(255,212,94,.25);border-radius:100px;color:#ffd45e">🔍 Research reports</span>
+            <span style="font-size:8px;padding:3px 8px;background:rgba(255,212,94,.08);border:1px solid rgba(255,212,94,.25);border-radius:100px;color:#ffd45e">💻 Code &amp; APIs</span>
+            <span style="font-size:8px;padding:3px 8px;background:rgba(255,212,94,.08);border:1px solid rgba(255,212,94,.25);border-radius:100px;color:#ffd45e">🎨 Design work</span>
+            <span style="font-size:8px;padding:3px 8px;background:rgba(255,212,94,.08);border:1px solid rgba(255,212,94,.25);border-radius:100px;color:#ffd45e">🤖 Agent subscriptions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="jobboard-content card">
     <div class="card-head">
-      <span class="card-title">📋 AGENT JOB BOARD</span>
+      <span class="card-title">📋 OPEN BOUNTIES</span>
       <button class="btn btn-accent" onclick="postJobForAgents()" style="font-size:9px">+ Post Job</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -38275,6 +38293,20 @@ function renderJobBoard() {
     </div>
   </div>`;
 }
+// One-click: post a starter bounty from a suggestion (real API + local mirror so it shows instantly).
+window.quickBounty = async function(title, desc, budget, category){
+  try{
+    const uid = (window.S && S.user && S.user.id) || 'me';
+    fetch('/api/marketplace/jobs',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ title, description:desc, budget, category, clientId:uid }) }).catch(()=>{});
+    const local = JSON.parse(localStorage.getItem('shaddai_jobs') || '[]');
+    local.unshift({ id:Date.now(), title, desc, budget, agents:[], created:Date.now(), category });
+    localStorage.setItem('shaddai_jobs', JSON.stringify(local.slice(0,100)));
+    if (typeof notify==='function') notify('✓ Bounty “'+title+'” posted — edit or claim it below');
+    const p = document.getElementById('cmd-jobs'); if (p) { p.innerHTML=''; renderJobBoard(); setTimeout(()=>{ try{ sortJobBoard(); }catch(e){} }, 30); }
+    if (document.getElementById('jobBoard')) { try{ _renderStandaloneJobBoard(); }catch(e){} }
+  }catch(e){ if (typeof notify==='function') notify('Post failed: '+e.message); }
+};
 function applyJobFilters() {
   const text = (document.getElementById('jobFilterText')?.value || '').toLowerCase();
   const agent = document.getElementById('jobFilterAgent')?.value || '';
@@ -38378,35 +38410,76 @@ function _writeJobsToStandaloneBoard(jobs) {
     </div>`;
   }).join('');
 }
-function _renderStandaloneJobBoard() {
-  const jobs = JSON.parse(localStorage.getItem('shaddai_jobs') || '[]');
-  const open = jobs.filter(j => !j.completed).length;
-  const done = jobs.filter(j => j.completed).length;
-  const bids = jobs.reduce((s, j) => s + (j.bids || []).length, 0);
-  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  setV('jobsOpenCount', open);
-  setV('jobsBidsCount', bids);
-  setV('jobsCompletedCount', done);
+async function _renderStandaloneJobBoard() {
   const container = document.getElementById('jobBoard');
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  // REAL jobs from the marketplace backend; fall back to local only if offline.
+  let raw = [];
+  try {
+    const r = await fetch('/api/marketplace/jobs', { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    raw = Array.isArray(d) ? d : (d.jobs || []);
+  } catch (e) { raw = JSON.parse(localStorage.getItem('shaddai_jobs') || '[]'); }
+  // Normalize across possible field names so the backend's final shape doesn't break us.
+  const jobs = raw.map(j => {
+    const done  = j.status === 'delivered' || j.status === 'completed' || j.completed;
+    const agent = j.agent || j.awardedTo || j.takenBy || (Array.isArray(j.agents) && j.agents[0]) || '';
+    const st    = done ? 'done' : (agent || j.status === 'in_progress' ? 'prog' : 'open');
+    return { id: j.id, title: j.title || 'Untitled', desc: j.description || j.desc || '',
+      budget: j.budget || j.price || 0, cat: String(j.category || j.cat || agent || 'bounty'),
+      bids: (j.bids || []).length || j.bidCount || 0, agent, st,
+      deliverable: j.deliverable || j.output || '' };
+  });
+  setV('jobsOpenCount', jobs.filter(j => j.st === 'open').length);
+  setV('jobsBidsCount', jobs.reduce((s, j) => s + j.bids, 0));
+  setV('jobsCompletedCount', jobs.filter(j => j.st === 'done').length);
   if (!container) return;
   if (!jobs.length) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:10px">Post a job to get bids from agents...</div>';
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:34px;font-size:12px;font-family:\'Share Tech Mono\',monospace;letter-spacing:.08em">◈ THE FLOOR IS OPEN — post the first bounty ↑</div>';
     return;
   }
+  container.style.display = 'grid';
+  container.style.gridTemplateColumns = 'repeat(auto-fill,minmax(272px,1fr))';
+  container.style.gap = '12px';
+  const SEAL = { open:['◈ OPEN','#00f0ff','rgba(0,240,255,.35)'], prog:['⚡ WORKING','#ffd45e','rgba(255,212,94,.4)'], done:['✓ DELIVERED','var(--accent)','rgba(0,229,160,.4)'] };
   container.innerHTML = jobs.map(j => {
-    const statusColor = j.completed ? 'var(--accent)' : 'var(--warning)';
-    const statusLabel = j.completed ? '✓ DONE' : '◉ OPEN';
-    return `<div style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:3px solid ${statusColor};border-radius:4px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span style="font-size:10px;font-weight:700">${escH(j.title || 'Untitled')}</span>
-        <span style="font-size:8px;color:${statusColor};margin-left:auto;font-weight:700">${statusLabel}</span>
-        <span style="font-size:11px;font-weight:900;color:var(--accent)">$${j.budget || 0}</span>
+    const S = SEAL[j.st], ini = (j.agent || '◈').charAt(0).toUpperCase();
+    const foot = j.st === 'open'
+      ? `<button class="btn" onclick="takeJobFromBoard('${j.id||''}')" style="border:1px solid rgba(0,229,160,.4);background:rgba(0,229,160,.08);color:var(--accent);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;border-radius:9px;padding:8px 15px;cursor:pointer">⚡ Claim</button>`
+      : `<div style="display:flex;align-items:center;gap:7px"><div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#0a3,#0f7);border:1px solid rgba(0,229,160,.5);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:11px;color:#04060a">${ini}</div><div style="font-size:9px;line-height:1.3"><b style="color:var(--text)">${escH(j.agent||'—')}</b><br><span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-muted)">${j.st==='done'?'delivered':'working…'}</span></div></div>`;
+    const deliv = j.deliverable ? `<div style="margin-top:10px;border:1px dashed rgba(0,240,255,.3);border-radius:9px;padding:10px;background:rgba(0,240,255,.04)"><div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.16em;color:#00f0ff;text-transform:uppercase;margin-bottom:5px">◈ Deliverable</div><div style="font-size:10px;line-height:1.5;color:var(--text);white-space:pre-wrap;max-height:130px;overflow:auto">${escH(String(j.deliverable).slice(0,700))}</div></div>` : '';
+    return `<div style="position:relative;overflow:hidden;background:linear-gradient(165deg,rgba(12,17,25,.92),rgba(8,11,18,.92));border:1px solid var(--border);border-radius:13px;padding:16px;transition:transform .2s,border-color .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='${S[2]}'" onmouseout="this.style.transform='';this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:9px">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.14em;color:#00f0ff;border:1px solid rgba(0,240,255,.28);border-radius:5px;padding:2px 7px">${escH(j.cat.toUpperCase().slice(0,14))}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.1em;font-weight:700;color:${S[1]};border:1px solid ${S[2]};padding:3px 10px;clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%)">${S[0]}</span>
       </div>
-      <div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">${escH((j.desc||'').slice(0,140))}</div>
-      <div style="font-size:7px;color:var(--text-muted)">Agents: ${(j.agents||[]).join(', ') || 'any'} · ${j.created ? new Date(j.created).toLocaleDateString() : '—'}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;color:#fff;line-height:1.25;margin-bottom:6px">${escH(j.title)}</div>
+      <div style="font-size:10px;color:var(--text-muted);line-height:1.5;max-height:44px;overflow:hidden">${escH(j.desc.slice(0,120))}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:11px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:21px;color:#ffd45e;text-shadow:0 0 16px rgba(255,212,94,.3);line-height:1">$${j.budget}<span style="display:block;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-muted);font-weight:400;text-shadow:none;margin-top:2px">${j.bids} bids</span></div>
+        ${foot}
+      </div>${deliv}
     </div>`;
   }).join('');
 }
+// Claim a bounty → the backend assigns an agent that actually does the work, then we re-render.
+window.takeJobFromBoard = async function(id){
+  if(!id){ if(typeof notify==='function') notify('This bounty has no id yet'); return; }
+  if(typeof notify==='function') notify('⚡ Claiming — an operative is on it…');
+  try{ await fetch('/api/marketplace/jobs/'+id+'/take',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})}); }
+  catch(e){ if(typeof notify==='function') notify('Claim failed: '+e.message); return; }
+  _renderStandaloneJobBoard(); // immediately show "working…"
+  // Poll for the real deliverable (the agent runs the job server-side).
+  var tries=0;
+  (function poll(){
+    tries++;
+    fetch('/api/marketplace/jobs/'+id+'/result').then(r=>r.json()).then(d=>{
+      if(d.status==='delivered'){ _renderStandaloneJobBoard(); if(typeof notify==='function') notify('✓ Bounty delivered by '+(d.agent||'operative')+'!'); return; }
+      if(d.status==='error'){ _renderStandaloneJobBoard(); if(typeof notify==='function') notify('⚠ Delivery failed: '+(d.error||'unknown')); return; }
+      if(tries<24) setTimeout(poll,2500); else _renderStandaloneJobBoard();
+    }).catch(()=>{ if(tries<24) setTimeout(poll,2500); });
+  })();
+};
 
 // ── Earnings dashboard ──
 function _buildEarningsHtml() {
@@ -38790,6 +38863,12 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
     <!-- TAB 1: AGENTS -->
     <div id="cmd-agents" style="display:block;padding:12px 0">
+      <div class="card">
+        <div class="card-head"><span class="card-title">🏆 Agent Levels &amp; Badges</span><span style="font-size:9px;color:var(--text-muted)">XP earned by doing real bounties</span></div>
+        <div id="agentLevelsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+          <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:14px;font-size:10px">Loading operative levels…</div>
+        </div>
+      </div>
       <div class="card" style="border:2px solid var(--accent);background:linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,200,255,0.04))">
         <div class="card-head" style="border-bottom:2px solid var(--accent)">
           <span class="card-title" style="font-size:16px;font-weight:900">🔴 LIVE AGENT STATUS</span>
@@ -41213,8 +41292,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       }
       return modsPromise;
     }
-    function showPortrait(){ // fallback: keep the masked portrait already inside the host
-      try { const img = host && host.querySelector('img'); if (img) img.style.display = ''; } catch(_){}
+    function showPortrait(){ // fallback: show the clean placeholder (never a broken raster)
+      try { const ph = host && host.querySelector('.room-ph'); if (ph) ph.style.display = ''; } catch(_){}
     }
     async function init(container, code, glow){
       dispose();
@@ -41241,7 +41320,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       controls.minPolarAngle = Math.PI * 0.18; controls.maxPolarAngle = Math.PI * 0.62;
       controls.target.set(0, 1.0, 0);
       const loader = new GLTFLoader();
-      loader.load('/assets/agents/' + code + '.glb', (gltf) => {
+      const onLoad = (gltf) => {
         if (!renderer) return; // disposed meanwhile
         const obj = gltf.scene;
         let box = new THREE.Box3().setFromObject(obj);
@@ -41256,8 +41335,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         controls.target.set(0, (box.max.y - box.min.y) * 0.5, 0);
         camera.position.set(0, (box.max.y - box.min.y) * 0.55, 3.4);
         scene.add(obj); current = obj;
-        const img = container.querySelector('img'); if (img) img.style.display = 'none'; // hide portrait, GLB is live
-      }, undefined, () => { showPortrait(); }); // GLB failed → keep masked portrait fallback
+        const ph = container.querySelector('.room-ph'); if (ph) ph.style.display = 'none'; // hide placeholder, GLB is live
+      };
+      // Prefer the hi-res model, fall back to the base model, then to a clean placeholder (never a broken image).
+      const urls = ['/assets/agents/' + code + '_hires.glb?v=8', '/assets/agents/' + code + '.glb?v=8'];
+      (function tryLoad(i){ if (i >= urls.length){ showPortrait(); return; } loader.load(urls[i], onLoad, undefined, () => tryLoad(i + 1)); })(0);
       try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
       (function animate(){
         raf = requestAnimationFrame(animate);
@@ -41371,10 +41453,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     ];
     // 3D GLB VIEWER container (hover + auto-rotate + drag-to-spin). Masked portrait sits inside as instant fallback
     // (background softened via radial mask so it isn't a hard rectangle). _roomViewer.init() is called after mount.
-    const spriteHtml = `<div id="roomModel3D_${agentId}" style="width:300px;height:330px;position:relative;display:flex;align-items:center;justify-content:center;cursor:grab;${mood==='sleeping'?'opacity:.75;':''}" title="Drag to spin">
-        <img src="/assets/agents/${a.name}-portrait.png" alt="${a.name}"
-          style="max-height:300px;max-width:100%;object-fit:contain;-webkit-mask-image:radial-gradient(ellipse 62% 72% at 50% 44%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 62% 72% at 50% 44%,#000 58%,transparent 100%);filter:drop-shadow(0 10px 22px rgba(${a.glow},0.6))"
-          onerror="this.onerror=null;this.src='/api/forge/art/char-${agentId}.png'">
+    const spriteHtml = `<div id="roomModel3D_${agentId}" style="width:330px;height:370px;position:relative;display:flex;align-items:center;justify-content:center;cursor:grab;${mood==='sleeping'?'opacity:.75;':''}" title="Drag to spin — 3D model">
+        <div class="room-ph" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:rgba(${a.glow},0.95)">
+          <div style="font-size:76px;line-height:1;filter:drop-shadow(0 0 30px rgba(${a.glow},0.75))">${a.icon||'◈'}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.42)">◈ SUMMONING MODEL…</div>
+        </div>
       </div>`;
 
     const roomItemsHtml = roomItems.length
@@ -41474,9 +41557,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         <!-- ─── LEFT: ROOM VISUAL ─── -->
         <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:40px;overflow:hidden">
 
-          <!-- HF ROOM BACKDROP — this agent's own aesthetic (throne room / lab / library / vault …) -->
-          <div style="position:absolute;inset:0;z-index:0;overflow:hidden">
-            <img src="/assets/rooms/${a.name}.png" alt="" style="width:100%;height:100%;object-fit:cover;opacity:0.95" onerror="this.parentElement.style.display='none'">
+          <!-- ROOM ATMOSPHERE — pure gradient + agent-glow (no raster; the 3D model is the hero) -->
+          <div style="position:absolute;inset:0;z-index:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 18%,rgba(${a.glow},0.12),transparent 60%),linear-gradient(180deg,#0a0f18,#05080f)">
             <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(4,6,13,0.88) 0%,rgba(4,6,13,0.28) 46%,rgba(4,6,13,0.5) 100%)"></div>
             <div style="position:absolute;inset:0;box-shadow:inset 0 0 90px rgba(${a.glow},0.25)"></div>
           </div>
@@ -41684,6 +41766,23 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     try {
       const _mc = document.getElementById('roomModel3D_' + agentId);
       if (_mc && window._roomViewer) window._roomViewer.init(_mc, a.name, a.glow);
+    } catch(_){}
+
+    // Real level + achievement badges in the room (from the live achievements engine).
+    try {
+      fetch('/api/achievements/' + a.name, { signal: AbortSignal.timeout(5000) }).then(r => r.json()).then(pr => {
+        const ov = document.getElementById('agentRoomOverlay');
+        if (!ov || ov.style.display === 'none' || ov.dataset.agent !== agentId) return;
+        const mc = document.getElementById('roomModel3D_' + agentId);
+        const col = mc && mc.parentElement; if (!col) return;
+        if (getComputedStyle(col).position === 'static') col.style.position = 'relative';
+        let panel = col.querySelector('.room-ach');
+        if (!panel) { panel = document.createElement('div'); panel.className = 'room-ach';
+          panel.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:6;max-width:280px;background:rgba(4,8,15,.85);backdrop-filter:blur(8px);border:1px solid rgba(' + a.glow + ',0.35);border-radius:12px;padding:11px 13px';
+          col.appendChild(panel); }
+        const badges = (pr.unlocked || []).slice(0, 8).map(u => '<span title="' + (u.name||'') + ' — ' + (u.description||'') + '" style="font-size:16px;filter:drop-shadow(0 0 6px rgba(' + a.glow + ',.6))">' + (u.icon||'🏅') + '</span>').join('') || '<span style="font-size:9px;color:rgba(255,255,255,.45)">No badges yet — complete bounties to earn them</span>';
+        panel.innerHTML = '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px"><span style="font-family:\'Orbitron\',sans-serif;font-weight:900;font-size:19px;color:rgb(' + a.glow + ')">LVL ' + (pr.level||1) + '</span><span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:rgba(255,255,255,.5)">' + (pr.xp||0) + ' XP · ' + ((pr.counters && pr.counters.bountiesDone)||0) + ' bounties</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + badges + '</div>';
+      }).catch(() => {});
     } catch(_){}
 
     // If live tool inventory wasn't cached yet, fetch it then re-render this card once with the REAL numbers
@@ -47536,58 +47635,21 @@ async function runWorkflowFromUI() {
   if (finalEl) { finalEl.style.display='none'; finalEl.innerHTML=''; }
   if (statusEl) { statusEl.textContent='RUNNING'; statusEl.style.color='#00f0ff'; }
 
-  // Check if backend is available first (fast probe)
-  var _backendAlive = false;
-  try {
-    var _probe = await fetch(PROXY+'/api/health', { signal: AbortSignal.timeout(3000) });
-    _backendAlive = _probe.ok;
-  } catch(_) {}
-
-  if (_backendAlive) {
-    // Backend online — use SSE streaming
-    try {
-      var es = new EventSource(PROXY+'/api/workflows/run?wf='+encodeURIComponent(wf)+'&input='+encodeURIComponent(input));
-      var _esOk = false;
-      var _esTimer = setTimeout(() => { if (!_esOk) { es.close(); _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl); } }, 8000);
-      es.onmessage = function(e) {
-        _esOk = true; clearTimeout(_esTimer);
-        try { var msg=JSON.parse(e.data);
-          if (msg.type==='step_start') {
-            if (stepsEl) {
-              var div=document.createElement('div');
-              div.id='wf-step-'+msg.step;
-              div.style.cssText='background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);border-radius:6px;padding:10px;font-size:9px';
-              div.innerHTML='<div style="font-weight:700;color:#00f0ff;margin-bottom:4px">▶ Step '+msg.step+': '+escH(msg.agent||'')+'</div><div style="color:var(--text-muted)">'+escH(msg.task||'')+'</div><div style="color:var(--text-muted);font-style:italic">Processing...</div>';
-              stepsEl.appendChild(div);
-            }
-          } else if (msg.type==='step_done') {
-            var stepDiv=document.getElementById('wf-step-'+msg.step);
-            if (stepDiv) {
-              stepDiv.style.borderColor='rgba(0,229,160,0.3)';
-              stepDiv.innerHTML='<div style="font-weight:700;color:#00ff88;margin-bottom:4px">✓ Step '+msg.step+': '+escH(msg.agent||'')+'</div><div style="color:var(--text-secondary);font-size:9px;line-height:1.5;white-space:pre-wrap">'+escH((msg.output||'').slice(0,200))+(msg.output&&msg.output.length>200?'…':'')+'</div>';
-            }
-          } else if (msg.type==='complete') {
-            if (statusEl) { statusEl.textContent='DONE'; statusEl.style.color='#00ff88'; }
-            if (finalEl) { finalEl.style.display='block'; finalEl.innerHTML='<div style="font-weight:700;color:#00f0ff;margin-bottom:8px;font-size:11px">✅ Workflow Complete</div><div style="white-space:pre-wrap">'+escH(msg.finalOutput||'')+'</div>'; }
-            if (typeof pushStandbyNotif==='function') pushStandbyNotif('WORKFLOW','Workflow "'+wf+'" complete');
-            es.close();
-          } else if (msg.type==='error') {
-            if (statusEl) { statusEl.textContent='ERROR'; statusEl.style.color='#ff4070'; }
-            notify('Workflow error: '+(msg.error||'unknown')); es.close();
-          }
-        } catch(ex) {}
-      };
-      es.onerror = function() { clearTimeout(_esTimer); es.close(); _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl); };
-    } catch(e) { _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl); }
-  } else {
-    // Backend offline — run entirely client-side via getResp()
-    _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl);
-  }
+  // Always run the verified client-side chain. Each step calls getResp(taskText, agent)
+  // through the /api/model/chat gateway with its OWN distinct, on-topic prompt and the
+  // PREVIOUS step's output chained forward. The old backend SSE path (/api/workflows/run)
+  // was removed here because it emitted identical output per step and leaked the
+  // stock/market-analysis template regardless of the task. See _runWorkflowClientSide.
+  _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl);
 }
 
 async function _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl) {
   if (statusEl) { statusEl.textContent='RUNNING (AI)'; statusEl.style.color='#ffd700'; }
   notify('⚡ Running workflow client-side via AI chain...');
+  // ── SINGLE SOURCE OF TRUTH for the Workflow Runner ──────────────────────────
+  // These are the canonical multi-agent chains. Each step's task is distinct and
+  // on-topic; {input} = raw user input (step 1), {prev} = previous step's output
+  // (chained forward). Do NOT reintroduce the market/stock-analysis template here.
   const WF_AGENTS = {
     'research-to-build': [
       {agent:'ORACLE', task:'Research and analyze this topic thoroughly, covering background, current state, key insights, and opportunities: {input}'},

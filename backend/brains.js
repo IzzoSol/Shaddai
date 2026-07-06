@@ -9,13 +9,40 @@
 // ============================================================================
 const express = require('express');
 const llm = require('./llm-client');
+const pool = require('./key-pool');
 
 // Best-effort billing hook — wired to the billing agent's recordUsage if present.
+// debitCredits:false → we only record usage STATS here; the actual credit charge
+// happens via the per-action credit meter (debitForAction) so we never double-charge.
 function meter(usage) {
   try {
     const billing = require('./billing-service');
-    if (billing && typeof billing.recordUsage === 'function') billing.recordUsage(usage);
+    if (billing && typeof billing.recordUsage === 'function') billing.recordUsage({ ...usage, debitCredits: false });
   } catch (_) { /* billing not wired yet — non-fatal */ }
+}
+
+// Map the chosen provider/brain to a credit-cost action id.
+// Local Ollama = the cheap fast path (fast_chat). Everything cloud/premium
+// (groq-70b, ollama-cloud, claude-*, openrouter, openai) = strong_chat.
+function actionForBrain(brainId, provider) {
+  const p = String(provider || '').toLowerCase();
+  if (p === 'ollama') return 'fast_chat';          // local Ollama only
+  if (brainId === 'ollama-local') return 'fast_chat';
+  return 'strong_chat';                            // groq/ollamacloud/anthropic/openrouter/openai
+}
+
+// Best-effort per-action credit debit. NEVER throws, NEVER blocks the response
+// in this pass — if blocked, we just log it (hard-blocking moves to the route
+// layer later). byok is honoured (charged 0, never blocked).
+async function meterAction(userId, actionId, byok) {
+  try {
+    const billing = require('./billing-service');
+    if (!billing || typeof billing.debitForAction !== 'function') return;
+    const r = await billing.debitForAction(userId, actionId, { byok: !!byok });
+    if (r && r.blocked) {
+      console.warn(`[credit-meter] BLOCK ${userId} action=${actionId} needed=${r.needed} remaining=${r.remaining} (best-effort pass — response still served)`);
+    }
+  } catch (_) { /* metering is best-effort — never fatal */ }
 }
 
 // --- BRAIN REGISTRY: friendly id -> { provider, model, tier, label } ---------
@@ -24,16 +51,18 @@ const BRAINS = {
   'ollama-local':   { provider: 'ollama',     model: process.env.OLLAMA_MODEL     || 'llama3.2:1b',                              tier: 'free',     label: 'Ollama · local (free)' },
   'openrouter-free':{ provider: 'openrouter', model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',   tier: 'free',     label: 'OpenRouter · free' },
   'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.3-70b-versatile',                 tier: 'standard', label: 'Groq · Llama 70B (fast)' },
+  'ollama-cloud':   { provider: 'ollamacloud',model: process.env.OLLAMA_CLOUD_MODEL|| 'gpt-oss:120b',                            tier: 'standard', label: 'Ollama Cloud · gpt-oss 120B' },
   'claude-haiku':   { provider: 'anthropic',  model: process.env.ANTHROPIC_MODEL  || 'claude-haiku-4-5-20251001',               tier: 'standard', label: 'Claude · Haiku 4.5' },
   'claude-premium': { provider: 'anthropic',  model: process.env.ANTHROPIC_PREMIUM_MODEL || 'claude-haiku-4-5-20251001',        tier: 'premium',  label: 'Claude · premium' }
 };
 
 const PROVIDER_ENABLED = {
   ollama:     () => true, // local, free; fails fast if not running
-  groq:       () => Boolean(process.env.GROQ_API_KEY),
-  openrouter: () => Boolean(process.env.OPENROUTER_API_KEY),
-  anthropic:  () => Boolean(process.env.ANTHROPIC_API_KEY),
-  openai:     () => Boolean(process.env.OPENAI_API_KEY)
+  groq:       () => pool.envKeys('groq').length > 0,
+  openrouter: () => pool.envKeys('openrouter').length > 0,
+  anthropic:  () => pool.envKeys('anthropic').length > 0,
+  openai:     () => pool.envKeys('openai').length > 0,
+  ollamacloud:() => pool.envKeys('ollamacloud').length > 0
 };
 function brainAvailable(id) { const b = BRAINS[id]; return !!b && PROVIDER_ENABLED[b.provider] && PROVIDER_ENABLED[b.provider](); }
 
@@ -56,17 +85,37 @@ function getPersona(agent) {
   return PERSONAS[agent] || customAgents[agent] || { label: agent, defaultBrain: 'groq-70b', persona: `You are ${agent}, a SHADDAI agent.` };
 }
 
+// --- STRENGTH LADDERS: which brains to prefer for a given horsepower need -----
+// The router walks the ladder top-to-bottom and picks the first AVAILABLE brain.
+// 'fast'     = cheap/quick, save quota for when it matters (or offline demo).
+// 'balanced' = the sensible default (Groq 70B when keyed).
+// 'strong'   = heavy reasoning; reach for the best brain available.
+const STRENGTH_LADDER = {
+  fast:     ['ollama-local', 'openrouter-free', 'groq-70b', 'claude-haiku', 'ollama-cloud', 'claude-premium'],
+  balanced: ['groq-70b', 'ollama-cloud', 'openrouter-free', 'claude-haiku', 'claude-premium', 'ollama-local'],
+  strong:   ['claude-premium', 'ollama-cloud', 'groq-70b', 'claude-haiku', 'openrouter-free', 'ollama-local']
+};
+const FALLBACK_LADDER = ['groq-70b', 'ollama-cloud', 'openrouter-free', 'claude-haiku', 'claude-premium', 'ollama-local'];
+
 // --- ROUTER: pick the brain for (agent, taskTier, user) ----------------------
-// Order of preference: explicit user override → persona default → tier upgrade →
-// first available fallback. Always returns an AVAILABLE brain.
-function route(agent, taskTier = 'standard', user = {}) {
+// Order of preference: explicit user override → strength ladder → persona
+// default → tier upgrade → first available fallback. Always returns an
+// AVAILABLE brain (Ollama is the guaranteed local backstop).
+function route(agent, taskTier = 'standard', user = {}, strength = null) {
   const p = getPersona(agent);
   let id = (user.brainOverride && BRAINS[user.brainOverride]) ? user.brainOverride
-         : agentBrainOverride[agent] || p.defaultBrain || 'groq-70b';
+         : agentBrainOverride[agent] || null;
+
+  // No explicit choice + a strength hint → let the ladder pick the best available.
+  if (!id && strength && STRENGTH_LADDER[strength]) {
+    id = STRENGTH_LADDER[strength].find(brainAvailable) || null;
+  }
+  if (!id) id = p.defaultBrain || 'groq-70b';
+
   // Premium task + premium-allowed user → upgrade to a premium brain if available.
   if (taskTier === 'premium' && (user.tier === 'premium' || user.tier === 'elite') && brainAvailable('claude-premium')) id = 'claude-premium';
   if (!brainAvailable(id)) {
-    id = ['ollama-local', 'groq-70b', 'openrouter-free', 'claude-haiku', 'claude-premium'].find(brainAvailable) || 'ollama-local';
+    id = FALLBACK_LADDER.find(brainAvailable) || 'ollama-local';
   }
   const b = BRAINS[id];
   return { brainId: id, provider: b.provider, model: b.model, persona: p.persona, agentLabel: p.label };
@@ -75,8 +124,8 @@ function route(agent, taskTier = 'standard', user = {}) {
 // --- agentLLM: the one call agent code should use ----------------------------
 let _kb = null; try { _kb = require('./knowledge'); } catch (e) { /* KBs optional */ }
 
-async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard', user = {}, options = {} }) {
-  const r = route(agent, taskTier, user);
+async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard', user = {}, strength = null, byok = null, options = {} }) {
+  const r = route(agent, taskTier, user, strength);
   let sys = r.persona;
   // GROUND the answer with the agent's local knowledge base (free, evergreen domain facts) so it gives
   // a REAL answer instead of vague filler. Look up the latest user message; if the KB knows it, inject
@@ -94,13 +143,18 @@ async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard
   const msgs = (messages[0] && messages[0].role === 'system')
     ? messages
     : [{ role: 'system', content: sys }, ...messages];
-  const result = await llm.callLLM(msgs, { ...options, provider: r.provider, model: r.model, agentName: agent });
+  const result = await llm.callLLM(msgs, { ...options, provider: r.provider, model: r.model, agentName: agent, byok: byok || options.byok });
+  const meterUserId = user.id || user.userId || 'anon';
+  const usedByok = !!(byok || options.byok);
   meter({
-    userId: user.id || user.userId || 'anon', agent, brain: r.brainId,
+    userId: meterUserId, agent, brain: r.brainId,
     provider: result.provider, model: result.model,
     tokens: (result.tokens?.input || 0) + (result.tokens?.output || 0),
-    costUsd: 0 // billing-service estimates cost from provider+tokens
+    costUsd: 0 // stats only — credit charge is per-action below
   });
+  // Per-action credit charge (outcome/hybrid model). Best-effort: awaited so we
+  // debit exactly once, but wrapped so it never throws/blocks the response.
+  await meterAction(meterUserId, actionForBrain(r.brainId, result.provider), usedByok);
   return { ...result, brainId: r.brainId, agent };
 }
 
@@ -114,6 +168,9 @@ router.get('/', (req, res) => {
   res.json({
     ok: true,
     brains: Object.entries(BRAINS).map(([id, b]) => ({ id, ...b, available: brainAvailable(id) })),
+    // Live key-pool headroom per provider — lets the UI show "Groq: 2/3 keys ready".
+    keyPool: Object.fromEntries(pool.providersWithKeys().map(p => [p, pool.stats(p)])),
+    strengths: Object.keys(STRENGTH_LADDER),
     agents: { ...Object.fromEntries(Object.entries(PERSONAS).map(([k, v]) => [k, { label: v.label, brain: agentBrainOverride[k] || v.defaultBrain }])),
               ...Object.fromEntries(Object.entries(customAgents).map(([k, v]) => [k, { label: v.label, brain: agentBrainOverride[k] || v.defaultBrain, custom: true }])) }
   });

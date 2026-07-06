@@ -1752,7 +1752,7 @@ const TOOLS = {
     params: ['symbol'],
     execute: async (params) => {
       const q = encodeURIComponent(params.symbol || params.query || 'SOL');
-      const r = await fetch(`https://api.dexscreener.com/latest/dex/search/?q=${q}`, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch(`https://api.dexscreener.com/latest/dex/search/?q=${q}`, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const pairs = (d.pairs || []).slice(0, 5);
       if (!pairs.length) return `No DEX pairs found for ${params.symbol}`;
@@ -1765,7 +1765,7 @@ const TOOLS = {
     params: ['symbol'],
     execute: async (params) => {
       const sym = (params.symbol || 'BTC').toUpperCase().replace('USDT','') + 'USDT';
-      const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`);
+      const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       if (d.code) return `Binance error: ${d.msg}`;
       return `${sym}: $${Number(d.lastPrice).toLocaleString()} | 24h: ${Number(d.priceChangePercent).toFixed(2)}% | High: $${Number(d.highPrice).toLocaleString()} | Low: $${Number(d.lowPrice).toLocaleString()} | Vol: ${Number(d.volume).toLocaleString()}`;
@@ -1777,7 +1777,7 @@ const TOOLS = {
     params: ['symbol'],
     execute: async (params) => {
       const sym = (params.symbol || 'BTC').toUpperCase().replace('USDT','') + 'USDT';
-      const r = await fetch(`https://api.binance.com/api/v3/depth?symbol=${sym}&limit=5`);
+      const r = await fetch(`https://api.binance.com/api/v3/depth?symbol=${sym}&limit=5`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const bids = (d.bids||[]).map(b => `  Bid: $${b[0]} x ${Number(b[1]).toFixed(4)}`).join('\n');
       const asks = (d.asks||[]).map(a => `  Ask: $${a[0]} x ${Number(a[1]).toFixed(4)}`).join('\n');
@@ -1820,7 +1820,7 @@ const TOOLS = {
     params: ['limit'],
     execute: async (params) => {
       const limit = params.limit || 10;
-      const r = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${Math.min(limit*2,50)}&page=1&price_change_percentage=24h`, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${Math.min(limit*2,50)}&page=1&price_change_percentage=24h`, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const coins = await r.json();
       if (!Array.isArray(coins)) return 'CoinGecko rate limited. Try again in 60s.';
       const sorted = [...coins].sort((a,b) => (b.price_change_percentage_24h||0) - (a.price_change_percentage_24h||0));
@@ -1832,7 +1832,7 @@ const TOOLS = {
     description: 'Get stablecoin market cap and peg data from DeFiLlama.',
     params: [],
     execute: async (params) => {
-      const r = await fetch('https://stablecoins.llama.fi/stablecoins?includePrices=true');
+      const r = await fetch('https://stablecoins.llama.fi/stablecoins?includePrices=true', { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const stables = (d.peggedAssets || []).slice(0, 8);
       return 'Stablecoin Data:\n' + stables.map(s => `${s.symbol}: $${(s.circulating?.peggedUSD/1e9||0).toFixed(2)}B market cap | Price: $${s.price?.toFixed(4)||'1.00'}`).join('\n');
@@ -1864,7 +1864,7 @@ const TOOLS = {
     description: 'Get historical Fear & Greed index data (last 7 days).',
     params: [],
     execute: async (params) => {
-      const r = await fetch('https://api.alternative.me/fng/?limit=7&format=json');
+      const r = await fetch('https://api.alternative.me/fng/?limit=7&format=json', { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const entries = (d.data || []).map(e => `${new Date(e.timestamp*1000).toLocaleDateString()}: ${e.value} (${e.value_classification})`);
       return 'Fear & Greed History (7 days):\n' + entries.join('\n');
@@ -1892,7 +1892,7 @@ const TOOLS = {
     params: ['address'],
     execute: async (params) => {
       const addr = params.address || params.symbol || 'So11111111111111111111111111111111111111112';
-      const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const pair = (d.pairs || [])[0];
       if (!pair) return `No data found for ${addr}`;
@@ -1907,7 +1907,8 @@ const TOOLS = {
       const r = await fetch('https://api.mainnet-beta.solana.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getRecentPerformanceSamples', params: [4] })
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getRecentPerformanceSamples', params: [4] }),
+        signal: AbortSignal.timeout(10000)
       });
       const d = await r.json();
       const samples = d.result || [];
@@ -1953,7 +1954,7 @@ const TOOLS = {
     description: 'Get Bitcoin and Ethereum market dominance percentages.',
     params: [],
     execute: async (params) => {
-      const r = await fetch('https://api.coingecko.com/api/v3/global', { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch('https://api.coingecko.com/api/v3/global', { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const data = d.data || {};
       return `Market Dominance:\nBTC: ${data.market_cap_percentage?.btc?.toFixed(2)}%\nETH: ${data.market_cap_percentage?.eth?.toFixed(2)}%\nTotal Market Cap: $${(data.total_market_cap?.usd/1e12).toFixed(2)}T\nTotal Volume 24h: $${(data.total_volume?.usd/1e9).toFixed(2)}B`;
@@ -1985,7 +1986,7 @@ const TOOLS = {
       const topic = params.topic || 'technology';
       const limit = params.limit || 8;
       const feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(topic)}&hl=en-US&gl=US&ceid=US:en`;
-      const r = await fetch(feedUrl, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch(feedUrl, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const xml = await r.text();
       const titles = [...xml.matchAll(/<title>(.*?)<\/title>/g)].slice(1, limit+1).map(m => m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
       return `News Headlines — "${topic}":\n` + titles.join('\n');
@@ -2022,7 +2023,7 @@ const TOOLS = {
       const owner = params.owner || 'vercel';
       const repo = params.repo || 'next.js';
       const limit = params.limit || 8;
-      const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=open&per_page=${limit}`, { headers: { 'User-Agent': 'SHADDAI/2.0', 'Accept': 'application/vnd.github.v3+json' } });
+      const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=open&per_page=${limit}`, { headers: { 'User-Agent': 'SHADDAI/2.0', 'Accept': 'application/vnd.github.v3+json' }, signal: AbortSignal.timeout(10000) });
       const issues = await r.json();
       if (!Array.isArray(issues)) return `Could not fetch issues for ${owner}/${repo}`;
       return `Open Issues — ${owner}/${repo}:\n` + issues.map(i => `#${i.number}: ${i.title} | ${i.comments} comments | ${i.labels?.map(l=>l.name).join(', ')||'no labels'}`).join('\n');
@@ -2034,7 +2035,7 @@ const TOOLS = {
     params: ['query'],
     execute: async (params) => {
       const q = encodeURIComponent(params.query || '');
-      const r = await fetch(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`, { headers: { 'User-Agent': 'SHADDAI/2.0' } });
+      const r = await fetch(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`, { headers: { 'User-Agent': 'SHADDAI/2.0' }, signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const results = [];
       if (d.AbstractText) results.push(`Summary: ${d.AbstractText}`);
@@ -2052,7 +2053,7 @@ const TOOLS = {
     execute: async (params) => {
       const tag = encodeURIComponent(params.tag || 'javascript');
       const limit = params.limit || 6;
-      const r = await fetch(`https://api.stackexchange.com/2.3/questions?order=desc&sort=votes&tagged=${tag}&site=stackoverflow&pagesize=${limit}&filter=withbody`);
+      const r = await fetch(`https://api.stackexchange.com/2.3/questions?order=desc&sort=votes&tagged=${tag}&site=stackoverflow&pagesize=${limit}&filter=withbody`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const qs = d.items || [];
       return `StackOverflow — "${params.tag}":\n` + qs.map(q => `[${q.score}↑ ${q.answer_count}ans] ${q.title}`).join('\n');
@@ -2090,16 +2091,16 @@ const TOOLS = {
     execute: async (params) => {
       const id = params.story_id || params.id;
       if (!id) {
-        const r = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+        const r = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', { signal: AbortSignal.timeout(10000) });
         const ids = await r.json();
         const storyId = ids[0];
-        const sr = await fetch(`https://hacker-news.firebaseio.com/v0/item/${storyId}.json`);
+        const sr = await fetch(`https://hacker-news.firebaseio.com/v0/item/${storyId}.json`, { signal: AbortSignal.timeout(10000) });
         const story = await sr.json();
         return `Top HN Story: ${story.title}\nURL: ${story.url||'(self)'}\nScore: ${story.score} | Comments: ${story.descendants}`;
       }
-      const r = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+      const r = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
-      const comments = await Promise.all((d.kids||[]).slice(0,5).map(kid => fetch(`https://hacker-news.firebaseio.com/v0/item/${kid}.json`).then(r=>r.json())));
+      const comments = await Promise.all((d.kids||[]).slice(0,5).map(kid => fetch(`https://hacker-news.firebaseio.com/v0/item/${kid}.json`, { signal: AbortSignal.timeout(10000) }).then(r=>r.json())));
       return `HN: ${d.title}\n\nTop Comments:\n` + comments.filter(c=>c.text).map(c => c.text.replace(/<[^>]+>/g,' ').trim().slice(0,200)).join('\n---\n');
     }
   },
@@ -2178,7 +2179,7 @@ const TOOLS = {
     params: ['package'],
     execute: async (params) => {
       const pkg = params.package || params.name || 'express';
-      const r = await fetch(`https://registry.npmjs.org/${pkg}`);
+      const r = await fetch(`https://registry.npmjs.org/${pkg}`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       if (d.error) return `Package "${pkg}" not found on npm`;
       const latest = d['dist-tags']?.latest;
@@ -2194,7 +2195,7 @@ const TOOLS = {
       const q = encodeURIComponent(params.query || 'AI agent');
       const lang = params.language ? `+language:${params.language}` : '';
       const limit = params.limit || 6;
-      const r = await fetch(`https://api.github.com/search/repositories?q=${q}${lang}&sort=stars&per_page=${limit}`, { headers: { 'User-Agent': 'SHADDAI/2.0', 'Accept': 'application/vnd.github.v3+json' } });
+      const r = await fetch(`https://api.github.com/search/repositories?q=${q}${lang}&sort=stars&per_page=${limit}`, { headers: { 'User-Agent': 'SHADDAI/2.0', 'Accept': 'application/vnd.github.v3+json' }, signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       if (!d.items) return 'GitHub search unavailable (rate limited). Try again.';
       return `GitHub Search — "${params.query}":\n` + d.items.map(r => `${r.stargazers_count.toLocaleString()} stars: ${r.full_name} — ${r.description?.slice(0,80)||'no description'}`).join('\n');
@@ -2392,7 +2393,7 @@ const TOOLS = {
       let lon = params.lon;
       let cityName = params.city || 'New York';
       if (!lat || !lon) {
-        const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1`);
+        const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1`, { signal: AbortSignal.timeout(10000) });
         const geoData = await geo.json();
         const loc = geoData.results?.[0];
         if (!loc) return `City "${cityName}" not found.`;
@@ -2400,7 +2401,7 @@ const TOOLS = {
         lon = loc.longitude;
         cityName = `${loc.name}, ${loc.country}`;
       }
-      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability&timezone=auto`);
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability&timezone=auto`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
       const w = d.current_weather;
       const code = {0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',51:'Light Drizzle',61:'Rain',71:'Snow',80:'Showers',95:'Thunderstorm'};
@@ -2680,7 +2681,8 @@ const TOOLS = {
       const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: params.message || params.text || '', parse_mode: 'Markdown' })
+        body: JSON.stringify({ chat_id: chatId, text: params.message || params.text || '', parse_mode: 'Markdown' }),
+        signal: AbortSignal.timeout(10000)
       });
       const d = await r.json();
       return d.ok ? `Telegram message sent to ${chatId}` : `Telegram error: ${d.description}`;
@@ -2696,7 +2698,8 @@ const TOOLS = {
       const r = await fetch(`https://api.github.com/repos/${params.owner}/${params.repo}/issues`, {
         method: 'POST',
         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'User-Agent': 'SHADDAI/2.0' },
-        body: JSON.stringify({ title: params.title, body: params.body||'', labels: params.labels ? params.labels.split(',').map(l=>l.trim()) : [] })
+        body: JSON.stringify({ title: params.title, body: params.body||'', labels: params.labels ? params.labels.split(',').map(l=>l.trim()) : [] }),
+        signal: AbortSignal.timeout(10000)
       });
       const d = await r.json();
       if (d.html_url) return `Issue created: ${d.html_url}`;
@@ -3289,7 +3292,11 @@ async function extractAndRunTools(text, agentName, taskId = null, allowed = null
     }
 
     try {
-      const result = await tool.execute(params);
+      // Per-tool timeout so a hung tool can't stall the whole autonomous loop.
+      const result = await Promise.race([
+        tool.execute(params),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('tool timeout')), 30000))
+      ]);
       cacheAnalytics.set(toolName, params, result); // store for next call
       results.push({ tool: toolName, params, result });
       if (taskId) agentEventBus.toolDone(taskId, toolName, result, Date.now() - t0);

@@ -912,13 +912,9 @@ const TOOLS_EXTRA = {
     execute: stubExecute('SENDGRID_API_KEY or RESEND_API_KEY')
   },
 
-  send_telegram: {
-    name: 'send_telegram',
-    description: 'Post a message to a Telegram bot/channel. Requires TELEGRAM_BOT_TOKEN.',
-    schema: { chat_id: 'string', message: 'string', parse_mode: 'string — HTML or Markdown (optional)' },
-    agents: ['QUILL', 'SHADDAI', 'PIKADON'],
-    execute: stubExecute('TELEGRAM_BOT_TOKEN')
-  },
+  // NOTE: send_telegram removed here — the REAL working implementation lives in
+  // agent-engine.js (aliased from post_to_telegram). This stub was merged last
+  // and silently clobbered it. Do not re-add.
 
   send_slack: {
     name: 'send_slack',
@@ -936,13 +932,8 @@ const TOOLS_EXTRA = {
     execute: stubExecute(['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM'])
   },
 
-  post_twitter: {
-    name: 'post_twitter',
-    description: 'Post a tweet via Twitter API v2. Requires TWITTER_BEARER_TOKEN.',
-    schema: { text: 'string — tweet content (max 280 chars)', reply_to: 'string — tweet ID to reply to (optional)' },
-    agents: ['QUILL', 'TURTLE'],
-    execute: stubExecute('TWITTER_BEARER_TOKEN')
-  },
+  // NOTE: post_twitter removed here — real impl is post_to_x in tools-social.js
+  // (aliased to post_twitter in agent-engine.js). This stub clobbered it.
 
   create_stripe_checkout: {
     name: 'create_stripe_checkout',
@@ -1260,13 +1251,8 @@ const TOOLS_EXTRA = {
     execute: stubExecute('VIRUSTOTAL_API_KEY')
   },
 
-  search_twitter: {
-    name: 'search_twitter',
-    description: 'Search Twitter/X via API v2. Requires TWITTER_BEARER_TOKEN.',
-    schema: { query: 'string', limit: 'number (optional)', since_id: 'string (optional)' },
-    agents: ['ORACLE', 'ZEROX'],
-    execute: stubExecute('TWITTER_BEARER_TOKEN')
-  },
+  // NOTE: search_twitter removed here — real impl is search_x in tools-social.js
+  // (aliased to search_twitter in agent-engine.js). This stub clobbered it.
 
   get_linkedin_profile: {
     name: 'get_linkedin_profile',

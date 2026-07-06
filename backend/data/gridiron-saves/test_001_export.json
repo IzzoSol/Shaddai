@@ -1,0 +1,12 @@
+{
+  "character": {
+    "id": "test_001",
+    "name": "TestChar",
+    "team": "NEXUS",
+    "stats": {
+      "speed": 60
+    }
+  },
+  "exportedAt": "2026-07-05T19:24:17.842Z",
+  "proModeLink": "/games/gridiron-pro.html?character=test_001"
+}

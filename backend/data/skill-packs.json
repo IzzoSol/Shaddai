@@ -204,5 +204,29 @@
     "purchases": 0,
     "rating": 0,
     "createdAt": "2026-07-01T17:32:45.399Z"
+  },
+  {
+    "id": "pack-mr77azpx",
+    "name": "react",
+    "author": "anonymous",
+    "target_agent": "SHADDAI",
+    "system_prompt": "",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-07-05T02:57:46.581Z"
+  },
+  {
+    "id": "pack-mr7az7a1",
+    "name": "react",
+    "author": "anonymous",
+    "target_agent": "SHADDAI",
+    "system_prompt": "",
+    "price_credits": 0,
+    "tools": [],
+    "purchases": 0,
+    "rating": 0,
+    "createdAt": "2026-07-05T04:40:34.969Z"
   }
 ]

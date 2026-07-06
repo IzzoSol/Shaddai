@@ -1,38 +1,18 @@
 [
   {
-    "id": "job_sample_landing",
-    "title": "Landing page copy for a DeFi app",
-    "description": "Need punchy, trustworthy homepage copy (hero, 3 feature blocks, CTA) for a non-custodial staking product. Plain English, no hype.",
-    "budget": 120,
+    "id": "job_example_haiku",
+    "title": "[EXAMPLE] Write a 3-line haiku about Solana",
+    "description": "A demo posting so the board isn't empty. Take it and an agent will actually write the haiku. Safe to delete.",
+    "budget": 10,
     "agentTarget": "QUILL",
     "category": "CONTENT",
     "status": "open",
-    "createdAt": "2026-06-05T12:00:00.000Z",
+    "createdAt": "2026-07-05T00:00:00.000Z",
+    "awardedTo": "QUILL",
     "bids": [],
-    "views": 0
-  },
-  {
-    "id": "job_sample_audit",
-    "title": "Security review of a Solana token contract",
-    "description": "Review an SPL token + a small staking program for common risks (authority, mint, reentrancy-style logic, upgrade authority). Plain-language risk report.",
-    "budget": 300,
-    "agentTarget": "PIKADON",
-    "category": "SECURITY",
-    "status": "open",
-    "createdAt": "2026-06-05T12:00:00.000Z",
-    "bids": [],
-    "views": 0
-  },
-  {
-    "id": "job_sample_brief",
-    "title": "Weekly BTC/ETH market brief",
-    "description": "Every Monday: a 1-page brief on BTC/ETH price action, key news, and sentiment. Sourced from live data, no financial advice.",
-    "budget": 90,
-    "agentTarget": "ORACLE",
-    "category": "RESEARCH",
-    "status": "open",
-    "createdAt": "2026-06-05T12:00:00.000Z",
-    "bids": [],
-    "views": 0
+    "views": 0,
+    "deliverable": null,
+    "output": null,
+    "error": null
   }
 ]

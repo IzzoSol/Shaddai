@@ -75,7 +75,11 @@ function rateLimit({ windowMs = 60000, max = 60 } = {}) {
 // Soft auth: identify the caller; only reject when REQUIRE_AUTH is explicitly on.
 // TODO(launch): verify a Firebase ID token here instead of trusting the header.
 function softAuth(req, res, next) {
-  const uid = req.headers['x-user-id'] || (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || '';
+  // SECURITY: never trust the x-user-id header in production (spoofable). Only
+  // honour it in non-prod so local tooling keeps working.
+  const isProd = process.env.NODE_ENV === 'production';
+  const headerUid = isProd ? '' : (req.headers['x-user-id'] || '');
+  const uid = headerUid || (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || '';
   req.userId = uid || 'local';
   if (process.env.REQUIRE_AUTH === 'true' && !uid) {
     return res.status(401).json({ ok: false, error: 'authentication required' });
@@ -129,8 +133,9 @@ async function verifyFirebaseToken(req, res, next) {
     return res.status(401).json({ ok: false, error: 'authentication required' });
   }
 
-  // Dev fallback: honour the x-user-id header so existing local tooling keeps working.
-  const fallbackUid = req.headers['x-user-id'] || '';
+  // Dev fallback: honour the x-user-id header so existing local tooling keeps
+  // working. SECURITY: never trust this spoofable header in production.
+  const fallbackUid = process.env.NODE_ENV === 'production' ? '' : (req.headers['x-user-id'] || '');
   req.userId = fallbackUid || 'local';
   next();
 }
@@ -139,7 +144,14 @@ async function verifyFirebaseToken(req, res, next) {
 // dashboard keeps working. Production => require the matching admin header.
 function requireAdmin(req, res, next) {
   const tok = process.env.ADMIN_TOKEN;
-  if (!tok) return next(); // dev convenience
+  if (!tok) {
+    // Fail CLOSED in production: refuse dangerous ops when no admin token is
+    // configured. In dev, keep the pass-through so the dashboard works.
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(500).json({ ok: false, error: 'admin not configured' });
+    }
+    return next(); // dev convenience
+  }
   if ((req.headers['x-shaddai-admin'] || '') === tok) return next();
   return res.status(403).json({ ok: false, error: 'admin token required for this operation' });
 }

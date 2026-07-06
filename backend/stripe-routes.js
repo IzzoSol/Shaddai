@@ -87,8 +87,10 @@ router.post('/create-checkout', express.json(), async (req, res) => {
     // 1) Hosted link wins if present for this item — append client_reference_id so we can match the buyer
     if (links[item]) {
       const userId = (req.body && req.body.userId) || 'guest';
+      // Encode "uid-item" so the webhook knows WHO paid and WHAT to grant.
+      const ref = encodeURIComponent(userId + '-' + item);
       const sep = links[item].indexOf('?') >= 0 ? '&' : '?';
-      const url = links[item] + sep + 'client_reference_id=' + encodeURIComponent(userId);
+      const url = links[item] + sep + 'client_reference_id=' + ref;
       return res.json({ ok: true, url, mode: 'links' });
     }
 

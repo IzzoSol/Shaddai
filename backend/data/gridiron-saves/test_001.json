@@ -1,0 +1,8 @@
+{
+  "id": "test_001",
+  "name": "TestChar",
+  "team": "NEXUS",
+  "stats": {
+    "speed": 60
+  }
+}

@@ -1876,7 +1876,7 @@ router.post('/content/generate', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message, content: '' }); }
 });
 
-router.post('/image/generate', async (req, res) => {
+router.post('/image/generate', require('./demo-limit').middleware, async (req, res) => {
   const { prompt, model = 'flux', width = 1024, height = 1024, aspect_ratio = '1:1', resolution = '1K', callback_url, apiKey } = req.body || {};
   if (!prompt || !String(prompt).trim()) {
     return res.status(400).json({ error: 'prompt required' });
@@ -2457,13 +2457,10 @@ router.post('/execute-code', requireAdmin, async (req, res) => {
       output: (r.success ? r.output.map(String).join('\n') : r.error).substring(0, 3000) || '(no output)'
     });
   } else if (language === 'python') {
-    const { execFileSync } = require('child_process');
-    try {
-      const result = execFileSync('python', ['-c', code], { timeout: 5000, encoding: 'utf8', maxBuffer: 50000 });
-      res.json({ status: 'ok', language, output: result.substring(0, 3000) || '(no output)' });
-    } catch (e) {
-      res.json({ status: 'error', language, output: (e.stderr || e.message || 'Error').substring(0, 500) });
-    }
+    // SECURITY: Python was executed via child_process with a blocklist that did
+    // NOT cover Python (e.g. `import os; os.system(...)`) — a trivial RCE. The
+    // Python execution path is disabled entirely.
+    res.json({ ok: false, error: 'Python execution disabled for security' });
   } else {
     res.status(400).json({ error: `Unsupported language: ${language}. Use javascript or python.` });
   }
@@ -2634,14 +2631,145 @@ router.post('/auth/link-wallet', (req, res) => {
   res.json({ success: true, walletAddress, userId, linked: true });
 });
 
+// ═════════════════════════════════════════════════════════════════
+// MARKETPLACE / JOB BOARD — single coherent lifecycle
 // ─────────────────────────────────────────────────────────────
-// MARKETPLACE JOBS — persistent JSON storage + SSE broadcasting
-// ─────────────────────────────────────────────────────────────
+// STATUS MODEL (the only statuses a job can hold):
+//   open        → posted, awaiting an agent
+//   in_progress → an agent has taken it and is executing the work
+//   delivered   → the agent produced a real deliverable (job.deliverable)
+//   cancelled   → the poster cancelled it (terminal)
+//   error       → the agent failed; job.error holds the message (retryable)
+//
+// Real work is done by the agent engine — createTask() + runAgentLoop() +
+// getTask().result — never faked. All mutations persist to jobs.json.
+// ═════════════════════════════════════════════════════════════════
 
 // Load from disk on startup
 let _jobs = loadJSON(JOBS_FILE, []);
+if (!Array.isArray(_jobs)) _jobs = [];
+
+const MAX_JOBS = 500; // cap the board so the JSON file can't grow unbounded
 
 function saveJobs() { saveJSON(JOBS_FILE, _jobs); }
+
+// Build the LLM prompt that turns a job posting into an executable instruction.
+function buildJobPrompt(job) {
+  return `Execute this marketplace job completely. Deliver the full, usable result — the actual output itself, not a description of what you would do.
+
+JOB TITLE: ${job.title}
+DESCRIPTION: ${job.description || 'No additional description'}
+BUDGET: $${job.budget || 0}
+REQUIRED SKILLS: ${(job.skills || []).join(', ') || 'General'}
+
+Deliver a complete, professional result now.`;
+}
+
+// Validate + sanitize a posting, push it onto _jobs, persist.
+// Returns { job } on success or { error, status } on failure. Never throws.
+function buildJobFromBody(body) {
+  body = body || {};
+  const rawTitle = body.title;
+  const rawDesc  = body.description;
+  const rawBudget = body.budget;
+
+  if (!rawTitle || typeof rawTitle !== 'string' || rawTitle.trim().length === 0) {
+    return { error: 'title is required', status: 400 };
+  }
+  if (rawTitle.length > 200) {
+    return { error: 'title must be 200 characters or fewer', status: 400 };
+  }
+  if (rawDesc != null && String(rawDesc).length > 2000) {
+    return { error: 'description must be 2000 characters or fewer', status: 400 };
+  }
+  if (rawBudget != null) {
+    const budget = Number(rawBudget);
+    if (isNaN(budget) || budget <= 0) {
+      return { error: 'budget must be a positive number', status: 400 };
+    }
+  }
+
+  // Enforce the cap — evict the oldest terminal job to make room, else reject.
+  if (_jobs.length >= MAX_JOBS) {
+    const evict = _jobs.findIndex(j => j.status === 'delivered' || j.status === 'cancelled');
+    if (evict !== -1) _jobs.splice(evict, 1);
+    else return { error: 'Job board is full — try again later', status: 429 };
+  }
+
+  const clean = { ...body };
+  clean.title = stripHtml(rawTitle).slice(0, 200);
+  if (rawDesc != null) clean.description = stripHtml(String(rawDesc)).slice(0, 2000);
+  if (rawBudget != null) clean.budget = Number(rawBudget);
+
+  const job = {
+    ...clean,
+    id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    status: 'open',
+    createdAt: new Date().toISOString(),
+    awardedTo: clean.awardedTo || clean.agentTarget || null,
+    bids: [],
+    views: 0,
+    deliverable: null,
+    output: null,
+    error: null
+  };
+  _jobs.push(job);
+  saveJobs();
+  return { job };
+}
+
+// THE REAL WORK. Runs the assigned agent on the job via the agent engine and
+// stores the genuine deliverable. Mutates `job` in place, persists, broadcasts.
+// Assumes the caller has already set job.status = 'in_progress'.
+async function executeJob(job, agentName) {
+  const agent = String(agentName || job.takenBy || job.awardedTo || 'SHADDAI').toUpperCase();
+  try {
+    const task = agentEngine.createTask(buildJobPrompt(job), agent);
+    await agentEngine.runAgentLoop(task.id);
+    const done = agentEngine.getTask(task.id);
+
+    if (!done || done.status === 'failed' || !done.result) {
+      job.status = 'error';
+      job.error = (done && done.error) || 'Agent produced no deliverable';
+      job.erroredAt = new Date().toISOString();
+      saveJobs();
+      broadcastEvent('job:error', { jobId: job.id, title: job.title, agent, error: job.error });
+      return job;
+    }
+
+    job.deliverable = done.result;   // canonical deliverable field
+    job.output = done.result;        // legacy alias (frontend polls job.output)
+    job.toolsUsed = done.tools_used || [];
+    job.executedBy = done.agentName || agent;
+    job.status = 'delivered';
+    job.error = null;
+    job.deliveredAt = new Date().toISOString();
+    saveJobs();
+    // Award XP + achievements to the operative for a real delivery (best-effort).
+    try {
+      const ach = require('./achievements');
+      const cat = job.category || (Array.isArray(job.skills) ? job.skills[0] : job.skills) || '';
+      job.achievements = ach.recordEvent(job.executedBy || agent, 'bounty_completed', { budget: job.budget || 0, category: cat });
+    } catch (_) { /* achievements optional */ }
+    broadcastEvent('job:delivered', {
+      jobId: job.id, title: job.title, agent: job.executedBy,
+      deliverablePreview: String(done.result).slice(0, 300)
+    });
+
+    // Record a receipt of the real work (bounded).
+    const receipts = loadJSON(path.join(DATA_DIR, 'task_receipts.json'), []);
+    receipts.unshift({ task_id: `job_${job.id}`, agent: job.executedBy, task: job.title, result: done.result, timestamp: new Date().toISOString() });
+    saveJSON(path.join(DATA_DIR, 'task_receipts.json'), receipts.slice(0, 500));
+    return job;
+  } catch (e) {
+    job.status = 'error';
+    job.error = e.message;
+    job.erroredAt = new Date().toISOString();
+    saveJobs();
+    broadcastEvent('job:error', { jobId: job.id, title: job.title, agent, error: e.message });
+    return job;
+  }
+}
 
 router.get('/marketplace/jobs', (req, res) => {
   const { status, clientId } = req.query;
@@ -2651,46 +2779,18 @@ router.get('/marketplace/jobs', (req, res) => {
   res.json({ jobs: filtered, total: filtered.length });
 });
 
+// GET /marketplace/jobs/open — convenience alias for ?status=open, {ok,data} shape.
+// MUST be declared before /marketplace/jobs/:id so "open" isn't parsed as an id.
+router.get('/marketplace/jobs/open', (req, res) => {
+  const open = _jobs.filter(j => j.status === 'open');
+  res.json({ ok: true, data: open, jobs: open, total: open.length });
+});
+
 router.post('/marketplace/jobs', (req, res) => {
-  // Input validation
-  const rawTitle = req.body.title;
-  const rawDesc  = req.body.description;
-  const rawBudget = req.body.budget;
-
-  if (!rawTitle || typeof rawTitle !== 'string' || rawTitle.trim().length === 0) {
-    return res.status(400).json({ error: 'title is required' });
-  }
-  if (rawTitle.length > 200) {
-    return res.status(400).json({ error: 'title must be 200 characters or fewer' });
-  }
-  if (rawDesc !== undefined && rawDesc !== null && String(rawDesc).length > 2000) {
-    return res.status(400).json({ error: 'description must be 2000 characters or fewer' });
-  }
-  if (rawBudget !== undefined && rawBudget !== null) {
-    const budget = Number(rawBudget);
-    if (isNaN(budget) || budget <= 0) {
-      return res.status(400).json({ error: 'budget must be a positive number' });
-    }
-  }
-
-  // Sanitize text fields — strip any embedded HTML tags
-  const sanitizedBody = { ...req.body };
-  sanitizedBody.title       = stripHtml(rawTitle).slice(0, 200);
-  if (rawDesc != null) sanitizedBody.description = stripHtml(String(rawDesc)).slice(0, 2000);
-
-  const job = {
-    id: `job_${Date.now()}`,
-    ...sanitizedBody,
-    status: 'open',
-    createdAt: new Date().toISOString(),
-    bids: [],
-    views: 0
-  };
-  _jobs.push(job);
-  saveJobs();
-  // Broadcast to all SSE clients
-  broadcastEvent('job:created', { jobId: job.id, title: job.title, budget: job.budget, status: 'open' });
-  res.json({ job, message: 'Job posted' });
+  const r = buildJobFromBody(req.body || {});
+  if (r.error) return res.status(r.status || 400).json({ error: r.error });
+  broadcastEvent('job:created', { jobId: r.job.id, title: r.job.title, budget: r.job.budget, status: 'open' });
+  res.json({ job: r.job, message: 'Job posted' });
 });
 
 router.get('/marketplace/jobs/:id', (req, res) => {
@@ -2741,75 +2841,50 @@ router.post('/marketplace/jobs/:id/bid', (req, res) => {
   res.json({ bid, message: 'Bid submitted' });
 });
 
+// Award a bid: record the winning agent (awardedTo) but keep the job OPEN.
+// The actual work only starts when the job is taken/executed. Shared by both
+// /bid/:bidId/accept and /award and /accept-bid.
+function awardBid(job, bid) {
+  bid.status = 'accepted';
+  job.awardedTo = bid.agentId || bid.agent || job.awardedTo;
+  job.acceptedBid = bid;
+  job.awardedAt = new Date().toISOString();
+  (job.bids || []).forEach(b => { if (b !== bid && b.id !== bid.id) b.status = 'rejected'; });
+  saveJobs();
+  broadcastEvent('bid:accepted', { bidId: bid.id, jobId: job.id, agentId: job.awardedTo });
+}
+
 router.post('/marketplace/jobs/:id/bid/:bidId/accept', (req, res) => {
   const job = _jobs.find(j => j.id === req.params.id);
   if (!job) return res.status(404).json({ error: 'Job not found' });
   const bid = (job.bids || []).find(b => b.id === req.params.bidId);
   if (!bid) return res.status(404).json({ error: 'Bid not found' });
-  bid.status = 'accepted';
-  job.status = 'awarded';
-  job.awardedTo = bid.agentId;
-  job.awardedAt = new Date().toISOString();
-  // Mark other bids as rejected
-  job.bids.forEach(b => { if (b.id !== bid.id) b.status = 'rejected'; });
-  saveJobs();
-  broadcastEvent('bid:accepted', { bidId: bid.id, jobId: job.id, agentId: bid.agentId });
-  res.json({ bid, job, message: 'Bid accepted — job awarded' });
+  awardBid(job, bid);
+  res.json({ bid, job, message: `Bid accepted — awarded to ${job.awardedTo}` });
 });
 
-// POST /marketplace/jobs/:id/award — frontend shorthand (accepts top bid or bidId from body)
+// POST /marketplace/jobs/:id/award — accepts top pending bid or a specific bidId.
 router.post('/marketplace/jobs/:id/award', (req, res) => {
   const job = _jobs.find(j => j.id === req.params.id);
   if (!job) return res.status(404).json({ error: 'Job not found' });
   const bidId = req.body.bidId;
-  const bid = bidId ? (job.bids||[]).find(b => b.id === bidId) : (job.bids||[]).find(b => b.status === 'pending');
+  const bid = bidId ? (job.bids || []).find(b => b.id === bidId) : (job.bids || []).find(b => b.status === 'pending');
   if (!bid) return res.status(404).json({ error: 'No valid bid to award' });
-  bid.status = 'accepted'; job.status = 'awarded'; job.awardedTo = bid.agentId; job.awardedAt = new Date().toISOString();
-  (job.bids||[]).forEach(b => { if (b.id !== bid.id) b.status = 'rejected'; });
-  saveJobs();
-  broadcastEvent('bid:accepted', { bidId: bid.id, jobId: job.id, agentId: bid.agentId });
-  res.json({ success: true, bid, job, message: `Job awarded to ${bid.agentId}` });
+  awardBid(job, bid);
+  res.json({ success: true, bid, job, message: `Job awarded to ${job.awardedTo}` });
 });
 
-// POST /marketplace/jobs/:id/execute — frontend shorthand for auto-execute
-router.post('/marketplace/jobs/:id/execute', async (req, res) => {
-  req.params.id = req.params.id; // passthrough to auto-execute logic below
+// POST /marketplace/jobs/:id/accept-bid — accept a bid by index (or bidId). {ok,data} shape.
+router.post('/marketplace/jobs/:id/accept-bid', (req, res) => {
   const job = _jobs.find(j => j.id === req.params.id);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
-  job.status = 'executing'; saveJobs();
-  broadcastEvent('job:executing', { jobId: job.id, title: job.title });
-  res.json({ success: true, jobId: job.id, status: 'executing', message: 'Job execution started' });
-  // Run async via best available LLM
-  setImmediate(async () => {
-    const prompt = `Execute this marketplace job completely and deliver the full result:\n\nTitle: ${job.title}\nDescription: ${job.description || ''}\nBudget: $${job.budget || 0}`;
-    let output = null;
-    // Try Groq first (fast)
-    if (process.env.GROQ_API_KEY) {
-      try {
-        const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'system', content: 'You are SHADDAI, expert AI job executor. Deliver complete, professional results.' }, { role: 'user', content: prompt }],
-          max_tokens: 2048
-        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
-        output = r.data.choices[0]?.message?.content;
-      } catch(e) { console.warn('[execute] Groq failed:', e.message); }
-    }
-    // Ollama fallback
-    if (!output) {
-      try {
-        const tags = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 3000 });
-        const model = (tags.data.models||[])[0]?.name || DEFAULT_OLLAMA_MODEL;
-        const r = await axios.post(`${OLLAMA_URL}/api/chat`, { model, messages: [{ role: 'user', content: prompt }], stream: false }, { timeout: 120000 });
-        output = r.data.message?.content;
-      } catch(e) { output = `[Execution failed: ${e.message}]`; }
-    }
-    job.status = 'completed'; job.output = output; job.completedAt = new Date().toISOString();
-    saveJobs();
-    broadcastEvent('job:completed', { jobId: job.id, title: job.title, output: output?.slice(0,200) });
-    const receipts = loadJSON(path.join(DATA_DIR, 'task_receipts.json'), []);
-    receipts.unshift({ task_id: `exec_${job.id}`, agent: job.awardedTo || 'SHADDAI', task: job.title, result: output?.slice(0,1000), timestamp: new Date().toISOString() });
-    saveJSON(path.join(DATA_DIR, 'task_receipts.json'), receipts.slice(0, 500));
-  });
+  if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
+  const { bidIndex, bidId } = req.body || {};
+  let bid;
+  if (bidId) bid = (job.bids || []).find(b => b.id === bidId);
+  else if (bidIndex != null) bid = (job.bids || [])[Number(bidIndex)];
+  if (!bid) return res.status(400).json({ ok: false, error: 'Invalid bid reference' });
+  awardBid(job, bid);
+  res.json({ ok: true, data: job });
 });
 
 router.post('/marketplace/jobs/:id/auto-bid', (req, res) => {
@@ -2819,52 +2894,57 @@ router.post('/marketplace/jobs/:id/auto-bid', (req, res) => {
   res.json({ status: 'enabled', jobId: req.params.id, message: 'Auto-bid enabled' });
 });
 
-router.post('/marketplace/jobs/:id/auto-execute', async (req, res) => {
+// POST /marketplace/jobs/:id/cancel — poster cancels an unfinished job (terminal).
+router.post('/marketplace/jobs/:id/cancel', (req, res) => {
   const job = _jobs.find(j => j.id === req.params.id);
   if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (job.status === 'delivered') return res.status(409).json({ error: 'Cannot cancel a delivered job' });
+  job.status = 'cancelled';
+  job.cancelledAt = new Date().toISOString();
+  saveJobs();
+  broadcastEvent('job:cancelled', { jobId: job.id, title: job.title });
+  res.json({ success: true, job });
+});
 
-  // Route to SHADDAI for auto-execution via LLM
-  try {
-    job.status = 'executing';
-    saveJobs();
-    broadcastEvent('job:executing', { jobId: job.id, title: job.title });
-
-    const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-      model: DEFAULT_OLLAMA_MODEL,
-      messages: [
-        { role: 'system', content: 'You are SHADDAI, AI job executor. Complete marketplace tasks concisely and thoroughly.' },
-        { role: 'user', content: `Execute this job: ${job.title || job.description || JSON.stringify(job)}` }
-      ],
-      stream: false
-    }, { timeout: 120000 });
-
-    const output = r.data.message?.content || 'Job executed';
-    job.status = 'completed';
-    job.output = output;
-    job.completedAt = new Date().toISOString();
-    saveJobs();
-    broadcastEvent('job:completed', { jobId: job.id, title: job.title });
-    res.json({ status: 'completed', jobId: job.id, output });
-  } catch (e) {
-    if (job) { job.status = 'failed'; job.error = e.message; saveJobs(); }
-    broadcastEvent('job:failed', { jobId: req.params.id, error: e.message });
-    res.status(500).json({ status: 'failed', error: e.message });
+// POST /marketplace/jobs/:id/auto-execute — SYNCHRONOUS real execution.
+// Runs the assigned agent, waits, and returns the real deliverable in the
+// response (frontend reads d.deliverable + d.agent directly).
+router.post('/marketplace/jobs/:id/auto-execute', require('./demo-limit').middleware, async (req, res) => {
+  const job = _jobs.find(j => j.id === req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (job.status === 'delivered') {
+    return res.json({ status: 'delivered', jobId: job.id, agent: job.executedBy || job.takenBy, deliverable: job.deliverable, output: job.output });
   }
+  const agentName = String(req.body.agent || job.awardedTo || 'SHADDAI').toUpperCase();
+  job.status = 'in_progress';
+  job.takenBy = agentName;
+  job.takenAt = new Date().toISOString();
+  job.error = null;
+  saveJobs();
+  broadcastEvent('job:in_progress', { jobId: job.id, title: job.title, agent: agentName });
+  await executeJob(job, agentName);
+  if (job.status === 'error') {
+    return res.status(502).json({ status: 'error', jobId: job.id, agent: agentName, error: job.error });
+  }
+  res.json({ status: job.status, jobId: job.id, agent: job.executedBy || agentName, deliverable: job.deliverable, output: job.output });
 });
 
 router.get('/marketplace/leaderboard', (req, res) => {
   // Build leaderboard from job bid/award data
   const agentStats = {};
   for (const job of _jobs) {
-    if (job.awardedTo) {
-      agentStats[job.awardedTo] = agentStats[job.awardedTo] || { agentId: job.awardedTo, wins: 0, bids: 0, earnings: 0 };
-      agentStats[job.awardedTo].wins++;
-      agentStats[job.awardedTo].earnings += parseFloat(job.budget || 0);
+    // A "win" = a job an agent actually delivered.
+    const winner = job.executedBy || job.takenBy;
+    if (job.status === 'delivered' && winner) {
+      agentStats[winner] = agentStats[winner] || { agentId: winner, wins: 0, bids: 0, earnings: 0 };
+      agentStats[winner].wins++;
+      agentStats[winner].earnings += parseFloat(job.budget || 0);
     }
     for (const bid of (job.bids || [])) {
-      if (bid.agentId) {
-        agentStats[bid.agentId] = agentStats[bid.agentId] || { agentId: bid.agentId, wins: 0, bids: 0, earnings: 0 };
-        agentStats[bid.agentId].bids++;
+      const bidder = bid.agentId || bid.agent;
+      if (bidder) {
+        agentStats[bidder] = agentStats[bidder] || { agentId: bidder, wins: 0, bids: 0, earnings: 0 };
+        agentStats[bidder].bids++;
       }
     }
   }
@@ -2873,99 +2953,65 @@ router.get('/marketplace/leaderboard', (req, res) => {
 });
 
 router.get('/marketplace/stats', (req, res) => {
-  const open = _jobs.filter(j => j.status === 'open').length;
-  const awarded = _jobs.filter(j => j.status === 'awarded').length;
-  const completed = _jobs.filter(j => j.status === 'completed').length;
+  const count = s => _jobs.filter(j => j.status === s).length;
   const totalBids = _jobs.reduce((sum, j) => sum + (j.bids || []).length, 0);
-  res.json({ total: _jobs.length, open, awarded, completed, totalBids, activeClients: _jobs.length });
-});
-
-// ═════════════════════════════════════════════════════════════════
-// JOB EXECUTION v2 — agent takes job, executes with intent routing
-// POST /api/marketplace/jobs/:id/take
-// Agent claims a job, runs it through intent routing, saves result
-// ═════════════════════════════════════════════════════════════════
-
-router.post('/marketplace/jobs/:id/take', async (req, res) => {
-  const job = _jobs.find(j => j.id === req.params.id);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
-  if (job.status === 'completed') return res.status(400).json({ error: 'Job already completed' });
-
-  const agentName = (req.body.agent || job.awardedTo || 'SHADDAI').toUpperCase();
-  const agentSystemPrompts = {
-    SHADDAI: 'You are SHADDAI, supreme AI orchestrator. Execute all tasks with authority and completeness.',
-    ZEROX:   'You are ZEROX, wealth and revenue specialist. Execute financial and business tasks with precision.',
-    ORACLE:  'You are ORACLE, intelligence analyst. Execute research and data tasks with depth and accuracy.',
-    NEXUS:   'You are NEXUS, technical architect. Execute code and systems tasks with engineering rigor.',
-    TURTLE:  'You are TURTLE, creative director. Execute design and content tasks with creativity and polish.',
-    QUILL:   'You are QUILL, master writer. Execute writing tasks with clarity, style, and impact.',
-    PIKADON: 'You are PIKADON, security specialist. Execute security and compliance tasks with thoroughness.'
-  };
-
-  const systemPrompt = agentSystemPrompts[agentName] || agentSystemPrompts.SHADDAI;
-  const jobPrompt = `Execute this marketplace job completely. Deliver the full, usable result — not a description of what you'd do, but the actual output.
-
-JOB TITLE: ${job.title}
-DESCRIPTION: ${job.description || 'No additional description'}
-BUDGET: $${job.budget || 0}
-REQUIRED SKILLS: ${(job.skills || []).join(', ') || 'General'}
-
-Deliver a complete, professional result now.`;
-
-  job.status = 'executing';
-  job.takenBy = agentName;
-  job.takenAt = new Date().toISOString();
-  saveJobs();
-  broadcastEvent('job:taken', { jobId: job.id, title: job.title, agent: agentName });
-
-  // Run execution — respond immediately then finish async
-  res.json({ success: true, jobId: job.id, agent: agentName, status: 'executing', message: `${agentName} is executing this job...` });
-
-  setImmediate(async () => {
-    let output = null;
-    // Try Groq first (fast, 70B quality)
-    if (process.env.GROQ_API_KEY) {
-      try {
-        const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: jobPrompt }],
-          max_tokens: 2500, temperature: 0.7
-        }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
-        output = r.data.choices[0]?.message?.content;
-      } catch (e) { console.warn('[job:take] Groq failed:', e.message); }
-    }
-    // Ollama fallback
-    if (!output) {
-      try {
-        const tags = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 3000 });
-        const model = (tags.data.models || [])[0]?.name || DEFAULT_OLLAMA_MODEL;
-        const r = await axios.post(`${OLLAMA_URL}/api/chat`, {
-          model,
-          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: jobPrompt }],
-          stream: false
-        }, { timeout: 120000 });
-        output = r.data.message?.content;
-      } catch (e) { output = `[Execution failed: ${e.message}]`; }
-    }
-
-    job.status = 'completed';
-    job.output = output;
-    job.completedAt = new Date().toISOString();
-    saveJobs();
-    broadcastEvent('job:completed', { jobId: job.id, title: job.title, agent: agentName, outputPreview: (output || '').slice(0, 300) });
-
-    // Save to task receipts
-    const receipts = loadJSON(path.join(DATA_DIR, 'task_receipts.json'), []);
-    receipts.unshift({ task_id: `job_${job.id}`, agent: agentName, task: job.title, result: output, timestamp: new Date().toISOString() });
-    saveJSON(path.join(DATA_DIR, 'task_receipts.json'), receipts.slice(0, 500));
+  res.json({
+    total: _jobs.length,
+    open: count('open'),
+    in_progress: count('in_progress'),
+    delivered: count('delivered'),
+    cancelled: count('cancelled'),
+    error: count('error'),
+    totalBids,
+    activeClients: new Set(_jobs.map(j => j.clientId).filter(Boolean)).size
   });
 });
 
-// GET /api/marketplace/jobs/:id/result — poll for job output after take
+// ═════════════════════════════════════════════════════════════════
+// JOB EXECUTION — an agent TAKES a job and does the REAL work.
+// POST /api/marketplace/jobs/:id/take   (== /execute, alias)
+//   open|error → in_progress (responds immediately), then the assigned
+//   agent runs via the agent engine in the background → delivered|error.
+//   Poll GET /api/marketplace/jobs/:id/result for the deliverable.
+// ═════════════════════════════════════════════════════════════════
+
+async function takeAndExecute(req, res) {
+  const job = _jobs.find(j => j.id === req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (job.status === 'in_progress') return res.status(409).json({ error: 'Job already in progress' });
+  if (job.status === 'delivered')   return res.status(409).json({ error: 'Job already delivered' });
+  if (job.status === 'cancelled')   return res.status(409).json({ error: 'Job was cancelled' });
+
+  // Accept agent from body.agent or body.agentId; fall back to awarded agent.
+  const agentName = String(req.body.agent || req.body.agentId || job.awardedTo || 'SHADDAI').toUpperCase();
+  job.status = 'in_progress';
+  job.takenBy = agentName;
+  job.takenAt = new Date().toISOString();
+  job.error = null;
+  saveJobs();
+  broadcastEvent('job:in_progress', { jobId: job.id, title: job.title, agent: agentName });
+
+  // Respond immediately, then do the real work in the background.
+  res.json({ success: true, jobId: job.id, agent: agentName, status: 'in_progress', message: `${agentName} is executing this job...` });
+  setImmediate(() => executeJob(job, agentName));
+}
+
+router.post('/marketplace/jobs/:id/take', require('./demo-limit').middleware, takeAndExecute);
+router.post('/marketplace/jobs/:id/execute', require('./demo-limit').middleware, takeAndExecute);
+
+// GET /api/marketplace/jobs/:id/result — poll for the deliverable after take/execute.
 router.get('/marketplace/jobs/:id/result', (req, res) => {
   const job = _jobs.find(j => j.id === req.params.id);
   if (!job) return res.status(404).json({ error: 'Job not found' });
-  res.json({ jobId: job.id, status: job.status, output: job.output || null, agent: job.takenBy || job.awardedTo, completedAt: job.completedAt });
+  res.json({
+    jobId: job.id,
+    status: job.status,                       // open|in_progress|delivered|cancelled|error
+    deliverable: job.deliverable || null,
+    output: job.output || null,               // legacy alias of deliverable
+    agent: job.executedBy || job.takenBy || job.awardedTo,
+    error: job.error || null,
+    deliveredAt: job.deliveredAt || null
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════
@@ -2997,14 +3043,15 @@ const BUILTIN_WORKFLOWS = {
       { agent: 'SHADDAI', task: 'Give a final VERDICT: should we pursue this? Include top 3 risks and top 3 opportunities: {prev}' }
     ]
   },
+  // Aligned with the frontend canonical WF_AGENTS['idea-to-product'] chain
+  // (SHADDAI→NEXUS→TURTLE→ZEROX) so backend and frontend agree on steps/order.
   'idea-to-product': {
     name: 'Idea → Product',
     steps: [
-      { agent: 'ORACLE', task: 'Validate this idea: research the market, competitors, and target users: {input}' },
-      { agent: 'ZEROX',  task: 'Define the monetization model and pricing strategy: {prev}' },
-      { agent: 'NEXUS',  task: 'Design the technical stack and MVP feature set: {prev}' },
-      { agent: 'TURTLE', task: 'Define the brand, UI/UX direction, and user experience: {prev}' },
-      { agent: 'QUILL',  task: 'Write the product one-pager and launch copy: {prev}' }
+      { agent: 'SHADDAI', task: 'Break down this product idea into a clear MVP feature set — what to build first and why: {input}' },
+      { agent: 'NEXUS',   task: 'Architecture and tech stack for this MVP: {prev}' },
+      { agent: 'TURTLE',  task: 'User flow and UI sketch — describe screens, interactions, visual direction: {prev}' },
+      { agent: 'ZEROX',   task: 'Monetization model, pricing tiers, and path to first $1K MRR: {prev}' }
     ]
   },
   'full-audit': {
@@ -3020,8 +3067,8 @@ const BUILTIN_WORKFLOWS = {
 
 async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
   const task = taskTemplate
-    .replace('{input}', input)
-    .replace('{prev}', prevOutput || input);
+    .replace(/\{input\}/g, input)
+    .replace(/\{prev\}/g, prevOutput || input);
 
   const agentPrompts = {
     SHADDAI: 'You are SHADDAI, supreme AI orchestrator. Be strategic, decisive, and thorough.',
@@ -4119,7 +4166,7 @@ router.get('/billing/usage/:sessionToken', (req, res) => {
 });
 
 // POST /billing/upgrade — update session tier (gate behind Stripe webhook in production)
-router.post('/billing/upgrade', (req, res) => {
+router.post('/billing/upgrade', requireAdmin, (req, res) => {
   const { token, newTier } = req.body;
   if (!token)   return res.status(400).json({ error: 'token is required' });
   if (!newTier) return res.status(400).json({ error: 'newTier is required' });
@@ -6202,7 +6249,7 @@ router.get('/alpaca/account', async (req, res) => {
 
 // POST /api/agent/run — Submit a task. Returns taskId immediately (async execution).
 // Body: { goal: string, agent?: string, workflow?: [{goal, agent}] }
-router.post('/agent/run', async (req, res) => {
+router.post('/agent/run', require('./demo-limit').middleware, async (req, res) => {
   const { goal, agent, workflow, options } = req.body;
   if (!goal && !workflow) return res.status(400).json({ error: 'goal or workflow required' });
 
@@ -6383,14 +6430,33 @@ router.get('/social/status', (req, res) => {
 // One endpoint the whole UI uses for chat. It never exposes which engine runs —
 // Ollama first (free/local), cloud fallback only if configured. Returns uniform
 // { ok, content, provider, model, tokens, costUSD } so the UI is engine-agnostic.
-router.post('/model/chat', async (req, res) => {
+router.post('/model/chat', require('./demo-limit').middleware, async (req, res) => {
   try {
     const { messages, message, system, agent } = req.body || {};
     let msgs = Array.isArray(messages) ? messages.slice() : [];
     if (!msgs.length && message) msgs = [{ role: 'user', content: String(message) }];
     if (system) msgs.unshift({ role: 'system', content: String(system) });
     if (!msgs.length) return res.status(400).json({ ok: false, error: 'messages or message required' });
+
+    // ── AURA free-path: token-saver. If the exact/fuzzy cache or safe local compute can
+    //    answer this prompt, return it for $0 / 0 tokens instead of calling the LLM. ──
+    let auraPrompt = '';
+    try {
+      const lastUser = [...msgs].reverse().find(m => m && m.role === 'user');
+      auraPrompt = (lastUser && typeof lastUser.content === 'string') ? lastUser.content : '';
+      if (auraPrompt) {
+        const hit = require('./lib/aura').route(auraPrompt);
+        if (hit && hit.hit && hit.answer) {
+          return res.json({ ok: true, content: hit.answer, provider: 'aura-cache',
+            model: hit.method || 'aura', tokens: { input: 0, output: 0, total: 0 },
+            costUSD: 0, cached: true, tokensSaved: hit.savedTokensEst || 0, similarity: hit.similarity });
+        }
+      }
+    } catch (_) { /* AURA optional — fall through to the LLM */ }
+
     const r = await agentEngine.modelChat(msgs, agent || 'SHADDAI');
+    // Record the real answer so future identical/similar prompts are free.
+    try { if (auraPrompt && r && r.content) require('./lib/aura').recordAnswer(auraPrompt, r.content); } catch (_) {}
     res.json({
       ok: true,
       content: r.content,
@@ -6427,8 +6493,8 @@ router.get('/pay/config', (req, res) => {
   try { res.json({ ok: true, config: require('./pay-guard').getConfig() }); }
   catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
-// POST /api/pay/config — update guard config (enable, set caps, allowlist)
-router.post('/pay/config', (req, res) => {
+// POST /api/pay/config — update guard config (enable, set caps, allowlist). ADMIN ONLY — this controls the real-money spend guard.
+router.post('/pay/config', requireAdmin, (req, res) => {
   try { res.json({ ok: true, config: require('./pay-guard').setConfig(req.body || {}) }); }
   catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
@@ -7320,6 +7386,10 @@ function probeYtdlp() {
 router.post('/clip', async (req, res) => {
   const { url, quality = '720', mode = 'video', start, end } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
+  // SECURITY: validate URL before handing it to yt-dlp (injection / SSRF).
+  if (!/^https?:\/\//.test(url) || String(url).startsWith('-')) {
+    return res.status(400).json({ error: 'invalid url' });
+  }
 
   const ver = await probeYtdlp();
   if (!ver) return res.status(503).json({
@@ -7342,7 +7412,7 @@ router.post('/clip', async (req, res) => {
     if (pp) args.push('--postprocessor-args', 'ffmpeg:' + pp);
   }
 
-  args.push('-o', outPath, '--no-playlist', url);
+  args.push('-o', outPath, '--no-playlist', '--', url);
 
   try {
     await new Promise((resolve, reject) => {
@@ -7367,9 +7437,13 @@ router.get('/clip/files/:filename', (req, res) => {
 });
 
 // POST /api/clip/transcribe — yt-dlp audio extraction + Groq Whisper STT
-router.post('/clip/transcribe', async (req, res) => {
+router.post('/clip/transcribe', require('./demo-limit').middleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
+  // SECURITY: validate URL before handing it to yt-dlp (injection / SSRF).
+  if (!/^https?:\/\//.test(url) || String(url).startsWith('-')) {
+    return res.status(400).json({ error: 'invalid url' });
+  }
 
   const GROQ_KEY_LOCAL = process.env.GROQ_API_KEY || '';
   if (!GROQ_KEY_LOCAL) return res.status(503).json({
@@ -7385,7 +7459,7 @@ router.post('/clip/transcribe', async (req, res) => {
   try {
     // Get title
     await new Promise((resolve) => {
-      execFile(YTDLP_BIN, ['--get-title', '--no-playlist', url], { timeout: 15000 }, (err, stdout) => {
+      execFile(YTDLP_BIN, ['--get-title', '--no-playlist', '--', url], { timeout: 15000 }, (err, stdout) => {
         if (!err && stdout.trim()) title = stdout.trim();
         resolve();
       });
@@ -7396,7 +7470,7 @@ router.post('/clip/transcribe', async (req, res) => {
       execFile(YTDLP_BIN, [
         '-x', '--audio-format', 'mp3', '--audio-quality', '5',
         '--max-filesize', '24m', '--no-playlist',
-        '-o', tmpFile, url
+        '-o', tmpFile, '--', url
       ], { timeout: 180000 }, (err, _o, stderr) => {
         if (err) reject(new Error((stderr || err.message).slice(0, 400)));
         else resolve();
@@ -7492,9 +7566,23 @@ function maskKey(k) {
 // POST /api/byok/set — store BYOK key with tier validation
 router.post('/byok/set', (req, res) => {
   try {
-    const { tier, provider, key } = req.body || {};
-    if (!tier || !provider || !key) {
-      return res.status(400).json({ error: 'tier, provider, and key are required' });
+    // SECURITY: never trust a client-supplied `tier` to decide permissions —
+    // derive it server-side from the customer record, defaulting to the lowest
+    // tier (free). Any `tier` in the body is ignored.
+    const { provider, key } = req.body || {};
+    let tier = 'free';
+    try {
+      const devFallback = process.env.NODE_ENV === 'production' ? '' : (req.headers['x-user-id'] || req.query.userId || '');
+      const uid = String(req.userId || devFallback || '').replace(/[^a-zA-Z0-9_@.-]/g, '');
+      const customersFile = path.join(__dirname, 'customers.json');
+      if (uid && fs.existsSync(customersFile)) {
+        const db = JSON.parse(fs.readFileSync(customersFile, 'utf8'));
+        const customer = Object.prototype.hasOwnProperty.call(db, uid) ? db[uid] : null;
+        if (customer && customer.tier) tier = customer.tier;
+      }
+    } catch (e) { /* default to free on any lookup failure */ }
+    if (!provider || !key) {
+      return res.status(400).json({ error: 'provider and key are required' });
     }
     if (!VALID_PROVIDERS.includes(provider)) {
       return res.status(400).json({ error: `Invalid provider. Must be one of: ${VALID_PROVIDERS.join(', ')}` });
@@ -7540,11 +7628,10 @@ router.get('/byok/status', (req, res) => {
 });
 
 // ═════════════════════════════════════════════════════════════════
-// COLLECTIBLES & MARKETPLACE — direct routes backed by agent-engine TOOLS
-// Persists to backend/data/collectibles.json and backend/data/marketplace.json
+// COLLECTIBLES — direct routes backed by agent-engine TOOLS
+// Persists to backend/data/collectibles.json
 // ═════════════════════════════════════════════════════════════════
 const COLLECTIBLES_FILE = path.join(__dirname, 'data', 'collectibles.json');
-const MARKETPLACE_FILE  = path.join(__dirname, 'data', 'marketplace.json');
 function _readCollectibles() {
   try { return JSON.parse(fs.readFileSync(COLLECTIBLES_FILE, 'utf8')); } catch { return []; }
 }
@@ -7630,39 +7717,10 @@ router.get('/collectibles/trades', (req, res) => {
   }
 });
 
-// GET /api/marketplace/jobs/open — open jobs from marketplace.json (file-backed,
-// distinct path from the in-memory /api/marketplace/jobs route above)
-router.get('/marketplace/jobs/open', (req, res) => {
-  try {
-    let data = [];
-    try { data = JSON.parse(fs.readFileSync(MARKETPLACE_FILE, 'utf8')); } catch { data = []; }
-    const jobs = Array.isArray(data) ? data : (data.jobs || []);
-    const open = jobs.filter(j => j && j.status !== 'completed');
-    res.json({ ok: true, data: open });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-// POST /api/marketplace/jobs/:id/accept-bid — accept a bid by index (frontend acceptJobBid)
-router.post('/marketplace/jobs/:id/accept-bid', (req, res) => {
-  try {
-    const { bidIndex } = req.body || {};
-    if (bidIndex == null) return res.status(400).json({ ok: false, error: 'bidIndex required' });
-    const data = _readMarketplace();
-    const isArr = Array.isArray(data);
-    const jobs = isArr ? data : (data.jobs || []);
-    const job = jobs.find(j => String(j.id) === String(req.params.id));
-    if (!job) return res.status(404).json({ ok: false, error: 'Job not found' });
-    const idx = Number(bidIndex);
-    if (!Array.isArray(job.bids) || !job.bids[idx]) return res.status(400).json({ ok: false, error: 'Invalid bidIndex' });
-    job.acceptedBid = job.bids[idx];
-    job.status = 'in_progress';
-    job.accepted_at = new Date().toISOString();
-    _writeMarketplace(isArr ? jobs : data);
-    res.json({ ok: true, data: job });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
-});
+// NOTE: /marketplace/jobs/open and /marketplace/jobs/:id/accept-bid are now
+// served by the canonical in-memory (_jobs / jobs.json) block near the top of
+// this file. The old marketplace.json-backed duplicates were removed so there
+// is a single source of truth for jobs.
 
 // GET /api/apis/available — list of APIs agents can use (powers the API-connect UI)
 router.get('/apis/available', (req, res) => {
@@ -7687,44 +7745,13 @@ router.get('/apis/available', (req, res) => {
   res.json({ ok: true, apis });
 });
 
-// Helpers for file-backed marketplace job CRUD (preserves array vs {jobs:[]} shape)
-function _readMarketplace() {
-  try { return JSON.parse(fs.readFileSync(MARKETPLACE_FILE, 'utf8')); }
-  catch { return []; }
-}
-function _writeMarketplace(data) {
-  try { fs.mkdirSync(path.dirname(MARKETPLACE_FILE), { recursive: true }); } catch {}
-  fs.writeFileSync(MARKETPLACE_FILE, JSON.stringify(data, null, 2));
-}
-
-// POST /api/marketplace/jobs/post — create a new job (alias of POST /marketplace/jobs
-// with normalized {ok,data} response; pushes to same in-memory _jobs array)
+// POST /api/marketplace/jobs/post — create a job, {ok,data} response shape.
+// Thin alias over the canonical validated creator (same _jobs / jobs.json store).
 router.post('/marketplace/jobs/post', (req, res) => {
-  try {
-    const { title, description, budget, agentTarget, deadline, postedBy } = req.body || {};
-    if (!title) return res.status(400).json({ ok: false, error: 'title required' });
-    const job = {
-      id: 'job_' + Date.now(),
-      title,
-      description: description || '',
-      budget: Number(budget) || 0,
-      agentTarget: agentTarget || 'any',
-      deadline: deadline || null,
-      postedBy: postedBy || 'anonymous',
-      status: 'open',
-      bids: [],
-      createdAt: new Date().toISOString(),
-      views: 0
-    };
-    _jobs.push(job);
-    saveJobs();
-    res.json({ ok: true, data: job });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
+  const r = buildJobFromBody(req.body || {});
+  if (r.error) return res.status(r.status || 400).json({ ok: false, error: r.error });
+  broadcastEvent('job:created', { jobId: r.job.id, title: r.job.title, budget: r.job.budget, status: 'open' });
+  res.json({ ok: true, data: r.job });
 });
-
-// Note: GET/:id, /bid, /accept-bid are handled by earlier routes at ~line 2405-2453
-// which use in-memory _jobs. Avoiding duplicates here.
 
 module.exports = router;
