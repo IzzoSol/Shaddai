@@ -39,9 +39,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   width:220px;z-index:30;display:none;}
 #power-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;
   color:#ffd700;text-align:center;margin-bottom:4px;text-shadow:0 0 6px #ffd700;}
-#power-bar-bg{background:rgba(0,0,0,.6);border:1px solid #ffd70066;border-radius:4px;height:16px;overflow:hidden;}
+#power-bar-bg{background:rgba(0,0,0,.6);border:1px solid #ffd70066;border-radius:4px;height:16px;overflow:hidden;position:relative;}
 #power-bar{height:100%;width:0%;background:linear-gradient(90deg,#37e6ff,#ffd700,#ff4d00);
   transition:none;border-radius:4px;box-shadow:0 0 8px currentColor;}
+/* Green release window */
+#green-window{position:absolute;height:100%;background:rgba(0,255,140,0.28);
+  border-left:2px solid #00ff8c;border-right:2px solid #00ff8c;
+  top:0;pointer-events:none;display:none;}
+/* Shot type label above power bar */
+#shot-type{position:fixed;bottom:112px;left:50%;transform:translateX(-50%);
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;
+  z-index:30;display:none;text-shadow:0 0 8px currentColor;}
 /* Possession */
 #poss{position:fixed;bottom:58px;left:50%;transform:translateX(-50%);
   font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;z-index:30;}
@@ -104,9 +112,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   <div class="clock" id="game-clock">Q1 &nbsp; 2:00</div>
 </div>
 <div id="shot-clock-wrap">SHOT <span id="shot-clock">24</span>s</div>
+<div id="shot-type"></div>
 <div id="power-wrap">
-  <div id="power-label">SHOOT POWER</div>
-  <div id="power-bar-bg"><div id="power-bar"></div></div>
+  <div id="power-label">POWER ·&thinsp;<span id="shot-label" style="letter-spacing:2px;">MID</span></div>
+  <div id="power-bar-bg">
+    <div id="power-bar"></div>
+    <div id="green-window"></div>
+  </div>
 </div>
 <div id="poss"></div>
 <div id="controls">WASD=MOVE &nbsp; SHIFT=SPRINT &nbsp; SPACE=JUMP &nbsp; HOLD J/MOUSE=SHOOT &nbsp; F=STEAL &nbsp; Q/E=CROSSOVER &nbsp; T=AUTO DEMO</div>
@@ -629,6 +641,25 @@ function findClip(clips, ...names) {
   return clips[0] || null;
 }
 
+// Traverse GLB skeleton to find basketball-relevant bones by name patterns
+function discoverBones(group, playerIdx) {
+  const b = {};
+  group.traverse(obj => {
+    const n = obj.name.toLowerCase();
+    if (!b.rarm     && /right.*(arm|upperarm|shoulder)/.test(n) && !/fore/.test(n)) b.rarm = obj;
+    if (!b.larm     && /left.*(arm|upperarm|shoulder)/.test(n)  && !/fore/.test(n)) b.larm = obj;
+    if (!b.rforearm && /right.*(fore|lowerarm|elbow)/.test(n))  b.rforearm = obj;
+    if (!b.lforearm && /left.*(fore|lowerarm|elbow)/.test(n))   b.lforearm = obj;
+    if (!b.rhand    && /right.*hand/.test(n))                   b.rhand = obj;
+    if (!b.lhand    && /left.*hand/.test(n))                    b.lhand = obj;
+    if (!b.spine    && /^.*spine[12]?$/.test(n))               b.spine = obj;
+    if (!b.hips     && /(hips?|pelvis|mixamorig:hips)/.test(n)) b.hips = obj;
+  });
+  playerBones[playerIdx] = b;
+  const found = Object.keys(b);
+  console.log(`[BONES${playerIdx}] found: ${found.length ? found.join(', ') : 'none (will use procedural fallback)'}`);
+}
+
 function loadGLBPlayer(playerIdx) {
   const p = players[playerIdx];
   const paths = GLB_PATHS[playerIdx];
@@ -694,6 +725,7 @@ function loadGLBPlayer(playerIdx) {
     }
 
     glbLoaded[playerIdx] = true;
+    discoverBones(model, playerIdx);
     console.log(`[GLB] Player ${playerIdx} loaded: ${paths.walk} | clips: ${gltf.animations.map(c=>c.name).join(', ')||'none'}`);
   }
 
@@ -733,6 +765,24 @@ function initMeshes() {
   loadGLBPlayer(1);
 }
 initMeshes();
+
+// ─────────────────────────────────────────────────────────────────
+// ARC INDICATOR DOTS + PER-PLAYER BONE REFS
+// ─────────────────────────────────────────────────────────────────
+const arcDots = [];
+(function buildArcDots() {
+  const dGeo = new THREE.SphereGeometry(0.055, 5, 5);
+  for (let i = 0; i < 10; i++) {
+    const m = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.75 });
+    const d = new THREE.Mesh(dGeo, m);
+    d.visible = false;
+    scene.add(d);
+    arcDots.push(d);
+  }
+})();
+
+// Bone references discovered per player when GLB loads
+const playerBones = [{}, {}];
 
 // ─────────────────────────────────────────────────────────────────
 // PARTICLES (made-basket burst)
@@ -794,29 +844,29 @@ function animatePlayer(p, dt, moving, speed) {
     p.glbGroup.position.copy(p.pos);
     p.glbGroup.rotation.y = p.facingAngle;
 
-    // Update mixer
+    // Update mixer (applies walk/idle clip blend)
     if (glbMixers[idx]) glbMixers[idx].update(dt);
 
-    // Blend walk / idle weights
+    // Walk/idle blend with speed-scaled timescale for run-vs-walk feel
     const walkAct = glbActions[idx].walk;
     const idleAct = glbActions[idx].idle;
     const targetWalk = moving ? 1 : 0;
     const targetIdle = moving ? 0 : 1;
+    const speedScale = moving ? Math.min(2.2, speed / PLAYER_SPEED) : 0;
     if (walkAct) {
       walkAct.setEffectiveWeight(THREE.MathUtils.lerp(walkAct.getEffectiveWeight(), targetWalk, 0.15));
-      walkAct.setEffectiveTimeScale(speed / PLAYER_SPEED * (moving ? 1 : 0));
+      walkAct.setEffectiveTimeScale(speedScale);
     }
     if (idleAct) {
       idleAct.setEffectiveWeight(THREE.MathUtils.lerp(idleAct.getEffectiveWeight(), targetIdle, 0.15));
     }
 
-    // Shoot raise — procedural arm lift on GLB (bone traversal fallback)
-    if (p.hasBall && game.shotCharging && p.isUser) {
-      // slight tilt forward on shot charge
-      p.glbGroup.rotation.x = THREE.MathUtils.lerp(p.glbGroup.rotation.x, -0.2, 0.1);
-    } else {
-      p.glbGroup.rotation.x = THREE.MathUtils.lerp(p.glbGroup.rotation.x, 0, 0.1);
-    }
+    // Subtle group tilt on shot charge
+    const tiltTarget = (p.hasBall && game.shotCharging && p.isUser) ? -0.08 : 0;
+    p.glbGroup.rotation.x = THREE.MathUtils.lerp(p.glbGroup.rotation.x, tiltTarget, 0.1);
+
+    // Procedural bone overrides ON TOP of mixer: dribble arm, shoot raise, defense stance
+    applyProceduralBones(p, dt);
     return;
   }
 
@@ -838,6 +888,82 @@ function animatePlayer(p, dt, moving, speed) {
   if (!p.onGround) { lLegPiv.rotation.x = -0.3; rLegPiv.rotation.x = -0.3; }
   if (!p.isUser && p.state === 'shoot')  rArmPiv.rotation.x = -Math.PI * 0.6;
   if (!p.isUser && p.state === 'guard') { lLegPiv.rotation.x += 0.2; rLegPiv.rotation.x += 0.2; }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PROCEDURAL BONE OVERRIDES (layered on top of walk/idle mixer)
+// ─────────────────────────────────────────────────────────────────
+function applyProceduralBones(p, dt) {
+  const idx = players.indexOf(p);
+  const b = playerBones[idx];
+  if (!b || !Object.keys(b).length) return; // no bones discovered — skip
+
+  const lerp = THREE.MathUtils.lerp;
+  const phase = game.frameCount * 0.14; // dribble oscillation
+
+  const isCharging  = p.isUser && game.shotCharging;
+  const isFollowThru = (p._shootFollowThrough || 0) > 0;
+  const isDefending  = !p.hasBall && !ball.inFlight && !p.isUser;
+
+  // Helper: safe lerp with default 0
+  const lx = (bone, val, k) => { if (bone) bone.rotation.x = lerp(bone.rotation.x || 0, val, k); };
+  const lz = (bone, val, k) => { if (bone) bone.rotation.z = lerp(bone.rotation.z || 0, val, k); };
+  const ly = (bone, val, k) => { if (bone) bone.rotation.y = lerp(bone.rotation.y || 0, val, k); };
+
+  if (isCharging) {
+    // ── SHOOT CHARGE: both arms raise progressively ──
+    const raise = -game.shotPower * 1.55; // negative x = arms sweep up
+    lx(b.rarm,     raise,       0.25);
+    lx(b.larm,     raise * 0.7, 0.20);
+    lx(b.rforearm, raise * 0.4, 0.20);
+    lx(b.spine,    -0.09,       0.15);
+    lz(b.rarm,     0,           0.18);
+    lz(b.larm,     0,           0.18);
+
+  } else if (isFollowThru) {
+    // ── POST-RELEASE FOLLOW-THROUGH: arms stay high briefly ──
+    p._shootFollowThrough -= dt;
+    const frac = Math.max(0, p._shootFollowThrough) / 0.55;
+    lx(b.rarm,     -1.3 * frac, 0.28);
+    lx(b.larm,     -0.9 * frac, 0.24);
+    lx(b.rforearm, -0.5 * frac, 0.22);
+    lx(b.spine,    -0.06 * frac,0.15);
+
+  } else if (p.hasBall) {
+    // ── DRIBBLE: right arm pushes down in sync with ball bounce ──
+    // sin goes 0→1→0 over half cycle; arm pushes forward (down) at bottom of bounce
+    const pushFwd = Math.max(0, Math.sin(phase)) * 0.85;
+    lx(b.rarm,     pushFwd,          0.22);
+    lx(b.rforearm, pushFwd * 0.45,   0.18);
+    lz(b.rarm,     0,                0.10);
+    lz(b.larm,     0,                0.10);
+    // Subtle spine lean forward when sprinting
+    const spd = Math.sqrt(p.vel.x**2 + p.vel.z**2);
+    lx(b.spine, Math.min(0.14, spd * 0.022), 0.10);
+    lx(b.hips,  0,  0.08);
+
+  } else if (isDefending) {
+    // ── DEFENSE: arms spread wide, hips lowered = athletic crouch ──
+    lz(b.rarm,  -0.62, 0.08);
+    lz(b.larm,   0.62, 0.08);
+    lx(b.rarm,  -0.12, 0.08);
+    lx(b.larm,  -0.12, 0.08);
+    lx(b.hips,   0.20, 0.07);
+    lx(b.spine,  0,    0.10);
+    // Lateral sway while shuffling
+    ly(b.spine, Math.sin(game.frameCount * 0.045) * 0.13, 0.10);
+
+  } else {
+    // ── NEUTRAL / IN-AIR: ease everything back to zero ──
+    [b.rarm, b.larm, b.rforearm, b.lforearm].forEach(bone => {
+      if (!bone) return;
+      lx(bone, 0, 0.07);
+      lz(bone, 0, 0.07);
+    });
+    lx(b.spine, 0, 0.07);
+    ly(b.spine, 0, 0.07);
+    lx(b.hips,  0, 0.07);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1044,28 +1170,82 @@ function updateAutoPlayer(p, dt) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// SHOOTING (USER)
+// SHOOTING (USER) — aim-locked arc, timing window, shot types
 // ─────────────────────────────────────────────────────────────────
-const pwrWrap = document.getElementById('power-wrap');
-const pwrBar  = document.getElementById('power-bar');
+const pwrWrap    = document.getElementById('power-wrap');
+const pwrBar     = document.getElementById('power-bar');
+const greenWin   = document.getElementById('green-window');
+const shotLabel  = document.getElementById('shot-label');
+const shotTypeEl = document.getElementById('shot-type');
+
+// Green release window: 57–73% of the bar
+const SHOT_IDEAL_LO = 0.57, SHOT_IDEAL_HI = 0.73;
+
+function getShotInfo(horizDist) {
+  if (horizDist < 2.5) return { type: 'LAYUP', color: '#00ffaa', pts: 2 };
+  if (horizDist < 6.5) return { type: 'MID',   color: '#ffd700', pts: 2 };
+  return                      { type: 'THREE', color: '#ff4d94', pts: 3 };
+}
+
+// Flight time scales with distance + chosen power
+function getShotFlightTime(horizDist, power) {
+  const p = Math.max(0.05, Math.min(1.0, power));
+  if (horizDist < 2.5) return 0.52 + p * 0.12;   // layup: 0.52–0.64 s
+  if (horizDist < 6.5) return 0.82 + p * 0.32;   // mid:   0.82–1.14 s
+  return 1.08 + p * 0.40;                          // three: 1.08–1.48 s
+}
+
+// Show parabolic trajectory preview dots
+function updateArcIndicator(you, T) {
+  const sp = you.pos.clone().add(new THREE.Vector3(0, 1.85, 0));
+  const vx = (HOOP_X - sp.x) / T;
+  const vz = (HOOP_Z - sp.z) / T;
+  const vy = (HOOP_Y - sp.y) / T - 0.5 * GRAVITY * T;
+  arcDots.forEach((dot, i) => {
+    const t = (i + 0.8) / arcDots.length * T;
+    const y = sp.y + vy * t + 0.5 * GRAVITY * t * t;
+    dot.position.set(sp.x + vx * t, Math.max(0.08, y), sp.z + vz * t);
+    dot.material.opacity = Math.max(0.05, 0.78 - i * 0.07);
+    dot.visible = y > -0.3;
+  });
+}
 
 function updateShooting(dt) {
   const you = players[0];
-  if (!you.hasBall || game.autoMode) { pwrWrap.style.display = 'none'; return; }
+  if (!you.hasBall || game.autoMode) {
+    pwrWrap.style.display = 'none';
+    if (shotTypeEl) shotTypeEl.style.display = 'none';
+    arcDots.forEach(d => { d.visible = false; });
+    return;
+  }
+
+  const horizToHoop = Math.sqrt((HOOP_X - you.pos.x)**2 + (HOOP_Z - you.pos.z)**2);
+  const sInfo = getShotInfo(horizToHoop);
 
   const shootPressed = keys['KeyJ'] || mouseDown;
   if (shootPressed && !game.shotCharging) {
     game.shotCharging = true;
-    game.shotPower = 0;
+    game.shotPower    = 0;
     pwrWrap.style.display = 'block';
+    if (shotTypeEl) { shotTypeEl.textContent = sInfo.type + ' SHOT'; shotTypeEl.style.color = sInfo.color; shotTypeEl.style.display = 'block'; }
+    if (shotLabel)  { shotLabel.textContent  = sInfo.type;            shotLabel.style.color  = sInfo.color; }
+    // Green window indicator on bar
+    if (greenWin)   { greenWin.style.left  = (SHOT_IDEAL_LO * 100) + '%';
+                      greenWin.style.width = ((SHOT_IDEAL_HI - SHOT_IDEAL_LO) * 100) + '%';
+                      greenWin.style.display = 'block'; }
   }
   if (game.shotCharging) {
     game.shotPower = Math.min(1, game.shotPower + dt * 0.88);
     pwrBar.style.width = (game.shotPower * 100) + '%';
+    // Live arc preview
+    updateArcIndicator(you, getShotFlightTime(horizToHoop, game.shotPower));
     if (!shootPressed) {
       releaseShotUser();
       game.shotCharging = false;
       pwrWrap.style.display = 'none';
+      if (shotTypeEl) shotTypeEl.style.display = 'none';
+      if (greenWin)   greenWin.style.display = 'none';
+      arcDots.forEach(d => { d.visible = false; });
     }
   }
 }
@@ -1073,30 +1253,78 @@ function updateShooting(dt) {
 function releaseShotUser() {
   const you = players[0];
   const pwr = game.shotPower;
-  const ideal = 0.62;
-  const accuracy = 1 - Math.abs(pwr - ideal) * 1.8;
-  const startPos = you.pos.clone().add(new THREE.Vector3(0, 1.6, 0));
-  const hoopPos  = new THREE.Vector3(HOOP_X, HOOP_Y, HOOP_Z);
-  const toHoop   = hoopPos.clone().sub(startPos);
-  const dist = toHoop.length();
-  const t = 1.0 + dist * 0.06;
-  const spread = (1 - accuracy) * 1.8;
-  const vx = toHoop.x / t + (Math.random()-0.5) * spread;
-  const vz = toHoop.z / t + (Math.random()-0.5) * spread;
-  const vy = (-GRAVITY * t / 2) + (HOOP_Y - startPos.y) / t + (Math.random()-0.5) * spread * 0.8;
-  launchBall(startPos, new THREE.Vector3(vx, vy, vz), 0);
+
+  // Start from where the ball currently is (near hand or body)
+  const startPos = ball.pos.clone();
+  startPos.y = Math.max(1.3, startPos.y); // never launch from floor level
+
+  const horizToHoop = Math.sqrt((HOOP_X - startPos.x)**2 + (HOOP_Z - startPos.z)**2);
+  const sInfo = getShotInfo(horizToHoop);
+  const T     = getShotFlightTime(horizToHoop, pwr);
+
+  // ── AIM-LOCK: velocity aimed straight at the hoop rim center ──
+  const vx = (HOOP_X - startPos.x) / T;
+  const vz = (HOOP_Z - startPos.z) / T;
+  const vy = (HOOP_Y - startPos.y) / T - 0.5 * GRAVITY * T;
+
+  // Timing quality: 1.0 = dead center of green window
+  const center    = (SHOT_IDEAL_LO + SHOT_IDEAL_HI) * 0.5;
+  const halfSpan  = (SHOT_IDEAL_HI - SHOT_IDEAL_LO) * 0.5;
+  const timingQ   = Math.max(0, 1 - Math.abs(pwr - center) / (halfSpan * 2.5));
+  const isGreen   = pwr >= SHOT_IDEAL_LO && pwr <= SHOT_IDEAL_HI;
+
+  // Contest: AI within 1.5 m
+  const ai = players[1];
+  const contested = ai.pos.distanceTo(you.pos) < 1.5;
+
+  // Make % by type + timing + contest
+  let makeChance;
+  if      (sInfo.type === 'LAYUP') makeChance = 0.80 + timingQ * 0.14;
+  else if (sInfo.type === 'MID')   makeChance = 0.48 + timingQ * 0.33;
+  else                             makeChance = 0.28 + timingQ * 0.26;
+  if (contested) makeChance -= 0.25;
+  makeChance = Math.max(0.02, Math.min(0.96, makeChance));
+
+  // On miss: realistic deviation — short, rim-out, or long
+  let fvx = vx, fvz = vz, fvy = vy;
+  if (Math.random() > makeChance) {
+    const roll = Math.random();
+    if (roll < 0.36) {
+      // Short — underpowered arc
+      fvy *= 0.89;
+    } else if (roll < 0.68) {
+      // Rim-out — slight lateral kick
+      const perpX = -vz / Math.max(0.01, Math.sqrt(vx*vx + vz*vz));
+      const perpZ =  vx / Math.max(0.01, Math.sqrt(vx*vx + vz*vz));
+      const err   = (Math.random() < 0.5 ? 1 : -1) * (0.14 + Math.random() * 0.24);
+      fvx += perpX * err; fvz += perpZ * err;
+    } else {
+      // Long — overpowered
+      fvy *= 1.09;
+    }
+  }
+
+  launchBall(startPos, new THREE.Vector3(fvx, fvy, fvz), 0);
+
+  // Trigger post-release follow-through animation
+  you._shootFollowThrough = 0.55;
+
+  // Feedback label
+  if (isGreen)        showMsg('GREEN!', '#00ff8c', 0.65);
+  else if (contested) showMsg(sInfo.type + ' (CONTESTED)', '#ff8800', 0.65);
+  else                showMsg(sInfo.type, sInfo.color, 0.50);
 }
 
-// Generic AI shot launch (used by both updateAI and updateAutoPlayer)
+// Generic AI shot launch — uses horizontal distance for clean parabola
 function launchAIShot(aiPlayer, errorMult = 0.3) {
-  const startPos  = aiPlayer.pos.clone().add(new THREE.Vector3(0, 1.6, 0));
-  const hoopTarget = new THREE.Vector3(HOOP_X, HOOP_Y, HOOP_Z);
-  const toHoop = hoopTarget.clone().sub(startPos);
-  const dist = toHoop.length();
-  const t    = 1.0 + dist * 0.06;
-  const vx = toHoop.x / t + (Math.random()-0.5) * errorMult;
-  const vz = toHoop.z / t + (Math.random()-0.5) * errorMult;
-  const vy = (-GRAVITY * t / 2) + (HOOP_Y - startPos.y) / t + (Math.random()-0.5) * errorMult;
+  const startPos   = aiPlayer.pos.clone().add(new THREE.Vector3(0, 1.65, 0));
+  const hdx = HOOP_X - startPos.x;
+  const hdz = HOOP_Z - startPos.z;
+  const horizDist  = Math.sqrt(hdx*hdx + hdz*hdz);
+  const T = 0.85 + horizDist * 0.065; // flight time scales with distance
+  const vx = hdx / T + (Math.random()-0.5) * errorMult;
+  const vz = hdz / T + (Math.random()-0.5) * errorMult;
+  const vy = (HOOP_Y - startPos.y) / T - 0.5 * GRAVITY * T + (Math.random()-0.5) * errorMult * 0.6;
   launchBall(startPos, new THREE.Vector3(vx, vy, vz), players.indexOf(aiPlayer));
 }
 
@@ -1221,13 +1449,43 @@ function launchBall(startPos, vel, shooterIdx) {
 function updateBall(dt) {
   if (ball.held) {
     const holder = players[ball.holder];
-    const dribbleY = 0.3 + Math.abs(Math.sin(game.frameCount * 0.15)) * 0.3;
-    const side = holder.isUser ? 0.22 : -0.22;
-    const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
-    const rt = new THREE.Vector3(fw.z, 0, -fw.x);
-    ball.pos.copy(holder.pos).addScaledVector(rt, side).addScaledVector(fw, 0.15);
-    ball.pos.y = dribbleY;
-    ball.mesh.position.copy(ball.pos);
+    const hIdx   = players.indexOf(holder);
+    const hBones = playerBones[hIdx];
+    const phase  = game.frameCount * 0.14;
+    const isCharging = holder.isUser && game.shotCharging;
+
+    let placed = false;
+
+    // ── Attempt GLB hand-bone attachment ──
+    if (!isCharging && holder.glbGroup && glbLoaded[hIdx] && hBones.rhand) {
+      const hwp = new THREE.Vector3();
+      hBones.rhand.getWorldPosition(hwp);
+      // Sanity-check: hand must be above floor and near the player
+      if (hwp.y > 0.05 && hwp.distanceTo(holder.pos) < 2.8) {
+        ball.pos.copy(hwp);
+        ball.pos.y = Math.max(BALL_R + 0.02, ball.pos.y);
+        ball.mesh.position.copy(ball.pos);
+        placed = true;
+      }
+    }
+
+    if (!placed) {
+      if (isCharging) {
+        // Ball rises from dribble height toward shooting position during charge
+        const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
+        ball.pos.copy(holder.pos).addScaledVector(fw, 0.10);
+        ball.pos.y = 1.55 + game.shotPower * 0.60; // rises 1.55 → 2.15
+      } else {
+        // Rhythmic dribble: ball bounces beside body in sync with arm push
+        const dribbleY = 0.12 + Math.abs(Math.sin(phase)) * 0.70;
+        const side = holder.team === 0 ? 0.28 : -0.28;
+        const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
+        const rt = new THREE.Vector3(fw.z, 0, -fw.x);
+        ball.pos.copy(holder.pos).addScaledVector(rt, side).addScaledVector(fw, 0.18);
+        ball.pos.y = dribbleY;
+      }
+      ball.mesh.position.copy(ball.pos);
+    }
     return;
   }
 
@@ -1348,24 +1606,57 @@ function toggleAutoMode() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CAMERA — third-person behind player, camYaw used for controls
+// CAMERA — third-person behind player, near-hoop safe + clamped
 // ─────────────────────────────────────────────────────────────────
 let camSmoothPos  = new THREE.Vector3(0, 5, 14);
 let camSmoothLook = new THREE.Vector3(0, 1, 0);
 
 function updateCamera(dt) {
   const you = players[0];
+
+  // How close is the player to the rim? (0 = far, 1 = right at the basket)
+  const horizToHoop = Math.sqrt((HOOP_X - you.pos.x)**2 + (HOOP_Z - you.pos.z)**2);
+  const nearHoop = Math.max(0, 1 - horizToHoop / 5.5); // ramps up inside 5.5m
+
+  // When close to the hoop, pull camera back further and higher so you can see the shot
+  const camBack = 6.5 + nearHoop * 4.2;   // 6.5 → 10.7
+  const camUp   = 3.8 + nearHoop * 3.0;   // 3.8 → 6.8
+
   const hoopDir   = new THREE.Vector3(HOOP_X - you.pos.x, 0, HOOP_Z - you.pos.z).normalize();
   const behindDir = hoopDir.clone().negate();
 
-  const idealPos = you.pos.clone()
-    .addScaledVector(behindDir, 6.5)
-    .add(new THREE.Vector3(0, 3.8, 0));
+  let idealPos = you.pos.clone()
+    .addScaledVector(behindDir, camBack)
+    .add(new THREE.Vector3(0, camUp, 0));
+
+  // ── Hard bounds: keep camera in court & above floor ──
+  idealPos.y = Math.max(2.4, idealPos.y);
+  idealPos.x = Math.max(-COURT_W/2 + 1.2, Math.min(COURT_W/2 - 1.2, idealPos.x));
+  idealPos.z = Math.max(-COURT_D/2 + 1.8, Math.min(COURT_D/2 - 1.8, idealPos.z));
+
+  // ── Pitch clamp: camera must look down at least MIN_PITCH (never level or below) ──
+  const playerEye = you.pos.clone().add(new THREE.Vector3(0, 1.0, 0));
+  const toCam = idealPos.clone().sub(playerEye);
+  const hDist = Math.sqrt(toCam.x**2 + toCam.z**2);
+  const MIN_PITCH = 0.20; // ~11.5° minimum elevation above the player
+  if (hDist > 0.5) {
+    const pitch = Math.atan2(toCam.y, hDist);
+    if (pitch < MIN_PITCH) {
+      // Raise idealPos.y so pitch equals MIN_PITCH
+      idealPos.y = playerEye.y + hDist * Math.tan(MIN_PITCH);
+      idealPos.y = Math.max(2.4, idealPos.y);
+    }
+  }
 
   camSmoothPos.lerp(idealPos, 1 - Math.exp(-6 * dt));
 
-  const lookTarget = new THREE.Vector3().lerpVectors(you.pos, new THREE.Vector3(HOOP_X, HOOP_Y * 0.6, HOOP_Z), 0.3);
-  lookTarget.y += 0.9;
+  // Look target: blend between player and hoop — lean toward hoop when near the rim
+  const lookBlend = 0.28 + nearHoop * 0.18; // 0.28 far → 0.46 at rim
+  const lookTarget = new THREE.Vector3().lerpVectors(
+    you.pos.clone().add(new THREE.Vector3(0, 1.0, 0)),
+    new THREE.Vector3(HOOP_X, HOOP_Y * 0.55, HOOP_Z),
+    lookBlend
+  );
   camSmoothLook.lerp(lookTarget, 1 - Math.exp(-7 * dt));
 
   if (game.shakeTimer > 0) {
@@ -1379,7 +1670,7 @@ function updateCamera(dt) {
   }
   camera.lookAt(camSmoothLook);
 
-  // Update camYaw so movement is relative to THIS camera direction
+  // Update camYaw so player movement is camera-relative
   const camFwd = camSmoothLook.clone().sub(camSmoothPos);
   camYaw = Math.atan2(camFwd.x, camFwd.z);
 }
