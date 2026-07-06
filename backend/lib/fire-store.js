@@ -12,11 +12,14 @@ let _db = null, _warned = false;
 
 function _ensureApp() {
   if (!admin) return false;
-  if (admin.apps && admin.apps.length) return true;
-  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!sa) return false;
-  try { admin.initializeApp({ credential: admin.credential.cert(JSON.parse(sa)) }); return true; }
-  catch (_) { return false; }
+  if (admin.apps && admin.apps.length) return true; // reuse the app auth-guard made
+  try {
+    const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (sa) { admin.initializeApp({ credential: admin.credential.cert(JSON.parse(sa)) }); return true; }
+    // Render Secret File path: GOOGLE_APPLICATION_CREDENTIALS points at the JSON file.
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) { admin.initializeApp({ credential: admin.credential.applicationDefault() }); return true; }
+  } catch (_) {}
+  return false;
 }
 
 function db() {

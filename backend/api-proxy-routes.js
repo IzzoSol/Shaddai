@@ -5292,6 +5292,14 @@ const GROQ_API_KEY_ROUTE = process.env.GROQ_API_KEY || '';
 const GROQ_MODEL_ROUTE = 'llama-3.3-70b-versatile';
 
 async function callGroqRoute(systemPrompt, message, history = []) {
+  // ── AURA forCall — token savings + cache on every call ───────────
+  const _auraRoute = (() => { try { return require('./lib/aura'); } catch(_) { return null; } })();
+  if (_auraRoute) {
+    const _fc = _auraRoute.forCall({ prompt: message, system: systemPrompt, ownTools: [], selectedTools: [], history: Array.isArray(history) ? history.slice(-4) : [] });
+    if (_fc.hit) { console.log(`[AURA] callGroqRoute hit — ~${_fc.saved.total} tokens saved`); return _fc.answer; }
+    console.log(`[AURA] callGroqRoute miss — saved ${_fc.saved.total} tokens (compress=${_fc.saved.compress})`);
+  }
+  // ─────────────────────────────────────────────────────────────────
   if (!GROQ_API_KEY_ROUTE) throw new Error('no-groq-key');
   const msgs = [
     { role: 'system', content: systemPrompt },
@@ -5301,7 +5309,9 @@ async function callGroqRoute(systemPrompt, message, history = []) {
   const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
     model: GROQ_MODEL_ROUTE, messages: msgs, max_tokens: 1500, temperature: 0.7
   }, { headers: { Authorization: `Bearer ${GROQ_API_KEY_ROUTE}` }, timeout: 30000 });
-  return r.data.choices[0]?.message?.content || '';
+  const _out = r.data.choices[0]?.message?.content || '';
+  if (_auraRoute && message && _out) { try { _auraRoute.recordAnswer(message, _out); } catch(_) {} }
+  return _out;
 }
 
 function detectIntent(message) {
