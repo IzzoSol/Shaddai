@@ -3661,6 +3661,12 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
 html[data-theme-skin="terminal"] #shaddaiScanlines{
   background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,20,0,.22) 2px, rgba(0,20,0,.22) 4px);
 }
+/* Make each skin VISIBLY distinct — accent + backdrop shift the moment you switch. */
+html[data-theme-skin="glitch"]{ --accent:#00ff88 !important; --accent-glow:rgba(0,255,136,.35) !important; }
+html[data-theme-skin="terminal"]{ --accent:#39ff14 !important; --accent-glow:rgba(57,255,20,.32) !important; --bg-deep:#020a02 !important; --bg-primary:#04140a !important; }
+html[data-theme-skin="void"]{ --accent:#a970ff !important; --accent-glow:rgba(169,112,255,.35) !important; --bg-deep:#06010f !important; --bg-primary:#0d0620 !important; }
+html[data-theme-skin="amber"]{ --accent:#ffb020 !important; --accent-glow:rgba(255,176,32,.35) !important; --bg-deep:#150c00 !important; --bg-primary:#241400 !important; }
+html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </style>
 <script>
 /* SHADDAI theme-skin loader — runs in <head> before paint (no flash).
