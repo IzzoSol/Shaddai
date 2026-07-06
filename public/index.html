@@ -6688,6 +6688,7 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
           <option value="category">By Category</option>
           <option value="length">Longest first</option>
         </select>
+        <button class="btn btn-ghost" id="skillsRunnableBtn" style="font-size:9px;padding:6px 10px" onclick="toggleRunnableOnly()" title="Show only skills that actually execute a tool">⚡ Runnable only</button>
         <button class="btn btn-ghost" id="skillsViewModeBtn" style="font-size:9px;padding:6px 10px" onclick="toggleSkillsViewMode()">⊞ Grid</button>
       </div>
       <!-- Agent filter chips -->
@@ -35953,7 +35954,7 @@ async function loadPaymentList() {
 // SKILLS LIBRARY — filter, search, sort, view full SKILL.md
 // ═══════════════════════════════════════════════════════════════════
 let _skillsLibrary = [];
-let _skillsFilter = { agent: 'all', category: 'all', search: '', sort: 'name', view: 'grid' };
+let _skillsFilter = { agent: 'all', category: 'all', search: '', sort: 'name', view: 'grid', runnableOnly: false };
 
 async function runSkillDebugger() {
   const PROXY = window.PROXY || '';
@@ -36053,6 +36054,17 @@ function setSkillsCatFilter(cat) {
   applySkillsFilter();
 }
 
+function toggleRunnableOnly() {
+  _skillsFilter.runnableOnly = !_skillsFilter.runnableOnly;
+  const btn = document.getElementById('skillsRunnableBtn');
+  if (btn) {
+    btn.style.background = _skillsFilter.runnableOnly ? 'var(--accent)' : '';
+    btn.style.color = _skillsFilter.runnableOnly ? '#000' : '';
+    btn.textContent = _skillsFilter.runnableOnly ? '⚡ Runnable only ✓' : '⚡ Runnable only';
+  }
+  applySkillsFilter();
+}
+
 function toggleSkillsViewMode() {
   _skillsFilter.view = _skillsFilter.view === 'grid' ? 'list' : 'grid';
   const btn = document.getElementById('skillsViewModeBtn');
@@ -36072,6 +36084,7 @@ function applySkillsFilter() {
   const search = (document.getElementById('skillSearchInput')?.value || '').toLowerCase().trim();
   const sortBy = document.getElementById('skillSortBy')?.value || 'name';
   let filtered = _skillsLibrary.filter(s => {
+    if (_skillsFilter.runnableOnly && !s.executable) return false;
     if (_skillsFilter.agent !== 'all' && s.agent !== _skillsFilter.agent) return false;
     if (_skillsFilter.category !== 'all' && s.category !== _skillsFilter.category) return false;
     if (search) {
@@ -36115,13 +36128,15 @@ function applySkillsFilter() {
         <div style="font-size:11px;font-weight:700;color:${c};font-family:'Orbitron',sans-serif;word-break:break-word">${sanitizeText(s.name)}</div>
         <span style="font-size:7px;padding:2px 6px;background:${c}15;border:1px solid ${c}40;color:${c};border-radius:8px;font-family:'Share Tech Mono',monospace;white-space:nowrap">${sanitizeText(s.agent || '?')}</span>
       </div>
-      ${s.category ? `<div style="font-size:7px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.08em">▸ ${sanitizeText(s.category)}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${s.executable ? `<span style="font-size:7px;padding:1px 6px;background:${c}22;border:1px solid ${c}55;color:${c};border-radius:6px;font-family:'Share Tech Mono',monospace;font-weight:700">⚡ RUNNABLE</span>` : `<span style="font-size:7px;padding:1px 6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;font-family:'Share Tech Mono',monospace">📖 REFERENCE</span>`}
+        ${s.category ? `<span style="font-size:7px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.08em">▸ ${sanitizeText(s.category)}</span>` : ''}
+      </div>
       <div style="font-size:10px;color:var(--text-secondary);line-height:1.5;flex:1">${descShort}</div>
-      ${truncated ? `<div style="font-size:8px;color:${c};font-weight:600">📖 Click to read full skill →</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:2px">
+      ${s.executable ? `<div style="display:flex;gap:6px;margin-top:2px">
         <button onclick="event.stopPropagation();openSkillRunner('${s.name.replace(/'/g,"\\'")}','${String(s.type||'run').replace(/'/g,"\\'")}')" style="flex:1;font-size:8px;padding:5px;background:${c}18;border:1px solid ${c}40;color:${c};border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.06em">▶ RUN</button>
         <button onclick="event.stopPropagation();sendSkillToAgent('${s.name.replace(/'/g,"\\'")}')" style="flex:1;font-size:8px;padding:5px;background:rgba(255,212,94,.12);border:1px solid rgba(255,212,94,.35);color:#ffd45e;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.06em">→ AGENT</button>
-      </div>
+      </div>` : `<div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;margin-top:2px;opacity:0.75">📖 Reference doc · click card to read</div>`}
     </div>`;
   }).join('');
 }
@@ -47468,17 +47483,19 @@ function expandModule(cfg){
       '<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);flex-shrink:0">'+
         '<span style="font-size:20px">'+(cfg.icon||'⬛')+'</span>'+
         '<span style="font-size:16px;font-weight:900;color:'+color+';font-family:\'Rajdhani\',sans-serif;letter-spacing:0.1em;flex:1">'+(cfg.title||'MODULE')+'</span>'+
-        '<div style="display:flex;gap:4px">'+
-          '<div style="width:10px;height:10px;border-radius:50%;background:#ff5f57;cursor:pointer" onclick="document.getElementById(\'shd-module-overlay\').remove()" title="Close"></div>'+
-          '<div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>'+
-          '<div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>'+
-        '</div>'+
+        // Clear, obvious close button (was a tiny 10px dot nobody could find).
+        '<button onclick="document.getElementById(\'shd-module-overlay\').remove()" title="Close (Esc)" '+
+          'style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:\'Rajdhani\',sans-serif;flex-shrink:0" '+
+          'onmouseenter="this.style.background=\''+color+'22\';this.style.borderColor=\''+color+'\'" '+
+          'onmouseleave="this.style.background=\'rgba(255,255,255,0.06)\';this.style.borderColor=\'rgba(255,255,255,0.18)\'">✕ <span style="font-size:10px;letter-spacing:0.08em">CLOSE</span></button>'+
       '</div>'+
       // Body
       '<div style="flex:1;overflow-y:auto;padding:20px;line-height:1.6">'+(cfg.content||'')+'</div>'+
     '</div>';
 
   overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  var _esc=function(e){if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',_esc);}};
+  document.addEventListener('keydown',_esc);
   document.body.appendChild(overlay);
 }
 
