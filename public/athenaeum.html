@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>The Athenaeum — ORACLE & QUILL · SHADDAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+:root{
+  --void:#07050f; --gold:#c4a24e; --gold2:#e8c45c;
+  --indigo:#4a3580; --violet:#7c56c8;
+  --ink:#f0e7cf; --ink2:#a99f86;
+  --amber:#b8832a; --parchment:#1a120a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--gold);color:#07050f}
+a{color:inherit;text-decoration:none}
+
+/* ── ENTRY ── */
+#entry{
+  position:fixed;inset:0;z-index:100;
+  background:radial-gradient(ellipse 120% 80% at 50% 30%,#0f0820 0%,var(--void) 60%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  transition:opacity .7s ease;padding:20px;
+}
+#entry.gone{opacity:0;pointer-events:none}
+.e-edition{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.e-rule{width:0;height:3px;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);
+  margin:0 auto 20px;animation:drawR 1.2s .2s ease forwards}
+@keyframes drawR{to{width:min(500px,80vw)}}
+.e-title{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(30px,8vw,84px);
+  letter-spacing:.2em;text-align:center;
+  background:linear-gradient(135deg,#e8c45c 0%,#f0e7cf 40%,#c4a24e 70%,#e8c45c 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 30px rgba(196,162,78,.4))}
+.e-sub{font-style:italic;font-size:clamp(12px,1.8vw,17px);color:var(--ink2);
+  letter-spacing:.06em;margin:10px 0 44px;text-align:center}
+.e-portals{display:flex;gap:clamp(14px,4vw,44px);align-items:stretch;flex-wrap:wrap;justify-content:center;margin-bottom:44px}
+.pc{position:relative;width:clamp(160px,26vw,230px);padding:34px 22px;cursor:pointer;
+  border:1px solid rgba(196,162,78,.3);background:rgba(10,6,22,.7);
+  transition:transform .22s ease,border-color .3s ease,background .3s ease;
+  overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:9px}
+.pc::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(91,63,166,.25),transparent 70%);
+  opacity:0;transition:opacity .35s ease;pointer-events:none}
+.pc:hover{transform:translateY(-4px);border-color:rgba(196,162,78,.7);background:rgba(14,8,32,.85)}
+.pc:hover::before{opacity:1}
+.pc-q::before{background:radial-gradient(ellipse at 50% 30%,rgba(138,98,48,.28),transparent 70%)}
+.cn{position:absolute;width:10px;height:10px;border:1px solid var(--gold)}
+.c1{top:5px;left:5px;border-right:none;border-bottom:none}
+.c2{bottom:5px;right:5px;border-left:none;border-top:none}
+.pc-icon{font-size:36px;color:var(--gold);
+  text-shadow:0 0 20px rgba(196,162,78,.6);filter:drop-shadow(0 0 12px rgba(196,162,78,.5));line-height:1}
+.pc-name{font-family:'Cinzel',serif;font-weight:900;font-size:19px;letter-spacing:.22em;
+  color:var(--gold);text-transform:uppercase}
+.pc-desc{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--ink2);text-align:center}
+.pc-hint{font-style:italic;font-size:11.5px;color:rgba(169,159,134,.65);text-align:center;line-height:1.5}
+.e-back{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--ink2);
+  border-bottom:1px solid rgba(169,159,134,.3);padding-bottom:2px;
+  transition:color .2s,border-color .2s}
+.e-back:hover{color:var(--gold);border-color:rgba(196,162,78,.6)}
+
+/* ── 3D CANVAS ── */
+#c3d{position:fixed;inset:0;display:none;width:100%;height:100%;cursor:grab}
+#c3d:active{cursor:grabbing}
+#c3d.on{display:block}
+
+/* ── HUD ── */
+.hud{position:fixed;inset:0;z-index:50;pointer-events:none;display:none}
+.hud.on{display:block}
+.hud-bar{position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  background:linear-gradient(rgba(7,5,15,.85),transparent);pointer-events:all}
+.hb{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink2);background:rgba(10,6,18,.75);border:1px solid rgba(196,162,78,.28);
+  padding:6px 13px;cursor:pointer;transition:color .2s,border-color .2s;pointer-events:all;display:inline-block}
+.hb:hover{color:var(--gold);border-color:rgba(196,162,78,.7)}
+.ht{flex:1;text-align:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 18px rgba(196,162,78,.4)}
+/* ORACLE bottom info */
+#oracle-info{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(7,5,15,.82);border:1px solid rgba(196,162,78,.22);
+  padding:12px 20px;max-width:min(640px,90vw);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.13em;
+  color:var(--ink2);text-align:center;pointer-events:none;line-height:1.7}
+#moon-line{font-size:12px;color:var(--gold);letter-spacing:.2em;margin-bottom:4px}
+/* Portal button */
+.scene-portal{position:absolute;bottom:24px;pointer-events:all}
+.pbtn{font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold);background:rgba(10,6,18,.85);
+  border:1px solid rgba(196,162,78,.38);padding:10px 18px;cursor:pointer;
+  transition:background .2s,border-color .2s,box-shadow .2s}
+.pbtn:hover{background:rgba(196,162,78,.14);border-color:var(--gold);box-shadow:0 0 18px rgba(196,162,78,.18)}
+
+/* ── QUILL PANEL ── */
+#quill-panel{
+  position:absolute;top:54px;right:0;bottom:0;width:clamp(270px,34vw,390px);
+  background:rgba(16,9,5,.94);border-left:1px solid rgba(196,162,78,.18);
+  overflow-y:auto;padding:18px 16px;pointer-events:all;
+  display:flex;flex-direction:column;gap:0}
+#quill-panel::-webkit-scrollbar{width:3px}
+#quill-panel::-webkit-scrollbar-thumb{background:rgba(196,162,78,.25)}
+.qtabs{display:flex;border-bottom:1px solid rgba(196,162,78,.18);margin-bottom:14px;flex-shrink:0}
+.qtab{flex:1;font-family:'Cinzel',serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 4px;text-align:center;cursor:pointer;color:var(--ink2);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s;pointer-events:all}
+.qtab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.qpane{display:none;flex-direction:column;gap:9px}
+.qpane.on{display:flex}
+.qlabel{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.qi{background:rgba(28,16,6,.85);border:1px solid rgba(196,162,78,.28);
+  color:var(--ink);padding:8px 11px;font-family:'Fraunces',Georgia,serif;font-size:14px;
+  outline:none;transition:border-color .2s;width:100%}
+.qi:focus{border-color:rgba(196,162,78,.65)}
+.qi::placeholder{color:rgba(169,159,134,.45);font-style:italic}
+.qbtn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  padding:8px 16px;background:rgba(196,162,78,.12);border:1px solid rgba(196,162,78,.35);
+  color:var(--gold);cursor:pointer;transition:background .2s;pointer-events:all}
+.qbtn:hover{background:rgba(196,162,78,.25)}
+.qbtn:disabled{opacity:.4;cursor:default}
+.qres{margin-top:2px;min-height:50px;font-size:13px;line-height:1.65;color:var(--ink2)}
+.qmsg{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(169,159,134,.5);padding:7px 0}
+.qerr{color:#ef6050}
+.bitem{padding:9px 0;border-bottom:1px solid rgba(196,162,78,.1)}
+.bitem:last-child{border-bottom:none}
+.btitle{font-family:'Cinzel',serif;font-weight:700;font-size:12.5px;letter-spacing:.05em;color:var(--gold)}
+.bauth{font-style:italic;font-size:11.5px;color:var(--ink2);margin-top:2px}
+.blink{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--amber)}
+.blink:hover{color:var(--gold)}
+.wtext{font-size:13px;line-height:1.72;font-style:italic;color:var(--ink2);
+  padding:10px 12px;border-left:2px solid rgba(196,162,78,.38)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  padding:4px 9px;border:1px solid rgba(196,162,78,.28);color:var(--ink2);
+  transition:background .15s,color .15s}
+.chip:hover{background:rgba(196,162,78,.18);color:var(--gold)}
+.craftcard{padding:13px;background:rgba(196,162,78,.05);border:1px solid rgba(196,162,78,.14);
+  font-size:12px;line-height:1.85;color:var(--ink2)}
+.craftcard strong{color:var(--gold);display:block;font-family:'Cinzel',serif;
+  font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:7px}
+
+@media(max-width:600px){
+  #quill-panel{width:100%;bottom:0;top:auto;height:52vh;border-left:none;border-top:1px solid rgba(196,162,78,.2)}
+  .e-portals{gap:10px}
+  .pc{width:clamp(140px,42vw,190px);padding:22px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ ENTRY ═══════════════════ -->
+<div id="entry">
+  <div class="e-edition">The Celestial Almanac · Astral Archive</div>
+  <div class="e-rule"></div>
+  <div class="e-title">THE ATHENAEUM</div>
+  <div class="e-sub">Where ORACLE reads the stars &amp; QUILL guards the word</div>
+  <div class="e-portals">
+    <div class="pc" id="oracle-portal" onclick="window.enterOracle()">
+      <span class="cn c1"></span><span class="cn c2"></span>
+      <div class="pc-icon">◎</div>
+      <div class="pc-name">ORACLE</div>
+      <div class="pc-desc">Astral Observatory</div>
+      <div class="pc-hint">The stargazer · the seer<br>Moon · History · Chakras</div>
+    </div>
+    <div class="pc pc-q" id="quill-portal" onclick="window.enterQuill()">
+      <span class="cn c1"></span><span class="cn c2"></span>
+      <div class="pc-icon">✎</div>
+      <div class="pc-name">QUILL</div>
+      <div class="pc-desc">The Library</div>
+      <div class="pc-hint">The chronicler · the keeper<br>Books · Reference · Words</div>
+    </div>
+  </div>
+  <a class="e-back" href="/">← Return to Codex</a>
+</div>
+
+<!-- ═══════════════════ 3D CANVAS ═══════════════════ -->
+<canvas id="c3d"></canvas>
+
+<!-- ═══════════════════ ORACLE HUD ═══════════════════ -->
+<div id="hud-oracle" class="hud">
+  <div class="hud-bar">
+    <button class="hb" onclick="window.showEntry()">← Change</button>
+    <span class="ht">ORACLE · Astral Observatory</span>
+    <a class="hb" href="/">← Codex</a>
+  </div>
+  <div id="oracle-info">
+    <div id="moon-line">● Computing lunar phase…</div>
+    <div id="hist-text">Consulting the astral record…</div>
+  </div>
+  <div class="scene-portal" style="right:24px">
+    <button class="pbtn" onclick="window.open('/SHADDAI-WORLD-3D.html','_blank')">To ORACLE's Tower →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ QUILL HUD ═══════════════════ -->
+<div id="hud-quill" class="hud">
+  <div class="hud-bar">
+    <button class="hb" onclick="window.showEntry()">← Change</button>
+    <span class="ht">QUILL · The Library</span>
+    <a class="hb" href="/">← Codex</a>
+  </div>
+
+  <!-- Search panel -->
+  <div id="quill-panel">
+    <div class="qtabs">
+      <div class="qtab on" onclick="window.setTab('books')">Books</div>
+      <div class="qtab" onclick="window.setTab('ref')">Reference</div>
+      <div class="qtab" onclick="window.setTab('words')">Words</div>
+      <div class="qtab" onclick="window.setTab('craft')">Craft</div>
+    </div>
+
+    <!-- Books -->
+    <div class="qpane on" id="pane-books">
+      <div class="qlabel">📖 Public Domain Books</div>
+      <input class="qi" id="books-q" placeholder="Shakespeare, Homer, Dickens…"
+        onkeydown="if(event.key==='Enter')window.searchBooks()"/>
+      <button class="qbtn" id="books-btn" onclick="window.searchBooks()">Search Archive</button>
+      <div class="qres" id="books-res"><div class="qmsg">Search the Gutenberg archive</div></div>
+    </div>
+
+    <!-- Reference -->
+    <div class="qpane" id="pane-ref">
+      <div class="qlabel">🔭 Encyclopedia</div>
+      <input class="qi" id="ref-q" placeholder="Byzantine Empire, consciousness…"
+        onkeydown="if(event.key==='Enter')window.searchRef()"/>
+      <button class="qbtn" id="ref-btn" onclick="window.searchRef()">Look Up</button>
+      <div class="qres" id="ref-res"><div class="qmsg">Wikipedia summary via QUILL's tools</div></div>
+    </div>
+
+    <!-- Words -->
+    <div class="qpane" id="pane-words">
+      <div class="qlabel">✎ Synonyms</div>
+      <input class="qi" id="words-q" placeholder="illuminate, sovereign, forge…"
+        onkeydown="if(event.key==='Enter')window.searchWords()"/>
+      <button class="qbtn" id="words-btn" onclick="window.searchWords()">Find Synonyms</button>
+      <div class="qres" id="words-res"><div class="qmsg">Find the perfect word</div></div>
+    </div>
+
+    <!-- Craft -->
+    <div class="qpane" id="pane-craft">
+      <div class="qlabel">✦ Writing Craft</div>
+      <div class="craftcard">
+        <strong>QUILL's Seven Principles</strong>
+        1. <em>Show, don't tell</em> — let the scene speak.<br>
+        2. <em>Cut with purpose</em> — every word earns its place.<br>
+        3. <em>Read aloud</em> — the ear catches what the eye misses.<br>
+        4. <em>Vary sentence length</em> — short. Then long and rolling.<br>
+        5. <em>Start in medias res</em> — begin at the action, not before.<br>
+        6. <em>Specific beats general</em> — "oak" not "tree"; "sprinted" not "ran".<br>
+        7. <em>Revise cold</em> — distance grants clarity.
+      </div>
+    </div>
+  </div>
+
+  <div class="scene-portal" style="right:clamp(282px,35vw,400px)">
+    <button class="pbtn" onclick="window.open('/SHADDAI-WORLD-3D.html','_blank')">To QUILL's Tower →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ SCRIPT ═══════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// ── Module state ──────────────────────────────────────────────────────────
+const canvas  = document.getElementById('c3d');
+const gltfLoader = new GLTFLoader();
+const clock   = new THREE.Clock(false);
+
+let renderer  = null;
+let scene     = null, camera = null, controls = null;
+let avatarMesh = null, avatarMixer = null, avatarBaseY = 0;
+let orbParticles = null;
+let floatPlaques = [];   // { mesh, mat, tex }
+let rafId     = null;
+let curView   = null;    // 'oracle' | 'quill' | null
+
+// ── Renderer (lazy, created once) ─────────────────────────────────────────
+function initRenderer() {
+  if (renderer) return;
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping     = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+}
+
+window.addEventListener('resize', () => {
+  if (!renderer) return;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  if (camera) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); }
+}, { passive: true });
+
+// ── Moon phase ────────────────────────────────────────────────────────────
+function getMoonPhase() {
+  const ref = new Date('2000-01-06T18:14:00Z');
+  const syn = 29.530588853;
+  const days = (Date.now() - ref.getTime()) / 86400000;
+  const phase = ((days % syn) + syn) % syn;
+  const illum = (1 - Math.cos(2 * Math.PI * phase / syn)) / 2;
+  const pct   = Math.round(illum * 100);
+  const names = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous',
+                 'Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+  const idx   = Math.min(7, Math.floor(phase / syn * 8));
+  return { phase, illum, pct, name: names[idx] };
+}
+
+// ── CanvasTexture plaque builder ──────────────────────────────────────────
+function makePlaque(title, lines, w = 512, h = 288) {
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(10,6,22,0.96)');
+  bg.addColorStop(1, 'rgba(4,2,14,0.96)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(196,162,78,0.72)'; ctx.lineWidth = 2;
+  ctx.strokeRect(3, 3, w - 6, h - 6);
+  ctx.strokeStyle = 'rgba(196,162,78,0.22)'; ctx.lineWidth = 1;
+  ctx.strokeRect(9, 9, w - 18, h - 18);
+
+  ctx.fillStyle   = '#c4a24e';
+  ctx.font        = `bold ${Math.round(w * 0.044)}px "Cinzel", serif`;
+  ctx.textAlign   = 'center';
+  ctx.fillText(title, w / 2, 40);
+
+  ctx.strokeStyle = 'rgba(196,162,78,0.45)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(28, 52); ctx.lineTo(w - 28, 52); ctx.stroke();
+
+  const fz = Math.max(13, Math.round(w * 0.032));
+  ctx.font      = `${fz}px "Fraunces", Georgia, serif`;
+  ctx.fillStyle = 'rgba(240,231,207,0.92)';
+  const lh = fz * 1.55, maxW = w - 56;
+  let y = 74;
+  for (const line of lines) {
+    if (!line) { y += fz * 0.8; continue; }
+    const words = line.split(' ');
+    let buf = '';
+    for (const word of words) {
+      const test = buf ? buf + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW) {
+        if (buf) { ctx.fillText(buf, w / 2, y); y += lh; }
+        buf = word;
+      } else buf = test;
+    }
+    if (buf) { ctx.fillText(buf, w / 2, y); y += lh; }
+    if (y > h - 22) break;
+  }
+
+  const tex = new THREE.CanvasTexture(cv);
+  return tex;
+}
+
+// ── Dispose current scene ─────────────────────────────────────────────────
+function disposeScene() {
+  cancelAnimationFrame(rafId); rafId = null;
+  if (avatarMixer) { avatarMixer.stopAllAction(); avatarMixer = null; }
+  avatarMesh = null; orbParticles = null; floatPlaques = [];
+  if (scene) {
+    scene.traverse(obj => {
+      if (obj.geometry) obj.geometry.dispose();
+      const mats = obj.material
+        ? (Array.isArray(obj.material) ? obj.material : [obj.material])
+        : [];
+      mats.forEach(m => {
+        ['map','alphaMap','emissiveMap','normalMap'].forEach(k => { if (m[k]) m[k].dispose(); });
+        m.dispose();
+      });
+    });
+    scene = null;
+  }
+  if (controls) { controls.dispose(); controls = null; }
+}
+
+// ── Show/hide screens ─────────────────────────────────────────────────────
+function hideAll() {
+  document.getElementById('entry').classList.add('gone');
+  canvas.classList.remove('on');
+  document.getElementById('hud-oracle').classList.remove('on');
+  document.getElementById('hud-quill').classList.remove('on');
+}
+
+window.showEntry = function () {
+  disposeScene(); curView = null;
+  document.getElementById('entry').classList.remove('gone');
+  canvas.classList.remove('on');
+  document.getElementById('hud-oracle').classList.remove('on');
+  document.getElementById('hud-quill').classList.remove('on');
+};
+
+// ── GLB loader helper ─────────────────────────────────────────────────────
+function loadGLB(path) {
+  return new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej));
+}
+
+function mountAvatar(gltf, sc, x = 0, z = 0, faceAngle = 0) {
+  const root = gltf.scene;
+  const box = new THREE.Box3().setFromObject(root);
+  const h   = box.getSize(new THREE.Vector3()).y;
+  const s   = 2.1 / Math.max(h, 0.01);
+  root.scale.setScalar(s);
+  const box2 = new THREE.Box3().setFromObject(root);
+  root.position.set(x, -box2.min.y, z);
+  root.rotation.y = faceAngle;
+  avatarBaseY = root.position.y;
+  sc.add(root);
+  avatarMesh = root;
+  if (gltf.animations && gltf.animations.length > 0) {
+    avatarMixer = new THREE.AnimationMixer(root);
+    avatarMixer.clipAction(gltf.animations[0]).play();
+  }
+}
+
+// ── Starfield ─────────────────────────────────────────────────────────────
+function addStars(sc, n = 2800, r = 260) {
+  const pos = new Float32Array(n * 3);
+  const col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const t = Math.random() * 2 * Math.PI;
+    const p = Math.acos(2 * Math.random() - 1);
+    const d = r * (0.6 + Math.random() * 0.4);
+    pos[i*3]   = d * Math.sin(p) * Math.cos(t);
+    pos[i*3+1] = d * Math.sin(p) * Math.sin(t);
+    pos[i*3+2] = d * Math.cos(p);
+    const v = Math.random();
+    col[i*3]   = 0.78 + v * 0.22; col[i*3+1] = 0.82 + v * 0.12; col[i*3+2] = 0.88 + (1-v)*0.12;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  sc.add(new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.65, vertexColors: true, sizeAttenuation: true })));
+}
+
+// ── Nebula soft sprite ─────────────────────────────────────────────────────
+function addNebula(sc, px, py, pz, c1, c2, sz = 90) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0, c1); g.addColorStop(0.55, c2); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,256,256);
+  const mat = new THREE.MeshBasicMaterial({
+    map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.17,
+    depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), mat);
+  m.position.set(px, py, pz); m.lookAt(0, py, 0);
+  sc.add(m);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ORACLE SCENE
+// ══════════════════════════════════════════════════════════════════════════
+async function buildOracle() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060310);
+  scene.fog = new THREE.FogExp2(0x03010a, 0.0014);
+
+  camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 4, 23);
+
+  // Ambient + fill lights
+  scene.add(new THREE.AmbientLight(0x180e38, 1.4));
+  const fl = new THREE.PointLight(0x4a2a80, 1.6, 65); fl.position.set(-12, 9, 6); scene.add(fl);
+  const gl = new THREE.PointLight(0xc4a24e, 0.7, 38); gl.position.set(10, 4, 11); scene.add(gl);
+
+  // Stars + nebula clouds
+  addStars(scene, 2800, 270);
+  addNebula(scene, -85, 22, -155, 'rgba(80,38,165,0.65)', 'rgba(38,8,100,0)', 140);
+  addNebula(scene, 95,  -8, -125, 'rgba(28,58,138,0.55)', 'rgba(8,18,82,0)',  118);
+  addNebula(scene, 18,  65, -185, 'rgba(95,28,58,0.38)',  'rgba(55,8,28,0)',  130);
+
+  // Platform
+  const platMat = new THREE.MeshStandardMaterial({
+    color: 0x18112e, roughness: 0.82, metalness: 0.32,
+    emissive: 0x280f4a, emissiveIntensity: 0.38
+  });
+  const plat = new THREE.Mesh(new THREE.CylinderGeometry(11, 13.5, 1.0, 36), platMat);
+  plat.position.y = -0.5; scene.add(plat);
+  // Top ring glow stripe
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x6038cc, emissive: 0x4020aa, emissiveIntensity: 1.2, roughness: 0.4 });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(11, 0.12, 8, 64), ringMat);
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.02; scene.add(ring);
+
+  // Crystal pillars
+  const cryMat = new THREE.MeshStandardMaterial({ color: 0x5830b8, roughness: 0.12, metalness: 0.85,
+    emissive: 0x2a18a0, emissiveIntensity: 0.65, transparent: true, opacity: 0.72 });
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const h = 1.8 + (i % 3) * 1.2;
+    const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, h, 6), cryMat);
+    pil.position.set(Math.cos(a) * 9, h / 2 - 0.5, Math.sin(a) * 9); scene.add(pil);
+    const cl = new THREE.PointLight(0x5030c8, 0.45, 7); cl.position.copy(pil.position); cl.position.y += h / 2; scene.add(cl);
+  }
+
+  // Orbiting ambient particles
+  const N = 220, ppos = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 5 + Math.random() * 16;
+    ppos[i*3]   = Math.cos(a) * r;
+    ppos[i*3+1] = (Math.random() - 0.3) * 7;
+    ppos[i*3+2] = Math.sin(a) * r;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(ppos, 3));
+  orbParticles = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x7855ff, size: 0.22, transparent: true, opacity: 0.62 }));
+  scene.add(orbParticles);
+
+  // MOON — position + phase-based directional light
+  const mp = getMoonPhase();
+  const moonMat = new THREE.MeshStandardMaterial({ color: 0xd4ccc0, roughness: 0.91, metalness: 0.04, emissive: 0x14120e, emissiveIntensity: 0.06 });
+  const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(7, 40, 40), moonMat);
+  moonMesh.position.set(-12, 33, -62); scene.add(moonMesh);
+  // Sun direction based on synodic phase
+  const phAng = 2 * Math.PI * (mp.phase / 29.530588853);
+  const sunLight = new THREE.DirectionalLight(0xfff8e8, 3.2);
+  sunLight.position.set(Math.sin(phAng) * 200, 20, Math.cos(phAng) * 200);
+  scene.add(sunLight); scene.add(sunLight.target);
+  sunLight.target.position.copy(moonMesh.position);
+  // Moon glow
+  const mglow = new THREE.PointLight(0xc4cce0, mp.illum * 1.4 + 0.08, 85);
+  mglow.position.copy(moonMesh.position); scene.add(mglow);
+
+  // Portal gateway
+  const archMat = new THREE.MeshStandardMaterial({ color: 0x261455, roughness: 0.6, metalness: 0.5, emissive: 0x3a18b0, emissiveIntensity: 0.55 });
+  for (const sx of [-1.6, 1.6]) {
+    const pil = new THREE.Mesh(new THREE.BoxGeometry(0.38, 5.2, 0.38), archMat);
+    pil.position.set(sx, 2.6, -14); scene.add(pil);
+  }
+  const arch = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.38, 0.38), archMat);
+  arch.position.set(0, 5.2, -14); scene.add(arch);
+  const agl = new THREE.PointLight(0x5030ff, 2.2, 14); agl.position.set(0, 3, -14); scene.add(agl);
+
+  // Floating plaques
+  const moonPhaseLines = [`Phase: ${mp.name}`, `Illumination: ${mp.pct}%`, '', 'The moon governs tides,', 'cycles, and the inner self.', '', `Days into cycle: ${mp.phase.toFixed(1)}`];
+  const chakraLines = ['Root (Muladhara) · Safety', 'Sacral (Svadhisthana) · Desire', 'Solar (Manipura) · Power', 'Heart (Anahata) · Love', 'Throat (Vishuddha) · Truth', 'Third Eye (Ajna) · Insight', 'Crown (Sahasrara) · Unity'];
+  const wisdomLines = ['"As above, so below."', '', '"The cosmos is within us.', 'We are made of star-stuff."', '', '"Know thyself, and thou', 'shalt know the universe."'];
+
+  const plaqueDefs = [
+    { title: 'THE MOON',          lines: moonPhaseLines, angle: 0 },
+    { title: 'THE SEVEN CHAKRAS', lines: chakraLines,    angle: Math.PI * 0.5 },
+    { title: "ORACLE'S WISDOM",   lines: wisdomLines,    angle: Math.PI },
+    { title: 'TODAY IN HISTORY',  lines: ['Consulting the astral record…'], angle: Math.PI * 1.5 }
+  ];
+  const PR = 17, PY = 3.8;
+  for (const def of plaqueDefs) {
+    const tex = makePlaque(def.title, def.lines);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    const m   = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.5), mat);
+    m.position.set(Math.sin(def.angle) * PR, PY, Math.cos(def.angle) * PR);
+    scene.add(m);
+    floatPlaques.push({ mesh: m, mat, tex, def });
+  }
+
+  // Controls
+  controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 2.5, 0);
+  controls.minDistance = 6; controls.maxDistance = 55;
+  controls.enablePan = false;
+  controls.autoRotate = true; controls.autoRotateSpeed = 0.35;
+  controls.update();
+
+  // Update HUD info
+  document.getElementById('moon-line').textContent = `☽ ${mp.name}  ·  ${mp.pct}% illuminated`;
+  document.getElementById('hist-text').textContent  = 'Consulting the astral record…';
+
+  // Async: fetch today in history, update plaque + HUD
+  fetchHistory(floatPlaques);
+}
+
+async function fetchHistory(plaques) {
+  try {
+    const r = await fetch('/api/tools/run', { method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tool: 'get_history_today', args: {} }) });
+    const d = await r.json();
+    if (d.ok && d.result) {
+      const raw    = d.result.replace(/^Today in history:\n?/i, '').trim();
+      const events = raw.split('\n').filter(Boolean);
+      document.getElementById('hist-text').textContent = events.slice(0, 3).join('  ·  ');
+      const entry = plaques.find(f => f.def.title === 'TODAY IN HISTORY');
+      if (entry) {
+        entry.tex.dispose();
+        const t2 = makePlaque('TODAY IN HISTORY', events.slice(0, 5));
+        entry.mat.map = t2; entry.mat.needsUpdate = true; entry.tex = t2;
+      }
+    }
+  } catch (_) {}
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  QUILL SCENE
+// ══════════════════════════════════════════════════════════════════════════
+async function buildQuill() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0c0704);
+  scene.fog = new THREE.Fog(0x100806, 18, 48);
+
+  camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 3.5, 15);
+
+  // Warm ambient
+  scene.add(new THREE.AmbientLight(0x3a2508, 1.3));
+  // Candles at four corners
+  [[- 9,6,-8],[9,6,-8],[-9,6,2],[9,6,2]].forEach(([x,y,z]) => {
+    const pl = new THREE.PointLight(0xd4853a, 1.3, 22); pl.position.set(x,y,z); scene.add(pl);
+  });
+  // Reading lamp
+  const lamp = new THREE.PointLight(0xf0b860, 2.8, 20); lamp.position.set(0, 7.5, -2); scene.add(lamp);
+
+  // Floor — warm wood CanvasTexture
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256;
+  const fx = fc.getContext('2d');
+  fx.fillStyle = '#281504'; fx.fillRect(0,0,256,256);
+  for (let i = 0; i < 9; i++) {
+    fx.strokeStyle = `rgba(55,32,10,${0.4+Math.random()*0.3})`; fx.lineWidth = 1.5+Math.random()*2.5;
+    fx.beginPath(); fx.moveTo(0, i*28+Math.random()*8); fx.lineTo(256,i*28+Math.random()*8); fx.stroke();
+  }
+  const floorTex = new THREE.CanvasTexture(fc);
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(4,4);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(28,28),
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.86, metalness: 0.04 }));
+  floor.rotation.x = -Math.PI/2; scene.add(floor);
+
+  // Walls
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x1c1006, roughness: 0.94 });
+  const bk = new THREE.Mesh(new THREE.PlaneGeometry(26,11), wallMat); bk.position.set(0,5.5,-13); scene.add(bk);
+  const sk = new THREE.Mesh(new THREE.PlaneGeometry(26,11), wallMat); sk.rotation.y=Math.PI; sk.position.set(0,5.5,10); scene.add(sk);
+  for (const [x,ry] of [[-12,1],[ 12,-1]]) {
+    const sw = new THREE.Mesh(new THREE.PlaneGeometry(24,11), wallMat); sw.rotation.y=ry*Math.PI/2; sw.position.set(x,5.5,-1.5); scene.add(sw);
+  }
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(26,24), new THREE.MeshStandardMaterial({color:0x100a06,roughness:0.97}));
+  ceil.rotation.x = Math.PI/2; ceil.position.y = 11; scene.add(ceil);
+
+  // Columns
+  const colMat = new THREE.MeshStandardMaterial({ color: 0x3a2412, roughness: 0.74, metalness: 0.2 });
+  for (const [x,z] of [[-9,-8],[9,-8],[-9,2],[9,2]]) {
+    const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.54, 10, 10), colMat);
+    cl.position.set(x,5,z); scene.add(cl);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.18,0.45,1.18), colMat); cap.position.set(x,10.2,z); scene.add(cap);
+  }
+
+  // Bookshelves
+  const shMat = new THREE.MeshStandardMaterial({ color: 0x2c1808, roughness: 0.88 });
+  const bookPalette = [0x8b2e2e,0x2a5828,0x383888,0x726012,0x562256,0x8a3e18,0x1c5455];
+  for (let s = 0; s < 3; s++) {
+    const sx = -8 + s * 8;
+    const back = new THREE.Mesh(new THREE.BoxGeometry(7.4,8.6,0.22), shMat); back.position.set(sx,4.3,-13.55); scene.add(back);
+    for (let sh = 0; sh < 5; sh++) {
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(7.4,0.1,0.7), shMat); shelf.position.set(sx, sh*1.68+0.9,-13.28); scene.add(shelf);
+      let bx = sx - 3.4;
+      while (bx < sx + 3.4) {
+        const bw = 0.11 + Math.random() * 0.15, bh = 1.1 + Math.random() * 0.5;
+        const bk = new THREE.Mesh(new THREE.BoxGeometry(bw,bh,0.52),
+          new THREE.MeshStandardMaterial({color:bookPalette[Math.floor(Math.random()*bookPalette.length)],roughness:0.78}));
+        bk.position.set(bx+bw/2, sh*1.68+0.9+bh/2+0.05,-13.25); scene.add(bk);
+        bx += bw + 0.008;
+      }
+    }
+  }
+
+  // Lectern / podium
+  const leMat = new THREE.MeshStandardMaterial({ color: 0x3c1e0a, roughness: 0.68, metalness: 0.16 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.4,0.76,1.4), leMat); base.position.set(0,0.38,-3); scene.add(base);
+  const stem = new THREE.Mesh(new THREE.BoxGeometry(0.28,1.45,0.28), leMat); stem.position.set(0,1.48,-3); scene.add(stem);
+  const top  = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.1,1.3), leMat); top.rotation.x=-0.24; top.position.set(0,2.28,-3.12); scene.add(top);
+  // Parchment on lectern
+  const pc = document.createElement('canvas'); pc.width=256; pc.height=192;
+  const px = pc.getContext('2d');
+  px.fillStyle='#eee0c0'; px.fillRect(0,0,256,192);
+  px.fillStyle='#3a2810'; px.font='bold 16px "Cinzel",serif'; px.textAlign='center'; px.fillText("QUILL'S ARCHIVE", 128, 30);
+  px.font='13px "Fraunces",Georgia,serif'; px.fillStyle='#5a3f20'; px.fillText('Search the canon within.',128,58);
+  px.fillText('Ask the archive anything.',128,80);
+  const parch = new THREE.Mesh(new THREE.PlaneGeometry(1.7,1.2),
+    new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(pc),roughness:0.94}));
+  parch.rotation.x = -Math.PI/2 - 0.24; parch.position.set(0,2.36,-3.15); scene.add(parch);
+
+  // Candle flames
+  const flameMat = new THREE.MeshBasicMaterial({ color: 0xffdd88 });
+  for (const [x,y,z] of [[-3,2.78,-2],[3,2.78,-2]]) {
+    const fl = new THREE.Mesh(new THREE.SphereGeometry(0.05,5,5), flameMat); fl.position.set(x,y,z); scene.add(fl);
+    const cl = new THREE.PointLight(0xffbb44, 1.1, 5.5); cl.position.set(x,y,z); scene.add(cl);
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.056,0.38,7),
+      new THREE.MeshStandardMaterial({color:0xf0e8d4})); st.position.set(x,y-0.22,z); scene.add(st);
+  }
+
+  // Controls
+  controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 2.2, -2);
+  controls.minDistance = 4; controls.maxDistance = 22;
+  controls.maxPolarAngle = Math.PI * 0.74;
+  controls.enablePan = false;
+  controls.autoRotate = false;
+  controls.update();
+}
+
+// ── Render loop ────────────────────────────────────────────────────────────
+function startLoop() {
+  const go = () => {
+    rafId = requestAnimationFrame(go);
+    const delta = clock.getDelta();
+    const t     = clock.getElapsedTime();
+
+    if (avatarMixer) avatarMixer.update(delta);
+    if (avatarMesh) {
+      avatarMesh.position.y = avatarBaseY + Math.sin(t * 0.72) * 0.1;
+      if (curView === 'oracle') avatarMesh.rotation.y += delta * 0.11;
+    }
+
+    // Billboard plaques toward camera
+    if (curView === 'oracle' && camera) {
+      for (const f of floatPlaques) f.mesh.lookAt(camera.position);
+      if (orbParticles) orbParticles.rotation.y += delta * 0.07;
+    }
+
+    if (controls) controls.update();
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  };
+  go();
+}
+
+// ── Enter ORACLE ───────────────────────────────────────────────────────────
+window.enterOracle = async function () {
+  disposeScene(); curView = 'oracle';
+  initRenderer(); hideAll();
+  canvas.classList.add('on');
+  document.getElementById('hud-oracle').classList.add('on');
+  clock.start();
+  await buildOracle();
+  try { const gltf = await loadGLB('/assets/agents/ORACLE.glb'); mountAvatar(gltf, scene, 0, 0, 0); } catch(_) {}
+  startLoop();
+};
+
+// ── Enter QUILL ────────────────────────────────────────────────────────────
+window.enterQuill = async function () {
+  disposeScene(); curView = 'quill';
+  initRenderer(); hideAll();
+  canvas.classList.add('on');
+  document.getElementById('hud-quill').classList.add('on');
+  clock.start();
+  await buildQuill();
+  try {
+    const gltf = await loadGLB('/assets/agents/QUILL.glb');
+    mountAvatar(gltf, scene, 0, 4, Math.PI);
+  } catch(_) {}
+  startLoop();
+};
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+window.setTab = function(tab) {
+  const tabs = ['books','ref','words','craft'];
+  tabs.forEach(t => {
+    document.getElementById('pane-' + t).classList.toggle('on', t === tab);
+  });
+  document.querySelectorAll('.qtab').forEach((el, i) => el.classList.toggle('on', tabs[i] === tab));
+};
+
+// ── QUILL tool calls ───────────────────────────────────────────────────────
+const API = '/api/tools/run';
+const ESC = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+async function runTool(tool, args, ms = 22000) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({tool, args}), signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Tool error');
+    return d.result;
+  } finally { clearTimeout(tid); }
+}
+
+function qSet(id, html) { document.getElementById(id).innerHTML = html; }
+function qMsg(id, t) { qSet(id, `<div class="qmsg">${ESC(t)}</div>`); }
+function qErr(id, t) { qSet(id, `<div class="qmsg qerr">⚠ ${ESC(t)}</div>`); }
+
+window.searchBooks = async function() {
+  const q = document.getElementById('books-q').value.trim(); if (!q) return;
+  const btn = document.getElementById('books-btn'); btn.disabled = true;
+  qMsg('books-res', 'Consulting the Gutenberg archive…');
+  try {
+    const res = await runTool('gutenberg_search', { query: q });
+    const arr = Array.isArray(res) ? res : [];
+    if (!arr.length) { qMsg('books-res', '— nothing found —'); return; }
+    qSet('books-res', arr.slice(0,8).map(b => `<div class="bitem">
+      <div class="btitle">${ESC(b.title||'(untitled)')}</div>
+      <div class="bauth">${ESC(b.author||'Unknown')}</div>
+      ${b.txt ? `<a class="blink" href="${ESC(b.txt)}" target="_blank" rel="noopener">Read text →</a>` : ''}
+    </div>`).join(''));
+  } catch(e) {
+    qErr('books-res', e.name === 'AbortError' ? 'Archive timed out — try again.' : e.message);
+  } finally { btn.disabled = false; }
+};
+
+window.searchRef = async function() {
+  const q = document.getElementById('ref-q').value.trim(); if (!q) return;
+  const btn = document.getElementById('ref-btn'); btn.disabled = true;
+  qMsg('ref-res', 'Consulting the encyclopedia…');
+  try {
+    const res = await runTool('get_wikipedia_summary', { topic: q });
+    if (!res) { qMsg('ref-res', '— nothing found —'); return; }
+    qSet('ref-res', `<div class="wtext">${ESC(res)}</div>`);
+  } catch(e) { qErr('ref-res', e.message); }
+  finally { btn.disabled = false; }
+};
+
+window.searchWords = async function() {
+  const q = document.getElementById('words-q').value.trim(); if (!q) return;
+  const btn = document.getElementById('words-btn'); btn.disabled = true;
+  qMsg('words-res', 'Consulting the thesaurus…');
+  try {
+    const res  = await runTool('word_synonyms', { word: q });
+    const syns = res && res.synonyms ? res.synonyms : (Array.isArray(res) ? res : []);
+    if (!syns.length) { qMsg('words-res', '— no synonyms found —'); return; }
+    qSet('words-res', `
+      <div style="color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.15em;margin-bottom:8px">${ESC(res.word||q)}</div>
+      <div class="chips">${syns.map(s=>`<span class="chip">${ESC(s)}</span>`).join('')}</div>`);
+  } catch(e) { qErr('words-res', e.message); }
+  finally { btn.disabled = false; }
+};
+</script>
+</body>
+</html>
