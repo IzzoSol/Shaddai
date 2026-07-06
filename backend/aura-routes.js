@@ -74,7 +74,9 @@ router.get('/bench', (req, res) => {
 // GET /api/aura/health — the dashboard's AURA client pings this on load.
 // POST /api/aura/warm { count } — TRAIN AURA: generate realistic prompts, answer each
 // once via the shared pool, cache them so future users hit for free. Raises hit-rate.
-router.post('/warm', async (req, res) => {
+// OWNER-ONLY (requireAdmin): training is for us, not a public button. AURA also
+// self-warms in the background (see aura-warmer.startAutoWarm).
+router.post('/warm', require('./auth-guard').requireAdmin, async (req, res) => {
   try {
     const n = (req.body && req.body.count) || 10;
     const out = await require('./aura-warmer').warm(n);

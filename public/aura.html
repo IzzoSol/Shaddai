@@ -177,26 +177,8 @@
       <div class="h-sub" style="margin:4px 0 0">Run the live benchmark — proves answers are real (COMPUTE), nothing is fabricated (SAFETY), and goals route to the right tool-chain (ROUTING).</div>
     </div>
     <button id="verifyBtn">▶ RUN BENCHMARK</button>
-    <button id="trainBtn" onclick="trainAura(this)" style="margin-left:8px">🔥 TRAIN AURA</button>
     <div id="verifyOut" style="flex-basis:100%;font-size:12px;color:var(--mut)">not run yet — click to verify on demand.</div>
-    <div id="trainOut" style="flex-basis:100%;font-size:12px;color:var(--mut)">Teach AURA real questions — each press answers ~45 prompts once via the shared pool and caches them, so future users hit for free. Press repeatedly to keep learning.</div>
   </div>
-  <script>
-  async function trainAura(btn){
-    const out=document.getElementById('trainOut'); btn.disabled=true; const old=btn.textContent;
-    let total=0; const rounds=3;
-    for(let i=0;i<rounds;i++){
-      btn.textContent='🔥 training '+(i+1)+'/'+rounds+'…';
-      try{
-        const r=await (await fetch('/api/aura/warm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:15})})).json();
-        if(r&&r.ok){ total+=r.cached||0; out.innerHTML='✓ cached <b style="color:var(--grn)">'+total+'</b> new answers this session · hit-rate <b>'+Math.round((r.hitRate||0)*100)+'%</b> · covered '+r.coveredSoFar+'/'+r.bankSize+' prompts'; }
-        else { out.textContent='training error: '+((r&&r.error)||'unknown'); break; }
-      }catch(e){ out.textContent='training failed: '+e.message; break; }
-    }
-    btn.textContent=old; btn.disabled=false;
-    try{ if(typeof load==='function') load(); }catch(_){}
-  }
-  </script>
 
   <div class="box">
     <h2>TRY AURA</h2>

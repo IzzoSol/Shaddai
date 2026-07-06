@@ -751,6 +751,8 @@ app.use('/api/billing', require('./billing-routes').router);
 try { app.use('/api/profile', require('./profile-routes')); } catch (e) { console.warn('[startup] profile-routes not mounted:', e.message); }
 // Agent Battle Arena — skill loadouts -> sim match -> data learner (which skills win)
 try { app.use('/api/battle', require('./battle-routes')); } catch (e) { console.warn('[startup] battle-routes not mounted:', e.message); }
+// AURA self-improvement: background auto-warm (no-op unless AURA_AUTOWARM=true)
+try { require('./aura-warmer').startAutoWarm(); } catch (_) {}
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
 // (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
 try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }

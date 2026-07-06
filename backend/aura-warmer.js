@@ -78,4 +78,19 @@ async function warm(n = 10) {
   };
 }
 
-module.exports = { warm, bankSize: () => BANK.length };
+// Background self-improvement: constantly warm AURA on the server (shared pool, no
+// owner tokens). OFF by default — enable with env AURA_AUTOWARM=true. Gentle by
+// design so it doesn't hog the shared free quota real users need.
+let _autoTimer = null;
+function startAutoWarm() {
+  if (_autoTimer) return false;
+  if (String(process.env.AURA_AUTOWARM || '').toLowerCase() !== 'true') return false;
+  const everyMs = Math.max(60000, parseInt(process.env.AURA_AUTOWARM_MS) || 300000); // default 5 min
+  const batch = Math.max(1, Math.min(8, parseInt(process.env.AURA_AUTOWARM_BATCH) || 3));
+  _autoTimer = setInterval(() => { warm(batch).catch(() => {}); }, everyMs);
+  if (_autoTimer.unref) _autoTimer.unref();
+  console.log(`[aura-warmer] auto-warm ON — ${batch} prompts / ${everyMs / 1000}s (fills AURA in the background)`);
+  return true;
+}
+
+module.exports = { warm, bankSize: () => BANK.length, startAutoWarm };
