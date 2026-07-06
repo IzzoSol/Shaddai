@@ -3937,13 +3937,18 @@ router.get('/webhooks', (req, res) => {
 });
 
 // GET /api/persistence/health — is the free Firestore backup working? (ORACLE fix)
+// Diagnostics are booleans/lengths only — NEVER exposes the secret value itself.
 router.get('/persistence/health', async (req, res) => {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT || '';
+  const diag = { firebaseEnvPresent: !!raw, firebaseEnvLen: raw.length, firebaseEnvParses: false, projectId: null };
+  try { const p = JSON.parse(raw); diag.firebaseEnvParses = true; diag.projectId = p.project_id || null; } catch (_) {}
   try {
+    let adminApps = 0; try { adminApps = (require('firebase-admin').apps || []).length; } catch (_) {}
     const store = require('./lib/fire-store');
     const ping = await store.ping();
-    res.json({ ok: true, ready: store.ready(), firestore: ping });
+    res.json({ ok: true, ready: store.ready(), adminApps, diag, firestore: ping });
   } catch (e) {
-    res.status(500).json({ ok: false, error: String(e.message || e) });
+    res.status(500).json({ ok: false, diag, error: String(e.message || e) });
   }
 });
 
