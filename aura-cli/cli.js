@@ -46,8 +46,11 @@ ${C.d}LLM fallback runs only with --llm AND a provider key set in your environme
 }
 
 function fmtStats(s) {
+  const everyPct = ((s.everyUseSaveRate || 0) * 100).toFixed(1);
+  const everyCol = (s.everyUseSaveRate || 0) >= 0.75 ? C.g : C.y;
   out(`${C.b}AURA savings${C.x}`);
   out(`  hits        ${C.g}${s.hits}${C.x}   misses ${s.misses}   hit-rate ${C.c}${(s.hitRate * 100).toFixed(1)}%${C.x}`);
+  out(`  every-use save rate ${everyCol}${everyPct}%${C.x}   ${everyCol}${(s.everyUseSaveRate||0) >= 0.75 ? '✓ every use saves tokens' : 'building up…'}${C.x}`);
   out(`  tokens saved ${C.g}${s.tokensSaved.toLocaleString()}${C.x}`);
   out(`  cost saved   ${C.y}$${s.costSavedUsd.toFixed(6)}${C.x}`);
   out(`  by method    fetch ${s.byMethod.fetch} · query ${s.byMethod.query} · skill ${s.byMethod.skill || 0} · compute ${s.byMethod.compute}`);

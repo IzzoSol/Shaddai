@@ -702,6 +702,11 @@ app.get('/api/polymarket/prices', async (req, res) => {
 // is handled by proxy instead of being caught by /api/agents/:name
 // ============================================
 
+// SECURITY: global rate limiter — a hard backstop against cost-amplification /
+// shared-key drain / brute abuse. Applies to ALL /api routes. Generous cap so
+// normal dashboard use is unaffected; blocks only runaway/scripted floods.
+try { app.use('/api', require('./auth-guard').rateLimit({ windowMs: 60000, max: 150 })); } catch (e) { console.warn('[security] rate limiter not mounted:', e.message); }
+
 app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/moonpay', require('./moonpay-agent'));

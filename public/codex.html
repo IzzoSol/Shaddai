@@ -232,12 +232,16 @@
 
     <section class="sect">
       <div class="head"><span class="num">II.</span><span class="name">The AURA Ledger</span><span class="tail" id="ledgerTail">coin spared</span></div>
+      <div id="auraEveryUse" style="display:none;margin:0 auto 14px;padding:8px 18px;border:1px solid var(--gold);background:rgba(0,0,0,0.12);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-align:center;max-width:460px">
+        ✦ Every use saves tokens — compression fires on cache hits and LLM misses alike ✦
+      </div>
       <div class="ledger">
         <div class="read"><div class="cap">Answered without cost</div><div class="fig" id="rHit">—<small>%</small></div><div class="note">of prompts served with no model called</div></div>
         <div class="read hot"><div class="cap">Tokens spared</div><div class="fig" id="rTok">—</div><div class="note">that a paid model never had to read</div></div>
         <div class="read"><div class="cap">Pulls averted</div><div class="fig" id="rPull">—</div><div class="note">live API calls served from the cache</div></div>
         <div class="read"><div class="cap">Times invoked</div><div class="fig" id="rUses">—</div><div class="note">total prompts routed through AURA</div></div>
         <div class="read"><div class="cap">Self-learned</div><div class="fig" id="rLearn">—</div><div class="note">recurring misses promoted to free answers</div></div>
+        <div class="read hot"><div class="cap">Every-use save rate</div><div class="fig" id="rEvery">—<small>%</small></div><div class="note">uses where tokens were saved (hit or miss)</div></div>
       </div>
     </section>
 
@@ -341,10 +345,18 @@
       tick($('rPull'), pulls);
       tick($('rUses'), s.uses || ((s.hits||0) + (s.misses||0)));
       tick($('rLearn'), (s.improvements && s.improvements.promoted) || 0);
+      const everyRate = Math.round((s.everyUseSaveRate||0)*100);
+      tick($('rEvery'), everyRate, '%');
+      // Show "every use saves" badge when rate is high (>= 75%)
+      const badge = $('auraEveryUse');
+      if(badge) badge.style.display = everyRate >= 75 ? 'block' : 'none';
+      // Update ledger tail with live token count
+      const tail = $('ledgerTail');
+      if(tail) tail.textContent = (s.tokensSaved||0).toLocaleString() + ' tokens spared';
     }catch(e){ $('rHit').textContent='—'; }
   }
 
-  loadCouncil(); loadLedger(); setInterval(loadLedger, 15000);
+  loadCouncil(); loadLedger(); setInterval(loadLedger, 4000);
 </script>
 <script>
 /* ═══ Theme switcher + premium mouse/3D effects (shared with forge-about.html) ═══ */

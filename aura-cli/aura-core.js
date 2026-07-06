@@ -41,13 +41,35 @@ function writeJson(file, obj) { try { ensureDir(); fs.writeFileSync(file, JSON.s
 
 // --------------------------------------------------------------------------- stats
 function loadStats() {
-  const s = readJson(STATS_FILE, { hits: 0, misses: 0, tokensSaved: 0, byMethod: { fetch: 0, query: 0, skill: 0, compute: 0 } });
+  const s = readJson(STATS_FILE, { hits: 0, misses: 0, tokensSaved: 0, missesWithSaving: 0, byMethod: { fetch: 0, query: 0, skill: 0, compute: 0 } });
   // back-fill byMethod.skill on stats files created before Stage 2
   if (s && s.byMethod && typeof s.byMethod.skill !== 'number') s.byMethod.skill = 0;
+  if (typeof s.missesWithSaving !== 'number') s.missesWithSaving = 0;
   return s;
 }
 function bumpStats(mut) { try { const s = loadStats(); mut(s); writeJson(STATS_FILE, s); } catch (_) {} }
 function estTokens(str) { return Math.max(1, Math.ceil(String(str || '').length / CHARS_PER_TOK)); }
+
+// --------------------------------------------------------------------------- prompt compressor (same logic as backend/lib/aura.js)
+function compressPrompt(prompt) {
+  try {
+    const original = String(prompt || '');
+    let c = original
+      .replace(/\t/g, ' ')
+      .replace(/[^\S\n]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/([!?.,-])\1{2,}/g, '$1$1')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim();
+    c = c.replace(/\b(.{8,}?)\s+\1\b/gi, '$1');
+    const origTokens = estTokens(original);
+    const compTokens = estTokens(c);
+    const saved = Math.max(0, origTokens - compTokens);
+    return { compressed: c, savedByCompression: saved, originalTokens: origTokens, compressedTokens: compTokens };
+  } catch (_) {
+    return { compressed: String(prompt || ''), savedByCompression: 0, originalTokens: 0, compressedTokens: 0 };
+  }
+}
 
 // --------------------------------------------------------------------------- normalize + sim
 function normalize(p) { return String(p || '').toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim(); }
@@ -309,10 +331,24 @@ function route(prompt, opts = {}) {
       try { recordAnswer(p, computed, opts); } catch (_) {}
       return { hit: true, method: 'compute', answer: computed, savedTokensEst: saved };
     }
-    bumpStats((s) => { s.misses++; });
-    return { hit: false };
+    // Miss — compress to save tokens even when hitting the LLM.
+    const { compressed, savedByCompression } = compressPrompt(p);
+    bumpStats((s) => {
+      s.misses++;
+      s.tokensSaved += savedByCompression;
+      if (savedByCompression > 0) s.missesWithSaving = (s.missesWithSaving || 0) + 1;
+    });
+    return { hit: false, compressed, compressionSaved: savedByCompression };
   } catch (_) {
-    try { bumpStats((s) => { s.misses++; }); } catch (_) {}
+    try {
+      const { compressed, savedByCompression } = compressPrompt(String(prompt || ''));
+      bumpStats((s) => {
+        s.misses++;
+        s.tokensSaved += savedByCompression;
+        if (savedByCompression > 0) s.missesWithSaving = (s.missesWithSaving || 0) + 1;
+      });
+      return { hit: false, compressed, compressionSaved: savedByCompression };
+    } catch (_2) {}
     return { hit: false };
   }
 }
@@ -333,16 +369,21 @@ function stats() {
     const s = loadStats();
     const total = s.hits + s.misses;
     const hitRate = total ? s.hits / total : 0;
+    const everyUseSaveRate = total
+      ? (s.hits + (s.missesWithSaving || 0)) / total
+      : 0;
     return {
       hits: s.hits, misses: s.misses,
       hitRate: Math.round(hitRate * 1000) / 1000,
+      everyUseSaveRate: Math.round(everyUseSaveRate * 1000) / 1000,
       tokensSaved: s.tokensSaved,
       costSavedUsd: Math.round(((s.tokensSaved / 1000) * COST_PER_1K) * 1e6) / 1e6,
       byMethod: s.byMethod,
       cacheFile: CACHE_FILE
     };
   } catch (_) {
-    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, byMethod: { fetch: 0, query: 0, compute: 0 }, cacheFile: CACHE_FILE };
+    return { hits: 0, misses: 0, hitRate: 0, everyUseSaveRate: 0, tokensSaved: 0, costSavedUsd: 0,
+      byMethod: { fetch: 0, query: 0, compute: 0 }, cacheFile: CACHE_FILE };
   }
 }
 
@@ -603,11 +644,13 @@ async function ask(prompt, opts = {}) {
     }
   } catch (_) {}
   if (opts.llm) {
-    const llm = await askLLM(prompt, opts);
-    if (llm.ok) { recordAnswer(prompt, llm.answer, opts); return { hit: false, method: 'llm', answer: llm.answer, provider: llm.provider, model: llm.model, tier: llm.tier, source: 'llm' }; }
+    // Use compressed prompt if available (saves tokens on the LLM call)
+    const llmPrompt = (r.compressed && r.compressed.length < prompt.length) ? r.compressed : prompt;
+    const llm = await askLLM(llmPrompt, opts);
+    if (llm.ok) { recordAnswer(prompt, llm.answer, opts); return { hit: false, method: 'llm', answer: llm.answer, provider: llm.provider, model: llm.model, tier: llm.tier, source: 'llm', compressionSaved: r.compressionSaved || 0 }; }
     return { hit: false, method: 'miss', reason: llm.reason };
   }
-  return { hit: false, method: 'miss' };
+  return { hit: false, method: 'miss', compressed: r.compressed, compressionSaved: r.compressionSaved || 0 };
 }
 
 module.exports = {

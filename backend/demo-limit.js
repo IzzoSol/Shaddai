@@ -66,29 +66,35 @@ function rollIfNewDay() {
   if (t !== _day) { _day = t; _global = 0; _visitors.clear(); _save(); }
 }
 
-// Derive a stable-ish visitor id from the request (session > user id > IP).
+// Derive a stable visitor id from SERVER-trusted signals only. We deliberately do
+// NOT trust client headers like x-visitor-id/x-session-id — rotating them would
+// reset the per-visitor cap. Prefer the authenticated user, then the source IP.
 function visitorId(req) {
   return (
-    (req.headers && (req.headers['x-visitor-id'] || req.headers['x-session-id'])) ||
-    (req.user && (req.user.id || req.user.userId)) ||
-    (req.ip) ||
-    (req.headers && req.headers['x-forwarded-for']) ||
+    (req && req.userId) ||
+    (req && req.user && (req.user.id || req.user.userId)) ||
+    (req && req.ip) ||
+    (req && req.headers && req.headers['x-forwarded-for']) ||
     'anon'
   );
 }
 
-// True when the caller is on their own key → skip all shared-pool limits.
+// A value only counts as a real key if it actually LOOKS like one. Bare presence
+// (e.g. `x-byok: 1`) used to bypass every cap for free — that's the drain hole.
+function _looksLikeRealKey(v) {
+  if (typeof v !== 'string') return false;
+  const k = v.trim().replace(/^Bearer\s+/i, '');
+  return k.length >= 20 && /^(gsk_|sk-|sk_|or-v1-|hf_|xai-|AIza|glhf_|key-|r8_)/i.test(k);
+}
+
+// True when the caller is on their OWN key → skip shared-pool limits.
+// SECURITY: requires either a server-set req.byok (a route already used the user's
+// real key) OR a header whose VALUE looks like a genuine key. We no longer trust
+// the global BYOK store here — one user saving a key must not disable caps for all.
 function hasBYOK(req) {
-  if (req && req.byok) return true;
-  const h = req && req.headers || {};
-  if (h['x-byok'] || h['x-api-key']) return true;
-  try { // any stored BYOK key means they're a real key holder
-    const eng = require('./agent-engine');
-    if (eng && typeof eng.getBYOKKey === 'function') {
-      return ['groq', 'openrouter', 'openai', 'claude'].some(p => eng.getBYOKKey(p));
-    }
-  } catch (_) {}
-  return false;
+  if (req && req.byok === true) return true;
+  const h = (req && req.headers) || {};
+  return _looksLikeRealKey(h['x-api-key']) || _looksLikeRealKey(h['x-byok']);
 }
 
 // Check + consume one unit. Returns { ok, reason, remaining, limit, scope }.

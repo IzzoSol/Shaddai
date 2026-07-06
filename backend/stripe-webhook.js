@@ -21,7 +21,7 @@ let Stripe = null;  try { Stripe = require('stripe'); } catch (_) {}
 // Tiers map to billing-service tiers (free/pro/elite). Founder = lifetime Pro + bonus credits.
 // Credit packs add credits (billing-service credit scale). Tune here.
 const GRANTS = {
-  founder:     { tier: 'pro',   credits: 5000, note: 'founder (lifetime)' },
+  founder:     { tier: 'pro',   credits: 26000, note: 'founder (lifetime) — 26000 credits ≈ $200 at pack rate, honors pricing promise' },
   builder:     { tier: 'pro' },
   pro:         { tier: 'pro' },
   alpha:       { tier: 'elite' },

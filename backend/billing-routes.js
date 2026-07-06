@@ -267,8 +267,13 @@ router.post('/subscribe', validateFields(['tier']), handle(async (req, res) => {
 /**
  * POST /subscribe/confirm
  * Body: { subscriptionId, tier }
+ * SECURITY: this route trusts a client-supplied `tier` with no Stripe payment
+ * verification — left open it lets a user self-grant Alpha for free. Real, paid
+ * tier grants now flow ONLY through the signature-verified Stripe webhook
+ * (checkout.session.completed → stripe-webhook.js). So this manual path is
+ * admin-only until it does server-side Stripe verification.
  */
-router.post('/subscribe/confirm', validateFields(['subscriptionId', 'tier']), handle(async (req, res) => {
+router.post('/subscribe/confirm', requireAdmin, validateFields(['subscriptionId', 'tier']), handle(async (req, res) => {
   const confirmed = await billingService.confirmSubscription(
     req.userId, req.body.subscriptionId, req.body.tier
   );

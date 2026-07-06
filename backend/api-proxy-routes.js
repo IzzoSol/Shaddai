@@ -46,7 +46,14 @@ function loadJSON(filePath, fallback = []) {
 }
 
 function saveJSON(filePath, data) {
-  try { fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {
+  // Atomic write: serialize to a temp file then rename over the target. A crash
+  // mid-write leaves the original intact instead of a truncated file that would
+  // silently load as [] and wipe jobs/receipts/earnings.
+  try {
+    const tmp = filePath + '.tmp-' + process.pid + '-' + Date.now();
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmp, filePath);
+  } catch (e) {
     console.error('[STORAGE] Failed to save:', filePath, e.message);
   }
 }
@@ -3929,11 +3936,34 @@ router.get('/webhooks', (req, res) => {
   res.json({ webhooks: _webhooks.map(w => ({ ...w })), total: _webhooks.length });
 });
 
+// SSRF guard — reject URLs that point at the server's own network: loopback,
+// link-local (incl. cloud metadata 169.254.169.254), and RFC1918 private ranges.
+function _isSafeWebhookUrl(raw) {
+  let u;
+  try { u = new URL(String(raw).trim()); } catch { return false; }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+  const host = u.hostname.toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) return false;
+  // IPv6 loopback/link-local
+  if (host === '::1' || host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return false;
+  // IPv4 literal ranges
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 127 || a === 0 || a === 10) return false;                 // loopback / this-net / private
+    if (a === 169 && b === 254) return false;                            // link-local + cloud metadata
+    if (a === 192 && b === 168) return false;                            // private
+    if (a === 172 && b >= 16 && b <= 31) return false;                   // private
+    if (a === 100 && b >= 64 && b <= 127) return false;                  // CGNAT
+  }
+  return true;
+}
+
 router.post('/webhooks', (req, res) => {
   const { url, events, secret, name } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
 
-  // URL validation — must be http/https, no javascript: or data: URIs
+  // URL validation — must be http/https, no javascript:/data:, and not internal (SSRF).
   const urlStr = String(url).trim();
   const lowerUrl = urlStr.toLowerCase();
   if (!lowerUrl.startsWith('http://') && !lowerUrl.startsWith('https://')) {
@@ -3941,6 +3971,9 @@ router.post('/webhooks', (req, res) => {
   }
   if (lowerUrl.includes('javascript:') || lowerUrl.includes('data:')) {
     return res.status(400).json({ error: 'Webhook URL contains a disallowed scheme' });
+  }
+  if (!_isSafeWebhookUrl(urlStr)) {
+    return res.status(400).json({ error: 'Webhook URL may not point to an internal/private address' });
   }
 
   const webhook = {
@@ -3967,8 +4000,9 @@ router.delete('/webhooks/:id', (req, res) => {
 router.post('/webhooks/:id/test', async (req, res) => {
   const wh = _webhooks.find(w => w.id === req.params.id);
   if (!wh) return res.status(404).json({ error: 'Webhook not found' });
+  if (!_isSafeWebhookUrl(wh.url)) return res.status(400).json({ error: 'Webhook target is an internal/private address — refusing to send' });
   try {
-    await axios.post(wh.url, { event: 'test', payload: { message: 'SHADDAI webhook test' }, timestamp: new Date().toISOString() }, { timeout: 5000 });
+    await axios.post(wh.url, { event: 'test', payload: { message: 'SHADDAI webhook test' }, timestamp: new Date().toISOString() }, { timeout: 5000, maxRedirects: 0 });
     res.json({ success: true, url: wh.url });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });

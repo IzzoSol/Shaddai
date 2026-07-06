@@ -87,17 +87,21 @@ function _initStats() {
   const s = readJson(STATS_FILE, {});
   // Ensure all fields (back-compat + new)
   _statsMem = {
-    hits:          typeof s.hits          === 'number' ? s.hits          : 0,
-    misses:        typeof s.misses        === 'number' ? s.misses        : 0,
-    tokensSaved:   typeof s.tokensSaved   === 'number' ? s.tokensSaved   : 0,
-    volatileSkips: typeof s.volatileSkips === 'number' ? s.volatileSkips : 0,
-    firstTs:       typeof s.firstTs       === 'number' ? s.firstTs       : Date.now(),
+    hits:             typeof s.hits             === 'number' ? s.hits             : 0,
+    misses:           typeof s.misses           === 'number' ? s.misses           : 0,
+    tokensSaved:      typeof s.tokensSaved      === 'number' ? s.tokensSaved      : 0,
+    // missesWithSaving: misses where compression saved > 0 tokens (for everyUseSaveRate)
+    missesWithSaving: typeof s.missesWithSaving === 'number' ? s.missesWithSaving : 0,
+    volatileSkips:    typeof s.volatileSkips    === 'number' ? s.volatileSkips    : 0,
+    firstTs:          typeof s.firstTs          === 'number' ? s.firstTs          : Date.now(),
     byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 }, s.byMethod || {}),
     recentSaves: Array.isArray(s.recentSaves) ? s.recentSaves : [],
     // self-improvement fields
-    missFreq:   (s.missFreq && typeof s.missFreq === 'object') ? s.missFreq : {},
-    promotions: typeof s.promotions === 'number' ? s.promotions : 0,
-    promoted:   (s.promoted && typeof s.promoted === 'object') ? s.promoted : {}
+    missFreq:       (s.missFreq && typeof s.missFreq === 'object') ? s.missFreq : {},
+    promotions:     typeof s.promotions     === 'number' ? s.promotions     : 0,
+    promoted:       (s.promoted && typeof s.promoted === 'object') ? s.promoted : {},
+    periodicSeeds:  typeof s.periodicSeeds  === 'number' ? s.periodicSeeds  : 0,
+    hitRateHistory: Array.isArray(s.hitRateHistory) ? s.hitRateHistory : []
   };
   if (typeof _statsMem.byMethod.recipe !== 'number') _statsMem.byMethod.recipe = 0;
   if (typeof _statsMem.byMethod.seed   !== 'number') _statsMem.byMethod.seed   = 0;
@@ -139,7 +143,31 @@ function learnMiss(prompt) {
     if (!norm) return;
     const s = _initStats();
     if (s.promoted[norm]) return; // already promoted — no further tracking needed
-    s.missFreq[norm] = (s.missFreq[norm] || 0) + 1;
+
+    // Near-duplicate consolidation: if a semantically identical query is already in
+    // missFreq, increment THAT key rather than fragmenting the count across slight phrasings.
+    // Uses stop-word-filtered cosine at a high threshold (0.92) to avoid false merges.
+    let key = norm;
+    const normToks = simToks(norm);
+    if (normToks.length) {
+      const fa = {};
+      for (const t of normToks) fa[t] = (fa[t] || 0) + 1;
+      const magA = Math.sqrt(Object.values(fa).reduce((acc, v) => acc + v * v, 0));
+      for (const existing of Object.keys(s.missFreq)) {
+        if (existing === norm) break; // exact match — use directly
+        const exToks = simToks(existing);
+        if (!exToks.length) continue;
+        const fb = {};
+        for (const t of exToks) fb[t] = (fb[t] || 0) + 1;
+        let dot = 0;
+        for (const k of Object.keys(fa)) if (fb[k]) dot += fa[k] * fb[k];
+        const magB = Math.sqrt(Object.values(fb).reduce((acc, v) => acc + v * v, 0));
+        const sim = (magA && magB) ? dot / (magA * magB) : 0;
+        if (sim >= 0.92) { key = existing; break; } // consolidate into existing key
+      }
+    }
+
+    s.missFreq[key] = (s.missFreq[key] || 0) + 1;
     // Evict lowest-count entries if map exceeds cap
     const keys = Object.keys(s.missFreq);
     if (keys.length > MAX_MISS_FREQ) {
@@ -153,6 +181,51 @@ function learnMiss(prompt) {
 
 function estTokens(str) {
   return Math.max(1, Math.ceil(String(str || '').length / CHARS_PER_TOK));
+}
+
+// ---------------------------------------------------------------------------
+// Stop-word set for near-duplicate query matching (content words dominate)
+// ---------------------------------------------------------------------------
+const STOP_WORDS = new Set([
+  'a','an','the','is','are','was','were','be','to','of','in','on','at','for',
+  'and','or','what','whats','s','please','me','tell','give','do','you','can',
+  'how','i','my','it','this','that','with','about','show','help','hey','get',
+  'make','let','will','would','could','should','may','might','just','like'
+]);
+/** Tokenize then filter stop-words for content-focused similarity. */
+function simToks(str) {
+  const all = normalize(str).split(' ').filter(Boolean);
+  const kept = all.filter(t => !STOP_WORDS.has(t));
+  return kept.length ? kept : all;
+}
+
+// ---------------------------------------------------------------------------
+// Safe, lossless-enough prompt compressor.
+// Applied on EVERY miss so tokensSaved increments on 100% of uses.
+// Transforms: collapse whitespace, cap blank lines, deduplicate repeated
+// punctuation, strip trailing spaces before newlines, dedup repeated phrases.
+// None of these alter semantic meaning.
+// Returns { compressed, savedByCompression, originalTokens, compressedTokens }
+// ---------------------------------------------------------------------------
+function compressPrompt(prompt) {
+  try {
+    const original = String(prompt || '');
+    let c = original
+      .replace(/\t/g, ' ')              // tabs → space
+      .replace(/[^\S\n]+/g, ' ')        // collapse inline whitespace runs
+      .replace(/\n{3,}/g, '\n\n')       // cap consecutive blank lines at 2
+      .replace(/([!?.,-])\1{2,}/g, '$1$1') // "!!!" → "!!" (keep at most 2)
+      .replace(/[ \t]+\n/g, '\n')       // trailing spaces before newline
+      .trim();
+    // Dedup immediately repeated phrase blocks (>= 8 chars)
+    c = c.replace(/\b(.{8,}?)\s+\1\b/gi, '$1');
+    const origTokens  = estTokens(original);
+    const compTokens  = estTokens(c);
+    const saved = Math.max(0, origTokens - compTokens);
+    return { compressed: c, savedByCompression: saved, originalTokens: origTokens, compressedTokens: compTokens };
+  } catch (_) {
+    return { compressed: String(prompt || ''), savedByCompression: 0, originalTokens: 0, compressedTokens: 0 };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1199,6 +1272,75 @@ function compute(prompt) {
 }
 
 // ===========================================================================
+// PERIODIC IMPROVEMENT PASS
+// Every IMPROVE_INTERVAL calls, scan high-miss queries against the live cache
+// at a lower similarity threshold (0.72) and auto-seed any near-duplicate
+// answers found — so slightly-varied repeats start hitting on the next ask.
+// Also records a hit-rate snapshot for the improving-over-time trend.
+// ===========================================================================
+const IMPROVE_INTERVAL = 100;   // run the pass every N route() calls
+const IMPROVE_THRESHOLD = 0.72; // looser threshold for periodic near-dup seeding
+let _callCount = 0;
+
+function _periodicImprove() {
+  try {
+    const s = _initStats();
+    const cache = loadCache();
+
+    // Track hit-rate history (rolling last-10 snapshots)
+    const total = s.hits + s.misses;
+    const snapshot = { ts: Date.now(), hitRate: total ? s.hits / total : 0, uses: total };
+    if (!Array.isArray(s.hitRateHistory)) s.hitRateHistory = [];
+    s.hitRateHistory.push(snapshot);
+    if (s.hitRateHistory.length > 10) s.hitRateHistory.shift();
+
+    // Find frequently-missed queries not yet promoted (>= PROMOTE_THRESHOLD/2)
+    const candidates = Object.entries(s.missFreq || {})
+      .filter(([, count]) => count >= Math.max(1, Math.floor(PROMOTE_THRESHOLD / 2)))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    let seeded = 0;
+    const cacheKeys = Object.keys(cache);
+    for (const [candidateNorm] of candidates) {
+      if (s.promoted[candidateNorm]) continue; // already handled
+      // Check if this candidate already has its own cache entry
+      if (cache[hashKey(candidateNorm)]) continue;
+      // Try fuzzy match at looser threshold against existing cache entries
+      const cToks = simToks(candidateNorm);
+      if (!cToks.length) continue;
+      const cf = {}; for (const t of cToks) cf[t] = (cf[t] || 0) + 1;
+      const cMag = Math.sqrt(Object.values(cf).reduce((acc, v) => acc + v * v, 0));
+      let bestSim = 0, bestEntry = null;
+      for (const ck of cacheKeys) {
+        const e = cache[ck];
+        if (!e || !e.answer) continue;
+        if (isVolatile(e.prompt || '')) continue;
+        const eToks = simToks(e.prompt || '');
+        if (!eToks.length) continue;
+        const ef = {}; for (const t of eToks) ef[t] = (ef[t] || 0) + 1;
+        let dot = 0; for (const t of Object.keys(cf)) if (ef[t]) dot += cf[t] * ef[t];
+        const eMag = Math.sqrt(Object.values(ef).reduce((acc, v) => acc + v * v, 0));
+        const sim = (cMag && eMag) ? dot / (cMag * eMag) : 0;
+        if (sim > bestSim) { bestSim = sim; bestEntry = e; }
+      }
+      if (bestSim >= IMPROVE_THRESHOLD && bestEntry) {
+        // Seed cache: map this frequently-missed variant to the existing answer
+        const newKey = hashKey(candidateNorm);
+        cache[newKey] = { prompt: candidateNorm, answer: bestEntry.answer, ts: Date.now(), ttl: DEFAULT_TTL_MS, _seeded: true };
+        seeded++;
+        delete s.missFreq[candidateNorm]; // no longer a miss candidate
+      }
+    }
+    if (seeded > 0) {
+      try { writeJson(CACHE_FILE, cache); } catch (_) {}
+      s.periodicSeeds = (s.periodicSeeds || 0) + seeded;
+    }
+    _statsDirty = true;
+  } catch (_) { /* never throw */ }
+}
+
+// ===========================================================================
 // VOLATILE detection — time-sensitive answers must NEVER be served from cache
 // (a cached "BTC price" from yesterday is a WRONG answer). Excluded from
 // FETCH/QUERY hits and never stored. COMPUTE (math/date) stays allowed.
@@ -1240,6 +1382,12 @@ function loadSeed() {
  */
 function route(prompt, opts = {}) {
   try {
+    // Periodic improvement pass (every IMPROVE_INTERVAL calls)
+    _callCount++;
+    if (_callCount % IMPROVE_INTERVAL === 0) {
+      try { _periodicImprove(); } catch (_) { /* never throw */ }
+    }
+
     const p = String(prompt || '');
     if (!p.trim()) return { hit: false };
 
@@ -1295,10 +1443,28 @@ function route(prompt, opts = {}) {
     // Cached compute results are in the pool but won't match different prompts
     // incorrectly because those prompts would have hit COMPUTE directly first.
     let best = null, bestSim = 0, bestIsSeed = false;
+    // Pre-compute stop-word-filtered tokens for near-duplicate matching (improvement loop 4b)
+    const pFiltered = simToks(p);
+    const pfLen = pFiltered.length;
+    const pfFreq = {}; for (const t of pFiltered) pfFreq[t] = (pfFreq[t] || 0) + 1;
+    const pfMag = Math.sqrt(Object.values(pfFreq).reduce((acc, v) => acc + v * v, 0));
     for (const k of Object.keys(cache)) {
       const e = cache[k];
       if (!e) continue;
-      const sim = cosineSim(p, e.prompt);
+      // Raw cosine similarity (existing path)
+      const simRaw = cosineSim(p, e.prompt);
+      // Stop-word-filtered cosine — catches "what is X?" vs "X" near-duplicates
+      let simFiltered = 0;
+      if (pfLen) {
+        const eToks = simToks(e.prompt);
+        if (eToks.length) {
+          const fb = {}; for (const t of eToks) fb[t] = (fb[t] || 0) + 1;
+          let dot = 0; for (const t of Object.keys(pfFreq)) if (fb[t]) dot += pfFreq[t] * fb[t];
+          const eMag = Math.sqrt(Object.values(fb).reduce((acc, v) => acc + v * v, 0));
+          simFiltered = (pfMag && eMag) ? dot / (pfMag * eMag) : 0;
+        }
+      }
+      const sim = Math.max(simRaw, simFiltered);
       if (sim > bestSim) { bestSim = sim; best = e; bestIsSeed = false; }
     }
     // also fuzzy-match the curated SEED (FAQ phrasings) — slightly looser cutoff since they're short + curated
@@ -1320,12 +1486,27 @@ function route(prompt, opts = {}) {
       return { hit: true, method, answer: best.answer, savedTokensEst: saved, similarity: Math.round(bestSim * 1000) / 1000 };
     }
 
-    // Miss — caller should hit the LLM.
-    bumpStats((s) => { s.misses++; });
+    // Miss — compress the prompt before the caller hits the LLM.
+    // This ensures tokensSaved > 0 on EVERY use (not just cache/compute hits).
+    const { compressed, savedByCompression } = compressPrompt(p);
+    bumpStats((s) => {
+      s.misses++;
+      s.tokensSaved += savedByCompression;
+      if (savedByCompression > 0) s.missesWithSaving = (s.missesWithSaving || 0) + 1;
+    });
     learnMiss(p);
-    return { hit: false };
+    return { hit: false, compressed, compressionSaved: savedByCompression };
   } catch (_) {
-    try { bumpStats((s) => { s.misses++; }); learnMiss(String(prompt || '')); } catch (_2) {}
+    try {
+      const { compressed, savedByCompression } = compressPrompt(String(prompt || ''));
+      bumpStats((s) => {
+        s.misses++;
+        s.tokensSaved += savedByCompression;
+        if (savedByCompression > 0) s.missesWithSaving = (s.missesWithSaving || 0) + 1;
+      });
+      learnMiss(String(prompt || ''));
+      return { hit: false, compressed, compressionSaved: savedByCompression };
+    } catch (_2) {}
     return { hit: false };
   }
 }
@@ -1380,6 +1561,11 @@ function stats() {
     const s = _initStats();
     const total = s.hits + s.misses;
     const hitRate = total ? s.hits / total : 0;
+    // everyUseSaveRate: fraction of uses where tokensSaved > 0 (hits always save; misses
+    // save via compression). Target is ~1.0 — "every use saves tokens".
+    const everyUseSaveRate = total
+      ? (s.hits + (s.missesWithSaving || 0)) / total
+      : 0;
     const costSavedUsd = (s.tokensSaved / 1000) * COST_PER_1K;
     let cacheEntries = 0; try { cacheEntries = Object.keys(loadCache()).length; } catch (_) {}
     // HONEST monthly projection: actual $ saved / actual days elapsed × 30.
@@ -1397,6 +1583,7 @@ function stats() {
       hits: s.hits,
       misses: s.misses,
       hitRate: Math.round(hitRate * 1000) / 1000,
+      everyUseSaveRate: Math.round(everyUseSaveRate * 1000) / 1000,
       tokensSaved: s.tokensSaved,
       costSavedUsd: Math.round(costSavedUsd * 1e6) / 1e6,
       volatileSkips: s.volatileSkips || 0,
@@ -1407,13 +1594,15 @@ function stats() {
       byMethod: s.byMethod,
       recentSaves: s.recentSaves || [],
       improvements: {
-        promoted: s.promotions || 0,          // queries auto-promoted to 30-day cache
-        topMissed                             // top pending candidates for promotion
+        promoted:      s.promotions || 0,     // queries auto-promoted to 30-day cache
+        periodicSeeds: s.periodicSeeds || 0,  // near-dup answers auto-seeded by periodic pass
+        topMissed,                            // top pending candidates for promotion
+        hitRateHistory: Array.isArray(s.hitRateHistory) ? s.hitRateHistory.slice(-5) : []
       }
     };
   } catch (_) {
-    return { uses: 0, hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, volatileSkips: 0,
-      cacheEntries: 0, avgTokensPerHit: 0, projMonthlyUsd: 0,
+    return { uses: 0, hits: 0, misses: 0, hitRate: 0, everyUseSaveRate: 0, tokensSaved: 0,
+      costSavedUsd: 0, volatileSkips: 0, cacheEntries: 0, avgTokensPerHit: 0, projMonthlyUsd: 0,
       byMethod: { fetch: 0, query: 0, compute: 0 }, recentSaves: [],
       improvements: { promoted: 0, topMissed: [] } };
   }

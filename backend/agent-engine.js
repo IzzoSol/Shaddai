@@ -3316,12 +3316,19 @@ async function extractAndRunTools(text, agentName, taskId = null, allowed = null
 // ═══════════════════════════════════════════════════════════════════
 
 const taskQueue = new Map();
+const TASK_QUEUE_MAX = 1000; // bound memory: evict oldest completed tasks (Map keeps insertion order)
 
 function createTask(goal, agentName, options = {}) {
   const id = crypto.randomUUID();
   const agent = routeTask(goal, agentName);
   const task = { id, goal, agentName: agent.name, status: 'pending', steps: [], result: null, error: null, startedAt: null, completedAt: null, tools_used: [], options };
   taskQueue.set(id, task);
+  // Prevent unbounded growth on a long-lived process — drop the oldest entries.
+  while (taskQueue.size > TASK_QUEUE_MAX) {
+    const oldest = taskQueue.keys().next().value;
+    if (oldest === undefined) break;
+    taskQueue.delete(oldest);
+  }
   return task;
 }
 
