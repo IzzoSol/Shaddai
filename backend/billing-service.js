@@ -221,8 +221,36 @@ function _writeAllSync() {
     fs.writeFileSync(path.join(DATA_DIR, 'ledger.json'),    JSON.stringify(ledger, null, 2));
     fs.writeFileSync(path.join(DATA_DIR, 'usage.json'),     JSON.stringify(usageDatabase, null, 2));
     _dirty = false;
+    // Mirror to Firestore — free durable backup that survives Render's ephemeral
+    // disk on redeploy. Fire-and-forget (not awaited) so it never blocks the hot path.
+    try { require('./lib/fire-store').saveDoc('shaddai_billing', 'state', { customers: customerDatabase, ledger, usage: usageDatabase }); } catch (_) {}
   } catch (err) {
     logger.error('Failed to save persistent data:', err.message);
+  }
+}
+
+// Restore billing state from Firestore after a redeploy wiped the local JSON.
+// Called shortly after boot; no-op when Firestore isn't configured/enabled.
+async function hydrateFromFirestore() {
+  try {
+    const store = require('./lib/fire-store');
+    if (!store.ready()) return { ok: false, reason: 'firestore not configured' };
+    const doc = await store.loadDoc('shaddai_billing', 'state');
+    if (doc && doc.customers && Object.keys(doc.customers).length) {
+      // Firestore holds the last durable snapshot; local JSON was just (re)loaded
+      // from a possibly-wiped disk, so restore anything missing locally.
+      for (const [uid, rec] of Object.entries(doc.customers)) {
+        if (!customerDatabase[uid]) customerDatabase[uid] = rec;
+      }
+      if (doc.ledger) for (const [k, v] of Object.entries(doc.ledger)) if (!ledger[k]) ledger[k] = v;
+      if (doc.usage)  for (const [k, v] of Object.entries(doc.usage))  if (!usageDatabase[k]) usageDatabase[k] = v;
+      _writeAllSync();
+      logger.info(`[persist] restored ${Object.keys(doc.customers).length} customers from Firestore`);
+      return { ok: true, restored: Object.keys(doc.customers).length };
+    }
+    return { ok: true, restored: 0 };
+  } catch (e) {
+    return { ok: false, reason: e.message };
   }
 }
 
@@ -924,6 +952,8 @@ function getMoonpayStatus() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 loadPersistentData();
+// Restore from the free Firestore backup shortly after boot (survives redeploys).
+setTimeout(() => { hydrateFromFirestore().then(r => logger.info('[persist] hydrate ' + JSON.stringify(r))).catch(() => {}); }, 2000);
 
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
 module.exports = {
@@ -931,6 +961,9 @@ module.exports = {
   TIER_CONFIG,
   STRIPE_PRICES,
   TIER_LIMITS: TIER_CONFIG, // back-compat alias
+
+  // Persistence (free Firestore backup/restore)
+  hydrateFromFirestore,
 
   // Customer management
   createCustomer,

@@ -1649,4 +1649,213 @@ function creditDeterministic(prompt, savedTokens) {
   } catch (_) { return false; }
 }
 
-module.exports = { route, recordAnswer, creditDeterministic, isVolatile, stats, router: buildRouter() };
+// ===========================================================================
+// TOOL TOKEN ESTIMATION — serialize only name/description/schema (skip execute)
+// ===========================================================================
+function _toolTokens(toolArr) {
+  if (!Array.isArray(toolArr) || !toolArr.length) return 0;
+  let total = 0;
+  for (const t of toolArr) {
+    try {
+      total += estTokens(JSON.stringify({ name: t.name, description: t.description, schema: t.schema }));
+    } catch (_) {
+      total += estTokens(String(t.name || '') + ' ' + String(t.description || ''));
+    }
+  }
+  return total;
+}
+
+// Simple keyword scorer for tool selection inside forCall()
+// (Used only when caller passes ownTools but no selectedTools)
+const FORCE_ALWAYS = new Set(['search_web', 'run_js', 'save_memory', 'search_skills', 'read_obsidian_skill', 'run_skill']);
+function _selectForCall(prompt, tools, max) {
+  if (!Array.isArray(tools) || tools.length <= max) return tools;
+  // Force-keep BASE_TOOLS equivalents
+  const always = tools.filter(t => FORCE_ALWAYS.has(t.name));
+  const rest   = tools.filter(t => !FORCE_ALWAYS.has(t.name));
+  if (always.length >= max) return always.slice(0, max);
+  const budget = max - always.length;
+
+  const words = simToks(normalize(String(prompt || '')));
+  if (!words.length) return [...always, ...rest.slice(0, budget)];
+
+  const scored = rest.map(t => {
+    const haystack = normalize((t.description || '') + ' ' + (t.name || ''));
+    let score = 0;
+    for (const w of words) {
+      if (haystack.includes(w)) score += 2;
+      else if (haystack.split(' ').some(d => d.length >= 4 && d.startsWith(w.slice(0, 4)))) score += 1;
+    }
+    return { t, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return [...always, ...scored.slice(0, budget).map(x => x.t)];
+}
+
+/**
+ * forCall({ prompt, system, ownTools, selectedTools, history }) — unified AURA entry point
+ * for every LLM call. Applies ALL savings levers and tracks them in stats.
+ *
+ * Savings levers (all real, all measured in estimated tokens = chars/4):
+ *   1. Cache hit       — entire call avoided; credits prompt+system+tools+history tokens.
+ *   2. Prompt compress — always applied (whitespace/boilerplate trim on prompt+system).
+ *   3. Tool injection  — if ownTools > selectedTools, credits the dropped tools' tokens.
+ *   4. History compact — if history > 8 turns, older turns collapsed to a short summary.
+ *
+ * @param {Object} opts
+ *   prompt        {string}  — last user message (cache key + compression target)
+ *   system        {string}  — system prompt content (compressed, not cache-keyed)
+ *   ownTools      {Array}   — FULL tool list for this agent (before selection); used to measure
+ *                            selection savings. Pass [] if no tools.
+ *   selectedTools {Array}   — ALREADY-selected subset (after tool-selector or similar). When
+ *                            provided, forCall() measures savings vs ownTools without re-selecting.
+ *                            When omitted, forCall() selects from ownTools itself.
+ *   history       {Array}   — message history array (non-system messages); used for compaction.
+ *
+ * @returns {Object}
+ *   hit           {boolean} — true if a cached/computed answer exists (skip LLM)
+ *   answer        {string}  — present only when hit:true
+ *   prompt        {string}  — (possibly compressed) prompt to use
+ *   system        {string}  — compressed system prompt
+ *   tools         {Array}   — tools to inject (selectedTools or forCall-selected subset)
+ *   history       {Array}   — (possibly compacted) history
+ *   saved         {Object}  — { total, cache, compress, tools, history } token counts
+ *   estBefore     {number}  — estimated tokens before AURA
+ *   estAfter      {number}  — estimated tokens after AURA
+ *
+ * Never throws. Always increments stats.uses (via misses or hits).
+ */
+function forCall({ prompt = '', system = '', ownTools = [], selectedTools = null, history = [] } = {}) {
+  try {
+    const p       = String(prompt || '');
+    const sys     = String(system || '');
+    const hist    = Array.isArray(history) ? history : [];
+    const own     = Array.isArray(ownTools) ? ownTools : [];
+    const selIn   = Array.isArray(selectedTools) ? selectedTools : null;
+
+    // ── Estimate BEFORE tokens ─────────────────────────────────────
+    const ownToolTok  = _toolTokens(own);
+    const histTok     = hist.length ? estTokens(JSON.stringify(hist.map(m => ({ role: m.role, content: String(m.content || '').slice(0, 200) })))) : 0;
+    const estBefore   = estTokens(p) + estTokens(sys) + ownToolTok + histTok;
+
+    // ── 1. CACHE HIT — avoid the entire call ───────────────────────
+    if (p && !isVolatile(p)) {
+      // Exact cache lookup
+      const cache = pruneCache(loadCache());
+      const key   = hashKey(p);
+      const exact = cache[key];
+      if (exact && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
+        const savedTotal = estBefore;
+        bumpStats(s => {
+          s.hits++; s.byMethod.fetch = (s.byMethod.fetch || 0) + 1;
+          s.tokensSaved += savedTotal;
+          s.recentSaves.unshift({ ts: Date.now(), method: 'fetch', snippet: p.slice(0, 60), tokens: savedTotal });
+          if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+        });
+        return { hit: true, answer: exact.answer, prompt: p, system: sys,
+          tools: selIn || own, history: hist,
+          saved: { total: savedTotal, cache: savedTotal, compress: 0, tools: 0, history: 0 },
+          estBefore, estAfter: 0 };
+      }
+      // SEED exact match
+      const seedExact = loadSeed().find(e => e.key === key);
+      if (seedExact) {
+        const savedTotal = estBefore;
+        bumpStats(s => {
+          s.hits++; s.byMethod.seed = (s.byMethod.seed || 0) + 1;
+          s.tokensSaved += savedTotal;
+          s.recentSaves.unshift({ ts: Date.now(), method: 'seed', snippet: p.slice(0, 60), tokens: savedTotal });
+          if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+        });
+        return { hit: true, answer: seedExact.answer, prompt: p, system: sys,
+          tools: selIn || own, history: hist,
+          saved: { total: savedTotal, cache: savedTotal, compress: 0, tools: 0, history: 0 },
+          estBefore, estAfter: 0 };
+      }
+      // COMPUTE — deterministic local solver
+      const computed = compute(p);
+      if (computed !== null) {
+        const savedTotal = estBefore;
+        bumpStats(s => {
+          s.hits++; s.byMethod.compute = (s.byMethod.compute || 0) + 1;
+          s.tokensSaved += savedTotal;
+          s.recentSaves.unshift({ ts: Date.now(), method: 'compute', snippet: p.slice(0, 60), tokens: savedTotal });
+          if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+        });
+        try { recordAnswer(p, computed, {}); } catch (_) {}
+        return { hit: true, answer: computed, prompt: p, system: sys,
+          tools: selIn || own, history: hist,
+          saved: { total: savedTotal, cache: savedTotal, compress: 0, tools: 0, history: 0 },
+          estBefore, estAfter: 0 };
+      }
+    }
+
+    // ── 2. PROMPT + SYSTEM COMPRESSION ────────────────────────────
+    const { compressed: compP, savedByCompression: cSaveP }   = compressPrompt(p);
+    const { compressed: compSys, savedByCompression: cSaveSys } = compressPrompt(sys);
+    const compressSaved = cSaveP + cSaveSys;
+
+    // ── 3. TOOL INJECTION SAVINGS ──────────────────────────────────
+    // selectedTools = caller-provided subset (tool-selector already ran).
+    // If not provided, do a quick keyword selection.
+    const MAX_TOOL_COUNT = 22;
+    const finalTools = selIn !== null ? selIn : _selectForCall(p, own, MAX_TOOL_COUNT);
+    const selToolTok  = _toolTokens(finalTools);
+    const toolsSaved  = Math.max(0, ownToolTok - selToolTok);
+
+    // ── 4. HISTORY COMPACTION ──────────────────────────────────────
+    let compactHistory = hist;
+    let historySaved   = 0;
+    if (hist.length > 8) {
+      const recent = hist.slice(-6);
+      const older  = hist.slice(0, -6);
+      const summary = older.map(m => `${m.role}: ${String(m.content || '').slice(0, 40)}`).join(' | ');
+      compactHistory = [{ role: 'system', content: `[Earlier context: ${summary}]` }, ...recent];
+      const oldHistTok = estTokens(JSON.stringify(hist.map(m => ({ role: m.role, content: String(m.content || '').slice(0, 200) }))));
+      const newHistTok = estTokens(JSON.stringify(compactHistory.map(m => ({ role: m.role, content: String(m.content || '').slice(0, 200) }))));
+      historySaved = Math.max(0, oldHistTok - newHistTok);
+    }
+
+    // ── Tally & persist ───────────────────────────────────────────
+    const totalSaved = compressSaved + toolsSaved + historySaved;
+    const estAfter   = Math.max(0, estBefore - totalSaved);
+
+    bumpStats(s => {
+      s.misses = (s.misses || 0) + 1;
+      s.tokensSaved = (s.tokensSaved || 0) + totalSaved;
+      if (totalSaved > 0) {
+        s.missesWithSaving = (s.missesWithSaving || 0) + 1;
+        s.recentSaves = s.recentSaves || [];
+        s.recentSaves.unshift({
+          ts: Date.now(), method: 'forCall', snippet: p.slice(0, 60), tokens: totalSaved,
+          breakdown: { compress: compressSaved, tools: toolsSaved, history: historySaved }
+        });
+        if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+      }
+    });
+    learnMiss(p);
+
+    return {
+      hit: false,
+      prompt: compP,
+      system: compSys,
+      tools: finalTools,
+      history: compactHistory,
+      saved: { total: totalSaved, cache: 0, compress: compressSaved, tools: toolsSaved, history: historySaved },
+      estBefore,
+      estAfter
+    };
+  } catch (err) {
+    // Graceful fallback — never throw to the caller
+    try { bumpStats(s => { s.misses = (s.misses || 0) + 1; }); } catch (_) {}
+    return {
+      hit: false, prompt: String(prompt || ''), system: String(system || ''),
+      tools: Array.isArray(selectedTools) ? selectedTools : (Array.isArray(ownTools) ? ownTools : []),
+      history: Array.isArray(history) ? history : [],
+      saved: { total: 0, cache: 0, compress: 0, tools: 0, history: 0 },
+      estBefore: 0, estAfter: 0
+    };
+  }
+}
+
+module.exports = { route, recordAnswer, creditDeterministic, isVolatile, stats, forCall, router: buildRouter() };

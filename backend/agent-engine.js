@@ -3214,21 +3214,25 @@ Use tools for real data, then give a concise final answer.` };
   // free-tier rate limits → ollama local last. So a chain never dies on a 429.
   const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
   const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL };
-  // ── AURA CACHE — attempt a free answer before any paid provider call ────────
-  // aura.route() is synchronous and never throws; it returns {hit:false} on any miss.
-  // Only cache single-turn prompts (not multi-turn tool-result messages) to avoid
-  // caching partial tool-injection contexts that won't match future queries.
+  // ── AURA forCall — token savings + cache on EVERY LLM call ──────────────────
+  // forCall() applies all savings levers (cache hit, prompt compression, tool-injection
+  // savings, history compaction) and records the totals in stats every single call.
+  // This is the chokepoint — every agent call routes through here.
   const _aura = require('./lib/aura');
   const _lastUserMsg = messages.slice().reverse().find(m => m && m.role === 'user' && typeof m.content === 'string');
-  const _auraPrompt = (_lastUserMsg && messages.filter(m => m.role === 'user').length === 1)
-    ? _lastUserMsg.content : '';
-  if (_auraPrompt) {
-    const _hit = _aura.route(_auraPrompt);
-    if (_hit.hit) {
-      console.log(`[AURA] Cache hit (${_hit.method}, ~${_hit.savedTokensEst} tokens saved) — skipping LLM call`);
-      return _hit.answer;
-    }
+  const _auraPrompt = _lastUserMsg ? _lastUserMsg.content : '';
+  const _fc = _aura.forCall({
+    prompt:        _auraPrompt,
+    system:        system.content || '',
+    ownTools:      ownTools,          // FULL agent tool list (before tool-selector ran)
+    selectedTools: _promptTools,      // already-selected subset (after tool-selector)
+    history:       messages.filter(m => m && m.role !== 'system')
+  });
+  if (_fc.hit) {
+    console.log(`[AURA] forCall hit — ~${_fc.saved.total} tokens saved — skipping LLM`);
+    return _fc.answer;
   }
+  console.log(`[AURA] forCall miss — saved ${_fc.saved.total} tokens (compress=${_fc.saved.compress} tools=${_fc.saved.tools} history=${_fc.saved.history})`);
   // ────────────────────────────────────────────────────────────────────────────
 
   let lastError;

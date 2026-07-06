@@ -3936,6 +3936,17 @@ router.get('/webhooks', (req, res) => {
   res.json({ webhooks: _webhooks.map(w => ({ ...w })), total: _webhooks.length });
 });
 
+// GET /api/persistence/health — is the free Firestore backup working? (ORACLE fix)
+router.get('/persistence/health', async (req, res) => {
+  try {
+    const store = require('./lib/fire-store');
+    const ping = await store.ping();
+    res.json({ ok: true, ready: store.ready(), firestore: ping });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
 // SSRF guard — reject URLs that point at the server's own network: loopback,
 // link-local (incl. cloud metadata 169.254.169.254), and RFC1918 private ranges.
 function _isSafeWebhookUrl(raw) {
