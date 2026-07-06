@@ -236,6 +236,8 @@
         <div class="read"><div class="cap">Answered without cost</div><div class="fig" id="rHit">—<small>%</small></div><div class="note">of prompts served with no model called</div></div>
         <div class="read hot"><div class="cap">Tokens spared</div><div class="fig" id="rTok">—</div><div class="note">that a paid model never had to read</div></div>
         <div class="read"><div class="cap">Pulls averted</div><div class="fig" id="rPull">—</div><div class="note">live API calls served from the cache</div></div>
+        <div class="read"><div class="cap">Times invoked</div><div class="fig" id="rUses">—</div><div class="note">total prompts routed through AURA</div></div>
+        <div class="read"><div class="cap">Self-learned</div><div class="fig" id="rLearn">—</div><div class="note">recurring misses promoted to free answers</div></div>
       </div>
     </section>
 
@@ -337,6 +339,8 @@
       tick($('rTok'), s.tokensSaved||0);
       const pulls = (s.toolCache && s.toolCache.pullsSaved) || 0;
       tick($('rPull'), pulls);
+      tick($('rUses'), s.uses || ((s.hits||0) + (s.misses||0)));
+      tick($('rLearn'), (s.improvements && s.improvements.promoted) || 0);
     }catch(e){ $('rHit').textContent='—'; }
   }
 

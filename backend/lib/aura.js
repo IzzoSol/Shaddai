@@ -1333,20 +1333,34 @@ function route(prompt, opts = {}) {
 /**
  * recordAnswer(prompt, answer, opts) — store an LLM answer for future reuse.
  * opts.ttlMs overrides default TTL. Never throws.
+ *
+ * Self-improvement: if this prompt has been missed >= PROMOTE_THRESHOLD times
+ * (tracked by learnMiss), it is PROMOTED — stored with a 30-day TTL so it
+ * never expires from routine cache churn.  The promotions counter in stats
+ * reflects how many queries AURA has genuinely self-learned.
  */
 function recordAnswer(prompt, answer, opts = {}) {
   try {
     const p = String(prompt || '');
     if (!p.trim() || answer === undefined || answer === null) return false;
-    if (isVolatile(p)) { bumpStats((s) => { s.volatileSkips = (s.volatileSkips || 0) + 1; }); return false; }   // kept fresh on purpose
+    if (isVolatile(p)) { bumpStats((s) => { s.volatileSkips = (s.volatileSkips || 0) + 1; }); return false; }
     const cache = pruneCache(loadCache());
-    const key = hashKey(p);
-    cache[key] = {
-      prompt: p,
-      answer: String(answer),
-      ts: Date.now(),
-      ttl: Number(opts.ttlMs) > 0 ? Number(opts.ttlMs) : DEFAULT_TTL_MS
-    };
+    const key   = hashKey(p);
+    const norm  = normalize(p);
+
+    // Determine TTL — promote frequently-missed queries to a 30-day lifetime.
+    let ttl = Number(opts.ttlMs) > 0 ? Number(opts.ttlMs) : DEFAULT_TTL_MS;
+    const s = _initStats();
+    if (!s.promoted[norm] && (s.missFreq[norm] || 0) >= PROMOTE_THRESHOLD) {
+      ttl = PROMOTED_TTL_MS;
+      bumpStats((inner) => {
+        inner.promoted[norm] = true;
+        inner.promotions = (inner.promotions || 0) + 1;
+        delete inner.missFreq[norm]; // no longer a miss candidate
+      });
+    }
+
+    cache[key] = { prompt: p, answer: String(answer), ts: Date.now(), ttl };
     pruneCache(cache);
     return writeJson(CACHE_FILE, cache);
   } catch (_) {
@@ -1356,37 +1370,52 @@ function recordAnswer(prompt, answer, opts = {}) {
 
 /**
  * stats() — cumulative savings summary. Never throws.
- * Backward-compatible: all original fields present; recentSaves is new.
+ * Backward-compatible: all original fields present; new fields added:
+ *   uses        — total prompts routed through AURA (hits + misses)
+ *   improvements.promoted  — queries AURA auto-promoted to 30-day cache (real self-learning)
+ *   improvements.topMissed — top 5 pending candidates (missed but not yet answered)
  */
 function stats() {
   try {
-    const s = loadStats();
+    const s = _initStats();
     const total = s.hits + s.misses;
     const hitRate = total ? s.hits / total : 0;
     const costSavedUsd = (s.tokensSaved / 1000) * COST_PER_1K;
     let cacheEntries = 0; try { cacheEntries = Object.keys(loadCache()).length; } catch (_) {}
     // HONEST monthly projection: actual $ saved / actual days elapsed × 30.
-    // Day count floored at 1 so a few minutes of data can't wildly over-extrapolate.
     const elapsedDays = Math.max(1, (Date.now() - (s.firstTs || Date.now())) / 86400000);
     const projMonthlyUsd = Math.round((costSavedUsd / elapsedDays) * 30 * 1e4) / 1e4;
+
+    // Top 5 pending promotion candidates (frequently missed, not yet answered/promoted)
+    const topMissed = Object.entries(s.missFreq || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([query, misses]) => ({ query, misses }));
+
     return {
+      uses: total,                            // total times AURA was consulted
       hits: s.hits,
       misses: s.misses,
       hitRate: Math.round(hitRate * 1000) / 1000,
       tokensSaved: s.tokensSaved,
       costSavedUsd: Math.round(costSavedUsd * 1e6) / 1e6,
-      volatileSkips: s.volatileSkips || 0,   // time-sensitive answers kept fresh (never cached)
-      cacheEntries,                           // live cached prompts
+      volatileSkips: s.volatileSkips || 0,
+      cacheEntries,
       avgTokensPerHit: s.hits ? Math.round(s.tokensSaved / s.hits) : 0,
-      recipeFastPaths: (s.byMethod && s.byMethod.recipe) || 0,  // deterministic recipe runs (no LLM orchestration)
-      projMonthlyUsd,                         // rough extrapolated monthly saving
+      recipeFastPaths: (s.byMethod && s.byMethod.recipe) || 0,
+      projMonthlyUsd,
       byMethod: s.byMethod,
-      recentSaves: s.recentSaves || []
+      recentSaves: s.recentSaves || [],
+      improvements: {
+        promoted: s.promotions || 0,          // queries auto-promoted to 30-day cache
+        topMissed                             // top pending candidates for promotion
+      }
     };
   } catch (_) {
-    return { hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, volatileSkips: 0,
+    return { uses: 0, hits: 0, misses: 0, hitRate: 0, tokensSaved: 0, costSavedUsd: 0, volatileSkips: 0,
       cacheEntries: 0, avgTokensPerHit: 0, projMonthlyUsd: 0,
-      byMethod: { fetch: 0, query: 0, compute: 0 }, recentSaves: [] };
+      byMethod: { fetch: 0, query: 0, compute: 0 }, recentSaves: [],
+      improvements: { promoted: 0, topMissed: [] } };
   }
 }
 
