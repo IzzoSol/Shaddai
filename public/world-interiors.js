@@ -2330,6 +2330,267 @@
     function showHint(t) { ensureHint(); hintEl.textContent = t; hintEl.style.display = 'block'; }
     function hideHint()  { if (hintEl) hintEl.style.display = 'none'; }
 
+    /* ════════════════════════════════════════════════════════════════════════
+       IN-INTERIOR TOOL PANEL — a 2D HUD showing THIS agent's REAL tools, usable
+       from inside the building.
+
+         • data  : GET /api/agent/tools → [{name,description,schema,agents:[CODE]}]
+                   (fetched once, cached). Filtered to tools whose `agents` array
+                   includes the room's agent code.
+         • run   : POST /api/tools/run {tool,args} → {ok,tool,result} | {ok:false,
+                   error,needsAuth?}. The REAL result is shown; needsAuth is stated
+                   honestly and never faked.
+         • NEXUS : also gets a GAMES launcher (existing arcade pages).
+
+       The panel is created fresh on enter() and fully removed from the DOM on
+       exit() (removing its child listeners with it) — no overlay / listener leaks.
+    ════════════════════════════════════════════════════════════════════════ */
+    var toolPanelEl   = null;   /* current panel root — recreated per enter, removed on exit */
+    var _toolsCache   = null;   /* GET /api/agent/tools payload, cached across enters       */
+    var _toolsFetch   = null;   /* in-flight fetch promise (dedupe)                         */
+
+    /* games available inside each room. NEXUS (the Navigator Core / server room) = arcade. */
+    var ROOM_GAMES = {
+      NEXUS: [
+        { label: '▶ AGENT ARCADE', url: '/arcade.html'    },
+        { label: '▶ GRID SERPENT', url: '/tron-snake.html' },
+      ],
+    };
+
+    function _accentHex(uc) {
+      var n = (themeOf(uc).accent || 0x27e0ff) & 0xffffff;
+      return '#' + n.toString(16).padStart(6, '0');
+    }
+
+    function fetchAgentTools() {
+      if (_toolsCache) return Promise.resolve(_toolsCache);
+      if (_toolsFetch) return _toolsFetch;
+      _toolsFetch = fetch('/api/agent/tools')
+        .then(function (r) { return r.json(); })
+        .then(function (d) { _toolsCache = (d && d.tools) || []; return _toolsCache; })
+        .catch(function () { _toolsFetch = null; return []; });
+      return _toolsFetch;
+    }
+
+    /* Launch a game — prefer the world's embedded iframe overlay (handles pointer-
+       lock release + ESC close); fall back to a new tab if it isn't present. */
+    function launchGame(url) {
+      try {
+        if (typeof global.SHADDAI_openPanel === 'function') { global.SHADDAI_openPanel(url); return; }
+      } catch (e) {}
+      try { global.open(url, '_blank'); } catch (e) {}
+    }
+
+    /* Build one tool card: name + description + schema-driven inputs + Run button. */
+    function buildToolCard(tool, accent) {
+      var card = document.createElement('div');
+      card.style.cssText =
+        'border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:9px 10px;' +
+        'margin-bottom:8px;background:rgba(255,255,255,0.03)';
+
+      var nm = document.createElement('div');
+      nm.textContent = tool.name;
+      nm.style.cssText = 'color:' + accent + ';font-weight:700;font-size:12px;letter-spacing:0.04em';
+      card.appendChild(nm);
+
+      if (tool.description) {
+        var ds = document.createElement('div');
+        ds.textContent = tool.description;
+        ds.style.cssText = 'color:rgba(255,255,255,0.55);font-size:10.5px;margin:3px 0 6px;line-height:1.4';
+        card.appendChild(ds);
+      }
+
+      var schema = tool.schema || {};
+      var keys   = Object.keys(schema);
+      var inputs = {};   /* key -> { el, isNum } */
+      for (var i = 0; i < keys.length; i++) {
+        var key  = keys[i];
+        var desc = String(schema[key] || '');
+        var isNum = /\bnumber\b/i.test(desc);
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;margin:4px 0';
+        var lab = document.createElement('label');
+        lab.textContent = key;
+        lab.style.cssText = 'color:rgba(255,255,255,0.75);font-size:10px;min-width:78px;font-family:monospace';
+        var inp = document.createElement('input');
+        inp.type = isNum ? 'number' : 'text';
+        inp.placeholder = desc.slice(0, 46);
+        inp.title = desc;
+        inp.style.cssText =
+          'flex:1;min-width:0;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.14);' +
+          'color:#fff;font-size:11px;padding:4px 6px;border-radius:5px;font-family:monospace';
+        row.appendChild(lab); row.appendChild(inp);
+        card.appendChild(row);
+        inputs[key] = { el: inp, isNum: isNum };
+      }
+
+      var runBtn = document.createElement('button');
+      runBtn.textContent = keys.length ? 'RUN ▸' : 'RUN (no input) ▸';
+      runBtn.style.cssText =
+        'margin-top:6px;background:' + accent + '22;border:1px solid ' + accent + ';color:' + accent + ';' +
+        'font-family:monospace;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer';
+
+      var out = document.createElement('pre');
+      out.style.cssText =
+        'display:none;margin:7px 0 0;max-height:150px;overflow:auto;white-space:pre-wrap;word-break:break-word;' +
+        'background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.10);border-radius:6px;' +
+        'padding:7px 8px;font-size:10px;line-height:1.45;color:#cfe';
+
+      runBtn.onclick = function () {
+        var args = {};
+        for (var k in inputs) {
+          if (!Object.prototype.hasOwnProperty.call(inputs, k)) continue;
+          var v = inputs[k].el.value;
+          if (v === '') continue;
+          args[k] = inputs[k].isNum ? Number(v) : v;
+        }
+        out.style.display = 'block';
+        out.style.color = '#cfe';
+        out.textContent = '⟳ running ' + tool.name + '…';
+        runBtn.disabled = true;
+        fetch('/api/tools/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tool: tool.name, args: args }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            runBtn.disabled = false;
+            if (d && d.ok) {
+              out.style.color = '#bff5d8';
+              var res = d.result;
+              out.textContent = (typeof res === 'string') ? res : JSON.stringify(res, null, 2);
+            } else if (d && d.needsAuth) {
+              out.style.color = '#ffd479';
+              out.textContent = '🔐 needs auth / API key: ' + (d.error || 'credential required') +
+                                '\n(configure this key in the dashboard to use this tool)';
+            } else {
+              out.style.color = '#ff9aa6';
+              out.textContent = '✗ ' + ((d && d.error) || 'tool failed');
+            }
+          })
+          .catch(function (e) {
+            runBtn.disabled = false;
+            out.style.color = '#ff9aa6';
+            out.textContent = '✗ network error: ' + (e && e.message ? e.message : e);
+          });
+      };
+
+      card.appendChild(runBtn);
+      card.appendChild(out);
+      return card;
+    }
+
+    /* Show the tool panel for room `uc`. Rebuilt fresh each time. */
+    function showToolPanel(uc) {
+      if (typeof document === 'undefined') return;
+      hideToolPanel();   /* never stack two panels */
+      var accent = _accentHex(uc);
+      var theme  = themeOf(uc);
+
+      var root = document.createElement('div');
+      root.id = 'wi-tools';
+      root.style.cssText =
+        'position:fixed;top:64px;right:16px;width:330px;max-height:calc(100vh - 140px);' +
+        'display:flex;flex-direction:column;z-index:9902;' +
+        'background:rgba(6,9,14,0.90);backdrop-filter:blur(7px);' +
+        'border:1px solid ' + accent + '55;border-radius:11px;' +
+        'box-shadow:0 8px 34px rgba(0,0,0,0.55);font-family:system-ui,sans-serif;' +
+        'color:#fff;overflow:hidden';
+
+      /* keep keystrokes inside the panel from driving the world (WASD) or exiting (E/Esc) */
+      ['keydown', 'keyup', 'keypress'].forEach(function (ev) {
+        root.addEventListener(ev, function (e) { e.stopPropagation(); }, true);
+      });
+
+      /* header + collapse toggle */
+      var head = document.createElement('div');
+      head.style.cssText =
+        'display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;' +
+        'border-bottom:1px solid rgba(255,255,255,0.10);flex:0 0 auto';
+      var tog = document.createElement('span');
+      tog.textContent = '▾';
+      tog.style.cssText = 'color:' + accent + ';font-size:12px';
+      var ttl = document.createElement('div');
+      ttl.textContent = (theme.label || uc) + ' — TOOLS';
+      ttl.style.cssText = 'flex:1;color:' + accent + ';font-weight:700;font-size:12px;letter-spacing:0.05em';
+      head.appendChild(tog); head.appendChild(ttl);
+      root.appendChild(head);
+
+      var body = document.createElement('div');
+      body.style.cssText = 'padding:10px 12px 12px;overflow:auto;flex:1 1 auto';
+      root.appendChild(body);
+
+      head.onclick = function () {
+        var hidden = body.style.display === 'none';
+        body.style.display = hidden ? 'block' : 'none';
+        tog.textContent = hidden ? '▾' : '▸';
+      };
+
+      /* NEXUS games launcher (uses existing arcade pages) */
+      var games = ROOM_GAMES[uc];
+      if (games && games.length) {
+        var gh = document.createElement('div');
+        gh.textContent = '◈ GAMES';
+        gh.style.cssText = 'color:' + accent + ';font-size:11px;font-weight:700;letter-spacing:0.06em;margin:0 0 6px';
+        body.appendChild(gh);
+        var grow = document.createElement('div');
+        grow.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px';
+        games.forEach(function (g) {
+          var b = document.createElement('button');
+          b.textContent = g.label;
+          b.style.cssText =
+            'background:' + accent + '22;border:1px solid ' + accent + ';color:' + accent + ';' +
+            'font-family:monospace;font-size:11px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer';
+          b.onclick = function () { launchGame(g.url); };
+          grow.appendChild(b);
+        });
+        body.appendChild(grow);
+      }
+
+      /* tools list — filtered to this agent, populated async */
+      var status = document.createElement('div');
+      status.textContent = '⟳ loading tools…';
+      status.style.cssText = 'color:rgba(255,255,255,0.6);font-size:11px;padding:4px 0';
+      body.appendChild(status);
+
+      var listWrap = document.createElement('div');
+      body.appendChild(listWrap);
+
+      toolPanelEl = root;
+      document.body.appendChild(root);
+
+      fetchAgentTools().then(function (tools) {
+        if (toolPanelEl !== root) return;   /* exited before fetch resolved */
+        var mine = tools.filter(function (t) {
+          var ags = t && t.agents;
+          if (!ags || !ags.length) return false;
+          for (var i = 0; i < ags.length; i++) {
+            if (String(ags[i]).toUpperCase() === uc) return true;
+          }
+          return false;
+        });
+        if (!mine.length) {
+          status.textContent = 'No dedicated tools registered for ' + uc + '.';
+          return;
+        }
+        status.textContent = mine.length + ' tool' + (mine.length === 1 ? '' : 's') +
+                             '  ·  press M to free the cursor';
+        status.style.color = accent;
+        for (var i = 0; i < mine.length; i++) {
+          listWrap.appendChild(buildToolCard(mine[i], accent));
+        }
+      });
+    }
+
+    /* Remove the tool panel entirely (DOM + its child listeners) — called on exit. */
+    function hideToolPanel() {
+      if (toolPanelEl && toolPanelEl.parentNode) {
+        toolPanelEl.parentNode.removeChild(toolPanelEl);
+      }
+      toolPanelEl = null;
+    }
+
     /* ── PUBLIC API ── */
 
     /* NOTE: ascendToSky() (the old 2nd-level in-room elevator → Sky Nexus hand-off)
@@ -2375,6 +2636,7 @@
 
         var theme = themeOf(uc);
         showHint(theme.label + '   ·   [E] or [ESC] to exit');
+        showToolPanel(uc);   /* in-interior HUD: this agent's REAL tools (+ games in NEXUS) */
       });
     }
 
@@ -2402,6 +2664,7 @@
         currentCode = null;
         fadeOut();
         hideHint();
+        hideToolPanel();   /* tear down the in-interior tool HUD — no DOM/listener leak */
         /* PERF: free the interior we just left (grace period lets an immediate
            re-enter reuse it; otherwise its geometry/materials/textures are freed). */
         scheduleDispose(_leftUc);

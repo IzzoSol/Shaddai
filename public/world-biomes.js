@@ -42,6 +42,10 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
   const voidFloaters  = [];  // { m, y0, ph, sp }
   const forestFireflies = []; // { attr, base, offsets }
   const desertSandMotes = []; // { attr, base }
+  // ── AMBIENT LIFE FX (2026-07-05) — cheap, characterless motion over the map ──
+  const ambientMotes  = [];  // { attr, base, offsets, cx, cz, r2 } — plaza drift Points
+  const godRays       = [];  // { mat, base, amp, speed, phase, x, z, r2 } — light-shaft opacity
+  let   ambientDrones = null; // { mesh, bases:[{x,y0,z,ph,sp,s}], obj } — floating orbs
 
   let water = null;  // { geo, base:Float32Array, update(t) }
 
@@ -866,6 +870,96 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
   })();
 
   // ══════════════════════════════════════════════════════════════════
+  //  AMBIENT LIFE FX — drifting motes, floating orbs, god-ray shafts
+  //  Adds motion/atmosphere over the central plaza + agent lounges WITHOUT any
+  //  new dynamic lights or walking NPCs. All emissive/additive, all instanced or
+  //  single-draw, shared materials, zero per-frame allocation, and DISTANCE-GATED
+  //  in update() so nothing animates while the player is far away.
+  // ══════════════════════════════════════════════════════════════════
+  (function buildAmbientFX() {
+    const sectors = (layout && layout.sectors) ? layout.sectors : [];
+    const spots   = [[0, 0]];                                   // world-centre plaza/temple
+    for (let i = 0; i < sectors.length && spots.length < 7; i++) {
+      const s = sectors[i]; if (s && s.pos) spots.push([s.pos[0], s.pos[1]]);
+    }
+
+    // ── 1) PLAZA DRIFT MOTES — one additive Points cloud over the inner plaza. ──
+    (function buildMotes() {
+      const N = 200, R = 168;
+      const base = new Float32Array(N * 3), offs = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        const a = rand() * Math.PI * 2, d = 40 + Math.sqrt(rand()) * (R - 40);
+        const x = Math.cos(a) * d, z = Math.sin(a) * d;
+        const y = heightAt(x, z) + rrange(6, 42);
+        base[i * 3] = x; base[i * 3 + 1] = y; base[i * 3 + 2] = z;
+        offs[i * 3] = rand() * 6.28; offs[i * 3 + 1] = rand() * 6.28; offs[i * 3 + 2] = rand() * 6.28;
+      }
+      const geo = track(new THREE.BufferGeometry());
+      geo.setAttribute('position', new THREE.BufferAttribute(base.slice(), 3));
+      const mat = track(new THREE.PointsMaterial({
+        color: 0x8fd8ff, size: 2.2, sizeAttenuation: true, transparent: true,
+        opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      const pts = new THREE.Points(geo, mat); pts.name = 'ambient-motes'; pts.frustumCulled = false;
+      group.add(pts);
+      ambientMotes.push({ attr: geo.attributes.position, base, offsets: offs, cx: 0, cz: 0, r2: 340 * 340 });
+    })();
+
+    // ── 2) FLOATING ORBS/DRONES — one InstancedMesh of emissive spheres that ──
+    // bob on a sine path over the plaza + lounges (shared material, no lights).
+    (function buildDrones() {
+      const pos = [];
+      // a ring of orbs hovering over the inner plaza
+      const RING = 6, RR = 120;
+      for (let i = 0; i < RING; i++) {
+        const a = (i / RING) * Math.PI * 2;
+        const x = Math.cos(a) * RR, z = Math.sin(a) * RR;
+        pos.push([x, heightAt(x, z) + 26, z, rrange(0.8, 1.5)]);
+      }
+      // one orb drifting over each agent lounge (offset inward toward centre)
+      for (let i = 1; i < spots.length && pos.length < 12; i++) {
+        const sx = spots[i][0], sz = spots[i][1], L = Math.hypot(sx, sz) || 1;
+        const x = sx * 0.86, z = sz * 0.86;                     // pull in over the lounge apron
+        pos.push([x, heightAt(x, z) + 30, z, rrange(1.0, 1.8)]);
+      }
+      const geo = track(new THREE.SphereGeometry(1.6, 12, 10));
+      const mat = track(new THREE.MeshBasicMaterial({
+        color: 0x66e6ff, transparent: true, opacity: 0.85,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      const mesh = new THREE.InstancedMesh(geo, mat, pos.length);
+      mesh.name = 'ambient-drones'; mesh.frustumCulled = false;
+      const bases = [];
+      for (let i = 0; i < pos.length; i++) {
+        const p = pos[i];
+        bases.push({ x: p[0], y0: p[1], z: p[2], ph: rand() * 6.28, sp: rrange(0.5, 0.9), s: p[3] });
+        setInst(mesh, i, p[0], p[1], p[2], 0, 0, 0, p[3], p[3], p[3]);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+      group.add(mesh);
+      ambientDrones = { mesh, bases, obj: new THREE.Object3D() };
+    })();
+
+    // ── 3) GOD-RAY SHAFTS — faint additive cones of light over key spots. ──
+    (function buildGodRays() {
+      const geo = track(new THREE.ConeGeometry(10, 64, 12, 1, true));   // open-ended shaft
+      const mat = track(new THREE.MeshBasicMaterial({
+        color: 0xbfe6ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      const im = new THREE.InstancedMesh(geo, mat, spots.length);
+      im.name = 'ambient-godrays'; im.frustumCulled = false;
+      for (let i = 0; i < spots.length; i++) {
+        const x = spots[i][0], z = spots[i][1];
+        setInst(im, i, x, heightAt(x, z) + 34, z, 0, rand() * Math.PI, 0, 1, 1, 1);
+      }
+      im.instanceMatrix.needsUpdate = true; group.add(im);
+      // one shared material → pulse its opacity as a group (cheap; near-gated to plaza).
+      godRays.push({ mat, base: 0.06, amp: 0.035, speed: 0.5, phase: 0, x: 0, z: 0, r2: 520 * 520 });
+    })();
+  })();
+
+  // ══════════════════════════════════════════════════════════════════
   //  PERF: FREEZE STATIC TRANSFORMS
   //  Every prop here is placed ONCE (instanced props carry their placement in
   //  instanceMatrix; the object's own transform is identity). Only the void
@@ -944,6 +1038,47 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     for (let ai = 0; ai < auroraPlanes.length; ai++) {
       const a = auroraPlanes[ai];
       a.mat.opacity = Math.max(0.01, a.base + Math.sin(t * a.speed + a.phase) * a.amp);
+    }
+
+    // ── AMBIENT LIFE FX (distance-gated: skip while the player is far away) ──
+    const pp = (typeof window !== 'undefined') ? window._playerPos : null;
+    const near = (x, z, r2) => !pp || ((pp.x - x) * (pp.x - x) + (pp.z - z) * (pp.z - z) < r2);
+
+    // plaza drift motes: gentle 3-axis wander on a pre-allocated buffer
+    for (let mi = 0; mi < ambientMotes.length; mi++) {
+      const m = ambientMotes[mi];
+      if (!near(m.cx, m.cz, m.r2)) continue;
+      const arr = m.attr.array, ba = m.base, of = m.offsets, n = arr.length / 3;
+      for (let i = 0; i < n; i++) {
+        const i3 = i * 3;
+        arr[i3]     = ba[i3]     + Math.sin(t * 0.28 + of[i3])     * 3.2;
+        arr[i3 + 1] = ba[i3 + 1] + Math.sin(t * 0.35 + of[i3 + 1]) * 2.0;
+        arr[i3 + 2] = ba[i3 + 2] + Math.cos(t * 0.24 + of[i3 + 2]) * 3.2;
+      }
+      m.attr.needsUpdate = true;
+    }
+
+    // floating orbs: bob each on its own sine (only upload if some orb is near)
+    if (ambientDrones) {
+      const D = ambientDrones, bs = D.bases, o = D.obj;
+      let dirty = false;
+      for (let i = 0; i < bs.length; i++) {
+        const b = bs[i];
+        if (!near(b.x, b.z, 260 * 260)) continue;
+        o.position.set(b.x, b.y0 + Math.sin(t * b.sp + b.ph) * 3.0, b.z);
+        o.rotation.set(0, t * b.sp * 0.4, 0);
+        o.scale.set(b.s, b.s, b.s);
+        o.updateMatrix(); D.mesh.setMatrixAt(i, o.matrix);
+        dirty = true;
+      }
+      if (dirty) D.mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // god-ray shafts: slow additive opacity breathing (near-gated to the plaza)
+    for (let gi = 0; gi < godRays.length; gi++) {
+      const g = godRays[gi];
+      if (!near(g.x, g.z, g.r2)) continue;
+      g.mat.opacity = Math.max(0.01, g.base + Math.sin(t * g.speed + g.phase) * g.amp);
     }
   }
 

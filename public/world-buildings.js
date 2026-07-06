@@ -47,46 +47,88 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   // player is near the lounge. If an endpoint fails the screen shows "— offline —"
   // (honest) — prices/headlines are never invented.
   const SCREEN_COINS = ['bitcoin', 'ethereum', 'solana'];
+
+  // Generalized live-screen state: MANY lounges, ONE shared batched fetch layer.
+  // Each agent lounge registers its own screens + centre position (independent
+  // near-gate). Data is cached per CATEGORY (coins/news/fear/trending/wiki/cve)
+  // and each category is pulled at most once / 60s, and only while at least one
+  // near lounge actually needs it. Prices/headlines/CVEs are never invented — on
+  // failure the *Err flag drives an honest "— offline —" placeholder.
   const screenState = {
-    screens:  [],                                   // [{ kind, canvas, ctx, tex, coin, scroll }]
-    pos:      null,                                 // {x,z} lounge centre (near-gate)
-    accent:   '#38e1ff',                            // themed screen accent (set at build)
-    data:     { coins: {}, news: null, newsErr: false, coinErr: {} },
-    lastFetch: -1e9,
-    lastDraw:  -1e9,
-    fetching:  false,
+    lounges: [],                                    // [{ code, pos:{x,z}, accent, screens:[] }]
+    data: {
+      coins: {}, coinErr: {},                       // /api/markets/ohlc            (charts)
+      news: null, newsSource: 'CRYPTO', newsErr: false, // /api/news/crypto          (tickers)
+      fear: null, fearErr: false,                   // tools/run get_fear_greed      (gauge)
+      trending: null, trendErr: false,              // tools/run get_trending        (list)
+      wiki: null, wikiErr: false,                   // tools/run get_wikipedia_summary
+      cve: null, cveErr: false,                     // tools/run cve_lookup          (threats)
+    },
+    cat: {},                                        // per-category { last:-1e9, busy:false }
+    lastDraw: -1e9,
+  };
+  try { window.__nexusScreens = screenState; } catch (e) {}   // legacy diagnostics alias
+
+  // POST /api/tools/run helper (shared by fear/trending/wiki/cve categories).
+  function _toolRun(tool, args) {
+    return fetch('/api/tools/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(args ? { tool, args } : { tool }),
+    }).then(r => r.json());
+  }
+
+  // One fetcher per data CATEGORY. Each resolves AFTER caching (data or *Err flag).
+  const CAT_FETCH = {
+    coins: () => Promise.all(SCREEN_COINS.map(id =>
+      fetch('/api/markets/ohlc?symbol=' + id).then(r => r.json()).then(j => {
+        if (j && j.ok && Array.isArray(j.candles) && j.candles.length) {
+          screenState.data.coins[id] = j; screenState.data.coinErr[id] = false;
+        } else { screenState.data.coinErr[id] = true; }
+      }).catch(() => { screenState.data.coinErr[id] = true; }))),
+    news: () => fetch('/api/news/crypto').then(r => r.json()).then(j => {
+      if (j && j.ok && Array.isArray(j.news) && j.news.length) {
+        screenState.data.news = j.news; screenState.data.newsSource = j.source || 'CRYPTO'; screenState.data.newsErr = false;
+      } else { screenState.data.newsErr = true; }
+    }).catch(() => { screenState.data.newsErr = true; }),
+    fear: () => _toolRun('get_fear_greed').then(j => {
+      const r = j && j.ok && j.result;
+      if (r && r.today && r.today.score != null) { screenState.data.fear = r; screenState.data.fearErr = false; }
+      else { screenState.data.fearErr = true; }
+    }).catch(() => { screenState.data.fearErr = true; }),
+    trending: () => _toolRun('get_trending').then(j => {
+      if (j && j.ok && Array.isArray(j.result) && j.result.length) { screenState.data.trending = j.result; screenState.data.trendErr = false; }
+      else { screenState.data.trendErr = true; }
+    }).catch(() => { screenState.data.trendErr = true; }),
+    wiki: () => _toolRun('get_wikipedia_summary', { topic: 'Bitcoin' }).then(j => {
+      if (j && j.ok && typeof j.result === 'string' && j.result.length) { screenState.data.wiki = j.result; screenState.data.wikiErr = false; }
+      else { screenState.data.wikiErr = true; }
+    }).catch(() => { screenState.data.wikiErr = true; }),
+    cve: () => _toolRun('cve_lookup', { keyword: 'openssl' }).then(j => {
+      let r = j && j.ok && j.result;
+      if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = null; } }
+      if (r && Array.isArray(r.cves) && r.cves.length) { screenState.data.cve = r; screenState.data.cveErr = false; }
+      else { screenState.data.cveErr = true; }
+    }).catch(() => { screenState.data.cveErr = true; }),
   };
 
-  // Shared fetch — pulls all coin candles + news once, caches, repaints on land.
-  function _screenFetch() {
-    if (screenState.fetching || typeof fetch !== 'function') return;
-    screenState.fetching = true;
-    const jobs = SCREEN_COINS.map(id =>
-      fetch('/api/markets/ohlc?symbol=' + id)
-        .then(r => r.json())
-        .then(j => {
-          if (j && j.ok && Array.isArray(j.candles) && j.candles.length) {
-            screenState.data.coins[id] = j; screenState.data.coinErr[id] = false;
-          } else { screenState.data.coinErr[id] = true; }
-        })
-        .catch(() => { screenState.data.coinErr[id] = true; }));
-    jobs.push(
-      fetch('/api/news/crypto')
-        .then(r => r.json())
-        .then(j => {
-          if (j && j.ok && Array.isArray(j.news) && j.news.length) {
-            screenState.data.news = j.news; screenState.data.newsSource = j.source || 'CRYPTO'; screenState.data.newsErr = false;
-          } else { screenState.data.newsErr = true; }
-        })
-        .catch(() => { screenState.data.newsErr = true; }));
-    Promise.all(jobs).then(() => { screenState.fetching = false; _screenRedrawAll(); });
+  // kind → data category. null = client-only (gallery loads local images, no fetch).
+  const KIND_CAT = { chart: 'coins', news: 'news', fear: 'fear', trending: 'trending', wiki: 'wiki', cve: 'cve', gallery: null };
+
+  // Fetch ONE category (throttled to 60s, de-duped across all lounges), then
+  // repaint just that category's screens when fresh data lands.
+  function _screenFetchCat(cat, t) {
+    if (!cat) return;
+    const st = screenState.cat[cat] || (screenState.cat[cat] = { last: -1e9, busy: false });
+    if (st.busy || (t - st.last) < 60 || typeof fetch !== 'function') return;
+    st.busy = true; st.last = t;
+    CAT_FETCH[cat]().then(() => { st.busy = false; _screenRedrawCat(cat); });
   }
 
   // Draw an "offline / loading" placeholder (never fake data).
   function _screenPlaceholder(s, msg) {
     const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
     c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
-    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.strokeStyle = s.accent || '#38e1ff'; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
     c.fillStyle = '#5a6b82'; c.font = 'bold 26px "Share Tech Mono", monospace';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(msg, W / 2, H / 2);
@@ -111,7 +153,7 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
 
     // background + frame
     c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
-    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
     // grid
     c.strokeStyle = 'rgba(120,150,190,0.14)'; c.lineWidth = 1;
     for (let g = 0; g <= 3; g++) { const gy2 = padT + (g / 3) * plotH; c.beginPath(); c.moveTo(padX, gy2); c.lineTo(W - padX, gy2); c.stroke(); }
@@ -120,7 +162,7 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
                    : n >= 1    ? '$' + n.toFixed(2)
                                : '$' + n.toFixed(4);
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
-    c.fillStyle = screenState.accent; c.font = 'bold 34px Orbitron, monospace';
+    c.fillStyle = s.accent; c.font = 'bold 34px Orbitron, monospace';
     c.fillText((feed.symbol || s.coin).toUpperCase(), 22, 46);
     c.fillStyle = '#eaf3ff'; c.font = 'bold 30px "Share Tech Mono", monospace';
     c.fillText(fmt(feed.price), 22, 74);
@@ -151,10 +193,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   function _drawNews(s) {
     const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
     c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
-    c.strokeStyle = screenState.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
     // header band
     c.fillStyle = 'rgba(56,225,255,0.10)'; c.fillRect(6, 6, W - 12, 54);
-    c.fillStyle = screenState.accent; c.font = 'bold 30px Orbitron, monospace';
+    c.fillStyle = s.accent; c.font = 'bold 30px Orbitron, monospace';
     c.textAlign = 'left'; c.textBaseline = 'middle';
     c.fillText('◈ ' + (screenState.data.newsSource || 'CRYPTO') + ' NEWS', 22, 34);
 
@@ -173,7 +215,7 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
         const y = top + i * rowH - off + pass * total;
         if (y > bottom || y + rowH < top) continue;
         const item = news[i];
-        c.fillStyle = screenState.accent; c.font = 'bold 22px "Share Tech Mono", monospace';
+        c.fillStyle = s.accent; c.font = 'bold 22px "Share Tech Mono", monospace';
         c.fillText('▸', 20, y + rowH / 2 - 10);
         c.fillStyle = '#eaf3ff'; c.font = '21px "Share Tech Mono", monospace';
         _wrapText(c, item.title || '', 44, y + 14, W - 60, 24, 2);
@@ -202,45 +244,233 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     c.fillText(line, x, y + row * lh);
   }
 
-  function _screenRedrawAll() {
-    for (const s of screenState.screens) (s.kind === 'chart' ? _drawChart : _drawNews)(s);
+  // ── ZEROX: FEAR & GREED gauge (get_fear_greed) ─────────────────────────────
+  function _drawFear(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = s.accent; c.font = 'bold 30px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillText('◈ FEAR & GREED', 22, 44);
+    const d = screenState.data.fear;
+    if (!d) { _screenPlaceholder(s, screenState.data.fearErr ? '— offline —' : 'loading…'); return; }
+    const score = Math.max(0, Math.min(100, parseInt(d.today.score, 10) || 0));
+    const label = d.today.label || '';
+    const col = score < 25 ? '#ff5d6c' : score < 45 ? '#ff9f43' : score < 55 ? '#ffd24a' : score < 75 ? '#7ed957' : '#39ff9e';
+    const cx = W / 2, cy = H - 68, R = 148;
+    c.lineWidth = 22; c.lineCap = 'round';
+    c.strokeStyle = 'rgba(120,150,190,0.18)';
+    c.beginPath(); c.arc(cx, cy, R, Math.PI, 2 * Math.PI); c.stroke();
+    c.strokeStyle = col;
+    c.beginPath(); c.arc(cx, cy, R, Math.PI, Math.PI + Math.PI * (score / 100)); c.stroke();
+    c.fillStyle = '#eaf3ff'; c.font = 'bold 74px Orbitron, monospace'; c.textAlign = 'center';
+    c.fillText(String(score), cx, cy - 6);
+    c.fillStyle = col; c.font = 'bold 26px "Share Tech Mono", monospace';
+    c.fillText(label.toUpperCase(), cx, cy + 30);
+    c.fillStyle = '#5a6b82'; c.font = '15px "Share Tech Mono", monospace';
+    c.fillText('alternative.me · ZEROX live', cx, H - 14);
+    s.tex.needsUpdate = true;
   }
 
-  // Per-frame tick (called from update): near-gated + throttled screen refresh.
+  // ── ORACLE: TRENDING list (get_trending) ───────────────────────────────────
+  function _drawTrending(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = 'rgba(120,90,255,0.10)'; c.fillRect(6, 6, W - 12, 54);
+    c.fillStyle = s.accent; c.font = 'bold 28px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillText('◈ TRENDING NOW', 22, 34);
+    const list = screenState.data.trending;
+    if (!list) { _screenPlaceholder(s, screenState.data.trendErr ? '— offline —' : 'loading…'); return; }
+    c.textBaseline = 'alphabetic';
+    const rows = Math.min(7, list.length), top = 90, rowH = 32;
+    for (let i = 0; i < rows; i++) {
+      const it = list[i], y = top + i * rowH;
+      c.fillStyle = s.accent; c.font = 'bold 22px "Share Tech Mono", monospace'; c.textAlign = 'left';
+      c.fillText((i + 1) + '.', 22, y);
+      c.fillStyle = '#eaf3ff'; c.font = '21px "Share Tech Mono", monospace';
+      let name = it.name || it.symbol || '';
+      if (name.length > 22) name = name.slice(0, 21) + '…';
+      c.fillText(name, 66, y);
+      c.fillStyle = s.accent; c.font = 'bold 20px "Share Tech Mono", monospace'; c.textAlign = 'right';
+      c.fillText(String(it.symbol || '').toUpperCase(), W - 22, y);
+    }
+    c.fillStyle = '#5a6b82'; c.font = '15px "Share Tech Mono", monospace'; c.textAlign = 'left';
+    c.fillText('ORACLE · market signals', 22, H - 14);
+    s.tex.needsUpdate = true;
+  }
+
+  // ── ORACLE: RESEARCH BRIEF (get_wikipedia_summary) ─────────────────────────
+  function _drawWiki(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#060a14'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = s.accent; c.font = 'bold 26px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillText('◈ RESEARCH BRIEF', 22, 42);
+    const txt = screenState.data.wiki;
+    if (!txt) { _screenPlaceholder(s, screenState.data.wikiErr ? '— offline —' : 'loading…'); return; }
+    c.fillStyle = '#cfe0f5'; c.font = '20px "Share Tech Mono", monospace';
+    _wrapText(c, txt, 22, 78, W - 44, 27, 8);
+    c.fillStyle = '#5a6b82'; c.font = '15px "Share Tech Mono", monospace';
+    c.fillText('Wikipedia · ORACLE intel', 22, H - 14);
+    s.tex.needsUpdate = true;
+  }
+
+  // ── PIKADON: THREAT MONITOR (cve_lookup) — board (static) or scroll ticker ──
+  function _drawCve(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#0a0608'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = 'rgba(255,60,60,0.10)'; c.fillRect(6, 6, W - 12, 54);
+    c.fillStyle = s.accent; c.font = 'bold 26px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillText('⚠ THREAT MONITOR', 22, 34);
+    const d = screenState.data.cve;
+    if (!d) { _screenPlaceholder(s, screenState.data.cveErr ? '— offline —' : 'loading…'); return; }
+    const cves = d.cves;
+    const sevCol = sv => /crit/i.test(sv) ? '#ff3b3b' : /import|high/i.test(sv) ? '#ff8c3b' : /mod|medium/i.test(sv) ? '#ffd24a' : '#7ed957';
+    c.textBaseline = 'alphabetic';
+    if (s.mode === 'scroll') {
+      const top = 72, bottom = H - 28, viewH = bottom - top, rowH = 64, total = Math.max(1, cves.length * rowH);
+      c.save(); c.beginPath(); c.rect(6, top, W - 12, viewH); c.clip();
+      const off = ((s.scroll % total) + total) % total;
+      for (let pass = 0; pass < 2; pass++) for (let i = 0; i < cves.length; i++) {
+        const y = top + i * rowH - off + pass * total;
+        if (y > bottom || y + rowH < top) continue;
+        const it = cves[i];
+        c.fillStyle = sevCol(it.severity); c.font = 'bold 20px "Share Tech Mono", monospace'; c.textAlign = 'left';
+        c.fillText('● ' + (it.cve || ''), 20, y + 20);
+        c.fillStyle = '#9fb0c6'; c.font = '15px "Share Tech Mono", monospace';
+        c.fillText('CVSS ' + (it.cvss || '?') + '   ' + String(it.severity || '').toUpperCase(), 22, y + 42);
+      }
+      c.restore();
+    } else {
+      const rows = Math.min(6, cves.length), top = 88, rowH = 40;
+      for (let i = 0; i < rows; i++) {
+        const it = cves[i], y = top + i * rowH;
+        c.fillStyle = sevCol(it.severity); c.fillRect(20, y - 16, 10, 24);
+        c.fillStyle = '#eaf3ff'; c.font = 'bold 19px "Share Tech Mono", monospace'; c.textAlign = 'left';
+        c.fillText(it.cve || '', 42, y);
+        c.fillStyle = sevCol(it.severity); c.font = 'bold 17px "Share Tech Mono", monospace'; c.textAlign = 'right';
+        c.fillText((it.cvss || '?') + ' · ' + String(it.severity || '').toUpperCase(), W - 22, y);
+      }
+    }
+    c.fillStyle = '#5a6b82'; c.font = '15px "Share Tech Mono", monospace'; c.textAlign = 'left';
+    c.fillText('Red Hat CVE · "' + (d.query || '') + '" · ' + (d.count || cves.length) + ' active', 22, H - 12);
+    s.tex.needsUpdate = true;
+  }
+
+  // ── TURTLE: GALLERY — cycles real archetype artwork (/assets/forge-models) ──
+  const GALLERY_ART = ['artisan', 'ghost', 'oracle', 'vanguard', 'psionic', 'street-deity', 'harvester', 'gaia-link']
+    .map(n => '/assets/forge-models/' + n + '-art.jpg');
+  function _galleryInit(s, start) {
+    s.gIdx = (start || 0) % GALLERY_ART.length;
+    s.gPrev = null; s.gImg = null; s.gErr = false; s.gLoading = false;
+  }
+  function _galleryLoad(s) {
+    if (s.gLoading || typeof Image === 'undefined') return;
+    s.gLoading = true;
+    const img = new Image();
+    img.onload  = () => { s.gLoading = false; s.gImg = img; s.gErr = false; _drawGallery(s); };
+    img.onerror = () => { s.gLoading = false; s.gImg = null; s.gErr = true;  _drawGallery(s); };
+    img.src = GALLERY_ART[s.gIdx % GALLERY_ART.length];
+  }
+  function _galleryTick(s, t) {
+    if (s.gPrev === null) { s.gPrev = t; _galleryLoad(s); return; }   // load first frame
+    if (t - s.gPrev > 4.0) { s.gPrev = t; s.gIdx = (s.gIdx + 1) % GALLERY_ART.length; s.gImg = null; _galleryLoad(s); }
+    else if (!s.gImg && !s.gLoading && !s.gErr) _galleryLoad(s);
+  }
+  function _drawGallery(s) {
+    const c = s.ctx, W = s.canvas.width, H = s.canvas.height;
+    c.fillStyle = '#07060a'; c.fillRect(0, 0, W, H);
+    if (!s.gImg) {
+      c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+      c.fillStyle = '#5a6b82'; c.font = 'bold 24px "Share Tech Mono", monospace';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(s.gErr ? '— offline —' : 'loading…', W / 2, H / 2);
+      s.tex.needsUpdate = true; return;
+    }
+    const iw = s.gImg.width || 1, ih = s.gImg.height || 1;
+    const scale = Math.max(W / iw, H / ih), dw = iw * scale, dh = ih * scale;
+    c.drawImage(s.gImg, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    const gr = c.createLinearGradient(0, H - 96, 0, H);
+    gr.addColorStop(0, 'rgba(7,6,10,0)'); gr.addColorStop(1, 'rgba(7,6,10,0.85)');
+    c.fillStyle = gr; c.fillRect(0, H - 96, W, 96);
+    c.strokeStyle = s.accent; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+    c.fillStyle = s.accent; c.font = 'bold 22px Orbitron, monospace';
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillText('◈ TURTLE GALLERY', 20, 40);
+    const name = (GALLERY_ART[s.gIdx % GALLERY_ART.length].split('/').pop() || '').replace('-art.jpg', '').replace(/-/g, ' ').toUpperCase();
+    c.fillStyle = '#eaf3ff'; c.font = 'bold 26px "Share Tech Mono", monospace';
+    c.fillText(name, 20, H - 26);
+    s.tex.needsUpdate = true;
+  }
+
+  // Draw dispatch by kind.
+  function _drawScreen(s) {
+    switch (s.kind) {
+      case 'chart':    return _drawChart(s);
+      case 'news':     return _drawNews(s);
+      case 'fear':     return _drawFear(s);
+      case 'trending': return _drawTrending(s);
+      case 'wiki':     return _drawWiki(s);
+      case 'cve':      return _drawCve(s);
+      case 'gallery':  return _drawGallery(s);
+    }
+  }
+
+  // Repaint every screen bound to a data category (called when fresh data lands).
+  function _screenRedrawCat(cat) {
+    for (const lg of screenState.lounges) for (const s of lg.screens)
+      if (KIND_CAT[s.kind] === cat) _drawScreen(s);
+  }
+
+  // Per-frame tick (from update): per-lounge near-gate + batched category fetch +
+  // cheap animation of the moving screens only (news/cve scroll, gallery cycle).
+  const SCREEN_NEAR2 = 210 * 210;
   function _screenTick(t) {
-    const scr = screenState.screens;
-    if (!scr.length) return;
-    // near-gate: skip all screen work while the player is far from the lounge.
+    if (!screenState.lounges.length) return;
     const p = (typeof window !== 'undefined') ? window._playerPos : null;
-    if (p && screenState.pos) {
-      const dx = p.x - screenState.pos.x, dz = p.z - screenState.pos.z;
-      if (dx * dx + dz * dz > 210 * 210) return;
-    }
-    // refresh live data every 60s (first eligible tick fires immediately).
-    if (t - screenState.lastFetch > 60) { screenState.lastFetch = t; _screenFetch(); }
-    // animate the news ticker at ~10fps (cheap 2D repaint; charts stay static).
-    if (t - screenState.lastDraw > 0.1) {
-      screenState.lastDraw = t;
-      for (const s of scr) if (s.kind === 'news') { s.scroll += 15; _drawNews(s); }
+    const anim = (t - screenState.lastDraw > 0.1);
+    if (anim) screenState.lastDraw = t;
+    for (const lg of screenState.lounges) {
+      if (p && lg.pos) {                              // far lounge → skip all its work
+        const dx = p.x - lg.pos.x, dz = p.z - lg.pos.z;
+        if (dx * dx + dz * dz > SCREEN_NEAR2) continue;
+      }
+      for (const s of lg.screens) {                   // pull each needed category (throttled+deduped)
+        const cat = KIND_CAT[s.kind];
+        if (cat) _screenFetchCat(cat, t);
+        if (cat === null && s.kind === 'gallery' && anim) _galleryTick(s, t);
+      }
+      if (anim) for (const s of lg.screens) {          // scroll the ticker screens (~10fps)
+        if (s.kind === 'news' || (s.kind === 'cve' && s.mode === 'scroll')) { s.scroll += 15; _drawScreen(s); }
+      }
     }
   }
 
-  // Build the NEXUS lounge screen wall: 3 chart screens + 2 news tickers on an
-  // arc across the back of the lounge, each facing the lounge centre, framed with
-  // an emissive arcade-glow border. Called from _buildPillarPavilion for NEXUS.
-  function _buildNexusScreens(x, z, groundY, undersideY, fp, pal, faceAng) {
-    screenState.pos    = { x, z };
-    screenState.accent = hexColor(pal.trim.getHex());
-    const layoutSpec = [
-      { kind: 'chart', coin: 'bitcoin'  },
-      { kind: 'news' },
-      { kind: 'chart', coin: 'ethereum' },
-      { kind: 'news' },
-      { kind: 'chart', coin: 'solana'   },
-    ];
+  // Which themed screens each agent lounge gets (verified live endpoints only).
+  const LOUNGE_SCREENS = {
+    'nexus-hub':        [{ kind: 'chart', coin: 'bitcoin' }, { kind: 'news' }, { kind: 'chart', coin: 'ethereum' }, { kind: 'news' }, { kind: 'chart', coin: 'solana' }],
+    'markets-exchange': [{ kind: 'chart', coin: 'bitcoin' }, { kind: 'fear' }, { kind: 'chart', coin: 'ethereum' }],   // ZEROX
+    'library':          [{ kind: 'news' }, { kind: 'news' }],                                                          // QUILL
+    'oracle-spire':     [{ kind: 'trending' }, { kind: 'wiki' }],                                                      // ORACLE
+    'museum':           [{ kind: 'gallery', start: 0 }, { kind: 'gallery', start: 3 }],                                // TURTLE
+    'aegis':            [{ kind: 'cve', mode: 'board' }, { kind: 'cve', mode: 'scroll' }],                             // PIKADON
+  };
+
+  // Build one lounge's screen wall on an arc across the back of the lounge, each
+  // screen facing the centre + framed with an emissive glow. Shared by all agents.
+  function _buildLoungeScreens(code, x, z, groundY, undersideY, fp, pal, faceAng) {
+    const layoutSpec = LOUNGE_SCREENS[code];
+    if (!layoutSpec || !layoutSpec.length) return;
+    const accent = hexColor(pal.trim.getHex());
+    const lounge = { code, pos: { x, z }, accent, screens: [] };
     const n      = layoutSpec.length;
     const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
-    const span   = Math.PI * 0.92;                    // ~165° arc
+    const span   = Math.min(Math.PI * 0.92, Math.PI * 0.30 * n);   // narrower arc for fewer screens
     const rW     = fp * 0.40;                          // just inside the pillar ring
     const sw     = fp * 0.150, sh = fp * 0.100;        // screen width / height
     const clear  = undersideY - groundY;
@@ -265,8 +495,9 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       landmarks.push({ mat: frame.material, baseOpacity: 0.5, phase: i * 0.7 });
 
       // canvas + texture + screen plane
+      const tall = (spec.kind === 'news' || spec.kind === 'cve');
       const canvas = document.createElement('canvas');
-      canvas.width = 512; canvas.height = (spec.kind === 'news') ? 384 : 320;
+      canvas.width = 512; canvas.height = tall ? 384 : 320;
       const ctx = canvas.getContext('2d');
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace; tex.minFilter = THREE.LinearFilter;
@@ -275,10 +506,12 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
         new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
       screen.position.set(px, yC, pz); screen.rotation.y = rotY; screen.renderOrder = 3; scene.add(screen);
 
-      const s = { kind: spec.kind, coin: spec.coin, canvas, ctx, tex, scroll: 0 };
+      const s = { kind: spec.kind, coin: spec.coin, mode: spec.mode, canvas, ctx, tex, scroll: 0, accent };
+      if (spec.kind === 'gallery') _galleryInit(s, spec.start);
       _screenPlaceholder(s, 'loading…');
-      screenState.screens.push(s);
+      lounge.screens.push(s);
     }
+    screenState.lounges.push(lounge);
   }
 
   // ── PILLAR-PAVILION LIFT (2026-07-05) ──────────────────────────────────────
@@ -4144,8 +4377,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     _loungeCenter(x, z, groundY, undersideY, fp, theme.center, pal);
     _loungeSign  (x, z, groundY, fp, frontDir, faceAng, theme.title, pal);
 
-    // NEXUS lounge = live market & news floor: a wall of real-data 3D screens.
-    if (code === 'nexus-hub') _buildNexusScreens(x, z, groundY, undersideY, fp, pal, faceAng);
+    // Every agent lounge gets its own themed wall of real-data 3D screens
+    // (NEXUS charts+news, ZEROX markets+fear/greed, ORACLE trending+research,
+    // QUILL headlines, PIKADON threat monitor, TURTLE gallery). Shared fetch.
+    _buildLoungeScreens(code, x, z, groundY, undersideY, fp, pal, faceAng);
   }
 
   // Themed furniture ring — 2 InstancedMesh (body + emissive accent) per lounge.
@@ -4555,8 +4790,8 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     _nFrozen, 'static matrices frozen (matrixAutoUpdate=false)');
 
   try {                                                        // expose for diagnostics
-    screenState.tick = _screenTick; screenState.fetch = _screenFetch;
-    window.__nexusScreens = screenState;
+    screenState.tick = _screenTick; screenState.fetchCat = _screenFetchCat;
+    window.__nexusScreens = screenState;   // legacy alias (now holds ALL lounges)
   } catch (e) {}
 
   return {
