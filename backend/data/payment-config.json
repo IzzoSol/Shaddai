@@ -1,0 +1,15 @@
+{
+  "_README": "Paste your Stripe Payment Link URLs below (dashboard.stripe.com > Payment Links > New). Each ~2 min, no code, no secret key needed. Leave blank = 'coming soon'. This file is gitignored.",
+  "mode": "links",
+  "publishableKey": "pk_live_51Tg59fPJ3CBOToUTEyDBOAeiSsAQdQDxPYKWgr9DqKuSADerWp3RhJNcBKOtwUz2qxD7F6EyspG6l42Mbe0erLJ800TNBTGh7t",
+  "links": {
+    "founder": "https://buy.stripe.com/7sYfZj9YI8BZ0jv2mOfUQ00",
+    "builder": "",
+    "pro": "https://buy.stripe.com/aFa3cx1sc19x3vH9PgfUQ01",
+    "alpha": "https://buy.stripe.com/4gM28tgn605t2rDf9AfUQ02",
+    "credits_10": "https://buy.stripe.com/bJeeVf8UEf0n8Q1bXofUQ03",
+    "credits_25": "https://buy.stripe.com/6oU4gBc6QdWj0jv9PgfUQ04",
+    "credits_50": "https://buy.stripe.com/28E9AV4Eo6tR7LX1iKfUQ05",
+    "credits_100": "https://buy.stripe.com/6oU4gB9YI8BZ1nz8LcfUQ06"
+  }
+}
