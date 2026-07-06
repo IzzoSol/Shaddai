@@ -3,430 +3,285 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AURA · The Ledger — Token-Saver Monitor</title>
+<title>AURA · Token-Saver Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --paper:#ece4d3; --paper2:#e4dac6; --ink:#191510; --ink2:#3b342a;
-    --gold:#9c7c26; --gold2:#c4a24e; --ox:#7b2d26; --faint:#b3a586;
-  }
+  :root{ --bg:#03070b; --panel:#0a1620; --bd:#15323c; --txt:#dff2f4; --mut:#5d8088; --cy:#27e0ff; --grn:#22e3a0; --amber:#ffce4a; --mag:#ff5db1; --vio:#9b8cff; }
   *{ box-sizing:border-box; }
-  html,body{ margin:0; background:var(--paper); color:var(--ink); }
-  body{
-    font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased;
-    background-image:
-      radial-gradient(1200px 700px at 78% -10%, rgba(156,124,38,.10), transparent 60%),
-      radial-gradient(900px 600px at -5% 108%, rgba(123,45,38,.08), transparent 55%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.035'/></svg>");
-    min-height:100vh;
-  }
-  ::selection{ background:var(--gold); color:var(--paper); }
-  a{ color:inherit; text-decoration:none; }
-
-  /* ── thin ledger bar ── */
-  .ledger-bar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 26px; border-bottom:1px solid var(--ink);
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.28em; text-transform:uppercase;
-  }
-  .ledger-bar .mid{ color:var(--ink2); }
-  .ledger-bar .st::before{ content:'●'; color:var(--ox); margin-right:7px; animation:beat 2.4s ease-in-out infinite; }
-  @keyframes beat{ 50%{ opacity:.28; } }
-  .back{ position:relative; }
-  .back::after{ content:''; position:absolute; left:0; right:100%; bottom:-3px; height:1px; background:var(--ink); transition:right .28s ease; }
-  .back:hover::after{ right:0; }
-  .live-age{ font-size:10px; color:var(--ink2); letter-spacing:.18em; }
-
-  /* ── wrap ── */
-  .wrap{ max-width:1080px; margin:0 auto; padding:0 26px 90px; }
-
-  /* ── masthead ── */
-  .mast{ position:relative; padding:48px 0 22px; text-align:center; }
-  .mast .edition{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.5em; text-transform:uppercase; color:var(--gold); }
-  .rule2{ height:4px; border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); margin:14px auto; width:0; animation:draw 1.1s .1s cubic-bezier(.2,.7,.2,1) forwards; }
-  @keyframes draw{ to{ width:100%; } }
-  h1.title{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.14em; margin:6px 0 2px;
-    font-size:clamp(52px,11vw,110px); line-height:.92; }
-  .mast .sub{ font-style:italic; font-size:clamp(15px,2.2vw,20px); color:var(--ink2); letter-spacing:.02em; }
-
-  /* ── section header (mirrors codex .sect > .head) ── */
-  .sect{ margin-top:60px; }
-  .sect > .head{
-    display:flex; align-items:baseline; gap:16px;
-    border-bottom:1px solid var(--ink); padding-bottom:9px;
-  }
-  .sect .num{ font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:var(--gold); letter-spacing:.2em; }
-  .sect .name{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(18px,2.4vw,24px); letter-spacing:.14em; text-transform:uppercase; }
-  .sect .tail{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.24em; color:var(--ink2); text-transform:uppercase; }
-
-  /* ── almanac ledger figures (mirrors codex .read .fig) ── */
-  .ledger-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:10px; border:1px solid rgba(25,21,16,.25); }
-  .read{ padding:28px 22px; border-right:1px solid rgba(25,21,16,.22); }
-  .read:last-child{ border-right:none; }
-  .read .cap{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--ink2); }
-  .read .fig{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(38px,6vw,72px); line-height:1; margin-top:10px; color:var(--ink); }
-  .read .fig small{ font-size:.4em; color:var(--gold); font-weight:700; vertical-align:.5em; margin-left:2px; }
-  .read .note{ font-style:italic; font-size:13px; color:var(--ink2); margin-top:7px; }
-  .read.accent .fig{ color:var(--ox); }
-
-  /* ── secondary sub-ledger (smaller 4-col) ── */
-  .sub-ledger{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid rgba(25,21,16,.20); border-top:none; }
-  .sread{ padding:18px 20px; border-right:1px solid rgba(25,21,16,.18); }
-  .sread:last-child{ border-right:none; }
-  .sread .cap{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink2); }
-  .sread .fig{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(22px,3.5vw,34px); line-height:1.1; margin-top:6px; color:var(--ink); }
-
-  /* ── method breakdown bars (almanac style) ── */
-  .method-list{ margin-top:14px; }
-  .meth{ margin-bottom:14px; }
-  .meth .lbl{ display:flex; justify-content:space-between; align-items:baseline; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); margin-bottom:5px; }
-  .meth .lbl .val{ font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:var(--ink); }
-  .bar{ height:8px; background:rgba(25,21,16,.10); border-radius:0; overflow:hidden; }
-  .bar i{ display:block; height:100%; width:0; transition:width .9s cubic-bezier(.2,.8,.2,1); background:var(--ink); }
-  .bar.seed i{ background:var(--ox); }
-  .bar.fetch i{ background:var(--gold); }
-  .bar.compute i{ background:var(--ink2); }
-  .bar.query i{ background:var(--gold2); }
-  .bar.recipe i{ background:var(--faint); }
-  .method-note{ font-style:italic; font-size:13px; color:var(--ink2); margin-top:14px; line-height:1.65; border-top:1px solid rgba(25,21,16,.15); padding-top:12px; }
-
-  /* ── API-pull cache block ── */
-  .cache-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:12px; border:1px solid rgba(25,21,16,.22); }
-  .cread{ padding:18px 20px; border-right:1px solid rgba(25,21,16,.18); }
-  .cread:last-child{ border-right:none; }
-  .cread .cap{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink2); }
-  .cread .fig{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(22px,3.5vw,34px); line-height:1.1; margin-top:6px; color:var(--ink); }
-  #tcTop{ margin-top:11px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink2); line-height:1.7; letter-spacing:.06em; }
-
-  /* ── TRY AURA panel ── */
-  .oracle-panel{ margin-top:14px; padding:22px 0 0; }
-  .oracle-desc{ font-style:italic; color:var(--ink2); font-size:15px; margin-bottom:18px; line-height:1.65; }
-  .tryrow{ display:flex; gap:10px; }
-  #tryIn{
-    flex:1; background:var(--paper2); border:1px solid rgba(25,21,16,.35); color:var(--ink);
-    padding:12px 15px; font-family:'IBM Plex Mono',monospace; font-size:13px;
-    letter-spacing:.06em; transition:.2s; border-radius:0;
-  }
-  #tryIn:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(156,124,38,.10); }
-  #tryIn::placeholder{ color:var(--faint); }
-  #tryBtn{
-    background:var(--ink); color:var(--paper); border:none; padding:0 22px;
-    font-family:'Cinzel',serif; font-weight:700; font-size:13px; letter-spacing:.18em; text-transform:uppercase;
-    cursor:pointer; transition:.2s;
-  }
-  #tryBtn:hover{ background:var(--ink2); }
-  .chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
-  .chip{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.10em;
-    border:1px solid rgba(25,21,16,.28); color:var(--ink2); background:transparent;
-    padding:5px 12px; cursor:pointer; transition:.15s;
-  }
-  .chip:hover{ border-color:var(--gold); color:var(--gold); }
-  #tryOut{
-    margin-top:14px; font-size:14px; line-height:1.7; min-height:46px;
-    border-left:3px solid rgba(25,21,16,.20); padding:4px 0 4px 14px; color:var(--ink2); font-style:italic;
-  }
-  #tryOut .free{ color:var(--ox); font-style:normal; font-family:'Cinzel',serif; font-weight:700; }
-  #tryOut .paid{ color:var(--gold); font-style:normal; font-family:'Cinzel',serif; font-weight:700; }
-  #tryOut .ans{ color:var(--ink); font-style:normal; }
-  #tryOut .meta{ color:var(--faint); font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:.06em; }
-
-  /* ── recent saves feed ── */
-  .feed{ max-height:300px; overflow-y:auto; border:1px solid rgba(25,21,16,.18); }
-  .feed::-webkit-scrollbar{ width:5px; } .feed::-webkit-scrollbar-thumb{ background:var(--faint); }
-  .ev{
-    display:grid; grid-template-columns:72px 1fr auto; gap:10px; align-items:baseline;
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em;
-    padding:9px 14px; border-bottom:1px solid rgba(25,21,16,.10); animation:slidein .35s ease;
-  }
-  @keyframes slidein{ from{ opacity:0; transform:translateX(-6px); } }
-  .ev .mm{ font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
-  .ev .mm.fetch{ color:var(--gold); } .ev .mm.compute{ color:var(--ink2); }
-  .ev .mm.query{ color:var(--gold2); } .ev .mm.recipe{ color:var(--faint); } .ev .mm.seed{ color:var(--ox); }
-  .ev .sn{ color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ev .tk{ color:var(--ink); font-weight:600; white-space:nowrap; }
-
-  /* ── MCP setup ── */
-  .codeblk{
-    display:flex; align-items:center; gap:10px;
-    background:var(--paper2); border:1px solid rgba(25,21,16,.28);
-    padding:12px 14px; margin-bottom:10px;
-  }
-  .codeblk code{ flex:1; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ox); word-break:break-all; line-height:1.5; }
-  .codeblk .cp{
-    flex:0 0 auto; background:transparent; border:1px solid rgba(25,21,16,.28);
-    color:var(--ink2); font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.10em;
-    text-transform:uppercase; padding:6px 11px; cursor:pointer; transition:.18s;
-  }
-  .codeblk .cp:hover{ color:var(--gold); border-color:var(--gold); }
-  .codeblk .cp.ok{ color:var(--ox); border-color:var(--ox); }
-  .code-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink2); margin:14px 0 6px; }
-
-  /* ── cols layout ── */
-  .cols{ display:grid; grid-template-columns:1fr 1.4fr; gap:24px; margin-top:14px; }
-
-  /* ── connection/offline banner ── */
-  #conn{ display:none; align-items:center; gap:10px; margin:16px 0 0; padding:11px 16px;
-    font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.08em;
-    border:1px solid; }
+  body{ margin:0; min-height:100vh; color:var(--txt); font-family:'JetBrains Mono',monospace; position:relative; overflow-x:hidden;
+    background:
+      radial-gradient(900px 560px at 82% -8%, #06303a 0%, transparent 55%),
+      radial-gradient(700px 500px at 10% 110%, #0a2436 0%, transparent 55%),
+      linear-gradient(180deg, rgba(3,7,11,.82), rgba(3,7,11,.96)),
+      url('/assets/ui/aura-field.png') center / cover no-repeat fixed,
+      #03070b; }
+  #fx{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.7; }
+  .heroOrb{ position:fixed; top:-110px; right:-110px; width:380px; height:380px; object-fit:contain; opacity:.55; pointer-events:none; z-index:0; mix-blend-mode:screen; filter:drop-shadow(0 0 50px rgba(39,224,255,.45)); animation:floaty 8s ease-in-out infinite; }
+  .heroOrb.two{ top:auto; right:auto; bottom:-150px; left:-130px; width:300px; height:300px; opacity:.32; animation-duration:11s; filter:drop-shadow(0 0 50px rgba(34,227,160,.4)); }
+  @keyframes floaty{ 50%{ transform:translateY(16px) scale(1.05); opacity:.66; } }
+  .wrap{ max-width:1080px; margin:0 auto; padding:24px 20px 60px; position:relative; z-index:1; }
+  /* header with animated AURA core */
+  .top{ display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--bd); padding-bottom:16px; }
+  .brand{ display:flex; align-items:center; gap:16px; }
+  .core{ width:46px; height:46px; position:relative; flex:0 0 46px; }
+  .core .ring{ position:absolute; inset:0; border-radius:50%; border:1.5px solid transparent; }
+  .core .r1{ border-top-color:var(--cy); border-right-color:var(--cy); animation:spin 3.4s linear infinite; }
+  .core .r2{ inset:7px; border-bottom-color:var(--grn); border-left-color:var(--grn); animation:spin 2.2s linear infinite reverse; }
+  .core .dot{ position:absolute; inset:16px; border-radius:50%; background:radial-gradient(circle,var(--cy),#0a5566); box-shadow:0 0 18px var(--cy),0 0 36px rgba(39,224,255,.5); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes pulse{ 50%{ transform:scale(.78); opacity:.7; } }
+  h1{ font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.26em; font-size:26px; margin:0; line-height:1;
+    background:linear-gradient(90deg,var(--cy),var(--grn)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h1 small{ display:block; font-family:'JetBrains Mono'; font-weight:400; font-size:9.5px; letter-spacing:.34em; color:var(--mut); margin-top:5px; -webkit-text-fill-color:var(--mut); }
+  .top .right{ text-align:right; }
+  .top a{ font-size:11px; color:var(--mut); text-decoration:none; border:1px solid var(--bd); padding:7px 13px; border-radius:4px; transition:.2s; }
+  .top a:hover{ color:var(--cy); border-color:var(--cy); box-shadow:0 0 14px rgba(39,224,255,.25); }
+  .live{ font-size:10px; color:var(--grn); margin-top:9px; } .live::before{ content:'◉'; margin-right:6px; animation:blink 1.5s infinite; } @keyframes blink{ 50%{ opacity:.25; } }
+  /* glowing glass stat cards */
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:24px 0 12px; }
+  .card{ position:relative; border-radius:12px; padding:18px 16px; overflow:hidden;
+    background:linear-gradient(180deg,rgba(14,28,38,.72),rgba(8,18,26,.72)); backdrop-filter:blur(8px);
+    border:1px solid var(--bd); transition:transform .25s, box-shadow .25s; }
+  .card:hover{ transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.5); }
+  .card::before{ content:''; position:absolute; left:0; right:0; top:0; height:2px; background:linear-gradient(90deg,transparent,var(--cy),transparent); background-size:200% 100%; animation:sheen 3s linear infinite; }
+  .card.g::before{ background:linear-gradient(90deg,transparent,var(--grn),transparent); background-size:200% 100%; }
+  .card.a::before{ background:linear-gradient(90deg,transparent,var(--amber),transparent); background-size:200% 100%; }
+  .card.v::before{ background:linear-gradient(90deg,transparent,var(--vio),transparent); background-size:200% 100%; }
+  @keyframes sheen{ to{ background-position:200% 0; } }
+  .card .k{ font-size:9px; letter-spacing:.2em; color:var(--mut); text-transform:uppercase; }
+  .card .vv{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:40px; line-height:1.05; margin-top:6px; color:var(--cy); text-shadow:0 0 22px rgba(39,224,255,.35); }
+  .card.g .vv{ color:var(--grn); text-shadow:0 0 22px rgba(34,227,160,.35); }
+  .card.a .vv{ color:var(--amber); text-shadow:0 0 22px rgba(255,206,74,.3); }
+  .card.v .vv{ color:var(--vio); text-shadow:0 0 22px rgba(155,140,255,.35); }
+  .card .s{ font-size:10px; color:var(--mut); margin-top:4px; }
+  .sub{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  .mini{ background:rgba(10,22,30,.6); backdrop-filter:blur(6px); border:1px solid var(--bd); border-radius:9px; padding:11px 14px; transition:.2s; }
+  .mini:hover{ border-color:var(--cy); }
+  .mini .k{ font-size:9px; letter-spacing:.16em; color:var(--mut); text-transform:uppercase; }
+  .mini .vv{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:23px; margin-top:3px; }
+  .box{ background:linear-gradient(180deg,rgba(12,24,33,.7),rgba(8,17,24,.7)); backdrop-filter:blur(8px); border:1px solid var(--bd); border-radius:12px; padding:17px; margin-bottom:14px; }
+  .box h2{ font-family:'Rajdhani',sans-serif; font-size:15px; letter-spacing:.16em; color:var(--cy); margin:0 0 4px; text-shadow:0 0 14px rgba(39,224,255,.3); }
+  .box .h-sub{ font-size:11px; color:var(--mut); margin-bottom:12px; line-height:1.5; }
+  #verifyBtn{ background:linear-gradient(135deg,var(--grn),#149c70); color:#02140d; border:none; border-radius:6px; padding:12px 22px; font-weight:800; cursor:pointer; font-family:'JetBrains Mono'; white-space:nowrap; box-shadow:0 6px 20px rgba(34,227,160,.25); transition:.18s; }
+  #verifyBtn:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(34,227,160,.4); }
+  .tryrow{ display:flex; gap:8px; }
+  #tryIn{ flex:1; background:#05121a; border:1px solid var(--bd); color:var(--txt); border-radius:6px; padding:12px 14px; font-family:'JetBrains Mono'; font-size:13px; transition:.2s; }
+  #tryIn:focus{ outline:none; border-color:var(--cy); box-shadow:0 0 0 3px rgba(39,224,255,.12); }
+  #tryBtn{ background:linear-gradient(180deg,var(--cy),#159fc0); color:#02141a; border:none; border-radius:6px; padding:0 20px; font-weight:800; cursor:pointer; font-family:'JetBrains Mono'; box-shadow:0 4px 16px rgba(39,224,255,.3); }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:11px; }
+  .chip{ font-size:11px; border:1px solid var(--bd); color:var(--mut); background:#05121a; border-radius:16px; padding:5px 12px; cursor:pointer; transition:.15s; }
+  .chip:hover{ border-color:var(--grn); color:var(--grn); transform:translateY(-1px); box-shadow:0 0 12px rgba(34,227,160,.25); }
+  #tryOut{ margin-top:13px; font-size:12.5px; line-height:1.6; min-height:46px; border-left:2px solid var(--bd); padding:4px 0 4px 12px; }
+  #tryOut .free{ color:var(--grn); font-weight:600; } #tryOut .paid{ color:var(--amber); font-weight:600; } #tryOut .ans{ color:var(--txt); } #tryOut .meta{ color:var(--mut); font-size:11px; }
+  .cols{ display:grid; grid-template-columns:1fr 1.4fr; gap:14px; }
+  .meth{ margin-bottom:12px; } .meth .lbl{ display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px; }
+  .bar{ height:9px; background:#06141c; border-radius:5px; overflow:hidden; position:relative; }
+  .bar i{ display:block; height:100%; width:0; border-radius:5px; transition:width .8s cubic-bezier(.2,.8,.2,1); position:relative; }
+  .bar i::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent); background-size:200% 100%; animation:sheen 2.2s linear infinite; }
+  .feed{ max-height:320px; overflow-y:auto; }
+  .feed::-webkit-scrollbar{ width:6px; } .feed::-webkit-scrollbar-thumb{ background:#1a3a44; border-radius:3px; }
+  .ev{ display:flex; gap:10px; align-items:baseline; font-size:11px; padding:7px 0; border-bottom:1px solid #08141c; animation:slidein .4s ease; }
+  @keyframes slidein{ from{ opacity:0; transform:translateX(-8px); } }
+  .ev .mm{ font-weight:600; width:62px; } .ev .mm.fetch{ color:var(--cy);} .ev .mm.compute{ color:var(--grn);} .ev .mm.query{ color:var(--amber);} .ev .mm.recipe{ color:var(--vio);} .ev .mm.seed{ color:var(--mag); }
+  .ev .sn{ flex:1; color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .ev .tk{ color:var(--txt); }
+  .note{ font-size:10px; color:var(--mut); margin-top:14px; line-height:1.6; }
+  @media(max-width:760px){ .grid,.sub{ grid-template-columns:1fr 1fr; } .cols{ grid-template-columns:1fr; } }
+  /* MCP setup code blocks */
+  .codeblk{ display:flex; align-items:center; gap:10px; background:#05121a; border:1px solid var(--bd); border-radius:6px; padding:11px 13px; }
+  .codeblk code{ flex:1; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--grn); word-break:break-all; line-height:1.5; }
+  .codeblk .cp{ flex:0 0 auto; background:transparent; border:1px solid var(--bd); color:var(--mut); font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:6px 12px; border-radius:5px; cursor:pointer; transition:.18s; }
+  .codeblk .cp:hover{ color:var(--cy); border-color:var(--cy); box-shadow:0 0 12px rgba(39,224,255,.22); }
+  .codeblk .cp.ok{ color:var(--grn); border-color:var(--grn); }
+  /* ── loading skeleton (first paint, before stats arrive) ── */
+  @keyframes skel{ 0%,100%{ opacity:.32; } 50%{ opacity:.9; } }
+  body.booting .vv{ color:var(--mut)!important; text-shadow:none!important; animation:skel 1.15s ease-in-out infinite; }
+  body.booting #feed .ev .sn, body.booting #tcTop{ opacity:.5; animation:skel 1.15s ease-in-out infinite; }
+  /* value flash when a number changes */
+  .vv.bumped{ animation:flash .7s ease; }
+  @keyframes flash{ 0%{ text-shadow:0 0 26px currentColor; transform:scale(1.06); } 100%{ text-shadow:inherit; transform:none; } }
+  /* ── connection banner ── */
+  #conn{ display:none; align-items:center; gap:10px; margin:16px 0 0; padding:10px 14px; border-radius:9px;
+    font-size:12px; letter-spacing:.04em; border:1px solid; }
   #conn.show{ display:flex; }
-  #conn.off{ color:var(--ox); border-color:rgba(123,45,38,.4); background:rgba(123,45,38,.05); }
-  #conn.off::before{ content:'⚠'; margin-right:8px; }
-
-  /* ── honest empty state ── */
-  #empty{ display:none; margin:18px 0 2px; padding:14px 18px; font-size:14px; line-height:1.6;
-    color:var(--ink2); font-style:italic; border:1px dashed rgba(25,21,16,.28); background:var(--paper2); }
+  #conn.off{ color:var(--amber); border-color:rgba(255,206,74,.4); background:rgba(255,206,74,.07); }
+  #conn.off::before{ content:'⚠'; }
+  /* ── honest empty-state banner (shown only when truly no activity) ── */
+  #empty{ display:none; margin:18px 0 2px; padding:13px 16px; border-radius:11px; font-size:12.5px; line-height:1.55;
+    color:var(--mut); border:1px dashed var(--bd); background:linear-gradient(180deg,rgba(10,22,30,.5),rgba(8,17,24,.5)); }
   #empty.show{ display:block; }
-  #empty b{ color:var(--ox); font-style:normal; }
-  #empty .cta{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:3px; font-style:normal; }
-
-  /* ── colophon ── */
-  .colophon{
-    margin-top:70px; padding-top:18px; border-top:4px double var(--ink);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink2);
-  }
-
-  /* ── loading skeleton ── */
-  @keyframes skel{ 0%,100%{ opacity:.35; } 50%{ opacity:.85; } }
-  body.booting .fig{ animation:skel 1.15s ease-in-out infinite; }
-
-  /* value flash */
-  .fig.bumped{ animation:flash .6s ease; }
-  @keyframes flash{ 0%{ opacity:.5; transform:scale(1.04); } 100%{ opacity:1; transform:none; } }
-
-  /* ── responsive ── */
-  @media(max-width:760px){
-    .ledger-grid,.sub-ledger,.cache-grid{ grid-template-columns:1fr 1fr; }
-    .read,.sread,.cread{ border-right:none; border-bottom:1px solid rgba(25,21,16,.18); }
-    .cols{ grid-template-columns:1fr; }
-  }
-  @media(max-width:480px){
-    .ledger-grid{ grid-template-columns:1fr 1fr; }
-    .ledger-bar{ padding:10px 15px; font-size:9.5px; }
-    h1.title{ font-size:clamp(40px,14vw,72px); }
-  }
-  @media(prefers-reduced-motion:reduce){
-    *{ animation-duration:.001s!important; animation-iteration-count:1!important; }
-    .rule2{ width:100%!important; animation:none!important; }
-  }
+  #empty b{ color:var(--cy); }
+  #empty .cta{ color:var(--grn); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .live.updated::after{ content:attr(data-age); color:var(--mut); margin-left:8px; opacity:.75; }
+  @media(max-width:460px){ .grid,.sub{ grid-template-columns:1fr 1fr; } h1{ font-size:22px; } .card .vv{ font-size:32px; } }
+  @media(prefers-reduced-motion:reduce){ *{ animation-duration:.001s!important; animation-iteration-count:1!important; } #fx{ display:none; } }
 </style>
 </head>
 <body>
-
-<!-- ── Ledger Bar ── -->
-<div class="ledger-bar">
-  <a class="back" href="/">← Return to Codex</a>
-  <span class="mid">AURA · TOKEN LEDGER</span>
-  <span class="st" id="liveT">connecting…</span>
-</div>
-
+<canvas id="fx"></canvas>
+<img class="heroOrb" src="/assets/ui/aura-orb.png" alt="" />
+<img class="heroOrb two" src="/assets/ui/aura-orb.png" alt="" />
 <div class="wrap">
-
-  <!-- ── Masthead ── -->
-  <div class="mast">
-    <div class="edition">The SHADDAI Token-Saver · Live Monitor</div>
-    <div class="rule2"></div>
-    <h1 class="title">AURA</h1>
-    <p class="mast sub">Every token spared. Every answer served free. The ledger of what was saved.</p>
+  <div class="top">
+    <div class="brand">
+      <div class="core"><div class="ring r1"></div><div class="ring r2"></div><div class="dot"></div></div>
+      <h1>AURA<small>token-saver · live monitor</small></h1>
+    </div>
+    <div class="right"><a href="/">← dashboard</a><div class="live" id="liveT">connecting…</div></div>
   </div>
 
   <div id="conn"><span id="connMsg"></span></div>
-  <div id="empty">No AURA activity recorded yet — every figure below is an honest <b>0</b>. Run the agents or use <span class="cta" id="emptyCta">the Oracle below</span> and watch the counters move.</div>
+  <div id="empty">No AURA activity has been recorded yet — every number below is an honest <b>0</b>. Run something in <span class="cta" id="emptyCta">TRY AURA ↓</span> or click <b>RUN BENCHMARK</b> and watch the counters move live.</div>
 
-  <!-- ── Section I: The Ledger ── -->
-  <div class="sect">
-    <div class="head">
-      <span class="num">I</span>
-      <span class="name">The Ledger</span>
-      <span class="tail">live · polling every 5s</span>
-    </div>
-    <div class="ledger-grid">
-      <div class="read accent">
-        <div class="cap">Tokens Spared</div>
-        <div class="fig" id="tok">—<small></small></div>
-        <div class="note" id="usd">—</div>
-      </div>
-      <div class="read">
-        <div class="cap">Hit Rate</div>
-        <div class="fig" id="rate">—<small>%</small></div>
-        <div class="note">answers served with no AI</div>
-      </div>
-      <div class="read">
-        <div class="cap">Times Invoked</div>
-        <div class="fig" id="hits">—</div>
-        <div class="note">uses answered free</div>
-      </div>
-      <div class="read">
-        <div class="cap">Every-Use Save Rate</div>
-        <div class="fig" id="proj">—<small></small></div>
-        <div class="note">projected monthly saving</div>
-      </div>
-    </div>
-    <div class="sub-ledger">
-      <div class="sread"><div class="cap">Cached Prompts</div><div class="fig" id="entries">—</div></div>
-      <div class="sread"><div class="cap">Kept Fresh</div><div class="fig" id="vol">—</div></div>
-      <div class="sread"><div class="cap">Avg Tokens / Hit</div><div class="fig" id="avg">—</div></div>
-      <div class="sread"><div class="cap">AI Misses</div><div class="fig" id="miss">—</div></div>
-    </div>
+  <div class="grid">
+    <div class="card g"><div class="k">Hit rate</div><div class="vv" id="rate">—</div><div class="s">answers served with no AI</div></div>
+    <div class="card"><div class="k">Tokens saved</div><div class="vv" id="tok">—</div><div class="s" id="usd">—</div></div>
+    <div class="card a"><div class="k">Free answers</div><div class="vv" id="hits">—</div><div class="s">delivered at $0</div></div>
+    <div class="card v"><div class="k">Projected / mo</div><div class="vv" id="proj">—</div><div class="s">at this rate</div></div>
+  </div>
+  <div class="sub">
+    <div class="mini"><div class="k">Cached prompts</div><div class="vv" id="entries" style="color:var(--cy)">—</div></div>
+    <div class="mini"><div class="k">Kept fresh</div><div class="vv" id="vol" style="color:var(--amber)">—</div></div>
+    <div class="mini"><div class="k">Avg tokens / hit</div><div class="vv" id="avg" style="color:var(--grn)">—</div></div>
+    <div class="mini"><div class="k">AI misses</div><div class="vv" id="miss" style="color:var(--mag)">—</div></div>
   </div>
 
-  <!-- ── Section II: How It Saved + Recent Saves ── -->
-  <div class="sect">
-    <div class="head">
-      <span class="num">II</span>
-      <span class="name">Method Chronicle</span>
-      <span class="tail">save paths · recent activity</span>
+  <div class="box" id="cacheBox">
+    <h2>⚡ LIVE API-PULL CACHE</h2>
+    <div class="h-sub">Repeated tool calls — same data within its freshness window (prices 45s, news 5m, repos 2h) — are served from cache instead of re-hitting the live API. Saves real calls, rate-limit budget &amp; latency. Mutating actions (post/mint/deploy) are <b>never</b> cached.</div>
+    <div class="sub" style="margin-bottom:0">
+      <div class="mini"><div class="k">API pulls saved</div><div class="vv" id="tcSaved" style="color:var(--grn)">—</div></div>
+      <div class="mini"><div class="k">Real pulls made</div><div class="vv" id="tcReal" style="color:var(--cy)">—</div></div>
+      <div class="mini"><div class="k">Seconds not spent</div><div class="vv" id="tcSecs" style="color:var(--amber)">—</div></div>
+      <div class="mini"><div class="k">Cached endpoints</div><div class="vv" id="tcEnd" style="color:var(--vio)">—</div></div>
     </div>
-    <div class="cols">
-      <div>
-        <div class="method-list">
-          <div class="meth">
-            <div class="lbl"><span>📚 Seed — knowledge base</span><span class="val" id="ms">0</span></div>
-            <div class="bar seed"><i id="bs"></i></div>
-          </div>
-          <div class="meth">
-            <div class="lbl"><span>⌕ Fetch — exact cache</span><span class="val" id="mf">0</span></div>
-            <div class="bar fetch"><i id="bf"></i></div>
-          </div>
-          <div class="meth">
-            <div class="lbl"><span>∑ Compute — solved locally</span><span class="val" id="mc">0</span></div>
-            <div class="bar compute"><i id="bc"></i></div>
-          </div>
-          <div class="meth">
-            <div class="lbl"><span>≈ Query — fuzzy match</span><span class="val" id="mq">0</span></div>
-            <div class="bar query"><i id="bq"></i></div>
-          </div>
-          <div class="meth">
-            <div class="lbl"><span>⬡ Recipe — deterministic</span><span class="val" id="mr">0</span></div>
-            <div class="bar recipe"><i id="br"></i></div>
-          </div>
-        </div>
-        <div class="method-note">
-          <b>Seed</b> — curated stable facts. <b>Fetch</b> — identical prompt seen before. <b>Compute</b> — math &amp; units solved with zero AI. <b>Query</b> — close paraphrase reused. <b>Recipe</b> — a known task ran its real tools directly, no AI deciding steps. Prices, news, and live data are <em>never cached</em>.
-        </div>
-      </div>
-      <div>
-        <div class="feed" id="feed">
-          <div class="ev"><span class="sn">waiting for activity…</span></div>
-        </div>
-      </div>
-    </div>
+    <div id="tcTop" style="margin-top:11px;font-size:11px;color:var(--mut)"></div>
   </div>
 
-  <!-- ── Section III: The Oracle (TRY AURA) ── -->
-  <div class="sect">
-    <div class="head">
-      <span class="num">III</span>
-      <span class="name">Consult the Oracle</span>
-      <span class="tail">live · free-answer test</span>
+  <div class="box" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h2 style="margin:0">VERIFY IT'S REAL</h2>
+      <div class="h-sub" style="margin:4px 0 0">Run the live benchmark — proves answers are real (COMPUTE), nothing is fabricated (SAFETY), and goals route to the right tool-chain (ROUTING).</div>
     </div>
-    <div class="oracle-panel">
-      <p class="oracle-desc">
-        Put a question to the Oracle. If AURA can answer it free — from cache, local computation, or its knowledge base — you will receive a <strong>FREE</strong> result at $0. Otherwise it is a <strong>PAID</strong> miss that would fall through to the AI. Time-sensitive prompts always pass through.
-      </p>
-      <div class="tryrow">
-        <input id="tryIn" placeholder="e.g.  average of 12, 18, 30  ·  255 in hex  ·  what is the current BTC price" />
-        <button id="tryBtn">Ask</button>
-      </div>
-      <div class="chips" id="chips"></div>
-      <div id="tryOut">Awaiting a prompt…</div>
-    </div>
+    <button id="verifyBtn">▶ RUN BENCHMARK</button>
+    <div id="verifyOut" style="flex-basis:100%;font-size:12px;color:var(--mut)">not run yet — click to verify on demand.</div>
   </div>
 
-  <!-- ── Section IV: API-Pull Cache ── -->
-  <div class="sect">
-    <div class="head">
-      <span class="num">IV</span>
-      <span class="name">The API-Pull Cache</span>
-      <span class="tail">tool calls · latency saved</span>
-    </div>
-    <p style="font-style:italic;color:var(--ink2);font-size:14px;margin:12px 0 0;line-height:1.65">
-      Repeated tool calls — prices (45 s freshness), news (5 m), repos (2 h) — are served from cache instead of re-hitting the live API. Saves real calls, rate-limit budget, and latency. Mutating actions (post / mint / deploy) are <em>never</em> cached.
-    </p>
-    <div class="cache-grid">
-      <div class="cread"><div class="cap">API Pulls Saved</div><div class="fig" id="tcSaved">—</div></div>
-      <div class="cread"><div class="cap">Real Pulls Made</div><div class="fig" id="tcReal">—</div></div>
-      <div class="cread"><div class="cap">Seconds Not Spent</div><div class="fig" id="tcSecs">—</div></div>
-      <div class="cread"><div class="cap">Cached Endpoints</div><div class="fig" id="tcEnd">—</div></div>
-    </div>
-    <div id="tcTop"></div>
+  <div class="box">
+    <h2>TRY AURA</h2>
+    <div class="h-sub">Type anything. If AURA can answer it free (cache or local compute) you'll see a <span style="color:var(--grn)">FREE</span> result — otherwise it's a <span style="color:var(--amber)">PAID</span> miss that hits the AI. Time-sensitive prompts always pass through.</div>
+    <div class="tryrow"><input id="tryIn" placeholder="e.g.  average of 12, 18, 30   ·   255 in hex   ·   what is the current BTC price" /><button id="tryBtn">RUN</button></div>
+    <div class="chips" id="chips"></div>
+    <div id="tryOut">awaiting a prompt…</div>
   </div>
 
-  <!-- ── Section V: MCP Setup ── -->
-  <div class="sect">
-    <div class="head">
-      <span class="num">V</span>
-      <span class="name">MCP Communion</span>
-      <span class="tail">open-source · npm · mcp server</span>
-    </div>
-    <p style="font-style:italic;color:var(--ink2);font-size:14px;margin:12px 0 16px;line-height:1.65">
-      AURA is open-source and published to npm as <strong>shaddai-aura</strong> — it ships an MCP server that serves AURA's token-saving cache &amp; tools over the Model Context Protocol, so any MCP-capable AI client can answer repeats for free.
-    </p>
-    <div class="code-label">Command</div>
+  <div class="box" id="mcpBox">
+    <h2>⬡ MCP SETUP</h2>
+    <div class="h-sub">AURA is open-source and published to npm as <b style="color:var(--cy)">shaddai-aura</b> — it ships an <b>MCP server</b> that serves AURA's token-saving cache &amp; tools over the Model Context Protocol, so any MCP-capable AI client can answer repeats for free.</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:6px">Command</div>
     <div class="codeblk"><code id="mcpCmd">npx -y -p shaddai-aura aura-mcp</code><button class="cp" data-copy="mcpCmd">copy</button></div>
-    <div class="code-label">Client config — add to your MCP client's mcpServers block</div>
+    <div style="font-size:11px;color:var(--mut);margin:14px 0 6px">Client config <span style="color:#3f5f66">— add to your MCP client's <code>mcpServers</code> block</span></div>
     <div class="codeblk"><code id="mcpJson">{"mcpServers":{"aura":{"command":"npx","args":["-y","-p","shaddai-aura","aura-mcp"]}}}</code><button class="cp" data-copy="mcpJson">copy</button></div>
   </div>
 
-  <!-- ── Colophon ── -->
-  <div class="colophon" id="foot">
-    <span>AURA · Token-Saver · Live Ledger</span>
-    <span id="footStats">—</span>
-    <span>SHADDAI Empire</span>
+  <div class="cols">
+    <div class="box">
+      <h2>HOW IT SAVED</h2>
+      <div class="meth"><div class="lbl"><span style="color:var(--mag)">📚 SEED — knowledge base</span><span id="ms">0</span></div><div class="bar"><i id="bs" style="background:var(--mag)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--cy)">⌕ FETCH — exact cache</span><span id="mf">0</span></div><div class="bar"><i id="bf" style="background:var(--cy)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--grn)">∑ COMPUTE — solved locally</span><span id="mc">0</span></div><div class="bar"><i id="bc" style="background:var(--grn)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--amber)">≈ QUERY — fuzzy match</span><span id="mq">0</span></div><div class="bar"><i id="bq" style="background:var(--amber)"></i></div></div>
+      <div class="meth"><div class="lbl"><span style="color:var(--vio)">⬡ RECIPE — deterministic tools</span><span id="mr">0</span></div><div class="bar"><i id="br" style="background:var(--vio)"></i></div></div>
+      <div class="note"><b style="color:var(--mag)">SEED</b> = curated stable facts. <b style="color:var(--cy)">FETCH</b> = identical prompt seen before. <b style="color:var(--grn)">COMPUTE</b> = math/units solved with zero AI. <b style="color:var(--amber)">QUERY</b> = a close paraphrase reused. <b style="color:var(--vio)">RECIPE</b> = a known task ran its real tools directly, no AI deciding steps. Prices/news/"live" are <b style="color:var(--txt)">never cached</b>.</div>
+    </div>
+    <div class="box">
+      <h2>RECENT SAVES</h2>
+      <div class="feed" id="feed"><div class="ev"><span class="sn">waiting for activity…</span></div></div>
+    </div>
   </div>
 
-</div><!-- .wrap -->
+  <div class="note" id="foot"></div>
+</div>
 
 <script>
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString();
 const esc=s=>String(s==null?'':s).replace(/</g,'&lt;');
-document.body.classList.add('booting');
-let lastOkTs=0;
+document.body.classList.add('booting');   // skeleton until first stats arrive
+let lastOkTs=0;                            // when we last got a good /stats response
 
-// ── count-up animation ──
+// ── particle data-stream background ──
+(function(){
+  const c=$('fx'), x=c.getContext('2d'); let w,h,P=[];
+  function size(){ w=c.width=innerWidth; h=c.height=innerHeight; P=Array.from({length:Math.min(90,Math.floor(w/16))},()=>({x:Math.random()*w,y:Math.random()*h,v:.3+Math.random()*1.1,s:Math.random()*1.6+.4,a:Math.random()})); }
+  size(); addEventListener('resize',size);
+  (function loop(){ requestAnimationFrame(loop); x.clearRect(0,0,w,h);
+    for(const p of P){ p.y-=p.v; if(p.y<-4){ p.y=h+4; p.x=Math.random()*w; }
+      x.fillStyle='rgba(39,224,255,'+(.10+p.a*.25)+')'; x.fillRect(p.x,p.y,p.s,p.s*3);
+    }
+  })();
+})();
+
+// ── count-up number animation ──
 function countTo(el, target, suffix, prefix){
   if(!el) return; suffix=suffix||''; prefix=prefix||'';
   const from=parseFloat((el.dataset.v||'0')); const to=Number(target)||0;
   const hadValue=el.dataset.v!==undefined; el.dataset.v=to;
   if(from===to){ el.textContent=prefix+(Number.isInteger(to)?fmt(to):to.toFixed(4))+suffix; return; }
-  if(hadValue && el.classList.contains('fig')){ el.classList.remove('bumped'); void el.offsetWidth; el.classList.add('bumped'); }
+  if(hadValue && el.classList.contains('vv')){ el.classList.remove('bumped'); void el.offsetWidth; el.classList.add('bumped'); }
   const t0=performance.now(), dur=700;
   (function step(t){ const k=Math.min(1,(t-t0)/dur); const e=1-Math.pow(1-k,3); const val=from+(to-from)*e;
     el.textContent=prefix+(Number.isInteger(to)?fmt(Math.round(val)):val.toFixed(4))+suffix; if(k<1) requestAnimationFrame(step);
   })(t0);
 }
 
-// ── example chips ──
 const EXAMPLES=['average of 12, 18, 30','255 in hex','roman numeral for 2025','3 hours in minutes','20% off 80','what is aura','what is the current BTC price'];
-$('chips').innerHTML=EXAMPLES.map(e=>`<span class="chip">${esc(e)}</span>`).join('');
+$('chips').innerHTML=EXAMPLES.map(e=>`<span class="chip">${e}</span>`).join('');
 $('chips').querySelectorAll('.chip').forEach(c=> c.onclick=()=>{ $('tryIn').value=c.textContent; runTry(); });
 
-// ── TRY AURA ──
 async function runTry(){
   const prompt=$('tryIn').value.trim(); if(!prompt) return;
-  $('tryOut').innerHTML='<span class="meta">routing the query…</span>';
+  $('tryOut').innerHTML='<span class="meta">routing…</span>';
   try{
     const r=await (await fetch('/api/aura/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})})).json();
-    if(r.hit){
-      $('tryOut').innerHTML=`<span class="free">✦ FREE — ${r.method.toUpperCase()}</span> &nbsp;<span class="meta">~${r.savedTokensEst} tokens saved · $0</span><br><span class="ans">${esc(r.answer).slice(0,320)}</span>`;
-    } else {
-      $('tryOut').innerHTML=`<span class="paid">→ PAID — would reach the AI</span><br><span class="meta">AURA cannot answer this for free (not cached, not locally computable, or it is time-sensitive and must stay fresh).</span>`;
-    }
+    if(r.hit){ $('tryOut').innerHTML=`<span class="free">✓ FREE — ${r.method.toUpperCase()}</span> · <span class="meta">~${r.savedTokensEst} tokens saved, $0</span><br><span class="ans">${esc(r.answer).slice(0,320)}</span>`; }
+    else{ $('tryOut').innerHTML=`<span class="paid">→ PAID — would hit the AI</span><br><span class="meta">AURA can't answer this for free (not cached, not locally computable, or it's time-sensitive and must stay fresh).</span>`; }
     setTimeout(tick,400);
-  }catch(e){ $('tryOut').innerHTML='<span class="meta">error: '+esc(e.message)+'</span>'; }
+  }catch(e){ $('tryOut').innerHTML='<span class="meta">error: '+e.message+'</span>'; }
 }
-$('tryBtn').onclick=runTry;
-$('tryIn').addEventListener('keydown',e=>{ if(e.key==='Enter') runTry(); });
+$('tryBtn').onclick=runTry; $('tryIn').addEventListener('keydown',e=>{ if(e.key==='Enter')runTry(); });
 
-// ── connection banner ──
+$('verifyBtn').onclick=async()=>{
+  $('verifyBtn').textContent='…running'; $('verifyBtn').disabled=true;
+  $('verifyOut').innerHTML='<span style="color:var(--amber)">running benchmark…</span>';
+  try{
+    const b=await (await fetch('/api/aura/bench')).json(); const sec=b.sections||{}; const pct=Math.round((b.rate||0)*100);
+    const okColor=pct>=80?'var(--grn)':'var(--mag)';
+    const row=(l,r,ok)=>`<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #08141c"><span style="flex:1;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l)}</span><span style="color:${ok?'var(--txt)':'var(--mag)'}">${esc(r)}</span><span style="color:${ok?'var(--grn)':'var(--mag)'};width:14px">${ok?'✓':'✗'}</span></div>`;
+    const proofs=(b.liveProofs||[]).map(p=>`<div style="display:flex;gap:8px;padding:3px 0"><span style="flex:1;color:var(--cy)">${esc(p.prompt)}</span><span style="color:var(--grn);font-weight:600">= ${esc(p.answer)}</span></div>`).join('');
+    const compute=(sec.compute&&sec.compute.cases||[]).map(c=>row(c.prompt,c.answer,c.ok)).join('');
+    const safety=(sec.safety&&sec.safety.cases||[]).map(c=>row(c.prompt, c.declined?'declined → real AI':'WRONGLY ANSWERED', c.ok)).join('');
+    const routing=(sec.routing&&sec.routing.cases||[]).map(c=>row(c.goal, c.recipe, c.ok)).join('');
+    $('verifyOut').innerHTML=
+      `<div style="font-size:15px"><b style="color:${okColor};text-shadow:0 0 14px ${okColor}">${pct}% (${b.pass}/${b.total})</b> — `+
+      `<span style="color:var(--grn)">EXACT ${sec.compute.pass}/${sec.compute.total}</span> · `+
+      `<span style="color:var(--cy)">DECLINED ${sec.safety.pass}/${sec.safety.total}</span> · `+
+      `<span style="color:var(--vio)">ROUTED ${sec.routing.pass}/${sec.routing.total}</span>`+
+      (b.fails&&b.fails.length?'':` &nbsp;<span style="color:var(--grn)">✓ all real, nothing fabricated</span>`)+`</div>`+
+      `<div style="margin-top:10px;font-size:11.5px"><b style="color:var(--grn)">⚡ Computed live, just now (novel inputs — not canned):</b>${proofs}`+
+      `<div style="color:var(--mut);margin:6px 0 2px">↑ check any with a calculator. Type your OWN numbers in TRY AURA — it computes any input, it's not a script.</div>`+
+      `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--cy)">show all ${b.total} checks</summary>`+
+        `<div style="margin-top:6px"><b style="color:var(--grn)">EXACT — real math, no AI:</b>${compute}</div>`+
+        `<div style="margin-top:8px"><b style="color:var(--cy)">SAFETY — refused to fake these (sent to the AI):</b>${safety}</div>`+
+        `<div style="margin-top:8px"><b style="color:var(--vio)">ROUTING — goal → deterministic tool-chain:</b>${routing}</div>`+
+      `</details></div>`;
+  }catch(e){ $('verifyOut').innerHTML='<span style="color:var(--mag)">verify error: '+e.message+'</span>'; }
+  $('verifyBtn').textContent='▶ RUN BENCHMARK'; $('verifyBtn').disabled=false;
+};
+
 function showConn(kind,msg){ const c=$('conn'); if(!kind){ c.className=''; return; } c.className='show '+kind; $('connMsg').textContent=msg; }
 $('emptyCta').onclick=()=>{ $('tryIn').focus(); $('tryIn').scrollIntoView({behavior:'smooth',block:'center'}); };
 
-// ── main stats poll ──
 async function tick(){
   let s;
   try{
@@ -434,72 +289,45 @@ async function tick(){
     if(s && s.ok===false) throw new Error(s.error||'stats unavailable');
   }catch(e){
     document.body.classList.remove('booting');
-    $('liveT').textContent='offline — retrying';
-    showConn('off','AURA backend unreachable — showing last known values. Retrying every 5 s.');
+    $('liveT').classList.remove('updated'); $('liveT').textContent='offline — retrying';
+    showConn('off','AURA backend unreachable — showing last known values. Retrying every 5s.');
     return;
   }
   document.body.classList.remove('booting'); showConn(null); lastOkTs=Date.now();
-  $('liveT').textContent='● live · 5 s';
-
-  // honest empty-state
+  $('liveT').classList.add('updated'); $('liveT').textContent='streaming · 5s'; $('liveT').setAttribute('data-age','· updated now');
+  // honest empty-state: only when nothing at all has been recorded
   const noActivity=!(s.hits||s.misses||s.tokensSaved);
   $('empty').classList.toggle('show', noActivity);
-
-  // main figures
-  countTo($('tok'), s.tokensSaved);
-  $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
-  countTo($('rate'), Math.round((s.hitRate||0)*100));
-  countTo($('hits'), s.hits);
-  // proj: show as $X.XXXX
-  const projEl=$('proj');
-  if(projEl){ const pv=s.projMonthlyUsd||0; projEl.dataset.v=pv; projEl.textContent='$'+pv.toFixed(4); }
-
-  countTo($('entries'), s.cacheEntries);
-  countTo($('vol'), s.volatileSkips);
-  countTo($('avg'), s.avgTokensPerHit);
-  countTo($('miss'), s.misses);
-
-  // method bars
+  countTo($('rate'), Math.round((s.hitRate||0)*100), '%');
+  countTo($('tok'), s.tokensSaved); $('usd').textContent='≈ $'+(s.costSavedUsd||0).toFixed(4)+' saved';
+  countTo($('hits'), s.hits); countTo($('proj'), s.projMonthlyUsd||0, '', '$');
+  countTo($('entries'), s.cacheEntries); countTo($('vol'), s.volatileSkips); countTo($('avg'), s.avgTokensPerHit); countTo($('miss'), s.misses);
   const bm=s.byMethod||{}; const max=Math.max(1,bm.fetch||0,bm.compute||0,bm.query||0,bm.recipe||0,bm.seed||0);
-  const setBar=(t,b,v)=>{ $(t).textContent=fmt(v||0); $(b).style.width=((v||0)/max*100)+'%'; };
-  setBar('ms','bs',bm.seed); setBar('mf','bf',bm.fetch); setBar('mc','bc',bm.compute); setBar('mq','bq',bm.query); setBar('mr','br',bm.recipe);
-
-  // recent saves feed
+  const set=(t,b,v)=>{ $(t).textContent=fmt(v||0); $(b).style.width=((v||0)/max*100)+'%'; };
+  set('ms','bs',bm.seed); set('mf','bf',bm.fetch); set('mc','bc',bm.compute); set('mq','bq',bm.query); set('mr','br',bm.recipe);
   const rec=s.recentSaves||[];
-  $('feed').innerHTML=rec.length
-    ? rec.map(r=>`<div class="ev"><span class="mm ${esc(r.method)}">${esc(r.method||'').toUpperCase()}</span><span class="sn">${esc(r.snippet)||'—'}</span><span class="tk">+${fmt(r.tokens)} t</span></div>`).join('')
-    : '<div class="ev"><span class="sn">no saves yet — run agents or try a prompt above</span></div>';
-
-  // colophon
-  $('footStats').textContent=`${fmt(s.cacheEntries)} cached · ${fmt(s.volatileSkips)} kept fresh · stats persist across restarts`;
-
-  // tool cache
+  $('feed').innerHTML=rec.length?rec.map(r=>`<div class="ev"><span class="mm ${r.method}">${(r.method||'').toUpperCase()}</span><span class="sn">${esc(r.snippet)||'—'}</span><span class="tk">+${fmt(r.tokens)}t</span></div>`).join('')
+    :'<div class="ev"><span class="sn">no saves yet — run agents or try a prompt above</span></div>';
+  $('foot').textContent=`AURA serves every repeat instantly at $0 · ${fmt(s.cacheEntries)} cached · ${fmt(s.volatileSkips)} kept fresh · stats persist across restarts.`;
   const tcv=s.toolCache;
   if(tcv){
-    countTo($('tcSaved'),tcv.pullsSaved);
-    countTo($('tcReal'),tcv.realPulls);
-    countTo($('tcEnd'),tcv.cachedEndpoints);
+    countTo($('tcSaved'),tcv.pullsSaved); countTo($('tcReal'),tcv.realPulls); countTo($('tcEnd'),tcv.cachedEndpoints);
     $('tcSecs').textContent=(tcv.secondsSaved||0).toFixed(1)+'s';
     $('tcTop').innerHTML=(tcv.topTools&&tcv.topTools.length)
-      ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--ink2)">Top cached endpoints: </span>'
-        + tcv.topTools.map(t=>`<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold)">${esc(t.name)}</span> <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink2)">×${fmt(t.hits)}</span>`).join(' · ')
-      : '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--ink2);letter-spacing:.06em">No repeated pulls yet — when an agent fetches the same data twice within its freshness window, it appears here.</span>';
+      ? 'Top cached endpoints: '+tcv.topTools.map(t=>`<span style="color:var(--cy)">${esc(t.name)}</span> ×${fmt(t.hits)}`).join(' · ')
+      : 'No repeated pulls yet — when an agent or workflow fetches the same data twice within its window, it shows here.';
   }
 }
 tick(); setInterval(tick,5000);
+// keep the "updated Ns ago" label honest between polls
+setInterval(()=>{ if(!lastOkTs) return; const a=Math.round((Date.now()-lastOkTs)/1000);
+  $('liveT').setAttribute('data-age', a<2?'· updated now':'· updated '+a+'s ago'); },1000);
 
-// ── "updated Ns ago" label ──
-setInterval(()=>{
-  if(!lastOkTs) return;
-  const a=Math.round((Date.now()-lastOkTs)/1000);
-  $('liveT').textContent='● '+(a<2?'updated now':'updated '+a+'s ago');
-},1000);
-
-// ── copy buttons ──
+// ── MCP setup copy buttons ──
 document.querySelectorAll('.codeblk .cp').forEach(btn=>{
   btn.addEventListener('click', async ()=>{
-    const el=document.getElementById(btn.dataset.copy); if(!el) return;
-    const text=el.textContent;
+    const el = document.getElementById(btn.dataset.copy); if(!el) return;
+    const text = el.textContent;
     try{ await navigator.clipboard.writeText(text); }
     catch(e){ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); try{ document.execCommand('copy'); }catch(_){} s.removeAllRanges(); }
     const old=btn.textContent; btn.textContent='copied'; btn.classList.add('ok');
