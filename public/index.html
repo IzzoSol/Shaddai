@@ -5047,7 +5047,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       .mk-railbtn .mk-nm{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--text-primary)}
       .mk-railbtn .mk-ds{font-size:7px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase}
       .mk-station{display:none}
-      #mkStationRoom.mk-immersive #mkStage .mk-station.active{display:block;animation:mkSwivel .42s ease}
+      /* Immersive mode: hide ALL stations; only .active shows — !important overrides any inline display set by widget JS */
+      #mkStationRoom.mk-immersive .mk-station{display:none!important}
+      #mkStationRoom.mk-immersive #mkStage .mk-station.active{display:block!important;animation:mkSwivel .42s ease}
       #mkStationRoom.mk-immersive #mkRail{display:flex}
       #mkStationRoom.mk-classic #mkRail{display:none}
       #mkStationRoom.mk-classic .mk-station{display:block;margin-bottom:6px}
@@ -5078,10 +5080,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           init:function(){ if(typeof updateCouncilModelList==='function') updateCouncilModelList(); }},
         {key:'dex', ic:'📊', nm:'DEX', ds:'Live markets',
           src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
-          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }},
-        {key:'wallet', ic:'◎', nm:'Wallet', ds:'Solana · Phantom',
-          src:[{inner:'pipeWalletStatus'},{inner:'pipeWalletBody'}],
-          init:function(){ if(window._walletPubkey && typeof pipeRefreshWallet==='function') pipeRefreshWallet(); }}
+          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }}
+        /* Wallet station removed per owner: wallet widget stays in pipeline view below the room */
       ];
       function grab(src){
         return src.map(function(s){
