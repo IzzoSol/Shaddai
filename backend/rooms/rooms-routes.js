@@ -202,11 +202,11 @@ router.post('/scene', express.json({ limit: '64kb' }), async (req, res) => {
     const prompt = buildScenePrompt(theme);
 
     if (!hf.keys().length) {
-      // No token → DO NOT fake an image. Return 503 + the exact prompt that would be sent.
+      // No token → DO NOT fake an image. Log the detail server-side, return a clean message.
+      console.warn('[rooms] No HF token configured. Set HF_TOKENS env (or backend/data/runtime-keys.json). Rooms render scenes with a real Hugging Face token — no mock.');
       return res.status(503).json({
         ok: false,
-        error: 'No HF token configured. Set HF_TOKENS env (or backend/data/runtime-keys.json). Rooms render scenes with a real Hugging Face token — no mock.',
-        prompt,
+        error: 'Image generation is temporarily unavailable — please try again shortly.',
       });
     }
 
@@ -215,10 +215,12 @@ router.post('/scene', express.json({ limit: '64kb' }), async (req, res) => {
       img = await hf.generate(prompt); // rotates across keys on depletion
     } catch (e) {
       const status = e.status === 402 ? 402 : 502;
+      if (e.status === 402) console.warn('[rooms] Hugging Face image credits are depleted (HTTP 402). Add credits or a new HF token to render rooms.');
+      else console.warn('[rooms] room scene render failed:', e.message);
       const msg = e.status === 402
-        ? 'Hugging Face image credits are depleted (HTTP 402). Add credits or a new HF token to render rooms.'
-        : 'room scene render failed';
-      return res.status(status).json({ ok: false, error: msg, detail: e.message });
+        ? 'Image generation is temporarily unavailable — please try again shortly.'
+        : 'Image generation is temporarily unavailable — please try again shortly.';
+      return res.status(status).json({ ok: false, error: msg });
     }
 
     ensureDirs();

@@ -52,13 +52,14 @@ function paymentMode() {
 // GET /api/stripe/config — is checkout live? + publishable key (for Stripe.js, if ever used)
 router.get('/config', (req, res) => {
   const { mode, cfg } = paymentMode();
+  if (mode === 'off') console.warn('[stripe] Payments not configured yet. Add hosted checkout links in backend/data/payment-config.json (or set STRIPE_SECRET_KEY).');
   res.json({
     ok: true,
     enabled: mode !== 'off',
     mode,                                   // 'links' | 'stripe' | 'off'
     publishableKey: cfg.publishableKey || process.env.STRIPE_PUBLISHABLE_KEY || '',
     message: mode === 'off'
-      ? 'Payments not configured yet. Add hosted checkout links in backend/data/payment-config.json (or set STRIPE_SECRET_KEY).'
+      ? "This option isn't available yet — please check back soon."
       : 'Payments live (' + mode + ').',
   });
 });
@@ -114,9 +115,10 @@ router.post('/create-checkout', express.json(), async (req, res) => {
     }
 
     // 3) Not configured — tidy response so the UI shows a clean "coming soon" state
+    console.warn('[stripe] Checkout for "' + item + '" not configured. Paste a hosted checkout link for it in backend/data/payment-config.json.');
     return res.json({
       ok: true, enabled: false, url: null,
-      message: 'Checkout for "' + item + '" not configured. Paste a hosted checkout link for it in backend/data/payment-config.json.',
+      message: "This option isn't available yet — please check back soon.",
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -132,7 +134,8 @@ router.get('/verify', async (req, res) => {
       return res.json({ ok: true, paid: s.payment_status === 'paid', status: s.status, item: s.metadata && s.metadata.item });
     }
     // hosted-link mode can't verify server-side without a webhook — report optimistic pending
-    res.json({ ok: true, paid: null, status: 'unknown', message: 'Verification needs a Stripe webhook or session_id.' });
+    console.warn('[stripe] verify: no session_id / webhook — cannot confirm payment server-side.');
+    res.json({ ok: true, paid: null, status: 'unknown', message: "We're still confirming your payment — this may take a moment." });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

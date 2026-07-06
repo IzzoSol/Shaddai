@@ -7780,7 +7780,6 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
         <button class="btn btn-ghost" onclick="analyzeErrors()">Analyze Errors</button>
         <button class="btn btn-ghost" onclick="testAllAPIsLegacy()">Test All APIs</button>
         <button class="btn btn-ghost" onclick="exportAuditCSV()">Export Audit CSV</button>
-        <button class="btn btn-ghost" style="border-color:#9945ff;color:#9945ff" onclick="agentRequestTrade('XEROX',{token:'SOL',amount:0.01,toToken:'USDC',amountUSD:1,slippage:0.5})">Test Agent Trade</button>
       </div>
     </div>
   </div>
@@ -9874,6 +9873,50 @@ html[data-theme-skin="terminal"] #shaddaiScanlines{
 
   <!-- Settings -->
   <div id="settingsView" class="view">
+
+    <!-- ══ PROFILE / ACCOUNT — who you are (saved to Firestore for free) ══ -->
+    <div class="card" id="profileCard" style="border:1px solid var(--accent);background:rgba(0,229,160,0.03)">
+      <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span class="card-title" style="color:var(--accent)">👤 Profile &amp; Account</span>
+        <span id="profileTierBadge" style="font-size:8px;font-weight:700;padding:3px 10px;background:rgba(0,229,160,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:4px">FREE</span>
+      </div>
+
+      <!-- Signed-out prompt -->
+      <div id="profileSignedOut" style="display:none;text-align:center;padding:22px 12px">
+        <div style="font-size:34px;margin-bottom:8px">🔐</div>
+        <div style="font-size:12px;color:var(--text-primary);font-weight:600;margin-bottom:4px">Sign in to save your profile</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:14px">Your display name, goal and avatar are saved to your account so they follow you across devices.</div>
+        <button class="btn btn-accent" onclick="if(window.shdSignIn)shdSignIn();">Sign In</button>
+      </div>
+
+      <!-- Signed-in editor -->
+      <div id="profileSignedIn" style="display:none">
+        <div id="profileGreeting" style="font-size:11px;color:var(--text-muted);margin-bottom:14px">Welcome.</div>
+        <div style="display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:start">
+          <!-- Avatar preview -->
+          <div style="text-align:center">
+            <div id="profileAvatarPreview" style="font-size:40px;line-height:56px;width:56px;height:56px;border:1px solid var(--border);border-radius:10px;background:rgba(0,0,0,0.35)">👤</div>
+            <div style="font-size:7px;color:var(--text-muted);margin-top:4px">Avatar</div>
+          </div>
+          <div>
+            <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Display Name</label>
+            <input id="profileDisplayName" class="input" maxlength="80" placeholder="e.g. Brittany" oninput="profileSyncGreeting()">
+            <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Avatar Emoji</label>
+            <input id="profileAvatarEmoji" class="input" maxlength="8" placeholder="👤" oninput="profileSyncAvatar()">
+          </div>
+        </div>
+        <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-top:6px">Short Bio</label>
+        <textarea id="profileBio" class="input" maxlength="500" rows="2" placeholder="A line about who you are…" style="resize:vertical"></textarea>
+        <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block">Your Goal</label>
+        <textarea id="profileGoal" class="input" maxlength="280" rows="2" placeholder="What are you here to build?" style="resize:vertical"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <button class="btn btn-accent" id="profileSaveBtn" onclick="saveUserProfile()">Save Profile</button>
+          <span id="profileSaveMsg" style="font-size:9px;color:var(--text-muted)"></span>
+        </div>
+        <div style="font-size:7px;color:var(--text-muted);margin-top:8px">Saved to your SHADDAI account · syncs across devices.</div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-head"><span class="card-title">Application Settings</span></div>
 
@@ -17620,6 +17663,100 @@ function renderSettingsPanel() {
   const ca = document.getElementById('settingsCostAll'); if(ca) ca.textContent = '$' + (S.costs?.total?.toFixed(4)||'0.00');
   // Version display
   const v = document.querySelector('#settingsView .settings-value'); if(v && v.textContent.startsWith('v')) v.textContent = 'v80';
+  // Profile / Account section
+  try { renderUserProfile(); } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+// PROFILE / ACCOUNT  (POST /api/profile, GET /api/profile/:uid)
+// Lets a signed-in user save who they are; persists to Firestore (free).
+// ════════════════════════════════════════════════════════════════
+function profileGetUid() {
+  try {
+    if (window.SHD_AUTH && SHD_AUTH.user && SHD_AUTH.user.uid) return SHD_AUTH.user.uid;
+  } catch(e) {}
+  return localStorage.getItem('shd_userid') || null;
+}
+function profileIsSignedIn() {
+  try { if (window.SHD_AUTH && SHD_AUTH.user) return true; } catch(e) {}
+  // Guests get a synthetic shd_userid but no Firebase user — treat as signed-out
+  // for the profile feature so we prompt them to sign in.
+  return false;
+}
+function profileSyncAvatar() {
+  var el = document.getElementById('profileAvatarEmoji');
+  var prev = document.getElementById('profileAvatarPreview');
+  if (el && prev) prev.textContent = (el.value || '').trim() || '👤';
+}
+function profileSyncGreeting() {
+  var name = (document.getElementById('profileDisplayName') || {}).value || '';
+  var g = document.getElementById('profileGreeting');
+  if (g) g.textContent = name.trim() ? ('Welcome, ' + name.trim() + '.') : 'Welcome.';
+}
+function renderUserProfile() {
+  var tier = (localStorage.getItem('shd_tier') || 'free').toUpperCase();
+  var badge = document.getElementById('profileTierBadge');
+  if (badge) badge.textContent = tier;
+  var signedIn = profileIsSignedIn();
+  var inEl = document.getElementById('profileSignedIn');
+  var outEl = document.getElementById('profileSignedOut');
+  if (inEl) inEl.style.display = signedIn ? 'block' : 'none';
+  if (outEl) outEl.style.display = signedIn ? 'none' : 'block';
+  if (!signedIn) return;
+  var uid = profileGetUid();
+  if (!uid) return;
+  fetch('/api/profile/' + encodeURIComponent(uid))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = (d && d.profile) || {};
+      var dn = document.getElementById('profileDisplayName');
+      var em = document.getElementById('profileAvatarEmoji');
+      var bio = document.getElementById('profileBio');
+      var goal = document.getElementById('profileGoal');
+      // Prefill display name from the Firebase account if none saved yet.
+      var fbName = '';
+      try { fbName = (SHD_AUTH.user && SHD_AUTH.user.displayName) || ''; } catch(e) {}
+      if (dn) dn.value = p.displayName || fbName || '';
+      if (em) em.value = p.avatarEmoji || '👤';
+      if (bio) bio.value = p.bio || '';
+      if (goal) goal.value = p.goal || '';
+      profileSyncAvatar();
+      profileSyncGreeting();
+    })
+    .catch(function(){ /* offline — leave fields as-is */ });
+}
+function saveUserProfile() {
+  var uid = profileGetUid();
+  var msg = document.getElementById('profileSaveMsg');
+  if (!uid) { if (msg) { msg.textContent = 'Sign in to save.'; msg.style.color = 'var(--warning)'; } return; }
+  var payload = {
+    uid: uid,
+    displayName: ((document.getElementById('profileDisplayName')||{}).value || '').trim(),
+    bio: ((document.getElementById('profileBio')||{}).value || '').trim(),
+    goal: ((document.getElementById('profileGoal')||{}).value || '').trim(),
+    avatarEmoji: ((document.getElementById('profileAvatarEmoji')||{}).value || '').trim() || '👤'
+  };
+  var btn = document.getElementById('profileSaveBtn');
+  if (btn) btn.disabled = true;
+  if (msg) { msg.textContent = 'Saving…'; msg.style.color = 'var(--text-muted)'; }
+  fetch('/api/profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.ok) {
+        if (msg) { msg.textContent = '✓ Saved'; msg.style.color = 'var(--accent)'; }
+        try { if (payload.displayName) localStorage.setItem('shd_displayName', payload.displayName); } catch(e) {}
+        profileSyncGreeting();
+        if (typeof notify === 'function') notify('Profile saved');
+      } else {
+        if (msg) { msg.textContent = 'Save failed'; msg.style.color = 'var(--danger)'; }
+      }
+    })
+    .catch(function(){ if (msg) { msg.textContent = 'Network error'; msg.style.color = 'var(--danger)'; } })
+    .then(function(){ if (btn) btn.disabled = false; });
 }
 
 async function pingAgentEndpoint(name, url) {

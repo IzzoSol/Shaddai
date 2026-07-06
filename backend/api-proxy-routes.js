@@ -27,6 +27,49 @@ const HELIUS_KEY = process.env.HELIUS_API_KEY || '';
 const DEFAULT_OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
 const OLLAMA_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes — LLM generation can be slow
 
+// ── CREDIT ENFORCEMENT (ZEROX+NEXUS) ─────────────────────────────────────────
+// Hard-charges a user's credit balance for an EXPENSIVE action BEFORE it runs.
+// Previously these handlers ran the costly op for free (metering was cosmetic).
+//
+//   returns true  → request was BLOCKED. A 402 has ALREADY been sent; the caller
+//                   MUST `return` immediately and NOT run the expensive op.
+//   returns false → proceed (charged OK, BYOK-free, or metering unavailable).
+//
+// Non-breaking by design: if credit-meter/costs are missing or throw, we degrade
+// to allow (never crash a handler on a billing hiccup). BYOK requests are free —
+// detected the same way demo-limit does, plus an explicit body.apiKey (the BYOK
+// path several media handlers already accept).
+const _demoLimit = require('./demo-limit');
+function _isByok(req) {
+  try {
+    if (_demoLimit.hasBYOK(req)) return true;
+  } catch (_) {}
+  const b = req && req.body;
+  return !!(b && typeof b.apiKey === 'string' && b.apiKey.trim().length >= 8);
+}
+async function enforceCredits(req, res, actionId) {
+  try {
+    const meter = require('./credit-meter');
+    if (!meter || typeof meter.debitForAction !== 'function') return false; // degrade → allow
+    const byok = _isByok(req);
+    const userId = (req && req.userId)
+      || (req && req.user && (req.user.id || req.user.userId))
+      || 'anon';
+    const r = await meter.debitForAction(userId, actionId, { byok });
+    if (r && r.blocked) {
+      res.status(402).json({
+        error: 'Out of credits — top up or add your own API key',
+        needsCredits: true,
+        action: actionId,
+        needed: r.needed,
+        remaining: r.remaining
+      });
+      return true; // blocked — caller must stop
+    }
+  } catch (_) { /* metering unavailable — never block the handler on a billing error */ }
+  return false;
+}
+
 // ─────────────────────────────────────────────────────────────
 // PERSISTENT FILE STORAGE — JSON-backed jobs, workflows, bids
 // ─────────────────────────────────────────────────────────────
@@ -1566,6 +1609,7 @@ router.post('/elevenlabs/tts', async (req, res) => {
   const key = process.env.ELEVENLABS_API_KEY || '';
   const { text, voice_id = 'pNInz6obpgDQGcFmaJgB' } = req.body;
   if (!key) return res.status(400).json({ error: 'No ElevenLabs API key' });
+  if (await enforceCredits(req, res, 'voice_tts')) return; // charge before synthesizing
   try {
     const r = await axios.post(
       `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`,
@@ -1888,6 +1932,7 @@ router.post('/image/generate', require('./demo-limit').middleware, async (req, r
   if (!prompt || !String(prompt).trim()) {
     return res.status(400).json({ error: 'prompt required' });
   }
+  if (await enforceCredits(req, res, 'image_generate')) return; // charge before generating
 
   // Opt-in premium path: NanoBanana / AceDataCloud (requires a key). Only used
   // when the caller explicitly asks for a nano-banana model AND a key is available.
@@ -3139,6 +3184,9 @@ router.post('/workflows/run', async (req, res) => {
   if (!workflowDef.steps || workflowDef.steps.length === 0) validationErrors.push('Workflow has no steps');
   if (validationErrors.length) return res.status(400).json({ error: 'Workflow validation failed', details: validationErrors });
 
+  // Charge for the workflow run BEFORE opening the SSE stream (402 must be plain JSON).
+  if (await enforceCredits(req, res, 'workflow_run')) return;
+
   const runId = `wf_${Date.now()}`;
   const results = [];
   let prevOutput = '';
@@ -3571,6 +3619,8 @@ router.post('/workflow/:id/run', async (req, res) => {
   });
   if (stepErrors.length) return res.status(400).json({ error: 'Workflow validation failed', details: stepErrors });
 
+  if (await enforceCredits(req, res, 'workflow_run')) return; // charge before background run
+
   wf.runs = (wf.runs || 0) + 1;
   wf.lastRun = new Date().toISOString();
   wf.status = 'running';
@@ -3946,7 +3996,9 @@ router.get('/persistence/health', async (req, res) => {
     let adminApps = 0; try { adminApps = (require('firebase-admin').apps || []).length; } catch (_) {}
     const store = require('./lib/fire-store');
     const ping = await store.ping();
-    res.json({ ok: true, ready: store.ready(), adminApps, diag, firestore: ping });
+    let writeBudget = null; try { writeBudget = store.stats(); } catch (_) {}
+    let beta = null; try { const bc = require('./beta-cap'); beta = { cap: bc.CAP, count: bc.count() }; } catch (_) {}
+    res.json({ ok: true, ready: store.ready(), adminApps, diag, firestore: ping, writeBudget, beta });
   } catch (e) {
     res.status(500).json({ ok: false, diag, error: String(e.message || e) });
   }
@@ -4689,6 +4741,7 @@ async function pollTask(taskId, apiKey, maxWait = 120000) {
 router.post('/image/generate-premium', async (req, res) => {
   const { prompt, model = 'nano-banana-2', aspect_ratio = '1:1', resolution = '1K', callback_url, apiKey } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  if (await enforceCredits(req, res, 'image_generate')) return; // charge before generating
   try {
     const body = { action: 'generate', prompt, model, aspect_ratio, resolution };
     if (callback_url) body.callback_url = callback_url;
@@ -7450,6 +7503,7 @@ router.post('/clip', async (req, res) => {
   if (!/^https?:\/\//.test(url) || String(url).startsWith('-')) {
     return res.status(400).json({ error: 'invalid url' });
   }
+  if (await enforceCredits(req, res, 'clip_generate')) return; // charge before clipping
 
   const ver = await probeYtdlp();
   if (!ver) return res.status(503).json({
@@ -7504,6 +7558,7 @@ router.post('/clip/transcribe', require('./demo-limit').middleware, async (req, 
   if (!/^https?:\/\//.test(url) || String(url).startsWith('-')) {
     return res.status(400).json({ error: 'invalid url' });
   }
+  if (await enforceCredits(req, res, 'clip_generate')) return; // charge before transcribing
 
   const GROQ_KEY_LOCAL = process.env.GROQ_API_KEY || '';
   if (!GROQ_KEY_LOCAL) return res.status(503).json({

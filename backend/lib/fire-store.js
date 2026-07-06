@@ -8,7 +8,21 @@
 // Reuses the firebase-admin app that auth-guard initializes (same service account).
 // ============================================================================
 let admin = null; try { admin = require('firebase-admin'); } catch (_) {}
-let _db = null, _warned = false;
+let _db = null, _warned = false, _capWarned = false;
+
+// ── Free-tier write budget ────────────────────────────────────────────────────
+// Firebase Spark (free) allows 20,000 Firestore writes/day. We stay comfortably
+// under that so we can NEVER hit a quota error or a surprise bill. When the daily
+// budget is spent, saveDoc() no-ops and callers keep using local JSON — data is
+// still safe in memory/disk that day; durable backups resume at UTC midnight.
+const DAILY_WRITE_CAP = Number(process.env.FIRESTORE_DAILY_WRITE_CAP) || 18000;
+let _writeDay = new Date().toISOString().slice(0, 10);
+let _writes = 0;
+function _rollWriteDay() {
+  const d = new Date().toISOString().slice(0, 10);
+  if (d !== _writeDay) { _writeDay = d; _writes = 0; _capWarned = false; }
+}
+function _budgetOk() { _rollWriteDay(); return _writes < DAILY_WRITE_CAP; }
 
 function _ensureApp() {
   if (!admin) return false;
@@ -41,8 +55,13 @@ function ready() { return !!db(); }
 // callers need not await). Wraps the payload so we can store arbitrary objects.
 async function saveDoc(collection, id, obj) {
   const d = db(); if (!d) return false;
+  if (!_budgetOk()) {
+    if (!_capWarned) { _capWarned = true; console.warn(`[fire-store] daily Firestore write budget (${DAILY_WRITE_CAP}) reached — pausing durable backups until UTC midnight; local JSON still active`); }
+    return false;
+  }
   try {
     await d.collection(collection).doc(id).set({ data: obj, _updatedAt: Date.now() });
+    _writes++;
     return true;
   } catch (e) {
     if (!_warned) { _warned = true; console.warn('[fire-store] save failed (will keep using local JSON):', e.message); }
@@ -70,4 +89,10 @@ async function ping() {
   }
 }
 
-module.exports = { ready, saveDoc, loadDoc, ping };
+// Usage snapshot for monitoring / the persistence health endpoint.
+function stats() {
+  _rollWriteDay();
+  return { ready: ready(), writesToday: _writes, dailyWriteCap: DAILY_WRITE_CAP, budgetLeft: Math.max(0, DAILY_WRITE_CAP - _writes), day: _writeDay };
+}
+
+module.exports = { ready, saveDoc, loadDoc, ping, stats };

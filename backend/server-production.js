@@ -563,22 +563,25 @@ app.get('/api/status', (req, res) => {
     return res.json(cached);
   }
 
+  // Defensive: any single failing metric used to 500 the whole endpoint. Wrap each
+  // sub-call so /api/status always returns something (used by uptime monitors).
+  const safe = (fn, fb) => { try { return fn(); } catch (_) { return fb; } };
   const status = {
     server: 'running',
-    agents: Object.entries(AGENTS).map(([key, agent]) => ({
+    agents: safe(() => Object.entries(AGENTS).map(([key, agent]) => ({
       name: agent.name,
       role: agent.role,
       status: 'available'
-    })),
-    executionStats: database.getStatistics(),
-    requestMetrics: requestTracker.getMetrics(),
-    cacheStats: cache.stats(),
-    websockets: wsConnections.size,
-    batchJobs: {
+    })), []),
+    executionStats: safe(() => database.getStatistics(), {}),
+    requestMetrics: safe(() => requestTracker.getMetrics(), {}),
+    cacheStats: safe(() => cache.stats(), {}),
+    websockets: safe(() => wsConnections.size, 0),
+    batchJobs: safe(() => ({
       queued: batchQueue.queue.length,
       processing: batchQueue.processing,
       total: batchQueue.jobs.size
-    }
+    }), {})
   };
 
   cache.set('status', status, 10000);
@@ -744,6 +747,8 @@ app.use('/api/chat', require('./lib/chat-routes'));                   // realm +
 app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
 app.use('/api/billing', require('./billing-routes').router);
+// User profiles — "who you are" account data, persisted free via Firestore (survives redeploys)
+try { app.use('/api/profile', require('./profile-routes')); } catch (e) { console.warn('[startup] profile-routes not mounted:', e.message); }
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
 // (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
 try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }

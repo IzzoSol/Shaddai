@@ -36,6 +36,35 @@ const PROCESSED_FILE = path.join(__dirname, 'data', 'stripe-processed.json');
 function loadProcessed() { try { return new Set(JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8'))); } catch (_) { return new Set(); } }
 function saveProcessed(set) { try { fs.writeFileSync(PROCESSED_FILE, JSON.stringify([...set].slice(-5000))); } catch (_) {} }
 
+// uid ↔ stripeCustomerId map — captured at checkout so LATER lifecycle events
+// (subscription.deleted / invoice.payment_succeeded) which carry only the Stripe
+// customer id can resolve back to our internal uid. Durable JSON backup; also
+// mirrored onto the live billing record so billing-service's own reverse lookup
+// resolves after this.
+const CUSTOMER_MAP_FILE = path.join(__dirname, 'data', 'stripe-customers.json');
+function loadCustomerMap() { try { return JSON.parse(fs.readFileSync(CUSTOMER_MAP_FILE, 'utf8')); } catch (_) { return {}; } }
+function saveCustomerMap(m) { try { fs.writeFileSync(CUSTOMER_MAP_FILE, JSON.stringify(m, null, 2)); } catch (_) {} }
+function mapCustomer(customerId, uid) {
+  if (!customerId || !uid || uid === 'guest') return;
+  const m = loadCustomerMap();
+  if (m[customerId] !== uid) { m[customerId] = uid; saveCustomerMap(m); }
+}
+function uidForCustomer(customerId) {
+  if (!customerId) return null;
+  const m = loadCustomerMap();
+  return m[customerId] || null;
+}
+// Mirror the stripe customer id onto the (live) billing record so billing-service's
+// own stripeCustomerId reverse lookup + reset logic works. getCustomer returns the
+// live object reference, so this mutation sticks.
+function linkBillingRecord(uid, customerId) {
+  if (!uid || !customerId || !billing) return;
+  try {
+    const c = billing.getCustomer(uid);
+    if (c && c.stripeCustomerId !== customerId) c.stripeCustomerId = customerId;
+  } catch (_) {}
+}
+
 // client_reference_id is "uid-item" (Firebase uids have no hyphen; item may contain underscores).
 function parseRef(ref) {
   if (!ref) return {};
@@ -69,6 +98,8 @@ module.exports = async function stripeWebhook(req, res) {
       if (uid && uid !== 'guest' && billing) {
         const email = (s.customer_details && s.customer_details.email) || undefined;
         try { await billing.getOrCreateCustomer(uid, email); } catch (_) {}
+        // Capture the Stripe customer id so later subscription/invoice events resolve to this uid.
+        if (s.customer) { mapCustomer(s.customer, uid); linkBillingRecord(uid, s.customer); }
         const g = GRANTS[item];
         if (g) {
           if (g.tier)    { try { await billing.updateSubscription(uid, g.tier); } catch (e) { console.warn('[stripe-webhook] tier grant failed:', e.message); } }
@@ -81,6 +112,52 @@ module.exports = async function stripeWebhook(req, res) {
         console.warn('[stripe-webhook] no uid on session ' + s.id + ' — cannot attribute (guest checkout?)');
       }
       processed.add(s.id);
+      saveProcessed(processed);
+    }
+
+    // ── SUBSCRIPTION LIFECYCLE ────────────────────────────────────────────────
+    // Churned/renewed users must not keep a paid tier forever. These events carry
+    // only the Stripe customer id, so we resolve the uid from the checkout-time map.
+    else if (
+      event.type === 'customer.subscription.deleted' ||
+      event.type === 'invoice.payment_succeeded' ||
+      event.type === 'customer.subscription.updated'
+    ) {
+      const obj = event.data.object || {};
+      const customerId = obj.customer;
+      const uid = uidForCustomer(customerId);
+
+      // Idempotency — skip if we've already handled this exact event id.
+      const processed = loadProcessed();
+      if (processed.has(event.id)) return res.json({ received: true, duplicate: true });
+
+      if (!uid || !billing) {
+        console.warn(`[stripe-webhook] ${event.type} for customer ${customerId} — no uid mapping (checkout predates map?)`);
+      } else {
+        // Ensure billing-service's own reverse lookup + reset logic can resolve this uid.
+        linkBillingRecord(uid, customerId);
+
+        if (event.type === 'customer.subscription.deleted') {
+          // Churned → downgrade to free.
+          try {
+            await billing.updateSubscription(uid, 'free');
+            console.log(`[stripe-webhook] subscription cancelled — downgraded ${uid} to free`);
+          } catch (e) { console.warn('[stripe-webhook] downgrade failed:', e.message); }
+        } else if (event.type === 'invoice.payment_succeeded') {
+          // Successful renewal → reset monthly credits for the current tier.
+          // billing.handleWebhook performs the reset AND persists it (no public setter exists),
+          // resolving the uid via the stripeCustomerId we just linked above.
+          try {
+            if (typeof billing.handleWebhook === 'function') await billing.handleWebhook(event);
+            console.log(`[stripe-webhook] invoice paid — reset monthly credits for ${uid}`);
+          } catch (e) { console.warn('[stripe-webhook] credit reset failed:', e.message); }
+        } else if (event.type === 'customer.subscription.updated') {
+          // Tier/status change from Stripe (plan swap, past_due, etc.) — let billing sync it.
+          try { if (typeof billing.handleWebhook === 'function') await billing.handleWebhook(event); }
+          catch (e) { console.warn('[stripe-webhook] subscription update sync failed:', e.message); }
+        }
+      }
+      processed.add(event.id);
       saveProcessed(processed);
     }
     res.json({ received: true });

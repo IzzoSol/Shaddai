@@ -30,7 +30,10 @@ router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
     const errs = core.validateBuild(build);
     if (errs.length) return res.status(400).json({ ok: false, error: 'invalid build', details: errs });
 
-    if (!hf.keys().length) return res.status(503).json({ ok: false, error: 'No HF token configured. Set HF_TOKENS env (or backend/data/runtime-keys.json). Forge needs a real Hugging Face token — no mock.' });
+    if (!hf.keys().length) {
+      console.warn('[forge] No HF token configured. Set HF_TOKENS env (or backend/data/runtime-keys.json). Forge needs a real Hugging Face token — no mock.');
+      return res.status(503).json({ ok: false, error: 'Image generation is temporarily unavailable — please try again shortly.' });
+    }
 
     ensureDirs();
     const state = loadState();

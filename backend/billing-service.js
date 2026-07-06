@@ -897,9 +897,13 @@ async function handleWebhook(event) {
         uid => customerDatabase[uid].stripeCustomerId === inv.customer
       );
       if (userId) {
-        // Reset monthly credits on successful payment (new billing cycle)
+        // Reset monthly credits on successful payment (new billing cycle).
+        // Zero the balance first, then credit the full monthly allocation via
+        // credit() — which both sets the balance AND records the ledger entry.
+        // (Previously we assigned creditsRemaining AND called credit(), which
+        //  double-granted the allocation, e.g. 5000 → 10000.)
         const tc = TIER_CONFIG[customerDatabase[userId].tier] || TIER_CONFIG.free;
-        customerDatabase[userId].creditsRemaining = tc.monthlyCredits;
+        customerDatabase[userId].creditsRemaining = 0;
         customerDatabase[userId].cycleStart       = new Date().toISOString();
         customerDatabase[userId].updatedAt        = new Date().toISOString();
         credit(userId, tc.monthlyCredits, `monthly_reset:invoice:${inv.id}`);
