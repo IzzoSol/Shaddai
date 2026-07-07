@@ -859,7 +859,10 @@ window.__worldBuilt = false;
   for(let f=0; f<3; f++){ const fl=new THREE.Mesh(new THREE.ConeGeometry(0.55-f*0.12,1.8-f*0.3,10), (f===1)?new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false}):flameMat);
     fl.position.set(fpX+(f-1)*0.7, 1.7-f*0.15, fpZ+1.0); grp.add(fl); flames.push(fl); }
   // warm firelight (the ember ambience for the whole nook)
-  const fire=new THREE.PointLight(EMBER, 1.4, 46, 2.0); fire.position.set(fpX,3,fpZ+2); grp.add(fire);
+  const fire=new THREE.PointLight(EMBER, 1.4, 78, 1.6); fire.position.set(fpX,3,fpZ+2); grp.add(fire);
+  // extra warm fill so the library reads cozy-lit, not too dim
+  const libFill=new THREE.PointLight(0xffd9a0, 1.5, 64, 1.7); libFill.position.set(fpX, 7.5, fpZ+8); grp.add(libFill);
+  const libFill2=new THREE.PointLight(0xffe6c0, 1.0, 50, 1.8); libFill2.position.set(fpX, 6, fpZ+18); grp.add(libFill2);
 
   // ── two AISLES of bookcases forming a walkable corridor (behind the existing nook) ──
   function bookcase(px,pz,rotY){
@@ -881,12 +884,12 @@ window.__worldBuilt = false;
   // a couple of aisle lanterns (dim purple wisps)
   const lanterns=[];
   for(let a=-1;a<=1;a+=2){ const lm=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12), new THREE.MeshBasicMaterial({color:PURPLE})); lm.position.set(a*3,5.5,-16); grp.add(lm);
-    const ll=new THREE.PointLight(PURPLE,0.4,18,2); ll.position.copy(lm.position); grp.add(ll); lanterns.push({lm,ll,ph:a}); }
+    const ll=new THREE.PointLight(PURPLE,1.1,34,2); ll.position.copy(lm.position); grp.add(ll); lanterns.push({lm,ll,ph:a}); }
 
   window._libraryEmberFX={ update:function(t,dt){
     // fire flicker — irregular warm pulse
     const fk=0.72+0.28*Math.sin(t*11.0)*Math.sin(t*6.3)+0.12*Math.sin(t*23.0);
-    fire.intensity=1.1+0.6*fk; fire.color.setHSL(0.045+0.02*fk, 0.9, 0.5);
+    fire.intensity=2.6+1.1*fk; fire.color.setHSL(0.05+0.02*fk, 0.85, 0.55);
     embers.material.opacity=0.4+0.2*fk;
     for(let f=0; f<flames.length; f++){ const fl=flames[f]; fl.scale.y=0.8+0.5*Math.abs(Math.sin(t*(9+f*2)+f))+0.2*fk; fl.scale.x=0.85+0.2*Math.sin(t*(7+f)); fl.material.opacity=0.65+0.3*fk; }
     for(let i=0;i<lanterns.length;i++){ lanterns[i].ll.intensity=0.35+0.12*Math.sin(t*3.0+lanterns[i].ph); }

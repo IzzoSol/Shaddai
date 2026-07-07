@@ -355,5 +355,23 @@
   /* simple XSS escape */
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
+<script>
+/* Hide / Show toggle for each library section (Books · Reference · Words). */
+(function(){
+  ['books-sect','ref-sect','words-sect'].forEach(function(id){
+    var sect=document.getElementById(id); if(!sect) return;
+    var head=sect.querySelector('.head'); if(!head) return;
+    var body=Array.prototype.slice.call(sect.children).filter(function(el){ return !el.classList.contains('head'); });
+    var btn=document.createElement('button');
+    btn.textContent='− Hide';
+    btn.style.cssText='margin-left:14px;font:600 10px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;background:transparent;border:1px solid var(--gold,#9c7c26);color:var(--gold,#9c7c26);border-radius:4px;padding:4px 11px;cursor:pointer;transition:.2s';
+    var hidden=false;
+    btn.onmouseenter=function(){ btn.style.background='var(--gold,#9c7c26)'; btn.style.color='var(--paper,#ece4d3)'; };
+    btn.onmouseleave=function(){ btn.style.background='transparent'; btn.style.color='var(--gold,#9c7c26)'; };
+    btn.onclick=function(e){ e.stopPropagation(); hidden=!hidden; body.forEach(function(el){ el.style.display=hidden?'none':''; }); btn.textContent=hidden?'+ Show':'− Hide'; };
+    head.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>
