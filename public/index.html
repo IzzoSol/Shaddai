@@ -3777,35 +3777,35 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 
 <nav id="mainNav">
   <button class="nav-btn active" onclick="showView('dash')">🎛️ Dashboard</button>
-  <button class="nav-btn" onclick="showView('agents')">🧠 Agents</button>
-  <button class="nav-btn" onclick="showView('workflow')">🔀 Workflow</button>
-  <button class="nav-btn" onclick="showView('pipeline')">📊 Markets</button>
+  <button class="nav-btn" onclick="showView('agents')"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
+  <button class="nav-btn" onclick="showView('workflow')"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
+  <button class="nav-btn" onclick="showView('pipeline')"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
   <button class="nav-btn" onclick="showView('office')" style="color:#ffd700;font-weight:700">🏢 Office</button>
-  <button class="nav-btn" onclick="showView('chat')">💬 Chat</button>
+  <button class="nav-btn" onclick="showView('chat')"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <button class="nav-btn" onclick="showView('library-notes')">📖 Lib & Notes</button>
   <button class="nav-btn" onclick="showView('projects')">🗂️ Projects</button>
   <button class="nav-btn" onclick="showView('apis')">🔌 APIs</button>
   <button class="nav-btn" onclick="showView('social')">📡 Social</button>
-  <button class="nav-btn" onclick="showView('media')">🎬 Media</button>
-  <button class="nav-btn" onclick="showView('automation')">⚙️ Automation</button>
-  <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700">⚡ Skills</button>
+  <button class="nav-btn" onclick="showView('media')"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
+  <button class="nav-btn" onclick="showView('automation')"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
+  <button class="nav-btn" onclick="showView('skills')" style="color:#ffd700;font-weight:700"><img src="/api/forge/art/arch-psionic.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(255,215,0,0.4)"> Skills</button>
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
-  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444">🛡️ Security</button>
-  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700">🏛️ Rooms</button>
-  <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700">📈 Sentiment</button>
+  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
+  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700"><img src="/api/forge/art/module-gallery.png" alt="" onerror="this.outerHTML='🏛️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(255,123,61,0.4)"> Rooms</button>
+  <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <!-- Commerce tab removed -->
   <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
-  <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent">⬡ The Forge</button>
-  <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP">⚡ AURA</button>
+  <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700" title="Plans & pricing">◈ Plans</button>
-  <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World">⬡ SHADDAI WORLD</button>
+  <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World"><img src="/api/forge/art/hero-light-cycle.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 6px rgba(0,229,255,0.55)"> SHADDAI WORLD</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
 
