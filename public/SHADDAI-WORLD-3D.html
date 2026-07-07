@@ -767,8 +767,8 @@ window.__worldBuilt = false;
     const frame=new THREE.Mesh(new THREE.PlaneGeometry(9.5,6.1), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
     frame.position.set(x,panelY,PADZ-0.05); frame.visible=false; root.add(frame);
     // floating fruit beside the pad (off the walking line, toward +z)
-    const fruit=makeFruit(ch.kind, ch.c); fruit.position.set(x, 2.6, PADZ+PAD_R+2.4); root.add(fruit);
-    pads.push({ disc, ring, beam, plight, panel, frame, panelY, fruit, col, x, activated:false, pReveal:0 });
+    const fruit=makeFruit(ch.kind, ch.c); fruit.position.set(x, 2.6, PADZ+PAD_R+2.4); fruit.visible=false; root.add(fruit);
+    pads.push({ disc, ring, beam, plight, panel, frame, panelY, fruit, col, x, activated:false, pReveal:0, learned:false });
     // bridge from pad i → pad i+1 (grows from this pad; stays lit once unlocked)
     if(i<CH.length-1){
       const grp=new THREE.Group(); grp.position.set(x+PAD_R,0.13,PADZ);   // pivot at edge of this pad
@@ -781,10 +781,12 @@ window.__worldBuilt = false;
   }
 
   const _v=new THREE.Vector3();
+  let _curOn=-1;   // pad the player is currently standing on (for the (L) Learn key)
   window._chakraFX={ update:function(t,dt,pp){
     // which pad is the player standing on?
     let on=-1;
     if(pp){ for(let i=0;i<pads.length;i++){ const dx=pp.x-pads[i].x, dz=pp.z-PADZ; if(dx*dx+dz*dz<PAD_R2){ on=i; break; } } }
+    _curOn=on;
     for(let i=0;i<pads.length;i++){
       const p=pads[i], pulse=0.5+0.5*Math.sin(t*2.0+i*0.7);
       // pad glow: brighter once permanently activated
@@ -796,7 +798,9 @@ window.__worldBuilt = false;
       p.beam.material.opacity = 0.10*p.pReveal*(0.7+0.3*pulse);
       p.plight.intensity = 0.9*p.pReveal;
       // fruit bob + slow spin
-      p.fruit.position.y = 2.6 + Math.sin(t*1.3+i)*0.35; p.fruit.rotation.y = t*0.5 + i;
+      // (L) Learn: the healing fruit only appears after the player presses L on this pad.
+      p.fruit.visible = p.learned;
+      if(p.learned){ p.fruit.position.y = 2.6 + Math.sin(t*1.3+i)*0.35; p.fruit.rotation.y = t*0.5 + i; }
       // info panel: fade in only while standing on THIS pad; billboard when visible
       const panelTarget = (i===on)?1:0;
       const cur = p.panel.material.opacity;
@@ -816,6 +820,8 @@ window.__worldBuilt = false;
         b.strip.material.opacity = 0.55*b.reveal*(0.75+0.25*Math.sin(t*3.0+i)); }
     }
   }};
+  // (L) Learn — reveal the healing fruit for the chakra you're standing on.
+  addEventListener('keydown', function(e){ if((e.key==='l'||e.key==='L') && _curOn>=0) pads[_curOn].learned=true; });
 })();
 
 // ════════════════════════════════════════════════════════════════════════════════════════
