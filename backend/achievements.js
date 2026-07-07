@@ -60,10 +60,26 @@ function _writeSync() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2));
     _dirty = false;
+    // Mirror to Firestore so achievements survive Render redeploys (best-effort).
+    try { require('./lib/fire-store').saveDoc('shaddai_achievements', 'state', state); } catch (_) {}
   } catch (err) {
     console.error('[achievements] save failed:', err && err.message);
   }
 }
+
+// Restore achievements from the Firestore backup after a redeploy wiped local JSON.
+async function hydrateFromFirestore() {
+  try {
+    const store = require('./lib/fire-store');
+    if (!store.ready()) return;
+    const doc = await store.loadDoc('shaddai_achievements', 'state');
+    if (doc && doc.subjects) {
+      for (const [k, v] of Object.entries(doc.subjects)) if (!state.subjects[k]) state.subjects[k] = v;
+      _writeSync();
+    }
+  } catch (_) {}
+}
+setTimeout(() => { hydrateFromFirestore().catch(() => {}); }, 2200);
 
 function _save() {
   _dirty = true;

@@ -13,12 +13,27 @@ const json = express.json();
 const GAL = path.join(__dirname, 'data', 'gallery.json');
 const readGal = () => { try { const d = JSON.parse(fs.readFileSync(GAL, 'utf8')); if (!Array.isArray(d.items)) d.items = []; return d; } catch (e) { return { items: [] }; } };
 // atomic write: write a tmp file then rename over the target (safe under concurrent readers).
-const writeGal = (d) => { try { const tmp = GAL + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(d, null, 2)); fs.renameSync(tmp, GAL); } catch (e) {} };
+const writeGal = (d) => {
+  try {
+    const tmp = GAL + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(d, null, 2)); fs.renameSync(tmp, GAL);
+    // Mirror to Firestore so the user gallery survives Render redeploys (best-effort).
+    try { require('./lib/fire-store').saveDoc('shaddai_gallery_all', 'items', (d.items || []).slice(0, 600)); } catch (_) {}
+  } catch (e) {}
+};
+// Restore the gallery from Firestore after a redeploy wiped local JSON (only if local is empty).
+setTimeout(async () => {
+  try {
+    const store = require('./lib/fire-store');
+    if (!store.ready || !store.ready()) return;
+    const items = await store.loadDoc('shaddai_gallery_all', 'items');
+    if (Array.isArray(items) && items.length) { const db = readGal(); if (!db.items.length) { db.items = items; writeGal(db); } }
+  } catch (_) {}
+}, 2400);
 
-const TYPES = ['image', 'music', 'clip', 'article', 'model', 'other'];
+const TYPES = ['image', 'music', 'clip', 'article', 'model', 'achievement', 'other'];
 const AGENTS = ['SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'QUILL', 'TURTLE', 'PIKADON', 'OPERATOR'];
 const CAP = 500;   // max stored items
-const pub = (it) => ({ id: it.id, user: it.user, agent: it.agent, type: it.type, title: it.title, url: it.url, meta: it.meta || {}, createdAt: it.createdAt, listed: !!it.listed, price: it.price != null ? it.price : null });
+const pub = (it) => ({ id: it.id, user: it.user, agent: it.agent, type: it.type, title: it.title, url: it.url, meta: it.meta || {}, createdAt: it.createdAt, listed: !!it.listed, price: it.price != null ? it.price : null, minted: !!it.minted });
 
 // ── SAVE — an agent's creation lands in its gallery (or the dashboard / OPERATOR) ──
 router.post('/api/gallery/save', json, (req, res) => {
@@ -40,6 +55,7 @@ router.post('/api/gallery/save', json, (req, res) => {
     createdAt: Date.now(),
     listed: false,
     price: null,
+    minted: false,   // NFT hook — achieved/created items can be minted later
   };
   db.items.unshift(item);              // newest first
   db.items = db.items.slice(0, CAP);   // cap 500
@@ -103,6 +119,18 @@ router.delete('/api/gallery/:id', (req, res) => {
   db.items.splice(idx, 1);
   writeGal(db);
   res.json({ ok: true, deleted: req.params.id });
+});
+
+// ── MINT — flag an achieved/created item as minted (NFT hook for later) ──
+router.post('/api/gallery/:id/mint', json, (req, res) => {
+  const user = String((req.body && req.body.user) || '').trim();
+  const db = readGal();
+  const item = db.items.find(it => it.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'item not found' });
+  if (!user || item.user !== user) return res.status(403).json({ error: 'only the owner can mint this item' });
+  item.minted = true; item.mintedAt = Date.now();
+  writeGal(db);
+  res.json({ ok: true, item: pub(item) });
 });
 
 module.exports = router;
