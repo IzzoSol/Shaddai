@@ -1419,6 +1419,56 @@ const RARITY_CONFIG = {
   epic:{crown:0xb06aff,speed:1.3}, legendary:{crown:0xffad2e,speed:1.6}, mythic:{crown:0xffffff,speed:2.0},
 };
 
+// ── TURTLE: procedural WALK / IDLE for the static single-mesh agent bodies ──────────────────
+// The 7 council GLBs (/assets/agents/<CODE>.glb) are single meshes with 0 bones, so they can't
+// play skeletal walk cycles — before this they just stood with a tiny breathing bob (and would
+// glide with no body motion if ever moved). This adds bones-free whole-body animation (same
+// technique as the XT Adventure standees): a |sin| step-bob + forward lean + side-sway + a
+// step-cadence yaw rock while moving (facing the travel direction), and a gentle breathing bob +
+// occasional slow look-around while idle. Movement is AUTO-DETECTED from the per-frame position
+// delta, so agents that STAND in their lounges (owner decision — no wander system re-enabled)
+// get a lively idle, and any body that ever moves gets a real walk cycle. It NEVER touches a
+// character driven by a real AnimationMixer (guarded via userData.__hasMixer) — the player hero
+// keeps its baked Walk/Run/Idle clips + procedural-bone overlay untouched. Zero per-frame alloc:
+// all state lives on the agentSprites entry, math uses scalars only.
+function _animateAgentBody(s, t, dt){
+  const b = s.body; if(!b) return;
+  if(b.userData && b.userData.__hasMixer) return;         // real baked-clip rig → leave it alone
+  const baseY = s.bodyBaseY || 0;
+  if(s._baseYaw === undefined){                            // lazy init once the body has streamed in
+    s._baseYaw = b.rotation.y; s._px = b.position.x; s._pz = b.position.z;
+    s._wph = s.bob || 0; s._spd = 0; s._lean = 0;
+    s._lookT = 3 + Math.random()*6; s._lookYaw = 0;
+  }
+  // measured planar speed (units/sec), low-pass smoothed so a single jumpy frame can't jerk the pose
+  const dx = b.position.x - s._px, dz = b.position.z - s._pz;
+  s._px = b.position.x; s._pz = b.position.z;
+  const inst = (dt > 1e-4) ? Math.hypot(dx, dz) / dt : 0;
+  s._spd += (inst - s._spd) * Math.min(1, dt * 8);
+  if(s._spd > 0.25){
+    // ── WALKING: bob + lean + sway + step-yaw, all amplitude-scaled by speed, facing travel dir ──
+    const spd = Math.min(s._spd, 9), k = Math.min(spd / 9, 1);
+    s._wph += dt * (4.5 + spd * 0.55);                     // step cadence rises with speed
+    b.position.y = baseY + Math.abs(Math.sin(s._wph)) * (0.10 + k * 0.22);
+    const targetYaw = Math.atan2(dx, dz);                  // model forward convention = player avatar's
+    b.rotation.y = _lerpAngle(b.rotation.y, targetYaw, 1 - Math.exp(-9 * dt));
+    const lean = k * 0.12;
+    s._lean += (lean - s._lean) * Math.min(1, dt * 6);
+    b.rotation.x = s._lean + Math.sin(s._wph * 2) * 0.015; // forward lean + faint bounce
+    b.rotation.z = Math.sin(s._wph) * (0.05 + k * 0.06);   // side-to-side sway
+    s._lookT = 2 + Math.random() * 5;                      // hold off idle look-around while moving
+  } else {
+    // ── IDLE: breathing bob + occasional slow turn/look, easing posture back to neutral ──
+    b.position.y = baseY + Math.sin(t * 0.8 + s.bob) * 0.05 + Math.sin(t * 1.7 + s.bob) * 0.012;
+    s._lean += (0 - s._lean) * Math.min(1, dt * 4);
+    b.rotation.x = s._lean + Math.sin(t * 0.6 + s.bob) * 0.01;   // subtle chest rise/fall
+    b.rotation.z = _lerpAngle(b.rotation.z, 0, 1 - Math.exp(-4 * dt));
+    s._lookT -= dt;
+    if(s._lookT <= 0){ s._lookYaw = (Math.random() - 0.5) * 1.1; s._lookT = 5 + Math.random() * 7; }
+    b.rotation.y = _lerpAngle(b.rotation.y, s._baseYaw + s._lookYaw, 1 - Math.exp(-1.6 * dt));
+  }
+}
+
 world.placeAgents = function(){
   // clear old (remove every tracked object so re-placing after a removal is clean)
   agentSprites.forEach(s=>{ [s.sprite,s.frame,s.ring,s.beam,s.crown,s.body,s.aura&&s.aura.points].forEach(o=>{ if(o) scene.remove(o); }); });
@@ -2966,8 +3016,8 @@ function animate(){
     const _yb = s.yBase || 0;   // SHADDAI floats on his sky-temple island; everyone else at 0
     s.sprite.position.y = _yb + 4.0 + Math.sin(t*1.0 + s.bob)*0.12;
     s.frame.position.y = s.sprite.position.y;
-    // 3D body: stands still (faces center), only a subtle breathing bob
-    if(s.body){ s.body.position.y = (s.bodyBaseY||0) + Math.sin(t*0.8 + s.bob)*0.05; }
+    // 3D body: bones-free procedural WALK when it moves / breathing IDLE + look-around when it stands
+    if(s.body) _animateAgentBody(s, t, dt);
     // Distance-cull aura particles: skip update for agents beyond the tier's cull radius (cheap visibility guard)
     const _sd2=(s.x-playerPos.x)**2+(s.z-playerPos.z)**2, _cr=_Q.tiers[_Q.tier].cullR;
     if(s.aura && _sd2 < _cr*_cr) s.aura.update(t, s.auraSpeed);
