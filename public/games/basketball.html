@@ -121,7 +121,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   </div>
 </div>
 <div id="poss"></div>
-<div id="controls">WASD=MOVE &nbsp; SHIFT=SPRINT &nbsp; SPACE=JUMP &nbsp; HOLD J/MOUSE=SHOOT &nbsp; F=STEAL &nbsp; Q/E=CROSSOVER &nbsp; T=AUTO DEMO</div>
+<div id="controls">MODE A · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=SHOOT(hold/release) / DUNK / JUMP · ↑+SPACE=BLOCK · SPACE=STEAL(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO</div>
 <div id="msg"></div>
 <div id="auto-badge">⚡ AUTO DEMO</div>
 <div id="basket-flash"></div>
@@ -131,10 +131,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   <h1>NEON HOOPS</h1>
   <div class="sub">1v1 · SHADDAI ARENA</div>
   <div class="controls-box">
-    WASD / ARROWS &nbsp;→&nbsp; Move (camera-relative)<br>
-    SHIFT &nbsp;→&nbsp; Sprint &nbsp;&nbsp; SPACE &nbsp;→&nbsp; Jump<br>
-    HOLD J or MOUSE &nbsp;→&nbsp; Charge shot · Release to shoot<br>
-    F &nbsp;→&nbsp; Steal / Contest &nbsp;&nbsp; Q / E &nbsp;→&nbsp; Crossover<br>
+    WASD / ARROWS &nbsp;→&nbsp; Move (camera-relative) &nbsp;&nbsp; SHIFT &nbsp;→&nbsp; Sprint<br>
+    <b style="color:#37e6ff">MODE A (default):</b> SPACE = hold to charge, release to SHOOT · near rim = DUNK<br>
+    On defense: SPACE = STEAL &nbsp;&nbsp; ↑ + SPACE = BLOCK (jump to contest)<br>
+    <b style="color:#ff4d94">MODE B:</b> SPACE = Dribble/Jump &nbsp;&nbsp; S = SHOOT &nbsp;&nbsp; F = Steal<br>
+    C &nbsp;→&nbsp; Switch control scheme &nbsp;&nbsp; H &nbsp;→&nbsp; Home/Away court &nbsp;&nbsp; Q / E &nbsp;→&nbsp; Crossover<br>
     T &nbsp;→&nbsp; Toggle AUTO DEMO mode (agents play themselves)
   </div>
   <div class="btn-row">
@@ -408,6 +409,50 @@ function buildCourt() {
 buildCourt();
 
 // ─────────────────────────────────────────────────────────────────
+// COURT FLOOR TEXTURES (generated jpgs) — Home / Away toggle (Fix 4)
+// Loaded via THREE.TextureLoader, sRGB, mapped 1:1 onto the court floor plane
+// (PlaneGeometry is COURT_W×COURT_D so repeat(1,1) fits without distortion).
+// Falls back gracefully to the procedural canvas floor if an image fails.
+// ─────────────────────────────────────────────────────────────────
+const _fallbackFloorTex = courtTex;            // procedural canvas texture (already on matFloor)
+const COURT_TEX_URLS = { home: '/assets/court-home.jpg', away: '/assets/court-away.jpg' };
+const _courtTexCache  = {};
+let courtSide = 'home';
+const _texLoader = new THREE.TextureLoader();
+
+function _setFloorMap(tex) {
+  matFloor.map = tex;
+  matFloor.needsUpdate = true;
+}
+function applyCourtTexture(side) {
+  if (_courtTexCache[side]) { _setFloorMap(_courtTexCache[side]); return; }
+  _texLoader.load(
+    COURT_TEX_URLS[side],
+    tex => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;  // fit whole image to court, no tiling
+      tex.repeat.set(1, 1);
+      try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch(e) {}
+      _courtTexCache[side] = tex;
+      // Only apply if this side is still the selected one
+      if (courtSide === side) _setFloorMap(tex);
+    },
+    undefined,
+    err => {
+      console.warn(`[COURT] Failed to load ${COURT_TEX_URLS[side]} — keeping fallback floor.`, err && err.message);
+      if (courtSide === side) _setFloorMap(_fallbackFloorTex);
+    }
+  );
+}
+function toggleCourtSide() {
+  courtSide = (courtSide === 'home') ? 'away' : 'home';
+  applyCourtTexture(courtSide);
+  showMsg(courtSide === 'home' ? 'HOME COURT' : 'AWAY COURT', '#ffd700', 1.0);
+}
+// Load the default (home) court texture over the fallback floor at startup
+applyCourtTexture('home');
+
+// ─────────────────────────────────────────────────────────────────
 // HOOP (enhanced — glowing rim, better backboard, animated net)
 // ─────────────────────────────────────────────────────────────────
 const hoopGroup = new THREE.Group();
@@ -576,7 +621,7 @@ const players = [
     stunTimer: 0,
     dunking: false, dunkTimer: 0, slammed: false,
     // Auto-AI state (used when game.autoMode = true)
-    autoState: 'guard', autoShootTimer: 0, autoDriveTimer: 0,
+    autoState: 'guard', autoShootTimer: 0, autoDriveTimer: 0, shotCooldown: 0,
   },
   {
     team: 1, isUser: false,
@@ -586,7 +631,7 @@ const players = [
     onGround: true, hasBall: false,
     speed: PLAYER_SPEED * 0.88,
     state: 'guard', facingAngle: Math.PI,
-    stealTimer: 0, shootTimer: 0, driveTimer: 0,
+    stealTimer: 0, shootTimer: 0, driveTimer: 0, shotCooldown: 0,
     crossoverTimer: 0, stunTimer: 0,
     dunking: false, dunkTimer: 0, slammed: false,
   }
@@ -627,10 +672,15 @@ const glbLoaded  = [false, false];
 // Input
 const keys = {};
 let mouseDown = false;
+// CONTROL MODES (Fix 3): 0 = Mode A (context-sensitive SPACE), 1 = Mode B (SPACE=dribble, S=shoot)
+// Toggle with C. Steal(F) and Shoot(J/mouse) work as fallbacks in both modes.
+let controlMode = 0;
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (!['F5','F11','F12'].includes(e.code)) e.preventDefault?.();
   if (e.code === 'KeyT' && game.running) toggleAutoMode();
+  if (e.code === 'KeyC') toggleControlMode();   // switch control scheme A/B
+  if (e.code === 'KeyH') toggleCourtSide();      // swap Home/Away court texture
 }, { passive: false });
 window.addEventListener('keyup',   e => { keys[e.code] = false; });
 window.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; initAudio(); } });
@@ -1154,9 +1204,11 @@ function updateUser(dt) {
   const fwd   = new THREE.Vector3( Math.sin(camYaw), 0,  Math.cos(camYaw)); // FIXED (was negated)
   const right = new THREE.Vector3(-Math.cos(camYaw), 0,  Math.sin(camYaw)); // FIXED (was negated)
 
+  // In Mode B, S = SHOOT (not backward-move) — use ArrowDown to move back there.
+  const backPressed = keys['ArrowDown'] || (controlMode === 0 && keys['KeyS']);
   const moveDir = new THREE.Vector3();
   if (keys['KeyW'] || keys['ArrowUp'])    moveDir.addScaledVector(fwd,   1);
-  if (keys['KeyS'] || keys['ArrowDown'])  moveDir.addScaledVector(fwd,  -1);
+  if (backPressed)                        moveDir.addScaledVector(fwd,  -1);
   if (keys['KeyA'] || keys['ArrowLeft'])  moveDir.addScaledVector(right,-1);
   if (keys['KeyD'] || keys['ArrowRight']) moveDir.addScaledVector(right, 1);
 
@@ -1171,14 +1223,28 @@ function updateUser(dt) {
     you.vel.z *= 0.72;
   }
 
-  if (keys['Space'] && you.onGround) {
+  // ── ACTION BUTTON (mode-aware, Fix 3) ──
+  // Mode A: SPACE is context-sensitive. With ball → dunk (under rim) or SHOOT (charge/release,
+  //   handled in updateShooting) — so SPACE does NOT plain-jump while holding the ball.
+  //   Without ball → jump (↑+SPACE = block contest); SPACE near handler = STEAL.
+  // Mode B: SPACE = dribble hop / jump; S = SHOOT (updateShooting).
+  const spaceDown = keys['Space'];
+  if (spaceDown && you.onGround) {
     const horizToHoop = Math.sqrt((HOOP_X - you.pos.x)**2 + (HOOP_Z - you.pos.z)**2);
-    if (you.hasBall && horizToHoop < 2.5 && tryDunk(you)) {
-      animatePlayer(you, dt, false, speed);
-      return;   // dunk takes over
+    if (you.hasBall) {
+      // Dunk if close, in both modes
+      if (horizToHoop < 2.5 && tryDunk(you)) {
+        animatePlayer(you, dt, false, speed);
+        return;   // dunk takes over
+      }
+      // Mode B: with ball, SPACE is a dribble hop (small jump). Mode A: SPACE charges the
+      // shot (updateShooting) so we intentionally do NOT jump here.
+      if (controlMode === 1) { you.vel.y = JUMP_VEL; you.onGround = false; }
+    } else {
+      // No ball → defensive jump (contest / block). ↑+SPACE explicitly = block jump.
+      you.vel.y = JUMP_VEL;
+      you.onGround = false;
     }
-    you.vel.y = JUMP_VEL;
-    you.onGround = false;
   }
 
   you.vel.y += GRAVITY * dt;
@@ -1196,8 +1262,11 @@ function updateUser(dt) {
   }
   if (you.crossoverTimer > 0) you.crossoverTimer -= dt;
 
-  // STEAL — fair version: requires F press, close range, LOW chance, long cooldown
-  if (keys['KeyF'] && you.stealTimer <= 0) {
+  // STEAL — fair version: close range, LOW chance, long cooldown.
+  // Mode A: SPACE (on defense, not ↑ which is block) = steal. Both modes keep F as steal.
+  const stealPressed = keys['KeyF'] ||
+    (controlMode === 0 && keys['Space'] && !keys['ArrowUp'] && !you.hasBall);
+  if (stealPressed && you.stealTimer <= 0) {
     const ai = players[1];
     const dist = you.pos.distanceTo(ai.pos);
     if (ai.hasBall && dist < 1.3 && ai.stunTimer <= 0) {
@@ -1240,6 +1309,7 @@ function updateAutoPlayer(p, dt) {
 
   if (p.dunking) { updateDunk(p, dt); return; }
   if (p.stunTimer > 0) { p.stunTimer -= dt; return; }
+  if (p.shotCooldown > 0) p.shotCooldown -= dt;   // no rapid-fire re-shoot loop (Fix 2)
 
   const distToHoop = p.pos.distanceTo(hoopVec);
   const distToOpp  = p.pos.distanceTo(opponent.pos);
@@ -1251,12 +1321,13 @@ function updateAutoPlayer(p, dt) {
   if (p.hasBall) {
     // Drive close enough? Slam it.
     if (distToHoop < 2.2 && p.onGround && tryDunk(p)) return;
-    if (distToHoop < 3.5) {
+    if (distToHoop < 3.5 && p.shotCooldown <= 0) {
       // Shoot
       moveTarget = null;
       p.autoShootTimer = (p.autoShootTimer || 0) + dt;
       if (p.autoShootTimer > 0.85) {
         p.autoShootTimer = 0;
+        p.shotCooldown = 1.8;   // wait for rebound/reset before shooting again
         launchAIShot(p, 0.28);
       }
     } else {
@@ -1375,17 +1446,19 @@ function updateArcIndicator(you, T) {
 
 function updateShooting(dt) {
   const you = players[0];
-  if (!you.hasBall || game.autoMode) {
+  if (!you.hasBall || game.autoMode || you.dunking) {
     pwrWrap.style.display = 'none';
     if (shotTypeEl) shotTypeEl.style.display = 'none';
     arcDots.forEach(d => { d.visible = false; });
+    if (you.dunking) game.shotCharging = false;
     return;
   }
 
   const horizToHoop = Math.sqrt((HOOP_X - you.pos.x)**2 + (HOOP_Z - you.pos.z)**2);
   const sInfo = getShotInfo(horizToHoop);
 
-  const shootPressed = keys['KeyJ'] || mouseDown;
+  // Mode A: SPACE charges/releases the shot. Mode B: S does. J / mouse work in both.
+  const shootPressed = (controlMode === 0 ? keys['Space'] : keys['KeyS']) || keys['KeyJ'] || mouseDown;
   if (shootPressed && !game.shotCharging) {
     game.shotCharging = true;
     game.shotPower    = 0;
@@ -1647,12 +1720,17 @@ function updateAI(dt) {
     ai.onGround = false;
   }
 
+  // Shot cooldown ticks down every frame — prevents the rapid-fire re-shoot loop (Fix 2)
+  if (ai.shotCooldown > 0) ai.shotCooldown -= dt;
+
   // ── STATE TRANSITIONS ──
   if (ai.hasBall) {
     const distToHoop = ai.pos.distanceTo(new THREE.Vector3(HOOP_X, 0, HOOP_Z));
     // Drive close enough? Attack the rim with a dunk.
     if (distToHoop < 2.2 && ai.onGround && tryDunk(ai)) return;
-    ai.state = distToHoop < 3.5 ? 'shoot' : 'drive';
+    // In range but still on cooldown from the last shot → hold/reset (drive) instead of firing again
+    if (distToHoop < 3.5 && ai.shotCooldown <= 0) ai.state = 'shoot';
+    else ai.state = 'drive';
   } else if (ball.inFlight && !ball.held) {
     ai.state = distToBall < 4.5 ? 'rebound' : 'guard';
   } else if (!ball.held && !ball.inFlight) {
@@ -1701,10 +1779,13 @@ function updateAI(dt) {
   } else if (ai.state === 'shoot') {
     moveTarget = null;
     ai.shootTimer = (ai.shootTimer || 0) + dt;
-    if (ai.shootTimer > 1.0) {
+    if (ai.shootTimer > 1.0 && ai.shotCooldown <= 0) {
       ai.shootTimer = 0;
+      ai.shotCooldown = 1.8;   // must wait (rebound/reset) before it can shoot again
       launchAIShot(ai, 0.30);
     }
+  } else {
+    ai.shootTimer = 0;         // reset wind-up whenever not actively shooting
   }
 
   // Movement
@@ -1822,8 +1903,8 @@ function updateBall(dt) {
   }
 
   checkBackboardCollision();
+  checkScore();          // clean make wins before any ring-edge clank is considered
   checkRimCollision();
-  checkScore();
 
   // Out of bounds — turnover
   if (Math.abs(ball.pos.x) > COURT_W/2 + 1.5 || Math.abs(ball.pos.z) > COURT_D/2 + 1.5) {
@@ -1851,48 +1932,56 @@ function checkBackboardCollision() {
   }
 }
 
+// RIM PHYSICS (Fix 1) — a ball descending inside the rim opening drops CLEANLY through
+// (checkScore handles that). Only a ball hitting the actual RING EDGE clanks, and it does
+// so with LOW restitution so a miss quickly settles into a rebound instead of pinballing
+// forever on the rim.
 function checkRimCollision() {
   if (ball.scored) return;
   const dx = ball.pos.x - HOOP_X;
   const dz = ball.pos.z - HOOP_Z;
   const horizDist = Math.sqrt(dx*dx + dz*dz);
   const vertDist  = Math.abs(ball.pos.y - HOOP_Y);
-  // Only the RING EDGE clanks. A ball passing through the centre (clean swish) is left alone.
-  const onRing = horizDist > RIM_R * 0.62 && horizDist < RIM_R + BALL_R + 0.05;
-  if (onRing && vertDist < 0.22) {
-    // ── RIM RULE ── any rim contact voids the make for this possession
-    if (!ball.rimContact) {
-      ball.rimContact = true;
-      if (horizDist > 0.01) {
-        const nx = dx / horizDist, nz = dz / horizDist;
-        const dot = ball.vel.x*nx + ball.vel.z*nz;
-        if (dot < 0) {                          // reflect the inbound component
-          ball.vel.x -= 2 * dot * nx * 0.6;
-          ball.vel.z -= 2 * dot * nz * 0.6;
-        }
-        // Kick outward + up so it caroms into a genuine loose-ball rebound
-        ball.vel.x += nx * 1.4;
-        ball.vel.z += nz * 1.4;
-        ball.vel.y  = Math.abs(ball.vel.y) * 0.4 + 1.7;
-      } else {
-        ball.vel.y = Math.abs(ball.vel.y) * 0.4 + 1.5;
+  // Ring band: the ball is at rim height AND out near the ring itself (i.e. NOT inside the
+  // clean-make cylinder that checkScore watches). A centred descent never enters this band.
+  const onRing = horizDist > RIM_R * 0.88 && horizDist < RIM_R + BALL_R + 0.04;
+  if (onRing && vertDist < 0.16) {
+    ball.rimContact = true; // flag kept for other systems; no longer voids the make
+    if (horizDist > 0.01) {
+      const nx = dx / horizDist, nz = dz / horizDist;
+      const dot = ball.vel.x*nx + ball.vel.z*nz;
+      if (dot < 0) {                          // reflect only the inbound component, softly
+        ball.vel.x -= 2 * dot * nx * 0.35;
+        ball.vel.z -= 2 * dot * nz * 0.35;
       }
-      triggerNetRipple();
-      sfxBounce();
+      // Small outward nudge so it clears the ring, then heavy damping = no endless pinball
+      ball.vel.x += nx * 0.45;
+      ball.vel.z += nz * 0.45;
+      // Push the ball just outside the ring to avoid re-colliding on the next frame
+      ball.pos.x = HOOP_X + nx * (RIM_R + BALL_R + 0.05);
+      ball.pos.z = HOOP_Z + nz * (RIM_R + BALL_R + 0.05);
     }
+    ball.vel.x *= 0.55; ball.vel.z *= 0.55;   // kill lateral energy
+    ball.vel.y *= 0.45;                        // low rim restitution — settles, not springs
+    triggerNetRipple();
+    if (game.frameCount - (ball._lastRimSfx || 0) > 8) { ball._lastRimSfx = game.frameCount; sfxBounce(); }
   }
 }
 
+// MAKE DETECTION (Fix 1) — reliable: a ball descending through the hoop cylinder within the
+// rim radius = a made basket. Independent of prior rim grazes (a rattle-in still counts).
+// possession < 0 = loose ball (e.g. after a block) — cannot score until re-established.
 function checkScore() {
-  // RIM RULE: a shot that clanked the rim can never fall for a make this possession.
-  // possession < 0 = loose ball (e.g. after a block) — cannot score until re-established.
-  if (ball.scored || !ball.inFlight || ball.rimContact || game.possession < 0) return;
+  if (ball.scored || !ball.inFlight || game.possession < 0) return;
   const horizDist = Math.sqrt(
     (ball.pos.x - HOOP_X)**2 + (ball.pos.z - HOOP_Z)**2
   );
-  if (ball.vel.y < -0.5 && horizDist < RIM_R * 1.1 &&
-      ball.pos.y < HOOP_Y + 0.05 && ball.pos.y > HOOP_Y - 0.35) {
+  // Descending, horizontally inside the rim opening, crossing the hoop plane downward.
+  if (ball.vel.y < -0.3 && horizDist < RIM_R * 0.92 &&
+      ball.pos.y < HOOP_Y + 0.10 && ball.pos.y > HOOP_Y - 0.38) {
     ball.scored = true; ball.inFlight = false;
+    // Drop it straight down through the net — no residual sideways carom
+    ball.vel.x *= 0.15; ball.vel.z *= 0.15;
     onScore();
   }
 }
@@ -1934,13 +2023,27 @@ function flashScreen() {
 function toggleAutoMode() {
   game.autoMode = !game.autoMode;
   document.getElementById('auto-badge').style.display = game.autoMode ? 'block' : 'none';
-  document.getElementById('controls').textContent =
-    game.autoMode
-      ? 'T = EXIT AUTO MODE  —  watching agents play ...'
-      : 'WASD=MOVE  SHIFT=SPRINT  SPACE=JUMP  HOLD J/MOUSE=SHOOT  F=STEAL  Q/E=CROSSOVER  T=AUTO DEMO';
+  updateControlsHUD();
   showMsg(game.autoMode ? 'AUTO DEMO' : 'PLAYER MODE', '#ffd700', 1.2);
   // If ball stuck, give possession to player 0
   if (!ball.held && !ball.inFlight) transferBall(0);
+}
+
+// CONTROL SCHEME TOGGLE (Fix 3) — C switches between Mode A and Mode B
+function toggleControlMode() {
+  controlMode = controlMode === 0 ? 1 : 0;
+  updateControlsHUD();
+  showMsg(controlMode === 0 ? 'CONTROLS: MODE A' : 'CONTROLS: MODE B', '#37e6ff', 1.4);
+}
+
+// Reflect the active scheme in the bottom HUD strip so the player always sees the mapping
+const CONTROLS_A = 'MODE A · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=SHOOT(hold/release) / DUNK / JUMP · ↑+SPACE=BLOCK · SPACE=STEAL(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO';
+const CONTROLS_B = 'MODE B · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=DRIBBLE/JUMP · S=SHOOT · F=STEAL · SPACE=BLOCK(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO';
+function updateControlsHUD() {
+  const el = document.getElementById('controls');
+  if (!el) return;
+  if (game.autoMode) { el.textContent = 'AUTO DEMO — watching agents play · T=EXIT · H=COURT'; return; }
+  el.textContent = controlMode === 0 ? CONTROLS_A : CONTROLS_B;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2168,6 +2271,7 @@ document.getElementById('startBtn').addEventListener('click', () => startGame(fa
 document.getElementById('watchBtn').addEventListener('click', () => startGame(true));
 
 // Kick off render loop immediately
+updateControlsHUD();
 game.lastFrameTime = performance.now();
 requestAnimationFrame(tick);
 
