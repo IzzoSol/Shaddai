@@ -496,8 +496,8 @@ window.__worldBuilt = false;
     oracleGroup.add(grp); screens.push({ grp, baseY:dy }); return grp;
   }
   // two side projection screens flanking the entrance + a title screen
-  addScreen(-14, 9, 16, 9, 5.5,  0.5, TEAL);
-  addScreen(-14, 9,-16, 9, 5.5, -0.5, CYAN);
+  const scrL=addScreen(-14, 9, 16, 9, 5.5,  0.5, TEAL);
+  const scrR=addScreen(-14, 9,-16, 9, 5.5, -0.5, CYAN);
   const titleScreen=addScreen(-20, 12, 0, 14, 4, Math.PI/2, PURPLE);
   const titleSign=new THREE.Mesh(new THREE.PlaneGeometry(12,3.6), new THREE.MeshBasicMaterial({ map:labelTex('THE ORACLE','esoteric observatory · lunar archive','#e6ccff'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
   titleSign.position.set(0,0,0.06); titleScreen.add(titleSign);
@@ -561,6 +561,29 @@ window.__worldBuilt = false;
   const phaseName=(function(f){ const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent']; return names[Math.round(f*8)%8]; })(_phaseF);
   const moonReadout=new THREE.Mesh(new THREE.PlaneGeometry(18,5.4), new THREE.MeshBasicMaterial({ map:labelTex(phaseName, Math.round(_illum*100)+'% illuminated · tonight', '#e6ccff'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
   moonReadout.position.y=-15; moonGroup.add(moonReadout);
+
+  // ── Oracle dashboard content on the two flanking screens (were blank holo panels) ──
+  function dashTex(title, rows, accent){
+    const c=document.createElement('canvas'); c.width=512; c.height=320; const g=c.getContext('2d');
+    g.clearRect(0,0,512,320);
+    g.strokeStyle=accent; g.lineWidth=3; g.globalAlpha=0.85;   // corner brackets
+    [[16,16,1,1],[496,16,-1,1],[16,304,1,-1],[496,304,-1,-1]].forEach(function(b){ g.beginPath(); g.moveTo(b[0],b[1]+24*b[3]); g.lineTo(b[0],b[1]); g.lineTo(b[0]+34*b[2],b[1]); g.stroke(); });
+    g.globalAlpha=1; g.textAlign='left'; g.textBaseline='middle';
+    g.shadowColor=accent; g.shadowBlur=18; g.fillStyle=accent; g.font='700 30px Orbitron, sans-serif'; g.fillText(title, 36, 46);
+    g.shadowBlur=0; g.strokeStyle=accent; g.globalAlpha=0.5; g.beginPath(); g.moveTo(36,70); g.lineTo(476,70); g.stroke(); g.globalAlpha=1;
+    g.font='400 20px monospace';
+    rows.forEach(function(r,i){ const y=108+i*42;
+      g.fillStyle='#9fb2d8'; g.textAlign='left'; g.fillText(r[0], 36, y);
+      g.fillStyle=accent; g.textAlign='right'; g.shadowColor=accent; g.shadowBlur=8; g.fillText(r[1], 476, y); g.shadowBlur=0;
+      g.globalAlpha=0.28; g.fillStyle=accent; g.fillRect(36, y+13, Math.max(0.05,Math.min(1,r[2]||0.5))*440, 3); g.globalAlpha=1;
+    });
+    g.globalAlpha=0.06; g.fillStyle=accent; for(let y=0;y<320;y+=4) g.fillRect(0,y,512,1); g.globalAlpha=1;
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t;
+  }
+  function dashContent(scr, tex){ const p=new THREE.Mesh(new THREE.PlaneGeometry(8.4,5.1), new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide })); p.position.z=0.06; scr.add(p); }
+  dashContent(scrL, dashTex('LUNAR ARCHIVE', [['PHASE', phaseName, _phaseF],['ILLUMINATION', Math.round(_illum*100)+'%', _illum],['SYNODIC DAY', (Math.round(_phaseF*29.53*10)/10)+' / 29.5', _phaseF],['SIGN', 'read on the pad ◐', 0.4]], '#7fe9ff'));
+  dashContent(scrR, dashTex('ORACLE · OBSERVATORY', [['STATUS', 'ATTUNED', 0.92],['STAR INDEX', '2,548', 0.7],['INSIGHT', 'HIGH', 0.85],['ARCHIVE', 'OPEN', 0.6]], '#8fb4ff'));
+
   moonGroup.visible=false; scene.add(moonGroup);
 
   // ── per-frame update (called from animate; playerPos passed in, no allocations) ──
@@ -948,6 +971,200 @@ window.__worldBuilt = false;
     const arr=mgeo.attributes.position.array;
     for(let i=0;i<MO;i++){ arr[i*3+1]+=dt*(1.0+0.5*Math.sin(mph[i])); if(arr[i*3+1]>44) arr[i*3+1]=0; arr[i*3]+=Math.sin(t*0.2+mph[i])*dt*0.6; }
     mgeo.attributes.position.needsUpdate=true;
+  }};
+})();
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — TURTLE STUDIO · MURAL PAINTER / JUMBOTRON. A giant upright neon canvas-screen on a
+// frame stands on open desert ground beside TURTLE (The Museum, sector [130,-225]). Its texture
+// is a THREE.CanvasTexture backed by an offscreen 1024×600 2D <canvas> that doubles as the
+// on-screen "tablet". Step onto the glowing PAINT pad in front → a 2D drawing overlay opens
+// (pointer + touch). Every brush stroke draws to the offscreen canvas and flips
+// screenTex.needsUpdate=true, so it appears LIVE on the 3D jumbotron. Toolbar = colour swatches,
+// brush size, eraser, clear, image upload (fit-to-mural), and "LET IT DRY" which frames +
+// vignettes the canvas, freezes it as window._muralFinal (dataURL, NFT hook), plays a shimmer on
+// the 3D plane and closes the overlay. Texture only updates while actually drawing. Build-once,
+// materials reused, zero per-frame allocation. Hook: window._muralFX.update(t,dt,playerPos).
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L=window.WORLD_LAYOUT;
+  const TU=(L&&L.sector&&L.sector('TURTLE')&&L.sector('TURTLE').pos)||[130,-225];
+  const TX=TU[0], TZ=TU[1];
+  const clen=Math.hypot(TX,TZ)||1, ox=TX/clen, oz=TZ/clen;      // outward unit (from world centre)
+  const JBX=TX+ox*95, JBZ=TZ+oz*95;                             // jumbotron centre — 95m out, clear of the R63 building
+  const inX=-ox, inZ=-oz;                                       // inward normal → screen faces the viewing area
+  const faceY=Math.atan2(inX,inZ);                             // group +z points inward
+  const PADX=JBX+inX*15, PADZ=JBZ+inZ*15;                       // PAINT pad, 15m in front of the screen
+  const TEAL=0x1fd6c4, MAG=0xff3ea5;
+  const INR2=25, OUTR2=100;                                     // step-in radius 5m / re-arm radius 10m
+  const SC_W=24, SC_H=14, SC_Y=9;                               // screen 24×14, bottom≈2 top≈16, centre y=9
+
+  // ── 3D FRAME + SCREEN (local space, rotated to face inward) ──────────────────────────────
+  const frame=new THREE.Group(); frame.position.set(JBX,0,JBZ); frame.rotation.y=faceY; scene.add(frame);
+  const metalMat=new THREE.MeshStandardMaterial({ color:0x12202a, roughness:0.5, metalness:0.6, emissive:TEAL, emissiveIntensity:0.12 });
+  const trimMat =new THREE.MeshBasicMaterial({ color:TEAL, toneMapped:false });
+  // base platform
+  const base=new THREE.Mesh(new THREE.BoxGeometry(SC_W+3,0.6,7), metalMat); base.position.set(0,0.3,0); frame.add(base);
+  // vertical posts + top / bottom beams
+  const postGeo=new THREE.BoxGeometry(1.1,16.4,1.1);
+  const postL=new THREE.Mesh(postGeo, metalMat); postL.position.set(-(SC_W/2+0.6),8.2,0); frame.add(postL);
+  const postR=new THREE.Mesh(postGeo, metalMat); postR.position.set( (SC_W/2+0.6),8.2,0); frame.add(postR);
+  const beamGeo=new THREE.BoxGeometry(SC_W+2.2,1.0,1.1);
+  const beamT=new THREE.Mesh(beamGeo, metalMat); beamT.position.set(0,16.6,0); frame.add(beamT);
+  const beamB=new THREE.Mesh(beamGeo, metalMat); beamB.position.set(0,1.4,0);  frame.add(beamB);
+  // neon trim strips on the posts
+  const stripGeo=new THREE.BoxGeometry(0.18,15.6,0.18);
+  const stL=new THREE.Mesh(stripGeo, trimMat); stL.position.set(-(SC_W/2+0.6),8.2,0.62); frame.add(stL);
+  const stR=new THREE.Mesh(stripGeo, trimMat); stR.position.set( (SC_W/2+0.6),8.2,0.62); frame.add(stR);
+
+  // ── offscreen 2D canvas (source of the CanvasTexture AND the on-screen tablet) ──
+  const CW=1024, CH=600;
+  const pcanvas=document.createElement('canvas'); pcanvas.width=CW; pcanvas.height=CH;
+  const pctx=pcanvas.getContext('2d');
+  function fillGrid(){
+    const g=pctx, grd=g.createLinearGradient(0,0,0,CH);
+    grd.addColorStop(0,'#0a0f1e'); grd.addColorStop(1,'#0d1830'); g.fillStyle=grd; g.fillRect(0,0,CW,CH);
+    g.strokeStyle='rgba(31,214,196,0.12)'; g.lineWidth=1;
+    for(let x=0;x<=CW;x+=48){ g.beginPath(); g.moveTo(x,0); g.lineTo(x,CH); g.stroke(); }
+    for(let y=0;y<=CH;y+=48){ g.beginPath(); g.moveTo(0,y); g.lineTo(CW,y); g.stroke(); }
+  }
+  function paintBackdrop(){
+    fillGrid(); const g=pctx; g.textAlign='center'; g.textBaseline='middle';
+    g.shadowColor='#1fd6c4'; g.shadowBlur=28; g.fillStyle='#1fd6c4'; g.font='700 78px Orbitron, sans-serif'; g.fillText('TURTLE STUDIO',CW/2,CH/2-28);
+    g.shadowBlur=10; g.fillStyle='#bfeee9'; g.font='400 30px monospace'; g.fillText('step on the pad to paint the mural',CW/2,CH/2+52);
+    g.shadowBlur=0;
+  }
+  paintBackdrop();
+  const screenTex=new THREE.CanvasTexture(pcanvas); screenTex.colorSpace=THREE.SRGBColorSpace; screenTex.anisotropy=4;
+  const screen=new THREE.Mesh(new THREE.PlaneGeometry(SC_W,SC_H), new THREE.MeshBasicMaterial({ map:screenTex, toneMapped:false, side:THREE.DoubleSide }));
+  screen.position.set(0,SC_Y,0.62); frame.add(screen);
+  // glow border (additive, shimmers on "dry")
+  const glowMat=new THREE.MeshBasicMaterial({ color:TEAL, transparent:true, opacity:0.30, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, toneMapped:false });
+  const glow=new THREE.Mesh(new THREE.PlaneGeometry(SC_W+1.4,SC_H+1.4), glowMat); glow.position.set(0,SC_Y,0.5); frame.add(glow);
+  const screenLight=new THREE.PointLight(TEAL,0.8,60,2.0); screenLight.position.set(0,SC_Y,4); frame.add(screenLight);
+
+  // ── marquee sign above the screen (built once) ──
+  (function(){ const c=document.createElement('canvas'); c.width=512; c.height=128; const g=c.getContext('2d');
+    g.textAlign='center'; g.textBaseline='middle'; g.shadowColor='#1fd6c4'; g.shadowBlur=22; g.fillStyle='#1fd6c4'; g.font='700 64px Orbitron, sans-serif'; g.fillText('◈ MURAL ◈',256,64);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+    const sign=new THREE.Mesh(new THREE.PlaneGeometry(11,2.75), new THREE.MeshBasicMaterial({ map:t, transparent:true, depthWrite:false, toneMapped:false }));
+    sign.position.set(0,18.4,0.6); frame.add(sign);
+  })();
+
+  // ── PAINT pad (world coords) + billboarded label ──
+  const padRoot=new THREE.Group(); scene.add(padRoot);
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(5,44), new THREE.MeshBasicMaterial({ color:MAG, transparent:true, opacity:0.16, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  disc.rotation.x=-Math.PI/2; disc.position.set(PADX,0.12,PADZ); padRoot.add(disc);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(4.9,5.6,44), new THREE.MeshBasicMaterial({ color:TEAL, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  ring.rotation.x=-Math.PI/2; ring.position.set(PADX,0.14,PADZ); padRoot.add(ring);
+  const padBeam=new THREE.Mesh(new THREE.CylinderGeometry(0.2,4,9,20,1,true), new THREE.MeshBasicMaterial({ color:MAG, transparent:true, opacity:0.10, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  padBeam.position.set(PADX,4.5,PADZ); padRoot.add(padBeam);
+  const padLabel=(function(){ const c=document.createElement('canvas'); c.width=256; c.height=128; const g=c.getContext('2d');
+    g.textAlign='center'; g.textBaseline='middle'; g.shadowColor='#ff3ea5'; g.shadowBlur=20; g.fillStyle='#ff8ac6'; g.font='700 60px Orbitron, sans-serif'; g.fillText('PAINT',128,52);
+    g.shadowBlur=8; g.fillStyle='#bfeee9'; g.font='400 22px monospace'; g.fillText('step here',128,100);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(6,3), new THREE.MeshBasicMaterial({ map:t, transparent:true, depthWrite:false, toneMapped:false }));
+    m.position.set(PADX,3.4,PADZ); padRoot.add(m); return m; })();
+
+  // ── HTML drawing overlay (the tablet) ──────────────────────────────────────────────────
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9998;display:none;'
+    +'background:rgba(6,12,22,0.94);border:1px solid #1fd6c4;border-radius:14px;padding:12px 14px;'
+    +'box-shadow:0 0 34px rgba(31,214,196,0.35);font-family:Orbitron,system-ui,sans-serif;max-width:94vw;';
+  const head=document.createElement('div');
+  head.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;';
+  head.innerHTML='<span style="color:#1fd6c4;font-weight:700;letter-spacing:1px;font-size:14px;">TURTLE STUDIO · MURAL PAINTER</span>';
+  const closeBtn=document.createElement('button'); closeBtn.textContent='✕';
+  closeBtn.style.cssText='background:#12202a;color:#8ff;border:1px solid #1fd6c4;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;';
+  head.appendChild(closeBtn); overlay.appendChild(head);
+  // the tablet canvas (same element that backs the texture)
+  pcanvas.style.cssText='display:block;width:min(86vw,660px);height:auto;border-radius:8px;border:1px solid rgba(31,214,196,0.4);touch-action:none;cursor:crosshair;background:#0a0f1e;';
+  overlay.appendChild(pcanvas);
+  // toolbar
+  const bar=document.createElement('div'); bar.style.cssText='display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;';
+  const SWATCHES=['#1fd6c4','#ff3ea5','#ffcf4a','#34e5b0','#b98cff','#27e0ff','#ff5a6e','#ffffff'];
+  let color=SWATCHES[0], size=16, eraser=false;
+  const swWrap=document.createElement('div'); swWrap.style.cssText='display:flex;gap:5px;';
+  const swEls=[];
+  SWATCHES.forEach(function(col){ const s=document.createElement('button');
+    s.style.cssText='width:24px;height:24px;border-radius:50%;cursor:pointer;background:'+col+';border:2px solid '+(col===color?'#fff':'transparent')+';';
+    s.onclick=function(){ color=col; eraser=false; swEls.forEach(function(e){ e.style.borderColor='transparent'; }); s.style.borderColor='#fff'; eraserBtn.style.background='#12202a'; };
+    swWrap.appendChild(s); swEls.push(s); });
+  bar.appendChild(swWrap);
+  const btnCss='background:#12202a;color:#bfeee9;border:1px solid #1fd6c4;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-family:inherit;';
+  const sizeLbl=document.createElement('label'); sizeLbl.style.cssText='color:#8ff;font-size:11px;display:flex;align-items:center;gap:5px;';
+  const sizeIn=document.createElement('input'); sizeIn.type='range'; sizeIn.min='2'; sizeIn.max='60'; sizeIn.value=''+size; sizeIn.style.width='90px';
+  sizeIn.oninput=function(){ size=+sizeIn.value; }; sizeLbl.appendChild(document.createTextNode('BRUSH')); sizeLbl.appendChild(sizeIn); bar.appendChild(sizeLbl);
+  const eraserBtn=document.createElement('button'); eraserBtn.textContent='ERASER'; eraserBtn.style.cssText=btnCss;
+  eraserBtn.onclick=function(){ eraser=!eraser; eraserBtn.style.background=eraser?'#2a1830':'#12202a'; };
+  bar.appendChild(eraserBtn);
+  const clearBtn=document.createElement('button'); clearBtn.textContent='CLEAR'; clearBtn.style.cssText=btnCss;
+  clearBtn.onclick=function(){ fillGrid(); screenTex.needsUpdate=true; }; bar.appendChild(clearBtn);
+  const upBtn=document.createElement('button'); upBtn.textContent='UPLOAD IMAGE'; upBtn.style.cssText=btnCss;
+  const fileIn=document.createElement('input'); fileIn.type='file'; fileIn.accept='image/*'; fileIn.style.display='none';
+  upBtn.onclick=function(){ fileIn.click(); };
+  fileIn.onchange=function(e){ const f=e.target.files&&e.target.files[0]; if(!f) return; const img=new Image();
+    img.onload=function(){ fillGrid(); const s=Math.min(CW/img.width,CH/img.height), w=img.width*s, h=img.height*s;
+      pctx.drawImage(img,(CW-w)/2,(CH-h)/2,w,h); screenTex.needsUpdate=true; URL.revokeObjectURL(img.src); };
+    img.src=URL.createObjectURL(f); fileIn.value=''; };
+  bar.appendChild(upBtn); bar.appendChild(fileIn);
+  const dryBtn=document.createElement('button'); dryBtn.textContent='✔ LET IT DRY';
+  dryBtn.style.cssText='background:#0e3a34;color:#7dffe9;border:1px solid #1fd6c4;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;';
+  bar.appendChild(dryBtn);
+  overlay.appendChild(bar);
+  document.body.appendChild(overlay);
+  // stop overlay clicks from bubbling to the world's click→pointer-lock handler
+  ['click','pointerdown','mousedown'].forEach(function(ev){ overlay.addEventListener(ev,function(e){ e.stopPropagation(); }); });
+
+  // ── drawing (pointer + touch) → live to canvas → live to texture ──
+  let drawing=false, lastX=0, lastY=0;
+  function toXY(e){ const r=pcanvas.getBoundingClientRect();
+    const cx=(e.touches&&e.touches[0])?e.touches[0].clientX:e.clientX, cy=(e.touches&&e.touches[0])?e.touches[0].clientY:e.clientY;
+    return { x:(cx-r.left)*(CW/r.width), y:(cy-r.top)*(CH/r.height) }; }
+  function paintDot(x,y){ pctx.fillStyle=eraser?'#0d1424':color; pctx.beginPath(); pctx.arc(x,y,Math.max(1,size/2),0,6.2832); pctx.fill(); screenTex.needsUpdate=true; }
+  function paintSeg(x0,y0,x1,y1){ pctx.strokeStyle=eraser?'#0d1424':color; pctx.lineWidth=size; pctx.lineCap='round'; pctx.lineJoin='round';
+    pctx.beginPath(); pctx.moveTo(x0,y0); pctx.lineTo(x1,y1); pctx.stroke(); screenTex.needsUpdate=true; }
+  function dStart(e){ e.preventDefault(); drawing=true; const p=toXY(e); lastX=p.x; lastY=p.y; paintDot(p.x,p.y); }
+  function dMove(e){ if(!drawing) return; e.preventDefault(); const p=toXY(e); paintSeg(lastX,lastY,p.x,p.y); lastX=p.x; lastY=p.y; }
+  function dEnd(){ drawing=false; }
+  pcanvas.addEventListener('mousedown',dStart); pcanvas.addEventListener('mousemove',dMove); addEventListener('mouseup',dEnd);
+  pcanvas.addEventListener('touchstart',dStart,{passive:false}); pcanvas.addEventListener('touchmove',dMove,{passive:false}); pcanvas.addEventListener('touchend',dEnd);
+
+  // ── open / close (proximity) ──
+  let open=false, armed=true, dryT=-1;
+  function openStudio(){ if(open) return; open=true; overlay.style.display='block'; try{ controls.unlock(); }catch(e){} }
+  function closeStudio(){ if(!open) return; open=false; overlay.style.display='none'; }
+  closeBtn.onclick=function(){ closeStudio(); };
+  // "LET IT DRY" → frame + vignette, freeze as dataURL (NFT hook), 3D shimmer, close overlay
+  dryBtn.onclick=function(){
+    const g=pctx; g.save();
+    const vg=g.createRadialGradient(CW/2,CH/2,CH*0.34,CW/2,CH/2,CH*0.9);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.5)'); g.fillStyle=vg; g.fillRect(0,0,CW,CH);
+    g.lineWidth=14; g.strokeStyle='#1fd6c4'; g.shadowColor='#1fd6c4'; g.shadowBlur=26; g.strokeRect(12,12,CW-24,CH-24);
+    g.lineWidth=3; g.strokeStyle='#ff3ea5'; g.shadowColor='#ff3ea5'; g.shadowBlur=14; g.strokeRect(26,26,CW-52,CH-52);
+    g.restore(); screenTex.needsUpdate=true;
+    try{ window._muralFinal=pcanvas.toDataURL('image/png'); }catch(e){ window._muralFinal=null; }
+    dryT=0; closeStudio();
+  };
+
+  const _v=new THREE.Vector3();
+  window._muralFX={ update:function(t,dt,pp){
+    // pad pulse + billboard label + screen breathing glow (cheap; no allocation)
+    const pulse=0.5+0.5*Math.sin(t*2.2);
+    disc.material.opacity=0.14+0.10*pulse; ring.material.opacity=0.5+0.2*pulse;
+    padBeam.material.opacity=0.08+0.05*pulse; padBeam.rotation.y=t*0.3;
+    padLabel.position.y=3.4+Math.sin(t*1.6)*0.25; padLabel.lookAt(camera.position.x,padLabel.position.y,camera.position.z);
+    if(dryT<0){ glowMat.opacity=0.26+0.10*pulse; screenLight.intensity=0.7+0.2*pulse; }
+    else { // "drying" shimmer sweep, then settle
+      dryT+=dt; const k=dryT/2.6;
+      if(k>=1){ dryT=-1; glowMat.opacity=0.30; screenLight.intensity=0.8; }
+      else { const s=Math.abs(Math.sin(k*Math.PI*3))*(1-k); glowMat.opacity=0.30+0.7*s; screenLight.intensity=0.8+1.4*s; }
+    }
+    // proximity: step onto the pad → open; must leave (>10m) to re-arm so closing doesn't reopen
+    if(pp){ const dx=pp.x-PADX, dz=pp.z-PADZ, d2=dx*dx+dz*dz;
+      if(d2>OUTR2) armed=true;
+      if(armed && !open && d2<INR2){ armed=false; openStudio(); }
+    }
   }};
 })();
 
@@ -2710,6 +2927,7 @@ function animate(){
     if(window._chakraFX) window._chakraFX.update(t, dt, playerPos);   // TURTLE: chakra path — step-to-open bridges + holo panels + fruit
     if(window._libraryEmberFX) window._libraryEmberFX.update(t, dt);  // TURTLE: QUILL ember fireplace + book aisles
     if(window._ambienceFX) window._ambienceFX.update(t, dt);          // TURTLE: floating orbs/runes/motes + floor glow
+    if(window._muralFX) window._muralFX.update(t, dt, playerPos);     // TURTLE: TURTLE STUDIO mural painter — proximity pad + live canvas→jumbotron + "let it dry"
   }
   if(_portalPlots) _portalPlots.update(dt, t);
   if(_portalDome) _portalDome.update(dt, t);
