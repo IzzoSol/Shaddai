@@ -398,6 +398,285 @@ window.__worldBuilt = false;
   }); });
 })();
 
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — ORACLE ZONE ENHANCEMENTS: real moon-phase hologram, holographic projection
+// screens, arcane 3D decor (constellations / orbiting rings / pedestals / star dust), and a
+// freshened QUILL library reading-nook. Pure Three.js primitives, materials reused, no
+// per-frame allocation. Builds once; the moon fades in ONLY while the player stands on the
+// Oracle "lunar phase" pad. Matches the neon/cyber palette (ORACLE purple #c084fc + cyan).
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L = window.WORLD_LAYOUT;
+  const OR = (L && L.sector && L.sector('ORACLE') && L.sector('ORACLE').pos) || [260,0];   // ORACLE sector centre
+  const QU = (L && L.sector && L.sector('QUILL')  && L.sector('QUILL').pos)  || [130,225];  // QUILL library
+  const ORX = OR[0], ORZ = OR[1], QUX = QU[0], QUZ = QU[1];
+  const PURPLE = 0xc084fc, CYAN = 0x27e0ff, TEAL = 0x5ff0e0, GOLD = 0xffcf4a, WARM = 0xffb46a;
+
+  // ── small reusable canvas-texture signage (built once each) ──
+  function labelTex(text, sub, accent){
+    const c=document.createElement('canvas'); c.width=512; c.height=160; const g=c.getContext('2d');
+    g.clearRect(0,0,512,160);
+    g.font='700 54px Orbitron, sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.shadowColor=accent; g.shadowBlur=22; g.fillStyle=accent; g.fillText(text,256, sub?60:80);
+    if(sub){ g.shadowBlur=8; g.font='400 26px monospace'; g.fillStyle='#dfeaff'; g.fillText(sub,256,116); }
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t;
+  }
+
+  // ── HOLOGRAPHIC SCREEN material (shared): translucent cyan/teal glass + scanlines + flicker + glow ──
+  const holoUniforms = { uTime:{value:0}, uColor:{value:new THREE.Color(TEAL)}, uReveal:{value:1} };
+  function makeHoloMat(color){
+    return new THREE.ShaderMaterial({
+      transparent:true, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending,
+      uniforms:{ uTime:holoUniforms.uTime, uColor:{value:new THREE.Color(color||TEAL)}, uReveal:holoUniforms.uReveal },
+      vertexShader:'varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ vUv=uv; vN=normalize(normalMatrix*normal); vec4 mv=modelViewMatrix*vec4(position,1.0); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
+      fragmentShader:[
+        'varying vec2 vUv; varying vec3 vN; varying vec3 vV; uniform float uTime; uniform vec3 uColor; uniform float uReveal;',
+        'void main(){',
+        '  float scan = 0.5 + 0.5*sin((vUv.y*140.0) - uTime*6.0);',        // travelling scanlines
+        '  float fine = 0.85 + 0.15*sin(vUv.y*680.0);',                     // fine raster grain
+        '  float edge = smoothstep(0.0,0.06,vUv.x)*smoothstep(1.0,0.94,vUv.x)*smoothstep(0.0,0.06,vUv.y)*smoothstep(1.0,0.94,vUv.y);',
+        '  float rim  = 1.0-edge;',                                          // glowing border frame
+        '  float flick= 0.9 + 0.1*sin(uTime*40.0)*sin(uTime*13.0);',        // subtle CRT flicker
+        '  float fres = pow(1.0-max(dot(vN,vV),0.0),2.0);',
+        '  float a = uReveal*flick*( 0.10 + 0.22*scan*fine + 0.55*rim + 0.20*fres );',
+        '  vec3 col = uColor*(0.65 + 0.6*scan) + vec3(0.5)*rim;',
+        '  gl_FragColor = vec4(col*fine, a);',
+        '}'
+      ].join('\n')
+    });
+  }
+
+  // ── ORACLE decor group (constellations, orbiting rings, arcane pedestals, star dust, holo screens) ──
+  const oracleGroup = new THREE.Group(); oracleGroup.position.set(ORX,0,ORZ); scene.add(oracleGroup);
+
+  // orbiting arcane rings around the spire crown
+  const ringMat = new THREE.MeshBasicMaterial({ color:PURPLE, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false });
+  const ringMat2= new THREE.MeshBasicMaterial({ color:CYAN,   transparent:true, opacity:0.4, blending:THREE.AdditiveBlending, depthWrite:false });
+  const ringA = new THREE.Mesh(new THREE.TorusGeometry(14,0.22,8,80), ringMat);  ringA.position.y=34; ringA.rotation.x=Math.PI/2.2;
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(10,0.16,8,64), ringMat2); ringB.position.y=34; ringB.rotation.x=Math.PI/2.6; ringB.rotation.z=0.6;
+  oracleGroup.add(ringA, ringB);
+
+  // floating geometric constellations — star points + connecting lines, high above the spire
+  const CN=42; const cpos=new Float32Array(CN*3);
+  for(let i=0;i<CN;i++){ const a=Math.random()*6.28, r=6+Math.random()*22; cpos[i*3]=Math.cos(a)*r; cpos[i*3+1]=40+Math.random()*26; cpos[i*3+2]=Math.sin(a)*r; }
+  const cgeo=new THREE.BufferGeometry(); cgeo.setAttribute('position',new THREE.BufferAttribute(cpos,3));
+  oracleGroup.add(new THREE.Points(cgeo, new THREE.PointsMaterial({ color:0xf0e6ff, size:0.7, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false })));
+  const lpos=[]; for(let i=0;i<CN;i++){ const j=(i+1+((i*7)%3))%CN; lpos.push(cpos[i*3],cpos[i*3+1],cpos[i*3+2], cpos[j*3],cpos[j*3+1],cpos[j*3+2]); }
+  const lgeo=new THREE.BufferGeometry(); lgeo.setAttribute('position',new THREE.Float32BufferAttribute(lpos,3));
+  const constellations=new THREE.LineSegments(lgeo, new THREE.LineBasicMaterial({ color:PURPLE, transparent:true, opacity:0.28, blending:THREE.AdditiveBlending, depthWrite:false }));
+  oracleGroup.add(constellations);
+
+  // arcane pedestals with slowly spinning crystals (3 around the entrance arc facing the plaza)
+  const pedMat=new THREE.MeshStandardMaterial({ color:0x2a1840, emissive:PURPLE, emissiveIntensity:0.25, roughness:0.5, metalness:0.6 });
+  const crystalMat=new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending });
+  const crystals=[];
+  for(let k=-1;k<=1;k++){ const ang=Math.PI + k*0.5;   // fan toward world centre (-x from oracle)
+    const px=Math.sin(ang)*20, pz=Math.cos(ang)*20;
+    const ped=new THREE.Mesh(new THREE.CylinderGeometry(1.5,2.0,3.0,6), pedMat); ped.position.set(px,1.5,pz);
+    const cry=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3,0), crystalMat); cry.position.set(px,5.4,pz);
+    oracleGroup.add(ped,cry); crystals.push(cry);
+  }
+
+  // drifting star dust over the oracle courtyard
+  const SD=120; const sdpos=new Float32Array(SD*3), sdph=new Float32Array(SD);
+  for(let i=0;i<SD;i++){ const a=Math.random()*6.28,r=Math.random()*34; sdpos[i*3]=Math.cos(a)*r; sdpos[i*3+1]=2+Math.random()*36; sdpos[i*3+2]=Math.sin(a)*r; sdph[i]=Math.random()*6.28; }
+  const sdgeo=new THREE.BufferGeometry(); sdgeo.setAttribute('position',new THREE.BufferAttribute(sdpos,3));
+  const stardust=new THREE.Points(sdgeo, new THREE.PointsMaterial({ color:0xd8c8ff, size:0.5, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false }));
+  oracleGroup.add(stardust);
+
+  // holographic projection screens — hovering translucent panels facing the plaza
+  const screens=[];
+  function addScreen(dx,dy,dz,w,h,rotY,color){
+    const grp=new THREE.Group(); grp.position.set(dx,dy,dz); grp.rotation.y=rotY;
+    const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h), makeHoloMat(color)); grp.add(panel);
+    const frame=new THREE.Mesh(new THREE.PlaneGeometry(w*1.06,h*1.06), new THREE.MeshBasicMaterial({ color:color||TEAL, transparent:true, opacity:0.12, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide })); frame.position.z=-0.05; grp.add(frame);
+    oracleGroup.add(grp); screens.push({ grp, baseY:dy }); return grp;
+  }
+  // two side projection screens flanking the entrance + a title screen
+  addScreen(-14, 9, 16, 9, 5.5,  0.5, TEAL);
+  addScreen(-14, 9,-16, 9, 5.5, -0.5, CYAN);
+  const titleScreen=addScreen(-20, 12, 0, 14, 4, Math.PI/2, PURPLE);
+  const titleSign=new THREE.Mesh(new THREE.PlaneGeometry(12,3.6), new THREE.MeshBasicMaterial({ map:labelTex('THE ORACLE','esoteric observatory · lunar archive','#e6ccff'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+  titleSign.position.set(0,0,0.06); titleScreen.add(titleSign);
+
+  // ── the "LUNAR PHASE" ground pad — stand on it to summon the moon hologram ──
+  const padAng=Math.PI, padR=26;                                   // in front of oracle toward plaza
+  const padX=ORX+Math.sin(padAng)*padR, padZ=ORZ+Math.cos(padAng)*padR;
+  const padGrp=new THREE.Group(); padGrp.position.set(padX,0.15,padZ); scene.add(padGrp);
+  const padRing=new THREE.Mesh(new THREE.RingGeometry(2.6,3.4,48), new THREE.MeshBasicMaterial({ color:PURPLE, transparent:true, opacity:0.6, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  padRing.rotation.x=-Math.PI/2; padGrp.add(padRing);
+  const padDisc=new THREE.Mesh(new THREE.CircleGeometry(2.6,48), new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:0.14, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  padDisc.rotation.x=-Math.PI/2; padDisc.position.y=0.02; padGrp.add(padDisc);
+  const padSign=new THREE.Mesh(new THREE.PlaneGeometry(6,1.9), new THREE.MeshBasicMaterial({ map:labelTex('◐ LUNAR PHASE','stand here — read tonight’s moon','#cfe0ff'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+  padSign.position.y=3.2; padGrp.add(padSign);
+
+  // ── REAL MOON-PHASE HOLOGRAM ──────────────────────────────────────────────────────────
+  // Synodic-month phase math (standard). Reference new moon: 2000-01-06 18:14 UTC.
+  const SYNODIC=29.530588853, NEWREF=Date.UTC(2000,0,6,18,14,0);
+  function moonPhaseFraction(d){ let f=(((d.getTime()-NEWREF)/86400000)%SYNODIC)/SYNODIC; if(f<0) f+=1; return f; } // 0=new .5=full
+  // phase angle → light direction in the moon's LOCAL (screen-facing) frame so the terminator is
+  // always correct for the viewer: new=dark, first-quarter=right lit, full=lit, last-quarter=left lit.
+  const _phaseF = moonPhaseFraction(new Date());
+  const _theta  = _phaseF*Math.PI*2;
+  const _illum  = (1-Math.cos(_theta))/2;   // illuminated fraction (0..1) — for the readout
+  const moonLightLocal = new THREE.Vector3(Math.sin(_theta), 0, -Math.cos(_theta)).normalize();
+
+  const moonMat=new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, blending:THREE.NormalBlending,
+    uniforms:{ uTime:{value:0}, uReveal:{value:0}, uLight:{value:moonLightLocal},
+      uLit:{value:new THREE.Color(0xdce8ff)}, uDark:{value:new THREE.Color(0x243055)}, uRim:{value:new THREE.Color(PURPLE)} },
+    vertexShader:'varying vec3 vNl; varying vec3 vN; varying vec3 vV; void main(){ vNl=normalize(position); vN=normalize(normalMatrix*normal); vec4 mv=modelViewMatrix*vec4(position,1.0); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
+    fragmentShader:[
+      'varying vec3 vNl; varying vec3 vN; varying vec3 vV;',
+      'uniform float uTime; uniform float uReveal; uniform vec3 uLight; uniform vec3 uLit; uniform vec3 uDark; uniform vec3 uRim;',
+      'void main(){',
+      '  float d = dot(normalize(vNl), normalize(uLight));',            // phase terminator in local frame
+      '  float lit = smoothstep(-0.12,0.12,d);',                        // soft terminator
+      '  float mott = 0.92 + 0.08*sin(vNl.x*22.0)*sin(vNl.y*19.0);',    // faint maria mottling
+      '  vec3 col = mix(uDark, uLit, lit)*mott;',
+      '  float fres = pow(1.0-max(dot(vN,vV),0.0),3.0);',               // holographic rim light
+      '  col += uRim*fres*1.4;',
+      '  float scan = 0.94 + 0.06*sin(vNl.y*120.0 - uTime*3.0);',       // hologram scanline shimmer
+      '  float flick= 0.94 + 0.06*sin(uTime*30.0);',
+      '  float a = uReveal*flick*( 0.30 + 0.55*lit + 0.6*fres )*scan;', // translucent, brighter on lit side + rim
+      '  gl_FragColor = vec4(col*scan, a);',
+      '}'
+    ].join('\n')
+  });
+  const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(10,48,48), moonMat);
+  const moonGroup=new THREE.Group();
+  moonGroup.position.set(ORX-46, 92, ORZ-30);   // floats high in the sky over the oracle courtyard
+  moonGroup.add(moonMesh);
+  // soft halo behind the moon
+  const moonHalo=new THREE.Mesh(new THREE.SphereGeometry(13,32,32), new THREE.MeshBasicMaterial({ color:PURPLE, transparent:true, opacity:0.0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.BackSide }));
+  moonGroup.add(moonHalo);
+  // projector beam from the pad up toward the moon (thin translucent cone)
+  const beamMat=new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:0.0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.5,3.0,40,20,1,true), beamMat);
+  beam.position.set(padX, 22, padZ); scene.add(beam);
+  // phase readout sign under the moon (built once from real phase)
+  const phaseName=(function(f){ const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent']; return names[Math.round(f*8)%8]; })(_phaseF);
+  const moonReadout=new THREE.Mesh(new THREE.PlaneGeometry(18,5.4), new THREE.MeshBasicMaterial({ map:labelTex(phaseName, Math.round(_illum*100)+'% illuminated · tonight', '#e6ccff'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+  moonReadout.position.y=-15; moonGroup.add(moonReadout);
+  moonGroup.visible=false; scene.add(moonGroup);
+
+  // ── per-frame update (called from animate; playerPos passed in, no allocations) ──
+  let reveal=0;   // eased 0..1 presence of the moon hologram
+  const _tmp=new THREE.Vector3();
+  window._oracleFX={ update:function(t,dt,pp){
+    holoUniforms.uTime.value=t;
+    ringA.rotation.z = t*0.25; ringB.rotation.z = -t*0.35;
+    constellations.rotation.y = t*0.04;
+    for(let i=0;i<crystals.length;i++){ const c=crystals[i]; c.rotation.y=t*0.6+i; c.rotation.x=t*0.4; c.position.y=5.4+Math.sin(t*1.2+i)*0.4; }
+    // star-dust drift
+    const arr=sdgeo.attributes.position.array;
+    for(let i=0;i<SD;i++){ arr[i*3+1]+=dt*(1.2+0.6*Math.sin(sdph[i])); if(arr[i*3+1]>40) arr[i*3+1]=2; }
+    sdgeo.attributes.position.needsUpdate=true;
+    padRing.rotation.z=t*0.5; padDisc.material.opacity=0.10+0.06*(0.5+0.5*Math.sin(t*2.0));
+    for(let i=0;i<screens.length;i++){ const s=screens[i]; s.grp.position.y=s.baseY+Math.sin(t*1.1+i)*0.5; }  // gentle hover
+
+    // presence: is the player standing on the lunar pad?
+    let on=false; if(pp){ const dx=pp.x-padX, dz=pp.z-padZ; on = (dx*dx+dz*dz) < 16; }   // ~4u radius
+    reveal += ((on?1:0)-reveal) * Math.min(1, dt*3.5);                                    // smooth fade in/out
+    const showing = reveal>0.01;
+    if(moonGroup.visible!==showing){ moonGroup.visible=showing; }
+    if(showing){
+      moonMat.uniforms.uTime.value=t; moonMat.uniforms.uReveal.value=reveal;
+      moonGroup.position.y = 92 + Math.sin(t*0.6)*1.6;                                    // gentle bob
+      moonMesh.rotation.y = Math.sin(t*0.15)*0.06;                                        // subtle drift (keeps terminator readable)
+      moonMesh.lookAt(camera.position);                                                   // billboard → phase always faces viewer correctly
+      moonHalo.material.opacity=0.18*reveal; beam.material.opacity=0.10*reveal;
+      moonReadout.lookAt(camera.position.x, moonReadout.getWorldPosition(_tmp).y, camera.position.z);
+    } else if(beam.material.opacity!==0){ beam.material.opacity=0; }
+  }};
+})();
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — QUILL LIBRARY reading-nook: freshened shelving, spines, a reading desk with a
+// glowing lamp + open floating book, and readable "THE LIBRARY" signage. Primitives only,
+// materials reused, placed in front of the QUILL library facade facing the plaza.
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L = window.WORLD_LAYOUT;
+  const QU = (L && L.sector && L.sector('QUILL') && L.sector('QUILL').pos) || [130,225];
+  const QX=QU[0], QZ=QU[1], PURPLE=0xb98cff, GOLD=0xffcf4a, WARM=0xffb46a;
+  // nook sits just in front of the library, offset toward the plaza (toward world centre)
+  const dirx=-QX, dirz=-QZ; const dl=Math.hypot(dirx,dirz)||1; const nx=QX+dirx/dl*34, nz=QZ+dirz/dl*34;
+  const faceY=Math.atan2(dirx,dirz);   // face the plaza
+  const nook=new THREE.Group(); nook.position.set(nx,0,nz); nook.rotation.y=faceY; scene.add(nook);
+
+  // warm reading-lamp glow lighting the nook (single cheap point light)
+  const lamp=new THREE.PointLight(WARM, 0.9, 34, 2.0); lamp.position.set(0,6,0); nook.add(lamp);
+
+  // shared materials
+  const woodMat  = new THREE.MeshStandardMaterial({ color:0x2a1c34, roughness:0.7, metalness:0.2, emissive:PURPLE, emissiveIntensity:0.06 });
+  const shelfMat = new THREE.MeshStandardMaterial({ color:0x1a1226, roughness:0.8, metalness:0.15 });
+  const bookCols = [0xb98cff,0x7dfdfe,0xffad2e,0xff5a8a,0x5ff0e0,0x9b6cff,0xffd166];
+  const bookMats = bookCols.map(c=>new THREE.MeshStandardMaterial({ color:c, roughness:0.6, metalness:0.1, emissive:c, emissiveIntensity:0.12 }));
+
+  // two tall bookcases flanking the nook, each filled with instanced book spines
+  function bookcase(px, rotY){
+    const g=new THREE.Group(); g.position.set(px,0,-4); g.rotation.y=rotY;
+    const H=9, W=6, D=1.6, shelves=4;
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(W,H,D), shelfMat));                       // carcass
+    // shelf boards + a row of book spines per shelf (instanced for cheapness)
+    const spineGeo=new THREE.BoxGeometry(0.32,1.5,1.0);
+    const perShelf=14, total=shelves*perShelf;
+    const inst=new THREE.InstancedMesh(spineGeo, bookMats[0], total);
+    const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3();
+    let idx=0;
+    for(let sh=0; sh<shelves; sh++){
+      const sy=-H/2+1.4+sh*(H-2)/shelves;
+      const board=new THREE.Mesh(new THREE.BoxGeometry(W-0.3,0.18,D-0.2), woodMat); board.position.set(0,sy-0.85,0); g.add(board);
+      for(let b=0;b<perShelf;b++){
+        const bx=-W/2+0.6+b*(W-1.1)/(perShelf-1);
+        const hh=1.2+Math.random()*0.7;
+        s.set(1,hh,1); m.compose(new THREE.Vector3(bx,sy-0.1,0.1), q, s);
+        inst.setMatrixAt(idx, m);
+        inst.setColorAt(idx, new THREE.Color(bookCols[(b+sh)%bookCols.length]));
+        idx++;
+      }
+    }
+    inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true;
+    inst.material=new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.6, metalness:0.1 });
+    g.add(inst); nook.add(g);
+  }
+  bookcase(-7,  0.25);
+  bookcase( 7, -0.25);
+
+  // reading desk + stool
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(6,0.4,3), woodMat); desk.position.set(0,3.2,3); nook.add(desk);
+  [[-2.6,-1.2],[2.6,-1.2],[-2.6,1.2],[2.6,1.2]].forEach(([lx,lz])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.3,3,0.3), woodMat); leg.position.set(lx,1.6,3+lz); nook.add(leg); });
+  const stool=new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.9,0.4,12), shelfMat); stool.position.set(0,2.0,5.4); nook.add(stool);
+  const stoolLeg=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,2,8), woodMat); stoolLeg.position.set(0,1.0,5.4); nook.add(stoolLeg);
+
+  // desk lamp — little glowing orb on a stalk
+  const stalk=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1.4,6), woodMat); stalk.position.set(-2.2,4.1,3); nook.add(stalk);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.4,16,16), new THREE.MeshBasicMaterial({ color:WARM })); bulb.position.set(-2.2,4.9,3); nook.add(bulb);
+
+  // open floating book above the desk (two angled pages) — hovers & bobs
+  const pageMat=new THREE.MeshStandardMaterial({ color:0xf3ecff, emissive:PURPLE, emissiveIntensity:0.18, roughness:0.5, side:THREE.DoubleSide });
+  const openBook=new THREE.Group(); openBook.position.set(1.6,5.2,3);
+  const pL=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.0), pageMat); pL.position.x=-0.78; pL.rotation.y=0.35; pL.rotation.x=-Math.PI/2.3;
+  const pR=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.0), pageMat); pR.position.x= 0.78; pR.rotation.y=-0.35; pR.rotation.x=-Math.PI/2.3;
+  openBook.add(pL,pR); nook.add(openBook);
+
+  // readable overhead signage
+  const c=document.createElement('canvas'); c.width=512; c.height=140; const g2=c.getContext('2d');
+  g2.font='700 60px Orbitron, sans-serif'; g2.textAlign='center'; g2.textBaseline='middle';
+  g2.shadowColor='#c9a8ff'; g2.shadowBlur=20; g2.fillStyle='#e6d6ff'; g2.fillText('THE LIBRARY',256,58);
+  g2.shadowBlur=6; g2.font='400 24px monospace'; g2.fillStyle='#cdbfff'; g2.fillText('QUILL · writing & knowledge',256,104);
+  const signTex=new THREE.CanvasTexture(c); signTex.colorSpace=THREE.SRGBColorSpace; signTex.anisotropy=4;
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(12,3.3), new THREE.MeshBasicMaterial({ map:signTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+  sign.position.set(0,12,-4); nook.add(sign);
+
+  window._libraryFX={ update:function(t,dt){
+    openBook.position.y=5.2+Math.sin(t*1.1)*0.12; openBook.rotation.y=Math.sin(t*0.5)*0.15;
+    lamp.intensity=0.8+0.15*Math.sin(t*3.0);   // soft lamp flicker
+    bulb.scale.setScalar(1+0.06*Math.sin(t*3.0));
+  }};
+})();
+
 // ── terrain presets (environment toggle) ──
 const TERRAIN = {
   grid:  { bg:0x04060d, fog:0x04060d, density:0.008, l1:0x27e0ff, l2:0xffcf4a },
@@ -2080,6 +2359,8 @@ function animate(){
       }
     }
     if(_minimap && _animFrame%3===0) _minimap.update();   // minimap redraws a full 2D canvas — 20Hz is plenty
+    if(window._oracleFX) window._oracleFX.update(t, dt, playerPos);   // TURTLE: Oracle constellations + moon-phase hologram + holo-screens
+    if(window._libraryFX) window._libraryFX.update(t, dt);            // TURTLE: QUILL library reading-nook ambience
   }
   if(_portalPlots) _portalPlots.update(dt, t);
   if(_portalDome) _portalDome.update(dt, t);
