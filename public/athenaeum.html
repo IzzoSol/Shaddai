@@ -288,8 +288,9 @@ let scene     = null, camera = null, controls = null;
 let avatarMesh = null, avatarMixer = null, avatarBaseY = 0;
 let orbParticles = null;
 let floatPlaques = [];   // { mesh, mat, tex }
-let rafId     = null;
-let curView   = null;    // 'oracle' | 'quill' | null
+let rafId          = null;
+let curView        = null;    // 'oracle' | 'quill' | null
+let fireplaceLight = null;    // QUILL fireplace — animated in render loop
 
 // ── Renderer (lazy, created once) ─────────────────────────────────────────
 function initRenderer() {
@@ -374,6 +375,7 @@ function disposeScene() {
   cancelAnimationFrame(rafId); rafId = null;
   if (avatarMixer) { avatarMixer.stopAllAction(); avatarMixer = null; }
   avatarMesh = null; orbParticles = null; floatPlaques = [];
+  fireplaceLight = null;
   if (scene) {
     scene.traverse(obj => {
       if (obj.geometry) obj.geometry.dispose();
@@ -611,20 +613,35 @@ async function fetchHistory(plaques) {
 // ══════════════════════════════════════════════════════════════════════════
 async function buildQuill() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0c0704);
-  scene.fog = new THREE.Fog(0x100806, 18, 48);
+  scene.background = new THREE.Color(0x1e120a);
+  scene.fog = new THREE.Fog(0x2a1a0e, 28, 74);
 
   camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.1, 200);
   camera.position.set(0, 3.5, 15);
 
-  // Warm ambient
-  scene.add(new THREE.AmbientLight(0x3a2508, 1.3));
-  // Candles at four corners
-  [[- 9,6,-8],[9,6,-8],[-9,6,2],[9,6,2]].forEach(([x,y,z]) => {
-    const pl = new THREE.PointLight(0xd4853a, 1.3, 22); pl.position.set(x,y,z); scene.add(pl);
-  });
+  // Warm ambient + hemisphere fill (brightened — the library was too dark to see)
+  scene.add(new THREE.AmbientLight(0x5a4018, 2.7));
+  scene.add(new THREE.HemisphereLight(0x7a5622, 0x180c04, 1.2));
   // Reading lamp
-  const lamp = new THREE.PointLight(0xf0b860, 2.8, 20); lamp.position.set(0, 7.5, -2); scene.add(lamp);
+  const lamp = new THREE.PointLight(0xffcf88, 3.6, 28); lamp.position.set(0, 7.8, -2); scene.add(lamp);
+
+  // ── Lanterns — glowing lamps around the room (mesh + warm light) ──
+  const lanternMat = new THREE.MeshStandardMaterial({ color:0xffd48a, emissive:0xffb347, emissiveIntensity:1.7, roughness:0.5 });
+  [[-9,4.4,-8],[9,4.4,-8],[-9,4.4,2],[9,4.4,2],[-11,5.6,-1.5],[11,5.6,-1.5]].forEach(([x,y,z]) => {
+    const lant = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.72,0.5), lanternMat);
+    lant.position.set(x,y,z); scene.add(lant);
+    const pl = new THREE.PointLight(0xffbe5c, 2.3, 26); pl.position.set(x,y,z); scene.add(pl);
+  });
+
+  // ── Fireplace against the back wall (hearth + flames + strong warm light) ──
+  const stoneMat = new THREE.MeshStandardMaterial({ color:0x33291f, roughness:0.95 });
+  const surround = new THREE.Mesh(new THREE.BoxGeometry(5,4.6,1.2), stoneMat); surround.position.set(0,2.3,-12.4); scene.add(surround);
+  const firebox = new THREE.Mesh(new THREE.BoxGeometry(3,2.6,1.0), new THREE.MeshStandardMaterial({color:0x0a0503,roughness:1})); firebox.position.set(0,1.6,-12.0); scene.add(firebox);
+  const mantle = new THREE.Mesh(new THREE.BoxGeometry(5.7,0.42,1.6), stoneMat); mantle.position.set(0,4.7,-12.3); scene.add(mantle);
+  const flameMat = new THREE.MeshBasicMaterial({ color:0xff7a1a, transparent:true, opacity:0.92 });
+  for (let i=0;i<5;i++){ const f=new THREE.Mesh(new THREE.ConeGeometry(0.3-i*0.03, 1.3-i*0.13, 8), flameMat); f.position.set(-0.8+i*0.4, 1.05, -11.7); scene.add(f); }
+  const emberGlow = new THREE.Mesh(new THREE.SphereGeometry(1.15,12,12), new THREE.MeshBasicMaterial({color:0xff6a1a,transparent:true,opacity:0.4})); emberGlow.position.set(0,1.1,-11.8); scene.add(emberGlow);
+  const fireLight = new THREE.PointLight(0xff8a2a, 4.2, 32); fireLight.position.set(0,1.9,-11.5); scene.add(fireLight);
 
   // Floor — warm wood CanvasTexture
   const fc = document.createElement('canvas'); fc.width = fc.height = 256;
