@@ -391,7 +391,10 @@ window.__worldBuilt = false;
       }
     }catch(e){ console.warn('footprint measure failed:', e && e.message); }
     _defer(function(){
-      try{ if(window.buildWorldNPCs) worldNPCs = window.buildWorldNPCs(THREE, scene, agentBodyLoader, worldTerrain && worldTerrain.heightAt, { count: 6 }); }catch(e){ console.warn('npc build failed:', e && e.message); }
+      // OWNER DECISION: agents STAND in their lounges (placed by world.placeAgents) — no wandering NPCs.
+      // buildWorldNPCs would duplicate the 7 council agents as walking crowd figures, which is NOT wanted.
+      // worldNPCs stays null so no wanderers exist. The update() call below is a no-op on null.
+      /* worldNPCs = window.buildWorldNPCs(...) — DISABLED */
       window.__worldBuilt = true;
       console.log('✅ world built (heavy geo deferred for a smooth loader)');
     });
@@ -674,6 +677,268 @@ window.__worldBuilt = false;
     openBook.position.y=5.2+Math.sin(t*1.1)*0.12; openBook.rotation.y=Math.sin(t*0.5)*0.15;
     lamp.intensity=0.8+0.15*Math.sin(t*3.0);   // soft lamp flicker
     bulb.scale.setScalar(1+0.06*Math.sin(t*3.0));
+  }};
+})();
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — CHAKRA PATH (headline): 7 glowing chakra floor pads ascend OUTWARD from the Oracle
+// observatory (+x, toward the world edge = "ascension"). Step on a pad → a holographic info
+// panel (matching the Oracle projection-screen style) fades in showing NAME / GOVERNS / HEALING
+// FRUIT, a glowing bridge grows toward the NEXT chakra (stays lit once unlocked), the pad lights
+// permanently, and a floating procedural fruit bobs beside it. Pure primitives, materials reused,
+// build-once, zero per-frame allocation. Update hook: window._chakraFX.update(t,dt,playerPos).
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L = window.WORLD_LAYOUT;
+  const OR = (L && L.sector && L.sector('ORACLE') && L.sector('ORACLE').pos) || [260,0];
+  const ORX = OR[0], ORZ = OR[1];
+  // 7 chakras, root→crown, laid along +x so the player ascends OUTWARD from the observatory.
+  const CH = [
+    { c:0xe01e1e, name:'ROOT',         sans:'Muladhara',    gov:'grounding & survival',   fruit:'pomegranate · strawberries · root veg', kind:'pom'   },
+    { c:0xff7b1e, name:'SACRAL',       sans:'Svadhisthana', gov:'creativity & emotion',   fruit:'oranges · mango · peaches',             kind:'orange'},
+    { c:0xffd21e, name:'SOLAR PLEXUS', sans:'Manipura',     gov:'willpower & confidence', fruit:'banana · pineapple · lemon',            kind:'banana'},
+    { c:0x21d07a, name:'HEART',        sans:'Anahata',      gov:'love & compassion',      fruit:'green apple · lime · leafy greens',     kind:'apple' },
+    { c:0x1ea0ff, name:'THROAT',       sans:'Vishuddha',    gov:'truth & voice',          fruit:'blueberries · kiwi · coconut water',    kind:'berry' },
+    { c:0x4b3bff, name:'THIRD EYE',    sans:'Ajna',         gov:'intuition & insight',    fruit:'purple grapes · plums · blackberries',  kind:'grape' },
+    { c:0xa94bff, name:'CROWN',        sans:'Sahasrara',    gov:'consciousness & spirit', fruit:'purple foods · pure water · light',      kind:'lotus' },
+  ];
+  const PAD_X0 = 292, GAP = 13, PADZ = ORZ, PAD_R = 4.2, PAD_R2 = PAD_R*PAD_R;
+  const padX = i => PAD_X0 + i*GAP;
+
+  const root = new THREE.Group(); scene.add(root);   // absolute world coords (no rotation → child==world)
+
+  // ── holographic info-panel texture (built once per chakra), Oracle projection-screen styling ──
+  function panelTex(ch){
+    const c=document.createElement('canvas'); c.width=512; c.height=320; const g=c.getContext('2d');
+    const hex='#'+ch.c.toString(16).padStart(6,'0');
+    g.clearRect(0,0,512,320);
+    g.textAlign='center'; g.textBaseline='middle';
+    g.font='700 52px Orbitron, sans-serif'; g.shadowColor=hex; g.shadowBlur=26; g.fillStyle=hex; g.fillText(ch.name,256,54);
+    g.shadowBlur=8; g.font='400 24px monospace'; g.fillStyle='#dfe6ff'; g.fillText(ch.sans+' chakra',256,98);
+    g.shadowBlur=4; g.font='700 22px monospace'; g.fillStyle=hex; g.fillText('GOVERNS',256,146);
+    g.shadowBlur=6; g.font='400 24px monospace'; g.fillStyle='#eef3ff'; g.fillText(ch.gov,256,178);
+    g.shadowBlur=4; g.font='700 22px monospace'; g.fillStyle='#ffd58a'; g.fillText('HEALING FRUIT',256,226);
+    // word-wrap the fruit list to fit two lines
+    g.shadowBlur=6; g.font='400 22px monospace'; g.fillStyle='#fff2d6';
+    const words=ch.fruit.split(' '); let line='', y=260;
+    for(let w=0; w<words.length; w++){ const test=line+words[w]+' ';
+      if(g.measureText(test).width>470 && line){ g.fillText(line.trim(),256,y); line=words[w]+' '; y+=30; } else line=test; }
+    g.fillText(line.trim(),256,y);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t;
+  }
+
+  // ── procedural fruit (tiny, cheap) — a group that bobs beside its pad ──
+  function makeFruit(kind, col){
+    const g=new THREE.Group();
+    const base=new THREE.MeshStandardMaterial({ color:col, emissive:col, emissiveIntensity:0.35, roughness:0.45, metalness:0.15 });
+    const cluster=(color,n,rad,spread)=>{ const m=new THREE.MeshStandardMaterial({ color:color, emissive:color, emissiveIntensity:0.3, roughness:0.4 });
+      for(let i=0;i<n;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(rad,10,10), m);
+        s.position.set((Math.random()-0.5)*spread,(Math.random()-0.5)*spread-i*rad*0.5,(Math.random()-0.5)*spread); g.add(s);} };
+    if(kind==='pom'){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.85,16,16),base); g.add(b);
+      const crown=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.28,0.35,6), new THREE.MeshStandardMaterial({color:0x7a2a2a,emissive:0x5a1010,emissiveIntensity:0.3})); crown.position.y=0.9; g.add(crown); }
+    else if(kind==='orange'){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16),base); g.add(b);
+      const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,8), new THREE.MeshStandardMaterial({color:0x2fa84a,emissive:0x1c6a2c,emissiveIntensity:0.3})); leaf.scale.set(1.6,0.4,0.9); leaf.position.set(0.2,0.82,0); g.add(leaf); }
+    else if(kind==='banana'){ const b=new THREE.Mesh(new THREE.TorusGeometry(0.75,0.2,10,16, Math.PI*0.95), base); b.rotation.z=Math.PI*0.15; g.add(b); }
+    else if(kind==='apple'){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16),base); b.scale.set(1,0.92,1); g.add(b);
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.35,6), new THREE.MeshStandardMaterial({color:0x5a3a1a,emissive:0x000000})); stem.position.y=0.8; g.add(stem); }
+    else if(kind==='berry'){ cluster(0x2a6bd8,6,0.34,0.9); }
+    else if(kind==='grape'){ cluster(0x6a2fb0,8,0.32,0.85); }
+    else { const b=new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,0), base); g.add(b);   // crown = radiant violet lotus-orb
+      const halo=new THREE.Mesh(new THREE.SphereGeometry(1.15,16,16), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.22,blending:THREE.AdditiveBlending,depthWrite:false})); g.add(halo); }
+    return g;
+  }
+
+  const pads=[], bridges=[];
+  for(let i=0;i<CH.length;i++){
+    const ch=CH[i], x=padX(i), col=new THREE.Color(ch.c);
+    // pad disc + ring + soft rim glow
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(PAD_R,40), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0.18, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+    disc.rotation.x=-Math.PI/2; disc.position.set(x,0.12,PADZ); root.add(disc);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(PAD_R,PAD_R+0.55,40), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+    ring.rotation.x=-Math.PI/2; ring.position.set(x,0.14,PADZ); root.add(ring);
+    // ascension beam (lit only once activated)
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.15,PAD_R*0.8,10,18,1,true), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0.0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+    beam.position.set(x,5,PADZ); root.add(beam);
+    // colored fill light (cheap fantasy fill for the otherwise-flat outer ground)
+    const plight=new THREE.PointLight(ch.c, 0.0, 26, 2.0); plight.position.set(x,4,PADZ); root.add(plight);
+    // holographic info panel (billboarded, fades in when the player stands on this pad)
+    const panel=new THREE.Mesh(new THREE.PlaneGeometry(9,5.6), new THREE.MeshBasicMaterial({ map:panelTex(ch), transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+    const panelY=7.2; panel.position.set(x,panelY,PADZ); panel.visible=false; root.add(panel);
+    const frame=new THREE.Mesh(new THREE.PlaneGeometry(9.5,6.1), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+    frame.position.set(x,panelY,PADZ-0.05); frame.visible=false; root.add(frame);
+    // floating fruit beside the pad (off the walking line, toward +z)
+    const fruit=makeFruit(ch.kind, ch.c); fruit.position.set(x, 2.6, PADZ+PAD_R+2.4); root.add(fruit);
+    pads.push({ disc, ring, beam, plight, panel, frame, panelY, fruit, col, x, activated:false, pReveal:0 });
+    // bridge from pad i → pad i+1 (grows from this pad; stays lit once unlocked)
+    if(i<CH.length-1){
+      const grp=new THREE.Group(); grp.position.set(x+PAD_R,0.13,PADZ);   // pivot at edge of this pad
+      const len=GAP-PAD_R*2+0.5, w=2.6;
+      const strip=new THREE.Mesh(new THREE.PlaneGeometry(len,w), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0.0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+      strip.rotation.x=-Math.PI/2; strip.position.x=len/2; grp.add(strip);
+      grp.scale.x=0.001; root.add(grp);
+      bridges.push({ grp, strip, reveal:0, unlocked:false });
+    }
+  }
+
+  const _v=new THREE.Vector3();
+  window._chakraFX={ update:function(t,dt,pp){
+    // which pad is the player standing on?
+    let on=-1;
+    if(pp){ for(let i=0;i<pads.length;i++){ const dx=pp.x-pads[i].x, dz=pp.z-PADZ; if(dx*dx+dz*dz<PAD_R2){ on=i; break; } } }
+    for(let i=0;i<pads.length;i++){
+      const p=pads[i], pulse=0.5+0.5*Math.sin(t*2.0+i*0.7);
+      // pad glow: brighter once permanently activated
+      p.disc.material.opacity = (p.activated?0.30:0.12) + 0.10*pulse;
+      p.ring.material.opacity = (p.activated?0.75:0.45) + 0.15*pulse;
+      if(i===on && !p.activated){ p.activated=true; if(i<bridges.length) bridges[i].unlocked=true; }  // step-to-open
+      const litTarget=p.activated?1:0;
+      p.pReveal += (litTarget - p.pReveal)*Math.min(1,dt*3);
+      p.beam.material.opacity = 0.10*p.pReveal*(0.7+0.3*pulse);
+      p.plight.intensity = 0.9*p.pReveal;
+      // fruit bob + slow spin
+      p.fruit.position.y = 2.6 + Math.sin(t*1.3+i)*0.35; p.fruit.rotation.y = t*0.5 + i;
+      // info panel: fade in only while standing on THIS pad; billboard when visible
+      const panelTarget = (i===on)?1:0;
+      const cur = p.panel.material.opacity;
+      const na = cur + (panelTarget-cur)*Math.min(1,dt*4);
+      const show = na>0.02;
+      if(p.panel.visible!==show){ p.panel.visible=show; p.frame.visible=show; }
+      if(show){
+        p.panel.material.opacity=na; p.frame.material.opacity=na*0.25;
+        p.panel.lookAt(camera.position.x, p.panelY, camera.position.z);
+        p.frame.lookAt(camera.position.x, p.panelY, camera.position.z);
+      } else if(cur!==0){ p.panel.material.opacity=0; p.frame.material.opacity=0; }
+    }
+    // bridges grow from their source pad and stay lit once unlocked
+    for(let i=0;i<bridges.length;i++){ const b=bridges[i];
+      b.reveal += ((b.unlocked?1:0)-b.reveal)*Math.min(1,dt*2.2);
+      if(b.reveal>0.001){ b.grp.scale.x=Math.max(0.001,b.reveal);
+        b.strip.material.opacity = 0.55*b.reveal*(0.75+0.25*Math.sin(t*3.0+i)); }
+    }
+  }};
+})();
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — QUILL LIBRARY: ember-lit upgrade. Adds a flickering FIREPLACE (warm point-light +
+// glowing logs + procedural flames) and two AISLES of bookcases the player can walk between,
+// deepening the existing reading-nook into a dim, cozy, immersive library. Additive to the
+// existing _libraryFX (untouched). Update hook: window._libraryEmberFX.update(t,dt).
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L = window.WORLD_LAYOUT;
+  const QU = (L && L.sector && L.sector('QUILL') && L.sector('QUILL').pos) || [130,225];
+  const QX=QU[0], QZ=QU[1];
+  const dirx=-QX, dirz=-QZ, dl=Math.hypot(dirx,dirz)||1, nx=QX+dirx/dl*34, nz=QZ+dirz/dl*34;
+  const faceY=Math.atan2(dirx,dirz);
+  const EMBER=0xff7a2a, WARM=0xffb46a, PURPLE=0xb98cff;
+  const grp=new THREE.Group(); grp.position.set(nx,0,nz); grp.rotation.y=faceY; scene.add(grp);
+
+  // shared materials
+  const woodMat  = new THREE.MeshStandardMaterial({ color:0x241826, roughness:0.75, metalness:0.15, emissive:PURPLE, emissiveIntensity:0.05 });
+  const stoneMat = new THREE.MeshStandardMaterial({ color:0x1a1520, roughness:0.9, metalness:0.1 });
+  const bookCols = [0xb98cff,0x7dfdfe,0xffad2e,0xff5a8a,0x5ff0e0,0x9b6cff,0xffd166,0xff7a2a];
+
+  // ── FIREPLACE (deep in the nook, local -z toward the library facade) ──
+  const fpX=8, fpZ=-12;
+  const hearth=new THREE.Mesh(new THREE.BoxGeometry(6,4.5,2.2), stoneMat); hearth.position.set(fpX,2.25,fpZ); grp.add(hearth);
+  const firebox=new THREE.Mesh(new THREE.BoxGeometry(4,2.6,0.6), new THREE.MeshBasicMaterial({ color:0x120400 })); firebox.position.set(fpX,1.6,fpZ+1.0); grp.add(firebox);
+  const mantel=new THREE.Mesh(new THREE.BoxGeometry(6.8,0.5,2.8), woodMat); mantel.position.set(fpX,4.7,fpZ); grp.add(mantel);
+  // glowing logs
+  const logMat=new THREE.MeshStandardMaterial({ color:0x3a1c0c, emissive:EMBER, emissiveIntensity:0.5, roughness:0.8 });
+  for(let k=-1;k<=1;k++){ const log=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,3.2,8), logMat); log.rotation.z=Math.PI/2; log.rotation.y=k*0.25; log.position.set(fpX+k*0.35,0.9,fpZ+1.0); grp.add(log); }
+  const embers=new THREE.Mesh(new THREE.SphereGeometry(1.4,12,10), new THREE.MeshBasicMaterial({ color:EMBER, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false })); embers.scale.set(1.4,0.5,0.7); embers.position.set(fpX,0.9,fpZ+1.0); grp.add(embers);
+  // procedural flames (additive cones that flicker)
+  const flames=[];
+  const flameMat=new THREE.MeshBasicMaterial({ color:0xffb02a, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false });
+  for(let f=0; f<3; f++){ const fl=new THREE.Mesh(new THREE.ConeGeometry(0.55-f*0.12,1.8-f*0.3,10), (f===1)?new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false}):flameMat);
+    fl.position.set(fpX+(f-1)*0.7, 1.7-f*0.15, fpZ+1.0); grp.add(fl); flames.push(fl); }
+  // warm firelight (the ember ambience for the whole nook)
+  const fire=new THREE.PointLight(EMBER, 1.4, 46, 2.0); fire.position.set(fpX,3,fpZ+2); grp.add(fire);
+
+  // ── two AISLES of bookcases forming a walkable corridor (behind the existing nook) ──
+  function bookcase(px,pz,rotY){
+    const g=new THREE.Group(); g.position.set(px,0,pz); g.rotation.y=rotY;
+    const H=8.5,W=5,D=1.4,shelves=4;
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(W,H,D), new THREE.MeshStandardMaterial({ color:0x181020, roughness:0.85, metalness:0.1 })));
+    const spineGeo=new THREE.BoxGeometry(0.3,1.4,0.95), perShelf=12, total=shelves*perShelf;
+    const inst=new THREE.InstancedMesh(spineGeo, new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.6, metalness:0.1 }), total);
+    const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(); let idx=0;
+    for(let sh=0; sh<shelves; sh++){ const sy=-H/2+1.3+sh*(H-2)/shelves;
+      const board=new THREE.Mesh(new THREE.BoxGeometry(W-0.3,0.16,D-0.2), woodMat); board.position.set(0,sy-0.8,0); g.add(board);
+      for(let b=0;b<perShelf;b++){ const bx=-W/2+0.5+b*(W-1)/(perShelf-1), hh=1.1+Math.random()*0.7;
+        s.set(1,hh,1); m.compose(new THREE.Vector3(bx,sy-0.05,0.1), q, s); inst.setMatrixAt(idx,m);
+        inst.setColorAt(idx, new THREE.Color(bookCols[(b+sh)%bookCols.length])); idx++; } }
+    inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true; g.add(inst); grp.add(g);
+  }
+  // corridor centered at local z≈-16, walk down the middle (gap 6 between the two rows)
+  for(let a=-1;a<=1;a++){ bookcase(a*5.5, -13, 0); bookcase(a*5.5, -19, Math.PI); }
+  // a couple of aisle lanterns (dim purple wisps)
+  const lanterns=[];
+  for(let a=-1;a<=1;a+=2){ const lm=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12), new THREE.MeshBasicMaterial({color:PURPLE})); lm.position.set(a*3,5.5,-16); grp.add(lm);
+    const ll=new THREE.PointLight(PURPLE,0.4,18,2); ll.position.copy(lm.position); grp.add(ll); lanterns.push({lm,ll,ph:a}); }
+
+  window._libraryEmberFX={ update:function(t,dt){
+    // fire flicker — irregular warm pulse
+    const fk=0.72+0.28*Math.sin(t*11.0)*Math.sin(t*6.3)+0.12*Math.sin(t*23.0);
+    fire.intensity=1.1+0.6*fk; fire.color.setHSL(0.045+0.02*fk, 0.9, 0.5);
+    embers.material.opacity=0.4+0.2*fk;
+    for(let f=0; f<flames.length; f++){ const fl=flames[f]; fl.scale.y=0.8+0.5*Math.abs(Math.sin(t*(9+f*2)+f))+0.2*fk; fl.scale.x=0.85+0.2*Math.sin(t*(7+f)); fl.material.opacity=0.65+0.3*fk; }
+    for(let i=0;i<lanterns.length;i++){ lanterns[i].ll.intensity=0.35+0.12*Math.sin(t*3.0+lanterns[i].ph); }
+  }};
+})();
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// TURTLE — ATMOSPHERE POLISH: drifting glowing orbs, floating runes, ember/petal motes, and a
+// soft radial FLOOR GLOW shimmer around the central plaza — tasteful fantasy vibe, existing
+// layout untouched, modest counts. Update hook: window._ambienceFX.update(t,dt).
+// ════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const root=new THREE.Group(); scene.add(root);
+
+  // ── soft radial floor-glow shimmer (does NOT touch the ground material) ──
+  const gc=document.createElement('canvas'); gc.width=256; gc.height=256; const gg=gc.getContext('2d');
+  const grd=gg.createRadialGradient(128,128,10,128,128,128);
+  grd.addColorStop(0,'rgba(255,224,150,0.55)'); grd.addColorStop(0.4,'rgba(120,200,255,0.22)'); grd.addColorStop(1,'rgba(0,0,0,0)');
+  gg.fillStyle=grd; gg.fillRect(0,0,256,256);
+  const glowTex=new THREE.CanvasTexture(gc); glowTex.colorSpace=THREE.SRGBColorSpace;
+  const floorGlow=new THREE.Mesh(new THREE.PlaneGeometry(520,520), new THREE.MeshBasicMaterial({ map:glowTex, transparent:true, opacity:0.06, blending:THREE.AdditiveBlending, depthWrite:false }));
+  floorGlow.rotation.x=-Math.PI/2; floorGlow.position.y=0.05; root.add(floorGlow);
+
+  // ── drifting glowing orbs around the central plaza ──
+  const orbCols=[0x27e0ff,0xffcf4a,0xc08cff,0x5ff0e0,0xff7a2a];
+  const orbs=[];
+  for(let i=0;i<12;i++){ const col=orbCols[i%orbCols.length];
+    const o=new THREE.Mesh(new THREE.SphereGeometry(0.6,14,14), new THREE.MeshBasicMaterial({ color:col }));
+    const halo=new THREE.Mesh(new THREE.SphereGeometry(1.3,12,12), new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0.25, blending:THREE.AdditiveBlending, depthWrite:false }));
+    const g=new THREE.Group(); g.add(o,halo);
+    const ang=(i/12)*Math.PI*2, rad=70+Math.random()*120;
+    g.position.set(Math.cos(ang)*rad, 6+Math.random()*10, Math.sin(ang)*rad); root.add(g);
+    orbs.push({ g, bx:g.position.x, bz:g.position.z, by:g.position.y, ph:Math.random()*6.28, sp:0.2+Math.random()*0.3 }); }
+
+  // ── floating runes (mystic glyph planes, billboarded, gently bobbing) ──
+  function runeTex(ch,hex){ const c=document.createElement('canvas'); c.width=128; c.height=128; const g=c.getContext('2d');
+    g.textAlign='center'; g.textBaseline='middle'; g.font='700 90px serif'; g.shadowColor=hex; g.shadowBlur=24; g.fillStyle=hex; g.fillText(ch,64,72);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; }
+  const glyphs=['✶','☾','✦','◈','♁','۞'], runeHex=['#c08cff','#7dfdfe','#ffcf4a','#5ff0e0','#ff7a8a','#aaccff'];
+  const runes=[];
+  for(let i=0;i<6;i++){ const r=new THREE.Mesh(new THREE.PlaneGeometry(4,4), new THREE.MeshBasicMaterial({ map:runeTex(glyphs[i],runeHex[i]), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+    const ang=(i/6)*Math.PI*2+0.5, rad=90+Math.random()*90; r.position.set(Math.cos(ang)*rad, 12+Math.random()*14, Math.sin(ang)*rad); root.add(r); runes.push({ r, by:r.position.y, ph:Math.random()*6.28 }); }
+
+  // ── drifting motes (embers/petals) over the plaza ──
+  const MO=180; const mp=new Float32Array(MO*3), mph=new Float32Array(MO);
+  for(let i=0;i<MO;i++){ const a=Math.random()*6.28, rr=Math.random()*230; mp[i*3]=Math.cos(a)*rr; mp[i*3+1]=Math.random()*40; mp[i*3+2]=Math.sin(a)*rr; mph[i]=Math.random()*6.28; }
+  const mgeo=new THREE.BufferGeometry(); mgeo.setAttribute('position', new THREE.BufferAttribute(mp,3));
+  const motes=new THREE.Points(mgeo, new THREE.PointsMaterial({ color:0xffd9a0, size:0.55, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false }));
+  root.add(motes);
+
+  window._ambienceFX={ update:function(t,dt){
+    floorGlow.material.opacity=0.05+0.02*Math.sin(t*0.5);
+    for(let i=0;i<orbs.length;i++){ const o=orbs[i];
+      o.g.position.y=o.by+Math.sin(t*o.sp+o.ph)*2.2; o.g.position.x=o.bx+Math.sin(t*0.15+o.ph)*4; o.g.position.z=o.bz+Math.cos(t*0.15+o.ph)*4; }
+    for(let i=0;i<runes.length;i++){ const rn=runes[i]; rn.r.position.y=rn.by+Math.sin(t*0.7+rn.ph)*1.5; rn.r.lookAt(camera.position); rn.r.rotation.z=Math.sin(t*0.3+rn.ph)*0.15; }
+    const arr=mgeo.attributes.position.array;
+    for(let i=0;i<MO;i++){ arr[i*3+1]+=dt*(1.0+0.5*Math.sin(mph[i])); if(arr[i*3+1]>44) arr[i*3+1]=0; arr[i*3]+=Math.sin(t*0.2+mph[i])*dt*0.6; }
+    mgeo.attributes.position.needsUpdate=true;
   }};
 })();
 
@@ -1435,6 +1700,59 @@ const playerAvatar = new THREE.Group();
   const rl=new THREE.Mesh(new THREE.CapsuleGeometry(0.22,1.2,4,8),avatarMat); rl.position.set(0.3,0.7,0); playerAvatar.add(rl);
 }
 playerAvatar.visible=false; scene.add(playerAvatar);
+
+// ── PROCEDURAL BONE WALK — ported from basketball.html ──────────────────────────
+// Discovers arm/leg/spine bones once per GLB load, then layers a sine-wave swing ON
+// TOP of the THREE.AnimationMixer clip every frame — same technique that makes the
+// basketball characters feel smooth and alive. Zero allocation per frame (lerp only).
+let _playerBones = {};    // bones discovered from the current player GLB
+let _playerWalkPhase = 0; // running walk-phase accumulator (radians)
+
+function _discoverPlayerBones(group) {
+  const b = {};
+  group.traverse(function(obj) {
+    const n = obj.name.toLowerCase();
+    if (!b.rarm     && /right.*(arm|upperarm|shoulder)/.test(n) && !/fore/.test(n)) b.rarm = obj;
+    if (!b.larm     && /left.*(arm|upperarm|shoulder)/.test(n)  && !/fore/.test(n)) b.larm = obj;
+    if (!b.rforearm && /right.*(fore|lowerarm|elbow)/.test(n))  b.rforearm = obj;
+    if (!b.lforearm && /left.*(fore|lowerarm|elbow)/.test(n))   b.lforearm = obj;
+    if (!b.rleg     && /right.*(upleg|thigh)/.test(n))          b.rleg = obj;
+    if (!b.lleg     && /left.*(upleg|thigh)/.test(n))           b.lleg = obj;
+    if (!b.rfoot    && /right.*(leg$|knee|shin|lowerleg)/.test(n)) b.rfoot = obj;
+    if (!b.lfoot    && /left.*(leg$|knee|shin|lowerleg)/.test(n))  b.lfoot = obj;
+    if (!b.spine    && /spine[12]?$/.test(n))                   b.spine = obj;
+    if (!b.hips     && /(hips?|pelvis|mixamorig:hips)/.test(n)) b.hips = obj;
+  });
+  _playerBones = b;
+  const found = Object.keys(b);
+  console.log('[PLAYER-BONES] found:', found.length ? found.join(', ') : 'none (fallback only)');
+}
+
+// applyProceduralBones — layered ON TOP of the mixer clip each frame.
+// isMoving: player has WASD held; isSprinting: Shift held; speed: units/s XZ velocity.
+function _applyPlayerProceduralBones(isMoving, isSprinting, speed) {
+  const b = _playerBones;
+  if (!b || !Object.keys(b).length) return;
+  const lerp = THREE.MathUtils.lerp;
+  // Blend strength scales with speed (0 when still → 1 at full speed), so the overlay
+  // eases in / out smoothly as the player accelerates and stops.
+  const sw = isMoving ? Math.min(1, speed / 10) : 0;
+  const ph = _playerWalkPhase;
+  const sp = isSprinting ? 1.4 : 1.0;   // sprint widens the arm arc
+  const lx = (bone, val, k) => { if (bone) bone.rotation.x = lerp(bone.rotation.x || 0, val, k); };
+  const lz = (bone, val, k) => { if (bone) bone.rotation.z = lerp(bone.rotation.z || 0, val, k); };
+  // Arm swing — counterbalances legs (right arm forward when left leg forward)
+  lx(b.rarm,     -Math.sin(ph) * 0.50 * sw * sp, 0.22);
+  lx(b.larm,      Math.sin(ph) * 0.50 * sw * sp, 0.22);
+  // Forearm partial curl on the "push" half of each cycle
+  lx(b.rforearm,  Math.max(0,  Math.sin(ph)) * 0.22 * sw, 0.18);
+  lx(b.lforearm,  Math.max(0, -Math.sin(ph)) * 0.22 * sw, 0.18);
+  // Spine: subtle forward lean that grows with speed
+  lx(b.spine, isSprinting ? 0.12 * sw : 0.03 * sw, 0.10);
+  // Hip lateral sway at half walk-phase frequency (weight-shift feel)
+  lz(b.hips, Math.sin(ph * 0.5) * 0.04 * sw, 0.08);
+}
+
 // ── rigged WALKING character: swap the capsule figure for the animated soldier (Idle/Walk/Run) ──
 let playerMixer=null; const playerClips={}; let playerAction=null;
 // pull an animation clip from a separate GLB onto the player mixer (same Meshy rig/skeleton)
@@ -1453,6 +1771,8 @@ function _loadHero(file){
     if(file.indexOf('hero')===0){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }
     playerAction = _clip('Idle')||_clip('Walk')||Object.values(playerClips)[0];
     if(playerAction) playerAction.play();
+    _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery
+    _discoverPlayerBones(m);                    // find arm/leg/spine for procedural overlay
     console.log('✅ main character ('+file+') clips:', Object.keys(playerClips).join(','));
   }, undefined, ()=>{ if(file!=='robot.glb') _loadHero('robot.glb'); else console.warn('player model failed; capsule avatar kept'); });
 }
@@ -1502,6 +1822,8 @@ window.setPlayerCharacter = function(code){
     if(playerMixer)(g.animations||[]).forEach(function(cl){ playerClips[cl.name]=playerMixer.clipAction(cl); });
     playerAction = _clip('Idle')||_clip('Walk')||(Object.values(playerClips)[0]||null);
     if(playerAction) playerAction.play();
+    _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery for this character's rig
+    _discoverPlayerBones(m);                    // find arm/leg/spine for procedural walk overlay
     window._playerCharacter = code;
     console.log('🎮 now playing as', code, '· clips:', Object.keys(playerClips).join(',')||'(static pose)');
   }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— keeping current body'); });
@@ -2277,7 +2599,22 @@ function animate(){
     playerMixer.update(dt);
     const mv = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
-    setPlayerAnim(bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle'));
+    const _pAnimName = bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle');
+    setPlayerAnim(_pAnimName);
+    // ── Basketball-style smooth walk: blend clip timescale with actual movement speed ──
+    // This ensures the feet keep up with the floor — no sliding at slow starts or fast runs.
+    if(playerAction && _pAnimName !== 'Idle'){
+      const _pSpd = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+      const _ts = Math.max(0.3, Math.min(2.5, _pSpd / 10));
+      playerAction.setEffectiveTimeScale(_ts);
+    }
+    // ── Procedural bone overlay (port of basketball.html applyProceduralBones) ──
+    // Advances the walk phase and applies arm/leg/spine rotations layered on the mixer.
+    if(playerAvatar.visible && !bikeMode){
+      const _pSpd2 = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+      if(mv) _playerWalkPhase += dt * (rn ? 7.5 : 5.5);
+      _applyPlayerProceduralBones(!!mv, !!rn, _pSpd2);
+    }
   }
   if(_spawnBusy){
     // sky-dive / descent controls the camera this frame — skip normal placement
@@ -2361,6 +2698,9 @@ function animate(){
     if(_minimap && _animFrame%3===0) _minimap.update();   // minimap redraws a full 2D canvas — 20Hz is plenty
     if(window._oracleFX) window._oracleFX.update(t, dt, playerPos);   // TURTLE: Oracle constellations + moon-phase hologram + holo-screens
     if(window._libraryFX) window._libraryFX.update(t, dt);            // TURTLE: QUILL library reading-nook ambience
+    if(window._chakraFX) window._chakraFX.update(t, dt, playerPos);   // TURTLE: chakra path — step-to-open bridges + holo panels + fruit
+    if(window._libraryEmberFX) window._libraryEmberFX.update(t, dt);  // TURTLE: QUILL ember fireplace + book aisles
+    if(window._ambienceFX) window._ambienceFX.update(t, dt);          // TURTLE: floating orbs/runes/motes + floor glow
   }
   if(_portalPlots) _portalPlots.update(dt, t);
   if(_portalDome) _portalDome.update(dt, t);
