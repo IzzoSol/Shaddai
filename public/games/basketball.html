@@ -712,6 +712,8 @@ function discoverBones(group, playerIdx) {
     if (!b.lhand    && /left.*hand/.test(n))                    b.lhand = obj;
     if (!b.spine    && /^.*spine[12]?$/.test(n))               b.spine = obj;
     if (!b.hips     && /(hips?|pelvis|mixamorig:hips)/.test(n)) b.hips = obj;
+    if (!b.head     && /^.*head$/.test(n))                     b.head = obj;
+    if (!b.neck     && /^.*neck[12]?$/.test(n))                b.neck = obj;
   });
   playerBones[playerIdx] = b;
   const found = Object.keys(b);
@@ -848,7 +850,7 @@ const playerBones = [{}, {}];
 // Team 0 (Vanguard): cyan #37e6ff, number 1
 // Team 1 (Ghost):    magenta #ff4d94, number 7
 // ─────────────────────────────────────────────────────────────────
-const jerseyData = [null, null]; // { vGroup, wristR, wristL }
+const jerseyData = [null, null]; // { vGroup, wristR, wristL, headBand }
 // Pre-alloc reusable objects — zero per-frame garbage
 const _jvP  = new THREE.Vector3();
 const _jvQ  = new THREE.Quaternion();
@@ -856,6 +858,8 @@ const _jwRp = new THREE.Vector3();
 const _jwLp = new THREE.Vector3();
 const _jwRq = new THREE.Quaternion();
 const _jwLq = new THREE.Quaternion();
+const _jhP  = new THREE.Vector3();
+const _jhQ  = new THREE.Quaternion();
 
 const JERSEY_NUMBERS = [1, 7];
 const JERSEY_COLORS  = ['#37e6ff', '#ff4d94'];
@@ -910,7 +914,7 @@ function createJerseyForPlayer(playerIdx) {
 
   const vGroup = new THREE.Group();
   vGroup.add(vestMesh, numF, numB);
-  vGroup.visible = false; // hidden until bone data ready
+  vGroup.visible = true; // visible from creation; updateJersey will position it each frame
   scene.add(vGroup);
 
   // ── Wristbands (forearm accents) ──
@@ -928,16 +932,30 @@ function createJerseyForPlayer(playerIdx) {
   scene.add(wristR);
   scene.add(wristL);
 
-  jerseyData[playerIdx] = { vGroup, wristR, wristL };
+  // ── Headband (thin torus around the forehead) ──
+  // Slightly wider tube front that acts as a sweatband strip.
+  const bandGeo = new THREE.TorusGeometry(0.135, 0.020, 6, 22);
+  const bandMat = new THREE.MeshStandardMaterial({
+    color: colorInt,
+    emissive: new THREE.Color(colorInt),
+    emissiveIntensity: 0.80,
+    roughness: 0.55,
+  });
+  const headBand = new THREE.Mesh(bandGeo, bandMat);
+  headBand.visible = false;
+  scene.add(headBand);
+
+  jerseyData[playerIdx] = { vGroup, wristR, wristL, headBand };
   console.log(`[JERSEY] Player ${playerIdx} jersey ready — color ${colorHex}, number ${num}`);
 }
 
 function updateJersey(playerIdx) {
   const jd = jerseyData[playerIdx];
-  if (!jd || !glbLoaded[playerIdx]) return;
-  const b = playerBones[playerIdx];
+  if (!jd) return;
+  const b = playerBones[playerIdx] || {};
+  const p = players[playerIdx];
 
-  // ── Vest: attach to spine bone world transform ──
+  // ── Vest: follow spine/hips bone, or estimated chest when no bones ──
   const spineBone = b.spine || b.hips;
   if (spineBone) {
     spineBone.getWorldPosition(_jvP);
@@ -945,14 +963,12 @@ function updateJersey(playerIdx) {
     _jvP.y += 0.10; // shift up from lower-spine toward chest center
     jd.vGroup.position.copy(_jvP);
     jd.vGroup.quaternion.copy(_jvQ);
-    jd.vGroup.visible = true;
   } else {
     // Fallback: estimated chest position from player root
-    const p = players[playerIdx];
     jd.vGroup.position.set(p.pos.x, p.pos.y + 1.15, p.pos.z);
     jd.vGroup.rotation.set(0, p.facingAngle, 0);
-    jd.vGroup.visible = true;
   }
+  jd.vGroup.visible = true;
 
   // ── Wristbands: follow forearm bones ──
   const rf = b.rforearm;
@@ -971,7 +987,28 @@ function updateJersey(playerIdx) {
     jd.wristL.quaternion.copy(_jwLq);
     jd.wristL.visible = true;
   }
+
+  // ── Headband: follow head bone, or estimated head position ──
+  const headBone = b.head || b.neck;
+  if (headBone) {
+    headBone.getWorldPosition(_jhP);
+    headBone.getWorldQuaternion(_jhQ);
+    jd.headBand.position.copy(_jhP);
+    jd.headBand.quaternion.copy(_jhQ);
+    jd.headBand.visible = true;
+  } else {
+    // Fallback: estimated head position (top of player ~1.6u)
+    jd.headBand.position.set(p.pos.x, p.pos.y + 1.60, p.pos.z);
+    jd.headBand.rotation.set(0, p.facingAngle, 0);
+    jd.headBand.visible = true;
+  }
 }
+
+// Pre-create jerseys for procedural bodies (runs while GLBs are loading).
+// When the GLB later loads, createJerseyForPlayer skips (guard in the function).
+// This ensures uniforms show even if a GLB fails to load.
+createJerseyForPlayer(0);
+createJerseyForPlayer(1);
 
 // ─────────────────────────────────────────────────────────────────
 // PARTICLES (made-basket burst)
@@ -1081,6 +1118,10 @@ function animatePlayer(p, dt, moving, speed) {
   if (!p.onGround) { lLegPiv.rotation.x = -0.3; rLegPiv.rotation.x = -0.3; }
   if (!p.isUser && p.state === 'shoot')  rArmPiv.rotation.x = -Math.PI * 0.6;
   if (!p.isUser && p.state === 'guard') { lLegPiv.rotation.x += 0.2; rLegPiv.rotation.x += 0.2; }
+
+  // Keep jersey/wristbands/headband anchored to estimated body positions on the procedural path too
+  const pidx = players.indexOf(p);
+  updateJersey(pidx);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2276,7 +2317,7 @@ game.lastFrameTime = performance.now();
 requestAnimationFrame(tick);
 
 // Expose for headless verification
-window.__NEON_HOOPS = { scene, renderer, game, players, ball, glbLoaded, glbMixers, THREE };
+window.__NEON_HOOPS = { scene, renderer, game, players, ball, glbLoaded, glbMixers, THREE, jerseyData };
 </script>
 </body>
 </html>
