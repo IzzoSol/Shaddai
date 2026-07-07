@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<!-- Cache-guard: the HTML URL isn't versioned, so browsers were reusing a stale page (bodies/edits
+     appeared "unchanged"). Force a revalidate each load so new builds show without a hard refresh. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>SHADDAI WORLD · 3D</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&family=Michroma&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1326,7 +1331,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=7';
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=8';  // v8 = Meshy-rigged bodies w/ real animation clips
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -1350,7 +1355,7 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=7';  // v7 = textured + gltf-transform optimized (1024 tex, ~-75% size)
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=8';  // v8 = Meshy-rigged bodies (idle/walk/run/attack1/attack2/heavy/flip), 1024 tex
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
@@ -1390,6 +1395,17 @@ function _nextAgentBody(){
       scene.add(body);
       _agentBodies[code] = body;
       entry.body = body; entry.bodyBaseY = body.position.y;
+      // Real skeletal rig (v8 Meshy bodies)? Build a mixer + actions dict and idle-loop it.
+      // __hasMixer makes the bones-free procedural animator skip this body.
+      if(gltf.animations && gltf.animations.length){
+        const mixer = new THREE.AnimationMixer(body);
+        const actions = {};
+        gltf.animations.forEach(cl=>{ actions[cl.name] = mixer.clipAction(cl); });
+        body.userData.__hasMixer = true;
+        entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
+        console.log('🕺 '+code+' rig clips:', Object.keys(actions).join(','));
+        playAgentAction(entry, 'idle');
+      }
       // real 3D body replaces the floating holograph: drop the billboard, beam & glow.
       // (the agent's portrait card still opens on click / press E via the dossier.)
       if(entry.sprite) entry.sprite.visible = false;
@@ -1419,6 +1435,30 @@ const RARITY_CONFIG = {
   epic:{crown:0xb06aff,speed:1.3}, legendary:{crown:0xffad2e,speed:1.6}, mythic:{crown:0xffffff,speed:2.0},
 };
 
+// ── Reusable crossfade driver for any rigged agent body (one pattern for the whole roster) ──
+// playAgentAction(entry,'attack1',{once:true}) → fades out the current clip, fades in the new one.
+function playAgentAction(entry, name, opts){
+  opts = opts || {};
+  const a = entry._actions && entry._actions[name];
+  if(!a){ return null; }
+  const dur = (opts.crossfadeDuration != null) ? opts.crossfadeDuration : 0.2;
+  const prev = entry._curAction;
+  if(prev === a && a.isRunning() && !opts.force) return a;
+  a.reset();
+  if(opts.once){ a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = !!opts.hold; }
+  else { a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; }
+  a.enabled = true; a.setEffectiveTimeScale(opts.timeScale || 1).setEffectiveWeight(1).fadeIn(dur).play();
+  if(prev && prev !== a) prev.fadeOut(dur);
+  entry._curAction = a;
+  // One-shot moves auto-return to idle (or a caller-chosen clip) when finished.
+  if(opts.once && !opts.hold){
+    const back = opts.returnTo || 'idle';
+    const onEnd = (e)=>{ if(e.action !== a) return; entry._mixer.removeEventListener('finished', onEnd); playAgentAction(entry, back, {crossfadeDuration:0.25}); };
+    entry._mixer.addEventListener('finished', onEnd);
+  }
+  return a;
+}
+
 // ── TURTLE: procedural WALK / IDLE for the static single-mesh agent bodies ──────────────────
 // The 7 council GLBs (/assets/agents/<CODE>.glb) are single meshes with 0 bones, so they can't
 // play skeletal walk cycles — before this they just stood with a tiny breathing bob (and would
@@ -1433,7 +1473,7 @@ const RARITY_CONFIG = {
 // all state lives on the agentSprites entry, math uses scalars only.
 function _animateAgentBody(s, t, dt){
   const b = s.body; if(!b) return;
-  if(b.userData && b.userData.__hasMixer) return;         // real baked-clip rig → leave it alone
+  if(s._mixer){ s._mixer.update(dt); return; }             // real baked-clip rig → drive the mixer, skip procedural
   const baseY = s.bodyBaseY || 0;
   if(s._baseYaw === undefined){                            // lazy init once the body has streamed in
     s._baseYaw = b.rotation.y; s._px = b.position.x; s._pz = b.position.z;
@@ -1821,7 +1861,10 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
       name: a.role || a.codename,
       color: (typeof a.color==='string' ? parseInt(a.color.replace('#',''),16) : a.color),
       portrait: portraitOf(a)
-    }; }),
+    }; }).concat([
+      // Playable villain (Crimson Sentinel) — full combat rig; boss AI comes later.
+      { code:'VILLAIN', name:'CRIMSON SENTINEL', color:0xff2a4d, portrait:'/assets/agents/VILLAIN-action.png' }
+    ]),
     onArrive: function(code, charCode){
       try{ if(charCode && window.setPlayerCharacter) window.setPlayerCharacter(charCode); }catch(e){}
       try{ thirdPerson = true; }catch(e){}   // 3rd-person so you SEE the operative you're walking around as
@@ -2052,6 +2095,9 @@ function _loadHero(file){
     console.log('✅ main character ('+file+') clips:', Object.keys(playerClips).join(','));
   }, undefined, ()=>{ if(file!=='robot.glb') _loadHero('robot.glb'); else console.warn('player model failed; capsule avatar kept'); });
 }
+// Always load a default player body at boot — this is the safety net that guarantees the player
+// has a body even if the picker's onArrive never fires setPlayerCharacter (removing it left the
+// player bodiless = "models don't load"). The picked operative swaps this out on arrival.
 _loadHero('hero-walk.glb');  // ORIGINAL SHADDAI hero (Meshy-rigged). Falls back to robot.glb if missing.
 
 // ── PLAY AS A CHOSEN OPERATIVE: swap the player body for that agent's real GLB (from the spawn picker) ──
@@ -2102,7 +2148,8 @@ window.setPlayerCharacter = function(code){
     _discoverPlayerBones(m);                    // find arm/leg/spine for procedural walk overlay
     window._playerCharacter = code;
     console.log('🎮 now playing as', code, '· clips:', Object.keys(playerClips).join(',')||'(static pose)');
-  }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— keeping current body'); });
+  }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— falling back to hero body');
+    if(!playerAvatar.children.length) _loadHero('hero-walk.glb'); });
 };
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'] };
@@ -2124,6 +2171,85 @@ function setPlayerAnim(name){
   next.reset().fadeIn(0.18).play(); playerAction=next;
 }
 addEventListener('keydown', e=>{ if(e.code==='KeyV') thirdPerson=!thirdPerson; });
+
+// ═══ COMBAT — player attack moves, flips & signature VFX projectiles ═══════════════════════
+// Left-click = basic combo (attack1↔attack2) · R = signature special (+VFX) · Q = flip/dodge.
+// Rigged bodies play real clips; static-body agents (SHADDAI/NEXUS/QUILL) fire VFX + a quick
+// procedural lunge/flip so the move still reads (spec §4 fallback).
+let _pAttackUntil = 0, _pComboFlip = false, _pTween = null;
+function _typingNow(){ return /input|textarea|select/i.test((document.activeElement||{}).tagName||''); }
+function playPlayerOnce(clipName, opts){
+  opts = opts||{}; const a = playerClips[clipName]; if(!a || !playerMixer) return 0;
+  const dur = (a.getClip() && a.getClip().duration) || 0.6;
+  if(playerAction && playerAction!==a) playerAction.fadeOut(0.1);
+  a.reset(); a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=false;
+  a.setEffectiveTimeScale(opts.timeScale||1).setEffectiveWeight(1).fadeIn(0.07).play();
+  playerAction = a;
+  _pAttackUntil = clock.elapsedTime + dur/(opts.timeScale||1) - 0.07;   // hold off movement-anim until it ends
+  return dur;
+}
+// character → signature special. vfx: glow(Oracle)/blast(SHADDAI)/feather(Quill)/orb(default)
+const _SIGNATURE = {
+  ORACLE:{vfx:'glow',clip:'heavy',color:0xc084fc}, SHADDAI:{vfx:'blast',clip:null,color:0xffcf4a},
+  QUILL:{vfx:'feather',clip:null,color:0xb98cff},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
+  TURTLE:{vfx:'orb',clip:'heavy',color:0x1fd6c4},  PIKADON:{vfx:'orb',clip:'heavy',color:0xff5a6e},
+  VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'orb',clip:null,color:0x34e5b0},
+};
+function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
+  if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'}; }
+function playerFlip(){ if(!playPlayerOnce('flip')) _pTween={t:0,dur:0.5,kind:'flip'}; }
+function playerSpecial(){
+  const sig=_SIGNATURE[(window._playerCharacter||'').toUpperCase()]||{vfx:'orb',clip:'heavy',color:0x9fb0e0};
+  if(!(sig.clip && playPlayerOnce(sig.clip))) _pTween={t:0,dur:0.32,kind:'lunge'};
+  fireSignatureVFX(sig);
+}
+// ── projectile system (mesh props + procedural orbs/feathers) ──
+const _projectiles=[]; const _propCache={};
+function _loadProp(name){ if(_propCache[name]) return _propCache[name];
+  _propCache[name]=new Promise(res=>agentBodyLoader.load('/assets/vfx/'+name+'.glb', g=>res(g.scene), undefined, ()=>res(null))); return _propCache[name]; }
+function _muzzle(){ const o=playerAvatar.position.clone(); o.y+=3.2; o.addScaledVector(fwd,1.8); return o; }
+function _pushProj(o,speed,life,spin,extra){ const light=new THREE.PointLight(extra&&extra.color||0xffffff,3.2,26); o.add(light);
+  scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:light}, extra||{})); }
+function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(true);
+  const box=new THREE.Box3().setFromObject(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
+  o.traverse(c=>{ if(c.isMesh){ c.castShadow=false; c.frustumCulled=false;
+    const mats=Array.isArray(c.material)?c.material:[c.material];
+    const cm=mats.map(m=>{ if(!m) return m; const mm=m.clone(); if(mm.emissive){mm.emissive.set(color);mm.emissiveIntensity=2.2;} mm.transparent=true; return mm; });
+    c.material=Array.isArray(c.material)?cm:(cm[0]||c.material); }});
+  o.position.copy(_muzzle()); _pushProj(o,speed,1.6,spin,{color}); }
+function _spawnOrb(color){ const o=new THREE.Mesh(new THREE.SphereGeometry(0.6,16,12),
+    new THREE.MeshStandardMaterial({color:0x000000,emissive:color,emissiveIntensity:2.4,transparent:true}));
+  o.position.copy(_muzzle()); _pushProj(o,40,1.4,0,{color}); }
+function _spawnFeatherFan(color){ const base=_muzzle(); const baseDir=fwd.clone();
+  for(let i=-2;i<=2;i++){ const dir=baseDir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), i*0.16);
+    const o=new THREE.Mesh(new THREE.PlaneGeometry(0.35,1.1),
+      new THREE.MeshStandardMaterial({color:0xffffff,emissive:color,emissiveIntensity:1.8,side:THREE.DoubleSide,transparent:true}));
+    o.position.copy(base); o.lookAt(base.clone().add(dir)); o.rotateX(Math.PI/2);
+    scene.add(o); _projectiles.push({o,vel:dir.multiplyScalar(52),life:1.2,age:0,spin:22,feather:true,fade:null,color}); } }
+function fireSignatureVFX(sig){
+  if(sig.vfx==='glow')   _loadProp('oracle-glow').then(s=> s?_spawnMeshProjectile(s,sig.color,42,3.2,5):_spawnOrb(sig.color));
+  else if(sig.vfx==='blast') _loadProp('shaddai-blast').then(s=> s?_spawnMeshProjectile(s,sig.color,46,3.6,4):_spawnOrb(sig.color));
+  else if(sig.vfx==='feather') _spawnFeatherFan(sig.color);
+  else _spawnOrb(sig.color);
+}
+function _updateCombat(dt){
+  // projectiles
+  for(let i=_projectiles.length-1;i>=0;i--){ const p=_projectiles[i];
+    p.age+=dt; p.o.position.addScaledVector(p.vel,dt);
+    if(p.spin) p.o.rotation.z += p.spin*dt;
+    if(p.feather) p.o.rotation.y += 8*dt;
+    const k=1-p.age/p.life;
+    p.o.traverse(c=>{ if(c.isMesh){ const m=Array.isArray(c.material)?c.material:[c.material]; m.forEach(mm=>{ if(mm&&mm.transparent) mm.opacity=Math.max(0,k); }); }});
+    if(p.fade) p.fade.intensity=Math.max(0,k*3.2);
+    if(p.age>=p.life){ scene.remove(p.o); p.o.traverse(c=>{ if(c.isMesh&&c.geometry&&c.geometry.dispose) c.geometry.dispose(); }); _projectiles.splice(i,1); } }
+  // static-body lunge / flip fallback
+  if(_pTween && playerAvatar){ _pTween.t+=dt; const pr=Math.min(1,_pTween.t/_pTween.dur);
+    playerAvatar.rotation.x = _pTween.kind==='flip' ? -pr*Math.PI*2 : -Math.sin(pr*Math.PI)*0.32;
+    if(pr>=1){ playerAvatar.rotation.x=0; _pTween=null; } }
+}
+addEventListener('mousedown', e=>{ if(e.button===0 && controls.isLocked && !(worldSpawn && worldSpawn.isAnimating())) playerBasicAttack(); });
+addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
+  if(e.code==='KeyR') playerSpecial(); else if(e.code==='KeyQ') playerFlip(); });
 
 addEventListener('click', ()=>{
   const d=document.getElementById('dossier');
@@ -2600,8 +2726,9 @@ window.removeAgent = function(a){
     btn.style.transition='transform .18s,opacity .3s'; btn.style.transform='scale(1.35)'; btn.style.opacity='0';
     // Kick off audio + STAGGERED character preloads NOW (during the ~1.5s warp) so they're ready on landing.
     AGENTS.forEach(function(a, i){ setTimeout(function(){ _pcPreload(a.codename); }, i * 500); });
-    try{ if(_audio){ _audio.start(); _audio.playSFX('warp'); } }catch(e){}
-    try{ if(_radio) _radio.start(); }catch(e){}
+    // Owner: no background music. Skip the ambient synth bed (_audio.start) and the radio auto-start;
+    // keep only the one-shot warp SFX. The radio can still be started manually from the stations UI.
+    try{ if(_audio){ _audio.playSFX('warp'); } }catch(e){}
     // fade the boot text out under the forming grid
     setTimeout(function(){ var ii=document.getElementById('introInner'); if(ii){ ii.style.transition='opacity .45s'; ii.style.opacity='0'; } }, 300);
     // run the grid→dimension transition, THEN drop into the already-loaded world
@@ -2876,22 +3003,26 @@ function animate(){
     const mv = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
     const _pAnimName = bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle');
-    setPlayerAnim(_pAnimName);
-    // ── Basketball-style smooth walk: blend clip timescale with actual movement speed ──
-    // This ensures the feet keep up with the floor — no sliding at slow starts or fast runs.
-    if(playerAction && _pAnimName !== 'Idle'){
-      const _pSpd = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
-      const _ts = Math.max(0.3, Math.min(2.5, _pSpd / 10));
-      playerAction.setEffectiveTimeScale(_ts);
-    }
-    // ── Procedural bone overlay (port of basketball.html applyProceduralBones) ──
-    // Advances the walk phase and applies arm/leg/spine rotations layered on the mixer.
-    if(playerAvatar.visible && !bikeMode){
-      const _pSpd2 = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
-      if(mv) _playerWalkPhase += dt * (rn ? 7.5 : 5.5);
-      _applyPlayerProceduralBones(!!mv, !!rn, _pSpd2);
+    const _attacking = clock.elapsedTime < _pAttackUntil;   // a one-shot attack/flip owns the mixer right now
+    if(!_attacking){
+      setPlayerAnim(_pAnimName);
+      // ── Basketball-style smooth walk: blend clip timescale with actual movement speed ──
+      // This ensures the feet keep up with the floor — no sliding at slow starts or fast runs.
+      if(playerAction && _pAnimName !== 'Idle'){
+        const _pSpd = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+        const _ts = Math.max(0.3, Math.min(2.5, _pSpd / 10));
+        playerAction.setEffectiveTimeScale(_ts);
+      }
+      // ── Procedural bone overlay (port of basketball.html applyProceduralBones) ──
+      // Advances the walk phase and applies arm/leg/spine rotations layered on the mixer.
+      if(playerAvatar.visible && !bikeMode){
+        const _pSpd2 = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+        if(mv) _playerWalkPhase += dt * (rn ? 7.5 : 5.5);
+        _applyPlayerProceduralBones(!!mv, !!rn, _pSpd2);
+      }
     }
   }
+  _updateCombat(dt);   // projectiles + static-body lunge/flip fallback (always runs)
   if(_spawnBusy){
     // sky-dive / descent controls the camera this frame — skip normal placement
     playerAvatar.visible=false;
