@@ -893,7 +893,12 @@
 
       // STOP-2 landing: the whole elevated footprint is a SOLID walkable floor (the
       // building's upper deck) so a rider steps off the lift onto real ground there.
-      deckList.push({ x: bx, z: bz, y: interiorY, r2: (fp * 0.42) * (fp * 0.42) });
+      // Upper-floor deck: radius = full building footprint (fp) so the player can walk
+      // anywhere on the elevated level without falling through near the walls.
+      // Old value fp*0.42 was too small — players at the wall face (~fp*0.46) or near
+      // corners (~fp*0.65) exited the zone and dropped to terrain. fp*1.0 covers every
+      // building shape (circle r≤88, box corners ≤fp*0.65).
+      deckList.push({ x: bx, z: bz, y: interiorY, r2: fp * fp });
       // STOP-3 landing + bridge: a walkable disc floating above the building at Nexus
       // height, joined to the main deck by a neon bridge (so the top stop lands solid).
       _buildLoungeObsLanding(lx, lz, col);
