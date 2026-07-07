@@ -103,7 +103,8 @@ for(const [code, cfg] of Object.entries(BUILD)){
     const r = copyClip(doc, nodesByName, src, clipName, outName);
     report.push(`${outName}:${clipName}(${r.bound}b${r.missed?'/'+r.missed+'miss':''})`);
   }
-  await doc.transform(weld(), dedup(), prune());
+  // NO weld/dedup/prune — those retriangulate/merge skinned verts and DEFORMED the bodies
+  // (TURTLE/ZEROX warped). Keep the owner's mesh byte-for-byte; only resize textures for size.
   await resizeTextures(doc, 1024);
   const outPath = path.join(OUT, `${code}.glb`);
   await io.write(outPath, doc);
