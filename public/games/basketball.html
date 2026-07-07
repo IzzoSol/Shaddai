@@ -253,8 +253,10 @@ const courtTex  = createCourtTexture();
 const matFloor  = new THREE.MeshStandardMaterial({ map: courtTex, roughness: 0.15, metalness: 0.35 });
 const matLine   = new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.4 });
 const matRim    = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.8, roughness: 0.3, metalness: 0.8 });
-const matBoard  = new THREE.MeshStandardMaterial({ color: 0x0d1a2e, roughness: 0.2, metalness: 0.2, transparent: true, opacity: 0.75 });
-const matBoardGlow = new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.6 });
+const matBoard  = new THREE.MeshStandardMaterial({ color: 0x0d1a2e, roughness: 0.2, metalness: 0.25, transparent: true, opacity: 0.82 });
+// Decorative overlay planes sit just in front of the glass — depthWrite:false + polygonOffset
+// prevents z-fighting/flicker with the board and with each other.
+const matBoardGlow = new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
 const matPole   = new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.4, metalness: 0.9 });
 const matBall   = new THREE.MeshStandardMaterial({ color: 0xff7700, roughness: 0.55, metalness: 0.1, emissive: 0xff3300, emissiveIntensity: 0.25 });
 const matCyan   = new THREE.MeshStandardMaterial({ color: 0x37e6ff, emissive: 0x37e6ff, emissiveIntensity: 0.6, roughness: 0.4 });
@@ -320,7 +322,7 @@ function buildCourt() {
   addLine( COURT_W/2-0.025, 0, 0.05, COURT_D);
   addLine(0, -COURT_D/2+0.025, COURT_W, 0.05);
   addLine(0,  COURT_D/2-0.025, COURT_W, 0.05);
-  addLine(0, 0, COURT_W, 0.04);
+  // (center-court line already drawn above — removed duplicate that caused z-fighting)
 
   // Center circle
   const makeCircle = (r, color, opacity = 0.4) => {
@@ -425,15 +427,16 @@ function buildHoop() {
   const board = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.15, 0.08), matBoard);
   board.position.set(0, HOOP_Y + 0.48, -COURT_D/2 + 0.4 + 2.5);
   board.castShadow = true; hoopGroup.add(board);
-  // Board outer glow border
-  const borderOuter = new THREE.Mesh(new THREE.BoxGeometry(1.87, 1.17, 0.01), matBoardGlow);
-  borderOuter.position.copy(board.position); borderOuter.position.z += 0.045;
+  // Board outer glow border (thin plane just in front of the glass)
+  const borderOuter = new THREE.Mesh(new THREE.PlaneGeometry(1.87, 1.17), matBoardGlow);
+  borderOuter.position.copy(board.position); borderOuter.position.z += 0.05;
   hoopGroup.add(borderOuter);
-  // Board target box (inner rectangle)
-  const targetBox = new THREE.Mesh(new THREE.BoxGeometry(0.59, 0.45, 0.01),
-    new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.35 }));
+  // Board target box (inner rectangle) — clearly separated in z so it never z-fights the border
+  const targetBox = new THREE.Mesh(new THREE.PlaneGeometry(0.59, 0.45),
+    new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.5,
+      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   targetBox.position.copy(board.position);
-  targetBox.position.y -= 0.1; targetBox.position.z += 0.046;
+  targetBox.position.y -= 0.1; targetBox.position.z += 0.07;
   hoopGroup.add(targetBox);
   // Rim — glowing orange torus
   const rim = new THREE.Mesh(new THREE.TorusGeometry(RIM_R, 0.028, 10, 32), matRim);
@@ -731,6 +734,7 @@ function loadGLBPlayer(playerIdx) {
 
     glbLoaded[playerIdx] = true;
     discoverBones(model, playerIdx);
+    createJerseyForPlayer(playerIdx);
     console.log(`[GLB] Player ${playerIdx} loaded: ${paths.walk} | clips: ${gltf.animations.map(c=>c.name).join(', ')||'none'}`);
   }
 
@@ -788,6 +792,136 @@ const arcDots = [];
 
 // Bone references discovered per player when GLB loads
 const playerBones = [{}, {}];
+
+// ─────────────────────────────────────────────────────────────────
+// JERSEY SYSTEM — team uniforms overlaid on GLB bodies
+// Team 0 (Vanguard): cyan #37e6ff, number 1
+// Team 1 (Ghost):    magenta #ff4d94, number 7
+// ─────────────────────────────────────────────────────────────────
+const jerseyData = [null, null]; // { vGroup, wristR, wristL }
+// Pre-alloc reusable objects — zero per-frame garbage
+const _jvP  = new THREE.Vector3();
+const _jvQ  = new THREE.Quaternion();
+const _jwRp = new THREE.Vector3();
+const _jwLp = new THREE.Vector3();
+const _jwRq = new THREE.Quaternion();
+const _jwLq = new THREE.Quaternion();
+
+const JERSEY_NUMBERS = [1, 7];
+const JERSEY_COLORS  = ['#37e6ff', '#ff4d94'];
+
+function _makeNumTex(colorHex, number) {
+  const cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 128;
+  const ctx = cv.getContext('2d');
+  // Number rendered in black on transparent background
+  ctx.clearRect(0, 0, 128, 128);
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 84px Orbitron, Arial Black, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(number), 64, 72);
+  return new THREE.CanvasTexture(cv);
+}
+
+function createJerseyForPlayer(playerIdx) {
+  if (jerseyData[playerIdx]) return; // already built
+  const colorHex = JERSEY_COLORS[playerIdx];
+  const colorInt = GLB_TINTS[playerIdx];
+  const num = JERSEY_NUMBERS[playerIdx];
+
+  // ── Vest mesh (torso overlay) ──
+  const vestGeo = new THREE.BoxGeometry(0.44, 0.46, 0.27);
+  const vestMat = new THREE.MeshStandardMaterial({
+    color: colorInt,
+    emissive: new THREE.Color(colorInt),
+    emissiveIntensity: 0.52,
+    roughness: 0.45,
+    metalness: 0.10,
+    transparent: true,
+    opacity: 0.88,
+  });
+  const vestMesh = new THREE.Mesh(vestGeo, vestMat);
+
+  // ── Jersey number — shared canvas texture, two planes (front + back) ──
+  const numTex  = _makeNumTex(colorHex, num);
+  const numF = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.20, 0.20),
+    new THREE.MeshBasicMaterial({ map: numTex, transparent: true, depthWrite: false })
+  );
+  numF.position.z = 0.138; // just proud of vest front face
+
+  const numB = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.20, 0.20),
+    new THREE.MeshBasicMaterial({ map: numTex, transparent: true, depthWrite: false })
+  );
+  numB.position.z = -0.138;
+  numB.rotation.y = Math.PI;
+
+  const vGroup = new THREE.Group();
+  vGroup.add(vestMesh, numF, numB);
+  vGroup.visible = false; // hidden until bone data ready
+  scene.add(vGroup);
+
+  // ── Wristbands (forearm accents) ──
+  const wristGeo = new THREE.TorusGeometry(0.048, 0.014, 6, 14);
+  const wristMat = new THREE.MeshStandardMaterial({
+    color: colorInt,
+    emissive: new THREE.Color(colorInt),
+    emissiveIntensity: 0.70,
+    roughness: 0.45,
+  });
+  const wristR = new THREE.Mesh(wristGeo, wristMat);
+  const wristL = new THREE.Mesh(wristGeo, wristMat.clone());
+  wristR.visible = false;
+  wristL.visible = false;
+  scene.add(wristR);
+  scene.add(wristL);
+
+  jerseyData[playerIdx] = { vGroup, wristR, wristL };
+  console.log(`[JERSEY] Player ${playerIdx} jersey ready — color ${colorHex}, number ${num}`);
+}
+
+function updateJersey(playerIdx) {
+  const jd = jerseyData[playerIdx];
+  if (!jd || !glbLoaded[playerIdx]) return;
+  const b = playerBones[playerIdx];
+
+  // ── Vest: attach to spine bone world transform ──
+  const spineBone = b.spine || b.hips;
+  if (spineBone) {
+    spineBone.getWorldPosition(_jvP);
+    spineBone.getWorldQuaternion(_jvQ);
+    _jvP.y += 0.10; // shift up from lower-spine toward chest center
+    jd.vGroup.position.copy(_jvP);
+    jd.vGroup.quaternion.copy(_jvQ);
+    jd.vGroup.visible = true;
+  } else {
+    // Fallback: estimated chest position from player root
+    const p = players[playerIdx];
+    jd.vGroup.position.set(p.pos.x, p.pos.y + 1.15, p.pos.z);
+    jd.vGroup.rotation.set(0, p.facingAngle, 0);
+    jd.vGroup.visible = true;
+  }
+
+  // ── Wristbands: follow forearm bones ──
+  const rf = b.rforearm;
+  const lf = b.lforearm;
+  if (rf) {
+    rf.getWorldPosition(_jwRp);
+    rf.getWorldQuaternion(_jwRq);
+    jd.wristR.position.copy(_jwRp);
+    jd.wristR.quaternion.copy(_jwRq);
+    jd.wristR.visible = true;
+  }
+  if (lf) {
+    lf.getWorldPosition(_jwLp);
+    lf.getWorldQuaternion(_jwLq);
+    jd.wristL.position.copy(_jwLp);
+    jd.wristL.quaternion.copy(_jwLq);
+    jd.wristL.visible = true;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────
 // PARTICLES (made-basket burst)
@@ -872,6 +1006,9 @@ function animatePlayer(p, dt, moving, speed) {
 
     // Procedural bone overrides ON TOP of mixer: dribble arm, shoot raise, defense stance
     applyProceduralBones(p, dt);
+
+    // Sync jersey / wristbands to skeleton bones this frame
+    updateJersey(idx);
     return;
   }
 
@@ -1284,6 +1421,9 @@ function releaseShotUser() {
   const startPos = ball.pos.clone();
   startPos.y = Math.max(1.3, startPos.y); // never launch from floor level
 
+  // ── BLOCK CHECK (Fix 3): a defender in reach can swat it before it leaves the hand ──
+  if (attemptBlock(you, startPos)) { you._shootFollowThrough = 0.2; return; }
+
   const horizToHoop = Math.sqrt((HOOP_X - startPos.x)**2 + (HOOP_Z - startPos.z)**2);
   const sInfo = getShotInfo(horizToHoop);
   const T     = getShotFlightTime(horizToHoop, pwr);
@@ -1309,11 +1449,28 @@ function releaseShotUser() {
   else if (sInfo.type === 'MID')   makeChance = 0.48 + timingQ * 0.33;
   else                             makeChance = 0.28 + timingQ * 0.26;
   if (contested) makeChance -= 0.25;
+
+  // ── UNDER-THE-RIM RULE (Fix 4): no cheap points for standing flat-footed under the basket.
+  // A real finish there requires a jump (airborne layup) or a dunk (SPACE while close). A
+  // flat-footed toss from directly under the rim is heavily penalized and forced off-centre. ──
+  let flatFootedUnderRim = false;
+  if (horizToHoop < 1.35 && you.onGround) {
+    flatFootedUnderRim = true;
+    makeChance = Math.min(makeChance, 0.10);
+    showMsg('JUMP TO FINISH', '#ff8800', 0.6);
+  }
   makeChance = Math.max(0.02, Math.min(0.96, makeChance));
 
   // On miss: realistic deviation — short, rim-out, or long
   let fvx = vx, fvz = vz, fvy = vy;
   if (Math.random() > makeChance) {
+    // Flat-footed under-rim clank: force an off-centre kick so the dead-centre aim can't fall in
+    if (flatFootedUnderRim) {
+      const inv = 1 / Math.max(0.01, Math.sqrt(vx*vx + vz*vz));
+      const px = -vz * inv, pz = vx * inv;
+      const err = (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.3);
+      fvx += px * err; fvz += pz * err; fvy *= 1.05;
+    } else {
     const roll = Math.random();
     if (roll < 0.36) {
       // Short — underpowered arc
@@ -1327,6 +1484,7 @@ function releaseShotUser() {
     } else {
       // Long — overpowered
       fvy *= 1.09;
+    }
     }
   }
 
@@ -1358,10 +1516,57 @@ function launchAIShot(aiPlayer, errorMult = 0.3) {
     ez = (Math.random() < 0.5 ? 1 : -1) * (0.16 + Math.random() * errorMult);
     ey = (Math.random() - 0.5) * errorMult * 0.6;
   }
+  if (attemptBlock(aiPlayer, startPos)) return;   // BLOCK: defender swats it — no shot goes up
   const vx = hdx / T + ex;
   const vz = hdz / T + ez;
   const vy = (HOOP_Y - startPos.y) / T - 0.5 * GRAVITY * T + ey;
   launchBall(startPos, new THREE.Vector3(vx, vy, vz), players.indexOf(aiPlayer));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// BLOCK MECHANIC (Fix 3) — a defender within reach at the moment of release can
+// swat/deflect the shot. Well-timed (airborne) contests block far more often. On a
+// block the ball is knocked loose → live rebound, no score.
+// ─────────────────────────────────────────────────────────────────
+function attemptBlock(shooter, releasePos) {
+  const shooterIdx = players.indexOf(shooter);
+  const defender   = players[(shooterIdx + 1) % 2];
+  if (defender.stunTimer > 0 || defender.dunking) return false;
+
+  const dx = defender.pos.x - shooter.pos.x;
+  const dz = defender.pos.z - shooter.pos.z;
+  const horiz = Math.sqrt(dx*dx + dz*dz);
+  if (horiz > 1.75) return false;                    // out of arm's reach
+
+  const reachY = defender.pos.y + 2.55;              // standing + arm; higher if jumping
+  if (reachY < releasePos.y - 0.15) return false;    // shot released above the defender's reach
+
+  let chance = 0.12 + (1 - horiz / 1.75) * 0.33;     // closer = better (0.12 → 0.45)
+  if (!defender.onGround) chance += 0.28;            // timed jump = big bonus
+  if (defender.isUser && (keys['KeyF'] || keys['Space'])) chance += 0.20; // active contest
+  chance = Math.min(0.85, chance);
+  if (Math.random() >= chance) return false;
+
+  // ── BLOCKED → knock the ball loose (no score, becomes a live rebound) ──
+  players.forEach(p => p.hasBall = false);
+  ball.held = false; ball.inFlight = true;
+  ball.scored = false; ball.bounces = 0; ball.rimContact = false;
+  ball.pos.copy(releasePos);
+  const away = new THREE.Vector3(shooter.pos.x - HOOP_X, 0, shooter.pos.z - HOOP_Z);
+  if (away.lengthSq() < 0.01) away.set(Math.random() - 0.5, 0, 1);
+  away.normalize();
+  ball.vel.set(
+    away.x * 3.4 + (Math.random() - 0.5) * 1.8,
+    2.2 + Math.random() * 0.8,
+    away.z * 3.4 + (Math.random() - 0.5) * 1.8
+  );
+  ball.mesh.position.copy(ball.pos);
+  game.possession = -1;                 // loose ball — next rebound sets possession
+  game.shakeTimer = Math.max(game.shakeTimer, 0.22);
+  showMsg(defender.isUser ? 'BLOCK!' : 'REJECTED!', '#ff4d94', 1.1);
+  sfxBlock();
+  defender.stealTimer = Math.max(defender.stealTimer, 0.6);
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1433,6 +1638,14 @@ function updateAI(dt) {
   const ballPos   = ball.held ? players[ball.holder].pos.clone().add(new THREE.Vector3(0,1,0)) : ball.pos.clone();
   const distToYou = ai.pos.distanceTo(you.pos);
   const distToBall= ai.pos.distanceTo(ball.pos);
+
+  // ── CONTEST JUMP (Fix 3): leap to challenge the user's shot near its release so the
+  // block mechanic can actually connect on a well-timed defensive jump. ──
+  if (!ai.hasBall && you.hasBall && you.isUser && game.shotCharging &&
+      game.shotPower > 0.55 && distToYou < 1.9 && ai.onGround && ai.stunTimer <= 0) {
+    ai.vel.y = JUMP_VEL * 0.92;
+    ai.onGround = false;
+  }
 
   // ── STATE TRANSITIONS ──
   if (ai.hasBall) {
@@ -1541,16 +1754,19 @@ function launchBall(startPos, vel, shooterIdx) {
   game.possession = shooterIdx;
 }
 
+const _ballFw  = new THREE.Vector3();
+const _ballRt  = new THREE.Vector3();
+const _ballRim = new THREE.Vector3();
 function updateBall(dt) {
   if (ball.held) {
     const holder = players[ball.holder];
     const isCharging = holder.isUser && game.shotCharging;
-    const fw = new THREE.Vector3(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
-    const rt = new THREE.Vector3(fw.z, 0, -fw.x);
+    const fw = _ballFw.set(Math.sin(holder.facingAngle), 0, Math.cos(holder.facingAngle));
+    const rt = _ballRt.set(fw.z, 0, -fw.x);
 
     if (holder.dunking) {
       // ── DUNK: ball is carried high, driven toward the rim for the slam ──
-      const rim = new THREE.Vector3(HOOP_X, HOOP_Y + 0.18, HOOP_Z);
+      const rim = _ballRim.set(HOOP_X, HOOP_Y + 0.18, HOOP_Z);
       ball.pos.lerp(rim, 0.30);
       ball.pos.y = Math.max(ball.pos.y, holder.pos.y + 2.0);
     } else if (isCharging) {
@@ -1668,8 +1884,9 @@ function checkRimCollision() {
 }
 
 function checkScore() {
-  // RIM RULE: a shot that clanked the rim can never fall for a make this possession
-  if (ball.scored || !ball.inFlight || ball.rimContact) return;
+  // RIM RULE: a shot that clanked the rim can never fall for a make this possession.
+  // possession < 0 = loose ball (e.g. after a block) — cannot score until re-established.
+  if (ball.scored || !ball.inFlight || ball.rimContact || game.possession < 0) return;
   const horizDist = Math.sqrt(
     (ball.pos.x - HOOP_X)**2 + (ball.pos.z - HOOP_Z)**2
   );
@@ -1732,6 +1949,18 @@ function toggleAutoMode() {
 let camSmoothPos  = new THREE.Vector3(0, 5, 14);
 let camSmoothLook = new THREE.Vector3(0, 1, 0);
 
+// The camera must never cross behind the backboard/rim plane (it sits at ~z = BOARD_Z_FACE,
+// which is HOOP_Z - 0.1). Keeping the camera on the COURT side of this plane stops the
+// clip/flip that happened when the player walked behind the hoop.
+const CAM_Z_LIMIT = HOOP_Z + 0.9;   // stay at least 0.9m court-side of the rim
+
+// Reused scratch vectors (avoid per-frame allocation in this hot path)
+const _camBehind = new THREE.Vector3();
+const _camIdeal  = new THREE.Vector3();
+const _camEye    = new THREE.Vector3();
+const _camLook   = new THREE.Vector3();
+const _camHoopHi = new THREE.Vector3(HOOP_X, HOOP_Y * 0.55, HOOP_Z);
+
 function updateCamera(dt) {
   const you = players[0];
 
@@ -1743,48 +1972,55 @@ function updateCamera(dt) {
   const camBack = 6.5 + nearHoop * 4.2;   // 6.5 → 10.7
   const camUp   = 3.8 + nearHoop * 3.0;   // 3.8 → 6.8
 
-  const hoopDir   = new THREE.Vector3(HOOP_X - you.pos.x, 0, HOOP_Z - you.pos.z).normalize();
-  const behindDir = hoopDir.clone().negate();
+  // "Behind the player" = away from the hoop. When the player is right on top of the hoop the
+  // player→hoop vector is ~zero; fall back to straight down-court (+z) so the camera never
+  // snaps/flips to a wild orientation.
+  _camBehind.set(you.pos.x - HOOP_X, 0, you.pos.z - HOOP_Z);
+  if (_camBehind.lengthSq() < 0.04) _camBehind.set(0, 0, 1);
+  _camBehind.normalize();
 
-  let idealPos = you.pos.clone()
-    .addScaledVector(behindDir, camBack)
-    .add(new THREE.Vector3(0, camUp, 0));
+  _camIdeal.copy(you.pos).addScaledVector(_camBehind, camBack);
+  _camIdeal.y += camUp;
 
   // ── Hard bounds: keep camera in court & above floor ──
-  idealPos.y = Math.max(2.4, idealPos.y);
-  idealPos.x = Math.max(-COURT_W/2 + 1.2, Math.min(COURT_W/2 - 1.2, idealPos.x));
-  idealPos.z = Math.max(-COURT_D/2 + 1.8, Math.min(COURT_D/2 - 1.8, idealPos.z));
+  _camIdeal.y = Math.max(2.4, _camIdeal.y);
+  _camIdeal.x = Math.max(-COURT_W/2 + 1.2, Math.min(COURT_W/2 - 1.2, _camIdeal.x));
+  _camIdeal.z = Math.max(-COURT_D/2 + 1.8, Math.min(COURT_D/2 - 1.8, _camIdeal.z));
+
+  // ── BACKBOARD CLAMP (Fix 1): never let the camera pass behind the rim/backboard plane ──
+  // This is the key fix for the "camera goes weird behind the hoop" bug. When the player is
+  // behind the basket the ideal camera would sit past the glass/wall; clamping z keeps it on
+  // the court side, framing both the hoop and the player from the front with no clip or flip.
+  _camIdeal.z = Math.max(_camIdeal.z, CAM_Z_LIMIT);
 
   // ── Pitch clamp: camera must look down at least MIN_PITCH (never level or below) ──
-  const playerEye = you.pos.clone().add(new THREE.Vector3(0, 1.0, 0));
-  const toCam = idealPos.clone().sub(playerEye);
-  const hDist = Math.sqrt(toCam.x**2 + toCam.z**2);
+  _camEye.copy(you.pos); _camEye.y += 1.0;
+  const dxc = _camIdeal.x - _camEye.x, dzc = _camIdeal.z - _camEye.z, dyc = _camIdeal.y - _camEye.y;
+  const hDist = Math.sqrt(dxc*dxc + dzc*dzc);
   const MIN_PITCH = 0.20; // ~11.5° minimum elevation above the player
   if (hDist > 0.5) {
-    const pitch = Math.atan2(toCam.y, hDist);
+    const pitch = Math.atan2(dyc, hDist);
     if (pitch < MIN_PITCH) {
-      // Raise idealPos.y so pitch equals MIN_PITCH
-      idealPos.y = playerEye.y + hDist * Math.tan(MIN_PITCH);
-      idealPos.y = Math.max(2.4, idealPos.y);
+      _camIdeal.y = _camEye.y + hDist * Math.tan(MIN_PITCH);
+      _camIdeal.y = Math.max(2.4, _camIdeal.y);
     }
   }
 
-  camSmoothPos.lerp(idealPos, 1 - Math.exp(-6 * dt));
+  camSmoothPos.lerp(_camIdeal, 1 - Math.exp(-6 * dt));
 
   // Look target: blend between player and hoop — lean toward hoop when near the rim
   const lookBlend = 0.28 + nearHoop * 0.18; // 0.28 far → 0.46 at rim
-  const lookTarget = new THREE.Vector3().lerpVectors(
-    you.pos.clone().add(new THREE.Vector3(0, 1.0, 0)),
-    new THREE.Vector3(HOOP_X, HOOP_Y * 0.55, HOOP_Z),
-    lookBlend
-  );
-  camSmoothLook.lerp(lookTarget, 1 - Math.exp(-7 * dt));
+  _camLook.copy(you.pos); _camLook.y += 1.0;
+  _camLook.lerp(_camHoopHi, lookBlend);
+  camSmoothLook.lerp(_camLook, 1 - Math.exp(-7 * dt));
 
   if (game.shakeTimer > 0) {
     game.shakeTimer -= dt;
     const sh = game.shakeTimer * 0.15;
-    camera.position.copy(camSmoothPos).add(
-      new THREE.Vector3((Math.random()-0.5)*sh, (Math.random()-0.5)*sh, 0)
+    camera.position.set(
+      camSmoothPos.x + (Math.random()-0.5)*sh,
+      camSmoothPos.y + (Math.random()-0.5)*sh,
+      camSmoothPos.z
     );
   } else {
     camera.position.copy(camSmoothPos);
@@ -1792,8 +2028,7 @@ function updateCamera(dt) {
   camera.lookAt(camSmoothLook);
 
   // Update camYaw so player movement is camera-relative
-  const camFwd = camSmoothLook.clone().sub(camSmoothPos);
-  camYaw = Math.atan2(camFwd.x, camFwd.z);
+  camYaw = Math.atan2(camSmoothLook.x - camSmoothPos.x, camSmoothLook.z - camSmoothPos.z);
 }
 
 // ─────────────────────────────────────────────────────────────────
