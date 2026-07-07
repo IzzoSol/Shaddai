@@ -26,9 +26,37 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 #waveLbl{font-size:12px;letter-spacing:4px;color:#f5e000;text-shadow:0 0 10px #f5e00088;}
 #scoreLbl{font-size:30px;font-weight:900;letter-spacing:2px;color:#00ff88;text-shadow:0 0 16px #00ff8888;}
 #comboLbl{font-size:12px;letter-spacing:2px;color:#00f0ff;min-height:14px;}
-/* Controls hint */
-#controls{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;color:#5a6b60;z-index:30;text-align:center;line-height:1.7;}
-#controls b{color:#00ff88;}
+/* Keyboard legend (desktop) */
+#legend{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:14px;align-items:center;
+  background:rgba(3,10,8,.55);border:1px solid #00ff8822;border-radius:10px;padding:7px 16px;backdrop-filter:blur(3px);}
+#legend .lg{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1.5px;color:#8fb3a2;}
+#legend .cap{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;color:#001;background:linear-gradient(135deg,#00f0ff,#00ff88);
+  border-radius:5px;padding:3px 8px;min-width:20px;text-align:center;box-shadow:0 0 8px #00ff8855;}
+#legend .sep{width:1px;height:20px;background:#00ff8822;}
+/* On-screen control dock (grouped, labeled, tap-friendly) */
+#ctrlDock{position:fixed;left:0;right:0;bottom:16px;z-index:35;display:flex;justify-content:space-between;align-items:flex-end;
+  padding:0 22px;pointer-events:none;}
+#ctrlDock .grp{pointer-events:none;}
+#ctrlDock .glabel{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:#5f8a76;text-align:center;margin-top:8px;}
+/* D-pad */
+.dpad{position:relative;width:132px;height:132px;}
+.dpad .db{position:absolute;width:44px;height:44px;pointer-events:all;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
+  background:rgba(3,14,10,.6);border:1px solid #00f0ff55;color:#00f0ff;border-radius:9px;font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px #00f0ff22;transition:background .08s,transform .08s;}
+.dpad .db:active,.dpad .db.on{background:#00f0ff33;transform:scale(.92);box-shadow:0 0 16px #00f0ff88;}
+.dpad .up{top:0;left:44px;}.dpad .left{top:44px;left:0;}.dpad .right{top:44px;right:0;}.dpad .down{bottom:0;left:44px;}
+/* Action buttons */
+.acts{display:flex;gap:14px;align-items:flex-end;}
+.acts .ab{pointer-events:all;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
+  width:74px;height:74px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:rgba(3,14,10,.6);transition:transform .08s,box-shadow .08s,background .08s;}
+.acts .ab b{font-family:'Orbitron',sans-serif;font-size:20px;line-height:1;}
+.acts .ab span{font-size:8px;letter-spacing:1px;line-height:1;}
+.acts .ab.slash{border:1px solid #00ff8866;color:#00ff88;box-shadow:0 0 12px #00ff8833;}
+.acts .ab.heavy{border:1px solid #f5e00088;color:#f5e000;box-shadow:0 0 12px #f5e00033;width:82px;height:82px;}
+.acts .ab.jump{border:1px solid #00f0ff66;color:#00f0ff;box-shadow:0 0 12px #00f0ff33;width:64px;height:64px;}
+.acts .ab:active,.acts .ab.on{transform:scale(.9);background:rgba(0,255,136,.14);}
+@media (max-width:720px){.dpad{width:120px;height:120px;}.dpad .db{width:40px;height:40px;}.dpad .up,.dpad .down{left:40px;}.dpad .left,.dpad .right{top:40px;}}
 /* Exit */
 #exitBtn{position:fixed;bottom:14px;right:16px;z-index:60;pointer-events:all;font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;background:transparent;border:1px solid #00ff8844;color:#00ff88;padding:6px 14px;border-radius:4px;cursor:pointer;}
 #exitBtn:hover{background:#00ff8822;}
@@ -78,8 +106,33 @@ h1.title{font-family:'Orbitron',sans-serif;font-size:clamp(34px,8vw,84px);font-w
     <div id="comboLbl"></div>
   </div>
 </div>
-<div id="controls">
-  <b>WASD</b>/arrows MOVE &nbsp;·&nbsp; <b>J</b> LIGHT SLASH &nbsp;·&nbsp; <b>K</b> HEAVY SWING &nbsp;·&nbsp; <b>SPACE</b> JUMP/DODGE &nbsp;·&nbsp; <b>A/D</b> face
+<!-- keyboard legend (desktop) -->
+<div id="legend">
+  <div class="lg"><span class="cap">WASD</span>MOVE</div>
+  <div class="sep"></div>
+  <div class="lg"><span class="cap">J</span>SLASH</div>
+  <div class="lg"><span class="cap">K</span>HEAVY</div>
+  <div class="lg"><span class="cap">SPACE</span>JUMP · DODGE</div>
+</div>
+<!-- on-screen control dock (tap-friendly) -->
+<div id="ctrlDock">
+  <div class="grp">
+    <div class="dpad">
+      <button class="db up"    data-k="w">▲</button>
+      <button class="db left"  data-k="a">◀</button>
+      <button class="db right" data-k="d">▶</button>
+      <button class="db down"  data-k="s">▼</button>
+    </div>
+    <div class="glabel">MOVE</div>
+  </div>
+  <div class="grp">
+    <div class="acts">
+      <button class="ab jump"  data-act="jump"><b>⎵</b><span>JUMP</span></button>
+      <button class="ab slash" data-act="light"><b>J</b><span>SLASH</span></button>
+      <button class="ab heavy" data-act="heavy"><b>K</b><span>HEAVY</span></button>
+    </div>
+    <div class="glabel">ATTACK</div>
+  </div>
 </div>
 <button id="exitBtn" onclick="(window.top!==window.self)?parent.postMessage({type:'exitGame'},'*'):(location.href='/games/xt-adventure.html'.replace(/[^/]*$/,'')+'../arcade.html')">✕ EXIT</button>
 <div id="hitFlash"></div>
@@ -142,14 +195,15 @@ const CHAR = {
   TURTLE: { color: 0x00ff88, glow: 0x55ff9d, path: '/assets/characters/TURTLE.glb', weapon: 'flail' }
 };
 const ENEMY_COLOR = 0xff3b5c, ENEMY_GLOW = 0xff5c7a;
-const MOVE_SPEED = 8.5, ENEMY_SPEED = 4.6;
-const GRAVITY = -26, JUMP_VEL = 10;
+const MOVE_SPEED = 5.2, ENEMY_SPEED = 2.8;    // slowed ~40% for a readable pace
+const GRAVITY = -24, JUMP_VEL = 9.4;
 const PLAYER_MAX_HP = 120, ENEMY_MAX_HP = 60;
 
-// attack tuning: {dur, active[start,end], reach, arc(dot), dmg, knock}
+// attack tuning: {dur, active[start,end], reach, arc(dot), dmg, knock, recover}
+// durations lengthened + recovery added so the wind-up → sweep → recover reads clearly
 const ATTACKS = {
-  light: { dur: 0.42, active: [0.14, 0.28], reach: 3.4, arc: 0.15, dmg: 14, knock: 4.5 },
-  heavy: { dur: 0.66, active: [0.26, 0.46], reach: 3.9, arc: -0.1, dmg: 26, knock: 8.5 }
+  light: { dur: 0.66, active: [0.30, 0.46], reach: 3.4, arc: 0.15, dmg: 14, knock: 4.0, recover: 0.20 },
+  heavy: { dur: 1.02, active: [0.34, 0.52], reach: 3.9, arc: -0.1, dmg: 26, knock: 7.5, recover: 0.34 }
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -279,48 +333,84 @@ function loadOne(kind) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// VFX — additive slash / flail arcs (pooled)
+// VFX — directional slash crescents (pooled)
+//   A tapered blade-trail crescent that SWEEPS through the swing path
+//   and fades — a real slash arc, not a spinning ring.
 // ────────────────────────────────────────────────────────────────
-const arcGeo = new THREE.TorusGeometry(1.6, 0.16, 8, 40, Math.PI * 1.15);
+const CRES_R = 1.7, CRES_HALF = 1.15;         // arc radius + half-angle (baked into geo)
+function makeCrescentGeo(radius, halfAngle, width, segs) {
+  const g = new THREE.BufferGeometry();
+  const pos = [], uv = [], idx = [];
+  for (let i = 0; i <= segs; i++) {
+    const f = i / segs;
+    const ang = -halfAngle + f * (2 * halfAngle);
+    const taper = Math.pow(Math.sin(f * Math.PI), 0.65);   // 0 at ends → fat middle = blade crescent
+    const w = width * taper;
+    const nx = Math.cos(ang), ny = Math.sin(ang);
+    pos.push((radius - w) * nx, (radius - w) * ny, 0);      // inner edge
+    pos.push((radius + w) * nx, (radius + w) * ny, 0);      // outer edge
+    uv.push(f, 0, f, 1);
+  }
+  for (let i = 0; i < segs; i++) {
+    const a = i * 2;
+    idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+  }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+const crescentGeo = makeCrescentGeo(CRES_R, CRES_HALF, 0.42, 30);
+
 const vfxPool = [];
 for (let i = 0; i < 14; i++) {
-  const m = new THREE.Mesh(arcGeo, new THREE.MeshBasicMaterial({
+  const container = new THREE.Group();                     // oriented into the swing plane
+  const cres = new THREE.Mesh(crescentGeo, new THREE.MeshBasicMaterial({
     color: 0x00f0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
   }));
-  m.visible = false;
-  // trailing ball on the arc tip (for flail feel)
+  // trailing ball rides the leading tip of the crescent (flail feel)
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 10),
     new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
-  ball.position.set(1.6, 0, 0);
-  m.add(ball);
-  scene.add(m);
-  vfxPool.push({ mesh: m, ball, life: 0, dur: 0.3, spin: 0 });
+  ball.position.set(Math.cos(CRES_HALF) * CRES_R, Math.sin(CRES_HALF) * CRES_R, 0);
+  cres.add(ball);
+  container.add(cres);
+  container.visible = false;
+  scene.add(container);
+  vfxPool.push({ container, cres, ball, mat: cres.material, life: 0, dur: 0.3, sweep: 0, startZ: 0, base: 1, showBall: false });
 }
 function spawnArc(pos, yaw, color, opts) {
   opts = opts || {};
   const v = vfxPool.find(x => x.life <= 0) || vfxPool[0];
-  v.mesh.visible = true;
-  v.mesh.material.color.setHex(color);
+  v.container.visible = true;
+  v.mat.color.setHex(color);
   v.ball.material.color.setHex(color);
-  v.mesh.position.copy(pos);
-  v.mesh.rotation.set(opts.pitch || 0, yaw, opts.roll != null ? opts.roll : Math.PI / 2);
-  v.mesh.scale.setScalar(opts.scale || 1);
+  v.container.position.copy(pos);
+  // orient the swing plane (yaw = facing puts the crescent broadside to the chase cam)
+  v.container.rotation.set(opts.pitch || 0, yaw, opts.roll || 0);
+  v.base = opts.scale || 1;
+  v.container.scale.setScalar(v.base);
   v.life = v.dur = opts.dur || 0.3;
-  v.spin = opts.spin || 0;
+  v.sweep = opts.sweep || 0;               // total in-plane sweep (radians), signed by direction
+  v.startZ = opts.startZ || 0;             // where the blade starts in the plane
+  v.cres.rotation.z = v.startZ;
   v.showBall = !!opts.ball;
-  v.baseScale = opts.scale || 1;
 }
 function updateVfx(dt) {
   for (const v of vfxPool) {
     if (v.life <= 0) continue;
     v.life -= dt;
     const t = Math.max(0, v.life / v.dur);
-    const op = t; // fade out
-    v.mesh.material.opacity = op * 0.9;
+    const p = 1 - t;                                    // 0 → 1 progress
+    // SWEEP the crescent along the swing path (a bounded arc, never a full spin)
+    v.cres.rotation.z = v.startZ + v.sweep * p;
+    // quick flash-in, smooth fade-out
+    const op = Math.max(0, Math.sin(Math.min(1, p * 1.25) * Math.PI));
+    v.mat.opacity = op * 0.95;
     v.ball.material.opacity = v.showBall ? op : 0;
-    v.mesh.scale.setScalar(v.baseScale * (1 + (1 - t) * 0.5));
-    v.mesh.rotation.z += v.spin * dt;
-    if (v.life <= 0) v.mesh.visible = false;
+    // slight stretch as the blade travels
+    v.container.scale.setScalar(v.base * (0.9 + p * 0.35));
+    if (v.life <= 0) v.container.visible = false;
   }
 }
 
@@ -369,8 +459,8 @@ function makeEntity(kind, isPlayer, tintEnemy) {
     weapon: CHAR[kind].weapon,
     moving: false, walkPhase: Math.random() * 6.28,
     y: 0, yv: 0, grounded: true,
-    attack: null, atkTime: 0, atkHitDone: false,
-    hurt: 0, dead: false, aiCd: 1 + Math.random() * 1.2,
+    attack: null, atkTime: 0, atkHitDone: false, recover: 0,
+    hurt: 0, dead: false, aiCd: 1.6 + Math.random() * 1.5,
     hpBar: null
   };
   if (!isPlayer) e.hpBar = makeHpBar(group);
@@ -409,7 +499,7 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 function tryAttack(e, type) {
-  if (e.attack || e.dead || !e.grounded) return;
+  if (e.attack || e.dead || !e.grounded || e.recover > 0) return;
   e.attack = type; e.atkTime = 0; e.atkHitDone = false;
   // spawn the VFX arc slightly into the swing (scheduled by anim), flagged here:
   e._vfxPending = true;
@@ -507,6 +597,7 @@ function startGame(playerKind, gameMode) {
 // ────────────────────────────────────────────────────────────────
 function animateEntity(e, dt) {
   const inner = e.inner;
+  if (e.recover > 0) e.recover -= dt;          // post-attack recovery pause
   // base reset each frame
   let bobY = 0, leanX = 0, swayZ = 0, extraYaw = 0, lungeF = 0;
 
@@ -559,7 +650,7 @@ function animateEntity(e, dt) {
         leanX = Math.sin(t * Math.PI) * 0.18;
       }
     }
-    if (e.atkTime >= spec.dur) { e.attack = null; e.atkTime = 0; e.atkHitDone = false; e._vfxPending = false; }
+    if (e.atkTime >= spec.dur) { e.recover = spec.recover || 0.2; e.attack = null; e.atkTime = 0; e.atkHitDone = false; e._vfxPending = false; }
   }
 
   // ---- hurt flinch ----
@@ -582,8 +673,8 @@ function animateEntity(e, dt) {
 
   // apply forward lunge to world position (whole body)
   if (lungeF !== 0) {
-    e.group.position.x += Math.sin(e.facing) * lungeF * dt * 22;
-    e.group.position.z += Math.cos(e.facing) * lungeF * dt * 22;
+    e.group.position.x += Math.sin(e.facing) * lungeF * dt * 15;
+    e.group.position.z += Math.cos(e.facing) * lungeF * dt * 15;
   }
 
   // apply transforms
@@ -605,17 +696,30 @@ function setEmissive(e, f) {
 function emitAttackVfx(e) {
   const col = e.isEnemy ? ENEMY_COLOR : CHAR[e.kind].color;
   const fwd = new THREE.Vector3(Math.sin(e.facing), 0, Math.cos(e.facing));
-  const pos = e.pos.clone().add(fwd.clone().multiplyScalar(1.3)); pos.y = 1.3;
+  const pos = e.pos.clone().add(fwd.clone().multiplyScalar(1.2)); pos.y = 1.35;
+  const heavy = e.attack === 'heavy';
   if (e.weapon === 'sword') {
-    spawnArc(pos, e.facing, col, { scale: e.attack === 'heavy' ? 1.5 : 1.1, roll: Math.PI / 2, pitch: 0.3, dur: 0.28, spin: -8 });
+    // SWORD: diagonal blade crescent that sweeps down across the front (upper-right → lower-left)
+    spawnArc(pos, e.facing, col, {
+      scale: heavy ? 1.6 : 1.2, pitch: 0, roll: 0,
+      startZ: heavy ? 1.75 : 1.45, sweep: heavy ? -3.0 : -2.5,
+      dur: heavy ? 0.5 : 0.38
+    });
   } else if (e.attack === 'light') {
-    // overhead vertical arc
-    spawnArc(pos, e.facing, col, { scale: 1.3, roll: 0, pitch: Math.PI / 2, dur: 0.3, spin: -6, ball: true });
+    // FLAIL light: overhead vertical smash arc with the ball trailing the tip
+    spawnArc(pos, e.facing, col, {
+      scale: 1.35, pitch: 0, roll: 0,
+      startZ: Math.PI * 0.62, sweep: -1.95, dur: 0.44, ball: true
+    });
   } else {
-    // horizontal sweeping ring for the spin
-    spawnArc(e.pos.clone().setY(1.2), e.facing, col, { scale: 1.7, roll: 0, pitch: 0, dur: 0.42, spin: 14, ball: true });
+    // FLAIL heavy: wide horizontal sling that sweeps around the body (flat plane), ball trailing
+    const cpos = e.pos.clone(); cpos.y = 1.2;
+    spawnArc(cpos, 0, col, {
+      scale: 1.85, pitch: -Math.PI / 2, roll: 0,
+      startZ: -e.facing - 1.15, sweep: 3.4, dur: 0.6, ball: true
+    });
   }
-  beep(e.weapon === 'sword' ? 520 : 200, 0.05, 0.05);
+  beep(e.weapon === 'sword' ? 520 : 200, 0.06, 0.05);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -674,7 +778,7 @@ function updateEnemy(e, dt) {
     if (d > 2.7) { to.normalize(); inDir.copy(to); }
     else if (e.aiCd <= 0 && e.grounded && !player.dead) {
       tryAttack(e, Math.random() < 0.35 ? 'heavy' : 'light');
-      e.aiCd = 1.1 + Math.random() * 1.4;
+      e.aiCd = 1.8 + Math.random() * 1.8;
     }
   }
   e.vel.addScaledVector(inDir, ENEMY_SPEED * 10 * dt);
@@ -851,6 +955,40 @@ document.getElementById('againBtn').addEventListener('click', () => {
   document.querySelectorAll('.charCard').forEach(c => c.classList.remove('sel'));
   const b = document.getElementById('beginBtn'); b.disabled = true; b.textContent = 'SELECT A FIGHTER';
 });
+
+// ────────────────────────────────────────────────────────────────
+// ON-SCREEN CONTROL DOCK (touch + mouse)
+// ────────────────────────────────────────────────────────────────
+(function wireDock() {
+  // D-pad: press = hold movement key
+  document.querySelectorAll('.dpad .db').forEach(btn => {
+    const k = btn.dataset.k;
+    const down = ev => { ev.preventDefault(); keys[k] = true; btn.classList.add('on'); };
+    const up   = ev => { ev.preventDefault(); keys[k] = false; btn.classList.remove('on'); };
+    btn.addEventListener('pointerdown', down);
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointerleave', up);
+    btn.addEventListener('pointercancel', up);
+  });
+  // Action buttons: press = fire once
+  document.querySelectorAll('.acts .ab').forEach(btn => {
+    const act = btn.dataset.act;
+    btn.addEventListener('pointerdown', ev => {
+      ev.preventDefault();
+      btn.classList.add('on');
+      if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+      if (running && player && !player.dead) {
+        if (act === 'light') tryAttack(player, 'light');
+        else if (act === 'heavy') tryAttack(player, 'heavy');
+        else if (act === 'jump') tryJump(player);
+      }
+    });
+    const rel = () => btn.classList.remove('on');
+    btn.addEventListener('pointerup', rel);
+    btn.addEventListener('pointerleave', rel);
+    btn.addEventListener('pointercancel', rel);
+  });
+})();
 
 // ────────────────────────────────────────────────────────────────
 // BOOT
