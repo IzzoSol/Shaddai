@@ -204,6 +204,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   // skeleton-safe clone (plain .clone() breaks skinned meshes)
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -2112,7 +2113,8 @@ window.setPlayerCharacter = function(code){
     while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]);
     // Clone the cached scene so we don't consume the gltf.scene singleton;
     // clone() is ~5ms vs. 200-500ms for a fresh parse.
-    const m = g.scene.clone(true);
+    const m = cloneSkinned(g.scene);   // SkeletonUtils clone: rebinds the skeleton so rigged bodies actually render
+    m.updateMatrixWorld(true);          // pose the cloned skeleton's matrices BEFORE measuring, else box is degenerate → mis-scaled/invisible
     const box=new THREE.Box3().setFromObject(m); const sz=new THREE.Vector3(); box.getSize(sz);
     m.scale.setScalar(3.6/(sz.y||1));
     const b2=new THREE.Box3().setFromObject(m); m.position.y=-b2.min.y;
