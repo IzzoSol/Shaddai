@@ -23552,6 +23552,8 @@ function showView(v) {
     if (b.getAttribute('onclick') === `showView('${v}')`) b.classList.add('active');
   });
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  // Free the Rooms-tab WebGL context when navigating away (no leaked renderers).
+  if (v !== 'marketplace') { try { window._chamberViewer && window._chamberViewer.dispose(); } catch(_){} }
   const viewEl = document.getElementById(v + 'View');
   if (!viewEl) { notify('Coming soon'); return; }
   viewEl.classList.add('active');
@@ -39371,12 +39373,112 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         </div>
       </div>
 
-      <!-- AGENT FLOOR - 6 desks in a row -->
+      <!-- ══ AGENT CHAMBERS — immersive 3D stage (hero) ══ -->
       <div style="position:relative;padding:14px">
         <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,107,53,0.5);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-          ▸ AGENT FLOOR
+          ▸ AGENT CHAMBERS
           <div style="flex:1;height:1px;background:rgba(255,107,53,0.15)"></div>
-          <span style="color:rgba(255,255,255,0.2);font-size:7px">CLICK TO ENTER ROOM · PLACE COLLECTIBLES · HIRE FROM INSIDE</span>
+          <span style="color:rgba(255,255,255,0.2);font-size:7px">PICK AN AGENT · DRAG TO SPIN · ENTER THE CHAMBER</span>
+        </div>
+
+        <!-- HERO STAGE: live rotating GLB (left) + agent dossier (right). Accent driven by --ch / --chg. -->
+        <div id="chamberStage" data-agent="shaddai" style="--ch:#ff6b35;--chg:255,107,53;position:relative;display:grid;grid-template-columns:1.35fr 1fr;gap:0;border:1px solid rgba(var(--chg),0.4);border-radius:14px;overflow:hidden;min-height:400px;background:radial-gradient(130% 100% at 50% 0%,rgba(var(--chg),0.14),transparent 62%),linear-gradient(180deg,#080c14,#04060c);box-shadow:0 0 46px rgba(var(--chg),0.12),inset 0 0 90px rgba(var(--chg),0.06);transition:border-color .3s,box-shadow .3s">
+
+          <!-- animated ambience -->
+          <div style="pointer-events:none;position:absolute;inset:0;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.05) 3px,rgba(0,0,0,0.05) 4px)"></div>
+          <div style="pointer-events:none;position:absolute;bottom:0;left:0;right:0;height:34%;z-index:0;background:linear-gradient(0deg,rgba(var(--chg),0.14) 0%,transparent 100%);border-top:1px solid rgba(var(--chg),0.4)"></div>
+          <div style="pointer-events:none;position:absolute;top:0;left:0;width:56px;height:56px;border-top:2px solid rgba(var(--chg),0.65);border-left:2px solid rgba(var(--chg),0.65);border-radius:14px 0 0 0;z-index:6"></div>
+          <div style="pointer-events:none;position:absolute;bottom:0;right:0;width:56px;height:56px;border-bottom:2px solid rgba(var(--chg),0.65);border-right:2px solid rgba(var(--chg),0.65);border-radius:0 0 14px 0;z-index:6"></div>
+
+          <!-- LEFT: 3D VIEWPORT -->
+          <div style="position:relative;z-index:2;min-height:400px;display:flex;align-items:center;justify-content:center;border-right:1px solid rgba(var(--chg),0.18)">
+            <!-- pedestal glow -->
+            <div style="pointer-events:none;position:absolute;bottom:38px;left:50%;transform:translateX(-50%);width:200px;height:44px;border-radius:50%;background:radial-gradient(ellipse,rgba(var(--chg),0.4) 0%,transparent 70%);filter:blur(6px)"></div>
+            <div id="chamberViewHost" style="position:absolute;inset:0;cursor:grab" title="Drag to spin">
+              <div class="chamber-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+                <div id="chIcon" style="font-size:92px;line-height:1;filter:drop-shadow(0 0 34px rgba(var(--chg),0.75))">👑</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.24em;color:rgba(255,255,255,.42)">◈ SUMMONING MODEL…</div>
+              </div>
+            </div>
+            <!-- floating "3D LIVE" tag -->
+            <div style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(0,0,0,0.55);border:1px solid rgba(var(--chg),0.4);border-radius:20px;backdrop-filter:blur(8px)">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--ch);box-shadow:0 0 8px var(--ch);animation:xpGlow 2s ease-in-out infinite"></div>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--ch)">3D · LIVE MODEL</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: DOSSIER -->
+          <div style="position:relative;z-index:3;padding:22px 22px 18px;display:flex;flex-direction:column;justify-content:center;gap:14px;background:rgba(2,4,9,0.55);backdrop-filter:blur(6px)">
+            <div>
+              <div id="chName" style="font-family:'Press Start 2P',monospace;font-size:14px;line-height:1.5;color:var(--ch);text-shadow:0 0 20px rgba(var(--chg),0.85)">SHADDAI'S CHAMBER</div>
+              <div id="chRole" style="font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:3px;color:rgba(255,255,255,0.4);margin-top:7px">SUPREME ORCHESTRATOR</div>
+            </div>
+            <div id="chBio" style="font-size:11px;color:rgba(255,255,255,0.55);line-height:1.7;font-style:italic;border-left:2px solid rgba(var(--chg),0.5);padding-left:11px">"Leads the empire. Strategic vision, final calls, revenue obsession."</div>
+
+            <div style="display:flex;gap:10px">
+              <div style="flex:1;text-align:center;padding:11px 6px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:9px">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:1.5px;color:rgba(255,255,255,0.32);margin-bottom:6px">LEVEL</div>
+                <div id="chLevel" style="font-family:'Press Start 2P',monospace;font-size:12px;color:var(--ch)">LV 3</div>
+              </div>
+              <div style="flex:1;text-align:center;padding:11px 6px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:9px">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:1.5px;color:rgba(255,255,255,0.32);margin-bottom:6px">REAL TOOLS</div>
+                <div id="chTools" style="font-family:'Press Start 2P',monospace;font-size:12px;color:var(--ch)">…</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:2px;color:rgba(var(--chg),0.6);margin-bottom:8px">▸ ACHIEVEMENTS</div>
+              <div id="chBadges" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;min-height:20px">
+                <span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace">Loading badges…</span>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:9px;margin-top:2px">
+              <button id="chEnterBtn" onclick="openAgentRoom('shaddai')" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--ch),rgba(var(--chg),0.55));border:none;border-radius:8px;color:#000;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;box-shadow:0 0 20px rgba(var(--chg),0.5);transition:transform .15s"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">▶ ENTER CHAMBER</button>
+              <button id="chHireBtn" onclick="openAgentHireModal('shaddai')" style="flex:1;padding:12px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(var(--chg),0.4);border-radius:8px;color:var(--ch);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:background .15s"
+                onmouseover="this.style.background='rgba(var(--chg),0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">⚡ HIRE</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTOR RAIL: pick a chamber (drives the hero) -->
+        <div id="chamberRail" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:12px">
+          <div data-ch-id="shaddai" onclick="selectChamber('shaddai')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid #ff6b35;background:rgba(255,107,53,0.18);box-shadow:0 0 16px rgba(255,107,53,0.4);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(255,107,53,0.7))">👑</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#ff6b35;margin-top:5px;letter-spacing:.5px">SHADDAI</div>
+          </div>
+          <div data-ch-id="nexus" onclick="selectChamber('nexus')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(0,196,255,0.7))">🔧</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#00c4ff;margin-top:5px;letter-spacing:.5px">NEXUS</div>
+          </div>
+          <div data-ch-id="zerox" onclick="selectChamber('zerox')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(255,215,0,0.7))">💰</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#ffd700;margin-top:5px;letter-spacing:.5px">ZEROX</div>
+          </div>
+          <div data-ch-id="oracle" onclick="selectChamber('oracle')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(167,139,250,0.7))">🔮</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#a78bfa;margin-top:5px;letter-spacing:.5px">ORACLE</div>
+          </div>
+          <div data-ch-id="turtle" onclick="selectChamber('turtle')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(0,229,160,0.7))">🐢</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#00ff88;margin-top:5px;letter-spacing:.5px">TURTLE</div>
+          </div>
+          <div data-ch-id="quill" onclick="selectChamber('quill')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(251,146,60,0.7))">✍️</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#fb923c;margin-top:5px;letter-spacing:.5px">QUILL</div>
+          </div>
+          <div data-ch-id="pikadon" onclick="selectChamber('pikadon')" style="cursor:pointer;padding:9px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s">
+            <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(244,63,94,0.7))">🛡️</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#f43f5e;margin-top:5px;letter-spacing:.5px">PIKADON</div>
+          </div>
+        </div>
+
+        <!-- Legacy desk grid retained (job-board counts + quick actions) -->
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,107,53,0.4);letter-spacing:2px;margin:16px 0 10px;display:flex;align-items:center;gap:8px">
+          ▸ AGENT FLOOR
+          <div style="flex:1;height:1px;background:rgba(255,107,53,0.12)"></div>
+          <span style="color:rgba(255,255,255,0.2);font-size:7px">CLICK A DESK TO PREVIEW · ENTER FOR THE FULL ROOM</span>
         </div>
         <div id="agentDesksRow" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px"></div>
       </div>
@@ -40956,7 +41058,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       const wallAccents = ['rgba(124,58,237,0.08)','rgba(0,229,160,0.06)','rgba(0,196,255,0.08)','rgba(255,215,0,0.06)','rgba(255,64,112,0.07)','rgba(0,196,255,0.06)'];
       const wallBg = wallAccents[wallIdx] || wallAccents[0];
 
-      return `<div onclick="openAgentRoom('${a.id}')" style="
+      return `<div onclick="selectChamber('${a.id}')" title="Preview ${a.name} in the chamber above" style="
           background:linear-gradient(160deg,rgba(${a.glow},0.13) 0%,rgba(0,0,0,0.55) 100%);
           border:1px solid rgba(${a.glow},0.35);border-radius:10px;padding:12px 8px 10px;
           text-align:center;cursor:pointer;position:relative;transition:all 0.18s;
@@ -41033,6 +41135,13 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (rev) { const total = txns.reduce((s,t)=>s+(t.amount||0),0); rev.textContent = '$'+total.toFixed(0); }
     const uj = document.getElementById('userActiveJobs'); if (uj) uj.textContent = jobs.filter(j=>j.status==='active'||j.status==='in_progress').length;
     const uc = document.getElementById('userCompletedJobs'); if (uc) uc.textContent = txns.length;
+
+    // Boot / refresh the immersive 3D chamber hero (keeps the current agent if one is selected).
+    try {
+      const stage = document.getElementById('chamberStage');
+      const cur = (stage && stage.dataset.agent) || 'shaddai';
+      if (typeof selectChamber === 'function') selectChamber(cur);
+    } catch(_){}
   }
 
   const _agentHireInfo = {
@@ -41395,8 +41504,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         scene.add(obj); current = obj;
         const ph = container.querySelector('.room-ph'); if (ph) ph.style.display = 'none'; // hide placeholder, GLB is live
       };
-      // Prefer the hi-res model, fall back to the base model, then to a clean placeholder (never a broken image).
-      const urls = ['/assets/agents/' + code + '_hires.glb?v=8', '/assets/agents/' + code + '.glb?v=8'];
+      // Load the OPTIMIZED base model FIRST (~4MB, ~27k verts — fast + reliable everywhere).
+      // The *_hires.glb files are 60MB+ (~940k verts, uncompressed) and stall/OOM on load —
+      // they were the reason the model "never showed". Base-first fixes that; hires is a last resort.
+      const urls = ['/assets/agents/' + code + '.glb?v=9', '/assets/agents/' + code + '_hires.glb?v=9'];
       (function tryLoad(i){ if (i >= urls.length){ showPortrait(); return; } loader.load(urls[i], onLoad, undefined, () => tryLoad(i + 1)); })(0);
       try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
       (function animate(){
@@ -41416,6 +41527,177 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     }
     return { init, dispose };
   })();
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  CHAMBER VIEWER — the immersive 3D stage that lives INSIDE the Rooms tab.
+  //  ONE shared WebGLRenderer for all 7 agents: switching agents only swaps the
+  //  loaded GLB (renderer/scene/camera are reused). Disposed when leaving the tab.
+  //  Loads the small optimized base GLB — POTATO-friendly, no postprocessing.
+  // ─────────────────────────────────────────────────────────────────────────
+  window._chamberViewer = (function(){
+    let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T;
+    let mods = null, mountedFor = null, loadToken = 0;
+    function loadMods(){
+      if (!mods) mods = Promise.all([
+        import('three'),
+        import('three/addons/loaders/GLTFLoader.js'),
+        import('three/addons/controls/OrbitControls.js')
+      ]).then(([t, g, o]) => ({ THREE: t, GLTFLoader: g.GLTFLoader, OrbitControls: o.OrbitControls }));
+      return mods;
+    }
+    function _hidePh(){ try { const ph = host && host.querySelector('.chamber-ph'); if (ph) ph.style.display = 'none'; } catch(_){} }
+    function _showPh(){ try { const ph = host && host.querySelector('.chamber-ph'); if (ph) ph.style.display = ''; } catch(_){} }
+    function _rgb(glow){ return (glow || '255,107,53').split(',').map(Number); }
+    async function mount(container, code, glow){
+      if (!container) return false;
+      let M; try { M = await loadMods(); } catch(e){ _showPh(); return false; }
+      if (!container.isConnected) return false;
+      const { THREE, GLTFLoader, OrbitControls } = M; T = THREE;
+      // (Re)build the renderer only if we don't have one, or the host changed.
+      if (!renderer || host !== container) {
+        _teardownGL();
+        host = container;
+        const w = container.clientWidth || 480, h = container.clientHeight || 380;
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(34, w / h, 0.1, 100);
+        camera.position.set(0, 1.15, 3.5);
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+        renderer.setPixelRatio(Math.min(1.6, window.devicePixelRatio || 1));
+        renderer.setSize(w, h);
+        renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
+        container.appendChild(renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+        keyLight = new THREE.DirectionalLight(0xffffff, 1.25); keyLight.position.set(2.5, 4.5, 3.2); scene.add(keyLight);
+        rim = new THREE.PointLight(0xffffff, 2.0, 26); rim.position.set(-3, 2.4, -2.2); scene.add(rim);
+        const fill = new THREE.PointLight(0xffffff, 0.7, 30); fill.position.set(3.2, 1.2, 3.5); scene.add(fill);
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false; controls.enablePan = false;
+        controls.autoRotate = true; controls.autoRotateSpeed = 2.0;
+        controls.minPolarAngle = Math.PI * 0.20; controls.maxPolarAngle = Math.PI * 0.60;
+        controls.target.set(0, 1.0, 0);
+        try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
+        (function animate(){
+          raf = requestAnimationFrame(animate);
+          try { controls && controls.update(); } catch(_){}
+          if (current) current.position.y = baseY + Math.sin(performance.now() / 780) * 0.06;
+          try { renderer && renderer.render(scene, camera); } catch(_){}
+        })();
+      }
+      return select(code, glow);
+    }
+    function select(code, glow){
+      if (!renderer || !T) return false;
+      mountedFor = code;
+      const c = _rgb(glow);
+      if (rim) rim.color.setRGB(c[0]/255, c[1]/255, c[2]/255);
+      // Remove the previous model (dispose its geometry/material to avoid GPU leaks).
+      if (current) { try { scene.remove(current); current.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material)?o.material:[o.material]).forEach(m => { for (const k in m){ if (m[k] && m[k].isTexture) m[k].dispose(); } m.dispose && m.dispose(); }); } }); } catch(_){}
+        current = null; }
+      _showPh();
+      const token = ++loadToken;
+      const loader = new T.GLTFLoader();
+      const urls = ['/assets/agents/' + code + '.glb?v=9', '/assets/agents/' + code + '_hires.glb?v=9'];
+      const onLoad = (gltf) => {
+        if (!renderer || token !== loadToken) return; // superseded or disposed
+        const obj = gltf.scene;
+        let box = new T.Box3().setFromObject(obj);
+        const size = box.getSize(new T.Vector3());
+        const scl = 1.85 / Math.max(size.x, size.y, size.z || 1);
+        obj.scale.setScalar(scl);
+        box = new T.Box3().setFromObject(obj);
+        const ctr = box.getCenter(new T.Vector3());
+        obj.position.x -= ctr.x; obj.position.z -= ctr.z; obj.position.y -= box.min.y;
+        baseY = obj.position.y;
+        const hgt = (box.max.y - box.min.y);
+        controls.target.set(0, hgt * 0.52, 0);
+        camera.position.set(0, hgt * 0.55, 3.5);
+        scene.add(obj); current = obj;
+        _hidePh();
+      };
+      (function tryLoad(i){ if (i >= urls.length){ _showPh(); return; } loader.load(urls[i], onLoad, undefined, () => tryLoad(i + 1)); })(0);
+      return true;
+    }
+    function _teardownGL(){
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      try { ro && ro.disconnect(); } catch(_){} ro = null;
+      try { controls && controls.dispose(); } catch(_){}
+      try { if (renderer) { renderer.forceContextLoss && renderer.forceContextLoss(); renderer.dispose(); renderer.domElement && renderer.domElement.remove(); } } catch(_){}
+      scene = camera = controls = renderer = current = rim = keyLight = host = null; mountedFor = null;
+    }
+    function dispose(){ _teardownGL(); }
+    function isMounted(){ return !!renderer; }
+    function currentAgent(){ return mountedFor; }
+    return { mount, select, dispose, isMounted, currentAgent };
+  })();
+
+  // Chamber definitions — role/bio/accent, matched to the room-overlay colours so
+  // the tab and the entered room feel like the SAME space.
+  const _CHAMBER_DEFS = {
+    shaddai:{name:'SHADDAI',code:'SHADDAI',icon:'👑',role:'Supreme Orchestrator',color:'#ff6b35',glow:'255,107,53',bio:'Leads the empire. Strategic vision, final calls, revenue obsession.'},
+    nexus:  {name:'NEXUS',  code:'NEXUS',  icon:'🔧',role:'Technical Architect', color:'#00c4ff',glow:'0,196,255',bio:'Backend systems, APIs and infrastructure. Thinks in scale.'},
+    zerox:  {name:'ZEROX',  code:'ZEROX',  icon:'💰',role:'Revenue Engine',      color:'#ffd700',glow:'255,215,0',bio:'Billing, pricing, subscriptions. Every call measured in MRR.'},
+    oracle: {name:'ORACLE', code:'ORACLE', icon:'🔮',role:'Research Intel',      color:'#a78bfa',glow:'167,139,250',bio:'Spots trends before they happen. Connects the dots.'},
+    turtle: {name:'TURTLE', code:'TURTLE', icon:'🐢',role:'UI / UX Designer',    color:'#00ff88',glow:'0,229,160',bio:'Makes things beautiful. Cares about feel, flow and brand.'},
+    quill:  {name:'QUILL',  code:'QUILL',  icon:'✍️',role:'Writer',             color:'#fb923c',glow:'251,146,60',bio:'No fluff. Every word earns its place.'},
+    pikadon:{name:'PIKADON',code:'PIKADON',icon:'🛡️',role:'Security Guard',     color:'#f43f5e',glow:'244,63,94',bio:'Assumes worst-case. Reviews everything. Keeps secrets safe.'}
+  };
+
+  // Select an agent's chamber: swap the 3D model in the shared viewer + repaint the stage.
+  window.selectChamber = function(agentId){
+    const a = _CHAMBER_DEFS[agentId]; if (!a) return;
+    const stage = document.getElementById('chamberStage');
+    if (!stage) return;
+    stage.dataset.agent = agentId;
+    stage.style.setProperty('--ch', a.color);
+    stage.style.setProperty('--chg', a.glow);
+
+    // Selector rail active state
+    document.querySelectorAll('#chamberRail [data-ch-id]').forEach(el => {
+      const on = el.getAttribute('data-ch-id') === agentId;
+      el.style.borderColor = on ? a.color : 'rgba(255,255,255,0.12)';
+      el.style.background = on ? 'rgba(' + a.glow + ',0.18)' : 'rgba(255,255,255,0.03)';
+      el.style.boxShadow = on ? '0 0 16px rgba(' + a.glow + ',0.4)' : 'none';
+    });
+
+    // Text / info
+    const txns = S.marketplace?.transactions || [];
+    const lvl = 3 + txns.length;
+    const _tools = (window._ROOM_AGENT_TOOLS || []).filter(t => Array.isArray(t.agents) && t.agents.includes(a.code)).length;
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    const setHtml = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
+    set('chName', a.name + "'S CHAMBER");
+    set('chRole', a.role.toUpperCase());
+    set('chBio', '"' + a.bio + '"');
+    set('chLevel', 'LV ' + lvl);
+    set('chTools', _tools ? String(_tools) : '…');
+    setHtml('chIcon', a.icon);
+    const enterBtn = document.getElementById('chEnterBtn');
+    if (enterBtn) enterBtn.setAttribute('onclick', "openAgentRoom('" + agentId + "')");
+    const hireBtn = document.getElementById('chHireBtn');
+    if (hireBtn) hireBtn.setAttribute('onclick', "openAgentHireModal('" + agentId + "')");
+
+    // Mount / swap the 3D model in the shared renderer
+    const hostEl = document.getElementById('chamberViewHost');
+    if (hostEl && window._chamberViewer) {
+      requestAnimationFrame(() => { try { window._chamberViewer.mount(hostEl, a.code, a.glow); } catch(_){} });
+    }
+    // If tool counts weren't cached, fetch then refresh the number
+    if (!_tools) { try { window._ensureRoomTools().then(() => { const s = document.getElementById('chTools'); const n = (window._ROOM_AGENT_TOOLS||[]).filter(t=>Array.isArray(t.agents)&&t.agents.includes(a.code)).length; if (s && n) s.textContent = String(n); }); } catch(_){} }
+    // Live achievements badges (graceful — no-op if backend offline)
+    try {
+      fetch('/api/achievements/' + a.code, { signal: AbortSignal.timeout(5000) }).then(r => r.ok ? r.json() : null).then(pr => {
+        if (!pr || document.getElementById('chamberStage')?.dataset.agent !== agentId) return;
+        const lv = document.getElementById('chLevel'); if (lv && pr.level) lv.textContent = 'LV ' + pr.level;
+        const badgeEl = document.getElementById('chBadges');
+        if (badgeEl) {
+          const badges = (pr.unlocked || []).slice(0, 6);
+          badgeEl.innerHTML = badges.length
+            ? badges.map(u => '<span title="' + (u.name||'') + '" style="font-size:15px;filter:drop-shadow(0 0 6px rgba(' + a.glow + ',0.6))">' + (u.icon||'🏅') + '</span>').join('')
+            : '<span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:\'Share Tech Mono\',monospace">Complete bounties to earn badges</span>';
+        }
+      }).catch(()=>{});
+    } catch(_){}
+  };
 
   // Close the agent room overlay AND dispose the 3D renderer (avoids leaked WebGL contexts)
   window._closeAgentRoom = function(){
