@@ -47233,6 +47233,19 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
   document.addEventListener('DOMContentLoaded',function(){
     lyApply(lyGet());
     lyInitIntro();
+    // Relocate the agent SWIVEL (deploy carousel) into the Rooms tab, below the chambers, so it's
+    // usable after forging. Moves the single #agentDeployCard node — IDs + JS wiring stay intact.
+    try {
+      var _sw = document.getElementById('agentDeployCard');
+      var _rooms = document.getElementById('marketplaceView');
+      if (_sw && _rooms && _sw.parentElement !== _rooms) {
+        var _hd = document.createElement('div');
+        _hd.style.cssText = 'margin:26px 4px 10px;font-family:\'Press Start 2P\',monospace;font-size:11px;letter-spacing:2px;color:#00e5a0;text-shadow:0 0 16px rgba(0,229,160,.6)';
+        _hd.textContent = '▾ OPERATIVE SWIVEL';
+        _rooms.appendChild(_hd);
+        _rooms.appendChild(_sw);
+      }
+    } catch(_){}
   });
 })();
 </script>
