@@ -41609,6 +41609,18 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       const onLoad = (gltf) => {
         if (!renderer || token !== loadToken) return; // superseded or disposed
         const obj = gltf.scene;
+        // Tame the Meshy PBR materials so they show their TEXTURE instead of mirroring the bright
+        // environment to solid white. (High metalness + IBL = white blob — same clamp the world uses.)
+        obj.traverse(c => { if (c.isMesh) { c.castShadow = false; c.frustumCulled = false;
+          const mats = Array.isArray(c.material) ? c.material : [c.material];
+          mats.forEach(m => { if (!m) return;
+            if ('metalness' in m) m.metalness = Math.min(m.metalness != null ? m.metalness : 0.5, 0.15);
+            if ('roughness' in m) m.roughness = Math.max(m.roughness != null ? m.roughness : 0.5, 0.6);
+            if ('envMapIntensity' in m) m.envMapIntensity = 0.5;
+            if (m.emissive && 'emissiveIntensity' in m) m.emissiveIntensity = Math.min(m.emissiveIntensity != null ? m.emissiveIntensity : 1, 0.4);
+            m.needsUpdate = true;
+          });
+        }});
         obj.updateMatrixWorld(true);
         // Pose the skeleton + idle-animate BEFORE measuring — a rigged skinned mesh with no mixer
         // renders as an exploded white blob (that was the "floating white, no texture" bug).
