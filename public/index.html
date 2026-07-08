@@ -41662,6 +41662,23 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     pikadon:{name:'PIKADON',code:'PIKADON',icon:'🛡️',role:'Security Guard',     color:'#f43f5e',glow:'244,63,94',bio:'Assumes worst-case. Reviews everything. Keeps secrets safe.'}
   };
 
+  // Revamp: skin the selector rail with real character art (HF FLUX) instead of emojis.
+  (function skinChamberRail(){
+    try {
+      const rail = document.getElementById('chamberRail'); if (!rail) return;
+      rail.querySelectorAll('[data-ch-id]').forEach(el => {
+        const def = _CHAMBER_DEFS[el.getAttribute('data-ch-id')]; if (!def) return;
+        const ic = el.querySelector('div'); if (!ic) return;
+        const emoji = ic.textContent;
+        ic.style.cssText = 'width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;box-shadow:inset 0 0 0 1px rgba(' + def.glow + ',0.35)';
+        ic.innerHTML = '<img src="/assets/agents/' + def.code + '-action.png" alt="' + def.name + '" loading="lazy" ' +
+          'style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease" ' +
+          'onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'\'" ' +
+          'onerror="this.parentElement.style.cssText=\'font-size:22px\';this.replaceWith(document.createTextNode(\'' + emoji + '\'))">';
+      });
+    } catch(_){}
+  })();
+
   // Select an agent's chamber: swap the 3D model in the shared viewer + repaint the stage.
   window.selectChamber = function(agentId){
     const a = _CHAMBER_DEFS[agentId]; if (!a) return;
@@ -41690,7 +41707,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     set('chBio', '"' + a.bio + '"');
     set('chLevel', 'LV ' + lvl);
     set('chTools', _tools ? String(_tools) : '…');
-    setHtml('chIcon', a.icon);
+    // Premium placeholder: real character art (HF FLUX) with emoji fallback, instead of a bare emoji.
+    setHtml('chIcon', '<img src="/assets/agents/' + a.code + '-action.png" alt="' + a.name + '" ' +
+      'style="width:190px;max-height:320px;object-fit:contain;border-radius:12px;filter:drop-shadow(0 0 34px rgba(' + a.glow + ',0.6))" ' +
+      'onerror="this.outerHTML=\'<div style=&quot;font-size:92px&quot;>' + a.icon + '</div>\'">');
     const enterBtn = document.getElementById('chEnterBtn');
     if (enterBtn) enterBtn.setAttribute('onclick', "openAgentRoom('" + agentId + "')");
     const hireBtn = document.getElementById('chHireBtn');
