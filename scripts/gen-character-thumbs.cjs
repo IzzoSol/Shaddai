@@ -14,16 +14,16 @@ const CHARS = {
           'dark glossy latex bodysuit with glowing emerald-cyan neon trim, wielding a glowing neon-green katana mid-swing, teal energy trails',
   ORACLE: 'a mystic esoteric oracle sorceress, flowing violet robes, glowing purple arcane sigils and constellations orbiting her, ' +
           'casting radiant violet cosmic energy, third-eye glow, ethereal',
-  TURTLE: 'a vibrant creative game-designer heroine, teal and aqua techwear with holographic neon accents, ' +
-          'spraying luminous teal paint-light into dynamic shapes, playful energetic leap',
+  TURTLE: 'a vibrant creative game-designer heroine with flowing emerald-GREEN hair, sleek green and jade ' +
+          'techwear with holographic neon accents, spraying luminous green paint-light into dynamic shapes, playful energetic leap',
   PIKADON:'an armored security-fortress guardian, crimson and black heavy plated armor, ' +
           'slamming a glowing red war-hammer, sparks and red shield energy, powerful low stance',
   SHADDAI:'a divine golden orchestrator overlord, radiant gold ornate armor and cloak, ' +
           'unleashing a brilliant golden energy light-blast from raised hand, halo of light, commanding',
-  NEXUS:  'a sleek auto-router techno-agent, emerald-green cyber armor with flowing network light-lines, ' +
-          'green data energy streams spiraling, swift motion',
-  QUILL:  'an elegant writer-mage, lavender-purple flowing coat, throwing a fan of glowing violet feathers like blades, ' +
-          'ink-magic swirls and purple glyphs, graceful dynamic throw',
+  NEXUS:  'a sleek auto-router techno-agent in deep BLUE cyber armor with glowing electric-blue circuit lines, ' +
+          'blue holographic network streams spiraling, swift precise motion, cool blue aesthetic',
+  QUILL:  'an elegant writer-mage with flowing violet-purple hair, lavender and amethyst robes, throwing a fan of ' +
+          'glowing purple feathers like blades, swirling ink-magic and purple glyphs, graceful dynamic throw, rich violet aesthetic',
   VILLAIN:'a menacing crimson sentinel villainess, long fiery red hair, dark battle armor with blood-red glowing edges, ' +
           'aggressive combat stance, crimson aura, sinister',
 };
