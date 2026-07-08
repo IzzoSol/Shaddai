@@ -7713,14 +7713,16 @@ router.post('/byok/set', (req, res) => {
       const required = provider === 'groq' || provider === 'gemini' ? 'Builder' : 'Pro';
       return res.status(403).json({ error: `Upgrade to ${required} to set ${provider} key` });
     }
+    try { ensureDataDir(); } catch (_) {}
     const store = loadJSON(BYOK_FILE, {});
     store[`${tier}:${provider}`] = { key, provider, tier, updatedAt: new Date().toISOString() };
     saveJSON(BYOK_FILE, store);
-    console.log(`[BYOK] Set ${provider} key for tier=${tier} (key=${maskKey(key)})`);
+    let masked = ''; try { masked = maskKey(key); } catch (_) { masked = '***'; }
+    console.log(`[BYOK] Set ${provider} key for tier=${tier} (key=${masked})`);
     return res.json({ ok: true, message: `Key set for ${provider}` });
   } catch (e) {
-    console.error('[BYOK] set error:', e.message);
-    return res.status(500).json({ error: e.message });
+    console.error('[BYOK] set error:', (e && e.stack) || e);   // full stack surfaces the real cause in Render logs
+    return res.status(500).json({ error: (e && e.message) || 'byok set failed' });
   }
 });
 
