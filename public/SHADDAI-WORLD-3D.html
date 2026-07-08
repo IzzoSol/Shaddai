@@ -3017,7 +3017,10 @@ function animate(){
       }
       // ── Procedural bone overlay (port of basketball.html applyProceduralBones) ──
       // Advances the walk phase and applies arm/leg/spine rotations layered on the mixer.
-      if(playerAvatar.visible && !bikeMode){
+      // SKIP for the new Meshy-rigged bodies (they have real idle/walk/run clips): the overlay
+      // was tuned for the old hero and fights the baked animation, deforming/stretching the rig.
+      const _rigged = !!(playerClips && (playerClips['idle'] || playerClips['walk'] || playerClips['run']));
+      if(!_rigged && playerAvatar.visible && !bikeMode){
         const _pSpd2 = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
         if(mv) _playerWalkPhase += dt * (rn ? 7.5 : 5.5);
         _applyPlayerProceduralBones(!!mv, !!rn, _pSpd2);
