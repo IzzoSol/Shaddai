@@ -117,3 +117,8 @@ _tmp_sa*.json
 serviceAccountKey*.json
 *firebase-adminsdk*.json
 public/assets/agents/TURTLE-anime.jpg
+
+FINALIZED/bodies/
+FINALIZED/vfx/
+FINALIZED/thumbnails/
+FINALIZED/scripts/
