@@ -1,4 +1,57 @@
 {
-  "nextTokenId": 20,
-  "operatives": {}
+  "nextTokenId": 21,
+  "operatives": {
+    "op_cb564d97_1783480230467": {
+      "id": "op_cb564d97_1783480230467",
+      "tokenId": 20,
+      "owner": "demo",
+      "codename": "NEWSX",
+      "archetype": "harvester",
+      "model": "SHADDAI",
+      "rarity": "epic",
+      "look": {
+        "archetype": "harvester"
+      },
+      "portrait": "/api/forge/image/forge-7.png",
+      "brain": {
+        "tier": "balanced",
+        "brainId": "groq-70b",
+        "persona": "Analyzing news and making posts for X"
+      },
+      "tools": [
+        "news-sentiment-brief",
+        "crypto-news-brief",
+        "daily-intelligence-brief",
+        "morning-briefing",
+        "world-news-pulse",
+        "hn-tech-pulse",
+        "hn-story-deep-dive",
+        "blog-post-draft"
+      ],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "harvester"
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 71,
+        "power": 71,
+        "iq": 70
+      },
+      "createdAt": 1783480230467,
+      "updatedAt": 1783480230467
+    }
+  }
 }

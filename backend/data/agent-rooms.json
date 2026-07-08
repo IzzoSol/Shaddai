@@ -38,7 +38,7 @@
   "shaddai": {
     "state": "sleeping",
     "mood": "sleeping",
-    "updatedAt": "2026-07-05T18:05:48.555Z",
+    "updatedAt": "2026-07-08T03:11:13.628Z",
     "items": [
       "plant"
     ]
@@ -46,7 +46,7 @@
   "nexus": {
     "state": "sleeping",
     "mood": "sleeping",
-    "updatedAt": "2026-06-06T19:47:39.196Z",
+    "updatedAt": "2026-07-07T20:35:12.094Z",
     "items": [
       "plant",
       "badge_builder",
@@ -65,7 +65,7 @@
   "turtle": {
     "state": "sleeping",
     "mood": "sleeping",
-    "updatedAt": "2026-07-05T18:10:36.320Z"
+    "updatedAt": "2026-07-07T20:35:39.565Z"
   },
   "undefined": {
     "items": [],
@@ -74,6 +74,21 @@
   "oracle": {
     "state": "sleeping",
     "mood": "sleeping",
-    "updatedAt": "2026-07-05T18:10:32.143Z"
+    "updatedAt": "2026-07-07T18:55:11.531Z"
+  },
+  "zerox": {
+    "state": "sleeping",
+    "mood": "sleeping",
+    "updatedAt": "2026-07-08T14:17:03.728Z"
+  },
+  "quill": {
+    "state": "sleeping",
+    "mood": "sleeping",
+    "updatedAt": "2026-07-07T20:35:34.712Z"
+  },
+  "pikadon": {
+    "state": "sleeping",
+    "mood": "sleeping",
+    "updatedAt": "2026-07-08T14:13:42.946Z"
   }
 }

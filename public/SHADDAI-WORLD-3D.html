@@ -1332,7 +1332,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=8';  // v8 = Meshy-rigged bodies w/ real animation clips
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=9';  // v9 = Meshy-rigged bodies (TURTLE=Emerald Enforcer) w/ real animation clips
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -1356,7 +1356,7 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=8';  // v8 = Meshy-rigged bodies (idle/walk/run/attack1/attack2/heavy/flip), 1024 tex
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=9';  // v9 = Meshy-rigged bodies (TURTLE=Emerald Enforcer), idle/walk/run/attack1/attack2/heavy/flip, 1024 tex
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
