@@ -41536,7 +41536,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   // ─────────────────────────────────────────────────────────────────────────
   window._chamberViewer = (function(){
     let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T;
-    let mods = null, mountedFor = null, loadToken = 0;
+    let mods = null, mountedFor = null, loadToken = 0, mixer = null, _mclock = 0;
     function loadMods(){
       if (!mods) mods = Promise.all([
         import('three'),
@@ -41579,6 +41579,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         (function animate(){
           raf = requestAnimationFrame(animate);
           try { controls && controls.update(); } catch(_){}
+          if (mixer){ const now = performance.now(); const dt = _mclock ? (now - _mclock) / 1000 : 0.016; _mclock = now; try { mixer.update(Math.min(dt, 0.05)); } catch(_){} }
           if (current) current.position.y = baseY + Math.sin(performance.now() / 780) * 0.06;
           try { renderer && renderer.render(scene, camera); } catch(_){}
         })();
@@ -41591,7 +41592,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       const c = _rgb(glow);
       if (rim) rim.color.setRGB(c[0]/255, c[1]/255, c[2]/255);
       // Remove the previous model (dispose its geometry/material to avoid GPU leaks).
-      if (current) { try { scene.remove(current); current.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material)?o.material:[o.material]).forEach(m => { for (const k in m){ if (m[k] && m[k].isTexture) m[k].dispose(); } m.dispose && m.dispose(); }); } }); } catch(_){}
+      if (current) { try { if (mixer){ mixer.stopAllAction(); mixer = null; } scene.remove(current); current.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material)?o.material:[o.material]).forEach(m => { for (const k in m){ if (m[k] && m[k].isTexture) m[k].dispose(); } m.dispose && m.dispose(); }); } }); } catch(_){}
         current = null; }
       _showPh();
       const token = ++loadToken;
@@ -41600,6 +41601,19 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       const onLoad = (gltf) => {
         if (!renderer || token !== loadToken) return; // superseded or disposed
         const obj = gltf.scene;
+        obj.updateMatrixWorld(true);
+        // Pose the skeleton + idle-animate BEFORE measuring — a rigged skinned mesh with no mixer
+        // renders as an exploded white blob (that was the "floating white, no texture" bug).
+        try {
+          if (mixer) { mixer.stopAllAction(); }
+          mixer = null;
+          if (gltf.animations && gltf.animations.length) {
+            mixer = new T.AnimationMixer(obj);
+            const idle = gltf.animations.find(a => /idle/i.test(a.name)) || gltf.animations[0];
+            mixer.clipAction(idle).reset().play(); mixer.update(0.3);
+            obj.updateMatrixWorld(true);
+          }
+        } catch(_){}
         let box = new T.Box3().setFromObject(obj);
         const size = box.getSize(new T.Vector3());
         const scl = 1.85 / Math.max(size.x, size.y, size.z || 1);
