@@ -58,6 +58,23 @@ build-agents.mjs (bake bodies) · build-props.mjs (vfx) · inspect-glb.mjs · ge
 6. Codex walkable — Quill's Library + Observatory (SAVE FOR LAST per owner).
 7. (Optional) regenerate/refresh HF images.
 
+## 🔜 NEXT SESSION — big features requested (need budget, not started)
+1. **Forged agents fully wired**: after forging, agent enters the swivel with a preset image,
+   populates the Agents tab + everywhere in the dashboard, and its skills/tools are usable across
+   the app — including CHAT: ask an agent in chat → it pulls the right tool and executes it. All
+   tool calls routed through **AURA** to save tokens. (Swivel already relocated to Rooms tab; the
+   forged-agent population + chat-tool-execution + AURA routing is the remaining work.)
+2. **Rebuild the actual agent rooms** (the 3D room *environments* around each agent, not just the
+   body) — construct proper rooms per agent, top-tier quality.
+
+## ✅ Done in the session-2 pass (all pushed to main)
+- Rooms tab: models render + idle-animate + PBR lighting + HF character-art rail/placeholder
+- Intro: removed codex gold veil + redundant dashboard splash (one clean intro)
+- Swivel (agentDeployCard) relocated from Forge into the Rooms tab below the chambers
+- Deploy fix: forge-art committed (dashboard buttons no longer emoji-fallback on Render)
+- Skinned-clone fix (rigged agents render when played); deformation fix (no prune/weld)
+- Verified: live Render serves the new build; GLB screenshots clean
+
 ## ⚠️ Key lesson
 Owner views the DEPLOYED Render site (shaddai-g81x.onrender.com), not localhost. Gitignored
 assets (GLBs, forge-art) never reach Render → force-commit them. Old service worker cached

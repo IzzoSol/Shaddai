@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#12141c}</style>
+<script type="importmap">{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+}}</script></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
+const q = new URLSearchParams(location.search);
+const file = q.get('f') || 'ZEROX.glb';
+const W = 640, H = 800;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setSize(W, H);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x12141c);
+const cam = new THREE.PerspectiveCamera(35, W/H, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.4));
+const dl = new THREE.DirectionalLight(0xffffff, 2.0); dl.position.set(3,6,4); scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0x88aaff, 0.8); dl2.position.set(-4,2,-3); scene.add(dl2);
+let mixer = null;
+new GLTFLoader().load('/assets/agents/'+file+'?v='+Date.now(), (g)=>{
+  // Clone via SkeletonUtils exactly like the world's setPlayerCharacter — proves rigged bodies
+  // render after cloning (plain .clone() would show nothing here).
+  const m = (q.get('clone')==='1') ? cloneSkinned(g.scene) : g.scene; scene.add(m);
+  m.updateMatrixWorld(true); scene.updateMatrixWorld(true);   // pose bones/matrices before measuring
+  const box = new THREE.Box3().setFromObject(m); const sz = new THREE.Vector3(); box.getSize(sz);
+  const ctr = new THREE.Vector3(); box.getCenter(ctr);
+  const h = sz.y||1;
+  cam.position.set(ctr.x, ctr.y + h*0.1, ctr.z + h*1.7);
+  cam.lookAt(ctr.x, ctr.y, ctr.z);
+  window.__clips = (g.animations||[]).map(a=>a.name);
+  if(g.animations && g.animations.length){
+    mixer = new THREE.AnimationMixer(m);
+    const idle = g.animations.find(a=>/idle/i.test(a.name)) || g.animations[0];
+    mixer.clipAction(idle).play(); mixer.update(0.3);   // pose to a real frame
+  }
+  renderer.render(scene, cam);
+  window.__ready = true;
+}, undefined, (e)=>{ window.__err = String(e && e.message || e); window.__ready = true; });
+function loop(){ requestAnimationFrame(loop); if(mixer) mixer.update(0.016); renderer.render(scene, cam); }
+loop();
+</script></body></html>
