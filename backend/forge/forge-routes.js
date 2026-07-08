@@ -59,6 +59,7 @@ router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
     const dataUri = `data:image/png;base64,${img.toString('base64')}`;
     res.json({ ok: true, metadata, image: imageUrl, dataUri });
   } catch (e) {
+    console.error('[forge] POST / failed:', (e && e.stack) || e);   // surface real cause in Render logs
     res.status(500).json({ ok: false, error: String(e && e.message || e) });
   }
 });
