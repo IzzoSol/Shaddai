@@ -41535,7 +41535,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   //  Loads the small optimized base GLB — POTATO-friendly, no postprocessing.
   // ─────────────────────────────────────────────────────────────────────────
   window._chamberViewer = (function(){
-    let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T;
+    let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T, GL;
     let mods = null, mountedFor = null, loadToken = 0, mixer = null, _mclock = 0;
     function loadMods(){
       if (!mods) mods = Promise.all([
@@ -41553,7 +41553,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       if (!container) return false;
       let M; try { M = await loadMods(); } catch(e){ _showPh(); return false; }
       if (!container.isConnected) return false;
-      const { THREE, GLTFLoader, OrbitControls, RoomEnvironment } = M; T = THREE;
+      const { THREE, GLTFLoader, OrbitControls, RoomEnvironment } = M; T = THREE; GL = GLTFLoader;
       // (Re)build the renderer only if we don't have one, or the host changed.
       if (!renderer || host !== container) {
         _teardownGL();
@@ -41602,7 +41602,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         current = null; }
       _showPh();
       const token = ++loadToken;
-      const loader = new T.GLTFLoader();
+      const loader = new GL();   // FIX: GLTFLoader is a separate import, NOT on the THREE namespace (T.GLTFLoader threw)
       const urls = ['/assets/agents/' + code + '.glb?v=9', '/assets/agents/' + code + '_hires.glb?v=9'];
       const onLoad = (gltf) => {
         if (!renderer || token !== loadToken) return; // superseded or disposed
