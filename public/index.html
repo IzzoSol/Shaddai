@@ -47226,22 +47226,9 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
     if(el){el.classList.add('out');setTimeout(function(){el.style.display='none';},700);}
   };
   function lyInitIntro(){
-    if(localStorage.getItem('shaddai_no_intro')==='1'){
-      var el=document.getElementById('ly-intro');if(el)el.style.display='none';return;
-    }
-    requestAnimationFrame(function(){
-      var b=document.getElementById('lyBar');if(b)b.style.width='100%';
-    });
-    fetch('/api/market/fear-greed',{signal:AbortSignal.timeout(4000)})
-      .then(function(r){return r.json();}).then(function(d){
-        var el=document.getElementById('lyFG');
-        if(el&&d.value!=null){
-          var n=parseInt(d.value);
-          el.textContent=n;
-          el.style.color=n>=60?'#00ff88':n<=35?'#ff4070':'#ffb020';
-        }
-      }).catch(function(){});
-    setTimeout(function(){lyDismiss(false);},5000);
+    // Owner: ONE clean intro. The boot cinematic (#shaddai-boot-overlay) is the load screen and
+    // auto-reveals the dashboard, so this second splash is redundant — suppress it entirely.
+    var el=document.getElementById('ly-intro'); if(el) el.style.display='none';
   }
   document.addEventListener('DOMContentLoaded',function(){
     lyApply(lyGet());

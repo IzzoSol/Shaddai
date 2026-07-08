@@ -293,10 +293,9 @@
 
   // ── Enter SHADDAI — visual transition then into the dashboard ──
   window.enterShaddai = function(){
-    const veil=$('enterVeil'), word=$('veilWord');
-    if(veil){ veil.style.opacity='1'; veil.style.pointerEvents='all'; }
-    if(word){ requestAnimationFrame(()=>{ word.style.opacity='1'; word.style.transform='scale(1.06)'; }); }
-    setTimeout(()=>{ window.location.href='/dashboard'; }, 850);
+    // Owner: the gold "⚡ SHADDAI" veil was a redundant SECOND intro — the dashboard already has
+    // its own load screen. Go straight there so the entry is one clean intro, not two.
+    window.location.href='/dashboard';
   };
 
   // ── Join the Circle — real email capture (beta waitlist) ──
