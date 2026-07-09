@@ -77,15 +77,16 @@
                           // circle:{ box:false, cx, cz, r, r2 }
   var _built     = false;
 
-  /* Buildings ARE solid again. Owner complaint (2026-07-09): "you can still walk
-   * THROUGH some buildings." The earlier free-walk experiment let the player pass
-   * through every wall, which read as broken. Re-enabled: colliders are built from
-   * the REAL measured wall silhouette (setBuildingFootprints → tight AABB / core
-   * circle in the player's ground band), so you're blocked exactly at the visible
-   * facade — no oversized force field, plaza/approach stays open. Entry is still via
-   * the [E] door prompt + interior cutscene / the [R] elevator, NOT by walking
-   * through geometry. Set false to restore the free-walk experiment. */
-  var BUILDINGS_SOLID = true;
+  /* Buildings stay WALK-THROUGH at ground level. Owner directive (2026-07-09):
+   * "the buildings stay walkable 1000%." The agent buildings are lifted 46u onto
+   * pillars with an OPEN, freely-walkable themed LOUNGE underneath at ground level —
+   * making the footprint solid (measured from the ground band) walls those lounges
+   * off, which the owner explicitly does NOT want. So building colliders are OFF;
+   * the player walks freely through/under every pavilion. Interiors are still entered
+   * via the [E] cutscene / [R] elevator. Falling off elevated decks is handled
+   * separately by the anti-fall edge clamp in SHADDAI-WORLD-3D.html (still active).
+   * If specific buildings need solid walls later, add them per-building, not blanket. */
+  var BUILDINGS_SOLID = false;
 
   /* ── Builder ────────────────────────────────────────────────────────────── */
   function buildWorldCollision(layout) {
