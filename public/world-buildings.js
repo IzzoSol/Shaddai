@@ -2255,6 +2255,90 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     im.instanceMatrix.needsUpdate = true; scene.add(im);
   }
 
+  // ── HERALDIC FLUX BANNER (2026-07-09) ─────────────────────────────────────
+  // Hangs a tall vertical fabric banner (real HuggingFace FLUX art from
+  // /assets/banners/<code>.jpg) UP on a tower's FRONT facade, facing world-centre
+  // (frontDir), seated in the upper third of the elevated mass. Visual only:
+  //   • NO collider, NO ground geometry — the walk-through lounge stays clear.
+  //   • Built ONCE at build time (freeze-safe): geometry + material + textures are
+  //     created here and never touched per-frame (no allocation in update()).
+  //   • Texture is loaded SRGB and its material is DoubleSide so the pennant reads
+  //     from either approach; a thin dark rod at top + a weighted hem bar at bottom
+  //     give it a finished, hung-tapestry look.
+  // buildingCode → banner asset code (only the 6 agent towers are decorated here).
+  const _BANNER_CODE = {
+    'nexus-hub':        'nexus',
+    'library':          'quill',    // QUILL's grand library
+    'aegis':            'pikadon',
+    'museum':           'turtle',
+    'markets-exchange': 'zerox',
+    'oracle-spire':     'oracle',
+    'source-spire':     'shaddai',  // (SHADDAI temple, if ever built via this path)
+  };
+  const _bannerTexCache = {};       // code → THREE.Texture (shared if a code repeats)
+
+  function hangBanner(code, x, z, frontDir, faceR, baseY, topY, pal) {
+    if (!code) return;
+    // Vertical span of the elevated mass; seat the banner across the upper third so
+    // it flies high and clear of the doorway/relief lower down.
+    const H       = Math.max(1, topY - baseY);
+    const bannerH = Math.min(26, Math.max(16, H * 0.40));      // ~16–26u tall
+    const bannerW = Math.min(16, Math.max(10, faceR * 0.34));  // ~10–16u wide
+    // Centre height ≈ upper third of the facade (clearly visible from a distance).
+    const cy      = baseY + H * 0.70;
+    // Sit a hair PROUD of the wall so it never z-fights the facade relief.
+    const standoff = 0.9;
+    const fr      = faceR + standoff;
+    const cx      = x + frontDir.x * fr;
+    const cz      = z + frontDir.z * fr;
+    const faceAng = Math.atan2(frontDir.x, frontDir.z);        // yaw so +Z of the plane faces world-centre
+
+    // Shared texture per code (SRGB, silent onError so a missing file can't break load).
+    let tex = _bannerTexCache[code];
+    if (tex === undefined) {
+      tex = null;
+      try {
+        const tl = new THREE.TextureLoader();
+        tex = tl.load('/assets/banners/' + code + '.jpg', undefined, undefined, function () { /* silent */ });
+        tex.anisotropy = 4;
+        if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+      } catch (e) { tex = null; }
+      _bannerTexCache[code] = tex;
+    }
+
+    // ── The cloth: a tall vertical plane carrying the FLUX banner art. ──────────
+    const clothMat = new THREE.MeshStandardMaterial({
+      map: tex || null,
+      color: tex ? 0xffffff : (pal ? pal.body : 0x101018),
+      roughness: 0.86, metalness: 0.04,
+      emissive: pal ? pal.primary : 0x223344, emissiveMap: tex || null, emissiveIntensity: tex ? 0.14 : 0.05,
+      side: THREE.DoubleSide, transparent: false,
+    });
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(bannerW, bannerH), clothMat);
+    cloth.position.set(cx, cy, cz);
+    cloth.rotation.y = faceAng;
+    scene.add(cloth);
+
+    // ── Trim: a dark rod across the top + a weighted hem bar across the bottom, so
+    //    the banner reads as a real hung tapestry (not a floating sticker). Both are
+    //    thin cylinders spanning the banner width, laid along the facade tangent. ──
+    const px = -frontDir.z, pz = frontDir.x;                   // tangent along the face
+    const rodMat = new THREE.MeshStandardMaterial({
+      color: 0x0b0d12, roughness: 0.5, metalness: 0.7,
+      emissive: pal ? pal.trim : 0x556677, emissiveIntensity: 0.10,
+    });
+    const rodLen = bannerW * 1.08;
+    function bar(yy, r) {
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(r, r, rodLen, 8), rodMat);
+      rod.rotation.z = Math.PI / 2;                            // lay horizontal…
+      rod.rotation.y = faceAng;                                // …along the facade tangent
+      rod.position.set(cx + px * 0, yy, cz + pz * 0);
+      scene.add(rod);
+    }
+    bar(cy + bannerH * 0.5 + 0.25, 0.42);                      // top rod (banner hangs from it)
+    bar(cy - bannerH * 0.5 - 0.20, 0.30);                      // bottom weighted hem
+  }
+
   // ── FULL DECORATION SUITE ─────────────────────────────────────────────────
   // faceR = actual building face radius (from each builder).
   // buildingCode used to tune window sides/density.
@@ -2313,6 +2397,11 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     // ── Crowning cornice cap — projecting molding terminates the wall at topY, so
     // the roofline reads as a finished crown, not a cut-off slab edge. ──────────
     _corniceCap   (x, z, topY, faceR, winSides, palette, fp);
+
+    // ── Heraldic FLUX banner flown on the FRONT facade (upper third), facing
+    // world-centre. Visual only — no collider, seated on the elevated mass so the
+    // walk-through lounge below stays completely clear. Built once (freeze-safe). ─
+    hangBanner(_BANNER_CODE[buildingCode], x, z, frontDir, faceR, landingY, topY, palette);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
