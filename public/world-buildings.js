@@ -471,8 +471,8 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     const n      = layoutSpec.length;
     const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
     const span   = Math.min(Math.PI * 0.92, Math.PI * 0.30 * n);   // narrower arc for fewer screens
-    // Screens ring: the lounge pillars sit at fp*0.40 with a fat shaft (rS≈fp*0.052), so their
-    // INNER surface is ~fp*0.348. Placing screens at fp*0.40 (the old value) made any screen that
+    // Screens ring: the lounge pillars sit at fp*0.375 with a fat shaft (rS≈fp*0.052), so their
+    // INNER surface is ~fp*0.323. Placing screens out at the pillar ring made any screen that
     // lined up with a pillar punch straight through it. Seat the screens fully INSIDE the pillars'
     // inner surface (fp*0.32) so they clear the legs at every angle — no clipping into the pillars.
     const rW     = fp * 0.32;
@@ -4220,7 +4220,12 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     // draw calls per building, no per-frame allocation (frozen by the build's
     // matrix-freeze pass). Emissive accents carry the "life"; no new lights.
     const NP   = 6;
-    const rP   = fp * 0.40;                                // ring radius — near the footprint edge
+    // TRIM: pulled the pillar ring IN from fp*0.40 → fp*0.375. The square plinth feet
+    // (rS*3.1 box → half ≈ fp*0.081) and capital abaci were reaching rP + half ≈ fp*0.481,
+    // poking past both the lounge floor (rL=fp*0.46) and the podium plinth above
+    // (plinthR=fp*0.458) — a visible flared overhang past the building silhouette. At
+    // fp*0.375 the outer feet/caps land ≈ fp*0.456, tucked just inside the floor & podium.
+    const rP   = fp * 0.375;                              // ring radius — capitals/feet tuck inside fp*0.46
     const rS   = Math.max(3.4, fp * 0.052);               // fat shaft radius ("legs")
     const angO = Math.PI / NP + faceAng;                  // offset off the entrance axis
 

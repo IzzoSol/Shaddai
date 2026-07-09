@@ -31,11 +31,17 @@
   var SPAWN_Z_OFFSET = 28;
 
   // MUST match the actual building wall radius (footprint*0.46) so the "[E] ENTER" prompt fires when you
-  // stand at the door — before this these were 24-34 while the walls sit at 62-78, so you hit the wall
+  // stand at the door — before this these were 24-34 while the walls sit at 62-119, so you hit the wall
   // and could NEVER reach the trigger ("no door / can't get in"). Now the prompt reaches just outside each wall.
+  // RADII RE-DERIVED from the actual footprints in world-buildings.js × 0.46 (the dressed-wall faceR):
+  //   NEXUS/TURTLE fp140→64 · ZEROX/PIKADON fp145→67 · ORACLE fp138→64 · QUILL/Library fp258→119.
+  //   QUILL was the big miss: the library was grown 172→258 but this table still read 78, putting the
+  //   ENTER trigger (78+16=94) a full ~24u INSIDE the fp*0.46=119 wall — you hit the wall before the
+  //   prompt could ever fire ("can't get into the library"). Now 119 matches the wall. SHADDAI is unused
+  //   here (skipped below — the ground centre is the open bazaar), left as-is.
   var COLLIDER_R = {
-    SHADDAI: 76, ZEROX: 65, ORACLE: 62, NEXUS: 63,
-    TURTLE: 63,  QUILL: 78, PIKADON: 65, bazaar: 37
+    SHADDAI: 76, ZEROX: 67, ORACLE: 64, NEXUS: 64,
+    TURTLE: 64,  QUILL: 119, PIKADON: 67, bazaar: 37
   };
   // FRONT-DOOR GATE: the "[E] ENTER" prompt only fires when the player stands on the
   // building's ENTRANCE side — the side facing world-centre. We bake a normalized front
