@@ -621,6 +621,45 @@
 
         wallPanels(group, accent, 5);
 
+        /* --- PROCESSIONAL FLOOR RUNNER (entrance → dais) ---------------------
+           The front/centre floor read empty between the spawn (z≈+28) and the
+           throne dais (z=-18). A thin crimson runner + flanking gold inlay strips
+           give the walk to the throne purpose. All planes sit flat at y≈0.05 so
+           they are purely visual and fully WALKABLE — the spawn→exit path (the
+           +Z centreline) is a flat carpet, never blocked. */
+        var runnerM = new THREE.MeshBasicMaterial({
+          color: 0x3a0008, transparent: true, opacity: 0.55, depthWrite: false,
+        });
+        var runner  = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 44), runnerM);
+        runner.rotation.x = -Math.PI / 2;
+        runner.position.set(0, 0.045, 4);     /* from ~z+26 back to the dais front */
+        runner.renderOrder = 1; group.add(runner);
+        /* gold trim strips down both edges of the runner (thin, glowing) */
+        var runTrimM = mat(accent, accent, 0.16, 0.7, 0.1, true, 0.42);
+        glow(runTrimM, 0.14, 0.4, 0.06);
+        [-3.9, 3.9].forEach(function (rx) {
+          var rt = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 44), runTrimM.clone());
+          rt.rotation.x = -Math.PI / 2;
+          rt.position.set(rx, 0.05, 4); rt.renderOrder = 2; group.add(rt);
+        });
+
+        /* --- FLANKING BRAZIERS (two, seated on the floor, off the walk path) ---
+           Well-proportioned: 1.5-tall bowl on a stem, ember orb on top → ~3.2 tall,
+           placed at x=±16 (clear of the 7.5-wide runner and the tool row). */
+        var brzStemM = mat(0x141008, accent, 0.08, 0.5, 0.4);
+        var brzBowlM = mat(0x1a1200, accent, 0.16, 0.4, 0.55);
+        glow(brzBowlM, 0.14, 1.0, 0.08);
+        var brzEmberM = mat(0xffb040, 0xffb040, 0.42, 0.3, 0.05);
+        glow(brzEmberM, 0.36, 0.6, 0.12);
+        [[-16, 6], [16, 6], [-16, -8], [16, -8]].forEach(function (bp, bi) {
+          var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.9, 2.2, 8), brzStemM.clone());
+          stem.position.set(bp[0], 1.1, bp[1]); group.add(stem);
+          var bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 0.8, 0.9, 10), brzBowlM.clone());
+          bowl.position.set(bp[0], 2.5, bp[1]); group.add(bowl);
+          var ember = new THREE.Mesh(new THREE.SphereGeometry(0.85, 10, 8), brzEmberM.clone());
+          ember.position.set(bp[0], 3.0, bp[1]); group.add(ember);
+        });
+
         /* TOOLS — SHADDAI's council of decisions (front-of-room, faces the entrant) */
         buildToolRow(group, accent, ['STRATEGY', 'DECREE', 'COUNCIL', 'VISION', 'LAUNCH'], 12, 0);
 
@@ -1403,6 +1442,38 @@
         var bk  = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.4, 2.2), bkM);
         bk.position.set(0, 3.7, 22); bk.rotation.x = -0.25; group.add(bk);
 
+        /* --- ZODIAC FLOOR INLAY (12 marks on an outer ring) -------------------
+           The wide floor annulus between the hex pillars (R=22) and the walls
+           (R=40) read empty. A ring of 12 faint glyph-plates at R=30 gives the
+           esoteric floor structure. Flat at y≈0.06 → purely visual, walkable. */
+        var zMarkGeo = new THREE.PlaneGeometry(2.4, 3.4);
+        var zMarkM   = mat(accent, accent, 0.12, 0.9, 0, true, 0.30);
+        glow(zMarkM, 0.10, 0.5, 0.06);
+        var zMarkIM  = new THREE.InstancedMesh(zMarkGeo, zMarkM, 12);
+        for (var zk = 0; zk < 12; zk++) {
+          var zA = zk * Math.PI / 6;
+          dum.position.set(Math.sin(zA) * 30, 0.06, Math.cos(zA) * 30);
+          dum.rotation.set(-Math.PI / 2, 0, -zA);   /* lie flat, face inward */
+          dum.updateMatrix();
+          zMarkIM.setMatrixAt(zk, dum.matrix);
+        }
+        zMarkIM.instanceMatrix.needsUpdate = true;
+        group.add(zMarkIM);
+
+        /* --- LOW STUDY BENCHES flanking the orrery (seated on the floor) ------
+           Two stone benches at x=±26 give the observatory a place to "sit and
+           read the sky". Off the +Z spawn→exit centreline, clear of pillars. */
+        var benchM = mat(0x120a24, accent, 0.06, 0.85, 0.08);
+        [[-26, 4], [26, 4]].forEach(function (bp) {
+          var seat = new THREE.Mesh(new THREE.BoxGeometry(3, 1.1, 9), benchM.clone());
+          seat.position.set(bp[0], 0.85, bp[1]); group.add(seat);
+          var legG = new THREE.BoxGeometry(2.6, 0.9, 1.0);
+          [-3.4, 3.4].forEach(function (lz) {
+            var leg = new THREE.Mesh(legG, benchM.clone());
+            leg.position.set(bp[0], 0.45, bp[1] + lz); group.add(leg);
+          });
+        });
+
         /* TOOLS — ORACLE's research & intelligence stations (front, before exit) */
         buildToolRow(group, accent, ['RESEARCH', 'SCRY', 'FORECAST', 'ANALYZE', 'DECODE'], 30, 0);
 
@@ -1536,6 +1607,48 @@
           rfP.position.set(ROOM_W/2 - 0.6, 8 + (rf%3-1)*3, -22 + rf * 9);
           group.add(rfP);
         }
+
+        /* --- DROP-CLOTH under the easel (grounds the hero, fills empty floor) --
+           A paint-spattered canvas sheet beneath the easel/sculpture zone. Flat
+           at y≈0.03 → walkable, purely visual. */
+        var clothM = new THREE.MeshBasicMaterial({
+          color: 0xe8e0d2, transparent: true, opacity: 0.32, depthWrite: false,
+        });
+        var cloth  = new THREE.Mesh(new THREE.PlaneGeometry(20, 16), clothM);
+        cloth.rotation.x = -Math.PI / 2;
+        cloth.position.set(-2, 0.03, -6); cloth.renderOrder = 1; group.add(cloth);
+        /* a few colour splatters on the cloth (instanced circles) */
+        var splGeo  = new THREE.CircleGeometry(0.9, 8);
+        var splCols = [0xff3366, 0x33ccff, 0xffcc00, 0x66ff66, 0xff6600, 0x9966ff];
+        /* white base material — per-instance colour comes from setColorAt() below
+           (InstancedMesh.instanceColor multiplies the base, no vertexColors needed) */
+        var splIM   = new THREE.InstancedMesh(
+          splGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false }), 6
+        );
+        var splC = new THREE.Color();
+        for (var sc2 = 0; sc2 < 6; sc2++) {
+          dum.position.set(-9 + sc2 * 3, 0.04, -10 + (sc2 % 3) * 5);
+          dum.rotation.set(-Math.PI / 2, 0, sc2); dum.scale.set(1 + (sc2 % 2) * 0.5, 1, 1);
+          dum.updateMatrix();
+          splIM.setMatrixAt(sc2, dum.matrix);
+          splIM.setColorAt(sc2, splC.setHex(splCols[sc2]));
+        }
+        dum.scale.set(1, 1, 1);   /* reset shared scratch scale */
+        splIM.instanceMatrix.needsUpdate = true;
+        if (splIM.instanceColor) splIM.instanceColor.needsUpdate = true;
+        group.add(splIM);
+
+        /* --- GALLERY VIEWING BENCHES (two, seated on floor, flank the walk) ----
+           Museum-style upholstered benches at x=±22 to view the wall art. Clear
+           of the +Z spawn→exit centreline and all hero props. */
+        var gBenchM = mat(0x161008, accent, 0.05, 0.85, 0.06);
+        var gBTopM  = mat(0x241a10, accent, 0.05, 0.9, 0.02);
+        [[-22, 20], [22, 20]].forEach(function (bp) {
+          var bBase = new THREE.Mesh(new THREE.BoxGeometry(9, 1.0, 3), gBenchM.clone());
+          bBase.position.set(bp[0], 0.5, bp[1]); group.add(bBase);
+          var bTop  = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.5, 3.2), gBTopM.clone());
+          bTop.position.set(bp[0], 1.25, bp[1]); group.add(bTop);
+        });
 
         /* warm daylight motes */
         group.userData.motes = buildMotes(group, 0xfff8c0, 55, false);
@@ -1990,6 +2103,27 @@
         group.userData.animObjs = [];
         pedestal(group, accent);
         wallPanels(group, accent, 4);
+
+        /* four corner columns frame the empty box so it doesn't read as a bare
+           cube (the pedestal alone left a huge blank floor + walls) */
+        column(group, accent, -26, -26);
+        column(group, accent,  26, -26);
+        column(group, accent, -26,  26);
+        column(group, accent,  26,  26);
+
+        /* centred floor inlay rings under the pedestal — gives the hero a base
+           and structures the empty floor. Flat at y≈0.05 → walkable. */
+        var gInlayM = mat(accent, accent, 0.14, 0.9, 0, true, 0.22);
+        glow(gInlayM, 0.12, 0.3, 0.06);
+        for (var gir = 1; gir <= 3; gir++) {
+          var gRing = new THREE.Mesh(new THREE.RingGeometry(gir * 6 - 0.4, gir * 6, 48), gInlayM.clone());
+          gRing.rotation.x = -Math.PI / 2; gRing.position.y = 0.05;
+          gRing.renderOrder = 1; group.add(gRing);
+        }
+
+        /* a soft light shaft onto the pedestal for cinematic depth */
+        buildShaft(group, 0, 0, 0.3, 2.5, ROOM_H, accent, 0.04);
+
         group.userData.motes = buildMotes(group, accent, 40, false);
       }
     };

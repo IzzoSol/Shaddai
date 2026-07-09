@@ -377,6 +377,62 @@
   canvas.addEventListener("touchmove", function(e){ canvasPos(e); e.preventDefault(); }, {passive:false});
   canvas.addEventListener("touchend", function(){ G.mouse.down=false; });
 
+  // ── mobile touch controls ──────────────────────────────────
+  // NEXUS: unify with desktop. Left thumb = move (drives the SAME G.keys the
+  // WASD/arrows set); SPECIAL button -> G.keys[' ']; DASH button -> tryDash().
+  // Aim + auto-cast stay on the canvas touch handlers (finger = aim).
+  var IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+  if(IS_TOUCH){ buildTouchControls(); }
+  function buildTouchControls(){
+    var css=document.createElement("style");
+    css.textContent=
+      "#tc{position:fixed;inset:0;z-index:30;pointer-events:none;}"+
+      "#tc .zone{position:absolute;bottom:24px;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;}"+
+      "#tcPad{left:22px;width:130px;height:130px;border-radius:50%;"+
+        "background:radial-gradient(circle,rgba(120,90,255,.12),rgba(6,6,14,.5));border:1px solid rgba(150,120,255,.4);}"+
+      "#tcNub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;"+
+        "background:rgba(150,120,255,.6);box-shadow:0 0 16px rgba(150,120,255,.6);}"+
+      "#tc .abtn{position:absolute;right:0;border-radius:50%;display:flex;align-items:center;justify-content:center;"+
+        "font-weight:800;letter-spacing:1px;color:#0a0a14;text-transform:uppercase;}"+
+      "#tcSpecial{right:26px;bottom:34px;width:88px;height:88px;font-size:12px;"+
+        "background:linear-gradient(135deg,#ffcf4a,#ff7a3a);box-shadow:0 0 22px -4px #ffcf4a;}"+
+      "#tcDash{right:118px;bottom:96px;width:60px;height:60px;font-size:12px;"+
+        "background:linear-gradient(135deg,#6ad0ff,#4a8cff);box-shadow:0 0 18px -4px #6ad0ff;}"+
+      "#tc .abtn.on{filter:brightness(1.25);transform:scale(.92);}";
+    document.head.appendChild(css);
+    var tc=document.createElement("div"); tc.id="tc";
+    tc.innerHTML='<div id="tcPad" class="zone"><div id="tcNub"></div></div>'+
+                 '<div id="tcDash" class="zone abtn">DASH</div>'+
+                 '<div id="tcSpecial" class="zone abtn">CAST</div>';
+    document.body.appendChild(tc);
+
+    var pad=document.getElementById("tcPad"), nub=document.getElementById("tcNub"), padId=-1;
+    var MK=["w","a","s","d"];
+    function clr(){ for(var i=0;i<MK.length;i++) G.keys[MK[i]]=false; }
+    function padMove(e){
+      var r=pad.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+      var dx=e.clientX-cx, dy=e.clientY-cy, d=Math.hypot(dx,dy)||1, max=r.width/2, cl=Math.min(d,max);
+      var nx=dx/d, ny=dy/d; nub.style.transform="translate("+(nx*cl)+"px,"+(ny*cl)+"px)";
+      clr(); var DEAD=0.30;
+      if(nx<-DEAD)G.keys["a"]=true; if(nx>DEAD)G.keys["d"]=true;
+      if(ny<-DEAD)G.keys["w"]=true; if(ny>DEAD)G.keys["s"]=true;
+    }
+    pad.addEventListener("pointerdown",function(e){ padId=e.pointerId; pad.setPointerCapture(e.pointerId); padMove(e); e.preventDefault(); });
+    pad.addEventListener("pointermove",function(e){ if(e.pointerId===padId){ padMove(e); e.preventDefault(); } });
+    function end(e){ if(e.pointerId===padId){ padId=-1; clr(); nub.style.transform="translate(0,0)"; } }
+    pad.addEventListener("pointerup",end); pad.addEventListener("pointercancel",end);
+
+    var sp=document.getElementById("tcSpecial");
+    sp.addEventListener("pointerdown",function(e){ e.preventDefault(); sp.classList.add("on"); G.keys[" "]=true; ac(); });
+    function spUp(e){ e.preventDefault(); sp.classList.remove("on"); G.keys[" "]=false; }
+    sp.addEventListener("pointerup",spUp); sp.addEventListener("pointercancel",spUp);
+
+    var da=document.getElementById("tcDash");
+    da.addEventListener("pointerdown",function(e){ e.preventDefault(); da.classList.add("on"); if(G.state==="play") tryDash(); });
+    function daUp(e){ e.preventDefault(); da.classList.remove("on"); }
+    da.addEventListener("pointerup",daUp); da.addEventListener("pointercancel",daUp);
+  }
+
   function tryDash(){
     var p = G.player; if(!p || p.dashCd>0) return;
     var dx=0, dy=0;

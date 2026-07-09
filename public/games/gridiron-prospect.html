@@ -287,7 +287,7 @@
                 antialias: true
             });
             renderer.setSize(gameConfig.width, gameConfig.height);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); // NEXUS: cap DPR for perf on hi-dpi / mobile
             renderer.shadowMap.enabled = true;
 
             // Lighting

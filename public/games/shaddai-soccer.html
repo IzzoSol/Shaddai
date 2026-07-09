@@ -249,6 +249,93 @@ window.addEventListener('keyup', e=>{
 });
 
 // ------------------------------------------------------------------
+// MOBILE TOUCH CONTROLS  (NEXUS: unified — drives the SAME keys{} the
+// keyboard sets, so no gameplay logic changes. Shown only on touch devices.)
+// ------------------------------------------------------------------
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+if(IS_TOUCH){
+  document.documentElement.classList.add('touch');
+  buildTouchControls();
+}
+function buildTouchControls(){
+  const css = document.createElement('style');
+  css.textContent = `
+    #tc{position:fixed;inset:0;z-index:25;pointer-events:none;}
+    #tc .zone{position:absolute;bottom:22px;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none;}
+    #tcPad{left:20px;width:132px;height:132px;border-radius:50%;
+      background:radial-gradient(circle,rgba(45,230,255,.10),rgba(6,12,22,.55));
+      border:1px solid rgba(45,230,255,.35);}
+    #tcNub{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;
+      background:rgba(45,230,255,.55);box-shadow:0 0 16px rgba(45,230,255,.5);transition:transform .04s linear;}
+    #tc .abtn{position:absolute;right:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-weight:800;letter-spacing:1px;color:#05070d;font-size:13px;text-transform:uppercase;}
+    #tcKick{right:24px;bottom:34px;width:92px;height:92px;background:linear-gradient(135deg,#2de6ff,#38ffb0);
+      box-shadow:0 0 22px -4px #2de6ff;font-size:15px;}
+    #tcSwitch{right:126px;bottom:96px;width:60px;height:60px;background:linear-gradient(135deg,#ffd35c,#ff9f45);
+      box-shadow:0 0 18px -4px #ffd35c;font-size:11px;}
+    #tcSprint{right:22px;bottom:132px;width:56px;height:56px;background:rgba(184,140,255,.85);
+      color:#05070d;box-shadow:0 0 16px -4px #b98cff;font-size:11px;}
+    #tc .abtn.on{filter:brightness(1.25);transform:scale(.92);}
+  `;
+  document.head.appendChild(css);
+  const tc = document.createElement('div');
+  tc.id='tc';
+  tc.innerHTML =
+    '<div id="tcPad" class="zone"><div id="tcNub"></div></div>'+
+    '<div id="tcSwitch" class="zone abtn">SWAP</div>'+
+    '<div id="tcSprint" class="zone abtn">RUN</div>'+
+    '<div id="tcKick" class="zone abtn">KICK</div>';
+  document.body.appendChild(tc);
+
+  // ---- movement pad: maps analog direction to WASD keys ----
+  const pad = document.getElementById('tcPad');
+  const nub = document.getElementById('tcNub');
+  let padId=-1;
+  const MOVE_KEYS=['w','a','s','d'];
+  function clearMove(){ MOVE_KEYS.forEach(k=>keys[k]=false); }
+  function setNub(dx,dy){ nub.style.transform='translate('+dx+'px,'+dy+'px)'; }
+  function padMove(e){
+    const r=pad.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    let dx=e.clientX-cx, dy=e.clientY-cy;
+    const d=Math.hypot(dx,dy)||1, max=r.width/2;
+    const cl=Math.min(d,max);
+    const nx=dx/d, ny=dy/d;
+    setNub(nx*cl, ny*cl);
+    clearMove();
+    const DEAD=0.30;
+    if(nx<-DEAD) keys['a']=true;
+    if(nx> DEAD) keys['d']=true;
+    if(ny<-DEAD) keys['w']=true;
+    if(ny> DEAD) keys['s']=true;
+  }
+  pad.addEventListener('pointerdown',e=>{ padId=e.pointerId; pad.setPointerCapture(e.pointerId); padMove(e); e.preventDefault(); });
+  pad.addEventListener('pointermove',e=>{ if(e.pointerId===padId){ padMove(e); e.preventDefault(); } });
+  const padEnd=e=>{ if(e.pointerId===padId){ padId=-1; clearMove(); setNub(0,0); } };
+  pad.addEventListener('pointerup',padEnd);
+  pad.addEventListener('pointercancel',padEnd);
+
+  // ---- action buttons ----
+  function holdBtn(id,key,onDown,onUp){
+    const el=document.getElementById(id);
+    el.addEventListener('pointerdown',e=>{ e.preventDefault(); el.classList.add('on'); keys[key]=true; if(onDown)onDown(); });
+    const up=e=>{ e.preventDefault(); el.classList.remove('on'); keys[key]=false; if(onUp)onUp(); };
+    el.addEventListener('pointerup',up);
+    el.addEventListener('pointercancel',up);
+    el.addEventListener('pointerleave',e=>{ if(el.classList.contains('on')) up(e); });
+  }
+  // KICK = space (hold to charge, release to kick — mirrors keyboard)
+  holdBtn('tcKick',' ', null, ()=>{ releaseKick(); });
+  // SPRINT = shift (held)
+  holdBtn('tcSprint','shift');
+  // SWAP = tap to switch player
+  const sw=document.getElementById('tcSwitch');
+  sw.addEventListener('pointerdown',e=>{ e.preventDefault(); sw.classList.add('on'); if(state==='play') manualSwitch(); });
+  sw.addEventListener('pointerup',e=>{ e.preventDefault(); sw.classList.remove('on'); });
+  sw.addEventListener('pointercancel',e=>{ sw.classList.remove('on'); });
+}
+
+// ------------------------------------------------------------------
 // TEAM / PLAYER CREATION
 // ------------------------------------------------------------------
 // Formation positions as fractions of field (attacking rightward for YOU team)

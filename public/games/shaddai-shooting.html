@@ -197,6 +197,55 @@ canvas.addEventListener('touchstart',e=>{const t=e.touches[0],r=canvas.getBoundi
 canvas.addEventListener('touchmove',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();mouse.x=t.clientX-r.left;mouse.y=t.clientY-r.top;},{passive:true});
 canvas.addEventListener('touchend',()=>{mouse.down=false;});
 
+// ── mobile touch controls ──────────────────────────────────
+// NEXUS: unify with the desktop scheme. Left thumb = move (drives the SAME
+// keys{} the WASD/arrow keys set); a SPECIAL button drives keys[' '].
+// Aim + fire stay on the canvas touch handlers above (finger = aim/fire).
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+if(IS_TOUCH){ buildTouchControls(); }
+function buildTouchControls(){
+  const css=document.createElement('style');
+  css.textContent=`
+    #tc{position:fixed;inset:0;z-index:30;pointer-events:none;}
+    #tc .zone{position:absolute;bottom:24px;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;}
+    #tcPad{left:22px;width:130px;height:130px;border-radius:50%;
+      background:radial-gradient(circle,rgba(39,224,255,.10),rgba(5,7,13,.5));
+      border:1px solid rgba(39,224,255,.35);}
+    #tcNub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;
+      background:rgba(39,224,255,.55);box-shadow:0 0 16px rgba(39,224,255,.5);}
+    #tcSpecial{right:26px;bottom:34px;width:88px;height:88px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;letter-spacing:1px;
+      color:#05070d;background:linear-gradient(135deg,#ffcf4a,#ff9d3a);box-shadow:0 0 22px -4px #ffcf4a;text-transform:uppercase;}
+    #tcSpecial.on{filter:brightness(1.25);transform:scale(.92);}
+  `;
+  document.head.appendChild(css);
+  const tc=document.createElement('div'); tc.id='tc';
+  tc.innerHTML='<div id="tcPad" class="zone"><div id="tcNub"></div></div>'+
+               '<div id="tcSpecial" class="zone">SPECIAL</div>';
+  document.body.appendChild(tc);
+
+  const pad=document.getElementById('tcPad'), nub=document.getElementById('tcNub');
+  let padId=-1; const MK=['w','a','s','d'];
+  function clr(){ MK.forEach(k=>keys[k]=false); }
+  function padMove(e){
+    const r=pad.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    let dx=e.clientX-cx, dy=e.clientY-cy; const d=Math.hypot(dx,dy)||1, max=r.width/2, cl=Math.min(d,max);
+    const nx=dx/d, ny=dy/d; nub.style.transform='translate('+(nx*cl)+'px,'+(ny*cl)+'px)';
+    clr(); const DEAD=0.30;
+    if(nx<-DEAD)keys['a']=true; if(nx>DEAD)keys['d']=true;
+    if(ny<-DEAD)keys['w']=true; if(ny>DEAD)keys['s']=true;
+  }
+  pad.addEventListener('pointerdown',e=>{ padId=e.pointerId; pad.setPointerCapture(e.pointerId); padMove(e); e.preventDefault(); });
+  pad.addEventListener('pointermove',e=>{ if(e.pointerId===padId){ padMove(e); e.preventDefault(); } });
+  const end=e=>{ if(e.pointerId===padId){ padId=-1; clr(); nub.style.transform='translate(0,0)'; } };
+  pad.addEventListener('pointerup',end); pad.addEventListener('pointercancel',end);
+
+  const sp=document.getElementById('tcSpecial');
+  sp.addEventListener('pointerdown',e=>{ e.preventDefault(); sp.classList.add('on'); keys[' ']=true; actx(); });
+  const spUp=e=>{ e.preventDefault(); sp.classList.remove('on'); keys[' ']=false; };
+  sp.addEventListener('pointerup',spUp); sp.addEventListener('pointercancel',spUp);
+}
+
 // ── game state ─────────────────────────────────────────────
 let state='select'; // select | play | pause | over
 let agent=AGENTS[0], selIdx=0;
