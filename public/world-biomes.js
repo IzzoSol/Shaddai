@@ -366,6 +366,42 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     fernsA.instanceMatrix.needsUpdate = fernsB.instanceMatrix.needsUpdate = true;
     group.add(fernsA, fernsB);
 
+    // ── GLOW SHARDS (instanced small emerald crystals, ground-seated) ─
+    // Characteristic forest detail: low bioluminescent quartz clusters that
+    // catch the eye between trees. One InstancedMesh, faceted octahedra, tilt
+    // + scale jitter so no two read the same. Natural clustering: each seed
+    // scatters 1-3 satellites nearby. Static → zero per-frame cost. Emissive
+    // pulses with the shared forest pulser (respects the emissive cap).
+    const GSHARD = 54;
+    const gsGeo = track(new THREE.OctahedronGeometry(0.5, 0));
+    const gsMat = track(new THREE.MeshStandardMaterial({
+      color: 0x123322, emissive: 0x36f0a0, emissiveIntensity: 0.42,
+      roughness: 0.25, metalness: 0.25, flatShading: true,
+      transparent: true, opacity: 0.9,
+    }));
+    pulsers.push({ mat: gsMat, base: 0.42, amp: 0.18, speed: 1.1 });
+    const gshards = new THREE.InstancedMesh(gsGeo, gsMat, GSHARD);
+    let gsc = 0;
+    for (let tries = 0; gsc < GSHARD && tries < GSHARD * 14; tries++) {
+      const p = scatter(b, 5); if (!p) continue;
+      if (Math.hypot(p[0], p[1]) < PLAZA_R) continue;
+      // cluster: a main shard + a few smaller satellites around it
+      const kids = 1 + (rand() * 3 | 0);
+      for (let k = 0; k < kids && gsc < GSHARD; k++) {
+        const ox = k === 0 ? 0 : rrange(-2.2, 2.2);
+        const oz = k === 0 ? 0 : rrange(-2.2, 2.2);
+        const x = p[0] + ox, z = p[1] + oz;
+        const s = (k === 0 ? rrange(1.1, 2.2) : rrange(0.5, 1.1));
+        setInst(gshards, gsc, x, heightAt(x, z) + s * 0.35, z,
+                rrange(-0.4, 0.4), rand() * Math.PI * 2, rrange(-0.4, 0.4),
+                s, s * rrange(1.1, 1.9), s);   // vertically stretched crystal
+        gsc++;
+      }
+    }
+    gshards.count = gsc;
+    gshards.instanceMatrix.needsUpdate = true;
+    group.add(gshards);
+
     // ── FIREFLIES (Points, animated each frame) ───────────────────────
     const FF = 80;
     const ffBase    = new Float32Array(FF * 3);
@@ -478,6 +514,36 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     drifts.count = dc;
     drifts.instanceMatrix.needsUpdate = true;
     group.add(drifts);
+
+    // ── FROST TUFTS (instanced low ice-crystal clusters, ground-seated) ─
+    // Cheap characteristic arctic ground cover: short pale-cyan cones fanned
+    // out of one merged tuft so a whole cluster is a single instance. Scatter
+    // + rotation/scale jitter reads as wind-blown frost grass between the big
+    // spires. One InstancedMesh, static → zero per-frame cost.
+    const tuftGeo = track(mergeGeos([
+      new THREE.ConeGeometry(0.10, 1.4, 4).translate(0, 0.7, 0),
+      new THREE.ConeGeometry(0.09, 1.1, 4).rotateZ(0.4).translate(0.35, 0.55, 0),
+      new THREE.ConeGeometry(0.09, 1.0, 4).rotateZ(-0.5).translate(-0.32, 0.5, 0.1),
+      new THREE.ConeGeometry(0.08, 0.9, 4).rotateX(0.45).translate(0.05, 0.45, 0.34),
+    ]));
+    const TUFT = 46;
+    const tuftMat = track(new THREE.MeshStandardMaterial({
+      color: 0xbfe8ff, emissive: 0x2f7fc0, emissiveIntensity: 0.14,
+      roughness: 0.4, metalness: 0.1, flatShading: true,
+      transparent: true, opacity: 0.85,
+    }));
+    const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, TUFT);
+    let tuc = 0;
+    for (let i = 0; tuc < TUFT && i < TUFT * 10; i++) {
+      const p = scatter(b, 4); if (!p) continue;
+      const s = rrange(0.7, 1.8);
+      setInst(tufts, tuc, p[0], heightAt(p[0], p[1]) - 0.05, p[1],
+              0, rand() * Math.PI * 2, 0, s, s * rrange(0.9, 1.4), s);
+      tuc++;
+    }
+    tufts.count = tuc;
+    tufts.instanceMatrix.needsUpdate = true;
+    group.add(tufts);
 
     // ── AURORA (two large additive planes high overhead) ──────────────
     // Low opacity + AdditiveBlending = tasteful shimmer, no blowout.
@@ -829,6 +895,31 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     nodes.count = nc;
     nodes.instanceMatrix.needsUpdate = true;
     group.add(nodes);
+
+    // ── GROUND GLYPHS (instanced flat emissive rings, laid flush on terrain) ─
+    // Distinct grid-biome ground detail: thin glowing circuit rings that sit
+    // just above the surface (walk-over, no collision) like data etched into
+    // the plain. RingGeometry laid flat, scale/rotation jitter, additive glow
+    // that pulses on a shared grid pulser. One InstancedMesh, static → free.
+    const GLYPH = 30;
+    const glGeo = track(new THREE.RingGeometry(1.3, 2.0, 6, 1));
+    glGeo.rotateX(-Math.PI / 2);                 // lay flat on the ground
+    const glMat = track(new THREE.MeshBasicMaterial({
+      color: 0x00e6ff, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
+    }));
+    const glyphs = new THREE.InstancedMesh(glGeo, glMat, GLYPH);
+    let glc = 0;
+    for (let i = 0; glc < GLYPH && i < GLYPH * 8; i++) {
+      const p = scatter(b, 6); if (!p) continue;
+      const s = rrange(0.8, 2.4);
+      setInst(glyphs, glc, p[0], heightAt(p[0], p[1]) + 0.12, p[1],
+              0, rand() * Math.PI * 2, 0, s, 1, s);
+      glc++;
+    }
+    glyphs.count = glc;
+    glyphs.instanceMatrix.needsUpdate = true;
+    group.add(glyphs);
 
     addBiomeLight(b, 0.9, 340);
   })();
