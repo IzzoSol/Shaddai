@@ -243,12 +243,12 @@ const canvas = document.getElementById('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;  // ATMOSPHERE POLISH: 0.85→0.9 — a hair brighter so agents/buildings read fuller under the moody night palette without washing out the blacks (ACES rolls the highlights, so the night vibe stays).
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060d);
-scene.fog = new THREE.FogExp2(0x04060d, 0.0036);  // lighter fog so the hexagon landmarks (R=260) are visible, not swallowed
+scene.fog = new THREE.FogExp2(0x070b1a, 0.0036);  // ATMOSPHERE POLISH: fog color 0x04060d→0x070b1a — a touch bluer/less pure-black so distance fades INTO the sky's deep-blue instead of a flat black cutoff (density unchanged, so R=260 hexagon landmarks stay visible).
 // PBR metal armor (the agent bodies) needs an environment to reflect, or it renders flat/grey.
 { const _pm = new THREE.PMREMGenerator(renderer); scene.environment = _pm.fromScene(new RoomEnvironment(), 0.03).texture; }
 
@@ -259,9 +259,13 @@ const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
 const gold = new THREE.PointLight(0xffcf4a, 1.0, 120); gold.position.set(0,14,0); scene.add(gold);
 // white fill so the 3D agent bodies read in true color (not grey) while keeping the neon vibe
-const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x202838, 1.15); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x241d2e, 1.15); scene.add(hemi);  // ATMOSPHERE POLISH: ground tint 0x202838→0x241d2e — a faint warm-violet bounce off the floor lifts the flat blue shadows without adding a light.
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(30, 60, 20); scene.add(sun);
 const sun2 = new THREE.DirectionalLight(0xcfe2ff, 0.7); sun2.position.set(-40, 40, -30); scene.add(sun2);
+// ATMOSPHERE POLISH: a low, warm RIM light opposite the cool key — grazes the far edge of agents/buildings so their
+// silhouettes separate from the dark night background (classic cinematic cool-key/warm-rim contrast). No shadows, no
+// per-frame cost; one static directional. Dim (0.5) so it accents rather than washes out the moody palette.
+const rim = new THREE.DirectionalLight(0xffb066, 0.5); rim.position.set(-60, 24, 60); scene.add(rim);
 // a fill light that follows the camera so whatever you look at is always lit
 const camFill = new THREE.PointLight(0xffffff, 0.5, 40); scene.add(camFill); // reduced: was (0.9, 60) — smaller range = fewer fragments lit per frame
 
@@ -269,7 +273,7 @@ const camFill = new THREE.PointLight(0xffffff, 0.5, 40); scene.add(camFill); // 
 const DAYNIGHT = {
   t: 0.32,            // time of day 0..1 (0/1 = midnight, .25 dawn, .5 noon, .75 dusk)
   cycleSec: 240,      // seconds for a full day
-  base: { amb:0.7, hemi:1.15, sun:1.5, sun2:0.7, key:1.2, gold:1.0 },
+  base: { amb:0.7, hemi:1.15, sun:1.5, sun2:0.7, key:1.2, gold:1.0, rim:0.5 },
   dayBG: new THREE.Color(0x0a1c38), nightBG: new THREE.Color(0x03040b),
 };
 let _dnAccum = 0;   // PERF: accumulates dt between throttled updateDayNight() calls (~7.5Hz)
@@ -285,6 +289,7 @@ function updateDayNight(dt){
   sun2.intensity    = DAYNIGHT.base.sun2 * lit;
   key.intensity     = DAYNIGHT.base.key  * (1.45 - 0.65 * day);  // neon glows stronger at night (Tron)
   gold.intensity    = DAYNIGHT.base.gold * (1.45 - 0.65 * day);
+  rim.intensity     = DAYNIGHT.base.rim  * (1.35 - 0.75 * day);  // ATMOSPHERE POLISH: warm rim strongest at night (edge-lights silhouettes), fades toward day so it never fights the noon sun.
   const ang = (t - 0.25) * Math.PI * 2;
   sun.position.set(Math.cos(ang) * 120, Math.sin(ang) * 120 + 8, 40);
   if(!window._themeLocked) scene.background.lerpColors(DAYNIGHT.nightBG, DAYNIGHT.dayBG, day);
@@ -1251,6 +1256,41 @@ const GROUND_TEX={ meadow:_terrainTex('tex-grass'), snow:_terrainTex('tex-snow')
   scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color:0xaecbff, size:1.4, sizeAttenuation:true, transparent:true, opacity:.8 })));
 }
 
+// ── ATMOSPHERE MOTES: slow-drifting dust/embers that surround the player ──
+// A SINGLE THREE.Points buffer (one draw call, additive, depthWrite:false — same pattern as the starfield/library
+// motes already in this file). It's a small CAMERA-FOLLOWING cube of points (like the skyDome trick) so a tiny 260-point
+// cloud always envelops the viewer instead of needing a world-sized buffer. Positions drift with a cheap per-point sine
+// evaluated on a THROTTLED cadence (every 3rd frame) — no per-frame allocations, no lights. Pure ambience.
+const _moteN = 260;
+const _motePos = new Float32Array(_moteN*3);
+const _moteBase = new Float32Array(_moteN*3);   // home offset relative to the camera
+const _motePhase = new Float32Array(_moteN);
+for(let i=0;i<_moteN;i++){
+  const bx=(Math.random()-0.5)*120, by=Math.random()*46+2, bz=(Math.random()-0.5)*120;   // 120u cube around the camera
+  _moteBase[i*3]=bx; _moteBase[i*3+1]=by; _moteBase[i*3+2]=bz;
+  _motePos[i*3]=bx; _motePos[i*3+1]=by; _motePos[i*3+2]=bz;
+  _motePhase[i]=Math.random()*6.28;
+}
+const _moteGeo = new THREE.BufferGeometry();
+_moteGeo.setAttribute('position', new THREE.BufferAttribute(_motePos,3));
+const _moteMat = new THREE.PointsMaterial({ color:0x9fc4ff, size:0.5, sizeAttenuation:true, transparent:true, opacity:0.32, blending:THREE.AdditiveBlending, depthWrite:false });
+const _motes = new THREE.Points(_moteGeo, _moteMat);
+_motes.frustumCulled = false;   // it's always centred on the camera, so never cull it
+scene.add(_motes);
+// Called from animate() (throttled). Drifts each mote around its camera-relative home with a slow sine wobble +
+// a gentle upward rise that wraps — reads as floating dust catching the neon light.
+function _updateMotes(t, camPos){
+  const p=_motePos;
+  for(let i=0;i<_moteN;i++){
+    const j=i*3, ph=_motePhase[i];
+    const rise=((t*0.6 + ph*7.3) % 48);   // 0..48 slow vertical wrap
+    p[j]   = camPos.x + _moteBase[j]   + Math.sin(t*0.25 + ph)*3.0;
+    p[j+1] = camPos.y + (_moteBase[j+1] + rise) % 48 - 4;
+    p[j+2] = camPos.z + _moteBase[j+2] + Math.cos(t*0.22 + ph)*3.0;
+  }
+  _moteGeo.attributes.position.needsUpdate = true;
+}
+
 // ── gradient SKY DOME (cinematic deep-space sky with a horizon glow) ──
 const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
@@ -1258,7 +1298,7 @@ const skyMat = new THREE.ShaderMaterial({
     top:     { value: new THREE.Color(0x03040a) },
     mid:     { value: new THREE.Color(0x0a1430) },
     horizon: { value: new THREE.Color(0x163a6e) },
-    glow:    { value: new THREE.Color(0x27406e) },
+    glow:    { value: new THREE.Color(0x33507e) },  // ATMOSPHERE POLISH: horizon glow 0x27406e→0x33507e — slightly brighter/cooler-blue so the horizon reads as a soft atmospheric band that the fog blends into (depth cue), giving the world a sense of distance.
   },
   vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
   fragmentShader: [
@@ -3184,6 +3224,9 @@ function animate(){
     if(window._libraryEmberFX) window._libraryEmberFX.update(t, dt);  // TURTLE: QUILL ember fireplace + book aisles
     if(window._ambienceFX) window._ambienceFX.update(t, dt);          // TURTLE: floating orbs/runes/motes + floor glow
     if(window._muralFX) window._muralFX.update(t, dt, playerPos);     // TURTLE: TURTLE STUDIO mural painter — proximity pad + live canvas→jumbotron + "let it dry"
+    // ATMOSPHERE POLISH: drift the camera-following dust motes. Throttled to every 3rd frame (~20Hz) — the drift is
+    // slow enough that this is imperceptible, and it keeps the single 260-point buffer write off the hot 60Hz path.
+    if(_animFrame % 3 === 0) _updateMotes(t, camera.position);
   }
   if(_portalPlots) _portalPlots.update(dt, t);
   if(_portalDome) _portalDome.update(dt, t);

@@ -92,6 +92,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   letter-spacing:3px;border:none;padding:12px 32px;border-radius:6px;cursor:pointer;}
 #startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;}
 #watchBtn{background:rgba(255,215,0,.15);border:1px solid #ffd70066 !important;color:#ffd700;border:none;}
+
+/* ── MOBILE TOUCH CONTROLS (additive; hidden unless body.touch) ── */
+#touch-controls{display:none;}                    /* hidden by default; shown only on touch devices */
+body.touch #touch-controls{display:block;}
+#touch-controls .tc-zone{position:fixed;bottom:0;z-index:50;
+  /* keep clear of iOS home-indicator / notches */
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+#tc-pad{left:14px;width:186px;height:186px;}      /* left thumb D-pad */
+#tc-actions{right:14px;width:200px;height:200px;} /* right action cluster */
+#touch-controls .tc-btn{position:absolute;display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:1px;color:#eaf6ff;
+  background:rgba(10,20,34,.42);border:1px solid #37e6ff55;border-radius:12px;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);text-align:center;line-height:1;}
+#touch-controls .tc-btn.active{background:rgba(55,230,255,.38);border-color:#37e6ff;color:#fff;}
+/* D-pad cross (60px cells) */
+#tc-pad .tc-btn{width:60px;height:60px;font-size:22px;}
+#tc-up   {left:63px; top:0;}
+#tc-down {left:63px; top:126px;}
+#tc-left {left:0;    top:63px;}
+#tc-right{left:126px;top:63px;}
+/* Action cluster — shoot is the big primary */
+#tc-actions .tc-btn{font-size:12px;}
+#tc-shoot {right:0;   bottom:0;   width:96px;height:96px;border-radius:50%;font-size:15px;
+  background:rgba(255,77,148,.30);border-color:#ff4d94aa;}
+#tc-shoot.active{background:rgba(255,77,148,.55);border-color:#ff4d94;}
+#tc-jump  {right:104px;bottom:24px; width:64px;height:64px;border-radius:50%;}
+#tc-sprint{right:0;    bottom:104px;width:88px;height:44px;}
+#tc-steal {right:104px;bottom:104px;width:70px;height:44px;}
+#tc-cross {right:104px;bottom:154px;width:70px;height:38px;font-size:10px;}
 </style>
 </head>
 <body>
@@ -126,6 +156,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 <div id="auto-badge">⚡ AUTO DEMO</div>
 <div id="basket-flash"></div>
 <button id="exitBtn" onclick="history.back()">✕ EXIT</button>
+
+<!-- MOBILE TOUCH CONTROLS — shown only on touch devices (body.touch); drives the SAME `keys` state.
+     data-key = the e.code that each button holds down while pressed. -->
+<div id="touch-controls">
+  <div id="tc-pad" class="tc-zone">
+    <div id="tc-up"    class="tc-btn" data-key="ArrowUp">▲</div>
+    <div id="tc-left"  class="tc-btn" data-key="ArrowLeft">◀</div>
+    <div id="tc-right" class="tc-btn" data-key="ArrowRight">▶</div>
+    <div id="tc-down"  class="tc-btn" data-key="ArrowDown">▼</div>
+  </div>
+  <div id="tc-actions" class="tc-zone">
+    <div id="tc-shoot"  class="tc-btn" data-key="KeyJ">SHOOT</div>
+    <div id="tc-jump"   class="tc-btn" data-key="Space">JUMP</div>
+    <div id="tc-sprint" class="tc-btn" data-key="ShiftLeft">SPRINT</div>
+    <div id="tc-steal"  class="tc-btn" data-key="KeyF">STEAL</div>
+    <div id="tc-cross"  class="tc-btn" data-key="KeyE">CROSS</div>
+  </div>
+</div>
 
 <div id="tipoff">
   <h1>NEON HOOPS</h1>
@@ -685,6 +733,45 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup',   e => { keys[e.code] = false; });
 window.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; initAudio(); } });
 window.addEventListener('mouseup',   e => { if (e.button === 0) mouseDown = false; });
+
+// ─────────────────────────────────────────────────────────────────
+// MOBILE TOUCH CONTROLS (additive — no effect on desktop/keyboard path)
+// Feature-detected: only wired + shown on touch-capable devices. Each on-screen
+// button holds down its data-key in the SAME `keys` object the keyboard uses, so
+// gameplay logic is untouched. We map only the ESSENTIAL basketball actions:
+//   D-pad  → ArrowUp/Down/Left/Right (pure movement, mode-agnostic in both schemes)
+//   SHOOT  → KeyJ  (charges/releases the shot in BOTH modes — avoids Space ambiguity)
+//   JUMP   → Space (context-sensitive: defensive jump/block, dunk near rim)
+//   SPRINT → ShiftLeft   STEAL → KeyF   CROSS → KeyE (crossover juke)
+// Intentionally keyboard-only (niche/debug): C=scheme, H=court, T=auto, Q (2nd cross dir),
+//   and Mode-B S=shoot (KeyJ already shoots universally on touch).
+const IS_TOUCH = ('ontouchstart' in window) ||
+  (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+if (IS_TOUCH) {
+  document.body.classList.add('touch');
+  const setKey = (code, down) => { if (code) keys[code] = down; };
+  document.querySelectorAll('#touch-controls .tc-btn').forEach(btn => {
+    const code = btn.getAttribute('data-key');
+    const press   = e => { e.preventDefault(); initAudio(); keys[code] = true;  btn.classList.add('active'); };
+    const release = e => { e.preventDefault(); keys[code] = false; btn.classList.remove('active'); };
+    // touch* covers phones/tablets; pointer* covers touch-laptops. preventDefault stops scroll/zoom.
+    btn.addEventListener('touchstart',  press,   { passive: false });
+    btn.addEventListener('touchend',    release, { passive: false });
+    btn.addEventListener('touchcancel', release, { passive: false });
+    btn.addEventListener('pointerdown', press,   { passive: false });
+    btn.addEventListener('pointerup',   release, { passive: false });
+    btn.addEventListener('pointerleave',release, { passive: false });
+  });
+  // Safety net: when the last touch lifts anywhere, clear any still-held touch keys
+  // (guards against a finger sliding off a button without firing its own touchend).
+  window.addEventListener('touchend', e => {
+    if (e.touches && e.touches.length === 0) {
+      document.querySelectorAll('#touch-controls .tc-btn.active').forEach(b => {
+        setKey(b.getAttribute('data-key'), false); b.classList.remove('active');
+      });
+    }
+  }, { passive: true });
+}
 
 // ─────────────────────────────────────────────────────────────────
 // GLB LOADER
