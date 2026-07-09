@@ -58,7 +58,10 @@
   var PANEL_CSS = [
     '#sdp-root{position:fixed;inset:0;z-index:9800;display:none;pointer-events:none;}',
     '#sdp-root.sdp-open{display:flex;align-items:center;justify-content:center;pointer-events:all;}',
-    '#sdp-backdrop{position:absolute;inset:0;background:rgba(0,4,12,0.72);backdrop-filter:blur(3px);}',
+    /* smooth fade for backdrop + panel instead of a hard pop-in */
+    '#sdp-backdrop{position:absolute;inset:0;background:rgba(0,4,12,0.72);backdrop-filter:blur(3px);',
+    '  opacity:0;transition:opacity 0.22s ease;}',
+    '#sdp-root.sdp-open #sdp-backdrop{opacity:1;}',
     '#sdp-panel{',
     '  position:relative;z-index:1;',
     '  width:min(480px,92vw);max-height:80vh;',
@@ -68,9 +71,11 @@
     '  box-shadow:0 0 32px 4px var(--sdp-glow,rgba(39,224,255,0.35)),inset 0 0 60px rgba(0,0,0,0.6);',
     '  display:flex;flex-direction:column;overflow:hidden;',
     '  font-family:"Share Tech Mono",Consolas,"Courier New",monospace;',
-    '  color:#e8f4ff;',
-    '  transition:box-shadow 0.4s ease;',
+    '  color:#eef7ff;',
+    '  transition:box-shadow 0.4s ease,opacity 0.24s ease,transform 0.24s cubic-bezier(0.16,1,0.3,1);',
+    '  opacity:0;transform:translateY(10px) scale(0.985);',
     '}',
+    '#sdp-root.sdp-open #sdp-panel{opacity:1;transform:translateY(0) scale(1);}',
     /* scan-line texture */
     '#sdp-panel::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:10;',
     '  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);',
@@ -98,8 +103,10 @@
     '#sdp-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}',
     /* greeting */
     '#sdp-greeting{',
-    '  font-size:0.82rem;line-height:1.55;color:rgba(220,240,255,0.85);',
+    /* bumped size/contrast + text-shadow backing so italic body reads over the panel glow */
+    '  font-size:0.86rem;line-height:1.6;color:rgba(232,245,255,0.95);',
     '  font-style:italic;border-left:2px solid var(--sdp-color,#27e0ff);padding-left:10px;',
+    '  text-shadow:0 1px 3px rgba(0,0,0,0.7);word-break:break-word;overflow-wrap:anywhere;',
     '}',
     /* skills */
     '#sdp-skills{display:flex;flex-wrap:wrap;gap:5px;}',
@@ -133,11 +140,16 @@
     '#sdp-ask-btn:disabled{opacity:0.45;cursor:default;}',
     /* reply */
     '#sdp-reply{',
-    '  min-height:0;font-size:0.78rem;line-height:1.55;color:rgba(220,240,255,0.8);',
-    '  background:rgba(0,0,0,0.3);border-radius:6px;padding:9px 11px;',
-    '  display:none;border-left:2px solid rgba(255,255,255,0.12);',
+    /* stronger contrast + shadow backing + safe wrapping so replies never clip */
+    '  min-height:0;font-size:0.82rem;line-height:1.6;color:rgba(228,242,255,0.94);',
+    '  background:rgba(0,0,0,0.34);border-radius:6px;padding:10px 12px;',
+    '  display:none;border-left:2px solid var(--sdp-color,#27e0ff);',
+    '  text-shadow:0 1px 2px rgba(0,0,0,0.6);word-break:break-word;overflow-wrap:anywhere;',
+    '  opacity:0;transition:opacity 0.2s ease;',
     '}',
+    /* .sdp-visible reveals the block; the .sdp-in class fades it in once populated */
     '#sdp-reply.sdp-visible{display:block;}',
+    '#sdp-reply.sdp-visible.sdp-in{opacity:1;}',
     /* actions */
     '#sdp-actions{display:flex;gap:10px;padding:10px 18px 16px;border-top:1px solid rgba(255,255,255,0.07);}',
     '#sdp-hire-btn{',
@@ -263,6 +275,10 @@
     var _open     = false;
     var _curCode  = null;
     var _glowPhase = 0;    // used by update() for panel pulse animation
+    // cached accent RGB for the current agent so update()'s pulse uses that agent's
+    // colour (not a hardcoded cyan) without re-parsing hex every frame
+    var _glowR = 39, _glowG = 224, _glowB = 255;
+    var _lastGlowStep = -1;   // last quantised pulse step written to boxShadow
 
     /* ── populate panel for an agent ───────────────────────────────────── */
     function populate(code) {
@@ -270,6 +286,11 @@
       var col = ag.color || 0x27e0ff;
       var css = hexToCss(col);
       var glow = hexToRgba(col, 0.40);
+
+      // cache this agent's accent RGB once so the per-frame pulse in update()
+      // reflects their identity colour with zero re-parsing
+      var n = (typeof col === 'number') ? col : parseInt(String(col).replace('#', ''), 16);
+      _glowR = (n >> 16) & 0xff; _glowG = (n >> 8) & 0xff; _glowB = n & 0xff;
 
       panel.style.setProperty('--sdp-color', css);
       panel.style.setProperty('--sdp-glow',  glow);
@@ -310,17 +331,31 @@
       askInput.placeholder = 'Ask ' + (ag.name || code) + ' something…';
       askInput.value = '';
       replyEl.textContent = '';
-      replyEl.className = 'sdp';   // hide reply
+      replyEl.className = '';   // hide reply (no display, opacity reset for next fade-in)
+    }
+
+    /* ── show a reply line with a smooth fade-in (reuses the one element) ──── */
+    function showReply(text) {
+      safe(replyEl, text);
+      replyEl.className = 'sdp-visible';        // display:block, opacity:0
+      // next frame flips opacity → CSS transition fades it in (no per-frame work)
+      requestAnimationFrame(function () { replyEl.classList.add('sdp-in'); });
     }
 
     /* ── ASK handler ────────────────────────────────────────────────────── */
+    var _lastAsk = 0;   // timestamp of last ASK, for a light anti-spam cooldown
     function handleAsk() {
       var text = askInput.value.trim();
       if (!text || !_curCode) return;
+      if (askBtn.disabled) return;                 // already awaiting a reply
+      var now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      if (now - _lastAsk < 600) return;            // 0.6s cooldown — no button spam
+      _lastAsk = now;
 
       askBtn.disabled = true;
-      safe(replyEl, '…');
-      replyEl.className = 'sdp-visible';
+      // reset the fade so the pending indicator (and next reply) animate cleanly
+      replyEl.classList.remove('sdp-in');
+      showReply('…');
 
       // Try the live API, fall back to canned
       var agCode = _curCode;
@@ -329,7 +364,8 @@
       function useCanned() {
         if (didRespond) return;
         didRespond = true;
-        safe(replyEl, CANNED[agCode] || 'I\'ll get back to you on that.');
+        replyEl.classList.remove('sdp-in');
+        showReply(CANNED[agCode] || 'I\'ll get back to you on that.');
         askBtn.disabled = false;
       }
 
@@ -348,9 +384,10 @@
         .then(function (data) {
           if (didRespond) return;
           didRespond = true;
-          // accept common response shapes
+          // accept common response shapes (data source / shapes UNCHANGED)
           var reply = data.response || data.result || data.message || data.output || '';
-          safe(replyEl, reply || CANNED[agCode]);
+          replyEl.classList.remove('sdp-in');
+          showReply(reply || CANNED[agCode]);
           askBtn.disabled = false;
         })
         .catch(function () {
@@ -422,6 +459,7 @@
       populate(code);
       _open = true;
       _glowPhase = 0;
+      _lastGlowStep = -1;   // force a boxShadow write on the first update frame
       root.classList.add('sdp-open');
       // focus the ask input after the transition frame
       setTimeout(function () { askInput.focus(); }, 60);
@@ -443,13 +481,18 @@
     function update(dt) {
       if (!_open) return;
       _glowPhase += dt * 1.8;
+      // quantise the pulse so we only touch style.boxShadow when it visibly changes
+      // (~50 steps) — avoids a fresh string + layout write on every single frame
       var pulse = 0.28 + 0.14 * Math.sin(_glowPhase);
-      var col = panel.style.getPropertyValue('--sdp-color') || '#27e0ff';
-      // parse the hex colour out of CSS to build an rgba glow
+      var step = Math.round(pulse * 50);
+      if (step === _lastGlowStep) return;
+      _lastGlowStep = step;
+      var a = step / 50;
+      // pulse the glow in THIS agent's accent colour (cached _glowR/G/B), not cyan
       panel.style.boxShadow =
-        '0 0 32px 6px rgba(39,224,255,' + pulse + '),' +
+        '0 0 32px 6px rgba(' + _glowR + ',' + _glowG + ',' + _glowB + ',' + a + '),' +
         'inset 0 0 60px rgba(0,0,0,0.6)';
-      // the --sdp-color variable already drives border; we just pulse the glow
+      // the --sdp-color variable already drives the border; we just pulse the glow
     }
 
     return { update: update, nearestAgent: nearestAgent, open: open, close: close, isOpen: isOpen };
