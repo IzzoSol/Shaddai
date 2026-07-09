@@ -74,9 +74,24 @@ a{color:inherit;text-decoration:none}
 .e-back:hover{color:var(--gold);border-color:rgba(196,162,78,.6)}
 
 /* ── 3D CANVAS ── */
-#c3d{position:fixed;inset:0;display:none;width:100%;height:100%;cursor:grab}
-#c3d:active{cursor:grabbing}
+/* CURSOR mode: a normal, visible arrow cursor so every HUD/menu/screen is directly
+   clickable (no ESC dance). WALK mode adds .walking → pointer-lock hides the cursor. */
+#c3d{position:fixed;inset:0;display:none;width:100%;height:100%;cursor:default}
+#c3d.dragging{cursor:grabbing}
+#c3d.walking{cursor:none}
 #c3d.on{display:block}
+
+/* ── CURSOR ⇄ WALK mode toggle (always available, obvious, labelled) ── */
+#mode-toggle{position:fixed;bottom:16px;right:16px;z-index:63;display:none;
+  pointer-events:all;cursor:pointer;user-select:none;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:rgba(10,6,18,.9);border:1px solid rgba(196,162,78,.45);
+  padding:9px 15px;color:var(--gold);transition:background .2s,border-color .2s,box-shadow .2s;
+  box-shadow:0 0 22px rgba(120,80,200,.22)}
+#mode-toggle:hover{background:rgba(196,162,78,.14);border-color:var(--gold);box-shadow:0 0 30px rgba(196,162,78,.35)}
+#mode-toggle.on{display:block}
+#mode-toggle .mt-mode{color:var(--ink);font-weight:600}
+#mode-toggle .mt-key{color:var(--ink2);font-size:9px;letter-spacing:.18em;display:block;margin-top:3px}
 
 /* ── HUD ── */
 .hud{position:fixed;inset:0;z-index:50;pointer-events:none;display:none}
@@ -88,15 +103,30 @@ a{color:inherit;text-decoration:none}
   color:var(--ink2);background:rgba(10,6,18,.75);border:1px solid rgba(196,162,78,.28);
   padding:6px 13px;cursor:pointer;transition:color .2s,border-color .2s;pointer-events:all;display:inline-block}
 .hb:hover{color:var(--gold);border-color:rgba(196,162,78,.7)}
+.hb-exit{color:#e88;border-color:rgba(220,120,110,.4)}
+.hb-exit:hover{color:#ff9d90;border-color:rgba(255,120,110,.85);background:rgba(60,14,10,.55)}
 .ht{flex:1;text-align:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;
   letter-spacing:.22em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 18px rgba(196,162,78,.4)}
-/* ORACLE bottom info */
+/* ORACLE moon info — HIDDEN by default; shown only when the moon mesh is clicked. */
 #oracle-info{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-  background:rgba(7,5,15,.82);border:1px solid rgba(196,162,78,.22);
-  padding:12px 20px;max-width:min(640px,90vw);
+  background:rgba(7,5,15,.92);border:1px solid rgba(196,162,78,.4);
+  padding:16px 44px 16px 24px;max-width:min(640px,90vw);
   font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.13em;
-  color:var(--ink2);text-align:center;pointer-events:none;line-height:1.7}
+  color:var(--ink2);text-align:center;pointer-events:all;line-height:1.7;
+  box-shadow:0 0 40px rgba(120,80,200,.28);display:none}
+#oracle-info.on{display:block}
 #moon-line{font-size:12px;color:var(--gold);letter-spacing:.2em;margin-bottom:4px}
+#oracle-info .oi-close{position:absolute;top:6px;right:9px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:15px;line-height:1;color:var(--ink2);
+  border:1px solid rgba(196,162,78,.35);padding:2px 7px;transition:color .2s,border-color .2s;pointer-events:all}
+#oracle-info .oi-close:hover{color:var(--gold);border-color:var(--gold)}
+/* Small hint pill telling the player the moon is clickable (bottom-left, clear of the invite) */
+#moon-hint{position:absolute;bottom:16px;left:16px;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink2);background:rgba(7,5,15,.7);border:1px solid rgba(196,162,78,.2);
+  padding:6px 14px;pointer-events:none;display:none;max-width:min(360px,60vw);line-height:1.5}
+#moon-hint.on{display:block}
+#moon-hint b{color:var(--gold)}
 /* Portal button */
 .scene-portal{position:absolute;bottom:24px;pointer-events:all}
 .pbtn{font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:.16em;
@@ -169,6 +199,32 @@ a{color:inherit;text-decoration:none}
 #walk-hint.on{display:block}
 #walk-hint b{color:var(--gold)}
 
+/* Chakra "Learn" prompt — appears when the walker stands on the square */
+#chakra-prompt{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:61;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:#ffdca0;background:rgba(20,6,30,.86);border:1px solid rgba(230,80,80,.55);
+  padding:9px 17px;pointer-events:none;display:none;
+  box-shadow:0 0 26px rgba(230,60,60,.28)}
+#chakra-prompt.on{display:block;animation:cpPulse 1.8s ease-in-out infinite}
+#chakra-prompt b{color:#ff6a6a}
+#chakra-prompt #chakra-name{color:#ffd54a;font-weight:700}
+@keyframes cpPulse{0%,100%{box-shadow:0 0 22px rgba(230,60,60,.22)}50%{box-shadow:0 0 34px rgba(230,60,60,.5)}}
+
+/* "Click to look" invite — a glowing pill near the bottom. Non-fullscreen so it never
+   blocks QUILL's side panel or the HUD; clicking it locks the pointer and starts the walk. */
+#walk-invite{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:62;
+  display:none;cursor:pointer;pointer-events:all;text-align:center;
+  padding:14px 30px;border:1px solid rgba(196,162,78,.5);background:rgba(8,5,16,.92);
+  box-shadow:0 0 46px rgba(80,40,140,.35);transition:border-color .2s,box-shadow .2s}
+#walk-invite:hover{border-color:var(--gold);box-shadow:0 0 60px rgba(196,162,78,.4)}
+#walk-invite.on{display:block;animation:wiPulse 2.4s ease-in-out infinite}
+@keyframes wiPulse{0%,100%{box-shadow:0 0 40px rgba(120,60,180,.28)}50%{box-shadow:0 0 60px rgba(196,162,78,.42)}}
+#walk-invite .wi-t{font-family:'Cinzel',serif;font-weight:900;font-size:16px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:6px;text-shadow:0 0 18px rgba(196,162,78,.5)}
+#walk-invite .wi-s{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink2);line-height:1.8}
+#walk-invite .wi-s b{color:var(--gold)}
+
 @media(max-width:600px){
   #quill-panel{width:100%;bottom:0;top:auto;height:52vh;border-left:none;border-top:1px solid rgba(196,162,78,.2)}
   .e-portals{gap:10px}
@@ -200,7 +256,7 @@ a{color:inherit;text-decoration:none}
       <div class="pc-hint">The chronicler · the keeper<br>Books · Reference · Words</div>
     </div>
   </div>
-  <a class="e-back" href="/">← Return to Codex</a>
+  <a class="e-back" href="/codex.html" onclick="return window.exitScene(event)">← Return to Codex</a>
 </div>
 
 <!-- ═══════════════════ 3D CANVAS ═══════════════════ -->
@@ -211,13 +267,15 @@ a{color:inherit;text-decoration:none}
   <div class="hud-bar">
     <button class="hb" onclick="window.showEntry()">← Change</button>
     <span class="ht">ORACLE · Astral Observatory</span>
-    <button class="hb" onclick="window.enterWalk()">🚶 Walk</button>
-    <a class="hb" href="/">← Codex</a>
+    <button class="hb" onclick="window.toggleMode()">⇄ Mode</button>
+    <button class="hb hb-exit" onclick="window.exitScene()">✕ Exit</button>
   </div>
   <div id="oracle-info">
+    <span class="oi-close" onclick="window.closeMoonInfo()">✕</span>
     <div id="moon-line">● Computing lunar phase…</div>
-    <div id="hist-text">Consulting the astral record…</div>
+    <div id="hist-text">The moon governs tides, cycles, and the inner self. · Walk the golden bridge for Today in History.</div>
   </div>
+  <div id="moon-hint">☽ Click the <b>moon</b> to read its phase · walk the <b>golden bridge</b> for Today in History</div>
   <div class="scene-portal" style="right:24px">
     <button class="pbtn" onclick="window.open('/SHADDAI-WORLD-3D.html','_blank')">To ORACLE's Tower →</button>
   </div>
@@ -228,8 +286,8 @@ a{color:inherit;text-decoration:none}
   <div class="hud-bar">
     <button class="hb" onclick="window.showEntry()">← Change</button>
     <span class="ht">QUILL · The Library</span>
-    <button class="hb" onclick="window.enterWalk()">🚶 Walk</button>
-    <a class="hb" href="/">← Codex</a>
+    <button class="hb" onclick="window.toggleMode()">⇄ Mode</button>
+    <button class="hb hb-exit" onclick="window.exitScene()">✕ Exit</button>
   </div>
 
   <!-- Search panel -->
@@ -291,7 +349,22 @@ a{color:inherit;text-decoration:none}
 
 <!-- ═══════════════════ WALK-MODE OVERLAYS ═══════════════════ -->
 <div id="walk-cross"></div>
-<div id="walk-hint"><b>WALK</b> · W A S D move · mouse look · Shift run · <b>ESC</b> to orbit</div>
+<div id="walk-hint"><b>WALK</b> · <b>W A S D</b> move · mouse look · <b>Shift</b> run · <b>L</b> learn · <b>Tab</b>/<b>ESC</b> → cursor</div>
+
+<!-- Chakra "Learn" prompt (Oracle scene, shown when standing on a chakra segment) -->
+<div id="chakra-prompt"><span id="chakra-name">ROOT · MULADHARA</span> — walk on to reveal the next · press <b>L</b> to LEARN deeper</div>
+
+<!-- CURSOR ⇄ WALK toggle — always visible in a scene; one click swaps modes. -->
+<div id="mode-toggle" onclick="window.toggleMode()">
+  <span>⇄ <span class="mt-mode" id="mt-mode">CURSOR</span> mode</span>
+  <span class="mt-key" id="mt-key">click / Tab → walk</span>
+</div>
+
+<!-- Click-to-look invite (shown after entering a walkable scene) -->
+<div id="walk-invite" onclick="window.enterWalk()">
+  <div class="wi-t">▶ Click to Walk</div>
+  <div class="wi-s"><b>W A S D</b> move · mouse look · <b>Tab</b>/<b>ESC</b> → cursor</div>
+</div>
 
 <!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script type="module">
@@ -309,10 +382,15 @@ let renderer  = null;
 let scene     = null, camera = null, controls = null;
 let avatarMesh = null, avatarMixer = null, avatarBaseY = 0;
 let orbParticles = null;
-let floatPlaques = [];   // { mesh, mat, tex }
+let floatPlaques = [];   // { mesh, mat, tex }  — billboards ringing the MAIN disc
+let historyRing  = null; // { center:{x,z}, screens:[{mesh,mat,tex}] } — the 2nd circle across the bridge
 let rafId          = null;
 let curView        = null;    // 'oracle' | 'quill' | null
 let fireplaceLight = null;    // QUILL fireplace — animated in render loop
+let moonMeshRef    = null;    // ORACLE moon sphere — click to open the moon HUD
+let moonInfoText   = '';      // cached "Phase · %" line for the moon HUD
+const rayc = new THREE.Raycaster();
+const ndc  = new THREE.Vector2();
 
 // ── WALK MODE (first-person) ───────────────────────────────────────────────
 // A pointer-lock FPS layer that lets you WALK the scene (WASD + mouse-look) instead of
@@ -322,23 +400,60 @@ const walkKeys = { f:false, b:false, l:false, r:false, run:false };
 let walkBounds = null;                 // {type:'circle',cx,cz,r} | {type:'rect',minX,maxX,minZ,maxZ}
 let walkEye = 3.2, walkSpawn = null;   // eye height + spawn {x,z} for the current scene
 
+// ── CURSOR ⇄ WALK dual mode ─────────────────────────────────────────────────
+// CURSOR (default): a normal visible mouse cursor; OrbitControls held / gentle drag-to-look;
+// every HUD/menu/screen button is directly clickable — NO ESC required. WALK: opt-in
+// pointer-lock FPS. The toggle button + Tab swap between them; ESC always drops to CURSOR.
+let uiMode = 'cursor';                  // 'cursor' | 'walk'
+function reflectMode() {
+  const mt = document.getElementById('mt-mode'), mk = document.getElementById('mt-key');
+  if (mt) mt.textContent = uiMode === 'walk' ? 'WALK' : 'CURSOR';
+  if (mk) mk.textContent = uiMode === 'walk' ? 'click / Tab / ESC → cursor' : 'click / Tab → walk';
+  const cv = document.getElementById('c3d');
+  if (cv) cv.classList.toggle('walking', uiMode === 'walk');
+}
+window.toggleMode = function () {
+  if (!curView) return;
+  if (uiMode === 'walk') {                // → CURSOR
+    if (plc && walkOn) { try { plc.unlock(); } catch(_){} }  // unlock handler flips state
+    else { uiMode = 'cursor'; reflectMode(); }
+  } else {                                // → WALK
+    window.enterWalk();
+  }
+};
+
+// ── THE CHAKRA PATH (Oracle scene) ──────────────────────────────────────────
+// A glowing sevenfold bridge running WEST out of the observatory disc into the dark.
+// As the walker advances, footfall glow rings bloom under each step, and one chakra
+// reveals per segment IN SEQUENCE (Root → Crown): its colored orb materializes beside
+// the path and its info panel (what it is · foods that heal it · why it matters) grows in.
+// (L) deepens the CURRENT chakra's reading. At the far end the "SHADDAI Codex · Books"
+// placeholder appears. A lit signpost at the mouth makes the path discoverable.
+let chakra = null;   // full state object, built in buildChakra(); null when not in Oracle
+
 function setupWalk() {
   // Rebuild for the fresh per-scene camera (buildOracle/buildQuill make a new camera each time).
   if (plc) { try { plc.dispose(); } catch(_){} plc = null; }
   plc = new PointerLockControls(camera, canvas);
   plc.addEventListener('lock', () => {
-    walkOn = true;
+    walkOn = true; uiMode = 'walk'; reflectMode();
     if (controls) controls.enabled = false;                 // orbit off while walking
     if (walkSpawn) { camera.position.set(walkSpawn.x, walkEye, walkSpawn.z);
       camera.lookAt(walkSpawn.x, walkEye, walkSpawn.z - 6); }   // face into the room (−z) for a clean start
     document.getElementById('walk-cross').classList.add('on');
     document.getElementById('walk-hint').classList.add('on');
+    document.getElementById('walk-invite').classList.remove('on');
+    const mh = document.getElementById('moon-hint'); if (mh) mh.classList.remove('on');
   });
   plc.addEventListener('unlock', () => {
-    walkOn = false;
-    if (controls) { controls.enabled = true; controls.update(); }  // hand back to orbit
+    walkOn = false; uiMode = 'cursor'; reflectMode();
+    if (controls) { controls.enabled = true; controls.update(); }  // hand back to CURSOR (orbit)
     document.getElementById('walk-cross').classList.remove('on');
     document.getElementById('walk-hint').classList.remove('on');
+    document.getElementById('chakra-prompt').classList.remove('on');
+    // In CURSOR mode the invite/toggle stay available so the user is never stranded.
+    if (curView) document.getElementById('walk-invite').classList.add('on');
+    if (curView === 'oracle') { const mh = document.getElementById('moon-hint'); if (mh) mh.classList.add('on'); }
   });
 }
 
@@ -346,6 +461,28 @@ window.enterWalk = function () {
   if (!plc || !curView) return;
   plc.lock();   // must be from a user gesture (the HUD button click) — required for pointer lock
 };
+
+// ── Moon HUD (Oracle): opens ONLY on a raycast click of the moon mesh; ✕ to dismiss ──
+window.openMoonInfo = function () {
+  const el = document.getElementById('oracle-info'); if (!el) return;
+  const ml = document.getElementById('moon-line'); if (ml && moonInfoText) ml.textContent = moonInfoText;
+  el.classList.add('on');
+  const mh = document.getElementById('moon-hint'); if (mh) mh.classList.remove('on');
+};
+window.closeMoonInfo = function () {
+  const el = document.getElementById('oracle-info'); if (el) el.classList.remove('on');
+};
+
+// Click on the canvas → in CURSOR mode, test the pointer against the moon sphere and,
+// on a hit, open the moon HUD. (In WALK mode the canvas click is consumed by pointer-lock.)
+canvas.addEventListener('click', (e) => {
+  if (curView !== 'oracle' || walkOn || !moonMeshRef || !camera) return;
+  ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+  ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  rayc.setFromCamera(ndc, camera);
+  const hit = rayc.intersectObject(moonMeshRef, false);
+  if (hit.length) window.openMoonInfo();
+});
 
 // Movement key state — only consumed while walking, so typing in QUILL's search boxes is never hijacked.
 addEventListener('keydown', e => {
@@ -366,6 +503,22 @@ addEventListener('keyup', e => {
     case 'KeyD': case 'ArrowRight': walkKeys.r = false; break;
     case 'ShiftLeft': case 'ShiftRight': walkKeys.run = false; break;
   }
+});
+
+// Global keys: Esc exits the scene when NOT walking (while walking, Esc is consumed by
+// pointer-lock to release the mouse — so we never trap the user). L = chakra "Learn".
+addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || '');
+  // Tab = swap CURSOR ⇄ WALK (don't steal Tab while typing in QUILL's search boxes).
+  if (e.code === 'Tab' && curView && !typing) { e.preventDefault(); window.toggleMode(); return; }
+  if (e.code === 'Escape') {
+    // ESC never traps: in WALK it drops to CURSOR (pointer-lock releases + our unlock
+    // handler flips uiMode). In CURSOR it exits the scene entirely.
+    if (walkOn) return;                 // let pointer-lock release; unlock handler → cursor
+    if (curView) window.exitScene();
+    return;
+  }
+  if ((e.code === 'KeyL') && walkOn && !typing) chakraLearn();
 });
 
 function updateWalk(delta) {
@@ -475,12 +628,65 @@ function makePlaque(title, lines, w = 512, h = 288) {
   return tex;
 }
 
+// ── Themed info-panel texture (used by the chakra walk) ─────────────────────
+// A tall parchment-glow card: colored header bar, title, wrapped body, optional footer.
+function makeInfoPanel(title, lines, accent = '#e64545', footer = '', w = 512, h = 680) {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(14,7,20,0.97)'); bg.addColorStop(1, 'rgba(6,3,12,0.97)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+  const glow = ctx.createRadialGradient(w/2, -40, 10, w/2, -40, w*0.9);
+  glow.addColorStop(0, accent + '55'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h*0.5);
+  ctx.strokeStyle = accent + 'cc'; ctx.lineWidth = 3; ctx.strokeRect(6, 6, w-12, h-12);
+  ctx.strokeStyle = 'rgba(196,162,78,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(13, 13, w-26, h-26);
+  ctx.fillStyle = accent; ctx.fillRect(13, 13, w-26, 8);
+  ctx.fillStyle = '#f4ecd6'; ctx.textAlign = 'center';
+  ctx.font = `bold ${Math.round(w*0.058)}px "Cinzel", serif`;
+  ctx.fillText(title, w/2, 74);
+  ctx.strokeStyle = accent + '99'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(46, 92); ctx.lineTo(w-46, 92); ctx.stroke();
+  const fz = Math.round(w*0.040), lh = fz*1.5, maxW = w - 76;
+  ctx.font = `${fz}px "Fraunces", Georgia, serif`; ctx.textAlign = 'left';
+  let y = 128;
+  for (const raw of lines) {
+    if (!raw) { y += fz*0.7; continue; }
+    let line = raw, bullet = false;
+    if (line.startsWith('• ')) { bullet = true; line = line.slice(2); }
+    const x0 = bullet ? 62 : 40;
+    const emit = (txt, isFirst) => {
+      if (bullet && isFirst) { ctx.fillStyle = accent; ctx.fillText('•', 42, y); }
+      ctx.fillStyle = bullet ? '#ffd9a0' : 'rgba(240,231,207,0.94)';
+      ctx.fillText(txt, x0, y); y += lh;
+    };
+    const words = line.split(' '); let buf = '', first = true;
+    for (const word of words) {
+      const test = buf ? buf+' '+word : word;
+      if (ctx.measureText(test).width > (bullet ? maxW-22 : maxW)) { if (buf) { emit(buf, first); first = false; } buf = word; }
+      else buf = test;
+    }
+    if (buf) emit(buf, first);
+    if (y > h - 60) break;
+  }
+  if (footer) {
+    ctx.fillStyle = accent; ctx.textAlign = 'center';
+    ctx.font = `${Math.round(w*0.030)}px "IBM Plex Mono", monospace`;
+    ctx.fillText(footer, w/2, h - 26);
+  }
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+  return tex;
+}
+
 // ── Dispose current scene ─────────────────────────────────────────────────
 function disposeScene() {
   cancelAnimationFrame(rafId); rafId = null;
   if (avatarMixer) { avatarMixer.stopAllAction(); avatarMixer = null; }
   avatarMesh = null; orbParticles = null; floatPlaques = [];
-  fireplaceLight = null;
+  fireplaceLight = null; chakra = null; historyRing = null; moonMeshRef = null;
+  document.getElementById('chakra-prompt').classList.remove('on');
+  { const oi = document.getElementById('oracle-info'); if (oi) oi.classList.remove('on'); }
+  { const mh = document.getElementById('moon-hint'); if (mh) mh.classList.remove('on'); }
   if (scene) {
     scene.traverse(obj => {
       if (obj.geometry) obj.geometry.dispose();
@@ -507,11 +713,45 @@ function hideAll() {
 
 window.showEntry = function () {
   if (plc && walkOn) { try { plc.unlock(); } catch(_){} }
-  disposeScene(); curView = null;
+  disposeScene(); curView = null; uiMode = 'cursor';
   document.getElementById('entry').classList.remove('gone');
+  document.getElementById('walk-invite').classList.remove('on');
+  document.getElementById('mode-toggle').classList.remove('on');
+  document.getElementById('moon-hint').classList.remove('on');
+  document.getElementById('oracle-info').classList.remove('on');
   canvas.classList.remove('on');
   document.getElementById('hud-oracle').classList.remove('on');
   document.getElementById('hud-quill').classList.remove('on');
+};
+
+// ── Robust EXIT ─────────────────────────────────────────────────────────────
+// Works standalone AND when embedded in an iframe (the deployed Codex embeds this
+// scene). Never traps the user: always releases pointer-lock first, then tries the
+// parent's closer, then postMessage, then history/back, then a hard nav to /codex.html.
+window.exitScene = function (ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  // Always release the mouse first so the user is never stranded in a locked view.
+  try { if (plc && walkOn) plc.unlock(); } catch(_){}
+  try { if (document.exitPointerLock) document.exitPointerLock(); } catch(_){}
+  // Embedded case: hand control back to the host page.
+  try {
+    if (window.parent && window.parent !== window) {
+      try { if (typeof window.parent.closeGame === 'function') { window.parent.closeGame(); return false; } } catch(_){}
+      try { window.parent.postMessage({ type: 'exitScene' }, '*'); } catch(_){}
+      // Give the host a beat to close us; if it doesn't, fall through to a nav below.
+      setTimeout(() => {
+        try { if (window.parent === window) return; } catch(_){}
+        try { window.location.href = '/codex.html'; } catch(_){}
+      }, 350);
+      return false;
+    }
+  } catch(_){}
+  // Standalone case.
+  try {
+    if (history.length > 1) { history.back(); }
+    else { window.location.href = '/codex.html'; }
+  } catch(_) { window.location.href = '/codex.html'; }
+  return false;
 };
 
 // ── GLB loader helper ─────────────────────────────────────────────────────
@@ -535,13 +775,30 @@ function makeFramedArt(sc, url, w, h, x, y, z, rotY) {
   grp.add(frame);
   const reveal = new THREE.Mesh(new THREE.BoxGeometry(w + 0.16, h + 0.16, frameD + 0.02), goldMat);
   reveal.position.z = 0.01; grp.add(reveal);
-  const artMat = new THREE.MeshBasicMaterial({ color: 0x2a2a2a });   // placeholder until the texture arrives
+  // Graceful canvas-texture placeholder so a frame is NEVER black/flat, even offline.
+  const ph = document.createElement('canvas'); ph.width = ph.height = 256;
+  const pctx = ph.getContext('2d');
+  const pg = pctx.createLinearGradient(0, 0, 0, 256);
+  pg.addColorStop(0, '#241a34'); pg.addColorStop(0.5, '#160f28'); pg.addColorStop(1, '#0e0a1e');
+  pctx.fillStyle = pg; pctx.fillRect(0, 0, 256, 256);
+  // faint constellation dots + a sigil so the placeholder still feels "of the Athenaeum"
+  pctx.fillStyle = 'rgba(196,162,78,0.5)';
+  for (let i = 0; i < 40; i++) pctx.fillRect(Math.random()*256, Math.random()*256, Math.random()<0.2?2:1, 1);
+  pctx.strokeStyle = 'rgba(196,162,78,0.55)'; pctx.lineWidth = 2;
+  pctx.beginPath(); pctx.arc(128, 118, 46, 0, Math.PI*2); pctx.stroke();
+  pctx.fillStyle = 'rgba(196,162,78,0.85)'; pctx.textAlign = 'center';
+  pctx.font = 'bold 30px "Cinzel", serif'; pctx.fillText('✦', 128, 130);
+  pctx.font = '13px "IBM Plex Mono", monospace'; pctx.fillStyle = 'rgba(169,159,134,0.7)';
+  pctx.fillText('THE ATHENAEUM', 128, 200);
+  const phTex = new THREE.CanvasTexture(ph); phTex.colorSpace = THREE.SRGBColorSpace;
+  const artMat = new THREE.MeshBasicMaterial({ map: phTex });   // placeholder until the real art arrives
   const art = new THREE.Mesh(new THREE.PlaneGeometry(w, h), artMat);
   art.position.z = frameD / 2 + 0.02; grp.add(art);
   texLoader.load(url, (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    if (art.material.map) art.material.map.dispose();
     art.material.map = tex; art.material.color.set(0xffffff); art.material.needsUpdate = true;
-  }, undefined, () => { /* keep placeholder if the asset is missing */ });
+  }, undefined, () => { /* keep the atmospheric placeholder if the asset is missing */ });
   // a small warm sconce so the painting reads even in a dim room
   const glow = new THREE.PointLight(0xffe0a0, 0.5, Math.max(w, h) * 3.2);
   glow.position.set(0, 0, frameD / 2 + 1.4); grp.add(glow);
@@ -565,6 +822,447 @@ function mountAvatar(gltf, sc, x = 0, z = 0, faceAngle = 0) {
     avatarMixer = new THREE.AnimationMixer(root);
     avatarMixer.clipAction(gltf.animations[0]).play();
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  THE CHAKRA PATH  (Root → Crown · sevenfold learning walk)
+// ══════════════════════════════════════════════════════════════════════════
+// A glowing bridge of SEVEN segments runs straight WEST out of the observatory disc
+// into the dark. The walker turns LEFT off the spawn (or follows the lit signpost) and
+// walks it. Each segment materializes ONE chakra as the walker reaches it — a colored
+// orb blooms beside the path and its info panel reveals, in sequence Root → Crown.
+// Footfall glow rings bloom under each step. (L) deepens the CURRENT chakra's panel.
+// At the far end the "SHADDAI Codex · Books" placeholder appears.
+//
+// Layout (path runs along z = CHAKRA_CZ, travelling −x from the disc edge outward):
+//   segment i centre X = CHAKRA_X0 − i * CHAKRA_SEG   (i = 0..6)
+//   segment 0 (Root) is nearest the disc; segment 6 (Crown) is deepest in the dark.
+const CHAKRA_CZ  = 0;           // the path centre-line Z (straight west, clear of the −z sightline via signpost)
+const CHAKRA_X0  = -14;         // centre X of the FIRST (Root) segment, just off the disc's west edge
+const CHAKRA_SEG = 5;           // length of each segment along x (also the reveal band width)
+const CHAKRA_HW  = 2.6;         // half-width of the walkway (z half-extent)
+const CHAKRA_N   = 7;           // seven chakras
+
+// name · hex color · the three reveal panels (what it is / foods that heal it / why it matters)
+// plus a deeper "learn" body for each panel (L expands the CURRENT panel's reading).
+const CHAKRAS = [
+  { name:'ROOT · MULADHARA',       color:0xff2f3a, css:'#e64545', accent:'#ff6a52',
+    what:['The first chakra, at the base of the spine — your foundation.','','Element EARTH · color deep RED. It governs survival, safety, and the felt sense of being grounded in your body.','','When it is open you feel present, stable, and at home in the world.'],
+    foods:['The root feeds on what grows in and near the earth — dense and red.','','• Root vegetables — beets, carrots, potatoes','• Red foods — apple, pomegranate, strawberries','• Grounding protein — beans, lentils, eggs','• Warming spices — ginger, turmeric, cayenne'],
+    why:['The root is where every other chakra stands.','','Without grounding there is no rising — creativity, love, and insight all need a stable base.','','Tend the root and you gain security, courage, and the calm certainty of belonging.'],
+    learn:['MULADHARA — "root support" (mula = root, adhara = base).','','A blocked root shows as anxiety and feeling unsafe; an overactive root as rigidity and fear of change.','','Ground it through the body: bare feet on earth, steady breath, weight-bearing movement, a settled daily rhythm. Safety is built, not found.'] },
+  { name:'SACRAL · SVADHISTHANA',  color:0xff8a1f, css:'#e6862e', accent:'#ff9a3a',
+    what:['The second chakra, below the navel — the seat of feeling.','','Element WATER · color ORANGE. It governs creativity, emotion, pleasure, and flow.','','When it is open you feel fluid, playful, and creatively alive.'],
+    foods:['The sacral loves sweet, watery, orange nourishment.','','• Orange foods — orange, mango, apricot, sweet potato','• Nuts & seeds — almonds, pumpkin, flax','• Hydration — clean water, coconut water','• Cinnamon, honey, and sweet spice'],
+    why:['Creativity and emotion are the current of a life.','','A flowing sacral lets you feel deeply without drowning, and create without forcing.','','Tend it and joy, intimacy, and inspiration return.'],
+    learn:['SVADHISTHANA — "one\'s own dwelling place."','','Blocked: numbness, guilt, creative block. Overactive: emotional overwhelm, attachment.','','Balance it through movement and water: hips, dance, swimming, and giving your feelings room to move.'] },
+  { name:'SOLAR PLEXUS · MANIPURA',color:0xffd21f, css:'#d9b429', accent:'#ffe14a',
+    what:['The third chakra, at the solar plexus — your inner fire.','','Element FIRE · color YELLOW. It governs personal power, confidence, and will.','','When it is open you feel capable, decisive, and self-assured.'],
+    foods:['This fire is fed by bright, energizing, golden foods.','','• Yellow foods — banana, corn, pineapple','• Whole grains — oats, brown rice, millet','• Warming — ginger, turmeric, chamomile tea','• Complex carbs for steady energy'],
+    why:['Power is the ability to act on what you value.','','A strong solar plexus turns intention into follow-through without domination.','','Tend it and you gain confidence, discipline, and healthy self-esteem.'],
+    learn:['MANIPURA — "city of jewels."','','Blocked: low self-worth, passivity, indecision. Overactive: control, anger, ego.','','Stoke it gently: purposeful action, core strength, sunlight, and honoring your own "yes" and "no."'] },
+  { name:'HEART · ANAHATA',        color:0x35d67a, css:'#3fbf6f', accent:'#5be08c',
+    what:['The fourth chakra, at the center of the chest — the bridge.','','Element AIR · color GREEN. It governs love, compassion, and connection.','','When it is open you give and receive love freely.'],
+    foods:['The heart opens to fresh, green, living food.','','• Leafy greens — spinach, kale, chard','• Broccoli, peas, green beans','• Green tea, matcha','• Fresh herbs — basil, parsley, cilantro'],
+    why:['The heart is the meeting place of lower and higher.','','Grounding rises into it; spirit descends into it. Love is the integrator.','','Tend it and compassion, forgiveness, and belonging flow both ways.'],
+    learn:['ANAHATA — "unstruck," the sound made without two things striking.','','Blocked: grief, isolation, defensiveness. Overactive: over-giving, poor boundaries.','','Open it through breath and connection: chest-opening movement, gratitude, and letting yourself be loved.'] },
+  { name:'THROAT · VISHUDDHA',     color:0x1f9dff, css:'#2e88d9', accent:'#4aa8ff',
+    what:['The fifth chakra, at the throat — your voice.','','Element ETHER · color BLUE. It governs expression, truth, and communication.','','When it is open you speak and listen with clarity.'],
+    foods:['The throat is soothed by blue fruit and clear liquids.','','• Blueberries, blackberries, blue/purple fruit','• Water and herbal teas','• Honey and lemon','• Soups and soothing liquids'],
+    why:['Truth spoken clearly frees both speaker and listener.','','A clear throat aligns what you feel, think, and say.','','Tend it and you gain honest expression and true listening.'],
+    learn:['VISHUDDHA — "especially pure."','','Blocked: fear of speaking, secrecy, sore throat. Overactive: talking over others, gossip.','','Clear it through voice: humming, singing, chanting, and speaking one true thing today.'] },
+  { name:'THIRD EYE · AJNA',       color:0x5a4bd6, css:'#5a4bc4', accent:'#8070f0',
+    what:['The sixth chakra, between the brows — the inner eye.','','Element LIGHT · color INDIGO. It governs intuition, insight, and vision.','','When it is open you see clearly, within and beyond.'],
+    foods:['The third eye is fed by deep purple and brain foods.','','• Purple foods — grapes, blackberry, eggplant','• Dark chocolate','• Omega-3 — walnuts, flax, oily fish','• Purple cabbage, plums'],
+    why:['Intuition is knowing that arrives before reasoning.','','A clear third eye trusts inner guidance and sees patterns others miss.','','Tend it and you gain clarity, imagination, and wise discernment.'],
+    learn:['AJNA — "command," "to perceive."','','Blocked: confusion, denial, poor memory. Overactive: overthinking, delusion, headaches.','','Open it through stillness: meditation, darkness, dream-journaling, and quiet trust in inner sight.'] },
+  { name:'CROWN · SAHASRARA',      color:0xd9a6ff, css:'#c79ae6', accent:'#eec6ff',
+    what:['The seventh chakra, at the crown — the opening to spirit.','','Element THOUGHT · color VIOLET / WHITE. It governs consciousness and connection to the divine.','','When it is open you feel unity, peace, and higher awareness.'],
+    foods:['The crown is nourished less by food than by light.','','• Light, pure foods — fruit, sprouts','• Fasting and cleansing','• Pure water','• Sunlight, air, and silence'],
+    why:['The crown is where the path completes and dissolves.','','Here the personal self meets the vast — the drop rejoins the ocean.','','Tend it and you gain peace, presence, and connection to something greater.'],
+    learn:['SAHASRARA — "thousand-petaled."','','Blocked: disconnection, cynicism, meaninglessness. Overactive: dissociation, spiritual bypass.','','Open it through surrender: meditation, prayer, sunlight, fasting — and gratitude for being here at all.'] }
+];
+
+const CODEX_BOOKS = [
+  'The Grounded Body — Root Practices',
+  'Rivers of Feeling — the Sacral Way',
+  'Inner Fire — Manipura & Will',
+  'The Open Heart — Anahata Codex',
+  'True Voice — Vishuddha Studies',
+  'The Seeing Eye — Ajna Insights',
+  'Crown of Light — the Sevenfold Path',
+  '— add your own volumes here —'
+];
+
+// Small helpers so each per-segment X is derived from the same formula everywhere.
+function chakraSegX(i) { return CHAKRA_X0 - i * CHAKRA_SEG; }   // centre X of segment i
+const CHAKRA_END_X = chakraSegX(CHAKRA_N - 1) - CHAKRA_SEG * 0.9;   // far end (past Crown) for the book panel
+
+function buildChakra(sc) {
+  const grp = new THREE.Group();
+  const CZ = CHAKRA_CZ, HW = CHAKRA_HW;
+  const nearX = CHAKRA_X0 + CHAKRA_SEG * 0.5;                 // near (disc) edge of the whole path
+  const farX  = chakraSegX(CHAKRA_N - 1) - CHAKRA_SEG * 0.5;  // far edge (past Crown)
+  const pathLen = nearX - farX;
+  const midX = (nearX + farX) / 2;
+
+  // ── The walkway deck: one long dark slab running west, with a faint glow underlay. ──
+  const deckMat = new THREE.MeshStandardMaterial({
+    color: 0x140a1c, roughness: 0.88, metalness: 0.18,
+    emissive: 0x1c1030, emissiveIntensity: 0.32 });
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(pathLen, 0.16, HW*2), deckMat);
+  deck.position.set(midX, -0.42, CZ); grp.add(deck);
+
+  // Glowing rails down both long edges (reused geometry, per-edge material tint).
+  const railGeo = new THREE.BoxGeometry(pathLen, 0.06, 0.10);
+  for (const dz of [-HW, HW]) {
+    const rail = new THREE.Mesh(railGeo, new THREE.MeshBasicMaterial({ color: 0x7a4bd6, transparent: true, opacity: 0.55 }));
+    rail.position.set(midX, -0.30, CZ + dz); grp.add(rail);
+  }
+
+  // Per-segment seams + a colored inlay tile the walker steps onto (one per chakra).
+  const seamMat = new THREE.MeshBasicMaterial({ color: 0x8060c0, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+  const seamGeo = new THREE.PlaneGeometry(0.08, HW*2);
+  const tileGeo = new THREE.RingGeometry(0.9, 1.35, 32);
+  const segTiles = [];
+  for (let i = 0; i < CHAKRA_N; i++) {
+    const sx = chakraSegX(i);
+    // seam line between this segment and the previous
+    const seam = new THREE.Mesh(seamGeo, seamMat);
+    seam.rotation.x = -Math.PI/2; seam.position.set(sx + CHAKRA_SEG*0.5, -0.33, CZ); grp.add(seam);
+    // colored ring tile at the segment's centre (dim until its chakra is revealed)
+    const tileMat = new THREE.MeshBasicMaterial({ color: CHAKRAS[i].color, transparent: true, opacity: 0.12,
+      side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const tile = new THREE.Mesh(tileGeo, tileMat);
+    tile.rotation.x = -Math.PI/2; tile.position.set(sx, -0.32, CZ); grp.add(tile);
+    segTiles.push({ mesh: tile, mat: tileMat });
+  }
+
+  // ── Footfall glow rings pool (shared geometry, reused as the walker steps). ──
+  const footGeo = new THREE.RingGeometry(0.35, 0.75, 24);
+  const foot = [];
+  for (let i = 0; i < 10; i++) {
+    const m = new THREE.Mesh(footGeo,
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0,
+        side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+    m.rotation.x = -Math.PI/2; m.position.set(CHAKRA_X0, -0.29, CZ); m.visible = false;
+    grp.add(m); foot.push({ mesh: m, life: 0 });
+  }
+
+  // ── The SEVEN chakra orbs — one per segment, each its own color, all start invisible. ──
+  // Shared geometries keep the build cheap; only materials differ per chakra.
+  const orbGeo   = new THREE.SphereGeometry(1.25, 28, 28);
+  const haloGeo  = new THREE.SphereGeometry(1.9, 18, 18);
+  const petalGeo = new THREE.TorusGeometry(1.6, 0.05, 6, 36);
+  const nodes = CHAKRAS.map((def, i) => {
+    const sx = chakraSegX(i);
+    const oy = 2.1;                       // orb hover height above the deck
+    const orbMat = new THREE.MeshStandardMaterial({ color: def.color, emissive: def.color,
+      emissiveIntensity: 1.3, roughness: 0.3, transparent: true, opacity: 0 });
+    const orb = new THREE.Mesh(orbGeo, orbMat);
+    orb.position.set(sx, oy, CZ - HW - 1.6);   // orb sits just OFF the far (−z) rail, beside the path
+    grp.add(orb);
+    const haloMat = new THREE.MeshBasicMaterial({ color: def.color, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false });
+    const halo = new THREE.Mesh(haloGeo, haloMat); halo.position.copy(orb.position); grp.add(halo);
+    const petalMat = new THREE.MeshBasicMaterial({ color: 0xffe6c0, transparent: true, opacity: 0 });
+    const petal = new THREE.Mesh(petalGeo, petalMat); petal.position.copy(orb.position); grp.add(petal);
+    const light = new THREE.PointLight(def.color, 0, 16); light.position.copy(orb.position); grp.add(light);
+
+    // Info panel for this chakra: three sections stacked into ONE tall card (what / foods / why).
+    const lines = def.what.concat(['', '▸ FOODS THAT HEAL IT'], def.foods, ['', '▸ WHY IT MATTERS'], def.why);
+    const tex = makeInfoPanel(def.name, lines, def.css, '▸ press  L  to learn more', 512, 820);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 5.1), mat);
+    panel.position.set(sx, 3.0, CZ + HW + 1.4);   // panel on the NEAR (+z) side, facing the walker
+    panel.rotation.y = Math.PI;                    // face +z (toward a walker looking across the path)
+    panel.scale.setScalar(0.001); panel.visible = false;
+    grp.add(panel);
+
+    return { def, orb, orbMat, halo, haloMat, petal, petalMat, light,
+             panel, panelMat: mat, tex, tile: segTiles[i], oy,
+             shown: false, expanded: false, mat: mat };
+  });
+
+  // ── "SHADDAI Codex · Books" placeholder at the FAR (west) end of the path. ──
+  const bookLines = ['You have walked the sevenfold path.', 'Continue your study in the archive:', '']
+                      .concat(CODEX_BOOKS.map(b => '• ' + b));
+  const bookTex = makeInfoPanel('SHADDAI CODEX · BOOKS', bookLines, '#c4a24e', 'more volumes to come');
+  const bookMat = new THREE.MeshBasicMaterial({ map: bookTex, transparent: true, side: THREE.DoubleSide });
+  const bookM = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), bookMat);
+  bookM.position.set(CHAKRA_END_X, 3.0, CZ); bookM.rotation.y = Math.PI/2;   // faces +x (back toward the walker)
+  bookM.scale.setScalar(0.001); bookM.visible = false; grp.add(bookM);
+
+  // ── Signpost / portal label near the disc's west edge, so the path is DISCOVERABLE. ──
+  const signTex = makeSignTex();
+  const signMat = new THREE.MeshBasicMaterial({ map: signTex, transparent: true, side: THREE.DoubleSide });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.4), signMat);
+  sign.position.set(nearX + 0.6, 3.2, CZ); sign.rotation.y = Math.PI/2;   // faces +x toward the spawn/disc
+  grp.add(sign);
+  const signGlow = new THREE.PointLight(0x9a6bff, 1.6, 12); signGlow.position.set(nearX, 2.6, CZ); grp.add(signGlow);
+
+  sc.add(grp);
+  chakra = { grp, foot, nodes, tex: bookTex,
+             book: { mesh: bookM, mat: bookMat, tex: bookTex, shown: false },
+             CZ, HW, nearX, farX, active: -1, onPath: false, reveal: 0, lastFootX: 999 };
+}
+
+// Tall signpost texture: the inviting "◆ The Chakra Path" label at the mouth of the walk.
+function makeSignTex() {
+  const w = 640, h = 300, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(18,9,34,0.96)'); bg.addColorStop(1, 'rgba(8,4,18,0.96)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(154,107,255,0.85)'; ctx.lineWidth = 4; ctx.strokeRect(8, 8, w-16, h-16);
+  ctx.strokeStyle = 'rgba(196,162,78,0.5)'; ctx.lineWidth = 1.5; ctx.strokeRect(16, 16, w-32, h-32);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e8c45c';
+  ctx.font = 'bold 46px "Cinzel", serif';
+  ctx.fillText('◆ THE CHAKRA PATH', w/2, 84);
+  ctx.strokeStyle = 'rgba(154,107,255,0.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(60, 108); ctx.lineTo(w-60, 108); ctx.stroke();
+  ctx.fillStyle = 'rgba(240,231,207,0.95)';
+  ctx.font = '26px "Fraunces", Georgia, serif';
+  ctx.fillText('Walk this bridge into the dark —', w/2, 152);
+  ctx.fillText('seven chakras reveal in sequence,', w/2, 188);
+  ctx.fillText('Root → Crown.', w/2, 224);
+  ctx.fillStyle = '#9a6bff';
+  ctx.font = '20px "IBM Plex Mono", monospace';
+  ctx.fillText('▶ Enter WALK mode  ·  WASD to walk it  ·  L to learn', w/2, 264);
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Which chakra segment is the walker over? (−1 = not on the path). Uses X-progression west.
+function chakraZoneAt(x, z) {
+  if (!chakra) return -1;
+  const { CZ, HW, nearX, farX } = chakra;
+  if (z < CZ - HW - 0.4 || z > CZ + HW + 0.4) return -1;   // off the walkway (with a little grace)
+  if (x > nearX + 0.6 || x < farX - 0.6) return -1;        // before the mouth or past the far end
+  // Map x (nearX → farX) onto 0..N-1 segments.
+  const t = (nearX - x) / (nearX - farX);                  // 0 near(Root) → 1 far(Crown)
+  return Math.max(0, Math.min(CHAKRA_N - 1, Math.floor(t * CHAKRA_N)));
+}
+
+// Reveal chakra `idx` (0..6): show + grow its panel, mark it for orb materialize.
+// idx === CHAKRA_N reveals the book list at the far end.
+function chakraReveal(idx) {
+  if (!chakra) return;
+  if (idx >= 0 && idx < CHAKRA_N) {
+    const n = chakra.nodes[idx];
+    if (n.shown) return;
+    n.shown = true; n.panel.visible = true;
+    chakra.reveal = Math.max(chakra.reveal, idx + 1);
+  } else if (idx === CHAKRA_N && !chakra.book.shown) {
+    chakra.book.shown = true; chakra.book.mesh.visible = true;
+  }
+}
+
+// (L) — expand the CURRENT chakra's panel into its deeper "learn" reading.
+// Walking REVEALS the chakra; L only DEEPENS the one you're standing at.
+function chakraLearn() {
+  if (!chakra || !chakra.onPath) return;
+  const i = chakra.active;
+  if (i < 0 || i >= CHAKRA_N) return;
+  const n = chakra.nodes[i];
+  if (!n.shown) return;              // can't deepen what hasn't revealed yet
+  if (n.expanded) return;            // already deepened
+  n.expanded = true;
+  const d = n.def;
+  const lines = d.learn.concat(['', '▸ DEEPER — FOODS'], d.foods, ['', '▸ DEEPER — WHY'], d.why);
+  const t2 = makeInfoPanel(d.name, lines, d.accent, '— the deeper reading —', 512, 820);
+  n.tex.dispose(); n.panelMat.map = t2; n.panelMat.needsUpdate = true; n.tex = t2;
+}
+
+// Per-frame chakra logic: segment detection, footfall glow, orb materialize, panel grow, prompt.
+function updateChakra(delta, t) {
+  if (!chakra) return;
+  const c = camera.position;
+  const zone = walkOn ? chakraZoneAt(c.x, c.z) : -1;
+  const on = zone >= 0;
+  chakra.onPath = on;
+  chakra.active = zone;
+
+  const promptEl = document.getElementById('chakra-prompt');
+  if (on) {
+    if (promptEl) promptEl.classList.add('on');
+    const nameEl = document.getElementById('chakra-name');
+    if (nameEl) nameEl.textContent = chakra.nodes[zone].def.name;
+    // Reveal the current segment AND every earlier one (so the sequence is never skipped
+    // even if the walker moves fast) — Root first, then each in turn up to where they stand.
+    for (let k = 0; k <= zone; k++) chakraReveal(k);
+    // The book list unlocks once the walker reaches the final (Crown) segment.
+    if (zone === CHAKRA_N - 1) chakraReveal(CHAKRA_N);
+    // Footfall glow ring: drop one when the walker has advanced enough since the last drop.
+    if (Math.abs(c.x - chakra.lastFootX) > 0.85 || chakra.lastFootX === 999) {
+      const slot = chakra.foot.find(f => f.life <= 0);
+      if (slot) {
+        slot.life = 1; slot.mesh.visible = true;
+        slot.mesh.position.set(c.x, -0.29, c.z); slot.mesh.scale.setScalar(1);
+        // tint the footfall glow to the CURRENT chakra's color
+        slot.mesh.material.color.setHex(chakra.nodes[zone].def.color);
+        slot.mesh.material.opacity = 0.85;
+      }
+      chakra.lastFootX = c.x;
+    }
+  } else {
+    if (promptEl) promptEl.classList.remove('on');
+  }
+
+  // Animate footfall rings (expand + fade).
+  for (const f of chakra.foot) {
+    if (f.life > 0) {
+      f.life -= delta * 1.15;
+      f.mesh.scale.setScalar(1 + (1 - f.life) * 2.2);
+      f.mesh.material.opacity = Math.max(0, f.life * 0.85);
+      if (f.life <= 0) f.mesh.visible = false;
+    }
+  }
+
+  // Per-chakra orb + panel animation. Each orb materializes once ITS chakra is revealed.
+  for (let i = 0; i < chakra.nodes.length; i++) {
+    const n = chakra.nodes[i];
+    const target = n.shown ? 1 : 0;
+    const cur = n.orbMat.opacity;
+    const k = cur + (target - cur) * Math.min(1, delta * 2.6);
+    n.orbMat.opacity = k;
+    n.haloMat.opacity = k * 0.5 * (0.7 + 0.3 * Math.sin(t * 2.1 + i));
+    n.petalMat.opacity = k * 0.8;
+    n.light.intensity = k * 2.6;
+    n.tile.mat.opacity = 0.12 + k * 0.55;          // the floor tile brightens as its orb wakes
+    if (k > 0.02) {
+      n.orb.rotation.y += delta * 0.4;
+      n.petal.rotation.z += delta * 0.25;
+      const y = n.oy + Math.sin(t * 1.3 + i) * 0.12;
+      n.orb.position.y = y; n.halo.position.y = y; n.petal.position.y = y; n.light.position.y = y;
+    }
+    // Panel grow-in + gentle float.
+    if (n.shown && n.panel.scale.x < 1) {
+      const s = Math.min(1, n.panel.scale.x + delta * 3.2);
+      n.panel.scale.setScalar(s < 0.02 ? 0.02 : s);
+    }
+    if (n.shown) n.panel.position.y = 3.0 + Math.sin(t * 1.1 + i) * 0.06;
+  }
+
+  // Book panel grow-in.
+  if (chakra.book.shown && chakra.book.mesh.scale.x < 1) {
+    const s = Math.min(1, chakra.book.mesh.scale.x + delta * 3.2);
+    chakra.book.mesh.scale.setScalar(s < 0.02 ? 0.02 : s);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  GOLDEN BRIDGE → TODAY-IN-HISTORY RING  (2nd circle, gold + purple)
+// ══════════════════════════════════════════════════════════════════════════
+// A golden bridge runs EAST from the main disc's edge to a smaller circular platform.
+// Around that ring float several gold+purple info screens carrying today-in-history.
+const HIST_CX = 24, HIST_CZ = 0, HIST_R = 8;   // 2nd circle centre + radius (east of the disc)
+
+// Gold-and-purple history screen texture (matches the Athenaeum aesthetic).
+function makeHistoryPanel(title, lines) {
+  const w = 512, h = 320;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  // deep violet → void gradient body
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(26,14,52,0.96)'); bg.addColorStop(1, 'rgba(9,5,20,0.96)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+  // violet top glow
+  const glow = ctx.createRadialGradient(w/2, -20, 8, w/2, -20, w*0.8);
+  glow.addColorStop(0, 'rgba(124,86,200,0.5)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h*0.55);
+  // double gold frame
+  ctx.strokeStyle = 'rgba(196,162,78,0.85)'; ctx.lineWidth = 3; ctx.strokeRect(6, 6, w-12, h-12);
+  ctx.strokeStyle = 'rgba(124,86,200,0.55)'; ctx.lineWidth = 1.5; ctx.strokeRect(13, 13, w-26, h-26);
+  // gold title bar
+  ctx.fillStyle = '#c4a24e'; ctx.fillRect(13, 13, w-26, 7);
+  ctx.fillStyle = '#e8c45c'; ctx.textAlign = 'center';
+  ctx.font = `bold ${Math.round(w*0.05)}px "Cinzel", serif`;
+  ctx.fillText(title, w/2, 56);
+  ctx.strokeStyle = 'rgba(196,162,78,0.6)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(40, 72); ctx.lineTo(w-40, 72); ctx.stroke();
+  const fz = Math.round(w*0.036), lh = fz*1.5, maxW = w - 64;
+  ctx.font = `${fz}px "Fraunces", Georgia, serif`; ctx.textAlign = 'left';
+  let y = 104;
+  for (const raw of lines) {
+    if (!raw) { y += fz*0.6; continue; }
+    const words = raw.split(' '); let buf = '';
+    for (const word of words) {
+      const test = buf ? buf+' '+word : word;
+      if (ctx.measureText(test).width > maxW) {
+        if (buf) { ctx.fillStyle = 'rgba(240,231,207,0.94)'; ctx.fillText(buf, 34, y); y += lh; }
+        buf = word;
+      } else buf = test;
+    }
+    if (buf) { ctx.fillStyle = 'rgba(240,231,207,0.94)'; ctx.fillText(buf, 34, y); y += lh; }
+    if (y > h - 26) break;
+  }
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function buildHistoryRing(sc) {
+  const grp = new THREE.Group();
+
+  // 2nd circular platform (gold-rimmed, violet top).
+  const platMat = new THREE.MeshStandardMaterial({ color: 0x1c1240, roughness: 0.8, metalness: 0.35,
+    emissive: 0x2a1466, emissiveIntensity: 0.4 });
+  const plat = new THREE.Mesh(new THREE.CylinderGeometry(HIST_R, HIST_R+1.6, 0.9, 40), platMat);
+  plat.position.set(HIST_CX, -0.5, HIST_CZ); grp.add(plat);
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, emissive: 0x6a4e10, emissiveIntensity: 0.9,
+    roughness: 0.35, metalness: 0.85 });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(HIST_R, 0.14, 8, 64), rimMat);
+  rim.rotation.x = Math.PI/2; rim.position.set(HIST_CX, 0.02, HIST_CZ); grp.add(rim);
+  // soft violet + gold lights over the ring
+  const vL = new THREE.PointLight(0x7c56c8, 1.6, 40); vL.position.set(HIST_CX, 7, HIST_CZ); grp.add(vL);
+  const gL = new THREE.PointLight(0xc4a24e, 0.7, 30); gL.position.set(HIST_CX, 3, HIST_CZ+4); grp.add(gL);
+
+  // ── GOLDEN BRIDGE from the main disc edge (~x=11) to the ring's west edge (~x=16). ──
+  const bx0 = 11, bx1 = HIST_CX - HIST_R;   // bridge spans between the two circles
+  const bLen = bx1 - bx0, bMid = (bx0 + bx1) / 2;
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xe8c45c, emissive: 0x8a6410, emissiveIntensity: 0.85,
+    roughness: 0.3, metalness: 0.9 });
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(bLen, 0.22, 3.4), goldMat);
+  deck.position.set(bMid, -0.42, HIST_CZ); grp.add(deck);
+  // gold railings + posts so it reads clearly as a bridge
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, emissive: 0x5a3e0c, emissiveIntensity: 0.7,
+    roughness: 0.4, metalness: 0.85 });
+  for (const sz of [-1.75, 1.75]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(bLen, 0.1, 0.12), railMat);
+    rail.position.set(bMid, 0.55, HIST_CZ + sz); grp.add(rail);
+    const posts = Math.max(2, Math.round(bLen / 1.6));
+    for (let i = 0; i <= posts; i++) {
+      const px = bx0 + (bLen * i / posts);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.9, 6), railMat);
+      post.position.set(px, 0.1, HIST_CZ + sz); grp.add(post);
+    }
+  }
+  // gentle bridge glow so it invites the walk
+  const bGlow = new THREE.PointLight(0xe8c45c, 0.9, 16); bGlow.position.set(bMid, 1.4, HIST_CZ); grp.add(bGlow);
+
+  // ── Today-in-History screens arranged in a RING around the 2nd circle ──
+  // Start with placeholders; fetchHistory() repaints each with real events.
+  const N = 5;
+  const screens = [];
+  const seedLines = ['Consulting the astral record…'];
+  for (let i = 0; i < N; i++) {
+    // place screens on the FAR half of the ring (facing inward toward the arriving walker)
+    const a = Math.PI * (0.15 + (i / (N - 1)) * 0.7);   // arc across the east/far side
+    const sx = HIST_CX + Math.cos(a) * (HIST_R - 0.6);
+    const sz = HIST_CZ + Math.sin(a) * (HIST_R - 0.6);
+    const tex = makeHistoryPanel(i === 0 ? 'TODAY IN HISTORY' : `· ${i} ·`, seedLines);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.9), mat);
+    m.position.set(sx, 3.4, sz);
+    m.lookAt(HIST_CX, 3.4, HIST_CZ);   // face the centre of the ring
+    grp.add(m);
+    screens.push({ mesh: m, mat, tex });
+  }
+
+  sc.add(grp);
+  historyRing = { center: { x: HIST_CX, z: HIST_CZ }, screens };
 }
 
 // ── Starfield ─────────────────────────────────────────────────────────────
@@ -667,6 +1365,7 @@ async function buildOracle() {
   const moonMat = new THREE.MeshStandardMaterial({ color: 0xd4ccc0, roughness: 0.91, metalness: 0.04, emissive: 0x14120e, emissiveIntensity: 0.06 });
   const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(7, 40, 40), moonMat);
   moonMesh.position.set(-12, 33, -62); scene.add(moonMesh);
+  moonMeshRef = moonMesh;   // clickable → opens the moon HUD (raycast in the canvas click handler)
   // Sun direction based on synodic phase
   const phAng = 2 * Math.PI * (mp.phase / 29.530588853);
   const sunLight = new THREE.DirectionalLight(0xfff8e8, 3.2);
@@ -692,11 +1391,12 @@ async function buildOracle() {
   const chakraLines = ['Root (Muladhara) · Safety', 'Sacral (Svadhisthana) · Desire', 'Solar (Manipura) · Power', 'Heart (Anahata) · Love', 'Throat (Vishuddha) · Truth', 'Third Eye (Ajna) · Insight', 'Crown (Sahasrara) · Unity'];
   const wisdomLines = ['"As above, so below."', '', '"The cosmos is within us.', 'We are made of star-stuff."', '', '"Know thyself, and thou', 'shalt know the universe."'];
 
+  // NOTE: "TODAY IN HISTORY" is no longer on the main circle — it lives on its own
+  // second platform across the golden bridge (see buildHistoryRing).
   const plaqueDefs = [
     { title: 'THE MOON',          lines: moonPhaseLines, angle: 0 },
-    { title: 'THE SEVEN CHAKRAS', lines: chakraLines,    angle: Math.PI * 0.5 },
-    { title: "ORACLE'S WISDOM",   lines: wisdomLines,    angle: Math.PI },
-    { title: 'TODAY IN HISTORY',  lines: ['Consulting the astral record…'], angle: Math.PI * 1.5 }
+    { title: 'THE SEVEN CHAKRAS', lines: chakraLines,    angle: Math.PI * (2/3) },
+    { title: "ORACLE'S WISDOM",   lines: wisdomLines,    angle: Math.PI * (4/3) }
   ];
   const PR = 17, PY = 3.8;
   for (const def of plaqueDefs) {
@@ -712,23 +1412,55 @@ async function buildOracle() {
   makeFramedArt(scene, '/assets/athenaeum/oracle-chart-1.jpg', 4.4, 4.4, -6, 4.6, -13.6, 0);
   makeFramedArt(scene, '/assets/athenaeum/oracle-chart-2.jpg', 4.4, 4.4,  6, 4.6, -13.6, 0);
 
+  // THE CHAKRA PATH — a glowing sevenfold bridge running WEST out of the disc into the dark.
+  // buildChakra creates the deck, the 7 orbs/panels, the far-end Codex, and the signpost.
+  buildChakra(scene);
+  // A short lit connector from the disc's west edge (~x=-10) to the path mouth (~x=-11.5),
+  // so the walkway visibly grows out of the observatory floor.
+  const pathMat = new THREE.MeshStandardMaterial({ color: 0x1a0e1e, roughness: 0.85,
+    emissive: 0x3a1a44, emissiveIntensity: 0.45 });
+  const connector = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, CHAKRA_HW*2), pathMat);
+  connector.position.set(-10.3, -0.42, CHAKRA_CZ); scene.add(connector);
+
+  // ══ GOLDEN BRIDGE → HISTORY RING ══ built to the EAST/front, opposite the chakra alcove.
+  buildHistoryRing(scene);
+
   // Controls
   controls = new OrbitControls(camera, canvas);
   controls.target.set(0, 2.5, 0);
   controls.minDistance = 6; controls.maxDistance = 55;
   controls.enablePan = false;
-  controls.autoRotate = true; controls.autoRotateSpeed = 0.35;
+  // Camera holds still in CURSOR mode (gentle drag-to-look only). No auto-spin so the
+  // moon / menus stay where the player expects to click them.
+  controls.autoRotate = false;
   controls.update();
 
-  // Update HUD info
-  document.getElementById('moon-line').textContent = `☽ ${mp.name}  ·  ${mp.pct}% illuminated`;
-  document.getElementById('hist-text').textContent  = 'Consulting the astral record…';
+  // Cache the moon phase line for the click-to-open moon HUD.
+  moonInfoText = `☽ ${mp.name}  ·  ${mp.pct}% illuminated`;
+  document.getElementById('moon-line').textContent = moonInfoText;
+  // (moon HUD body text is set in the HTML and stays static; it opens only on moon-click.)
 
-  // Async: fetch today in history, update plaque + HUD
-  fetchHistory(floatPlaques);
+  // Async: fetch today-in-history → paint the RING screens across the golden bridge.
+  fetchHistory();
 }
 
-async function fetchHistory(plaques) {
+async function fetchHistory() {
+  const paint = (events) => {
+    if (!historyRing) return;
+    const scr = historyRing.screens;
+    // First screen = title + top 3 events; remaining screens = one event each.
+    if (scr[0]) {
+      scr[0].tex.dispose();
+      const t = makeHistoryPanel('TODAY IN HISTORY', events.slice(0, 3));
+      scr[0].mat.map = t; scr[0].mat.needsUpdate = true; scr[0].tex = t;
+    }
+    for (let i = 1; i < scr.length; i++) {
+      const ev = events[i + 1] || events[i] || '—';
+      scr[i].tex.dispose();
+      const t = makeHistoryPanel(`ON THIS DAY · ${i}`, [ev]);
+      scr[i].mat.map = t; scr[i].mat.needsUpdate = true; scr[i].tex = t;
+    }
+  };
   try {
     const r = await fetch('/api/tools/run', { method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -737,15 +1469,15 @@ async function fetchHistory(plaques) {
     if (d.ok && d.result) {
       const raw    = d.result.replace(/^Today in history:\n?/i, '').trim();
       const events = raw.split('\n').filter(Boolean);
-      document.getElementById('hist-text').textContent = events.slice(0, 3).join('  ·  ');
-      const entry = plaques.find(f => f.def.title === 'TODAY IN HISTORY');
-      if (entry) {
-        entry.tex.dispose();
-        const t2 = makePlaque('TODAY IN HISTORY', events.slice(0, 5));
-        entry.mat.map = t2; entry.mat.needsUpdate = true; entry.tex = t2;
-      }
+      paint(events.length ? events : ['The archive returned no events today.']);
+      return;
     }
-  } catch (_) {}
+    throw new Error('no result');
+  } catch (_) {
+    // Graceful fallback so the ring never stays stuck on "Consulting…".
+    paint(['The astral record rests —', 'the archive is quiet tonight.',
+           'Walk the golden bridge again', 'when the connection returns.', '—']);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -895,6 +1627,7 @@ function startLoop() {
 
     if (walkOn) updateWalk(delta);
     else if (controls) controls.update();   // orbit auto-rotates in update(), so only run it when NOT walking
+    if (curView === 'oracle') updateChakra(delta, t);
     if (renderer && scene && camera) renderer.render(scene, camera);
   };
   go();
@@ -908,12 +1641,21 @@ window.enterOracle = async function () {
   document.getElementById('hud-oracle').classList.add('on');
   clock.start();
   await buildOracle();
-  // Walk config: circular observatory platform (radius ~10.5), spawn near the front edge facing in.
+  // Walk config: main disc PLUS two arms —
+  //   WEST (x −52 … −11) → THE CHAKRA PATH (the sevenfold bridge into the dark),
+  //   EAST (x +11 … +32) → the GOLDEN BRIDGE to the Today-in-History ring.
+  // A generous rect covers all three so the whole chakra path is reachable; soft clamping
+  // keeps the walker in-bounds. Spawn faces the moon (−z); the signpost points them left/west.
   walkEye = 3.4; walkSpawn = { x: 0, z: 8.5 };
-  walkBounds = { type:'circle', cx:0, cz:0, r:10.5 };
+  walkBounds = { type:'rect', minX:-52, maxX:32, minZ:-11, maxZ:11 };
   setupWalk();
   try { const gltf = await loadGLB('/assets/agents/ORACLE.glb'); mountAvatar(gltf, scene, 0, 0, 0); } catch(_) {}
   startLoop();
+  // Default to CURSOR mode — menus/moon are directly clickable; player opts into WALK.
+  uiMode = 'cursor'; reflectMode();
+  document.getElementById('mode-toggle').classList.add('on');
+  document.getElementById('walk-invite').classList.add('on');   // invite the user to walk
+  document.getElementById('moon-hint').classList.add('on');     // tell them the moon is clickable
 };
 
 // ── Enter QUILL ────────────────────────────────────────────────────────────
@@ -934,6 +1676,10 @@ window.enterQuill = async function () {
     mountAvatar(gltf, scene, 0, 4, Math.PI);
   } catch(_) {}
   startLoop();
+  // Default to CURSOR mode — the QUILL search panel is directly clickable, no ESC dance.
+  uiMode = 'cursor'; reflectMode();
+  document.getElementById('mode-toggle').classList.add('on');
+  document.getElementById('walk-invite').classList.add('on');   // invite the user to walk
 };
 
 // ── Tab switching ──────────────────────────────────────────────────────────
@@ -985,15 +1731,30 @@ window.searchBooks = async function() {
   } finally { btn.disabled = false; }
 };
 
+// Direct Wikipedia REST fallback — used if the SHADDAI backend tool is unreachable
+// (e.g. static hosting). Returns the extract string, or throws.
+async function wikiDirect(topic) {
+  const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/ /g,'_'))}`,
+    { headers: { 'Accept': 'application/json' } });
+  if (!r.ok) throw new Error('Wikipedia HTTP ' + r.status);
+  const d = await r.json();
+  return d.extract || '';
+}
+
 window.searchRef = async function() {
   const q = document.getElementById('ref-q').value.trim(); if (!q) return;
   const btn = document.getElementById('ref-btn'); btn.disabled = true;
   qMsg('ref-res', 'Consulting the encyclopedia…');
   try {
-    const res = await runTool('get_wikipedia_summary', { topic: q });
+    let res;
+    try { res = await runTool('get_wikipedia_summary', { topic: q }); }
+    catch (_) { res = await wikiDirect(q); }          // backend down → hit Wikipedia directly
+    if (!res || /unavailable for/i.test(res)) {        // backend returned a soft-miss → try direct
+      try { const d = await wikiDirect(q); if (d) res = d; } catch(_){}
+    }
     if (!res) { qMsg('ref-res', '— nothing found —'); return; }
     qSet('ref-res', `<div class="wtext">${ESC(res)}</div>`);
-  } catch(e) { qErr('ref-res', e.message); }
+  } catch(e) { qErr('ref-res', e.message || 'Lookup failed'); }
   finally { btn.disabled = false; }
 };
 

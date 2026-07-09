@@ -80,6 +80,8 @@
     border:1px solid var(--border);
   }
   .topbar .back:hover{border-color:var(--border-strong);}
+  .topbar .back.lbk{color:var(--yellow);border-color:rgba(245,224,0,0.3);}
+  .topbar .back.lbk:hover{border-color:rgba(245,224,0,0.7);color:var(--yellow);}
   .topbar .spacer{margin-left:auto;}
   .apistatus{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
   .apistatus.up{color:var(--green);}
@@ -126,7 +128,7 @@
   .pick{
     background:var(--panel2);
     border:2px solid #182018;
-    padding:14px;
+    padding:10px;
     cursor:pointer;
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
     position:relative;
@@ -143,25 +145,34 @@
   .game-ico{font-size:34px;line-height:1;margin-bottom:8px;display:block;}
   .game-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;}
 
-  /* Agent cards */
-  .agent-tile{
+  /* Agent cards — HF art as the main visual */
+  .agent-art{
     width:100%;
-    aspect-ratio:1/1;
+    aspect-ratio:3/4;
     background:#000;
     border:1px solid #141a14;
-    border-radius:6px;
-    display:flex;align-items:center;justify-content:center;
-    margin-bottom:8px;overflow:hidden;
+    border-radius:4px;
+    margin-bottom:8px;
+    overflow:hidden;
+    position:relative;
   }
-  .agent-tile img.ship{
-    width:100%;height:100%;object-fit:contain;
-    mix-blend-mode:lighten;
+  .agent-art img{
+    width:100%;height:100%;
+    object-fit:cover;
+    object-position:top center;
+    display:block;
   }
-  .agent-row{display:flex;align-items:center;justify-content:center;gap:7px;}
-  .agent-port{
-    width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:top center;
-    border:1px solid rgba(255,255,255,0.15);background:#000;flex:none;
+  /* letter-tile fallback shown when both img sources fail */
+  .agent-art .letter-tile{
+    display:none;
+    width:100%;height:100%;
+    align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:32px;
+    color:rgba(0,0,0,0.6);
   }
+  .agent-art.letter-mode .letter-tile{display:flex;}
+  .agent-art.letter-mode img{display:none;}
+
   .agent-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;}
 
   /* Actions */
@@ -174,8 +185,6 @@
     transition:all .12s ease;
   }
   .btn:hover:not(:disabled){background:rgba(0,255,136,0.1);box-shadow:0 0 18px rgba(0,255,136,0.35);}
-  .btn.cyan{color:var(--cyan);border-color:rgba(0,240,255,0.4);}
-  .btn.cyan:hover:not(:disabled){background:rgba(0,240,255,0.1);box-shadow:0 0 18px rgba(0,240,255,0.35);}
   .btn:disabled{opacity:.35;cursor:not-allowed;}
   .btn.small{font-size:11px;padding:7px 14px;}
   .sel-note{color:var(--dim);font-size:12px;}
@@ -195,27 +204,7 @@
   .banner .summary{margin-top:8px;color:var(--text);font-size:13px;line-height:1.5;}
   .banner .meta{margin-top:6px;color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase;}
 
-  /* Leaderboard */
-  .lb-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
-  .lb-head .filters{display:flex;gap:10px;flex-wrap:wrap;}
-  .lb-head .spacer{margin-left:auto;}
-  .table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th{
-    text-align:left;color:var(--green);font-family:'Orbitron',sans-serif;font-weight:500;
-    font-size:10px;text-transform:uppercase;letter-spacing:1px;
-    padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;
-  }
-  td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
-  tr:hover td{background:rgba(0,255,136,0.03);}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle;box-shadow:0 0 6px currentColor;}
-  .aname{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;vertical-align:middle;}
-  .rank{color:var(--dim);font-size:11px;}
-  .badge-win{color:var(--green);font-weight:700;}
-  .badge-loss{color:var(--red);font-weight:700;}
-  .empty{color:var(--dim);text-align:center;padding:24px;font-size:13px;}
-
-  /* Watch overlay */
+  /* Game overlay */
   .overlay{
     position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.92);
     display:none;flex-direction:column;padding:14px;
@@ -233,9 +222,10 @@
 <body>
   <div class="topbar">
     <h1>◈ AGENT ARCADE</h1>
-    <span class="tag">pick a game · pick an agent · watch it play</span>
+    <span class="tag">pick a game · pick an agent · play</span>
     <div class="spacer"></div>
     <span id="apiStatus" class="apistatus">● connecting…</span>
+    <a class="back lbk" href="/leaderboard.html">◆ LEADERBOARD</a>
     <a class="back" href="/games/battle-arena.html">⚔ BATTLE ARENA</a>
     <a class="back" href="/">← DASHBOARD</a>
   </div>
@@ -258,42 +248,19 @@
     <div class="card">
       <h2><span class="step">03</span> Play</h2>
       <div class="actions">
-        <button id="btnPlay" class="btn" disabled>▶ Play (Instant)</button>
-        <button id="btnWatch" class="btn cyan" disabled>◉ Watch Bot</button>
+        <button id="btnPlay" class="btn" disabled>▶ PLAY</button>
         <span id="selNote" class="sel-note">Choose a game and an agent to begin.</span>
       </div>
       <div id="banner" class="banner"></div>
     </div>
 
-    <!-- LEADERBOARD -->
-    <div class="card">
-      <div class="lb-head">
-        <h2 style="margin:0;">◆ Leaderboard</h2>
-        <div class="filters">
-          <select id="filterGame"><option value="">All Games</option></select>
-          <select id="filterAgent"><option value="">All Agents</option></select>
-        </div>
-        <div class="spacer"></div>
-        <button id="btnRefresh" class="btn small">↻ Refresh</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Agent</th><th>Game</th><th>Score</th><th>Result</th><th>When</th></tr>
-          </thead>
-          <tbody id="lbBody">
-            <tr><td colspan="6" class="empty">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
-  <!-- WATCH OVERLAY -->
+  <!-- GAME OVERLAY -->
   <div id="overlay" class="overlay">
     <div class="obar">
-      <span class="otitle" id="overlayTitle">◉ Watching…</span>
-      <span class="waiting" id="overlayWait">Bot is playing — result will appear here.</span>
+      <span class="otitle" id="overlayTitle">▶ Playing…</span>
+      <span class="waiting" id="overlayWait">Game in progress — result will appear here when finished.</span>
       <div class="spacer" style="margin-left:auto;"></div>
       <button id="btnCloseOverlay" class="btn small">✕ Close</button>
     </div>
@@ -306,11 +273,11 @@
 
   // ---------- fallback data ----------
   var FALLBACK_GAMES = [
-    {id:"basketball",  name:"NEON HOOPS",     url:"/games/basketball.html",  color:"#ff9d3d", icon:"🏀"},
-    {id:"football",    name:"GRID GRIDIRON",  url:"/games/football.html",    color:"#ff2a2a", icon:"🏈"},
-    {id:"dodgeball",   name:"GRID DODGEBALL", url:"/games/dodgeball.html",   color:"#ff5db1", icon:"⚡"},
-    {id:"sigil-storm", name:"SIGIL STORM",    url:"/games/sigil-storm.html", color:"#c084fc", icon:"✦"},
-    {id:"xt-adventure", name:"XT ADVENTURE",  url:"/games/xt-adventure.html", color:"#00ff88", icon:"🗡️"}
+    {id:"basketball",   name:"NEON HOOPS",     url:"/games/basketball.html",   color:"#ff9d3d", icon:"🏀"},
+    {id:"football",     name:"GRID GRIDIRON",  url:"/games/football.html",     color:"#ff2a2a", icon:"🏈"},
+    {id:"dodgeball",    name:"GRID DODGEBALL", url:"/games/dodgeball.html",    color:"#ff5db1", icon:"⚡"},
+    {id:"sigil-storm",  name:"SIGIL STORM",    url:"/games/sigil-storm.html",  color:"#c084fc", icon:"✦"},
+    {id:"xt-adventure", name:"XT ADVENTURE",   url:"/games/xt-adventure.html", color:"#00ff88", icon:"🗡️"}
   ];
   var FALLBACK_AGENTS = [
     {id:"SHADDAI", color:"#ffcf1a"},
@@ -322,26 +289,31 @@
     {id:"PIKADON", color:"#ff2a2a"}
   ].map(function(a){
     a.name = a.id;
-    a.ship = "/assets/games/ships/"+a.id+".png";
     a.portrait = "/assets/agents/"+a.id+"-portrait.png";
     return a;
   });
   var GAME_ICONS = {basketball:"🏀", football:"🏈", dodgeball:"⚡", "sigil-storm":"✦", "xt-adventure":"🗡️"};
 
+  // HF action portrait — grounded cinematic art from football assets folder
+  function hfArtUrl(id){
+    return "/sports/football/assets/players/"+encodeURIComponent(id)+".png?v=cine1";
+  }
+  function fallbackPortrait(id){
+    return "/assets/agents/"+encodeURIComponent(id)+"-portrait.png";
+  }
+
   // ---------- state ----------
   var GAMES = [], AGENTS = [];
   var selGame = null, selAgent = null;
   var apiOnline = true;
-  var pollTimer = null;
 
   // ---------- dom ----------
   var $ = function(id){ return document.getElementById(id); };
-  var gamesGrid = $("gamesGrid"), agentsGrid = $("agentsGrid");
-  var btnPlay = $("btnPlay"), btnWatch = $("btnWatch"), selNote = $("selNote");
-  var banner = $("banner"), lbBody = $("lbBody");
-  var filterGame = $("filterGame"), filterAgent = $("filterAgent");
-  var overlay = $("overlay"), gameFrame = $("gameFrame");
-  var apiStatus = $("apiStatus");
+  var gamesGrid  = $("gamesGrid"),  agentsGrid  = $("agentsGrid");
+  var btnPlay    = $("btnPlay"),    selNote     = $("selNote");
+  var banner     = $("banner");
+  var overlay    = $("overlay"),    gameFrame   = $("gameFrame");
+  var apiStatus  = $("apiStatus");
 
   // ---------- helpers ----------
   function esc(s){
@@ -357,16 +329,6 @@
     for(var i=0;i<GAMES.length;i++){ if(GAMES[i].id===id) return GAMES[i]; }
     return null;
   }
-  function timeAgo(ts){
-    if(!ts) return "—";
-    var t = (typeof ts === "number") ? ts : Date.parse(ts);
-    if(isNaN(t)) return "—";
-    var s = Math.max(0, Math.floor((Date.now()-t)/1000));
-    if(s<60) return s+"s ago";
-    var m = Math.floor(s/60); if(m<60) return m+"m ago";
-    var h = Math.floor(m/60); if(h<24) return h+"h ago";
-    return Math.floor(h/24)+"d ago";
-  }
   function setApiStatus(up){
     apiOnline = up;
     apiStatus.className = "apistatus " + (up ? "up" : "down");
@@ -381,21 +343,17 @@
   // ---------- render games ----------
   function renderGames(){
     gamesGrid.innerHTML = "";
-    filterGame.innerHTML = '<option value="">All Games</option>';
     GAMES.forEach(function(g){
       var icon = g.icon || GAME_ICONS[g.id] || "🎮";
       var el = document.createElement("div");
       el.className = "pick";
       el.style.setProperty("--accent", g.color || "#00ff88");
-      el.innerHTML = '<span class="game-ico">'+esc(icon)+'</span>'+
-                     '<span class="game-name" style="color:'+esc(g.color||"#00ff88")+'">'+esc(g.name)+'</span>';
+      el.innerHTML =
+        '<span class="game-ico">'+esc(icon)+'</span>'+
+        '<span class="game-name" style="color:'+esc(g.color||"#00ff88")+'">'+esc(g.name)+'</span>';
       el.addEventListener("click", function(){ selectGame(g.id); });
       el.dataset.id = g.id;
       gamesGrid.appendChild(el);
-
-      var o = document.createElement("option");
-      o.value = g.id; o.textContent = g.name;
-      filterGame.appendChild(o);
     });
   }
   function selectGame(id){
@@ -407,28 +365,63 @@
   }
 
   // ---------- render agents ----------
+  // Builds an agent card with HF art as primary image.
+  // Image fallback chain: HF action portrait → /assets/agents/<ID>-portrait.png → letter tile
+  function buildAgentCard(a){
+    var col = a.color || "#00ff88";
+    var initials = a.id.charAt(0);
+    var hfSrc  = hfArtUrl(a.id);
+    var fbSrc  = a.portrait || fallbackPortrait(a.id);
+
+    var el = document.createElement("div");
+    el.className = "pick";
+    el.style.setProperty("--accent", col);
+    el.dataset.id = a.id;
+
+    // art container
+    var artDiv = document.createElement("div");
+    artDiv.className = "agent-art";
+
+    // letter tile (hidden by default, revealed when both images fail)
+    var tile = document.createElement("div");
+    tile.className = "letter-tile";
+    tile.style.background = col;
+    tile.textContent = initials;
+
+    // primary img — HF action portrait
+    var img = document.createElement("img");
+    img.alt = a.name || a.id;
+    img.src = hfSrc;
+
+    var triedFallback = false;
+    img.onerror = function(){
+      if(!triedFallback){
+        triedFallback = true;
+        img.src = fbSrc;
+      } else {
+        // both failed — show letter tile
+        artDiv.classList.add("letter-mode");
+      }
+    };
+
+    artDiv.appendChild(img);
+    artDiv.appendChild(tile);
+
+    var nameSpan = document.createElement("span");
+    nameSpan.className = "agent-name";
+    nameSpan.style.color = col;
+    nameSpan.textContent = a.name || a.id;
+
+    el.appendChild(artDiv);
+    el.appendChild(nameSpan);
+    el.addEventListener("click", function(){ selectAgent(a.id); });
+    return el;
+  }
+
   function renderAgents(){
     agentsGrid.innerHTML = "";
-    filterAgent.innerHTML = '<option value="">All Agents</option>';
     AGENTS.forEach(function(a){
-      var col = a.color || "#00ff88";
-      var el = document.createElement("div");
-      el.className = "pick";
-      el.style.setProperty("--accent", col);
-      el.innerHTML =
-        '<div class="agent-tile"><img class="ship" alt="'+esc(a.name)+' ship" src="'+esc(a.ship)+'" '+
-          'onerror="this.style.display=\'none\'"></div>'+
-        '<div class="agent-row">'+
-          '<img class="agent-port" alt="" src="'+esc(a.portrait)+'" onerror="this.style.display=\'none\'">'+
-          '<span class="agent-name" style="color:'+esc(col)+'">'+esc(a.name)+'</span>'+
-        '</div>';
-      el.addEventListener("click", function(){ selectAgent(a.id); });
-      el.dataset.id = a.id;
-      agentsGrid.appendChild(el);
-
-      var o = document.createElement("option");
-      o.value = a.id; o.textContent = a.name;
-      filterAgent.appendChild(o);
+      agentsGrid.appendChild(buildAgentCard(a));
     });
   }
   function selectAgent(id){
@@ -440,12 +433,12 @@
   }
 
   function updateActions(){
-    var ready = selGame && selAgent;
+    var ready = !!(selGame && selAgent);
     btnPlay.disabled = !ready;
-    btnWatch.disabled = !ready;
     if(ready){
       var g = gameById(selGame), a = agentById(selAgent);
-      selNote.innerHTML = "Ready: <b>"+esc(a?a.name:selAgent)+"</b> plays <b>"+esc(g?g.name:selGame)+"</b>.";
+      selNote.innerHTML =
+        "Ready: <b>"+esc(a?a.name:selAgent)+"</b> plays <b>"+esc(g?g.name:selGame)+"</b>.";
     } else {
       selNote.textContent = "Choose a game and an agent to begin.";
     }
@@ -466,42 +459,16 @@
     banner.classList.add("show");
   }
 
-  // ---------- PLAY (instant) ----------
-  async function playInstant(){
-    if(!selGame || !selAgent) return;
-    btnPlay.disabled = true;
-    var prev = btnPlay.textContent; btnPlay.textContent = "… playing";
-    try{
-      var data = await api("/api/arcade/play", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({game:selGame, agent:selAgent})
-      });
-      setApiStatus(true);
-      if(data && data.ok && data.result){
-        showResult(data.result);
-        loadLeaderboard();
-      } else {
-        banner.innerHTML = '<div class="summary">No result returned by the arcade engine.</div>';
-        banner.classList.add("show");
-      }
-    }catch(e){
-      setApiStatus(false);
-      banner.innerHTML = '<div class="summary" style="color:var(--orange)">Play failed — the arcade API is offline. Try again once the backend is running.</div>';
-      banner.classList.add("show");
-    }finally{
-      btnPlay.textContent = prev; btnPlay.disabled = !(selGame && selAgent);
-    }
-  }
-
-  // ---------- WATCH BOT (iframe + postMessage) ----------
-  function watchBot(){
+  // ---------- PLAY — launches game iframe for the user to play ----------
+  function launchPlay(){
     if(!selGame || !selAgent) return;
     var g = gameById(selGame), a = agentById(selAgent);
     if(!g) return;
-    var url = g.url + (g.url.indexOf("?")>=0 ? "&" : "?") + "autoplay=1&agent=" + encodeURIComponent(selAgent);
-    $("overlayTitle").textContent = "◉ " + (a?a.name:selAgent) + " plays " + (g?g.name:selGame);
-    $("overlayWait").textContent = "Bot is playing — result will appear here.";
+    // Build URL: pass agent context, NO autoplay=1 (user plays)
+    var sep = g.url.indexOf("?") >= 0 ? "&" : "?";
+    var url = g.url + sep + "agent=" + encodeURIComponent(selAgent);
+    $("overlayTitle").textContent = "▶ " + (a?a.name:selAgent) + " — " + (g?g.name:selGame);
+    $("overlayWait").textContent = "Game in progress — result will appear here when finished.";
     gameFrame.src = url;
     overlay.classList.add("show");
   }
@@ -509,61 +476,23 @@
     overlay.classList.remove("show");
     gameFrame.src = "about:blank";
   }
-  // listen for game results
+
+  // listen for game results posted via postMessage
   window.addEventListener("message", function(ev){
     var d = ev.data;
     if(!d || typeof d !== "object") return;
     if(d.type !== "arcadeResult") return;
     var r = d.result || d.payload || d;
-    // normalise minimal shape
     var result = {
-      game:   r.game   != null ? r.game   : selGame,
-      agent:  r.agent  != null ? r.agent  : selAgent,
-      score:  r.score,
-      win:    r.win,
-      summary:r.summary
+      game:    r.game   != null ? r.game    : selGame,
+      agent:   r.agent  != null ? r.agent   : selAgent,
+      score:   r.score,
+      win:     r.win,
+      summary: r.summary
     };
     $("overlayWait").textContent = "Result received ✓ — you can close this window.";
     showResult(result);
-    loadLeaderboard();
   });
-
-  // ---------- leaderboard ----------
-  async function loadLeaderboard(){
-    var qs = [];
-    if(filterGame.value)  qs.push("game="+encodeURIComponent(filterGame.value));
-    if(filterAgent.value) qs.push("agent="+encodeURIComponent(filterAgent.value));
-    qs.push("limit=20");
-    try{
-      var data = await api("/api/arcade/leaderboard?"+qs.join("&"));
-      setApiStatus(true);
-      renderLeaderboard((data && data.scores) || []);
-    }catch(e){
-      setApiStatus(false);
-      lbBody.innerHTML = '<tr><td colspan="6" class="empty">Leaderboard unavailable — arcade API is offline.</td></tr>';
-    }
-  }
-  function renderLeaderboard(scores){
-    if(!scores.length){
-      lbBody.innerHTML = '<tr><td colspan="6" class="empty">No scores yet — be the first to play.</td></tr>';
-      return;
-    }
-    var rows = scores.map(function(s, i){
-      var a = agentById(s.agent), g = gameById(s.game);
-      var col = a ? a.color : "#00ff88";
-      var win = !!s.win;
-      return '<tr>'+
-        '<td class="rank">'+(i+1)+'</td>'+
-        '<td><span class="dot" style="color:'+esc(col)+';background:'+esc(col)+'"></span>'+
-            '<span class="aname" style="color:'+esc(col)+'">'+esc(a?a.name:s.agent)+'</span></td>'+
-        '<td>'+esc(g?g.name:s.game)+'</td>'+
-        '<td style="color:var(--yellow)">'+esc(s.score==null?"—":s.score)+'</td>'+
-        '<td>'+(win?'<span class="badge-win">WIN</span>':'<span class="badge-loss">LOSS</span>')+'</td>'+
-        '<td class="rank">'+esc(timeAgo(s.ts))+'</td>'+
-      '</tr>';
-    });
-    lbBody.innerHTML = rows.join("");
-  }
 
   // ---------- load games/agents ----------
   async function loadCatalog(){
@@ -576,9 +505,8 @@
     try{
       var ad = await api("/api/arcade/agents");
       AGENTS = (ad && ad.ok && ad.agents && ad.agents.length) ? ad.agents.map(function(a){
-        a.name = a.name || a.id;
-        a.ship = a.ship || ("/assets/games/ships/"+a.id+".png");
-        a.portrait = a.portrait || ("/assets/agents/"+a.id+"-portrait.png");
+        a.name    = a.name    || a.id;
+        a.portrait = a.portrait || fallbackPortrait(a.id);
         return a;
       }) : FALLBACK_AGENTS;
     }catch(e){ AGENTS = FALLBACK_AGENTS; }
@@ -588,22 +516,14 @@
   }
 
   // ---------- wire ----------
-  btnPlay.addEventListener("click", playInstant);
-  btnWatch.addEventListener("click", watchBot);
+  btnPlay.addEventListener("click", launchPlay);
   $("btnCloseOverlay").addEventListener("click", closeOverlay);
-  $("btnRefresh").addEventListener("click", loadLeaderboard);
-  filterGame.addEventListener("change", loadLeaderboard);
-  filterAgent.addEventListener("change", loadLeaderboard);
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && overlay.classList.contains("show")) closeOverlay();
   });
 
   // ---------- init ----------
-  (async function init(){
-    await loadCatalog();
-    await loadLeaderboard();
-    pollTimer = setInterval(loadLeaderboard, 15000);
-  })();
+  loadCatalog();
 
 })();
 </script>

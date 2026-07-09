@@ -733,10 +733,23 @@ Risk Checklist:
 
   generateImage: async (prompt) => {
     try {
-      const encoded = encodeURIComponent(prompt);
-      return `TURTLE Image Generated:\n\nhttps://image.pollinations.ai/prompt/${encoded}\n\nDescription: ${prompt}`;
+      const hf   = require('./lib/hf-keys');
+      const fs   = require('fs');
+      const path = require('path');
+      const DATA_DIR = path.join(__dirname, '..', 'data');
+      const IMG_DIR  = path.join(DATA_DIR, 'agent-images');
+      try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
+      if (!hf.keys().length) {
+        return 'TURTLE Image Generation: No HF token configured (NO_KEY). Add HF_TOKENS to .env or backend/data/runtime-keys.json to enable real image generation.';
+      }
+      const img = await hf.generate(String(prompt || 'abstract AI art'));
+      const file = 'gen-' + Date.now() + '-' + Math.floor(Math.random() * 1e5) + '.png';
+      fs.writeFileSync(path.join(IMG_DIR, file), img);
+      const url = '/api/forge/image/' + file;
+      const dataUri = 'data:image/png;base64,' + img.toString('base64');
+      return JSON.stringify({ success: true, ok: true, provider: 'huggingface-flux', url, dataUri, prompt, note: 'Real FLUX image generated and saved server-side.' });
     } catch (e) {
-      return `TURTLE Image Generation:\n\n[Image service unavailable]\n\nRequested: ${prompt}`;
+      return JSON.stringify({ success: false, error: 'TURTLE Image Generation failed: ' + (e && e.message || 'unknown'), code: e && e.code || 'GEN_ERROR', prompt });
     }
   },
 

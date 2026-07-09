@@ -944,17 +944,26 @@ const TOOLS = {
 
   generate_image: {
     name: 'generate_image',
-    description: 'Generate an AI image — FREE, no API key (Pollinations). model: "flux" (quality) or "turbo" (fast). Returns a primary URL + free no-key fallback URLs. Higher quality if ACEDATACLOUD_API_TOKEN is set (Flux/Seedream/NanoBanana).',
-    schema: { prompt: 'string — detailed image description', model: "string — 'flux' (default) or 'turbo'", width: 'number (default 1024)', height: 'number (default 1024)' },
+    description: 'Generate a real AI image using HuggingFace FLUX.1-schnell (server-side key pool, no client key needed). Returns a served URL to the rendered PNG.',
+    schema: { prompt: 'string — detailed image description', model: "string — ignored (always uses FLUX.1-schnell)", width: 'number (default 1024)', height: 'number (default 1024)' },
     agents: ['TURTLE'],
     async execute({ prompt, model = 'flux', width = 1024, height = 1024 }) {
-      const enc = encodeURIComponent(prompt || ''); const seed = Math.floor(Math.random() * 1e6);
-      const poll = m => `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&model=${m}&seed=${seed}&nologo=true&enhance=true`;
-      const primary = poll(model);
-      // Free, no-key fallbacks (alternate Pollinations models) — try these if the primary stalls.
-      const fallbacks = ['flux', 'turbo'].filter(m => m !== model).map(poll);
-      const premium = process.env.ACEDATACLOUD_API_TOKEN ? 'available (AceDataCloud Flux/Seedream/NanoBanana)' : 'set ACEDATACLOUD_API_TOKEN to enable';
-      return JSON.stringify({ success: true, provider: 'pollinations', model, url: primary, fallbacks, premium, prompt, note: 'Free & keyless. Image renders on first load of the URL; if slow, use a fallback.' });
+      const hf = require('./lib/hf-keys');
+      const DATA_DIR = path.join(__dirname, '..', 'data');
+      const IMG_DIR  = path.join(DATA_DIR, 'agent-images');
+      try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
+      if (!hf.keys().length) {
+        return JSON.stringify({ success: false, error: 'No HF token configured. Add HF_TOKENS to .env or backend/data/runtime-keys.json.', code: 'NO_KEY' });
+      }
+      let img;
+      try { img = await hf.generate(String(prompt || 'abstract AI art')); }
+      catch (e) { return JSON.stringify({ success: false, error: 'Image generation failed: ' + (e && e.message || 'unknown'), code: e && e.code || 'GEN_ERROR' }); }
+      const file = 'gen-' + Date.now() + '-' + Math.floor(Math.random() * 1e5) + '.png';
+      try { fs.writeFileSync(path.join(IMG_DIR, file), img); }
+      catch (e) { return JSON.stringify({ success: false, error: 'Could not save image: ' + (e && e.message || 'unknown') }); }
+      const url = '/api/forge/image/' + file;
+      const dataUri = 'data:image/png;base64,' + img.toString('base64');
+      return JSON.stringify({ success: true, ok: true, provider: 'huggingface-flux', url, dataUri, prompt, note: 'Image saved server-side. Access via ' + url });
     }
   },
 
@@ -2241,14 +2250,28 @@ const TOOLS = {
   },
 
   generate_image_free: {
-    description: 'Generate an AI image for free using Pollinations.ai. No API key needed.',
+    description: 'Generate a real AI image using the server-side HuggingFace FLUX.1-schnell key pool. Returns a served URL to the rendered PNG (no client key required).',
     params: ['prompt', 'width', 'height'],
     execute: async (params) => {
-      const prompt = encodeURIComponent(params.prompt || 'cyberpunk AI agent dashboard');
-      const width = params.width || 1024;
-      const height = params.height || 768;
-      const url = `https://image.pollinations.ai/prompt/${prompt}?width=${width}&height=${height}&nologo=true`;
-      return `Image generated!\nPrompt: ${decodeURIComponent(prompt)}\nURL: ${url}\n\nOpen this URL in browser to view the image.`;
+      const hf = require('./lib/hf-keys');
+      const fs = require('fs');
+      const path = require('path');
+      const DATA_DIR = path.join(__dirname, '..', 'data');
+      const IMG_DIR  = path.join(DATA_DIR, 'agent-images');
+      try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
+      const prompt = params.prompt || 'cyberpunk AI agent dashboard';
+      if (!hf.keys().length) {
+        return JSON.stringify({ success: false, error: 'No HF token configured. Add HF_TOKENS to .env or backend/data/runtime-keys.json.', code: 'NO_KEY' });
+      }
+      let img;
+      try { img = await hf.generate(String(prompt)); }
+      catch (e) { return JSON.stringify({ success: false, error: 'Image generation failed: ' + (e && e.message || 'unknown'), code: e && e.code || 'GEN_ERROR' }); }
+      const file = 'gen-' + Date.now() + '-' + Math.floor(Math.random() * 1e5) + '.png';
+      try { fs.writeFileSync(path.join(IMG_DIR, file), img); }
+      catch (e) { return JSON.stringify({ success: false, error: 'Could not save image: ' + (e && e.message || 'unknown') }); }
+      const url = '/api/forge/image/' + file;
+      const dataUri = 'data:image/png;base64,' + img.toString('base64');
+      return JSON.stringify({ success: true, ok: true, provider: 'huggingface-flux', url, dataUri, prompt, note: 'Image saved server-side. Access via ' + url });
     }
   },
 

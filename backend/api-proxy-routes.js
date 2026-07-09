@@ -7689,7 +7689,10 @@ router.post('/byok/set', (req, res) => {
     try {
       const devFallback = process.env.NODE_ENV === 'production' ? '' : (req.headers['x-user-id'] || req.query.userId || '');
       const uid = String(req.userId || devFallback || '').replace(/[^a-zA-Z0-9_@.-]/g, '');
-      const customersFile = path.join(__dirname, 'customers.json');
+      // FIX: customers.json lives in backend/data/, not backend/. The old path
+      // (__dirname/customers.json) never existed, so every user silently fell back
+      // to the 'free' tier and Pro users could not save paid-provider keys.
+      const customersFile = path.join(DATA_DIR, 'customers.json');
       if (uid && fs.existsSync(customersFile)) {
         const db = JSON.parse(fs.readFileSync(customersFile, 'utf8'));
         const customer = Object.prototype.hasOwnProperty.call(db, uid) ? db[uid] : null;

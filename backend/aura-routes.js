@@ -99,6 +99,38 @@ router.post('/task', (req, res) => {
   } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
 });
 
+// GET /api/aura/skills — list the loaded (validated) declarative skills (A5.1).
+// Returns names + action types only; invalid/duplicate skills were already skipped at load.
+router.get('/skills', (req, res) => {
+  try {
+    const skills = (aura.loadSkills ? aura.loadSkills() : []).map(s => ({ name: s.name, type: s.action && s.action.type }));
+    res.json({ ok: true, count: skills.length, skills });
+  } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+});
+
+// GET /api/aura/audit?limit=50 — tail the JSONL audit log (A5.3). Owner diagnostics.
+router.get('/audit', require('./auth-guard').requireAdmin, (req, res) => {
+  try {
+    const fs = require('fs'); const path = require('path');
+    const dir = aura.DATA_DIR || path.join(__dirname, 'data');
+    const file = path.join(dir, 'aura-audit.jsonl');
+    let lines = [];
+    try {
+      const raw = fs.readFileSync(file, 'utf8');
+      lines = raw.split('\n').filter(Boolean);
+    } catch (_) { /* no log yet */ }
+    const limit = Math.min(500, Math.max(1, parseInt((req.query && req.query.limit) || '50', 10) || 50));
+    const tail = lines.slice(-limit).map(l => { try { return JSON.parse(l); } catch (_) { return null; } }).filter(Boolean);
+    res.json({ ok: true, total: lines.length, returned: tail.length, entries: tail });
+  } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+});
+
+// GET /api/aura/policy — show the active (env-derived) policy gates (A5.2). Introspection only.
+router.get('/policy', (req, res) => {
+  try { res.json({ ok: true, policy: aura.policy || {} }); }
+  catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
+});
+
 // POST /api/aura/tools/:name — local tools not available in this lightweight layer.
 router.post('/tools/:name', (req, res) => res.json({ ok: false, error: 'tool not available in AURA layer' }));
 

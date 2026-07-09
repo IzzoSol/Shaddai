@@ -32,10 +32,16 @@ const crypto = require('crypto');
 // ---------------------------------------------------------------------------
 // Config + persistence paths
 // ---------------------------------------------------------------------------
-const DATA_DIR     = process.env.AURA_HOME || path.join(__dirname, '..', 'data');
+// Persistence dir (A4): AURA_DATA_DIR (preferred, e.g. a Render persistent disk like
+// /opt/render/project/data) → AURA_HOME (legacy) → backend/data (repo default).
+// Stats + ledger + cache + audit log all live here, so mounting a persistent disk
+// at AURA_DATA_DIR lets them survive redeploys.
+const DATA_DIR     = process.env.AURA_DATA_DIR || process.env.AURA_HOME || path.join(__dirname, '..', 'data');
 const CACHE_FILE   = path.join(DATA_DIR, 'aura-cache.json');
 const STATS_FILE   = path.join(DATA_DIR, 'aura-stats.json');
 const SEED_FILE    = path.join(DATA_DIR, 'aura-seed.json');   // curated, stable knowledge base (committed)
+const AUDIT_FILE   = path.join(DATA_DIR, 'aura-audit.jsonl'); // A5.3 — one JSON line per route() call
+const SKILLS_FILE  = path.join(DATA_DIR, 'aura-skills.json'); // A5.1 — optional declarative skill registry
 
 const DEFAULT_TTL_MS   = 24 * 60 * 60 * 1000; // 24h
 const PROMOTED_TTL_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days — promoted (frequently-missed) queries
@@ -47,6 +53,34 @@ const MAX_RECENT_SAVES = 50;                   // rolling activity log cap
 const FLUSH_INTERVAL_MS = 5000;               // throttle: write disk at most every 5s
 const PROMOTE_THRESHOLD = 3;                  // misses before a query is auto-promoted
 const MAX_MISS_FREQ     = 200;                // max entries in the miss-frequency map
+const AUDIT_MAX_QUERY   = 120;                // A5.3 — truncate audit query field to this many chars
+const VALID_ACTION_TYPES = new Set(['answer', 'adapter', 'compute', 'chain']); // A5.1 — allowed skill.action.type
+
+// ---------------------------------------------------------------------------
+// A5.2 — Optional policy gates (opt-in, default OFF → existing behavior unchanged).
+// Global policy is read from env once; per-skill policy can override in the registry.
+//   AURA_MAX_COST_USD   — when set to 0, block the LLM fallback (route() misses
+//                         are annotated { policyBlocked:true, reason:'no-LLM policy' }).
+//   AURA_RATELIMIT_MAX  — max route() calls allowed per window (0/unset = unlimited).
+//   AURA_RATELIMIT_WINDOW_MS — sliding window size (default 60000).
+// All gates are no-ops unless the corresponding env is present.
+// ---------------------------------------------------------------------------
+const GLOBAL_POLICY = (() => {
+  const p = {};
+  if (process.env.AURA_MAX_COST_USD !== undefined && process.env.AURA_MAX_COST_USD !== '') {
+    const v = Number(process.env.AURA_MAX_COST_USD);
+    if (isFinite(v)) p.maxCostUSD = v;
+  }
+  if (process.env.AURA_RATELIMIT_MAX !== undefined && process.env.AURA_RATELIMIT_MAX !== '') {
+    const v = Number(process.env.AURA_RATELIMIT_MAX);
+    if (isFinite(v) && v > 0) {
+      p.rateLimit = { max: Math.floor(v), windowMs: Number(process.env.AURA_RATELIMIT_WINDOW_MS) > 0 ? Number(process.env.AURA_RATELIMIT_WINDOW_MS) : 60000 };
+    }
+  }
+  return p;
+})();
+// Sliding-window timestamps for the global rate-limit gate (in-memory only).
+let _rateWindow = [];
 
 // ---------------------------------------------------------------------------
 // Tiny JSON file helpers (resilient — never throw outward)
@@ -94,7 +128,7 @@ function _initStats() {
     missesWithSaving: typeof s.missesWithSaving === 'number' ? s.missesWithSaving : 0,
     volatileSkips:    typeof s.volatileSkips    === 'number' ? s.volatileSkips    : 0,
     firstTs:          typeof s.firstTs          === 'number' ? s.firstTs          : Date.now(),
-    byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0 }, s.byMethod || {}),
+    byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0, skill: 0, chain: 0 }, s.byMethod || {}),
     recentSaves: Array.isArray(s.recentSaves) ? s.recentSaves : [],
     // self-improvement fields
     missFreq:       (s.missFreq && typeof s.missFreq === 'object') ? s.missFreq : {},
@@ -1372,6 +1406,176 @@ function loadSeed() {
 }
 
 // ===========================================================================
+// A5.3 — JSONL audit log. One JSON line per route() call. All file I/O is
+// try/catch-guarded so logging can NEVER break a request. Diagnostics → stderr.
+// ===========================================================================
+function _auditHash(prompt) {
+  try { return crypto.createHash('sha256').update(normalize(prompt)).digest('hex').slice(0, 16); }
+  catch (_) { return ''; }
+}
+function auditLog(rec) {
+  try {
+    ensureDir();
+    const line = JSON.stringify({
+      ts: new Date().toISOString(),
+      qHash: _auditHash(rec.query || ''),
+      query: String(rec.query || '').replace(/\s+/g, ' ').slice(0, AUDIT_MAX_QUERY),
+      method: rec.method || 'miss',
+      hit: !!rec.hit,
+      latencyMs: typeof rec.latencyMs === 'number' ? Math.round(rec.latencyMs * 1000) / 1000 : 0
+    }) + '\n';
+    fs.appendFileSync(AUDIT_FILE, line);
+  } catch (err) {
+    try { console.error('[aura] audit log write failed:', err && err.message); } catch (_) {}
+  }
+}
+
+// ===========================================================================
+// A5.1 — Declarative skill registry (OPTIONAL). Loaded from aura-skills.json if
+// present. Each skill: { name, match, action:{ type, ... }, policy? }.
+// Validation: name (string, unique), match (compiles as RegExp), action.type in
+// ['answer','adapter','compute','chain']. Invalid/duplicate skills are SKIPPED
+// with a clear stderr warning — never crashes the module.
+// ===========================================================================
+const ADAPTERS = Object.create(null); // name → fn(prompt, match, skill) → string|null (registered by host)
+/** registerAdapter(name, fn) — expose a host function to 'adapter'/'chain' skills. */
+function registerAdapter(name, fn) {
+  if (typeof name === 'string' && typeof fn === 'function') ADAPTERS[name] = fn;
+  return true;
+}
+
+let _skills = null;
+function _validateSkill(sk, seenNames) {
+  if (!sk || typeof sk !== 'object') { console.error('[aura] skill rejected: not an object'); return null; }
+  if (typeof sk.name !== 'string' || !sk.name.trim()) { console.error('[aura] skill rejected: missing/invalid name'); return null; }
+  const name = sk.name.trim();
+  if (seenNames.has(name)) { console.error(`[aura] skill rejected: duplicate name "${name}"`); return null; }
+  if (typeof sk.match !== 'string' && !(sk.match instanceof RegExp)) {
+    console.error(`[aura] skill "${name}" rejected: missing/invalid match`); return null;
+  }
+  let re;
+  try { re = sk.match instanceof RegExp ? sk.match : new RegExp(sk.match, 'i'); }
+  catch (e) { console.error(`[aura] skill "${name}" rejected: bad match regex (${e && e.message})`); return null; }
+  const action = sk.action;
+  if (!action || typeof action !== 'object' || !VALID_ACTION_TYPES.has(action.type)) {
+    console.error(`[aura] skill "${name}" rejected: action.type must be one of ${[...VALID_ACTION_TYPES].join('/')}`);
+    return null;
+  }
+  if (action.type === 'chain') {
+    if (!Array.isArray(action.steps) || !action.steps.length) {
+      console.error(`[aura] skill "${name}" rejected: chain action needs a non-empty steps[]`); return null;
+    }
+    for (const st of action.steps) {
+      if (!st || !VALID_ACTION_TYPES.has(st.type) || st.type === 'chain') {
+        console.error(`[aura] skill "${name}" rejected: each chain step needs a valid non-chain type`); return null;
+      }
+    }
+  }
+  seenNames.add(name);
+  return { name, re, action, policy: (sk.policy && typeof sk.policy === 'object') ? sk.policy : null };
+}
+function loadSkills() {
+  if (_skills) return _skills;
+  const out = [];
+  try {
+    const raw = readJson(SKILLS_FILE, null);
+    if (raw) {
+      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw.skills) ? raw.skills : []);
+      const seen = new Set();
+      for (const sk of arr) {
+        const v = _validateSkill(sk, seen);
+        if (v) out.push(v);
+      }
+      if (arr.length && out.length < arr.length) {
+        console.error(`[aura] skill registry: loaded ${out.length}/${arr.length} valid skills`);
+      }
+    }
+  } catch (err) {
+    try { console.error('[aura] skill registry load failed:', err && err.message); } catch (_) {}
+  }
+  _skills = out;
+  return _skills;
+}
+
+// A5.4 — run one skill action deterministically → string answer or null. No LLM.
+function _runAction(action, prompt, matchResult) {
+  try {
+    switch (action.type) {
+      case 'answer': {
+        // Static/templated answer. {N} or {0}.. substitutes regex capture groups.
+        let a = String(action.value != null ? action.value : (action.text != null ? action.text : ''));
+        if (matchResult) a = a.replace(/\{(\d+)\}/g, (_, i) => (matchResult[Number(i)] != null ? matchResult[Number(i)] : ''));
+        return a || null;
+      }
+      case 'compute': {
+        // Delegate to the built-in deterministic solvers on a target string.
+        // action.expr may reference capture groups ({0}..{N}) or {prev} (chain feed).
+        let expr = action.expr != null ? String(action.expr) : prompt;
+        if (matchResult) expr = expr.replace(/\{(\d+)\}/g, (_, i) => (matchResult[Number(i)] != null ? matchResult[Number(i)] : ''));
+        return compute(expr);
+      }
+      case 'adapter': {
+        const fn = ADAPTERS[action.adapter || action.name];
+        if (typeof fn !== 'function') return null;
+        const r = fn(prompt, matchResult, action);
+        return (r == null) ? null : String(r);
+      }
+      case 'chain': {
+        // Run ordered sub-actions; feed each result forward as {prev}; require ALL to resolve.
+        let prev = '';
+        for (const step of action.steps) {
+          const stepPrompt = step.usePrev ? prev : (step.input != null ? String(step.input) : prompt);
+          const r = _runAction(step, stepPrompt, matchResult);
+          if (r == null) return null; // deterministic: a failed step aborts the chain
+          prev = r;
+        }
+        return prev || null;
+      }
+      default: return null;
+    }
+  } catch (err) {
+    try { console.error('[aura] skill action error:', err && err.message); } catch (_) {}
+    return null;
+  }
+}
+
+/** Try the declarative skill registry. Returns { answer, method:'skill', name } or null. */
+function trySkills(prompt) {
+  const skills = loadSkills();
+  if (!skills.length) return null;
+  for (const sk of skills) {
+    let m;
+    try { m = sk.re.exec(prompt); } catch (_) { continue; }
+    if (!m) continue;
+    const ans = _runAction(sk.action, prompt, m);
+    if (ans != null) return { answer: ans, name: sk.name, policy: sk.policy, actionType: sk.action.type };
+  }
+  return null;
+}
+
+// ===========================================================================
+// A5.2 — Policy gate. Returns null when allowed, or a { policyBlocked, reason }
+// object when a gate blocks the LLM fallback. Opt-in via env / per-skill policy.
+// ===========================================================================
+function _policyBlockLLM(perSkillPolicy) {
+  // maxCostUSD === 0 → no-LLM policy: block the paid fallback.
+  const maxCost = (perSkillPolicy && perSkillPolicy.maxCostUSD !== undefined)
+    ? perSkillPolicy.maxCostUSD : GLOBAL_POLICY.maxCostUSD;
+  if (maxCost === 0) return { policyBlocked: true, reason: 'no-LLM policy (maxCostUSD=0)' };
+  return null;
+}
+/** Rate-limit gate. Returns true if the call is allowed, false if throttled. */
+function _rateAllow() {
+  const rl = GLOBAL_POLICY.rateLimit;
+  if (!rl) return true;
+  const now = Date.now();
+  _rateWindow = _rateWindow.filter(t => now - t < rl.windowMs);
+  if (_rateWindow.length >= rl.max) return false;
+  _rateWindow.push(now);
+  return true;
+}
+
+// ===========================================================================
 // PUBLIC API
 // ===========================================================================
 
@@ -1381,6 +1585,7 @@ function loadSeed() {
  * Never throws.
  */
 function route(prompt, opts = {}) {
+  const _t0 = Date.now();
   try {
     // Periodic improvement pass (every IMPROVE_INTERVAL calls)
     _callCount++;
@@ -1390,6 +1595,13 @@ function route(prompt, opts = {}) {
 
     const p = String(prompt || '');
     if (!p.trim()) return { hit: false };
+
+    // A5.2 — global rate-limit gate (opt-in). When throttled, we do NOT touch the
+    // cache/compute path or increment savings; caller should back off / retry.
+    if (!_rateAllow()) {
+      auditLog({ query: p, method: 'ratelimited', hit: false, latencyMs: Date.now() - _t0 });
+      return { hit: false, policyBlocked: true, reason: 'rate limit exceeded' };
+    }
 
     const cache = pruneCache(loadCache());
     const volatile = isVolatile(p);   // time-sensitive → never serve a cached LLM answer
@@ -1404,6 +1616,7 @@ function route(prompt, opts = {}) {
         s.recentSaves.unshift({ ts: Date.now(), method: 'fetch', snippet: p.slice(0, 60), tokens: saved });
         if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
       });
+      auditLog({ query: p, method: 'fetch', hit: true, latencyMs: Date.now() - _t0 });
       return { hit: true, method: 'fetch', answer: exact.answer, savedTokensEst: saved };
     }
 
@@ -1417,6 +1630,7 @@ function route(prompt, opts = {}) {
           s.recentSaves.unshift({ ts: Date.now(), method: 'seed', snippet: p.slice(0, 60), tokens: saved });
           if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
         });
+        auditLog({ query: p, method: 'seed', hit: true, latencyMs: Date.now() - _t0 });
         return { hit: true, method: 'seed', answer: seedExact.answer, savedTokensEst: saved };
       }
     }
@@ -1435,7 +1649,23 @@ function route(prompt, opts = {}) {
       });
       // Cache compute results so identical future prompts get an O(1) FETCH hit.
       try { recordAnswer(p, computed, opts); } catch (_) { /* ignore */ }
+      auditLog({ query: p, method: 'compute', hit: true, latencyMs: Date.now() - _t0 });
       return { hit: true, method: 'compute', answer: computed, savedTokensEst: saved };
+    }
+
+    // 2b) SKILL — declarative registry (answer/adapter/compute/chain). Deterministic,
+    // runs after built-in COMPUTE, before fuzzy QUERY. No-op if no aura-skills.json.
+    const sk = trySkills(p);
+    if (sk) {
+      const saved = estTokens(p) + estTokens(sk.answer);
+      const method = sk.actionType === 'chain' ? 'chain' : 'skill';
+      bumpStats((s) => {
+        s.hits++; s.byMethod[method] = (s.byMethod[method] || 0) + 1; s.tokensSaved += saved;
+        s.recentSaves.unshift({ ts: Date.now(), method, snippet: p.slice(0, 60), tokens: saved, skill: sk.name });
+        if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+      });
+      auditLog({ query: p, method, hit: true, latencyMs: Date.now() - _t0 });
+      return { hit: true, method, answer: sk.answer, skill: sk.name, savedTokensEst: saved };
     }
 
     // 3) QUERY — fuzzy match over cached LLM answers.
@@ -1483,6 +1713,7 @@ function route(prompt, opts = {}) {
         s.recentSaves.unshift({ ts: Date.now(), method, snippet: p.slice(0, 60), tokens: saved, similarity: Math.round(bestSim * 1000) / 1000 });
         if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
       });
+      auditLog({ query: p, method, hit: true, latencyMs: Date.now() - _t0 });
       return { hit: true, method, answer: best.answer, savedTokensEst: saved, similarity: Math.round(bestSim * 1000) / 1000 };
     }
 
@@ -1495,6 +1726,10 @@ function route(prompt, opts = {}) {
       if (savedByCompression > 0) s.missesWithSaving = (s.missesWithSaving || 0) + 1;
     });
     learnMiss(p);
+    // A5.2 — no-LLM policy gate: when maxCostUSD===0, tell the caller NOT to hit the LLM.
+    const block = _policyBlockLLM(null);
+    auditLog({ query: p, method: block ? 'policy-miss' : 'miss', hit: false, latencyMs: Date.now() - _t0 });
+    if (block) return { hit: false, compressed, compressionSaved: savedByCompression, ...block };
     return { hit: false, compressed, compressionSaved: savedByCompression };
   } catch (_) {
     try {
@@ -1858,4 +2093,12 @@ function forCall({ prompt = '', system = '', ownTools = [], selectedTools = null
   }
 }
 
-module.exports = { route, recordAnswer, creditDeterministic, isVolatile, stats, forCall, router: buildRouter() };
+module.exports = {
+  route, recordAnswer, creditDeterministic, isVolatile, stats, forCall, router: buildRouter(),
+  // A5 additions (all optional / additive — existing behavior unchanged):
+  registerAdapter,   // register a host fn for 'adapter'/'chain' skills
+  loadSkills,        // load + validate the declarative skill registry (aura-skills.json)
+  auditLog,          // append a JSONL audit line (also called internally by route())
+  policy: GLOBAL_POLICY, // resolved global policy (from env) for introspection
+  DATA_DIR           // resolved persistence dir (A4) for tooling/tests
+};

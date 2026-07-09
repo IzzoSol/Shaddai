@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Turtle's Museum — The Gallery of SHADDAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+:root{
+  --void:#07050f; --gold:#c4a24e; --gold2:#e8c45c;
+  --indigo:#4a3580; --violet:#7c56c8;
+  --ink:#f0e7cf; --ink2:#a99f86;
+  --amber:#b8832a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--gold);color:#07050f}
+a{color:inherit;text-decoration:none}
+
+/* ── ENTRY ── */
+#entry{position:fixed;inset:0;z-index:100;
+  background:radial-gradient(ellipse 120% 80% at 50% 30%,#170a2e 0%,var(--void) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  transition:opacity .7s ease;padding:20px}
+#entry.gone{opacity:0;pointer-events:none}
+.e-edition{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.e-rule{width:0;height:3px;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);
+  margin:0 auto 20px;animation:drawR 1.2s .2s ease forwards}
+@keyframes drawR{to{width:min(500px,80vw)}}
+.e-title{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(30px,8vw,80px);
+  letter-spacing:.18em;text-align:center;
+  background:linear-gradient(135deg,#e8c45c 0%,#f0e7cf 40%,#c4a24e 70%,#e8c45c 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 30px rgba(196,162,78,.4))}
+.e-sub{font-style:italic;font-size:clamp(12px,1.8vw,17px);color:var(--ink2);
+  letter-spacing:.06em;margin:10px 0 40px;text-align:center}
+.e-enter{position:relative;cursor:pointer;padding:16px 44px;margin-bottom:36px;
+  border:1px solid rgba(196,162,78,.4);background:rgba(10,6,22,.7);
+  font-family:'Cinzel',serif;font-weight:900;font-size:16px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--gold);transition:transform .2s,border-color .3s,box-shadow .3s;
+  box-shadow:0 0 40px rgba(120,80,200,.22)}
+.e-enter:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 0 60px rgba(196,162,78,.4)}
+.e-back{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--ink2);
+  border-bottom:1px solid rgba(169,159,134,.3);padding-bottom:2px;transition:color .2s,border-color .2s}
+.e-back:hover{color:var(--gold);border-color:rgba(196,162,78,.6)}
+
+/* ── 3D CANVAS ── */
+#c3d{position:fixed;inset:0;display:none;width:100%;height:100%;cursor:default}
+#c3d.dragging{cursor:grabbing}
+#c3d.walking{cursor:none}
+#c3d.on{display:block}
+
+/* ── HUD ── */
+.hud{position:fixed;inset:0;z-index:50;pointer-events:none;display:none}
+.hud.on{display:block}
+.hud-bar{position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  background:linear-gradient(rgba(7,5,15,.85),transparent);pointer-events:all}
+.hb{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink2);background:rgba(10,6,18,.75);border:1px solid rgba(196,162,78,.28);
+  padding:6px 13px;cursor:pointer;transition:color .2s,border-color .2s;pointer-events:all;display:inline-block}
+.hb:hover{color:var(--gold);border-color:rgba(196,162,78,.7)}
+.hb-exit{color:#e88;border-color:rgba(220,120,110,.4)}
+.hb-exit:hover{color:#ff9d90;border-color:rgba(255,120,110,.85);background:rgba(60,14,10,.55)}
+.ht{flex:1;text-align:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 18px rgba(196,162,78,.4)}
+
+/* ── CURSOR ⇄ WALK toggle ── */
+#mode-toggle{position:fixed;bottom:16px;right:16px;z-index:63;display:none;
+  pointer-events:all;cursor:pointer;user-select:none;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:rgba(10,6,18,.9);border:1px solid rgba(196,162,78,.45);
+  padding:9px 15px;color:var(--gold);transition:background .2s,border-color .2s,box-shadow .2s;
+  box-shadow:0 0 22px rgba(120,80,200,.22)}
+#mode-toggle:hover{background:rgba(196,162,78,.14);border-color:var(--gold);box-shadow:0 0 30px rgba(196,162,78,.35)}
+#mode-toggle.on{display:block}
+#mode-toggle .mt-mode{color:var(--ink);font-weight:600}
+#mode-toggle .mt-key{color:var(--ink2);font-size:9px;letter-spacing:.18em;display:block;margin-top:3px}
+
+/* ── WALK-MODE OVERLAYS ── */
+#walk-cross{position:fixed;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;
+  z-index:60;pointer-events:none;display:none}
+#walk-cross::before,#walk-cross::after{content:'';position:absolute;background:rgba(196,162,78,.7);
+  box-shadow:0 0 6px rgba(196,162,78,.5)}
+#walk-cross::before{left:6px;top:0;width:2px;height:14px}
+#walk-cross::after{top:6px;left:0;height:2px;width:14px}
+#walk-cross.on{display:block}
+#walk-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink2);background:rgba(7,5,15,.82);border:1px solid rgba(196,162,78,.28);
+  padding:8px 15px;pointer-events:none;display:none}
+#walk-hint.on{display:block}
+#walk-hint b{color:var(--gold)}
+#walk-invite{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:62;
+  display:none;cursor:pointer;pointer-events:all;text-align:center;
+  padding:14px 30px;border:1px solid rgba(196,162,78,.5);background:rgba(8,5,16,.92);
+  box-shadow:0 0 46px rgba(80,40,140,.35);transition:border-color .2s,box-shadow .2s}
+#walk-invite:hover{border-color:var(--gold);box-shadow:0 0 60px rgba(196,162,78,.4)}
+#walk-invite.on{display:block;animation:wiPulse 2.4s ease-in-out infinite}
+@keyframes wiPulse{0%,100%{box-shadow:0 0 40px rgba(120,60,180,.28)}50%{box-shadow:0 0 60px rgba(196,162,78,.42)}}
+#walk-invite .wi-t{font-family:'Cinzel',serif;font-weight:900;font-size:16px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:6px;text-shadow:0 0 18px rgba(196,162,78,.5)}
+#walk-invite .wi-s{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink2);line-height:1.8}
+#walk-invite .wi-s b{color:var(--gold)}
+
+/* ── MURAL PAINT PANEL (cursor mode) ── */
+#mural-panel{position:fixed;top:54px;left:0;bottom:0;width:clamp(250px,30vw,340px);z-index:52;
+  background:rgba(12,7,22,.95);border-right:1px solid rgba(196,162,78,.2);
+  overflow-y:auto;padding:16px;pointer-events:all;display:none;flex-direction:column;gap:12px}
+#mural-panel.on{display:flex}
+#mural-panel::-webkit-scrollbar{width:3px}
+#mural-panel::-webkit-scrollbar-thumb{background:rgba(196,162,78,.25)}
+.mp-title{font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);text-align:center}
+.mp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink2);text-align:center;line-height:1.6;margin-top:-6px}
+#paint-canvas{width:100%;aspect-ratio:1;background:#0e0a1e;border:1px solid rgba(196,162,78,.35);
+  touch-action:none;cursor:crosshair;display:block}
+.mp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mp-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink2);min-width:44px}
+.mp-swatch{width:22px;height:22px;border:1px solid rgba(196,162,78,.3);cursor:pointer;transition:transform .12s}
+.mp-swatch:hover{transform:scale(1.15)}
+.mp-swatch.on{border-color:var(--gold);box-shadow:0 0 8px rgba(196,162,78,.6)}
+#brush-size{flex:1;accent-color:var(--gold)}
+input[type=text].mp-input{flex:1;background:rgba(28,16,6,.85);border:1px solid rgba(196,162,78,.28);
+  color:var(--ink);padding:7px 10px;font-family:'Fraunces',serif;font-size:13px;outline:none;width:100%}
+input[type=text].mp-input:focus{border-color:rgba(196,162,78,.65)}
+.mp-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 14px;background:rgba(196,162,78,.12);border:1px solid rgba(196,162,78,.35);
+  color:var(--gold);cursor:pointer;transition:background .2s;text-align:center}
+.mp-btn:hover{background:rgba(196,162,78,.25)}
+.mp-btn.ghost{background:transparent;color:var(--ink2);border-color:rgba(169,159,134,.3)}
+.mp-btn.ghost:hover{color:var(--gold);border-color:rgba(196,162,78,.6)}
+.mp-note{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;
+  color:rgba(169,159,134,.55);line-height:1.6;text-align:center}
+.mp-divider{height:1px;background:rgba(196,162,78,.15);margin:2px 0}
+
+/* Pending / owner-review list */
+#pending-list{display:flex;flex-direction:column;gap:8px}
+.pend-item{display:flex;align-items:center;gap:8px;padding:6px;
+  border:1px solid rgba(196,162,78,.18);background:rgba(20,12,30,.6)}
+.pend-item img{width:44px;height:44px;object-fit:cover;border:1px solid rgba(196,162,78,.3);flex-shrink:0}
+.pend-meta{flex:1;min-width:0}
+.pend-title{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pend-by{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em;color:var(--ink2)}
+.pend-acts{display:flex;gap:4px;flex-shrink:0}
+.pend-acc,.pend-den{font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;
+  padding:4px 7px;border:1px solid;line-height:1}
+.pend-acc{color:#7ee08a;border-color:rgba(120,220,140,.4)}
+.pend-acc:hover{background:rgba(30,80,40,.5)}
+.pend-den{color:#e88;border-color:rgba(220,120,110,.4)}
+.pend-den:hover{background:rgba(80,20,16,.5)}
+
+/* ── KIOSK EXPAND MODAL ── */
+#kiosk-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  background:rgba(4,2,10,.86);pointer-events:all;padding:24px}
+#kiosk-modal.on{display:flex}
+.km-card{position:relative;max-width:min(680px,92vw);width:100%;
+  background:linear-gradient(160deg,rgba(20,12,36,.98),rgba(8,4,16,.98));
+  border:1px solid rgba(196,162,78,.5);box-shadow:0 0 80px rgba(120,80,200,.4);padding:28px}
+.km-close{position:absolute;top:10px;right:12px;cursor:pointer;color:var(--ink2);
+  font-family:'IBM Plex Mono',monospace;font-size:18px;border:1px solid rgba(196,162,78,.35);
+  padding:2px 9px;transition:color .2s,border-color .2s}
+.km-close:hover{color:var(--gold);border-color:var(--gold)}
+.km-title{font-family:'Cinzel',serif;font-weight:900;font-size:22px;letter-spacing:.06em;
+  color:var(--gold);text-align:center;margin-bottom:4px;text-shadow:0 0 20px rgba(196,162,78,.4)}
+.km-by{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink2);text-align:center;margin-bottom:18px}
+.km-img{width:100%;max-height:56vh;object-fit:contain;background:#0e0a1e;
+  border:1px solid rgba(196,162,78,.3);display:block}
+.km-empty{text-align:center;color:var(--ink2);font-style:italic;padding:60px 0}
+
+@media(max-width:600px){
+  #mural-panel{width:100%;bottom:0;top:auto;height:60vh;border-right:none;border-top:1px solid rgba(196,162,78,.2)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ ENTRY ═══════════════════ -->
+<div id="entry">
+  <div class="e-edition">The Gallery of SHADDAI · Turtle's Museum</div>
+  <div class="e-rule"></div>
+  <div class="e-title">TURTLE'S MUSEUM</div>
+  <div class="e-sub">A cosmic hall of art — the ceiling fresco, the four great works, &amp; the Community Mural</div>
+  <div class="e-enter" onclick="window.enterMuseum()">Enter the Gallery</div>
+  <a class="e-back" href="/codex.html" onclick="return window.exitScene(event)">← Return to Codex</a>
+</div>
+
+<!-- ═══════════════════ 3D CANVAS ═══════════════════ -->
+<canvas id="c3d"></canvas>
+
+<!-- ═══════════════════ HUD ═══════════════════ -->
+<div id="hud" class="hud">
+  <div class="hud-bar">
+    <button class="hb" onclick="window.toggleMural()">🎨 Mural</button>
+    <span class="ht">Turtle's Museum · The Gallery</span>
+    <button class="hb" onclick="window.toggleMode()">⇄ Mode</button>
+    <button class="hb hb-exit" onclick="window.exitScene()">✕ Exit</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ MURAL PAINT PANEL (cursor mode) ═══════════════════ -->
+<div id="mural-panel">
+  <div class="mp-title">Community Mural</div>
+  <div class="mp-sub">Paint · Request · Owner accepts → it hangs on the wall</div>
+  <canvas id="paint-canvas" width="360" height="360"></canvas>
+  <div class="mp-row" id="swatches"></div>
+  <div class="mp-row">
+    <span class="mp-label">Brush</span>
+    <input type="range" id="brush-size" min="2" max="40" value="8"/>
+  </div>
+  <input type="text" class="mp-input" id="art-title" placeholder="Title your work…" maxlength="40"/>
+  <input type="text" class="mp-input" id="art-by" placeholder="Your name / handle…" maxlength="28"/>
+  <div class="mp-row" style="gap:8px">
+    <div class="mp-btn ghost" style="flex:1" onclick="window.clearPaint()">Clear</div>
+    <div class="mp-btn" style="flex:2" onclick="window.requestShowcase()">Request Showcase</div>
+  </div>
+  <div class="mp-note">Saved locally on this device. No account needed.</div>
+  <div class="mp-divider"></div>
+  <div class="mp-title" style="font-size:11px">Owner Review <span style="color:var(--ink2)">(placeholder)</span></div>
+  <div id="pending-list"><div class="mp-note">No submissions pending.</div></div>
+  <div class="mp-note">Accept → tile joins the mural wall &amp; kiosk. Deny → removed.</div>
+</div>
+
+<!-- ═══════════════════ WALK OVERLAYS ═══════════════════ -->
+<div id="walk-cross"></div>
+<div id="walk-hint"><b>WALK</b> · <b>W A S D</b> move · mouse look · <b>Shift</b> run · <b>Tab</b>/<b>ESC</b> → cursor</div>
+<div id="mode-toggle" onclick="window.toggleMode()">
+  <span>⇄ <span class="mt-mode" id="mt-mode">CURSOR</span> mode</span>
+  <span class="mt-key" id="mt-key">click / Tab → walk</span>
+</div>
+<div id="walk-invite" onclick="window.enterWalk()">
+  <div class="wi-t">▶ Click to Walk</div>
+  <div class="wi-s"><b>W A S D</b> move · mouse look · <b>Tab</b>/<b>ESC</b> → cursor</div>
+</div>
+
+<!-- ═══════════════════ KIOSK EXPAND MODAL ═══════════════════ -->
+<div id="kiosk-modal" onclick="if(event.target===this)window.closeKiosk()">
+  <div class="km-card">
+    <span class="km-close" onclick="window.closeKiosk()">✕</span>
+    <div class="km-title" id="km-title">—</div>
+    <div class="km-by" id="km-by">—</div>
+    <img class="km-img" id="km-img" alt="mural entry"/>
+    <div class="km-empty" id="km-empty" style="display:none">The mural is empty. Paint something and get it accepted to see it here.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SCRIPT ═══════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// ── Module state ────────────────────────────────────────────────────────────
+const canvas  = document.getElementById('c3d');
+const gltfLoader = new GLTFLoader();
+const texLoader  = new THREE.TextureLoader();
+const clock   = new THREE.Clock(false);
+
+let renderer  = null;
+let scene     = null, camera = null, controls = null;
+let rafId     = null;
+let curView   = null;   // 'museum' | null
+let ceilingGlow = null; // animated fresco spotlight
+
+// Mural render targets (rebuilt each scene enter)
+let muralWall = null;       // THREE.Group holding accepted tiles
+let muralGridInfo = null;   // {cx, cz, wallY, cols, cellW, cellH, gap, startX, startY} for tile placement
+let kioskPanel = null;      // {mesh, mat, tex} — the cycling pedestal display
+
+// ── WALK MODE (first-person) ─────────────────────────────────────────────────
+let plc = null, walkOn = false;
+const walkKeys = { f:false, b:false, l:false, r:false, run:false };
+let walkBounds = null;                 // {type:'rect',minX,maxX,minZ,maxZ}
+let walkEye = 3.4, walkSpawn = null;
+
+// ── CURSOR ⇄ WALK dual mode ──────────────────────────────────────────────────
+let uiMode = 'cursor';
+function reflectMode() {
+  const mt = document.getElementById('mt-mode'), mk = document.getElementById('mt-key');
+  if (mt) mt.textContent = uiMode === 'walk' ? 'WALK' : 'CURSOR';
+  if (mk) mk.textContent = uiMode === 'walk' ? 'click / Tab / ESC → cursor' : 'click / Tab → walk';
+  const cv = document.getElementById('c3d');
+  if (cv) cv.classList.toggle('walking', uiMode === 'walk');
+}
+window.toggleMode = function () {
+  if (!curView) return;
+  if (uiMode === 'walk') {
+    if (plc && walkOn) { try { plc.unlock(); } catch(_){} }
+    else { uiMode = 'cursor'; reflectMode(); }
+  } else {
+    window.enterWalk();
+  }
+};
+
+function setupWalk() {
+  if (plc) { try { plc.dispose(); } catch(_){} plc = null; }
+  plc = new PointerLockControls(camera, canvas);
+  plc.addEventListener('lock', () => {
+    walkOn = true; uiMode = 'walk'; reflectMode();
+    if (controls) controls.enabled = false;
+    if (walkSpawn) { camera.position.set(walkSpawn.x, walkEye, walkSpawn.z);
+      camera.lookAt(walkSpawn.x, walkEye, walkSpawn.z - 6); }
+    document.getElementById('walk-cross').classList.add('on');
+    document.getElementById('walk-hint').classList.add('on');
+    document.getElementById('walk-invite').classList.remove('on');
+    // Painting is cursor-only — close the mural panel while walking.
+    document.getElementById('mural-panel').classList.remove('on');
+  });
+  plc.addEventListener('unlock', () => {
+    walkOn = false; uiMode = 'cursor'; reflectMode();
+    if (controls) { controls.enabled = true; controls.update(); }
+    document.getElementById('walk-cross').classList.remove('on');
+    document.getElementById('walk-hint').classList.remove('on');
+    if (curView) document.getElementById('walk-invite').classList.add('on');
+  });
+}
+
+window.enterWalk = function () {
+  if (!plc || !curView) return;
+  plc.lock();
+};
+
+// Movement key state — only consumed while walking (never hijacks the mural title inputs).
+addEventListener('keydown', e => {
+  if (!walkOn) return;
+  switch (e.code) {
+    case 'KeyW': case 'ArrowUp':    walkKeys.f = true; break;
+    case 'KeyS': case 'ArrowDown':  walkKeys.b = true; break;
+    case 'KeyA': case 'ArrowLeft':  walkKeys.l = true; break;
+    case 'KeyD': case 'ArrowRight': walkKeys.r = true; break;
+    case 'ShiftLeft': case 'ShiftRight': walkKeys.run = true; break;
+  }
+});
+addEventListener('keyup', e => {
+  switch (e.code) {
+    case 'KeyW': case 'ArrowUp':    walkKeys.f = false; break;
+    case 'KeyS': case 'ArrowDown':  walkKeys.b = false; break;
+    case 'KeyA': case 'ArrowLeft':  walkKeys.l = false; break;
+    case 'KeyD': case 'ArrowRight': walkKeys.r = false; break;
+    case 'ShiftLeft': case 'ShiftRight': walkKeys.run = false; break;
+  }
+});
+
+// Global keys: Tab swaps mode, Esc exits when not walking (pointer-lock owns Esc while walking).
+addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || '');
+  if (e.code === 'Tab' && curView && !typing) { e.preventDefault(); window.toggleMode(); return; }
+  if (e.code === 'Escape') {
+    if (walkOn) return;
+    if (document.getElementById('kiosk-modal').classList.contains('on')) { window.closeKiosk(); return; }
+    if (curView) window.exitScene();
+  }
+});
+
+function updateWalk(delta) {
+  if (!walkOn || !plc) return;
+  const step = (walkKeys.run ? 14 : 6.5) * delta;
+  let dx = 0, dz = 0;
+  if (walkKeys.f) dz += 1;
+  if (walkKeys.b) dz -= 1;
+  if (walkKeys.r) dx += 1;
+  if (walkKeys.l) dx -= 1;
+  if (dx || dz) {
+    const inv = 1 / Math.hypot(dx, dz);
+    plc.moveRight(dx * inv * step);
+    plc.moveForward(dz * inv * step);
+  }
+  const c = camera.position;
+  if (walkBounds) {
+    c.x = Math.max(walkBounds.minX, Math.min(walkBounds.maxX, c.x));
+    c.z = Math.max(walkBounds.minZ, Math.min(walkBounds.maxZ, c.z));
+  }
+  c.y = walkEye;
+}
+
+// ── Renderer (lazy) ──────────────────────────────────────────────────────────
+function initRenderer() {
+  if (renderer) return;
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));   // DPR capped at 2 per spec
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+}
+window.addEventListener('resize', () => {
+  if (!renderer) return;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  if (camera) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); }
+}, { passive: true });
+
+// ── Robust EXIT (iframe-safe, never traps) ───────────────────────────────────
+window.exitScene = function (ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  try { if (plc && walkOn) plc.unlock(); } catch(_){}
+  try { if (document.exitPointerLock) document.exitPointerLock(); } catch(_){}
+  try {
+    if (window.parent && window.parent !== window) {
+      try { if (typeof window.parent.closeGame === 'function') { window.parent.closeGame(); return false; } } catch(_){}
+      try { window.parent.postMessage({ type: 'exitScene' }, '*'); } catch(_){}
+      setTimeout(() => {
+        try { if (window.parent === window) return; } catch(_){}
+        try { window.location.href = '/codex.html'; } catch(_){}
+      }, 350);
+      return false;
+    }
+  } catch(_){}
+  try {
+    if (history.length > 1) { history.back(); }
+    else { window.location.href = '/codex.html'; }
+  } catch(_) { window.location.href = '/codex.html'; }
+  return false;
+};
+
+// ── Placeholder canvas texture (so NO frame is ever black on 404) ────────────
+function placeholderTexture(label) {
+  const ph = document.createElement('canvas'); ph.width = ph.height = 256;
+  const c = ph.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, '#241a34'); g.addColorStop(0.5, '#160f28'); g.addColorStop(1, '#0e0a1e');
+  c.fillStyle = g; c.fillRect(0, 0, 256, 256);
+  c.fillStyle = 'rgba(196,162,78,0.5)';
+  for (let i = 0; i < 40; i++) c.fillRect(Math.random()*256, Math.random()*256, Math.random()<0.2?2:1, 1);
+  c.strokeStyle = 'rgba(196,162,78,0.55)'; c.lineWidth = 2;
+  c.beginPath(); c.arc(128, 116, 46, 0, Math.PI*2); c.stroke();
+  c.fillStyle = 'rgba(196,162,78,0.85)'; c.textAlign = 'center';
+  c.font = 'bold 32px "Cinzel", serif'; c.fillText('✦', 128, 128);
+  c.font = '13px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(169,159,134,0.7)';
+  c.fillText((label || "TURTLE'S MUSEUM").toUpperCase(), 128, 196);
+  const t = new THREE.CanvasTexture(ph); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// ── Gold plaque label (small canvas texture) ────────────────────────────────
+function plaqueTexture(text) {
+  const w = 256, h = 64;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#e8c45c'); g.addColorStop(0.5, '#c4a24e'); g.addColorStop(1, '#8a6410');
+  c.fillStyle = g; c.fillRect(0, 0, w, h);
+  c.strokeStyle = 'rgba(40,26,6,0.8)'; c.lineWidth = 2; c.strokeRect(3, 3, w-6, h-6);
+  c.fillStyle = '#1a1206'; c.textAlign = 'center';
+  c.font = `bold ${Math.round(h*0.42)}px "Cinzel", serif`;
+  c.fillText(text, w/2, h/2 + h*0.15);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+
+// ── Framed wall art (ornate gold frame + graceful placeholder + spotlight) ───
+// url loads async; a canvas placeholder is shown first so a frame is NEVER black.
+function makeFramedArt(sc, url, w, h, x, y, z, rotY, label) {
+  const grp = new THREE.Group();
+  grp.position.set(x, y, z); grp.rotation.y = rotY || 0;
+  const frameD = 0.2;
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x120c06, roughness: 0.7, metalness: 0.3,
+    emissive: 0x1a1206, emissiveIntensity: 0.25 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.35, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.45 });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.7, h + 0.7, frameD), frameMat);
+  grp.add(frame);
+  const reveal = new THREE.Mesh(new THREE.BoxGeometry(w + 0.24, h + 0.24, frameD + 0.02), goldMat);
+  reveal.position.z = 0.01; grp.add(reveal);
+  const artMat = new THREE.MeshBasicMaterial({ map: placeholderTexture(label) });
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(w, h), artMat);
+  art.position.z = frameD / 2 + 0.02; grp.add(art);
+  texLoader.load(url, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    if (art.material.map) art.material.map.dispose();
+    art.material.map = tex; art.material.color.set(0xffffff); art.material.needsUpdate = true;
+  }, undefined, () => { /* keep placeholder if asset 404s */ });
+  // warm spotlight so the piece reads
+  const glow = new THREE.SpotLight(0xffe6b0, 3.0, Math.max(w, h) * 5, Math.PI/5, 0.5, 1);
+  glow.position.set(0, h*0.5 + 1.4, frameD / 2 + 2.4);
+  glow.target = art; grp.add(glow); grp.add(glow.target);
+  // gold plaque under the art
+  if (label) {
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.55),
+      new THREE.MeshBasicMaterial({ map: plaqueTexture(label) }));
+    pl.position.set(0, -(h/2) - 0.7, frameD/2 + 0.03); grp.add(pl);
+  }
+  sc.add(grp);
+  return grp;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  COMMUNITY MURAL — localStorage persistence
+// ══════════════════════════════════════════════════════════════════════════
+// Tiles are {id, title, by, img(dataURL), ts}. Two buckets: pending (awaiting owner)
+// and accepted (hung on the wall + shown in the kiosk).
+// TODO: POST to museum/NFT API — replace loadMural/saveMural with server calls so a
+// submission mints/registers the artwork and syncs across users. For now = device-local.
+const LS_KEY = 'shaddai_museum_mural_v1';
+function loadMural() {
+  try { const d = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    return { pending: d.pending || [], accepted: d.accepted || [] }; }
+  catch(_) { return { pending: [], accepted: [] }; }
+}
+function saveMural(m) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(m)); } catch(_) {}
+}
+let mural = loadMural();
+
+// ── Paint canvas ────────────────────────────────────────────────────────────
+const paintCanvas = document.getElementById('paint-canvas');
+const pctx = paintCanvas.getContext('2d');
+let paintColor = '#e8c45c', brushSize = 8, painting = false;
+function initPaint() {
+  pctx.fillStyle = '#0e0a1e'; pctx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
+  pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+}
+initPaint();
+window.clearPaint = function () { initPaint(); };
+
+// swatches
+const PALETTE = ['#e8c45c','#7c56c8','#4a3580','#e04b6b','#39b3a6','#f0e7cf','#ff8a2a','#0e0a1e'];
+(function buildSwatches(){
+  const row = document.getElementById('swatches');
+  PALETTE.forEach((col, i) => {
+    const s = document.createElement('div');
+    s.className = 'mp-swatch' + (i === 0 ? ' on' : '');
+    s.style.background = col;
+    s.onclick = () => { paintColor = col;
+      row.querySelectorAll('.mp-swatch').forEach(e => e.classList.remove('on')); s.classList.add('on'); };
+    row.appendChild(s);
+  });
+})();
+document.getElementById('brush-size').addEventListener('input', e => { brushSize = +e.target.value; });
+
+function paintPos(e) {
+  const r = paintCanvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - r.left) * (paintCanvas.width / r.width),
+           y: (src.clientY - r.top)  * (paintCanvas.height / r.height) };
+}
+function paintStart(e) { e.preventDefault(); painting = true; const p = paintPos(e);
+  pctx.beginPath(); pctx.moveTo(p.x, p.y); pctx.lineTo(p.x + 0.01, p.y);
+  pctx.strokeStyle = paintColor; pctx.lineWidth = brushSize; pctx.stroke(); }
+function paintMove(e) { if (!painting) return; e.preventDefault(); const p = paintPos(e);
+  pctx.lineTo(p.x, p.y); pctx.strokeStyle = paintColor; pctx.lineWidth = brushSize; pctx.stroke(); }
+function paintEnd() { painting = false; }
+paintCanvas.addEventListener('mousedown', paintStart);
+paintCanvas.addEventListener('mousemove', paintMove);
+addEventListener('mouseup', paintEnd);
+paintCanvas.addEventListener('touchstart', paintStart, { passive:false });
+paintCanvas.addEventListener('touchmove', paintMove, { passive:false });
+paintCanvas.addEventListener('touchend', paintEnd);
+
+window.toggleMural = function () {
+  const el = document.getElementById('mural-panel');
+  const showing = el.classList.toggle('on');
+  // Painting only makes sense in cursor mode — release pointer-lock if walking.
+  if (showing && walkOn && plc) { try { plc.unlock(); } catch(_){} }
+};
+
+// ── Submit → pending ─────────────────────────────────────────────────────────
+window.requestShowcase = function () {
+  const title = (document.getElementById('art-title').value || 'Untitled').trim().slice(0, 40);
+  const by    = (document.getElementById('art-by').value || 'Anonymous').trim().slice(0, 28);
+  const img   = paintCanvas.toDataURL('image/png');
+  const tile  = { id: 'm' + Date.now().toString(36) + Math.floor(Math.random()*999),
+                  title, by, img, ts: Date.now() };
+  mural.pending.push(tile);
+  saveMural(mural);
+  // TODO: POST to museum/NFT API here — send {title, by, img} for owner moderation / minting.
+  renderPending();
+  document.getElementById('art-title').value = '';
+  window.clearPaint();
+  // brief confirmation flash on the button label
+  const note = document.querySelector('#mural-panel .mp-note');
+  if (note) { const old = note.textContent; note.textContent = '✓ Submitted — awaiting owner review below.';
+    setTimeout(() => { note.textContent = old; }, 2600); }
+};
+
+// ── Owner accept / deny (placeholder control) ────────────────────────────────
+function renderPending() {
+  const box = document.getElementById('pending-list');
+  if (!mural.pending.length) { box.innerHTML = '<div class="mp-note">No submissions pending.</div>'; return; }
+  box.innerHTML = '';
+  mural.pending.forEach(t => {
+    const row = document.createElement('div'); row.className = 'pend-item';
+    row.innerHTML = `<img src="${t.img}" alt=""/>
+      <div class="pend-meta"><div class="pend-title">${escapeHtml(t.title)}</div>
+      <div class="pend-by">by ${escapeHtml(t.by)}</div></div>
+      <div class="pend-acts">
+        <span class="pend-acc" title="Accept">✓</span>
+        <span class="pend-den" title="Deny">✕</span></div>`;
+    row.querySelector('.pend-acc').onclick = () => acceptTile(t.id);
+    row.querySelector('.pend-den').onclick = () => denyTile(t.id);
+    box.appendChild(row);
+  });
+}
+function acceptTile(id) {
+  const i = mural.pending.findIndex(t => t.id === id); if (i < 0) return;
+  const [t] = mural.pending.splice(i, 1);
+  mural.accepted.push(t);
+  saveMural(mural);
+  // TODO: PATCH museum/NFT API — mark this submission approved / mint the NFT.
+  renderPending();
+  addTileToWall(t);      // hang it on the mural wall
+  refreshKiosk();        // include it in the cycling kiosk
+}
+function denyTile(id) {
+  const i = mural.pending.findIndex(t => t.id === id); if (i < 0) return;
+  mural.pending.splice(i, 1);
+  saveMural(mural);
+  // TODO: DELETE museum/NFT API — reject the submission.
+  renderPending();
+}
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Mural WALL: render accepted tiles as a framed grid on the feature wall ────
+function buildMuralGrid(sc, cx, cz, wallY, rotY) {
+  muralWall = new THREE.Group();
+  muralWall.position.set(cx, 0, cz); muralWall.rotation.y = rotY;
+  sc.add(muralWall);
+  muralGridInfo = { cols: 5, cellW: 1.5, cellH: 1.5, gap: 0.3, wallY, rotY };
+  // (re)hang all accepted tiles
+  mural.accepted.forEach(addTileToWall);
+}
+let _tileIndex = 0;
+function addTileToWall(t) {
+  if (!muralWall || !muralGridInfo) return;
+  const gi = muralGridInfo;
+  const idx = _tileIndex++;
+  const col = idx % gi.cols, rowN = Math.floor(idx / gi.cols);
+  const totalW = gi.cols * (gi.cellW + gi.gap) - gi.gap;
+  const startX = -totalW / 2 + gi.cellW / 2;
+  const lx = startX + col * (gi.cellW + gi.gap);
+  const ly = gi.wallY + 1.2 - rowN * (gi.cellH + gi.gap);   // grid grows downward from top row
+  const grp = new THREE.Group();
+  grp.position.set(lx, ly, 0.12);
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.4, metalness: 0.85,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.4 });
+  const fr = new THREE.Mesh(new THREE.BoxGeometry(gi.cellW + 0.18, gi.cellH + 0.18, 0.1), goldMat);
+  grp.add(fr);
+  const tex = new THREE.CanvasTexture(dataURLToCanvas(t.img)); tex.colorSpace = THREE.SRGBColorSpace;
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(gi.cellW, gi.cellH),
+    new THREE.MeshBasicMaterial({ map: tex }));
+  art.position.z = 0.06; grp.add(art);
+  muralWall.add(grp);
+}
+function dataURLToCanvas(url) {
+  // draw the dataURL onto an offscreen canvas synchronously-ish; CanvasTexture updates when img loads
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#0e0a1e'; c.fillRect(0,0,256,256);
+  const img = new Image();
+  img.onload = () => { c.drawImage(img, 0, 0, 256, 256); if (cv._tex) cv._tex.needsUpdate = true; };
+  img.src = url;
+  return cv;
+}
+
+// ── KIOSK: cycles accepted entries 1-by-1 (auto-advance + prev/next + EXPAND) ─
+let kioskEntries = [];
+let kioskIdx = 0, kioskTimer = 0;
+function refreshKiosk() { kioskEntries = mural.accepted.slice(); if (kioskIdx >= kioskEntries.length) kioskIdx = 0; drawKiosk(); }
+function kioskTexture(entry) {
+  const w = 512, h = 640;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const bg = c.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(24,14,44,0.98)'); bg.addColorStop(1, 'rgba(8,4,16,0.98)');
+  c.fillStyle = bg; c.fillRect(0, 0, w, h);
+  const glow = c.createRadialGradient(w/2, -30, 10, w/2, -30, w*0.9);
+  glow.addColorStop(0, 'rgba(124,86,200,0.5)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = glow; c.fillRect(0, 0, w, h*0.5);
+  c.strokeStyle = 'rgba(196,162,78,0.85)'; c.lineWidth = 4; c.strokeRect(8, 8, w-16, h-16);
+  c.fillStyle = '#e8c45c'; c.textAlign = 'center';
+  c.font = 'bold 30px "Cinzel", serif'; c.fillText('COMMUNITY MURAL', w/2, 56);
+  c.strokeStyle = 'rgba(196,162,78,0.5)'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(48, 74); c.lineTo(w-48, 74); c.stroke();
+  if (!entry) {
+    c.fillStyle = 'rgba(240,231,207,0.7)'; c.font = 'italic 22px "Fraunces", serif';
+    c.fillText('The mural awaits its', w/2, h/2 - 18);
+    c.fillText('first accepted work.', w/2, h/2 + 16);
+    c.font = '15px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(169,159,134,0.7)';
+    c.fillText('Paint · Request · Accept', w/2, h/2 + 70);
+  } else {
+    // artwork frame
+    c.fillStyle = '#0e0a1e'; c.fillRect(w/2 - 190, 100, 380, 380);
+    c.strokeStyle = '#c4a24e'; c.lineWidth = 3; c.strokeRect(w/2 - 190, 100, 380, 380);
+    const img = new Image();
+    img.onload = () => { c.drawImage(img, w/2 - 186, 104, 372, 372); if (cv._tex) cv._tex.needsUpdate = true; };
+    img.src = entry.img;
+    c.fillStyle = '#e8c45c'; c.font = 'bold 30px "Cinzel", serif';
+    c.fillText(entry.title.slice(0, 26), w/2, 528);
+    c.fillStyle = 'rgba(240,231,207,0.85)'; c.font = 'italic 20px "Fraunces", serif';
+    c.fillText('by ' + entry.by.slice(0, 24), w/2, 562);
+    c.fillStyle = 'rgba(169,159,134,0.7)'; c.font = '14px "IBM Plex Mono", monospace';
+    c.fillText(`${(kioskIdx % Math.max(1,kioskEntries.length)) + 1} / ${kioskEntries.length}  ·  ▲/▼ prev·next  ·  ⤢ EXPAND`, w/2, 600);
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  cv._tex = t;
+  return t;
+}
+function drawKiosk() {
+  if (!kioskPanel) return;
+  const entry = kioskEntries[kioskIdx] || null;
+  const t = kioskTexture(entry);
+  if (kioskPanel.tex) kioskPanel.tex.dispose();
+  kioskPanel.mat.map = t; kioskPanel.mat.needsUpdate = true; kioskPanel.tex = t;
+}
+window.kioskNext = function () { if (!kioskEntries.length) return; kioskIdx = (kioskIdx + 1) % kioskEntries.length; kioskTimer = 0; drawKiosk(); };
+window.kioskPrev = function () { if (!kioskEntries.length) return; kioskIdx = (kioskIdx - 1 + kioskEntries.length) % kioskEntries.length; kioskTimer = 0; drawKiosk(); };
+window.expandKiosk = function () {
+  const modal = document.getElementById('kiosk-modal');
+  const entry = kioskEntries[kioskIdx] || null;
+  const img = document.getElementById('km-img'), empty = document.getElementById('km-empty');
+  if (!entry) { document.getElementById('km-title').textContent = 'Community Mural';
+    document.getElementById('km-by').textContent = '';
+    img.style.display = 'none'; empty.style.display = 'block'; }
+  else { document.getElementById('km-title').textContent = entry.title;
+    document.getElementById('km-by').textContent = 'by ' + entry.by;
+    img.src = entry.img; img.style.display = 'block'; empty.style.display = 'none'; }
+  modal.classList.add('on');
+};
+window.closeKiosk = function () { document.getElementById('kiosk-modal').classList.remove('on'); };
+
+// Raycast click on the kiosk / its buttons (cursor mode).
+const rayc = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let kioskHit = { panel:null, prev:null, next:null, expand:null };
+canvas.addEventListener('click', (e) => {
+  if (curView !== 'museum' || walkOn || !camera) return;
+  ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+  ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  rayc.setFromCamera(ndc, camera);
+  const targets = [kioskHit.prev, kioskHit.next, kioskHit.expand, kioskHit.panel].filter(Boolean);
+  const hit = rayc.intersectObjects(targets, false);
+  if (!hit.length) return;
+  const o = hit[0].object;
+  if (o === kioskHit.prev) window.kioskPrev();
+  else if (o === kioskHit.next) window.kioskNext();
+  else if (o === kioskHit.expand || o === kioskHit.panel) window.expandKiosk();
+});
+
+function buildKiosk(sc, x, z) {
+  const grp = new THREE.Group(); grp.position.set(x, 0, z);
+  // pedestal
+  const pedMat = new THREE.MeshStandardMaterial({ color: 0x1a1030, roughness: 0.6, metalness: 0.4,
+    emissive: 0x2a1466, emissiveIntensity: 0.3 });
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.2, 1.6, 24), pedMat);
+  ped.position.y = 0.8; grp.add(ped);
+  const goldRim = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.06, 8, 40),
+    new THREE.MeshStandardMaterial({ color: 0xc4a24e, emissive: 0x6a4e10, emissiveIntensity: 0.9, metalness: 0.9, roughness: 0.3 }));
+  goldRim.rotation.x = Math.PI/2; goldRim.position.y = 1.6; grp.add(goldRim);
+  // glowing display panel
+  const mat = new THREE.MeshBasicMaterial({ map: kioskTexture(null), transparent: true });
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.25), mat);
+  panel.position.set(0, 3.6, 0); grp.add(panel);
+  kioskPanel = { mesh: panel, mat, tex: mat.map };
+  kioskHit.panel = panel;
+  // violet backlight
+  const bl = new THREE.PointLight(0x7c56c8, 2.4, 14); bl.position.set(0, 3.6, -0.6); grp.add(bl);
+  const fl = new THREE.PointLight(0xffe6b0, 1.2, 10); fl.position.set(0, 3.6, 1.6); grp.add(fl);
+  // prev / next / expand controls (little gold plates in front of the pedestal)
+  const btnGeo = new THREE.PlaneGeometry(0.6, 0.5);
+  const mkBtn = (label, bx) => {
+    const b = new THREE.Mesh(btnGeo, new THREE.MeshBasicMaterial({ map: plaqueTexture(label) }));
+    b.position.set(bx, 1.85, 0.95); b.rotation.x = -0.5; grp.add(b); return b;
+  };
+  kioskHit.prev   = mkBtn('◀ PREV', -0.9);
+  kioskHit.expand = mkBtn('⤢ EXPAND', 0);
+  kioskHit.next   = mkBtn('NEXT ▶', 0.9);
+  sc.add(grp);
+  refreshKiosk();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MUSEUM SCENE  — grand walkable gallery hall
+// ══════════════════════════════════════════════════════════════════════════
+// Layout (top-down, +z = toward entry/spawn, -z = far wall):
+//   Hall is a rect ~ x:[-15,15]  z:[-20,16].  Spawn at (0, +12) facing -z.
+//   Far wall (z=-20): wall-battle (left) + wall-mission (right).
+//   Left wall (x=-15): wall-space.   Right wall (x=+15): wall-abstract.
+//   Ceiling (y=13): the Michelangelo-style collage fresco, gold-framed, lit from below.
+//   MURAL feature wall = the near wall behind spawn (z=+16), a big blank wall that fills
+//     with accepted community tiles.  The KIOSK pedestal stands just in front of it.
+function buildMuseum() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0618);
+  scene.fog = new THREE.Fog(0x0a0618, 34, 78);
+
+  camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 400);
+  camera.position.set(0, 4.5, 12);
+
+  // ── Warm cosmic gallery lighting ──
+  scene.add(new THREE.AmbientLight(0x2a2044, 1.5));
+  scene.add(new THREE.HemisphereLight(0x6a5aa0, 0x140a20, 0.9));
+  const key = new THREE.PointLight(0xffe6b0, 2.4, 60); key.position.set(0, 11, 4); scene.add(key);
+  const violet = new THREE.PointLight(0x7c56c8, 1.8, 55); violet.position.set(-10, 8, -8); scene.add(violet);
+  const gold = new THREE.PointLight(0xc4a24e, 1.4, 50); gold.position.set(10, 8, -8); scene.add(gold);
+
+  const HALL_MINX = -15, HALL_MAXX = 15, HALL_MINZ = -20, HALL_MAXZ = 16, WALL_H = 14;
+
+  // ── Marble-ish floor (CanvasTexture) ──
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256;
+  const fx = fc.getContext('2d');
+  const fg = fx.createLinearGradient(0, 0, 256, 256);
+  fg.addColorStop(0, '#2a2138'); fg.addColorStop(0.5, '#1c1630'); fg.addColorStop(1, '#241d34');
+  fx.fillStyle = fg; fx.fillRect(0, 0, 256, 256);
+  fx.strokeStyle = 'rgba(196,162,78,0.14)'; fx.lineWidth = 1;
+  for (let i = 0; i < 14; i++) { fx.beginPath();
+    fx.moveTo(Math.random()*256, 0); fx.bezierCurveTo(Math.random()*256,85,Math.random()*256,170,Math.random()*256,256);
+    fx.stroke(); }
+  const floorTex = new THREE.CanvasTexture(fc);
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(6, 6);
+  floorTex.colorSpace = THREE.SRGBColorSpace;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALL_MAXX-HALL_MINX, HALL_MAXZ-HALL_MINZ),
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4, metalness: 0.25 }));
+  floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, (HALL_MINZ+HALL_MAXZ)/2); scene.add(floor);
+  // gold inlay border strip
+  const inlay = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.1, 4),
+    new THREE.MeshStandardMaterial({ color: 0xc4a24e })); // placeholder ref (kept invisible)
+  inlay.visible = false; scene.add(inlay);
+
+  // ── Walls ──
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x181028, roughness: 0.9, metalness: 0.1 });
+  const midZ = (HALL_MINZ + HALL_MAXZ) / 2, spanZ = HALL_MAXZ - HALL_MINZ, spanX = HALL_MAXX - HALL_MINX;
+  const far  = new THREE.Mesh(new THREE.PlaneGeometry(spanX, WALL_H), wallMat.clone());
+  far.position.set(0, WALL_H/2, HALL_MINZ); scene.add(far);
+  const near = new THREE.Mesh(new THREE.PlaneGeometry(spanX, WALL_H), wallMat.clone());
+  near.rotation.y = Math.PI; near.position.set(0, WALL_H/2, HALL_MAXZ); scene.add(near);   // mural feature wall
+  const wL = new THREE.Mesh(new THREE.PlaneGeometry(spanZ, WALL_H), wallMat.clone());
+  wL.rotation.y = Math.PI/2; wL.position.set(HALL_MINX, WALL_H/2, midZ); scene.add(wL);
+  const wR = new THREE.Mesh(new THREE.PlaneGeometry(spanZ, WALL_H), wallMat.clone());
+  wR.rotation.y = -Math.PI/2; wR.position.set(HALL_MAXX, WALL_H/2, midZ); scene.add(wR);
+
+  // ── Columns lining the hall ──
+  const colMat = new THREE.MeshStandardMaterial({ color: 0x2a2140, roughness: 0.6, metalness: 0.3,
+    emissive: 0x1a1030, emissiveIntensity: 0.3 });
+  const capMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.4, metalness: 0.85,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.35 });
+  for (const cx of [-12, 12]) {
+    for (const cz of [-14, -6, 2, 10]) {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.75, WALL_H-1, 14), colMat);
+      col.position.set(cx, (WALL_H-1)/2, cz); scene.add(col);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 1.7), capMat);
+      cap.position.set(cx, WALL_H-1, cz); scene.add(cap);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 1.7), capMat);
+      base.position.set(cx, 0.25, cz); scene.add(base);
+    }
+  }
+
+  // ── CEILING FRESCO — the Michelangelo-style collage, gold-framed, lit ──
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(spanX, spanZ),
+    new THREE.MeshStandardMaterial({ color: 0x0e0820, roughness: 0.95 }));
+  ceil.rotation.x = Math.PI/2; ceil.position.set(0, WALL_H, midZ); scene.add(ceil);
+  // gold frame around the fresco
+  const frescoW = spanX - 6, frescoD = spanZ - 8;
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.35, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.5 });
+  const fFrame = new THREE.Mesh(new THREE.BoxGeometry(frescoW + 1.4, 0.5, frescoD + 1.4), frameMat);
+  fFrame.position.set(0, WALL_H - 0.4, midZ); scene.add(fFrame);
+  const fresco = new THREE.Mesh(new THREE.PlaneGeometry(frescoW, frescoD),
+    new THREE.MeshBasicMaterial({ map: placeholderTexture('Ceiling Fresco') }));
+  fresco.rotation.x = Math.PI/2; fresco.position.set(0, WALL_H - 0.5, midZ); scene.add(fresco);
+  texLoader.load('/assets/museum/ceiling-collage.png', (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    if (fresco.material.map) fresco.material.map.dispose();
+    fresco.material.map = tex; fresco.material.needsUpdate = true;
+  }, undefined, () => {});
+  // uplights washing the fresco
+  ceilingGlow = new THREE.PointLight(0xffe6c0, 2.6, 40); ceilingGlow.position.set(0, WALL_H - 4, midZ); scene.add(ceilingGlow);
+  const cg2 = new THREE.PointLight(0x7c56c8, 1.2, 34); cg2.position.set(0, WALL_H - 5, midZ - 6); scene.add(cg2);
+
+  // ── FOUR WALL PIECES (gold frames + plaques + spotlights) ──
+  // Far wall: two pieces flanking centre.
+  makeFramedArt(scene, '/assets/museum/wall-battle.png',  5, 5, -6, 6, HALL_MINZ + 0.3, 0, 'Agent Battles');
+  makeFramedArt(scene, '/assets/museum/wall-mission.png', 5, 5,  6, 6, HALL_MINZ + 0.3, 0, 'Missions');
+  // Left wall.
+  makeFramedArt(scene, '/assets/museum/wall-space.png',   5.5, 5.5, HALL_MINX + 0.3, 6, -6, Math.PI/2, 'Cosmic Adventures');
+  // Right wall.
+  makeFramedArt(scene, '/assets/museum/wall-abstract.png', 5.5, 5.5, HALL_MAXX - 0.3, 6, -6, -Math.PI/2, 'Abstract Forms');
+
+  // ── COMMUNITY MURAL feature wall (near wall) + KIOSK in front ──
+  // The mural grid sits on the near wall (z=HALL_MAXZ), facing into the room (−z).
+  buildMuralGrid(scene, 0, HALL_MAXZ - 0.25, 6.5, Math.PI);
+  // "Community Mural" gold header plaque above the grid
+  const header = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.1),
+    new THREE.MeshBasicMaterial({ map: plaqueTexture('COMMUNITY MURAL') }));
+  header.position.set(0, 10.5, HALL_MAXZ - 0.3); header.rotation.y = Math.PI; scene.add(header);
+  buildKiosk(scene, 6, HALL_MAXZ - 4);   // kiosk pedestal near the mural
+
+  // subtle floating dust motes for atmosphere (cheap Points)
+  const N = 160, dp = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { dp[i*3] = (Math.random()-0.5)*spanX; dp[i*3+1] = Math.random()*WALL_H; dp[i*3+2] = midZ + (Math.random()-0.5)*spanZ; }
+  const dGeo = new THREE.BufferGeometry(); dGeo.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+  scene.add(new THREE.Points(dGeo, new THREE.PointsMaterial({ color: 0xc9b57a, size: 0.09, transparent: true, opacity: 0.5 })));
+
+  // ── Controls (CURSOR mode default = OrbitControls gentle look) ──
+  controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 4, 0);
+  controls.minDistance = 4; controls.maxDistance = 40;
+  controls.maxPolarAngle = Math.PI * 0.85;
+  controls.enablePan = false; controls.autoRotate = false;
+  controls.update();
+
+  // Walk config
+  walkEye = 3.6; walkSpawn = { x: 0, z: 12 };
+  walkBounds = { type:'rect', minX: HALL_MINX + 1, maxX: HALL_MAXX - 1, minZ: HALL_MINZ + 1, maxZ: HALL_MAXZ - 1 };
+}
+
+// ── Render loop ──────────────────────────────────────────────────────────────
+function startLoop() {
+  const go = () => {
+    rafId = requestAnimationFrame(go);
+    const delta = clock.getDelta();
+    const t     = clock.getElapsedTime();
+    // gentle fresco light breathing
+    if (ceilingGlow) ceilingGlow.intensity = 2.4 + Math.sin(t * 0.8) * 0.35;
+    // kiosk billboard buttons + auto-advance
+    if (kioskEntries.length > 1) {
+      kioskTimer += delta;
+      if (kioskTimer > 6) { kioskTimer = 0; window.kioskNext(); }
+    }
+    if (walkOn) updateWalk(delta);
+    else if (controls) controls.update();
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  };
+  go();
+}
+
+// ── Dispose ──────────────────────────────────────────────────────────────────
+function disposeScene() {
+  cancelAnimationFrame(rafId); rafId = null;
+  ceilingGlow = null; muralWall = null; muralGridInfo = null; kioskPanel = null;
+  kioskHit = { panel:null, prev:null, next:null, expand:null };
+  _tileIndex = 0;
+  if (scene) {
+    scene.traverse(obj => {
+      if (obj.geometry) obj.geometry.dispose();
+      const mats = obj.material ? (Array.isArray(obj.material) ? obj.material : [obj.material]) : [];
+      mats.forEach(m => { ['map','alphaMap','emissiveMap','normalMap'].forEach(k => { if (m[k]) m[k].dispose(); }); m.dispose(); });
+    });
+    scene = null;
+  }
+  if (controls) { controls.dispose(); controls = null; }
+}
+
+// ── Enter museum ─────────────────────────────────────────────────────────────
+window.enterMuseum = function () {
+  disposeScene(); curView = 'museum';
+  initRenderer();
+  document.getElementById('entry').classList.add('gone');
+  canvas.classList.add('on');
+  document.getElementById('hud').classList.add('on');
+  clock.start();
+  buildMuseum();
+  setupWalk();
+  // optional TURTLE avatar greeter (graceful if the GLB is missing)
+  loadGLB('/assets/agents/TURTLE.glb').then(gltf => {
+    const root = gltf.scene;
+    const box = new THREE.Box3().setFromObject(root);
+    const s = 2.2 / Math.max(box.getSize(new THREE.Vector3()).y, 0.01);
+    root.scale.setScalar(s);
+    const b2 = new THREE.Box3().setFromObject(root);
+    root.position.set(-4, -b2.min.y, 8); root.rotation.y = Math.PI;
+    if (scene) scene.add(root);
+  }).catch(() => {});
+  startLoop();
+  renderPending();
+  // Default to CURSOR mode — mural paint panel + kiosk buttons are directly clickable.
+  uiMode = 'cursor'; reflectMode();
+  document.getElementById('mode-toggle').classList.add('on');
+  document.getElementById('walk-invite').classList.add('on');
+};
+
+function loadGLB(path) { return new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej)); }
+</script>
+</body>
+</html>

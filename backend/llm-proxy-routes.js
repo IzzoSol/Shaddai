@@ -130,4 +130,109 @@ router.get('/providers', (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /health
+// Live per-provider check. For each keyed provider, sends a minimal 1-token
+// ping and reports { provider, configured, ok, status, latencyMs }. Providers
+// with no key in env report configured:false (NOT an error). Every call is
+// wrapped in try/catch with a short timeout so one dead provider can't hang the
+// route, and all pings run in parallel. Keys and full responses are NEVER
+// included in the output — only env var NAMES and boolean/latency/status.
+//
+// Response: { ok, checkedAt, providers: [ { provider, envVar, configured, ok, status, latencyMs, error? } ] }
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Minimal, provider-specific ping definitions. Each returns the fetch URL,
+// headers (built from a pool key — the key value never leaves this closure),
+// body, and a fn to decide if the parsed/HTTP response counts as "ok".
+// One shared bad prompt keeps token spend near-zero.
+const PING_TIMEOUT_MS = Number(process.env.LLM_HEALTH_TIMEOUT_MS) || 8000;
+const PING_MESSAGES = [{ role: 'user', content: 'ping' }];
+
+function buildPing(provider, apiKey) {
+  switch (provider) {
+    case 'groq':
+      return {
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: { model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', messages: PING_MESSAGES, max_tokens: 1 }
+      };
+    case 'openrouter':
+      return {
+        url: 'https://openrouter.ai/api/v1/chat/completions',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'https://shaddai.app', 'X-Title': 'SHADDAI' },
+        body: { model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free', messages: PING_MESSAGES, max_tokens: 1 }
+      };
+    case 'openai':
+      return {
+        url: 'https://api.openai.com/v1/chat/completions',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: { model: process.env.OPENAI_MODEL || 'gpt-4o-mini', messages: PING_MESSAGES, max_tokens: 1 }
+      };
+    case 'anthropic':
+      return {
+        url: 'https://api.anthropic.com/v1/messages',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: { model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001', max_tokens: 1, messages: PING_MESSAGES }
+      };
+    case 'ollamacloud':
+      return {
+        url: `${process.env.OLLAMA_CLOUD_URL || 'https://ollama.com'}/api/chat`,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: { model: process.env.OLLAMA_CLOUD_MODEL || 'gpt-oss:120b', messages: PING_MESSAGES, stream: false, options: { num_predict: 1 } }
+      };
+    default:
+      return null;
+  }
+}
+
+async function pingProvider(pool, provider) {
+  const envVar = pool.ENV_PREFIX[provider] || null;
+  const keyList = pool.keys(provider);            // BYOK-less; env pool only
+  if (!keyList.length) {
+    return { provider, envVar, configured: false, ok: false, status: null, latencyMs: 0 };
+  }
+
+  const ping = buildPing(provider, keyList[0]);   // one key is enough for a liveness probe
+  if (!ping) {
+    return { provider, envVar, configured: true, ok: false, status: null, latencyMs: 0, error: 'no ping defined' };
+  }
+
+  const started = Date.now();
+  try {
+    const res = await fetch(ping.url, {
+      method: 'POST',
+      headers: ping.headers,
+      body: JSON.stringify(ping.body),
+      signal: AbortSignal.timeout(PING_TIMEOUT_MS)
+    });
+    const latencyMs = Date.now() - started;
+    // Drain and discard the body so we never surface provider content or keys.
+    await res.text().catch(() => '');
+    // 200-family = live & authed. 429 = live but rate-limited (still "reachable+valid key")→ ok:false but no auth error.
+    return {
+      provider, envVar, configured: true,
+      ok: res.ok, status: res.status, latencyMs,
+      ...(res.ok ? {} : { error: `HTTP ${res.status}` })
+    };
+  } catch (err) {
+    const latencyMs = Date.now() - started;
+    const msg = err && err.name === 'TimeoutError' ? 'timeout' : String((err && err.message) || 'request failed');
+    return { provider, envVar, configured: true, ok: false, status: null, latencyMs, error: msg.slice(0, 120) };
+  }
+}
+
+router.get('/health', async (req, res) => {
+  try {
+    const pool = require('./key-pool');
+    // Cloud/keyed providers only. Local Ollama is keyless and not part of the pool health check.
+    const providers = ['groq', 'openrouter', 'anthropic', 'openai', 'ollamacloud'];
+    const results = await Promise.all(providers.map(p => pingProvider(pool, p)));
+    return res.json({ ok: true, checkedAt: new Date().toISOString(), providers: results });
+  } catch (err) {
+    console.error('[llm-proxy] /health error:', err.message);
+    return res.status(500).json({ ok: false, error: String(err.message || 'health check failed') });
+  }
+});
+
 module.exports = router;

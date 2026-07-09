@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>◆ LEADERBOARD — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#050505;
+    --panel2:#080a09;
+    --border:rgba(0,255,136,0.14);
+    --border-strong:rgba(0,255,136,0.4);
+    --green:#00ff88;
+    --cyan:#00f0ff;
+    --purple:#c084fc;
+    --yellow:#f5e000;
+    --orange:#ff9d3d;
+    --red:#ff2a2a;
+    --dim:#5a6b60;
+    --text:#c8d6cd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:14px;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* CRT scanlines */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.035) 3px,
+      rgba(0,0,0,0.035) 4px
+    );
+  }
+  h1,h2,h3{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;margin:0;}
+  a{color:var(--cyan);text-decoration:none;}
+  a:hover{color:var(--green);}
+
+  /* Top bar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:14px 22px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:100;
+    flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-size:20px;
+    color:var(--yellow);
+    text-shadow:0 0 12px rgba(245,224,0,0.45);
+  }
+  .topbar .tag{color:var(--dim);font-size:12px;letter-spacing:1px;}
+  .topbar .back{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+  }
+  .topbar .back:hover{border-color:var(--border-strong);}
+  .topbar .spacer{margin-left:auto;}
+  .apistatus{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+  .apistatus.up{color:var(--green);}
+  .apistatus.down{color:var(--red);}
+  .refresh-tick{font-size:11px;color:var(--dim);letter-spacing:1px;}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:22px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:18px;
+    margin-bottom:22px;
+    box-shadow:0 0 24px rgba(0,255,136,0.04) inset;
+  }
+
+  select,button{font-family:'Share Tech Mono',monospace;outline:none;}
+  select{
+    background:#000;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:13px;
+    padding:8px 10px;
+  }
+  select:focus{border-color:var(--green);}
+
+  .btn{
+    font-family:'Orbitron',sans-serif;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;font-size:13px;
+    padding:12px 22px;background:#000;color:var(--green);
+    border:1px solid var(--border-strong);cursor:pointer;
+    transition:all .12s ease;
+  }
+  .btn:hover:not(:disabled){background:rgba(0,255,136,0.1);box-shadow:0 0 18px rgba(0,255,136,0.35);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn.small{font-size:11px;padding:7px 14px;}
+
+  /* Leaderboard header controls */
+  .lb-head{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .lb-head h2{
+    font-family:'Orbitron',sans-serif;font-size:14px;color:var(--yellow);margin:0;
+    text-transform:uppercase;letter-spacing:2px;
+    text-shadow:0 0 8px rgba(245,224,0,0.3);
+  }
+  .filters{display:flex;gap:10px;flex-wrap:wrap;}
+  .sort-note{color:var(--dim);font-size:11px;letter-spacing:1px;}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{
+    text-align:left;color:var(--green);font-family:'Orbitron',sans-serif;font-weight:500;
+    font-size:10px;text-transform:uppercase;letter-spacing:1px;
+    padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;
+    cursor:pointer;user-select:none;
+  }
+  th:hover{color:var(--cyan);}
+  th.sort-asc::after{content:" ▲";}
+  th.sort-desc::after{content:" ▼";}
+  th.no-sort{cursor:default;}
+  th.no-sort:hover{color:var(--green);}
+
+  td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+  tr:hover td{background:rgba(0,255,136,0.025);}
+
+  .rank{color:var(--dim);font-size:11px;font-family:'Orbitron',sans-serif;font-weight:500;}
+  .rank-1{color:var(--yellow);text-shadow:0 0 8px rgba(245,224,0,0.5);}
+  .rank-2{color:#c0c0c0;}
+  .rank-3{color:#cd7f32;}
+
+  /* Agent cell */
+  .agent-cell{display:flex;align-items:center;gap:9px;}
+  .agent-avatar{
+    width:32px;height:32px;border-radius:4px;overflow:hidden;
+    background:#000;border:1px solid #1a2a1a;flex:none;
+    position:relative;
+  }
+  .agent-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+  .agent-avatar .av-tile{
+    display:none;width:100%;height:100%;
+    align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;
+    color:rgba(0,0,0,0.6);
+  }
+  .agent-avatar.letter-mode .av-tile{display:flex;}
+  .agent-avatar.letter-mode img{display:none;}
+  .aname{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;}
+
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;box-shadow:0 0 5px currentColor;}
+  .badge-win{color:var(--green);font-weight:700;letter-spacing:1px;}
+  .badge-loss{color:var(--red);font-weight:700;letter-spacing:1px;}
+  .score-val{color:var(--yellow);}
+  .when{color:var(--dim);font-size:11px;}
+
+  .empty{color:var(--dim);text-align:center;padding:32px;font-size:13px;letter-spacing:1px;}
+  .empty .sub{margin-top:8px;font-size:12px;color:#3a4a40;}
+
+  /* Stats row */
+  .stats-row{
+    display:flex;gap:22px;flex-wrap:wrap;margin-bottom:20px;
+    padding:14px 16px;background:var(--panel2);border:1px solid var(--border);
+  }
+  .stat-item{display:flex;flex-direction:column;gap:3px;}
+  .stat-label{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+  .stat-val{font-family:'Orbitron',sans-serif;font-weight:700;font-size:16px;color:var(--green);}
+  .stat-val.cyan{color:var(--cyan);}
+  .stat-val.yellow{color:var(--yellow);}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>◆ LEADERBOARD</h1>
+    <span class="tag">all-time arcade scores</span>
+    <div class="spacer"></div>
+    <span id="refreshTick" class="refresh-tick">↻ next refresh in <span id="countdownVal">15</span>s</span>
+    <span id="apiStatus" class="apistatus">● connecting…</span>
+    <a class="back" href="/arcade.html">← ARCADE</a>
+    <a class="back" href="/">← DASHBOARD</a>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+
+      <!-- Stats summary -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-item">
+          <span class="stat-label">Total Scores</span>
+          <span class="stat-val" id="statTotal">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Win Rate</span>
+          <span class="stat-val cyan" id="statWinRate">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Top Score</span>
+          <span class="stat-val yellow" id="statTopScore">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Top Agent</span>
+          <span class="stat-val" id="statTopAgent">—</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="lb-head">
+        <h2>◆ All Scores</h2>
+        <div class="filters">
+          <select id="filterGame"><option value="">All Games</option></select>
+          <select id="filterAgent"><option value="">All Agents</option></select>
+          <select id="filterResult">
+            <option value="">All Results</option>
+            <option value="win">Wins Only</option>
+            <option value="loss">Losses Only</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+          <span class="sort-note">Click column header to sort</span>
+          <button id="btnRefresh" class="btn small">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table id="lbTable">
+          <thead>
+            <tr>
+              <th class="no-sort" data-col="rank">#</th>
+              <th class="no-sort" data-col="agent">Agent</th>
+              <th data-col="game">Game</th>
+              <th data-col="score">Score</th>
+              <th data-col="win">Result</th>
+              <th data-col="ts">When</th>
+            </tr>
+          </thead>
+          <tbody id="lbBody">
+            <tr><td colspan="6" class="empty">Loading leaderboard…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- fallback catalog ----------
+  var FALLBACK_GAMES = [
+    {id:"basketball",   name:"NEON HOOPS",     color:"#ff9d3d"},
+    {id:"football",     name:"GRID GRIDIRON",  color:"#ff2a2a"},
+    {id:"dodgeball",    name:"GRID DODGEBALL", color:"#ff5db1"},
+    {id:"sigil-storm",  name:"SIGIL STORM",    color:"#c084fc"},
+    {id:"xt-adventure", name:"XT ADVENTURE",   color:"#00ff88"}
+  ];
+  var FALLBACK_AGENTS = [
+    {id:"SHADDAI", name:"SHADDAI", color:"#ffcf1a"},
+    {id:"NEXUS",   name:"NEXUS",   color:"#00f0ff"},
+    {id:"ORACLE",  name:"ORACLE",  color:"#b06bff"},
+    {id:"ZEROX",   name:"ZEROX",   color:"#ff9d3d"},
+    {id:"TURTLE",  name:"TURTLE",  color:"#ff2bd6"},
+    {id:"QUILL",   name:"QUILL",   color:"#f5e000"},
+    {id:"PIKADON", name:"PIKADON", color:"#ff2a2a"}
+  ];
+
+  // ---------- state ----------
+  var GAMES  = [];
+  var AGENTS = [];
+  var ALL_SCORES = [];      // raw from API (up to 100)
+  var sortCol = "ts";
+  var sortDir = "desc";
+  var refreshTimer = null;
+  var countdownTimer = null;
+  var REFRESH_INTERVAL = 15;
+  var countdownRemaining = REFRESH_INTERVAL;
+
+  // ---------- dom ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var lbBody      = $("lbBody");
+  var filterGame  = $("filterGame");
+  var filterAgent = $("filterAgent");
+  var filterResult= $("filterResult");
+  var apiStatus   = $("apiStatus");
+  var countdownEl = $("countdownVal");
+
+  // ---------- helpers ----------
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function agentById(id){
+    for(var i=0;i<AGENTS.length;i++){ if(AGENTS[i].id===id) return AGENTS[i]; }
+    return null;
+  }
+  function gameById(id){
+    for(var i=0;i<GAMES.length;i++){ if(GAMES[i].id===id) return GAMES[i]; }
+    return null;
+  }
+  function timeAgo(ts){
+    if(!ts) return "—";
+    var t = (typeof ts === "number") ? ts : Date.parse(ts);
+    if(isNaN(t)) return "—";
+    var s = Math.max(0, Math.floor((Date.now()-t)/1000));
+    if(s<60) return s+"s ago";
+    var m = Math.floor(s/60); if(m<60) return m+"m ago";
+    var h = Math.floor(m/60); if(h<24) return h+"h ago";
+    return Math.floor(h/24)+"d ago";
+  }
+  function setApiStatus(up){
+    apiStatus.className = "apistatus " + (up ? "up" : "down");
+    apiStatus.textContent = up ? "● API online" : "● API offline";
+  }
+  async function api(path, opts){
+    var res = await fetch(path, opts);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return res.json();
+  }
+
+  // ---------- HF art helpers ----------
+  function hfArtUrl(id){
+    return "/sports/football/assets/players/"+encodeURIComponent(id)+".png?v=cine1";
+  }
+  function fallbackPortrait(id){
+    return "/assets/agents/"+encodeURIComponent(id)+"-portrait.png";
+  }
+
+  // Build a small avatar element with the same HF → portrait → letter fallback
+  function buildAvatar(agent){
+    var a   = agent || {};
+    var col = a.color || "#00ff88";
+    var id  = a.id || "?";
+    var initial = id.charAt(0);
+
+    var wrap = document.createElement("div");
+    wrap.className = "agent-avatar";
+
+    var tile = document.createElement("div");
+    tile.className = "av-tile";
+    tile.style.background = col;
+    tile.textContent = initial;
+
+    var img = document.createElement("img");
+    img.alt = a.name || id;
+    img.src = hfArtUrl(id);
+
+    var triedFallback = false;
+    img.onerror = function(){
+      if(!triedFallback){
+        triedFallback = true;
+        img.src = a.portrait || fallbackPortrait(id);
+      } else {
+        wrap.classList.add("letter-mode");
+      }
+    };
+
+    wrap.appendChild(img);
+    wrap.appendChild(tile);
+    return wrap;
+  }
+
+  // ---------- populate filter dropdowns ----------
+  function populateFilters(){
+    filterGame.innerHTML  = '<option value="">All Games</option>';
+    filterAgent.innerHTML = '<option value="">All Agents</option>';
+    GAMES.forEach(function(g){
+      var o = document.createElement("option");
+      o.value = g.id; o.textContent = g.name;
+      filterGame.appendChild(o);
+    });
+    AGENTS.forEach(function(a){
+      var o = document.createElement("option");
+      o.value = a.id; o.textContent = a.name || a.id;
+      filterAgent.appendChild(o);
+    });
+  }
+
+  // ---------- sort + filter then render ----------
+  function applyAndRender(){
+    var gf = filterGame.value;
+    var af = filterAgent.value;
+    var rf = filterResult.value;
+
+    var filtered = ALL_SCORES.filter(function(s){
+      if(gf && s.game !== gf) return false;
+      if(af && s.agent !== af) return false;
+      if(rf === "win"  && !s.win)  return false;
+      if(rf === "loss" &&  s.win)  return false;
+      return true;
+    });
+
+    // sort
+    filtered.sort(function(a, b){
+      var av, bv;
+      if(sortCol === "score"){
+        av = a.score == null ? -Infinity : Number(a.score);
+        bv = b.score == null ? -Infinity : Number(b.score);
+      } else if(sortCol === "win"){
+        av = a.win ? 1 : 0;
+        bv = b.win ? 1 : 0;
+      } else if(sortCol === "ts"){
+        av = a.ts ? (typeof a.ts==="number"?a.ts:Date.parse(a.ts)) : 0;
+        bv = b.ts ? (typeof b.ts==="number"?b.ts:Date.parse(b.ts)) : 0;
+      } else if(sortCol === "game"){
+        var ga = gameById(a.game), gb = gameById(b.game);
+        av = (ga?ga.name:a.game||"").toLowerCase();
+        bv = (gb?gb.name:b.game||"").toLowerCase();
+      } else {
+        av = (a[sortCol]||"").toString().toLowerCase();
+        bv = (b[sortCol]||"").toString().toLowerCase();
+      }
+      if(av < bv) return sortDir === "asc" ?  -1 : 1;
+      if(av > bv) return sortDir === "asc" ?   1 : -1;
+      return 0;
+    });
+
+    renderStats(filtered);
+    renderRows(filtered);
+    updateSortHeaders();
+  }
+
+  function renderStats(scores){
+    var total = scores.length;
+    var wins  = scores.filter(function(s){ return s.win; }).length;
+    var winPct = total ? Math.round(wins/total*100) : 0;
+    var top = null;
+    scores.forEach(function(s){
+      if(s.score != null && (top === null || Number(s.score) > Number(top))) top = s.score;
+    });
+
+    // find top agent by win count
+    var agentWins = {};
+    scores.forEach(function(s){
+      if(s.win){
+        agentWins[s.agent] = (agentWins[s.agent]||0)+1;
+      }
+    });
+    var topAgent = null, topWins = 0;
+    Object.keys(agentWins).forEach(function(k){
+      if(agentWins[k] > topWins){ topWins = agentWins[k]; topAgent = k; }
+    });
+
+    $("statTotal").textContent    = total;
+    $("statWinRate").textContent  = total ? winPct+"%" : "—";
+    $("statTopScore").textContent = top != null ? top : "—";
+    $("statTopAgent").textContent = topAgent || "—";
+  }
+
+  function renderRows(scores){
+    if(!scores.length){
+      lbBody.innerHTML =
+        '<tr><td colspan="6" class="empty">No scores yet'+(filterGame.value||filterAgent.value||filterResult.value?" for this filter":"")+'.'
+        +'<div class="sub">Play a game in the arcade to get on the board.</div></td></tr>';
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    scores.forEach(function(s, i){
+      var a   = agentById(s.agent);
+      var g   = gameById(s.game);
+      var col = a ? a.color : "#00ff88";
+      var win = !!s.win;
+      var rankNum = i+1;
+      var rankClass = "rank";
+      if(rankNum===1) rankClass = "rank rank-1";
+      else if(rankNum===2) rankClass = "rank rank-2";
+      else if(rankNum===3) rankClass = "rank rank-3";
+
+      var tr = document.createElement("tr");
+
+      // # rank
+      var tdRank = document.createElement("td");
+      tdRank.className = rankClass;
+      tdRank.textContent = rankNum===1 ? "◈ 1" : rankNum;
+      tr.appendChild(tdRank);
+
+      // Agent cell with avatar
+      var tdAgent = document.createElement("td");
+      var agentCell = document.createElement("div");
+      agentCell.className = "agent-cell";
+      agentCell.appendChild(buildAvatar(a || {id:s.agent, color:col}));
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "aname";
+      nameSpan.style.color = col;
+      nameSpan.textContent = a ? (a.name||a.id) : s.agent;
+      agentCell.appendChild(nameSpan);
+      tdAgent.appendChild(agentCell);
+      tr.appendChild(tdAgent);
+
+      // Game
+      var tdGame = document.createElement("td");
+      tdGame.textContent = g ? (g.name||g.id) : (s.game||"—");
+      tr.appendChild(tdGame);
+
+      // Score
+      var tdScore = document.createElement("td");
+      tdScore.className = "score-val";
+      tdScore.textContent = s.score == null ? "—" : s.score;
+      tr.appendChild(tdScore);
+
+      // Result
+      var tdResult = document.createElement("td");
+      var badge = document.createElement("span");
+      badge.className = win ? "badge-win" : "badge-loss";
+      badge.textContent = win ? "WIN" : "LOSS";
+      tdResult.appendChild(badge);
+      tr.appendChild(tdResult);
+
+      // When
+      var tdWhen = document.createElement("td");
+      tdWhen.className = "when";
+      tdWhen.textContent = timeAgo(s.ts);
+      tr.appendChild(tdWhen);
+
+      frag.appendChild(tr);
+    });
+    lbBody.innerHTML = "";
+    lbBody.appendChild(frag);
+  }
+
+  function updateSortHeaders(){
+    var ths = document.querySelectorAll("#lbTable thead th");
+    [].forEach.call(ths, function(th){
+      th.classList.remove("sort-asc","sort-desc");
+      if(!th.classList.contains("no-sort") && th.dataset.col === sortCol){
+        th.classList.add(sortDir === "asc" ? "sort-asc" : "sort-desc");
+      }
+    });
+  }
+
+  // ---------- load leaderboard ----------
+  async function loadLeaderboard(){
+    try{
+      var data = await api("/api/arcade/leaderboard?limit=100");
+      setApiStatus(true);
+      ALL_SCORES = (data && data.scores) ? data.scores : [];
+      // auto-populate any unseen agents/games from scores
+      ALL_SCORES.forEach(function(s){
+        if(s.agent && !agentById(s.agent)){
+          AGENTS.push({id:s.agent, name:s.agent, color:"#00ff88"});
+        }
+        if(s.game && !gameById(s.game)){
+          GAMES.push({id:s.game, name:s.game, color:"#00ff88"});
+        }
+      });
+      populateFilters();
+      applyAndRender();
+    }catch(e){
+      setApiStatus(false);
+      lbBody.innerHTML =
+        '<tr><td colspan="6" class="empty">Leaderboard unavailable — arcade API is offline.'
+        +'<div class="sub">Start the backend and refresh to load scores.</div></td></tr>';
+      $("statTotal").textContent   = "—";
+      $("statWinRate").textContent = "—";
+      $("statTopScore").textContent= "—";
+      $("statTopAgent").textContent= "—";
+    }
+  }
+
+  // ---------- load games + agents catalog ----------
+  async function loadCatalog(){
+    try{
+      var gd = await api("/api/arcade/games");
+      GAMES = (gd && gd.ok && gd.games && gd.games.length) ? gd.games : FALLBACK_GAMES;
+    }catch(e){ GAMES = FALLBACK_GAMES; }
+
+    try{
+      var ad = await api("/api/arcade/agents");
+      AGENTS = (ad && ad.ok && ad.agents && ad.agents.length) ? ad.agents.map(function(a){
+        a.name = a.name || a.id;
+        return a;
+      }) : FALLBACK_AGENTS;
+    }catch(e){ AGENTS = FALLBACK_AGENTS; }
+
+    populateFilters();
+  }
+
+  // ---------- countdown + auto-refresh ----------
+  function startCountdown(){
+    countdownRemaining = REFRESH_INTERVAL;
+    if(countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(function(){
+      countdownRemaining--;
+      if(countdownRemaining <= 0){
+        countdownRemaining = REFRESH_INTERVAL;
+        loadLeaderboard();
+      }
+      if(countdownEl) countdownEl.textContent = countdownRemaining;
+    }, 1000);
+  }
+
+  // ---------- sort header wire ----------
+  var ths = document.querySelectorAll("#lbTable thead th");
+  [].forEach.call(ths, function(th){
+    if(th.classList.contains("no-sort")) return;
+    th.addEventListener("click", function(){
+      var col = th.dataset.col;
+      if(sortCol === col){
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortCol = col;
+        sortDir = col === "ts" || col === "score" ? "desc" : "asc";
+      }
+      applyAndRender();
+    });
+  });
+
+  // ---------- filter wire ----------
+  filterGame.addEventListener("change",   applyAndRender);
+  filterAgent.addEventListener("change",  applyAndRender);
+  filterResult.addEventListener("change", applyAndRender);
+  $("btnRefresh").addEventListener("click", function(){
+    countdownRemaining = REFRESH_INTERVAL;
+    if(countdownEl) countdownEl.textContent = countdownRemaining;
+    loadLeaderboard();
+  });
+
+  // ---------- init ----------
+  (async function init(){
+    await loadCatalog();
+    await loadLeaderboard();
+    startCountdown();
+  })();
+
+})();
+</script>
+</body>
+</html>

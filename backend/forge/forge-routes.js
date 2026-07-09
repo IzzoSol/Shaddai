@@ -8,6 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const core = require('./forge-core');
 const hf = require('../lib/hf-keys'); // HF key pool + auto-rotation
+// Unified operative store (single source of truth read by Rooms/Agents/Office/World).
+// Loaded defensively so a require failure can never crash the forge route.
+let opStore = null; try { opStore = require('../lib/operatives'); } catch (e) { console.warn('[forge] operatives store unavailable:', e && e.message); }
 
 const router = express.Router();
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -17,7 +20,15 @@ const STATE_FILE = path.join(DATA_DIR, 'forge-state.json');
 
 function ensureDirs(){ for (const d of [DATA_DIR, IMG_DIR]) if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); }
 function loadState(){ try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); } catch { return { nextTokenId: 1, operatives: [] }; } }
-function saveState(s){ fs.writeFileSync(STATE_FILE, JSON.stringify(s, null, 2)); }
+function saveState(s){
+  // Atomic write: temp file + rename so a crash mid-write can't corrupt forge-state.json
+  // (a truncated file would fail JSON.parse and silently reset nextTokenId → duplicate ids).
+  try {
+    const tmp = STATE_FILE + '.tmp-' + process.pid + '-' + Date.now();
+    fs.writeFileSync(tmp, JSON.stringify(s, null, 2), 'utf8');
+    fs.renameSync(tmp, STATE_FILE);
+  } catch (e) { console.error('[forge] failed to persist forge-state.json:', e && e.message); }
+}
 
 // (HF calls now go through ../lib/hf-keys → server-side keys + auto-rotation)
 
@@ -30,23 +41,46 @@ router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
     const errs = core.validateBuild(build);
     if (errs.length) return res.status(400).json({ ok: false, error: 'invalid build', details: errs });
 
-    if (!hf.keys().length) {
-      console.warn('[forge] No HF token configured. Set HF_TOKENS env (or backend/data/runtime-keys.json). Forge needs a real Hugging Face token — no mock.');
-      return res.status(503).json({ ok: false, error: 'Image generation is temporarily unavailable — please try again shortly.' });
-    }
-
     ensureDirs();
     const state = loadState();
     const tokenId = state.nextTokenId;
     const prompt = core.assemblePrompt(build, tokenId);
 
-    let img;
-    try { img = await hf.generate(prompt); } // rotates across keys on depletion
-    catch (e) { return res.status(502).json({ ok: false, error: 'forge render failed', detail: e.message }); }
+    // Try a real FLUX render. If HF is unavailable (no token) or the render fails,
+    // DEGRADE GRACEFULLY: fall back to the pre-generated archetype portrait so the
+    // forge still succeeds and the agent is created — never a hard crash / dead forge.
+    // The /api/forge/art/:file route has its own bulletproof fallback chain, so this
+    // URL always resolves to a real colourful image.
+    let imageUrl, dataUri = null, degraded = false, renderNote = '';
+    let img = null;
+    if (hf.keys().length) {
+      try { img = await hf.generate(prompt); } // rotates across keys on depletion
+      catch (e) { renderNote = 'render failed: ' + (e && e.message || 'unknown'); }
+    } else {
+      renderNote = 'no HF token configured';
+      console.warn('[forge] No HF token configured (set HF_TOKENS env or backend/data/runtime-keys.json) — using archetype fallback portrait.');
+    }
 
-    const file = `forge-${tokenId}.png`;
-    fs.writeFileSync(path.join(IMG_DIR, file), img);
-    const imageUrl = `/api/forge/image/${file}`;
+    if (Buffer.isBuffer(img) && img.length) {
+      const file = `forge-${tokenId}.png`;
+      try {
+        fs.writeFileSync(path.join(IMG_DIR, file), img);
+        imageUrl = `/api/forge/image/${file}`;
+        dataUri = `data:image/png;base64,${img.toString('base64')}`;
+      } catch (e) {
+        // couldn't persist the fresh render → degrade to the archetype fallback rather than 500
+        renderNote = 'could not save portrait: ' + (e && e.message);
+        img = null;
+      }
+    }
+    if (!imageUrl) {
+      // graceful fallback portrait (served with its own multi-level fallback chain)
+      const arch = (build && build.archetype) || archetype || 'ghost';
+      imageUrl = `/api/forge/art/arch-${arch}.png`;
+      degraded = true;
+      console.warn('[forge] degraded to fallback portrait for archetype=' + arch + ' (' + renderNote + ')');
+    }
+
     const metadata = core.forgeMetadata(build, tokenId, imageUrl, owner);
     metadata.codename = name || metadata.name;
 
@@ -55,9 +89,31 @@ router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
       archetype: build.archetype, buildHash: metadata.buildHash, build, image: imageUrl, at: Date.now() });
     saveState(state);
 
-    // also return a data URI so the UI can paint instantly without a second fetch
-    const dataUri = `data:image/png;base64,${img.toString('base64')}`;
-    res.json({ ok: true, metadata, image: imageUrl, dataUri });
+    // PERSISTENCE: write the forged agent straight into the unified operative store
+    // (backend/data/operatives.json) that the Rooms/Agents/Office/World tabs read.
+    // Previously the forge only wrote forge-state.json and relied on the frontend
+    // making a second POST /api/operatives — if that call was skipped or failed the
+    // agent never showed up. Best-effort + non-fatal: a store hiccup must NOT fail
+    // the forge (the portrait already rendered, and a lazy GET /api/operatives sync
+    // remains as a backstop).
+    let operative = null;
+    if (opStore && typeof opStore.create === 'function') {
+      try {
+        operative = opStore.create({
+          owner, codename: metadata.codename,
+          archetype: build.archetype,
+          rarity: metadata.rarity,
+          look: build,
+          portrait: imageUrl,
+          tools: [],
+          buildHash: metadata.buildHash,
+        });
+      } catch (e) { console.error('[forge] operative store persist failed (non-fatal):', e && e.message); }
+    }
+
+    // dataUri (set only when we rendered a fresh portrait) lets the UI paint instantly
+    // without a second fetch; on the degraded path the UI loads `image` (fallback art URL).
+    res.json({ ok: true, metadata, image: imageUrl, dataUri, operative, degraded });
   } catch (e) {
     console.error('[forge] POST / failed:', (e && e.stack) || e);   // surface real cause in Render logs
     res.status(500).json({ ok: false, error: String(e && e.message || e) });

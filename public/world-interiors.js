@@ -2831,6 +2831,116 @@
       return card;
     }
 
+    /* ── ZEROX MARKETS chart card — canvas line chart of live OHLC closes ──────────
+       Draws BTC/ETH/SOL from /api/markets/ohlc (the world's existing markets feed). Falls
+       back to a clean sample sine-wave chart if the endpoint is unavailable (no black boxes).
+       `root` is the panel root so the canvas can resize when the panel is EXPANDED (#2). */
+    function buildMarketChartCard(body, accent, root) {
+      var card = document.createElement('div');
+      card.style.cssText =
+        'border:1px solid ' + accent + '44;border-radius:9px;padding:9px 10px;margin-bottom:12px;' +
+        'background:rgba(0,0,0,0.30)';
+
+      var hdr = document.createElement('div');
+      hdr.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:7px';
+      var title = document.createElement('div');
+      title.style.cssText = 'flex:1;color:' + accent + ';font-weight:700;font-size:12px;letter-spacing:0.04em';
+      title.textContent = '📈 LIVE CHART';
+      hdr.appendChild(title);
+      ['BTC', 'ETH', 'SOL'].forEach(function (sym) {
+        var b = document.createElement('button');
+        b.textContent = sym;
+        b.style.cssText =
+          'background:' + accent + '18;border:1px solid ' + accent + '66;color:#cfe;' +
+          'font-family:monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;cursor:pointer';
+        b.onclick = function () { load(sym.toLowerCase()); };
+        hdr.appendChild(b);
+      });
+      card.appendChild(hdr);
+
+      var cv = document.createElement('canvas');
+      cv.width = 300; cv.height = 150;
+      cv.style.cssText = 'display:block;width:100%;height:auto;border-radius:7px;background:rgba(0,0,0,0.45)';
+      card.appendChild(cv);
+
+      var meta = document.createElement('div');
+      meta.style.cssText = 'font-size:10.5px;color:rgba(255,255,255,0.7);margin-top:6px;font-family:monospace';
+      meta.textContent = 'loading…';
+      card.appendChild(meta);
+
+      body.appendChild(card);
+
+      function draw(pts, label, up) {
+        var ctx = cv.getContext('2d');
+        var W = cv.width, H = cv.height, pad = 10;
+        ctx.clearRect(0, 0, W, H);
+        // grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+        for (var g = 0; g <= 4; g++) { var gy = pad + (H - 2 * pad) * g / 4; ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W - pad, gy); ctx.stroke(); }
+        if (!pts.length) return;
+        var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts), span = (max - min) || 1;
+        var col = up ? '#00e5a0' : '#ff4d6a';
+        // area fill
+        var grad = ctx.createLinearGradient(0, pad, 0, H - pad);
+        grad.addColorStop(0, up ? 'rgba(0,229,160,0.35)' : 'rgba(255,77,106,0.35)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.beginPath();
+        pts.forEach(function (p, i) {
+          var x = pad + (W - 2 * pad) * i / (pts.length - 1 || 1);
+          var y = (H - pad) - (H - 2 * pad) * (p - min) / span;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        var lx = W - pad, ly = H - pad;
+        ctx.lineTo(lx, ly); ctx.lineTo(pad, ly); ctx.closePath();
+        ctx.fillStyle = grad; ctx.fill();
+        // line
+        ctx.beginPath();
+        pts.forEach(function (p, i) {
+          var x = pad + (W - 2 * pad) * i / (pts.length - 1 || 1);
+          var y = (H - pad) - (H - 2 * pad) * (p - min) / span;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.stroke(); ctx.shadowBlur = 0;
+      }
+
+      function sample(sym) {
+        // graceful fallback: a clean sample series so the chart is never blank/broken
+        var base = sym === 'btc' ? 68000 : sym === 'eth' ? 3600 : 165, arr = [];
+        for (var i = 0; i < 40; i++) arr.push(base * (1 + 0.04 * Math.sin(i / 5) + (Math.random() - 0.5) * 0.01));
+        return arr;
+      }
+
+      function load(sym) {
+        // Enlarge the render buffer when the panel is expanded so the chart stays crisp.
+        var big = root && /width:min\(860px/.test(root.style.cssText || '');
+        cv.width = big ? 760 : 300; cv.height = big ? 300 : 150;
+        meta.textContent = sym.toUpperCase() + ' · loading…';
+        fetch('/api/markets/ohlc?symbol=' + sym)
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d || !d.ok || !d.candles || !d.candles.length) throw new Error('no data');
+            var closes = d.candles.map(function (c) { return c.c; });
+            var up = (d.change24h || 0) >= 0;
+            draw(closes, sym, up);
+            meta.textContent = (d.symbol || sym.toUpperCase()) + '  $' + Number(d.price).toLocaleString() +
+              '   ' + (up ? '▲' : '▼') + ' ' + Math.abs(d.change24h || 0) + '%  ·  ⤢ expand for a big chart';
+            meta.style.color = up ? '#8ff0cf' : '#ffb0bb';
+          })
+          .catch(function () {
+            draw(sample(sym), sym, true);
+            meta.textContent = sym.toUpperCase() + ' · sample data (live feed offline) · ⤢ expand for a big chart';
+            meta.style.color = 'rgba(255,255,255,0.6)';
+          });
+      }
+      // let the panel's ⤢ EXPAND redraw the chart crisp at the new size (see expBtn handler)
+      if (root) root._onResize = function () { load(_lastSym); };
+      var _lastSym = 'btc';
+      var _origLoad = load;
+      load = function (s) { _lastSym = s; return _origLoad(s); };
+      load('btc');
+      return card;
+    }
+
     /* Show the tool panel for room `uc`. Rebuilt fresh each time. */
     function showToolPanel(uc) {
       if (typeof document === 'undefined') return;
@@ -2840,13 +2950,26 @@
 
       var root = document.createElement('div');
       root.id = 'wi-tools';
-      root.style.cssText =
-        'position:fixed;top:64px;right:16px;width:330px;max-height:calc(100vh - 140px);' +
+      /* Compact style — a slim panel docked top-right. The ⤢ EXPAND button (added to the header
+         below) swaps these inline styles for the large centered-modal styles so cramped tool/info
+         panels become big + readable (mirrors the museum kiosk's expand). */
+      var COMPACT_CSS =
+        'position:fixed;top:64px;right:16px;left:auto;bottom:auto;transform:none;width:330px;max-height:calc(100vh - 140px);' +
         'display:flex;flex-direction:column;z-index:9902;' +
         'background:rgba(6,9,14,0.90);backdrop-filter:blur(7px);' +
         'border:1px solid ' + accent + '55;border-radius:11px;' +
         'box-shadow:0 8px 34px rgba(0,0,0,0.55);font-family:system-ui,sans-serif;' +
         'color:#fff;overflow:hidden';
+      var EXPANDED_CSS =
+        'position:fixed;top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);' +
+        'width:min(860px,94vw);max-height:88vh;' +
+        'display:flex;flex-direction:column;z-index:9903;' +
+        'background:rgba(6,9,14,0.97);backdrop-filter:blur(10px);' +
+        'border:1px solid ' + accent + ';border-radius:16px;' +
+        'box-shadow:0 0 60px rgba(0,0,0,0.75),0 0 40px ' + accent + '33;font-family:system-ui,sans-serif;' +
+        'color:#fff;overflow:hidden';
+      var _expanded = false;
+      root.style.cssText = COMPACT_CSS;
 
       /* keep keystrokes inside the panel from driving the world (WASD) or exiting (E/Esc) */
       ['keydown', 'keyup', 'keypress'].forEach(function (ev) {
@@ -2864,18 +2987,46 @@
       var ttl = document.createElement('div');
       ttl.textContent = (theme.label || uc) + ' — TOOLS';
       ttl.style.cssText = 'flex:1;color:' + accent + ';font-weight:700;font-size:12px;letter-spacing:0.05em';
-      head.appendChild(tog); head.appendChild(ttl);
+      /* ⤢ EXPAND — opens a large, readable centered-modal version of this same panel (live tool
+         cards move with it — no clone, so Run buttons keep working). Toggles back to ⤡ SHRINK. */
+      var expBtn = document.createElement('button');
+      expBtn.textContent = '⤢';
+      expBtn.title = 'Expand to a large, readable panel';
+      expBtn.style.cssText =
+        'flex:0 0 auto;background:' + accent + '22;border:1px solid ' + accent + ';color:' + accent + ';' +
+        'font-size:13px;line-height:1;padding:3px 8px;border-radius:6px;cursor:pointer';
+      head.appendChild(tog); head.appendChild(ttl); head.appendChild(expBtn);
       root.appendChild(head);
 
       var body = document.createElement('div');
       body.style.cssText = 'padding:10px 12px 12px;overflow:auto;flex:1 1 auto';
       root.appendChild(body);
 
+      /* clicking the header (title/collapse ▾) still collapses; the ⤢ button is its own control */
       head.onclick = function () {
         var hidden = body.style.display === 'none';
         body.style.display = hidden ? 'block' : 'none';
         tog.textContent = hidden ? '▾' : '▸';
       };
+      expBtn.onclick = function (ev) {
+        ev.stopPropagation();                 /* don't trigger the header collapse */
+        _expanded = !_expanded;
+        root.style.cssText = _expanded ? EXPANDED_CSS : COMPACT_CSS;
+        body.style.display = 'block';         /* expanding always reveals the body */
+        tog.textContent = '▾';
+        expBtn.textContent = _expanded ? '⤡' : '⤢';
+        expBtn.title = _expanded ? 'Shrink back to the docked panel' : 'Expand to a large, readable panel';
+        ttl.textContent = (theme.label || uc) + (_expanded ? ' — TOOLS  ·  press ⤡ or M to shrink/free cursor' : ' — TOOLS');
+        try { if (typeof root._onResize === 'function') root._onResize(); } catch (e) {}   /* redraw chart crisp at the new size */
+      };
+
+      /* ── ZEROX MARKETS — in-panel price chart ─────────────────────────────────
+         The player can VIEW CHARTS right inside the ZEROX Markets tool panel: a canvas
+         line chart of BTC/ETH/SOL drawn from the SAME data the world already fetches
+         (/api/markets/ohlc — reused from the outdoor holo-candlestick board). BTC/ETH/SOL
+         switch buttons refresh it. It scales up with the ⤢ EXPAND button (#2) → big + readable.
+         LIVE-DATA HOOK: swap the fetch URL below for a websocket/poll if a live feed is added. */
+      if (uc === 'ZEROX') { buildMarketChartCard(body, accent, root); }
 
       /* NEXUS games launcher (uses existing arcade pages) */
       var games = ROOM_GAMES[uc];

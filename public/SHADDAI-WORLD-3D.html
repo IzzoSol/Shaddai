@@ -126,7 +126,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
-<div class="hud" id="hint"><span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">N</span> news · <span class="k">ESC</span> release</div>
+<div class="hud" id="hint"><span class="k">TAB</span> cursor⇄play · <span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">N</span> news · <span class="k">ESC</span> cursor</div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
 <button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:58px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
@@ -141,6 +141,29 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 <style>.terrOpt{display:block;width:140px;text-align:left;margin:3px 0;background:rgba(39,224,255,.08);border:1px solid rgba(39,224,255,.2);color:#cfe9ff;font-family:'Orbitron',sans-serif;font-size:10px;padding:7px 10px;border-radius:6px;cursor:pointer}.terrOpt:hover{background:rgba(39,224,255,.22)}</style>
 <div id="labels"></div>
+
+<!-- ── CURSOR ⇄ PLAY (walk) dual-mode toggle — always visible; one click swaps modes.
+     CURSOR (default): normal usable mouse, every HUD/menu/tool-panel/building UI directly
+     clickable — NO ESC dance. PLAY: pointer-lock move+look. Tab also toggles; ESC → cursor.
+     Mirrors the pattern added to athenaeum.html. -->
+<style>
+  body.cursor-mode{cursor:default}
+  body.play-mode{cursor:none}
+  #modeToggle{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:64;
+    display:block;pointer-events:auto;cursor:pointer;user-select:none;
+    font-family:'Orbitron','Chakra Petch',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    background:rgba(8,12,22,.9);border:1px solid rgba(39,224,255,.45);border-radius:8px;
+    padding:9px 18px;color:#8fefff;transition:background .2s,border-color .2s,box-shadow .2s;
+    box-shadow:0 0 22px rgba(39,224,255,.22)}
+  #modeToggle:hover{background:rgba(39,224,255,.14);border-color:#27e0ff;box-shadow:0 0 30px rgba(39,224,255,.4)}
+  #modeToggle .mt-mode{color:#fff;font-weight:800}
+  #modeToggle .mt-key{color:#7e9ab0;font-size:9px;letter-spacing:2px;display:block;margin-top:3px}
+  body.play-mode #modeToggle{opacity:.55}
+</style>
+<div id="modeToggle" onclick="window.toggleWorldMode&&window.toggleWorldMode()" style="display:none">
+  <span>⇄ <span class="mt-mode" id="mtMode">CURSOR</span> mode</span>
+  <span class="mt-key" id="mtKey">click / Tab → play (walk)</span>
+</div>
 
 <div id="intro">
   <canvas id="portalCv"></canvas>
@@ -1808,26 +1831,317 @@ MODEL_CONFIG.forEach((cfg, idx) => {
   }, 100 * idx); // Stagger loading to not overwhelm network
 });
 
-// ── COMMUNITY PORTALS — organized ring around the NEXUS hub (NEXUS is the portal keeper) ──
+// ── COMMUNITY PORTALS — an organized ARCH RING around the NEXUS hub (NEXUS is the portal keeper) ──
+// OVERHAUL (2026-07-09): every portal sits in its own sectioned bay, EVENLY spaced on a ring, and
+// FACES THE MIDDLE (the NEXUS hub centre). Each bay gets a beautiful entryway — twin pillars + a
+// glowing arch lintel framing the portal disc — so the circle reads as a clean colonnade, not a
+// scatter of loose rings. A shared low plinth base ties the bays together as one plaza.
 const portals=[]; let nearPortal=null;
 const _nx = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.sector && window.WORLD_LAYOUT.sector('NEXUS')) || { pos:[-130,225] };
-const PORTAL_RING = { cx:_nx.pos[0], cz:_nx.pos[1], r:34 };  // community portals circle, kept by NEXUS
+const PORTAL_RING = { cx:_nx.pos[0], cz:_nx.pos[1], r:44 };  // community portals circle (widened for the arch bays), kept by NEXUS
+// A cheap reusable arch-bay builder: two pillars + a lintel + the portal disc, all facing `yaw`
+// (toward centre). Pure primitives, materials created per-portal but tiny — POTATO-safe.
+function _buildPortalArch(px, pz, yaw, col){
+  const g = new THREE.Group(); g.position.set(px, 0, pz); g.rotation.y = yaw;
+  const stoneMat = new THREE.MeshStandardMaterial({ color:0x0c1420, emissive:col, emissiveIntensity:0.10, metalness:0.5, roughness:0.6 });
+  const glowMat  = new THREE.MeshBasicMaterial({ color:col, toneMapped:false });
+  const pillarGeo = new THREE.CylinderGeometry(0.7, 0.9, 11, 10);
+  const pL = new THREE.Mesh(pillarGeo, stoneMat); pL.position.set(-5, 5.5, 0); g.add(pL);
+  const pR = new THREE.Mesh(pillarGeo, stoneMat); pR.position.set( 5, 5.5, 0); g.add(pR);
+  // caps
+  [-5,5].forEach(function(x){ const cap=new THREE.Mesh(new THREE.CylinderGeometry(1.05,0.75,0.7,10), glowMat); cap.position.set(x,11.1,0); g.add(cap); });
+  // lintel (top beam) with a glowing under-edge
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1.4, 1.8), stoneMat); lintel.position.set(0, 11.9, 0); g.add(lintel);
+  const lintelGlow = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.25, 1.9), glowMat); lintelGlow.position.set(0, 11.1, 0); g.add(lintelGlow);
+  // the portal disc itself, framed inside the arch, facing centre
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(3.9, 0.4, 12, 40), glowMat); ring.position.set(0, 5.2, 0); g.add(ring);
+  const inner = new THREE.Mesh(new THREE.CircleGeometry(3.5, 40), new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0.15, side:THREE.DoubleSide, blending:THREE.AdditiveBlending })); inner.position.set(0, 5.2, 0.02); g.add(inner);
+  scene.add(g);
+  return { group:g, ring:ring, inner:inner };
+}
 fetch('/api/grid/portals').then(r=>r.ok?r.json():null).then(d=>{
   const list=((d&&d.portals)||[]);
+  // shared circular plinth so all the bays sit on one organized plaza
+  try {
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(PORTAL_RING.r+8, PORTAL_RING.r+10, 0.6, 64), new THREE.MeshStandardMaterial({ color:0x080e18, emissive:0x34e5b0, emissiveIntensity:0.06, metalness:0.6, roughness:0.7 }));
+    plinth.position.set(PORTAL_RING.cx, 0.3, PORTAL_RING.cz); scene.add(plinth);
+    const plinthRing = new THREE.Mesh(new THREE.TorusGeometry(PORTAL_RING.r+8, 0.3, 8, 80), new THREE.MeshBasicMaterial({ color:0x34e5b0, toneMapped:false }));
+    plinthRing.rotation.x = Math.PI/2; plinthRing.position.set(PORTAL_RING.cx, 0.7, PORTAL_RING.cz); scene.add(plinthRing);
+  } catch(_){}
+  const n = Math.max(list.length, 1);
   list.forEach((p,i)=>{
-    // lay every portal evenly on the NEXUS ring so the circle reads as an organized community hub
-    const ang=(i/Math.max(list.length,1))*Math.PI*2;
-    const px=PORTAL_RING.cx+Math.cos(ang)*PORTAL_RING.r, pz=PORTAL_RING.cz+Math.sin(ang)*PORTAL_RING.r, col=new THREE.Color(p.color||'#888888');
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(4.5,0.4,12,48), new THREE.MeshBasicMaterial({color:col,toneMapped:false}));
-    ring.position.set(px,5,pz); scene.add(ring);
-    const inner=new THREE.Mesh(new THREE.CircleGeometry(4.1,48), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.13,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
-    inner.position.set(px,5,pz); scene.add(inner);
+    // EVEN spacing on the ring; each bay FACES THE MIDDLE (yaw points its front toward the ring centre)
+    const ang=(i/n)*Math.PI*2;
+    const px=PORTAL_RING.cx+Math.cos(ang)*PORTAL_RING.r, pz=PORTAL_RING.cz+Math.sin(ang)*PORTAL_RING.r;
+    const col=new THREE.Color(p.color||'#34e5b0');
+    // face centre: the arch's local -Z should point toward (cx,cz)
+    const yaw = Math.atan2(PORTAL_RING.cx - px, PORTAL_RING.cz - pz);
+    const arch = _buildPortalArch(px, pz, yaw, col);
     const el=document.createElement('div'); el.className='lbl';
     el.innerHTML='<div class="nm" style="color:'+p.color+'">'+(p.type==='game'?'🎮 ':'🌀 ')+p.name+'</div><div class="sk">'+(p.type==='claimable'?'unclaimed slot':(p.type==='game'?'arcade · free play':(p.entry_fee_usdc>0?'$'+p.entry_fee_usdc+' USDC':'free entry')))+'</div><div class="tag">▶ PRESS P TO '+(p.type==='game'?'PLAY':'ENTER')+'</div>';
     labelLayer.appendChild(el);
-    portals.push({ name:p.name, url:p.url, type:p.type, px, pz, ring, inner, el });
+    portals.push({ name:p.name, url:p.url, type:p.type, px, pz, ring:arch.ring, inner:arch.inner, group:arch.group, el });
   });
 });
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PORTAL PLACE — the warehouse-mansion behind the NEXUS hub (2026-07-09)
+// A perfectly organized hall of EMPTY portals available for use, laid out in an even grid under
+// a grand vaulted roof + colonnade. Includes an "Apply for a Portal" kiosk (contact @SHADDAIAI on
+// X / ShaddaiCircle on Telegram) and an AGENTIC toggle button that transforms the hall between
+// a "Portal Warehouse" mode and a glowing "Dance Floor / Venue" mode (lights + floor + ambiance).
+// Pure primitives + a couple of InstancedMeshes → POTATO-safe. Graceful: nothing here can black-box.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const nx=_nx.pos;                                  // NEXUS sector centre
+  const dirLen=Math.hypot(nx[0],nx[1])||1;
+  // "behind NEXUS" = further from world-centre along the centre→NEXUS vector
+  const bx=nx[0]+(nx[0]/dirLen)*70, bz=nx[1]+(nx[1]/dirLen)*70;
+  const yawToCenter=Math.atan2(-bx, -bz);           // face the hall's front (−Z) toward world centre
+  const HALL={ x:bx, z:bz, w:64, d:44, h:20 };
+  const grp=new THREE.Group(); grp.position.set(bx,0,bz); grp.rotation.y=yawToCenter; scene.add(grp);
+  const ACCENT=0x8b5cf6;                             // portal-place violet
+
+  // ── shared materials ──
+  const wallMat=new THREE.MeshStandardMaterial({ color:0x0b1120, emissive:ACCENT, emissiveIntensity:0.05, metalness:0.5, roughness:0.7 });
+  const trimMat=new THREE.MeshBasicMaterial({ color:ACCENT, toneMapped:false });
+  const floorMat=new THREE.MeshStandardMaterial({ color:0x070a12, emissive:0x120a24, emissiveIntensity:0.25, metalness:0.7, roughness:0.35 });
+
+  // ── floor + perimeter walls (warehouse-mansion shell) ──
+  const floor=new THREE.Mesh(new THREE.BoxGeometry(HALL.w,0.6,HALL.d), floorMat); floor.position.set(0,0.3,0); grp.add(floor);
+  // back + side walls (front left open as the grand entrance)
+  const backW=new THREE.Mesh(new THREE.BoxGeometry(HALL.w,HALL.h,1), wallMat); backW.position.set(0,HALL.h/2,-HALL.d/2); grp.add(backW);
+  [-1,1].forEach(function(s){ const sw=new THREE.Mesh(new THREE.BoxGeometry(1,HALL.h,HALL.d), wallMat); sw.position.set(s*HALL.w/2,HALL.h/2,0); grp.add(sw); });
+  // vaulted roof (a low ridge prism) + glowing ridge line
+  const roof=new THREE.Mesh(new THREE.CylinderGeometry(HALL.d*0.55,HALL.d*0.55,HALL.w,3,1,true), wallMat);
+  roof.rotation.z=Math.PI/2; roof.position.set(0,HALL.h,0); roof.scale.set(0.5,1,1); grp.add(roof);
+  const ridge=new THREE.Mesh(new THREE.BoxGeometry(HALL.w,0.4,0.4), trimMat); ridge.position.set(0,HALL.h+HALL.d*0.28,0); grp.add(ridge);
+  // front colonnade — evenly spaced pillars framing the grand entrance
+  for(let i=-2;i<=2;i++){ const pil=new THREE.Mesh(new THREE.CylinderGeometry(1,1.3,HALL.h,10), wallMat); pil.position.set(i*(HALL.w/5),HALL.h/2,HALL.d/2); grp.add(pil);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1,0.8,10), trimMat); cap.position.set(i*(HALL.w/5),HALL.h-0.4,HALL.d/2); grp.add(cap); }
+
+  // ── EMPTY PORTALS — a perfectly even grid, neatly arranged, all available for use ──
+  const emptyPortals=[]; const COLS=4, ROWS=2, gx=HALL.w/(COLS+1), gz=HALL.d/(ROWS+1);
+  const emptyRingMat=new THREE.MeshBasicMaterial({ color:0x3a2a5a, toneMapped:false });
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const ex=-HALL.w/2+gx*(c+1), ez=-HALL.d/2+gz*(r+1);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(3.2,0.32,10,32), emptyRingMat); ring.position.set(ex,5,ez); grp.add(ring);
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(2.9,32), new THREE.MeshBasicMaterial({ color:ACCENT, transparent:true, opacity:0.08, side:THREE.DoubleSide, blending:THREE.AdditiveBlending })); disc.position.set(ex,5,ez+0.02); grp.add(disc);
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(3.6,4.0,0.5,24), wallMat); base.position.set(ex,0.55,ez); grp.add(base);
+    emptyPortals.push({ ring, disc, ex, ez });
+  }
+
+  // ── APPLY-FOR-A-PORTAL kiosk (physical marker in the hall) ──
+  const kioskMat=new THREE.MeshStandardMaterial({ color:0x140a24, emissive:ACCENT, emissiveIntensity:0.3, metalness:0.6, roughness:0.4 });
+  const kiosk=new THREE.Mesh(new THREE.BoxGeometry(3,6,0.6), kioskMat); kiosk.position.set(0,3,HALL.d/2-4); grp.add(kiosk);
+  const kioskGlow=new THREE.Mesh(new THREE.BoxGeometry(3.4,6.4,0.3), new THREE.MeshBasicMaterial({ color:ACCENT, transparent:true, opacity:0.3, toneMapped:false })); kioskGlow.position.set(0,3,HALL.d/2-4.2); grp.add(kioskGlow);
+
+  // ── DANCE-FLOOR extras (hidden until venue mode) — a checker floor + point lights ──
+  const danceGroup=new THREE.Group(); danceGroup.visible=false; grp.add(danceGroup);
+  const danceTiles=[];
+  const tileGeo=new THREE.PlaneGeometry(gx*0.9, gz*0.9);
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const tile=new THREE.Mesh(tileGeo, new THREE.MeshBasicMaterial({ color:0x8b5cf6, transparent:true, opacity:0.5, side:THREE.DoubleSide, toneMapped:false }));
+    tile.rotation.x=-Math.PI/2; tile.position.set(-HALL.w/2+gx*(c+1), 0.65, -HALL.d/2+gz*(r+1)); danceGroup.add(tile); danceTiles.push(tile);
+  }
+  // a small stage at the back + two coloured venue lights (cap total scene lights — only 2, added lazily)
+  const stage=new THREE.Mesh(new THREE.BoxGeometry(HALL.w*0.4,1.2,8), new THREE.MeshStandardMaterial({ color:0x1a1030, emissive:ACCENT, emissiveIntensity:0.4, metalness:0.6, roughness:0.4 })); stage.position.set(0,0.9,-HALL.d/2+6); danceGroup.add(stage);
+  let venueLights=null;
+  function ensureVenueLights(){
+    if(venueLights) return; venueLights=[];
+    const l1=new THREE.PointLight(0xff3ea5,0,60); l1.position.set(-HALL.w*0.25,HALL.h-3,0);
+    const l2=new THREE.PointLight(0x27e0ff,0,60); l2.position.set( HALL.w*0.25,HALL.h-3,0);
+    grp.add(l1); grp.add(l2); venueLights=[l1,l2];
+  }
+
+  // ── ARCHITECTURE: control booth on a high-rise + twin winding stairs + VIP sections +
+  //    an opposite SKY BOOTH. All cheap primitives, no extra real lights (glow = emissive/basic).
+  const railMat=new THREE.MeshBasicMaterial({ color:ACCENT, toneMapped:false });
+  const deckMat=new THREE.MeshStandardMaterial({ color:0x100a1e, emissive:ACCENT, emissiveIntensity:0.2, metalness:0.6, roughness:0.45 });
+  const glassMat=new THREE.MeshBasicMaterial({ color:0x27e0ff, transparent:true, opacity:0.16, side:THREE.DoubleSide, toneMapped:false });
+  // A reusable railing ring/box outline for balconies
+  function _railBox(w,d,y,x,z){
+    const g=new THREE.Group();
+    const bar=new THREE.BoxGeometry(w,0.25,0.25), barZ=new THREE.BoxGeometry(0.25,0.25,d);
+    const f=new THREE.Mesh(bar,railMat); f.position.set(0,1.1,-d/2); g.add(f);
+    const b=new THREE.Mesh(bar,railMat); b.position.set(0,1.1, d/2); g.add(b);
+    const l=new THREE.Mesh(barZ,railMat); l.position.set(-w/2,1.1,0); g.add(l);
+    const r=new THREE.Mesh(barZ,railMat); r.position.set( w/2,1.1,0); g.add(r);
+    g.position.set(x,y,z); return g;
+  }
+  // CONTROL BOOTH — a raised high-rise deck at the BACK, overlooking the whole warehouse.
+  const boothY=HALL.h-4;                              // deck height (up near the roof, overlooks the hall)
+  const boothZ=-HALL.d/2+5;
+  const boothDeck=new THREE.Mesh(new THREE.BoxGeometry(18,0.8,10), deckMat); boothDeck.position.set(0,boothY,boothZ); grp.add(boothDeck);
+  const boothCol=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.8,boothY,10), wallMat); boothCol.position.set(0,boothY/2,boothZ); grp.add(boothCol);
+  const boothGlass=new THREE.Mesh(new THREE.BoxGeometry(16,5,0.3), glassMat); boothGlass.position.set(0,boothY+2.8,boothZ+5); grp.add(boothGlass);
+  grp.add(_railBox(18,10,boothY+0.4,0,boothZ));
+  // a "console" strip on the booth deck (emissive → reads as a lighting/DJ desk)
+  const console_=new THREE.Mesh(new THREE.BoxGeometry(12,0.7,2.2), new THREE.MeshStandardMaterial({ color:0x1a1030, emissive:0xff3ea5, emissiveIntensity:0.5, metalness:0.6, roughness:0.4 })); console_.position.set(0,boothY+0.85,boothZ-2.6); grp.add(console_);
+  // WINDING STAIRS on BOTH sides — a helical run of steps up to the booth deck.
+  function _windingStair(side){                       // side = -1 (left) | +1 (right)
+    const g=new THREE.Group();
+    const steps=16, baseX=side*(HALL.w/2-6), baseZ=-HALL.d/2+8, radius=4.2;
+    for(let i=0;i<steps;i++){
+      const t=i/steps, a=side*t*Math.PI*1.6;          // spiral sweep
+      const st=new THREE.Mesh(new THREE.BoxGeometry(4,0.4,2.2), deckMat);
+      st.position.set(baseX+Math.sin(a)*radius*side, (boothY)*t+0.6, baseZ+radius-Math.cos(a)*radius);
+      st.rotation.y=a; g.add(st);
+    }
+    // a glowing helical rail line following the steps
+    const railPts=[];
+    for(let i=0;i<=steps;i++){ const t=i/steps, a=side*t*Math.PI*1.6; railPts.push(new THREE.Vector3(baseX+Math.sin(a)*radius*side, boothY*t+1.6, baseZ+radius-Math.cos(a)*radius)); }
+    const railLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(railPts), new THREE.LineBasicMaterial({ color:ACCENT, toneMapped:false }));
+    g.add(railLine);
+    return g;
+  }
+  grp.add(_windingStair(-1)); grp.add(_windingStair(1));
+  // VIP SECTIONS — one raised lounge platform on EACH side, railed, overlooking the floor.
+  [-1,1].forEach(function(s){
+    const vy=6, vx=s*(HALL.w/2-6), vz=HALL.d*0.10;
+    const vipDeck=new THREE.Mesh(new THREE.BoxGeometry(12,0.7,14), deckMat); vipDeck.position.set(vx,vy,vz); grp.add(vipDeck);
+    const vipCol=new THREE.Mesh(new THREE.CylinderGeometry(1,1.3,vy,8), wallMat); vipCol.position.set(vx,vy/2,vz); grp.add(vipCol);
+    grp.add(_railBox(12,14,vy+0.35,vx,vz));
+    // "VIP" glow strip on the balcony edge
+    const vipStrip=new THREE.Mesh(new THREE.BoxGeometry(12,0.2,0.4), new THREE.MeshBasicMaterial({ color:0xffcf4a, toneMapped:false })); vipStrip.position.set(vx,vy+0.4,vz-7); grp.add(vipStrip);
+  });
+  // SKY BOOTH — opposite the control booth (FRONT, up in the sky), a floating perch above the entrance.
+  const skyY=HALL.h+8, skyZ=HALL.d/2-2;
+  const skyDeck=new THREE.Mesh(new THREE.BoxGeometry(12,0.7,8), deckMat); skyDeck.position.set(0,skyY,skyZ); grp.add(skyDeck);
+  const skyGlass=new THREE.Mesh(new THREE.BoxGeometry(11,4,0.3), glassMat); skyGlass.position.set(0,skyY+2.2,skyZ-4); grp.add(skyGlass);
+  grp.add(_railBox(12,8,skyY+0.35,0,skyZ));
+  // a slim mast tying the sky booth visually to the roof ridge
+  const skyMast=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,skyY-HALL.h,6), railMat); skyMast.position.set(0,(skyY+HALL.h)/2,skyZ); grp.add(skyMast);
+
+  // ── NEON VISUALIZER CEILING — a grid of emissive panels that pulse & shift hue (cheap, no lights).
+  //    Colors are driven per-frame in update(); vertex/emissive glow only → POTATO-safe.
+  const vizPanels=[]; const VCOLS=6, VROWS=3;
+  const vizGeo=new THREE.PlaneGeometry(HALL.w/VCOLS*0.86, HALL.d/VROWS*0.86);
+  for(let r=0;r<VROWS;r++) for(let c=0;c<VCOLS;c++){
+    const pm=new THREE.MeshBasicMaterial({ color:0x2a1550, transparent:true, opacity:0.55, side:THREE.DoubleSide, toneMapped:false });
+    const p=new THREE.Mesh(vizGeo, pm);
+    p.rotation.x=Math.PI/2;
+    p.position.set(-HALL.w/2+(HALL.w/VCOLS)*(c+0.5), HALL.h-0.6, -HALL.d/2+(HALL.d/VROWS)*(r+0.5));
+    grp.add(p); vizPanels.push(p);
+  }
+  // RAFTERS — clean beams framing the ceiling; leave open mounting spots for future NFTs / art.
+  // TODO: NFT/art in rafters — mount textured planes on these beams (rafterMounts[] hold the anchor points).
+  const rafterMounts=[]; const beamMat=new THREE.MeshStandardMaterial({ color:0x0a0f1a, emissive:ACCENT, emissiveIntensity:0.08, metalness:0.5, roughness:0.7 });
+  for(let i=1;i<=4;i++){
+    const bz=-HALL.d/2+(HALL.d/5)*i;
+    const beam=new THREE.Mesh(new THREE.BoxGeometry(HALL.w,0.6,0.8), beamMat); beam.position.set(0,HALL.h-1.4,bz); grp.add(beam);
+    // two empty art anchors per rafter (spots reserved for NFTs)
+    [-HALL.w*0.22, HALL.w*0.22].forEach(function(ax){
+      const anchor=new THREE.Object3D(); anchor.position.set(ax,HALL.h-2.2,bz); grp.add(anchor); rafterMounts.push(anchor);
+    });
+  }
+  window._portalPlaceRafters=rafterMounts;   // exposed so future NFT art can be mounted here
+
+  // ── HTML label (mode-aware) ──
+  const el=document.createElement('div'); el.className='lbl'; labelLayer.appendChild(el);
+  let venueMode=false;
+  function renderLabel(){
+    el.innerHTML='<div class="nm" style="color:#b58cff;text-shadow:0 0 12px #8b5cf6">🏛 PORTAL PLACE</div>'+
+      '<div class="sk">'+(venueMode?'✦ DANCE FLOOR / VENUE MODE ✦':'warehouse of open portals · apply to claim one')+'</div>'+
+      '<div class="tag">press J → APPLY · toggle mode below</div>';
+  }
+  renderLabel();
+
+  // ── AGENTIC MODE TOGGLE (on-screen button) — Warehouse ⇄ Dance Floor / Venue ──
+  const toggleBtn=document.createElement('button');
+  toggleBtn.id='portalPlaceMode';
+  toggleBtn.style.cssText='position:fixed;bottom:64px;right:16px;z-index:56;display:none;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;background:rgba(20,10,36,.9);border:1px solid #8b5cf6;color:#c9adff;padding:9px 15px;border-radius:8px;cursor:pointer;box-shadow:0 0 22px rgba(139,92,246,.3)';
+  document.body.appendChild(toggleBtn);
+  function reflectToggle(){ toggleBtn.textContent = venueMode ? '🏛 → Warehouse mode' : '🪩 → Dance Floor / Venue'; }
+  function setVenue(on){
+    venueMode=on;
+    danceGroup.visible=on;
+    if(on){ ensureVenueLights(); }
+    if(venueLights) venueLights.forEach(function(l){ l.intensity = on?2.2:0; });
+    // ambiance: floor + empty rings glow hotter in venue mode
+    floorMat.emissive.setHex(on?0x3a1060:0x120a24); floorMat.emissiveIntensity=on?0.5:0.25;
+    emptyPortals.forEach(function(p){ p.ring.material.color.setHex(on?0xff3ea5:0x3a2a5a); });
+    reflectToggle(); renderLabel();
+  }
+  toggleBtn.onclick=function(){ setVenue(!venueMode); };
+  reflectToggle();
+
+  // ── LIGHT-SHOW button — kicks the neon visualizer + venue lights into a hot animated show ──
+  let lightShow=false;
+  const lsBtn=document.createElement('button');
+  lsBtn.id='portalPlaceLightShow';
+  lsBtn.style.cssText='position:fixed;bottom:104px;right:16px;z-index:56;display:none;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;background:rgba(20,10,36,.9);border:1px solid #ff3ea5;color:#ffb0dd;padding:9px 15px;border-radius:8px;cursor:pointer;box-shadow:0 0 22px rgba(255,62,165,.3)';
+  document.body.appendChild(lsBtn);
+  function reflectLS(){ lsBtn.textContent = lightShow ? '💡 Light Show: ON' : '💡 Light Show'; lsBtn.style.borderColor=lightShow?'#ffcf4a':'#ff3ea5'; }
+  lsBtn.onclick=function(){ lightShow=!lightShow; ensureVenueLights(); if(venueLights) venueLights.forEach(function(l){ l.intensity=lightShow?3.0:(venueMode?2.2:0); }); reflectLS(); };
+  reflectLS();
+
+  // ── APPLY-FOR-A-PORTAL modal (press J near the kiosk, or the toggle is always the entry) ──
+  const applyOv=document.createElement('div');
+  applyOv.style.cssText='position:fixed;inset:0;z-index:100001;display:none;align-items:center;justify-content:center;background:rgba(4,3,12,.82);backdrop-filter:blur(5px);font-family:monospace';
+  applyOv.innerHTML='<div style="width:min(520px,92vw);background:linear-gradient(180deg,#140a24,#0a0714);border:1px solid #8b5cf6;border-radius:16px;box-shadow:0 0 60px rgba(139,92,246,.35);padding:26px 28px;color:#e7ddff">'+
+    '<div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(139,92,246,.3);padding-bottom:14px;margin-bottom:16px">'+
+      '<div style="font-size:26px">🌀</div>'+
+      '<div><div style="font-size:18px;font-weight:800;letter-spacing:2px;color:#c9adff">APPLY FOR A PORTAL</div>'+
+      '<div style="font-size:11px;color:#9a86c8">Portal Place · a warehouse of open portals kept by NEXUS</div></div>'+
+      '<div style="margin-left:auto;font-size:20px;color:#9a86c8;cursor:pointer" id="ppApplyX">✕</div>'+
+    '</div>'+
+    '<div style="font-size:13px;line-height:1.7;color:#d6c9f5">To claim one of the empty portals in this hall and link YOUR world, reach out to the SHADDAI team:</div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;margin:18px 0 6px">'+
+      '<a href="https://x.com/SHADDAIAI" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.5);border-radius:10px;padding:12px 16px;color:#fff">'+
+        '<span style="font-size:20px">𝕏</span><div><div style="font-weight:800;letter-spacing:1px">X · @SHADDAIAI</div><div style="font-size:11px;color:#a99cd0">x.com/SHADDAIAI</div></div><span style="margin-left:auto;color:#8b5cf6">▶</span></a>'+
+      '<a href="https://t.me/ShaddaiCircle" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;background:rgba(39,180,246,.1);border:1px solid rgba(39,180,246,.5);border-radius:10px;padding:12px 16px;color:#fff">'+
+        '<span style="font-size:20px">✈</span><div><div style="font-weight:800;letter-spacing:1px">Telegram · ShaddaiCircle</div><div style="font-size:11px;color:#8fd0f5">t.me/ShaddaiCircle</div></div><span style="margin-left:auto;color:#27b4f6">▶</span></a>'+
+    '</div>'+
+    '<div style="font-size:11px;color:#9a86c8;margin-top:14px">Approved portals are placed in the NEXUS arch-ring and here in Portal Place.</div>'+
+  '</div>';
+  document.body.appendChild(applyOv);
+  function openApply(){ applyOv.style.display='flex'; try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(_){} }
+  function closeApply(){ applyOv.style.display='none'; }
+  applyOv.querySelector('#ppApplyX').onclick=closeApply;
+  applyOv.addEventListener('click',function(e){ if(e.target===applyOv) closeApply(); });
+  window.openPortalApply=openApply;
+  addEventListener('keydown',function(e){
+    if(e.key==='Escape' && applyOv.style.display==='flex'){ closeApply(); return; }
+    if((e.code==='KeyJ') && !e.repeat && !/input|textarea|select/i.test((document.activeElement||{}).tagName||'')) openApply();
+  });
+
+  // ── proximity: reveal the mode toggle + label near the hall; animate dance floor in venue mode ──
+  const _pc=new THREE.Vector3();
+  window._portalPlace={ update:function(t, dt){
+    const px=(window._playerPos&&window._playerPos.x)||0, pz=(window._playerPos&&window._playerPos.z)||0;
+    const dist=Math.hypot(px-bx, pz-bz);
+    const near = dist<70;
+    toggleBtn.style.display = near ? 'block' : 'none';
+    lsBtn.style.display = near ? 'block' : 'none';
+    // label projection
+    _pc.set(bx, HALL.h+6, bz); _pc.project(camera);
+    if(_pc.z>1||_pc.z<-1){ el.style.opacity='0'; }
+    else { el.style.transform='translate(-50%,-100%) translate3d('+((_pc.x*0.5+0.5)*innerWidth)+'px,'+((-_pc.y*0.5+0.5)*innerHeight)+'px,0)';
+      el.style.opacity = dist<220 ? String(Math.max(0.2,1-dist/260)) : '0'; }
+    // spin empty portals gently
+    for(let i=0;i<emptyPortals.length;i++){ emptyPortals[i].ring.rotation.z += dt*0.4; }
+    // NEON VISUALIZER CEILING — always breathing; hue-shifts + brightens with venue / light-show.
+    if(vizPanels.length){
+      const hot = lightShow || venueMode, spd = lightShow?3.4:(venueMode?2.0:0.7);
+      for(let i=0;i<vizPanels.length;i++){
+        const ph=i*0.55, hue=((t*(lightShow?0.14:0.05)+i*0.045)%1);
+        vizPanels[i].material.color.setHSL(hue, 0.85, hot?0.58:0.42);
+        vizPanels[i].material.opacity = 0.35 + (hot?0.5:0.25)*Math.abs(Math.sin(t*spd+ph));
+      }
+    }
+    // venue mode: pulse the dance tiles + swing the lights
+    if(venueMode){
+      for(let i=0;i<danceTiles.length;i++){ danceTiles[i].material.opacity = 0.25+0.5*Math.abs(Math.sin(t*2.5+i*0.9)); }
+    }
+    if(venueLights && (venueMode||lightShow)){
+      const sw = lightShow?16:10;
+      venueLights[0].position.x=-HALL.w*0.25+Math.sin(t*(lightShow?2.6:1.6))*sw;
+      venueLights[1].position.x= HALL.w*0.25+Math.cos(t*(lightShow?2.2:1.4))*sw;
+      if(lightShow){ venueLights[0].color.setHSL((t*0.2)%1,0.9,0.55); venueLights[1].color.setHSL((t*0.2+0.5)%1,0.9,0.55); }
+    }
+  }};
+})();
+
 // ── visitor agents (F4): inbound federated agents render as orange diamonds ──
 const visitors = []; // { mesh, el, name }
 function refreshVisitors(){
@@ -2101,6 +2415,43 @@ const keys = {};
 addEventListener('keydown', e=>{ keys[e.code]=true; });
 addEventListener('keyup', e=>{ keys[e.code]=false; });
 
+// ── CURSOR ⇄ PLAY (walk) DUAL MODE ───────────────────────────────────────────
+// The world used PointerLockControls with an "any click re-locks" handler, so the
+// only way to touch a menu/tool-panel was ESC-then-click (the mouse kept getting
+// trapped). Now there are two explicit modes:
+//   CURSOR (default): pointer NOT locked; a normal usable arrow cursor; every HUD /
+//     tool-panel / building UI is directly clickable — canvas clicks do NOT re-lock.
+//   PLAY  : pointer-lock move+look (the original FPS controls).
+// The toggle button + Tab swap them; ESC always drops to CURSOR (pointer-lock releases,
+// our 'unlock' handler flips the flag). We NEVER auto-trap the pointer. window._uiMode
+// is the single source of truth; movement/look/combat gate on it (was controls.isLocked).
+window._uiMode = 'cursor';                      // 'cursor' | 'play'
+function _reflectMode(){
+  var mm=document.getElementById('mtMode'), mk=document.getElementById('mtKey');
+  var play = window._uiMode==='play';
+  if(mm) mm.textContent = play ? 'PLAY' : 'CURSOR';
+  if(mk) mk.textContent = play ? 'click / Tab / ESC → cursor' : 'click / Tab → play (walk)';
+  document.body.classList.toggle('play-mode', play);
+  document.body.classList.toggle('cursor-mode', !play);
+  var mt=document.getElementById('modeToggle'); if(mt) mt.style.display='block';   // reveal once the world is live
+}
+// controls fire lock/unlock → keep _uiMode in perfect sync no matter how it changed
+// (button, Tab, ESC, browser gesture rejection). This is what makes ESC never trap.
+controls.addEventListener('lock',   function(){ window._uiMode='play';   _reflectMode(); });
+controls.addEventListener('unlock', function(){ window._uiMode='cursor'; _reflectMode(); });
+// enter PLAY (must be from a user gesture for pointer-lock): grab the mouse.
+window.enterPlayMode = function(){ _safeLock(); };
+// leave PLAY → CURSOR: release pointer-lock (unlock handler flips the flag).
+window.exitPlayMode  = function(){ if(controls.isLocked){ try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(e){} } else { window._uiMode='cursor'; _reflectMode(); } };
+window.toggleWorldMode = function(){ if(window._uiMode==='play') window.exitPlayMode(); else window.enterPlayMode(); };
+// Tab = swap CURSOR ⇄ PLAY (don't steal Tab while typing in any input/textarea/select).
+addEventListener('keydown', function(e){
+  if(e.code!=='Tab') return;
+  if(/input|textarea|select/i.test((document.activeElement||{}).tagName||'')) return;
+  e.preventDefault(); window.toggleWorldMode();
+});
+_reflectMode();
+
 const raycaster = new THREE.Raycaster();
 const center = new THREE.Vector2(0,0);
 // per-frame caches (avoid rebuilding/allocating every frame)
@@ -2141,7 +2492,9 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
     onArrive: function(code, charCode){
       try{ if(charCode && window.setPlayerCharacter) window.setPlayerCharacter(charCode); }catch(e){}
       try{ thirdPerson = true; }catch(e){}   // 3rd-person so you SEE the operative you're walking around as
-      try{ _safeLock(); }catch(e){}          // BUG FIX: grab the mouse for look-controls the moment you land (click re-locks if browser defers)
+      // MOUSE FIX: land in CURSOR mode — the player can immediately click the HUD/menus/tool-panels.
+      // They opt into walking with the ⇄ PLAY toggle (or Tab). We no longer auto-trap the pointer.
+      try{ window._uiMode='cursor'; _reflectMode&&_reflectMode(); }catch(e){}
       try{ console.log('🌀 spawned at', code, 'as', charCode); }catch(e){}
     }
   });
@@ -2522,7 +2875,9 @@ function playPlayerOnce(clipName, opts){
 const _SIGNATURE = {
   // ORACLE Q = PURPLE blast bolt (oracle-glow prop tinted purple via sig.color). (2026-07-09)
   ORACLE:{vfx:'glow',clip:'heavy',color:0x9b30ff}, SHADDAI:{vfx:'blast',clip:null,color:0xffcf4a,glide:true,e2:{vfx:'orb',color:0xffe27a}},
-  QUILL:{vfx:'feather',clip:null,color:0xb98cff},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
+  // QUILL = "floating scholar" glide (owner-approved 2026-07-09): boneless glide like SHADDAI/NEXUS,
+  // but with a slightly UPRIGHT lean + a subtle page-flutter idle sway. glideStyle:'scholar' selects it.
+  QUILL:{vfx:'feather',clip:null,color:0xb98cff,glide:true,glideStyle:'scholar'},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
   TURTLE:{vfx:'orb',clip:'heavy',color:0x1fd6c4},  PIKADON:{vfx:'orb',clip:'heavy',color:0xff5a6e},
   // NEXUS shares SHADDAI's 'blast' snowball projectile (both are the "creator/source" pair) + glides. (2026-07-09)
   VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'blast',clip:null,color:0x34e5b0,glide:true},
@@ -2711,10 +3066,15 @@ addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
   else if(e.code==='KeyK') playerKick();
 });
 
-addEventListener('click', ()=>{
+addEventListener('click', (ev)=>{
   const d=document.getElementById('dossier');
   if(d.classList.contains('open')) return;          // let dossier buttons handle their own clicks
-  if(!controls.isLocked){ _safeLock(); return; } // click canvas to (re)enter first-person — no more lock-out
+  // MOUSE FIX: in CURSOR mode NEVER auto-lock — the cursor stays free so every HUD/menu/tool-panel
+  // is directly clickable (no ESC dance). A click that lands on any UI element (buttons, panels,
+  // links) is left alone. Only a click on the bare 3D canvas while ALREADY in PLAY mode targets an
+  // agent. To START playing, use the ⇄ toggle button or Tab (a real user gesture for pointer-lock).
+  if(window._uiMode!=='play') return;               // CURSOR mode → do nothing; mouse is fully usable
+  if(!controls.isLocked){ return; }                 // (shouldn't happen) never trap from a stray click
   if(targeted){ openDossier(targeted.a); }
 });
 addEventListener('keydown', e=>{
@@ -3553,10 +3913,18 @@ function animate(){
     // so their locomotion reads as gliding, not stepping. SHADDAI's F = FLY adds a buoyant rise.
     if(!playerMixer && playerAvatar.visible){
       const _mv2 = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
-      const _glide = !!(_playerSig() && _playerSig().glide);
+      const _sig = _playerSig();
+      const _glide = !!(_sig && _sig.glide);
+      const _scholar = _glide && _sig.glideStyle==='scholar';   // QUILL: floating scholar variant
       const _flying = clock.elapsedTime < _flyUntil;
       const _rise = _flying ? Math.sin(Math.min(1,(_flyUntil-clock.elapsedTime)/1.1)*Math.PI) * 2.4 : 0;  // F=fly: rise then settle
-      if(_glide){
+      if(_scholar){
+        // QUILL "floating scholar": buoyant hover + slightly UPRIGHT posture (small BACKWARD lean, more
+        // when idle) + a gentle page-flutter idle sway (tiny z-roll) so he reads as a drifting scribe.
+        playerAvatar.position.y = baseY + _rise + Math.sin(clock.elapsedTime*1.25)*0.07;   // soft buoyant hover
+        playerAvatar.rotation.x = (_mv2 ? -0.02 : 0.05);                                   // upright: nose-up drift when idle, near-flat when gliding forward
+        playerAvatar.rotation.z = (_mv2 ? 0 : Math.sin(clock.elapsedTime*2.6)*0.035);      // page-flutter idle sway
+      } else if(_glide){
         // smooth hover (no footstep bob) + gentle forward head/torso lean when moving
         playerAvatar.position.y = baseY + _rise + Math.sin(clock.elapsedTime*1.4)*0.06;   // slight buoyant hover
         playerAvatar.rotation.x = (_mv2 ? -0.10 : -0.04);                                  // lean forward (more while moving)
@@ -3640,6 +4008,7 @@ function animate(){
   }
   if(_portalPlots) _portalPlots.update(dt, t);
   if(_portalDome) _portalDome.update(dt, t);
+  if(window._portalPlace) window._portalPlace.update(t, dt);   // Portal Place: mode toggle proximity + venue FX
   if(_dialogue){
     _dialogue.update(dt);
     if(_dialogue.isOpen()){ _talkPrompt.style.display='none'; }

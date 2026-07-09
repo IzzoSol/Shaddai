@@ -39348,7 +39348,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           <button class="hq-btn" style="color:#00ff88;border-color:rgba(0,229,160,0.35);background:rgba(0,229,160,0.07)" onclick="showRevenueBreakdown()"><svg class="hq-i" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 14l3-4 3 2 4-6"/></svg>Revenue</button>
           <button class="hq-btn" style="color:#ffd700;border-color:rgba(255,215,0,0.35);background:rgba(255,215,0,0.07)" onclick="openCollectiblesShop()"><svg class="hq-i" viewBox="0 0 24 24"><path d="M4 9l1-4h14l1 4M4 9v10h16V9M4 9h16M9 19v-5h6v5"/></svg>Shop</button>
           <button class="hq-btn" style="color:#ff8a3d;border-color:rgba(232,184,75,0.45);background:rgba(232,184,75,0.09)" onclick="window.open('marketplace-shop-v2.html','_blank')" title="Open the 2D Bazaar — sell content &amp; agent work"><svg class="hq-i" viewBox="0 0 24 24"><path d="M4 11v9h16v-9M4 11l2-6h12l2 6M4 11h16M9 20v-4a3 3 0 0 1 6 0v4"/></svg>BAZAAR</button>
-          <button class="hq-btn" style="color:#e8c14b;border-color:rgba(212,175,55,0.45);background:rgba(212,175,55,0.09)" onclick="window.open('achievements.html','_blank')" title="The Vault — your operative cards, achievements &amp; unlocks"><svg class="hq-i" viewBox="0 0 24 24"><path d="M6 3h12l3 5-9 13L3 8z M3 8h18 M9 3l-1.5 5L12 21 M15 3l1.5 5L12 21"/></svg>VAULT</button>
+          <button class="hq-btn" style="color:#e8c14b;border-color:rgba(212,175,55,0.45);background:rgba(212,175,55,0.09)" onclick="window.open('achievements.html','_blank')" title="Trophy Vault — your achievements, unlocked badges &amp; NFT collection"><svg class="hq-i" viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z M7 6H4v1a3 3 0 0 0 3 3 M17 6h3v1a3 3 0 0 1-3 3 M10 15h4 M9 19h6 M12 13v2"/></svg>VAULT</button>
           <button class="hq-btn" style="color:var(--text-muted);border-color:rgba(255,255,255,0.16);background:rgba(255,255,255,0.05)" onclick="openOfficeCustomizer()"><svg class="hq-i" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2.3"/><circle cx="10" cy="16" r="2.3"/></svg>Customize</button>
         </div>
       </div>
@@ -39441,6 +39441,17 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               </div>
             </div>
 
+            <!-- COUNCIL-only: real callable tools/skills list (live from /api/agent/tools). Searchable. -->
+            <div id="chCouncilSkills">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:8px">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:2px;color:rgba(var(--chg),0.6)">▸ REAL SKILLS &amp; TOOLS <span id="chSkillsCount" style="color:rgba(255,255,255,0.35)"></span></div>
+                <input id="chSkillsSearch" type="text" placeholder="filter…" oninput="window._filterChamberSkills&&window._filterChamberSkills(this.value)" style="width:82px;font-family:'Share Tech Mono',monospace;font-size:7px;padding:3px 6px;border-radius:6px;background:rgba(0,0,0,0.35);border:1px solid rgba(var(--chg),0.25);color:rgba(255,255,255,0.75);outline:none">
+              </div>
+              <div id="chCouncilSkillsList" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;min-height:22px;max-height:120px;overflow:auto;padding-right:2px">
+                <span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace">Loading live tool inventory…</span>
+              </div>
+            </div>
+
             <!-- FORGED-only: real stats + real skills (hidden for council agents) -->
             <div id="chForgedExtra" style="display:none">
               <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -39470,11 +39481,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
             <div style="display:flex;gap:9px;margin-top:2px">
               <button id="chTalkBtn" onclick="chatWithAgent('SHADDAI')" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--ch),rgba(var(--chg),0.55));border:none;border-radius:8px;color:#000;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;box-shadow:0 0 20px rgba(var(--chg),0.5);transition:transform .15s"
-                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">💬 TALK</button>
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:5px"><path d="M21 12a8 8 0 0 1-11.3 7.3L4 21l1.7-5.7A8 8 0 1 1 21 12z"/></svg>TALK</button>
               <button id="chEnterBtn" onclick="openAgentRoom('shaddai')" style="flex:1;padding:12px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(var(--chg),0.4);border-radius:8px;color:var(--ch);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:background .15s"
-                onmouseover="this.style.background='rgba(var(--chg),0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">▶ ENTER</button>
+                onmouseover="this.style.background='rgba(var(--chg),0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1px;margin-right:4px"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9 12H3m0 0 4-4M3 12l4 4"/></svg>ENTER</button>
               <button id="chHireBtn" onclick="openAgentHireModal('shaddai')" style="flex:1;padding:12px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(var(--chg),0.4);border-radius:8px;color:var(--ch);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:background .15s"
-                onmouseover="this.style.background='rgba(var(--chg),0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">⚡ HIRE</button>
+                onmouseover="this.style.background='rgba(var(--chg),0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1px;margin-right:4px"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>HIRE</button>
             </div>
           </div>
         </div>
@@ -41733,6 +41744,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   // Chamber definitions — role/bio/accent, matched to the room-overlay colours so
   // the tab and the entered room feel like the SAME space.
+  // Inline speech-bubble glyph for TALK buttons (replaces the 💬 emoji — on-brand, inherits color).
+  const _TALK_SVG = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:5px"><path d="M21 12a8 8 0 0 1-11.3 7.3L4 21l1.7-5.7A8 8 0 1 1 21 12z"/></svg>';
   const _CHAMBER_DEFS = {
     shaddai:{name:'SHADDAI',code:'SHADDAI',icon:'👑',role:'Supreme Orchestrator',color:'#ff6b35',glow:'255,107,53',bio:'Leads the empire. Strategic vision, final calls, revenue obsession.'},
     nexus:  {name:'NEXUS',  code:'NEXUS',  icon:'🔧',role:'Technical Architect', color:'#00c4ff',glow:'0,196,255',bio:'Backend systems, APIs and infrastructure. Thinks in scale.'},
@@ -41767,11 +41780,41 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     show('chamber3dTag',   !isForged);
     show('chBadgesWrap',   !isForged);
     show('chCouncilStats', !isForged);   // LEVEL / REAL-TOOLS row is council-only (forged shows spd/pwr/iq + skills)
+    show('chCouncilSkills', !isForged);  // council-only real tools/skills list (forged uses #chSkills instead)
     show('chamberPortrait', isForged);
     show('chForgedExtra',   isForged);
     // HIRE/ENTER hidden for forged v1 (no forged-room flow yet).
     ['chEnterBtn','chHireBtn'].forEach(id => show(id, !isForged));
   }
+
+  // Render this council agent's REAL callable tools/skills (live from /api/agent/tools) as a
+  // readable, filterable chip list — each chip shows the tool name + a description tooltip.
+  window._CHAMBER_SKILL_STATE = { code:'', glow:'', color:'', q:'' };
+  window._renderChamberSkills = function(code, glow, color){
+    const box = document.getElementById('chCouncilSkillsList'); if (!box) return;
+    window._CHAMBER_SKILL_STATE = { code:code, glow:glow, color:color, q:(window._CHAMBER_SKILL_STATE.code===code ? window._CHAMBER_SKILL_STATE.q : '') };
+    const searchEl = document.getElementById('chSkillsSearch');
+    if (searchEl && window._CHAMBER_SKILL_STATE.code !== code) searchEl.value = '';
+    const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const all = (window._ROOM_AGENT_TOOLS || []);
+    if (!all.length) { box.innerHTML = '<span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:\'Share Tech Mono\',monospace">Loading live tool inventory…</span>'; return; }
+    let tools = all.filter(t => Array.isArray(t.agents) && t.agents.includes(code));
+    const q = (window._CHAMBER_SKILL_STATE.q || '').trim().toLowerCase();
+    if (q) tools = tools.filter(t => ((t.name||'') + ' ' + (t.description||t.desc||'')).toLowerCase().indexOf(q) >= 0);
+    const cntEl = document.getElementById('chSkillsCount');
+    if (cntEl) cntEl.textContent = '(' + tools.length + ')';
+    if (!tools.length) { box.innerHTML = '<span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:\'Share Tech Mono\',monospace">' + (q ? 'No tools match “' + esc(q) + '”' : 'No tools assigned') + '</span>'; return; }
+    box.innerHTML = tools.map(t => {
+      const nm = esc(t.name || t.id || 'tool');
+      const d  = esc(t.description || t.desc || '');
+      return '<span title="' + (d || nm) + '" style="font-family:\'Share Tech Mono\',monospace;font-size:8px;padding:3px 8px;border-radius:20px;background:rgba(' + glow + ',0.12);border:1px solid rgba(' + glow + ',0.35);color:' + color + ';cursor:default;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm + '</span>';
+    }).join('');
+  };
+  window._filterChamberSkills = function(v){
+    window._CHAMBER_SKILL_STATE.q = v || '';
+    const s = window._CHAMBER_SKILL_STATE;
+    if (s.code) window._renderChamberSkills(s.code, s.glow, s.color);
+  };
 
   // Select an agent's chamber: swap the 3D model in the shared viewer + repaint the stage.
   window.selectChamber = function(agentId){
@@ -41803,12 +41846,14 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     set('chBio', '"' + a.bio + '"');
     set('chLevel', 'LV ' + lvl);
     set('chTools', _tools ? String(_tools) : '…');
+    // Real callable tools/skills list for this council agent (live from /api/agent/tools).
+    window._renderChamberSkills(a.code, a.glow, a.color);
     // Premium placeholder: real character art (HF FLUX) with emoji fallback, instead of a bare emoji.
     setHtml('chIcon', '<img src="/assets/agents/' + a.code + '-action.png" alt="' + a.name + '" ' +
       'style="width:190px;max-height:320px;object-fit:contain;border-radius:12px;filter:drop-shadow(0 0 34px rgba(' + a.glow + ',0.6))" ' +
       'onerror="this.outerHTML=\'<div style=&quot;font-size:92px&quot;>' + a.icon + '</div>\'">');
     const talkBtn = document.getElementById('chTalkBtn');
-    if (talkBtn) { talkBtn.setAttribute('onclick', "chatWithAgent('" + a.code + "')"); talkBtn.innerHTML = '💬 TALK TO ' + a.code; }
+    if (talkBtn) { talkBtn.setAttribute('onclick', "chatWithAgent('" + a.code + "')"); talkBtn.innerHTML = _TALK_SVG + 'TALK TO ' + a.code; }
     const enterBtn = document.getElementById('chEnterBtn');
     if (enterBtn) enterBtn.setAttribute('onclick', "openAgentRoom('" + agentId + "')");
     const hireBtn = document.getElementById('chHireBtn');
@@ -41820,7 +41865,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       requestAnimationFrame(() => { try { window._chamberViewer.mount(hostEl, a.code, a.glow); } catch(_){} });
     }
     // If tool counts weren't cached, fetch then refresh the number
-    if (!_tools) { try { window._ensureRoomTools().then(() => { const s = document.getElementById('chTools'); const n = (window._ROOM_AGENT_TOOLS||[]).filter(t=>Array.isArray(t.agents)&&t.agents.includes(a.code)).length; if (s && n) s.textContent = String(n); }); } catch(_){} }
+    if (!_tools) { try { window._ensureRoomTools().then(() => { if (document.getElementById('chamberStage')?.dataset.agent !== agentId) return; const s = document.getElementById('chTools'); const n = (window._ROOM_AGENT_TOOLS||[]).filter(t=>Array.isArray(t.agents)&&t.agents.includes(a.code)).length; if (s && n) s.textContent = String(n); window._renderChamberSkills(a.code, a.glow, a.color); }); } catch(_){} }
     // Live achievements badges (graceful — no-op if backend offline)
     try {
       fetch('/api/achievements/' + a.code, { signal: AbortSignal.timeout(5000) }).then(r => r.ok ? r.json() : null).then(pr => {
@@ -41912,7 +41957,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           : '<span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:\'Share Tech Mono\',monospace">No skills equipped</span>';
       }
       const talk = document.getElementById('chTalkBtn');
-      if (talk) { talk.setAttribute('onclick', "chatWithAgent('" + (op.codename||'') + "')"); talk.innerHTML = '💬 TALK'; }
+      if (talk) { talk.setAttribute('onclick', "chatWithAgent('" + (op.codename||'') + "')"); talk.innerHTML = _TALK_SVG + 'TALK'; }
     };
 
     // Fetch operatives, build the forged rail. Safe/no-op if backend offline or none exist.
