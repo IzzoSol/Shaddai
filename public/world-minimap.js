@@ -38,6 +38,11 @@
   var TWO_PI = Math.PI * 2;
   var SWEEP_SPEED = 1.15;       // radians / second (radar rotation rate)
 
+  /* Crisp-text scaling: render the backing store at devicePixelRatio (capped at
+   * 2 for perf) while keeping the CSS box at SIZE px. All draw math stays in
+   * "logical" SIZE units — we just pre-scale each 2D context by DPR once. */
+  var DPR = Math.min(2, (window.devicePixelRatio || 1));
+
   /* ── Utility: hex number (e.g. 0xffcf4a) → CSS rgba() string ─────────── */
   function hex2rgba(hex, a) {
     return 'rgba(' +
@@ -79,35 +84,45 @@
 
     /* ── Main (dynamic) canvas ──────────────────────────────────────────── */
     var canvas = document.createElement('canvas');
-    canvas.width  = SIZE;
-    canvas.height = SIZE;
+    canvas.width  = SIZE * DPR;         // backing store: hi-dpi for crisp text
+    canvas.height = SIZE * DPR;
     var cvs = canvas.style;
     cvs.display      = 'block';
+    cvs.width        = SIZE + 'px';     // CSS box stays the same size/position
+    cvs.height       = SIZE + 'px';
     cvs.borderRadius = '50%';
     container.appendChild(canvas);
     document.body.appendChild(container);
 
     var ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);                // draw in logical units; auto-upscaled
+
+    /* Off-screen canvases are baked at DPR too, then blitted at logical size
+     * via drawImage(img, 0, 0, SIZE, SIZE) so the baked detail stays sharp. */
 
     /* ── Off-screen static canvas (baked once) ──────────────────────────── */
     var staticCanvas    = document.createElement('canvas');
-    staticCanvas.width  = SIZE;
-    staticCanvas.height = SIZE;
+    staticCanvas.width  = SIZE * DPR;
+    staticCanvas.height = SIZE * DPR;
     var sCtx = staticCanvas.getContext('2d');
+    sCtx.scale(DPR, DPR);
     _bakeStatic(sCtx, layout, HALF, DRAW, PAD, w2c);
 
     /* ── Off-screen sweep canvas (baked once, rotated each frame) ───────── */
     var sweepCanvas    = document.createElement('canvas');
-    sweepCanvas.width  = SIZE;
-    sweepCanvas.height = SIZE;
-    _bakeSweep(sweepCanvas.getContext('2d'));
+    sweepCanvas.width  = SIZE * DPR;
+    sweepCanvas.height = SIZE * DPR;
+    var swCtx = sweepCanvas.getContext('2d');
+    swCtx.scale(DPR, DPR);
+    _bakeSweep(swCtx);
 
     /* ── Public API ─────────────────────────────────────────────────────── */
 
     /* update() — call inside animate(); allocation-free */
     function update() {
       ctx.clearRect(0, 0, SIZE, SIZE);
-      ctx.drawImage(staticCanvas, 0, 0);          // blit baked disc
+      /* Dest size is logical SIZE (ctx is DPR-scaled); source is DPR-sized. */
+      ctx.drawImage(staticCanvas, 0, 0, SIZE, SIZE); // blit baked disc
 
       /* rotating radar sweep (time-driven; cached wedge, just rotated) */
       var ang = (performance.now() * 0.001 * SWEEP_SPEED) % TWO_PI;
@@ -115,7 +130,7 @@
       ctx.translate(CTR, CTR);
       ctx.rotate(ang);
       ctx.translate(-CTR, -CTR);
-      ctx.drawImage(sweepCanvas, 0, 0);
+      ctx.drawImage(sweepCanvas, 0, 0, SIZE, SIZE);
       ctx.restore();
 
       var p = getPlayer();
@@ -320,10 +335,16 @@
         ctx.stroke();
       }
 
-      /* initial letter above the dot */
-      ctx.font      = (isSource ? 'bold 7px' : '5px') + ' "Courier New", monospace';
-      ctx.fillStyle = isSource ? GOLD : hex2rgba(sec.color, 1);
-      ctx.fillText(sec.code[0], sp[0], sp[1] - r - 3);
+      /* initial letter above the dot — bumped up + dark halo for legibility
+       * against the busy glowing backdrop (contrast, not just color). */
+      var ly0 = sp[1] - r - 3.5;
+      ctx.font         = (isSource ? 'bold 9px' : 'bold 7px') + ' "Courier New", monospace';
+      ctx.lineJoin     = 'round';
+      ctx.strokeStyle  = 'rgba(2,8,15,0.85)';   // dark outline = readable on any hue
+      ctx.lineWidth    = 2;
+      ctx.strokeText(sec.code[0], sp[0], ly0);
+      ctx.fillStyle    = isSource ? GOLD : '#eafcff';  // near-white pops vs. dark
+      ctx.fillText(sec.code[0], sp[0], ly0);
     }
 
     /* ── Bazaar landmark (teal filled square with 'B' label) ──────────── */
@@ -338,9 +359,14 @@
       ctx.strokeStyle = 'rgba(255,255,255,0.6)';
       ctx.lineWidth   = 0.8;
       ctx.strokeRect(bp[0] - 3.2, bp[1] - 3.2, 6.4, 6.4);
-      ctx.font      = '5px "Courier New", monospace';
-      ctx.fillStyle = hex2rgba(bazaar.color, 1);
-      ctx.fillText('B', bp[0], bp[1] - 5.5);
+      /* 'B' label — matched to agent-label legibility (bump + dark halo) */
+      ctx.font        = 'bold 7px "Courier New", monospace';
+      ctx.lineJoin    = 'round';
+      ctx.strokeStyle = 'rgba(2,8,15,0.85)';
+      ctx.lineWidth   = 2;
+      ctx.strokeText('B', bp[0], bp[1] - 6);
+      ctx.fillStyle   = '#eafcff';
+      ctx.fillText('B', bp[0], bp[1] - 6);
     }
 
     /* ── Holo scanlines + vignette (inside the clip) ────────────────────── */
@@ -408,13 +434,18 @@
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = 'bold 8px "Courier New", monospace';
+    ctx.lineJoin     = 'round';
     var letters = ['N', 'E', 'S', 'W'];
     var langs   = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
     for (var li = 0; li < 4; li++) {
       var la = langs[li];
       var lx = CTR + Math.cos(la) * (RAD - 9);
       var ly = CTR + Math.sin(la) * (RAD - 9);
-      ctx.fillStyle = (li === 0) ? GOLD : 'rgba(39,224,255,0.85)';
+      /* dark halo keeps the compass letters crisp over the bright bezel glow */
+      ctx.strokeStyle = 'rgba(2,8,15,0.9)';
+      ctx.lineWidth   = 2.5;
+      ctx.strokeText(letters[li], lx, ly);
+      ctx.fillStyle = (li === 0) ? GOLD : 'rgba(180,240,255,0.95)';
       ctx.fillText(letters[li], lx, ly);
     }
 
@@ -468,6 +499,21 @@
     ctx.arc(0, 0, 8, 0, TWO_PI);
     ctx.fillStyle = 'rgba(39,224,255,0.16)';
     ctx.fill();
+
+    /* dark backing disc — separates the "you are here" blip from the
+     * cyan-heavy map so it's unmistakable at a glance (contrast). */
+    ctx.beginPath();
+    ctx.arc(0, 0, 6.4, 0, TWO_PI);
+    ctx.fillStyle = 'rgba(2,8,15,0.55)';
+    ctx.fill();
+
+    /* faint heading beam so the facing direction reads instantly */
+    ctx.strokeStyle = 'rgba(120,240,255,0.45)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(0, -13);
+    ctx.stroke();
 
     /* glowing chevron pointing up (local −y = north at angle 0) */
     ctx.shadowColor = CYAN;
