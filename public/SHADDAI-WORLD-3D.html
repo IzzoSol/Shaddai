@@ -2269,7 +2269,8 @@ const _SIGNATURE = {
   VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'orb',clip:null,color:0x34e5b0},
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
-  if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'}; }
+  if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
+  _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
 function playerFlip(){ if(!playPlayerOnce('flip')) _pTween={t:0,dur:0.5,kind:'flip'}; }
 function playerSpecial(){
   const sig=_SIGNATURE[(window._playerCharacter||'').toUpperCase()]||{vfx:'orb',clip:'heavy',color:0x9fb0e0};
@@ -2285,7 +2286,13 @@ function _loadProp(name){ if(_propCache[name]) return _propCache[name];
 // at hand/weapon level instead of mid-torso. (3.6→7.0 body change.)
 function _muzzle(){ const o=playerAvatar.position.clone(); o.y+=3.2*_PLAYER_EYE_K; o.addScaledVector(fwd,1.8*_PLAYER_EYE_K); return o; }
 function _pushProj(o,speed,life,spin,extra){ const light=new THREE.PointLight(extra&&extra.color||0xffffff,3.2,26); o.add(light);
-  scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:light}, extra||{})); }
+  // VFX POLISH: soft additive halo so the bolt reads as a glowing projectile (not a flat mesh).
+  // Sprite = billboards for free + is skipped by the isMesh dispose traverse (no shared-geo dispose bug).
+  // Fades with the projectile via `halo` handle below → clean fade-out, no popping.
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({ color:extra&&extra.color||0xffffff,
+    transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending }));
+  halo.scale.setScalar(2.4); o.add(halo);
+  scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:light,halo}, extra||{})); }
 function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(true);
   const box=new THREE.Box3().setFromObject(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
   o.traverse(c=>{ if(c.isMesh){ c.castShadow=false; c.frustumCulled=false;
@@ -2302,13 +2309,81 @@ function _spawnFeatherFan(color){ const base=_muzzle(); const baseDir=fwd.clone(
       new THREE.MeshStandardMaterial({color:0xffffff,emissive:color,emissiveIntensity:1.8,side:THREE.DoubleSide,transparent:true}));
     o.position.copy(base); o.lookAt(base.clone().add(dir)); o.rotateX(Math.PI/2);
     scene.add(o); _projectiles.push({o,vel:dir.multiplyScalar(52),life:1.2,age:0,spin:22,feather:true,fade:null,color}); } }
+// ── VFX POLISH: pooled short-lived hit/impact sprites ──────────────────────────
+// Readability layer for swings + specials. All meshes are POOLED (created lazily,
+// then recycled) so the hot path never `new`s geometry/material. Shared geometry
+// keeps GPU cost tiny. Each active fx just scales/fades an existing mesh per frame.
+// Gameplay untouched — these are purely cosmetic and carry no hitbox/damage.
+const _VFX_MAX = 12;                       // hard cap on concurrent polish sprites
+const _vfxActive = [];                     // live fx {mesh,age,life,kind,r0,r1,mat}
+const _vfxFree = [];                       // recycled meshes by kind: {ring:[],arc:[],flash:[]}
+const _vfxGeo = {                          // shared geometry, allocated once
+  ring:  new THREE.RingGeometry(0.55, 1.0, 28),   // shock ring / muzzle pop
+  arc:   new THREE.RingGeometry(0.72, 1.0, 20, 1, -0.9, 1.8), // slash sweep (partial ring)
+  flash: new THREE.CircleGeometry(1.0, 16),       // muzzle flash disc
+};
+function _vfxGet(kind, color){
+  let mesh = (_vfxFree[kind]||(_vfxFree[kind]=[])).pop();
+  if(!mesh){
+    mesh = new THREE.Mesh(_vfxGeo[kind], new THREE.MeshBasicMaterial({
+      color, transparent:true, opacity:1, depthWrite:false,
+      blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+  } else { mesh.material.color.set(color); }
+  mesh.visible = true; return mesh;
+}
+// Spawn one polish fx. kind: 'flash'|'arc'|'ring'. Lives ~life sec, scales r0→r1, fades out.
+function _spawnVFX(kind, pos, color, opts){
+  opts = opts||{};
+  if(_vfxActive.length >= _VFX_MAX){ // recycle oldest rather than grow unbounded
+    const old=_vfxActive.shift(); _vfxRelease(old);
+  }
+  const mesh=_vfxGet(kind, color);
+  mesh.position.copy(pos);
+  // orient: flash faces camera-ish (flat toward player fwd); arc/ring lie in the swing plane
+  if(kind==='ring'){ mesh.rotation.set(-Math.PI/2,0,0); }          // flat shock ring on ground plane feel
+  else { mesh.quaternion.copy(camera.quaternion); }                 // billboard toward view
+  const r0=opts.r0!=null?opts.r0:0.6, r1=opts.r1!=null?opts.r1:2.2;
+  mesh.scale.setScalar(r0);
+  scene.add(mesh);
+  _vfxActive.push({mesh, age:0, life:opts.life||0.22, r0, r1, base:opts.opacity!=null?opts.opacity:0.9});
+}
+function _vfxRelease(fx){
+  scene.remove(fx.mesh); fx.mesh.visible=false;
+  const kind = fx.mesh.geometry===_vfxGeo.ring?'ring':fx.mesh.geometry===_vfxGeo.arc?'arc':'flash';
+  (_vfxFree[kind]||(_vfxFree[kind]=[])).push(fx.mesh);  // recycle mesh+material, don't dispose
+}
+function _updateVFX(dt){
+  for(let i=_vfxActive.length-1;i>=0;i--){ const fx=_vfxActive[i];
+    fx.age+=dt; const k=fx.age/fx.life;          // 0→1 lifetime
+    const s=fx.r0+(fx.r1-fx.r0)*k;               // grow outward
+    fx.mesh.scale.setScalar(s);
+    fx.mesh.material.opacity = fx.base*(1-k)*(1-k); // ease-out fade, no popping
+    if(k>=1){ _vfxRelease(fx); _vfxActive.splice(i,1); }
+  }
+}
+// Quick readable muzzle cue for a basic swing: a flash disc + a slash sweep arc.
+function _attackFlash(){
+  const sig=_SIGNATURE[(window._playerCharacter||'').toUpperCase()];
+  const col=sig?sig.color:0xffffff;
+  const p=_muzzle();
+  _spawnVFX('flash', p, col, {r0:0.4, r1:1.6, life:0.16, opacity:0.85});
+  _spawnVFX('arc',   p, col, {r0:1.0, r1:2.4, life:0.20, opacity:0.75});
+}
+// ── /VFX POLISH ────────────────────────────────────────────────────────────────
 function fireSignatureVFX(sig){
+  // VFX POLISH: brief, cheap "power" read on the special — a shock ring + muzzle
+  // burst at cast, in the character's signature color. Short-lived & pooled, so it
+  // punches without blowing out the screen. No gameplay change.
+  const _sp=_muzzle();
+  _spawnVFX('ring',  _sp, sig.color, {r0:0.6, r1:5.0, life:0.34, opacity:0.85});   // expanding shock ring
+  _spawnVFX('flash', _sp, sig.color, {r0:0.6, r1:2.6, life:0.20, opacity:1.0});    // bright cast flash
   if(sig.vfx==='glow')   _loadProp('oracle-glow').then(s=> s?_spawnMeshProjectile(s,sig.color,42,3.2,5):_spawnOrb(sig.color));
   else if(sig.vfx==='blast') _loadProp('shaddai-blast').then(s=> s?_spawnMeshProjectile(s,sig.color,46,3.6,4):_spawnOrb(sig.color));
   else if(sig.vfx==='feather') _spawnFeatherFan(sig.color);
   else _spawnOrb(sig.color);
 }
 function _updateCombat(dt){
+  _updateVFX(dt);   // VFX POLISH: advance pooled hit/impact sprites (grow + fade + recycle)
   // projectiles
   for(let i=_projectiles.length-1;i>=0;i--){ const p=_projectiles[i];
     p.age+=dt; p.o.position.addScaledVector(p.vel,dt);
@@ -2317,7 +2392,10 @@ function _updateCombat(dt){
     const k=1-p.age/p.life;
     p.o.traverse(c=>{ if(c.isMesh){ const m=Array.isArray(c.material)?c.material:[c.material]; m.forEach(mm=>{ if(mm&&mm.transparent) mm.opacity=Math.max(0,k); }); }});
     if(p.fade) p.fade.intensity=Math.max(0,k*3.2);
-    if(p.age>=p.life){ scene.remove(p.o); p.o.traverse(c=>{ if(c.isMesh&&c.geometry&&c.geometry.dispose) c.geometry.dispose(); }); _projectiles.splice(i,1); } }
+    if(p.halo){ p.halo.material.opacity=Math.max(0,k*0.55); p.halo.scale.setScalar(2.4+(1-k)*1.6); } // VFX POLISH: halo pulses out & fades cleanly
+    if(p.age>=p.life){ scene.remove(p.o);
+      if(p.halo) p.halo.material.dispose();   // VFX POLISH: free the sprite material (Sprite skipped by isMesh dispose below)
+      p.o.traverse(c=>{ if(c.isMesh&&c.geometry&&c.geometry.dispose) c.geometry.dispose(); }); _projectiles.splice(i,1); } }
   // static-body lunge / flip fallback
   if(_pTween && playerAvatar){ _pTween.t+=dt; const pr=Math.min(1,_pTween.t/_pTween.dur);
     playerAvatar.rotation.x = _pTween.kind==='flip' ? -pr*Math.PI*2 : -Math.sin(pr*Math.PI)*0.32;
