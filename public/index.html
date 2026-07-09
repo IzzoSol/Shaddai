@@ -41556,6 +41556,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         try { controls && controls.update(); } catch(_){}
         if (current) current.position.y = baseY + Math.sin(performance.now() / 720) * 0.07; // gentle hover
         try { renderer && renderer.render(scene, camera); } catch(_){}
+        try { window._perfMon && window._perfMon.tick(renderer, 'room'); } catch(_){}
       })();
       return true;
     }
@@ -41629,6 +41630,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           if (mixer){ const now = performance.now(); const dt = _mclock ? (now - _mclock) / 1000 : 0.016; _mclock = now; try { mixer.update(Math.min(dt, 0.05)); } catch(_){} }
           if (current) current.position.y = baseY + Math.sin(performance.now() / 780) * 0.06;
           try { renderer && renderer.render(scene, camera); } catch(_){}
+          try { window._perfMon && window._perfMon.tick(renderer, 'chamber'); } catch(_){}
         })();
       }
       return select(code, glow);
@@ -41918,6 +41920,47 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         const cnt = document.getElementById('forgedRailCount'); if (cnt) cnt.textContent = n ? (n + ' forged') : '';
       }).catch(() => { if (wrap) wrap.style.display = 'none'; });
     };
+  })();
+
+  // ══════════════ B3: lightweight perf monitor (FPS + renderer.info leak stats) ══════════════
+  // Off by default; toggle with Shift+P. Reads three.js renderer.info (draw calls / triangles /
+  // textures / geometries) so it catches texture leaks + draw-call spikes, not just FPS.
+  (function _perfMonitor(){
+    if (window._perfMon) return;
+    let visible = false, frames = 0, last = performance.now(), fps = 0, ms = 0, lastRenderer = null, lastSrc = '', panel = null;
+    function ensurePanel(){
+      if (panel) return panel;
+      panel = document.createElement('div'); panel.id = 'perfMon';
+      panel.style.cssText = "position:fixed;top:8px;right:8px;z-index:99999;display:none;font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.5;color:#00ff88;background:rgba(2,6,12,0.86);border:1px solid rgba(0,229,160,0.4);border-radius:8px;padding:8px 10px;min-width:152px;pointer-events:none;box-shadow:0 0 18px rgba(0,229,160,0.25)";
+      document.body.appendChild(panel); return panel;
+    }
+    function paint(){
+      const p = ensurePanel(); const inf = lastRenderer && lastRenderer.info;
+      const r = (inf && inf.render) || {}, mem = (inf && inf.memory) || {};
+      const col = fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffd700' : '#ff6b6b';
+      p.innerHTML =
+        '<div style="color:' + col + ';font-weight:bold">' + fps + ' FPS · ' + ms + ' ms</div>' +
+        '<div style="color:rgba(255,255,255,0.55);font-size:8px;letter-spacing:1px;margin:3px 0 4px">' + (lastSrc || '—').toUpperCase() + ' VIEWER</div>' +
+        '<div>calls: ' + (r.calls != null ? r.calls : '–') + '</div>' +
+        '<div>tris: ' + (r.triangles != null ? r.triangles.toLocaleString() : '–') + '</div>' +
+        '<div>textures: ' + (mem.textures != null ? mem.textures : '–') + '</div>' +
+        '<div>geometries: ' + (mem.geometries != null ? mem.geometries : '–') + '</div>';
+    }
+    window._perfMon = {
+      tick: function(renderer, src){
+        frames++; if (renderer) lastRenderer = renderer; if (src) lastSrc = src;
+        const now = performance.now(), dt = now - last;
+        if (dt >= 500){ fps = Math.round(frames * 1000 / dt); ms = +(dt / frames).toFixed(1); frames = 0; last = now; if (visible) paint(); }
+      },
+      toggle: function(on){ visible = (on == null) ? !visible : !!on; ensurePanel().style.display = visible ? 'block' : 'none'; if (visible) paint(); return visible; },
+      isVisible: function(){ return visible; }
+    };
+    window.addEventListener('keydown', function(e){
+      if (!(e.shiftKey && (e.key === 'P' || e.key === 'p'))) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;   // don't hijack typing
+      e.preventDefault(); window._perfMon.toggle();
+    });
   })();
 
   // Close the agent room overlay AND dispose the 3D renderer (avoids leaked WebGL contexts)
