@@ -28,9 +28,19 @@
  *   0 per-building PointLights. No per-frame allocations in update().
  *   ≤16 draw calls per building × 8 buildings.
  */
-window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
+window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, onComplete) {
   try { window.__scene = scene; } catch (e) {}   // expose for collision-footprint measuring + diagnostics
   var _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  var _now = function(){ return (typeof performance !== 'undefined' ? performance.now() : Date.now()); };
+  var _PERF = false; try { _PERF = /[?&]perf\b/.test(location.search); } catch (e) {}
+  // Chunked scheduler: build the heavy towers a few frames apart so the intro warp RAF never
+  // freezes on one giant synchronous pass. requestAnimationFrame keeps chunks aligned to the
+  // paint loop; falls back to setTimeout in non-browser/headless contexts.
+  var _raf = (typeof requestAnimationFrame !== 'undefined') ? requestAnimationFrame : function (f) { return setTimeout(f, 16); };
+  // whenReady — resolves when every tower + all post-build steps (facade textures + bounds/
+  // frustum pass) are done. Callers can await it OR pass onComplete. Both fire together.
+  var _readyResolve = null;
+  var whenReady = (typeof Promise !== 'undefined') ? new Promise(function (res) { _readyResolve = res; }) : null;
   const gy       = (x, z) => (heightAt ? heightAt(x, z) : 0);
   const spinners  = [];
   const markers   = [];
@@ -4993,24 +5003,29 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   // Observatory (built in world-elevators.js). The ground centre is now the grand
   // CIRCULAR BAZAAR / community marketplace (the old standalone bazaar building at
   // ~[0,130] is removed — the bazaar now lives ONLY here at world-centre).
-  _buildBazaarCenter(S.SHADDAI.pos[0], S.SHADDAI.pos[1]);
-  buildProceduralBuilding('nexus-hub',         140, S.NEXUS.pos[0],   S.NEXUS.pos[1],   0x34e5b0, 'NEXUS HUB');
-  buildProceduralBuilding('library',           258, S.QUILL.pos[0],   S.QUILL.pos[1],   0xb98cff, 'LIBRARY');  // ← 1.5× bigger (was 172): a grand, fully-roofed domed library. faceR=258·0.46≈118 (collider bumped to match in SHADDAI-WORLD-3D.html)
-  buildProceduralBuilding('aegis',             145, S.PIKADON.pos[0], S.PIKADON.pos[1], 0xff5a6e, 'THE AEGIS');
-  buildProceduralBuilding('museum',            140, S.TURTLE.pos[0],  S.TURTLE.pos[1],  0x1fd6c4, 'THE MUSEUM');
-  buildProceduralBuilding('markets-exchange',  145, S.ZEROX.pos[0],   S.ZEROX.pos[1],   0xff7a18, 'ZEROX MARKETS');
-  buildProceduralBuilding('oracle-spire',      138, S.ORACLE.pos[0],  S.ORACLE.pos[1],  0xc084fc, 'ORACLE');
-
-  // QUILL'S STUDY — a small scholar's office set just OUTSIDE the grand Library, placed
-  // radially outward from the QUILL sector so it clears the library footprint (faceR≈79)
-  // and sits in open ground beyond the agent ring (no overlap with neighbours).
-  {
-    const lx = S.QUILL.pos[0], lz = S.QUILL.pos[1];
-    const lr = Math.sqrt(lx * lx + lz * lz) || 1;
-    const qsx = lx + (lx / lr) * 165;                 // ~165u further out along the radius (was 130; pushed out so it clears the now-bigger library faceR≈118)
-    const qsz = lz + (lz / lr) * 165;
-    _buildQuillStudy(qsx, qsz);
-  }
+  // ── CHUNKED BUILD QUEUE ────────────────────────────────────────────────────
+  // Each entry builds ONE structure. We drain the queue a small slice at a time,
+  // yielding to requestAnimationFrame between slices so the intro warp animation
+  // keeps painting smoothly instead of freezing on ~7 back-to-back tower builds.
+  const _buildQueue = [
+    function(){ _buildBazaarCenter(S.SHADDAI.pos[0], S.SHADDAI.pos[1]); },
+    function(){ buildProceduralBuilding('nexus-hub',         140, S.NEXUS.pos[0],   S.NEXUS.pos[1],   0x34e5b0, 'NEXUS HUB'); },
+    function(){ buildProceduralBuilding('library',           258, S.QUILL.pos[0],   S.QUILL.pos[1],   0xb98cff, 'LIBRARY'); },  // ← 1.5× bigger (was 172): a grand, fully-roofed domed library. faceR=258·0.46≈118 (collider bumped to match in SHADDAI-WORLD-3D.html)
+    function(){ buildProceduralBuilding('aegis',             145, S.PIKADON.pos[0], S.PIKADON.pos[1], 0xff5a6e, 'THE AEGIS'); },
+    function(){ buildProceduralBuilding('museum',            140, S.TURTLE.pos[0],  S.TURTLE.pos[1],  0x1fd6c4, 'THE MUSEUM'); },
+    function(){ buildProceduralBuilding('markets-exchange',  145, S.ZEROX.pos[0],   S.ZEROX.pos[1],   0xff7a18, 'ZEROX MARKETS'); },
+    function(){ buildProceduralBuilding('oracle-spire',      138, S.ORACLE.pos[0],  S.ORACLE.pos[1],  0xc084fc, 'ORACLE'); },
+    // QUILL'S STUDY — a small scholar's office set just OUTSIDE the grand Library, placed
+    // radially outward from the QUILL sector so it clears the library footprint and sits in
+    // open ground beyond the agent ring (no overlap with neighbours).
+    function(){
+      const lx = S.QUILL.pos[0], lz = S.QUILL.pos[1];
+      const lr = Math.sqrt(lx * lx + lz * lz) || 1;
+      const qsx = lx + (lx / lr) * 165;                 // ~165u further out along the radius (was 130; pushed out so it clears the now-bigger library faceR≈118)
+      const qsz = lz + (lz / lr) * 165;
+      _buildQuillStudy(qsx, qsz);
+    },
+  ];
 
   // BAZAAR: the standalone bazaar building is REMOVED — the bazaar now lives only
   // in the world-centre as the circular marketplace built by _buildBazaarCenter().
@@ -5019,10 +5034,72 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
 
   console.log('[layout] SHADDAI temple removed from ground center; now on the sky observatory');
 
-  // Apply PBR textures to all registered facade materials (async, lazy)
-  _initFacadeTextures();
+  // Drain the tower queue across frames (≤ ~12ms of build per frame), then run the one-time
+  // post-build steps and signal completion.
+  var _towersT0 = _now();
+  function _drainQueue(){
+    var _sliceStart = _now();
+    // Build at least one entry per frame; keep going only while we're under the frame budget so
+    // a fast machine still builds several per frame but a slow one never blows the frame.
+    while (_buildQueue.length) {
+      var job = _buildQueue.shift();
+      try { job(); } catch (e) { console.warn('tower build failed:', e && e.message); }
+      if ((_now() - _sliceStart) >= 12) break;
+    }
+    if (_buildQueue.length) { _raf(_drainQueue); return; }
+    if (_PERF) console.log('[perf] towers built in', Math.round(_now() - _towersT0), 'ms');
+    _raf(_postBuild);   // yield one more frame so the last tower's paint lands, then finish
+  }
 
-  // ── FRUSTUM-CULLING / BOUNDS PASS (one-time, at build — biggest FPS lever) ──
+  function _postBuild(){
+    // Apply PBR textures to all registered facade materials (async, lazy)
+    _initFacadeTextures();
+    var _boundsT0 = _now();
+    _runBoundsPass();
+    if (_PERF) console.log('[perf] bounds/frustum pass in', Math.round(_now() - _boundsT0), 'ms');
+    try {                                                        // expose for diagnostics
+      screenState.tick = _screenTick; screenState.fetchCat = _screenFetchCat;
+      window.__nexusScreens = screenState;   // legacy alias (now holds ALL lounges)
+    } catch (e) {}
+    if (typeof onComplete === 'function') { try { onComplete(); } catch (e) { console.warn('onComplete', e && e.message); } }
+    if (_readyResolve) _readyResolve();
+  }
+
+  _raf(_drainQueue);
+
+  // Return the API object IMMEDIATELY (towers build async in the background). Callers that
+  // touch applyFacadeTexture before towers exist just iterate an empty registry (safe no-op);
+  // the HTML now applies facade textures + measures footprints from the onComplete callback.
+  return {
+    markers,
+    whenReady,
+
+    // applyFacadeTexture — public hook (kept for external callers).
+    // Accepts either a single THREE.Texture (legacy: sets map only) or an object
+    // { map, normalMap, roughnessMap } for full PBR override per building code.
+    applyFacadeTexture(code, texOrObj) {
+      const mats = facadeRegistry[code] || [];
+      mats.forEach(m => {
+        if (texOrObj && typeof texOrObj === 'object' && !(texOrObj instanceof THREE.Texture)) {
+          if (texOrObj.map)          { m.map = texOrObj.map; }
+          if (texOrObj.normalMap)    { m.normalMap = texOrObj.normalMap; }
+          if (texOrObj.roughnessMap) { m.roughnessMap = texOrObj.roughnessMap; }
+        } else {
+          m.map = texOrObj;
+        }
+        m.needsUpdate = true;
+      });
+    },
+
+    update(t) {
+      for (const s  of spinners)  s.o.rotation.y = t * s.ry;
+      for (const lm of landmarks) lm.mat.opacity = lm.baseOpacity * (0.72 + 0.28 * Math.sin(t * 1.6 + lm.phase));
+      for (const tr of trimRings) tr.ring.material.opacity = tr.baseOpacity * (0.75 + 0.25 * Math.sin(t * 1.8 + tr.phase));
+      _screenTick(t);   // NEXUS lounge live screens: near-gated + throttled refresh
+    },
+  };
+
+  // ── FRUSTUM-CULLING / BOUNDS PASS (one-time, after all towers exist — biggest FPS lever) ──
   // The world is ~8 buildings × dozens of InstancedMesh detail objects (windows,
   // ribs, columns, greebles, dentils, stalls, banners…), all added to the scene at
   // the ORIGIN with WORLD coordinates baked into their per-instance matrices.
@@ -5059,58 +5136,30 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
   //   The ONLY objects skipped are the spinning holo halos (their .o rotates every frame in
   //   update()), which must keep matrixAutoUpdate=true. Meshes animated by material opacity
   //   only (landmarks / trimRings) never move, so freezing their matrices is safe.
-  var _spinSet = new Set();
-  for (var _si = 0; _si < spinners.length; _si++) _spinSet.add(spinners[_si].o);
-  var _nIM = 0, _nMesh = 0, _nFrozen = 0;
-  scene.traverse(function (o) {
-    if (o.isInstancedMesh) {
-      _nIM++;
-      o.frustumCulled = true;
-      o.computeBoundingSphere();          // rebuild sphere from baked world-space instances
-      if (!_spinSet.has(o)) { o.updateMatrix(); o.matrixAutoUpdate = false; _nFrozen++; }
-    } else if (o.isMesh) {
-      _nMesh++;
-      o.frustumCulled = true;
-      if (o.geometry && o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
-      if (!_spinSet.has(o)) { o.updateMatrix(); o.matrixAutoUpdate = false; _nFrozen++; }
-    }
-  });
+  //
+  // Defined as a hoisted function declaration so _postBuild (above) can call it once every
+  // tower mesh exists in the scene — measuring/culling too early would miss geometry.
+  function _runBoundsPass(){
+    var _spinSet = new Set();
+    for (var _si = 0; _si < spinners.length; _si++) _spinSet.add(spinners[_si].o);
+    var _nIM = 0, _nMesh = 0, _nFrozen = 0;
+    scene.traverse(function (o) {
+      if (o.isInstancedMesh) {
+        _nIM++;
+        o.frustumCulled = true;
+        o.computeBoundingSphere();          // rebuild sphere from baked world-space instances
+        if (!_spinSet.has(o)) { o.updateMatrix(); o.matrixAutoUpdate = false; _nFrozen++; }
+      } else if (o.isMesh) {
+        _nMesh++;
+        o.frustumCulled = true;
+        if (o.geometry && o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
+        if (!_spinSet.has(o)) { o.updateMatrix(); o.matrixAutoUpdate = false; _nFrozen++; }
+      }
+    });
 
-  console.log('[BENCH] world-buildings built in',
-    Math.round(((typeof performance !== 'undefined' ? performance : Date).now()) - _t0),
-    'ms |', (_nMesh + _nIM), 'scene meshes (' + _nIM + ' InstancedMesh +', _nMesh, 'Mesh) |',
-    _nFrozen, 'static matrices frozen (matrixAutoUpdate=false)');
-
-  try {                                                        // expose for diagnostics
-    screenState.tick = _screenTick; screenState.fetchCat = _screenFetchCat;
-    window.__nexusScreens = screenState;   // legacy alias (now holds ALL lounges)
-  } catch (e) {}
-
-  return {
-    markers,
-
-    // applyFacadeTexture — public hook (kept for external callers).
-    // Accepts either a single THREE.Texture (legacy: sets map only) or an object
-    // { map, normalMap, roughnessMap } for full PBR override per building code.
-    applyFacadeTexture(code, texOrObj) {
-      const mats = facadeRegistry[code] || [];
-      mats.forEach(m => {
-        if (texOrObj && typeof texOrObj === 'object' && !(texOrObj instanceof THREE.Texture)) {
-          if (texOrObj.map)          { m.map = texOrObj.map; }
-          if (texOrObj.normalMap)    { m.normalMap = texOrObj.normalMap; }
-          if (texOrObj.roughnessMap) { m.roughnessMap = texOrObj.roughnessMap; }
-        } else {
-          m.map = texOrObj;
-        }
-        m.needsUpdate = true;
-      });
-    },
-
-    update(t) {
-      for (const s  of spinners)  s.o.rotation.y = t * s.ry;
-      for (const lm of landmarks) lm.mat.opacity = lm.baseOpacity * (0.72 + 0.28 * Math.sin(t * 1.6 + lm.phase));
-      for (const tr of trimRings) tr.ring.material.opacity = tr.baseOpacity * (0.75 + 0.25 * Math.sin(t * 1.8 + tr.phase));
-      _screenTick(t);   // NEXUS lounge live screens: near-gated + throttled refresh
-    },
-  };
+    console.log('[BENCH] world-buildings built in',
+      Math.round(((typeof performance !== 'undefined' ? performance : Date).now()) - _t0),
+      'ms |', (_nMesh + _nIM), 'scene meshes (' + _nIM + ' InstancedMesh +', _nMesh, 'Mesh) |',
+      _nFrozen, 'static matrices frozen (matrixAutoUpdate=false)');
+  }
 };

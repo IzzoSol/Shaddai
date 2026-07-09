@@ -323,16 +323,18 @@ window.__worldBuilt = false;
     // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
-  // HEAVY GEOMETRY (buildings + NPCs) is built a couple frames LATER so the boot/loading screen paints
-  // and animates SMOOTHLY instead of freezing on one giant synchronous build. Nothing outside the render
-  // loop touches these two synchronously, so deferring is safe. ENTER stays locked until __worldBuilt
-  // (the loading gate waits for it). REMOVED here: ambient blimps/cars + the old squarescape/emblem
-  // ground GLBs (owner: "sloppy") — terrain is the single ground source now.
-  const _defer = window.requestAnimationFrame || function(f){ setTimeout(f,16); };
-  _defer(function(){ _defer(function(){
-    try{ if(L && window.buildWorldBuildings) worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader); }catch(e){ console.warn('buildings build failed:', e && e.message); try{ window.__reportErr && window.__reportErr('BUILDINGS BUILD FAILED: '+(e&&e.message)+'\n'+(((e&&e.stack)||'').split('\n').slice(1,5).join('\n'))); }catch(_){}}
+  // HEAVY GEOMETRY (buildings) is built by buildWorldBuildings, which now CHUNKS the towers across
+  // animation frames INTERNALLY so the boot/loading warp keeps painting smoothly instead of freezing
+  // on one giant synchronous build. The footprint-measure + collision build + __worldBuilt flag are
+  // driven from the onComplete callback so they run ONLY after every tower mesh + post-build steps
+  // exist (never on a fixed frame defer that could race the async build). ENTER stays locked until
+  // __worldBuilt (the loading gate waits for it). REMOVED here: ambient blimps/cars + the old
+  // squarescape/emblem ground GLBs (owner: "sloppy") — terrain is the single ground source now.
+  var __PERF_WORLD = false; try{ __PERF_WORLD = /[?&]perf\b/.test(location.search); }catch(_){}
+  var __worldT0 = (typeof performance!=='undefined'?performance.now():Date.now());
+  function __onWorldBuildingsDone(){
     // Paint the FLUX-generated stone onto the buildings (free HF texture). Marble on all facades; the
-    // dedicated library-facade art on QUILL. Loaded once, tiled, sRGB.
+    // dedicated library-facade art on QUILL. Loaded once, tiled, sRGB. Runs now that towers exist.
     try{ if(worldBuildings && worldBuildings.applyFacadeTexture){
       const _tl=new THREE.TextureLoader();
       const _mk=(url,rep)=>{ const t=_tl.load(url); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t; };
@@ -355,6 +357,7 @@ window.__worldBuilt = false;
     //   • skip PlaneGeometry         → flat banners / holo-screens / decals are not walls.
     // Round buildings (NEXUS dome, ORACLE spires) become a CIRCLE sized from the CORE mesh (centered on the
     // sector) so off-center decorative satellites don't balloon the radius. Runs ONCE, before NPCs build.
+    var __fpT0 = (typeof performance!=='undefined'?performance.now():Date.now());
     try{
       if(L && L.sectors && window.setBuildingFootprints && window.buildWorldCollision){
         scene.updateMatrixWorld(true);                 // ensure matrixWorld is current before measuring
@@ -402,15 +405,30 @@ window.__worldBuilt = false;
         console.log('[SOLID-FOOTPRINTS] measured '+Object.keys(fp).length+' buildings from real ground-band geometry', fp);
       }
     }catch(e){ console.warn('footprint measure failed:', e && e.message); }
-    _defer(function(){
-      // OWNER DECISION: agents STAND in their lounges (placed by world.placeAgents) — no wandering NPCs.
-      // buildWorldNPCs would duplicate the 7 council agents as walking crowd figures, which is NOT wanted.
-      // worldNPCs stays null so no wanderers exist. The update() call below is a no-op on null.
-      /* worldNPCs = window.buildWorldNPCs(...) — DISABLED */
-      window.__worldBuilt = true;
-      console.log('✅ world built (heavy geo deferred for a smooth loader)');
-    });
-  }); });
+    if(__PERF_WORLD){ try{ console.log('[perf] footprint measure + collision in', Math.round((typeof performance!=='undefined'?performance.now():Date.now()) - __fpT0), 'ms'); }catch(_){} }
+    // OWNER DECISION: agents STAND in their lounges (placed by world.placeAgents) — no wandering NPCs.
+    // buildWorldNPCs would duplicate the 7 council agents as walking crowd figures, which is NOT wanted.
+    // worldNPCs stays null so no wanderers exist. The update() call below is a no-op on null.
+    /* worldNPCs = window.buildWorldNPCs(...) — DISABLED */
+    window.__worldBuilt = true;   // set ONLY after every tower mesh + footprints + colliders exist
+    if(__PERF_WORLD){ try{ console.log('[perf] TOTAL world build (towers→footprints)', Math.round((typeof performance!=='undefined'?performance.now():Date.now()) - __worldT0), 'ms'); }catch(_){} }
+    console.log('✅ world built (heavy geo chunked across frames for a smooth loader)');
+  }
+
+  // Kick off the chunked build. Towers build across frames INSIDE buildWorldBuildings; when every
+  // tower + its post-build steps are done, __onWorldBuildingsDone fires (facade textures → footprint
+  // measure → collision → __worldBuilt). No fixed frame defer — completion drives sequencing.
+  try{
+    if(L && window.buildWorldBuildings){
+      worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, __onWorldBuildingsDone);
+    } else {
+      window.__worldBuilt = true;   // no builder present → don't trap the loading gate
+    }
+  }catch(e){
+    console.warn('buildings build failed:', e && e.message);
+    try{ window.__reportErr && window.__reportErr('BUILDINGS BUILD FAILED: '+(e&&e.message)+'\n'+(((e&&e.stack)||'').split('\n').slice(1,5).join('\n'))); }catch(_){}
+    window.__worldBuilt = true;      // build threw → don't trap the loading gate on the 9s fallback
+  }
 })();
 
 // ════════════════════════════════════════════════════════════════════════════════════════
@@ -708,10 +726,34 @@ window.__worldBuilt = false;
   const sign=new THREE.Mesh(new THREE.PlaneGeometry(12,3.3), new THREE.MeshBasicMaterial({ map:signTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
   sign.position.set(0,12,-4); nook.add(sign);
 
+  // ── LIBRARY DETAIL (2026-07-09): a woven floor rug, floor book-stacks, and a study globe so
+  //    the nook reads as a real, lived-in library rather than bare bookcases. All static primitives,
+  //    materials reused, added once — zero per-frame cost. ──
+  const rug=new THREE.Mesh(new THREE.PlaneGeometry(16,12), new THREE.MeshStandardMaterial({ color:0x241733, roughness:0.95, metalness:0.0, emissive:PURPLE, emissiveIntensity:0.05, side:THREE.DoubleSide }));
+  rug.rotation.x=-Math.PI/2; rug.position.set(0,0.06,1.5); nook.add(rug);
+  const rugEdge=new THREE.Mesh(new THREE.PlaneGeometry(15,11), new THREE.MeshBasicMaterial({ color:0xb98cff, transparent:true, opacity:0.10, side:THREE.DoubleSide, depthWrite:false }));
+  rugEdge.rotation.x=-Math.PI/2; rugEdge.position.set(0,0.07,1.5); nook.add(rugEdge);
+  // scattered floor book-stacks (leaning tomes) near the desk & bases of the cases
+  function bookStack(px,pz,n,rot){
+    const g=new THREE.Group(); g.position.set(px,0,pz); g.rotation.y=rot||0;
+    for(let k=0;k<n;k++){ const w=1.1+Math.random()*0.5, d=1.5+Math.random()*0.4, h=0.28+Math.random()*0.12;
+      const col=bookCols[(k+px|0)%bookCols.length];
+      const bk=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({ color:col, roughness:0.65, metalness:0.05, emissive:col, emissiveIntensity:0.08 }));
+      bk.position.set((Math.random()-0.5)*0.3, 0.16+k*h, (Math.random()-0.5)*0.3); bk.rotation.y=(Math.random()-0.5)*0.25; g.add(bk); }
+    nook.add(g);
+  }
+  bookStack(-4.5, 4.5, 4, 0.3); bookStack(3.8, 5.6, 3, -0.4); bookStack(-6.2, -1.5, 5, 0.1);
+  // a study globe on a little stand beside the desk
+  const globeStand=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,1.4,10), woodMat); globeStand.position.set(3.4,3.9,3.2); nook.add(globeStand);
+  const globe=new THREE.Mesh(new THREE.SphereGeometry(0.85,20,16), new THREE.MeshStandardMaterial({ color:0x1b3b5a, emissive:0x2a6cff, emissiveIntensity:0.18, roughness:0.5, metalness:0.2 }));
+  globe.position.set(3.4,5.1,3.2); globe.rotation.z=0.35; nook.add(globe);
+  const globeRing=new THREE.Mesh(new THREE.TorusGeometry(0.95,0.05,8,28), new THREE.MeshBasicMaterial({ color:GOLD, toneMapped:false })); globeRing.position.copy(globe.position); globeRing.rotation.x=0.35; nook.add(globeRing);
+
   window._libraryFX={ update:function(t,dt){
     openBook.position.y=5.2+Math.sin(t*1.1)*0.12; openBook.rotation.y=Math.sin(t*0.5)*0.15;
     lamp.intensity=0.8+0.15*Math.sin(t*3.0);   // soft lamp flicker
     bulb.scale.setScalar(1+0.06*Math.sin(t*3.0));
+    globe.rotation.y += dt*0.25;   // slow globe spin — subtle sign of a living study
   }};
 })();
 
@@ -1373,7 +1415,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=9';  // v9 = Meshy-rigged bodies (TURTLE=Emerald Enforcer) w/ real animation clips
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=10';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -1405,7 +1447,7 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=9';  // v9 = Meshy-rigged bodies (TURTLE=Emerald Enforcer), idle/walk/run/attack1/attack2/heavy/flip, 1024 tex
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=10';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
@@ -1457,6 +1499,18 @@ function _nextAgentBody(){
         const mixer = new THREE.AnimationMixer(body);
         const actions = {};
         gltf.animations.forEach(cl=>{ actions[cl.name] = mixer.clipAction(cl); });
+        // Alias canonical clip names (idle/walk/run/flip/attack) for rigs whose clips carry
+        // descriptive names — e.g. TURTLE = Neon Valkyrie (Walking/Running/Cardio_Dance/Parkour_Vault…).
+        // Only fills a canonical slot the model didn't already ship, so native idle/walk/run rigs keep working.
+        (function(){ const A=actions, C=gltf.animations, mx=mixer;
+          function alias(canon, subs){ if(A[canon]) return; for(const cl of C){ const n=cl.name.toLowerCase(); if(subs.some(s=>n.includes(s))){ A[canon]=mx.clipAction(cl); return; } } }
+          alias('walk',['walk']); alias('run',['run','sprint']);
+          alias('idle',['idle','dance','swing','breath']);      // TURTLE's base pose → a dance
+          alias('flip',['vault','backflip','flip','handstand']);
+          alias('attack1',['roundhouse','flying','high_kick','kick']);
+          alias('attack2',['jab','punch','sweep']);
+          alias('heavy',['spin_kick','double_kick']);
+        })();
         body.userData.__hasMixer = true;
         entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
         entry._poseSnap = _snapshotPose(body);   // rest pose → restore after one-shot clips so flip/attack don't leave the body facing backward
@@ -1833,6 +1887,142 @@ function renderNewsLabel(){ const it=NEWS.items[NEWS.idx%Math.max(1,NEWS.items.l
 function refreshNews(){ fetch('/api/news/crypto').then(r=>r.json()).then(d=>{ if(!d||!d.ok) return; NEWS.items=d.news||[]; window._newsData=NEWS.items; renderNewsLabel(); }).catch(()=>{}); }
 refreshNews(); setInterval(refreshNews, 300000);
 setInterval(()=>{ if(NEWS.items.length){ NEWS.idx++; renderNewsLabel(); } }, 6000);
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// ARCADE KIOSK (2026-07-09) — walk-up cabinet by the NEXUS Hub (the ARCADE-themed building) that
+// LAUNCHES THE CURRENT GAMES in the in-world overlay via window.openGame(). This is the reliable,
+// always-present entry point to the updated games (the /api/grid/portals ring is data-driven and
+// may be empty). Buttons point at the REAL, current game files (/games/*.html) + the arcade hub.
+// Cheap: a few boxed meshes + one canvas screen texture. Proximity + EXPAND handled in DOM.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+(function(){
+  const L = window.WORLD_LAYOUT;
+  const NX = (L && L.sector && L.sector('NEXUS') && L.sector('NEXUS').pos) || [-130,225];
+  // sit the cabinet just in front of the NEXUS hub, offset toward world-centre so it faces the plaza
+  const dirx=-NX[0], dirz=-NX[1], dl=Math.hypot(dirx,dirz)||1;
+  const KX=NX[0]+dirx/dl*30, KZ=NX[1]+dirz/dl*30;
+  const NEON=0x34e5b0, faceY=Math.atan2(dirx,dirz);
+  const kiosk=new THREE.Group(); kiosk.position.set(KX,0,KZ); kiosk.rotation.y=faceY; scene.add(kiosk);
+
+  const bodyMat=new THREE.MeshStandardMaterial({ color:0x0a1622, emissive:NEON, emissiveIntensity:0.22, metalness:0.55, roughness:0.45 });
+  const trimMat=new THREE.MeshBasicMaterial({ color:NEON, toneMapped:false });
+  // cabinet body (a proper arcade cab: base + angled control deck + tall screen head)
+  const base=new THREE.Mesh(new THREE.BoxGeometry(6,7,3.4), bodyMat); base.position.y=3.5; kiosk.add(base);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(6.4,4.2,2.4), bodyMat); head.position.set(0,8.6,-0.4); head.rotation.x=-0.12; kiosk.add(head);
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(6,0.5,2.6), bodyMat); deck.position.set(0,5.4,1.3); deck.rotation.x=0.5; kiosk.add(deck);
+  // neon edge trim on the head + a marquee bar
+  const marquee=new THREE.Mesh(new THREE.BoxGeometry(6.8,0.9,2.6), trimMat); marquee.position.set(0,10.9,-0.3); kiosk.add(marquee);
+  [[-3.1,8.6],[3.1,8.6]].forEach(([px,py])=>{ const r=new THREE.Mesh(new THREE.BoxGeometry(0.22,4.2,0.22), trimMat); r.position.set(px,py,0.9); kiosk.add(r); });
+  // glowing screen (canvas texture)
+  const sc=document.createElement('canvas'); sc.width=512; sc.height=384; const sg=sc.getContext('2d');
+  function drawScreen(){
+    sg.fillStyle='#04121c'; sg.fillRect(0,0,512,384);
+    sg.strokeStyle='rgba(52,229,176,0.55)'; sg.lineWidth=6; sg.strokeRect(8,8,496,368);
+    sg.textAlign='center'; sg.shadowColor='#34e5b0'; sg.shadowBlur=22;
+    sg.fillStyle='#7dffd9'; sg.font='700 60px Orbitron, sans-serif'; sg.fillText('◈ ARCADE', 256, 92);
+    sg.shadowBlur=8; sg.fillStyle='#bff7e6'; sg.font='700 40px Orbitron, sans-serif';
+    sg.fillText('🏈  🏀  ⚡  ✦', 256, 176);
+    sg.fillStyle='#9fe8d4'; sg.font='400 26px monospace';
+    sg.fillText('GRID GRIDIRON · NEON HOOPS', 256, 236);
+    sg.fillText('DODGEBALL · SIGIL STORM', 256, 272);
+    sg.shadowBlur=14; sg.fillStyle='#ffe27a'; sg.font='700 30px monospace';
+    sg.fillText('▶ PRESS E TO PLAY', 256, 336);
+  }
+  drawScreen();
+  const scTex=new THREE.CanvasTexture(sc); scTex.colorSpace=THREE.SRGBColorSpace; scTex.anisotropy=4;
+  const screen=new THREE.Mesh(new THREE.PlaneGeometry(5.4,4.0),
+    new THREE.MeshBasicMaterial({ map:scTex, toneMapped:false }));
+  screen.position.set(0,8.6,0.85); screen.rotation.x=-0.12; kiosk.add(screen);
+  // soft neon fill so the cab reads at night
+  const kLight=new THREE.PointLight(NEON, 1.2, 40, 2.0); kLight.position.set(0,9,3); kiosk.add(kLight);
+
+  // floating overhead label (same .lbl system as portals/kiosks)
+  const el=document.createElement('div'); el.className='lbl';
+  el.innerHTML='<div class="nm" style="color:#34e5b0;text-shadow:0 0 12px #34e5b0">🎮 SHADDAI ARCADE</div>'+
+    '<div class="sk">the updated games · free play</div>'+
+    '<div class="tag">▶ PRESS E TO PLAY</div>';
+  labelLayer.appendChild(el);
+
+  // ── DOM launch panel (the EXPAND / readable menu) ─────────────────────────────
+  // Small by default (compact card); EXPAND grows it to a large readable game grid.
+  const GAMES=[
+    { id:'football',   name:'GRID GRIDIRON', url:'/games/football.html',   icon:'🏈', note:'just finished · playable' },
+    { id:'basketball', name:'NEON HOOPS',    url:'/games/basketball.html', icon:'🏀', note:'3D hoops' },
+    { id:'dodgeball',  name:'GRID DODGEBALL',url:'/games/dodgeball.html',  icon:'⚡', note:'dodge & throw' },
+    { id:'sigilstorm', name:'SIGIL STORM',   url:'/games/sigil-storm.html',icon:'✦', note:'roguelite' },
+    { id:'xt',         name:'XT ADVENTURE',  url:'/games/xt-adventure.html',icon:'🗡️', note:'action' },
+  ];
+  const panel=document.createElement('div');
+  panel.id='arcadeKioskPanel';
+  panel.style.cssText='position:fixed;z-index:64;left:50%;top:50%;transform:translate(-50%,-50%);'+
+    'width:min(420px,92vw);max-height:82vh;overflow:auto;display:none;font-family:monospace;'+
+    'background:linear-gradient(180deg,#08131e,#050a12);border:1px solid #34e5b0;border-radius:16px;'+
+    'box-shadow:0 0 46px rgba(52,229,176,.28);padding:18px 18px 16px;color:#dff7ee';
+  function rowHtml(g,big){
+    return '<button data-url="'+g.url+'" data-name="'+g.name+'" class="akGame" style="'+
+      'display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;'+
+      'margin:6px 0;padding:'+(big?'14px 16px':'10px 12px')+';border-radius:12px;'+
+      'background:rgba(52,229,176,.07);border:1px solid rgba(52,229,176,.35);color:#eafff8;'+
+      'font-family:monospace;font-size:'+(big?'16px':'14px')+'">'+
+      '<span style="font-size:'+(big?'30px':'22px')+'">'+g.icon+'</span>'+
+      '<span><b style="color:#7dffd9">'+g.name+'</b><br><span style="opacity:.6;font-size:11px">'+g.note+'</span></span></button>';
+  }
+  function render(big){
+    panel.style.width = big ? 'min(680px,94vw)' : 'min(420px,92vw)';
+    panel.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(52,229,176,.3);padding-bottom:10px;margin-bottom:10px">'+
+        '<div style="font-size:'+(big?'22px':'18px')+';color:#7dffd9;letter-spacing:2px">🎮 SHADDAI ARCADE</div>'+
+        '<div>'+
+          '<button id="akExpand" style="background:rgba(52,229,176,.12);border:1px solid #34e5b0;color:#7dffd9;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:monospace">'+(big?'▣ SHRINK':'⤢ EXPAND')+'</button> '+
+          '<button id="akClose" style="background:rgba(255,90,110,.12);border:1px solid #ff5a6e;color:#ffb3bd;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:monospace">✕</button>'+
+        '</div>'+
+      '</div>'+
+      (big?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">':'<div>')+
+      GAMES.map(g=>rowHtml(g,big)).join('')+
+      '</div>'+
+      '<button id="akFull" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;cursor:pointer;'+
+        'background:linear-gradient(90deg,#0e3a30,#0a2a3a);border:1px solid #34e5b0;color:#bff7e6;font-family:monospace;font-size:14px">'+
+        '▶ OPEN FULL ARCADE HUB</button>';
+    // wire buttons
+    panel.querySelectorAll('.akGame').forEach(b=>b.addEventListener('click',()=>{
+      const u=b.getAttribute('data-url'), n=b.getAttribute('data-name');
+      hide(); if(window.openGame) window.openGame(u,n); else window.location.href=u;
+    }));
+    const exp=panel.querySelector('#akExpand'); if(exp) exp.addEventListener('click',()=>render(!big));
+    const cl=panel.querySelector('#akClose'); if(cl) cl.addEventListener('click',hide);
+    const full=panel.querySelector('#akFull'); if(full) full.addEventListener('click',()=>{
+      hide(); if(window.openGame) window.openGame('/arcade.html','SHADDAI ARCADE'); else window.location.href='/arcade.html';
+    });
+  }
+  function show(){ render(false); panel.style.display='block'; if(document.exitPointerLock) document.exitPointerLock(); }
+  function hide(){ panel.style.display='none'; }
+  document.body.appendChild(panel);
+
+  // proximity: expose an update() the animate loop calls; also a global open() for menus.
+  let _near=false; const _kv=new THREE.Vector3();
+  window._arcadeKiosk = {
+    update:function(playerPos,camera,tmp){
+      const dx=playerPos.x-KX, dz=playerPos.z-KZ; const d2=dx*dx+dz*dz;
+      _near = d2 < 18*18;
+      // project label
+      tmp.set(KX,13,KZ); tmp.project(camera);
+      if(tmp.z>1||tmp.z<-1){ el.style.opacity='0'; }
+      else { el.style.transform='translate(-50%,-100%) translate3d('+((tmp.x*0.5+0.5)*innerWidth)+'px,'+((-tmp.y*0.5+0.5)*innerHeight)+'px,0)';
+        const dist=Math.sqrt(d2); el.style.opacity = dist<150 ? String(Math.max(0.2,1-dist/180)) : '0'; }
+      el.classList.toggle('near', _near);
+      marquee.material.color.setHSL(0.44, 1, 0.55+0.12*Math.sin(performance.now()*0.004));  // marquee shimmer
+    },
+    isNear:function(){ return _near; },
+    open:show
+  };
+  // E launches the menu when standing at the cabinet (only if not talking to an agent / typing)
+  addEventListener('keydown',e=>{
+    if(e.code!=='KeyE' || e.repeat) return;
+    if(/input|textarea|select/i.test((document.activeElement||{}).tagName||'')) return;
+    if(panel.style.display==='block'){ hide(); return; }
+    if(_near){ show(); }
+  });
+})();
 
 // ── THE BAZAAR — a walkable 3D marketplace zone (stalls you walk to; [F] to buy) ──
 const BAZAAR = { pos:new THREE.Vector3(-100,0,100), stalls:[], near:null };   // SOUTH-WEST (−X=west, +Z=south) — matches the UI note "the green ring & arch, south-west". Was (-100,-100) = NW, which rendered "at the top". Floor/ring/arch/stalls all derive from BAZAAR.pos so they move together.
@@ -2251,7 +2441,12 @@ window.setPlayerCharacter = function(code){
     if(!playerAvatar.children.length) _loadHero('hero-walk.glb'); });
 };
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
-const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'] };
+const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'],
+  // combat one-shots — descriptive Meshy/Mixamo clip names matched by substring (e.g. TURTLE = Neon Valkyrie).
+  flip:['flip','backflip','vault','parkour','handstand','roll'],
+  kick:['kick','roundhouse','high_kick','sweep','flying'],
+  heavy:['heavy','spin_kick','double_kick','power','special','cast'],
+  attack1:['roundhouse','flying','high_kick','kick','attack1'] };
 function _clip(name){
   const aliases=(_ALIAS[name]||[name]).map(s=>s.toLowerCase());
   const keys=Object.keys(playerClips);
@@ -2278,7 +2473,9 @@ addEventListener('keydown', e=>{ if(e.code==='KeyV') thirdPerson=!thirdPerson; }
 let _pAttackUntil = 0, _pComboFlip = false, _pTween = null;
 function _typingNow(){ return /input|textarea|select/i.test((document.activeElement||{}).tagName||''); }
 function playPlayerOnce(clipName, opts){
-  opts = opts||{}; const a = playerClips[clipName]; if(!a || !playerMixer) return 0;
+  opts = opts||{};
+  // resolve exact name first, else fall through to alias/substring match (descriptive Meshy clip names).
+  const a = playerClips[clipName] || _clip(clipName); if(!a || !playerMixer) return 0;
   const dur = (a.getClip() && a.getClip().duration) || 0.6;
   if(playerAction && playerAction!==a) playerAction.fadeOut(0.1);
   a.reset(); a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=false;
@@ -2287,21 +2484,59 @@ function playPlayerOnce(clipName, opts){
   _pAttackUntil = clock.elapsedTime + dur/(opts.timeScale||1) - 0.07;   // hold off movement-anim until it ends
   return dur;
 }
-// character → signature special. vfx: glow(Oracle)/blast(SHADDAI)/feather(Quill)/orb(default)
+// ═══ UNIFIED CONTROL SCHEME (2026-07-09) — remap from LMB-combo/R-special/Q-flip ════════════
+// Q = PROJECTILE (fire the agent's signature VFX bolt) · F = FLIP (rigged flip clip; SHADDAI=fly;
+// others no-op) · K = KICK (rigged kick clip; others no-op) · E = building/agent interact
+// (SHADDAI: E = SECOND projectile) · WASD move · L learn. Boneless single-mesh agents (SHADDAI/
+// NEXUS/QUILL) have no skeletal clips → flip/kick gracefully no-op (SHADDAI's F becomes a fly).
+//
+// character → signature projectile. vfx: glow(Oracle,PURPLE)/blast(SHADDAI,NEXUS)/feather(Quill)/orb.
+//   glide:true → boneless glide locomotion (skip step-bob, forward lean + hover). (SHADDAI, NEXUS)
+//   e2 → SHADDAI's SECOND projectile fired on E (he's the only agent with two).
 const _SIGNATURE = {
-  ORACLE:{vfx:'glow',clip:'heavy',color:0xc084fc}, SHADDAI:{vfx:'blast',clip:null,color:0xffcf4a},
+  // ORACLE Q = PURPLE blast bolt (oracle-glow prop tinted purple via sig.color). (2026-07-09)
+  ORACLE:{vfx:'glow',clip:'heavy',color:0x9b30ff}, SHADDAI:{vfx:'blast',clip:null,color:0xffcf4a,glide:true,e2:{vfx:'orb',color:0xffe27a}},
   QUILL:{vfx:'feather',clip:null,color:0xb98cff},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
   TURTLE:{vfx:'orb',clip:'heavy',color:0x1fd6c4},  PIKADON:{vfx:'orb',clip:'heavy',color:0xff5a6e},
-  VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'orb',clip:null,color:0x34e5b0},
+  // NEXUS shares SHADDAI's 'blast' snowball projectile (both are the "creator/source" pair) + glides. (2026-07-09)
+  VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'blast',clip:null,color:0x34e5b0,glide:true},
 };
+// Return the active player's signature entry (or a sane default).
+function _playerSig(){ return _SIGNATURE[(window._playerCharacter||'').toUpperCase()] || {vfx:'orb',clip:null,color:0x9fb0e0}; }
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
   _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
-function playerFlip(){ if(!playPlayerOnce('flip')) _pTween={t:0,dur:0.5,kind:'flip'}; }
-function playerSpecial(){
-  const sig=_SIGNATURE[(window._playerCharacter||'').toUpperCase()]||{vfx:'orb',clip:'heavy',color:0x9fb0e0};
+
+// ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
+function playerProjectile(){
+  const sig=_playerSig();
+  // rigged bodies punctuate the cast with their 'heavy' clip; boneless bodies get a tiny procedural lunge.
   if(!(sig.clip && playPlayerOnce(sig.clip))) _pTween={t:0,dur:0.32,kind:'lunge'};
   fireSignatureVFX(sig);
+}
+// ── E (SHADDAI only) = SECOND projectile — he's the only agent with two attacks and no melee. ──
+function playerProjectile2(){
+  const sig=_playerSig(); if(!sig.e2) return false;
+  _pTween={t:0,dur:0.32,kind:'lunge'};
+  // fire the secondary bolt (own vfx/color) reusing the signature VFX pipeline.
+  fireSignatureVFX({vfx:sig.e2.vfx||'orb', color:sig.e2.color||sig.color});
+  return true;
+}
+// ── F = FLIP (rigged flip clip). SHADDAI = FLY (rise/float). Others without a flip clip: tiny hop no-op. ──
+let _flyUntil = 0, _flyImpulse = 0;
+function playerFlipOrFly(){
+  const code=(window._playerCharacter||'').toUpperCase();
+  if(code==='SHADDAI'){ _flyUntil = clock.elapsedTime + 1.1; _flyImpulse = 1; return; }  // F = fly: brief buoyant rise/float
+  if(playPlayerOnce('flip')) return;                       // rigged agents (TURTLE = Backflip / Parkour_Vault) play the real clip
+  if(playerMixer) return;                                  // rigged but no flip clip → graceful no-op
+  _pTween={t:0,dur:0.5,kind:'hop'};                        // boneless non-SHADDAI → tiny procedural hop
+}
+// ── K = KICK (rigged kick clip). TURTLE has several kicks (aliased into attack1). Others: no-op. ──
+function playerKick(){
+  // try common kick clip names first, then the aliased attack slot the loader mapped kicks into.
+  if(playPlayerOnce('kick',{timeScale:1.1})) { _attackFlash(); return; }
+  if(playPlayerOnce('attack1',{timeScale:1.1})) { _attackFlash(); return; }  // TURTLE: roundhouse/high_kick → attack1 alias
+  // no kick clip (boneless / non-kicking rig) → graceful no-op.
 }
 // ── projectile system (mesh props + procedural orbs/feathers) ──
 const _projectiles=[]; const _propCache={};
@@ -2325,7 +2560,16 @@ function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(tru
   const box=new THREE.Box3().setFromObject(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
   o.traverse(c=>{ if(c.isMesh){ c.castShadow=false; c.frustumCulled=false;
     const mats=Array.isArray(c.material)?c.material:[c.material];
-    const cm=mats.map(m=>{ if(!m) return m; const mm=m.clone(); if(mm.emissive){mm.emissive.set(color);mm.emissiveIntensity=2.2;} mm.transparent=true; return mm; });
+    const cm=mats.map(m=>{ if(!m) return m; const mm=m.clone();
+      // BOX-ARTIFACT FIX (2026-07-09): the Meshy VFX GLBs (shaddai-blast / oracle-glow) ship as an
+      // OPAQUE, double-sided textured mesh. Rendered as-is, the square textured backing draws a solid
+      // BOX around the glowing orb. Force ADDITIVE blending + alpha-test + no depth-write so the dark
+      // edge pixels of the texture drop out and only the bright core reads → clean glowing bolt, no box.
+      if(mm.emissive){ mm.emissive.set(color); mm.emissiveIntensity=2.6; }
+      mm.color && mm.color.set(color);
+      mm.transparent=true; mm.blending=THREE.AdditiveBlending; mm.depthWrite=false;
+      mm.alphaTest=0.06; mm.side=THREE.DoubleSide; mm.toneMapped=false;
+      return mm; });
     c.material=Array.isArray(c.material)?cm:(cm[0]||c.material); }});
   o.position.copy(_muzzle()); _pushProj(o,speed,1.6,spin,{color}); }
 function _spawnOrb(color){ const o=new THREE.Mesh(new THREE.SphereGeometry(0.6,16,12),
@@ -2424,14 +2668,22 @@ function _updateCombat(dt){
     if(p.age>=p.life){ scene.remove(p.o);
       if(p.halo) p.halo.material.dispose();   // VFX POLISH: free the sprite material (Sprite skipped by isMesh dispose below)
       p.o.traverse(c=>{ if(c.isMesh&&c.geometry&&c.geometry.dispose) c.geometry.dispose(); }); _projectiles.splice(i,1); } }
-  // static-body lunge / flip fallback
+  // static-body lunge / flip / hop fallback (boneless bodies with no matching clip)
   if(_pTween && playerAvatar){ _pTween.t+=dt; const pr=Math.min(1,_pTween.t/_pTween.dur);
-    playerAvatar.rotation.x = _pTween.kind==='flip' ? -pr*Math.PI*2 : -Math.sin(pr*Math.PI)*0.32;
+    if(_pTween.kind==='flip')      playerAvatar.rotation.x = -pr*Math.PI*2;                 // full backflip spin
+    else if(_pTween.kind==='hop')  playerAvatar.rotation.x = -Math.sin(pr*Math.PI)*0.5;    // tiny crouch-hop cue (no-op stand-in)
+    else                           playerAvatar.rotation.x = -Math.sin(pr*Math.PI)*0.32;    // lunge
     if(pr>=1){ playerAvatar.rotation.x=0; _pTween=null; } }
 }
 addEventListener('mousedown', e=>{ if(e.button===0 && controls.isLocked && !(worldSpawn && worldSpawn.isAnimating())) playerBasicAttack(); });
+// UNIFIED SCHEME: Q = projectile · F = flip (SHADDAI = fly) · K = kick. (E handled in the interact
+// listener below — building/agent for everyone, SECOND projectile for SHADDAI.)
 addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
-  if(e.code==='KeyR') playerSpecial(); else if(e.code==='KeyQ') playerFlip(); });
+  if(!controls.isLocked) return;
+  if(e.code==='KeyQ') playerProjectile();
+  else if(e.code==='KeyF') playerFlipOrFly();
+  else if(e.code==='KeyK') playerKick();
+});
 
 addEventListener('click', ()=>{
   const d=document.getElementById('dossier');
@@ -2440,7 +2692,14 @@ addEventListener('click', ()=>{
   if(targeted){ openDossier(targeted.a); }
 });
 addEventListener('keydown', e=>{
-  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); }  // E = talk/open agent + enter buildings (building ENTER handled by its own listener). (Lift boarding moved to R.)
+  if(e.code==='KeyE' && controls.isLocked){
+    // SHADDAI is the only agent with a SECOND projectile → E fires it, UNLESS he's at a building door
+    // (building ENTER, handled by its own listener, keeps priority) or has an agent targeted to talk to.
+    const _isShaddai=(window._playerCharacter||'').toUpperCase()==='SHADDAI';
+    const _atDoor = !!(_interiors && ((_interiors.isInside&&_interiors.isInside()) || (_interiors.nearestDoor&&_interiors.nearestDoor(playerPos.x, playerPos.z))));
+    if(_isShaddai && !targeted && !_atDoor){ playerProjectile2(); }
+    else if(targeted) openDossier(targeted.a);
+  }  // E = talk/open agent + enter buildings (building ENTER handled by its own listener). SHADDAI: E = 2nd projectile. (Lift boarding on R.)
   if(e.code==='KeyP' && controls.isLocked){ if(nearPortal) enterPortal(nearPortal); }  // P = enter/play the community portal — moved off E so it no longer overlaps the NEXUS hub's "[E] ENTER" door prompt
   if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
@@ -2818,9 +3077,14 @@ window.removeAgent = function(a){
   var _t0 = Date.now(), _warmed = false;
   (function _tryReady(){
     var elapsed = Date.now() - _t0;
-    // ready when assets are in AND we've held ~1.2s (so the bar reads); hard 9s fallback so a
-    // missing/stuck asset can never trap you on the loading screen.
-    if((window.__assetsReady && window.__worldBuilt && elapsed > 1200) || elapsed > 9000){
+    // READY GATE: the world is genuinely enterable the moment __worldBuilt is true — every tower,
+    // footprint and collider exists. We hold a short 900ms floor only so the warp animation reads,
+    // then reveal JACK IN immediately. We deliberately DON'T block on __assetsReady: a single slow
+    // or failed agent/texture GLB (which the LoadingManager counts) used to hold the button all the
+    // way to the old 9s fallback even though the world was fully walkable. Assets that trickle in a
+    // beat late (agent bodies) just pop in behind the already-shown button. Hard 5s fallback so a
+    // stuck build can never trap you on the loading screen.
+    if((window.__worldBuilt && elapsed > 900) || elapsed > 5000){
       clearInterval(msgI);
       if(!_warmed){
         _warmed = true;
@@ -2837,7 +3101,7 @@ window.removeAgent = function(a){
     }
     // keep the bar visibly creeping even if onProgress is quiet (slow first byte)
     var bar=document.getElementById('loadBar');
-    if(bar && (parseFloat(bar.style.width)||0) < 90){ var creep=Math.min(90, Math.round(elapsed/9000*90)); if(creep>(parseFloat(bar.style.width)||0)){ bar.style.width=creep+'%'; var pl2=document.getElementById('loadPct'); if(pl2) pl2.textContent=creep+'%'; } }
+    if(bar && (parseFloat(bar.style.width)||0) < 90){ var creep=Math.min(90, Math.round(elapsed/5000*90)); if(creep>(parseFloat(bar.style.width)||0)){ bar.style.width=creep+'%'; var pl2=document.getElementById('loadPct'); if(pl2) pl2.textContent=creep+'%'; } }
     setTimeout(_tryReady, 200);
   })();
 
@@ -3408,6 +3672,7 @@ function animate(){
       const dist=Math.sqrt(d2); p.el.style.opacity = dist<150 ? String(Math.max(0.2,1-dist/180)) : '0'; }
   }
   for(const p of portals) p.el.classList.toggle('near', nearPortal===p);
+  if(window._arcadeKiosk) window._arcadeKiosk.update(playerPos, camera, tmp);   // arcade cabinet proximity + label + marquee shimmer
   // visitor diamonds: spin, float, label projection
   for(const v of visitors){
     v.mesh.rotation.y += dt*1.2; v.mesh.rotation.x += dt*0.5;
