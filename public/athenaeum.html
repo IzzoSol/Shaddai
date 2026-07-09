@@ -519,6 +519,36 @@ function loadGLB(path) {
   return new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej));
 }
 
+// ── Framed wall art (real HuggingFace FLUX images baked to /assets/athenaeum) ──
+// A dark ornate frame + a gold inner reveal + the art plane. The texture loads async;
+// it attaches to the scene mesh and is disposed with the scene in disposeScene().
+const texLoader = new THREE.TextureLoader();
+function makeFramedArt(sc, url, w, h, x, y, z, rotY) {
+  const grp = new THREE.Group();
+  grp.position.set(x, y, z); grp.rotation.y = rotY || 0;
+  const frameD = 0.18;
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x120c06, roughness: 0.7, metalness: 0.3,
+    emissive: 0x1a1206, emissiveIntensity: 0.25 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.35, metalness: 0.85,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.4 });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, h + 0.5, frameD), frameMat);
+  grp.add(frame);
+  const reveal = new THREE.Mesh(new THREE.BoxGeometry(w + 0.16, h + 0.16, frameD + 0.02), goldMat);
+  reveal.position.z = 0.01; grp.add(reveal);
+  const artMat = new THREE.MeshBasicMaterial({ color: 0x2a2a2a });   // placeholder until the texture arrives
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(w, h), artMat);
+  art.position.z = frameD / 2 + 0.02; grp.add(art);
+  texLoader.load(url, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    art.material.map = tex; art.material.color.set(0xffffff); art.material.needsUpdate = true;
+  }, undefined, () => { /* keep placeholder if the asset is missing */ });
+  // a small warm sconce so the painting reads even in a dim room
+  const glow = new THREE.PointLight(0xffe0a0, 0.5, Math.max(w, h) * 3.2);
+  glow.position.set(0, 0, frameD / 2 + 1.4); grp.add(glow);
+  sc.add(grp);
+  return grp;
+}
+
 function mountAvatar(gltf, sc, x = 0, z = 0, faceAngle = 0) {
   const root = gltf.scene;
   const box = new THREE.Box3().setFromObject(root);
@@ -678,6 +708,10 @@ async function buildOracle() {
     floatPlaques.push({ mesh: m, mat, tex, def });
   }
 
+  // Real FLUX star-chart paintings flanking the portal arch (baked to /assets/athenaeum)
+  makeFramedArt(scene, '/assets/athenaeum/oracle-chart-1.jpg', 4.4, 4.4, -6, 4.6, -13.6, 0);
+  makeFramedArt(scene, '/assets/athenaeum/oracle-chart-2.jpg', 4.4, 4.4,  6, 4.6, -13.6, 0);
+
   // Controls
   controls = new OrbitControls(camera, canvas);
   controls.target.set(0, 2.5, 0);
@@ -824,6 +858,11 @@ async function buildQuill() {
     const st = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.056,0.38,7),
       new THREE.MeshStandardMaterial({color:0xf0e8d4})); st.position.set(x,y-0.22,z); scene.add(st);
   }
+
+  // Real FLUX framed art on the side walls (baked to /assets/athenaeum): the keeper's
+  // portrait on the left, an illuminated manuscript on the right. Square to match 768x768 art.
+  makeFramedArt(scene, '/assets/athenaeum/quill-portrait.jpg',   4.2, 4.2, -11.7, 5.0, -3,  Math.PI / 2);
+  makeFramedArt(scene, '/assets/athenaeum/quill-manuscript.jpg', 4.2, 4.2,  11.7, 5.0, -3, -Math.PI / 2);
 
   // Controls
   controls = new OrbitControls(camera, canvas);
