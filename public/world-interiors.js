@@ -1562,10 +1562,22 @@
       artStudio: function (group, accent) {
         group.userData.animObjs = [];
 
-        /* --- skylight shafts --- */
-        buildShaft(group, -18, -14, 0.5, 3, ROOM_H, 0xfffae8, 0.050);
-        buildShaft(group,   6, -10, 0.4, 2.5, ROOM_H, 0xfffae8, 0.042);
-        buildShaft(group,  18,  -6, 0.5, 3, ROOM_H, 0xfff8e0, 0.048);
+        /* --- GALLERY COLUMNS (owner ask #1: pillars OFF the paintings) ---------
+           Real museum columns, placed ONLY in the four corners so they frame the
+           hall without ever standing in front of wall art. The wall paintings sit
+           on the back wall (z=-39), the two side walls, and the left-wall FLUX
+           piece (x=-40, z=0); corner columns at (±32, ±32) are well inboard of
+           every artwork and never break a viewer's sightline to a canvas. */
+        column(group, accent, -32, -32);
+        column(group, accent,  32, -32);
+        column(group, accent, -32,  32);
+        column(group, accent,  32,  32);
+
+        /* --- skylight shafts (moved to sit ABOVE the corner columns / centre,
+           pulled off the wall lines so they never wash over a painting) --------- */
+        buildShaft(group, -32, -32, 0.5, 3,   ROOM_H, 0xfffae8, 0.048);
+        buildShaft(group,  32, -32, 0.5, 3,   ROOM_H, 0xfff8e0, 0.048);
+        buildShaft(group,   0,   0, 0.6, 3.5, ROOM_H, 0xfffae8, 0.055);  /* over the central exhibit */
 
         /* --- InstancedMesh gallery frames (10, two walls) --- */
         var frmGeo = new THREE.BoxGeometry(9.5, 7.5, 0.5);
@@ -1616,21 +1628,97 @@
           smR.position.set(-4 + sm * 1.1, 7 + Math.random()*4, -8.38); group.add(smR);
         }
 
-        /* --- rotating sculpture on turntable at center --- */
-        var sculM = mat(0x1a1a1a, accent, 0.14, 0.35, 0.65);
-        var base  = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.8, 0.5, 16), sculM.clone());
-        base.position.set(14, 0.25, 8); group.add(base);
+        /* ══ HERO FLOATING CENTRAL EXHIBIT (owner ask #3) ════════════════════════
+           THE centerpiece of the museum, dead-centre at (0,0) — forward of the
+           +Z spawn (z=+28) and 40u clear of the exit portal (z=+40), so it never
+           blocks the spawn→exit path. Sized to the 80×80×22 room: a low pedestal
+           + a floating, slowly-rotating holographic artifact caged in a glass
+           vitrine, lit from a ceiling skylight coffer above. Player walks a full
+           360° around it. Rotation + bob run active-room-only (see animObjs). */
+
+        /* pedestal / plinth (stepped, museum-style) */
+        var pedM = mat(0x14100a, accent, 0.06, 0.55, 0.35);
+        var pedBase = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 5.2, 1.2, 24), pedM.clone());
+        pedBase.position.set(0, 0.6, 0); group.add(pedBase);
+        var pedMid  = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 4.4, 2.6, 24), pedM.clone());
+        pedMid.position.set(0, 2.5, 0); group.add(pedMid);
+        var pedCapM = mat(accent, accent, 0.20, 0.35, 0.55);
+        glow(pedCapM, 0.16, 0.4, 0.10);
+        var pedCap  = new THREE.Mesh(new THREE.CylinderGeometry(4.0, 3.6, 0.5, 24), pedCapM);
+        pedCap.position.set(0, 4.05, 0); group.add(pedCap);
+
+        /* emerald hologram base disc glowing up into the artifact */
+        var holoDiscM = new THREE.MeshBasicMaterial({
+          color: accent, transparent: true, opacity: 0.22,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        });
+        var holoDisc = new THREE.Mesh(new THREE.CircleGeometry(3.4, 24), holoDiscM);
+        holoDisc.rotation.x = -Math.PI/2; holoDisc.position.set(0, 4.35, 0);
+        holoDisc.renderOrder = 1; group.add(holoDisc);
+
+        /* the FLOATING holographic sculpture (crossed torii + faceted emerald core) */
+        var sculM   = mat(accent, accent, 0.20, 0.30, 0.60);
         var sculGrp = new THREE.Group();
-        sculGrp.position.set(14, 0.5, 8);
-        var s1 = new THREE.Mesh(new THREE.TorusGeometry(2, 0.4, 8, 24), sculM.clone());
+        sculGrp.position.set(0, 11.0, 0);        /* hovers mid-air above the plinth */
+        var s1 = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.42, 10, 32), sculM.clone());
+        glow(s1.material, 0.18, 0.3, 0.12);
         s1.rotation.x = Math.PI/2; sculGrp.add(s1);
-        var s2 = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.3, 8, 20), sculM.clone());
+        var s2 = new THREE.Mesh(new THREE.TorusGeometry(2.1, 0.34, 10, 28), sculM.clone());
+        glow(s2.material, 0.18, 1.1, 0.12);
         s2.rotation.x = Math.PI/4; sculGrp.add(s2);
-        var s3 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 10, 8), mat(accent, accent, 0.35, 0.25, 0.05));
-        glow(s3.material, 0.30, 1.0, 0.10);
+        var coreM = mat(accent, accent, 0.42, 0.20, 0.05);
+        glow(coreM, 0.34, 1.6, 0.14);
+        var s3 = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, 1), coreM);
         sculGrp.add(s3);
         group.add(sculGrp);
-        group.userData.animObjs.push({ mesh: sculGrp, axis: 'y', speed: 0.50 });
+        /* slow spin + gentle vertical bob — active-room-only */
+        group.userData.animObjs.push({ mesh: sculGrp, axis: 'y', speed: 0.34, bobAmp: 0.9, bobSpeed: 0.7, baseY: 11.0 });
+
+        /* upward hologram beam (soft emerald cone hugging the artifact) */
+        buildShaft(group, 0, 0, 0.7, 3.2, 15, accent, 0.045);
+
+        /* GLASS VITRINE / display case — thin emerald-edged cylinder enclosing it.
+           Additive + no depth-write so it never occludes the exhibit or the view. */
+        var vitM = new THREE.MeshBasicMaterial({
+          color: accent, transparent: true, opacity: 0.055,
+          depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+        });
+        var vitrine = new THREE.Mesh(new THREE.CylinderGeometry(5.0, 5.0, 12.5, 20, 1, true), vitM);
+        vitrine.position.set(0, 10.6, 0); group.add(vitrine);
+        /* vitrine cap + base rings (glowing emerald edges) */
+        var vRingM = mat(accent, accent, 0.24, 0.35, 0.5);
+        glow(vRingM, 0.20, 0.9, 0.12);
+        var vTop = new THREE.Mesh(new THREE.TorusGeometry(5.0, 0.14, 8, 32), vRingM.clone());
+        vTop.rotation.x = Math.PI/2; vTop.position.set(0, 16.85, 0); group.add(vTop);
+        var vBot = new THREE.Mesh(new THREE.TorusGeometry(5.0, 0.14, 8, 32), vRingM.clone());
+        vBot.rotation.x = Math.PI/2; vBot.position.set(0, 4.35, 0); group.add(vBot);
+
+        /* small pedestal LABEL plate (facing +Z toward the spawn/approach) */
+        var exLbl = textLabel('◈  PRIMA OPERA  ◈', 6.2, 1.55, accent, 40, 'TURTLE · Central Exhibit');
+        exLbl.position.set(0, 5.6, 4.5); group.add(exLbl);
+
+        /* CEILING FEATURE — coffered emerald skylight panel directly above the
+           exhibit, so the piece reads as lit from a gallery skylight. */
+        var skyPanM = mat(0x05100e, accent, 0.14, 0.85, 0.05, true, 0.9);
+        glow(skyPanM, 0.12, 0.2, 0.08);
+        var skyPan = new THREE.Mesh(new THREE.BoxGeometry(16, 0.4, 16), skyPanM);
+        skyPan.position.set(0, ROOM_H - 0.25, 0); group.add(skyPan);
+        var skyGlowM = new THREE.MeshBasicMaterial({
+          color: accent, transparent: true, opacity: 0.16,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        });
+        var skyGlow = new THREE.Mesh(new THREE.PlaneGeometry(13, 13), skyGlowM);
+        skyGlow.rotation.x = Math.PI/2; skyGlow.position.set(0, ROOM_H - 0.5, 0);
+        skyGlow.renderOrder = 1; group.add(skyGlow);
+        /* coffered grid lines on the skylight */
+        var cofM = mat(accent, accent, 0.22, 0.4, 0.5);
+        glow(cofM, 0.18, 1.3, 0.10);
+        for (var cf = -1; cf <= 1; cf++) {
+          var cfBarH = new THREE.Mesh(new THREE.BoxGeometry(16, 0.22, 0.3), cofM.clone());
+          cfBarH.position.set(0, ROOM_H - 0.45, cf * 5); group.add(cfBarH);
+          var cfBarV = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 16), cofM.clone());
+          cfBarV.position.set(cf * 5, ROOM_H - 0.45, 0); group.add(cfBarV);
+        }
 
         /* floor paint spots (instanced) */
         var spotGeo = new THREE.CircleGeometry(1.2, 8);
@@ -1727,6 +1815,46 @@
           var bTop  = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.5, 3.2), gBTopM.clone());
           bTop.position.set(bp[0], 1.25, bp[1]); group.add(bTop);
         });
+
+        /* ══ GALLERY LIGHTING (owner ask #2) ═════════════════════════════════════
+           Static gallery-style spotlights that GRAZE each wall of art plus a warm
+           downlight on the central exhibit, and a soft ambient lift so the hall
+           reads bright-but-cinematic (not dim, not blown out). All lights are
+           children of the room group → they dispose with the room. No per-frame
+           light churn: positions/targets are set once here. */
+
+        /* soft ambient lift — brings the whole hall up off "dim" */
+        group.add(new THREE.AmbientLight(0xdfeee9, 0.30));
+        /* warm hemisphere: gallery ceiling wash from above, cool floor bounce */
+        group.add(new THREE.HemisphereLight(0xfff4e0, 0x0a1614, 0.35));
+
+        /* helper: a downward gallery spot aimed at a wall point */
+        function galSpot(px, py, pz, tx, ty, tz, colr, inten, ang) {
+          var sp = new THREE.SpotLight(colr, inten, 60, ang || 0.6, 0.45, 1.2);
+          sp.position.set(px, py, pz);
+          sp.target.position.set(tx, ty, tz);
+          group.add(sp);
+          group.add(sp.target);   /* target must be in the graph; disposes with room */
+          return sp;
+        }
+
+        /* BACK-WALL gallery run (5 frames at z≈-39, x=-26..26, y=10) */
+        for (var bl = 0; bl < 5; bl++) {
+          var bx = -26 + bl * 13;
+          galSpot(bx, ROOM_H - 1.5, -30, bx, 10, -ROOM_D/2 + 1.0, 0xfff2dc, 0.85, 0.55);
+        }
+        /* SIDE-WALL gallery run (5 frames at z≈+39) */
+        for (var sl = 0; sl < 5; sl++) {
+          var sx = -26 + sl * 13;
+          galSpot(sx, ROOM_H - 1.5, 30, sx, 10, ROOM_D/2 - 1.0, 0xfff2dc, 0.80, 0.55);
+        }
+        /* LEFT-WALL FLUX hero painting (hangArt hangs it at x=-40, z=0, y≈8.4) */
+        galSpot(-30, ROOM_H - 1.0, 0, -ROOM_W/2 + 0.6, 8.4, 0, 0xfff6e6, 1.10, 0.5);
+        /* RIGHT-WALL reference/mood board */
+        galSpot(30, ROOM_H - 1.5, 0, ROOM_W/2 - 0.6, 9, 0, 0xeef6ff, 0.70, 0.6);
+        /* CENTRAL EXHIBIT downlight — emerald-warm key from the skylight coffer */
+        galSpot(0, ROOM_H - 1.0, 0, 0, 8, 0, accent, 1.20, 0.7);
+        galSpot(0, ROOM_H - 1.2, 0, 0, 11, 0, 0xfff4e0, 0.90, 0.85);
 
         /* warm daylight motes */
         group.userData.motes = buildMotes(group, 0xfff8c0, 55, false);
@@ -2953,11 +3081,16 @@
         }
       }
 
-      /* rotations */
+      /* rotations (+ optional vertical bob) — active room only, alloc-free */
       var ao = r.animObjs;
       if (ao) {
         for (i = 0; i < ao.length; i++) {
-          ao[i].mesh.rotation[ao[i].axis] += ao[i].speed * dt;
+          var aoi = ao[i];
+          aoi.mesh.rotation[aoi.axis] += aoi.speed * dt;
+          /* optional float: {bobAmp, bobSpeed, baseY} → gentle Y hover */
+          if (aoi.bobAmp) {
+            aoi.mesh.position.y = aoi.baseY + aoi.bobAmp * Math.sin(t * aoi.bobSpeed);
+          }
         }
       }
 
