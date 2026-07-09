@@ -77,11 +77,15 @@
                           // circle:{ box:false, cx, cz, r, r2 }
   var _built     = false;
 
-  /* Buildings are NO LONGER solid. Design change (owner): remove the collider
-   * "force field" entirely — the player walks freely up to, under, and through the
-   * building footprints. Buildings sit elevated (on pillars) and you go INSIDE via
-   * the elevator, not by bumping a wall. Set this true to restore solid walls. */
-  var BUILDINGS_SOLID = false;
+  /* Buildings ARE solid again. Owner complaint (2026-07-09): "you can still walk
+   * THROUGH some buildings." The earlier free-walk experiment let the player pass
+   * through every wall, which read as broken. Re-enabled: colliders are built from
+   * the REAL measured wall silhouette (setBuildingFootprints → tight AABB / core
+   * circle in the player's ground band), so you're blocked exactly at the visible
+   * facade — no oversized force field, plaza/approach stays open. Entry is still via
+   * the [E] door prompt + interior cutscene / the [R] elevator, NOT by walking
+   * through geometry. Set false to restore the free-walk experiment. */
+  var BUILDINGS_SOLID = true;
 
   /* ── Builder ────────────────────────────────────────────────────────────── */
   function buildWorldCollision(layout) {

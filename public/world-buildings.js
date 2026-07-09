@@ -2271,6 +2271,79 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       pal
     );
 
+    // ── GRAND ENTRANCE STAIRCASE ────────────────────────────────────────────
+    // Owner ask: "the temple at the top should have stairs." A monumental flight
+    // climbs the frontDir (entrance) side up to the tier-0 PLATFORM / door
+    // threshold (top tread level = baseY, where the _doorRecess sits). It seats on
+    // the temple base and marches OUT through the open colonnade gap (which faces
+    // frontDir), so it reads as the clear ceremonial way up — no piece blocks it.
+    //   • 1 InstancedMesh for the treads (shared box geo, matrices baked once).
+    //   • 1 InstancedMesh for the two flanking cheek/stringer walls.
+    // All matrices baked at build; nothing per-frame, no per-frame `new`.
+    {
+      const faceAng   = Math.atan2(frontDir.x, frontDir.z);
+      const px = -frontDir.z, pz = frontDir.x;         // tangent along the entrance face
+      const STEP_N    = 10;                             // grand flight
+      const totalRise = tiers[0].h * 1.10;             // top tread ≈ platform top (baseY)
+      const riseEach  = totalRise / STEP_N;
+      const treadD    = Math.max(2.2, fp * 0.030);     // depth of each tread
+      const stepW     = Math.max(14, tiers[0].r * 1.30); // wide, matched to the temple face
+      // Innermost tread edge sits just outside the cella wall (fp*0.46); the flight
+      // then marches OUTWARD (larger radius) as it descends to the ground.
+      const innerR    = tiers[0].r * 1.02;
+      // Matched gold materials (same family as the temple body/spire accents).
+      const stairMat  = new THREE.MeshStandardMaterial({
+        color: pal.structural.clone().lerp(new THREE.Color(0xffd700), 0.34),
+        emissive: pal.primary.clone(), emissiveIntensity: 0.028,
+        roughness: 0.60, metalness: 0.22,
+      });
+      const cheekMat  = new THREE.MeshStandardMaterial({
+        color: pal.secondary.clone().lerp(pal.structural, 0.24),
+        emissive: pal.trim.clone(), emissiveIntensity: 0.05,
+        roughness: 0.56, metalness: 0.24,
+      });
+
+      const treadIM = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(stepW, riseEach + 1.0, treadD), stairMat, STEP_N);
+      treadIM.castShadow = true; treadIM.receiveShadow = true;
+      const d = new THREE.Object3D();
+      // i=0 is the TOP tread (hugging the platform), i=STEP_N-1 is the lowest/outermost.
+      for (let i = 0; i < STEP_N; i++) {
+        const topY   = baseY - riseEach * i;                 // each step down from platform
+        const botY   = baseY - totalRise - 2.4;              // buried deep → no floating edges
+        const radial = innerR + treadD * (i + 0.5);          // step OUT as it descends
+        d.rotation.set(0, faceAng, 0);
+        d.position.set(x + frontDir.x * radial, (topY + botY) * 0.5, z + frontDir.z * radial);
+        d.scale.set(1, (topY - botY) / (riseEach + 1.0), 1);
+        d.updateMatrix(); treadIM.setMatrixAt(i, d.matrix);
+      }
+      treadIM.instanceMatrix.needsUpdate = true; scene.add(treadIM);
+
+      // Two flanking CHEEK / STRINGER walls — solid raked stringers seating the flight
+      // as intentional architecture (and framing the ascent). One IM, 2 instances.
+      const cheekW   = Math.max(2.0, stepW * 0.06);
+      const cheekLen = (treadD * STEP_N) * 1.06;             // spans the flight length
+      const cheekH   = totalRise + 3.0;
+      const cheekMidR = innerR + (treadD * STEP_N) * 0.5;   // mid-radius of the flight
+      const cheekIM  = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(cheekW, cheekH, cheekLen), cheekMat, 2);
+      cheekIM.castShadow = true; cheekIM.receiveShadow = true;
+      { let k = 0;
+        for (const side of [-1, 1]) {
+          const o = side * (stepW * 0.5 + cheekW * 0.5);
+          d.rotation.set(0, faceAng, 0);
+          d.scale.set(1, 1, 1);
+          d.position.set(
+            x + frontDir.x * cheekMidR + px * o,
+            baseY - cheekH * 0.5 + 1.5,                       // top of cheek ≈ platform
+            z + frontDir.z * cheekMidR + pz * o
+          );
+          d.updateMatrix(); cheekIM.setMatrixAt(k++, d.matrix);
+        }
+        cheekIM.instanceMatrix.needsUpdate = true; scene.add(cheekIM);
+      }
+    }
+
     // Central spire
     const spireH  = 38;
     const spireMat = new THREE.MeshStandardMaterial({
@@ -2314,7 +2387,12 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     }
 
     // ── Rooftop: ritual antenna array + satellite dish on tier-1 ────────────
-    _antennaCluster(x, z, y, fp, 8, pal);
+    // TRIM: the antenna cluster was seated at `y` (the crown-orb tip, ~40u above the
+    // temple on a spire only fp*0.016 wide) — its rods radiate to fp*0.094, so they
+    // FLOATED in open air beside the thin spire with no surface under them. Re-seat
+    // the array onto the tier-2 rooftop platform (same ceremonial roof shelf the
+    // exhaust stacks stand on) so every rod plants on real roof.
+    _antennaCluster(x, z, baseY + tiers[0].h + tiers[1].h, fp, 8, pal);
     _satelliteDish(x + tiers[1].r * 0.72, z, baseY + tiers[0].h, fp * 0.055, pal);
     // Exhaust stacks as ceremonial brazier chimneys around tier-2 platform
     _exhaustStacks(x, z, baseY + tiers[0].h + tiers[1].h, fp * 0.50, 5, pal);
