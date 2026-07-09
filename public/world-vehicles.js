@@ -71,7 +71,8 @@ window.buildWorldVehicles = function (THREE, scene, layout) {
           const a = t * v.speed + v.ph;
           v.g.position.set(Math.cos(a) * v.r, v.alt + Math.sin(t * 0.8) * 4, Math.sin(a) * v.r);
           v.g.rotation.y = -a;
-          v.g.rotation.z = 0.5;
+          // gentler, subtly-animated bank into the turn (was a fixed steep 0.5 rad that read as permanently tilted)
+          v.g.rotation.z = 0.3 + Math.sin(t * 0.7) * 0.06;
         }
       }
     }
