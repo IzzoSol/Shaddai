@@ -122,3 +122,14 @@ FINALIZED/bodies/
 FINALIZED/vfx/
 FINALIZED/thumbnails/
 FINALIZED/scripts/
+
+# backups & scratch (kept locally, out of git)
+*.bak
+*.bak.*
+*.bak-*
+*-oldchar*
+_backup-*/
+**/_backup-*/
+_pre-tom-backup/
+**/_pre-tom-backup/
+scripts/shot-*.png
