@@ -156,6 +156,8 @@
 
   function open(agentId){
     injectCss();
+    if(ST.poll){ clearInterval(ST.poll); ST.poll=null; }   // don't leak a running Operate poll across room switches
+    try { window._roomViewer && window._roomViewer.dispose && window._roomViewer.dispose(); } catch(_){}
     try { window._chamberViewer && window._chamberViewer.dispose && window._chamberViewer.dispose(); } catch(_){}
     var overlay = el('agentRoomOverlay');
     if (!overlay){ overlay=document.createElement('div'); overlay.id='agentRoomOverlay'; document.body.appendChild(overlay); }
@@ -371,6 +373,7 @@
   function operate(d){
     var goal=(el('cdGoal').value||'').trim(); var con=el('cdCon'); var btn=el('cdRun');
     if(!goal){ con.innerHTML='<span class="m">enter a directive first.</span>'; return; }
+    if(ST.poll){ clearInterval(ST.poll); ST.poll=null; }   // cancel any in-flight run before starting a new one
     btn.disabled=true; con.innerHTML='<span class="l">▸ dispatching to '+esc(d.nm)+'…</span>';
     var body={goal:goal, agent:d.nm}; if(ST.forged&&ST.op&&ST.op.tools) body.options={tools:ST.op.tools};
     j('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){
