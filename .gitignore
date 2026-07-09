@@ -140,3 +140,4 @@ TEST-v*.md
 /test-*.js
 *-test.html
 test-*.html
+diag_*.txt
