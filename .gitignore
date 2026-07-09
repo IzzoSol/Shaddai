@@ -141,3 +141,7 @@ TEST-v*.md
 *-test.html
 test-*.html
 diag_*.txt
+
+# Claude/agent tooling — not product code
+.claude/
+.agents/
