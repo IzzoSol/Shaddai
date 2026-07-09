@@ -23605,7 +23605,7 @@ function showView(v) {
   if (v === 'apis')       { renderAPIs(); if (typeof renderApiCarousel === 'function') renderApiCarousel(); if (typeof renderApiKeysPanel === 'function') renderApiKeysPanel(); }
   if (v === 'media')      { if (typeof setMediaViewMode === 'function') setMediaViewMode(localStorage.getItem('shaddai_media_view') || 'modules'); }
   if (v === 'my-agents')  renderMyAgents();
-  if (v === 'marketplace') renderMarketplace();
+  if (v === 'marketplace') { renderMarketplace(); if (typeof window._loadForgedChambers === 'function') setTimeout(window._loadForgedChambers, 60); }
   if (v === 'automation')  renderAutomation();
   if (v === 'sentiment')  renderSentimentView();
   if (v === 'content-studio') renderContentStudio();
@@ -39400,8 +39400,12 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
                 <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.24em;color:rgba(255,255,255,.42)">◈ SUMMONING MODEL…</div>
               </div>
             </div>
+            <!-- FORGED portrait layer (2D swivel card; forged agents have no GLB) -->
+            <div id="chamberPortrait" style="position:absolute;inset:0;z-index:4;display:none;align-items:center;justify-content:center;perspective:900px;cursor:grab" title="Move to tilt">
+              <img id="chamberPortraitImg" alt="" style="max-width:74%;max-height:78%;object-fit:contain;border-radius:14px;transform-style:preserve-3d;filter:drop-shadow(0 0 34px rgba(var(--chg),0.6));animation:forgeSpin 9s ease-in-out infinite;will-change:transform">
+            </div>
             <!-- floating "3D LIVE" tag -->
-            <div style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(0,0,0,0.55);border:1px solid rgba(var(--chg),0.4);border-radius:20px;backdrop-filter:blur(8px)">
+            <div id="chamber3dTag" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(0,0,0,0.55);border:1px solid rgba(var(--chg),0.4);border-radius:20px;backdrop-filter:blur(8px)">
               <div style="width:6px;height:6px;border-radius:50%;background:var(--ch);box-shadow:0 0 8px var(--ch);animation:xpGlow 2s ease-in-out infinite"></div>
               <span style="font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--ch)">3D · LIVE MODEL</span>
             </div>
@@ -39415,7 +39419,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             </div>
             <div id="chBio" style="font-size:11px;color:rgba(255,255,255,0.55);line-height:1.7;font-style:italic;border-left:2px solid rgba(var(--chg),0.5);padding-left:11px">"Leads the empire. Strategic vision, final calls, revenue obsession."</div>
 
-            <div style="display:flex;gap:10px">
+            <div id="chCouncilStats" style="display:flex;gap:10px">
               <div style="flex:1;text-align:center;padding:11px 6px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:9px">
                 <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:1.5px;color:rgba(255,255,255,0.32);margin-bottom:6px">LEVEL</div>
                 <div id="chLevel" style="font-family:'Press Start 2P',monospace;font-size:12px;color:var(--ch)">LV 3</div>
@@ -39426,7 +39430,27 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               </div>
             </div>
 
-            <div>
+            <!-- FORGED-only: real stats + real skills (hidden for council agents) -->
+            <div id="chForgedExtra" style="display:none">
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <div style="flex:1;text-align:center;padding:9px 4px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:8px">
+                  <div style="font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.32);margin-bottom:5px">SPD</div>
+                  <div id="chStatSpd" style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--ch)">–</div>
+                </div>
+                <div style="flex:1;text-align:center;padding:9px 4px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:8px">
+                  <div style="font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.32);margin-bottom:5px">PWR</div>
+                  <div id="chStatPwr" style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--ch)">–</div>
+                </div>
+                <div style="flex:1;text-align:center;padding:9px 4px;background:rgba(var(--chg),0.07);border:1px solid rgba(var(--chg),0.2);border-radius:8px">
+                  <div style="font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.32);margin-bottom:5px">IQ</div>
+                  <div id="chStatIq" style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--ch)">–</div>
+                </div>
+              </div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:2px;color:rgba(var(--chg),0.6);margin-bottom:8px">▸ SKILLS</div>
+              <div id="chSkills" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:20px;max-height:78px;overflow:auto"></div>
+            </div>
+
+            <div id="chBadgesWrap">
               <div style="font-family:'Share Tech Mono',monospace;font-size:6.5px;letter-spacing:2px;color:rgba(var(--chg),0.6);margin-bottom:8px">▸ ACHIEVEMENTS</div>
               <div id="chBadges" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;min-height:20px">
                 <span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace">Loading badges…</span>
@@ -39474,6 +39498,16 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             <div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(244,63,94,0.7))">🛡️</div>
             <div style="font-family:'Press Start 2P',monospace;font-size:5.5px;color:#f43f5e;margin-top:5px;letter-spacing:.5px">PIKADON</div>
           </div>
+        </div>
+
+        <!-- FORGED OPERATIVES rail — populated from /api/operatives (B1) -->
+        <div id="forgedRailWrap" style="display:none;margin-top:14px">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,229,160,0.55);letter-spacing:2px;margin:0 0 10px;display:flex;align-items:center;gap:8px">
+            ▸ FORGED OPERATIVES
+            <div style="flex:1;height:1px;background:rgba(0,229,160,0.14)"></div>
+            <span id="forgedRailCount" style="color:rgba(255,255,255,0.28);font-size:7px"></span>
+          </div>
+          <div id="forgedRail" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px"></div>
         </div>
 
         <!-- Legacy desk grid retained (job-board counts + quick actions) -->
@@ -41698,8 +41732,23 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     } catch(_){}
   })();
 
+  // Toggle the chamber between COUNCIL (3D swivel) and FORGED (portrait card) modes.
+  function _chamberSetForgedMode(isForged){
+    const show = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
+    show('chamberViewHost', !isForged);
+    show('chamber3dTag',   !isForged);
+    show('chBadgesWrap',   !isForged);
+    show('chCouncilStats', !isForged);   // LEVEL / REAL-TOOLS row is council-only (forged shows spd/pwr/iq + skills)
+    show('chamberPortrait', isForged);
+    show('chForgedExtra',   isForged);
+    // HIRE/ENTER hidden for forged v1 (no forged-room flow yet).
+    ['chEnterBtn','chHireBtn'].forEach(id => show(id, !isForged));
+  }
+
   // Select an agent's chamber: swap the 3D model in the shared viewer + repaint the stage.
   window.selectChamber = function(agentId){
+    if (agentId && agentId.indexOf('op:') === 0) { return window._selectForgedChamber(agentId); }
+    _chamberSetForgedMode(false);
     const a = _CHAMBER_DEFS[agentId]; if (!a) return;
     const stage = document.getElementById('chamberStage');
     if (!stage) return;
@@ -41759,6 +41808,117 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       }).catch(()=>{});
     } catch(_){}
   };
+
+  // ══════════════ B1: FORGED OPERATIVES in the chamber ══════════════
+  // Forged agents have a unique 2D portrait but no 3D GLB, so they render as a
+  // portrait "swivel" card (auto-spin + mouse-tilt) instead of the shared 3D viewer.
+  (function _forgedChambers(){
+    if (window._selectForgedChamber) return;               // guard: define once
+    const _FORGED = {};                                    // op:<id> -> operative
+    const RARITY = { legendary:'#ffd700', epic:'#a78bfa', rare:'#3b82f6', common:'#94a3b8' };
+    const glowOf = hex => { const n = parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255].join(','); };
+    const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    // one-time CSS: portrait auto-swivel keyframes
+    if (!document.getElementById('forgeSpinCss')) {
+      const st = document.createElement('style'); st.id = 'forgeSpinCss';
+      st.textContent = '@keyframes forgeSpin{0%,100%{transform:rotateY(-16deg)}50%{transform:rotateY(16deg)}}' +
+        '#chamberPortrait.tilting #chamberPortraitImg{animation:none}';
+      document.head.appendChild(st);
+    }
+    // mouse-tilt: pause auto-spin and follow the cursor while hovering the portrait
+    const pWrap = document.getElementById('chamberPortrait');
+    if (pWrap && !pWrap._tiltWired) {
+      pWrap._tiltWired = true;
+      const img = () => document.getElementById('chamberPortraitImg');
+      pWrap.addEventListener('mousemove', e => {
+        const r = pWrap.getBoundingClientRect(); const im = img(); if (!im) return;
+        const rx = ((e.clientY - r.top) / r.height - 0.5) * -18;
+        const ry = ((e.clientX - r.left) / r.width - 0.5) * 32;
+        pWrap.classList.add('tilting');
+        im.style.transform = 'rotateX(' + rx.toFixed(1) + 'deg) rotateY(' + ry.toFixed(1) + 'deg)';
+      });
+      pWrap.addEventListener('mouseleave', () => { const im = img(); pWrap.classList.remove('tilting'); if (im) im.style.transform = ''; });
+    }
+
+    window._selectForgedChamber = function(key){
+      const op = _FORGED[key]; if (!op) return;
+      const color = RARITY[(op.rarity||'common').toLowerCase()] || RARITY.common;
+      const glow = glowOf(color);
+      const stage = document.getElementById('chamberStage'); if (!stage) return;
+      stage.dataset.agent = key;
+      stage.style.setProperty('--ch', color);
+      stage.style.setProperty('--chg', glow);
+      _chamberSetForgedMode(true);
+      // rail active state (council + forged)
+      document.querySelectorAll('#chamberRail [data-ch-id], #forgedRail [data-ch-id]').forEach(el => {
+        const on = el.getAttribute('data-ch-id') === key;
+        el.style.borderColor = on ? color : 'rgba(255,255,255,0.12)';
+        el.style.background = on ? 'rgba(' + glow + ',0.18)' : 'rgba(255,255,255,0.03)';
+        el.style.boxShadow = on ? '0 0 16px rgba(' + glow + ',0.4)' : 'none';
+      });
+      // 3D viewer isn't used for forged — free its context so it doesn't render behind the card
+      try { window._chamberViewer && window._chamberViewer.dispose(); } catch(_){}
+      // portrait
+      const im = document.getElementById('chamberPortraitImg');
+      if (im) { im.src = op.portrait || ''; im.alt = op.codename || 'operative';
+        im.onerror = function(){ this.onerror=null; this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="380"><rect width="100%" height="100%" fill="#0a0f18"/><text x="50%" y="50%" fill="' + color + '" font-family="monospace" font-size="48" text-anchor="middle" dominant-baseline="middle">' + esc((op.codename||'?').slice(0,2).toUpperCase()) + '</text></svg>'); };
+      }
+      // dossier text
+      const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+      set('chName', (op.codename || 'OPERATIVE') + "'S CHAMBER");
+      set('chRole', ((op.archetype||'forged') + ' · ' + (op.rarity||'common')).toUpperCase());
+      const persona = (op.brain && op.brain.persona) || 'A forged operative.';
+      const bio = document.getElementById('chBio'); if (bio) bio.textContent = '"' + persona + '"';
+      const stats = op.stats || {};
+      set('chStatSpd', stats.speed != null ? stats.speed : '–');
+      set('chStatPwr', stats.power != null ? stats.power : '–');
+      set('chStatIq',  stats.iq != null ? stats.iq : '–');
+      // real skills → chips
+      const sk = document.getElementById('chSkills');
+      if (sk) {
+        const tools = Array.isArray(op.tools) ? op.tools : [];
+        sk.innerHTML = tools.length ? tools.map(t =>
+          '<span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;padding:3px 7px;border-radius:20px;background:rgba(' + glow + ',0.12);border:1px solid rgba(' + glow + ',0.35);color:' + color + '">' + esc(t) + '</span>').join('')
+          : '<span style="font-size:7.5px;color:rgba(255,255,255,0.35);font-family:\'Share Tech Mono\',monospace">No skills equipped</span>';
+      }
+      const talk = document.getElementById('chTalkBtn');
+      if (talk) { talk.setAttribute('onclick', "chatWithAgent('" + (op.codename||'') + "')"); talk.innerHTML = '💬 TALK'; }
+    };
+
+    // Fetch operatives, build the forged rail. Safe/no-op if backend offline or none exist.
+    window._loadForgedChambers = function(){
+      const rail = document.getElementById('forgedRail'); const wrap = document.getElementById('forgedRailWrap');
+      if (!rail) return;
+      fetch('/api/operatives', { signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : null).then(d => {
+        const raw = d && (Array.isArray(d) ? d : (d.operatives || d.list || []));
+        const ops = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
+        rail.innerHTML = '';
+        let n = 0;
+        ops.forEach(op => {
+          if (!op || !op.id) return;
+          const key = 'op:' + op.id; _FORGED[key] = op; n++;
+          const color = RARITY[(op.rarity||'common').toLowerCase()] || RARITY.common;
+          const glow = glowOf(color);
+          const tile = document.createElement('div');
+          tile.setAttribute('data-ch-id', key);
+          tile.style.cssText = 'cursor:pointer;padding:0;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);text-align:center;transition:all .15s;overflow:hidden';
+          tile.onclick = () => window.selectChamber(key);
+          const nm = esc((op.codename || 'OP').slice(0, 8));
+          tile.innerHTML =
+            '<div style="width:100%;aspect-ratio:1;overflow:hidden;position:relative;box-shadow:inset 0 0 0 1px rgba(' + glow + ',0.35)">' +
+              '<img src="' + esc(op.portrait || '') + '" alt="' + nm + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" ' +
+              'onerror="this.style.display=\'none\';this.parentElement.style.cssText+=\';display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:20px;color:' + color + '\';this.parentElement.textContent=\'' + esc((op.codename||'?').slice(0,2).toUpperCase()) + '\'">' +
+            '</div>' +
+            '<div style="font-family:\'Press Start 2P\',monospace;font-size:5px;color:' + color + ';margin:5px 2px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nm + '</div>';
+          rail.appendChild(tile);
+        });
+        if (wrap) wrap.style.display = n ? '' : 'none';
+        const cnt = document.getElementById('forgedRailCount'); if (cnt) cnt.textContent = n ? (n + ' forged') : '';
+      }).catch(() => { if (wrap) wrap.style.display = 'none'; });
+    };
+  })();
 
   // Close the agent room overlay AND dispose the 3D renderer (avoids leaked WebGL contexts)
   window._closeAgentRoom = function(){
