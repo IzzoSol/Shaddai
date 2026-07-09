@@ -133,3 +133,5 @@ _backup-*/
 _pre-tom-backup/
 **/_pre-tom-backup/
 scripts/shot-*.png
+*.v*-backup-*
+ship/SHADDAI_v*.html
