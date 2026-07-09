@@ -188,6 +188,49 @@
     #themeBtn{ font-size:9px; padding:5px 9px; letter-spacing:.14em; }
     #cursorGlow{ width:220px; height:220px; margin:-110px 0 0 -110px; }
   }
+
+  /* ═══════════ MOBILE RESPONSIVE POLISH (additive — desktop untouched) ═══════════ */
+  @media(max-width:768px){
+    .wrap{ padding:0 20px 70px; }
+    .bar{ padding:11px 18px; }
+    /* instruments stack to a single column so each tile is comfortably tappable */
+    .instr{ grid-template-columns:1fr; }
+    .lk{ min-height:64px; }
+    .mast{ padding:40px 0 20px; }
+    .sect{ margin-top:52px; }
+    /* join form fills width, no side-by-side crowding */
+    #joinForm{ flex-direction:column; align-items:stretch; }
+    #joinEmail{ min-width:0; width:100%; }
+    #joinForm button[type="submit"]{ width:100%; min-height:48px; }
+    /* social links go full-width, stacked */
+    #joinForm ~ div{ flex-direction:column; align-items:stretch !important; }
+    #joinForm ~ div .lk{ width:100%; min-width:0; }
+  }
+
+  @media(max-width:600px){
+    /* prevent any horizontal overflow */
+    html,body{ overflow-x:hidden; }
+    .wrap{ padding:0 15px 60px; }
+    .bar{ padding:10px 14px; letter-spacing:.16em; }
+    /* readable, non-clipped headings */
+    h1.title{ font-size:clamp(44px,15vw,80px); }
+    .sect .name{ font-size:clamp(17px,5vw,22px); }
+    .sect .tail{ display:none; }
+    .lede{ font-size:15px; padding:0 4px; }
+    /* roster rows: keep names readable, drop the "seated" chip already handled at 720 */
+    .op{ gap:14px; padding:16px 4px; }
+    .op .nm{ font-size:clamp(19px,6vw,26px); }
+    .op .rl{ font-size:13.5px; }
+    /* AURA ledger figures scale down so they never overflow their cell */
+    .read{ padding:22px 18px; }
+    .read .fig{ font-size:clamp(38px,12vw,60px); }
+    /* instrument tiles: comfortable tap targets + tighter padding */
+    .lk{ padding:20px 18px; font-size:15px; min-height:60px; }
+    /* enter button + enlist button reach 44px+ and don't run off-edge */
+    #enterBtn{ padding:16px 30px !important; width:100%; max-width:340px; }
+    #joinEmail{ padding:15px 16px; }
+    .colophon{ gap:8px; font-size:9px; }
+  }
 </style>
 </head>
 <body>

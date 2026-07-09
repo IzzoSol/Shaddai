@@ -2240,7 +2240,10 @@ function playerSpecial(){
 const _projectiles=[]; const _propCache={};
 function _loadProp(name){ if(_propCache[name]) return _propCache[name];
   _propCache[name]=new Promise(res=>agentBodyLoader.load('/assets/vfx/'+name+'.glb', g=>res(g.scene), undefined, ()=>res(null))); return _propCache[name]; }
-function _muzzle(){ const o=playerAvatar.position.clone(); o.y+=3.2; o.addScaledVector(fwd,1.8); return o; }
+// Muzzle/VFX origin. y=3.2 & reach=1.8 were tuned for the OLD 3.6-tall body (≈hand/weapon height).
+// Body is now PLAYER_BODY_HEIGHT (7.0), so scale both by _PLAYER_EYE_K (=7.0/3.6) to keep the emit point
+// at hand/weapon level instead of mid-torso. (3.6→7.0 body change.)
+function _muzzle(){ const o=playerAvatar.position.clone(); o.y+=3.2*_PLAYER_EYE_K; o.addScaledVector(fwd,1.8*_PLAYER_EYE_K); return o; }
 function _pushProj(o,speed,life,spin,extra){ const light=new THREE.PointLight(extra&&extra.color||0xffffff,3.2,26); o.add(light);
   scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:light}, extra||{})); }
 function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(true);

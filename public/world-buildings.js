@@ -2160,6 +2160,101 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     im.instanceMatrix.needsUpdate = true; scene.add(im);
   }
 
+  // ── CROWNING CORNICE CAP — projecting molding ring at the wall top ──────────
+  // Additive detail pass: without this the facade wall simply STOPS at topY, which
+  // reads as an unfinished slab edge. This lays a shallow, slightly-overhanging
+  // molding around the very top of each face (a proper terminated roofline / crown).
+  // Per-face box segments (matches _stringCourses / _friezeBand placement math) so it
+  // hugs the wall radius on flat AND cylinder buildings. Overhang is small (bd only)
+  // → stays inside the building silhouette, never reaches the ground lounge.
+  // 2 IM = 2 draw calls: main fascia band + a thinner brighter drip edge just under it.
+  function _corniceCap(x, z, topY, faceR, sides, pal, fp) {
+    const faceW = faceR * (Math.PI * 2 / sides) * 0.995;   // full face width, tiny seam gap
+    const bh    = Math.max(1.0, faceR * 0.055);            // fascia height
+    const bd    = Math.max(0.6, faceR * 0.05);             // projection (overhang) depth
+    // Main fascia — solid stone molding, seats so its top aligns with topY.
+    const capMat = new THREE.MeshStandardMaterial({
+      color:    pal.secondary.clone().lerp(pal.structural, 0.30),
+      emissive: pal.trim.clone(), emissiveIntensity: 0.05,
+      roughness: 0.60, metalness: 0.20,
+    });
+    // Drip edge — thin bright lip under the fascia = crisp shadow line + accent glow.
+    const lipMat = new THREE.MeshStandardMaterial({
+      color:    pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.16),
+      emissive: pal.trim.clone(), emissiveIntensity: 0.30,
+      roughness: 0.45, metalness: 0.30,
+    });
+    const capIM = new THREE.InstancedMesh(new THREE.BoxGeometry(faceW, bh, bd), capMat, sides);
+    const lipH  = bh * 0.28;
+    const lipIM = new THREE.InstancedMesh(new THREE.BoxGeometry(faceW * 0.96, lipH, bd * 1.14), lipMat, sides);
+    capIM.castShadow = true;
+    const d = new THREE.Object3D();
+    for (let s = 0; s < sides; s++) {
+      const fa   = (s / sides) * Math.PI * 2 + Math.PI / sides;   // face center
+      const cosF = Math.cos(fa), sinF = Math.sin(fa);
+      const rot  = Math.atan2(Math.cos(fa), Math.sin(fa));
+      // Fascia: top edge flush with topY, projecting outward by bd*0.5 beyond the wall.
+      d.rotation.set(0, rot, 0);
+      d.position.set(x + cosF * (faceR + bd * 0.5), topY - bh * 0.5, z + sinF * (faceR + bd * 0.5));
+      d.updateMatrix(); capIM.setMatrixAt(s, d.matrix);
+      // Drip lip: sits just under the fascia, projecting a hair further for a shadow ledge.
+      d.position.set(x + cosF * (faceR + bd * 0.5), topY - bh - lipH * 0.5, z + sinF * (faceR + bd * 0.5));
+      d.updateMatrix(); lipIM.setMatrixAt(s, d.matrix);
+    }
+    capIM.instanceMatrix.needsUpdate = true; scene.add(capIM);
+    lipIM.instanceMatrix.needsUpdate = true; scene.add(lipIM);
+  }
+
+  // ── WINDOW SILLS — projecting ledge under each recessed window ──────────────
+  // Additive detail pass: the recessed windows have a frame reveal but sit flush at
+  // the bottom, so the opening reads slightly floating. A thin projecting sill under
+  // each window grounds the opening (classic architectural read). Placement math is a
+  // 1:1 mirror of addWindowsRecessed() so every sill lands exactly under its window.
+  // 1 IM = 1 draw call. Overhang tiny; windows are at facade height, far above lounge.
+  function _windowSills(x, z, baseY, roofY, footprint, faceR, sides, rows, cols, pal) {
+    const H     = Math.max(1, roofY - baseY);
+    const fp    = footprint;
+    const winW  = Math.max(1.4, fp * 0.044);
+    const winH  = Math.max(2.0, fp * 0.068);
+    const frameT = Math.max(0.24, fp * 0.008);
+    const colSpacing = winW + Math.max(1.0, fp * 0.030);
+    const count = sides * rows * cols;
+    if (count < 1) return;
+    const sillW = winW + frameT * 2.4;                 // a touch wider than the frame
+    const sillH = Math.max(0.28, fp * 0.010);
+    const sillD = Math.max(0.5, fp * 0.016);           // projection beyond facade
+    const mat = new THREE.MeshStandardMaterial({
+      color:    pal.structural.clone().lerp(pal.secondary, 0.30),
+      emissive: pal.trim.clone(), emissiveIntensity: 0.035,
+      roughness: 0.66, metalness: 0.18,
+    });
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(sillW, sillH, sillD), mat, count);
+    im.castShadow = true;
+    const d = new THREE.Object3D();
+    let idx = 0;
+    for (let s = 0; s < sides; s++) {
+      const fa   = (s / sides) * Math.PI * 2 + Math.PI / sides;
+      const cosF = Math.cos(fa), sinF = Math.sin(fa);
+      const cosP = Math.cos(fa + Math.PI / 2), sinP = Math.sin(fa + Math.PI / 2);
+      for (let row = 0; row < rows; row++) {
+        const yPos = baseY + H * (0.16 + (row / Math.max(1, rows - 1)) * 0.66);
+        for (let col = 0; col < cols; col++) {
+          const xOff = (col - (cols - 1) * 0.5) * colSpacing;
+          const fx = x + cosF * faceR + cosP * xOff;
+          const fz = z + sinF * faceR + sinP * xOff;
+          // Sill sits at the window's bottom edge, projecting proud of the facade.
+          d.position.set(
+            fx + cosF * (sillD * 0.4),
+            yPos - winH * 0.5 - sillH * 0.4,
+            fz + sinF * (sillD * 0.4));
+          d.rotation.set(0, fa, 0); d.updateMatrix();
+          im.setMatrixAt(idx++, d.matrix);
+        }
+      }
+    }
+    im.instanceMatrix.needsUpdate = true; scene.add(im);
+  }
+
   // ── FULL DECORATION SUITE ─────────────────────────────────────────────────
   // faceR = actual building face radius (from each builder).
   // buildingCode used to tune window sides/density.
@@ -2195,6 +2290,9 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     const winRows    = 5, winCols = 3;
     addWindowsRecessed(x, z, palette, landingY, topY, fp, faceR, winSides, winRows, winCols);
 
+    // ── Window sills — projecting ledge under each window, grounds the opening ─
+    _windowSills(x, z, landingY, topY, fp, faceR, winSides, winRows, winCols, palette);
+
     // ── Mullion strips — vertical panel seams, 1 IM ──────────────────────────
     _mullionStrips(x, z, landingY, topY, faceR, winSides, winCols + 1, palette);
 
@@ -2211,6 +2309,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     _pilasters    (x, z, landingY, topY, faceR, winSides, palette, fp);
     _stringCourses(x, z, landingY, topY, faceR, winSides, palette, fp);
     _friezeBand   (x, z, landingY + Hfull * 0.86, faceR, winSides, palette, fp);
+
+    // ── Crowning cornice cap — projecting molding terminates the wall at topY, so
+    // the roofline reads as a finished crown, not a cut-off slab edge. ──────────
+    _corniceCap   (x, z, topY, faceR, winSides, palette, fp);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
