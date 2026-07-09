@@ -74,6 +74,9 @@ window.buildWorldNPCs = function (THREE, scene, loader, heightAt, opts) {
   var IDLE_MIN     = 2.0;    // seconds idle at waypoint (min)
   var IDLE_MAX     = 6.0;    // seconds idle at waypoint (max)
   var REACH_DIST   = 5.0;    // waypoint "arrived" radius
+  var NPC_SEP_R    = 3.4;    // NPC-vs-NPC personal-space radius (world units)
+  var NPC_SEP_R2   = NPC_SEP_R * NPC_SEP_R;   // pre-squared (PERF)
+  var NPC_SEP_STR  = 1.6;    // separation push strength (blended into travel dir)
   var BLDG_RADIUS  = 26;     // avoidance/exclusion zone around each building
   var PUSH_RADIUS  = BLDG_RADIUS + 10;  // start pushing before hitting the hard radius
   var SCATTER_R    = 60;     // max radius for random scatter waypoints (kept tight so NPCs stay near their district, not roaming the whole map)
@@ -281,11 +284,16 @@ window.buildWorldNPCs = function (THREE, scene, loader, heightAt, opts) {
       try {
         var m = gltf.scene;
 
-        // ── scale to target height ───────────────────────────────────────
+        // ── scale to target height (+ per-NPC height variety) ────────────
+        // Cheap per-instance variety: jitter each NPC's target height ±7 %
+        // (sum-of-two-randoms clusters toward the mean, so most stay near
+        // normal size and only a few read as notably taller/shorter). No new
+        // geometry or textures — it's a single scalar multiply.
         var box1   = new THREE.Box3().setFromObject(m);
         var sizeVec = new THREE.Vector3();
         box1.getSize(sizeVec);
-        var s = MODEL_HEIGHT / (sizeVec.y || 1);
+        var heightMult = 0.93 + (Math.random() + Math.random()) * 0.07;  // 0.93–1.07×
+        var s = (MODEL_HEIGHT * heightMult) / (sizeVec.y || 1);
         m.scale.setScalar(s);
 
         // ── foot-align: recompute bounds after scale ─────────────────────
@@ -633,6 +641,27 @@ window.buildWorldNPCs = function (THREE, scene, loader, heightAt, opts) {
             avZ += (bvz / bd) * str * 2.2;
           }
         }
+        // ── NPC-vs-NPC separation: soft push out of a neighbour's space ──
+        // Prevents two NPCs converging on the same waypoint from clipping
+        // into one clump. Folds into the same avX/avZ force vector so it
+        // shares the single normalise below (no extra sqrt/normalise pass).
+        // Roster is tiny (council-sized), so this O(n²) scan is a handful of
+        // cheap squared-distance checks — no allocation, early-out when far.
+        for (var j = 0; j < walkers.length; j++) {
+          if (j === i) continue;
+          var ow  = walkers[j];
+          if (ow._culled) continue;              // frozen/off-screen — ignore
+          var ndx = gx - ow.grp.position.x;
+          var ndz = gz - ow.grp.position.z;
+          var nd2 = ndx * ndx + ndz * ndz;
+          if (nd2 < NPC_SEP_R2 && nd2 > 0.0001) {
+            var nd  = Math.sqrt(nd2);
+            var nst = (NPC_SEP_R - nd) / NPC_SEP_R;   // 0..1 ramp, stronger up close
+            avX += (ndx / nd) * nst * NPC_SEP_STR;
+            avZ += (ndz / nd) * nst * NPC_SEP_STR;
+          }
+        }
+
         // blend avoidance into travel direction then re-normalise
         nx += avX;  nz += avZ;
         var nl = Math.sqrt(nx * nx + nz * nz) || 1;
