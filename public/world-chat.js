@@ -50,21 +50,34 @@
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 340px;
-        max-height: 420px;
+        width: 360px;
+        max-width: calc(100vw - 40px);   /* never wider than the viewport */
+        max-height: 440px;
         display: flex;
         flex-direction: column;
-        background: rgba(5, 8, 20, 0.93);
+        background: rgba(5, 8, 20, 0.95);   /* +contrast behind text */
         border: 1px solid rgba(0, 255, 255, 0.35);
         border-radius: 10px;
         box-shadow: 0 0 24px rgba(0, 255, 255, 0.15), inset 0 0 40px rgba(0,0,0,0.5);
         font-family: 'Share Tech Mono', 'Courier New', monospace;
-        font-size: 12px;
-        color: #c8f0ff;
+        font-size: 13px;   /* bumped from 12 for legibility */
+        color: #dbf6ff;
         z-index: 9999;
         transition: opacity .2s, transform .2s;
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
+      }
+      /* Mobile: dock to a bottom sheet that fits phone screens */
+      @media (max-width: 520px) {
+        #shaddai-chat-panel {
+          left: 8px;
+          right: 8px;
+          bottom: 8px;
+          width: auto;
+          max-width: none;
+          max-height: 60vh;
+          max-height: 60dvh;   /* dvh accounts for the on-screen keyboard */
+        }
       }
       #shaddai-chat-panel.shc-hidden {
         opacity: 0;
@@ -90,11 +103,17 @@
       #shc-close-btn {
         background: none;
         border: none;
-        color: #555;
-        font-size: 16px;
+        color: #7788aa;   /* was #555 — too low-contrast to notice */
+        font-size: 18px;
         cursor: pointer;
         line-height: 1;
-        padding: 0 0 4px;
+        /* >=44px tap target for touch without shifting layout */
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: -8px -8px -4px 0;
       }
       #shc-close-btn:hover { color: #ff4466; }
       /* Tab switcher */
@@ -108,12 +127,12 @@
         background: none;
         border: 1px solid rgba(0,255,255,0.2);
         border-bottom: none;
-        color: #667788;
+        color: #8899aa;   /* was #667788 — lift inactive-tab contrast */
         font-family: inherit;
         font-size: 11px;
         letter-spacing: 1px;
         text-transform: uppercase;
-        padding: 4px 14px;
+        padding: 9px 16px;   /* taller for a comfortable tap target */
         cursor: pointer;
         border-radius: 4px 4px 0 0;
         transition: color .15s, background .15s;
@@ -127,56 +146,95 @@
       .shc-tab:hover:not(.active) { color: #aaddee; }
       /* Room badge */
       #shc-room-badge {
-        font-size: 9px;
-        color: #ffcc44;
+        font-size: 10px;
+        color: #ffd45a;
         letter-spacing: 1px;
         text-transform: uppercase;
         margin-left: 5px;
-        opacity: 0.8;
+        opacity: 0.9;
       }
       /* Message list */
       #shc-messages {
         flex: 1;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;   /* momentum scroll on iOS */
+        overscroll-behavior: contain;         /* don't scroll the world behind it */
         padding: 8px 12px;
         min-height: 180px;
         max-height: 240px;
         scrollbar-width: thin;
         scrollbar-color: rgba(0,255,255,0.2) transparent;
       }
+      /* On mobile the panel is a flex column that grows to its cap — let the
+         message list take the free space instead of a fixed 240px window. */
+      @media (max-width: 520px) {
+        #shc-messages { max-height: none; min-height: 0; }
+      }
       #shc-messages::-webkit-scrollbar { width: 4px; }
       #shc-messages::-webkit-scrollbar-track { background: transparent; }
       #shc-messages::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
       .shc-msg {
-        margin: 0 0 7px;
-        line-height: 1.45;
-        word-break: break-word;
+        margin: 0 0 8px;
+        line-height: 1.5;   /* roomier for readability */
+        /* break only truly long/unbroken tokens (URLs), keep normal wrapping */
+        overflow-wrap: anywhere;
         animation: shcFadeIn .2s ease;
+        padding: 3px 8px;
+        border-radius: 6px;
+        border-left: 2px solid rgba(255,200,60,0.35);   /* agent/other accent */
+        background: rgba(255,255,255,0.02);
+      }
+      /* Own messages: distinct accent + subtle tint so the player can scan
+         their side of the conversation at a glance. */
+      .shc-msg.is-self {
+        border-left-color: rgba(0,255,200,0.5);
+        background: rgba(0,255,200,0.05);
       }
       @keyframes shcFadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform:none; } }
       .shc-msg-name {
-        color: #ffcc44;
+        color: #ffd45a;
         font-weight: bold;
         text-shadow: 0 0 5px rgba(255,200,60,0.4);
         margin-right: 5px;
       }
-      .shc-msg-name.is-self { color: #00ffcc; text-shadow: 0 0 5px rgba(0,255,180,0.4); }
-      .shc-msg-text { color: #c8eeff; }
-      .shc-msg-time { color: #334455; font-size: 10px; margin-left: 5px; }
+      .shc-msg-name.is-self { color: #2affd0; text-shadow: 0 0 5px rgba(0,255,180,0.4); }
+      .shc-msg-text { color: #e2f4ff; }   /* was #c8eeff — brighter body text */
+      .shc-msg-time { color: #5a6b7c; font-size: 10px; margin-left: 5px; }   /* was #334455 — legible timestamp */
       .shc-system {
-        color: rgba(0,255,255,0.4);
+        color: rgba(120,235,255,0.7);   /* was 0.4 alpha — warnings were barely visible */
         font-style: italic;
         font-size: 11px;
         margin: 4px 0;
         text-align: center;
       }
       .shc-empty {
-        color: #334455;
+        color: #5a6b7c;   /* was #334455 — readable placeholder */
         font-style: italic;
         text-align: center;
         margin-top: 20px;
-        font-size: 11px;
+        font-size: 12px;
       }
+      /* Typing / awaiting-reply indicator */
+      .shc-typing {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: rgba(0,255,255,0.6);
+        font-size: 11px;
+        font-style: italic;
+        margin: 2px 0 8px;
+        padding: 0 2px;
+      }
+      .shc-typing .dot {
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: #00ffff;
+        box-shadow: 0 0 5px #00ffff;
+        animation: shcBlink 1.2s infinite ease-in-out;
+      }
+      .shc-typing .dot:nth-child(2) { animation-delay: .2s; }
+      .shc-typing .dot:nth-child(3) { animation-delay: .4s; }
+      @keyframes shcBlink { 0%,80%,100% { opacity:.25; } 40% { opacity:1; } }
       /* Input row */
       #shc-input-row {
         display: flex;
@@ -187,18 +245,19 @@
       }
       #shc-input {
         flex: 1;
+        min-width: 0;   /* allow the input to shrink inside the flex row */
         background: rgba(0,255,255,0.05);
         border: 1px solid rgba(0,255,255,0.2);
         border-radius: 5px;
-        color: #c8f0ff;
+        color: #dbf6ff;
         font-family: inherit;
-        font-size: 12px;
-        padding: 5px 8px;
+        font-size: 13px;
+        padding: 9px 10px;   /* taller field = easier to tap/read */
         outline: none;
         transition: border-color .2s;
       }
       #shc-input:focus { border-color: rgba(0,255,255,0.5); background: rgba(0,255,255,0.08); }
-      #shc-input::placeholder { color: #334455; }
+      #shc-input::placeholder { color: #5a6b7c; }   /* was #334455 — visible hint */
       #shc-send-btn {
         background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(0,200,255,0.08));
         border: 1px solid rgba(0,255,255,0.35);
@@ -206,12 +265,18 @@
         color: #00ffff;
         font-family: inherit;
         font-size: 11px;
-        padding: 5px 12px;
+        padding: 9px 16px;   /* >=44px effective tap target */
+        min-height: 40px;
         cursor: pointer;
         letter-spacing: 1px;
         text-shadow: 0 0 6px #00ffff;
         transition: background .15s, box-shadow .15s;
         flex-shrink: 0;
+      }
+      /* iOS zooms the page when a focused input's font-size < 16px; force 16
+         on small screens to keep the panel from jumping. */
+      @media (max-width: 520px) {
+        #shc-input { font-size: 16px; }
       }
       #shc-send-btn:hover {
         background: rgba(0,255,255,0.2);
@@ -238,7 +303,7 @@
         transition: background .15s;
         display: none;
       }
-      #addai-chat-toggle:hover { background: rgba(0,255,255,0.12); }
+      #shaddai-chat-toggle:hover { background: rgba(0,255,255,0.12); }   /* fixed selector typo (#addai→#shaddai) */
       /* Unread dot */
       #shc-unread-dot {
         display: inline-block;
@@ -405,6 +470,7 @@
   // ── Tab switching ────────────────────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
+    hideTyping();   // indicator is channel-specific — drop it on tab change
     tabRealm.classList.toggle('active', tab === 'realm');
     tabRoom.classList.toggle('active', tab === 'room');
     renderMessages();
@@ -416,6 +482,32 @@
   }
 
   // ── Message rendering ────────────────────────────────────────────────────
+  // Build one message row. Shared by full render + incremental append so the
+  // self/other styling (accent bar + tint) stays consistent in one place.
+  function buildMsgEl(m) {
+    const self = m.name === operative;
+    const el = document.createElement('div');
+    el.className = 'shc-msg' + (self ? ' is-self' : '');
+    el.dataset.id = m.id;
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'shc-msg-name' + (self ? ' is-self' : '');
+    nameEl.textContent = m.name + ':';
+
+    const textEl = document.createElement('span');
+    textEl.className = 'shc-msg-text';
+    textEl.textContent = ' ' + m.text;   // textContent = no XSS
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'shc-msg-time';
+    timeEl.textContent = formatTime(m.at);
+
+    el.appendChild(nameEl);
+    el.appendChild(textEl);
+    el.appendChild(timeEl);
+    return el;
+  }
+
   function renderMessages() {
     const chan = currentChannel();
     const msgs = msgCache[chan] || [];
@@ -432,30 +524,33 @@
       return;
     }
 
-    for (const m of msgs) {
-      const el  = document.createElement('div');
-      el.className = 'shc-msg';
-      el.dataset.id = m.id;
+    for (const m of msgs) msgList.appendChild(buildMsgEl(m));
 
-      const nameEl = document.createElement('span');
-      nameEl.className = 'shc-msg-name' + (m.name === operative ? ' is-self' : '');
-      nameEl.textContent = m.name + ':';
-
-      const textEl = document.createElement('span');
-      textEl.className = 'shc-msg-text';
-      textEl.textContent = ' ' + m.text;   // textContent = no XSS
-
-      const timeEl = document.createElement('span');
-      timeEl.className = 'shc-msg-time';
-      timeEl.textContent = formatTime(m.at);
-
-      el.appendChild(nameEl);
-      el.appendChild(textEl);
-      el.appendChild(timeEl);
-      msgList.appendChild(el);
-    }
-
+    if (typingEl) msgList.appendChild(typingEl);   // keep indicator pinned last
     msgList.scrollTop = msgList.scrollHeight;
+  }
+
+  // ── Typing / awaiting-reply indicator ────────────────────────────────────
+  let typingEl = null;
+  function showTyping(who) {
+    hideTyping();
+    typingEl = document.createElement('div');
+    typingEl.className = 'shc-typing';
+    const label = document.createElement('span');
+    label.textContent = (who || 'sending') + ' ';
+    typingEl.appendChild(label);
+    for (let i = 0; i < 3; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot';
+      typingEl.appendChild(d);
+    }
+    msgList.appendChild(typingEl);
+    msgList.scrollTop = msgList.scrollHeight;
+  }
+  function hideTyping() {
+    clearTimeout(typingTimer);
+    if (typingEl && typingEl.parentNode) typingEl.remove();
+    typingEl = null;
   }
 
   function formatTime(epoch) {
@@ -481,27 +576,13 @@
       if (empty) empty.remove();
 
       for (const m of fresh) {
-        const el  = document.createElement('div');
-        el.className = 'shc-msg';
-        el.dataset.id = m.id;
-
-        const nameEl = document.createElement('span');
-        nameEl.className = 'shc-msg-name' + (m.name === operative ? ' is-self' : '');
-        nameEl.textContent = m.name + ':';
-
-        const textEl = document.createElement('span');
-        textEl.className = 'shc-msg-text';
-        textEl.textContent = ' ' + m.text;
-
-        const timeEl = document.createElement('span');
-        timeEl.className = 'shc-msg-time';
-        timeEl.textContent = formatTime(m.at);
-
-        el.appendChild(nameEl);
-        el.appendChild(textEl);
-        el.appendChild(timeEl);
-        msgList.appendChild(el);
+        // Insert before the typing indicator so it stays last if present.
+        if (typingEl && typingEl.parentNode) msgList.insertBefore(buildMsgEl(m), typingEl);
+        else msgList.appendChild(buildMsgEl(m));
       }
+
+      // Any inbound message that isn't ours means a reply arrived — clear the wait.
+      if (fresh.some(m => m.name !== operative)) hideTyping();
 
       if (wasAtBottom) msgList.scrollTop = msgList.scrollHeight;
     }
@@ -551,6 +632,12 @@
     const chan = currentChannel();
     textInput.value = '';
     textInput.focus();
+    showTyping('awaiting reply');   // subtle loading cue while the send/poll resolves
+    // Safety net: in a quiet channel no reply may ever come, so auto-clear the
+    // indicator rather than let it spin forever. hideTyping also fires the
+    // moment a non-self message lands (see appendMessages).
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(hideTyping, 8000);
 
     try {
       const res = await fetch(`${API_BASE}/${encodeURIComponent(chan)}`, {
@@ -560,10 +647,12 @@
       });
 
       if (res.status === 429) {
+        hideTyping();
         showSystemMsg('Slow down — 1 message per 1.5s');
         return;
       }
       if (!res.ok) {
+        hideTyping();
         const err = await res.json().catch(() => ({}));
         showSystemMsg(err.error || 'Send failed');
         return;
@@ -576,9 +665,12 @@
         else sinceRoomRef.val = data.message.at;
       }
     } catch (_) {
+      hideTyping();
       showSystemMsg('Offline — message not sent');
     }
   }
+
+  let typingTimer = null;
 
   function showSystemMsg(text) {
     const el = document.createElement('div');
