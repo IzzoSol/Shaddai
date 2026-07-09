@@ -1230,10 +1230,14 @@
     }
 
     // ── bridgeLandingToHub — route a glass bridge from a grand landing radially
-    // inward to the deck's central hub ring (stops just outside the glass chute).
+    // inward to the deck's central hub ring (meets the glass-chute plinth).
+    // ALIGN FIX (2026-07-09): the old hubR=34 left the bridge hanging ~24u short of
+    // the CHUTE_R+4≈10.5 plinth — the two glass spans pointed at the chute but never
+    // touched it (a floater). Bring the inner end flush to the plinth so each bridge
+    // visibly lands on the central chute base.
     function bridgeLandingToHub(sx, sz, colorHex) {
       var ang    = Math.atan2(sz, sx);
-      var hubR   = 34;                                   // end just outside the chute base
+      var hubR   = 10;                                   // = CHUTE_R(6.5)+3.5 → meet the chute plinth edge (no gap)
       var startR = Math.max(hubR + 8, Math.hypot(sx, sz) - (GL_LANDING_R - 3));
       buildGlassBridge(Math.cos(ang) * startR, Math.sin(ang) * startR,
                        Math.cos(ang) * hubR,   Math.sin(ang) * hubR, colorHex, 9);

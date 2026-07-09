@@ -283,6 +283,35 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
       }
     }
 
+    // ── WORLD-EDGE FADE: soften the hard rectangular boundary. Past ~78% of the
+    // half-extent, gently darken + desaturate toward the void tone so the terrain
+    // dissolves into the dark horizon instead of ending on a visible hard edge.
+    {
+      var _edge = Math.max(Math.abs(x), Math.abs(z)) / (SIZE * 0.5); // 0..1
+      if (_edge > 0.78) {
+        var _ef = smooth((_edge - 0.78) / 0.22);   // 0→1 over the outer band
+        var _voidR = 0.03, _voidG = 0.045, _voidB = 0.07;
+        tmpColor.r += (_voidR - tmpColor.r) * _ef * 0.85;
+        tmpColor.g += (_voidG - tmpColor.g) * _ef * 0.85;
+        tmpColor.b += (_voidB - tmpColor.b) * _ef * 0.85;
+      }
+    }
+
+    // ── AMBIENT FLOOR LIFT: stop stacked darkeners (valley × slope × blotch) from
+    // crushing any vertex to near-black under the world's dark night lighting.
+    // Lerp very slightly toward a cool ground-ambient tone only where the color is
+    // already dark → deep valleys/cliffs keep readable form instead of voids.
+    {
+      var _lum = tmpColor.r * 0.299 + tmpColor.g * 0.587 + tmpColor.b * 0.114;
+      if (_lum < 0.14) {
+        // 0 at lum=0.14, up to ~0.35 as it approaches black
+        var _lift = (0.14 - _lum) / 0.14 * 0.35;
+        tmpColor.r += (0.05 - tmpColor.r) * _lift;
+        tmpColor.g += (0.09 - tmpColor.g) * _lift;
+        tmpColor.b += (0.13 - tmpColor.b) * _lift;
+      }
+    }
+
     colors[i * 3 + 0] = tmpColor.r;
     colors[i * 3 + 1] = tmpColor.g;
     colors[i * 3 + 2] = tmpColor.b;
@@ -322,15 +351,27 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     const d = img.data;
     for (let y = 0; y < S; y++) {
       for (let x = 0; x < S; x++) {
-        const n = detailField(x / S, y / S);
+        const u = x / S, v = y / S;
+        const n = detailField(u, v);
+        // Soft, low-frequency "stain" layer (seamless integer-wave) breaks up the
+        // uniform grit into broad lighter/darker patches so the surface reads as a
+        // real weathered material rather than tiled speckle. Build-time only.
+        const stain =
+          Math.sin(u * TAU * 1) * 0.6 +
+          Math.cos(v * TAU * 1) * 0.5 +
+          Math.sin((u + v) * TAU * 2) * 0.4;
+        const stainN = stain / 1.5;                  // ≈ -1..1
         // Wider range than before (163–221) for more surface contrast.
         // Slight warm-R / cool-B split gives the detail map subtle color temperature
         // variation so the ground surface reads as real material (not a grey wash).
-        const base = 192 + (n - 0.5) * 58;
+        const base = 192 + (n - 0.5) * 58 + stainN * 14;
         const i = (y * S + x) * 4;
-        d[i]     = Math.min(255, base + 6);  // R: slightly warm (soil warmth)
-        d[i + 1] = base;                      // G: neutral
-        d[i + 2] = Math.max(0,   base - 7);  // B: slightly cool (shadowed pores)
+        // Color temperature drifts with the stain: warmer in lit patches, cooler in
+        // shadowed patches → gives the tiled ground gentle natural mottling.
+        const warm = stainN * 5;
+        d[i]     = Math.max(0, Math.min(255, base + 6 + warm)); // R: soil warmth
+        d[i + 1] = Math.max(0, Math.min(255, base));            // G: neutral
+        d[i + 2] = Math.max(0, Math.min(255, base - 7 - warm)); // B: shadowed pores
         d[i + 3] = 255;
       }
     }
@@ -456,12 +497,15 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     map: makeDetailTex(),                  // tiled detail multiplies the biome vertex color
     normalMap: makeNormalTex(),            // procedural micro-relief under light
     flatShading: false,
-    roughness: 0.78,      // slight drop (0.82→0.78): more light play, still non-metallic
-    metalness: 0.04,      // reduced (0.08→0.04): ground is organic, not conductive
-    emissive: new THREE.Color(0x0a1726),  // faint cool glow so valleys never read pure black
-    emissiveIntensity: 0.22, // CRITICAL drop (0.5→0.22): was washing out all terrain shadow
+    roughness: 0.80,      // slight raise (0.78→0.80): softer, more natural non-metallic sheen
+    metalness: 0.03,      // reduced (0.04→0.03): ground is organic, not conductive
+    emissive: new THREE.Color(0x0c1a2e),  // faint cool glow so valleys never read pure black
+    emissiveIntensity: 0.20, // CRITICAL: kept low so terrain shadow/contrast survives
   });
-  if (mat.normalScale) mat.normalScale.set(0.85, 0.85); // raised (0.6→0.85): more tactile depth
+  if (mat.normalScale) mat.normalScale.set(0.90, 0.90); // raised (0.85→0.90): more tactile depth
+  // IBL contribution: let the night-sky env map softly light the ground so it never
+  // reads flat-black under the world's dark lighting, without blowing out the emissive.
+  if ('envMapIntensity' in mat) mat.envMapIntensity = 0.55;
 
   // ── cached originals for 'grid' revert ──
   var _origDetailTex  = mat.map;
@@ -702,11 +746,12 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
       mat.normalMap     = _origNormalTex;
       mat.roughnessMap  = null;
       mat.color.setHex(0xffffff);
-      mat.roughness        = 0.78;   // matches tuned init value
-      mat.metalness        = 0.04;   // matches tuned init value
-      mat.emissive.setHex(0x0a1726);
-      mat.emissiveIntensity = 0.22;  // matches tuned init value
-      if (mat.normalScale) mat.normalScale.set(0.85, 0.85); // matches tuned init value
+      mat.roughness        = 0.80;   // matches tuned init value
+      mat.metalness        = 0.03;   // matches tuned init value
+      mat.emissive.setHex(0x0c1a2e);
+      mat.emissiveIntensity = 0.20;  // matches tuned init value
+      if (mat.normalScale) mat.normalScale.set(0.90, 0.90); // matches tuned init value
+      if ('envMapIntensity' in mat) mat.envMapIntensity = 0.55; // matches tuned init value
       mat.needsUpdate = true;
       return;
     }

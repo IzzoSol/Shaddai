@@ -126,7 +126,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
-<div class="hud" id="hint"><span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">B</span> bike · <span class="k">V</span> 3rd-person · <span class="k">F</span> buy · <span class="k">N</span> news · <span class="k">CLICK</span> agent · <span class="k">ESC</span> release</div>
+<div class="hud" id="hint"><span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">N</span> news · <span class="k">ESC</span> release</div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
 <button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:58px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
@@ -1290,13 +1290,39 @@ const _texL=new THREE.TextureLoader(__loadMgr);
 function _terrainTex(name){ const t=_texL.load('/api/forge/art/'+name+'.png'); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(28,28); return t; }
 const GROUND_TEX={ meadow:_terrainTex('tex-grass'), snow:_terrainTex('tex-snow'), desert:_terrainTex('tex-sand') };
 
-// starfield dome
+// ── STARFIELD dome (camera-following, two-layer for depth) ──
+// TURTLE SKY POLISH: the old starfield lived at a fixed origin (r=400..900) with an abs()-clamped
+// upper hemisphere, so stars bunched overhead and — because it did NOT follow the camera — some
+// pulled in close and read as odd "floating specks" as you walked toward the world edge. Now it's a
+// large sphere that camera-follows on XZ (like skyDome), pushed far out (r≥620) so no star ever sits
+// near a building/agent, wraps the FULL dome above the horizon (no hemisphere bunching), and uses
+// additive blending + two size/opacity buckets so the sky reads as a deep field of bright + faint
+// stars instead of one flat pale sheet. Grouped so a single position.copy() in animate() follows the cam.
+const starGroup = new THREE.Group();
 {
-  const N=1400, pos=new Float32Array(N*3);
-  for(let i=0;i<N;i++){ const r=400+Math.random()*500, th=Math.random()*6.28, ph=Math.acos(2*Math.random()-1);
-    pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=Math.abs(r*Math.cos(ph))*0.6+30; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th); }
-  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color:0xaecbff, size:1.4, sizeAttenuation:true, transparent:true, opacity:.8 })));
+  // helper: build one point layer over the sky dome (all stars sit above the horizon, y≥40)
+  function starLayer(N, rMin, rSpan, color, size, opacity){
+    const pos=new Float32Array(N*3);
+    for(let i=0;i<N;i++){
+      const r=rMin+Math.random()*rSpan, th=Math.random()*6.283185;
+      const ph=Math.acos(Math.random());                 // 0..PI/2 → upper hemisphere, evenly over the dome (no abs bias)
+      pos[i*3]  = r*Math.sin(ph)*Math.cos(th);
+      pos[i*3+1]= r*Math.cos(ph)+40;                      // lift the whole field so the horizon band stays clear
+      pos[i*3+2]= r*Math.sin(ph)*Math.sin(th);
+    }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const pts=new THREE.Points(geo, new THREE.PointsMaterial({ color, size, sizeAttenuation:true, transparent:true, opacity, blending:THREE.AdditiveBlending, depthWrite:false }));
+    pts.frustumCulled=false;                              // camera-centred → never cull
+    starGroup.add(pts);
+  }
+  starLayer(1000, 620, 240, 0xbcd6ff, 1.2, 0.55);        // faint far layer (cool white-blue)
+  starLayer( 360, 640, 200, 0xffffff, 2.0, 0.95);        // bright near-ish layer (crisp white highlights)
+  starGroup.add(new THREE.Points(                        // a sparse warm-violet accent to match the neon palette
+    (function(){ const N=120,pos=new Float32Array(N*3); for(let i=0;i<N;i++){ const r=650+Math.random()*180,th=Math.random()*6.283185,ph=Math.acos(Math.random()); pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph)+40; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);} const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); return g; })(),
+    new THREE.PointsMaterial({ color:0xc9a8ff, size:1.6, sizeAttenuation:true, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false })
+  ));
+  starGroup.children.forEach(c=>{ c.frustumCulled=false; });
+  scene.add(starGroup);
 }
 
 // ── ATMOSPHERE MOTES: slow-drifting dust/embers that surround the player ──
@@ -2053,7 +2079,7 @@ function buyNearStall(){ const s=BAZAAR.near; if(!s||!s.listing) return;
   fetch('/api/bazaar/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:s.listing.id,buyer:(window.SHADDAI_USER||'owner')})}).then(async r=>{ const d=await r.json().catch(()=>({}));
     if(r.status===402){ alert('⛔ Not enough SHAD-Credits for '+s.listing.name); return; }
     if(d.ok){ alert('✅ Bought '+d.bought.name+' for '+d.bought.price+' SHAD (fee '+d.payment.fee+')'); if(window._x402refresh)window._x402refresh(); fetchBazaar(); } }); }
-addEventListener('keydown',e=>{ if(e.code==='KeyF') buyNearStall(); });
+addEventListener('keydown',e=>{ if(e.code==='KeyG') buyNearStall(); });  // buy moved F→G (F is now flip/fly in the unified combat scheme)
 
 function enterPortal(p){
   if(p.type==='claimable' || !p.url){ alert('🌀 '+p.name+' — unclaimed portal. Claim it to link your world here.'); return; }
@@ -2269,13 +2295,13 @@ const _talkPrompt = document.createElement('div');
 _talkPrompt.style.cssText='position:fixed;bottom:137px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(255,207,74,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(255,207,74,0.6)';
 document.body.appendChild(_talkPrompt);
 
-// hotkeys: M=map · R=Shaddai Radio · T=talk · K=mute
+// hotkeys: M=map · R=Shaddai Radio · T=talk · J=mute  (mute moved K→J: K is now KICK in the unified combat scheme)
 addEventListener('keydown', function(e){
   if(e.repeat) return;
   if(/input|textarea|select/i.test((document.activeElement||{}).tagName||'')) return;
   if(e.code==='KeyM' && _minimap){ _minimapVis=!_minimapVis; _minimap.setVisible(_minimapVis); }
   // else if(e.code==='KeyR' && _radio){ _radio.toggle(); }   // disabled: R was popping the radio up unexpectedly (owner). Re-add a button if wanted.
-  else if(e.code==='KeyK' && _audio){ _audio.setEnabled(!_audio.isEnabled()); }
+  else if(e.code==='KeyJ' && _audio){ _audio.setEnabled(!_audio.isEnabled()); }
   else if(e.code==='KeyT' && _dialogue){ if(_dialogue.isOpen()){ _dialogue.close(); } else { const ag=_dialogue.nearestAgent(playerPos.x, playerPos.z, playerPos.y); if(ag) _dialogue.open(ag.code); } }
   // R = RIDE the nearby lift (clear, deliberate keybind — no more auto step-on). tryBoard() no-ops if out of range.
   else if(e.code==='KeyR' && controls.isLocked && _elevators && _elevators.tryBoard && !(_interiors && _interiors.isInside())){ _elevators.tryBoard(playerPos.x, playerPos.z); }
@@ -3522,12 +3548,24 @@ function animate(){
     { const _yt=Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
       if(!_avatarYawInit){ _avatarYaw=_yt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _yt, 1-Math.exp(-11*dt));
       playerAvatar.rotation.y=_avatarYaw; }
-    // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway
+    // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway.
+    // GLIDE agents (SHADDAI / NEXUS): skip the |sin| step-bob → smooth hover + slight forward lean,
+    // so their locomotion reads as gliding, not stepping. SHADDAI's F = FLY adds a buoyant rise.
     if(!playerMixer && playerAvatar.visible){
       const _mv2 = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
-      const _wt2 = clock.elapsedTime * ((keys['ShiftLeft']||keys['ShiftRight']) ? 15 : 10);
-      if(_mv2){ playerAvatar.position.y = baseY + Math.abs(Math.sin(_wt2))*0.35; playerAvatar.rotation.z = Math.sin(_wt2)*0.06; }
-      else { playerAvatar.position.y = baseY + Math.sin(clock.elapsedTime*2)*0.05; playerAvatar.rotation.z = 0; }
+      const _glide = !!(_playerSig() && _playerSig().glide);
+      const _flying = clock.elapsedTime < _flyUntil;
+      const _rise = _flying ? Math.sin(Math.min(1,(_flyUntil-clock.elapsedTime)/1.1)*Math.PI) * 2.4 : 0;  // F=fly: rise then settle
+      if(_glide){
+        // smooth hover (no footstep bob) + gentle forward head/torso lean when moving
+        playerAvatar.position.y = baseY + _rise + Math.sin(clock.elapsedTime*1.4)*0.06;   // slight buoyant hover
+        playerAvatar.rotation.x = (_mv2 ? -0.10 : -0.04);                                  // lean forward (more while moving)
+        playerAvatar.rotation.z = 0;
+      } else {
+        const _wt2 = clock.elapsedTime * ((keys['ShiftLeft']||keys['ShiftRight']) ? 15 : 10);
+        if(_mv2){ playerAvatar.position.y = baseY + Math.abs(Math.sin(_wt2))*0.35; playerAvatar.rotation.z = Math.sin(_wt2)*0.06; }
+        else { playerAvatar.position.y = baseY + Math.sin(clock.elapsedTime*2)*0.05; playerAvatar.rotation.z = 0; }
+      }
     }
   } else {
     camera.position.set(playerPos.x, baseY + eye, playerPos.z);
@@ -3535,6 +3573,7 @@ function animate(){
   }
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
   skyDome.position.copy(camera.position);   // PERF: sky follows the camera (standard skybox trick) so the r=1400 dome is always centred on the viewer → the tightened far plane (1500) never clips it. Gradient is direction-based so the look is identical.
+  starGroup.position.set(camera.position.x, 0, camera.position.z);   // TURTLE SKY POLISH: starfield follows the camera on XZ only (keeps its own overhead Y) so stars stay an infinite dome — never pull in close and read as floating specks near the world edge.
   veh.update(dt, fwd);                       // VEHICLE-HOOK: vehicle follows player + board/dismount prompt
   // GRID BIKE: ride it in bike mode — sits under the player, faces the look direction
   gridBike.visible = bikeMode;
@@ -3706,7 +3745,7 @@ function animate(){
     // innerHTML only changes when the [F] BUY prompt toggles — rebuild it then, not every frame (was re-parsing HTML per stall per frame)
     const _near=(BAZAAR.near===s);
     if(s._elNear!==_near || !s._elBuilt){
-      s.el.innerHTML='<div class="nm" style="color:#00e5a0;font-size:11px">'+s.listing.name+'</div><div class="sk">·'+s.listing.kind+'· ⚡'+s.listing.price+'</div>'+(_near?'<div class="tag" style="opacity:1;color:#ffcf4a">[F] BUY</div>':'');
+      s.el.innerHTML='<div class="nm" style="color:#00e5a0;font-size:11px">'+s.listing.name+'</div><div class="sk">·'+s.listing.kind+'· ⚡'+s.listing.price+'</div>'+(_near?'<div class="tag" style="opacity:1;color:#ffcf4a">[G] BUY</div>':'');
       s._elNear=_near; s._elBuilt=true;
     }
     s.el.style.opacity = dist<70 ? String(Math.max(0.2,1-dist/90)) : '0';
@@ -3999,7 +4038,7 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
     // The Bazaar itself is a WALKABLE 3D zone (stalls SW of the plaza). This is just the
     // seller's desk: list something to sell, then walk the Bazaar to browse & buy [F].
     b.insertAdjacentHTML('beforeend',
-      '<div class="dist-note">⚖ Browsing & buying happen in the world — walk to <b>THE BAZAAR</b> (the green ring & arch, south-west). Approach a stall and press <b>[F]</b> to buy.</div>'+
+      '<div class="dist-note">⚖ Browsing & buying happen in the world — walk to <b>THE BAZAAR</b> (the green ring & arch, south-west). Approach a stall and press <b>[G]</b> to buy.</div>'+
       '<div class="dist-sub" style="margin-top:12px">PUT SOMETHING UP FOR SALE</div>'+
       '<input id="agN" placeholder="name (e.g. Neon Sword / Logo Design)"><select id="agK"><option value="item">item</option><option value="skill">skill</option><option value="service">service</option></select>'+
       '<input id="agP" type="number" placeholder="price in SHAD-Credits"><input id="agD" placeholder="short description">'+
