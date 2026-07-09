@@ -63,6 +63,9 @@
     ".cd .holo{position:relative;overflow:hidden;border-right:1px solid rgba(var(--acg),.2);display:flex;align-items:flex-end;justify-content:center;cursor:crosshair}",
     ".cd .holo::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;box-shadow:inset 0 0 120px 34px rgba(0,0,0,.6)}",
     ".cd .scene{position:absolute;inset:0;z-index:0}",
+    ".cd .sceneimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;filter:brightness(.6) saturate(1.06);animation:cdSceneIn 1.1s ease both}",
+    "@keyframes cdSceneIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}",
+    ".cd .scenescrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(90% 70% at 50% 42%,transparent,rgba(2,5,10,.55)),linear-gradient(0deg,rgba(2,5,10,.7),transparent 45%)}",
     ".cd .floor{position:absolute;inset:-2px;z-index:0;opacity:.4;background-image:linear-gradient(rgba(var(--acg),.16) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--acg),.16) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(120% 80% at 50% 55%,#000,transparent 78%);mask-image:radial-gradient(120% 80% at 50% 55%,#000,transparent 78%);animation:cdDrift 22s linear infinite}",
     "@keyframes cdDrift{to{background-position:0 -46px,-46px 0}}",
     ".cd .beam{position:absolute;top:-6%;left:50%;transform:translateX(-50%);width:44%;height:92%;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(var(--acg),.2),rgba(var(--acg),.04) 55%,transparent);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);filter:blur(7px);opacity:.6;animation:cdPulse 4s ease-in-out infinite}",
@@ -77,7 +80,8 @@
     ".cd .vtog{position:absolute;top:12px;right:12px;z-index:5;display:flex;background:rgba(0,0,0,.5);border:1px solid rgba(var(--acg),.4);border-radius:22px;overflow:hidden}",
     ".cd .vtog button{border:none;background:transparent;color:var(--mut);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 12px;display:flex;align-items:center;gap:5px}.cd .vtog button.on{background:rgba(var(--acg),.22);color:var(--ac)}",
     ".cd .lvl{position:absolute;bottom:14px;left:16px;z-index:3;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--ac);text-shadow:0 0 12px rgba(var(--acg),.7)}.cd .lvl small{display:block;font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--mut);margin-bottom:5px}",
-    ".cd .panel{position:relative;display:flex;flex-direction:column;background:rgba(8,16,28,.62);min-height:0}",
+    ".cd .panel{position:relative;display:flex;flex-direction:column;background:radial-gradient(120% 55% at 100% 0%,rgba(var(--acg),.07),transparent 60%),linear-gradient(180deg,rgba(9,17,29,.74),rgba(4,8,15,.68));min-height:0}",
+    ".cd .body{background-image:repeating-linear-gradient(0deg,transparent 0 22px,rgba(255,255,255,.012) 22px 23px)}",
     ".cd .tabs{position:relative;display:flex;gap:2px;padding:12px 12px 0;border-bottom:1px solid rgba(var(--acg),.28)}",
     ".cd .tab{flex:1;padding:10px 4px 12px;text-align:center;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--mut);border-bottom:2px solid transparent;transition:.16s}.cd .tab:hover{color:var(--ink)}.cd .tab.on{color:var(--ac)}",
     ".cd .tab .ic{display:block;font-size:15px;margin-bottom:5px}",
@@ -183,6 +187,8 @@
       '</div>'+
       '<div class="holo" id="cdHolo">'+
         '<div class="scene" style="background:'+sceneCss(d.sceneKey)+'"></div>'+
+        '<img class="sceneimg" src="/assets/rooms/'+esc(d.sceneKey)+'-scene.png" alt="" onerror="this.remove()">'+
+        '<div class="scenescrim"></div>'+
         '<div class="floor" id="cdFloor"></div><div class="beam" id="cdBeam"></div>'+
         '<div class="tag"><span class="dot" style="width:6px;height:6px"></span> <span id="cdTag">STATIC · 2D — '+esc(d.scene)+'</span></div>'+
         '<div class="vtog"><button class="on" data-v="2d">'+IC.d2+' 2D</button><button data-v="3d">'+IC.d3+' 3D</button></div>'+
@@ -217,9 +223,10 @@
             '<div class="skills" id="cdSkills" style="margin-top:10px"></div>'+
           '</div>'+
           '<div class="pane" data-p="wk">'+
-            '<div class="sec">GENERATE — real image (HuggingFace FLUX)</div>'+
+            '<div class="sec">GENERATE — real image · pick an engine</div>'+
             '<div style="display:flex;gap:8px;align-items:stretch">'+
               '<input class="goal" id="cdImgPrompt" style="flex:1" placeholder="describe an image to generate…">'+
+              '<select class="bsel" id="cdImgProv" style="margin:0;align-self:stretch" title="image engine"><option value="flux">FLUX (HF)</option><option value="nano-banana">NanoBanana</option><option value="fal">fal.ai</option><option value="dall-e-3">DALL·E 3</option></select>'+
               '<button class="run" id="cdGen" style="width:auto;margin-top:0;padding:0 16px">'+IC.st+' GEN</button>'+
             '</div>'+
             '<div class="cap" id="cdGenMsg" style="margin-top:8px"></div>'+
@@ -404,8 +411,9 @@
   function genImage(d){
     var prompt=(el('cdImgPrompt').value||'').trim(); var msg=el('cdGenMsg'); var btn=el('cdGen');
     if(!prompt){ msg.textContent='enter a prompt.'; return; }
-    btn.disabled=true; msg.textContent='◈ generating with FLUX…';
-    j('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,model:'flux',width:1024,height:1024})}).then(function(r){
+    var model=(el('cdImgProv')&&el('cdImgProv').value)||'flux';
+    btn.disabled=true; msg.textContent='◈ generating with '+model+'…';
+    j('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,model:model,width:1024,height:1024})}).then(function(r){
       if(!r||!r.success||!(r.url||r.image_url)){ msg.textContent='⚠ '+((r&&r.error)||'image engine unavailable'); btn.disabled=false; return; }
       var url=r.url||r.image_url;
       // persist to /assets/gallery so it survives + becomes a stable path
