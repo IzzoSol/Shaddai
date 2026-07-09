@@ -187,6 +187,19 @@
       return u * u * u * (u * (u * 6 - 15) + 10);
     }
 
+    // ── FRAME-DELTA CLAMP (JANK FIX 2026-07-09) ──────────────────────────────
+    // If a frame HITCHES (GC pause, tab refocus, heavy load), dt spikes and the
+    // raw progress step (ELEV_SPEED*dt/span) balloons — the pad (and the carried
+    // camera) then teleports a big chunk in a single frame = a visible SNAP. We
+    // clamp the effective dt used for lift/pod motion so one bad frame can only
+    // advance the ride by a small, smooth amount; the ride simply continues next
+    // frame. Pure scalar; zero alloc. 1/24s ≈ the slowest we still treat as
+    // "one smooth step" — anything longer is capped so it can't lurch.
+    var MOVE_DT_CAP = 1 / 24;   // ≈0.0417s — max motion step per frame (anti-hitch)
+    function moveDt(dt) {
+      return (dt > MOVE_DT_CAP) ? MOVE_DT_CAP : dt;
+    }
+
     // ── PRE-ALLOCATED WORKING VECTORS (ZERO per-frame alloc) ───────────────
     // _v3a and _v3b are available for any scratch use inside update().
     // Each platform has its own prevPos + curPos.
@@ -1509,9 +1522,18 @@
             } else {
               var _toI = p.curStop + p.dir;
               var _seg = Math.abs(_st[_toI] - _st[p.curStop]);
-              var _mrate = (_seg > 0.001) ? (ELEV_SPEED * dt / _seg) : 1;
+              // JANK FIX (2026-07-09): use the clamped moveDt() so a frame hitch
+              // can't fling segNorm (and the carried camera) a big chunk at once.
+              var _mrate = (_seg > 0.001) ? (ELEV_SPEED * moveDt(dt) / _seg) : 1;
               p.segNorm += _mrate;
               if (p.segNorm >= 1) {
+                // Arrived at the next floor. Snap segNorm to exactly 0 and DWELL:
+                // the pad must rest EXACTLY on the floor Y during the pause so a
+                // rider can step off level with the deck (carrying the sub-frame
+                // overshoot into position would leave the pad a hair off the floor
+                // during dwell → an unlevel step-off). smootherstep already made the
+                // approach velocity ~0 here, so snapping the tiny remainder is
+                // invisible; the intentional dwell dominates. No mid-floor jerk.
                 p.segNorm = 0;
                 p.curStop = _toI;
                 if (p.curStop >= _n - 1)      p.dir = -1;   // reached top → head down
@@ -1533,7 +1555,10 @@
           if (p.pauseT > 0) {
             p.pauseT -= dt;
           } else {
-            var rate = (span > 0.001) ? (ELEV_SPEED * dt / span) : 1;
+            // JANK FIX (2026-07-09): clamp dt via moveDt() so a frame hitch can't
+            // spike `rate` and fling yNorm (→ eased pad Y → carried camera) a big
+            // jump in one frame. The ride just resumes smoothly next frame.
+            var rate = (span > 0.001) ? (ELEV_SPEED * moveDt(dt) / span) : 1;
             p.yNorm += p.dir * rate;
             if (p.yNorm >= 1) {
               p.yNorm  = 1;
@@ -1562,7 +1587,8 @@
           if (p.pauseT > 0) {
             p.pauseT -= dt;
           } else {
-            var tStep = (p.totalDist > 0.001) ? (TRANSIT_SPEED * dt / p.totalDist) : 1;
+            // JANK FIX (2026-07-09): clamped moveDt() — a hitch can't lurch the pod.
+            var tStep = (p.totalDist > 0.001) ? (TRANSIT_SPEED * moveDt(dt) / p.totalDist) : 1;
             p.tNorm  += p.dir * tStep;
             if (p.tNorm >= 1) {
               p.tNorm  = 1;
