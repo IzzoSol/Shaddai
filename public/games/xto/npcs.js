@@ -1,22 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   XTO_Npcs — the citizens (module #4)
-   OPTION B: 2.5D camera-facing billboard crowd + stylized neon traffic.
-   Owner intent: "people walking around ... a FULL city."
+   XTO_Npcs — the townsfolk + traffic (module #4)   [REWORK — "leaning A" 3D]
+
+   Owner feedback that drove this rewrite:
+     1. The old 2D billboard crowd was HORRIBLE  -> REMOVED.
+        Replaced with a FEW (5–8) real 3D agent GLBs as townsfolk. Small-town
+        density. They stand at a spot or gently wander between waypoints.
+        Animation ONLY if the GLB ships a walk/idle clip; NEVER dance/attack.
+     2. The old cars were BOX cars -> REMOVED.
+        Replaced with 2–3 sleek futuristic HOVER-PODS: rounded capsule/ellipsoid
+        body, curved tinted canopy, glowing underlight + thruster, tapered nose,
+        neon trim. They glide slowly above the road and ease to a stop near you.
+     3. Night = fewer townsfolk out (some go home / hurry), guarded cheaply
+        via ctx.time.night.
 
    Contract:  window.XTO_Npcs = { build(ctx) -> { update(dt,t) } }
-   ctx = { THREE, scene, camera, renderer, loader, canvas, hud, keys, input,
-           player:{position?}, time:{dayFrac,night}, state, helpers, flags,
-           lights, chosen, city }
-   ctx.city (if present) = { radius, isSolid(x,z), starts, spawn }.  Ground is FLAT y=0.
+   ctx = { THREE, scene, loader, camera, time:{night},
+           player:{position}, city:{radius,isSolid,starts,shaddai,spawn},
+           terrain:{heightAt} }        (built AFTER City)
 
-   Design notes:
-   - 6 shared textures /assets/xto/npc-1..6.png -> 6 shared materials (loaded once).
-     Missing image -> stylized rounded colored silhouette (still a billboard, never a cube).
-   - ~14-22 citizens wander street waypoints, pause, separate lightly, dodge buildings.
-   - Day = more strollers + calm pace. Night = fewer citizens + hurried pace.
-   - A few low-poly neon cars loop the main streets; they slow/stop near the player.
-   - Perf: shared plane geometry, 6 shared materials, object pool, O(n<24) update,
-     no per-frame allocation (scratch vectors reused).
+   Perf: agent GLB loaded ONCE each (cache), scene = a few objects, O(n) update,
+   no per-frame allocation (scratch vectors reused), mixer.update for animated GLBs.
    ═══════════════════════════════════════════════════════════════════════════ */
 (function () {
   window.XTO_Npcs = {
@@ -24,30 +27,18 @@
       const THREE = ctx.THREE;
       const scene = ctx.scene;
       const camera = ctx.camera;
+      const loader = ctx.loader || null;
 
-      // ── City info (guard if City module absent) ──────────────────────────
+      // ── Guards: this module leans on City + Terrain. Degrade gracefully. ──
       const city = ctx.city || null;
-      const RADIUS = (city && +city.radius) || 120;
-      const WANDER_R = RADIUS * 0.9;                 // keep citizens inside the ring
+      const terrain = ctx.terrain || null;
+      const RADIUS = (city && +city.radius) || 130;
       const isSolid = (city && typeof city.isSolid === 'function')
         ? city.isSolid
-        : function () { return false; };             // no buildings known -> open ground
-
-      // ── Tunables ─────────────────────────────────────────────────────────
-      const MAX_CITIZENS = 22;                       // hard cap (pool size)
-      const DAY_CITIZENS = 22;                        // active in daytime
-      const NIGHT_CITIZENS = 12;                       // thinned out at night
-      const CITIZEN_SPEED_DAY = 2.4;                   // calm stroll
-      const CITIZEN_SPEED_NIGHT = 4.0;                 // hurry home
-      const MAX_CARS = 5;
-      const CAR_SPEED = 9.0;
-
-      const TEX_PATHS = [
-        '/assets/xto/npc-1.png', '/assets/xto/npc-2.png', '/assets/xto/npc-3.png',
-        '/assets/xto/npc-4.png', '/assets/xto/npc-5.png', '/assets/xto/npc-6.png',
-      ];
-      // Fallback silhouette palette (used per-slot if its texture is missing).
-      const FALLBACK_COLORS = [0x5ad1ff, 0xff7ac2, 0xffd15a, 0x7affa8, 0xb98cff, 0xff9b5a];
+        : function () { return false; };
+      const groundY = (terrain && typeof terrain.heightAt === 'function')
+        ? terrain.heightAt
+        : function () { return 0; };
 
       // ── Root group ───────────────────────────────────────────────────────
       const root = new THREE.Group();
@@ -55,202 +46,255 @@
       scene.add(root);
 
       // ── Scratch (reused every frame — zero per-frame allocation) ──────────
-      const _camPos = new THREE.Vector3();
       const _tmpA = new THREE.Vector3();
       const _tmpB = new THREE.Vector3();
       const _playerPos = new THREE.Vector3();
 
-      // ── Shared geometry (all citizens share ONE plane) ───────────────────
-      // Plane is 1x1 with its foot at y=0 (translate up by 0.5 so origin sits at ground).
-      const billboardGeo = new THREE.PlaneGeometry(1, 1);
-      billboardGeo.translate(0, 0.5, 0);
-      const shadowGeo = new THREE.CircleGeometry(0.5, 16);
+      // ── Tunables ─────────────────────────────────────────────────────────
+      const AGENT_SCALE_TARGET = 1.9;   // desired townsfolk height (world units)
+      const WANDER_R = RADIUS * 0.72;   // keep folk near the plaza/shops, inside ring
+      const WALK_SPEED_DAY = 1.3;       // gentle stroll
+      const WALK_SPEED_NIGHT = 2.6;     // hurry home
+      const REPOINT_DIST = 1.2;         // reached-waypoint threshold
+      const DAY_TOWNSFOLK = 7;          // out during the day (5–8 range)
+      const NIGHT_TOWNSFOLK = 3;        // most have gone home
 
-      // Shared soft ground-shadow material (one instance, reused).
-      const shadowMat = new THREE.MeshBasicMaterial({
-        color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false,
-      });
+      // Agent GLBs (loaded ONCE each, cached in glbCache). ~a handful placed.
+      const AGENT_URLS = {
+        SHADDAI: '/assets/agents/SHADDAI.glb',
+        ORACLE:  '/assets/agents/ORACLE.glb',
+        QUILL:   '/assets/agents/QUILL.glb',
+        PIKADON: '/assets/agents/PIKADON.glb',
+        NEXUS:   '/assets/agents/NEXUS.glb',
+        ZEROX:   '/assets/agents/ZEROX.glb',
+      };
+      // One townsperson per agent (7 total). Home = their shop/start if City gave one.
+      const AGENT_ORDER = ['ORACLE', 'QUILL', 'PIKADON', 'NEXUS', 'ZEROX', 'SHADDAI'];
 
-      // ── Rounded-silhouette fallback texture (canvas, generated once, tinted per-mat) ──
-      function makeSilhouetteTexture() {
-        const cv = document.createElement('canvas');
-        cv.width = 64; cv.height = 128;
-        const g = cv.getContext('2d');
-        g.clearRect(0, 0, 64, 128);
-        g.fillStyle = '#ffffff';
-        // head
-        g.beginPath(); g.arc(32, 26, 15, 0, Math.PI * 2); g.fill();
-        // body — rounded capsule torso + legs hint
-        g.beginPath();
-        g.moveTo(14, 52);
-        g.quadraticCurveTo(10, 44, 22, 42);
-        g.lineTo(42, 42);
-        g.quadraticCurveTo(54, 44, 50, 52);
-        g.lineTo(46, 116);
-        g.quadraticCurveTo(46, 124, 38, 124);
-        g.lineTo(34, 124); g.lineTo(34, 92); g.lineTo(30, 92); g.lineTo(30, 124);
-        g.lineTo(26, 124);
-        g.quadraticCurveTo(18, 124, 18, 116);
-        g.closePath(); g.fill();
-        const tex = new THREE.CanvasTexture(cv);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        return tex;
-      }
-      const silhouetteTex = makeSilhouetteTexture();
-
-      // ── Build the 6 SHARED materials (image if present, silhouette fallback if not) ──
-      // Each material is reused across many citizens => texture loaded once, not per NPC.
-      const loaderTex = new THREE.TextureLoader();
-      const sharedMats = TEX_PATHS.map(function (path, i) {
-        // Start each material on the tinted-silhouette fallback so the crowd is
-        // never empty; upgrade to the real portrait the moment it loads.
-        const mat = new THREE.MeshBasicMaterial({
-          map: silhouetteTex,
-          color: new THREE.Color(FALLBACK_COLORS[i]),
-          transparent: true,
-          alphaTest: 0.35,
-          depthWrite: true,
-          side: THREE.DoubleSide,
+      const glbCache = Object.create(null);   // url -> Promise<gltf> (load once)
+      function loadGLB(url) {
+        if (!loader) return Promise.reject(new Error('no loader'));
+        if (glbCache[url]) return glbCache[url];
+        glbCache[url] = new Promise(function (resolve, reject) {
+          loader.load(url, resolve, undefined, reject);
         });
-        loaderTex.load(
-          path,
-          function (tex) {                 // success -> use HF art, drop the tint
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.magFilter = THREE.LinearFilter;
-            mat.map = tex;
-            mat.color.setHex(0xffffff);
-            mat.needsUpdate = true;
-          },
-          undefined,
-          function () { /* keep silhouette fallback silently */ }
-        );
-        return mat;
-      });
+        return glbCache[url];
+      }
 
-      // ── Waypoint helper: a random reachable point on the streets ──────────
+      // Pick a "home" position for a townsperson. Prefer their shop start; else
+      // a random reachable point near the plaza. Returns {x,z}.
+      function homeFor(name) {
+        const s = city && city.starts && city.starts[name];
+        if (s && typeof s.x === 'number' && !isSolid(s.x, s.z)) return { x: s.x, z: s.z };
+        const spot = randomWaypoint(_tmpA);
+        return { x: spot.x, z: spot.z };
+      }
+
+      // A random reachable point on the streets (never inside a building).
       function randomWaypoint(out) {
-        for (let tries = 0; tries < 12; tries++) {
+        for (let tries = 0; tries < 14; tries++) {
           const a = Math.random() * Math.PI * 2;
           const r = Math.sqrt(Math.random()) * WANDER_R;
           const x = Math.cos(a) * r, z = Math.sin(a) * r;
           if (!isSolid(x, z)) { out.set(x, 0, z); return out; }
         }
-        out.set(0, 0, 0); return out;          // fallback: plaza centre
+        out.set(0, 0, 0); return out;   // fallback: plaza centre
       }
 
-      // ── Citizen pool ──────────────────────────────────────────────────────
-      const citizens = [];
-      const _wp = new THREE.Vector3();
-      for (let i = 0; i < MAX_CITIZENS; i++) {
+      // ── Townsfolk pool (filled asynchronously as GLBs load) ───────────────
+      const townsfolk = [];   // { grp, mixer|null, action|null, home, target, wander, pauseT, speedScale, radiusScale }
+
+      function normalizeAndPlace(gltf, home) {
+        const src = gltf.scene || (gltf.scenes && gltf.scenes[0]);
+        if (!src) return null;
+        const model = src.clone(true);
+
+        // Scale to ~AGENT_SCALE_TARGET tall using the source bounding box.
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const h = size.y || 1;
+        const scale = AGENT_SCALE_TARGET / h;
+        model.scale.setScalar(scale);
+
+        // Re-measure after scaling so feet land exactly on the ground.
+        const box2 = new THREE.Box3().setFromObject(model);
+        const footOffset = -box2.min.y;   // lift so lowest point sits at grp origin
+
         const grp = new THREE.Group();
-        const matIdx = i % sharedMats.length;
+        model.position.y = footOffset;
+        grp.add(model);
 
-        const bb = new THREE.Mesh(billboardGeo, sharedMats[matIdx]);
-        const scale = 1.7 + Math.random() * 0.7;         // vary height 1.7–2.4
-        bb.scale.setScalar(scale);
-        grp.add(bb);
-
+        // Soft ground shadow (shared geo/mat).
         const shadow = new THREE.Mesh(shadowGeo, shadowMat);
         shadow.rotation.x = -Math.PI / 2;
         shadow.position.y = 0.02;
-        shadow.scale.setScalar(scale * 0.55);
+        shadow.scale.setScalar(0.9);
         grp.add(shadow);
 
-        // spawn position
-        const start = new THREE.Vector3();
-        randomWaypoint(start);
-        grp.position.copy(start);
+        grp.position.set(home.x, groundY(home.x, home.z), home.z);
         root.add(grp);
 
-        const target = new THREE.Vector3();
-        randomWaypoint(target);
+        // Animation: ONLY use a walk/idle clip. Never dance/attack/heavy/flip.
+        let mixer = null, walkAction = null, idleAction = null;
+        const clips = gltf.animations || [];
+        if (clips.length) {
+          const walk = pickClip(clips, ['walk', 'run', 'stroll', 'move']);
+          const idle = pickClip(clips, ['idle', 'stand', 'breath', 'wait']);
+          if (walk || idle) {
+            mixer = new THREE.AnimationMixer(model);
+            if (walk) { walkAction = mixer.clipAction(walk); walkAction.play(); walkAction.setEffectiveWeight(0); }
+            if (idle) { idleAction = mixer.clipAction(idle); idleAction.play(); idleAction.setEffectiveWeight(1); }
+          }
+        }
 
-        citizens.push({
-          grp: grp,
-          billboard: bb,
-          baseScale: scale,
-          target: target,
-          pauseT: 0,                                   // >0 = standing still
-          bobPhase: Math.random() * Math.PI * 2,
-          active: true,
-        });
+        return { grp, mixer, walkAction, idleAction };
       }
 
-      // ── Traffic: stylized low-poly neon cars (NOT cubes) ─────────────────
-      // Shared child geometries; each car is its own small group so it can drive.
-      const bodyGeo = new THREE.BoxGeometry(1.9, 0.55, 3.6);
-      const cabinGeo = new THREE.BoxGeometry(1.5, 0.5, 1.7);
-      const windshieldGeo = new THREE.BoxGeometry(1.45, 0.42, 0.12);
-      const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12);
-      const lightGeo = new THREE.SphereGeometry(0.14, 8, 8);
-
-      const CAR_COLORS = [0xff2d6f, 0x22d3ff, 0xa855f7, 0x34e37a, 0xffb020];
-      const cars = [];
-
-      function makeCar(colorHex) {
-        const car = new THREE.Group();
-
-        const bodyMat = new THREE.MeshStandardMaterial({
-          color: colorHex, metalness: 0.6, roughness: 0.35,
-          emissive: colorHex, emissiveIntensity: 0.25,
-        });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.55; car.add(body);
-
-        const cabin = new THREE.Mesh(cabinGeo, bodyMat);
-        cabin.position.set(0, 1.0, -0.2); car.add(cabin);
-
-        const glassMat = new THREE.MeshStandardMaterial({
-          color: 0x081018, metalness: 0.9, roughness: 0.1,
-          emissive: 0x0a2233, emissiveIntensity: 0.6,
-        });
-        const windshield = new THREE.Mesh(windshieldGeo, glassMat);
-        windshield.position.set(0, 1.0, 0.65); car.add(windshield);
-
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-        const wheelOffX = 1.0, wheelOffZ = 1.15;
-        [[-wheelOffX, wheelOffZ], [wheelOffX, wheelOffZ],
-         [-wheelOffX, -wheelOffZ], [wheelOffX, -wheelOffZ]].forEach(function (p) {
-          const w = new THREE.Mesh(wheelGeo, wheelMat);
-          w.rotation.z = Math.PI / 2;
-          w.position.set(p[0], 0.42, p[1]); car.add(w);
-        });
-
-        // taillight glow (rear, emissive red)
-        const tailMat = new THREE.MeshStandardMaterial({
-          color: 0xff2222, emissive: 0xff2222, emissiveIntensity: 1.6,
-        });
-        [[-0.6, -1.85], [0.6, -1.85]].forEach(function (p) {
-          const tl = new THREE.Mesh(lightGeo, tailMat);
-          tl.position.set(p[0], 0.6, p[1]); car.add(tl);
-        });
-
-        root.add(car);
-        return car;
+      // Find a clip whose name loosely matches one of the allowed keywords.
+      // Explicitly rejects violent/dance clips regardless of match.
+      const BANNED = ['attack', 'atk', 'dance', 'flip', 'heavy', 'hit', 'die', 'death', 'jump', 'kick', 'punch', 'special', 'combo', 'windup', 'roll'];
+      function pickClip(clips, wanted) {
+        for (let w = 0; w < wanted.length; w++) {
+          for (let i = 0; i < clips.length; i++) {
+            const nm = (clips[i].name || '').toLowerCase();
+            if (isBanned(nm)) continue;
+            if (nm.indexOf(wanted[w]) !== -1) return clips[i];
+          }
+        }
+        return null;
+      }
+      function isBanned(nm) {
+        for (let i = 0; i < BANNED.length; i++) if (nm.indexOf(BANNED[i]) !== -1) return true;
+        return false;
       }
 
-      for (let i = 0; i < MAX_CARS; i++) {
-        const car = makeCar(CAR_COLORS[i % CAR_COLORS.length]);
-        // Cars drive rectangular loops on "avenues" at fixed lane offsets.
-        const lane = (0.35 + 0.5 * (i / MAX_CARS)) * WANDER_R;
-        const loopRadius = Math.min(lane, WANDER_R - 8);
+      // Kick off loads — one townsperson per agent, in order. Failures are silent.
+      AGENT_ORDER.forEach(function (name, idx) {
+        const url = AGENT_URLS[name];
+        if (!url) return;
+        const home = homeFor(name);
+        loadGLB(url).then(function (gltf) {
+          const built = normalizeAndPlace(gltf, home);
+          if (!built) return;
+          const target = new THREE.Vector3();
+          randomWaypoint(target);
+          townsfolk.push({
+            name: name,
+            grp: built.grp,
+            mixer: built.mixer,
+            walkAction: built.walkAction,
+            idleAction: built.idleAction,
+            home: home,
+            target: target,
+            pauseT: 1 + Math.random() * 3,   // start settled at their spot
+            homebody: (idx % 2 === 0),       // half tend to loiter near their shop
+            slot: idx,
+          });
+        }).catch(function () { /* GLB missing -> that person just isn't there */ });
+      });
+
+      // ── Shared shadow geo/mat (townsfolk + used nowhere else) ─────────────
+      const shadowGeo = new THREE.CircleGeometry(0.55, 20);
+      const shadowMat = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false,
+      });
+
+      // ══════════════════════════════════════════════════════════════════════
+      //  FUTURISTIC HOVER-PODS (2–3)  — sleek rounded speeders, NOT boxes.
+      //  Body = squashed capsule/ellipsoid. Canopy = curved tinted glass dome.
+      //  Underlight bar + rear thruster glow. Tapered nose. Neon trim ring.
+      //  All child geometries are SHARED across pods (built once).
+      // ══════════════════════════════════════════════════════════════════════
+      const NUM_PODS = 3;
+
+      // Rounded ellipsoid body: a sphere squashed into a smooth teardrop-ish hull.
+      const podBodyGeo = new THREE.SphereGeometry(1, 24, 16);
+      podBodyGeo.scale(1.05, 0.5, 2.0);          // wide-ish, low, long -> sleek hull
+      // Tapered nose cone (smooth, points forward +Z).
+      const podNoseGeo = new THREE.ConeGeometry(0.85, 1.7, 24);
+      podNoseGeo.rotateX(Math.PI / 2);           // point along +Z
+      // Curved tinted canopy — a half-sphere dome (top-front bubble).
+      const podCanopyGeo = new THREE.SphereGeometry(0.72, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2);
+      podCanopyGeo.scale(1.0, 0.85, 1.35);
+      // Glowing underlight bar (thin rounded capsule along belly).
+      const podUnderGeo = new THREE.CapsuleGeometry(0.14, 2.4, 4, 8);
+      podUnderGeo.rotateX(Math.PI / 2);
+      // Rear thruster ring + glow disc.
+      const podThrusterGeo = new THREE.TorusGeometry(0.34, 0.12, 10, 20);
+      const podGlowGeo = new THREE.CircleGeometry(0.3, 16);
+      // Neon trim ring around the hull midsection.
+      const podTrimGeo = new THREE.TorusGeometry(1.35, 0.055, 8, 32);
+      podTrimGeo.scale(1.0, 1.0, 1.45);          // stretch to hug the long hull
+
+      const POD_COLORS = [0x22d3ff, 0xff2d6f, 0xa855f7];   // cyan / magenta / violet
+
+      // Shared materials keyed by color index (metallic hull + one neon per pod).
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1622, metalness: 0.5, roughness: 0.08,
+        transparent: true, opacity: 0.55,
+        emissive: 0x123449, emissiveIntensity: 0.5,
+      });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x0b0f16, metalness: 0.7, roughness: 0.4 });
+
+      const pods = [];
+      function makePod(colorHex) {
+        const pod = new THREE.Group();
+
+        const hullMat = new THREE.MeshStandardMaterial({
+          color: 0xdfe9f5, metalness: 0.85, roughness: 0.22,
+          emissive: colorHex, emissiveIntensity: 0.06,
+        });
+        const neonMat = new THREE.MeshBasicMaterial({ color: colorHex });
+        const neonSoft = new THREE.MeshBasicMaterial({
+          color: colorHex, transparent: true, opacity: 0.85,
+        });
+
+        const body = new THREE.Mesh(podBodyGeo, hullMat);
+        body.position.y = 0.7; pod.add(body);
+
+        const nose = new THREE.Mesh(podNoseGeo, hullMat);
+        nose.position.set(0, 0.65, 2.35); pod.add(nose);
+
+        const canopy = new THREE.Mesh(podCanopyGeo, glassMat);
+        canopy.position.set(0, 0.95, 0.35); pod.add(canopy);
+
+        const trim = new THREE.Mesh(podTrimGeo, neonMat);
+        trim.position.y = 0.7; pod.add(trim);
+
+        const under = new THREE.Mesh(podUnderGeo, neonSoft);
+        under.position.set(0, 0.28, 0); pod.add(under);
+
+        const thruster = new THREE.Mesh(podThrusterGeo, darkMat);
+        thruster.position.set(0, 0.7, -2.05); pod.add(thruster);
+        const glow = new THREE.Mesh(podGlowGeo, neonMat);
+        glow.position.set(0, 0.7, -2.12);
+        glow.rotation.y = Math.PI;            // face rearward
+        pod.add(glow);
+
+        pod._underlight = under;               // pulse handle
+        pod._glow = glow;
+        root.add(pod);
+        return pod;
+      }
+
+      for (let i = 0; i < NUM_PODS; i++) {
+        const pod = makePod(POD_COLORS[i % POD_COLORS.length]);
+        const lane = (0.42 + 0.42 * (i / Math.max(1, NUM_PODS - 1))) * WANDER_R;
+        const loopRadius = Math.min(lane, WANDER_R - 6);
         const dir = (i % 2 === 0) ? 1 : -1;
-        const startAng = (i / MAX_CARS) * Math.PI * 2;
-        car.position.set(Math.cos(startAng) * loopRadius, 0, Math.sin(startAng) * loopRadius);
-        cars.push({
-          car: car,
+        const startAng = (i / NUM_PODS) * Math.PI * 2;
+        pods.push({
+          pod: pod,
           angle: startAng,
           radius: loopRadius,
           dir: dir,
-          speedMul: 1,                                 // eased toward target each frame
+          speedMul: 1,          // eased toward target each frame (smooth stop/go)
+          hoverPhase: Math.random() * Math.PI * 2,
         });
       }
 
-      // ── Per-frame state ──────────────────────────────────────────────────
-      const REPOINT_DIST = 1.4;                          // reached-target threshold
-      const SEP_DIST = 2.2;                              // separation radius
-      const SEP_DIST2 = SEP_DIST * SEP_DIST;
-
+      // ── helpers ───────────────────────────────────────────────────────────
       function getPlayerPos(out) {
         const p = ctx.player;
         if (p) {
@@ -260,106 +304,116 @@
         return out.set(0, 0, 0);
       }
 
+      const POD_SPEED = 5.0;    // slow, graceful glide
+      const HOVER_H = 0.9;      // ride height above the ground
+
       // ── UPDATE ────────────────────────────────────────────────────────────
       function update(dt, t) {
         const night = !!(ctx.time && ctx.time.night);
-        const activeCount = night ? NIGHT_CITIZENS : DAY_CITIZENS;
-        const speed = night ? CITIZEN_SPEED_NIGHT : CITIZEN_SPEED_DAY;
+        const activeCount = night ? NIGHT_TOWNSFOLK : DAY_TOWNSFOLK;
+        const walkSpeed = night ? WALK_SPEED_NIGHT : WALK_SPEED_DAY;
 
-        camera.getWorldPosition(_camPos);
         getPlayerPos(_playerPos);
 
-        // ── Citizens ──
-        for (let i = 0; i < citizens.length; i++) {
-          const c = citizens[i];
+        // ── Townsfolk ──
+        for (let i = 0; i < townsfolk.length; i++) {
+          const c = townsfolk[i];
 
-          // Day/night thinning: extra citizens simply hide (cheap toggle).
-          const shouldBeActive = i < activeCount;
-          if (c.active !== shouldBeActive) {
-            c.active = shouldBeActive;
-            c.grp.visible = shouldBeActive;
+          // Day/night thinning: extras "go home" (hidden cheaply). Priority by slot.
+          const shouldBeActive = c.slot < activeCount;
+          if (c.grp.visible !== shouldBeActive) c.grp.visible = shouldBeActive;
+          if (!shouldBeActive) {
+            // keep mixer frozen when hidden (no update) — cheap
+            continue;
           }
-          if (!shouldBeActive) continue;
 
           const pos = c.grp.position;
+          let moving = false;
 
           if (c.pauseT > 0) {
-            c.pauseT -= dt;                              // standing still (idle)
+            c.pauseT -= dt;                    // standing at their spot (idle)
           } else {
-            // Vector toward current target (flat, y ignored).
             _tmpA.set(c.target.x - pos.x, 0, c.target.z - pos.z);
             const dist = _tmpA.length();
             if (dist < REPOINT_DIST) {
-              // arrived -> maybe pause, then pick a fresh waypoint
-              randomWaypoint(c.target);
-              if (Math.random() < 0.35) c.pauseT = 0.8 + Math.random() * 2.5;
-            } else {
-              _tmpA.multiplyScalar(1 / dist);            // normalized heading
-
-              // light separation: nudge away from close neighbours
-              for (let j = 0; j < citizens.length; j++) {
-                if (j === i || !citizens[j].active) continue;
-                const op = citizens[j].grp.position;
-                const dx = pos.x - op.x, dz = pos.z - op.z;
-                const d2 = dx * dx + dz * dz;
-                if (d2 > 0.0001 && d2 < SEP_DIST2) {
-                  const inv = 1 / Math.sqrt(d2);
-                  _tmpA.x += dx * inv * 0.5;
-                  _tmpA.z += dz * inv * 0.5;
-                }
+              // arrived -> pause a bit, then choose next spot.
+              // Homebodies mostly return to their shop; others roam the plaza.
+              if (c.homebody && Math.random() < 0.6) {
+                c.target.set(c.home.x, 0, c.home.z);
+              } else {
+                randomWaypoint(c.target);
               }
-              // renormalize after separation
-              const hl = Math.hypot(_tmpA.x, _tmpA.z) || 1;
-              _tmpA.x /= hl; _tmpA.z /= hl;
+              c.pauseT = 1.5 + Math.random() * (night ? 1.5 : 4.0);   // linger less at night
+            } else {
+              _tmpA.multiplyScalar(1 / dist);   // heading
 
-              const step = speed * dt;
+              const step = walkSpeed * dt;
               const nx = pos.x + _tmpA.x * step;
               const nz = pos.z + _tmpA.z * step;
-
-              // revert step if it enters a building or leaves the ring
               const inRing = (nx * nx + nz * nz) < (WANDER_R * WANDER_R);
               if (inRing && !isSolid(nx, nz)) {
                 pos.x = nx; pos.z = nz;
+                moving = true;
+                // face direction of travel
+                c.grp.rotation.y = Math.atan2(_tmpA.x, _tmpA.z);
               } else {
-                randomWaypoint(c.target);                // blocked -> new goal
+                randomWaypoint(c.target);        // blocked -> new goal
               }
             }
           }
 
-          // gentle idle/walk bob on the billboard
-          c.bobPhase += dt * (c.pauseT > 0 ? 2.2 : 6.0);
-          const bob = Math.sin(c.bobPhase) * 0.04;
-          c.billboard.scale.y = c.baseScale * (1 + bob);
+          // keep feet on terrain (cheap sampler)
+          pos.y = groundY(pos.x, pos.z);
 
-          // Billboard face-camera: yaw only (keep upright, foot planted on flat ground).
-          _tmpB.set(_camPos.x - pos.x, 0, _camPos.z - pos.z);
-          c.grp.rotation.y = Math.atan2(_tmpB.x, _tmpB.z);
+          // Animation cross-fade: walk while moving, idle while paused — only if
+          // the GLB actually provided those clips.
+          if (c.mixer) {
+            c.mixer.update(dt);
+            if (c.walkAction && c.idleAction) {
+              const wantWalk = moving ? 1 : 0;
+              const wa = c.walkAction, ia = c.idleAction;
+              const cur = wa.getEffectiveWeight();
+              const next = cur + (wantWalk - cur) * Math.min(1, dt * 8);
+              wa.setEffectiveWeight(next);
+              ia.setEffectiveWeight(1 - next);
+            }
+          }
         }
 
-        // ── Traffic ──
-        for (let i = 0; i < cars.length; i++) {
-          const cc = cars[i];
+        // ── Hover-pods ──
+        for (let i = 0; i < pods.length; i++) {
+          const pp = pods[i];
 
-          // slow / stop when the player is near the car's path
-          _tmpA.copy(cc.car.position); _tmpA.y = 0;
+          // ease to a stop when the player is near this pod's path
+          _tmpA.copy(pp.pod.position); _tmpA.y = 0;
           const distToPlayer = _tmpA.distanceTo(_playerPos);
           let targetMul = 1;
-          if (distToPlayer < 6) targetMul = 0;            // full stop
-          else if (distToPlayer < 12) targetMul = 0.35;    // crawl
-          if (night) targetMul *= 1.15;                    // slightly brisker at night
-          // ease the speed multiplier (smooth stop/go, no jerk)
-          cc.speedMul += (targetMul - cc.speedMul) * Math.min(1, dt * 4);
+          if (distToPlayer < 6) targetMul = 0;         // full, smooth stop
+          else if (distToPlayer < 13) targetMul = 0.3; // ease down / crawl
+          pp.speedMul += (targetMul - pp.speedMul) * Math.min(1, dt * 3);
 
-          const angStep = (CAR_SPEED / Math.max(6, cc.radius)) * dt * cc.dir * cc.speedMul;
-          cc.angle += angStep;
+          const angStep = (POD_SPEED / Math.max(6, pp.radius)) * dt * pp.dir * pp.speedMul;
+          pp.angle += angStep;
 
-          const px = Math.cos(cc.angle) * cc.radius;
-          const pz = Math.sin(cc.angle) * cc.radius;
-          cc.car.position.set(px, 0, pz);
+          const px = Math.cos(pp.angle) * pp.radius;
+          const pz = Math.sin(pp.angle) * pp.radius;
 
-          // heading = tangent to the loop (drive forward along the circle)
-          const heading = cc.angle + (cc.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
-          cc.car.rotation.y = heading;
+          // hover: ride above ground with a gentle bob
+          pp.hoverPhase += dt * 1.4;
+          const bob = Math.sin(pp.hoverPhase) * 0.08;
+          pp.pod.position.set(px, groundY(px, pz) + HOVER_H + bob, pz);
+
+          // heading = tangent to the loop (nose leads)
+          const heading = pp.angle + (pp.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+          pp.pod.rotation.y = heading;
+          // slight bank into the turn for style
+          pp.pod.rotation.z = -0.12 * pp.dir * pp.speedMul;
+
+          // pulse the underlight/thruster (brighter when moving)
+          const glowP = 0.55 + 0.45 * (0.5 + 0.5 * Math.sin(pp.hoverPhase * 1.7));
+          const drive = 0.5 + 0.5 * pp.speedMul;
+          if (pp.pod._underlight) pp.pod._underlight.material.opacity = 0.45 + 0.4 * glowP * drive;
+          if (pp.pod._glow) pp.pod._glow.scale.setScalar(0.8 + 0.5 * glowP * drive);
         }
       }
 
@@ -367,8 +421,8 @@
       return {
         update: update,
         root: root,
-        citizenCount: citizens.length,
-        carCount: cars.length,
+        get townsfolkCount() { return townsfolk.length; },
+        podCount: pods.length,
       };
     },
   };

@@ -48,7 +48,8 @@
       scene.add(rig);
 
       let mixer = null;
-      const clips = { idle: null, walk: null, run: null, jump: null };
+      // Only locomotion clips we ever play: walk / run / idle. No jump/attack/dance.
+      const clips = { idle: null, walk: null, run: null };
       let curAction = null;
 
       // ── Load helper (promisified single-URL load) ────────────────────────
@@ -82,21 +83,32 @@
         });
       }
 
-      // Categorize animation clips by name.
+      // Categorize animation clips STRICTLY by name.
+      // Owner bug: the GLB has many clips (idle/walk/run/attack/dance/flip) and a
+      // "first clip" fallback made her DANCE. So we NEVER fall back to an arbitrary
+      // clip. Only clips whose name explicitly matches walk / run / idle are used.
+      // Anything else (attack/dance/flip/heavy/victory/…) is ignored entirely.
+      // If no walk clip exists we leave clips.walk null → caller does a procedural
+      // walk instead of ever playing a random clip.
+      const RE_RUN  = /run|sprint|jog/i;   // run / sprint / jog
+      const RE_WALK = /walk/i;             // walk ONLY (not generic "move")
+      const RE_IDLE = /idle|stand/i;       // idle / stand
       function classifyClips(animations) {
         if (!animations || !animations.length) return;
         for (let i = 0; i < animations.length; i++) {
           const c = animations[i];
-          const nm = (c.name || '').toLowerCase();
-          if (!clips.run && /run|sprint|jog/.test(nm)) clips.run = c;
-          else if (!clips.walk && /walk|move/.test(nm)) clips.walk = c;
-          else if (!clips.jump && /jump|leap/.test(nm)) clips.jump = c;
-          else if (!clips.idle && /idle|stand|breath/.test(nm)) clips.idle = c;
+          const nm = c.name || '';
+          // Run takes precedence, then walk, then idle. A run clip must NOT also be
+          // caught as walk, so test run first and use else-if.
+          if (!clips.run && RE_RUN.test(nm)) clips.run = c;
+          else if (!clips.walk && RE_WALK.test(nm)) clips.walk = c;
+          else if (!clips.idle && RE_IDLE.test(nm)) clips.idle = c;
         }
-        // Fallbacks: if nothing matched, use first clip as idle; derive walk/run.
-        if (!clips.idle) clips.idle = animations[0] || null;
-        if (!clips.walk) clips.walk = clips.run || clips.idle;
-        if (!clips.run)  clips.run  = clips.walk || clips.idle;
+        // If only one of walk/run matched by name, reuse the matched locomotion clip
+        // (still a real walk/run — never a dance/attack). Idle stays null if none
+        // named → caller pauses on a neutral pose instead of playing a random clip.
+        if (!clips.walk && clips.run)  clips.walk = clips.run;
+        if (!clips.run  && clips.walk) clips.run  = clips.walk;
       }
 
       // Neat fallback: capsule body + head + glowing visor (never a plain box).
@@ -160,15 +172,25 @@
       }
       rig.add(hero);
 
-      // Cache actions
-      const actions = { idle: null, walk: null, run: null, jump: null };
+      // Cache actions — ONLY walk / run / idle. Any of these may be null; the state
+      // machine handles nulls (pauses on neutral pose / uses procedural walk).
+      const actions = { idle: null, walk: null, run: null };
+      // Whether we must synthesize a walk (no named walk/run clip in the GLB).
+      const needProceduralWalk = !!mixer && !clips.walk && !clips.run;
       if (mixer) {
         if (clips.idle) actions.idle = mixer.clipAction(clips.idle);
         if (clips.walk) actions.walk = mixer.clipAction(clips.walk);
         if (clips.run)  actions.run  = mixer.clipAction(clips.run);
-        if (clips.jump) { actions.jump = mixer.clipAction(clips.jump); actions.jump.setLoop(THREE.LoopOnce, 1); actions.jump.clampWhenFinished = true; }
+        // Start on idle if a real idle clip exists; otherwise leave the rig on its
+        // neutral bind/standing pose (mixer idle → no random clip plays).
         if (actions.idle) { actions.idle.play(); curAction = actions.idle; }
       }
+      // Procedural walk applies when: fallback capsule hero (no clips at all) OR a
+      // GLB that has NO named walk/run clip. It sways the whole rig so she "walks"
+      // without ever playing an unrelated (dance/attack/flip) clip.
+      const procWalk = (usedFallback || needProceduralWalk);
+      // Baseline for procedural sway so we can restore the rest pose when idle.
+      const heroBaseY = hero.position.y;
       function crossTo(next) {
         if (!next || next === curAction) return;
         next.reset().play();
@@ -180,6 +202,7 @@
 
       // ── Spawn position (from City, guarded) ──────────────────────────────
       const city = ctx.city || null;
+      const terrain = ctx.terrain || null;  // { heightAt(x,z) } — guarded everywhere
       const cityRadius = (city && typeof city.radius === 'number') ? city.radius : 380;
       const HERO_RADIUS = 0.5; // for collision probing
       const pos = new THREE.Vector3(0, 0, 0);
@@ -347,7 +370,8 @@
         if (jumpDown && !wasJumpDown && grounded) {
           yVel = JUMP_VEL;
           grounded = false;
-          if (actions.jump) { actions.jump.reset().play(); }
+          // No jump clip is ever played (owner: walk/run only). Locomotion clip
+          // keeps running underneath; the arc is purely positional.
         }
         wasJumpDown = jumpDown;
 
@@ -373,9 +397,23 @@
           pos.z = (pos.z / d) * maxR;
         }
 
-        // Vertical (jump arc). Ground is flat y=0.
-        pos.y += yVel * dt;
-        if (pos.y <= 0) { pos.y = 0; yVel = 0; if (!grounded) grounded = true; }
+        // Vertical (jump arc), relative to terrain ground height under the hero.
+        // Sample ctx.terrain.heightAt(x,z) so feet sit on the terrain; guard to 0
+        // if terrain (or a valid number) is absent.
+        let groundY = 0;
+        if (terrain && typeof terrain.heightAt === 'function') {
+          try {
+            const gy = terrain.heightAt(pos.x, pos.z);
+            if (typeof gy === 'number' && isFinite(gy)) groundY = gy;
+          } catch (_) { groundY = 0; }
+        }
+        if (grounded) {
+          // Stick to the terrain surface as the hero walks over hills/dips.
+          pos.y = groundY; yVel = 0;
+        } else {
+          pos.y += yVel * dt;
+          if (pos.y <= groundY) { pos.y = groundY; yVel = 0; grounded = true; }
+        }
 
         rig.position.copy(pos);
 
@@ -387,15 +425,41 @@
           rig.rotation.y = heading;
         }
 
-        // 9) Animation state machine.
-        if (mixer) {
-          if (!grounded && actions.jump) {
-            // jump action already one-shot; keep locomotion underneath if desired
+        // 9) Animation state machine — STRICTLY walk / run / idle.
+        //    Moving  → run clip if sprinting (else walk clip).
+        //    Still   → idle clip if one exists, else PAUSE on neutral pose.
+        //    Never crossfades to attack/dance/flip/heavy/victory (none are cached).
+        const moving = planarSpeedSq > 0.05;
+        if (mixer && !procWalk) {
+          if (moving) {
+            // Prefer run when sprinting; fall back to walk. If neither exists we
+            // simply keep the current clip (won't happen: procWalk covers that).
+            const loco = (isSprinting && actions.run) ? actions.run
+                       : (actions.walk || actions.run);
+            if (loco) crossTo(loco);
+          } else if (actions.idle) {
+            crossTo(actions.idle);   // gentle named idle
+          } else if (curAction) {
+            // No idle clip → freeze on a neutral standing pose (no random clip).
+            curAction.paused = true;
           }
-          if (planarSpeedSq > 0.05) {
-            crossTo(isSprinting && actions.run ? actions.run : actions.walk);
+          // Un-pause locomotion when we start moving again.
+          if (moving && curAction) curAction.paused = false;
+        }
+
+        // 9b) Procedural walk fallback (fallback hero, or GLB with no walk/run clip).
+        //     Sway the whole rig subtly so she visibly "walks"/"runs" — never a clip.
+        if (procWalk) {
+          if (moving) {
+            const gait = isSprinting ? 13.0 : 8.0;
+            const amp  = isSprinting ? 0.09 : 0.06;
+            const ph = (t || 0) * gait;
+            hero.position.y = heroBaseY + Math.abs(Math.sin(ph)) * amp; // stride bob
+            hero.rotation.z = Math.sin(ph) * (amp * 0.5);               // shoulder roll
           } else {
-            crossTo(actions.idle);
+            // Ease back to the rest pose when standing still.
+            hero.position.y += (heroBaseY - hero.position.y) * Math.min(1, 8 * dt);
+            hero.rotation.z += (0 - hero.rotation.z) * Math.min(1, 8 * dt);
           }
         }
 

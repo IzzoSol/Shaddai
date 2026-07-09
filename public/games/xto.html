@@ -41,11 +41,13 @@
 <div id="err"></div>
 
 <!-- ═══ XTO MODULES (classic scripts — each sets window.XTO_<Name> = { build(ctx) → {update(dt,t), ...} } before the shell runs) ═══ -->
-<script src="/games/xto/daynight.js?v=1"></script>
-<script src="/games/xto/city.js?v=1"></script>
-<script src="/games/xto/mechanics.js?v=1"></script>
-<script src="/games/xto/npcs.js?v=1"></script>
-<script src="/games/xto/player.js?v=1"></script>
+<script src="/games/xto/terrain.js?v=2"></script>
+<script src="/games/xto/daynight.js?v=2"></script>
+<script src="/games/xto/city.js?v=2"></script>
+<script src="/games/xto/mechanics.js?v=2"></script>
+<script src="/games/xto/npcs.js?v=2"></script>
+<script src="/games/xto/player.js?v=2"></script>
+<script src="/games/xto/story.js?v=2"></script>
 
 <!-- ═══ SHELL — owns renderer/scene/camera/loop + the shared context every module plugs into ═══ -->
 <script type="module">
@@ -123,11 +125,14 @@ const bootFill = document.getElementById('bootFill');
 const bootMsg  = document.getElementById('bootMsg');
 const updaters = [];
 const MODULES = [
+  ['XTO_Terrain',   'the land'],       // FIRST — city/player read ctx.terrain.heightAt
   ['XTO_DayNight',  'day & night'],
-  ['XTO_City',      'the city'],
+  ['XTO_City',      'the town'],
   ['XTO_Mechanics', 'your vitals'],
-  ['XTO_Npcs',      'the citizens'],
+  ['XTO_Npcs',      'the townsfolk'],
   ['XTO_Player',    'your hero'],
+  // XTO_Story self-bootstraps (polls window.XTO until player+city exist) so it is
+  // intentionally NOT listed here — listing it would double-invoke build().
 ];
 async function boot(){
   for(let i=0;i<MODULES.length;i++){
