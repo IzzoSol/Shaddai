@@ -1363,16 +1363,22 @@ function _nextAgentBody(){
       body.traverse(c=>{
         if(c.isMesh){
           c.castShadow=true; c.receiveShadow=true;
-          // Kill the white self-glow + mirror-sheen, and tint toward the agent's color so untextured
-          // Meshy bodies read as colored characters instead of glowing white blobs.
+          // Match the WORKING rooms/chamber viewer's material treatment so textured Meshy bodies
+          // read as their real texture (not flat/grey/tinted). Key: DON'T stomp the albedo when a
+          // texture map exists, force the map to sRGB, and give the body an IBL envMap response.
           const _acc = new THREE.Color((entry.a && entry.a.color) || '#9fb0e0');
           const mats = Array.isArray(c.material) ? c.material : [c.material];
           mats.forEach(m=>{ if(!m) return;
-            if(m.color){ m.color.set(0xffffff); m.color.lerp(_acc, m.map ? 0.16 : 0.6); } // textured=gentle, plain=strong
-            if('emissiveIntensity' in m) m.emissiveIntensity = 0;   // no self-glow
-            if(m.emissive) m.emissive.setRGB(0,0,0);
-            if('metalness' in m) m.metalness = Math.min(m.metalness ?? 0.5, 0.12);  // stop mirroring the white sky
-            if('roughness' in m) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
+            const hasTex = !!m.map;
+            if(hasTex && 'colorSpace' in m.map) m.map.colorSpace = THREE.SRGBColorSpace; // albedo must be sRGB or it renders washed/flat
+            if(m.color){
+              m.color.set(0xffffff);                       // textured: white multiplier = show the real albedo unchanged
+              if(!hasTex) m.color.lerp(_acc, 0.6);         // plain Meshy blob (no texture): tint to the agent color
+            }
+            if('emissiveIntensity' in m) m.emissiveIntensity = Math.min(m.emissiveIntensity ?? 0, 0.3); // trim self-glow, keep a touch (matches chamber viewer)
+            if('metalness' in m) m.metalness = Math.min(m.metalness ?? 0.5, 0.15);  // stop mirroring the sky to a white blob
+            if('roughness' in m) m.roughness = Math.max(m.roughness ?? 0.5, 0.6);
+            if('envMapIntensity' in m) m.envMapIntensity = 0.7;                     // IBL gives the body form under the night exposure
             m.needsUpdate = true;
           });
         }
@@ -1404,6 +1410,7 @@ function _nextAgentBody(){
         gltf.animations.forEach(cl=>{ actions[cl.name] = mixer.clipAction(cl); });
         body.userData.__hasMixer = true;
         entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
+        entry._poseSnap = _snapshotPose(body);   // rest pose → restore after one-shot clips so flip/attack don't leave the body facing backward
         console.log('🕺 '+code+' rig clips:', Object.keys(actions).join(','));
         playAgentAction(entry, 'idle');
       }
@@ -1454,7 +1461,7 @@ function playAgentAction(entry, name, opts){
   // One-shot moves auto-return to idle (or a caller-chosen clip) when finished.
   if(opts.once && !opts.hold){
     const back = opts.returnTo || 'idle';
-    const onEnd = (e)=>{ if(e.action !== a) return; entry._mixer.removeEventListener('finished', onEnd); playAgentAction(entry, back, {crossfadeDuration:0.25}); };
+    const onEnd = (e)=>{ if(e.action !== a) return; entry._mixer.removeEventListener('finished', onEnd); _restorePose(entry._poseSnap); playAgentAction(entry, back, {crossfadeDuration:0.25}); };
     entry._mixer.addEventListener('finished', onEnd);
   }
   return a;
@@ -1687,7 +1694,7 @@ fetch('/api/grid/portals').then(r=>r.ok?r.json():null).then(d=>{
     const inner=new THREE.Mesh(new THREE.CircleGeometry(4.1,48), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.13,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
     inner.position.set(px,5,pz); scene.add(inner);
     const el=document.createElement('div'); el.className='lbl';
-    el.innerHTML='<div class="nm" style="color:'+p.color+'">'+(p.type==='game'?'🎮 ':'🌀 ')+p.name+'</div><div class="sk">'+(p.type==='claimable'?'unclaimed slot':(p.type==='game'?'arcade · free play':(p.entry_fee_usdc>0?'$'+p.entry_fee_usdc+' USDC':'free entry')))+'</div><div class="tag">▶ PRESS E TO '+(p.type==='game'?'PLAY':'ENTER')+'</div>';
+    el.innerHTML='<div class="nm" style="color:'+p.color+'">'+(p.type==='game'?'🎮 ':'🌀 ')+p.name+'</div><div class="sk">'+(p.type==='claimable'?'unclaimed slot':(p.type==='game'?'arcade · free play':(p.entry_fee_usdc>0?'$'+p.entry_fee_usdc+' USDC':'free entry')))+'</div><div class="tag">▶ PRESS P TO '+(p.type==='game'?'PLAY':'ENTER')+'</div>';
     labelLayer.appendChild(el);
     portals.push({ name:p.name, url:p.url, type:p.type, px, pz, ring, inner, el });
   });
@@ -2075,6 +2082,18 @@ function _applyPlayerProceduralBones(isMoving, isSprinting, speed) {
 
 // ── rigged WALKING character: swap the capsule figure for the animated soldier (Idle/Walk/Run) ──
 let playerMixer=null; const playerClips={}; let playerAction=null;
+// Bind/rest pose snapshot (per bone) so one-shot clips (flip/attack) can't leave the body facing
+// backward: Meshy flip/attack clips rotate the root/hips bone, but the idle clip has NO track for
+// that bone — so after the move that bone keeps the flip's final rotation forever. We snapshot the
+// rest transforms once after load and restore them the instant a one-shot ends (before idle fades
+// back in); idle then re-drives its own tracks on top and the orphaned bones return to rest.
+let _playerPoseSnap = null, _wasAttacking = false;
+function _snapshotPose(root){
+  const snap = [];
+  root.traverse(o=>{ if(o.isBone){ snap.push({ b:o, q:o.quaternion.clone(), p:o.position.clone() }); } });
+  return snap;
+}
+function _restorePose(snap){ if(!snap) return; for(const s of snap){ s.b.quaternion.copy(s.q); s.b.position.copy(s.p); } }
 // pull an animation clip from a separate GLB onto the player mixer (same Meshy rig/skeleton)
 function _addClipsFrom(url){ agentBodyLoader.load(url, (g)=>{ if(!playerMixer) return; (g.animations||[]).forEach(cl=>{ if(!playerClips[cl.name]) playerClips[cl.name]=playerMixer.clipAction(cl); }); }, undefined, ()=>{}); }
 function _loadHero(file){
@@ -2093,6 +2112,7 @@ function _loadHero(file){
     if(playerAction) playerAction.play();
     _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery
     _discoverPlayerBones(m);                    // find arm/leg/spine for procedural overlay
+    _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
     console.log('✅ main character ('+file+') clips:', Object.keys(playerClips).join(','));
   }, undefined, ()=>{ if(file!=='robot.glb') _loadHero('robot.glb'); else console.warn('player model failed; capsule avatar kept'); });
 }
@@ -2126,11 +2146,13 @@ window.setPlayerCharacter = function(code){
       const clonedMats = rawMats.map(function(mm){ return mm ? mm.clone() : mm; });
       c.material = Array.isArray(c.material) ? clonedMats : (clonedMats[0]||c.material);
       clonedMats.forEach(function(mm){ if(!mm) return;
-        if(mm.color){ mm.color.set(0xffffff); mm.color.lerp(_pacc, mm.map ? 0.16 : 0.6); }
-        if('emissiveIntensity' in mm) mm.emissiveIntensity = 0;
-        if(mm.emissive) mm.emissive.setRGB(0,0,0);
-        if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.12);
-        if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.7);
+        var hasTex = !!mm.map;
+        if(hasTex && 'colorSpace' in mm.map) mm.map.colorSpace = THREE.SRGBColorSpace; // albedo must be sRGB or it renders washed/flat
+        if(mm.color){ mm.color.set(0xffffff); if(!hasTex) mm.color.lerp(_pacc, 0.6); }  // textured: show real albedo; plain blob: tint to agent color
+        if('emissiveIntensity' in mm) mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3);
+        if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.15);
+        if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.6);
+        if('envMapIntensity' in mm) mm.envMapIntensity = 0.7;                           // IBL gives the body form
         mm.needsUpdate = true;
       });
     }});
@@ -2148,6 +2170,7 @@ window.setPlayerCharacter = function(code){
     if(playerAction) playerAction.play();
     _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery for this character's rig
     _discoverPlayerBones(m);                    // find arm/leg/spine for procedural walk overlay
+    _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
     window._playerCharacter = code;
     console.log('🎮 now playing as', code, '· clips:', Object.keys(playerClips).join(',')||'(static pose)');
   }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— falling back to hero body');
@@ -2260,7 +2283,8 @@ addEventListener('click', ()=>{
   if(targeted){ openDossier(targeted.a); }
 });
 addEventListener('keydown', e=>{
-  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); else if(nearPortal) enterPortal(nearPortal); }  // E = talk/open agent · enter portal. (Lift boarding moved to R — see hotkeys block.)
+  if(e.code==='KeyE' && controls.isLocked){ if(targeted) openDossier(targeted.a); }  // E = talk/open agent + enter buildings (building ENTER handled by its own listener). (Lift boarding moved to R.)
+  if(e.code==='KeyP' && controls.isLocked){ if(nearPortal) enterPortal(nearPortal); }  // P = enter/play the community portal — moved off E so it no longer overlaps the NEXUS hub's "[E] ENTER" door prompt
   if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
   if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
@@ -3006,6 +3030,8 @@ function animate(){
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
     const _pAnimName = bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle');
     const _attacking = clock.elapsedTime < _pAttackUntil;   // a one-shot attack/flip owns the mixer right now
+    if(_wasAttacking && !_attacking) _restorePose(_playerPoseSnap);  // one-shot just ended: clear residual orphan-bone rotation so the body faces forward again (fixes facing-backward after flip/attack)
+    _wasAttacking = _attacking;
     if(!_attacking){
       setPlayerAnim(_pAnimName);
       // ── Basketball-style smooth walk: blend clip timescale with actual movement speed ──

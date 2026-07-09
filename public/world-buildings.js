@@ -471,7 +471,11 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     const n      = layoutSpec.length;
     const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
     const span   = Math.min(Math.PI * 0.92, Math.PI * 0.30 * n);   // narrower arc for fewer screens
-    const rW     = fp * 0.40;                          // just inside the pillar ring
+    // Screens ring: the lounge pillars sit at fp*0.40 with a fat shaft (rS≈fp*0.052), so their
+    // INNER surface is ~fp*0.348. Placing screens at fp*0.40 (the old value) made any screen that
+    // lined up with a pillar punch straight through it. Seat the screens fully INSIDE the pillars'
+    // inner surface (fp*0.32) so they clear the legs at every angle — no clipping into the pillars.
+    const rW     = fp * 0.32;
     const sw     = fp * 0.150, sh = fp * 0.100;        // screen width / height
     const clear  = undersideY - groundY;
     const yC     = groundY + Math.min(clear * 0.56, 9.5) + sh * 0.5;   // eye-level, under the podium

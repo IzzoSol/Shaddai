@@ -154,6 +154,21 @@ a{color:inherit;text-decoration:none}
 .craftcard strong{color:var(--gold);display:block;font-family:'Cinzel',serif;
   font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:7px}
 
+/* ── WALK MODE ── */
+#walk-cross{position:fixed;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;
+  z-index:60;pointer-events:none;display:none}
+#walk-cross::before,#walk-cross::after{content:'';position:absolute;background:rgba(196,162,78,.7);
+  box-shadow:0 0 6px rgba(196,162,78,.5)}
+#walk-cross::before{left:6px;top:0;width:2px;height:14px}
+#walk-cross::after{top:6px;left:0;height:2px;width:14px}
+#walk-cross.on{display:block}
+#walk-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink2);background:rgba(7,5,15,.82);border:1px solid rgba(196,162,78,.28);
+  padding:8px 15px;pointer-events:none;display:none}
+#walk-hint.on{display:block}
+#walk-hint b{color:var(--gold)}
+
 @media(max-width:600px){
   #quill-panel{width:100%;bottom:0;top:auto;height:52vh;border-left:none;border-top:1px solid rgba(196,162,78,.2)}
   .e-portals{gap:10px}
@@ -196,6 +211,7 @@ a{color:inherit;text-decoration:none}
   <div class="hud-bar">
     <button class="hb" onclick="window.showEntry()">← Change</button>
     <span class="ht">ORACLE · Astral Observatory</span>
+    <button class="hb" onclick="window.enterWalk()">🚶 Walk</button>
     <a class="hb" href="/">← Codex</a>
   </div>
   <div id="oracle-info">
@@ -212,6 +228,7 @@ a{color:inherit;text-decoration:none}
   <div class="hud-bar">
     <button class="hb" onclick="window.showEntry()">← Change</button>
     <span class="ht">QUILL · The Library</span>
+    <button class="hb" onclick="window.enterWalk()">🚶 Walk</button>
     <a class="hb" href="/">← Codex</a>
   </div>
 
@@ -272,10 +289,15 @@ a{color:inherit;text-decoration:none}
   </div>
 </div>
 
+<!-- ═══════════════════ WALK-MODE OVERLAYS ═══════════════════ -->
+<div id="walk-cross"></div>
+<div id="walk-hint"><b>WALK</b> · W A S D move · mouse look · Shift run · <b>ESC</b> to orbit</div>
+
 <!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ── Module state ──────────────────────────────────────────────────────────
@@ -291,6 +313,89 @@ let floatPlaques = [];   // { mesh, mat, tex }
 let rafId          = null;
 let curView        = null;    // 'oracle' | 'quill' | null
 let fireplaceLight = null;    // QUILL fireplace — animated in render loop
+
+// ── WALK MODE (first-person) ───────────────────────────────────────────────
+// A pointer-lock FPS layer that lets you WALK the scene (WASD + mouse-look) instead of
+// only orbiting it. Orbit stays the default; the HUD "🚶 Walk" button engages this, ESC exits.
+let plc = null, walkOn = false;
+const walkKeys = { f:false, b:false, l:false, r:false, run:false };
+let walkBounds = null;                 // {type:'circle',cx,cz,r} | {type:'rect',minX,maxX,minZ,maxZ}
+let walkEye = 3.2, walkSpawn = null;   // eye height + spawn {x,z} for the current scene
+
+function setupWalk() {
+  // Rebuild for the fresh per-scene camera (buildOracle/buildQuill make a new camera each time).
+  if (plc) { try { plc.dispose(); } catch(_){} plc = null; }
+  plc = new PointerLockControls(camera, canvas);
+  plc.addEventListener('lock', () => {
+    walkOn = true;
+    if (controls) controls.enabled = false;                 // orbit off while walking
+    if (walkSpawn) { camera.position.set(walkSpawn.x, walkEye, walkSpawn.z);
+      camera.lookAt(walkSpawn.x, walkEye, walkSpawn.z - 6); }   // face into the room (−z) for a clean start
+    document.getElementById('walk-cross').classList.add('on');
+    document.getElementById('walk-hint').classList.add('on');
+  });
+  plc.addEventListener('unlock', () => {
+    walkOn = false;
+    if (controls) { controls.enabled = true; controls.update(); }  // hand back to orbit
+    document.getElementById('walk-cross').classList.remove('on');
+    document.getElementById('walk-hint').classList.remove('on');
+  });
+}
+
+window.enterWalk = function () {
+  if (!plc || !curView) return;
+  plc.lock();   // must be from a user gesture (the HUD button click) — required for pointer lock
+};
+
+// Movement key state — only consumed while walking, so typing in QUILL's search boxes is never hijacked.
+addEventListener('keydown', e => {
+  if (!walkOn) return;
+  switch (e.code) {
+    case 'KeyW': case 'ArrowUp':    walkKeys.f = true; break;
+    case 'KeyS': case 'ArrowDown':  walkKeys.b = true; break;
+    case 'KeyA': case 'ArrowLeft':  walkKeys.l = true; break;
+    case 'KeyD': case 'ArrowRight': walkKeys.r = true; break;
+    case 'ShiftLeft': case 'ShiftRight': walkKeys.run = true; break;
+  }
+});
+addEventListener('keyup', e => {
+  switch (e.code) {
+    case 'KeyW': case 'ArrowUp':    walkKeys.f = false; break;
+    case 'KeyS': case 'ArrowDown':  walkKeys.b = false; break;
+    case 'KeyA': case 'ArrowLeft':  walkKeys.l = false; break;
+    case 'KeyD': case 'ArrowRight': walkKeys.r = false; break;
+    case 'ShiftLeft': case 'ShiftRight': walkKeys.run = false; break;
+  }
+});
+
+function updateWalk(delta) {
+  if (!walkOn || !plc) return;
+  const step = (walkKeys.run ? 15 : 7) * delta;
+  let dx = 0, dz = 0;
+  if (walkKeys.f) dz += 1;
+  if (walkKeys.b) dz -= 1;
+  if (walkKeys.r) dx += 1;
+  if (walkKeys.l) dx -= 1;
+  if (dx || dz) {
+    const inv = 1 / Math.hypot(dx, dz);
+    plc.moveRight(dx * inv * step);
+    plc.moveForward(dz * inv * step);
+  }
+  // Floor + wall collision: clamp to the scene bounds and pin the eye height.
+  const c = camera.position;
+  if (walkBounds) {
+    if (walkBounds.type === 'circle') {
+      const d = Math.hypot(c.x - walkBounds.cx, c.z - walkBounds.cz);
+      if (d > walkBounds.r) { const k = walkBounds.r / d;
+        c.x = walkBounds.cx + (c.x - walkBounds.cx) * k;
+        c.z = walkBounds.cz + (c.z - walkBounds.cz) * k; }
+    } else {
+      c.x = Math.max(walkBounds.minX, Math.min(walkBounds.maxX, c.x));
+      c.z = Math.max(walkBounds.minZ, Math.min(walkBounds.maxZ, c.z));
+    }
+  }
+  c.y = walkEye;
+}
 
 // ── Renderer (lazy, created once) ─────────────────────────────────────────
 function initRenderer() {
@@ -401,6 +506,7 @@ function hideAll() {
 }
 
 window.showEntry = function () {
+  if (plc && walkOn) { try { plc.unlock(); } catch(_){} }
   disposeScene(); curView = null;
   document.getElementById('entry').classList.remove('gone');
   canvas.classList.remove('on');
@@ -748,7 +854,8 @@ function startLoop() {
       if (orbParticles) orbParticles.rotation.y += delta * 0.07;
     }
 
-    if (controls) controls.update();
+    if (walkOn) updateWalk(delta);
+    else if (controls) controls.update();   // orbit auto-rotates in update(), so only run it when NOT walking
     if (renderer && scene && camera) renderer.render(scene, camera);
   };
   go();
@@ -762,6 +869,10 @@ window.enterOracle = async function () {
   document.getElementById('hud-oracle').classList.add('on');
   clock.start();
   await buildOracle();
+  // Walk config: circular observatory platform (radius ~10.5), spawn near the front edge facing in.
+  walkEye = 3.4; walkSpawn = { x: 0, z: 8.5 };
+  walkBounds = { type:'circle', cx:0, cz:0, r:10.5 };
+  setupWalk();
   try { const gltf = await loadGLB('/assets/agents/ORACLE.glb'); mountAvatar(gltf, scene, 0, 0, 0); } catch(_) {}
   startLoop();
 };
@@ -774,6 +885,11 @@ window.enterQuill = async function () {
   document.getElementById('hud-quill').classList.add('on');
   clock.start();
   await buildQuill();
+  // Walk config: rectangular library — walls at x=±12, back wall z=-13, front z=10.
+  // Keep the walker off the walls/shelves; spawn mid-room facing the fireplace (-z).
+  walkEye = 3.4; walkSpawn = { x: 0, z: 7 };
+  walkBounds = { type:'rect', minX:-10.5, maxX:10.5, minZ:-10.5, maxZ:8.5 };
+  setupWalk();
   try {
     const gltf = await loadGLB('/assets/agents/QUILL.glb');
     mountAvatar(gltf, scene, 0, 4, Math.PI);
