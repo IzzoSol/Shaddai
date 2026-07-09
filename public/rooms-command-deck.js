@@ -163,7 +163,7 @@
       ST.sceneKey=d.sceneKey;
       render(d);
       // fetch brains + catalog in background to fill brain panel + skills
-      Promise.all([ j('/api/brains'), j('/api/skills/catalog?limit=5000&agent='+encodeURIComponent(d.glb)) ]).then(function(res){
+      Promise.all([ j('/api/brains'), j('/api/skills/catalog?limit=5000') ]).then(function(res){
         ST.brains=res[0]; ST.catalog=(res[1]&&res[1].skills)||[];
         fillBrain(d); fillSkills(d);
       });
@@ -213,7 +213,7 @@
           '<div class="pane" data-p="sk">'+
             '<div class="skhead"><div class="sec" style="margin:0">EQUIPPED SKILLS</div><button class="add" id="cdAddBtn">'+IC.add+' ADD SKILL</button></div>'+
             '<div class="cap" id="cdSkCap">loading…</div>'+
-            '<div class="picker" id="cdPicker"><input class="psearch" id="cdPSearch" placeholder="search 3,478 skills…"><div id="cdPList"></div></div>'+
+            '<div class="picker" id="cdPicker"><input class="psearch" id="cdPSearch" placeholder="search the skill library…"><div id="cdPList"></div></div>'+
             '<div class="skills" id="cdSkills" style="margin-top:10px"></div>'+
           '</div>'+
           '<div class="pane" data-p="wk">'+
@@ -324,8 +324,9 @@
     var list=el('cdSkills'), cap=el('cdSkCap'); if(!list)return;
     var tools = ST.forged ? ((ST.op&&ST.op.tools)||[]) : (ST.catalog||[]).slice(0,12).map(function(s){return s.id;});
     ST.tools=tools;
-    cap.textContent = tools.length+' '+(ST.forged?'/ 100 equipped · pull from the 3,478-skill library':'core skills · '+d.nm+' library has '+((ST.catalog||[]).length)+'+ skills');
-    list.innerHTML = tools.length ? tools.map(function(t){return '<div class="skill"><span class="k">▸</span>'+esc(t)+'</div>';}).join('') : '<div class="cap">no skills equipped</div>';
+    cap.textContent = tools.length+' '+(ST.forged?'equipped · click a skill to remove · '+((ST.catalog||[]).length)+' in the library':'core skills · '+((ST.catalog||[]).length)+' in the library');
+    list.innerHTML = tools.length ? tools.map(function(t){return '<div class="skill" data-skill="'+esc(t)+'"'+(ST.forged?' title="click to remove" style="cursor:pointer"':'')+'><span class="k">▸</span>'+esc(t)+(ST.forged?'<span style="margin-left:auto;color:var(--mut)">✕</span>':'')+'</div>';}).join('') : '<div class="cap">no skills equipped</div>';
+    if(ST.forged){ [].forEach.call(list.querySelectorAll('.skill[data-skill]'),function(s){ s.onclick=function(){ removeSkill(s.dataset.skill); }; }); }
     // forged can add; council is read-only here
     var addBtn=el('cdAddBtn'); if(addBtn) addBtn.style.display=ST.forged?'':'none';
     renderPicker('');
@@ -339,16 +340,17 @@
     pl.innerHTML = rows.length ? rows.map(function(s){return '<div class="prow" data-id="'+esc(s.id)+'">'+IC.add+' <b style="color:var(--ac)">'+esc(s.id)+'</b> <span style="color:var(--mut)">'+esc((s.description||'').slice(0,44))+'</span></div>';}).join('') : '<div class="cap" style="padding:11px">no matches</div>';
     [].forEach.call(pl.querySelectorAll('.prow'),function(r){ r.onclick=function(){ addSkill(r.dataset.id); }; });
   }
-  function addSkill(id){
+  function saveTools(next, verb, id){
     if(!ST.forged||!ST.op)return;
-    var next=[].concat(ST.tools); if(next.indexOf(id)===-1)next.push(id);
     j('/api/operatives/'+ST.op.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tools:next})}).then(function(r){
       if(r&&r.operative){ ST.op=r.operative; ST.tools=r.operative.tools||next;
         var d={forged:true,glb:ST.glb,nm:(ST.op.codename||'OP')}; fillSkills(d);
-        try{window.notify&&window.notify('⚙ Equipped '+id);}catch(_){ }
+        try{window.notify&&window.notify(verb+' '+id);}catch(_){ }
       }
     });
   }
+  function addSkill(id){ if(!ST.forged||!ST.op)return; var next=[].concat(ST.tools); if(next.indexOf(id)===-1)next.push(id); saveTools(next,'⚙ Equipped',id); }
+  function removeSkill(id){ if(!ST.forged||!ST.op)return; var next=ST.tools.filter(function(t){return t!==id;}); saveTools(next,'✕ Removed',id); }
 
   /* ---- OPERATE (real /api/agent/run + poll) ---- */
   function operate(d){
