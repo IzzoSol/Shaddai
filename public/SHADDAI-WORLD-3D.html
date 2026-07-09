@@ -194,6 +194,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-audio.js?v=20260703d"></script>
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
+<script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
 <script src="/portals/portal-plots.js?v=20260703d"></script>
 <script src="/portals/portal-dome.js?v=20260703d"></script>
@@ -2012,6 +2013,31 @@ if (window.buildWorldInteriors) {
         });
       };
     })();
+
+    // ── ZEROX LOUNGE (world-lounge.js): a DOM-overlay lounge with a COMMUNITY RADIO
+    //    (WebAudio EQ visualizer) + a trending-coins CHART VIEWER. Auto-opens once
+    //    per entry while inside the ZEROX interior; closes on leaving; KeyL toggles. ──
+    (function(){
+      var _lounge = null;
+      try { if (typeof window.buildZeroxLounge === 'function') _lounge = window.buildZeroxLounge(); }
+      catch(e){ console.warn('lounge init failed:', e && e.message); }
+      if(!_lounge) return;
+      var _wasZerox = false;   // so we auto-open ONCE per entry, not every frame
+      function inZerox(){ return !!(_interiors && _interiors.code && _interiors.code() === 'ZEROX'); }
+      window.__zeroxLoungePoll = function(){
+        var now = inZerox();
+        if(now && !_wasZerox){ _lounge.open(); }
+        else if(!now && _wasZerox){ _lounge.close(); }
+        _wasZerox = now;
+      };
+      // toggle key — only while inside ZEROX, and never when typing in a field
+      addEventListener('keydown', function(e){
+        if(e.code !== 'KeyL') return;
+        var t = e.target, tag = t && t.tagName;
+        if(tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
+        if(inZerox() || _lounge.isOpen()){ e.preventDefault(); _lounge.toggle(); }
+      });
+    })();
   } catch(e){ console.warn('interiors init failed:', e && e.message); }
 }
 
@@ -3282,6 +3308,7 @@ function animate(){
     if(_themes) _themes.update(dt);                // theme particle animation (snow/sand/etc.)
     if(_interiors){                                // interiors: animate props + show "Press E" door prompt
       _interiors.update(dt, t);
+      if(window.__zeroxLoungePoll) window.__zeroxLoungePoll();   // auto-open/close ZEROX lounge on room change
       if(window._doorPrompt){
         let _dpTxt='';   // desired prompt text ('' = hidden)
         if(_interiors.isInside()) _dpTxt='[ E ]  EXIT';

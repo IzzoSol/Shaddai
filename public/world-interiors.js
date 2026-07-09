@@ -2987,6 +2987,7 @@
     }
 
     return { enter: enter, exit: exit, isInside: isInside, update: update,
+             code: function () { return currentCode; },
              nearestDoor: nearestDoor, openDoor: openDoor, roomReady: function () { return global.__wiRoomReady !== false; } };
   };
 
