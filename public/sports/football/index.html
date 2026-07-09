@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>SHADDAI Football — Live Spectator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- ARCADE POP fonts: Bungee (scores/headers) + Luckiest Guy (captions) + Fredoka (body) -->
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Luckiest+Guy&family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===== COMIC PALETTE =====
+       --paper  : #f4ecd6  (cream base)
+       --ink    : #15130f  (thick ink black)
+       --red    : #e63127  (team A, comic red)
+       --blue   : #1f6fe5  (team B, comic blue)
+       --yellow : #ffd23f  (action accent, comic yellow)
+    */
+    :root {
+      --paper:   #f4ecd6;
+      --ink:     #15130f;
+      --red:     #e63127;
+      --blue:    #1f6fe5;
+      --yellow:  #ffd23f;
+      --red-dim: #e6312733;
+      --blue-dim:#1f6fe533;
+      --yel-dim: #ffd23f44;
+      --panel:   #fff8ee;
+      --panel2:  #fdf3e0;
+      --shadow:  6px 6px 0 var(--ink);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Fredoka', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ===== HALFTONE PAPER BACKGROUND ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+      background-size: 18px 18px;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== LAYOUT ===== */
+    #app {
+      display: grid;
+      width: 100vw; height: 100vh;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 1fr;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== SCOREBOARD — comic panel ===== */
+    #scoreboard {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--ink);
+      border-bottom: 4px solid var(--ink);
+      flex-wrap: wrap;
+      gap: 8px;
+      z-index: 10;
+      position: relative;
+      /* Subtle halftone on dark panel */
+      background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 12px 12px;
+      background-color: var(--ink);
+    }
+
+    /* Yellow accent stripe under scoreboard */
+    #scoreboard::after {
+      content: '';
+      position: absolute;
+      bottom: -8px; left: 0; right: 0;
+      height: 4px;
+      background: var(--yellow);
+    }
+
+    .score-team {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .team-name {
+      font-family: 'Bungee', cursive;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      min-width: 88px;
+    }
+
+    #team-name-a {
+      color: var(--red);
+      /* Comic offset text shadow */
+      text-shadow: 2px 2px 0 #fff, 3px 3px 0 var(--ink);
+    }
+    #team-name-b {
+      color: var(--blue);
+      text-shadow: 2px 2px 0 #fff, 3px 3px 0 var(--ink);
+      text-align: right;
+    }
+
+    .score-num {
+      font-family: 'Bungee', cursive;
+      font-size: 2.8rem;
+      min-width: 52px;
+      text-align: center;
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    #score-a {
+      color: var(--red);
+      text-shadow: 3px 3px 0 #fff, 5px 5px 0 var(--ink);
+    }
+    #score-b {
+      color: var(--blue);
+      text-shadow: 3px 3px 0 #fff, 5px 5px 0 var(--ink);
+    }
+
+    .score-num.score-bump {
+      animation: scoreBump 0.4s ease-out;
+    }
+    @keyframes scoreBump {
+      0%   { transform: scale(1.5) rotate(-3deg); }
+      60%  { transform: scale(1.08) rotate(1deg); }
+      100% { transform: scale(1)    rotate(0deg); }
+    }
+
+    #score-sep {
+      font-family: 'Bungee', cursive;
+      font-size: 2rem;
+      color: var(--yellow);
+      text-shadow: 2px 2px 0 var(--ink);
+      margin: 0 4px;
+    }
+
+    /* HUD center — comic panel card */
+    #hud-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: var(--yellow);
+      border: 3px solid var(--ink);
+      border-radius: 8px;
+      padding: 6px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    #quarter {
+      font-family: 'Bungee', cursive;
+      font-size: 1.2rem;
+      color: var(--ink);
+      letter-spacing: 0.08em;
+    }
+
+    #down-dist {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    #mode-label {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      background: var(--ink);
+      color: var(--yellow);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ===== TEAM BADGES — comic shield icons ===== */
+    .team-badge {
+      flex-shrink: 0;
+      filter: drop-shadow(2px 2px 0 #15130f);
+      transition: transform 0.15s;
+    }
+    .score-team:hover .team-badge { transform: scale(1.08) rotate(-3deg); }
+
+    /* Seed label wrapper — inline with input */
+    #seed-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #seed-label input {
+      width: 88px;
+      min-height: 44px;
+    }
+    #seed-label input::placeholder { color: rgba(21,19,15,0.35); }
+
+    /* Scoreboard depth — layered panel shadow */
+    #scoreboard {
+      box-shadow: 0 4px 0 #15130f, 0 6px 18px rgba(21,19,15,0.35);
+    }
+
+    /* Possession indicator */
+    .possession-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-left: 5px;
+      background: var(--yellow);
+      border: 2px solid var(--ink);
+      animation: dotPulse 1.2s ease-in-out infinite;
+      box-shadow: 1px 1px 0 var(--ink);
+    }
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.35); }
+    }
+
+    /* ===== CANVAS AREA ===== */
+    #canvas-area {
+      position: relative;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      min-height: 0;
+      /* Comic thick border */
+      border: 4px solid var(--ink);
+      border-top: none;
+      border-bottom: none;
+    }
+
+    #football-canvas {
+      display: block;
+      width: 100%; height: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* ===== CAPTION OVERLAY — speech bubble ===== */
+    #play-caption {
+      position: absolute;
+      bottom: 16px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--yellow);
+      color: var(--ink);
+      font-family: 'Luckiest Guy', 'Fredoka', cursive;
+      font-size: clamp(0.95rem, 2.8vw, 1.3rem);
+      letter-spacing: 0.04em;
+      padding: 9px 20px 9px 20px;
+      border-radius: 10px;
+      border: 3px solid var(--ink);
+      box-shadow: var(--shadow);
+      max-width: 92%;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity 0.18s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Speech bubble tail */
+    #play-caption::before {
+      content: '';
+      position: absolute;
+      top: -14px; left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 14px solid var(--ink);
+    }
+    #play-caption::after {
+      content: '';
+      position: absolute;
+      top: -10px; left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 11px solid var(--yellow);
+    }
+
+    @keyframes captionPop {
+      0%   { transform: translateX(-50%) scale(0.8); }
+      60%  { transform: translateX(-50%) scale(1.06); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    .caption-flash   { animation: captionPop 0.35s ease-out; }
+
+    .caption-ability {
+      background: #bf00ff !important;
+      border-color: var(--ink) !important;
+      color: #ffffff !important;
+    }
+    .caption-ability::after { border-bottom-color: #bf00ff !important; }
+
+    .caption-td {
+      background: var(--red) !important;
+      border-color: var(--ink) !important;
+      color: #ffffff !important;
+      font-size: clamp(1.1rem, 3.2vw, 1.5rem) !important;
+      text-shadow: 2px 2px 0 var(--ink);
+    }
+    .caption-td::after { border-bottom-color: var(--red) !important; }
+
+    /* ===== CAM MODE BADGE ===== */
+    #cam-mode-label {
+      position: absolute;
+      top: 10px; right: 12px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      background: var(--yellow);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 2px solid var(--ink);
+      box-shadow: 2px 2px 0 var(--ink);
+      pointer-events: none;
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    #how-it-works {
+      position: absolute;
+      top: 10px; left: 12px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.48rem;
+      color: var(--ink);
+      pointer-events: none;
+      max-width: 160px;
+      line-height: 1.5;
+      opacity: 0.6;
+    }
+
+    /* ===== LOADING OVERLAY ===== */
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--paper);
+      background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+      background-size: 18px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 100;
+    }
+
+    .splash-emblem {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      border: 4px solid var(--ink);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      animation: emblemBounce 0.8s ease-in-out infinite alternate;
+    }
+    .splash-emblem-fallback {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: var(--yellow);
+      border: 4px solid var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    @keyframes emblemBounce {
+      0%   { transform: translateY(0) rotate(-2deg); }
+      100% { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    /* Comic loading ring — thick ink style */
+    .loader-ring {
+      width: 60px; height: 60px;
+      border: 6px solid var(--ink);
+      border-top-color: var(--red);
+      border-right-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      box-shadow: var(--shadow);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 1.4rem;
+      color: var(--ink);
+      text-shadow: 3px 3px 0 var(--yellow);
+      letter-spacing: 0.15em;
+    }
+
+    /* ===== POST MATCH PANEL ===== */
+    #post-match {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(244,236,214,0.96);
+      background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+      background-size: 16px 16px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 50;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    /* Big starburst behind FINAL SCORE */
+    #post-match::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('/sports/football/assets/burst.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 380px;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    #post-match h2 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(1.2rem, 4vw, 2rem);
+      color: var(--ink);
+      text-shadow: 3px 3px 0 var(--yellow);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    #post-score {
+      font-family: 'Bungee', cursive;
+      font-size: clamp(3rem, 12vw, 6rem);
+      color: var(--ink);
+      line-height: 1;
+      text-shadow: 5px 5px 0 var(--yellow), 7px 7px 0 var(--ink);
+    }
+
+    #post-winner {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(1.3rem, 5vw, 2.2rem);
+      color: var(--red);
+      text-shadow: 3px 3px 0 var(--ink);
+      letter-spacing: 0.08em;
+      animation: winnerPop 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes winnerPop {
+      from { transform: scale(1);    }
+      to   { transform: scale(1.06); }
+    }
+
+    #post-mvp-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #post-mvp-portrait {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid var(--ink);
+      box-shadow: var(--shadow);
+      display: none;
+    }
+
+    #post-mvp {
+      font-family: 'Bungee', cursive;
+      font-size: 1.1rem;
+      color: var(--ink);
+      text-shadow: 2px 2px 0 var(--yellow);
+      letter-spacing: 0.06em;
+    }
+
+    #post-summary {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.7rem;
+      color: var(--ink);
+      max-width: 520px;
+      line-height: 1.6;
+      opacity: 0.75;
+    }
+
+    .post-btns {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-top: 10px;
+    }
+
+    /* ===== CONTROLS BAR — chunky comic buttons ===== */
+    #controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--ink);
+      border-top: 4px solid var(--ink);
+      flex-wrap: wrap;
+      z-index: 10;
+      position: relative;
+      /* Halftone texture on dark bar */
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 12px 12px;
+      background-color: var(--ink);
+    }
+
+    /* Yellow accent stripe above controls */
+    #controls::before {
+      content: '';
+      position: absolute;
+      top: -8px; left: 0; right: 0;
+      height: 4px;
+      background: var(--yellow);
+    }
+
+    /* ===== BUTTONS — comic sticker style ===== */
+    button, select, input[type="text"] {
+      background: var(--paper);
+      color: var(--ink);
+      border: 3px solid var(--ink);
+      border-radius: 8px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 8px 14px;
+      min-height: 44px;
+      min-width: 44px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.08s, box-shadow 0.08s;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    button:hover, button:focus {
+      outline: none;
+      background: var(--yellow);
+      transform: translate(-1px, -1px);
+      box-shadow: 7px 7px 0 var(--ink);
+    }
+
+    button:active {
+      transform: translate(3px, 3px);
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+
+    #btn-play {
+      min-width: 100px;
+      color: var(--paper);
+      background: var(--red);
+      border-color: var(--ink);
+      font-family: 'Bungee', cursive;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+    }
+    #btn-play:hover {
+      background: var(--yellow);
+      color: var(--ink);
+    }
+
+    #btn-cam {
+      color: var(--paper);
+      background: var(--blue);
+      border-color: var(--ink);
+    }
+    #btn-cam:hover {
+      background: var(--yellow);
+      color: var(--ink);
+    }
+
+    #btn-new, #btn-new-seed {
+      color: var(--ink);
+      background: var(--yellow);
+      border-color: var(--ink);
+    }
+    #btn-new:hover, #btn-new-seed:hover {
+      background: var(--paper);
+    }
+
+    #btn-watch-again {
+      color: var(--ink);
+      background: var(--yellow);
+      border-color: var(--ink);
+    }
+
+    button:disabled {
+      opacity: 0.35; cursor: not-allowed; box-shadow: 3px 3px 0 var(--ink);
+    }
+    button:disabled:hover {
+      background: var(--paper); color: var(--ink);
+      transform: none; box-shadow: 3px 3px 0 var(--ink);
+    }
+
+    select {
+      min-width: 72px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2315130f'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 28px;
+      appearance: none;
+    }
+
+    #seed-input {
+      width: 96px;
+      min-height: 44px;
+    }
+    #seed-input::placeholder { color: rgba(21,19,15,0.4); }
+
+    .play-soon {
+      opacity: 0.3; cursor: not-allowed;
+      border-style: dashed;
+      font-size: 0.72rem;
+    }
+
+    /* ===== EVENT FEED — comic ticker ===== */
+    #feed-panel {
+      display: none;
+      position: absolute;
+      top: 0; right: 0;
+      width: 240px; height: 100%;
+      background: rgba(244,236,214,0.93);
+      border-left: 4px solid var(--ink);
+      overflow-y: auto;
+      z-index: 5;
+      padding: 10px 8px;
+      box-shadow: -4px 0 0 var(--ink);
+    }
+
+    #feed-panel::-webkit-scrollbar { width: 5px; }
+    #feed-panel::-webkit-scrollbar-track { background: var(--paper); }
+    #feed-panel::-webkit-scrollbar-thumb { background: var(--ink); border-radius: 3px; }
+
+    #feed-label {
+      font-family: 'Bungee', cursive;
+      font-size: 0.65rem;
+      color: var(--ink);
+      letter-spacing: 0.15em;
+      padding: 3px 6px 8px;
+      margin-bottom: 6px;
+      border-bottom: 3px solid var(--ink);
+      text-shadow: 1px 1px 0 var(--yellow);
+    }
+
+    #event-feed {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .feed-item {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: var(--ink);
+      padding: 6px 8px;
+      border-left: 4px solid var(--ink);
+      border-radius: 4px;
+      line-height: 1.4;
+      word-break: break-word;
+      background: var(--panel);
+      border: 2px solid var(--ink);
+      box-shadow: 2px 2px 0 var(--ink);
+    }
+
+    .feed-td {
+      border-color: var(--ink) !important;
+      background: var(--yellow) !important;
+      font-family: 'Luckiest Guy', cursive !important;
+      font-size: 0.65rem !important;
+    }
+    .feed-int {
+      border-color: var(--ink) !important;
+      background: var(--blue) !important;
+      color: #ffffff !important;
+    }
+    .feed-sack {
+      border-color: var(--ink) !important;
+      background: var(--red) !important;
+      color: #ffffff !important;
+    }
+    .feed-ability {
+      border-color: var(--ink) !important;
+      background: #bf00ff !important;
+      color: #ffffff !important;
+    }
+
+    .feed-td::before    { content: '🏈 '; }
+    .feed-int::before   { content: '🪤 '; }
+    .feed-sack::before  { content: '🚨 '; }
+    .feed-ability::before { content: '⚡ '; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (min-width: 700px) {
+      #feed-panel { display: block; }
+    }
+
+    @media (max-width: 480px) {
+      #scoreboard { padding: 5px 8px; }
+      .team-name  { min-width: 64px; font-size: 0.65rem; }
+      .score-num  { font-size: 2rem; }
+      #hud-meta   { padding: 4px 10px; }
+      #quarter    { font-size: 1rem; }
+      button, select { font-size: 0.75rem; padding: 7px 10px; min-height: 40px; }
+      #seed-input { width: 74px; }
+      #play-caption { font-size: 0.85rem; }
+    }
+
+    @media (max-width: 360px) {
+      #controls { gap: 5px; }
+      button    { min-width: 38px; padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCOREBOARD -->
+  <div id="scoreboard">
+    <div class="score-team">
+      <!-- Team A badge (red shield with initial) -->
+      <svg class="team-badge team-badge-a" id="badge-a" width="28" height="32" viewBox="0 0 28 32" aria-hidden="true">
+        <path d="M14 1 L27 7 L27 18 Q27 27 14 31 Q1 27 1 18 L1 7 Z" fill="#e63127" stroke="#15130f" stroke-width="2.5"/>
+        <text x="14" y="19" text-anchor="middle" dominant-baseline="middle"
+              font-family="Bungee,Impact,monospace" font-size="12" fill="#fff" id="badge-a-letter">A</text>
+      </svg>
+      <div class="team-name" id="team-name-a">TEAM A</div>
+      <div class="score-num" id="score-a">0</div>
+    </div>
+
+    <div id="hud-meta">
+      <div id="quarter">Q1</div>
+      <div id="down-dist">1&amp;10 | KICKOFF</div>
+      <div id="mode-label">SPECTATE</div>
+    </div>
+
+    <div class="score-team">
+      <div class="score-num" id="score-b">0</div>
+      <div class="team-name" id="team-name-b">TEAM B</div>
+      <!-- Team B badge (blue shield with initial) -->
+      <svg class="team-badge team-badge-b" id="badge-b" width="28" height="32" viewBox="0 0 28 32" aria-hidden="true">
+        <path d="M14 1 L27 7 L27 18 Q27 27 14 31 Q1 27 1 18 L1 7 Z" fill="#1f6fe5" stroke="#15130f" stroke-width="2.5"/>
+        <text x="14" y="19" text-anchor="middle" dominant-baseline="middle"
+              font-family="Bungee,Impact,monospace" font-size="12" fill="#fff" id="badge-b-letter">B</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- CANVAS AREA -->
+  <div id="canvas-area">
+    <canvas id="football-canvas"></canvas>
+
+    <!-- Caption / speech bubble -->
+    <div id="play-caption">Loading match…</div>
+
+    <!-- Camera mode badge -->
+    <div id="cam-mode-label">SIDE_25D</div>
+
+    <!-- How it works -->
+    <div id="how-it-works">
+      Replaying deterministic match from server — SHADDAI agents vs agents.
+      Swipe canvas to scrub.
+    </div>
+
+    <!-- Event feed (wide screens) -->
+    <div id="feed-panel">
+      <div id="feed-label">▸ PLAY-BY-PLAY</div>
+      <ul id="event-feed"></ul>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay">
+      <img class="splash-emblem" src="/sports/football/assets/splash.png" alt="SHADDAI"
+           onerror="this.style.display='none'; document.querySelector('.splash-emblem-fallback').style.display='block'">
+      <div class="splash-emblem-fallback" style="display:none"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-text">LOADING…</div>
+    </div>
+
+    <!-- Post-match panel -->
+    <div id="post-match">
+      <h2>⬡ FINAL SCORE ⬡</h2>
+      <div id="post-score">0 — 0</div>
+      <div id="post-winner">WINNER</div>
+      <div id="post-mvp-wrap">
+        <img id="post-mvp-portrait" src="" alt="MVP" onerror="this.style.display='none'">
+        <div id="post-mvp"></div>
+      </div>
+      <div id="post-summary"></div>
+      <div class="post-btns">
+        <button id="btn-watch-again">↺ Watch Again</button>
+        <button id="btn-new-seed">🎲 New Match</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="controls">
+    <button id="btn-play">▶ PLAY</button>
+    <button id="btn-restart" title="Restart">↺</button>
+
+    <select id="speed-select" title="Playback speed" aria-label="Playback speed">
+      <option value="0.5">0.5×</option>
+      <option value="1" selected>1×</option>
+      <option value="2">2×</option>
+      <option value="4">4×</option>
+    </select>
+
+    <button id="btn-cam" title="Toggle camera">2.5D ⇄ Iso</button>
+
+    <select id="theme-select" title="Field theme" aria-label="Field theme">
+      <option value="classic" selected>🌤 Classic</option>
+      <option value="neon">🌃 Neon</option>
+      <option value="dome">🏟 Dome</option>
+    </select>
+
+    <label id="seed-label" title="Same number replays the same game" style="display:flex;align-items:center;gap:4px;cursor:default">
+      <span style="font-family:'Fredoka',sans-serif;font-size:0.72rem;font-weight:600;color:var(--yellow);letter-spacing:0.05em;text-shadow:1px 1px 0 var(--ink)">🎲 MATCH #</span>
+      <input id="seed-input" type="text" placeholder="e.g. 42" maxlength="12" inputmode="numeric"
+             title="Same number replays the same game">
+    </label>
+    <button id="btn-new" title="Fetch new match">New Match</button>
+
+    <button class="play-soon" disabled title="Live play mode — coming soon">PLAY (soon)</button>
+  </div>
+
+</div>
+
+<!-- JS: load order matters — projection → replay → renderer → spectator -->
+<script src="/sports/football/projection.js"></script>
+<script src="/sports/football/replay.js"></script>
+<script src="/sports/football/renderer.js"></script>
+<script src="/sports/football/spectator.js"></script>
+</body>
+</html>
