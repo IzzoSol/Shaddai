@@ -217,10 +217,16 @@
             '<div class="skills" id="cdSkills" style="margin-top:10px"></div>'+
           '</div>'+
           '<div class="pane" data-p="wk">'+
-            '<div class="sec">WORKSHOP — create &amp; list to the Bazaar</div>'+
+            '<div class="sec">GENERATE — real image (HuggingFace FLUX)</div>'+
+            '<div style="display:flex;gap:8px;align-items:stretch">'+
+              '<input class="goal" id="cdImgPrompt" style="flex:1" placeholder="describe an image to generate…">'+
+              '<button class="run" id="cdGen" style="width:auto;margin-top:0;padding:0 16px">'+IC.st+' GEN</button>'+
+            '</div>'+
+            '<div class="cap" id="cdGenMsg" style="margin-top:8px"></div>'+
+            '<div class="sec mt">GALLERY</div>'+
             '<div class="wgrid" id="cdWGrid"></div>'+
-            '<button class="run" id="cdCreate" style="font-size:8px">'+IC.add+' CREATE NEW → LIST TO BAZAAR</button>'+
-            '<div class="cap" id="cdWMsg" style="margin-top:10px"></div>'+
+            '<button class="run" id="cdCreate" style="font-size:8px;background:transparent;border:1px dashed rgba(var(--acg),.5);color:var(--ac);box-shadow:none">'+IC.add+' CREATE IN CONTENT STUDIO</button>'+
+            '<div class="cap" id="cdWMsg" style="margin-top:8px"></div>'+
           '</div>'+
           '<div class="pane" data-p="cu">'+
             '<div class="sec">ACCENT</div><div class="swatches" id="cdSw"></div>'+
@@ -263,7 +269,9 @@
     el('cdAddBtn').onclick=function(){ var p=el('cdPicker'); p.classList.toggle('on'); if(p.classList.contains('on'))el('cdPSearch').focus(); };
     el('cdPSearch').oninput=function(){ renderPicker(this.value); };
     // workshop
-    el('cdCreate').onclick=function(){ createAndList(d); };
+    el('cdGen').onclick=function(){ genImage(d); };
+    el('cdImgPrompt').onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); genImage(d); } };
+    el('cdCreate').onclick=function(){ openContentStudio(); };
     // customize accents
     var sws=['0,229,255','255,215,0','167,139,250','0,255,136','251,146,60','244,63,94']; var sw=el('cdSw');
     sws.forEach(function(g){ var b=document.createElement('div'); b.className='sw'; b.style.background=color(g); b.onclick=function(){ setAccent(g); }; sw.appendChild(b); });
@@ -379,27 +387,50 @@
     });
   }
 
-  /* ---- WORKSHOP (collectibles listings + mint→list) ---- */
+  /* ---- WORKSHOP: real gallery (S.media) + FLUX gen + Content Studio route ---- */
+  function galleryItems(){
+    try { var m=(window.S&&window.S.media)||[]; return m.filter(function(x){return x&&(x.type==='image'||/^data:image|\/assets\/gallery\//.test(x.content||''));}); } catch(_){ return []; }
+  }
   function loadWorkshop(d){
     var grid=el('cdWGrid'); if(!grid)return;
-    j('/api/collectibles/listings').then(function(r){
-      var items=(r&&r.data)||[];
-      var mine=items.filter(function(c){return String(c.owner||'').toUpperCase()===d.nm||String(c.owner||'')===(ST.op&&ST.op.id);}).slice(0,4);
-      var show=mine.length?mine:items.slice(0,2);
-      grid.innerHTML = show.length ? show.map(function(c){return '<div class="wcard"><div class="wth"><div class="scene" style="background:'+sceneCss(ST.sceneKey)+'"></div><span style="position:relative;z-index:1">'+esc(c.rarity||'item')+'</span></div><div class="wmeta"><div class="wt">'+esc(c.name||'Untitled')+'</div><div class="ws">'+(c.listing?esc(c.listing.priceCredits)+' cr · listed':'owned')+'</div></div></div>';}).join('')
-        : '<div class="cap" style="grid-column:1/3">No outputs yet — create one and list it to the Bazaar.</div>';
-    });
+    var items=galleryItems().slice(0,8);
+    grid.innerHTML = items.length ? items.map(function(it,i){
+      return '<div class="wcard"><div class="wth"><img src="'+esc(it.content)+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'"></div>'+
+        '<div class="wmeta"><div class="wt">'+esc((it.prompt||'Untitled').slice(0,40))+'</div><div class="ws">'+esc(it.type||'image')+'</div>'+
+        '<button class="list" data-gi="'+i+'">'+IC.cart+' LIST TO BAZAAR</button></div></div>';
+    }).join('') : '<div class="cap" style="grid-column:1/3">No creations yet — generate an image above, or use Content Studio.</div>';
+    [].forEach.call(grid.querySelectorAll('.list[data-gi]'),function(btn){ btn.onclick=function(){ listItem(items[+btn.dataset.gi], d, btn); }; });
   }
-  function createAndList(d){
-    var msg=el('cdWMsg'); msg.textContent='minting…';
-    var name=d.nm+' Output #'+Math.floor((ST.op&&ST.op.tokenId||0)+ (window.performance?performance.now():1))%9999;
-    j('/api/collectibles/mint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,rarity:'rare',owner:(ST.op&&ST.op.id)||d.nm})}).then(function(r){
-      var c=r&&r.data&&r.data.collectible; if(!c){ msg.textContent='⚠ mint failed (backend offline?)'; return; }
-      j('/api/collectibles/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id,priceCredits:50})}).then(function(r2){
-        msg.textContent = r2&&r2.ok ? '✓ listed "'+name+'" to the Bazaar (50 cr)' : '⚠ list failed';
-        loadWorkshop(d);
+  function genImage(d){
+    var prompt=(el('cdImgPrompt').value||'').trim(); var msg=el('cdGenMsg'); var btn=el('cdGen');
+    if(!prompt){ msg.textContent='enter a prompt.'; return; }
+    btn.disabled=true; msg.textContent='◈ generating with FLUX…';
+    j('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,model:'flux',width:1024,height:1024})}).then(function(r){
+      if(!r||!r.success||!(r.url||r.image_url)){ msg.textContent='⚠ '+((r&&r.error)||'image engine unavailable'); btn.disabled=false; return; }
+      var url=r.url||r.image_url;
+      // persist to /assets/gallery so it survives + becomes a stable path
+      j('/api/media/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:url,type:'image'})}).then(function(sv){
+        var stable=(sv&&sv.path)||url;
+        try{ window.S=window.S||{}; window.S.media=window.S.media||[]; window.S.media.unshift({id:'img_'+Date.now(),type:'image',content:stable,prompt:prompt,time:new Date().toISOString()}); if(typeof window.save==='function')window.save(); }catch(_){}
+        msg.textContent='✓ generated — added to gallery'; el('cdImgPrompt').value=''; btn.disabled=false; loadWorkshop(d);
       });
     });
+  }
+  function listItem(it, d, btn){
+    if(!it){ return; } if(btn){ btn.textContent='minting…'; btn.disabled=true; }
+    var name=(it.prompt||(d.nm+' creation')).slice(0,48);
+    j('/api/collectibles/mint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,rarity:'rare',owner:(ST.op&&ST.op.id)||d.nm})}).then(function(r){
+      var c=r&&r.data&&r.data.collectible; if(!c){ if(btn){btn.textContent='⚠ failed';btn.disabled=false;} return; }
+      j('/api/collectibles/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id,priceCredits:50})}).then(function(r2){
+        if(btn){ btn.textContent=(r2&&r2.ok)?'✓ listed · 50cr':'⚠ list failed'; }
+        try{window.notify&&window.notify('🛒 Listed "'+name+'" to the Bazaar');}catch(_){}
+      });
+    });
+  }
+  function openContentStudio(){
+    try{ window._closeAgentRoom&&window._closeAgentRoom(); }catch(_){}
+    var o=el('agentRoomOverlay'); if(o){o.style.display='none';o.innerHTML='';}
+    try{ if(typeof window.showView==='function'){ window.showView('content-studio'); } else { el('cdWMsg')&&(el('cdWMsg').textContent='Content Studio unavailable'); } }catch(_){}
   }
 
   /* ---- install override ---- */
