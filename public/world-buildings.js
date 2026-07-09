@@ -484,6 +484,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       color: pal.trim.clone().lerp(new THREE.Color(0xffffff), 0.15),
       transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
     });
+    // Solid dark BEZEL behind each screen so it reads as a framed TV/monitor with a clean
+    // border (owner: "add some borders around it"). A thin accent trim rim sits on its edge.
+    const bezelMat = new THREE.MeshStandardMaterial({ color: 0x090c13, roughness: 0.7, metalness: 0.4 });
+    const bezelRimMat = new THREE.MeshBasicMaterial({ color: pal.trim.clone(), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
 
     for (let i = 0; i < n; i++) {
       const spec = layoutSpec[i];
@@ -491,6 +495,14 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
       const ox = Math.cos(a), oz = Math.sin(a);
       const px = x + ox * rW, pz = z + oz * rW;
       const rotY = Math.atan2(-ox, -oz);              // face the lounge centre
+
+      // solid dark bezel border (a framed-TV look), with a thin accent trim rim on its face
+      const bezel = new THREE.Mesh(new THREE.PlaneGeometry(sw * 1.24, sh * 1.32), bezelMat);
+      bezel.position.set(px + ox * 0.14, yC, pz + oz * 0.14);
+      bezel.rotation.y = rotY; bezel.renderOrder = 1; scene.add(bezel);
+      const bezelRim = new THREE.Mesh(new THREE.PlaneGeometry(sw * 1.16, sh * 1.24), bezelRimMat);
+      bezelRim.position.set(px + ox * 0.10, yC, pz + oz * 0.10);
+      bezelRim.rotation.y = rotY; bezelRim.renderOrder = 1; scene.add(bezelRim);
 
       // emissive frame behind the screen (arcade glow)
       const frame = new THREE.Mesh(new THREE.PlaneGeometry(sw * 1.10, sh * 1.16), frameMat);
@@ -2286,8 +2298,10 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader) {
     const bannerW = Math.min(16, Math.max(10, faceR * 0.34));  // ~10–16u wide
     // Centre height ≈ upper third of the facade (clearly visible from a distance).
     const cy      = baseY + H * 0.70;
-    // Sit a hair PROUD of the wall so it never z-fights the facade relief.
-    const standoff = 0.9;
+    // Stand the banner CLEARLY proud of the wall — 0.9 clipped into the facade relief
+    // (mullions/conduits/greebles + the new cornices), which read as the banner being
+    // "stuck in the building". 3.2 lets it hang free in front of all facade detail.
+    const standoff = 3.2;
     const fr      = faceR + standoff;
     const cx      = x + frontDir.x * fr;
     const cz      = z + frontDir.z * fr;
