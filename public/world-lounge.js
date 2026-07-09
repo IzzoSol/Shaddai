@@ -55,6 +55,15 @@
   var COINS_URL = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=1&sparkline=true&price_change_percentage=24h';
   var COIN_CACHE_MS = 60 * 1000;
 
+  /* DexScreener — free public API (no key, CORS-ok) + iframe-safe embed pages. */
+  var DEX_SEARCH = 'https://api.dexscreener.com/latest/dex/search?q=';
+  var DEX_SITE   = 'https://dexscreener.com/search?q=';
+  var DEX_QUICK  = ['SOL', 'ETH', 'WIF', 'PEPE', 'BONK', 'DOGE'];
+  function dexEmbedUrl(chainId, pairAddress) {
+    return 'https://dexscreener.com/' + encodeURIComponent(chainId) + '/' + encodeURIComponent(pairAddress)
+      + '?embed=1&theme=dark&chartTheme=dark&info=0&trades=0&tabs=0&chartLeftToolbar=0&interval=15';
+  }
+
   function injectStyle() {
     if (document.getElementById(STYLE_ID)) return;
     var css = ''
@@ -112,7 +121,50 @@
       + '.zx-chart{width:100%;height:150px;display:block;background:rgba(0,0,0,0.35);border-radius:10px;border:1px solid rgba(39,224,255,0.18);margin-bottom:8px}'
       + '.zx-note{font-size:11px;color:#9fd8ea;opacity:.8;padding:6px 2px}'
       + '.zx-note.zx-err{color:#ff9db0}'
-      + '@media(max-width:760px){.zx-body{flex-direction:column}.zx-list,.zx-coins{max-height:160px}}';
+      /* --- DexScreener view --- */
+      + '.zx-dexrow{display:flex;align-items:center;gap:8px;margin:0 0 10px}'
+      + '.zx-dexrow .zx-dexsearch{flex:1;min-width:0;height:38px;background:rgba(0,0,0,0.4);border:1px solid rgba(39,224,255,0.3);'
+      + 'color:#eaf6ff;border-radius:9px;padding:0 12px;font-family:inherit;font-size:12px;outline:none}'
+      + '.zx-dexsearch:focus{border-color:' + CYAN + ';box-shadow:0 0 12px rgba(39,224,255,0.35)}'
+      + '.zx-dexgo{height:38px;padding:0 14px;background:' + CYAN + ';color:#03121a;border:0;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px;box-shadow:0 0 14px rgba(39,224,255,0.4)}'
+      + '.zx-dexgo:hover{filter:brightness(1.12)}'
+      + '.zx-quick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}'
+      + '.zx-chip{padding:6px 11px;background:rgba(39,224,255,0.08);border:1px solid rgba(39,224,255,0.35);'
+      + 'color:' + CYAN + ';border-radius:20px;font-size:11px;letter-spacing:1px;cursor:pointer;transition:.12s;font-weight:700}'
+      + '.zx-chip:hover{background:rgba(39,224,255,0.22)}'
+      + '.zx-dexmeta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 8px;min-height:20px}'
+      + '.zx-dexpair{font-size:14px;font-weight:700;color:#eaf6ff}.zx-dexpair b{color:' + CYAN + '}'
+      + '.zx-dexprice{font-size:13px;color:#eaf6ff}'
+      + '.zx-dexchg{font-size:12px}.zx-dexchg.zx-up{color:#3cf08a}.zx-dexchg.zx-down{color:#ff5c7a}'
+      + '.zx-dexchain{font-size:10px;letter-spacing:1px;color:#9fd8ea;opacity:.75;text-transform:uppercase}'
+      + '.zx-dexframe{position:relative;flex:1;min-height:320px;border-radius:12px;overflow:hidden;'
+      + 'border:1px solid rgba(39,224,255,0.25);background:rgba(0,0,0,0.5)}'
+      + '.zx-dexframe.zx-big{min-height:min(78vh,760px)}'
+      + '.zx-dexframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}'
+      + '.zx-dexover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;'
+      + 'text-align:center;padding:20px;background:radial-gradient(600px 400px at 50% 30%,rgba(39,224,255,0.06),rgba(2,6,12,0.92));color:#cfeefb}'
+      + '.zx-dexover.zx-hide{display:none}'
+      + '.zx-dexspin{width:34px;height:34px;border:3px solid rgba(39,224,255,0.25);border-top-color:' + CYAN + ';border-radius:50%;animation:zxspin 0.8s linear infinite}'
+      + '@keyframes zxspin{to{transform:rotate(360deg)}}'
+      + '.zx-dexlink{display:inline-block;margin-top:6px;padding:9px 16px;background:rgba(39,224,255,0.12);border:1px solid ' + CYAN + ';'
+      + 'color:' + CYAN + ';border-radius:10px;text-decoration:none;font-size:12px;font-weight:700}'
+      + '.zx-dexlink:hover{background:rgba(39,224,255,0.25)}'
+      /* --- view tabs --- */
+      + '.zx-tabs{display:flex;gap:8px;padding:0 20px 12px;border-bottom:1px solid rgba(39,224,255,0.14)}'
+      + '.zx-tab{flex:0 0 auto;padding:8px 14px;background:rgba(39,224,255,0.05);border:1px solid rgba(39,224,255,0.22);'
+      + 'color:#9fd8ea;border-radius:10px;font-family:inherit;font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:.14s;font-weight:700}'
+      + '.zx-tab:hover{background:rgba(39,224,255,0.14);color:#eaf6ff}'
+      + '.zx-tab.zx-tab-on{background:rgba(39,224,255,0.18);border-color:' + CYAN + ';color:' + CYAN + ';box-shadow:0 0 14px rgba(39,224,255,0.3)}'
+      + '.zx-view{display:none}.zx-view.zx-view-on{display:flex}'
+      + '.zx-view.zx-view-dex{flex-direction:column;flex:1;min-height:0}'
+      + '.zx-btn-look{margin-left:auto;padding:6px 12px;background:' + CYAN + ';color:#03121a;border:0;border-radius:8px;'
+      + 'font-family:inherit;font-size:10px;letter-spacing:1px;font-weight:700;cursor:pointer;box-shadow:0 0 12px rgba(39,224,255,0.4)}'
+      + '.zx-btn-look:hover{filter:brightness(1.12)}'
+      + '.zx-coinact{margin-left:8px;font-size:10px;color:' + CYAN + ';border:1px solid rgba(39,224,255,0.4);'
+      + 'border-radius:7px;padding:3px 7px;cursor:pointer;white-space:nowrap;flex:0 0 auto}'
+      + '.zx-coinact:hover{background:rgba(39,224,255,0.18)}'
+      + '@media(max-width:760px){.zx-body{flex-direction:column}.zx-list,.zx-coins{max-height:160px}'
+      + '.zx-dexframe.zx-big{min-height:min(70vh,620px)}.zx-tabs{overflow-x:auto}}';
     var s = document.createElement('style');
     s.id = STYLE_ID;
     s.textContent = css;
@@ -155,6 +207,11 @@
       +   '<div class="zx-title">ZEROX LOUNGE · COMMUNITY RADIO<small>WEALTH DISTRICT · AFTER HOURS</small></div>'
       +   '<button class="zx-x" title="Close (Esc)">✕</button>'
       + '</div>'
+      + '<div class="zx-tabs">'
+      +   '<button class="zx-tab zx-tab-home zx-tab-on" data-view="home">◈ RADIO · COINS</button>'
+      +   '<button class="zx-tab zx-tab-dex" data-view="dex">📈 LIVE CHARTS · DEXSCREENER</button>'
+      + '</div>'
+      + '<div class="zx-view zx-view-home zx-view-on">'
       + '<div class="zx-body">'
       +   '<div class="zx-col zx-radio">'
       +     '<div class="zx-h2">◈ Sound System</div>'
@@ -175,12 +232,34 @@
       +     '<ul class="zx-list"></ul>'
       +   '</div>'
       +   '<div class="zx-col zx-charts">'
-      +     '<div class="zx-h2">◈ Trending Coins</div>'
+      +     '<div class="zx-h2" style="display:flex;align-items:center">◈ Trending Coins'
+      +       '<button class="zx-btn-look zx-coin-dex" title="Open selected coin on DexScreener">▶ DEXSCREENER</button></div>'
       +     '<canvas class="zx-chart"></canvas>'
       +     '<div class="zx-note zx-cnote">Pick a coin to view its 7-day chart.</div>'
       +     '<ul class="zx-coins"></ul>'
       +   '</div>'
       + '</div>'
+      + '</div>' /* /zx-view-home */
+      + '<div class="zx-view zx-view-dex">'
+      +   '<div class="zx-body" style="flex-direction:column;flex:1;min-height:0">'
+      +     '<div class="zx-col" style="flex:1;min-height:0">'
+      +       '<div class="zx-h2" style="display:flex;align-items:center">◈ Live DEX Charts'
+      +         '<button class="zx-btn-look zx-look" title="Expand chart">⛶ LOOK AT CHARTS</button></div>'
+      +       '<div class="zx-dexrow">'
+      +         '<input type="text" class="zx-dexsearch" placeholder="Search token / symbol / pair (e.g. SOL, WIF, 0x…)" spellcheck="false">'
+      +         '<button class="zx-dexgo">SEARCH</button>'
+      +       '</div>'
+      +       '<div class="zx-quick"></div>'
+      +       '<div class="zx-dexmeta"><span class="zx-dexpair">DexScreener</span></div>'
+      +       '<div class="zx-dexframe">'
+      +         '<div class="zx-dexover">'
+      +           '<div class="zx-dexspin"></div>'
+      +           '<div class="zx-dexmsg">Pick a token above to load its live chart.</div>'
+      +         '</div>'
+      +       '</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>' /* /zx-view-dex */
       + '</div>';
     document.body.appendChild(root);
 
@@ -192,6 +271,17 @@
     var seek   = $('.zx-seek'), volume = $('.zx-volume');
     var btnPlay = $('.zx-play'), btnMute = $('.zx-mute');
     var listEl = $('.zx-list'), coinsEl = $('.zx-coins'), cnote = $('.zx-cnote');
+
+    /* -- DexScreener view refs -- */
+    var dexSearchEl = $('.zx-dexsearch');
+    var dexQuickEl  = $('.zx-quick');
+    var dexMetaEl   = $('.zx-dexmeta');
+    var dexFrameBox = $('.zx-dexframe');
+    var dexOver     = $('.zx-dexover');
+    var dexMsg      = $('.zx-dexmsg');
+    var dexIframe   = null;      /* lazy: created on first DEX view show */
+    var dexLoaded   = false;     /* has the view ever been shown */
+    var dexReqId    = 0;         /* guards against out-of-order searches */
 
     /* prevent world keybinds from firing while typing/using lounge controls */
     root.addEventListener('keydown', function (e) { e.stopPropagation(); });
@@ -320,12 +410,18 @@
           + '<div class="zx-cname">' + esc(c.name) + '</div></span>'
           + '<span class="zx-cprice"><div>' + fmtPrice(c.current_price) + '</div>'
           + '<div class="' + (up ? 'zx-up' : 'zx-down') + '">'
-          + (up ? '▲' : '▼') + ' ' + (chg == null ? '--' : Math.abs(chg).toFixed(2)) + '%</div></span>';
+          + (up ? '▲' : '▼') + ' ' + (chg == null ? '--' : Math.abs(chg).toFixed(2)) + '%</div></span>'
+          + '<span class="zx-coinact" title="View on DexScreener">▶ DEX</span>';
         li.onclick = function () {
           selectedCoin = c;
           Array.prototype.forEach.call(coinsEl.children, function (n) { n.classList.remove('zx-active'); });
           li.classList.add('zx-active');
           drawSparkline(c);
+        };
+        li.querySelector('.zx-coinact').onclick = function (e) {
+          e.stopPropagation();
+          selectedCoin = c;
+          dexSearch(c.symbol); /* switches to DEX view + embeds top pair */
         };
         coinsEl.appendChild(li);
       });
@@ -395,6 +491,164 @@
         });
     }
 
+    /* --------------------------- DexScreener ------------------------------ */
+    function dexShowOverlay(html, spinning) {
+      dexOver.classList.remove('zx-hide');
+      dexOver.innerHTML = (spinning ? '<div class="zx-dexspin"></div>' : '')
+        + '<div class="zx-dexmsg">' + html + '</div>';
+      dexMsg = dexOver.querySelector('.zx-dexmsg');
+    }
+    function dexHideOverlay() { dexOver.classList.add('zx-hide'); }
+
+    function ensureDexIframe() {
+      if (dexIframe) return dexIframe;
+      dexIframe = document.createElement('iframe');
+      dexIframe.setAttribute('loading', 'lazy');
+      dexIframe.setAttribute('allow', 'clipboard-write; fullscreen');
+      dexIframe.setAttribute('referrerpolicy', 'no-referrer');
+      dexIframe.title = 'DexScreener live chart';
+      /* insert before the overlay so the overlay stays on top */
+      dexFrameBox.insertBefore(dexIframe, dexOver);
+      return dexIframe;
+    }
+
+    function dexSiteLink(q) {
+      return '<a class="zx-dexlink" href="' + DEX_SITE + encodeURIComponent(q)
+        + '" target="_blank" rel="noopener noreferrer">Open DexScreener ↗</a>';
+    }
+
+    function dexRenderMeta(pair) {
+      var base = (pair.baseToken && pair.baseToken.symbol) || '?';
+      var quote = (pair.quoteToken && pair.quoteToken.symbol) || '';
+      var price = pair.priceUsd != null ? fmtPrice(parseFloat(pair.priceUsd)) : '--';
+      var chg = pair.priceChange && pair.priceChange.h24;
+      var up = (parseFloat(chg) || 0) >= 0;
+      dexMetaEl.innerHTML =
+        '<span class="zx-dexpair"><b>' + esc(base) + '</b>' + (quote ? '/' + esc(quote) : '') + '</span>'
+        + '<span class="zx-dexprice">' + price + '</span>'
+        + '<span class="zx-dexchg ' + (up ? 'zx-up' : 'zx-down') + '">'
+        + (chg == null ? '' : (up ? '▲' : '▼') + ' ' + Math.abs(parseFloat(chg)).toFixed(2) + '%') + '</span>'
+        + '<span class="zx-dexchain">' + esc(pair.chainId || '') + '</span>';
+    }
+
+    function dexEmbedPair(pair, query) {
+      dexRenderMeta(pair);
+      var frame = ensureDexIframe();
+      var url = dexEmbedUrl(pair.chainId, pair.pairAddress);
+      var settled = false;
+      dexShowOverlay('Loading ' + esc((pair.baseToken && pair.baseToken.symbol) || 'chart') + ' chart…', true);
+      /* if the embed is blocked (CSP/X-Frame) onload may never fire → fall back */
+      var guard = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        dexShowOverlay('This chart could not be embedded here.<br>'
+          + dexSiteLink(query || ((pair.baseToken && pair.baseToken.symbol) || '')), false);
+      }, 9000);
+      frame.onload = function () {
+        if (settled) return;
+        settled = true; clearTimeout(guard); dexHideOverlay();
+      };
+      frame.onerror = function () {
+        if (settled) return;
+        settled = true; clearTimeout(guard);
+        dexShowOverlay('This chart could not be loaded.<br>'
+          + dexSiteLink(query || ((pair.baseToken && pair.baseToken.symbol) || '')), false);
+      };
+      frame.src = url;
+    }
+
+    /* search DexScreener → pick highest-liquidity pair → embed */
+    function dexSearch(query) {
+      query = String(query || '').trim();
+      if (!query) return;
+      setView('dex');
+      if (dexSearchEl.value !== query) dexSearchEl.value = query;
+      var myReq = ++dexReqId;
+      dexMetaEl.innerHTML = '<span class="zx-dexpair">Searching “' + esc(query) + '”…</span>';
+      dexShowOverlay('Searching DexScreener for “' + esc(query) + '”…', true);
+      fetch(DEX_SEARCH + encodeURIComponent(query), { headers: { accept: 'application/json' } })
+        .then(function (r) {
+          if (r.status === 429) throw new Error('rate');
+          if (!r.ok) throw new Error('http');
+          return r.json();
+        })
+        .then(function (data) {
+          if (myReq !== dexReqId) return; /* stale */
+          var pairs = (data && data.pairs) || [];
+          if (!pairs.length) {
+            dexMetaEl.innerHTML = '<span class="zx-dexpair">No pair found for “' + esc(query) + '”</span>';
+            dexShowOverlay('No matching pair on DexScreener.<br>' + dexSiteLink(query), false);
+            return;
+          }
+          /* best = highest USD liquidity */
+          var best = pairs[0], bestLiq = -1;
+          pairs.forEach(function (p) {
+            var liq = (p.liquidity && parseFloat(p.liquidity.usd)) || 0;
+            if (liq > bestLiq) { bestLiq = liq; best = p; }
+          });
+          dexEmbedPair(best, query);
+        })
+        .catch(function (err) {
+          if (myReq !== dexReqId) return;
+          var msg = err && err.message === 'rate'
+            ? 'DexScreener is rate-limiting right now — try again in a moment.'
+            : 'Could not reach DexScreener (offline?).';
+          dexMetaEl.innerHTML = '<span class="zx-dexpair">DexScreener</span>';
+          dexShowOverlay(msg + '<br>' + dexSiteLink(query), false);
+        });
+    }
+
+    function renderDexQuick() {
+      if (dexQuickEl.children.length) return;
+      DEX_QUICK.forEach(function (sym) {
+        var b = document.createElement('button');
+        b.className = 'zx-chip';
+        b.textContent = sym;
+        b.onclick = function () { dexSearch(sym); };
+        dexQuickEl.appendChild(b);
+      });
+    }
+
+    /* first time the DEX view is shown, wire quick picks + a default chart */
+    function initDexView() {
+      renderDexQuick();
+      if (!dexLoaded) {
+        dexLoaded = true;
+        dexSearch(DEX_QUICK[0]); /* SOL */
+      }
+    }
+
+    $('.zx-dexgo').onclick = function () { dexSearch(dexSearchEl.value); };
+    dexSearchEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') dexSearch(dexSearchEl.value);
+    });
+    /* "Look at Charts" → expand the embedded chart large */
+    $('.zx-look').onclick = function () {
+      var big = dexFrameBox.classList.toggle('zx-big');
+      this.textContent = big ? '⛶ SHRINK' : '⛶ LOOK AT CHARTS';
+    };
+    /* coin-list → DexScreener: search the selected coin's symbol */
+    $('.zx-coin-dex').onclick = function () {
+      if (!selectedCoin) { setView('dex'); initDexView(); return; }
+      dexSearch(selectedCoin.symbol);
+    };
+
+    /* ------------------------------ view tabs ----------------------------- */
+    var currentView = 'home';
+    function setView(name) {
+      if (name === currentView && dexLoaded) { /* still ensure init for dex */ }
+      currentView = name;
+      Array.prototype.forEach.call(root.querySelectorAll('.zx-tab'), function (t) {
+        t.classList.toggle('zx-tab-on', t.getAttribute('data-view') === name);
+      });
+      $('.zx-view-home').classList.toggle('zx-view-on', name === 'home');
+      $('.zx-view-dex').classList.toggle('zx-view-on', name === 'dex');
+      if (name === 'dex') initDexView();
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('.zx-tab'), function (t) {
+      t.onclick = function () { setView(t.getAttribute('data-view')); };
+    });
+
     /* --------------------------- open / close ----------------------------- */
     function open() {
       if (openState) return;
@@ -411,6 +665,11 @@
       root.classList.remove('zx-on');
       stopViz();
       try { audio.pause(); } catch (_) {}
+      /* blank the DexScreener iframe so it isn't running while hidden */
+      if (dexIframe) { try { dexIframe.onload = null; dexIframe.src = 'about:blank'; } catch (_) {} }
+      dexLoaded = false;        /* reload a fresh chart next time DEX view opens */
+      dexFrameBox.classList.remove('zx-big');
+      var lookBtn = $('.zx-look'); if (lookBtn) lookBtn.textContent = '⛶ LOOK AT CHARTS';
     }
     function toggle() { openState ? close() : open(); }
     function isOpen() { return openState; }
