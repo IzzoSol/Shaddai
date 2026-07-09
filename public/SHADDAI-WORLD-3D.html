@@ -2285,14 +2285,16 @@ function _loadProp(name){ if(_propCache[name]) return _propCache[name];
 // Body is now PLAYER_BODY_HEIGHT (7.0), so scale both by _PLAYER_EYE_K (=7.0/3.6) to keep the emit point
 // at hand/weapon level instead of mid-torso. (3.6→7.0 body change.)
 function _muzzle(){ const o=playerAvatar.position.clone(); o.y+=3.2*_PLAYER_EYE_K; o.addScaledVector(fwd,1.8*_PLAYER_EYE_K); return o; }
-function _pushProj(o,speed,life,spin,extra){ const light=new THREE.PointLight(extra&&extra.color||0xffffff,3.2,26); o.add(light);
-  // VFX POLISH: soft additive halo so the bolt reads as a glowing projectile (not a flat mesh).
-  // Sprite = billboards for free + is skipped by the isMesh dispose traverse (no shared-geo dispose bug).
-  // Fades with the projectile via `halo` handle below → clean fade-out, no popping.
+function _pushProj(o,speed,life,spin,extra){
+  // FREEZE FIX (2026-07-09): do NOT add a dynamic PointLight per projectile. Adding/removing a
+  // light changes the scene's light count, which forces THREE.js to RECOMPILE every material's
+  // shader — a multi-hundred-ms main-thread HITCH on every R press (and again on despawn). That
+  // was the "R keeps freezing the game" report. The bolt already reads as glowing via its emissive
+  // material + the additive halo sprite + the scene's UnrealBloom pass — no per-bolt light needed.
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({ color:extra&&extra.color||0xffffff,
     transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending }));
   halo.scale.setScalar(2.4); o.add(halo);
-  scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:light,halo}, extra||{})); }
+  scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:null,halo}, extra||{})); }
 function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(true);
   const box=new THREE.Box3().setFromObject(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
   o.traverse(c=>{ if(c.isMesh){ c.castShadow=false; c.frustumCulled=false;
