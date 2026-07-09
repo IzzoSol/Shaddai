@@ -505,6 +505,84 @@
       group.add(hdr);
     }
 
+    /* ── FRAMED WALL ART (TURTLE, 2026-07-09) ─────────────────────────────────
+       Hangs ONE themed FLUX painting per room. A dark bevel frame with an
+       accent inner reveal + a soft accent sconce (point light) so each piece
+       reads as native to the room. The art texture is loaded ONCE via
+       TextureLoader (colorSpace = SRGBColorSpace so the JPG isn't washed out);
+       no per-frame work is added — update() never touches these meshes. Frame
+       geometry/materials + the loaded texture are freed automatically by the
+       room's disposeObject3D() teardown (it disposes every material's maps).
+
+       ART table: file + wall placement per room. Default wall = LEFT (x=-40),
+       facing +X into the room, at comfortable eye height. Placements are chosen
+       to sit on a clear stretch of wall — never over the +Z EXIT PORTAL, never
+       over a back-wall hero piece — so the room stays fully walkable and the
+       exit reachable. `z` is the along-wall offset; art hangs flat on the wall. */
+    var ART = {
+      SHADDAI: { file: 'shaddai.jpg', z:  0,  w: 13 },   /* left wall, clear of dais(-Z)+runner */
+      /* NEXUS left wall is dense with 11.5-tall portals (z=-24,-8,8,24). Fit the
+         piece in the clear z=0 gap AND above the portal tops (y≈16.5) so it never
+         overlaps a portal — smaller + raised for this one room only. */
+      NEXUS:   { file: 'nexus.jpg',   z:  0,  w: 7,  y: 16.6 },
+      QUILL:   { file: 'quill.jpg',   z:  0,  w: 12 },
+      ORACLE:  { file: 'oracle.jpg',  z:  0,  w: 12 },
+      TURTLE:  { file: 'turtle.jpg',  z:  0,  w: 13 },
+      PIKADON: { file: 'pikadon.jpg', z:  0,  w: 12 },
+      ZEROX:   { file: 'zerox.jpg',   z:  0,  w: 12 },
+      bazaar:  { file: 'bazaar.jpg',  z:  0,  w: 13 },
+    };
+
+    /* Hang the matching room's framed piece on the LEFT wall (x=-40), facing +X.
+       Safe if the room has no art entry (no-op) or if the texture fails to load
+       (the frame + reveal still render). Called once at build time per room. */
+    function hangArt(group, code, accent) {
+      var cfg = ART[upperCode(code)] || ART[code];
+      if (!cfg) return;
+      var artW = cfg.w || 12;
+      var artH = artW;                       /* source art is square (768×768) */
+      var wallX = -ROOM_W / 2 + 0.35;        /* just off the left wall face */
+      var cz    = cfg.z || 0;                /* along-wall (Z) offset */
+      var cy    = cfg.y || 8.4;              /* centre height (default eye level) */
+      var ry    = Math.PI / 2;               /* face +X (into the room) */
+
+      var art = new THREE.Group();
+      art.position.set(wallX, cy, cz);
+      art.rotation.y = ry;
+
+      /* dark outer frame slab (art plane sits proud of it) */
+      var frameM = mat(0x0a0a0c, accent, 0.10, 0.55, 0.45);
+      var frame  = new THREE.Mesh(
+        new THREE.BoxGeometry(artW + 1.6, artH + 1.6, 0.4), frameM);
+      frame.position.set(0, 0, 0);           /* local: plane is on +Z of the group */
+      art.add(frame);
+
+      /* accent inner reveal (thin glowing liner around the canvas) */
+      var revM = mat(accent, accent, 0.24, 0.45, 0.30);
+      glow(revM, 0.20, cz * 0.2 + 0.5, 0.10);
+      var reveal = new THREE.Mesh(
+        new THREE.BoxGeometry(artW + 0.5, artH + 0.5, 0.34), revM);
+      reveal.position.set(0, 0, 0.06); art.add(reveal);
+
+      /* the art plane itself — unlit basic material so the painting shows true */
+      var artMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      var artMesh = new THREE.Mesh(new THREE.PlaneGeometry(artW, artH), artMat);
+      artMesh.position.set(0, 0, 0.24); art.add(artMesh);
+      try {
+        new THREE.TextureLoader().load('/assets/interiors/' + cfg.file, function (tex) {
+          if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;   /* correct gamma */
+          artMat.map = tex; artMat.needsUpdate = true;
+        });
+      } catch (e) { /* headless / no loader → frame still renders */ }
+
+      /* soft accent sconce that grazes the canvas (in front, angled down) */
+      var sconce = new THREE.PointLight(accent, 0.55, 26);
+      sconce.position.set(wallX + 7, cy + 5, cz);   /* out in the room, above */
+      group.add(sconce);
+
+      group.add(art);
+    }
+
     /* ────────────────────────────────────────────────────────────────────────
        THEMED PROP BUILDERS
        Each receives (group, accent) and pushes animatable objects onto
@@ -2245,6 +2323,10 @@
       /* themed props */
       var fn = propBuilders[theme.propFn] || propBuilders.genericRoom;
       fn(group, theme.accent);
+
+      /* framed FLUX wall-art (left wall, eye height) — one themed piece per room.
+         Added AFTER props so its glow material joins this room's glowEntries splice. */
+      hangArt(group, uc, theme.accent);
 
       /* NOTE: the 2nd-level in-room elevator/skyPad was removed — elevators now
          live OUTSIDE next to each building (world-elevators.js). Interiors are
