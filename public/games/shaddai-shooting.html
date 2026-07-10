@@ -21,6 +21,31 @@
   .btn.gold{border-color:#ffcf4a;color:#ffcf4a;background:rgba(255,207,74,.08)}
   .btn.gold:hover{background:rgba(255,207,74,.2);box-shadow:0 0 18px rgba(255,207,74,.5)}
 
+  /* ── premium DEPLOY button: depth, drop shadow, inner glow, gradient, states ── */
+  .btn-deploy{pointer-events:auto;cursor:pointer;user-select:none;position:relative;
+    display:inline-flex;align-items:center;gap:12px;
+    padding:18px 46px;border-radius:14px;border:1px solid var(--acc,#ffcf4a);
+    font-weight:900;font-size:19px;letter-spacing:3px;text-transform:uppercase;
+    color:#0a0d16;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--acc,#ffcf4a) 92%,#fff),var(--acc,#ffcf4a) 55%,color-mix(in srgb,var(--acc,#ffcf4a) 70%,#000));
+    box-shadow:0 10px 26px -6px var(--acc,#ffcf4a),
+      0 2px 0 rgba(0,0,0,.4),
+      inset 0 2px 3px rgba(255,255,255,.55),
+      inset 0 -3px 6px rgba(0,0,0,.35);
+    text-shadow:0 1px 0 rgba(255,255,255,.35);
+    transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s,filter .12s;
+    overflow:hidden}
+  .btn-deploy::before{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.45) 48%,transparent 66%);
+    transform:translateX(-120%);transition:transform .5s ease}
+  .btn-deploy:hover{transform:translateY(-3px) scale(1.02);filter:brightness(1.08);
+    box-shadow:0 16px 36px -6px var(--acc,#ffcf4a),0 3px 0 rgba(0,0,0,.4),
+      inset 0 2px 3px rgba(255,255,255,.6),inset 0 -3px 6px rgba(0,0,0,.35)}
+  .btn-deploy:hover::before{transform:translateX(120%)}
+  .btn-deploy:active{transform:translateY(1px) scale(.99);
+    box-shadow:0 4px 12px -4px var(--acc,#ffcf4a),inset 0 3px 6px rgba(0,0,0,.4)}
+  .btn-deploy .tri{font-size:15px;filter:drop-shadow(0 1px 0 rgba(255,255,255,.4))}
+
   /* ── close ── */
   #close{position:absolute;top:14px;right:16px;pointer-events:auto;cursor:pointer;z-index:50;
     border:1px solid #ff5b7a;color:#ff5b7a;background:rgba(255,91,122,.08);
@@ -33,6 +58,119 @@
     backdrop-filter:blur(2px);text-align:center;padding:20px}
   .title{font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:6px}
   .sub{margin-top:6px;font-size:13px;letter-spacing:3px;opacity:.7;text-transform:uppercase}
+
+  /* ── cinematic STARFALL menu: tight, centered, intentional ── */
+  #titleScreen{justify-content:flex-start;padding:0;overflow-y:auto}
+  /* one centered column with a hard max-width so nothing floats loose */
+  #titlePanel{display:flex;flex-direction:column;align-items:center;width:100%;
+    max-width:760px;margin:auto;padding:clamp(18px,4vh,44px) clamp(16px,4vw,32px);gap:0;
+    background:linear-gradient(180deg,rgba(10,16,30,.55),rgba(6,10,20,.35));
+    border:1px solid rgba(39,224,255,.14);border-radius:22px;
+    box-shadow:0 24px 70px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter:blur(3px)}
+  .starfall-logo{position:relative;font-weight:900;line-height:.9;
+    font-size:clamp(46px,10vw,116px);letter-spacing:clamp(4px,1.4vw,16px);
+    background:linear-gradient(180deg,#ffffff 0%,#cfe8ff 32%,#27e0ff 62%,#1a6fff 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(39,224,255,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.6));
+    animation:logoIn 1s cubic-bezier(.16,1,.3,1) both}
+  .starfall-logo::after{content:"STARFALL";position:absolute;left:0;top:0;z-index:-1;
+    color:transparent;-webkit-text-stroke:2px rgba(39,224,255,.35);
+    filter:blur(2px);transform:translateY(2px)}
+  @keyframes logoIn{from{opacity:0;transform:translateY(24px) scale(.94);filter:blur(6px)}
+    to{opacity:1;transform:none}}
+  .title-tag{font-size:clamp(10px,1.4vw,14px);letter-spacing:clamp(4px,1vw,9px);
+    text-transform:uppercase;color:#8fb8ff;opacity:.85;
+    text-shadow:0 0 12px rgba(39,224,255,.5)}
+
+  /* hero preview + selected-ship readout, side by side */
+  #titleHeroRow{display:flex;align-items:center;justify-content:center;gap:clamp(14px,3vw,30px);
+    width:100%;margin:14px 0 6px;flex-wrap:wrap}
+  #titleHeroBox{width:min(30vw,168px);height:min(30vw,168px);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;position:relative;
+    border-radius:20px;border:1px solid var(--acc,#27e0ff);
+    background:radial-gradient(circle at 50% 40%,rgba(39,224,255,.10),rgba(6,10,20,.2));
+    box-shadow:inset 0 0 30px rgba(0,0,0,.5),0 0 32px -8px var(--acc,#27e0ff)}
+  #titleHero{width:82%;height:82%;
+    filter:drop-shadow(0 12px 22px rgba(0,0,0,.7)) drop-shadow(0 0 26px var(--acc,#27e0ff));
+    animation:heroFloat 4s ease-in-out infinite;object-fit:contain;pointer-events:none}
+  @keyframes heroFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
+  #titleInfo{flex:0 1 260px;text-align:left;min-width:200px}
+  #titleAgentName{font-weight:900;font-size:clamp(18px,2.6vw,28px);letter-spacing:3px;
+    text-transform:uppercase;margin-bottom:2px}
+  #titleRole{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.6;margin-bottom:10px}
+  #titleStats{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;
+    font-family:'Share Tech Mono',monospace;font-size:11px}
+  #titleStats .srow{display:flex;align-items:center;gap:8px}
+  #titleStats .slbl{width:34px;opacity:.65;letter-spacing:1px}
+  #titleSpecial{font-size:12px;opacity:.85;font-style:italic;letter-spacing:.5px;line-height:1.4}
+
+  /* ── ROSTER: vertical character cards — agent standing next to their ship ── */
+  .roster-head{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.55;
+    margin:16px 0 10px;align-self:center}
+  #roster{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;width:100%;margin-bottom:4px}
+  .ship{pointer-events:auto;cursor:pointer;position:relative;display:flex;flex-direction:column;
+    align-items:stretch;padding:0;border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
+    transition:transform .16s,border-color .16s,box-shadow .16s;overflow:hidden}
+  .ship:hover{transform:translateY(-4px);border-color:var(--c);background:rgba(255,255,255,.06);
+    box-shadow:0 10px 24px -10px var(--c)}
+  .ship.sel{transform:translateY(-4px);border-color:var(--c);
+    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+    box-shadow:0 0 26px -4px var(--c),inset 0 0 0 1px var(--c)}
+  .ship.sel::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+    background:var(--c);box-shadow:0 0 12px var(--c)}
+  /* vertical portrait: agent + ship (HF art), fallback = ship PNG on a color glow */
+  .ship .portrait{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 32%,color-mix(in srgb,var(--c) 30%,transparent),transparent 66%),
+      linear-gradient(180deg,#0c1424,#05070d)}
+  .ship .portrait img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+  .ship .portrait img.fallback{object-fit:contain;padding:14% 10%;object-position:center}
+  .ship .portrait .letter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:clamp(20px,4vw,34px);color:var(--c);text-shadow:0 0 16px var(--c)}
+  /* dark scrim so the name/trait text is always legible over art */
+  .ship .portrait::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52%;
+    background:linear-gradient(180deg,transparent,rgba(4,6,12,.92));pointer-events:none}
+  .ship .meta{position:relative;z-index:2;margin-top:-38%;padding:6px 6px 8px;text-align:center}
+  .ship .snm{font-weight:900;font-size:clamp(10px,1.5vw,13px);letter-spacing:.5px;color:var(--c);
+    text-shadow:0 1px 4px #000,0 0 10px color-mix(in srgb,var(--c) 60%,transparent)}
+  .ship .shint{font-size:clamp(7.5px,1vw,9px);opacity:.85;letter-spacing:.3px;line-height:1.2;
+    text-transform:uppercase;min-height:11px;margin-top:2px;color:#cfe0ff;text-shadow:0 1px 3px #000}
+
+  #titleScreen .swap-hint{margin-top:14px;font-size:11px;letter-spacing:2px;opacity:.5;text-transform:uppercase}
+
+  /* ── DIALOG BOX: portrait + banter, shown at key beats ── */
+  #dialog{position:absolute;left:50%;bottom:76px;transform:translateX(-50%) translateY(16px);
+    display:flex;align-items:center;gap:14px;max-width:min(680px,92vw);
+    padding:12px 20px 12px 12px;border-radius:16px;opacity:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(10,16,30,.92),rgba(6,10,20,.9));
+    border:1px solid var(--acc,#27e0ff);
+    box-shadow:0 18px 46px -14px #000,0 0 30px -10px var(--acc,#27e0ff),inset 0 1px 0 rgba(255,255,255,.06);
+    transition:opacity .32s cubic-bezier(.16,1,.3,1),transform .32s cubic-bezier(.16,1,.3,1)}
+  #dialog.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #dialogPort{flex:0 0 auto;width:60px;height:60px;border-radius:12px;overflow:hidden;
+    border:1px solid var(--acc,#27e0ff);background:radial-gradient(circle,color-mix(in srgb,var(--acc,#27e0ff) 30%,transparent),#05070d);
+    box-shadow:0 0 18px -4px var(--acc,#27e0ff)}
+  #dialogPort img{width:100%;height:100%;object-fit:cover;object-position:top center}
+  #dialogPort .lt{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:26px;color:var(--acc,#27e0ff);text-shadow:0 0 12px var(--acc,#27e0ff)}
+  #dialogBody{text-align:left;min-width:0}
+  #dialogName{font-weight:900;font-size:13px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--acc,#27e0ff);text-shadow:0 0 10px var(--acc,#27e0ff)}
+  #dialogText{font-size:14px;line-height:1.35;color:#e6efff;margin-top:2px}
+
+  /* responsive reflow: fewer columns on tablets/phones */
+  @media (max-width:760px){
+    #roster{grid-template-columns:repeat(4,1fr)}
+    #titleInfo{flex-basis:100%;text-align:center}
+    #titleStats .srow{justify-content:center}
+    #titleHeroRow{gap:12px}
+    #dialog{bottom:64px;padding:10px 16px 10px 10px}
+    #dialogPort{width:50px;height:50px}
+    #dialogText{font-size:13px}
+  }
+  @media (max-width:460px){ #roster{grid-template-columns:repeat(3,1fr)} #dialogText{font-size:12px} }
 
   /* ── character grid ── */
   #cards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:960px;margin:26px 0 10px}
@@ -56,12 +194,36 @@
   #hpfill{height:100%;width:100%;background:linear-gradient(90deg,#2fff9a,#27e0ff);transition:width .12s}
   #spbar{width:150px;height:10px;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;background:rgba(0,0,0,.4)}
   #spfill{height:100%;width:0%;background:linear-gradient(90deg,#ffcf4a,#ff9d3a);transition:width .1s}
+  #hud .row{position:relative}
+  #hpbar,#spbar{position:relative}
+  /* moving sheen inside the fill bars for a premium "energy" read */
+  #hpfill::after,#spfill::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+    background-size:60px 100%;animation:barSheen 2.2s linear infinite;pointer-events:none}
+  @keyframes barSheen{from{background-position:-60px 0}to{background-position:260px 0}}
+  #spword{transition:color .2s,text-shadow .2s}
+  #spword.ready{color:#2fff9a!important;opacity:1!important;text-shadow:0 0 10px rgba(47,255,154,.8)}
   #topright{position:absolute;top:12px;right:110px;text-align:right;font-family:'Share Tech Mono',monospace}
-  #score{font-size:30px;font-weight:900}
-  #combo{font-size:14px;height:16px}
-  #wave{font-size:14px;opacity:.85;letter-spacing:1px}
-  #hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11px;
-    letter-spacing:1px;opacity:.5;font-family:'Share Tech Mono',monospace}
+  #score{font-size:32px;font-weight:900;text-shadow:0 0 14px currentColor,0 2px 6px rgba(0,0,0,.6);
+    transition:transform .1s}
+  #score.pop{transform:scale(1.14)}
+  #combo{font-size:15px;height:18px;font-weight:800;transition:transform .12s}
+  #combo.pop{transform:scale(1.22)}
+  #wave{font-size:14px;opacity:.85;letter-spacing:2px;
+    text-shadow:0 0 10px rgba(39,224,255,.5)}
+  /* ── control-hint legend: single non-overlapping strip of key-cap chips ── */
+  #hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;
+    max-width:min(720px,94vw);padding:8px 16px;border-radius:12px;
+    background:rgba(6,12,22,.55);border:1px solid rgba(39,224,255,.18);
+    backdrop-filter:blur(4px);font-family:'Share Tech Mono',monospace}
+  #hint .grp{display:flex;align-items:center;gap:5px;white-space:nowrap}
+  #hint .lbl{font-size:10px;letter-spacing:1px;opacity:.6;text-transform:uppercase}
+  #hint .key{display:inline-flex;align-items:center;justify-content:center;
+    min-width:20px;height:20px;padding:0 6px;border-radius:5px;font-size:11px;font-weight:700;
+    color:#cfe8ff;background:linear-gradient(180deg,#1a2740,#0c1526);
+    border:1px solid rgba(120,170,255,.35);border-bottom-width:2px;
+    box-shadow:0 1px 0 rgba(0,0,0,.4);line-height:1}
   #banner{position:absolute;top:34%;left:0;right:0;text-align:center;font-size:clamp(26px,5vw,54px);
     font-weight:900;letter-spacing:5px;opacity:0;transition:opacity .3s;pointer-events:none}
   .hide{display:none!important}
@@ -71,7 +233,13 @@
 <div id="wrap">
   <canvas id="c"></canvas>
   <div id="ui">
-    <div id="close">✕ CLOSE</div>
+    <div id="close">◀ ARCADE MENU</div>
+
+    <!-- DIALOG BOX: chosen agent banter with portrait -->
+    <div id="dialog">
+      <div id="dialogPort"><img id="dialogPortImg" alt=""><span id="dialogPortLetter" class="lt hide"></span></div>
+      <div id="dialogBody"><div id="dialogName"></div><div id="dialogText"></div></div>
+    </div>
 
     <!-- HUD -->
     <div id="hud" class="hide">
@@ -83,16 +251,52 @@
       <div id="combo" class="neon"></div>
       <div id="wave">WAVE 1</div>
     </div>
-    <div id="hint" class="hide">WASD / ARROWS move · MOUSE aim · CLICK/HOLD fire · SPACE special · P pause</div>
+    <div id="hint" class="hide">
+      <span class="grp"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="lbl">move</span></span>
+      <span class="grp"><span class="key">MOUSE</span><span class="lbl">aim</span></span>
+      <span class="grp"><span class="key">AUTO</span><span class="lbl">fire</span></span>
+      <span class="grp"><span class="key">SPACE</span><span class="lbl">special</span></span>
+      <span class="grp"><span class="key">P</span><span class="lbl">pause</span></span>
+    </div>
     <div id="banner"></div>
 
+    <!-- TITLE / START SCREEN -->
+    <div id="titleScreen" class="screen">
+      <div id="titlePanel">
+        <div class="title-tag">SHADDAI ARENA presents</div>
+        <div class="starfall-logo">STARFALL</div>
+        <div class="title-tag">◆ NEON VOID SURVIVAL ◆</div>
+
+        <!-- hero preview + selected ship readout -->
+        <div id="titleHeroRow">
+          <div id="titleHeroBox"><img id="titleHero" alt=""></div>
+          <div id="titleInfo">
+            <div id="titleAgentName"></div>
+            <div id="titleRole"></div>
+            <div id="titleStats"></div>
+            <div id="titleSpecial"></div>
+          </div>
+        </div>
+
+        <!-- ALL 7 SHIPS — always-visible roster -->
+        <div class="roster-head">◆ SELECT YOUR OPERATIVE ◆</div>
+        <div id="roster"></div>
+
+        <div id="menuBtnRow" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:4px">
+          <button id="deployBtn" class="btn-deploy"><span class="tri">▶</span> DEPLOY</button>
+          <button id="codexBtn" class="btn" style="border-color:#b46bff;color:#d7b3ff;background:rgba(180,107,255,.10)">⌂ CODEX</button>
+        </div>
+        <div class="swap-hint">Click an operative to select · <b>ENTER</b> to launch</div>
+      </div>
+    </div>
+
     <!-- CHARACTER SELECT -->
-    <div id="select" class="screen">
-      <div class="title neon">SHADDAI ARENA</div>
-      <div class="sub gold">Select your operative</div>
+    <div id="select" class="screen hide">
+      <div class="title neon">SELECT OPERATIVE</div>
+      <div class="sub gold">Choose your ship</div>
       <div id="cards"></div>
-      <button id="startBtn" class="btn gold" style="margin-top:8px">▶ Deploy</button>
-      <div class="sub" style="margin-top:14px;opacity:.5">WASD move · Mouse aim · Click fire · Space special · P pause</div>
+      <button id="startBtn" class="btn gold" style="margin-top:8px">▶ Confirm &amp; Deploy</button>
+      <div class="sub" style="margin-top:14px;opacity:.5">WASD / Arrows move · Mouse aim · AUTO fire · Space special · P pause</div>
     </div>
 
     <!-- PAUSE -->
@@ -159,39 +363,130 @@ const sfx={
 // stats normalized 1..5 for bars; real numbers derived below
 const AGENTS = [
   {id:'shaddai', name:'SHADDAI', role:'Supreme',   color:'#ffcf4a', special:'OVERDRIVE — 3s of triple damage',
+    trait:'DIVINE AEGIS · regenerates HP over time',
     fireRate:0.22, dmg:16, speed:245, bullet:9, spread:0, pierce:0, homing:0, shield:0, maxHp:110,
-    bars:{fire:3,dmg:4,spd:3}, spKind:'overdrive'},
+    regen:5, bars:{fire:3,dmg:4,spd:3}, spKind:'overdrive'},
   {id:'nexus', name:'NEXUS', role:'Architect',   color:'#37f0c8', special:'RECHARGE — instant reload + speed burst',
+    trait:'OVERCLOCK · fastest special cooldown',
     fireRate:0.16, dmg:12, speed:270, bullet:8, spread:0, pierce:0, homing:0, shield:0, maxHp:100,
-    bars:{fire:4,dmg:3,spd:4}, spKind:'dash'},
+    spCd:5, bars:{fire:4,dmg:3,spd:4}, spKind:'dash'},
   {id:'zerox', name:'ZEROX', role:'Revenue',     color:'#3aa0ff', special:'MINIGUN — 3s of insane fire rate',
+    trait:'RAPID BLADE · twin cyan bullet stream',
     fireRate:0.09, dmg:8, speed:235, bullet:6, spread:0, pierce:0, homing:0, shield:0, maxHp:90,
-    bars:{fire:5,dmg:2,spd:3}, spKind:'minigun'},
+    twin:1, bars:{fire:5,dmg:2,spd:3}, spKind:'minigun'},
   {id:'oracle', name:'ORACLE', role:'Intel',     color:'#b46bff', special:'RAILGUN — piercing beam blast',
-    fireRate:0.28, dmg:22, speed:230, bullet:11, spread:0, pierce:3, homing:0, shield:0, maxHp:95,
+    trait:'SEER ROUNDS · shots pierce one enemy',
+    fireRate:0.28, dmg:22, speed:230, bullet:11, spread:0, pierce:1, homing:0, shield:0, maxHp:95,
     bars:{fire:2,dmg:5,spd:3}, spKind:'railgun'},
   {id:'turtle', name:'TURTLE', role:'Creative',  color:'#2fff9a', special:'BLOOM — 12-way spread nova',
+    trait:'EMERALD SPREAD · 3-way primary fire',
     fireRate:0.30, dmg:9, speed:225, bullet:7, spread:2, pierce:0, homing:0, shield:0, maxHp:105,
     bars:{fire:2,dmg:3,spd:2}, spKind:'nova'},
   {id:'quill', name:'QUILL', role:'Comms',       color:'#ff9d3a', special:'SWARM — 6 homing seekers',
-    fireRate:0.26, dmg:11, speed:240, bullet:7, spread:0, pierce:0, homing:1, shield:0, maxHp:95,
+    trait:'GUIDED QUILLS · primary shots gently home',
+    fireRate:0.26, dmg:11, speed:240, bullet:7, spread:0, pierce:0, homing:0.6, shield:0, maxHp:95,
     bars:{fire:3,dmg:3,spd:3}, spKind:'swarm'},
   {id:'pikadon', name:'PIKADON', role:'Security', color:'#ff5b7a', special:'BASTION — invuln shield + shockwave',
+    trait:'BULWARK · huge hull, halves contact damage',
     fireRate:0.24, dmg:15, speed:200, bullet:9, spread:0, pierce:0, homing:0, shield:1, maxHp:150,
-    bars:{fire:3,dmg:4,spd:2}, spKind:'bastion'}
+    armor:0.5, bars:{fire:3,dmg:4,spd:2}, spKind:'bastion'}
 ];
-const SP_COOLDOWN = 8; // seconds
+const SP_COOLDOWN = 8; // seconds (default; agent.spCd overrides per-ship)
+function spMax(){ return agent.spCd || SP_COOLDOWN; }
+
+// ── ship HF art (per-agent PNG, graceful fallback to vector) ──────────
+// Real ship art: /assets/games/ships/<AGENT>.png (SHADDAI, NEXUS, ...).
+// If a PNG 404s, img.ok stays false and draw() uses the procedural ship.
+const shipImgs = {};
+AGENTS.forEach(a=>{
+  const im = new Image();
+  im.ok = false;
+  im.onload = ()=>{ im.ok = (im.naturalWidth>0); };
+  im.onerror = ()=>{ im.ok = false; };
+  im.src = '/assets/games/ships/'+a.id.toUpperCase()+'.png';
+  shipImgs[a.id] = im;
+});
+
+// ── STARFALL character-selector art: agent standing next to their ship (HF) ──
+// select = tall pilot+ship portrait; thumb = square face for dialog boxes.
+// Graceful: if a portrait 404s (credits not yet regenerated), the card falls
+// back to the transparent ship PNG, then to a letter tile. Re-run
+// scripts/gen-starfall-art.js to fill any missing ones later.
+const selImgs = {}, thumbImgs = {};
+AGENTS.forEach(a=>{
+  const s=new Image(); s.ok=false;
+  s.onload=()=>{ s.ok=(s.naturalWidth>0); }; s.onerror=()=>{ s.ok=false; };
+  s.src='/assets/games/starfall/'+a.id+'-select.png'; selImgs[a.id]=s;
+  const t=new Image(); t.ok=false;
+  t.onload=()=>{ t.ok=(t.naturalWidth>0); }; t.onerror=()=>{ t.ok=false; };
+  t.src='/assets/games/starfall/'+a.id+'-thumb.png'; thumbImgs[a.id]=t;
+});
+// cinematic screen backgrounds (HF); optional, screens still work without them
+const bgImgs={};
+['start','win','lose'].forEach(k=>{ const im=new Image(); im.src='/assets/games/starfall/bg-'+k+'.png'; bgImgs[k]=im; });
+
+// ── per-agent dialog banter (intro / wave clear / game over) ──
+const BANTER={
+  shaddai:{intro:"The heavens open. Fall upon them, mortals.",wave:"Judgment delivered. The next wave dares approach.",over:"Even gods rest. We rise again."},
+  nexus:{intro:"Systems nominal. Compiling their destruction.",wave:"Wave cleared. Rerouting power to weapons.",over:"Fatal exception. Rebooting the run."},
+  zerox:{intro:"Let's turn these rocks into profit.",wave:"Ka-ching! Next batch, please.",over:"Assets liquidated. Not my finest quarter."},
+  oracle:{intro:"I have foreseen every shot. Begin.",wave:"As predicted. The future holds more.",over:"Even I did not see that coming."},
+  turtle:{intro:"Let's paint this void emerald.",wave:"Beautiful. A masterpiece of debris.",over:"A tragic ending... but what a canvas."},
+  quill:{intro:"Every kill, a story worth telling.",wave:"Chapter complete. Turning the page.",over:"And so the tale ends... for now."},
+  pikadon:{intro:"Shields up. Nothing gets through me.",wave:"Perimeter secured. Bring the next threat.",over:"Breach detected. The wall has fallen."}
+};
+let dialogT=0;
+function showDialog(kind){
+  const a=agent, line=(BANTER[a.id]||{})[kind]; if(!line) return;
+  const box=document.getElementById('dialog');
+  box.style.setProperty('--acc',a.color);
+  const img=document.getElementById('dialogPortImg'), lt=document.getElementById('dialogPortLetter');
+  const th=thumbImgs[a.id];
+  if(th&&th.ok){ img.src=th.src; img.style.display=''; lt.classList.add('hide'); }
+  else{ img.style.display='none'; lt.textContent=a.name[0]; lt.classList.remove('hide'); }
+  document.getElementById('dialogName').textContent=a.name;
+  document.getElementById('dialogText').textContent=line;
+  box.classList.add('on'); dialogT=(kind==='over')?4.5:3.2;
+}
+function hideDialog(){ document.getElementById('dialog').classList.remove('on'); dialogT=0; }
+
+// apply an HF cinematic background to a screen overlay (graceful if img missing)
+function screenBg(id,key){
+  const el=document.getElementById(id); if(!el) return;
+  const im=bgImgs[key];
+  if(im&&im.complete&&im.naturalWidth>0){
+    el.style.backgroundImage=
+      'radial-gradient(ellipse at center,rgba(8,14,26,.55),rgba(3,5,10,.9)),url("'+im.src+'")';
+    el.style.backgroundSize='cover'; el.style.backgroundPosition='center';
+  }
+}
+
+// ── honor ?agent=<ID> from the URL (default = ship-pick screen) ─────────
+let urlAgent = null;
+try{
+  const q = new URLSearchParams(location.search);
+  const want = (q.get('agent')||'').toLowerCase();
+  const found = AGENTS.findIndex(a=>a.id===want);
+  if(found>=0) urlAgent = found;
+}catch(e){}
 
 // ── input ──────────────────────────────────────────────────
 const keys={}, mouse={x:W/2,y:H/2,down:false};
 addEventListener('keydown',e=>{
-  keys[e.key.toLowerCase()]=true;
-  if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
-  if(e.key.toLowerCase()==='p'||e.key==='Escape'){ if(state==='play') togglePause(); else if(state==='pause') togglePause(); }
+  const k=e.key.toLowerCase();
+  keys[k]=true;
+  if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if(k==='p'||e.key==='Escape'){ if(state==='play') togglePause(); else if(state==='pause') togglePause(); }
+  if(state==='title'){
+    if(k==='enter'||k===' '){ e.preventDefault(); beginRun(); }
+    else if(k==='c'){ toSelect(); }
+  } else if(state==='cutscene'){
+    if(k==='enter'||k===' '||k==='escape'){ e.preventDefault(); endCutscene(); }
+  }
 });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
 canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
-canvas.addEventListener('mousedown',()=>{mouse.down=true;actx();});
+canvas.addEventListener('mousedown',()=>{mouse.down=true;actx();if(state==='cutscene')endCutscene();});
 addEventListener('mouseup',()=>{mouse.down=false;});
 canvas.addEventListener('touchstart',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();mouse.x=t.clientX-r.left;mouse.y=t.clientY-r.top;mouse.down=true;actx();},{passive:true});
 canvas.addEventListener('touchmove',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();mouse.x=t.clientX-r.left;mouse.y=t.clientY-r.top;},{passive:true});
@@ -202,7 +497,9 @@ canvas.addEventListener('touchend',()=>{mouse.down=false;});
 // keys{} the WASD/arrow keys set); a SPECIAL button drives keys[' '].
 // Aim + fire stay on the canvas touch handlers above (finger = aim/fire).
 const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
-if(IS_TOUCH){ buildTouchControls(); }
+/* On-screen joystick removed per owner — NO joysticks on any game. Keyboard + mouse only.
+   (Canvas finger aim/fire handlers above still work for tap-to-fire on touch devices.) */
+// if(IS_TOUCH){ buildTouchControls(); }
 function buildTouchControls(){
   const css=document.createElement('style');
   css.textContent=`
@@ -247,17 +544,158 @@ function buildTouchControls(){
 }
 
 // ── game state ─────────────────────────────────────────────
-let state='select'; // select | play | pause | over
+let state='title'; // title | select | cutscene | play | pause | over
 let agent=AGENTS[0], selIdx=0;
 let player, bullets=[], eBullets=[], enemies=[], parts=[], pickups=[], floaters=[];
 let score=0, wave=0, combo=1, comboTimer=0, shake=0, spCd=0, spActive=0, spKind='', minigunT=0, overdriveT=0;
 let spawnQueue=0, spawnTimer=0, waveClearT=0, bannerT=0, invuln=0, time=0;
 let shockwaves=[];
+let bank=0; // ship banking angle (visual lean on turns)
+// pooled explosions (core flash + expanding ring). No per-frame alloc.
+const blasts=[]; for(let i=0;i<24;i++) blasts.push({on:false,x:0,y:0,life:0,max:0,r:0,col:'#fff'});
+function boom(x,y,col,size){
+  const b=blasts.find(p=>!p.on); if(!b) return;
+  b.on=true; b.x=x; b.y=y; b.col=col||'#ffcf4a'; b.max=size||34; b.r=0;
+  b.life=b.dur=size&&size>100?0.55:0.36;
+}
+let hpFlash=0; // brief red pulse when the player is hurt (canvas danger vignette boost)
+let cut=null; // cutscene state object
 
 function rand(a,b){return a+Math.random()*(b-a);}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function ang(a,b){return Math.atan2(b.y-a.y,b.x-a.x);}
 function clamp(v,a,b){return v<a?a:v>b?b:v;}
+function lerp(a,b,t){return a+(b-a)*t;}
+function easeOut(t){return 1-Math.pow(1-t,3);}
+// darken/lighten a #rrggbb hex by amt (-1..1); cached to avoid per-frame parse churn
+const _shadeCache={};
+function shade(hex,amt){
+  const key=hex+'|'+amt; if(_shadeCache[key]) return _shadeCache[key];
+  let h=hex.replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  let r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  const f=amt<0?0:255,p=amt<0?1+amt:1-amt;
+  r=Math.round(r*p+f*(1-p));g=Math.round(g*p+f*(1-p));b=Math.round(b*p+f*(1-p));
+  const out='#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  _shadeCache[key]=out; return out;
+}
+
+// ── parallax starfield + drifting nebula (built once, no per-frame alloc) ──
+// Each layer carries its own tint + a "bright" flag so the near layer can
+// bloom as glowing points while far layers stay as cheap flat dust.
+const STAR_LAYERS = [
+  {n:80,  spd:6,  size:[0.5,1.1], a:0.30, col:'#8fb0e0', bright:false}, // far dust
+  {n:52,  spd:16, size:[0.9,1.8], a:0.60, col:'#cfe0ff', bright:false}, // mid
+  {n:30,  spd:34, size:[1.4,2.8], a:0.98, col:'#ffffff', bright:true }  // near (glows)
+];
+let stars = [];
+function buildStars(){
+  stars = STAR_LAYERS.map(L=>{
+    const arr=[];
+    for(let i=0;i<L.n;i++) arr.push({x:Math.random(),y:Math.random(),
+      s:rand(L.size[0],L.size[1]),tw:Math.random()*6.28,
+      tws:rand(1.6,3.4)}); // per-star twinkle speed
+    return {L,arr};
+  });
+}
+buildStars();
+// nebula blobs (soft radial gradients, drift slowly + gently hue-shift)
+const NEB_COLORS=[[26,47,107],[58,26,107],[10,58,85],[42,20,80],[70,24,60]];
+let nebulae=[];
+function buildNebulae(){
+  nebulae=[];
+  for(let i=0;i<5;i++){ const c=NEB_COLORS[i%NEB_COLORS.length];
+    nebulae.push({ x:Math.random(),y:Math.random(),r:rand(0.30,0.55),
+      cr:c[0],cg:c[1],cb:c[2], dx:rand(-0.005,0.005),dy:rand(-0.005,0.005),
+      ph:Math.random()*6.28, hue:rand(0.4,1.2) }); }
+}
+buildNebulae();
+// distant faint galaxy/dust smudges — fixed, very subtle, add depth (built once)
+let galaxies=[];
+function buildGalaxies(){
+  galaxies=[];
+  for(let i=0;i<3;i++) galaxies.push({x:Math.random(),y:rand(0.05,0.6),
+    r:rand(0.10,0.20),rot:rand(0,6.28),col:['#5a7bd6','#a06be0','#6bd0e0'][i%3]});
+}
+buildGalaxies();
+// shooting stars — pooled, spawned occasionally, never allocated in the hot loop
+const shootPool=[]; for(let i=0;i<4;i++) shootPool.push({on:false,x:0,y:0,vx:0,vy:0,life:0,max:0,len:0});
+let nextShoot=rand(2.5,6);
+function updateShoot(dt,scroll){
+  nextShoot-=dt;
+  if(nextShoot<=0){
+    nextShoot=rand(3.5,8);
+    const s=shootPool.find(p=>!p.on);
+    if(s){ const a=rand(Math.PI*0.15,Math.PI*0.45);
+      s.on=true; s.x=rand(0,W); s.y=rand(-20,H*0.35);
+      s.vx=Math.cos(a)*rand(520,760); s.vy=Math.sin(a)*rand(520,760);
+      s.life=s.max=rand(0.5,0.9); s.len=rand(60,130); }
+  }
+  for(const s of shootPool){ if(!s.on)continue; s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
+    if(s.life<=0||s.x>W+40||s.y>H+40) s.on=false; }
+}
+
+// draws the layered space backdrop into current transform (scrolls by `time`)
+function drawSpace(scroll){
+  // deep gradient base — a touch of blue up top fading to near-black
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#070c1a'); bg.addColorStop(0.5,'#04070f'); bg.addColorStop(1,'#02040a');
+  ctx.fillStyle=bg; ctx.fillRect(-20,-20,W+40,H+40);
+
+  ctx.globalCompositeOperation='lighter';
+  // distant galaxies (very faint, elongated smudges)
+  for(const gx of galaxies){
+    const px=gx.x*W, py=gx.y*H, rr=gx.r*Math.min(W,H);
+    ctx.save(); ctx.translate(px,py); ctx.rotate(gx.rot); ctx.scale(1,0.42);
+    const gg=ctx.createRadialGradient(0,0,0,0,0,rr);
+    gg.addColorStop(0,gx.col+'26'); gg.addColorStop(0.5,gx.col+'10'); gg.addColorStop(1,gx.col+'00');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(0,0,rr,0,7); ctx.fill(); ctx.restore();
+  }
+  // nebula clouds (drift + slow hue breathing)
+  for(const nb of nebulae){
+    const px=((nb.x + nb.dx*scroll)%1+1)%1*W;
+    const py=((nb.y + nb.dy*scroll)%1+1)%1*H;
+    const rr=nb.r*Math.min(W,H)*(0.9+Math.sin(scroll*0.3+nb.ph)*0.1);
+    const pulse=0.7+0.3*Math.sin(scroll*nb.hue*0.25+nb.ph);
+    const r=Math.round(nb.cr*pulse), g=Math.round(nb.cg*pulse), b=Math.round(nb.cb*pulse);
+    const base='rgba('+r+','+g+','+b+',';
+    const gr=ctx.createRadialGradient(px,py,0,px,py,rr);
+    gr.addColorStop(0,base+'0.34)'); gr.addColorStop(0.5,base+'0.13)'); gr.addColorStop(1,base+'0)');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,rr,0,7); ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
+
+  // parallax stars (scroll downward). Near layer glows additively (capped count).
+  for(const layer of stars){
+    const bright=layer.L.bright;
+    if(bright){ ctx.globalCompositeOperation='lighter'; ctx.shadowColor='#bcd8ff'; }
+    ctx.fillStyle=layer.L.col;
+    for(const st of layer.arr){
+      const y=((st.y + (scroll*layer.L.spd)/H)%1+1)%1*H;
+      const x=st.x*W;
+      const tw=layer.L.a*(0.5+0.5*Math.sin(scroll*st.tws+st.tw));
+      ctx.globalAlpha=tw;
+      if(bright){ ctx.shadowBlur=st.s*3*tw;
+        ctx.beginPath(); ctx.arc(x,y,st.s*0.7,0,7); ctx.fill(); }
+      else ctx.fillRect(x,y,st.s,st.s);
+    }
+    if(bright){ ctx.shadowBlur=0; ctx.globalCompositeOperation='source-over'; }
+  }
+  ctx.globalAlpha=1;
+
+  // shooting stars (additive streaks with a hot head)
+  ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+  for(const s of shootPool){ if(!s.on)continue;
+    const k=clamp(s.life/s.max,0,1), d=Math.hypot(s.vx,s.vy)||1;
+    const tx=s.x-s.vx/d*s.len*k, ty=s.y-s.vy/d*s.len*k;
+    const gr=ctx.createLinearGradient(s.x,s.y,tx,ty);
+    gr.addColorStop(0,'rgba(230,242,255,'+(0.9*k)+')'); gr.addColorStop(1,'rgba(120,170,255,0)');
+    ctx.strokeStyle=gr; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(tx,ty); ctx.stroke();
+    ctx.shadowBlur=10; ctx.shadowColor='#cfe4ff'; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,1.8,0,7); ctx.fill(); ctx.shadowBlur=0;
+  }
+  ctx.lineCap='butt'; ctx.globalCompositeOperation='source-over';
+}
 
 // ── build character cards ──────────────────────────────────
 const cardsEl=document.getElementById('cards');
@@ -267,7 +705,10 @@ AGENTS.forEach((a,i)=>{
   d.className='card'+(i===0?' sel':'');
   d.style.borderColor=a.color+'55';
   d.innerHTML=`
-    <div class="av" style="background:${a.color};box-shadow:0 0 16px ${a.color}">${a.name[0]}</div>
+    <div class="av" style="background:${a.color};box-shadow:0 0 16px ${a.color};overflow:hidden">
+      <img src="/assets/games/ships/${a.id.toUpperCase()}.png" alt="" style="width:100%;height:100%;object-fit:contain"
+           onerror="this.style.display='none';this.parentNode.textContent='${a.name[0]}'">
+    </div>
     <div class="nm" style="color:${a.color}">${a.name}</div>
     <div class="rl">${a.role}</div>
     <div class="st">
@@ -276,8 +717,49 @@ AGENTS.forEach((a,i)=>{
       SPD&nbsp; ${barHtml(a.bars.spd,a.color)}
     </div>
     <div class="sp" style="color:${a.color}">${a.special}</div>`;
-  d.onclick=()=>{selIdx=i;agent=a;[...cardsEl.children].forEach(c=>{c.classList.remove('sel');c.style.boxShadow='none';});d.classList.add('sel');d.style.boxShadow='0 0 22px '+a.color+'88';actx();};
+  d.onclick=()=>{selIdx=i;agent=a;[...cardsEl.children].forEach(c=>{c.classList.remove('sel');c.style.boxShadow='none';});d.classList.add('sel');d.style.boxShadow='0 0 22px '+a.color+'88';refreshTitle();actx();};
   cardsEl.appendChild(d);
+});
+// pre-select ship from ?agent=<ID> (still shows pick screen so player confirms)
+if(urlAgent!==null){
+  selIdx=urlAgent; agent=AGENTS[urlAgent];
+  [...cardsEl.children].forEach((c,i)=>{c.classList.toggle('sel',i===urlAgent);
+    c.style.boxShadow = i===urlAgent ? '0 0 22px '+agent.color+'88' : 'none';});
+}
+
+// ── build the ALWAYS-VISIBLE menu roster (all 7 ships on the title screen) ──
+// Each ship card: trimmed HF art (contain, graceful onerror→letter tile),
+// agent name, and a one-word special hint. Click selects → hero + DEPLOY update.
+const rosterEl=document.getElementById('roster');
+const shipCards=[];
+function selectAgent(i){
+  selIdx=i; agent=AGENTS[i];
+  shipCards.forEach((c,k)=>c.classList.toggle('sel',k===i));
+  refreshTitle(); actx();
+}
+AGENTS.forEach((a,i)=>{
+  // signature trait for the card (short); full trait on hover
+  const traitShort = (a.trait||a.special).split('·')[0].split('—')[0].trim();
+  const s=document.createElement('div');
+  s.className='ship'+(i===selIdx?' sel':'');
+  s.style.setProperty('--c',a.color);
+  s.title=a.name+' — '+(a.trait||a.special);
+  // portrait: HF agent+ship art → ship PNG fallback (contain) → letter tile
+  const shipPng='/assets/games/ships/'+a.id.toUpperCase()+'.png';
+  s.innerHTML=`
+    <div class="portrait">
+      <img class="portart" alt="${a.name}"
+           onerror="var f=this;var p=f.parentNode;f.className='fallback';f.onerror=function(){f.style.display='none';p.insertAdjacentHTML('beforeend','<span class=&quot;letter&quot;>${a.name[0]}</span>');};f.src='${shipPng}';">
+    </div>
+    <div class="meta">
+      <div class="snm">${a.name}</div>
+      <div class="shint">${traitShort}</div>
+    </div>`;
+  // set primary src after wiring onerror so fallback chain fires reliably
+  s.querySelector('.portart').src='/assets/games/starfall/'+a.id+'-select.png';
+  s.onclick=()=>selectAgent(i);
+  rosterEl.appendChild(s);
+  shipCards.push(s);
 });
 
 // ── entity factories ───────────────────────────────────────
@@ -289,18 +771,23 @@ function shoot(){
   const dmg=agent.dmg*(overdriveT>0?3:1);
   const shots = agent.spread ? 3 : 1;
   const spreadArc = 0.18;
-  for(let i=0;i<shots;i++){
-    const off=(shots>1)?(i-(shots-1)/2)*spreadArc:0;
-    bullets.push({x:player.x+Math.cos(a)*18,y:player.y+Math.sin(a)*18,
-      vx:Math.cos(a+off)*640,vy:Math.sin(a+off)*640,r:agent.bullet,dmg,
-      pierce:agent.pierce,homing:agent.homing,life:1.1,col:agent.color});
+  // perpendicular unit (for twin parallel barrels)
+  const px=Math.cos(a+Math.PI/2), py=Math.sin(a+Math.PI/2);
+  const lanes = agent.twin ? [-7,7] : [0]; // ZEROX fires two parallel streams
+  for(const lane of lanes){
+    for(let i=0;i<shots;i++){
+      const off=(shots>1)?(i-(shots-1)/2)*spreadArc:0;
+      bullets.push({x:player.x+Math.cos(a)*18+px*lane,y:player.y+Math.sin(a)*18+py*lane,
+        vx:Math.cos(a+off)*640,vy:Math.sin(a+off)*640,r:agent.bullet,dmg,
+        pierce:agent.pierce,homing:agent.homing,life:1.1,col:agent.color});
+    }
   }
   shake=Math.max(shake,2.5);
   sfx.shot();
 }
 function fireSpecial(){
   if(spCd>0||spActive>0) return;
-  spCd=SP_COOLDOWN; spKind=agent.spKind; sfx.special();
+  spCd=spMax(); spKind=agent.spKind; sfx.special();
   shake=Math.max(shake,8); banner(agent.special.split('—')[0].trim(), agent.color);
   if(spKind==='overdrive'){overdriveT=3;spActive=3;}
   else if(spKind==='minigun'){minigunT=3;spActive=3;}
@@ -348,12 +835,15 @@ function addParts(x,y,col,n,spd){
 function floater(x,y,txt,col){floaters.push({x,y,txt,col,life:0.9});}
 
 function damageEnemy(e,dmg,px,py){
-  e.hp-=dmg; e.flash=0.1;
+  e.hp-=dmg; e.flash=0.12;
   addParts(px||e.x,py||e.y,e.col,4,140);
+  boom(px||e.x,py||e.y,'#ffffff',10); // small hit spark flash at impact point
   if(e.hp<=0){
     const gain=Math.round(e.val*combo);
     score+=gain; floater(e.x,e.y,'+'+gain,'#ffcf4a');
     addParts(e.x,e.y,e.col,e.boss?40:14,e.boss?260:200);
+    addParts(e.x,e.y,'#ffffff',e.boss?18:6,e.boss?200:150); // white debris sparks
+    boom(e.x,e.y,e.col,e.boss?150:e.r*2.4); // big multi-layer explosion
     shake=Math.max(shake,e.boss?14:5);
     sfx.kill();
     combo=Math.min(combo+ (e.boss?1:0.25), 8); comboTimer=2.4;
@@ -369,7 +859,7 @@ function damageEnemy(e,dmg,px,py){
 
 // ── update ─────────────────────────────────────────────────
 function update(dt){
-  time+=dt;
+  // (time advanced in main loop)
   // timers
   if(spCd>0) spCd=Math.max(0,spCd-dt);
   if(spActive>0) spActive=Math.max(0,spActive-dt);
@@ -379,6 +869,9 @@ function update(dt){
   if(bannerT>0){bannerT-=dt; if(bannerT<=0) document.getElementById('banner').style.opacity='0';}
   if(comboTimer>0){comboTimer-=dt; if(comboTimer<=0) combo=1;}
   if(shake>0) shake=Math.max(0,shake-dt*24);
+  if(hpFlash>0) hpFlash=Math.max(0,hpFlash-dt);
+  // advance pooled explosions (ring grows, life fades)
+  for(const b of blasts){ if(!b.on)continue; b.life-=dt; b.r+=b.max*dt*3.4; if(b.life<=0) b.on=false; }
 
   // player move
   let mx=0,my=0;
@@ -386,18 +879,28 @@ function update(dt){
   if(keys['d']||keys['arrowright'])mx+=1;
   if(keys['w']||keys['arrowup'])my-=1;
   if(keys['s']||keys['arrowdown'])my+=1;
+  const moving=(mx||my);
   const ml=Math.hypot(mx,my)||1; mx/=ml; my/=ml;
   const sp=agent.speed;
-  player.vx += (mx*sp - player.vx)*Math.min(1,dt*12);
-  player.vy += (my*sp - player.vy)*Math.min(1,dt*12);
+  // crisper, more responsive accel; snappier stop when no input
+  const acc = moving ? dt*16 : dt*20;
+  player.vx += (mx*sp - player.vx)*Math.min(1,acc);
+  player.vy += (my*sp - player.vy)*Math.min(1,acc);
   player.x=clamp(player.x+player.vx*dt,player.r,W-player.r);
   player.y=clamp(player.y+player.vy*dt,player.r,H-player.r);
+  // SHADDAI divine aegis: slow HP regen while alive
+  if(agent.regen && player.hp>0 && player.hp<player.maxHp) player.hp=Math.min(player.maxHp,player.hp+agent.regen*dt);
   player.angle=ang(player,mouse);
+  // visual banking: lean into lateral velocity relative to aim
+  const rvx = player.vx*Math.cos(-player.angle) - player.vy*Math.sin(-player.angle);
+  const targetBank = clamp(-rvx/sp,-1,1)*0.42;
+  bank += (targetBank-bank)*Math.min(1,dt*10);
 
-  // fire
+  // AUTO-FIRE: primary weapon always fires on its cadence while the run is active.
+  // No click/hold needed — the player only AIMS with the mouse.
   const rate = agent.fireRate*(minigunT>0?0.35:1);
   player.fireT-=dt;
-  if(mouse.down && player.fireT<=0){ shoot(); player.fireT=rate; }
+  if(player.fireT<=0){ shoot(); player.fireT=rate; }
   if(keys[' ']) fireSpecial();
 
   // bullets
@@ -482,6 +985,7 @@ function update(dt){
     spawnTimer-=dt;
     if(spawnTimer<=0){enemies.push(makeEnemy(pickType()));spawnQueue--;spawnTimer=rand(0.4,0.9);}
   } else if(enemies.length===0){
+    if(waveClearT===0) showDialog('wave'); // one banter line as the wave clears
     waveClearT+=dt;
     if(waveClearT>1.2) startWave(wave+1);
   }
@@ -491,7 +995,8 @@ function update(dt){
 
 function hurt(d){
   if(invuln>0||agent.shield&&spActive>0){addParts(player.x,player.y,'#27e0ff',5,120);return;}
-  player.hp-=d; shake=Math.max(shake,6); sfx.hurt(); invuln=0.35;
+  if(agent.armor) d*=agent.armor; // PIKADON bulwark: reduced incoming damage
+  player.hp-=d; shake=Math.max(shake,6); sfx.hurt(); invuln=0.35; hpFlash=0.5;
   combo=1; comboTimer=0;
   addParts(player.x,player.y,'#ff5b7a',8,180);
   if(player.hp<=0){player.hp=0;gameOver();}
@@ -506,16 +1011,23 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.save(); ctx.translate(sx,sy);
 
-  // background grid
-  ctx.fillStyle='#070b14'; ctx.fillRect(-20,-20,W+40,H+40);
-  ctx.strokeStyle='rgba(39,224,255,0.06)'; ctx.lineWidth=1;
-  const g=54;
+  // layered space backdrop (parallax stars + drifting nebula)
+  drawSpace(time);
+  // subtle depth grid, faded toward edges
+  ctx.strokeStyle='rgba(39,224,255,0.045)'; ctx.lineWidth=1;
+  const g=64;
   for(let x=0;x<W;x+=g){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(let y=0;y<H;y+=g){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // vignette for depth
+  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+  if(state==='title'||state==='select'){ ctx.restore(); return; }
+  if(state==='cutscene'){ drawCutscene(); ctx.restore(); return; }
+
   // arena border glow
   ctx.strokeStyle=agent.color+'44';ctx.lineWidth=3;ctx.strokeRect(3,3,W-6,H-6);
-
-  if(state==='select'){ ctx.restore(); return; }
 
   // pickups
   for(const p of pickups){
@@ -532,57 +1044,185 @@ function draw(){
   // shockwaves
   for(const s of shockwaves){ctx.strokeStyle='rgba(255,91,122,'+clamp(1-s.r/s.max,0,1)+')';ctx.lineWidth=6;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.stroke();}
 
-  // enemy bullets
-  for(const b of eBullets){ctx.shadowBlur=8;ctx.shadowColor=b.col;ctx.fillStyle=b.col;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fill();}
-  ctx.shadowBlur=0;
+  // enemy bullets — glowing orb with a short trailing wisp + white core
+  ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
+  for(const b of eBullets){
+    ctx.globalAlpha=0.55;ctx.strokeStyle=b.col;ctx.lineWidth=b.r*1.1;ctx.shadowBlur=10;ctx.shadowColor=b.col;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*0.02,b.y-b.vy*0.02);ctx.stroke();
+    ctx.globalAlpha=1;ctx.shadowBlur=12;ctx.fillStyle=b.col;
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.shadowBlur=6;
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.4,0,7);ctx.fill();
+  }
+  ctx.lineCap='butt';ctx.globalCompositeOperation='source-over';ctx.shadowBlur=0;ctx.globalAlpha=1;
 
-  // enemies
+  // enemies (shaded body + rim-light so they read 3D, not flat)
   for(const e of enemies){
     ctx.save();ctx.translate(e.x,e.y);
-    ctx.shadowBlur=14;ctx.shadowColor=e.col;
-    ctx.fillStyle=e.flash>0?'#fff':e.col;
-    if(e.type==='chaser'){ctx.rotate(time*2);ctx.beginPath();for(let i=0;i<3;i++){const a=i/3*Math.PI*2-Math.PI/2;ctx[i?'lineTo':'moveTo'](Math.cos(a)*e.r,Math.sin(a)*e.r);}ctx.closePath();ctx.fill();}
-    else if(e.type==='shooter'){ctx.beginPath();for(let i=0;i<5;i++){const a=i/5*Math.PI*2-Math.PI/2;ctx[i?'lineTo':'moveTo'](Math.cos(a)*e.r,Math.sin(a)*e.r);}ctx.closePath();ctx.fill();}
-    else if(e.type==='tank'){ctx.fillRect(-e.r,-e.r,e.r*2,e.r*2);ctx.strokeStyle='#05070d';ctx.lineWidth=3;ctx.strokeRect(-e.r*0.5,-e.r*0.5,e.r,e.r);}
-    else if(e.boss){ctx.rotate(time*0.8);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2,rr=i%2?e.r:e.r*0.62;ctx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr);}ctx.closePath();ctx.fill();}
-    ctx.restore();ctx.shadowBlur=0;
+    // ground drop-shadow (offset dark ellipse)
+    ctx.globalAlpha=0.32;ctx.fillStyle='#000';
+    ctx.beginPath();ctx.ellipse(3,5,e.r*0.95,e.r*0.62,0,0,7);ctx.fill();ctx.globalAlpha=1;
+    ctx.shadowBlur=16;ctx.shadowColor=e.col;
+    const lit=e.flash>0;
+    // radial shading fill: bright top-left, darker bottom-right
+    const grd=ctx.createRadialGradient(-e.r*0.4,-e.r*0.4,e.r*0.15,0,0,e.r*1.15);
+    if(lit){grd.addColorStop(0,'#fff');grd.addColorStop(1,'#fff');}
+    else{grd.addColorStop(0,'#ffffff');grd.addColorStop(0.18,e.col);
+      grd.addColorStop(1,shade(e.col,-0.55));}
+    ctx.fillStyle=grd;
+    const path=()=>{
+      if(e.type==='chaser'){ctx.save();ctx.rotate(time*2);ctx.beginPath();for(let i=0;i<3;i++){const a=i/3*Math.PI*2-Math.PI/2;ctx[i?'lineTo':'moveTo'](Math.cos(a)*e.r,Math.sin(a)*e.r);}ctx.closePath();ctx.fill();ctx.restore();}
+      else if(e.type==='shooter'){ctx.beginPath();for(let i=0;i<5;i++){const a=i/5*Math.PI*2-Math.PI/2;ctx[i?'lineTo':'moveTo'](Math.cos(a)*e.r,Math.sin(a)*e.r);}ctx.closePath();ctx.fill();}
+      else if(e.type==='tank'){ctx.save();ctx.rotate(time*0.6);ctx.beginPath();ctx.rect(-e.r,-e.r,e.r*2,e.r*2);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=3;ctx.strokeRect(-e.r*0.5,-e.r*0.5,e.r,e.r);ctx.restore();}
+      else if(e.boss){ctx.save();ctx.rotate(time*0.8);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2,rr=i%2?e.r:e.r*0.62;ctx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr);}ctx.closePath();ctx.fill();ctx.restore();}
+    };
+    path();
+    ctx.shadowBlur=0;
+    // rim highlight: small bright arc top-left for a lit-sphere read
+    if(!lit){ctx.globalAlpha=0.5;ctx.fillStyle='#fff';
+      ctx.beginPath();ctx.arc(-e.r*0.32,-e.r*0.32,e.r*0.22,0,7);ctx.fill();ctx.globalAlpha=1;}
+    // impact crack-flash ring on hit
+    if(e.flash>0){ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha=clamp(e.flash/0.12,0,1);ctx.strokeStyle='#fff';ctx.lineWidth=2;
+      ctx.shadowBlur=12;ctx.shadowColor=e.col;
+      ctx.beginPath();ctx.arc(0,0,e.r+3,0,7);ctx.stroke();
+      ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+    ctx.restore();
     // hp bar
     if(e.hp<e.maxHp){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,4);ctx.fillStyle=e.col;ctx.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*(e.hp/e.maxHp),4);}
   }
 
-  // player bullets (with trail)
+  // player bullets — richer laser bolt: soft colored halo + bright color trail
+  // + white-hot core, all additive so overlapping fire blooms into light.
+  ctx.lineCap='round';
+  ctx.globalCompositeOperation='lighter';
   for(const b of bullets){
-    ctx.shadowBlur=b.beam?24:12;ctx.shadowColor=b.col;ctx.strokeStyle=b.col;ctx.lineWidth=b.beam?6:3;
-    ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*0.02,b.y-b.vy*0.02);ctx.stroke();
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.5,0,7);ctx.fill();
+    const tl=b.beam?0.055:0.034;
+    const tx=b.x-b.vx*tl, ty=b.y-b.vy*tl;
+    // wide soft glow halo (colored, low alpha)
+    ctx.globalAlpha=0.5;
+    ctx.shadowBlur=b.beam?30:18;ctx.shadowColor=b.col;
+    ctx.strokeStyle=b.col;ctx.lineWidth=b.beam?12:6;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(tx,ty);ctx.stroke();
+    // bright colored trail
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=b.beam?18:10;
+    ctx.lineWidth=b.beam?6:3;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(tx,ty);ctx.stroke();
+    // white-hot inner streak + head
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=b.beam?3:1.5;ctx.shadowBlur=b.beam?14:6;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*tl*0.6,b.y-b.vy*tl*0.6);ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r*(b.beam?0.7:0.6),0,7);ctx.fill();
   }
-  ctx.shadowBlur=0;
+  ctx.globalCompositeOperation='source-over';
+  ctx.lineCap='butt';ctx.shadowBlur=0;ctx.globalAlpha=1;
 
-  // particles
+  // particles (additive so debris sparks bloom)
+  ctx.globalCompositeOperation='lighter';
   for(const p of parts){ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();}
+  ctx.globalCompositeOperation='source-over';
   ctx.globalAlpha=1;
 
-  // player
+  // explosions — additive multi-layer bloom: core flash + expanding shock ring
+  ctx.globalCompositeOperation='lighter';
+  for(const b of blasts){ if(!b.on)continue;
+    const k=clamp(b.life/b.dur,0,1); // 1→0
+    // hot core flash
+    const cr=b.max*(0.5+(1-k)*0.4);
+    const cg=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,cr);
+    cg.addColorStop(0,'rgba(255,255,255,'+(0.9*k)+')');
+    cg.addColorStop(0.35,'rgba(255,240,190,'+(0.55*k)+')');
+    cg.addColorStop(1,b.col+'00');
+    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(b.x,b.y,cr,0,7); ctx.fill();
+    // expanding ring
+    ctx.globalAlpha=k*0.8; ctx.strokeStyle=b.col; ctx.lineWidth=2.5*k+0.6;
+    ctx.shadowBlur=14*k; ctx.shadowColor=b.col;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.globalAlpha=1;
+  }
+  ctx.globalCompositeOperation='source-over';
+
+  // player (soft ground shadow + glow + banking lean + engine flame)
   if(player){
     const blink = invuln>0 && Math.floor(time*30)%2===0;
+    // drop shadow on the "floor" (offset, blurred, doesn't rotate with ship)
+    ctx.save();ctx.translate(player.x+4,player.y+7);
+    ctx.globalAlpha=0.4;ctx.fillStyle='#000';ctx.shadowBlur=10;ctx.shadowColor='#000';
+    ctx.beginPath();ctx.ellipse(0,0,player.r*1.05,player.r*0.7,0,0,7);ctx.fill();
+    ctx.restore();ctx.shadowBlur=0;ctx.globalAlpha=1;
+
+    // agent-color AURA behind the ship — additive radial bloom that breathes
+    {const au=player.r*(2.2+0.15*Math.sin(time*4));
+      ctx.globalCompositeOperation='lighter';
+      const ag=ctx.createRadialGradient(player.x,player.y,0,player.x,player.y,au);
+      ag.addColorStop(0,agent.color+'55');ag.addColorStop(0.45,agent.color+'22');ag.addColorStop(1,agent.color+'00');
+      ctx.fillStyle=ag;ctx.beginPath();ctx.arc(player.x,player.y,au,0,7);ctx.fill();
+      ctx.globalCompositeOperation='source-over';}
+
     ctx.save();ctx.translate(player.x,player.y);
-    // shield ring
-    if(invuln>0||(agent.shield&&spActive>0)){ctx.strokeStyle='rgba(39,224,255,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,player.r+9,0,7);ctx.stroke();}
+    // shield / overdrive rings
+    if(invuln>0||(agent.shield&&spActive>0)){
+      ctx.strokeStyle='rgba(39,224,255,.7)';ctx.lineWidth=3;ctx.shadowBlur=14;ctx.shadowColor='#27e0ff';
+      ctx.beginPath();ctx.arc(0,0,player.r+9,0,7);ctx.stroke();ctx.shadowBlur=0;}
     if(overdriveT>0){ctx.strokeStyle='rgba(255,207,74,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,player.r+6,0,7);ctx.stroke();}
     ctx.rotate(player.angle);
+    // engine flame (behind ship, flickers, brighter when thrusting) — additive, layered
+    const thrust=Math.min(1,Math.hypot(player.vx,player.vy)/agent.speed);
+    const fl=(0.55+thrust*1.1)*(0.8+Math.random()*0.4);
+    ctx.globalCompositeOperation='lighter';
+    // outer soft plume (agent color)
+    const fg=ctx.createLinearGradient(-12,0,-14-30*fl,0);
+    fg.addColorStop(0,agent.color);fg.addColorStop(0.55,agent.color+'88');fg.addColorStop(1,agent.color+'00');
+    ctx.fillStyle=fg;ctx.beginPath();
+    ctx.moveTo(-11,-6);ctx.lineTo(-14-30*fl,0);ctx.lineTo(-11,6);ctx.closePath();ctx.fill();
+    // hot white inner core
+    const fc=ctx.createLinearGradient(-12,0,-13-18*fl,0);
+    fc.addColorStop(0,'#ffffff');fc.addColorStop(1,'#ffffff00');
+    ctx.fillStyle=fc;ctx.beginPath();
+    ctx.moveTo(-11,-2.6);ctx.lineTo(-13-18*fl,0);ctx.lineTo(-11,2.6);ctx.closePath();ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    // banking lean: squash across the roll axis to fake a bank into turns
+    ctx.scale(1, Math.cos(bank));
     ctx.shadowBlur=18;ctx.shadowColor=agent.color;
     ctx.globalAlpha=blink?0.4:1;
-    // ship body (arrow)
-    ctx.fillStyle=agent.color;ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(-12,-12);ctx.lineTo(-6,0);ctx.lineTo(-12,12);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#05070d';ctx.beginPath();ctx.arc(2,0,4,0,7);ctx.fill();
+    const img=shipImgs[agent.id];
+    if(img && img.ok){
+      // HF ship art (trimmed to content) — preserve aspect so non-square ships don't stretch.
+      const S=46, iw=img.naturalWidth||1, ih=img.naturalHeight||1, sc=S/Math.max(iw,ih);
+      const dw=iw*sc, dh=ih*sc;
+      ctx.rotate(Math.PI/2);   // PNGs face up → rotate into the aim direction
+      ctx.drawImage(img,-dw/2,-dh/2,dw,dh);
+    } else {
+      // fallback: procedural arrow ship, shaded (no black/broken sprite)
+      const sg=ctx.createLinearGradient(-12,-12,10,12);
+      sg.addColorStop(0,shade(agent.color,0.35));sg.addColorStop(1,shade(agent.color,-0.35));
+      ctx.fillStyle=sg;ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(-12,-12);ctx.lineTo(-6,0);ctx.lineTo(-12,12);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.fillStyle='#05070d';ctx.beginPath();ctx.arc(2,0,4,0,7);ctx.fill();
+    }
     ctx.restore();ctx.globalAlpha=1;ctx.shadowBlur=0;
-    // muzzle
-    if(mouse.down){ctx.fillStyle=agent.color+'66';ctx.beginPath();ctx.arc(player.x+Math.cos(player.angle)*20,player.y+Math.sin(player.angle)*20,rand(2,5),0,7);ctx.fill();}
+    // muzzle flash — always on (auto-fire)
+    {ctx.fillStyle=agent.color+'88';ctx.shadowBlur=12;ctx.shadowColor=agent.color;
+      ctx.beginPath();ctx.arc(player.x+Math.cos(player.angle)*22,player.y+Math.sin(player.angle)*22,rand(3,6),0,7);ctx.fill();ctx.shadowBlur=0;}
   }
 
   // floaters
   for(const f of floaters){ctx.globalAlpha=clamp(f.life/0.9,0,1);ctx.fillStyle=f.col;ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillText(f.txt,f.x,f.y);}
   ctx.globalAlpha=1;
+
+  // low-HP / hurt danger vignette — red edge pulse (rises as HP drops)
+  if(player){
+    const hpFrac=player.hp/player.maxHp;
+    const danger=Math.max(hpFlash*0.8, hpFrac<0.34?(0.34-hpFrac)/0.34:0);
+    if(danger>0.01){
+      const pulse=0.5+0.5*Math.sin(time*8);
+      const a=clamp(danger*(0.55+pulse*0.35),0,0.7);
+      const dv=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.32,W/2,H/2,Math.max(W,H)*0.7);
+      dv.addColorStop(0,'rgba(255,40,70,0)');dv.addColorStop(1,'rgba(255,30,60,'+a+')');
+      ctx.fillStyle=dv;ctx.fillRect(0,0,W,H);
+    }
+  }
 
   // crosshair
   ctx.strokeStyle=agent.color;ctx.lineWidth=1.5;ctx.globalAlpha=0.8;
@@ -592,49 +1232,186 @@ function draw(){
 }
 
 // ── HUD ────────────────────────────────────────────────────
+let _hudScore=0,_hudCombo=1,_hudReady=false;
 function updateHUD(){
   document.getElementById('hpfill').style.width=(player.hp/player.maxHp*100)+'%';
-  document.getElementById('score').textContent=score.toLocaleString();
+  const sc=document.getElementById('score');
+  sc.textContent=score.toLocaleString();
+  if(score!==_hudScore){ _hudScore=score; sc.classList.remove('pop');void sc.offsetWidth;sc.classList.add('pop'); }
   const c=document.getElementById('combo');
   c.textContent = combo>1.01 ? ('COMBO x'+combo.toFixed(1)) : '';
+  c.style.color=agent.color; c.style.textShadow='0 0 10px '+agent.color;
+  if(combo!==_hudCombo){ _hudCombo=combo; if(combo>1.01){c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');} }
   const sf=document.getElementById('spfill');
   const ready=spCd<=0;
-  sf.style.width=(ready?100:(1-spCd/SP_COOLDOWN)*100)+'%';
-  document.getElementById('spword').textContent = ready?'READY':(spCd.toFixed(1)+'s');
+  sf.style.width=(ready?100:(1-spCd/spMax())*100)+'%';
+  const sw=document.getElementById('spword');
+  sw.textContent = ready?'READY':(spCd.toFixed(1)+'s');
+  if(ready!==_hudReady){ _hudReady=ready; sw.classList.toggle('ready',ready); }
 }
 
 // ── state transitions ──────────────────────────────────────
 function show(id,on){document.getElementById(id).classList.toggle('hide',!on);}
+
+// refresh the title screen hero to the currently selected agent
+function refreshTitle(){
+  const t=document.getElementById('titleScreen');
+  t.style.setProperty('--acc',agent.color);
+  document.getElementById('titleHeroBox').style.setProperty('--acc',agent.color);
+  const hero=document.getElementById('titleHero');
+  // prefer the tall agent+ship portrait; fall back to the ship PNG, then hide
+  const sel=selImgs[agent.id], ship=shipImgs[agent.id];
+  hero.onerror=()=>{ hero.style.display='none'; };
+  if(sel && sel.ok){ hero.src=sel.src; hero.style.display=''; hero.style.objectFit='cover'; hero.style.borderRadius='16px'; }
+  else if(ship && ship.ok){ hero.src=ship.src; hero.style.display=''; hero.style.objectFit='contain'; hero.style.borderRadius='0'; }
+  else { hero.src='/assets/games/ships/'+agent.id.toUpperCase()+'.png'; hero.style.display=''; hero.style.objectFit='contain'; }
+  const nm=document.getElementById('titleAgentName');
+  nm.textContent=agent.name;
+  nm.style.color=agent.color; nm.style.textShadow='0 0 14px '+agent.color+'aa';
+  document.getElementById('titleRole').textContent=agent.role;
+  // stat bars (reuse the 1..5 bar helper) so the selected ship reads clearly
+  const st=document.getElementById('titleStats');
+  if(st) st.innerHTML=
+    `<div class="srow"><span class="slbl">FIRE</span>${barHtml(agent.bars.fire,agent.color)}</div>`+
+    `<div class="srow"><span class="slbl">DMG</span>${barHtml(agent.bars.dmg,agent.color)}</div>`+
+    `<div class="srow"><span class="slbl">SPD</span>${barHtml(agent.bars.spd,agent.color)}</div>`;
+  const sp=document.getElementById('titleSpecial');
+  sp.innerHTML='<b>'+agent.special+'</b>'+(agent.trait?('<br><span style="opacity:.8">◈ '+agent.trait+'</span>'):'');
+  sp.style.color=agent.color;
+  document.getElementById('deployBtn').style.setProperty('--acc',agent.color);
+  // keep BOTH the roster tiles and the (hidden) select-screen cards in sync
+  if(typeof shipCards!=='undefined')
+    shipCards.forEach((c,k)=>c.classList.toggle('sel',k===selIdx));
+  if(typeof cardsEl!=='undefined')
+    [...cardsEl.children].forEach((c,i)=>{c.classList.toggle('sel',i===selIdx);
+      c.style.boxShadow = i===selIdx ? '0 0 22px '+agent.color+'88' : 'none';});
+}
+function toTitle(){
+  state='title';
+  show('over',false);show('pause',false);show('select',false);
+  show('hud',false);show('topright',false);show('hint',false);
+  show('titleScreen',true);
+  screenBg('titleScreen','start');
+  refreshTitle();
+}
+function toSelect(){
+  state='select';
+  show('titleScreen',false);show('over',false);show('pause',false);
+  show('select',true);
+}
+// DEPLOY from title → cutscene → play
+function beginRun(){ actx(); startCutscene(); }
+
+// ── intro cutscene (skippable ~2.6s canvas tween) ──────────
+function startCutscene(){
+  state='cutscene';
+  show('titleScreen',false);show('select',false);
+  cut={t:0,dur:2.6,streaks:[]};
+  // pre-seed incoming asteroid streaks (pooled, no per-frame alloc)
+  for(let i=0;i<10;i++) cut.streaks.push({x:Math.random(),y:Math.random(),
+    r:rand(8,26),spd:rand(0.6,1.4),rot:Math.random()*6.28});
+  sfx.wave();
+}
+function endCutscene(){ startGame(); }
+function drawCutscene(){
+  const c=cut; if(!c) return;
+  const p=clamp(c.t/c.dur,0,1);
+  // warp streaks pulling toward center as ship "warps in"
+  const cx=W/2, cy=H/2;
+  ctx.save();
+  for(const s of c.streaks){
+    const life=(c.t*s.spd)%1;
+    const sx=lerp(s.x*W,cx,life), sy=lerp(s.y*H,cy,life);
+    const len=lerp(60,4,life)*(1-p*0.4);
+    const dx=cx-sx, dy=cy-sy, d=Math.hypot(dx,dy)||1;
+    ctx.globalAlpha=0.5*(1-life);
+    ctx.strokeStyle=agent.color;ctx.lineWidth=2;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-dx/d*len,sy-dy/d*len);ctx.stroke();
+  }
+  ctx.globalAlpha=1;ctx.lineCap='butt';
+
+  // hero ship warps in from below, decelerating to center
+  const inT=easeOut(clamp(p/0.65,0,1));
+  const shy=lerp(H+120,cy,inT);
+  const scl=lerp(0.5,1,inT);
+  ctx.save();ctx.translate(cx,shy);ctx.scale(scl,scl);
+  // engine trail
+  const tg=ctx.createLinearGradient(0,10,0,120);
+  tg.addColorStop(0,agent.color);tg.addColorStop(1,agent.color+'00');
+  ctx.fillStyle=tg;ctx.globalAlpha=(1-inT)*0.9+0.1;
+  ctx.beginPath();ctx.moveTo(-10,12);ctx.lineTo(0,120*(1.2-inT));ctx.lineTo(10,12);ctx.closePath();ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.shadowBlur=30;ctx.shadowColor=agent.color;
+  const img=shipImgs[agent.id];const S=90,half=S/2;
+  if(img&&img.ok){ ctx.drawImage(img,-half,-half,S,S); }
+  else { ctx.rotate(-Math.PI/2);ctx.fillStyle=agent.color;ctx.beginPath();
+    ctx.moveTo(30,0);ctx.lineTo(-20,-20);ctx.lineTo(-10,0);ctx.lineTo(-20,20);ctx.closePath();ctx.fill(); }
+  ctx.shadowBlur=0;ctx.restore();
+
+  // agent name flourish (fades in, letter-spaced)
+  const na=clamp((p-0.25)/0.4,0,1);
+  ctx.globalAlpha=na;
+  ctx.textAlign='center';
+  ctx.fillStyle=agent.color;ctx.shadowBlur=18;ctx.shadowColor=agent.color;
+  ctx.font='900 '+Math.round(Math.min(W,H)*0.06)+'px Segoe UI, sans-serif';
+  ctx.fillText(agent.name.toUpperCase(), cx, cy-110-(1-na)*20);
+  ctx.shadowBlur=0;
+  ctx.font='600 14px Share Tech Mono, monospace';ctx.fillStyle='#bcd6ff';
+  ctx.globalAlpha=na*0.85;
+  ctx.fillText('DEPLOYING · '+agent.role.toUpperCase(), cx, cy-80);
+  ctx.globalAlpha=1;ctx.textAlign='start';
+
+  // skip prompt
+  ctx.globalAlpha=0.5+0.3*Math.sin(c.t*6);
+  ctx.textAlign='center';ctx.fillStyle='#9fb8d8';ctx.font='11px Share Tech Mono, monospace';
+  ctx.fillText('CLICK / SPACE TO SKIP', cx, H-40);
+  ctx.globalAlpha=1;ctx.textAlign='start';
+  ctx.restore();
+}
+
 function startGame(){
   actx();
-  score=0;combo=1;comboTimer=0;wave=0;shake=0;spCd=0;spActive=0;overdriveT=0;minigunT=0;invuln=0;time=0;
+  score=0;combo=1;comboTimer=0;wave=0;shake=0;spCd=0;spActive=0;overdriveT=0;minigunT=0;invuln=0;time=0;bank=0;
   bullets=[];eBullets=[];enemies=[];parts=[];pickups=[];floaters=[];shockwaves=[];
   spawnPlayer();
   state='play';
-  show('select',false);show('over',false);show('pause',false);
+  show('titleScreen',false);show('select',false);show('over',false);show('pause',false);
   show('hud',true);show('topright',true);show('hint',true);
   document.getElementById('hpfill').style.background='linear-gradient(90deg,'+agent.color+','+'#27e0ff)';
   document.getElementById('score').style.color=agent.color;
   startWave(1);
+  showDialog('intro'); // chosen agent's opening line
 }
 function togglePause(){
   if(state==='play'){state='pause';show('pause',true);}
   else if(state==='pause'){state='play';show('pause',false);last=performance.now();}
 }
 function toMenu(){
-  state='select';show('pause',false);show('over',false);
-  show('hud',false);show('topright',false);show('hint',false);show('select',true);
+  hideDialog();
+  show('pause',false);show('over',false);
+  show('hud',false);show('topright',false);show('hint',false);
+  toTitle();
 }
 let posted=false;
 function gameOver(){
   state='over'; sfx.over(); posted=false;
   show('hud',false);show('topright',false);show('hint',false);show('over',true);
+  // reaching a high wave = a triumphant end screen; otherwise somber
+  screenBg('over', wave>=5 ? 'win' : 'lose');
+  showDialog('over'); // agent's defeat line
   document.getElementById('finalScore').textContent=score.toLocaleString();
   document.getElementById('overStats').innerHTML='Operative <b style="color:'+agent.color+'">'+agent.name+'</b> · Reached WAVE '+wave;
   postScore(score);
 }
 function postScore(s){
   if(posted) return; posted=true;
+  // arcade hub / leaderboard integration (mirrors football.html)
+  try{ window.parent.postMessage({type:'arcadeResult',game:'shooting',agent:agent.id,score:s,wave:wave},'*'); }catch(e){}
+  try{
+    fetch('/api/arcade/result',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game:'shooting',agent:agent.id,score:s,wave:wave})}).catch(()=>{});
+  }catch(e){}
+  // legacy channels (kept for backward compat)
   try{ window.parent.postMessage({type:'shaddai-game-score',game:'shooting',score:s},'*'); }catch(e){}
   try{
     fetch('/api/leaderboard/shooting',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -643,13 +1420,29 @@ function postScore(s){
 }
 
 // ── buttons ────────────────────────────────────────────────
-document.getElementById('startBtn').onclick=startGame;
+document.getElementById('deployBtn').onclick=beginRun;
+document.getElementById('codexBtn').onclick=()=>{ try{ (window.top||window).location.href='/codex.html'; }catch(e){ location.href='/codex.html'; } };
+document.getElementById('startBtn').onclick=()=>{ show('select',false); refreshTitle(); beginRun(); }; // confirm pick → run
 document.getElementById('resumeBtn').onclick=togglePause;
 document.getElementById('quitBtn').onclick=toMenu;
 document.getElementById('againBtn').onclick=startGame;
 document.getElementById('menuBtn').onclick=toMenu;
 document.getElementById('close').onclick=()=>{
-  try{ window.parent.postMessage({type:'shaddai-close-panel'},'*'); }catch(e){}
+  // iframe-aware BACK: if embedded in the arcade overlay, tell the parent to
+  // close its overlay and return to the game list. Never navigate the iframe.
+  const embedded = window.parent && window.parent !== window;
+  if(embedded){
+    try{ window.parent.closeGame && window.parent.closeGame(); }catch(e){}
+    try{ window.parent.postMessage({type:'exitGame'},'*'); }catch(e){}
+    // legacy channel kept for backward compat
+    try{ window.parent.postMessage({type:'shaddai-close-panel'},'*'); }catch(e){}
+    return;
+  }
+  // standalone: go back to the codex / history
+  try{
+    if(history.length>1) history.back();
+    else location.href='/codex.html';
+  }catch(e){ location.href='/codex.html'; }
 };
 
 // ── main loop ──────────────────────────────────────────────
@@ -657,11 +1450,18 @@ let last=performance.now();
 function loop(now){
   let dt=(now-last)/1000; last=now;
   if(dt>0.05) dt=0.05; // clamp big frame gaps
+  time+=dt; // keep background/animations alive on all screens
+  updateShoot(dt,time); // shooting stars live on every screen
+  if(dialogT>0){ dialogT-=dt; if(dialogT<=0) hideDialog(); } // auto-dismiss banter
   if(state==='play') update(dt);
+  else if(state==='cutscene'){ if(cut){ cut.t+=dt; if(cut.t>=cut.dur) endCutscene(); } }
   draw();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+// initialize the title screen on load
+toTitle();
 </script>
 </body>
 </html>

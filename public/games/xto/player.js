@@ -36,7 +36,7 @@
       const CANDIDATES = {
         TURTLE: ['/assets/agents/TURTLE.glb', '/assets/characters/TURTLE.glb'],
         ORACLE: ['/assets/agents/ORACLE.glb'],
-        XEROX:  ['/assets/characters/XEROX.glb', '/assets/agents/ZEROX.glb', '/assets/agents/XEROX.glb'],
+        XEROX:  ['/assets/agents/ZEROX.glb', '/assets/characters/XEROX.glb', '/assets/agents/XEROX.glb'],  // blue-haired katana girl = ZEROX model
         // common alias
         ZEROX:  ['/assets/characters/XEROX.glb', '/assets/agents/ZEROX.glb'],
       };

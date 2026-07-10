@@ -17,7 +17,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 #c{display:block;position:fixed;inset:0;width:100%;height:100%;}
 /* HUD */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:20;}
-#score-board{position:fixed;top:16px;left:50%;transform:translateX(-50%);
+#score-board{position:fixed;top:58px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.85);border:1px solid #37e6ff55;border-radius:10px;
   padding:10px 32px 6px;text-align:center;z-index:30;
   box-shadow:0 0 24px #37e6ff22,inset 0 0 20px rgba(55,230,255,0.04);}
@@ -28,7 +28,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 .mag-col{color:#ff4d94;text-shadow:0 0 16px #ff4d9488;}
 #score-board .sep{color:#555;font-size:28px;}
 #score-board .clock{font-size:11px;letter-spacing:3px;color:#ffd700;margin-top:4px;text-shadow:0 0 8px #ffd700;}
-#shot-clock-wrap{position:fixed;top:100px;left:50%;transform:translateX(-50%);
+#shot-clock-wrap{position:fixed;top:142px;left:50%;transform:translateX(-50%);
   font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;z-index:30;
   background:rgba(0,0,0,.6);padding:4px 12px;border-radius:4px;border:1px solid #ffffff22;}
 #shot-clock{color:#fff;}
@@ -51,24 +51,38 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;
   z-index:30;display:none;text-shadow:0 0 8px currentColor;}
 /* Possession */
-#poss{position:fixed;bottom:58px;left:50%;transform:translateX(-50%);
-  font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;z-index:30;}
-/* Controls hint */
-#controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
-  font-size:9px;letter-spacing:2px;color:#444;z-index:30;text-align:center;}
+#poss{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);
+  font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;z-index:30;
+  text-align:center;text-shadow:0 0 8px currentColor;}
+/* Controls hint — bounded, padded pill; wraps inside; never overlaps */
+#controls{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  max-width:min(92vw,720px);width:max-content;
+  font-size:10px;letter-spacing:1.5px;color:#9fb3c9;z-index:30;text-align:center;
+  line-height:1.5;padding:7px 18px;border-radius:999px;
+  background:rgba(0,0,0,.55);border:1px solid #37e6ff22;
+  white-space:normal;word-break:break-word;pointer-events:none;}
 /* Message overlay */
 #msg{position:fixed;top:48%;left:50%;transform:translate(-50%,-50%);
   font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;
   letter-spacing:5px;z-index:50;pointer-events:none;opacity:0;
   text-shadow:0 0 40px currentColor;transition:opacity .15s;}
-/* Exit */
-#exitBtn{position:fixed;top:14px;right:16px;z-index:60;pointer-events:all;
-  font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;
-  background:transparent;border:1px solid #37e6ff44;color:#37e6ff;
-  padding:6px 14px;border-radius:4px;cursor:pointer;}
-#exitBtn:hover{background:#37e6ff22;}
-/* AUTO mode badge */
-#auto-badge{position:fixed;top:14px;left:16px;z-index:60;display:none;
+/* ONE clean top strip: title (left) + single BACK button (right) */
+#top-strip{position:fixed;top:0;left:0;right:0;height:48px;z-index:60;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,4,8,.85) 0%,rgba(2,4,8,0) 100%);}
+#game-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:4px;color:#37e6ff;text-shadow:0 0 14px #37e6ff66;}
+.navbtns{display:flex;gap:8px;align-items:center;pointer-events:none;}
+#backBtn,#codexBtn{pointer-events:all;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:2px;background:rgba(0,0,0,.5);
+  border:1px solid #37e6ff55;color:#37e6ff;padding:7px 16px;border-radius:6px;
+  cursor:pointer;transition:background .15s,box-shadow .15s;}
+#backBtn:hover{background:#37e6ff22;box-shadow:0 0 14px #37e6ff44;}
+#codexBtn{border-color:#ff9d3d66;color:#ff9d3d;}
+#codexBtn:hover{background:#ff9d3d22;box-shadow:0 0 14px #ff9d3d55;}
+/* AUTO mode badge — sits below the top strip, left */
+#auto-badge{position:fixed;top:54px;left:16px;z-index:60;display:none;
   font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;
   color:#ffd700;background:rgba(0,0,0,.75);border:1px solid #ffd70066;
   padding:6px 14px;border-radius:4px;animation:autoPulse 1.2s ease-in-out infinite alternate;}
@@ -77,51 +91,106 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 #basket-flash{position:fixed;inset:0;pointer-events:none;z-index:45;opacity:0;
   background:radial-gradient(ellipse at center,rgba(55,230,255,0.18) 0%,transparent 70%);
   transition:opacity .1s;}
-/* Tip-off overlay */
-#tipoff{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:55;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-#tipoff h1{font-family:'Orbitron',sans-serif;font-size:clamp(24px,5vw,52px);font-weight:900;
-  letter-spacing:6px;background:linear-gradient(90deg,#37e6ff,#ff4d94);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-#tipoff .sub{font-size:11px;letter-spacing:4px;color:#888;}
-#tipoff .controls-box{background:rgba(255,255,255,.04);border:1px solid #37e6ff22;
-  border-radius:8px;padding:16px 28px;font-size:10px;letter-spacing:2px;color:#bbb;
-  line-height:2.2;max-width:480px;text-align:center;}
-#tipoff .btn-row{display:flex;gap:16px;margin-top:8px;}
+/* Tip-off overlay — cinematic HF background + centered bounded card */
+#tipoff{position:fixed;inset:0;z-index:55;overflow-y:auto;
+  display:flex;align-items:center;justify-content:center;padding:56px 16px;
+  background:
+    radial-gradient(ellipse at center,rgba(2,4,8,.55) 0%,rgba(2,4,8,.9) 100%),
+    url('/assets/games/hoops/start-bg.png') center/cover no-repeat,
+    linear-gradient(135deg,#04101f 0%,#0a0416 100%);}
+#tipoff .tipoff-card{width:min(92vw,540px);
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:clamp(20px,4vh,36px) clamp(18px,4vw,40px);
+  background:rgba(4,8,16,.72);border:1px solid #37e6ff33;border-radius:16px;
+  box-shadow:0 0 60px rgba(0,0,0,.7),inset 0 0 40px rgba(55,230,255,.05);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+#tipoff h1{font-family:'Orbitron',sans-serif;font-size:clamp(28px,6vw,52px);font-weight:900;
+  letter-spacing:6px;text-align:center;line-height:1.1;
+  background:linear-gradient(90deg,#37e6ff,#ff4d94);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 30px rgba(55,230,255,.3);}
+#tipoff .sub{font-size:11px;letter-spacing:4px;color:#9fb3c9;text-align:center;}
+#tipoff .controls-box{width:100%;background:rgba(255,255,255,.03);
+  border:1px solid #37e6ff22;border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:8px;}
+#tipoff .ctrl-row{display:flex;align-items:baseline;gap:12px;
+  font-size:11px;letter-spacing:1px;line-height:1.4;}
+#tipoff .ctrl-row .k{flex:0 0 108px;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:10px;letter-spacing:1px;color:#37e6ff;text-align:right;
+  text-shadow:0 0 8px #37e6ff55;}
+#tipoff .ctrl-row .d{flex:1;color:#c3d2e2;word-break:break-word;}
+#tipoff .btn-row{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;justify-content:center;}
 #tipoff button{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;
-  letter-spacing:3px;border:none;padding:12px 32px;border-radius:6px;cursor:pointer;}
-#startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;}
-#watchBtn{background:rgba(255,215,0,.15);border:1px solid #ffd70066 !important;color:#ffd700;border:none;}
+  letter-spacing:3px;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s;}
+#tipoff button:hover{transform:translateY(-2px);}
+#startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;
+  box-shadow:0 0 20px rgba(55,230,255,.4);}
+#startBtn:hover{box-shadow:0 0 30px rgba(255,77,148,.6);}
+#watchBtn{background:rgba(255,215,0,.12);border:1px solid #ffd70066;color:#ffd700;}
+#watchBtn:hover{box-shadow:0 0 22px rgba(255,215,0,.4);}
+/* END / RESULT screen */
+#endscreen{position:fixed;inset:0;z-index:58;display:none;
+  align-items:center;justify-content:center;padding:56px 16px;overflow-y:auto;
+  background:
+    radial-gradient(ellipse at center,rgba(2,4,8,.6) 0%,rgba(2,4,8,.94) 100%),
+    url('/assets/games/hoops/start-bg.png') center/cover no-repeat,
+    linear-gradient(135deg,#04101f 0%,#0a0416 100%);}
+#endscreen.show{display:flex;}
+#endscreen .end-card{width:min(92vw,460px);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:clamp(24px,5vh,40px) clamp(20px,5vw,44px);
+  background:rgba(4,8,16,.78);border:1px solid #37e6ff33;border-radius:16px;
+  box-shadow:0 0 60px rgba(0,0,0,.75),inset 0 0 40px rgba(55,230,255,.05);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+#end-result{font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(22px,5vw,40px);letter-spacing:4px;line-height:1.15;
+  color:#37e6ff;text-shadow:0 0 28px currentColor;}
+#end-score{font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(40px,9vw,64px);letter-spacing:4px;display:flex;gap:18px;align-items:center;}
+#end-score .end-sep{color:#556;font-weight:700;}
+.end-sub{font-size:10px;letter-spacing:4px;color:#8aa0b8;}
+#endscreen button{font-family:'Orbitron',sans-serif;font-weight:900;font-size:12px;
+  letter-spacing:2px;border:none;padding:12px 26px;border-radius:8px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s;}
+#endscreen button:hover{transform:translateY(-2px);}
+#rematchBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;
+  box-shadow:0 0 20px rgba(55,230,255,.4);}
+#endBackBtn{background:rgba(255,255,255,.06);border:1px solid #37e6ff44;color:#37e6ff;}
+#endBackBtn:hover{box-shadow:0 0 18px #37e6ff44;}
 
-/* ── MOBILE TOUCH CONTROLS (additive; hidden unless body.touch) ── */
-#touch-controls{display:none;}                    /* hidden by default; shown only on touch devices */
-body.touch #touch-controls{display:block;}
-#touch-controls .tc-zone{position:fixed;bottom:0;z-index:50;
-  /* keep clear of iOS home-indicator / notches */
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
-#tc-pad{left:14px;width:186px;height:186px;}      /* left thumb D-pad */
-#tc-actions{right:14px;width:200px;height:200px;} /* right action cluster */
-#touch-controls .tc-btn{position:absolute;display:flex;align-items:center;justify-content:center;
-  font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:1px;color:#eaf6ff;
-  background:rgba(10,20,34,.42);border:1px solid #37e6ff55;border-radius:12px;
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);text-align:center;line-height:1;}
-#touch-controls .tc-btn.active{background:rgba(55,230,255,.38);border-color:#37e6ff;color:#fff;}
-/* D-pad cross (60px cells) */
-#tc-pad .tc-btn{width:60px;height:60px;font-size:22px;}
-#tc-up   {left:63px; top:0;}
-#tc-down {left:63px; top:126px;}
-#tc-left {left:0;    top:63px;}
-#tc-right{left:126px;top:63px;}
-/* Action cluster — shoot is the big primary */
-#tc-actions .tc-btn{font-size:12px;}
-#tc-shoot {right:0;   bottom:0;   width:96px;height:96px;border-radius:50%;font-size:15px;
-  background:rgba(255,77,148,.30);border-color:#ff4d94aa;}
-#tc-shoot.active{background:rgba(255,77,148,.55);border-color:#ff4d94;}
-#tc-jump  {right:104px;bottom:24px; width:64px;height:64px;border-radius:50%;}
-#tc-sprint{right:0;    bottom:104px;width:88px;height:44px;}
-#tc-steal {right:104px;bottom:104px;width:70px;height:44px;}
-#tc-cross {right:104px;bottom:154px;width:70px;height:38px;font-size:10px;}
+/* NOTE: on-screen joystick / touch controls intentionally REMOVED — keyboard only. */
+
+/* CAMERA MODE HUD label (top-left, below auto badge) */
+#cam-badge{position:fixed;top:54px;right:16px;z-index:60;
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;
+  color:#37e6ff;background:rgba(0,0,0,.7);border:1px solid #37e6ff55;
+  padding:6px 14px;border-radius:4px;pointer-events:none;
+  text-shadow:0 0 8px #37e6ff66;}
+#cam-badge .k{color:#ffd700;}
+
+/* ── VERTICAL CHARACTER SELECTOR ── */
+#char-select-wrap{width:100%;margin-top:4px;}
+#char-select-title{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:4px;
+  color:#ffd700;text-align:center;text-shadow:0 0 8px #ffd70066;margin-bottom:10px;}
+#char-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));
+  gap:10px;width:100%;max-width:520px;margin:0 auto;}
+.char-card{position:relative;cursor:pointer;border-radius:12px;overflow:hidden;
+  border:1px solid #37e6ff33;background:rgba(4,10,20,.6);
+  display:flex;flex-direction:column;align-items:center;
+  transition:transform .12s,box-shadow .15s,border-color .15s;}
+.char-card:hover{transform:translateY(-3px);box-shadow:0 0 18px rgba(55,230,255,.35);}
+.char-card.selected{border-color:var(--ac,#37e6ff);
+  box-shadow:0 0 22px var(--ac,#37e6ff),inset 0 0 18px rgba(255,255,255,.05);}
+.char-card .portrait{width:100%;aspect-ratio:3/4;object-fit:cover;
+  background:linear-gradient(160deg,#0a1626,#160a1e);display:block;}
+.char-card .cc-name{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;
+  letter-spacing:2px;color:#fff;padding:5px 2px 2px;text-shadow:0 0 6px var(--ac,#37e6ff);}
+.char-card .cc-role{font-size:7px;letter-spacing:1px;color:#9fb3c9;padding:0 2px 6px;text-align:center;line-height:1.2;}
+.char-card .cc-check{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;
+  background:var(--ac,#37e6ff);color:#000;font-size:11px;font-weight:900;line-height:18px;
+  text-align:center;display:none;box-shadow:0 0 10px var(--ac,#37e6ff);}
+.char-card.selected .cc-check{display:block;}
 </style>
 </head>
 <body>
@@ -151,44 +220,60 @@ body.touch #touch-controls{display:block;}
   </div>
 </div>
 <div id="poss"></div>
-<div id="controls">MODE A · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=SHOOT(hold/release) / DUNK / JUMP · ↑+SPACE=BLOCK · SPACE=STEAL(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO</div>
+<div id="controls">WASD / Arrows move · SHIFT sprint · SPACE shoot / jump · Q / E crossover · ESC exit</div>
 <div id="msg"></div>
 <div id="auto-badge">⚡ AUTO DEMO</div>
+<div id="cam-badge">CAM <span class="k" id="cam-mode-label">BROADCAST</span> · <span class="k">V</span></div>
 <div id="basket-flash"></div>
-<button id="exitBtn" onclick="history.back()">✕ EXIT</button>
 
-<!-- MOBILE TOUCH CONTROLS — shown only on touch devices (body.touch); drives the SAME `keys` state.
-     data-key = the e.code that each button holds down while pressed. -->
-<div id="touch-controls">
-  <div id="tc-pad" class="tc-zone">
-    <div id="tc-up"    class="tc-btn" data-key="ArrowUp">▲</div>
-    <div id="tc-left"  class="tc-btn" data-key="ArrowLeft">◀</div>
-    <div id="tc-right" class="tc-btn" data-key="ArrowRight">▶</div>
-    <div id="tc-down"  class="tc-btn" data-key="ArrowDown">▼</div>
-  </div>
-  <div id="tc-actions" class="tc-zone">
-    <div id="tc-shoot"  class="tc-btn" data-key="KeyJ">SHOOT</div>
-    <div id="tc-jump"   class="tc-btn" data-key="Space">JUMP</div>
-    <div id="tc-sprint" class="tc-btn" data-key="ShiftLeft">SPRINT</div>
-    <div id="tc-steal"  class="tc-btn" data-key="KeyF">STEAL</div>
-    <div id="tc-cross"  class="tc-btn" data-key="KeyE">CROSS</div>
+<!-- ONE clean top strip: title + single BACK button -->
+<div id="top-strip">
+  <span id="game-title">NEON HOOPS</span>
+  <div class="navbtns">
+    <button id="codexBtn" type="button" title="Back to Codex">⌂ CODEX</button>
+    <button id="backBtn" type="button">◀ ARCADE MENU</button>
   </div>
 </div>
 
 <div id="tipoff">
-  <h1>NEON HOOPS</h1>
-  <div class="sub">1v1 · SHADDAI ARENA</div>
-  <div class="controls-box">
-    WASD / ARROWS &nbsp;→&nbsp; Move (camera-relative) &nbsp;&nbsp; SHIFT &nbsp;→&nbsp; Sprint<br>
-    <b style="color:#37e6ff">MODE A (default):</b> SPACE = hold to charge, release to SHOOT · near rim = DUNK<br>
-    On defense: SPACE = STEAL &nbsp;&nbsp; ↑ + SPACE = BLOCK (jump to contest)<br>
-    <b style="color:#ff4d94">MODE B:</b> SPACE = Dribble/Jump &nbsp;&nbsp; S = SHOOT &nbsp;&nbsp; F = Steal<br>
-    C &nbsp;→&nbsp; Switch control scheme &nbsp;&nbsp; H &nbsp;→&nbsp; Home/Away court &nbsp;&nbsp; Q / E &nbsp;→&nbsp; Crossover<br>
-    T &nbsp;→&nbsp; Toggle AUTO DEMO mode (agents play themselves)
+  <div class="tipoff-card">
+    <h1>NEON HOOPS</h1>
+    <div class="sub">1v1 · SHADDAI ARENA</div>
+    <div class="controls-box">
+      <div class="ctrl-row"><span class="k">WASD / Arrows</span><span class="d">Move (camera-relative)</span></div>
+      <div class="ctrl-row"><span class="k">SHIFT</span><span class="d">Sprint</span></div>
+      <div class="ctrl-row"><span class="k">SPACE</span><span class="d">Hold to charge &amp; release to shoot · near rim = dunk · jump / block on defense</span></div>
+      <div class="ctrl-row"><span class="k">Q / E</span><span class="d">Crossover juke</span></div>
+      <div class="ctrl-row"><span class="k">C</span><span class="d">Switch control scheme (A / B)</span></div>
+      <div class="ctrl-row"><span class="k">H</span><span class="d">Swap home / away court</span></div>
+      <div class="ctrl-row"><span class="k">V</span><span class="d">Cycle camera: broadcast → enemy-facing → first-person</span></div>
+      <div class="ctrl-row"><span class="k">T</span><span class="d">Toggle AUTO demo (agents self-play)</span></div>
+    </div>
+    <div id="char-select-wrap">
+      <div id="char-select-title">CHOOSE YOUR BALLER</div>
+      <div id="char-grid"><!-- cards injected by JS --></div>
+    </div>
+    <div class="btn-row">
+      <button id="startBtn" type="button">TIP-OFF</button>
+      <button id="watchBtn" type="button">WATCH AUTO</button>
+    </div>
   </div>
-  <div class="btn-row">
-    <button id="startBtn">TIP-OFF</button>
-    <button id="watchBtn">WATCH AUTO</button>
+</div>
+
+<!-- END / RESULT screen -->
+<div id="endscreen">
+  <div class="end-card">
+    <div id="end-result">VANGUARD WINS!</div>
+    <div id="end-score">
+      <span class="cyan-col">0</span>
+      <span class="end-sep">:</span>
+      <span class="mag-col">0</span>
+    </div>
+    <div class="end-sub">FINAL · SHADDAI ARENA</div>
+    <div class="btn-row">
+      <button id="rematchBtn" type="button">REMATCH</button>
+      <button id="endBackBtn" type="button">◀ BACK TO ARCADE</button>
+    </div>
   </div>
 </div>
 
@@ -214,6 +299,26 @@ const GLB_PATHS = [
   { walk: '/assets/forge-models/ghost-walk.glb',    idle: '/assets/forge-models/ghost.glb'    },
 ];
 const GLB_TINTS = [0x37e6ff, 0xff4d94];
+
+// ─────────────────────────────────────────────────────────────────
+// AGENT ROSTER — themed uniform portraits for the character selector.
+// Portraits live in /assets/games/hoops/chars/<AGENT>.png (uppercase).
+// The chosen agent becomes YOUR baller (team 0 / Vanguard); a random
+// remaining agent is assigned as the GHOST opponent (team 1).
+// ─────────────────────────────────────────────────────────────────
+const ROSTER = [
+  { id: 'SHADDAI', name: 'SHADDAI', role: 'God-King',   color: 0xffd700, hex: '#ffd700' },
+  { id: 'ZEROX',   name: 'ZEROX',   role: 'Katana',     color: 0x37e6ff, hex: '#37e6ff' },
+  { id: 'TURTLE',  name: 'TURTLE',  role: 'Enforcer',   color: 0x33e06b, hex: '#33e06b' },
+  { id: 'NEXUS',   name: 'NEXUS',   role: 'Architect',  color: 0x2f6bff, hex: '#2f6bff' },
+  { id: 'ORACLE',  name: 'ORACLE',  role: 'Sorceress',  color: 0x9d5cff, hex: '#9d5cff' },
+  { id: 'PIKADON', name: 'PIKADON', role: 'Knight',     color: 0xff3b4d, hex: '#ff3b4d' },
+  { id: 'QUILL',   name: 'QUILL',   role: 'Mage',       color: 0xff8fd0, hex: '#ff8fd0' },
+];
+const CHAR_ART = id => `/assets/games/hoops/chars/${id}.png`;
+// selection: index 0 = your baller, index 1 = ghost opponent
+let selectedAgent = ROSTER[1];       // default ZEROX (cyan Vanguard)
+let ghostAgent    = ROSTER[5];       // default PIKADON (crimson Ghost)
 
 // ─────────────────────────────────────────────────────────────────
 // SCENE SETUP
@@ -729,49 +834,33 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyT' && game.running) toggleAutoMode();
   if (e.code === 'KeyC') toggleControlMode();   // switch control scheme A/B
   if (e.code === 'KeyH') toggleCourtSide();      // swap Home/Away court texture
+  if (e.code === 'KeyV') cycleCamMode();         // cycle camera: broadcast → enemy → first-person
 }, { passive: false });
 window.addEventListener('keyup',   e => { keys[e.code] = false; });
 window.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; initAudio(); } });
 window.addEventListener('mouseup',   e => { if (e.button === 0) mouseDown = false; });
 
 // ─────────────────────────────────────────────────────────────────
-// MOBILE TOUCH CONTROLS (additive — no effect on desktop/keyboard path)
-// Feature-detected: only wired + shown on touch-capable devices. Each on-screen
-// button holds down its data-key in the SAME `keys` object the keyboard uses, so
-// gameplay logic is untouched. We map only the ESSENTIAL basketball actions:
-//   D-pad  → ArrowUp/Down/Left/Right (pure movement, mode-agnostic in both schemes)
-//   SHOOT  → KeyJ  (charges/releases the shot in BOTH modes — avoids Space ambiguity)
-//   JUMP   → Space (context-sensitive: defensive jump/block, dunk near rim)
-//   SPRINT → ShiftLeft   STEAL → KeyF   CROSS → KeyE (crossover juke)
-// Intentionally keyboard-only (niche/debug): C=scheme, H=court, T=auto, Q (2nd cross dir),
-//   and Mode-B S=shoot (KeyJ already shoots universally on touch).
-const IS_TOUCH = ('ontouchstart' in window) ||
-  (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
-if (IS_TOUCH) {
-  document.body.classList.add('touch');
-  const setKey = (code, down) => { if (code) keys[code] = down; };
-  document.querySelectorAll('#touch-controls .tc-btn').forEach(btn => {
-    const code = btn.getAttribute('data-key');
-    const press   = e => { e.preventDefault(); initAudio(); keys[code] = true;  btn.classList.add('active'); };
-    const release = e => { e.preventDefault(); keys[code] = false; btn.classList.remove('active'); };
-    // touch* covers phones/tablets; pointer* covers touch-laptops. preventDefault stops scroll/zoom.
-    btn.addEventListener('touchstart',  press,   { passive: false });
-    btn.addEventListener('touchend',    release, { passive: false });
-    btn.addEventListener('touchcancel', release, { passive: false });
-    btn.addEventListener('pointerdown', press,   { passive: false });
-    btn.addEventListener('pointerup',   release, { passive: false });
-    btn.addEventListener('pointerleave',release, { passive: false });
-  });
-  // Safety net: when the last touch lifts anywhere, clear any still-held touch keys
-  // (guards against a finger sliding off a button without firing its own touchend).
-  window.addEventListener('touchend', e => {
-    if (e.touches && e.touches.length === 0) {
-      document.querySelectorAll('#touch-controls .tc-btn.active').forEach(b => {
-        setKey(b.getAttribute('data-key'), false); b.classList.remove('active');
-      });
+// EXIT — keyboard-only game; single BACK button + ESC key.
+// Reuses the arcade's expected exit contract: post {type:'exitGame'} to the
+// parent frame (when embedded), otherwise fall back to history.back()/close.
+// ─────────────────────────────────────────────────────────────────
+function exitGame() {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'exitGame', game: 'neon-hoops' }, '*');
+      return;
     }
-  }, { passive: true });
+  } catch (e) { /* cross-origin parent — fall through */ }
+  if (window.history.length > 1) { window.history.back(); }
+  else { try { window.close(); } catch (e) {} }
 }
+document.getElementById('backBtn').addEventListener('click', exitGame);
+document.getElementById('codexBtn').addEventListener('click', function(){
+  try { (window.top||window).location.href='/codex.html'; }
+  catch(e){ location.href='/codex.html'; }
+});
+window.addEventListener('keydown', e => { if (e.code === 'Escape') exitGame(); });
 
 // ─────────────────────────────────────────────────────────────────
 // GLB LOADER
@@ -810,7 +899,7 @@ function discoverBones(group, playerIdx) {
 function loadGLBPlayer(playerIdx) {
   const p = players[playerIdx];
   const paths = GLB_PATHS[playerIdx];
-  const tintColor = GLB_TINTS[playerIdx];
+  const tintColor = TEAM_COLORS[playerIdx];
 
   function applyTint(model) {
     model.traverse(child => {
@@ -949,7 +1038,10 @@ const _jhP  = new THREE.Vector3();
 const _jhQ  = new THREE.Quaternion();
 
 const JERSEY_NUMBERS = [1, 7];
-const JERSEY_COLORS  = ['#37e6ff', '#ff4d94'];
+// Jersey colors follow the selected roster agents (fallback to team defaults).
+const JERSEY_COLORS  = [selectedAgent.hex, ghostAgent.hex];
+// Team tints (used by GLB emissive + jersey) — mutable so selection can update them.
+const TEAM_COLORS    = [selectedAgent.color, ghostAgent.color];
 
 function _makeNumTex(colorHex, number) {
   const cv = document.createElement('canvas');
@@ -968,7 +1060,7 @@ function _makeNumTex(colorHex, number) {
 function createJerseyForPlayer(playerIdx) {
   if (jerseyData[playerIdx]) return; // already built
   const colorHex = JERSEY_COLORS[playerIdx];
-  const colorInt = GLB_TINTS[playerIdx];
+  const colorInt = TEAM_COLORS[playerIdx];
   const num = JERSEY_NUMBERS[playerIdx];
 
   // ── Vest mesh (torso overlay) ──
@@ -1304,8 +1396,25 @@ function clampToCourt(pos) {
   pos.z = Math.max(-COURT_D/2 + 0.3, Math.min(COURT_D/2 - 0.3, pos.z));
 }
 
-// Camera yaw
+// Camera yaw (updated each frame; drives camera-relative movement)
 let camYaw = Math.PI;
+
+// ── CAMERA MODES ──
+// 0 = BROADCAST (default third-person behind player)
+// 1 = ENEMY-FACING (from the defending hoop looking back toward the attacker)
+// 2 = FIRST-PERSON (locked to the player's eyes, looking where they move/aim)
+const CAM_BROADCAST = 0, CAM_ENEMY = 1, CAM_FP = 2;
+const CAM_LABELS = ['BROADCAST', 'ENEMY-FACING', 'FIRST-PERSON'];
+let camMode = CAM_BROADCAST;
+// Smoothed heading used by the FP camera so it doesn't jitter when idle.
+let fpHeading = Math.PI;
+function setCamMode(m) {
+  camMode = ((m % 3) + 3) % 3;
+  const lbl = document.getElementById('cam-mode-label');
+  if (lbl) lbl.textContent = CAM_LABELS[camMode];
+  showMsg('CAM · ' + CAM_LABELS[camMode], '#37e6ff', 0.9);
+}
+function cycleCamMode() { setCamMode(camMode + 1); }
 
 // ─────────────────────────────────────────────────────────────────
 // PLAYER (USER) UPDATE — controls fixed (camera-relative, correct orientation)
@@ -2165,12 +2274,12 @@ function toggleControlMode() {
 }
 
 // Reflect the active scheme in the bottom HUD strip so the player always sees the mapping
-const CONTROLS_A = 'MODE A · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=SHOOT(hold/release) / DUNK / JUMP · ↑+SPACE=BLOCK · SPACE=STEAL(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO';
-const CONTROLS_B = 'MODE B · WASD/↑↓←→=MOVE · SHIFT=SPRINT · SPACE=DRIBBLE/JUMP · S=SHOOT · F=STEAL · SPACE=BLOCK(def) · Q/E=CROSS · C=SCHEME · H=COURT · T=AUTO';
+const CONTROLS_A = 'MODE A · WASD / Arrows move · SHIFT sprint · SPACE shoot (hold/release) / dunk / jump / block · Q / E crossover · V camera · C scheme · H court · T auto · ESC exit';
+const CONTROLS_B = 'MODE B · WASD / Arrows move · SHIFT sprint · SPACE dribble / jump / block · S shoot · F steal · Q / E crossover · V camera · C scheme · H court · T auto · ESC exit';
 function updateControlsHUD() {
   const el = document.getElementById('controls');
   if (!el) return;
-  if (game.autoMode) { el.textContent = 'AUTO DEMO — watching agents play · T=EXIT · H=COURT'; return; }
+  if (game.autoMode) { el.textContent = 'AUTO DEMO — agents self-play · V camera · T resume control · H court · ESC exit'; return; }
   el.textContent = controlMode === 0 ? CONTROLS_A : CONTROLS_B;
 }
 
@@ -2192,7 +2301,93 @@ const _camEye    = new THREE.Vector3();
 const _camLook   = new THREE.Vector3();
 const _camHoopHi = new THREE.Vector3(HOOP_X, HOOP_Y * 0.55, HOOP_Z);
 
+// Scratch vectors for the alternate cameras
+const _fpEye   = new THREE.Vector3();
+const _fpLook  = new THREE.Vector3();
+const _enEye   = new THREE.Vector3();
+const _enLook  = new THREE.Vector3();
+
+// Dispatch to the active camera mode. camYaw is (re)set inside each mode so that
+// WASD movement stays correctly camera-relative for whatever view is active.
 function updateCamera(dt) {
+  if (camMode === CAM_FP)        { updateCameraFP(dt);    return; }
+  if (camMode === CAM_ENEMY)     { updateCameraEnemy(dt); return; }
+  updateCameraBroadcast(dt);
+}
+
+// ── FIRST-PERSON: locked to the controlled player's eyes, looking where they head/aim ──
+function updateCameraFP(dt) {
+  const you = players[0];
+  // Heading: while moving use facing; while holding still look toward the hoop you attack.
+  const speed2 = you.vel.x*you.vel.x + you.vel.z*you.vel.z;
+  let targetHeading;
+  if (speed2 > 0.25) {
+    targetHeading = you.facingAngle;
+  } else {
+    // Idle → look toward the attacking hoop so the player can line up a shot.
+    targetHeading = Math.atan2(HOOP_X - you.pos.x, HOOP_Z - you.pos.z);
+  }
+  // Smooth heading (shortest-arc lerp)
+  let diff = targetHeading - fpHeading;
+  while (diff >  Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  fpHeading += diff * (1 - Math.exp(-10 * dt));
+
+  const fwdX = Math.sin(fpHeading), fwdZ = Math.cos(fpHeading);
+  // Eye position: at the player's head, nudged slightly forward past the face.
+  const eyeY = you.pos.y + 1.62;
+  _fpEye.set(you.pos.x + fwdX * 0.18, eyeY, you.pos.z + fwdZ * 0.18);
+  // Look a few metres ahead, biased slightly downward toward the rim/court.
+  const aimDown = -0.12;
+  _fpLook.set(_fpEye.x + fwdX * 6, eyeY + aimDown * 6, _fpEye.z + fwdZ * 6);
+
+  camSmoothPos.lerp(_fpEye, 1 - Math.exp(-16 * dt));
+  camSmoothLook.lerp(_fpLook, 1 - Math.exp(-16 * dt));
+
+  applyShakeAndLook(dt);
+  // FP: forward is exactly the player's heading → movement stays intuitive.
+  camYaw = fpHeading;
+}
+
+// ── ENEMY-FACING: from behind the DEFENDING hoop, looking back at the attacker ──
+// (You attack the hoop at HOOP_Z = -11; the defending side is the far +Z baseline.)
+function updateCameraEnemy(dt) {
+  const you = players[0];
+  // Camera sits behind the defending baseline (positive Z end), elevated, aimed down-court.
+  _enEye.set(
+    THREE.MathUtils.clamp(you.pos.x * 0.35, -4, 4),
+    7.5,
+    COURT_D / 2 - 1.5
+  );
+  // Look at the attacker (slightly ahead toward the hoop they're driving to).
+  _enLook.set(you.pos.x * 0.6, 1.4, you.pos.z - 1.5);
+
+  camSmoothPos.lerp(_enEye, 1 - Math.exp(-6 * dt));
+  camSmoothLook.lerp(_enLook, 1 - Math.exp(-7 * dt));
+
+  applyShakeAndLook(dt);
+  // Camera looks in the -Z direction (down-court toward the attacking hoop),
+  // so recompute camYaw from the actual view vector to keep movement correct.
+  camYaw = Math.atan2(camSmoothLook.x - camSmoothPos.x, camSmoothLook.z - camSmoothPos.z);
+}
+
+// Shared: apply optional shake, point the camera, done by broadcast/enemy/fp.
+function applyShakeAndLook(dt) {
+  if (game.shakeTimer > 0) {
+    game.shakeTimer -= dt;
+    const sh = game.shakeTimer * 0.15;
+    camera.position.set(
+      camSmoothPos.x + (Math.random()-0.5)*sh,
+      camSmoothPos.y + (Math.random()-0.5)*sh,
+      camSmoothPos.z
+    );
+  } else {
+    camera.position.copy(camSmoothPos);
+  }
+  camera.lookAt(camSmoothLook);
+}
+
+function updateCameraBroadcast(dt) {
   const you = players[0];
 
   // How close is the player to the rim? (0 = far, 1 = right at the basket)
@@ -2333,8 +2528,19 @@ function endGame() {
   game.running = false;
   const result = game.scoreYou > game.scoreAI ? 'VANGUARD WINS!' :
                  game.scoreYou < game.scoreAI ? 'GHOST WINS!'   : 'TIE GAME';
-  const col = game.scoreYou >= game.scoreAI ? '#37e6ff' : '#ff4d94';
-  showMsg(result, col, 9999);
+  const col = game.scoreYou > game.scoreAI ? '#37e6ff' :
+              game.scoreYou < game.scoreAI ? '#ff4d94' : '#ffd700';
+  // Populate polished end screen
+  const resEl = document.getElementById('end-result');
+  const scEl  = document.getElementById('end-score');
+  if (resEl) { resEl.textContent = result; resEl.style.color = col; }
+  if (scEl) {
+    scEl.querySelector('.cyan-col').textContent = game.scoreYou;
+    scEl.querySelector('.mag-col').textContent  = game.scoreAI;
+  }
+  // Clear any lingering center message so it doesn't overlap the card
+  if (game.msgEl) { game.msgEl.style.opacity = '0'; game.msgTimer = 0; }
+  document.getElementById('endscreen').classList.add('show');
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2381,6 +2587,15 @@ function tick(now) {
 function startGame(auto = false) {
   initAudio();
   document.getElementById('tipoff').style.display = 'none';
+  document.getElementById('endscreen').classList.remove('show');
+  // Reset scores/clocks for a clean (re)match
+  game.scoreYou = 0; game.scoreAI = 0;
+  game.quarter = 1; game.quarterTimer = QUARTER_SEC;
+  game.shotClock = SHOT_CLOCK_MAX; game.autoMode = false;
+  document.getElementById('auto-badge').style.display = 'none';
+  applySelectionColors();
+  applyTeamColorsToScene();
+  updateControlsHUD();
   transferBall(0);
   game.running = true;
   game.lastFrameTime = performance.now();
@@ -2395,8 +2610,94 @@ function startGame(auto = false) {
   updatePossUI();
 }
 
+// ─────────────────────────────────────────────────────────────────
+// CHARACTER SELECTOR — vertical cards; pick your baller (team 0).
+// Ghost opponent auto-picks a contrasting agent from the rest of the roster.
+// ─────────────────────────────────────────────────────────────────
+function pickGhostFor(agentId) {
+  const pool = ROSTER.filter(a => a.id !== agentId);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function applySelectionColors() {
+  TEAM_COLORS[0]   = selectedAgent.color; TEAM_COLORS[1]   = ghostAgent.color;
+  JERSEY_COLORS[0] = selectedAgent.hex;   JERSEY_COLORS[1] = ghostAgent.hex;
+  // Scoreboard team names + accent colors
+  const yn = document.querySelector('#score-board .cyan-col.team-name');
+  const gn = document.querySelector('#score-board .mag-col.team-name');
+  if (yn) { yn.textContent = selectedAgent.name; yn.style.color = selectedAgent.hex; yn.style.textShadow = `0 0 16px ${selectedAgent.hex}88`; }
+  if (gn) { gn.textContent = ghostAgent.name;    gn.style.color = ghostAgent.hex;    gn.style.textShadow = `0 0 16px ${ghostAgent.hex}88`; }
+}
+// Re-tint already-built jerseys + loaded GLB bodies to the current TEAM_COLORS.
+// Runs on game start so a late selection change is reflected on-court.
+function applyTeamColorsToScene() {
+  for (let idx = 0; idx < 2; idx++) {
+    const col = new THREE.Color(TEAM_COLORS[idx]);
+    // Jersey vest + accents
+    const jd = jerseyData[idx];
+    if (jd) {
+      jd.vGroup.children.forEach(ch => {
+        if (ch.material && ch.material.isMeshStandardMaterial) {
+          ch.material.color.copy(col);
+          if (ch.material.emissive) ch.material.emissive.copy(col);
+          ch.material.needsUpdate = true;
+        }
+      });
+      [jd.wristR, jd.wristL, jd.headBand].forEach(m => {
+        if (m && m.material) { m.material.color.copy(col); if (m.material.emissive) m.material.emissive.copy(col); m.material.needsUpdate = true; }
+      });
+    }
+    // GLB emissive tint
+    const p = players[idx];
+    if (p.glbGroup) {
+      p.glbGroup.traverse(child => {
+        if (child.isMesh) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat => { if (mat && mat.isMeshStandardMaterial) { mat.emissive = col.clone(); mat.emissiveIntensity = 0.28; } });
+        }
+      });
+    }
+  }
+}
+function buildCharSelector() {
+  const grid = document.getElementById('char-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  ROSTER.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'char-card' + (a.id === selectedAgent.id ? ' selected' : '');
+    card.style.setProperty('--ac', a.hex);
+    card.dataset.id = a.id;
+    const img = document.createElement('img');
+    img.className = 'portrait';
+    img.alt = a.name;
+    img.loading = 'lazy';
+    img.src = CHAR_ART(a.id);
+    // Fallback to existing forge/agent art if themed portrait is missing
+    img.onerror = () => {
+      if (img.dataset.fb) { img.style.opacity = '0.35'; return; }
+      img.dataset.fb = '1';
+      img.src = `/assets/agents/${a.id}-portrait.png`;
+    };
+    const nm = document.createElement('div'); nm.className = 'cc-name'; nm.textContent = a.name;
+    const rl = document.createElement('div'); rl.className = 'cc-role'; rl.textContent = a.role;
+    const ck = document.createElement('div'); ck.className = 'cc-check'; ck.textContent = '✓';
+    card.append(ck, img, nm, rl);
+    card.addEventListener('click', () => {
+      selectedAgent = a;
+      ghostAgent = pickGhostFor(a.id);
+      applySelectionColors();
+      grid.querySelectorAll('.char-card').forEach(c => c.classList.toggle('selected', c.dataset.id === a.id));
+    });
+    grid.appendChild(card);
+  });
+}
+buildCharSelector();
+applySelectionColors();
+
 document.getElementById('startBtn').addEventListener('click', () => startGame(false));
 document.getElementById('watchBtn').addEventListener('click', () => startGame(true));
+document.getElementById('rematchBtn').addEventListener('click', () => startGame(false));
+document.getElementById('endBackBtn').addEventListener('click', exitGame);
 
 // Kick off render loop immediately
 updateControlsHUD();

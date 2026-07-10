@@ -752,6 +752,8 @@ try { app.use('/api/profile', require('./profile-routes')); } catch (e) { consol
 // Agent Battle Arena — skill loadouts -> sim match -> data learner (which skills win)
 try { app.use('/api/battle', require('./battle-routes')); } catch (e) { console.warn('[startup] battle-routes not mounted:', e.message); }
 try { app.use('/api/football', require('./sports/football/football-routes')); } catch (e) { console.warn('[startup] football-routes not mounted:', e.message); }
+// Cross-game SKILLPLAY: agent real-skills -> per-game abilities (scalable to forged agents)
+try { app.use('/api/skillplay', require('./skillplay-routes')); } catch (e) { console.warn('[startup] skillplay-routes not mounted:', e.message); }
 // AURA self-improvement: background auto-warm (no-op unless AURA_AUTOWARM=true)
 try { require('./aura-warmer').startAutoWarm(); } catch (_) {}
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links

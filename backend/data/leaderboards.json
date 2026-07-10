@@ -5,5 +5,22 @@
       "score": 42,
       "at": 1783046471852
     }
+  ],
+  "shooting": [
+    {
+      "name": "operative",
+      "score": 594,
+      "at": 1783648075139
+    },
+    {
+      "name": "operative",
+      "score": 500,
+      "at": 1783650713651
+    },
+    {
+      "name": "operative",
+      "score": 20,
+      "at": 1783650218054
+    }
   ]
 }

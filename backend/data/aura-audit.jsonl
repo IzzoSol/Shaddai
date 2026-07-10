@@ -1,0 +1,209 @@
+{"ts":"2026-07-09T08:31:30.533Z","qHash":"39e04e25899158b2","query":"roman numeral for 2025","method":"fetch","hit":true,"latencyMs":10}
+{"ts":"2026-07-09T08:31:30.537Z","qHash":"3df6c5f859aedc90","query":"15% of 240","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.553Z","qHash":"a488dcb3b09ff9d4","query":"stddev of 2, 4, 4, 4, 5, 5, 7, 9","method":"compute","hit":true,"latencyMs":16}
+{"ts":"2026-07-09T08:31:30.560Z","qHash":"2181a606a91f317d","query":"sum of 5 10 15","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.575Z","qHash":"ea833ec338087463","query":"(3 + 4) * 5","method":"compute","hit":true,"latencyMs":14}
+{"ts":"2026-07-09T08:31:30.584Z","qHash":"de271799f65bd73e","query":"is 2024 a leap year","method":"compute","hit":true,"latencyMs":7}
+{"ts":"2026-07-09T08:31:30.585Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.595Z","qHash":"0efa7c053bbd3325","query":"is 17 prime","method":"compute","hit":true,"latencyMs":8}
+{"ts":"2026-07-09T08:31:30.602Z","qHash":"2de882a064f6213b","query":"median of 2, 5, 9","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.606Z","qHash":"28b8e6107d3b0793","query":"hypotenuse of 3 and 4","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.610Z","qHash":"978fca2fbbb231a8","query":"count vowels in 'hello'","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.618Z","qHash":"416b8a8e62e47f08","query":"latest crypto news","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.621Z","qHash":"6d5e532a95429c50","query":"url encode hello world","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.625Z","qHash":"0325183e3129b62b","query":"base64 encode hello","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.627Z","qHash":"d5bba2bf1f393089","query":"#FF5733 to rgb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.633Z","qHash":"29cf033a0362bd31","query":"summarize the French revolution","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T08:31:30.636Z","qHash":"a64f8fee3d76838f","query":"what is the current price of bitcoin","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.641Z","qHash":"ee88c17caf853db9","query":"10th fibonacci number","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.648Z","qHash":"597d8097c018b30f","query":"unix timestamp for 2024-01-01","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.656Z","qHash":"689f5ce537d909d2","query":"what should I cook for dinner","method":"miss","hit":false,"latencyMs":7}
+{"ts":"2026-07-09T08:31:30.661Z","qHash":"9bc740bb8ed7b591","query":"uppercase: hello world","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.666Z","qHash":"8491e9e4054f104d","query":"sha256 of 'hello'","method":"compute","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:31:30.671Z","qHash":"6a5524d836b5ecb3","query":"XIV in decimal","method":"compute","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:31:30.675Z","qHash":"1a092482af49b0bf","query":"simplify ratio 12:8","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.679Z","qHash":"af6f610dfa586afb","query":"10 km to miles","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.681Z","qHash":"1c42b375f9c8fc65","query":"ordinal of 21","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.685Z","qHash":"3a965ba88a51f539","query":"20% markup on 50","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.687Z","qHash":"6c2e1a159586cdf4","query":"what is aura","method":"seed","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.691Z","qHash":"c8f70d92dfd2235d","query":"sqrt of 144","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.695Z","qHash":"e4aa14f319292e6e","query":"monthly payment on 10000 at 5% for 3 years","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.699Z","qHash":"1e46bf7c5134da75","query":"12 * 12","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.703Z","qHash":"c0434a552a655fcf","query":"500 ml to liters","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.707Z","qHash":"6c21dd74171b8dc8","query":"compound interest on 1000 at 10% for 2 years","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.711Z","qHash":"ca2a06f5daa4be9e","query":"0b1010 in decimal","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.713Z","qHash":"c0847377bd8e7c1d","query":"clamp 150 between 0 and 100","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.716Z","qHash":"b1d6947bb13aafe6","query":"3 hours in minutes","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:31:30.722Z","qHash":"17e695c0e2150be5","query":"explain quantum entanglement to a child","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.725Z","qHash":"7fe98bb13fe3668e","query":"2^10","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.729Z","qHash":"c3f859c00f1cfb35","query":"100 c to f","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.734Z","qHash":"101e92dabf04aa95","query":"max of 3, 9, 4","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.738Z","qHash":"6085fff237c610a2","query":"17 mod 5","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.746Z","qHash":"8ede1235515fe016","query":"write a haiku about autumn rain","method":"miss","hit":false,"latencyMs":7}
+{"ts":"2026-07-09T08:31:30.749Z","qHash":"795d99df5c1ac7e5","query":"3 out of 4 as a percent","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.752Z","qHash":"f0f3c3625c5f3a5a","query":"gcd of 12 and 8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.755Z","qHash":"7739fceb3262a357","query":"lcm of 4 and 6","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.761Z","qHash":"a065ab9df0831428","query":"what does zerox do","method":"seed","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:31:30.763Z","qHash":"1136038e9cce2b85","query":"what is shaddai","method":"seed","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.768Z","qHash":"1a424d74c3e37793","query":"what is the pro tier price","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.773Z","qHash":"849de27bacb05f98","query":"word count of: the quick brown fox","method":"compute","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:31:30.778Z","qHash":"2c47dcb62ee4ff20","query":"what is the weather right now","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.782Z","qHash":"8c257580fa1ed498","query":"round 3.14159 to 2 decimal places","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.786Z","qHash":"902daee0c8aca36f","query":"should I buy Tesla stock","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.788Z","qHash":"820a32f54c3f4944","query":"20% off 80","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.794Z","qHash":"978b4896598e132a","query":"what is the meaning of life","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.796Z","qHash":"af46f529d746cce8","query":"factorial of 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.802Z","qHash":"4653d056f986d59f","query":"give me a marketing slogan for shoes","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T08:31:30.808Z","qHash":"cb6ab5745b837563","query":"how many agents does shaddai have","method":"seed","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.811Z","qHash":"44763a003a0d091f","query":"reverse: abc","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:31:30.813Z","qHash":"3f8074e2de0e099e","query":"1 gb to mb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:31:30.819Z","qHash":"c1a76a7989ec38f3","query":"123 in words","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:31:30.821Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.180Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"fetch","hit":true,"latencyMs":7}
+{"ts":"2026-07-09T08:32:35.183Z","qHash":"2181a606a91f317d","query":"sum of 5 10 15","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.186Z","qHash":"101e92dabf04aa95","query":"max of 3, 9, 4","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.201Z","qHash":"07634fbdcf8065bb","query":"min of 3, 9, 4","method":"compute","hit":true,"latencyMs":15}
+{"ts":"2026-07-09T08:32:35.203Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.206Z","qHash":"ca2a06f5daa4be9e","query":"0b1010 in decimal","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.207Z","qHash":"39e04e25899158b2","query":"roman numeral for 2025","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.210Z","qHash":"6a5524d836b5ecb3","query":"XIV in decimal","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.212Z","qHash":"af46f529d746cce8","query":"factorial of 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.224Z","qHash":"e7f6c011776e8db7","query":"6!","method":"compute","hit":true,"latencyMs":12}
+{"ts":"2026-07-09T08:32:35.226Z","qHash":"f0f3c3625c5f3a5a","query":"gcd of 12 and 8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.228Z","qHash":"7739fceb3262a357","query":"lcm of 4 and 6","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.231Z","qHash":"0efa7c053bbd3325","query":"is 17 prime","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.234Z","qHash":"b1d6947bb13aafe6","query":"3 hours in minutes","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.236Z","qHash":"3f8074e2de0e099e","query":"1 gb to mb","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.239Z","qHash":"af6f610dfa586afb","query":"10 km to miles","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.241Z","qHash":"c3f859c00f1cfb35","query":"100 c to f","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.244Z","qHash":"3df6c5f859aedc90","query":"15% of 240","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.246Z","qHash":"820a32f54c3f4944","query":"20% off 80","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.248Z","qHash":"1e46bf7c5134da75","query":"12 * 12","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.250Z","qHash":"ea833ec338087463","query":"(3 + 4) * 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.252Z","qHash":"7fe98bb13fe3668e","query":"2^10","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.259Z","qHash":"3d2c66596a1ed46c","query":"format 1000000 with commas","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-09T08:32:35.261Z","qHash":"9bc740bb8ed7b591","query":"uppercase: hello world","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.263Z","qHash":"44763a003a0d091f","query":"reverse: abc","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T08:32:35.265Z","qHash":"849de27bacb05f98","query":"word count of: the quick brown fox","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.267Z","qHash":"0325183e3129b62b","query":"base64 encode hello","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.268Z","qHash":"3a965ba88a51f539","query":"20% markup on 50","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.270Z","qHash":"00d7396e43b5ab29","query":"mode of 1, 2, 2, 3","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.273Z","qHash":"a488dcb3b09ff9d4","query":"stddev of 2, 4, 4, 4, 5, 5, 7, 9","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.278Z","qHash":"1939e437ec7fca2b","query":"variance of 2, 4, 6","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.280Z","qHash":"1a092482af49b0bf","query":"simplify ratio 12:8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.283Z","qHash":"8c257580fa1ed498","query":"round 3.14159 to 2 decimal places","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.286Z","qHash":"795d99df5c1ac7e5","query":"3 out of 4 as a percent","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.288Z","qHash":"6c21dd74171b8dc8","query":"compound interest on 1000 at 10% for 2 years","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:35.291Z","qHash":"1c42b375f9c8fc65","query":"ordinal of 21","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.298Z","qHash":"d848dbc7ebecac04","query":"ordinal of 11","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-09T08:32:35.301Z","qHash":"c1a76a7989ec38f3","query":"123 in words","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.306Z","qHash":"d6aba386acfd7f32","query":"1000 in words","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.308Z","qHash":"978fca2fbbb231a8","query":"count vowels in 'hello'","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.310Z","qHash":"8491e9e4054f104d","query":"sha256 of 'hello'","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.312Z","qHash":"6d5e532a95429c50","query":"url encode hello world","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.315Z","qHash":"8e8cf4553c095a2a","query":"url decode hello%20world","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:32:35.317Z","qHash":"597d8097c018b30f","query":"unix timestamp for 2024-01-01","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.318Z","qHash":"d5bba2bf1f393089","query":"#FF5733 to rgb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.327Z","qHash":"e2f3a7c7756ebede","query":"rgb(255, 87, 51) to hex","method":"compute","hit":true,"latencyMs":8}
+{"ts":"2026-07-09T08:32:35.329Z","qHash":"c0847377bd8e7c1d","query":"clamp 150 between 0 and 100","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.335Z","qHash":"36f701b92e4ab48f","query":"clamp 50 between 0 and 100","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.340Z","qHash":"ec195f97f2453dc5","query":"1 hectare to sqm","method":"compute","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:32:35.342Z","qHash":"c0434a552a655fcf","query":"500 ml to liters","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:35.347Z","qHash":"af53ad51674b749b","query":"1 atm to pa","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:32:35.351Z","qHash":"ae71984dd4434301","query":"8 bits to bytes","method":"compute","hit":true,"latencyMs":3}
+{"ts":"2026-07-09T08:32:35.361Z","qHash":"8ede1235515fe016","query":"write a haiku about autumn rain","method":"miss","hit":false,"latencyMs":9}
+{"ts":"2026-07-09T08:32:35.365Z","qHash":"978b4896598e132a","query":"what is the meaning of life","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.372Z","qHash":"17e695c0e2150be5","query":"explain quantum entanglement to a child","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T08:32:35.377Z","qHash":"902daee0c8aca36f","query":"should I buy Tesla stock","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:32:35.383Z","qHash":"4653d056f986d59f","query":"give me a marketing slogan for shoes","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T08:32:35.388Z","qHash":"a64f8fee3d76838f","query":"what is the current price of bitcoin","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:32:35.392Z","qHash":"29cf033a0362bd31","query":"summarize the French revolution","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.397Z","qHash":"d81daa5bef354b93","query":"write a poem about standard deviation in finance","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.402Z","qHash":"844fcd44fdfff314","query":"what is compound interest and how does it work in economics","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:35.407Z","qHash":"6ca75ce4f70e5cb2","query":"how do I simplify my microservices architecture into fewer components","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:36.289Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"fetch","hit":true,"latencyMs":5}
+{"ts":"2026-07-09T08:32:36.292Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-09T08:32:36.293Z","qHash":"39e04e25899158b2","query":"roman numeral for 2025","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.295Z","qHash":"af46f529d746cce8","query":"factorial of 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.296Z","qHash":"f0f3c3625c5f3a5a","query":"gcd of 12 and 8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.298Z","qHash":"b1d6947bb13aafe6","query":"3 hours in minutes","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.299Z","qHash":"3f8074e2de0e099e","query":"1 gb to mb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.301Z","qHash":"3df6c5f859aedc90","query":"15% of 240","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.302Z","qHash":"820a32f54c3f4944","query":"20% off 80","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.305Z","qHash":"7fe98bb13fe3668e","query":"2^10","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.307Z","qHash":"00d7396e43b5ab29","query":"mode of 1, 2, 2, 3","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.308Z","qHash":"1c42b375f9c8fc65","query":"ordinal of 21","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.310Z","qHash":"c0847377bd8e7c1d","query":"clamp 150 between 0 and 100","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T08:32:36.312Z","qHash":"d5bba2bf1f393089","query":"#FF5733 to rgb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.340Z","qHash":"8ede1235515fe016","query":"write a haiku about autumn rain","method":"miss","hit":false,"latencyMs":28}
+{"ts":"2026-07-09T08:32:36.350Z","qHash":"978b4896598e132a","query":"what is the meaning of life","method":"miss","hit":false,"latencyMs":9}
+{"ts":"2026-07-09T08:32:36.355Z","qHash":"902daee0c8aca36f","query":"should I buy Tesla stock","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:36.359Z","qHash":"a64f8fee3d76838f","query":"what is the current price of bitcoin","method":"miss","hit":false,"latencyMs":3}
+{"ts":"2026-07-09T08:32:36.364Z","qHash":"29cf033a0362bd31","query":"summarize the French revolution","method":"miss","hit":false,"latencyMs":4}
+{"ts":"2026-07-09T08:32:36.378Z","qHash":"839cd3913b318191","query":"average of 3, 19, 44, 80","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.379Z","qHash":"f19e0ac604730519","query":"611 / 13","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.381Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:36.383Z","qHash":"621990b94d5d40b3","query":"37 + 58 * 2","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T08:32:56.547Z","qHash":"0af710c231baf3fe","query":"write a fresh unique haiku 1783585976496","method":"miss","hit":false,"latencyMs":49}
+{"ts":"2026-07-09T23:24:25.176Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"fetch","hit":true,"latencyMs":7}
+{"ts":"2026-07-09T23:24:25.180Z","qHash":"2181a606a91f317d","query":"sum of 5 10 15","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.182Z","qHash":"101e92dabf04aa95","query":"max of 3, 9, 4","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.184Z","qHash":"07634fbdcf8065bb","query":"min of 3, 9, 4","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.185Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.187Z","qHash":"ca2a06f5daa4be9e","query":"0b1010 in decimal","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.189Z","qHash":"39e04e25899158b2","query":"roman numeral for 2025","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.191Z","qHash":"6a5524d836b5ecb3","query":"XIV in decimal","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.192Z","qHash":"af46f529d746cce8","query":"factorial of 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.193Z","qHash":"e7f6c011776e8db7","query":"6!","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.195Z","qHash":"f0f3c3625c5f3a5a","query":"gcd of 12 and 8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.196Z","qHash":"7739fceb3262a357","query":"lcm of 4 and 6","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.198Z","qHash":"0efa7c053bbd3325","query":"is 17 prime","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.199Z","qHash":"b1d6947bb13aafe6","query":"3 hours in minutes","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.200Z","qHash":"3f8074e2de0e099e","query":"1 gb to mb","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.202Z","qHash":"af6f610dfa586afb","query":"10 km to miles","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.203Z","qHash":"c3f859c00f1cfb35","query":"100 c to f","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.204Z","qHash":"3df6c5f859aedc90","query":"15% of 240","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.206Z","qHash":"820a32f54c3f4944","query":"20% off 80","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.208Z","qHash":"1e46bf7c5134da75","query":"12 * 12","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.209Z","qHash":"ea833ec338087463","query":"(3 + 4) * 5","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.210Z","qHash":"7fe98bb13fe3668e","query":"2^10","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.212Z","qHash":"3d2c66596a1ed46c","query":"format 1000000 with commas","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.213Z","qHash":"9bc740bb8ed7b591","query":"uppercase: hello world","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.214Z","qHash":"44763a003a0d091f","query":"reverse: abc","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.216Z","qHash":"849de27bacb05f98","query":"word count of: the quick brown fox","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.217Z","qHash":"0325183e3129b62b","query":"base64 encode hello","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.219Z","qHash":"3a965ba88a51f539","query":"20% markup on 50","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.220Z","qHash":"00d7396e43b5ab29","query":"mode of 1, 2, 2, 3","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.221Z","qHash":"a488dcb3b09ff9d4","query":"stddev of 2, 4, 4, 4, 5, 5, 7, 9","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.223Z","qHash":"1939e437ec7fca2b","query":"variance of 2, 4, 6","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.224Z","qHash":"1a092482af49b0bf","query":"simplify ratio 12:8","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.225Z","qHash":"8c257580fa1ed498","query":"round 3.14159 to 2 decimal places","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.226Z","qHash":"795d99df5c1ac7e5","query":"3 out of 4 as a percent","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.228Z","qHash":"6c21dd74171b8dc8","query":"compound interest on 1000 at 10% for 2 years","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.229Z","qHash":"1c42b375f9c8fc65","query":"ordinal of 21","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.230Z","qHash":"d848dbc7ebecac04","query":"ordinal of 11","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.232Z","qHash":"c1a76a7989ec38f3","query":"123 in words","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.233Z","qHash":"d6aba386acfd7f32","query":"1000 in words","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.234Z","qHash":"978fca2fbbb231a8","query":"count vowels in 'hello'","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.235Z","qHash":"8491e9e4054f104d","query":"sha256 of 'hello'","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.236Z","qHash":"6d5e532a95429c50","query":"url encode hello world","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.238Z","qHash":"8e8cf4553c095a2a","query":"url decode hello%20world","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.239Z","qHash":"597d8097c018b30f","query":"unix timestamp for 2024-01-01","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.240Z","qHash":"d5bba2bf1f393089","query":"#FF5733 to rgb","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.241Z","qHash":"e2f3a7c7756ebede","query":"rgb(255, 87, 51) to hex","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.242Z","qHash":"c0847377bd8e7c1d","query":"clamp 150 between 0 and 100","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.244Z","qHash":"36f701b92e4ab48f","query":"clamp 50 between 0 and 100","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.245Z","qHash":"ec195f97f2453dc5","query":"1 hectare to sqm","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.247Z","qHash":"c0434a552a655fcf","query":"500 ml to liters","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.248Z","qHash":"af53ad51674b749b","query":"1 atm to pa","method":"fetch","hit":true,"latencyMs":1}
+{"ts":"2026-07-09T23:24:25.249Z","qHash":"ae71984dd4434301","query":"8 bits to bytes","method":"fetch","hit":true,"latencyMs":0}
+{"ts":"2026-07-09T23:24:25.279Z","qHash":"8ede1235515fe016","query":"write a haiku about autumn rain","method":"miss","hit":false,"latencyMs":28}
+{"ts":"2026-07-09T23:24:25.288Z","qHash":"978b4896598e132a","query":"what is the meaning of life","method":"miss","hit":false,"latencyMs":8}
+{"ts":"2026-07-09T23:24:25.293Z","qHash":"17e695c0e2150be5","query":"explain quantum entanglement to a child","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T23:24:25.298Z","qHash":"902daee0c8aca36f","query":"should I buy Tesla stock","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T23:24:25.304Z","qHash":"4653d056f986d59f","query":"give me a marketing slogan for shoes","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T23:24:25.310Z","qHash":"a64f8fee3d76838f","query":"what is the current price of bitcoin","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T23:24:25.316Z","qHash":"29cf033a0362bd31","query":"summarize the French revolution","method":"miss","hit":false,"latencyMs":5}
+{"ts":"2026-07-09T23:24:25.324Z","qHash":"d81daa5bef354b93","query":"write a poem about standard deviation in finance","method":"miss","hit":false,"latencyMs":6}
+{"ts":"2026-07-09T23:24:25.331Z","qHash":"844fcd44fdfff314","query":"what is compound interest and how does it work in economics","method":"miss","hit":false,"latencyMs":7}
+{"ts":"2026-07-09T23:24:25.340Z","qHash":"6ca75ce4f70e5cb2","query":"how do I simplify my microservices architecture into fewer components","method":"miss","hit":false,"latencyMs":7}

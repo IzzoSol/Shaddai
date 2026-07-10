@@ -27,18 +27,39 @@
     background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);}
   #vig{position:fixed;inset:0;pointer-events:none;z-index:39;
     box-shadow:inset 0 0 180px rgba(0,255,136,0.05), inset 0 0 60px rgba(0,0,0,0.7);}
-  #exit{position:fixed;top:12px;right:14px;z-index:60;
-    font-family:'Orbitron',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;
-    color:var(--red);background:rgba(10,0,0,0.55);border:1px solid var(--red);
-    padding:8px 12px;border-radius:6px;cursor:pointer;user-select:none;
-    text-shadow:0 0 8px var(--red);box-shadow:0 0 14px rgba(255,26,26,0.35);
+  /* ---- ONE clean top strip: BACK + title ---- */
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:60;
+    display:flex;align-items:center;gap:12px;
+    padding:8px clamp(10px,2vw,18px);
+    background:linear-gradient(180deg,rgba(0,0,0,0.78),rgba(0,0,0,0));
+    pointer-events:none;}
+  #topbar .navbtns{display:flex;gap:8px;align-items:center;flex:none;pointer-events:none;}
+  #back,#codex{pointer-events:auto;flex:none;
+    font-family:'Orbitron',sans-serif;font-weight:800;
+    font-size:clamp(11px,1.5vw,14px);letter-spacing:1px;
+    color:var(--green);background:rgba(0,14,9,0.6);border:1px solid var(--green);
+    padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;
+    text-shadow:0 0 8px var(--green);box-shadow:0 0 14px rgba(0,255,136,0.28);
     transition:all .15s;}
-  #exit:hover{background:var(--red);color:#000;box-shadow:0 0 22px var(--red);}
-  #hint{position:fixed;left:0;right:0;bottom:8px;z-index:35;text-align:center;
-    font-size:12px;letter-spacing:1px;color:#7fe;opacity:.85;pointer-events:none;
-    text-shadow:0 0 6px rgba(0,240,255,.5);}
+  #back:hover{background:var(--green);color:#000;box-shadow:0 0 22px var(--green);}
+  #codex{color:var(--mag);border-color:var(--mag);text-shadow:0 0 8px var(--mag);box-shadow:0 0 14px rgba(255,0,170,0.28);}
+  #codex:hover{background:var(--mag);color:#000;box-shadow:0 0 22px var(--mag);}
+  #topbar .ttl{flex:1;min-width:0;text-align:center;
+    font-family:'Orbitron',sans-serif;font-weight:800;
+    font-size:clamp(13px,2.4vw,22px);letter-spacing:2px;
+    color:var(--mag);text-shadow:0 0 12px var(--mag);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #topbar .spacer{flex:none;width:clamp(58px,9vw,90px);}
+  /* ---- CONTROLS legend: spaced, wrapping, overlaps nothing ---- */
+  #hint{position:fixed;left:0;right:0;bottom:0;z-index:35;
+    display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+    gap:6px 16px;padding:8px clamp(10px,3vw,24px);
+    background:linear-gradient(0deg,rgba(0,0,0,0.72),rgba(0,0,0,0));
+    font-size:clamp(9px,1.4vw,12px);letter-spacing:1px;color:#8ff;opacity:.92;
+    pointer-events:none;text-shadow:0 0 6px rgba(0,240,255,.5);}
+  #hint span{white-space:nowrap;}
   #hint b{color:var(--green);}
-  @media (max-width:640px){#hint{font-size:9px;}}
+  @media (max-width:640px){#hint{gap:4px 10px;}}
 </style>
 </head>
 <body>
@@ -47,9 +68,20 @@
 </div>
 <div id="vig"></div>
 <div id="crt"></div>
-<button id="exit">✕ EXIT</button>
+<div id="topbar">
+  <button id="back">◀ ARCADE MENU</button>
+  <div class="ttl">GRID DODGEBALL</div>
+  <div class="navbtns">
+    <button id="codex" title="Back to Codex">⌂ CODEX</button>
+  </div>
+</div>
 <div id="hint">
-  <b>WASD/ARROWS</b> move &nbsp;·&nbsp; <b>SPACE</b> throw / catch (hold=CHARGE) &nbsp;·&nbsp; <b>SHIFT</b> jump-dodge &nbsp;·&nbsp; <b>R</b> restart &nbsp;·&nbsp; <b>ESC</b> exit
+  <span><b>WASD / ARROWS</b> move</span>
+  <span><b>SPACE</b> throw / catch (hold = charge)</span>
+  <span><b>SHIFT</b> jump-dodge</span>
+  <span><b>V</b> camera view</span>
+  <span><b>R</b> restart</span>
+  <span><b>ESC</b> exit</span>
 </div>
 
 <script>
@@ -66,7 +98,34 @@ function doExit(){
   try{ window.close(); }catch(e){}
   if(history.length>1){ history.back(); } else { location.href="/"; }
 }
-document.getElementById('exit').addEventListener('click', doExit);
+document.getElementById('back').addEventListener('click', doExit);
+document.getElementById('codex').addEventListener('click', function(){
+  try{ (window.top||window).location.href='/codex.html'; }catch(e){ location.href='/codex.html'; }
+});
+
+/* ============================ CINEMATIC BG (HF FLUX arena; gradient fallback) ============================ */
+var arenaBg=new Image(); var arenaReady=false;
+arenaBg.onload=function(){ arenaReady=true; };
+arenaBg.onerror=function(){ arenaReady=false; };
+arenaBg.src='/assets/games/dodgeball/arena-bg.jpg?v=1';
+// draw HF art as a "cover" fill; gentle dark scrim keeps text readable. Falls back to gradient.
+function drawArenaBg(scrim){
+  if(arenaReady && arenaBg.width){
+    var iw=arenaBg.width, ih=arenaBg.height, s=Math.max(W/iw, H/ih);
+    var dw=iw*s, dh=ih*s;
+    ctx.drawImage(arenaBg, (W-dw)/2, (H-dh)/2, dw, dh);
+  } else {
+    var g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#12001a'); g.addColorStop(0.5,'#1a0022'); g.addColorStop(1,'#02110b');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // subtle magenta glow center for the fallback so it never looks broken/empty
+    var rg=ctx.createRadialGradient(W/2,H*0.45,0,W/2,H*0.45,Math.max(W,H)*0.6);
+    rg.addColorStop(0,'rgba(255,43,214,0.16)'); rg.addColorStop(1,'rgba(255,43,214,0)');
+    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
+  }
+  if(scrim==null) scrim=0.55;
+  ctx.fillStyle='rgba(2,0,8,'+scrim+')'; ctx.fillRect(0,0,W,H);
+}
 
 /* ============================ CANVAS ============================ */
 var canvas = document.getElementById('game');
@@ -124,14 +183,15 @@ function sndMove(){ beep(520,0.04,'square',0.05,0); }
 
 /* ============================ AGENT ROSTER ============================ */
 // stats are 1..5 display values (spd=speed, pwr=throw power, cat=catch skill, hp=durability)
+// selImg = themed neon-dodgeball-uniform portrait (task art); img = fallback agent portrait
 var AGENTS=[
-  {key:'SHADDAI', color:'#ffcf1a', img:'/assets/agents/SHADDAI-portrait.png', tag:'Supreme',  stats:{spd:3,pwr:4,cat:3,hp:5}},
-  {key:'NEXUS',   color:'#00f0ff', img:'/assets/agents/NEXUS-portrait.png',   tag:'Architect',stats:{spd:4,pwr:4,cat:3,hp:3}},
-  {key:'ORACLE',  color:'#b06bff', img:'/assets/agents/ORACLE-portrait.png',  tag:'Intel',    stats:{spd:3,pwr:2,cat:5,hp:3}},
-  {key:'ZEROX',   color:'#ff9d3d', img:'/assets/agents/ZEROX-portrait.png',   tag:'Wealth',   stats:{spd:3,pwr:5,cat:2,hp:4}},
-  {key:'TURTLE',  color:'#ff2bd6', img:'/assets/agents/TURTLE-portrait.png',  tag:'Creative', stats:{spd:2,pwr:3,cat:4,hp:5}},
-  {key:'QUILL',   color:'#f5e000', img:'/assets/agents/QUILL-portrait.png',   tag:'Comms',    stats:{spd:5,pwr:2,cat:4,hp:2}},
-  {key:'PIKADON', color:'#ff2a2a', img:'/assets/agents/PIKADON-portrait.png', tag:'Security', stats:{spd:4,pwr:5,cat:3,hp:3}}
+  {key:'SHADDAI', color:'#ffcf1a', selImg:'/assets/games/dodgeball/chars/SHADDAI.png', img:'/assets/agents/SHADDAI-portrait.png', tag:'Supreme',  stats:{spd:3,pwr:4,cat:3,hp:5}},
+  {key:'NEXUS',   color:'#00f0ff', selImg:'/assets/games/dodgeball/chars/NEXUS.png',   img:'/assets/agents/NEXUS-portrait.png',   tag:'Architect',stats:{spd:4,pwr:4,cat:3,hp:3}},
+  {key:'ORACLE',  color:'#b06bff', selImg:'/assets/games/dodgeball/chars/ORACLE.png',  img:'/assets/agents/ORACLE-portrait.png',  tag:'Intel',    stats:{spd:3,pwr:2,cat:5,hp:3}},
+  {key:'ZEROX',   color:'#ff9d3d', selImg:'/assets/games/dodgeball/chars/ZEROX.png',   img:'/assets/agents/ZEROX-portrait.png',   tag:'Wealth',   stats:{spd:3,pwr:5,cat:2,hp:4}},
+  {key:'TURTLE',  color:'#ff2bd6', selImg:'/assets/games/dodgeball/chars/TURTLE.png',  img:'/assets/agents/TURTLE-portrait.png',  tag:'Creative', stats:{spd:2,pwr:3,cat:4,hp:5}},
+  {key:'QUILL',   color:'#f5e000', selImg:'/assets/games/dodgeball/chars/QUILL.png',   img:'/assets/agents/QUILL-portrait.png',   tag:'Comms',    stats:{spd:5,pwr:2,cat:4,hp:2}},
+  {key:'PIKADON', color:'#ff2a2a', selImg:'/assets/games/dodgeball/chars/PIKADON.png', img:'/assets/agents/PIKADON-portrait.png', tag:'Security', stats:{spd:4,pwr:5,cat:3,hp:3}}
 ];
 // derive gameplay multipliers from display stats
 for(var si=0; si<AGENTS.length; si++){
@@ -141,12 +201,23 @@ for(var si=0; si<AGENTS.length; si++){
   AGENTS[si].catMul = 0.70 + st.cat*0.12;   // 0.82 .. 1.30
   AGENTS[si].hpVal  = Math.round(72 + st.hp*14); // 86 .. 142
 }
-// preload portraits
+// preload portraits (HUD badge) + themed selector art (falls back to badge portrait)
 for(var ai=0; ai<AGENTS.length; ai++){
   (function(a){
     var im=new Image(); im.onload=function(){ a.ready=true; }; im.onerror=function(){ a.ready=false; };
     im.src=a.img; a.im=im; a.ready=false;
+    // themed neon-uniform selector portrait; on error fall back to the badge portrait
+    var sel=new Image();
+    sel.onload=function(){ a.selReady=true; };
+    sel.onerror=function(){ a.selReady=false; a.selIm=a.im; a.selReady=a.ready; };
+    sel.src=a.selImg; a.selIm=sel; a.selReady=false;
   })(AGENTS[ai]);
+}
+// helper: the best available image + its readiness for the SELECT cards
+function selArt(a){
+  if(a.selReady && a.selIm && a.selIm.width) return a.selIm;
+  if(a.ready && a.im && a.im.width) return a.im;
+  return null;
 }
 function hexToRgb(h){ h=h.replace('#',''); return {r:parseInt(h.substr(0,2),16),g:parseInt(h.substr(2,2),16),b:parseInt(h.substr(4,2),16)}; }
 function tint(hex,f){ var c=hexToRgb(hex); return 'rgb('+Math.round(c.r*f)+','+Math.round(c.g*f)+','+Math.round(c.b*f)+')'; }
@@ -268,9 +339,12 @@ var CY='#00f0ff', MG='#ff2bd6', GN='#00ff88';
 
 /* ============================ VIEW MAP ============================ */
 var scale=1, offX=0, offY=0, topPad=70;
+// vertical inset so the in-game HUD clears the fixed BACK/title top strip
+var HUD_TOP=46;
 function computeView(){
-  topPad=Math.min(96,Math.max(58,H*0.13));
-  var botPad=30;
+  // court top margin must clear the fixed top strip (HUD_TOP) + the HUD panels
+  topPad=Math.min(150,Math.max(112,H*0.18));
+  var botPad=54;   // leave room for the bottom controls legend + charge meter
   var availW=W-20, availH=H-topPad-botPad;
   scale=Math.min(availW/COURT_W, availH/COURT_H);
   if(scale<=0) scale=1;
@@ -278,11 +352,49 @@ function computeView(){
   offY=topPad+(availH-COURT_H*scale)/2;
 }
 var shakeX=0, shakeY=0, shakeMag=0;
-function sx(x){ return offX + x*scale + shakeX; }
-function sy(y){ return offY + y*scale + shakeY; }
+/* ---- CAMERA VIEW: 0=default (broadcast), 1=opponent-facing (mirrored), 2=FP-chase (zoom on you) ---- */
+var VIEW={ mode:0, names:['BROADCAST','OPPONENT-FACING','FP-CHASE'], zoom:1, panX:0, panY:0 };
+function cycleView(){
+  VIEW.mode=(VIEW.mode+1)%3;
+  // reset smoothing targets so the switch is snappy but not jarring
+  if(VIEW.mode!==2){ VIEW.zoom=1; VIEW.panX=0; VIEW.panY=0; }
+  sndSelect();
+}
+// world -> screen. Applies mirror (opponent-facing) and zoom/pan (FP-chase).
+// Zoom is applied around the screen center, then the FP pan re-centers on the active player.
+function sx(x){
+  var wx = (VIEW.mode===1) ? (COURT_W-x) : x;           // mirror X to view from enemy side
+  var base = offX + wx*scale;
+  return W/2 + (base - W/2)*VIEW.zoom + VIEW.panX + shakeX;
+}
+function sy(y){
+  var base = offY + y*scale;
+  return H/2 + (base - H/2)*VIEW.zoom + VIEW.panY + shakeY;
+}
 function addShake(m){ shakeMag=Math.max(shakeMag,m); }
 // subtle court depth: near rows (bottom) slightly larger than far rows (top)
 function depthOf(y){ return 0.82 + 0.34*(y/COURT_H); }
+// FP-chase: smoothly zoom in and pan so the controlled player sits center-lower screen.
+var FP_ZOOM=2.15;
+function updateCamera(dt){
+  var tZoom=1, tPanX=0, tPanY=0;
+  if(VIEW.mode===2 && (G.state==='PLAY'||G.state==='ROUNDCLEAR') && activeRef){
+    tZoom=FP_ZOOM;
+    // where the active player lands on screen at this zoom (before pan)...
+    var wx=(VIEW.mode===1)?(COURT_W-activeRef.x):activeRef.x;
+    var baseX=offX+wx*scale, baseY=offY+activeRef.y*scale;
+    var sxNoPan = W/2 + (baseX-W/2)*tZoom;
+    var syNoPan = H/2 + (baseY-H/2)*tZoom;
+    // ...pan so they sit centered horizontally and a bit below center (chase feel)
+    tPanX = W*0.5 - sxNoPan;
+    tPanY = H*0.62 - syNoPan;
+  }
+  // smooth toward targets
+  var k=Math.min(1, dt*8);
+  VIEW.zoom += (tZoom-VIEW.zoom)*k;
+  VIEW.panX += (tPanX-VIEW.panX)*k;
+  VIEW.panY += (tPanY-VIEW.panY)*k;
+}
 
 /* ============================ STATE ============================ */
 var G={ state:'SELECT', timer:MATCH_TIME, winner:null,
@@ -415,6 +527,7 @@ window.addEventListener('keydown', function(e){
   var k=keyName(e);
   if(['space','arrowup','arrowdown','arrowleft','arrowright','w','a','s','d','shift','enter'].indexOf(k)>=0) e.preventDefault();
   if(k==='esc'){ doExit(); return; }
+  if(k==='v'){ cycleView(); return; }   // camera view toggle (works in autoplay/spectate too)
   if(AP.on) return;   // ignore real input while autoplaying
   if(G.state==='SELECT'){ selectKey(k); keys[k]=true; return; }
   if(k==='t'){ G.state='SELECT'; return; }
@@ -438,7 +551,6 @@ function moveVec(){
   if(keys['s']||keys['arrowdown']) dy+=1;
   if(keys['a']||keys['arrowleft']) dx-=1;
   if(keys['d']||keys['arrowright']) dx+=1;
-  if(joy.active){ dx+=joy.dx; dy+=joy.dy; }
   return {x:dx,y:dy};
 }
 
@@ -1011,7 +1123,7 @@ function drawTeamPanel(arr, agent, side, sub){
   var pad=14;
   var br=Math.max(16,Math.min(26,W*0.026));
   var badgeX = side==='left' ? pad+br : W-pad-br;
-  var badgeY = 12+br;
+  var badgeY = HUD_TOP+12+br;
   drawBadge(agent, badgeX, badgeY, br, true);
   ctx.save();
   ctx.textBaseline='top';
@@ -1019,16 +1131,16 @@ function drawTeamPanel(arr, agent, side, sub){
   ctx.textAlign = side==='left' ? 'left':'right';
   ctx.font="800 "+Math.max(13,Math.min(19,W*0.017))+"px 'Orbitron',sans-serif";
   ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=10;
-  ctx.fillText(agent.key, tx, 10);
+  ctx.fillText(agent.key, tx, HUD_TOP+10);
   ctx.shadowBlur=0;
   ctx.font="10px 'Share Tech Mono',monospace"; ctx.fillStyle='#9fe';
-  ctx.fillText(sub, tx, 30);
+  ctx.fillText(sub, tx, HUD_TOP+30);
   // HP bars
   var bw=Math.min(150, W*0.20), bh=8, gap=11;
   var barX = side==='left' ? tx : tx-bw;
   for(var i=0;i<arr.length;i++){
     var p=arr[i];
-    var by=44+i*gap;
+    var by=HUD_TOP+44+i*gap;
     ctx.fillStyle='rgba(255,255,255,0.10)'; ctx.fillRect(barX,by,bw,bh);
     var frac=Math.max(0,p.hp/p.maxHp);
     if(!p.alive){ ctx.fillStyle='rgba(120,120,120,0.4)'; ctx.fillRect(barX,by,bw,bh); }
@@ -1044,22 +1156,29 @@ function drawTeamPanel(arr, agent, side, sub){
 }
 function drawHUD(){
   ctx.save();
-  var g=ctx.createLinearGradient(0,0,0,topPad+6);
+  var g=ctx.createLinearGradient(0,HUD_TOP,0,HUD_TOP+topPad+6);
   g.addColorStop(0,'rgba(0,0,0,0.85)'); g.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,topPad+14);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,HUD_TOP+topPad+14);
   ctx.restore();
 
   drawTeamPanel(teamA, G.playerAgent, 'left', 'YOU');
   drawTeamPanel(teamB, G.cpuAgent, 'right', 'CPU');
 
-  // timer center
+  // timer center (below the fixed top strip)
   var mm=Math.floor(G.timer/60), ss=Math.floor(G.timer%60);
   ctx.textAlign='center'; ctx.textBaseline='top';
   ctx.font="12px 'Share Tech Mono',monospace"; ctx.fillStyle='#8fd';
-  ctx.fillText('ROUND '+G.round+'/'+MAX_ROUNDS+'   ·   SCORE '+G.score+'   ·   K.O. '+G.elims, W/2, 8);
+  ctx.fillText('ROUND '+G.round+'/'+MAX_ROUNDS+'   ·   SCORE '+G.score+'   ·   K.O. '+G.elims, W/2, HUD_TOP+6);
   ctx.font="800 "+Math.max(20,Math.min(34,W*0.03))+"px 'Orbitron',sans-serif";
   ctx.fillStyle = G.timer<15?'#ff1a1a':GN; ctx.shadowColor=ctx.fillStyle; ctx.shadowBlur=12;
-  ctx.fillText(mm+':'+(ss<10?'0':'')+ss, W/2, 22);
+  ctx.fillText(mm+':'+(ss<10?'0':'')+ss, W/2, HUD_TOP+22);
+  ctx.shadowBlur=0;
+
+  // camera view label (bottom-center) — always show which angle is active + how to cycle
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.font="800 11px 'Orbitron',sans-serif";
+  ctx.fillStyle=CY; ctx.shadowColor=CY; ctx.shadowBlur=8;
+  ctx.fillText('◎ CAM: '+VIEW.names[VIEW.mode]+'   (V)', W/2, H-30);
   ctx.shadowBlur=0;
 
   // charge meter bottom-left
@@ -1105,9 +1224,11 @@ function computeCards(){
   var topY = topPad+6;
   var availH = H-topY-140;
   var gap = Math.max(8, W*0.012);
-  var cw = Math.min((W-gap*(cols+1))/cols, 150);
-  var ch = Math.min(cw*1.4, availH/rows - gap);
-  if(ch<70) ch=70;
+  var cw = Math.min((W-gap*(cols+1))/cols, 160);
+  // vertical cards: portrait aspect (taller than wide), clamped to available height
+  var ch = Math.min(cw*1.55, availH/rows - gap);
+  if(ch<cw*1.15) ch=Math.max(80,Math.min(cw*1.55, availH/rows - gap)); // keep portrait feel
+  if(ch<80) ch=80;
   var gridW = cols*cw + (cols-1)*gap;
   var startX = (W-gridW)/2;
   var gridH = rows*ch + (rows-1)*gap;
@@ -1129,20 +1250,19 @@ function computeCards(){
 }
 
 function drawSelect(){
-  ctx.fillStyle='#02110b'; ctx.fillRect(0,0,W,H);
-  // faint grid backdrop
+  // cinematic HF arena background (gradient fallback), scrimmed for readable cards
+  drawArenaBg(0.6);
+  // faint grid overlay for arcade feel
   ctx.strokeStyle='rgba(0,255,136,0.05)'; ctx.lineWidth=1;
   for(var gx=0; gx<W; gx+=40){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
   for(var gy=0; gy<H; gy+=40){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
 
-  // title
+  // subtitle sits just under the fixed top strip (which already shows the title)
   ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.font="800 "+Math.max(24,Math.min(54,W*0.05))+"px 'Orbitron',sans-serif";
-  ctx.fillStyle=GN; ctx.shadowColor=GN; ctx.shadowBlur=22;
-  ctx.fillText('GRID DODGEBALL', W/2, 14);
+  ctx.font=Math.max(11,Math.min(15,W*0.015))+"px 'Share Tech Mono',monospace"; ctx.fillStyle=CY;
+  ctx.shadowColor=CY; ctx.shadowBlur=8;
+  ctx.fillText('SELECT YOUR SHADDAI TEAM  ·  PICK ONE FOR YOU, THEN ANOTHER FOR CPU', W/2, topPad-16);
   ctx.shadowBlur=0;
-  ctx.font="13px 'Share Tech Mono',monospace"; ctx.fillStyle=CY;
-  ctx.fillText('// SELECT YOUR SHADDAI TEAM   ·   TAP A CARD FOR YOU, THEN ANOTHER FOR CPU', W/2, topPad-18);
 
   computeCards();
   for(var i=0;i<cardRects.length;i++){
@@ -1152,24 +1272,31 @@ function drawSelect(){
     // card bg
     ctx.fillStyle='rgba(0,0,0,0.6)';
     roundRect(cr.x,cr.y,cr.w,cr.h,10); ctx.fill();
-    // portrait
-    ctx.save(); roundRect(cr.x+4,cr.y+4,cr.w-8,cr.h-30,8); ctx.clip();
-    ctx.fillStyle=rgba(ag.color,0.10); ctx.fillRect(cr.x,cr.y,cr.w,cr.h);
-    if(ag.ready && ag.im){
-      var iw=ag.im.width, ih=ag.im.height;
-      var s=Math.max((cr.w-8)/iw,(cr.h-34)/ih);
-      ctx.drawImage(ag.im, cr.x+cr.w/2-iw*s/2, cr.y+4, iw*s, ih*s);
+    // portrait (themed neon-uniform art; falls back to badge portrait / initial)
+    ctx.save(); roundRect(cr.x+4,cr.y+4,cr.w-8,cr.h-42,8); ctx.clip();
+    var pg=ctx.createLinearGradient(cr.x,cr.y,cr.x,cr.y+cr.h);
+    pg.addColorStop(0,rgba(ag.color,0.18)); pg.addColorStop(1,'rgba(0,0,0,0.35)');
+    ctx.fillStyle=pg; ctx.fillRect(cr.x,cr.y,cr.w,cr.h);
+    var art=selArt(ag);
+    if(art){
+      var iw=art.width, ih=art.height;
+      var s=Math.max((cr.w-8)/iw,(cr.h-42)/ih);   // cover the portrait region
+      ctx.drawImage(art, cr.x+cr.w/2-iw*s/2, cr.y+4, iw*s, ih*s);
     } else {
       ctx.fillStyle=ag.color; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.font="800 "+(cr.w*0.4)+"px 'Orbitron',sans-serif";
-      ctx.fillText(ag.key.charAt(0), cr.x+cr.w/2, cr.y+(cr.h-30)/2);
+      ctx.fillText(ag.key.charAt(0), cr.x+cr.w/2, cr.y+(cr.h-42)/2);
     }
+    // bottom fade so the name/role plate reads cleanly over the art
+    var fg=ctx.createLinearGradient(0,cr.y+cr.h-56,0,cr.y+cr.h-4);
+    fg.addColorStop(0,'rgba(0,0,0,0)'); fg.addColorStop(1,'rgba(0,0,0,0.82)');
+    ctx.fillStyle=fg; ctx.fillRect(cr.x,cr.y+cr.h-56,cr.w,52);
     ctx.restore();
     // stat bars (SPD / PWR / CAT / HP) overlaid on lower portrait
     var sVals=[['SPD',ag.stats.spd],['PWR',ag.stats.pwr],['CAT',ag.stats.cat],['HP',ag.stats.hp]];
     var sBH=Math.max(3,cr.h*0.026), sGap=Math.max(2,cr.h*0.012);
     var sTotal=sVals.length*sBH+(sVals.length-1)*sGap;
-    var sY=cr.y+(cr.h-30)-sTotal-6;
+    var sY=cr.y+(cr.h-42)-sTotal-6;
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,0.55)';
     roundRect(cr.x+4, sY-5, cr.w-8, sTotal+10, 6); ctx.fill();
@@ -1184,12 +1311,14 @@ function drawSelect(){
       ctx.fillStyle=ag.color; ctx.fillRect(bx0,yy,bw0*(sVals[s][1]/5),sBH);
     }
     ctx.restore();
-    // name plate
+    // name + role plate
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle=ag.color; ctx.shadowColor=ag.color; ctx.shadowBlur=8;
     ctx.font="800 "+Math.max(11,Math.min(16,cr.w*0.13))+"px 'Orbitron',sans-serif";
-    ctx.fillText(ag.key, cr.x+cr.w/2, cr.y+cr.h-14);
+    ctx.fillText(ag.key, cr.x+cr.w/2, cr.y+cr.h-24);
     ctx.shadowBlur=0;
+    ctx.fillStyle='#bfe'; ctx.font=Math.max(7,Math.min(10,cr.w*0.08))+"px 'Share Tech Mono',monospace";
+    ctx.fillText((ag.tag||'').toUpperCase(), cr.x+cr.w/2, cr.y+cr.h-10);
     // border
     var bcol=ag.color, bw=2;
     if(isYou){ bcol=CY; bw=4; } else if(isCpu){ bcol='#ff3a3a'; bw=4; }
@@ -1219,10 +1348,10 @@ function drawSelect(){
   drawSelBtn(shuffleBtn,'⟳ SHUFFLE','#b06bff', true);
   drawSelBtn(startBtn, ready?'▶ START':'PICK A TEAM', ready?GN:'#666', ready);
 
-  // footer hint
+  // footer hint (SELECT screen keys) — spaced, sits above the bottom edge
   ctx.textAlign='center'; ctx.textBaseline='bottom';
-  ctx.font="11px 'Share Tech Mono',monospace"; ctx.fillStyle='#7fe';
-  ctx.fillText('ARROWS move  ·  SPACE pick  ·  ENTER start  ·  ESC exit', W/2, H-30);
+  ctx.font=Math.max(10,Math.min(13,W*0.013))+"px 'Share Tech Mono',monospace"; ctx.fillStyle='#8ff';
+  ctx.fillText('ARROWS / WASD move   ·   SPACE pick   ·   ENTER start   ·   R shuffle   ·   ESC exit', W/2, H-14);
 }
 function drawSelBtn(b,label,color,enabled){
   ctx.save();
@@ -1291,7 +1420,8 @@ function drawRoundClear(){
 }
 function drawOver(){
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.80)'; ctx.fillRect(0,0,W,H);
+  // cinematic arena backdrop under a strong scrim so the result reads clearly
+  drawArenaBg(0.74);
   ctx.textAlign='center'; ctx.textBaseline='middle';
   var win=G.winner==='A';
   var wa=win?G.playerAgent:G.cpuAgent;
@@ -1315,47 +1445,14 @@ function drawOver(){
   ctx.globalAlpha=pulse;
   ctx.font="800 "+Math.max(15,Math.min(24,W*0.022))+"px 'Orbitron',sans-serif";
   ctx.fillStyle=CY; ctx.shadowColor=CY; ctx.shadowBlur=16;
-  ctx.fillText('R / TAP — PLAY AGAIN      ·      T — CHANGE AGENT', W/2, H*0.70);
+  ctx.fillText('R — PLAY AGAIN      ·      T — CHANGE AGENT      ·      ESC — EXIT', W/2, H*0.70);
   ctx.restore();
 }
 
-/* ============================ TOUCH UI ============================ */
-var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
-var joy={active:false,id:-1,ox:0,oy:0,dx:0,dy:0};
-var btnThrow={x:0,y:0,r:46,id:-1,active:false};
-var btnJump={x:0,y:0,r:38,id:-1,active:false};
-function layoutButtons(){
-  btnThrow.x=W-70; btnThrow.y=H-84; btnThrow.r=Math.max(40,Math.min(54,W*0.07));
-  btnJump.x=W-160; btnJump.y=H-70; btnJump.r=Math.max(34,Math.min(46,W*0.06));
-}
-function drawTouchUI(){
-  if(!isTouch || G.state!=='PLAY') return;
-  layoutButtons();
-  if(joy.active){
-    ctx.save();
-    ctx.globalAlpha=0.25; ctx.strokeStyle=GN; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.arc(joy.ox,joy.oy,52,0,6.283); ctx.stroke();
-    ctx.globalAlpha=0.5; ctx.fillStyle=GN;
-    ctx.beginPath(); ctx.arc(joy.ox+joy.dx*40, joy.oy+joy.dy*40, 22,0,6.283); ctx.fill();
-    ctx.restore();
-  }
-  drawTouchBtn(btnThrow, 'THROW', CY, btnThrow.active);
-  drawTouchBtn(btnJump, 'JUMP', GN, btnJump.active);
-}
-function drawTouchBtn(b,label,color,active){
-  ctx.save();
-  ctx.globalAlpha=active?0.55:0.28;
-  ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=active?18:8;
-  ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.283); ctx.fill();
-  ctx.globalAlpha=0.9; ctx.strokeStyle=color; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.283); ctx.stroke();
-  ctx.shadowBlur=0; ctx.globalAlpha=1;
-  ctx.fillStyle='#001'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font="800 "+Math.max(11,b.r*0.32)+"px 'Orbitron',sans-serif";
-  ctx.fillText(label,b.x,b.y);
-  ctx.restore();
-}
-function inBtn(b,x,y){ return Math.hypot(x-b.x,y-b.y)<=b.r+6; }
+/* ============================ MENU MOUSE (menus only — NO on-screen game controls) ============================ */
+/* Keyboard is the ONLY gameplay input. Mouse/tap is allowed on the SELECT and OVER
+   menu screens purely to click cards/buttons — there is no on-screen joystick or
+   throw/jump touch button anywhere. */
 function inRect(r,x,y){ return x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h; }
 
 canvas.addEventListener('pointerdown', function(e){
@@ -1369,25 +1466,7 @@ canvas.addEventListener('pointerdown', function(e){
     return;
   }
   if(G.state==='OVER'){ restartMatch(); return; }
-  layoutButtons();
-  if(inBtn(btnThrow,x,y)){ btnThrow.id=e.pointerId; btnThrow.active=true; actionDown(); return; }
-  if(inBtn(btnJump,x,y)){ btnJump.id=e.pointerId; btnJump.active=true; doJump(); return; }
-  joy.active=true; joy.id=e.pointerId; joy.ox=x; joy.oy=y; joy.dx=0; joy.dy=0;
 });
-canvas.addEventListener('pointermove', function(e){
-  if(e.pointerId===joy.id && joy.active){
-    var dx=e.clientX-joy.ox, dy=e.clientY-joy.oy;
-    var d=Math.hypot(dx,dy)||1; var m=Math.min(1,d/48);
-    joy.dx=dx/d*m; joy.dy=dy/d*m;
-  }
-});
-function endPointer(e){
-  if(e.pointerId===joy.id){ joy.active=false; joy.id=-1; joy.dx=0; joy.dy=0; }
-  if(e.pointerId===btnThrow.id){ btnThrow.id=-1; btnThrow.active=false; actionUp(); }
-  if(e.pointerId===btnJump.id){ btnJump.id=-1; btnJump.active=false; }
-}
-canvas.addEventListener('pointerup', endPointer);
-canvas.addEventListener('pointercancel', endPointer);
 
 /* ============================ MAIN LOOP ============================ */
 var last=performance.now();
@@ -1409,7 +1488,12 @@ function frame(now){
     shakeMag*=Math.pow(0.0015,dt); shakeMag-=dt*10; if(shakeMag<0)shakeMag=0;
   } else { shakeX=0; shakeY=0; shakeMag=0; }
 
+  updateCamera(dt);
   ctx.clearRect(0,0,W,H);
+
+  // show the HTML controls legend only during live play (SELECT/OVER have their own footer)
+  var hintEl=document.getElementById('hint');
+  if(hintEl){ hintEl.style.display=(G.state==='PLAY'||G.state==='ROUNDCLEAR')?'flex':'none'; }
 
   if(G.state==='SELECT'){
     drawSelect();
@@ -1422,7 +1506,6 @@ function frame(now){
     drawParticles();
     drawPopups();
     drawHUD();
-    drawTouchUI();
     if(G.state==='ROUNDCLEAR') drawRoundClear();
     if(G.state==='OVER') drawOver();
   }

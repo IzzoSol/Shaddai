@@ -70,6 +70,38 @@
   .btn.ghost { background: transparent; color: #cfc8ef; border: 1px solid rgba(150,120,240,.4); box-shadow: none; margin-left: 8px; }
   .controls { color: #a49cce; font-size: 12.5px; letter-spacing: 1px; margin-top: 16px; line-height: 1.8; }
   .controls b { color: #ffd25a; }
+
+  /* ── tidy keyboard-hint legend (keycap chips, no overlap) ── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 14px;
+    justify-content: center; align-items: center;
+    margin-top: 16px;
+  }
+  .legend .hint { display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; letter-spacing: 1px; color: #b8b0dd; white-space: nowrap; }
+  .legend .hint .lbl { color: #cfc8ef; }
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 7px;
+    font: 800 11px/1 "Trebuchet MS", system-ui, sans-serif; letter-spacing: 1px;
+    color: #f2eeff; background: linear-gradient(180deg,#2a1e4e,#160f2e);
+    border: 1px solid rgba(150,120,240,.5);
+    border-radius: 6px; box-shadow: 0 2px 0 rgba(90,60,180,.55), inset 0 1px 0 rgba(255,255,255,.08);
+    text-shadow: 0 0 6px rgba(160,120,255,.5);
+  }
+  .kbd.wide { min-width: 40px; }
+  /* in-game bottom legend strip — one clean row, clear of the HUD/score */
+  #hudLegend {
+    position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
+    z-index: 15; pointer-events: none;
+    display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; align-items: center;
+    max-width: 92vw; padding: 7px 16px;
+    background: rgba(10,8,22,.55); border: 1px solid rgba(140,100,255,.28);
+    border-radius: 12px; backdrop-filter: blur(3px);
+    box-shadow: 0 0 22px rgba(90,60,180,.22);
+  }
+  #hudLegend .hint { font-size: 11px; color: #a8a0cf; }
+  @media (max-width: 560px){ #hudLegend { display: none; } }
   #closeBtn {
     position: fixed; top: 12px; right: 14px; z-index: 40; cursor: pointer;
     background: rgba(20,12,40,.7); color: #d9d2ff; border: 1px solid rgba(150,120,240,.45);
@@ -93,15 +125,25 @@
 <div id="wrap"><canvas id="game"></canvas></div>
 <button id="closeBtn">✕ CLOSE</button>
 
+<div id="hudLegend" class="hidden" aria-hidden="true">
+  <span class="hint"><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="lbl">move</span></span>
+  <span class="hint"><span class="kbd wide">Space</span><span class="lbl">Sigil</span></span>
+  <span class="hint"><span class="kbd wide">Shift</span><span class="lbl">Dash</span></span>
+  <span class="hint"><span class="kbd">P</span><span class="lbl">Pause</span></span>
+</div>
+
 <div id="selectScreen" class="overlay">
   <h1 class="title">SIGIL STORM</h1>
   <div class="sub">Sacred Geometry Bullet-Hell • SHADDAI</div>
   <div class="panel">
     <div style="color:#cfc8ef;letter-spacing:2px;font-size:13px;margin-bottom:14px;">CHOOSE YOUR SPELLCASTER</div>
     <div class="roster" id="roster"></div>
-    <div class="controls">
-      <b>WASD / Arrows</b> move &nbsp;•&nbsp; <b>Mouse</b> aim (auto-cast) &nbsp;•&nbsp;
-      <b>Space</b> Sigil Special (AOE) &nbsp;•&nbsp; <b>Shift</b> Dash &nbsp;•&nbsp; <b>P / Esc</b> Pause
+    <div class="legend">
+      <span class="hint"><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="lbl">move</span></span>
+      <span class="hint"><span class="kbd wide">Mouse</span><span class="lbl">aim · auto-cast</span></span>
+      <span class="hint"><span class="kbd wide">Space</span><span class="lbl">Sigil (AOE)</span></span>
+      <span class="hint"><span class="kbd wide">Shift</span><span class="lbl">Dash</span></span>
+      <span class="hint"><span class="kbd">P</span><span class="lbl">Pause</span></span>
     </div>
     <button class="btn" id="startBtn">BEGIN THE STORM</button>
   </div>
@@ -117,9 +159,13 @@
   <h1 class="title" style="font-size:clamp(28px,5vw,52px)">PAUSED</h1>
   <div class="sub">The storm holds its breath</div>
   <div class="panel">
-    <div class="controls">
-      <b>WASD / Arrows</b> move &nbsp;•&nbsp; <b>Mouse</b> aim &nbsp;•&nbsp; <b>Space</b> Special &nbsp;•&nbsp; <b>Shift</b> Dash<br>
-      <b>P / Esc</b> resume &nbsp;•&nbsp; <b>Q</b> quit to menu
+    <div class="legend">
+      <span class="hint"><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="lbl">move</span></span>
+      <span class="hint"><span class="kbd wide">Mouse</span><span class="lbl">aim</span></span>
+      <span class="hint"><span class="kbd wide">Space</span><span class="lbl">Special</span></span>
+      <span class="hint"><span class="kbd wide">Shift</span><span class="lbl">Dash</span></span>
+      <span class="hint"><span class="kbd">P</span><span class="lbl">resume</span></span>
+      <span class="hint"><span class="kbd">Q</span><span class="lbl">quit</span></span>
     </div>
     <button class="btn" id="resumeBtn">RESUME</button>
     <button class="btn ghost" id="quitBtn">QUIT</button>
@@ -152,7 +198,7 @@
     canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
   }
-  window.addEventListener("resize", resize); resize();
+  window.addEventListener("resize", function(){ resize(); if(G && G.stars) initStars(); }); resize();
 
   var rand = function(a,b){ return a + Math.random()*(b-a); };
   var clamp = function(v,a,b){ return v<a?a:(v>b?b:v); };
@@ -211,8 +257,19 @@
     keys:{}, mouse:{x:0,y:0, down:false},
     player:null, bullets:[], enemies:[], particles:[], orbs:[], texts:[], orbitals:[],
     spawnTimer:0, wave:1, waveTimer:0, killCount:0, score:0, elapsed:0,
-    bossTimer:0, bossAlive:false, best: loadBest()
+    bossTimer:0, bossAlive:false, best: loadBest(),
+    combo:0, comboTimer:0, mult:1, stars:[], flashV:0
   };
+  // drifting arcane motes — ambient atmosphere layer (built once, reused)
+  function initStars(){
+    G.stars.length=0;
+    var n=Math.round(clamp((W*H)/16000, 40, 130));
+    for(var i=0;i<n;i++){
+      G.stars.push({ x:Math.random()*W, y:Math.random()*H,
+        z:rand(0.25,1), r:rand(0.5,1.8), tw:rand(0,TAU), c: i%9===0?"#ffd25a":(i%4===0?"#39e0ff":"#8a5bff") });
+    }
+  }
+  initStars();
   function loadBest(){ try{ return JSON.parse(localStorage.getItem("sigilStormBest")||"0")||0; }catch(e){ return 0; } }
   function saveBest(v){ try{ localStorage.setItem("sigilStormBest", JSON.stringify(v)); }catch(e){} }
 
@@ -326,11 +383,14 @@
     rosterEl.appendChild(el);
   });
 
+  var hudLegend = document.getElementById("hudLegend");
   function showScreen(name){
     selScreen.classList.toggle("hidden", name!=="select");
     lvScreen.classList.toggle("hidden", name!=="level");
     pauseScreen.classList.toggle("hidden", name!=="pause");
     overScreen.classList.toggle("hidden", name!=="over");
+    // in-game keyboard legend only while actively playing (name==="none"); hide on touch/autoplay
+    if(hudLegend){ hudLegend.classList.toggle("hidden", !(name==="none" && !IS_TOUCH && !AP.on)); }
   }
 
   function startGame(){
@@ -339,6 +399,8 @@
     G.bullets=[]; G.enemies=[]; G.particles=[]; G.orbs=[]; G.texts=[]; G.orbitals=[];
     G.spawnTimer=0; G.wave=1; G.waveTimer=0; G.killCount=0; G.score=0; G.elapsed=0;
     G.bossTimer=0; G.bossAlive=false; G.shake=0; G.state="play";
+    G.combo=0; G.comboTimer=0; G.mult=1; G.flashV=0;
+    initStars();
     G.mouse.x=W/2; G.mouse.y=H/2 - 100;
     showScreen("none");
   }
@@ -500,6 +562,8 @@
     p.cd = p.baseCd;
     var n = p.proj, i;
     SFX.cast();
+    // muzzle spark at the cast origin
+    for(i=0;i<3;i++){ addParticle(p.x+ax*p.r, p.y+ay*p.r, p.c, rand(1,2.2), rand(0.12,0.22), ax*rand(1,2.5)+rand(-0.6,0.6), ay*rand(1,2.5)+rand(-0.6,0.6)); }
     if(p.weapon==="homing"){
       for(i=0;i<n;i++){ var s1=(i-(n-1)/2)*0.25; fireBullet(p, base+s1, {homing:true}); }
     } else if(p.weapon==="spread"){
@@ -528,7 +592,7 @@
   function castSpecial(){
     var p=G.player; if(p.special>0) return;
     p.special = p.specialMax;
-    SFX.special(); G.shake=Math.min(20,G.shake+16);
+    SFX.special(); G.shake=Math.min(20,G.shake+16); G.flashV=0.4;
     var radius = 260, i;
     for(i=0;i<48;i++){
       var a = (i/48)*TAU;
@@ -554,7 +618,12 @@
   function killEnemy(e){
     if(e.dead) return;
     e.dead=true; G.killCount++;
-    G.score += e.boss?500:(e.elite?60:Math.round(10+e.r));
+    // combo: chained kills ramp a score multiplier (x1 → x4), resets if you stop killing
+    G.combo++; G.comboTimer=2.2;
+    G.mult = 1 + Math.min(3, Math.floor(G.combo/5)*0.5 + (G.combo>=25?0.5:0));
+    var base = e.boss?500:(e.elite?60:Math.round(10+e.r));
+    G.score += Math.round(base*G.mult);
+    if(G.combo>0 && G.combo%5===0) flashText(e.x,e.y-e.r-10,"x"+G.mult.toFixed(1)+" COMBO","#ffd25a",0.8,15);
     SFX.kill();
     G.shake=Math.min(14, G.shake + (e.boss?12:e.elite?5:1.5));
     var burst = e.boss?46:e.elite?18:8, i;
@@ -616,6 +685,9 @@
     G.elapsed += dt; G.t += dt;
     if(AP.on){ apAutoAI(dt); if(G.elapsed>=90){ gameOver(); return; } }
     if(G.shake>0) G.shake=Math.max(0,G.shake-dt*30);
+    if(G.flashV>0) G.flashV=Math.max(0,G.flashV-dt*3.2);
+    // combo decays if no kills land within the window
+    if(G.combo>0){ G.comboTimer-=dt; if(G.comboTimer<=0){ G.combo=0; G.mult=1; } }
 
     var mx=0,my=0;
     if(G.keys["w"]||G.keys["arrowup"]) my-=1;
@@ -702,7 +774,7 @@
       var rr2=en.r+p.r;
       if(dist2(en.x,en.y,p.x,p.y)<rr2*rr2){
         if(p.invuln<=0){
-          p.hp-=en.dmg; p.invuln=0.6; SFX.hurt(); G.shake=Math.min(16,G.shake+7);
+          p.hp-=en.dmg; p.invuln=0.6; SFX.hurt(); G.shake=Math.min(16,G.shake+7); G.flashV=0.35;
           flashText(p.x,p.y-p.r-6,"-"+Math.round(en.dmg),"#ff5a5a",0.7,15);
           for(var q=0;q<8;q++) addParticle(p.x,p.y,"#ff5a5a",rand(2,3),0.4);
           if(p.hp<=0){ gameOver(); return; }
@@ -783,6 +855,11 @@
       document.getElementById("ovBest").textContent="✦ NEW BEST SIGIL ✦"; }
     else document.getElementById("ovBest").textContent="BEST  "+G.best.toLocaleString();
     try{ window.parent.postMessage({type:"shaddai-game-score", game:"sigil-storm", score:finalScore}, "*"); }catch(e){}
+    // Arcade-hub integration: register the run on the leaderboard (human plays too, not just autoplay).
+    if(!AP.on){
+      var won = G.wave>3;
+      try{ window.parent.postMessage({type:"arcadeResult", game:"sigil-storm", agent:(G.caster?G.caster.id:null), score:finalScore, win:won, level:G.player.level, kills:G.killCount, time:t}, "*"); }catch(e){}
+    }
     try{
       fetch("/api/leaderboard/sigil-storm",{ method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -796,6 +873,24 @@
 
   function drawBackground(){
     ctx.fillStyle="#070512"; ctx.fillRect(0,0,W,H);
+    // nebula glow that breathes with the caster's colour
+    var nb = ctx.createRadialGradient(W/2,H*0.42,0, W/2,H*0.42, Math.max(W,H)*0.7);
+    var nbc = G.caster?G.caster.c:"#8a5bff";
+    nb.addColorStop(0, "rgba(24,14,52,0.55)");
+    nb.addColorStop(0.55, "rgba(10,6,26,0.35)");
+    nb.addColorStop(1, "rgba(5,4,10,0)");
+    ctx.save(); ctx.globalAlpha=0.6+Math.sin(G.t*0.6)*0.06; ctx.fillStyle=nb; ctx.fillRect(0,0,W,H); ctx.restore();
+    // drifting arcane motes
+    ctx.save();
+    for(var si=0; si<G.stars.length; si++){
+      var s=G.stars[si];
+      s.y += s.z*6*0.016; s.tw += 0.02;
+      if(s.y>H+4){ s.y=-4; s.x=Math.random()*W; }
+      var tw=0.35+Math.abs(Math.sin(s.tw))*0.55;
+      ctx.globalAlpha=tw*s.z; ctx.fillStyle=s.c; ctx.shadowColor=s.c; ctx.shadowBlur=6*s.z;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r*s.z,0,TAU); ctx.fill();
+    }
+    ctx.restore();
     ctx.save();
     ctx.globalAlpha=0.06; ctx.strokeStyle="#6a4bd0"; ctx.lineWidth=1;
     var gs=54, x, y;
@@ -870,6 +965,24 @@
     }
 
     ctx.restore();
+
+    // low-HP danger vignette (pulses red when the caster is near death)
+    var pl=G.player;
+    if(pl && (G.state==="play"||G.state==="pause"||G.state==="level")){
+      var hpf=clamp(pl.hp/pl.maxhp,0,1);
+      if(hpf<0.34){
+        var pulse=0.18+Math.sin(G.t*6)*0.08;
+        var vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.28, W/2,H/2,Math.max(W,H)*0.62);
+        vg.addColorStop(0,"rgba(255,40,60,0)");
+        vg.addColorStop(1,"rgba(255,30,50,"+(pulse*(1-hpf/0.34))+")");
+        ctx.save(); ctx.fillStyle=vg; ctx.fillRect(0,0,W,H); ctx.restore();
+      }
+    }
+    // white hit-flash on taking damage / casting the sigil special
+    if(G.flashV>0){
+      ctx.save(); ctx.globalAlpha=Math.min(0.5,G.flashV); ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,W,H); ctx.restore();
+    }
+
     if(G.state==="play"||G.state==="pause"||G.state==="level") drawHUD();
   }
 
@@ -960,19 +1073,27 @@
     ctx.fillText("SCORE "+Math.round(G.score).toLocaleString(), W-pad, pad+34);
     ctx.fillStyle="#a49cce";
     ctx.fillText("WAVE "+G.wave+"  ·  "+G.killCount+" slain", W-pad, pad+50);
+    if(G.mult>1){
+      ctx.font="900 14px Trebuchet MS"; ctx.fillStyle="#ffd25a";
+      ctx.shadowColor="#ffd25a"; ctx.shadowBlur=10;
+      ctx.fillText("COMBO ×"+G.mult.toFixed(1), W-pad, pad+68); ctx.shadowBlur=0;
+    }
 
-    var sw=150, sx=W/2-sw/2, sy=H-30;
+    // lift these clear of the fixed keyboard-legend strip (bottom:10px) so nothing overlaps
+    var legendGap = (!IS_TOUCH && !AP.on) ? 52 : 22;
+    var sw=160, sx=W/2-sw/2, sy=H-legendGap-14;
     ctx.textAlign="center";
     ctx.fillStyle="rgba(10,8,22,.55)"; roundRect(sx,sy,sw,14,7); ctx.fill();
     var sF=1-clamp(p.special/p.specialMax,0,1);
     ctx.fillStyle=sF>=1?"#ffd25a":p.c;
-    roundRect(sx,sy,sw*sF,14,7); ctx.fill();
-    ctx.fillStyle="#0a0614"; ctx.font="800 10px Trebuchet MS";
-    ctx.fillText(sF>=1?"✦ SPACE: SIGIL READY ✦":"SIGIL "+Math.ceil(p.special)+"s", W/2, sy+11);
+    if(sF>=1){ ctx.shadowColor="#ffd25a"; ctx.shadowBlur=14; }
+    roundRect(sx,sy,sw*sF,14,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle=sF>=1?"#0a0614":"#e8e6ff"; ctx.font="800 10px Trebuchet MS";
+    ctx.fillText(sF>=1?"✦ SPACE — SIGIL READY ✦":"SIGIL "+Math.ceil(p.special)+"s", W/2, sy+11);
 
     ctx.textAlign="left"; ctx.font="700 11px Trebuchet MS";
     ctx.fillStyle = p.dashCd>0?"#6a6299":"#4dffa1";
-    ctx.fillText(p.dashCd>0?"⇢ DASH …":"⇢ DASH ready (Shift)", pad, H-16);
+    ctx.fillText(p.dashCd>0?"⇢ DASH …":"⇢ DASH ready", pad, sy+11);
     ctx.restore();
   }
   function roundRect(x,y,w,h,r){

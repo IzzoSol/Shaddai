@@ -1,0 +1,3634 @@
+[
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.46,
+        "tieRate": 0.14,
+        "avgScoreA": 9.88,
+        "avgScoreB": 11.54,
+        "avgYardsPerPlayA": 2.2733626714988353,
+        "avgYardsPerPlayB": 2.3668133574941757,
+        "turnoverRateA": 2.3,
+        "turnoverRateB": 1.18,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.24,
+        "touchdownsPerGameB": 1.28,
+        "avgPlays": 77.26
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.76,
+        "winRateB": 0.24,
+        "tieRate": 0,
+        "avgScoreA": 20,
+        "avgScoreB": 12.6,
+        "avgYardsPerPlayA": 3.7062043795620436,
+        "avgYardsPerPlayB": 2.8622262773722627,
+        "turnoverRateA": 0.8,
+        "turnoverRateB": 1.96,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.6,
+        "touchdownsPerGameB": 1.62,
+        "avgPlays": 65.76
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 5.133333333333334,
+        "avgScoreB": 24.766666666666666,
+        "avgYardsPerPlayA": 1.6233933161953729,
+        "avgYardsPerPlayB": 3.4721508140531276,
+        "turnoverRateA": 3.066666666666667,
+        "turnoverRateB": 0.2,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.6333333333333333,
+        "touchdownsPerGameB": 3.3666666666666667,
+        "avgPlays": 77.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.1,
+        "winRateB": 0.9,
+        "tieRate": 0,
+        "avgScoreA": 13.925,
+        "avgScoreB": 25.05,
+        "avgYardsPerPlayA": 2.625525040387722,
+        "avgYardsPerPlayB": 3.536025848142165,
+        "turnoverRateA": 1.7,
+        "turnoverRateB": 0.05,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.775,
+        "touchdownsPerGameB": 3.3,
+        "avgPlays": 77.375
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.04,
+        "winRateB": 0.96,
+        "tieRate": 0,
+        "avgScoreA": 7.48,
+        "avgScoreB": 24.24,
+        "avgYardsPerPlayA": 2.4778818211172102,
+        "avgYardsPerPlayB": 4.365515014530191,
+        "turnoverRateA": 2.76,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.94,
+        "touchdownsPerGameB": 3.12,
+        "avgPlays": 61.94
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.04,
+        "winRateB": 0.96,
+        "tieRate": 0,
+        "avgScoreA": 7.48,
+        "avgScoreB": 24.24,
+        "avgYardsPerPlayA": 2.4778818211172102,
+        "avgYardsPerPlayB": 4.365515014530191,
+        "turnoverRateA": 2.76,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.94,
+        "touchdownsPerGameB": 3.12,
+        "avgPlays": 61.94
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.43,
+        "winRateB": 0.42,
+        "tieRate": 0.15,
+        "avgScoreA": 10.51,
+        "avgScoreB": 11.47,
+        "avgYardsPerPlayA": 2.3085120207927226,
+        "avgYardsPerPlayB": 2.3823261858349576,
+        "turnoverRateA": 2.22,
+        "turnoverRateB": 1.23,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 1.27,
+        "avgPlays": 76.95
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.11,
+        "winRateB": 0.86,
+        "tieRate": 0.03,
+        "avgScoreA": 14.23,
+        "avgScoreB": 24.96,
+        "avgYardsPerPlayA": 2.801402184171498,
+        "avgYardsPerPlayB": 3.67385735472563,
+        "turnoverRateA": 1.7,
+        "turnoverRateB": 0.04,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.84,
+        "touchdownsPerGameB": 3.27,
+        "avgPlays": 74.17
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.4666666666666666
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.2,
+        "winRateB": 0.7,
+        "tieRate": 0.1,
+        "avgScoreA": 18.1,
+        "avgScoreB": 23.2,
+        "avgYardsPerPlayA": 2.7485242030696577,
+        "avgYardsPerPlayB": 3.0295159386068478,
+        "turnoverRateA": 0.9,
+        "turnoverRateB": 0.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.2,
+        "touchdownsPerGameB": 3.1,
+        "avgPlays": 84.7
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 8.2,
+        "avgScoreB": 24.4,
+        "avgYardsPerPlayA": 1.7251908396946565,
+        "avgYardsPerPlayB": 3.4936386768447836,
+        "turnoverRateA": 2.4,
+        "turnoverRateB": 0.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1,
+        "touchdownsPerGameB": 3.4,
+        "avgPlays": 78.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 6,
+        "avgScoreB": 22.4,
+        "avgYardsPerPlayA": 2.8358208955223883,
+        "avgYardsPerPlayB": 3.991044776119403,
+        "turnoverRateA": 2.4,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.6,
+        "touchdownsPerGameB": 2.6,
+        "avgPlays": 67
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 21,
+        "avgScoreB": 24,
+        "avgYardsPerPlayA": 2.623762376237624,
+        "avgYardsPerPlayB": 2.8514851485148514,
+        "turnoverRateA": 1,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 3,
+        "avgPlays": 101
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.46,
+        "tieRate": 0.14,
+        "avgScoreA": 9.88,
+        "avgScoreB": 11.54,
+        "avgYardsPerPlayA": 2.2733626714988353,
+        "avgYardsPerPlayB": 2.3668133574941757,
+        "turnoverRateA": 2.3,
+        "turnoverRateB": 1.18,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.24,
+        "touchdownsPerGameB": 1.28,
+        "avgPlays": 77.26
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.76,
+        "winRateB": 0.24,
+        "tieRate": 0,
+        "avgScoreA": 20,
+        "avgScoreB": 12.6,
+        "avgYardsPerPlayA": 3.7062043795620436,
+        "avgYardsPerPlayB": 2.8622262773722627,
+        "turnoverRateA": 0.8,
+        "turnoverRateB": 1.96,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.6,
+        "touchdownsPerGameB": 1.62,
+        "avgPlays": 65.76
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 5.133333333333334,
+        "avgScoreB": 24.766666666666666,
+        "avgYardsPerPlayA": 1.6233933161953729,
+        "avgYardsPerPlayB": 3.4721508140531276,
+        "turnoverRateA": 3.066666666666667,
+        "turnoverRateB": 0.2,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.6333333333333333,
+        "touchdownsPerGameB": 3.3666666666666667,
+        "avgPlays": 77.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.1,
+        "winRateB": 0.9,
+        "tieRate": 0,
+        "avgScoreA": 13.925,
+        "avgScoreB": 25.05,
+        "avgYardsPerPlayA": 2.625525040387722,
+        "avgYardsPerPlayB": 3.536025848142165,
+        "turnoverRateA": 1.7,
+        "turnoverRateB": 0.05,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.775,
+        "touchdownsPerGameB": 3.3,
+        "avgPlays": 77.375
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.04,
+        "winRateB": 0.96,
+        "tieRate": 0,
+        "avgScoreA": 7.48,
+        "avgScoreB": 24.24,
+        "avgYardsPerPlayA": 2.4778818211172102,
+        "avgYardsPerPlayB": 4.365515014530191,
+        "turnoverRateA": 2.76,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.94,
+        "touchdownsPerGameB": 3.12,
+        "avgPlays": 61.94
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.04,
+        "winRateB": 0.96,
+        "tieRate": 0,
+        "avgScoreA": 7.48,
+        "avgScoreB": 24.24,
+        "avgYardsPerPlayA": 2.4778818211172102,
+        "avgYardsPerPlayB": 4.365515014530191,
+        "turnoverRateA": 2.76,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.94,
+        "touchdownsPerGameB": 3.12,
+        "avgPlays": 61.94
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.43,
+        "winRateB": 0.42,
+        "tieRate": 0.15,
+        "avgScoreA": 10.51,
+        "avgScoreB": 11.47,
+        "avgYardsPerPlayA": 2.3085120207927226,
+        "avgYardsPerPlayB": 2.3823261858349576,
+        "turnoverRateA": 2.22,
+        "turnoverRateB": 1.23,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 1.27,
+        "avgPlays": 76.95
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.11,
+        "winRateB": 0.86,
+        "tieRate": 0.03,
+        "avgScoreA": 14.23,
+        "avgScoreB": 24.96,
+        "avgYardsPerPlayA": 2.801402184171498,
+        "avgYardsPerPlayB": 3.67385735472563,
+        "turnoverRateA": 1.7,
+        "turnoverRateB": 0.04,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.84,
+        "touchdownsPerGameB": 3.27,
+        "avgPlays": 74.17
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.4666666666666666
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.2,
+        "winRateB": 0.7,
+        "tieRate": 0.1,
+        "avgScoreA": 18.1,
+        "avgScoreB": 23.2,
+        "avgYardsPerPlayA": 2.7485242030696577,
+        "avgYardsPerPlayB": 3.0295159386068478,
+        "turnoverRateA": 0.9,
+        "turnoverRateB": 0.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.2,
+        "touchdownsPerGameB": 3.1,
+        "avgPlays": 84.7
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 8.2,
+        "avgScoreB": 24.4,
+        "avgYardsPerPlayA": 1.7251908396946565,
+        "avgYardsPerPlayB": 3.4936386768447836,
+        "turnoverRateA": 2.4,
+        "turnoverRateB": 0.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1,
+        "touchdownsPerGameB": 3.4,
+        "avgPlays": 78.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 6,
+        "avgScoreB": 22.4,
+        "avgYardsPerPlayA": 2.8358208955223883,
+        "avgYardsPerPlayB": 3.991044776119403,
+        "turnoverRateA": 2.4,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.6,
+        "touchdownsPerGameB": 2.6,
+        "avgPlays": 67
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 20,
+        "avgScoreB": 7,
+        "avgYardsPerPlayA": 4.5964912280701755,
+        "avgYardsPerPlayB": 2.3684210526315788,
+        "turnoverRateA": 0,
+        "turnoverRateB": 3,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2,
+        "touchdownsPerGameB": 1,
+        "avgPlays": 57
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.58,
+        "winRateB": 0.3,
+        "tieRate": 0.12,
+        "avgScoreA": 14.72,
+        "avgScoreB": 11.42,
+        "avgYardsPerPlayA": 3.2193146417445484,
+        "avgYardsPerPlayB": 2.7601246105919004,
+        "turnoverRateA": 1.6,
+        "turnoverRateB": 1.22,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.88,
+        "touchdownsPerGameB": 1.34,
+        "avgPlays": 64.2
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.76,
+        "winRateB": 0.24,
+        "tieRate": 0,
+        "avgScoreA": 20,
+        "avgScoreB": 12.6,
+        "avgYardsPerPlayA": 3.7062043795620436,
+        "avgYardsPerPlayB": 2.8622262773722627,
+        "turnoverRateA": 0.8,
+        "turnoverRateB": 1.96,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.6,
+        "touchdownsPerGameB": 1.62,
+        "avgPlays": 65.76
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.16666666666666666,
+        "winRateB": 0.8333333333333334,
+        "tieRate": 0,
+        "avgScoreA": 11.6,
+        "avgScoreB": 23.2,
+        "avgYardsPerPlayA": 2.4540202214732787,
+        "avgYardsPerPlayB": 3.8743379874819452,
+        "turnoverRateA": 2.2666666666666666,
+        "turnoverRateB": 0.26666666666666666,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.6,
+        "touchdownsPerGameB": 3,
+        "avgPlays": 69.23333333333333
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.025,
+        "winRateB": 0.975,
+        "tieRate": 0,
+        "avgScoreA": 13.275,
+        "avgScoreB": 25.5,
+        "avgYardsPerPlayA": 2.9012302284710016,
+        "avgYardsPerPlayB": 3.872056239015817,
+        "turnoverRateA": 1.775,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.65,
+        "touchdownsPerGameB": 3.375,
+        "avgPlays": 71.125
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.02,
+        "winRateB": 0.98,
+        "tieRate": 0,
+        "avgScoreA": 8.5,
+        "avgScoreB": 25.04,
+        "avgYardsPerPlayA": 2.4362152357920195,
+        "avgYardsPerPlayB": 4.1148730350665055,
+        "turnoverRateA": 2.64,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.12,
+        "touchdownsPerGameB": 3.32,
+        "avgPlays": 66.16
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.02,
+        "winRateB": 0.98,
+        "tieRate": 0,
+        "avgScoreA": 8.5,
+        "avgScoreB": 25.04,
+        "avgYardsPerPlayA": 2.4362152357920195,
+        "avgYardsPerPlayB": 4.1148730350665055,
+        "turnoverRateA": 2.64,
+        "turnoverRateB": 0.08,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.12,
+        "touchdownsPerGameB": 3.32,
+        "avgPlays": 66.16
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.61,
+        "winRateB": 0.28,
+        "tieRate": 0.11,
+        "avgScoreA": 15.09,
+        "avgScoreB": 11.17,
+        "avgYardsPerPlayA": 3.273331224296109,
+        "avgYardsPerPlayB": 2.7831382473900663,
+        "turnoverRateA": 1.53,
+        "turnoverRateB": 1.34,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.92,
+        "touchdownsPerGameB": 1.33,
+        "avgPlays": 63.22
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.11,
+        "winRateB": 0.83,
+        "tieRate": 0.06,
+        "avgScoreA": 14.86,
+        "avgScoreB": 24.63,
+        "avgYardsPerPlayA": 2.856966199505359,
+        "avgYardsPerPlayB": 3.7251992305578456,
+        "turnoverRateA": 1.61,
+        "turnoverRateB": 0.07,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.93,
+        "touchdownsPerGameB": 3.21,
+        "avgPlays": 72.78
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.29999999999999993
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.6,
+        "winRateB": 0.4,
+        "tieRate": 0,
+        "avgScoreA": 20.5,
+        "avgScoreB": 22.1,
+        "avgYardsPerPlayA": 3.0755208333333335,
+        "avgYardsPerPlayB": 3.4010416666666665,
+        "turnoverRateA": 0.9,
+        "turnoverRateB": 0.5,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.8,
+        "touchdownsPerGameB": 2.9,
+        "avgPlays": 76.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 12.2,
+        "avgScoreB": 25.6,
+        "avgYardsPerPlayA": 2.3707865168539324,
+        "avgYardsPerPlayB": 3.898876404494382,
+        "turnoverRateA": 1.8,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.4,
+        "touchdownsPerGameB": 3.4,
+        "avgPlays": 71.2
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 11.4,
+        "avgScoreB": 24,
+        "avgYardsPerPlayA": 2.394578313253012,
+        "avgYardsPerPlayB": 4.090361445783133,
+        "turnoverRateA": 1,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.2,
+        "touchdownsPerGameB": 3,
+        "avgPlays": 66.4
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 0,
+        "avgScoreB": 20,
+        "avgYardsPerPlayA": 1.7049180327868851,
+        "avgYardsPerPlayB": 4.377049180327869,
+        "turnoverRateA": 3,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0,
+        "touchdownsPerGameB": 2,
+        "avgPlays": 61
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.94,
+        "winRateB": 0,
+        "tieRate": 0.06,
+        "avgScoreA": 18.24,
+        "avgScoreB": 5.74,
+        "avgYardsPerPlayA": 4.202039274924472,
+        "avgYardsPerPlayB": 2.2167673716012084,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 1.06,
+        "sackRateA": 1.96,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.46,
+        "touchdownsPerGameB": 0.7,
+        "avgPlays": 52.96
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.9,
+        "winRateB": 0,
+        "tieRate": 0.1,
+        "avgScoreA": 17.44,
+        "avgScoreB": 7.06,
+        "avgYardsPerPlayA": 4.061549870226178,
+        "avgYardsPerPlayB": 2.435669262143122,
+        "turnoverRateA": 1.28,
+        "turnoverRateB": 1.12,
+        "sackRateA": 1.92,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.32,
+        "touchdownsPerGameB": 0.82,
+        "avgPlays": 53.94
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.9,
+        "winRateB": 0.03333333333333333,
+        "tieRate": 0.06666666666666667,
+        "avgScoreA": 15.333333333333334,
+        "avgScoreB": 6.466666666666667,
+        "avgYardsPerPlayA": 4.036500943989931,
+        "avgYardsPerPlayB": 2.3580868470736314,
+        "turnoverRateA": 1.4666666666666666,
+        "turnoverRateB": 0.9,
+        "sackRateA": 1.9666666666666666,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.9333333333333333,
+        "touchdownsPerGameB": 0.7666666666666667,
+        "avgPlays": 52.96666666666667
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.95,
+        "winRateB": 0,
+        "tieRate": 0.05,
+        "avgScoreA": 18.05,
+        "avgScoreB": 8.125,
+        "avgYardsPerPlayA": 4.101631701631701,
+        "avgYardsPerPlayB": 2.416783216783217,
+        "turnoverRateA": 1.15,
+        "turnoverRateB": 0.875,
+        "sackRateA": 2.025,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.375,
+        "touchdownsPerGameB": 1,
+        "avgPlays": 53.625
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.9,
+        "winRateB": 0,
+        "tieRate": 0.1,
+        "avgScoreA": 18.9,
+        "avgScoreB": 8,
+        "avgYardsPerPlayA": 4.115972963358235,
+        "avgYardsPerPlayB": 2.4887940234791888,
+        "turnoverRateA": 1.04,
+        "turnoverRateB": 0.9,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.52,
+        "touchdownsPerGameB": 0.92,
+        "avgPlays": 56.22
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.9,
+        "winRateB": 0,
+        "tieRate": 0.1,
+        "avgScoreA": 18.9,
+        "avgScoreB": 8,
+        "avgYardsPerPlayA": 4.115972963358235,
+        "avgYardsPerPlayB": 2.4887940234791888,
+        "turnoverRateA": 1.04,
+        "turnoverRateB": 0.9,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.52,
+        "touchdownsPerGameB": 0.92,
+        "avgPlays": 56.22
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.91,
+        "winRateB": 0.01,
+        "tieRate": 0.08,
+        "avgScoreA": 17.53,
+        "avgScoreB": 6.73,
+        "avgYardsPerPlayA": 4.1247923204725865,
+        "avgYardsPerPlayB": 2.352224478493631,
+        "turnoverRateA": 1.25,
+        "turnoverRateB": 0.95,
+        "sackRateA": 2,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.32,
+        "touchdownsPerGameB": 0.79,
+        "avgPlays": 54.17
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.9,
+        "winRateB": 0.01,
+        "tieRate": 0.09,
+        "avgScoreA": 18.57,
+        "avgScoreB": 7.74,
+        "avgYardsPerPlayA": 4.105458596360935,
+        "avgYardsPerPlayB": 2.5235796509468993,
+        "turnoverRateA": 1.13,
+        "turnoverRateB": 0.79,
+        "sackRateA": 2.25,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.49,
+        "touchdownsPerGameB": 0.9,
+        "avgPlays": 53.86
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.16666666666666663
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "QB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 16.6,
+        "avgScoreB": 7,
+        "avgYardsPerPlayA": 3.828996282527881,
+        "avgYardsPerPlayB": 2.2230483271375463,
+        "turnoverRateA": 1.4,
+        "turnoverRateB": 0.9,
+        "sackRateA": 2.3,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.2,
+        "touchdownsPerGameB": 0.7,
+        "avgPlays": 53.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 19.4,
+        "avgScoreB": 9.6,
+        "avgYardsPerPlayA": 3.8,
+        "avgYardsPerPlayB": 2.4526315789473685,
+        "turnoverRateA": 1,
+        "turnoverRateB": 1.2,
+        "sackRateA": 2,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.6,
+        "touchdownsPerGameB": 1.2,
+        "avgPlays": 57
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 18.8,
+        "avgScoreB": 8.2,
+        "avgYardsPerPlayA": 3.932862190812721,
+        "avgYardsPerPlayB": 2.409893992932862,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 1,
+        "sackRateA": 2.4,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.6,
+        "touchdownsPerGameB": 1,
+        "avgPlays": 56.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 17,
+        "avgScoreB": 7,
+        "avgYardsPerPlayA": 4.481481481481482,
+        "avgYardsPerPlayB": 2.6296296296296298,
+        "turnoverRateA": 1,
+        "turnoverRateB": 1,
+        "sackRateA": 3,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2,
+        "touchdownsPerGameB": 1,
+        "avgPlays": 54
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.84,
+        "winRateB": 0.06,
+        "tieRate": 0.1,
+        "avgScoreA": 19.44,
+        "avgScoreB": 12.5,
+        "avgYardsPerPlayA": 3.0856909684439606,
+        "avgYardsPerPlayB": 2.5829706202393905,
+        "turnoverRateA": 0.52,
+        "turnoverRateB": 0.54,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.46,
+        "touchdownsPerGameB": 1.4,
+        "avgPlays": 73.52
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.54,
+        "winRateB": 0.26,
+        "tieRate": 0.2,
+        "avgScoreA": 14.82,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1012658227848102,
+        "avgYardsPerPlayB": 2.907996295152825,
+        "turnoverRateA": 1.62,
+        "turnoverRateB": 0.42,
+        "sackRateA": 2.58,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.92,
+        "touchdownsPerGameB": 1.46,
+        "avgPlays": 64.78
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 0.9666666666666667,
+        "tieRate": 0.03333333333333333,
+        "avgScoreA": 8.966666666666667,
+        "avgScoreB": 24.933333333333334,
+        "avgYardsPerPlayA": 1.8390047566776435,
+        "avgYardsPerPlayB": 3.0190267105744604,
+        "turnoverRateA": 1.8,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.9666666666666667,
+        "touchdownsPerGameB": 3.2333333333333334,
+        "avgPlays": 91.1
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.7,
+        "winRateB": 0.225,
+        "tieRate": 0.075,
+        "avgScoreA": 21.85,
+        "avgScoreB": 16,
+        "avgYardsPerPlayA": 2.8583750695603785,
+        "avgYardsPerPlayB": 2.436282693377852,
+        "turnoverRateA": 0.425,
+        "turnoverRateB": 1.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.8,
+        "touchdownsPerGameB": 2.05,
+        "avgPlays": 89.85
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.82,
+        "winRateB": 0.09,
+        "tieRate": 0.09,
+        "avgScoreA": 19.48,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1119228118538937,
+        "avgYardsPerPlayB": 2.5804272915230877,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.44,
+        "sackRateA": 2.19,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.47,
+        "touchdownsPerGameB": 1.43,
+        "avgPlays": 72.55
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.86,
+        "winRateB": 0.05,
+        "tieRate": 0.09,
+        "avgScoreA": 20.86,
+        "avgScoreB": 12.58,
+        "avgYardsPerPlayA": 3.3827177700348434,
+        "avgYardsPerPlayB": 2.579233449477352,
+        "turnoverRateA": 0.41,
+        "turnoverRateB": 0.48,
+        "sackRateA": 2.46,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.65,
+        "touchdownsPerGameB": 1.42,
+        "avgPlays": 71.75
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.09999999999999998
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.6,
+        "winRateB": 0.1,
+        "tieRate": 0.3,
+        "avgScoreA": 22.2,
+        "avgScoreB": 17.1,
+        "avgYardsPerPlayA": 3.2553475935828877,
+        "avgYardsPerPlayB": 2.7259358288770055,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.2,
+        "sackRateA": 1.8,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 2.1,
+        "avgPlays": 74.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.4,
+        "tieRate": 0.2,
+        "avgScoreA": 15,
+        "avgScoreB": 16.2,
+        "avgYardsPerPlayA": 2.676392572944297,
+        "avgYardsPerPlayB": 2.843501326259947,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 0.2,
+        "sackRateA": 2.6,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.8,
+        "touchdownsPerGameB": 1.8,
+        "avgPlays": 75.4
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 13.6,
+        "avgScoreB": 27.2,
+        "avgYardsPerPlayA": 1.8397435897435896,
+        "avgYardsPerPlayB": 3.019230769230769,
+        "turnoverRateA": 1.6,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.6,
+        "touchdownsPerGameB": 3.8,
+        "avgPlays": 93.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 28,
+        "avgScoreB": 17,
+        "avgYardsPerPlayA": 3.1839080459770117,
+        "avgYardsPerPlayB": 2.6666666666666665,
+        "turnoverRateA": 0,
+        "turnoverRateB": 0,
+        "sackRateA": 2,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 4,
+        "touchdownsPerGameB": 2,
+        "avgPlays": 87
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.84,
+        "winRateB": 0.06,
+        "tieRate": 0.1,
+        "avgScoreA": 19.44,
+        "avgScoreB": 12.5,
+        "avgYardsPerPlayA": 3.0856909684439606,
+        "avgYardsPerPlayB": 2.5829706202393905,
+        "turnoverRateA": 0.52,
+        "turnoverRateB": 0.54,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.46,
+        "touchdownsPerGameB": 1.4,
+        "avgPlays": 73.52
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.54,
+        "winRateB": 0.26,
+        "tieRate": 0.2,
+        "avgScoreA": 14.82,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1012658227848102,
+        "avgYardsPerPlayB": 2.907996295152825,
+        "turnoverRateA": 1.62,
+        "turnoverRateB": 0.42,
+        "sackRateA": 2.58,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.92,
+        "touchdownsPerGameB": 1.46,
+        "avgPlays": 64.78
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 0.9666666666666667,
+        "tieRate": 0.03333333333333333,
+        "avgScoreA": 8.966666666666667,
+        "avgScoreB": 24.933333333333334,
+        "avgYardsPerPlayA": 1.8390047566776435,
+        "avgYardsPerPlayB": 3.0190267105744604,
+        "turnoverRateA": 1.8,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.9666666666666667,
+        "touchdownsPerGameB": 3.2333333333333334,
+        "avgPlays": 91.1
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.7,
+        "winRateB": 0.225,
+        "tieRate": 0.075,
+        "avgScoreA": 21.85,
+        "avgScoreB": 16,
+        "avgYardsPerPlayA": 2.8583750695603785,
+        "avgYardsPerPlayB": 2.436282693377852,
+        "turnoverRateA": 0.425,
+        "turnoverRateB": 1.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.8,
+        "touchdownsPerGameB": 2.05,
+        "avgPlays": 89.85
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.82,
+        "winRateB": 0.09,
+        "tieRate": 0.09,
+        "avgScoreA": 19.48,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1119228118538937,
+        "avgYardsPerPlayB": 2.5804272915230877,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.44,
+        "sackRateA": 2.19,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.47,
+        "touchdownsPerGameB": 1.43,
+        "avgPlays": 72.55
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.86,
+        "winRateB": 0.05,
+        "tieRate": 0.09,
+        "avgScoreA": 20.86,
+        "avgScoreB": 12.58,
+        "avgYardsPerPlayA": 3.3827177700348434,
+        "avgYardsPerPlayB": 2.579233449477352,
+        "turnoverRateA": 0.41,
+        "turnoverRateB": 0.48,
+        "sackRateA": 2.46,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.65,
+        "touchdownsPerGameB": 1.42,
+        "avgPlays": 71.75
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.06666666666666665
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "Y wins",
+      "deltaWinRate": -0.03333333333333333
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.6,
+        "winRateB": 0.1,
+        "tieRate": 0.3,
+        "avgScoreA": 22.2,
+        "avgScoreB": 17.1,
+        "avgYardsPerPlayA": 3.2553475935828877,
+        "avgYardsPerPlayB": 2.7259358288770055,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.2,
+        "sackRateA": 1.8,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 2.1,
+        "avgPlays": 74.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.4,
+        "tieRate": 0.2,
+        "avgScoreA": 15,
+        "avgScoreB": 16.2,
+        "avgYardsPerPlayA": 2.676392572944297,
+        "avgYardsPerPlayB": 2.843501326259947,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 0.2,
+        "sackRateA": 2.6,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.8,
+        "touchdownsPerGameB": 1.8,
+        "avgPlays": 75.4
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 13.6,
+        "avgScoreB": 27.2,
+        "avgYardsPerPlayA": 1.8397435897435896,
+        "avgYardsPerPlayB": 3.019230769230769,
+        "turnoverRateA": 1.6,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.6,
+        "touchdownsPerGameB": 3.8,
+        "avgPlays": 93.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 21,
+        "avgScoreB": 14,
+        "avgYardsPerPlayA": 3.8135593220338984,
+        "avgYardsPerPlayB": 2.440677966101695,
+        "turnoverRateA": 1,
+        "turnoverRateB": 0,
+        "sackRateA": 2,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 2,
+        "avgPlays": 59
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.84,
+        "winRateB": 0.06,
+        "tieRate": 0.1,
+        "avgScoreA": 19.44,
+        "avgScoreB": 12.5,
+        "avgYardsPerPlayA": 3.0856909684439606,
+        "avgYardsPerPlayB": 2.5829706202393905,
+        "turnoverRateA": 0.52,
+        "turnoverRateB": 0.54,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.46,
+        "touchdownsPerGameB": 1.4,
+        "avgPlays": 73.52
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.54,
+        "winRateB": 0.26,
+        "tieRate": 0.2,
+        "avgScoreA": 14.82,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1012658227848102,
+        "avgYardsPerPlayB": 2.907996295152825,
+        "turnoverRateA": 1.62,
+        "turnoverRateB": 0.42,
+        "sackRateA": 2.58,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.92,
+        "touchdownsPerGameB": 1.46,
+        "avgPlays": 64.78
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 0.9666666666666667,
+        "tieRate": 0.03333333333333333,
+        "avgScoreA": 8.966666666666667,
+        "avgScoreB": 24.933333333333334,
+        "avgYardsPerPlayA": 1.8390047566776435,
+        "avgYardsPerPlayB": 3.0190267105744604,
+        "turnoverRateA": 1.8,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.9666666666666667,
+        "touchdownsPerGameB": 3.2333333333333334,
+        "avgPlays": 91.1
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.7,
+        "winRateB": 0.225,
+        "tieRate": 0.075,
+        "avgScoreA": 21.85,
+        "avgScoreB": 16,
+        "avgYardsPerPlayA": 2.8583750695603785,
+        "avgYardsPerPlayB": 2.436282693377852,
+        "turnoverRateA": 0.425,
+        "turnoverRateB": 1.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.8,
+        "touchdownsPerGameB": 2.05,
+        "avgPlays": 89.85
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.82,
+        "winRateB": 0.09,
+        "tieRate": 0.09,
+        "avgScoreA": 19.48,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1119228118538937,
+        "avgYardsPerPlayB": 2.5804272915230877,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.44,
+        "sackRateA": 2.19,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.47,
+        "touchdownsPerGameB": 1.43,
+        "avgPlays": 72.55
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.86,
+        "winRateB": 0.05,
+        "tieRate": 0.09,
+        "avgScoreA": 20.86,
+        "avgScoreB": 12.58,
+        "avgYardsPerPlayA": 3.3827177700348434,
+        "avgYardsPerPlayB": 2.579233449477352,
+        "turnoverRateA": 0.41,
+        "turnoverRateB": 0.48,
+        "sackRateA": 2.46,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.65,
+        "touchdownsPerGameB": 1.42,
+        "avgPlays": 71.75
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.06666666666666665
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "Y wins",
+      "deltaWinRate": -0.03333333333333333
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.6,
+        "winRateB": 0.1,
+        "tieRate": 0.3,
+        "avgScoreA": 22.2,
+        "avgScoreB": 17.1,
+        "avgYardsPerPlayA": 3.2553475935828877,
+        "avgYardsPerPlayB": 2.7259358288770055,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.2,
+        "sackRateA": 1.8,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 2.1,
+        "avgPlays": 74.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.4,
+        "tieRate": 0.2,
+        "avgScoreA": 15,
+        "avgScoreB": 16.2,
+        "avgYardsPerPlayA": 2.676392572944297,
+        "avgYardsPerPlayB": 2.843501326259947,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 0.2,
+        "sackRateA": 2.6,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.8,
+        "touchdownsPerGameB": 1.8,
+        "avgPlays": 75.4
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 13.6,
+        "avgScoreB": 27.2,
+        "avgYardsPerPlayA": 1.8397435897435896,
+        "avgYardsPerPlayB": 3.019230769230769,
+        "turnoverRateA": 1.6,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.6,
+        "touchdownsPerGameB": 3.8,
+        "avgPlays": 93.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 28,
+        "avgScoreB": 17,
+        "avgYardsPerPlayA": 3.0232558139534884,
+        "avgYardsPerPlayB": 2.616279069767442,
+        "turnoverRateA": 0,
+        "turnoverRateB": 0,
+        "sackRateA": 2,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 4,
+        "touchdownsPerGameB": 2,
+        "avgPlays": 86
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.84,
+        "winRateB": 0.06,
+        "tieRate": 0.1,
+        "avgScoreA": 19.44,
+        "avgScoreB": 12.5,
+        "avgYardsPerPlayA": 3.0856909684439606,
+        "avgYardsPerPlayB": 2.5829706202393905,
+        "turnoverRateA": 0.52,
+        "turnoverRateB": 0.54,
+        "sackRateA": 2.12,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.46,
+        "touchdownsPerGameB": 1.4,
+        "avgPlays": 73.52
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 7,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 7,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.54,
+        "winRateB": 0.26,
+        "tieRate": 0.2,
+        "avgScoreA": 14.82,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1012658227848102,
+        "avgYardsPerPlayB": 2.907996295152825,
+        "turnoverRateA": 1.62,
+        "turnoverRateB": 0.42,
+        "sackRateA": 2.58,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.92,
+        "touchdownsPerGameB": 1.46,
+        "avgPlays": 64.78
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 42,
+    "runs": 30,
+    "metrics": {
+      "type": "runLab",
+      "runs": 30,
+      "baseSeed": 42,
+      "metrics": {
+        "runs": 30,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 0.9666666666666667,
+        "tieRate": 0.03333333333333333,
+        "avgScoreA": 8.966666666666667,
+        "avgScoreB": 24.933333333333334,
+        "avgYardsPerPlayA": 1.8390047566776435,
+        "avgYardsPerPlayB": 3.0190267105744604,
+        "turnoverRateA": 1.8,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 0.9666666666666667,
+        "touchdownsPerGameB": 3.2333333333333334,
+        "avgPlays": 91.1
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 3,
+    "runs": 40,
+    "metrics": {
+      "type": "runLab",
+      "runs": 40,
+      "baseSeed": 3,
+      "metrics": {
+        "runs": 40,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.7,
+        "winRateB": 0.225,
+        "tieRate": 0.075,
+        "avgScoreA": 21.85,
+        "avgScoreB": 16,
+        "avgYardsPerPlayA": 2.8583750695603785,
+        "avgYardsPerPlayB": 2.436282693377852,
+        "turnoverRateA": 0.425,
+        "turnoverRateB": 1.4,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.8,
+        "touchdownsPerGameB": 2.05,
+        "avgPlays": 89.85
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 99,
+    "runs": 50,
+    "metrics": {
+      "type": "runLab",
+      "runs": 50,
+      "baseSeed": 99,
+      "metrics": {
+        "runs": 50,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.08,
+        "winRateB": 0.92,
+        "tieRate": 0,
+        "avgScoreA": 11.68,
+        "avgScoreB": 24.5,
+        "avgYardsPerPlayA": 1.9444896299308663,
+        "avgYardsPerPlayB": 2.7810085400569338,
+        "turnoverRateA": 1.42,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.36,
+        "touchdownsPerGameB": 3.14,
+        "avgPlays": 98.36
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 1,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 1,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.82,
+        "winRateB": 0.09,
+        "tieRate": 0.09,
+        "avgScoreA": 19.48,
+        "avgScoreB": 12.62,
+        "avgYardsPerPlayA": 3.1119228118538937,
+        "avgYardsPerPlayB": 2.5804272915230877,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.44,
+        "sackRateA": 2.19,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.47,
+        "touchdownsPerGameB": 1.43,
+        "avgPlays": 72.55
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 9999,
+    "runs": 100,
+    "metrics": {
+      "type": "runLab",
+      "runs": 100,
+      "baseSeed": 9999,
+      "metrics": {
+        "runs": 100,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.86,
+        "winRateB": 0.05,
+        "tieRate": 0.09,
+        "avgScoreA": 20.86,
+        "avgScoreB": 12.58,
+        "avgYardsPerPlayA": 3.3827177700348434,
+        "avgYardsPerPlayB": 2.579233449477352,
+        "turnoverRateA": 0.41,
+        "turnoverRateB": 0.48,
+        "sackRateA": 2.46,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 2.65,
+        "touchdownsPerGameB": 1.42,
+        "avgPlays": 71.75
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "NEXUS",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "NEXUS",
+      "role": null,
+      "runs": 30,
+      "verdict": "X wins",
+      "deltaWinRate": 0.06666666666666665
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ORACLE",
+    "seedFamily": 0,
+    "runs": 30,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ORACLE",
+      "role": null,
+      "runs": 30,
+      "verdict": "Y wins",
+      "deltaWinRate": -0.03333333333333333
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "ZEROX",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "ZEROX",
+      "role": null,
+      "runs": 20,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "TURTLE",
+    "seedFamily": 0,
+    "runs": 20,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "TURTLE",
+      "roles": [
+        "QB",
+        "RB"
+      ],
+      "runs": 20,
+      "bestRole": "RB"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "QUILL",
+    "seedFamily": 0,
+    "runs": 15,
+    "metrics": {
+      "type": "roleLab",
+      "agent": "QUILL",
+      "roles": [
+        "WR",
+        "OL"
+      ],
+      "runs": 15,
+      "bestRole": "WR"
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 777,
+    "runs": 10,
+    "metrics": {
+      "type": "runLab",
+      "runs": 10,
+      "baseSeed": 777,
+      "metrics": {
+        "runs": 10,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.6,
+        "winRateB": 0.1,
+        "tieRate": 0.3,
+        "avgScoreA": 22.2,
+        "avgScoreB": 17.1,
+        "avgYardsPerPlayA": 3.2553475935828877,
+        "avgYardsPerPlayB": 2.7259358288770055,
+        "turnoverRateA": 0.5,
+        "turnoverRateB": 0.2,
+        "sackRateA": 1.8,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 2.1,
+        "avgPlays": 74.8
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 888,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 888,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0.4,
+        "winRateB": 0.4,
+        "tieRate": 0.2,
+        "avgScoreA": 15,
+        "avgScoreB": 16.2,
+        "avgYardsPerPlayA": 2.676392572944297,
+        "avgYardsPerPlayB": 2.843501326259947,
+        "turnoverRateA": 1.2,
+        "turnoverRateB": 0.2,
+        "sackRateA": 2.6,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.8,
+        "touchdownsPerGameB": 1.8,
+        "avgPlays": 75.4
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 889,
+    "runs": 5,
+    "metrics": {
+      "type": "runLab",
+      "runs": 5,
+      "baseSeed": 889,
+      "metrics": {
+        "runs": 5,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 0,
+        "winRateB": 1,
+        "tieRate": 0,
+        "avgScoreA": 13.6,
+        "avgScoreB": 27.2,
+        "avgYardsPerPlayA": 1.8397435897435896,
+        "avgYardsPerPlayB": 3.019230769230769,
+        "turnoverRateA": 1.6,
+        "turnoverRateB": 0,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 1.6,
+        "touchdownsPerGameB": 3.8,
+        "avgPlays": 93.6
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": null,
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "runLab",
+      "runs": 1,
+      "baseSeed": 0,
+      "metrics": {
+        "runs": 1,
+        "simVersion": "shaddai-sim-0.1.0",
+        "winRateA": 1,
+        "winRateB": 0,
+        "tieRate": 0,
+        "avgScoreA": 21,
+        "avgScoreB": 10,
+        "avgYardsPerPlayA": 3.4029850746268657,
+        "avgYardsPerPlayB": 2.417910447761194,
+        "turnoverRateA": 0,
+        "turnoverRateB": 2,
+        "sackRateA": 0,
+        "sackRateB": 0,
+        "touchdownsPerGameA": 3,
+        "touchdownsPerGameB": 1,
+        "avgPlays": 67
+      }
+    }
+  },
+  {
+    "simVersion": "shaddai-sim-0.1.0",
+    "sport": "football",
+    "loadoutId": "PIKADON",
+    "seedFamily": 0,
+    "runs": 1,
+    "metrics": {
+      "type": "compareLoadouts",
+      "agent": "PIKADON",
+      "role": null,
+      "runs": 1,
+      "verdict": "tie",
+      "deltaWinRate": 0
+    }
+  }
+]
