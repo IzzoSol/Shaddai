@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX · Market Nexus</title>
+<link rel="preconnect" href="https://s3.tradingview.com">
+<style>
+  :root{ --cy:#00f0ff; --cy2:#12d4ff; --mag:#ff2bd6; --gold:#ffd24a; --bg:#03060e; --pan:rgba(6,16,30,.72); }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:var(--bg);color:#dff4ff;font-family:'Share Tech Mono',ui-monospace,monospace;overflow:hidden}
+  /* ── neon room: receding floor grid + side walls + ceiling glow ── */
+  #room{position:fixed;inset:0;overflow:hidden;z-index:0}
+  #floor{position:absolute;left:-20%;right:-20%;bottom:0;height:46%;
+    background-image:linear-gradient(rgba(0,240,255,.28) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.28) 1px,transparent 1px);
+    background-size:60px 60px;transform:perspective(520px) rotateX(66deg);transform-origin:bottom center;
+    mask-image:linear-gradient(to top,#000 0%,#000 30%,transparent 92%);opacity:.55}
+  #ceil{position:absolute;left:-20%;right:-20%;top:0;height:34%;
+    background-image:linear-gradient(rgba(255,43,214,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(255,43,214,.16) 1px,transparent 1px);
+    background-size:64px 64px;transform:perspective(520px) rotateX(-66deg);transform-origin:top center;
+    mask-image:linear-gradient(to bottom,#000 0%,transparent 88%);opacity:.4}
+  #glow{position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 50% 42%,rgba(0,120,160,.20),transparent 70%)}
+  .vign{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 220px 40px rgba(0,0,0,.9)}
+  /* ── ceiling ticker (runs around the top perimeter) ── */
+  #ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:40;height:40px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(2,10,20,.96),rgba(2,10,20,.62));
+    border-bottom:1px solid rgba(0,240,255,.45);box-shadow:0 0 26px rgba(0,240,255,.25),inset 0 0 40px rgba(0,240,255,.06)}
+  #ticker{display:inline-flex;align-items:center;gap:34px;white-space:nowrap;height:40px;padding-left:100%;
+    animation:tick 46s linear infinite;font-size:14px;letter-spacing:1px}
+  #ticker.rev{animation-duration:60s}
+  @keyframes tick{to{transform:translateX(-100%)}}
+  .tk{display:inline-flex;align-items:center;gap:8px}
+  .tk .sym{color:#9fe8ff;font-weight:700} .tk .px{color:#fff} .up{color:#38ffb0} .dn{color:#ff6a8a}
+  /* corner brackets = the "4 corners of the ceiling" */
+  .corner{position:fixed;width:46px;height:46px;z-index:41;border:2px solid var(--cy);filter:drop-shadow(0 0 8px var(--cy));opacity:.85}
+  .corner.tl{top:44px;left:10px;border-right:none;border-bottom:none}
+  .corner.tr{top:44px;right:10px;border-left:none;border-bottom:none}
+  .corner.bl{bottom:10px;left:10px;border-right:none;border-top:none}
+  .corner.br{bottom:10px;right:10px;border-left:none;border-top:none}
+  /* ── header ── */
+  header{position:fixed;top:40px;left:0;right:0;z-index:35;display:flex;align-items:center;gap:14px;
+    padding:12px clamp(14px,3vw,30px);pointer-events:none}
+  .brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:4px;font-size:clamp(16px,2.6vw,26px);
+    background:linear-gradient(90deg,#00f0ff,#7ef9ff,#00f0ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(0,240,255,.4)}
+  .brand small{display:block;font-family:'Share Tech Mono',monospace;font-weight:400;font-size:10px;letter-spacing:3px;color:#5ac7e0;-webkit-text-fill-color:#5ac7e0}
+  .spacer{flex:1}
+  .nav{pointer-events:auto;display:flex;gap:8px}
+  .nav a{font-family:'Orbitron',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;text-decoration:none;
+    color:var(--cy);border:1px solid rgba(0,240,255,.4);border-radius:8px;padding:8px 14px;background:rgba(4,14,24,.6);
+    backdrop-filter:blur(6px);transition:.15s;white-space:nowrap}
+  .nav a:hover{background:var(--cy);color:#02121a;box-shadow:0 0 22px rgba(0,240,255,.6)}
+  .nav a.mag{color:var(--mag);border-color:rgba(255,43,214,.5)} .nav a.mag:hover{background:var(--mag);color:#120017;box-shadow:0 0 22px rgba(255,43,214,.6)}
+  /* ── screen grid ── */
+  #screens{position:fixed;z-index:20;top:112px;bottom:64px;left:clamp(12px,2.4vw,34px);right:clamp(12px,2.4vw,34px);
+    display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:clamp(12px,1.6vw,22px)}
+  @media(max-width:820px){#screens{grid-template-columns:1fr;grid-template-rows:repeat(4,minmax(220px,1fr));top:104px;bottom:56px;overflow-y:auto}}
+  .screen{position:relative;border:1px solid rgba(0,240,255,.32);border-radius:14px;overflow:hidden;
+    background:var(--pan);box-shadow:0 0 0 1px rgba(0,240,255,.08),0 0 34px -6px rgba(0,240,255,.32),inset 0 0 60px rgba(0,60,90,.18);
+    backdrop-filter:blur(4px)}
+  .screen .bar{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;gap:10px;
+    padding:8px 12px;background:linear-gradient(180deg,rgba(3,12,22,.92),rgba(3,12,22,.35));border-bottom:1px solid rgba(0,240,255,.22)}
+  .screen .bar .dot{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:pulse 1.6s infinite alternate}
+  @keyframes pulse{to{opacity:.35}}
+  .screen .bar .t{font-family:'Orbitron',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#eaffff}
+  .screen .bar .live{margin-left:auto;font-size:10px;letter-spacing:2px;color:#38ffb0;border:1px solid rgba(56,255,176,.4);border-radius:5px;padding:2px 7px}
+  .screen .body{position:absolute;inset:38px 0 0 0}
+  .screen .body iframe,.tv-wrap{width:100%!important;height:100%!important;border:0}
+  .screen.mag{border-color:rgba(255,43,214,.35);box-shadow:0 0 34px -6px rgba(255,43,214,.34),inset 0 0 60px rgba(90,0,70,.18)}
+  .screen.mag .bar{border-color:rgba(255,43,214,.25)} .screen.mag .bar .dot{background:var(--mag);box-shadow:0 0 10px var(--mag)}
+  .screen.mag .bar .t{color:#ffdaf6}
+  /* SpaceX panel */
+  #spx{position:absolute;inset:38px 0 0 0;padding:16px 18px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+  #spx .big{font-family:'Orbitron',sans-serif;font-size:clamp(18px,2.4vw,26px);font-weight:900;color:#ffdaf6;text-shadow:0 0 18px rgba(255,43,214,.4)}
+  #spx .cd{font-family:'Orbitron',sans-serif;font-size:clamp(22px,3.4vw,40px);font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(255,210,74,.4)}
+  #spx .row{display:flex;justify-content:space-between;font-size:12px;color:#cbb6e6;border-bottom:1px dashed rgba(255,43,214,.18);padding:5px 0}
+  #spx .row b{color:#fff}
+  #spx .patch{width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,43,214,.5));align-self:center;margin:2px 0}
+  /* footer strip */
+  #foot{position:fixed;bottom:0;left:0;right:0;z-index:35;height:44px;display:flex;align-items:center;gap:18px;overflow:hidden;
+    padding:0 clamp(14px,3vw,30px);background:linear-gradient(0deg,rgba(2,10,20,.96),rgba(2,10,20,.4));border-top:1px solid rgba(0,240,255,.3);font-size:12px;color:#7fd6ea}
+  #foot .z{color:var(--mag)} #foot a{color:var(--cy);text-decoration:none} #foot a:hover{text-decoration:underline}
+</style></head>
+<body>
+<div id="room"><div id="glow"></div><div id="ceil"></div><div id="floor"></div><div class="vign"></div></div>
+
+<!-- ceiling ticker + corner brackets -->
+<div id="ticker-wrap"><div id="ticker">loading live markets…</div></div>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+<header>
+  <div class="brand">ZEROX · MARKET NEXUS<small>WEALTH &amp; REVENUE ENGINE · LIVE FEEDS</small></div>
+  <div class="spacer"></div>
+  <nav class="nav">
+    <a href="/codex.html">◀ CODEX</a>
+    <a class="mag" href="/index.html">DASHBOARD</a>
+  </nav>
+</header>
+
+<main id="screens">
+  <div class="screen"><div class="bar"><span class="dot"></span><span class="t">BTC / USD</span><span class="live">● LIVE</span></div><div class="body" id="tv-btc"></div></div>
+  <div class="screen"><div class="bar"><span class="dot"></span><span class="t">SOL / USD</span><span class="live">● LIVE</span></div><div class="body" id="tv-sol"></div></div>
+  <div class="screen"><div class="bar"><span class="dot"></span><span class="t">ETH / USD</span><span class="live">● LIVE</span></div><div class="body" id="tv-eth"></div></div>
+  <div class="screen mag"><div class="bar"><span class="dot"></span><span class="t">◈ SPACEX MISSION CONTROL</span><span class="live" style="color:var(--mag);border-color:rgba(255,43,214,.4)">● FEED</span></div>
+    <div id="spx"><div class="big" id="spx-name">Contacting mission control…</div><div class="cd" id="spx-cd">—</div><div id="spx-rows"></div></div>
+  </div>
+</main>
+
+<div id="foot"><span class="z">◈ ZEROX</span><span>Non-custodial market intel · crypto via CoinGecko/TradingView · launches via SpaceX API</span><span class="spacer" style="flex:1"></span><span id="clock"></span></div>
+
+<script>
+/* ── TradingView live charts (free, no key) ── */
+(function(){
+  const cfg = [
+    { el:'tv-btc', sym:'BINANCE:BTCUSDT' },
+    { el:'tv-sol', sym:'BINANCE:SOLUSDT' },
+    { el:'tv-eth', sym:'BINANCE:ETHUSDT' },
+  ];
+  function build(){
+    cfg.forEach(c=>{
+      const host=document.getElementById(c.el); if(!host) return;
+      const d=document.createElement('div'); d.className='tv-wrap'; host.appendChild(d);
+      try{ new TradingView.widget({ container_id:d.id||(d.id='w_'+c.el), symbol:c.sym, interval:'60',
+        theme:'dark', style:'3', locale:'en', autosize:true, hide_top_toolbar:true, hide_legend:false,
+        hide_side_toolbar:true, allow_symbol_change:false, save_image:false, backgroundColor:'rgba(6,16,30,0)',
+        gridColor:'rgba(0,240,255,0.06)' }); }catch(e){ host.innerHTML='<div style="padding:20px;color:#5ac">chart unavailable</div>'; }
+    });
+  }
+  const s=document.createElement('script'); s.src='https://s3.tradingview.com/tv.js'; s.async=true;
+  s.onload=build; s.onerror=()=>cfg.forEach(c=>{const h=document.getElementById(c.el);if(h)h.innerHTML='<div style="padding:20px;color:#5ac">chart blocked</div>';});
+  document.head.appendChild(s);
+})();
+
+/* ── Live ticker via CoinGecko (free, no key) ── */
+const TICK_IDS = { bitcoin:'BTC', ethereum:'ETH', solana:'SOL', binancecoin:'BNB', ripple:'XRP', cardano:'ADA', dogecoin:'DOGE', 'avalanche-2':'AVAX' };
+async function pumpTicker(){
+  try{
+    const ids=Object.keys(TICK_IDS).join(',');
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=usd&include_24hr_change=true');
+    const j=await r.json();
+    const items=Object.entries(TICK_IDS).map(([id,sym])=>{
+      const d=j[id]; if(!d) return '';
+      const ch=d.usd_24h_change||0, cls=ch>=0?'up':'dn', arr=ch>=0?'▲':'▼';
+      const px=d.usd>=1?d.usd.toLocaleString(undefined,{maximumFractionDigits:2}):d.usd.toFixed(4);
+      return `<span class="tk"><span class="sym">${sym}</span><span class="px">$${px}</span><span class="${cls}">${arr}${Math.abs(ch).toFixed(2)}%</span></span>`;
+    }).join('<span style="color:#134">•</span>');
+    const rail=(items+'<span style="color:#134">•</span>').repeat(2);
+    document.getElementById('ticker').innerHTML=rail;
+  }catch(e){ /* keep last */ }
+}
+pumpTicker(); setInterval(pumpTicker, 30000);
+
+/* ── SpaceX Mission Control (free api.spacexdata.com) ── */
+async function loadSpaceX(){
+  try{
+    // Launch Library 2 (thespacedevs) — free, CORS-enabled, no key
+    const r=await fetch('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=1&search=spacex');
+    const j=await r.json();
+    const nx=j&&j.results&&j.results[0];
+    const nm=document.getElementById('spx-name'), rows=document.getElementById('spx-rows');
+    if(nx){
+      nm.textContent='NEXT: '+(nx.name||'—');
+      const img=nx.image;
+      rows.innerHTML =
+        (img?`<img class="patch" src="${img}" alt="mission" style="width:96px;height:96px;border-radius:8px">`:'')+
+        `<div class="row"><span>Vehicle</span><b>${(nx.rocket&&nx.rocket.configuration&&nx.rocket.configuration.name)||'—'}</b></div>`+
+        `<div class="row"><span>Pad</span><b>${(nx.pad&&nx.pad.name)||'—'}</b></div>`+
+        `<div class="row"><span>Window</span><b>${nx.net?new Date(nx.net).toUTCString().replace('GMT',''):'TBD'}</b></div>`+
+        `<div class="row"><span>Status</span><b style="color:var(--cy)">${(nx.status&&nx.status.abbrev)||'—'}</b></div>`;
+      window._spxTarget = nx.net ? new Date(nx.net).getTime() : null;
+    } else { nm.textContent='No upcoming SpaceX launch found'; }
+  }catch(e){ document.getElementById('spx-name').textContent='SpaceX feed unavailable'; }
+}
+function tickCountdown(){
+  const el=document.getElementById('spx-cd'); if(!el) return;
+  if(!window._spxTarget){ el.textContent='T-  --:--:--'; return; }
+  let s=Math.floor((window._spxTarget-Date.now())/1000);
+  const sign=s<0?'T+':'T-'; s=Math.abs(s);
+  const d=Math.floor(s/86400); s%=86400; const h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60); s%=60;
+  el.textContent=`${sign} ${d?d+'d ':''}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+loadSpaceX(); setInterval(loadSpaceX, 120000); setInterval(tickCountdown, 1000);
+
+/* clock */
+setInterval(()=>{ const c=document.getElementById('clock'); if(c) c.textContent=new Date().toUTCString().split(' ')[4]+' UTC'; },1000);
+</script>
+</body></html>

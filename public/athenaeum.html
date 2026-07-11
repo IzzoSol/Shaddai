@@ -474,7 +474,7 @@ input[type=text].mp-input:focus{border-color:rgba(72,210,128,.65)}
 
 <!-- ═══════════════════ WALK-MODE OVERLAYS ═══════════════════ -->
 <div id="walk-cross"></div>
-<div id="walk-hint"><b>WALK</b> · <b>W A S D</b> move · mouse look · <b>Shift</b> run · <b>L</b> learn · <b>Tab</b>/<b>ESC</b> → cursor</div>
+<div id="walk-hint"><b>WALKING AS THE AGENT</b> · <b>W A S D</b> move · mouse orbit · <b>Shift</b> run · <b>L</b> learn · <b>Tab</b>/<b>ESC</b> → cursor</div>
 
 <!-- Chakra "Learn" prompt (Oracle scene, shown when standing on a chakra segment) -->
 <div id="chakra-prompt"><span id="chakra-name">ROOT · MULADHARA</span> — walk on to reveal the next · press <b>L</b> to LEARN deeper</div>
@@ -487,8 +487,8 @@ input[type=text].mp-input:focus{border-color:rgba(72,210,128,.65)}
 
 <!-- Click-to-look invite (shown after entering a walkable scene) -->
 <div id="walk-invite" onclick="window.enterWalk()">
-  <div class="wi-t">▶ Click to Walk</div>
-  <div class="wi-s"><b>W A S D</b> move · mouse look · <b>Tab</b>/<b>ESC</b> → cursor</div>
+  <div class="wi-t">▶ Walk as the Agent</div>
+  <div class="wi-s"><b>W A S D</b> move · mouse orbit · <b>Tab</b>/<b>ESC</b> → cursor</div>
 </div>
 
 <!-- ═══════════════════ SCRIPT ═══════════════════ -->
@@ -520,7 +520,8 @@ const ndc  = new THREE.Vector2();
 // ── MUSEUM state ──────────────────────────────────────────────────────────────
 let museumCeilingGlow = null;   // animated fresco light
 let museumMuralWall   = null;   // THREE.Group holding accepted mural tiles
-let museumMuralGrid   = null;   // {cols,cellW,cellH,gap,wallY} placement info
+let museumMuralGrid   = null;   // {cols,rows,cellW,cellH,gap,wallY} placement info
+let museumMuralSlots  = [];     // placeholder "empty frame" meshes, replaced as tiles are accepted
 let museumKioskPanel  = null;   // {mesh,mat,tex}
 let museumKioskHit    = { panel:null, prev:null, next:null, expand:null };
 let museumKioskEntries = [];
@@ -544,6 +545,17 @@ let plc = null, walkOn = false;
 const walkKeys = { f:false, b:false, l:false, r:false, run:false };
 let walkBounds = null;                 // {type:'circle',cx,cz,r} | {type:'rect',minX,maxX,minZ,maxZ}
 let walkEye = 3.2, walkSpawn = null;   // eye height + spawn {x,z} for the current scene
+
+// ── THIRD-PERSON "walk AS the agent" rig ────────────────────────────────────
+// In WALK mode the player embodies the scene's agent: the already-loaded avatar GLB
+// becomes the PLAYER's BODY and moves with WASD, while a smooth camera trails behind &
+// above it (mouse-look via PointerLockControls yaw/pitch). See enterWalk/updateWalk.
+const playerPos   = new THREE.Vector3();   // avatar's ground position (feet at y=0)
+let   playerYaw   = 0;                      // avatar facing (radians), eased toward movement dir
+let   camDist     = 7.2;                    // trailing distance behind the avatar
+let   camHeight   = 4.2;                    // camera height above the avatar's feet
+let   walkFootT   = 0;                      // little bob/step timer for a lively gait
+const _fwd = new THREE.Vector3(), _rgt = new THREE.Vector3(), _tmp = new THREE.Vector3();
 
 // ── CURSOR ⇄ WALK dual mode ─────────────────────────────────────────────────
 // CURSOR (default): a normal visible mouse cursor; OrbitControls held / gentle drag-to-look;
@@ -583,9 +595,16 @@ function setupWalk() {
   plc.addEventListener('lock', () => {
     walkOn = true; uiMode = 'walk'; reflectMode();
     if (controls) controls.enabled = false;                 // orbit off while walking
-    if (walkSpawn) { camera.position.set(walkSpawn.x, walkEye, walkSpawn.z);
-      camera.lookAt(walkSpawn.x, walkEye, walkSpawn.z - 6); }   // face into the room (−z) for a clean start
-    document.getElementById('walk-cross').classList.add('on');
+    // ── Embody the agent: place the avatar body at the spawn, camera trailing behind ──
+    const sx = walkSpawn ? walkSpawn.x : 0, sz = walkSpawn ? walkSpawn.z : 8;
+    playerPos.set(sx, 0, sz);
+    playerYaw = Math.PI;                                     // face into the room (−z)
+    if (avatarMesh) { avatarMesh.position.set(sx, avatarBaseY, sz); avatarMesh.rotation.y = playerYaw; }
+    // Seat the camera behind/above and aim it forward so PLC yaw starts clean.
+    camera.position.set(sx, camHeight, sz + camDist);
+    camera.lookAt(sx, walkEye * 0.6, sz - 4);
+    // Walk-cross is only meaningful for first-person aim; in 3rd-person we hide it.
+    document.getElementById('walk-cross').classList.remove('on');
     document.getElementById('walk-hint').classList.add('on');
     document.getElementById('walk-invite').classList.remove('on');
     const mh = document.getElementById('moon-hint'); if (mh) mh.classList.remove('on');
@@ -680,31 +699,68 @@ addEventListener('keydown', e => {
 
 function updateWalk(delta) {
   if (!walkOn || !plc) return;
-  const step = (walkKeys.run ? 15 : 7) * delta;
-  let dx = 0, dz = 0;
-  if (walkKeys.f) dz += 1;
-  if (walkKeys.b) dz -= 1;
-  if (walkKeys.r) dx += 1;
-  if (walkKeys.l) dx -= 1;
-  if (dx || dz) {
-    const inv = 1 / Math.hypot(dx, dz);
-    plc.moveRight(dx * inv * step);
-    plc.moveForward(dz * inv * step);
+  const speed = (walkKeys.run ? 13 : 6.5);
+  const step  = speed * delta;
+
+  // Camera-relative movement basis (flattened to the ground plane).
+  camera.getWorldDirection(_fwd); _fwd.y = 0;
+  if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1);
+  _fwd.normalize();
+  _rgt.set(_fwd.z, 0, -_fwd.x);     // right-hand perpendicular on the ground
+
+  let mx = 0, mz = 0;               // local input (mz forward, mx strafe)
+  if (walkKeys.f) mz += 1;
+  if (walkKeys.b) mz -= 1;
+  if (walkKeys.r) mx += 1;
+  if (walkKeys.l) mx -= 1;
+
+  const moving = (mx || mz);
+  if (moving) {
+    const inv = 1 / Math.hypot(mx, mz);
+    _tmp.set(0, 0, 0)
+        .addScaledVector(_fwd, mz * inv * step)
+        .addScaledVector(_rgt, mx * inv * step);
+    playerPos.x += _tmp.x; playerPos.z += _tmp.z;
+    // Face the avatar toward travel direction (shortest-arc ease).
+    const targetYaw = Math.atan2(_tmp.x, _tmp.z);
+    let d = targetYaw - playerYaw;
+    while (d >  Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    playerYaw += d * Math.min(1, delta * 12);
+    walkFootT += delta * (walkKeys.run ? 12 : 8);
   }
-  // Floor + wall collision: clamp to the scene bounds and pin the eye height.
-  const c = camera.position;
+
+  // Clamp the AVATAR (not the camera) to the scene bounds.
   if (walkBounds) {
     if (walkBounds.type === 'circle') {
-      const d = Math.hypot(c.x - walkBounds.cx, c.z - walkBounds.cz);
-      if (d > walkBounds.r) { const k = walkBounds.r / d;
-        c.x = walkBounds.cx + (c.x - walkBounds.cx) * k;
-        c.z = walkBounds.cz + (c.z - walkBounds.cz) * k; }
+      const dd = Math.hypot(playerPos.x - walkBounds.cx, playerPos.z - walkBounds.cz);
+      if (dd > walkBounds.r) { const k = walkBounds.r / dd;
+        playerPos.x = walkBounds.cx + (playerPos.x - walkBounds.cx) * k;
+        playerPos.z = walkBounds.cz + (playerPos.z - walkBounds.cz) * k; }
     } else {
-      c.x = Math.max(walkBounds.minX, Math.min(walkBounds.maxX, c.x));
-      c.z = Math.max(walkBounds.minZ, Math.min(walkBounds.maxZ, c.z));
+      playerPos.x = Math.max(walkBounds.minX, Math.min(walkBounds.maxX, playerPos.x));
+      playerPos.z = Math.max(walkBounds.minZ, Math.min(walkBounds.maxZ, playerPos.z));
     }
   }
-  c.y = walkEye;
+
+  // Drive the avatar body: position, facing, and a gentle walking bob.
+  if (avatarMesh) {
+    const bob = moving ? Math.abs(Math.sin(walkFootT)) * 0.12 : 0;
+    avatarMesh.position.set(playerPos.x, avatarBaseY + bob, playerPos.z);
+    avatarMesh.rotation.y = playerYaw + Math.PI;   // GLBs face +z by default; add PI so "front" leads
+  }
+
+  // Trailing third-person camera: sit behind the avatar along the look direction,
+  // smoothly (lerp) so it feels cinematic. PLC still owns pitch/yaw via the mouse.
+  _tmp.copy(playerPos)
+      .addScaledVector(_fwd, -camDist)      // behind the avatar
+      .add(new THREE.Vector3(0, camHeight, 0));
+  // Keep the camera inside the room too, so it never clips through a wall.
+  if (walkBounds && walkBounds.type === 'rect') {
+    _tmp.x = Math.max(walkBounds.minX - 1.5, Math.min(walkBounds.maxX + 1.5, _tmp.x));
+    _tmp.z = Math.max(walkBounds.minZ - 1.5, Math.min(walkBounds.maxZ + 1.5, _tmp.z));
+  }
+  camera.position.lerp(_tmp, Math.min(1, delta * 9));
 }
 
 // ── Renderer (lazy, created once) ─────────────────────────────────────────
@@ -842,7 +898,7 @@ function disposeScene() {
   avatarMesh = null; orbParticles = null; floatPlaques = [];
   fireplaceLight = null; chakra = null; historyRing = null; moonMeshRef = null;
   // Museum refs
-  museumCeilingGlow = null; museumMuralWall = null; museumMuralGrid = null;
+  museumCeilingGlow = null; museumMuralWall = null; museumMuralGrid = null; museumMuralSlots = [];
   museumKioskPanel = null; museumKioskHit = { panel:null, prev:null, next:null, expand:null };
   museumKioskEntries = []; museumKioskIdx = 0; museumKioskTimer = 0; museumTileIndex = 0;
   document.getElementById('chakra-prompt').classList.remove('on');
@@ -921,7 +977,9 @@ window.exitScene = function (ev) {
 
 // ── GLB loader helper ─────────────────────────────────────────────────────
 function loadGLB(path) {
-  return new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej));
+  // cache-bust agent models so corrected GLBs (e.g. the green-flail TURTLE) load fresh
+  const url = /\/assets\/agents\/.*\.glb$/.test(path) ? path + '?v=14' : path;
+  return new Promise((res, rej) => gltfLoader.load(url, res, undefined, rej));
 }
 
 // ── Framed wall art (real HuggingFace FLUX images baked to /assets/athenaeum) ──
@@ -983,6 +1041,9 @@ function mountAvatar(gltf, sc, x = 0, z = 0, faceAngle = 0) {
   avatarBaseY = root.position.y;
   sc.add(root);
   avatarMesh = root;
+  // If the player is ALREADY walking when this GLB finishes loading, snap the body to
+  // the live player position so you seamlessly embody it (no static greeter left behind).
+  if (walkOn) { root.position.set(playerPos.x, avatarBaseY, playerPos.z); root.rotation.y = playerYaw + Math.PI; }
   if (gltf.animations && gltf.animations.length > 0) {
     avatarMixer = new THREE.AnimationMixer(root);
     avatarMixer.clipAction(gltf.animations[0]).play();
@@ -1243,7 +1304,8 @@ function chakraLearn() {
 // Per-frame chakra logic: segment detection, footfall glow, orb materialize, panel grow, prompt.
 function updateChakra(delta, t) {
   if (!chakra) return;
-  const c = camera.position;
+  // In third-person WALK the walker IS the avatar body (playerPos), not the trailing camera.
+  const c = walkOn ? playerPos : camera.position;
   const zone = walkOn ? chakraZoneAt(c.x, c.z) : -1;
   const on = zone >= 0;
   chakra.onPath = on;
@@ -1779,7 +1841,8 @@ function startLoop() {
     const t     = clock.getElapsedTime();
 
     if (avatarMixer) avatarMixer.update(delta);
-    if (avatarMesh) {
+    // Idle float/turn ONLY when not embodying the agent (walk mode drives the body itself).
+    if (avatarMesh && !walkOn) {
       avatarMesh.position.y = avatarBaseY + Math.sin(t * 0.72) * 0.1;
       if (curView === 'oracle') avatarMesh.rotation.y += delta * 0.11;
     }
@@ -1969,13 +2032,95 @@ function denyTile(id) {
   mural.pending.splice(i, 1); saveMural(mural); renderPending();
 }
 
-// ── Mural wall grid ────────────────────────────────────────────────────────────
+// ── Community Mural — premium gallery wall ─────────────────────────────────────
+// A framed grid of tiles on a dark backing panel with a carved gold title header,
+// wall-wash spotlights, and empty placeholder frames so the wall reads intentional
+// even before the first submission. Accepted tiles fill the slots left→right, top→down.
+function muralHeaderTexture() {
+  const w = 1024, h = 200;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#e8c45c'); g.addColorStop(0.5, '#b8912e'); g.addColorStop(1, '#7a5c10');
+  c.fillStyle = g; c.fillRect(0, 0, w, h);
+  c.strokeStyle = 'rgba(30,20,4,0.85)'; c.lineWidth = 6; c.strokeRect(6, 6, w-12, h-12);
+  c.strokeStyle = 'rgba(255,240,190,0.5)'; c.lineWidth = 2; c.strokeRect(16, 16, w-32, h-32);
+  c.fillStyle = '#160f02'; c.textAlign = 'center';
+  c.font = 'bold 74px "Cinzel", serif';
+  c.fillText('COMMUNITY  MURAL', w/2, 96);
+  c.font = 'italic 30px "Fraunces", Georgia, serif'; c.fillStyle = 'rgba(30,20,4,0.85)';
+  c.fillText('Painted by the SHADDAI community · curated by TURTLE', w/2, 150);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+function muralEmptyTexture(n) {
+  const s = 256; const cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, s);
+  g.addColorStop(0, '#0d1a12'); g.addColorStop(1, '#081209');
+  c.fillStyle = g; c.fillRect(0, 0, s, s);
+  c.strokeStyle = 'rgba(72,210,128,0.25)'; c.lineWidth = 2;
+  c.setLineDash([8, 8]); c.strokeRect(18, 18, s-36, s-36); c.setLineDash([]);
+  c.fillStyle = 'rgba(72,210,128,0.5)'; c.textAlign = 'center';
+  c.font = 'bold 46px "Cinzel", serif'; c.fillText('✦', s/2, s/2 - 6);
+  c.font = '15px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(169,159,134,0.55)';
+  c.fillText('YOUR ART HERE', s/2, s/2 + 40);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 function buildMuralGrid(sc, cx, cz, wallY, rotY) {
   museumMuralWall = new THREE.Group();
   museumMuralWall.position.set(cx, 0, cz);
   museumMuralWall.rotation.y = rotY;
   sc.add(museumMuralWall);
-  museumMuralGrid = { cols: 5, cellW: 1.5, cellH: 1.5, gap: 0.3, wallY };
+
+  const cols = 5, rows = 3, cellW = 2.0, cellH = 2.0, gap = 0.42;
+  museumMuralGrid = { cols, rows, cellW, cellH, gap, wallY };
+  museumMuralSlots = [];
+  const totalW = cols * (cellW + gap) - gap;
+  const totalH = rows * (cellH + gap) - gap;
+
+  // Dark polished backing panel behind the whole grid (frames the feature).
+  const backMat = new THREE.MeshStandardMaterial({ color: 0x0a140d, roughness: 0.6, metalness: 0.3,
+    emissive: 0x08160e, emissiveIntensity: 0.3 });
+  const back = new THREE.Mesh(new THREE.BoxGeometry(totalW + 1.6, totalH + 1.6, 0.2), backMat);
+  back.position.set(0, wallY + 0.4, 0.02); museumMuralWall.add(back);
+  // Outer gold frame around the backing.
+  const outerGold = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.32, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.5 });
+  const outer = new THREE.Mesh(new THREE.BoxGeometry(totalW + 2.1, totalH + 2.1, 0.14), outerGold);
+  outer.position.set(0, wallY + 0.4, -0.01); museumMuralWall.add(outer);
+
+  // Gold title header above the grid.
+  const header = new THREE.Mesh(new THREE.PlaneGeometry(totalW * 0.86, 1.35),
+    new THREE.MeshBasicMaterial({ map: muralHeaderTexture() }));
+  header.position.set(0, wallY + totalH/2 + 1.9, 0.16); museumMuralWall.add(header);
+
+  // Empty placeholder frames laid out in the grid (replaced as tiles are accepted).
+  for (let idx = 0; idx < cols * rows; idx++) {
+    const col = idx % cols, rowN = Math.floor(idx / cols);
+    const lx = -totalW/2 + cellW/2 + col*(cellW+gap);
+    const ly = wallY + totalH/2 - cellH/2 - rowN*(cellH+gap);
+    const grp = new THREE.Group(); grp.position.set(lx, ly, 0.12);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(cellW+0.22, cellH+0.22, 0.1), outerGold.clone());
+    grp.add(fr);
+    const ph = new THREE.Mesh(new THREE.PlaneGeometry(cellW, cellH),
+      new THREE.MeshBasicMaterial({ map: muralEmptyTexture(idx) }));
+    ph.position.z = 0.07; grp.add(ph);
+    museumMuralWall.add(grp);
+    museumMuralSlots.push({ grp, placeholder: ph, filled: false });
+  }
+
+  // Wall-wash spotlights so the mural glows like a real gallery feature.
+  for (const sx of [-totalW/2, 0, totalW/2]) {
+    const sp = new THREE.SpotLight(0xfff0d0, 3.4, 26, Math.PI/5, 0.5, 1);
+    sp.position.set(sx, wallY + totalH/2 + 2.2, 4.2);
+    sp.target.position.set(sx, wallY, 0);
+    museumMuralWall.add(sp); museumMuralWall.add(sp.target);
+  }
+  const glow = new THREE.PointLight(0x48d280, 1.6, 20);
+  glow.position.set(0, wallY + 0.4, 3.2); museumMuralWall.add(glow);
+
   mural.accepted.forEach(addTileToMuralWall);
 }
 function dataURLToCanvas(url) {
@@ -1987,24 +2132,50 @@ function dataURLToCanvas(url) {
   img.src = url;
   return cv;
 }
+function muralTitlePlaque(title, by) {
+  const w = 256, h = 56; const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(8,20,12,0.92)'; c.fillRect(0, 0, w, h);
+  c.strokeStyle = 'rgba(196,162,78,0.6)'; c.lineWidth = 1.5; c.strokeRect(2, 2, w-4, h-4);
+  c.textAlign = 'center'; c.fillStyle = '#48d280';
+  c.font = 'bold 17px "Cinzel", serif'; c.fillText(String(title||'Untitled').slice(0,22), w/2, 24);
+  c.fillStyle = 'rgba(240,231,207,0.72)'; c.font = 'italic 12px "Fraunces", serif';
+  c.fillText('by ' + String(by||'Anonymous').slice(0,22), w/2, 44);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
 function addTileToMuralWall(t) {
   if (!museumMuralWall || !museumMuralGrid) return;
   const gi = museumMuralGrid;
   const idx = museumTileIndex++;
-  const col = idx % gi.cols, rowN = Math.floor(idx / gi.cols);
-  const totalW = gi.cols * (gi.cellW + gi.gap) - gi.gap;
+  const slot = museumMuralSlots[idx];
+  const cols = gi.cols;
+  const col = idx % cols, rowN = Math.floor(idx / cols);
+  const totalW = cols * (gi.cellW + gi.gap) - gi.gap;
+  const totalH = gi.rows * (gi.cellH + gi.gap) - gi.gap;
   const lx = -totalW/2 + gi.cellW/2 + col*(gi.cellW+gi.gap);
-  const ly = gi.wallY + 1.2 - rowN*(gi.cellH+gi.gap);
-  const grp = new THREE.Group(); grp.position.set(lx, ly, 0.12);
-  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.4, metalness: 0.85,
-    emissive: 0x3a2c0e, emissiveIntensity: 0.4 });
-  const fr = new THREE.Mesh(new THREE.BoxGeometry(gi.cellW+0.18, gi.cellH+0.18, 0.1), goldMat);
+  const ly = gi.wallY + totalH/2 - gi.cellH/2 - rowN*(gi.cellH+gi.gap);
+
+  // Reuse (and clear) the placeholder frame slot when one exists; else append past the grid.
+  if (slot) { slot.filled = true; if (slot.placeholder) { slot.placeholder.visible = false; } }
+
+  const grp = new THREE.Group(); grp.position.set(lx, ly, 0.14);
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0bc58, roughness: 0.34, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.5 });
+  const innerMat = new THREE.MeshStandardMaterial({ color: 0x0a140d, roughness: 0.7, metalness: 0.2 });
+  const fr = new THREE.Mesh(new THREE.BoxGeometry(gi.cellW+0.26, gi.cellH+0.26, 0.12), goldMat);
   grp.add(fr);
+  const mat = new THREE.Mesh(new THREE.BoxGeometry(gi.cellW+0.08, gi.cellH+0.08, 0.13), innerMat);
+  mat.position.z = 0.005; grp.add(mat);
   const cv = dataURLToCanvas(t.img);
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; cv._tex = tex;
   const art = new THREE.Mesh(new THREE.PlaneGeometry(gi.cellW, gi.cellH),
     new THREE.MeshBasicMaterial({ map: tex }));
-  art.position.z = 0.06; grp.add(art);
+  art.position.z = 0.08; grp.add(art);
+  // Little title plaque under each accepted piece.
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(gi.cellW*0.92, gi.cellH*0.2),
+    new THREE.MeshBasicMaterial({ map: muralTitlePlaque(t.title, t.by), transparent: true }));
+  pl.position.set(0, -gi.cellH/2 + 0.04, 0.09); grp.add(pl);
   museumMuralWall.add(grp);
 }
 
@@ -2144,40 +2315,73 @@ function buildMuseum() {
   camera = new THREE.PerspectiveCamera(56, window.innerWidth/window.innerHeight, 0.1, 400);
   camera.position.set(0, 4.5, 11);
 
-  // ── Lighting ──
-  scene.add(new THREE.AmbientLight(0x1a2a20, 1.8));
-  scene.add(new THREE.HemisphereLight(0x48d280, 0x0a1408, 0.7));
-  const keyLight = new THREE.PointLight(0xffe6b0, 2.2, 60);
-  keyLight.position.set(0, 10, 4); scene.add(keyLight);
-  const greenFill = new THREE.PointLight(0x2ad870, 1.6, 55);
+  // ── Lighting (brightened — owner couldn't see the floor; whole hall now reads) ──
+  scene.add(new THREE.AmbientLight(0x2c4438, 2.6));
+  scene.add(new THREE.HemisphereLight(0x6ff0a8, 0x1a2814, 1.15));
+  const keyLight = new THREE.PointLight(0xfff0cc, 3.0, 80);
+  keyLight.position.set(0, 11, 4); scene.add(keyLight);
+  const greenFill = new THREE.PointLight(0x3ae888, 2.0, 70);
   greenFill.position.set(-9, 8, -8); scene.add(greenFill);
-  const goldAccent = new THREE.PointLight(0xc4a24e, 1.2, 50);
+  const goldAccent = new THREE.PointLight(0xe8c45c, 1.8, 66);
   goldAccent.position.set(9, 8, -8); scene.add(goldAccent);
+  // Overhead floor-wash so the polished marble reads clearly across the whole span.
+  const floorWash = new THREE.PointLight(0xd8f0d0, 2.4, 90);
+  floorWash.position.set(0, 9, -3); scene.add(floorWash);
+  const floorWash2 = new THREE.PointLight(0xffe6b0, 1.6, 70);
+  floorWash2.position.set(0, 7, 9); scene.add(floorWash2);
 
   const HALL_MINX=-14, HALL_MAXX=14, HALL_MINZ=-19, HALL_MAXZ=15, WALL_H=13;
   const spanX = HALL_MAXX - HALL_MINX;
   const spanZ = HALL_MAXZ - HALL_MINZ;
   const midZ  = (HALL_MINZ + HALL_MAXZ) / 2;
 
-  // ── Marble floor (CanvasTexture, emerald-veined) ──
-  const fc = document.createElement('canvas'); fc.width = fc.height = 256;
+  // ── Polished cosmic gold/emerald marble floor + glowing neon grid ──
+  // Higher-res canvas so the veining + grid read crisply; bright enough to be UNMISSABLE.
+  const fc = document.createElement('canvas'); fc.width = fc.height = 512;
   const fx = fc.getContext('2d');
-  const fg = fx.createLinearGradient(0, 0, 256, 256);
-  fg.addColorStop(0, '#1a2420'); fg.addColorStop(0.5, '#141e18'); fg.addColorStop(1, '#1c2622');
-  fx.fillStyle = fg; fx.fillRect(0, 0, 256, 256);
-  // veining
-  fx.strokeStyle = 'rgba(72,210,128,0.10)'; fx.lineWidth = 1;
-  for (let i = 0; i < 12; i++) {
-    fx.beginPath(); fx.moveTo(Math.random()*256, 0);
-    fx.bezierCurveTo(Math.random()*256,85,Math.random()*256,170,Math.random()*256,256);
-    fx.stroke();
+  // Warm-dark marble base with a soft radial sheen (reads as a polished, waxed floor).
+  const fg = fx.createRadialGradient(256, 256, 40, 256, 256, 380);
+  fg.addColorStop(0, '#26362c'); fg.addColorStop(0.5, '#1c2a22'); fg.addColorStop(1, '#111c16');
+  fx.fillStyle = fg; fx.fillRect(0, 0, 512, 512);
+  // Gold marble veining — bright, branching threads.
+  const vein = (x0, y0, hue, alpha, wobble) => {
+    fx.strokeStyle = hue; fx.globalAlpha = alpha; fx.lineWidth = 1 + Math.random()*2.2;
+    fx.beginPath(); fx.moveTo(x0, y0);
+    let x = x0, y = y0;
+    for (let s = 0; s < 6; s++) { x += (Math.random()-0.5)*wobble; y += 512/6;
+      fx.lineTo(x, y); }
+    fx.stroke(); fx.globalAlpha = 1;
+  };
+  for (let i = 0; i < 14; i++) vein(Math.random()*512, 0, 'rgba(228,196,92,0.55)', 0.5+Math.random()*0.3, 90);
+  for (let i = 0; i < 10; i++) vein(Math.random()*512, 0, 'rgba(96,232,150,0.35)', 0.4, 70);
+  // Emerald neon grid — glowing inlaid lines every 64px, with a soft bloom.
+  fx.shadowColor = 'rgba(72,230,140,0.9)'; fx.shadowBlur = 8;
+  fx.strokeStyle = 'rgba(96,240,160,0.55)'; fx.lineWidth = 2;
+  for (let g = 0; g <= 512; g += 64) {
+    fx.beginPath(); fx.moveTo(g, 0); fx.lineTo(g, 512); fx.stroke();
+    fx.beginPath(); fx.moveTo(0, g); fx.lineTo(512, g); fx.stroke();
+  }
+  fx.shadowBlur = 0;
+  // Bright gold nodes at grid intersections.
+  fx.fillStyle = 'rgba(232,196,92,0.9)';
+  for (let gx = 0; gx <= 512; gx += 64) for (let gy = 0; gy <= 512; gy += 64) {
+    fx.beginPath(); fx.arc(gx, gy, 3, 0, Math.PI*2); fx.fill();
   }
   const floorTex = new THREE.CanvasTexture(fc);
-  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(6,6);
-  floorTex.colorSpace = THREE.SRGBColorSpace;
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(5,5);
+  floorTex.colorSpace = THREE.SRGBColorSpace; floorTex.anisotropy = 8;
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(spanX, spanZ),
-    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4, metalness: 0.25 }));
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.28, metalness: 0.55,
+      emissive: 0x0e2216, emissiveMap: floorTex, emissiveIntensity: 0.45 }));
   floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, midZ); scene.add(floor);
+  // A subtle central medallion so the eye lands on a "stage" for the avatar.
+  const medMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.3, metalness: 0.8,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 });
+  const medallion = new THREE.Mesh(new THREE.RingGeometry(3.2, 3.7, 64), medMat);
+  medallion.rotation.x = -Math.PI/2; medallion.position.set(0, 0.02, 6); scene.add(medallion);
+  const medallion2 = new THREE.Mesh(new THREE.RingGeometry(2.0, 2.2, 64),
+    new THREE.MeshBasicMaterial({ color: 0x48d280, transparent: true, opacity: 0.55 }));
+  medallion2.rotation.x = -Math.PI/2; medallion2.position.set(0, 0.02, 6); scene.add(medallion2);
 
   // ── Walls ──
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x0e1810, roughness: 0.9, metalness: 0.06 });
@@ -2280,12 +2484,8 @@ function buildMuseum() {
   makeMuseumArt(scene, '/assets/museum/wall-space.png',    5.5, 5.5, HALL_MINX+0.3, 6, -5,  Math.PI/2,  'Cosmic Adventures');
   makeMuseumArt(scene, '/assets/museum/wall-abstract.png', 5.5, 5.5, HALL_MAXX-0.3, 6, -5, -Math.PI/2,  'Abstract Forms');
 
-  // ── COMMUNITY MURAL feature wall (near wall, z=HALL_MAXZ) ──
-  buildMuralGrid(scene, 0, HALL_MAXZ-0.25, 6.5, Math.PI);
-  // "Community Mural" header plaque above the grid
-  const header = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.1),
-    new THREE.MeshBasicMaterial({ map: museumPlaqueTexture('COMMUNITY MURAL') }));
-  header.position.set(0, 10.5, HALL_MAXZ-0.3); header.rotation.y = Math.PI; scene.add(header);
+  // ── COMMUNITY MURAL feature wall (near wall, z=HALL_MAXZ) — premium gallery build ──
+  buildMuralGrid(scene, 0, HALL_MAXZ-0.25, 6.8, Math.PI);
 
   // ── KIOSK pedestal (to the right of spawn, near the mural) ──
   buildMuseumKiosk(scene, 6, HALL_MAXZ-4);
@@ -2328,10 +2528,18 @@ window.enterMuseum = async function () {
   walkEye = 3.6; walkSpawn = { x: 0, z: 11 };
   walkBounds = { type:'rect', minX:-12.2, maxX:12.2, minZ:-18, maxZ:14 };
   setupWalk();
-  // Optional TURTLE greeter avatar
+  // TURTLE greeter avatar (Emerald Enforcer) — stands on the gold medallion, well-lit.
   try {
     const gltf = await loadGLB('/assets/agents/TURTLE.glb');
-    mountAvatar(gltf, scene, -3.5, 8, Math.PI);
+    mountAvatar(gltf, scene, 0, 6, 0);   // face +z toward the entry/spawn so you meet her
+    // Dedicated avatar spotlights so the green-latex model is crisp & unmissable.
+    if (avatarMesh && scene) {
+      const spot = new THREE.SpotLight(0xffffff, 6.0, 30, Math.PI/5, 0.55, 1);
+      spot.position.set(0, 12, 6); spot.target.position.set(0, 2, 6);
+      scene.add(spot); scene.add(spot.target);
+      const rim = new THREE.PointLight(0x66ffb0, 2.4, 16); rim.position.set(0, 3, 2.5); scene.add(rim);
+      const front = new THREE.PointLight(0xfff0d0, 2.0, 16); front.position.set(0, 3, 9.5); scene.add(front);
+    }
   } catch(_) {}
   startLoop();
   renderPending();
