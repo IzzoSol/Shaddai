@@ -4361,12 +4361,12 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
     b.insertAdjacentHTML('beforeend','<div class="dist-sub" style="margin-top:14px">ASK NEXUS</div>');
     b.insertAdjacentHTML('beforeend','<input id="navQ" placeholder="Ask about Shaddai… e.g. how do I forge an agent?"><button class="dist-btn" id="navGo">ASK NEXUS</button><div id="auraBox"></div>');
     const o=out(b);
-    document.getElementById('navGo').onclick=async()=>{ show(o,'…'); const d=await jget('/api/navigator/ask?q='+encodeURIComponent(document.getElementById('navQ').value)); show(o,d.answer); };
+    document.getElementById('navGo').onclick=async()=>{ show(o,'…'); const r=await jpost('/api/model/chat',{message:document.getElementById('navQ').value||'How do I get started in SHADDAI?',agent:'NEXUS'}); show(o,(r.data&&r.data.content)||(r.data&&r.data.error)||'NEXUS is unavailable right now.'); };
     document.getElementById('navQ').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('navGo').click(); });
-    jget('/api/navigator/aura').then(d=>{ const a=d.aura||{}; const hits=a.hits||a.cacheHits||0;
+    jget('/api/aura/stats').then(a=>{ a=a||{}; const hits=a.hits||a.cacheHits||0;
       document.getElementById('auraBox').innerHTML='<div class="dist-sub" style="margin-top:16px">⚡ AURA TOKEN SAVER</div>'+
         '<div class="dist-stat"><span>cache hits</span><b>'+hits+'</b></div>'+
-        '<div class="dist-stat"><span>entries cached</span><b>'+(a.entries||a.size||0)+'</b></div>'+
+        '<div class="dist-stat"><span>entries cached</span><b>'+(a.cacheEntries||a.entries||a.size||0)+'</b></div>'+
         '<div class="dist-stat"><span>tokens saved (est)</span><b>'+(a.tokensSaved||a.estimatedTokensSaved||hits*350).toLocaleString()+'</b></div>'; }).catch(()=>{});
   }
   function lib_(b){
@@ -4381,7 +4381,7 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
   function aeg_(b){
     b.insertAdjacentHTML('beforeend','<input id="aegT" placeholder="URL, code snippet, or CVE keyword to audit…"><button class="dist-btn" id="aegGo">🛡 RUN SECURITY SCAN</button>');
     const o=out(b);
-    document.getElementById('aegGo').onclick=async()=>{ show(o,'scanning…'); const r=await jpost('/api/aegis/scan',{target:document.getElementById('aegT').value}); const x=(r.data&&r.data.result)||{}; show(o,'SECURITY:\n'+(typeof x.security==='string'?x.security:JSON.stringify(x.security,null,2))+'\n\nCVE:\n'+(x.cve||'—')); };
+    document.getElementById('aegGo').onclick=async()=>{ const tgt=document.getElementById('aegT').value; if(!tgt){ show(o,'Paste a URL, code snippet, or CVE keyword to scan.'); return; } show(o,'scanning…'); const r=await jpost('/api/model/chat',{message:'You are PIKADON, SHADDAI security. Perform a concise security review of the following (code, URL, or CVE keyword). List concrete risks/vulnerabilities and any relevant known CVEs, then a short hardening recommendation:\n\n'+tgt,agent:'PIKADON'}); show(o,(r.data&&r.data.content)||(r.data&&r.data.error)||'Scan unavailable right now.'); };
   }
   function mus_(b){
     b.insertAdjacentHTML('beforeend',
@@ -4430,7 +4430,7 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
     }
     b.insertAdjacentHTML('beforeend','<div class="dist-sub" style="margin-top:16px">CONSULT ORACLE (live)</div><select id="esoTier"><option value="free">Free (locked)</option><option value="builder">Builder</option><option value="pro">Pro</option><option value="alpha">Alpha</option></select><input id="esoQ" placeholder="natal chart · numerology · sacred geometry · chakra…"><button class="dist-btn" id="esoGo">🔮 CONSULT THE ARCHIVE</button>');
     const o=out(b);
-    document.getElementById('esoGo').onclick=async()=>{ show(o,'…'); const r=await jpost('/api/oracle/esoteric',{query:document.getElementById('esoQ').value,tier:document.getElementById('esoTier').value}); if(r.status===402){ show(o,'🔒 '+r.data.error); return; } show(o,(r.data.result&&r.data.result.content)||'no result'); };
+    document.getElementById('esoGo').onclick=async()=>{ const q=document.getElementById('esoQ').value; if(!q){ show(o,'Ask the Archive — a natal chart, numerology, sacred geometry, a chakra…'); return; } show(o,'…'); const r=await jpost('/api/model/chat',{message:'You are ORACLE, keeper of the Esoteric Archive. Give an insightful, grounded esoteric reading for:\n\n'+q,agent:'ORACLE'}); show(o,(r.data&&r.data.content)||(r.data&&r.data.error)||'The Archive is quiet right now.'); };
   }
   function ago_(b){
     // ZEROX runs the markets sector — live exchange chart up top, seller's desk below.
