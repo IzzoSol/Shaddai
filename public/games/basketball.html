@@ -75,9 +75,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   letter-spacing:4px;color:#37e6ff;text-shadow:0 0 14px #37e6ff66;}
 .navbtns{display:flex;gap:8px;align-items:center;pointer-events:none;}
 #backBtn,#codexBtn{pointer-events:all;font-family:'Orbitron',sans-serif;font-weight:700;
-  font-size:12px;letter-spacing:2px;background:rgba(0,0,0,.5);
-  border:1px solid #37e6ff55;color:#37e6ff;padding:7px 16px;border-radius:6px;
-  cursor:pointer;transition:background .15s,box-shadow .15s;}
+  font-size:clamp(10px,1.4vw,12px);letter-spacing:2px;background:rgba(0,0,0,.5);
+  border:1px solid #37e6ff55;color:#37e6ff;padding:8px 16px;border-radius:6px;
+  min-height:36px;cursor:pointer;transition:background .15s,box-shadow .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;}
+#backBtn:active,#codexBtn:active{transform:scale(.96);}
 #backBtn:hover{background:#37e6ff22;box-shadow:0 0 14px #37e6ff44;}
 #codexBtn{border-color:#ff9d3d66;color:#ff9d3d;}
 #codexBtn:hover{background:#ff9d3d22;box-shadow:0 0 14px #ff9d3d55;}
@@ -110,25 +112,45 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   text-shadow:0 0 30px rgba(55,230,255,.3);}
 #tipoff .sub{font-size:11px;letter-spacing:4px;color:#9fb3c9;text-align:center;}
-#tipoff .controls-box{width:100%;background:rgba(255,255,255,.03);
-  border:1px solid #37e6ff22;border-radius:10px;padding:14px 16px;
-  display:flex;flex-direction:column;gap:8px;}
-#tipoff .ctrl-row{display:flex;align-items:baseline;gap:12px;
-  font-size:11px;letter-spacing:1px;line-height:1.4;}
-#tipoff .ctrl-row .k{flex:0 0 108px;font-family:'Orbitron',sans-serif;font-weight:700;
-  font-size:10px;letter-spacing:1px;color:#37e6ff;text-align:right;
-  text-shadow:0 0 8px #37e6ff55;}
+#tipoff .controls-box{width:100%;background:linear-gradient(180deg,rgba(55,230,255,.045),rgba(255,255,255,.015));
+  border:1px solid #37e6ff2e;border-radius:12px;padding:6px 14px;
+  display:flex;flex-direction:column;
+  box-shadow:inset 0 0 24px rgba(55,230,255,.04);}
+#tipoff .controls-box::before{content:'CONTROLS';display:block;
+  font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:4px;color:#5f7c93;
+  padding:8px 2px 6px;border-bottom:1px solid #37e6ff1a;margin-bottom:2px;}
+#tipoff .ctrl-row{display:flex;align-items:center;gap:14px;
+  font-size:11px;letter-spacing:1px;line-height:1.35;padding:6px 2px;
+  border-bottom:1px solid rgba(255,255,255,.04);}
+#tipoff .ctrl-row:last-child{border-bottom:none;}
+#tipoff .ctrl-row .k{flex:0 0 116px;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:9.5px;letter-spacing:.5px;color:#37e6ff;text-align:center;
+  padding:5px 6px;border-radius:6px;background:rgba(55,230,255,.08);
+  border:1px solid #37e6ff33;text-shadow:0 0 8px #37e6ff44;}
 #tipoff .ctrl-row .d{flex:1;color:#c3d2e2;word-break:break-word;}
-#tipoff .btn-row{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;justify-content:center;}
-#tipoff button{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;
-  letter-spacing:3px;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;
-  transition:transform .12s,box-shadow .12s;}
+#tipoff .btn-row{display:flex;gap:clamp(12px,2.4vw,18px);margin-top:10px;
+  flex-wrap:wrap;justify-content:center;width:100%;}
+#tipoff button{font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(13px,1.7vw,15px);letter-spacing:3px;border:none;
+  padding:clamp(13px,1.8vh,16px) clamp(26px,4.5vw,40px);
+  min-width:clamp(150px,40%,200px);min-height:50px;border-radius:10px;cursor:pointer;
+  position:relative;text-transform:uppercase;
+  transition:transform .12s ease,box-shadow .18s ease,filter .12s ease;
+  -webkit-tap-highlight-color:transparent;}
 #tipoff button:hover{transform:translateY(-2px);}
-#startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;
-  box-shadow:0 0 20px rgba(55,230,255,.4);}
-#startBtn:hover{box-shadow:0 0 30px rgba(255,77,148,.6);}
-#watchBtn{background:rgba(255,215,0,.12);border:1px solid #ffd70066;color:#ffd700;}
-#watchBtn:hover{box-shadow:0 0 22px rgba(255,215,0,.4);}
+#tipoff button:active{transform:translateY(0) scale(.98);filter:brightness(1.1);}
+#tipoff button:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+/* Primary TIP-OFF — the obvious, glowing call-to-action */
+#startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#040810;
+  box-shadow:0 4px 22px rgba(55,230,255,.45),0 0 0 1px rgba(255,255,255,.12) inset;
+  animation:startPulse 2.2s ease-in-out infinite;}
+#startBtn:hover{box-shadow:0 6px 34px rgba(255,77,148,.65),0 0 0 1px rgba(255,255,255,.2) inset;}
+@keyframes startPulse{0%,100%{box-shadow:0 4px 22px rgba(55,230,255,.45),0 0 0 1px rgba(255,255,255,.12) inset;}
+  50%{box-shadow:0 4px 30px rgba(255,77,148,.55),0 0 0 1px rgba(255,255,255,.18) inset;}}
+/* Secondary WATCH — clearly a subordinate, still obviously clickable */
+#watchBtn{background:rgba(255,215,0,.10);border:1.5px solid #ffd70077;color:#ffd700;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);}
+#watchBtn:hover{background:rgba(255,215,0,.18);box-shadow:0 4px 24px rgba(255,215,0,.4);}
 /* END / RESULT screen */
 #endscreen{position:fixed;inset:0;z-index:58;display:none;
   align-items:center;justify-content:center;padding:56px 16px;overflow-y:auto;
@@ -150,14 +172,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   font-size:clamp(40px,9vw,64px);letter-spacing:4px;display:flex;gap:18px;align-items:center;}
 #end-score .end-sep{color:#556;font-weight:700;}
 .end-sub{font-size:10px;letter-spacing:4px;color:#8aa0b8;}
-#endscreen button{font-family:'Orbitron',sans-serif;font-weight:900;font-size:12px;
-  letter-spacing:2px;border:none;padding:12px 26px;border-radius:8px;cursor:pointer;
-  transition:transform .12s,box-shadow .12s;}
+#endscreen .btn-row{display:flex;gap:clamp(12px,2.4vw,18px);
+  flex-wrap:wrap;justify-content:center;width:100%;margin-top:4px;}
+#endscreen button{font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(12px,1.6vw,14px);letter-spacing:2px;border:none;
+  padding:clamp(13px,1.8vh,16px) clamp(22px,4vw,34px);
+  min-width:clamp(140px,40%,190px);min-height:50px;border-radius:10px;cursor:pointer;
+  text-transform:uppercase;-webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease,box-shadow .18s ease,filter .12s ease;}
 #endscreen button:hover{transform:translateY(-2px);}
-#rematchBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;
-  box-shadow:0 0 20px rgba(55,230,255,.4);}
-#endBackBtn{background:rgba(255,255,255,.06);border:1px solid #37e6ff44;color:#37e6ff;}
-#endBackBtn:hover{box-shadow:0 0 18px #37e6ff44;}
+#endscreen button:active{transform:translateY(0) scale(.98);filter:brightness(1.1);}
+#endscreen button:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+#rematchBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#040810;
+  box-shadow:0 4px 22px rgba(55,230,255,.45),0 0 0 1px rgba(255,255,255,.12) inset;}
+#rematchBtn:hover{box-shadow:0 6px 34px rgba(255,77,148,.6),0 0 0 1px rgba(255,255,255,.2) inset;}
+#endBackBtn{background:rgba(255,255,255,.06);border:1.5px solid #37e6ff55;color:#37e6ff;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);}
+#endBackBtn:hover{background:rgba(55,230,255,.12);box-shadow:0 4px 24px #37e6ff44;}
 
 /* NOTE: on-screen joystick / touch controls intentionally REMOVED — keyboard only. */
 
@@ -822,6 +853,16 @@ const glbActions = [
 ];
 const glbLoaded  = [false, false];
 
+// ─────────────────────────────────────────────────────────────────
+// TEAM / JERSEY COLORS — declared HERE (before initMeshes/loadGLBPlayer run)
+// so there's no temporal-dead-zone crash. loadGLBPlayer() + createJerseyForPlayer()
+// read TEAM_COLORS/JERSEY_COLORS, and initMeshes() (which calls loadGLBPlayer)
+// executes further down at module top-level — these must already be initialized.
+// Mutable arrays so a late character-selection change can re-tint the scene.
+const JERSEY_NUMBERS = [1, 7];
+const JERSEY_COLORS  = [selectedAgent.hex, ghostAgent.hex];
+const TEAM_COLORS    = [selectedAgent.color, ghostAgent.color];
+
 // Input
 const keys = {};
 let mouseDown = false;
@@ -1037,11 +1078,10 @@ const _jwLq = new THREE.Quaternion();
 const _jhP  = new THREE.Vector3();
 const _jhQ  = new THREE.Quaternion();
 
-const JERSEY_NUMBERS = [1, 7];
-// Jersey colors follow the selected roster agents (fallback to team defaults).
-const JERSEY_COLORS  = [selectedAgent.hex, ghostAgent.hex];
-// Team tints (used by GLB emissive + jersey) — mutable so selection can update them.
-const TEAM_COLORS    = [selectedAgent.color, ghostAgent.color];
+// NOTE: JERSEY_NUMBERS / JERSEY_COLORS / TEAM_COLORS are declared earlier
+// (right after the GLB state) so they exist BEFORE initMeshes() → loadGLBPlayer()
+// runs. Declaring them here caused a temporal-dead-zone ReferenceError that
+// aborted the whole module (so the TIP-OFF button listeners never bound).
 
 function _makeNumTex(colorHex, number) {
   const cv = document.createElement('canvas');
@@ -2585,29 +2625,49 @@ function tick(now) {
 // START
 // ─────────────────────────────────────────────────────────────────
 function startGame(auto = false) {
-  initAudio();
-  document.getElementById('tipoff').style.display = 'none';
-  document.getElementById('endscreen').classList.remove('show');
-  // Reset scores/clocks for a clean (re)match
-  game.scoreYou = 0; game.scoreAI = 0;
-  game.quarter = 1; game.quarterTimer = QUARTER_SEC;
-  game.shotClock = SHOT_CLOCK_MAX; game.autoMode = false;
-  document.getElementById('auto-badge').style.display = 'none';
-  applySelectionColors();
-  applyTeamColorsToScene();
-  updateControlsHUD();
-  transferBall(0);
-  game.running = true;
-  game.lastFrameTime = performance.now();
-  if (auto) {
-    game.autoMode = true;
-    document.getElementById('auto-badge').style.display = 'block';
-    showMsg('AUTO DEMO', '#ffd700', 1.5);
-  } else {
-    showMsg('TIP-OFF!', '#ffd700', 1.5);
+  // DEFENSIVE START: the 3D bodies (GLBs) load async and may not be ready yet.
+  // Every scene-touching call below is guarded so a not-yet-loaded GLB, jersey,
+  // or ball can NEVER dead-end the start. The game starts regardless; bodies
+  // pop in when their loaders resolve. Errors are logged, never swallowed silently.
+  try {
+    initAudio();
+    const tip = document.getElementById('tipoff'); if (tip) tip.style.display = 'none';
+    const end = document.getElementById('endscreen'); if (end) end.classList.remove('show');
+
+    // Reset scores/clocks for a clean (re)match
+    game.scoreYou = 0; game.scoreAI = 0;
+    game.quarter = 1; game.quarterTimer = QUARTER_SEC;
+    game.shotClock = SHOT_CLOCK_MAX; game.autoMode = false;
+    const badge = document.getElementById('auto-badge'); if (badge) badge.style.display = 'none';
+
+    // Scene-dependent setup — individually guarded so a late GLB can't block start.
+    try { applySelectionColors(); }   catch (e) { console.error('[startGame] applySelectionColors failed (non-fatal):', e); }
+    try { applyTeamColorsToScene(); } catch (e) { console.error('[startGame] applyTeamColorsToScene failed (non-fatal):', e); }
+    try { updateControlsHUD(); }      catch (e) { console.error('[startGame] updateControlsHUD failed (non-fatal):', e); }
+    try { transferBall(0); }          catch (e) { console.error('[startGame] transferBall failed (non-fatal):', e); }
+
+    // FLIP THE SWITCH — the render loop is already running; this is the gate it checks.
+    game.running = true;
+    game.lastFrameTime = performance.now();
+
+    if (auto) {
+      game.autoMode = true;
+      if (badge) badge.style.display = 'block';
+      showMsg('AUTO DEMO', '#ffd700', 1.5);
+    } else {
+      showMsg('TIP-OFF!', '#ffd700', 1.5);
+    }
+
+    try { updateScoreUI(); } catch (e) { console.error('[startGame] updateScoreUI failed (non-fatal):', e); }
+    try { updatePossUI(); }  catch (e) { console.error('[startGame] updatePossUI failed (non-fatal):', e); }
+  } catch (e) {
+    // Last-resort guard: even if something unexpected throws, make sure the game
+    // is actually running and the tip-off is dismissed so the player isn't stuck.
+    console.error('[startGame] fatal path — forcing game to run anyway:', e);
+    game.running = true;
+    game.lastFrameTime = performance.now();
+    const tip = document.getElementById('tipoff'); if (tip) tip.style.display = 'none';
   }
-  updateScoreUI();
-  updatePossUI();
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2691,16 +2751,25 @@ function buildCharSelector() {
     grid.appendChild(card);
   });
 }
-buildCharSelector();
-applySelectionColors();
+// DEFENSIVE INIT TAIL: bind the tip-off / watch / rematch / back buttons FIRST,
+// each guarded, so nothing downstream can prevent the START button from working.
+// (A crash anywhere in top-level init previously left these listeners unbound —
+// that was the "start button does nothing" bug. Keep this resilient.)
+try { buildCharSelector(); }  catch (e) { console.error('[init] buildCharSelector failed (non-fatal):', e); }
+try { applySelectionColors(); } catch (e) { console.error('[init] applySelectionColors failed (non-fatal):', e); }
 
-document.getElementById('startBtn').addEventListener('click', () => startGame(false));
-document.getElementById('watchBtn').addEventListener('click', () => startGame(true));
-document.getElementById('rematchBtn').addEventListener('click', () => startGame(false));
-document.getElementById('endBackBtn').addEventListener('click', exitGame);
+function bindClick(id, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', handler);
+  else console.error(`[init] button #${id} not found — listener not bound`);
+}
+bindClick('startBtn',   () => startGame(false));
+bindClick('watchBtn',   () => startGame(true));
+bindClick('rematchBtn', () => startGame(false));
+bindClick('endBackBtn', exitGame);
 
 // Kick off render loop immediately
-updateControlsHUD();
+try { updateControlsHUD(); } catch (e) { console.error('[init] updateControlsHUD failed (non-fatal):', e); }
 game.lastFrameTime = performance.now();
 requestAnimationFrame(tick);
 
