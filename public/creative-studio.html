@@ -143,11 +143,15 @@
 <section class="panel" id="p-sonify"><div class="wrap"><div class="card">
   <h2>🖼 SONIFY · IMAGE → MUSIC</h2><div class="d">Turn any image into music. Each column of the image becomes a note — brightness picks the pitch (locked to a scale), so it always sounds musical. See the image's binary underneath.</div>
   <div class="ctrls">
+    <label>PROMPT <input type="text" id="son-prompt" placeholder="emerald koi · nebula · sacred geometry…" style="min-width:190px;background:rgba(4,20,13,.9);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:7px 10px;font-family:inherit;font-size:12px"></label>
+    <button class="play" id="son-generate">✦ GENERATE IMAGE</button>
+    <label style="opacity:.6">or</label>
     <label>IMAGE <input type="file" id="son-file" accept="image/*" style="font-size:11px;color:#9fdcbf"></label>
-    <button class="hbtn" id="son-sample">◈ USE SAMPLE</button>
+    <button class="hbtn" id="son-sample">◈ USE ART</button>
     <label>SCALE <select id="son-scale"></select></label>
     <label>SPEED <input type="range" id="son-speed" min="4" max="16" value="9"></label>
     <label>VOICE <select id="son-voice"><option value="sine">Sine</option><option value="triangle" selected>Triangle</option><option value="sawtooth">Saw</option></select></label>
+    <label title="Hue picks the instrument, saturation the loudness"><input type="checkbox" id="son-color" checked> color→timbre</label>
     <button class="play" id="son-play">▶ SONIFY</button>
     <button class="hbtn" id="son-stop">STOP</button>
   </div>
@@ -196,8 +200,8 @@
     <canvas id="artcanvas" width="800" height="500"></canvas>
     <div class="artside">
       <div class="ctrls" style="flex-direction:column;align-items:stretch;gap:10px">
-        <label>STYLE <select id="art-style"><option value="flow">Flow Field</option><option value="orbits">Neon Orbits</option><option value="grid">Binary Grid</option></select></label>
-        <label>PALETTE <select id="art-pal"><option value="grn">Emerald</option><option value="cy">Cyan</option><option value="mag">Magenta</option><option value="spec">Spectrum</option></select></label>
+        <label>STYLE <select id="art-style"><option value="spectrum">Radial Spectrum</option><option value="mandala">Kaleido Mandala</option><option value="bloom">Particle Bloom</option><option value="flow">Flow Field</option><option value="orbits">Neon Orbits</option><option value="grid">Binary Grid</option></select></label>
+        <label>PALETTE <select id="art-pal"><option value="grn">Emerald</option><option value="teal">Teal</option><option value="brass">Brass</option><option value="ember">Ember</option><option value="spec">Spectrum</option></select></label>
         <label><input type="checkbox" id="art-react" checked> react to beat</label>
         <button class="play" id="art-gen">✦ GENERATE</button>
         <button class="hbtn" id="art-save">⤓ SAVE PNG</button>
@@ -399,25 +403,42 @@ document.getElementById('med-play').onclick=()=>medPlaying?medStop():medStart();
 
 // ═══════════════ ART — generative canvas ═══════════════
 const cv=document.getElementById('artcanvas'), cx=cv.getContext('2d');
-const PALS={ grn:['#00ff88','#38ffb0','#0c9'], cy:['#00f0ff','#7ef9ff','#0af'], mag:['#ff2bd6','#f0b07a','#c0f'], spec:['#00ff88','#00f0ff','#ffd24a','#ff2bd6'] };
+const PALS={ grn:['#43e8a0','#89ffcf','#0c9a6a'], teal:['#3fd7c6','#7ef9e6','#118a86'], brass:['#e0a94a','#f3cd7a','#b07a2a'], ember:['#e0864f','#f0b07a','#c9563a'], spec:['#43e8a0','#3fd7c6','#e0a94a','#e0864f'] };
 let artSeed=Math.floor(performance.now?performance.now():1)%99999, artRAF=null, analyser=null, aData=null;
 function rng(s){ return ()=>{ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
-function connectAnalyser(){ if(analyser||!AC) return; analyser=AC.createAnalyser(); analyser.fftSize=64; master.connect(analyser); aData=new Uint8Array(analyser.frequencyBinCount); }
+function connectAnalyser(){ if(analyser||!AC) return; analyser=AC.createAnalyser(); analyser.fftSize=256; analyser.smoothingTimeConstant=0.82; master.connect(analyser); aData=new Uint8Array(analyser.frequencyBinCount); }
+function bands(){ if(!(document.getElementById('art-react').checked && analyser)) return {bass:.4,mid:.4,treble:.4,amp:.55,react:false};
+  analyser.getByteFrequencyData(aData); const n=aData.length, avg=(a,b)=>{let s=0;for(let i=a;i<b;i++)s+=aData[i];return s/((b-a)*255);};
+  const bass=avg(0,6),mid=avg(6,40),treble=avg(40,n); return {bass,mid,treble,amp:0.3+(bass*1.4+mid+treble*0.6),react:true}; }
 function drawArt(){
-  const style=document.getElementById('art-style').value, pal=PALS[document.getElementById('art-pal').value];
-  const r=rng(artSeed+1); cx.fillStyle='#020a06'; cx.fillRect(0,0,cv.width,cv.height);
-  let amp=0.5; if(document.getElementById('art-react').checked && analyser){ analyser.getByteFrequencyData(aData); amp=0.3+ (aData.reduce((a,b)=>a+b,0)/aData.length/255)*1.4; }
-  cx.globalCompositeOperation='lighter';
+  const style=document.getElementById('art-style').value, pal=PALS[document.getElementById('art-pal').value]||PALS.grn;
+  const B=bands(), amp=B.amp, r=rng(artSeed+1), W=cv.width,H=cv.height,CXP=W/2,CYP=H/2,tm=performance.now()*0.001;
+  cx.fillStyle=B.react?'rgba(2,10,6,.22)':'#020a06'; cx.fillRect(0,0,W,H);   // trails when reactive
+  cx.globalCompositeOperation='lighter'; cx.lineCap='round';
   if(style==='flow'){
-    for(let i=0;i<520;i++){ let x=r()*cv.width, y=r()*cv.height; cx.strokeStyle=pal[i%pal.length]+'55'; cx.lineWidth=0.7+r()*1.6*amp; cx.beginPath(); cx.moveTo(x,y);
-      for(let j=0;j<26;j++){ const a=(Math.sin(x*0.008+artSeed)+Math.cos(y*0.008-artSeed))*Math.PI*amp; x+=Math.cos(a)*7; y+=Math.sin(a)*7; cx.lineTo(x,y); } cx.stroke(); }
+    const N=Math.round(340+B.treble*360);
+    for(let i=0;i<N;i++){ let x=r()*W,y=r()*H; cx.strokeStyle=pal[i%pal.length]+'55'; cx.lineWidth=0.6+r()*2*(0.5+B.bass); cx.beginPath(); cx.moveTo(x,y);
+      for(let j=0;j<24;j++){ const a=(Math.sin(x*0.008+artSeed+tm)+Math.cos(y*0.008-artSeed))*Math.PI*(0.7+amp*0.8); x+=Math.cos(a)*7; y+=Math.sin(a)*7; cx.lineTo(x,y);} cx.stroke(); }
   } else if(style==='orbits'){
-    const cxp=cv.width/2, cyp=cv.height/2;
-    for(let i=0;i<160;i++){ const rad=(20+i*3)*(0.6+amp*0.5), a0=r()*6.28; cx.strokeStyle=pal[i%pal.length]+'44'; cx.lineWidth=0.8+amp; cx.beginPath();
-      for(let a=0;a<6.3;a+=0.12){ const rr=rad*(1+0.14*Math.sin(a*5+artSeed+i)); const x=cxp+Math.cos(a+a0)*rr, y=cyp+Math.sin(a+a0)*rr*0.62; a===0?cx.moveTo(x,y):cx.lineTo(x,y);} cx.stroke(); }
+    for(let i=0;i<180;i++){ const rad=(16+i*3)*(0.6+amp*0.5), a0=r()*6.28; cx.strokeStyle=pal[i%pal.length]+'44'; cx.lineWidth=0.8+B.mid*2; cx.beginPath();
+      for(let a=0;a<6.3;a+=0.1){ const rr=rad*(1+0.16*Math.sin(a*(4+Math.round(B.treble*6))+artSeed+i+tm)); const x=CXP+Math.cos(a+a0)*rr, y=CYP+Math.sin(a+a0)*rr*0.62; a===0?cx.moveTo(x,y):cx.lineTo(x,y);} cx.stroke(); }
+  } else if(style==='mandala'){
+    const seg=Math.max(6,Math.round(6+B.mid*14)); cx.save(); cx.translate(CXP,CYP);
+    for(let s=0;s<seg;s++){ cx.rotate(6.2832/seg);
+      for(let i=0;i<34;i++){ const rr=(8+i*5)*(0.7+amp*0.4); cx.strokeStyle=`hsla(${(150+B.treble*160+i*6+tm*20)%360},78%,62%,.5)`; cx.lineWidth=0.8+B.bass*2.4;
+        cx.beginPath(); cx.arc(rr*0.5,0,rr*0.3*(1+B.treble),0,6.2832); cx.stroke(); } } cx.restore();
+  } else if(style==='spectrum'){
+    if(B.react){ const n=aData.length, RR=Math.min(W,H)*0.42;
+      for(let s=-1;s<=1;s+=2) for(let i=0;i<n;i++){ const a=s*i/n*6.2832, mag=aData[i]/255, r0=42, r1=r0+mag*RR;
+        cx.strokeStyle=pal[i%pal.length]+(s>0?'aa':'55'); cx.lineWidth=Math.max(1,6.2832*r0/n*0.8); cx.beginPath(); cx.moveTo(CXP+Math.cos(a)*r0,CYP+Math.sin(a)*r0); cx.lineTo(CXP+Math.cos(a)*r1,CYP+Math.sin(a)*r1); cx.stroke(); }
+    } else { cx.fillStyle=pal[0]+'55'; cx.font='italic 16px Fraunces,serif'; cx.textAlign='center'; cx.fillText('play a sound to bloom the spectrum',CXP,CYP); cx.textAlign='left'; }
+  } else if(style==='bloom'){
+    const N=Math.round(70+B.bass*300);
+    for(let i=0;i<N;i++){ const a=r()*6.2832, d=r()*Math.min(W,H)*0.5*(0.4+amp), x=CXP+Math.cos(a)*d, y=CYP+Math.sin(a)*d*0.72, sz=1+r()*4*(0.5+B.treble);
+      cx.fillStyle=pal[i%pal.length]+'66'; cx.beginPath(); cx.arc(x,y,sz,0,6.2832); cx.fill(); }
   } else { // binary grid
     const cell=18; cx.font='13px monospace';
-    for(let y=0;y<cv.height;y+=cell) for(let x=0;x<cv.width;x+=cell){ const v=r(); cx.fillStyle=pal[Math.floor(r()*pal.length)]+(v>0.5?'cc':'33'); cx.fillText(v>0.5*amp?'1':'0',x,y+cell); }
+    for(let y=0;y<H;y+=cell) for(let x=0;x<W;x+=cell){ const v=r(); cx.fillStyle=pal[Math.floor(r()*pal.length)]+(v>0.5?'cc':'33'); cx.fillText(v>(0.5/Math.max(amp,.4))?'1':'0',x,y+cell); }
   }
   cx.globalCompositeOperation='source-over';
 }
@@ -436,24 +457,42 @@ drawArt(); artLoop();
 const sonScale=document.getElementById('son-scale'); Object.keys(SCALES).forEach(s=>sonScale.add(new Option(s,s))); sonScale.value='Pentatonic Minor';
 const sonVoiceSel=document.getElementById('son-voice'); sonVoiceSel.innerHTML=''; PATCH_NAMES.forEach(n=>sonVoiceSel.add(new Option(n,n))); sonVoiceSel.value='Kalimba';
 const sonCv=document.getElementById('son-canvas'), sonCx=sonCv.getContext('2d');
-let sonCols=[], sonTimer=null;
+let sonCols=[], sonHue=[], sonSat=[], sonTimer=null;
+// hue-band → instrument (color paints timbre): red→pluck, amber→keys, green→mallet, cyan→pad, blue→bell, violet→bass
+const HUE_PATCH=['Pluck','E-Piano','Kalimba','Warm Pad','Glass','Deep Sub'];
+function rgb2hsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0; if(d){ h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h/=6; } const l=(mx+mn)/2, s=d?d/(1-Math.abs(2*l-1)||1):0; return [h,s,l]; }
 function analyzeImage(img){
   sonCx.fillStyle='#020a06'; sonCx.fillRect(0,0,sonCv.width,sonCv.height); sonCx.drawImage(img,0,0,sonCv.width,sonCv.height);
-  const N=40, data=sonCx.getImageData(0,0,sonCv.width,sonCv.height).data; sonCols=[];
-  for(let c=0;c<N;c++){ const x=Math.floor(c/N*sonCv.width); let sum=0,cnt=0;
-    for(let y=0;y<sonCv.height;y+=5){ const i=(y*sonCv.width+x)*4; sum+=(data[i]+data[i+1]+data[i+2])/3; cnt++; } sonCols.push(sum/cnt/255); }
+  const N=40, data=sonCx.getImageData(0,0,sonCv.width,sonCv.height).data; sonCols=[]; sonHue=[]; sonSat=[];
+  for(let c=0;c<N;c++){ const x=Math.floor(c/N*sonCv.width); let sum=0,rs=0,gs=0,bs=0,cnt=0;
+    for(let y=0;y<sonCv.height;y+=5){ const i=(y*sonCv.width+x)*4; rs+=data[i];gs+=data[i+1];bs+=data[i+2]; sum+=(data[i]+data[i+1]+data[i+2])/3; cnt++; }
+    const [h,s]=rgb2hsl(rs/cnt,gs/cnt,bs/cnt); sonCols.push(sum/cnt/255); sonHue.push(h); sonSat.push(s); }
   document.getElementById('son-binary').textContent = sonCols.map(b=>Math.round(b*255).toString(2).padStart(8,'0')).join(' ');
 }
 document.getElementById('son-file').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const img=new Image(); img.onload=()=>{analyzeImage(img);toast('Image loaded — press Sonify');}; img.src=URL.createObjectURL(f); };
-document.getElementById('son-sample').onclick=()=>{ const img=new Image(); img.onload=()=>{analyzeImage(img);toast('Sample loaded — press Sonify');}; img.src=cv.toDataURL('image/png'); };
+document.getElementById('son-sample').onclick=()=>{ const img=new Image(); img.onload=()=>{analyzeImage(img);toast('Art loaded — press Sonify');}; img.src=cv.toDataURL('image/png'); };
+document.getElementById('son-generate').onclick=()=>{
+  const q=document.getElementById('son-prompt').value.trim()||'emerald sacred geometry, neon organic art, koi, nebula, intricate';
+  const gb=document.getElementById('son-generate'); gb.textContent='… GENERATING'; toast('Generating FLUX image…');
+  const seed=Math.floor((performance.now()*(Math.floor(Math.random()*90+9)))%99999);
+  const poll='https://image.pollinations.ai/prompt/'+encodeURIComponent(q)+'?width=512&height=320&model=flux&nologo=true&seed='+seed;
+  const img=new Image();
+  img.onload=()=>{ analyzeImage(img); gb.textContent='✦ GENERATE IMAGE'; toast('Image ready — press ▶ SONIFY'); };
+  img.onerror=()=>{ gb.textContent='✦ GENERATE IMAGE'; toast('Generation failed — try again'); };
+  img.src='/api/proxy-image?url='+encodeURIComponent(poll);   // same-origin proxy → canvas stays readable
+};
 function sonStop(){ clearTimeout(sonTimer); sonTimer=null; }
 document.getElementById('son-stop').onclick=sonStop;
 document.getElementById('son-play').onclick=()=>{ if(!sonCols.length){ toast('Load an image first'); return; } audio(); sonStop();
-  const ints=SCALES[sonScale.value], oct=4, root=0, speed=+document.getElementById('son-speed').value, vt=document.getElementById('son-voice').value; let i=0; const dur=1/speed;
-  (function next(){ if(i>=sonCols.length){ sonTimer=null; return; } const b=sonCols[i];
+  const ints=SCALES[sonScale.value], oct=4, root=0, speed=+document.getElementById('son-speed').value, vt=document.getElementById('son-voice').value;
+  const colorMode=document.getElementById('son-color').checked; let i=0; const dur=1/speed;
+  (function next(){ if(i>=sonCols.length){ sonTimer=null; return; } const b=sonCols[i], h=sonHue[i]||0, s=sonSat[i]||0;
     const deg=Math.floor(b*ints.length*2), midi=12*(oct+1)+root+ints[deg%ints.length]+12*Math.floor(deg/ints.length);
-    playPatch(vt, midiToFreq(midi), dur*1.5);
-    sonCx.fillStyle='rgba(67,232,160,.22)'; sonCx.fillRect(i/sonCols.length*sonCv.width,0,sonCv.width/sonCols.length,sonCv.height);
+    const patch=colorMode ? HUE_PATCH[Math.min(HUE_PATCH.length-1,Math.floor(h*HUE_PATCH.length))] : vt;
+    const vel=0.35+s*0.65;                                   // saturation → loudness
+    playPatch(patch, midiToFreq(midi), dur*1.5, vel);
+    if(colorMode && s>0.55) playPatch('Glass', midiToFreq(midi+12), dur*1.2, vel*0.4);  // vivid columns shimmer
+    sonCx.fillStyle=`hsla(${Math.round(h*360)},80%,60%,.28)`; sonCx.fillRect(i/sonCols.length*sonCv.width,0,sonCv.width/sonCols.length,sonCv.height);
     i++; sonTimer=setTimeout(next,dur*1000); })(); };
 
 // ═══════════════ HERTZ — frequency + sacred geometry ═══════════════
