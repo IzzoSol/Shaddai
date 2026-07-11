@@ -22,7 +22,7 @@ const A = {
   NEXUS:    'NEXUS a sleek dark-blue cybernetic armored hero in a full visor helmet glowing with electric-blue circuitry',
   ORACLE:   'ORACLE a hooded violet sorceress in flowing purple robes conjuring glowing purple magic',
   PIKADON:  'PIKADON a crimson-and-black armored knight with a horned helmet, glowing red warhammer and a large red diamond shield',
-  QUILL:    'QUILL a silver-haired mage youth in purple-and-white flowing robes casting a glowing pink feather spell',
+  QUILL:    'QUILL a silver-haired mage youth in glowing orange-and-white flowing robes casting a radiant orange feather spell, warm amber energy',
 };
 
 const STYLE = 'vibrant retro arcade cabinet cover art, bold dynamic anime action illustration, dramatic rim lighting, ' +
@@ -34,31 +34,52 @@ const COVERS = [
   { key: 'hoops',          prompt: `Neon basketball arcade box art. ${A.TURTLE} and ${A.ZEROX} leaping for an epic slam dunk with a glowing orange basketball on a vibrant neon night court, electric orange energy trails, glowing hoop, city skyline. ${STYLE}, dominant orange and amber palette` },
   { key: 'starfall',       prompt: `Neon space shooter arcade box art. ${A.NEXUS} and ${A.SHADDAI} piloting sleek chrome-and-cyan starfighters blasting lasers through a field of crystalline asteroids and alien ships, glowing nebula. ${STYLE}, dominant cyan and electric blue palette` },
   { key: 'dodgeball',      prompt: `Neon dodgeball arena arcade box art. ${A.TURTLE}, ${A.ORACLE} and ${A.QUILL} dodging and hurling glowing pink energy dodgeballs mid-air, electric pink sparks, motion blur. ${STYLE}, dominant hot pink and magenta palette` },
-  { key: 'xto-adventure',  prompt: `Neon action-RPG adventure arcade box art. ${A.TURTLE} and ${A.QUILL} adventuring through a lush glowing neon-jungle ruin with ancient glowing portals and mystical emerald energy. ${STYLE}, dominant emerald green palette` },
-  { key: 'shaddai-realms', prompt: `Epic strategy-conquest arcade box art. ${A.SHADDAI} and ${A.PIKADON} commanding a vast empire of glowing golden citadels and marching armies at golden hour, war banners. ${STYLE}, dominant gold and amber palette` },
-  { key: 'soccer',         prompt: `Neon soccer stadium arcade box art. ${A.ZEROX} and ${A.TURTLE} striking a glowing golden soccer ball mid bicycle-kick on a vibrant neon pitch at night, floodlights, roaring crowd. ${STYLE}, dominant gold and yellow palette` },
+  // ── Blackjack — flagship main game, ALL SEVEN agents at a luxury casino table ──
+  { key: 'blackjack',      prompt: `Luxurious high-roller casino arcade box art, opulent VIP card table scene. All seven heroes gathered around a lavish green-felt blackjack table under a golden art-deco chandelier: ${A.SHADDAI} as the elegant dealer dealing glowing cards, with ${A.ZEROX}, ${A.TURTLE}, ${A.NEXUS}, ${A.ORACLE}, ${A.PIKADON} and ${A.QUILL} seated as players holding fanned playing cards, stacks of glowing gold and neon chips, an ace and king of spades, floating suits (spades hearts diamonds clubs) sparkling in the air, champagne, velvet and gold trim, dramatic cinematic casino lighting. ${STYLE}, opulent emerald green gold and black palette, luxury casino grandeur` },
+  { key: 'xto-adventure',  prompt: `Epic neon action-RPG adventure arcade box art, cinematic key visual. ${A.TURTLE} and ${A.QUILL} as heroic adventurers mid-battle deep in a vast glowing neon-jungle temple, ancient runic portals blazing with mystical emerald energy, floating stone platforms, glowing vines, a colossal ruined god-statue behind them, magical particles, epic scale and depth. ${STYLE}, dominant emerald green and teal palette with warm orange accents` },
+  { key: 'shaddai-realms', prompt: `Grand epic strategy-conquest arcade box art, sweeping cinematic vista. ${A.SHADDAI} and ${A.PIKADON} commanding a vast empire of towering glowing golden citadels, sprawling armies and war banners marching across mountains at golden hour, dramatic sun rays, floating fortresses, monumental scale. ${STYLE}, dominant radiant gold and amber palette, majestic and grandiose` },
+  { key: 'soccer',         prompt: `Explosive neon soccer stadium arcade box art, dynamic action key visual. ${A.ZEROX} and ${A.TURTLE} striking a blazing golden soccer ball in a mid-air bicycle-kick on a vibrant neon pitch at night, packed roaring stadium, brilliant floodlights, streaking energy trails, confetti and sparks, dramatic low camera angle. ${STYLE}, dominant electric gold and lime-green palette, high-energy stadium spectacle` },
 ];
 
 const only = process.argv.slice(2);
 const jobs = only.length ? COVERS.filter(c => only.includes(c.key)) : COVERS;
 
+// Free, keyless Pollinations FLUX fallback (used when HF credits are depleted).
+async function genPollinations(prompt, tries = 0) {
+  const seed = Math.floor(Math.random() * 999999);
+  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
+    `?width=768&height=1024&model=flux&nologo=true&seed=${seed}`;
+  const res = await fetch(url);
+  if (res.status === 200) {
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 4000) return buf;              // guard against tiny error blobs
+  }
+  if (tries < 3) { await new Promise(r => setTimeout(r, 3000)); return genPollinations(prompt, tries + 1); }
+  throw new Error(`Pollinations HTTP ${res.status}`);
+}
+
 async function gen(prompt, tokenIdx = 0, tries = 0) {
+  if (!TOKENS.length) return genPollinations(prompt);   // no HF keys → straight to free fallback
   const token = TOKENS[tokenIdx % TOKENS.length];
-  const res = await fetch(MODEL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ inputs: prompt, parameters: { width: 768, height: 1024 } }),
-  });
+  let res;
+  try {
+    res = await fetch(MODEL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: prompt, parameters: { width: 768, height: 1024 } }),
+    });
+  } catch (e) { return genPollinations(prompt); }
   if (res.status === 200) return Buffer.from(await res.arrayBuffer());
   const msg = await res.text();
-  if ((res.status === 402 || res.status === 403 || res.status === 429) && tokenIdx < TOKENS.length - 1) {
-    return gen(prompt, tokenIdx + 1, tries);
+  if ((res.status === 402 || res.status === 403 || res.status === 429)) {
+    if (tokenIdx < TOKENS.length - 1) return gen(prompt, tokenIdx + 1, tries);
+    return genPollinations(prompt);                 // all HF keys exhausted → free fallback
   }
   if (res.status === 503 && tries < 4) {
     await new Promise(r => setTimeout(r, 4000));
     return gen(prompt, tokenIdx, tries + 1);
   }
-  throw new Error(`HTTP ${res.status}: ${msg.slice(0, 160)}`);
+  return genPollinations(prompt);                   // any other HF failure → free fallback
 }
 
 (async () => {

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SHADDAI ROYALE — High Stakes Blackjack</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- engine loads first; ui.js runs on DOMContentLoaded -->
+  <script src="engine.js" onerror="console.warn('engine.js not found — using fallback engine')"></script>
+  <script src="story.js" onerror="console.warn('story.js not found')"></script>
+</head>
+<body>
+
+<div id="vignette"></div>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 1 — SPLASH
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-splash" class="screen">
+    <div class="skyline-bg">
+      <canvas id="splash-canvas"></canvas>
+    </div>
+
+    <div class="splash-logo">
+      <div class="top-line">Est. 2025 · Monte Carlo · Las Vegas</div>
+      <div class="main-title">SHADDAI</div>
+      <div class="main-title" style="font-size:clamp(1.8rem,5vw,3.8rem);margin-top:-0.1em">ROYALE</div>
+      <div class="sub-title">High Stakes Blackjack</div>
+    </div>
+
+    <div class="splash-divider"></div>
+
+    <button id="btn-splash-play" class="splash-play-btn">Enter the Table</button>
+
+    <p class="splash-tagline">"Fortune favours the bold — and the prepared."</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 2 — MODE SELECT
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-mode" class="screen">
+    <div class="screen-header">
+      <div class="eyebrow">Choose Your Game</div>
+      <h2>Select Mode</h2>
+    </div>
+
+    <div class="mode-cards">
+      <div class="mode-card" data-mode="story">
+        <div class="mode-badge">Campaign</div>
+        <span class="mode-icon">🗺️</span>
+        <h3>Story</h3>
+        <p>Conquer five cities — Phoenix to New York — in an escalating high-stakes tour.</p>
+      </div>
+
+      <div class="mode-card" data-mode="tournament">
+        <div class="mode-badge">Compete</div>
+        <span class="mode-icon">🏆</span>
+        <h3>Tournament</h3>
+        <p>Face all seven SHADDAI agents at once. Last stack standing wins the crown.</p>
+      </div>
+
+      <div class="mode-card" data-mode="arcade">
+        <div class="mode-badge">Free Play</div>
+        <span class="mode-icon">⚡</span>
+        <h3>Arcade</h3>
+        <p>Pure blackjack, no limits. Perfect for practicing your edge at any hour.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 3 — AGENT SELECT
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-agent" class="screen">
+    <div class="screen-header" style="margin-bottom:1.2rem">
+      <div class="eyebrow">Your Dealer &amp; Companion</div>
+      <h2>Choose Your Agent</h2>
+    </div>
+
+    <div id="agent-grid" class="agent-grid"></div>
+
+    <div style="display:flex;gap:0.8rem;margin-top:1.5rem;position:relative;z-index:2">
+      <button id="btn-agent-back" class="back-btn">← Back</button>
+      <button id="btn-agent-next" class="btn-gold-primary" style="flex:1;max-width:200px">Continue →</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 4 — TABLE CONFIG
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-config" class="screen">
+    <!-- City backdrop -->
+    <div id="config-backdrop" class="city-backdrop">
+      <img src="" alt="" onerror="this.style.display='none'">
+      <div class="city-backdrop-fallback" style="position:absolute;inset:0"></div>
+    </div>
+
+    <div class="config-panel">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:0.3rem">Table Configuration</div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--gold-bright),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Set the Stage</div>
+      </div>
+
+      <div class="config-section">
+        <span class="config-label">City / Venue</span>
+        <div id="city-pills" class="city-pills"></div>
+      </div>
+
+      <div class="divider-gold"></div>
+
+      <div class="config-section">
+        <span class="config-label">Players at the Table</span>
+        <div id="player-count-row" class="player-count-row"></div>
+      </div>
+
+      <div class="divider-gold"></div>
+
+      <div style="display:flex;gap:0.8rem;margin-top:0.5rem">
+        <button id="btn-config-back" class="back-btn">← Back</button>
+        <button id="btn-config-play" class="btn-gold-primary" style="flex:1">Deal Me In</button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 5 — STORY MAP (legacy, redirects to new story hub)
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-story" class="screen" style="justify-content:flex-start;padding:1rem 0 0;overflow-y:auto">
+    <div style="position:relative;z-index:2;text-align:center;margin-bottom:1.2rem;padding:0 1rem">
+      <div style="font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:0.3rem">Story Campaign</div>
+      <h2 style="font-family:'Cinzel Decorative',serif;font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--gold-bright),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">The Grand Tour</h2>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:0.85rem;font-style:italic;color:rgba(245,240,232,0.4);margin-top:0.3rem">Beat each city to unlock the next venue</p>
+    </div>
+    <div id="story-path" class="story-path"></div>
+    <div style="position:relative;z-index:2;padding:0 1rem 1.5rem">
+      <button id="btn-story-back" class="back-btn" style="justify-content:center">← Back to Modes</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — INTRO CINEMATIC
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-story-intro" class="screen">
+    <div class="story-intro-bg" id="story-intro-bg"></div>
+    <div class="story-intro-panel" id="story-intro-panel">
+      <div class="story-intro-beat-label" id="story-intro-beat-label">The Bottom</div>
+      <div class="story-intro-lines" id="story-intro-lines"></div>
+      <button class="story-intro-next" id="btn-story-intro-next">Continue →</button>
+    </div>
+    <div class="story-intro-progress" id="story-intro-progress"></div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — UNDERGROUND VENUE PICKER
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-underground" class="screen">
+    <div class="underground-bg"></div>
+    <div class="underground-header">
+      <div class="lore-bar-wrap">
+        <div class="lore-bar-label">
+          <span class="lore-tier-name" id="lore-tier-name">Nobody</span>
+          <span class="lore-pts" id="lore-pts">0 LORE</span>
+        </div>
+        <div class="lore-bar-track">
+          <div class="lore-bar-fill" id="lore-bar-fill"></div>
+          <div class="lore-bar-next-marker" id="lore-next-marker"></div>
+        </div>
+        <div class="lore-tier-blurb" id="lore-tier-blurb">You're just some guy at the table.</div>
+      </div>
+    </div>
+
+    <div class="underground-title-row">
+      <div class="underground-eyebrow">The Come-Up</div>
+      <h2 class="underground-title">Choose Your Night</h2>
+    </div>
+
+    <div class="venue-cards" id="venue-cards"></div>
+
+    <div class="underground-footer">
+      <button class="phone-btn" id="btn-open-phone" title="Phone">
+        <span class="phone-btn-icon">📱</span>
+        <span class="phone-btn-label">Phone</span>
+        <span class="phone-notif" id="phone-notif" style="display:none"></span>
+      </button>
+      <button class="companion-btn" id="btn-pick-companion">
+        <span id="companion-label">Bring Someone</span>
+      </button>
+      <button class="circuit-btn" id="btn-open-circuit" style="display:none">
+        <span>The Circuit →</span>
+      </button>
+    </div>
+    <div style="position:relative;z-index:3;padding:0.5rem 1rem 0">
+      <button class="back-btn" id="btn-underground-back">← Menu</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — CIRCUIT MAP (Def Jam city pins)
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-circuit" class="screen">
+    <div class="circuit-bg"></div>
+    <div class="circuit-header">
+      <div class="circuit-eyebrow">The Circuit</div>
+      <h2 class="circuit-title">Five Cities. One Throne.</h2>
+      <div class="circuit-lore-pill">
+        <span id="circuit-tier-name">Nobody</span>
+        <span id="circuit-lore-display">0 LORE</span>
+      </div>
+    </div>
+    <div class="circuit-map" id="circuit-map"></div>
+    <div style="position:relative;z-index:3;padding:0.5rem 1rem 0;display:flex;gap:0.8rem;align-items:center">
+      <button class="back-btn" id="btn-circuit-back">← Underground</button>
+      <button class="phone-btn-small" id="btn-circuit-phone" title="Phone">📱</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — CUTSCENE (arrival / victory beats)
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-cutscene" class="screen">
+    <div class="cutscene-bg" id="cutscene-bg"></div>
+    <div class="cutscene-rival-wrap" id="cutscene-rival-wrap">
+      <img class="cutscene-rival-img" id="cutscene-rival-img" src="" alt="" onerror="this.style.display='none'">
+      <div class="cutscene-rival-name" id="cutscene-rival-name"></div>
+      <div class="cutscene-rival-title" id="cutscene-rival-title"></div>
+    </div>
+    <div class="cutscene-panel">
+      <div class="cutscene-city-label" id="cutscene-city-label"></div>
+      <div class="cutscene-line" id="cutscene-line"></div>
+      <div class="cutscene-dots" id="cutscene-dots"></div>
+      <button class="cutscene-next" id="btn-cutscene-next">Continue</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — PHONE (Sidekick-style)
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-phone" class="screen">
+    <div class="phone-device">
+      <div class="phone-shell">
+        <!-- Hinge area -->
+        <div class="phone-hinge">
+          <div class="phone-speaker"></div>
+          <div class="phone-camera"></div>
+        </div>
+        <!-- Screen -->
+        <div class="phone-screen">
+          <div class="phone-status-bar">
+            <span class="phone-time" id="phone-time">9:41</span>
+            <span class="phone-carrier">ROYALE</span>
+            <span class="phone-battery">▮▮▮</span>
+          </div>
+          <div class="phone-app-tabs">
+            <button class="phone-tab active" data-tab="contacts" onclick="switchPhoneTab('contacts',this)">Contacts</button>
+            <button class="phone-tab" data-tab="messages" onclick="switchPhoneTab('messages',this)">Messages</button>
+            <button class="phone-tab" data-tab="circuit" onclick="switchPhoneTab('circuit',this)">Circuit</button>
+            <button class="phone-tab" data-tab="bank" onclick="switchPhoneTab('bank',this)">Bank</button>
+          </div>
+          <div class="phone-content" id="phone-content"></div>
+        </div>
+        <!-- Keyboard / lower shell -->
+        <div class="phone-keyboard">
+          <div class="phone-dpad">
+            <div class="dpad-up">▲</div>
+            <div class="dpad-row">
+              <div class="dpad-left">◄</div>
+              <div class="dpad-center">OK</div>
+              <div class="dpad-right">►</div>
+            </div>
+            <div class="dpad-down">▼</div>
+          </div>
+          <div class="phone-keys">
+            <div class="phone-key">1</div><div class="phone-key">2</div><div class="phone-key">3</div>
+            <div class="phone-key">4</div><div class="phone-key">5</div><div class="phone-key">6</div>
+            <div class="phone-key">7</div><div class="phone-key">8</div><div class="phone-key">9</div>
+            <div class="phone-key">*</div><div class="phone-key">0</div><div class="phone-key">#</div>
+          </div>
+          <button class="phone-close-btn" id="btn-close-phone">Close</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY — COMPANION PICKER
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-companion" class="screen">
+    <div class="companion-bg"></div>
+    <div class="companion-header">
+      <div class="companion-eyebrow">Who's Coming With You</div>
+      <h2 class="companion-title">Bring Someone</h2>
+      <p class="companion-sub">They boost your lore. Make it count.</p>
+    </div>
+    <div class="companion-grid" id="companion-grid"></div>
+    <div style="position:relative;z-index:3;padding:0.5rem 1rem 1rem;display:flex;gap:0.8rem">
+      <button class="back-btn" id="btn-companion-back">← Back</button>
+      <button class="btn-gold-primary" style="flex:1;max-width:200px" id="btn-companion-solo">Go Solo</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY DIALOG BUBBLE (overlay on table)
+       ══════════════════════════════════════════════════════ -->
+  <div id="story-dialog-bubble" class="story-dialog-bubble" style="display:none">
+    <div class="sdb-rival-wrap">
+      <img class="sdb-rival-img" id="sdb-rival-img" src="" alt="" onerror="this.style.display='none'">
+    </div>
+    <div class="sdb-text-wrap">
+      <div class="sdb-name" id="sdb-name"></div>
+      <div class="sdb-text" id="sdb-text"></div>
+    </div>
+    <button class="sdb-close" onclick="document.getElementById('story-dialog-bubble').style.display='none'">✕</button>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       DRINKS BAR (table overlay button strip)
+       ══════════════════════════════════════════════════════ -->
+  <div id="drinks-bar" class="drinks-bar" style="display:none">
+    <span class="drinks-label">Bar</span>
+    <button class="drinks-btn" id="btn-buy-drink" title="Buy a drink — raises dizzy meter">🥃 $50</button>
+    <button class="drinks-btn water-btn" id="btn-drink-water" title="Drink water — reduces dizziness">💧</button>
+    <div class="dizzy-meter" id="dizzy-meter">
+      <div class="dizzy-fill" id="dizzy-fill"></div>
+    </div>
+    <span class="dizzy-label" id="dizzy-label">Sober</span>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       INVITE NOTIFICATION (animated SMS chain)
+       ══════════════════════════════════════════════════════ -->
+  <div id="invite-overlay" class="invite-overlay" style="display:none">
+    <div class="invite-phone-mock">
+      <div class="invite-from">Unknown +1 (???-???-????)</div>
+      <div class="invite-messages" id="invite-messages"></div>
+      <button class="invite-dismiss" id="btn-invite-dismiss">→ I'll Show Up</button>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 6 — GAME TABLE
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-table" class="screen" style="justify-content:flex-start">
+
+    <!-- City backdrop -->
+    <div id="table-city-bg">
+      <img id="table-bg-img" src="" alt="" style="opacity:0;transition:opacity 1s">
+      <canvas id="table-city-bg-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+    </div>
+
+    <!-- Header -->
+    <header class="table-header">
+      <div class="table-logo">SR</div>
+      <div class="bankroll-display">
+        <span class="bankroll-label">Bankroll</span>
+        <span class="bankroll-amount" id="bankroll-amount">$5,000</span>
+      </div>
+      <div class="header-btns">
+        <button class="icon-btn" id="btn-table-stats" title="Statistics">◈</button>
+        <button class="icon-btn" id="btn-table-settings" title="Settings">⚙</button>
+        <button class="icon-btn" id="btn-table-back" title="Exit Table">←</button>
+      </div>
+    </header>
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat-pill wins">W <b id="stat-wins">0</b></div>
+      <div class="stat-pill losses">L <b id="stat-losses">0</b></div>
+      <div class="stat-pill bjs">BJ <b id="stat-bjs">0</b></div>
+      <div class="stat-pill streak">Streak <b id="stat-streak">0</b></div>
+    </div>
+
+    <!-- 2.5D Table -->
+    <div class="table-viewport">
+      <div class="felt-table">
+        <!-- Gold rim -->
+        <div class="table-rim"></div>
+
+        <!-- Felt surface -->
+        <div class="table-felt">
+          <div class="table-inner-border"></div>
+          <div class="pay-line"></div>
+          <div class="table-inscription">SHADDAI ROYALE</div>
+
+          <!-- DEALER zone -->
+          <div class="dealer-zone">
+            <div class="dealer-portrait-wrap">
+              <div class="dealer-avatar">
+                <img id="dealer-avatar" src="" alt="Dealer">
+                <div id="dealer-avatar-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:1.2rem;color:var(--gold)"></div>
+              </div>
+              <div class="dealer-info">
+                <span class="dealer-label">Dealer</span>
+                <span class="dealer-name" id="dealer-name">SHADDAI</span>
+              </div>
+              <div class="hand-total" id="dealer-total">—</div>
+            </div>
+            <div class="cards-row" id="dealer-cards"></div>
+          </div>
+
+          <!-- Side bets row -->
+          <div class="side-bet-row" style="margin:0.3rem 0">
+            <div class="side-bet-spot" id="btn-side-pp">
+              <span>Perfect Pairs</span>
+              <span class="side-bet-amount" id="side-pp-amount"></span>
+            </div>
+            <div class="side-bet-spot" id="btn-side-21">
+              <span>21 + 3</span>
+              <span class="side-bet-amount" id="side-21-amount"></span>
+            </div>
+          </div>
+
+          <!-- Bet circles + AI seats -->
+          <div class="bet-circle-zone" id="bet-circle-zone">
+            <div class="bet-spot">
+              <div class="bet-circle has-bet" id="main-bet-circle">
+                <div id="payout-float-area" style="position:absolute;inset:0;pointer-events:none;z-index:20"></div>
+                <div class="result-badge" id="player-result"></div>
+              </div>
+              <span class="bet-circle-label">Your Bet</span>
+            </div>
+          </div>
+
+          <!-- PLAYER zone -->
+          <div class="players-zone">
+            <!-- AI seats will be injected here -->
+            <div id="ai-seat-row" class="ai-seat-row"></div>
+
+            <!-- Main player seat -->
+            <div class="player-seat active-seat" id="player-seat">
+              <span class="seat-label">You</span>
+              <div class="hand-total" id="player-total">—</div>
+              <div class="cards-row" id="player-cards"></div>
+              <span class="seat-bet-label" id="player-bet-label"></span>
+            </div>
+          </div>
+
+        </div><!-- /table-felt -->
+      </div><!-- /felt-table -->
+    </div><!-- /table-viewport -->
+
+    <!-- Hint bar -->
+    <div class="hint-bar">
+      <img id="hint-dealer-thumb" class="hint-dealer-thumb" src="" alt="">
+      <div class="hint-text" id="hint-text">Place your bet and deal to begin.</div>
+      <button class="hint-toggle" id="btn-hint">Hint</button>
+    </div>
+
+    <!-- Bottom panel -->
+    <div class="table-bottom">
+
+      <!-- Chip selector -->
+      <div id="chip-selector" class="chip-selector"></div>
+
+      <!-- Bet amount row -->
+      <div class="bet-amount-row">
+        <button class="bet-adj-btn" id="btn-bet-down">−</button>
+        <div class="bet-display">
+          <span class="bet-display-label">Current Bet</span>
+          <div class="bet-display-amount" id="bet-amount">$100</div>
+        </div>
+        <button class="bet-adj-btn" id="btn-bet-up">+</button>
+      </div>
+
+      <!-- Action row / Deal button -->
+      <div id="action-area">
+        <div class="action-row" id="action-row" style="margin-bottom:0.4rem">
+          <button class="action-btn hit"   id="btn-hit"      disabled>Hit</button>
+          <button class="action-btn stand" id="btn-stand"    disabled>Stand</button>
+          <button class="action-btn double" id="btn-double"  disabled>Double</button>
+          <button class="action-btn split"  id="btn-split"   disabled>Split</button>
+          <button class="action-btn surr"   id="btn-surrender" disabled>Surrender</button>
+          <button class="action-btn ins"    id="btn-insurance" disabled>Insurance</button>
+        </div>
+        <div style="text-align:center">
+          <button class="deal-button" id="btn-deal">Deal</button>
+        </div>
+      </div>
+
+    </div><!-- /table-bottom -->
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 7 — SETTINGS (accessible from table header)
+       ══════════════════════════════════════════════════════ -->
+  <section id="screen-settings" class="screen">
+    <div class="screen-header" style="margin-bottom:1.2rem">
+      <div class="eyebrow">Preferences</div>
+      <h2>Settings</h2>
+    </div>
+
+    <div class="settings-panel">
+      <div id="settings-screen-body"></div>
+      <div class="divider-gold" style="margin:1rem 0"></div>
+      <button id="btn-settings-back" class="btn-gold-primary">Save &amp; Return</button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL OVERLAY
+       ══════════════════════════════════════════════════════ -->
+  <div id="modal-overlay" class="overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title" id="modal-title">Modal</div>
+      <div class="modal-sub" id="modal-sub"></div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="divider-gold" style="margin:1rem 0 0.6rem"></div>
+      <button class="btn-gold-primary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script src="ui.js"></script>
+<script src="story-mode.js"></script>
+</body>
+</html>
