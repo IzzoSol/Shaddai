@@ -709,7 +709,7 @@ function updateWalk(delta) {
   camera.getWorldDirection(_fwd); _fwd.y = 0;
   if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1);
   _fwd.normalize();
-  _rgt.set(_fwd.z, 0, -_fwd.x);     // right-hand perpendicular on the ground
+  _rgt.set(-_fwd.z, 0, _fwd.x);     // camera-right on the ground (screen-right = world +X when facing −Z)
 
   let mx = 0, mz = 0;               // local input (mz forward, mx strafe)
   if (walkKeys.f) mz += 1;
@@ -802,36 +802,83 @@ function getMoonPhase() {
 }
 
 // ── CanvasTexture plaque builder ──────────────────────────────────────────
-function makePlaque(title, lines, w = 512, h = 288) {
+function makePlaque(title, lines, w = 1024, h = 600) {
+  // High-DPI neon "astral screen": deep-violet glass, gold + neon-cyan accents,
+  // sacred-geometry watermark, crisp glowing type. (Rendered big for legibility.)
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d');
 
-  const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, 'rgba(10,6,22,0.96)');
-  bg.addColorStop(1, 'rgba(4,2,14,0.96)');
+  // ── Base glass panel ──
+  const bg = ctx.createLinearGradient(0, 0, w * 0.4, h);
+  bg.addColorStop(0, 'rgba(26,12,54,0.97)');
+  bg.addColorStop(0.55, 'rgba(14,6,34,0.97)');
+  bg.addColorStop(1, 'rgba(6,2,18,0.98)');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = 'rgba(196,162,78,0.72)'; ctx.lineWidth = 2;
-  ctx.strokeRect(3, 3, w - 6, h - 6);
-  ctx.strokeStyle = 'rgba(196,162,78,0.22)'; ctx.lineWidth = 1;
-  ctx.strokeRect(9, 9, w - 18, h - 18);
+  // Top violet aurora glow
+  const aur = ctx.createRadialGradient(w / 2, -30, 20, w / 2, -30, w * 0.85);
+  aur.addColorStop(0, 'rgba(140,70,255,0.42)');
+  aur.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = aur; ctx.fillRect(0, 0, w, h * 0.6);
 
-  ctx.fillStyle   = '#c4a24e';
-  ctx.font        = `bold ${Math.round(w * 0.044)}px "Cinzel", serif`;
-  ctx.textAlign   = 'center';
-  ctx.fillText(title, w / 2, 40);
+  // ── Sacred-geometry watermark (seed-of-life) ──
+  ctx.save();
+  ctx.globalAlpha = 0.10; ctx.strokeStyle = '#c9a24e'; ctx.lineWidth = 1.4;
+  const gx = w / 2, gy = h * 0.56, gr = h * 0.30;
+  ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    ctx.beginPath(); ctx.arc(gx + Math.cos(a) * gr, gy + Math.sin(a) * gr, gr, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
 
-  ctx.strokeStyle = 'rgba(196,162,78,0.45)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(28, 52); ctx.lineTo(w - 28, 52); ctx.stroke();
+  // ── Neon frame: outer violet glow + gold inner rule ──
+  ctx.save();
+  ctx.shadowColor = 'rgba(150,80,255,0.9)'; ctx.shadowBlur = 26;
+  ctx.strokeStyle = 'rgba(150,90,255,0.85)'; ctx.lineWidth = 4;
+  ctx.strokeRect(10, 10, w - 20, h - 20);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(201,162,78,0.85)'; ctx.lineWidth = 2;
+  ctx.strokeRect(20, 20, w - 40, h - 40);
+  // Corner ornaments (gold brackets)
+  ctx.strokeStyle = '#e6c169'; ctx.lineWidth = 3; const cs = 34;
+  [[20,20,1,1],[w-20,20,-1,1],[20,h-20,1,-1],[w-20,h-20,-1,-1]].forEach(([x,y,sx,sy])=>{
+    ctx.beginPath(); ctx.moveTo(x+cs*sx,y); ctx.lineTo(x,y); ctx.lineTo(x,y+cs*sy); ctx.stroke();
+  });
 
-  const fz = Math.max(13, Math.round(w * 0.032));
-  ctx.font      = `${fz}px "Fraunces", Georgia, serif`;
-  ctx.fillStyle = 'rgba(240,231,207,0.92)';
-  const lh = fz * 1.55, maxW = w - 56;
-  let y = 74;
+  // ── Title (gold, glowing) ──
+  ctx.textAlign = 'center';
+  ctx.save();
+  ctx.shadowColor = 'rgba(230,193,105,0.85)'; ctx.shadowBlur = 18;
+  ctx.fillStyle = '#f2d488';
+  ctx.font = `bold ${Math.round(w * 0.050)}px "Cinzel", serif`;
+  ctx.fillText(title, w / 2, h * 0.15);
+  ctx.restore();
+
+  // Neon-cyan underline flourish
+  ctx.save();
+  ctx.shadowColor = 'rgba(90,220,255,0.9)'; ctx.shadowBlur = 12;
+  ctx.strokeStyle = 'rgba(120,225,255,0.9)'; ctx.lineWidth = 2.5;
+  const uy = h * 0.185;
+  ctx.beginPath(); ctx.moveTo(w * 0.22, uy); ctx.lineTo(w * 0.78, uy); ctx.stroke();
+  ctx.fillStyle = 'rgba(120,225,255,0.95)';
+  ctx.beginPath(); ctx.arc(w / 2, uy, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // ── Body (bright, crisp, soft glow for legibility) ──
+  const fz = Math.max(26, Math.round(w * 0.040));
+  ctx.font = `${fz}px "Fraunces", Georgia, serif`;
+  const lh = fz * 1.5, maxW = w - 120;
+  let y = h * 0.28;
   for (const line of lines) {
-    if (!line) { y += fz * 0.8; continue; }
+    if (!line) { y += fz * 0.7; continue; }
+    const isQuote = /^["“]/.test(line);
+    ctx.save();
+    ctx.shadowColor = 'rgba(150,90,255,0.55)'; ctx.shadowBlur = 8;
+    ctx.fillStyle = isQuote ? '#f2d488' : 'rgba(238,232,214,0.96)';
+    ctx.font = isQuote ? `italic ${fz}px "Fraunces", Georgia, serif`
+                       : `${fz}px "Fraunces", Georgia, serif`;
     const words = line.split(' ');
     let buf = '';
     for (const word of words) {
@@ -842,10 +889,12 @@ function makePlaque(title, lines, w = 512, h = 288) {
       } else buf = test;
     }
     if (buf) { ctx.fillText(buf, w / 2, y); y += lh; }
-    if (y > h - 22) break;
+    ctx.restore();
+    if (y > h - 40) break;
   }
 
   const tex = new THREE.CanvasTexture(cv);
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -1728,19 +1777,38 @@ async function buildOracle() {
 
   // NOTE: "TODAY IN HISTORY" is no longer on the main circle — it lives on its own
   // second platform across the golden bridge (see buildHistoryRing).
+  // Rotated so THE MOON sits at the back (−Z) and none crowd the spawn camera (+Z).
   const plaqueDefs = [
-    { title: 'THE MOON',          lines: moonPhaseLines, angle: 0 },
-    { title: 'THE SEVEN CHAKRAS', lines: chakraLines,    angle: Math.PI * (2/3) },
-    { title: "ORACLE'S WISDOM",   lines: wisdomLines,    angle: Math.PI * (4/3) }
+    { title: 'THE MOON',          lines: moonPhaseLines, angle: Math.PI },
+    { title: 'THE SEVEN CHAKRAS', lines: chakraLines,    angle: Math.PI * (5/3) },
+    { title: "ORACLE'S WISDOM",   lines: wisdomLines,    angle: Math.PI * (1/3) }
   ];
-  const PR = 17, PY = 3.8;
+  // Raised higher (PY) and backed further out (PR) so the astral screens read as
+  // grand cosmic monuments. Each stays a faint ghost until you step onto its glowing
+  // rune-pad on the disc (or the pad is near enough), then it blooms to full brightness.
+  const PR = 22, PY = 7.2, PADR = 7.6;   // PADR = trigger-pad radius on the observatory disc
   for (const def of plaqueDefs) {
     const tex = makePlaque(def.title, def.lines);
-    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-    const m   = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.5), mat);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, opacity: 0.16 });
+    const m   = new THREE.Mesh(new THREE.PlaneGeometry(9.2, 5.4), mat);
     m.position.set(Math.sin(def.angle) * PR, PY, Math.cos(def.angle) * PR);
     scene.add(m);
-    floatPlaques.push({ mesh: m, mat, tex, def });
+
+    // Glowing rune-pad on the floor beneath the screen's direction (the "circle").
+    const padX = Math.sin(def.angle) * PADR, padZ = Math.cos(def.angle) * PADR;
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x7a4ad6, emissive: 0x6a34cc, emissiveIntensity: 1.0, roughness: 0.4, transparent: true, opacity: 0.9 });
+    const pad = new THREE.Mesh(new THREE.TorusGeometry(1.9, 0.11, 10, 40), padMat);
+    pad.rotation.x = Math.PI / 2; pad.position.set(padX, 0.06, padZ); scene.add(pad);
+    const padInner = new THREE.Mesh(new THREE.CircleGeometry(1.78, 40),
+      new THREE.MeshBasicMaterial({ color: 0x8a5cff, transparent: true, opacity: 0.10, side: THREE.DoubleSide }));
+    padInner.rotation.x = -Math.PI / 2; padInner.position.set(padX, 0.05, padZ); scene.add(padInner);
+    const padLight = new THREE.PointLight(0x8850ff, 0.6, 9); padLight.position.set(padX, 1.4, padZ); scene.add(padLight);
+    // Beam of light rising from pad to screen (gold neon column)
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xc9a24e, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.7, PY, 16, 1, true), beamMat);
+    beam.position.set(padX, PY / 2, padZ); scene.add(beam);
+
+    floatPlaques.push({ mesh: m, mat, tex, def, padX, padZ, padMat, padInner, padLight, beamMat, baseY: PY, glow: 0.16 });
   }
 
   // Real FLUX star-chart paintings flanking the portal arch (baked to /assets/athenaeum)
@@ -1955,9 +2023,25 @@ function startLoop() {
       if (curView === 'oracle') avatarMesh.rotation.y += delta * 0.11;
     }
 
-    // Billboard plaques toward camera
+    // Billboard plaques toward camera + proximity reveal (step onto the rune-pad).
     if (curView === 'oracle' && camera) {
-      for (const f of floatPlaques) f.mesh.lookAt(camera.position);
+      // Reference point = the embodied avatar when walking, else the camera target.
+      const px = walkOn ? playerPos.x : camera.position.x;
+      const pz = walkOn ? playerPos.z : camera.position.z;
+      const ease = Math.min(1, delta * 4);
+      for (const f of floatPlaques) {
+        f.mesh.lookAt(camera.position);
+        const near = f.padX != null && Math.hypot(px - f.padX, pz - f.padZ) < 3.2;
+        const target = near ? 1.0 : 0.16;                 // full bloom on the pad, faint ghost otherwise
+        f.glow += (target - f.glow) * ease;
+        f.mat.opacity = f.glow;
+        // Lift + brighten the screen and its pad when active
+        f.mesh.position.y = f.baseY + (f.glow - 0.16) * 0.9 + Math.sin(t * 0.9 + f.def.angle) * 0.12;
+        if (f.padMat)   { f.padMat.emissiveIntensity = 0.7 + f.glow * 1.6; f.padMat.opacity = 0.55 + f.glow * 0.45; }
+        if (f.padInner) f.padInner.material.opacity = 0.06 + f.glow * 0.22;
+        if (f.padLight) f.padLight.intensity = 0.4 + f.glow * 1.8;
+        if (f.beamMat)  f.beamMat.opacity = 0.04 + f.glow * 0.16;
+      }
       if (orbParticles) orbParticles.rotation.y += delta * 0.07;
     }
 
