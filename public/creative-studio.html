@@ -165,7 +165,7 @@
 
 <!-- ART -->
 <section class="panel" id="p-art"><div class="wrap"><div class="card">
-  <h2>✦ GENERATIVE ART</h2><div class="d">Neon generative art — flow fields woven from a seed. Reacts to your beat when it's playing. Save your favourites for the Community Mural.</div>
+  <h2>✦ GENERATIVE ART · MUSIC → IMAGE</h2><div class="d">Neon generative art woven from a seed. With <b>react to beat</b> on, it breathes with ANY sound you make — play a melody, a beat, or a Hertz tone and watch it paint. Save your favourites for the Community Mural.</div>
   <div id="artwrap">
     <canvas id="artcanvas" width="800" height="500"></canvas>
     <div class="artside">
@@ -395,7 +395,12 @@ function drawArt(){
   }
   cx.globalCompositeOperation='source-over';
 }
-function artLoop(){ if(document.getElementById('art-react').checked && (beatPlaying)){ connectAnalyser(); drawArt(); } artRAF=requestAnimationFrame(artLoop); }
+let _artLast=0;
+function artLoop(){ artRAF=requestAnimationFrame(artLoop);
+  // music → image: react to ANY sound (melody, beat, hertz, sonify) via the master analyser, throttled ~18fps
+  if(!AC || !document.getElementById('art-react').checked || !document.getElementById('p-art').classList.contains('active')) return;
+  const now=performance.now(); if(now-_artLast<55) return; _artLast=now; connectAnalyser(); drawArt();
+}
 document.getElementById('art-gen').onclick=()=>{ artSeed=Math.floor((performance.now()*(Math.floor(Math.random()*97+3)))%99999); drawArt(); };
 document.getElementById('art-style').onchange=drawArt; document.getElementById('art-pal').onchange=drawArt;
 document.getElementById('art-save').onclick=()=>{ const a=document.createElement('a'); a.download='shaddai-art-'+artSeed+'.png'; a.href=cv.toDataURL('image/png'); a.click(); toast('Saved — add it to the Community Mural ✦'); };
