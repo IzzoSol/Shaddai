@@ -2221,7 +2221,7 @@ function buildCandles(d){
   });
 }
 function refreshMarket(){
-  fetch('/api/markets/ohlc?symbol='+MKT.symbol).then(r=>r.json()).then(d=>{ if(!d||!d.ok) return; MKT.last=d; buildCandles(d);
+  fetch('/api/markets/ohlc?symbol='+MKT.symbol).then(r=>r.ok?r.json():null).then(d=>{ if(!d||!d.ok) return; MKT.last=d; buildCandles(d);
     const up=(d.change24h||0)>=0;
     mktLabel.innerHTML='<div class="nm" style="color:#00e5a0;font-size:15px;text-shadow:0 0 12px #00e5a0">📈 '+d.symbol+' · MARKETS</div>'+
       '<div class="sk" style="font-size:13px;color:'+(up?'#00e5a0':'#ff4d6a')+'">$'+Number(d.price).toLocaleString()+'  '+(up?'▲':'▼')+' '+Math.abs(d.change24h)+'%</div>'+
