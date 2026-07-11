@@ -207,6 +207,60 @@ function voice(freq, {type='sawtooth', dur=0.5, gain=0.22, cutoff=2600}={}){
   o.start(t); o.stop(t+dur+0.05);
   o.onended=()=>{ try{o.disconnect();f.disconnect();g.disconnect();}catch(e){} };
 }
+// ── FX space bus: synth-impulse reverb + slap delay (subtle, keeps sounds clean) ──
+let fxRev=null, fxDelay=null;
+function initFX(){ if(fxRev) return;
+  fxRev=AC.createConvolver(); const len=Math.floor(AC.sampleRate*1.6), imp=AC.createBuffer(2,len,AC.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d=imp.getChannelData(ch); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+  fxRev.buffer=imp; const rg=AC.createGain(); rg.gain.value=0.85; fxRev.connect(rg); rg.connect(master);
+  fxDelay=AC.createDelay(1); fxDelay.delayTime.value=0.23; const fb=AC.createGain(); fb.gain.value=0.26; const dg=AC.createGain(); dg.gain.value=0.5;
+  fxDelay.connect(fb); fb.connect(fxDelay); fxDelay.connect(dg); dg.connect(master);
+}
+// ── INSTRUMENT LIBRARY — all synthesized (clean, correct pitch, no samples/distortion, offline) ──
+// layer = [waveType, octaveOffset, detuneCents, mixGain]; adsr=[a,d,s,r]; fm=[ratio,depth] optional
+const PATCHES = {
+  'Warm Pad':   {layers:[['sawtooth',0,-7,.5],['sawtooth',0,7,.5]], cut:1300,cenv:900,q:.9, adsr:[.28,.4,.65,1.0], gain:.15, rev:.45},
+  'Bright Pad': {layers:[['sawtooth',0,-5,.4],['square',0,5,.3],['sawtooth',1,0,.25]], cut:2600,cenv:1400,q:1, adsr:[.15,.5,.55,.9], gain:.13, rev:.4},
+  'Detune Pad': {layers:[['sawtooth',0,-12,.4],['sawtooth',0,12,.4],['triangle',-1,0,.3]], cut:1500,cenv:1000,q:1, adsr:[.3,.5,.6,1.2], gain:.13, rev:.55},
+  'Choir Aah':  {layers:[['sawtooth',0,-3,.4],['sine',0,3,.45],['triangle',1,0,.2]], cut:1500,cenv:700,q:2.2, adsr:[.25,.3,.7,1.0], gain:.15, rev:.6},
+  'Strings':    {layers:[['sawtooth',0,-4,.45],['sawtooth',0,4,.45]], cut:1600,cenv:1000,q:1.1, adsr:[.22,.35,.7,.9], gain:.14, rev:.45},
+  'Brass':      {layers:[['sawtooth',0,-3,.5],['sawtooth',0,3,.5]], cut:1700,cenv:2200,q:1.3, adsr:[.06,.2,.7,.5], gain:.15, rev:.3},
+  'Flute':      {layers:[['sine',0,0,.7],['triangle',1,0,.15]], cut:3000,cenv:600,q:1, adsr:[.08,.2,.8,.5], gain:.18, rev:.4},
+  'Deep Sub':   {layers:[['sine',-1,0,.9],['sine',0,0,.3]], cut:600,cenv:200,q:.6, adsr:[.02,.25,.8,.5], gain:.26, rev:.1},
+  'Reese Bass': {layers:[['sawtooth',-1,-14,.5],['sawtooth',-1,14,.5]], cut:900,cenv:700,q:2, adsr:[.01,.2,.7,.4], gain:.2, rev:.12},
+  'Bass Guitar':{layers:[['triangle',-1,0,.7],['square',-1,0,.2]], cut:1000,cenv:600,q:1.2, adsr:[.01,.18,.5,.35], gain:.22, rev:.12},
+  'FM Bell':    {layers:[['sine',0,0,.6]], cut:6000,cenv:0,q:1, adsr:[.004,.7,.0,.9], gain:.19, rev:.5, fm:[3.51,240]},
+  'Music Box':  {layers:[['sine',1,0,.5],['sine',2,3,.2]], cut:7000,cenv:0,q:1, adsr:[.003,.5,.0,.7], gain:.19, rev:.55, fm:[2.0,60]},
+  'Glass':      {layers:[['sine',1,0,.5],['sine',2,7,.25]], cut:8000,cenv:0,q:1, adsr:[.004,.8,.0,1.0], gain:.15, rev:.6, fm:[4.02,180]},
+  'Kalimba':    {layers:[['sine',0,0,.6],['triangle',1,0,.25]], cut:4000,cenv:0,q:1, adsr:[.004,.4,.0,.5], gain:.2, rev:.4},
+  'Marimba':    {layers:[['sine',0,0,.6],['sine',2,0,.2]], cut:3600,cenv:0,q:1, adsr:[.003,.35,.0,.4], gain:.2, rev:.3},
+  'Harp':       {layers:[['triangle',0,0,.5],['sine',1,0,.3]], cut:4000,cenv:1800,q:1.2, adsr:[.003,.5,.0,.6], gain:.2, rev:.45},
+  'E-Piano':    {layers:[['sine',0,0,.5],['triangle',1,2,.25]], cut:2800,cenv:1200,q:1, adsr:[.005,.5,.25,.6], gain:.18, rev:.3, fm:[1.0,40]},
+  'Organ':      {layers:[['sine',0,0,.4],['sine',1,0,.3],['sine',2,0,.2],['sine',-1,0,.2]], cut:3200,cenv:0,q:1, adsr:[.02,.05,.9,.2], gain:.15, rev:.35},
+  'Pluck':      {layers:[['sawtooth',0,0,.5],['square',0,0,.2]], cut:2600,cenv:2400,q:2, adsr:[.002,.3,.0,.3], gain:.19, rev:.25},
+  'Saw Lead':   {layers:[['sawtooth',0,-4,.5],['sawtooth',0,4,.5]], cut:3000,cenv:1600,q:1.4, adsr:[.01,.2,.6,.35], gain:.16, rev:.3},
+  'Square Lead':{layers:[['square',0,0,.6],['square',1,0,.15]], cut:2800,cenv:1200,q:1.2, adsr:[.01,.2,.6,.35], gain:.15, rev:.3},
+  'Sine Lead':  {layers:[['sine',0,0,.8]], cut:4000,cenv:0,q:1, adsr:[.02,.15,.7,.4], gain:.2, rev:.3},
+  'Synth Stab': {layers:[['sawtooth',0,-6,.4],['square',0,6,.3],['sawtooth',-1,0,.3]], cut:2400,cenv:2000,q:1.6, adsr:[.005,.18,.3,.3], gain:.16, rev:.3},
+  'Chime':      {layers:[['sine',1,0,.5],['sine',3,4,.2]], cut:9000,cenv:0,q:1, adsr:[.003,.9,.0,1.1], gain:.16, rev:.6, fm:[5.4,120]},
+};
+const PATCH_NAMES = Object.keys(PATCHES);
+function playPatch(name, freq, dur=0.6, vel=1){
+  audio(); initFX(); const P=PATCHES[name]||PATCHES['Warm Pad']; const t=AC.currentTime; const [a,d,s,r]=P.adsr;
+  const f=AC.createBiquadFilter(); f.type='lowpass'; f.Q.value=P.q||1;
+  f.frequency.setValueAtTime(P.cut,t); if(P.cenv){ f.frequency.linearRampToValueAtTime(P.cut+P.cenv,t+0.02); f.frequency.exponentialRampToValueAtTime(Math.max(200,P.cut),t+d+0.12); }
+  const g=AC.createGain(); const pk=Math.max(0.0001,(P.gain||0.16)*vel);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(pk,t+a); g.gain.linearRampToValueAtTime(Math.max(0.0001,pk*s),t+a+d);
+  g.gain.setValueAtTime(Math.max(0.0001,pk*s),t+dur); g.gain.exponentialRampToValueAtTime(0.0001,t+dur+r);
+  f.connect(g); g.connect(master);
+  if(P.rev){ const rs=AC.createGain(); rs.gain.value=P.rev; g.connect(rs); rs.connect(fxRev); const ds=AC.createGain(); ds.gain.value=P.rev*0.35; g.connect(ds); ds.connect(fxDelay); }
+  const end=t+dur+r+0.1;
+  P.layers.forEach(([type,octd,det,lg])=>{ const o=AC.createOscillator(); o.type=type; o.frequency.value=freq*Math.pow(2,octd); o.detune.value=det;
+    const lgn=AC.createGain(); lgn.gain.value=lg; o.connect(lgn); lgn.connect(f); o.start(t); o.stop(end); o.onended=()=>{try{o.disconnect();lgn.disconnect();}catch(e){}};
+    if(P.fm){ const m=AC.createOscillator(), mg=AC.createGain(); m.frequency.value=freq*P.fm[0]; mg.gain.value=P.fm[1]; m.connect(mg); mg.connect(o.frequency); m.start(t); m.stop(end); m.onended=()=>{try{m.disconnect();mg.disconnect();}catch(e){}}; }
+  });
+}
+
 // ── drum synths ──
 function noiseBuf(){ const n=AC.sampleRate*0.4, b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b; }
 let _nb=null;
@@ -260,6 +314,7 @@ bldSeq();
 const SCALES={ 'Major':[0,2,4,5,7,9,11],'Minor (natural)':[0,2,3,5,7,8,10],'Pentatonic Major':[0,2,4,7,9],
   'Pentatonic Minor':[0,3,5,7,10],'Dorian':[0,2,3,5,7,9,10],'Mixolydian':[0,2,4,5,7,9,10],'Harmonic Minor':[0,2,3,5,7,8,11],'Blues':[0,3,5,6,7,10] };
 const rootSel=document.getElementById('root'), scaleSel=document.getElementById('scale'), octSel=document.getElementById('oct'), voiceSel=document.getElementById('voice');
+voiceSel.innerHTML=''; PATCH_NAMES.forEach(n=>voiceSel.add(new Option(n,n))); voiceSel.value='Warm Pad';
 NOTE_NAMES.forEach((n,i)=>rootSel.add(new Option(n,i))); rootSel.value=0;
 Object.keys(SCALES).forEach(s=>scaleSel.add(new Option(s,s)));
 [2,3,4,5].forEach(o=>octSel.add(new Option('Oct '+o,o))); octSel.value=4;
@@ -274,7 +329,7 @@ function buildScale(){
     p.innerHTML=`${NOTE_NAMES[m%12]}<small>${keys[i]||''}</small>`;
     p.onclick=()=>hitPad(i); pads.appendChild(p); });
 }
-function hitPad(i){ audio(); const m=scaleNotes[i]; if(m==null) return; voice(midiToFreq(m),{type:voiceSel.value,dur:0.6,gain:0.24});
+function hitPad(i){ audio(); const m=scaleNotes[i]; if(m==null) return; playPatch(voiceSel.value, midiToFreq(m), 0.6);
   const p=document.querySelector(`.pad[data-m="${m}"]`); if(p){ p.classList.add('hit'); setTimeout(()=>p.classList.remove('hit'),140); } }
 [rootSel,scaleSel,octSel].forEach(s=>s.onchange=buildScale);
 buildScale();
@@ -348,6 +403,7 @@ drawArt(); artLoop();
 
 // ═══════════════ SONIFY — image → music + binary ═══════════════
 const sonScale=document.getElementById('son-scale'); Object.keys(SCALES).forEach(s=>sonScale.add(new Option(s,s))); sonScale.value='Pentatonic Minor';
+const sonVoiceSel=document.getElementById('son-voice'); sonVoiceSel.innerHTML=''; PATCH_NAMES.forEach(n=>sonVoiceSel.add(new Option(n,n))); sonVoiceSel.value='Kalimba';
 const sonCv=document.getElementById('son-canvas'), sonCx=sonCv.getContext('2d');
 let sonCols=[], sonTimer=null;
 function analyzeImage(img){
@@ -365,7 +421,7 @@ document.getElementById('son-play').onclick=()=>{ if(!sonCols.length){ toast('Lo
   const ints=SCALES[sonScale.value], oct=4, root=0, speed=+document.getElementById('son-speed').value, vt=document.getElementById('son-voice').value; let i=0; const dur=1/speed;
   (function next(){ if(i>=sonCols.length){ sonTimer=null; return; } const b=sonCols[i];
     const deg=Math.floor(b*ints.length*2), midi=12*(oct+1)+root+ints[deg%ints.length]+12*Math.floor(deg/ints.length);
-    voice(midiToFreq(midi),{type:vt,dur:dur*1.5,gain:0.2});
+    playPatch(vt, midiToFreq(midi), dur*1.5);
     sonCx.fillStyle='rgba(0,255,136,.22)'; sonCx.fillRect(i/sonCols.length*sonCv.width,0,sonCv.width/sonCols.length,sonCv.height);
     i++; sonTimer=setTimeout(next,dur*1000); })(); };
 
