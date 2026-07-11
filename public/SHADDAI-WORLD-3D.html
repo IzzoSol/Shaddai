@@ -2432,6 +2432,39 @@ const controls = new PointerLockControls(camera, document.body);
 // already silences the async "pointer lock was already requested" rejection. Clicking the
 // canvas simply tries again, so a dropped lock always re-engages on the next click.
 function _safeLock(){ try{ if(!controls.isLocked) controls.lock(); }catch(e){} }
+
+// ── SMOOTH MOUSE-LOOK ─────────────────────────────────────────────────────────
+// PointerLockControls applies raw movementX/Y straight to the camera every mousemove
+// (no damping) → jittery, snappy look on high-poll / high-DPI mice. Neutralize its
+// instant apply (pointerSpeed 0) and drive the camera ourselves with an exponential
+// low-pass filter: mousemove accumulates a TARGET yaw/pitch; _applyLook() eases the
+// live orientation toward it each frame. Nothing else writes camera.quaternion while
+// locked, so this is the single source of truth for look (1st- AND 3rd-person).
+try { controls.pointerSpeed = 0; } catch(e){}
+const _look = { yaw:0, pitch:0, tYaw:0, tPitch:0, init:false };
+const _LOOK_SENS = 0.0020;     // radians per mouse unit (matches PLC default feel)
+const _LOOK_DAMP = 24;         // higher = snappier / closer to raw; lower = floatier
+const _LOOK_PLIM = Math.PI/2 - 0.02;   // pitch clamp (just shy of straight up/down)
+const _lookEuler = new THREE.Euler(0,0,0,'YXZ');
+function _seedLook(){ _lookEuler.setFromQuaternion(camera.quaternion,'YXZ'); _look.yaw=_look.tYaw=_lookEuler.y; _look.pitch=_look.tPitch=_lookEuler.x; _look.init=true; }
+controls.addEventListener('lock', _seedLook);
+addEventListener('mousemove', function(e){
+  if(window._uiMode!=='play' || !controls.isLocked) return;
+  if(!_look.init) _seedLook();
+  _look.tYaw   -= e.movementX * _LOOK_SENS;
+  _look.tPitch -= e.movementY * _LOOK_SENS;
+  if(_look.tPitch >  _LOOK_PLIM) _look.tPitch =  _LOOK_PLIM;
+  if(_look.tPitch < -_LOOK_PLIM) _look.tPitch = -_LOOK_PLIM;
+}, { passive:true });
+function _applyLook(dt){
+  if(!controls.isLocked || window._uiMode!=='play' || !_look.init) return;
+  const k = 1 - Math.exp(-_LOOK_DAMP * Math.min(dt, 0.05));   // frame-rate independent; cap dt so a stall can't over-rotate
+  _look.yaw   += (_look.tYaw   - _look.yaw)   * k;
+  _look.pitch += (_look.tPitch - _look.pitch) * k;
+  _lookEuler.set(_look.pitch, _look.yaw, 0);
+  camera.quaternion.setFromEuler(_lookEuler);
+}
+
 const keys = {};
 addEventListener('keydown', e=>{ keys[e.code]=true; });
 addEventListener('keyup', e=>{ keys[e.code]=false; });
@@ -3793,6 +3826,7 @@ function animate(){
     } else _liftPrompt.style.display='none';
   }
   const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
+  if(!_spawnBusy) _applyLook(dt);   // damped mouse-look → drives camera orientation before movement reads it
   // movement (manual, relative to camera yaw)
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();

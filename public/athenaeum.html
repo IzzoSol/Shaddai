@@ -595,6 +595,7 @@ function setupWalk() {
   // Rebuild for the fresh per-scene camera (buildOracle/buildQuill make a new camera each time).
   if (plc) { try { plc.dispose(); } catch(_){} plc = null; }
   plc = new PointerLockControls(camera, canvas);
+  try { plc.pointerSpeed = 0; } catch(_){}   // neutralize raw look; _applyWalkLook drives it damped
   plc.addEventListener('lock', () => {
     walkOn = true; uiMode = 'walk'; reflectMode();
     if (controls) controls.enabled = false;                 // orbit off while walking
@@ -606,6 +607,7 @@ function setupWalk() {
     // Seat the camera behind/above and aim it forward so PLC yaw starts clean.
     camera.position.set(sx, camHeight, sz + camDist);
     camera.lookAt(sx, walkEye * 0.6, sz - 4);
+    _seedWalkLook();                                          // start the damped look from this clean orientation
     // Walk-cross is only meaningful for first-person aim; in 3rd-person we hide it.
     document.getElementById('walk-cross').classList.remove('on');
     document.getElementById('walk-hint').classList.add('on');
@@ -628,6 +630,32 @@ window.enterWalk = function () {
   if (!plc || !curView) return;
   plc.lock();   // must be from a user gesture (the HUD button click) — required for pointer lock
 };
+
+// ── Smooth mouse-look for WALK mode (damped, layered over PointerLockControls) ──
+// PLC applies raw movementX/Y instantly (jittery). We neutralize it (pointerSpeed 0) and
+// low-pass the look here: mousemove accumulates a target yaw/pitch; _applyWalkLook eases
+// the camera toward it each frame (called at the top of updateWalk, before movement reads
+// the facing). Nothing else writes camera.quaternion in walk mode.
+const _wlook = { yaw:0, pitch:0, tYaw:0, tPitch:0, init:false };
+const _WLOOK_SENS = 0.0020, _WLOOK_DAMP = 22, _WLOOK_PLIM = Math.PI/2 - 0.05;
+const _wlookEuler = new THREE.Euler(0,0,0,'YXZ');
+function _seedWalkLook(){ if(!camera) return; _wlookEuler.setFromQuaternion(camera.quaternion,'YXZ'); _wlook.yaw=_wlook.tYaw=_wlookEuler.y; _wlook.pitch=_wlook.tPitch=_wlookEuler.x; _wlook.init=true; }
+addEventListener('mousemove', function(e){
+  if(!walkOn || !plc || !plc.isLocked) return;
+  if(!_wlook.init) _seedWalkLook();
+  _wlook.tYaw   -= e.movementX * _WLOOK_SENS;
+  _wlook.tPitch -= e.movementY * _WLOOK_SENS;
+  if(_wlook.tPitch >  _WLOOK_PLIM) _wlook.tPitch =  _WLOOK_PLIM;
+  if(_wlook.tPitch < -_WLOOK_PLIM) _wlook.tPitch = -_WLOOK_PLIM;
+}, { passive:true });
+function _applyWalkLook(dt){
+  if(!walkOn || !plc || !plc.isLocked || !_wlook.init) return;
+  const k = 1 - Math.exp(-_WLOOK_DAMP * Math.min(dt, 0.05));
+  _wlook.yaw   += (_wlook.tYaw   - _wlook.yaw)   * k;
+  _wlook.pitch += (_wlook.tPitch - _wlook.pitch) * k;
+  _wlookEuler.set(_wlook.pitch, _wlook.yaw, 0);
+  camera.quaternion.setFromEuler(_wlookEuler);
+}
 
 // ── Moon HUD (Oracle): opens ONLY on a raycast click of the moon mesh; ✕ to dismiss ──
 window.openMoonInfo = function () {
@@ -702,6 +730,7 @@ addEventListener('keydown', e => {
 
 function updateWalk(delta) {
   if (!walkOn || !plc) return;
+  _applyWalkLook(delta);            // damped mouse-look → set camera orientation before movement reads it
   const speed = (walkKeys.run ? 13 : 6.5);
   const step  = speed * delta;
 
@@ -1830,6 +1859,7 @@ async function buildOracle() {
 
   // Controls
   controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.09; controls.rotateSpeed = 0.75;  // smooth inertial orbit
   controls.target.set(0, 2.5, 0);
   controls.minDistance = 6; controls.maxDistance = 55;
   controls.enablePan = false;
@@ -2001,6 +2031,7 @@ async function buildQuill() {
 
   // Controls
   controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.09; controls.rotateSpeed = 0.75;  // smooth inertial orbit
   controls.target.set(0, 2.2, -2);
   controls.minDistance = 4; controls.maxDistance = 22;
   controls.maxPolarAngle = Math.PI * 0.74;
@@ -2696,6 +2727,7 @@ function buildMuseum() {
 
   // ── OrbitControls (cursor mode default) ──
   controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.09; controls.rotateSpeed = 0.75;  // smooth inertial orbit
   controls.target.set(0, 4, 0);
   controls.minDistance = 4; controls.maxDistance = 38;
   controls.maxPolarAngle = Math.PI * 0.82;

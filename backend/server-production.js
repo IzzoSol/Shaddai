@@ -382,7 +382,8 @@ app.use(helmet({
       // existing UI actually works. (Consistent with scriptSrc 'unsafe-inline' above.)
       scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: [
-        "'self'", "wss:",
+        "'self'", "wss:", "blob:", "data:",   // blob:/data: → GLTFLoader fetch()es embedded GLB textures via blob URLs
+
         "https://*.googleapis.com", "https://*.firebaseapp.com",
         "http://localhost:3000", "ws://localhost:3000",
         "http://localhost:8000", "http://localhost:8001", "http://localhost:8002",
