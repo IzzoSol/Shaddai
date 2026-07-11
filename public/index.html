@@ -41557,6 +41557,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       container.appendChild(renderer.domElement);
       try { const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; } catch(_){}  // IBL so PBR bodies read textured, not flat grey
       scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+      scene.add(new THREE.HemisphereLight(0xffe6b0, 0x141018, 1.1));  // forge-style sky/ground fill so painted textures read clearly
       const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(2.5, 4, 3); scene.add(key);
       const rgb = (glow || '255,107,53').split(',').map(Number);
       const rim = new THREE.PointLight((rgb[0] << 16) + (rgb[1] << 8) + rgb[2], 1.4, 20); rim.position.set(-3, 2, -2); scene.add(rim);
@@ -41616,7 +41617,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       // Load the OPTIMIZED base model FIRST (~4MB, ~27k verts — fast + reliable everywhere).
       // The *_hires.glb files are 60MB+ (~940k verts, uncompressed) and stall/OOM on load —
       // they were the reason the model "never showed". Base-first fixes that; hires is a last resort.
-      const urls = ['/assets/agents/' + code + '.glb?v=12'];   // v11: updated rigged models (Neon Valkyrie etc.)
+      const urls = ['/assets/agents/' + code + '.glb?v=13'];   // v11: updated rigged models (Neon Valkyrie etc.)
       (function tryLoad(i){ if (i >= urls.length){ showPortrait(); return; } loader.load(urls[i], onLoad, undefined, () => tryLoad(i + 1)); })(0);
       try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
       (function animate(){
@@ -41715,7 +41716,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       _showPh();
       const token = ++loadToken;
       const loader = new GL();   // FIX: GLTFLoader is a separate import, NOT on the THREE namespace (T.GLTFLoader threw)
-      const urls = ['/assets/agents/' + code + '.glb?v=12'];   // v11: updated rigged models (Neon Valkyrie etc.)
+      const urls = ['/assets/agents/' + code + '.glb?v=13'];   // v11: updated rigged models (Neon Valkyrie etc.)
       const onLoad = (gltf) => {
         if (!renderer || token !== loadToken) return; // superseded or disposed
         const obj = gltf.scene;
