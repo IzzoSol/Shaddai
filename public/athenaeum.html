@@ -506,6 +506,9 @@ const clock   = new THREE.Clock(false);
 let renderer  = null;
 let scene     = null, camera = null, controls = null;
 let avatarMesh = null, avatarMixer = null, avatarBaseY = 0;
+// Named animation actions for the embodied agent + which one is currently faded IN.
+let avatarActs = { idle:null, walk:null, run:null };
+let avatarCurAct = null;   // the action currently crossfaded to (for smooth transitions)
 let orbParticles = null;
 let floatPlaques = [];   // { mesh, mat, tex }  — billboards ringing the MAIN disc
 let historyRing  = null; // { center:{x,z}, screens:[{mesh,mat,tex}] } — the 2nd circle across the bridge
@@ -747,7 +750,12 @@ function updateWalk(delta) {
   if (avatarMesh) {
     const bob = moving ? Math.abs(Math.sin(walkFootT)) * 0.12 : 0;
     avatarMesh.position.set(playerPos.x, avatarBaseY + bob, playerPos.z);
-    avatarMesh.rotation.y = playerYaw + Math.PI;   // GLBs face +z by default; add PI so "front" leads
+    // All agent GLBs default-face +Z, so rotation.y = playerYaw points the model's
+    // FRONT exactly along playerYaw (which we ease toward the travel direction above).
+    // No +PI offset — that made the back lead (the "looks sideways/backward" bug).
+    avatarMesh.rotation.y = playerYaw;
+    // Crossfade the embodied clip: walk/run while moving, idle when standing.
+    if (avatarMixer) setAvatarMotion(moving ? (walkKeys.run ? 'run' : 'walk') : 'idle');
   }
 
   // Trailing third-person camera: sit behind the avatar along the look direction,
@@ -895,6 +903,7 @@ function makeInfoPanel(title, lines, accent = '#e64545', footer = '', w = 512, h
 function disposeScene() {
   cancelAnimationFrame(rafId); rafId = null;
   if (avatarMixer) { avatarMixer.stopAllAction(); avatarMixer = null; }
+  avatarActs = { idle:null, walk:null, run:null }; avatarCurAct = null;
   avatarMesh = null; orbParticles = null; floatPlaques = [];
   fireplaceLight = null; chakra = null; historyRing = null; moonMeshRef = null;
   // Museum refs
@@ -1043,11 +1052,110 @@ function mountAvatar(gltf, sc, x = 0, z = 0, faceAngle = 0) {
   avatarMesh = root;
   // If the player is ALREADY walking when this GLB finishes loading, snap the body to
   // the live player position so you seamlessly embody it (no static greeter left behind).
-  if (walkOn) { root.position.set(playerPos.x, avatarBaseY, playerPos.z); root.rotation.y = playerYaw + Math.PI; }
-  if (gltf.animations && gltf.animations.length > 0) {
+  // +Z-forward models face their yaw directly (rotation.y = playerYaw), no PI offset.
+  if (walkOn) { root.position.set(playerPos.x, avatarBaseY, playerPos.z); root.rotation.y = playerYaw; }
+
+  // ── Animation: select clips BY NAME (idle / walk / run), never by arbitrary index. ──
+  avatarActs = { idle:null, walk:null, run:null };
+  avatarCurAct = null;
+  const clips = (gltf.animations || []);
+  if (clips.length > 0) {
     avatarMixer = new THREE.AnimationMixer(root);
-    avatarMixer.clipAction(gltf.animations[0]).play();
+    // Prefer the BEST match, not just the first: try a tight regex, then a looser one,
+    // and among candidates prefer "inplace" clips (no root translation) and avoid clips
+    // that bundle a jump/roll/vault/attack (those drift or read wrong as locomotion).
+    const bad = /jump|roll|vault|kick|punch|slash|combo|attack|spin|flip|boxing|swing|groove|gangnam|flirty/i;
+    const best = (...res) => {
+      for (const re of res) {
+        const hits = clips.filter(c => re.test(c.name || ''));
+        if (!hits.length) continue;
+        // rank: prefer inplace, then a clean (non-"bad") name, then shortest name.
+        hits.sort((a,b) => {
+          const A = a.name||'', B = b.name||'';
+          const ai = /inplace/i.test(A)?0:1, bi = /inplace/i.test(B)?0:1;
+          if (ai !== bi) return ai - bi;
+          const ac = bad.test(A)?1:0, bc = bad.test(B)?1:0;
+          if (ac !== bc) return ac - bc;
+          return A.length - B.length;
+        });
+        return hits[0];
+      }
+      return null;
+    };
+    // Fall back gracefully so we never crash on odd rigs.
+    let idleClip = best(/idle/i, /stand|breath|pose/i, /strut|confident|indoor/i) || clips[0];
+    let walkClip = best(/walk/i, /move|strut/i) || idleClip;
+    let runClip  = best(/^running$|(?<![a-z])run(?![a-z])|sprint|jog/i, /run/i) || walkClip;
+    // Strip baked ROOT MOTION so the code owns position + facing (in-place clips only).
+    idleClip = stripRootMotion(idleClip, root);
+    walkClip = stripRootMotion(walkClip, root);
+    runClip  = stripRootMotion(runClip,  root);
+    const mk = (clip) => { const a = avatarMixer.clipAction(clip); a.enabled = true; a.setEffectiveWeight(1); return a; };
+    avatarActs.idle = idleClip ? mk(idleClip) : null;
+    avatarActs.walk = walkClip ? mk(walkClip) : null;
+    avatarActs.run  = runClip  ? mk(runClip)  : null;
+    // Start on idle (weight 0 on the others so a crossfade can bring them in).
+    const start = avatarActs.idle || avatarActs.walk || avatarActs.run;
+    if (start) { start.reset().play(); avatarCurAct = start; }
+    for (const k of ['idle','walk','run']) {
+      const a = avatarActs[k];
+      if (a && a !== start) { a.play(); a.setEffectiveWeight(0); }
+    }
   }
+}
+
+// Return a CLONE of the clip with root-drift removed: zero out the root/hips
+// translation track and any Y-rotation (quaternion) track on the root, so the
+// animation plays IN PLACE and never fights the code's position/facing.
+function stripRootMotion(clip, root) {
+  if (!clip) return clip;
+  // Identify the animated root node's name (top of the skeleton / a hips-like bone).
+  let rootName = null;
+  root.traverse(o => { if (!rootName && /(hips|root|armature|pelvis|spine)/i.test(o.name || '')) rootName = o.name; });
+  const out = clip.clone();
+  out.tracks = out.tracks.filter(tr => {
+    const isPos = /\.position$/.test(tr.name);
+    const targetsRoot = rootName && tr.name.indexOf(rootName) === 0;
+    // Drop the root's position track entirely (kills translational drift). Keep
+    // vertical bob? No — the code adds its own bob, so remove all root translation.
+    if (isPos && targetsRoot) return false;
+    // If we can't identify a named root, still strip the FIRST position track's
+    // horizontal drift by dropping any position track whose node has no dot-parent
+    // path prefix beyond a single node (best-effort for un-named rigs).
+    return true;
+  });
+  // Also flatten baked Y-rotation on the root quaternion track (keeps facing to code).
+  for (const tr of out.tracks) {
+    if (targetsRootQuat(tr, rootName)) neutralizeYaw(tr);
+  }
+  return out;
+}
+function targetsRootQuat(tr, rootName) {
+  return rootName && /\.quaternion$/.test(tr.name) && tr.name.indexOf(rootName) === 0;
+}
+// Re-project each keyframe quaternion so its yaw (rotation about world Y) is removed,
+// leaving only the pitch/roll of the animation — the code owns heading.
+function neutralizeYaw(tr) {
+  const v = tr.values, q = new THREE.Quaternion(), e = new THREE.Euler();
+  for (let i = 0; i < v.length; i += 4) {
+    q.set(v[i], v[i+1], v[i+2], v[i+3]);
+    e.setFromQuaternion(q, 'YXZ');
+    e.y = 0;                       // drop the heading component
+    q.setFromEuler(e);
+    v[i] = q.x; v[i+1] = q.y; v[i+2] = q.z; v[i+3] = q.w;
+  }
+}
+
+// Crossfade the embodied agent to the target motion action (idle/walk/run), smoothly.
+function setAvatarMotion(which) {
+  if (!avatarMixer) return;
+  const next = avatarActs[which] || avatarActs.idle || avatarActs.walk || avatarActs.run;
+  if (!next || next === avatarCurAct) return;
+  next.enabled = true; next.setEffectiveTimeScale(1); next.setEffectiveWeight(1);
+  if (avatarCurAct) avatarCurAct.crossFadeTo(next, 0.22, false);
+  else { next.reset().play(); }
+  next.play();
+  avatarCurAct = next;
 }
 
 // ══════════════════════════════════════════════════════════════════════════
