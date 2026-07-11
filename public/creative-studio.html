@@ -81,6 +81,7 @@
     <button class="tab" data-tab="meditate">☯ MEDITATE</button>
     <button class="tab" data-tab="art">✦ ART</button>
   </div>
+  <button class="hbtn" id="recbtn" style="color:#ff5b6e;border-color:rgba(255,91,110,.5)">● REC</button>
   <button class="hbtn stop" id="stopall">■ STOP ALL</button>
   <a class="hbtn" href="/codex.html">◀ CODEX</a>
 </header>
@@ -462,6 +463,19 @@ document.getElementById('tabs').addEventListener('click',e=>{ const b=e.target.c
 });
 function stopAll(){ beatStop(); clearTimeout(melTimer); medStop(); sonStop(); hzStop(); toast('All sound stopped'); }
 document.getElementById('stopall').onclick=stopAll;
+
+// ═══════════════ RECORD & EXPORT — capture the master to a song file ═══════════════
+let recorder=null, recChunks=[], recDest=null; const recBtn=document.getElementById('recbtn');
+recBtn.onclick=()=>{
+  if(recorder && recorder.state==='recording'){ recorder.stop(); return; }
+  audio(); if(!recDest){ recDest=AC.createMediaStreamDestination(); master.connect(recDest); }
+  if(typeof MediaRecorder==='undefined'){ toast('Recording not supported in this browser'); return; }
+  recChunks=[]; try{ recorder=new MediaRecorder(recDest.stream); }catch(e){ toast('Recorder unavailable'); return; }
+  recorder.ondataavailable=e=>{ if(e.data&&e.data.size) recChunks.push(e.data); };
+  recorder.onstop=()=>{ const blob=new Blob(recChunks,{type:recorder.mimeType||'audio/webm'}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='shaddai-song-'+Date.now()+'.webm'; a.click(); toast('Song saved (.webm) ✦');
+    recBtn.classList.remove('on'); recBtn.textContent='● REC'; recBtn.style.color='#ff5b6e'; };
+  recorder.start(); recBtn.classList.add('on'); recBtn.textContent='■ REC…'; recBtn.style.color='#fff'; toast('Recording — play beats/melody, hit REC again to save'); };
 let _tt=null; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),1800); }
 </script>
 </body></html>
