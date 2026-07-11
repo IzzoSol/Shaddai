@@ -120,7 +120,12 @@
 (function(){var show=function(t){var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
 window.__reportErr=show;   // let other code surface caught (swallowed) errors to the on-screen box
 window.addEventListener('error',function(e){show('JS: '+(e.message||(e.error&&e.error.message)||e)+'  @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));});
-window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */show('PROMISE: '+msg);});})();
+window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */
+  /* Non-fatal background data fetches (portals/visitors/news/markets/museum) can transiently return
+     HTML (SPA 404 fallback) or fail offline. Those must NOT nuke the world with a red box — degrade
+     silently (warn to console for debugging). Real JS bugs throw a different message and still show. */
+  if(/unexpected token|not valid json|json\.parse|<!doctype|failed to fetch|networkerror|load failed|the string did not match/i.test(msg)){try{console.warn('[world] non-fatal fetch/parse:',msg);}catch(_){}e.preventDefault();return;}
+  show('PROMISE: '+msg);});})();
 </script>
 
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
@@ -245,7 +250,7 @@ const AGENTS = [
   { codename:'ORACLE',  color:'#c084fc', rarity:'LEGENDARY', role:'Esoteric & Knowledge',      creator:'SHADDAI Genesis', price:3, skills:['research','natal_chart','numerology','chakra_scan','sacred_geometry','run_skill'] },
   { codename:'NEXUS',   color:'#34e5b0', rarity:'EPIC',      role:'Auto-Router',               creator:'SHADDAI Genesis', price:2, skills:['route','workflow','schedule','run_js','search_skills','run_skill'] },
   { codename:'TURTLE',  color:'#1fd6c4', rarity:'RARE',      role:'Creative & Game Design',    creator:'SHADDAI Genesis', price:4, skills:['pixel_sprite','melody_gen','game_design','color_palette','draft_post','run_skill'] },
-  { codename:'QUILL',   color:'#b98cff', rarity:'RARE',      role:'Writer & Chat',             creator:'SHADDAI Genesis', price:2, skills:['copywrite','tone_engineer','phonetics','docs','draft_post','run_skill'] },
+  { codename:'QUILL',   color:'#ff9d3d', rarity:'RARE',      role:'Writer & Chat',             creator:'SHADDAI Genesis', price:2, skills:['copywrite','tone_engineer','phonetics','docs','draft_post','run_skill'] },
   { codename:'PIKADON', color:'#ff5a6e', rarity:'EPIC',      role:'Security Fortress',         creator:'SHADDAI Genesis', price:3, skills:['check_security','rbac_guard','pgp_encrypt','audit_log','leak_scan','run_skill'] },
 ];
 let SKILLCOUNTS = {};
@@ -1453,7 +1458,7 @@ const loader = new THREE.TextureLoader(__loadMgr);
 const agentSprites = [];
 const labelEls = [];
 const labelLayer = document.getElementById('labels');
-function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpperCase()+'-portrait.png'); }
+function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpperCase()+'-action.png'); }
 
 // ── PLAYER CHARACTER GLB PRELOAD CACHE ──
 // Kick off downloads during the sky-dive (900ms before picker opens) so the GLB is already
@@ -1554,17 +1559,33 @@ function _nextAgentBody(){
         (function(){ const A=actions, C=gltf.animations, mx=mixer;
           function alias(canon, subs){ if(A[canon]) return; for(const cl of C){ const n=cl.name.toLowerCase(); if(subs.some(s=>n.includes(s))){ A[canon]=mx.clipAction(cl); return; } } }
           alias('walk',['walk']); alias('run',['run','sprint']);
-          alias('idle',['idle','dance','swing','breath']);      // TURTLE's base pose → a dance
           alias('flip',['vault','backflip','flip','handstand']);
           alias('attack1',['roundhouse','flying','high_kick','kick']);
           alias('attack2',['jab','punch','sweep']);
           alias('heavy',['spin_kick','double_kick']);
         })();
+        // STANDING IDLE — many Meshy rigs ship a stiff/T-pose clip literally named "idle".
+        // OVERRIDE it: prefer a lively dance/breathing loop; else fall back to the WALK cycle
+        // played slow (so ZEROX/TURTLE sway instead of freezing in a T-pose). Never a bare rest pose.
+        entry._idleSlow = false;
+        (function(){ const C=gltf.animations, mx=mixer; let pick=null;
+          for(const cl of C){ if(/dance|breath|sway|idle[_ ]?loop|bounce/i.test(cl.name)){ pick=cl; break; } }
+          if(!pick) for(const cl of C){ if(/idle/i.test(cl.name) && !/t[_ ]?pose|rest|a[_ ]?pose/i.test(cl.name)){ pick=cl; break; } }
+          if(!pick) for(const cl of C){ if(/walk/i.test(cl.name)){ pick=cl; entry._idleSlow=true; break; } }
+          if(!pick && C.length) pick = C[0];                          // last resort: SOME motion, not a T-pose
+          if(pick){
+            // Strip root/hip TRANSLATION so the looping idle plays IN PLACE — otherwise the clip's
+            // root motion drifts the body off its plaza spot (the "standing still but off-center" bug),
+            // and the HTML name-tile, anchored to the spawn XZ, ends up offset from the body.
+            const clip = pick.clone(); clip.tracks = clip.tracks.filter(tr=>!/\.position$/.test(tr.name));
+            actions['idle'] = mx.clipAction(clip);
+          }
+        })();
         body.userData.__hasMixer = true;
         entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
         entry._poseSnap = _snapshotPose(body);   // rest pose → restore after one-shot clips so flip/attack don't leave the body facing backward
         console.log('🕺 '+code+' rig clips:', Object.keys(actions).join(','));
-        playAgentAction(entry, 'idle');
+        playAgentAction(entry, 'idle', entry._idleSlow ? {timeScale:0.55} : {});
       }
       // real 3D body replaces the floating holograph: drop the billboard, beam & glow.
       // (the agent's portrait card still opens on click / press E via the dossier.)
@@ -4212,21 +4233,25 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
 </script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
-  <button class="dist-x" onclick="closeDistrict()">✕</button>
+  <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>
   <div id="distTitle" class="dist-title">DISTRICT</div>
   <div id="distBody" class="dist-body"></div>
+  <button class="dist-back" onclick="closeDistrict()">◀ BACK TO THE WORLD</button>
 </div></div>
 <style>
 .dist{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(2,5,10,.78);backdrop-filter:blur(6px)}
 .dist.open{display:flex}
-.dist-card{width:min(640px,94vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,rgba(8,12,22,.98),rgba(5,8,16,.99));border:1px solid var(--dpc,#27e0ff);border-radius:16px;box-shadow:0 0 60px color-mix(in srgb,var(--dpc,#27e0ff) 30%,transparent);padding:22px 26px;position:relative;font-family:'Share Tech Mono',monospace}
-.dist-x{position:absolute;top:14px;right:16px;background:rgba(0,0,0,.4);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px}
-.dist-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;letter-spacing:3px;color:var(--dpc,#27e0ff);text-shadow:0 0 16px var(--dpc,#27e0ff)}
-.dist-sub{font-size:9px;letter-spacing:2px;color:#7e8aa3;margin:4px 0 14px;text-transform:uppercase}
-.dist-body input,.dist-body textarea,.dist-body select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(39,224,255,.25);border-radius:8px;color:#eaf2ff;font-family:inherit;font-size:12px;padding:10px;margin:6px 0}
-.dist-body textarea{min-height:90px;resize:vertical}
-.dist-btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:10px 18px;border-radius:8px;cursor:pointer;border:none;background:linear-gradient(90deg,var(--dpc,#27e0ff),color-mix(in srgb,var(--dpc,#27e0ff) 55%,#000));color:#04060d;margin-top:6px}
-.dist-out{margin-top:14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px;font-size:11px;color:#cfe9ff;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto;line-height:1.55}
+.dist-card{width:min(1060px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,rgba(8,12,22,.98),rgba(5,8,16,.99));border:1px solid var(--dpc,#27e0ff);border-radius:16px;box-shadow:0 0 60px color-mix(in srgb,var(--dpc,#27e0ff) 30%,transparent);padding:26px 34px 30px;position:relative;font-family:'Share Tech Mono',monospace}
+.dist-x{position:absolute;top:16px;right:18px;background:rgba(0,0,0,.5);border:1px solid var(--dpc,#27e0ff);color:#fff;height:38px;padding:0 16px;border-radius:9px;cursor:pointer;font-size:13px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;z-index:2;transition:background .12s,box-shadow .12s}
+.dist-x:hover{background:color-mix(in srgb,var(--dpc,#27e0ff) 25%,#000);box-shadow:0 0 16px color-mix(in srgb,var(--dpc,#27e0ff) 50%,transparent)}
+.dist-back{display:block;width:100%;margin-top:22px;padding:14px;border-radius:10px;cursor:pointer;border:1px solid var(--dpc,#27e0ff);background:rgba(0,0,0,.35);color:var(--dpc,#27e0ff);font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;transition:background .12s,box-shadow .12s}
+.dist-back:hover{background:color-mix(in srgb,var(--dpc,#27e0ff) 18%,#000);box-shadow:0 0 20px color-mix(in srgb,var(--dpc,#27e0ff) 40%,transparent)}
+.dist-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:26px;letter-spacing:3px;color:var(--dpc,#27e0ff);text-shadow:0 0 16px var(--dpc,#27e0ff);padding-right:120px}
+.dist-sub{font-size:10px;letter-spacing:2px;color:#7e8aa3;margin:5px 0 16px;text-transform:uppercase}
+.dist-body input,.dist-body textarea,.dist-body select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(39,224,255,.25);border-radius:8px;color:#eaf2ff;font-family:inherit;font-size:13px;padding:11px;margin:6px 0}
+.dist-body textarea{min-height:96px;resize:vertical}
+.dist-btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;padding:11px 20px;border-radius:8px;cursor:pointer;border:none;background:linear-gradient(90deg,var(--dpc,#27e0ff),color-mix(in srgb,var(--dpc,#27e0ff) 55%,#000));color:#04060d;margin-top:6px}
+.dist-out{margin-top:14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:14px;font-size:12px;color:#cfe9ff;white-space:pre-wrap;word-break:break-word;max-height:46vh;overflow:auto;line-height:1.6}
 .dist-stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:12px}
 .dist-stat b{color:#fff;font-family:'Orbitron',sans-serif} .dist-stat span{color:#7e8aa3}
 .dist-note{padding:8px 10px;background:rgba(255,255,255,.03);border-left:2px solid var(--dpc,#27e0ff);border-radius:4px;margin:6px 0;font-size:11px;color:#cfe9ff}
@@ -4333,15 +4358,7 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
         '<button class="dist-btn musF" data-t="music" style="margin-top:0">MUSIC</button>'+
         '<button class="dist-btn musF" data-t="other" style="margin-top:0">OTHER</button>'+
       '</div>'+
-      '<div id="musGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0"></div>'+
-      '<div class="dist-sub" style="margin-top:14px">⬆ Upload to the Museum</div>'+
-      '<input id="musTitle" placeholder="Title">'+
-      '<select id="musType"><option value="art">Art (image)</option><option value="music">Music (audio)</option><option value="other">Other (file)</option></select>'+
-      '<input id="musUrl" placeholder="Image / audio / file URL or data ref">'+
-      '<input id="musCreator" placeholder="Creator (you)">'+
-      '<button class="dist-btn" id="musUp">＋ ADD TO GALLERY</button>'+
-      '<div class="dist-sub" style="margin-top:14px">Mint tier (for NFT minting)</div>'+
-      '<select id="musTier"><option value="free">Free</option><option value="builder">Builder</option><option value="pro">Pro</option><option value="alpha">Alpha</option></select>');
+      '<div id="musGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0"></div>');
     const o=out(b);
     const esc=(s)=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     let curType='';
@@ -4350,7 +4367,7 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
       try{
         const d=await jget('/api/museum/list'+(curType?('?type='+curType):''));
         const items=d.items||[];
-        if(!items.length){ grid.innerHTML='<div class="dist-note" style="grid-column:1/-1">Gallery empty — upload art, music, or other below.</div>'; return; }
+        if(!items.length){ grid.innerHTML='<div class="dist-note" style="grid-column:1/-1">The gallery is being curated — check back soon.</div>'; return; }
         grid.innerHTML=items.map(it=>{
           const media = it.type==='art'
             ? '<img src="'+esc(it.url)+'" alt="'+esc(it.title)+'" style="width:100%;height:90px;object-fit:cover;border-radius:6px;background:rgba(255,255,255,.04)">'
@@ -4361,28 +4378,11 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
             media+
             '<div style="margin-top:6px"><b>'+esc(it.title)+'</b></div>'+
             '<div style="color:#7e8aa3;font-size:10px">by '+esc(it.creator)+(it.minted?' · <span style="color:var(--dpc,#27e0ff)">⛓ MINTED</span>':'')+'</div>'+
-            (it.minted?'':'<button class="dist-btn musMint" data-id="'+esc(it.id)+'" style="font-size:9px;padding:6px 10px;margin-top:6px">⛓ MINT AS NFT</button>')+
           '</div>';
         }).join('');
-        grid.querySelectorAll('.musMint').forEach(btn=>{ btn.onclick=async()=>{
-          const tier=document.getElementById('musTier').value;
-          const r=await jpost('/api/museum/mint',{id:btn.dataset.id,tier});
-          if(r.status===402){ show(o,'🔒 '+r.data.error); return; }
-          if(r.data.ok){ show(o,'⛓ Minted "'+(r.data.item.title)+'" as an NFT ('+r.data.item.tier+' tier).'); load(); }
-          else show(o,'⚠ '+(r.data.error||'mint failed'));
-        }; });
       }catch(e){ grid.innerHTML='<div class="dist-note" style="grid-column:1/-1">museum offline</div>'; }
     }
     b.querySelectorAll('.musF').forEach(f=>{ f.onclick=()=>{ curType=f.dataset.t; load(); }; });
-    document.getElementById('musUp').onclick=async()=>{
-      const r=await jpost('/api/museum/item',{
-        title:document.getElementById('musTitle').value,
-        type:document.getElementById('musType').value,
-        url:document.getElementById('musUrl').value,
-        creator:document.getElementById('musCreator').value });
-      if(r.data.ok){ show(o,'✅ added to the Museum ('+r.data.total+' items)'); document.getElementById('musTitle').value=''; document.getElementById('musUrl').value=''; load(); }
-      else show(o,'⚠ '+(r.data.error||'upload failed'));
-    };
     load();
   }
   function eso_(b){

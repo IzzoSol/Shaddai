@@ -133,7 +133,7 @@ a{color:inherit;text-decoration:none}
 #moon-hint.on{display:block}
 #moon-hint b{color:var(--gold)}
 /* Portal button */
-.scene-portal{position:absolute;bottom:24px;pointer-events:all}
+.scene-portal{position:absolute;bottom:74px;pointer-events:all}  /* lifted clear of the bottom-right CURSOR⇄WALK toggle */
 .pbtn{font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--gold);background:rgba(10,6,18,.85);
   border:1px solid rgba(196,162,78,.38);padding:10px 18px;cursor:pointer;
@@ -1693,8 +1693,8 @@ async function buildOracle() {
   scene.background = new THREE.Color(0x060310);
   scene.fog = new THREE.FogExp2(0x03010a, 0.0014);
 
-  camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 4, 23);
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);  // 52→60: less zoomed-in, fits the observatory on screen
+  camera.position.set(0, 4.5, 26);
 
   // Ambient + fill lights
   scene.add(new THREE.AmbientLight(0x180e38, 1.4));
