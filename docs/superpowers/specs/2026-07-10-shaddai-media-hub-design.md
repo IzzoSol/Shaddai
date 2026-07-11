@@ -62,6 +62,25 @@ Workflows tab:        unchanged, advanced-only (Simple Mode removed from it)
 The current `showView('media')` becomes the **Create** pane inside the hub (kept working; re-parented,
 not rewritten). `media-hub` is the new top-level id.
 
+### 4b. Codex surface (public landing `codex.html`)
+
+The Codex (`public/codex.html`) is the public almanac landing with instrument links (`.lk`). Two
+changes, built with TURTLE + the frontend-design skill:
+
+- **Add a "Shaddai Media" instrument** → opens the Shaddai Media hub (option 2a). Until the hub ships,
+  it can point at the Clipper; switch the href to the hub route once Phase 1 lands.
+- **Turtle Museum → into The Athenaeum (3D).** Today it's its own Codex link (`/museum.html`). The
+  museum is already built; promote it into a **walkable 3D room inside `athenaeum.html`** alongside
+  Oracle's observatory and Quill's library (the Athenaeum already hosts ORACLE + QUILL entry portals
+  via `enterOracle` / `enterQuill`). Work: make the museum **walkable**, **fix the pillars/geometry**,
+  and wire it as a third portal (`enterMuseum`); update the Athenaeum's blurb to "Oracle · Quill ·
+  Turtle's Museum"; **remove the standalone `/museum.html` link** from `codex.html`. No new standalone
+  museum page.
+
+Codex files touched: `public/codex.html` (add Shaddai Media link, remove Museum link, relabel
+Athenaeum), `public/athenaeum.html` (third walkable museum room + `enterMuseum`), reusing existing
+`public/museum.html` content/assets.
+
 ---
 
 ## 5. The shared `MediaAsset` contract (the integration layer)

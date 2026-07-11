@@ -100,6 +100,8 @@
     font-family:'Cinzel',serif; letter-spacing:.12em; text-transform:uppercase; font-weight:700; font-size:16px; transition:color .3s; }
   .lk .corner{ position:absolute; width:9px; height:9px; border:1px solid var(--gold); } .lk .c1{ top:6px; left:6px; border-right:0; border-bottom:0; } .lk .c2{ bottom:6px; right:6px; border-left:0; border-top:0; }
   .lk .arrow{ display:block; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.2em; color:var(--gold); margin-top:8px; font-weight:400; text-transform:none; transition:color .3s; }
+  .lk-glyph{ display:block; font-family:'Cinzel',serif; font-size:18px; color:var(--gold); margin-bottom:10px; letter-spacing:0; line-height:1; font-weight:400; transition:color .3s; }
+  .lk:hover .lk-glyph{ color:var(--gold2); }
   .lk::before{ content:''; position:absolute; inset:0; background:var(--ink); transform:translateY(101%); transition:transform .34s cubic-bezier(.7,0,.2,1); z-index:-1; }
   .lk:hover{ color:var(--paper); } .lk:hover .arrow{ color:var(--gold2); } .lk:hover::before{ transform:translateY(0); }
 
@@ -291,13 +293,12 @@
     <section class="sect">
       <div class="head"><span class="num">III.</span><span class="name">Instruments</span><span class="tail">enter the works</span></div>
       <div class="instr">
-        <a class="lk" href="/aura.html"><span class="corner c1"></span><span class="corner c2"></span>The AURA Ledger<span class="arrow">observe the savings →</span></a>
-        <a class="lk" href="/forge-about.html"><span class="corner c1"></span><span class="corner c2"></span>The Forge<span class="arrow">learn the craft →</span></a>
-        <a class="lk" href="/world"><span class="corner c1"></span><span class="corner c2"></span>Shaddai World<span class="arrow">walk among them →</span></a>
-        <a class="lk" href="/arcade.html"><span class="corner c1"></span><span class="corner c2"></span>Shaddai Games<span class="arrow">enter the arcade →</span></a>
-        <a class="lk" href="/athenaeum.html"><span class="corner c1"></span><span class="corner c2"></span>The Athenaeum<span class="arrow">Oracle's observatory · Quill's library →</span></a>
-        <a class="lk" href="/museum.html"><span class="corner c1"></span><span class="corner c2"></span>Turtle's Museum<span class="arrow">the gallery · community mural →</span></a>
-        <a class="lk" href="/pricing.html"><span class="corner c1"></span><span class="corner c2"></span>The Covenant<span class="arrow">choose thy plan →</span></a>
+        <a class="lk" href="/aura.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⚖</span>The AURA Ledger<span class="arrow">observe the savings →</span></a>
+        <a class="lk" href="/forge-about.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⚒</span>The Forge<span class="arrow">learn the craft →</span></a>
+        <a class="lk" href="/world"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">✦</span>Shaddai World<span class="arrow">walk among them →</span></a>
+        <a class="lk" href="/arcade.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">◈</span>Shaddai Games<span class="arrow">enter the arcade →</span></a>
+        <a class="lk" href="/athenaeum.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⟁</span>The Athenaeum<span class="arrow">Oracle's observatory · Quill's library · Turtle's Museum →</span></a>
+        <a class="lk" href="/pricing.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">☽</span>The Covenant<span class="arrow">choose thy plan →</span></a>
       </div>
     </section>
 

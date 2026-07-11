@@ -57,6 +57,11 @@ a{color:inherit;text-decoration:none}
 .pc:hover{transform:translateY(-4px);border-color:rgba(196,162,78,.7);background:rgba(14,8,32,.85)}
 .pc:hover::before{opacity:1}
 .pc-q::before{background:radial-gradient(ellipse at 50% 30%,rgba(138,98,48,.28),transparent 70%)}
+.pc-m::before{background:radial-gradient(ellipse at 50% 30%,rgba(32,108,60,.30),transparent 70%)}
+.pc-m:hover{border-color:rgba(72,210,128,.65)!important}
+.pc-m .pc-icon{color:#48d280;text-shadow:0 0 20px rgba(72,210,128,.6);filter:drop-shadow(0 0 12px rgba(72,210,128,.5))}
+.pc-m .pc-name{color:#48d280}
+.pc-m .cn{border-color:#48d280}
 .cn{position:absolute;width:10px;height:10px;border:1px solid var(--gold)}
 .c1{top:5px;left:5px;border-right:none;border-bottom:none}
 .c2{bottom:5px;right:5px;border-left:none;border-top:none}
@@ -229,7 +234,75 @@ a{color:inherit;text-decoration:none}
   #quill-panel{width:100%;bottom:0;top:auto;height:52vh;border-left:none;border-top:1px solid rgba(196,162,78,.2)}
   .e-portals{gap:10px}
   .pc{width:clamp(140px,42vw,190px);padding:22px 14px}
+  #mural-panel{width:100%;bottom:0;top:auto;height:60vh;border-right:none;border-top:1px solid rgba(72,210,128,.2)}
 }
+
+/* ── MUSEUM MURAL PANEL ── */
+#mural-panel{position:absolute;top:54px;left:0;bottom:0;width:clamp(250px,30vw,340px);z-index:52;
+  background:rgba(8,18,12,.95);border-right:1px solid rgba(72,210,128,.2);
+  overflow-y:auto;padding:16px;pointer-events:all;display:none;flex-direction:column;gap:12px}
+#mural-panel.on{display:flex}
+#mural-panel::-webkit-scrollbar{width:3px}
+#mural-panel::-webkit-scrollbar-thumb{background:rgba(72,210,128,.25)}
+.mp-title{font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:#48d280;text-align:center}
+.mp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink2);text-align:center;line-height:1.6;margin-top:-6px}
+#paint-canvas{width:100%;aspect-ratio:1;background:#070f0a;border:1px solid rgba(72,210,128,.35);
+  touch-action:none;cursor:crosshair;display:block}
+.mp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mp-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink2);min-width:44px}
+.mp-swatch{width:22px;height:22px;border:1px solid rgba(72,210,128,.3);cursor:pointer;transition:transform .12s}
+.mp-swatch:hover{transform:scale(1.15)}
+.mp-swatch.on{border-color:#48d280;box-shadow:0 0 8px rgba(72,210,128,.6)}
+#brush-size{flex:1;accent-color:#48d280}
+input[type=text].mp-input{flex:1;background:rgba(8,20,10,.85);border:1px solid rgba(72,210,128,.28);
+  color:var(--ink);padding:7px 10px;font-family:'Fraunces',serif;font-size:13px;outline:none;width:100%}
+input[type=text].mp-input:focus{border-color:rgba(72,210,128,.65)}
+.mp-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 14px;background:rgba(72,210,128,.12);border:1px solid rgba(72,210,128,.35);
+  color:#48d280;cursor:pointer;transition:background .2s;text-align:center}
+.mp-btn:hover{background:rgba(72,210,128,.25)}
+.mp-btn.ghost{background:transparent;color:var(--ink2);border-color:rgba(169,159,134,.3)}
+.mp-btn.ghost:hover{color:#48d280;border-color:rgba(72,210,128,.6)}
+.mp-note{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;
+  color:rgba(169,159,134,.55);line-height:1.6;text-align:center}
+.mp-divider{height:1px;background:rgba(72,210,128,.15);margin:2px 0}
+#pending-list{display:flex;flex-direction:column;gap:8px}
+.pend-item{display:flex;align-items:center;gap:8px;padding:6px;
+  border:1px solid rgba(72,210,128,.18);background:rgba(8,20,12,.6)}
+.pend-item img{width:44px;height:44px;object-fit:cover;border:1px solid rgba(72,210,128,.3);flex-shrink:0}
+.pend-meta{flex:1;min-width:0}
+.pend-title{font-family:'Cinzel',serif;font-size:11px;color:#48d280;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pend-by{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em;color:var(--ink2)}
+.pend-acts{display:flex;gap:4px;flex-shrink:0}
+.pend-acc,.pend-den{font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;
+  padding:4px 7px;border:1px solid;line-height:1}
+.pend-acc{color:#7ee08a;border-color:rgba(120,220,140,.4)}
+.pend-acc:hover{background:rgba(30,80,40,.5)}
+.pend-den{color:#e88;border-color:rgba(220,120,110,.4)}
+.pend-den:hover{background:rgba(80,20,16,.5)}
+
+/* ── KIOSK MODAL ── */
+#kiosk-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  background:rgba(2,8,4,.86);pointer-events:all;padding:24px}
+#kiosk-modal.on{display:flex}
+.km-card{position:relative;max-width:min(680px,92vw);width:100%;
+  background:linear-gradient(160deg,rgba(8,22,14,.98),rgba(3,10,5,.98));
+  border:1px solid rgba(72,210,128,.5);box-shadow:0 0 80px rgba(32,140,80,.4);padding:28px}
+.km-close{position:absolute;top:10px;right:12px;cursor:pointer;color:var(--ink2);
+  font-family:'IBM Plex Mono',monospace;font-size:18px;border:1px solid rgba(72,210,128,.35);
+  padding:2px 9px;transition:color .2s,border-color .2s}
+.km-close:hover{color:#48d280;border-color:#48d280}
+.km-title{font-family:'Cinzel',serif;font-weight:900;font-size:22px;letter-spacing:.06em;
+  color:#48d280;text-align:center;margin-bottom:4px;text-shadow:0 0 20px rgba(72,210,128,.4)}
+.km-by{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink2);text-align:center;margin-bottom:18px}
+.km-img{width:100%;max-height:56vh;object-fit:contain;background:#070f0a;
+  border:1px solid rgba(72,210,128,.3);display:block}
+.km-empty{text-align:center;color:var(--ink2);font-style:italic;padding:60px 0}
 </style>
 </head>
 <body>
@@ -254,6 +327,13 @@ a{color:inherit;text-decoration:none}
       <div class="pc-name">QUILL</div>
       <div class="pc-desc">The Library</div>
       <div class="pc-hint">The chronicler · the keeper<br>Books · Reference · Words</div>
+    </div>
+    <div class="pc pc-m" id="museum-portal" onclick="window.enterMuseum()">
+      <span class="cn c1"></span><span class="cn c2"></span>
+      <div class="pc-icon">🏛</div>
+      <div class="pc-name">TURTLE</div>
+      <div class="pc-desc">The Gallery · Museum</div>
+      <div class="pc-hint">The curator · the artist<br>Fresco · Mural · Kiosk</div>
     </div>
   </div>
   <a class="e-back" href="/codex.html" onclick="return window.exitScene(event)">← Return to Codex</a>
@@ -347,6 +427,51 @@ a{color:inherit;text-decoration:none}
   </div>
 </div>
 
+<!-- ═══════════════════ MUSEUM HUD ═══════════════════ -->
+<div id="hud-museum" class="hud">
+  <div class="hud-bar">
+    <button class="hb" onclick="window.showEntry()">← Change</button>
+    <span class="ht">TURTLE · The Gallery · Museum</span>
+    <button class="hb" onclick="window.toggleMural()">🎨 Mural</button>
+    <button class="hb" onclick="window.toggleMode()">⇄ Mode</button>
+    <button class="hb hb-exit" onclick="window.exitScene()">✕ Exit</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ MURAL PAINT PANEL ═══════════════════ -->
+<div id="mural-panel">
+  <div class="mp-title">Community Mural</div>
+  <div class="mp-sub">Paint · Request · Owner accepts → it hangs on the wall</div>
+  <canvas id="paint-canvas" width="360" height="360"></canvas>
+  <div class="mp-row" id="swatches"></div>
+  <div class="mp-row">
+    <span class="mp-label">Brush</span>
+    <input type="range" id="brush-size" min="2" max="40" value="8"/>
+  </div>
+  <input type="text" class="mp-input" id="art-title" placeholder="Title your work…" maxlength="40"/>
+  <input type="text" class="mp-input" id="art-by" placeholder="Your name / handle…" maxlength="28"/>
+  <div class="mp-row" style="gap:8px">
+    <div class="mp-btn ghost" style="flex:1" onclick="window.clearPaint()">Clear</div>
+    <div class="mp-btn" style="flex:2" onclick="window.requestShowcase()">Request Showcase</div>
+  </div>
+  <div class="mp-note" id="mural-note">Saved locally on this device. No account needed.</div>
+  <div class="mp-divider"></div>
+  <div class="mp-title" style="font-size:11px">Owner Review <span style="color:var(--ink2)">(placeholder)</span></div>
+  <div id="pending-list"><div class="mp-note">No submissions pending.</div></div>
+  <div class="mp-note">Accept → tile joins the mural wall &amp; kiosk. Deny → removed.</div>
+</div>
+
+<!-- ═══════════════════ KIOSK MODAL ═══════════════════ -->
+<div id="kiosk-modal" onclick="if(event.target===this)window.closeKiosk()">
+  <div class="km-card">
+    <span class="km-close" onclick="window.closeKiosk()">✕</span>
+    <div class="km-title" id="km-title">—</div>
+    <div class="km-by" id="km-by">—</div>
+    <img class="km-img" id="km-img" alt="mural entry"/>
+    <div class="km-empty" id="km-empty" style="display:none">The mural is empty. Paint something and get it accepted to see it here.</div>
+  </div>
+</div>
+
 <!-- ═══════════════════ WALK-MODE OVERLAYS ═══════════════════ -->
 <div id="walk-cross"></div>
 <div id="walk-hint"><b>WALK</b> · <b>W A S D</b> move · mouse look · <b>Shift</b> run · <b>L</b> learn · <b>Tab</b>/<b>ESC</b> → cursor</div>
@@ -385,12 +510,32 @@ let orbParticles = null;
 let floatPlaques = [];   // { mesh, mat, tex }  — billboards ringing the MAIN disc
 let historyRing  = null; // { center:{x,z}, screens:[{mesh,mat,tex}] } — the 2nd circle across the bridge
 let rafId          = null;
-let curView        = null;    // 'oracle' | 'quill' | null
+let curView        = null;    // 'oracle' | 'quill' | 'museum' | null
 let fireplaceLight = null;    // QUILL fireplace — animated in render loop
 let moonMeshRef    = null;    // ORACLE moon sphere — click to open the moon HUD
 let moonInfoText   = '';      // cached "Phase · %" line for the moon HUD
 const rayc = new THREE.Raycaster();
 const ndc  = new THREE.Vector2();
+
+// ── MUSEUM state ──────────────────────────────────────────────────────────────
+let museumCeilingGlow = null;   // animated fresco light
+let museumMuralWall   = null;   // THREE.Group holding accepted mural tiles
+let museumMuralGrid   = null;   // {cols,cellW,cellH,gap,wallY} placement info
+let museumKioskPanel  = null;   // {mesh,mat,tex}
+let museumKioskHit    = { panel:null, prev:null, next:null, expand:null };
+let museumKioskEntries = [];
+let museumKioskIdx    = 0;
+let museumKioskTimer  = 0;
+let museumTileIndex   = 0;
+// localStorage for mural submissions (shared key with museum.html for device-local continuity)
+const MURAL_LS_KEY = 'shaddai_museum_mural_v1';
+function loadMural() {
+  try { const d = JSON.parse(localStorage.getItem(MURAL_LS_KEY) || '{}');
+    return { pending: d.pending || [], accepted: d.accepted || [] }; }
+  catch(_) { return { pending: [], accepted: [] }; }
+}
+function saveMural(m) { try { localStorage.setItem(MURAL_LS_KEY, JSON.stringify(m)); } catch(_){} }
+let mural = loadMural();
 
 // ── WALK MODE (first-person) ───────────────────────────────────────────────
 // A pointer-lock FPS layer that lets you WALK the scene (WASD + mouse-look) instead of
@@ -473,15 +618,26 @@ window.closeMoonInfo = function () {
   const el = document.getElementById('oracle-info'); if (el) el.classList.remove('on');
 };
 
-// Click on the canvas → in CURSOR mode, test the pointer against the moon sphere and,
-// on a hit, open the moon HUD. (In WALK mode the canvas click is consumed by pointer-lock.)
+// Click on the canvas → in CURSOR mode, test pointer against interactive objects.
 canvas.addEventListener('click', (e) => {
-  if (curView !== 'oracle' || walkOn || !moonMeshRef || !camera) return;
+  if (walkOn || !camera) return;
   ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
   ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
   rayc.setFromCamera(ndc, camera);
-  const hit = rayc.intersectObject(moonMeshRef, false);
-  if (hit.length) window.openMoonInfo();
+  if (curView === 'oracle' && moonMeshRef) {
+    const hit = rayc.intersectObject(moonMeshRef, false);
+    if (hit.length) { window.openMoonInfo(); return; }
+  }
+  if (curView === 'museum') {
+    const targets = [museumKioskHit.prev, museumKioskHit.next, museumKioskHit.expand, museumKioskHit.panel].filter(Boolean);
+    const hit = rayc.intersectObjects(targets, false);
+    if (hit.length) {
+      const o = hit[0].object;
+      if (o === museumKioskHit.prev) window.kioskPrev();
+      else if (o === museumKioskHit.next) window.kioskNext();
+      else { window.expandKiosk(); }
+    }
+  }
 });
 
 // Movement key state — only consumed while walking, so typing in QUILL's search boxes is never hijacked.
@@ -513,8 +669,9 @@ addEventListener('keydown', e => {
   if (e.code === 'Tab' && curView && !typing) { e.preventDefault(); window.toggleMode(); return; }
   if (e.code === 'Escape') {
     // ESC never traps: in WALK it drops to CURSOR (pointer-lock releases + our unlock
-    // handler flips uiMode). In CURSOR it exits the scene entirely.
+    // handler flips uiMode). In CURSOR it exits the scene (or closes modal first).
     if (walkOn) return;                 // let pointer-lock release; unlock handler → cursor
+    { const km = document.getElementById('kiosk-modal'); if (km && km.classList.contains('on')) { window.closeKiosk(); return; } }
     if (curView) window.exitScene();
     return;
   }
@@ -684,6 +841,10 @@ function disposeScene() {
   if (avatarMixer) { avatarMixer.stopAllAction(); avatarMixer = null; }
   avatarMesh = null; orbParticles = null; floatPlaques = [];
   fireplaceLight = null; chakra = null; historyRing = null; moonMeshRef = null;
+  // Museum refs
+  museumCeilingGlow = null; museumMuralWall = null; museumMuralGrid = null;
+  museumKioskPanel = null; museumKioskHit = { panel:null, prev:null, next:null, expand:null };
+  museumKioskEntries = []; museumKioskIdx = 0; museumKioskTimer = 0; museumTileIndex = 0;
   document.getElementById('chakra-prompt').classList.remove('on');
   { const oi = document.getElementById('oracle-info'); if (oi) oi.classList.remove('on'); }
   { const mh = document.getElementById('moon-hint'); if (mh) mh.classList.remove('on'); }
@@ -709,6 +870,8 @@ function hideAll() {
   canvas.classList.remove('on');
   document.getElementById('hud-oracle').classList.remove('on');
   document.getElementById('hud-quill').classList.remove('on');
+  document.getElementById('hud-museum').classList.remove('on');
+  document.getElementById('mural-panel').classList.remove('on');
 }
 
 window.showEntry = function () {
@@ -722,6 +885,8 @@ window.showEntry = function () {
   canvas.classList.remove('on');
   document.getElementById('hud-oracle').classList.remove('on');
   document.getElementById('hud-quill').classList.remove('on');
+  document.getElementById('hud-museum').classList.remove('on');
+  document.getElementById('mural-panel').classList.remove('on');
 };
 
 // ── Robust EXIT ─────────────────────────────────────────────────────────────
@@ -1628,10 +1793,553 @@ function startLoop() {
     if (walkOn) updateWalk(delta);
     else if (controls) controls.update();   // orbit auto-rotates in update(), so only run it when NOT walking
     if (curView === 'oracle') updateChakra(delta, t);
+    if (curView === 'museum') updateMuseum(delta, t);
     if (renderer && scene && camera) renderer.render(scene, camera);
   };
   go();
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MUSEUM — helper functions
+// ══════════════════════════════════════════════════════════════════════════
+
+// Small gold plaque canvas texture (museum-style, darker bg)
+function museumPlaqueTexture(text) {
+  const w = 256, h = 64;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#c4a24e'); g.addColorStop(0.5, '#a8892e'); g.addColorStop(1, '#7a5c10');
+  c.fillStyle = g; c.fillRect(0, 0, w, h);
+  c.strokeStyle = 'rgba(30,20,4,0.8)'; c.lineWidth = 2; c.strokeRect(3, 3, w-6, h-6);
+  c.fillStyle = '#140e02'; c.textAlign = 'center';
+  c.font = `bold ${Math.round(h*0.40)}px "Cinzel", serif`;
+  c.fillText(text, w/2, h/2 + h*0.15);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+
+// Placeholder canvas texture for museum artwork frames
+function museumPlaceholderTexture(label) {
+  const ph = document.createElement('canvas'); ph.width = ph.height = 256;
+  const c = ph.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, '#1a1228'); g.addColorStop(0.5, '#0f0a1e'); g.addColorStop(1, '#0a0618');
+  c.fillStyle = g; c.fillRect(0, 0, 256, 256);
+  c.fillStyle = 'rgba(72,210,128,0.3)';
+  for (let i = 0; i < 35; i++) c.fillRect(Math.random()*256, Math.random()*256, Math.random()<0.2?2:1, 1);
+  c.strokeStyle = 'rgba(72,210,128,0.5)'; c.lineWidth = 2;
+  c.beginPath(); c.arc(128, 116, 44, 0, Math.PI*2); c.stroke();
+  c.fillStyle = 'rgba(72,210,128,0.85)'; c.textAlign = 'center';
+  c.font = 'bold 28px "Cinzel", serif'; c.fillText('✦', 128, 126);
+  c.font = '12px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(169,159,134,0.7)';
+  c.fillText((label || "TURTLE'S MUSEUM").toUpperCase(), 128, 192);
+  const t = new THREE.CanvasTexture(ph); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// Framed wall art with warm spotlight, used in the museum scene
+function makeMuseumArt(sc, url, w, h, x, y, z, rotY, label) {
+  const grp = new THREE.Group();
+  grp.position.set(x, y, z); grp.rotation.y = rotY || 0;
+  const frameD = 0.2;
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x120c06, roughness: 0.7, metalness: 0.3,
+    emissive: 0x1a1206, emissiveIntensity: 0.25 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.35, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.45 });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.7, h + 0.7, frameD), frameMat);
+  grp.add(frame);
+  const reveal = new THREE.Mesh(new THREE.BoxGeometry(w + 0.24, h + 0.24, frameD + 0.02), goldMat);
+  reveal.position.z = 0.01; grp.add(reveal);
+  const artMat = new THREE.MeshBasicMaterial({ map: museumPlaceholderTexture(label) });
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(w, h), artMat);
+  art.position.z = frameD / 2 + 0.02; grp.add(art);
+  texLoader.load(url, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    if (art.material.map) art.material.map.dispose();
+    art.material.map = tex; art.material.needsUpdate = true;
+  }, undefined, () => {});
+  // warm spotlight so the piece reads
+  const glow = new THREE.SpotLight(0xffe6b0, 3.0, Math.max(w,h)*5, Math.PI/5, 0.5, 1);
+  glow.position.set(0, h*0.5 + 1.4, frameD/2 + 2.4);
+  glow.target = art; grp.add(glow); grp.add(glow.target);
+  if (label) {
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.55),
+      new THREE.MeshBasicMaterial({ map: museumPlaqueTexture(label) }));
+    pl.position.set(0, -(h/2) - 0.7, frameD/2 + 0.03); grp.add(pl);
+  }
+  sc.add(grp);
+  return grp;
+}
+
+// ── Paint canvas (mural feature) ─────────────────────────────────────────────
+const paintCanvas = document.getElementById('paint-canvas');
+const pctx = paintCanvas.getContext('2d');
+let paintColor = '#48d280', brushSize = 8, isPainting = false;
+function initPaint() {
+  pctx.fillStyle = '#070f0a'; pctx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
+  pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+}
+initPaint();
+window.clearPaint = function () { initPaint(); };
+
+// Swatches — green-biased TURTLE palette
+const TURTLE_PALETTE = ['#48d280','#c4a24e','#7c56c8','#4a3580','#e04b6b','#39b3a6','#f0e7cf','#0a0618'];
+(function buildSwatches() {
+  const row = document.getElementById('swatches');
+  TURTLE_PALETTE.forEach((col, i) => {
+    const s = document.createElement('div');
+    s.className = 'mp-swatch' + (i === 0 ? ' on' : '');
+    s.style.background = col;
+    s.onclick = () => { paintColor = col;
+      row.querySelectorAll('.mp-swatch').forEach(e => e.classList.remove('on')); s.classList.add('on'); };
+    row.appendChild(s);
+  });
+})();
+document.getElementById('brush-size').addEventListener('input', e => { brushSize = +e.target.value; });
+
+function paintPos(e) {
+  const r = paintCanvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - r.left) * (paintCanvas.width / r.width),
+           y: (src.clientY - r.top)  * (paintCanvas.height / r.height) };
+}
+function paintStart(e) { e.preventDefault(); isPainting = true; const p = paintPos(e);
+  pctx.beginPath(); pctx.moveTo(p.x, p.y); pctx.lineTo(p.x+0.01, p.y);
+  pctx.strokeStyle = paintColor; pctx.lineWidth = brushSize; pctx.stroke(); }
+function paintMove(e) { if (!isPainting) return; e.preventDefault(); const p = paintPos(e);
+  pctx.lineTo(p.x, p.y); pctx.strokeStyle = paintColor; pctx.lineWidth = brushSize; pctx.stroke(); }
+function paintEnd() { isPainting = false; }
+paintCanvas.addEventListener('mousedown', paintStart);
+paintCanvas.addEventListener('mousemove', paintMove);
+addEventListener('mouseup', paintEnd);
+paintCanvas.addEventListener('touchstart', paintStart, { passive: false });
+paintCanvas.addEventListener('touchmove',  paintMove,  { passive: false });
+paintCanvas.addEventListener('touchend', paintEnd);
+
+window.toggleMural = function () {
+  if (curView !== 'museum') return;
+  const el = document.getElementById('mural-panel');
+  const showing = el.classList.toggle('on');
+  if (showing && walkOn && plc) { try { plc.unlock(); } catch(_){} }
+};
+
+// ── Mural submit / accept / deny ──────────────────────────────────────────────
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.requestShowcase = function () {
+  const title = (document.getElementById('art-title').value || 'Untitled').trim().slice(0,40);
+  const by    = (document.getElementById('art-by').value   || 'Anonymous').trim().slice(0,28);
+  const img   = paintCanvas.toDataURL('image/png');
+  const tile  = { id: 'm' + Date.now().toString(36) + Math.floor(Math.random()*999),
+                  title, by, img, ts: Date.now() };
+  mural.pending.push(tile);
+  saveMural(mural);
+  renderPending();
+  document.getElementById('art-title').value = '';
+  window.clearPaint();
+  const note = document.getElementById('mural-note');
+  if (note) { const old = note.textContent; note.textContent = '✓ Submitted — awaiting owner review below.';
+    setTimeout(() => { note.textContent = old; }, 2600); }
+};
+
+function renderPending() {
+  const box = document.getElementById('pending-list');
+  if (!mural.pending.length) { box.innerHTML = '<div class="mp-note">No submissions pending.</div>'; return; }
+  box.innerHTML = '';
+  mural.pending.forEach(t => {
+    const row = document.createElement('div'); row.className = 'pend-item';
+    row.innerHTML = `<img src="${t.img}" alt=""/>
+      <div class="pend-meta"><div class="pend-title">${escapeHtml(t.title)}</div>
+      <div class="pend-by">by ${escapeHtml(t.by)}</div></div>
+      <div class="pend-acts"><span class="pend-acc" title="Accept">✓</span><span class="pend-den" title="Deny">✕</span></div>`;
+    row.querySelector('.pend-acc').onclick = () => acceptTile(t.id);
+    row.querySelector('.pend-den').onclick = () => denyTile(t.id);
+    box.appendChild(row);
+  });
+}
+function acceptTile(id) {
+  const i = mural.pending.findIndex(t => t.id === id); if (i < 0) return;
+  const [t] = mural.pending.splice(i, 1);
+  mural.accepted.push(t); saveMural(mural);
+  renderPending(); addTileToMuralWall(t); refreshMuseumKiosk();
+}
+function denyTile(id) {
+  const i = mural.pending.findIndex(t => t.id === id); if (i < 0) return;
+  mural.pending.splice(i, 1); saveMural(mural); renderPending();
+}
+
+// ── Mural wall grid ────────────────────────────────────────────────────────────
+function buildMuralGrid(sc, cx, cz, wallY, rotY) {
+  museumMuralWall = new THREE.Group();
+  museumMuralWall.position.set(cx, 0, cz);
+  museumMuralWall.rotation.y = rotY;
+  sc.add(museumMuralWall);
+  museumMuralGrid = { cols: 5, cellW: 1.5, cellH: 1.5, gap: 0.3, wallY };
+  mural.accepted.forEach(addTileToMuralWall);
+}
+function dataURLToCanvas(url) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#070f0a'; c.fillRect(0,0,256,256);
+  const img = new Image();
+  img.onload = () => { c.drawImage(img, 0, 0, 256, 256); if (cv._tex) cv._tex.needsUpdate = true; };
+  img.src = url;
+  return cv;
+}
+function addTileToMuralWall(t) {
+  if (!museumMuralWall || !museumMuralGrid) return;
+  const gi = museumMuralGrid;
+  const idx = museumTileIndex++;
+  const col = idx % gi.cols, rowN = Math.floor(idx / gi.cols);
+  const totalW = gi.cols * (gi.cellW + gi.gap) - gi.gap;
+  const lx = -totalW/2 + gi.cellW/2 + col*(gi.cellW+gi.gap);
+  const ly = gi.wallY + 1.2 - rowN*(gi.cellH+gi.gap);
+  const grp = new THREE.Group(); grp.position.set(lx, ly, 0.12);
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.4, metalness: 0.85,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.4 });
+  const fr = new THREE.Mesh(new THREE.BoxGeometry(gi.cellW+0.18, gi.cellH+0.18, 0.1), goldMat);
+  grp.add(fr);
+  const cv = dataURLToCanvas(t.img);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; cv._tex = tex;
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(gi.cellW, gi.cellH),
+    new THREE.MeshBasicMaterial({ map: tex }));
+  art.position.z = 0.06; grp.add(art);
+  museumMuralWall.add(grp);
+}
+
+// ── Kiosk ─────────────────────────────────────────────────────────────────────
+function museumKioskTexture(entry) {
+  const w = 512, h = 640;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const bg = c.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, 'rgba(8,22,14,0.98)'); bg.addColorStop(1, 'rgba(2,8,4,0.98)');
+  c.fillStyle = bg; c.fillRect(0, 0, w, h);
+  const glow = c.createRadialGradient(w/2, -30, 10, w/2, -30, w*0.9);
+  glow.addColorStop(0, 'rgba(48,180,100,0.45)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = glow; c.fillRect(0, 0, w, h*0.5);
+  c.strokeStyle = 'rgba(72,210,128,0.85)'; c.lineWidth = 4; c.strokeRect(8, 8, w-16, h-16);
+  c.fillStyle = '#48d280'; c.textAlign = 'center';
+  c.font = 'bold 28px "Cinzel", serif'; c.fillText('COMMUNITY MURAL', w/2, 54);
+  c.strokeStyle = 'rgba(72,210,128,0.5)'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(48, 72); c.lineTo(w-48, 72); c.stroke();
+  if (!entry) {
+    c.fillStyle = 'rgba(240,231,207,0.7)'; c.font = 'italic 20px "Fraunces", serif';
+    c.fillText('The mural awaits its', w/2, h/2 - 16);
+    c.fillText('first accepted work.', w/2, h/2 + 14);
+    c.font = '14px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(169,159,134,0.7)';
+    c.fillText('Paint · Request · Accept', w/2, h/2 + 60);
+  } else {
+    c.fillStyle = '#070f0a'; c.fillRect(w/2-190, 98, 380, 380);
+    c.strokeStyle = '#48d280'; c.lineWidth = 3; c.strokeRect(w/2-190, 98, 380, 380);
+    const img = new Image();
+    img.onload = () => { c.drawImage(img, w/2-186, 102, 372, 372); if (cv._tex) cv._tex.needsUpdate = true; };
+    img.src = entry.img;
+    c.fillStyle = '#48d280'; c.font = 'bold 28px "Cinzel", serif';
+    c.fillText(entry.title.slice(0,26), w/2, 526);
+    c.fillStyle = 'rgba(240,231,207,0.85)'; c.font = 'italic 18px "Fraunces", serif';
+    c.fillText('by ' + entry.by.slice(0,24), w/2, 558);
+    c.fillStyle = 'rgba(169,159,134,0.7)'; c.font = '13px "IBM Plex Mono", monospace';
+    c.fillText(`${(museumKioskIdx%Math.max(1,museumKioskEntries.length))+1} / ${museumKioskEntries.length}  ·  ◀/▶  ·  ⤢ EXPAND`, w/2, 596);
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; cv._tex = t;
+  return t;
+}
+function drawMuseumKiosk() {
+  if (!museumKioskPanel) return;
+  const entry = museumKioskEntries[museumKioskIdx] || null;
+  const t = museumKioskTexture(entry);
+  if (museumKioskPanel.tex) museumKioskPanel.tex.dispose();
+  museumKioskPanel.mat.map = t; museumKioskPanel.mat.needsUpdate = true; museumKioskPanel.tex = t;
+}
+function refreshMuseumKiosk() {
+  museumKioskEntries = mural.accepted.slice();
+  if (museumKioskIdx >= museumKioskEntries.length) museumKioskIdx = 0;
+  drawMuseumKiosk();
+}
+window.kioskNext = function () {
+  if (!museumKioskEntries.length) return;
+  museumKioskIdx = (museumKioskIdx + 1) % museumKioskEntries.length;
+  museumKioskTimer = 0; drawMuseumKiosk();
+};
+window.kioskPrev = function () {
+  if (!museumKioskEntries.length) return;
+  museumKioskIdx = (museumKioskIdx - 1 + museumKioskEntries.length) % museumKioskEntries.length;
+  museumKioskTimer = 0; drawMuseumKiosk();
+};
+window.expandKiosk = function () {
+  const modal = document.getElementById('kiosk-modal');
+  const entry = museumKioskEntries[museumKioskIdx] || null;
+  const img = document.getElementById('km-img'), empty = document.getElementById('km-empty');
+  if (!entry) {
+    document.getElementById('km-title').textContent = 'Community Mural';
+    document.getElementById('km-by').textContent = '';
+    img.style.display = 'none'; empty.style.display = 'block';
+  } else {
+    document.getElementById('km-title').textContent = entry.title;
+    document.getElementById('km-by').textContent = 'by ' + entry.by;
+    img.src = entry.img; img.style.display = 'block'; empty.style.display = 'none';
+  }
+  modal.classList.add('on');
+};
+window.closeKiosk = function () { document.getElementById('kiosk-modal').classList.remove('on'); };
+
+function buildMuseumKiosk(sc, x, z) {
+  const grp = new THREE.Group(); grp.position.set(x, 0, z);
+  const pedMat = new THREE.MeshStandardMaterial({ color: 0x0c1e10, roughness: 0.6, metalness: 0.4,
+    emissive: 0x1a3a20, emissiveIntensity: 0.3 });
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.2, 1.6, 24), pedMat);
+  ped.position.y = 0.8; grp.add(ped);
+  const greenRim = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.06, 8, 40),
+    new THREE.MeshStandardMaterial({ color: 0x48d280, emissive: 0x1a6a38, emissiveIntensity: 0.9, metalness: 0.8, roughness: 0.3 }));
+  greenRim.rotation.x = Math.PI/2; greenRim.position.y = 1.6; grp.add(greenRim);
+  const mat = new THREE.MeshBasicMaterial({ map: museumKioskTexture(null), transparent: true });
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.25), mat);
+  panel.position.set(0, 3.6, 0); grp.add(panel);
+  museumKioskPanel = { mesh: panel, mat, tex: mat.map };
+  museumKioskHit.panel = panel;
+  const bl = new THREE.PointLight(0x48d280, 2.0, 14); bl.position.set(0, 3.6, -0.6); grp.add(bl);
+  const fl = new THREE.PointLight(0xffe6b0, 1.0, 10); fl.position.set(0, 3.6, 1.6); grp.add(fl);
+  const btnGeo = new THREE.PlaneGeometry(0.6, 0.5);
+  const mkBtn = (label, bx) => {
+    const b = new THREE.Mesh(btnGeo, new THREE.MeshBasicMaterial({ map: museumPlaqueTexture(label) }));
+    b.position.set(bx, 1.85, 0.95); b.rotation.x = -0.5; grp.add(b); return b;
+  };
+  museumKioskHit.prev   = mkBtn('◀ PREV', -0.9);
+  museumKioskHit.expand = mkBtn('⤢ EXPAND', 0);
+  museumKioskHit.next   = mkBtn('NEXT ▶', 0.9);
+  sc.add(grp);
+  refreshMuseumKiosk();
+}
+
+// ── Per-frame museum update ────────────────────────────────────────────────────
+function updateMuseum(delta, t) {
+  // Fresco ceiling breathing glow
+  if (museumCeilingGlow) museumCeilingGlow.intensity = 2.2 + Math.sin(t * 0.85) * 0.35;
+  // Kiosk auto-advance
+  if (museumKioskEntries.length > 1) {
+    museumKioskTimer += delta;
+    if (museumKioskTimer > 6) { museumKioskTimer = 0; window.kioskNext(); }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MUSEUM SCENE — Turtle's Gallery, inside the Athenaeum
+// ══════════════════════════════════════════════════════════════════════════
+// Layout (top-down, +z toward entry/spawn, -z toward far wall):
+//   Hall ~x:[-14,14]  z:[-19,15].  Spawn at (0,+11) facing -z.
+//   4 walls: far (z=-19), near/mural (z=+15), left (x=-14), right (x=+14).
+//   CEILING (y=12): Michelangelo collage fresco, gold-framed panel, uplifted.
+//   COLUMNS: 2 rows of 4 each side, properly proportioned with base+shaft+capital.
+//   FAR WALL: "Agent Battles" (left) + "Missions" (right).
+//   LEFT WALL: "Cosmic Adventures".   RIGHT WALL: "Abstract Forms".
+//   NEAR WALL: Community Mural grid (z=+15) + "COMMUNITY MURAL" header plaque.
+//   KIOSK: pedestal near mural wall (x=6, z=+11).
+function buildMuseum() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x08100c);
+  scene.fog = new THREE.Fog(0x08100c, 32, 75);
+
+  camera = new THREE.PerspectiveCamera(56, window.innerWidth/window.innerHeight, 0.1, 400);
+  camera.position.set(0, 4.5, 11);
+
+  // ── Lighting ──
+  scene.add(new THREE.AmbientLight(0x1a2a20, 1.8));
+  scene.add(new THREE.HemisphereLight(0x48d280, 0x0a1408, 0.7));
+  const keyLight = new THREE.PointLight(0xffe6b0, 2.2, 60);
+  keyLight.position.set(0, 10, 4); scene.add(keyLight);
+  const greenFill = new THREE.PointLight(0x2ad870, 1.6, 55);
+  greenFill.position.set(-9, 8, -8); scene.add(greenFill);
+  const goldAccent = new THREE.PointLight(0xc4a24e, 1.2, 50);
+  goldAccent.position.set(9, 8, -8); scene.add(goldAccent);
+
+  const HALL_MINX=-14, HALL_MAXX=14, HALL_MINZ=-19, HALL_MAXZ=15, WALL_H=13;
+  const spanX = HALL_MAXX - HALL_MINX;
+  const spanZ = HALL_MAXZ - HALL_MINZ;
+  const midZ  = (HALL_MINZ + HALL_MAXZ) / 2;
+
+  // ── Marble floor (CanvasTexture, emerald-veined) ──
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256;
+  const fx = fc.getContext('2d');
+  const fg = fx.createLinearGradient(0, 0, 256, 256);
+  fg.addColorStop(0, '#1a2420'); fg.addColorStop(0.5, '#141e18'); fg.addColorStop(1, '#1c2622');
+  fx.fillStyle = fg; fx.fillRect(0, 0, 256, 256);
+  // veining
+  fx.strokeStyle = 'rgba(72,210,128,0.10)'; fx.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    fx.beginPath(); fx.moveTo(Math.random()*256, 0);
+    fx.bezierCurveTo(Math.random()*256,85,Math.random()*256,170,Math.random()*256,256);
+    fx.stroke();
+  }
+  const floorTex = new THREE.CanvasTexture(fc);
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(6,6);
+  floorTex.colorSpace = THREE.SRGBColorSpace;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(spanX, spanZ),
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4, metalness: 0.25 }));
+  floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, midZ); scene.add(floor);
+
+  // ── Walls ──
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x0e1810, roughness: 0.9, metalness: 0.06 });
+  const far = new THREE.Mesh(new THREE.PlaneGeometry(spanX, WALL_H), wallMat.clone());
+  far.position.set(0, WALL_H/2, HALL_MINZ); scene.add(far);
+  const near = new THREE.Mesh(new THREE.PlaneGeometry(spanX, WALL_H), wallMat.clone());
+  near.rotation.y = Math.PI; near.position.set(0, WALL_H/2, HALL_MAXZ); scene.add(near);
+  const wL = new THREE.Mesh(new THREE.PlaneGeometry(spanZ, WALL_H), wallMat.clone());
+  wL.rotation.y = Math.PI/2; wL.position.set(HALL_MINX, WALL_H/2, midZ); scene.add(wL);
+  const wR = new THREE.Mesh(new THREE.PlaneGeometry(spanZ, WALL_H), wallMat.clone());
+  wR.rotation.y = -Math.PI/2; wR.position.set(HALL_MAXX, WALL_H/2, midZ); scene.add(wR);
+
+  // ── COLUMNS — FIXED proportions ──────────────────────────────────────────
+  // Classic 3-part column: BASE (square plinth, slightly wider than shaft) +
+  // SHAFT (tapered cylinder, radiusTop < radiusBottom, 16 sides for clean look) +
+  // CAPITAL (square abacus slab). Heights are musically proportioned: 1:8:1 ratio.
+  // Placed symmetrically on both sides, 4 positions per row, evenly spaced.
+  const SHAFT_H   = WALL_H * 0.78;   // shaft takes most of the column height (~10.1u)
+  const BASE_H    = 0.7;              // base plinth height
+  const CAPITAL_H = 0.7;              // capital abacus height
+  const TOTAL_COL = BASE_H + SHAFT_H + CAPITAL_H;  // ~11.5u, well within WALL_H=13
+  const SHAFT_R_BOT = 0.58;           // bottom radius of tapered shaft
+  const SHAFT_R_TOP = 0.46;           // top radius (taper toward capital)
+  const BASE_W    = SHAFT_R_BOT*2 + 0.3;   // base slightly wider than shaft bottom
+  const CAP_W     = SHAFT_R_TOP*2 + 0.5;   // capital slightly wider than shaft top
+
+  const shaftMat = new THREE.MeshStandardMaterial({
+    color: 0x1e2e24, roughness: 0.55, metalness: 0.28,
+    emissive: 0x0e1a10, emissiveIntensity: 0.22 });
+  const capMat = new THREE.MeshStandardMaterial({
+    color: 0xc4a24e, roughness: 0.38, metalness: 0.88,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.32 });
+
+  // Column positions: 4 columns per side, evenly spaced between z=-14 and z=8
+  const COL_ZS = [-13, -6, 1, 8];
+  const COL_XS = [HALL_MINX + 1.6, HALL_MAXX - 1.6];  // inset slightly from wall
+
+  for (const cx of COL_XS) {
+    for (const cz of COL_ZS) {
+      // Base plinth
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(BASE_W, BASE_H, BASE_W), capMat);
+      base.position.set(cx, BASE_H/2, cz); scene.add(base);
+
+      // Shaft — tapered cylinder
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(SHAFT_R_TOP, SHAFT_R_BOT, SHAFT_H, 16), shaftMat);
+      shaft.position.set(cx, BASE_H + SHAFT_H/2, cz); scene.add(shaft);
+
+      // Capital — square abacus (slightly wider than shaft top)
+      const capital = new THREE.Mesh(
+        new THREE.BoxGeometry(CAP_W, CAPITAL_H, CAP_W), capMat);
+      capital.position.set(cx, BASE_H + SHAFT_H + CAPITAL_H/2, cz); scene.add(capital);
+
+      // Thin echinus torus between shaft top and capital (classical detail)
+      const echinus = new THREE.Mesh(
+        new THREE.TorusGeometry(SHAFT_R_TOP + 0.05, 0.08, 6, 20), capMat);
+      echinus.rotation.x = Math.PI/2;
+      echinus.position.set(cx, BASE_H + SHAFT_H - 0.12, cz); scene.add(echinus);
+
+      // Warm column sconce light (subtle, keeps them readable in the dark gallery)
+      const sconce = new THREE.PointLight(0xc4a24e, 0.4, 8);
+      sconce.position.set(cx, BASE_H + SHAFT_H + CAPITAL_H + 0.5, cz); scene.add(sconce);
+    }
+  }
+
+  // ── CEILING FRESCO — Michelangelo-style collage, gold-framed ──
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(spanX, spanZ),
+    new THREE.MeshStandardMaterial({ color: 0x0a1410, roughness: 0.95 }));
+  ceil.rotation.x = Math.PI/2; ceil.position.set(0, WALL_H, midZ); scene.add(ceil);
+
+  // Gold frame around the fresco panel
+  const frescoW = spanX - 6, frescoD = spanZ - 8;
+  const frameMat2 = new THREE.MeshStandardMaterial({ color: 0xc4a24e, roughness: 0.35, metalness: 0.9,
+    emissive: 0x3a2c0e, emissiveIntensity: 0.5 });
+  const fFrame = new THREE.Mesh(new THREE.BoxGeometry(frescoW+1.4, 0.5, frescoD+1.4), frameMat2);
+  fFrame.position.set(0, WALL_H-0.4, midZ); scene.add(fFrame);
+
+  // Fresco plane — loads from asset, shows placeholder first
+  const fresco = new THREE.Mesh(new THREE.PlaneGeometry(frescoW, frescoD),
+    new THREE.MeshBasicMaterial({ map: museumPlaceholderTexture('Ceiling Fresco') }));
+  fresco.rotation.x = Math.PI/2; fresco.position.set(0, WALL_H-0.5, midZ); scene.add(fresco);
+  texLoader.load('/assets/museum/ceiling-collage.png', (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    if (fresco.material.map) fresco.material.map.dispose();
+    fresco.material.map = tex; fresco.material.needsUpdate = true;
+  }, undefined, () => {});
+
+  // Upward ceiling glow — breathes in updateMuseum()
+  museumCeilingGlow = new THREE.PointLight(0xb0ffe0, 2.2, 40);
+  museumCeilingGlow.position.set(0, WALL_H-4, midZ); scene.add(museumCeilingGlow);
+  const cg2 = new THREE.PointLight(0x48d280, 1.0, 32);
+  cg2.position.set(0, WALL_H-5, midZ-5); scene.add(cg2);
+
+  // ── FOUR WALL PAINTINGS (gold frames + spotlights + plaques) ──
+  // Far wall: two pieces flanking centre
+  makeMuseumArt(scene, '/assets/museum/wall-battle.png',   5, 5, -6, 6, HALL_MINZ+0.3,  0,        'Agent Battles');
+  makeMuseumArt(scene, '/assets/museum/wall-mission.png',  5, 5,  6, 6, HALL_MINZ+0.3,  0,        'Missions');
+  // Side walls
+  makeMuseumArt(scene, '/assets/museum/wall-space.png',    5.5, 5.5, HALL_MINX+0.3, 6, -5,  Math.PI/2,  'Cosmic Adventures');
+  makeMuseumArt(scene, '/assets/museum/wall-abstract.png', 5.5, 5.5, HALL_MAXX-0.3, 6, -5, -Math.PI/2,  'Abstract Forms');
+
+  // ── COMMUNITY MURAL feature wall (near wall, z=HALL_MAXZ) ──
+  buildMuralGrid(scene, 0, HALL_MAXZ-0.25, 6.5, Math.PI);
+  // "Community Mural" header plaque above the grid
+  const header = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.1),
+    new THREE.MeshBasicMaterial({ map: museumPlaqueTexture('COMMUNITY MURAL') }));
+  header.position.set(0, 10.5, HALL_MAXZ-0.3); header.rotation.y = Math.PI; scene.add(header);
+
+  // ── KIOSK pedestal (to the right of spawn, near the mural) ──
+  buildMuseumKiosk(scene, 6, HALL_MAXZ-4);
+
+  // ── Atmospheric dust motes ──
+  const N = 140, dp = new Float32Array(N*3);
+  for (let i = 0; i < N; i++) {
+    dp[i*3]   = (Math.random()-0.5)*spanX;
+    dp[i*3+1] = Math.random()*WALL_H;
+    dp[i*3+2] = midZ + (Math.random()-0.5)*spanZ;
+  }
+  const dGeo = new THREE.BufferGeometry();
+  dGeo.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+  scene.add(new THREE.Points(dGeo, new THREE.PointsMaterial({
+    color: 0x7ad9a0, size: 0.08, transparent: true, opacity: 0.45 })));
+
+  // ── OrbitControls (cursor mode default) ──
+  controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 4, 0);
+  controls.minDistance = 4; controls.maxDistance = 38;
+  controls.maxPolarAngle = Math.PI * 0.82;
+  controls.enablePan = false; controls.autoRotate = false;
+  controls.update();
+
+  // Walk configuration
+  walkEye = 3.6; walkSpawn = { x: 0, z: 11 };
+  walkBounds = { type:'rect',
+    minX: HALL_MINX+1.8, maxX: HALL_MAXX-1.8,
+    minZ: HALL_MINZ+1,   maxZ: HALL_MAXZ-1 };
+}
+
+// ── Enter MUSEUM ───────────────────────────────────────────────────────────
+window.enterMuseum = async function () {
+  disposeScene(); curView = 'museum';
+  initRenderer(); hideAll();
+  canvas.classList.add('on');
+  document.getElementById('hud-museum').classList.add('on');
+  clock.start();
+  buildMuseum();
+  walkEye = 3.6; walkSpawn = { x: 0, z: 11 };
+  walkBounds = { type:'rect', minX:-12.2, maxX:12.2, minZ:-18, maxZ:14 };
+  setupWalk();
+  // Optional TURTLE greeter avatar
+  try {
+    const gltf = await loadGLB('/assets/agents/TURTLE.glb');
+    mountAvatar(gltf, scene, -3.5, 8, Math.PI);
+  } catch(_) {}
+  startLoop();
+  renderPending();
+  // Default to CURSOR mode — kiosk + mural panel are directly clickable
+  uiMode = 'cursor'; reflectMode();
+  document.getElementById('mode-toggle').classList.add('on');
+  document.getElementById('walk-invite').classList.add('on');
+};
 
 // ── Enter ORACLE ───────────────────────────────────────────────────────────
 window.enterOracle = async function () {
