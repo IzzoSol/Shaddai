@@ -12,7 +12,7 @@ const LOOK = {
   ORACLE:  'ORACLE a violet-haired mystic woman with hooded purple aura and glowing violet eyes',
   ZEROX:   'ZEROX a blue-haired anime woman with space-bun braids and glowing cyan energy accents',
   TURTLE:  'TURTLE a green-haired anime woman with long twin-tails and glowing emerald energy accents',
-  QUILL:   'QUILL a silver-haired youth with soft glowing pink energy accents',
+  QUILL:   'QUILL a silver-haired youth with glowing bright ORANGE energy accents and orange-and-white gear',
   PIKADON: 'PIKADON a crimson-armored fighter with a horned helmet motif and glowing red accents',
 };
 

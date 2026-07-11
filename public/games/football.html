@@ -430,9 +430,16 @@ AGENTS.forEach(function(a){
 });
 
 /* Per-agent role tag for the vertical selector (flavor + a hint at their kit) */
+// Each agent: MAIN position / BACKUP position — correlated to their AGENT_RATING
+// (qb/wr/def) so the label matches how they actually play.
 var AGENT_ROLE = {
-  SHADDAI:'QUARTERBACK', NEXUS:'LINEBACKER', ORACLE:'WIDE RECEIVER',
-  ZEROX:'RUNNING BACK', TURTLE:'SLOT RECEIVER', QUILL:'KICKER', PIKADON:'D-LINE'
+  SHADDAI:'QB / FS',   // elite passer, reads deep
+  NEXUS:  'QB / WR',   // architect playmaker
+  ORACLE: 'FS / CB',   // intel — reads and breaks on the ball
+  ZEROX:  'RB / DL',   // power runner / pass rush
+  TURTLE: 'WR / CB',   // creative flair receiver
+  QUILL:  'WR / RB',   // precise route runner (NOT a kicker)
+  PIKADON:'LB / DL'    // security core — tackling
 };
 /* overall rating (0-99) derived from the qb/wr/def ratings for card display */
 function agentOVR(id){
@@ -895,6 +902,20 @@ function endPlay(spotX, opt){
     G.los = Math.max(2, Math.min(98, spotX));
     G.down=1; G.firstDown=Math.min(100, G.los+FDIST);
     goDead(1.5); return;
+  }
+
+  // FUMBLE — juked straight into a hit and the ball popped loose (turnover)
+  if(opt.fumble){
+    sndBad(); addShake(13); flingFX(carrier);
+    announce('FUMBLE!', '#ff6a00', true);
+    banner('FUMBLE — TURNOVER', '#ff6a00');
+    var recov = other(G.offenseTeam);
+    bumpStreak(recov);
+    coolStreak(G.offenseTeam);
+    G.offenseTeam = recov;
+    G.los = Math.max(2, Math.min(98, spotX));
+    G.down = 1; G.firstDown = Math.min(100, G.los + FDIST);
+    goDead(1.6); return;
   }
 
   // INCOMPLETE
@@ -1389,15 +1410,17 @@ function aiDef(p, dt){
     var carrierDir = Math.atan2(c2.vy||0, c2.vx||0.1);
     var defAngle = Math.atan2(-relY, -relX);  // angle from carrier to defender (behind = ~same as carrier dir)
     var angleDiff = Math.abs(((defAngle - carrierDir + Math.PI*3) % (Math.PI*2)) - Math.PI);
-    var inRearCone = angleDiff < 0.65;  // ~37-degree half-cone behind carrier
-    if(inRearCone && d2c < 14 && d2c > 1.5){
-      // behind and within ~14 yards: pursuit boost scales with distance
-      var pursuitBoost = 2.6 * (1.0 - d2c/14);
+    var inRearCone = angleDiff < 1.0;   // wider ~57-degree half-cone — defenders you just beat still give chase
+    if(inRearCone && d2c < 20 && d2c > 1.2){
+      // behind and within ~20 yards: strong pursuit boost so breakaways get run down
+      var pursuitBoost = 3.8 * (1.0 - d2c/20);
       speed += pursuitBoost;
-      // cap carrier breakaway speed slightly (CPU carrier)
+      // the SINGLE closest chaser gets a little extra "last line" angle speed
+      if(d2c < 9) speed += 0.8;
+      // gently cap a CPU carrier's top breakaway speed (human is never slowed — feels bad)
       if(c2.team!==HUMAN){
         var cSpd = Math.hypot(c2.vx,c2.vy);
-        if(cSpd > 13.5){ var sf=13.5/cSpd; c2.vx*=sf; c2.vy*=sf; }
+        if(cSpd > 13.2){ var sf=13.2/cSpd; c2.vx*=sf; c2.vy*=sf; }
       }
     }
   }
@@ -1468,6 +1491,13 @@ function updateLive(dt){
       // big_hit: defenders with this ability tackle harder (more stun/knockback)
       var hasBigHit = hasAbility(d.team,'big_hit') || skillBoosts.bigHit>0;
       var big = (d.turboActive || d.diveT>0 || rel>16 || hasBigHit);
+      // FUMBLE: if the carrier is mid-juke (burst active) when the hit lands, the
+      // ball can pop loose. truck_stick = better ball security (halved chance).
+      if(c.burst>0){
+        var fumbleChance = big ? 0.40 : 0.26;
+        if(hasAbility(c.team,'truck_stick') || skillBoosts.truckStick>0) fumbleChance *= 0.5;
+        if(Math.random() < fumbleChance){ endPlay(c.x, {fumble:true}); return; }
+      }
       endPlay(c.x, {bigHit:big}); return;
     }
   }
@@ -1702,30 +1732,80 @@ function fieldLineX(yd){ // draw a full-width yard line at depth yd
 }
 function drawField(){
   computeView();
-  ctx.fillStyle='#010c08'; ctx.fillRect(0,0,W,H);
 
   var near=Math.max(-12, camBackX-2);
   var far =Math.min(112, camBackX+74);
 
-  // grass trapezoid — richer depth gradient
   var nl=proj(near,0), nr=proj(near,FIELD_W), fl=proj(far,0), fr=proj(far,FIELD_W);
+
+  // --- sky / stands backdrop above the horizon (cool neon haze) ---
+  var horY=fl.y;
+  var sky=ctx.createLinearGradient(0,0,0,horY);
+  sky.addColorStop(0.0,'#01060a');
+  sky.addColorStop(0.7,'#03121a');
+  sky.addColorStop(1.0,'#04201c');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,Math.max(0,horY));
+  // horizon glow so far players/turf separate from the black
+  var hg=ctx.createLinearGradient(0,horY-H*0.10,0,horY+H*0.06);
+  hg.addColorStop(0,'rgba(20,120,90,0)');
+  hg.addColorStop(0.55,'rgba(40,200,150,0.16)');
+  hg.addColorStop(1,'rgba(20,120,90,0)');
+  ctx.fillStyle=hg; ctx.fillRect(0,horY-H*0.10,W,H*0.16);
+  // fill remainder below (in case grass trapezoid doesn't cover corners)
+  ctx.fillStyle='#010c08'; ctx.fillRect(0,Math.max(0,horY),W,H-Math.max(0,horY));
+
+  // grass trapezoid — richer depth gradient (cool/dark far -> lush/bright near)
   var grad=ctx.createLinearGradient(0,fl.y,0,nl.y);
-  grad.addColorStop(0.0,'#020f08');  // horizon: near-black forest green
-  grad.addColorStop(0.35,'#063a18'); // mid: deeper emerald
-  grad.addColorStop(0.72,'#094d1e'); // lush mid-field
-  grad.addColorStop(1.0,'#041a0e');  // near plane: dark again (depth shadow)
+  grad.addColorStop(0.0,'#04160c');  // horizon: near-black forest green
+  grad.addColorStop(0.30,'#0a3f1c'); // mid: deeper emerald
+  grad.addColorStop(0.62,'#0f5a26'); // lush mid-field
+  grad.addColorStop(0.86,'#137032'); // brightest near-mid
+  grad.addColorStop(1.0,'#0a3c1c');  // near plane: settles darker (foreground shadow)
   ctx.fillStyle=grad;
   ctx.beginPath(); ctx.moveTo(nl.x,nl.y); ctx.lineTo(fl.x,fl.y); ctx.lineTo(fr.x,fr.y); ctx.lineTo(nr.x,nr.y); ctx.closePath(); ctx.fill();
 
-  // mowed stripe bands every 5 yards — alternating light/dark, perspective-correct
+  // clip to the field trapezoid so all turf detail stays inside the pitch
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(nl.x,nl.y); ctx.lineTo(fl.x,fl.y); ctx.lineTo(fr.x,fr.y); ctx.lineTo(nr.x,nr.y); ctx.closePath(); ctx.clip();
+
+  // primary mowed stripe bands every 5 yards — alternating light/dark, perspective-correct
   for(var s=Math.ceil(near/5)*5; s<far; s+=5){
     var A=proj(s,0), B=proj(s,FIELD_W);
     var s2=Math.min(far,s+5);
     var C2=proj(s2,FIELD_W), D2=proj(s2,0);
     var even=((s/5)%2===0);
-    ctx.fillStyle=even?'rgba(10,80,30,0.22)':'rgba(0,0,0,0.14)';
+    ctx.fillStyle=even?'rgba(90,220,120,0.16)':'rgba(0,10,4,0.20)';
     ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C2.x,C2.y); ctx.lineTo(D2.x,D2.y); ctx.closePath(); ctx.fill();
   }
+  // secondary cross-mow hatch across the width — subtle checkerboard for texture
+  for(var s=Math.ceil(near/5)*5; s<far; s+=10){
+    var s2=Math.min(far,s+5);
+    var w0=0, wStep=FIELD_W/6;
+    for(var wi=0; wi<6; wi++){
+      if((wi%2)!==0) continue;
+      var y0=w0+wi*wStep, y1=y0+wStep;
+      var P0=proj(s,y0), P1=proj(s,y1), P2=proj(s2,y1), P3=proj(s2,y0);
+      ctx.fillStyle='rgba(120,240,150,0.05)';
+      ctx.beginPath(); ctx.moveTo(P0.x,P0.y); ctx.lineTo(P1.x,P1.y); ctx.lineTo(P2.x,P2.y); ctx.lineTo(P3.x,P3.y); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // faint grain speckle — a few sparse dabs, cheap, adds turf noise (no per-pixel loop)
+  ctx.fillStyle='rgba(0,0,0,0.10)';
+  for(var gi=0; gi<26; gi++){
+    var gx=((gi*97)%100)/100, gy=((gi*53)%100)/100;
+    var gp=proj(near+(far-near)*gy, FIELD_W*gx);
+    var gr=Math.max(0.6,2.2*gp.s);
+    ctx.beginPath(); ctx.arc(gp.x,gp.y,gr,0,6.283); ctx.fill();
+  }
+
+  // sideline shading — darken toward both touchlines for a crown/turf-edge feel
+  var sideL=ctx.createLinearGradient(nl.x,0,W/2,0);
+  sideL.addColorStop(0,'rgba(0,0,0,0.30)'); sideL.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sideL;
+  ctx.beginPath(); ctx.moveTo(nl.x,nl.y); ctx.lineTo(fl.x,fl.y); ctx.lineTo(fr.x,fr.y); ctx.lineTo(nr.x,nr.y); ctx.closePath(); ctx.fill();
+
+  ctx.restore(); // end turf clip
 
   // subtle inner vignette on the field for depth
   var fgx1=W/2, fgy1=fl.y+(nl.y-fl.y)*0.5;
@@ -1739,39 +1819,66 @@ function drawField(){
   drawEndzone(-10,0, teamCol(HUMAN), agentName(HUMAN), near, far);
   drawEndzone(100,110, teamCol(CPU), agentName(CPU), near, far);
 
-  // yard lines + numbers + hashes
+  // yard lines + numbers + hashes  (crisp chalk white lines)
   ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.lineCap='round';
   for(var yd=Math.max(0,Math.ceil(near/5)*5); yd<=Math.min(100,far); yd+=5){
     var ln=fieldLineX(yd);
     var major=(yd%10===0);
-    ctx.strokeStyle= major?'rgba(120,255,190,0.40)':'rgba(120,255,190,0.16)';
-    ctx.lineWidth= Math.max(0.6, (major?2.0:1.0)*ln.a.s);
+    var mid50=(yd===50);
+    // soft chalk shadow underlay, then bright white line
+    ctx.strokeStyle= major?'rgba(0,20,10,0.35)':'rgba(0,20,10,0.20)';
+    ctx.lineWidth= Math.max(0.8, (major?3.2:1.8)*ln.a.s);
+    ctx.beginPath(); ctx.moveTo(ln.a.x,ln.a.y+Math.max(0.6,ln.a.s)); ctx.lineTo(ln.b.x,ln.b.y+Math.max(0.6,ln.a.s)); ctx.stroke();
+    ctx.strokeStyle= mid50?'rgba(255,255,255,0.95)': major?'rgba(240,255,248,0.78)':'rgba(225,250,240,0.34)';
+    ctx.lineWidth= Math.max(0.7, (mid50?2.8:major?2.1:1.1)*ln.a.s);
     ctx.beginPath(); ctx.moveTo(ln.a.x,ln.a.y); ctx.lineTo(ln.b.x,ln.b.y); ctx.stroke();
 
     if(major && yd>0 && yd<100){
       var num = yd<=50 ? yd : 100-yd;
       var fs=Math.max(8, PLAYER_H*0.42*ln.a.s);
       ctx.font="800 "+fs+"px 'Share Tech Mono', monospace";
-      ctx.fillStyle='rgba(150,255,200,0.35)';
       var p1=proj(yd, MIDY-13), p2=proj(yd, MIDY+13);
+      // dark backing + white number for legibility on turf
+      ctx.fillStyle='rgba(0,18,8,0.55)';
+      ctx.fillText(num, p1.x+Math.max(0.6,ln.a.s), p1.y+Math.max(0.6,ln.a.s));
+      ctx.fillText(num, p2.x+Math.max(0.6,ln.a.s), p2.y+Math.max(0.6,ln.a.s));
+      ctx.fillStyle= mid50?'rgba(255,255,255,0.92)':'rgba(230,252,242,0.72)';
       ctx.fillText(num, p1.x, p1.y);
       ctx.fillText(num, p2.x, p2.y);
     }
-    // hash ticks
-    var h1=proj(yd,MIDY-6), h2=proj(yd,MIDY+6);
+    // hash ticks — two inner rows (NFL-style)
     var hs=Math.max(2,4*ln.a.s);
-    ctx.strokeStyle='rgba(120,255,190,0.22)'; ctx.lineWidth=Math.max(0.6,ln.a.s);
-    ctx.beginPath(); ctx.moveTo(h1.x-hs,h1.y); ctx.lineTo(h1.x+hs,h1.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(h2.x-hs,h2.y); ctx.lineTo(h2.x+hs,h2.y); ctx.stroke();
+    ctx.strokeStyle='rgba(230,250,240,0.30)'; ctx.lineWidth=Math.max(0.6,1.2*ln.a.s);
+    var hrows=[MIDY-6,MIDY+6];
+    for(var hr=0; hr<hrows.length; hr++){
+      var hp=proj(yd,hrows[hr]);
+      ctx.beginPath(); ctx.moveTo(hp.x-hs,hp.y); ctx.lineTo(hp.x+hs,hp.y); ctx.stroke();
+    }
+  }
+  ctx.lineCap='butt';
+
+  // midfield logo/emphasis — glowing ring at the 50
+  if(50>=near && 50<=far){
+    var mc=proj(50,MIDY);
+    var mr=Math.max(6,PLAYER_H*0.9*mc.s);
+    ctx.save();
+    ctx.strokeStyle='rgba(120,255,200,0.35)'; ctx.lineWidth=Math.max(1,2*mc.s);
+    ctx.shadowColor='rgba(80,255,180,0.5)'; ctx.shadowBlur=10*mc.s;
+    ctx.beginPath(); ctx.ellipse(mc.x,mc.y,mr,mr*0.42,0,0,6.283); ctx.stroke();
+    ctx.restore();
   }
 
-  // sidelines
-  ctx.strokeStyle='rgba(200,255,235,0.6)';
-  ctx.lineWidth=2;
+  // sidelines — bright chalk with subtle glow
+  ctx.save();
+  ctx.strokeStyle='rgba(230,255,245,0.72)';
+  ctx.lineWidth=2.4; ctx.lineCap='round';
+  ctx.shadowColor='rgba(120,255,200,0.35)'; ctx.shadowBlur=6;
   ctx.beginPath(); ctx.moveTo(nl.x,nl.y); ctx.lineTo(fl.x,fl.y); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(nr.x,nr.y); ctx.lineTo(fr.x,fr.y); ctx.stroke();
+  ctx.restore();
   // goal lines
-  goalLine(0,'rgba(255,255,255,0.7)'); goalLine(100,'rgba(255,255,255,0.7)');
+  goalLine(0,'rgba(255,255,255,0.8)'); goalLine(100,'rgba(255,255,255,0.8)');
 
   // LOS & first-down markers in perspective
   if(G.state!=='TITLE' && G.state!=='SELECT'){

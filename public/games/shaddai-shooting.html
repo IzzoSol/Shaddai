@@ -4,28 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHADDAI ARENA — Neon Shooter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ── TURTLE type system: display / heading / label / body ──
+     Orbitron = characterful sci-fi display for titles & headers,
+     Rajdhani = tight condensed for names/labels/buttons,
+     Share Tech Mono = HUD & stat readouts. */
+  :root{
+    --font-display:'Orbitron','Rajdhani','Segoe UI',sans-serif;
+    --font-head:'Rajdhani','Orbitron','Segoe UI',sans-serif;
+    --font-mono:'Share Tech Mono',ui-monospace,monospace;
+    --acc-cyan:#27e0ff; --acc-gold:#ffcf4a; --acc-violet:#b46bff;
+    --glass:linear-gradient(180deg,rgba(12,20,38,.62),rgba(6,10,20,.42));
+    --glass-brd:1px solid rgba(120,190,255,.16);
+  }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;background:#05070d;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#dbe9ff}
+  html,body{width:100%;height:100%;background:#05070d;overflow:hidden;
+    font-family:var(--font-head);color:#dbe9ff;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   #wrap{position:fixed;inset:0}
   canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
   #ui{position:absolute;inset:0;pointer-events:none}
 
   /* ── shared neon ── */
-  .neon{color:#27e0ff;text-shadow:0 0 8px rgba(39,224,255,.8),0 0 18px rgba(39,224,255,.4)}
-  .gold{color:#ffcf4a;text-shadow:0 0 8px rgba(255,207,74,.8)}
-  .btn{pointer-events:auto;cursor:pointer;user-select:none;border:1px solid #27e0ff;
-    background:rgba(39,224,255,.08);color:#27e0ff;font-weight:700;letter-spacing:1px;
-    padding:12px 26px;border-radius:8px;font-size:15px;transition:.15s;text-transform:uppercase}
-  .btn:hover{background:rgba(39,224,255,.22);box-shadow:0 0 18px rgba(39,224,255,.5);transform:translateY(-2px)}
-  .btn.gold{border-color:#ffcf4a;color:#ffcf4a;background:rgba(255,207,74,.08)}
-  .btn.gold:hover{background:rgba(255,207,74,.2);box-shadow:0 0 18px rgba(255,207,74,.5)}
+  .neon{color:#27e0ff;text-shadow:0 0 6px rgba(39,224,255,.9),0 0 16px rgba(39,224,255,.55),0 0 34px rgba(39,224,255,.28)}
+  .gold{color:#ffcf4a;text-shadow:0 0 6px rgba(255,207,74,.9),0 0 16px rgba(255,207,74,.5),0 0 30px rgba(255,207,74,.25)}
+  /* glassy neon button with real depth: gradient face, inner bevel, layered outer glow */
+  .btn{pointer-events:auto;cursor:pointer;user-select:none;position:relative;overflow:hidden;
+    border:1px solid rgba(39,224,255,.7);color:#8ef2ff;font-family:var(--font-head);
+    font-weight:700;letter-spacing:2px;font-size:15px;
+    padding:12px 28px;border-radius:10px;text-transform:uppercase;
+    background:linear-gradient(180deg,rgba(39,224,255,.18),rgba(39,224,255,.05) 55%,rgba(8,16,28,.4));
+    box-shadow:0 6px 18px -8px rgba(39,224,255,.6),0 1px 0 rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(180,240,255,.35),inset 0 -6px 12px rgba(0,0,0,.35);
+    text-shadow:0 0 10px rgba(39,224,255,.7);
+    transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s,background .14s,color .14s}
+  .btn:hover{color:#e8ffff;transform:translateY(-2px);
+    background:linear-gradient(180deg,rgba(39,224,255,.34),rgba(39,224,255,.12) 55%,rgba(8,16,28,.4));
+    box-shadow:0 12px 26px -8px rgba(39,224,255,.75),0 0 22px rgba(39,224,255,.5),
+      inset 0 1px 0 rgba(200,245,255,.5),inset 0 -6px 12px rgba(0,0,0,.35)}
+  .btn:active{transform:translateY(1px);box-shadow:0 3px 10px -6px rgba(39,224,255,.6),inset 0 3px 8px rgba(0,0,0,.45)}
+  .btn.gold{border-color:rgba(255,207,74,.75);color:#ffe6a3;
+    background:linear-gradient(180deg,rgba(255,207,74,.2),rgba(255,207,74,.06) 55%,rgba(28,20,6,.4));
+    box-shadow:0 6px 18px -8px rgba(255,207,74,.6),0 1px 0 rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(255,236,180,.4),inset 0 -6px 12px rgba(0,0,0,.35);
+    text-shadow:0 0 10px rgba(255,207,74,.7)}
+  .btn.gold:hover{color:#fff4d6;
+    background:linear-gradient(180deg,rgba(255,207,74,.36),rgba(255,207,74,.12) 55%,rgba(28,20,6,.4));
+    box-shadow:0 12px 26px -8px rgba(255,207,74,.75),0 0 22px rgba(255,207,74,.5),
+      inset 0 1px 0 rgba(255,240,200,.55),inset 0 -6px 12px rgba(0,0,0,.35)}
 
   /* ── premium DEPLOY button: depth, drop shadow, inner glow, gradient, states ── */
   .btn-deploy{pointer-events:auto;cursor:pointer;user-select:none;position:relative;
-    display:inline-flex;align-items:center;gap:12px;
+    display:inline-flex;align-items:center;gap:12px;font-family:var(--font-display);
     padding:18px 46px;border-radius:14px;border:1px solid var(--acc,#ffcf4a);
-    font-weight:900;font-size:19px;letter-spacing:3px;text-transform:uppercase;
+    font-weight:900;font-size:19px;letter-spacing:5px;text-transform:uppercase;
     color:#0a0d16;
     background:linear-gradient(180deg,color-mix(in srgb,var(--acc,#ffcf4a) 92%,#fff),var(--acc,#ffcf4a) 55%,color-mix(in srgb,var(--acc,#ffcf4a) 70%,#000));
     box-shadow:0 10px 26px -6px var(--acc,#ffcf4a),
@@ -48,40 +83,56 @@
 
   /* ── close ── */
   #close{position:absolute;top:14px;right:16px;pointer-events:auto;cursor:pointer;z-index:50;
-    border:1px solid #ff5b7a;color:#ff5b7a;background:rgba(255,91,122,.08);
-    padding:7px 14px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:1px}
-  #close:hover{background:rgba(255,91,122,.22);box-shadow:0 0 14px rgba(255,91,122,.5)}
+    border:1px solid rgba(255,91,122,.65);color:#ff9db1;font-family:var(--font-head);
+    background:linear-gradient(180deg,rgba(255,91,122,.2),rgba(255,91,122,.05) 60%,rgba(24,6,12,.4));
+    padding:8px 15px;border-radius:9px;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;
+    text-shadow:0 0 8px rgba(255,91,122,.6);
+    box-shadow:0 4px 14px -6px rgba(255,91,122,.6),inset 0 1px 0 rgba(255,180,195,.35),inset 0 -4px 8px rgba(0,0,0,.35);
+    transition:transform .14s,box-shadow .14s,color .14s}
+  #close:hover{color:#ffdbe2;transform:translateY(-1px);
+    box-shadow:0 8px 20px -6px rgba(255,91,122,.7),0 0 18px rgba(255,91,122,.5),inset 0 1px 0 rgba(255,200,210,.45),inset 0 -4px 8px rgba(0,0,0,.35)}
 
   /* ── overlays ── */
   .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;pointer-events:auto;background:radial-gradient(ellipse at center,rgba(8,14,26,.72),rgba(3,5,10,.94));
-    backdrop-filter:blur(2px);text-align:center;padding:20px}
-  .title{font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:6px}
-  .sub{margin-top:6px;font-size:13px;letter-spacing:3px;opacity:.7;text-transform:uppercase}
+    justify-content:center;pointer-events:auto;
+    background:
+      radial-gradient(120% 90% at 50% 0%,rgba(39,224,255,.06),transparent 55%),
+      radial-gradient(ellipse at center,rgba(8,14,26,.74),rgba(3,5,10,.95));
+    backdrop-filter:blur(3px) saturate(1.05);text-align:center;padding:20px}
+  /* pause & over get a centered glass card feel via their buttons/titles stacking */
+  #over,#pause{gap:2px}
+  .title{font-family:var(--font-display);font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:6px;
+    text-shadow:0 0 10px currentColor,0 4px 18px rgba(0,0,0,.7)}
+  .sub{margin-top:8px;font-family:var(--font-mono);font-size:13px;letter-spacing:4px;opacity:.7;text-transform:uppercase}
 
   /* ── cinematic STARFALL menu: tight, centered, intentional ── */
   #titleScreen{justify-content:flex-start;padding:0;overflow-y:auto}
   /* one centered column with a hard max-width so nothing floats loose */
   #titlePanel{display:flex;flex-direction:column;align-items:center;width:100%;
     max-width:760px;margin:auto;padding:clamp(18px,4vh,44px) clamp(16px,4vw,32px);gap:0;
-    background:linear-gradient(180deg,rgba(10,16,30,.55),rgba(6,10,20,.35));
-    border:1px solid rgba(39,224,255,.14);border-radius:22px;
-    box-shadow:0 24px 70px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);
-    backdrop-filter:blur(3px)}
-  .starfall-logo{position:relative;font-weight:900;line-height:.9;
-    font-size:clamp(46px,10vw,116px);letter-spacing:clamp(4px,1.4vw,16px);
-    background:linear-gradient(180deg,#ffffff 0%,#cfe8ff 32%,#27e0ff 62%,#1a6fff 100%);
+    position:relative;
+    background:
+      radial-gradient(120% 80% at 50% -10%,rgba(39,224,255,.10),transparent 60%),
+      linear-gradient(180deg,rgba(12,20,38,.66),rgba(6,10,20,.42));
+    border:1px solid rgba(120,190,255,.18);border-radius:24px;
+    box-shadow:0 30px 90px -28px rgba(0,0,0,.85),
+      0 0 40px -18px rgba(39,224,255,.35),
+      inset 0 1px 0 rgba(190,225,255,.12),inset 0 0 60px rgba(20,60,120,.12);
+    backdrop-filter:blur(6px) saturate(1.1)}
+  .starfall-logo{position:relative;font-family:var(--font-display);font-weight:900;line-height:.9;
+    font-size:clamp(44px,9.4vw,110px);letter-spacing:clamp(3px,1.1vw,12px);
+    background:linear-gradient(180deg,#ffffff 0%,#dff1ff 28%,#27e0ff 60%,#1a6fff 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 0 26px rgba(39,224,255,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.6));
+    filter:drop-shadow(0 0 30px rgba(39,224,255,.6)) drop-shadow(0 0 60px rgba(39,224,255,.28)) drop-shadow(0 8px 16px rgba(0,0,0,.65));
     animation:logoIn 1s cubic-bezier(.16,1,.3,1) both}
   .starfall-logo::after{content:"STARFALL";position:absolute;left:0;top:0;z-index:-1;
-    color:transparent;-webkit-text-stroke:2px rgba(39,224,255,.35);
-    filter:blur(2px);transform:translateY(2px)}
+    color:transparent;-webkit-text-stroke:2px rgba(39,224,255,.4);
+    filter:blur(3px);transform:translateY(2px)}
   @keyframes logoIn{from{opacity:0;transform:translateY(24px) scale(.94);filter:blur(6px)}
     to{opacity:1;transform:none}}
-  .title-tag{font-size:clamp(10px,1.4vw,14px);letter-spacing:clamp(4px,1vw,9px);
-    text-transform:uppercase;color:#8fb8ff;opacity:.85;
-    text-shadow:0 0 12px rgba(39,224,255,.5)}
+  .title-tag{font-family:var(--font-mono);font-size:clamp(10px,1.4vw,14px);letter-spacing:clamp(4px,1vw,9px);
+    text-transform:uppercase;color:#a6c8ff;opacity:.9;
+    text-shadow:0 0 12px rgba(39,224,255,.55),0 0 26px rgba(39,224,255,.25)}
 
   /* hero preview + selected-ship readout, side by side */
   #titleHeroRow{display:flex;align-items:center;justify-content:center;gap:clamp(14px,3vw,30px);
@@ -89,37 +140,47 @@
   #titleHeroBox{width:min(30vw,168px);height:min(30vw,168px);flex:0 0 auto;
     display:flex;align-items:center;justify-content:center;position:relative;
     border-radius:20px;border:1px solid var(--acc,#27e0ff);
-    background:radial-gradient(circle at 50% 40%,rgba(39,224,255,.10),rgba(6,10,20,.2));
-    box-shadow:inset 0 0 30px rgba(0,0,0,.5),0 0 32px -8px var(--acc,#27e0ff)}
+    background:
+      radial-gradient(circle at 50% 32%,color-mix(in srgb,var(--acc,#27e0ff) 22%,transparent),rgba(6,10,20,.25) 68%),
+      linear-gradient(180deg,rgba(14,22,40,.5),rgba(5,8,16,.5));
+    box-shadow:inset 0 2px 0 rgba(190,225,255,.15),inset 0 0 34px rgba(0,0,0,.55),
+      0 0 40px -8px var(--acc,#27e0ff),0 16px 40px -16px rgba(0,0,0,.7)}
   #titleHero{width:82%;height:82%;
     filter:drop-shadow(0 12px 22px rgba(0,0,0,.7)) drop-shadow(0 0 26px var(--acc,#27e0ff));
     animation:heroFloat 4s ease-in-out infinite;object-fit:contain;pointer-events:none}
   @keyframes heroFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
   #titleInfo{flex:0 1 260px;text-align:left;min-width:200px}
-  #titleAgentName{font-weight:900;font-size:clamp(18px,2.6vw,28px);letter-spacing:3px;
-    text-transform:uppercase;margin-bottom:2px}
-  #titleRole{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.6;margin-bottom:10px}
-  #titleStats{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;
-    font-family:'Share Tech Mono',monospace;font-size:11px}
+  #titleAgentName{font-family:var(--font-display);font-weight:900;font-size:clamp(18px,2.6vw,28px);letter-spacing:3px;
+    text-transform:uppercase;margin-bottom:3px}
+  #titleRole{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:12px}
+  #titleStats{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;
+    font-family:var(--font-mono);font-size:11px}
   #titleStats .srow{display:flex;align-items:center;gap:8px}
-  #titleStats .slbl{width:34px;opacity:.65;letter-spacing:1px}
-  #titleSpecial{font-size:12px;opacity:.85;font-style:italic;letter-spacing:.5px;line-height:1.4}
+  #titleStats .slbl{width:34px;opacity:.7;letter-spacing:1px}
+  #titleSpecial{font-family:var(--font-head);font-size:13px;opacity:.9;letter-spacing:.5px;line-height:1.45}
 
   /* ── ROSTER: vertical character cards — agent standing next to their ship ── */
-  .roster-head{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.55;
-    margin:16px 0 10px;align-self:center}
+  .roster-head{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;text-transform:uppercase;opacity:.6;
+    margin:18px 0 12px;align-self:center;text-shadow:0 0 12px rgba(39,224,255,.4)}
   #roster{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;width:100%;margin-bottom:4px}
   .ship{pointer-events:auto;cursor:pointer;position:relative;display:flex;flex-direction:column;
-    align-items:stretch;padding:0;border-radius:14px;
-    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
-    transition:transform .16s,border-color .16s,box-shadow .16s;overflow:hidden}
-  .ship:hover{transform:translateY(-4px);border-color:var(--c);background:rgba(255,255,255,.06);
-    box-shadow:0 10px 24px -10px var(--c)}
-  .ship.sel{transform:translateY(-4px);border-color:var(--c);
-    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
-    box-shadow:0 0 26px -4px var(--c),inset 0 0 0 1px var(--c)}
+    align-items:stretch;padding:0;border-radius:15px;
+    border:1px solid rgba(140,190,255,.14);
+    background:linear-gradient(180deg,rgba(24,34,58,.35),rgba(8,13,24,.35));
+    box-shadow:0 8px 20px -12px rgba(0,0,0,.8),inset 0 1px 0 rgba(190,225,255,.08);
+    transition:transform .18s cubic-bezier(.2,.8,.2,1),border-color .18s,box-shadow .18s,background .18s;overflow:hidden}
+  .ship:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--c) 70%,transparent);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--c) 12%,rgba(24,34,58,.35)),rgba(8,13,24,.35));
+    box-shadow:0 16px 30px -12px var(--c),0 0 20px -6px var(--c),inset 0 1px 0 rgba(200,235,255,.14)}
+  .ship.sel{transform:translateY(-5px);border-color:var(--c);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--c) 18%,rgba(20,30,52,.4)),rgba(8,13,24,.4));
+    box-shadow:0 18px 34px -12px var(--c),0 0 32px -4px var(--c),
+      inset 0 0 0 1px var(--c),inset 0 1px 0 rgba(210,240,255,.18)}
   .ship.sel::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
-    background:var(--c);box-shadow:0 0 12px var(--c)}
+    background:var(--c);box-shadow:0 0 14px var(--c),0 0 26px var(--c)}
+  /* selected corner tick for an unmistakable active state */
+  .ship.sel::before{content:"";position:absolute;top:7px;right:7px;z-index:3;width:8px;height:8px;border-radius:50%;
+    background:var(--c);box-shadow:0 0 10px var(--c),0 0 4px #fff}
   /* vertical portrait: agent + ship (HF art), fallback = ship PNG on a color glow */
   .ship .portrait{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;
     background:
@@ -133,12 +194,12 @@
   .ship .portrait::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52%;
     background:linear-gradient(180deg,transparent,rgba(4,6,12,.92));pointer-events:none}
   .ship .meta{position:relative;z-index:2;margin-top:-38%;padding:6px 6px 8px;text-align:center}
-  .ship .snm{font-weight:900;font-size:clamp(10px,1.5vw,13px);letter-spacing:.5px;color:var(--c);
-    text-shadow:0 1px 4px #000,0 0 10px color-mix(in srgb,var(--c) 60%,transparent)}
-  .ship .shint{font-size:clamp(7.5px,1vw,9px);opacity:.85;letter-spacing:.3px;line-height:1.2;
-    text-transform:uppercase;min-height:11px;margin-top:2px;color:#cfe0ff;text-shadow:0 1px 3px #000}
+  .ship .snm{font-family:var(--font-display);font-weight:800;font-size:clamp(10px,1.5vw,13px);letter-spacing:1px;color:var(--c);
+    text-shadow:0 1px 4px #000,0 0 12px color-mix(in srgb,var(--c) 70%,transparent)}
+  .ship .shint{font-family:var(--font-mono);font-size:clamp(7.5px,1vw,9px);opacity:.85;letter-spacing:.4px;line-height:1.2;
+    text-transform:uppercase;min-height:11px;margin-top:3px;color:#cfe0ff;text-shadow:0 1px 3px #000}
 
-  #titleScreen .swap-hint{margin-top:14px;font-size:11px;letter-spacing:2px;opacity:.5;text-transform:uppercase}
+  #titleScreen .swap-hint{font-family:var(--font-mono);margin-top:16px;font-size:11px;letter-spacing:2px;opacity:.55;text-transform:uppercase}
 
   /* ── DIALOG BOX: portrait + banter, shown at key beats ── */
   #dialog{position:absolute;left:50%;bottom:76px;transform:translateX(-50%) translateY(16px);
@@ -156,9 +217,9 @@
   #dialogPort .lt{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     font-weight:900;font-size:26px;color:var(--acc,#27e0ff);text-shadow:0 0 12px var(--acc,#27e0ff)}
   #dialogBody{text-align:left;min-width:0}
-  #dialogName{font-weight:900;font-size:13px;letter-spacing:2px;text-transform:uppercase;
-    color:var(--acc,#27e0ff);text-shadow:0 0 10px var(--acc,#27e0ff)}
-  #dialogText{font-size:14px;line-height:1.35;color:#e6efff;margin-top:2px}
+  #dialogName{font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--acc,#27e0ff);text-shadow:0 0 10px var(--acc,#27e0ff),0 0 22px color-mix(in srgb,var(--acc,#27e0ff) 50%,transparent)}
+  #dialogText{font-family:var(--font-head);font-size:15px;line-height:1.35;color:#e6efff;margin-top:3px}
 
   /* responsive reflow: fewer columns on tablets/phones */
   @media (max-width:760px){
@@ -174,26 +235,34 @@
 
   /* ── character grid ── */
   #cards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:960px;margin:26px 0 10px}
-  .card{pointer-events:auto;cursor:pointer;width:132px;border:1px solid rgba(255,255,255,.14);
-    border-radius:12px;padding:14px 10px;background:rgba(255,255,255,.03);transition:.18s;position:relative;overflow:hidden}
-  .card:hover{transform:translateY(-4px)}
-  .card.sel{transform:translateY(-4px)}
+  .card{pointer-events:auto;cursor:pointer;width:132px;border:1px solid rgba(140,190,255,.16);
+    border-radius:14px;padding:14px 10px;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,rgba(24,34,58,.4),rgba(8,13,24,.4));
+    box-shadow:0 8px 20px -12px rgba(0,0,0,.8),inset 0 1px 0 rgba(190,225,255,.08);
+    transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s}
+  .card:hover{transform:translateY(-5px)}
+  .card.sel{transform:translateY(-5px)}
   .card .av{width:56px;height:56px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;
-    justify-content:center;font-weight:900;font-size:22px;color:#05070d}
-  .card .nm{font-weight:800;font-size:16px;letter-spacing:1px}
-  .card .rl{font-size:10px;opacity:.65;margin:2px 0 8px;letter-spacing:1px;text-transform:uppercase}
-  .card .st{font-size:10px;text-align:left;line-height:1.55;opacity:.85;font-family:'Share Tech Mono',monospace}
+    justify-content:center;font-family:var(--font-display);font-weight:900;font-size:22px;color:#05070d}
+  .card .nm{font-family:var(--font-display);font-weight:800;font-size:16px;letter-spacing:1px}
+  .card .rl{font-family:var(--font-mono);font-size:10px;opacity:.65;margin:3px 0 8px;letter-spacing:2px;text-transform:uppercase}
+  .card .st{font-size:10px;text-align:left;line-height:1.6;opacity:.85;font-family:var(--font-mono)}
   .bar{height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:2px 0 5px;overflow:hidden}
   .bar > i{display:block;height:100%;border-radius:2px}
   .sp{font-size:10px;margin-top:6px;opacity:.9;font-style:italic}
 
   /* ── HUD ── */
-  #hud{position:absolute;top:12px;left:14px;font-family:'Share Tech Mono',monospace}
-  #hud .row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-  #hpbar{width:230px;height:16px;border:1px solid rgba(255,255,255,.25);border-radius:9px;overflow:hidden;background:rgba(0,0,0,.4)}
-  #hpfill{height:100%;width:100%;background:linear-gradient(90deg,#2fff9a,#27e0ff);transition:width .12s}
-  #spbar{width:150px;height:10px;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;background:rgba(0,0,0,.4)}
-  #spfill{height:100%;width:0%;background:linear-gradient(90deg,#ffcf4a,#ff9d3a);transition:width .1s}
+  #hud{position:absolute;top:12px;left:14px;font-family:var(--font-mono)}
+  #hud .row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  #hud .row > span:first-child{font-family:var(--font-head);font-weight:700}
+  #hpbar{width:230px;height:16px;border:1px solid rgba(150,200,255,.3);border-radius:9px;overflow:hidden;
+    background:rgba(0,0,0,.5);box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 10px -3px rgba(39,224,255,.4)}
+  #hpfill{height:100%;width:100%;background:linear-gradient(90deg,#2fff9a,#27e0ff);transition:width .12s;
+    box-shadow:0 0 12px rgba(47,255,154,.6)}
+  #spbar{width:150px;height:10px;border:1px solid rgba(150,200,255,.3);border-radius:6px;overflow:hidden;
+    background:rgba(0,0,0,.5);box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 8px -3px rgba(255,207,74,.4)}
+  #spfill{height:100%;width:0%;background:linear-gradient(90deg,#ffcf4a,#ff9d3a);transition:width .1s;
+    box-shadow:0 0 12px rgba(255,207,74,.6)}
   #hud .row{position:relative}
   #hpbar,#spbar{position:relative}
   /* moving sheen inside the fill bars for a premium "energy" read */
@@ -203,29 +272,32 @@
   @keyframes barSheen{from{background-position:-60px 0}to{background-position:260px 0}}
   #spword{transition:color .2s,text-shadow .2s}
   #spword.ready{color:#2fff9a!important;opacity:1!important;text-shadow:0 0 10px rgba(47,255,154,.8)}
-  #topright{position:absolute;top:12px;right:110px;text-align:right;font-family:'Share Tech Mono',monospace}
-  #score{font-size:32px;font-weight:900;text-shadow:0 0 14px currentColor,0 2px 6px rgba(0,0,0,.6);
-    transition:transform .1s}
+  #topright{position:absolute;top:12px;right:110px;text-align:right;font-family:var(--font-mono)}
+  #score{font-family:var(--font-display);font-size:34px;font-weight:900;letter-spacing:1px;
+    text-shadow:0 0 14px currentColor,0 0 30px currentColor,0 2px 6px rgba(0,0,0,.7);transition:transform .1s}
   #score.pop{transform:scale(1.14)}
-  #combo{font-size:15px;height:18px;font-weight:800;transition:transform .12s}
+  #combo{font-family:var(--font-head);font-size:16px;height:18px;font-weight:700;letter-spacing:1px;transition:transform .12s}
   #combo.pop{transform:scale(1.22)}
-  #wave{font-size:14px;opacity:.85;letter-spacing:2px;
-    text-shadow:0 0 10px rgba(39,224,255,.5)}
+  #wave{font-family:var(--font-mono);font-size:14px;opacity:.85;letter-spacing:3px;
+    text-shadow:0 0 10px rgba(39,224,255,.55),0 0 22px rgba(39,224,255,.25)}
   /* ── control-hint legend: single non-overlapping strip of key-cap chips ── */
   #hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
     display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;
-    max-width:min(720px,94vw);padding:8px 16px;border-radius:12px;
-    background:rgba(6,12,22,.55);border:1px solid rgba(39,224,255,.18);
-    backdrop-filter:blur(4px);font-family:'Share Tech Mono',monospace}
+    max-width:min(720px,94vw);padding:9px 18px;border-radius:13px;
+    background:linear-gradient(180deg,rgba(12,20,38,.62),rgba(6,10,20,.5));
+    border:1px solid rgba(120,190,255,.2);
+    box-shadow:0 10px 30px -14px rgba(0,0,0,.8),inset 0 1px 0 rgba(190,225,255,.08);
+    backdrop-filter:blur(6px);font-family:var(--font-mono)}
   #hint .grp{display:flex;align-items:center;gap:5px;white-space:nowrap}
-  #hint .lbl{font-size:10px;letter-spacing:1px;opacity:.6;text-transform:uppercase}
+  #hint .lbl{font-size:10px;letter-spacing:2px;opacity:.6;text-transform:uppercase}
   #hint .key{display:inline-flex;align-items:center;justify-content:center;
-    min-width:20px;height:20px;padding:0 6px;border-radius:5px;font-size:11px;font-weight:700;
-    color:#cfe8ff;background:linear-gradient(180deg,#1a2740,#0c1526);
-    border:1px solid rgba(120,170,255,.35);border-bottom-width:2px;
-    box-shadow:0 1px 0 rgba(0,0,0,.4);line-height:1}
-  #banner{position:absolute;top:34%;left:0;right:0;text-align:center;font-size:clamp(26px,5vw,54px);
-    font-weight:900;letter-spacing:5px;opacity:0;transition:opacity .3s;pointer-events:none}
+    min-width:22px;height:22px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:700;
+    color:#e0f1ff;background:linear-gradient(180deg,#22355a,#0c1526);
+    border:1px solid rgba(140,190,255,.4);border-bottom-width:3px;border-bottom-color:rgba(60,90,150,.7);
+    box-shadow:0 2px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(200,230,255,.25);line-height:1;
+    text-shadow:0 0 6px rgba(120,180,255,.5)}
+  #banner{position:absolute;top:34%;left:0;right:0;text-align:center;font-family:var(--font-display);
+    font-size:clamp(26px,5vw,54px);font-weight:900;letter-spacing:5px;opacity:0;transition:opacity .3s;pointer-events:none}
   .hide{display:none!important}
 </style>
 </head>

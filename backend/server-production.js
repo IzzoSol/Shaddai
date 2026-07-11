@@ -436,11 +436,21 @@ app.use(helmet({
 }));
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow: no origin (same-origin, curl), file:// (string 'null'), localhost/127.0.0.1
-    if (!origin || origin === 'null' || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin.startsWith('file://')) {
+    // Allow: no origin (same-origin, curl), file:// (string 'null'), localhost/127.0.0.1,
+    // this app's OWN deployed origin (*.onrender.com — the dashboard is served same-origin),
+    // and any extra origins listed in ALLOWED_ORIGINS (comma-separated).
+    const extra = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!origin
+        || origin === 'null'
+        || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+        || origin.startsWith('file://')
+        || /^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin)
+        || extra.includes(origin)) {
       cb(null, true);
     } else {
-      cb(new Error('CORS: origin not allowed: ' + origin));
+      // Deny WITHOUT throwing — throwing here escalates to a 500 that breaks EVERY request.
+      // Just withhold CORS headers; the browser blocks cross-origin, same-origin still works.
+      cb(null, false);
     }
   },
   credentials: false

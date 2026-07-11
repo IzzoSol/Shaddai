@@ -859,37 +859,91 @@ function updatePlay(dt){
 
 /* ============================ RENDER: COURT ============================ */
 function drawCourt(){
-  ctx.fillStyle='#02110b'; ctx.fillRect(0,0,W,H);
+  // deep arena backdrop (dark magenta-noir) behind everything
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#12001a'); bg.addColorStop(0.55,'#0a0011'); bg.addColorStop(1,'#050008');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
   var L=sx(X0), R=sx(X1), T=sy(Y0), B=sy(Y1);
+  var mx=sx(CX), midY=(T+B)/2;
+  var cw=R-L, ch=B-T;
   var pc=G.playerAgent.color, cc=G.cpuAgent.color;
-  // team-tinted halves (agent colors)
+
   ctx.save();
-  var gA=ctx.createLinearGradient(L,0,sx(CX),0);
-  gA.addColorStop(0,rgba(pc,0.22)); gA.addColorStop(1,rgba(pc,0.06));
-  ctx.fillStyle=gA; ctx.fillRect(L,T,sx(CX)-L,B-T);
-  var gB=ctx.createLinearGradient(sx(CX),0,R,0);
-  gB.addColorStop(0,rgba(cc,0.06)); gB.addColorStop(1,rgba(cc,0.22));
-  ctx.fillStyle=gB; ctx.fillRect(sx(CX),T,R-sx(CX),B-T);
+  // clip to the court so the polished floor never bleeds past the walls
+  ctx.beginPath(); ctx.rect(L,T,cw,ch); ctx.clip();
+
+  // 1) polished floor base — dark surface, brighter at center, darker toward edges
+  var floorBase=ctx.createLinearGradient(0,T,0,B);
+  floorBase.addColorStop(0,'#140120'); floorBase.addColorStop(0.5,'#1c0330'); floorBase.addColorStop(1,'#0c0016');
+  ctx.fillStyle=floorBase; ctx.fillRect(L,T,cw,ch);
+  // radial center-court glow (magenta) so players/balls pop against a bright middle
+  var rad=ctx.createRadialGradient(mx,midY,0,mx,midY,Math.max(cw,ch)*0.62);
+  rad.addColorStop(0,'rgba(255,43,214,0.22)'); rad.addColorStop(0.5,'rgba(255,43,214,0.07)'); rad.addColorStop(1,'rgba(255,43,214,0)');
+  ctx.fillStyle=rad; ctx.fillRect(L,T,cw,ch);
+
+  // 2) team-tinted halves (agent colors, subtle)
+  var gA=ctx.createLinearGradient(L,0,mx,0);
+  gA.addColorStop(0,rgba(pc,0.20)); gA.addColorStop(1,rgba(pc,0.04));
+  ctx.fillStyle=gA; ctx.fillRect(L,T,mx-L,ch);
+  var gB=ctx.createLinearGradient(mx,0,R,0);
+  gB.addColorStop(0,rgba(cc,0.04)); gB.addColorStop(1,rgba(cc,0.20));
+  ctx.fillStyle=gB; ctx.fillRect(mx,T,R-mx,ch);
+
+  // 3) tile / panel grid — cyan hairlines, brighter near center via a soft overlay pass
+  ctx.strokeStyle='rgba(0,240,255,0.10)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(var gx=10; gx<COURT_W; gx+=10){ ctx.moveTo(sx(gx),T); ctx.lineTo(sx(gx),B); }
+  for(var gy=10; gy<COURT_H; gy+=10){ ctx.moveTo(L,sy(gy)); ctx.lineTo(R,sy(gy)); }
+  ctx.stroke();
+
+  // 4) reflection sheen — a soft diagonal highlight sweeping the floor (screen-blend)
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  var sheen=ctx.createLinearGradient(L,T,R*0.55,B);
+  sheen.addColorStop(0,'rgba(255,255,255,0.045)');
+  sheen.addColorStop(0.35,'rgba(255,120,230,0.02)');
+  sheen.addColorStop(0.6,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(L,T,cw,ch);
   ctx.restore();
-  // floor grid
-  ctx.strokeStyle='rgba(0,255,136,0.08)'; ctx.lineWidth=1;
-  for(var gx=10; gx<COURT_W; gx+=10){ ctx.beginPath(); ctx.moveTo(sx(gx),T); ctx.lineTo(sx(gx),B); ctx.stroke(); }
-  for(var gy=10; gy<COURT_H; gy+=10){ ctx.beginPath(); ctx.moveTo(L,sy(gy)); ctx.lineTo(R,sy(gy)); ctx.stroke(); }
-  // border
+
+  // 5) inner vignette — darken the edges so the field reads as a lit stage
+  var vig=ctx.createRadialGradient(mx,midY,Math.min(cw,ch)*0.28,mx,midY,Math.max(cw,ch)*0.72);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=vig; ctx.fillRect(L,T,cw,ch);
+  ctx.restore(); // end clip
+
+  // 6) center divider — glowing magenta beam with a white core + cyan mid circle
   ctx.save();
-  ctx.strokeStyle='rgba(0,255,136,0.55)'; ctx.lineWidth=3;
-  ctx.shadowColor=GN; ctx.shadowBlur=16;
-  ctx.strokeRect(L,T,R-L,B-T);
-  ctx.restore();
-  // center line
-  var mx=sx(CX);
-  ctx.save();
-  ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=2.5;
-  ctx.setLineDash([12,9]); ctx.shadowColor='#fff'; ctx.shadowBlur=10;
+  var pulse=(Math.sin(perfNow*0.004)*0.5+0.5);
+  ctx.strokeStyle=rgba(MG,0.9); ctx.lineWidth=4; ctx.shadowColor=MG; ctx.shadowBlur=18+pulse*10;
+  ctx.beginPath(); ctx.moveTo(mx,T); ctx.lineTo(mx,B); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.4; ctx.shadowBlur=6;
+  ctx.setLineDash([14,10]);
   ctx.beginPath(); ctx.moveTo(mx,T); ctx.lineTo(mx,B); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.strokeStyle='rgba(0,240,255,0.4)'; ctx.lineWidth=2; ctx.shadowColor=CY; ctx.shadowBlur=12;
-  ctx.beginPath(); ctx.arc(mx,(T+B)/2, 22*scale, 0, 6.283); ctx.stroke();
+  // center circle (cyan) + inner dot
+  ctx.strokeStyle=rgba(CY,0.6); ctx.lineWidth=2; ctx.shadowColor=CY; ctx.shadowBlur=14;
+  ctx.beginPath(); ctx.arc(mx,midY, 22*scale, 0, 6.283); ctx.stroke();
+  ctx.fillStyle=rgba(CY,0.12);
+  ctx.beginPath(); ctx.arc(mx,midY, 22*scale, 0, 6.283); ctx.fill();
+  ctx.restore();
+
+  // 7) boundary walls — layered neon rail (magenta outer glow + cyan inner line)
+  ctx.save();
+  ctx.strokeStyle=rgba(MG,0.75); ctx.lineWidth=5; ctx.shadowColor=MG; ctx.shadowBlur=22;
+  ctx.strokeRect(L,T,cw,ch);
+  ctx.strokeStyle=rgba(CY,0.85); ctx.lineWidth=1.8; ctx.shadowColor=CY; ctx.shadowBlur=10;
+  ctx.strokeRect(L,T,cw,ch);
+  // corner accents
+  ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=2.5; ctx.shadowBlur=8;
+  var cl=16*scale;
+  var corners=[[L,T,1,1],[R,T,-1,1],[L,B,1,-1],[R,B,-1,-1]];
+  ctx.beginPath();
+  for(var i=0;i<corners.length;i++){ var c=corners[i];
+    ctx.moveTo(c[0]+c[2]*cl,c[1]); ctx.lineTo(c[0],c[1]); ctx.lineTo(c[0],c[1]+c[3]*cl);
+  }
+  ctx.stroke();
   ctx.restore();
 }
 

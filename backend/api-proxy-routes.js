@@ -2023,15 +2023,25 @@ router.post('/image/generate', require('./demo-limit').middleware, async (req, r
       const dataUri = `data:image/png;base64,${img.toString('base64')}`;
       return res.json({ success: true, status: 'completed', url: dataUri, image_url: dataUri, source: 'HuggingFace FLUX.1-schnell', prompt, model: 'flux-schnell' });
     }
-  } catch (e) { /* fall through to the honest no-key response */ }
+  } catch (e) { /* fall through to the free fallback */ }
 
-  // No engine key available — be honest, no silent low-quality fallback.
-  return res.status(503).json({
-    success: false,
-    error: 'No image engine configured. Add a free Hugging Face token (HF_TOKEN) in the API vault — or a Together / fal.ai / OpenAI key — to generate images.',
-    needsKey: true,
-    suggested: ['huggingface', 'fal', 'dall-e-3']
-  });
+  // FREE FALLBACK — Pollinations FLUX (no API key, no credits). Always available,
+  // so the image generator works even when every keyed engine is missing/depleted.
+  try {
+    const w = parseInt(width, 10) || 1024, h = parseInt(height, 10) || 1024;
+    // deterministic per-prompt seed (no Math.random) so repeats are stable
+    const seed = Math.abs(String(prompt || '').split('').reduce((a, ch) => ((a << 5) - a + ch.charCodeAt(0)) | 0, 7)) % 100000;
+    const pollUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
+      '?width=' + w + '&height=' + h + '&model=flux&nologo=true&seed=' + seed;
+    return res.json({ success: true, status: 'completed', url: pollUrl, image_url: pollUrl, source: 'Pollinations FLUX (free)', prompt, model: 'flux-schnell' });
+  } catch (e) {
+    return res.status(503).json({
+      success: false,
+      error: 'Image generation failed. Try again, or add a Hugging Face / fal.ai key in the API vault.',
+      needsKey: true,
+      suggested: ['huggingface', 'fal', 'dall-e-3']
+    });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────
