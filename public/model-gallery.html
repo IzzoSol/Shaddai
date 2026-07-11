@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Model Gallery</title>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}</script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#05070d;color:#dfeaff;font-family:'Share Tech Mono',ui-monospace,monospace;overflow:hidden}
+  #wrap{display:flex;height:100vh}
+  #list{width:340px;flex:none;overflow-y:auto;border-right:1px solid #123;padding:14px 12px;background:#070b14}
+  #list h1{font-family:'Orbitron',sans-serif;font-size:15px;letter-spacing:3px;color:#00ff88;margin-bottom:2px}
+  #list .sub{font-size:11px;color:#6f8;opacity:.7;margin-bottom:12px}
+  .row{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid #143;border-radius:9px;margin-bottom:8px;cursor:pointer;background:#0a1120;transition:.15s}
+  .row:hover{border-color:#00ff88;background:#0d1830}
+  .row.sel{border-color:#00f0ff;box-shadow:0 0 14px -4px #00f0ff}
+  .row .nm{flex:1;min-width:0}
+  .row .nm b{display:block;font-size:12px;color:#eafff4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .nm span{font-size:10px;color:#8fb}
+  .row .sz{font-size:11px;color:#ffd24a;flex:none}
+  .row .tag{font-size:9px;letter-spacing:1px;padding:2px 6px;border-radius:4px;flex:none}
+  .tag.assigned{background:#0f3;color:#032;} .tag.backup{background:#530;color:#fb0;border:1px solid #a60}
+  .row input{accent-color:#ff5b6e;width:15px;height:15px;flex:none}
+  #foot{position:sticky;bottom:0;background:#070b14;padding-top:10px;border-top:1px solid #123;margin-top:6px}
+  #foot .tot{font-size:11px;color:#9fb}
+  #foot .del{font-size:11px;color:#ff7a8a;margin:4px 0}
+  #cmd{width:100%;height:70px;background:#000;color:#4f8;border:1px solid #243;border-radius:8px;font-size:10px;padding:7px;margin-top:6px;resize:none;font-family:inherit}
+  #stage{flex:1;position:relative}
+  #stage canvas{display:block;width:100%;height:100%}
+  #cap{position:absolute;top:14px;left:16px;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:2px;color:#00f0ff;text-shadow:0 0 12px #00f0ff88}
+  #hint{position:absolute;bottom:14px;left:16px;font-size:11px;color:#6f8;opacity:.7}
+  #ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#345;font-size:13px}
+</style></head>
+<body>
+<div id="wrap">
+  <div id="list">
+    <h1>◈ MODEL GALLERY</h1>
+    <div class="sub">click to preview · check to mark for deletion</div>
+    <div id="rows"></div>
+    <div id="foot">
+      <div class="tot" id="tot"></div>
+      <div class="del" id="delinfo">0 marked</div>
+      <textarea id="cmd" readonly placeholder="check models → delete command appears here"></textarea>
+    </div>
+  </div>
+  <div id="stage"><div id="cap">—</div><div id="ph">select a model →</div><div id="hint">drag = rotate · scroll = zoom</div></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Model inventory (agent slot models + backups). Sizes in MB (approx, updated at push time).
+const MODELS = [
+  { f:'SHADDAI.glb',  a:'SHADDAI',  mb:3.7, tag:'assigned' },
+  { f:'NEXUS.glb',    a:'NEXUS',    mb:3.4, tag:'assigned' },
+  { f:'ORACLE.glb',   a:'ORACLE',   mb:7.3, tag:'assigned' },
+  { f:'ZEROX.glb',    a:'ZEROX · cyan katana (Neon Valkyrie)', mb:6.8, tag:'assigned' },
+  { f:'TURTLE.glb',   a:'TURTLE · green flail (Emerald Enforcer)', mb:7.2, tag:'assigned' },
+  { f:'QUILL.glb',    a:'QUILL',    mb:3.1, tag:'assigned' },
+  { f:'PIKADON.glb',  a:'PIKADON',  mb:8.5, tag:'assigned' },
+  { f:'VILLAIN.glb',  a:'VILLAIN (Adragona/enemy)', mb:4.5, tag:'assigned' },
+  { f:'TURTLE.glb.bak-emerald', a:'OLD backup (mislabeled katana) — safe to delete', mb:7.1, tag:'backup' },
+  { f:'TURTLE.glb.bak-emerald2-1783631913', a:'OLD backup — safe to delete', mb:7.2, tag:'backup' },
+];
+const BASE='/assets/agents/';
+
+// ── viewer ──
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(1.8,devicePixelRatio));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setSize(stage.clientWidth,stage.clientHeight);
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(42,stage.clientWidth/stage.clientHeight,.05,100);
+camera.position.set(0,1.2,4.2);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.target.set(0,1,0);controls.autoRotate=true;controls.autoRotateSpeed=1.6;
+// forge-style lighting so textures read (no bright IBL wash)
+scene.add(new THREE.HemisphereLight(0xffe6b0,0x141018,1.15));
+scene.add(new THREE.AmbientLight(0xffffff,.5));
+const key=new THREE.DirectionalLight(0xffffff,1.6);key.position.set(2,5,3);scene.add(key);
+const rim=new THREE.DirectionalLight(0x54d6df,.6);rim.position.set(-4,2,-3);scene.add(rim);
+const loader=new GLTFLoader();
+let current=null,mixer=null,clock=new THREE.Clock();
+addEventListener('resize',()=>{camera.aspect=stage.clientWidth/stage.clientHeight;camera.updateProjectionMatrix();renderer.setSize(stage.clientWidth,stage.clientHeight);});
+(function loop(){requestAnimationFrame(loop);if(mixer)mixer.update(clock.getDelta());controls.update();renderer.render(scene,camera);})();
+
+function show(m){
+  document.getElementById('cap').textContent=m.a;
+  document.getElementById('ph').style.display='none';
+  if(current){scene.remove(current);current.traverse(o=>{if(o.geometry)o.geometry.dispose();});current=null;}
+  if(mixer){mixer.stopAllAction();mixer=null;}
+  loader.load(BASE+m.f+'?v=g1',(g)=>{
+    const o=g.scene;
+    o.traverse(c=>{if(c.isMesh){const ms=Array.isArray(c.material)?c.material:[c.material];ms.forEach(mt=>{if(!mt)return;if('metalness'in mt)mt.metalness=Math.min(mt.metalness??.5,.1);if('roughness'in mt)mt.roughness=Math.max(mt.roughness??.5,.6);if(mt.map)try{mt.map.colorSpace=THREE.SRGBColorSpace;}catch(e){}mt.needsUpdate=true;});}});
+    if(g.animations&&g.animations.length){mixer=new THREE.AnimationMixer(o);const A=g.animations;const d=A.find(a=>/dance/i.test(a.name))||A.find(a=>/idle/i.test(a.name))||A[0];mixer.clipAction(d).reset().play();mixer.update(.2);}
+    o.updateMatrixWorld(true);
+    const box=new THREE.Box3().setFromObject(o);const sz=box.getSize(new THREE.Vector3());const s=1.8/Math.max(sz.x,sz.y,sz.z||1);o.scale.setScalar(s);
+    const b2=new THREE.Box3().setFromObject(o);const c=b2.getCenter(new THREE.Vector3());o.position.x-=c.x;o.position.z-=c.z;o.position.y-=b2.min.y;
+    const h=b2.max.y-b2.min.y;controls.target.set(0,h*.5,0);camera.position.set(0,h*.55,Math.max(3.2,h*1.2));
+    scene.add(o);current=o;
+  },undefined,(e)=>{document.getElementById('cap').textContent='LOAD ERROR: '+m.f;});
+}
+
+// ── list UI ──
+const rows=document.getElementById('rows');let total=0,marked=new Set();
+MODELS.forEach((m,i)=>{
+  total+=m.mb;
+  const r=document.createElement('div');r.className='row';r.dataset.i=i;
+  r.innerHTML=`<input type="checkbox" ${m.tag==='backup'?'checked':''}><div class="nm"><b>${m.f}</b><span>${m.a}</span></div><div class="sz">${m.mb}MB</div><span class="tag ${m.tag}">${m.tag}</span>`;
+  const cb=r.querySelector('input');
+  if(m.tag==='backup')marked.add(i);
+  r.addEventListener('click',(e)=>{if(e.target===cb)return;document.querySelectorAll('.row').forEach(x=>x.classList.remove('sel'));r.classList.add('sel');show(m);});
+  cb.addEventListener('change',()=>{cb.checked?marked.add(i):marked.delete(i);refresh();});
+  rows.appendChild(r);
+});
+function refresh(){
+  const files=[...marked].map(i=>MODELS[i]);
+  const mb=files.reduce((s,m)=>s+m.mb,0);
+  document.getElementById('delinfo').textContent=`${files.length} marked · frees ~${mb.toFixed(1)}MB`;
+  document.getElementById('cmd').value=files.length?('rm '+files.map(m=>`"public/assets/agents/${m.f}"`).join(' ')):'';
+}
+document.getElementById('tot').textContent=`${MODELS.length} models · ${total.toFixed(1)}MB total`;
+refresh();
+// preview first assigned
+document.querySelector('.row').click();
+</script>
+</body></html>
