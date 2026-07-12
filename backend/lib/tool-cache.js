@@ -27,8 +27,12 @@ const MAX_RECENT  = 40;      // rolling activity log
 // ── TTL policy (ms). 0 = never cache. ──────────────────────────────────────
 const SEC = 1000, MIN = 60 * SEC, HOUR = 60 * MIN;
 
-// Side-effecting / sensitive / expensive-nondeterministic — MUST NOT be cached.
-const NEVER = /(post|send|tweet|publish|share|reply|comment|dm|email|mint|deploy|create|shorten|buy|sell|swap|trade|transfer|sign|pay|vote|generate|image|draw|render|upload|write_|set_)/i;
+// Side-effecting / mutating / expensive-nondeterministic — MUST NOT be cached. Matched
+// against a NORMALIZED name (camelCase + separators -> words) with word boundaries, so
+// update_config / updateConfig / delete-user / withdraw_funds are all caught, while read
+// tools like get_credit / compute_score / settings are NOT false-flagged. Word boundaries
+// also fix prior over-matches (bare "sign" used to hit "design"/"assign").
+const NEVER = /\b(post|send|tweet|publish|share|reply|comment|dm|email|mint|deploy|create|shorten|buy|sell|swap|trade|transfer|sign|pay|vote|generate|image|draw|render|upload|write|set|update|delete|remove|edit|patch|insert|drop|put|revoke|cancel|withdraw|deposit|stake|claim|approve|execute|exec)\b/i;
 // Volatile market data — short window.
 const VOLATILE = /(price|ticker|quote|market|depth|orderbook|order_book|funding|gas|fear|greed|fng|dominance|global|gainers|losers|ohlc|chart|candle|whale|balance|supply|tvl|dex|pair|token_info|stablecoin)/i;
 // Semi-fresh feeds.
@@ -36,9 +40,18 @@ const SEMI = /(news|feed|trending|posts|reddit|hacker|^hn|producthunt|product_hu
 // Effectively static reference data.
 const STABLE = /(repo|github|npm|package|dictionary|define|country|countries|wiki|color|colour|moon|phase|history|on_this_day|geo|^ip|lookup|define_word|country_info)/i;
 
+// Normalize a tool name to space-separated lowercase words so the NEVER word-boundary
+// match catches update_config, updateConfig, and update-config alike.
+function _norm(name) {
+  return String(name || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')   // camelCase -> "camel Case"
+    .replace(/[^a-zA-Z0-9]+/g, ' ')            // _ - . etc -> space
+    .toLowerCase();
+}
+
 function ttlFor(name) {
   const n = String(name || '');
-  if (NEVER.test(n))    return 0;
+  if (NEVER.test(_norm(n))) return 0;   // safety first: never cache a mutation
   if (VOLATILE.test(n)) return 45 * SEC;
   if (SEMI.test(n))     return 5 * MIN;
   if (STABLE.test(n))   return 2 * HOUR;

@@ -27,6 +27,19 @@ check('mint_nft → never (0)',     tc.ttlFor('mint_nft'), 0);
 check('generate_image → never',   tc.ttlFor('generate_image'), 0);
 check('unknown_tool → 60s default', tc.ttlFor('something_else'), 60000);
 
+// ── mutation-safety: CRUD + financial mutations must NEVER cache (regression) ──
+console.log('\n=== MUTATION SAFETY (never cache state changes) ===');
+for (const t of ['update_config','deleteUser','remove_item','edit_post','patch_record','http_put','withdraw_funds','deposit_sol','stake_sol','claim_reward','revoke_key','cancel_order','swap_tokens','insert_row','execute_trade']) {
+  check(`${t} → never (0)`, tc.ttlFor(t), 0);
+}
+// ── read tools whose names merely CONTAIN a mutation substring must still cache ──
+console.log('\n=== NO FALSE-BLOCK (word boundaries) ===');
+check('get_credit still caches (not "edit")', tc.ttlFor('get_credit') > 0, true);
+check('compute_score still caches (not "put")', tc.ttlFor('compute_score') > 0, true);
+check('design_doc still caches (not "sign")', tc.ttlFor('design_doc') > 0, true);
+check('output_summary still caches (not "put")', tc.ttlFor('output_summary') > 0, true);
+check('settings still caches (not "set")', tc.ttlFor('settings') > 0, true);
+
 // ── caching a read tool: 2nd identical call is a HIT (no 2nd real call) ──
 console.log('\n=== READ TOOL CACHING ===');
 tc._reset();
