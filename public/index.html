@@ -2584,6 +2584,97 @@ body::before {
 .api-toggle::after { content:''; position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#fff; transition:transform 0.2s; }
 .api-toggle.on::after { transform:translateX(15px); }
 
+/* ═══ E5a — Agent Management cards (skills/tools, brain power, connect) ═══ */
+.e5-agent-expand { padding:0 !important; border:0 !important; }
+.e5-agent-panel {
+  background:linear-gradient(160deg, rgba(0,229,160,0.04), rgba(0,229,255,0.02) 60%, rgba(0,0,0,0));
+  border:1px solid rgba(0,255,136,0.18); border-left:3px solid var(--e5c,#00ff88);
+  border-radius:10px; margin:2px 0 8px; padding:14px 16px;
+  box-shadow:0 0 22px rgba(0,229,160,0.06) inset, 0 4px 14px rgba(0,0,0,0.35);
+  position:relative; overflow:hidden;
+}
+.e5-agent-panel::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(0,229,160,0.05) 50%, transparent);
+  background-size:200% 100%; opacity:.5;
+}
+.e5-sec-h {
+  font-family:'Share Tech Mono',monospace; font-size:9px; font-weight:700;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--e5c,#00ff88);
+  display:flex; align-items:center; gap:7px; margin:0 0 8px;
+}
+.e5-sec-h::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,currentColor,transparent); opacity:.35; }
+.e5-sec-count { font-size:8px; color:#00E5FF; background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.25); padding:1px 7px; border-radius:9px; }
+/* Brain power meter */
+.e5-brain { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.e5-brain-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.14em; color:var(--text-muted); text-transform:uppercase; white-space:nowrap; }
+.e5-brain-bar { flex:1; height:9px; border-radius:5px; background:rgba(0,0,0,0.45); border:1px solid rgba(0,229,160,0.18); overflow:hidden; position:relative; }
+.e5-brain-fill { height:100%; border-radius:5px; background:linear-gradient(90deg,#00ff88,#00E5FF); box-shadow:0 0 10px rgba(0,229,160,0.6); transition:width .5s ease; }
+.e5-brain-tier { font-family:'Rajdhani','Share Tech Mono',sans-serif; font-size:11px; font-weight:800; letter-spacing:.06em; white-space:nowrap; }
+.e5-brain-model { font-size:8px; color:var(--text-muted); font-family:monospace; white-space:nowrap; }
+/* Tool / skill chips */
+.e5-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:4px; }
+.e5-chip {
+  font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.03em;
+  padding:3px 9px; border-radius:11px; background:rgba(0,229,160,0.08);
+  border:1px solid rgba(0,229,160,0.28); color:#9effcf; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:5px; transition:all .12s;
+}
+.e5-chip.skill { background:rgba(0,229,255,0.07); border-color:rgba(0,229,255,0.28); color:#9fe9ff; }
+.e5-chip:hover { border-color:#00ff88; box-shadow:0 0 8px rgba(0,229,160,0.35); }
+.e5-chip-cat { font-size:7px; opacity:.6; }
+/* Category chooser (segmented) */
+.e5-catbar { display:flex; flex-wrap:wrap; gap:4px; margin:0 0 9px; }
+.e5-cat {
+  font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.08em; text-transform:uppercase;
+  padding:3px 10px; border-radius:6px; cursor:pointer; user-select:none;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); transition:all .12s;
+}
+.e5-cat:hover { border-color:rgba(0,229,160,0.4); color:#cfe; }
+.e5-cat.active { background:rgba(0,229,160,0.16); border-color:#00ff88; color:#00ff88; box-shadow:0 0 8px rgba(0,229,160,0.3); }
+/* Row action buttons — bolder Deploy */
+.e5-deploy {
+  font-family:'Rajdhani','Share Tech Mono',sans-serif; font-weight:800; letter-spacing:.1em;
+  font-size:10px; padding:6px 16px; border-radius:6px; cursor:pointer;
+  background:linear-gradient(135deg,#00ff88,#00c46a); color:#001a10; border:0;
+  box-shadow:0 0 12px rgba(0,229,160,0.5); transition:transform .1s, box-shadow .15s; text-transform:uppercase;
+}
+.e5-deploy:hover { transform:translateY(-1px); box-shadow:0 0 18px rgba(0,229,160,0.75); }
+.e5-toolsbtn {
+  font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.06em;
+  padding:5px 11px; border-radius:6px; cursor:pointer; background:rgba(0,229,255,0.06);
+  border:1px solid rgba(0,229,255,0.3); color:#00E5FF; transition:all .12s;
+}
+.e5-toolsbtn:hover { background:rgba(0,229,255,0.14); box-shadow:0 0 8px rgba(0,229,255,0.35); }
+.e5-toolsbtn.open { background:rgba(0,229,255,0.16); }
+/* Connect-API inline section inside card */
+.e5-api-note { font-size:9px; color:var(--text-muted); line-height:1.55; margin:2px 0 10px; }
+.e5-api-note b { color:#00E5FF; }
+.e5-api-row {
+  display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px;
+  background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.06); margin-bottom:6px; transition:all .12s;
+}
+.e5-api-row.on { border-color:rgba(0,229,160,0.45); background:rgba(0,229,160,0.05); }
+.e5-api-ico { font-size:16px; flex-shrink:0; }
+.e5-api-meta { flex:1; min-width:0; }
+.e5-api-nm { font-size:10px; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px; }
+.e5-api-ds { font-size:8px; color:var(--text-muted); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.e5-api-pill { font-size:6.5px; padding:1px 5px; border-radius:3px; letter-spacing:.05em; }
+.e5-api-pill.free { background:rgba(0,229,160,0.18); color:#00ff88; }
+.e5-api-pill.configured { background:rgba(255,176,32,0.18); color:#ffb020; }
+.e5-api-pill.needs-key { background:rgba(255,80,80,0.14); color:#ff8080; }
+.e5-api-act { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.e5-key-link { font-size:8px; color:#ffb020; text-decoration:none; border-bottom:1px dashed rgba(255,176,32,0.5); }
+.e5-key-link:hover { color:#ffd060; }
+.e5-conn-btn { font-family:'Share Tech Mono',monospace; font-size:8px; padding:4px 10px; border-radius:5px; cursor:pointer; border:1px solid; background:transparent; transition:all .12s; }
+.e5-conn-btn.connect { color:#00ff88; border-color:rgba(0,229,160,0.4); }
+.e5-conn-btn.connect:hover { background:rgba(0,229,160,0.12); }
+.e5-conn-btn.disconnect { color:#ff6b6b; border-color:rgba(255,80,80,0.4); }
+.e5-conn-btn.disconnect:hover { background:rgba(255,80,80,0.12); }
+.e5-conn-btn.locked { color:var(--text-muted); border-color:rgba(255,255,255,0.12); cursor:not-allowed; opacity:.7; }
+.e5-del-btn { font-size:11px; color:#ff6b6b; background:transparent; border:0; cursor:pointer; padding:2px 5px; border-radius:4px; transition:background .12s; }
+.e5-del-btn:hover { background:rgba(255,80,80,0.15); }
+
 /* ── Agent Customizer panel ── */
 .customizer-fields .cf { margin-bottom:14px; }
 .customizer-fields .cf label { display:block; font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
@@ -6301,9 +6392,32 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         const opTools=[...new Set([...skills,...((window.SHADDAI_FORGE_SKILLS)||[])])];
         const op=await j('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,codename:name,archetype:selLook,rarity,portrait,look:{archetype:selLook},brain:{tier,brainId:chosenBrain(),persona:personaFull()},tools:opTools,model:(window.SHADDAI_FORGE_MODEL||'SHADDAI'),buildHash:meta&&meta.buildHash})});
         if(op&&op.operative){lastOp=op.operative;opOk=true;}
+        /* REQ-5.2 / REQ-5.3 — AWAKEN = go LIVE everywhere, no manual deploy click.
+           Auto-register the freshly-forged operative into the Office surface (which feeds
+           _officeOperatives → pixel Office, Workflows agent selects, and Mission Control),
+           then refresh every surface that caches operatives so it appears immediately in
+           Rooms, Agent Management, Workflows and Mission Control. Guarded: skip the PATCH if
+           it's already deployed. Manual deploy buttons remain for redeploy/marketplace/room. */
+        let awakened=false;
+        if(opOk && op.operative){
+          try{
+            const nop=op.operative;
+            const already=(nop.deployedTo==='office')||(nop.deploy&&(nop.deploy.where==='office'||nop.deploy.office))||nop.inOffice;
+            if(!already){
+              // reuse the existing deploy path (PATCH /api/operatives/{id} where='office')
+              await j('/api/operatives/'+nop.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({deployedTo:'office',inOffice:true,deploy:{where:'office',office:true},room:nop.room})});
+            }
+            awakened=true;
+          }catch(_){}
+          // refresh the surfaces that cache operatives (force-bust the 12s throttle)
+          try{ if(typeof _loadOfficeOperatives==='function') _loadOfficeOperatives(true); }catch(_){}
+          try{ if(typeof _refreshWorkflowAgentSelects==='function') _refreshWorkflowAgentSelects(); }catch(_){}
+          // re-fill Mission Control dropdown once the forced reload lands
+          try{ if(typeof renderMissionControlAgents==='function'){ renderMissionControlAgents(); setTimeout(()=>renderMissionControlAgents(),1400); } }catch(_){}
+        }
         if(!silent){
           $('ofConsole').textContent=opOk
-            ?`⬡ FORGED "${name}" · ${rarity.toUpperCase()} · brain=${chosenBrain()} · ${skills.size} skills · ${portrait?'real FLUX portrait ✓':portraitNote}${r.ok?'':' · brain pending'}.`
+            ?`⬡ AWAKENED "${name}" · ${rarity.toUpperCase()} · brain=${chosenBrain()} · ${skills.size} skills · ${portrait?'real FLUX portrait ✓':portraitNote}${r.ok?'':' · brain pending'} — now LIVE in Rooms, Agents, Workflows & Mission Control.`
             :'⚠ '+((op&&op.error)||(r&&r.error)||'forge failed');
           if(opOk)await loadGallery();
         }
@@ -11426,6 +11540,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     </div>
     <div style="display:flex;gap:5px;align-items:center">
       <select class="select" style="font-size:9px;padding:3px 6px;max-width:100px" id="popoutAgentSelect" onchange="switchPopoutAgent(this.value)"></select>
+      <button onclick="deployAgentToMissionControl(document.getElementById('popoutAgentSelect').value)" title="Deploy selected agent into Mission Control chat" style="background:transparent;border:1px solid var(--accent);color:var(--accent);height:24px;padding:0 7px;border-radius:4px;cursor:pointer;font-size:9px;font-weight:700;letter-spacing:.5px">▶ DEPLOY</button>
       <button onclick="clearPopoutChat()" title="Clear chat" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:10px">✕</button>
       <button onclick="minimizePopout()" title="Minimize" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:11px">—</button>
       <button onclick="toggleMaxPopout()" title="Maximize" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:11px">⛶</button>
@@ -16705,12 +16820,19 @@ function renderAgents() {
     const curRole = S.agentRoles[a.name] || '';
     const isPrimary = a.name === S.primaryAgent;
     const isRouted = S.singleAgentMode && a.name !== S.primaryAgent;
+    const _bp = e5BrainPower(a);
+    const _toolCount = e5AgentTools(a.name).length;
     return `
-    <tr style="${isRouted ? 'opacity:0.45' : ''}">
+    <tr id="e5row_${a.name}" style="${isRouted ? 'opacity:0.45' : ''}">
       <td>
         <span style="color:${a.color};font-weight:700">${a.name}</span>
         ${isPrimary ? '<span style="font-size:7px;background:var(--accent);color:#000;padding:1px 5px;border-radius:3px;margin-left:4px">PRIMARY</span>' : ''}
         <br><span style="font-size:8px;color:var(--text-muted)">${a.role}</span>
+        <br><span title="Brain Power tier (live model)" style="display:inline-flex;align-items:center;gap:5px;margin-top:3px">
+          <span style="font-size:6.5px;letter-spacing:.1em;color:var(--text-muted);font-family:'Share Tech Mono',monospace">BRAIN</span>
+          <span style="display:inline-block;width:42px;height:5px;border-radius:3px;background:rgba(0,0,0,0.5);overflow:hidden;vertical-align:middle"><span style="display:block;height:100%;width:${_bp.pct}%;background:linear-gradient(90deg,${_bp.cls},#00E5FF)"></span></span>
+          <span style="font-size:7px;font-weight:800;color:${_bp.cls}">${_bp.tier}</span>
+        </span>
       </td>
       <td style="font-size:9px;color:var(--text-muted)">${a.domain}</td>
       <td>
@@ -16721,8 +16843,9 @@ function renderAgents() {
       <td><select class="select" style="font-size:9px;max-width:130px" onchange="setModel('${a.name}', this.value)">${modelOpts}</select></td>
       <td><span style="color:${a.status === 'WORKING' ? 'var(--warning)' : a.status === 'COMMANDING' ? 'var(--accent)' : 'var(--success)'}">${a.status}</span></td>
       <td>${a.mem ? a.mem.length : 0}</td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap">
-        <button class="btn btn-ghost" style="padding:3px 8px;font-size:8px" onclick="chatWithAgent('${a.name}')">Chat</button>
+      <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        <button class="e5-deploy" onclick="chatWithAgent('${a.name}')">▶ Deploy</button>
+        <button class="e5-toolsbtn" id="e5tbtn_${a.name}" onclick="e5ToggleAgentPanel('${a.name}')">◈ Tools &amp; APIs · ${_toolCount}</button>
         <button class="btn btn-ghost" style="padding:3px 8px;font-size:8px" onclick="setPrimaryAgent('${a.name}')">Set Primary</button>
         <button class="btn btn-ghost" style="padding:3px 8px;font-size:8px" onclick="clearAgentMemory('${a.name}')">Clear Mem</button>
       </td>
@@ -16732,9 +16855,67 @@ function renderAgents() {
   // Sync 3D cards too
   render3DAgentCards();
 
+  // E5a — append forged operatives so they get the same Tools & APIs / Connect panel
+  e5RenderForgedRows();
+
   // Load and display agent wallets
   renderAgentWallets();
 }
+
+// E5a REQ-5.13 — forged operatives appear in Agent Management with Deploy + Tools & APIs.
+window._e5Operatives = window._e5Operatives || [];
+async function e5RenderForgedRows() {
+  const tbody = document.getElementById('agentTable');
+  if (!tbody) return;
+  // drop any previously-appended forged rows / expand panels
+  tbody.querySelectorAll('tr.e5-forged-row, tr.e5-forged-head').forEach(el => el.remove());
+  let ops = [];
+  try {
+    const r = await fetch('/api/operatives', { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    ops = (d && d.operatives) || [];
+  } catch { return; }
+  if (!ops.length) return;
+  // normalize so e5AgentPanelHTML can resolve color/skills/model by name
+  window._e5Operatives = ops.map(o => ({
+    name: o.codename || o.name || o.id,
+    color: (o.look && o.look.color) || '#00E5FF',
+    model: (o.brain && (o.brain.brainId || o.brain.tier)) || o.model || 'balanced',
+    caps: o.tools || o.skills || [],
+    tier: (o.brain && o.brain.tier) || 'balanced'
+  }));
+  const head = document.createElement('tr');
+  head.className = 'e5-forged-head';
+  head.innerHTML = `<td colspan="7" style="padding:12px 4px 4px"><span style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.18em;color:#00E5FF">⬡ FORGED OPERATIVES · ${window._e5Operatives.length}</span> <span style="font-size:8px;color:var(--text-muted)">— your custom agents, same tools &amp; API wiring</span></td>`;
+  tbody.appendChild(head);
+  window._e5Operatives.forEach(op => {
+    const bp = e5BrainPower(op);
+    const toolCount = (op.caps || []).length;
+    const tr = document.createElement('tr');
+    tr.className = 'e5-forged-row';
+    tr.id = 'e5row_' + op.name;
+    tr.innerHTML = `
+      <td><span style="color:${op.color};font-weight:700">${escH(op.name)}</span>
+        <br><span style="font-size:8px;color:var(--text-muted)">Forged Operative</span>
+        <br><span style="display:inline-flex;align-items:center;gap:5px;margin-top:3px">
+          <span style="font-size:6.5px;letter-spacing:.1em;color:var(--text-muted);font-family:'Share Tech Mono',monospace">BRAIN</span>
+          <span style="display:inline-block;width:42px;height:5px;border-radius:3px;background:rgba(0,0,0,0.5);overflow:hidden"><span style="display:block;height:100%;width:${bp.pct}%;background:linear-gradient(90deg,${bp.cls},#00E5FF)"></span></span>
+          <span style="font-size:7px;font-weight:800;color:${bp.cls}">${bp.tier}</span>
+        </span>
+      </td>
+      <td style="font-size:9px;color:var(--text-muted)">custom</td>
+      <td style="font-size:9px;color:var(--text-muted)">—</td>
+      <td style="font-size:9px;color:var(--text-muted)">${escH(op.model)}</td>
+      <td><span style="color:var(--success)">READY</span></td>
+      <td>—</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        <button class="e5-deploy" onclick="chatWithAgent('${escH(op.name)}')">▶ Deploy</button>
+        <button class="e5-toolsbtn" id="e5tbtn_${escH(op.name)}" onclick="e5ToggleAgentPanel('${escH(op.name)}')">◈ Tools &amp; APIs · ${toolCount}</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.e5RenderForgedRows = e5RenderForgedRows;
 
 async function renderAgentWallets() {
   const el = document.getElementById('agentWalletsPanel');
@@ -16912,6 +17093,196 @@ async function loadAgentAPIConnections() {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// E5a — Agent Management: skills/tools, BRAIN POWER, category chooser,
+//        inline Connect-APIs (works for council + forged operatives)
+// ═══════════════════════════════════════════════════════════════
+
+// Infer a tool's category from its name / registry desc (llm/market/wallet/
+// blockchain/media/social/automation) so the category chooser can filter.
+function e5ToolCategory(name, desc) {
+  const s = (name + ' ' + (desc || '')).toLowerCase();
+  if (/price|trending|fear|greed|market|dex|token|whale|funding|tvl|coin/.test(s)) return 'market';
+  if (/wallet|swap|trade|transfer|balance|sol\b/.test(s)) return 'wallet';
+  if (/mint|nft|chain|rpc|helius|collectible|on-chain/.test(s)) return 'blockchain';
+  if (/image|video|music|audio|media|palette|screenshot|render|generate_image|art/.test(s)) return 'media';
+  if (/discord|telegram|twitter|post|social|tweet|send_/.test(s)) return 'social';
+  if (/workflow|schedule|job|automat|run_js|run_python|write_file|read_file|delegate/.test(s)) return 'automation';
+  if (/search|web|wiki|news|arxiv|fetch|summar|sentiment|translate|grammar|skills/.test(s)) return 'info';
+  if (/llm|chat|model|brain|prompt|memory/.test(s)) return 'llm';
+  return 'other';
+}
+const E5_CAT_META = {
+  all:{label:'ALL',icon:'◈'}, llm:{label:'LLM',icon:'🧠'}, market:{label:'MARKET',icon:'📊'},
+  wallet:{label:'WALLET',icon:'💰'}, blockchain:{label:'CHAIN',icon:'◎'}, media:{label:'MEDIA',icon:'🎨'},
+  social:{label:'SOCIAL',icon:'📣'}, automation:{label:'AUTO',icon:'⚙'}, info:{label:'INFO',icon:'🔎'}, other:{label:'OTHER',icon:'▢'}
+};
+
+// Real tools this agent can call (from _AGENT_TOOLS_REGISTRY) + capability skills.
+function e5AgentTools(agentName) {
+  const REG = (typeof _AGENT_TOOLS_REGISTRY !== 'undefined') ? _AGENT_TOOLS_REGISTRY : {};
+  const NAME = (agentName || '').toUpperCase();
+  const tools = Object.keys(REG)
+    .filter(k => (REG[k].agents || []).includes(NAME))
+    .map(k => ({ name: k, desc: REG[k].desc || '', cat: e5ToolCategory(k, REG[k].desc) }));
+  if (tools.length) return tools;
+  // Forged operative → use its equipped tools (op.caps)
+  const op = (window._e5Operatives || []).find(o => o.name === agentName);
+  if (op && (op.caps || []).length) {
+    return op.caps.map(t => {
+      const n = typeof t === 'string' ? t : (t.name || String(t));
+      const d = REG[n] ? REG[n].desc : '';
+      return { name: n, desc: d, cat: e5ToolCategory(n, d) };
+    });
+  }
+  return tools;
+}
+
+// BRAIN POWER — derive tier + % from the agent's live selected model string.
+function e5BrainPower(agent) {
+  const model = (agent && agent.model || '').toLowerCase();
+  let tier = 'Balanced', pct = 66, cls = '#00E5FF';
+  if (/opus|claude-?3|claude-premium|gpt-4|gpt4|70b|72b|large|premium|heavy/.test(model)) { tier = 'Heavy'; pct = 100; cls = '#00ff88'; }
+  else if (/1b|3b|mini|nano|light|phi|gemma|tinyllama|local|ollama/.test(model)) { tier = 'Light'; pct = 38; cls = '#ffb020'; }
+  else if (/8b|9b|13b|mixtral|balanced|flash|haiku/.test(model)) { tier = 'Balanced'; pct = 66; cls = '#00E5FF'; }
+  return { tier, pct, cls, model: agent && agent.model || '—' };
+}
+
+// Toggle the expandable tools/APIs panel under an agent row.
+function e5ToggleAgentPanel(agentName) {
+  const id = 'e5panel_' + agentName;
+  const existing = document.getElementById(id);
+  const btn = document.getElementById('e5tbtn_' + agentName);
+  if (existing) { existing.parentElement.remove(); if (btn) btn.classList.remove('open'); return; }
+  // Close any other open panel first (accordion)
+  document.querySelectorAll('[id^="e5panel_"]').forEach(el => el.parentElement.remove());
+  document.querySelectorAll('.e5-toolsbtn.open').forEach(b => b.classList.remove('open'));
+  const row = document.getElementById('e5row_' + agentName);
+  if (!row) return;
+  const tr = document.createElement('tr');
+  const td = document.createElement('td');
+  td.colSpan = 7; td.className = 'e5-agent-expand';
+  td.innerHTML = e5AgentPanelHTML(agentName);
+  tr.appendChild(td); row.after(tr);
+  if (btn) btn.classList.add('open');
+  // default category = all
+  e5FilterTools(agentName, 'all');
+}
+
+// The premium panel body: brain meter + category chooser + tool chips + inline APIs.
+function e5AgentPanelHTML(agentName) {
+  const isCouncil = !!S.agents.find(a => a.name === agentName);
+  const agent = S.agents.find(a => a.name === agentName) || (window._e5Operatives||[]).find(o => o.name === agentName) || {};
+  const color = agent.color || '#00ff88';
+  const bp = e5BrainPower(agent);
+  const tools = e5AgentTools(agentName);
+  const skills = isCouncil ? (agent.caps || agent.skills || []) : [];
+  const cats = ['all', ...Array.from(new Set(tools.map(t => t.cat)))];
+  const catBar = cats.map(c => `<span class="e5-cat ${c==='all'?'active':''}" id="e5cat_${agentName}_${c}" onclick="e5FilterTools('${agentName}','${c}')">${E5_CAT_META[c]?.icon||''} ${E5_CAT_META[c]?.label||c.toUpperCase()}</span>`).join('');
+  return `<div class="e5-agent-panel" style="--e5c:${color}">
+    <!-- BRAIN POWER -->
+    <div class="e5-brain">
+      <span class="e5-brain-lbl">◆ Brain Power</span>
+      <div class="e5-brain-bar"><div class="e5-brain-fill" style="width:${bp.pct}%;background:linear-gradient(90deg,${bp.cls},#00E5FF)"></div></div>
+      <span class="e5-brain-tier" style="color:${bp.cls}">${bp.tier}</span>
+      <span class="e5-brain-model">${escH(bp.model)}</span>
+    </div>
+    <!-- TOOLS + category chooser -->
+    <div class="e5-sec-h">⚡ Real Tools <span class="e5-sec-count" id="e5toolcount_${agentName}">${tools.length}</span></div>
+    <div class="e5-catbar">${catBar}</div>
+    <div class="e5-chips" id="e5tools_${agentName}"></div>
+    ${skills.length ? `<div class="e5-sec-h" style="margin-top:12px">✦ Skills <span class="e5-sec-count">${skills.length}</span></div>
+      <div class="e5-chips">${skills.slice(0,24).map(s=>`<span class="e5-chip skill">${escH(typeof s==='string'?s:(s.name||''))}</span>`).join('')}${skills.length>24?`<span class="e5-chip skill">+${skills.length-24}</span>`:''}</div>`:''}
+    <!-- CONNECT APIS (inline, folds in the old Connect button) -->
+    <div class="e5-sec-h" style="margin-top:14px">🔌 Connect APIs <span class="e5-sec-count" id="e5apicount_${agentName}">…</span></div>
+    <div class="e5-api-note">Every agent is wired to <b>the full dashboard API set</b>. <b>More APIs connected = more tools unlocked.</b> Toggle a source on to let this agent pull it live.</div>
+    <div id="e5apis_${agentName}"><div style="font-size:9px;color:var(--text-muted);padding:6px">Loading sources…</div></div>
+  </div>`;
+}
+
+// Filter the tool chips by category.
+function e5FilterTools(agentName, cat) {
+  const wrap = document.getElementById('e5tools_' + agentName);
+  if (!wrap) return;
+  const tools = e5AgentTools(agentName);
+  const shown = cat === 'all' ? tools : tools.filter(t => t.cat === cat);
+  document.querySelectorAll(`[id^="e5cat_${agentName}_"]`).forEach(el => el.classList.remove('active'));
+  const active = document.getElementById(`e5cat_${agentName}_${cat}`);
+  if (active) active.classList.add('active');
+  wrap.innerHTML = shown.length
+    ? shown.map(t => `<span class="e5-chip" title="${escH(t.desc)}">${escH(t.name)}<span class="e5-chip-cat">${E5_CAT_META[t.cat]?.icon||''}</span></span>`).join('')
+    : '<span style="font-size:8px;color:var(--text-muted)">No tools in this category</span>';
+  // Ensure APIs are rendered (once panel is in DOM)
+  e5RenderAgentAPIs(agentName);
+}
+
+// Render the inline Connect-APIs list for one agent (council OR forged).
+async function e5RenderAgentAPIs(agentName) {
+  const host = document.getElementById('e5apis_' + agentName);
+  if (!host || host.dataset.done === '1') return;
+  host.dataset.done = '1';
+  const key = agentName.toLowerCase();
+  // Make sure the available-API catalog is loaded
+  if (!_availableAPIs.length) {
+    try { const r = await fetch('/api/apis/available', { signal: AbortSignal.timeout(8000) }); const d = await r.json(); _availableAPIs = d.apis || []; } catch {}
+  }
+  // Fetch this agent's connected list live (works for forged too)
+  let connected = _agentAPIConnections[key] || [];
+  try { const r = await fetch(`/api/agent/${encodeURIComponent(key)}/apis`, { signal: AbortSignal.timeout(5000) }); const d = await r.json(); connected = d.connected || connected; _agentAPIConnections[key] = connected; } catch {}
+  const cntEl = document.getElementById('e5apicount_' + agentName);
+  if (cntEl) cntEl.textContent = `${connected.length}/${_availableAPIs.length}`;
+  if (!_availableAPIs.length) { host.innerHTML = '<div style="font-size:9px;color:var(--text-muted)">No API sources available.</div>'; return; }
+  host.innerHTML = _availableAPIs.map(api => {
+    const on = connected.includes(api.id);
+    const state = api.free ? 'free' : (api.configured ? 'configured' : 'needs-key');
+    const label = api.free ? 'FREE' : (api.configured ? 'READY' : 'NEEDS KEY');
+    const avail = api.configured || api.free;
+    let act;
+    if (on) {
+      act = `<button class="e5-conn-btn disconnect" onclick="e5ToggleAgentAPI('${key}','${api.id}',true,'${agentName}')">DISCONNECT</button>
+             <button class="e5-del-btn" title="Remove / disconnect" onclick="e5ToggleAgentAPI('${key}','${api.id}',true,'${agentName}')">🗑</button>`;
+    } else if (avail) {
+      act = `<button class="e5-conn-btn connect" onclick="e5ToggleAgentAPI('${key}','${api.id}',false,'${agentName}')">CONNECT</button>`;
+    } else {
+      act = `<a class="e5-key-link" href="/settings#apis" title="Add ${escH(api.envKey||'API key')}">+ Add key</a>
+             <button class="e5-conn-btn locked" disabled>LOCKED</button>`;
+    }
+    return `<div class="e5-api-row ${on?'on':''}" id="e5apirow_${agentName}_${api.id}">
+      <span class="e5-api-ico">${api.icon||'🔗'}</span>
+      <div class="e5-api-meta">
+        <div class="e5-api-nm">${escH(api.name)} <span class="e5-api-pill ${state}">${label}</span></div>
+        <div class="e5-api-ds">${escH(api.description||'')}</div>
+        ${(!avail)?`<div style="font-size:7px;color:#ff9090;margin-top:1px">Add ${escH(api.envKey||'key')} in Settings → APIs, then return &amp; connect.</div>`:''}
+      </div>
+      <div class="e5-api-act">${act}</div>
+    </div>`;
+  }).join('');
+}
+
+// Connect/disconnect an API for an agent, then live-refresh the row + count + card badges.
+async function e5ToggleAgentAPI(agentKey, apiId, isOn, agentName) {
+  try {
+    const body = isOn ? { disconnect: apiId } : { connect: apiId };
+    const r = await fetch(`/api/agent/${encodeURIComponent(agentKey)}/apis`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(5000)
+    });
+    const d = await r.json();
+    _agentAPIConnections[agentKey] = d.connected || [];
+    // Live re-render this agent's inline API list + count
+    const host = document.getElementById('e5apis_' + agentName);
+    if (host) { host.dataset.done = ''; e5RenderAgentAPIs(agentName); }
+    // Update any card badge row
+    const badge = document.getElementById(`apiBadges_${agentKey.toUpperCase()}`);
+    if (badge) badge.innerHTML = buildAgentAPIBadges(agentKey.toUpperCase());
+    notify(isOn ? `Disconnected ${apiId} from ${agentName}` : `✅ Connected ${apiId} to ${agentName}`);
+  } catch (e) { notify('Error saving API connection: ' + e.message); }
+}
+window.e5ToggleAgentPanel = e5ToggleAgentPanel;
+window.e5FilterTools = e5FilterTools;
+window.e5ToggleAgentAPI = e5ToggleAgentAPI;
+window.e5RenderAgentAPIs = e5RenderAgentAPIs;
+
 function buildAgentAPIBadges(agentName) {
   const key = agentName.toLowerCase();
   const connected = _agentAPIConnections[key] || [];
@@ -16992,15 +17363,19 @@ function showAgentFullDetail(agentName) {
       </div>
     </div>
   `, [
-    { label: '💬 Deploy (Chat)', class: 'btn-accent', action: () => { closeModal(); chatWithAgent(agentName); } },
-    { label: '⚡ Connect API', class: 'btn-ghost', action: () => { closeModal(); openAPIConnector(agentName); } },
+    { label: '▶ Deploy', class: 'btn-accent', action: () => { closeModal(); chatWithAgent(agentName); } },
     { label: '🗑 Clear Memory', class: 'btn-ghost', action: () => { if (confirm('Clear all memory for ' + agentName + '?')) { const ag = S.agents.find(x=>x.name===agentName); if (ag) { ag.mem=[]; save(); toast('Memory cleared'); } closeModal(); } } },
     { label: 'Close', class: 'btn-ghost', action: closeModal }
   ]);
 }
 
-function openAPIConnector(agentName) {
+async function openAPIConnector(agentName) {
   const key = agentName.toLowerCase();
+  // Lazy-load the full live dashboard API set + this agent's connections (works for forged too)
+  if (!_availableAPIs.length) {
+    try { const r = await fetch('/api/apis/available', { signal: AbortSignal.timeout(8000) }); const d = await r.json(); _availableAPIs = d.apis || []; } catch {}
+  }
+  try { const r = await fetch(`/api/agent/${encodeURIComponent(key)}/apis`, { signal: AbortSignal.timeout(5000) }); const d = await r.json(); _agentAPIConnections[key] = d.connected || _agentAPIConnections[key] || []; } catch {}
   const connected = _agentAPIConnections[key] || [];
 
   const groupOrder = ['crypto','storage','info','ai','creative','social'];
@@ -17020,16 +17395,18 @@ function openAPIConnector(agentName) {
     sectionsHtml += '<div class="api-grid">';
     grouped[cat].forEach(api => {
       const isOn = connected.includes(api.id);
+      const avail = api.configured || api.free;
       const statusCls = api.free ? 'free' : (api.configured ? 'configured' : 'needs-key');
       const statusLabel = api.free ? 'FREE' : (api.configured ? 'CONFIGURED' : 'NEEDS KEY');
       sectionsHtml += `
-        <div class="api-item ${isOn ? 'connected' : ''} ${!api.configured && !api.free ? 'locked' : ''}" id="apiItem_${api.id}" onclick="toggleAPIConnection('${key}','${api.id}',${api.configured || api.free})">
+        <div class="api-item ${isOn ? 'connected' : ''} ${!avail ? 'locked' : ''}" id="apiItem_${api.id}" ${avail ? `onclick="toggleAPIConnection('${key}','${api.id}',true)"` : ''}>
           <div class="api-item-left"><span class="api-item-icon">${api.icon}</span></div>
           <div class="api-item-right">
             <div class="api-item-name">${api.name} <span class="api-item-pill ${statusCls}">${statusLabel}</span></div>
             <div class="api-item-desc">${api.description}</div>
-            ${!api.free && !api.configured ? `<div style="font-size:8px;color:#ff8080;margin-top:2px">Add ${api.envKey} to .env</div>` : ''}
+            ${!avail ? `<div style="font-size:8px;color:#ff8080;margin-top:2px">Add <b>${api.envKey||'API key'}</b> in <a class="e5-key-link" href="/settings#apis" onclick="event.stopPropagation()">Settings → APIs</a>, then return &amp; connect.</div>` : ''}
           </div>
+          ${isOn ? `<button class="e5-del-btn" title="Disconnect / remove" onclick="event.stopPropagation();toggleAPIConnection('${key}','${api.id}',true)">🗑</button>` : ''}
           <div class="api-toggle ${isOn ? 'on' : ''}" id="apiToggle_${api.id}"></div>
         </div>`;
     });
@@ -17038,7 +17415,7 @@ function openAPIConnector(agentName) {
 
   showShaddaiModal(`
     <h3 style="margin:0 0 3px">⚡ Connect APIs — ${agentName}</h3>
-    <div class="sub">Toggle which real-time data sources this agent uses when you give it a task.</div>
+    <div class="sub"><b style="color:#00E5FF">${connected.length}/${_availableAPIs.length} connected.</b> Every agent can reach the full dashboard API set — <b style="color:#00ff88">more APIs connected = more tools unlocked.</b> Toggle a source on to let this agent pull it live; 🗑 removes a binding.</div>
     ${sectionsHtml}
     <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeShaddaiModal()" style="font-size:10px;padding:5px 14px">Done</button>
@@ -18916,10 +19293,9 @@ function updateInd() {
     }
   }
 
-  // Update popout select
-  const popoutSelect = document.getElementById('popoutAgentSelect');
-  if (popoutSelect) {
-    popoutSelect.innerHTML = '<option value="ALL">ALL</option>' + S.agents.map(a => `<option value="${escH(a.name)}" ${S.agent === a.name ? 'selected' : ''}>${escH(a.name)}</option>`).join('');
+  // Update popout select — full Mission Control roster (council 7 + forged operatives)
+  if (typeof renderMissionControlAgents === 'function') {
+    renderMissionControlAgents(S.agent && S.agent !== 'ALL' ? S.agent : undefined);
   }
 }
 
@@ -19778,6 +20154,54 @@ function switchPopoutAgent(name) {
   const lbl = document.getElementById('popoutAgentLabel');
   if (lbl) lbl.textContent = name + ' ACTIVE';
 }
+
+// ===== MISSION CONTROL — agent dropdown (council 7 + forged operatives) =====
+// Fills #popoutAgentSelect from AGENTS7 plus every forged operative (via /api/operatives,
+// cached in window._officeOperatives). Called on load, after awaken, and on op refresh.
+function renderMissionControlAgents(selected) {
+  const sel = document.getElementById('popoutAgentSelect');
+  if (!sel) return;
+  const council = (typeof MC_COUNCIL !== 'undefined' ? MC_COUNCIL
+                  : ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON']);
+  const forged = ((window._officeOperatives) || [])
+    .map(o => (o && (o.name || (o.op && o.op.codename))) || '')
+    .map(n => String(n).toUpperCase())
+    .filter(n => n && council.indexOf(n) === -1);
+  const forgedUniq = [...new Set(forged)];
+  const want = selected || sel.value || S.agent || 'SHADDAI';
+  const optHtml = council.map(n =>
+      `<option value="${escH(n)}" ${n===want?'selected':''}>${escH(n)}</option>`).join('')
+    + (forgedUniq.length
+        ? `<optgroup label="⬡ FORGED">` + forgedUniq.map(n =>
+            `<option value="${escH(n)}" ${n===want?'selected':''}>${escH(n)}</option>`).join('') + `</optgroup>`
+        : '');
+  sel.innerHTML = optHtml;
+  // ensure a valid selection sticks even inside optgroup
+  if ([...sel.options].some(o => o.value === want)) sel.value = want;
+}
+const MC_COUNCIL = ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+
+// ===== MISSION CONTROL — Deploy an agent (council or forged) INTO the popout chat =====
+// Sets Mission Control's active agent AND opens that agent's chat surfaced through the
+// SHADDAI floating popout. This is the target the Rooms "Deploy" button (E6) will call.
+function deployAgentToMissionControl(name) {
+  if (!name) { const s = document.getElementById('popoutAgentSelect'); name = (s && s.value) || 'SHADDAI'; }
+  name = String(name).toUpperCase();
+  // 1) set active agent (chat context) — reuse existing pickAgent/chat wiring
+  try { if (typeof chatWithAgent === 'function') chatWithAgent(name); } catch(_) {}
+  S.agent = name;
+  // 2) reflect selection in the Mission Control dropdown + label
+  renderMissionControlAgents(name);
+  const sel = document.getElementById('popoutAgentSelect');
+  if (sel) sel.value = name;
+  const lbl = document.getElementById('popoutAgentLabel');
+  if (lbl) lbl.textContent = name + ' ACTIVE';
+  // 3) surface the chat through the floating Mission Control popout
+  try { if (typeof openPopout === 'function') openPopout(); } catch(_) {}
+  setTimeout(() => { renderMissionControlAgents(name); const s2=document.getElementById('popoutAgentSelect'); if(s2) s2.value=name; document.getElementById('popoutIn')?.focus(); }, 60);
+}
+window.deployAgentToMissionControl = deployAgentToMissionControl;
+window.renderMissionControlAgents = renderMissionControlAgents;
 
 function addMsg(m) {
   const panel = document.getElementById('panelChatMsgs');
@@ -22721,12 +23145,11 @@ function openPopout() {
   const tag = document.getElementById('popoutModelTag');
   if (tag) tag.textContent = S.ollamaOn ? 'ollama ●' : 'llama-3.3-70b ●';
   _applyPopoutQuickState();
-  // Update agent select — only show main agents, not subagents
-  const sel = document.getElementById('popoutAgentSelect');
-  if (sel && S.agents) {
-    const mainAgents = S.agents.filter(a => !SUBAGENT_NAMES.includes(a.name));
-    sel.innerHTML = mainAgents.map(a => `<option value="${escH(a.name)}" ${a.name==='SHADDAI'?'selected':''}>${escH(a.name)}</option>`).join('');
-  }
+  // Update agent select — full Mission Control roster (council 7 + forged operatives)
+  try { if (typeof _loadOfficeOperatives === 'function') _loadOfficeOperatives(); } catch(_) {}
+  if (typeof renderMissionControlAgents === 'function') renderMissionControlAgents(S.agent || 'SHADDAI');
+  // forged ops load async — re-fill once they arrive so the dropdown isn't empty of them
+  setTimeout(() => { if (typeof renderMissionControlAgents === 'function') renderMissionControlAgents(); }, 1400);
   const lbl = document.getElementById('popoutAgentLabel');
   if (lbl) lbl.textContent = 'MISSION CONTROL';
   setTimeout(() => document.getElementById('popoutIn')?.focus(), 100);
