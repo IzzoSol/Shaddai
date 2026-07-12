@@ -223,6 +223,8 @@
             '<div class="cap" id="cdSkCap">loading…</div>'+
             '<div class="picker" id="cdPicker"><input class="psearch" id="cdPSearch" placeholder="search the skill library…"><div id="cdPList"></div></div>'+
             '<div class="skills" id="cdSkills" style="margin-top:10px"></div>'+
+            '<div class="cap" style="margin-top:6px;opacity:.7">Click a skill name for what it does · ▶ runs it here.</div>'+
+            '<div id="cdSkResult" style="display:none;margin-top:10px;background:rgba(0,0,0,.42);border:1px solid rgba(var(--acg),.3);border-radius:8px;padding:10px"></div>'+
           '</div>'+
           '<div class="pane" data-p="wk">'+
             '<div class="sec">GENERATE — real image · pick an engine</div>'+
@@ -234,7 +236,7 @@
             '<div class="cap" id="cdGenMsg" style="margin-top:8px"></div>'+
             '<div class="sec mt">GALLERY</div>'+
             '<div class="wgrid" id="cdWGrid"></div>'+
-            '<button class="run" id="cdCreate" style="font-size:8px;background:transparent;border:1px dashed rgba(var(--acg),.5);color:var(--ac);box-shadow:none">'+IC.add+' CREATE IN CONTENT STUDIO</button>'+
+            /* E6a: removed "CREATE IN CONTENT STUDIO" button + Content-Studio empty-state copy (out of scope for rooms). */
             '<div class="cap" id="cdWMsg" style="margin-top:8px"></div>'+
           '</div>'+
           '<div class="pane" data-p="cu">'+
@@ -280,7 +282,7 @@
     // workshop
     el('cdGen').onclick=function(){ genImage(d); };
     el('cdImgPrompt').onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); genImage(d); } };
-    el('cdCreate').onclick=function(){ openContentStudio(); };
+    /* E6a: cdCreate button removed — no wiring needed. */
     // customize accents
     var sws=['0,229,255','255,215,0','167,139,250','0,255,136','251,146,60','244,63,94']; var sw=el('cdSw');
     sws.forEach(function(g){ var b=document.createElement('div'); b.className='sw'; b.style.background=color(g); b.onclick=function(){ setAccent(g); }; sw.appendChild(b); });
@@ -341,9 +343,22 @@
     var list=el('cdSkills'), cap=el('cdSkCap'); if(!list)return;
     var tools = ST.forged ? ((ST.op&&ST.op.tools)||[]) : (ST.catalog||[]).slice(0,12).map(function(s){return s.id;});
     ST.tools=tools;
-    cap.textContent = tools.length+' '+(ST.forged?'equipped · click a skill to remove · '+((ST.catalog||[]).length)+' in the library':'core skills · '+((ST.catalog||[]).length)+' in the library');
-    list.innerHTML = tools.length ? tools.map(function(t){return '<div class="skill" data-skill="'+esc(t)+'"'+(ST.forged?' title="click to remove" style="cursor:pointer"':'')+'><span class="k">▸</span>'+esc(t)+(ST.forged?'<span style="margin-left:auto;color:var(--mut)">✕</span>':'')+'</div>';}).join('') : '<div class="cap">no skills equipped</div>';
-    if(ST.forged){ [].forEach.call(list.querySelectorAll('.skill[data-skill]'),function(s){ s.onclick=function(){ removeSkill(s.dataset.skill); }; }); }
+    cap.textContent = tools.length+' '+(ST.forged?'equipped · '+((ST.catalog||[]).length)+' in the library':'core skills · '+((ST.catalog||[]).length)+' in the library');
+    // E6a: each skill is USABLE in-room — name = explainer, ▶ = run it here, ✕ = remove (forged only).
+    list.innerHTML = tools.length ? tools.map(function(t){
+      return '<div class="skill" data-skill="'+esc(t)+'" style="display:flex;align-items:center;gap:6px">'+
+        '<span class="k">▸</span>'+
+        '<span class="cd-sk-name" data-skill="'+esc(t)+'" title="what it does &amp; how to use it" style="cursor:pointer">'+esc(t)+'</span>'+
+        '<span style="margin-left:auto;display:inline-flex;gap:4px">'+
+          '<button class="cd-sk-run" data-skill="'+esc(t)+'" title="run '+esc(t)+' now" style="background:rgba(var(--acg),.16);border:1px solid rgba(var(--acg),.4);color:var(--ac);border-radius:5px;cursor:pointer;font-size:8px;padding:2px 7px;font-family:inherit">▶</button>'+
+          (ST.forged?'<button class="cd-sk-rm" data-skill="'+esc(t)+'" title="remove" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:10px">✕</button>':'')+
+        '</span>'+
+      '</div>';
+    }).join('') : '<div class="cap">no skills equipped</div>';
+    var _agentNm = (ST.forged ? ((ST.op&&ST.op.codename)||'OP') : (d&&d.nm)||'SHADDAI');
+    [].forEach.call(list.querySelectorAll('.cd-sk-name'),function(s){ s.onclick=function(){ try{ window._roomExplainTool && window._roomExplainTool(s.dataset.skill); }catch(_){} }; });
+    [].forEach.call(list.querySelectorAll('.cd-sk-run'),function(s){ s.onclick=function(){ cdRunSkill(s.dataset.skill, _agentNm); }; });
+    if(ST.forged){ [].forEach.call(list.querySelectorAll('.cd-sk-rm'),function(s){ s.onclick=function(){ removeSkill(s.dataset.skill); }; }); }
     // forged can add; council is read-only here
     var addBtn=el('cdAddBtn'); if(addBtn) addBtn.style.display=ST.forged?'':'none';
     renderPicker('');
@@ -357,6 +372,36 @@
     pl.innerHTML = rows.length ? rows.map(function(s){return '<div class="prow" data-id="'+esc(s.id)+'">'+IC.add+' <b style="color:var(--ac)">'+esc(s.id)+'</b> <span style="color:var(--mut)">'+esc((s.description||'').slice(0,44))+'</span></div>';}).join('') : '<div class="cap" style="padding:11px">no matches</div>';
     [].forEach.call(pl.querySelectorAll('.prow'),function(r){ r.onclick=function(){ addSkill(r.dataset.id); }; });
   }
+  // E6a: run a single equipped skill in-room via the SAME engine as the Skills tab (window.runSkill → /api/skills/run),
+  // show the result in #cdSkResult, and reuse the global Save-to-Notes / Gallery / Download helpers from index.html.
+  function cdRunSkill(skillId, agentNm){
+    var box=el('cdSkResult'); if(!box)return;
+    box.style.display='block';
+    box.innerHTML='<div style="font-size:9px;color:var(--ac)">⏳ running <b>'+esc(skillId)+'</b>… <span style="color:var(--mut)">(real /api/skills/run)</span></div>';
+    if(typeof window.runSkill!=='function'){ box.innerHTML='<div style="font-size:9px;color:#ff6b6b">⚠ skill engine unavailable</div>'; return; }
+    window.runSkill(skillId, null, {}).then(function(res){
+      if(res&&res.error) throw new Error(res.error);
+      var raw = res && (res.result!==undefined?res.result:(res.response||res.output||res));
+      var text = (typeof raw==='string')?raw:JSON.stringify(raw,null,2);
+      window._roomToolLast = window._roomToolLast || {};
+      var slot='deck:'+skillId; window._roomToolLast[slot]={tool:skillId,agent:agentNm,text:text};
+      var isImg=/^(https?:\/\/|data:image)/.test(String(text).trim());
+      box.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">'+
+          '<div style="font-size:8px;color:var(--ac);letter-spacing:1px">▸ '+esc(skillId)+' · RESULT</div>'+
+          '<button onclick="var b=document.getElementById(\'cdSkResult\');if(b)b.style.display=\'none\'" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:11px">✕</button>'+
+        '</div>'+
+        (isImg
+          ? '<img src="'+esc(text)+'" alt="result" style="width:100%;border-radius:6px;border:1px solid rgba(var(--acg),.3);display:block">'
+          : '<div style="max-height:150px;overflow:auto;font-family:monospace;font-size:10px;line-height:1.5;color:#c8d2e0;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.35);border-radius:5px;padding:8px">'+esc(text)+'</div>')+
+        '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+          '<button onclick="window._roomSaveToNotes(\'deck\',\''+skillId.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:rgba(var(--acg),.14);border:1px solid rgba(var(--acg),.4);border-radius:5px;color:var(--ac);cursor:pointer;font-size:8px;font-family:inherit">💾 Notes</button>'+
+          '<button onclick="window._roomSaveToGallery(\'deck\',\''+skillId.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:rgba(var(--acg),.14);border:1px solid rgba(var(--acg),.4);border-radius:5px;color:var(--ac);cursor:pointer;font-size:8px;font-family:inherit">🖼 Gallery</button>'+
+          '<button onclick="window._roomDownload(\'deck\',\''+skillId.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:#c8d2e0;cursor:pointer;font-size:8px;font-family:inherit">↓ Download</button>'+
+        '</div>';
+    }).catch(function(e){ box.innerHTML='<div style="font-size:9px;color:#ff6b6b">⚠ '+esc(skillId)+' failed: '+esc(e.message||'error')+'</div>'; });
+  }
+
   function saveTools(next, verb, id){
     if(!ST.forged||!ST.op)return;
     j('/api/operatives/'+ST.op.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tools:next})}).then(function(r){
@@ -408,7 +453,7 @@
       return '<div class="wcard"><div class="wth"><img src="'+esc(it.content)+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'"></div>'+
         '<div class="wmeta"><div class="wt">'+esc((it.prompt||'Untitled').slice(0,40))+'</div><div class="ws">'+esc(it.type||'image')+'</div>'+
         '<button class="list" data-gi="'+i+'">'+IC.cart+' LIST TO BAZAAR</button></div></div>';
-    }).join('') : '<div class="cap" style="grid-column:1/3">No creations yet — generate an image above, or use Content Studio.</div>';
+    }).join('') : '<div class="cap" style="grid-column:1/3">No creations yet — generate an image above.</div>';
     [].forEach.call(grid.querySelectorAll('.list[data-gi]'),function(btn){ btn.onclick=function(){ listItem(items[+btn.dataset.gi], d, btn); }; });
   }
   function genImage(d){
