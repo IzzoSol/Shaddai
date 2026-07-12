@@ -953,10 +953,11 @@ const RECIPES = {
     description: 'Generate 5 detailed AI image prompts for any concept.',
     params: ['concept', 'style'],
     steps: [
-      { tool: 'generate_image_free', params: { prompt: '{{input.concept}} {{input.style}} cyberpunk' } },
-      { tool: 'extract_keywords',    params: { text: '{{input.concept}} {{input.style}}' } }
+      // Defaults via ||"…" so a missing concept/style never yields an empty prompt or 0 keywords.
+      { tool: 'generate_image_free', params: { prompt: '{{input.concept||"futuristic AI concept art"}} {{input.style||"cyberpunk"}}', hf_key: '{{input.hf_key}}' } },
+      { tool: 'extract_keywords',    params: { text: '{{input.concept||"futuristic AI concept art"}} {{input.style||"cyberpunk"}} lighting environment camera composition mood' } }
     ],
-    synthesize: 'Generate 5 detailed AI image prompts for "{{input.concept}}" in {{input.style}} style. Each prompt should be 50-100 words and include: subject, environment, lighting, camera angle, artistic style, quality modifiers. Also provide one free Pollinations.ai URL.'
+    synthesize: 'Generate 5 detailed AI image prompts for "{{input.concept||"the given concept"}}" in {{input.style||"cyberpunk"}} style. Each prompt should be 50-100 words and include: subject, environment, lighting, camera angle, artistic style, quality modifiers. If an image URL was generated above, include it.'
   },
 
   'color-palette-generator': {

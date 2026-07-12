@@ -947,23 +947,23 @@ const TOOLS = {
     description: 'Generate a real AI image using HuggingFace FLUX.1-schnell (server-side key pool, no client key needed). Returns a served URL to the rendered PNG.',
     schema: { prompt: 'string — detailed image description', model: "string — ignored (always uses FLUX.1-schnell)", width: 'number (default 1024)', height: 'number (default 1024)' },
     agents: ['TURTLE'],
-    async execute({ prompt, model = 'flux', width = 1024, height = 1024 }) {
+    async execute({ prompt, model = 'flux', width = 1024, height = 1024, hf_key }) {
       const hf = require('./lib/hf-keys');
       const DATA_DIR = path.join(__dirname, '..', 'data');
       const IMG_DIR  = path.join(DATA_DIR, 'agent-images');
       try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
-      if (!hf.keys().length) {
-        return JSON.stringify({ success: false, error: 'No HF token configured. Add HF_TOKENS to .env or backend/data/runtime-keys.json.', code: 'NO_KEY' });
+      const p = String(prompt || 'abstract AI art');
+      // Rotates BYOK + HF pool; on total failure returns a keyless Pollinations URL (never hard-fails).
+      const out = await hf.generateSafe(p, { byok: hf_key, width, height });
+      if (out.fallbackUrl) {
+        return JSON.stringify({ success: true, ok: true, provider: out.provider, url: out.fallbackUrl, prompt: p, note: 'Generated via keyless free fallback' + (out.hfError ? ' (HF pool unavailable: ' + out.hfError + ')' : '') });
       }
-      let img;
-      try { img = await hf.generate(String(prompt || 'abstract AI art')); }
-      catch (e) { return JSON.stringify({ success: false, error: 'Image generation failed: ' + (e && e.message || 'unknown'), code: e && e.code || 'GEN_ERROR' }); }
       const file = 'gen-' + Date.now() + '-' + Math.floor(Math.random() * 1e5) + '.png';
-      try { fs.writeFileSync(path.join(IMG_DIR, file), img); }
-      catch (e) { return JSON.stringify({ success: false, error: 'Could not save image: ' + (e && e.message || 'unknown') }); }
+      try { fs.writeFileSync(path.join(IMG_DIR, file), out.buffer); }
+      catch (e) { const fb = hf.pollinationsUrl(p, { width, height }); return JSON.stringify({ success: true, ok: true, provider: 'pollinations-free', url: fb, prompt: p, note: 'HF ok but save failed (' + (e && e.message) + '); using free URL' }); }
       const url = '/api/forge/image/' + file;
-      const dataUri = 'data:image/png;base64,' + img.toString('base64');
-      return JSON.stringify({ success: true, ok: true, provider: 'huggingface-flux', url, dataUri, prompt, note: 'Image saved server-side. Access via ' + url });
+      const dataUri = 'data:image/png;base64,' + out.buffer.toString('base64');
+      return JSON.stringify({ success: true, ok: true, provider: out.provider, url, dataUri, prompt: p, note: 'Image saved server-side. Access via ' + url });
     }
   },
 
@@ -1147,7 +1147,7 @@ const TOOLS = {
     agents: ['ORACLE','QUILL','ZEROX'],
     async execute({ text, limit = 10 }) {
       const stop = new Set(['the','a','an','and','or','but','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','should','could','may','might','must','can','this','that','these','those','i','you','he','she','it','we','they','what','which','who','when','where','why','how','of','to','in','on','at','for','with','by','from','as','about','into','through','during','before','after','above','below','up','down','out','off','over','under','again','further','then','once','here','there','all','any','both','each','few','more','most','other','some','such','no','not','only','own','same','so','than','too','very','just']);
-      const words = text.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+      const words = String(text || '').toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
       const freq = {};
       words.forEach(w => { if (!stop.has(w)) freq[w] = (freq[w] || 0) + 1; });
       const top = Object.entries(freq).sort((a,b) => b[1] - a[1]).slice(0, limit).map(([word, count]) => ({ word, count }));
@@ -2259,19 +2259,19 @@ const TOOLS = {
       const DATA_DIR = path.join(__dirname, '..', 'data');
       const IMG_DIR  = path.join(DATA_DIR, 'agent-images');
       try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
-      const prompt = params.prompt || 'cyberpunk AI agent dashboard';
-      if (!hf.keys().length) {
-        return JSON.stringify({ success: false, error: 'No HF token configured. Add HF_TOKENS to .env or backend/data/runtime-keys.json.', code: 'NO_KEY' });
+      const prompt = String(params.prompt || 'cyberpunk AI agent dashboard');
+      // Rotates BYOK (params.hf_key) + HF pool; on total failure returns a keyless
+      // Pollinations URL so this tool ALWAYS produces an image (never "missing HF token").
+      const out = await hf.generateSafe(prompt, { byok: params.hf_key, width: params.width, height: params.height });
+      if (out.fallbackUrl) {
+        return JSON.stringify({ success: true, ok: true, provider: out.provider, url: out.fallbackUrl, prompt, note: 'Generated via keyless free fallback' + (out.hfError ? ' (HF pool unavailable: ' + out.hfError + ')' : '') });
       }
-      let img;
-      try { img = await hf.generate(String(prompt)); }
-      catch (e) { return JSON.stringify({ success: false, error: 'Image generation failed: ' + (e && e.message || 'unknown'), code: e && e.code || 'GEN_ERROR' }); }
       const file = 'gen-' + Date.now() + '-' + Math.floor(Math.random() * 1e5) + '.png';
-      try { fs.writeFileSync(path.join(IMG_DIR, file), img); }
-      catch (e) { return JSON.stringify({ success: false, error: 'Could not save image: ' + (e && e.message || 'unknown') }); }
+      try { fs.writeFileSync(path.join(IMG_DIR, file), out.buffer); }
+      catch (e) { const fb = hf.pollinationsUrl(prompt); return JSON.stringify({ success: true, ok: true, provider: 'pollinations-free', url: fb, prompt, note: 'HF ok but save failed (' + (e && e.message) + '); using free URL' }); }
       const url = '/api/forge/image/' + file;
-      const dataUri = 'data:image/png;base64,' + img.toString('base64');
-      return JSON.stringify({ success: true, ok: true, provider: 'huggingface-flux', url, dataUri, prompt, note: 'Image saved server-side. Access via ' + url });
+      const dataUri = 'data:image/png;base64,' + out.buffer.toString('base64');
+      return JSON.stringify({ success: true, ok: true, provider: out.provider, url, dataUri, prompt, note: 'Image saved server-side. Access via ' + url });
     }
   },
 

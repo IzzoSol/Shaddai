@@ -1306,6 +1306,30 @@ router.get('/skills/content/:name', (req, res) => {
         source = 'custom';
       }
     }
+    // Fallback to the recipe / MD / baked catalog (skill-index) so executable skills
+    // like gen-image / image-prompt-pack resolve instead of showing "Skill content not available".
+    if (!content) {
+      try {
+        const skillIndex = require('./skill-index');
+        let sk = skillIndex.loadSkillContent(name);
+        if (!sk) {
+          const m = skillIndex.findSkills(name, { limit: 1 });
+          if (m.length) sk = skillIndex.loadSkillContent(m[0].id, { type: m[0].type });
+        }
+        if (sk) {
+          if (sk.type === 'recipe') {
+            const r = sk.recipe;
+            source = 'recipe';
+            content = `# ${name}\n\n${r.description || ''}\n\n**Agent:** ${r.agent}\n**Inputs:** ${(r.params || []).join(', ') || 'none'}\n\n**Steps:**\n` +
+              r.steps.map((s, i) => `${i + 1}. \`${s.tool}\``).join('\n') +
+              `\n\nThis is an executable tool-recipe — press Run to execute it.`;
+          } else {
+            source = sk.type;
+            content = sk.content || `${sk.skill?.name || name}: ${sk.skill?.description || ''}`;
+          }
+        }
+      } catch (_) {}
+    }
     if (!content) return res.status(404).json({ error: 'skill not found', name });
     res.json({ name, content, source, filePath, length: content.length });
   } catch(e) {
@@ -6560,6 +6584,36 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
     if (!msgs.length && message) msgs = [{ role: 'user', content: String(message) }];
     if (system) msgs.unshift({ role: 'system', content: String(system) });
     if (!msgs.length) return res.status(400).json({ ok: false, error: 'messages or message required' });
+
+    // ── "Send to Chat" handoff: a message like "[SKILL: gen-image/action] <task>"
+    //    executes that skill server-side (real tools) and returns its result inline,
+    //    instead of sending the raw tag to the LLM. Fixes the Send-to-Chat error and
+    //    enables the content-idea → image handoff (the skill's text becomes tool input).
+    try {
+      const lastUserMsg = [...msgs].reverse().find(m => m && m.role === 'user');
+      const raw = lastUserMsg && typeof lastUserMsg.content === 'string' ? lastUserMsg.content : '';
+      const m = raw.match(/^\s*\[SKILL:\s*([^\]/\s]+)(?:\/([^\]\s]+))?\s*\]\s*([\s\S]*)$/i);
+      if (m) {
+        const skillId = m[1];
+        const action = m[2] || null;
+        const task = (m[3] || '').trim();
+        const input = task ? { prompt: task, text: task, query: task, concept: task, task } : {};
+        if (action) input.action = action;
+        try {
+          const skillResult = await agentEngine.runSkill(skillId, input, agent);
+          const content = typeof skillResult?.result === 'string'
+            ? skillResult.result
+            : JSON.stringify(skillResult?.result ?? skillResult, null, 2);
+          return res.json({ ok: true, content, provider: 'skill-runner', model: skillId,
+            tools_used: skillResult?.tools_used || [], skill: skillId,
+            tokens: { input: 0, output: 0, total: 0 }, costUSD: 0 });
+        } catch (skillErr) {
+          return res.json({ ok: true, provider: 'skill-runner', model: skillId, skill: skillId,
+            content: `Skill "${skillId}" could not run: ${skillErr.message}`,
+            tokens: { input: 0, output: 0, total: 0 }, costUSD: 0 });
+        }
+      }
+    } catch (_) { /* tag parse optional — fall through to normal chat */ }
 
     // ── AURA free-path: token-saver. If the exact/fuzzy cache or safe local compute can
     //    answer this prompt, return it for $0 / 0 tokens instead of calling the LLM. ──
