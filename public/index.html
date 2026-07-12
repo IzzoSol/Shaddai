@@ -40027,6 +40027,27 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               <div style="width:6px;height:6px;border-radius:50%;background:var(--ch);box-shadow:0 0 8px var(--ch);animation:xpGlow 2s ease-in-out infinite"></div>
               <span style="font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--ch)">3D · LIVE MODEL</span>
             </div>
+            <!-- REQ-6.3/6.4: 3D HUD controls — zoom + / -, and Animations cycle. On-theme cyber-neon. -->
+            <div id="chamberHud" style="position:absolute;right:12px;bottom:12px;z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none">
+              <button id="chAnimBtn" type="button" title="Cycle animation"
+                style="display:none;align-items:center;gap:6px;padding:5px 9px;background:rgba(2,6,12,0.72);border:1px solid rgba(var(--chg),0.55);border-radius:20px;color:var(--ch);cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);box-shadow:0 0 12px rgba(var(--chg),0.35)"
+                onclick="try{var n=window._chamberViewer&&window._chamberViewer.cycleAnim&&window._chamberViewer.cycleAnim();var l=document.getElementById('chAnimLbl');if(n&&l)l.textContent=n;}catch(_){}">
+                <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;flex:0 0 auto"><path d="M8 5v14l11-7z"/></svg>
+                <span id="chAnimLbl" style="font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1.5px">ANIM</span>
+              </button>
+              <div style="display:flex;gap:8px;pointer-events:auto">
+                <button type="button" title="Zoom out"
+                  style="width:30px;height:30px;display:grid;place-items:center;background:rgba(2,6,12,0.72);border:1px solid rgba(var(--chg),0.55);border-radius:8px;color:var(--ch);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 0 10px rgba(var(--chg),0.3)"
+                  onclick="try{window._chamberViewer&&window._chamberViewer.zoomBy(-1);}catch(_){}">
+                  <span data-icon="zoom-out" style="display:grid;place-items:center;width:15px;height:15px"></span>
+                </button>
+                <button type="button" title="Zoom in"
+                  style="width:30px;height:30px;display:grid;place-items:center;background:rgba(2,6,12,0.72);border:1px solid rgba(var(--chg),0.55);border-radius:8px;color:var(--ch);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 0 10px rgba(var(--chg),0.3)"
+                  onclick="try{window._chamberViewer&&window._chamberViewer.zoomBy(1);}catch(_){}">
+                  <span data-icon="zoom-in" style="display:grid;place-items:center;width:15px;height:15px"></span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- RIGHT: DOSSIER -->
@@ -42293,6 +42314,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   window._chamberViewer = (function(){
     let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T, GL;
     let mods = null, mountedFor = null, loadToken = 0, mixer = null, _mclock = 0;
+    let _clips = [], _clipIdx = 0, _curObj = null;   // REQ-6.4: animation clip list + current for cycling
     function loadMods(){
       if (!mods) mods = Promise.all([
         import('three'),
@@ -42333,7 +42355,9 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         rim = new THREE.PointLight(0xffffff, 2.0, 26); rim.position.set(-3, 2.4, -2.2); scene.add(rim);
         const fill = new THREE.PointLight(0xffffff, 0.7, 30); fill.position.set(3.2, 1.2, 3.5); scene.add(fill);
         controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableZoom = false; controls.enablePan = false;
+        controls.enableZoom = true; controls.enablePan = false;   // REQ-6.3: wheel/pinch zoom on the model
+        controls.minDistance = 1.4; controls.maxDistance = 9;      // sane bounds so it never clips inside or flies away
+        controls.zoomSpeed = 0.9;
         controls.autoRotate = true; controls.autoRotateSpeed = 2.0;
         controls.minPolarAngle = Math.PI * 0.20; controls.maxPolarAngle = Math.PI * 0.60;
         controls.target.set(0, 1.0, 0);
@@ -42379,18 +42403,22 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         obj.updateMatrixWorld(true);
         // Pose the skeleton + idle-animate BEFORE measuring — a rigged skinned mesh with no mixer
         // renders as an exploded white blob (that was the "floating white, no texture" bug).
+        _clips = []; _clipIdx = 0; _curObj = obj;
         try {
           if (mixer) { mixer.stopAllAction(); }
           mixer = null;
           if (gltf.animations && gltf.animations.length) {
             mixer = new T.AnimationMixer(obj);
             const A = gltf.animations;
+            _clips = A.slice();   // REQ-6.4: keep the full clip list so the Animations button can cycle them
             // Default to a DANCE, then a FLIP/VAULT, then idle — livelier than a static idle.
             const def = A.find(a => /dance/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
+            _clipIdx = Math.max(0, A.indexOf(def));
             mixer.clipAction(def).reset().play(); mixer.update(0.3);
             obj.updateMatrixWorld(true);
           }
         } catch(_){}
+        try { _syncAnimBtn(); } catch(_){}
         let box = new T.Box3().setFromObject(obj);
         const size = box.getSize(new T.Vector3());
         const scl = 1.85 / Math.max(size.x, size.y, size.z || 1);
@@ -42420,8 +42448,52 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     function dispose(){ _teardownGL(); }
     function isMounted(){ return !!renderer; }
     function currentAgent(){ return mountedFor; }
-    return { mount, select, dispose, isMounted, currentAgent };
+    // REQ-6.3: nudge the orbit radius in/out (button zoom, works alongside wheel/pinch). dir>0 = zoom in.
+    function zoomBy(dir){
+      try {
+        if (!camera || !controls || !T) return;
+        const off = new T.Vector3().subVectors(camera.position, controls.target);
+        let r = off.length(); if (!isFinite(r) || r <= 0) return;
+        const step = 0.82;                       // multiplicative so it feels even at any distance
+        r = dir > 0 ? r * step : r / step;
+        const mn = controls.minDistance || 1.4, mx = controls.maxDistance || 9;
+        r = Math.max(mn, Math.min(mx, r));
+        off.setLength(r); camera.position.copy(controls.target).add(off);
+        controls.update();
+      } catch(_){}
+    }
+    // REQ-6.4: cycle to the next animation clip. Returns the new clip name (or null if none).
+    function cycleAnim(){
+      try {
+        if (!mixer || !_curObj || !_clips.length) return null;
+        _clipIdx = (_clipIdx + 1) % _clips.length;
+        mixer.stopAllAction();
+        const clip = _clips[_clipIdx];
+        mixer.clipAction(clip).reset().play();
+        _mclock = 0;
+        return _prettyClip(clip.name);
+      } catch(_){ return null; }
+    }
+    function animInfo(){ return { count: _clips.length, name: (_clips[_clipIdx] ? _prettyClip(_clips[_clipIdx].name) : '') }; }
+    return { mount, select, dispose, isMounted, currentAgent, zoomBy, cycleAnim, animInfo };
   })();
+
+  // Tidy a raw clip name (e.g. "mixamo.com|Idle") into a short readable label.
+  function _prettyClip(n){
+    try { return String(n || '').split(/[|:/\\]/).pop().replace(/[_\-]+/g,' ').replace(/\.\d+$/,'').trim().slice(0,14).toUpperCase() || 'CLIP'; }
+    catch(_){ return 'CLIP'; }
+  }
+  // Reflect the current clip name/availability onto the Animations HUD button.
+  function _syncAnimBtn(){
+    try {
+      const btn = document.getElementById('chAnimBtn'); if (!btn) return;
+      const info = (window._chamberViewer && window._chamberViewer.animInfo) ? window._chamberViewer.animInfo() : { count: 0, name: '' };
+      const lbl = document.getElementById('chAnimLbl');
+      if (info.count > 1) { btn.style.display = 'flex'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; if (lbl) lbl.textContent = info.name || 'ANIM'; }
+      else if (info.count === 1) { btn.style.display = 'flex'; btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; if (lbl) lbl.textContent = info.name || 'ANIM'; }  // single clip: show label, no cycle
+      else { btn.style.display = 'none'; }   // no clips → hide gracefully
+    } catch(_){}
+  }
 
   // Chamber definitions — role/bio/accent, matched to the room-overlay colours so
   // the tab and the entered room feel like the SAME space.
@@ -42456,11 +42528,23 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     } catch(_){}
   })();
 
+  // Fill the zoom HUD buttons with the branded shaddaiIcon SVGs (falls back to +/- text glyphs).
+  (function fillChamberHudIcons(){
+    try {
+      document.querySelectorAll('#chamberHud [data-icon]').forEach(el => {
+        const key = el.getAttribute('data-icon');
+        if (window.shaddaiIcon) { el.innerHTML = window.shaddaiIcon(key, { size: 15, color: 'currentColor' }); }
+        else { el.textContent = key === 'zoom-in' ? '+' : '−'; el.style.fontFamily = "'Share Tech Mono',monospace"; el.style.fontSize = '15px'; }
+      });
+    } catch(_){}
+  })();
+
   // Toggle the chamber between COUNCIL (3D swivel) and FORGED (portrait card) modes.
   function _chamberSetForgedMode(isForged){
     const show = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
     show('chamberViewHost', !isForged);
     show('chamber3dTag',   !isForged);
+    show('chamberHud',     !isForged);   // zoom/anim HUD is 3D-model-only (forged shows 2D portrait)
     show('chBadgesWrap',   !isForged);
     show('chCouncilStats', !isForged);   // LEVEL / REAL-TOOLS row is council-only (forged shows spd/pwr/iq + skills)
     show('chCouncilSkills', !isForged);  // council-only real tools/skills list (forged uses #chSkills instead)

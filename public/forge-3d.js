@@ -14,7 +14,7 @@
     var m = String(window.SHADDAI_FORGE_MODEL || 'SHADDAI').toUpperCase();
     return MODELS[m] ? m : 'SHADDAI';
   }
-  function srcFor(m) { return '/assets/agents/' + m + '.glb?v=7'; }
+  function srcFor(m) { return '/assets/agents/' + m + '.glb?v=14'; }
 
   // Load the <model-viewer> web component once (unpkg is already CSP-allowed — forge.html uses it).
   function ensureMV() {
@@ -65,10 +65,25 @@
     mv.setAttribute('rotation-per-second', '22deg');
     mv.setAttribute('interaction-prompt', 'none');
     mv.setAttribute('shadow-intensity', '0.7');
-    mv.setAttribute('exposure', '1.05');
+    mv.setAttribute('exposure', '1.0');
+    mv.setAttribute('environment-image', 'neutral');   // neutral IBL so PBR reads its texture, not a bright white mirror
+    mv.setAttribute('tone-mapping', 'aces');
     mv.setAttribute('camera-orbit', '0deg 82deg 2.4m');
     mv.setAttribute('field-of-view', '32deg');
     mv.setAttribute('src', srcFor(curModel()));
+    // TEXTURE FIX: Meshy GLBs export metallicFactor≈1 → the environment mirrors to solid white.
+    // On load, walk the scene-graph materials and drop metalness to ~0 / bump roughness so the
+    // real albedo texture shows. Runtime-only (no GLB re-export). Null-safe, never throws.
+    mv.addEventListener('load', function () {
+      try {
+        var mats = (mv.model && mv.model.materials) || [];
+        for (var i = 0; i < mats.length; i++) {
+          var pbr = mats[i] && mats[i].pbrMetallicRoughness; if (!pbr) continue;
+          try { pbr.setMetallicFactor(0); } catch (e) {}
+          try { if (typeof pbr.roughnessFactor === 'number' && pbr.roughnessFactor < 0.6) pbr.setRoughnessFactor(0.7); } catch (e) {}
+        }
+      } catch (e) {}
+    });
     mv.addEventListener('error', function () { /* GLB failed — portrait backdrop still shows */ });
     scene.appendChild(mv);
     var badge = document.createElement('div');

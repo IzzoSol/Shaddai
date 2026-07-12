@@ -300,7 +300,7 @@
     var host=el('cdHost'), figw=el('cdFigw');
     if(v==='3d'){
       figw.style.display='none'; host.style.display='block';
-      try { if(window._roomViewer&&window._roomViewer.mount){ window._roomViewer.mount(host, d.glb, ST.acg); } else { host.innerHTML='<div style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.4);font-family:\'Share Tech Mono\',monospace;font-size:10px">3D viewer unavailable</div>'; } } catch(_){}
+      try { if(window._roomViewer&&window._roomViewer.init){ window._roomViewer.init(host, d.glb, ST.acg); } else { host.innerHTML='<div style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.4);font-family:\'Share Tech Mono\',monospace;font-size:10px">3D viewer unavailable</div>'; } } catch(_){}
     } else {
       host.style.display='none'; try{window._roomViewer&&window._roomViewer.dispose&&window._roomViewer.dispose();}catch(_){}
       figw.style.display='';
