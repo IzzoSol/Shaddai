@@ -157,7 +157,22 @@ router.get('/art/:file', (req, res) => {
   // gitignored), kick off regeneration in the background for next load.
   const m = /^char-([a-z0-9_-]+)\.png$/.exec(safe);
   if (m) { try { require('../lib/char-gen').ensureCouncilChar(m[1]); } catch (e) {} }
-  // never break the UI — fall back to a guaranteed colorful preset
+  // FINAL, always-works fallback: the COMMITTED static council portraits in
+  // public/assets/agents/*. forge-art/ is gitignored (empty on Render) and HF self-heal
+  // needs credits — so agent-{name}/char-{name}/arch-{name} all 404'd and textures went blank.
+  // The static portraits ship with the repo → agent textures now render with zero HF/forge-art dependency.
+  try {
+    const nm = /(?:agent|char|arch)-([a-z0-9_-]+)\.png$/i.exec(safe);
+    if (nm) {
+      const up = nm[1].toUpperCase();
+      const staticDir = path.join(__dirname, '..', '..', 'public', 'assets', 'agents');
+      for (const suffix of ['-portrait.png', '-action.png']) {
+        const sp = path.join(staticDir, up + suffix);
+        if (sp.startsWith(staticDir) && fs.existsSync(sp)) return _sendArt(res, sp, 86400);
+      }
+    }
+  } catch (e) {}
+  // never break the UI — fall back to a guaranteed colorful preset (if any forge-art exists)
   for (const d of DEFAULT_ART) { const dp = path.join(ART_DIR, d); if (fs.existsSync(dp)) return _sendArt(res, dp, 3600); }
   try { const any = fs.readdirSync(ART_DIR).find(f => f.endsWith('.png')); if (any) return _sendArt(res, path.join(ART_DIR, any), 3600); } catch (e) {}
   return res.status(404).end();
