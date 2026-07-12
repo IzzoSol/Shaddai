@@ -920,6 +920,11 @@ select:not(.select){ background: var(--bg-deep,#0e1117); color: var(--text,#e8ec
 /* Chat View */
 #chatView.active { display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 400px; }
 
+/* ⚡ Quick-action pills (shared: chat pop-up + Mission Control) */
+.qa-pillrow { display:flex; gap:7px; flex-wrap:wrap; }
+.qa-pill { font-size:10px; font-weight:600; padding:7px 13px; border:1px solid rgba(0,229,160,.3); background:rgba(0,229,160,.06); color:var(--accent,#00ff88); border-radius:20px; cursor:pointer; transition:.15s; white-space:nowrap; }
+.qa-pill:hover { background:var(--accent,#00ff88); color:#04212b; border-color:var(--accent,#00ff88); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,229,160,.35); }
+
 /* ══════════════════════════════════════════════════
    IMPERIAL OPS TERMINAL — Skills + Office Redesign
    Aesthetic: Classified military intelligence feed
@@ -4336,11 +4341,12 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
         <span class="card-title" id="wfModeTitle">⚡ Simple Mode</span>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span id="wfModeNote" style="font-size:9px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
-          <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-            <button id="wfTabSimple" onclick="wfMode('simple')" style="font-size:9px;font-weight:700;letter-spacing:.06em;padding:5px 12px;background:var(--accent,#00ff88);color:#04212b;border:none;cursor:pointer">SIMPLE</button>
-            <button id="wfTabPro" onclick="wfMode('pro')" style="font-size:9px;font-weight:700;letter-spacing:.06em;padding:5px 12px;background:transparent;color:var(--text-muted);border:none;cursor:pointer">PRO</button>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span id="wfModeNote" style="font-size:10px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
+          <div class="sm-modeToggle" role="tablist" aria-label="Simple or Pro mode">
+            <span class="sm-modeGlide" id="wfModeGlide"></span>
+            <button id="wfTabSimple" role="tab" onclick="wfMode('simple')" class="on">⚡ SIMPLE</button>
+            <button id="wfTabPro" role="tab" onclick="wfMode('pro')">🔗 PRO</button>
           </div>
         </div>
       </div>
@@ -4363,31 +4369,43 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       </div>
     </div>
     <style>
-      #smWizard{max-width:780px;margin:6px auto 0}
-      #smWizard .wiz-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
-      #smWizard .wiz-steps .b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:1px solid var(--border);color:var(--text-muted);transition:.2s}
-      #smWizard .wiz-steps .b.on{background:var(--accent,#00ff88);color:#04212b;border-color:var(--accent,#00ff88);transform:scale(1.1)}
-      #smWizard .wiz-steps .b.done{background:var(--accent,#00ff88);color:#04212b;opacity:.55}
+      /* ── SIMPLE/PRO segmented toggle (premium, gliding thumb) ── */
+      .sm-modeToggle{position:relative;display:inline-flex;padding:3px;border:1px solid rgba(0,229,160,.35);border-radius:10px;background:rgba(0,0,0,.35);overflow:hidden}
+      .sm-modeToggle .sm-modeGlide{position:absolute;top:3px;left:3px;bottom:3px;width:calc(50% - 3px);border-radius:7px;background:linear-gradient(135deg,var(--accent,#00ff88),#00c896);box-shadow:0 0 14px rgba(0,229,160,.5);transition:transform .28s cubic-bezier(.4,1.3,.5,1);z-index:0}
+      .sm-modeToggle button{position:relative;z-index:1;font-size:11px;font-weight:800;letter-spacing:.1em;padding:7px 20px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;transition:color .2s;min-width:88px}
+      .sm-modeToggle button.on{color:#04212b}
+      /* ── wizard shell ── */
+      #smWizard{max-width:820px;margin:8px auto 0}
+      #smWizard .wiz-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px}
+      #smWizard .wiz-steps .b{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;border:1px solid var(--border);color:var(--text-muted);transition:.25s}
+      #smWizard .wiz-steps .b.on{background:var(--accent,#00ff88);color:#04212b;border-color:var(--accent,#00ff88);transform:scale(1.15);box-shadow:0 0 12px rgba(0,229,160,.55)}
+      #smWizard .wiz-steps .b.done{background:var(--accent,#00ff88);color:#04212b;opacity:.5}
       #smWizard .wiz-steps .bar{width:54px;height:2px;background:var(--border)}
-      #smWizard .wiz-q{text-align:center;font-size:22px;font-weight:600;margin-bottom:4px;color:var(--text,#e8ecf2)}
-      #smWizard .wiz-sub{text-align:center;font-size:12.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5}
-      #smWizard .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-      #smWizard .opt{background:var(--bg,#0e1117);border:1px solid var(--border);padding:20px 14px;text-align:center;cursor:pointer;transition:.18s;border-radius:8px}
-      #smWizard .opt:hover{transform:translateY(-3px);border-color:#ffd23f}
-      #smWizard .opt.on{border-color:var(--accent,#00ff88);box-shadow:0 0 0 3px rgba(0,229,160,.14)}
-      #smWizard .opt .ico{font-size:32px;margin-bottom:10px}
-      #smWizard .opt .ti{font-size:14px;font-weight:600;color:var(--text,#e8ecf2)}
-      #smWizard .opt .ds{font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4}
-      #smWizard .opt.feat{grid-column:1/-1;border-color:#ffd23f;background:linear-gradient(135deg,rgba(255,210,63,.09),transparent)}
-      #smWizard .wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
-      #smWizard .big-go{font-weight:700;font-size:17px;letter-spacing:.2em;text-transform:uppercase;padding:16px 44px;border:none;cursor:pointer;background:var(--accent,#00ff88);color:#04212b;border-radius:6px;transition:.18s}
-      #smWizard .big-go:hover{filter:brightness(1.13);letter-spacing:.3em}
-      #smWizard .summary{text-align:center;font-size:16px;line-height:1.9;margin-bottom:6px;color:var(--text,#e8ecf2)}
+      #smWizard .wiz-q{text-align:center;font-size:24px;font-weight:700;margin-bottom:6px;color:var(--text,#e8ecf2);letter-spacing:-.01em}
+      #smWizard .wiz-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.55}
+      /* ── task tiles (premium) ── */
+      #smWizard .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+      #smWizard .opt{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(0,0,0,.25));border:1px solid var(--border);padding:24px 16px 20px;text-align:center;cursor:pointer;transition:transform .18s cubic-bezier(.4,1.2,.5,1),border-color .18s,box-shadow .18s;border-radius:14px;overflow:hidden}
+      #smWizard .opt::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%,rgba(0,229,160,.10),transparent 60%);opacity:0;transition:opacity .2s}
+      #smWizard .opt:hover{transform:translateY(-5px);border-color:var(--accent,#00ff88);box-shadow:0 12px 30px rgba(0,0,0,.4),0 0 0 1px rgba(0,229,160,.25)}
+      #smWizard .opt:hover::before{opacity:1}
+      #smWizard .opt.on{border-color:var(--accent,#00ff88);box-shadow:0 0 0 2px rgba(0,229,160,.35),0 10px 26px rgba(0,0,0,.4)}
+      #smWizard .opt.on::before{opacity:1}
+      #smWizard .opt .ico{font-size:38px;margin-bottom:12px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,229,160,.35))}
+      #smWizard .opt .ti{font-size:15px;font-weight:700;color:var(--text,#e8ecf2);letter-spacing:.01em}
+      #smWizard .opt .ds{font-size:10.5px;color:var(--text-muted);margin-top:5px;line-height:1.45}
+      #smWizard .opt.feat{grid-column:1/-1;border-color:#ffd23f;background:linear-gradient(135deg,rgba(255,210,63,.12),transparent)}
+      #smWizard .opt.feat:hover{border-color:#ffd23f;box-shadow:0 12px 30px rgba(0,0,0,.4),0 0 0 1px rgba(255,210,63,.35)}
+      #smWizard .wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:26px}
+      /* ── big GO ── */
+      #smWizard .big-go{position:relative;font-weight:800;font-size:18px;letter-spacing:.22em;text-transform:uppercase;padding:17px 50px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent,#00ff88),#00c896);color:#04212b;border-radius:9px;transition:.18s;box-shadow:0 6px 22px rgba(0,229,160,.4)}
+      #smWizard .big-go:hover{filter:brightness(1.1);letter-spacing:.3em;transform:translateY(-1px);box-shadow:0 10px 28px rgba(0,229,160,.55)}
+      #smWizard .summary{text-align:center;font-size:17px;line-height:1.9;margin-bottom:6px;color:var(--text,#e8ecf2)}
       #smWizard .summary b{color:var(--accent,#00ff88)}
-      #smWizard .run-card{text-align:center;padding:30px 10px}
-      #smWizard .run-card .big{font-size:44px;margin-bottom:14px}
+      #smWizard .run-card{text-align:center;padding:32px 10px}
+      #smWizard .run-card .big{font-size:48px;margin-bottom:16px}
       #smWizard .pill{display:inline-block;font-size:9px;padding:3px 9px;border:1px solid var(--border);border-radius:20px;color:var(--text-muted)}
-      @media(max-width:860px){#smWizard .opts{grid-template-columns:1fr}}
+      @media(max-width:860px){#smWizard .opts{grid-template-columns:1fr}.sm-modeToggle button{min-width:70px;padding:7px 14px}}
     </style>
     <div class="card">
       <div class="card-head">
@@ -7073,10 +7091,20 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
       </div>
 
+      <!-- ⚡ Quick Actions pop-up — runs a Simple-Mode task ON THE CURRENT agent (S.agent) -->
+      <div id="chatQuickPanel" style="display:none;padding:10px 12px;background:rgba(0,229,160,.05);border-top:1px solid rgba(0,229,160,.22)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <span style="font-size:8px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-family:'Share Tech Mono',monospace">⚡ Quick Actions</span>
+          <span style="font-size:8px;color:var(--text-muted)">— runs on <b id="chatQuickWho" style="color:var(--accent)">this agent</b> with its model &amp; tools</span>
+          <button onclick="toggleChatQuick(false)" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1">✕</button>
+        </div>
+        <div id="chatQuickPills" class="qa-pillrow"></div>
+      </div>
       <div class="chat-input-row">
         <button class="btn btn-ghost" id="voiceBtnFull" onclick="startVoiceFull()" style="padding:10px 14px">REC</button>
         <button class="btn btn-ghost" id="ttsBtn" onclick="toggleTTS()" style="padding:10px 14px">TTS</button>
         <button class="btn btn-ghost" title="Web Research — give any agent live URL context" onclick="toggleWebResearch()" style="padding:10px 12px;font-size:11px" id="webResearchToggle">🌐</button>
+        <button class="btn btn-ghost" title="Quick actions — make a picture/song/post, research a coin, check the market, safety check — run on this agent" onclick="toggleChatQuick()" style="padding:10px 12px;font-size:11px" id="chatQuickToggle">⚡</button>
         <input type="text" class="chat-input" id="chatInFull" placeholder="Type message to agent..." onkeypress="if(event.key==='Enter')sendMsgFull()">
         <button class="chat-send" id="sendBtnFull" onclick="sendMsgFull()">SEND</button>
       </div>
@@ -8328,11 +8356,6 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <div class="card">
         <div class="card-head">
           <span class="card-title">Content Composer</span>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost" style="font-size:9px" onclick="generateSocialVariants()">3 Variants</button>
-            <button class="btn btn-ghost" style="font-size:9px" onclick="generateXThread()">X Thread</button>
-            <button class="btn btn-ghost" style="font-size:9px" onclick="generateAlphaGroupPost()">Alpha Call</button>
-          </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
           <span style="font-size:8px;color:var(--text-muted);letter-spacing:0.08em;font-family:'Rajdhani',sans-serif">POST TO:</span>
@@ -8407,6 +8430,55 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
         <div id="socialCalendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-height:120px">
           <!-- Populated by renderSocCalendar() -->
+        </div>
+      </div>
+
+      <!-- ── E10: AGENT-FILL FLOW (pick agent → describe → preview → approve) ── -->
+      <div class="card" style="margin-top:12px;border:1px solid rgba(0,229,160,0.28)">
+        <div class="card-head">
+          <span class="card-title">🤖 Agent Calendar Builder</span>
+          <span style="font-size:8px;color:var(--text-muted);letter-spacing:.06em">pick an agent → describe → preview → approve</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">AGENT</label>
+            <select class="select" id="calAgentPick" style="font-size:11px;min-width:150px"></select>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">WHAT SHOULD THIS CALENDAR COVER?</label>
+            <input class="input" id="calAgentBrief" style="font-size:11px;width:100%" placeholder="e.g. 7 days of Solana content, mix of tips and hype">
+          </div>
+          <div>
+            <label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">DAYS</label>
+            <input class="input" id="calAgentDays" type="number" min="1" max="30" value="7" style="font-size:11px;width:62px">
+          </div>
+          <button class="btn btn-accent" onclick="calAgentDraft()" style="font-weight:800;font-size:12px;padding:9px 18px">⚡ Draft Calendar</button>
+        </div>
+        <!-- Preview panel (hidden until a draft is generated) -->
+        <div id="calDraftPreview" style="display:none;background:rgba(0,0,0,0.32);border:1px solid var(--border);border-radius:8px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+            <span style="font-size:11px;font-weight:800;color:var(--accent)">📋 Draft preview — nothing added yet</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-accent" onclick="calApproveDraft()" style="font-weight:800;font-size:12px;padding:8px 16px">✓ APPROVE &amp; ADD</button>
+              <button class="btn btn-ghost" onclick="calDiscardDraft()" style="font-size:11px;color:var(--danger);border-color:var(--danger)">✕ Discard</button>
+            </div>
+          </div>
+          <div id="calDraftList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+      <!-- ── E10: ENTRIES LIST (edit / remove / deliver) ── -->
+      <div class="card" style="margin-top:12px">
+        <div class="card-head">
+          <span class="card-title">🗓 Scheduled Entries</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost" style="font-size:9px" onclick="calExportICS()">⬇ Export .ics</button>
+            <button class="btn btn-ghost" style="font-size:9px;border-color:#4285f4;color:#8ab4ff" onclick="calAllToGoogle()">📆 All → Google</button>
+            <button class="btn btn-ghost" style="font-size:9px;border-color:#0088cc;color:#33aadd" onclick="calAllToTelegram()">📤 All → Telegram</button>
+          </div>
+        </div>
+        <div id="calEntryList" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto">
+          <!-- Populated by renderCalEntryList() -->
         </div>
       </div>
     </div>
@@ -8601,42 +8673,63 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       </div>
 
       <!-- Agent Pay -->
-      <div class="card" style="border:2px solid rgba(153,69,255,0.4);background:linear-gradient(135deg,rgba(153,69,255,0.06),rgba(20,241,149,0.03))">
-        <div class="card-head" style="border-bottom-color:rgba(153,69,255,0.3)">
-          <span class="card-title" style="color:#9945ff">🤖 AGENT PAY — Autonomous API Access</span>
-          <span style="font-size:8px;background:rgba(153,69,255,0.12);border:1px solid rgba(153,69,255,0.3);color:#9945ff;padding:2px 8px;border-radius:10px;font-family:'Share Tech Mono',monospace">pay.sh · HTTP 402</span>
+      <div class="card" style="border:2px solid rgba(153,69,255,0.45);background:linear-gradient(160deg,rgba(153,69,255,0.09),rgba(20,241,149,0.04));box-shadow:0 0 40px rgba(153,69,255,0.12),inset 0 0 60px rgba(153,69,255,0.04);position:relative;overflow:hidden">
+        <div style="position:absolute;top:-40%;right:-10%;width:280px;height:280px;background:radial-gradient(circle,rgba(153,69,255,0.14),transparent 70%);pointer-events:none"></div>
+        <!-- HERO HEADER -->
+        <div style="display:flex;align-items:center;gap:16px;padding:6px 0 18px;border-bottom:1px solid rgba(153,69,255,0.25);margin-bottom:18px;position:relative">
+          <div style="font-size:38px;line-height:1;filter:drop-shadow(0 0 12px rgba(153,69,255,0.6))">🤖</div>
+          <div style="flex:1">
+            <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:22px;letter-spacing:0.06em;color:#c299ff;text-shadow:0 0 16px rgba(153,69,255,0.5);line-height:1.1">AGENT PAY</div>
+            <div style="font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;margin-top:2px">Autonomous API Access — agents call &amp; pay for external APIs via Solana</div>
+          </div>
+          <span style="font-size:10px;background:rgba(153,69,255,0.15);border:1px solid rgba(153,69,255,0.4);color:#c299ff;padding:5px 12px;border-radius:14px;font-family:'Share Tech Mono',monospace;white-space:nowrap;box-shadow:0 0 12px rgba(153,69,255,0.2)">pay.sh · HTTP 402</span>
         </div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">Agents autonomously call paid external APIs and pay via Solana. Metered, logged, and gated by your daily budget.</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
-          <div class="stat-box" style="border-color:rgba(153,69,255,0.3)"><div class="stat-label">Daily Budget</div><div class="stat-value" style="color:#9945ff" id="agentPayDailyBudget">0.05 SOL</div></div>
-          <div class="stat-box" style="border-color:rgba(20,241,149,0.3)"><div class="stat-label">Spent Today</div><div class="stat-value good" id="agentPaySpentToday">0.000 SOL</div></div>
-          <div class="stat-box" style="border-color:rgba(255,176,32,0.3)"><div class="stat-label">Calls Made</div><div class="stat-value" style="color:#ffb020" id="agentPayCallCount">0</div></div>
+
+        <!-- SECTION 1: STATS ROW -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+          <div class="stat-box" style="border-color:rgba(153,69,255,0.4);background:rgba(153,69,255,0.05);padding:16px 12px;border-radius:10px">
+            <div class="stat-label" style="font-size:9px;letter-spacing:0.1em">DAILY BUDGET</div>
+            <div class="stat-value" style="color:#c299ff;font-size:26px;text-shadow:0 0 14px rgba(153,69,255,0.4)" id="agentPayDailyBudget">0.05 SOL</div>
+          </div>
+          <div class="stat-box" style="border-color:rgba(20,241,149,0.4);background:rgba(20,241,149,0.05);padding:16px 12px;border-radius:10px">
+            <div class="stat-label" style="font-size:9px;letter-spacing:0.1em">SPENT TODAY</div>
+            <div class="stat-value good" style="font-size:26px;text-shadow:0 0 14px rgba(20,241,149,0.35)" id="agentPaySpentToday">0.000 SOL</div>
+          </div>
+          <div class="stat-box" style="border-color:rgba(255,176,32,0.4);background:rgba(255,176,32,0.05);padding:16px 12px;border-radius:10px">
+            <div class="stat-label" style="font-size:9px;letter-spacing:0.1em">CALLS MADE</div>
+            <div class="stat-value" style="color:#ffb020;font-size:26px;text-shadow:0 0 14px rgba(255,176,32,0.35)" id="agentPayCallCount">0</div>
+          </div>
         </div>
-        <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(153,69,255,0.2);border-radius:6px;padding:10px;margin-bottom:10px">
-          <div style="font-size:9px;font-weight:700;color:#9945ff;margin-bottom:8px;letter-spacing:0.08em">▸ MANUAL AGENT API CALL</div>
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:end;margin-bottom:6px">
+
+        <!-- SECTION 2: CALL FORM -->
+        <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(153,69,255,0.28);border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;color:#c299ff;margin-bottom:16px;letter-spacing:0.1em;display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#9945ff,#14f195);border-radius:2px;display:inline-block"></span>MANUAL AGENT API CALL</div>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:14px">
             <div>
-              <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px">Target API URL (HTTPS only)</div>
-              <input id="agentPayUrl" class="input" placeholder="https://api.example.com/data" style="width:100%;font-size:9px;padding:5px 8px;margin:0">
+              <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em">TARGET API URL (HTTPS ONLY)</div>
+              <input id="agentPayUrl" class="input" placeholder="https://api.example.com/data" style="width:100%;font-size:12px;padding:10px 12px;margin:0">
             </div>
             <div>
-              <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px">Agent</div>
-              <select id="agentPayAgent" class="select" style="font-size:9px;padding:5px 6px">
+              <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em">AGENT</div>
+              <select id="agentPayAgent" class="select" style="width:100%;font-size:12px;padding:10px 10px">
                 <option>SHADDAI</option><option>ORACLE</option><option>ZEROX</option><option>NEXUS</option><option>TURTLE</option><option>QUILL</option><option>PIKADON</option>
               </select>
             </div>
             <div>
-              <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px">Price (SOL)</div>
-              <input id="agentPayPrice" class="input" type="number" value="0.001" step="0.0005" min="0.0001" style="width:80px;font-size:9px;padding:5px 8px;margin:0">
+              <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em">PRICE (SOL)</div>
+              <input id="agentPayPrice" class="input" type="number" value="0.001" step="0.0005" min="0.0001" style="width:100%;font-size:12px;padding:10px 12px;margin:0">
             </div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input id="agentPayLabel" class="input" placeholder="Label (what is this API call for?)" style="flex:1;font-size:9px;padding:5px 8px;margin:0">
-            <button class="btn" style="background:linear-gradient(135deg,#9945ff,#14f195);border:none;color:#fff;font-weight:700;font-size:9px;padding:6px 12px;white-space:nowrap" onclick="triggerAgentPayCall()">⚡ PAY & CALL</button>
+          <div style="margin-bottom:16px">
+            <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em">LABEL</div>
+            <input id="agentPayLabel" class="input" placeholder="What is this API call for?" style="width:100%;font-size:12px;padding:10px 12px;margin:0">
           </div>
+          <button class="btn" style="width:100%;background:linear-gradient(135deg,#9945ff,#14f195);border:none;color:#fff;font-weight:800;font-size:15px;letter-spacing:0.1em;padding:15px;border-radius:10px;box-shadow:0 0 24px rgba(153,69,255,0.4);text-shadow:0 1px 4px rgba(0,0,0,0.4)" onclick="triggerAgentPayCall()">⚡ PAY &amp; CALL</button>
         </div>
-        <div style="font-size:9px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;letter-spacing:0.05em">CALL LOG</div>
-        <div id="agentPayLog" style="display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;font-size:8px">
+
+        <!-- SECTION 3: CALL LOG -->
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;letter-spacing:0.1em;display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:rgba(153,69,255,0.5);border-radius:2px;display:inline-block"></span>CALL LOG</div>
+        <div id="agentPayLog" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;font-size:10px;background:rgba(0,0,0,0.25);border:1px solid rgba(153,69,255,0.15);border-radius:10px;padding:10px">
           <div style="color:var(--text-muted);text-align:center;padding:14px">No agent API calls yet</div>
         </div>
       </div>
@@ -8645,35 +8738,49 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 
   <!-- Media / Creative Studio -->
   <div id="newsView" class="view">
-    <div class="card cyber-card">
-      <div class="card-head">
-        <span class="card-title">📰 News</span>
+    <!-- NEWS HUD HEADER -->
+    <div class="news-hud" style="background:linear-gradient(135deg,rgba(0,0,0,0.6),rgba(0,200,255,0.05));border:1px solid rgba(0,200,255,0.18);border-radius:14px;padding:18px 22px;margin-bottom:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse 55% 45% at 85% 40%,rgba(0,200,255,0.08) 0%,transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,200,255,.16),rgba(0,229,160,.08));border:1px solid rgba(0,200,255,.3);box-shadow:0 0 20px rgba(0,200,255,.15) inset;font-size:20px">📡</div>
+          <div>
+            <div style="font-family:'Orbitron','Rajdhani',sans-serif;font-size:20px;font-weight:900;color:#fff;letter-spacing:0.09em;line-height:1">NEWS FEED</div>
+            <div style="font-size:9px;color:rgba(0,200,255,0.75);letter-spacing:0.18em;text-transform:uppercase;margin-top:4px">Live · Keyless · Sentiment on-device</div>
+          </div>
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:9px" onclick="renderNews()">↻ Refresh</button>
+          <button class="btn btn-ghost" style="font-size:9px;border-color:rgba(0,200,255,0.3)" onclick="renderNews()">↻ Refresh</button>
           <button class="btn btn-accent" style="font-size:9px" onclick="analyzeNews()">📊 Analyze Sentiment</button>
         </div>
       </div>
-      <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Live, free, keyless sources (Google News · CryptoCompare · CoinDesk · CoinTelegraph). Sentiment runs locally — no tokens used.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-        <input id="newsTopic" class="input" placeholder="Filter by topic — e.g. bitcoin, AI, solana…" style="flex:1;min-width:160px;font-size:10px;padding:6px 9px" onkeydown="if(event.key==='Enter')renderNews()">
+    </div>
+
+    <div class="card cyber-card news-panel" style="background:linear-gradient(160deg,rgba(9,14,20,.7),rgba(6,10,14,.55));border:1px solid rgba(0,200,255,0.14);box-shadow:0 12px 34px -16px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.04)">
+      <div style="display:flex;align-items:center;gap:8px;font-size:9px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        <span style="flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:#00E5A0;box-shadow:0 0 8px #00E5A0;animation:newsPulse 2s ease-in-out infinite"></span>
+        <span>Live, free, keyless sources — <b style="color:rgba(0,200,255,.85)">Google News · CryptoCompare · CoinDesk · CoinTelegraph</b>. Sentiment runs locally — no tokens used.</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input id="newsTopic" class="input" placeholder="Filter by topic — e.g. bitcoin, AI, solana…" style="flex:1;min-width:180px;font-size:10px;padding:8px 11px" onkeydown="if(event.key==='Enter')renderNews()">
         <button class="btn btn-ghost" style="font-size:9px" onclick="renderNews()">🔎 Go</button>
-        <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-          <button id="newsViewSwivel" onclick="newsSetView('swivel')" style="font-size:11px;padding:5px 10px;background:var(--accent,#22d3ee);color:#04212b;border:none;cursor:pointer" title="Swivel cards">🎠</button>
-          <button id="newsViewList" onclick="newsSetView('list')" style="font-size:11px;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer" title="List">☰</button>
+        <div style="display:flex;border:1px solid rgba(0,200,255,.28);border-radius:8px;overflow:hidden;background:rgba(0,0,0,.3)">
+          <button id="newsViewSwivel" onclick="newsSetView('swivel')" style="font-size:12px;padding:6px 12px;background:var(--accent,#22d3ee);color:#04212b;border:none;cursor:pointer;transition:all .15s" title="Swivel cards">🎠</button>
+          <button id="newsViewList" onclick="newsSetView('list')" style="font-size:12px;padding:6px 12px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;transition:all .15s" title="List">☰</button>
         </div>
       </div>
-      <div id="newsSentiment" style="display:none;font-size:11px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:10px"></div>
+      <div id="newsSentiment" style="display:none;font-size:11px;padding:12px 14px;border:1px solid rgba(0,200,255,.28);border-radius:10px;margin-bottom:12px;background:linear-gradient(135deg,rgba(0,200,255,.06),rgba(0,229,160,.03))"></div>
       <!-- Swivel stage (cover-flow) -->
       <div id="newsSwivelWrap" style="position:relative;height:300px;display:flex;align-items:center;justify-content:center;perspective:1400px;margin-bottom:6px">
-        <button onclick="newsSwivel(-1)" style="position:absolute;left:6px;z-index:5;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);color:#22d3ee;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px">◀</button>
+        <button onclick="newsSwivel(-1)" style="position:absolute;left:6px;z-index:5;background:rgba(0,200,255,.14);border:1px solid rgba(0,200,255,.4);color:#22d3ee;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;box-shadow:0 0 14px rgba(0,200,255,.2);transition:all .15s" onmouseover="this.style.background='rgba(0,200,255,.3)'" onmouseout="this.style.background='rgba(0,200,255,.14)'">◀</button>
         <div id="newsSwivelStage" style="width:100%;max-width:560px;height:280px;position:relative;transform-style:preserve-3d"></div>
-        <button onclick="newsSwivel(1)" style="position:absolute;right:6px;z-index:5;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);color:#22d3ee;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px">▶</button>
+        <button onclick="newsSwivel(1)" style="position:absolute;right:6px;z-index:5;background:rgba(0,200,255,.14);border:1px solid rgba(0,200,255,.4);color:#22d3ee;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;box-shadow:0 0 14px rgba(0,200,255,.2);transition:all .15s" onmouseover="this.style.background='rgba(0,200,255,.3)'" onmouseout="this.style.background='rgba(0,200,255,.14)'">▶</button>
       </div>
-      <div id="newsSwivelMeta" style="text-align:center;font-size:9px;color:var(--text-muted);margin-bottom:8px"></div>
+      <div id="newsSwivelMeta" style="text-align:center;font-size:9px;color:var(--text-muted);letter-spacing:.08em;margin-bottom:8px"></div>
       <!-- List view -->
       <div id="newsList" style="display:none;flex-direction:column;gap:8px"></div>
       <!-- Action output (summary/analysis appears here) -->
-      <div id="newsActionOut" style="display:none;margin-top:10px;border:1px solid rgba(34,211,238,.3);border-radius:8px;padding:12px;background:rgba(34,211,238,.05)"></div>
+      <div id="newsActionOut" style="display:none;margin-top:10px;border:1px solid rgba(0,200,255,.3);border-radius:10px;padding:14px;background:linear-gradient(135deg,rgba(0,200,255,.06),rgba(0,229,160,.03))"></div>
     </div>
   </div>
 
@@ -8765,7 +8872,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative">
         <div>
           <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#fff;letter-spacing:0.1em;line-height:1">MEDIA STUDIO</div>
-          <div style="font-size:9px;color:rgba(0,229,160,0.7);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px">AI-POWERED CREATIVE SUITE · 6 MODULES</div>
+          <div style="font-size:9px;color:rgba(0,229,160,0.7);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px">AI-POWERED CREATIVE SUITE · 9 MODULES</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-ghost" style="font-size:9px;border-color:rgba(0,229,160,0.3);color:var(--accent)" onclick="toggleMediaClassic()">☰ Classic View</button>
@@ -8791,7 +8898,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">IMAGE GEN</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Prompt · Style · Negative</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Stable Diffusion · Midjourney · Leonardo</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Video Studio Module -->
@@ -8801,7 +8908,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO STUDIO</div>
         <div style="font-size:9px;color:rgba(0,200,255,0.7);margin-top:2px">Script · Storyboard · Hook · AI Prompt</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">HeyGen · Runway ML · Kling · Pika</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,200,255,0.15);border:1px solid rgba(0,200,255,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5FF"><span>◇</span></div>
       </div>
 
       <!-- Music + Audio Module -->
@@ -8811,7 +8918,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">MUSIC + AUDIO</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Lyrics · Beats · Sound Design</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Suno · Udio · Splash · Soundraw</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Voice / TTS Module -->
@@ -8821,7 +8928,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VOICE / TTS</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Clone · Generate · Script</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Browser Web Speech · free</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Content Writer Module -->
@@ -8831,7 +8938,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">AI WRITER</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Threads · Captions · Blogs · Copy</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL Agent · Platform-optimized</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Gallery Module -->
@@ -8841,7 +8948,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">GALLERY</div>
         <div style="font-size:9px;color:rgba(255,215,0,0.7);margin-top:2px">Saved prompts · Generated media</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Local storage · Export · Share</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#FFD54E"><span>◇</span></div>
       </div>
 
       <!-- Video Clipper Module -->
@@ -8851,7 +8958,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO CLIPPER <span style="font-size:7px;color:#ffd45e;border:1px solid rgba(255,212,94,.4);border-radius:4px;padding:1px 4px;vertical-align:middle">PREMIUM</span></div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Long video → captioned vertical shorts</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">SHADDAI engine · ffmpeg + Whisper · TikTok/Reels</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Chart Signal Module -->
@@ -8861,7 +8968,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CHART SIGNAL</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Ticker + notes → signal post + caption</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">ORACLE analysis · Twitter · IG · Telegram</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
 
       <!-- Content Series Module -->
@@ -8871,7 +8978,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CONTENT SERIES</div>
         <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Topic → full day-by-day series</div>
         <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL writes · 3–30 days · Any platform</div>
-        <div style="position:absolute;bottom:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">⬡</div>
+        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
       </div>
     </div>
 
@@ -11555,8 +11662,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <button onclick="popoutQuick('Build my optimal daily schedule for today based on my goals as an artist, entrepreneur, and father.')">📅 Daily Plan</button>
       <button onclick="popoutImagePrompt()">🖼 Image</button>
       <button onclick="popoutPricePrompt()">💹 Price</button>
+      <button onclick="togglePopoutTasks()" title="Run a task on the selected agent" style="color:var(--accent)">⚡ Tasks</button>
     </div>
     <button id="popoutQuickToggle" onclick="togglePopoutQuick()" title="Hide quick actions" style="background:transparent;border:none;border-left:1px solid var(--border);color:var(--text-muted);width:26px;cursor:pointer;font-size:11px;flex-shrink:0">⋯</button>
+  </div>
+  <!-- ⚡ Quick Tasks pop-up — runs a Simple-Mode task ON THE SELECTED agent (#popoutAgentSelect) -->
+  <div id="popoutTasksPanel" style="display:none;padding:9px 10px;border-bottom:1px solid var(--border);background:rgba(0,229,160,.05)">
+    <div style="font-size:8px;color:var(--text-muted);margin-bottom:6px">Runs on <b id="popoutTasksWho" style="color:var(--accent)">the selected agent</b> with its model &amp; tools</div>
+    <div id="popoutTasksPills" class="qa-pillrow"></div>
   </div>
 
   <!-- Messages -->
@@ -20050,6 +20163,45 @@ function _applyPopoutQuickState() {
   } catch(_){}
 }
 
+// ⚡ Mission Control quick tasks — the 6 Simple-Mode actions, run on the SELECTED agent (REQ-8.2).
+function _popoutCurrentAgent(){ const s=document.getElementById('popoutAgentSelect'); return (s && s.value) || S.agent || 'SHADDAI'; }
+function togglePopoutTasks(force){
+  const p=document.getElementById('popoutTasksPanel'); if(!p) return;
+  const show=(typeof force==='boolean')?force:(p.style.display==='none');
+  p.style.display=show?'block':'none';
+  if(show){
+    const who=document.getElementById('popoutTasksWho'); if(who) who.textContent=_popoutCurrentAgent();
+    const pills=document.getElementById('popoutTasksPills');
+    if(pills && typeof qaPillsHTML==='function') pills.innerHTML=qaPillsHTML('popoutTaskRun');
+  }
+}
+async function popoutTaskRun(actionKey){
+  const agent=_popoutCurrentAgent();
+  const a=(window.QA_ACTIONS||[]).find(x=>x.key===actionKey); if(!a) return;
+  togglePopoutTasks(false);
+  const input=prompt(`${a.ic} ${a.label} — ${a.ask}`, ''); if(input===null) return;
+  addPopoutMsg('user', `${a.ic} ${a.label}${input?': '+input:''}`);
+  const msgs=document.getElementById('popoutMsgs');
+  const sid='pqa_'+Date.now();
+  if(msgs){ msgs.insertAdjacentHTML('beforeend', `<div id="${sid}" class="sys-msg" style="color:var(--accent)">${escH(agent)} starting…</div>`); msgs.scrollTop=msgs.scrollHeight; }
+  const setStatus=txt=>{ const el=document.getElementById(sid); if(el) el.textContent=txt; if(msgs) msgs.scrollTop=msgs.scrollHeight; };
+  await window.runQuickAction(actionKey, agent, input, {
+    thinking:setStatus,
+    image:(url,promptText,source)=>{
+      document.getElementById(sid)?.remove();
+      const safe=String(url).replace(/"/g,'&quot;');
+      const label=String(promptText).replace(/[<>'"]/g,'').slice(0,80);
+      addPopoutHTML(`<img src="${safe}" alt="generated" style="max-width:100%;border-radius:8px;border:1px solid rgba(0,229,160,.35);display:block"><div style="margin-top:6px"><button class="popout-mini-btn" onclick="ovSaveImageToGallery('${safe.replace(/'/g,'%27')}','${label.replace(/'/g,'%27')}')">💾 Save to Gallery</button></div><div style="font-size:8px;color:var(--text-muted);margin-top:4px">${escH(agent)} · ${escH(source||'huggingface')}</div>`);
+    },
+    text:(txt,tools)=>{
+      document.getElementById(sid)?.remove();
+      const tnote=(tools&&tools.length)?`\n\n🛠 ${tools.join(', ')}`:'';
+      addPopoutMsg('shaddai', txt+tnote);
+    },
+    error:msg=>{ setStatus('⚠ '+msg); }
+  });
+}
+
 // ── Screenshot + screen-recording → in-app Gallery (S.media) ──
 function _saveMediaLocal(type, content, label, alsoDownload) {
   let saved = false;
@@ -24327,6 +24479,57 @@ function chatWithAgent(name) {
   document.getElementById('panelChatIn').focus();
 }
 
+// ⚡ Quick Actions in the chat experience (REQ-8.2) — pop-up of the 6 Simple-Mode tasks that
+// run ON THE CURRENT agent (S.agent) using its configured model/tools, via window.runQuickAction.
+function _chatCurrentAgent(){ return (S.agent && S.agent !== 'ALL') ? S.agent : 'SHADDAI'; }
+function toggleChatQuick(force){
+  const p=document.getElementById('chatQuickPanel'), t=document.getElementById('chatQuickToggle');
+  if(!p) return;
+  const show = (typeof force==='boolean') ? force : (p.style.display==='none');
+  p.style.display = show?'block':'none';
+  if(t){ t.style.background = show?'var(--accent,#00ff88)':''; t.style.color = show?'#04212b':''; }
+  if(show){
+    const who=document.getElementById('chatQuickWho'); if(who) who.textContent=_chatCurrentAgent();
+    const pills=document.getElementById('chatQuickPills');
+    if(pills && typeof qaPillsHTML==='function') pills.innerHTML=qaPillsHTML('chatQuickRun');
+  }
+}
+async function chatQuickRun(actionKey){
+  const agent=_chatCurrentAgent();
+  const a=(window.QA_ACTIONS||[]).find(x=>x.key===actionKey); if(!a) return;
+  toggleChatQuick(false);
+  const input=prompt(`${a.ic} ${a.label} — ${a.ask}`, ''); if(input===null) return;
+  const key = S.agent === 'ALL' ? '_all' : S.agent;
+  if(!S.msgs[key]) S.msgs[key]=[];
+  // Show the request as a user turn
+  S.msgs[key].push({ id:Date.now(), text:`${a.ic} ${a.label}${input?': '+input:''}`, sender:'user', type:'user', time:new Date().toISOString() });
+  renderMsgs();
+  const panel=document.getElementById('chatMsgsFull');
+  // Live status bubble
+  const statusId='qa_'+Date.now();
+  if(panel){ panel.insertAdjacentHTML('beforeend', `<div id="${statusId}" class="chat-msg system"><div class="chat-content" style="font-style:italic;color:var(--text-muted)">${escH(agent)} starting…</div></div>`); panel.scrollTop=panel.scrollHeight; }
+  const setStatus=txt=>{ const el=document.getElementById(statusId); if(el){ const c=el.querySelector('.chat-content'); if(c) c.textContent=txt; } if(panel) panel.scrollTop=panel.scrollHeight; };
+  await window.runQuickAction(actionKey, agent, input, {
+    thinking:setStatus,
+    image:(url,promptText,source)=>{
+      document.getElementById(statusId)?.remove();
+      S.msgs[key].push({ id:Date.now(), text:`[image] ${promptText}`, sender:agent, type:'agent', time:new Date().toISOString() });
+      const su=String(url).replace(/'/g,'%27');
+      if(panel){ panel.insertAdjacentHTML('beforeend',
+        `<div class="chat-msg agent"><div class="chat-content"><img src="${su}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);display:block"><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:9px" onclick="window.open('${su}','_blank')">⬇ Open</button><button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveImageToGallery&&ovSaveImageToGallery('${su}','${escH(String(promptText)).slice(0,50)}')">💾 Gallery</button></div><div style="font-size:8px;color:var(--text-muted);margin-top:4px">${escH(agent)} · source: ${escH(source||'huggingface')}</div></div></div>`);
+        panel.scrollTop=panel.scrollHeight; }
+      save();
+    },
+    text:(txt,tools)=>{
+      document.getElementById(statusId)?.remove();
+      const tnote=(tools&&tools.length)?`\n\n🛠 ${tools.join(', ')}`:'';
+      S.msgs[key].push({ id:Date.now(), text:txt+tnote, sender:agent, type:'agent', time:new Date().toISOString() });
+      renderMsgs(); save();
+    },
+    error:msg=>{ setStatus('⚠ '+msg); }
+  });
+}
+
 async function assignTaskToAgent(agentId) {
   const input = document.querySelector(`[data-agent="${agentId}"]`);
   const task = input ? input.value.trim() : '';
@@ -25326,41 +25529,145 @@ async function aiGenerateSocialContent() {
   notify('Navigate to the AI Content Generator section above');
 }
 
-async function aiSocialCalendar() {
-  notify('QUILL drafting 7 days of posts…');
-  const projects = S.projects.slice(0, 3).map(p => p.name).join(', ') || 'SHADDAI — an AI agent workstation & marketplace';
+// ── E10: legacy "AI Fill" button now routes into the preview-first Agent Builder ──
+function aiSocialCalendar() {
+  // Scroll the Agent Calendar Builder into view and prefill a sensible brief.
   try {
-    // Ask QUILL for ONE concise post per day, pipe-delimited so we can fill the calendar cells.
-    const prompt = `You are planning a 7-day social content calendar for: ${projects}.\nReturn EXACTLY 7 lines, one per day, NO numbering, NO preamble. Each line format:\nPLATFORM | HOOK/TOPIC (max 12 words) | #hashtag1 #hashtag2\nPlatforms vary across X, Instagram, LinkedIn, Telegram.`;
-    const result = await getResp(prompt, 'QUILL');
-    const lines = String(result).split('\n').map(s => s.trim()).filter(s => s && s.includes('|')).slice(0, 7);
-    if (!lines.length) { notify('QUILL returned no usable rows — try again'); return; }
-    // Stage them as DRAFTS in the post queue (prepared for you — NOT auto-posted).
-    const queue = JSON.parse(localStorage.getItem('shaddai_post_queue') || '[]');
-    const today = new Date();
-    lines.forEach((line, i) => {
-      const parts = line.split('|').map(s => s.trim());
-      const platform = (parts[0] || 'X').replace(/[^A-Za-z/ ]/g, '').slice(0, 14) || 'X';
-      const topic = parts[1] || line;
-      const tags = parts[2] || '';
-      const d = new Date(today); d.setDate(today.getDate() + i);
-      queue.push({
-        id: Date.now() + i,
-        date: d.toISOString().slice(0, 10),
-        platform,
-        content: (topic + (tags ? '\n\n' + tags : '')),
-        status: 'draft',         // ← draft, never auto-sent
-        source: 'ai-fill'
-      });
+    calPopulateAgentPicker();
+    var brief = document.getElementById('calAgentBrief');
+    if (brief && !brief.value) {
+      var proj = (S.projects && S.projects[0] && S.projects[0].name) || 'SHADDAI';
+      brief.value = '7 days of content for ' + proj + ', mix of tips and hype';
+    }
+    var card = document.getElementById('calDraftPreview');
+    if (brief) { brief.scrollIntoView({behavior:'smooth', block:'center'}); brief.focus(); }
+  } catch(e){}
+  notify('Pick an agent + describe the calendar, then hit ⚡ Draft Calendar');
+}
+
+// Holds the pending (un-approved) draft entries.
+var _calDraftEntries = null;
+
+// Fill the agent picker with the 7 council agents + any forged operatives.
+function calPopulateAgentPicker() {
+  var sel = document.getElementById('calAgentPick');
+  if (!sel) return;
+  var seen = {}, opts = [];
+  (S.agents || []).forEach(function(a){
+    if (!a || !a.name) return;
+    var n = String(a.name).toUpperCase();
+    if (seen[n]) return; seen[n] = 1;
+    opts.push(n);
+  });
+  if (!opts.length) opts = ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+  (window._officeOperatives || []).forEach(function(o){
+    var n = String((o && o.name) || '').toUpperCase();
+    if (!n || seen[n]) return; seen[n] = 1; opts.push(n);
+  });
+  var cur = sel.value;
+  sel.innerHTML = opts.map(function(n){ return '<option value="'+n+'">'+n+'</option>'; }).join('');
+  if (cur && opts.indexOf(cur) >= 0) sel.value = cur;
+  else if (opts.indexOf('QUILL') >= 0) sel.value = 'QUILL';
+}
+
+// Ask the chosen agent to draft N days → show in PREVIEW panel (NOT written yet).
+async function calAgentDraft() {
+  calPopulateAgentPicker();
+  var agent = (document.getElementById('calAgentPick') || {}).value || 'QUILL';
+  var brief = ((document.getElementById('calAgentBrief') || {}).value || '').trim();
+  var days = Math.max(1, Math.min(30, parseInt((document.getElementById('calAgentDays') || {}).value, 10) || 7));
+  if (!brief) { notify('Describe what the calendar should cover first'); return; }
+  notify(agent + ' drafting ' + days + ' days…');
+  var btn = event && event.target; if (btn) { btn.disabled = true; btn.textContent = '⏳ Drafting…'; }
+  try {
+    var prompt = 'You are planning a ' + days + '-day social content calendar.\n' +
+      'Brief from the user: "' + brief + '".\n' +
+      'Return EXACTLY ' + days + ' lines, one per day, NO numbering, NO preamble, NO commentary.\n' +
+      'Each line MUST use this exact pipe format:\n' +
+      'DAY_OFFSET | PLATFORM | POST TEXT (with any hashtags inline)\n' +
+      'DAY_OFFSET is an integer 0..' + (days-1) + ' (0 = today). PLATFORM is one of X, Instagram, LinkedIn, Telegram, TikTok.\n' +
+      'Example: 0 | X | GM builders — day 1 of our Solana series. #Solana';
+    var result = await getResp(prompt, agent);
+    var entries = calParseAgentLines(String(result || ''), days);
+    if (!entries.length) { notify(agent + ' returned no usable rows — try rephrasing the brief'); if (btn){btn.disabled=false;btn.textContent='⚡ Draft Calendar';} return; }
+    _calDraftEntries = entries;
+    calRenderDraftPreview(agent);
+    notify('✅ ' + entries.length + ' entries drafted — review, then APPROVE to add');
+  } catch(e) { notify('Draft failed: ' + e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '⚡ Draft Calendar'; } }
+}
+
+// Robust parser: prefers "offset | platform | text", tolerates "platform | text" and loose lines.
+function calParseAgentLines(raw, days) {
+  var today = new Date();
+  var out = [];
+  var lines = raw.split('\n').map(function(s){ return s.replace(/^\s*[-*\d.)\]]+\s*/, '').trim(); })
+                 .filter(function(s){ return s && !/^```/.test(s); });
+  var idx = 0;
+  lines.forEach(function(line){
+    if (out.length >= days) return;
+    var parts = line.split('|').map(function(s){ return s.trim(); });
+    var off, platform, text;
+    if (parts.length >= 3 && /^-?\d+$/.test(parts[0])) {
+      off = parseInt(parts[0], 10); platform = parts[1]; text = parts.slice(2).join(' | ');
+    } else if (parts.length >= 2) {
+      off = idx; platform = parts[0]; text = parts.slice(1).join(' | ');
+    } else {
+      off = idx; platform = 'X'; text = line;
+    }
+    if (!text) return;
+    off = isNaN(off) ? idx : off;
+    if (off < 0 || off > 60) off = idx;
+    platform = (platform || 'X').replace(/[^A-Za-z/ ]/g, '').trim().slice(0, 14) || 'X';
+    var d = new Date(today); d.setDate(today.getDate() + off);
+    out.push({
+      id: Date.now() + Math.floor(Math.random()*100000) + idx,
+      date: d.toISOString().slice(0, 10),
+      platform: platform,
+      content: text,
+      text: text,            // renderSocCalendar reads .text
+      status: 'draft',
+      source: 'agent-fill'
     });
-    localStorage.setItem('shaddai_post_queue', JSON.stringify(queue));
-    // Also keep the full plan in Notes for reference.
-    S.notes.unshift({ id: Date.now(), text: `[7-DAY CONTENT PLAN — ${new Date().toLocaleDateString()}]\n\n${lines.join('\n')}`, cat: 'ref', agent: 'QUILL', time: new Date().toISOString() });
-    save();
-    if (typeof renderSocCalendar === 'function') renderSocCalendar();
-    if (typeof renderNotes === 'function') renderNotes();
-    notify('✅ 7 days drafted into your calendar (review & publish yourself — nothing auto-posted)');
-  } catch(e) { notify('Error: ' + e.message); }
+    idx++;
+  });
+  return out;
+}
+
+function calRenderDraftPreview(agent) {
+  var panel = document.getElementById('calDraftPreview');
+  var list = document.getElementById('calDraftList');
+  if (!panel || !list) return;
+  panel.style.display = '';
+  list.innerHTML = _calDraftEntries.map(function(e){
+    return '<div style="display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:7px 9px">'+
+      '<span style="font-size:9px;font-weight:800;color:var(--accent);min-width:78px">'+e.date+'</span>'+
+      '<span style="font-size:8px;font-weight:700;color:var(--text-muted);min-width:64px;text-transform:uppercase">'+esc(e.platform)+'</span>'+
+      '<span style="font-size:10px;color:var(--text-secondary);flex:1;line-height:1.45">'+esc(e.content)+'</span>'+
+    '</div>';
+  }).join('');
+  panel.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// APPROVE gate — ONLY here do drafts get written into the calendar store.
+function calApproveDraft() {
+  if (!_calDraftEntries || !_calDraftEntries.length) { notify('Nothing to approve'); return; }
+  var queue = JSON.parse(localStorage.getItem('shaddai_post_queue') || '[]');
+  _calDraftEntries.forEach(function(e){ queue.push(e); });
+  localStorage.setItem('shaddai_post_queue', JSON.stringify(queue));
+  _socPostQueue = queue; // keep in-memory queue in sync for remove/edit
+  var n = _calDraftEntries.length;
+  _calDraftEntries = null;
+  var panel = document.getElementById('calDraftPreview'); if (panel) panel.style.display = 'none';
+  if (typeof renderSocCalendar === 'function') renderSocCalendar();
+  renderCalEntryList();
+  notify('✅ ' + n + ' entries added to your calendar');
+}
+
+function calDiscardDraft() {
+  _calDraftEntries = null;
+  var panel = document.getElementById('calDraftPreview'); if (panel) panel.style.display = 'none';
+  notify('Draft discarded — nothing was added');
 }
 
 function saveSocialToNotes() {
@@ -44013,15 +44320,26 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
               ${_SKILL_PACKS.map(skillCard).join('')}
             </div>
           ` : `
+            <!-- COMING SOON BANNER -->
+            <div style="position:relative;overflow:hidden;border:1px solid rgba(0,229,160,0.35);border-radius:12px;padding:16px 18px;margin-bottom:16px;background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(0,196,255,0.05));box-shadow:0 0 30px rgba(0,229,160,0.1),inset 0 0 40px rgba(0,229,160,0.03)">
+              <div style="position:absolute;top:-30%;right:-5%;width:180px;height:180px;background:radial-gradient(circle,rgba(0,229,160,0.14),transparent 70%);pointer-events:none"></div>
+              <div style="display:flex;align-items:center;gap:14px;position:relative">
+                <div style="font-size:30px;line-height:1;filter:drop-shadow(0 0 10px rgba(0,229,160,0.6))">🎴</div>
+                <div style="flex:1">
+                  <div style="display:inline-block;font-size:9px;font-weight:800;letter-spacing:0.18em;color:#00ff88;background:rgba(0,229,160,0.14);border:1px solid rgba(0,229,160,0.4);padding:3px 10px;border-radius:12px;font-family:'Share Tech Mono',monospace;box-shadow:0 0 12px rgba(0,229,160,0.2);margin-bottom:6px">✦ COMING SOON</div>
+                  <div style="font-size:11px;color:var(--text-secondary);line-height:1.5">Collectables are coming soon — they'll live in your <b style="color:#00E5FF">Rooms</b> and get a graphics revamp. Browse the preview set below; purchasing unlocks at launch.</div>
+                </div>
+              </div>
+            </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <div style="font-size:8px;color:rgba(255,255,255,0.4)">Owned: <b style="color:#00ff88">${owned.length}</b> / ${_ALL_COLLECTIBLES.length} <span style="color:rgba(255,255,255,0.3)">+ ${(window._BACKEND_COLLECTIBLES||[]).length} verified</span></div>
+              <div style="font-size:8px;color:rgba(255,255,255,0.4)">Preview set: <b style="color:#00ff88">${_ALL_COLLECTIBLES.length}</b> designs <span style="color:rgba(255,255,255,0.3)">+ ${(window._BACKEND_COLLECTIBLES||[]).length} verified</span></div>
               <a href="SHADDAI-Collectables.html" target="_blank" style="font-size:7.5px;padding:3px 8px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.22);color:#00ff88;border-radius:3px;text-decoration:none;transition:all 0.15s" onmouseover="this.style.background='rgba(0,229,160,0.14)'" onmouseout="this.style.background='rgba(0,229,160,0.07)'">✦ Expansion Shop →</a>
             </div>
-            <div style="font-size:7.5px;font-weight:700;color:#ffd700;letter-spacing:1px;margin-bottom:8px">🛒 BUY WITH CREDITS</div>
+            <div style="font-size:7.5px;font-weight:700;color:#ffd700;letter-spacing:1px;margin-bottom:8px">🛒 SHOP PREVIEW <span style="color:rgba(255,255,255,0.35);font-weight:400;letter-spacing:0.5px">— buying opens at launch</span></div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
               ${shopItems.map(collectibleCard).join('')}
             </div>
-            <div style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:8px">🏆 EARN BY ACHIEVING</div>
+            <div style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:8px">🏆 EARNABLE PREVIEW <span style="color:rgba(255,255,255,0.3);font-weight:400;letter-spacing:0.5px">— unlock via achievements at launch</span></div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
               ${earnable.map(collectibleCard).join('')}
             </div>
@@ -44038,6 +44356,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   };
 
   window.buyCollectible = async function(id, price) {
+    // E11 — Collectables are preview-only ("coming soon"); no purchases until launch.
+    notify('🎴 Collectables are coming soon — they\'ll live in your Rooms. Purchasing unlocks at launch!');
+    return;
+    /* eslint-disable no-unreachable */
     const credits = S.billing?.credits?.balance || 0;
     if (credits < price) { notify(`Need ${price} credits — you have ${credits}. Top up in Billing!`); return; }
     if (!S.billing) S.billing = { subscription:{tier:'free'}, credits:{balance:0}, usage:{}, invoices:[], payouts:[] };
@@ -44074,6 +44396,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         `, [{ label: 'Close', class: 'btn-ghost', action: closeModal }]);
       }
     } catch (e) { /* backend optional — keep local purchase */ }
+    /* eslint-enable no-unreachable */
   };
 
   // List an owned collectible for sale via backend
@@ -48071,15 +48394,46 @@ body::after {
 #mediaView.media-mode-compact .card[id^="mediaCard_"] .card-head { padding: 4px 0; border-bottom-width: 1px; margin-bottom: 6px; }
 #mediaView.media-mode-compact .card[id^="mediaCard_"] textarea, #mediaView.media-mode-compact .card[id^="mediaCard_"] .input { padding: 4px 6px; font-size: 9px; min-height: 28px; }
 .media-tile { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
-.media-mod-icon { width:52px; height:52px; border-radius:11px; object-fit:cover; margin-bottom:10px; box-shadow:0 0 18px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.08); }
+.media-mod-icon { width:54px; height:54px; border-radius:12px; object-fit:cover; margin-bottom:12px; box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04) inset; border:1px solid rgba(255,255,255,.1); transition:transform .25s cubic-bezier(.2,.8,.2,1); }
+/* ── Media Studio module cards: premium HUD window, depth + type polish ── */
+#mediaModGrid > div {
+  background:linear-gradient(155deg, rgba(10,16,20,.78) 0%, rgba(6,10,14,.62) 55%, rgba(0,229,160,.03) 100%) !important;
+  border-radius:14px !important;
+  padding:18px 18px 16px !important;
+  box-shadow:0 10px 30px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter:blur(6px);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .25s !important;
+}
+#mediaModGrid.mmv-grid > div:hover, #mediaModGrid.mmv-swivel > div:hover { transform:translateY(-4px) !important; }
+#mediaModGrid > div:hover .media-mod-icon { transform:scale(1.06) rotate(-1.5deg); }
+/* clean, intentional corner accent (replaces old grey ⬡ square) */
+.mm-corner {
+  position:absolute; bottom:13px; right:13px; width:22px; height:22px;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none; opacity:.55; transition:opacity .2s, transform .25s;
+}
+.mm-corner svg, .mm-corner span { width:16px; height:16px; font-size:13px; line-height:1; filter:drop-shadow(0 0 6px currentColor); }
+#mediaModGrid > div:hover .mm-corner { opacity:1; transform:scale(1.12); }
+/* top HUD hairline that lights up on hover */
+#mediaModGrid > div::before {
+  content:""; position:absolute; top:0; left:14px; right:14px; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(0,229,160,.6), rgba(0,200,255,.6), transparent);
+  opacity:.28; transition:opacity .25s; pointer-events:none;
+}
+#mediaModGrid > div:hover::before { opacity:.7; }
+@keyframes newsPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(.8); } }
 /* Media view-mode filter: grid / list / swivel */
 .mmode { font-size:12px; padding:5px 11px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text-muted); cursor:pointer; border-radius:6px; line-height:1; transition:all .15s; }
 .mmode:hover { color:var(--text); border-color:var(--accent,#00ff88); }
 .mmode.on { background:var(--accent,#00ff88); color:#04212b; border-color:var(--accent,#00ff88); }
 #mediaModGrid.mmv-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
 #mediaModGrid.mmv-list { display:grid; grid-template-columns:1fr; gap:8px; }
-#mediaModGrid.mmv-swivel { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:10px; }
-#mediaModGrid.mmv-swivel > div { flex:0 0 248px; scroll-snap-align:center; }
+#mediaModGrid.mmv-swivel { display:flex; gap:22px; overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 6px 16px; }
+#mediaModGrid.mmv-swivel > div {
+  flex:0 0 250px; scroll-snap-align:center;
+  /* a touch more solid than grid so text reads through the translucency */
+  background:linear-gradient(155deg, rgba(9,14,18,.9) 0%, rgba(6,10,14,.8) 55%, rgba(0,229,160,.04) 100%) !important;
+}
 @media(max-width:900px){ #mediaModGrid.mmv-grid { grid-template-columns:repeat(2,1fr); } }
 .media-tile:hover { transform: translateY(-2px); border-color: var(--accent) !important; box-shadow: 0 4px 12px rgba(0,229,160,0.2); }
 @keyframes skel-pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -48539,7 +48893,7 @@ function switchSocTab(tab){
     if(el)el.style.display=t===tab?'':('none');
     if(btn)btn.classList.toggle('active',t===tab);
   });
-  if(tab==='calendar')renderSocCalendar();
+  if(tab==='calendar'){ renderSocCalendar(); try{ calPopulateAgentPicker(); renderCalEntryList(); }catch(e){} }
   if(tab==='analytics')refreshSocialAnalytics();
 }
 var _calView = 'week';
@@ -48613,7 +48967,173 @@ function renderSocCalendar(){
       grid.appendChild(cell2);
     }
   }
+  try{ if(typeof renderCalEntryList==='function') renderCalEntryList(); }catch(e){}
 }
+/* ── E10: Scheduled-entries list with per-entry EDIT + REMOVE + delivery ── */
+function _calReadStore(){ try { return JSON.parse(localStorage.getItem('shaddai_post_queue')||'[]'); } catch(e){ return []; } }
+function _calWriteStore(arr){ localStorage.setItem('shaddai_post_queue', JSON.stringify(arr)); try { _socPostQueue = arr; } catch(e){} }
+
+function renderCalEntryList(){
+  var list=document.getElementById('calEntryList'); if(!list) return;
+  var arr=_calReadStore().slice().sort(function(a,b){ return String(a.date).localeCompare(String(b.date)); });
+  if(!arr.length){ list.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:22px;font-size:11px">No entries yet — use the Agent Calendar Builder above.</div>'; return; }
+  list.innerHTML='';
+  arr.forEach(function(e){
+    var eid=String(e.id);
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;align-items:flex-start;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:7px;padding:8px 10px';
+    row.innerHTML=
+      '<div style="min-width:80px"><span style="font-size:9px;font-weight:800;color:var(--accent)">'+esc(e.date||'')+'</span><br>'+
+        '<span style="font-size:7px;font-weight:700;color:var(--text-muted);text-transform:uppercase">'+esc(e.platform||'')+'</span></div>'+
+      '<div style="flex:1;font-size:10px;color:var(--text-secondary);line-height:1.45;word-break:break-word">'+esc(e.content||e.text||'')+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0">'+
+        '<div style="display:flex;gap:3px">'+
+          '<button class="btn btn-ghost" title="Edit" style="font-size:8px;padding:2px 7px" onclick="calEditEntry(\''+eid+'\')">✎ Edit</button>'+
+          '<button class="btn btn-ghost" title="Remove" style="font-size:8px;padding:2px 7px;color:var(--danger)" onclick="calRemoveEntry(\''+eid+'\')">✕</button>'+
+        '</div>'+
+        '<div style="display:flex;gap:3px">'+
+          '<button class="btn btn-ghost" title="Add to Google Calendar" style="font-size:8px;padding:2px 7px;color:#8ab4ff" onclick="calEntryToGoogle(\''+eid+'\')">📆</button>'+
+          '<button class="btn btn-ghost" title="Send to Telegram" style="font-size:8px;padding:2px 7px;color:#33aadd" onclick="calEntryToTelegram(\''+eid+'\')">📤</button>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(row);
+  });
+}
+
+function calRemoveEntry(id){
+  var arr=_calReadStore().filter(function(e){ return String(e.id)!==String(id); });
+  _calWriteStore(arr);
+  renderCalEntryList(); if(typeof renderSocCalendar==='function')renderSocCalendar();
+  try{ if(typeof refreshSocialAnalytics==='function')refreshSocialAnalytics(); }catch(e){}
+  notify('Entry removed');
+}
+
+function calEditEntry(id){
+  var arr=_calReadStore(); var e=arr.filter(function(x){return String(x.id)===String(id);})[0];
+  if(!e){ notify('Entry not found'); return; }
+  var ov=document.createElement('div');
+  ov.id='calEditOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML=
+    '<div style="width:min(460px,94vw);background:var(--surface,#0d1117);border:1px solid rgba(0,229,160,0.35);border-radius:12px;padding:18px;box-shadow:0 0 40px rgba(0,229,160,0.15)">'+
+      '<div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:12px">✎ Edit Calendar Entry</div>'+
+      '<label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">DATE</label>'+
+      '<input class="input" id="calEditDate" type="date" value="'+esc(e.date||'')+'" style="width:100%;font-size:12px;margin-bottom:10px">'+
+      '<label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">PLATFORM</label>'+
+      '<input class="input" id="calEditPlatform" value="'+esc(e.platform||'')+'" style="width:100%;font-size:12px;margin-bottom:10px" placeholder="X / Instagram / LinkedIn / Telegram">'+
+      '<label style="font-size:8px;color:var(--text-muted);letter-spacing:.08em;display:block;margin-bottom:3px">CONTENT</label>'+
+      '<textarea class="input" id="calEditContent" rows="5" style="width:100%;font-size:12px;line-height:1.5;margin-bottom:14px">'+esc(e.content||e.text||'')+'</textarea>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end">'+
+        '<button class="btn btn-ghost" onclick="calCloseEdit()" style="font-size:11px">Cancel</button>'+
+        '<button class="btn btn-accent" onclick="calSaveEdit(\''+String(e.id)+'\')" style="font-weight:800;font-size:12px;padding:8px 18px">💾 Save</button>'+
+      '</div>'+
+    '</div>';
+  ov.addEventListener('click', function(ev){ if(ev.target===ov) calCloseEdit(); });
+  document.body.appendChild(ov);
+}
+function calCloseEdit(){ var o=document.getElementById('calEditOverlay'); if(o)o.remove(); }
+function calSaveEdit(id){
+  var arr=_calReadStore();
+  var date=(document.getElementById('calEditDate')||{}).value||'';
+  var platform=((document.getElementById('calEditPlatform')||{}).value||'').trim()||'X';
+  var content=((document.getElementById('calEditContent')||{}).value||'').trim();
+  arr.forEach(function(e){ if(String(e.id)===String(id)){ e.date=date||e.date; e.platform=platform; e.content=content; e.text=content; } });
+  _calWriteStore(arr);
+  calCloseEdit();
+  renderCalEntryList(); if(typeof renderSocCalendar==='function')renderSocCalendar();
+  notify('✅ Entry updated');
+}
+
+/* ── E10: DELIVERY — Google Calendar (template URL + .ics) & Telegram ── */
+function _calGDate(dateStr){
+  // All-day-style default at 09:00 local → 1h event, formatted as UTC basic.
+  var start=new Date((dateStr||new Date().toISOString().slice(0,10))+'T09:00:00');
+  if(isNaN(start.getTime())) start=new Date();
+  var end=new Date(start.getTime()+60*60*1000);
+  function f(d){ return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); }
+  return f(start)+'/'+f(end);
+}
+function calEntryToGoogle(id){
+  var e=_calReadStore().filter(function(x){return String(x.id)===String(id);})[0];
+  if(!e){ notify('Entry not found'); return; }
+  var body=(e.content||e.text||'');
+  var title=(e.platform?('['+e.platform+'] '):'')+body.split('\n')[0].slice(0,80);
+  var url='https://calendar.google.com/calendar/render?action=TEMPLATE'+
+    '&text='+encodeURIComponent(title)+
+    '&dates='+_calGDate(e.date)+
+    '&details='+encodeURIComponent('SHADDAI content calendar\nPlatform: '+(e.platform||'')+'\n\n'+body);
+  window.open(url,'_blank','noopener');
+}
+function calAllToGoogle(){
+  var arr=_calReadStore();
+  if(!arr.length){ notify('No entries to send'); return; }
+  if(arr.length>1 && !confirm('Open '+arr.length+' Google Calendar tabs (one per entry)?')) return;
+  arr.forEach(function(e){ calEntryToGoogle(String(e.id)); });
+}
+function _calICSDate(dateStr){
+  var start=new Date((dateStr||new Date().toISOString().slice(0,10))+'T09:00:00');
+  if(isNaN(start.getTime())) start=new Date();
+  var end=new Date(start.getTime()+60*60*1000);
+  function f(d){ return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); }
+  return { s:f(start), e:f(end) };
+}
+function _icsEsc(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n'); }
+function calExportICS(){
+  var arr=_calReadStore();
+  if(!arr.length){ notify('No entries to export'); return; }
+  var now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SHADDAI//Content Calendar//EN','CALSCALE:GREGORIAN'];
+  arr.forEach(function(e){
+    var t=_calICSDate(e.date); var body=(e.content||e.text||'');
+    var title=(e.platform?('['+e.platform+'] '):'')+body.split('\n')[0].slice(0,80);
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:shaddai-'+String(e.id)+'@shaddai');
+    lines.push('DTSTAMP:'+now);
+    lines.push('DTSTART:'+t.s);
+    lines.push('DTEND:'+t.e);
+    lines.push('SUMMARY:'+_icsEsc(title));
+    lines.push('DESCRIPTION:'+_icsEsc('Platform: '+(e.platform||'')+'\n\n'+body));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  var ics=lines.join('\r\n');
+  if(typeof downloadText==='function') downloadText(ics,'shaddai-calendar.ics','text/calendar');
+  else { var a=document.createElement('a'); a.href='data:text/calendar,'+encodeURIComponent(ics); a.download='shaddai-calendar.ics'; a.click(); }
+  notify('⬇ Exported '+arr.length+' entries to .ics');
+}
+async function calEntryToTelegram(id){
+  var e=_calReadStore().filter(function(x){return String(x.id)===String(id);})[0];
+  if(!e){ notify('Entry not found'); return; }
+  var text=(e.platform?('['+e.platform+' — '+e.date+']\n'):'')+(e.content||e.text||'');
+  try{
+    var r=await fetch((typeof PROXY!=='undefined'?PROXY:'')+'/api/social/post',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({platform:'telegram',content:text}),
+      signal:AbortSignal.timeout(10000)});
+    var d=await r.json().catch(function(){return {};});
+    if(d && d.status==='sent'){ notify('✓ Sent to Telegram'); }
+    else { notify(d && d.message ? d.message : 'Connect Telegram in APIs to enable (set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)'); }
+  }catch(err){ notify('Telegram not reachable — connect it in the APIs tab. ('+err.message+')'); }
+}
+async function calAllToTelegram(){
+  var arr=_calReadStore();
+  if(!arr.length){ notify('No entries to send'); return; }
+  if(!confirm('Send all '+arr.length+' entries to Telegram now?')) return;
+  var ok=0, fail=0;
+  for(var i=0;i<arr.length;i++){
+    var e=arr[i];
+    var text='['+(e.platform||'')+' — '+(e.date||'')+']\n'+(e.content||e.text||'');
+    try{
+      var r=await fetch((typeof PROXY!=='undefined'?PROXY:'')+'/api/social/post',{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:'telegram',content:text}),
+        signal:AbortSignal.timeout(10000)});
+      var d=await r.json().catch(function(){return {};});
+      if(d && d.status==='sent') ok++; else { fail++; if(i===0){ notify(d && d.message ? d.message : 'Connect Telegram in APIs to enable'); return; } }
+    }catch(err){ fail++; if(i===0){ notify('Telegram not reachable — connect it in the APIs tab.'); return; } }
+  }
+  notify('Telegram: '+ok+' sent, '+fail+' failed');
+}
+
 var _socPostQueue=JSON.parse(localStorage.getItem('shaddai_post_queue')||'[]');
 function addToPostQueue(){
   var outEl=document.getElementById('socialOutput');
@@ -52407,11 +52927,83 @@ try{
     var simple=m!=='pro';
     var sw=$('smWizard'), pc=$('proChain'), ts=$('wfTabSimple'), tp=$('wfTabPro'), title=$('wfModeTitle'), note=$('wfModeNote');
     if(sw)sw.style.display=simple?'':'none'; if(pc)pc.style.display=simple?'none':'';
-    if(ts){ ts.style.background=simple?'var(--accent,#00ff88)':'transparent'; ts.style.color=simple?'#04212b':'var(--text-muted)'; }
-    if(tp){ tp.style.background=simple?'transparent':'var(--accent,#00ff88)'; tp.style.color=simple?'var(--text-muted)':'#04212b'; }
+    if(ts) ts.classList.toggle('on', simple);
+    if(tp) tp.classList.toggle('on', !simple);
+    var glide=$('wfModeGlide'); if(glide) glide.style.transform=simple?'translateX(0)':'translateX(100%)';
     if(title)title.textContent=simple?'⚡ Simple Mode':'🔗 Pro — Agent Chains';
     if(note)note.textContent=simple?'Anyone can use it — tap what you want, pick who, GO.':'Multi-agent chains: each step feeds the next.';
     if(!simple && !psteps.length){ var pp=$('proPresets'); if(pp&&!pp.childElementCount){ PRESETS.forEach(function(p){ var b=document.createElement('button'); b.className='preset'; b.style.cssText='font-size:9.5px;text-align:left;padding:9px 12px;border:1px solid var(--border);background:var(--bg,#0e1117);color:var(--text-muted);cursor:pointer;border-radius:6px'; b.innerHTML='<b style="display:block;color:#33d6ff;font-size:11px;margin-bottom:2px">'+p.name+'</b>'+p.desc; b.onclick=function(){loadPreset(p);}; pp.appendChild(b); }); } loadPreset(PRESETS[0]); }
+  };
+})();
+
+// ⚡ Shared Quick-Actions — the 6 Simple-Mode tasks, runnable ON THE CURRENT AGENT you're
+// chatting with (chatView S.agent OR Mission-Control #popoutAgentSelect). Same run paths as
+// Simple Mode: /api/agent/run for agent goals, /api/image/generate for pictures. One source of
+// truth so the chat pop-ups and the Simple-Mode tiles share logic (REQ-8.2).
+(function(){
+  // key, icon, label, one-line ask prompt for the user, and a prompt builder.
+  const QA_ACTIONS=[
+    {key:'picture',ic:'🖼',label:'Make a picture',kind:'image',ask:'What should the picture show?',ph:'a neon owl over a cyberpunk city',
+      build:t=>t||'an abstract neon artwork'},
+    {key:'song',ic:'🎵',label:'Make a song',kind:'agent',ask:'What is the song about?',ph:'rising from nothing',
+      build:t=>`Write a complete song about: ${t||'an epic journey'}. Include a title, full lyrics (verses + chorus), and a one-line audio/production prompt for Suno/Udio.`},
+    {key:'post',ic:'✍️',label:'Write a post',kind:'agent',isPost:true,ask:'What should the post be about?',ph:'we just shipped SHADDAI',
+      build:t=>`Write a punchy social post about: ${t||'SHADDAI'}. Output only the post, ready to publish, with relevant hashtags.`},
+    {key:'coin',ic:'🔎',label:'Research a coin',kind:'agent',ask:'Which coin / token?',ph:'SOL',
+      build:t=>`Research ${t||'this coin'} — full overview. Use live price + news/sentiment tools and give a clear verdict. Not financial advice.`},
+    {key:'market',ic:'📊',label:'Check the market',kind:'agent',ask:'Market / pair / question?',ph:'BTC and ETH today',
+      build:t=>`Check the market: ${t||'BTC/ETH'} — quick read. Use live data and summarize the trend. Not financial advice.`},
+    {key:'safe',ic:'🛡',label:'Is this safe?',kind:'agent',ask:'Paste a URL, address, or code',ph:'https://…',
+      build:t=>`Security check this: ${t||''}. Scan for risks and give a clear safe/caution/danger verdict with reasons.`}
+  ];
+  window.QA_ACTIONS=QA_ACTIONS;
+  const byKey=k=>QA_ACTIONS.find(a=>a.key===k);
+
+  // Run one action on `agent` using that agent's configured model/tools.
+  //   render = { thinking(txt), image(url,prompt), text(str), error(msg) }
+  // For image → /api/image/generate. For agent goals → /api/agent/run (the real tool loop,
+  // identical to Simple Mode's smRun; the backend uses the named agent's own model/tools).
+  window.runQuickAction=async function(actionKey, agent, input, render){
+    const a=byKey(actionKey); if(!a){render&&render.error&&render.error('Unknown action');return;}
+    agent=agent||'SHADDAI';
+    const safe=s=>String(s==null?'':s).replace(/[<>]/g,'');
+    try{ window.setAgentActivity && window.setAgentActivity(agent,'working',a.label+': '+(input||'').slice(0,40)); }catch(e){}
+    // IMAGE — real render (same endpoint & shape as Simple Mode).
+    if(a.kind==='image'){
+      render&&render.thinking&&render.thinking(`${agent} is generating your image…`);
+      try{
+        const prompt=a.build(input);
+        const r=await fetch('/api/image/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,model:'huggingface',width:768,height:768})});
+        if(r.status===503){const n=await r.json();render&&render.error&&render.error(safe(n.error||'This engine needs an API key — add it in the API vault.'));return;}
+        const d=await r.json();const url=d.url||d.image_url;if(!url)throw new Error(d.error||'no image');
+        render&&render.image&&render.image(url,prompt,d.source);
+      }catch(e){render&&render.error&&render.error(safe(e.message));}
+      try{ window.setAgentActivity && window.setAgentActivity(agent,'idle'); }catch(e){}
+      return;
+    }
+    // AGENT goals — same /api/agent/run tool loop Simple Mode uses, but pinned to `agent`.
+    render&&render.thinking&&render.thinking(`${agent} is working…`);
+    try{
+      const goal=a.build(input);
+      const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':'chat-quick'},body:JSON.stringify({goal,agent})});
+      const d=await r.json();if(!d.taskId)throw new Error(d.error||'engine did not start');
+      let result=null;
+      for(let i=0;i<40;i++){await new Promise(s=>setTimeout(s,1300));
+        const t=await(await fetch('/api/agent/task/'+d.taskId)).json();
+        render&&render.thinking&&render.thinking(`${agent} working… (${t.status||'running'}${t.iterations?` · step ${t.iterations}`:''})`);
+        if(t.status==='completed'||t.status==='failed'){result=t;break;}}
+      if(!result)throw new Error('timed out — try again');
+      if(result.status==='failed')throw new Error(result.result||result.error||'agent reported a failure');
+      const text=result.result||JSON.stringify(result).slice(0,400);
+      const tools=Array.isArray(result.tools_used)?result.tools_used:[];
+      render&&render.text&&render.text(text,tools,a);
+    }catch(e){render&&render.error&&render.error(safe(e.message));}
+    try{ window.setAgentActivity && window.setAgentActivity(agent,'idle'); }catch(e){}
+  };
+
+  // Build the row of pill buttons for a given surface. onPick(actionKey) is the click handler.
+  window.qaPillsHTML=function(handlerName){
+    return QA_ACTIONS.map(a=>`<button type="button" class="qa-pill" onclick="${handlerName}('${a.key}')">${a.ic} ${a.label}</button>`).join('');
   };
 })();
 
