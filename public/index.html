@@ -538,13 +538,14 @@ body::after {
 .res-value { color: var(--accent); font-weight: 700; font-size: 12px; }
 
 #mainArea {
-  margin-top: 126px;
+  /* A5: agentBar (status line) relocated into the top header → mainArea now starts right under mainNav (38+44=82). */
+  margin-top: 82px;
   margin-left: 0;
   margin-right: 0;
   margin-bottom: 0;
   padding: 10px 12px 12px 12px;
   width: 100%;
-  min-height: calc(100vh - 126px);
+  min-height: calc(100vh - 82px);
   position: relative;
   z-index: 1;
   box-sizing: border-box;
@@ -554,7 +555,7 @@ body::after {
 #fileSidebar {
   position: fixed;
   left: 0;
-  top: 126px;
+  top: 82px; /* A5: aligned with mainArea after agentBar removal */
   bottom: 52px;
   width: 220px;
   background: var(--bg-card);
@@ -2202,6 +2203,27 @@ body::before {
   gap: 16px;
   padding: 8px 0;
 }
+/* A3 — Agents view toggle (Grid vs Swivel) */
+.ag-view-tab {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  padding: 6px 16px;
+  color: rgba(190, 215, 225, 0.6);
+  background: rgba(0, 12, 20, 0.6);
+  border: 1px solid rgba(0, 229, 160, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.ag-view-tab:hover { color: #d5f5ea; border-color: rgba(0, 229, 160, 0.4); }
+.ag-view-tab.active {
+  color: #02141a;
+  background: linear-gradient(180deg, #00ffa0, #00c982);
+  border-color: #00ffa0;
+  box-shadow: 0 0 16px rgba(0, 255, 160, 0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+}
 .agent-3d-card {
   position: relative;
   perspective: 900px;
@@ -3835,7 +3857,18 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <div id="shaddai-boot-overlay"></div>
 
 <div id="topBar">
-  <span>SHADDAI v91</span>
+  <!-- A5: centered brand/version (absolutely centered in the top header) -->
+  <div id="tbBrand" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;pointer-events:none;z-index:1">
+    <span style="font-weight:900;letter-spacing:5px;color:var(--accent);text-shadow:0 0 14px rgba(0,229,160,.5);font-size:13px">SHADDAI</span>
+    <span style="font-weight:800;letter-spacing:2px;color:#ffce63;font-size:10px;padding:2px 8px;border:1px solid rgba(255,206,99,.35);border-radius:999px;background:linear-gradient(135deg,rgba(255,206,99,.12),rgba(255,206,99,.02))">V94.44</span>
+    <!-- A5: live status readouts moved UP into the header (compact cluster beside the title) -->
+    <div id="tbStatus" style="display:flex;align-items:center;gap:12px;font:700 9px/1 'Share Tech Mono',monospace;letter-spacing:.5px;color:#8ea3b8;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)">
+      <span class="tbs-item" title="AI backend" style="display:flex;align-items:center;gap:5px;cursor:pointer;pointer-events:auto" onclick="checkOllama();refreshOllamaModels()"><span class="status-dot checking" id="ollamaDotHdr" style="width:6px;height:6px;border-radius:50%"></span><span id="ollamaTxtHdr">Checking</span></span>
+      <span class="tbs-item" title="Models available" style="color:#a9b6c6">◈ <b id="modelCountHdr" style="color:#00e5a0;font-weight:900">0</b> models</span>
+      <span class="tbs-item" title="Queued jobs">Queue: <b id="queueNumHdr" style="color:#00e5a0;font-weight:900">0</b></span>
+      <span class="tbs-item" title="Session cost">Cost: <b id="totalCostHdr" style="color:#ffce63;font-weight:900">$0.0000</b></span>
+    </div>
+  </div>
   <style>
     #topBar .tb-meter{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font:700 9px/1 'Share Tech Mono',monospace;color:#ffce63;background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(255,176,32,.03));border:1px solid rgba(255,176,32,.28);cursor:pointer;white-space:nowrap;transition:.2s;user-select:none}
     #topBar .tb-meter:hover{border-color:rgba(255,176,32,.6);box-shadow:0 0 16px rgba(255,176,32,.22)}
@@ -3847,6 +3880,12 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     #topBar .tb-seg:hover{background:rgba(255,255,255,.07);color:#fff}
     #topBar .tb-seg .ic{font-size:13px;line-height:1}
     #topBar .tb-seg:hover .ic{filter:drop-shadow(0 0 6px currentColor)}
+    /* A5: header tab-mover control (docks the nav position, tucked into the top strip) */
+    #topBar .tb-seg#tbNavMover{color:#7fd8ff}
+    #topBar .tb-seg#tbNavMover.on{color:#00e5ff;background:rgba(0,229,255,.1)}
+    /* A5: keep the centered brand cluster from colliding with the right strip on smaller widths */
+    @media (max-width: 1180px){ #topBar #tbStatus{display:none !important} }
+    @media (max-width: 720px){ #topBar #tbBrand span:nth-child(2){display:none} }
   </style>
   <!-- Phantom Wallet Widget — HIDDEN per owner (unapproved wallet UI removed) -->
   <div id="phantomTopWidget" style="display:none !important;align-items:center;gap:12px;margin-left:auto;margin-right:auto;font-size:10px;font-weight:600">
@@ -3863,6 +3902,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <!-- Token cost pill (computing) removed — unwired -->
     <!-- Unified action strip (Mission-Control glass) -->
     <div class="tb-strip">
+      <!-- A5: MC restore chip — appears here when Mission Control is minimized (click to reopen) -->
+      <button class="tb-seg" id="tbMcChip" onclick="restoreMissionControl()" title="Restore Mission Control" style="display:none;color:#00e5a0"><span class="ic">◈</span>MC</button>
+      <!-- A5: tab-mover — cycles the nav dock (top → left → right → bottom). Tucked into the header, out of the way. -->
+      <button class="tb-seg" id="tbNavMover" onclick="cycleNavPos()" title="Move tabs: top / left / right / bottom"><span class="ic" id="tbNavMoverIc">⬍</span></button>
       <button class="tb-seg" onclick="loadUserDashboard()" id="dashBtn" title="Profile & earnings" style="color:#a78bfa"><span class="ic">👤</span></button>
       <!-- Notifications button removed — unwired -->
       <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="color:#ffb020"><span class="ic">◉</span>ALL</button>
@@ -3897,7 +3940,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <!-- Commerce tab removed -->
-  <button class="nav-btn" onclick="showView('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
+  <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
   <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
@@ -4066,17 +4109,49 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <!-- "?" button to re-open onboarding — only rendered on mobile via CSS -->
 <button id="shdOnboardBtn" onclick="shdOnboardOpen()" title="What is SHADDAI?" style="display:none;position:fixed;bottom:20px;right:16px;z-index:1500;width:42px;height:42px;border-radius:50%;background:var(--accent);border:none;color:#020817;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 0 16px var(--accent-glow);align-items:center;justify-content:center;">?</button>
 
-<div id="agentBar">
-  <!-- REQ-1.5: top agent-chip row (SHADDAI/ZEROX/ORACLE/NEXUS/TURTLE/QUILL/PIKADON/ALL/TEST/PING) removed per owner —
-       it only navigated to the agents tab. Handlers (pickAgent/pickAllAgents/testAllAgents/pingAllLocalAgents) are kept,
-       they're still used by dashboard tiles, command palette, and leaderboards. -->
-  <div id="statusBar">
+<!-- A5: #agentBar collapsed — the Queue/Cost status line was relocated UP into the top header (#tbStatus).
+     The original status ids are kept (hidden) so all existing live-update JS keeps working; a sync loop
+     mirrors them into the header readouts. #offlineIndicator still surfaces via its own JS toggling display. -->
+<div id="agentBar" style="display:none">
+  <div id="statusBar" style="display:none">
     <div class="status-item" style="cursor:pointer" onclick="checkOllama();refreshOllamaModels()" title="Click to recheck Ollama connection"><span class="status-dot checking" id="ollamaDot"></span><span id="ollamaTxt">Checking</span></div>
     <div class="status-item">Queue: <span id="queueNum">0</span></div>
     <div class="status-item">Cost: <span id="totalCost">$0.00</span></div>
     <div class="status-item" id="offlineIndicator" style="display:none;color:var(--danger);cursor:pointer" onclick="checkOllama();refreshOllamaModels()">OFFLINE — Click to retry</div>
   </div>
 </div>
+<script>
+/* A5: mirror the (now-hidden) status-bar readouts UP into the top-header cluster (#tbStatus).
+   Existing JS still writes to #ollamaTxt/#ollamaDot/#queueNum/#totalCost — we just reflect them,
+   plus a live models count (from S.models) and dollar cost with 4 decimals. */
+(function(){
+  function txt(id){ var e=document.getElementById(id); return e?e.textContent:null; }
+  function sync(){
+    try{
+      var oT=txt('ollamaTxt'), hT=document.getElementById('ollamaTxtHdr');
+      if(oT!==null&&hT&&hT.textContent!==oT) hT.textContent=oT;
+      var oD=document.getElementById('ollamaDot'), hD=document.getElementById('ollamaDotHdr');
+      if(oD&&hD){ hD.className='status-dot '+ (oD.className.replace('status-dot','').trim()); }
+      var q=txt('queueNum'), hQ=document.getElementById('queueNumHdr');
+      if(q!==null&&hQ&&hQ.textContent!==q) hQ.textContent=q;
+      // models: count from S.models (loaded Ollama models); fall back to 0
+      var m=(window.S&&Array.isArray(S.models))?S.models.length:0, hM=document.getElementById('modelCountHdr');
+      if(hM&&hM.textContent!=String(m)) hM.textContent=m;
+      // cost: prefer the token meter (4-decimal), else parse the legacy $0.00 readout
+      var c=null;
+      if(window._tokenMeter&&typeof _tokenMeter.totalCost==='number') c='$'+_tokenMeter.totalCost.toFixed(4);
+      else { var raw=txt('totalCost'); if(raw){ var n=parseFloat(raw.replace(/[^0-9.]/g,''))||0; c='$'+n.toFixed(4); } }
+      var hC=document.getElementById('totalCostHdr');
+      if(c!==null&&hC&&hC.textContent!==c) hC.textContent=c;
+      // offline: tint the header AI text red when the offline indicator is showing
+      var off=document.getElementById('offlineIndicator');
+      if(off&&hT){ hT.style.color = (off.style.display!=='none')?'var(--danger)':''; }
+    }catch(e){}
+  }
+  sync(); setInterval(sync, 1500);
+  document.addEventListener('DOMContentLoaded', sync);
+})();
+</script>
 
 <div id="sbNav">
   <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v91</span></div>
@@ -4097,7 +4172,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <button class="sbt" onclick="showView('office');switchOfficeTab('skills');lySetSb(this)"><span class="ic">🧠</span>Skills</button>
     <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Forge</button>
     <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">⚡</span>AURA</button>
-    <button class="sbt" onclick="showView('billing');lySetSb(this)" style="color:#ffd700"><span class="ic">💳</span>Billing</button>
+    <!-- A4: repointed to Office ▸ Billing sub-tab (standalone Billing view retired from nav) -->
+    <button class="sbt" onclick="showView('office');switchOfficeTab('billing');lySetSb(this)" style="color:#ffd700"><span class="ic">💳</span>Billing</button>
     <!-- E3: repointed to Office ▸ Library sub-tab (standalone Lib & Notes retired from nav) -->
     <button class="sbt" onclick="showView('office');switchOfficeTab('library');lySetSb(this)"><span class="ic">📚</span>Library</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
@@ -4277,8 +4353,20 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
       </div>
 
+      <!-- A3 — VIEW TOGGLE: Grid cards vs the swivel Deployment-Interface (character sheets).
+           Both surfaces show the same 7 (+ forged) agents; the swivel node is relocated in
+           here on demand by setAgentsView() so there's one consolidated agent surface. -->
+      <div id="agentsViewToggle" style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+        <button id="agViewGridBtn" class="ag-view-tab active" onclick="setAgentsView('grid')">▤ Grid</button>
+        <button id="agViewSwivelBtn" class="ag-view-tab" onclick="setAgentsView('swivel')">⬡ Swivel</button>
+        <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,160,0.55)">// AGENT ROSTER</span>
+      </div>
+
       <!-- 3D Agent Cards (Nano Banana powered) -->
       <div id="agent3DGrid" class="agent-3d-grid" style="margin-bottom:16px"></div>
+
+      <!-- Swivel mount — the #agentDeployCard node is moved in here when the Swivel view is active -->
+      <div id="agentSwivelMount" style="display:none;margin-bottom:16px"></div>
 
       <!-- Agent Performance Leaderboard -->
       <div style="margin-bottom:14px">
@@ -5576,7 +5664,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">⚡ Work Board</button>
       <button class="nav-btn" id="officeTab7" onclick="switchOfficeTab('projects')">🗂️ Projects</button>
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
-      <button class="nav-btn" id="officeTab5" onclick="switchOfficeTab('workflows')">🔗 Workflows</button>
+      <!-- A4: Workflows sub-tab REMOVED (owner) — Workflow lives ONLY as its own top-level tab. officeTab5 retired. -->
+      <button class="nav-btn" id="officeTab9" onclick="switchOfficeTab('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
       <button class="nav-btn" id="officeTab6" onclick="switchOfficeTab('pixel')" style="color:#ffd700;font-weight:700">📍 Pixel Office</button>
       <button class="nav-btn" id="officeTab2" onclick="switchOfficeTab('boardroom')">🏢 Boardroom</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
@@ -5797,49 +5886,16 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <button class="btn btn-accent" onclick="startBoardroomDiscussion()">🗣 Discuss</button>
         </div>
       </div>
-      <!-- Skill Transfer + Agent Creator (collapsed) -->
-      <div class="card">
-        <div class="card-head" onclick="document.getElementById('skillTransferPanel').style.display=document.getElementById('skillTransferPanel').style.display==='none'?'block':'none'" style="cursor:pointer">
-          <span class="card-title">⚡ Agent Tools — Skill Transfer & Creator</span>
-          <span style="font-size:9px;color:var(--text-muted)">▼ expand</span>
-        </div>
-        <div id="skillTransferPanel" style="display:none">
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding-top:8px">
-            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:12px">
-              <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">Transfer Skills</div>
-              <select class="select" id="boardFromAgent" style="width:100%;margin-bottom:8px">
-                <option value="SHADDAI">From: SHADDAI</option><option value="ZEROX">From: ZEROX</option><option value="ORACLE">From: ORACLE</option><option value="NEXUS">From: NEXUS</option><option value="TURTLE">From: TURTLE</option><option value="QUILL">From: QUILL</option><option value="PIKADON">From: PIKADON</option>
-              </select>
-              <select class="select" id="boardToAgent" style="width:100%;margin-bottom:8px">
-                <option value="SHADDAI">To: SHADDAI</option><option value="ZEROX">To: ZEROX</option><option value="ORACLE">To: ORACLE</option><option value="NEXUS">To: NEXUS</option><option value="TURTLE">To: TURTLE</option><option value="QUILL">To: QUILL</option><option value="PIKADON">To: PIKADON</option>
-              </select>
-              <button class="btn btn-accent" style="width:100%" onclick="transferSkills()">Transfer Knowledge</button>
-            </div>
-            <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:12px">
-              <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">Custom Agent Creator</div>
-              <input type="text" id="customAgentName" class="input" style="margin-bottom:8px" placeholder="New Agent Name">
-              <select class="select" id="customAgentBase" style="width:100%;margin-bottom:8px">
-                <option value="llama3.2:3b">Base: llama3.2:3b</option><option value="phi3:mini">Base: phi3:mini</option><option value="gemma2:2b">Base: gemma2:2b</option>
-              </select>
-              <textarea id="customAgentPrompt" class="input" rows="3" placeholder="System prompt..."></textarea>
-              <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="createCustomAgent()">Create Agent</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- A6 — "⚡ Agent Tools — Skill Transfer & Creator" card REMOVED from Boardroom
+           (owner: "isnt needed in board room"). Skill Transfer / Agent Creator live in the
+           Forge + Agents surfaces; the Boardroom is now discussion-only. -->
     </div>
     
-    <!-- Workflows Tab (ORACLE #1 priority feature) -->
-    <!-- E4: Workflows CONSOLIDATED into the top-level Workflow tab (#workflowCenter).
-         This Office sub-panel is now a short pointer to avoid duplicate ids/handlers. -->
-    <div id="officeWorkflows" class="office-room" style="display:none;flex-direction:column;padding:24px;align-items:center;justify-content:center;gap:14px;text-align:center">
-      <div style="font-size:44px">🔗</div>
-      <div style="font-size:16px;font-weight:700;font-family:'Rajdhani',sans-serif;color:#ffd700;letter-spacing:0.06em">Workflows moved to the Workflow tab</div>
-      <div style="font-size:11px;color:var(--text-muted);max-width:460px;line-height:1.6">Chains, Scheduled Jobs and Webhooks now live in one clean place — the <b style="color:#00f0ff">Workflow</b> tab. Build a chain, schedule it, or wire a webhook there.</div>
-      <button class="btn btn-accent" style="font-size:12px;font-family:'Rajdhani',sans-serif;font-weight:700;padding:10px 26px" onclick="showView('workflow')">→ OPEN WORKFLOW CENTER</button>
-    </div>
+    <!-- A4: Workflows Office sub-panel REMOVED (owner: "workflow IN office isn't needed").
+         Workflow lives ONLY as its own top-level tab (#workflowCenter). No pointer, no panel. -->
 
-    <!-- E4: legacy Workflows markup deleted (moved to #workflowCenter in the Workflow tab). -->
+    <!-- A4: Billing sub-panel — standalone #billingView content relocated here at runtime by switchOfficeTab('billing') -->
+    <div id="officeBilling" class="office-room" style="display:none"></div>
 
     <!-- Library -->
     <div id="officeLibrary" class="office-room" style="display:none">
@@ -6435,9 +6491,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         }
         if(!silent){
           $('ofConsole').textContent=opOk
-            ?`⬡ AWAKENED "${name}" · ${rarity.toUpperCase()} · brain=${chosenBrain()} · ${skills.size} skills · ${portrait?'real FLUX portrait ✓':portraitNote}${r.ok?'':' · brain pending'} — now LIVE in Rooms, Agents, Workflows & Mission Control.`
+            ?`⬡ AWAKENED "${name}" · ${rarity.toUpperCase()} · brain=${chosenBrain()} · ${skills.size} skills · ${portrait?'real FLUX portrait ✓':portraitNote}${r.ok?'':' · brain pending'} — now LIVE in Rooms, Agents & Workflows. Opening ${name}'s chat in Mission Control…`
             :'⚠ '+((op&&op.error)||(r&&r.error)||'forge failed');
-          if(opOk)await loadGallery();
+          if(opOk){
+            await loadGallery();
+            /* A2 — AWAKEN opens the new agent's CHAT in Mission Control (never auto-runs a tool).
+               Reuse deployAgentToMissionControl (which reuses chatWithAgent + openPopout). */
+            try{ if(typeof window.deployAgentToMissionControl==='function'){ window.deployAgentToMissionControl(name); } }catch(_){}
+          }
         }
         return opOk;
       }
@@ -6740,7 +6801,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
             <div style="font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:4px;color:rgba(0,229,160,0.7)">// OPERATIVE FILE</div>
             <div style="font-size:13px;font-weight:900;font-family:'Orbitron',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.9);margin-top:2px">CHARACTER SHEET</div>
           </div>
-          <button class="btn btn-accent" style="font-size:9px;padding:6px 16px;letter-spacing:2px;font-family:'Share Tech Mono',monospace" id="revolverHireBtn" onclick="selectAgent(carouselIndex)">▶ DEPLOY</button>
+          <button class="btn btn-accent" style="font-size:9px;padding:6px 16px;letter-spacing:2px;font-family:'Share Tech Mono',monospace" id="revolverHireBtn" onclick="(function(){var a=(window.AGENT_REGISTRY||[])[carouselIndex];if(a){ if(typeof deployAgentToMissionControl==='function'){deployAgentToMissionControl(a.name);} else if(typeof chatWithAgent==='function'){chatWithAgent(a.name);} }})()">▶ DEPLOY</button>
         </div>
 
         <!-- Two-column RPG layout -->
@@ -17870,14 +17931,15 @@ function render3DAgentCards() {
   const container = document.getElementById('agent3DGrid');
   if (!container) return;
 
+  // A3 — canonical per-agent accent palette (matches the swivel + spec)
   const DOSSIER_META = {
-    SHADDAI: { color:'#ffd700', rgb:'255,215,0',  rank:'SUPREME COMMANDER',   code:'SHA', clearance:4 },
-    ZEROX:   { color:'#00ff88', rgb:'0,255,136',   rank:'REVENUE STRATEGIST',  code:'ZRX', clearance:3 },
-    ORACLE:  { color:'#8b5cf6', rgb:'139,92,246',  rank:'INTELLIGENCE OFFICER', code:'ORC', clearance:3 },
-    NEXUS:   { color:'#64b5f6', rgb:'100,181,246', rank:'SYSTEMS ARCHITECT',   code:'NXS', clearance:3 },
-    TURTLE:  { color:'#1abc9c', rgb:'26,188,156',  rank:'DESIGN DIRECTOR',     code:'TRT', clearance:2 },
-    QUILL:   { color:'#ffb020', rgb:'255,176,32',  rank:'COMMS SPECIALIST',    code:'QLL', clearance:2 },
-    PIKADON: { color:'#ff4444', rgb:'255,68,68',   rank:'SECURITY LEAD',       code:'PKD', clearance:4 },
+    SHADDAI: { color:'#f0b429', rgb:'240,180,41',  rank:'SUPREME COMMANDER',   code:'SHA', clearance:4 },
+    ZEROX:   { color:'#00e5ff', rgb:'0,229,255',   rank:'REVENUE STRATEGIST',  code:'ZRX', clearance:3 },
+    ORACLE:  { color:'#a78bfa', rgb:'167,139,250', rank:'INTELLIGENCE OFFICER', code:'ORC', clearance:3 },
+    NEXUS:   { color:'#00f0ff', rgb:'0,240,255',   rank:'SYSTEMS ARCHITECT',   code:'NXS', clearance:3 },
+    TURTLE:  { color:'#00ff88', rgb:'0,255,136',   rank:'DESIGN DIRECTOR',     code:'TRT', clearance:2 },
+    QUILL:   { color:'#fb923c', rgb:'251,146,60',  rank:'COMMS SPECIALIST',    code:'QLL', clearance:2 },
+    PIKADON: { color:'#f43f5e', rgb:'244,63,94',   rank:'SECURITY LEAD',       code:'PKD', clearance:4 },
   };
 
   container.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-bottom:16px';
@@ -17934,10 +17996,10 @@ function render3DAgentCards() {
         <div class="op-sec-label">⚙ Tools</div>
         <div class="op-chips" style="margin-bottom:10px">${toolChips}</div>
 
-        <!-- Brain clearance -->
+        <!-- Brain power (L1/L2 + connected APIs) -->
         <div style="margin-bottom:9px">
           <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-            <span class="op-stat">🧠 BRAIN CLEARANCE</span>
+            <span class="op-stat">🧠 BRAIN POWER</span>
             <span class="op-stat"><strong>L${brainLevel}</strong> · ${connectedCount} APIS</span>
           </div>
           <div class="op-clearance"><div class="op-clearance-fill" style="width:${brainPct}%;background:linear-gradient(90deg,${m.color},rgba(255,255,255,0.4))"></div></div>
@@ -17946,16 +18008,63 @@ function render3DAgentCards() {
         <!-- API badges -->
         <div id="apiBadges_${a.name}" style="margin-bottom:9px">${buildAgentAPIBadges(a.name)}</div>
 
-        <!-- Actions -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
-          <button class="op-action" onclick="event.stopPropagation();chatWithAgent('${a.name}')" style="--op-color:${m.color};--op-rgb:${m.rgb}">DEPLOY</button>
-          <button class="op-action" onclick="event.stopPropagation();showAgentFullDetail('${a.name}')" style="--op-color:${m.color};--op-rgb:${m.rgb}">📋 DOSSIER</button>
-          <button class="op-action" onclick="event.stopPropagation();openAPIConnector('${a.name}')" style="--op-color:${m.color};--op-rgb:${m.rgb}">⚡ CONNECT</button>
+        <!-- Connect APIs — folded into the card (replaces the old standalone ⚡ CONNECT button) -->
+        <div style="margin-bottom:9px">
+          <div class="op-connect-head" onclick="event.stopPropagation();(function(el){var b=el.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';el.querySelector('.op-connect-caret').textContent=b.style.display==='none'?'▸':'▾';})(this)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;color:rgba(${m.rgb},0.85);border:1px solid rgba(${m.rgb},0.2);padding:4px 8px;border-radius:4px">
+            <span>🔌 CONNECT APIS</span><span class="op-connect-caret">▸</span>
+          </div>
+          <div style="display:none;padding:7px 2px 2px">
+            <button class="op-action" onclick="event.stopPropagation();openAPIConnector('${a.name}')" style="--op-color:${m.color};--op-rgb:${m.rgb};width:100%">＋ Add / Manage API Keys</button>
+          </div>
+        </div>
+
+        <!-- Action — single bold Deploy (opens the agent's chat / Mission Control) -->
+        <div>
+          <button class="op-action op-deploy-primary" onclick="event.stopPropagation();chatWithAgent('${a.name}')" style="--op-color:${m.color};--op-rgb:${m.rgb};width:100%;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,${m.color},rgba(${m.rgb},0.6));color:#02141a;border:none;box-shadow:0 0 16px rgba(${m.rgb},0.35)">▶ DEPLOY</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
+
+/* A3 — consolidate the two agent surfaces into ONE Agents tab with a Grid/Swivel toggle.
+   The swivel (#agentDeployCard, the "AGENT DEPLOYMENT INTERFACE" character-sheet turntable)
+   originally lived in the Forge view. Rather than duplicate its DOM/ids, we physically move
+   that same node into #agentSwivelMount when the Swivel view is picked, and move it back to
+   its Forge home when Grid is picked. Reuses the existing renderCarousel(). */
+let _agentsViewMode = 'grid';
+let _agentDeployHome = null; // remembers the swivel's original parent so we can restore it
+function setAgentsView(mode) {
+  _agentsViewMode = (mode === 'swivel') ? 'swivel' : 'grid';
+  const grid   = document.getElementById('agent3DGrid');
+  const mount  = document.getElementById('agentSwivelMount');
+  const swivel = document.getElementById('agentDeployCard');
+  const gBtn   = document.getElementById('agViewGridBtn');
+  const sBtn   = document.getElementById('agViewSwivelBtn');
+  if (gBtn) gBtn.classList.toggle('active', _agentsViewMode === 'grid');
+  if (sBtn) sBtn.classList.toggle('active', _agentsViewMode === 'swivel');
+
+  if (_agentsViewMode === 'swivel') {
+    if (grid) grid.style.display = 'none';
+    if (mount) mount.style.display = 'block';
+    // relocate the swivel node into the Agents tab (remember its home the first time)
+    if (swivel && mount && swivel.parentNode !== mount) {
+      if (!_agentDeployHome) _agentDeployHome = { parent: swivel.parentNode, next: swivel.nextSibling };
+      mount.appendChild(swivel);
+    }
+    try { if (typeof renderCarousel === 'function') renderCarousel(); } catch(e) {}
+    setTimeout(() => { try { renderCarousel(); } catch(e) {} }, 80);
+  } else {
+    if (grid) grid.style.display = '';
+    if (mount) mount.style.display = 'none';
+    // send the swivel node back to its Forge home so the Forge view keeps working
+    if (swivel && _agentDeployHome && _agentDeployHome.parent && swivel.parentNode !== _agentDeployHome.parent) {
+      _agentDeployHome.parent.insertBefore(swivel, _agentDeployHome.next);
+    }
+    try { render3DAgentCards(); } catch(e) {}
+  }
+}
+window.setAgentsView = setAgentsView;
 
 function promptGenerateAgentImage(agentName) {
   const key = prompt(`Enter your AceDataCloud API token to generate ${agentName}'s avatar via Nano Banana 2:`);
@@ -23277,7 +23386,9 @@ function initPopoutDrag() {
 function openPopout() {
   const el = document.getElementById('popout');
   if (!el) return;
-  // If minimized, just restore
+  // A5: opening MC clears the header "minimized" chip + persisted state.
+  try { const chip = document.getElementById('tbMcChip'); if (chip) chip.style.display = 'none'; localStorage.setItem('shaddai_mc_min', '0'); } catch(_) {}
+  // If minimized (legacy in-place collapse), just restore
   if (el.classList.contains('minimized')) {
     el.classList.remove('minimized');
     el.style.height = '';
@@ -23311,18 +23422,31 @@ function closePopout() {
   document.getElementById('popout').style.display = 'none';
 }
 
+// A5: Mission Control minimize now TUCKS the popout into the top header as a compact "◈ MC" chip.
+// Clicking the chip (restoreMissionControl) reopens it. State persists in localStorage.
 function minimizePopout() {
   const el = document.getElementById('popout');
   if (!el) return;
-  const isMin = el.classList.contains('minimized');
-  if (isMin) {
-    el.classList.remove('minimized');
-    el.style.height = '';
-  } else {
-    el.classList.remove('maximized');
-    el.classList.add('minimized');
-  }
+  el.classList.remove('maximized', 'minimized');
+  el.style.display = 'none';
+  const chip = document.getElementById('tbMcChip');
+  if (chip) chip.style.display = 'flex';
+  try { localStorage.setItem('shaddai_mc_min', '1'); } catch(_) {}
 }
+function restoreMissionControl() {
+  const chip = document.getElementById('tbMcChip');
+  if (chip) chip.style.display = 'none';
+  try { localStorage.setItem('shaddai_mc_min', '0'); } catch(_) {}
+  const el = document.getElementById('popout');
+  if (el) el.classList.remove('minimized');
+  if (typeof openPopout === 'function') openPopout();
+}
+// Restore the minimized chip on load if MC was left minimized last session.
+try { document.addEventListener('DOMContentLoaded', function(){
+  if (localStorage.getItem('shaddai_mc_min') === '1') {
+    var chip = document.getElementById('tbMcChip'); if (chip) chip.style.display = 'flex';
+  }
+}); } catch(_) {}
 
 // ================== COMMAND PALETTE ==================
 let PALETTE_COMMANDS = [];
@@ -24177,8 +24301,8 @@ function showView(v) {
   if (v === 'tools')     v = 'automation';
   if (v === 'tasks')     v = 'workflow';
   if (v === 'markets')   v = 'pipeline';
-  // E3: retired standalone views now live as Office sub-tabs — route through Office.
-  if (v === 'projects' || v === 'skills' || v === 'library-notes') {
+  // E3/A4: retired standalone views now live as Office sub-tabs — route through Office.
+  if (v === 'projects' || v === 'skills' || v === 'library-notes' || v === 'billing') {
     const _sub = (v === 'library-notes') ? 'library' : v;
     _hideAllOutputs();
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -24215,7 +24339,7 @@ function showView(v) {
       // Respect the side rail (210px) so the view isn't hidden behind the nav when tabs are docked left/right.
       const sbL = document.body.classList.contains('ly-sb');
       const sbR = document.body.classList.contains('ly-sb-right');
-      viewEl.style.marginTop = '126px';
+      viewEl.style.marginTop = '82px'; /* A5: agentBar removed from header stack */
       viewEl.style.padding = '0 20px 20px 20px';
       viewEl.style.marginLeft = sbL ? '210px' : '';
       viewEl.style.marginRight = sbR ? '210px' : '';
@@ -24235,7 +24359,7 @@ function showView(v) {
   if (v === 'news')         renderNews();
   if (v === 'commerce')     renderCommerce();
   // Note: pixel office init happens in switchOfficeTab('pixel'), not here
-  if (v === 'agents')       renderAgents();
+  if (v === 'agents')       { renderAgents(); try { if (typeof setAgentsView === 'function') setAgentsView(_agentsViewMode || 'grid'); } catch(e) {} }
   if (v === 'workflow')     { renderTasks(); if (typeof initWorkflowsTab === 'function') { try { initWorkflowsTab(); } catch(e){} } }
   if (v === 'library-notes'){ renderLibrary(); renderNotes(); if (typeof renderRagFileList === 'function') setTimeout(renderRagFileList, 200); }
   if (v === 'projects')     renderProjects();
@@ -24245,7 +24369,11 @@ function showView(v) {
   if (v === 'wallet')     { if (window._walletPubkey) { document.getElementById('walletNotConnected').style.display='none'; document.getElementById('walletConnected').style.display='block'; } if (typeof loadPaymentList === 'function') loadPaymentList(); if (typeof renderAgentEarnings === 'function') renderAgentEarnings(); }
   if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; }
   if (v === 'chat')       { updateChatRoutingDisplay(); }
-  if (v === 'forge')      { try { renderCarousel(); } catch(e) {} setTimeout(() => { try { renderCarousel(); } catch(e) {} }, 80); }
+  if (v === 'forge')      {
+    // A3: if the swivel was relocated into the Agents tab, bring it home before rendering Forge.
+    try { const sw=document.getElementById('agentDeployCard'); if (sw && _agentDeployHome && _agentDeployHome.parent && sw.parentNode!==_agentDeployHome.parent) { _agentDeployHome.parent.insertBefore(sw, _agentDeployHome.next); const m=document.getElementById('agentSwivelMount'); if(m) m.style.display='none'; _agentsViewMode='grid'; const gB=document.getElementById('agViewGridBtn'),sB=document.getElementById('agViewSwivelBtn'); if(gB)gB.classList.add('active'); if(sB)sB.classList.remove('active'); const g=document.getElementById('agent3DGrid'); if(g)g.style.display=''; } } catch(e) {}
+    try { renderCarousel(); } catch(e) {} setTimeout(() => { try { renderCarousel(); } catch(e) {} }, 80);
+  }
   if (v === 'skills')     { setTimeout(() => { if (typeof loadSkillsLibrary === 'function') loadSkillsLibrary(); if (typeof renderSkillsModelsTab === 'function' && window._skActiveTab==='models') renderSkillsModelsTab(); }, 80); }
   if (v === 'apis')       { renderAPIs(); if (typeof renderApiCarousel === 'function') renderApiCarousel(); if (typeof renderApiKeysPanel === 'function') renderApiKeysPanel(); }
   if (v === 'media')      { if (typeof setMediaViewMode === 'function') setMediaViewMode(localStorage.getItem('shaddai_media_view') || 'modules'); }
@@ -26363,16 +26491,18 @@ function _e3RelocateIntoOffice(sourceViewId, panelId, initFn) {
 }
 
 function switchOfficeTab(tab) {
-  const rooms = ['Command', 'Projects', 'Skills', 'Workflows', 'Pixel', 'Boardroom', 'Library', 'Studio', 'Safety'];
+  // A4: 'workflows' removed (owner) → Workflow is top-level only. 'billing' added as an Office sub-tab.
+  if (tab === 'workflows') { try { showView('workflow'); } catch(e){} return; } // legacy callers still work
+  const rooms = ['Command', 'Projects', 'Skills', 'Billing', 'Pixel', 'Boardroom', 'Library', 'Studio', 'Safety'];
   rooms.forEach(r => {
     const el = document.getElementById('office' + r);
-    if (el) { el.style.display = r.toLowerCase() === tab ? (r === 'Command' || r === 'Workflows' || r === 'Pixel' ? 'flex' : 'block') : 'none'; }
+    if (el) { el.style.display = r.toLowerCase() === tab ? (r === 'Command' || r === 'Pixel' ? 'flex' : 'block') : 'none'; }
   });
-  for (let i = 1; i <= 8; i++) {
+  for (let i = 1; i <= 9; i++) {
     const btn = document.getElementById('officeTab' + i);
     if (btn) btn.classList.remove('active');
   }
-  const tabMap = { command: 1, projects: 7, skills: 8, workflows: 5, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4 };
+  const tabMap = { command: 1, projects: 7, skills: 8, billing: 9, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4 };
   const activeBtn = document.getElementById('officeTab' + tabMap[tab]);
   if (activeBtn) activeBtn.classList.add('active');
   if (tab === 'projects') {
@@ -26397,7 +26527,10 @@ function switchOfficeTab(tab) {
     try { if (typeof renderNotes === 'function') renderNotes(); } catch(e){}
     try { if (typeof renderRagFileList === 'function') renderRagFileList(); } catch(e){}
   }
-  if (tab === 'workflows') initWorkflowsTab();
+  if (tab === 'billing') {
+    // A4: migrate the standalone #billingView content into #officeBilling once, then (re)render it.
+    _e3RelocateIntoOffice('billingView', 'officeBilling', typeof renderBillingView === 'function' ? renderBillingView : null);
+  }
   if (tab === 'pixel') {
     // Three timed attempts — browser needs layout recalc after display:flex before canvas dims are right
     if (typeof initPixelOffice === 'function') {
@@ -31402,7 +31535,7 @@ function exportAuditLog() {
 // Agent Registry Data
 // ── AGENT REGISTRY — Loaded from Obsidian vault: SHADDAI OBSIDIAN/Agents/ ──
 const AGENT_REGISTRY = [
-  { name: 'SHADDAI', color: '#ffd700', port: 8000, skills: ['routing', 'orchestration', 'code', 'spiritual', 'operations'], price: '0.005', wallet: '', stake: 0.5, status: 'active', jobs: 127, earnings: 2.84, stars: 5, reviews: 42, rank: 'THE SOURCE',
+  { name: 'SHADDAI', color: '#f0b429', port: 8000, skills: ['routing', 'orchestration', 'code', 'spiritual', 'operations'], price: '0.005', wallet: '', stake: 0.5, status: 'active', jobs: 127, earnings: 2.84, stars: 5, reviews: 42, rank: 'THE SOURCE',
     description: 'THE SOURCE — every task routes through SHADDAI first. The orchestrator that delegates to the 6 specialists and runs multi-agent workflow chains. Real, executable tools across orchestration, memory, web/knowledge, markets, compute and economy. Brain: Ollama llama3.2 primary, cloud (Groq/Claude) for heavy reasoning.',
     outfit: { head:'helmet', body:'armor', accent:'cape', accessory:'visor' },
     skillDetails: [
@@ -31413,7 +31546,7 @@ const AGENT_REGISTRY = [
       { name:'Compute & Files', level:5, desc:'run_js · calculate · write_file · count_tokens · hash_text · get_uuid' },
       { name:'Economy & Ops', level:4, desc:'mint_collectible · list_open_jobs · complete_job · pay_api_call · post_discord' }
     ]},
-  { name: 'ZEROX', color: '#00f0ff', port: 8001, skills: ['trading', 'finance', 'scaling', 'market-analysis', 'on-chain'], price: '0.003', wallet: '', stake: 0.3, status: 'active', jobs: 89, earnings: 1.62, stars: 4.8, reviews: 31, rank: 'Market Intelligence',
+  { name: 'ZEROX', color: '#00e5ff', port: 8001, skills: ['trading', 'finance', 'scaling', 'market-analysis', 'on-chain'], price: '0.003', wallet: '', stake: 0.3, status: 'active', jobs: 89, earnings: 1.62, stars: 4.8, reviews: 31, rank: 'Market Intelligence',
     description: 'Wealth & Revenue Engine — real tools: live prices across CEX/DEX, DeFi TVL & on-chain flows, whale & funding signals, and trade execution. Brain: Groq primary, Ollama fallback. The empire\'s market intelligence.',
     outfit: { head:'cap', body:'vest', accent:'glasses', accessory:'headset' },
     skillDetails: [
@@ -31424,7 +31557,7 @@ const AGENT_REGISTRY = [
       { name:'Analysis', level:4, desc:'analyze_sentiment · get_stablecoin_data · get_protocol_revenue · get_fear_greed_history' },
       { name:'Marketplace', level:4, desc:'mint_collectible · list_collectible · browse_listings · complete_job' }
     ]},
-  { name: 'ORACLE', color: '#b06aff', port: 8002, skills: ['esoteric', 'astrology', 'knowledge', 'anatomy', 'sacred-geometry'], price: '0.003', wallet: '', stake: 0.25, status: 'active', jobs: 74, earnings: 1.15, stars: 4.9, reviews: 28, rank: 'Esoteric & Knowledge',
+  { name: 'ORACLE', color: '#a78bfa', port: 8002, skills: ['esoteric', 'astrology', 'knowledge', 'anatomy', 'sacred-geometry'], price: '0.003', wallet: '', stake: 0.25, status: 'active', jobs: 74, earnings: 1.15, stars: 4.9, reviews: 28, rank: 'Esoteric & Knowledge',
     description: 'Research & Intelligence — real tools: deep web research, knowledge bases (Wikipedia, arXiv, StackOverflow), live news & communities, and NLP analysis. Brain: OpenRouter/Gemini. The empire\'s research engine + keeper of the (premium) Esoteric Archive.',
     outfit: { head:'hood', body:'robe', accent:'staff', accessory:'amulet' },
     skillDetails: [
@@ -31434,7 +31567,7 @@ const AGENT_REGISTRY = [
       { name:'NLP Analysis', level:5, desc:'analyze_sentiment · extract_keywords · extract_entities · summarize_text · detect_language' },
       { name:'Live Data', level:4, desc:'fetch_price · get_fear_greed · weather_live · get_country_info · get_timezone · get_moon_phase' }
     ]},
-  { name: 'NEXUS', color: '#00ff88', port: 8003, skills: ['orchestration', 'workflow', 'scheduling', 'routing', 'ops'], price: '0.002', wallet: '', stake: 0.15, status: 'active', jobs: 156, earnings: 1.98, stars: 4.7, reviews: 35, rank: 'Auto-Router',
+  { name: 'NEXUS', color: '#00f0ff', port: 8003, skills: ['orchestration', 'workflow', 'scheduling', 'routing', 'ops'], price: '0.002', wallet: '', stake: 0.15, status: 'active', jobs: 156, earnings: 1.98, stars: 4.7, reviews: 35, rank: 'Auto-Router',
     description: 'Technical Architect — real tools: runs JS/Python, reads/writes files, pulls GitHub & npm intel, audits code, and bundles dev utilities. Brain: OpenRouter. The build & infrastructure backbone of the council.',
     outfit: { head:'antenna', body:'jacket', accent:'belt', accessory:'drone' },
     skillDetails: [
@@ -31444,7 +31577,7 @@ const AGENT_REGISTRY = [
       { name:'Validation & Security', level:4, desc:'check_security · check_port · validate_json · regex_test · get_public_apis' },
       { name:'Dev Utilities', level:4, desc:'base64_codec · hash_text · diff_texts · convert_units · generate_mermaid · markdown_to_html' }
     ]},
-  { name: 'TURTLE', color: '#ff7b3d', port: 8004, skills: ['gamedesign', 'pixel-art', 'music', 'imaging', 'branding'], price: '0.004', wallet: '', stake: 0.2, status: 'active', jobs: 63, earnings: 0.94, stars: 4.9, reviews: 22, rank: 'Creative & Game Design',
+  { name: 'TURTLE', color: '#00ff88', port: 8004, skills: ['gamedesign', 'pixel-art', 'music', 'imaging', 'branding'], price: '0.004', wallet: '', stake: 0.2, status: 'active', jobs: 63, earnings: 0.94, stars: 4.9, reviews: 22, rank: 'Creative & Game Design',
     description: 'UI/UX & Creative — real tools: FLUX image generation, design helpers (palettes, QR, diagrams), and content/web utilities. Brain: Ollama. The artistic hand of the council (runs The Museum).',
     outfit: { head:'beret', body:'smock', accent:'palette', accessory:'brush' },
     skillDetails: [
@@ -31453,7 +31586,7 @@ const AGENT_REGISTRY = [
       { name:'Content & Web', level:4, desc:'search_web · wikipedia_search · get_wikipedia_summary · write_file · shorten_url' },
       { name:'Inspiration', level:3, desc:'get_random_quote · get_joke · random_user' }
     ]},
-  { name: 'QUILL', color: '#9b59b6', port: 8005, skills: ['writing', 'chat', 'phonetics', 'learning', 'dev-tools'], price: '0.002', wallet: '', stake: 0.1, status: 'active', jobs: 98, earnings: 1.22, stars: 4.8, reviews: 33, rank: 'Writer & Chat',
+  { name: 'QUILL', color: '#fb923c', port: 8005, skills: ['writing', 'chat', 'phonetics', 'learning', 'dev-tools'], price: '0.002', wallet: '', stake: 0.1, status: 'active', jobs: 98, earnings: 1.22, stars: 4.8, reviews: 33, rank: 'Writer & Chat',
     description: 'Writing & Communication — real tools: drafting & editing, translation, content research, and multi-channel publishing (Discord, Telegram, webhooks). Runs The Library. Adapts voice to any brand or persona.',
     outfit: { head:'fedora', body:'sweater', accent:'scarf', accessory:'pen' },
     skillDetails: [
@@ -31463,7 +31596,7 @@ const AGENT_REGISTRY = [
       { name:'Publishing', level:5, desc:'post_discord · post_webhook · send_telegram · create_github_issue · markdown_to_html · shorten_url' },
       { name:'Analysis', level:4, desc:'analyze_sentiment · extract_keywords · regex_test · count_tokens' }
     ]},
-  { name: 'PIKADON', color: '#ff4070', port: 8008, skills: ['security', 'encryption', 'auth', 'compliance', 'forensics'], price: '0.003', wallet: '', stake: 0.35, status: 'active', jobs: 45, earnings: 0.78, stars: 5, reviews: 18, rank: 'Security Fortress',
+  { name: 'PIKADON', color: '#f43f5e', port: 8008, skills: ['security', 'encryption', 'auth', 'compliance', 'forensics'], price: '0.003', wallet: '', stake: 0.35, status: 'active', jobs: 45, earnings: 0.78, stars: 5, reviews: 18, rank: 'Security Fortress',
     description: 'Security & Compliance — real tools: code & password audits, port/IP recon, hashing & encoding, JSON/regex validation, and incident reporting. Runs The Aegis. The last line of defense for the council.',
     outfit: { head:'mask', body:'tactical', accent:'shield', accessory:'scanner' },
     skillDetails: [
@@ -52679,8 +52812,25 @@ window.setNavPos=function(p){var b=document.body;b.classList.remove('ly-sb','ly-
     if(av&&ma&&!ma.contains(av)){var L=p==='left',R=p==='right';
       av.style.marginLeft=L?'210px':'';av.style.marginRight=R?'210px':'';av.style.width=(L||R)?'calc(100% - 210px)':'100%';}
   }catch(e){}};
+// A5: header tab-mover — cycle the nav dock position (top → left → right → bottom → top).
+// Reuses setNavPos(); updates the header button's arrow glyph + active tint per position.
+window.cycleNavPos=function(){
+  var order=['top','left','right','bottom'];
+  var cur=(localStorage.getItem('shaddai_navpos')||'top');
+  var next=order[(order.indexOf(cur)+1)%order.length];
+  try{ setNavPos(next); }catch(e){}
+  _updateNavMoverIcon(next);
+};
+window._updateNavMoverIcon=function(p){
+  var glyph={top:'⬆',left:'⬅',right:'➡',bottom:'⬇'}[p]||'⬍';
+  var ic=document.getElementById('tbNavMoverIc'); if(ic) ic.textContent=glyph;
+  var b=document.getElementById('tbNavMover'); if(b){ b.classList.add('on'); b.title='Tabs docked: '+p+' — click to move'; }
+};
 // Default: dashboard NEXT TO the tabs (left side-nav) on desktop; top nav on mobile. Respects a saved choice.
-try{ var _sp=localStorage.getItem('shaddai_navpos'); setNavPos(_sp||((window.innerWidth>768)?'left':'top')); }catch(e){ try{setNavPos('top');}catch(_){} }
+try{ var _sp=localStorage.getItem('shaddai_navpos'); var _p0=_sp||((window.innerWidth>768)?'left':'top'); setNavPos(_p0); try{_updateNavMoverIcon(_p0);}catch(_){} }catch(e){ try{setNavPos('top');}catch(_){} }
+// A5: retire the floating nav-position picker (its function now lives as the compact header tab-mover).
+try{ var _npp=document.getElementById('navPosPicker'); if(_npp) _npp.style.display='none';
+     var _npps=document.getElementById('navPosPickerShow'); if(_npps) _npps.style.display='none'; }catch(_){}
 // One-time cleanup: remove leftover test/demo jobs from a user's saved Job Board so beta testers see a clean board.
 try{
   var _jb=JSON.parse(localStorage.getItem('shaddai_jobs')||'[]');
