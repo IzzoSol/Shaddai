@@ -40468,6 +40468,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
     <!-- TAB 1: AGENTS -->
     <div id="cmd-agents" style="display:block;padding:12px 0">
+      <!-- ⬡ AGENTS AT WORK — hero "while you were away" + live feed (work-client.js) -->
+      <div id="agentsAtWorkMount"></div>
       <div class="card">
         <div class="card-head"><span class="card-title">🏆 Agent Levels &amp; Badges</span><span style="font-size:9px;color:var(--text-muted)">XP earned by doing real bounties</span></div>
         <div id="agentLevelsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
@@ -54229,6 +54231,7 @@ window.hireAgentX402=async function(){
 <script defer src="/rooms-plus.js"></script>
 <script defer src="/rooms-command-deck.js"></script>
 <script defer src="/economy-client.js"></script>
+<script defer src="/work-client.js"></script>
 <script defer src="/agents-pipeline.js"></script>
 <script defer src="/agent-editor.js"></script>
 <!-- ════════ /DEPTH + GLOW + FORGE LAYER ════════ -->

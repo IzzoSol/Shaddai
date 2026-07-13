@@ -759,6 +759,7 @@ app.use('/api/chat', require('./lib/chat-routes'));                   // realm +
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
 app.use('/api/economy', require('./economy-routes'));                 // Sparks ledger (append-only, idempotent; Postgres or atomic dev store)
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
+app.use('/api/work', require('./work-sessions'));                     // agent work loop: real work -> Sparks payout + while-away summary + live feed
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
