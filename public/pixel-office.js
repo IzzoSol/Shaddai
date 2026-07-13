@@ -29,7 +29,7 @@
  * ==========================================================================*/
 (function () {
   'use strict';
-  if (window.PixelOffice && window.PixelOffice.__v === 5) return; // already loaded
+  if (window.PixelOffice && window.PixelOffice.__v === 6) return; // already loaded
 
   // ---- Brand + agent theming ------------------------------------------------
   // Positions re-spaced for the larger 22x20 footprint (see LAYOUT below).
@@ -196,6 +196,36 @@
   let lastT = 0, hoverTile = null, hoverDoor = null;
   let mountAt = 0;                              // for the staggered intro reveal
   let nextBubbleAt = 0;                         // scheduler for idle chatter
+
+  // ---- MULTIPLAYER (opt-in; single-player unchanged when offline) -----------
+  //   Contract:
+  //     POST /api/mp/sync  {room,id,name,agent,x,y}
+  //        -> {ok, online, players:[{id,name,agent,x,y}], chat:[{name,text,t}]}
+  //     POST /api/mp/chat  {room,id,name,text} -> {ok}
+  //   All fetch is try/catch + backoff. On repeated failure or non-OK we
+  //   permanently DISABLE MP for this mount (no console spam, never throws).
+  const MP = {
+    room: 'office',
+    joined: false,                 // are we online?
+    available: true,               // set false after repeated failures / opened as file://
+    player: null,                  // {id,name} persistent identity
+    you: null,                     // YOUR avatar sprite (walks the office when joined)
+    others: {},                    // id -> remote sprite runtime {id,name,agent,col,row,tcol,trow,...}
+    chat: [],                      // last chat array from sync (name,text,t)
+    online: 0,                     // reported online count
+    pollTimer: 0,                  // setInterval handle
+    inFlight: false,               // guard against overlapping syncs
+    fails: 0,                      // consecutive failure counter
+    POLL_MS: 1300,
+    MAX_FAILS: 4,
+    panel: null,                   // chat panel DOM
+    goBtn: null,                   // "Go Online" HUD button
+    onlineChip: null,              // "● N online" indicator
+    msgList: null, msgInput: null, // chat DOM refs
+    nameInput: null,
+    seenChatKey: '',               // to skip re-rendering identical chat
+  };
+  const YOU_COLOR = '#e8eef5';     // neutral operator tone (distinct from the 7 agents)
 
   // ---- ISO MATH -------------------------------------------------------------
   function isoToScreen(col, row) {
@@ -381,6 +411,9 @@
       }
       nextBubbleAt = now + 3400 + Math.random() * 3600;
     }
+
+    // multiplayer: move YOUR avatar + glide remote players (no-op when offline)
+    if (MP.joined) updateMP(dt, now);
 
     // ease camera toward target (recenter)
     originX += (camTargetX - originX) * Math.min(1, dt * 6);
@@ -1006,6 +1039,140 @@
     drawBubble(sp, bx, by, now);
   }
 
+  // ---- Draw a MULTIPLAYER avatar (YOU or a remote guest) --------------------
+  //   Same charming operative silhouette as the agents but in a neutral operator
+  //   tone so real humans read as clearly distinct from the 7 AI agents. YOUR
+  //   avatar gets a bright "YOU" tag + selection-style ring; guests get a plain
+  //   name pill with a soft presence dot.
+  function drawPlayer(sp, now, isYou) {
+    const p = isoToScreen(sp.col, sp.row);
+    const s = scale;
+    const walking = !!sp.path || (!isYou && (Math.abs(sp.tcol - sp.col) > 0.03 || Math.abs(sp.trow - sp.row) > 0.03));
+    const accent = isYou ? '#00ff88' : '#8fa6c0';      // YOU=brand green tag, guests=cool grey
+    const body = sp.color || YOU_COLOR;
+    const fdir = sp.face || 1;
+    const breathe = Math.sin(sp.breath) * (walking ? 0.6 : 1.0);
+    const bob = (Math.sin(sp.bob) * (walking ? 2.6 : 0.9) + breathe * 0.7) * s;
+    const bx = p.x, by = p.y - bob;
+
+    ctx.save();
+
+    // ground glow (subtle, accent-tinted)
+    const glowR = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, 16 * s);
+    glowR.addColorStop(0, accent + '33');
+    glowR.addColorStop(1, accent + '00');
+    ctx.fillStyle = glowR;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, 16 * s, 8 * s, 0, 0, Math.PI * 2); ctx.fill();
+
+    // contact shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 1.5 * s, (walking ? 10.5 : 9.5) * s, 4.4 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // YOU gets a pulsing presence ring so you always find yourself
+    if (isYou) {
+      const k = (Math.sin(now / 300) + 1) / 2;
+      ctx.save();
+      ctx.strokeStyle = accent; ctx.lineWidth = 2 * s;
+      ctx.shadowColor = accent; ctx.shadowBlur = 14;
+      ctx.globalAlpha = 0.55 + k * 0.4;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, (13 + k * 3) * s, (6.5 + k * 1.6) * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---- legs with stride ----
+    const gait = Math.sin(sp.bob * 2);
+    const strideF = walking ? gait * 3.0 * s : 0;
+    const strideB = walking ? -gait * 3.0 * s : 0;
+    ctx.fillStyle = shade(body, -0.5);
+    ctx.fillRect(bx - 5 * s, by - 7 * s, 3.4 * s, 7 * s + Math.max(0, strideB));
+    ctx.fillStyle = '#1a1f26';
+    ctx.fillRect(bx - 5.4 * s, by - 0.5 * s + Math.max(0, strideB), 4.2 * s, 2 * s);
+    ctx.fillStyle = shade(body, -0.4);
+    ctx.fillRect(bx + 1.6 * s, by - 7 * s, 3.4 * s, 7 * s + Math.max(0, strideF));
+    ctx.fillStyle = '#222831';
+    ctx.fillRect(bx + 1.2 * s, by - 0.5 * s + Math.max(0, strideF), 4.2 * s, 2 * s);
+
+    // ---- torso trapezoid ----
+    const topY = by - 25 * s, botY = by - 7 * s;
+    const shoW = 8.2 * s, waistW = 6.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(bx - shoW, topY); ctx.lineTo(bx + shoW, topY);
+    ctx.lineTo(bx + waistW, botY); ctx.lineTo(bx - waistW, botY);
+    ctx.closePath();
+    ctx.fillStyle = body; ctx.fill();
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = shade(body, -0.2);
+    ctx.fillRect(fdir > 0 ? bx : bx - shoW - 1, topY - 1, shoW + 1, 20 * s);
+    // accent chest stripe marks a human operator
+    ctx.fillStyle = accent;
+    ctx.fillRect(bx - 0.9 * s, topY + 2 * s, 1.8 * s, 14 * s);
+    ctx.restore();
+
+    // ---- arm ----
+    const armSwing = walking ? gait * 3.2 * s : Math.sin(sp.breath) * 0.5 * s;
+    ctx.fillStyle = shade(body, -0.28);
+    const ax = fdir > 0 ? bx + shoW - 1.2 * s : bx - shoW - 1.6 * s;
+    ctx.fillRect(ax, topY + 2 * s + Math.max(0, armSwing), 2.8 * s, 8 * s);
+
+    // ---- head ----
+    const hy = by - 35 * s;
+    ctx.fillStyle = '#e7ecf2';
+    roundRect(bx - 5 * s, hy - 1 * s, 10 * s, 11 * s, 3.2 * s); ctx.fill();
+    ctx.save(); roundRect(bx - 5 * s, hy - 1 * s, 10 * s, 11 * s, 3.2 * s); ctx.clip();
+    ctx.fillStyle = shade('#e7ecf2', -0.13);
+    ctx.fillRect(fdir > 0 ? bx : bx - 5 * s, hy - 1 * s, 5 * s, 12 * s);
+    ctx.fillStyle = accent;                       // accent headband
+    ctx.fillRect(bx - 5 * s, hy - 1 * s, 10 * s, 2.4 * s);
+    ctx.restore();
+    // visor (accent, blinks)
+    const blinking = now < sp.blinkUntil;
+    ctx.save();
+    ctx.shadowColor = accent; ctx.shadowBlur = 7;
+    ctx.fillStyle = accent;
+    if (blinking) ctx.fillRect(bx - 4.4 * s, hy + 5.4 * s, 8.8 * s, 1 * s);
+    else ctx.fillRect(bx - 4.4 * s, hy + 4 * s, 8.8 * s, 3.2 * s);
+    ctx.restore();
+
+    // ---- name pill + YOU tag / presence dot ----
+    ctx.font = `700 ${Math.max(9, 9.5 * s) | 0}px 'Share Tech Mono', monospace`;
+    ctx.textAlign = 'center';
+    const label = String(sp.name || (isYou ? 'YOU' : 'Guest')).slice(0, 16);
+    const tw = ctx.measureText(label).width;
+    const ly = by - 52 * s;
+    ctx.fillStyle = 'rgba(6,11,17,0.78)';
+    roundRect(bx - tw / 2 - 10, ly, tw + 20, 15, 5); ctx.fill();
+    ctx.strokeStyle = accent + (isYou ? 'cc' : '77'); ctx.lineWidth = 1; ctx.stroke();
+    const dotA = 0.55 + (Math.sin(now / 420 + sp.bob) + 1) / 2 * 0.45;
+    ctx.save(); ctx.globalAlpha = dotA;
+    ctx.fillStyle = accent; ctx.shadowColor = accent; ctx.shadowBlur = 5;
+    ctx.beginPath(); ctx.arc(bx - tw / 2 - 3, ly + 7.5, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#eef4f2';
+    ctx.fillText(label, bx + 4, ly + 11);
+
+    if (isYou) {
+      // small "YOU" tag pill above the name
+      ctx.font = `700 8px 'Share Tech Mono', monospace`;
+      const yt = 'YOU';
+      const ytw = ctx.measureText(yt).width;
+      ctx.fillStyle = accent;
+      ctx.shadowColor = accent; ctx.shadowBlur = 6;
+      roundRect(bx - ytw / 2 - 5, ly - 13, ytw + 10, 11, 4); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#04120c';
+      ctx.fillText(yt, bx, ly - 4);
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+
+    // speech bubble (chat) floats above
+    drawBubble(sp, bx, by, now);
+  }
+
   // Rounded rect path helper.
   function roundRect(x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -1189,14 +1356,24 @@
 
     ctx.restore(); // rooms alpha
 
-    // agents, depth-sorted (draw farther/back first), with per-agent staggered fade-in
-    Object.values(sprites)
-      .sort((a, b) => (a.col + a.row) - (b.col + b.row))
-      .forEach(sp => {
-        const introStart = 380 + sp.idx * 70;
-        const intro = Math.max(0, Math.min(1, (t0 - introStart) / 320));
-        if (intro <= 0) return;
-        drawAgent(sp, now, intro);
+    // agents + multiplayer avatars, depth-sorted together (draw back first) so
+    // occlusion between AI agents and real players reads correctly.
+    const drawList = Object.values(sprites).map(sp => ({ sp, kind: 'agent' }));
+    if (MP.joined) {
+      for (const id in MP.others) drawList.push({ sp: MP.others[id], kind: 'remote' });
+      if (MP.you) drawList.push({ sp: MP.you, kind: 'you' });
+    }
+    drawList
+      .sort((a, b) => (a.sp.col + a.sp.row) - (b.sp.col + b.sp.row))
+      .forEach(item => {
+        if (item.kind === 'agent') {
+          const introStart = 380 + item.sp.idx * 70;
+          const intro = Math.max(0, Math.min(1, (t0 - introStart) / 320));
+          if (intro <= 0) return;
+          drawAgent(item.sp, now, intro);
+        } else {
+          drawPlayer(item.sp, now, item.kind === 'you');
+        }
       });
 
     // building-entry toast (floats over the target tile, fades out)
@@ -1386,9 +1563,299 @@
     // building click (forge routes to dashboard; soon-tiles show a toast)
     const b = buildingAtTile(c, r);
     if (b) { enterBuilding(b); return; }
-    // else: walk the selected agent to the clicked tile
+    // else: walk to the clicked tile.
+    //   When JOINED, a bare floor-click moves YOUR avatar (agent/nav/building
+    //   clicks above are untouched). When OFFLINE, behavior is unchanged: the
+    //   selected AI agent walks there.
+    if (MP.joined && MP.you) {
+      if (!isWall(c, r)) walkTo(MP.you, c, r);
+      return;
+    }
     const sp = sprites[selected];
     if (sp && !isWall(c, r)) walkTo(sp, c, r);
+  }
+
+  // ===========================================================================
+  // MULTIPLAYER — identity, join/leave, poll loop, remote render, chat.
+  // Everything below is null-safe and never throws. When the backend is absent
+  // (404 / network / file://) MP silently disables and the office keeps working.
+  // ===========================================================================
+
+  // Persistent identity in localStorage. Short random id + friendly guest name.
+  function shortId(n) {
+    const c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let s = '';
+    for (let i = 0; i < (n || 6); i++) s += c[(Math.random() * c.length) | 0];
+    return s;
+  }
+  function loadPlayer() {
+    let p = null;
+    try {
+      const raw = localStorage.getItem('pxo_player');
+      if (raw) p = JSON.parse(raw);
+    } catch (_) {}
+    if (!p || typeof p.id !== 'string' || typeof p.name !== 'string') {
+      p = { id: shortId(8), name: 'Guest-' + shortId(4) };
+      savePlayer(p);
+    }
+    return p;
+  }
+  function savePlayer(p) {
+    try { localStorage.setItem('pxo_player', JSON.stringify(p)); } catch (_) {}
+  }
+  function renamePlayer(name) {
+    if (!MP.player) return;
+    name = String(name || '').trim().slice(0, 20).replace(/[\r\n]/g, '');
+    if (!name) return;
+    MP.player.name = name;
+    savePlayer(MP.player);
+    if (MP.you) MP.you.name = name;
+  }
+
+  // Build YOUR avatar sprite (distinct neutral operator). Spawns at reception.
+  function makeYou() {
+    const spawn = [3, 3];
+    return {
+      name: MP.player ? MP.player.name : 'YOU',
+      color: YOU_COLOR, role: 'Operator', isYou: true,
+      col: spawn[0], row: spawn[1], homeCol: spawn[0], homeRow: spawn[1],
+      idx: 99, path: null, pathI: 0, face: 1,
+      bob: 0, breath: 0,
+      nextBlinkAt: performance.now() + 2000, blinkUntil: 0,
+      wanderAt: Infinity,           // YOU never auto-wanders
+      bubbleText: '', bubbleStart: 0, bubbleDur: 0,
+    };
+  }
+  // Remote-player sprite. col/row = smoothed render pos; tcol/trow = reported target.
+  function makeRemote(pl) {
+    return {
+      id: pl.id, name: String(pl.name || 'Guest').slice(0, 20),
+      color: YOU_COLOR, role: 'Guest', isRemote: true,
+      col: pl.x, row: pl.y, tcol: pl.x, trow: pl.y,
+      idx: 90, path: null, face: 1,
+      bob: Math.random() * Math.PI * 2, breath: Math.random() * Math.PI * 2,
+      nextBlinkAt: performance.now() + 1500 + Math.random() * 4000, blinkUntil: 0,
+      bubbleText: '', bubbleStart: 0, bubbleDur: 0,
+      lastChatKey: '',
+    };
+  }
+
+  // Toggle online/offline from the HUD button.
+  function toggleJoin() {
+    if (!MP.available) return;
+    if (MP.joined) leaveMP(); else joinMP();
+  }
+  function joinMP() {
+    if (!MP.available || MP.joined) return;
+    if (!MP.player) MP.player = loadPlayer();
+    MP.you = makeYou();
+    MP.joined = true;
+    MP.fails = 0;
+    updateJoinUI();
+    if (MP.panel) MP.panel.style.display = 'flex';
+    // immediate sync, then interval
+    syncMP();
+    if (MP.pollTimer) clearInterval(MP.pollTimer);
+    MP.pollTimer = setInterval(() => {
+      // pause polling while offscreen to be a good citizen
+      if (!visible) return;
+      syncMP();
+    }, MP.POLL_MS);
+  }
+  function leaveMP() {
+    MP.joined = false;
+    if (MP.pollTimer) { clearInterval(MP.pollTimer); MP.pollTimer = 0; }
+    MP.you = null;
+    MP.others = {};
+    MP.online = 0;
+    updateJoinUI();
+    if (MP.panel) MP.panel.style.display = 'none';
+  }
+  // Permanently disable MP for this mount (backend missing / repeated failure).
+  function disableMP() {
+    MP.available = false;
+    MP.joined = false;
+    if (MP.pollTimer) { clearInterval(MP.pollTimer); MP.pollTimer = 0; }
+    MP.you = null; MP.others = {}; MP.online = 0;
+    if (MP.goBtn) {
+      MP.goBtn.textContent = '◌ OFFLINE';
+      MP.goBtn.classList.add('pxo-mp-off');
+      MP.goBtn.disabled = true;
+      MP.goBtn.title = 'Multiplayer unavailable';
+    }
+    if (MP.panel) MP.panel.style.display = 'none';
+  }
+
+  // POST /api/mp/sync — report our tile, ingest other players + chat.
+  async function syncMP() {
+    if (!MP.available || !MP.joined || MP.inFlight || !MP.you) return;
+    MP.inFlight = true;
+    try {
+      const body = {
+        room: MP.room,
+        id: MP.player.id,
+        name: MP.player.name,
+        agent: selected,
+        x: Math.round(MP.you.col),
+        y: Math.round(MP.you.row),
+      };
+      const res = await fetch('/api/mp/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res || !res.ok) throw new Error('bad status');
+      const data = await res.json();
+      if (!data || data.ok !== true) throw new Error('not ok');
+      MP.fails = 0;
+      ingestPlayers(Array.isArray(data.players) ? data.players : []);
+      ingestChat(Array.isArray(data.chat) ? data.chat : []);
+      MP.online = (typeof data.online === 'number') ? data.online : (Object.keys(MP.others).length + 1);
+      updateOnlineChip();
+    } catch (_) {
+      MP.fails++;
+      if (MP.fails >= MP.MAX_FAILS) disableMP();   // silent — no console spam
+    } finally {
+      MP.inFlight = false;
+    }
+  }
+
+  // Reconcile the remote-player set: add new, retarget existing, drop gone.
+  function ingestPlayers(players) {
+    const seen = {};
+    for (const pl of players) {
+      if (!pl || typeof pl.id !== 'string' || pl.id === MP.player.id) continue;
+      const x = clampTile(+pl.x, GRID_W), y = clampTile(+pl.y, GRID_H);
+      seen[pl.id] = true;
+      let r = MP.others[pl.id];
+      if (!r) { r = makeRemote({ id: pl.id, name: pl.name, x, y }); MP.others[pl.id] = r; }
+      r.name = String(pl.name || 'Guest').slice(0, 20);
+      // face toward travel direction (screen x = dc - dr)
+      const sx = (x - r.tcol) - (y - r.trow);
+      if (Math.abs(sx) > 0.001) r.face = sx > 0 ? 1 : -1;
+      r.tcol = x; r.trow = y;                       // lerp target (glide, not teleport)
+    }
+    for (const id in MP.others) if (!seen[id]) delete MP.others[id];
+  }
+  function clampTile(v, max) {
+    if (!isFinite(v)) return 1;
+    return Math.max(0, Math.min(max - 1, Math.round(v)));
+  }
+
+  // Ingest chat: render into the panel + pop a bubble over the speaker.
+  function ingestChat(chat) {
+    MP.chat = chat;
+    // pop a speech bubble on the most recent NEW message from a remote player
+    if (chat.length) {
+      const last = chat[chat.length - 1];
+      const key = (last.name || '') + '|' + (last.text || '') + '|' + (last.t || '');
+      if (key !== MP.seenChatKey) {
+        MP.seenChatKey = key;
+        // find a remote sprite whose name matches the speaker
+        for (const id in MP.others) {
+          const r = MP.others[id];
+          if (r.name === last.name && r.lastChatKey !== key) {
+            r.lastChatKey = key;
+            sayBubble(r, String(last.text || '').slice(0, 120), 4200);
+            break;
+          }
+        }
+      }
+    }
+    renderChatList();
+  }
+
+  // POST /api/mp/chat — send a message (name+text). Never throws.
+  async function sendChat(text) {
+    if (!MP.available || !MP.joined || !MP.player) return;
+    text = String(text || '').trim().slice(0, 240);
+    if (!text) return;
+    try {
+      const res = await fetch('/api/mp/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: MP.room, id: MP.player.id, name: MP.player.name, text }),
+      });
+      if (!res || !res.ok) throw new Error('bad status');
+      // optimistic: pop our own bubble + kick a fast sync to pull the log
+      if (MP.you) sayBubble(MP.you, text.slice(0, 120), 4200);
+      syncMP();
+    } catch (_) {
+      MP.fails++;
+      if (MP.fails >= MP.MAX_FAILS) disableMP();
+    }
+  }
+
+  // ---- Chat DOM rendering (XSS-safe: textContent only, never innerHTML) -----
+  function renderChatList() {
+    if (!MP.msgList) return;
+    const key = MP.chat.map(m => (m.name || '') + '' + (m.text || '') + '' + (m.t || '')).join('');
+    if (key === MP.msgList.__key) return;          // no change → skip DOM churn
+    MP.msgList.__key = key;
+    // rebuild (small list, max 30) with safe textContent nodes
+    const nearBottom = MP.msgList.scrollHeight - MP.msgList.scrollTop - MP.msgList.clientHeight < 40;
+    MP.msgList.textContent = '';
+    for (const m of MP.chat) {
+      const row = document.createElement('div');
+      row.className = 'pxo-msg';
+      const nm = document.createElement('span');
+      nm.className = 'pxo-msg-name';
+      nm.textContent = (m.name || 'Guest') + ':';    // textContent = XSS-safe
+      const tx = document.createElement('span');
+      tx.className = 'pxo-msg-text';
+      tx.textContent = ' ' + (m.text || '');
+      row.appendChild(nm); row.appendChild(tx);
+      MP.msgList.appendChild(row);
+    }
+    if (nearBottom) MP.msgList.scrollTop = MP.msgList.scrollHeight;
+  }
+  function updateOnlineChip() {
+    if (!MP.onlineChip) return;
+    if (MP.joined) {
+      MP.onlineChip.style.display = '';
+      MP.onlineChip.textContent = '● ' + Math.max(1, MP.online | 0) + ' online';
+    } else {
+      MP.onlineChip.style.display = 'none';
+    }
+  }
+  function updateJoinUI() {
+    if (MP.goBtn && MP.available) {
+      MP.goBtn.textContent = MP.joined ? '◉ LEAVE' : '◉ GO ONLINE';
+      MP.goBtn.classList.toggle('pxo-mp-on', MP.joined);
+    }
+    updateOnlineChip();
+  }
+
+  // ---- MP update (called each frame from update()) --------------------------
+  function updateMP(dt, now) {
+    // YOUR avatar walks its path just like an agent
+    const you = MP.you;
+    if (you) {
+      you.bob += dt * 3; you.breath += dt * 1.6;
+      if (now > you.nextBlinkAt) { you.blinkUntil = now + 120; you.nextBlinkAt = now + 2200 + Math.random() * 4200; }
+      if (you.path && you.pathI < you.path.length) {
+        const tgt = you.path[you.pathI];
+        const spd = dt * 3.2;
+        const ddc = tgt.c - you.col, ddr = tgt.r - you.row;
+        const sx = ddc - ddr;
+        if (Math.abs(sx) > 0.001) you.face = sx > 0 ? 1 : -1;
+        you.col += Math.sign(ddc) * Math.min(spd, Math.abs(ddc));
+        you.row += Math.sign(ddr) * Math.min(spd, Math.abs(ddr));
+        if (Math.abs(tgt.c - you.col) < 0.02 && Math.abs(tgt.r - you.row) < 0.02) {
+          you.col = tgt.c; you.row = tgt.r; you.pathI++;
+          if (you.pathI >= you.path.length) you.path = null;
+        }
+      }
+    }
+    // remote players glide toward their reported tile (lerp, not teleport)
+    for (const id in MP.others) {
+      const r = MP.others[id];
+      r.bob += dt * 3; r.breath += dt * 1.6;
+      if (now > r.nextBlinkAt) { r.blinkUntil = now + 120; r.nextBlinkAt = now + 2200 + Math.random() * 4200; }
+      const k = Math.min(1, dt * 6);               // smoothing factor
+      r.col += (r.tcol - r.col) * k;
+      r.row += (r.trow - r.row) * k;
+    }
   }
 
   // ---- HUD ------------------------------------------------------------------
@@ -1399,6 +1866,9 @@
       '<div class="pxo-chips"></div>' +
       '<div class="pxo-tools">' +
         '<button class="pxo-btn" data-act="recenter">◎ RECENTER</button>' +
+        '<button class="pxo-btn pxo-mp-btn" data-act="join">◉ GO ONLINE</button>' +
+        '<button class="pxo-btn pxo-mp-btn" data-act="chat">✆ CHAT</button>' +
+        '<span class="pxo-online" style="display:none">● 0 online</span>' +
       '</div>' +
       '<div class="pxo-legend">' +
         '<span class="pxo-lg"><i style="background:#00ff88"></i>tile → walk</span>' +
@@ -1417,8 +1887,59 @@
     hud.querySelector('[data-act="recenter"]').addEventListener('click', () => {
       fitCamera();
     });
+    // multiplayer HUD wiring
+    MP.goBtn = hud.querySelector('[data-act="join"]');
+    MP.onlineChip = hud.querySelector('.pxo-online');
+    MP.goBtn.addEventListener('click', toggleJoin);
+    hud.querySelector('[data-act="chat"]').addEventListener('click', toggleChatPanel);
     host.appendChild(hud);
+    buildChatPanel();
+    updateJoinUI();
     refreshChips();
+  }
+
+  // ---- Chat panel (compact, on-theme, XSS-safe rendering) -------------------
+  function buildChatPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'pxo-chat';
+    panel.style.display = 'none';
+    panel.innerHTML =
+      '<div class="pxo-chat-head">' +
+        '<span class="pxo-chat-title">◉ OFFICE CHAT</span>' +
+        '<span class="pxo-chat-name">' +
+          '<input class="pxo-name-input" maxlength="20" placeholder="name" />' +
+          '<button class="pxo-name-save" title="Rename">✎</button>' +
+        '</span>' +
+        '<button class="pxo-chat-close" title="Close">✕</button>' +
+      '</div>' +
+      '<div class="pxo-msglist"></div>' +
+      '<div class="pxo-chat-input">' +
+        '<input class="pxo-msg-input" maxlength="240" placeholder="Say something…" />' +
+        '<button class="pxo-send">SEND</button>' +
+      '</div>';
+    host.appendChild(panel);
+    MP.panel = panel;
+    MP.msgList = panel.querySelector('.pxo-msglist');
+    MP.msgInput = panel.querySelector('.pxo-msg-input');
+    MP.nameInput = panel.querySelector('.pxo-name-input');
+    if (!MP.player) MP.player = loadPlayer();
+    MP.nameInput.value = MP.player.name;
+
+    const send = () => {
+      const v = MP.msgInput.value;
+      MP.msgInput.value = '';
+      sendChat(v);
+    };
+    panel.querySelector('.pxo-send').addEventListener('click', send);
+    MP.msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+    const doRename = () => { renamePlayer(MP.nameInput.value); MP.nameInput.value = MP.player.name; };
+    panel.querySelector('.pxo-name-save').addEventListener('click', doRename);
+    MP.nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doRename(); MP.msgInput.focus(); } });
+    panel.querySelector('.pxo-chat-close').addEventListener('click', () => { panel.style.display = 'none'; });
+  }
+  function toggleChatPanel() {
+    if (!MP.panel) return;
+    MP.panel.style.display = (MP.panel.style.display === 'none') ? 'flex' : 'none';
   }
   function refreshChips() {
     if (!hud) return;
@@ -1472,6 +1993,47 @@
     .pxo-lg{display:flex;align-items:center;gap:4px}
     .pxo-lg i{width:6px;height:6px;border-radius:2px;display:inline-block}
     @media(max-width:640px){.pxo-legend{display:none}}
+    /* ---- multiplayer HUD ---- */
+    .pxo-mp-btn{color:#00e5ff;background:rgba(0,229,255,.08);border-color:rgba(0,229,255,.35)}
+    .pxo-mp-btn:hover{background:#00e5ff;color:#04120c;box-shadow:0 0 14px rgba(0,229,255,.55)}
+    .pxo-btn.pxo-mp-on{color:#04120c;background:#00ff88;border-color:#00ff88;box-shadow:0 0 14px rgba(0,255,136,.55)}
+    .pxo-btn.pxo-mp-off{color:#6b7787;background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.12);cursor:not-allowed;box-shadow:none}
+    .pxo-online{font-size:8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;
+      color:#00ff88;padding:4px 8px;border-radius:20px;background:rgba(0,255,136,.08);
+      border:1px solid rgba(0,255,136,.3);align-self:center}
+    /* ---- chat panel ---- */
+    .pxo-chat{position:absolute;right:11px;bottom:52px;width:min(300px,72vw);height:min(320px,52vh);
+      display:flex;flex-direction:column;background:rgba(6,11,17,.94);
+      border:1px solid rgba(0,229,255,.3);border-radius:11px;overflow:hidden;z-index:6;
+      box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 0 1px rgba(0,229,255,.06) inset;
+      backdrop-filter:blur(4px);font-family:'Share Tech Mono',monospace}
+    .pxo-chat-head{display:flex;align-items:center;gap:6px;padding:7px 9px;
+      background:linear-gradient(90deg,rgba(0,229,255,.14),rgba(0,255,136,.05));
+      border-bottom:1px solid rgba(0,229,255,.2)}
+    .pxo-chat-title{font-size:9px;letter-spacing:1.5px;color:#00e5ff;font-weight:700}
+    .pxo-chat-name{margin-left:auto;display:flex;align-items:center;gap:3px}
+    .pxo-name-input{width:72px;font-size:9px;font-family:'Share Tech Mono',monospace;
+      color:#e8f0ee;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+      border-radius:5px;padding:3px 5px;outline:none}
+    .pxo-name-input:focus{border-color:#00ff88}
+    .pxo-name-save,.pxo-chat-close{font-size:10px;cursor:pointer;color:#9fb0c4;
+      background:transparent;border:none;padding:2px 4px}
+    .pxo-name-save:hover,.pxo-chat-close:hover{color:#00ff88}
+    .pxo-msglist{flex:1;overflow-y:auto;padding:7px 9px;display:flex;flex-direction:column;gap:4px;
+      scrollbar-width:thin;scrollbar-color:rgba(0,229,255,.3) transparent}
+    .pxo-msglist::-webkit-scrollbar{width:6px}
+    .pxo-msglist::-webkit-scrollbar-thumb{background:rgba(0,229,255,.28);border-radius:3px}
+    .pxo-msg{font-size:11px;line-height:1.35;color:#dce6e2;word-break:break-word;font-family:'Rajdhani','Share Tech Mono',sans-serif}
+    .pxo-msg-name{color:#00e5ff;font-weight:700}
+    .pxo-chat-input{display:flex;gap:5px;padding:7px 9px;border-top:1px solid rgba(0,229,255,.16)}
+    .pxo-msg-input{flex:1;font-size:11px;font-family:'Rajdhani','Share Tech Mono',sans-serif;
+      color:#e8f0ee;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+      border-radius:6px;padding:5px 8px;outline:none}
+    .pxo-msg-input:focus{border-color:#00e5ff;box-shadow:0 0 8px rgba(0,229,255,.3)}
+    .pxo-send{font-size:9px;letter-spacing:1px;font-weight:700;cursor:pointer;color:#04120c;
+      background:#00e5ff;border:none;border-radius:6px;padding:5px 11px;transition:all .15s ease}
+    .pxo-send:hover{background:#00ff88;box-shadow:0 0 12px rgba(0,255,136,.5)}
+    @media(max-width:640px){.pxo-chat{bottom:60px;height:min(260px,44vh)}}
     `;
     document.head.appendChild(st);
   }
@@ -1498,9 +2060,18 @@
     canvas = document.createElement('canvas');
     host.appendChild(canvas);
     ctx = canvas.getContext('2d');
+    // multiplayer: fresh per-mount state (default OFFLINE = single-player)
+    MP.joined = false;
+    MP.available = (typeof location === 'undefined') ? true : location.protocol !== 'file:';
+    MP.you = null; MP.others = {}; MP.chat = []; MP.online = 0;
+    MP.fails = 0; MP.inFlight = false; MP.seenChatKey = '';
+    if (MP.pollTimer) { clearInterval(MP.pollTimer); MP.pollTimer = 0; }
+    MP.player = loadPlayer();
+
     buildHud();
     resetSprites();
     initEmbers();
+    if (!MP.available) disableMP();               // file:// → MP off, office fine
 
     canvas.addEventListener('click', onClick);
     canvas.addEventListener('mousemove', onMove);
@@ -1521,6 +2092,12 @@
   function unmount() {
     running = false;
     if (rafId) cancelAnimationFrame(rafId); rafId = 0;
+    // multiplayer: stop polling + drop remote state (no leaks across mounts)
+    if (MP.pollTimer) { clearInterval(MP.pollTimer); MP.pollTimer = 0; }
+    MP.joined = false; MP.inFlight = false;
+    MP.you = null; MP.others = {}; MP.chat = [];
+    MP.panel = null; MP.msgList = null; MP.msgInput = null; MP.nameInput = null;
+    MP.goBtn = null; MP.onlineChip = null;
     if (ro) { try { ro.disconnect(); } catch (_) {} ro = null; }
     if (io) { try { io.disconnect(); } catch (_) {} io = null; }
     if (canvas) {
@@ -1542,7 +2119,7 @@
   function _emitPay(payload) { payCallbacks.forEach(cb => { try { cb(payload); } catch (_) {} }); }
 
   window.PixelOffice = {
-    __v: 5,
+    __v: 6,
     mount, unmount,
     addCollectable, onPay,
     selectAgent,
