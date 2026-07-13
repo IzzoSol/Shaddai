@@ -29,17 +29,18 @@
  * ==========================================================================*/
 (function () {
   'use strict';
-  if (window.PixelOffice && window.PixelOffice.__v === 3) return; // already loaded
+  if (window.PixelOffice && window.PixelOffice.__v === 4) return; // already loaded
 
   // ---- Brand + agent theming ------------------------------------------------
+  // Positions re-spaced for the larger 22x20 footprint (see LAYOUT below).
   const AGENTS = [
-    { name: 'SHADDAI', color: '#f0b429', tile: [8, 3],  role: 'Orchestrator' },
-    { name: 'ZEROX',   color: '#00e5ff', tile: [3, 6],  role: 'Revenue' },
-    { name: 'ORACLE',  color: '#a78bfa', tile: [12, 6], role: 'Research' },
-    { name: 'NEXUS',   color: '#00f0ff', tile: [3, 10], role: 'Architect' },
-    { name: 'TURTLE',  color: '#00ff88', tile: [12, 10],role: 'Design' },
-    { name: 'QUILL',   color: '#fb923c', tile: [6, 13], role: 'Writing' },
-    { name: 'PIKADON', color: '#f43f5e', tile: [9, 13], role: 'Security' },
+    { name: 'SHADDAI', color: '#f0b429', tile: [11, 4],  role: 'Orchestrator' },
+    { name: 'ZEROX',   color: '#00e5ff', tile: [4, 8],   role: 'Revenue' },
+    { name: 'ORACLE',  color: '#a78bfa', tile: [17, 8],  role: 'Research' },
+    { name: 'NEXUS',   color: '#00f0ff', tile: [4, 13],  role: 'Architect' },
+    { name: 'TURTLE',  color: '#00ff88', tile: [17, 13], role: 'Design' },
+    { name: 'QUILL',   color: '#fb923c', tile: [8, 16],  role: 'Writing' },
+    { name: 'PIKADON', color: '#f43f5e', tile: [13, 16], role: 'Security' },
   ];
 
   // ---- IN-CHARACTER ONE-LINERS (idle speech bubbles) ------------------------
@@ -104,44 +105,64 @@
   };
 
   // ---- Grid / iso constants -------------------------------------------------
-  const GRID_W = 16, GRID_H = 16;   // logical tile grid
+  const GRID_W = 22, GRID_H = 20;   // logical tile grid (roomier city-seed footprint)
   const TILE_W = 56, TILE_H = 28;   // 2:1 iso diamond footprint (base; scaled to fit)
 
   // ---------------------------------------------------------------------------
   // ROOM LAYOUT DATA
   //   0 floor(lobby)  1 wall  2 breakroom  3 boss(rug)  4 boardroom
   //   5 agentdesk     6 grass  7 water      8 shelf(collectables)  9 elevator
+  //   R forge floor(warm)  K bank floor  M market floor  H docks(planks)
   // ---------------------------------------------------------------------------
-  const F = 0, W = 1, B = 2, O = 3, D = 4, A = 5, G = 6, T = 7, S = 8, E = 9;
+  const F = 0, W = 1, B = 2, O = 3, D = 4, A = 5, G = 6, T = 7, S = 8, E = 9,
+        R = 10, K = 11, M = 12, H = 13;
   const LAYOUT = [
-    [W,W,W,W,W,W,W,O,O,W,W,W,W,W,W,W],
-    [W,E,F,F,F,F,W,O,O,W,F,F,F,F,S,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,S,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
-    [W,B,B,F,F,F,F,F,F,F,F,F,F,F,F,W],
-    [W,B,B,F,F,A,F,F,F,F,A,F,F,F,F,W],
-    [W,B,B,F,F,F,F,F,F,F,F,F,F,F,F,W],
-    [W,F,F,F,D,D,D,D,D,D,D,D,F,F,F,W],
-    [W,F,F,F,D,D,D,D,D,D,D,D,F,F,F,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
-    [W,F,F,F,F,A,F,F,F,F,A,F,F,F,F,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,F,G,G,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,G,G,G,W],
-    [W,F,F,F,F,F,A,F,F,A,F,F,G,T,G,W],
-    [W,F,F,F,F,F,F,F,F,F,F,F,G,G,G,W],
-    [W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W],
+    [W,W,W,W,W,W,W,W,W,O,O,O,W,W,W,W,W,W,W,W,W,W],
+    [W,E,F,F,F,F,F,W,O,O,O,O,O,W,F,F,F,F,F,S,S,W],
+    [W,E,F,F,F,F,F,F,O,O,O,O,O,F,F,F,F,F,F,S,S,W],
+    [W,F,F,F,F,F,F,F,F,O,O,O,F,F,F,F,F,F,F,F,F,W],
+    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+    [W,B,B,B,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+    [W,B,B,B,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+    [W,B,B,B,F,F,F,D,D,D,D,D,D,D,D,F,F,F,F,F,F,W],
+    [W,F,F,F,F,F,F,D,D,D,D,D,D,D,D,F,F,F,F,F,F,W],
+    [W,F,F,F,F,F,F,D,D,D,D,D,D,D,D,F,F,F,F,F,F,W],
+    [W,F,F,F,F,F,F,D,D,D,D,D,D,D,D,F,F,F,F,F,F,W],
+    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,R,R,R,W],
+    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,R,R,R,W],
+    [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,R,R,R,W],
+    [W,K,K,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,R,R,R,W],
+    [W,K,K,F,F,F,F,F,F,F,F,F,F,F,F,F,M,M,F,F,F,W],
+    [W,K,K,F,F,F,F,F,F,F,F,F,F,F,F,F,M,M,F,F,F,W],
+    [W,F,F,F,F,F,H,H,H,F,F,F,F,F,F,F,M,M,F,F,F,W],
+    [W,F,F,F,F,F,H,H,H,F,F,F,F,F,F,F,F,F,F,F,F,W],
+    [W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W],
   ];
   const isWall = (c, r) =>
     r < 0 || c < 0 || r >= GRID_H || c >= GRID_W || LAYOUT[r][c] === W;
 
   // Labelled zones (drawn as floating tags in iso space) ----------------------
   const ZONES = [
-    { label: 'RECEPTION',    at: [4, 2],  color: '#ffd700' },
-    { label: 'BOSS OFFICE',  at: [8, 5],  color: '#f0b429' },
-    { label: 'BOARDROOM',    at: [8, 7.5],color: '#00e5ff' },
-    { label: 'BREAK ROOM',   at: [1.5,5], color: '#00ff88' },
-    { label: 'COLLECTABLES', at: [14, 1.5],color: '#a78bfa' },
-    { label: 'WORLD',        at: [13, 12], color: '#00ff88' },
+    { label: 'RECEPTION',    at: [3, 2],   color: '#ffd700' },
+    { label: 'BOSS OFFICE',  at: [10.5, 1.6], color: '#f0b429' },
+    { label: 'BOARDROOM',    at: [10.5, 8.5], color: '#00e5ff' },
+    { label: 'BREAK ROOM',   at: [2, 5.5],  color: '#00ff88' },
+    { label: 'COLLECTABLES', at: [19.5, 1.4], color: '#a78bfa' },
+    { label: '⬡ THE FORGE',  at: [19, 11.4], color: '#ff8c1a' },
+  ];
+
+  // ---- Clickable "buildings" (hit-tested tile regions) ----------------------
+  //   The Forge routes into the dashboard Forge; the rest are city "coming soon"
+  //   footprints so the office reads as the seed of a larger city.
+  const BUILDINGS = [
+    { id: 'forge',  label: '⬡ THE FORGE', soon: false, color: '#ff8c1a',
+      tiles: R, center: [19, 12.5], door: [17, 12] },
+    { id: 'bank',   label: 'BANK',   soon: true, color: '#ffd76a',
+      tiles: K, center: [1.5, 15],  door: [3, 15] },
+    { id: 'market', label: 'MARKET', soon: true, color: '#7ee787',
+      tiles: M, center: [16.5, 15.5], door: [15, 16] },
+    { id: 'docks',  label: 'DOCKS',  soon: true, color: '#38bdf8',
+      tiles: H, center: [7, 17.5], door: [8, 17] },
   ];
 
   // ---- Module state ---------------------------------------------------------
@@ -314,6 +335,10 @@
       case T: return ['#0e3540', '#0a2530'];              // water
       case S: return ['#241a33', '#170f22'];              // collectables shelf
       case E: return ['#2a2320', '#1a1512'];              // elevator
+      case R: return ['#3a1f0c', '#26140a'];              // forge (warm ember floor)
+      case K: return ['#2a2818', '#1a1810'];              // bank marble/brass
+      case M: return ['#182a1a', '#0f1c11'];              // market stalls
+      case H: return ['#2a2114', '#1c160d'];              // docks planks
       default:
         return null; // lobby → checker handled separately
     }
@@ -352,6 +377,13 @@
       grad.addColorStop(0, shade('#0e3540', 0.05 + sh * 0.10));
       grad.addColorStop(1, '#0a2530');
       diamondPath(p.x, p.y, hw, hh); ctx.fillStyle = grad; ctx.fill();
+    } else if (kind === R) {
+      // forge floor: warm radiating ember glow (heat haze pulse)
+      const sh = (Math.sin(now / 500 + col * 0.8 + row * 0.6) + 1) / 2;
+      const grad = ctx.createLinearGradient(p.x, p.y - hh, p.x, p.y + hh);
+      grad.addColorStop(0, shade('#4a2a10', 0.06 + sh * 0.12));
+      grad.addColorStop(1, '#20120a');
+      diamondPath(p.x, p.y, hw, hh); ctx.fillStyle = grad; ctx.fill();
     } else {
       const grad = ctx.createLinearGradient(p.x, p.y - hh, p.x, p.y + hh);
       grad.addColorStop(0, shade(top, 0.05));
@@ -363,6 +395,11 @@
     // faint grid glow on the lobby floor for a "holo deck" feel
     if (kind === F || kind === O || kind === D) {
       ctx.strokeStyle = 'rgba(0,229,255,0.05)'; ctx.lineWidth = 1;
+      diamondPath(p.x, p.y, hw, hh); ctx.stroke();
+    }
+    // warm forge floor gets an ember rim instead of the cool holo line
+    if (kind === R) {
+      ctx.strokeStyle = 'rgba(255,140,26,0.10)'; ctx.lineWidth = 1;
       diamondPath(p.x, p.y, hw, hh); ctx.stroke();
     }
 
@@ -538,6 +575,163 @@
     ctx.beginPath(); ctx.arc(p.x, y, 2.4 * scale, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,215,106,${glow})`; ctx.fill();
     ctx.restore();
+  }
+
+  // ===========================================================================
+  // THE FORGE — the marquee workshop: furnace + anvil + sparks + emblem.
+  // Warm orange/gold palette against the cool office. All procedural.
+  // ===========================================================================
+  // Persistent ember particles for the forge (recycled — no per-frame alloc).
+  const embers = [];
+  function initEmbers() {
+    embers.length = 0;
+    for (let i = 0; i < 16; i++) {
+      embers.push({
+        ox: (Math.random() - 0.5) * 16,   // launch offset around furnace mouth
+        life: Math.random(),               // 0..1 progress
+        spd: 0.35 + Math.random() * 0.5,   // rise speed
+        drift: (Math.random() - 0.5) * 0.8,
+        sz: 1 + Math.random() * 1.6,
+      });
+    }
+  }
+  function drawFurnace(col, row, now) {
+    const p = isoToScreen(col, row);
+    const s = scale;
+    // stone furnace body
+    drawBox(col, row, 0.85, 26, '#3a2b22', '#241811', 'rgba(255,140,26,0.35)');
+    // glowing mouth (pulsing molten core)
+    const pulse = 0.55 + (Math.sin(now / 260) + 1) / 2 * 0.45;
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,120,20,0.9)'; ctx.shadowBlur = 24 * s;
+    const mg = ctx.createRadialGradient(p.x, p.y - 16 * s, 1, p.x, p.y - 16 * s, 12 * s);
+    mg.addColorStop(0, `rgba(255,240,180,${pulse})`);
+    mg.addColorStop(0.4, `rgba(255,150,40,${pulse})`);
+    mg.addColorStop(1, 'rgba(180,40,0,0)');
+    ctx.fillStyle = mg;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y - 16 * s, 10 * s, 8 * s, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // chimney glow cap
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,90,20,0.7)'; ctx.shadowBlur = 14 * s;
+    ctx.fillStyle = 'rgba(255,120,30,0.5)';
+    ctx.fillRect(p.x - 3 * s, p.y - 40 * s, 6 * s, 6 * s);
+    ctx.restore();
+
+    // ---- ember particles rising from the mouth ----
+    ctx.save();
+    for (const e of embers) {
+      e.life += e.spd * 0.012;
+      if (e.life > 1) { e.life = 0; e.ox = (Math.random() - 0.5) * 16; }
+      const ex = p.x + (e.ox + e.drift * e.life * 14) * s;
+      const ey = p.y - 16 * s - e.life * 34 * s;
+      const a = (1 - e.life) * 0.9;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = e.life < 0.4 ? '#ffe08a' : '#ff7a1a';
+      ctx.shadowColor = '#ff8c1a'; ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(ex + Math.sin(now / 200 + e.ox) * 1.5 * s, ey, e.sz * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  // Blacksmith anvil on a stump — the forge's icon prop.
+  function drawAnvil(col, row, now) {
+    const p = isoToScreen(col, row);
+    const s = scale;
+    contactShadow(p.x, p.y + 3 * s, 13 * s, 6 * s, 0.28);
+    // wood stump base
+    ctx.fillStyle = '#3a2716';
+    ctx.fillRect(p.x - 7 * s, p.y - 8 * s, 14 * s, 10 * s);
+    ctx.fillStyle = '#2a1c0f';
+    ctx.fillRect(p.x + 0 * s, p.y - 8 * s, 7 * s, 10 * s);
+    // anvil body (dark iron)
+    ctx.fillStyle = '#3d434d';
+    ctx.fillRect(p.x - 9 * s, p.y - 15 * s, 18 * s, 5 * s);   // top face
+    ctx.fillStyle = '#2a2f37';
+    ctx.fillRect(p.x - 5 * s, p.y - 10 * s, 10 * s, 3 * s);   // waist
+    // horn (tapered nose)
+    ctx.fillStyle = '#4a515c';
+    ctx.beginPath();
+    ctx.moveTo(p.x + 9 * s, p.y - 15 * s);
+    ctx.lineTo(p.x + 15 * s, p.y - 13.5 * s);
+    ctx.lineTo(p.x + 9 * s, p.y - 11 * s);
+    ctx.closePath(); ctx.fill();
+    // hot glowing metal being worked
+    const hot = 0.5 + (Math.sin(now / 220) + 1) / 2 * 0.5;
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,140,30,0.9)'; ctx.shadowBlur = 12 * s;
+    ctx.fillStyle = `rgba(255,${140 + hot * 90 | 0},40,${0.7 + hot * 0.3})`;
+    ctx.fillRect(p.x - 3 * s, p.y - 16.5 * s, 5 * s, 1.6 * s);
+    ctx.restore();
+    // occasional hammer-strike spark burst on top of the anvil
+    const strike = (Math.sin(now / 220) > 0.92);
+    if (strike) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,220,140,0.85)'; ctx.lineWidth = 1;
+      ctx.shadowColor = '#ffcf6a'; ctx.shadowBlur = 8;
+      for (let i = 0; i < 5; i++) {
+        const ang = -0.6 - i * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y - 16 * s);
+        ctx.lineTo(p.x + Math.cos(ang) * 9 * s, p.y - 16 * s + Math.sin(ang) * 9 * s);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  // Glowing ⬡ SHADDAI forge emblem, floating over the workshop.
+  function drawForgeEmblem(col, row, now) {
+    const p = isoToScreen(col, row);
+    const s = scale;
+    const y = p.y - 40 * s;
+    const glow = 0.5 + (Math.sin(now / 700) + 1) / 2 * 0.4;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,150,40,${glow})`; ctx.lineWidth = 2 * s;
+    ctx.shadowColor = 'rgba(255,140,26,0.8)'; ctx.shadowBlur = 14 * s;
+    // hexagon sigil
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 3;
+      const hx = p.x + Math.cos(a) * 9 * s, hy = y + Math.sin(a) * 9 * s;
+      i === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+    }
+    ctx.closePath(); ctx.stroke();
+    // inner molten core
+    ctx.fillStyle = `rgba(255,200,90,${glow})`;
+    ctx.beginPath(); ctx.arc(p.x, y, 3 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ---- COMING-SOON city footprints (bank / market / docks) ------------------
+  // Lightweight décor + a "SOON" tag so the office reads as a city seed.
+  function drawSoonFootprint(b, now) {
+    const p = isoToScreen(b.center[0], b.center[1]);
+    const s = scale;
+    // faint building silhouette box in the building's accent color
+    drawBox(b.center[0], b.center[1], 0.8, 14,
+            shade(b.color, -0.5), shade(b.color, -0.62), b.color + '55');
+    // small themed glyph on the roof
+    ctx.save();
+    ctx.font = `${13 * s | 0}px sans-serif`; ctx.textAlign = 'center';
+    ctx.shadowColor = b.color; ctx.shadowBlur = 8;
+    ctx.fillStyle = b.color;
+    const glyph = b.id === 'bank' ? '🏦' : b.id === 'market' ? '🛒' : '⚓';
+    ctx.fillText(glyph, p.x, p.y - 20 * s);
+    ctx.restore();
+    // pulsing SOON tag
+    const blink = 0.45 + (Math.sin(now / 600 + b.center[0]) + 1) / 2 * 0.55;
+    ctx.save();
+    ctx.globalAlpha = blink;
+    ctx.font = "7px 'Share Tech Mono', monospace"; ctx.textAlign = 'center';
+    const tw = ctx.measureText('SOON').width;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    roundRect(p.x - tw / 2 - 5, p.y - 34 * s, tw + 10, 11, 3); ctx.fill();
+    ctx.strokeStyle = b.color; ctx.lineWidth = 1;
+    roundRect(p.x - tw / 2 - 5, p.y - 34 * s, tw + 10, 11, 3); ctx.stroke();
+    ctx.fillStyle = b.color; ctx.fillText('SOON', p.x, p.y - 34 * s + 8);
+    ctx.restore();
+    ctx.textAlign = 'left';
   }
 
   // ---- Draw an agent sprite (blocky iso character w/ life) ------------------
@@ -740,26 +934,37 @@
     }
 
     // ---- PROPS (depth-sorted roughly by row) ----
-    drawStatue(4, 2, now);                                    // reception centerpiece
+    drawStatue(3, 2, now);                                    // reception centerpiece
     drawBox(1, 1, 0.8, 26, '#3a3f4a', '#22262e', 'rgba(0,229,255,0.4)'); // elevator
+    drawBox(1, 2, 0.8, 26, '#3a3f4a', '#22262e', 'rgba(0,229,255,0.4)');
     // Break room: couches + coffee table w/ steam
-    drawCouch(1, 4); drawCouch(2, 5);
-    drawCoffee(1, 5, now);
-    drawPlant(2, 4);
-    // Boss office: rug emblem + big desk + throne
-    drawEmblem(8, 4, now);
-    drawBox(8, 5, 1.1, 12, '#5a4a1c', '#3a300f', 'rgba(240,180,41,0.35)'); // big desk
-    drawBox(8, 4, 0.7, 16, '#6a5620', '#463913');            // throne
-    // Boardroom: long table + chairs + screen
-    drawBox(6, 7.5, 1.6, 9, '#20404c', '#132a33');
-    drawBox(9, 7.5, 1.6, 9, '#20404c', '#132a33');
-    drawScreen(6, 6.4, now);
-    // Collectables shelf
-    drawBox(14, 1.5, 0.7, 18, '#3a2c52', '#241a33', 'rgba(167,139,250,0.4)');
-    // Plants dotted around
-    drawPlant(13, 2); drawPlant(3, 9); drawPlant(11, 11); drawPlant(6, 3);
-    // World-replica outdoor patch (bottom-right grass/water)
-    drawTree(13, 13); drawTree(14, 12);
+    drawCouch(2, 5); drawCouch(3, 6);
+    drawCoffee(2, 6, now);
+    drawPlant(3, 5);
+    // Boss office: rug emblem + big desk + throne (top gold rug)
+    drawEmblem(10.5, 1.4, now);
+    drawBox(10.5, 2.2, 1.1, 12, '#5a4a1c', '#3a300f', 'rgba(240,180,41,0.35)'); // big desk
+    drawBox(10.5, 1.4, 0.7, 16, '#6a5620', '#463913');       // throne
+    // Boardroom: long table + chairs + screen (center cyan)
+    drawBox(9, 8.5, 1.8, 9, '#20404c', '#132a33');
+    drawBox(12.5, 8.5, 1.8, 9, '#20404c', '#132a33');
+    drawScreen(10.5, 7.2, now);
+    // Collectables shelf (top-right)
+    drawBox(19.5, 1.5, 0.7, 18, '#3a2c52', '#241a33', 'rgba(167,139,250,0.4)');
+
+    // ---- THE FORGE (marquee workshop, bottom-right warm room) ----
+    drawForgeEmblem(19, 11, now);
+    drawFurnace(20, 12, now);
+    drawAnvil(18.5, 13, now);
+    drawBox(19, 14, 0.6, 8, '#2a1c10', '#1a1108');           // tool bench / quench barrel
+
+    // ---- COMING-SOON city footprints (bank / market / docks) ----
+    BUILDINGS.forEach(b => { if (b.soon) drawSoonFootprint(b, now); });
+    // docks water accent beside the docks planks
+    drawTree(4, 18);
+
+    // Plants dotted around the roomier floor
+    drawPlant(6, 4); drawPlant(15, 4); drawPlant(6, 12); drawPlant(15, 11); drawPlant(9, 14);
 
     // Agent desks: colored nameplates on desk tiles
     AGENTS.forEach(a => {
@@ -812,8 +1017,38 @@
         drawAgent(sp, now, intro);
       });
 
+    // building-entry toast (floats over the target tile, fades out)
+    drawToast(now);
+
     // ---- HUD CHROME overlay: vignette + scanlines + corner brackets ----
     drawChrome(w, h, now);
+  }
+
+  // On-theme toast anchored to a world tile (building entry cue).
+  function drawToast(now) {
+    if (!toast.text) return;
+    const age = now - toast.start;
+    if (age > toast.dur) { toast.text = ''; return; }
+    let a = 1;
+    if (age < 200) a = age / 200;
+    else if (age > toast.dur - 500) a = Math.max(0, (toast.dur - age) / 500);
+    const rise = (1 - Math.min(1, age / 300)) * 8;
+    const p = isoToScreen(toast.at[0], toast.at[1]);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.font = "11px 'Rajdhani','Share Tech Mono',sans-serif"; ctx.textAlign = 'center';
+    const tw = ctx.measureText(toast.text).width;
+    const bw = tw + 20, bh = 22, cx = p.x - bw / 2, cy = p.y - 54 * scale - rise;
+    ctx.fillStyle = 'rgba(8,14,20,0.95)';
+    roundRect(cx, cy, bw, bh, 8); ctx.fill();
+    ctx.strokeStyle = toast.color; ctx.lineWidth = 1.5;
+    ctx.shadowColor = toast.color; ctx.shadowBlur = 12;
+    roundRect(cx, cy, bw, bh, 8); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#eef4f2';
+    ctx.fillText(toast.text, p.x, cy + 15);
+    ctx.restore();
+    ctx.textAlign = 'left';
   }
 
   // Ambient vignette, faint scanline grain, and neon corner brackets.
@@ -890,8 +1125,38 @@
     const iso = screenToIso(p.x, p.y);
     const c = Math.round(iso.col), r = Math.round(iso.row);
     hoverTile = (c >= 0 && r >= 0 && c < GRID_W && r < GRID_H) ? { c, r } : null;
-    canvas.style.cursor = agentAt(p.x, p.y) ? 'pointer' : 'default';
+    const overBuilding = hoverTile && buildingAtTile(hoverTile.c, hoverTile.r);
+    canvas.style.cursor = (agentAt(p.x, p.y) || overBuilding) ? 'pointer' : 'default';
   }
+  // Which clickable building (if any) owns the clicked tile?
+  function buildingAtTile(c, r) {
+    if (r < 0 || c < 0 || r >= GRID_H || c >= GRID_W) return null;
+    const kind = LAYOUT[r][c];
+    return BUILDINGS.find(b => b.tiles === kind) || null;
+  }
+
+  // Floating toast bubble anchored to a tile (used for building entry cues).
+  const toast = { text: '', color: '#fff', at: [0, 0], start: 0, dur: 0 };
+  function showToast(text, color, tile) {
+    toast.text = text; toast.color = color || '#fff';
+    toast.at = tile || [GRID_W / 2, GRID_H / 2];
+    toast.start = performance.now(); toast.dur = 2400;
+  }
+
+  function enterBuilding(b) {
+    if (!b) return;
+    if (b.id === 'forge') {
+      showToast('⬡ Entering The Forge…', '#ff8c1a', b.center);
+      try { if (typeof window.showView === 'function') window.showView('forge'); } catch (_) {}
+    } else {
+      showToast(`${b.label} — coming soon`, b.color, b.center);
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('pixeloffice:enter-building',
+        { detail: { building: b.id } }));
+    } catch (_) {}
+  }
+
   function onClick(ev) {
     const p = localPt(ev);
     const a = agentAt(p.x, p.y);
@@ -907,9 +1172,12 @@
       } catch (_) {}
       return;
     }
-    // else: walk the selected agent to the clicked tile
     const iso = screenToIso(p.x, p.y);
     const c = Math.round(iso.col), r = Math.round(iso.row);
+    // building click (forge routes to dashboard; soon-tiles show a toast)
+    const b = buildingAtTile(c, r);
+    if (b) { enterBuilding(b); return; }
+    // else: walk the selected agent to the clicked tile
     const sp = sprites[selected];
     if (sp && !isWall(c, r)) walkTo(sp, c, r);
   }
@@ -1022,6 +1290,7 @@
     ctx = canvas.getContext('2d');
     buildHud();
     resetSprites();
+    initEmbers();
 
     canvas.addEventListener('click', onClick);
     canvas.addEventListener('mousemove', onMove);
@@ -1062,7 +1331,7 @@
   function _emitPay(payload) { payCallbacks.forEach(cb => { try { cb(payload); } catch (_) {} }); }
 
   window.PixelOffice = {
-    __v: 3,
+    __v: 4,
     mount, unmount,
     addCollectable, onPay,
     selectAgent,

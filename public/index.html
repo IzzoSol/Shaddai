@@ -9081,93 +9081,93 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <div id="mediaModGrid" class="mmv-grid" style="margin-bottom:20px">
 
       <!-- Image Gen Module -->
-      <div onclick="launchMediaModule('image')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-imagegen.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">IMAGE GEN</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Prompt · Style · Negative</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Stable Diffusion · Midjourney · Leonardo</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('image')" style="--acc:#00E5A0;--acc2:#00c8ff">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-imagegen.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">IMAGE GEN</div>
+        <div class="mm-sub">Prompt · Style · Negative</div>
+        <div class="mm-chips"><span>Flux</span><span>Midjourney</span><span>Leonardo</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></div>
       </div>
 
       <!-- Video Studio Module -->
-      <div onclick="launchMediaModule('video')" style="background:linear-gradient(135deg,rgba(0,200,255,0.06),rgba(0,229,160,0.03));border:1px solid rgba(0,200,255,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,200,255,0.6)';this.style.boxShadow='0 0 24px rgba(0,200,255,0.15)'" onmouseout="this.style.borderColor='rgba(0,200,255,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,200,255,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-videostudio.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO STUDIO</div>
-        <div style="font-size:9px;color:rgba(0,200,255,0.7);margin-top:2px">Script · Storyboard · Hook · AI Prompt</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">HeyGen · Runway ML · Kling · Pika</div>
-        <div class="mm-corner" style="color:#00E5FF"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('video')" style="--acc:#00E5FF;--acc2:#00ff88">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-videostudio.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">VIDEO STUDIO</div>
+        <div class="mm-sub">Script · Storyboard · Hook · AI Prompt</div>
+        <div class="mm-chips"><span>HeyGen</span><span>Runway</span><span>Kling</span><span>Pika</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 9l5-3v12l-5-3z"/></svg></div>
       </div>
 
       <!-- Music + Audio Module -->
-      <div onclick="launchMediaModule('music')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-musicaudio.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">MUSIC + AUDIO</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Lyrics · Beats · Sound Design</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Suno · Udio · Splash · Soundraw</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('music')" style="--acc:#ffb020;--acc2:#ff7b3d">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-musicaudio.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">MUSIC + AUDIO</div>
+        <div class="mm-sub">Lyrics · Beats · Sound Design</div>
+        <div class="mm-chips"><span>Suno</span><span>Udio</span><span>Splash</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
       </div>
 
       <!-- Voice / TTS Module -->
-      <div onclick="launchMediaModule('voice')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-voicetts.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VOICE / TTS</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Clone · Generate · Script</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Browser Web Speech · free</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('voice')" style="--acc:#8b5cf6;--acc2:#c084fc">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-voicetts.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">VOICE / TTS</div>
+        <div class="mm-sub">Clone · Generate · Script</div>
+        <div class="mm-chips"><span>Web Speech</span><span class="mm-chip-free">Free</span><span>ElevenLabs</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
       </div>
 
       <!-- Content Writer Module -->
-      <div onclick="launchMediaModule('content')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-aiwriter.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">AI WRITER</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Threads · Captions · Blogs · Copy</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL Agent · Platform-optimized</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('content')" style="--acc:#ff4070;--acc2:#ff8fb0">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-aiwriter.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">AI WRITER</div>
+        <div class="mm-sub">Threads · Captions · Blogs · Copy</div>
+        <div class="mm-chips"><span>QUILL</span><span>Platform-native</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
       </div>
 
       <!-- Gallery Module -->
-      <div onclick="launchMediaModule('gallery')" style="background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(255,176,32,0.03));border:1px solid rgba(255,215,0,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(255,215,0,0.6)';this.style.boxShadow='0 0 24px rgba(255,215,0,0.15)'" onmouseout="this.style.borderColor='rgba(255,215,0,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(255,215,0,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-gallery.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">GALLERY</div>
-        <div style="font-size:9px;color:rgba(255,215,0,0.7);margin-top:2px">Saved prompts · Generated media</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">Local storage · Export · Share</div>
-        <div class="mm-corner" style="color:#FFD54E"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('gallery')" style="--acc:#FFD54E;--acc2:#ffb020">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-gallery.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">GALLERY</div>
+        <div class="mm-sub">Saved images · video · prompts</div>
+        <div class="mm-chips"><span>Images</span><span>Video</span><span>Export</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/><path d="M14 14l2-2 5 5"/></svg></div>
       </div>
 
       <!-- Video Clipper Module -->
-      <div onclick="launchMediaModule('clipper')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">VIDEO CLIPPER <span style="font-size:7px;color:#ffd45e;border:1px solid rgba(255,212,94,.4);border-radius:4px;padding:1px 4px;vertical-align:middle">PREMIUM</span></div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Long video → captioned vertical shorts</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">SHADDAI engine · ffmpeg + Whisper · TikTok/Reels</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card mm-premium" onclick="launchMediaModule('clipper')" style="--acc:#00E5A0;--acc2:#ffd45e">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">PREMIUM</span></div>
+        <div class="mm-sub">Long video → captioned vertical shorts</div>
+        <div class="mm-chips"><span>ffmpeg</span><span>Whisper</span><span>TikTok/Reels</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></div>
       </div>
 
       <!-- Chart Signal Module -->
-      <div onclick="launchMediaModule('signal')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-chartsignal.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CHART SIGNAL</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Ticker + notes → signal post + caption</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">ORACLE analysis · Twitter · IG · Telegram</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('signal')" style="--acc:#00ff88;--acc2:#00c8ff">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-chartsignal.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">CHART SIGNAL</div>
+        <div class="mm-sub">Ticker + notes → signal post</div>
+        <div class="mm-chips"><span>ORACLE</span><span>Twitter</span><span>Telegram</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg></div>
       </div>
 
       <!-- Content Series Module -->
-      <div onclick="launchMediaModule('series')" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,200,255,0.03));border:1px solid rgba(0,229,160,0.25);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='rgba(0,229,160,0.6)';this.style.boxShadow='0 0 24px rgba(0,229,160,0.15)'" onmouseout="this.style.borderColor='rgba(0,229,160,0.25)';this.style.boxShadow='none'">
-        <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,229,160,0.1),transparent);border-radius:0 12px 0 80px;pointer-events:none"></div>
-        <img src="/api/forge/art/module-contentseries.png" alt="" loading="lazy" class="media-mod-icon">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.05em;color:#fff">CONTENT SERIES</div>
-        <div style="font-size:9px;color:rgba(0,229,160,0.7);margin-top:2px">Topic → full day-by-day series</div>
-        <div style="margin-top:12px;font-size:8px;color:rgba(255,255,255,0.3)">QUILL writes · 3–30 days · Any platform</div>
-        <div class="mm-corner" style="color:#00E5A0"><span>◇</span></div>
+      <div class="mm-card" onclick="launchMediaModule('series')" style="--acc:#00c8ff;--acc2:#8b5cf6">
+        <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-contentseries.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-title">CONTENT SERIES</div>
+        <div class="mm-sub">Topic → full day-by-day series</div>
+        <div class="mm-chips"><span>QUILL</span><span>3–30 days</span><span>Any platform</span></div>
+        <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h4"/></svg></div>
       </div>
     </div>
 
@@ -48904,47 +48904,95 @@ body::after {
 #mediaView.media-mode-compact .card[id^="mediaCard_"] .card-head { padding: 4px 0; border-bottom-width: 1px; margin-bottom: 6px; }
 #mediaView.media-mode-compact .card[id^="mediaCard_"] textarea, #mediaView.media-mode-compact .card[id^="mediaCard_"] .input { padding: 4px 6px; font-size: 9px; min-height: 28px; }
 .media-tile { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
-.media-mod-icon { width:54px; height:54px; border-radius:12px; object-fit:cover; margin-bottom:12px; box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04) inset; border:1px solid rgba(255,255,255,.1); transition:transform .25s cubic-bezier(.2,.8,.2,1); }
-/* ── Media Studio module cards: premium HUD window, depth + type polish ── */
-#mediaModGrid > div {
-  background:linear-gradient(155deg, rgba(10,16,20,.78) 0%, rgba(6,10,14,.62) 55%, rgba(0,229,160,.03) 100%) !important;
-  border-radius:14px !important;
+.media-mod-icon { width:52px; height:52px; border-radius:13px; object-fit:cover; box-shadow:0 8px 22px -6px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05) inset; border:1px solid color-mix(in srgb, var(--acc,#00E5A0) 45%, rgba(255,255,255,.1)); transition:transform .3s cubic-bezier(.2,.8,.2,1); }
+/* ══ Media Studio flagship tiles — layered glass, per-tool accent, sheen sweep ══ */
+.mm-card {
+  --acc:#00E5A0; --acc2:#00c8ff;
+  position:relative; overflow:hidden; cursor:pointer; isolation:isolate;
+  border-radius:16px !important;
   padding:18px 18px 16px !important;
-  box-shadow:0 10px 30px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.05) !important;
-  backdrop-filter:blur(6px);
-  transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .25s !important;
+  border:1px solid color-mix(in srgb, var(--acc) 30%, rgba(255,255,255,.06)) !important;
+  background:
+    linear-gradient(155deg, rgba(11,17,22,.82) 0%, rgba(6,10,14,.66) 52%, color-mix(in srgb, var(--acc) 10%, transparent) 100%) !important;
+  box-shadow:0 14px 34px -16px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.055) !important;
+  backdrop-filter:blur(8px) saturate(1.15);
+  transition:transform .3s cubic-bezier(.2,.85,.2,1), border-color .25s, box-shadow .3s !important;
+  display:flex; flex-direction:column;
 }
-#mediaModGrid.mmv-grid > div:hover, #mediaModGrid.mmv-swivel > div:hover { transform:translateY(-4px) !important; }
-#mediaModGrid > div:hover .media-mod-icon { transform:scale(1.06) rotate(-1.5deg); }
-/* clean, intentional corner accent (replaces old grey ⬡ square) */
-.mm-corner {
-  position:absolute; bottom:13px; right:13px; width:22px; height:22px;
-  display:flex; align-items:center; justify-content:center;
-  pointer-events:none; opacity:.55; transition:opacity .2s, transform .25s;
+/* gradient-mesh glow bloom, keyed to the tool accent */
+.mm-mesh { position:absolute; inset:0; z-index:-2; pointer-events:none; opacity:.6; transition:opacity .3s;
+  background:
+    radial-gradient(60% 46% at 82% 8%, color-mix(in srgb, var(--acc) 26%, transparent), transparent 70%),
+    radial-gradient(48% 40% at 6% 96%, color-mix(in srgb, var(--acc2) 20%, transparent), transparent 72%);
 }
-.mm-corner svg, .mm-corner span { width:16px; height:16px; font-size:13px; line-height:1; filter:drop-shadow(0 0 6px currentColor); }
-#mediaModGrid > div:hover .mm-corner { opacity:1; transform:scale(1.12); }
+/* fine scanline texture — subtle HUD grain */
+.mm-scan { position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.14; mix-blend-mode:overlay;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.5) 0 1px, transparent 1px 4px); }
+/* diagonal sheen that sweeps across on hover */
+.mm-sheen { position:absolute; top:0; left:-60%; width:55%; height:100%; z-index:2; pointer-events:none;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.16), transparent);
+  transform:skewX(-16deg); transition:none; }
+.mm-card:hover .mm-sheen { animation:mmSheen .8s cubic-bezier(.3,.7,.3,1); }
+@keyframes mmSheen { 0%{left:-60%} 100%{left:135%} }
+.mm-card:hover { transform:translateY(-5px); border-color:color-mix(in srgb, var(--acc) 65%, transparent) !important;
+  box-shadow:0 22px 46px -18px rgba(0,0,0,.9), 0 0 30px -6px color-mix(in srgb, var(--acc) 40%, transparent), inset 0 1px 0 rgba(255,255,255,.08) !important; }
+.mm-card:hover .mm-mesh { opacity:.95; }
+.mm-card:hover .media-mod-icon { transform:scale(1.07) rotate(-2deg); }
+/* icon shell — glass plinth under the art */
+.mm-icon-shell { width:60px; height:60px; border-radius:15px; margin-bottom:13px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(160deg, color-mix(in srgb, var(--acc) 16%, rgba(255,255,255,.03)), rgba(0,0,0,.28));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 16px -8px color-mix(in srgb, var(--acc) 60%, #000); }
+.mm-title { font-family:'Rajdhani',sans-serif; font-size:15.5px; font-weight:800; letter-spacing:.06em; color:#fff; line-height:1.05; text-shadow:0 0 14px color-mix(in srgb, var(--acc) 30%, transparent); }
+.mm-sub { font-size:9px; color:color-mix(in srgb, var(--acc) 78%, #cfd8dc); letter-spacing:.02em; margin-top:3px; }
+.mm-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:11px; }
+.mm-chips span { font-family:'Share Tech Mono',monospace; font-size:7.5px; letter-spacing:.03em; color:rgba(255,255,255,.6);
+  padding:2px 6px; border-radius:5px; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.08); transition:all .2s; }
+.mm-card:hover .mm-chips span { border-color:color-mix(in srgb, var(--acc) 40%, transparent); color:rgba(255,255,255,.82); }
+.mm-chips span.mm-chip-free { color:var(--acc); border-color:color-mix(in srgb, var(--acc) 55%, transparent); background:color-mix(in srgb, var(--acc) 12%, transparent); }
+.mm-badge { font-size:7px; font-weight:800; letter-spacing:.08em; color:#ffd45e; border:1px solid rgba(255,212,94,.45); border-radius:5px; padding:1px 5px; vertical-align:middle; background:rgba(255,212,94,.08); }
+.mm-premium { border-color:rgba(255,212,94,.32) !important; }
+/* crafted corner glyph — per-tool SVG, glows on hover */
+.mm-corner { position:absolute; bottom:14px; right:14px; width:24px; height:24px; z-index:1;
+  display:flex; align-items:center; justify-content:center; color:var(--acc);
+  pointer-events:none; opacity:.5; transition:opacity .25s, transform .3s; }
+.mm-corner svg { width:18px; height:18px; filter:drop-shadow(0 0 6px currentColor); }
+.mm-card:hover .mm-corner { opacity:1; transform:scale(1.15) translateY(-1px); }
 /* top HUD hairline that lights up on hover */
-#mediaModGrid > div::before {
-  content:""; position:absolute; top:0; left:14px; right:14px; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(0,229,160,.6), rgba(0,200,255,.6), transparent);
-  opacity:.28; transition:opacity .25s; pointer-events:none;
-}
-#mediaModGrid > div:hover::before { opacity:.7; }
+.mm-card::before { content:""; position:absolute; top:0; left:14px; right:14px; height:1px; z-index:1;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 70%, transparent), color-mix(in srgb, var(--acc2) 70%, transparent), transparent);
+  opacity:.32; transition:opacity .25s; pointer-events:none; }
+.mm-card:hover::before { opacity:.85; }
 @keyframes newsPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(.8); } }
 /* Media view-mode filter: grid / list / swivel */
 .mmode { font-size:12px; padding:5px 11px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text-muted); cursor:pointer; border-radius:6px; line-height:1; transition:all .15s; }
 .mmode:hover { color:var(--text); border-color:var(--accent,#00ff88); }
 .mmode.on { background:var(--accent,#00ff88); color:#04212b; border-color:var(--accent,#00ff88); }
-#mediaModGrid.mmv-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+#mediaModGrid.mmv-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
 #mediaModGrid.mmv-list { display:grid; grid-template-columns:1fr; gap:8px; }
-#mediaModGrid.mmv-swivel { display:flex; gap:22px; overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 6px 16px; }
-#mediaModGrid.mmv-swivel > div {
-  flex:0 0 250px; scroll-snap-align:center;
-  /* a touch more solid than grid so text reads through the translucency */
-  background:linear-gradient(155deg, rgba(9,14,18,.9) 0%, rgba(6,10,14,.8) 55%, rgba(0,229,160,.04) 100%) !important;
+/* list mode: icon left, text right — compact row */
+#mediaModGrid.mmv-list .mm-card { flex-direction:row; align-items:center; gap:16px; padding:12px 16px !important; }
+#mediaModGrid.mmv-list .mm-icon-shell { margin-bottom:0; flex:0 0 48px; width:48px; height:48px; }
+#mediaModGrid.mmv-list .media-mod-icon { width:40px; height:40px; }
+#mediaModGrid.mmv-list .mm-chips { margin-top:5px; }
+#mediaModGrid.mmv-swivel { display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; padding:6px 6px 18px; }
+#mediaModGrid.mmv-swivel .mm-card {
+  flex:0 0 252px; scroll-snap-align:center;
+  background:linear-gradient(155deg, rgba(9,14,18,.92) 0%, rgba(6,10,14,.82) 52%, color-mix(in srgb, var(--acc) 12%, transparent) 100%) !important;
 }
 @media(max-width:900px){ #mediaModGrid.mmv-grid { grid-template-columns:repeat(2,1fr); } }
+/* ══ Media Gallery — real image + video library grid ══ */
+@keyframes galFade { from{opacity:0} to{opacity:1} }
+.gal-card { position:relative; border-radius:11px; overflow:hidden; background:linear-gradient(160deg,rgba(12,16,20,.9),rgba(6,9,12,.86)); border:1px solid rgba(255,255,255,.07); box-shadow:0 12px 28px -16px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.04); transition:transform .25s cubic-bezier(.2,.85,.2,1), border-color .25s, box-shadow .25s; }
+.gal-card:hover { transform:translateY(-4px); border-color:rgba(255,213,78,.4); box-shadow:0 18px 36px -16px rgba(0,0,0,.9), 0 0 26px -8px rgba(255,213,78,.35); }
+.gal-thumb { width:100%; aspect-ratio:1/1; background-size:cover; background-position:center; background-color:rgba(0,0,0,.5); cursor:zoom-in; border-bottom:1px solid rgba(255,255,255,.05); position:relative; }
+.gal-thumb.gal-video { cursor:pointer; overflow:hidden; }
+.gal-thumb.gal-text { aspect-ratio:auto; min-height:96px; padding:11px; font-family:'Share Tech Mono',monospace; font-size:9px; line-height:1.6; color:rgba(255,255,255,.55); white-space:pre-wrap; overflow:hidden; background:linear-gradient(160deg,rgba(167,139,250,.06),rgba(0,0,0,.35)); }
+.gal-play { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; text-shadow:0 2px 12px #000; background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.22),transparent 60%),rgba(0,0,0,.22); opacity:.9; transition:opacity .2s, transform .2s; pointer-events:none; }
+.gal-thumb.gal-video:hover .gal-play { transform:scale(1.15); opacity:1; }
+.gal-actions { display:flex; gap:5px; margin-top:9px; }
+.gal-act { flex:1; display:flex; align-items:center; justify-content:center; text-decoration:none; height:26px; border-radius:6px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); color:rgba(255,255,255,.7); font-size:11px; cursor:pointer; transition:all .15s; }
+.gal-act:hover { background:rgba(255,213,78,.14); border-color:rgba(255,213,78,.5); color:#ffd54e; }
+.gal-act.gal-del:hover { background:rgba(244,63,94,.16); border-color:rgba(244,63,94,.5); color:#ff6b6b; }
 .media-tile:hover { transform: translateY(-2px); border-color: var(--accent) !important; box-shadow: 0 4px 12px rgba(0,229,160,0.2); }
 @keyframes skel-pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
@@ -50721,6 +50769,12 @@ window.ovSaveImageToGallery=function(url,label){
   try{ S.media=S.media||[]; S.media.unshift({id:Date.now(),type:'image',content:url,prompt:label||'',time:new Date().toISOString()}); if(typeof save==='function')save(); if(typeof renderMedia==='function')renderMedia(); notify('Saved to Gallery'); }
   catch(e){ notify('Could not save'); }
 };
+// Save a generated video to the gallery. renderMedia()→_persistGallery() downloads it once
+// to /assets/gallery/ (POST /api/media/save handles mp4/webm) so the provider URL doesn't expire.
+window.ovSaveVideoToGallery=function(url,label){
+  try{ S.media=S.media||[]; S.media.unshift({id:Date.now(),type:'video',content:decodeURIComponent(url),prompt:label||'',time:new Date().toISOString()}); if(typeof save==='function')save(); if(typeof renderMedia==='function')renderMedia(); notify('🎬 Saved to Gallery'); }
+  catch(e){ notify('Could not save'); }
+};
 
 // 🎥 Real video generation via BYOK backend (/api/video). Honest needs-key; polls to completion.
 window.ovGenerateVideo=async function(){
@@ -50736,7 +50790,7 @@ window.ovGenerateVideo=async function(){
     for(var i=0;i<40;i++){ await new Promise(s=>setTimeout(s,4000));
       var t=await (await fetch('/api/video/status/'+d.jobId)).json();
       wrap.innerHTML='<div style="color:#00f0ff;font-size:10px">⟳ '+engine+' · '+(t.status||'processing')+' '+(t.progress?('· '+t.progress+'%'):'')+'</div>';
-      if(t.status==='completed'&&t.videoUrl){ wrap.innerHTML='<video src="'+String(t.videoUrl).replace(/"/g,'')+'" controls style="width:100%;border-radius:8px;border:1px solid rgba(0,200,255,.35)"></video><div style="margin-top:6px"><button class="btn btn-ghost" style="font-size:8px" onclick="window.open(\''+String(t.videoUrl).replace(/'/g,'')+'\',\'_blank\')">⬇ Open</button></div>'; return; }
+      if(t.status==='completed'&&t.videoUrl){ var vUrl=String(t.videoUrl).replace(/"/g,''); var vLabel=subj.replace(/[<>'"]/g,'').slice(0,70); wrap.innerHTML='<video src="'+vUrl+'" controls style="width:100%;border-radius:8px;border:1px solid rgba(0,200,255,.35)"></video><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:9px" onclick="window.open(\''+String(t.videoUrl).replace(/'/g,'')+'\',\'_blank\')">⬇ Open</button><button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveVideoToGallery(\''+vUrl.replace(/'/g,'%27')+'\',\''+vLabel+'\')">💾 Save to Gallery</button></div>'; return; }
       if(t.status==='error'||t.status==='failed'){ wrap.innerHTML='<div style="color:#ff6b6b;font-size:10px">⚠ '+String(t.error||'generation failed').replace(/[<>]/g,'')+'</div>'; return; }
     }
     wrap.innerHTML='<div style="color:#ffb020;font-size:10px">Still rendering — check back shortly.</div>';
@@ -50831,39 +50885,97 @@ function _openMusicOverlay(){
   });
 }
 
+// ── REAL MEDIA GALLERY — grid of images + video, filter, lightbox, per-item actions.
+// Persistence: canonical store is S.media[] (localStorage via save()); each image/video's
+// `content` is a remote/data URL that renderMedia()→_persistGallery() downloads once to
+// /assets/gallery/ via POST /api/media/save so it survives (provider URLs expire). This
+// overlay reads that same S.media store — generating + Save lands items here.
+window._galleryFilter = window._galleryFilter || 'all';
+function _galMediaUrl(item){
+  // canonical field is content; tolerate legacy url field
+  var v = item.content || item.url || '';
+  return (/^(https?:\/\/|data:|blob:|\/)/.test(String(v))) ? String(v) : '';
+}
+function _galKind(item){
+  var t = (item.type||'').toLowerCase();
+  if(t==='video'||t==='clip') return 'video';
+  if(t==='image'||t==='pixel'){ return _galMediaUrl(item) ? 'image' : 'text'; }
+  return 'text';
+}
+window.setGalleryFilter = function(f){ window._galleryFilter=f; _openGalleryOverlay(); };
+window.galDelete = function(id){ S.media=(S.media||[]).filter(function(x){return String(x.id)!==String(id);}); if(typeof save==='function')save(); if(typeof renderMedia==='function')renderMedia(); notify('Deleted'); _openGalleryOverlay(); };
+window.galCopy = function(v){ try{ navigator.clipboard&&navigator.clipboard.writeText(v); notify('Link copied'); }catch(e){} };
+window.galLightbox = function(url,kind,title){
+  url=decodeURIComponent(url);
+  var body = kind==='video'
+    ? '<video src="'+escH(url)+'" controls autoplay style="max-width:88vw;max-height:80vh;border-radius:10px;border:1px solid rgba(255,215,0,.4);box-shadow:0 30px 80px -20px #000,0 0 60px -20px rgba(255,215,0,.4)"></video>'
+    : '<img src="'+escH(url)+'" style="max-width:88vw;max-height:80vh;object-fit:contain;border-radius:10px;border:1px solid rgba(255,215,0,.4);box-shadow:0 30px 80px -20px #000,0 0 60px -20px rgba(255,215,0,.4)">';
+  var ov=document.createElement('div');
+  ov.id='galLightbox';
+  ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(2,5,8,.92);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:galFade .18s ease';
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  ov.innerHTML='<div style="position:absolute;top:18px;left:22px;font-family:\'Rajdhani\',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;color:#ffd54e">'+escH(title||'')+'</div>'+
+    '<button onclick="document.getElementById(\'galLightbox\').remove()" style="position:absolute;top:16px;right:20px;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:16px;cursor:pointer">✕</button>'+
+    body+
+    '<div style="display:flex;gap:8px"><a href="'+escH(url)+'" target="_blank" download style="text-decoration:none"><button class="btn btn-ghost" style="font-size:10px">⬇ Download</button></a>'+
+    '<button class="btn btn-ghost" style="font-size:10px" onclick="galCopy('+JSON.stringify(url).replace(/"/g,'&quot;')+')">🔗 Copy link</button></div>';
+  document.body.appendChild(ov);
+};
 function _openGalleryOverlay(){
-  var items=S.media&&S.media.length?S.media:[];
-  var html='<div style="display:flex;flex-direction:column;gap:12px">';
+  var all = (S.media&&S.media.length)?S.media.slice():[];
+  var f = window._galleryFilter||'all';
+  var counts = { all:all.length, image:0, video:0 };
+  all.forEach(function(it){ var k=_galKind(it); if(k==='image')counts.image++; else if(k==='video')counts.video++; });
+  var items = all.filter(function(it){ var k=_galKind(it); return f==='all' ? true : (f==='image'? k==='image' : f==='video'? k==='video' : true); });
+
+  var chip=function(key,lbl,n){ var on=f===key; return '<button onclick="setGalleryFilter(\''+key+'\')" style="font-family:\'Share Tech Mono\',monospace;font-size:9px;letter-spacing:.05em;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .15s;'+(on?'background:linear-gradient(135deg,#ffd54e,#ffb020);color:#1a1200;border:1px solid #ffd54e;box-shadow:0 0 14px -3px rgba(255,213,78,.6)':'background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1)')+'">'+lbl+' <span style="opacity:.7">'+n+'</span></button>'; };
+
+  var html='<div style="display:flex;flex-direction:column;gap:14px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'+
+    '<div style="display:flex;gap:7px;flex-wrap:wrap">'+chip('all','◆ ALL',counts.all)+chip('image','🖼 IMAGES',counts.image)+chip('video','▶ VIDEO',counts.video)+'</div>'+
+    '<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:rgba(255,213,78,.7);letter-spacing:.06em">'+items.length+' shown · saved to your library</div>'+
+    '</div>';
+
   if(!items.length){
-    html+='<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.4);font-size:11px">No saved media yet.<br><span style="font-size:9px">Use Image Gen, Video Studio, or Music tools and click Save to Gallery.</span></div>';
+    html+='<div style="text-align:center;padding:52px 20px;border:1px dashed rgba(255,213,78,.25);border-radius:14px;background:radial-gradient(120% 90% at 50% 0%,rgba(255,213,78,.05),transparent 70%)">'+
+      '<div style="font-size:34px;opacity:.6;margin-bottom:10px;filter:drop-shadow(0 0 12px rgba(255,213,78,.4))">🖼</div>'+
+      '<div style="font-family:\'Rajdhani\',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em">'+(f==='all'?'Your gallery is empty':'No '+f+' items yet')+'</div>'+
+      '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:6px;line-height:1.6">Generate with <b style="color:#ffd54e">Image Gen</b> or <b style="color:#00e5ff">Video Studio</b>,<br>then hit <b>💾 Save to Gallery</b>. Images & video land right here.</div>'+
+      '</div>';
   }else{
-    html+='<div style="font-size:9px;color:rgba(255,255,255,0.5)">'+items.length+' saved items</div>';
-    html+='<div style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto">';
-    items.forEach(function(item,idx){
-      var icon=item.type==='image'?'🎨':item.type==='video'?'🎬':item.type==='audio'?'🎵':'📝';
-      var label=escH(item.label||item.subject||item.type||'media');
-      var dateStr=new Date(item.time||item.id||Date.now()).toLocaleDateString();
-      var copyVal=item.content||item.url||'';
-      var previewHtml='';
-      if(item.type==='image'&&item.url){
-        previewHtml='<img src="'+escH(item.url)+'" style="width:100%;max-height:180px;object-fit:contain;border-radius:6px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,215,0,0.2);margin-top:6px">'
-          +'<div style="display:flex;gap:6px;margin-top:6px">'
-          +'<a href="'+escH(item.url)+'" target="_blank" download style="text-decoration:none"><button class="btn btn-ghost" style="font-size:8px;padding:3px 10px">⬇ Download</button></a>'
-          +'<button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="(function(){navigator.clipboard&&navigator.clipboard.writeText(\''+escH(item.url)+'\');notify(\'URL copied\')})()">🔗 URL</button>'
-          +'</div>';
-      } else if(item.content){
-        var preview=item.content.slice(0,200)+(item.content.length>200?'…':'');
-        previewHtml='<div style="font-size:9px;color:rgba(255,255,255,0.5);line-height:1.6;white-space:pre-wrap;margin-top:6px;max-height:100px;overflow:hidden">'+escH(preview)+'</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;max-height:56vh;overflow-y:auto;padding:2px 2px 6px">';
+    items.forEach(function(item){
+      var kind=_galKind(item);
+      var url=_galMediaUrl(item);
+      var title=escH(item.prompt||item.label||item.subject||item.type||'media');
+      var dateStr=new Date(item.time||item.id||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      var badge = kind==='video'?['▶ VIDEO','#00e5ff']:kind==='image'?['🖼 IMAGE','#ffd54e']:[(item.type||'text').toUpperCase(),'#a78bfa'];
+      var idJson=JSON.stringify(item.id);
+      var urlEnc=encodeURIComponent(url);
+      var thumb='';
+      if(kind==='image'){
+        thumb='<div class="gal-thumb" onclick="galLightbox(\''+urlEnc+'\',\'image\',\''+title.replace(/'/g,"")+'\')" style="background-image:url(\''+escH(url).replace(/'/g,"%27")+'\')"></div>';
+      } else if(kind==='video'){
+        thumb='<div class="gal-thumb gal-video" onclick="galLightbox(\''+urlEnc+'\',\'video\',\''+title.replace(/'/g,"")+'\')">'+
+          '<video src="'+escH(url)+'#t=0.5" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:9px 9px 0 0"></video>'+
+          '<div class="gal-play">▶</div></div>';
+      } else {
+        var preview=escH(String(item.content||'').slice(0,160));
+        thumb='<div class="gal-thumb gal-text" onclick="galCopy('+JSON.stringify(item.content||'').replace(/"/g,"&quot;")+')" style="cursor:copy">'+preview+(String(item.content||'').length>160?'…':'')+'</div>';
       }
-      html+='<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<span style="font-size:10px;font-weight:700">'+icon+' '+label+' · '+dateStr+'</span>'+
-        '<div style="display:flex;gap:4px">'+
-        '<button class="btn btn-ghost" style="font-size:8px;padding:2px 8px" onclick="(function(){navigator.clipboard&&navigator.clipboard.writeText('+JSON.stringify(copyVal)+');notify(\'Copied\')})()">Copy</button>'+
-        '<button class="btn btn-ghost" style="font-size:8px;padding:2px 8px;color:var(--danger)" onclick="S.media.splice('+idx+',1);save();notify(\'Deleted\');launchMediaModule(\'gallery\')">Del</button>'+
-        '</div></div>'+
-        previewHtml+
-        '</div>';
+      var actions='<button class="gal-act" title="Open / Play" onclick="'+(kind==='text'?'galCopy('+JSON.stringify(item.content||'').replace(/"/g,"&quot;")+')':'galLightbox(\''+urlEnc+'\',\''+kind+'\',\''+title.replace(/'/g,"")+'\')')+'">'+(kind==='text'?'⧉':(kind==='video'?'▶':'⤢'))+'</button>';
+      if(url) actions+='<a class="gal-act" title="Download" href="'+escH(url)+'" target="_blank" download>⬇</a>'+
+        '<button class="gal-act" title="Copy link" onclick="galCopy('+JSON.stringify(url).replace(/"/g,"&quot;")+')">🔗</button>';
+      actions+='<button class="gal-act gal-del" title="Delete" onclick="galDelete('+idJson+')">🗑</button>';
+      html+='<div class="gal-card">'+
+        thumb+
+        '<div style="padding:9px 10px 10px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'+
+        '<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;letter-spacing:.06em;color:'+badge[1]+';border:1px solid '+badge[1]+'55;border-radius:4px;padding:1px 5px;background:'+badge[1]+'11">'+badge[0]+'</span>'+
+        '<span style="font-size:8px;color:rgba(255,255,255,.35)">'+dateStr+'</span></div>'+
+        '<div style="font-family:\'Rajdhani\',sans-serif;font-size:11px;font-weight:600;color:#fff;margin-top:5px;line-height:1.3;max-height:29px;overflow:hidden">'+title+'</div>'+
+        '<div class="gal-actions">'+actions+'</div>'+
+        '</div></div>';
     });
     html+='</div>';
   }

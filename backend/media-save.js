@@ -31,6 +31,9 @@ router.post('/save', express.json({ limit: '30mb' }), async (req, res) => {
       else if (/webp/.test(mime)) guessedExt = 'webp';
       else if (/gif/.test(mime)) guessedExt = 'gif';
       else if (/mp4/.test(mime)) guessedExt = 'mp4';
+      else if (/webm/.test(mime)) guessedExt = 'webm';
+      else if (/mpeg|mp3/.test(mime)) guessedExt = 'mp3';
+      else if (/wav/.test(mime)) guessedExt = 'wav';
     } else if (/^https?:\/\//i.test(data)) {
       const r = await fetch(data, { signal: AbortSignal.timeout(25000) });
       if (!r.ok) throw new Error('source fetch failed: HTTP ' + r.status);
@@ -39,7 +42,13 @@ router.post('/save', express.json({ limit: '30mb' }), async (req, res) => {
       if (/png/.test(ct)) guessedExt = 'png';
       else if (/jpe?g/.test(ct)) guessedExt = 'jpg';
       else if (/webp/.test(ct)) guessedExt = 'webp';
+      else if (/gif/.test(ct)) guessedExt = 'gif';
       else if (/mp4/.test(ct)) guessedExt = 'mp4';
+      else if (/webm/.test(ct)) guessedExt = 'webm';
+      else if (/mpeg|mp3/.test(ct)) guessedExt = 'mp3';
+      else if (/wav/.test(ct)) guessedExt = 'wav';
+      // fall back to the caller's declared media type when the source omits a content-type
+      else if (type === 'video') guessedExt = 'mp4';
     } else {
       return res.status(400).json({ ok: false, error: 'data must be a data: URI or http(s) URL' });
     }
