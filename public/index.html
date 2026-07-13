@@ -50828,7 +50828,7 @@ window.ovGenerateVideo=async function(){
     for(var i=0;i<40;i++){ await new Promise(s=>setTimeout(s,4000));
       var t=await (await fetch('/api/video/status/'+d.jobId)).json();
       wrap.innerHTML='<div style="color:#00f0ff;font-size:10px">⟳ '+engine+' · '+(t.status||'processing')+' '+(t.progress?('· '+t.progress+'%'):'')+'</div>';
-      if(t.status==='completed'&&t.videoUrl){ var vUrl=String(t.videoUrl).replace(/"/g,''); var vLabel=subj.replace(/[<>'"]/g,'').slice(0,70); wrap.innerHTML='<video src="'+vUrl+'" controls style="width:100%;border-radius:8px;border:1px solid rgba(0,200,255,.35)"></video><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:9px" onclick="window.open(\''+String(t.videoUrl).replace(/'/g,'')+'\',\'_blank\')">⬇ Open</button><button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveVideoToGallery(\''+vUrl.replace(/'/g,'%27')+'\',\''+vLabel+'\')">💾 Save to Gallery</button></div>'; return; }
+      if(t.status==='completed'&&t.videoUrl){ var vUrl=String(t.videoUrl).replace(/"/g,''); var vLabel=subj.replace(/[<>'"]/g,'').slice(0,70); wrap.innerHTML='<video src="'+vUrl+'" controls style="width:100%;border-radius:8px;border:1px solid rgba(0,200,255,.35)"></video><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:9px" onclick="window.open(\''+String(t.videoUrl).replace(/'/g,'')+'\',\'_blank\')">⬇ Open</button><button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveVideoToGallery(\''+vUrl.replace(/'/g,'%27')+'\',\''+vLabel+'\')">💾 Save to Gallery</button></div>'; try{ if(window.Economy){ Economy.gate({el:wrap,key:'vid_'+d.jobId,product:'video',label:'video'}); } }catch(_e){} return; }
       if(t.status==='error'||t.status==='failed'){ wrap.innerHTML='<div style="color:#ff6b6b;font-size:10px">⚠ '+String(t.error||'generation failed').replace(/[<>]/g,'')+'</div>'; return; }
     }
     wrap.innerHTML='<div style="color:#ffb020;font-size:10px">Still rendering — check back shortly.</div>';
@@ -51236,6 +51236,8 @@ function _showClipResult(out,links){
   out.style.display='block';
   out.innerHTML=html;
   notify('✅ Download link ready');
+  // ── MONETIZATION: paywall the finished clip for FREE users over the daily limit ──
+  try{ if(window.Economy){ Economy.gate({el:out,key:'clip_'+((links[0]&&links[0].url)||Date.now()),product:'clip',label:'clip'}); } }catch(e){}
 }
 
 function _showClipError(out,msg){
@@ -54226,6 +54228,7 @@ window.hireAgentX402=async function(){
 <script defer src="/forge-gate.js"></script>
 <script defer src="/rooms-plus.js"></script>
 <script defer src="/rooms-command-deck.js"></script>
+<script defer src="/economy-client.js"></script>
 <script defer src="/agents-pipeline.js"></script>
 <script defer src="/agent-editor.js"></script>
 <!-- ════════ /DEPTH + GLOW + FORGE LAYER ════════ -->

@@ -1,0 +1,166 @@
+'use strict';
+/**
+ * SHADDAI Economy routes — express Router.
+ *
+ * Mount example (in server-production.js, NOT edited here):
+ *   const economyRoutes = require('./economy-routes');
+ *   app.use('/api/economy', economyRoutes());
+ *
+ * Assumes express.json() is applied globally. All handlers validate input and
+ * translate errors into clean 4xx responses — they never 500-crash on bad
+ * input. There is NO cash-out / withdraw endpoint (closed-loop by design).
+ *
+ * User identity: taken from req.user?.id / req.userId if your auth middleware
+ * sets it; otherwise falls back to the request body/query userId for dev. In
+ * production, wire real auth and remove the fallback.
+ */
+
+const express = require('express');
+const {
+  getDefault,
+  InsufficientFundsError,
+  ValidationError
+} = require('./economy-service');
+
+function resolveUserId(req, provided) {
+  if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
+  if (typeof req.userId === 'string' && req.userId) return req.userId;
+  if (typeof provided === 'string' && provided) return provided;
+  return null;
+}
+
+function sendError(res, err) {
+  if (err instanceof InsufficientFundsError) {
+    return res.status(402).json({ ok: false, error: err.message, code: err.code });
+  }
+  if (err instanceof ValidationError) {
+    return res.status(400).json({ ok: false, error: err.message, code: err.code });
+  }
+  // Unexpected: log server-side, return generic 500 (no stack to client).
+  // eslint-disable-next-line no-console
+  console.error('[economy-routes] unexpected error:', err && err.stack ? err.stack : err);
+  return res.status(500).json({ ok: false, error: 'Internal error', code: 'INTERNAL' });
+}
+
+function createRouter(serviceOverride) {
+  const router = express.Router();
+  const svc = serviceOverride || getDefault();
+
+  // --- GET /balance -------------------------------------------------------
+  router.get('/balance', async (req, res) => {
+    try {
+      const userId = resolveUserId(req, req.query.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
+      const balance = await svc.getBalance(userId);
+      return res.json({ ok: true, userId, sparks_balance: balance });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
+  // --- GET /inventory -----------------------------------------------------
+  router.get('/inventory', async (req, res) => {
+    try {
+      const userId = resolveUserId(req, req.query.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
+      const items = await svc.getInventory(userId);
+      return res.json({ ok: true, userId, items });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
+  // --- POST /catalog/purchase --------------------------------------------
+  // Body: { userId?, catalogId, idempotencyKey, qty? }
+  // Validates the catalog item is active + sparks-priced, then spends Sparks
+  // and grants the item. Idempotency keys are derived so a client retry of the
+  // same purchase neither double-charges nor double-grants.
+  router.post('/catalog/purchase', async (req, res) => {
+    try {
+      const body = req.body || {};
+      const userId = resolveUserId(req, body.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
+
+      const catalogId = body.catalogId;
+      if (typeof catalogId !== 'string' || !catalogId.trim()) {
+        return res.status(400).json({ ok: false, error: 'catalogId required', code: 'VALIDATION' });
+      }
+      const idempotencyKey = body.idempotencyKey;
+      if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+        return res.status(400).json({ ok: false, error: 'idempotencyKey required', code: 'VALIDATION' });
+      }
+      let qty = body.qty == null ? 1 : body.qty;
+      if (typeof qty !== 'number' || !Number.isInteger(qty) || qty <= 0) {
+        return res.status(400).json({ ok: false, error: 'qty must be a positive integer', code: 'VALIDATION' });
+      }
+
+      const item = await svc.getCatalogItem(catalogId);
+      if (!item || item.active === false) {
+        return res.status(404).json({ ok: false, error: 'Catalog item not found or inactive', code: 'NOT_FOUND' });
+      }
+      const unitPrice = Number(item.sparks_price);
+      if (!Number.isInteger(unitPrice) || unitPrice <= 0) {
+        return res.status(400).json({ ok: false, error: 'Item is not purchasable with Sparks', code: 'NOT_PURCHASABLE' });
+      }
+      const total = unitPrice * qty;
+      if (!Number.isSafeInteger(total)) {
+        return res.status(400).json({ ok: false, error: 'qty too large', code: 'VALIDATION' });
+      }
+
+      // Derive stable idempotency keys for the two sub-operations from the
+      // client key so retries are safe end-to-end. spend runs first (rejects
+      // on insufficient funds BEFORE any item is granted).
+      const spendKey = `purchase:${idempotencyKey}:spend`;
+      const grantKey = `purchase:${idempotencyKey}:grant`;
+
+      const spendResult = await svc.spend(
+        userId, total, `purchase:${catalogId} x${qty}`, spendKey, { refId: catalogId }
+      );
+      // Only after a successful (or replayed) spend do we grant the item.
+      const grantResult = await svc.grantItem(userId, catalogId, qty, grantKey);
+
+      return res.json({
+        ok: true,
+        userId,
+        catalogId,
+        qty,
+        spent: total,
+        balance: spendResult.balance,
+        item: grantResult.item,
+        replayed: spendResult.replayed && grantResult.replayed
+      });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
+  // --- POST /grant  (ADMIN/DEBUG only) ------------------------------------
+  // Guarded by ADMIN_TOKEN. Used to seed Sparks for testing the loop.
+  // Body: { userId, amount, reason?, idempotencyKey }
+  // Header: x-admin-token: <ADMIN_TOKEN>
+  router.post('/grant', async (req, res) => {
+    try {
+      const adminToken = process.env.ADMIN_TOKEN;
+      if (!adminToken) {
+        return res.status(503).json({ ok: false, error: 'Admin grant disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
+      }
+      const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
+      if (provided !== adminToken) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
+      }
+      const body = req.body || {};
+      const { userId, amount, idempotencyKey } = body;
+      const reason = body.reason || 'admin_grant';
+      // Service-layer validation gives clean 400s for bad input.
+      const result = await svc.grant(userId, amount, reason, idempotencyKey);
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
+  return router;
+}
+
+module.exports = createRouter;
+module.exports.createRouter = createRouter;

@@ -327,6 +327,8 @@ app.use(compression());
 // Stripe webhook MUST see the raw body for signature verification — register it
 // BEFORE express.json() so the JSON parser doesn't consume the body first.
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), require('./stripe-webhook'));
+// Sparks/subscription paywall webhook — also raw body, also BEFORE express.json().
+app.post('/api/sub-billing/webhook', express.raw({ type: 'application/json' }), require('./sub-billing-webhook'));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
 // Never let browsers cache HTML pages — they must always fetch the latest build. (Static assets like
@@ -755,6 +757,8 @@ app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish 
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
+app.use('/api/economy', require('./economy-routes'));                 // Sparks ledger (append-only, idempotent; Postgres or atomic dev store)
+app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
