@@ -24768,7 +24768,7 @@ function showView(v) {
   if (v === 'zerox')         { if (typeof pingZerox === 'function') pingZerox(); if (typeof loadFearGreed === 'function') loadFearGreed(); }
   if (v === 'oracle')        { if (typeof pingOracle === 'function') pingOracle(); if (typeof loadMoonPhase === 'function') loadMoonPhase(); }
   if (v === 'turtle')        { if (typeof pingTurtle === 'function') pingTurtle(); }
-  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab('command'); }
+  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'pixel'); window._officeEntrySub = null; }
   if (v === 'agents')     { if (typeof render3DAgentCards === 'function') render3DAgentCards(); if (typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); }
 }
 
@@ -26929,6 +26929,44 @@ function switchOfficeTab(tab) {
     });
   }
 }
+
+// ── Pixel Office building routing ─────────────────────────────────────────────
+// The Pixel Office (public/pixel-office.js) dispatches
+//   CustomEvent('pixeloffice:enter-building', { detail:{ building:'<key>' } })
+// when the player walks into / clicks a building. Route each key to the matching
+// office function so the Pixel Office acts as the front door of the Office tab.
+// Registered exactly once, guarded, and never throws.
+(function wirePixelOfficeBuildingRouting() {
+  if (window._pixelOfficeRoutingWired) return;
+  window._pixelOfficeRoutingWired = true;
+  // building key -> Office sub-tab (via switchOfficeTab)
+  const OFFICE_SUB = {
+    command:  'command',
+    projects: 'projects',
+    skills:   'skills',
+    library:  'library',
+    boardroom:'boardroom',
+    bank:     'billing',   // Bank ≈ Billing
+  };
+  window.addEventListener('pixeloffice:enter-building', function (e) {
+    try {
+      const key = (e && e.detail && e.detail.building || '').toString().toLowerCase();
+      if (!key) return;
+      if (key === 'forge') {
+        if (typeof showView === 'function') showView('forge');
+        return;
+      }
+      if (OFFICE_SUB[key]) {
+        // Make sure the Office view is active, then open the mapped sub-tab.
+        if (S && S.view !== 'office') { window._officeEntrySub = OFFICE_SUB[key]; if (typeof showView === 'function') showView('office'); }
+        else if (typeof switchOfficeTab === 'function') { switchOfficeTab(OFFICE_SUB[key]); }
+        return;
+      }
+      // Unknown / future city buildings (market, docks, …) → friendly toast, no-op otherwise.
+      if (typeof notify === 'function') notify((key.charAt(0).toUpperCase() + key.slice(1)) + ' — coming soon');
+    } catch (_) { /* never throw from the router */ }
+  });
+})();
 
 // ======= WORKFLOW CHAIN ENGINE =======
 let _userWorkflows = JSON.parse(localStorage.getItem('shaddai_workflows') || '[]');

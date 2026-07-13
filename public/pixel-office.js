@@ -29,7 +29,7 @@
  * ==========================================================================*/
 (function () {
   'use strict';
-  if (window.PixelOffice && window.PixelOffice.__v === 4) return; // already loaded
+  if (window.PixelOffice && window.PixelOffice.__v === 5) return; // already loaded
 
   // ---- Brand + agent theming ------------------------------------------------
   // Positions re-spaced for the larger 22x20 footprint (see LAYOUT below).
@@ -165,6 +165,25 @@
       tiles: H, center: [7, 17.5], door: [8, 17] },
   ];
 
+  // ---- REAL NAVIGATION DOORS (open dashboard Office sub-tabs) ----------------
+  //   Each is a labeled, clickable building/desk INSIDE the office. Clicking one
+  //   dispatches CustomEvent('pixeloffice:enter-building',{detail:{building:key}})
+  //   and (best-effort) calls window.showView(key) so the user can reach every
+  //   Office function from within the pixel office. Hit-tested by a tile radius
+  //   around `center` (rendered as an on-theme kiosk/door prop + label).
+  const NAV_DOORS = [
+    { id: 'command',  label: '◈ MISSION DECK', short: 'Work Board',
+      color: '#00e5ff', center: [10.5, 11.4], glyph: '◈', hitR: 2.2 },
+    { id: 'projects', label: '▤ PROJECTS',     short: 'Projects',
+      color: '#7ee787', center: [5.5, 3.4],  glyph: '▤', hitR: 1.7 },
+    { id: 'skills',   label: '✦ SKILLS',       short: 'Skills',
+      color: '#a78bfa', center: [16, 3.4],   glyph: '✦', hitR: 1.7 },
+    { id: 'library',  label: '❖ LIBRARY',      short: 'Library',
+      color: '#fb923c', center: [19.5, 2.4], glyph: '❖', hitR: 1.7 },
+    { id: 'boardroom',label: '⬢ BOARDROOM',    short: 'Boardroom',
+      color: '#00b4d8', center: [10.5, 6.2], glyph: '⬢', hitR: 1.8 },
+  ];
+
   // ---- Module state ---------------------------------------------------------
   let host = null, canvas = null, ctx = null, hud = null;
   let dpr = 1, running = false, rafId = 0, visible = true, io = null, ro = null;
@@ -174,7 +193,7 @@
   let sprites = {};                             // name -> sprite runtime
   const collectables = [];                      // {tileX,tileY,icon}
   const payCallbacks = [];                      // x402 hooks
-  let lastT = 0, hoverTile = null;
+  let lastT = 0, hoverTile = null, hoverDoor = null;
   let mountAt = 0;                              // for the staggered intro reveal
   let nextBubbleAt = 0;                         // scheduler for idle chatter
 
@@ -191,15 +210,60 @@
     return { col: (dx + dy) / 2, row: (dy - dx) / 2 };
   }
 
-  // ---- Fit camera so the whole diamond grid is centered in the host ---------
+  // ---- Fit camera so the ENTIRE scene (floor + wall/prop height + labels)
+  //      is fully contained within the host, with comfortable margin --------
+  //
+  //   FIT MATH (guarantees nothing is ever clipped):
+  //   1. Compute the iso content bounding box in *unscaled* screen units
+  //      (i.e. as if scale === 1, origin at 0,0). The floor diamond's four
+  //      corners project to:
+  //          minSX = -(GRID_H) * TILE_W/2   (left  = tile [0, GRID_H])
+  //          maxSX =  (GRID_W) * TILE_W/2   (right = tile [GRID_W, 0])
+  //          minSY =  0                     (top   = tile [0,0])
+  //          maxSY = (GRID_W+GRID_H)*TILE_H/2 (bottom = far corner)
+  //      We then EXPAND this box by the extra vertical/horizontal reach of
+  //      things drawn ABOVE the floor (walls, furnace, tall props, sprite
+  //      name labels, floating emblems) and BELOW it (contact shadows) plus a
+  //      little horizontal slack for labels near the diamond's left/right tips.
+  //   2. Let content span be (cw, ch) at scale=1. To fit inside the host with
+  //      PAD fractional margin on every side:
+  //          scale = min( (w*(1-2*PAD)) / cw , (h*(1-2*PAD)) / ch )
+  //      Using min() over BOTH axes means the box is contained in width AND
+  //      height for wide OR tall hosts. Then we center the *scaled box* in the
+  //      host and back out originX/originY so the box's min corner lands at the
+  //      centered position. This is exact — the box, scaled and translated, is
+  //      provably inside the host rect.
+  const PAD = 0.07;                 // ~7% breathing room on every side
+  // extra reach (in unscaled px) beyond the flat floor diamond:
+  const REACH_TOP = 78;             // tallest thing above a tile: sprite label + emblem
+  const REACH_BOTTOM = 14;          // contact shadow droop below the front row
+  const REACH_SIDE = 30;            // zone/name labels poking past the L/R tips
   function fitCamera() {
+    if (!canvas) return;
     const w = canvas.width / dpr, h = canvas.height / dpr;
-    const gridW = (GRID_W + GRID_H) * TILE_W / 2;
-    const gridH = (GRID_W + GRID_H) * TILE_H / 2;
-    scale = Math.min((w * 0.92) / gridW, (h * 0.86) / gridH);
-    scale = Math.max(0.35, Math.min(scale, 1.6));
-    camTargetX = w / 2 - ((GRID_W - GRID_H) * (TILE_W * scale) / 4);
-    camTargetY = h / 2 - ((GRID_W + GRID_H) * (TILE_H * scale) / 4) + 10;
+
+    // (1) unscaled content box (scale = 1, origin = 0,0)
+    const minSX = -(GRID_H * TILE_W / 2) - REACH_SIDE;
+    const maxSX = (GRID_W * TILE_W / 2) + REACH_SIDE;
+    const minSY = 0 - REACH_TOP;
+    const maxSY = (GRID_W + GRID_H) * TILE_H / 2 + REACH_BOTTOM;
+    const cw = maxSX - minSX;        // content width  @ scale 1
+    const ch = maxSY - minSY;        // content height @ scale 1
+
+    // (2) scale that contains the box in BOTH axes with PAD margin
+    const availW = Math.max(1, w * (1 - 2 * PAD));
+    const availH = Math.max(1, h * (1 - 2 * PAD));
+    scale = Math.min(availW / cw, availH / ch);
+    scale = Math.max(0.18, Math.min(scale, 1.8));
+
+    // center the scaled box in the host, then solve origin so the box's
+    // min-corner lands at the centered top-left.
+    const boxW = cw * scale, boxH = ch * scale;
+    const boxLeft = (w - boxW) / 2;
+    const boxTop = (h - boxH) / 2;
+    // origin maps unscaled (0,0); box min corner sits at origin + min*scale.
+    camTargetX = boxLeft - minSX * scale;
+    camTargetY = boxTop - minSY * scale;
     if (!originX && !originY) { originX = camTargetX; originY = camTargetY; }
   }
 
@@ -734,94 +798,206 @@
     ctx.textAlign = 'left';
   }
 
-  // ---- Draw an agent sprite (blocky iso character w/ life) ------------------
+  // ---- Draw a REAL nav door/kiosk (opens an Office sub-tab on click) ---------
+  //   A glowing archway-panel with the section glyph + a floating label so the
+  //   user clearly reads it as an interactive door into that office function.
+  function drawNavDoor(d, now, hovered) {
+    const p = isoToScreen(d.center[0], d.center[1]);
+    const s = scale;
+    const pulse = 0.55 + (Math.sin(now / 620 + d.center[0]) + 1) / 2 * 0.45;
+    // grounded kiosk base
+    drawBox(d.center[0], d.center[1], 0.5, 5, shade(d.color, -0.4), shade(d.color, -0.55));
+    // portal panel (glowing doorway)
+    ctx.save();
+    ctx.shadowColor = d.color; ctx.shadowBlur = (hovered ? 22 : 13) * s;
+    const pg = ctx.createLinearGradient(p.x, p.y - 30 * s, p.x, p.y - 6 * s);
+    pg.addColorStop(0, d.color + 'e0');
+    pg.addColorStop(1, shade(d.color, -0.45));
+    ctx.fillStyle = pg;
+    roundRect(p.x - 9 * s, p.y - 30 * s, 18 * s, 26 * s, 5 * s); ctx.fill();
+    // inner dark recess
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(6,11,17,0.82)';
+    roundRect(p.x - 6.4 * s, p.y - 27 * s, 12.8 * s, 22 * s, 4 * s); ctx.fill();
+    // glyph
+    ctx.globalAlpha = pulse;
+    ctx.shadowColor = d.color; ctx.shadowBlur = 10 * s;
+    ctx.fillStyle = d.color;
+    ctx.font = `${13 * s | 0}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText(d.glyph, p.x, p.y - 13 * s);
+    ctx.restore();
+
+    // floating label pill
+    ctx.save();
+    ctx.font = "8px 'Share Tech Mono', monospace"; ctx.textAlign = 'center';
+    const tw = ctx.measureText(d.label).width;
+    ctx.fillStyle = hovered ? 'rgba(8,14,20,0.96)' : 'rgba(8,14,20,0.72)';
+    roundRect(p.x - tw / 2 - 7, p.y - 44 * s, tw + 14, 13, 4); ctx.fill();
+    ctx.strokeStyle = d.color + (hovered ? 'ff' : 'aa'); ctx.lineWidth = 1;
+    ctx.shadowColor = d.color; ctx.shadowBlur = hovered ? 9 : 4;
+    roundRect(p.x - tw / 2 - 7, p.y - 44 * s, tw + 14, 13, 4); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = d.color; ctx.fillText(d.label, p.x, p.y - 44 * s + 9);
+    ctx.restore();
+    ctx.textAlign = 'left';
+  }
+
+  // ---- Draw an agent sprite — a characterful little operative ----------------
+  //   Refined silhouette: tapered legs w/ feet, a shoulder-cut torso, a helmet
+  //   head with a glowing visor + brow, an antenna glint, subtle idle breathing
+  //   + weight-shift + blink, and a proper stride with arm swing while walking.
+  //   All procedural, no per-frame allocations.
   function drawAgent(sp, now, intro) {
     const p = isoToScreen(sp.col, sp.row);
     const s = scale;
     const walking = !!sp.path;
-    // breathing bob (bigger while walking)
-    const bob = (Math.sin(sp.bob) * (walking ? 2.4 : 1.2) + Math.sin(sp.breath) * 0.6) * s;
+    // idle life: gentle breathing scale + a slow lateral weight-shift when idle
+    const breathe = Math.sin(sp.breath) * (walking ? 0.6 : 1.0);
+    const bob = (Math.sin(sp.bob) * (walking ? 2.6 : 0.9) + breathe * 0.7) * s;
+    const sway = walking ? 0 : Math.sin(sp.breath * 0.5) * 0.9 * s;   // weight shift
     const isSel = sp.name === selected;
+    const fdir = sp.face; // +1 right, -1 left
 
     ctx.save();
     ctx.globalAlpha = intro;
 
-    // colored ground-glow in the agent's color
+    // clean colored ground-glow (soft radial, no harsh ring)
     ctx.save();
-    ctx.shadowColor = sp.color; ctx.shadowBlur = 14;
-    ctx.fillStyle = sp.color + '22';
-    ctx.beginPath(); ctx.ellipse(p.x, p.y, 13 * s, 6.5 * s, 0, 0, Math.PI * 2); ctx.fill();
+    const glowR = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, 16 * s);
+    glowR.addColorStop(0, sp.color + '3a');
+    glowR.addColorStop(1, sp.color + '00');
+    ctx.fillStyle = glowR;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, 16 * s, 8 * s, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
-    // soft contact shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.30)';
-    ctx.beginPath(); ctx.ellipse(p.x, p.y + 1.5 * s, 11 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+    // grounded contact shadow (tightens when idle, stretches slightly walking)
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 1.5 * s, (walking ? 10.5 : 9.5) * s, 4.4 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // pulsing selection ring
+    // pulsing selection ring (double: crisp inner + soft outer)
     if (isSel) {
-      const pulse = 1 + (Math.sin(now / 260) + 1) / 2 * 0.25;
+      const k = (Math.sin(now / 260) + 1) / 2;
       ctx.save();
       ctx.strokeStyle = sp.color; ctx.lineWidth = 2 * s;
-      ctx.shadowColor = sp.color; ctx.shadowBlur = 14;
-      ctx.globalAlpha = intro * (0.65 + (Math.sin(now / 260) + 1) / 2 * 0.35);
-      ctx.beginPath(); ctx.ellipse(p.x, p.y, 15 * s * pulse, 8 * s * pulse, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.shadowColor = sp.color; ctx.shadowBlur = 16;
+      ctx.globalAlpha = intro * (0.6 + k * 0.4);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, (13 + k * 3) * s, (6.5 + k * 1.6) * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.restore();
     }
 
-    const bx = p.x, by = p.y - bob;
-    const fdir = sp.face; // +1 right, -1 left
+    const bx = p.x + sway, by = p.y - bob;
 
-    // legs (tiny stride when walking)
-    const stride = walking ? Math.sin(sp.bob * 2) * 2.5 * s : 0;
-    ctx.fillStyle = shade(sp.color, -0.35);
-    ctx.fillRect(bx - 6 * s, by - 6 * s, 4 * s, 6 * s + Math.max(0, stride));
-    ctx.fillRect(bx + 2 * s, by - 6 * s, 4 * s, 6 * s + Math.max(0, -stride));
+    // ---- LEGS: tapered, with feet; alternating stride while walking ----
+    const gait = Math.sin(sp.bob * 2);
+    const strideF = walking ? gait * 3.0 * s : 0;      // front leg lift
+    const strideB = walking ? -gait * 3.0 * s : 0;     // back leg lift
+    const darkLeg = shade(sp.color, -0.4);
+    // back leg
+    ctx.fillStyle = shade(sp.color, -0.5);
+    ctx.fillRect(bx - 5 * s, by - 7 * s, 3.4 * s, 7 * s + Math.max(0, strideB));
+    ctx.fillStyle = '#1a1f26';                          // foot
+    ctx.fillRect(bx - 5.4 * s, by - 0.5 * s + Math.max(0, strideB), 4.2 * s, 2 * s);
+    // front leg
+    ctx.fillStyle = darkLeg;
+    ctx.fillRect(bx + 1.6 * s, by - 7 * s, 3.4 * s, 7 * s + Math.max(0, strideF));
+    ctx.fillStyle = '#222831';                          // foot
+    ctx.fillRect(bx + 1.2 * s, by - 0.5 * s + Math.max(0, strideF), 4.2 * s, 2 * s);
 
-    // body (colored torso block) w/ shaded half
+    // ---- TORSO: trapezoid (broad shoulders → narrower waist) ----
+    const topY = by - 25 * s, botY = by - 7 * s;
+    const shoW = 8.2 * s, waistW = 6.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(bx - shoW, topY);
+    ctx.lineTo(bx + shoW, topY);
+    ctx.lineTo(bx + waistW, botY);
+    ctx.lineTo(bx - waistW, botY);
+    ctx.closePath();
+    ctx.fillStyle = sp.color; ctx.fill();
+    // shaded trailing half
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = shade(sp.color, -0.2);
+    ctx.fillRect(fdir > 0 ? bx : bx - shoW - 1, topY - 1, shoW + 1, 20 * s);
+    // core seam / chest light
+    ctx.fillStyle = shade(sp.color, 0.28);
+    ctx.fillRect(bx - 0.6 * s, topY, 1.2 * s, 18 * s);
+    ctx.restore();
+    // rim light on leading shoulder edge
+    ctx.strokeStyle = shade(sp.color, 0.34); ctx.lineWidth = 1.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(fdir > 0 ? bx + shoW : bx - shoW, topY);
+    ctx.lineTo(fdir > 0 ? bx + waistW : bx - waistW, botY);
+    ctx.stroke();
+
+    // ---- ARM hint: a small swinging forearm on the leading side ----
+    const armSwing = walking ? gait * 3.2 * s : Math.sin(sp.breath) * 0.5 * s;
+    ctx.fillStyle = shade(sp.color, -0.28);
+    const ax = fdir > 0 ? bx + shoW - 1.2 * s : bx - shoW - 1.6 * s;
+    ctx.fillRect(ax, topY + 2 * s + Math.max(0, armSwing), 2.8 * s, 8 * s);
+
+    // ---- HEAD: rounded helmet w/ visor, brow glint, antenna ----
+    const hy = by - 35 * s;
+    // helmet shell
+    ctx.fillStyle = '#efe2cd';
+    roundRect(bx - 5 * s, hy - 1 * s, 10 * s, 11 * s, 3.2 * s); ctx.fill();
+    // shaded trailing cheek
+    ctx.save(); roundRect(bx - 5 * s, hy - 1 * s, 10 * s, 11 * s, 3.2 * s); ctx.clip();
+    ctx.fillStyle = shade('#efe2cd', -0.13);
+    ctx.fillRect(fdir > 0 ? bx : bx - 5 * s, hy - 1 * s, 5 * s, 12 * s);
+    // hair/helmet cap band in agent color
     ctx.fillStyle = sp.color;
-    ctx.fillRect(bx - 7 * s, by - 24 * s, 14 * s, 20 * s);
-    ctx.fillStyle = shade(sp.color, -0.18);
-    ctx.fillRect(fdir > 0 ? bx : bx - 7 * s, by - 24 * s, 7 * s, 20 * s);  // shaded trailing half
-    // subtle rim light on the leading edge
-    ctx.fillStyle = shade(sp.color, 0.22);
-    ctx.fillRect(fdir > 0 ? bx - 7 * s : bx + 5 * s, by - 24 * s, 2 * s, 20 * s);
+    ctx.fillRect(bx - 5 * s, hy - 1 * s, 10 * s, 2.4 * s);
+    ctx.restore();
 
-    // head
-    ctx.fillStyle = '#f2e4cf';
-    ctx.fillRect(bx - 5 * s, by - 36 * s, 10 * s, 12 * s);
-    ctx.fillStyle = shade('#f2e4cf', -0.12);
-    ctx.fillRect(fdir > 0 ? bx : bx - 5 * s, by - 36 * s, 5 * s, 12 * s);
-
-    // visor accent (blinks: thins to a line briefly)
+    // visor band (blink = thins to a line)
     const blinking = now < sp.blinkUntil;
+    ctx.save();
+    ctx.shadowColor = sp.color; ctx.shadowBlur = 7;
     ctx.fillStyle = sp.color;
     if (blinking) {
-      ctx.fillRect(bx - 5 * s, by - 30.5 * s, 10 * s, 1.2 * s);
+      ctx.fillRect(bx - 4.4 * s, hy + 5.4 * s, 8.8 * s, 1 * s);
     } else {
-      ctx.fillRect(bx - 5 * s, by - 32 * s, 10 * s, 3 * s);
-      // eye-glint on the facing side
-      ctx.save(); ctx.shadowColor = sp.color; ctx.shadowBlur = 6;
-      ctx.fillStyle = shade(sp.color, 0.4);
-      ctx.fillRect(fdir > 0 ? bx + 1.5 * s : bx - 3.5 * s, by - 31.4 * s, 2 * s, 1.6 * s);
-      ctx.restore();
+      ctx.fillStyle = shade(sp.color, -0.55);
+      ctx.fillRect(bx - 4.4 * s, hy + 4 * s, 8.8 * s, 3.2 * s);      // visor recess
+      // bright glint travelling across the visor on the facing side
+      ctx.fillStyle = shade(sp.color, 0.5);
+      const gx = fdir > 0 ? bx + 0.6 * s : bx - 3.6 * s;
+      ctx.fillRect(gx, hy + 4.4 * s, 2.4 * s, 2 * s);
     }
+    ctx.restore();
 
-    // name label + status dot
-    ctx.font = `${Math.max(8, 9 * s) | 0}px 'Share Tech Mono', monospace`;
+    // antenna with a pulsing tip
+    const aBlink = 0.5 + (Math.sin(now / 380 + sp.idx) + 1) / 2 * 0.5;
+    ctx.strokeStyle = shade(sp.color, -0.1); ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.moveTo(bx + 2.4 * s * fdir, hy - 1 * s);
+    ctx.lineTo(bx + 3.6 * s * fdir, hy - 4 * s);
+    ctx.stroke();
+    ctx.save(); ctx.globalAlpha = intro * aBlink;
+    ctx.fillStyle = sp.color; ctx.shadowColor = sp.color; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.arc(bx + 3.6 * s * fdir, hy - 4.2 * s, 1.3 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // ---- NAME LABEL: crisp pill w/ status dot ----
+    ctx.font = `700 ${Math.max(9, 9.5 * s) | 0}px 'Share Tech Mono', monospace`;
     ctx.textAlign = 'center';
     const label = sp.name;
     const tw = ctx.measureText(label).width;
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    roundRect(bx - tw / 2 - 8, by - 53 * s, tw + 18, 14, 4); ctx.fill();
-    ctx.strokeStyle = sp.color + '55'; ctx.lineWidth = 1; ctx.stroke();
-    // pulsing status dot
+    const ly = by - 52 * s;
+    ctx.fillStyle = 'rgba(6,11,17,0.72)';
+    roundRect(bx - tw / 2 - 10, ly, tw + 20, 15, 5); ctx.fill();
+    ctx.strokeStyle = sp.color + '77'; ctx.lineWidth = 1; ctx.stroke();
+    // status dot (left)
     const dotA = 0.55 + (Math.sin(now / 420 + sp.idx) + 1) / 2 * 0.45;
     ctx.save(); ctx.globalAlpha = intro * dotA;
-    ctx.fillStyle = sp.color;
-    ctx.beginPath(); ctx.arc(bx - tw / 2 - 2, by - 53 * s + 7, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = sp.color; ctx.shadowColor = sp.color; ctx.shadowBlur = 5;
+    ctx.beginPath(); ctx.arc(bx - tw / 2 - 3, ly + 7.5, 2.4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
-    ctx.fillStyle = '#e8f0ee';
-    ctx.fillText(label, bx + 4, by - 53 * s + 11);
+    ctx.fillStyle = '#eef4f2';
+    ctx.fillText(label, bx + 4, ly + 11);
     ctx.textAlign = 'left';
 
     ctx.restore();
@@ -957,6 +1133,12 @@
     drawFurnace(20, 12, now);
     drawAnvil(18.5, 13, now);
     drawBox(19, 14, 0.6, 8, '#2a1c10', '#1a1108');           // tool bench / quench barrel
+
+    // ---- REAL NAV DOORS (open Office sub-tabs) — drawn as glowing kiosks ----
+    NAV_DOORS.forEach(d => {
+      const hovered = hoverDoor && hoverDoor.id === d.id;
+      drawNavDoor(d, now, hovered);
+    });
 
     // ---- COMING-SOON city footprints (bank / market / docks) ----
     BUILDINGS.forEach(b => { if (b.soon) drawSoonFootprint(b, now); });
@@ -1125,14 +1307,25 @@
     const iso = screenToIso(p.x, p.y);
     const c = Math.round(iso.col), r = Math.round(iso.row);
     hoverTile = (c >= 0 && r >= 0 && c < GRID_W && r < GRID_H) ? { c, r } : null;
+    hoverDoor = doorAtIso(iso.col, iso.row);
     const overBuilding = hoverTile && buildingAtTile(hoverTile.c, hoverTile.r);
-    canvas.style.cursor = (agentAt(p.x, p.y) || overBuilding) ? 'pointer' : 'default';
+    canvas.style.cursor = (agentAt(p.x, p.y) || overBuilding || hoverDoor) ? 'pointer' : 'default';
   }
   // Which clickable building (if any) owns the clicked tile?
   function buildingAtTile(c, r) {
     if (r < 0 || c < 0 || r >= GRID_H || c >= GRID_W) return null;
     const kind = LAYOUT[r][c];
     return BUILDINGS.find(b => b.tiles === kind) || null;
+  }
+  // Which nav door (if any) sits under a fractional iso coord (radius hit-test)?
+  function doorAtIso(col, row) {
+    let hit = null, best = Infinity;
+    for (const d of NAV_DOORS) {
+      const dc = col - d.center[0], dr = row - d.center[1];
+      const dist = Math.hypot(dc, dr);
+      if (dist <= (d.hitR || 1.6) && dist < best) { best = dist; hit = d; }
+    }
+    return hit;
   }
 
   // Floating toast bubble anchored to a tile (used for building entry cues).
@@ -1146,7 +1339,7 @@
   function enterBuilding(b) {
     if (!b) return;
     if (b.id === 'forge') {
-      showToast('⬡ Entering The Forge…', '#ff8c1a', b.center);
+      showToast('↦ Opening The Forge…', '#ff8c1a', b.center);
       try { if (typeof window.showView === 'function') window.showView('forge'); } catch (_) {}
     } else {
       showToast(`${b.label} — coming soon`, b.color, b.center);
@@ -1154,6 +1347,19 @@
     try {
       window.dispatchEvent(new CustomEvent('pixeloffice:enter-building',
         { detail: { building: b.id } }));
+    } catch (_) {}
+  }
+
+  // Open an Office sub-tab from a nav door — best-effort, never throws.
+  function enterNavDoor(d) {
+    if (!d) return;
+    showToast(`↦ Opening ${d.short}…`, d.color, d.center);
+    // The dashboard's 'pixeloffice:enter-building' router owns ALL routing (office sub-tabs
+    // don't have standalone views, so a direct showView(d.id) here would flash a false
+    // "Coming soon" toast for command/boardroom). Dispatch the event and let it route.
+    try {
+      window.dispatchEvent(new CustomEvent('pixeloffice:enter-building',
+        { detail: { building: d.id } }));
     } catch (_) {}
   }
 
@@ -1173,6 +1379,9 @@
       return;
     }
     const iso = screenToIso(p.x, p.y);
+    // REAL nav doors take priority — open the matching Office sub-tab
+    const nd = doorAtIso(iso.col, iso.row);
+    if (nd) { enterNavDoor(nd); return; }
     const c = Math.round(iso.col), r = Math.round(iso.row);
     // building click (forge routes to dashboard; soon-tiles show a toast)
     const b = buildingAtTile(c, r);
@@ -1194,6 +1403,7 @@
       '<div class="pxo-legend">' +
         '<span class="pxo-lg"><i style="background:#00ff88"></i>tile → walk</span>' +
         '<span class="pxo-lg"><i style="background:#00e5ff"></i>agent → chat</span>' +
+        '<span class="pxo-lg"><i style="background:#a78bfa"></i>door → open</span>' +
       '</div>';
     const chips = hud.querySelector('.pxo-chips');
     AGENTS.forEach(a => {
@@ -1320,6 +1530,7 @@
     }
     if (host) { host.classList.remove('pxo-root'); host.innerHTML = ''; }
     canvas = null; ctx = null; hud = null; host = null; originX = 0; originY = 0;
+    hoverTile = null; hoverDoor = null; toast.text = '';
   }
 
   // ---- HOOKS (documented placeholders — wired later by other terminals) -----
@@ -1331,7 +1542,7 @@
   function _emitPay(payload) { payCallbacks.forEach(cb => { try { cb(payload); } catch (_) {} }); }
 
   window.PixelOffice = {
-    __v: 4,
+    __v: 5,
     mount, unmount,
     addCollectable, onPay,
     selectAgent,
