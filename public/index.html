@@ -3809,6 +3809,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </script>
 <!-- SHADDAI icon set (window.SHADDAI_ICONS / window.shaddaiIcon) — loaded before nav renders -->
 <script src="/assets/shaddai-icons.js"></script>
+<script src="/pixel-office.js" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
 </head>
 <body data-theme="dark">
@@ -5758,7 +5759,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
         <div style="display:flex;gap:5px;align-items:center">
           <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;border-color:rgba(255,215,0,0.2)" onclick="pingAllAgents();notify('Pinging operatives...')">↻ PING</button>
-          <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;color:#00ff88;border-color:rgba(0,229,160,0.2)" onclick="try{Object.keys(_pixelOfficeSprites).forEach(k=>delete _pixelOfficeSprites[k]);drawPixelOffice();}catch(e){notify('Draw err: '+e.message)}">⬡ REDRAW</button>
+          <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;color:#00ff88;border-color:rgba(0,229,160,0.2)" onclick="try{ if(window.PixelOffice) window.PixelOffice.mount(document.getElementById('pixelOfficeStage')); }catch(e){notify('Draw err: '+e.message)}">⬡ REDRAW</button>
           <button class="btn btn-accent" style="font-size:7px;padding:3px 10px;letter-spacing:1px;font-family:'Share Tech Mono',monospace" onclick="openShaddaiDesk()">▶ DESK</button>
         </div>
       </div>
@@ -5797,7 +5798,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <div class="cam-corner br"></div>
           <div class="cam-timecode" id="camTimecode">00:00:00</div>
         </div>
-        <canvas id="officeCanvas" style="width:100%;height:100%;display:block;cursor:crosshair"></canvas>
+        <canvas id="officeCanvas" style="display:none"></canvas>
+        <!-- Wave C: Pixel Office MMO mounts here (public/pixel-office.js). Old canvas kept hidden for legacy refs. -->
+        <div id="pixelOfficeStage" style="width:100%;height:100%;min-height:380px;position:relative"></div>
       </div>
 
       <!-- ── OPERATIVE STATUS BOARD ── -->
@@ -9695,69 +9698,211 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 
   <!-- ═══════════ AURA TOKEN SAVER VIEW ═══════════ -->
   <div id="auraView" class="view" style="overflow-y:auto;max-height:86vh">
-    <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+    <!-- ═══════════ TURTLE REDESIGN — cyber-neon HUD, matches dashboard identity ═══════════ -->
+    <style id="auraHudCss">
+      #auraView{ --aura-cy:#00E5FF; --aura-grn:#00ff88; }
+      #auraView .aura-wrap{ max-width:1120px; margin:0 auto; display:flex; flex-direction:column; gap:16px; padding-bottom:40px; }
+      /* Hero */
+      #auraView .aura-hero{ position:relative; overflow:hidden; border:1px solid rgba(0,229,255,0.32); border-radius:12px;
+        background:radial-gradient(720px 240px at 12% -20%,rgba(0,229,255,0.14),transparent 60%),radial-gradient(640px 260px at 100% 0%,rgba(0,255,136,0.10),transparent 60%),linear-gradient(180deg,rgba(9,16,30,0.94),rgba(5,9,20,0.94));
+        padding:22px 24px; box-shadow:0 0 0 1px rgba(0,229,255,0.05),0 18px 50px rgba(0,0,0,0.5); }
+      #auraView .aura-hero::before{ content:''; position:absolute; inset:0; background:repeating-linear-gradient(180deg,rgba(0,229,255,0.05) 0 1px,transparent 1px 4px); opacity:.35; pointer-events:none; }
+      #auraView .aura-hero-top{ position:relative; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+      #auraView .aura-glyph{ width:56px; height:56px; flex:none; border-radius:14px; display:flex; align-items:center; justify-content:center;
+        background:linear-gradient(135deg,rgba(0,229,255,0.22),rgba(0,255,136,0.18)); border:1px solid rgba(0,229,255,0.4); box-shadow:0 0 24px rgba(0,229,255,0.35),inset 0 0 16px rgba(0,229,255,0.15); color:var(--aura-cy); }
+      #auraView .aura-glyph svg{ filter:drop-shadow(0 0 6px currentColor); }
+      #auraView .aura-title{ font-family:'Orbitron',sans-serif; font-size:26px; font-weight:900; letter-spacing:.1em; line-height:1;
+        background:linear-gradient(90deg,#fff,#9becff 60%,#00E5FF); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+      #auraView .aura-kicker{ font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.34em; color:var(--aura-cy); margin-top:6px; }
+      #auraView .aura-live{ margin-left:auto; display:inline-flex; align-items:center; gap:7px; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.14em; color:var(--aura-grn);
+        border:1px solid rgba(0,255,136,0.3); border-radius:20px; padding:5px 12px; background:rgba(0,255,136,0.06); }
+      #auraView .aura-live .dot{ width:7px; height:7px; border-radius:50%; background:var(--aura-grn); box-shadow:0 0 8px var(--aura-grn); animation:auraBlink 1.6s ease-in-out infinite; }
+      @keyframes auraBlink{ 0%,100%{opacity:1} 50%{opacity:.25} }
+      #auraView .aura-lead{ position:relative; margin-top:14px; font-family:'Rajdhani',sans-serif; font-size:15px; line-height:1.55; color:var(--text-secondary); max-width:820px; }
+      #auraView .aura-lead b{ color:var(--aura-cy); font-weight:700; }
+      #auraView .aura-cta-row{ position:relative; display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
+      #auraView .aura-gh{ display:inline-flex; align-items:center; gap:8px; font-family:'Orbitron',sans-serif; font-weight:800; font-size:11px; letter-spacing:.06em;
+        color:#001018; background:linear-gradient(135deg,#00E5FF,#00ff88); border:none; border-radius:9px; padding:11px 18px; cursor:pointer; text-decoration:none;
+        box-shadow:0 0 22px rgba(0,229,255,0.4),0 6px 18px rgba(0,0,0,0.35); transition:.18s; }
+      #auraView .aura-gh:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+      #auraView .aura-pill{ display:inline-flex; align-items:center; gap:8px; font-family:'Share Tech Mono',monospace; font-size:11px; color:#9becff;
+        background:rgba(0,0,0,0.4); border:1px solid rgba(0,229,255,0.3); border-radius:9px; padding:9px 12px; }
+      #auraView .aura-pill code{ color:#c8f4ff; }
+      #auraView .aura-pill button{ background:none; border:1px solid rgba(0,229,255,0.35); color:var(--aura-cy); border-radius:5px; font-size:9px; padding:3px 7px; cursor:pointer; font-family:'Share Tech Mono',monospace; }
+      #auraView .aura-pill button:hover{ background:rgba(0,229,255,0.12); }
+      #auraView .aura-mut{ font-size:9px; color:var(--text-muted); font-family:'Share Tech Mono',monospace; letter-spacing:.06em; }
+      /* Section shells */
+      #auraView .aura-sec{ border:1px solid var(--border); border-radius:12px; background:linear-gradient(180deg,rgba(11,19,36,0.72),rgba(6,11,24,0.72));
+        padding:16px 18px; backdrop-filter:blur(12px); box-shadow:0 8px 30px rgba(0,0,0,0.35); }
+      #auraView .aura-sec.cy{ border-color:rgba(0,229,255,0.28); }
+      #auraView .aura-sec-h{ display:flex; align-items:center; gap:9px; margin-bottom:4px; }
+      #auraView .aura-sec-h .ico{ color:var(--aura-cy); display:inline-flex; }
+      #auraView .aura-sec-h .ico svg{ filter:drop-shadow(0 0 5px currentColor); }
+      #auraView .aura-sec-t{ font-family:'Orbitron',sans-serif; font-size:12px; font-weight:800; letter-spacing:.16em; color:#fff; text-transform:uppercase; }
+      #auraView .aura-sec-n{ margin-left:auto; font-size:9px; color:var(--text-muted); font-family:'Share Tech Mono',monospace; letter-spacing:.08em; }
+      #auraView .aura-sec-sub{ font-size:11px; color:var(--text-muted); line-height:1.6; margin:2px 0 14px; }
+      /* Metric tiles */
+      #auraView .aura-tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+      #auraView .aura-tile{ position:relative; overflow:hidden; border:1px solid var(--border); border-radius:10px; padding:13px 14px;
+        background:linear-gradient(180deg,rgba(0,0,0,0.28),rgba(0,0,0,0.14)); transition:.18s; }
+      #auraView .aura-tile:hover{ border-color:rgba(0,229,255,0.4); transform:translateY(-2px); box-shadow:0 0 20px rgba(0,229,255,0.14); }
+      #auraView .aura-tile.hi{ border-color:rgba(0,229,255,0.45); background:linear-gradient(180deg,rgba(0,229,255,0.10),rgba(0,0,0,0.14)); }
+      #auraView .aura-tile.hi::after{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#00E5FF,#00ff88); }
+      #auraView .aura-tile .tk{ font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.14em; color:var(--text-muted); text-transform:uppercase; }
+      #auraView .aura-tile .tv{ font-family:'Orbitron',sans-serif; font-size:22px; font-weight:900; margin-top:6px; line-height:1; color:#fff; }
+      #auraView .aura-tile .ts{ font-size:9px; color:var(--text-muted); margin-top:5px; line-height:1.3; }
+      #auraView .aura-tile.cy .tv{ color:var(--aura-cy); }
+      #auraView .aura-tile.grn .tv{ color:var(--aura-grn); }
+      #auraView .aura-tile.amber .tv{ color:var(--warning); }
+      #auraView .aura-tile.mag .tv{ color:var(--danger); }
+      /* Method rows */
+      #auraView .aura-meth{ display:flex; flex-direction:column; gap:9px; }
+      #auraView .aura-meth-row{ display:grid; grid-template-columns:150px 1fr; gap:12px; align-items:center; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:rgba(0,0,0,0.2); }
+      #auraView .aura-meth-row .ml{ font-family:'Share Tech Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.05em; }
+      #auraView .aura-meth-row .md{ font-size:10px; color:var(--text-muted); line-height:1.45; }
+      /* MCP code blocks */
+      #auraView .aura-code{ display:flex; gap:8px; align-items:stretch; margin-bottom:12px; }
+      #auraView .aura-code code{ flex:1; background:rgba(0,0,0,0.5); border:1px solid rgba(0,229,255,0.2); border-radius:7px; padding:10px 12px;
+        font-family:'Share Tech Mono',monospace; font-size:10.5px; color:#9becff; overflow-x:auto; white-space:nowrap; }
+      #auraView .aura-code-lbl{ font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--aura-cy); font-weight:700; letter-spacing:.1em; margin-bottom:5px; }
+      #auraView .aura-btn-cy{ font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.05em; white-space:nowrap;
+        background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.4); color:var(--aura-cy); border-radius:7px; padding:0 14px; cursor:pointer; }
+      #auraView .aura-btn-cy:hover{ background:rgba(0,229,255,0.2); }
+      #auraView .aura-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+    </style>
 
-      <!-- Hero -->
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid rgba(39,224,255,0.15);padding-bottom:14px">
-        <div style="font-size:34px">⚡</div>
-        <div>
-          <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff;letter-spacing:0.08em">AURA</div>
-          <div style="font-size:11px;color:#27e0ff;font-weight:700;letter-spacing:.14em">TOKEN SAVER</div>
+    <div class="aura-wrap">
+
+      <!-- ══ HERO — what AURA is, GitHub link, npm install pill ══ -->
+      <div class="aura-hero">
+        <div class="aura-hero-top">
+          <div class="aura-glyph" id="auraHeroGlyph">⚡</div>
+          <div>
+            <div class="aura-title">AURA</div>
+            <div class="aura-kicker">TOKEN&nbsp;·&nbsp;SAVER</div>
+          </div>
+          <span class="aura-live"><span class="dot"></span>STREAMING · 5s</span>
         </div>
-        <div style="flex:1;min-width:220px;font-size:11px;color:var(--text-muted);line-height:1.6">A multi-layer engine that answers a prompt the cheapest way possible <b style="color:#27e0ff">before</b> any paid model runs — BM25-ranked answer cache, deterministic local compute, saved skills, a tool-result cache, context compression, and your own ingested docs. Zero-dependency &amp; open source (MIT). It sits under every agent call here, so the more the empire works, the cheaper it gets. Savings scale with repetition — repeat work saves most; a novel one-off saves nothing.</div>
+        <div class="aura-lead">
+          SHADDAI's open-source <b>token-saver</b>. It answers repeat &amp; known prompts for <b>free</b> — from cache and local compute — <i>before</i> the AI ever spends a token, and caches live API pulls inside their freshness window. It sits under every agent call here, so the more the empire works, the cheaper it runs. Repeat work saves the most; a novel one-off saves nothing (we keep the numbers honest).
+        </div>
+        <div class="aura-cta-row">
+          <a class="aura-gh" href="https://github.com/IzzoIzzoIzzo/aura" target="_blank" rel="noopener" id="auraGhLink">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            AURA on GitHub · MIT
+          </a>
+          <span class="aura-pill">
+            <span class="aura-mut">npm</span>
+            <code id="auraNpmPill">npx -y -p shaddai-aura aura-mcp</code>
+            <button onclick="_auraCopy('auraNpmPill')">⧉ COPY</button>
+          </span>
+          <span class="aura-pill"><span class="aura-mut">shaddai-aura v0.4.0 · CLI · library · MCP</span></span>
+        </div>
       </div>
 
-      <!-- Live stats -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-        <div class="stat-box" style="border-color:rgba(39,224,255,0.3)"><div class="stat-label" style="color:#27e0ff">TOKENS SAVED</div><div class="stat-value" id="auraTokens" style="color:#27e0ff">—</div></div>
-        <div class="stat-box"><div class="stat-label">EST. $ SAVED</div><div class="stat-value" id="auraDollars">—</div></div>
-        <div class="stat-box"><div class="stat-label">CACHE HITS</div><div class="stat-value" id="auraHits">—</div></div>
-        <div class="stat-box"><div class="stat-label">HIT RATE</div><div class="stat-value" id="auraHitRate">—</div></div>
+      <!-- ══ 1 · HEADLINE METRIC TILES ══ -->
+      <div class="aura-sec cy">
+        <div class="aura-sec-h"><span class="ico" id="auraIcoStats">📊</span><span class="aura-sec-t">Savings — live</span><span class="aura-sec-n">honest · zero until something runs</span></div>
+        <div class="aura-tiles">
+          <div class="aura-tile hi cy"><div class="tk">Hit rate</div><div class="tv" id="auraHitRate">—</div><div class="ts">answers served with no AI</div></div>
+          <div class="aura-tile cy"><div class="tk">Tokens saved</div><div class="tv" id="auraTokens">—</div><div class="ts" id="auraDollars">est. $ saved</div></div>
+          <div class="aura-tile grn"><div class="tk">Free answers</div><div class="tv" id="auraHits">—</div><div class="ts">delivered at $0</div></div>
+          <div class="aura-tile"><div class="tk">Projected / mo</div><div class="tv" id="auraProj">—</div><div class="ts">at this rate</div></div>
+          <div class="aura-tile"><div class="tk">Cached prompts</div><div class="tv" id="auraCached">—</div><div class="ts">answers on hand</div></div>
+          <div class="aura-tile amber"><div class="tk">Kept fresh</div><div class="tv" id="auraFresh">—</div><div class="ts">volatile, never stale-cached</div></div>
+          <div class="aura-tile"><div class="tk">Avg tokens / hit</div><div class="tv" id="auraAvg">—</div><div class="ts">per free answer</div></div>
+          <div class="aura-tile mag"><div class="tk">AI misses</div><div class="tv" id="auraMiss">—</div><div class="ts">had to spend tokens</div></div>
+        </div>
       </div>
 
-      <!-- ACTIVATE AURA — embeds the live interface right in the tab -->
-      <div class="card" id="auraActivateCard" style="border:1px solid rgba(39,224,255,0.4);background:radial-gradient(600px 200px at 50% 0%,rgba(39,224,255,0.10),transparent 70%),linear-gradient(180deg,rgba(10,18,32,0.6),rgba(6,10,22,0.6));overflow:hidden;position:relative">
-        <div id="auraLaunchWrap" style="text-align:center;padding:26px 16px">
-          <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:#fff;letter-spacing:.18em;margin-bottom:6px">AURA ENGINE</div>
-          <div style="font-size:11px;color:var(--text-muted);max-width:520px;margin:0 auto 20px;line-height:1.7">Launch the live AURA interface right here in the dashboard — type a prompt, watch it answer <b style="color:#27e0ff">free</b> from cache / compute / skills, teach it new answers, and see your savings climb in real time.</div>
-          <button onclick="activateAura()" style="position:relative;font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:.14em;color:#001018;border:none;border-radius:12px;padding:16px 40px;cursor:pointer;background:linear-gradient(135deg,#27e0ff,#00ff88);box-shadow:0 0 30px rgba(39,224,255,0.5),0 8px 24px rgba(0,0,0,0.4);transition:.2s;animation:auraPulse 2.4s ease-in-out infinite" onmouseover="this.style.filter='brightness(1.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.filter='';this.style.transform=''">⚡ ACTIVATE AURA</button>
-          <div style="font-size:9px;color:var(--text-muted);margin-top:14px;letter-spacing:.1em">● opens the live token-saver console inside this tab</div>
+      <!-- ══ 2 · LIVE API-PULL CACHE ══ -->
+      <div class="aura-sec">
+        <div class="aura-sec-h"><span class="ico" id="auraIcoConnect">🌐</span><span class="aura-sec-t">Live API-pull cache</span><span class="aura-sec-n">reuses fresh pulls within their window</span></div>
+        <div class="aura-sec-sub">When two calls want the same live data inside its freshness window, AURA serves the cached pull instead of hitting the API again — saving requests, latency and rate-limit budget without ever serving stale data.</div>
+        <div class="aura-tiles">
+          <div class="aura-tile cy"><div class="tk">Pulls saved</div><div class="tv" id="auraPullsSaved">—</div><div class="ts">API calls avoided</div></div>
+          <div class="aura-tile"><div class="tk">Real pulls</div><div class="tv" id="auraRealPulls">—</div><div class="ts">actually fetched</div></div>
+          <div class="aura-tile grn"><div class="tk">Seconds saved</div><div class="tv" id="auraSecsSaved">—</div><div class="ts">round-trip latency</div></div>
+          <div class="aura-tile"><div class="tk">Cached endpoints</div><div class="tv" id="auraEndpoints">—</div><div class="ts">distinct sources</div></div>
         </div>
-        <iframe id="auraFrame" title="AURA" style="display:none;width:100%;height:72vh;border:0;border-radius:10px;background:#04060d"></iframe>
+        <div id="auraTopEndpoints" style="margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted)">Top endpoints appear here once live pulls are cached.</div>
+      </div>
+
+      <div class="aura-cols">
+        <!-- ══ 3a · VERIFY / BENCHMARK ══ -->
+        <div class="aura-sec cy">
+          <div class="aura-sec-h"><span class="ico" id="auraIcoVerify">🛡️</span><span class="aura-sec-t">Verify</span></div>
+          <div class="aura-sec-sub">Run the live benchmark — proves answers are real (COMPUTE), nothing is fabricated (SAFETY), and goals route to the right tool-chain (ROUTING). No fake numbers.</div>
+          <button class="aura-gh" style="width:100%;justify-content:center" onclick="activateAura();try{notify('Run BENCHMARK inside the live console')}catch(e){}">▶ RUN BENCHMARK</button>
+          <div class="aura-mut" style="margin-top:9px;text-align:center">opens the live console below — counters move as it runs</div>
+        </div>
+        <!-- ══ 3b · TRY AURA ══ -->
+        <div class="aura-sec">
+          <div class="aura-sec-h"><span class="ico" id="auraIcoTry">⚡</span><span class="aura-sec-t">Try AURA</span></div>
+          <div class="aura-sec-sub">Type a prompt and watch it answer <b style="color:var(--aura-cy)">free</b> from cache / compute / skills — or teach it a new answer. It computes any input; it's not a script.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"12.5% of 4800"</span>
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"convert 3 miles to km"</span>
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"sha256 of hello"</span>
+          </div>
+          <button class="aura-btn-cy" style="width:100%;padding:11px 0" onclick="activateAura()">⚡ OPEN LIVE TESTER</button>
+        </div>
+      </div>
+
+      <!-- ══ LIVE CONSOLE — embeds the real AURA interface (benchmark · try · recent saves) ══ -->
+      <div class="aura-sec cy" id="auraActivateCard" style="overflow:hidden;position:relative">
+        <div class="aura-sec-h"><span class="ico" id="auraIcoConsole">▶</span><span class="aura-sec-t">Live console</span><span class="aura-sec-n">real engine · in-tab</span></div>
+        <div id="auraLaunchWrap" style="text-align:center;padding:22px 16px 8px">
+          <div style="font-size:11px;color:var(--text-muted);max-width:560px;margin:0 auto 18px;line-height:1.7">Launch the full AURA interface right here — the live benchmark, the prompt tester, the SEED/FETCH/COMPUTE/QUERY/RECIPE breakdown, recent saves and the roadmap — all wired to the running engine, savings climbing in real time.</div>
+          <button onclick="activateAura()" style="position:relative;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;letter-spacing:.14em;color:#001018;border:none;border-radius:11px;padding:15px 38px;cursor:pointer;background:linear-gradient(135deg,#00E5FF,#00ff88);box-shadow:0 0 30px rgba(0,229,255,0.5),0 8px 24px rgba(0,0,0,0.4);transition:.2s;animation:auraPulse 2.4s ease-in-out infinite" onmouseover="this.style.filter='brightness(1.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.filter='';this.style.transform=''">⚡ ACTIVATE AURA CONSOLE</button>
+          <div class="aura-mut" style="margin-top:13px">● benchmark · try · live cache · how-it-saved · recent saves · roadmap</div>
+        </div>
+        <iframe id="auraFrame" title="AURA" style="display:none;width:100%;height:74vh;border:0;border-radius:10px;background:#04060d"></iframe>
         <div id="auraFrameBar" style="display:none;align-items:center;justify-content:space-between;padding:8px 4px 0">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#27e0ff">● AURA ENGINE — LIVE</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--aura-cy)">● AURA ENGINE — LIVE</span>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost" style="font-size:9px" onclick="window.open('/aura.html','_blank')">↗ Full screen</button>
-            <button class="btn btn-ghost" style="font-size:9px" onclick="deactivateAura()">▣ Minimize</button>
+            <button class="aura-btn-cy" style="font-size:9px;padding:4px 10px" onclick="window.open('/aura.html','_blank')">↗ Full screen</button>
+            <button class="aura-btn-cy" style="font-size:9px;padding:4px 10px" onclick="deactivateAura()">▣ Minimize</button>
           </div>
         </div>
       </div>
 
-      <!-- MCP card -->
-      <div class="card" style="border:1px solid rgba(39,224,255,0.25)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span style="font-size:16px">🔌</span>
-          <span style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:800;color:#fff;letter-spacing:.05em">USE AURA IN YOUR OWN AI TOOLS (MCP)</span>
+      <!-- ══ 5 · HOW IT SAVED — method breakdown ══ -->
+      <div class="aura-sec">
+        <div class="aura-sec-h"><span class="ico" id="auraIcoHow">✦</span><span class="aura-sec-t">How it saved</span><span class="aura-sec-n">the cheapest path wins</span></div>
+        <div class="aura-sec-sub">Every free answer comes from one of five deterministic layers — tried cheapest-first before any paid model runs. Prices, news and anything "live" are <b style="color:var(--text-primary)">never</b> stale-cached.</div>
+        <div class="aura-meth">
+          <div class="aura-meth-row"><div class="ml" style="color:var(--danger)">📚 SEED</div><div class="md">Curated stable facts from a knowledge base — answered with zero AI.</div></div>
+          <div class="aura-meth-row"><div class="ml" style="color:var(--aura-cy)">⌕ FETCH</div><div class="md">Exact-match cache — this identical prompt was seen before, served instantly.</div></div>
+          <div class="aura-meth-row"><div class="ml" style="color:var(--aura-grn)">∑ COMPUTE</div><div class="md">Math, units, hashes and conversions solved locally with zero AI.</div></div>
+          <div class="aura-meth-row"><div class="ml" style="color:var(--warning)">≈ QUERY</div><div class="md">A close paraphrase of a known prompt, reused via BM25 similarity ranking.</div></div>
+          <div class="aura-meth-row"><div class="ml" style="color:#8b5cf6">⬡ RECIPE</div><div class="md">A known task runs its real tool-chain directly — no AI deciding the steps.</div></div>
         </div>
-        <div style="font-size:10px;color:var(--text-muted);line-height:1.7;margin-bottom:14px">AURA ships an <b>MCP server</b> (v0.4.0, 5 tools). Add it to Claude Desktop, Claude Code, or Cursor and it saves tokens automatically — answering repeat prompts for free from cache, compute, skills or your own docs before your model spends anything.</div>
+      </div>
 
-        <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE CODE — one line</div>
-        <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
-          <code id="auraMcpCC" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">claude mcp add aura -- npx -y -p shaddai-aura aura-mcp</code>
-          <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpCC')">⧉ Copy</button>
+      <!-- ══ 4 · MCP SETUP + 6 · RECENT SAVES / 7 · ROADMAP link ══ -->
+      <div class="aura-sec cy">
+        <div class="aura-sec-h"><span class="ico" id="auraIcoMcp">🔌</span><span class="aura-sec-t">MCP setup</span><span class="aura-sec-n">v0.4.0 · 5 tools · zero deps</span></div>
+        <div class="aura-sec-sub">Add AURA to Claude Desktop, Claude Code or Cursor and it saves tokens automatically — answering repeat prompts for free from cache, compute, skills or your own docs before your model spends anything.</div>
+
+        <div class="aura-code-lbl">CLAUDE CODE — one line</div>
+        <div class="aura-code">
+          <code id="auraMcpCC">claude mcp add aura -- npx -y -p shaddai-aura aura-mcp</code>
+          <button class="aura-btn-cy" onclick="_auraCopy('auraMcpCC')">⧉ COPY</button>
         </div>
 
-        <div style="font-size:9px;color:#27e0ff;font-weight:700;margin-bottom:4px;letter-spacing:.08em">CLAUDE DESKTOP / CURSOR — config JSON</div>
-        <div style="display:flex;gap:6px;margin-bottom:14px;align-items:stretch">
-          <code id="auraMcpJson" style="flex:1;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:#8fdcff;overflow-x:auto;white-space:nowrap">{ "mcpServers": { "aura": { "command": "npx", "args": ["-y","-p","shaddai-aura","aura-mcp"] } } }</code>
-          <button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="_auraCopy('auraMcpJson')">⧉ Copy</button>
+        <div class="aura-code-lbl">CLAUDE DESKTOP / CURSOR — config JSON</div>
+        <div class="aura-code">
+          <code id="auraMcpJson">{ "mcpServers": { "aura": { "command": "npx", "args": ["-y","-p","shaddai-aura","aura-mcp"] } } }</code>
+          <button class="aura-btn-cy" onclick="_auraCopy('auraMcpJson')">⧉ COPY</button>
         </div>
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-accent" style="background:#27e0ff;color:#001018;border:none;font-weight:700;font-size:10px" onclick="window.open('https://github.com/IzzoIzzoIzzo/aura','_blank')">★ AURA on GitHub</button>
-          <button class="btn btn-ghost" style="font-size:10px" onclick="window.open('/aura.html','_blank')">Open live monitor / tester</button>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:4px">
+          <a class="aura-gh" href="https://github.com/IzzoIzzoIzzo/aura" target="_blank" rel="noopener">★ AURA on GitHub</a>
+          <button class="aura-btn-cy" style="padding:11px 16px" onclick="activateAura()">Recent saves &amp; roadmap →</button>
+          <button class="aura-btn-cy" style="padding:11px 16px" onclick="window.open('/aura.html','_blank')">Open full monitor ↗</button>
         </div>
-        <div style="font-size:8px;color:var(--text-muted);margin-top:10px">Five tools, led by <b style="color:#8fdcff">aura_ask</b> (free answer first) · <b style="color:#8fdcff">aura_remember</b> (cache it) · <b style="color:#8fdcff">aura_stats</b> (savings). Zero dependencies, MIT.</div>
+        <div class="aura-mut" style="margin-top:11px">Five tools — <b style="color:#9becff">aura_ask</b> (free answer first) · <b style="color:#9becff">aura_remember</b> (cache it) · <b style="color:#9becff">aura_stats</b> (savings) · aura_compress · aura_savings. Zero dependencies, MIT.</div>
       </div>
 
     </div>
@@ -9767,16 +9912,42 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   window.activateAura = function(){ var f=document.getElementById('auraFrame'); if(f && !f.src) f.src='/aura.html'; if(f) f.style.display='block'; var w=document.getElementById('auraLaunchWrap'); if(w) w.style.display='none'; var b=document.getElementById('auraFrameBar'); if(b) b.style.display='flex'; };
   window.deactivateAura = function(){ var f=document.getElementById('auraFrame'); if(f) f.style.display='none'; var w=document.getElementById('auraLaunchWrap'); if(w) w.style.display='block'; var b=document.getElementById('auraFrameBar'); if(b) b.style.display='none'; };
   (function(){ try{ var s=document.createElement('style'); s.textContent='@keyframes auraPulse{0%,100%{box-shadow:0 0 30px rgba(39,224,255,0.5),0 8px 24px rgba(0,0,0,0.4)}50%{box-shadow:0 0 48px rgba(39,224,255,0.9),0 8px 24px rgba(0,0,0,0.4)}}'; document.head.appendChild(s);}catch(e){} })();
+  // TURTLE: inject branded SHADDAI icons into the redesigned AURA hero + section heads.
+  window._auraIcons = function(){
+    if(typeof window.shaddaiIcon !== 'function') return;
+    var map={ auraHeroGlyph:['aura',26], auraIcoStats:['skills',15], auraIcoConnect:['connect',15], auraIcoVerify:['pikadon',15],
+      auraIcoTry:['aura',15], auraIcoConsole:['play',15], auraIcoHow:['forge',15], auraIcoMcp:['connect',15] };
+    Object.keys(map).forEach(function(id){ var el=document.getElementById(id); if(!el) return;
+      try{ el.innerHTML=window.shaddaiIcon(map[id][0],{size:map[id][1]}); }catch(e){} });
+  };
   window.loadAuraTab = async function(){
+    try{ window._auraIcons(); }catch(e){}
     var g=function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+    var N=function(x){ return Number(x||0).toLocaleString(); };
     try{
       var base=(typeof AURA_BASE!=='undefined')?AURA_BASE:'/api';
       var s=await (await fetch(base+'/aura/stats',{signal:AbortSignal.timeout(5000)})).json();
-      g('auraTokens', Number(s.tokensSaved||0).toLocaleString());
-      g('auraDollars', '$'+Number(s.costSavedUsd||0).toFixed(2));
-      g('auraHits', Number(s.hits||0).toLocaleString());
+      // headline tiles
       g('auraHitRate', Math.round((s.hitRate||0)*100)+'%');
-    }catch(e){ /* leave dashes if offline */ }
+      g('auraTokens', N(s.tokensSaved));
+      g('auraDollars', '≈ $'+Number(s.costSavedUsd||0).toFixed(4)+' saved');
+      g('auraHits', N(s.hits));
+      g('auraProj', '$'+Number(s.projMonthlyUsd||0).toFixed(2));
+      g('auraCached', N(s.cacheEntries));
+      g('auraFresh', N(s.volatileSkips));
+      g('auraAvg', N(s.avgTokensPerHit));
+      g('auraMiss', N(s.misses));
+      // live API-pull cache
+      var tc=s.toolCache||{};
+      g('auraPullsSaved', N(tc.pullsSaved));
+      g('auraRealPulls', N(tc.realPulls));
+      g('auraSecsSaved', Number(tc.secondsSaved||0).toFixed(1)+'s');
+      g('auraEndpoints', N(tc.cachedEndpoints));
+      var te=document.getElementById('auraTopEndpoints');
+      if(te){ te.innerHTML=(tc.topTools&&tc.topTools.length)
+        ? 'Top cached endpoints: '+tc.topTools.map(function(t){ return '<span style="color:#00E5FF">'+String(t.name||'').replace(/[<>]/g,'')+'</span> ×'+N(t.hits); }).join(' · ')
+        : 'No repeated pulls yet — when an agent or workflow fetches the same data twice within its window, it shows here.'; }
+    }catch(e){ /* leave dashes if offline — honest empty state */ }
   };
   </script>
   <!-- ═══════════ /AURA VIEW ═══════════ -->
@@ -26505,6 +26676,8 @@ function switchOfficeTab(tab) {
   const tabMap = { command: 1, projects: 7, skills: 8, billing: 9, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4 };
   const activeBtn = document.getElementById('officeTab' + tabMap[tab]);
   if (activeBtn) activeBtn.classList.add('active');
+  // Wave C: free the Pixel Office MMO render loop whenever we leave the Pixel tab
+  if (tab !== 'pixel' && window.PixelOffice) { try { window.PixelOffice.unmount(); } catch(e){} }
   if (tab === 'projects') {
     _e3RelocateIntoOffice('projectsView', 'officeProjects', typeof renderProjects === 'function' ? renderProjects : null);
   }
@@ -26532,12 +26705,9 @@ function switchOfficeTab(tab) {
     _e3RelocateIntoOffice('billingView', 'officeBilling', typeof renderBillingView === 'function' ? renderBillingView : null);
   }
   if (tab === 'pixel') {
-    // Three timed attempts — browser needs layout recalc after display:flex before canvas dims are right
-    if (typeof initPixelOffice === 'function') {
-      setTimeout(initPixelOffice, 60);
-      setTimeout(initPixelOffice, 250);
-      setTimeout(initPixelOffice, 600);
-    }
+    // Wave C: mount the Pixel Office MMO into its stage (timed so the panel has laid out after display:flex)
+    const _mmoMount = () => { try { if (window.PixelOffice) window.PixelOffice.mount(document.getElementById('pixelOfficeStage')); } catch(e){} };
+    setTimeout(_mmoMount, 60); setTimeout(_mmoMount, 300);
     // Refresh per-agent status dots
     if (typeof pingAllAgents === 'function') pingAllAgents();
     const AGENTS = ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
