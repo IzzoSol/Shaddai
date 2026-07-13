@@ -1012,6 +1012,57 @@ select:not(.select){ background: var(--bg-deep,#0e1117); color: var(--text,#e8ec
 .np-stat-val { font-size: 15px; font-weight: 700; line-height: 1; }
 .np-stat-lbl { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.3); margin-top: 2px; }
 
+/* ══ TURTLE FLAGSHIP PASS — swivel = flipping through operative dossiers ══ */
+#agentDeployCard{
+  position:relative; border-radius:14px !important;
+  border:1px solid rgba(var(--ops-rgb,0,229,160),0.18) !important;
+  background:
+    radial-gradient(900px 300px at 50% -30%, color-mix(in srgb, var(--ops-accent,#00ff88) 12%, transparent), transparent 60%),
+    linear-gradient(160deg,rgba(0,5,15,0.98),rgba(5,15,30,0.96)) !important;
+  box-shadow:0 24px 60px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.4);
+  transition:border-color .5s ease, background .5s ease;
+  overflow:hidden !important;
+}
+/* soft accent aura bleeding from the top, retinted per agent */
+#agentDeployCard::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(600px 220px at 50% 0%, color-mix(in srgb, var(--ops-accent,#00ff88) 16%, transparent), transparent 62%);
+  opacity:.55; transition:background .5s ease;
+}
+#agentDeployCard > *{ position:relative; z-index:1; }
+/* premium header */
+.deploy-header{ padding:14px 18px; border-bottom:1px solid color-mix(in srgb, var(--ops-accent,#00ff88) 24%, transparent); }
+.deploy-header::before{ box-shadow:0 0 16px var(--ops-accent,#00ff88); }
+.deploy-title{ font-size:12px; letter-spacing:3.5px; text-shadow:0 0 18px color-mix(in srgb, var(--ops-accent,#00ff88) 55%, transparent); }
+.deploy-stamp{ background:rgba(255,60,60,0.06); box-shadow:inset 0 0 10px rgba(255,60,60,0.12); }
+/* stage — deeper vignette + subtle floor grid feel driven by accent */
+#agentCarousel{ background:
+    radial-gradient(ellipse at center 60%, color-mix(in srgb, var(--ops-accent,#00ff88) 7%, transparent) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.35)) !important; }
+#revolverGlow{ opacity:.32 !important; }
+.ops-corners span{ border-color:color-mix(in srgb, var(--ops-accent,#00ff88) 62%, transparent) !important; }
+/* the turntable card swap reads as a dossier flip */
+#carouselStage{ transition:transform 0.8s cubic-bezier(0.34,1.4,0.5,1) !important; }
+/* nameplate — glassy, accent-lit, dossier entrance */
+.agent-nameplate{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--np-color,#00ff88) 8%, rgba(0,0,0,0.55)), rgba(5,10,20,0.85)) !important;
+  backdrop-filter:blur(8px); border-top:1px solid color-mix(in srgb, var(--np-color,#00ff88) 22%, transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.agent-nameplate-accent{ width:5px; box-shadow:0 0 18px var(--np-color,#00ff88), inset 0 0 6px rgba(255,255,255,0.4) !important; }
+.agent-nameplate-name{ font-size:28px; letter-spacing:4.5px; animation:npFlipIn .45s cubic-bezier(.16,.84,.34,1); }
+.np-stat-val{ font-size:16px; text-shadow:0 0 12px rgba(0,0,0,0.4); }
+.agent-nameplate-stats > div{ padding-right:2px; position:relative; }
+.agent-nameplate-stats > div + div::before{ content:''; position:absolute; left:-11px; top:2px; bottom:2px; width:1px;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,0.12),transparent); }
+@keyframes npFlipIn{ from{ opacity:0; transform:translateY(6px) rotateX(20deg); } to{ opacity:1; transform:none; } }
+/* character dossier panel gets a per-agent left rule */
+#currentAgentSkills{ border-top:1px solid color-mix(in srgb, var(--ops-accent,#00ff88) 12%, transparent);
+  background:linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.18)) !important; }
+@media (prefers-reduced-motion: reduce){
+  .agent-nameplate-name{ animation:none; }
+}
+
 /* ── Dossier panel ── */
 .ops-dossier {
   border: 1px solid rgba(255,255,255,0.07);
@@ -2956,6 +3007,79 @@ body[data-theme="dark"] {
 .op-tool.more { color:var(--op-color,#00ff88); border-color:rgba(var(--op-rgb,0,229,160),.3); }
 .op-sec-label { font-family:'Share Tech Mono',monospace; font-size:7px; letter-spacing:2px; text-transform:uppercase;
   color:rgba(150,180,160,.55); margin:0 0 4px; }
+
+/* ══ TURTLE FLAGSHIP PASS — character-sheet drama, premium per-agent theming ══ */
+.operator-dossier{
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(var(--op-rgb,0,229,160),0.12), transparent 55%),
+    linear-gradient(180deg, rgba(6,12,26,0.96), rgba(2,7,18,0.98));
+  border:1px solid rgba(var(--op-rgb,0,229,160),0.22);
+  border-top:2px solid var(--op-color,#00ff88);
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.45), inset 0 0 30px rgba(var(--op-rgb,0,229,160),0.03);
+  transition:transform .28s cubic-bezier(.2,.8,.3,1), box-shadow .28s ease, border-color .28s ease;
+}
+/* corner-bracket accents = tactical dossier feel */
+.operator-dossier::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:3; border-radius:12px;
+  background:
+    linear-gradient(var(--op-color,#00ff88),var(--op-color,#00ff88)) top left/14px 2px no-repeat,
+    linear-gradient(var(--op-color,#00ff88),var(--op-color,#00ff88)) top left/2px 14px no-repeat,
+    linear-gradient(var(--op-color,#00ff88),var(--op-color,#00ff88)) bottom right/14px 2px no-repeat,
+    linear-gradient(var(--op-color,#00ff88),var(--op-color,#00ff88)) bottom right/2px 14px no-repeat;
+  opacity:.5; transition:opacity .28s;
+}
+.operator-dossier:hover{
+  transform:translateY(-6px) scale(1.012);
+  border-color:rgba(var(--op-rgb,0,229,160),0.55);
+  box-shadow:0 22px 54px rgba(0,0,0,0.6), 0 0 34px rgba(var(--op-rgb,0,229,160),0.28), inset 0 0 40px rgba(var(--op-rgb,0,229,160),0.05);
+}
+.operator-dossier:hover::after{ opacity:1; }
+/* moving sheen across the whole card on hover */
+.operator-dossier .op-hero::after{
+  content:''; position:absolute; top:0; left:-70%; width:55%; height:100%; z-index:2; transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.16),transparent); transition:left .6s ease; pointer-events:none;
+}
+.operator-dossier:hover .op-hero::after{ left:140%; }
+/* portrait — bolder presentation, accent duotone glow, taller */
+.op-hero{ height:172px; }
+.op-hero img{ object-position:center 18%; filter:saturate(1.08) contrast(1.05); }
+.operator-dossier:hover .op-hero img{ transform:scale(1.08); filter:saturate(1.18) contrast(1.08); }
+.op-hero-scrim{ height:78%;
+  background:linear-gradient(180deg,transparent,rgba(2,6,14,.35) 40%,rgba(2,6,14,.7) 66%,rgba(var(--op-rgb,0,229,160),0.06)),
+            linear-gradient(180deg,transparent 55%,rgba(2,6,14,.9)); }
+.op-hero-fallback{ font-size:52px; text-shadow:0 0 24px currentColor; }
+/* callsign hierarchy */
+.op-callsign{ font-size:25px; letter-spacing:2.5px; }
+.op-designation{ opacity:.85; }
+/* skill chips get a soft inner glow, tools a mono panel */
+.op-chip{ box-shadow:inset 0 0 8px rgba(var(--op-rgb,0,229,160),0.06); }
+.op-chips .op-chip, .op-chips .op-tool{ transition:transform .12s ease; }
+.operator-dossier:hover .op-chip{ transform:translateY(-1px); }
+/* clearance / brain bar — thicker + glow */
+.op-clearance{ height:5px; border-radius:3px; box-shadow:inset 0 0 6px rgba(0,0,0,.6); }
+.op-clearance-fill{ box-shadow:0 0 10px rgba(var(--op-rgb,0,229,160),0.6); }
+/* the bold DEPLOY button — pulse glow + sheen */
+.op-deploy-primary{ position:relative; overflow:hidden; padding:9px 8px !important; font-size:11px !important; border-radius:8px !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .16s ease, box-shadow .16s ease, filter .16s ease; }
+.op-deploy-primary::after{ content:''; position:absolute; top:0; left:-60%; width:45%; height:100%; transform:skewX(-20deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent); transition:left .5s ease; }
+.op-deploy-primary:hover{ transform:translateY(-2px); filter:brightness(1.1); box-shadow:0 0 26px rgba(var(--op-rgb,0,229,160),0.6) !important; }
+.op-deploy-primary:hover::after{ left:130%; }
+/* staggered entrance for the grid of cards */
+#agent3DGrid .operator-dossier{ animation:opCardRise .5s cubic-bezier(.16,.84,.34,1) both; }
+#agent3DGrid .operator-dossier:nth-child(1){animation-delay:.03s}
+#agent3DGrid .operator-dossier:nth-child(2){animation-delay:.08s}
+#agent3DGrid .operator-dossier:nth-child(3){animation-delay:.13s}
+#agent3DGrid .operator-dossier:nth-child(4){animation-delay:.18s}
+#agent3DGrid .operator-dossier:nth-child(5){animation-delay:.23s}
+#agent3DGrid .operator-dossier:nth-child(6){animation-delay:.28s}
+#agent3DGrid .operator-dossier:nth-child(n+7){animation-delay:.33s}
+@keyframes opCardRise{ from{ opacity:0; transform:translateY(20px) scale(.98);} to{ opacity:1; transform:translateY(0) scale(1);} }
+@media (prefers-reduced-motion: reduce){
+  #agent3DGrid .operator-dossier{ animation:none; }
+  .operator-dossier .op-hero::after,.op-deploy-primary::after{ transition:none; }
+}
 
 /* ── Stat boxes: Terminal readouts ── */
 .stat-box {
@@ -9769,6 +9893,84 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.4); color:var(--aura-cy); border-radius:7px; padding:0 14px; cursor:pointer; }
       #auraView .aura-btn-cy:hover{ background:rgba(0,229,255,0.2); }
       #auraView .aura-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+
+      /* ══ TURTLE FLAGSHIP PASS — atmosphere · depth · motion · hierarchy ══ */
+      /* Layered gradient-mesh atmosphere behind the whole tab */
+      #auraView{ position:relative; }
+      #auraView .aura-wrap{ position:relative; z-index:1; }
+      #auraView .aura-wrap::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+        background:
+          radial-gradient(900px 520px at 8% -8%, rgba(0,229,255,0.10), transparent 60%),
+          radial-gradient(760px 620px at 100% 4%, rgba(0,255,136,0.075), transparent 62%),
+          radial-gradient(680px 540px at 50% 118%, rgba(0,229,255,0.06), transparent 60%);
+        opacity:.9; animation:auraMeshDrift 22s ease-in-out infinite alternate; }
+      @keyframes auraMeshDrift{ 0%{ transform:translate3d(0,0,0) scale(1); } 100%{ transform:translate3d(-2%,1.5%,0) scale(1.05); } }
+
+      /* Hero — animated aurora sweep + brighter clipped headline */
+      #auraView .aura-hero{ background:
+          radial-gradient(720px 240px at 12% -20%,rgba(0,229,255,0.18),transparent 60%),
+          radial-gradient(640px 260px at 100% 0%,rgba(0,255,136,0.13),transparent 60%),
+          linear-gradient(180deg,rgba(9,16,30,0.95),rgba(5,9,20,0.96)); }
+      #auraView .aura-hero::after{ content:''; position:absolute; inset:-2px; pointer-events:none; border-radius:12px;
+        background:linear-gradient(115deg,transparent 30%,rgba(0,229,255,0.09) 47%,rgba(0,255,136,0.07) 53%,transparent 70%);
+        background-size:280% 280%; animation:auraHeroSweep 9s ease-in-out infinite; mix-blend-mode:screen; }
+      @keyframes auraHeroSweep{ 0%{ background-position:120% 0; } 50%{ background-position:-20% 100%; } 100%{ background-position:120% 0; } }
+      #auraView .aura-title{ font-size:30px; letter-spacing:.12em;
+        background:linear-gradient(90deg,#ffffff,#b8f6ff 42%,#00E5FF 72%,#00ff88);
+        filter:drop-shadow(0 0 18px rgba(0,229,255,0.35)); }
+      #auraView .aura-glyph{ animation:auraGlyphFloat 5s ease-in-out infinite; }
+      @keyframes auraGlyphFloat{ 0%,100%{ transform:translateY(0); box-shadow:0 0 24px rgba(0,229,255,0.35),inset 0 0 16px rgba(0,229,255,0.15);} 50%{ transform:translateY(-4px); box-shadow:0 0 40px rgba(0,229,255,0.55),inset 0 0 20px rgba(0,229,255,0.22);} }
+      #auraView .aura-lead{ font-size:15.5px; }
+
+      /* Orchestrated staggered entrance on tab open */
+      #auraView.aura-anim .aura-wrap > *{ opacity:0; transform:translateY(18px); animation:auraRise .62s cubic-bezier(.16,.84,.34,1) forwards; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(1){ animation-delay:.02s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(2){ animation-delay:.10s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(3){ animation-delay:.18s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(4){ animation-delay:.26s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(5){ animation-delay:.34s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(6){ animation-delay:.42s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(7){ animation-delay:.50s; }
+      #auraView.aura-anim .aura-wrap > *:nth-child(n+8){ animation-delay:.56s; }
+      @keyframes auraRise{ to{ opacity:1; transform:translateY(0); } }
+
+      /* Section headers — distinctive, with accent underline sweep */
+      #auraView .aura-sec{ position:relative; }
+      #auraView .aura-sec-h{ margin-bottom:6px; padding-bottom:9px; border-bottom:1px solid rgba(255,255,255,0.05); }
+      #auraView .aura-sec-h::after{ content:''; position:absolute; left:18px; height:2px; width:44px; margin-top:32px; border-radius:2px;
+        background:linear-gradient(90deg,#00E5FF,#00ff88); box-shadow:0 0 10px rgba(0,229,255,0.6); }
+      #auraView .aura-sec.cy .aura-sec-h::after{ width:64px; }
+      #auraView .aura-sec-t{ font-size:12.5px; }
+      #auraView .aura-sec-h .ico{ width:26px; height:26px; border-radius:7px; align-items:center; justify-content:center;
+        background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.22); box-shadow:inset 0 0 10px rgba(0,229,255,0.12); }
+
+      /* Metric tiles — glass, inner glow, animated top hairline, clear hierarchy */
+      #auraView .aura-tiles{ gap:12px; }
+      #auraView .aura-tile{ padding:15px 16px;
+        background:linear-gradient(180deg,rgba(14,22,40,0.55),rgba(6,11,24,0.35));
+        backdrop-filter:blur(6px); box-shadow:0 6px 22px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.03); }
+      #auraView .aura-tile::before{ content:''; position:absolute; left:0; right:0; top:0; height:2px; opacity:0;
+        background:linear-gradient(90deg,transparent,rgba(0,229,255,0.9),rgba(0,255,136,0.9),transparent);
+        background-size:200% 100%; transition:opacity .25s; animation:auraHair 3.2s linear infinite; }
+      #auraView .aura-tile:hover::before,#auraView .aura-tile.hi::before{ opacity:1; }
+      @keyframes auraHair{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+      #auraView .aura-tile:hover{ transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,0,0,0.4),0 0 26px rgba(0,229,255,0.16),inset 0 1px 0 rgba(255,255,255,0.05); }
+      #auraView .aura-tile.hi{ background:linear-gradient(180deg,rgba(0,229,255,0.14),rgba(6,11,24,0.35)); box-shadow:0 8px 28px rgba(0,0,0,0.35),0 0 24px rgba(0,229,255,0.14),inset 0 0 18px rgba(0,229,255,0.06); }
+      #auraView .aura-tile .tv{ font-size:23px; text-shadow:0 0 18px rgba(0,229,255,0.12); }
+      /* headline (section-1) tiles bigger for hierarchy */
+      #auraView .aura-sec.cy > .aura-tiles .aura-tile.hi .tv{ font-size:34px; }
+      #auraView .aura-sec.cy > .aura-tiles .aura-tile.hi{ grid-column:span 1; }
+
+      /* CTA buttons — sheen on the GitHub button */
+      #auraView .aura-gh{ position:relative; overflow:hidden; }
+      #auraView .aura-gh::after{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; transform:skewX(-20deg);
+        background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent); transition:left .55s; }
+      #auraView .aura-gh:hover::after{ left:130%; }
+
+      @media (prefers-reduced-motion: reduce){
+        #auraView .aura-wrap::before,#auraView .aura-hero::after,#auraView .aura-glyph,#auraView .aura-tile::before{ animation:none; }
+        #auraView.aura-anim .aura-wrap > *{ opacity:1; transform:none; animation:none; }
+      }
     </style>
 
     <div class="aura-wrap">
@@ -9922,6 +10124,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   };
   window.loadAuraTab = async function(){
     try{ window._auraIcons(); }catch(e){}
+    // TURTLE: re-trigger the orchestrated staggered fade-in every time the tab opens
+    try{ var _av=document.getElementById('auraView'); if(_av){ _av.classList.remove('aura-anim'); void _av.offsetWidth; _av.classList.add('aura-anim'); } }catch(e){}
     var g=function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
     var N=function(x){ return Number(x||0).toLocaleString(); };
     try{
@@ -32285,6 +32489,8 @@ function renderCarousel() {
   if (idx2El) idx2El.textContent = String(carouselIndex + 1).padStart(3, '0');
   const accentBar = document.getElementById('npAccentBar');
   if (accentBar) { accentBar.style.background = agent.color; accentBar.style.boxShadow = '0 0 12px ' + agent.color; }
+  // TURTLE: drive a per-agent color wash across the whole swivel via CSS vars
+  try{ var _dc=document.getElementById('agentDeployCard'); if(_dc){ _dc.style.setProperty('--ops-accent',agent.color); _dc.style.setProperty('--np-color',agent.color); } }catch(e){}
 
   try { showAgentSkills(carouselIndex); } catch(e) { console.warn('showAgentSkills error:', e); }
 
