@@ -165,20 +165,16 @@
       msg('Opening Google sign-in…','#8ba0a0');
       var p=new firebase.auth.GoogleAuthProvider();
       try{
-        await firebase.auth().signInWithPopup(p);
+        await firebase.auth().signInWithPopup(p);   // popup only — no redirect fallback (that caused a double sign-in)
         msg('Signed in ✓','#00e5a0'); G.hide();
       }catch(e){
         var c=String(e.code||e.message||'').replace('auth/','');
-        // Popup blocked/closed or unsupported context → fall back to a full-page redirect (much more reliable).
-        if(c==='popup-blocked'||c==='popup-closed-by-user'||c==='cancelled-popup-request'||c==='operation-not-supported-in-this-environment'||c==='web-storage-unsupported'){
-          msg('Popup blocked — redirecting you to Google…','#8ba0a0');
-          try{ await firebase.auth().signInWithRedirect(p); return; }
-          catch(e2){ c=String(e2.code||e2.message||'').replace('auth/',''); }
-        }
         msg(
           c==='unauthorized-domain' ? 'This site isn’t authorized in Firebase. Add this exact domain in Firebase Console → Authentication → Settings → Authorized domains.'
           : c==='operation-not-allowed' ? 'Google sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Google.'
-          : (c==='internal-error'||c==='network-request-failed') ? 'Google sign-in failed — this is usually blocked third-party cookies (common in Private/Incognito windows). Use a normal window with cookies allowed, or sign in with email/password below.'
+          : c==='popup-blocked' ? 'Your browser blocked the popup — click the blocked-popup icon in the address bar, allow popups for this site, then try again.'
+          : (c==='popup-closed-by-user'||c==='cancelled-popup-request') ? 'The sign-in popup was closed before it finished — click Continue with Google again.'
+          : (c==='internal-error'||c==='network-request-failed') ? 'Google sign-in failed — usually blocked third-party cookies (common in Private/Incognito windows). Use a normal window with cookies allowed, or sign in with email/password below.'
           : c
         );
       }
@@ -6535,7 +6531,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       }
       async function loadGallery(){
         const gallery=$('ofGallery');
-        const [ores,bres]=await Promise.all([j('/api/operatives'),j('/api/brains')]);
+        const [ores,bres]=await Promise.all([j('/api/operatives?owner='+encodeURIComponent(opOwner())),j('/api/brains')]);
         const ops=(ores&&ores.operatives&&Array.isArray(ores.operatives))?ores.operatives.slice():[];
         ops.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
         /* brain-only customs not already represented by an operative (de-dupe by codename) */
@@ -6663,7 +6659,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           const tb=$('ofTiers');if(tb){tb.style.animation='none';void tb.offsetWidth;tb.style.animation='ofShake .4s';}
           return false;
         }
-        const owner=(window.S&&S.user&&S.user.email)||'demo';
+        const owner=opOwner();
         if(!silent)$('ofConsole').textContent='⟳ casting look → real FLUX portrait (server-side)…';
         /* 1) REAL custom FLUX portrait of the chosen archetype look */
         let portrait=null, rarity=selRarity, meta=null, portraitNote='portrait pending';
@@ -17528,7 +17524,7 @@ async function e5RenderForgedRows() {
   tbody.querySelectorAll('tr.e5-forged-row, tr.e5-forged-head').forEach(el => el.remove());
   let ops = [];
   try {
-    const r = await fetch('/api/operatives', { signal: AbortSignal.timeout(6000) });
+    const r = await fetch('/api/operatives?owner='+encodeURIComponent(opOwner()), { signal: AbortSignal.timeout(6000) });
     const d = await r.json();
     ops = (d && d.operatives) || [];
   } catch { return; }
@@ -18805,6 +18801,13 @@ function profileGetUid() {
   } catch(e) {}
   return localStorage.getItem('shd_userid') || null;
 }
+// Canonical owner id for forged agents — the signed-in Firebase uid, else a per-browser guest id.
+// Used so each user only sees/creates THEIR OWN operatives (not everyone's).
+window.opOwner = function () {
+  try { var u = (typeof profileGetUid === 'function') ? profileGetUid() : null; if (u) return u; } catch (e) {}
+  try { var g = localStorage.getItem('shd_userid'); if (!g) { g = 'guest-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('shd_userid', g); } return g; } catch (e) {}
+  return 'guest';
+};
 function profileIsSignedIn() {
   try { if (window.SHD_AUTH && SHD_AUTH.user) return true; } catch(e) {}
   // Guests get a synthetic shd_userid but no Firebase user — treat as signed-out
@@ -38599,7 +38602,7 @@ function _loadOfficeOperatives(force) {
   const now = Date.now();
   if (!force && now - _officeOpsLast < 12000) return;        // throttle: refresh ~every 12s
   _officeOpsLast = now;
-  fetch('/api/operatives').then(r => r.json()).then(d => {
+  fetch('/api/operatives?owner='+encodeURIComponent(opOwner())).then(r => r.json()).then(d => {
     const ops = (d && d.operatives) || [];
     let list = ops.filter(o => o && ((o.deploy && (o.deploy.where === 'office' || o.deploy.office)) || o.inOffice));
     if (!list.length) list = ops;                            // none flagged → show them all
@@ -43903,7 +43906,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     window._loadForgedChambers = function(){
       const rail = document.getElementById('forgedRail'); const wrap = document.getElementById('forgedRailWrap');
       if (!rail) return;
-      fetch('/api/operatives', { signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : null).then(d => {
+      fetch('/api/operatives?owner='+encodeURIComponent(opOwner()), { signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : null).then(d => {
         const raw = d && (Array.isArray(d) ? d : (d.operatives || d.list || []));
         const ops = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
         rail.innerHTML = '';
