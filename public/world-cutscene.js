@@ -87,6 +87,7 @@ window.buildWorldCutscene = (function () {
     var _ctx        = null;
     var _onResize   = null;
     var _W = 0, _H = 0, _dpr = 1;
+    var _visit      = 0;   // increments each ENTER — rotates which of the 3 action images shows
 
     function _sizeCanvas() {
       _dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -134,6 +135,22 @@ window.buildWorldCutscene = (function () {
 
         var label = (isExit ? 'LEAVING' : 'ENTERING') + '  ·  ' + name;
         var sub   = isExit ? '↩  RETURNING TO WORLD  ↩' : '▣  INITIALIZING SECTOR  ▣';
+
+        // ── agent ACTION SPLASH: a full-bleed action-art image of this agent, shown behind the
+        //    portal FX while entering their building. 3 images per agent rotate across visits;
+        //    falls back to the single "<CODE>-action.png" (which already exists) if a numbered
+        //    variant is missing, so it looks good before the 3-image sets are generated. ──
+        var _img = null, _imgReady = false;
+        if (!isExit) {
+          var _idx = (_visit++ % 3) + 1;                       // 1..3, advances each entry
+          var _cands = [ '/assets/agents/' + name + '-action-' + _idx + '.png',
+                         '/assets/agents/' + name + '-action.png' ];
+          var _ci = 0;
+          _img = new Image();
+          _img.onload  = function () { _imgReady = true; };
+          _img.onerror = function () { _ci++; if (_ci < _cands.length) _img.src = _cands[_ci]; };
+          _img.src = _cands[0];
+        }
 
         // ── build canvas overlay ────────────────────────────────────────────
         _canvas = document.createElement('canvas');
@@ -196,6 +213,31 @@ window.buildWorldCutscene = (function () {
           ctx.fillStyle = bg;
           ctx.fillRect(0, 0, W, H);
           ctx.restore();
+
+          // 1b) AGENT ACTION SPLASH — full-bleed hero art, cover-fit with a slow ken-burns push.
+          //     Drawn over the black cover (so it appears as the screen darkens on ENTER and fades
+          //     out on REVEAL) with a scrim + accent tint so the title/loader stay legible on top.
+          if (_imgReady && _img && _img.width) {
+            var iw = _img.width, ih = _img.height;
+            var scale = Math.max(W / iw, H / ih);
+            var kb = 1.0 + 0.07 * easeOutCubic(clamp01(t / (COVER + HOLD + REVEAL)));  // subtle zoom-in
+            scale *= kb;
+            var dw = iw * scale, dh = ih * scale;
+            ctx.save();
+            ctx.globalAlpha = baseA * 0.94;
+            ctx.drawImage(_img, cx - dw / 2, cy - dh / 2, dw, dh);
+            ctx.restore();
+            // legibility scrim (darker top & bottom) + faint accent wash
+            ctx.save();
+            ctx.globalAlpha = baseA;
+            var scr = ctx.createLinearGradient(0, 0, 0, H);
+            scr.addColorStop(0.00, 'rgba(2,3,10,0.52)');
+            scr.addColorStop(0.46, 'rgba(2,3,10,0.14)');
+            scr.addColorStop(1.00, 'rgba(2,3,10,0.80)');
+            ctx.fillStyle = scr; ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = baseA * 0.10; ctx.fillStyle = hex; ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+          }
 
           // 2) colored energy core (additive) ---------------------------------
           var coreR = (0.16 + 0.55 * irisP) * maxR * (1 + 0.35 * burst);

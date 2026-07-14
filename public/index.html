@@ -24896,6 +24896,9 @@ function showView(v) {
   if (v === 'tools')     v = 'automation';
   if (v === 'tasks')     v = 'workflow';
   if (v === 'markets')   v = 'pipeline';
+  // In the 3D world, hide the dashboard chrome (top nav + side rail) so the SHADDAI/Shop/nav
+  // buttons don't overlay the world. Any other view restores it.
+  document.body.classList.toggle('in-world', v === 'grid');
   // E3/A4: retired standalone views now live as Office sub-tabs — route through Office.
   if (v === 'projects' || v === 'skills' || v === 'library-notes' || v === 'billing') {
     const _sub = (v === 'library-notes') ? 'library' : v;
@@ -54376,6 +54379,8 @@ window.hireAgentX402=async function(){
 
 <style>
 #gridView.active { display:block !important; position:fixed !important; inset:0 !important; width:100% !important; height:100% !important; margin:0 !important; padding:0 !important; z-index:1200 !important; overflow:hidden !important; }
+/* While inside the 3D world, hide dashboard chrome (top nav bar + side rail) so its SHADDAI/Shop buttons don't overlay the world. */
+body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 #worldPortal .wp-sun,#worldPortal .wp-moon,#worldPortal .wp-ring,#worldPortal .wp-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #worldPortal .wp-sun{width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffd24a 22%,#ff7b3d 55%,rgba(255,80,30,0) 72%);filter:blur(2px);animation:wpSun 3.4s ease-out forwards}
 #worldPortal .wp-moon{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#eaf2ff 0%,#9fb6e0 45%,rgba(60,90,160,0) 72%);filter:blur(1px);animation:wpMoon 3.4s ease-out forwards}

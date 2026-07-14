@@ -164,10 +164,14 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
   #modeToggle .mt-mode{color:#fff;font-weight:800}
   #modeToggle .mt-key{color:#7e9ab0;font-size:9px;letter-spacing:2px;display:block;margin-top:3px}
   body.play-mode #modeToggle{opacity:.55}
-  /* Once the player has ENTERED the 3D world (intro dismissed → body.in-world), hide the on-screen
-     "⇄ CURSOR mode" pill. Keyboard Tab/ESC still toggle cursor/play — only the visible pill is hidden.
-     !important beats the inline display:block that _reflectMode() writes every mode change. */
-  body.in-world #modeToggle{display:none!important}
+  /* Once ENTERED (body.in-world), move the "⇄ CURSOR mode" pill OUT of the center-bottom (where it
+     blocked the action) into a compact top-right corner chip, tucked under the EXIT button. Keyboard
+     Tab/ESC still toggle too. !important beats the inline bottom/left/display that _reflectMode() writes. */
+  body.in-world #modeToggle{top:54px!important;right:16px!important;bottom:auto!important;left:auto!important;
+    transform:none!important;padding:6px 11px!important;font-size:9px!important;letter-spacing:2px!important;
+    box-shadow:0 0 14px rgba(39,224,255,.18)!important;opacity:.85!important}
+  body.in-world #modeToggle:hover{opacity:1!important}
+  body.in-world #modeToggle .mt-key{display:none!important}
 </style>
 <div id="modeToggle" onclick="window.toggleWorldMode&&window.toggleWorldMode()" style="display:none">
   <span>⇄ <span class="mt-mode" id="mtMode">CURSOR</span> mode</span>
