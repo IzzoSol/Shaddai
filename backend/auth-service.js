@@ -31,7 +31,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
 // ── CONFIG ──────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production-very-secret-key';
+const JWT_SECRET = require('./lib/jwt-secret'); // fail-closed: never a public default
 const JWT_EXPIRY = '1h'; // Access token expiry
 const REFRESH_TOKEN_EXPIRY = '7d'; // Refresh token expiry
 const API_KEY_PREFIX = process.env.API_KEY_PREFIX || 'sk_';

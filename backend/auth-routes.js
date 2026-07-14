@@ -78,7 +78,7 @@ const verifyJWT = (req, res, next) => {
     // Verify token
     const decoded = require('jsonwebtoken').verify(
       token,
-      process.env.JWT_SECRET || 'change-me-in-production-very-secret-key'
+      require('./lib/jwt-secret')
     );
 
     // Attach user info to request

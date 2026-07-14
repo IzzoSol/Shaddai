@@ -174,8 +174,8 @@ const generateSecureApiKey = () => {
 
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 const ENCRYPTION_KEY = crypto.scryptSync(
-  process.env.ENCRYPTION_SECRET || 'change-me-in-production',
-  process.env.ENCRYPTION_SALT || 'default-salt',
+  process.env.ENCRYPTION_SECRET || process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'),
+  process.env.ENCRYPTION_SALT || crypto.randomBytes(16).toString('hex'),
   32 // 256 bits
 );
 
@@ -549,7 +549,7 @@ const validateCsrfToken = (req, res, next) => {
 const jwtSecretRotation = {
   secrets: [
     {
-      secret: process.env.JWT_SECRET || 'current-secret',
+      secret: require('./lib/jwt-secret'),
       createdAt: Date.now(),
       expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
       active: true
