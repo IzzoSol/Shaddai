@@ -286,6 +286,7 @@
         <div class="read"><div class="cap">Pulls averted</div><div class="fig" id="rPull">—</div><div class="note">live API calls served from the cache</div></div>
         <div class="read"><div class="cap">Times invoked</div><div class="fig" id="rUses">—</div><div class="note">total prompts routed through AURA</div></div>
         <div class="read"><div class="cap">Self-learned</div><div class="fig" id="rLearn">—</div><div class="note">recurring misses promoted to free answers</div></div>
+        <div class="read"><div class="cap">Prompts distilled</div><div class="fig" id="rDistill">—</div><div class="note">bloated instruction pared, safety spared</div></div>
         <div class="read hot"><div class="cap">Every-use save rate</div><div class="fig" id="rEvery">—<small>%</small></div><div class="note">uses where tokens were saved (hit or miss)</div></div>
       </div>
     </section>
@@ -392,6 +393,7 @@
       tick($('rPull'), pulls);
       tick($('rUses'), s.uses || ((s.hits||0) + (s.misses||0)));
       tick($('rLearn'), (s.improvements && s.improvements.promoted) || 0);
+      tick($('rDistill'), (s.byMethod && s.byMethod.distill) || 0);
       const everyRate = Math.round((s.everyUseSaveRate||0)*100);
       tick($('rEvery'), everyRate, '%');
       // Show "every use saves" badge when rate is high (>= 75%)

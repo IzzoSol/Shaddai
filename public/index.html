@@ -4034,7 +4034,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <button class="tb-seg" id="tbMcChip" onclick="restoreMissionControl()" title="Restore Mission Control" style="display:none;color:#00e5a0"><span class="ic">◈</span>MC</button>
       <!-- A5: tab-mover — cycles the nav dock (top → left → right → bottom). Tucked into the header, out of the way. -->
       <span id="tbNavMoverWrap" style="position:relative;display:inline-flex">
-      <button class="tb-seg" id="tbNavMover" onclick="toggleNavMoverPop(event)" title="Move tabs: up / left / right / down"><span class="ic" id="tbNavMoverIc">⬍</span></button>
+      <button class="tb-seg" id="tbNavMover" onclick="toggleNavMoverPop(event)" title="Move tabs: up / left / right / down"><span class="ic" id="tbNavMoverIc">✥</span>Move</button>
       <div id="tbNavMoverPop" style="display:none;position:absolute;top:calc(100% + 7px);right:0;z-index:100000;background:rgba(4,12,28,0.97);border:1px solid rgba(0,229,160,0.28);border-radius:10px;padding:7px;box-shadow:0 10px 28px rgba(0,0,0,.6)">
         <div style="font:700 6px/1 'Share Tech Mono',monospace;letter-spacing:2px;color:rgba(0,229,160,.6);text-align:center;margin-bottom:5px">DOCK TABS</div>
         <div style="display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,26px);gap:3px;place-items:center">
@@ -10049,6 +10049,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <div class="aura-tile amber"><div class="tk">Kept fresh</div><div class="tv" id="auraFresh">—</div><div class="ts">volatile, never stale-cached</div></div>
           <div class="aura-tile"><div class="tk">Avg tokens / hit</div><div class="tv" id="auraAvg">—</div><div class="ts">per free answer</div></div>
           <div class="aura-tile mag"><div class="tk">AI misses</div><div class="tv" id="auraMiss">—</div><div class="ts">had to spend tokens</div></div>
+          <div class="aura-tile cy"><div class="tk">Prompts distilled</div><div class="tv" id="auraDistill">—</div><div class="ts">bloated instructions trimmed</div></div>
         </div>
       </div>
 
@@ -10176,6 +10177,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       g('auraFresh', N(s.volatileSkips));
       g('auraAvg', N(s.avgTokensPerHit));
       g('auraMiss', N(s.misses));
+      g('auraDistill', N(s.byMethod && s.byMethod.distill));
       // live API-pull cache
       var tc=s.toolCache||{};
       g('auraPullsSaved', N(tc.pullsSaved));
@@ -29996,7 +29998,12 @@ function openSkillRunner(skillName, action) {
         </div>
         <button onclick="document.getElementById('skill-runner-modal').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px">✕</button>
       </div>
-      <textarea id="skill-task-input" placeholder="Describe what you want this skill to do..." rows="4"
+      <label style="display:block;font-size:9px;color:var(--text-muted);margin:0 0 4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px">RUN AS AGENT</label>
+      <select id="skill-agent-select" style="width:100%;padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;margin-bottom:10px">
+        <option>SHADDAI</option><option>NEXUS</option><option>ZEROX</option><option>ORACLE</option><option>TURTLE</option><option>QUILL</option><option>PIKADON</option>
+      </select>
+      <label style="display:block;font-size:9px;color:var(--text-muted);margin:0 0 4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px">CONTEXT / DETAILS (optional)</label>
+      <textarea id="skill-task-input" placeholder="Add any details this skill should use — or leave blank to just run..." rows="4"
         style="width:100%;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);resize:vertical;font-size:12px;margin-bottom:12px"></textarea>
       <div style="display:flex;gap:8px">
         <button onclick="executeSkillFromModal('${skillName}','${action || ''}')"
@@ -53436,9 +53443,10 @@ window.cycleNavPos=function(){
   _updateNavMoverIcon(next);
 };
 window._updateNavMoverIcon=function(p){
-  var glyph={top:'⬆',left:'⬅',right:'➡',bottom:'⬇'}[p]||'⬍';
-  var ic=document.getElementById('tbNavMoverIc'); if(ic) ic.textContent=glyph;
-  var b=document.getElementById('tbNavMover'); if(b){ b.classList.add('on'); b.title='Tabs docked: '+p+' — click to move'; }
+  // Header button always shows a clear 4-way MOVE icon (so it reads as a button, not a static arrow).
+  // The current dock direction is reflected in the label + tooltip instead.
+  var ic=document.getElementById('tbNavMoverIc'); if(ic) ic.textContent='✥';
+  var b=document.getElementById('tbNavMover'); if(b){ b.classList.add('on'); b.title='Move tabs (docked: '+p+') — click for ⬆⬅➡⬇'; }
 };
 // Header tab-mover POP-OUT: a directional D-pad (up/left/right/down) to dock the nav.
 window.toggleNavMoverPop=function(e){ if(e&&e.stopPropagation)e.stopPropagation();

@@ -128,7 +128,7 @@ function _initStats() {
     missesWithSaving: typeof s.missesWithSaving === 'number' ? s.missesWithSaving : 0,
     volatileSkips:    typeof s.volatileSkips    === 'number' ? s.volatileSkips    : 0,
     firstTs:          typeof s.firstTs          === 'number' ? s.firstTs          : Date.now(),
-    byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0, skill: 0, chain: 0 }, s.byMethod || {}),
+    byMethod: Object.assign({ fetch: 0, query: 0, compute: 0, recipe: 0, seed: 0, skill: 0, chain: 0, distill: 0 }, s.byMethod || {}),
     recentSaves: Array.isArray(s.recentSaves) ? s.recentSaves : [],
     // self-improvement fields
     missFreq:       (s.missFreq && typeof s.missFreq === 'object') ? s.missFreq : {},
@@ -139,6 +139,7 @@ function _initStats() {
   };
   if (typeof _statsMem.byMethod.recipe !== 'number') _statsMem.byMethod.recipe = 0;
   if (typeof _statsMem.byMethod.seed   !== 'number') _statsMem.byMethod.seed   = 0;
+  if (typeof _statsMem.byMethod.distill !== 'number') _statsMem.byMethod.distill = 0;
   return _statsMem;
 }
 
@@ -1862,6 +1863,20 @@ function buildRouter() {
     res.json(route(prompt, (req.body && req.body.opts) || {}));
   });
 
+  // DISTILL — trim redundant instructions from a prompt/system-prompt (3rd pillar).
+  r.post('/distill', (req, res) => {
+    try {
+      const { distill } = require('./prompt-distill');
+      const prompt = String((req.body && req.body.prompt) || '').slice(0, 20000);
+      const opts = {};
+      if (Number(req.body && req.body.similarity) > 0) opts.similarity = Number(req.body.similarity);
+      if (req.body && req.body.trimFiller === false) opts.trimFiller = false;
+      const out = distill(prompt, opts);
+      if (out.report.stats.saved > 0) recordDistill(prompt, out.report.stats.saved);
+      res.json({ distilled: out.distilled, report: out.report });
+    } catch (e) { res.status(200).json({ error: String((e && e.message) || e) }); }
+  });
+
   return r;
 }
 
@@ -1878,6 +1893,24 @@ function creditDeterministic(prompt, savedTokens) {
       s.hits++; s.tokensSaved += tk;
       s.byMethod.recipe = (s.byMethod.recipe || 0) + 1;
       s.recentSaves.unshift({ ts: Date.now(), method: 'recipe', snippet: String(prompt || '').slice(0, 60), tokens: tk });
+      if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
+    });
+    return true;
+  } catch (_) { return false; }
+}
+
+/**
+ * recordDistill(prompt, savedTokens) — credit a DISTILL run (3rd pillar): tokens trimmed
+ * from a bloated prompt/system-prompt, which are saved on every subsequent call. Never throws.
+ */
+function recordDistill(prompt, savedTokens) {
+  try {
+    const tk = Math.max(0, Number(savedTokens) || 0);
+    if (tk <= 0) return false;
+    bumpStats((s) => {
+      s.hits++; s.tokensSaved += tk;
+      s.byMethod.distill = (s.byMethod.distill || 0) + 1;
+      s.recentSaves.unshift({ ts: Date.now(), method: 'distill', snippet: String(prompt || '').slice(0, 60), tokens: tk });
       if (s.recentSaves.length > MAX_RECENT_SAVES) s.recentSaves.length = MAX_RECENT_SAVES;
     });
     return true;
@@ -2094,7 +2127,7 @@ function forCall({ prompt = '', system = '', ownTools = [], selectedTools = null
 }
 
 module.exports = {
-  route, recordAnswer, creditDeterministic, isVolatile, stats, forCall, router: buildRouter(),
+  route, recordAnswer, creditDeterministic, recordDistill, isVolatile, stats, forCall, router: buildRouter(),
   // A5 additions (all optional / additive — existing behavior unchanged):
   registerAdapter,   // register a host fn for 'adapter'/'chain' skills
   loadSkills,        // load + validate the declarative skill registry (aura-skills.json)
