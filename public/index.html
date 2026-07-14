@@ -4088,7 +4088,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
       </div>
       </span>
-      <button class="tb-seg" onclick="loadUserDashboard()" id="dashBtn" title="Profile & earnings" style="color:#a78bfa"><span class="ic">👤</span></button>
+      <button class="tb-seg" onclick="showAccountMenu()" id="dashBtn" title="Account — who's signed in / sign out" style="color:#a78bfa"><span class="ic">👤</span></button>
       <button class="tb-seg" onclick="window.openToolRunner&&window.openToolRunner()" id="toolsBtn" title="Run any agent tool with inputs" style="color:#00e5a0"><span class="ic">🛠</span>Tools</button>
       <!-- Notifications button removed — unwired -->
       <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="color:#ffb020"><span class="ic">◉</span>ALL</button>
@@ -10700,7 +10700,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
             <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Display Name</label>
             <input id="profileDisplayName" class="input" maxlength="80" placeholder="e.g. Brittany" oninput="profileSyncGreeting()">
             <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Avatar Emoji</label>
-            <input id="profileAvatarEmoji" class="input" maxlength="8" placeholder="👤" oninput="profileSyncAvatar()">
+            <input id="profileAvatarEmoji" type="hidden" value="/assets/agents/SHADDAI-portrait.png">
+            <div style="font-size:7px;color:var(--text-muted);margin:2px 0 4px">Pick your avatar (SHADDAI HF art)</div>
+            <div id="profileEmojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px"></div>
           </div>
         </div>
         <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-top:6px">Short Bio</label>
@@ -10709,6 +10711,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <textarea id="profileGoal" class="input" maxlength="280" rows="2" placeholder="What are you here to build?" style="resize:vertical"></textarea>
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
           <button class="btn btn-accent" id="profileSaveBtn" onclick="saveUserProfile()">Save Profile</button>
+          <button class="btn btn-ghost" onclick="if(window.shdSignOut)shdSignOut()" style="border-color:rgba(244,63,94,.4);color:#f43f5e" title="Sign out of this account">⎋ Sign Out</button>
           <span id="profileSaveMsg" style="font-size:9px;color:var(--text-muted)"></span>
         </div>
         <div style="font-size:7px;color:var(--text-muted);margin-top:8px">Saved to your SHADDAI account · syncs across devices.</div>
@@ -18806,11 +18809,54 @@ function profileIsSignedIn() {
   // for the profile feature so we prompt them to sign in.
   return false;
 }
+// 👤 top-bar account menu — shows WHO is signed in (Firebase) + Sign Out. Works for guests too.
+window.showAccountMenu = function () {
+  var u = (window.SHD_AUTH && SHD_AUTH.user) || null;
+  var name = u ? (u.displayName || u.email || 'Account') : null;
+  var av = (u && u.photoURL) ? '<img src="' + String(u.photoURL).replace(/"/g, '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '👤';
+  var body = '<div style="text-align:center;padding:4px 2px">'
+    + '<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 10px;display:grid;place-items:center;font-size:28px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);overflow:hidden">' + av + '</div>'
+    + (u
+        ? '<div style="font-size:14px;font-weight:700;color:var(--text)">' + escH(name) + '</div>' + ((u.email && u.email !== name) ? '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + escH(u.email) + '</div>' : '') + '<div style="font-size:9px;color:#00e5a0;margin-top:5px">● Signed in</div>'
+        : '<div style="font-size:14px;font-weight:700;color:var(--text)">Guest</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Not signed in — your work isn’t saved.</div>')
+    + '</div>';
+  var actions = u
+    ? [{ label: '⎋ Sign Out', class: 'btn-ghost', action: function () { closeModal(); if (window.shdSignOut) shdSignOut(); } }, { label: 'Close', action: closeModal }]
+    : [{ label: 'Sign In', class: 'btn-accent', action: function () { closeModal(); if (window.shdGate) shdGate.show(); } }, { label: 'Close', action: closeModal }];
+  showModal(u ? '👤 Account' : '👤 Account', body, actions);
+};
+function _profileAvatarHtml(v) {
+  v = String(v || '').trim() || '👤';
+  return /^(\/|https?:|data:)/.test(v)
+    ? '<img src="' + v.replace(/"/g, '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:9px" onerror="this.replaceWith(document.createTextNode(\'👤\'))">'
+    : v;
+}
 function profileSyncAvatar() {
   var el = document.getElementById('profileAvatarEmoji');
   var prev = document.getElementById('profileAvatarPreview');
-  if (el && prev) prev.textContent = (el.value || '').trim() || '👤';
+  if (el && prev) prev.innerHTML = _profileAvatarHtml(el.value);
 }
+window.pickProfileEmoji = function (v) {
+  var el = document.getElementById('profileAvatarEmoji'); if (el) el.value = v;
+  profileSyncAvatar();
+  var pk = document.getElementById('profileEmojiPicker');
+  if (pk) [].forEach.call(pk.querySelectorAll('button'), function (b) {
+    var on = b.getAttribute('data-v') === v;
+    b.style.borderColor = on ? '#00e5a0' : 'var(--border)';
+    b.style.boxShadow = on ? '0 0 8px rgba(0,229,160,.5)' : 'none';
+  });
+};
+// Fill the avatar picker with the real HF agent portraits (emoji fallback if art fails to load).
+window.renderProfileAvatarPicker = function () {
+  var pk = document.getElementById('profileEmojiPicker'); if (!pk) return;
+  var AG = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+  var FB = { SHADDAI: '👑', NEXUS: '🔧', ZEROX: '💰', ORACLE: '🔮', TURTLE: '🐢', QUILL: '✍️', PIKADON: '🛡️' };
+  var cur = (document.getElementById('profileAvatarEmoji') || {}).value || '';
+  pk.innerHTML = AG.map(function (a) {
+    var src = '/assets/agents/' + a + '-portrait.png'; var on = cur === src;
+    return '<button type="button" data-v="' + src + '" onclick="pickProfileEmoji(\'' + src + '\')" title="' + a + '" style="width:40px;height:40px;padding:0;border-radius:9px;overflow:hidden;cursor:pointer;border:1px solid ' + (on ? '#00e5a0' : 'var(--border)') + ';background:rgba(0,0,0,.3);box-shadow:' + (on ? '0 0 8px rgba(0,229,160,.5)' : 'none') + '"><img src="' + src + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\'' + FB[a] + '\';this.parentNode.style.fontSize=\'18px\'"></button>';
+  }).join('');
+};
 function profileSyncGreeting() {
   var name = (document.getElementById('profileDisplayName') || {}).value || '';
   var g = document.getElementById('profileGreeting');
@@ -18840,13 +18886,14 @@ function renderUserProfile() {
       var fbName = '';
       try { fbName = (SHD_AUTH.user && SHD_AUTH.user.displayName) || ''; } catch(e) {}
       if (dn) dn.value = p.displayName || fbName || '';
-      if (em) em.value = p.avatarEmoji || '👤';
+      if (em) em.value = p.avatarEmoji || '/assets/agents/SHADDAI-portrait.png';
       if (bio) bio.value = p.bio || '';
       if (goal) goal.value = p.goal || '';
       profileSyncAvatar();
       profileSyncGreeting();
+      if (typeof renderProfileAvatarPicker === 'function') renderProfileAvatarPicker();
     })
-    .catch(function(){ /* offline — leave fields as-is */ });
+    .catch(function(){ if (typeof renderProfileAvatarPicker === 'function') renderProfileAvatarPicker(); });
 }
 function saveUserProfile() {
   var uid = profileGetUid();
@@ -53627,11 +53674,16 @@ window._updateNavMoverIcon=function(p){
 };
 // Header tab-mover POP-OUT: a directional D-pad (up/left/right/down) to dock the nav.
 window.toggleNavMoverPop=function(e){ if(e&&e.stopPropagation)e.stopPropagation();
-  var p=document.getElementById('tbNavMoverPop'); if(!p)return;
-  p.style.display=(p.style.display==='block')?'none':'block'; };
+  var p=document.getElementById('tbNavMoverPop'), b=document.getElementById('tbNavMover'); if(!p||!b)return;
+  if(p.style.display==='block'){ p.style.display='none'; return; }
+  // Reparent to <body> + position:fixed so the header's overflow can't clip it.
+  if(p.parentElement!==document.body) document.body.appendChild(p);
+  var r=b.getBoundingClientRect();
+  p.style.position='fixed'; p.style.top=(r.bottom+7)+'px'; p.style.right=Math.max(6,(window.innerWidth-r.right))+'px'; p.style.left='auto';
+  p.style.display='block'; };
 window.closeNavMoverPop=function(){ var p=document.getElementById('tbNavMoverPop'); if(p)p.style.display='none'; };
-document.addEventListener('click',function(ev){ var w=document.getElementById('tbNavMoverWrap'); var p=document.getElementById('tbNavMoverPop');
-  if(p&&w&&!w.contains(ev.target)) p.style.display='none'; });
+document.addEventListener('click',function(ev){ var b=document.getElementById('tbNavMover'); var p=document.getElementById('tbNavMoverPop');
+  if(p&&p.style.display==='block'&&b&&!b.contains(ev.target)&&!p.contains(ev.target)) p.style.display='none'; });
 // Default: dashboard NEXT TO the tabs (left side-nav) on desktop; top nav on mobile. Respects a saved choice.
 try{ var _sp=localStorage.getItem('shaddai_navpos'); var _p0=_sp||((window.innerWidth>768)?'left':'top'); setNavPos(_p0); try{_updateNavMoverIcon(_p0);}catch(_){} }catch(e){ try{setNavPos('top');}catch(_){} }
 // A5: retire the floating nav-position picker (its function now lives as the compact header tab-mover).
