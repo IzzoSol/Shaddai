@@ -327,6 +327,7 @@
   function makeSprite(a, i) {
     return {
       name: a.name, color: a.color, role: a.role,
+      forged: !!a.forged, skinIcon: a.skinIcon || '',
       col: a.tile[0], row: a.tile[1],   // logical position (fractional while moving)
       homeCol: a.tile[0], homeRow: a.tile[1],
       idx: i,
@@ -382,10 +383,15 @@
     const base = new Set(AGENTS.map(a => a.name.toUpperCase()));
     const list = (typeof window !== 'undefined' && (window._officeOperatives || window._operatives)) || [];
     const seen = new Set(), forged = [];
-    (Array.isArray(list) ? list : []).forEach(op => {
-      const nm = String((op && (op.codename || op.name)) || '').trim(); if (!nm) return;
+    (Array.isArray(list) ? list : []).forEach(item => {
+      const op = (item && item.op) ? item.op : item;   // dashboard office items nest the record under .op
+      const nm = String((item && item.name) || (op && (op.codename || op.name)) || '').trim(); if (!nm) return;
       const up = nm.toUpperCase(); if (base.has(up) || seen.has(up)) return; seen.add(up);
-      forged.push({ name: nm, color: _forgedColor(op), role: (op && (op.role || op.archetype)) || 'Operative', forged: true });
+      // Pixel Forge agents carry look.pixel = { color, icon, ... } — use it for skin.
+      const pix = (op && op.look && op.look.pixel) || null;
+      const color = (pix && pix.color) || (item && item.color) || _forgedColor(op);
+      const role = (op && (op.role || op.archetype)) || (item && item.role) || 'Operative';
+      forged.push({ name: nm, color: color, role: role, forged: true, skinIcon: (pix && pix.icon) || '' });
     });
     return forged.slice(0, MAX_FORGED);
   }
@@ -397,7 +403,7 @@
   function reconcileSprites() {
     ROSTER.forEach((a, i) => {
       if (!sprites[a.name]) sprites[a.name] = makeSprite(a, i);
-      else { sprites[a.name].idx = i; sprites[a.name].color = a.color; sprites[a.name].role = a.role; }
+      else { sprites[a.name].idx = i; sprites[a.name].color = a.color; sprites[a.name].role = a.role; sprites[a.name].skinIcon = a.skinIcon || ''; sprites[a.name].forged = !!a.forged; }
     });
     const keep = new Set(ROSTER.map(a => a.name));
     Object.keys(sprites).forEach(nm => { if (!keep.has(nm)) delete sprites[nm]; });
@@ -1106,6 +1112,17 @@
     ctx.fillStyle = '#eef4f2';
     ctx.fillText(label, bx + 4, ly + 11);
     ctx.textAlign = 'left';
+
+    // Pixel Forge skin marker — floats just above the name pill so custom agents read distinctly.
+    if (sp.skinIcon) {
+      ctx.save();
+      ctx.globalAlpha = intro;
+      ctx.font = `${Math.max(12, 14 * s) | 0}px serif`;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = sp.color; ctx.shadowBlur = 8;
+      ctx.fillText(sp.skinIcon, bx, ly - 4);
+      ctx.restore();
+    }
 
     ctx.restore();
 

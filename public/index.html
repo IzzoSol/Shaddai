@@ -6024,6 +6024,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           </div>
         </div>
         <div style="display:flex;gap:5px;align-items:center">
+          <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;color:#00e5ff;border-color:rgba(0,229,255,0.3)" onclick="(function(){var el=document.getElementById('officePixel');try{if(!document.fullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}else{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){notify('Fullscreen: '+e.message)}})()" title="Full-screen the office">⛶ FULLSCREEN</button>
           <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;border-color:rgba(255,215,0,0.2)" onclick="pingAllAgents();notify('Pinging operatives...')">↻ PING</button>
           <button class="btn btn-ghost" style="font-size:7px;padding:3px 8px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;color:#00ff88;border-color:rgba(0,229,160,0.2)" onclick="try{ if(window.PixelOffice) window.PixelOffice.mount(document.getElementById('pixelOfficeStage')); }catch(e){notify('Draw err: '+e.message)}">⬡ REDRAW</button>
           <button class="btn btn-accent" style="font-size:7px;padding:3px 10px;letter-spacing:1px;font-family:'Share Tech Mono',monospace" onclick="openShaddaiDesk()">▶ DESK</button>
@@ -6053,11 +6054,16 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <button class="ocmd mode" onclick="officeMode('work')" title="Send agents to their desks">⚙ Work</button>
         <button class="ocmd mode" onclick="officeMode('break')" title="Agents take a break">☕ Break</button>
         <span class="ocmd-div"></span>
-        <button class="ocmd run" onclick="showView('forge')" title="Forge & customize a new agent — it awakens straight into this office" style="background:linear-gradient(180deg,rgba(255,215,0,.16),rgba(255,215,0,.03));border-color:rgba(255,215,0,.45);color:#ffd700">⚒ Forge Agent</button>
+        <button class="ocmd run" onclick="window.openPixelForge&&openPixelForge()" title="Pixel Forge — pick color, body skin, name & tools, drip a custom pixel agent into this office" style="background:linear-gradient(180deg,rgba(39,224,255,.16),rgba(39,224,255,.03));border-color:rgba(39,224,255,.45);color:#27e0ff">⬡ Pixel Forge</button>
       </div>
 
       <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
-      <div style="position:relative;flex:0 0 auto;width:100%;height:46vh;min-height:220px;max-height:52vh;background:#050a14;border:1px solid rgba(255,215,0,0.15);overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,0.7) inset,0 0 0 1px rgba(255,255,255,0.03)">
+      <style>
+        #officePixel:fullscreen{background:#04060d;padding:14px 18px;overflow-y:auto}
+        #officePixel:fullscreen #officeCameraFeed{height:auto!important;max-height:none!important;flex:1 1 auto!important;min-height:60vh!important}
+        #officePixel:-webkit-full-screen #officeCameraFeed{height:auto!important;max-height:none!important;flex:1 1 auto!important;min-height:60vh!important}
+      </style>
+      <div id="officeCameraFeed" style="position:relative;flex:0 0 auto;width:100%;height:46vh;min-height:220px;max-height:52vh;background:#050a14;border:1px solid rgba(255,215,0,0.15);overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,0.7) inset,0 0 0 1px rgba(255,255,255,0.03)">
         <!-- Camera corner overlays -->
         <div class="cam-frame" aria-hidden="true">
           <div class="cam-corner tl"></div>
@@ -54371,6 +54377,139 @@ window.hireAgentX402=async function(){
   try{ window.setAgentActivity && window.setAgentActivity(agent,'idle'); }catch(e){}
   go.disabled=false;
 };
+</script>
+
+<!-- ════════ PIXEL FORGE — customize a pixel agent (color · body skin · name · tools) and drip it into the 2D office ════════ -->
+<style>
+  #pixelForgeModal{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(2,4,10,.86);backdrop-filter:blur(6px);font-family:'Share Tech Mono',monospace}
+  #pixelForgeModal.on{display:flex}
+  #pixelForgeModal .pf-card{width:min(860px,95vw);max-height:92vh;overflow-y:auto;background:linear-gradient(160deg,#0a1120,#070c16);
+    border:2px solid #27e0ff;border-radius:14px;box-shadow:0 0 60px rgba(39,224,255,.25),0 0 0 4px #04060d;padding:20px 22px}
+  #pixelForgeModal h2{font-family:'Orbitron',sans-serif;font-size:20px;color:#8fefff;margin:0 0 2px;letter-spacing:.06em;text-shadow:0 0 16px rgba(39,224,255,.5)}
+  #pixelForgeModal .pf-sub{color:#5f7c86;font-size:11px;margin:0 0 16px}
+  #pixelForgeModal .pf-grid{display:grid;grid-template-columns:200px 1fr;gap:18px}
+  @media(max-width:640px){#pixelForgeModal .pf-grid{grid-template-columns:1fr}}
+  #pixelForgeModal .pf-lbl{font-size:9px;letter-spacing:.18em;color:#5f7c86;text-transform:uppercase;margin:12px 0 6px;display:block}
+  #pixelForgeModal input[type=text]{width:100%;box-sizing:border-box;background:#04060d;border:1px solid rgba(39,224,255,.25);color:#eaf4ff;padding:9px 11px;border-radius:6px;font-family:inherit;font-size:13px;outline:none}
+  #pixelForgeModal input:focus{border-color:#27e0ff}
+  #pxfSwatches{display:flex;flex-wrap:wrap;gap:6px}
+  #pxfSwatches .sw{width:24px;height:24px;border-radius:5px;cursor:pointer;border:2px solid transparent;transition:transform .1s}
+  #pxfSwatches .sw:hover{transform:scale(1.12)}
+  #pxfSwatches .sw.on{border-color:#fff;box-shadow:0 0 10px currentColor}
+  #pxfSkins{display:flex;flex-wrap:wrap;gap:6px}
+  #pxfSkins .skin{font-size:10px;padding:6px 9px;border-radius:6px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:#9fb0c4;transition:all .12s}
+  #pxfSkins .skin.on{border-color:#27e0ff;color:#8fefff;background:rgba(39,224,255,.1)}
+  #pxfToolSearch{margin-bottom:8px}
+  #pxfTools{max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+  #pxfTools label{display:flex;align-items:center;gap:6px;font-size:10px;color:#9fb0c4;cursor:pointer;padding:2px 0}
+  #pxfTools input{accent-color:#27e0ff}
+  #pixelForgeModal .pf-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  #pixelForgeModal .pf-btn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:.04em;padding:11px 16px;border-radius:8px;cursor:pointer;border:none;transition:filter .15s,transform .12s}
+  #pixelForgeModal .pf-btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+  #pixelForgeModal .pf-drip{background:linear-gradient(100deg,#27e0ff,#8fefff);color:#04060a;flex:1}
+  #pixelForgeModal .pf-3d{background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.5);color:#ffd45e}
+  #pixelForgeModal .pf-close{background:transparent;border:1px solid rgba(255,255,255,.2);color:#7d94a0}
+  #pxfPreview{display:block;margin:0 auto;background:radial-gradient(circle at 50% 40%,#0d1526,#05070e);border:1px solid rgba(39,224,255,.2);border-radius:10px}
+  #pxfStatus{font-size:11px;color:#8fefff;min-height:15px;margin-top:10px;font-family:'Share Tech Mono',monospace}
+</style>
+<div id="pixelForgeModal" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closePixelForge()">
+  <div class="pf-card">
+    <h2>⬡ PIXEL FORGE</h2>
+    <p class="pf-sub">Build a custom pixel operative — pick a color, body skin, name & tools, then drip it straight into your 2D office. Swap in collectables later.</p>
+    <div class="pf-grid">
+      <div>
+        <canvas id="pxfPreview" width="180" height="180"></canvas>
+        <span class="pf-lbl">Codename</span>
+        <input type="text" id="pxfName" placeholder="e.g. NOVA" maxlength="18" oninput="window._pxfDraw&&_pxfDraw()">
+        <span class="pf-lbl">Agent Color</span>
+        <div id="pxfSwatches"></div>
+        <span class="pf-lbl">Body Skin</span>
+        <div id="pxfSkins"></div>
+      </div>
+      <div>
+        <span class="pf-lbl">Tools — wired through the dashboard (pick any)</span>
+        <input type="text" id="pxfToolSearch" placeholder="search tools…" oninput="window._pxfFilterTools&&_pxfFilterTools(this.value)">
+        <div id="pxfTools"><div style="color:#5f7c86;font-size:10px;padding:8px">Loading tools…</div></div>
+        <div style="font-size:9px;color:#5f7c86;margin-top:6px"><span id="pxfToolCount">0</span> tools equipped</div>
+      </div>
+    </div>
+    <div id="pxfStatus"></div>
+    <div class="pf-actions">
+      <button class="pf-btn pf-drip" onclick="window.pixelForgeCreate(false)">💧 Drip into Office</button>
+      <button class="pf-btn pf-3d" onclick="window.pixelForgeCreate(true)" title="Also open the 3D Forge to build a matching 3D body">⬡ Also make 3D</button>
+      <button class="pf-btn pf-close" onclick="window.closePixelForge()">Close</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var SKINS=[
+    {key:'operative',label:'Operative',color:'#00e5a0',icon:'⬡'},
+    {key:'ninja',label:'Ninja',color:'#8b5cf6',icon:'🗡'},
+    {key:'mystic',label:'Mystic',color:'#c084fc',icon:'✦'},
+    {key:'robot',label:'Robot',color:'#27e0ff',icon:'⚙'},
+    {key:'rogue',label:'Rogue',color:'#ff9d3d',icon:'☾'},
+    {key:'guardian',label:'Guardian',color:'#ff5a6e',icon:'🛡'},
+    {key:'gold',label:'Gold',color:'#ffd700',icon:'★'},
+    {key:'toxic',label:'Toxic',color:'#a3e635',icon:'☣'},
+  ];
+  var SWATCHES=['#00e5a0','#27e0ff','#8b5cf6','#c084fc','#ff9d3d','#ff5a6e','#ffd700','#a3e635','#ff7ac2','#f97316','#38bdf8','#ffffff'];
+  var FALLBACK_TOOLS=['fetch_price','web_search','summarize','sentiment_analysis','image_generate','write_post','run_code','translate','calculate','crypto_quote','news_scan','market_analysis','draft_email','extract_data','schedule_task'];
+  var curColor='#00e5a0', curSkin=SKINS[0], selected=new Set(), allTools=[];
+  function shadeHex(hex,amt){ hex=String(hex).replace('#',''); if(hex.length===3)hex=hex.split('').map(function(x){return x+x}).join(''); var n=parseInt(hex,16); if(isNaN(n))return hex; var r=(n>>16)&255,g=(n>>8)&255,b=n&255; function a(v){return Math.max(0,Math.min(255,Math.round(v+(amt<0?v*amt:(255-v)*amt))))} return 'rgb('+a(r)+','+a(g)+','+a(b)+')'; }
+  function rr(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+  function draw(){
+    var cv=document.getElementById('pxfPreview'); if(!cv)return; var x=cv.getContext('2d'); var W=cv.width,H=cv.height; x.clearRect(0,0,W,H);
+    x.fillStyle='rgba(0,0,0,.4)'; x.beginPath(); x.ellipse(W/2,H-24,36,10,0,0,Math.PI*2); x.fill();
+    var c=curColor, dk=shadeHex(c,-0.42), lt=shadeHex(c,0.34);
+    // glow
+    var g=x.createRadialGradient(W/2,H/2,4,W/2,H/2,64); g.addColorStop(0,c+'44'); g.addColorStop(1,c+'00'); x.fillStyle=g; x.fillRect(0,0,W,H);
+    // body
+    x.fillStyle=c; rr(x,W/2-24,H/2-2,48,60,10); x.fill();
+    x.fillStyle=dk; x.fillRect(W/2-24,H/2+44,48,7);
+    // head
+    x.fillStyle=lt; x.beginPath(); x.arc(W/2,H/2-22,19,0,Math.PI*2); x.fill();
+    x.fillStyle=dk; x.fillRect(W/2-9,H/2-25,5,7); x.fillRect(W/2+4,H/2-25,5,7);
+    // name plate
+    var nm=(document.getElementById('pxfName')||{}).value||'PIXEL';
+    x.font="700 10px 'Share Tech Mono',monospace"; x.textAlign='center'; x.fillStyle='#eaf4ff'; x.fillText(nm.toUpperCase().slice(0,14), W/2, H-8);
+    // skin marker
+    x.font='22px serif'; x.fillStyle='#fff'; x.fillText(curSkin.icon, W/2, H/2-48);
+  }
+  window._pxfDraw=draw;
+  function renderSwatches(){ var el=document.getElementById('pxfSwatches'); if(!el)return; el.innerHTML=''; SWATCHES.forEach(function(col){ var d=document.createElement('div'); d.className='sw'+(col===curColor?' on':''); d.style.background=col; d.style.color=col; d.onclick=function(){ curColor=col; renderSwatches(); draw(); }; el.appendChild(d); }); }
+  function renderSkins(){ var el=document.getElementById('pxfSkins'); if(!el)return; el.innerHTML=''; SKINS.forEach(function(s){ var b=document.createElement('div'); b.className='skin'+(s.key===curSkin.key?' on':''); b.textContent=s.icon+' '+s.label; b.onclick=function(){ curSkin=s; curColor=s.color; renderSkins(); renderSwatches(); draw(); }; el.appendChild(b); }); }
+  function renderTools(filter){ var el=document.getElementById('pxfTools'); if(!el)return; var f=(filter||'').toLowerCase(); var list=allTools.filter(function(t){return !f||t.toLowerCase().indexOf(f)>=0;}).slice(0,120); el.innerHTML=''; if(!list.length){ el.innerHTML='<div style="color:#5f7c86;font-size:10px;padding:8px">No tools match.</div>'; return; } list.forEach(function(t){ var lab=document.createElement('label'); var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=selected.has(t); cb.onchange=function(){ if(cb.checked)selected.add(t); else selected.delete(t); var cnt=document.getElementById('pxfToolCount'); if(cnt)cnt.textContent=selected.size; }; lab.appendChild(cb); var sp=document.createElement('span'); sp.textContent=t; lab.appendChild(sp); el.appendChild(lab); }); }
+  window._pxfFilterTools=renderTools;
+  function loadTools(){ fetch('/api/agent/tools').then(function(r){return r.json();}).then(function(d){ var t=[]; var src=(d&&(d.tools||d.list||d))||[]; if(Array.isArray(src)) t=src.map(function(o){return typeof o==='string'?o:(o&&(o.name||o.id||o.tool));}).filter(Boolean); if(!t.length) t=FALLBACK_TOOLS; allTools=Array.from(new Set(t)).sort(); renderTools(''); }).catch(function(){ allTools=FALLBACK_TOOLS.slice(); renderTools(''); }); }
+  window.openPixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else renderTools(''); draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
+  window.closePixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(m)m.classList.remove('on'); };
+  function status(t,ok){ var st=document.getElementById('pxfStatus'); if(st){ st.textContent=t||''; st.style.color=ok?'#00ff88':'#8fefff'; } }
+  window.pixelForgeCreate=async function(also3d){
+    var name=((document.getElementById('pxfName')||{}).value||'').trim();
+    if(!name){ status('⚠ Name your pixel agent first.'); return; }
+    var tools=Array.from(selected);
+    var owner=(typeof opOwner==='function')?opOwner():'guest';
+    status('⟳ dripping '+name+' into the office…');
+    var persona=name+' — a custom '+curSkin.label+' pixel operative forged in the Pixel Forge.';
+    // 1) real brain so it can chat + use tools (best-effort)
+    try{ await fetch('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,persona:persona,brainId:'auto',tools:tools,look:'pixel',portrait:'',rarity:'CUSTOM'})}); }catch(_){}
+    // 2) persist the operative (color + skin nested in look so it survives the store whitelist)
+    var look={archetype:'pixel',pixel:{color:curColor,body:curSkin.key,icon:curSkin.icon,label:curSkin.label}};
+    var op=null;
+    try{
+      var r=await fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:owner,codename:name,archetype:'pixel',rarity:'CUSTOM',portrait:'',color:curColor,look:look,brain:{tier:'light',brainId:'auto',persona:persona},tools:tools,model:'PIXEL',inOffice:true,deploy:{where:'office',office:true}})});
+      op=await r.json();
+    }catch(e){ status('⚠ '+e.message); return; }
+    if(!op||!op.operative){ status('⚠ '+((op&&op.error)||'create failed — is the server online?')); return; }
+    try{ await fetch('/api/operatives/'+op.operative.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({inOffice:true,deploy:{where:'office',office:true}})}); }catch(_){}
+    try{ if(typeof _loadOfficeOperatives==='function') _loadOfficeOperatives(true); }catch(_){}
+    try{ if(typeof loadGallery==='function') loadGallery(); }catch(_){}
+    status('✅ '+name+' dripped into the office!',true);
+    setTimeout(function(){ window.closePixelForge(); if(typeof showView==='function') showView('office'); if(typeof switchOfficeTab==='function') switchOfficeTab('pixel'); if(window.PixelOffice&&PixelOffice.syncAgents){ setTimeout(function(){try{PixelOffice.syncAgents();}catch(_){}} ,1200); } }, 750);
+    if(also3d){ setTimeout(function(){ if(typeof showView==='function') showView('forge'); var nf=document.getElementById('ofName'); if(nf)nf.value=name; }, 1100); }
+  };
+})();
 </script>
 
 <!-- ════════ SHADDAI WORLD ════════ -->
