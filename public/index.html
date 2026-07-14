@@ -20,7 +20,7 @@
 <meta name="twitter:title" content="SHADDAI — Sovereign AI Agent Empire">
 <meta name="twitter:description" content="Seven AI agents. 200+ real tools. Forge operatives, run workflows, explore a 3D world — powered by your own free API key.">
 <meta name="twitter:image" content="/assets/agents/SHADDAI-portrait.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://s3.tradingview.com https://s.tradingview.com https://www.gstatic.com https://apis.google.com; connect-src 'self' blob: data: ws://localhost:3000 wss: http://localhost:11434 https://*.googleapis.com https://*.firebaseapp.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.github.com https://api.anthropic.com https://openrouter.ai https://api.openai.com https://generativelanguage.googleapis.com https://api.telegram.org https://mainnet.helius-rpc.com https://api.coinlore.net https://api.coingecko.com https://api.dexscreener.com https://quote-api.jup.ag https://lite.rpc.solana.com https://serpapi.com https://api.elevenlabs.io https://api.acedata.cloud https://api.minimax.chat https://api.together.xyz https://api.openweathermap.org https://newsapi.org http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com; img-src 'self' data: blob: https: http:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' http://localhost:8787 http://127.0.0.1:8787 https://shaddai-clipper.onrender.com https://calendly.com https://calendar.google.com https://s.tradingview.com https://shaddai999.firebaseapp.com https://accounts.google.com; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'">
 <title>SHADDAI — Sovereign AI Agent Empire · 7 Agents, 200+ Real Tools</title>
 <!-- ── Shaddai World (Grid) — Three.js module map. unpkg is CSP-allowed (see script-src above). ── -->
 <script type="importmap">
@@ -3667,6 +3667,8 @@ body.ly-sb-right #commandCenterView,body.ly-sb-right #agentStatusView,body.ly-sb
 body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePanel{right:210px!important;left:0!important}
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00ff88;background:rgba(0,229,160,.12)}
+#tbNavMoverPop .np-arrow{background:transparent;border:1px solid rgba(0,229,160,.18);color:#00e5a0;cursor:pointer;font-size:13px;width:26px;height:26px;border-radius:6px;display:grid;place-items:center;transition:.15s;padding:0;line-height:1}
+#tbNavMoverPop .np-arrow:hover{background:rgba(0,229,160,.15);border-color:#00e5a0;box-shadow:0 0 8px rgba(0,229,160,.4)}
 </style>
 <!-- ══ SHADDAI GLITCH THEME (design Fix 4 + Fix 2) — reversible: delete this link+style to revert ══ -->
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -3933,7 +3935,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </script>
 <!-- SHADDAI icon set (window.SHADDAI_ICONS / window.shaddaiIcon) — loaded before nav renders -->
 <script src="/assets/shaddai-icons.js"></script>
-<script src="/pixel-office.js" defer></script>
+<script src="/pixel-office.js?v=15" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
 </head>
 <body data-theme="dark">
@@ -4031,8 +4033,25 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <!-- A5: MC restore chip — appears here when Mission Control is minimized (click to reopen) -->
       <button class="tb-seg" id="tbMcChip" onclick="restoreMissionControl()" title="Restore Mission Control" style="display:none;color:#00e5a0"><span class="ic">◈</span>MC</button>
       <!-- A5: tab-mover — cycles the nav dock (top → left → right → bottom). Tucked into the header, out of the way. -->
-      <button class="tb-seg" id="tbNavMover" onclick="cycleNavPos()" title="Move tabs: top / left / right / bottom"><span class="ic" id="tbNavMoverIc">⬍</span></button>
+      <span id="tbNavMoverWrap" style="position:relative;display:inline-flex">
+      <button class="tb-seg" id="tbNavMover" onclick="toggleNavMoverPop(event)" title="Move tabs: up / left / right / down"><span class="ic" id="tbNavMoverIc">⬍</span></button>
+      <div id="tbNavMoverPop" style="display:none;position:absolute;top:calc(100% + 7px);right:0;z-index:100000;background:rgba(4,12,28,0.97);border:1px solid rgba(0,229,160,0.28);border-radius:10px;padding:7px;box-shadow:0 10px 28px rgba(0,0,0,.6)">
+        <div style="font:700 6px/1 'Share Tech Mono',monospace;letter-spacing:2px;color:rgba(0,229,160,.6);text-align:center;margin-bottom:5px">DOCK TABS</div>
+        <div style="display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,26px);gap:3px;place-items:center">
+          <span></span>
+          <button class="np-arrow" onclick="setNavPos('top');_updateNavMoverIcon('top');closeNavMoverPop()" title="Tabs on top">⬆</button>
+          <span></span>
+          <button class="np-arrow" onclick="setNavPos('left');_updateNavMoverIcon('left');closeNavMoverPop()" title="Tabs on left">⬅</button>
+          <span style="color:rgba(0,229,160,.5);font-size:11px">◈</span>
+          <button class="np-arrow" onclick="setNavPos('right');_updateNavMoverIcon('right');closeNavMoverPop()" title="Tabs on right">➡</button>
+          <span></span>
+          <button class="np-arrow" onclick="setNavPos('bottom');_updateNavMoverIcon('bottom');closeNavMoverPop()" title="Tabs on bottom">⬇</button>
+          <span></span>
+        </div>
+      </div>
+      </span>
       <button class="tb-seg" onclick="loadUserDashboard()" id="dashBtn" title="Profile & earnings" style="color:#a78bfa"><span class="ic">👤</span></button>
+      <button class="tb-seg" onclick="window.openToolRunner&&window.openToolRunner()" id="toolsBtn" title="Run any agent tool with inputs" style="color:#00e5a0"><span class="ic">🛠</span>Tools</button>
       <!-- Notifications button removed — unwired -->
       <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="color:#ffb020"><span class="ic">◉</span>ALL</button>
       <!-- Shop / credit-card button removed — unwired -->
@@ -5770,8 +5789,20 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           if(r) r.classList.toggle('active', st.key===key);
         });
       }
+      // A station is worth re-initializing if its live-data grid ended up empty
+      // or on an error (first fetch failed / DexScreener 429 / offline). This lets
+      // a re-focus retry instead of the old behaviour of showing a permanent blank.
+      function stationNeedsRetry(key){
+        if(key==='dex'){
+          var g=el('dexFeedGrid'); if(!g) return false;
+          var t=(g.textContent||'');
+          return /Click Trending|Error:|No pairs|Fetching trending/i.test(t) || g.children.length<=1;
+        }
+        return false;
+      }
       function lazy(key){
-        if(MK._inited[key]) return; MK._inited[key]=true;
+        if(MK._inited[key] && !stationNeedsRetry(key)) return;
+        MK._inited[key]=true;
         var st=STATIONS.filter(function(s){return s.key===key;})[0];
         if(st){ try{ st.init(); }catch(e){ console.warn('MK init',key,e); } }
       }
@@ -5925,7 +5956,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
         <canvas id="officeCanvas" style="display:none"></canvas>
         <!-- Wave C: Pixel Office MMO mounts here (public/pixel-office.js). Old canvas kept hidden for legacy refs. -->
-        <div id="pixelOfficeStage" style="width:100%;height:100%;min-height:380px;position:relative"></div>
+        <div id="pixelOfficeStage" style="width:100%;height:100%;min-height:0;position:relative"></div>
       </div>
 
       <!-- ── OPERATIVE STATUS BOARD ── -->
@@ -9989,8 +10020,11 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div class="aura-lead">
           SHADDAI's open-source <b>token-saver</b>. It answers repeat &amp; known prompts for <b>free</b> — from cache and local compute — <i>before</i> the AI ever spends a token, and caches live API pulls inside their freshness window. It sits under every agent call here, so the more the empire works, the cheaper it runs. Repeat work saves the most; a novel one-off saves nothing (we keep the numbers honest).
         </div>
+        <div class="aura-lead" style="margin-top:8px">
+          <b style="color:var(--aura-cy)">AURA saves on three surfaces:</b> the <b>answer</b> (cache · compute · skills), the <b>history</b> (compress long conversations before each turn), and — new in v0.5.0 — the <b>instructions</b>: <b style="color:var(--aura-cy)">DISTILL</b> trims redundant rules from a bloated system prompt (which you pay for on <i>every</i> call), while never removing safety, output-shape, success, or tool-routing constraints. Per OpenAI's GPT-5.6 guidance, leaner prompts score ~10-15% higher while cutting 41-66% of tokens.
+        </div>
         <div class="aura-cta-row">
-          <a class="aura-gh" href="https://github.com/IzzoIzzoIzzo/aura" target="_blank" rel="noopener" id="auraGhLink">
+          <a class="aura-gh" href="https://github.com/IzzoSol/aura" target="_blank" rel="noopener" id="auraGhLink">
             <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
             AURA on GitHub · MIT
           </a>
@@ -9999,7 +10033,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
             <code id="auraNpmPill">npx -y -p shaddai-aura aura-mcp</code>
             <button onclick="_auraCopy('auraNpmPill')">⧉ COPY</button>
           </span>
-          <span class="aura-pill"><span class="aura-mut">shaddai-aura v0.4.0 · CLI · library · MCP</span></span>
+          <span class="aura-pill"><span class="aura-mut">shaddai-aura v0.5.0 · CLI · library · MCP · 6 tools (+ distill)</span></span>
         </div>
       </div>
 
@@ -10101,7 +10135,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
 
         <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:4px">
-          <a class="aura-gh" href="https://github.com/IzzoIzzoIzzo/aura" target="_blank" rel="noopener">★ AURA on GitHub</a>
+          <a class="aura-gh" href="https://github.com/IzzoSol/aura" target="_blank" rel="noopener">★ AURA on GitHub</a>
           <button class="aura-btn-cy" style="padding:11px 16px" onclick="activateAura()">Recent saves &amp; roadmap →</button>
           <button class="aura-btn-cy" style="padding:11px 16px" onclick="window.open('/aura.html','_blank')">Open full monitor ↗</button>
         </div>
@@ -26956,6 +26990,12 @@ function switchOfficeTab(tab) {
         if (typeof showView === 'function') showView('forge');
         return;
       }
+      // Market building → THE MARKET shop overlay (shop-client.js opens it via its
+      // own listener; skip the "coming soon" toast so they don't collide).
+      if (key === 'market') {
+        if (window.Shop && typeof window.Shop.open === 'function') window.Shop.open();
+        return;
+      }
       if (OFFICE_SUB[key]) {
         // Make sure the Office view is active, then open the mapped sub-tab.
         if (S && S.view !== 'office') { window._officeEntrySub = OFFICE_SUB[key]; if (typeof showView === 'function') showView('office'); }
@@ -27023,10 +27063,44 @@ function _wfAgentOptions(selected) {
 // Repopulate every step's agent dropdown with council + forged agents (preserving selection).
 function _refreshWorkflowAgentSelects() {
   try { if (typeof _loadOfficeOperatives === 'function') _loadOfficeOperatives(); } catch(e) {}
-  document.querySelectorAll('#wfStepsContainer .wf-step-row select').forEach(sel => {
+  document.querySelectorAll('#wfStepsContainer .wf-step-row select:not(.wf-tool)').forEach(sel => {
     const cur = sel.value; sel.innerHTML = _wfAgentOptions(cur);
   });
+  try { if (window._wfEnhanceSteps) window._wfEnhanceSteps(); } catch(_){}
 }
+
+// ── Workflow step TOOL selector: each step can force a REAL engine tool ──
+window._wfTools = null; window._wfToolsLoading = null;
+function _wfLoadTools() {
+  if (window._wfTools) return Promise.resolve(window._wfTools);
+  if (window._wfToolsLoading) return window._wfToolsLoading;
+  window._wfToolsLoading = fetch('/api/agent/tools').then(r => r.json()).then(d => {
+    const arr = d.tools || d; window._wfTools = (Array.isArray(arr) ? arr : Object.values(arr)).filter(t => t && t.name); return window._wfTools;
+  }).catch(() => { window._wfTools = []; return []; });
+  return window._wfToolsLoading;
+}
+function _wfToolOptions(agentVal, selected) {
+  const ag = String(agentVal || '').toUpperCase();
+  const tools = window._wfTools || [];
+  const mine = tools.filter(t => !Array.isArray(t.agents) || !t.agents.length || t.agents.includes(ag));
+  const list = (mine.length ? mine : tools).slice().sort((a, b) => a.name.localeCompare(b.name));
+  return '<option value="">⚙ agent decides</option>' + list.map(t => `<option value="${t.name}"${t.name === selected ? ' selected' : ''}>🔧 ${t.name}</option>`).join('');
+}
+function _wfEnhanceStep(row) {
+  if (!row || row.querySelector('.wf-tool')) return;
+  const sel = row.querySelector('select'); const inp = row.querySelector('input');
+  if (!sel || !inp) return;
+  const tool = document.createElement('select'); tool.className = 'wf-tool';
+  tool.style.cssText = 'background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.28);border-radius:5px;color:var(--text);padding:6px 7px;font-size:10px';
+  tool.innerHTML = '<option value="">⚙ agent decides</option>';
+  sel.insertAdjacentElement('afterend', tool);
+  row.style.gridTemplateColumns = '20px 0.9fr 1fr 1.2fr';
+  const fill = () => { const cur = tool.value; _wfLoadTools().then(() => { tool.innerHTML = _wfToolOptions(sel.value, cur); }); };
+  fill(); sel.addEventListener('change', fill);
+}
+window._wfEnhanceStep = _wfEnhanceStep;
+window._wfEnhanceSteps = function () { document.querySelectorAll('#wfStepsContainer .wf-step-row').forEach(_wfEnhanceStep); };
+document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { try { window._wfEnhanceSteps(); } catch (_) {} }, 900); });
 
 function addWorkflowStep() {
   _wfStepCount++;
@@ -27039,6 +27113,7 @@ function addWorkflowStep() {
     <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">${_wfAgentOptions('')}</select>
     <input placeholder="What should this agent do? (use {step${_wfStepCount-1}} for the previous result)" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">`;
   container.appendChild(row);
+  try { if (window._wfEnhanceStep) window._wfEnhanceStep(row); else if (window._wfEnhanceSteps) window._wfEnhanceSteps(); } catch(_){}
 }
 
 function createNewWorkflow() { /* Reset form */ _wfStepCount = 2; }
@@ -27050,9 +27125,15 @@ async function saveAndRunWorkflow() {
   const rows = document.querySelectorAll('.wf-step-row');
   const steps = [];
   rows.forEach((row, i) => {
-    const sel = row.querySelector('select');
+    const sel = row.querySelector('select:not(.wf-tool)') || row.querySelector('select');
+    const toolSel = row.querySelector('.wf-tool');
     const inp = row.querySelector('input');
-    if (sel && inp && inp.value.trim()) steps.push({ step: i+1, agent: sel.value, prompt: inp.value.trim() });
+    if (sel && inp && inp.value.trim()) {
+      let prompt = inp.value.trim();
+      const tool = toolSel && toolSel.value;
+      if (tool) prompt += ` (use the ${tool} tool)`;   // force this REAL tool through the agent engine
+      steps.push({ step: i+1, agent: sel.value, prompt, tool: tool || undefined });
+    }
   });
   if (!steps.length) { notify('Add at least one step with a prompt'); return; }
   const wf = { id: Date.now(), name, trigger, output, steps, created: new Date().toISOString() };
@@ -40817,10 +40898,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         </div>
       </div>
 
-      <!-- YOUR OFFICE + JOB BOARD ROW -->
-      <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:2px solid rgba(255,107,53,0.25)">
+      <!-- YOUR WORKSPACE ROW (job board removed — jobs live in Office & Bazaar) -->
+      <div style="position:relative;display:grid;grid-template-columns:1fr;gap:0;border-bottom:2px solid rgba(255,107,53,0.25)">
         <!-- YOUR WORKSPACE -->
-        <div style="padding:14px;border-right:2px solid rgba(255,107,53,0.2)">
+        <div style="padding:14px">
           <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,107,53,0.6);letter-spacing:2px;margin-bottom:10px">▸ YOUR WORKSPACE</div>
           <div style="display:flex;align-items:center;gap:12px">
             <div id="userOfficeDeskIcon" style="width:56px;height:56px;background:rgba(255,107,53,0.15);border:2px solid rgba(255,107,53,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;image-rendering:pixelated;position:relative">
@@ -40839,13 +40920,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             </div>
           </div>
         </div>
-        <!-- LIVE JOB BOARD -->
-        <div style="padding:14px">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,176,32,0.6);letter-spacing:2px;margin-bottom:8px">▸ LIVE JOB BOARD</div>
-          <div id="officeJobBoard" style="display:flex;flex-direction:column;gap:5px;max-height:80px;overflow-y:auto">
-            <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace">Loading jobs...</div>
-          </div>
-        </div>
+        <!-- LIVE JOB BOARD removed — jobs live in the Office & Bazaar only (post/accept/create a shop). -->
       </div>
 
       <!-- ══ AGENT CHAMBERS — immersive 3D stage (hero) ══ -->
@@ -40871,7 +40946,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             <div style="pointer-events:none;position:absolute;bottom:38px;left:50%;transform:translateX(-50%);width:200px;height:44px;border-radius:50%;background:radial-gradient(ellipse,rgba(var(--chg),0.4) 0%,transparent 70%);filter:blur(6px)"></div>
             <div id="chamberViewHost" style="position:absolute;inset:0;cursor:grab" title="Drag to spin">
               <div class="chamber-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-                <div id="chIcon" style="font-size:92px;line-height:1;filter:drop-shadow(0 0 34px rgba(var(--chg),0.75))">👑</div>
+                <div id="chIcon" style="line-height:1;filter:drop-shadow(0 0 34px rgba(var(--chg),0.75))"><img src="/assets/agents/SHADDAI-action.png" alt="SHADDAI" style="width:190px;max-height:320px;object-fit:contain;border-radius:12px" onerror="this.onerror=null;this.src='/assets/agents/SHADDAI-portrait.png';this.onerror=function(){this.outerHTML='<div style=&quot;font-size:76px;color:var(--ch)&quot;>◈</div>';}"></div>
                 <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.24em;color:rgba(255,255,255,.42)">◈ SUMMONING MODEL…</div>
               </div>
             </div>
@@ -42561,12 +42636,17 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   }
 
   window.openOfficeCustomizer = function() {
+    const modal = document.getElementById('officeCustomizerModal');
+    if (!modal) { try{ notify('Customizer not found'); }catch(_){}; return; }
+    // FIX: the modal lives inside #marketplaceView (a .view with overflow:hidden + clip),
+    // so it was being clipped/hidden. Reparent to <body> so nothing can clip a fixed modal.
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
     const cfg = JSON.parse(localStorage.getItem('shd_office_cfg') || '{}');
     const nameEl = document.getElementById('ocName');
     if (nameEl && cfg.name) nameEl.value = cfg.name;
     try { if (typeof window._fillOfficeIcons === 'function') window._fillOfficeIcons(); } catch(_){}
     if (cfg.theme !== undefined) selectOfficeTheme(cfg.theme, true);
-    document.getElementById('officeCustomizerModal').style.display = 'flex';
+    modal.style.display = 'flex';
   };
 
   window.selectOfficeTheme = function(i, silent) {
@@ -42614,6 +42694,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (cfg.icon) {
       const el = document.getElementById('userOfficeDeskIcon');
       if (el) el.innerHTML = _renderDeskIcon(cfg.icon);
+    } else {
+      // Default: themed SVG desk icon (window.shaddaiIcon) instead of the bare 🧑‍💻 emoji.
+      const el = document.getElementById('userOfficeDeskIcon');
+      if (el && typeof window.shaddaiIcon === 'function') el.innerHTML = _renderDeskIcon('office');
     }
     if (cfg.theme !== undefined) { _applyOfficeTheme(cfg.theme); window._selectedOfficeTheme = cfg.theme; }
   }
@@ -43164,174 +43248,145 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
   // ─────────────────────────────────────────────────────────────────────────
   //  CHAMBER VIEWER — the immersive 3D stage that lives INSIDE the Rooms tab.
-  //  ONE shared WebGLRenderer for all 7 agents: switching agents only swaps the
-  //  loaded GLB (renderer/scene/camera are reused). Disposed when leaving the tab.
-  //  Loads the small optimized base GLB — POTATO-friendly, no postprocessing.
+  //  MODEL-VIEWER BACKED (2026-07-13, NEXUS): the raw-Three path glowed SOLID
+  //  WHITE (no texture) despite metalness/sRGB/IBL clamps — 10 failed fixes.
+  //  ROOT CAUSE: stock GLTFLoader leaves the albedo `.map` UNBOUND on these
+  //  Meshy GLBs (spec-gloss / extension the loader ignores) → the PBR material
+  //  defaults to white and the bright IBL mirrors it to a solid-white blob.
+  //  The FORGE renders the SAME /assets/agents/<CODE>.glb PERFECTLY via Google
+  //  <model-viewer> (see forge-3d.js), so we switch this viewer to the exact
+  //  same component. Animations are PRESERVED via model-viewer's clip API
+  //  (availableAnimations / animation-name). Public API is unchanged so
+  //  selectChamber / the HUD buttons / _syncAnimBtn / dispose all keep working.
   // ─────────────────────────────────────────────────────────────────────────
   window._chamberViewer = (function(){
-    let renderer, scene, camera, controls, raf, current, baseY = 0, ro, host, rim, keyLight, T, GL;
-    let mods = null, mountedFor = null, loadToken = 0, mixer = null, _mclock = 0;
-    let _clips = [], _clipIdx = 0, _curObj = null;   // REQ-6.4: animation clip list + current for cycling
-    function loadMods(){
-      if (!mods) mods = Promise.all([
-        import('three'),
-        import('three/addons/loaders/GLTFLoader.js'),
-        import('three/addons/controls/OrbitControls.js'),
-        import('three/addons/environments/RoomEnvironment.js')
-      ]).then(([t, g, o, r]) => ({ THREE: t, GLTFLoader: g.GLTFLoader, OrbitControls: o.OrbitControls, RoomEnvironment: r.RoomEnvironment }));
-      return mods;
+    let mv = null, host = null, mountedFor = null, exposure = 1.05;
+    let _clips = [], _clipIdx = 0;   // REQ-6.4: animation clip list + current for cycling
+
+    // Reuse the same <model-viewer> web component the Forge already injects
+    // (script[data-forge3d-mv], unpkg @google/model-viewer@3.5.0 — CSP-allowed).
+    function ensureMV(){
+      if (document.querySelector('script[data-forge3d-mv]') || customElements.get('model-viewer')) return;
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = '/model-viewer.min.js?v=15';
+      s.setAttribute('data-forge3d-mv', '1');
+      document.head.appendChild(s);
     }
     function _hidePh(){ try { const ph = host && host.querySelector('.chamber-ph'); if (ph) ph.style.display = 'none'; } catch(_){} }
     function _showPh(){ try { const ph = host && host.querySelector('.chamber-ph'); if (ph) ph.style.display = ''; } catch(_){} }
     function _rgb(glow){ return (glow || '255,107,53').split(',').map(Number); }
-    async function mount(container, code, glow){
+    function srcFor(code){ return '/assets/agents/' + code + '.glb?v=14'; }
+
+    // Drop metalness → 0 on load, exactly like forge-3d, so the albedo texture
+    // shows instead of a mirror-white IBL reflection. Runtime-only, never throws.
+    function _tameMaterials(){
+      try {
+        var mats = (mv && mv.model && mv.model.materials) || [];
+        for (var i = 0; i < mats.length; i++) {
+          var pbr = mats[i] && mats[i].pbrMetallicRoughness; if (!pbr) continue;
+          try { pbr.setMetallicFactor(0); } catch (e) {}
+          try { if (typeof pbr.roughnessFactor === 'number' && pbr.roughnessFactor < 0.6) pbr.setRoughnessFactor(0.7); } catch (e) {}
+        }
+      } catch (e) {}
+    }
+
+    // Build the model-viewer element inside the host (once). z-index:5 keeps it
+    // ABOVE the dark vignette/scanline scrims (z 0) and the pedestal glow so the
+    // textured model is never composited under a darkening layer.
+    function _build(container){
+      ensureMV();
+      mv = document.createElement('model-viewer');
+      mv.id = 'chamberMv';
+      mv.setAttribute('camera-controls', '');
+      mv.setAttribute('auto-rotate', '');
+      mv.setAttribute('rotation-per-second', '18deg');
+      mv.setAttribute('interaction-prompt', 'none');
+      mv.setAttribute('shadow-intensity', '0.6');
+      mv.setAttribute('exposure', String(exposure));
+      mv.setAttribute('environment-image', 'neutral');   // neutral IBL → PBR reads its texture, not a white mirror
+      mv.setAttribute('tone-mapping', 'aces');
+      mv.setAttribute('camera-orbit', '0deg 82deg auto');
+      mv.setAttribute('min-camera-orbit', 'auto auto 5%');
+      mv.setAttribute('max-camera-orbit', 'auto auto 300%');
+      mv.setAttribute('field-of-view', '32deg');
+      mv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:5;background:transparent;--poster-color:transparent;--progress-bar-color:var(--ch,#ff6b35);pointer-events:auto';
+      mv.addEventListener('load', function(){
+        _tameMaterials();
+        try {
+          var A = mv.availableAnimations || [];
+          _clips = A.slice();
+          // Default to a lively clip: dance → vault/flip → idle → first.
+          var pick = A.findIndex(function(n){ return /dance/i.test(n); });
+          if (pick < 0) pick = A.findIndex(function(n){ return /vault|flip|parkour|spin/i.test(n); });
+          if (pick < 0) pick = A.findIndex(function(n){ return /idle/i.test(n); });
+          if (pick < 0) pick = 0;
+          _clipIdx = Math.max(0, pick);
+          if (A.length) { mv.animationName = A[_clipIdx]; try { mv.play(); } catch(_){} }
+        } catch(_){ _clips = []; _clipIdx = 0; }
+        _hidePh();
+        try { _syncAnimBtn(); } catch(_){}
+      });
+      mv.addEventListener('error', function(){ _clips = []; _clipIdx = 0; _showPh(); try { _syncAnimBtn(); } catch(_){} });
+      container.appendChild(mv);
+    }
+
+    function mount(container, code, glow){
       if (!container) return false;
-      let M; try { M = await loadMods(); } catch(e){ _showPh(); return false; }
-      if (!container.isConnected) return false;
-      const { THREE, GLTFLoader, OrbitControls, RoomEnvironment } = M; T = THREE; GL = GLTFLoader;
-      // (Re)build the renderer only if we don't have one, or the host changed.
-      if (!renderer || host !== container) {
-        _teardownGL();
-        host = container;
-        const w = container.clientWidth || 480, h = container.clientHeight || 380;
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(34, w / h, 0.1, 100);
-        camera.position.set(0, 1.15, 3.5);
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
-        renderer.setPixelRatio(Math.min(1.6, window.devicePixelRatio || 1));
-        renderer.setSize(w, h);
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;     // filmic, premium look
-        renderer.toneMappingExposure = 1.15;
-        renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
-        container.appendChild(renderer.domElement);
-        // Image-based lighting (PBR) — makes the metallic/textured bodies read as premium instead of flat.
-        try { const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; } catch(_){}
-        scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-        keyLight = new THREE.DirectionalLight(0xffffff, 1.25); keyLight.position.set(2.5, 4.5, 3.2); scene.add(keyLight);
-        rim = new THREE.PointLight(0xffffff, 2.0, 26); rim.position.set(-3, 2.4, -2.2); scene.add(rim);
-        const fill = new THREE.PointLight(0xffffff, 0.7, 30); fill.position.set(3.2, 1.2, 3.5); scene.add(fill);
-        controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableZoom = true; controls.enablePan = false;   // REQ-6.3: wheel/pinch zoom on the model
-        controls.minDistance = 1.4; controls.maxDistance = 9;      // sane bounds so it never clips inside or flies away
-        controls.zoomSpeed = 0.9;
-        controls.autoRotate = true; controls.autoRotateSpeed = 2.0;
-        controls.minPolarAngle = Math.PI * 0.20; controls.maxPolarAngle = Math.PI * 0.60;
-        controls.target.set(0, 1.0, 0);
-        try { ro = new ResizeObserver(() => { if (!renderer || !container.clientWidth) return; camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }); ro.observe(container); } catch(_){}
-        (function animate(){
-          raf = requestAnimationFrame(animate);
-          try { controls && controls.update(); } catch(_){}
-          if (mixer){ const now = performance.now(); const dt = _mclock ? (now - _mclock) / 1000 : 0.016; _mclock = now; try { mixer.update(Math.min(dt, 0.05)); } catch(_){} }
-          if (current) current.position.y = baseY + Math.sin(performance.now() / 780) * 0.06;
-          try { renderer && renderer.render(scene, camera); } catch(_){}
-          try { window._perfMon && window._perfMon.tick(renderer, 'chamber'); } catch(_){}
-        })();
+      // (Re)build the model-viewer only if we don't have one, or the host changed.
+      if (!mv || host !== container) {
+        try { if (mv && mv.parentNode) mv.parentNode.removeChild(mv); } catch(_){}
+        mv = null; host = container;
+        _build(container);
       }
       return select(code, glow);
     }
+
     function select(code, glow){
-      if (!renderer || !T) return false;
+      if (!mv) return false;
       mountedFor = code;
-      const c = _rgb(glow);
-      if (rim) rim.color.setRGB(c[0]/255, c[1]/255, c[2]/255);
-      // Remove the previous model (dispose its geometry/material to avoid GPU leaks).
-      if (current) { try { if (mixer){ mixer.stopAllAction(); mixer = null; } scene.remove(current); current.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material)?o.material:[o.material]).forEach(m => { for (const k in m){ if (m[k] && m[k].isTexture) m[k].dispose(); } m.dispose && m.dispose(); }); } }); } catch(_){}
-        current = null; }
-      _showPh();
-      const token = ++loadToken;
-      const loader = new GL();   // FIX: GLTFLoader is a separate import, NOT on the THREE namespace (T.GLTFLoader threw)
-      const urls = ['/assets/agents/' + code + '.glb?v=14'];   // v11: updated rigged models (Neon Valkyrie etc.)
-      const onLoad = (gltf) => {
-        if (!renderer || token !== loadToken) return; // superseded or disposed
-        const obj = gltf.scene;
-        // Tame the Meshy PBR materials so they show their TEXTURE instead of mirroring the bright
-        // environment to solid white. (High metalness + IBL = white blob — same clamp the world uses.)
-        obj.traverse(c => { if (c.isMesh) { c.castShadow = false; c.frustumCulled = false;
-          const mats = Array.isArray(c.material) ? c.material : [c.material];
-          mats.forEach(m => { if (!m) return;
-            if ('metalness' in m) m.metalness = Math.min(m.metalness != null ? m.metalness : 0.5, 0.15);
-            if ('roughness' in m) m.roughness = Math.max(m.roughness != null ? m.roughness : 0.5, 0.6);
-            if ('envMapIntensity' in m) m.envMapIntensity = 0.5;
-            if (m.emissive && 'emissiveIntensity' in m) m.emissiveIntensity = Math.min(m.emissiveIntensity != null ? m.emissiveIntensity : 1, 0.4);
-            m.needsUpdate = true;
-          });
-        }});
-        obj.updateMatrixWorld(true);
-        // Pose the skeleton + idle-animate BEFORE measuring — a rigged skinned mesh with no mixer
-        // renders as an exploded white blob (that was the "floating white, no texture" bug).
-        _clips = []; _clipIdx = 0; _curObj = obj;
-        try {
-          if (mixer) { mixer.stopAllAction(); }
-          mixer = null;
-          if (gltf.animations && gltf.animations.length) {
-            mixer = new T.AnimationMixer(obj);
-            const A = gltf.animations;
-            _clips = A.slice();   // REQ-6.4: keep the full clip list so the Animations button can cycle them
-            // Default to a DANCE, then a FLIP/VAULT, then idle — livelier than a static idle.
-            const def = A.find(a => /dance/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
-            _clipIdx = Math.max(0, A.indexOf(def));
-            mixer.clipAction(def).reset().play(); mixer.update(0.3);
-            obj.updateMatrixWorld(true);
-          }
-        } catch(_){}
-        try { _syncAnimBtn(); } catch(_){}
-        let box = new T.Box3().setFromObject(obj);
-        const size = box.getSize(new T.Vector3());
-        const scl = 1.85 / Math.max(size.x, size.y, size.z || 1);
-        obj.scale.setScalar(scl);
-        box = new T.Box3().setFromObject(obj);
-        const ctr = box.getCenter(new T.Vector3());
-        obj.position.x -= ctr.x; obj.position.z -= ctr.z; obj.position.y -= box.min.y;
-        baseY = obj.position.y;
-        const hgt = (box.max.y - box.min.y), wid = Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
-        // frame from the model's real size so wide/mid-motion poses (e.g. ZEROX) aren't zoomed/cropped
-        const camDist = Math.max(3.2, hgt * 1.15, wid * 1.7);
-        controls.target.set(0, hgt * 0.52, 0);
-        camera.position.set(0, hgt * 0.55, camDist);
-        scene.add(obj); current = obj;
-        _hidePh();
-      };
-      (function tryLoad(i){ if (i >= urls.length){ _showPh(); return; } loader.load(urls[i], onLoad, undefined, () => tryLoad(i + 1)); })(0);
+      _clips = []; _clipIdx = 0;
+      try { mv.style.setProperty('--progress-bar-color', 'rgb(' + _rgb(glow).join(',') + ')'); } catch(_){}
+      _showPh();                       // placeholder shows until the new GLB's `load` fires
+      try { mv.setAttribute('src', srcFor(code)); } catch(_){ _showPh(); return false; }
       return true;
     }
-    function _teardownGL(){
-      if (raf) cancelAnimationFrame(raf); raf = null;
-      try { ro && ro.disconnect(); } catch(_){} ro = null;
-      try { controls && controls.dispose(); } catch(_){}
-      try { if (renderer) { renderer.forceContextLoss && renderer.forceContextLoss(); renderer.dispose(); renderer.domElement && renderer.domElement.remove(); } } catch(_){}
-      scene = camera = controls = renderer = current = rim = keyLight = host = null; mountedFor = null;
+
+    function dispose(){
+      try { if (mv && mv.parentNode) mv.parentNode.removeChild(mv); } catch(_){}
+      mv = null; host = null; mountedFor = null; _clips = []; _clipIdx = 0;
     }
-    function dispose(){ _teardownGL(); }
-    function isMounted(){ return !!renderer; }
+    function isMounted(){ return !!mv; }
     function currentAgent(){ return mountedFor; }
-    // REQ-6.3: nudge the orbit radius in/out (button zoom, works alongside wheel/pinch). dir>0 = zoom in.
+
+    // REQ-6.3: button zoom. model-viewer has no direct radius setter, so nudge
+    // the orbit radius via camera-orbit (radius is the 3rd component). dir>0 = in.
     function zoomBy(dir){
       try {
-        if (!camera || !controls || !T) return;
-        const off = new T.Vector3().subVectors(camera.position, controls.target);
-        let r = off.length(); if (!isFinite(r) || r <= 0) return;
-        const step = 0.82;                       // multiplicative so it feels even at any distance
+        if (!mv) return;
+        var o = (typeof mv.getCameraOrbit === 'function') ? mv.getCameraOrbit() : null;
+        if (!o) return;
+        var r = o.radius; if (!isFinite(r) || r <= 0) return;
+        var step = 0.82;
         r = dir > 0 ? r * step : r / step;
-        const mn = controls.minDistance || 1.4, mx = controls.maxDistance || 9;
-        r = Math.max(mn, Math.min(mx, r));
-        off.setLength(r); camera.position.copy(controls.target).add(off);
-        controls.update();
+        r = Math.max(0.4, Math.min(12, r));
+        var theta = (o.theta * 180 / Math.PI).toFixed(1);
+        var phi   = (o.phi   * 180 / Math.PI).toFixed(1);
+        mv.cameraOrbit = theta + 'deg ' + phi + 'deg ' + r.toFixed(3) + 'm';
       } catch(_){}
     }
-    // REQ-6.4: cycle to the next animation clip. Returns the new clip name (or null if none).
+
+    // REQ-6.4: cycle to the next animation clip. Returns the new (pretty) clip name.
     function cycleAnim(){
       try {
-        if (!mixer || !_curObj || !_clips.length) return null;
+        if (!mv || !_clips.length) return null;
         _clipIdx = (_clipIdx + 1) % _clips.length;
-        mixer.stopAllAction();
-        const clip = _clips[_clipIdx];
-        mixer.clipAction(clip).reset().play();
-        _mclock = 0;
-        return _prettyClip(clip.name);
+        mv.animationName = _clips[_clipIdx];
+        try { mv.play(); } catch(_){}
+        return _prettyClip(_clips[_clipIdx]);
       } catch(_){ return null; }
     }
-    function animInfo(){ return { count: _clips.length, name: (_clips[_clipIdx] ? _prettyClip(_clips[_clipIdx].name) : '') }; }
+    function animInfo(){ return { count: _clips.length, name: (_clips[_clipIdx] ? _prettyClip(_clips[_clipIdx]) : '') }; }
     return { mount, select, dispose, isMounted, currentAgent, zoomBy, cycleAnim, animInfo };
   })();
 
@@ -45970,7 +46025,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     const sentScore = document.getElementById('sentimentScore');
     const curScore = sentScore ? parseInt(sentScore.textContent)||0 : 50;
     S.trading.sentiment.history = (S.trading.sentiment.history||[]);
-    S.trading.sentiment.history.push(Math.max(0,Math.min(100,(curScore+100)/2)));
+    // curScore is already a 0-100 Fear&Greed reading — store it directly (no legacy -100..100 remap).
+    S.trading.sentiment.history.push(Math.max(0,Math.min(100,curScore)));
     if (S.trading.sentiment.history.length > 28) S.trading.sentiment.history.shift();
     save();
     notify(`Consensus: ${consensus} (score: ${weightedScore.toFixed(2)})`);
@@ -45999,7 +46055,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     const scoreEl = document.getElementById('sentimentScore');
     const barEl = document.getElementById('sentimentBar');
     if (scoreEl) { scoreEl.textContent = result.score; scoreEl.style.color = result.score > 0 ? 'var(--accent)' : result.score < 0 ? 'var(--danger)' : 'var(--warning)'; }
-    if (barEl) { barEl.style.width = ((result.score + 100) / 2) + '%'; }
+    // Needle is positioned via `left` (matches the Fear&Greed path); map -100..100 → 0..100%.
+    if (barEl) { const pct = (result.score + 100) / 2; barEl.style.left = `calc(${pct}% - 5px)`; }
     // Update signals
     const sigEl = document.getElementById('sentimentSignals');
     if (sigEl) {
@@ -46302,19 +46359,45 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         });
     }
 
-    // Sentiment history mini chart
+    // Sentiment history mini chart — REAL accumulated Fear&Greed reads only (no demo/fake series).
+    // Seeds from the last 14 days of the live Fear&Greed API on first open so the chart is
+    // populated with genuine data instead of a fabricated placeholder.
     const histEl = document.getElementById('sentimentHistory');
     if (histEl) {
-      const history = S.trading.sentiment&&S.trading.sentiment.history&&S.trading.sentiment.history.length
-        ? S.trading.sentiment.history
-        : [20,35,60,45,70,55,80,65,75,90,70,80,85,60,45,65,80,95,75,85,70,65,80,85,90,78,82,88]; // demo
-      const max = Math.max(...history);
-      histEl.innerHTML = history.map((v,i)=>{
-        const h = Math.max(4, Math.round((v/max)*56));
-        const isRecent = i >= history.length-5;
-        const col = v>60?'var(--accent)':v>40?'var(--warning)':'var(--danger)';
-        return `<div style="flex:1;height:${h}px;background:${col};opacity:${isRecent?1:0.5};min-width:3px;transition:height 0.3s" title="${v}"></div>`;
-      }).join('');
+      const drawHist = (history) => {
+        if (!history || !history.length) {
+          histEl.innerHTML = '<div style="color:var(--text-muted);font-size:8px;padding:6px 4px;align-self:center">Building history from live reads…</div>';
+          return;
+        }
+        const max = Math.max(...history, 1);
+        histEl.innerHTML = history.map((v,i)=>{
+          const h = Math.max(4, Math.round((v/max)*56));
+          const isRecent = i >= history.length-5;
+          const col = v>60?'var(--accent)':v>40?'var(--warning)':'var(--danger)';
+          return `<div style="flex:1;height:${h}px;background:${col};opacity:${isRecent?1:0.5};min-width:3px;transition:height 0.3s" title="${Math.round(v)}"></div>`;
+        }).join('');
+      };
+      // Accumulate REAL Fear&Greed readings over time (persisted in S). No fabricated series —
+      // the multi-day alternative.me history API is CORS-blocked in the browser, and the
+      // same-origin proxy only exposes the latest value, so we append each genuine read.
+      if (!S.trading.sentiment) S.trading.sentiment = { current:0, history:[] };
+      const _appendReal = (n) => {
+        if (isNaN(n)) return;
+        const h = S.trading.sentiment.history = (S.trading.sentiment.history || []);
+        if (!h.length || Math.abs(h[h.length-1] - n) >= 0.5) { h.push(n); if (h.length > 28) h.shift(); try{ save(); }catch(_){} }
+        drawHist(h);
+      };
+      if (S.trading.sentiment.history && S.trading.sentiment.history.length) {
+        drawHist(S.trading.sentiment.history);
+      }
+      // Pull the current real reading via the same-origin proxy (works; no CORS) and append it.
+      fetch('/api/market/fear-greed', { signal: AbortSignal.timeout(6000) })
+        .then(r => r.ok ? r.json() : null).catch(() => null)
+        .then(d => {
+          const v = d && (d.value ?? (d.data && d.data[0] && d.data[0].value));
+          if (v != null) _appendReal(parseInt(v)); else drawHist(S.trading.sentiment.history);
+        })
+        .catch(() => drawHist(S.trading.sentiment.history));
     }
 
     // Auto-run On-Chain signal on first open
@@ -53218,7 +53301,7 @@ Provide a comprehensive analysis:
 
 <!-- ════════ web2 → web3 GUIDE (additive; separate from onboardingWizard) ════════ -->
 <button id="sw3Help" title="How SHADDAI works (web2 → web3)" onclick="sw3Open()"
-  style="position:fixed;bottom:16px;left:16px;z-index:99990;width:34px;height:34px;border-radius:50%;border:1px solid #ffd23f;background:#0e1117;color:#ffd23f;font-weight:700;cursor:pointer;font-family:monospace;box-shadow:0 4px 14px rgba(0,0,0,.5)">?</button>
+  style="display:none !important;position:fixed;bottom:16px;left:16px;z-index:99990;width:34px;height:34px;border-radius:50%;border:1px solid #ffd23f;background:#0e1117;color:#ffd23f;font-weight:700;cursor:pointer;font-family:monospace;box-shadow:0 4px 14px rgba(0,0,0,.5)">?</button>
 <div id="sw3Modal" role="dialog" aria-modal="true"
   style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(5,7,10,.86);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
   <div style="background:#12161e;border:1px solid #2a3240;border-radius:14px;max-width:560px;width:100%;padding:34px 30px 24px;position:relative;font-family:'Segoe UI',system-ui,sans-serif;color:#e8ecf2;box-shadow:0 20px 60px rgba(0,0,0,.6)">
@@ -53357,6 +53440,13 @@ window._updateNavMoverIcon=function(p){
   var ic=document.getElementById('tbNavMoverIc'); if(ic) ic.textContent=glyph;
   var b=document.getElementById('tbNavMover'); if(b){ b.classList.add('on'); b.title='Tabs docked: '+p+' — click to move'; }
 };
+// Header tab-mover POP-OUT: a directional D-pad (up/left/right/down) to dock the nav.
+window.toggleNavMoverPop=function(e){ if(e&&e.stopPropagation)e.stopPropagation();
+  var p=document.getElementById('tbNavMoverPop'); if(!p)return;
+  p.style.display=(p.style.display==='block')?'none':'block'; };
+window.closeNavMoverPop=function(){ var p=document.getElementById('tbNavMoverPop'); if(p)p.style.display='none'; };
+document.addEventListener('click',function(ev){ var w=document.getElementById('tbNavMoverWrap'); var p=document.getElementById('tbNavMoverPop');
+  if(p&&w&&!w.contains(ev.target)) p.style.display='none'; });
 // Default: dashboard NEXT TO the tabs (left side-nav) on desktop; top nav on mobile. Respects a saved choice.
 try{ var _sp=localStorage.getItem('shaddai_navpos'); var _p0=_sp||((window.innerWidth>768)?'left':'top'); setNavPos(_p0); try{_updateNavMoverIcon(_p0);}catch(_){} }catch(e){ try{setNavPos('top');}catch(_){} }
 // A5: retire the floating nav-position picker (its function now lives as the compact header tab-mover).
@@ -54228,10 +54318,12 @@ window.hireAgentX402=async function(){
 <script defer src="/bazaar-buy.js"></script>
 <script defer src="/results-inbox.js"></script>
 <script defer src="/forge-gate.js"></script>
-<script defer src="/rooms-plus.js"></script>
-<script defer src="/rooms-command-deck.js"></script>
-<script defer src="/economy-client.js"></script>
-<script defer src="/work-client.js"></script>
+<script defer src="/rooms-plus.js?v=15"></script>
+<script defer src="/rooms-command-deck.js?v=16"></script>
+<script defer src="/economy-client.js?v=15"></script>
+<script defer src="/shop-client.js?v=15"></script>
+<script defer src="/work-client.js?v=15"></script>
+<script defer src="/tool-runner.js?v=2"></script>
 <script defer src="/agents-pipeline.js"></script>
 <script defer src="/agent-editor.js"></script>
 <!-- ════════ /DEPTH + GLOW + FORGE LAYER ════════ -->
