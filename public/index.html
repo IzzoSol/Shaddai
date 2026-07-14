@@ -54435,6 +54435,13 @@ window.hireAgentX402=async function(){
         <div style="font-size:9px;color:#5f7c86;margin-top:6px"><span id="pxfToolCount">0</span> tools equipped</div>
       </div>
     </div>
+    <div style="margin-top:14px;padding:10px 12px;border:1px solid rgba(232,184,75,.3);border-radius:8px;background:rgba(232,184,75,.05)">
+      <label style="display:flex;align-items:center;gap:9px;font-size:11px;color:#e8b84b;cursor:pointer">
+        <input type="checkbox" id="pxfList" style="accent-color:#e8b84b"> 🏪 List in the Bazaar for hire
+        <input type="text" id="pxfPrice" value="2" style="width:50px;margin-left:auto;padding:5px 7px;font-size:12px;text-align:center" title="Sparks charged per hire">
+        <span style="font-size:9px;color:#5f7c86">Sparks / call</span>
+      </label>
+    </div>
     <div id="pxfStatus"></div>
     <div class="pf-actions">
       <button class="pf-btn pf-drip" onclick="window.pixelForgeCreate(false)">💧 Drip into Office</button>
@@ -54507,7 +54514,19 @@ window.hireAgentX402=async function(){
     try{ await fetch('/api/operatives/'+op.operative.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({inOffice:true,deploy:{where:'office',office:true}})}); }catch(_){}
     try{ if(typeof _loadOfficeOperatives==='function') _loadOfficeOperatives(true); }catch(_){}
     try{ if(typeof loadGallery==='function') loadGallery(); }catch(_){}
-    status('✅ '+name+' dripped into the office!',true);
+    // Optional: list in the Bazaar for hire (x402 Sparks) — reuses S.agents + renderMarketplace + initiatePurchase.
+    try{
+      var wantList=((document.getElementById('pxfList')||{}).checked)||false;
+      if(wantList && typeof S==='object' && S && Array.isArray(S.agents)){
+        var price=parseFloat((document.getElementById('pxfPrice')||{}).value)||2;
+        S.agents.push({ id:op.operative.id, name:name, color:curColor, role:curSkin.label+' Pixel Agent', domain:'pixel',
+          listing:{ listed:true, price:price, subscription:0, category:'PIXEL', description:persona, rating:0, ratings:[], launches:0, earnings:0 } });
+        if(typeof save==='function') save();
+        if(typeof renderMarketplace==='function') renderMarketplace();
+        status('✅ '+name+' dripped into the office + listed in the Bazaar ('+price+' Sparks/call)!',true);
+      }
+    }catch(_){}
+    if(!((document.getElementById('pxfList')||{}).checked)) status('✅ '+name+' dripped into the office!',true);
     setTimeout(function(){ window.closePixelForge(); if(typeof showView==='function') showView('office'); if(typeof switchOfficeTab==='function') switchOfficeTab('pixel'); if(window.PixelOffice&&PixelOffice.syncAgents){ setTimeout(function(){try{PixelOffice.syncAgents();}catch(_){}} ,1200); } }, 750);
     if(also3d){ setTimeout(function(){ if(typeof showView==='function') showView('forge'); var nf=document.getElementById('ofName'); if(nf)nf.value=name; }, 1100); }
   };
