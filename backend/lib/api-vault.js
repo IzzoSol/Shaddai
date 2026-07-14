@@ -116,6 +116,7 @@ const CATALOG = [
   { provider: 'groq',         label: 'Groq',            category: 'LLM',      envVar: 'GROQ_API_KEY',         signupUrl: 'https://console.groq.com/keys',                 free: true  },
   { provider: 'gemini',       label: 'Google Gemini',   category: 'LLM',      envVar: 'GEMINI_API_KEY',       signupUrl: 'https://aistudio.google.com/app/apikey',        free: true  },
   { provider: 'openrouter',   label: 'OpenRouter',      category: 'LLM',      envVar: 'OPENROUTER_API_KEY',   signupUrl: 'https://openrouter.ai/keys',                    free: true  },
+  { provider: 'ollama',       label: 'Ollama (local / self-host)', category: 'LLM', envVar: 'OLLAMA_BASE_URL', signupUrl: 'https://ollama.com/download',              free: true  },
 
   // Image / Music / Voice
   { provider: 'suno',         label: 'Suno',            category: 'Music',    envVar: 'SUNO_API_KEY',         signupUrl: 'https://suno.com',                              free: false },

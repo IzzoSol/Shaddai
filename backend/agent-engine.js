@@ -634,6 +634,7 @@ const TOOLS = {
     schema: { code: 'string — code snippet or file content to audit' },
     agents: ['PIKADON'],
     async execute({ code }) {
+      if (!code || typeof code !== 'string') return JSON.stringify({ error: 'provide `code` — a code snippet or file content to audit' });
       const findings = [];
       const checks = [
         [/eval\s*\(/g,                              'HIGH',     'eval() — remote code execution risk'],
@@ -1428,6 +1429,7 @@ const TOOLS = {
     execute: async ({ country }) => {
       const r = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(country)}?fields=name,capital,population,currencies,languages,flags`, { signal: AbortSignal.timeout(10000) });
       const d = await r.json();
+      if (!Array.isArray(d) || !d[0]) return `No country data for "${country}". Try a full name like Japan, Brazil, or Germany.`;
       const c = d[0];
       const cur = Object.values(c.currencies||{})[0];
       const lang = Object.values(c.languages||{}).join(', ');
@@ -3834,6 +3836,20 @@ try { Object.assign(TOOLS, require('./tools-extra').TOOLS_EXTRA); } catch (e) { 
 try { Object.assign(TOOLS, require('./tools-social')); } catch (e) { console.warn('[tools-social] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-news').TOOLS_NEWS); } catch (e) { console.warn('[tools-news] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./tools-defi').TOOLS_DEFI); } catch (e) { console.warn('[tools-defi] not loaded:', e.message); }
+try { const t = require('./tools-solana').TOOLS_SOLANA; Object.assign(TOOLS, t); console.log('[ENGINE] tools-solana merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-solana] not loaded:', e.message); }
+try { const t = require('./tools-content').TOOLS_CONTENT; Object.assign(TOOLS, t); console.log('[ENGINE] tools-content merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-content] not loaded:', e.message); }
+try { const t = require('./tools-security').TOOLS_SECURITY; Object.assign(TOOLS, t); console.log('[ENGINE] tools-security merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-security] not loaded:', e.message); }
+try { const t = require('./tools-design').TOOLS_DESIGN; Object.assign(TOOLS, t); console.log('[ENGINE] tools-design merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-design] not loaded:', e.message); }
+try { const t = require('./tools-dev').TOOLS_DEV; Object.assign(TOOLS, t); console.log('[ENGINE] tools-dev merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-dev] not loaded:', e.message); }
+try { const t = require('./tools-markets').TOOLS_MARKETS; Object.assign(TOOLS, t); console.log('[ENGINE] tools-markets merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-markets] not loaded:', e.message); }
+try { const t = require('./tools-research').TOOLS_RESEARCH; Object.assign(TOOLS, t); console.log('[ENGINE] tools-research merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-research] not loaded:', e.message); }
+try { const t = require('./tools-data').TOOLS_DATA; Object.assign(TOOLS, t); console.log('[ENGINE] tools-data merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-data] not loaded:', e.message); }
+try { const t = require('./tools-turtle').TOOLS_TURTLE2; Object.assign(TOOLS, t); console.log('[ENGINE] tools-turtle merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-turtle] not loaded:', e.message); }
+try { const t = require('./tools-pikadon').TOOLS_PIKADON2; Object.assign(TOOLS, t); console.log('[ENGINE] tools-pikadon merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-pikadon] not loaded:', e.message); }
+try { const t = require('./tools-nexus').TOOLS_NEXUS2; Object.assign(TOOLS, t); console.log('[ENGINE] tools-nexus merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-nexus] not loaded:', e.message); }
+try { const t = require('./tools-utils2').TOOLS_UTILS2; Object.assign(TOOLS, t); console.log('[ENGINE] tools-utils2 merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-utils2] not loaded:', e.message); }
+try { const t = require('./tools-utils3').TOOLS_UTILS3; Object.assign(TOOLS, t); console.log('[ENGINE] tools-utils3 merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-utils3] not loaded:', e.message); }
+try { const t = require('./tools-utils4').TOOLS_UTILS4; Object.assign(TOOLS, t); console.log('[ENGINE] tools-utils4 merged:', Object.keys(t).length); } catch (e) { console.warn('[tools-utils4] not loaded:', e.message); }
 try { Object.assign(TOOLS, require('./lib/nft-mint')); } catch (e) { console.warn('[nft-mint] not loaded:', e.message); }
 // Upgrade legacy stub names → the REAL implementations (dedup; callers of the old
 // names now hit real tools instead of "needs key" stubs). No breakage.

@@ -1,0 +1,226 @@
+{
+  "id": "char_1783966426258",
+  "name": "Prospect",
+  "team": "TURTLE",
+  "age": 21,
+  "stats": {
+    "speed": 50,
+    "strength": 50,
+    "endurance": 50,
+    "qb_accuracy": 50,
+    "agility": 50,
+    "vertical_jump": 50,
+    "confidence": 50,
+    "focus": 50
+  },
+  "lore": {
+    "dedicated_athlete": 1,
+    "focused_learner": 0,
+    "party_guy": 0,
+    "player_cheater": 0,
+    "lazy": 1,
+    "influencer": 0,
+    "dealer": 0,
+    "underdog": 0,
+    "villain": 0,
+    "heartbreaker": 0,
+    "loyal": 0,
+    "social_star": 0
+  },
+  "relationships": {
+    "coach_approval": 50,
+    "gf_status": "single",
+    "rival_name": "Derek",
+    "rival_intensity": 0
+  },
+  "money": {
+    "balance": 0,
+    "legal_sales": 0,
+    "illegal_sales": 0
+  },
+  "gear": {
+    "tier": "basic",
+    "social_followers": 0
+  },
+  "cities_completed": 0,
+  "current_city": 1,
+  "challenges_passed": 0,
+  "challenges_failed": 0,
+  "energy": 100,
+  "current_day": 3,
+  "days_in_city": 3,
+  "franchise": {
+    "teamKey": "TURTLE",
+    "coach": "Prospect",
+    "seasonLength": 8,
+    "currentWeek": 4,
+    "roster": [
+      {
+        "id": "p_TURTLE_0",
+        "name": "Cade Rivers",
+        "offRole": "QB",
+        "defRole": "DL",
+        "level": 2,
+        "xp": 194,
+        "ratingBonus": 5,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_1",
+        "name": "Malik Stone",
+        "offRole": "RB",
+        "defRole": "LB",
+        "level": 4,
+        "xp": 215,
+        "ratingBonus": 15,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_2",
+        "name": "Deshawn Vega",
+        "offRole": "WR",
+        "defRole": "CB",
+        "level": 1,
+        "xp": 20,
+        "ratingBonus": 0,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_3",
+        "name": "Tyrell Boone",
+        "offRole": "OL",
+        "defRole": "FS",
+        "level": 2,
+        "xp": 70,
+        "ratingBonus": 5,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_4",
+        "name": "Julian Frost",
+        "offRole": "QB",
+        "defRole": "DL",
+        "level": 1,
+        "xp": 20,
+        "ratingBonus": 0,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_5",
+        "name": "Marcus Kane",
+        "offRole": "RB",
+        "defRole": "LB",
+        "level": 1,
+        "xp": 20,
+        "ratingBonus": 0,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_6",
+        "name": "Andre Cole",
+        "offRole": "WR",
+        "defRole": "CB",
+        "level": 1,
+        "xp": 20,
+        "ratingBonus": 0,
+        "skills": []
+      },
+      {
+        "id": "p_TURTLE_7",
+        "name": "Roman Vance",
+        "offRole": "OL",
+        "defRole": "FS",
+        "level": 1,
+        "xp": 20,
+        "ratingBonus": 0,
+        "skills": []
+      }
+    ],
+    "schedule": [
+      {
+        "week": 1,
+        "opponent": "NEXUS",
+        "seed": 2325608641,
+        "played": true,
+        "resultForUs": "L",
+        "scoreUs": 6,
+        "scoreThem": 10
+      },
+      {
+        "week": 2,
+        "opponent": "ZEROX",
+        "seed": 2275275784,
+        "played": true,
+        "resultForUs": "L",
+        "scoreUs": 7,
+        "scoreThem": 10
+      },
+      {
+        "week": 3,
+        "opponent": "ORACLE",
+        "seed": 2292053403,
+        "played": true,
+        "resultForUs": "W",
+        "scoreUs": 24,
+        "scoreThem": 14
+      },
+      {
+        "week": 4,
+        "opponent": "QUILL",
+        "seed": 2375941498,
+        "played": false,
+        "resultForUs": null,
+        "scoreUs": null,
+        "scoreThem": null
+      },
+      {
+        "week": 5,
+        "opponent": "PIKADON",
+        "seed": 2392719117,
+        "played": false,
+        "resultForUs": null,
+        "scoreUs": null,
+        "scoreThem": null
+      },
+      {
+        "week": 6,
+        "opponent": "SHADDAI",
+        "seed": 2342386260,
+        "played": false,
+        "resultForUs": null,
+        "scoreUs": null,
+        "scoreThem": null
+      },
+      {
+        "week": 7,
+        "opponent": "NEXUS",
+        "seed": 2359163879,
+        "played": false,
+        "resultForUs": null,
+        "scoreUs": null,
+        "scoreThem": null
+      },
+      {
+        "week": 8,
+        "opponent": "ZEROX",
+        "seed": 2174610070,
+        "played": false,
+        "resultForUs": null,
+        "scoreUs": null,
+        "scoreThem": null
+      }
+    ],
+    "standings": {
+      "wins": 1,
+      "losses": 2,
+      "ties": 0,
+      "pointsFor": 37,
+      "pointsAgainst": 34
+    },
+    "history": [
+      "Week 1: vs NEXUS — L 6-10",
+      "Week 2: vs ZEROX — L 7-10",
+      "Week 3: vs ORACLE — W 24-14"
+    ]
+  }
+}

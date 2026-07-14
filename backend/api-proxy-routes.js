@@ -6477,16 +6477,30 @@ router.get('/agent/stats', (req, res) => {
   }
 });
 
+// Derive a sensible category for tools that don't declare one (pre-existing tools).
+function _catFor(t) {
+  if (t.category) return t.category;
+  const n = (t.name || '').toLowerCase();
+  if (/price|token|coin|crypto|defi|sol_|eth_|wallet|nft|mint|market|whale|gas|ohlcv|fear|greed|jupiter|dex|rug/.test(n)) return 'Crypto & Markets';
+  if (/security|scan|cve|vuln|audit|breach|password|ssl|dns|jwt|threat|phish|pwned/.test(n)) return 'Security & Trust';
+  if (/image|img|flux|art|photo|music|audio|voice|speech|tts|video|media|color|palette|svg|css|design/.test(n)) return 'Media & Design';
+  if (/file|read_|write_|list_|inbox|memory|note|save|obsidian|recall/.test(n)) return 'Files & Memory';
+  if (/post_|tweet|telegram|discord|slack|social/.test(n)) return 'Social';
+  if (/search|wiki|news|rss|github|npm|arxiv|reddit|hacker|fetch_url|scholar|book|weather|country|trend|define|dictionary/.test(n)) return 'Web & Research';
+  if (/run_|calc|hash|json|base64|regex|uuid|encode|decode|convert|format|slug|case|morse|binary/.test(n)) return 'Dev & Utility';
+  if (/agent|workflow|task|deploy|schedule|delegate|council|room|brain/.test(n)) return 'Agents & Workflow';
+  return 'General';
+}
 // GET /api/agent/tools — List all available tools with schemas (incl. connected MCP tools)
 router.get('/agent/tools', (req, res) => {
   const tools = Object.values(agentEngine.TOOLS).map(t => ({
-    name: t.name, description: t.description, schema: t.schema, agents: t.agents
+    name: t.name, description: t.description, schema: t.schema, agents: t.agents, category: _catFor(t)
   }));
   let mcpTools = [];
   try {
     const mcp = require('./mcp-client');
     mcpTools = Object.values(mcp.getAgentTools()).map(t => ({
-      name: t.name, description: t.description, schema: t.schema, agents: t.agents, mcp: true
+      name: t.name, description: t.description, schema: t.schema, agents: t.agents, category: 'MCP', mcp: true
     }));
   } catch {}
   res.json({ tools: [...tools, ...mcpTools], total: tools.length + mcpTools.length, mcpTools: mcpTools.length });

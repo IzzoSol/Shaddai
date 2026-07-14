@@ -220,3 +220,33 @@
 {"ts":"2026-07-11T05:25:32.354Z","qHash":"47b78ebfda430772","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"$Kins\". Give a concise, insightful 2","method":"query","hit":true,"latencyMs":24}
 {"ts":"2026-07-11T05:25:36.135Z","qHash":"5c32e0852742fa77","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"$Kins coin\". Give a concise, insight","method":"miss","hit":false,"latencyMs":28}
 {"ts":"2026-07-11T05:25:47.374Z","qHash":"359e81a12efd10f0","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"$Kins coin game on solana\". Give a c","method":"miss","hit":false,"latencyMs":65}
+{"ts":"2026-07-11T08:25:47.237Z","qHash":"83af8d886e7648cb","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"Artificial intelligence\". Give a con","method":"miss","hit":false,"latencyMs":81}
+{"ts":"2026-07-11T08:25:47.976Z","qHash":"35e9f3fc5af1806c","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"Prediction market\". Give a concise, ","method":"miss","hit":false,"latencyMs":10}
+{"ts":"2026-07-11T18:52:48.261Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"compute","hit":true,"latencyMs":25}
+{"ts":"2026-07-11T18:52:48.282Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"compute","hit":true,"latencyMs":19}
+{"ts":"2026-07-11T18:52:48.290Z","qHash":"39e04e25899158b2","query":"roman numeral for 2025","method":"compute","hit":true,"latencyMs":8}
+{"ts":"2026-07-11T18:52:48.303Z","qHash":"af46f529d746cce8","query":"factorial of 5","method":"compute","hit":true,"latencyMs":12}
+{"ts":"2026-07-11T18:52:48.312Z","qHash":"f0f3c3625c5f3a5a","query":"gcd of 12 and 8","method":"compute","hit":true,"latencyMs":8}
+{"ts":"2026-07-11T18:52:48.324Z","qHash":"b1d6947bb13aafe6","query":"3 hours in minutes","method":"compute","hit":true,"latencyMs":11}
+{"ts":"2026-07-11T18:52:48.334Z","qHash":"3f8074e2de0e099e","query":"1 gb to mb","method":"compute","hit":true,"latencyMs":9}
+{"ts":"2026-07-11T18:52:48.345Z","qHash":"3df6c5f859aedc90","query":"15% of 240","method":"compute","hit":true,"latencyMs":10}
+{"ts":"2026-07-11T18:52:48.353Z","qHash":"820a32f54c3f4944","query":"20% off 80","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-11T18:52:48.361Z","qHash":"7fe98bb13fe3668e","query":"2^10","method":"compute","hit":true,"latencyMs":7}
+{"ts":"2026-07-11T18:52:48.367Z","qHash":"00d7396e43b5ab29","query":"mode of 1, 2, 2, 3","method":"compute","hit":true,"latencyMs":6}
+{"ts":"2026-07-11T18:52:48.372Z","qHash":"1c42b375f9c8fc65","query":"ordinal of 21","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-11T18:52:48.377Z","qHash":"c0847377bd8e7c1d","query":"clamp 150 between 0 and 100","method":"compute","hit":true,"latencyMs":4}
+{"ts":"2026-07-11T18:52:48.385Z","qHash":"d5bba2bf1f393089","query":"#FF5733 to rgb","method":"compute","hit":true,"latencyMs":7}
+{"ts":"2026-07-11T18:52:48.408Z","qHash":"8ede1235515fe016","query":"write a haiku about autumn rain","method":"miss","hit":false,"latencyMs":21}
+{"ts":"2026-07-11T18:52:48.419Z","qHash":"978b4896598e132a","query":"what is the meaning of life","method":"miss","hit":false,"latencyMs":11}
+{"ts":"2026-07-11T18:52:48.430Z","qHash":"902daee0c8aca36f","query":"should I buy Tesla stock","method":"miss","hit":false,"latencyMs":10}
+{"ts":"2026-07-11T18:52:48.440Z","qHash":"a64f8fee3d76838f","query":"what is the current price of bitcoin","method":"miss","hit":false,"latencyMs":8}
+{"ts":"2026-07-11T18:52:48.455Z","qHash":"29cf033a0362bd31","query":"summarize the French revolution","method":"miss","hit":false,"latencyMs":15}
+{"ts":"2026-07-11T18:52:48.520Z","qHash":"839cd3913b318191","query":"average of 3, 19, 44, 80","method":"compute","hit":true,"latencyMs":15}
+{"ts":"2026-07-11T18:52:48.617Z","qHash":"f19e0ac604730519","query":"611 / 13","method":"compute","hit":true,"latencyMs":96}
+{"ts":"2026-07-11T18:52:48.621Z","qHash":"c9b3a908f7a342b1","query":"255 in hex","method":"fetch","hit":true,"latencyMs":2}
+{"ts":"2026-07-11T18:52:48.629Z","qHash":"621990b94d5d40b3","query":"37 + 58 * 2","method":"compute","hit":true,"latencyMs":8}
+{"ts":"2026-07-11T18:52:49.813Z","qHash":"9f86d081884c7d65","query":"test","method":"miss","hit":false,"latencyMs":9}
+{"ts":"2026-07-11T22:47:49.401Z","qHash":"8fae2deaae676cf7","query":"say hi in 3 words","method":"miss","hit":false,"latencyMs":384}
+{"ts":"2026-07-14T01:05:49.781Z","qHash":"216450b77e341e49","query":"Write an engaging social post (2-3 sentences + 2 hashtags) about this headline. Output ONLY the post: \"Donna police warn","method":"miss","hit":false,"latencyMs":54}
+{"ts":"2026-07-14T06:58:49.383Z","qHash":"bdcf5ef4eca54c51","query":"Execute your skill \"api-endpoint-builder\" now on my behalf and return the result directly.","method":"miss","hit":false,"latencyMs":60}
+{"ts":"2026-07-14T06:58:49.510Z","qHash":"bdcf5ef4eca54c51","query":"Execute your skill \"api-endpoint-builder\" now on my behalf and return the result directly.","method":"miss","hit":false,"latencyMs":22}

@@ -26,6 +26,10 @@
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   #wrap{position:fixed;inset:0}
   canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+  /* during a run the native OS cursor is hidden — the neon crosshair IS the
+     cursor, so there's never a distracting double pointer. Menus restore it. */
+  body.playing{cursor:none}
+  body.playing #ui{cursor:none}
   #ui{position:absolute;inset:0;pointer-events:none}
 
   /* ── shared neon ── */
@@ -199,6 +203,21 @@
   .ship .shint{font-family:var(--font-mono);font-size:clamp(7.5px,1vw,9px);opacity:.85;letter-spacing:.4px;line-height:1.2;
     text-transform:uppercase;min-height:11px;margin-top:3px;color:#cfe0ff;text-shadow:0 1px 3px #000}
 
+  /* entrance-menu controls legend — same key-cap language as the in-game HUD */
+  #menuControls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;
+    margin:18px 0 2px;padding:10px 16px;border-radius:12px;max-width:640px;
+    background:linear-gradient(180deg,rgba(12,20,38,.5),rgba(6,10,20,.36));
+    border:1px solid rgba(120,190,255,.16);font-family:var(--font-mono);
+    box-shadow:inset 0 1px 0 rgba(190,225,255,.06)}
+  #menuControls .grp{display:flex;align-items:center;gap:5px;white-space:nowrap}
+  #menuControls .lbl{font-size:10px;letter-spacing:2px;opacity:.6;text-transform:uppercase}
+  #menuControls .key{display:inline-flex;align-items:center;justify-content:center;
+    min-width:22px;height:22px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:700;
+    color:#e0f1ff;background:linear-gradient(180deg,#22355a,#0c1526);
+    border:1px solid rgba(140,190,255,.4);border-bottom-width:3px;border-bottom-color:rgba(60,90,150,.7);
+    box-shadow:0 2px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(200,230,255,.25);line-height:1;
+    text-shadow:0 0 6px rgba(120,180,255,.5)}
+
   #titleScreen .swap-hint{font-family:var(--font-mono);margin-top:16px;font-size:11px;letter-spacing:2px;opacity:.55;text-transform:uppercase}
 
   /* ── DIALOG BOX: portrait + banter, shown at key beats ── */
@@ -326,7 +345,7 @@
     <div id="hint" class="hide">
       <span class="grp"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="lbl">move</span></span>
       <span class="grp"><span class="key">MOUSE</span><span class="lbl">aim</span></span>
-      <span class="grp"><span class="key">AUTO</span><span class="lbl">fire</span></span>
+      <span class="grp"><span class="key">HOLD</span><span class="key">LMB</span><span class="lbl">fire</span></span>
       <span class="grp"><span class="key">SPACE</span><span class="lbl">special</span></span>
       <span class="grp"><span class="key">P</span><span class="lbl">pause</span></span>
     </div>
@@ -354,11 +373,20 @@
         <div class="roster-head">◆ SELECT YOUR OPERATIVE ◆</div>
         <div id="roster"></div>
 
-        <div id="menuBtnRow" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:4px">
+        <!-- controls legend so players know how to play BEFORE they deploy -->
+        <div id="menuControls">
+          <span class="grp"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="lbl">move</span></span>
+          <span class="grp"><span class="key">MOUSE</span><span class="lbl">aim</span></span>
+          <span class="grp"><span class="key">HOLD</span><span class="key">LMB</span><span class="lbl">fire</span></span>
+          <span class="grp"><span class="key">SPACE</span><span class="lbl">special</span></span>
+          <span class="grp"><span class="key">P</span><span class="lbl">pause</span></span>
+        </div>
+
+        <div id="menuBtnRow" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:14px">
           <button id="deployBtn" class="btn-deploy"><span class="tri">▶</span> DEPLOY</button>
           <button id="codexBtn" class="btn" style="border-color:#b46bff;color:#d7b3ff;background:rgba(180,107,255,.10)">⌂ CODEX</button>
         </div>
-        <div class="swap-hint">Click an operative to select · <b>ENTER</b> to launch</div>
+        <div class="swap-hint">Click an operative to select · <b>DEPLOY</b> or press <b>ENTER</b> to launch</div>
       </div>
     </div>
 
@@ -368,7 +396,7 @@
       <div class="sub gold">Choose your ship</div>
       <div id="cards"></div>
       <button id="startBtn" class="btn gold" style="margin-top:8px">▶ Confirm &amp; Deploy</button>
-      <div class="sub" style="margin-top:14px;opacity:.5">WASD / Arrows move · Mouse aim · AUTO fire · Space special · P pause</div>
+      <div class="sub" style="margin-top:14px;opacity:.5">WASD / Arrows move · Mouse aim · Hold LMB fire · Space special · P pause</div>
     </div>
 
     <!-- PAUSE -->
@@ -543,7 +571,11 @@ try{
 }catch(e){}
 
 // ── input ──────────────────────────────────────────────────
-const keys={}, mouse={x:W/2,y:H/2,down:false};
+// Mouse-first controls: cursor = aim (tracked across the whole viewport, no
+// edge deadzones), HOLD LEFT MOUSE = fire. `mouse.seen` flips true once the
+// player actually moves the pointer, so the ship faces the cursor from the
+// first frame the player takes aim (no snap-to-a-stale-center).
+const keys={}, mouse={x:W/2,y:H/2,down:false,seen:false};
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   keys[k]=true;
@@ -557,12 +589,32 @@ addEventListener('keydown',e=>{
   }
 });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
-canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
-canvas.addEventListener('mousedown',()=>{mouse.down=true;actx();if(state==='cutscene')endCutscene();});
-addEventListener('mouseup',()=>{mouse.down=false;});
-canvas.addEventListener('touchstart',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();mouse.x=t.clientX-r.left;mouse.y=t.clientY-r.top;mouse.down=true;actx();},{passive:true});
-canvas.addEventListener('touchmove',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();mouse.x=t.clientX-r.left;mouse.y=t.clientY-r.top;},{passive:true});
+// Track aim on the WINDOW (not just the canvas) so the pointer never "sticks"
+// at an edge and there are no dead zones — the canvas fills the viewport.
+function setAim(clientX,clientY){
+  const r=canvas.getBoundingClientRect();
+  mouse.x=clamp(clientX-r.left,0,W);
+  mouse.y=clamp(clientY-r.top,0,H);
+  mouse.seen=true;
+}
+addEventListener('mousemove',e=>{ setAim(e.clientX,e.clientY); });
+// LEFT-button press = start firing (hold to keep firing). Right/middle ignored.
+canvas.addEventListener('mousedown',e=>{
+  if(e.button!==0) return;
+  e.preventDefault();
+  mouse.down=true; mouse.seen=true; actx();
+  if(state==='cutscene') endCutscene();
+});
+addEventListener('mouseup',e=>{ if(e.button===0) mouse.down=false; });
+// releasing outside the window (drag off-screen) must also stop fire
+addEventListener('blur',()=>{ mouse.down=false; });
+// no context menu on right-click so aiming near the edge never pops a menu
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+// touch: finger = aim + fire (tap or drag). Same model, no joystick.
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];setAim(t.clientX,t.clientY);mouse.down=true;actx();if(state==='cutscene')endCutscene();},{passive:true});
+canvas.addEventListener('touchmove',e=>{const t=e.touches[0];setAim(t.clientX,t.clientY);},{passive:true});
 canvas.addEventListener('touchend',()=>{mouse.down=false;});
+canvas.addEventListener('touchcancel',()=>{mouse.down=false;});
 
 // ── mobile touch controls ──────────────────────────────────
 // NEXUS: unify with the desktop scheme. Left thumb = move (drives the SAME
@@ -962,17 +1014,26 @@ function update(dt){
   player.y=clamp(player.y+player.vy*dt,player.r,H-player.r);
   // SHADDAI divine aegis: slow HP regen while alive
   if(agent.regen && player.hp>0 && player.hp<player.maxHp) player.hp=Math.min(player.maxHp,player.hp+agent.regen*dt);
+  // aim = cursor. Instant, no smoothing lag; the ship snaps to face the pointer.
   player.angle=ang(player,mouse);
   // visual banking: lean into lateral velocity relative to aim
   const rvx = player.vx*Math.cos(-player.angle) - player.vy*Math.sin(-player.angle);
   const targetBank = clamp(-rvx/sp,-1,1)*0.42;
   bank += (targetBank-bank)*Math.min(1,dt*10);
 
-  // AUTO-FIRE: primary weapon always fires on its cadence while the run is active.
-  // No click/hold needed — the player only AIMS with the mouse.
+  // FIRE: hold the LEFT MOUSE button (or a finger / F / Ctrl) to shoot. Bullets
+  // leave on the weapon's cadence for as long as you hold — real click-to-shoot
+  // AND hold-to-autofire. A fresh press fires immediately (fireT already <=0).
+  const wantFire = mouse.down || keys['f'] || keys['control'];
   const rate = agent.fireRate*(minigunT>0?0.35:1);
-  player.fireT-=dt;
-  if(player.fireT<=0){ shoot(); player.fireT=rate; }
+  if(player.fireT>0) player.fireT-=dt;
+  if(wantFire){
+    if(player.fireT<=0){ shoot(); player.fireT=rate; }
+  } else {
+    // not firing: keep the cooldown "primed" so the next press is instant,
+    // never a queued burst of stored shots.
+    if(player.fireT<0) player.fireT=0;
+  }
   if(keys[' ']) fireSpecial();
 
   // bullets
@@ -1274,8 +1335,8 @@ function draw(){
       ctx.fillStyle='#05070d';ctx.beginPath();ctx.arc(2,0,4,0,7);ctx.fill();
     }
     ctx.restore();ctx.globalAlpha=1;ctx.shadowBlur=0;
-    // muzzle flash — always on (auto-fire)
-    {ctx.fillStyle=agent.color+'88';ctx.shadowBlur=12;ctx.shadowColor=agent.color;
+    // muzzle flash — only while the trigger is held (mouse-driven fire)
+    if(mouse.down||keys['f']||keys['control']){ctx.fillStyle=agent.color+'88';ctx.shadowBlur=12;ctx.shadowColor=agent.color;
       ctx.beginPath();ctx.arc(player.x+Math.cos(player.angle)*22,player.y+Math.sin(player.angle)*22,rand(3,6),0,7);ctx.fill();ctx.shadowBlur=0;}
   }
 
@@ -1296,9 +1357,34 @@ function draw(){
     }
   }
 
-  // crosshair
-  ctx.strokeStyle=agent.color;ctx.lineWidth=1.5;ctx.globalAlpha=0.8;
-  ctx.beginPath();ctx.arc(mouse.x,mouse.y,10,0,7);ctx.moveTo(mouse.x-16,mouse.y);ctx.lineTo(mouse.x-4,mouse.y);ctx.moveTo(mouse.x+4,mouse.y);ctx.lineTo(mouse.x+16,mouse.y);ctx.moveTo(mouse.x,mouse.y-16);ctx.lineTo(mouse.x,mouse.y-4);ctx.moveTo(mouse.x,mouse.y+4);ctx.lineTo(mouse.x,mouse.y+16);ctx.stroke();ctx.globalAlpha=1;
+  // crosshair — this IS the pointer (native cursor hidden while playing).
+  // Ring pulses tighter + brighter while firing so the player feels the mouse.
+  {
+    const firing = mouse.down || keys['f'] || keys['control'];
+    const mx=mouse.x, my=mouse.y;
+    const ringR = firing ? 8 : 11;
+    const gap   = firing ? 3 : 5;
+    const reach = firing ? 15 : 17;
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle=agent.color;
+    ctx.shadowColor=agent.color; ctx.shadowBlur=firing?12:6;
+    ctx.lineWidth=firing?2.2:1.6;
+    ctx.globalAlpha=firing?1:0.85;
+    // ring
+    ctx.beginPath();ctx.arc(mx,my,ringR,0,7);ctx.stroke();
+    // four ticks with a center gap
+    ctx.beginPath();
+    ctx.moveTo(mx-reach,my);ctx.lineTo(mx-gap,my);
+    ctx.moveTo(mx+gap,my);ctx.lineTo(mx+reach,my);
+    ctx.moveTo(mx,my-reach);ctx.lineTo(mx,my-gap);
+    ctx.moveTo(mx,my+gap);ctx.lineTo(mx,my+reach);
+    ctx.stroke();
+    // center dot
+    ctx.shadowBlur=0;ctx.fillStyle=agent.color;
+    ctx.beginPath();ctx.arc(mx,my,firing?2:1.4,0,7);ctx.fill();
+    ctx.restore();
+  }
 
   ctx.restore();
 }
@@ -1360,6 +1446,7 @@ function refreshTitle(){
 }
 function toTitle(){
   state='title';
+  document.body.classList.remove('playing'); mouse.down=false;
   show('over',false);show('pause',false);show('select',false);
   show('hud',false);show('topright',false);show('hint',false);
   show('titleScreen',true);
@@ -1447,6 +1534,7 @@ function startGame(){
   bullets=[];eBullets=[];enemies=[];parts=[];pickups=[];floaters=[];shockwaves=[];
   spawnPlayer();
   state='play';
+  document.body.classList.add('playing'); // hide OS cursor → crosshair only
   show('titleScreen',false);show('select',false);show('over',false);show('pause',false);
   show('hud',true);show('topright',true);show('hint',true);
   document.getElementById('hpfill').style.background='linear-gradient(90deg,'+agent.color+','+'#27e0ff)';
@@ -1455,11 +1543,14 @@ function startGame(){
   showDialog('intro'); // chosen agent's opening line
 }
 function togglePause(){
-  if(state==='play'){state='pause';show('pause',true);}
-  else if(state==='pause'){state='play';show('pause',false);last=performance.now();}
+  if(state==='play'){state='pause';show('pause',true);
+    document.body.classList.remove('playing'); mouse.down=false;} // show cursor, drop fire
+  else if(state==='pause'){state='play';show('pause',false);
+    document.body.classList.add('playing');last=performance.now();}
 }
 function toMenu(){
   hideDialog();
+  document.body.classList.remove('playing'); mouse.down=false;
   show('pause',false);show('over',false);
   show('hud',false);show('topright',false);show('hint',false);
   toTitle();
@@ -1467,6 +1558,7 @@ function toMenu(){
 let posted=false;
 function gameOver(){
   state='over'; sfx.over(); posted=false;
+  document.body.classList.remove('playing'); mouse.down=false; // restore cursor on menus
   show('hud',false);show('topright',false);show('hint',false);show('over',true);
   // reaching a high wave = a triumphant end screen; otherwise somber
   screenBg('over', wave>=5 ? 'win' : 'lose');

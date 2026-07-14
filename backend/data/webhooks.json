@@ -10,7 +10,7 @@
     "secret": null,
     "createdAt": "2026-05-15T02:30:17.490Z",
     "fireCount": 0,
-    "errorCount": 12,
+    "errorCount": 13,
     "lastError": ""
   },
   {
@@ -23,7 +23,7 @@
     "secret": null,
     "createdAt": "2026-05-15T03:19:50.766Z",
     "fireCount": 0,
-    "errorCount": 4,
+    "errorCount": 5,
     "lastError": ""
   },
   {
@@ -35,9 +35,9 @@
     ],
     "secret": null,
     "createdAt": "2026-05-15T03:27:31.488Z",
-    "fireCount": 2,
+    "fireCount": 3,
     "errorCount": 1,
-    "lastFired": "2026-07-09T14:09:42.169Z",
+    "lastFired": "2026-07-11T18:53:27.135Z",
     "lastError": "Request failed with status code 503"
   }
 ]

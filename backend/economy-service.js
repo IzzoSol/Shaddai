@@ -271,6 +271,16 @@ class DevFileStore {
     });
   }
 
+  // Read-only: list ACTIVE catalog items. No money mutation.
+  async listCatalog() {
+    return this._withLock(async (db) => {
+      return Object.keys(db.catalog_items)
+        .map((k) => db.catalog_items[k])
+        .filter((it) => it && it.active !== false)
+        .map((it) => ({ ...it }));
+    });
+  }
+
   // Test/seed helper (not part of the money-write API surface).
   async upsertCatalogItem(item) {
     return this._withLock(async (db) => {
@@ -460,6 +470,25 @@ class PostgresStore {
     };
   }
 
+  // Read-only: list ACTIVE catalog items. Selects * so any optional columns
+  // (description, category) flow through if the schema has them.
+  async listCatalog() {
+    const r = await this.pool.query(
+      'SELECT * FROM catalog_items WHERE active = true ORDER BY id'
+    );
+    return r.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      kind: row.kind,
+      sparks_price: row.sparks_price == null ? null : Number(row.sparks_price),
+      usd_price_cents: row.usd_price_cents == null ? null : Number(row.usd_price_cents),
+      rarity: row.rarity,
+      description: row.description != null ? row.description : null,
+      category: row.category != null ? row.category : null,
+      active: row.active
+    }));
+  }
+
   async upsertCatalogItem(item) {
     await this.pool.query(
       `INSERT INTO catalog_items (id, name, kind, sparks_price, usd_price_cents, rarity, active)
@@ -565,6 +594,14 @@ class EconomyService {
   async getCatalogItem(catalogId) {
     assertCatalogId(catalogId);
     return this.store.getCatalogItem(catalogId);
+  }
+  // Read-only listing of ACTIVE catalog items. No money mutation; safe to
+  // expose publicly. Returns [] on an empty catalog (never throws on empty).
+  async listCatalog() {
+    if (typeof this.store.listCatalog === 'function') {
+      return this.store.listCatalog();
+    }
+    return [];
   }
   async upsertCatalogItem(item) {
     if (!item || typeof item.id !== 'string' || !item.id.trim()) {

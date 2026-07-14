@@ -284,7 +284,7 @@
     const availW = Math.max(1, w * (1 - 2 * PAD));
     const availH = Math.max(1, h * (1 - 2 * PAD));
     scale = Math.min(availW / cw, availH / ch);
-    scale = Math.max(0.18, Math.min(scale, 1.8));
+    scale = Math.max(0.08, Math.min(scale, 1.8));
 
     // center the scaled box in the host, then solve origin so the box's
     // min-corner lands at the centered top-left.
@@ -1963,7 +1963,7 @@
     if (document.getElementById('pxo-styles')) return;
     const st = document.createElement('style'); st.id = 'pxo-styles';
     st.textContent = `
-    .pxo-root{position:relative;width:100%;height:100%;min-height:340px;display:flex;flex-direction:column;
+    .pxo-root{position:relative;width:100%;height:100%;min-height:0;display:flex;flex-direction:column;
       background:#05080c;border:1px solid rgba(0,255,136,.18);border-radius:12px;overflow:hidden;
       box-shadow:0 0 0 1px rgba(0,229,255,.06) inset, 0 14px 44px rgba(0,0,0,.5);
       font-family:'Rajdhani','Share Tech Mono',monospace}
@@ -2041,7 +2041,9 @@
   // ---- SIZING ---------------------------------------------------------------
   function resize() {
     if (!canvas || !host) return;
-    const rect = canvas.getBoundingClientRect();
+    // Measure the HOST (guaranteed laid-out), not the canvas (which may be mid-reflow
+    // or momentarily 0-height during a flex/tab transition → baked-in wrong size).
+    const rect = host.getBoundingClientRect();
     dpr = Math.min(2, window.devicePixelRatio || 1);          // cap DPR at 2
     canvas.width = Math.max(1, rect.width * dpr | 0);
     canvas.height = Math.max(1, rect.height * dpr | 0);
@@ -2079,7 +2081,11 @@
 
     ro = new ResizeObserver(resize); ro.observe(host);
     io = new IntersectionObserver(es => {
+      var wasVisible = visible;
       visible = es[0] && es[0].isIntersecting;
+      // Re-fit the moment the office tab becomes visible: on hidden→visible the host
+      // now has a real laid-out rect, so this replaces the fragile setTimeout mount hack.
+      if (visible && !wasVisible) resize();
     }, { threshold: 0.01 });
     io.observe(host);
 

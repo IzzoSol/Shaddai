@@ -1,3 +1,31 @@
 {
-  "subjects": {}
+  "subjects": {
+    "SHADDAI": {
+      "subject": "SHADDAI",
+      "xp": 235,
+      "level": 2,
+      "unlocked": [
+        {
+          "id": "first_bounty",
+          "at": "2026-07-14T07:31:47.800Z"
+        },
+        {
+          "id": "night_shift",
+          "at": "2026-07-14T07:31:47.800Z"
+        }
+      ],
+      "counters": {
+        "bountiesDone": 1,
+        "dollarsEarned": 10,
+        "tasksRun": 0,
+        "failures": 0,
+        "nightJobs": 1,
+        "categories": {
+          "content": 1
+        }
+      },
+      "createdAt": "2026-07-14T07:31:47.800Z",
+      "updatedAt": "2026-07-14T07:31:47.800Z"
+    }
+  }
 }

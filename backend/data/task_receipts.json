@@ -1,5 +1,33 @@
 [
   {
+    "task_id": "job_job_example_haiku",
+    "agent": "SHADDAI",
+    "task": "[EXAMPLE] Write a 3-line haiku about Solana",
+    "result": "The 3-line haiku about Solana is:\n\nFast blockchain dawn\nSolana's swift whispers rise\nCrypto's bright star",
+    "timestamp": "2026-07-14T07:31:47.804Z"
+  },
+  {
+    "task_id": "council_1784011489585",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-07-14T06:44:49.672Z"
+  },
+  {
+    "task_id": "council_1784011476953",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-07-14T06:44:37.010Z"
+  },
+  {
+    "task_id": "council_1784011463739",
+    "agent": "council",
+    "task": "[COUNCIL/ollama-agents] SOL analysis",
+    "result": "[SHADDAI OFFLINE — manual review required]",
+    "timestamp": "2026-07-14T06:44:23.898Z"
+  },
+  {
     "task_id": "job_job_1783332713855_bdr36",
     "agent": "QUILL",
     "task": "Write a 3-line haiku about Solana",

@@ -101,6 +101,53 @@
   .stat .bar i { display:block; height:100%; background:var(--ac); border-radius:3px; }
   .stat .k { width:44px; text-align:left; text-transform:uppercase; letter-spacing:.5px; color:#6fa8c8; }
 
+  /* Skill loadout cards (SKILLPLAY) */
+  .skillcard {
+    width:200px; min-height:96px; border-radius:14px; cursor:pointer; position:relative;
+    padding:12px 14px; text-align:left; display:flex; flex-direction:column; gap:4px;
+    background:linear-gradient(180deg,rgba(14,26,42,.85),rgba(8,16,28,.92));
+    border:2px solid rgba(45,230,255,.22); transition:transform .15s, border-color .15s, box-shadow .15s;
+  }
+  .skillcard:hover { transform:translateY(-3px); border-color:rgba(45,230,255,.55); }
+  .skillcard.sel { border-color:#2de6ff; box-shadow:0 0 22px -4px #2de6ff; background:rgba(45,230,255,.12); }
+  .skillcard.matched { border-color:rgba(255,211,92,.55); }
+  .skillcard.matched.sel { border-color:#2de6ff; }
+  .skillcard .snm { font-weight:900; letter-spacing:.5px; font-size:14px; color:#e8f6ff; display:flex; align-items:center; gap:7px; }
+  .skillcard .sdesc { font-size:11px; color:#9fd0e8; line-height:1.35; }
+  .skillcard .sbadge { position:absolute; top:8px; right:10px; font-size:12px; font-weight:900; color:#ffd35c; text-shadow:0 0 8px rgba(255,211,92,.6); }
+  .skillcard.sel .sbadge { color:#2de6ff; text-shadow:0 0 8px rgba(45,230,255,.7); }
+  .skillcard .sicon { font-size:18px; }
+
+  /* MODE SELECT cards (PLAY / WATCH / SKILL PLAY) */
+  .modes { display:flex; flex-wrap:wrap; gap:18px; justify-content:center; margin:14px auto 0; max-width:820px; }
+  .mode {
+    width:230px; min-height:250px; border-radius:18px; cursor:pointer; position:relative;
+    padding:24px 18px 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;
+    background:linear-gradient(180deg,rgba(14,26,42,.85),rgba(6,12,22,.94));
+    border:2px solid rgba(45,230,255,.22); transition:transform .16s, border-color .16s, box-shadow .16s;
+  }
+  .mode:hover { transform:translateY(-5px); border-color:var(--mc); box-shadow:0 0 30px -6px var(--mc); }
+  .mode.sel { border-color:var(--mc); box-shadow:0 0 34px -6px var(--mc); background:linear-gradient(180deg,color-mix(in srgb,var(--mc) 16%,rgba(14,26,42,.85)),rgba(6,12,22,.94)); }
+  .mode .micon { font-size:52px; line-height:1; color:var(--mc); text-shadow:0 0 22px var(--mc); }
+  .mode .mtitle { font-weight:900; letter-spacing:2px; font-size:22px; color:#e8f6ff; }
+  .mode .msub { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--mc); font-weight:800; }
+  .mode .mdesc { font-size:12px; color:#9fd0e8; line-height:1.45; margin-top:4px; }
+  .mode .mgo { margin-top:auto; font-weight:900; letter-spacing:1.5px; font-size:12px; color:var(--mc);
+    opacity:0; transition:opacity .16s; }
+  .mode:hover .mgo, .mode.sel .mgo { opacity:1; }
+
+  /* WATCH-mode spectate banner during a match */
+  #spectateBanner {
+    position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:22;
+    display:none; align-items:center; gap:10px; padding:8px 20px; border-radius:12px;
+    background:rgba(6,12,22,.82); border:1px solid #2de6ff; color:#2de6ff;
+    font-weight:900; letter-spacing:3px; font-size:13px; backdrop-filter:blur(6px);
+    box-shadow:0 0 24px -6px rgba(45,230,255,.6); pointer-events:none; white-space:nowrap;
+  }
+  #spectateBanner .dot { width:9px; height:9px; border-radius:50%; background:#ff5a7a; box-shadow:0 0 10px #ff5a7a; animation:specPulse 1.1s infinite; }
+  @keyframes specPulse { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  body.watching #spectateBanner { display:flex; }
+
   .durs { display:flex; gap:12px; justify-content:center; }
   .dur {
     padding:10px 22px; border-radius:10px; cursor:pointer; font-weight:800; letter-spacing:1px;
@@ -108,6 +155,13 @@
   }
   .dur:hover { border-color:rgba(255,211,92,.6); }
   .dur.sel { background:#ffd35c; color:#05070d; box-shadow:0 0 20px -4px #ffd35c; }
+  /* AUTO / MANUAL assist toggle — green accent so the assist state reads instantly */
+  #autoList .dur { border-color:rgba(56,255,176,.28); color:#38ffb0; }
+  #autoList .dur:hover { border-color:rgba(56,255,176,.7); }
+  #autoList .dur.sel { background:#38ffb0; color:#05070d; box-shadow:0 0 22px -4px #38ffb0; }
+  #autoList #autoOffBtn { color:#2de6ff; border-color:rgba(45,230,255,.28); }
+  #autoList #autoOffBtn:hover { border-color:rgba(45,230,255,.7); }
+  #autoList #autoOffBtn.sel { background:#2de6ff; color:#05070d; box-shadow:0 0 22px -4px #2de6ff; }
 
   .btn {
     margin-top:26px; padding:15px 52px; border-radius:12px; cursor:pointer;
@@ -154,6 +208,7 @@
 </div>
 
 <div id="pauseHint" class="hidden">P / ESC — PAUSE</div>
+<div id="spectateBanner"><span class="dot"></span> SPECTATING · AI vs AI · [P] MENU</div>
 
 <!-- SELECT SCREEN -->
 <div id="selectScreen" class="screen">
@@ -163,11 +218,26 @@
   <div class="label">Choose Your Captain</div>
   <div class="agents" id="agentList"></div>
 
+  <div class="label">Team Size</div>
+  <div class="durs" id="sizeList">
+    <div class="dur" data-size="5">5 v 5</div>
+    <div class="dur sel" data-size="6">6 v 6</div>
+  </div>
+
   <div class="label">Match Length</div>
   <div class="durs" id="durList">
     <div class="dur" data-min="1">1 MIN</div>
     <div class="dur sel" data-min="2">2 MIN</div>
     <div class="dur" data-min="3">3 MIN</div>
+  </div>
+
+  <div class="label">Assist</div>
+  <div class="durs" id="autoList">
+    <div class="dur" data-auto="0" id="autoOffBtn">✋ MANUAL</div>
+    <div class="dur" data-auto="1" id="autoOnBtn">🤖 AUTO</div>
+  </div>
+  <div class="note" id="autoNote" style="max-width:520px;margin:8px auto 0;font-size:12px;color:#7fb8d8;line-height:1.5;">
+    <b style="color:#38ffb0;">AUTO</b> = your player runs to the ball and kicks/passes/shoots for you — great for a relaxed watch-and-nudge game. <b style="color:#2de6ff;">MANUAL</b> = full control. Press <span class="key">T</span> in a match to switch anytime.
   </div>
 
   <button class="btn" id="startBtn">KICK OFF ▸</button>
@@ -177,12 +247,32 @@
       <span class="item"><span class="key">WASD</span><span class="key">Arrows</span> Move</span>
       <span class="item"><span class="key">Space</span><span class="key">J</span> Kick / Pass (hold to charge)</span>
       <span class="item"><span class="key">Shift</span> Sprint</span>
+      <span class="item"><span class="key">Q</span> Captain SURGE ★</span>
       <span class="item"><span class="key">Tab</span><span class="key">K</span> Switch player</span>
+      <span class="item"><span class="key">T</span> AUTO assist on/off</span>
       <span class="item"><span class="key">V</span> Camera view</span>
       <span class="item"><span class="key">P</span><span class="key">Esc</span> Pause</span>
     </div>
-    <div class="note"><b>Keyboard only.</b> Nearest player to the ball is auto-selected. Score more than your rival before full time.</div>
+    <div class="note"><b>Keyboard only.</b> Movement matches the screen — press up to run up-field. On defense you auto-switch to the nearest player (or press <span class="key">Tab</span>). Turn on <b style="color:#38ffb0;">AUTO</b> above (or <span class="key">T</span> mid-match) to let your player chase and kick for you. Next you'll pick a mode: <b>PLAY</b> · <b>WATCH</b> (AI vs AI) · <b>SKILL PLAY</b>.</div>
   </div>
+</div>
+
+<!-- MODE SELECT SCREEN -->
+<div id="modeScreen" class="screen hidden">
+  <div class="title" style="font-size:clamp(30px,6vw,58px)">SELECT MODE</div>
+  <div class="sub" id="modeSub">Choose how you play</div>
+  <div class="modes" id="modeList"></div>
+  <button class="btn" id="modeBackBtn" style="margin-top:22px;background:rgba(45,230,255,.15);color:#2de6ff;box-shadow:none;border:1px solid #2de6ff;">◀ BACK</button>
+</div>
+
+<!-- SKILL SELECT SCREEN (SKILLPLAY) -->
+<div id="skillScreen" class="screen hidden">
+  <div class="title" style="font-size:clamp(28px,6vw,56px)">ACTIVATE SKILLS</div>
+  <div class="sub" id="skillSub">Ability Loadout</div>
+  <div class="label" id="skillHint">Pick up to 3 — ★ = auto-matched to your captain</div>
+  <div class="agents" id="skillList" style="max-width:760px"></div>
+  <button class="btn gold" id="skillStartBtn" style="margin-top:22px">START WITH SKILLS ▸</button>
+  <button class="btn" id="skillBackBtn" style="margin-top:12px;background:rgba(45,230,255,.15);color:#2de6ff;box-shadow:none;border:1px solid #2de6ff;">◀ BACK</button>
 </div>
 
 <!-- RESULT SCREEN -->
@@ -224,6 +314,79 @@ const FALLBACK_ART = id => `/assets/games/soccer/${id.toLowerCase()}.png`;
 let selectedAgent = AGENTS[0];
 let matchMinutes = 2;
 
+// GAME MODE: 'play' (human + AI teammates vs AI), 'watch' (full AI vs AI spectate), 'skill' (skill loadout → play)
+let gameMode = 'play';
+let watchOn = false;   // true = WATCH mode: block human input, AI drives the YOU team too
+
+// AUTO-ASSIST: when ON, the human-controlled player auto-steers toward the ball
+// and auto-kicks/passes/shoots at good moments. Toggle on the select screen or
+// with [T] in-match. It only assists the ONE controlled player — teammates still AI,
+// and any manual movement key instantly overrides the auto-steer that frame.
+let autoAssist = false;
+
+// ------------------------------------------------------------------
+// SKILLPLAY — ability catalog (ids match backend soccer catalog:
+// backend/platform/skillplay.js). Boosts map to gameplay stats.
+// ------------------------------------------------------------------
+const ALL_SKILL_DEFS = [
+  { id:'finisher',     icon:'🎯', label:'Finisher',     desc:'Clinical in the box — buries the chance.',   boost:{power:0.18} },
+  { id:'playmaker',    icon:'🧠', label:'Playmaker',    desc:'Threads killer passes, unlocks defenses.',   boost:{control:0.18} },
+  { id:'speedster',    icon:'⚡', label:'Speedster',    desc:'Burns past defenders on the flank.',         boost:{speed:0.20} },
+  { id:'wall',         icon:'🛡', label:'Back Wall',    desc:'Immovable in defense, wins every duel.',     boost:{defense:0.22} },
+  { id:'free_kick_ace',icon:'🎪', label:'Set-Piece Ace',desc:'Bends set-pieces into the top corner.',      boost:{power:0.12, control:0.10} },
+  { id:'engine',       icon:'🔋', label:'Engine',       desc:'Box-to-box stamina, presses all match.',     boost:{stamina:0.35} },
+  { id:'interceptor',  icon:'🪤', label:'Interceptor',  desc:'Reads the pass and steps in to win it.',     boost:{defense:0.16, control:0.08} },
+  { id:'dribble_king', icon:'🕺', label:'Dribble King', desc:'Close control glides through traffic.',       boost:{control:0.16, speed:0.08} },
+];
+// Council-agent natural abilities (auto-matched + ★ badged). Forged agents fall through.
+const AGENT_ABILITIES = {
+  SHADDAI: ['playmaker','finisher','free_kick_ace'],
+  NEXUS:   ['playmaker','interceptor','wall'],
+  ZEROX:   ['speedster','dribble_king','finisher'],
+  ORACLE:  ['playmaker','interceptor','dribble_king'],
+  TURTLE:  ['dribble_king','finisher','free_kick_ace'],
+  QUILL:   ['playmaker','speedster','engine'],
+  PIKADON: ['wall','interceptor','finisher'],
+};
+const skillPickMax = 3;
+let skillPicked = [];          // array of ALL_SKILL_DEFS indices
+let agentMatchedIds = [];      // auto-matched ability ids for chosen captain
+// Boosts summed from picked skills — applied to YOU team only.
+let skillBoosts = { power:0, control:0, speed:0, stamina:0, defense:0 };
+
+function computeAgentMatchedLocal(){
+  const a = (selectedAgent && AGENT_ABILITIES[selectedAgent.id]) ? AGENT_ABILITIES[selectedAgent.id].slice() : [];
+  return a.length ? a : ['playmaker','finisher','speedster'];
+}
+// Scalable path: ask backend to auto-match this captain's REAL skills → abilities.
+function refreshAgentMatchedFromBackend(){
+  const id = selectedAgent && selectedAgent.id; if(!id) return;
+  try{
+    fetch('/api/skillplay/soccer/kit/'+encodeURIComponent(id)+'?n=3')
+      .then(r=>r.json())
+      .then(j=>{
+        if(j && j.ok && j.abilities && j.abilities.length){
+          agentMatchedIds = j.abilities.map(x=>x.id);
+          renderSkillCards(); // re-badge if user still on the screen
+        }
+      }).catch(()=>{});
+  }catch(e){}
+}
+function applySkillBoosts(){
+  skillBoosts = { power:0, control:0, speed:0, stamina:0, defense:0 };
+  for(const idx of skillPicked){
+    const sk = ALL_SKILL_DEFS[idx]; if(!sk) continue;
+    for(const k in sk.boost){ if(sk.boost.hasOwnProperty(k)) skillBoosts[k] = (skillBoosts[k]||0) + sk.boost[k]; }
+  }
+}
+// Effective stat helper — adds the named skill boost to a base value for the YOU team only
+// (mirrors football getEffectiveRating). key ∈ {power,control,speed,stamina,defense}.
+function getEffectiveStat(base, team, key){
+  if(team!=='you') return base;
+  const add = (key && skillBoosts[key]) ? skillBoosts[key] : 0;
+  return base + add;
+}
+
 // ------------------------------------------------------------------
 // SELECT SCREEN UI
 // ------------------------------------------------------------------
@@ -263,27 +426,205 @@ document.querySelectorAll('.dur').forEach(d=>{
   });
 });
 
+document.querySelectorAll('#sizeList .dur').forEach(d=>{
+  d.addEventListener('click',()=>{
+    document.querySelectorAll('#sizeList .dur').forEach(n=>n.classList.remove('sel'));
+    d.classList.add('sel'); teamSize = parseInt(d.dataset.size,10);
+  });
+});
+
+// AUTO / MANUAL assist toggle on the select screen
+function syncAutoButtons(){
+  const off=document.getElementById('autoOffBtn'), on=document.getElementById('autoOnBtn');
+  if(off) off.classList.toggle('sel', !autoAssist);
+  if(on)  on.classList.toggle('sel',  autoAssist);
+}
+document.querySelectorAll('#autoList .dur').forEach(d=>{
+  d.addEventListener('click',()=>{
+    autoAssist = d.dataset.auto==='1';
+    syncAutoButtons();
+  });
+});
+syncAutoButtons();
+
+// ------------------------------------------------------------------
+// SKILL SELECT SCREEN UI (SKILLPLAY)
+// ------------------------------------------------------------------
+const skillList = document.getElementById('skillList');
+function renderSkillCards(){
+  if(!skillList) return;
+  skillList.innerHTML='';
+  ALL_SKILL_DEFS.forEach((sk,idx)=>{
+    const picked = skillPicked.indexOf(idx)>=0;
+    const matched = agentMatchedIds.indexOf(sk.id)>=0;
+    const el = document.createElement('div');
+    el.className = 'skillcard' + (picked?' sel':'') + (matched?' matched':'');
+    el.innerHTML =
+      `<div class="snm"><span class="sicon">${sk.icon}</span>${sk.label}</div>
+       <div class="sdesc">${sk.desc}</div>
+       ${(matched||picked)?`<div class="sbadge">${matched?(picked?'★✓':'★'):'✓'}</div>`:''}`;
+    el.addEventListener('click',()=>{
+      const at = skillPicked.indexOf(idx);
+      if(at>=0){ skillPicked.splice(at,1); }
+      else {
+        if(skillPicked.length>=skillPickMax) skillPicked.shift(); // keep newest N
+        skillPicked.push(idx);
+      }
+      applySkillBoosts();
+      renderSkillCards();
+      updateSkillStartLabel();
+    });
+    skillList.appendChild(el);
+  });
+}
+function updateSkillStartLabel(){
+  const b = document.getElementById('skillStartBtn');
+  if(b) b.textContent = skillPicked.length>0
+    ? `START WITH ${skillPicked.length} SKILL${skillPicked.length>1?'S':''} ▸`
+    : 'START (NO SKILLS) ▸';
+}
+function gotoSkillSelect(){
+  // captain + duration already chosen on the select screen
+  const sub=document.getElementById('skillSub'); if(sub) sub.textContent = selectedAgent.id+' · Ability Loadout';
+  const hint=document.getElementById('skillHint'); if(hint) hint.textContent = `Pick up to ${skillPickMax} — ★ = auto-matched to ${selectedAgent.id}`;
+  agentMatchedIds = computeAgentMatchedLocal();   // instant local match
+  // pre-select the captain's natural skills (up to max)
+  skillPicked = [];
+  for(let i=0;i<ALL_SKILL_DEFS.length && skillPicked.length<skillPickMax;i++){
+    if(agentMatchedIds.indexOf(ALL_SKILL_DEFS[i].id)>=0) skillPicked.push(i);
+  }
+  applySkillBoosts();
+  refreshAgentMatchedFromBackend();               // scalable refine (forged-ready)
+  renderSkillCards();
+  updateSkillStartLabel();
+  document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('skillScreen').classList.remove('hidden');
+  state='menu';
+}
+function confirmSkillPlay(){
+  applySkillBoosts();
+  document.getElementById('skillScreen').classList.add('hidden');
+  startGame();
+}
+
+// ------------------------------------------------------------------
+// MODE SELECT SCREEN UI (PLAY / WATCH / SKILL PLAY)
+// ------------------------------------------------------------------
+const MODE_DEFS = [
+  { id:'play',  icon:'▶', title:'PLAY',       sub:'Human + AI vs AI', desc:'Drive your captain. Your AI teammates back you up against the rival council.', color:'#38ffb0' },
+  { id:'watch', icon:'◈', title:'WATCH',      sub:'AI vs AI',         desc:'Sit back and spectate a full AI-versus-AI showdown. No controls.',            color:'#2de6ff' },
+  { id:'skill', icon:'✦', title:'SKILL PLAY', sub:'Loadout + Play',   desc:'Activate ability boosts matched to your captain, then take the pitch.',        color:'#ffd35c' },
+];
+let modeCursor = 0;
+const modeList = document.getElementById('modeList');
+function renderModeCards(){
+  if(!modeList) return;
+  modeList.innerHTML = '';
+  MODE_DEFS.forEach((m,i)=>{
+    const el = document.createElement('div');
+    el.className = 'mode' + (i===modeCursor?' sel':'');
+    el.style.setProperty('--mc', m.color);
+    el.innerHTML =
+      `<div class="micon">${m.icon}</div>
+       <div class="mtitle">${m.title}</div>
+       <div class="msub">${m.sub}</div>
+       <div class="mdesc">${m.desc}</div>
+       <div class="mgo">▶ SELECT</div>`;
+    el.addEventListener('mouseenter', ()=>{ modeCursor=i; syncModeSel(); });
+    el.addEventListener('click', ()=>{ modeCursor=i; chooseMode(m.id); });
+    modeList.appendChild(el);
+  });
+}
+function syncModeSel(){
+  const cards = modeList ? modeList.querySelectorAll('.mode') : [];
+  cards.forEach((c,i)=> c.classList.toggle('sel', i===modeCursor));
+}
+function gotoModeSelect(){
+  const sub=document.getElementById('modeSub'); if(sub) sub.textContent = selectedAgent.id+' · '+(teamSize)+'v'+(teamSize)+' · choose your mode';
+  modeCursor = 0;
+  renderModeCards();
+  document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('skillScreen').classList.add('hidden');
+  document.getElementById('modeScreen').classList.remove('hidden');
+  state='menu';
+}
+function chooseMode(id){
+  gameMode = id;
+  document.getElementById('modeScreen').classList.add('hidden');
+  if(id==='skill'){ watchOn=false; gotoSkillSelect(); return; }
+  watchOn = (id==='watch');
+  startGame();
+}
+
 // ------------------------------------------------------------------
 // CANVAS / FIELD SETUP
 // ------------------------------------------------------------------
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 
-// Logical field dimensions (game world in these units, scaled to screen)
+// Logical field dimensions (the PHYSICS world lives in these units — unchanged).
+//  field X : 0 (left goal) .. FIELD.w (right goal)   → screen WIDTH axis
+//  field Y : 0 (FAR touchline / horizon) .. FIELD.h (NEAR touchline / bottom) → screen DEPTH axis
+// Regulation pitch is ~1.575:1 (105m x 68m). 1040/660 = 1.576 — proportions are true-to-life.
 const FIELD = { w: 1040, h: 660, margin: 46 };
-let scale = 1, offX = 0, offY = 0;
+let scale = 1;               // legacy uniform scale, kept ONLY for HUD text sizing (screen px per ~ref px)
+
+// ------------------------------------------------------------------
+// PERSPECTIVE PROJECTION  (2.5D broadcast pitch on a flat 2D canvas)
+// ------------------------------------------------------------------
+// A single proj(fx,fy) maps field coords → screen {x,y,s}. It is the ONE
+// source of truth: field lines, players, ball, goals all route through it so
+// nothing can drift out of alignment. Nearer (large fy) → bigger & lower on
+// screen; farther (small fy) → smaller & higher, receding to a vanishing line.
+//
+// MATH — a pinhole-style depth divide (same family as football.html):
+//   dz = distance of the point from the camera along the depth axis
+//   s  = CAMD / (CAMD + dz)                (perspective foreshortening 0..1)
+//   screenY = horizonY + (baseY - horizonY) * s
+//   screenX = cx + (fx - FIELD.w/2) * PPX * s
+// s falls off as 1/(1+dz) — the exact hyperbolic falloff of true perspective,
+// so a straight field line stays straight and evenly-mapped (not warped).
+const PERSP = {
+  camd: 470,        // camera-distance constant (larger = gentler/flatter perspective)
+  camBehind: 120,   // how far behind the near touchline the camera plane sits (depth units)
+  horizonFrac: 0.235,// fraction of screen height where the vanishing horizon sits
+  baseFrac: 0.965,  // fraction of screen height where the near touchline sits
+  fillFrac: 0.985   // horizontal fill of the near plane across the viewport
+};
+let horizonY = 0, baseY = 0, PPX = 0;   // recomputed on resize (screen-space)
+let camFlip = 1;                        // +1 default, -1 OPPONENT VIEW (mirror depth+width)
+let camZoomP = 1, camPanX = 0, camPanY = 0; // CHASE-cam zoom/pan (screen space, applied post-proj)
 
 function resize(){
-  const availW = window.innerWidth, availH = window.innerHeight;
-  const totalW = FIELD.w + FIELD.margin*2;
-  const totalH = FIELD.h + FIELD.margin*2;
-  scale = Math.min(availW/totalW, availH/totalH);
-  cv.width = Math.floor(totalW*scale);
-  cv.height = Math.floor(totalH*scale);
-  offX = FIELD.margin; offY = FIELD.margin;
+  const W = window.innerWidth, Hh = window.innerHeight;
+  cv.width = Math.floor(W); cv.height = Math.floor(Hh);
+  horizonY = Hh * PERSP.horizonFrac;
+  baseY    = Hh * PERSP.baseFrac;
+  // px-per-field-unit of WIDTH at the near plane (s≈1): fill fillFrac of the viewport.
+  PPX = (W * PERSP.fillFrac) / FIELD.w;
+  scale = Math.min(W/1132, Hh/752);   // HUD text scale reference (old canvas ~ 1132x752)
 }
 window.addEventListener('resize', resize);
 resize();
+
+// Project a field point → screen. s = depth scale (also used to size players/ball).
+function proj(fx, fy){
+  // depth from camera: near touchline (fy=FIELD.h) is closest, far (fy=0) recedes.
+  let depth = (FIELD.h - fy);                 // 0 at near touchline, FIELD.h at far
+  let dz = (depth + PERSP.camBehind);         // distance from camera plane
+  if(camFlip < 0) dz = (fy + PERSP.camBehind); // OPPONENT VIEW: mirror the depth axis
+  if(dz < 1) dz = 1;
+  const s = PERSP.camd / (PERSP.camd + dz);
+  let sy = horizonY + (baseY - horizonY) * s;
+  let sx = cv.width/2 + (fx - FIELD.w/2) * camFlip * PPX * s;
+  // CHASE cam: zoom about the focus (camPanX/Y is the screen-space focus point)
+  if(camZoomP !== 1){
+    sx = cv.width/2 + (sx - camPanX) * camZoomP;
+    sy = cv.height/2 + (sy - camPanY) * camZoomP;
+  }
+  return { x: sx + shakeX, y: sy + shakeY, s: s * (camZoomP!==1?camZoomP:1) };
+}
+function projS(fx,fy){ return proj(fx,fy).s; }
 
 // Goal geometry (in field coords, field origin at 0,0 top-left of play area)
 const GOAL_H = 190;
@@ -308,6 +649,14 @@ let charge = 0;               // kick charge 0..1
 let charging = false;
 
 // ------------------------------------------------------------------
+// FRANCHISE HOOKS (inert scaffolding). matchConfig.activeRoster, when
+// populated by a 'shaddai-load-roster' postMessage, feeds per-slot
+// agentId/level/xp/ratings into makePlayer. Dormant by default → the
+// game plays identically to before.
+// ------------------------------------------------------------------
+let matchConfig = { activeRoster: null, source: 'default' };
+
+// ------------------------------------------------------------------
 // CAMERA VIEWS (toggle with V)
 //  0 = DEFAULT   : full pitch, static, you attack rightward
 //  1 = OPPONENT  : mirrored 180° — view from the enemy goal looking back at you
@@ -315,29 +664,88 @@ let charging = false;
 // ------------------------------------------------------------------
 const VIEW_NAMES = ['SIDELINE', 'OPPONENT VIEW', 'CHASE CAM'];
 let cameraView = 0;
-let camX = FIELD.w/2, camY = FIELD.h/2, camZoom = 1; // smoothed chase-cam target
 let viewFlash = 0; // brief on-screen label emphasis after a view change
+let autoFlash = 0; // brief on-screen emphasis after toggling AUTO assist
+let autoKickCd = 0; // AUTO-assist: small delay between auto-kicks so it doesn't machine-gun
 let stamina = 1;             // user player stamina 0..1
 let particles = [];
 let confetti = [];
+const MAX_PARTICLES = 180;    // hard cap keeps the field smooth during goal/surge spam
+const drawOrder = [];         // reused each frame for depth sort (no realloc)
+function sortByYAsc(a,b){ return a.y-b.y; }
+function sortByYDesc(a,b){ return b.y-a.y; }
 
 const PLAYER_R = 15;
 const BALL_R = 9;
+
+// ── BALL PHYSICS TUNING (all forces are per-second; integrated with dt) ──
+// The ball world runs in field units/second. Kicks set speed directly in units/s.
+// TEMPO PASS: all kick/pass speeds cut to ~62% (see releaseKick / AI strikes) for a
+// calmer, real pace. Friction eased from 1.9→1.5 so a slower pass still travels a
+// believable distance and doesn't die at the striker's feet in the new tempo.
+const BALL_FRICTION      = 1.5;   // rolling deceleration (units/s^2 ≈ friction*speed) — weighty roll
+const BALL_MIN_SPEED     = 5;     // below this the ball settles to rest (kills micro-drift)
+const BALL_WALL_BOUNCE   = 0.60;  // energy kept on a wall bounce
+const BALL_PLAYER_BOUNCE = 0.52;  // energy kept when a loose ball caroms off a body
+const BALL_SPIN_DECAY    = 1.4;   // how fast curve/spin bleeds off (per second)
+const BALL_SPIN_FORCE    = 40;    // lateral accel per unit of spin (banana curve strength)
+const BALL_MAX_SPEED     = 470;   // clamp so a surge blast never tunnels (scaled to new tempo)
+
+// Possession / control feel
+const TRAP_RANGE   = 26;   // how close a receiving player pulls a slow loose ball under control
+const TRAP_SPEED   = 320;  // a ball faster than this can't be cleanly trapped (deflects instead)
+const DRIBBLE_GAP  = 6;    // resting distance the carried ball sits ahead of the feet
+const DRIBBLE_SPRINT_GAP = 16; // bigger touch pushed ahead when sprinting
+const KICK_REACH   = 20;   // how close you must be to strike/pass the ball
+const CARRY_CD     = 0.0;  // no cooldown to keep dribbling
+
+let ballOwner = null;      // player currently carrying (close control); null = loose
+let ownerGrace = 0;        // secs a fresh kicker can't re-trap their own ball (stops instant re-stick)
+
+// ── CAPTAIN SPECIAL ("SURGE") tuning ──
+const SURGE_COOLDOWN = 10;   // seconds between captain surge uses
+const SURGE_TIME     = 2.6;  // duration of the pace + power burst
+const SURGE_SPD_MUL  = 1.55; // top-speed boost while surging
+const SURGE_PWR_MUL  = 1.45; // shot/pass power boost while surging
 
 // input
 const keys = {};
 window.addEventListener('keydown', e=>{
   const k = e.key.toLowerCase();
   if(['arrowup','arrowdown','arrowleft','arrowright',' ','tab'].includes(k)) e.preventDefault();
+  // MODE SELECT keyboard nav (screen is up)
+  if(!document.getElementById('modeScreen').classList.contains('hidden')){
+    if(k==='arrowleft'||k==='a'){ modeCursor=(modeCursor+MODE_DEFS.length-1)%MODE_DEFS.length; syncModeSel(); }
+    else if(k==='arrowright'||k==='d'){ modeCursor=(modeCursor+1)%MODE_DEFS.length; syncModeSel(); }
+    else if(k==='enter'||k===' '){ chooseMode(MODE_DEFS[modeCursor].id); }
+    return;
+  }
   keys[k] = true;
-  if(k==='p' || k==='escape') togglePause();
+  if(k==='p' || k==='escape') togglePause();   // pause works in WATCH too (lets you leave)
+  if(k==='v'){ cameraView = (cameraView+1) % 3; viewFlash = 1.2; }  // camera works in WATCH too
+  if(watchOn) return;   // WATCH mode: block gameplay input (movement/switch/kick)
+  if(k==='t'){ autoAssist = !autoAssist; syncAutoButtons(); autoFlash = 1.4; }  // toggle AUTO assist mid-match
   if((k==='tab' || k==='k') && state==='play') manualSwitch();
-  if(k==='v'){ cameraView = (cameraView+1) % 3; viewFlash = 1.2; }
+  if(k==='q' && state==='play') doCaptainSurge();   // captain SURGE special
 });
 window.addEventListener('keyup', e=>{
   const k = e.key.toLowerCase();
   if(k===' ' || k==='j'){ releaseKick(); }
   keys[k] = false;
+});
+
+// FRANCHISE HOOK (in): accept an optional roster from a parent frame.
+// Payload: { type:'shaddai-load-roster', roster:[ {agentId,level,xp,ratings}, ... ] }
+// Stored inert in matchConfig; only read by makePlayer when a match starts.
+// Never auto-starts a match or changes current play — fully dormant by default.
+window.addEventListener('message', e=>{
+  try{
+    const d = e.data;
+    if(d && d.type==='shaddai-load-roster'){
+      matchConfig.activeRoster = Array.isArray(d.roster) ? d.roster : null;
+      matchConfig.source = matchConfig.activeRoster ? 'franchise' : 'default';
+    }
+  }catch(err){}
 });
 
 // ------------------------------------------------------------------
@@ -356,8 +764,29 @@ const FORMATION = [
   {x:0.68, y:0.35},
   {x:0.68, y:0.65},
 ];
+// 5v5 formation (GK + 4 outfield) — selectable via Team Size toggle.
+const FORMATION_5 = [
+  {x:0.10, y:0.50, gk:true},   // keeper
+  {x:0.32, y:0.32},
+  {x:0.32, y:0.68},
+  {x:0.55, y:0.50},            // central captain
+  {x:0.72, y:0.50},
+];
+let teamSize = 6; // 5 or 6
+function activeFormation(){ return teamSize===5 ? FORMATION_5 : FORMATION; }
+// Index of the most-central outfield player (captain) in the active formation.
+function captainIndex(form){
+  let best=1, bd=1e9;
+  for(let i=0;i<form.length;i++){
+    if(form[i].gk) continue;
+    const d = Math.abs(form[i].x-0.5) + Math.abs(form[i].y-0.5)*0.6;
+    if(d<bd){ bd=d; best=i; }
+  }
+  return best;
+}
 
-function makePlayer(team, home, isCaptain){
+function makePlayer(team, home, isCaptain, rosterEntry){
+  const re = rosterEntry || null;
   return {
     team, // 'you' or 'opp'
     x: home.x, y: home.y,
@@ -372,6 +801,23 @@ function makePlayer(team, home, isCaptain){
     color: team==='you' ? (isCaptain? selectedAgent.color : '#2de6ff') : '#ff5a7a',
     trail: [],
     kickCd: 0,
+    tackleCd: 0,
+    face: team==='you' ? 0 : Math.PI,   // facing angle (radians) for articulated body
+    anim: Math.random()*6.28,            // run-cycle phase
+    kickAnim: 0,                         // >0 briefly after a kick (leg swing)
+    num: 0,                              // jersey number (assigned in initMatch)
+    // ── CAPTAIN SPECIAL ("SURGE") — mirrors dodgeball OVERDRIVE ──
+    capCd: 0,                            // seconds until special ready again
+    surgeT: 0,                           // >0 while the pace/power burst is active
+    surgeFlash: 0,                       // brief visual pop on activation
+    aiSurgeCd: 1.5 + Math.random()*2.5,  // AI re-evaluate timer for using surge
+    // AI decision jitter so teammates don't act in lockstep
+    aiJitter: Math.random()*0.4,
+    // ── FRANCHISE HOOKS (inert scaffolding — dormant unless a roster is loaded) ──
+    agentId: (re && re.agentId) || (isCaptain ? selectedAgent.id : null),
+    level:   (re && re.level)   || 1,
+    xp:      (re && re.xp)      || 0,
+    ratings: (re && re.ratings) || null,
   };
 }
 
@@ -379,19 +825,29 @@ function initMatch(){
   scoreYou = 0; scoreOpp = 0;
   timeLeft = matchMinutes * 60;
   players = [];
+  const form = activeFormation();
+  const capIdx = captainIndex(form);
+  // FRANCHISE HOOK: if a roster was loaded via postMessage, read per-slot data (inert otherwise).
+  const roster = (matchConfig && Array.isArray(matchConfig.activeRoster)) ? matchConfig.activeRoster : null;
   // YOU team (attacks to the right, defends left goal)
-  FORMATION.forEach((f,i)=>{
+  form.forEach((f,i)=>{
     const home = { x: f.x*FIELD.w, y: f.y*FIELD.h, gk:f.gk };
-    players.push(makePlayer('you', home, i===3)); // captain = central mid
+    const p = makePlayer('you', home, i===capIdx, roster ? roster[i] : null); // captain = most-central outfield
+    p.num = f.gk ? 1 : (i===capIdx ? 10 : (i+2));   // #1 keeper, #10 captain
+    players.push(p);
   });
   // OPP team (mirrored, attacks left)
-  FORMATION.forEach((f)=>{
+  form.forEach((f,i)=>{
     const home = { x: (1-f.x)*FIELD.w, y: f.y*FIELD.h, gk:f.gk };
-    players.push(makePlayer('opp', home, false));
+    const p = makePlayer('opp', home, false);
+    p.num = f.gk ? 1 : (i+2);
+    players.push(p);
   });
-  ball = { x:FIELD.w/2, y:FIELD.h/2, vx:0, vy:0, r:BALL_R, owner:null, trail:[] };
+  ball = { x:FIELD.w/2, y:FIELD.h/2, vx:0, vy:0, r:BALL_R, owner:null, spin:0, trail:[] };
+  ballOwner = null; ownerGrace = 0;
   stamina = 1; charge = 0; charging=false;
-  cameraView = 0; camX = FIELD.w/2; camY = FIELD.h/2; camZoom = 1; viewFlash = 0;
+  cameraView = 0; camFlip = 1; camZoomP = 1; camPanX = cv.width/2; camPanY = cv.height/2; viewFlash = 0;
+  autoFlash = 0; autoKickCd = 0;
   userControlled = null;
   autoSelectUser();
   particles = []; confetti = [];
@@ -399,8 +855,9 @@ function initMatch(){
 }
 
 function resetKickoff(){
-  players.forEach(p=>{ p.x=p.home.x; p.y=p.home.y; p.vx=0; p.vy=0; p.trail=[]; });
-  ball.x = FIELD.w/2; ball.y = FIELD.h/2; ball.vx=0; ball.vy=0; ball.owner=null; ball.trail=[];
+  players.forEach(p=>{ p.x=p.home.x; p.y=p.home.y; p.vx=0; p.vy=0; p.trail=[]; p.surgeT=0; });
+  ball.x = FIELD.w/2; ball.y = FIELD.h/2; ball.vx=0; ball.vy=0; ball.owner=null; ball.spin=0; ball.trail=[];
+  ballOwner = null; ownerGrace = 0;
   charge = 0; charging=false;
   autoSelectUser();
 }
@@ -409,7 +866,12 @@ function resetKickoff(){
 // USER PLAYER SELECTION
 // ------------------------------------------------------------------
 function autoSelectUser(){
+  if(watchOn){ userControlled = null; return; }   // WATCH: AI drives the whole YOU team
   if(performance.now() < userLockUntil && userControlled) return;
+  // If YOU already control the player who is carrying the ball, keep them — never
+  // yank control off the ball-carrier (that was a big source of "hard to control").
+  if(userControlled && ballOwner===userControlled) return;
+  // nearest YOU outfielder to the ball becomes the active player
   let best=null, bd=1e9;
   for(const p of players){
     if(p.team!=='you' || p.gk) continue;
@@ -417,6 +879,29 @@ function autoSelectUser(){
     if(d<bd){ bd=d; best=p; }
   }
   if(best) userControlled = best;
+}
+
+// SMART DEFENSIVE AUTO-SWITCH: while defending (rival carries / loose ball), keep the
+// controlled player on whoever is nearest the ball so the human is always the relevant
+// defender. Skips when we possess it (let the human keep their carry) and respects a
+// short lock after a MANUAL switch so [Tab]/[K] choices stick.
+function autoSwitchDefense(){
+  if(watchOn || !userControlled) return;
+  if(performance.now() < userLockUntil) return;      // honor manual switch
+  const posTeam = possessionTeam();
+  if(posTeam==='you') return;                         // we have it → don't hijack the carry
+  if(ballOwner===userControlled) return;
+  let best=null, bd=1e9;
+  for(const p of players){
+    if(p.team!=='you' || p.gk) continue;
+    const d=(p.x-ball.x)**2+(p.y-ball.y)**2;
+    if(d<bd){ bd=d; best=p; }
+  }
+  // only switch if a clearly-closer teammate exists (avoid twitchy flip-flopping)
+  if(best && best!==userControlled){
+    const cur=(userControlled.x-ball.x)**2+(userControlled.y-ball.y)**2;
+    if(bd < cur*0.55) userControlled = best;
+  }
 }
 function manualSwitch(){
   const outfield = players.filter(p=>p.team==='you' && !p.gk);
@@ -430,30 +915,192 @@ function manualSwitch(){
 // ------------------------------------------------------------------
 // KICK / CHARGE
 // ------------------------------------------------------------------
+// ── STRIKE THE BALL: one weighted model used by shots, passes and clears. ──
+// speed = target units/second, spin = signed curve (±). Carries a little of the
+// striker's own momentum so a running strike is livelier than a standing one.
+function strikeBall(p, dirX, dirY, speed, spin){
+  const mag = Math.hypot(dirX,dirY)||1;
+  const ux = dirX/mag, uy = dirY/mag;
+  // push the ball just off the boot first so it never starts inside the body
+  ball.x = p.x + ux*(p.r+ball.r+2);
+  ball.y = p.y + uy*(p.r+ball.r+2);
+  ball.vx = ux*speed + p.vx*0.14;
+  ball.vy = uy*speed + p.vy*0.14;
+  ball.spin = spin||0;
+  ball.owner = null; ballOwner = null;
+  ownerGrace = 0.22;                 // brief window so the striker can't instantly re-trap
+  p.kickAnim = 0.22; p.face = Math.atan2(uy, ux);
+  spawnKickParticles(ball.x, ball.y, p.color);
+}
+// Find a human-pass target: a teammate ahead in the aimed direction, leading their run.
+function humanPassTarget(p, aimX, aimY){
+  const amag = Math.hypot(aimX,aimY)||1; const ax=aimX/amag, ay=aimY/amag;
+  let best=null, bestScore=-1e9;
+  for(const m of players){
+    if(m===p || m.team!==p.team || m.gk) continue;
+    const dx=m.x-p.x, dy=m.y-p.y, dist=Math.hypot(dx,dy);
+    if(dist<45 || dist>460) continue;
+    const along = (dx*ax+dy*ay);              // projection onto aim
+    if(along < 40) continue;                   // must be broadly where we're aiming
+    const off = Math.abs(dx*(-ay)+dy*ax);      // perpendicular distance from the aim line
+    const cone = off/Math.max(1,along);        // tan of angle from aim
+    if(cone > 0.6) continue;                    // ~31° cone
+    const score = along - off*1.4 - dist*0.15;
+    if(score>bestScore){ bestScore=score; best=m; }
+  }
+  return best;
+}
 function releaseKick(){
   if(state!=='play' || !userControlled){ charging=false; charge=0; return; }
   const p = userControlled;
   const d = Math.hypot(ball.x-p.x, ball.y-p.y);
-  if(d < p.r + ball.r + 14 && p.kickCd<=0){
-    // aim: current movement dir, else toward opponent goal
-    let ax = keyDirX(), ay = keyDirY();
-    if(ax===0 && ay===0){ ax = 1; ay = ((goalTop+goalBot)/2 - p.y)*0.02; } // toward right goal
-    const mag = Math.hypot(ax,ay)||1;
-    const pw = (5.5 + charge*12) * (0.8 + p.power*0.5);
-    ball.vx = ax/mag*pw + p.vx*0.02;
-    ball.vy = ay/mag*pw + p.vy*0.02;
-    ball.owner = null;
-    p.kickCd = 0.25;
-    spawnKickParticles(ball.x, ball.y, p.color);
+  const canStrike = (d < p.r + ball.r + KICK_REACH) && p.kickCd<=0 && (ballOwner===p || !ballOwner || ballOwner.team===p.team);
+  // If a rival is carrying and we're close, the kick key becomes a TACKLE.
+  if(ballOwner && ballOwner.team!==p.team && Math.hypot(ball.x-p.x,ball.y-p.y) < p.r+ball.r+18){
+    if(tryTackle(p)) { charging=false; charge=0; return; }
+  }
+  if(canStrike){
+    const enemyGoalX = p.team==='you' ? FIELD.w : 0;
+    let steerX = keyDirX(), steerY = keyDirY();
+    const steering = (steerX!==0 || steerY!==0);
+    const pw = getEffectiveStat(p.power, p.team, 'power');
+    const ctl = getEffectiveStat(p.control, p.team, 'control');
+    const surgeMul = p.surgeT>0 ? SURGE_PWR_MUL : 1;
+
+    // Short tap (barely charged) while steering toward a teammate = a crisp PASS.
+    const mate = steering ? humanPassTarget(p, steerX, steerY) : null;
+    if(mate && charge < 0.55){
+      // ground pass that LEADS the receiver's run
+      const lx = mate.x + mate.vx*0.14, ly = mate.y + mate.vy*0.14;
+      const dist = Math.hypot(lx-p.x, ly-p.y);
+      // weight scales with distance so short passes aren't rockets, long balls still arrive
+      let speed = (110 + dist*0.55 + charge*105) * (0.9 + pw*0.22) * surgeMul;
+      speed = Math.min(speed, 360);
+      strikeBall(p, lx-p.x, ly-p.y, speed, 0);
+      p.kickCd = 0.24;
+    } else {
+      // SHOT / CLEAR. Aim where you steer; if not steering, aim-assist to an open corner.
+      let ax, ay;
+      if(steering){ ax = steerX; ay = steerY; }
+      else { const aim = aimAssistToGoal(p); ax = aim.x; ay = aim.y; }
+      // curve: lateral steer relative to the goal line bends the shot (banana)
+      let spin = 0;
+      const toGoalX = enemyGoalX - p.x;
+      if(Math.sign(ax)===Math.sign(toGoalX) || !steering){
+        // curl toward the near side you're leaning — feels intentional
+        spin = (steerY!==0 ? steerY : 0) * (0.9*ctl) ;
+      }
+      let speed = (195 + charge*300) * (0.78 + pw*0.5) * surgeMul;
+      speed = Math.min(speed, 470);
+      strikeBall(p, ax, ay, speed, spin);
+      p.kickCd = 0.30;
+    }
   }
   charging=false; charge=0;
 }
-function keyDirX(){ return (keys['a']||keys['arrowleft']?-1:0)+(keys['d']||keys['arrowright']?1:0); }
-function keyDirY(){ return (keys['w']||keys['arrowup']?-1:0)+(keys['s']||keys['arrowdown']?1:0); }
+// RAW key axes (what the fingers press).
+function rawDirX(){ return (keys['a']||keys['arrowleft']?-1:0)+(keys['d']||keys['arrowright']?1:0); }
+function rawDirY(){ return (keys['w']||keys['arrowup']?-1:0)+(keys['s']||keys['arrowdown']?1:0); }
+// PERSPECTIVE-AWARE steer: map on-screen intent → field coords. In OPPONENT VIEW the
+// depth+width axes are mirrored (camFlip=-1), so we flip both so "up" always moves the
+// player up-SCREEN and "right" always moves right-on-SCREEN — the way it looks. This is
+// the single source of movement + aim, so control matches what the player sees.
+function keyDirX(){ return rawDirX() * camFlip; }
+function keyDirY(){ return rawDirY() * camFlip; }
+
+// ── CAPTAIN SPECIAL: "SURGE" — a burst of pace + power for a short window, on a
+// cooldown. Mirrors the dodgeball OVERDRIVE pattern (shake/flash/particles + HUD).
+function findTeamCaptain(team){
+  for(const p of players){ if(p.team===team && p.isCaptain && !p.gk) return p; }
+  return null;
+}
+function activateSurge(p){
+  if(!p || p.gk || !p.isCaptain || p.capCd>0 || p.surgeT>0) return;
+  p.surgeT = SURGE_TIME;
+  p.capCd  = SURGE_COOLDOWN;
+  p.surgeFlash = 0.5;
+  shake = Math.max(shake, 14);
+  // burst particles in the team color (respect the cap)
+  spawnKickParticles(p.x, p.y, p.color);
+  let n=10; if(particles.length+n>MAX_PARTICLES) n=Math.max(0, MAX_PARTICLES-particles.length);
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=2+Math.random()*4;
+    particles.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.5+Math.random()*0.4,color:p.color});
+  }
+}
+// human trigger (Q): drive the YOU-team captain's surge even if not the active player
+function doCaptainSurge(){
+  const cap = findTeamCaptain('you');
+  if(cap){ activateSurge(cap); }
+}
+
+// ── AUTO-ASSIST KICK: decides + executes a shot/pass/clear for the controlled player.
+// Only fires when we're actually on the ball, our team has it (or it's loose at our feet),
+// and the auto cooldown has elapsed — so it feels like a smart teammate, not a spammer.
+function autoAssistKick(dt){
+  const p = userControlled;
+  if(!p || p.kickCd>0 || autoKickCd>0) return;
+  const d = Math.hypot(ball.x-p.x, ball.y-p.y);
+  const inReach = d < p.r + ball.r + KICK_REACH;
+  if(!inReach) return;
+  // if a rival owns it and we're tight, auto-tackle to win it back
+  if(ballOwner && ballOwner.team!==p.team){
+    if(d < p.r+ball.r+18){ tryTackle(p); autoKickCd=0.25; }
+    return;
+  }
+  // only strike a ball that is ours / loose (not flying away from us)
+  if(ballOwner && ballOwner.team===p.team && ballOwner!==p) return;
+  const enemyGoalX = p.team==='you' ? FIELD.w : 0;
+  const attackDir  = p.team==='you' ? 1 : -1;
+  const distGoal = Math.abs(enemyGoalX - p.x);
+  const ctl = getEffectiveStat(p.control, p.team, 'control');
+  const pw  = getEffectiveStat(p.power,   p.team, 'power');
+  const surgeMul = p.surgeT>0 ? SURGE_PWR_MUL : 1;
+  // pressure on us right now
+  let press=1e9;
+  for(const o of players){ if(o.team===p.team||o.gk) continue;
+    const od=Math.hypot(o.x-p.x,o.y-p.y); if(od<press) press=od; }
+  const pressured = press < 62;
+  const mate = bestPassTarget(p, enemyGoalX, attackDir);
+  const shootRange = distGoal < 340;
+
+  if(shootRange && (!pressured || !mate)){
+    // SHOOT toward the open corner
+    const aim = aimAssistToGoal(p);
+    const speed = Math.min(470, (300 + pw*150 + (pressured?40:0)) * surgeMul);
+    const spin = ((aim.y)>0?1:-1) * (0.3*ctl);
+    strikeBall(p, aim.x, aim.y, speed, spin);
+    p.kickCd = 0.34; autoKickCd = 0.5;
+  } else if(mate){
+    // PASS — lead the receiver
+    const lx = mate.x + mate.vx*0.16, ly = mate.y + mate.vy*0.16;
+    const dist = Math.hypot(lx-p.x, ly-p.y);
+    const speed = Math.min(360, (135 + dist*0.6) * surgeMul);
+    strikeBall(p, lx-p.x, ly-p.y, speed, 0);
+    p.kickCd = 0.28; autoKickCd = 0.4;
+  } else if(pressured){
+    // no shot, no pass, under pressure → clear it upfield out of danger
+    const flankY = p.y < FIELD.h/2 ? FIELD.h*0.72 : FIELD.h*0.28;
+    strikeBall(p, enemyGoalX-p.x, flankY-p.y, 380*surgeMul, 0);
+    p.kickCd = 0.34; autoKickCd = 0.5;
+  }
+  // else: keep dribbling (the auto-steer keeps carrying it forward)
+}
 
 // ------------------------------------------------------------------
 // AI
 // ------------------------------------------------------------------
+// Which team is in possession right now (nearest outfielder within touch range)?
+function possessionTeam(){
+  let best=null, bd=44*44;
+  for(const p of players){
+    if(p.gk) continue;
+    const d=(p.x-ball.x)**2+(p.y-ball.y)**2;
+    if(d<bd){ bd=d; best=p; }
+  }
+  return best ? best.team : null;
+}
+
 function aiUpdate(dt){
   // find nearest to ball per team (the "active" chaser)
   const chaser = {};
@@ -467,6 +1114,7 @@ function aiUpdate(dt){
     }
     chaser[t]=best;
   });
+  const posTeam = possessionTeam();
 
   for(const p of players){
     if(p===userControlled) continue; // user drives this one
@@ -474,17 +1122,51 @@ function aiUpdate(dt){
     const attackDir = p.team==='you' ? 1 : -1;
     const ownGoalX = p.team==='you' ? 0 : FIELD.w;
     const enemyGoalX = p.team==='you' ? FIELD.w : 0;
+    const weAttack = (posTeam===p.team);
+
+    // ── CAPTAIN SURGE (AI): fire when it changes the play — chasing a loose ball,
+    // breaking clear on the counter, or defending a fast attack. Re-checked on a timer.
+    if(p.isCaptain && !p.gk){
+      p.aiSurgeCd -= dt;
+      if(p.aiSurgeCd<=0 && p.capCd<=0 && p.surgeT<=0){
+        p.aiSurgeCd = 1.2 + Math.random()*1.6;
+        const ballDist0 = Math.hypot(ball.x-p.x, ball.y-p.y);
+        const inFinalThird = (attackDir>0) ? p.x>FIELD.w*0.62 : p.x<FIELD.w*0.38;
+        const looseNear = (!posTeam && ballDist0<220);
+        const breakingClear = (weAttack && p===chaser[p.team] && inFinalThird);
+        const chaseBack = (!weAttack && p===chaser[p.team] && ballDist0<260);
+        if(looseNear || breakingClear || chaseBack){ activateSurge(p); }
+      }
+    }
 
     if(p.gk){
-      // keeper: track ball vertically, stay near own goal
+      // keeper: hold the line, read the ball's path, come out to narrow the angle,
+      // and dive to the predicted crossing point so shots aren't free goals.
       tx = ownGoalX + attackDir*40;
-      ty = Math.max(goalTop+10, Math.min(goalBot-10, ball.y));
-      if(Math.hypot(ball.x-p.x, ball.y-p.y) < 60){ ty = ball.y; tx = ownGoalX + attackDir*30; }
-      moveToward(p, tx, ty, dt, 0.85);
-      // clear the ball
-      if(Math.hypot(ball.x-p.x, ball.y-p.y) < p.r+ball.r+8 && p.kickCd<=0){
-        const mag=Math.hypot(attackDir, ((goalTop+goalBot)/2 - p.y))||1;
-        ball.vx = attackDir/mag*11; ball.vy = (Math.random()-0.5)*6; ball.owner=null; p.kickCd=0.4;
+      // predict where the ball crosses the goal line (time = horizontal dist / vx)
+      let predictY = ball.y;
+      const towardUs = (attackDir>0) ? ball.vx<-20 : ball.vx>20;
+      if(towardUs){
+        const t = Math.abs((ownGoalX - ball.x)/ball.vx);
+        predictY = ball.y + ball.vy*Math.min(t,0.6);
+        // reaction imperfection: keeper can't read a well-placed shot perfectly,
+        // so corner-bound shots have a real chance to beat it.
+        predictY += (Math.random()-0.5)*46;
+      } else {
+        predictY = ball.y + ball.vy*0.08; // gentle shade to live ball
+      }
+      ty = Math.max(goalTop+8, Math.min(goalBot-8, predictY));
+      const gkDist = Math.hypot(ball.x-p.x, ball.y-p.y);
+      // rush out to smother when the ball is close and loose/incoming
+      if(gkDist < 120 && (attackDir>0 ? ball.x < FIELD.w*0.2 : ball.x > FIELD.w*0.8)){
+        ty = predictY; tx = ownGoalX + attackDir*(gkDist<55?22:38);
+      }
+      moveToward(p, tx, ty, dt, 0.82);
+      // clear the ball upfield toward an open flank
+      if(gkDist < p.r+ball.r+KICK_REACH && p.kickCd<=0){
+        const flankY = p.y < FIELD.h/2 ? FIELD.h*0.72 : FIELD.h*0.28;
+        strikeBall(p, enemyGoalX-p.x, flankY-p.y, 400, 0);
+        p.kickCd=0.5;
       }
       continue;
     }
@@ -493,51 +1175,164 @@ function aiUpdate(dt){
     const ballDist = Math.hypot(ball.x-p.x, ball.y-p.y);
 
     if(iAmChaser){
-      // go to ball; if close, dribble/shoot toward enemy goal
-      tx = ball.x; ty = ball.y;
-      if(ballDist < p.r+ball.r+6 && p.kickCd<=0){
+      // intercept the ball — lead its motion so we run onto it, not behind it.
+      const bs0 = Math.hypot(ball.vx,ball.vy);
+      const lead = Math.min(0.28, 40/(bs0+40)); // more lead when the ball is slow/nearby
+      tx = ball.x + ball.vx*lead; ty = ball.y + ball.vy*lead;
+      const surgeMul = p.surgeT>0 ? SURGE_PWR_MUL : 1;
+      const ctl = getEffectiveStat(p.control,p.team,'control');
+      const pw  = getEffectiveStat(p.power, p.team, 'power');
+      const carrying = (ballOwner===p);
+      if((carrying || ballDist < p.r+ball.r+KICK_REACH) && p.kickCd<=0){
         const gy = goalTop + GOAL_H*0.5;
-        const dxg = enemyGoalX - p.x;
-        const distGoal = Math.abs(dxg);
-        if(distGoal < 340){
-          // shoot
-          const aimY = gy + (Math.random()-0.5)*(GOAL_H-40);
-          const ang = Math.atan2(aimY-p.y, enemyGoalX-p.x);
-          const pw = 9 + p.power*4;
-          ball.vx = Math.cos(ang)*pw; ball.vy = Math.sin(ang)*pw; ball.owner=null; p.kickCd=0.35;
-          spawnKickParticles(ball.x,ball.y,p.color);
+        const distGoal = Math.abs(enemyGoalX - p.x);
+        const mate = bestPassTarget(p, enemyGoalX, attackDir);
+        // pressure: nearest rival to us
+        let press = 1e9;
+        for(const o of players){ if(o.team===p.team||o.gk) continue;
+          const od=Math.hypot(o.x-p.x,o.y-p.y); if(od<press) press=od; }
+        const pressured = press < 60;
+        const shootRange = distGoal < 360;
+        if(shootRange && (!pressured || !mate || Math.random()<0.5)){
+          // SHOOT — aim into a corner, tighter with more control; surge = laser.
+          const spread = (GOAL_H-56) * (1 - ctl*0.45);
+          const aimY = gy + (Math.random()-0.5)*spread;
+          const spin = ((aimY - p.y)>0?1:-1) * (Math.random()*0.5) * ctl;
+          const speed = (335 + pw*140) * surgeMul;
+          strikeBall(p, enemyGoalX-p.x, aimY-p.y, Math.min(speed,470), spin);
+          p.kickCd = 0.44;
+        } else if(mate){
+          // PASS — lead the receiver's run, weighted to distance.
+          const lx = mate.x + mate.vx*0.16, ly = mate.y + mate.vy*0.16;
+          const dist = Math.hypot(lx-p.x, ly-p.y);
+          const speed = Math.min(360, (130 + dist*0.6) * surgeMul);
+          strikeBall(p, lx-p.x, ly-p.y, speed, 0);
+          p.kickCd = 0.3;
         } else {
-          // dribble toward goal
-          ball.vx += attackDir*3.2; ball.vy += ( (gy-p.y)*0.01 );
-          ball.owner=null; p.kickCd=0.12;
+          // DRIBBLE — take a controlled touch toward goal (close control keeps it near).
+          const touch = (100 + (1-ctl)*45) * surgeMul;
+          const ang = Math.atan2((gy-p.y)*0.35, attackDir);
+          strikeBall(p, attackDir, (gy-p.y)*0.4, touch, 0);
+          ballOwner = p;                 // keep close control after the touch
+          p.kickCd = 0.14;
         }
       }
-      moveToward(p, tx, ty, dt, 1.0);
+      moveToward(p, tx, ty, dt, 1.12);
+      if(!carrying && ballOwner && ballOwner.team!==p.team) tryTackle(p);
+    } else if(weAttack){
+      // ATTACKING SHAPE: break into space and spread across the pitch for options.
+      // Fan out around the carrier so we always offer a forward + a wide passing lane.
+      const spreadY = (p.home.y - FIELD.h/2);          // keep vertical spacing from home role
+      tx = ball.x + attackDir*(120 + (p.home.x-FIELD.w/2)*0.15);
+      ty = ball.y*0.5 + (FIELD.h/2 + spreadY*1.15)*0.5;
+      // don't clog the carrier's exact spot — push off if too close
+      const dxc = p.x-ball.x, dyc = p.y-ball.y, dc=Math.hypot(dxc,dyc);
+      if(dc>0 && dc<70){ tx += (dxc/dc)*40; ty += (dyc/dc)*40; }
+      moveToward(p, tx, ty, dt, 0.82);
     } else {
-      // support / defend based on ball side
-      const ballOnOurHalf = (p.team==='you') ? ball.x < FIELD.w/2 : ball.x > FIELD.w/2;
-      if(ballOnOurHalf){
-        // drop toward own goal, shade to ball's y
-        tx = (p.home.x*0.55) + (ownGoalX + attackDir*180)*0.45;
-        ty = p.home.y*0.5 + ball.y*0.5;
+      // DEFENDING SHAPE: compact block goal-side of the ball; the second-nearest
+      // defender steps up to PRESS the carrier, the rest hold a line and cover.
+      const secondPresser = isSecondNearest(p, chaser[p.team]);
+      if(secondPresser && ballDist < 300){
+        // press: close down the carrier, staying slightly goal-side
+        tx = ball.x + (ownGoalX - ball.x)*0.12;
+        ty = ball.y + (p.home.y - ball.y)*0.2;
+        moveToward(p, tx, ty, dt, 1.05);
+        tryTackle(p);   // steal it if we get tight to a rival carrier
       } else {
-        // push up to support attack
-        tx = p.home.x + attackDir*120;
-        ty = p.home.y*0.6 + ball.y*0.4;
+        // hold a compact defensive block, shade to ball y, sit goal-side
+        tx = p.home.x*0.42 + (ownGoalX + attackDir*185)*0.58;
+        ty = p.home.y*0.5 + ball.y*0.5;
+        moveToward(p, tx, ty, dt, 0.8);
       }
-      moveToward(p, tx, ty, dt, 0.7);
     }
   }
+}
+// true if p is the 2nd-nearest outfielder on its team to the ball (the presser),
+// given the nearest (chaser) is already committed.
+function isSecondNearest(p, chaser){
+  if(p===chaser) return false;
+  let bd=1e9, best=null;
+  for(const q of players){
+    if(q.team!==p.team || q.gk || q===chaser) continue;
+    const d=(q.x-ball.x)**2+(q.y-ball.y)**2;
+    if(d<bd){ bd=d; best=q; }
+  }
+  return best===p;
+}
+
+// STANDING TACKLE: a close-range poke that dislodges the ball from a rival carrier.
+// Success scales with the tackler's control vs the carrier's control (contested, fair).
+function tryTackle(p){
+  if(p.gk || p.tackleCd>0) return false;
+  const carrier = ballOwner;
+  const targetIsCarrier = carrier && carrier.team!==p.team;
+  const bd = Math.hypot(ball.x-p.x, ball.y-p.y);
+  if(bd > p.r+ball.r+16) return false;         // must be tight to the ball
+  p.tackleCd = 0.45;                            // can't spam
+  const myCtl = getEffectiveStat(p.control,p.team,'control') + (p.team==='you'?skillBoosts.defense*0.6:0);
+  if(targetIsCarrier){
+    const carCtl = getEffectiveStat(carrier.control,carrier.team,'control');
+    const win = 0.34 + (myCtl-carCtl)*0.6;      // ~34% base, tilted by control gap (lets attacks build)
+    if(Math.random() < win){
+      // knock the ball toward the tackler / into space ahead of them
+      const ang = Math.atan2((p.y-carrier.y), (p.x-carrier.x)) + (Math.random()-0.5)*0.5;
+      ball.vx = Math.cos(ang)*100 + p.vx*0.3;
+      ball.vy = Math.sin(ang)*100 + p.vy*0.3;
+      ball.owner=null; ballOwner=null; ownerGrace=0.12; carrier.kickCd=0.3;
+      spawnKickParticles(ball.x, ball.y, p.color);
+      shake = Math.max(shake, 6);
+      return true;
+    }
+    return false;
+  }
+  // loose ball right at our feet: gather it
+  if(!carrier && Math.hypot(ball.vx,ball.vy) < TRAP_SPEED){ ballOwner = p; return true; }
+  return false;
 }
 
 function moveToward(p, tx, ty, dt, spdMul){
   const dx=tx-p.x, dy=ty-p.y;
   const d=Math.hypot(dx,dy)||1;
-  const acc = 900 * spdMul * (0.7 + p.speed*0.6);
+  const acc = 580 * spdMul * (0.7 + getEffectiveStat(p.speed, p.team, 'speed')*0.6);
   if(d>4){
     p.vx += (dx/d)*acc*dt;
     p.vy += (dy/d)*acc*dt;
   }
+}
+// AIM ASSIST: return a unit-ish vector toward the best-open corner of the enemy goal.
+// Picks whichever post the keeper is furthest from, so an idle-direction kick still
+// threatens the goal. Used for the human kick when no steering key is held.
+function aimAssistToGoal(p){
+  const enemyGoalX = p.team==='you' ? FIELD.w : 0;
+  const gk = players.find(o=>o.team!==p.team && o.gk);
+  const topC = goalTop + 26, botC = goalBot - 26;
+  // aim away from the keeper's y; if no keeper, aim at whichever corner is nearer p's line
+  let aimY;
+  if(gk){ aimY = (Math.abs(gk.y-topC) >= Math.abs(gk.y-botC)) ? topC : botC; }
+  else { aimY = (p.y < (goalTop+goalBot)/2) ? topC : botC; }
+  return { x: enemyGoalX - p.x, y: aimY - p.y };
+}
+
+// Pick a teammate who is clearly further up the pitch and reasonably open (no rival
+// tight to the passing lane). Returns null if dribbling/shooting is better.
+function bestPassTarget(p, enemyGoalX, attackDir){
+  let best=null, bestScore=0;
+  for(const m of players){
+    if(m===p || m.team!==p.team || m.gk) continue;
+    const forward = (m.x - p.x)*attackDir;       // how much further up-pitch
+    if(forward < 55) continue;                    // only forward passes
+    const dist = Math.hypot(m.x-p.x, m.y-p.y);
+    if(dist < 60 || dist > 420) continue;
+    // openness: nearest rival to the receiver
+    let tight = 1e9;
+    for(const o of players){ if(o.team===p.team) continue;
+      const od=Math.hypot(o.x-m.x, o.y-m.y); if(od<tight) tight=od; }
+    if(tight < 46) continue;                       // marked → not a good option
+    const score = forward*1.2 + tight*0.4 - Math.abs(m.y-p.y)*0.2;
+    if(score>bestScore){ bestScore=score; best=m; }
+  }
+  return best;
 }
 
 // ------------------------------------------------------------------
@@ -559,33 +1354,75 @@ function update(dt){
   // AI
   if(state==='play') aiUpdate(dt);
 
+  // keep the human on the most relevant defender while defending (manual switch still wins)
+  if(state==='play' && !watchOn) autoSwitchDefense();
+
   // USER movement
   if(state==='play' && userControlled){
     const p=userControlled;
     let dx=keyDirX(), dy=keyDirY();
-    const mag=Math.hypot(dx,dy);
+    let mag=Math.hypot(dx,dy);
+    const manualInput = mag>0;
+
+    // AUTO-ASSIST steer: with no manual key held, drive toward the ball (leading it a touch)
+    // so the player always closes down the ball. Manual keys instantly override this frame.
+    if(autoAssist && !manualInput){
+      const lead=0.14;
+      let ax=(ball.x + ball.vx*lead) - p.x, ay=(ball.y + ball.vy*lead) - p.y;
+      const am=Math.hypot(ax,ay);
+      if(am>6){ dx=ax/am; dy=ay/am; mag=1; }
+    }
+
     const sprinting = (keys['shift']) && stamina>0.02 && mag>0;
-    const baseAcc = 1250 * (0.7 + p.speed*0.6);
-    const acc = baseAcc * (sprinting?1.7:1.0);
-    if(mag>0){ p.vx += dx/mag*acc*dt; p.vy += dy/mag*acc*dt; }
-    if(sprinting){ stamina = Math.max(0, stamina - dt*0.45); }
-    else { stamina = Math.min(1, stamina + dt*0.28); }
+    // snappier acceleration for a responsive, in-command feel
+    const baseAcc = 1180 * (0.72 + getEffectiveStat(p.speed, p.team, 'speed')*0.6);
+    const acc = baseAcc * (sprinting?1.7:1.0) * (p.surgeT>0?1.4:1.0);
+    if(mag>0){
+      const ux=dx/mag, uy=dy/mag;
+      // TURN ASSIST: bleed off velocity pointing AGAINST the new input so direction
+      // changes bite immediately instead of skating on old momentum (kills the "icy" feel).
+      const vDot = p.vx*ux + p.vy*uy;               // current speed along the desired dir
+      if(vDot < 0){ p.vx -= ux*vDot*0.85; p.vy -= uy*vDot*0.85; }
+      p.vx += ux*acc*dt; p.vy += uy*acc*dt;
+    }
+    // stamina: 'engine' skill drains slower and recovers faster (YOU team)
+    const stamMul = 1 + getEffectiveStat(0, p.team, 'stamina'); // 1 + boost
+    if(sprinting){ stamina = Math.max(0, stamina - dt*0.45/stamMul); }
+    else { stamina = Math.min(1, stamina + dt*0.28*stamMul); }
+  }
+
+  // AUTO-ASSIST auto-kick: fire a shot/pass when the controlled player is on the ball
+  // and it makes sense (in range + not machine-gunning). Uses the same weighted strike
+  // model as the manual kick so it feels identical, just triggered for you.
+  if(state==='play' && autoAssist && userControlled && !watchOn){
+    if(autoKickCd>0) autoKickCd -= dt;
+    autoAssistKick(dt);
   }
 
   // integrate players
-  const maxSpeed = 260;
+  // TEMPO: player top speed reduced to ~63% of the old 260 for a calmer, readable pace.
+  const maxSpeed = 164;
   for(const p of players){
     if(p.kickCd>0) p.kickCd-=dt;
+    if(p.tackleCd>0) p.tackleCd-=dt;
+    if(p.kickAnim>0) p.kickAnim-=dt;
+    if(p.capCd>0) p.capCd-=dt;
+    if(p.surgeT>0) p.surgeT-=dt;
+    if(p.surgeFlash>0) p.surgeFlash-=dt;
     // friction
     p.vx *= 0.86; p.vy *= 0.86;
     const sp=Math.hypot(p.vx,p.vy);
-    let cap = maxSpeed*(0.75+p.speed*0.5);
+    let cap = maxSpeed*(0.75+getEffectiveStat(p.speed, p.team, 'speed')*0.5);
     if(p===userControlled && keys['shift'] && stamina>0.02) cap*=1.35;
+    if(p.surgeT>0) cap*=SURGE_SPD_MUL;   // captain SURGE burst of pace
     if(sp>cap){ p.vx=p.vx/sp*cap; p.vy=p.vy/sp*cap; }
     p.x += p.vx*dt; p.y += p.vy*dt;
     // bounds
     p.x=Math.max(p.r, Math.min(FIELD.w-p.r, p.x));
     p.y=Math.max(p.r, Math.min(FIELD.h-p.r, p.y));
+    // facing + run-cycle animation (cartoon body)
+    if(sp>18){ p.face = Math.atan2(p.vy, p.vx); p.anim += dt*(6 + sp*0.03); }
+    else { p.anim += dt*1.2; }
     // trail
     p.trail.push({x:p.x,y:p.y});
     if(p.trail.length>8) p.trail.shift();
@@ -606,28 +1443,104 @@ function update(dt){
     }
   }
 
-  // BALL physics
-  ball.vx *= 0.985; ball.vy *= 0.985;
-  if(Math.hypot(ball.vx,ball.vy)<0.4){ ball.vx*=0.9; ball.vy*=0.9; }
-  ball.x += ball.vx; ball.y += ball.vy;
+  // ── BALL PHYSICS (dt-integrated, units/second) ──
+  if(ownerGrace>0) ownerGrace-=dt;
+  // if the current owner strayed (got tackled / ball kicked away), drop ownership
+  if(ballOwner){
+    const od = Math.hypot(ball.x-ballOwner.x, ball.y-ballOwner.y);
+    if(ballOwner.gk || od > ballOwner.r+ball.r+34) ballOwner = null;
+  }
+
+  if(ballOwner){
+    // CLOSE CONTROL / DRIBBLE — the carrier keeps the ball just ahead of their feet.
+    const p = ballOwner;
+    const sp = Math.hypot(p.vx,p.vy);
+    let dirx = p.vx, diry = p.vy;
+    if(sp < 8){ dirx = Math.cos(p.face); diry = Math.sin(p.face); }     // stand still: hold it in front
+    const dm = Math.hypot(dirx,diry)||1; dirx/=dm; diry/=dm;
+    const sprinting = (p===userControlled && keys['shift'] && stamina>0.02) || p.surgeT>0;
+    const gap = p.r + ball.r + (sprinting ? DRIBBLE_SPRINT_GAP : DRIBBLE_GAP);
+    const tX = p.x + dirx*gap, tY = p.y + diry*gap;
+    // spring the ball toward the control point — responsive but not glued/teleporty
+    const follow = Math.min(1, dt*22);
+    ball.x += (tX-ball.x)*follow;
+    ball.y += (tY-ball.y)*follow;
+    ball.vx = p.vx; ball.vy = p.vy; ball.spin = 0;
+    ball.face = p.face;
+  } else {
+    // LOOSE BALL — roll with weighty friction; curve if it has spin.
+    let sp = Math.hypot(ball.vx,ball.vy);
+    if(sp>0){
+      // curve (magnus): accel perpendicular to travel, scaled by spin
+      if(Math.abs(ball.spin)>0.01){
+        const nx=-ball.vy/sp, ny=ball.vx/sp;
+        ball.vx += nx*ball.spin*BALL_SPIN_FORCE*dt;
+        ball.vy += ny*ball.spin*BALL_SPIN_FORCE*dt;
+        ball.spin -= ball.spin*Math.min(1,BALL_SPIN_DECAY*dt);
+      }
+      // rolling friction: decelerate proportional to speed (weighty, natural)
+      const dec = BALL_FRICTION*dt;
+      const nsp = Math.max(0, sp - dec*sp - 0.4*dec*Math.sqrt(sp));
+      if(nsp<=BALL_MIN_SPEED){ ball.vx=0; ball.vy=0; ball.spin=0; }
+      else { const k=nsp/sp; ball.vx*=k; ball.vy*=k; }
+    }
+    // clamp
+    sp = Math.hypot(ball.vx,ball.vy);
+    if(sp>BALL_MAX_SPEED){ const k=BALL_MAX_SPEED/sp; ball.vx*=k; ball.vy*=k; }
+    ball.x += ball.vx*dt; ball.y += ball.vy*dt;
+  }
 
   // trail
   ball.trail.push({x:ball.x,y:ball.y});
   if(ball.trail.length>12) ball.trail.shift();
 
-  // ball vs players (dribble / bounce)
-  for(const p of players){
-    const dx=ball.x-p.x, dy=ball.y-p.y; let d=Math.hypot(dx,dy);
-    const min=p.r+ball.r;
-    if(d<min && d>0){
-      const nx=dx/d, ny=dy/d;
-      ball.x=p.x+nx*min; ball.y=p.y+ny*min;
-      const rel = (ball.vx*nx+ball.vy*ny);
-      // reflect ball off player + impart some of player's motion
-      ball.vx = ball.vx - rel*nx*1.2 + p.vx*0.06;
-      ball.vy = ball.vy - rel*ny*1.2 + p.vy*0.06;
-      // gentle nudge so it doesn't stick
-      ball.vx += nx*0.8; ball.vy += ny*0.8;
+  // ── BALL vs PLAYERS: trap loose balls, or carom off bodies cleanly (no stick/jitter) ──
+  if(!ballOwner){
+    // pick the closest player within trap reach who is eligible to gather it
+    let trapper=null, tbd=1e9;
+    for(const p of players){
+      if(ownerGrace>0 && p.kickCd>0) continue;               // striker's brief no-retrap window
+      const d=Math.hypot(ball.x-p.x, ball.y-p.y);
+      const reach = p.r+ball.r+ (p===userControlled? TRAP_RANGE : (p.gk?18:14));
+      if(d<reach && d<tbd){ tbd=d; trapper=p; }
+    }
+    const bs = Math.hypot(ball.vx,ball.vy);
+    if(trapper){
+      const facingOk = true;
+      if(bs <= TRAP_SPEED){
+        // FIRST TOUCH — gather it under control (spring handles positioning next frame)
+        if(!(trapper===userControlled && charging)){
+          ballOwner = trapper;
+        }
+      } else {
+        // too hot to trap: a deflected first touch that kills some pace, stays near
+        const d=Math.hypot(ball.x-trapper.x,ball.y-trapper.y)||1;
+        const nx=(ball.x-trapper.x)/d, ny=(ball.y-trapper.y)/d;
+        ball.x=trapper.x+nx*(trapper.r+ball.r+2); ball.y=trapper.y+ny*(trapper.r+ball.r+2);
+        const rel=ball.vx*nx+ball.vy*ny;
+        const ctl=getEffectiveStat(trapper.control,trapper.team,'control');
+        const keep = 0.28 - ctl*0.12;            // better control = softer, closer deflection
+        ball.vx = (ball.vx - rel*nx)*0.5 + nx*bs*keep*0.3 + trapper.vx*0.2;
+        ball.vy = (ball.vy - rel*ny)*0.5 + ny*bs*keep*0.3 + trapper.vy*0.2;
+        ball.spin*=0.4;
+      }
+    } else {
+      // no one gathering — resolve any body overlap as a clean bounce
+      for(const p of players){
+        const dx=ball.x-p.x, dy=ball.y-p.y; let d=Math.hypot(dx,dy);
+        const min=p.r+ball.r;
+        if(d<min && d>0){
+          const nx=dx/d, ny=dy/d;
+          ball.x=p.x+nx*min; ball.y=p.y+ny*min;
+          const rel=ball.vx*nx+ball.vy*ny;
+          if(rel<0){ // moving into the body → reflect
+            ball.vx -= (1+BALL_PLAYER_BOUNCE)*rel*nx;
+            ball.vy -= (1+BALL_PLAYER_BOUNCE)*rel*ny;
+          }
+          ball.vx += p.vx*0.25; ball.vy += p.vy*0.25;   // carry some of the body's motion
+          ball.spin*=0.5;
+        }
+      }
     }
   }
 
@@ -643,10 +1556,10 @@ function update(dt){
   // update user selection
   if(state==='play') autoSelectUser();
 
-  // particles
+  // particles (field-space, dt-integrated)
   for(let i=particles.length-1;i>=0;i--){
     const pt=particles[i];
-    pt.x+=pt.vx; pt.y+=pt.vy; pt.vx*=0.92; pt.vy*=0.92; pt.life-=dt;
+    pt.fx+=pt.vx*dt; pt.fy+=pt.vy*dt; pt.vx*=0.90; pt.vy*=0.90; pt.life-=dt;
     if(pt.life<=0) particles.splice(i,1);
   }
   for(let i=confetti.length-1;i>=0;i--){
@@ -664,17 +1577,18 @@ function update(dt){
 
 function handleBallBounds(){
   const topWall = 0, botWall = FIELD.h, leftWall=0, rightWall=FIELD.w;
-  if(ball.y-ball.r<topWall){ ball.y=topWall+ball.r; ball.vy=-ball.vy*0.7; }
-  if(ball.y+ball.r>botWall){ ball.y=botWall-ball.r; ball.vy=-ball.vy*0.7; }
+  const R=BALL_WALL_BOUNCE;
+  if(ball.y-ball.r<topWall){ ball.y=topWall+ball.r; ball.vy=-ball.vy*R; ball.spin*=0.6; if(ballOwner)ballOwner=null; }
+  if(ball.y+ball.r>botWall){ ball.y=botWall-ball.r; ball.vy=-ball.vy*R; ball.spin*=0.6; if(ballOwner)ballOwner=null; }
   // left side: goal region or wall
   if(ball.x-ball.r<leftWall){
     if(ball.y>goalTop && ball.y<goalBot){ goal('opp'); return; }
-    else { ball.x=leftWall+ball.r; ball.vx=-ball.vx*0.7; }
+    else { ball.x=leftWall+ball.r; ball.vx=-ball.vx*R; ball.spin*=0.6; if(ballOwner)ballOwner=null; }
   }
   // right side: goal region or wall
   if(ball.x+ball.r>rightWall){
     if(ball.y>goalTop && ball.y<goalBot){ goal('you'); return; }
-    else { ball.x=rightWall-ball.r; ball.vx=-ball.vx*0.7; }
+    else { ball.x=rightWall-ball.r; ball.vx=-ball.vx*R; ball.spin*=0.6; if(ballOwner)ballOwner=null; }
   }
 }
 
@@ -688,7 +1602,7 @@ function goal(scorer){
   state='celebrate';
   celebrateTimer = 1.8;
   shake = 22;
-  ball.vx*=0.2; ball.vy*=0.2;
+  ball.vx*=0.2; ball.vy*=0.2; ball.spin=0; ballOwner=null;
   spawnConfetti(scorer==='you'?selectedAgent.color:'#ff5a7a');
 }
 
@@ -714,14 +1628,27 @@ function endMatch(){
 // SCORE POSTING
 // ------------------------------------------------------------------
 function postScore(score){
+  const pickedIds = skillPicked.map(i=>ALL_SKILL_DEFS[i] && ALL_SKILL_DEFS[i].id).filter(Boolean);
   try{
     window.parent.postMessage({type:'shaddai-game-score', game:'soccer', score:score}, '*');
+  }catch(e){}
+  // FRANCHISE HOOK (out): structured match result for a future franchise layer.
+  // No-op-safe — just an extra postMessage nobody has to listen to.
+  try{
+    window.parent.postMessage({
+      type:'shaddai-soccer-result',
+      game:'soccer',
+      captain:selectedAgent.id,
+      you:scoreYou, opp:scoreOpp,
+      win: scoreYou>scoreOpp, draw: scoreYou===scoreOpp,
+      teamSize:teamSize, skills:pickedIds
+    }, '*');
   }catch(e){}
   try{
     fetch('/api/leaderboard/soccer', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ game:'soccer', captain:selectedAgent.id, score:score, opponent:scoreOpp })
+      body:JSON.stringify({ game:'soccer', captain:selectedAgent.id, score:score, opponent:scoreOpp, skills:pickedIds })
     }).catch(()=>{});
   }catch(e){}
 }
@@ -729,17 +1656,22 @@ function postScore(score){
 // ------------------------------------------------------------------
 // PARTICLES
 // ------------------------------------------------------------------
+// particles live in FIELD space (fx,fy) so they project correctly in perspective.
 function spawnKickParticles(x,y,color){
-  for(let i=0;i<8;i++){
-    const a=Math.random()*Math.PI*2, s=1+Math.random()*3;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.4+Math.random()*0.3,color});
+  let n=8;
+  if(particles.length+n>MAX_PARTICLES) n=Math.max(0, MAX_PARTICLES-particles.length);
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=18+Math.random()*40;   // field-units/sec
+    particles.push({fx:x,fy:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.4+Math.random()*0.3,color});
   }
 }
+// confetti bursts at field-center; x/y are small screen-space offsets around the projected point.
 function spawnConfetti(color){
   const cols=[color,'#2de6ff','#ffd35c','#38ffb0','#ffffff'];
   for(let i=0;i<70;i++){
     confetti.push({
-      x:FIELD.w/2+(Math.random()-0.5)*200, y:FIELD.h/2+(Math.random()-0.5)*120,
+      fx:FIELD.w/2, fy:FIELD.h*0.55,
+      x:(Math.random()-0.5)*260, y:-40-Math.random()*90,
       vx:(Math.random()-0.5)*10, vy:-4-Math.random()*7,
       rot:Math.random()*6, vr:(Math.random()-0.5)*0.4,
       w:4+Math.random()*5, h:6+Math.random()*7,
@@ -751,49 +1683,32 @@ function spawnConfetti(color){
 // ------------------------------------------------------------------
 // CAMERA
 // ------------------------------------------------------------------
-// Update smoothed chase-cam target each frame (called from update()).
+// Update smoothed camera each frame (called from update()). The perspective
+// is applied inside proj(); here we only smooth the CHASE zoom/pan + view flip.
+//  view 0 SIDELINE : full broadcast pitch, no flip, no zoom
+//  view 1 OPPONENT : depth axis mirrored (camFlip=-1) → you look back from the far end
+//  view 2 CHASE    : zoom in on the controlled player (screen-space zoom about focus)
 function updateCamera(dt){
   if(viewFlash>0) viewFlash = Math.max(0, viewFlash - dt);
-  // desired focus + zoom per view
-  let tX, tY, tZ;
-  if(cameraView===2 && userControlled){
-    // CHASE: tuck the camera slightly behind the player toward the enemy goal,
-    // biased toward the ball so the action stays on screen.
-    const p = userControlled;
-    const fx = p.x*0.6 + ball.x*0.4;
-    const fy = p.y*0.6 + ball.y*0.4;
-    tX = fx + 70;          // look a bit ahead (enemy goal is to the right)
-    tY = fy;
-    tZ = 2.05;             // zoomed-in "first-person-style" chase
+  if(autoFlash>0) autoFlash = Math.max(0, autoFlash - dt);
+  // view flip is instantaneous (proj reads camFlip); zoom/pan smooth toward target
+  let tZ, tPX, tPY;
+  if(cameraView===2 && (userControlled || watchOn)){
+    const fp = userControlled || ballOwner || {x:ball.x, y:ball.y};
+    const fx = fp.x*0.55 + ball.x*0.45;
+    const fy = fp.y*0.55 + ball.y*0.45;
+    const sp = proj(fx, fy);   // note: proj uses current camZoomP; fine as a target seed
+    tZ = 1.9;
+    tPX = sp.x; tPY = sp.y;
   } else {
-    tX = FIELD.w/2; tY = FIELD.h/2; tZ = 1;
+    tZ = 1; tPX = cv.width/2; tPY = cv.height/2;
   }
-  // smooth
-  const k = cameraView===2 ? Math.min(1, dt*9) : Math.min(1, dt*7);
-  camX += (tX-camX)*k; camY += (tY-camY)*k; camZoom += (tZ-camZoom)*k;
-}
-
-// Apply the active camera as a ctx transform (already in field space, post base scale).
-function applyCamera(){
-  const cw = FIELD.w, ch = FIELD.h;
-  if(cameraView===1){
-    // OPPONENT VIEW: rotate the whole pitch 180° about its center so the enemy
-    // goal is at the bottom of the screen and you're viewing back toward yourself.
-    ctx.translate(cw/2, ch/2);
-    ctx.rotate(Math.PI);
-    ctx.translate(-cw/2, -ch/2);
-  } else if(cameraView===2){
-    // CHASE CAM: zoom in on the controlled player, clamped so we never show
-    // past the pitch edges (keeps it readable/stable).
-    const z = camZoom;
-    const halfW = cw/(2*z), halfH = ch/(2*z);
-    const fx = Math.max(halfW, Math.min(cw-halfW, camX));
-    const fy = Math.max(halfH, Math.min(ch-halfH, camY));
-    ctx.translate(cw/2, ch/2);
-    ctx.scale(z, z);
-    ctx.translate(-fx, -fy);
-  }
-  // cameraView===0 : identity (default sideline view)
+  const k = Math.min(1, dt*8);
+  camZoomP += (tZ - camZoomP)*k;
+  camPanX  += (tPX - camPanX)*k;
+  camPanY  += (tPY - camPanY)*k;
+  if(Math.abs(camZoomP-1) < 0.004) camZoomP = 1;   // snap to identity to avoid drift
+  camFlip = (cameraView===1) ? -1 : 1;
 }
 
 // ------------------------------------------------------------------
@@ -806,49 +1721,63 @@ function draw(){
   shakeX = shake>0 ? (Math.random()-0.5)*shake : 0;
   shakeY = shake>0 ? (Math.random()-0.5)*shake : 0;
 
-  ctx.save();
-  ctx.translate((offX+shakeX)*scale, (offY+shakeY)*scale);
-  ctx.scale(scale,scale);
-  applyCamera();   // <-- view transform (default / opponent-flip / chase-zoom)
-
+  // ALL world art is drawn directly in SCREEN space via proj() — no ctx transform.
   drawPitch();
-  drawGoals();
+  drawGoalNet('far');      // far goal net behind everything
 
-  // ball shadow
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.35)';
-  ctx.beginPath(); ctx.ellipse(ball.x+4, ball.y+7, ball.r*0.9, ball.r*0.45, 0,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  // ball trail
+  // ball ground shadow (projected; foreshortened ellipse at the ball's field pos)
+  {
+    const bp = proj(ball.x, ball.y);
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(bp.x+4*bp.s, bp.y+3*bp.s, BALL_R*bp.s*0.95, BALL_R*bp.s*0.5, 0,0,Math.PI*2);
+    ctx.fill(); ctx.restore();
+  }
+  // ball trail (projected)
   for(let i=0;i<ball.trail.length;i++){
-    const t=ball.trail[i], al=i/ball.trail.length*0.35;
+    const t=ball.trail[i], tp=proj(t.x,t.y), al=i/ball.trail.length*0.35;
     ctx.fillStyle=`rgba(255,255,255,${al})`;
-    ctx.beginPath(); ctx.arc(t.x,t.y,ball.r*(i/ball.trail.length),0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tp.x,tp.y,BALL_R*tp.s*(i/ball.trail.length),0,Math.PI*2); ctx.fill();
   }
 
-  for(const p of players) drawPlayer(p);
-  drawBall();
+  // DEPTH SORT — draw far (small field-y) first so nearer players overlap them.
+  // OPPONENT view mirrors the depth axis, so the order flips.
+  drawOrder.length = 0;
+  for(let i=0;i<players.length;i++) drawOrder[i]=players[i];
+  drawOrder.sort(cameraView===1 ? sortByYDesc : sortByYAsc);
+  // interleave the ball by its own depth so it can sit in front of / behind bodies
+  const ballDepth = ball.y;
+  let ballDrawn = false;
+  for(let i=0;i<drawOrder.length;i++){
+    const pd = drawOrder[i].y;
+    const nearer = cameraView===1 ? (pd < ballDepth) : (pd > ballDepth);
+    if(!ballDrawn && nearer){ drawBall(); ballDrawn = true; }
+    drawPlayer(drawOrder[i]);
+  }
+  if(!ballDrawn) drawBall();
 
-  // particles
+  drawGoalNet('near');     // near goal posts drawn over players for depth
+
+  // particles (projected)
   for(const pt of particles){
+    const pp = proj(pt.fx!==undefined?pt.fx:pt.x, pt.fy!==undefined?pt.fy:pt.y);
     ctx.globalAlpha=Math.max(0,pt.life);
     ctx.fillStyle=pt.color;
-    ctx.beginPath(); ctx.arc(pt.x,pt.y,2.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(pp.x,pp.y,2.4*pp.s,0,Math.PI*2); ctx.fill();
   }
   ctx.globalAlpha=1;
 
-  // confetti
+  // confetti (projected to the field center burst)
   for(const c of confetti){
+    const cp = proj(c.fx!==undefined?c.fx:FIELD.w/2, c.fy!==undefined?c.fy:FIELD.h/2);
     ctx.save();
     ctx.globalAlpha=Math.min(1,c.life);
-    ctx.translate(c.x,c.y); ctx.rotate(c.rot);
-    ctx.fillStyle=c.color; ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h);
+    ctx.translate(cp.x + (c.x||0)*cp.s, cp.y + (c.y||0)*cp.s); ctx.rotate(c.rot);
+    ctx.fillStyle=c.color; ctx.fillRect(-c.w/2*cp.s,-c.h/2*cp.s,c.w*cp.s,c.h*cp.s);
     ctx.restore();
   }
   ctx.globalAlpha=1;
-
-  ctx.restore();
 
   drawHUD();
 
@@ -863,108 +1792,428 @@ function draw(){
   }
 }
 
+// helper: stroke a straight field line between two field points (perspective-correct
+// because both endpoints are individually projected — a straight line stays straight).
+function fLine(x0,y0,x1,y1){
+  const a=proj(x0,y0), b=proj(x1,y1);
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+}
+// fill a field-space quad (4 corners) — used for the pitch body and mow stripes.
+function fQuad(pts, style){
+  ctx.fillStyle=style; ctx.beginPath();
+  const p0=proj(pts[0][0],pts[0][1]); ctx.moveTo(p0.x,p0.y);
+  for(let i=1;i<pts.length;i++){ const p=proj(pts[i][0],pts[i][1]); ctx.lineTo(p.x,p.y); }
+  ctx.closePath(); ctx.fill();
+}
+// draw a field-space arc (circle/penalty arc) by sampling points and projecting each.
+function fArc(cx,cy,r,a0,a1){
+  ctx.beginPath();
+  const N=40;
+  for(let i=0;i<=N;i++){
+    const a=a0+(a1-a0)*i/N;
+    const p=proj(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+  }
+  ctx.stroke();
+}
+
 function drawPitch(){
-  const g=ctx.createLinearGradient(0,0,0,FIELD.h);
-  g.addColorStop(0,'#0d2438'); g.addColorStop(1,'#091a2a');
-  ctx.fillStyle=g; ctx.fillRect(0,0,FIELD.w,FIELD.h);
-  const stripes=12, sw=FIELD.w/stripes;
-  for(let i=0;i<stripes;i++){
-    ctx.fillStyle = i%2===0 ? 'rgba(45,230,255,0.03)' : 'rgba(45,230,255,0.06)';
-    ctx.fillRect(i*sw,0,sw,FIELD.h);
+  const W=cv.width, Hh=cv.height;
+  // --- sky / stands haze above the horizon ---
+  const sky=ctx.createLinearGradient(0,0,0,horizonY+40);
+  sky.addColorStop(0,'#05070d'); sky.addColorStop(0.6,'#081522'); sky.addColorStop(1,'#0c2033');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,horizonY+40);
+  // horizon glow so far touchline separates from the stands
+  const hg=ctx.createLinearGradient(0,horizonY-30,0,horizonY+30);
+  hg.addColorStop(0,'rgba(45,230,255,0)'); hg.addColorStop(0.5,'rgba(45,230,255,0.14)'); hg.addColorStop(1,'rgba(45,230,255,0)');
+  ctx.fillStyle=hg; ctx.fillRect(0,horizonY-30,W,60);
+  // ground fill below (dark base beneath the trapezoid)
+  ctx.fillStyle='#061019'; ctx.fillRect(0,horizonY,W,Hh-horizonY);
+
+  // --- PITCH TRAPEZOID body (near = wide/low, far = narrow/high) ---
+  const near=ctx.createLinearGradient(0,horizonY,0,baseY);
+  near.addColorStop(0,'#0a1d2e'); near.addColorStop(1,'#0e2b42');
+  fQuad([[0,0],[FIELD.w,0],[FIELD.w,FIELD.h],[0,FIELD.h]], near);
+  // vignette gradient overlay for depth (darker far)
+  // mowed stripes across the DEPTH axis (bands of field-y) — perspective-correct
+  const bands=14, bh=FIELD.h/bands;
+  for(let i=0;i<bands;i++){
+    const y0=i*bh, y1=y0+bh;
+    fQuad([[0,y0],[FIELD.w,y0],[FIELD.w,y1],[0,y1]],
+      i%2===0 ? 'rgba(45,230,255,0.028)' : 'rgba(45,230,255,0.058)');
   }
-  ctx.strokeStyle='rgba(45,230,255,0.55)'; ctx.lineWidth=3;
-  ctx.strokeRect(0,0,FIELD.w,FIELD.h);
-  ctx.beginPath(); ctx.moveTo(FIELD.w/2,0); ctx.lineTo(FIELD.w/2,FIELD.h); ctx.stroke();
-  ctx.beginPath(); ctx.arc(FIELD.w/2,FIELD.h/2,80,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(FIELD.w/2,FIELD.h/2,4,0,Math.PI*2); ctx.fillStyle='rgba(45,230,255,0.6)'; ctx.fill();
-  const boxW=110, boxH=300, boxY=(FIELD.h-boxH)/2;
-  ctx.strokeRect(0,boxY,boxW,boxH);
-  ctx.strokeRect(FIELD.w-boxW,boxY,boxW,boxH);
-  const sixW=44, sixH=170, sixY=(FIELD.h-sixH)/2;
-  ctx.strokeRect(0,sixY,sixW,sixH);
-  ctx.strokeRect(FIELD.w-sixW,sixY,sixW,sixH);
+
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  // line width scales gently with average depth so far lines look thinner — use per-line s
+  // outer boundary (touchlines + goal lines)
+  ctx.strokeStyle='rgba(45,230,255,0.6)'; ctx.lineWidth=3;
+  fLine(0,0, FIELD.w,0);            // far touchline
+  fLine(0,FIELD.h, FIELD.w,FIELD.h);// near touchline
+  fLine(0,0, 0,FIELD.h);            // left goal line
+  fLine(FIELD.w,0, FIELD.w,FIELD.h);// right goal line
+  // halfway line (runs across depth at x = w/2)
+  ctx.strokeStyle='rgba(45,230,255,0.5)'; ctx.lineWidth=2.4;
+  fLine(FIELD.w/2,0, FIELD.w/2,FIELD.h);
+  // center circle + spot (radius ~80 field units)
+  fArc(FIELD.w/2, FIELD.h/2, 80, 0, Math.PI*2);
+  { const cp=proj(FIELD.w/2,FIELD.h/2); ctx.fillStyle='rgba(45,230,255,0.6)';
+    ctx.beginPath(); ctx.arc(cp.x,cp.y,3.2*cp.s,0,Math.PI*2); ctx.fill(); }
+
+  // penalty boxes + six-yard boxes (both ends), drawn as projected rectangles
+  const boxW=110, boxH=300, boxY0=(FIELD.h-boxH)/2, boxY1=boxY0+boxH;
+  const sixW=44, sixH=170, sixY0=(FIELD.h-sixH)/2, sixY1=sixY0+sixH;
+  ctx.strokeStyle='rgba(45,230,255,0.5)'; ctx.lineWidth=2.2;
+  function boxAt(gx, w){   // gx = goal-line x (0 or FIELD.w), w = box depth into pitch
+    const inX = gx===0 ? w : FIELD.w-w;
+    fLine(gx, boxY0, inX, boxY0);
+    fLine(gx, boxY1, inX, boxY1);
+    fLine(inX, boxY0, inX, boxY1);
+  }
+  boxAt(0, boxW); boxAt(FIELD.w, boxW);
+  function sixAt(gx){ const w=sixW; const inX = gx===0 ? w : FIELD.w-w;
+    fLine(gx, sixY0, inX, sixY0); fLine(gx, sixY1, inX, sixY1); fLine(inX, sixY0, inX, sixY1); }
+  sixAt(0); sixAt(FIELD.w);
+  // penalty spots + arcs (arc opens toward the pitch)
+  ctx.lineWidth=2;
+  const penX0=88, penX1=FIELD.w-88;
+  { const p=proj(penX0,FIELD.h/2); ctx.fillStyle='rgba(45,230,255,0.55)'; ctx.beginPath(); ctx.arc(p.x,p.y,2.6*p.s,0,Math.PI*2); ctx.fill(); }
+  { const p=proj(penX1,FIELD.h/2); ctx.fillStyle='rgba(45,230,255,0.55)'; ctx.beginPath(); ctx.arc(p.x,p.y,2.6*p.s,0,Math.PI*2); ctx.fill(); }
+  fArc(penX0, FIELD.h/2, 74, -1.05, 1.05);              // left arc opens right
+  fArc(penX1, FIELD.h/2, 74, Math.PI-1.05, Math.PI+1.05); // right arc opens left
 }
 
-function drawGoals(){
-  ctx.save();
-  ctx.lineWidth=4;
-  ctx.strokeStyle='rgba(45,230,255,0.9)';
-  ctx.fillStyle='rgba(45,230,255,0.10)';
-  ctx.fillRect(-GOAL_DEPTH,goalTop,GOAL_DEPTH,GOAL_H);
-  ctx.strokeRect(-GOAL_DEPTH,goalTop,GOAL_DEPTH,GOAL_H);
-  ctx.strokeStyle='rgba(255,90,122,0.9)';
-  ctx.fillStyle='rgba(255,90,122,0.10)';
-  ctx.fillRect(FIELD.w,goalTop,GOAL_DEPTH,GOAL_H);
-  ctx.strokeRect(FIELD.w,goalTop,GOAL_DEPTH,GOAL_H);
-  ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.15)';
-  for(let y=goalTop;y<goalBot;y+=10){
-    ctx.beginPath(); ctx.moveTo(-GOAL_DEPTH,y); ctx.lineTo(0,y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(FIELD.w,y); ctx.lineTo(FIELD.w+GOAL_DEPTH,y); ctx.stroke();
-  }
-  ctx.restore();
+// A goal is a real 3D frame: two upright posts (crossbar height GOAL_UP above the
+// turf), a crossbar, and a net that recedes GOAL_DEPTH behind the goal line.
+// The goal mouth spans the DEPTH axis (field-y goalTop..goalBot) so nearer post
+// projects larger than the far post — reads as true perspective.
+const GOAL_UP = 118;          // crossbar height above the pitch (field units, drawn UP screen)
+// raise a projected field point by 'up' pitch-units (scaled by depth so posts foreshorten)
+function projUp(fx, fy, up){ const p=proj(fx,fy); return { x:p.x, y:p.y - up*p.s, s:p.s }; }
+
+function drawGoalNet(which){
+  // 'far'  = the goal net mesh (behind players)   'near' = the posts/crossbar (over players)
+  drawOneGoal(0,      '#2de6ff', which);   // left goal (YOU defend)
+  drawOneGoal(FIELD.w,'#ff5a7a', which);   // right goal (RIVAL defend)
 }
+function drawOneGoal(gx, col, which){
+  const outX = gx===0 ? gx-GOAL_DEPTH : gx+GOAL_DEPTH;   // back of the net (behind goal line)
+  // four ground corners: front-top, front-bot, back-top, back-bot (in field-y depth)
+  const fT=proj(gx, goalTop),  fB=proj(gx, goalBot);
+  const bT=proj(outX, goalTop),bB=proj(outX, goalBot);
+  // raised (crossbar-height) versions
+  const fTu=projUp(gx, goalTop, GOAL_UP),  fBu=projUp(gx, goalBot, GOAL_UP);
+  const bTu=projUp(outX, goalTop, GOAL_UP),bBu=projUp(outX, goalBot, GOAL_UP);
 
-function drawPlayer(p){
-  for(let i=0;i<p.trail.length;i++){
-    const t=p.trail[i], al=i/p.trail.length*0.25;
-    ctx.fillStyle=hexA(p.color,al);
-    ctx.beginPath(); ctx.arc(t.x,t.y,p.r*(0.5+i/p.trail.length*0.5),0,Math.PI*2); ctx.fill();
-  }
-  ctx.fillStyle='rgba(0,0,0,0.35)';
-  ctx.beginPath(); ctx.ellipse(p.x+3,p.y+6,p.r*0.95,p.r*0.5,0,0,Math.PI*2); ctx.fill();
-
-  ctx.save();
-  const isUser = (p===userControlled);
-  if(isUser){ ctx.shadowColor=p.color; ctx.shadowBlur=22; }
-  const grad=ctx.createRadialGradient(p.x-4,p.y-4,2,p.x,p.y,p.r);
-  grad.addColorStop(0, lighten(p.color));
-  grad.addColorStop(1, p.color);
-  ctx.fillStyle=grad;
-  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  ctx.lineWidth=2.5;
-  ctx.strokeStyle = p.team==='you' ? 'rgba(255,255,255,0.7)':'rgba(20,10,14,0.6)';
-  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke();
-
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  // keep marker labels upright even in the 180° OPPONENT view
-  const uprightLabel = (txt, style, font)=>{
+  if(which==='far'){
+    // NET — translucent mesh on the back + side + roof panels
     ctx.save();
-    if(cameraView===1){ ctx.translate(p.x,p.y); ctx.rotate(Math.PI); ctx.translate(-p.x,-p.y); }
-    ctx.fillStyle=style; ctx.font=font; ctx.fillText(txt,p.x,p.y);
+    ctx.fillStyle = gx===0 ? 'rgba(45,230,255,0.07)' : 'rgba(255,90,122,0.07)';
+    // back panel
+    ctx.beginPath(); ctx.moveTo(bT.x,bT.y); ctx.lineTo(bB.x,bB.y); ctx.lineTo(bBu.x,bBu.y); ctx.lineTo(bTu.x,bTu.y); ctx.closePath(); ctx.fill();
+    // roof panel
+    ctx.beginPath(); ctx.moveTo(fTu.x,fTu.y); ctx.lineTo(fBu.x,fBu.y); ctx.lineTo(bBu.x,bBu.y); ctx.lineTo(bTu.x,bTu.y); ctx.closePath(); ctx.fill();
+    // net mesh lines
+    ctx.strokeStyle = gx===0 ? 'rgba(45,230,255,0.22)' : 'rgba(255,90,122,0.22)'; ctx.lineWidth=1;
+    const N=7;
+    for(let i=1;i<N;i++){ const t=i/N;
+      // vertical strands on back panel
+      const a={x:bT.x+(bB.x-bT.x)*t,y:bT.y+(bB.y-bT.y)*t};
+      const b={x:bTu.x+(bBu.x-bTu.x)*t,y:bTu.y+(bBu.y-bTu.y)*t};
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    }
+    for(let i=1;i<4;i++){ const t=i/4;
+      const a={x:bT.x+(bTu.x-bT.x)*t,y:bT.y+(bTu.y-bT.y)*t};
+      const b={x:bB.x+(bBu.x-bB.x)*t,y:bB.y+(bBu.y-bB.y)*t};
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    }
     ctx.restore();
-  };
-  if(p.gk){
-    uprightLabel('GK','rgba(0,0,0,0.55)','bold 12px Segoe UI');
-  } else if(p.isCaptain){
-    uprightLabel(selectedAgent.id[0],'#05070d','900 13px Segoe UI');
+    return;
   }
 
+  // which==='near' : the solid FRAME (posts + crossbar + net-depth struts), over players
+  ctx.save();
+  ctx.strokeStyle=col; ctx.lineWidth=Math.max(2.5, 5*fT.s); ctx.lineCap='round';
+  ctx.shadowColor=col; ctx.shadowBlur=10;
+  // two front posts
+  ctx.beginPath(); ctx.moveTo(fT.x,fT.y); ctx.lineTo(fTu.x,fTu.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fB.x,fB.y); ctx.lineTo(fBu.x,fBu.y); ctx.stroke();
+  // crossbar
+  ctx.beginPath(); ctx.moveTo(fTu.x,fTu.y); ctx.lineTo(fBu.x,fBu.y); ctx.stroke();
+  // depth struts to the back frame (thinner)
+  ctx.lineWidth=Math.max(1.5,3*fT.s); ctx.globalAlpha=0.8;
+  ctx.beginPath(); ctx.moveTo(fTu.x,fTu.y); ctx.lineTo(bTu.x,bTu.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fBu.x,fBu.y); ctx.lineTo(bBu.x,bBu.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bTu.x,bTu.y); ctx.lineTo(bBu.x,bBu.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fT.x,fT.y); ctx.lineTo(bT.x,bT.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fB.x,fB.y); ctx.lineTo(bB.x,bB.y); ctx.stroke();
+  ctx.restore();
+}
+
+// ---- FACELESS ARTICULATED HUMAN BODY (matches dodgeball's drawPlayer style):
+//      NO face (no eyes/mouth/brows), real ELBOWS + KNEES that flex, athletic
+//      proportions, team color + jersey number, ground shadow. Adapted to the
+//      soccer top-down field: feet at (p.x, p.y), body drawn upright above it. ----
+function drawPlayer(p){
+  const isUser = (p===userControlled);
+  const pf = proj(p.x, p.y);                    // projected FEET position + depth scale
+  const s  = pf.s;                              // depth scale (nearer = bigger)
+  const u = p.r * 0.92 * s;                     // unit size, foreshortened by depth
+  const faceSign = Math.cos(p.face) >= 0 ? 1 : -1;   // face left/right
+  const speed = Math.hypot(p.vx, p.vy);
+  const gait = Math.min(1, speed/150);          // 0 idle -> 1 sprinting
+  const dark  = tintHex(p.color, 0.55);
+  const lite  = lighten(p.color);
+  const surging = p.surgeT>0;
+
+  // motion trail (projected)
+  for(let i=0;i<p.trail.length;i++){
+    const t=p.trail[i], tp=proj(t.x,t.y), al=i/p.trail.length*0.16;
+    ctx.fillStyle=hexA(p.color,al);
+    ctx.beginPath(); ctx.arc(tp.x,tp.y,p.r*tp.s*(0.35+i/p.trail.length*0.45),0,Math.PI*2); ctx.fill();
+  }
+
+  // ground shadow (feet, projected + foreshortened)
+  ctx.save();
+  ctx.globalAlpha=0.32; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(pf.x, pf.y, u*1.05, u*0.44, 0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // active-player ring + charge arc (at feet, projected scale)
   if(isUser){
-    ctx.strokeStyle=p.color; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+6,0,Math.PI*2); ctx.stroke();
-    ctx.fillStyle=p.color;
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y-p.r-11); ctx.lineTo(p.x-5,p.y-p.r-19); ctx.lineTo(p.x+5,p.y-p.r-19); ctx.closePath();
-    ctx.fill();
+    const pr = Math.sin(performance.now()*0.008)*0.5+0.5;
+    ctx.save();
+    ctx.globalAlpha=0.9; ctx.strokeStyle=p.color; ctx.lineWidth=2.5;
+    ctx.shadowColor=p.color; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.ellipse(pf.x, pf.y, u*1.35+pr*2, u*0.58+pr, 0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
     if(charge>0){
       ctx.strokeStyle='#ffd35c'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r+10,-Math.PI/2,-Math.PI/2+charge*Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(pf.x,pf.y,u*1.55,u*0.66,0,-Math.PI/2,-Math.PI/2+charge*Math.PI*2); ctx.stroke();
     }
   }
+  // captain marker ring at feet + SURGE aura
+  if(p.isCaptain && !p.gk){
+    const cpp=(Math.sin(performance.now()*0.006+p.num)*0.5+0.5);
+    ctx.save();
+    ctx.globalAlpha=(surging?0.9:0.55)+cpp*0.3; ctx.strokeStyle=p.color; ctx.lineWidth=surging?3:2;
+    ctx.shadowColor=p.color; ctx.shadowBlur=surging?20:10;
+    ctx.beginPath(); ctx.ellipse(pf.x, pf.y, u*1.15+cpp*(surging?4:2), u*0.5+cpp*(surging?2:1), 0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  if(surging){
+    // trailing surge streaks behind the captain (projected)
+    ctx.save(); ctx.globalAlpha=Math.min(1,p.surgeT/SURGE_TIME)*0.5;
+    ctx.strokeStyle=lite; ctx.lineWidth=2.4; ctx.shadowColor=p.color; ctx.shadowBlur=10;
+    for(let i=1;i<=3;i++){ ctx.globalAlpha=(0.4-i*0.1)*Math.min(1,p.surgeT/SURGE_TIME);
+      const sp=proj(p.x - p.vx*i*0.045, p.y - p.vy*i*0.045);
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, u*0.5,0,Math.PI*2); ctx.stroke(); }
+    ctx.restore();
+  }
+
+  // Body: translate to the PROJECTED feet. All internal offsets are in 'u' which
+  // already carries the depth scale, so the whole figure foreshortens correctly.
+  ctx.save();
+  ctx.translate(pf.x, pf.y);
+
+  const walk  = speed>18 ? Math.sin(p.anim*2.0) : 0;
+  const walk2 = speed>18 ? Math.sin(p.anim*2.0 + Math.PI) : 0;
+  const breathe = Math.sin(p.anim*1.1)*u*0.04;
+
+  // ATHLETIC PROPORTIONS — feet at y=0, everything measured UP (negative y).
+  const hipY = -u*1.55, torsoH = u*1.45;
+  const shoulderY = hipY - torsoH;
+  const torsoHalf = u*0.62;
+  const neckY  = shoulderY - u*0.18;
+  const headR  = u*0.72;                         // realistic head, NOT oversized
+  const headCY = neckY - headR - u*0.06 - breathe;
+
+  // two-segment limb bending at a joint (elbow/knee)
+  function limb(rootX,rootY,endX,endY,bend,width,col){
+    const dx=endX-rootX, dy=endY-rootY, len=Math.hypot(dx,dy)||1;
+    const nx=-dy/len, ny=dx/len;
+    const mx=(rootX+endX)/2, my=(rootY+endY)/2;
+    const jx=mx+nx*bend, jy=my+ny*bend;
+    ctx.strokeStyle=col; ctx.lineWidth=width; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(rootX,rootY); ctx.lineTo(jx,jy); ctx.lineTo(endX,endY); ctx.stroke();
+  }
+
+  // ===== LEGS: thigh + shin bending at the KNEE =====
+  const kick = p.kickAnim>0 ? (p.kickAnim/0.22) : 0;
+  const legSpread=u*0.30;
+  const stride=(0.28+gait*0.34)*u;
+  const kneeBend=(0.18+gait*0.34)*u;
+  // kick swing overrides the front leg
+  const lFootX=-legSpread + walk*stride,  lFootY=-u*0.02;
+  const rFootX= legSpread + walk2*stride, rFootY=-u*0.02;
+  const hipLX=-legSpread*0.7, hipRX=legSpread*0.7;
+  const kb = kneeBend;
+  const backIsLeft = walk<0;
+  const thighW=u*0.50;
+  const shoeCol = p.gk ? '#ffd35c' : '#dfeefc';
+  // BACK leg (behind torso)
+  (function(){
+    let fx2=backIsLeft?lFootX:rFootX, fy2=backIsLeft?lFootY:rFootY; const hx=backIsLeft?hipLX:hipRX;
+    limb(hx,hipY, fx2,fy2, faceSign*kb, thighW, dark);
+    ctx.fillStyle=shoeCol;
+    ctx.beginPath(); ctx.ellipse(fx2+faceSign*u*0.10, fy2+u*0.02, u*0.26,u*0.13,0,0,Math.PI*2); ctx.fill();
+  })();
+
+  // ===== TORSO (athletic V trunk) =====
+  ctx.save();
+  ctx.shadowColor=p.color; ctx.shadowBlur=isUser?15:8;
+  const jg=ctx.createLinearGradient(0,shoulderY,0,hipY);
+  jg.addColorStop(0, lite); jg.addColorStop(1, tintHex(p.color,0.5));
+  ctx.fillStyle=jg;
+  const shW=torsoHalf*1.14, hpW=torsoHalf*0.86;
+  function trunkPath(){
+    ctx.beginPath();
+    ctx.moveTo(-shW, shoulderY+u*0.05);
+    ctx.quadraticCurveTo(-shW*1.02, (shoulderY+hipY)/2, -hpW, hipY);
+    ctx.quadraticCurveTo(0, hipY+u*0.12, hpW, hipY);
+    ctx.quadraticCurveTo(shW*1.02, (shoulderY+hipY)/2, shW, shoulderY+u*0.05);
+    ctx.quadraticCurveTo(0, shoulderY-u*0.10, -shW, shoulderY+u*0.05);
+    ctx.closePath();
+  }
+  trunkPath(); ctx.fill();
+  ctx.restore();
+  // jersey shade
+  ctx.save(); trunkPath(); ctx.clip();
+  ctx.fillStyle='rgba(0,0,0,0.24)';
+  ctx.fillRect(-shW, (shoulderY+hipY)/2, shW*2, (hipY-shoulderY)/2+u);
+  // subtle team accent stripe down the middle
+  ctx.fillStyle=p.team==='you' ? 'rgba(255,255,255,0.20)' : 'rgba(20,10,14,0.28)';
+  ctx.fillRect(-u*0.09, shoulderY, u*0.18, torsoH);
+  ctx.restore();
+  // jersey number
+  ctx.fillStyle='#0a0a0a'; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=Math.max(1,u*0.09);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='800 '+(u*0.7).toFixed(0)+"px 'Segoe UI',sans-serif";
+  const numY=(shoulderY+hipY)/2+u*0.14, numStr=String(p.num||'');
+  ctx.strokeText(numStr, 0, numY); ctx.fillText(numStr, 0, numY);
+
+  // ===== FRONT leg (over torso; swings hard on a kick) =====
+  (function(){
+    let fx2, fy2, hx;
+    if(kick>0){
+      // planted-and-swing: the front foot drives forward toward facing
+      fx2 = faceSign*(u*0.35 + u*0.9*kick); fy2 = -u*0.02 - u*0.2*kick; hx = faceSign*hipRX;
+    } else {
+      fx2=backIsLeft?rFootX:lFootX; fy2=backIsLeft?rFootY:lFootY; hx=backIsLeft?hipRX:hipLX;
+    }
+    limb(hx,hipY, fx2,fy2, faceSign*(kb+kick*u*0.3), thighW, p.color);
+    ctx.fillStyle= p.gk ? '#ffd35c' : '#eaf6ff';
+    ctx.beginPath(); ctx.ellipse(fx2+faceSign*u*0.10, fy2+u*0.02, u*0.27,u*0.14,0,0,Math.PI*2); ctx.fill();
+  })();
+
+  // ===== ARMS: upper-arm + forearm bending at the ELBOW =====
+  ctx.lineCap='round';
+  const shLX=-torsoHalf*1.02, shRX=torsoHalf*1.02;
+  const armW=u*0.40;
+  if(kick>0){
+    // kick balance: lead arm out, trailing arm back
+    const t=kick;
+    limb(faceSign>0?shLX:shRX, shoulderY, -faceSign*u*(0.8+0.3*t), shoulderY+u*0.4, faceSign*u*0.35, armW, dark);
+    limb(faceSign>0?shRX:shLX, shoulderY,  faceSign*u*0.85, shoulderY+u*0.1, -faceSign*u*0.3, armW, p.color);
+  } else if(isUser && charge>0){
+    // planted, arms out for balance while charging a shot
+    limb(shLX, shoulderY, -u*0.95, shoulderY+u*0.55, -u*0.3, armW, dark);
+    limb(shRX, shoulderY,  u*0.95, shoulderY+u*0.55,  u*0.3, armW, p.color);
+  } else {
+    // run/idle: arms swing opposite to legs, elbows relaxed-bent
+    const swing=(0.3+gait*0.5);
+    limb(shLX,shoulderY, -torsoHalf*1.1, shoulderY+u*0.85+walk2*u*swing*0.5, -u*(0.28+gait*0.25), armW, dark);
+    limb(shRX,shoulderY,  torsoHalf*1.1, shoulderY+u*0.85+walk*u*swing*0.5,   u*(0.28+gait*0.25), armW, p.color);
+  }
+
+  // ===== NECK + HEAD (clean, FACELESS — no eyes/mouth/brows) =====
+  ctx.strokeStyle='#e6b58c'; ctx.lineWidth=u*0.34; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(0,shoulderY-u*0.02); ctx.lineTo(0,neckY); ctx.stroke();
+
+  const hCY=headCY;
+  // dark halo behind head (team glow)
+  ctx.save(); ctx.shadowColor=p.color; ctx.shadowBlur=isUser?16:9;
+  ctx.fillStyle='#0a0a0f';
+  ctx.beginPath(); ctx.ellipse(0,hCY,headR*0.98,headR*1.06,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // skin (soft radial shading, NO face)
+  const sg=ctx.createRadialGradient(-headR*0.35, hCY-headR*0.4, headR*0.15, 0, hCY, headR);
+  sg.addColorStop(0,'#ffe6cf'); sg.addColorStop(0.6,'#f0c39a'); sg.addColorStop(1,'#c98f63');
+  ctx.fillStyle=sg;
+  ctx.beginPath(); ctx.ellipse(0,hCY,headR*0.9,headR,0,0,Math.PI*2); ctx.fill();
+  // team-color cap across the crown
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(0,hCY,headR*0.9,headR,0,0,Math.PI*2); ctx.clip();
+  const hg=ctx.createLinearGradient(0,hCY-headR,0,hCY-headR*0.15);
+  hg.addColorStop(0, lite); hg.addColorStop(1, dark); ctx.fillStyle=hg;
+  ctx.beginPath();
+  ctx.moveTo(-headR*0.9,hCY-headR*0.12);
+  ctx.quadraticCurveTo(-headR*0.9, hCY-headR*1.02, 0, hCY-headR*1.0);
+  ctx.quadraticCurveTo(headR*0.9, hCY-headR*1.02, headR*0.9, hCY-headR*0.12);
+  ctx.quadraticCurveTo(headR*0.5, hCY-headR*0.32, 0, hCY-headR*0.34);
+  ctx.quadraticCurveTo(-headR*0.5, hCY-headR*0.32, -headR*0.9, hCY-headR*0.12);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // crisp team-color rim around head
+  ctx.lineWidth=Math.max(1.4,u*0.14); ctx.strokeStyle=p.color;
+  ctx.shadowColor=p.color; ctx.shadowBlur=isUser?11:5;
+  ctx.beginPath(); ctx.ellipse(0,hCY,headR*0.9,headR,0,0,Math.PI*2); ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // role markers (NOT faces): GK label / captain ★ pip above the head
+  if(p.gk){
+    ctx.fillStyle='#ffd35c'; ctx.font='800 '+(u*0.5).toFixed(0)+"px 'Segoe UI',sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('GK', 0, hCY-headR*1.5);
+  } else if(p.isCaptain){
+    ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+    ctx.font='800 '+(u*0.95).toFixed(0)+"px 'Segoe UI',sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('★', 0, hCY-headR*1.55);
+    ctx.shadowBlur=0;
+    // captain armband
+    ctx.fillStyle=p.color;
+    roundRectC(shLX-u*0.02, shoulderY+u*0.30, u*0.18, u*0.42, u*0.05); ctx.fill();
+  }
+
+  ctx.restore();
+
+  // user chevron (screen-space, upright, above the projected head)
+  if(isUser){
+    ctx.save();
+    ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+    const ay=pf.y - u*5.6;
+    const w=7*s;
+    ctx.beginPath(); ctx.moveTo(pf.x,ay+8*s); ctx.lineTo(pf.x-w,ay-2*s); ctx.lineTo(pf.x+w,ay-2*s); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+}
+function roundRectC(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function tintHex(hex,f){
+  const c=hex.replace('#','');
+  const r=parseInt(c.substring(0,2),16),g=parseInt(c.substring(2,4),16),b=parseInt(c.substring(4,6),16);
+  return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;
 }
 
 function drawBall(){
+  const bp = proj(ball.x, ball.y);
+  const r = BALL_R * bp.s;
+  // subtle "lift" — the faster it travels the higher it visually rides off the deck
+  const spd = Math.hypot(ball.vx, ball.vy);
+  const lift = Math.min(10, spd*0.012) * bp.s;
+  const cxp = bp.x, cyp = bp.y - lift;
   ctx.save();
   ctx.shadowColor='rgba(255,255,255,0.6)'; ctx.shadowBlur=10;
-  const g=ctx.createRadialGradient(ball.x-3,ball.y-3,1,ball.x,ball.y,ball.r);
+  const g=ctx.createRadialGradient(cxp-r*0.35,cyp-r*0.35,1,cxp,cyp,r);
   g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#cfe6f2');
   ctx.fillStyle=g;
-  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxp,cyp,r,0,Math.PI*2); ctx.fill();
   ctx.restore();
   ctx.fillStyle='rgba(20,30,45,0.85)';
-  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r*0.35,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxp,cyp,r*0.35,0,Math.PI*2); ctx.fill();
 }
 
 // ------------------------------------------------------------------
@@ -1023,7 +2272,31 @@ function drawHUD(){
     ctx.fillText('[V] VIEW', vx+vw/2, vy+vh+7*scale);
   }
 
-  // stamina bar (bottom-left)
+  // ── AUTO-ASSIST indicator (top-right, under the view pill) — shows when the assist is
+  // driving your player, and pulses briefly whenever you toggle it with [T]. ──
+  if(!watchOn && (autoAssist || autoFlash>0)){
+    const aLabel = autoAssist ? '🤖 AUTO ASSIST · ON' : '✋ AUTO · OFF';
+    const aFont = Math.floor((autoFlash>0?12:10.5)*scale);
+    ctx.font='800 '+aFont+'px Segoe UI';
+    const aw = ctx.measureText(aLabel).width + 20*scale;
+    const ax = cv.width - aw - 12*scale, ay = vy+vh+ (viewFlash>0?8:16)*scale, ah=24*scale;
+    const aOn = autoAssist;
+    ctx.fillStyle = autoFlash>0 ? (aOn?'rgba(56,255,176,0.28)':'rgba(45,230,255,0.22)') : 'rgba(6,12,22,0.82)';
+    roundRect(ax, ay, aw, ah, 8*scale); ctx.fill();
+    ctx.strokeStyle = aOn ? '#38ffb0' : '#2de6ff'; ctx.lineWidth=1.5;
+    roundRect(ax, ay, aw, ah, 8*scale); ctx.stroke();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle = aOn ? '#38ffb0' : '#7fb8d8';
+    ctx.fillText(aLabel, ax+aw/2, ay+ah/2 + 1*scale);
+    if(autoFlash<=0 && aOn){
+      ctx.font='600 '+Math.floor(8*scale)+'px Segoe UI';
+      ctx.fillStyle='rgba(127,184,216,0.7)';
+      ctx.fillText('[T] TOGGLE', ax+aw/2, ay+ah+7*scale);
+    }
+  }
+
+  // stamina bar (bottom-left) — hidden in WATCH mode (no human player)
+  if(!watchOn){
   const stX=16*scale, stY=cv.height-30*scale, stW=170*scale, stH=12*scale;
   ctx.fillStyle='rgba(6,12,22,0.8)';
   roundRect(stX-4*scale, stY-16*scale, stW+8*scale, stH+22*scale, 6*scale); ctx.fill();
@@ -1033,9 +2306,40 @@ function drawHUD(){
   roundRect(stX,stY,stW,stH,4*scale); ctx.fill();
   ctx.fillStyle = stamina>0.3 ? '#38ffb0' : '#ff8a8a';
   roundRect(stX,stY,stW*stamina,stH,4*scale); ctx.fill();
+  }
+
+  // ── CAPTAIN SURGE indicator (bottom-center) — mirrors dodgeball OVERDRIVE HUD ──
+  if(!watchOn){
+    const cap = findTeamCaptain('you');
+    if(cap){
+      const ready = cap.capCd<=0 && cap.surgeT<=0;
+      const active = cap.surgeT>0;
+      const sw=150*scale, sh=30*scale, sx0=cv.width/2-sw/2, sy0=cv.height-40*scale;
+      ctx.fillStyle='rgba(6,12,22,0.82)';
+      roundRect(sx0, sy0, sw, sh, 8*scale); ctx.fill();
+      const col = active ? '#ffd35c' : (ready ? selectedAgent.color : '#4a7590');
+      ctx.strokeStyle=col; ctx.lineWidth=1.5;
+      roundRect(sx0, sy0, sw, sh, 8*scale); ctx.stroke();
+      // cooldown fill
+      if(!ready && !active){
+        const frac=1-Math.max(0,cap.capCd)/SURGE_COOLDOWN;
+        ctx.fillStyle='rgba(45,230,255,0.16)';
+        roundRect(sx0, sy0, sw*frac, sh, 8*scale); ctx.fill();
+      } else if(active){
+        const frac=Math.max(0,cap.surgeT)/SURGE_TIME;
+        ctx.fillStyle='rgba(255,211,92,0.25)';
+        roundRect(sx0, sy0, sw*frac, sh, 8*scale); ctx.fill();
+      }
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font='800 '+Math.floor(12*scale)+'px Segoe UI';
+      ctx.fillStyle=col;
+      const label = active ? '⚡ SURGE!' : (ready ? '[Q] SURGE ★' : 'SURGE …');
+      ctx.fillText(label, cv.width/2, sy0+sh/2);
+    }
+  }
 
   // charge indicator bottom-right
-  if(charge>0){
+  if(charge>0 && !watchOn){
     const chX=cv.width-186*scale, chY=cv.height-30*scale, chW=170*scale, chH=12*scale;
     ctx.fillStyle='rgba(6,12,22,0.8)';
     roundRect(chX-4*scale, chY-16*scale, chW+8*scale, chH+22*scale, 6*scale); ctx.fill();
@@ -1070,6 +2374,21 @@ function lighten(hex){
 // ------------------------------------------------------------------
 // LOOP
 // ------------------------------------------------------------------
+// read-only debug snapshot (used by headless QA; harmless in production)
+window.__soccerDebug = function(){
+  const u = userControlled;
+  return {
+    state, scoreYou, scoreOpp,
+    ball: ball ? {x:ball.x,y:ball.y,vx:ball.vx,vy:ball.vy,spin:ball.spin} : null,
+    owner: ballOwner ? (ballOwner.team+':'+ballOwner.num) : null,
+    watchOn, autoAssist,
+    user: u ? {
+      x:u.x, y:u.y, num:u.num,
+      dist: ball ? Math.hypot(u.x-ball.x, u.y-ball.y) : null,
+      speed: Math.hypot(u.vx,u.vy)
+    } : null
+  };
+};
 function loop(t){
   requestAnimationFrame(loop);
   let dt=(t-lastTime)/1000; lastTime=t;
@@ -1084,10 +2403,12 @@ requestAnimationFrame(loop);
 // ------------------------------------------------------------------
 function startGame(){
   document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('modeScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.add('hidden');
   document.getElementById('pauseScreen').classList.add('hidden');
-  document.getElementById('pauseHint').classList.remove('hidden');
+  document.getElementById('pauseHint').classList.toggle('hidden', watchOn);
   document.body.classList.add('playing');
+  document.body.classList.toggle('watching', watchOn);
   initMatch();
   state='play';
 }
@@ -1096,13 +2417,27 @@ function togglePause(){
   else if(state==='pause'){ state='play'; document.getElementById('pauseScreen').classList.add('hidden'); }
 }
 
-document.getElementById('startBtn').addEventListener('click', startGame);
+// KICK OFF now routes: SELECT → MODE SELECT → (SKILL SELECT) → MATCH
+document.getElementById('startBtn').addEventListener('click', gotoModeSelect);
+document.getElementById('modeBackBtn').addEventListener('click', ()=>{
+  document.getElementById('modeScreen').classList.add('hidden');
+  document.getElementById('selectScreen').classList.remove('hidden');
+  state='menu';
+});
+document.getElementById('skillStartBtn').addEventListener('click', confirmSkillPlay);
+document.getElementById('skillBackBtn').addEventListener('click', ()=>{
+  document.getElementById('skillScreen').classList.add('hidden');
+  gotoModeSelect();  // SKILL PLAY was reached from MODE select → go back there
+});
+// PLAY AGAIN / restart replays with the same captain + skills already chosen
 document.getElementById('restartBtn').addEventListener('click', startGame);
 document.getElementById('menuBtn').addEventListener('click', ()=>{
   document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('skillScreen').classList.add('hidden');
+  document.getElementById('modeScreen').classList.add('hidden');
   document.getElementById('selectScreen').classList.remove('hidden');
   document.getElementById('pauseHint').classList.add('hidden');
-  document.body.classList.remove('playing');
+  document.body.classList.remove('playing','watching');
   state='menu';
 });
 document.getElementById('resumeBtn').addEventListener('click', ()=>{
@@ -1110,9 +2445,11 @@ document.getElementById('resumeBtn').addEventListener('click', ()=>{
 });
 document.getElementById('quitBtn').addEventListener('click', ()=>{
   document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('skillScreen').classList.add('hidden');
+  document.getElementById('modeScreen').classList.add('hidden');
   document.getElementById('selectScreen').classList.remove('hidden');
   document.getElementById('pauseHint').classList.add('hidden');
-  document.body.classList.remove('playing');
+  document.body.classList.remove('playing','watching');
   state='menu';
 });
 

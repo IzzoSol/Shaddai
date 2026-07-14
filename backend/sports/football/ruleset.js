@@ -703,6 +703,10 @@ const footballRuleset = {
         touchdownsB: state.touchdownsB,
         playsRun:    state.playsRun,
         drivesPlayed: TOTAL_DRIVES - state.drivesLeft,
+        // Per-player box scores (ADDITIVE — franchise/coach-mode XP source).
+        // Keyed by player name → { yards, touchdowns, tackles, interceptions, sacks }.
+        boxScoreA:   state.accumA || {},
+        boxScoreB:   state.accumB || {},
       },
     };
   },

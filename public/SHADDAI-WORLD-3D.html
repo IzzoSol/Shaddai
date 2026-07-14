@@ -1569,8 +1569,16 @@ function _nextAgentBody(){
         // played slow (so ZEROX/TURTLE sway instead of freezing in a T-pose). Never a bare rest pose.
         entry._idleSlow = false;
         (function(){ const C=gltf.animations, mx=mixer; let pick=null;
-          for(const cl of C){ if(/dance|breath|sway|idle[_ ]?loop|bounce/i.test(cl.name)){ pick=cl; break; } }
+          // Prefer a lively UPRIGHT in-place loop. Added strut/groove/swing/waltz so rigs that ship
+          // those (e.g. TURTLE = Neon Valkyrie: Gangnam_Groove/Confident_Strut/Flirty_Strut_inplace)
+          // stand STRAIGHT. Without these, TURTLE's fallback landed on "Sneaky_Walk_inplace" — a
+          // hunched forward-leaning stealth crouch (~16° lean, measured) that read as "standing tilted".
+          // These upright loops measured ~3.6-4.6° lean, i.e. essentially straight.  ← TURTLE UPRIGHT IDLE FIX
+          for(const cl of C){ if(/dance|breath|sway|idle[_ ]?loop|bounce|groove|strut|swing|waltz/i.test(cl.name)){ pick=cl; break; } }
           if(!pick) for(const cl of C){ if(/idle/i.test(cl.name) && !/t[_ ]?pose|rest|a[_ ]?pose/i.test(cl.name)){ pick=cl; break; } }
+          // Walk-as-idle last resort: prefer a plain "Walking" travel clip over a "sneaky/crouch/stealth"
+          // walk, since the stealth variants hold a deep forward lean that looks tilted when slowed.
+          if(!pick) for(const cl of C){ if(/walk/i.test(cl.name) && !/sneak|stealth|crouch|creep/i.test(cl.name)){ pick=cl; entry._idleSlow=true; break; } }
           if(!pick) for(const cl of C){ if(/walk/i.test(cl.name)){ pick=cl; entry._idleSlow=true; break; } }
           if(!pick && C.length) pick = C[0];                          // last resort: SOME motion, not a T-pose
           if(pick){
@@ -2552,6 +2560,7 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
       try{ console.log('🌀 spawned at', code, 'as', charCode); }catch(e){}
     }
   });
+  try{ window.worldSpawn = worldSpawn; }catch(e){}   // expose for headless verification / debug (harmless read-only handle)
 }
 
 // ── ONE-BUTTON THEME ENGINE (world-themes.js): snow / desert / tron / ocean whole-world snap ──
@@ -2804,7 +2813,13 @@ function _loadHero(file){
     playerAvatar.add(m);
     playerMixer=new THREE.AnimationMixer(m);
     (g.animations||[]).forEach(cl=> playerClips[cl.name]=playerMixer.clipAction(cl));
-    if(file.indexOf('hero')===0){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }
+    // PERF: the extra Run/rigged clip GLBs (~9MB each) are only needed for the DEFAULT hero, which is
+    // almost always swapped out when the player picks an operative at the spawn picker. Defer them off the
+    // boot+descent critical path (4s) so they don't compete with world geometry + agent bodies for
+    // bandwidth/parse time during the exact "coming into the world" window. If the player stays on the
+    // default hero, Walk works immediately and Run just becomes available a beat later (_addClipsFrom
+    // already tolerates late arrival — the clip simply pops into playerClips when it lands).
+    if(file.indexOf('hero')===0){ setTimeout(function(){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }, 4000); }
     playerAction = _clip('Idle')||_clip('Walk')||Object.values(playerClips)[0];
     if(playerAction) playerAction.play();
     _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery
@@ -4099,10 +4114,15 @@ function animate(){
     const _yb = s.yBase || 0;   // SHADDAI floats on his sky-temple island; everyone else at 0
     s.sprite.position.y = _yb + 4.0 + Math.sin(t*1.0 + s.bob)*0.12;
     s.frame.position.y = s.sprite.position.y;
-    // 3D body: bones-free procedural WALK when it moves / breathing IDLE + look-around when it stands
-    if(s.body) _animateAgentBody(s, t, dt);
-    // Distance-cull aura particles: skip update for agents beyond the tier's cull radius (cheap visibility guard)
+    // Distance for cull guards (aura + body animation). Cheap squared-distance, no alloc.
     const _sd2=(s.x-playerPos.x)**2+(s.z-playerPos.z)**2, _cr=_Q.tiers[_Q.tier].cullR;
+    // 3D body: bones-free procedural WALK / breathing IDLE — OR drive the skeletal mixer. PERF: skip the
+    // per-frame mixer + procedural pose update for agents beyond the tier's cull radius. A distant agent's
+    // subtle idle sway / breathing is imperceptible at that range, and skinned-mesh mixer.update() (bone
+    // matrix recompute + skinning) is one of the heavier CPU ops in the loop. Animation resumes the instant
+    // you walk back within range — no state is lost (mixer just advances less often when far).
+    if(s.body && _sd2 < _cr*_cr) _animateAgentBody(s, t, dt);
+    // Distance-cull aura particles: skip update for agents beyond the tier's cull radius (cheap visibility guard)
     if(s.aura && _sd2 < _cr*_cr) s.aura.update(t, s.auraSpeed);
     if(s.crown){ s.crown.rotation.z += dt*0.6; s.crown.position.y = _yb + 8.4 + Math.sin(t*1.2 + s.bob)*0.2; }
     s.ring.material.opacity = (targeted===s)?1:0.6;
@@ -4179,9 +4199,17 @@ function animate(){
   // (water is animated inside worldBiomes.update)
 
   // ── Animate loaded GLB models with vehicle-specific physics ──
+  // PERF (2026-07-13): distance-cull the whole per-model update. These GLB vehicles/
+  // characters patrol far out on the map; their subtle motion is imperceptible past the
+  // tier cull radius, and the wheel/prop spin traverse() (a recursive scene-graph walk)
+  // is real per-frame CPU. Skip any model beyond cull range — motion resumes instantly
+  // when you approach (it's time-based, so no state drifts). Cheap squared distance.
+  const _mCull = _Q.tiers[_Q.tier].cullR, _mCull2 = _mCull * _mCull;
   for(const name in models){
     const m = models[name];
     if(!m.model) continue;
+    { const _mp = m.model.position; const _mdx = _mp.x - playerPos.x, _mdz = _mp.z - playerPos.z;
+      if(_mdx*_mdx + _mdz*_mdz > _mCull2) continue; }   // too far to notice — skip its update entirely
 
     const type = m.type;
     const base = m.basePos || (m.config && m.config.pos) || [0,0,0];
@@ -4205,10 +4233,11 @@ function animate(){
       m.model.rotation.y = heading;
       m.model.rotation.x = Math.sin(t * 0.8) * 0.05; // pitch from terrain
 
-      // Spin wheels
-      m.model.traverse((child) => {
+      // Spin wheels (PERF: throttle the recursive traverse to every 2nd frame — 2× the
+      // step keeps the same visual rate at half the scene-graph-walk cost).
+      if(_animFrame % 2 === 0) m.model.traverse((child) => {
         if(child.isMesh && (child.name.toLowerCase().includes('wheel') || child.name.toLowerCase().includes('tire'))){
-          child.rotation.x += dt * 8; // wheel rotation speed
+          child.rotation.x += dt * 16; // wheel rotation speed (×2 to offset the 2-frame throttle)
         }
       });
     }
@@ -4226,10 +4255,10 @@ function animate(){
       m.model.rotation.z = Math.sin(t * 1.2) * 0.12; // hull roll from waves
       m.model.rotation.x = Math.sin(t * 0.9) * 0.08; // pitch
 
-      // Spin propeller
-      m.model.traverse((child) => {
+      // Spin propeller (PERF: throttle traverse to every 2nd frame, 2× step)
+      if(_animFrame % 2 === 0) m.model.traverse((child) => {
         if(child.isMesh && (child.name.toLowerCase().includes('prop') || child.name.toLowerCase().includes('screw'))){
-          child.rotation.z += dt * 6;
+          child.rotation.z += dt * 12;
         }
       });
     }
@@ -4248,10 +4277,10 @@ function animate(){
       m.model.rotation.z = Math.sin(t * 0.7) * 0.3; // banking into turns
       m.model.rotation.x = Math.cos(t * 0.5) * 0.15; // pitch up/down
 
-      // Spin engines
-      m.model.traverse((child) => {
+      // Spin engines (PERF: throttle traverse to every 2nd frame, 2× step)
+      if(_animFrame % 2 === 0) m.model.traverse((child) => {
         if(child.isMesh && (child.name.toLowerCase().includes('prop') || child.name.toLowerCase().includes('engine'))){
-          child.rotation.x += dt * 12;
+          child.rotation.x += dt * 24;
         }
       });
     }

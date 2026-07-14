@@ -145,3 +145,15 @@ diag_*.txt
 # Claude/agent tooling — not product code
 .claude/
 .agents/
+
+backend/data/user-keys.json
+
+# scratch/test files (do not commit)
+_dodgeball_test.js
+_soccer_goaltest.js
+_soccer_qa.js
+_soccer_verify.js
+_verify-gui.js
+audit.js
+audit_script.js
+public/_pixeloffice_preview.html

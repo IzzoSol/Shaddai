@@ -144,8 +144,9 @@
 <div id="app">
   <header class="reveal" style="animation-delay:.05s">
     <div class="mark">⬡ THE&nbsp;FORGE<small>summon · equip · awaken</small></div>
-    <a class="back" href="/dashboard" target="_top">⟵ return to dashboard</a>
+    <a class="back" id="forgeBackLink" href="/dashboard" target="_top">⟵ return to dashboard</a>
   </header>
+  <script>/* Forge is embedded inside the dashboard — hide the redundant "return to dashboard" when in an iframe. */try{if(window.self!==window.top){var _fb=document.getElementById('forgeBackLink');if(_fb)_fb.style.display='none';}}catch(_){}</script>
 
   <!-- summoning stage -->
   <div id="stageWrap" class="reveal" style="animation-delay:.15s">

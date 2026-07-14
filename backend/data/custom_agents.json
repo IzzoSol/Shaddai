@@ -1,0 +1,16 @@
+[
+  {
+    "id": "agent_1783795970764_rty3z",
+    "name": "TEST",
+    "emoji": "🤖",
+    "role": "Custom Agent",
+    "color": "#888888",
+    "systemPrompt": "You are test, a specialized AI agent. Be helpful, precise, and always sign your responses as [TEST].",
+    "avatarUrl": null,
+    "position": {
+      "col": 1,
+      "row": 1
+    },
+    "createdAt": "2026-07-11T18:52:50.764Z"
+  }
+]

@@ -4629,6 +4629,88 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
       glyphIM.instanceMatrix.needsUpdate = true; scene.add(glyphIM);
     }
 
+    // ── 1b) SECOND-FLOOR DECK + BALCONY RAILING (2026-07-13) ─────────────────
+    // The pillars used to hold up the elevated building mass with an EMPTY gap at
+    // their tops — "pillars floating in the air with nothing on them." This builds
+    // the real WALKABLE upper floor that those pillars support: a solid deck slab
+    // capping the pillars at podium level, a perimeter parapet + glowing rail
+    // (balcony), and a soft under-glow. The player already RIDES the lounge lift up
+    // to this level (world-elevators.js STOP-2 registers a walkable deckList patch of
+    // radius fp at interiorY = groundY+BUILD_LIFT), so this only adds the missing
+    // VISUAL floor — collision/reachability were already in place. All static /
+    // instanced, frozen by the build's matrix-freeze pass; no per-frame allocation.
+    // The deck ring is held just INSIDE the building silhouette (fp*0.455) so it never
+    // flares past the podium/facade, and it wraps the building mass as a balcony.
+    {
+      const deckTopY = baseY;                     // flush with the elevated building floor (podium seat)
+      const rD       = fp * 0.455;                // deck radius — inside the fp*0.46 facade, caps the pillar ring (rP=fp*0.375)
+      const deckMat  = new THREE.MeshStandardMaterial({
+        color: pal.body.clone().lerp(pal.structural, 0.34),
+        emissive: pal.primary.clone(), emissiveIntensity: 0.05,
+        roughness: 0.74, metalness: 0.22,
+      });
+      // Solid slab (Cylinder axis=Y → horizontal disc). Top surface sits at deckTopY;
+      // slab hangs 1.2 below so it visually meets the pillar capitals + podium underside.
+      const deck = new THREE.Mesh(new THREE.CylinderGeometry(rD, rD, 1.2, 48), deckMat);
+      deck.position.set(x, deckTopY - 0.6, z); deck.receiveShadow = true; deck.castShadow = true;
+      scene.add(deck);
+      // Fascia band (a slightly wider, thin trim below the deck edge — reads as a floor edge, not a raw disc).
+      const fascia = new THREE.Mesh(new THREE.CylinderGeometry(rD * 1.008, rD * 1.008, 0.5, 48), trimMat);
+      fascia.position.set(x, deckTopY - 1.35, z); scene.add(fascia);
+
+      // Perimeter PARAPET wall — a low open glass/metal balcony wall around the deck edge.
+      const parapetMat = new THREE.MeshStandardMaterial({
+        color: pal.body.clone().lerp(pal.secondary, 0.22),
+        emissive: pal.trim.clone(), emissiveIntensity: 0.10,
+        roughness: 0.60, metalness: 0.30, side: THREE.DoubleSide,
+      });
+      const parapet = new THREE.Mesh(
+        new THREE.CylinderGeometry(rD - 0.4, rD - 0.4, 2.4, 48, 1, true), parapetMat);
+      parapet.position.set(x, deckTopY + 1.2, z); scene.add(parapet);
+      // Glowing top RAIL cap ringing the parapet (the "balcony" light seam).
+      const rail = new THREE.Mesh(
+        new THREE.TorusGeometry(rD - 0.4, Math.max(0.28, fp * 0.006), 8, 64), glowMat);
+      rail.rotation.x = Math.PI / 2; rail.position.set(x, deckTopY + 2.5, z);
+      rail.renderOrder = 3; scene.add(rail);
+      landmarks.push({ mat: rail.material, baseOpacity: 0.42, phase: 2.3 });
+
+      // Balustrade POSTS around the rail (instanced — one draw call). Ties rail to deck.
+      const NPOST = 24;
+      const postGeo = new THREE.CylinderGeometry(Math.max(0.14, fp * 0.004), Math.max(0.14, fp * 0.004), 2.4, 6);
+      const postIM  = new THREE.InstancedMesh(postGeo, trimMat, NPOST);
+      postIM.castShadow = true;
+      {
+        const d = new THREE.Object3D();
+        for (let i = 0; i < NPOST; i++) {
+          const a = (i / NPOST) * Math.PI * 2;
+          d.position.set(x + Math.cos(a) * (rD - 0.4), deckTopY + 1.2, z + Math.sin(a) * (rD - 0.4));
+          d.rotation.set(0, 0, 0); d.updateMatrix(); postIM.setMatrixAt(i, d.matrix);
+        }
+        postIM.instanceMatrix.needsUpdate = true; scene.add(postIM);
+      }
+
+      // Soft UNDER-GLOW on the deck's underside so the lounge below reads as lit-from-above.
+      const deckUnder = new THREE.Mesh(
+        new THREE.CircleGeometry(rD * 0.92, 40),
+        new THREE.MeshBasicMaterial({
+          color: pal.trim, transparent: true, opacity: 0.08,
+          blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+        }));
+      deckUnder.rotation.x = Math.PI / 2;         // face DOWN toward the lounge
+      deckUnder.position.set(x, deckTopY - 1.5, z); deckUnder.renderOrder = 2; scene.add(deckUnder);
+      landmarks.push({ mat: deckUnder.material, baseOpacity: 0.08, phase: 0.9 });
+
+      // Faint accent RING inlaid on the deck's top surface (matches the lounge rug motif).
+      const deckRing = new THREE.Mesh(
+        new THREE.RingGeometry(rD * 0.58, rD * 0.66, 48),
+        new THREE.MeshBasicMaterial({
+          color: pal.trim, transparent: true, opacity: 0.14,
+          side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,
+        }));
+      deckRing.rotation.x = -Math.PI / 2; deckRing.position.set(x, deckTopY + 0.08, z);
+      deckRing.renderOrder = 2; scene.add(deckRing);
+    }
+
     // ── 2) LOUNGE FLOOR — themed slab + accent rug rings ─────────────────────
     const rL = fp * 0.46;
     const floorMat = new THREE.MeshStandardMaterial({

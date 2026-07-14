@@ -21,7 +21,7 @@
     if (document.querySelector('script[data-forge3d-mv]')) return;
     var s = document.createElement('script');
     s.type = 'module';
-    s.src = 'https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+    s.src = '/model-viewer.min.js?v=15';
     s.setAttribute('data-forge3d-mv', '1');
     document.head.appendChild(s);
   }

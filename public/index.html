@@ -4856,6 +4856,28 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
                   <div style="font-size:8px;color:var(--text-muted)">ZEROX models revenue → ORACLE finds competitors → SHADDAI makes recommendations</div>
                   <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(255,215,0,0.5);margin-top:4px">ZEROX → ORACLE → SHADDAI → inbox</div>
                 </div>
+                <!-- Tool-aligned chains — each step runs REAL tools we built -->
+                <div style="font-size:8px;font-family:'Share Tech Mono',monospace;color:rgba(0,229,160,0.55);letter-spacing:1px;margin:4px 0 2px">🔧 TOOL-ALIGNED CHAINS</div>
+                <div class="card" style="padding:9px;border-color:rgba(0,229,160,0.22)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🪙 Crypto Market Scan</div>
+                    <button onclick="runSavedWorkflow('crypto-market-scan')" style="font-size:7px;padding:2px 7px;background:rgba(0,229,160,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:3px;cursor:pointer">▶ RUN</button></div>
+                  <div style="font-size:7px;color:var(--text-muted);margin-top:3px">crypto_global · jupiter_price · defillama_protocols · write_thread</div></div>
+                <div class="card" style="padding:9px;border-color:rgba(244,63,94,0.22)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🛡️ Token Safety Check</div>
+                    <button onclick="runSavedWorkflow('token-safety-check')" style="font-size:7px;padding:2px 7px;background:rgba(244,63,94,0.12);border:1px solid #f43f5e;color:#f43f5e;border-radius:3px;cursor:pointer">▶ RUN</button></div>
+                  <div style="font-size:7px;color:var(--text-muted);margin-top:3px">rugcheck_token · sol_token_holders · dexscreener_token</div></div>
+                <div class="card" style="padding:9px;border-color:rgba(255,215,0,0.22)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🌾 DeFi Yield Hunt</div>
+                    <button onclick="runSavedWorkflow('defi-yield-hunt')" style="font-size:7px;padding:2px 7px;background:rgba(255,215,0,0.1);border:1px solid #ffd700;color:#ffd700;border-radius:3px;cursor:pointer">▶ RUN</button></div>
+                  <div style="font-size:7px;color:var(--text-muted);margin-top:3px">defillama_yields · defillama_chains</div></div>
+                <div class="card" style="padding:9px;border-color:rgba(0,196,255,0.22)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">📣 Content Blast</div>
+                    <button onclick="runSavedWorkflow('content-blast')" style="font-size:7px;padding:2px 7px;background:rgba(0,196,255,0.1);border:1px solid #00c4ff;color:#00c4ff;border-radius:3px;cursor:pointer">▶ RUN</button></div>
+                  <div style="font-size:7px;color:var(--text-muted);margin-top:3px">write_thread · generate_hooks · image_prompt · hashtag_suggest</div></div>
+                <div class="card" style="padding:9px;border-color:rgba(139,92,246,0.22)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🔐 Site Security Audit</div>
+                    <button onclick="runSavedWorkflow('site-security-audit')" style="font-size:7px;padding:2px 7px;background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:3px;cursor:pointer">▶ RUN</button></div>
+                  <div style="font-size:7px;color:var(--text-muted);margin-top:3px">ssl_check · security_headers · dns_lookup</div></div>
                 <div id="userWorkflowsList"></div>
               </div>
             </div>
@@ -7229,8 +7251,12 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <div class="chat-main">
       <div class="chat-header">
         <span class="card-title">Direct Communication</span>
-        <div style="display:flex;align-items:center;gap:12px">
-          <input type="text" id="chatSearch" class="input" placeholder="Search conversations..." style="width:200px;padding:6px 10px;margin:0" oninput="searchConversations(this.value)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="chatAgentSelect" onchange="pickAgent(this.value)" title="Choose which agent you're talking to" style="padding:6px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:'Share Tech Mono',monospace">
+            <option value="SHADDAI">👑 SHADDAI</option><option value="NEXUS">🔧 NEXUS</option><option value="ZEROX">💰 ZEROX</option><option value="ORACLE">🔮 ORACLE</option><option value="TURTLE">🐢 TURTLE</option><option value="QUILL">✍️ QUILL</option><option value="PIKADON">🛡️ PIKADON</option><option value="ALL">◉ ALL AIs</option>
+          </select>
+          <button class="btn btn-ghost" onclick="clearCurrentChat()" title="Clear this conversation" style="padding:6px 10px;font-size:10px;white-space:nowrap">🧹 Clear</button>
+          <input type="text" id="chatSearch" class="input" placeholder="Search…" style="width:140px;padding:6px 10px;margin:0" oninput="searchConversations(this.value)">
           <div class="chat-indicator" id="chatInd"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span><span id="chatIndTxt">SHADDAI</span></div>
         </div>
       </div>
@@ -9106,7 +9132,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <div style="display:flex;gap:5px">
         <button class="mmode on" id="mmGrid" onclick="mediaSetView('grid')" title="Grid view">⊞</button>
         <button class="mmode" id="mmList" onclick="mediaSetView('list')" title="List view">≣</button>
-        <button class="mmode" id="mmSwivel" onclick="mediaSetView('swivel')" title="Swivel view">🎠</button>
+        <!-- Swivel/carousel view removed — grid + list only. -->
       </div>
     </div>
     <div id="mediaModGrid" class="mmv-grid" style="margin-bottom:20px">
@@ -9171,11 +9197,12 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/><path d="M14 14l2-2 5 5"/></svg></div>
       </div>
 
-      <!-- Video Clipper Module -->
-      <div class="mm-card mm-premium" onclick="launchMediaModule('clipper')" style="--acc:#00E5A0;--acc2:#ffd45e">
+      <!-- Video Clipper Module — LOCKED for now -->
+      <div class="mm-card mm-premium" onclick="notify('🔒 Video Clipper is locked — coming soon')" style="--acc:#00E5A0;--acc2:#ffd45e;opacity:.55;cursor:not-allowed;position:relative">
+        <div style="position:absolute;top:8px;right:8px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1px;color:#ffd45e;background:rgba(0,0,0,.6);border:1px solid rgba(255,212,94,.5);border-radius:6px;padding:3px 7px">🔒 LOCKED</div>
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
         <div class="mm-icon-shell"><img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon"></div>
-        <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">PREMIUM</span></div>
+        <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">SOON</span></div>
         <div class="mm-sub">Long video → captioned vertical shorts</div>
         <div class="mm-chips"><span>ffmpeg</span><span>Whisper</span><span>TikTok/Reels</span></div>
         <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></div>
@@ -9205,6 +9232,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <!-- CLASSIC CARDS — hidden by default, toggle above -->
     <script>
     window.mediaSetView = function(mode){
+      if(mode==='swivel') mode='grid';   // swivel/carousel view retired — grid + list only
       var g = document.getElementById('mediaModGrid'); if(!g) return;
       g.className = 'mmv-' + mode;
       [['grid','mmGrid'],['list','mmList'],['swivel','mmSwivel']].forEach(function(p){ var b=document.getElementById(p[1]); if(b) b.classList.toggle('on', p[0]===mode); });
@@ -10717,7 +10745,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
           <div class="settings-plan-card" data-tier="free"    style="padding:8px 6px;text-align:center;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s" onclick="showView('billing')"><div style="font-size:9px;font-weight:700;color:var(--text-muted)">FREE</div><div style="font-size:11px;font-weight:900;color:var(--text-muted)">$0</div><div style="font-size:7px;color:var(--text-muted);margin-top:2px">Free chat + images</div></div>
           <div class="settings-plan-card" data-tier="builder" style="padding:8px 6px;text-align:center;border:1px solid var(--accent);border-radius:6px;cursor:pointer;transition:all 0.2s;background:rgba(0,229,160,0.05)" onclick="showView('billing')"><div style="font-size:9px;font-weight:700;color:var(--accent)">BUILDER</div><div style="font-size:11px;font-weight:900;color:var(--accent)">$19</div><div style="font-size:7px;color:var(--text-muted);margin-top:2px">7 agents + Orchestrator</div></div>
-          <div class="settings-plan-card" data-tier="pro"     style="padding:8px 6px;text-align:center;border:1px solid #64b5f6;border-radius:6px;cursor:pointer;transition:all 0.2s" onclick="showView('billing')"><div style="font-size:9px;font-weight:700;color:#64b5f6">PRO</div><div style="font-size:11px;font-weight:900;color:#64b5f6">$49</div><div style="font-size:7px;color:var(--text-muted);margin-top:2px">Premium models + creation</div></div>
+          <div class="settings-plan-card" data-tier="pro"     style="padding:8px 6px;text-align:center;border:1px solid #64b5f6;border-radius:6px;cursor:pointer;transition:all 0.2s" onclick="showView('billing')"><div style="font-size:9px;font-weight:700;color:#64b5f6">PRO</div><div style="font-size:11px;font-weight:900;color:#64b5f6">$29.99</div><div style="font-size:7px;color:var(--text-muted);margin-top:2px">Premium models + creation</div></div>
           <div class="settings-plan-card" data-tier="alpha"   style="padding:8px 6px;text-align:center;border:1px solid #ffd700;border-radius:6px;cursor:pointer;transition:all 0.2s" onclick="showView('billing')"><div style="font-size:9px;font-weight:700;color:#ffd700">ALPHA</div><div style="font-size:11px;font-weight:900;color:#ffd700">$199</div><div style="font-size:7px;color:var(--text-muted);margin-top:2px">NFT mint + white-label</div></div>
         </div>
         <div style="font-size:7.5px;color:var(--text-muted);background:rgba(51,214,255,0.05);border:1px solid rgba(51,214,255,0.18);border-radius:6px;padding:7px 9px;margin-bottom:10px;line-height:1.5">
@@ -14068,7 +14096,7 @@ function _seedDemoData() {
   if (!S.notes || S.notes.length === 0) {
     const now = Date.now();
     S.notes = [
-      { id:1, title:'Revenue Strategy', content:'Alpha tier: 5 spots × $199 = $995/mo. Pro tier: 10 × $49 = $490/mo. Goal: $1K MRR by end of month. Focus on referral loop.', agent:'ZEROX', created: now - 172800000, tags:['revenue','strategy'] },
+      { id:1, title:'Revenue Strategy', content:'Alpha tier: 5 spots × $199 = $995/mo. Pro tier: 34 × $29.99 = ~$1,020/mo. Goal: $1K MRR by end of month. Focus on referral loop.', agent:'ZEROX', created: now - 172800000, tags:['revenue','strategy'] },
       { id:2, title:'PIKADON Security Audit — v80', content:'14/14 checks passed. CORS locked to localhost. No dynamic code execution. 256 fetch timeouts. CSP active. SSRF protected. VERDICT: ✅ HACKATHON-READY.', agent:'PIKADON', created: now - 86400000, tags:['security','audit'] },
       { id:3, title:'7-Agent Architecture Notes', content:'SHADDAI (commander) → ZEROX (wealth) → ORACLE (research) → NEXUS (backend) → TURTLE (design) → QUILL (writing) → PIKADON (security). All on dedicated ports. 200+ real, executable tools wired across the council.', agent:'SHADDAI', created: now - 43200000, tags:['architecture','agents'] },
     ];
@@ -14209,7 +14237,7 @@ function initSovereignTerminal() {
     const PLAN_PRICES = { free:0, builder:19, pro:49, alpha:199 };
     const localMRR = PLAN_PRICES[plan] || 0;
     const refStats = JSON.parse(localStorage.getItem('shaddai_ref_stats') || '{}');
-    const refBonus = (refStats.conversions || 0) * 49; // avg $49 per converted referral
+    const refBonus = (refStats.conversions || 0) * 29.99; // avg $29.99 per converted referral
     const totalMRR = localMRR + refBonus;
     const pct = Math.min(100, Math.round(totalMRR / 10)); // 1% per $10 toward $1K
     const mrrEl = document.getElementById('missionMRR');
@@ -19454,7 +19482,7 @@ function connectApiProvider(providerId) {
       <div style="text-align:center;padding:24px 16px">
         <div style="font-size:36px;margin-bottom:12px">🔒</div>
         <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#a78bfa;margin-bottom:12px">PRO PLAN REQUIRED</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.7;margin-bottom:14px">Claude API requires <b style="color:#a78bfa">Pro ($49/mo)</b> or above.<br>Upgrade to unlock Claude Haiku, Sonnet, and Opus with your own key.</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.7;margin-bottom:14px">Claude API requires <b style="color:#a78bfa">Pro ($29.99/mo)</b> or above.<br>Upgrade to unlock Claude Haiku, Sonnet, and Opus with your own key.</div>
         <div style="font-size:8px;color:rgba(255,255,255,0.25)">Free tier: Groq + Ollama (zero cost) · Builder: All APIs except Claude</div>
       </div>`, [{label:'⚡ Upgrade', class:'btn-accent', action:()=>{closeModal();showBillingPlan();}},{label:'Cancel',class:'btn-ghost',action:closeModal}]);
     return;
@@ -20205,6 +20233,19 @@ async function streamAgentChat(agentKey, message, bubbleEl) {
     resolve(full || `[${agentKey}] No response.`);
   });
 }
+
+// Clear the CURRENT agent's conversation (chat header 🧹 Clear button).
+window.clearCurrentChat = function () {
+  try {
+    const key = S.agent === 'ALL' ? '_all' : S.agent;
+    if (S.msgs) S.msgs[key] = [];
+    if (typeof renderMsgs === 'function') renderMsgs();
+    if (typeof persistState === 'function') try { persistState(); } catch (_) {}
+    if (typeof notify === 'function') notify('🧹 Conversation cleared');
+  } catch (e) { if (typeof notify === 'function') notify('Could not clear: ' + e.message); }
+};
+// Keep the chat header agent dropdown in sync when the agent changes elsewhere.
+window._syncChatAgentSelect = function () { var s = document.getElementById('chatAgentSelect'); if (s && S.agent) s.value = S.agent; };
 
 async function sendMsgFull() {
   const inp = document.getElementById('chatInFull');
@@ -27268,6 +27309,47 @@ async function runSavedWorkflow(id) {
         {step:2, agent:'oracle', prompt:'For this revenue strategy: {step1}\nWhat are 3 competitors doing better and what can we learn from them?'},
         {step:3, agent:'shaddai', prompt:'Given this revenue analysis: {step2}\nWhat is the #1 strategic decision to make this week to get to $1K/month faster?'}
       ]
+    },
+    // ── NEW: tool-aligned workflows (each step forces a REAL tool we built) ──
+    'crypto-market-scan': {
+      name:'Crypto Market Scan', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'oracle', prompt:'Get the global crypto market overview (use the crypto_global tool) and the live price of SOL and BTC (use the jupiter_price and fetch_price tools). Summarize the market state.'},
+        {step:2, agent:'zerox', prompt:'Based on this market data: {step1}\nGet the top DeFi protocols by TVL (use the defillama_protocols tool) and identify 2 opportunities.'},
+        {step:3, agent:'quill', prompt:'Write an engaging 5-tweet crypto market thread from these insights: {step2}. (use the write_thread tool)'}
+      ]
+    },
+    'token-safety-check': {
+      name:'Token Safety Check', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'pikadon', prompt:'Run a safety report on the USDC mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v (use the rugcheck_token tool) and check its top holders (use the sol_token_holders tool). Flag any risks.'},
+        {step:2, agent:'zerox', prompt:'For this token: {step1}\nGet its live market data (use the dexscreener_token tool) — price, liquidity, volume.'},
+        {step:3, agent:'shaddai', prompt:'Given the safety report and market data: {step2}\nGive a clear SAFE / CAUTION / AVOID verdict with one-line reasoning.'}
+      ]
+    },
+    'defi-yield-hunt': {
+      name:'DeFi Yield Hunt', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'zerox', prompt:'Find the top DeFi yield pools with at least $1M TVL (use the defillama_yields tool) and the chains with the most TVL (use the defillama_chains tool).'},
+        {step:2, agent:'oracle', prompt:'From these yield options: {step1}\nWhich 3 offer the best risk-adjusted return and why?'},
+        {step:3, agent:'quill', prompt:'Summarize the top 3 DeFi yield picks as a clean briefing from: {step2}. (use the summarize_bullets tool if available, else write bullets)'}
+      ]
+    },
+    'content-blast': {
+      name:'Content Blast', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'oracle', prompt:'Give me the 3 most interesting angles on the topic "AI agents that earn while you sleep" for social content.'},
+        {step:2, agent:'quill', prompt:'From these angles: {step1}\nWrite a viral X thread (use the write_thread tool) AND 10 scroll-stopping hooks (use the generate_hooks tool).'},
+        {step:3, agent:'turtle', prompt:'For this content: {step2}\nWrite an image-generation prompt for a hero visual (use the image_prompt tool) and suggest hashtags (use the hashtag_suggest tool).'}
+      ]
+    },
+    'site-security-audit': {
+      name:'Site Security Audit', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'pikadon', prompt:'Audit github.com: check its TLS certificate (use the ssl_check tool), grade its security headers (use the security_headers tool), and resolve its DNS (use the dns_lookup tool).'},
+        {step:2, agent:'nexus', prompt:'From this security scan: {step1}\nWhat are the top 3 concrete hardening recommendations?'},
+        {step:3, agent:'quill', prompt:'Write a brief executive security report with action items from: {step2}'}
+      ]
     }
   };
   const wf = prebuilt[id];
@@ -29982,7 +30064,10 @@ function renderSkillsPanel() {
 }
 
 // Skill runner modal
-function openSkillRunner(skillName, action) {
+function openSkillRunner(skillName, action, defaultAgent) {
+  const _AG = ['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
+  const _da = String(defaultAgent || 'SHADDAI').toUpperCase();
+  const _agentOpts = _AG.map(a => `<option${a === _da ? ' selected' : ''}>${a}</option>`).join('');
   const existing = document.getElementById('skill-runner-modal');
   if (existing) existing.remove();
 
@@ -30000,7 +30085,7 @@ function openSkillRunner(skillName, action) {
       </div>
       <label style="display:block;font-size:9px;color:var(--text-muted);margin:0 0 4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px">RUN AS AGENT</label>
       <select id="skill-agent-select" style="width:100%;padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;margin-bottom:10px">
-        <option>SHADDAI</option><option>NEXUS</option><option>ZEROX</option><option>ORACLE</option><option>TURTLE</option><option>QUILL</option><option>PIKADON</option>
+        ${_agentOpts}
       </select>
       <label style="display:block;font-size:9px;color:var(--text-muted);margin:0 0 4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px">CONTEXT / DETAILS (optional)</label>
       <textarea id="skill-task-input" placeholder="Add any details this skill should use — or leave blank to just run..." rows="4"
@@ -30022,11 +30107,18 @@ async function executeSkillFromModal(skillName, action) {
   if (!taskInput || !outputEl) return;
 
   const task = taskInput.value.trim();
+  const agentSel = document.getElementById('skill-agent-select');
+  const agent = agentSel ? agentSel.value : undefined;
   outputEl.style.display = 'block';
-  outputEl.textContent = '⚡ Running skill...';
+  outputEl.textContent = '⚡ ' + (agent || 'Agent') + ' running ' + skillName + '…';
 
-  const result = await runSkill(skillName, action || null, { task });
-  outputEl.textContent = JSON.stringify(result, null, 2);
+  const params = agent ? { task, agent } : { task };
+  const result = await runSkill(skillName, action || null, params);
+  const out = (result && result.result != null) ? (typeof result.result === 'string' ? result.result : JSON.stringify(result.result, null, 2)) : (result && result.error ? '⚠ ' + result.error : JSON.stringify(result, null, 2));
+  outputEl.textContent = out;
+  // Surface the run in Mission Control (log + deploy the agent's MC chat so it's "there").
+  try { if (typeof officeLog === 'function') officeLog('[SKILL] ' + skillName + ' → ' + (agent || '?')); } catch (_) {}
+  try { if (agent && typeof deployAgentToMissionControl === 'function' && task) deployAgentToMissionControl(agent); } catch (_) {}
 }
 
 async function sendSkillToChat(skillName, action) {
@@ -41988,6 +42080,27 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <div id="billingPlans" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">Loading plans…</div>
     </div>
 
+    <!-- ── SIMPLE PLANS (clean, correct pricing) ── -->
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px">✦ Plans</div>
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">Start free. Go <b style="color:var(--accent)">Pro</b> for premium models + creation. You also earn <b style="color:#ffd700">Sparks</b> just by using your agents — spend them in the Shop. Card billing is secure via Stripe.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.08em">FREE</div>
+          <div style="font-size:26px;font-weight:900;color:var(--text)">$0</div>
+          <div style="font-size:8px;color:var(--text-muted);margin:8px 0;line-height:1.8">All 7 agents · free models<br>Earn & spend Sparks<br>Forge custom agents</div>
+          <button class="btn btn-ghost" style="width:100%;font-size:9px" disabled>Your plan</button>
+        </div>
+        <div style="border:2px solid var(--accent);border-radius:8px;padding:14px;text-align:center;background:rgba(0,229,160,.05);position:relative">
+          <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:800;letter-spacing:1px;color:#04120c;background:var(--accent);padding:2px 9px;border-radius:10px">POPULAR</div>
+          <div style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.08em">PRO</div>
+          <div style="font-size:26px;font-weight:900;color:var(--text)">$29.99<span style="font-size:10px;color:var(--text-muted)">/mo</span></div>
+          <div style="font-size:8px;color:var(--text-muted);margin:8px 0;line-height:1.8">Premium models (Groq/Claude)<br>Image · video · voice creation<br>Priority + bonus Sparks</div>
+          <button class="btn btn-accent" style="width:100%;font-size:10px;font-weight:700" onclick="var b=document.getElementById('billingPlans');if(b){b.scrollIntoView({behavior:'smooth'});} if(typeof notify==='function')notify('Pick the Pro plan to check out via Stripe ↑');">⚡ Upgrade to Pro</button>
+        </div>
+      </div>
+    </div>
+    <details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:9px;color:var(--text-muted);padding:8px 0">▸ More details — brain levels, credits, annual plans &amp; projections</summary>
     <!-- Brain Upgrade Economy — Hero Section -->
     <div style="padding:14px 0 16px;margin-bottom:2px">
       <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">🧠 Upgrade Your Agents' Intelligence</div>
@@ -42041,8 +42154,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         </div>
         <div style="border:1px solid var(--secondary);padding:14px;text-align:center">
           <div style="font-size:10px;font-weight:700;color:var(--secondary);margin-bottom:4px">PRO</div>
-          <div style="font-size:22px;font-weight:900;color:var(--text-primary)">$49<span style="font-size:10px;color:var(--text-muted)">/mo</span></div>
-          <div style="font-size:8px;color:var(--text-muted);margin:6px 0">Unlimited marketplace<br>500 credits/mo</div>
+          <div style="font-size:22px;font-weight:900;color:var(--text-primary)">$29.99<span style="font-size:10px;color:var(--text-muted)">/mo</span></div>
+          <div style="font-size:8px;color:var(--text-muted);margin:6px 0">Premium models + creation<br>Priority + bonus Sparks</div>
           <button class="btn btn-ghost" style="width:100%;font-size:8px;margin-top:8px;border-color:var(--secondary);color:var(--secondary)" onclick="selectPlan('pro')">Upgrade</button>
         </div>
         <div style="border:1px solid #ffd700;padding:14px;text-align:center;background:rgba(255,215,0,0.04)">
@@ -42113,7 +42226,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
             <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px">AVG PLAN</div>
             <select id="projAvgPlan" oninput="calcProjection()" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:5px 7px;font-size:10px">
               <option value="19">Builder ($19/mo)</option>
-              <option value="49" selected>Pro ($49/mo)</option>
+              <option value="29.99" selected>Pro ($29.99/mo)</option>
               <option value="199">Alpha ($199/mo)</option>
             </select>
           </div>
@@ -42189,6 +42302,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       </div>
     </div>
 
+    </details>
     <!-- REFERRAL SYSTEM — viral growth engine -->
     <div class="card" style="margin-top:12px;border-color:rgba(0,229,160,0.3)">
       <div class="card-head">
@@ -48103,7 +48217,7 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
 
 // ── SOLANA PAY SUBSCRIPTION FLOW ──────────────────────────────────────────────
 const _SH_PAY_WALLET = 'HsGGkqymKrCbCYUwKZdbnBJ6rHoLevHwqm9nWi5EZvnH'; // placeholder — set real wallet
-const _SOL_PRICES = { builder: 0.21, pro: 0.52, alpha: 2.12 }; // approx $19/$49/$199 in SOL @ $95/SOL
+const _SOL_PRICES = { builder: 0.21, pro: 0.32, alpha: 2.12 }; // approx $19/$29.99/$199 in SOL @ $95/SOL
 
 window.openSolanaPayModal = function(tier, priceUsd) {
   const solAmount = _SOL_PRICES[tier] || (priceUsd / 95).toFixed(4);
@@ -48306,7 +48420,7 @@ window.showBillingPlan = function() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div style="padding:8px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:6px">
           <div style="font-size:9px;font-weight:700;color:var(--accent)">Subscriptions (MRR)</div>
-          <div style="font-size:8px;color:var(--text-muted);margin-top:4px">Builder $19 · Pro $49 · Alpha $199<br>Annual: 20% discount</div>
+          <div style="font-size:8px;color:var(--text-muted);margin-top:4px">Builder $19 · Pro $29.99 · Alpha $199<br>Annual: 20% discount</div>
         </div>
         <div style="padding:8px;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.2);border-radius:6px">
           <div style="font-size:9px;font-weight:700;color:#ffb020">Marketplace (15% fee)</div>
@@ -48336,7 +48450,7 @@ window.showBillingPlan = function() {
       <div style="margin-top:12px;font-weight:700;color:var(--accent)">PATH TO $1K/MONTH</div>
       <div style="font-size:9px;line-height:2;color:var(--text-muted)">
         Option A: 53 Builder subscribers @ $19 = $1,007/mo<br>
-        Option B: 21 Pro subscribers @ $49 = $1,029/mo<br>
+        Option B: 34 Pro subscribers @ $29.99 = ~$1,020/mo<br>
         Option C: Mix of 10 Pro + 20 Builder = $870/mo + marketplace fees<br>
         Option D: 5 Alpha clients @ $199 = $995/mo (easiest to hit fast)<br>
         <br>
@@ -50761,7 +50875,9 @@ var MEDIA_MODULES={
 };
 function launchMediaModule(key){
   var mod=MEDIA_MODULES[key];
-  if(!mod){notify('Module not found');return;}
+  // signal / series / clipper are overlay-only modules (not in MEDIA_MODULES) — route them below, don't block here.
+  var _overlayOnly=['signal','series','clipper','clips'];
+  if(!mod && _overlayOnly.indexOf(key)<0){notify('Module not found');return;}
 
   // ── AI WRITER overlay ─────────────────────────────────────────
   if(key==='content'){
@@ -51113,12 +51229,15 @@ function _openGalleryOverlay(){
   expandModule({title:'🖼 MEDIA GALLERY',accentColor:'#ffd700',content:html});
 }
 
-// Engine URL: localhost in dev, the clipper's Render service in production.
-// After deploying the clipper to Render, set this to its real URL (or window.CLIP_ENGINE).
+// Engine URL: the clipper runs LOCALLY ONLY (it is NOT deployed to any public URL).
+// Uses localhost:8787 when the dashboard is opened on localhost. On a deployed
+// (https) dashboard there is no engine to reach, so this stays empty and the
+// overlay shows a "run it locally" note instead of failing against a dead URL.
+// To use a hosted engine later, set window.CLIP_ENGINE to its real URL.
 var CLIP_ENGINE = (window.CLIP_ENGINE) ||
   ((location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.protocol==='file:')
     ? 'http://localhost:8787'
-    : 'https://shaddai-clipper.onrender.com');
+    : '');
 function _openClipperOverlay(){
   // Open straight into the clipper (Pro gate removed — re-add a tier check here for billing later).
   expandModule({title:'✂️ VIDEO CLIPPER — SHADDAI Engine',accentColor:'#ff4070',icon:'✂️',content:
@@ -51132,6 +51251,16 @@ function _openClipperOverlay(){
 }
 window._clipperProbe=function(){
   var wrap=document.getElementById('ov_clipperWrap'); if(!wrap) return;
+  if(!CLIP_ENGINE){
+    wrap.innerHTML=
+      '<div style="background:rgba(255,70,112,0.06);border:1px solid rgba(255,70,112,0.25);border-radius:10px;padding:18px;font-size:11px;line-height:1.7;color:rgba(255,255,255,0.85)">'+
+        '<div style="font-weight:700;color:#ff4070;margin-bottom:6px;font-size:13px">Video Clipper runs locally</div>'+
+        'The clip engine is not deployed to a public URL yet — it runs on your own machine. To use it:'+
+        '<div style="margin:10px 0 0 0;font-family:monospace;font-size:10px;color:rgba(255,255,255,0.7)">1. Run <b>START-CLIPPER.bat</b> (engine on :8787)<br>2. Open this dashboard at <b>http://localhost:3000</b></div>'+
+        '<div style="margin-top:12px;color:rgba(255,255,255,0.55)">(A hosted version can be added later; set <b>window.CLIP_ENGINE</b> to its URL.)</div>'+
+      '</div>';
+    return;
+  }
   fetch(CLIP_ENGINE+'/api/clips/v1/health',{signal:AbortSignal.timeout(4500)})
     .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
     .then(function(){
@@ -51149,7 +51278,7 @@ window._clipperProbe=function(){
       wrap.innerHTML=
         '<div style="background:rgba(255,70,112,0.06);border:1px solid rgba(255,70,112,0.25);border-radius:10px;padding:18px;font-size:11px;line-height:1.7;color:rgba(255,255,255,0.85)">'+
           '<div style="font-weight:700;color:#ff4070;margin-bottom:6px;font-size:13px">Clip engine isn\'t reachable</div>'+
-          'The hosted clip engine may be starting up (Render cold start) or offline. Wait a moment and retry.'+
+          'The local clip engine isn\'t running. Start it with <b>START-CLIPPER.bat</b> (serves on :8787), then retry.'+
           '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+
             '<button class="btn btn-accent" style="background:#ff4070;border:none;font-size:10px;font-weight:700" onclick="_clipperProbe()">↻ Retry connection</button>'+
             '<button class="btn btn-ghost" style="font-size:10px" onclick="_openClipperLegacy()">Use the URL downloader instead</button>'+

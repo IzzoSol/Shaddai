@@ -197,13 +197,13 @@ body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opa
     <div>
       <div class="eyebrow">SHADDAI EMPIRE · <b>MISSION CONTROL</b> · <i>MERCHANT GRID</i></div>
       <h1 class="title">THE <span class="g">BAZAAR</span></h1>
-      <div class="tagline">A living marketplace of operator-run shops — deploy agents, buy skills, license workflows and datasets. Every stall is a real operator. The grid never sleeps.</div>
+      <div class="tagline">A marketplace of operator-run shops — deploy agents, buy skills, license workflows and datasets. <b style="color:#ffd45e">The shops below are example operators seeding the grid</b> — open your own shop to go live. The grid never sleeps.</div>
     </div>
     <div class="hactions">
       <div class="wallet">⚡ <div><span class="amt" id="credN">2,450</span> <span class="lb">credits</span></div></div>
       <div class="row">
         <a class="btn btn-ghost" href="/" onclick="if(window.self!==window.top){history.back();return false}">← SHADDAI</a>
-        <div class="wchip" id="walletChip" onclick="connectWallet()"><span class="dot"></span> Connect Wallet</div>
+        <div class="wchip" id="walletChip" onclick="walletExplain()" title="Optional · non-custodial · Solana devnet (test SOL). Click to see exactly what connecting does."><span class="dot"></span> Connect Wallet <span style="font-size:9px;opacity:.6">ⓘ</span></div>
         <button class="btn btn-cta" onclick="openShop()">▣ Build a Pack</button>
       </div>
     </div>
@@ -214,7 +214,7 @@ body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opa
   <div class="feat" id="feat"></div>
 
   <!-- filters + grid -->
-  <div class="sec"><span class="no">02 /</span><span class="lbl">Open Shops</span><span class="ln"></span><span class="meta"><span id="liveCount">11</span> LIVE · SORTED BY HEAT</span></div>
+  <div class="sec"><span class="no">02 /</span><span class="lbl">Open Shops</span><span class="ln"></span><span class="meta"><span id="liveCount">11</span> EXAMPLE SHOPS · SEED GRID · SORTED BY HEAT</span></div>
   <div class="filters" id="filters"></div>
   <div class="grid" id="grid"></div>
 
@@ -398,11 +398,42 @@ try{syncSol();}catch(e){}
 let WALLET=null,WPUB=null;const DEVNET='https://api.devnet.solana.com';
 const TREASURY='11111111111111111111111111111111'; // TODO: set your real receiving address
 function getProvider(){return (window.phantom&&window.phantom.solana)||(window.solana&&window.solana.isPhantom?window.solana:null)||window.solflare||window.backpack||window.solana||null;}
+/* Informed-consent step: explain what connecting does BEFORE the wallet popup. Also handles disconnect. */
+function walletExplain(){
+  if(WALLET&&WPUB){
+    if(confirm('Wallet connected: '+WPUB.slice(0,4)+'…'+WPUB.slice(-4)+'\n\nDisconnect it?')){
+      try{WALLET.disconnect&&WALLET.disconnect();}catch(_){}
+      WALLET=null;WPUB=null;var c=document.getElementById('walletChip');
+      if(c){c.classList.remove('conn');c.innerHTML='<span class="dot"></span> Connect Wallet <span style="font-size:9px;opacity:.6">ⓘ</span>';}
+    }
+    return;
+  }
+  var m=document.getElementById('walletExplainModal');
+  if(!m){m=document.createElement('div');m.id='walletExplainModal';document.body.appendChild(m);
+    m.onclick=function(e){if(e.target===m)m.style.display='none';};}
+  m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(3,6,12,.85);backdrop-filter:blur(8px)';
+  m.innerHTML='<div style="width:min(460px,94vw);background:#0b1018;border:1px solid rgba(255,212,94,.35);border-radius:14px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.7);font-family:system-ui,-apple-system,sans-serif">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:15px;font-weight:800;color:#ffd45e">◎ Connect your Solana wallet</div><button onclick="document.getElementById(\'walletExplainModal\').style.display=\'none\'" style="background:none;border:none;color:#7c8aa0;cursor:pointer;font-size:16px">✕</button></div>'
+    +'<div style="font-size:12px;color:#c8d2e0;line-height:1.6;margin-bottom:12px">Links your existing wallet (Phantom, Solflare, or Backpack) so the Bazaar can show your address and let you pay with SOL. Exactly what happens:</div>'
+    +'<div style="font-size:11px;color:#aeb9c9;line-height:2;margin-bottom:14px">'
+      +'✓ <b style="color:#00e5a0">Non-custodial</b> — we never hold, move, or see your funds. Keys stay in your wallet.<br>'
+      +'✓ <b style="color:#00e5a0">Read-only connect</b> — sharing only your public address. Nothing leaves your wallet unless <b>you</b> approve a payment.<br>'
+      +'✓ <b style="color:#00e5a0">Test network</b> — currently on Solana <b>devnet</b> (test SOL — no real money moves).<br>'
+      +'✓ <b style="color:#00e5a0">Optional</b> — you can browse and buy with credits without any wallet.'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+      +'<button onclick="document.getElementById(\'walletExplainModal\').style.display=\'none\'" style="flex:1;padding:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:9px;color:#c8d2e0;cursor:pointer;font-size:12px">Not now</button>'
+      +'<button onclick="document.getElementById(\'walletExplainModal\').style.display=\'none\';connectWallet()" style="flex:2;padding:11px;background:linear-gradient(135deg,#ffd45e,#ffb020);border:none;border-radius:9px;color:#1a1200;font-weight:800;cursor:pointer;font-size:12px">◎ Connect my wallet</button>'
+    +'</div>'
+    +'<div style="font-size:9px;color:#6c7688;text-align:center;margin-top:11px">Non-custodial. Never share your seed phrase with anyone — including SHADDAI.</div>'
+  +'</div>';
+  m.style.display='flex';
+}
 async function connectWallet(){const chip=document.getElementById('walletChip');const p=getProvider();
   if(!p){window.open('https://phantom.app/','_blank');chip.innerHTML='<span class="dot"></span> Install a wallet →';return;}
   try{const res=await p.connect();WALLET=p;WPUB=(res&&res.publicKey?res.publicKey:p.publicKey).toString();
     chip.classList.add('conn');chip.innerHTML=`<span class="dot"></span> ${WPUB.slice(0,4)}…${WPUB.slice(-4)} <span class="bal" id="wbal">·</span>`;refreshBal();
-  }catch(e){chip.innerHTML='<span class="dot"></span> Connect Wallet';}}
+  }catch(e){chip.innerHTML='<span class="dot"></span> Connect Wallet <span style="font-size:9px;opacity:.6">ⓘ</span>';}}
 async function refreshBal(){if(!WPUB)return;try{const r=await fetch(DEVNET,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[WPUB]})});const j=await r.json();const b=document.getElementById('wbal');if(b)b.textContent='◎ '+((j.result&&j.result.value||0)/1e9).toFixed(2);}catch(e){}}
 
 /* ── Pay with SOL (devnet · summary · wallet approval) ── */

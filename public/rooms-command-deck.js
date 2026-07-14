@@ -75,7 +75,8 @@
     ".cd .fig{position:relative;height:100%;filter:drop-shadow(0 24px 40px rgba(0,0,0,.6)) drop-shadow(0 0 40px rgba(var(--acg),.35));transition:transform .2s ease-out}.cd .fig img{height:100%;object-fit:contain;display:block}",
     ".cd .fig::after{content:'';position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.4;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(var(--acg),.22) 2px 3px);background-size:100% 4px;animation:cdHs 3.2s linear infinite}",
     "@keyframes cdHs{to{background-position:0 -120px}}",
-    ".cd #cdHost{position:absolute;inset:0;z-index:2;display:none}",
+    ".cd #cdHost{position:absolute;inset:0;z-index:6;display:none;background:transparent}",
+    ".cd #cdHost model-viewer{width:100%;height:100%;background:transparent;--poster-color:transparent;--progress-bar-color:var(--ac)}",
     ".cd .tag{position:absolute;top:14px;left:14px;z-index:3;display:flex;gap:7px;align-items:center;padding:5px 11px;border-radius:20px;background:rgba(0,0,0,.5);border:1px solid rgba(var(--acg),.4);font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ac)}",
     ".cd .vtog{position:absolute;top:12px;right:12px;z-index:5;display:flex;background:rgba(0,0,0,.5);border:1px solid rgba(var(--acg),.4);border-radius:22px;overflow:hidden}",
     ".cd .vtog button{border:none;background:transparent;color:var(--mut);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 12px;display:flex;align-items:center;gap:5px}.cd .vtog button.on{background:rgba(var(--acg),.22);color:var(--ac)}",
@@ -227,27 +228,16 @@
             '<div id="cdSkResult" style="display:none;margin-top:10px;background:rgba(0,0,0,.42);border:1px solid rgba(var(--acg),.3);border-radius:8px;padding:10px"></div>'+
           '</div>'+
           '<div class="pane" data-p="wk">'+
-            '<div class="sec">GENERATE — real image · pick an engine</div>'+
-            '<div style="display:flex;gap:8px;align-items:stretch">'+
-              '<input class="goal" id="cdImgPrompt" style="flex:1" placeholder="describe an image to generate…">'+
-              '<select class="bsel" id="cdImgProv" style="margin:0;align-self:stretch" title="image engine"><option value="flux">FLUX (HF)</option><option value="nano-banana">NanoBanana</option><option value="fal">fal.ai</option><option value="dall-e-3">DALL·E 3</option></select>'+
-              '<button class="run" id="cdGen" style="width:auto;margin-top:0;padding:0 16px">'+IC.st+' GEN</button>'+
-            '</div>'+
-            '<div class="cap" id="cdGenMsg" style="margin-top:8px"></div>'+
-            '<div class="sec mt">GALLERY</div>'+
+            /* image-gen button removed — generate images by running the generate_image tool from the SKILLS tab. */
+            '<div class="cap" style="opacity:.75;margin-bottom:8px">Generate images by running the <b>generate_image</b> tool in the SKILLS tab. Saved media appears below.</div>'+
+            '<div class="sec">GALLERY</div>'+
             '<div class="wgrid" id="cdWGrid"></div>'+
             /* E6a: removed "CREATE IN CONTENT STUDIO" button + Content-Studio empty-state copy (out of scope for rooms). */
             '<div class="cap" id="cdWMsg" style="margin-top:8px"></div>'+
           '</div>'+
           '<div class="pane" data-p="cu">'+
-            '<div class="sec">ACCENT</div><div class="swatches" id="cdSw"></div>'+
-            '<div class="sec mt">ROOM MODULES</div>'+
-            '<div class="opts">'+
-              '<div class="opt on" data-mod="floor">FLOOR GRID <span class="pill">ON</span></div>'+
-              '<div class="opt on" data-mod="beam">LIGHT BEAM <span class="pill">ON</span></div>'+
-              '<div class="opt on" data-mod="fig">HOLOGRAM <span class="pill">ON</span></div>'+
-            '</div>'+
-            '<div class="cap" style="margin-top:10px">In 3D view the model shows its idle / walk / attack clips.</div>'+
+            '<div class="sec">ACCENT / THEME</div><div class="swatches" id="cdSw"></div>'+
+            '<div class="cap" style="margin-top:10px">Pick your room accent. In 3D view the model shows its idle / walk / attack clips.</div>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -279,9 +269,9 @@
     // skills add
     el('cdAddBtn').onclick=function(){ var p=el('cdPicker'); p.classList.toggle('on'); if(p.classList.contains('on'))el('cdPSearch').focus(); };
     el('cdPSearch').oninput=function(){ renderPicker(this.value); };
-    // workshop
-    el('cdGen').onclick=function(){ genImage(d); };
-    el('cdImgPrompt').onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); genImage(d); } };
+    // workshop — image-gen controls removed; gallery only
+    var _cdGen=el('cdGen'); if(_cdGen) _cdGen.onclick=function(){ genImage(d); };
+    var _cdImgPrompt=el('cdImgPrompt'); if(_cdImgPrompt) _cdImgPrompt.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); genImage(d); } };
     /* E6a: cdCreate button removed — no wiring needed. */
     // customize accents
     var sws=['0,229,255','255,215,0','167,139,250','0,255,136','251,146,60','244,63,94']; var sw=el('cdSw');
@@ -293,16 +283,70 @@
 
   function setAccent(g){ ST.acg=g; ST.color=color(g); var root=el('cdRoot'); if(root){root.style.setProperty('--acg',g);root.style.setProperty('--ac',ST.color);} }
 
+  /* Load the <model-viewer> web component once (same unpkg build the Forge uses; already CSP-allowed). */
+  function ensureMV(){
+    if (document.querySelector('script[data-forge3d-mv]')) return;
+    var s=document.createElement('script'); s.type='module';
+    s.src='/model-viewer.min.js?v=15';
+    s.setAttribute('data-forge3d-mv','1'); document.head.appendChild(s);
+  }
+
   function setView(v,d){
     ST.view=v;
     [].forEach.call(document.querySelectorAll('.cd .vtog button'),function(b){b.classList.toggle('on',b.dataset.v===v);});
     el('cdTag').textContent=(v==='3d'?'LIVE · 3D — ':'STATIC · 2D — ')+d.scene;
     var host=el('cdHost'), figw=el('cdFigw');
     if(v==='3d'){
+      // Rooms 3D now uses the SAME Google <model-viewer> as the Forge (public/forge-3d.js).
+      // It is self-contained (decodes the embedded GLB texture + neutral IBL), sits at
+      // z-index:6 ABOVE the .holo::after vignette, and falls back to the 2D portrait on error.
       figw.style.display='none'; host.style.display='block';
-      try { if(window._roomViewer&&window._roomViewer.init){ window._roomViewer.init(host, d.glb, ST.acg); } else { host.innerHTML='<div style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.4);font-family:\'Share Tech Mono\',monospace;font-size:10px">3D viewer unavailable</div>'; } } catch(_){}
+      try {
+        ensureMV();
+        // dispose any legacy raw-Three viewer if it was ever mounted (harmless if absent)
+        try{ window._roomViewer&&window._roomViewer.dispose&&window._roomViewer.dispose(); }catch(_){}
+        host.innerHTML=
+          '<model-viewer id="cdMv" auto-rotate camera-controls autoplay '+
+            'rotation-per-second="20deg" interaction-prompt="none" shadow-intensity="0.6" '+
+            'exposure="1.0" environment-image="neutral" tone-mapping="aces" '+
+            'camera-orbit="0deg 82deg 2.6m" min-camera-orbit="auto auto 1.4m" max-camera-orbit="auto auto 5m" field-of-view="34deg" '+
+            'style="width:100%;height:100%;background:transparent" '+
+            'src="/assets/agents/'+esc(d.glb)+'.glb?v=14"></model-viewer>'+
+          // In-room HUD: zoom out / in + cycle animation (matches the main chamber).
+          '<div id="cdHud" style="position:absolute;right:10px;bottom:10px;z-index:8;display:flex;gap:6px;pointer-events:auto">'+
+            '<button id="cdZoomOut" title="Zoom out" style="width:28px;height:28px;border-radius:7px;background:rgba(2,6,12,.72);border:1px solid rgba(var(--acg),.55);color:var(--ac);cursor:pointer;font-size:15px;line-height:1;backdrop-filter:blur(8px)">−</button>'+
+            '<button id="cdZoomIn" title="Zoom in" style="width:28px;height:28px;border-radius:7px;background:rgba(2,6,12,.72);border:1px solid rgba(var(--acg),.55);color:var(--ac);cursor:pointer;font-size:15px;line-height:1;backdrop-filter:blur(8px)">+</button>'+
+            '<button id="cdAnim" title="Cycle animation" style="height:28px;padding:0 10px;border-radius:7px;background:rgba(2,6,12,.72);border:1px solid rgba(var(--acg),.55);color:var(--ac);cursor:pointer;font:700 8px/1 \'Share Tech Mono\',monospace;letter-spacing:1px;backdrop-filter:blur(8px)">▶ ANIM</button>'+
+          '</div>';
+        var mv=el('cdMv');
+        if(mv){
+          // zoom + animation controls (parity with the chamber HUD)
+          var _rad=2.6;
+          function _cdZoom(delta){ _rad=Math.max(1.4,Math.min(5,_rad+delta)); try{ mv.cameraOrbit='0deg 82deg '+_rad+'m'; }catch(_){} }
+          var _zo=el('cdZoomOut'); if(_zo)_zo.onclick=function(){ _cdZoom(0.5); };
+          var _zi=el('cdZoomIn'); if(_zi)_zi.onclick=function(){ _cdZoom(-0.5); };
+          var _an=el('cdAnim'); if(_an)_an.onclick=function(){ try{ var A=(mv.availableAnimations||[]); if(!A.length)return; var idx=A.indexOf(mv.animationName); var next=A[(idx+1)%A.length]; mv.animationName=next; if(mv.play)mv.play(); _an.textContent='▶ '+String(next).slice(0,7).toUpperCase(); }catch(_){} };
+          // Meshy GLBs can export metallicFactor≈1 → env mirrors to white; drop metalness so albedo shows.
+          mv.addEventListener('load',function(){
+            try{
+              var mats=(mv.model&&mv.model.materials)||[];
+              for(var i=0;i<mats.length;i++){
+                var pbr=mats[i]&&mats[i].pbrMetallicRoughness; if(!pbr)continue;
+                try{ pbr.setMetallicFactor(0); }catch(e){}
+                try{ if(typeof pbr.roughnessFactor==='number'&&pbr.roughnessFactor<0.6) pbr.setRoughnessFactor(0.7); }catch(e){}
+              }
+            }catch(e){}
+          });
+          // GLB or component failed → fall back to the 2D portrait, never a blank panel.
+          mv.addEventListener('error',function(){ host.style.display='none'; figw.style.display=''; el('cdTag').textContent='STATIC · 2D — '+d.scene; [].forEach.call(document.querySelectorAll('.cd .vtog button'),function(b){b.classList.toggle('on',b.dataset.v==='2d');}); });
+        } else {
+          // web component not yet defined / unavailable → keep the portrait visible
+          host.style.display='none'; figw.style.display='';
+        }
+      } catch(_){ host.style.display='none'; figw.style.display=''; }
     } else {
-      host.style.display='none'; try{window._roomViewer&&window._roomViewer.dispose&&window._roomViewer.dispose();}catch(_){}
+      host.style.display='none'; host.innerHTML='';
+      try{window._roomViewer&&window._roomViewer.dispose&&window._roomViewer.dispose();}catch(_){}
       figw.style.display='';
     }
   }
@@ -375,6 +419,8 @@
   // E6a: run a single equipped skill in-room via the SAME engine as the Skills tab (window.runSkill → /api/skills/run),
   // show the result in #cdSkResult, and reuse the global Save-to-Notes / Gallery / Download helpers from index.html.
   function cdRunSkill(skillId, agentNm){
+    // Unified runner: let the user pick an agent + add context before running (falls back to direct run).
+    if (typeof window.openSkillRunner === 'function') { try { window.openSkillRunner(skillId, null, agentNm); return; } catch(_){} }
     var box=el('cdSkResult'); if(!box)return;
     box.style.display='block';
     box.innerHTML='<div style="font-size:9px;color:var(--ac)">⏳ running <b>'+esc(skillId)+'</b>… <span style="color:var(--mut)">(real /api/skills/run)</span></div>';

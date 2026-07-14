@@ -50,7 +50,7 @@ module.exports = {
   jupiter_token_price: {
     name: 'jupiter_token_price', description: 'Solana token price via Jupiter Price API (free).',
     schema: { mint: 'string — token mint or symbol (e.g. SOL)' }, agents: ['ZEROX'],
-    execute: async ({ mint }) => trim(await gj(`https://price.jup.ag/v6/price?ids=${encodeURIComponent(mint||'SOL')}`)),
+    execute: async ({ mint }) => trim(await gj(`https://lite-api.jup.ag/tokens/v2/search?query=${encodeURIComponent(mint||'SOL')}`)),
   },
 
   // ── NEXUS — dev ──

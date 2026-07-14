@@ -740,6 +740,12 @@ app.use('/api/x402/ledger', require('./x402-ledger-routes')); // prepaid balance
 app.use('/api/collectibles/rewards', require('./lib/collectible-rewards').router);              // AURA token-saver (cache/compute-first) stats+route
 app.use('/api/security', require('./lib/security-scan').router); // PIKADON real scans (url/code/skill)
 app.use('/api/vault', require('./lib/api-vault').router);        // BYOK API key vault (password-locked)
+// BYOK panel (dashboard "🔑 Connect Your APIs" card): simple paste-a-key → applied to env + persisted.
+try {
+  const _keys = require('./keys-routes');
+  if (_keys.applyStoredKeysToEnv) _keys.applyStoredKeysToEnv();   // apply saved user keys to process.env on boot
+  if (_keys.router) app.use('/api/keys', _keys.router);
+} catch (e) { console.error('[keys-routes] mount failed:', e.message); }
 // Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
 app.use('/api/brains', require('./brains').router);
 // Operative Forge — build-your-own-agent LOOK → real FLUX NFT portrait (HF token stays server-side)
@@ -758,6 +764,8 @@ app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
 app.use('/api/economy', require('./economy-routes'));                 // Sparks ledger (append-only, idempotent; Postgres or atomic dev store)
+// Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
+try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
 app.use('/api/work', require('./work-sessions'));                     // agent work loop: real work -> Sparks payout + while-away summary + live feed
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route

@@ -70,6 +70,37 @@ function createRouter(serviceOverride) {
     }
   });
 
+  // --- GET /catalog -------------------------------------------------------
+  // Public, read-only list of ACTIVE shop items. No money mutation. Never
+  // 500-crashes on empty catalog. Normalizes each row to a stable shape so
+  // the frontend can render decor/cosmetic/upgrade/premium uniformly.
+  router.get('/catalog', async (req, res) => {
+    try {
+      const raw = await svc.listCatalog();
+      const items = (Array.isArray(raw) ? raw : []).map((it) => {
+        const sparks = (it.sparks_price == null || Number(it.sparks_price) <= 0)
+          ? null
+          : Number(it.sparks_price);
+        const usd = (it.usd_price_cents == null || Number(it.usd_price_cents) <= 0)
+          ? null
+          : Number(it.usd_price_cents);
+        return {
+          id: it.id,
+          name: it.name,
+          kind: it.kind,
+          rarity: it.rarity != null ? it.rarity : null,
+          sparks_price: sparks,
+          usd_price_cents: usd,
+          description: it.description != null ? it.description : null,
+          category: it.category != null ? it.category : null
+        };
+      });
+      return res.json({ ok: true, items });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
   // --- POST /catalog/purchase --------------------------------------------
   // Body: { userId?, catalogId, idempotencyKey, qty? }
   // Validates the catalog item is active + sparks-priced, then spends Sparks
@@ -99,7 +130,28 @@ function createRouter(serviceOverride) {
         return res.status(404).json({ ok: false, error: 'Catalog item not found or inactive', code: 'NOT_FOUND' });
       }
       const unitPrice = Number(item.sparks_price);
-      if (!Number.isInteger(unitPrice) || unitPrice <= 0) {
+      const usdCents = Number(item.usd_price_cents);
+      const hasSparksPrice = Number.isInteger(unitPrice) && unitPrice > 0;
+      // PREMIUM (real-$) item: usd_price_cents set, not Sparks-priced. Do NOT
+      // spend Sparks — hand off to Stripe (implemented in sub-billing). We
+      // return a hint so the frontend routes to the unlock/checkout flow.
+      if (!hasSparksPrice && Number.isInteger(usdCents) && usdCents > 0) {
+        return res.status(200).json({
+          ok: true,
+          requiresStripe: true,
+          userId,
+          catalogId,
+          qty,
+          item: {
+            id: item.id,
+            name: item.name,
+            kind: item.kind,
+            rarity: item.rarity != null ? item.rarity : null,
+            usd_price_cents: usdCents
+          }
+        });
+      }
+      if (!hasSparksPrice) {
         return res.status(400).json({ ok: false, error: 'Item is not purchasable with Sparks', code: 'NOT_PURCHASABLE' });
       }
       const total = unitPrice * qty;

@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════════════════════════════
+   tools-utils2.js — REAL calculators & converters (compute, keyless).
+   Finance, math, unit conversions. Deterministic real output. Tagged
+   to ALL agents → lifts each toward 250.
+   ══════════════════════════════════════════════════════════════════ */
+'use strict';
+const ALL = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+const ok = (o) => JSON.stringify(o);
+const err = (m) => JSON.stringify({ error: m });
+const N = (v, n) => { const x = Number(v); if (v == null || v === '' || isNaN(x)) throw new Error(n + ' (number) required'); return x; };
+const r2 = (x) => Math.round(x * 100) / 100;
+function tool(name, desc, schema, fn, cat) { return { name, description: desc, schema: schema || {}, agents: ALL, category: cat || 'Calculators', async execute(p = {}) { try { return ok(fn(p || {})); } catch (e) { return err(e.message); } } }; }
+const TOOLS_UTILS2 = {};
+const reg = (t) => { TOOLS_UTILS2[t.name] = t; };
+
+// ── finance ────────────────────────────────────────────────────────
+reg(tool('compound_interest', 'Compound interest final value.', { principal: 'number', rate: 'number — annual %', years: 'number', compounds: 'number — per year, default 12' }, (p) => { const P = N(p.principal, 'principal'), r = N(p.rate, 'rate') / 100, t = N(p.years, 'years'), n = Number(p.compounds) || 12; const A = P * Math.pow(1 + r / n, n * t); return { finalValue: r2(A), interestEarned: r2(A - P) }; }));
+reg(tool('loan_payment', 'Monthly payment for a loan (amortized).', { principal: 'number', rate: 'number — annual %', years: 'number' }, (p) => { const P = N(p.principal, 'principal'), r = N(p.rate, 'rate') / 100 / 12, n = N(p.years, 'years') * 12; const m = r === 0 ? P / n : P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1); return { monthlyPayment: r2(m), totalPaid: r2(m * n), totalInterest: r2(m * n - P) }; }));
+reg(tool('roi', 'Return on investment %.', { gain: 'number — final value', cost: 'number — initial' }, (p) => { const g = N(p.gain, 'gain'), c = N(p.cost, 'cost'); return { roiPercent: r2((g - c) / c * 100) + '%', netProfit: r2(g - c) }; }));
+reg(tool('profit_margin', 'Gross profit margin %.', { revenue: 'number', cost: 'number' }, (p) => { const rev = N(p.revenue, 'revenue'), c = N(p.cost, 'cost'); return { marginPercent: r2((rev - c) / rev * 100) + '%', profit: r2(rev - c) }; }));
+reg(tool('markup', 'Selling price from cost + markup %.', { cost: 'number', markup: 'number — %' }, (p) => { const c = N(p.cost, 'cost'), m = N(p.markup, 'markup'); return { price: r2(c * (1 + m / 100)), profit: r2(c * m / 100) }; }));
+reg(tool('discount', 'Price after a discount %.', { price: 'number', percent: 'number' }, (p) => { const pr = N(p.price, 'price'), d = N(p.percent, 'percent'); return { finalPrice: r2(pr * (1 - d / 100)), saved: r2(pr * d / 100) }; }));
+reg(tool('sales_tax', 'Add sales tax to a price.', { amount: 'number', rate: 'number — %' }, (p) => { const a = N(p.amount, 'amount'), t = N(p.rate, 'rate'); return { tax: r2(a * t / 100), total: r2(a * (1 + t / 100)) }; }));
+reg(tool('break_even', 'Break-even units = fixed / (price - variable).', { fixed: 'number', price: 'number', variable: 'number' }, (p) => { const f = N(p.fixed, 'fixed'), pr = N(p.price, 'price'), v = N(p.variable, 'variable'); if (pr <= v) throw new Error('price must exceed variable cost'); return { breakEvenUnits: Math.ceil(f / (pr - v)), contributionMargin: r2(pr - v) }; }));
+reg(tool('ltv_cac', 'LTV:CAC ratio for unit economics.', { ltv: 'number', cac: 'number' }, (p) => { const l = N(p.ltv, 'ltv'), c = N(p.cac, 'cac'); return { ratio: r2(l / c) + ':1', healthy: l / c >= 3 }; }));
+reg(tool('mrr_arr', 'MRR → ARR and per-customer averages.', { mrr: 'number', customers: 'number — (optional)' }, (p) => { const m = N(p.mrr, 'mrr'); const out = { arr: r2(m * 12) }; if (p.customers) out.arpu = r2(m / Number(p.customers)); return out; }));
+reg(tool('percentage_change', 'Percent change from old to new value.', { from: 'number', to: 'number' }, (p) => { const a = N(p.from, 'from'), b = N(p.to, 'to'); return { changePercent: r2((b - a) / Math.abs(a) * 100) + '%', direction: b >= a ? 'increase' : 'decrease' }; }));
+reg(tool('runway', 'Cash runway in months.', { cash: 'number', burn: 'number — monthly' }, (p) => { const c = N(p.cash, 'cash'), b = N(p.burn, 'burn'); return { runwayMonths: r2(c / b), outOfCash: 'in ' + r2(c / b) + ' months' }; }));
+
+// ── math ───────────────────────────────────────────────────────────
+reg(tool('power', 'Raise base to an exponent.', { base: 'number', exponent: 'number' }, (p) => ({ result: Math.pow(N(p.base, 'base'), N(p.exponent, 'exponent')) }), 'Math'));
+reg(tool('sqrt', 'Square root of a number.', { n: 'number' }, (p) => ({ result: Math.sqrt(N(p.n, 'n')) }), 'Math'));
+reg(tool('nth_root', 'Nth root of a number.', { n: 'number', root: 'number' }, (p) => ({ result: r2(Math.pow(N(p.n, 'n'), 1 / N(p.root, 'root'))) }), 'Math'));
+reg(tool('log', 'Logarithm of a number (any base).', { n: 'number', base: 'number — default 10' }, (p) => ({ result: r2(Math.log(N(p.n, 'n')) / Math.log(Number(p.base) || 10)) }), 'Math'));
+reg(tool('permutations', 'nPr — permutations of n taken r.', { n: 'number', r: 'number' }, (p) => { const n = N(p.n, 'n'), r = N(p.r, 'r'); let x = 1; for (let i = 0; i < r; i++) x *= (n - i); return { result: x }; }, 'Math'));
+reg(tool('combinations', 'nCr — combinations of n taken r.', { n: 'number', r: 'number' }, (p) => { const n = N(p.n, 'n'), r = N(p.r, 'r'); let num = 1, den = 1; for (let i = 0; i < r; i++) { num *= (n - i); den *= (i + 1); } return { result: Math.round(num / den) }; }, 'Math'));
+reg(tool('quadratic', 'Solve ax²+bx+c=0.', { a: 'number', b: 'number', c: 'number' }, (p) => { const a = N(p.a, 'a'), b = N(p.b, 'b'), c = N(p.c, 'c'); const d = b * b - 4 * a * c; if (d < 0) return { roots: 'complex', discriminant: d }; return { roots: [r2((-b + Math.sqrt(d)) / (2 * a)), r2((-b - Math.sqrt(d)) / (2 * a))], discriminant: d }; }, 'Math'));
+reg(tool('hypotenuse', 'Hypotenuse from two sides (Pythagoras).', { a: 'number', b: 'number' }, (p) => ({ result: r2(Math.hypot(N(p.a, 'a'), N(p.b, 'b'))) }), 'Math'));
+reg(tool('circle_area', 'Area + circumference of a circle.', { radius: 'number' }, (p) => { const r = N(p.radius, 'radius'); return { area: r2(Math.PI * r * r), circumference: r2(2 * Math.PI * r) }; }, 'Math'));
+reg(tool('weighted_average', 'Weighted average of values with weights.', { values: 'string — comma numbers', weights: 'string — comma numbers' }, (p) => { const v = String(p.values).split(/[\s,]+/).map(Number), w = String(p.weights).split(/[\s,]+/).map(Number); let s = 0, ws = 0; for (let i = 0; i < v.length; i++) { s += v[i] * (w[i] || 0); ws += (w[i] || 0); } return { result: r2(s / ws) }; }, 'Math'));
+
+// ── unit conversions ───────────────────────────────────────────────
+reg(tool('area_convert', 'Convert area (m2, km2, ft2, acre, hectare).', { value: 'number', from: 'string', to: 'string' }, (p) => { const M = { m2: 1, km2: 1e6, ft2: 0.092903, acre: 4046.86, hectare: 10000, mi2: 2.59e6 }; const f = M[String(p.from).toLowerCase()], t = M[String(p.to).toLowerCase()]; if (!f || !t) throw new Error('units: m2,km2,ft2,acre,hectare,mi2'); return { result: r2(N(p.value, 'value') * f / t) }; }, 'Convert'));
+reg(tool('volume_convert', 'Convert volume (l, ml, gal, cup, floz, m3).', { value: 'number', from: 'string', to: 'string' }, (p) => { const M = { l: 1, ml: 0.001, gal: 3.78541, cup: 0.236588, floz: 0.0295735, m3: 1000, pint: 0.473176 }; const f = M[String(p.from).toLowerCase()], t = M[String(p.to).toLowerCase()]; if (!f || !t) throw new Error('units: l,ml,gal,cup,floz,m3,pint'); return { result: r2(N(p.value, 'value') * f / t) }; }, 'Convert'));
+reg(tool('speed_convert', 'Convert speed (kmh, mph, ms, knot).', { value: 'number', from: 'string', to: 'string' }, (p) => { const M = { kmh: 1, mph: 1.60934, ms: 3.6, knot: 1.852, fts: 1.09728 }; const f = M[String(p.from).toLowerCase()], t = M[String(p.to).toLowerCase()]; if (!f || !t) throw new Error('units: kmh,mph,ms,knot,fts'); return { result: r2(N(p.value, 'value') * f / t) }; }, 'Convert'));
+reg(tool('data_convert', 'Convert data sizes (B, KB, MB, GB, TB).', { value: 'number', from: 'string', to: 'string' }, (p) => { const M = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3, tb: 1024 ** 4 }; const f = M[String(p.from).toLowerCase()], t = M[String(p.to).toLowerCase()]; if (!f || !t) throw new Error('units: B,KB,MB,GB,TB'); return { result: r2(N(p.value, 'value') * f / t) }; }, 'Convert'));
+reg(tool('time_convert', 'Convert time (s, min, hr, day, week).', { value: 'number', from: 'string', to: 'string' }, (p) => { const M = { s: 1, min: 60, hr: 3600, day: 86400, week: 604800, ms: 0.001 }; const f = M[String(p.from).toLowerCase()], t = M[String(p.to).toLowerCase()]; if (!f || !t) throw new Error('units: s,min,hr,day,week,ms'); return { result: r2(N(p.value, 'value') * f / t) }; }, 'Convert'));
+reg(tool('angle_convert', 'Convert between degrees and radians.', { value: 'number', from: 'string — deg|rad', to: 'string — deg|rad' }, (p) => { const v = N(p.value, 'value'); const rad = String(p.from).toLowerCase() === 'deg' ? v * Math.PI / 180 : v; const out = String(p.to).toLowerCase() === 'deg' ? rad * 180 / Math.PI : rad; return { result: r2(out) }; }, 'Convert'));
+
+// ── everyday calculators ───────────────────────────────────────────
+reg(tool('bmi', 'Body Mass Index from weight (kg) and height (cm).', { weight_kg: 'number', height_cm: 'number' }, (p) => { const w = N(p.weight_kg, 'weight_kg'), h = N(p.height_cm, 'height_cm') / 100; const bmi = w / (h * h); return { bmi: r2(bmi), category: bmi < 18.5 ? 'underweight' : bmi < 25 ? 'normal' : bmi < 30 ? 'overweight' : 'obese' }; }));
+reg(tool('age_calculator', 'Age (years/months/days) from a birthdate.', { birthdate: 'string — YYYY-MM-DD' }, (p) => { const b = new Date(p.birthdate); if (isNaN(b)) throw new Error('use YYYY-MM-DD'); const now = new Date(); let y = now.getFullYear() - b.getFullYear(); let m = now.getMonth() - b.getMonth(); if (m < 0 || (m === 0 && now.getDate() < b.getDate())) { y--; m += 12; } return { years: y, months: m, totalDays: Math.floor((now - b) / 864e5) }; }));
+reg(tool('ordinal', 'Ordinal form of a number (1 → 1st).', { n: 'number' }, (p) => { const n = N(p.n, 'n'); const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return { result: n + (s[(v - 20) % 10] || s[v] || s[0]) }; }));
+reg(tool('gpa', 'GPA from a list of letter grades.', { grades: 'string — comma e.g. A,B+,C' }, (p) => { const M = { 'A+': 4, A: 4, 'A-': 3.7, 'B+': 3.3, B: 3, 'B-': 2.7, 'C+': 2.3, C: 2, 'C-': 1.7, D: 1, F: 0 }; const g = String(p.grades).split(',').map((x) => x.trim().toUpperCase()); const pts = g.map((x) => M[x] ?? null).filter((x) => x != null); return { gpa: r2(pts.reduce((a, b) => a + b, 0) / pts.length), courses: pts.length }; }));
+reg(tool('random_pick', 'Randomly pick one item from a list.', { list: 'string — comma separated' }, (p) => { const a = String(p.list || '').split(',').map((x) => x.trim()).filter(Boolean); if (!a.length) throw new Error('list required'); return { pick: a[Math.floor(Math.random() * a.length)] }; }));
+reg(tool('shuffle_list', 'Randomly shuffle a list.', { list: 'string — comma separated' }, (p) => { const a = String(p.list || '').split(',').map((x) => x.trim()).filter(Boolean); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return { shuffled: a }; }));
+
+module.exports = { TOOLS_UTILS2, _count: Object.keys(TOOLS_UTILS2).length };

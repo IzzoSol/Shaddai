@@ -1,5 +1,128 @@
 [
   {
+    "id": "council_1784011489585",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-07-14T06:44:49.585Z",
+    "quote": "LIVE MARKET DATA (as of now):\nPrice: $75.22\n24h Change: -1.58%\n7d Change: -8.09%\n24h Volume: $1.25B\nMarket Cap: $40.9B\nRank: #7\n",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:49.611Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:49.620Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:49.638Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:49.649Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-07-14T06:44:49.660Z"
+  },
+  {
+    "id": "council_1784011476953",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-07-14T06:44:36.953Z",
+    "quote": "LIVE MARKET DATA (as of now):\nPrice: $75.22\n24h Change: -1.58%\n7d Change: -8.09%\n24h Volume: $1.25B\nMarket Cap: $40.9B\nRank: #7\n",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:36.967Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:36.977Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:36.984Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:36.991Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-07-14T06:44:37.003Z"
+  },
+  {
+    "id": "council_1784011463739",
+    "ticker": "SOL",
+    "provider": "ollama-agents",
+    "model": "tinyllama",
+    "status": "complete",
+    "started": "2026-07-14T06:44:23.741Z",
+    "quote": "LIVE MARKET DATA (as of now):\nPrice: $75.22\n24h Change: -1.58%\n7d Change: -8.09%\n24h Volume: $1.25B\nMarket Cap: $40.9B\nRank: #7\n",
+    "perspectives": [
+      {
+        "agent": "ORACLE",
+        "role": "fundamentals & news analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:23.807Z"
+      },
+      {
+        "agent": "ZEROX",
+        "role": "price action + sentiment",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:23.838Z"
+      },
+      {
+        "agent": "NEXUS",
+        "role": "technical analyst",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:23.848Z"
+      },
+      {
+        "agent": "PIKADON",
+        "role": "risk manager",
+        "response": "[ERROR] ",
+        "error": true,
+        "ts": "2026-07-14T06:44:23.862Z"
+      }
+    ],
+    "verdict": "[SHADDAI OFFLINE — manual review required]",
+    "finished": "2026-07-14T06:44:23.887Z"
+  },
+  {
     "id": "council_1780580843409",
     "ticker": "SOL",
     "provider": "ollama-agents",
