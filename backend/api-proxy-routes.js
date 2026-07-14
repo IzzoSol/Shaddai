@@ -7098,6 +7098,9 @@ router.post('/tradingagents/analyze', async (req, res) => {
   // Validate ticker (no path traversal)
   if (!/^[A-Z0-9.-]{1,10}$/.test(ticker)) return res.status(400).json({ error: 'Invalid ticker' });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date (YYYY-MM-DD required)' });
+  // SECURITY: provider/model are interpolated into executed Python — allow only safe chars (no quotes/parens/semicolons/newlines → no code injection).
+  if (!/^[a-zA-Z0-9._-]{1,40}$/.test(provider)) return res.status(400).json({ error: 'Invalid provider' });
+  if (!/^[a-zA-Z0-9._:/-]{1,60}$/.test(model)) return res.status(400).json({ error: 'Invalid model' });
 
   const run_id = 'ta_' + Date.now();
   const runEntry = { id: run_id, ticker, date, provider, model, status: 'running', started: new Date().toISOString() };
