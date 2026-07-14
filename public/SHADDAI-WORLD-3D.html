@@ -164,6 +164,10 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
   #modeToggle .mt-mode{color:#fff;font-weight:800}
   #modeToggle .mt-key{color:#7e9ab0;font-size:9px;letter-spacing:2px;display:block;margin-top:3px}
   body.play-mode #modeToggle{opacity:.55}
+  /* Once the player has ENTERED the 3D world (intro dismissed → body.in-world), hide the on-screen
+     "⇄ CURSOR mode" pill. Keyboard Tab/ESC still toggle cursor/play — only the visible pill is hidden.
+     !important beats the inline display:block that _reflectMode() writes every mode change. */
+  body.in-world #modeToggle{display:none!important}
 </style>
 <div id="modeToggle" onclick="window.toggleWorldMode&&window.toggleWorldMode()" style="display:none">
   <span>⇄ <span class="mt-mode" id="mtMode">CURSOR</span> mode</span>
@@ -2522,6 +2526,12 @@ let _rayTargets = [], _rayTargetsFrame = -999;   // raycast target list, rebuilt
 let _monCore = null, _monCoreChecked = false;    // cached monument core (was getObjectByName every frame)
 let _coordsEl = null, _coordsLast = '';          // cached coords element + last value (skip redundant writes)
 let _introEl = null, _introGone = false;         // cached intro gate
+// INTRO→WORLD lag fix: once ENTER is pressed we begin the ~1.5s dimension-warp (a full-screen canvas
+// that still hides the 3D view). Flip this then so the render loop STARTS warming up the scene behind
+// the warp — the costly first frame (shader compile + texture/GLB GPU upload) is paid DURING the warp
+// instead of as a frozen hitch the instant the intro is removed. Purely a pre-warm; nothing is visible.
+let _introWarming = false;
+window.__worldWarmup = function(){ _introWarming = true; };
 let targeted = null;
 
 // ── player avatar + 1st/3rd person (press V) ──
@@ -2689,6 +2699,32 @@ let _portalDome=null;
 try { if(window.buildPortalDome && window.PORTALS_REGISTRY && window.PORTALS_REGISTRY.dome) _portalDome = window.buildPortalDome({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalDome init', e && e.message); }
 let _elevators=null;
 try { if(window.buildWorldElevators && window.WORLD_LAYOUT) _elevators = window.buildWorldElevators({ THREE, scene, layout: window.WORLD_LAYOUT, playerPos, getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0 }); } catch(e){ console.warn('elevators init', e && e.message); }
+// ── SHADDAI BODY FIX ──────────────────────────────────────────────────────
+// placeAgents() runs BEFORE the elevator module exists, so at placement time window.SHADDAI_SKY is
+// undefined and SHADDAI's body/sprite fall back to hardcoded sky-temple coords. Now that the elevators
+// (and thus the AUTHORITATIVE SHADDAI_SKY temple position) are built, snap SHADDAI's sprite + streamed
+// body onto the real island so he always appears in his temple — even if the temple constants ever
+// drift from the hardcoded fallback. Also re-queue his body if it never streamed in. Idempotent.
+try{
+  var _sky = window.SHADDAI_SKY;
+  var _se = agentSprites.find(function(s){ return s.a && (s.a.codename||'').toUpperCase()==='SHADDAI'; });
+  if(_sky && _se && isFinite(_sky.templeX) && isFinite(_sky.templeY) && isFinite(_sky.templeZ)){
+    var _tx=_sky.templeX, _tz=_sky.templeZ, _ty=_sky.templeY;
+    if(_se.x!==_tx || _se.z!==_tz || _se.yBase!==_ty){
+      _se.x=_tx; _se.z=_tz; _se.yBase=_ty;
+      [ [_se.sprite,4.0], [_se.frame,4.0], [_se.ring,0.05], [_se.beam,3.5], [_se.crown,8.4] ].forEach(function(p){
+        if(p[0]) p[0].position.set(_tx, _ty+p[1], _tz);
+      });
+      if(_se.aura && _se.aura.points) _se.aura.points.position.set(_tx, _ty+2.5, _tz);
+      // if the real 3D body already streamed in, slide it onto the island XZ (its Y is already
+      // feet-on-island from yBase and matched the fallback, so leave Y alone).
+      if(_se.body){ _se.body.position.x=_tx; _se.body.position.z=_tz; }
+    }
+    // ensure SHADDAI's body streams in — but only if it isn't already loaded AND isn't already queued
+    // (placeAgents queued it; avoid a wasteful duplicate load — _nextAgentBody would replace it anyway)
+    if(!_se.body && _bodyQueue.indexOf(_se)===-1){ try{ queueAgentBody(_se); }catch(_){} }
+  }
+}catch(e){ console.warn('shaddai body fix', e && e.message); }
 const _liftPrompt = document.createElement('div');
 _liftPrompt.style.cssText='position:fixed;bottom:178px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#8fefff;border:1px solid rgba(39,224,255,0.5);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
 document.body.appendChild(_liftPrompt);
@@ -3625,6 +3661,7 @@ window.removeAgent = function(a){
   document.getElementById('enterBtn').addEventListener('click', function(){
     var btn=this; if(btn._used) return; btn._used=true;   // ignore double-clicks
     cancelAnimationFrame(raf);                             // stop the intro canvas — no competing frames
+    try{ window.__worldWarmup && window.__worldWarmup(); }catch(_){}  // warm the 3D pipeline behind the warp → kills the reveal hitch
     btn.style.transition='transform .18s,opacity .3s'; btn.style.transform='scale(1.35)'; btn.style.opacity='0';
     // Kick off audio + STAGGERED character preloads NOW (during the ~1.5s warp) so they're ready on landing.
     AGENTS.forEach(function(a, i){ setTimeout(function(){ _pcPreload(a.codename); }, i * 500); });
@@ -3636,6 +3673,7 @@ window.removeAgent = function(a){
     // run the grid→dimension transition, THEN drop into the already-loaded world
     _dimensionWarp(function(){
       var intro=document.getElementById('intro'); intro.classList.add('gone');
+      document.body.classList.add('in-world');   // hides the on-screen cursor-mode pill (Tab/ESC still work)
       setTimeout(function(){ intro.style.display='none'; }, 500);
       if(worldSpawn){ worldSpawn.startSkydive(); setTimeout(function(){ worldSpawn.openPicker(); }, 650); }
       else { _safeLock(); }
@@ -3825,7 +3863,13 @@ function animate(){
   // INTRO gate: once the intro is gone, stop touching the DOM every frame (cache + flag).
   if(!_introGone){
     if(!_introEl) _introEl=document.getElementById('intro');
-    if(_introEl && _introEl.style.display!=='none' && !_introEl.classList.contains('gone')){ return; }
+    if(_introEl && _introEl.style.display!=='none' && !_introEl.classList.contains('gone')){
+      // Not fully entered yet. If ENTER was pressed (warp running), do a couple of quiet warm-up
+      // renders behind the warp so the GPU uploads/shader-compiles NOW — avoids the reveal hitch.
+      // Skip the heavy per-frame world updates; a bare composer.render primes the pipeline cheaply.
+      if(_introWarming){ try{ composer.render(); }catch(_){ try{ renderer.render(scene,camera); }catch(__){} } }
+      return;
+    }
     _introGone = true;   // never check again
   }
   _animFrame++;
