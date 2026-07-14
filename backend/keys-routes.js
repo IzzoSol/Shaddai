@@ -21,6 +21,28 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// At-rest encryption for the key store. Uses KEY_STORE_SECRET (or JWT_SECRET) → AES-256-GCM.
+// If no secret is set (local dev), falls back to plaintext so nothing breaks.
+function _secret() { return process.env.KEY_STORE_SECRET || process.env.JWT_SECRET || ''; }
+function _encrypt(plain) {
+  const s = _secret(); if (!s) return null;
+  const key = crypto.createHash('sha256').update(s).digest();
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const enc = Buffer.concat([c.update(JSON.stringify(plain), 'utf8'), c.final()]);
+  return { __enc: 'aes-256-gcm', iv: iv.toString('base64'), tag: c.getAuthTag().toString('base64'), data: enc.toString('base64') };
+}
+function _decrypt(obj) {
+  const s = _secret(); if (!s) return {};
+  try {
+    const key = crypto.createHash('sha256').update(s).digest();
+    const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(obj.iv, 'base64'));
+    d.setAuthTag(Buffer.from(obj.tag, 'base64'));
+    return JSON.parse(Buffer.concat([d.update(Buffer.from(obj.data, 'base64')), d.final()]).toString('utf8'));
+  } catch (e) { return {}; }
+}
 
 const DATA_DIR = path.join(__dirname, 'data');
 const STORE_PATH = path.join(DATA_DIR, 'user-keys.json');
@@ -30,14 +52,19 @@ try { vaultCatalog = require('./lib/api-vault').catalog() || []; } catch (_e) { 
 
 // ---- store helpers ----------------------------------------------------
 function readStore() {
-  try { return JSON.parse(fs.readFileSync(STORE_PATH, 'utf8')) || {}; }
-  catch (_e) { return {}; }
+  try {
+    const raw = JSON.parse(fs.readFileSync(STORE_PATH, 'utf8'));
+    if (raw && raw.__enc) return _decrypt(raw) || {};   // encrypted → decrypt
+    return raw || {};                                    // legacy plaintext
+  } catch (_e) { return {}; }
 }
 function writeStore(obj) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const enc = _encrypt(obj);            // encrypt if a secret is configured
+    const out = enc ? enc : obj;          // else plaintext (dev only)
     const tmp = STORE_PATH + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+    fs.writeFileSync(tmp, JSON.stringify(out, null, 2), { mode: 0o600 });  // owner-only perms
     fs.renameSync(tmp, STORE_PATH);
   } catch (e) { /* best-effort */ }
 }

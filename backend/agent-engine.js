@@ -9,6 +9,7 @@
 const axios   = require('axios');
 const vm      = require('vm');
 const { runSandboxedJs } = require('./lib/sandbox');
+let ssrfGuard; try { ssrfGuard = require('./lib/ssrf-guard'); } catch (e) { ssrfGuard = { assertPublicUrl: async (u) => u }; }  // SSRF protection for user-URL tools
 const fs      = require('fs');
 const path    = require('path');
 const crypto  = require('crypto');
@@ -417,6 +418,7 @@ const TOOLS = {
     agents: ['ORACLE','QUILL','NEXUS','PIKADON'],
     async execute({ url }) {
       if (!url?.startsWith('http')) return 'URL must start with https://';
+      try { await ssrfGuard.assertPublicUrl(url); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
       const r = await axios.get(url, {
         timeout: 12000,
         headers: { 'User-Agent': 'Mozilla/5.0 SHADDAI-Agent/2.0' },
@@ -457,6 +459,7 @@ const TOOLS = {
     schema: { url: 'string — RSS feed URL', limit: 'number — items to return (default 8)' },
     agents: ['ORACLE','QUILL'],
     async execute({ url, limit = 8 }) {
+      try { await ssrfGuard.assertPublicUrl(url); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
       const r = await axios.get(url, { timeout: 10000, responseType: 'text', headers: { 'User-Agent': 'SHADDAI-Agent/2.0' } });
       const xml = r.data;
       // Extract items from RSS or Atom

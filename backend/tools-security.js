@@ -12,6 +12,7 @@ const dns = require('dns').promises;
 const tls = require('tls');
 const net = require('net');
 const crypto = require('crypto');
+const { assertPublicUrl, assertPublicHost } = require('./lib/ssrf-guard');  // SSRF protection
 
 const ok = (o) => JSON.stringify(o);
 const err = (e) => JSON.stringify({ error: (e && e.message) || String(e) });
@@ -28,6 +29,7 @@ const TOOLS_SECURITY = {
     async execute({ host }) {
       const h = cleanHost(host);
       if (!h) return err('host required');
+      try { await assertPublicHost(h); } catch (e) { return err(e); }   // SSRF guard
       return new Promise((resolve) => {
         const s = tls.connect(443, h, { servername: h, timeout: 8000 }, () => {
           const c = s.getPeerCertificate();
@@ -84,7 +86,7 @@ const TOOLS_SECURITY = {
     async execute({ url }) {
       if (!url) return err('url required');
       try {
-        const u = /^https?:\/\//.test(url) ? url : 'https://' + url;
+        const u = await assertPublicUrl(url);   // SSRF guard
         const r = await fetch(u, { method: 'GET', redirect: 'manual' });
         const h = {}; r.headers.forEach((v, k) => { h[k] = v; });
         return ok({ url: u, status: r.status, server: h.server, headers: h });
@@ -100,7 +102,7 @@ const TOOLS_SECURITY = {
     async execute({ url }) {
       if (!url) return err('url required');
       try {
-        const u = /^https?:\/\//.test(url) ? url : 'https://' + url;
+        const u = await assertPublicUrl(url);   // SSRF guard
         const r = await fetch(u, { method: 'GET', redirect: 'follow' });
         const h = {}; r.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
         const checks = {
@@ -238,6 +240,7 @@ const TOOLS_SECURITY = {
     async execute({ host, port }) {
       const h = cleanHost(host); const p = Number(port);
       if (!h || !p) return err('host and port required');
+      try { await assertPublicHost(h); } catch (e) { return err(e); }   // SSRF guard
       return new Promise((resolve) => {
         const sock = new net.Socket(); let done = false;
         const finish = (open, note) => { if (done) return; done = true; try { sock.destroy(); } catch (_) {} resolve(ok({ host: h, port: p, open, note })); };

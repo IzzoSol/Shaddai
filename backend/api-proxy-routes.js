@@ -6531,6 +6531,17 @@ router.post('/tools/run', async (req, res) => {
   if (!tool || typeof tool !== 'string') {
     return res.status(400).json({ ok: false, error: 'tool (string) required' });
   }
+  // SECURITY: read/compute tools stay open (the dashboard Tool Runner needs them), but
+  // state-changing / resource-spending tools require auth (or an explicit env opt-in),
+  // and REQUIRE_AUTH=true gates the whole endpoint for a locked-down public deploy.
+  const MUTATING_TOOL = /(post_|send_|tweet|publish|mint|deploy|buy_|sell_|swap|execute_trade|transfer|write_file|make_music|generate_image|complete_job|bid_on|create_agent|schedule_task)/i;
+  const _authed = !!(req.user || (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] === process.env.ADMIN_TOKEN));
+  if (process.env.REQUIRE_AUTH === 'true' && !_authed) {
+    return res.status(401).json({ ok: false, error: 'Authentication required (REQUIRE_AUTH).' });
+  }
+  if (MUTATING_TOOL.test(tool) && !_authed && process.env.ALLOW_MUTATING_TOOLS !== 'true') {
+    return res.status(403).json({ ok: false, error: 'This tool changes state or spends resources — sign in (or set ALLOW_MUTATING_TOOLS=true) to run it.' });
+  }
   // agent-engine tools first, then any connected MCP tools.
   let t = agentEngine.TOOLS[tool];
   if (!t || typeof t.execute !== 'function') {
