@@ -475,8 +475,14 @@ router.post(
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!stripe || !secret) {
-      // Accept the call but skip signature verification (dev mode)
-      logger.warn('Stripe webhook received but STRIPE_WEBHOOK_SECRET not set — skipping verification');
+      // SECURITY: in production NEVER process an unverified webhook — an unsigned event could be
+      // forged by anyone to grant themselves credits/subscriptions. Fail closed.
+      if (process.env.NODE_ENV === 'production') {
+        logger.error('Stripe webhook REJECTED — STRIPE_WEBHOOK_SECRET not set in production (refusing unverified event)');
+        return res.status(503).json({ error: 'Webhook not configured — set STRIPE_WEBHOOK_SECRET.' });
+      }
+      // Dev only: accept without verification for local testing.
+      logger.warn('Stripe webhook received but STRIPE_WEBHOOK_SECRET not set — skipping verification (DEV ONLY)');
       try {
         const event  = JSON.parse(req.body.toString());
         const result = await billingService.handleWebhook(event);

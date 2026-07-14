@@ -153,7 +153,23 @@
   var G={
     show:function(){ var g=gate(); if(g) g.classList.add('on'); },
     hide:function(){ var g=gate(); if(g) g.classList.remove('on'); },
-    google:async function(){ try{ if(window.shdSignIn) await window.shdSignIn(); }catch(e){ msg(e.code||e.message); } },
+    google:async function(){
+      if(!(window.firebase&&firebase.auth)){ msg('Auth library not loaded — check your connection and refresh.'); return; }
+      msg('Opening Google sign-in…','#8ba0a0');
+      try{
+        var p=new firebase.auth.GoogleAuthProvider();
+        await firebase.auth().signInWithPopup(p);
+        msg('Signed in ✓','#00e5a0');
+      }catch(e){
+        var c=String(e.code||e.message||'').replace('auth/','');
+        msg(
+          c==='unauthorized-domain' ? 'This site isn’t authorized in Firebase. Add this exact domain in Firebase Console → Authentication → Settings → Authorized domains.'
+          : c==='operation-not-allowed' ? 'Google sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Google.'
+          : (c==='popup-blocked'||c==='popup-closed-by-user'||c==='cancelled-popup-request') ? 'The Google popup was blocked or closed — allow popups for this site and try again.'
+          : c
+        );
+      }
+    },
     email:async function(){
       var e=(document.getElementById('shdEmail')||{}).value, p=(document.getElementById('shdPass')||{}).value;
       if(!e||!p){ msg('Enter email and password.'); return; }
@@ -161,7 +177,17 @@
       try{
         try{ await firebase.auth().signInWithEmailAndPassword(e,p); }
         catch(err){ if(err.code==='auth/user-not-found'){ await firebase.auth().createUserWithEmailAndPassword(e,p); } else { throw err; } }
-      }catch(err){ msg((err.code||err.message||'').replace('auth/','')); }
+      }catch(err){
+        var c=String(err.code||err.message||'').replace('auth/','');
+        msg(
+          c==='operation-not-allowed' ? 'Email sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Email/Password.'
+          : c==='email-already-in-use' ? 'That email already has an account — check your password (or use Google).'
+          : c==='wrong-password'||c==='invalid-credential' ? 'Wrong password for that email.'
+          : c==='weak-password' ? 'Password too weak — use at least 6 characters.'
+          : c==='invalid-email' ? 'That email address looks invalid.'
+          : c
+        );
+      }
     },
     guest:function(){ try{ sessionStorage.setItem('shd_guest','1'); }catch(e){} G.hide(); var b=document.getElementById('shdGuestBadge'); if(b) b.classList.add('on'); }
   };
