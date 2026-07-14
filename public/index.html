@@ -162,18 +162,15 @@
     hide:function(){ var g=gate(); if(g) g.classList.remove('on'); },
     google:async function(){
       if(!(window.firebase&&firebase.auth)){ msg('Auth library not loaded — check your connection and refresh.'); return; }
-      msg('Opening Google sign-in…','#8ba0a0');
+      msg('Redirecting to Google…','#8ba0a0');
       var p=new firebase.auth.GoogleAuthProvider();
-      try{
-        await firebase.auth().signInWithPopup(p);   // popup only — no redirect fallback (that caused a double sign-in)
-        msg('Signed in ✓','#00e5a0'); G.hide();
-      }catch(e){
+      // REDIRECT (not popup): full-page hop to Google and back. No popup to block, and no double sign-in.
+      try{ await firebase.auth().signInWithRedirect(p); }
+      catch(e){
         var c=String(e.code||e.message||'').replace('auth/','');
         msg(
           c==='unauthorized-domain' ? 'This site isn’t authorized in Firebase. Add this exact domain in Firebase Console → Authentication → Settings → Authorized domains.'
           : c==='operation-not-allowed' ? 'Google sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Google.'
-          : c==='popup-blocked' ? 'Your browser blocked the popup — click the blocked-popup icon in the address bar, allow popups for this site, then try again.'
-          : (c==='popup-closed-by-user'||c==='cancelled-popup-request') ? 'The sign-in popup was closed before it finished — click Continue with Google again.'
           : (c==='internal-error'||c==='network-request-failed') ? 'Google sign-in failed — usually blocked third-party cookies (common in Private/Incognito windows). Use a normal window with cookies allowed, or sign in with email/password below.'
           : c
         );
