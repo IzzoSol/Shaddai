@@ -28672,7 +28672,7 @@ function dexOpenDetail(encodedOrStr) {
   const links=[website?`<a href="${website}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">🌐 Website</a>`:'',twitter?`<a href="https://twitter.com/${twitter.replace('@','')}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">𝕏 Twitter</a>`:'',telegram?`<a href="https://t.me/${telegram.replace('@','')}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">✈️ Telegram</a>`:'',discord?`<a href="https://discord.gg/${discord}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">💬 Discord</a>`:'',`<a href="${dexUrl}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">📊 DexScreener</a>`,`<a href="https://birdeye.so/token/${mint}?chain=${chain}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">🦅 Birdeye</a>`,chain==='solana'?`<a href="https://solscan.io/token/${mint}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;padding:5px 10px">🔍 Solscan</a>`:'',''].filter(Boolean);
   set('cdm-socials',links.join(''));
   set('cdm-contract',mint?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><code style="font-size:10px;color:var(--accent);word-break:break-all">${mint}</code><button onclick="navigator.clipboard.writeText('${mint}');toast('Copied!')" class="btn btn-ghost" style="font-size:8px;padding:3px 8px">Copy</button></div>`:'<span style="color:var(--text-muted);font-size:10px">Not available</span>');
-  set('cdm-flags',flags.length?flags.map(f=>`<div style="font-size:10px;color:var(--warning);margin-bottom:3px">${f}</div>`).join(''):'');
+  set('cdm-flags',flags.length?flags.map(f=>`<div style="font-size:10px;color:var(--warning);margin-bottom:3px">${escH(f)}</div>`).join(''):'');
   set('cdm-desc',p._pumpDesc?`<div style="font-size:10px;color:var(--text-secondary);line-height:1.6;max-height:70px;overflow-y:auto;background:rgba(0,0,0,0.2);padding:8px;border-radius:6px">${p._pumpDesc}</div>`:'');
   const chartLink=document.getElementById('cdm-chartlink'); if(chartLink) chartLink.href=dexUrl;
   modal.style.display='flex';
@@ -30149,7 +30149,7 @@ async function quickAlpha(token) {
         <div class="chat-msg-head"><strong style="color:${color}">⚡ ALPHA SCAN — ${t}</strong></div>
         <div class="chat-content">
           <div>Score: <strong style="color:${color}">${score}/100</strong> — ${result.verdict || 'N/A'}</div>
-          ${(result.flags || []).map(f => `<div style="font-size:11px;margin-top:4px">${f}</div>`).join('')}
+          ${(result.flags || []).map(f => `<div style="font-size:11px;margin-top:4px">${escH(f)}</div>`).join('')}
           ${result.price_data ? `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">${result.price_data.formatted || ''}</div>` : ''}
         </div>
       </div>`);
@@ -30166,7 +30166,7 @@ async function quickBriefing() {
       chatEl.insertAdjacentHTML('beforeend', `
         <div class="chat-msg agent" style="border-left-color:#ffd700">
           <div class="chat-msg-head"><strong style="color:#ffd700">📊 DAILY PULSE</strong></div>
-          <div class="chat-content" style="white-space:pre-line">${result.formatted}</div>
+          <div class="chat-content" style="white-space:pre-line">${escH(result.formatted||'')}</div>
         </div>`);
       chatEl.scrollTop = chatEl.scrollHeight;
     }
@@ -30210,7 +30210,7 @@ async function quickIncomeSprint() {
         chatEl.insertAdjacentHTML('beforeend', `
           <div class="chat-msg agent" style="border-left-color:#ffd700">
             <div class="chat-msg-head"><strong style="color:#ffd700">💰 7-DAY INCOME SPRINT</strong></div>
-            <div class="chat-content" style="white-space:pre-line">${result.sprint_plan}</div>
+            <div class="chat-content" style="white-space:pre-line">${escH(result.sprint_plan||'')}</div>
           </div>`);
         chatEl.scrollTop = chatEl.scrollHeight;
       }
@@ -46614,7 +46614,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
 
       if (qEl) {
         if (!S.content.queue.length) { qEl.innerHTML = '<div style="color:var(--text-muted);padding:20px;font-size:9px">No content queued</div>'; }
-        else qEl.innerHTML = S.content.queue.map(item => `<div style="padding:8px;border:1px solid var(--border);font-size:8px;border-radius:3px"><div style="font-weight:700">${item.type}</div><div style="color:var(--text-muted)">${item.prompt.substring(0,40)}</div></div>`).join('');
+        else qEl.innerHTML = S.content.queue.map(item => `<div style="padding:8px;border:1px solid var(--border);font-size:8px;border-radius:3px"><div style="font-weight:700">${item.type}</div><div style="color:var(--text-muted)">${escH((item.prompt||'').substring(0,40))}</div></div>`).join('');
       }
     });
     if (gEl) {
@@ -46630,10 +46630,10 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         const timeStr = ago < 60 ? ago + 'm ago' : ago < 1440 ? Math.round(ago/60) + 'h ago' : Math.round(ago/1440) + 'd ago';
         const hasImage = item.type === 'image' && item.imageUrl;
         const thumb = hasImage
-          ? `<img src="${item.imageUrl}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${item.imageUrl}','_blank')" onerror="this.style.display='none'" alt="Generated">`
+          ? `<img src="${escH(item.imageUrl||'')}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${encodeURI(String(item.imageUrl||'')).replace(/'/g,'%27')}','_blank')" onerror="this.style.display='none'" alt="Generated">`
           : `<div style="height:80px;background:linear-gradient(135deg,${clr}18,rgba(0,0,0,0.4));display:flex;align-items:center;justify-content:center;font-size:28px">${icon}</div>`;
-        const actionBtn = item.sunoUrl ? `<a href="${item.sunoUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Suno</a>`
-          : item.klingUrl ? `<a href="${item.klingUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Kling</a>`
+        const actionBtn = item.sunoUrl ? `<a href="${escH(item.sunoUrl||'')}" target="_blank" rel="noopener" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Suno</a>`
+          : item.klingUrl ? `<a href="${escH(item.klingUrl||'')}" target="_blank" rel="noopener" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Kling</a>`
           : item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">↗ View</a>` : '';
         const deleteBtn = `<button class="btn btn-ghost" style="font-size:7px;color:var(--danger);padding:1px 3px" onclick="deleteContentItem(${item.id},true)" title="Delete">🗑️</button>`;
         return `<div style="background:var(--bg-card);border:1px solid var(--border);padding:0;overflow:hidden;position:relative;border-radius:4px">
@@ -46743,7 +46743,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           const preview = card.querySelector('.img-preview-area');
           if (!preview) {
             const thumb = card.querySelector('div:first-child');
-            if (thumb) thumb.innerHTML = `<img src="${item.imageUrl}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${item.imageUrl}','_blank')" onerror="this.parentNode.innerHTML='🖼️'" alt="Generated image">`;
+            if (thumb) thumb.innerHTML = `<img src="${escH(item.imageUrl||'')}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${encodeURI(String(item.imageUrl||'')).replace(/'/g,'%27')}','_blank')" onerror="this.parentNode.innerHTML='🖼️'" alt="Generated image">`;
           }
         }
       }
@@ -47772,10 +47772,10 @@ ${Object.entries(status.features).map(([name, enabled]) => `  ${enabled ? '✅' 
       const timeStr = ago < 60 ? ago + 'm ago' : ago < 1440 ? Math.round(ago/60) + 'h ago' : Math.round(ago/1440) + 'd ago';
       const hasImage = item.type === 'image' && item.imageUrl;
       const thumb = hasImage
-        ? `<img src="${item.imageUrl}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${item.imageUrl}','_blank')" onerror="this.style.display='none'" alt="Generated">`
+        ? `<img src="${escH(item.imageUrl||'')}" style="width:100%;height:80px;object-fit:cover;cursor:pointer" onclick="window.open('${encodeURI(String(item.imageUrl||'')).replace(/'/g,'%27')}','_blank')" onerror="this.style.display='none'" alt="Generated">`
         : `<div style="height:80px;background:linear-gradient(135deg,${clr}18,rgba(0,0,0,0.4));display:flex;align-items:center;justify-content:center;font-size:28px">${icon}</div>`;
-      const actionBtn = item.sunoUrl ? `<a href="${item.sunoUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Suno</a>`
-        : item.klingUrl ? `<a href="${item.klingUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Kling</a>`
+      const actionBtn = item.sunoUrl ? `<a href="${escH(item.sunoUrl||'')}" target="_blank" rel="noopener" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Suno</a>`
+        : item.klingUrl ? `<a href="${escH(item.klingUrl||'')}" target="_blank" rel="noopener" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">▶ Kling</a>`
         : item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" style="font-size:7px;color:${clr};text-decoration:none;border:1px solid ${clr}44;padding:2px 6px;border-radius:3px">↗ View</a>` : '';
 
       return `<div style="background:var(--bg-card);border:1px solid var(--border);padding:0;overflow:hidden;position:relative;border-radius:4px">
@@ -51266,13 +51266,14 @@ window._clipperProbe=function(){
     .then(function(){
       wrap.innerHTML=
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'+
-          '<div style="font-size:9px;color:#28c840">● Engine online — drop a long video in, get captioned vertical clips out.</div>'+
+          '<div style="font-size:9px;color:#28c840">● Engine online — Manual: pick exact timestamps (fast). Auto: AI finds highlights.</div>'+
           '<div style="display:flex;gap:6px">'+
+            '<button class="btn btn-ghost" id="ov_clipManualBtn" style="font-size:8px" onclick="_clipSwitch(\'manual\')">✂️ Manual trim</button>'+
+            '<button class="btn btn-ghost" id="ov_clipAutoBtn" style="font-size:8px" onclick="_clipSwitch(\'auto\')">🤖 Auto highlights</button>'+
             '<button class="btn btn-ghost" style="font-size:8px" onclick="window.open(CLIP_ENGINE,\'_blank\')">↗ Open full</button>'+
-            '<button class="btn btn-ghost" style="font-size:8px" onclick="_openClipperLegacy()">URL downloader</button>'+
           '</div>'+
         '</div>'+
-        '<iframe src="'+CLIP_ENGINE+'/clips" style="width:100%;height:68vh;border:1px solid rgba(255,70,112,0.25);border-radius:8px;background:#0A0E1A" allow="clipboard-write; fullscreen"></iframe>';
+        '<iframe id="ov_clipFrame" src="'+CLIP_ENGINE+'/manual" style="width:100%;height:68vh;border:1px solid rgba(255,70,112,0.25);border-radius:8px;background:#0A0E1A" allow="clipboard-write; fullscreen"></iframe>';
     })
     .catch(function(){
       wrap.innerHTML=
@@ -51285,6 +51286,15 @@ window._clipperProbe=function(){
           '</div>'+
         '</div>';
     });
+};
+
+// Switch the clipper iframe between Manual trim (upload + timestamps, no Whisper)
+// and Auto highlights (Whisper). Manual is the Render-friendly, fast default.
+window._clipSwitch=function(mode){
+  var fr=document.getElementById('ov_clipFrame'); if(!fr) return;
+  fr.src=CLIP_ENGINE+(mode==='auto'?'/clips':'/manual');
+  var m=document.getElementById('ov_clipManualBtn'),a=document.getElementById('ov_clipAutoBtn');
+  if(m&&a){ var on='background:rgba(0,255,136,0.12);color:#00ff88'; m.style.cssText='font-size:8px'; a.style.cssText='font-size:8px'; (mode==='auto'?a:m).style.cssText='font-size:8px;'+on; }
 };
 
 function _openClipperLegacy(){
@@ -51919,7 +51929,7 @@ window.runWriterFromOverlay=async function(){
   if(out){out.style.display='block';out.innerHTML='<span style="color:#ff4070;font-style:italic">QUILL is writing...</span>';}
   var prompt='Write a '+platform+' in a '+tone+' tone about: '+topic+'\n\nMake it platform-native, engaging, with appropriate length and formatting.';
   var reply=await sendAgenticMessage('QUILL',prompt,null);
-  if(out)out.innerHTML=reply.replace(/\n/g,'<br>');
+  if(out)out.innerHTML=escH(reply).replace(/\n/g,'<br>');
 };
 
 window.runWriterOverlay=async function(){
