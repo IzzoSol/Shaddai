@@ -70,9 +70,9 @@
       firebase.initializeApp(firebaseConfig);
       firebase.auth().onAuthStateChanged(async function(u){
         window.SHD_AUTH.user=u||null;
-        window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;
         window.SHD_AUTH.ready=true;
-        if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();
+        if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
+        window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
       });
       // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
       firebase.auth().getRedirectResult().catch(function(e){
@@ -166,7 +166,7 @@
       var p=new firebase.auth.GoogleAuthProvider();
       try{
         await firebase.auth().signInWithPopup(p);
-        msg('Signed in ✓','#00e5a0');
+        msg('Signed in ✓','#00e5a0'); G.hide();
       }catch(e){
         var c=String(e.code||e.message||'').replace('auth/','');
         // Popup blocked/closed or unsupported context → fall back to a full-page redirect (much more reliable).
@@ -178,6 +178,7 @@
         msg(
           c==='unauthorized-domain' ? 'This site isn’t authorized in Firebase. Add this exact domain in Firebase Console → Authentication → Settings → Authorized domains.'
           : c==='operation-not-allowed' ? 'Google sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Google.'
+          : (c==='internal-error'||c==='network-request-failed') ? 'Google sign-in failed — this is usually blocked third-party cookies (common in Private/Incognito windows). Use a normal window with cookies allowed, or sign in with email/password below.'
           : c
         );
       }
@@ -188,7 +189,8 @@
       msg(mode==='create'?'Creating your account…':'Signing in…','#8ba0a0');
       try{
         if(mode==='create'){ await firebase.auth().createUserWithEmailAndPassword(e,p); msg('Account created ✓ — welcome!','#00e5a0'); }
-        else { await firebase.auth().signInWithEmailAndPassword(e,p); }
+        else { await firebase.auth().signInWithEmailAndPassword(e,p); msg('Signed in ✓','#00e5a0'); }
+        G.hide();  // close the gate right away on success (don't wait on anything)
       }catch(err){
         var c=String(err.code||err.message||'').replace('auth/','');
         msg(
