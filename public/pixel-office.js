@@ -42,6 +42,10 @@
     { name: 'QUILL',   color: '#fb923c', tile: [8, 16],  role: 'Writing' },
     { name: 'PIKADON', color: '#f43f5e', tile: [13, 16], role: 'Security' },
   ];
+  // ROSTER = the 7 council above PLUS the owner's forged operatives (merged at runtime from
+  // window._officeOperatives). Everything that spawns/draws/lists agents reads ROSTER, so forged
+  // agents become real walkable, clickable, chatting characters in the office. See syncRoster().
+  let ROSTER = AGENTS.slice();
 
   // ---- IN-CHARACTER ONE-LINERS (idle speech bubbles) ------------------------
   // Kept as data so they are easy to extend. Short, on-brand, a little witty.
@@ -339,8 +343,78 @@
   }
   function resetSprites() {
     sprites = {};
-    AGENTS.forEach((a, i) => { sprites[a.name] = makeSprite(a, i); });
+    ROSTER.forEach((a, i) => { sprites[a.name] = makeSprite(a, i); });
   }
+
+  // ---- FORGED-AGENT ROSTER SYNC ---------------------------------------------
+  // Merge the owner's forged operatives (window._officeOperatives) into ROSTER as walkable
+  // characters, place them on open floor tiles, and keep sprites/chips in sync. Idempotent.
+  const MAX_FORGED = 10;
+  const RARITY_COLOR = { legendary:'#ffd700', epic:'#c084fc', rare:'#00e5ff', uncommon:'#00ff88', common:'#8fb0c4' };
+  const GENERIC_LINES = ['Operative online.', 'Loadout ready.', 'Awaiting orders.', 'On the grid.', 'Executing tasks.', 'Forged and functional.', 'Tools primed.'];
+  function _forgedColor(op) {
+    if (op && op.color) return op.color;
+    const rk = String((op && op.rarity) || '').toLowerCase();
+    if (RARITY_COLOR[rk]) return RARITY_COLOR[rk];
+    let h = 0, s = String((op && (op.codename || op.name)) || 'A');
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return 'hsl(' + (h % 360) + ',72%,62%)';
+  }
+  function _freeFloorTiles() {
+    const used = new Set(AGENTS.map(a => a.tile[0] + ',' + a.tile[1]));
+    const out = [];
+    for (let r = 2; r < GRID_H - 1; r++)
+      for (let c = 2; c < GRID_W - 1; c++)
+        if (LAYOUT[r][c] === F && !used.has(c + ',' + r)) out.push([c, r]);
+    return out;
+  }
+  function _assignForgedTiles(n) {
+    const free = _freeFloorTiles(); const tiles = []; if (!free.length || n <= 0) return tiles;
+    const stride = Math.max(1, Math.floor(free.length / Math.max(1, n))); const usedIdx = new Set();
+    for (let i = 0; i < n; i++) {
+      let idx = (i * stride + 5) % free.length, g = 0;
+      while (usedIdx.has(idx) && g++ < free.length) idx = (idx + 1) % free.length;
+      usedIdx.add(idx); tiles.push(free[idx]);
+    }
+    return tiles;
+  }
+  function _readForged() {
+    const base = new Set(AGENTS.map(a => a.name.toUpperCase()));
+    const list = (typeof window !== 'undefined' && (window._officeOperatives || window._operatives)) || [];
+    const seen = new Set(), forged = [];
+    (Array.isArray(list) ? list : []).forEach(op => {
+      const nm = String((op && (op.codename || op.name)) || '').trim(); if (!nm) return;
+      const up = nm.toUpperCase(); if (base.has(up) || seen.has(up)) return; seen.add(up);
+      forged.push({ name: nm, color: _forgedColor(op), role: (op && (op.role || op.archetype)) || 'Operative', forged: true });
+    });
+    return forged.slice(0, MAX_FORGED);
+  }
+  function syncRoster() {
+    const forged = _readForged(); const tiles = _assignForgedTiles(forged.length);
+    forged.forEach((f, i) => { f.tile = tiles[i] || [8, 8]; });
+    ROSTER = AGENTS.concat(forged);
+  }
+  function reconcileSprites() {
+    ROSTER.forEach((a, i) => {
+      if (!sprites[a.name]) sprites[a.name] = makeSprite(a, i);
+      else { sprites[a.name].idx = i; sprites[a.name].color = a.color; sprites[a.name].role = a.role; }
+    });
+    const keep = new Set(ROSTER.map(a => a.name));
+    Object.keys(sprites).forEach(nm => { if (!keep.has(nm)) delete sprites[nm]; });
+  }
+  function rebuildChips() {
+    if (!hud) return; const chips = hud.querySelector('.pxo-chips'); if (!chips) return;
+    chips.innerHTML = '';
+    ROSTER.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'pxo-chip'; b.dataset.agent = a.name; b.style.setProperty('--ac', a.color);
+      b.innerHTML = '<span class="dot"></span>' + a.name;
+      b.addEventListener('click', () => selectAgent(a.name, true));
+      chips.appendChild(b);
+    });
+  }
+  // Public re-sync: called on mount and by the dashboard whenever operatives change.
+  function refreshRoster() { try { syncRoster(); reconcileSprites(); rebuildChips(); } catch (_) {} }
   function randomWalkTile() {
     for (let i = 0; i < 30; i++) {
       const c = 1 + (Math.random() * (GRID_W - 2) | 0);
@@ -362,7 +436,7 @@
     sp.bubbleDur = dur || 4200;
   }
   function sayRandom(sp) {
-    const pool = LINES[sp.name];
+    const pool = LINES[sp.name] || GENERIC_LINES;   // forged agents fall back to generic lines
     if (!pool || !pool.length) return;
     sayBubble(sp, pool[(Math.random() * pool.length) | 0]);
   }
@@ -1876,7 +1950,7 @@
         '<span class="pxo-lg"><i style="background:#a78bfa"></i>door → open</span>' +
       '</div>';
     const chips = hud.querySelector('.pxo-chips');
-    AGENTS.forEach(a => {
+    ROSTER.forEach(a => {
       const b = document.createElement('button');
       b.className = 'pxo-chip'; b.dataset.agent = a.name;
       b.style.setProperty('--ac', a.color);
@@ -2070,6 +2144,7 @@
     if (MP.pollTimer) { clearInterval(MP.pollTimer); MP.pollTimer = 0; }
     MP.player = loadPlayer();
 
+    syncRoster();     // merge forged operatives into ROSTER before HUD/sprites are built
     buildHud();
     resetSprites();
     initEmbers();
@@ -2125,10 +2200,11 @@
   function _emitPay(payload) { payCallbacks.forEach(cb => { try { cb(payload); } catch (_) {} }); }
 
   window.PixelOffice = {
-    __v: 6,
+    __v: 7,
     mount, unmount,
     addCollectable, onPay,
     selectAgent,
+    syncAgents: refreshRoster,      // dashboard calls this when forged operatives change
     _emitPay,                       // reserved for x402 wiring
   };
 })();

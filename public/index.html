@@ -38668,9 +38668,12 @@ function _loadOfficeOperatives(force) {
     window._officeOperatives = list.slice(0, 12).map(o => ({
       name: String(o.codename || o.name || 'OP').toUpperCase(),
       color: o.color || '#9b7bff',
+      role: o.role || o.archetype || 'Operative',
       portrait: o.portrait || ('/api/forge/art/arch-' + (o.archetype || 'ghost') + '.png'),
       op: o,
     }));
+    // Push forged operatives into the 2D pixel office so they appear as walkable characters.
+    try { if (window.PixelOffice && window.PixelOffice.syncAgents) window.PixelOffice.syncAgents(); } catch (_) {}
   }).catch(() => {});
 }
 
