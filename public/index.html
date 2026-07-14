@@ -9285,12 +9285,11 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/><path d="M14 14l2-2 5 5"/></svg></div>
       </div>
 
-      <!-- Video Clipper Module — LOCKED for now -->
-      <div class="mm-card mm-premium" onclick="notify('🔒 Video Clipper is locked — coming soon')" style="--acc:#00E5A0;--acc2:#ffd45e;opacity:.55;cursor:not-allowed;position:relative">
-        <div style="position:absolute;top:8px;right:8px;z-index:3;font-size:9px;font-weight:800;letter-spacing:1px;color:#ffd45e;background:rgba(0,0,0,.6);border:1px solid rgba(255,212,94,.5);border-radius:6px;padding:3px 7px">🔒 LOCKED</div>
+      <!-- Video Clipper Module — UNLOCKED (opens the clipper overlay: Manual trim + Auto highlights) -->
+      <div class="mm-card" onclick="launchMediaModule('clipper')" style="--acc:#00E5A0;--acc2:#ffd45e;position:relative">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
         <div class="mm-icon-shell"><img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon"></div>
-        <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">SOON</span></div>
+        <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">NEW</span></div>
         <div class="mm-sub">Long video → captioned vertical shorts</div>
         <div class="mm-chips"><span>ffmpeg</span><span>Whisper</span><span>TikTok/Reels</span></div>
         <div class="mm-corner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></div>
@@ -45389,11 +45388,12 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
         </div>`;
         return;
       }
-      // No real agents listed yet — show empty state
+      // No agents here yet — clean forge CTA (no job-board / "Deploy → List" framing).
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
-        <div style="font-size:28px;margin-bottom:10px">🏪</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:6px">No agents listed yet</div>
-        <div style="font-size:9px">Forge an agent in <b>Skills</b>, then use <b>Deploy → List</b> to make it available here.</div>
+        <div style="font-size:28px;margin-bottom:10px">🜲</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:6px">No agents here yet</div>
+        <div style="font-size:9px;margin-bottom:12px">Forge your first operative and it appears across your Office, Agents and Rooms.</div>
+        <button class="btn btn-accent" style="font-size:9px;padding:7px 16px" onclick="showView('forge')">⚒ Forge an Agent</button>
       </div>`;
       return;
     }
@@ -45450,6 +45450,12 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   }
 
   function renderMarketplaceJobs() {
+    // JOB BOARD REMOVED from the Marketplace/Rooms tab entirely (per owner) — jobs happen in the
+    // Office & Bazaar, not here. Strip any previously-rendered job section and stop.
+    const _old = document.getElementById('mktLiveJobsSection');
+    if (_old && _old.parentNode) _old.parentNode.removeChild(_old);
+    return;
+    /* eslint-disable no-unreachable */
     let jobsSection = document.getElementById('mktLiveJobsSection');
     if (!jobsSection) {
       // Create jobs section if not present
