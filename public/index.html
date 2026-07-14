@@ -102,45 +102,105 @@
 
 <!-- ── SIGN-IN OVERLAY (Firebase) — Google / email / skip-as-guest ── -->
 <style>
-#shdAuthGate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;
-  background:radial-gradient(1000px 600px at 50% -10%,rgba(0,255,136,.10),transparent 60%),linear-gradient(180deg,#05070a,#04060a);
-  font-family:'Rajdhani','Share Tech Mono',system-ui,sans-serif;}
+/* ══ NEURAL COUNCIL TERMINAL — agentic neon sign-in ══ */
+#shdAuthGate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;overflow:hidden;
+  background:#03050c;font-family:'Rajdhani','Share Tech Mono',system-ui,sans-serif;}
 #shdAuthGate.on{display:flex;}
-#shdAuthGate .card{position:relative;width:min(420px,92vw);border-radius:18px;padding:2px;
-  background:linear-gradient(135deg,#ffd45e,rgba(0,255,136,.35) 45%,#00f0ff);box-shadow:0 0 60px rgba(0,255,136,.15);}
-#shdAuthGate .in{background:linear-gradient(160deg,#0d1420,#0a0f18);border-radius:16px;padding:30px 26px;}
-#shdAuthGate .logo{display:flex;align-items:center;gap:9px;font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:.28em;color:#e7f3ec;font-size:15px;}
-#shdAuthGate .logo .d{width:9px;height:9px;border-radius:50%;background:#00ff88;box-shadow:0 0 12px #00ff88;}
-#shdAuthGate h2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:24px;margin:16px 0 4px;color:#fff;}
-#shdAuthGate p.sub{color:#8ba0a0;font-size:14px;margin:0 0 18px;line-height:1.5;}
-#shdAuthGate button, #shdAuthGate input{width:100%;box-sizing:border-box;font-family:inherit;border-radius:11px;}
-#shdAuthGate input{background:#070b12;border:1px solid rgba(0,255,136,.16);color:#e7f3ec;padding:12px 13px;font-size:15px;margin-bottom:9px;outline:none;}
-#shdAuthGate input:focus{border-color:#ffd45e;}
-#shdAuthGate .bg{cursor:pointer;border:none;padding:13px;font-weight:700;font-size:14px;letter-spacing:.03em;margin-bottom:9px;transition:transform .15s,filter .2s;}
-#shdAuthGate .bg:hover{transform:translateY(-1px);filter:brightness(1.06);}
-#shdAuthGate .google{background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;}
-#shdAuthGate .prim{background:linear-gradient(100deg,#00ff88,#00f0ff);color:#04060a;font-family:'Orbitron',sans-serif;}
-#shdAuthGate .skip{background:transparent;border:1px solid rgba(139,160,160,.3)!important;color:#8ba0a0;}
-#shdAuthGate .skip:hover{color:#ffd45e;border-color:#ffd45e!important;}
-#shdAuthGate .or{display:flex;align-items:center;gap:10px;color:#5c6f70;font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:12px 0;}
-#shdAuthGate .or::before,#shdAuthGate .or::after{content:'';flex:1;height:1px;background:rgba(0,255,136,.12);}
-#shdAuthGate .msg{min-height:17px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ff6b6b;margin-top:4px;}
-#shdAuthGate .fine{font-size:11px;color:#5c6f70;margin-top:12px;line-height:1.5;}
-#shdGuestBadge{position:fixed;bottom:12px;left:12px;z-index:9998;display:none;align-items:center;gap:7px;background:rgba(12,17,25,.9);
-  border:1px solid rgba(255,212,94,.3);color:#ffd45e;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.1em;
-  padding:6px 11px;border-radius:100px;cursor:pointer;}
+/* layer 1 — drifting colour aura */
+#shdAuthGate::before{content:'';position:absolute;inset:-25%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(38% 32% at 50% 2%,rgba(39,224,255,.20),transparent 62%),
+    radial-gradient(34% 30% at 84% 20%,rgba(192,140,255,.15),transparent 62%),
+    radial-gradient(34% 34% at 14% 88%,rgba(255,207,74,.12),transparent 62%);
+  animation:shdAura 16s ease-in-out infinite alternate;}
+/* layer 2 — perspective HUD grid, faded at edges */
+#shdAuthGate::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.55;
+  background:linear-gradient(rgba(39,224,255,.06) 1px,transparent 1px) 0 0/100% 36px,
+             linear-gradient(90deg,rgba(39,224,255,.06) 1px,transparent 1px) 0 0/36px 100%;
+  -webkit-mask-image:radial-gradient(120% 95% at 50% 42%,#000 26%,transparent 80%);
+          mask-image:radial-gradient(120% 95% at 50% 42%,#000 26%,transparent 80%);
+  animation:shdGrid 26s linear infinite;}
+@keyframes shdAura{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(0,-16px,0) scale(1.07)}}
+@keyframes shdGrid{to{background-position:0 360px,360px 0}}
+/* card — angular gradient-bordered hologram */
+#shdAuthGate .card{position:relative;z-index:2;width:min(432px,93vw);padding:1.5px;
+  clip-path:polygon(24px 0,100% 0,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%,0 24px);
+  background:linear-gradient(135deg,#27e0ff,#c08cff 46%,#ffcf4a);
+  filter:drop-shadow(0 0 34px rgba(39,224,255,.24)) drop-shadow(0 0 70px rgba(192,140,255,.14));
+  animation:shdCardGlow 5.5s ease-in-out infinite;}
+@keyframes shdCardGlow{0%,100%{filter:drop-shadow(0 0 30px rgba(39,224,255,.22)) drop-shadow(0 0 64px rgba(192,140,255,.12))}
+  50%{filter:drop-shadow(0 0 44px rgba(255,207,74,.24)) drop-shadow(0 0 90px rgba(39,224,255,.18))}}
+#shdAuthGate .in{position:relative;overflow:hidden;padding:26px 26px 24px;
+  clip-path:polygon(23px 0,100% 0,100% calc(100% - 23px),calc(100% - 23px) 100%,0 100%,0 23px);
+  background:linear-gradient(165deg,#0a1120 0%,#070c16 100%);}
+/* scanline sweep across the card */
+#shdAuthGate .in::before{content:'';position:absolute;left:0;right:0;top:-40%;height:40%;pointer-events:none;z-index:4;
+  background:linear-gradient(180deg,transparent,rgba(39,224,255,.10),transparent);animation:shdScan 6.5s linear infinite;}
+@keyframes shdScan{0%{top:-45%}100%{top:110%}}
+/* HUD corner brackets */
+#shdAuthGate .in::after{content:'';position:absolute;top:9px;left:9px;width:26px;height:26px;pointer-events:none;z-index:4;
+  border-top:2px solid rgba(39,224,255,.6);border-left:2px solid rgba(39,224,255,.6);}
+#shdAuthGate .brk{position:absolute;bottom:9px;right:9px;width:26px;height:26px;pointer-events:none;z-index:4;
+  border-bottom:2px solid rgba(255,207,74,.55);border-right:2px solid rgba(255,207,74,.55);}
+#shdAuthGate .bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:.24em;color:#5f7c86;text-transform:uppercase;margin-bottom:18px;}
+#shdAuthGate .bar .lv{color:#27e0ff;text-shadow:0 0 8px rgba(39,224,255,.6);}
+#shdAuthGate .logo,#shdAuthGate h2,#shdAuthGate .sub,#shdAuthGate .council,#shdAuthGate .row,#shdAuthGate input,#shdAuthGate .bg,#shdAuthGate .msg,#shdAuthGate .fine{position:relative;z-index:5;}
+#shdAuthGate .logo{display:flex;align-items:center;gap:9px;font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:.30em;color:#dbe9ff;font-size:13px;}
+#shdAuthGate .logo .d{width:8px;height:8px;border-radius:50%;background:#27e0ff;box-shadow:0 0 12px #27e0ff;animation:shdBlink 1.8s ease-in-out infinite;}
+@keyframes shdBlink{0%,100%{opacity:1}50%{opacity:.35}}
+#shdAuthGate h2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:25px;letter-spacing:.02em;margin:12px 0 4px;line-height:1.08;
+  background:linear-gradient(100deg,#8fefff,#fff 40%,#ffcf4a);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 26px rgba(39,224,255,.28);}
+#shdAuthGate p.sub{color:#7d94a0;font-size:13.5px;margin:0 0 16px;line-height:1.5;}
+/* council status row — the 7 agents */
+#shdAuthGate .council{display:flex;align-items:center;gap:8px;margin:0 0 18px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.18em;color:#5f7c86;text-transform:uppercase;}
+#shdAuthGate .council .dots{display:flex;gap:5px;}
+#shdAuthGate .council i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);animation:shdPulse 2.4s ease-in-out infinite;animation-delay:var(--d);}
+@keyframes shdPulse{0%,100%{transform:scale(.7);opacity:.45}50%{transform:scale(1.15);opacity:1}}
+#shdAuthGate input{width:100%;box-sizing:border-box;background:rgba(4,9,18,.85);border:1px solid rgba(39,224,255,.18);color:#eaf4ff;
+  padding:12px 13px;font-size:15px;font-family:inherit;margin-bottom:9px;outline:none;border-radius:0;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);transition:border-color .2s,box-shadow .2s;}
+#shdAuthGate input::placeholder{color:#4b5f6a;}
+#shdAuthGate input:focus{border-color:#27e0ff;box-shadow:0 0 0 1px rgba(39,224,255,.4),0 0 18px rgba(39,224,255,.22);}
+#shdAuthGate .row{display:flex;gap:8px;}
+#shdAuthGate .bg{width:100%;box-sizing:border-box;cursor:pointer;border:none;padding:13px;font-weight:700;font-size:13.5px;letter-spacing:.06em;
+  margin-bottom:9px;font-family:'Orbitron',sans-serif;text-transform:uppercase;transition:transform .15s,filter .2s,box-shadow .2s;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);}
+#shdAuthGate .bg:hover{transform:translateY(-1px);filter:brightness(1.08);}
+#shdAuthGate .prim{position:relative;overflow:hidden;background:linear-gradient(100deg,#27e0ff,#8fefff 40%,#ffcf4a);color:#04060a;
+  box-shadow:0 0 22px rgba(39,224,255,.28);}
+#shdAuthGate .prim::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);
+  transform:translateX(-120%);animation:shdSheen 3.4s ease-in-out infinite;}
+@keyframes shdSheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+#shdAuthGate .make{background:rgba(39,224,255,.07);border:1px solid rgba(39,224,255,.4);color:#8fefff;}
+#shdAuthGate .skip{background:transparent;border:1px solid rgba(95,124,134,.35);color:#7d94a0;font-family:'Share Tech Mono',monospace;letter-spacing:.14em;}
+#shdAuthGate .skip:hover{color:#ffcf4a;border-color:#ffcf4a;}
+#shdAuthGate .msg{min-height:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ff6b6b;margin-top:5px;}
+#shdAuthGate .fine{font-size:11px;color:#4b5f6a;margin-top:11px;line-height:1.5;font-family:'Share Tech Mono',monospace;letter-spacing:.03em;}
+#shdGuestBadge{position:fixed;bottom:12px;left:12px;z-index:9998;display:none;align-items:center;gap:7px;background:rgba(8,12,22,.92);
+  border:1px solid rgba(255,207,74,.35);color:#ffcf4a;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.12em;
+  padding:6px 12px;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);cursor:pointer;}
 #shdGuestBadge.on{display:flex;}
 </style>
 <div id="shdAuthGate" role="dialog" aria-modal="true">
   <div class="card"><div class="in">
-    <div class="logo"><span class="d"></span>SHADDAI</div>
+    <span class="brk"></span>
+    <div class="bar"><span>◢ SECURE CHANNEL</span><span class="lv">● LINK ACTIVE</span></div>
+    <div class="logo"><span class="d"></span>SHADDAI // GRID ACCESS</div>
     <h2>Enter the Council</h2>
-    <p class="sub">Sign in to save your agents, memory and work across sessions — or jump in as a guest.</p>
+    <p class="sub">Authenticate to save your agents, memory and work across sessions — or jump in as a guest.</p>
+    <div class="council"><span>Council</span>
+      <span class="dots">
+        <i style="--c:#ffd45e;--d:0s"></i><i style="--c:#27e0ff;--d:.3s"></i><i style="--c:#c08cff;--d:.6s"></i>
+        <i style="--c:#00ff88;--d:.9s"></i><i style="--c:#ff7ac2;--d:1.2s"></i><i style="--c:#8fefff;--d:1.5s"></i><i style="--c:#ff5a5a;--d:1.8s"></i>
+      </span><span class="lv" style="color:#00ff88;margin-left:auto;text-shadow:0 0 8px rgba(0,255,136,.5)">7 ONLINE</span>
+    </div>
     <input id="shdEmail" type="email" placeholder="you@email.com" autocomplete="email">
     <input id="shdPass" type="password" placeholder="password" autocomplete="current-password">
-    <div style="display:flex;gap:8px">
+    <div class="row">
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
-      <button class="bg" onclick="shdGate.email('create')" style="flex:1;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.4);color:#00e5a0">Create Account</button>
+      <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
     <button class="bg skip" onclick="shdGate.guest()">Skip — continue as guest →</button>
     <div class="msg" id="shdAuthMsg"></div>
