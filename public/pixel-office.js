@@ -163,7 +163,7 @@
       tiles: R, center: [19, 12.5], door: [17, 12] },
     { id: 'bank',   label: 'BANK',   soon: true, color: '#ffd76a',
       tiles: K, center: [1.5, 15],  door: [3, 15] },
-    { id: 'market', label: 'MARKET', soon: true, color: '#7ee787',
+    { id: 'market', label: '🏪 BAZAAR', soon: true, active: true, color: '#e8b84b',
       tiles: M, center: [16.5, 15.5], door: [15, 16] },
     { id: 'docks',  label: 'DOCKS',  soon: true, color: '#38bdf8',
       tiles: H, center: [7, 17.5], door: [8, 17] },
@@ -896,17 +896,18 @@
     const glyph = b.id === 'bank' ? '🏦' : b.id === 'market' ? '🛒' : '⚓';
     ctx.fillText(glyph, p.x, p.y - 20 * s);
     ctx.restore();
-    // pulsing SOON tag
+    // pulsing status tag — "OPEN" for live buildings (Bazaar), "SOON" for the rest
+    const tag = b.active ? 'OPEN' : 'SOON';
     const blink = 0.45 + (Math.sin(now / 600 + b.center[0]) + 1) / 2 * 0.55;
     ctx.save();
     ctx.globalAlpha = blink;
     ctx.font = "7px 'Share Tech Mono', monospace"; ctx.textAlign = 'center';
-    const tw = ctx.measureText('SOON').width;
+    const tw = ctx.measureText(tag).width;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     roundRect(p.x - tw / 2 - 5, p.y - 34 * s, tw + 10, 11, 3); ctx.fill();
     ctx.strokeStyle = b.color; ctx.lineWidth = 1;
     roundRect(p.x - tw / 2 - 5, p.y - 34 * s, tw + 10, 11, 3); ctx.stroke();
-    ctx.fillStyle = b.color; ctx.fillText('SOON', p.x, p.y - 34 * s + 8);
+    ctx.fillStyle = b.color; ctx.fillText(tag, p.x, p.y - 34 * s + 8);
     ctx.restore();
     ctx.textAlign = 'left';
   }
@@ -1609,6 +1610,8 @@
     if (b.id === 'forge') {
       showToast('↦ Opening The Forge…', '#ff8c1a', b.center);
       try { if (typeof window.showView === 'function') window.showView('forge'); } catch (_) {}
+    } else if (b.id === 'market') {
+      showToast('↦ Opening the Bazaar…', '#e8b84b', b.center);   // handled by the dashboard router → opens the Bazaar
     } else {
       showToast(`${b.label} — coming soon`, b.color, b.center);
     }

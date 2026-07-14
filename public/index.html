@@ -6055,6 +6055,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <button class="ocmd mode" onclick="officeMode('break')" title="Agents take a break">☕ Break</button>
         <span class="ocmd-div"></span>
         <button class="ocmd run" onclick="window.openPixelForge&&openPixelForge()" title="Pixel Forge — pick color, body skin, name & tools, drip a custom pixel agent into this office" style="background:linear-gradient(180deg,rgba(39,224,255,.16),rgba(39,224,255,.03));border-color:rgba(39,224,255,.45);color:#27e0ff">⬡ Pixel Forge</button>
+        <button class="ocmd run" onclick="try{if(window.Shop&&Shop.open){Shop.open();}else{window.open('marketplace-shop-v2.html','_blank');}}catch(e){window.open('marketplace-shop-v2.html','_blank');}" title="Open the Bazaar — hire agents, sell content & agent work (x402 Sparks)" style="background:linear-gradient(180deg,rgba(232,184,75,.16),rgba(232,184,75,.03));border-color:rgba(232,184,75,.5);color:#e8b84b">🏪 Bazaar</button>
       </div>
 
       <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
@@ -27190,8 +27191,9 @@ function switchOfficeTab(tab) {
       }
       // Market building → THE MARKET shop overlay (shop-client.js opens it via its
       // own listener; skip the "coming soon" toast so they don't collide).
-      if (key === 'market') {
+      if (key === 'market' || key === 'bazaar') {
         if (window.Shop && typeof window.Shop.open === 'function') window.Shop.open();
+        else window.open('marketplace-shop-v2.html', '_blank');   // simple Bazaar door
         return;
       }
       if (OFFICE_SUB[key]) {
