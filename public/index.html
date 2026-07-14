@@ -74,6 +74,10 @@
         window.SHD_AUTH.ready=true;
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();
       });
+      // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
+      firebase.auth().getRedirectResult().catch(function(e){
+        try{ var m=document.getElementById('shdAuthMsg'); if(m&&e&&(e.code||e.message)){ m.textContent=String(e.code||e.message).replace('auth/',''); m.style.color='#ff6b6b'; } }catch(_){}
+      });
     }
   }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
   // Sign-in (Google popup) / sign-out helpers.
@@ -139,7 +143,10 @@
     <div class="or">or</div>
     <input id="shdEmail" type="email" placeholder="you@email.com" autocomplete="email">
     <input id="shdPass" type="password" placeholder="password" autocomplete="current-password">
-    <button class="bg prim" onclick="shdGate.email()">Sign in / Create account</button>
+    <div style="display:flex;gap:8px">
+      <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
+      <button class="bg" onclick="shdGate.email('create')" style="flex:1;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.4);color:#00e5a0">Create Account</button>
+    </div>
     <button class="bg skip" onclick="shdGate.guest()">Skip — continue as guest →</button>
     <div class="msg" id="shdAuthMsg"></div>
     <div class="fine">Guest mode works fully, but your data won't be saved after you close the tab.</div>
@@ -156,33 +163,38 @@
     google:async function(){
       if(!(window.firebase&&firebase.auth)){ msg('Auth library not loaded — check your connection and refresh.'); return; }
       msg('Opening Google sign-in…','#8ba0a0');
+      var p=new firebase.auth.GoogleAuthProvider();
       try{
-        var p=new firebase.auth.GoogleAuthProvider();
         await firebase.auth().signInWithPopup(p);
         msg('Signed in ✓','#00e5a0');
       }catch(e){
         var c=String(e.code||e.message||'').replace('auth/','');
+        // Popup blocked/closed or unsupported context → fall back to a full-page redirect (much more reliable).
+        if(c==='popup-blocked'||c==='popup-closed-by-user'||c==='cancelled-popup-request'||c==='operation-not-supported-in-this-environment'||c==='web-storage-unsupported'){
+          msg('Popup blocked — redirecting you to Google…','#8ba0a0');
+          try{ await firebase.auth().signInWithRedirect(p); return; }
+          catch(e2){ c=String(e2.code||e2.message||'').replace('auth/',''); }
+        }
         msg(
           c==='unauthorized-domain' ? 'This site isn’t authorized in Firebase. Add this exact domain in Firebase Console → Authentication → Settings → Authorized domains.'
           : c==='operation-not-allowed' ? 'Google sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Google.'
-          : (c==='popup-blocked'||c==='popup-closed-by-user'||c==='cancelled-popup-request') ? 'The Google popup was blocked or closed — allow popups for this site and try again.'
           : c
         );
       }
     },
-    email:async function(){
+    email:async function(mode){
       var e=(document.getElementById('shdEmail')||{}).value, p=(document.getElementById('shdPass')||{}).value;
       if(!e||!p){ msg('Enter email and password.'); return; }
-      msg('…',' #8ba0a0');
+      msg(mode==='create'?'Creating your account…':'Signing in…','#8ba0a0');
       try{
-        try{ await firebase.auth().signInWithEmailAndPassword(e,p); }
-        catch(err){ if(err.code==='auth/user-not-found'){ await firebase.auth().createUserWithEmailAndPassword(e,p); } else { throw err; } }
+        if(mode==='create'){ await firebase.auth().createUserWithEmailAndPassword(e,p); msg('Account created ✓ — welcome!','#00e5a0'); }
+        else { await firebase.auth().signInWithEmailAndPassword(e,p); }
       }catch(err){
         var c=String(err.code||err.message||'').replace('auth/','');
         msg(
           c==='operation-not-allowed' ? 'Email sign-in isn’t enabled. Turn it on in Firebase Console → Authentication → Sign-in method → Email/Password.'
-          : c==='email-already-in-use' ? 'That email already has an account — check your password (or use Google).'
-          : c==='wrong-password'||c==='invalid-credential' ? 'Wrong password for that email.'
+          : c==='email-already-in-use' ? 'That email already has an account — use Sign In instead.'
+          : (c==='wrong-password'||c==='invalid-credential'||c==='user-not-found') ? 'Email or password incorrect. New here? Tap Create Account.'
           : c==='weak-password' ? 'Password too weak — use at least 6 characters.'
           : c==='invalid-email' ? 'That email address looks invalid.'
           : c
