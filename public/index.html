@@ -6012,7 +6012,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     </div>
     
     <!-- Pixel Office — Shaddai's command throne with 6 agent desks -->
-    <div id="officePixel" class="office-room" style="display:none;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:8px;gap:6px;min-height:0;overflow:hidden">
+    <div id="officePixel" class="office-room" style="display:none;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:8px;gap:6px;min-height:0;max-height:100%;overflow-y:auto">
 
       <!-- ── OPS FEED HEADER ── -->
       <div class="ops-feed-header">
@@ -6054,8 +6054,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <button class="ocmd mode" onclick="officeMode('break')" title="Agents take a break">☕ Break</button>
       </div>
 
-      <!-- ── CANVAS — camera feed with corner brackets ── -->
-      <div style="position:relative;flex:1;width:100%;min-height:280px;background:#050a14;border:1px solid rgba(255,215,0,0.15);overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,0.7) inset,0 0 0 1px rgba(255,255,255,0.03)">
+      <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
+      <div style="position:relative;flex:0 0 auto;width:100%;height:46vh;min-height:220px;max-height:52vh;background:#050a14;border:1px solid rgba(255,215,0,0.15);overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,0.7) inset,0 0 0 1px rgba(255,255,255,0.03)">
         <!-- Camera corner overlays -->
         <div class="cam-frame" aria-hidden="true">
           <div class="cam-corner tl"></div>
@@ -6423,7 +6423,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           </div>
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
           <div><label>SKILL LOADOUT — <span id="ofSkillCount">0</span> equipped (each adds compute load)</label><div class="of-skills" id="ofSkills">loading tools…</div></div>
-          <div class="of-actions"><button id="ofForge">⬡ FORGE</button><button id="ofTest">▶ TEST RUN</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
+          <!-- TEST RUN removed: forging must ONLY create + deploy the agent to the dashboard, never run a
+               tool loop inside the forge (that was the glitch). Tools run when you chat with the agent. -->
+          <div class="of-actions"><button id="ofForge">⬡ FORGE &amp; AWAKEN</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
           <div class="of-console" id="ofConsole">// forge an operator, equip skills, pick a brain, then TEST RUN.</div>
         </div>
       </div>
@@ -6785,7 +6787,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         }
         ov.querySelector('#of3DFrame').src='/forge-models-test.html?arch='+encodeURIComponent(arch);
       };
-      $('ofTest').onclick=async()=>{
+      var _ofTestBtn=$('ofTest'); if(_ofTestBtn) _ofTestBtn.onclick=async()=>{
         const name=$('ofName').value.trim();
         if(!name){$('ofConsole').textContent='⚠ CODENAME required.';return}
         const equipped=[...skills];
