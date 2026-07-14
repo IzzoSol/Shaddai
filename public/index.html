@@ -27160,6 +27160,11 @@ function switchOfficeTab(tab) {
 (function wirePixelOfficeBuildingRouting() {
   if (window._pixelOfficeRoutingWired) return;
   window._pixelOfficeRoutingWired = true;
+  // Clicking an operative in the pixel office opens their chat (the event was dispatched but nothing
+  // listened → agents were unclickable). Now clicking an agent talks to them.
+  window.addEventListener('pixeloffice:agent-click', function (e) {
+    try { var nm = e && e.detail && e.detail.name; if (nm && typeof chatWithAgent === 'function') chatWithAgent(nm); } catch (_) {}
+  });
   // building key -> Office sub-tab (via switchOfficeTab)
   const OFFICE_SUB = {
     command:  'command',
