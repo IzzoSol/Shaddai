@@ -4,7 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const core = require('./forge-core');
 
-const MESHY_KEY = 'msy_Y4mJn5Ot96iQjHfpUp3ldrdmaW6d7hhOCBCA';
+// SECURITY: never hardcode keys. Set MESHY_KEY in the environment (this is a one-off dev script).
+const MESHY_KEY = process.env.MESHY_KEY || '';
+if (!MESHY_KEY) { console.error('Set MESHY_KEY in your environment before running this generator.'); process.exit(1); }
 const AUTH = { Authorization: `Bearer ${MESHY_KEY}` };
 const OUT = path.join(__dirname, '..', '..', 'public', 'assets', 'forge-models');
 fs.mkdirSync(OUT, { recursive: true });
