@@ -80,8 +80,8 @@
       });
     }
   }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
-  // Sign-in (Google popup) / sign-out helpers.
-  window.shdSignIn=async function(){ try{ var p=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(p); if(typeof notify==='function')notify('Signed in'); }catch(e){ if(typeof notify==='function')notify('Sign-in: '+(e.code||e.message)); } };
+  // Sign-in (Google REDIRECT — no popup) / sign-out helpers.
+  window.shdSignIn=async function(){ try{ var p=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithRedirect(p); }catch(e){ if(typeof notify==='function')notify('Sign-in: '+(e.code||e.message)); } };
   window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.removeItem('shd_mode'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
 })();
 
