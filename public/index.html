@@ -54459,7 +54459,7 @@ window.hireAgentX402=async function(){
     <div id="pxfStatus"></div>
     <div class="pf-actions">
       <button class="pf-btn pf-drip" onclick="window.pixelForgeCreate(false)">💧 Drip into Office</button>
-      <button class="pf-btn pf-3d" onclick="window.pixelForgeCreate(true)" title="Also open the 3D Forge to build a matching 3D body">⬡ Also make 3D</button>
+      <button class="pf-btn pf-3d" onclick="window.openPixel3D&&openPixel3D()" title="Give this agent a 3D body — free base bodies or premium AI">⬡ 3D Body <span id="pxf3dBadge" style="display:none;font-size:9px;margin-left:4px;color:#00ff88"></span></button>
       <button class="pf-btn pf-close" onclick="window.closePixelForge()">Close</button>
     </div>
   </div>
@@ -54554,10 +54554,13 @@ window.hireAgentX402=async function(){
       buildCats(); renderTools();
     }).catch(function(){ allTools=FALLBACK_TOOLS.map(function(n){return {name:n,cat:catOf(n)};}); buildCats(); renderTools(); });
   }
+  window._pxfGet=function(){ return { name:((document.getElementById('pxfName')||{}).value||'').trim(), color:curColor, skin:curSkin }; };
   window.openPixelForge=function(){
     // Soft password gate (owner-set) — keeps the Pixel Forge private while it's in beta.
     try{ if(sessionStorage.getItem('pxfUnlocked')!=='1'){ var pw=prompt('🔒 Pixel Forge — enter password:'); if(pw!=='ShaddaiForge'){ if(pw!==null&&typeof notify==='function')notify('Wrong password'); return; } sessionStorage.setItem('pxfUnlocked','1'); } }catch(e){}
-    var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else { buildCats(); renderTools(); } draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
+    var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on');
+    window._pxf3dChosen=null; var _b3=document.getElementById('pxf3dBadge'); if(_b3)_b3.style.display='none';
+    renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else { buildCats(); renderTools(); } draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
   window.closePixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(m)m.classList.remove('on'); };
   function status(t,ok){ var st=document.getElementById('pxfStatus'); if(st){ st.textContent=t||''; st.style.color=ok?'#00ff88':'#8fefff'; } }
   window.pixelForgeCreate=async function(also3d){
@@ -54570,7 +54573,8 @@ window.hireAgentX402=async function(){
     // 1) real brain so it can chat + use tools (best-effort)
     try{ await fetch('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,persona:persona,brainId:'auto',tools:tools,look:'pixel',portrait:'',rarity:'CUSTOM'})}); }catch(_){}
     // 2) persist the operative (color + skin nested in look so it survives the store whitelist)
-    var look={archetype:'pixel',pixel:{color:curColor,body:curSkin.key,icon:curSkin.icon,label:curSkin.label}};
+    var _c3=window._pxf3dChosen||null;
+    var look={archetype:'pixel',pixel:{color:curColor,body:curSkin.key,icon:curSkin.icon,label:curSkin.label,body3d:_c3?{url:_c3.url,source:_c3.source,label:_c3.label}:null}};
     var op=null;
     try{
       var r=await fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:owner,codename:name,archetype:'pixel',rarity:'CUSTOM',portrait:'',color:curColor,look:look,brain:{tier:'light',brainId:'auto',persona:persona},tools:tools,model:'PIXEL',inOffice:true,deploy:{where:'office',office:true}})});
@@ -54596,6 +54600,130 @@ window.hireAgentX402=async function(){
     setTimeout(function(){ window.closePixelForge(); if(typeof showView==='function') showView('office'); if(typeof switchOfficeTab==='function') switchOfficeTab('pixel'); if(window.PixelOffice&&PixelOffice.syncAgents){ setTimeout(function(){try{PixelOffice.syncAgents();}catch(_){}} ,1200); } }, 750);
     if(also3d){ setTimeout(function(){ if(typeof showView==='function') showView('forge'); var nf=document.getElementById('ofName'); if(nf)nf.value=name; }, 1100); }
   };
+})();
+</script>
+
+<!-- ════════ 3D BODY FORGE — ranked source picker (free base bodies + AI lanes) ════════ -->
+<style>
+  #pixel3dModal{position:fixed;inset:0;z-index:100001;display:none;align-items:center;justify-content:center;background:rgba(2,4,10,.88);backdrop-filter:blur(6px);font-family:'Share Tech Mono',monospace}
+  #pixel3dModal.on{display:flex}
+  #pixel3dModal .p3-card{width:min(820px,95vw);max-height:92vh;overflow-y:auto;background:linear-gradient(160deg,#0a1120,#070c16);border:2px solid #8b5cf6;border-radius:14px;box-shadow:0 0 60px rgba(139,92,246,.25);padding:20px 22px}
+  #pixel3dModal h2{font-family:'Orbitron',sans-serif;font-size:19px;color:#c9adff;margin:0 0 2px;letter-spacing:.05em}
+  #pixel3dModal .p3-sub{color:#5f7c86;font-size:11px;margin:0 0 14px}
+  .p3-lane{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .13s;background:rgba(255,255,255,.02)}
+  .p3-lane:hover{border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06)}
+  .p3-lane.on{border-color:#8b5cf6;background:rgba(139,92,246,.1)}
+  .p3-lane.off{opacity:.5}
+  .p3-rank{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#8b5cf6;width:22px;text-align:center}
+  .p3-info{flex:1;min-width:0}
+  .p3-name{font-size:13px;font-weight:700;color:#eaf4ff}
+  .p3-note{font-size:10px;color:#7d94a0;margin-top:2px}
+  .p3-badges{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;max-width:210px}
+  .p3-badge{font-size:8.5px;padding:3px 7px;border-radius:20px;white-space:nowrap;font-weight:700;letter-spacing:.04em}
+  .p3-free{background:rgba(0,255,136,.14);color:#00ff88;border:1px solid rgba(0,255,136,.4)}
+  .p3-paid{background:rgba(232,184,75,.14);color:#e8b84b;border:1px solid rgba(232,184,75,.4)}
+  .p3-meta{background:rgba(255,255,255,.06);color:#9fb0c4;border:1px solid rgba(255,255,255,.14)}
+  #p3Panel{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px}
+  #p3Bodies{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  #p3Bodies .bod{font-size:10px;padding:6px 10px;border-radius:7px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:#9fb0c4}
+  #p3Bodies .bod.on{border-color:#8b5cf6;color:#c9adff;background:rgba(139,92,246,.12)}
+  #p3Viewer{width:100%;height:280px;background:radial-gradient(circle at 50% 40%,#0d1526,#05070e);border:1px solid rgba(139,92,246,.2);border-radius:10px;display:block}
+  #pixel3dModal .p3-actions{display:flex;gap:8px;margin-top:12px}
+  #pixel3dModal .p3-btn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;padding:11px 16px;border-radius:8px;cursor:pointer;border:none}
+  #pixel3dModal .p3-use{background:linear-gradient(100deg,#8b5cf6,#c9adff);color:#0a0416;flex:1}
+  #pixel3dModal .p3-x{background:transparent;border:1px solid rgba(255,255,255,.2);color:#7d94a0}
+  #p3Status{font-size:11px;color:#c9adff;min-height:15px;margin-top:8px}
+</style>
+<div id="pixel3dModal" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closePixel3D()">
+  <div class="p3-card">
+    <h2>⬡ FORGE A 3D BODY</h2>
+    <p class="p3-sub">Give <b id="p3Name" style="color:#c9adff">your agent</b> a 3D body. Ranked best→premium. The free ones work right now.</p>
+    <div id="p3Lanes"></div>
+    <div id="p3Panel" style="display:none"></div>
+    <div id="p3Status"></div>
+    <div class="p3-actions"><button class="p3-btn p3-x" onclick="window.closePixel3D()">Close</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  var LANES=[
+    {key:'base', name:'Base Body', badges:[['FREE','free'],['Instant','meta'],['★★★','meta']], avail:true,
+     note:'Customize one of our 7 rigged archetype bodies — walks & talks in the world immediately.'},
+    {key:'hf', name:'AI Sketch — HuggingFace', badges:[['FREE','free'],['~1 min','meta'],['AI text→3D','meta']], avail:true,
+     note:'Describe a look, AI builds the 3D model using your HuggingFace token. Can queue.'},
+    {key:'threews', name:'Premium AI — three.ws', badges:[['~$0.05–0.50','paid'],['Sparks / x402','meta'],['★★★★','meta']], avail:false,
+     note:'Higher-quality AI (draft/standard/high). Paid per model via your Sparks balance. Enable with Pro credits.'},
+    {key:'meshy', name:'Studio — Meshy', badges:[['PAID','paid'],['~2 min','meta'],['★★★★','meta']], avail:false,
+     note:'Studio-grade rigged model. Needs a Meshy key on the server (Pro / premium lane).'},
+    {key:'nvidia', name:'NVIDIA TRELLIS', badges:[['FREE','free'],['~12s','meta'],['needs key','meta']], avail:false,
+     note:'Free & fast, but NVIDIA signup needs phone verification. Enable later when a key is added.'},
+  ];
+  var BASE_BODIES=[['psionic','Psionic'],['ghost','Ghost'],['oracle','Oracle'],['harvester','Harvester'],['artisan','Artisan'],['gaia-link','Gaia-Link'],['street-deity','Street Deity']];
+  var curLane=null, curBody=null;
+  function el(id){return document.getElementById(id);}
+  function ensureMV(){ try{ if(window.customElements&&customElements.get('model-viewer'))return; if(document.getElementById('mvScript'))return; var s=document.createElement('script'); s.id='mvScript'; s.type='module'; s.src='/model-viewer.min.js'; document.head.appendChild(s); }catch(e){} }
+  function status(t,c){ var s=el('p3Status'); if(s){ s.textContent=t||''; s.style.color=c||'#c9adff'; } }
+  function renderLanes(){
+    var w=el('p3Lanes'); if(!w)return; w.innerHTML='';
+    LANES.forEach(function(L,i){
+      var d=document.createElement('div'); d.className='p3-lane'+(L.avail?'':' off')+(curLane===L.key?' on':'');
+      var badges=L.badges.map(function(b){return '<span class="p3-badge p3-'+b[1]+'">'+b[0]+'</span>';}).join('');
+      d.innerHTML='<div class="p3-rank">'+(i+1)+'</div><div class="p3-info"><div class="p3-name">'+L.name+'</div><div class="p3-note">'+L.note+'</div></div><div class="p3-badges">'+badges+'</div>';
+      d.onclick=function(){ curLane=L.key; renderLanes(); openPanel(L); };
+      w.appendChild(d);
+    });
+  }
+  function openPanel(L){
+    var p=el('p3Panel'); if(!p)return; p.style.display='block';
+    if(L.key==='base'){
+      ensureMV();
+      p.innerHTML='<div style="font-size:10px;color:#5f7c86;margin-bottom:7px">Pick a body — rotate to preview:</div><div id="p3Bodies"></div><model-viewer id="p3Viewer" camera-controls auto-rotate shadow-intensity="1" exposure="1" ar="false"></model-viewer><div class="p3-actions"><button class="p3-btn p3-use" onclick="window._p3UseBase()">✓ Use this body</button></div>';
+      var bw=el('p3Bodies');
+      BASE_BODIES.forEach(function(b){ var c=document.createElement('div'); c.className='bod'+(curBody===b[0]?' on':''); c.textContent=b[1]; c.onclick=function(){ curBody=b[0]; setBody(b[0]); Array.prototype.forEach.call(bw.children,function(x){x.classList.remove('on');}); c.classList.add('on'); }; bw.appendChild(c); });
+      if(!curBody){ curBody=BASE_BODIES[0][0]; if(bw.firstChild)bw.firstChild.classList.add('on'); }
+      setBody(curBody); status('');
+    } else if(L.key==='hf'){
+      p.innerHTML='<div style="font-size:11px;color:#9fb0c4;margin-bottom:8px">AI text→3D via your HuggingFace token.</div><input id="p3hfPrompt" type="text" placeholder="describe the body… e.g. neon samurai robot" style="width:100%;box-sizing:border-box;background:#04060d;border:1px solid rgba(139,92,246,.3);color:#eaf4ff;padding:10px;border-radius:7px;font-family:inherit;margin-bottom:8px"><div class="p3-actions"><button class="p3-btn p3-use" onclick="window._p3GenHF()">⚡ Generate (Beta)</button></div>';
+      var g=window._pxfGet?_pxfGet():{}; var pi=el('p3hfPrompt'); if(pi&&g.skin)pi.value=(g.skin.label||'')+' operative';
+      status('');
+    } else if(L.key==='meshy'){
+      p.innerHTML='<div style="font-size:11px;color:#9fb0c4;margin-bottom:8px">Studio-grade Meshy render (~2 min). Requires a Meshy key on the server.</div><div class="p3-actions"><button class="p3-btn p3-use" onclick="window._p3GenMeshy()">⚡ Generate</button></div>';
+      status('');
+    } else {
+      p.innerHTML='<div style="font-size:11px;color:#9fb0c4;padding:6px 0">'+L.note+'</div>';
+      status(L.key==='threews'?'Premium three.ws lane — enabled with Pro credits (paid per model via Sparks).':(L.key==='nvidia'?'NVIDIA lane needs an nvapi- key (phone verification). Wired and ready when a key is set.':''),'#7d94a0');
+    }
+  }
+  function setBody(key){ var v=el('p3Viewer'); if(v){ v.setAttribute('src','/assets/forge-models/'+key+'.glb'); } }
+  window._p3UseBase=function(){
+    var lbl=(BASE_BODIES.filter(function(b){return b[0]===curBody;})[0]||['','Body'])[1];
+    window._pxf3dChosen={source:'base', url:'/assets/forge-models/'+curBody+'.glb', body:curBody, label:lbl};
+    status('✓ '+lbl+' set as the 3D body. It ships when you Drip the agent.','#00ff88');
+    var b=document.getElementById('pxf3dBadge'); if(b){ b.textContent='3D: '+lbl+' ✓'; b.style.display='inline-block'; }
+    setTimeout(window.closePixel3D, 650);
+  };
+  window._p3GenHF=function(){ status('⚡ HF TRELLIS generation is in beta — base body + Meshy are the wired lanes for now. Using the base body is instant.','#e8b84b'); };
+  window._p3GenMeshy=async function(){
+    var g=window._pxfGet?_pxfGet():{name:'',color:'',skin:{key:'operative'}};
+    status('⟳ requesting Meshy render…');
+    try{
+      var r=await fetch('/api/forge/3d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:g.name,color:g.color,skin:(g.skin&&g.skin.key)||'operative',tier:(window.SHD_TIER||'free')})});
+      var d=await r.json();
+      if(r.status===503){ status('Meshy isn’t configured on the server yet (needs MESHY_KEY). Use the free base body meanwhile.','#e8b84b'); return; }
+      if(r.status===402){ status('Meshy is a Pro/premium lane. Use the free base body, or upgrade for studio renders.','#e8b84b'); return; }
+      if(!d.ok||!d.taskId){ status('⚠ '+((d&&d.note)||(d&&d.error)||'could not start'),'#ff6b6b'); return; }
+      status('⟳ generating your 3D body… (~2 min)');
+      var tries=0, iv=setInterval(async function(){ tries++; if(tries>60){clearInterval(iv);status('⚠ still working — check back shortly.');return;}
+        try{ var pr=await fetch('/api/forge/3d/'+d.taskId); var pj=await pr.json();
+          if(pj.status==='SUCCEEDED'&&pj.glb){ clearInterval(iv); window._pxf3dChosen={source:'meshy',url:pj.glb,label:'Meshy body'}; status('✅ 3D body ready! It ships when you Drip the agent.','#00ff88'); var b=document.getElementById('pxf3dBadge'); if(b){b.textContent='3D: Meshy ✓';b.style.display='inline-block';} setTimeout(window.closePixel3D,900); }
+          else if(pj.status==='FAILED'){ clearInterval(iv); status('⚠ generation failed: '+(pj.error||''),'#ff6b6b'); }
+          else { status('⟳ generating… '+(pj.progress||0)+'%'); }
+        }catch(e){}
+      }, 3000);
+    }catch(e){ status('⚠ '+e.message,'#ff6b6b'); }
+  };
+  window.openPixel3D=function(){ var m=el('pixel3dModal'); if(!m)return; var g=window._pxfGet?_pxfGet():{}; var n=el('p3Name'); if(n)n.textContent=g.name||'your agent'; curLane=null; el('p3Panel').style.display='none'; status(''); renderLanes(); m.classList.add('on'); };
+  window.closePixel3D=function(){ var m=el('pixel3dModal'); if(m)m.classList.remove('on'); };
 })();
 </script>
 
