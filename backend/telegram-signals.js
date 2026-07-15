@@ -49,6 +49,7 @@ function _cfg() {
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
     rugFilter: cc.rugFilter !== false,
+    rugMinScore: Number(cc.rugMinScore) || 50,   // require safety score ≥ this (owner: >50%)
     bullishOnly: cc.bullishOnly !== false,
     // poll cadences (env-tunable)
     interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
@@ -80,6 +81,38 @@ async function _rugCheck(mint) {
 // extract a Solana mint from a GeckoTerminal base_token id like "solana_<mint>"
 function _mintFromGecko(p) { try { const id = p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id; if (id && id.startsWith('solana_')) return id.slice(7); } catch (e) {} return null; }
 
+// ── RUG SCORE (Solana, rugcheck.xyz full report) — 0..100 ─────────────────────
+// Owner params: LP must be 100% locked; top holder < 30% (unless LP locked);
+// danger/warn flags penalise. Borderline coins still pass but score lower.
+// Fail-open: if the API errors, return a neutral score so good calls aren't lost.
+async function _rugScore(mint) {
+  if (!mint) return { checked: false, score: 60, label: '' };
+  try {
+    const r = await fetch('https://api.rugcheck.xyz/v1/tokens/' + mint + '/report', { signal: AbortSignal.timeout(9000) });
+    if (!r.ok) return { checked: false, score: 60, label: '' };
+    const j = await r.json();
+    let score = 100; const notes = [];
+    // LP locked %
+    let lp = 0;
+    try { const m = (j.markets || [])[0]; const L = m && m.lp; lp = Number((L && (L.lpLockedPct != null ? L.lpLockedPct : L.lpLocked)) || 0); } catch (e) {}
+    if (lp >= 99) notes.push('🔒 LP 100%');
+    else if (lp >= 50) { score -= 25; notes.push('🔓 LP ' + lp.toFixed(0) + '%'); }
+    else { score -= 55; notes.push('🔓 LP unlocked'); }
+    // top holder concentration
+    let topPct = 0;
+    try { const th = j.topHolders || []; const nonLp = th.filter(h => !h.insider && !(h.owner && /lp|amm|pool/i.test(String(h.owner)))); topPct = (nonLp[0] && Number(nonLp[0].pct)) || (th[0] && Number(th[0].pct)) || 0; } catch (e) {}
+    if (topPct > 30) { score -= (lp >= 99 ? 8 : 25); notes.push('🐋 top ' + topPct.toFixed(0) + '%'); }
+    // risk flags
+    const risks = j.risks || [];
+    const danger = risks.filter(x => String(x.level || '').toLowerCase() === 'danger').length;
+    const warn = risks.filter(x => String(x.level || '').toLowerCase() === 'warn').length;
+    score -= danger * 25 + warn * 8;
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    const badge = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
+    return { checked: true, score, lp, topPct, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
+  } catch (e) { return { checked: false, score: 60, label: '' }; }
+}
+
 function _fmtUsd(n) {
   const v = Number(n) || 0;
   if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
@@ -102,36 +135,34 @@ async function _send(cfg, html) {
   } catch (e) { console.warn('[tg-signals] send error', e && e.message); return false; }
 }
 
-// bullish / non-bullish mood from a 24h % change
-function _mood(pct) {
-  const v = Number(pct);
-  if (!isFinite(v)) return '';
-  if (v >= 50) return '🚀 MOONING';
-  if (v >= 10) return '🟢 BULLISH';
-  if (v > -10) return '🟡 NEUTRAL';
-  if (v > -40) return '🔴 BEARISH';
-  return '💀 DUMPING';
+// clean 24h change chip — just a dot + %, no cheesy labels
+function _chgStr(pct) {
+  if (pct == null || pct === '') return '';
+  const v = Number(pct); if (!isFinite(v)) return '';
+  const e = v >= 100 ? '🔥' : v > 0 ? '🟢' : v === 0 ? '⚪' : '🔴';
+  return e + ' ' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
 }
 
 function _signalCard(chain, pair) {
   const b = pair.baseToken || {};
-  const mood = _mood(pair.priceChange && pair.priceChange.h24);
-  const name = _esc(b.name || b.symbol || 'Token');
-  const sym = _esc(b.symbol || '');
-  const price = pair.priceUsd ? '$' + Number(pair.priceUsd).toPrecision(4) : 'n/a';
+  const sym = _esc(b.symbol || 'TOKEN');
+  const nm = _esc(b.name || '');
+  const price = pair.priceUsd ? '$' + Number(pair.priceUsd).toPrecision(3) : 'n/a';
+  const mc = _fmtUsd(pair.fdv || pair.marketCap || 0);
   const liq = _fmtUsd(pair.liquidity && pair.liquidity.usd);
   const vol = _fmtUsd(pair.volume && pair.volume.h24);
-  const ch = pair.priceChange && pair.priceChange.h24 != null ? (Number(pair.priceChange.h24) >= 0 ? '🟢 +' : '🔴 ') + Number(pair.priceChange.h24).toFixed(1) + '%' : '';
+  const chg = _chgStr(pair.priceChange && pair.priceChange.h24);
   const url = _esc(pair.url || '');
-  const ca = _esc((pair.baseToken && pair.baseToken.address) || '');
+  const ca = _esc((b.address) || '');
   return (
-    `${mood ? mood + '  ' : ''}⚡ <b>SHADDAI SIGNAL</b> · ${_esc(chain.toUpperCase())}\n` +
-    `<b>${name}</b> ($${sym})  ${ch}\n` +
-    `💵 Price: <b>${_esc(price)}</b>\n` +
-    `💧 Liq: <b>${liq}</b>   📊 24h Vol: <b>${vol}</b>\n` +
-    (url ? `🔗 <a href="${url}">Chart on DexScreener</a>\n` : '') +
-    (ca ? `📋 CA: <code>${ca}</code>\n` : '') +
-    `\n<i>Not financial advice. DYOR.</i>`
+    `⚡️ <b>$${sym}</b>${nm && nm.toLowerCase() !== sym.toLowerCase() ? '  ' + nm : ''}\n` +
+    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}\n` +
+    `━━━━━━━━━━━━━\n` +
+    `💰 MC <b>${mc}</b>   💧 Liq <b>${liq}</b>\n` +
+    `📊 Vol <b>${vol}</b>   💵 <b>${_esc(price)}</b>\n` +
+    (ca ? `\n<code>${ca}</code>\n` : '') +
+    (url ? `🔗 <a href="${url}">Chart</a>` : '') +
+    `\n\n<i>NFA · DYOR</i>`
   );
 }
 
@@ -187,12 +218,13 @@ function _bondCard(c) {
   const mint = c.mint || c.address || '';
   const url = mint ? 'https://pump.fun/' + mint : '';
   return (
-    `🎓 <b>BONDED</b> · pump.fun\n` +
-    `<b>${name}</b> ($${sym}) just completed its bonding curve — now live on Raydium.\n` +
-    (mc ? `💰 Market cap: <b>${mc}</b>\n` : '') +
-    (url ? `🔗 <a href="${_esc(url)}">View on pump.fun</a>\n` : '') +
-    (mint ? `<code>${_esc(mint)}</code>\n` : '') +
-    `\n<i>Not financial advice. Always rug-check before aping.</i>`
+    `🎓 <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — BONDED\n` +
+    `Graduated → Raydium\n` +
+    `━━━━━━━━━━━━━\n` +
+    (mc ? `💰 MC <b>${mc}</b>\n` : '') +
+    (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
+    (url ? `🔗 <a href="${_esc(url)}">pump.fun</a>` : '') +
+    `\n\n<i>NFA · rug-check first</i>`
   );
 }
 async function _pollBonded() {
@@ -217,7 +249,7 @@ async function _pollBonded() {
     if (_bondSeeded) {   // first poll only seeds
       if (core.wasAlerted(mint)) continue;   // GLOBAL de-dupe — already called on another feed
       let card = _bondCard(c);
-      if (cfg.rugFilter) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; }
+      if (cfg.rugFilter) { const rs = await _rugScore(mint); if (rs.checked && rs.score < cfg.rugMinScore) continue; if (rs.label) card += '\n' + rs.label; }
       const ok = (await core.broadcast(card)) > 0;
       if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: Number(c.usd_market_cap || c.market_cap || 0), entryPrice: 0 }); } catch (e) {} }
     }
@@ -239,14 +271,17 @@ function _poolCard(net, kind, a, addr) {
   const vol = _fmtUsd(a.volume_usd && a.volume_usd.h24);
   const fdv = a.fdv_usd ? _fmtUsd(a.fdv_usd) : '';
   const url = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
-  const tag = kind === 'new_pools' ? '🆕 <b>NEW POOL</b>' : '🔥 <b>TRENDING</b>';
-  const mood = _mood(a.price_change_percentage && (a.price_change_percentage.h24 || a.price_change_percentage.h1));
+  const tag = kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT';
+  const chg = _chgStr(a.price_change_percentage && (a.price_change_percentage.h24 || a.price_change_percentage.h1));
   return (
-    `${mood ? mood + '  ' : ''}${tag} · ${_esc(net.toUpperCase())}\n<b>${name}</b>\n` +
-    `💵 <b>${_esc(price)}</b>\n💧 Liq: <b>${liq}</b>  📊 24h: <b>${vol}</b>` + (fdv ? `  🏷 FDV: <b>${fdv}</b>` : '') + `\n` +
-    (url ? `🔗 <a href="${_esc(url)}">GeckoTerminal</a>\n` : '') +
-    (addr ? `📋 CA: <code>${_esc(addr)}</code>\n` : '') +
-    `\n<i>Not financial advice. Rug-check first.</i>`
+    `${tag}  <b>${name}</b>\n` +
+    `${_esc(net.toUpperCase())}${chg ? '   ' + chg : ''}\n` +
+    `━━━━━━━━━━━━━\n` +
+    (fdv ? `💰 MC <b>${fdv}</b>   ` : '') + `💧 Liq <b>${liq}</b>\n` +
+    `📊 Vol <b>${vol}</b>   💵 <b>${_esc(price)}</b>\n` +
+    (addr ? `\n<code>${_esc(addr)}</code>\n` : '') +
+    (url ? `🔗 <a href="${_esc(url)}">Chart</a>` : '') +
+    `\n\n<i>NFA · rug-check first</i>`
   );
 }
 async function _pollGecko() {
@@ -275,7 +310,7 @@ async function _pollGecko() {
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a, _taddr);
-          if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
+          if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rs = await _rugScore(mint); if (rs.checked && rs.score < cfg.rugMinScore) continue; if (rs.label) card += '\n' + rs.label; } }
           const ok = (await core.broadcast(card)) > 0;
           if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
         }
@@ -294,6 +329,7 @@ function startTelegramSignals() {
     return;
   }
   if (_timer) return;
+  if (!core.acquireBroadcastLock()) { console.log('[tg-signals] another instance owns broadcasting — signals not started here (prevents duplicate sends).'); return; }
   console.log(`[tg-signals] ENABLED → ${cfg.channel || '(no channel — DM chats only)'} · chains=${cfg.chains.join(',')} · trending/${Math.round(cfg.interval / 1000)}s · bonded=${cfg.bonded ? Math.round(cfg.bondedInterval / 1000) + 's' : 'off'}`);
   // trending feed (DexScreener boosts) — first run after a short delay so it doesn't fight boot
   setTimeout(() => { _pollOnce().catch(() => {}); }, 8000);

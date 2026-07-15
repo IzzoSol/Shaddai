@@ -218,6 +218,7 @@ let _timer = null, _digestTimer = null;
 function startTracker() {
   if (!core.token()) { console.log('[tg-pnl] disabled (no token).'); return; }
   if (_timer) return;
+  if (!core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting — tracker not started here.'); return; }
   console.log('[tg-pnl] call tracker armed — re-pricing + milestone wins.');
   setTimeout(() => { trackTick().catch(() => {}); }, 12000);
   _timer = setInterval(() => { trackTick().catch(() => {}); }, 8 * 60000);   // every 8 min

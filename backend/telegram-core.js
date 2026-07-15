@@ -51,6 +51,26 @@ function markAlerted(mint) {
 }
 function resetAlerted() { _alerted = {}; _write(ALERTED_FILE, _alerted); }
 
+// ── SINGLE-BROADCASTER LOCK ─────────────────────────────────────────────────
+// Guarantees only ONE process ever broadcasts (kills duplicate sends from a 2nd
+// instance — e.g. a dev server + a standalone stack). A live lock heartbeats every
+// 30s; a stale one (>90s) is taken over.
+const LOCK_FILE = path.join(DATA_DIR, 'tg-lock.json');
+const _lockId = 'lk-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
+let _lockAcquired = false;
+function acquireBroadcastLock() {
+  if (_lockAcquired) return true;
+  try {
+    const cur = _read(LOCK_FILE, null);
+    if (cur && cur.id !== _lockId && (Date.now() - (cur.ts || 0)) < 90000) return false;   // another live broadcaster
+    _ensure(); fs.writeFileSync(LOCK_FILE, JSON.stringify({ id: _lockId, ts: Date.now() }));
+    _lockAcquired = true;
+    const hb = setInterval(() => { try { fs.writeFileSync(LOCK_FILE, JSON.stringify({ id: _lockId, ts: Date.now() })); } catch (e) {} }, 30000);
+    if (hb.unref) hb.unref();
+    return true;
+  } catch (e) { return true; }
+}
+
 // ── runtime config (dashboard-editable) ─────────────────────────────────────
 const _defaults = {
   // feed toggles
@@ -74,7 +94,8 @@ const _defaults = {
   minFdv: 0,              // min fully-diluted valuation USD (0 = off)
   maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
   maxPer: 3,              // max posts per poll per source
-  rugFilter: true,        // Solana: skip tokens rugcheck.xyz flags as danger; append a safety label
+  rugFilter: true,        // Solana: score tokens via rugcheck (LP-locked, top holders, risks)
+  rugMinScore: 50,        // require safety score ≥ this to post (owner: >50%); borderline posts w/ lower score
   bullishOnly: true,      // public feed: skip clearly-bearish calls (24h < -10%) to funnel Pro
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
@@ -138,4 +159,4 @@ async function broadcast(html, opts) {
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock };

@@ -100,6 +100,7 @@ let _timer = null, _newsTimer = null, _promoTimer = null;
 function startNewsPoster() {
   if (!core.token()) { return; }
   if (_timer) return;
+  if (!core.acquireBroadcastLock()) { console.log('[tg-news] another instance owns broadcasting — news not started here.'); return; }
   const tick = async () => {
     const cfg = core.getConfig();
     if (!cfg.news) return;                       // toggled off from dashboard

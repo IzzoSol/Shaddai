@@ -66,7 +66,7 @@ router.post('/config', express.json({ limit: '8kb' }), (req, res) => {
   if (b.newsIntervalMin != null) patch.newsIntervalMin = Math.max(15, parseInt(b.newsIntervalMin, 10) || 60);
   if (b.headlinesIntervalMin != null) patch.headlinesIntervalMin = Math.max(15, parseInt(b.headlinesIntervalMin, 10) || 45);
   if (typeof b.chains === 'string') patch.chains = b.chains.slice(0, 120);
-  ['minLiq', 'minVol24h', 'minFdv', 'maxFdv', 'maxPer'].forEach(k => { if (b[k] != null && isFinite(Number(b[k]))) patch[k] = Math.max(0, Number(b[k])); });
+  ['minLiq', 'minVol24h', 'minFdv', 'maxFdv', 'maxPer', 'rugMinScore'].forEach(k => { if (b[k] != null && isFinite(Number(b[k]))) patch[k] = Math.max(0, Number(b[k])); });
   res.json({ ok: true, config: core.setConfig(patch) });
 });
 
