@@ -8710,23 +8710,28 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
         <pre id="tgpScore" style="font-size:11px;color:var(--text-secondary);background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:16px;white-space:pre-wrap;font-family:'Share Tech Mono',monospace;min-height:20px">Pick a period to see the scorecard.</pre>
 
-        <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Signal Sources (free APIs)</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:16px;font-size:11px">
+        <div style="font-size:9px;letter-spacing:.14em;color:#5cc8ff;text-transform:uppercase;margin-bottom:6px">🔭 Discovery <span style="color:var(--text-muted);text-transform:none;letter-spacing:0">— find new coins</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:14px;font-size:11px">
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpBonded"> 🎓 Bonded (pump.fun)</label>
-          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpNewpools"> 🆕 New pools (GeckoTerminal)</label>
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpNewpools"> 🆕 New pools (Gecko)</label>
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpTrending"> 🔥 Trending pools (Gecko)</label>
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpSignals"> 📈 Boosted (DexScreener)</label>
-          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpNews"> 📊 Market pulse</label>
-          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpHeadlines"> 📰 News headlines (RSS)</label>
-          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpPromo"> ⬡ SHADDAI promo (GitHub/socials)</label>
         </div>
-        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:8px;color:#ff8a3d"><input type="checkbox" id="tgpRugFilter"> 🛡 Rug filter — skip tokens rugcheck.xyz flags as high-risk (Solana), and label the rest</label>
-        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:16px;color:#00ff88"><input type="checkbox" id="tgpBullish"> 🟢 Bullish-only public feed — skip clearly-bearish calls (funnels full PNL to Pro)</label>
+        <div style="font-size:9px;letter-spacing:.14em;color:#ff8a3d;text-transform:uppercase;margin-bottom:6px">🛡 Validation <span style="color:var(--text-muted);text-transform:none;letter-spacing:0">— safety gate</span></div>
+        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:14px;color:#ff8a3d"><input type="checkbox" id="tgpRugFilter"> 🛡 RugCheck score gate — LP-lock, holders, top-holder % (skip high-risk, label the rest)</label>
+        <div style="font-size:9px;letter-spacing:.14em;color:#a78bfa;text-transform:uppercase;margin-bottom:6px">📣 Narrative <span style="color:var(--text-muted);text-transform:none;letter-spacing:0">— context &amp; reach</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:14px;font-size:11px">
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpNews"> 📊 Market pulse</label>
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpHeadlines"> 📰 News headlines</label>
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpPromo"> ⬡ SHADDAI promo</label>
+        </div>
+        <div style="font-size:9px;letter-spacing:.14em;color:#00ff88;text-transform:uppercase;margin-bottom:6px">🧭 Routing</div>
+        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:16px;color:#00ff88"><input type="checkbox" id="tgpBullish"> 🟢 Public feed excludes bearish/uncertain calls (funnels full PNL to Pro)</label>
 
         <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Parameters</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:16px">
           <label style="font-size:10px;color:var(--text-secondary)">Chains (comma)<input type="text" id="tgpChains" placeholder="solana,base,eth" style="width:100%;margin-top:3px"></label>
-          <label style="font-size:10px;color:var(--text-secondary)">Max posts / poll<input type="number" id="tgpMaxPer" min="1" style="width:100%;margin-top:3px"></label>
+          <label style="font-size:10px;color:var(--text-secondary)">Max alerts / cycle<input type="number" id="tgpMaxPer" min="1" style="width:100%;margin-top:3px"></label>
           <label style="font-size:10px;color:var(--text-secondary)">Min liquidity $<input type="number" id="tgpMinLiq" min="0" style="width:100%;margin-top:3px"></label>
           <label style="font-size:10px;color:var(--text-secondary)">Min 24h volume $<input type="number" id="tgpMinVol" min="0" style="width:100%;margin-top:3px"></label>
           <label style="font-size:10px;color:var(--text-secondary)">Min FDV $ (0=off)<input type="number" id="tgpMinFdv" min="0" style="width:100%;margin-top:3px"></label>
@@ -49926,8 +49931,8 @@ async function tgpLoad(){
     var d=await (await fetch('/api/telegram/status')).json();
     var s=document.getElementById('tgpStatus');
     if(s) s.innerHTML = d.enabled
-      ? 'Status: <b style="color:#00ff88">● LIVE</b> · Channel: <b>'+(d.channel?String(d.channel).replace(/</g,'&lt;'):'none')+'</b> · Reaching <b>'+d.chats+'</b> chat(s) + channel'+(d.adminRequired?' · <span style="color:#e8b84b">admin token required</span>':'')
-      : 'Status: <b style="color:#ff6b6b">○ OFF</b> — set TELEGRAM_BOT_TOKEN on the server to enable.';
+      ? '⚙ <b>Engine:</b> <span style="color:#00ff88">● LIVE</span>   ·   <b>Mode:</b> Polling<br>📡 <b>Destinations:</b> '+(d.channel?String(d.channel).replace(/</g,'&lt;'):'DMs only')+' + <b>'+d.chats+'</b> chat(s)<br>🔐 <b>Admin auth:</b> '+(d.adminRequired?'<span style="color:#e8b84b">required</span>':'open (owner mode)')
+      : '⚙ <b>Engine:</b> <span style="color:#ff6b6b">○ OFF</span> — set TELEGRAM_BOT_TOKEN on the server to enable.';
     var c=d.config||{},g=function(id){return document.getElementById(id);},sb=function(id,v){if(g(id))g(id).checked=v!==false;},sv=function(id,v){if(g(id))g(id).value=v;};
     sb('tgpBonded',c.bonded);sb('tgpNewpools',c.newpools);sb('tgpTrending',c.trending);sb('tgpSignals',c.signals);sb('tgpNews',c.news);sb('tgpHeadlines',c.headlines);sb('tgpPromo',c.promo);sb('tgpRugFilter',c.rugFilter);sb('tgpBullish',c.bullishOnly);
     sv('tgpChains',c.chains||'solana');sv('tgpMaxPer',c.maxPer||3);sv('tgpMinLiq',c.minLiq||0);sv('tgpMinVol',c.minVol24h||0);sv('tgpMinFdv',c.minFdv||0);sv('tgpMaxFdv',c.maxFdv||0);sv('tgpNewsInt',c.newsIntervalMin||60);
