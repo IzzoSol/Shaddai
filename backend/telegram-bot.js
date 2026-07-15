@@ -15,6 +15,7 @@ const DS_SEARCH = (q) => `https://api.dexscreener.com/latest/dex/search?q=${enco
 const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=40&sort=created_timestamp&order=DESC&includeNsfw=false';
 const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`;
 const _core = require('./telegram-core');   // shared chat registry + broadcast
+const _pnl = require('./telegram-pnl');      // hit-rate + best-calls scorecard
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -45,6 +46,7 @@ function _help() {
     '/ask <code>&lt;question&gt;</code> — ask a SHADDAI agent anything\n' +
     '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis + sentiment\n' +
     '/news — live market pulse (mcap, BTC/ETH/SOL, trending)\n' +
+    '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
     '/signals — the free live signals channel\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
@@ -140,6 +142,7 @@ async function _handle(cfg, update) {
     case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
     case 'zerox': case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
     case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable right now.'); }
+    case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
@@ -166,6 +169,7 @@ async function _registerCommands(token) {
         { command: 'ask', description: 'Ask a SHADDAI agent' },
         { command: 'zerox', description: 'ZEROX market analysis + sentiment' },
         { command: 'news', description: 'Live market pulse' },
+        { command: 'stats', description: 'Hit-rate + best calls scorecard' },
         { command: 'signals', description: 'Free live signals channel' },
         { command: 'agents', description: 'What is SHADDAI' },
         { command: 'gm', description: 'gm ☀️' },

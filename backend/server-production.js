@@ -1680,6 +1680,8 @@ if (!process.env.VERCEL_ENV) {
     try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
     // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
     try { require('./telegram-news').startNewsPoster(); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
+    // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
+    try { require('./telegram-pnl').startTracker(); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
 
     console.log(`
 ╔════════════════════════════════════════════════════════╗

@@ -18,6 +18,7 @@
 'use strict';
 
 const core = require('./telegram-core');   // shared broadcast (channel + every chat the bot is in)
+const pnl = require('./telegram-pnl');     // call performance tracker (entry → Xs)
 const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
@@ -168,7 +169,7 @@ async function _pollOnce() {
 
     const ok = (await core.broadcast(_signalCard(chain, pair))) > 0;
     _seen.add(addr);
-    if (ok) posted++;
+    if (ok) { posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0) }); } catch (e) {} }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
 }
@@ -211,7 +212,8 @@ async function _pollBonded() {
     if (_bondSeeded) {   // first poll only seeds
       let card = _bondCard(c);
       if (cfg.rugFilter) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; }
-      const ok = (await core.broadcast(card)) > 0; if (ok) posted++;
+      const ok = (await core.broadcast(card)) > 0;
+      if (ok) { posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: Number(c.usd_market_cap || c.market_cap || 0), entryPrice: 0 }); } catch (e) {} }
     }
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
   }
@@ -261,7 +263,8 @@ async function _pollGecko() {
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a);
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
-          const ok = (await core.broadcast(card)) > 0; if (ok) posted++;
+          const ok = (await core.broadcast(card)) > 0;
+          if (ok) { posted++; try { const _bt = (p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id) || ''; const _addr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt; pnl.recordCall({ source: kind, chain: net, mint: _addr, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
         }
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }

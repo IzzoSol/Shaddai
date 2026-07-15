@@ -8702,6 +8702,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div class="card-head"><span class="card-title" style="color:#5cc8ff">📡 Telegram Signals — Command Center</span></div>
         <div id="tgpStatus" style="font-size:11px;color:var(--text-secondary);background:rgba(34,158,217,0.06);border:1px solid rgba(34,158,217,0.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.7">Loading…</div>
 
+        <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Scorecard — hit rate & best calls</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('day')">Daily</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('week')">Weekly</button>
+          <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('month')">Monthly</button>
+        </div>
+        <pre id="tgpScore" style="font-size:11px;color:var(--text-secondary);background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:16px;white-space:pre-wrap;font-family:'Share Tech Mono',monospace;min-height:20px">Pick a period to see the scorecard.</pre>
+
         <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Signal Sources (free APIs)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:16px;font-size:11px">
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpBonded"> 🎓 Bonded (pump.fun)</label>
@@ -49935,7 +49943,11 @@ async function tgpBroadcast(){
     if(d.ok){ _tgpMsg('✅ delivered to '+d.delivered+' chat(s)','#00ff88'); var m=document.getElementById('tgpMsg'); if(m)m.value=''; }
     else _tgpMsg('⚠️ '+((d&&d.error)||'failed'),'#ff6b6b'); }catch(e){ _tgpMsg('⚠️ '+e.message,'#ff6b6b'); }
 }
-window.tgpLoad=tgpLoad; window.tgpSave=tgpSave; window.tgpBroadcast=tgpBroadcast;
+async function tgpStats(period){
+  var el=document.getElementById('tgpScore'); if(el)el.textContent='Loading…';
+  try{ var d=await (await fetch('/api/telegram/stats?period='+period)).json(); if(el)el.textContent=(d.text||'').replace(/<[^>]+>/g,''); }catch(e){ if(el)el.textContent='⚠️ Could not load stats (server running?)'; }
+}
+window.tgpLoad=tgpLoad; window.tgpSave=tgpSave; window.tgpBroadcast=tgpBroadcast; window.tgpStats=tgpStats;
 var _calView = 'week';
 var _calOffset = 0; // week offset or month offset
 

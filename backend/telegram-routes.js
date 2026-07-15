@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const core = require('./telegram-core');
+const pnl = require('./telegram-pnl');
 
 function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function _adminOk(req) {
@@ -27,6 +28,11 @@ router.get('/status', (req, res) => {
     config: core.getConfig(),
     adminRequired: !!process.env.ADMIN_TOKEN,
   });
+});
+
+router.get('/stats', (req, res) => {
+  const p = String(req.query.period || 'day');
+  res.json({ ok: true, period: p, text: pnl.stats(p === 'week' || p === 'month' ? p : 'day') });
 });
 
 router.post('/broadcast', express.json({ limit: '32kb' }), async (req, res) => {
