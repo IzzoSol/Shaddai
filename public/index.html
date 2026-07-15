@@ -8707,6 +8707,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('day')">Daily</button>
           <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('week')">Weekly</button>
           <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('month')">Monthly</button>
+          <button class="btn btn-ghost" style="font-size:10px;color:#ff6b6b;border-color:rgba(255,107,107,.4);margin-left:auto" onclick="window.tgpReset&&tgpReset()" title="Wipe all tracked calls + de-dupe history and start fresh">♻ Reset</button>
         </div>
         <pre id="tgpScore" style="font-size:11px;color:var(--text-secondary);background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:16px;white-space:pre-wrap;font-family:'Share Tech Mono',monospace;min-height:20px">Pick a period to see the scorecard.</pre>
 
@@ -49949,7 +49950,13 @@ async function tgpStats(period){
   var el=document.getElementById('tgpScore'); if(el)el.textContent='Loading…';
   try{ var d=await (await fetch('/api/telegram/stats?period='+period)).json(); if(el)el.textContent=(d.text||'').replace(/<[^>]+>/g,''); }catch(e){ if(el)el.textContent='⚠️ Could not load stats (server running?)'; }
 }
-window.tgpLoad=tgpLoad; window.tgpSave=tgpSave; window.tgpBroadcast=tgpBroadcast; window.tgpStats=tgpStats;
+async function tgpReset(){
+  if(!confirm('Wipe ALL tracked calls + de-dupe history and start the scorecard fresh?'))return;
+  var el=document.getElementById('tgpScore'); if(el)el.textContent='Resetting…';
+  try{ var d=await (await fetch('/api/telegram/reset',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':_tgpAdmin()},body:JSON.stringify({adminToken:_tgpAdmin()})})).json();
+    if(el)el.textContent=d.ok?'✅ Reset — tracking starts fresh from now.':'⚠️ '+((d&&d.error)||'reset failed'); }catch(e){ if(el)el.textContent='⚠️ '+e.message; }
+}
+window.tgpLoad=tgpLoad; window.tgpSave=tgpSave; window.tgpBroadcast=tgpBroadcast; window.tgpStats=tgpStats; window.tgpReset=tgpReset;
 var _calView = 'week';
 var _calOffset = 0; // week offset or month offset
 

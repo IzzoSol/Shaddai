@@ -165,4 +165,6 @@ function startTracker() {
   if (_timer.unref) _timer.unref();
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption };
+function resetCalls() { _state = { calls: [] }; _write(_state); }
+
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls };

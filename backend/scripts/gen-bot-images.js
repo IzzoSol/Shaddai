@@ -39,6 +39,7 @@ async function _save(file, img) {
   return false;
 }
 async function one(file, prompt) {
+  if (fs.existsSync(path.join(OUT, file + '.png'))) { console.log('HAVE ' + file); return true; }   // skip existing → only fill gaps
   // 1) HF FLUX (if keys have credit)
   try { const img = await hf.generate(prompt, { width: 1024, height: 1024 }); if (await _save(file, img)) return true; } catch (e) {}
   // 2) free Pollinations fallback (keyless — the app's standing image fallback)

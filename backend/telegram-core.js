@@ -49,6 +49,7 @@ function markAlerted(mint) {
   if (keys.length > 8000) { keys.map(x => [x, _alerted[x]]).sort((a, b) => a[1] - b[1]).slice(0, 2000).forEach(([x]) => delete _alerted[x]); }
   _write(ALERTED_FILE, _alerted);
 }
+function resetAlerted() { _alerted = {}; _write(ALERTED_FILE, _alerted); }
 
 // ── runtime config (dashboard-editable) ─────────────────────────────────────
 const _defaults = {
@@ -134,4 +135,4 @@ async function broadcast(html, opts) {
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted };

@@ -45,6 +45,12 @@ router.post('/broadcast', express.json({ limit: '32kb' }), async (req, res) => {
   res.json({ ok: true, delivered });
 });
 
+router.post('/reset', express.json({ limit: '2kb' }), (req, res) => {
+  if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
+  try { pnl.resetCalls(); core.resetAlerted(); res.json({ ok: true, reset: true }); }
+  catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
+
 router.post('/config', express.json({ limit: '8kb' }), (req, res) => {
   if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
   const b = req.body || {};
