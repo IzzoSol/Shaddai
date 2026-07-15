@@ -29,7 +29,7 @@
  * ==========================================================================*/
 (function () {
   'use strict';
-  if (window.PixelOffice && window.PixelOffice.__v === 6) return; // already loaded
+  if (window.PixelOffice && window.PixelOffice.__v === 7) return; // already loaded
 
   // ---- Brand + agent theming ------------------------------------------------
   // Positions re-spaced for the larger 22x20 footprint (see LAYOUT below).

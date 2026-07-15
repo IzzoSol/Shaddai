@@ -258,7 +258,7 @@ async function _pollBonded() {
   const list = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
   let posted = 0;
   for (const c of list) {
-    if (posted >= cfg.bondedMax) break;
+    if (posted >= cfg.maxPer) break;
     const mint = c && (c.mint || c.address);
     if (!mint) continue;
     const bonded = c.complete === true || !!c.raydium_pool || c.graduated === true;

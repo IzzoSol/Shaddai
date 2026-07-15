@@ -101,7 +101,8 @@ async function trackTick() {
     let hit = 0;
     for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) hit = m; }
     if (hit) {
-      call.milestones.push(hit);
+      // record EVERY newly-crossed milestone ≤ peak so skipped lower ones don't re-fire (out of order) on later ticks
+      for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) call.milestones.push(m); }
       changed = true;
       const img = _pnlImage();
       if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit));
