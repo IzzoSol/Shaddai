@@ -271,12 +271,13 @@ async function _pollGecko() {
         if (cfg.bullishOnly && isFinite(_chg) && _chg < -10) continue;   // skip bearish (funnel)
         const _bt = (p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id) || '';
         const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
-        if (_taddr && core.wasAlerted(_taddr)) continue;   // GLOBAL de-dupe — already called on another feed
+        const _dk = _taddr || id;   // dedupe key: token address if present, else the pool id (always present)
+        if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a, _taddr);
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
           const ok = (await core.broadcast(card)) > 0;
-          if (ok) { if (_taddr) core.markAlerted(_taddr); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
+          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
         }
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }

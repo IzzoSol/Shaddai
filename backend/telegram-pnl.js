@@ -25,7 +25,7 @@ function _pnlImage() {
   } catch (e) { return null; }
 }
 const DS_TOKENS = (addrs) => `https://api.dexscreener.com/latest/dex/tokens/${addrs}`;
-const MILESTONES = [2, 3, 5, 10, 25, 50, 100];
+const MILESTONES = [2, 5, 10, 25, 100];   // spaced — a token updates only at big milestones, not over and over
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;   // stop tracking after 30 days
 const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function _usd(n) { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(0); }
@@ -142,7 +142,7 @@ function pnlCaption(period) {
   const span = period === 'month' ? 30 : period === 'all' ? 3650 : 7;
   const since = _now - span * 24 * 3600 * 1000;
   const rows = _state.calls.filter(c => c.ts >= since);
-  const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 6);
+  const best = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 6);
   const hits = rows.filter(c => c.peakMult >= 2).length;
   const hitRate = rows.length ? Math.round((hits / rows.length) * 100) : 0;
   const ch = core.channel() || '@ShaddaiLabs';
@@ -186,9 +186,9 @@ function distribution() {
   const hits = b25 + b510 + b10;
   const hitRate = total ? Math.round((hits / total) * 100) : 0;
   const avg = total ? (rows.reduce((s, c) => s + c.peakMult, 0) / total) : 0;
-  const top = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
+  const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
   const ch = core.channel() || '@ShaddaiLabs';
-  const topTxt = top.length ? top.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n') : '• (tracking…)';
+  const topTxt = top.length ? top.map(c => `• <b>$${_esc(c.symbol || c.name)}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n') : '• (tracking…)';
   return (
     `📊 <b>SHADDAI PERFORMANCE</b> · ${_esc(ch)}\n\n` +
     `<b>Distribution</b> (${total} calls)\n` +
