@@ -121,7 +121,7 @@ function startNewsPoster() {
     const cfg = core.getConfig();
     if (!cfg.news) return;                       // toggled off from dashboard
     const html = await marketPulse();
-    if (html) await core.broadcast(html);
+    if (html) { const img = _botImage(); await (img ? core.broadcastPhoto(img, html) : core.broadcast(html)); }
   };
   // re-evaluate the interval every minute so dashboard changes take effect without a restart
   let last = 0;
