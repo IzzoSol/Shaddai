@@ -45,6 +45,14 @@ router.post('/broadcast', express.json({ limit: '32kb' }), async (req, res) => {
   res.json({ ok: true, delivered });
 });
 
+router.get('/presets', (req, res) => { res.json({ ok: true, presets: core.listPresets() }); });
+router.post('/preset', express.json({ limit: '2kb' }), (req, res) => {
+  if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
+  const cfg = core.applyPreset(String((req.body && req.body.name) || ''));
+  if (!cfg) return res.status(400).json({ ok: false, error: 'unknown preset' });
+  res.json({ ok: true, config: cfg });
+});
+
 router.post('/reset', express.json({ limit: '2kb' }), (req, res) => {
   if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
   try { pnl.resetCalls(); core.resetAlerted(); res.json({ ok: true, reset: true }); }

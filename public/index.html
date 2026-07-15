@@ -8697,6 +8697,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <div class="card-head"><span class="card-title" style="color:#5cc8ff">📡 Telegram Signals — Command Center</span></div>
         <div id="tgpStatus" style="font-size:11px;color:var(--text-secondary);background:rgba(34,158,217,0.06);border:1px solid rgba(34,158,217,0.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.7">Loading…</div>
 
+        <div style="font-size:9px;letter-spacing:.14em;color:#5cc8ff;text-transform:uppercase;margin-bottom:8px">⚡ Presets — one click loads a full filter set</div>
+        <div id="tgpPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px"></div>
+
         <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Scorecard — hit rate & best calls</div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <button class="btn btn-ghost" style="font-size:10px" onclick="window.tgpStats&&tgpStats('day')">Daily</button>
@@ -49918,6 +49921,7 @@ function switchSocTab(tab){
 function _tgpAdmin(){ return (document.getElementById('tgpAdmin')||{}).value||localStorage.getItem('shd_admin_token')||''; }
 function _tgpMsg(t,c){ var e=document.getElementById('tgpMsgStatus'); if(e){e.textContent=t||'';e.style.color=c||'#5cc8ff';} }
 async function tgpLoad(){
+  try{ tgpPresets(); }catch(e){}
   try{
     var d=await (await fetch('/api/telegram/status')).json();
     var s=document.getElementById('tgpStatus');
@@ -49946,6 +49950,19 @@ async function tgpStats(period){
   var el=document.getElementById('tgpScore'); if(el)el.textContent='Loading…';
   try{ var d=await (await fetch('/api/telegram/stats?period='+period)).json(); if(el)el.textContent=(d.text||'').replace(/<[^>]+>/g,''); }catch(e){ if(el)el.textContent='⚠️ Could not load stats (server running?)'; }
 }
+async function tgpPresets(){
+  var el=document.getElementById('tgpPresets'); if(!el)return;
+  try{ var d=await (await fetch('/api/telegram/presets')).json(); el.innerHTML='';
+    (d.presets||[]).forEach(function(p){ var b=document.createElement('button'); b.className='btn btn-ghost'; b.style.cssText='font-size:10px;padding:7px 12px'; b.title=p.desc; b.textContent=p.label; b.onclick=function(){ tgpApplyPreset(p.key, p.label); }; el.appendChild(b); });
+  }catch(e){ el.innerHTML='<span style="font-size:10px;color:#5f7c86">presets need the server running</span>'; }
+}
+async function tgpApplyPreset(name, label){
+  _tgpMsg('⚡ loading '+(label||name)+'…');
+  try{ var d=await (await fetch('/api/telegram/preset',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':_tgpAdmin()},body:JSON.stringify({name:name,adminToken:_tgpAdmin()})})).json();
+    if(d.ok){ _tgpMsg('✅ '+(label||name)+' preset applied','#00ff88'); tgpLoad(); }
+    else _tgpMsg('⚠️ '+((d&&d.error)||'failed'),'#ff6b6b'); }catch(e){ _tgpMsg('⚠️ '+e.message,'#ff6b6b'); }
+}
+window.tgpPresets=tgpPresets; window.tgpApplyPreset=tgpApplyPreset;
 async function tgpReset(){
   if(!confirm('Wipe ALL tracked calls + de-dupe history and start the scorecard fresh?'))return;
   var el=document.getElementById('tgpScore'); if(el)el.textContent='Resetting…';

@@ -104,6 +104,23 @@ let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 function getConfig() { return Object.assign({}, _config); }
 function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _write(CFG_FILE, _config); return getConfig(); }
 
+// ── PRESETS: one-click filter bundles (preset-first control panel) ───────────
+const PRESETS = {
+  sniper:          { label: '🎯 Sniper',      desc: 'Ultra-new, aggressive, small caps',      maxFdv: 3000000,   minLiq: 5000,  minVol24h: 5000,  minHolders: 20,  minLiqPct: 3, rugMinScore: 50, bullishOnly: false, bonded: true,  newpools: true,  trending: true,  maxPer: 5 },
+  momentum:        { label: '🔥 Momentum',    desc: 'Real-volume runners with structure',      maxFdv: 50000000,  minLiq: 20000, minVol24h: 50000, minHolders: 50,  minLiqPct: 5, rugMinScore: 60, bullishOnly: true,  bonded: true,  newpools: true,  trending: true,  maxPer: 3 },
+  safe_swing:      { label: '🛡 Safe Swing',   desc: 'Cleaner, fewer, higher quality',          maxFdv: 100000000, minLiq: 50000, minVol24h: 30000, minHolders: 100, minLiqPct: 8, rugMinScore: 75, bullishOnly: true,  bonded: false, newpools: false, trending: true,  maxPer: 2 },
+  reversal:        { label: '↩ Reversal',      desc: 'Washed tokens, recovering flow',          maxFdv: 50000000,  minLiq: 15000, minVol24h: 20000, minHolders: 60,  minLiqPct: 4, rugMinScore: 60, bullishOnly: false, bonded: false, newpools: false, trending: true,  maxPer: 3 },
+  premium_futures: { label: '💎 Premium',      desc: 'Advanced/premium, top structure',         maxFdv: 200000000, minLiq: 40000, minVol24h: 40000, minHolders: 80,  minLiqPct: 6, rugMinScore: 70, bullishOnly: true,  bonded: false, newpools: true,  trending: true,  maxPer: 3 },
+};
+function listPresets() { return Object.keys(PRESETS).map(k => ({ key: k, label: PRESETS[k].label, desc: PRESETS[k].desc })); }
+function applyPreset(name) {
+  const p = PRESETS[name]; if (!p) return null;
+  const patch = Object.assign({}, p); delete patch.label; delete patch.desc;
+  patch.rugFilter = true;
+  setConfig(patch);
+  return getConfig();
+}
+
 // ── send / broadcast ────────────────────────────────────────────────────────
 async function send(chatId, html, extra) {
   const t = token(); if (!t || chatId == null) return false;
@@ -161,4 +178,4 @@ async function broadcast(html, opts) {
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset };
