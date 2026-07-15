@@ -172,12 +172,12 @@ async function _pollBonded() {
 let _timer = null, _bondTimer = null;
 function startTelegramSignals() {
   const cfg = _cfg();
-  if (!cfg.token || !cfg.channel) {
-    console.log('[tg-signals] disabled — set TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL to enable the public DEX signals feed.');
+  if (!cfg.token) {
+    console.log('[tg-signals] disabled — set TELEGRAM_BOT_TOKEN to enable the DEX signals feed (broadcasts to the channel + every chat the bot is in).');
     return;
   }
   if (_timer) return;
-  console.log(`[tg-signals] ENABLED → ${cfg.channel} · chains=${cfg.chains.join(',')} · trending/${Math.round(cfg.interval / 1000)}s · bonded=${cfg.bonded ? Math.round(cfg.bondedInterval / 1000) + 's' : 'off'}`);
+  console.log(`[tg-signals] ENABLED → ${cfg.channel || '(no channel — DM chats only)'} · chains=${cfg.chains.join(',')} · trending/${Math.round(cfg.interval / 1000)}s · bonded=${cfg.bonded ? Math.round(cfg.bondedInterval / 1000) + 's' : 'off'}`);
   // trending feed (DexScreener boosts) — first run after a short delay so it doesn't fight boot
   setTimeout(() => { _pollOnce().catch(() => {}); }, 8000);
   _timer = setInterval(() => { _pollOnce().catch(() => {}); }, cfg.interval);
