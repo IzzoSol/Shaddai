@@ -81,7 +81,7 @@ function projectPromo() {
   const web = process.env.SHADDAI_WEBSITE || 'https://shaddai-g81x.onrender.com';
   const gh = process.env.SHADDAI_GITHUB || 'https://github.com/IzzoSol';
   const x = process.env.SHADDAI_X || 'https://x.com/IzzoSol';
-  const lounge = process.env.SHADDAI_LOUNGE || '';
+  const lounge = process.env.SHADDAI_LOUNGE || 'https://t.me/EMERALDLOUNGE';
   return (
     '⬡ <b>SHADDAI — Sovereign AI Agents</b>\n\n' +
     'Forge AI agents that live, work &amp; <b>earn</b> across a dashboard, a 2D pixel world and a 3D world. Intelligence you <b>own</b>, not rent — 200+ real tools on your own free keys, on open rails (Solana · x402).\n\n' +
