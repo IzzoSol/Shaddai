@@ -76,7 +76,27 @@ async function _pollHeadlines() {
   _newsSeeded = true;   // first poll only seeds — then post only NEW headlines
 }
 
-let _timer = null, _newsTimer = null;
+// ── SHADDAI PROJECT PROMO (timely brand signal) ─────────────────────────────
+function projectPromo() {
+  const web = process.env.SHADDAI_WEBSITE || 'https://shaddai-g81x.onrender.com';
+  const gh = process.env.SHADDAI_GITHUB || 'https://github.com/IzzoSol';
+  const x = process.env.SHADDAI_X || 'https://x.com/IzzoSol';
+  const lounge = process.env.SHADDAI_LOUNGE || '';
+  return (
+    '⬡ <b>SHADDAI — Sovereign AI Agents</b>\n\n' +
+    'Forge AI agents that live, work &amp; <b>earn</b> across a dashboard, a 2D pixel world and a 3D world. Intelligence you <b>own</b>, not rent — 200+ real tools on your own free keys, on open rails (Solana · x402).\n\n' +
+    '🤖 The council: SHADDAI · ZEROX · ORACLE · NEXUS · TURTLE · QUILL · PIKADON\n' +
+    '🌿 <b>Emerald Vine</b> — our open community lounge\n' +
+    '⭐ <b>Star the GitHub to enter giveaways</b>\n\n' +
+    '🌐 ' + _esc(web) + '\n' +
+    '𝕏 ' + _esc(x) + '  (@IzzoSol)\n' +
+    '⭐ ' + _esc(gh) + '\n' +
+    (lounge ? '🌿 ' + _esc(lounge) + '\n' : '') +
+    '\n<i>Build your empire. This bot &amp; premium signals are part of it.</i>'
+  );
+}
+
+let _timer = null, _newsTimer = null, _promoTimer = null;
 function startNewsPoster() {
   if (!core.token()) { return; }
   if (_timer) return;
@@ -103,7 +123,16 @@ function startNewsPoster() {
     if (Date.now() - lastN >= everyMs) { lastN = Date.now(); _pollHeadlines().catch(() => {}); }
   }, 60000);
   if (_newsTimer.unref) _newsTimer.unref();
-  console.log('[tg-news] market-pulse + RSS headlines armed (intervals from dashboard config).');
+  // SHADDAI project promo — periodic brand/GitHub-star/socials broadcast
+  let lastP = Date.now();   // wait a full interval before the first promo (no spam on restart)
+  _promoTimer = setInterval(async () => {
+    const cfg = core.getConfig();
+    if (cfg.promo === false) return;
+    const everyMs = Math.max(30, cfg.promoIntervalMin || 240) * 60000;
+    if (Date.now() - lastP >= everyMs) { lastP = Date.now(); core.broadcast(projectPromo()).catch(() => {}); }
+  }, 60000);
+  if (_promoTimer.unref) _promoTimer.unref();
+  console.log('[tg-news] market-pulse + RSS headlines + project promo armed.');
 }
 
-module.exports = { startNewsPoster, marketPulse, _pollHeadlines };
+module.exports = { startNewsPoster, marketPulse, projectPromo, _pollHeadlines };

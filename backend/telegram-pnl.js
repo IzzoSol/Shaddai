@@ -14,6 +14,16 @@ const path = require('path');
 const core = require('./telegram-core');
 
 const FILE = path.join(__dirname, 'data', 'tg-calls.json');
+const BOT_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot');
+// pick a random existing PNL celebration image (pnl-1..10.png) or null if none generated yet
+function _pnlImage() {
+  try {
+    const imgs = [];
+    for (let i = 1; i <= 10; i++) { const f = path.join(BOT_DIR, 'pnl-' + i + '.png'); if (fs.existsSync(f)) imgs.push(f); }
+    if (!imgs.length) return null;
+    return imgs[Math.floor(Math.random() * imgs.length)];
+  } catch (e) { return null; }
+}
 const DS_TOKENS = (addrs) => `https://api.dexscreener.com/latest/dex/tokens/${addrs}`;
 const MILESTONES = [2, 3, 5, 10, 25, 50, 100];
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;   // stop tracking after 30 days
@@ -93,7 +103,9 @@ async function trackTick() {
     if (hit) {
       call.milestones.push(hit);
       changed = true;
-      await core.broadcast(_milestoneCard(call, hit));
+      const img = _pnlImage();
+      if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit));
+      else await core.broadcast(_milestoneCard(call, hit));
     }
   }
   if (changed) _write(_state);

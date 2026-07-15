@@ -61,6 +61,8 @@ const _defaults = {
   newsIntervalMin: 60,
   headlines: true,        // free RSS crypto news headlines (CoinTelegraph/CoinDesk)
   headlinesIntervalMin: 45,
+  promo: true,            // periodic SHADDAI project promo (bio, GitHub star-for-giveaway, socials)
+  promoIntervalMin: 240,  // every 4h
   // filter parameters (apply across the DEX sources)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
   minLiq: 8000,           // min pair/pool liquidity USD
@@ -92,6 +94,35 @@ async function send(chatId, html, extra) {
   } catch (e) { return false; }
 }
 
+// Send a photo (local file path → uploaded bytes, or a public URL) with an HTML caption.
+async function sendPhoto(chatId, photo, caption) {
+  const t = token(); if (!t || chatId == null || !photo) return false;
+  try {
+    if (!/^https?:/i.test(photo) && fs.existsSync(photo)) {
+      const fd = new FormData();
+      fd.append('chat_id', String(chatId));
+      if (caption) { fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML'); }
+      fd.append('photo', new Blob([fs.readFileSync(photo)]), 'img.png');
+      const r = await fetch(TG(t, 'sendPhoto'), { method: 'POST', body: fd });
+      if (r.status === 403) removeChat(chatId);
+      return r.ok;
+    }
+    const r = await fetch(TG(t, 'sendPhoto'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, photo, caption: (caption || '').slice(0, 1024), parse_mode: 'HTML' }),
+    });
+    if (r.status === 403) removeChat(chatId);
+    return r.ok;
+  } catch (e) { return false; }
+}
+async function broadcastPhoto(photo, caption) {
+  const t = token(); if (!t) return 0;
+  const targets = new Set(); const ch = channel(); if (ch) targets.add(ch);
+  chats().forEach(c => targets.add(c.id));
+  let ok = 0; for (const id of targets) { if (await sendPhoto(id, photo, caption)) ok++; }
+  return ok;
+}
+
 // Broadcast to the main channel + every registered chat. Returns count delivered.
 async function broadcast(html, opts) {
   const t = token(); if (!t) return 0;
@@ -103,4 +134,4 @@ async function broadcast(html, opts) {
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, wasAlerted, markAlerted };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted };

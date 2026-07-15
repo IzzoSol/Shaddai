@@ -145,6 +145,7 @@ async function _handle(cfg, update) {
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
+    case 'about': case 'project': case 'info': return _send(t, chatId, require('./telegram-news').projectPromo());
     case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
     default: return _send(t, chatId, 'Unknown command. Try /help');
   }
@@ -172,6 +173,7 @@ async function _registerCommands(token) {
         { command: 'stats', description: 'Hit-rate + best calls scorecard' },
         { command: 'signals', description: 'Free live signals channel' },
         { command: 'agents', description: 'What is SHADDAI' },
+        { command: 'about', description: 'The SHADDAI project + links' },
         { command: 'gm', description: 'gm ☀️' },
       ] }),
     });
