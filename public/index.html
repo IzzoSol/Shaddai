@@ -6433,8 +6433,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
           <div><label>SKILL LOADOUT — <span id="ofSkillCount">0</span> equipped (each adds compute load)</label><div class="of-skills" id="ofSkills">loading tools…</div></div>
           <!-- TEST RUN removed: forging must ONLY create + deploy the agent to the dashboard, never run a
-               tool loop inside the forge (that was the glitch). Tools run when you chat with the agent. -->
-          <div class="of-actions"><button id="ofForge">⬡ FORGE &amp; AWAKEN</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
+               tool loop inside the forge (that was the glitch). Tools run when you chat with the agent.
+               "Make in 2D Pixel" = the mirror of the Pixel Forge's "3D Body": one agent, manifested across
+               realities (SHADDAI · 2D · 3D). It opens the Pixel Forge pre-filled with this agent's name. -->
+          <div class="of-actions"><button id="ofForge">⬡ FORGE &amp; AWAKEN</button><button id="ofPixel" onclick="(function(){var n=(document.getElementById('ofName')||{}).value||'';if(window.openPixelForge){openPixelForge();var pn=document.getElementById('pxfName');if(pn&&n)pn.value=n;}})()" title="Manifest this agent in the 2D pixel world — pick its pixel body & color">◧ Make in 2D Pixel</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
           <div class="of-console" id="ofConsole">// forge an operator, equip skills, pick a brain, then TEST RUN.</div>
         </div>
       </div>
