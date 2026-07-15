@@ -8719,7 +8719,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpNews"> 📊 Market pulse</label>
           <label style="display:flex;gap:7px;align-items:center;cursor:pointer"><input type="checkbox" id="tgpHeadlines"> 📰 News headlines (RSS)</label>
         </div>
-        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:16px;color:#ff8a3d"><input type="checkbox" id="tgpRugFilter"> 🛡 Rug filter — skip tokens rugcheck.xyz flags as high-risk (Solana), and label the rest</label>
+        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:8px;color:#ff8a3d"><input type="checkbox" id="tgpRugFilter"> 🛡 Rug filter — skip tokens rugcheck.xyz flags as high-risk (Solana), and label the rest</label>
+        <label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11px;margin-bottom:16px;color:#00ff88"><input type="checkbox" id="tgpBullish"> 🟢 Bullish-only public feed — skip clearly-bearish calls (funnels full PNL to Pro)</label>
 
         <div style="font-size:9px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Parameters</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:16px">
@@ -49926,13 +49927,13 @@ async function tgpLoad(){
       ? 'Status: <b style="color:#00ff88">● LIVE</b> · Channel: <b>'+(d.channel?String(d.channel).replace(/</g,'&lt;'):'none')+'</b> · Reaching <b>'+d.chats+'</b> chat(s) + channel'+(d.adminRequired?' · <span style="color:#e8b84b">admin token required</span>':'')
       : 'Status: <b style="color:#ff6b6b">○ OFF</b> — set TELEGRAM_BOT_TOKEN on the server to enable.';
     var c=d.config||{},g=function(id){return document.getElementById(id);},sb=function(id,v){if(g(id))g(id).checked=v!==false;},sv=function(id,v){if(g(id))g(id).value=v;};
-    sb('tgpBonded',c.bonded);sb('tgpNewpools',c.newpools);sb('tgpTrending',c.trending);sb('tgpSignals',c.signals);sb('tgpNews',c.news);sb('tgpHeadlines',c.headlines);sb('tgpRugFilter',c.rugFilter);
+    sb('tgpBonded',c.bonded);sb('tgpNewpools',c.newpools);sb('tgpTrending',c.trending);sb('tgpSignals',c.signals);sb('tgpNews',c.news);sb('tgpHeadlines',c.headlines);sb('tgpRugFilter',c.rugFilter);sb('tgpBullish',c.bullishOnly);
     sv('tgpChains',c.chains||'solana');sv('tgpMaxPer',c.maxPer||3);sv('tgpMinLiq',c.minLiq||0);sv('tgpMinVol',c.minVol24h||0);sv('tgpMinFdv',c.minFdv||0);sv('tgpMaxFdv',c.maxFdv||0);sv('tgpNewsInt',c.newsIntervalMin||60);
   }catch(e){ var s=document.getElementById('tgpStatus'); if(s)s.textContent='⚠️ Could not load (is the server running?)'; }
 }
 async function tgpSave(){
   var g=function(id){return document.getElementById(id);},ck=function(id){return !!(g(id)&&g(id).checked);},nv=function(id){return parseFloat((g(id)||{}).value)||0;};
-  var body={ bonded:ck('tgpBonded'),newpools:ck('tgpNewpools'),trending:ck('tgpTrending'),signals:ck('tgpSignals'),news:ck('tgpNews'),headlines:ck('tgpHeadlines'),rugFilter:ck('tgpRugFilter'),
+  var body={ bonded:ck('tgpBonded'),newpools:ck('tgpNewpools'),trending:ck('tgpTrending'),signals:ck('tgpSignals'),news:ck('tgpNews'),headlines:ck('tgpHeadlines'),rugFilter:ck('tgpRugFilter'),bullishOnly:ck('tgpBullish'),
     chains:((g('tgpChains')||{}).value||'solana'),maxPer:nv('tgpMaxPer')||3,minLiq:nv('tgpMinLiq'),minVol24h:nv('tgpMinVol'),minFdv:nv('tgpMinFdv'),maxFdv:nv('tgpMaxFdv'),newsIntervalMin:nv('tgpNewsInt')||60,adminToken:_tgpAdmin() };
   try{ await fetch('/api/telegram/config',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':_tgpAdmin()},body:JSON.stringify(body)}); _tgpMsg('✓ parameters saved','#00ff88'); }catch(e){ _tgpMsg('⚠️ save failed','#ff6b6b'); }
 }

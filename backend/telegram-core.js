@@ -51,6 +51,7 @@ const _defaults = {
   maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
   maxPer: 3,              // max posts per poll per source
   rugFilter: true,        // Solana: skip tokens rugcheck.xyz flags as danger; append a safety label
+  bullishOnly: true,      // public feed: skip clearly-bearish calls (24h < -10%) to funnel Pro
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 function getConfig() { return Object.assign({}, _config); }

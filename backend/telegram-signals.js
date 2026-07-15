@@ -49,6 +49,7 @@ function _cfg() {
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
     rugFilter: cc.rugFilter !== false,
+    bullishOnly: cc.bullishOnly !== false,
     // poll cadences (env-tunable)
     interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
     bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000),
@@ -166,6 +167,7 @@ async function _pollOnce() {
                   .sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
     } catch (e) { continue; }
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
+    if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
 
     const ok = (await core.broadcast(_signalCard(chain, pair))) > 0;
     _seen.add(addr);
@@ -260,6 +262,8 @@ async function _pollGecko() {
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
         _seenPool.add(id);
         if (liq < cfg.minLiq || vol < cfg.minVol24h || !_passesFdv(cfg, fdv)) continue;
+        const _chg = Number(a.price_change_percentage && a.price_change_percentage.h24);
+        if (cfg.bullishOnly && isFinite(_chg) && _chg < -10) continue;   // skip bearish (funnel)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a);
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
