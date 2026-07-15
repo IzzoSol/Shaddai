@@ -33,7 +33,22 @@ function removeChat(id) { const k = String(id); if (_chats[k]) { delete _chats[k
 function chats() { return Object.values(_chats); }
 
 // ── runtime config (dashboard-editable) ─────────────────────────────────────
-const _defaults = { signals: true, bonded: true, news: true, newsIntervalMin: 60 };
+const _defaults = {
+  // feed toggles
+  signals: true,          // DexScreener trending/boosts
+  bonded: true,           // pump.fun graduations
+  newpools: true,         // GeckoTerminal brand-new pools
+  trending: true,         // GeckoTerminal trending pools
+  news: true,             // CoinGecko market pulse
+  newsIntervalMin: 60,
+  // filter parameters (apply across the DEX sources)
+  chains: 'solana',       // comma list: solana,base,eth,bsc,…
+  minLiq: 8000,           // min pair/pool liquidity USD
+  minVol24h: 10000,       // min 24h volume USD
+  minFdv: 0,              // min fully-diluted valuation USD (0 = off)
+  maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
+  maxPer: 3,              // max posts per poll per source
+};
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 function getConfig() { return Object.assign({}, _config); }
 function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _write(CFG_FILE, _config); return getConfig(); }

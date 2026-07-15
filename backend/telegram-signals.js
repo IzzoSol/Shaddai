@@ -33,19 +33,28 @@ const _SEEN_CAP = 4000;
 const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (rate safety)
 
 function _cfg() {
+  const cc = core.getConfig();   // dashboard-editable filter params + feed toggles
   return {
     token: process.env.TELEGRAM_BOT_TOKEN || '',
     channel: process.env.TELEGRAM_CHANNEL || '',
-    chains: (process.env.TG_SIGNALS_CHAINS || 'solana').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    chains: String(cc.chains || 'solana').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    minLiq: Number(cc.minLiq) || 0,
+    minVol24h: Number(cc.minVol24h) || 0,
+    minFdv: Number(cc.minFdv) || 0,
+    maxFdv: Number(cc.maxFdv) || 0,
+    maxPer: Math.max(1, parseInt(cc.maxPer, 10) || 3),
+    signals: cc.signals !== false,
+    bonded: cc.bonded !== false,
+    newpools: cc.newpools !== false,
+    trending: cc.trending !== false,
+    // poll cadences (env-tunable)
     interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
-    minLiq: parseFloat(process.env.TG_SIGNALS_MIN_LIQ || '15000') || 15000,
-    maxPer: Math.max(1, parseInt(process.env.TG_SIGNALS_MAX_PER || '3', 10) || 3),
-    // "as soon as a token bonds" — pump.fun graduation detector (fires fast, cheap poll)
-    bonded: (process.env.TG_BONDED || 'true').toLowerCase() !== 'false',
     bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000),
-    bondedMax: Math.max(1, parseInt(process.env.TG_BONDED_MAX || '5', 10) || 5),
+    geckoInterval: Math.max(60000, parseInt(process.env.TG_GECKO_INTERVAL || '120000', 10) || 120000),
   };
 }
+// filters a token's FDV/liq/vol against the current params (0 = disabled)
+function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; if (cfg.maxFdv && fdv > cfg.maxFdv) return false; return true; }
 
 function _fmtUsd(n) {
   const v = Number(n) || 0;
@@ -90,7 +99,7 @@ function _signalCard(chain, pair) {
 
 async function _pollOnce() {
   const cfg = _cfg();
-  if (!cfg.token) return;   // disabled until a bot token is set (broadcasts to channel + all chats)
+  if (!cfg.token || !cfg.signals) return;   // disabled or trending feed toggled off
   let boosts;
   try {
     const r = await fetch(DS_BOOSTS);
@@ -116,7 +125,9 @@ async function _pollOnce() {
       if (!r.ok) continue;
       const j = await r.json();
       const pairs = (j && j.pairs) || [];
-      pair = pairs.filter(p => (p.liquidity && p.liquidity.usd) >= cfg.minLiq)
+      pair = pairs.filter(p => (p.liquidity && p.liquidity.usd || 0) >= cfg.minLiq
+                            && (p.volume && p.volume.h24 || 0) >= cfg.minVol24h
+                            && _passesFdv(cfg, p.fdv || p.marketCap || 0))
                   .sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
     } catch (e) { continue; }
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
@@ -169,7 +180,54 @@ async function _pollBonded() {
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
 }
 
-let _timer = null, _bondTimer = null;
+// ── GECKOTERMINAL (free, no key) — brand-new pools + trending pools ──────────
+const GT_NET = { solana: 'solana', sol: 'solana', base: 'base', eth: 'eth', ethereum: 'eth', bsc: 'bsc', bnb: 'bsc', polygon: 'polygon_pos', arbitrum: 'arbitrum', avax: 'avax' };
+const GT = (net, kind, page) => `https://api.geckoterminal.com/api/v2/networks/${net}/${kind}?page=${page || 1}`;
+const _seenPool = new Set();
+let _poolSeeded = false;
+
+function _poolCard(net, kind, a) {
+  const name = _esc(a.name || 'Pool');
+  const price = a.base_token_price_usd ? '$' + Number(a.base_token_price_usd).toPrecision(4) : 'n/a';
+  const liq = _fmtUsd(a.reserve_in_usd);
+  const vol = _fmtUsd(a.volume_usd && a.volume_usd.h24);
+  const fdv = a.fdv_usd ? _fmtUsd(a.fdv_usd) : '';
+  const url = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
+  const tag = kind === 'new_pools' ? '🆕 <b>NEW POOL</b>' : '🔥 <b>TRENDING</b>';
+  return (
+    `${tag} · ${_esc(net.toUpperCase())}\n<b>${name}</b>\n` +
+    `💵 <b>${_esc(price)}</b>\n💧 Liq: <b>${liq}</b>  📊 24h: <b>${vol}</b>` + (fdv ? `  🏷 FDV: <b>${fdv}</b>` : '') + `\n` +
+    (url ? `🔗 <a href="${_esc(url)}">GeckoTerminal</a>\n` : '') +
+    `\n<i>Not financial advice. Rug-check first.</i>`
+  );
+}
+async function _pollGecko() {
+  const cfg = _cfg();
+  if (!cfg.token || (!cfg.newpools && !cfg.trending)) return;
+  const kinds = []; if (cfg.newpools) kinds.push('new_pools'); if (cfg.trending) kinds.push('trending_pools');
+  let posted = 0;
+  for (const chain of cfg.chains) {
+    const net = GT_NET[chain]; if (!net) continue;
+    for (const kind of kinds) {
+      if (posted >= cfg.maxPer) break;
+      let data;
+      try { const r = await fetch(GT(net, kind, 1), { headers: { accept: 'application/json' } }); if (!r.ok) continue; const j = await r.json(); data = (j && j.data) || []; } catch (e) { continue; }
+      for (const p of data) {
+        if (posted >= cfg.maxPer) break;
+        const a = p && p.attributes; const id = p && p.id; if (!a || !id) continue;
+        if (_seenPool.has(id)) continue;
+        const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
+        _seenPool.add(id);
+        if (liq < cfg.minLiq || vol < cfg.minVol24h || !_passesFdv(cfg, fdv)) continue;
+        if (_poolSeeded) { const ok = (await core.broadcast(_poolCard(net, kind, a))) > 0; if (ok) posted++; }
+        if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
+      }
+    }
+  }
+  _poolSeeded = true;   // first poll only seeds — then post only NEW pools
+}
+
+let _timer = null, _bondTimer = null, _geckoTimer = null;
 function startTelegramSignals() {
   const cfg = _cfg();
   if (!cfg.token) {
@@ -188,6 +246,10 @@ function startTelegramSignals() {
     _bondTimer = setInterval(() => { _pollBonded().catch(() => {}); }, cfg.bondedInterval);
     if (_bondTimer.unref) _bondTimer.unref();
   }
+  // GeckoTerminal new/trending pools — seed first, then post only NEW pools
+  setTimeout(() => { _pollGecko().catch(() => {}); }, 6000);
+  _geckoTimer = setInterval(() => { _pollGecko().catch(() => {}); }, cfg.geckoInterval);
+  if (_geckoTimer.unref) _geckoTimer.unref();
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded };
+module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko };
