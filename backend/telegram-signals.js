@@ -57,8 +57,10 @@ function _cfg() {
     geckoInterval: Math.max(60000, parseInt(process.env.TG_GECKO_INTERVAL || '120000', 10) || 120000),
   };
 }
-// filters a token's FDV/liq/vol against the current params (0 = disabled)
-function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; if (cfg.maxFdv && fdv > cfg.maxFdv) return false; return true; }
+// min FDV only (max handled post-rug so premium coins can be waived over the cap)
+function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; return true; }
+// over the max-mcap cap? allowed only if it's a premium-safety coin (fits all params)
+function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs && rs.checked && rs.score >= 80); }
 
 // rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
 // Fail-open: if the API errors/rate-limits, we DON'T block the call (checked=false).
@@ -203,7 +205,13 @@ async function _pollOnce() {
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
 
-    const ok = (await core.broadcast(_signalCard(chain, pair))) > 0;
+    let card = _signalCard(chain, pair);
+    let rs = null;
+    if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
+    if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
+    if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
+    if (rs && rs.label) card += '\n' + rs.label;
+    const ok = (await core.broadcast(card)) > 0;
     _seen.add(addr);
     if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0) }); } catch (e) {} }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
@@ -310,7 +318,11 @@ async function _pollGecko() {
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a, _taddr);
-          if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rs = await _rugScore(mint); if (rs.checked && rs.score < cfg.rugMinScore) continue; if (rs.label) card += '\n' + rs.label; } }
+          let rs = null;
+          if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) rs = await _rugScore(mint); }
+          if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
+          if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
+          if (rs && rs.label) card += '\n' + rs.label;
           const ok = (await core.broadcast(card)) > 0;
           if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
         }
