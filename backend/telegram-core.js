@@ -41,6 +41,8 @@ const _defaults = {
   trending: true,         // GeckoTerminal trending pools
   news: true,             // CoinGecko market pulse
   newsIntervalMin: 60,
+  headlines: true,        // free RSS crypto news headlines (CoinTelegraph/CoinDesk)
+  headlinesIntervalMin: 45,
   // filter parameters (apply across the DEX sources)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
   minLiq: 8000,           // min pair/pool liquidity USD

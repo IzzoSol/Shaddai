@@ -36,7 +36,47 @@ async function marketPulse() {
   } catch (e) { return null; }
 }
 
-let _timer = null;
+// ── FREE RSS NEWS HEADLINES (no key) ────────────────────────────────────────
+const RSS_FEEDS = (process.env.TG_NEWS_RSS ||
+  'https://cointelegraph.com/rss,https://www.coindesk.com/arc/outboundfeeds/rss/,https://decrypt.co/feed'
+).split(',').map(s => s.trim()).filter(Boolean);
+const _seenNews = new Set();
+let _newsSeeded = false;
+function _rssItems(xml) {
+  const out = [];
+  const re = /<item[\s\S]*?<\/item>/gi;
+  let m;
+  while ((m = re.exec(xml)) && out.length < 12) {
+    const blk = m[0];
+    const t = (blk.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i) || [])[1];
+    const l = (blk.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i) || [])[1];
+    if (t && l) out.push({ title: t.trim(), link: l.trim() });
+  }
+  return out;
+}
+async function _pollHeadlines() {
+  if (!core.token() || core.getConfig().headlines === false) return;
+  let posted = 0;
+  for (const feed of RSS_FEEDS) {
+    if (posted >= 2) break;
+    let xml;
+    try { const r = await fetch(feed, { headers: { 'user-agent': 'Mozilla/5.0 (SHADDAI)' } }); if (!r.ok) continue; xml = await r.text(); } catch (e) { continue; }
+    const items = _rssItems(xml).slice(0, 4);
+    for (const it of items) {
+      if (posted >= 2) break;
+      if (_seenNews.has(it.link)) continue;
+      _seenNews.add(it.link);
+      if (_newsSeeded) {
+        const html = '📰 <b>' + _esc(it.title) + '</b>\n<a href="' + _esc(it.link) + '">Read →</a>';
+        if (await core.broadcast(html)) posted++;
+      }
+      if (_seenNews.size > 3000) { const f = _seenNews.values().next().value; _seenNews.delete(f); }
+    }
+  }
+  _newsSeeded = true;   // first poll only seeds — then post only NEW headlines
+}
+
+let _timer = null, _newsTimer = null;
 function startNewsPoster() {
   if (!core.token()) { return; }
   if (_timer) return;
@@ -54,7 +94,16 @@ function startNewsPoster() {
     if (Date.now() - last >= everyMs) { last = Date.now(); tick().catch(() => {}); }
   }, 60000);
   if (_timer.unref) _timer.unref();
-  console.log('[tg-news] market-pulse poster armed (interval from dashboard config).');
+  // RSS headlines — seed first, then post only NEW headlines on its own cadence
+  setTimeout(() => { _pollHeadlines().catch(() => {}); }, 6000);
+  let lastN = 0;
+  _newsTimer = setInterval(async () => {
+    const cfg = core.getConfig();
+    const everyMs = Math.max(15, cfg.headlinesIntervalMin || 45) * 60000;
+    if (Date.now() - lastN >= everyMs) { lastN = Date.now(); _pollHeadlines().catch(() => {}); }
+  }, 60000);
+  if (_newsTimer.unref) _newsTimer.unref();
+  console.log('[tg-news] market-pulse + RSS headlines armed (intervals from dashboard config).');
 }
 
-module.exports = { startNewsPoster, marketPulse };
+module.exports = { startNewsPoster, marketPulse, _pollHeadlines };

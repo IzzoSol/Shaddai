@@ -100,8 +100,20 @@ async function _send(cfg, html) {
   } catch (e) { console.warn('[tg-signals] send error', e && e.message); return false; }
 }
 
+// bullish / non-bullish mood from a 24h % change
+function _mood(pct) {
+  const v = Number(pct);
+  if (!isFinite(v)) return '';
+  if (v >= 50) return '🚀 MOONING';
+  if (v >= 10) return '🟢 BULLISH';
+  if (v > -10) return '🟡 NEUTRAL';
+  if (v > -40) return '🔴 BEARISH';
+  return '💀 DUMPING';
+}
+
 function _signalCard(chain, pair) {
   const b = pair.baseToken || {};
+  const mood = _mood(pair.priceChange && pair.priceChange.h24);
   const name = _esc(b.name || b.symbol || 'Token');
   const sym = _esc(b.symbol || '');
   const price = pair.priceUsd ? '$' + Number(pair.priceUsd).toPrecision(4) : 'n/a';
@@ -110,7 +122,7 @@ function _signalCard(chain, pair) {
   const ch = pair.priceChange && pair.priceChange.h24 != null ? (Number(pair.priceChange.h24) >= 0 ? '🟢 +' : '🔴 ') + Number(pair.priceChange.h24).toFixed(1) + '%' : '';
   const url = _esc(pair.url || '');
   return (
-    `⚡ <b>SHADDAI SIGNAL</b> · ${_esc(chain.toUpperCase())}\n` +
+    `${mood ? mood + '  ' : ''}⚡ <b>SHADDAI SIGNAL</b> · ${_esc(chain.toUpperCase())}\n` +
     `<b>${name}</b> ($${sym})  ${ch}\n` +
     `💵 Price: <b>${_esc(price)}</b>\n` +
     `💧 Liq: <b>${liq}</b>   📊 24h Vol: <b>${vol}</b>\n` +
@@ -220,8 +232,9 @@ function _poolCard(net, kind, a) {
   const fdv = a.fdv_usd ? _fmtUsd(a.fdv_usd) : '';
   const url = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
   const tag = kind === 'new_pools' ? '🆕 <b>NEW POOL</b>' : '🔥 <b>TRENDING</b>';
+  const mood = _mood(a.price_change_percentage && (a.price_change_percentage.h24 || a.price_change_percentage.h1));
   return (
-    `${tag} · ${_esc(net.toUpperCase())}\n<b>${name}</b>\n` +
+    `${mood ? mood + '  ' : ''}${tag} · ${_esc(net.toUpperCase())}\n<b>${name}</b>\n` +
     `💵 <b>${_esc(price)}</b>\n💧 Liq: <b>${liq}</b>  📊 24h: <b>${vol}</b>` + (fdv ? `  🏷 FDV: <b>${fdv}</b>` : '') + `\n` +
     (url ? `🔗 <a href="${_esc(url)}">GeckoTerminal</a>\n` : '') +
     `\n<i>Not financial advice. Rug-check first.</i>`
