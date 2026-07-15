@@ -86,18 +86,18 @@ const _defaults = {
   promoIntervalMin: 240,  // every 4h
   digest: true,           // hourly performance distribution (1-2x/2-5x/5-10x/10x+ + top performers)
   digestIntervalMin: 60,
-  autoPrune: true,        // drop aged calls that never hit 1.5x → winners-fresh public scoreboard
+  autoPrune: false,       // keep honest hit-rate (owner) — don't silently drop losers
   // filter parameters (apply across the DEX sources)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
-  minLiq: 8000,           // min pair/pool liquidity USD
-  minVol24h: 10000,       // min 24h volume USD
+  minLiq: 12000,          // min pair/pool liquidity USD (ZEROX-finalized)
+  minVol24h: 15000,       // min 24h volume USD
   minFdv: 0,              // min fully-diluted valuation USD (0 = off)
-  maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
+  maxFdv: 50000000,       // max mcap 50M (premium exception ≥80 score) — persists on Render (no DB needed)
   maxPer: 3,              // max posts per poll per source
   rugFilter: true,        // Solana: score tokens via rugcheck (LP-locked, top holders, risks, holders)
   rugMinScore: 60,        // require safety score ≥ this to post (owner: >50%); borderline posts w/ lower score
   minHolders: 40,         // token MUST have at least this many holders
-  minLiqPct: 3,           // liquidity MUST be ≥ this % of mcap (liq that "matches" the token)
+  minLiqPct: 4,           // liquidity MUST be ≥ this % of mcap (liq that "matches" the token)
   bullishOnly: true,      // public feed: skip clearly-bearish calls (24h < -10%) to funnel Pro
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
