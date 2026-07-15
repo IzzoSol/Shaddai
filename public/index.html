@@ -54401,10 +54401,20 @@ window.hireAgentX402=async function(){
   #pxfSkins{display:flex;flex-wrap:wrap;gap:6px}
   #pxfSkins .skin{font-size:10px;padding:6px 9px;border-radius:6px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:#9fb0c4;transition:all .12s}
   #pxfSkins .skin.on{border-color:#27e0ff;color:#8fefff;background:rgba(39,224,255,.1)}
+  #pxfToolCats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+  .pxf-catchip{font-size:9px;padding:4px 9px;border-radius:20px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);color:#9fb0c4;transition:all .12s;white-space:nowrap}
+  .pxf-catchip:hover{border-color:rgba(39,224,255,.4)}
+  .pxf-catchip.on{background:rgba(39,224,255,.14);border-color:#27e0ff;color:#8fefff}
   #pxfToolSearch{margin-bottom:8px}
-  #pxfTools{max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
-  #pxfTools label{display:flex;align-items:center;gap:6px;font-size:10px;color:#9fb0c4;cursor:pointer;padding:2px 0}
-  #pxfTools input{accent-color:#27e0ff}
+  #pxfTools{max-height:238px;overflow-y:auto;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 8px}
+  .pxf-cat-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#27e0ff;margin:9px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(39,224,255,.14);position:sticky;top:0;background:#070c16;z-index:1}
+  .pxf-cat-h:first-child{margin-top:0}
+  .pxf-cat-h span{color:#5f7c86;float:right;font-weight:400}
+  .pxf-toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+  .pxf-tool{display:flex;align-items:center;gap:7px;font-size:10.5px;color:#9fb0c4;cursor:pointer;padding:3px 4px;border-radius:4px}
+  .pxf-tool:hover{background:rgba(39,224,255,.06);color:#eaf4ff}
+  .pxf-tool input{accent-color:#27e0ff;flex-shrink:0}
+  .pxf-tool span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #pixelForgeModal .pf-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
   #pixelForgeModal .pf-btn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:.04em;padding:11px 16px;border-radius:8px;cursor:pointer;border:none;transition:filter .15s,transform .12s}
   #pixelForgeModal .pf-btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
@@ -54429,10 +54439,14 @@ window.hireAgentX402=async function(){
         <div id="pxfSkins"></div>
       </div>
       <div>
-        <span class="pf-lbl">Tools — wired through the dashboard (pick any)</span>
-        <input type="text" id="pxfToolSearch" placeholder="search tools…" oninput="window._pxfFilterTools&&_pxfFilterTools(this.value)">
+        <span class="pf-lbl">Tools — real, wired through the dashboard (pick any)</span>
+        <div id="pxfToolCats"></div>
+        <input type="text" id="pxfToolSearch" placeholder="search tools…" oninput="window._pxfSearch&&_pxfSearch(this.value)">
         <div id="pxfTools"><div style="color:#5f7c86;font-size:10px;padding:8px">Loading tools…</div></div>
-        <div style="font-size:9px;color:#5f7c86;margin-top:6px"><span id="pxfToolCount">0</span> tools equipped</div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#5f7c86;margin-top:6px">
+          <span><span id="pxfToolCount">0</span> equipped</span>
+          <button onclick="window._pxfClearTools&&_pxfClearTools()" style="background:none;border:none;color:#5f7c86;font-size:9px;cursor:pointer;text-decoration:underline">clear</button>
+        </div>
       </div>
     </div>
     <div style="margin-top:14px;padding:10px 12px;border:1px solid rgba(232,184,75,.3);border-radius:8px;background:rgba(232,184,75,.05)">
@@ -54464,7 +54478,7 @@ window.hireAgentX402=async function(){
   ];
   var SWATCHES=['#00e5a0','#27e0ff','#8b5cf6','#c084fc','#ff9d3d','#ff5a6e','#ffd700','#a3e635','#ff7ac2','#f97316','#38bdf8','#ffffff'];
   var FALLBACK_TOOLS=['fetch_price','web_search','summarize','sentiment_analysis','image_generate','write_post','run_code','translate','calculate','crypto_quote','news_scan','market_analysis','draft_email','extract_data','schedule_task'];
-  var curColor='#00e5a0', curSkin=SKINS[0], selected=new Set(), allTools=[];
+  var curColor='#00e5a0', curSkin=SKINS[0], selected=new Set(), allTools=[], activeCat='All', searchVal='';
   function shadeHex(hex,amt){ hex=String(hex).replace('#',''); if(hex.length===3)hex=hex.split('').map(function(x){return x+x}).join(''); var n=parseInt(hex,16); if(isNaN(n))return hex; var r=(n>>16)&255,g=(n>>8)&255,b=n&255; function a(v){return Math.max(0,Math.min(255,Math.round(v+(amt<0?v*amt:(255-v)*amt))))} return 'rgb('+a(r)+','+a(g)+','+a(b)+')'; }
   function rr(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
   function draw(){
@@ -54488,10 +54502,59 @@ window.hireAgentX402=async function(){
   window._pxfDraw=draw;
   function renderSwatches(){ var el=document.getElementById('pxfSwatches'); if(!el)return; el.innerHTML=''; SWATCHES.forEach(function(col){ var d=document.createElement('div'); d.className='sw'+(col===curColor?' on':''); d.style.background=col; d.style.color=col; d.onclick=function(){ curColor=col; renderSwatches(); draw(); }; el.appendChild(d); }); }
   function renderSkins(){ var el=document.getElementById('pxfSkins'); if(!el)return; el.innerHTML=''; SKINS.forEach(function(s){ var b=document.createElement('div'); b.className='skin'+(s.key===curSkin.key?' on':''); b.textContent=s.icon+' '+s.label; b.onclick=function(){ curSkin=s; curColor=s.color; renderSkins(); renderSwatches(); draw(); }; el.appendChild(b); }); }
-  function renderTools(filter){ var el=document.getElementById('pxfTools'); if(!el)return; var f=(filter||'').toLowerCase(); var list=allTools.filter(function(t){return !f||t.toLowerCase().indexOf(f)>=0;}).slice(0,120); el.innerHTML=''; if(!list.length){ el.innerHTML='<div style="color:#5f7c86;font-size:10px;padding:8px">No tools match.</div>'; return; } list.forEach(function(t){ var lab=document.createElement('label'); var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=selected.has(t); cb.onchange=function(){ if(cb.checked)selected.add(t); else selected.delete(t); var cnt=document.getElementById('pxfToolCount'); if(cnt)cnt.textContent=selected.size; }; lab.appendChild(cb); var sp=document.createElement('span'); sp.textContent=t; lab.appendChild(sp); el.appendChild(lab); }); }
-  window._pxfFilterTools=renderTools;
-  function loadTools(){ fetch('/api/agent/tools').then(function(r){return r.json();}).then(function(d){ var t=[]; var src=(d&&(d.tools||d.list||d))||[]; if(Array.isArray(src)) t=src.map(function(o){return typeof o==='string'?o:(o&&(o.name||o.id||o.tool));}).filter(Boolean); if(!t.length) t=FALLBACK_TOOLS; allTools=Array.from(new Set(t)).sort(); renderTools(''); }).catch(function(){ allTools=FALLBACK_TOOLS.slice(); renderTools(''); }); }
-  window.openPixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else renderTools(''); draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
+  function catOf(name){
+    var n=String(name||'').toLowerCase();
+    if(/crypto|defi|binance|coingecko|coinlore|token|price|tvl|yield|stablecoin|jupiter|solana|wallet|dex|orderbook|position_size|break_even/.test(n)) return 'Crypto & Markets';
+    if(/color|css|palette|contrast|border|radius|aspect|gradient|\bhue\b|blend|darken|complementary|analogous/.test(n)) return 'Design';
+    if(/base64|base32|\bhex\b|binary|cipher|caesar|atbash|encode|decode|hash|rot13|defang/.test(n)) return 'Encoding';
+    if(/word|anagram|syllable|vowel|\bcase\b|camel|snake|slug|char_|count_word|count_occ|count_match/.test(n)) return 'Text';
+    if(/calculate|convert|area|volume|interest|average|correlation|combination|permutation|clamp|bmi|percent|round|angle|cone|cylinder|circle/.test(n)) return 'Math & Convert';
+    if(/google|notion|airtable|hubspot|github|stripe|sheet|_doc|calendar|slack|vercel|telegram|record|create_.*(issue|page|contact|checkout|event)/.test(n)) return 'Integrations';
+    if(/email|blog|ad_copy|content|\bcta\b|brand|outline|\bpost\b|cold_email|caption|headline|script/.test(n)) return 'Writing';
+    if(/security|breach|pwned|\bcve\b|\bport\b|password|check_sec|constant_time|firewall|scan|cidr|curl_build/.test(n)) return 'Security';
+    if(/\bjob\b|\bbid\b|listing|marketplace|browse_listings|complete_job|delegate|deploy_to/.test(n)) return 'Marketplace';
+    if(/\bday\b|date|hour|business_day|cron|week|_time|schedule|days_between/.test(n)) return 'Time & Dates';
+    if(/csv|json|data_convert|column|_stats|_query|chunk|\blist\b/.test(n)) return 'Data';
+    if(/search|book_search|define|acronym|lookup/.test(n)) return 'Search & Reference';
+    return 'Other';
+  }
+  function updateCount(){ var c=document.getElementById('pxfToolCount'); if(c)c.textContent=selected.size; }
+  function buildCats(){
+    var el=document.getElementById('pxfToolCats'); if(!el)return;
+    var cats=['All'].concat(Array.from(new Set(allTools.map(function(t){return t.cat;}))).sort());
+    el.innerHTML='';
+    cats.forEach(function(c){ var b=document.createElement('button'); b.className='pxf-catchip'+(c===activeCat?' on':''); b.textContent=c+(c==='All'?' ('+allTools.length+')':''); b.onclick=function(){ activeCat=c; buildCats(); renderTools(); }; el.appendChild(b); });
+  }
+  function renderTools(){
+    var el=document.getElementById('pxfTools'); if(!el)return;
+    var f=searchVal.toLowerCase();
+    var list=allTools.filter(function(t){ return (activeCat==='All'||t.cat===activeCat) && (!f||t.name.toLowerCase().indexOf(f)>=0); });
+    if(!list.length){ el.innerHTML='<div style="color:#5f7c86;font-size:10px;padding:8px">No tools match.</div>'; return; }
+    var groups={}; list.forEach(function(t){ (groups[t.cat]=groups[t.cat]||[]).push(t); });
+    var html='';
+    Object.keys(groups).sort().forEach(function(c){
+      html+='<div class="pxf-cat-h">'+c+' <span>'+groups[c].length+'</span></div><div class="pxf-toolgrid">';
+      groups[c].sort(function(a,b){return a.name<b.name?-1:1;}).forEach(function(t){
+        var nm=t.name.replace(/"/g,'');
+        html+='<label class="pxf-tool"><input type="checkbox" data-t="'+nm+'"'+(selected.has(t.name)?' checked':'')+'><span title="'+nm+'">'+nm+'</span></label>';
+      });
+      html+='</div>';
+    });
+    el.innerHTML=html;
+    Array.prototype.forEach.call(el.querySelectorAll('input[data-t]'),function(cb){ cb.onchange=function(){ var n=cb.getAttribute('data-t'); if(cb.checked)selected.add(n); else selected.delete(n); updateCount(); }; });
+  }
+  window._pxfSearch=function(v){ searchVal=v||''; renderTools(); };
+  window._pxfClearTools=function(){ selected.clear(); updateCount(); renderTools(); };
+  function loadTools(){
+    fetch('/api/agent/tools').then(function(r){return r.json();}).then(function(d){
+      var src=(d&&(d.tools||d.list||d))||[];
+      var arr=(Array.isArray(src)?src:[]).map(function(o){ if(typeof o==='string')return {name:o,cat:catOf(o)}; var nm=o&&(o.name||o.id||o.tool); if(!nm)return null; return {name:nm,cat:(o.category||o.cat||catOf(nm))}; }).filter(Boolean);
+      if(!arr.length) arr=FALLBACK_TOOLS.map(function(n){return {name:n,cat:catOf(n)};});
+      var seen={}; allTools=arr.filter(function(t){ if(seen[t.name])return false; seen[t.name]=1; return true; });
+      buildCats(); renderTools();
+    }).catch(function(){ allTools=FALLBACK_TOOLS.map(function(n){return {name:n,cat:catOf(n)};}); buildCats(); renderTools(); });
+  }
+  window.openPixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else { buildCats(); renderTools(); } draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
   window.closePixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(m)m.classList.remove('on'); };
   function status(t,ok){ var st=document.getElementById('pxfStatus'); if(st){ st.textContent=t||''; st.style.color=ok?'#00ff88':'#8fefff'; } }
   window.pixelForgeCreate=async function(also3d){
