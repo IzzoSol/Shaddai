@@ -17,6 +17,7 @@
    ══════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+const core = require('./telegram-core');   // shared broadcast (channel + every chat the bot is in)
 const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
@@ -89,7 +90,7 @@ function _signalCard(chain, pair) {
 
 async function _pollOnce() {
   const cfg = _cfg();
-  if (!cfg.token || !cfg.channel) return;   // disabled until configured
+  if (!cfg.token) return;   // disabled until a bot token is set (broadcasts to channel + all chats)
   let boosts;
   try {
     const r = await fetch(DS_BOOSTS);
@@ -120,7 +121,7 @@ async function _pollOnce() {
     } catch (e) { continue; }
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
 
-    const ok = await _send(cfg, _signalCard(chain, pair));
+    const ok = (await core.broadcast(_signalCard(chain, pair))) > 0;
     _seen.add(addr);
     if (ok) posted++;
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
@@ -145,7 +146,7 @@ function _bondCard(c) {
 }
 async function _pollBonded() {
   const cfg = _cfg();
-  if (!cfg.token || !cfg.channel || !cfg.bonded) return;
+  if (!cfg.token || !cfg.bonded) return;
   let coins;
   try {
     const r = await fetch(PF_COINS, { headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0 (SHADDAI-signals)' } });
@@ -162,7 +163,7 @@ async function _pollBonded() {
     if (!bonded) continue;
     if (_seenBond.has(mint)) continue;
     _seenBond.add(mint);
-    if (_bondSeeded) { const ok = await _send(cfg, _bondCard(c)); if (ok) posted++; }  // first poll only seeds
+    if (_bondSeeded) { const ok = (await core.broadcast(_bondCard(c))) > 0; if (ok) posted++; }  // first poll only seeds
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens

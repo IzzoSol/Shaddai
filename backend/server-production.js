@@ -725,6 +725,7 @@ try { app.use('/api', require('./auth-guard').rateLimit({ windowMs: 60000, max: 
 
 app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
+app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
@@ -1677,6 +1678,8 @@ if (!process.env.VERCEL_ENV) {
     try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
     // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
     try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+    // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
+    try { require('./telegram-news').startNewsPoster(); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
 
     console.log(`
 ╔════════════════════════════════════════════════════════╗

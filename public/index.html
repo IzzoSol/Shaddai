@@ -6056,6 +6056,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         <span class="ocmd-div"></span>
         <button class="ocmd run" onclick="window.openPixelForge&&openPixelForge()" title="Pixel Forge — pick color, body skin, name & tools, drip a custom pixel agent into this office" style="background:linear-gradient(180deg,rgba(39,224,255,.16),rgba(39,224,255,.03));border-color:rgba(39,224,255,.45);color:#27e0ff">⬡ Pixel Forge</button>
         <button class="ocmd run" onclick="try{if(window.Shop&&Shop.open){Shop.open();}else{window.open('marketplace-shop-v2.html','_blank');}}catch(e){window.open('marketplace-shop-v2.html','_blank');}" title="Open the Bazaar — hire agents, sell content & agent work (x402 Sparks)" style="background:linear-gradient(180deg,rgba(232,184,75,.16),rgba(232,184,75,.03));border-color:rgba(232,184,75,.5);color:#e8b84b">🏪 Bazaar</button>
+        <button class="ocmd run" onclick="window.openTelegramCC&&openTelegramCC()" title="Telegram Command Center — signals, news & broadcast" style="background:linear-gradient(180deg,rgba(34,158,217,.16),rgba(34,158,217,.03));border-color:rgba(34,158,217,.5);color:#5cc8ff">📡 Telegram</button>
       </div>
 
       <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
@@ -54726,6 +54727,84 @@ window.hireAgentX402=async function(){
   };
   window.openPixel3D=function(){ var m=el('pixel3dModal'); if(!m)return; var g=window._pxfGet?_pxfGet():{}; var n=el('p3Name'); if(n)n.textContent=g.name||'your agent'; curLane=null; el('p3Panel').style.display='none'; status(''); renderLanes(); m.classList.add('on'); };
   window.closePixel3D=function(){ var m=el('pixel3dModal'); if(m)m.classList.remove('on'); };
+})();
+</script>
+
+<!-- ════════ TELEGRAM COMMAND CENTER — dashboard control for the bot/signals ════════ -->
+<style>
+  #tgccModal{position:fixed;inset:0;z-index:100002;display:none;align-items:center;justify-content:center;background:rgba(2,4,10,.88);backdrop-filter:blur(6px);font-family:'Share Tech Mono',monospace}
+  #tgccModal.on{display:flex}
+  #tgccModal .tg-card{width:min(560px,95vw);max-height:92vh;overflow-y:auto;background:linear-gradient(160deg,#0a1120,#070c16);border:2px solid #229ed9;border-radius:14px;box-shadow:0 0 60px rgba(34,158,217,.25);padding:20px 22px}
+  #tgccModal h2{font-family:'Orbitron',sans-serif;font-size:18px;color:#8fd6ff;margin:0 0 12px;letter-spacing:.05em}
+  #tgccStatus{font-size:11px;color:#9fb0c4;background:rgba(34,158,217,.06);border:1px solid rgba(34,158,217,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.7}
+  #tgccStatus b{color:#5cc8ff}
+  .tg-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:12px;color:#cfe0ea}
+  .tg-row label{display:flex;align-items:center;gap:7px;cursor:pointer}
+  .tg-row input[type=checkbox]{accent-color:#229ed9;width:15px;height:15px}
+  .tg-lbl{font-size:9px;letter-spacing:.16em;color:#5f7c86;text-transform:uppercase;margin:14px 0 6px;display:block}
+  #tgccModal input[type=number],#tgccModal input[type=password],#tgccModal textarea{width:100%;box-sizing:border-box;background:#04060d;border:1px solid rgba(34,158,217,.25);color:#eaf4ff;padding:9px 11px;border-radius:7px;font-family:inherit;font-size:12px;outline:none}
+  #tgccModal textarea{min-height:64px;resize:vertical}
+  #tgccModal .tg-btn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;padding:10px 15px;border-radius:8px;cursor:pointer;border:none;margin-top:8px}
+  #tgccModal .tg-send{background:linear-gradient(100deg,#229ed9,#5cc8ff);color:#04121c;width:100%}
+  #tgccModal .tg-x{background:transparent;border:1px solid rgba(255,255,255,.2);color:#7d94a0;margin-top:14px}
+  #tgccMsgStatus{font-size:11px;color:#5cc8ff;min-height:14px;margin-top:6px}
+</style>
+<div id="tgccModal" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeTelegramCC()">
+  <div class="tg-card">
+    <h2>📡 TELEGRAM COMMAND CENTER</h2>
+    <div id="tgccStatus">Loading…</div>
+    <span class="tg-lbl">Auto-feeds</span>
+    <div class="tg-row"><label><input type="checkbox" id="tgcSignals" onchange="window._tgccSave&&_tgccSave()"> Trending signals</label></div>
+    <div class="tg-row"><label><input type="checkbox" id="tgcBonded" onchange="window._tgccSave&&_tgccSave()"> Bonded-token alerts (pump.fun)</label></div>
+    <div class="tg-row"><label><input type="checkbox" id="tgcNews" onchange="window._tgccSave&&_tgccSave()"> Market pulse / news</label>
+      <span style="margin-left:auto;font-size:10px;color:#5f7c86">every</span>
+      <input type="number" id="tgcInterval" min="15" style="width:64px" onchange="window._tgccSave&&_tgccSave()"><span style="font-size:10px;color:#5f7c86">min</span></div>
+    <span class="tg-lbl">Broadcast to channel + all chats</span>
+    <textarea id="tgccMsg" placeholder="Type a message to blast to everyone…"></textarea>
+    <button class="tg-btn tg-send" onclick="window.tgccBroadcast&&tgccBroadcast()">📢 Broadcast</button>
+    <div id="tgccMsgStatus"></div>
+    <span class="tg-lbl">Admin token (only if ADMIN_TOKEN is set on the server)</span>
+    <input type="password" id="tgccAdmin" placeholder="x-admin-token" autocomplete="off">
+    <button class="tg-btn tg-x" onclick="window.closeTelegramCC()">Close</button>
+  </div>
+</div>
+<script>
+(function(){
+  function adminTok(){ return (document.getElementById('tgccAdmin')||{}).value||localStorage.getItem('shd_admin_token')||''; }
+  function st(t,c){ var e=document.getElementById('tgccMsgStatus'); if(e){e.textContent=t||'';e.style.color=c||'#5cc8ff';} }
+  window.openTelegramCC=async function(){
+    var m=document.getElementById('tgccModal'); if(!m)return; m.classList.add('on'); st('');
+    try{
+      var r=await fetch('/api/telegram/status'); var d=await r.json();
+      var sEl=document.getElementById('tgccStatus');
+      if(sEl) sEl.innerHTML = d.enabled
+        ? 'Status: <b>● LIVE</b><br>Channel: <b>'+(d.channel?String(d.channel).replace(/</g,'&lt;'):'not set')+'</b><br>Reaching: <b>'+d.chats+'</b> chat(s) + channel'+(d.adminRequired?'<br><span style="color:#e8b84b">Admin token required for controls</span>':'')
+        : 'Status: <b style="color:#ff6b6b">○ OFF</b> — set <b>TELEGRAM_BOT_TOKEN</b> on the server to enable.';
+      var c=d.config||{};
+      var g=function(id){return document.getElementById(id);};
+      if(g('tgcSignals'))g('tgcSignals').checked=c.signals!==false;
+      if(g('tgcBonded'))g('tgcBonded').checked=c.bonded!==false;
+      if(g('tgcNews'))g('tgcNews').checked=c.news!==false;
+      if(g('tgcInterval'))g('tgcInterval').value=c.newsIntervalMin||60;
+    }catch(e){ var s=document.getElementById('tgccStatus'); if(s)s.textContent='⚠️ Could not load status (is the server running?)'; }
+  };
+  window.closeTelegramCC=function(){ var m=document.getElementById('tgccModal'); if(m)m.classList.remove('on'); };
+  window._tgccSave=async function(){
+    var g=function(id){return document.getElementById(id);};
+    var body={ signals:!!(g('tgcSignals')&&g('tgcSignals').checked), bonded:!!(g('tgcBonded')&&g('tgcBonded').checked), news:!!(g('tgcNews')&&g('tgcNews').checked), newsIntervalMin:parseInt((g('tgcInterval')||{}).value,10)||60, adminToken:adminTok() };
+    try{ await fetch('/api/telegram/config',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':adminTok()},body:JSON.stringify(body)}); st('✓ settings saved','#00ff88'); }catch(e){ st('⚠️ save failed','#ff6b6b'); }
+  };
+  window.tgccBroadcast=async function(){
+    var t=((document.getElementById('tgccMsg')||{}).value||'').trim();
+    if(!t){ st('Type a message first.','#e8b84b'); return; }
+    st('📤 sending…');
+    try{
+      var r=await fetch('/api/telegram/broadcast',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':adminTok()},body:JSON.stringify({text:t,adminToken:adminTok()})});
+      var d=await r.json();
+      if(d.ok){ st('✅ delivered to '+d.delivered+' chat(s)','#00ff88'); var mm=document.getElementById('tgccMsg'); if(mm)mm.value=''; }
+      else st('⚠️ '+((d&&d.error)||'failed')+(r.status===401?' — enter your admin token below':''),'#ff6b6b');
+    }catch(e){ st('⚠️ '+e.message,'#ff6b6b'); }
+  };
 })();
 </script>
 

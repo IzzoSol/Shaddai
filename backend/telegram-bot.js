@@ -14,6 +14,7 @@ const TG = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 const DS_SEARCH = (q) => `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
 const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=40&sort=created_timestamp&order=DESC&includeNsfw=false';
 const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`;
+const _core = require('./telegram-core');   // shared chat registry + broadcast
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -42,6 +43,8 @@ function _help() {
     '/bonded — latest pump.fun tokens that just bonded\n' +
     '/rug <code>&lt;mint&gt;</code> — rug-check a Solana token (rugcheck.xyz)\n' +
     '/ask <code>&lt;question&gt;</code> — ask a SHADDAI agent anything\n' +
+    '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis + sentiment\n' +
+    '/news — live market pulse (mcap, BTC/ETH/SOL, trending)\n' +
     '/signals — the free live signals channel\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
@@ -106,13 +109,13 @@ async function _rug(token, chatId, mint) {
   } catch (e) { return _send(token, chatId, '⚠️ Rug check failed — try again.'); }
 }
 
-async function _ask(token, chatId, cfg, q) {
+async function _ask(token, chatId, cfg, q, agent) {
   if (!q) return _send(token, chatId, 'Usage: /ask <your question>');
   await _send(token, chatId, '🧠 Thinking…');
   try {
     const r = await fetch(`http://127.0.0.1:${cfg.port}/api/model/chat`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q, agent: 'SHADDAI' }), signal: AbortSignal.timeout(45000),
+      body: JSON.stringify({ message: q, agent: agent || 'SHADDAI' }), signal: AbortSignal.timeout(45000),
     });
     const j = await r.json();
     const out = (j && (j.content || j.reply || j.result)) || '';
@@ -122,6 +125,7 @@ async function _ask(token, chatId, cfg, q) {
 
 async function _handle(cfg, update) {
   const msg = update.message || update.channel_post; if (!msg) return;
+  try { _core.addChat(msg.chat); } catch (e) {}   // register every chat for broadcast
   const chatId = msg.chat && msg.chat.id; const text = (msg.text || '').trim();
   if (!chatId || !text) return;
   const m = text.match(/^\/([a-z0-9_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i);
@@ -134,6 +138,8 @@ async function _handle(cfg, update) {
     case 'bonded': case 'bonds': return _bonded(t, chatId);
     case 'rug': case 'rugcheck': return _rug(t, chatId, arg);
     case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
+    case 'zerox': case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
+    case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable right now.'); }
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
@@ -158,6 +164,8 @@ async function _registerCommands(token) {
         { command: 'bonded', description: 'Latest pump.fun tokens that bonded' },
         { command: 'rug', description: 'Rug-check a Solana mint' },
         { command: 'ask', description: 'Ask a SHADDAI agent' },
+        { command: 'zerox', description: 'ZEROX market analysis + sentiment' },
+        { command: 'news', description: 'Live market pulse' },
         { command: 'signals', description: 'Free live signals channel' },
         { command: 'agents', description: 'What is SHADDAI' },
         { command: 'gm', description: 'gm ☀️' },
