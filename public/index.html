@@ -4401,14 +4401,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
     <button class="sbt" onclick="showView('automation');lySetSb(this)"><span class="ic">⚙</span>Automation</button>
     <!-- E3: repointed to Office sub-tabs (standalone Projects/Skills views retired) -->
-    <button class="sbt" onclick="showView('office');switchOfficeTab('projects');lySetSb(this)"><span class="ic">📁</span>Projects</button>
-    <button class="sbt" onclick="showView('office');switchOfficeTab('skills');lySetSb(this)"><span class="ic">🧠</span>Skills</button>
+    <!-- Skills / Billing / Library removed from the sidebar — they live INSIDE the Office tab (sub-tabs), not as standalone tabs (owner). -->
     <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Forge</button>
     <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">⚡</span>AURA</button>
-    <!-- A4: repointed to Office ▸ Billing sub-tab (standalone Billing view retired from nav) -->
-    <button class="sbt" onclick="showView('office');switchOfficeTab('billing');lySetSb(this)" style="color:#ffd700"><span class="ic">💳</span>Billing</button>
-    <!-- E3: repointed to Office ▸ Library sub-tab (standalone Lib & Notes retired from nav) -->
-    <button class="sbt" onclick="showView('office');switchOfficeTab('library');lySetSb(this)"><span class="ic">📚</span>Library</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
