@@ -1673,6 +1673,9 @@ if (!process.env.VERCEL_ENV) {
   server.listen(PORT, () => {
     logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
 
+    // Public DexScreener → Telegram signals feed (no-op unless TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL set).
+    try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
+
     console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  SHADDAI PRODUCTION SERVER v62                        ║
