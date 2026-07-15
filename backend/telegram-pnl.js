@@ -133,6 +133,28 @@ function stats(period) {
   );
 }
 
+// ── /pnl card: a random polished image + a branded best-calls scoreboard ─────
+function pnlImage() { return _pnlImage(); }
+function pnlCaption(period) {
+  _now = Date.now();
+  const span = period === 'month' ? 30 : period === 'all' ? 3650 : 7;
+  const since = _now - span * 24 * 3600 * 1000;
+  const rows = _state.calls.filter(c => c.ts >= since);
+  const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 6);
+  const hits = rows.filter(c => c.peakMult >= 2).length;
+  const hitRate = rows.length ? Math.round((hits / rows.length) * 100) : 0;
+  const ch = core.channel() || '@ShaddaiLabs';
+  const bestTxt = best.length
+    ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n')
+    : '• (calls are being tracked — check back soon)';
+  return (
+    `📊 <b>SHADDAI PNL</b> · ${_esc(ch)}\n\n` +
+    `🏆 <b>Best calls</b>\n${bestTxt}\n\n` +
+    `Hit rate: <b>${hitRate}%</b>  ·  Calls tracked: <b>${rows.length}</b>\n` +
+    `📡 Live calls: ${_esc(ch)}\n<i>Not financial advice. DYOR.</i>`
+  );
+}
+
 let _timer = null;
 function startTracker() {
   if (!core.token()) { console.log('[tg-pnl] disabled (no token).'); return; }
@@ -143,4 +165,4 @@ function startTracker() {
   if (_timer.unref) _timer.unref();
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption };
