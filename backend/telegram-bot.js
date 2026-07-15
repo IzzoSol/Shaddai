@@ -165,7 +165,9 @@ async function _handle(cfg, update) {
     case 'dist': case 'distribution': case 'performance': { const cap = _pnl.distribution(); const img = _pnl.pnlImage(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
-    case 'about': case 'project': case 'info': return _send(t, chatId, require('./telegram-news').projectPromo());
+    case 'about': case 'project': case 'info': { const news = require('./telegram-news'); const img = news._botImage(); const cap = news.projectPromo(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
+    case 'axiom': case 'trade': return _send(t, chatId,
+      '⚡ <b>Unlock the Axiom Edge</b>\n\nOn Phantom? Axiom adds a pro trading layer — stop-losses, advanced orders, and wallet tracking to copy winners &amp; dodge dev wallets/KOLs.\n\n🔗 <a href="https://axiom.trade/@emeraldog">axiom.trade/@emeraldog</a>\n<i>(Rewards go to users who actively trade.)</i>\n\n🎁 Star our GitHub, follow @IzzoSol, and trade via the link → DM for <b>1 week Premium free</b>.');
     case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
     default: return _send(t, chatId, 'Unknown command. Try /help');
   }
@@ -196,6 +198,7 @@ async function _registerCommands(token) {
         { command: 'signals', description: 'Free live signals channel' },
         { command: 'agents', description: 'What is SHADDAI' },
         { command: 'about', description: 'The SHADDAI project + links' },
+        { command: 'axiom', description: 'Axiom trading edge + free-week offer' },
         { command: 'gm', description: 'gm ☀️' },
       ] }),
     });

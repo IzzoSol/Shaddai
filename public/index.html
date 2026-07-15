@@ -54915,6 +54915,59 @@ window.hireAgentX402=async function(){
 })();
 </script>
 
+<!-- ════════ AXIOM REFERRAL POPUP (QUILL copy) ════════ -->
+<style>
+  #axiomModal{position:fixed;inset:0;z-index:100003;display:none;align-items:center;justify-content:center;background:rgba(2,4,10,.88);backdrop-filter:blur(7px);font-family:'Share Tech Mono',monospace}
+  #axiomModal.on{display:flex}
+  #axiomModal .ax-card{position:relative;width:min(460px,94vw);max-height:92vh;overflow-y:auto;background:linear-gradient(165deg,#0b1424,#06101c);border:2px solid #00e5a0;border-radius:16px;box-shadow:0 0 60px rgba(0,229,160,.28);padding:24px 22px}
+  #axiomModal h2{font-family:'Orbitron',sans-serif;font-size:20px;color:#7dffce;margin:0 0 4px;letter-spacing:.04em;text-shadow:0 0 18px rgba(0,229,160,.5)}
+  #axiomModal .ax-sub{color:#8ba0a0;font-size:12px;margin:0 0 14px;line-height:1.5}
+  #axiomModal .ax-sec{font-size:9px;letter-spacing:.16em;color:#00e5a0;text-transform:uppercase;margin:14px 0 6px}
+  #axiomModal .ax-li{font-size:12px;color:#cfe0d8;line-height:1.65;margin:2px 0}
+  #axiomModal .ax-link{display:block;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.35);border-radius:8px;padding:8px 11px;color:#7dffce;font-size:12px;margin:8px 0;text-align:center;word-break:break-all}
+  #axiomModal .ax-gift{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.35);border-radius:10px;padding:11px 13px;margin:14px 0}
+  #axiomModal .ax-gift b{color:#ffd45e}
+  #axiomModal .ax-cta{display:block;background:linear-gradient(100deg,#00e5a0,#7dffce);color:#04120c;font-family:'Orbitron',sans-serif;font-weight:800;font-size:13px;text-align:center;padding:13px;border-radius:10px;text-decoration:none;margin-top:14px;box-shadow:0 0 22px rgba(0,229,160,.3)}
+  #axiomModal .ax-later{width:100%;background:transparent;border:none;color:#5c6f70;font-size:11px;cursor:pointer;margin-top:10px;font-family:inherit}
+  #axiomModal .ax-x{position:absolute;top:11px;right:13px;background:none;border:none;color:#5c6f70;font-size:20px;cursor:pointer}
+</style>
+<div id="axiomModal" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeAxiom()">
+  <div class="ax-card">
+    <button class="ax-x" onclick="window.closeAxiom()">×</button>
+    <h2>⚡ Unlock the Axiom Edge</h2>
+    <p class="ax-sub">Trade like the sharks. If you're on <b>Phantom</b>, Axiom bolts a pro trading layer on top — <b>stop-losses</b>, advanced order tools, and <b>wallet tracking</b> so you can copy the winners and dodge the dev wallets, KOLs & known bad actors.</p>
+    <a class="ax-link" href="https://axiom.trade/@emeraldog" target="_blank" rel="noopener">🔗 axiom.trade/@emeraldog</a>
+    <div style="font-size:10px;color:#8ba0a0;text-align:center;margin-bottom:6px">Rewards go to users who <b>actively trade</b> — not just sign up.</div>
+
+    <div class="ax-sec">Trade 1+ month via the link → you unlock</div>
+    <div class="ax-li">• <b>200+ curated tracked wallets</b> — KOLs, high-PnL traders, dev wallets</div>
+    <div class="ax-li">• <b>200+ linked X profiles</b> mapped to on-chain activity</div>
+
+    <div class="ax-sec">Caller incentives</div>
+    <div class="ax-li">• 35%+ average performance → <b>VIP at 50% off</b></div>
+    <div class="ax-li">• Top Caller of the Month → <b>VIP free</b></div>
+    <div class="ax-li">• Already won? 2nd or 3rd place takes it</div>
+
+    <div class="ax-gift">
+      🎁 <b>Free week of SHADDAI Premium Signals.</b> Do all three, then DM us:
+      <div class="ax-li" style="margin-top:5px">1. ⭐ Star the <a href="https://github.com/IzzoSol" target="_blank" style="color:#7dffce">GitHub</a></div>
+      <div class="ax-li">2. Follow <a href="https://x.com/shaddaiai" target="_blank" style="color:#7dffce">@shaddaiai</a> + <a href="https://x.com/IzzoSol" target="_blank" style="color:#7dffce">@IzzoSol</a> on X</div>
+      <div class="ax-li">3. Sign up &amp; trade via the Axiom link above</div>
+    </div>
+
+    <a class="ax-cta" href="https://axiom.trade/@emeraldog" target="_blank" rel="noopener">Trade on Axiom →</a>
+    <button class="ax-later" onclick="window.closeAxiom()">Maybe later</button>
+  </div>
+</div>
+<script>
+(function(){
+  window.openAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.add('on'); };
+  window.closeAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.remove('on'); try{localStorage.setItem('axiomSeen','1');}catch(e){} };
+  // auto-show once per browser (dismiss = never auto-again; reopen via window.openAxiom)
+  setTimeout(function(){ try{ if(!localStorage.getItem('axiomSeen')) window.openAxiom(); }catch(e){} }, 9000);
+})();
+</script>
+
 <!-- ════════ SHADDAI WORLD ════════ -->
 <div id="gridView" class="view" style="display:none;position:fixed;inset:0;background:#04060d;z-index:1200;overflow:hidden">
   <iframe id="gridWorldFrame" title="Shaddai World" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block" allow="fullscreen; pointer-lock"></iframe>

@@ -6,8 +6,13 @@
    ══════════════════════════════════════════════════════════════════════════ */
 'use strict';
 const core = require('./telegram-core');
+const fs = require('fs');
+const path = require('path');
 
 const CG = 'https://api.coingecko.com/api/v3';
+const BOT_IMG_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot');
+// random branded HF image (img-1..10.png) for aesthetic posts (promo etc.); null if none
+function _botImage() { try { const imgs = []; for (let i = 1; i <= 10; i++) { const f = path.join(BOT_IMG_DIR, 'img-' + i + '.png'); if (fs.existsSync(f)) imgs.push(f); } return imgs.length ? imgs[Math.floor(Math.random() * imgs.length)] : null; } catch (e) { return null; } }
 const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function _usd(n) { const v = Number(n) || 0; if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T'; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; return '$' + v.toLocaleString(); }
 function _pct(n) { const v = Number(n); if (!isFinite(v)) return ''; return (v >= 0 ? '🟢 +' : '🔴 ') + v.toFixed(1) + '%'; }
@@ -141,10 +146,10 @@ function startNewsPoster() {
     const cfg = core.getConfig();
     if (cfg.promo === false) return;
     const everyMs = Math.max(30, cfg.promoIntervalMin || 240) * 60000;
-    if (Date.now() - lastP >= everyMs) { lastP = Date.now(); core.broadcast(projectPromo()).catch(() => {}); }
+    if (Date.now() - lastP >= everyMs) { lastP = Date.now(); const img = _botImage(); (img ? core.broadcastPhoto(img, projectPromo()) : core.broadcast(projectPromo())).catch(() => {}); }
   }, 60000);
   if (_promoTimer.unref) _promoTimer.unref();
   console.log('[tg-news] market-pulse + RSS headlines + project promo armed.');
 }
 
-module.exports = { startNewsPoster, marketPulse, projectPromo, _pollHeadlines };
+module.exports = { startNewsPoster, marketPulse, projectPromo, _pollHeadlines, _botImage };
