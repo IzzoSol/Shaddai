@@ -1675,6 +1675,8 @@ if (!process.env.VERCEL_ENV) {
 
     // Public DexScreener → Telegram signals feed (no-op unless TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL set).
     try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
+    // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
+    try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
 
     console.log(`
 ╔════════════════════════════════════════════════════════╗

@@ -1,0 +1,193 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   telegram-bot.js — the interactive SHADDAI Telegram bot (long-polling).
+   Commands: /start /help /price /bonded /rug /signals /agents /ask /gm
+   Reuses the FREE DexScreener + pump.fun + rugcheck.xyz APIs and the app's own
+   LLM (/api/model/chat) for /ask.
+
+   SECURITY: token read from env only (TELEGRAM_BOT_TOKEN). No secrets in code.
+   Fail-safe: no-op if the token is unset; never throws; never blocks boot.
+   Long-polling (getUpdates) so it works with zero webhook/URL config.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+const TG = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
+const DS_SEARCH = (q) => `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
+const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=40&sort=created_timestamp&order=DESC&includeNsfw=false';
+const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`;
+
+const _cfg = () => ({
+  token: process.env.TELEGRAM_BOT_TOKEN || '',
+  channel: process.env.TELEGRAM_CHANNEL || '',
+  port: process.env.PORT || 3000,
+});
+
+const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function _fmtUsd(n) { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(2); }
+const _sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function _send(token, chatId, html, extra) {
+  try {
+    await fetch(TG(token, 'sendMessage'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ chat_id: chatId, text: html, parse_mode: 'HTML', disable_web_page_preview: true }, extra || {})),
+    });
+  } catch (e) { /* fail-safe */ }
+}
+
+// ── command handlers ───────────────────────────────────────────────────────
+function _help() {
+  return (
+    '⬡ <b>SHADDAI BOT</b> — commands:\n\n' +
+    '/price <code>&lt;symbol|address&gt;</code> — live DEX price, liquidity & volume\n' +
+    '/bonded — latest pump.fun tokens that just bonded\n' +
+    '/rug <code>&lt;mint&gt;</code> — rug-check a Solana token (rugcheck.xyz)\n' +
+    '/ask <code>&lt;question&gt;</code> — ask a SHADDAI agent anything\n' +
+    '/signals — the free live signals channel\n' +
+    '/agents — what SHADDAI is\n' +
+    '/gm — gm ☀️\n\n' +
+    '<i>Not financial advice. Always DYOR.</i>'
+  );
+}
+function _start(cfg) {
+  return (
+    '⬡ <b>Welcome to SHADDAI</b> — your AI agent empire.\n\n' +
+    'I post live crypto signals and answer questions with real agents.\n' +
+    (cfg.channel ? `📡 Free signals: ${_esc(cfg.channel)}\n` : '') +
+    '🌐 Dashboard: https://shaddai-g81x.onrender.com\n\n' +
+    'Type /help for commands.'
+  );
+}
+
+async function _price(token, chatId, q) {
+  if (!q) return _send(token, chatId, 'Usage: /price <symbol or token address>  e.g. <code>/price SOL</code>');
+  await _send(token, chatId, '🔎 Looking up <b>' + _esc(q) + '</b>…');
+  try {
+    const r = await fetch(DS_SEARCH(q));
+    const j = await r.json();
+    const pairs = (j && j.pairs) || [];
+    const p = pairs.filter(x => x.liquidity && x.liquidity.usd).sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
+    if (!p) return _send(token, chatId, '❌ No pairs found for <b>' + _esc(q) + '</b>.');
+    const b = p.baseToken || {};
+    const ch = p.priceChange && p.priceChange.h24 != null ? (Number(p.priceChange.h24) >= 0 ? '🟢 +' : '🔴 ') + Number(p.priceChange.h24).toFixed(1) + '%' : '';
+    return _send(token, chatId,
+      `<b>${_esc(b.name || b.symbol || q)}</b> ($${_esc(b.symbol || '')}) · ${_esc((p.chainId || '').toUpperCase())}  ${ch}\n` +
+      `💵 <b>$${_esc(Number(p.priceUsd || 0).toPrecision(4))}</b>\n` +
+      `💧 Liq: <b>${_fmtUsd(p.liquidity && p.liquidity.usd)}</b>  📊 24h Vol: <b>${_fmtUsd(p.volume && p.volume.h24)}</b>\n` +
+      (p.url ? `🔗 <a href="${_esc(p.url)}">DexScreener</a>` : ''));
+  } catch (e) { return _send(token, chatId, '⚠️ Lookup failed — try again.'); }
+}
+
+async function _bonded(token, chatId) {
+  try {
+    const r = await fetch(PF_COINS, { headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0 (SHADDAI)' } });
+    const coins = await r.json();
+    const list = (Array.isArray(coins) ? coins : (coins && coins.coins) || []).filter(c => c && (c.complete === true || c.raydium_pool)).slice(0, 5);
+    if (!list.length) return _send(token, chatId, 'No freshly-bonded tokens right now — check back soon. 🎓');
+    const body = list.map(c => `🎓 <b>${_esc(c.name || '')}</b> ($${_esc(c.symbol || '')}) — ${c.usd_market_cap ? _fmtUsd(c.usd_market_cap) : ''}\n<a href="https://pump.fun/${_esc(c.mint || '')}">pump.fun</a>`).join('\n\n');
+    return _send(token, chatId, '🎓 <b>Recently bonded</b>\n\n' + body + '\n\n<i>Not financial advice. Rug-check first.</i>');
+  } catch (e) { return _send(token, chatId, '⚠️ pump.fun feed unavailable right now.'); }
+}
+
+async function _rug(token, chatId, mint) {
+  if (!mint) return _send(token, chatId, 'Usage: /rug <token mint address>');
+  await _send(token, chatId, '🛡 Rug-checking…');
+  try {
+    const r = await fetch(RUGCHECK(mint.trim()));
+    if (!r.ok) return _send(token, chatId, '⚠️ rugcheck.xyz had no report for that mint (or is rate-limited). DYOR.');
+    const j = await r.json();
+    const score = (j && (j.score_normalised != null ? j.score_normalised : j.score));
+    const risks = (j && j.risks) || [];
+    const rl = risks.slice(0, 5).map(x => `• ${_esc(x.name || x.description || '')}${x.level ? ' (' + _esc(x.level) + ')' : ''}`).join('\n');
+    return _send(token, chatId,
+      `🛡 <b>Rug Check</b>\n` +
+      (score != null ? `Risk score: <b>${_esc(String(score))}</b>\n` : '') +
+      (rl ? `\n<b>Flags:</b>\n${rl}\n` : '\nNo major flags reported.\n') +
+      `\n<i>Automated check — not a guarantee. Always DYOR.</i>`);
+  } catch (e) { return _send(token, chatId, '⚠️ Rug check failed — try again.'); }
+}
+
+async function _ask(token, chatId, cfg, q) {
+  if (!q) return _send(token, chatId, 'Usage: /ask <your question>');
+  await _send(token, chatId, '🧠 Thinking…');
+  try {
+    const r = await fetch(`http://127.0.0.1:${cfg.port}/api/model/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q, agent: 'SHADDAI' }), signal: AbortSignal.timeout(45000),
+    });
+    const j = await r.json();
+    const out = (j && (j.content || j.reply || j.result)) || '';
+    return _send(token, chatId, out ? _esc(out).slice(0, 3800) : '⚠️ No answer — the engine may be busy.');
+  } catch (e) { return _send(token, chatId, '⚠️ Agents are busy — try again shortly, or use the dashboard.'); }
+}
+
+async function _handle(cfg, update) {
+  const msg = update.message || update.channel_post; if (!msg) return;
+  const chatId = msg.chat && msg.chat.id; const text = (msg.text || '').trim();
+  if (!chatId || !text) return;
+  const m = text.match(/^\/([a-z0-9_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i);
+  if (!m) { return; }   // ignore non-commands (avoid spamming groups)
+  const cmd = m[1].toLowerCase(); const arg = (m[2] || '').trim(); const t = cfg.token;
+  switch (cmd) {
+    case 'start': return _send(t, chatId, _start(cfg));
+    case 'help': return _send(t, chatId, _help());
+    case 'price': case 'p': return _price(t, chatId, arg);
+    case 'bonded': case 'bonds': return _bonded(t, chatId);
+    case 'rug': case 'rugcheck': return _rug(t, chatId, arg);
+    case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
+    case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
+    case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
+    case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
+    default: return _send(t, chatId, 'Unknown command. Try /help');
+  }
+}
+
+async function _getUpdates(token, offset) {
+  const r = await fetch(TG(token, 'getUpdates') + `?timeout=30&offset=${offset}`, { signal: AbortSignal.timeout(40000) });
+  const j = await r.json();
+  return (j && j.result) || [];
+}
+
+async function _registerCommands(token) {
+  try {
+    await fetch(TG(token, 'setMyCommands'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commands: [
+        { command: 'start', description: 'Welcome + links' },
+        { command: 'help', description: 'List all commands' },
+        { command: 'price', description: 'Live DEX price of a token' },
+        { command: 'bonded', description: 'Latest pump.fun tokens that bonded' },
+        { command: 'rug', description: 'Rug-check a Solana mint' },
+        { command: 'ask', description: 'Ask a SHADDAI agent' },
+        { command: 'signals', description: 'Free live signals channel' },
+        { command: 'agents', description: 'What is SHADDAI' },
+        { command: 'gm', description: 'gm ☀️' },
+      ] }),
+    });
+  } catch (e) { /* non-fatal */ }
+}
+
+let _running = false;
+async function _loop() {
+  const cfg = _cfg();
+  await _registerCommands(cfg.token);
+  let offset = 0, fails = 0;
+  while (_running) {
+    try {
+      const updates = await _getUpdates(cfg.token, offset);
+      fails = 0;
+      for (const u of updates) { offset = u.update_id + 1; _handle(_cfg(), u).catch(() => {}); }
+    } catch (e) { fails++; await _sleep(Math.min(30000, 2000 * fails)); }
+  }
+}
+
+function startTelegramBot() {
+  const cfg = _cfg();
+  if (!cfg.token) { console.log('[tg-bot] disabled — set TELEGRAM_BOT_TOKEN to enable the interactive bot.'); return; }
+  if (_running) return;
+  _running = true;
+  console.log('[tg-bot] ENABLED — long-polling for commands (/start /help /price /bonded /rug /ask /signals /agents /gm)');
+  _loop().catch(e => { console.warn('[tg-bot] loop ended:', e && e.message); _running = false; });
+}
+function stopTelegramBot() { _running = false; }
+
+module.exports = { startTelegramBot, stopTelegramBot };
