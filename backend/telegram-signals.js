@@ -47,6 +47,7 @@ function _cfg() {
     bonded: cc.bonded !== false,
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
+    rugFilter: cc.rugFilter !== false,
     // poll cadences (env-tunable)
     interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
     bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000),
@@ -55,6 +56,27 @@ function _cfg() {
 }
 // filters a token's FDV/liq/vol against the current params (0 = disabled)
 function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; if (cfg.maxFdv && fdv > cfg.maxFdv) return false; return true; }
+
+// rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
+// Fail-open: if the API errors/rate-limits, we DON'T block the call (checked=false).
+async function _rugCheck(mint) {
+  if (!mint) return { risky: false, label: '', checked: false };
+  try {
+    const r = await fetch('https://api.rugcheck.xyz/v1/tokens/' + mint + '/report/summary', { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return { risky: false, label: '', checked: false };
+    const j = await r.json();
+    const risks = (j && j.risks) || [];
+    const danger = risks.some(x => String(x.level || '').toLowerCase() === 'danger');
+    const score = (j && (j.score_normalised != null ? j.score_normalised : j.score));
+    const top = risks.slice(0, 2).map(x => x.name).filter(Boolean).join(', ');
+    const label = danger
+      ? `⚠️ <b>RUGCHECK: HIGH RISK</b>${top ? ' — ' + _esc(top) : ''}`
+      : `🛡 RugCheck: ${score != null ? 'score ' + _esc(String(score)) : 'no major flags'}`;
+    return { risky: danger, label, checked: true, score };
+  } catch (e) { return { risky: false, label: '', checked: false }; }
+}
+// extract a Solana mint from a GeckoTerminal base_token id like "solana_<mint>"
+function _mintFromGecko(p) { try { const id = p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id; if (id && id.startsWith('solana_')) return id.slice(7); } catch (e) {} return null; }
 
 function _fmtUsd(n) {
   const v = Number(n) || 0;
@@ -174,7 +196,11 @@ async function _pollBonded() {
     if (!bonded) continue;
     if (_seenBond.has(mint)) continue;
     _seenBond.add(mint);
-    if (_bondSeeded) { const ok = (await core.broadcast(_bondCard(c))) > 0; if (ok) posted++; }  // first poll only seeds
+    if (_bondSeeded) {   // first poll only seeds
+      let card = _bondCard(c);
+      if (cfg.rugFilter) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; }
+      const ok = (await core.broadcast(card)) > 0; if (ok) posted++;
+    }
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
@@ -219,7 +245,11 @@ async function _pollGecko() {
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
         _seenPool.add(id);
         if (liq < cfg.minLiq || vol < cfg.minVol24h || !_passesFdv(cfg, fdv)) continue;
-        if (_poolSeeded) { const ok = (await core.broadcast(_poolCard(net, kind, a))) > 0; if (ok) posted++; }
+        if (_poolSeeded) {
+          let card = _poolCard(net, kind, a);
+          if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
+          const ok = (await core.broadcast(card)) > 0; if (ok) posted++;
+        }
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }
     }

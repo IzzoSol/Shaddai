@@ -48,6 +48,7 @@ const _defaults = {
   minFdv: 0,              // min fully-diluted valuation USD (0 = off)
   maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
   maxPer: 3,              // max posts per poll per source
+  rugFilter: true,        // Solana: skip tokens rugcheck.xyz flags as danger; append a safety label
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 function getConfig() { return Object.assign({}, _config); }
