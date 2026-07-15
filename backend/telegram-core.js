@@ -94,8 +94,10 @@ const _defaults = {
   minFdv: 0,              // min fully-diluted valuation USD (0 = off)
   maxFdv: 0,              // max FDV USD (0 = off; use to catch small caps)
   maxPer: 3,              // max posts per poll per source
-  rugFilter: true,        // Solana: score tokens via rugcheck (LP-locked, top holders, risks)
-  rugMinScore: 50,        // require safety score ≥ this to post (owner: >50%); borderline posts w/ lower score
+  rugFilter: true,        // Solana: score tokens via rugcheck (LP-locked, top holders, risks, holders)
+  rugMinScore: 60,        // require safety score ≥ this to post (owner: >50%); borderline posts w/ lower score
+  minHolders: 40,         // token MUST have at least this many holders
+  minLiqPct: 3,           // liquidity MUST be ≥ this % of mcap (liq that "matches" the token)
   bullishOnly: true,      // public feed: skip clearly-bearish calls (24h < -10%) to funnel Pro
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));

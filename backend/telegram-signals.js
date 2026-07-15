@@ -49,7 +49,9 @@ function _cfg() {
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
     rugFilter: cc.rugFilter !== false,
-    rugMinScore: Number(cc.rugMinScore) || 50,   // require safety score ≥ this (owner: >50%)
+    rugMinScore: Number(cc.rugMinScore) || 60,   // require safety score ≥ this (owner: >50%)
+    minHolders: Number(cc.minHolders) || 40,     // must have holders
+    minLiqPct: Number(cc.minLiqPct) || 3,        // liq must be ≥ this % of mcap
     bullishOnly: cc.bullishOnly !== false,
     // poll cadences (env-tunable)
     interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
@@ -61,6 +63,10 @@ function _cfg() {
 function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; return true; }
 // over the max-mcap cap? allowed only if it's a premium-safety coin (fits all params)
 function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs && rs.checked && rs.score >= 80); }
+// liquidity must "match" the token — at least minLiqPct% of mcap (thin book vs big mcap = red flag)
+function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; return (Number(liq) || 0) >= (cfg.minLiqPct / 100) * fdv; }
+// holders gate — must clear the minimum when we have the data
+function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
 
 // rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
 // Fail-open: if the API errors/rate-limits, we DON'T block the call (checked=false).
@@ -104,6 +110,9 @@ async function _rugScore(mint) {
     let topPct = 0;
     try { const th = j.topHolders || []; const nonLp = th.filter(h => !h.insider && !(h.owner && /lp|amm|pool/i.test(String(h.owner)))); topPct = (nonLp[0] && Number(nonLp[0].pct)) || (th[0] && Number(th[0].pct)) || 0; } catch (e) {}
     if (topPct > 30) { score -= (lp >= 99 ? 8 : 25); notes.push('🐋 top ' + topPct.toFixed(0) + '%'); }
+    // holders — must have some
+    let holders = Number(j.totalHolders || (j.token && j.token.holders) || 0);
+    if (holders) { notes.push('👥 ' + holders); if (holders < 40) score -= 30; }
     // risk flags
     const risks = j.risks || [];
     const danger = risks.filter(x => String(x.level || '').toLowerCase() === 'danger').length;
@@ -111,7 +120,7 @@ async function _rugScore(mint) {
     score -= danger * 25 + warn * 8;
     score = Math.max(0, Math.min(100, Math.round(score)));
     const badge = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
-    return { checked: true, score, lp, topPct, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
+    return { checked: true, score, lp, topPct, holders, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
   } catch (e) { return { checked: false, score: 60, label: '' }; }
 }
 
@@ -209,6 +218,8 @@ async function _pollOnce() {
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
     if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
+    if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
+    if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
     if (rs && rs.label) card += '\n' + rs.label;
     const ok = (await core.broadcast(card)) > 0;
@@ -321,6 +332,8 @@ async function _pollGecko() {
           let rs = null;
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) rs = await _rugScore(mint); }
           if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
+          if (!_holdersOk(cfg, rs)) continue;                            // must have holders
+          if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           if (rs && rs.label) card += '\n' + rs.label;
           const ok = (await core.broadcast(card)) > 0;
