@@ -109,6 +109,8 @@ async function trackTick() {
     }
   }
   if (changed) _write(_state);
+  // auto-prune aged losers → keeps the public scoreboard winners-fresh
+  try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
 }
 
 // ── stats: daily / weekly / monthly ─────────────────────────────────────────
@@ -232,4 +234,17 @@ function startTracker() {
 
 function resetCalls() { _state = { calls: [] }; _write(_state); }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall };
+// Remove "bad" calls — aged calls that never reached minPeak. Keeps seeds, winners,
+// and young calls (they still have time to run). Powers the winners-fresh public feed.
+function pruneLosers(minPeak, minAgeHours) {
+  _now = Date.now();
+  const mp = Number(minPeak) || 1.5;
+  const ageMs = (Number(minAgeHours) || 6) * 3600 * 1000;
+  const before = _state.calls.length;
+  _state.calls = _state.calls.filter(c => c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
+  const removed = before - _state.calls.length;
+  if (removed > 0) _write(_state);
+  return removed;
+}
+
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers };

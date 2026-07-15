@@ -51,6 +51,13 @@ router.post('/reset', express.json({ limit: '2kb' }), (req, res) => {
   catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
 });
 
+router.post('/prune', express.json({ limit: '2kb' }), (req, res) => {
+  if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
+  const minPeak = (req.body && Number(req.body.minPeak)) || 2;   // manual prune is stricter (age-agnostic)
+  try { const removed = pnl.pruneLosers(minPeak, 0); res.json({ ok: true, removed }); }
+  catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
+
 router.post('/config', express.json({ limit: '8kb' }), (req, res) => {
   if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
   const b = req.body || {};

@@ -66,6 +66,7 @@ const _defaults = {
   promoIntervalMin: 240,  // every 4h
   digest: true,           // hourly performance distribution (1-2x/2-5x/5-10x/10x+ + top performers)
   digestIntervalMin: 60,
+  autoPrune: true,        // drop aged calls that never hit 1.5x → winners-fresh public scoreboard
   // filter parameters (apply across the DEX sources)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
   minLiq: 8000,           // min pair/pool liquidity USD
