@@ -186,4 +186,72 @@ router.get('/image/:file', (req, res) => {
   res.type('png').send(fs.readFileSync(fp));
 });
 
+// ── POST /api/forge/pixel-art → a matching HF FLUX portrait for a Pixel-Forge agent ──
+// Free for all users. Builds a prompt from the chosen color + body skin so the rendered
+// portrait MATCHES the pixel agent's look, then returns the image URL + data URI.
+router.post('/pixel-art', express.json({ limit: '64kb' }), async (req, res) => {
+  try {
+    const { color = '#00e5a0', skin = 'operative', name = '' } = req.body || {};
+    const clean = (s, n) => String(s == null ? '' : s).replace(/[^a-z0-9 _#-]/gi, '').slice(0, n);
+    const nm = clean(name, 24) || 'operative';
+    const sk = clean(skin, 24) || 'operative';
+    const col = clean(color, 16) || '#00e5a0';
+    const prompt = `${nm}, a ${sk} sci-fi operative character, dominant ${col} color scheme, full body hero concept art, neon cyberpunk, dramatic rim lighting, single character, dark background, game character sheet`;
+    if (!hf.keys().length) return res.json({ ok: false, error: 'no HF token configured', note: 'set HF_TOKENS to render matching art' });
+    let img = null;
+    try { img = await hf.generate(prompt); } catch (e) { return res.json({ ok: false, error: 'render failed: ' + (e && e.message || 'unknown') }); }
+    if (!Buffer.isBuffer(img) || !img.length) return res.json({ ok: false, error: 'empty render' });
+    ensureDirs();
+    const file = `pixel-${Date.now().toString(36)}.png`;
+    try { fs.writeFileSync(path.join(IMG_DIR, file), img); } catch (e) { return res.json({ ok: false, error: 'save failed' }); }
+    res.json({ ok: true, image: `/api/forge/image/${file}`, dataUri: `data:image/png;base64,${img.toString('base64')}` });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
+
+// ── 3D BODY FORGE (Meshy text-to-3D) — PRO feature; needs MESHY_KEY on the server ──
+// POST creates the Meshy task (returns taskId); GET polls it (~1-3 min) and, on success,
+// downloads the GLB into public/assets/forge-models/ and returns its URL.
+const _meshyKey = () => process.env.MESHY_KEY || '';
+router.post('/3d', express.json({ limit: '64kb' }), async (req, res) => {
+  try {
+    const { name = '', color = '', skin = 'operative', tier = '', prompt: userPrompt = '' } = req.body || {};
+    if (!_meshyKey()) return res.status(503).json({ ok: false, error: 'MESHY_NOT_CONFIGURED', note: 'Set MESHY_KEY on the server to enable 3D body forging (paid Meshy API).' });
+    if (String(tier).toLowerCase() !== 'pro') return res.status(402).json({ ok: false, error: 'PRO_REQUIRED', note: 'Forging a 3D body from scratch is a Pro feature.' });
+    const clean = (s, n) => String(s == null ? '' : s).replace(/[^a-z0-9 _,#-]/gi, '').slice(0, n);
+    const p = clean(userPrompt, 300) || `${clean(skin, 24) || 'operative'} sci-fi operative character named ${clean(name, 24) || 'agent'}, ${clean(color, 16)} color scheme, full body, T-pose, game-ready, clean topology, single character, neon cyberpunk`;
+    const r = await fetch('https://api.meshy.ai/openapi/v2/text-to-3d', {
+      method: 'POST', headers: { Authorization: `Bearer ${_meshyKey()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'preview', prompt: p, art_style: 'realistic', should_remesh: true }),
+    });
+    if (r.status !== 202 && !r.ok) return res.status(502).json({ ok: false, error: 'meshy create ' + r.status });
+    const j = await r.json();
+    res.json({ ok: true, taskId: j.result, note: 'Generating your 3D body — poll GET /api/forge/3d/:taskId (~1-3 min).' });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
+router.get('/3d/:taskId', async (req, res) => {
+  try {
+    if (!_meshyKey()) return res.status(503).json({ ok: false, error: 'MESHY_NOT_CONFIGURED' });
+    const id = String(req.params.taskId).replace(/[^a-z0-9-]/gi, '').slice(0, 80);
+    const r = await fetch(`https://api.meshy.ai/openapi/v2/text-to-3d/${id}`, { headers: { Authorization: `Bearer ${_meshyKey()}` } });
+    const t = await r.json();
+    if (t.status === 'SUCCEEDED') {
+      const glbUrl = t.model_urls && t.model_urls.glb;
+      let saved = glbUrl || null;
+      if (glbUrl) {
+        try {
+          const g = await fetch(glbUrl); const buf = Buffer.from(await g.arrayBuffer());
+          const dir = path.join(__dirname, '..', '..', 'public', 'assets', 'forge-models');
+          fs.mkdirSync(dir, { recursive: true });
+          const file = `pixel-${id.slice(0, 12)}.glb`;
+          fs.writeFileSync(path.join(dir, file), buf);
+          saved = `/assets/forge-models/${file}`;
+        } catch (e) { /* keep remote url */ }
+      }
+      return res.json({ ok: true, status: 'SUCCEEDED', progress: 100, glb: saved, thumbnail: t.thumbnail_url || null });
+    }
+    if (t.status === 'FAILED') return res.json({ ok: false, status: 'FAILED', error: (t.task_error && t.task_error.message) || 'failed' });
+    res.json({ ok: true, status: t.status || 'PENDING', progress: t.progress || 0 });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
+
 module.exports = router;

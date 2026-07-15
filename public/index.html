@@ -54554,7 +54554,10 @@ window.hireAgentX402=async function(){
       buildCats(); renderTools();
     }).catch(function(){ allTools=FALLBACK_TOOLS.map(function(n){return {name:n,cat:catOf(n)};}); buildCats(); renderTools(); });
   }
-  window.openPixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else { buildCats(); renderTools(); } draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
+  window.openPixelForge=function(){
+    // Soft password gate (owner-set) — keeps the Pixel Forge private while it's in beta.
+    try{ if(sessionStorage.getItem('pxfUnlocked')!=='1'){ var pw=prompt('🔒 Pixel Forge — enter password:'); if(pw!=='ShaddaiForge'){ if(pw!==null&&typeof notify==='function')notify('Wrong password'); return; } sessionStorage.setItem('pxfUnlocked','1'); } }catch(e){}
+    var m=document.getElementById('pixelForgeModal'); if(!m)return; m.classList.add('on'); renderSwatches(); renderSkins(); if(!allTools.length)loadTools(); else { buildCats(); renderTools(); } draw(); var st=document.getElementById('pxfStatus'); if(st)st.textContent=''; };
   window.closePixelForge=function(){ var m=document.getElementById('pixelForgeModal'); if(m)m.classList.remove('on'); };
   function status(t,ok){ var st=document.getElementById('pxfStatus'); if(st){ st.textContent=t||''; st.style.color=ok?'#00ff88':'#8fefff'; } }
   window.pixelForgeCreate=async function(also3d){
