@@ -88,10 +88,11 @@ function projectPromo() {
     '🤖 The council: SHADDAI · ZEROX · ORACLE · NEXUS · TURTLE · QUILL · PIKADON\n' +
     '🌿 <b>Emerald Vine</b> — our open community lounge\n' +
     '⭐ <b>Star the GitHub to enter giveaways</b>\n\n' +
+    '⭐ Star: ' + _esc(gh) + '\n' +
     '🌐 ' + _esc(web) + '\n' +
     '𝕏 ' + _esc(x) + '  (@IzzoSol)\n' +
-    '⭐ ' + _esc(gh) + '\n' +
-    (lounge ? '🌿 ' + _esc(lounge) + '\n' : '') +
+    (lounge ? '🌿 Emerald Vine: ' + _esc(lounge) + '\n' : '') +
+    '💬 Contact: ' + _esc(process.env.SHADDAI_CONTACT || '@WithLoveWeWinAgain') + '\n' +
     '\n<i>Build your empire. This bot &amp; premium signals are part of it.</i>'
   );
 }
