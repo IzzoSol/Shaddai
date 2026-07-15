@@ -13,6 +13,8 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, 'data');
 const CHATS_FILE = path.join(DATA_DIR, 'tg-chats.json');
 const CFG_FILE = path.join(DATA_DIR, 'tg-config.json');
+const ALERTED_FILE = path.join(DATA_DIR, 'tg-alerted.json');
+const ALERT_TTL = 30 * 24 * 3600 * 1000;   // re-alert a coin at most once per 30 days
 const TG = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 
 function _ensure() { try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {} }
@@ -31,6 +33,22 @@ function addChat(chat) {
 }
 function removeChat(id) { const k = String(id); if (_chats[k]) { delete _chats[k]; _write(CHATS_FILE, _chats); } }
 function chats() { return Object.values(_chats); }
+
+// ── GLOBAL de-dupe: one alert per coin across ALL sources (persisted, TTL) ──
+let _alerted = _read(ALERTED_FILE, {});   // { mintLower: ts }
+function wasAlerted(mint) {
+  const k = String(mint == null ? '' : mint).toLowerCase(); if (!k) return false;
+  const ts = _alerted[k]; if (!ts) return false;
+  if (Date.now() - ts > ALERT_TTL) { delete _alerted[k]; return false; }
+  return true;
+}
+function markAlerted(mint) {
+  const k = String(mint == null ? '' : mint).toLowerCase(); if (!k) return;
+  _alerted[k] = Date.now();
+  const keys = Object.keys(_alerted);
+  if (keys.length > 8000) { keys.map(x => [x, _alerted[x]]).sort((a, b) => a[1] - b[1]).slice(0, 2000).forEach(([x]) => delete _alerted[x]); }
+  _write(ALERTED_FILE, _alerted);
+}
 
 // ── runtime config (dashboard-editable) ─────────────────────────────────────
 const _defaults = {
@@ -85,4 +103,4 @@ async function broadcast(html, opts) {
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, wasAlerted, markAlerted };
