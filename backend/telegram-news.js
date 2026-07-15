@@ -25,6 +25,7 @@ async function marketPulse() {
     const btcDom = g && g.market_cap_percentage && g.market_cap_percentage.btc;
     const line = (id, label) => (pR && pR[id]) ? `${label}: <b>$${Number(pR[id].usd).toLocaleString()}</b>  ${_pct(pR[id].usd_24h_change)}` : '';
     const trend = (tR && tR.coins || []).slice(0, 5).map(c => `${_esc(c.item.name)} ($${_esc(c.item.symbol)})`).join(' · ');
+    if (!mcap && !(pR && pR.bitcoin) && !trend) return null;   // CoinGecko blocked/empty (common on Render) — don't post an empty card
     return (
       `📊 <b>SHADDAI MARKET PULSE</b>\n\n` +
       (mcap ? `🌐 Total mcap: <b>${_usd(mcap)}</b>  ${_pct(mcapChg)}\n` : '') +
