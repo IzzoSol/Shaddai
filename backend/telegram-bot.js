@@ -56,12 +56,23 @@ function _help() {
   );
 }
 function _start(cfg) {
+  const web = process.env.SHADDAI_WEBSITE || 'https://shaddai-g81x.onrender.com';
+  const gh = process.env.SHADDAI_GITHUB || 'https://github.com/IzzoSol';
+  const x = process.env.SHADDAI_X || 'https://x.com/IzzoSol';
+  const lounge = process.env.SHADDAI_LOUNGE || 'https://t.me/EMERALDLOUNGE';
   return (
-    '⬡ <b>Welcome to SHADDAI</b> — your AI agent empire.\n\n' +
-    'I post live crypto signals and answer questions with real agents.\n' +
-    (cfg.channel ? `📡 Free signals: ${_esc(cfg.channel)}\n` : '') +
-    '🌐 Dashboard: https://shaddai-g81x.onrender.com\n\n' +
-    'Type /help for commands.'
+    '⬡ <b>Welcome to SHADDAI</b> — Sovereign AI Agents\n' +
+    '━━━━━━━━━━━━━━━\n' +
+    'Forge AI agents that <b>live, work &amp; earn</b> across a dashboard, a 2D pixel world and a 3D world — intelligence you <b>own</b>, on open rails (Solana · x402).\n\n' +
+    'This channel posts <b>live, rug-filtered crypto signals</b> — bonded launches, new pools & trending — each scored for safety (LP-lock, holders, top-holder %) with real <b>PNL tracking</b> (Xs, hit-rate, milestone wins). The bot also answers with real agents.\n\n' +
+    '🤖 The council: SHADDAI · ZEROX · ORACLE · NEXUS · TURTLE · QUILL · PIKADON\n\n' +
+    `📡 Free signals: ${_esc(cfg.channel || '@ShaddaiLabs')}\n` +
+    `🌿 Emerald Vine lounge: ${_esc(lounge)}\n` +
+    `⭐ Star the GitHub (giveaways): ${_esc(gh)}\n` +
+    `𝕏 ${_esc(x)}  (@IzzoSol)\n` +
+    `🌐 ${_esc(web)}\n\n` +
+    '<b>Try:</b> /price SOL · /bonded · /dist · /pnl · /rug &lt;mint&gt; · /zerox BTC\n' +
+    'Type /help for the full command list.'
   );
 }
 

@@ -14,25 +14,34 @@ function _pct(n) { const v = Number(n); if (!isFinite(v)) return ''; return (v >
 
 async function marketPulse() {
   try {
-    const [gR, pR, tR] = await Promise.all([
-      fetch(`${CG}/global`).then(r => r.json()).catch(() => null),
-      fetch(`${CG}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true`).then(r => r.json()).catch(() => null),
-      fetch(`${CG}/search/trending`).then(r => r.json()).catch(() => null),
-    ]);
-    const g = gR && gR.data;
-    const mcap = g && g.total_market_cap && g.total_market_cap.usd;
-    const mcapChg = g && g.market_cap_change_percentage_24h_usd;
-    const btcDom = g && g.market_cap_percentage && g.market_cap_percentage.btc;
-    const line = (id, label) => (pR && pR[id]) ? `${label}: <b>$${Number(pR[id].usd).toLocaleString()}</b>  ${_pct(pR[id].usd_24h_change)}` : '';
-    const trend = (tR && tR.coins || []).slice(0, 5).map(c => `${_esc(c.item.name)} ($${_esc(c.item.symbol)})`).join(' · ');
-    if (!mcap && !(pR && pR.bitcoin) && !trend) return null;   // CoinGecko blocked/empty (common on Render) — don't post an empty card
+    // Kraken ticker — US-cloud friendly (Binance geo-blocks US/Render IPs). price + 24h change.
+    const prices = {};
+    try {
+      const r = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD,SOLUSD');
+      if (r.ok) {
+        const res = (await r.json()).result || {};
+        const kr = (...keys) => { for (const k of keys) if (res[k]) return res[k]; return null; };
+        const mk = (t) => { if (!t) return null; const last = Number(t.c[0]), open = Number(t.o); return { p: last, c: open ? ((last - open) / open * 100) : 0 }; };
+        prices.BTCUSDT = mk(kr('XXBTZUSD', 'XBTUSD'));
+        prices.ETHUSDT = mk(kr('XETHZUSD', 'ETHUSD'));
+        prices.SOLUSDT = mk(kr('SOLUSD'));
+        Object.keys(prices).forEach(k => { if (!prices[k]) delete prices[k]; });
+      }
+    } catch (e) {}
+    // CoinGecko global mcap + BTC dominance — best-effort (may be blocked on Render → omitted).
+    let mcap, mcapChg, btcDom;
+    try { const g = (await (await fetch(`${CG}/global`)).json()).data; mcap = g.total_market_cap && g.total_market_cap.usd; mcapChg = g.market_cap_change_percentage_24h_usd; btcDom = g.market_cap_percentage && g.market_cap_percentage.btc; } catch (e) {}
+    const line = (s, label) => prices[s] ? `${label}: <b>$${prices[s].p.toLocaleString(undefined, { maximumFractionDigits: prices[s].p < 10 ? 2 : 0 })}</b>  ${_pct(prices[s].c)}` : '';
+    const coins = [line('BTCUSDT', '₿ BTC'), line('ETHUSDT', 'Ξ ETH'), line('SOLUSDT', '◎ SOL')].filter(Boolean);
+    if (!coins.length && !mcap) return null;   // nothing to show — don't post an empty card
     return (
-      `📊 <b>SHADDAI MARKET PULSE</b>\n\n` +
+      `📊 <b>SHADDAI MARKET PULSE</b>\n` +
+      `━━━━━━━━━━━━━\n` +
       (mcap ? `🌐 Total mcap: <b>${_usd(mcap)}</b>  ${_pct(mcapChg)}\n` : '') +
       (btcDom ? `👑 BTC dominance: <b>${btcDom.toFixed(1)}%</b>\n` : '') +
-      `\n${line('bitcoin', '₿ BTC')}\n${line('ethereum', 'Ξ ETH')}\n${line('solana', '◎ SOL')}\n` +
-      (trend ? `\n🔥 Trending: ${trend}\n` : '') +
-      `\n<i>Not financial advice. DYOR.</i>`
+      (mcap || btcDom ? '\n' : '') +
+      coins.join('\n') +
+      `\n\n<i>NFA · DYOR</i>`
     );
   } catch (e) { return null; }
 }
