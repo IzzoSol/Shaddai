@@ -155,7 +155,64 @@ function pnlCaption(period) {
   );
 }
 
-let _timer = null;
+// /pnl <token> — a card for one specific tracked call
+function pnlForToken(q) {
+  _now = Date.now();
+  const s = String(q || '').toLowerCase().replace(/^\$/, '').trim(); if (!s) return null;
+  const c = _state.calls.find(x => (x.symbol || '').toLowerCase() === s || (x.name || '').toLowerCase() === s || (x.mint || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
+  if (!c) return null;
+  const ch = core.channel() || '@ShaddaiLabs';
+  const realMint = c.mint && !String(c.mint).startsWith('seed-');
+  return (
+    `📊 <b>PNL — $${_esc(c.symbol || c.name || '?')}</b>\n\n` +
+    `Entry: <b>${_usd(c.entryFdv)}</b>\nNow: <b>${_usd(c.curFdv || c.entryFdv)}</b>\n` +
+    `Peak: <b>${c.peakMult.toFixed(1)}x</b>  ·  Current: <b>${(c.curMult || 1).toFixed(1)}x</b>\n` +
+    `Called: ${_ago(c.ts)} ago\n` +
+    (realMint ? `📋 CA: <code>${_esc(c.mint)}</code>\n` : '') +
+    `\n📡 ${_esc(ch)}  ·  <i>Not financial advice.</i>`
+  );
+}
+
+// hourly PERFORMANCE distribution: 1-2x / 2-5x / 5-10x / 10x+ + top performers
+function distribution() {
+  _now = Date.now();
+  const rows = _state.calls;
+  const total = rows.length;
+  const inB = (lo, hi) => rows.filter(c => c.peakMult >= lo && (hi ? c.peakMult < hi : true)).length;
+  const b12 = inB(1, 2), b25 = inB(2, 5), b510 = inB(5, 10), b10 = inB(10, 0);
+  const hits = b25 + b510 + b10;
+  const hitRate = total ? Math.round((hits / total) * 100) : 0;
+  const avg = total ? (rows.reduce((s, c) => s + c.peakMult, 0) / total) : 0;
+  const top = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
+  const ch = core.channel() || '@ShaddaiLabs';
+  const topTxt = top.length ? top.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n') : '• (tracking…)';
+  return (
+    `📊 <b>SHADDAI PERFORMANCE</b> · ${_esc(ch)}\n\n` +
+    `<b>Distribution</b> (${total} calls)\n` +
+    `🟡 1–2x: <b>${b12}</b>\n🟢 2–5x: <b>${b25}</b>\n🔥 5–10x: <b>${b510}</b>\n🚀 10x+: <b>${b10}</b>\n\n` +
+    `✅ Hit rate (2x+): <b>${hitRate}%</b>  ·  Avg peak: <b>${avg.toFixed(1)}x</b>\n\n` +
+    `🏆 <b>Top performers</b>\n${topTxt}\n\n` +
+    `📡 ${_esc(ch)}  ·  <i>Not financial advice. DYOR.</i>`
+  );
+}
+
+// manually add a (historical) winning call — locked/closed so it isn't re-priced
+function seedCall(o) {
+  _now = Date.now();
+  const peak = Number(o.peakMult) || 1;
+  const entry = Number(o.entryFdv || o.entryMcap) || 20000;
+  _state.calls.push({
+    mint: o.mint || ('seed-' + (o.symbol || 'x') + '-' + _state.calls.length), chain: o.chain || 'solana',
+    name: o.name || o.symbol || '', symbol: o.symbol || o.name || '', source: 'seed',
+    entryFdv: entry, entryPrice: 0, ts: _now - (Number(o.daysAgo) || 1) * 24 * 3600 * 1000,
+    peakMult: peak, curMult: peak, curFdv: entry * peak, milestones: [], closed: true,
+  });
+  _write(_state);
+  return true;
+}
+
+let _timer = null, _digestTimer = null;
 function startTracker() {
   if (!core.token()) { console.log('[tg-pnl] disabled (no token).'); return; }
   if (_timer) return;
@@ -163,8 +220,16 @@ function startTracker() {
   setTimeout(() => { trackTick().catch(() => {}); }, 12000);
   _timer = setInterval(() => { trackTick().catch(() => {}); }, 8 * 60000);   // every 8 min
   if (_timer.unref) _timer.unref();
+  // hourly performance distribution digest (with a polished image)
+  let lastD = Date.now();
+  _digestTimer = setInterval(() => {
+    const cfg = core.getConfig(); if (cfg.digest === false) return;
+    const everyMs = Math.max(30, cfg.digestIntervalMin || 60) * 60000;
+    if (Date.now() - lastD >= everyMs) { lastD = Date.now(); const img = _pnlImage(); const cap = distribution(); (img ? core.broadcastPhoto(img, cap) : core.broadcast(cap)).catch(() => {}); }
+  }, 60000);
+  if (_digestTimer.unref) _digestTimer.unref();
 }
 
 function resetCalls() { _state = { calls: [] }; _write(_state); }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall };

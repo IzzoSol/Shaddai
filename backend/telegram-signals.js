@@ -123,12 +123,14 @@ function _signalCard(chain, pair) {
   const vol = _fmtUsd(pair.volume && pair.volume.h24);
   const ch = pair.priceChange && pair.priceChange.h24 != null ? (Number(pair.priceChange.h24) >= 0 ? '🟢 +' : '🔴 ') + Number(pair.priceChange.h24).toFixed(1) + '%' : '';
   const url = _esc(pair.url || '');
+  const ca = _esc((pair.baseToken && pair.baseToken.address) || '');
   return (
     `${mood ? mood + '  ' : ''}⚡ <b>SHADDAI SIGNAL</b> · ${_esc(chain.toUpperCase())}\n` +
     `<b>${name}</b> ($${sym})  ${ch}\n` +
     `💵 Price: <b>${_esc(price)}</b>\n` +
     `💧 Liq: <b>${liq}</b>   📊 24h Vol: <b>${vol}</b>\n` +
     (url ? `🔗 <a href="${url}">Chart on DexScreener</a>\n` : '') +
+    (ca ? `📋 CA: <code>${ca}</code>\n` : '') +
     `\n<i>Not financial advice. DYOR.</i>`
   );
 }
@@ -230,7 +232,7 @@ const GT = (net, kind, page) => `https://api.geckoterminal.com/api/v2/networks/$
 const _seenPool = new Set();
 let _poolSeeded = false;
 
-function _poolCard(net, kind, a) {
+function _poolCard(net, kind, a, addr) {
   const name = _esc(a.name || 'Pool');
   const price = a.base_token_price_usd ? '$' + Number(a.base_token_price_usd).toPrecision(4) : 'n/a';
   const liq = _fmtUsd(a.reserve_in_usd);
@@ -243,6 +245,7 @@ function _poolCard(net, kind, a) {
     `${mood ? mood + '  ' : ''}${tag} · ${_esc(net.toUpperCase())}\n<b>${name}</b>\n` +
     `💵 <b>${_esc(price)}</b>\n💧 Liq: <b>${liq}</b>  📊 24h: <b>${vol}</b>` + (fdv ? `  🏷 FDV: <b>${fdv}</b>` : '') + `\n` +
     (url ? `🔗 <a href="${_esc(url)}">GeckoTerminal</a>\n` : '') +
+    (addr ? `📋 CA: <code>${_esc(addr)}</code>\n` : '') +
     `\n<i>Not financial advice. Rug-check first.</i>`
   );
 }
@@ -270,7 +273,7 @@ async function _pollGecko() {
         const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
         if (_taddr && core.wasAlerted(_taddr)) continue;   // GLOBAL de-dupe — already called on another feed
         if (_poolSeeded) {
-          let card = _poolCard(net, kind, a);
+          let card = _poolCard(net, kind, a, _taddr);
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) { const rc = await _rugCheck(mint); if (rc.risky) continue; if (rc.label) card += '\n' + rc.label; } }
           const ok = (await core.broadcast(card)) > 0;
           if (ok) { if (_taddr) core.markAlerted(_taddr); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }

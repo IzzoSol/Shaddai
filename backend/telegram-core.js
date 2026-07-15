@@ -64,6 +64,8 @@ const _defaults = {
   headlinesIntervalMin: 45,
   promo: true,            // periodic SHADDAI project promo (bio, GitHub star-for-giveaway, socials)
   promoIntervalMin: 240,  // every 4h
+  digest: true,           // hourly performance distribution (1-2x/2-5x/5-10x/10x+ + top performers)
+  digestIntervalMin: 60,
   // filter parameters (apply across the DEX sources)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
   minLiq: 8000,           // min pair/pool liquidity USD

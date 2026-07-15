@@ -47,7 +47,8 @@ function _help() {
     '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis + sentiment\n' +
     '/news — live market pulse (mcap, BTC/ETH/SOL, trending)\n' +
     '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
-    '/pnl — PNL card (best calls + a polished image)\n' +
+    '/pnl <code>[token]</code> — PNL card (all calls, or one token) + image\n' +
+    '/dist — performance distribution (1-2x / 2-5x / 5-10x / 10x+)\n' +
     '/signals — the free live signals channel\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
@@ -144,7 +145,13 @@ async function _handle(cfg, update) {
     case 'zerox': case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
     case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable right now.'); }
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
-    case 'pnl': { const img = _pnl.pnlImage(); const cap = _pnl.pnlCaption(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
+    case 'pnl': {
+      let cap;
+      if (arg) { cap = _pnl.pnlForToken(arg); if (!cap) return _send(t, chatId, 'No tracked call found for <b>' + _esc(arg) + '</b>. Try /pnl for the full scoreboard.'); }
+      else cap = _pnl.pnlCaption();
+      const img = _pnl.pnlImage(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap);
+    }
+    case 'dist': case 'distribution': case 'performance': { const cap = _pnl.distribution(); const img = _pnl.pnlImage(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'about': case 'project': case 'info': return _send(t, chatId, require('./telegram-news').projectPromo());
@@ -173,7 +180,8 @@ async function _registerCommands(token) {
         { command: 'zerox', description: 'ZEROX market analysis + sentiment' },
         { command: 'news', description: 'Live market pulse' },
         { command: 'stats', description: 'Hit-rate + best calls scorecard' },
-        { command: 'pnl', description: 'PNL card + polished image' },
+        { command: 'pnl', description: 'PNL card (all or one token)' },
+        { command: 'dist', description: 'Performance distribution + top' },
         { command: 'signals', description: 'Free live signals channel' },
         { command: 'agents', description: 'What is SHADDAI' },
         { command: 'about', description: 'The SHADDAI project + links' },
