@@ -54939,6 +54939,7 @@ window.hireAgentX402=async function(){
 <div id="axiomModal" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeAxiom()">
   <div class="ax-card">
     <button class="ax-x" onclick="window.closeAxiom()">×</button>
+    <img id="axiomBanner" alt="" style="width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:14px;display:block;border:1px solid rgba(0,229,160,.25)" onerror="this.style.display='none'">
     <h2>⚡ Unlock the Axiom Edge</h2>
     <p class="ax-sub">Trade like the sharks. If you're on <b>Phantom</b>, Axiom bolts a pro trading layer on top — <b>stop-losses</b>, advanced order tools, and <b>wallet tracking</b> so you can copy the winners and dodge the dev wallets, KOLs & known bad actors.</p>
     <a class="ax-link" href="https://axiom.trade/@emeraldog" target="_blank" rel="noopener">🔗 axiom.trade/@emeraldog</a>
@@ -54966,7 +54967,7 @@ window.hireAgentX402=async function(){
 </div>
 <script>
 (function(){
-  window.openAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.add('on'); };
+  window.openAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.add('on'); var b=document.getElementById('axiomBanner'); if(b)b.src='/assets/bot/img-'+(1+Math.floor(Math.random()*10))+'.png'; };
   window.closeAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.remove('on'); try{localStorage.setItem('axiomSeen','1');}catch(e){} };
   // auto-show once per browser (dismiss = never auto-again; reopen via window.openAxiom)
   setTimeout(function(){ try{ if(!localStorage.getItem('axiomSeen')) window.openAxiom(); }catch(e){} }, 9000);

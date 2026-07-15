@@ -147,7 +147,7 @@ async function _handle(cfg, update) {
   if (!m) { return; }   // ignore non-commands (avoid spamming groups)
   const cmd = m[1].toLowerCase(); const arg = (m[2] || '').trim(); const t = cfg.token;
   switch (cmd) {
-    case 'start': return _send(t, chatId, _start(cfg));
+    case 'start': { const img = require('./telegram-news')._botImage(); const cap = _start(cfg); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
     case 'help': return _send(t, chatId, _help());
     case 'price': case 'p': return _price(t, chatId, arg);
     case 'bonded': case 'bonds': return _bonded(t, chatId);
@@ -166,8 +166,10 @@ async function _handle(cfg, update) {
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}\nBonded tokens, trending pairs & more.` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'about': case 'project': case 'info': { const news = require('./telegram-news'); const img = news._botImage(); const cap = news.projectPromo(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
-    case 'axiom': case 'trade': return _send(t, chatId,
-      '⚡ <b>Unlock the Axiom Edge</b>\n\nOn Phantom? Axiom adds a pro trading layer — stop-losses, advanced orders, and wallet tracking to copy winners &amp; dodge dev wallets/KOLs.\n\n🔗 <a href="https://axiom.trade/@emeraldog">axiom.trade/@emeraldog</a>\n<i>(Rewards go to users who actively trade.)</i>\n\n🎁 Star our GitHub, follow @IzzoSol, and trade via the link → DM for <b>1 week Premium free</b>.');
+    case 'axiom': case 'trade': {
+      const cap = '⚡ <b>Unlock the Axiom Edge</b>\n\nOn Phantom? Axiom adds a pro trading layer — stop-losses, advanced orders, and wallet tracking to copy winners &amp; dodge dev wallets/KOLs.\n\n🔗 <a href="https://axiom.trade/@emeraldog">axiom.trade/@emeraldog</a>\n<i>(Rewards go to users who actively trade.)</i>\n\n🎁 Star our GitHub, follow @IzzoSol, and trade via the link → DM for <b>1 week Premium free</b>.';
+      const img = require('./telegram-news')._botImage(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap);
+    }
     case 'gm': return _send(t, chatId, 'gm ☀️ — go forge something.');
     default: return _send(t, chatId, 'Unknown command. Try /help');
   }
