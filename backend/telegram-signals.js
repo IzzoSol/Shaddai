@@ -79,6 +79,12 @@ function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; r
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
 // top10 concentration gate — must be under the max
 function _top10Ok(cfg, rs) { return !(rs && rs.checked && rs.top10Pct && cfg.maxTop10Pct && rs.top10Pct > cfg.maxTop10Pct); }
+// locked LP gate — LP must be ≥50% locked
+function _lpLockedOk(cfg, rs) {
+  if (!cfg.requireLocked) return true;
+  if (!rs || !rs.checked) return true;   // no data = pass (rugCheck stage will catch it)
+  return rs.lp >= 50;
+}
 // sniper/bundler gate — reject if snipers/bundlers detected and required to be clean
 function _snipersOk(cfg, rs) {
   if (!rs || !rs.checked) return true;  // fail-open if no data
@@ -191,8 +197,9 @@ async function _socialScore(pumpData, mint) {
         const m = (j.markets || [])[0];
         const lp = m && m.lp;
         const lockedPct = Number((lp && (lp.lpLockedPct != null ? lp.lpLockedPct : lp.lpLocked)) || 0);
-        if (lockedPct >= 99) { has.locked = true; score += 2; }
-        else if (lockedPct >= 50) { score += 1; }
+        if (lockedPct >= 50) { has.locked = true; score += 2; }
+        else if (lockedPct >= 25) { score += 1; }
+        has.lockedPct = lockedPct;
       }
     } catch (e) {}
   }
@@ -319,6 +326,7 @@ async function _pollOnce() {
     if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
     if (!_top10Ok(cfg, rs)) { _seen.add(addr); continue; }     // top10 concentration
+    if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP must be locked ≥50%
     if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
@@ -381,6 +389,7 @@ async function _pollBonded() {
         if (rs.checked && rs.score < cfg.rugMinScore) continue;
         if (!_holdersOk(cfg, rs)) continue;
         if (!_top10Ok(cfg, rs)) continue;
+        if (!_lpLockedOk(cfg, rs)) continue;
         if (!_snipersOk(cfg, rs)) continue;
         if (rs.label) card += '\n' + rs.label;
       }
@@ -456,6 +465,7 @@ async function _pollGecko() {
           if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
           if (!_holdersOk(cfg, rs)) continue;                            // must have holders
           if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
+          if (!_lpLockedOk(cfg, rs)) continue;                           // LP must be locked ≥50%
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety

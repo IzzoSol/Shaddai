@@ -1,0 +1,1151 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@metaplex-foundation/umi-bundle-defaults": {
+      "name": "@metaplex-foundation/umi-bundle-defaults",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@metaplex-foundation/umi-eddsa-web3js",
+        "@metaplex-foundation/umi-rpc-web3js",
+        "@metaplex-foundation/umi-transaction-factory-web3js",
+        "@solana/web3.js"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@metaplex-foundation/umi-bundle-defaults"
+      ],
+      "fixAvailable": false
+    },
+    "@metaplex-foundation/umi-eddsa-web3js": {
+      "name": "@metaplex-foundation/umi-eddsa-web3js",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@metaplex-foundation/umi-web3js-adapters",
+        "@solana/web3.js"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@metaplex-foundation/umi-eddsa-web3js"
+      ],
+      "fixAvailable": true
+    },
+    "@metaplex-foundation/umi-rpc-web3js": {
+      "name": "@metaplex-foundation/umi-rpc-web3js",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@metaplex-foundation/umi-web3js-adapters",
+        "@solana/web3.js"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@metaplex-foundation/umi-rpc-web3js"
+      ],
+      "fixAvailable": true
+    },
+    "@metaplex-foundation/umi-transaction-factory-web3js": {
+      "name": "@metaplex-foundation/umi-transaction-factory-web3js",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@metaplex-foundation/umi-web3js-adapters",
+        "@solana/web3.js"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@metaplex-foundation/umi-transaction-factory-web3js"
+      ],
+      "fixAvailable": true
+    },
+    "@metaplex-foundation/umi-web3js-adapters": {
+      "name": "@metaplex-foundation/umi-web3js-adapters",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@solana/web3.js"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@metaplex-foundation/umi-web3js-adapters"
+      ],
+      "fixAvailable": true
+    },
+    "@newrelic/native-metrics": {
+      "name": "@newrelic/native-metrics",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "node-gyp"
+      ],
+      "effects": [],
+      "range": "10.1.1 - 10.2.0",
+      "nodes": [
+        "node_modules/@newrelic/native-metrics"
+      ],
+      "fixAvailable": true
+    },
+    "@newrelic/security-agent": {
+      "name": "@newrelic/security-agent",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "uuid"
+      ],
+      "effects": [
+        "newrelic"
+      ],
+      "range": "<=3.0.3",
+      "nodes": [
+        "node_modules/@newrelic/security-agent"
+      ],
+      "fixAvailable": {
+        "name": "newrelic",
+        "version": "14.2.1",
+        "isSemVerMajor": true
+      }
+    },
+    "@ngneat/falso": {
+      "name": "@ngneat/falso",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "uuid"
+      ],
+      "effects": [
+        "artillery-plugin-fake-data"
+      ],
+      "range": ">=2.0.0-beta.0",
+      "nodes": [
+        "node_modules/@ngneat/falso"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/core": {
+      "name": "@opentelemetry/core",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1120821,
+          "name": "@opentelemetry/core",
+          "dependency": "@opentelemetry/core",
+          "title": "OpenTelemetry Core: Unbounded memory allocation in W3C Baggage propagation",
+          "url": "https://github.com/advisories/GHSA-8988-4f7v-96qf",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<2.8.0"
+        }
+      ],
+      "effects": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/exporter-metrics-otlp-proto",
+        "@opentelemetry/exporter-trace-otlp-grpc",
+        "@opentelemetry/exporter-trace-otlp-http",
+        "@opentelemetry/exporter-trace-otlp-proto",
+        "@opentelemetry/exporter-zipkin",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-grpc-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-logs",
+        "@opentelemetry/sdk-metrics",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "range": "<2.8.0",
+      "nodes": [
+        "node_modules/@opentelemetry/core"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-metrics-otlp-grpc": {
+      "name": "@opentelemetry/exporter-metrics-otlp-grpc",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-grpc-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-metrics"
+      ],
+      "effects": [],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-metrics-otlp-grpc"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-metrics-otlp-http": {
+      "name": "@opentelemetry/exporter-metrics-otlp-http",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-metrics"
+      ],
+      "effects": [],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-metrics-otlp-http"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-metrics-otlp-proto": {
+      "name": "@opentelemetry/exporter-metrics-otlp-proto",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-metrics"
+      ],
+      "effects": [],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-metrics-otlp-proto"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-trace-otlp-grpc": {
+      "name": "@opentelemetry/exporter-trace-otlp-grpc",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-grpc-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [
+        "artillery-plugin-publish-metrics"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-trace-otlp-grpc"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-trace-otlp-http": {
+      "name": "@opentelemetry/exporter-trace-otlp-http",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [
+        "artillery-plugin-publish-metrics"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-trace-otlp-http"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-trace-otlp-proto": {
+      "name": "@opentelemetry/exporter-trace-otlp-proto",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-transformer",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-trace-otlp-proto"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/exporter-zipkin": {
+      "name": "@opentelemetry/exporter-zipkin",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [],
+      "range": "<=2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/exporter-zipkin"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/otlp-exporter-base": {
+      "name": "@opentelemetry/otlp-exporter-base",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-transformer"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/exporter-metrics-otlp-proto",
+        "@opentelemetry/exporter-trace-otlp-grpc",
+        "@opentelemetry/exporter-trace-otlp-http",
+        "@opentelemetry/exporter-trace-otlp-proto"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/otlp-exporter-base"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/otlp-grpc-exporter-base": {
+      "name": "@opentelemetry/otlp-grpc-exporter-base",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-transformer"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-trace-otlp-grpc"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/otlp-grpc-exporter-base"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/otlp-transformer": {
+      "name": "@opentelemetry/otlp-transformer",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-logs",
+        "@opentelemetry/sdk-metrics",
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/exporter-metrics-otlp-proto",
+        "@opentelemetry/exporter-trace-otlp-grpc",
+        "@opentelemetry/exporter-trace-otlp-http",
+        "@opentelemetry/exporter-trace-otlp-proto",
+        "@opentelemetry/otlp-exporter-base",
+        "@opentelemetry/otlp-grpc-exporter-base"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/otlp-transformer"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/resources": {
+      "name": "@opentelemetry/resources",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-zipkin"
+      ],
+      "range": "0.8.0 - 2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/resources"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/sdk-logs": {
+      "name": "@opentelemetry/sdk-logs",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources"
+      ],
+      "effects": [
+        "@opentelemetry/otlp-transformer"
+      ],
+      "range": "<=0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/sdk-logs"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/sdk-metrics": {
+      "name": "@opentelemetry/sdk-metrics",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/exporter-metrics-otlp-proto",
+        "@opentelemetry/otlp-transformer"
+      ],
+      "range": "<=2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/sdk-metrics"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/sdk-trace-base": {
+      "name": "@opentelemetry/sdk-trace-base",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources"
+      ],
+      "effects": [
+        "@opentelemetry/exporter-zipkin"
+      ],
+      "range": "<=2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/sdk-trace-base"
+      ],
+      "fixAvailable": true
+    },
+    "@solana/web3.js": {
+      "name": "@solana/web3.js",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "jayson"
+      ],
+      "effects": [
+        "@metaplex-foundation/umi-bundle-defaults",
+        "@metaplex-foundation/umi-eddsa-web3js",
+        "@metaplex-foundation/umi-rpc-web3js",
+        "@metaplex-foundation/umi-transaction-factory-web3js",
+        "@metaplex-foundation/umi-web3js-adapters"
+      ],
+      "range": "<=0.0.0-pr-29130 || 0.0.4 - 1.98.4",
+      "nodes": [
+        "node_modules/@solana/web3.js"
+      ],
+      "fixAvailable": false
+    },
+    "artillery": {
+      "name": "artillery",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "artillery-plugin-fake-data",
+        "artillery-plugin-publish-metrics"
+      ],
+      "effects": [],
+      "range": ">=2.0.0-0",
+      "nodes": [
+        "node_modules/artillery"
+      ],
+      "fixAvailable": true
+    },
+    "artillery-plugin-fake-data": {
+      "name": "artillery-plugin-fake-data",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@ngneat/falso"
+      ],
+      "effects": [
+        "artillery"
+      ],
+      "range": "<=1.23.0",
+      "nodes": [
+        "node_modules/artillery-plugin-fake-data"
+      ],
+      "fixAvailable": true
+    },
+    "artillery-plugin-publish-metrics": {
+      "name": "artillery-plugin-publish-metrics",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/exporter-metrics-otlp-grpc",
+        "@opentelemetry/exporter-metrics-otlp-http",
+        "@opentelemetry/exporter-metrics-otlp-proto",
+        "@opentelemetry/exporter-trace-otlp-grpc",
+        "@opentelemetry/exporter-trace-otlp-http",
+        "@opentelemetry/exporter-trace-otlp-proto"
+      ],
+      "effects": [
+        "artillery"
+      ],
+      "range": ">=2.7.0-8697334",
+      "nodes": [
+        "node_modules/artillery-plugin-publish-metrics"
+      ],
+      "fixAvailable": true
+    },
+    "cacache": {
+      "name": "cacache",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "tar"
+      ],
+      "effects": [
+        "make-fetch-happen"
+      ],
+      "range": "14.0.0 - 18.0.4",
+      "nodes": [
+        "node_modules/cacache"
+      ],
+      "fixAvailable": true
+    },
+    "engine.io-client": {
+      "name": "engine.io-client",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "ws"
+      ],
+      "effects": [],
+      "range": "0.7.0 || 0.7.8 - 0.7.9 || 6.0.0 - 6.6.5",
+      "nodes": [
+        "node_modules/engine.io-client"
+      ],
+      "fixAvailable": true
+    },
+    "form-data": {
+      "name": "form-data",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1120743,
+          "name": "form-data",
+          "dependency": "form-data",
+          "title": "form-data: CRLF injection in form-data via unescaped multipart field names and filenames",
+          "url": "https://github.com/advisories/GHSA-hmw2-7cc7-3qxx",
+          "severity": "high",
+          "cwe": [
+            "CWE-93"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": ">=4.0.0 <4.0.6"
+        },
+        {
+          "source": 1120745,
+          "name": "form-data",
+          "dependency": "form-data",
+          "title": "form-data: CRLF injection in form-data via unescaped multipart field names and filenames",
+          "url": "https://github.com/advisories/GHSA-hmw2-7cc7-3qxx",
+          "severity": "high",
+          "cwe": [
+            "CWE-93"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": "<2.5.6"
+        }
+      ],
+      "effects": [],
+      "range": ">=4.0.0 <4.0.6 || <2.5.6",
+      "nodes": [
+        "node_modules/form-data",
+        "node_modules/then-request/node_modules/form-data"
+      ],
+      "fixAvailable": true
+    },
+    "jayson": {
+      "name": "jayson",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "uuid"
+      ],
+      "effects": [
+        "@solana/web3.js"
+      ],
+      "range": ">=2.0.6",
+      "nodes": [
+        "node_modules/jayson"
+      ],
+      "fixAvailable": false
+    },
+    "joi": {
+      "name": "joi",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1120656,
+          "name": "joi",
+          "dependency": "joi",
+          "title": "joi has an uncaught RangeError on deeply nested input through recursive `link()` schemas",
+          "url": "https://github.com/advisories/GHSA-q7cg-457f-vx79",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-248",
+            "CWE-400"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<17.13.4"
+        }
+      ],
+      "effects": [],
+      "range": "<17.13.4",
+      "nodes": [
+        "node_modules/joi"
+      ],
+      "fixAvailable": true
+    },
+    "js-yaml": {
+      "name": "js-yaml",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1121859,
+          "name": "js-yaml",
+          "dependency": "js-yaml",
+          "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases",
+          "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-407"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<3.15.0"
+        },
+        {
+          "source": 1121860,
+          "name": "js-yaml",
+          "dependency": "js-yaml",
+          "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases",
+          "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-407"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=4.0.0 <=4.1.1"
+        }
+      ],
+      "effects": [
+        "pm2"
+      ],
+      "range": "<=3.14.2 || 4.0.0 - 4.1.1",
+      "nodes": [
+        "node_modules/js-yaml",
+        "node_modules/pm2/node_modules/js-yaml"
+      ],
+      "fixAvailable": {
+        "name": "pm2",
+        "version": "7.0.3",
+        "isSemVerMajor": true
+      }
+    },
+    "make-fetch-happen": {
+      "name": "make-fetch-happen",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "cacache"
+      ],
+      "effects": [
+        "node-gyp"
+      ],
+      "range": "7.1.1 - 14.0.0",
+      "nodes": [
+        "node_modules/make-fetch-happen"
+      ],
+      "fixAvailable": true
+    },
+    "newrelic": {
+      "name": "newrelic",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@newrelic/security-agent"
+      ],
+      "effects": [],
+      "range": "10.3.0 - 13.8.1",
+      "nodes": [
+        "node_modules/newrelic"
+      ],
+      "fixAvailable": {
+        "name": "newrelic",
+        "version": "14.2.1",
+        "isSemVerMajor": true
+      }
+    },
+    "node-gyp": {
+      "name": "node-gyp",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "make-fetch-happen",
+        "tar"
+      ],
+      "effects": [
+        "@newrelic/native-metrics"
+      ],
+      "range": "<=10.3.1",
+      "nodes": [
+        "node_modules/node-gyp"
+      ],
+      "fixAvailable": true
+    },
+    "pm2": {
+      "name": "pm2",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1119406,
+          "name": "pm2",
+          "dependency": "pm2",
+          "title": "pm2 Regular Expression Denial of Service vulnerability",
+          "url": "https://github.com/advisories/GHSA-x5gf-qvw8-r2rm",
+          "severity": "low",
+          "cwe": [
+            "CWE-400",
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 4.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<7.0.0"
+        },
+        "js-yaml"
+      ],
+      "effects": [],
+      "range": "<=7.0.1",
+      "nodes": [
+        "node_modules/pm2"
+      ],
+      "fixAvailable": {
+        "name": "pm2",
+        "version": "7.0.3",
+        "isSemVerMajor": true
+      }
+    },
+    "protobufjs": {
+      "name": "protobufjs",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1120742,
+          "name": "protobufjs",
+          "dependency": "protobufjs",
+          "title": "protobufjs : Schema-derived names can shadow runtime-significant properties",
+          "url": "https://github.com/advisories/GHSA-f38q-mgvj-vph7",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-674",
+            "CWE-754"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<=7.6.2"
+        }
+      ],
+      "effects": [],
+      "range": "<=7.6.2",
+      "nodes": [
+        "node_modules/protobufjs"
+      ],
+      "fixAvailable": true
+    },
+    "tar": {
+      "name": "tar",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1112659,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "node-tar Vulnerable to Arbitrary File Creation/Overwrite via Hardlink Path Traversal",
+          "url": "https://github.com/advisories/GHSA-34x7-hfp2-rc4v",
+          "severity": "high",
+          "cwe": [
+            "CWE-22",
+            "CWE-59"
+          ],
+          "cvss": {
+            "score": 8.2,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:L/A:N"
+          },
+          "range": "<7.5.7"
+        },
+        {
+          "source": 1113300,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "node-tar is Vulnerable to Arbitrary File Overwrite and Symlink Poisoning via Insufficient Path Sanitization",
+          "url": "https://github.com/advisories/GHSA-8qq5-rm4j-mr97",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=7.5.2"
+        },
+        {
+          "source": 1113375,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction",
+          "url": "https://github.com/advisories/GHSA-83g3-92jg-28cx",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 7.1,
+            "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+          },
+          "range": "<7.5.8"
+        },
+        {
+          "source": 1114200,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "tar has Hardlink Path Traversal via Drive-Relative Linkpath",
+          "url": "https://github.com/advisories/GHSA-qffp-2rhf-9h96",
+          "severity": "high",
+          "cwe": [
+            "CWE-22",
+            "CWE-59"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=7.5.9"
+        },
+        {
+          "source": 1114302,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "node-tar Symlink Path Traversal via Drive-Relative Linkpath",
+          "url": "https://github.com/advisories/GHSA-9ppj-qmqm-q256",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=7.5.10"
+        },
+        {
+          "source": 1114680,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS",
+          "url": "https://github.com/advisories/GHSA-r6q2-hw4h-h46w",
+          "severity": "high",
+          "cwe": [
+            "CWE-176",
+            "CWE-367"
+          ],
+          "cvss": {
+            "score": 8.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:H/A:L"
+          },
+          "range": "<=7.5.3"
+        },
+        {
+          "source": 1120782,
+          "name": "tar",
+          "dependency": "tar",
+          "title": "node-tar applies PAX size override to intermediary GNU long-name/long-link headers, causing tar parser interpretation differential (file smuggling)",
+          "url": "https://github.com/advisories/GHSA-vmf3-w455-68vh",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-436"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=7.5.15"
+        }
+      ],
+      "effects": [
+        "cacache",
+        "node-gyp"
+      ],
+      "range": "<=7.5.15",
+      "nodes": [
+        "node_modules/tar"
+      ],
+      "fixAvailable": true
+    },
+    "undici": {
+      "name": "undici",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1121187,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to TLS certificate validation bypass via dropped requestTls in SOCKS5 ProxyAgent",
+          "url": "https://github.com/advisories/GHSA-vmh5-mc38-953g",
+          "severity": "high",
+          "cwe": [
+            "CWE-295"
+          ],
+          "cvss": {
+            "score": 7.4,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          "range": ">=7.23.0 <7.28.0"
+        },
+        {
+          "source": 1121241,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to HTTP header injection via Set-Cookie percent-decoding",
+          "url": "https://github.com/advisories/GHSA-p88m-4jfj-68fv",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-93"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": ">=7.0.0 <7.28.0"
+        },
+        {
+          "source": 1121244,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici WebSocket client vulnerable to denial of service via fragment count bypass",
+          "url": "https://github.com/advisories/GHSA-vxpw-j846-p89q",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=7.0.0 <7.28.0"
+        },
+        {
+          "source": 1121247,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to cross-origin request routing via SOCKS5 proxy pool reuse",
+          "url": "https://github.com/advisories/GHSA-hm92-r4w5-c3mj",
+          "severity": "high",
+          "cwe": [
+            "CWE-346"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": ">=7.23.0 <7.28.0"
+        },
+        {
+          "source": 1121249,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to HTTP response queue poisoning via keep-alive socket reuse",
+          "url": "https://github.com/advisories/GHSA-35p6-xmwp-9g52",
+          "severity": "low",
+          "cwe": [
+            "CWE-367"
+          ],
+          "cvss": {
+            "score": 3.7,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": ">=7.0.0 <7.28.0"
+        },
+        {
+          "source": 1121254,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to Set-Cookie SameSite attribute downgrade via permissive substring matching",
+          "url": "https://github.com/advisories/GHSA-g8m3-5g58-fq7m",
+          "severity": "low",
+          "cwe": [
+            "CWE-183"
+          ],
+          "cvss": {
+            "score": 3.7,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": ">=7.0.0 <7.28.0"
+        },
+        {
+          "source": 1121428,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "undici vulnerable to cross-user information disclosure via shared cache whitespace bypass",
+          "url": "https://github.com/advisories/GHSA-pr7r-676h-xcf6",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-524"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          },
+          "range": ">=7.0.0 <7.28.0"
+        }
+      ],
+      "effects": [],
+      "range": "7.0.0 - 7.27.2",
+      "nodes": [
+        "node_modules/undici"
+      ],
+      "fixAvailable": true
+    },
+    "uuid": {
+      "name": "uuid",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1119441,
+          "name": "uuid",
+          "dependency": "uuid",
+          "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+          "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-787",
+            "CWE-1285"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": "<11.1.1"
+        }
+      ],
+      "effects": [
+        "@newrelic/security-agent",
+        "@ngneat/falso",
+        "jayson"
+      ],
+      "range": "<11.1.1",
+      "nodes": [
+        "node_modules/@ngneat/falso/node_modules/uuid",
+        "node_modules/jayson/node_modules/uuid",
+        "node_modules/uuid"
+      ],
+      "fixAvailable": false
+    },
+    "ws": {
+      "name": "ws",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1123259,
+          "name": "ws",
+          "dependency": "ws",
+          "title": "ws: Memory exhaustion DoS from tiny fragments and data chunks",
+          "url": "https://github.com/advisories/GHSA-96hv-2xvq-fx4p",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770",
+            "CWE-1050"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=8.0.0 <8.21.0"
+        }
+      ],
+      "effects": [
+        "engine.io-client"
+      ],
+      "range": "8.0.0 - 8.20.1",
+      "nodes": [
+        "node_modules/engine.io-client/node_modules/ws"
+      ],
+      "fixAvailable": true
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 33,
+      "high": 9,
+      "critical": 0,
+      "total": 42
+    },
+    "dependencies": {
+      "prod": 258,
+      "dev": 908,
+      "optional": 221,
+      "peer": 39,
+      "peerOptional": 0,
+      "total": 1412
+    }
+  }
+}
