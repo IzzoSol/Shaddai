@@ -1743,6 +1743,22 @@ if (!process.env.VERCEL_ENV) {
     // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
     try { require('./telegram-pnl').startTracker(); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
 
+    // ── KEEP-ALIVE: Render's free plan spins the service DOWN after ~15 min idle, which stops the
+    // signal pollers (no calls when nobody's visiting). Self-ping the public URL every ~10 min so the
+    // instance stays awake 24/7 and the pollers keep running. (Render auto-sets RENDER_EXTERNAL_URL.)
+    try {
+      const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL;
+      if (selfUrl && process.env.TELEGRAM_BOT_TOKEN) {
+        const ping = () => { fetch(selfUrl.replace(/\/$/, '') + '/api/model/health').then(() => {}).catch(() => {}); };
+        const ka = setInterval(ping, 10 * 60 * 1000);   // every 10 min (< Render's ~15 min idle window)
+        if (ka.unref) ka.unref();
+        setTimeout(ping, 30000);
+        console.log('[keep-alive] self-ping armed →', selfUrl, '(prevents free-plan spin-down so signals run 24/7)');
+      } else {
+        console.log('[keep-alive] not armed (no RENDER_EXTERNAL_URL) — set SELF_PING_URL or use an external uptime pinger to keep signals running 24/7.');
+      }
+    } catch (e) { console.warn('[keep-alive] init skipped:', e && e.message); }
+
     console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  SHADDAI PRODUCTION SERVER v62                        ║
