@@ -95,21 +95,9 @@ async function _discover() {
     }
   }
 
-  // CoinGecko trending (every 60s)
-  if (now - _lastCg >= 60000) {
-    _lastCg = now;
-    try {
-      const trending = await providers.cgTrending();
-      const coins = (trending && trending.coins) || [];
-      for (const tc of coins) {
-        const item = tc.item;
-        if (!item || !item.small || !item.data) continue;
-        // CoinGecko doesn't give contract address directly, use symbol for tracking
-        const sym = (item.item && item.item.symbol) || '';
-        if (sym) _addCandidate('cg-' + sym.toLowerCase(), 'solana', 'coingecko', { symbol: sym, name: item.item.name, cgRank: item.item.market_cap_rank });
-      }
-    } catch (e) {}
-  }
+  // CoinGecko trending — DISABLED as a discovery source: it returns no contract address, so its
+  // candidates could never confirm (fake 'cg-<symbol>' key) or be risk-checked → un-verifiable ghosts
+  // that polluted the candidate queue and learning data. (Kept available via providers.cgTrending() for context only.)
 
   _stats.discovered = _candidates.size;
 }
@@ -170,11 +158,12 @@ async function _validate() {
   const cfg = core.getConfig();
   for (const [mint, c] of _candidates) {
     if (c.stage !== 'confirmed') continue;
-    if (c.chain !== 'solana') { c.stage = 'validated'; continue; }   // skip risk for non-Solana
+    if (c.chain !== 'solana') { _reject(c, 'unsupported chain — cannot risk-check'); continue; }   // fail-closed: only post chains we can verify
     if (!cfg.rugFilter) { c.stage = 'validated'; continue; }
 
-    // RugCheck
+    // RugCheck — PRIMARY risk source. Fail CLOSED: no risk data = no post (was fail-open → rugs slipped through on API errors).
     const rc = await providers.rugReport(mint);
+    if (!rc) { _reject(c, 'rugcheck unavailable — fail closed'); continue; }
     if (rc) {
       const score = (rc.score_normalised != null ? rc.score_normalised : rc.score) || 0;
       const risks = rc.risks || [];
@@ -187,8 +176,8 @@ async function _validate() {
       let bundlerClusters = 0;
       const _bAmts = topHolders.slice(0, 10).map(h => Number(h.amount) || 0).filter(a => a > 0).sort((a, b) => b - a);
       for (let i = 0; i < _bAmts.length - 1; i++) { const ratio = _bAmts[i] > 0 ? _bAmts[i + 1] / _bAmts[i] : 0; if (ratio > 0.85 && ratio < 1.15) bundlerClusters++; }
-      let lpPct = 0;
-      try { const m = (rc.markets || [])[0]; lpPct = Number((m && m.lp && (m.lp.lpLockedPct != null ? m.lp.lpLockedPct : m.lp.lpLocked)) || 0); } catch (e) {}
+      let lpPct = 0, lpDataPresent = false;
+      try { const m = (rc.markets || [])[0]; if (m && m.lp) { lpDataPresent = true; lpPct = Number((m.lp.lpLockedPct != null ? m.lp.lpLockedPct : m.lp.lpLocked) || 0); } } catch (e) {}
       const holders = Number(rc.totalHolders || 0);
 
       c.metrics.rugScore = score;
@@ -202,12 +191,14 @@ async function _validate() {
 
       // apply filters — HARD REJECTS (locked liq, sniper/bundler cap under 10%)
       if (score < (cfg.rugMinScore || 45)) { _reject(c, 'rug score ' + score + ' < ' + (cfg.rugMinScore || 45)); continue; }
-      if (holders && holders < (cfg.minHolders || 5)) { _reject(c, 'holders ' + holders + ' < ' + (cfg.minHolders || 5)); continue; }
-      // locked LP check: LP must be locked ≥50%
-      if (cfg.requireLocked && lpPct < 50) { _reject(c, 'LP not locked: ' + lpPct.toFixed(1) + '% < 50%'); continue; }
-      // snipers + bundlers combined must be < 10% of holders
-      const sniperBundlerPct = holders > 0 ? ((insiders + bundlerClusters) / holders * 100) : 0;
-      if (cfg.maxSnipersPct && sniperBundlerPct >= cfg.maxSnipersPct) { _reject(c, 'snipers+bundlers ' + sniperBundlerPct.toFixed(1) + '% >= ' + cfg.maxSnipersPct + '%'); continue; }
+      if ((holders || 0) < (cfg.minHolders || 5)) { _reject(c, 'holders ' + (holders || 0) + ' < ' + (cfg.minHolders || 5)); continue; }   // missing holder data = reject
+      // locked LP: LP must be ≥50% locked — only enforce when RugCheck actually returned LP data (fresh tokens aren't indexed yet)
+      if (cfg.requireLocked && lpDataPresent && lpPct < 50) { _reject(c, 'LP not locked: ' + lpPct.toFixed(1) + '% < 50%'); continue; }
+      // OWNER RULE: top holder must be < 30% unless LP is locked
+      if (topHolderPct > 30 && lpPct < 50) { _reject(c, 'top holder ' + topHolderPct.toFixed(1) + '% (unlocked)'); continue; }
+      // OWNER RULE: sniper/insider share of SUPPLY must be under the cap (was count/holders — almost never tripped)
+      const insiderSupplyPct = topHolders.filter(h => h.insider).reduce((s, h) => s + (Number(h.pct) || 0), 0);
+      if (cfg.maxSnipersPct && insiderSupplyPct >= cfg.maxSnipersPct) { _reject(c, 'insider supply ' + insiderSupplyPct.toFixed(1) + '% >= ' + cfg.maxSnipersPct + '%'); continue; }
       // whale conviction bonus: top10 ≥15% = bullish, ≥50% = extra conviction
       if (top10Pct >= 50) c.confidence += (cfg.top10BullishBonus || 5);
       else if (top10Pct >= (cfg.minTop10Pct || 15)) c.confidence += 3;
@@ -306,8 +297,11 @@ async function _enrich() {
     else if (holderCount >= 50) c.confidence += 3;
 
     // final filters
+    if (!c.metrics.fdv || c.metrics.fdv <= 0) { _reject(c, 'unknown mcap — cannot size'); continue; }   // no mcap = no post
     if (cfg.maxFdv && c.metrics.fdv > cfg.maxFdv) { _reject(c, 'fdv $' + (c.metrics.fdv/1000).toFixed(0) + 'K > $' + (cfg.maxFdv/1000).toFixed(0) + 'K'); continue; }
     if (cfg.minLiq && c.metrics.liq < cfg.minLiq) { _reject(c, 'liq $' + c.metrics.liq.toFixed(0) + ' < $' + cfg.minLiq); continue; }
+    // OWNER RULE: liquidity must "match" the token — ≥ minLiqPct% of mcap (thin book vs big mcap = drainable)
+    if (cfg.minLiqPct && (c.metrics.liq / c.metrics.fdv * 100) < cfg.minLiqPct) { _reject(c, 'liq ' + (c.metrics.liq / c.metrics.fdv * 100).toFixed(1) + '% of mcap < ' + cfg.minLiqPct + '%'); continue; }
     if (cfg.minVol24h && c.metrics.vol24h < cfg.minVol24h) { _reject(c, 'vol $' + c.metrics.vol24h.toFixed(0) + ' < $' + cfg.minVol24h); continue; }
     if (cfg.bullishOnly && c.metrics.change24h < -10) { _reject(c, 'bearish ' + c.metrics.change24h.toFixed(0) + '%'); continue; }
 
@@ -315,6 +309,8 @@ async function _enrich() {
     c.finalConfidence = c.confidence;
     results.push(c);
   }
+  // rank best calls first so the maxPer cutoff keeps the highest-confidence runners, not arbitrary Map order
+  results.sort((a, b) => (b.finalConfidence || 0) - (a.finalConfidence || 0));
   _stats.enriched = results.length;
   return results;
 }

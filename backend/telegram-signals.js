@@ -28,6 +28,7 @@ const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=
 const _seen = new Set();          // trending token addresses already posted (dedupe)
 const _seenBond = new Set();      // bonded mints already posted (dedupe)
 let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of existing graduates)
+let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
@@ -352,6 +353,8 @@ async function _pollOnce() {
     boosts = await r.json();
   } catch (e) { return; }
   if (!Array.isArray(boosts)) return;
+  // first poll after (re)start only SEEDS — prevents re-posting the whole trending list on Render redeploys
+  if (!_trendSeeded) { for (const item of boosts) { if (item && item.tokenAddress) _seen.add(item.tokenAddress); } _trendSeeded = true; return; }
 
   let posted = 0, enrich = 0;
   for (const item of boosts) {

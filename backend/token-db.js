@@ -111,6 +111,7 @@ function recordOutcome(c) {
     milestones: [],
     closed: false,
   });
+  if (_calls.calls.length > 5000) _calls.calls = _calls.calls.slice(-5000);   // cap (was unbounded)
   _write(CALLS_FILE, _calls);
 }
 
