@@ -260,6 +260,12 @@ async function _enrich() {
     });
     c.confidence += learnBonus;
 
+    // holder count bonus — more holders = more bullish
+    const holderCount = c.metrics.holders || 0;
+    if (holderCount >= 200) c.confidence += 8;
+    else if (holderCount >= 100) c.confidence += 5;
+    else if (holderCount >= 50) c.confidence += 3;
+
     // final filters
     if (cfg.maxFdv && c.metrics.fdv > cfg.maxFdv) { _reject(c, 'fdv $' + (c.metrics.fdv/1000).toFixed(0) + 'K > $' + (cfg.maxFdv/1000).toFixed(0) + 'K'); continue; }
     if (cfg.minLiq && c.metrics.liq < cfg.minLiq) { _reject(c, 'liq $' + c.metrics.liq.toFixed(0) + ' < $' + cfg.minLiq); continue; }

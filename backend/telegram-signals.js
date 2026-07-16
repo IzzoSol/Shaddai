@@ -116,6 +116,66 @@ async function _rugCheck(mint) {
 // extract a Solana mint from a GeckoTerminal base_token id like "solana_<mint>"
 function _mintFromGecko(p) { try { const id = p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id; if (id && id.startsWith('solana_')) return id.slice(7); } catch (e) {} return null; }
 
+// ── HOLDER CONVICTION SCORE (0-100) — separate bullish signal dimension ──────
+// Evaluates: holder count, whale conviction, distribution quality, whale stability
+// High scores = strong holder base with conviction = more bullish
+function _holderConvictionScore(topHolders, totalHolders, cfg) {
+  const th = topHolders || [];
+  const result = { score: 0, label: '', signals: [] };
+
+  // ── SIGNAL 1: HOLDER COUNT (0-25 pts) ──────────────────────────────────
+  const hc = totalHolders || th.length;
+  let holderPts = 0;
+  if (hc >= 200) holderPts = 25;
+  else if (hc >= 100) holderPts = 20;
+  else if (hc >= 50) holderPts = 15;
+  else if (hc >= 20) holderPts = 10;
+  else if (hc >= 10) holderPts = 5;
+  result.score += holderPts;
+  if (hc >= 100) result.signals.push('👥 ' + hc + ' holders');
+
+  // ── SIGNAL 2: WHALE CONVICTION (0-30 pts) ─────────────────────────────
+  // Large single holder = early believer with skin in the game
+  const topHolder = th[0] || {};
+  const topPct = Number(topHolder.pct) || 0;
+  let whalePts = 0;
+  if (topPct >= 50) { whalePts = 30; result.signals.push('🐋 whale ' + topPct.toFixed(1) + '%'); }
+  else if (topPct >= 30) { whalePts = 20; result.signals.push('🐋 whale ' + topPct.toFixed(1) + '%'); }
+  else if (topPct >= 15) { whalePts = 10; result.signals.push('🐋 whale ' + topPct.toFixed(1) + '%'); }
+  result.score += whalePts;
+
+  // ── SIGNAL 3: HOLDER DISTRIBUTION (0-25 pts) ──────────────────────────
+  // Even spread = healthier token ecosystem
+  const top10Pct = th.slice(0, 10).reduce((sum, h) => sum + (Number(h.pct) || 0), 0);
+  let distPts = 0;
+  if (top10Pct < 70) distPts = 25;
+  else if (top10Pct < 85) distPts = 15;
+  else distPts = 5;
+  result.score += distPts;
+  result.signals.push('📊 top10 ' + top10Pct.toFixed(1) + '%');
+
+  // ── SIGNAL 4: WHALE STABILITY (0-20 pts) ──────────────────────────────
+  // Clean/round amounts = real holders; bot-like amounts = dump risk
+  const amounts = th.slice(0, 10).map(h => Number(h.amount) || 0).filter(a => a > 0);
+  let stableWhales = 0;
+  for (const amt of amounts) {
+    // Real holders tend to have round-ish amounts (not exact bot multiples)
+    const isRound = amt % 1000000 === 0 || amt % 500000 === 0 || amt % 100000 === 0;
+    const isBot = amounts.filter(a => Math.abs(a - amt) / Math.max(amt, 1) < 0.05).length >= 3;
+    if (isRound && !isBot) stableWhales++;
+  }
+  let stablePts = 0;
+  if (stableWhales >= 5) stablePts = 20;
+  else if (stableWhales >= 3) stablePts = 15;
+  else if (stableWhales >= 1) stablePts = 10;
+  result.score += stablePts;
+  if (stableWhales >= 3) result.signals.push('💎 ' + stableWhales + ' stable whales');
+
+  result.score = Math.min(100, result.score);
+  result.label = result.signals.length ? result.signals.join(' · ') : '';
+  return result;
+}
+
 // ── RUG SCORE (Solana, rugcheck.xyz full report) — 0..100 ─────────────────────
 // Owner params: LP must be 100% locked; top holder < 30% (unless LP locked);
 // danger/warn flags penalise. Borderline coins still pass but score lower.
@@ -174,7 +234,11 @@ async function _rugScore(mint) {
     score -= danger * 25 + warn * 8;
     score = Math.max(0, Math.min(100, Math.round(score)));
     const badge = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
-    return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, insiders, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
+    // compute holder conviction score (separate bullish signal)
+    const conviction = _holderConvictionScore(j.topHolders || [], holders, {});
+    return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, insiders,
+      conviction: conviction.score, convictionLabel: conviction.label, convictionSignals: conviction.signals,
+      label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
   } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
 }
 
@@ -333,6 +397,8 @@ async function _pollOnce() {
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
     if (rs && rs.label) card += '\n' + rs.label;
+    // holder conviction bonus — separate bullish signal
+    if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
     const ok = (await core.broadcast(card)) > 0;
     _seen.add(addr);
     if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0) }); } catch (e) {} }
@@ -472,6 +538,7 @@ async function _pollGecko() {
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           if (rs && rs.label) card += '\n' + rs.label;
+          if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
           const ok = (await core.broadcast(card)) > 0;
           if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
         }
