@@ -99,11 +99,12 @@ const _defaults = {
   minHolders: 5,          // token MUST have at least this many holders (fresh coins start low)
   minLiqPct: 2,           // liquidity MUST be ≥ this % of mcap (liq that "matches" the token)
   bullishOnly: false,     // don't filter bearish — some 2x+ calls come from dip-buying
-  // HARD REQUIREMENTS — every token must pass these (locked liq, clean holders, no snipers/bundlers)
-  requireLocked: true,     // LP MUST be locked (≥50% locked) — no unlock rugs
-  maxTop10Pct: 30,         // top 10 holders max 30% — reject whale-dominated bags
-  requireNoSnipers: true,  // reject if sniper bots detected (early same-block buys)
-  requireNoBundlers: true, // reject if bundler pattern detected (multiple wallets, same amount)
+  // HARD REQUIREMENTS — every token must pass these
+  requireLocked: true,       // LP MUST be locked (≥50% locked) — no unlock rugs
+  maxSnipersPct: 10,         // snipers + bundlers combined < 10% of holders
+  // whale signal — high top10 concentration is BULLISH (early accumulation = conviction)
+  minTop10Pct: 15,           // top 10 holders SHOULD be ≥15% — shows whale conviction
+  top10BullishBonus: 5,      // confidence +5 if top10 ≥ 50% (whale-heavy = bullish)
   // social requirements (off by default for sniper_seed, on for higher presets)
   requireWebsite: false,
   requireTwitter: false,
@@ -113,9 +114,9 @@ const _defaults = {
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 // HARD ENFORCE: these filters are non-negotiable — always override saved config
 _config.requireLocked = true;
-_config.requireNoSnipers = true;
-_config.requireNoBundlers = true;
-if (!_config.maxTop10Pct || _config.maxTop10Pct > 30) _config.maxTop10Pct = 30;
+if (!_config.maxSnipersPct || _config.maxSnipersPct > 10) _config.maxSnipersPct = 10;
+if (!_config.minTop10Pct || _config.minTop10Pct < 15) _config.minTop10Pct = 15;
+_config.top10BullishBonus = 5;
 function getConfig() { return Object.assign({}, _config); }
 function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _write(CFG_FILE, _config); return getConfig(); }
 
@@ -125,63 +126,63 @@ function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _
 const PRESETS = {
   sniper_seed: {
     label: '🏆 Sniper Seed',
-    desc: 'Ultra-low FDV, max upside, the Solandier formula — locked + clean only',
+    desc: 'Ultra-low FDV, locked LP, whale conviction — the Solandier formula',
     maxFdv: 100000, minLiq: 2000, minVol24h: 1000, minHolders: 5,
     minLiqPct: 2, rugMinScore: 45, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
     requireLocked: true, minSocialScore: 0,
-    maxTop10Pct: 30, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   anti_sniper: {
     label: '🎯 Anti-Sniper',
-    desc: 'Locked LP + no snipers/bundlers + top 10 <25%',
+    desc: 'Locked LP + snipers/bundlers <10% + whale conviction',
     maxFdv: 200000, minLiq: 2000, minVol24h: 1000, minHolders: 10,
     minLiqPct: 2, rugMinScore: 50, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
     requireLocked: true, minSocialScore: 0,
-    maxTop10Pct: 25, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   social_micro: {
     label: '💎 Social Micro',
-    desc: 'Locked LP + website & X + top 10 <25% = real team, not a rug',
+    desc: 'Locked LP + website & X + whale top10 = real team with conviction',
     maxFdv: 300000, minLiq: 3000, minVol24h: 2000, minHolders: 10,
     minLiqPct: 2, rugMinScore: 50, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: true, requireTwitter: true, requireSocial: false,
     requireLocked: true, minSocialScore: 3,
-    maxTop10Pct: 25, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   full_stack: {
     label: '🔥 Full Stack',
-    desc: 'Locked + social stack + clean holders = premium quality',
+    desc: 'Locked + social stack + whale conviction = premium quality',
     maxFdv: 500000, minLiq: 5000, minVol24h: 3000, minHolders: 15,
     minLiqPct: 3, rugMinScore: 55, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 4,
     requireWebsite: true, requireTwitter: true, requireSocial: true,
     requireLocked: true, minSocialScore: 5,
-    maxTop10Pct: 25, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   momentum: {
     label: '⚡ Momentum',
-    desc: 'Locked runners with social proof & clean structure',
+    desc: 'Locked runners with social proof & whale accumulation',
     maxFdv: 2000000, minLiq: 15000, minVol24h: 30000, minHolders: 40,
     minLiqPct: 5, rugMinScore: 65, bullishOnly: true, bonded: false,
     newpools: true, trending: false, maxPer: 3,
     requireWebsite: true, requireTwitter: true, requireSocial: false,
     requireLocked: true, minSocialScore: 4,
-    maxTop10Pct: 30, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   safe_swing: {
     label: '🛡 Safe Swing',
-    desc: 'Locked + full social + clean holders = institutional quality',
+    desc: 'Locked + full social + whale conviction = institutional quality',
     maxFdv: 50000000, minLiq: 40000, minVol24h: 25000, minHolders: 80,
     minLiqPct: 8, rugMinScore: 75, bullishOnly: true, bonded: false,
     newpools: false, trending: false, maxPer: 2,
     requireWebsite: true, requireTwitter: true, requireSocial: true,
     requireLocked: true, minSocialScore: 6,
-    maxTop10Pct: 25, requireNoSnipers: true, requireNoBundlers: true,
+    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
 };
 function listPresets() { return Object.keys(PRESETS).map(k => ({ key: k, label: PRESETS[k].label, desc: PRESETS[k].desc })); }

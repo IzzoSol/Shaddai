@@ -193,18 +193,17 @@ async function _validate() {
       c.metrics.holders = holders;
       c.metrics.dangerRisks = danger;
 
-      // apply filters — HARD REJECTS (locked liq, holder cap, no snipers/bundlers)
+      // apply filters — HARD REJECTS (locked liq, sniper/bundler cap under 10%)
       if (score < (cfg.rugMinScore || 45)) { _reject(c, 'rug score ' + score + ' < ' + (cfg.rugMinScore || 45)); continue; }
-      if (cfg.maxTop10Pct && cfg.maxTop10Pct < 100 && top10Pct > cfg.maxTop10Pct) { _reject(c, 'top10 ' + top10Pct.toFixed(1) + '% > ' + cfg.maxTop10Pct + '%'); continue; }
-      if (cfg.requireNoSnipers && insiders > 0) { _reject(c, 'snipers/insiders detected: ' + insiders); continue; }
       if (holders && holders < (cfg.minHolders || 5)) { _reject(c, 'holders ' + holders + ' < ' + (cfg.minHolders || 5)); continue; }
-      // locked LP check: if requireLocked, LP must be locked ≥50%
+      // locked LP check: LP must be locked ≥50%
       if (cfg.requireLocked && lpPct < 50) { _reject(c, 'LP not locked: ' + lpPct.toFixed(1) + '% < 50%'); continue; }
-      // bundler detection: ≥3 wallets with identical or near-identical amounts = bundler pattern
-      const amtCounts = {};
-      for (const h of topHolders) { const a = Math.round(Number(h.usdValue || 0) / 100) * 100; if (a > 0) amtCounts[a] = (amtCounts[a] || 0) + 1; }
-      const bundlerClusters = Object.values(amtCounts).filter(c => c >= 3).length;
-      if (cfg.requireNoBundlers && bundlerClusters > 0) { _reject(c, 'bundler pattern: ' + bundlerClusters + ' cluster(s) of identical holder amounts'); continue; }
+      // snipers + bundlers combined must be < 10% of holders
+      const sniperBundlerPct = holders > 0 ? ((insiders + bundlerClusters) / holders * 100) : 0;
+      if (cfg.maxSnipersPct && sniperBundlerPct >= cfg.maxSnipersPct) { _reject(c, 'snipers+bundlers ' + sniperBundlerPct.toFixed(1) + '% >= ' + cfg.maxSnipersPct + '%'); continue; }
+      // whale conviction bonus: top10 ≥15% = bullish, ≥50% = extra conviction
+      if (top10Pct >= 50) c.confidence += (cfg.top10BullishBonus || 5);
+      else if (top10Pct >= (cfg.minTop10Pct || 15)) c.confidence += 3;
 
       // risk bonus
       if (score >= 70 && danger === 0) c.confidence += 10;

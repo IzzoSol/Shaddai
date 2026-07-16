@@ -85,12 +85,14 @@ function _lpLockedOk(cfg, rs) {
   if (!rs || !rs.checked) return true;   // no data = pass (rugCheck stage will catch it)
   return rs.lp >= 50;
 }
-// sniper/bundler gate — reject if snipers/bundlers detected and required to be clean
+// sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders
 function _snipersOk(cfg, rs) {
   if (!rs || !rs.checked) return true;  // fail-open if no data
-  if (cfg.requireNoSnipers && rs.hasSnipers) return false;
-  if (cfg.requireNoBundlers && rs.hasBundlers) return false;
-  return true;
+  if (!cfg.maxSnipersPct) return true;
+  const total = rs.holders || 100;
+  const bad = (rs.hasSnipers ? 1 : 0) + (rs.hasBundlers ? 1 : 0);
+  const pct = total > 0 ? (bad / total * 100) : 0;
+  return pct < cfg.maxSnipersPct;
 }
 
 // rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
