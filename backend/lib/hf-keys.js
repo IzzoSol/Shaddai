@@ -11,7 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const FLUX = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
+// hf-inference deprecated its serverless image models (410). HF now routes image gen through
+// Inference Providers; fal-ai serves FLUX.1-schnell and works with a standard hf_ token.
+const FLUX = 'https://router.huggingface.co/fal-ai/fal-ai/flux/schnell';
 
 // Ordered key list. `byok` (user's own hf_ key) is placed first when valid.
 function keys(byok) {
@@ -40,22 +42,37 @@ function pollinationsUrl(prompt, { width = 1024, height = 1024, seed } = {}) {
 // Generate one image. Rotates across BYOK + all pool keys on depletion/rate-limit.
 // Returns { buffer } on HF success. If every key fails (or none exist), returns
 // { fallbackUrl } (keyless Pollinations) instead of throwing — callers must handle both.
-async function generateSafe(prompt, { model = FLUX, byok, width, height } = {}) {
+async function generateSafe(prompt, { model = FLUX, byok, width = 1024, height = 1024 } = {}) {
   const pool = keys(byok);
+  const isFal = /fal-ai/.test(model);
+  const body = isFal
+    ? JSON.stringify({ prompt: String(prompt).slice(0, 1800), image_size: { width, height }, num_images: 1 })
+    : JSON.stringify({ inputs: prompt });
   let lastErr;
   for (let i = 0; i < pool.length; i++) {
     try {
       const r = await fetch(model, {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + pool[i], 'Content-Type': 'application/json', 'x-wait-for-model': 'true' },
-        body: JSON.stringify({ inputs: prompt }),
+        body,
       });
       const ct = r.headers.get('content-type') || '';
-      if (r.ok && ct.startsWith('image')) return { buffer: Buffer.from(await r.arrayBuffer()), provider: 'huggingface-flux' };
+      if (r.ok) {
+        // raw image bytes (legacy serverless) …
+        if (ct.startsWith('image')) return { buffer: Buffer.from(await r.arrayBuffer()), provider: 'huggingface-flux' };
+        // …or JSON with an image URL (fal-ai / provider style) → fetch the bytes
+        try {
+          const j = await r.json();
+          const url = j && j.images && j.images[0] && (j.images[0].url || j.images[0]);
+          if (url) { const ir = await fetch(url, { signal: AbortSignal.timeout(30000) }); if (ir.ok) return { buffer: Buffer.from(await ir.arrayBuffer()), provider: 'hf-fal-flux' }; }
+          lastErr = new Error('HF ok but no image url');
+        } catch (e) { lastErr = new Error('HF json parse: ' + (e && e.message)); }
+        continue;
+      }
       if ([402, 429, 401, 403].includes(r.status)) { lastErr = new Error(`HF ${r.status} on key#${i + 1}`); continue; }
       if (r.status === 503) { await new Promise(s => setTimeout(s, 8000)); i--; continue; } // model warming
-      let body = ''; try { body = (await r.text()).slice(0, 160); } catch {}
-      lastErr = new Error(`HF ${r.status} ${body}`);
+      let b = ''; try { b = (await r.text()).slice(0, 160); } catch {}
+      lastErr = new Error(`HF ${r.status} ${b}`);
     } catch (e) { lastErr = e; }
   }
   // No HF key succeeded → keyless free fallback so image tools never hard-fail.
