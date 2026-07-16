@@ -75,17 +75,19 @@ function acquireBroadcastLock() {
 const _defaults = {
   // feed toggles — tuned to what actually wins (trending/bonded had 0% hit rate)
   signals: true,          // DexScreener trending/boosts
-  bonded: false,          // pump.fun graduations — had 0% hit rate, disabled
+  bonded: true,           // pump.fun graduations — RE-ENABLED with upgraded feed (advanced-api holders/snipers/dev% + DexScreener USD enrich + locked-liq gate)
   newpools: true,         // GeckoTerminal brand-new pools — main winner source
   trending: false,        // GeckoTerminal trending — had 0% hit rate, disabled
-  news: true,             // CoinGecko market pulse
-  newsIntervalMin: 60,
+  news: true,             // market pulse (mcap/dominance/BTC-ETH-SOL)
+  newsIntervalMin: 120,   // every 2h (was hourly — was posting too often)
   headlines: true,        // free RSS crypto news headlines (CoinTelegraph/CoinDesk)
   headlinesIntervalMin: 45,
   promo: true,            // periodic SHADDAI project promo (bio, GitHub star-for-giveaway, socials)
   promoIntervalMin: 240,  // every 4h
   digest: true,           // hourly performance distribution (1-2x/2-5x/5-10x/10x+ + top performers)
   digestIntervalMin: 60,
+  heldPost: true,         // auto-post "conviction holds" (long-term survivors that held their ATH)
+  heldIntervalMin: 60,    // every 1h
   autoPrune: false,       // keep honest hit-rate (owner) — don't silently drop losers
   // filter parameters — DEFAULT: sniper_seed preset (best win rate, 50% on seed calls)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…

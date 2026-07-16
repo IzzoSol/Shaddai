@@ -68,6 +68,7 @@ function recordCall(c) {
     _state.calls.push({
       mint, chain: (c.chain || '').toLowerCase(), name: c.name || '', symbol: c.symbol || '',
       source: c.source || '', entryFdv: entry, entryPrice: Number(c.entryPrice) || 0,
+      holders: Number(c.holders) || 0,
       ts: _now, peakMult: 1, curMult: 1, curFdv: entry, milestones: [], closed: false,
     });
     if (_state.calls.length > 5000) _state.calls = _state.calls.slice(-5000);
@@ -233,11 +234,12 @@ function survivors(period) {
   const minAge = wk ? 24 * 3600 * 1000 : 12 * 3600 * 1000;         // day view: 12h+ old · week view: 1d+ old
   const maxAge = wk ? 9 * 24 * 3600 * 1000 : 3 * 24 * 3600 * 1000; // week view: up to ~9d · day view: up to 3d
   const scored = _state.calls
-    .filter(c => { const age = _now - c.ts; return age >= minAge && age <= maxAge && (c.curMult || 1) >= 1; })  // survived / still green
+    .filter(c => { if (c.source === 'seed') return false; const age = _now - c.ts; return age >= minAge && age <= maxAge && (c.curMult || 1) >= 1; })  // live survivors only, still green
     .map(c => {
       const peak = c.peakMult || 1, cur = c.curMult || 1;
       const retention = peak > 0 ? cur / peak : 0;                 // how much of ATH it holds
-      const held = cur * (0.4 + 0.6 * retention);                  // current gain, boosted when held near ATH
+      const holderBoost = 1 + Math.min(0.5, (c.holders || 0) / 1000);   // real-holder conviction: up to +50% at 1000+ holders
+      const held = cur * (0.4 + 0.6 * retention) * holderBoost;    // current gain, boosted by ATH retention + holder base
       return { c, peak, cur, retention, held };
     })
     .sort((a, b) => b.held - a.held)
@@ -251,8 +253,9 @@ function survivors(period) {
     const sym = _esc(s.c.symbol || s.c.name || '?');
     const ret = Math.round(s.retention * 100);
     const bar = ret >= 70 ? '🟢' : ret >= 40 ? '🟡' : '🟠';
+    const hold = s.c.holders ? ` · 👥 ${s.c.holders}` : '';
     const ca = s.c.mint && !String(s.c.mint).startsWith('seed-') ? `\n   <code>${_esc(s.c.mint)}</code>` : '';
-    return `${bar} <b>$${sym}</b> — now <b>${s.cur.toFixed(1)}x</b> · ATH ${s.peak.toFixed(1)}x · held <b>${ret}%</b> · ${_ago(s.c.ts)}${ca}`;
+    return `${bar} <b>$${sym}</b> — now <b>${s.cur.toFixed(1)}x</b> · ATH ${s.peak.toFixed(1)}x · held <b>${ret}%</b>${hold} · ${_ago(s.c.ts)}${ca}`;
   }).join('\n');
   return (
     `💎 <b>SHADDAI CONVICTION HOLDS — ${label}</b>\n` +
@@ -279,7 +282,7 @@ function seedCall(o) {
   return true;
 }
 
-let _timer = null, _digestTimer = null;
+let _timer = null, _digestTimer = null, _heldTimer = null;
 function startTracker() {
   if (!core.token()) { console.log('[tg-pnl] disabled (no token).'); return; }
   if (_timer) return;
@@ -296,6 +299,20 @@ function startTracker() {
     if (Date.now() - lastD >= everyMs) { lastD = Date.now(); const img = _pnlImage(); const cap = distribution(); (img ? core.broadcastPhoto(img, cap) : core.broadcast(cap)).catch(() => {}); }
   }, 60000);
   if (_digestTimer.unref) _digestTimer.unref();
+  // conviction holds — auto-post long-term survivors on its own cadence (default hourly). Stays QUIET when none.
+  let lastH = Date.now();
+  _heldTimer = setInterval(() => {
+    const cfg = core.getConfig(); if (cfg.heldPost === false) return;
+    const everyMs = Math.max(30, cfg.heldIntervalMin || 60) * 60000;
+    if (Date.now() - lastH >= everyMs) {
+      lastH = Date.now();
+      const cap = survivors('day');
+      if (cap.includes('No surviving calls')) return;   // nothing matured yet — don't spam an empty card
+      const img = _pnlImage();
+      (img ? core.broadcastPhoto(img, cap) : core.broadcast(cap)).catch(() => {});
+    }
+  }, 60000);
+  if (_heldTimer.unref) _heldTimer.unref();
 }
 
 function resetCalls() { _state = { calls: [] }; _write(_state); }

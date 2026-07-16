@@ -407,7 +407,7 @@ async function _pollOnce() {
     if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
     const ok = (await core.broadcast(card)) > 0;
     _seen.add(addr);
-    if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0) }); } catch (e) {} }
+    if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {} }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
 }
@@ -503,7 +503,7 @@ async function _pollBonded() {
       if (rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
     }
     const ok = (await core.broadcast(card)) > 0;
-    if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0 }); } catch (e) {} }
+    if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {} }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
 }
@@ -579,7 +579,7 @@ async function _pollGecko() {
           if (rs && rs.label) card += '\n' + rs.label;
           if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
           const ok = (await core.broadcast(card)) > 0;
-          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0 }); } catch (e) {} }
+          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {} }
         }
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }
@@ -672,7 +672,7 @@ async function _pipelineCycle(pipeline) {
             rugScore: c.metrics.rugScore || 0, lpPct: c.metrics.lpPct || 0,
             holders: c.metrics.holders || 0, vol24h: c.metrics.vol24h, liquidity: c.metrics.liq,
           });
-          pnl.recordCall({ source: 'pipeline', chain: c.chain, mint: c.mint, name: c.name, symbol: c.symbol, entryFdv: c.metrics.fdv, entryPrice: c.metrics.price });
+          pnl.recordCall({ source: 'pipeline', chain: c.chain, mint: c.mint, name: c.name, symbol: c.symbol, entryFdv: c.metrics.fdv, entryPrice: c.metrics.price, holders: c.metrics.holders || 0 });
         } catch (e) {}
       }
     }
