@@ -115,7 +115,11 @@ async function trackTick() {
     if (!cur) continue;
     call.curFdv = cur;
     call.curMult = cur / call.entryFdv;
-    if (call.curMult > call.peakMult) { call.peakMult = call.curMult; changed = true; }
+    if (call.curMult > call.peakMult) {
+      call.peakMult = call.curMult; changed = true;
+      // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
+      try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) {}
+    }
     // fire the highest newly-crossed milestone (winners only → funnel)
     let hit = 0;
     for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) hit = m; }

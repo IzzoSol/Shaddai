@@ -570,6 +570,10 @@ function startTelegramSignals() {
   _pipelineTimer = setInterval(() => { _pipelineCycle(pipeline).catch(() => {}); }, 20000);
   if (_pipelineTimer.unref) _pipelineTimer.unref();
 
+  // ZEROX learning: every 30 min re-analyze call outcomes → weights the pipeline applies (closes the learning loop)
+  const _learnTimer = setInterval(() => { try { require('./token-db').analyzeOutcomes(); } catch (e) {} }, 30 * 60000);
+  if (_learnTimer.unref) _learnTimer.unref();
+
   // trending feed (DexScreener boosts) — first run after a short delay so it doesn't fight boot
   setTimeout(() => { _pollOnce().catch(() => {}); }, 8000);
   _timer = setInterval(() => { _pollOnce().catch(() => {}); }, cfg.interval);
@@ -599,6 +603,7 @@ async function _pipelineCycle(pipeline) {
       // build signal card
       const socialLabel = c.sourceNames ? '📡 ' + c.sourceNames.join('+') : '';
       let card = _signalCard(c.chain, { baseToken: { symbol: c.symbol, name: c.name, address: c.mint }, priceUsd: c.metrics.price, fdv: c.metrics.fdv, marketCap: c.metrics.fdv, liquidity: { usd: c.metrics.liq }, volume: { h24: c.metrics.vol24h }, priceChange: { h24: c.metrics.change24h }, url: c.metrics.url }, socialLabel);
+      if (c.conviction && c.conviction.score) { try { card += '\n' + require('./lib/conviction').convictionLine(c.conviction); } catch (e) {} }
       if (c.confidence > 0) card += `\n🎯 Confidence: <b>+${c.confidence}</b>`;
       const ok = (await core.broadcast(card)) > 0;
       if (ok) {
@@ -613,7 +618,7 @@ async function _pipelineCycle(pipeline) {
             sourceCount: c.sourceCount, sources: c.sourceNames,
             socialScore: c.confidence, hasWebsite: false, hasTwitter: false,
             locked: c.metrics.lpPct >= 99, top10Pct: c.metrics.top10Pct || 0,
-            insiders: c.metrics.insiders || 0, bundlers: false, snipers: (c.metrics.insiders || 0) > 0,
+            insiders: c.metrics.insiders || 0, bundlers: c.metrics.bundlers || false, snipers: (c.metrics.insiders || 0) > 0,
             rugScore: c.metrics.rugScore || 0, lpPct: c.metrics.lpPct || 0,
             holders: c.metrics.holders || 0, vol24h: c.metrics.vol24h, liquidity: c.metrics.liq,
           });

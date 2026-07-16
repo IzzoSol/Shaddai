@@ -181,14 +181,21 @@ async function _validate() {
       const danger = risks.filter(x => String(x.level || '').toLowerCase() === 'danger').length;
       const topHolders = rc.topHolders || [];
       const top10Pct = topHolders.slice(0, 10).reduce((s, h) => s + (Number(h.pct) || 0), 0);
+      const topHolderPct = Number((topHolders[0] && topHolders[0].pct)) || 0;
       const insiders = topHolders.filter(h => h.insider).length;
+      // bundler clusters: top holders with suspiciously similar amounts (batch/bundle buys)
+      let bundlerClusters = 0;
+      const _bAmts = topHolders.slice(0, 10).map(h => Number(h.amount) || 0).filter(a => a > 0).sort((a, b) => b - a);
+      for (let i = 0; i < _bAmts.length - 1; i++) { const ratio = _bAmts[i] > 0 ? _bAmts[i + 1] / _bAmts[i] : 0; if (ratio > 0.85 && ratio < 1.15) bundlerClusters++; }
       let lpPct = 0;
       try { const m = (rc.markets || [])[0]; lpPct = Number((m && m.lp && (m.lp.lpLockedPct != null ? m.lp.lpLockedPct : m.lp.lpLocked)) || 0); } catch (e) {}
       const holders = Number(rc.totalHolders || 0);
 
       c.metrics.rugScore = score;
       c.metrics.top10Pct = top10Pct;
+      c.metrics.topHolderPct = topHolderPct;
       c.metrics.insiders = insiders;
+      c.metrics.bundlers = bundlerClusters > 0;
       c.metrics.lpPct = lpPct;
       c.metrics.holders = holders;
       c.metrics.dangerRisks = danger;
@@ -254,11 +261,21 @@ async function _enrich() {
       hasWebsite: false, hasTwitter: false,
       locked: c.metrics.lpPct >= 99,
       top10Pct: c.metrics.top10Pct || 100,
-      bundlers: false, snipers: (c.metrics.insiders || 0) > 0,
+      bundlers: c.metrics.bundlers || false, snipers: (c.metrics.insiders || 0) > 0,
       rugScore: c.metrics.rugScore || 0,
       fdvAtCall: c.metrics.fdv || 0,
     });
     c.confidence += learnBonus;
+
+    // holder conviction score (pure module) — the 0-100 conviction line shown on cards
+    try {
+      c.conviction = require('./lib/conviction').convictionScore({
+        holderCount: c.metrics.holders || 0,
+        topHolderPct: c.metrics.topHolderPct || 0,
+        top10Pct: c.metrics.top10Pct || 0,
+        whales: [],
+      });
+    } catch (e) {}
 
     // holder count bonus — more holders = more bullish
     const holderCount = c.metrics.holders || 0;

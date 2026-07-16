@@ -45,6 +45,26 @@ router.post('/broadcast', express.json({ limit: '32kb' }), async (req, res) => {
   res.json({ ok: true, delivered });
 });
 
+// ── observability: provider health, cache, pipeline overlap, ZEROX learning ──
+router.get('/health', (req, res) => {
+  const out = { ok: true };
+  try { out.providers = require('./providers').status(); } catch (e) { out.providers = []; }
+  try { out.cache = require('./providers').cacheStats(); } catch (e) { out.cache = {}; }
+  try { out.pipeline = require('./pipeline').getStats(); } catch (e) { out.pipeline = {}; }
+  res.json(out);
+});
+router.get('/overlap', (req, res) => {
+  let candidates = [];
+  try { candidates = require('./pipeline').getCandidates(); } catch (e) {}
+  res.json({ ok: true, count: candidates.length, candidates });
+});
+router.get('/learning', (req, res) => {
+  const out = { ok: true };
+  try { out.learning = require('./token-db').getLearning(); } catch (e) { out.learning = {}; }
+  try { out.stats = require('./token-db').historicalStats(); } catch (e) { out.stats = {}; }
+  res.json(out);
+});
+
 router.get('/presets', (req, res) => { res.json({ ok: true, presets: core.listPresets() }); });
 router.post('/preset', express.json({ limit: '2kb' }), (req, res) => {
   if (!_adminOk(req)) return res.status(401).json({ ok: false, error: 'admin token required' });
