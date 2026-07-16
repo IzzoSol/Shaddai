@@ -30,8 +30,8 @@ const _seenBond = new Set();      // bonded mints already posted (dedupe)
 let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of existing graduates)
 const _SEEN_CAP = 4000;
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
-// We stay far under: 1 boosts call + a capped number of token lookups per poll.
-const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (rate safety)
+// Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
+const _ENRICH_CAP = 10;           // max token-detail fetches per trending poll (rate safety — was 18, lowered)
 
 function _cfg() {
   const cc = core.getConfig();   // dashboard-editable filter params + feed toggles
@@ -49,14 +49,24 @@ function _cfg() {
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
     rugFilter: cc.rugFilter !== false,
-    rugMinScore: Number(cc.rugMinScore) || 60,   // require safety score ≥ this (owner: >50%)
-    minHolders: Number(cc.minHolders) || 40,     // must have holders
-    minLiqPct: Number(cc.minLiqPct) || 3,        // liq must be ≥ this % of mcap
+    rugMinScore: Number(cc.rugMinScore) || 60,
+    minHolders: Number(cc.minHolders) || 40,
+    minLiqPct: Number(cc.minLiqPct) || 3,
     bullishOnly: cc.bullishOnly !== false,
-    // poll cadences (env-tunable)
-    interval: Math.max(60000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),
-    bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000),
-    geckoInterval: Math.max(60000, parseInt(process.env.TG_GECKO_INTERVAL || '120000', 10) || 120000),
+    // social requirements
+    requireWebsite: cc.requireWebsite === true,
+    requireTwitter: cc.requireTwitter === true,
+    requireSocial: cc.requireSocial === true,
+    requireLocked: cc.requireLocked === true,
+    minSocialScore: Number(cc.minSocialScore) || 0,
+    // holder/sniper requirements
+    maxTop10Pct: Number(cc.maxTop10Pct) || 100,
+    requireNoSnipers: cc.requireNoSnipers === true,
+    requireNoBundlers: cc.requireNoBundlers === true,
+    // poll cadences (env-tunable) — balanced for free tier rate limits
+    interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '600000', 10) || 600000),      // 10 min default (DexScreener: ~60 req/min free)
+    bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '180000', 10) || 180000), // 3 min default (pump.fun: generous)
+    geckoInterval: Math.max(120000, parseInt(process.env.TG_GECKO_INTERVAL || '300000', 10) || 300000),  // 5 min default (GeckoTerminal: generous)
   };
 }
 // min FDV only (max handled post-rug so premium coins can be waived over the cap)
@@ -67,6 +77,15 @@ function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs 
 function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; return (Number(liq) || 0) >= (cfg.minLiqPct / 100) * fdv; }
 // holders gate — must clear the minimum when we have the data
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
+// top10 concentration gate — must be under the max
+function _top10Ok(cfg, rs) { return !(rs && rs.checked && rs.top10Pct && cfg.maxTop10Pct && rs.top10Pct > cfg.maxTop10Pct); }
+// sniper/bundler gate — reject if snipers/bundlers detected and required to be clean
+function _snipersOk(cfg, rs) {
+  if (!rs || !rs.checked) return true;  // fail-open if no data
+  if (cfg.requireNoSnipers && rs.hasSnipers) return false;
+  if (cfg.requireNoBundlers && rs.hasBundlers) return false;
+  return true;
+}
 
 // rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
 // Fail-open: if the API errors/rate-limits, we DON'T block the call (checked=false).
@@ -93,11 +112,12 @@ function _mintFromGecko(p) { try { const id = p.relationships && p.relationships
 // Owner params: LP must be 100% locked; top holder < 30% (unless LP locked);
 // danger/warn flags penalise. Borderline coins still pass but score lower.
 // Fail-open: if the API errors, return a neutral score so good calls aren't lost.
+// SNIPER/BUNDLER DETECTION: top10 concentration, insider flags, similar amounts
 async function _rugScore(mint) {
-  if (!mint) return { checked: false, score: 60, label: '' };
+  if (!mint) return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
   try {
     const r = await fetch('https://api.rugcheck.xyz/v1/tokens/' + mint + '/report', { signal: AbortSignal.timeout(9000) });
-    if (!r.ok) return { checked: false, score: 60, label: '' };
+    if (!r.ok) return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
     const j = await r.json();
     let score = 100; const notes = [];
     // LP locked %
@@ -106,10 +126,36 @@ async function _rugScore(mint) {
     if (lp >= 99) notes.push('🔒 LP 100%');
     else if (lp >= 50) { score -= 25; notes.push('🔓 LP ' + lp.toFixed(0) + '%'); }
     else { score -= 55; notes.push('🔓 LP unlocked'); }
-    // top holder concentration
+    // top holder concentration — CRITICAL for anti-sniper
     let topPct = 0;
-    try { const th = j.topHolders || []; const nonLp = th.filter(h => !h.insider && !(h.owner && /lp|amm|pool/i.test(String(h.owner)))); topPct = (nonLp[0] && Number(nonLp[0].pct)) || (th[0] && Number(th[0].pct)) || 0; } catch (e) {}
+    let top10Pct = 0;
+    let hasSnipers = false;
+    let hasBundlers = false;
+    let insiders = 0;
+    try {
+      const th = j.topHolders || [];
+      insiders = th.filter(h => h.insider).length;
+      // calculate top 10 concentration
+      top10Pct = th.slice(0, 10).reduce((sum, h) => sum + (Number(h.pct) || 0), 0);
+      // sniper detection: holders with very similar amounts (batch buys)
+      const amounts = th.slice(0, 10).map(h => Number(h.amount) || 0).filter(a => a > 0).sort((a, b) => b - a);
+      if (amounts.length >= 3) {
+        // check if top 3-5 holders have suspiciously similar amounts (bundler pattern)
+        for (let i = 0; i < Math.min(5, amounts.length - 1); i++) {
+          const ratio = amounts[i] > 0 ? amounts[i + 1] / amounts[i] : 0;
+          if (ratio > 0.85 && ratio < 1.15) { hasBundlers = true; break; }
+        }
+      }
+      // insider flag count
+      hasSnipers = insiders > 0;
+      // single holder concentration
+      const nonLp = th.filter(h => !h.insider && !(h.owner && /lp|amm|pool/i.test(String(h.owner))));
+      topPct = (nonLp[0] && Number(nonLp[0].pct)) || (th[0] && Number(th[0].pct)) || 0;
+    } catch (e) {}
     if (topPct > 30) { score -= (lp >= 99 ? 8 : 25); notes.push('🐋 top ' + topPct.toFixed(0) + '%'); }
+    if (top10Pct > 50) { score -= 15; notes.push('👥 top10 ' + top10Pct.toFixed(0) + '%'); }
+    if (hasSnipers) { score -= 10; notes.push('🔫 ' + insiders + ' insider(s)'); }
+    if (hasBundlers) { score -= 15; notes.push('📦 bundler pattern'); }
     // holders — must have some
     let holders = Number(j.totalHolders || (j.token && j.token.holders) || 0);
     if (holders) { notes.push('👥 ' + holders); if (holders < 40) score -= 30; }
@@ -120,8 +166,54 @@ async function _rugScore(mint) {
     score -= danger * 25 + warn * 8;
     score = Math.max(0, Math.min(100, Math.round(score)));
     const badge = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
-    return { checked: true, score, lp, topPct, holders, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
-  } catch (e) { return { checked: false, score: 60, label: '' }; }
+    return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, insiders, label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
+  } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
+}
+
+// ── SOCIAL SCORE (website, X, TG, Discord, locked) — 0..8 ───────────────────
+// Returns { score, has, label } where has = { website, twitter, telegram, discord, locked }
+// Pump.fun tokens have social data in their API response
+async function _socialScore(pumpData, mint) {
+  const has = { website: false, twitter: false, telegram: false, discord: false, locked: false };
+  let score = 0;
+  if (pumpData) {
+    if (pumpData.website) { has.website = true; score += 2; }
+    if (pumpData.twitter) { has.twitter = true; score += 2; }
+    if (pumpData.telegram) { has.telegram = true; score += 1; }
+    if (pumpData.discord) { has.discord = true; score += 1; }
+  }
+  // Check locked supply via rugcheck if we have mint
+  if (mint && !has.locked) {
+    try {
+      const r = await fetch('https://api.rugcheck.xyz/v1/tokens/' + mint + '/report/summary', { signal: AbortSignal.timeout(6000) });
+      if (r.ok) {
+        const j = await r.json();
+        const m = (j.markets || [])[0];
+        const lp = m && m.lp;
+        const lockedPct = Number((lp && (lp.lpLockedPct != null ? lp.lpLockedPct : lp.lpLocked)) || 0);
+        if (lockedPct >= 99) { has.locked = true; score += 2; }
+        else if (lockedPct >= 50) { score += 1; }
+      }
+    } catch (e) {}
+  }
+  const tags = [];
+  if (has.website) tags.push('🌐');
+  if (has.twitter) tags.push('𝕏');
+  if (has.telegram) tags.push('📱');
+  if (has.discord) tags.push('💬');
+  if (has.locked) tags.push('🔒');
+  const label = tags.length ? tags.join(' ') : '';
+  return { score, has, label };
+}
+
+function _passesSocial(cfg, social) {
+  if (!social) return true;  // fail-open if no social data
+  if (cfg.requireWebsite && !social.has.website) return false;
+  if (cfg.requireTwitter && !social.has.twitter) return false;
+  if (cfg.requireSocial && social.score < 3) return false;
+  if (cfg.requireLocked && !social.has.locked) return false;
+  if (cfg.minSocialScore && social.score < cfg.minSocialScore) return false;
+  return true;
 }
 
 function _fmtUsd(n) {
@@ -154,7 +246,7 @@ function _chgStr(pct) {
   return e + ' ' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
 }
 
-function _signalCard(chain, pair) {
+function _signalCard(chain, pair, socialLabel) {
   const b = pair.baseToken || {};
   const sym = _esc(b.symbol || 'TOKEN');
   const nm = _esc(b.name || '');
@@ -167,7 +259,7 @@ function _signalCard(chain, pair) {
   const ca = _esc((b.address) || '');
   return (
     `⚡️ <b>$${sym}</b>${nm && nm.toLowerCase() !== sym.toLowerCase() ? '  ' + nm : ''}\n` +
-    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}\n` +
+    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}${socialLabel ? '   ' + socialLabel : ''}\n` +
     `━━━━━━━━━━━━━\n` +
     `💰 MC <b>${mc}</b>   💧 Liq <b>${liq}</b>\n` +
     `📊 Vol <b>${vol}</b>   💵 <b>${_esc(price)}</b>\n` +
@@ -214,11 +306,20 @@ async function _pollOnce() {
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
 
-    let card = _signalCard(chain, pair);
+    // social scoring (fail-open — missing data doesn't block)
+    let social = null;
+    if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
+      social = await _socialScore(null, addr);  // will check rugcheck for locked
+      if (!_passesSocial(cfg, social)) { _seen.add(addr); continue; }
+    }
+
+    let card = _signalCard(chain, pair, social ? social.label : '');
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
     if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
+    if (!_top10Ok(cfg, rs)) { _seen.add(addr); continue; }     // top10 concentration
+    if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
     if (rs && rs.label) card += '\n' + rs.label;
@@ -267,8 +368,22 @@ async function _pollBonded() {
     _seenBond.add(mint);
     if (_bondSeeded) {   // first poll only seeds
       if (core.wasAlerted(mint)) continue;   // GLOBAL de-dupe — already called on another feed
+      // social scoring for bonded tokens
+      let social = null;
+      if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
+        social = await _socialScore(c, mint);
+        if (!_passesSocial(cfg, social)) continue;
+      }
       let card = _bondCard(c);
-      if (cfg.rugFilter) { const rs = await _rugScore(mint); if (rs.checked && rs.score < cfg.rugMinScore) continue; if (rs.label) card += '\n' + rs.label; }
+      if (social && social.label) card += '\n' + social.label;
+      if (cfg.rugFilter) {
+        const rs = await _rugScore(mint);
+        if (rs.checked && rs.score < cfg.rugMinScore) continue;
+        if (!_holdersOk(cfg, rs)) continue;
+        if (!_top10Ok(cfg, rs)) continue;
+        if (!_snipersOk(cfg, rs)) continue;
+        if (rs.label) card += '\n' + rs.label;
+      }
       const ok = (await core.broadcast(card)) > 0;
       if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: Number(c.usd_market_cap || c.market_cap || 0), entryPrice: 0 }); } catch (e) {} }
     }
@@ -329,10 +444,19 @@ async function _pollGecko() {
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a, _taddr);
+          // social scoring for gecko pools
+          let social = null;
+          if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
+            social = await _socialScore(null, _taddr);
+            if (!_passesSocial(cfg, social)) continue;
+          }
+          if (social && social.label) card += '\n' + social.label;
           let rs = null;
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) rs = await _rugScore(mint); }
           if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
           if (!_holdersOk(cfg, rs)) continue;                            // must have holders
+          if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
+          if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           if (rs && rs.label) card += '\n' + rs.label;
@@ -346,7 +470,7 @@ async function _pollGecko() {
   _poolSeeded = true;   // first poll only seeds — then post only NEW pools
 }
 
-let _timer = null, _bondTimer = null, _geckoTimer = null;
+let _timer = null, _bondTimer = null, _geckoTimer = null, _pipelineTimer = null;
 function startTelegramSignals() {
   const cfg = _cfg();
   if (!cfg.token) {
@@ -356,6 +480,17 @@ function startTelegramSignals() {
   if (_timer) return;
   if (!core.acquireBroadcastLock()) { console.log('[tg-signals] another instance owns broadcasting — signals not started here (prevents duplicate sends).'); return; }
   console.log(`[tg-signals] ENABLED → ${cfg.channel || '(no channel — DM chats only)'} · chains=${cfg.chains.join(',')} · trending/${Math.round(cfg.interval / 1000)}s · bonded=${cfg.bonded ? Math.round(cfg.bondedInterval / 1000) + 's' : 'off'}`);
+
+  // Start token-db auto-save
+  try { require('./token-db').startAutoSave(); } catch (e) {}
+
+  // Pipeline: 4-stage discovery → confirm → validate → enrich (20s cycle)
+  const pipeline = require('./pipeline');
+  console.log('[tg-signals] pipeline armed — 4-stage discovery cycle');
+  setTimeout(() => { _pipelineCycle(pipeline).catch(() => {}); }, 10000);
+  _pipelineTimer = setInterval(() => { _pipelineCycle(pipeline).catch(() => {}); }, 20000);
+  if (_pipelineTimer.unref) _pipelineTimer.unref();
+
   // trending feed (DexScreener boosts) — first run after a short delay so it doesn't fight boot
   setTimeout(() => { _pollOnce().catch(() => {}); }, 8000);
   _timer = setInterval(() => { _pollOnce().catch(() => {}); }, cfg.interval);
@@ -372,4 +507,42 @@ function startTelegramSignals() {
   if (_geckoTimer.unref) _geckoTimer.unref();
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko };
+// Pipeline cycle: run 4 stages, post enriched candidates
+async function _pipelineCycle(pipeline) {
+  try {
+    const enriched = await pipeline._cycle();
+    if (!enriched || !enriched.length) return;
+    const cfg = _cfg();
+    let posted = 0;
+    for (const c of enriched) {
+      if (posted >= cfg.maxPer) break;
+      if (core.wasAlerted(c.mint)) continue;
+      // build signal card
+      const socialLabel = c.sourceNames ? '📡 ' + c.sourceNames.join('+') : '';
+      let card = _signalCard(c.chain, { baseToken: { symbol: c.symbol, name: c.name, address: c.mint }, priceUsd: c.metrics.price, fdv: c.metrics.fdv, marketCap: c.metrics.fdv, liquidity: { usd: c.metrics.liq }, volume: { h24: c.metrics.vol24h }, priceChange: { h24: c.metrics.change24h }, url: c.metrics.url }, socialLabel);
+      if (c.confidence > 0) card += `\n🎯 Confidence: <b>+${c.confidence}</b>`;
+      const ok = (await core.broadcast(card)) > 0;
+      if (ok) {
+        core.markAlerted(c.mint);
+        pipeline.addCooldown(c.mint);
+        posted++;
+        try {
+          const tokenDb = require('./token-db');
+          tokenDb.recordOutcome({
+            mint: c.mint, chain: c.chain, name: c.name, symbol: c.symbol,
+            source: 'pipeline', entryFdv: c.metrics.fdv, entryPrice: c.metrics.price,
+            sourceCount: c.sourceCount, sources: c.sourceNames,
+            socialScore: c.confidence, hasWebsite: false, hasTwitter: false,
+            locked: c.metrics.lpPct >= 99, top10Pct: c.metrics.top10Pct || 0,
+            insiders: c.metrics.insiders || 0, bundlers: false, snipers: (c.metrics.insiders || 0) > 0,
+            rugScore: c.metrics.rugScore || 0, lpPct: c.metrics.lpPct || 0,
+            holders: c.metrics.holders || 0, vol24h: c.metrics.vol24h, liquidity: c.metrics.liq,
+          });
+          pnl.recordCall({ source: 'pipeline', chain: c.chain, mint: c.mint, name: c.name, symbol: c.symbol, entryFdv: c.metrics.fdv, entryPrice: c.metrics.price });
+        } catch (e) {}
+      }
+    }
+  } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
+}
+
+module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _socialScore, _passesSocial };

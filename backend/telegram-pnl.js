@@ -15,7 +15,8 @@ const core = require('./telegram-core');
 
 const FILE = path.join(__dirname, 'data', 'tg-calls.json');
 const BOT_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot');
-// pick a random existing PNL celebration image (pnl-1..10.png) or null if none generated yet
+const MILESTONES_DIR = path.join(BOT_DIR, 'milestones');
+// pick a random existing PNL celebration image (pnl-1..10.png) or null
 function _pnlImage() {
   try {
     const imgs = [];
@@ -24,8 +25,26 @@ function _pnlImage() {
     return imgs[Math.floor(Math.random() * imgs.length)];
   } catch (e) { return null; }
 }
+// milestone image: returns themed image for 2x,5x,10x,15x,20x,25x,30x,35x,40x,45x,50x
+const MILESTONE_LEVELS = [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+function milestoneImage(mult) {
+  const m = Math.floor(Number(mult) || 0);
+  // find the highest milestone image <= current mult
+  let best = 0;
+  for (const lvl of MILESTONE_LEVELS) { if (m >= lvl) best = lvl; }
+  if (!best) return null;
+  const f = path.join(MILESTONES_DIR, 'milestone-' + best + 'x.png');
+  return fs.existsSync(f) ? f : null;
+}
+// get PNL image for /pnl command: use milestone image if at milestone, else random pnl image
+function _pnlImageForCall(call) {
+  const m = Math.floor(Number(call.curMult || call.peakMult || 0));
+  const msImg = milestoneImage(m);
+  if (msImg) return msImg;
+  return _pnlImage();
+}
 const DS_TOKENS = (addrs) => `https://api.dexscreener.com/latest/dex/tokens/${addrs}`;
-const MILESTONES = [2, 5, 10, 25, 100];   // spaced — a token updates only at big milestones, not over and over
+const MILESTONES = [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];   // every milestone level
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;   // stop tracking after 30 days
 const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function _usd(n) { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(0); }
@@ -104,7 +123,7 @@ async function trackTick() {
       // record EVERY newly-crossed milestone ≤ peak so skipped lower ones don't re-fire (out of order) on later ticks
       for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) call.milestones.push(m); }
       changed = true;
-      const img = _pnlImage();
+      const img = milestoneImage(hit) || _pnlImage();
       if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit));
       else await core.broadcast(_milestoneCard(call, hit));
     }
@@ -249,4 +268,52 @@ function pruneLosers(minPeak, minAgeHours) {
   return removed;
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers };
+// /pnl <CA> save — generate a PNL snapshot image on demand and return it
+async function savePnlSnapshot(q) {
+  _now = Date.now();
+  const s = String(q || '').toLowerCase().replace(/^\$/, '').trim();
+  if (!s) return { error: 'No token provided.' };
+  const c = _state.calls.find(x => (x.mint || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase() === s || (x.name || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
+  if (!c) return { error: 'No tracked call found for <b>' + _esc(s) + '</b>.' };
+
+  const mult = Number(c.peakMult || c.curMult || 1);
+  const symbol = c.symbol || c.name || 'TOKEN';
+  const img = await pnlImages.generatePnlImage(c);
+  const ch = core.channel() || '@ShaddaiLabs';
+  const cap = (
+    `📊 <b>PNL SNAPSHOT — $${_esc(symbol)}</b>\n\n` +
+    `Entry: <b>${_usd(c.entryFdv)}</b>\n` +
+    `ATH: <b>${mult.toFixed(1)}x</b>  →  <b>${_usd(c.entryFdv * mult)}</b>\n` +
+    `Current: <b>${(c.curMult || 1).toFixed(1)}x</b>\n` +
+    (c.mint && !String(c.mint).startsWith('seed-') ? `📋 CA: <code>${_esc(c.mint)}</code>\n` : '') +
+    `\n📡 ${_esc(ch)}  ·  <i>Saved PNL snapshot.</i>`
+  );
+  return { img, cap, symbol, mult };
+}
+
+// find a previously saved PNL image for a token (no generation)
+function savedPnlImage(q) {
+  const s = String(q || '').toLowerCase().replace(/^\$/, '').trim();
+  if (!s) return null;
+  const GENERATED_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot', 'pnl-generated');
+  try {
+    if (!fs.existsSync(GENERATED_DIR)) return null;
+    const files = fs.readdirSync(GENERATED_DIR);
+    const match = files.find(f => f.toLowerCase().includes(s));
+    if (match) return path.join(GENERATED_DIR, match);
+  } catch (e) {}
+  return null;
+}
+
+// find a call by ticker/name/mint (for /pnl image lookup)
+function _findCall(q) {
+  _now = Date.now();
+  const s = String(q || '').toLowerCase().replace(/^\$/, '').trim();
+  if (!s) return null;
+  return _state.calls.find(x => (x.symbol || '').toLowerCase() === s || (x.name || '').toLowerCase() === s || (x.mint || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
+}
+
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, _findCall };

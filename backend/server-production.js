@@ -614,6 +614,66 @@ app.get('/api/apis/health', async (req, res) => {
   }
 });
 
+// ── PROVIDER HEALTH + PIPELINE + LEARNING (admin) ──────────────────────────
+app.get('/api/providers/status', (req, res) => {
+  try {
+    const providers = require('./providers');
+    const tokenDb = require('./token-db');
+    const pipeline = require('./pipeline');
+    res.json({
+      providers: providers.status(),
+      cache: providers.cacheStats(),
+      pipeline: pipeline.getStats(),
+      candidates: pipeline.getCandidates(),
+      learning: tokenDb.getLearning(),
+      stats: tokenDb.historicalStats(),
+      overlap: Object.fromEntries(
+        Object.entries(tokenDb.getSnapshots())
+          .filter(([, v]) => v.sources && Object.keys(v.sources).length >= 2)
+          .map(([k, v]) => [k, { name: v.name, symbol: v.symbol, sources: Object.keys(v.sources), lastSeen: v.lastSeen }])
+      ),
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/providers/health', (req, res) => {
+  try {
+    const providers = require('./providers');
+    res.json({ providers: providers.status(), cache: providers.cacheStats() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/providers/learning', (req, res) => {
+  try {
+    const tokenDb = require('./token-db');
+    const learning = tokenDb.analyzeOutcomes();
+    res.json({ learning, stats: tokenDb.historicalStats(), weights: tokenDb.getWeights() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/providers/overlap', (req, res) => {
+  try {
+    const tokenDb = require('./token-db');
+    const snaps = tokenDb.getSnapshots();
+    const overlap = {};
+    for (const [mint, s] of Object.entries(snaps)) {
+      if (s.sources && Object.keys(s.sources).length >= 2) {
+        overlap[mint] = { name: s.name, symbol: s.symbol, sources: Object.keys(s.sources), fdv: s.entryFdv, lastSeen: s.lastSeen };
+      }
+    }
+    res.json({ overlap, count: Object.keys(overlap).length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/providers/reset-circuit', (req, res) => {
+  try {
+    const { name } = req.body;
+    const providers = require('./providers');
+    if (name) { providers.resetCircuit(name); res.json({ ok: true, reset: name }); }
+    else { res.status(400).json({ error: 'provider name required' }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/ollama/generate', async (req, res) => {
   try {
     const { prompt, model } = req.body;
