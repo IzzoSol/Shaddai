@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, 'data');   // set to a Render persistent-disk path (paid plan) to survive redeploys
 const CHATS_FILE = path.join(DATA_DIR, 'tg-chats.json');
 const CFG_FILE = path.join(DATA_DIR, 'tg-config.json');
 const ALERTED_FILE = path.join(DATA_DIR, 'tg-alerted.json');

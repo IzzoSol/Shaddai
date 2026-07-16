@@ -16,7 +16,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, 'data');
+// TG_DATA_DIR lets state live on a Render persistent disk (paid plan) so learning/dedupe/PNL
+// survive redeploys. Unset (free plan) = ephemeral local dir; seed-guards mitigate restart repeats.
+const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, 'data');
 const SNAPSHOTS_FILE = path.join(DATA_DIR, 'token-snapshots.json');
 const CALLS_FILE = path.join(DATA_DIR, 'token-calls.json');
 const LEARNING_FILE = path.join(DATA_DIR, 'zerox-learning.json');
