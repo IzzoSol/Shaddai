@@ -222,43 +222,64 @@ async function send(chatId, html, extra) {
 }
 
 // Send a photo (local file path → uploaded bytes, or a public URL) with an HTML caption.
-async function sendPhoto(chatId, photo, caption) {
+async function sendPhoto(chatId, photo, caption, buttons) {
   const t = token(); if (!t || chatId == null || !photo) return false;
   try {
     if (!/^https?:/i.test(photo) && fs.existsSync(photo)) {
       const fd = new FormData();
       fd.append('chat_id', String(chatId));
       if (caption) { fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML'); }
+      if (buttons) fd.append('reply_markup', JSON.stringify(buttons));
       fd.append('photo', new Blob([fs.readFileSync(photo)]), 'img.png');
       const r = await fetch(TG(t, 'sendPhoto'), { method: 'POST', body: fd });
       if (r.status === 403) removeChat(chatId);
       return r.ok;
     }
+    const body = { chat_id: chatId, photo, caption: (caption || '').slice(0, 1024), parse_mode: 'HTML' };
+    if (buttons) body.reply_markup = buttons;
     const r = await fetch(TG(t, 'sendPhoto'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, photo, caption: (caption || '').slice(0, 1024), parse_mode: 'HTML' }),
+      body: JSON.stringify(body),
     });
     if (r.status === 403) removeChat(chatId);
     return r.ok;
   } catch (e) { return false; }
 }
-async function broadcastPhoto(photo, caption) {
+async function broadcastPhoto(photo, caption, buttons) {
   const t = token(); if (!t) return 0;
   const targets = new Set(); const ch = channel(); if (ch) targets.add(ch);
   chats().forEach(c => targets.add(c.id));
-  let ok = 0; for (const id of targets) { if (await sendPhoto(id, photo, caption)) ok++; }
+  let ok = 0; for (const id of targets) { if (await sendPhoto(id, photo, caption, buttons)) ok++; }
   return ok;
 }
 
 // Broadcast to the main channel + every registered chat. Returns count delivered.
+// opts.buttons = a reply_markup inline_keyboard (from buildButtons) attached to each message.
 async function broadcast(html, opts) {
   const t = token(); if (!t) return 0;
   const targets = new Set();
   const ch = channel(); if (ch && !(opts && opts.skipChannel)) targets.add(ch);
   chats().forEach(c => targets.add(c.id));
+  const extra = (opts && opts.buttons) ? { reply_markup: opts.buttons } : undefined;
   let ok = 0;
-  for (const id of targets) { if (await send(id, html)) ok++; }
+  for (const id of targets) { if (await send(id, html, extra)) ok++; }
   return ok;
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset, getPreset, activePresetKey };
+// Inline-keyboard buttons for a call card: Chart · DexScreener · pump.fun (+ optional 📸 PNL tap-button).
+function buildButtons(mint, chain, chartUrl, opts) {
+  if (!mint) return undefined;
+  const c = (chain || 'solana').toLowerCase();
+  const dsChain = c === 'sol' ? 'solana' : c;
+  const rows = [];
+  const r1 = [{ text: '📊 Chart', url: chartUrl || ('https://dexscreener.com/' + dsChain + '/' + mint) },
+              { text: '🔎 DexScreener', url: 'https://dexscreener.com/' + dsChain + '/' + mint }];
+  rows.push(r1);
+  const r2 = [];
+  if (dsChain === 'solana') r2.push({ text: '💊 pump.fun', url: 'https://pump.fun/' + mint });
+  if (opts && opts.pnl) r2.push({ text: '📸 PNL Card', callback_data: ('pnl:' + mint).slice(0, 64) });
+  if (r2.length) rows.push(r2);
+  return { inline_keyboard: rows };
+}
+
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, buildButtons, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset, getPreset, activePresetKey };

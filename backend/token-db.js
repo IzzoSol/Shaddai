@@ -108,6 +108,9 @@ function recordOutcome(c) {
       fdvAtCall: c.entryFdv || 0,
       volAtCall: c.vol24h || 0,
       liqAtCall: c.liquidity || 0,
+      devPct: c.devPct || 0,          // dev/creator holdings %
+      venue: c.venue || '',           // launch/trade venue (pump, raydium, pumpswap, meteora, …)
+      top10Pct: c.top10Pct || 0,
     },
     // outcome
     milestones: [],

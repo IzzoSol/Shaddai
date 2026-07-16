@@ -129,8 +129,9 @@ async function trackTick() {
       for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) call.milestones.push(m); }
       changed = true;
       const img = milestoneImage(hit) || _pnlImage();
-      if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit));
-      else await core.broadcast(_milestoneCard(call, hit));
+      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });   // Chart + 📸 PNL Card tap-button
+      if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
+      else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
     }
   }
   if (changed) _write(_state);

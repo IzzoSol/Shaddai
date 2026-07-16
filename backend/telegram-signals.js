@@ -20,6 +20,8 @@
 const core = require('./telegram-core');   // shared broadcast (channel + every chat the bot is in)
 const pnl = require('./telegram-pnl');     // call performance tracker (entry → Xs)
 const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
+// log the full feature fingerprint of a posted call → token-db (powers ZEROX winner/loser analysis)
+function _logFeatures(o) { try { require('./token-db').recordOutcome(o); } catch (e) {} }
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
 // pump.fun graduated ("bonded") coins — unofficial public API, best-effort.
@@ -405,9 +407,10 @@ async function _pollOnce() {
     if (rs && rs.label) card += '\n' + rs.label;
     // holder conviction bonus — separate bullish signal
     if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
-    const ok = (await core.broadcast(card)) > 0;
+    const ok = (await core.broadcast(card, { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
     _seen.add(addr);
-    if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {} }
+    if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
+      _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
 }
@@ -490,9 +493,9 @@ async function _pollBonded() {
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
     c.usdMc = usdMc; c.liq = liq;                     // reliable USD numbers for card + PNL entry
     let card = _bondCard(c);
-    if (pair.url) card += `\n🔗 <a href="${_esc(pair.url)}">Chart</a>`;
+    let rs = null;
     if (cfg.rugFilter) {
-      const rs = await _rugScore(mint);
+      rs = await _rugScore(mint);
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
       if (_overCap(cfg, usdMc, rs)) continue;         // >maxFdv unless premium-safe
       if (!_holdersOk(cfg, rs)) continue;
@@ -502,8 +505,12 @@ async function _pollBonded() {
       if (rs.label) card += '\n' + rs.label;
       if (rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
     }
-    const ok = (await core.broadcast(card)) > 0;
-    if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {} }
+    const ok = (await core.broadcast(card, { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
+    if (ok) {
+      core.markAlerted(mint); posted++;
+      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
+      _logFeatures({ mint, chain: 'solana', name: c.name, symbol: c.symbol, source: 'bonded', entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: c.holders || (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), devPct: c.devPct || 0, venue: pair.dexId || 'pump', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: liq, sourceCount: 1 });
+    }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
 }
@@ -578,8 +585,11 @@ async function _pollGecko() {
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           if (rs && rs.label) card += '\n' + rs.label;
           if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
-          const ok = (await core.broadcast(card)) > 0;
-          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {} }
+          const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
+          const ok = (await core.broadcast(card, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {}
+            const _venue = (p.relationships && p.relationships.dex && p.relationships.dex.data && p.relationships.dex.data.id) || '';
+            _logFeatures({ mint: _taddr || _dk, chain: net, name: a.name, source: kind, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: _venue, vol24h: vol, liquidity: liq, sourceCount: 1 }); }
         }
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }
@@ -655,7 +665,7 @@ async function _pipelineCycle(pipeline) {
       if (flags.length) card += '\n' + flags.join('  ');
       if (c.confidence > 0) card += `\n🎯 Confidence: <b>+${c.confidence}</b>`;
       if (regime && regime.label) card += `\n🌐 Market: ${regime.label} (${regime.mcapChg >= 0 ? '+' : ''}${regime.mcapChg.toFixed(1)}%)`;
-      const ok = (await core.broadcast(card)) > 0;
+      const ok = (await core.broadcast(card, { buttons: core.buildButtons(c.mint, c.chain, c.metrics.url) })) > 0;
       if (ok) {
         core.markAlerted(c.mint);
         pipeline.addCooldown(c.mint);

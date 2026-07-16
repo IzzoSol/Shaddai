@@ -131,7 +131,29 @@ async function _ask(token, chatId, cfg, q, agent) {
 }
 
 // ── command router ─────────────────────────────────────────────────────────
+// inline-button taps — currently the 📸 PNL Card button on milestone posts
+async function _handleCallback(cfg, cq) {
+  const t = cfg.token;
+  const answer = (text) => fetch(TG(t, 'answerCallbackQuery'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: cq.id, text: text || '' }) }).catch(() => {});
+  try {
+    const data = String(cq.data || '');
+    const chatId = cq.message && cq.message.chat && cq.message.chat.id;
+    if (data.startsWith('pnl:') && chatId) {
+      const key = data.slice(4);
+      const cap = _pnl.pnlForToken(key) || 'No tracked call found for that token.';
+      const call = _pnl._findCall ? _pnl._findCall(key) : null;
+      const img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
+      const btns = _core.buildButtons(key, (call && call.chain) || 'solana', null);
+      await answer('📸 PNL card below');
+      if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
+      return _send(t, chatId, cap);
+    }
+    return answer();
+  } catch (e) { return answer(); }
+}
+
 async function _handle(cfg, update) {
+  if (update.callback_query) return _handleCallback(cfg, update.callback_query);
   const msg = update.message || update.channel_post; if (!msg) return;
   try { _core.addChat(msg.chat); } catch (e) {}
   const chatId = msg.chat && msg.chat.id; const text = (msg.text || '').trim();
