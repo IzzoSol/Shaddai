@@ -168,6 +168,15 @@ async function _handle(cfg, update) {
 
     case 'dist': case 'distribution': case 'performance': return _send(t, chatId, _pnl.distribution());
 
+    // /held — long-term "conviction holds": calls still green, ranked by how well they held their ATH
+    case 'held': case 'holds': case 'survivors': case 'conviction': case 'longterm': {
+      const per = /week|wk|7d/i.test(arg) ? 'week' : 'day';
+      const cap = _pnl.survivors(per);
+      const img = _pnl.pnlImage && _pnl.pnlImage();
+      if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; }
+      return _send(t, chatId, cap);
+    }
+
     // /preset — view all presets or switch active one
     case 'preset': {
       const presets = _core.listPresets();

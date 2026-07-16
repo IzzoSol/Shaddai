@@ -24,6 +24,9 @@ const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
 // pump.fun graduated ("bonded") coins — unofficial public API, best-effort.
 const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&includeNsfw=false';
+// advanced pump.fun API — richer graduated data (holders, snipers, dev%, ATH, bonding progress)
+const PF_GRADUATED = 'https://advanced-api-v2.pump.fun/coins/graduated?limit=50';
+const PF_HEADERS = { accept: 'application/json', origin: 'https://pump.fun', 'user-agent': 'Mozilla/5.0 (SHADDAI-signals)' };
 
 const _seen = new Set();          // trending token addresses already posted (dedupe)
 const _seenBond = new Set();      // bonded mints already posted (dedupe)
@@ -413,14 +416,22 @@ async function _pollOnce() {
 function _bondCard(c) {
   const name = _esc(c.name || 'Token');
   const sym = _esc(c.symbol || '');
-  const mc = c.usd_market_cap ? _fmtUsd(c.usd_market_cap) : (c.market_cap ? _fmtUsd(c.market_cap) : '');
+  const mc = c.usdMc ? _fmtUsd(c.usdMc) : '';
+  const ath = c.athUsd ? _fmtUsd(c.athUsd) : '';
+  const liq = c.liq ? _fmtUsd(c.liq) : '';
   const mint = c.mint || c.address || '';
   const url = mint ? 'https://pump.fun/' + mint : '';
+  const extra = [];
+  if (c.holders) extra.push('👥 ' + c.holders);
+  if (c.devPct != null && c.devPct > 0) extra.push('👨‍💻 dev ' + Number(c.devPct).toFixed(0) + '%');
+  if (c.snipers != null && c.snipers > 0) extra.push('🔫 ' + c.snipers + ' snipers');
   return (
     `🎓 <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — BONDED\n` +
     `Graduated → Raydium\n` +
     `━━━━━━━━━━━━━\n` +
-    (mc ? `💰 MC <b>${mc}</b>\n` : '') +
+    (mc ? `💰 MC <b>${mc}</b>${ath ? `   🏔 ATH <b>${ath}</b>` : ''}\n` : '') +
+    (liq ? `💧 Liq <b>${liq}</b>\n` : '') +
+    (extra.length ? extra.join('   ') + '\n' : '') +
     (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
     (url ? `🔗 <a href="${_esc(url)}">pump.fun</a>` : '') +
     `\n\n<i>NFA · rug-check first</i>`
@@ -429,45 +440,70 @@ function _bondCard(c) {
 async function _pollBonded() {
   const cfg = _cfg();
   if (!cfg.token || !cfg.bonded) return;
-  let coins;
+  // Prefer the ADVANCED pump.fun API (rich: holders, snipers, dev%, ATH, bonding progress); fall back to frontend-v3.
+  let list = [];
   try {
-    const r = await fetch(PF_COINS, { headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0 (SHADDAI-signals)' } });
-    if (!r.ok) { if (!_bondSeeded) console.warn('[tg-signals] pump.fun bonded poll HTTP', r.status, '(unofficial API — may be geo/CF-blocked)'); return; }
-    coins = await r.json();
-  } catch (e) { return; }
-  const list = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
+    const r = await fetch(PF_GRADUATED, { headers: PF_HEADERS });
+    if (r.ok) {
+      const j = await r.json();
+      const arr = Array.isArray(j) ? j : (j && (j.data || j.coins)) || [];
+      list = arr.map(c => ({
+        mint: c.coinMint, name: c.name, symbol: c.ticker,
+        pumpMc: Number(c.marketCap) || 0, pumpAth: Number(c.allTimeHighMarketCap) || 0,
+        holders: Number(c.numHolders) || 0, snipers: Number(c.sniperCount) || 0,
+        devPct: Number(c.devHoldingsPercentage) || 0, bcProg: Number(c.bondingCurveProgress) || 0,
+      })).filter(c => c.mint);
+    }
+  } catch (e) {}
+  if (!list.length) {   // fallback → frontend-api-v3
+    try {
+      const r = await fetch(PF_COINS, { headers: PF_HEADERS });
+      if (!r.ok) { if (!_bondSeeded) console.warn('[tg-signals] pump.fun bonded poll HTTP', r.status); return; }
+      const coins = await r.json();
+      const arr = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
+      list = arr.filter(c => c.complete === true || !!c.raydium_pool || c.graduated === true)
+                .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0 }));
+    } catch (e) { return; }
+  }
   let posted = 0;
   for (const c of list) {
     if (posted >= cfg.maxPer) break;
-    const mint = c && (c.mint || c.address);
-    if (!mint) continue;
-    const bonded = c.complete === true || !!c.raydium_pool || c.graduated === true;
-    if (!bonded) continue;
-    if (_seenBond.has(mint)) continue;
+    const mint = c.mint;
+    if (!mint || _seenBond.has(mint)) continue;
     _seenBond.add(mint);
-    if (_bondSeeded) {   // first poll only seeds
-      if (core.wasAlerted(mint)) continue;   // GLOBAL de-dupe — already called on another feed
-      // social scoring for bonded tokens
-      let social = null;
-      if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
-        social = await _socialScore(c, mint);
-        if (!_passesSocial(cfg, social)) continue;
-      }
-      let card = _bondCard(c);
-      if (social && social.label) card += '\n' + social.label;
-      if (cfg.rugFilter) {
-        const rs = await _rugScore(mint);
-        if (rs.checked && rs.score < cfg.rugMinScore) continue;
-        if (!_holdersOk(cfg, rs)) continue;
-        if (!_top10Ok(cfg, rs)) continue;
-        if (!_lpLockedOk(cfg, rs)) continue;
-        if (!_snipersOk(cfg, rs)) continue;
-        if (rs.label) card += '\n' + rs.label;
-      }
-      const ok = (await core.broadcast(card)) > 0;
-      if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: Number(c.usd_market_cap || c.market_cap || 0), entryPrice: 0 }); } catch (e) {} }
-    }
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
+    if (!_bondSeeded) continue;                       // first poll only seeds (no dump on restart)
+    if (core.wasAlerted(mint)) continue;              // global de-dupe
+    // pump's own rich data as early gates (owner rules), when present
+    if (c.holders && cfg.minHolders && c.holders < cfg.minHolders) continue;
+    if (c.devPct && c.devPct > 30) continue;          // dev holding >30% = rug risk
+    // ENRICH via DexScreener for reliable USD mcap/liq + confirm it's live on Raydium (else too fresh → next poll)
+    let pair = null;
+    try {
+      const r = await fetch(DS_TOKEN('solana', mint));
+      if (r.ok) { const j = await r.json(); pair = ((j && j.pairs) || []).sort((a, b) => (b.liquidity && b.liquidity.usd || 0) - (a.liquidity && a.liquidity.usd || 0))[0]; }
+    } catch (e) {}
+    if (!pair) continue;                              // not indexed/tradeable yet — catch it next poll
+    const usdMc = Number(pair.fdv || pair.marketCap) || 0;
+    const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
+    if (usdMc <= 0 || liq <= 0) continue;
+    if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
+    c.usdMc = usdMc; c.liq = liq;                     // reliable USD numbers for card + PNL entry
+    let card = _bondCard(c);
+    if (pair.url) card += `\n🔗 <a href="${_esc(pair.url)}">Chart</a>`;
+    if (cfg.rugFilter) {
+      const rs = await _rugScore(mint);
+      if (rs.checked && rs.score < cfg.rugMinScore) continue;
+      if (_overCap(cfg, usdMc, rs)) continue;         // >maxFdv unless premium-safe
+      if (!_holdersOk(cfg, rs)) continue;
+      if (!_top10Ok(cfg, rs)) continue;
+      if (!_lpLockedOk(cfg, rs)) continue;            // LP MUST be locked
+      if (!_snipersOk(cfg, rs)) continue;
+      if (rs.label) card += '\n' + rs.label;
+      if (rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
+    }
+    const ok = (await core.broadcast(card)) > 0;
+    if (ok) { core.markAlerted(mint); posted++; try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0 }); } catch (e) {} }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
 }

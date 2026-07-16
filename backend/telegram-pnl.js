@@ -223,6 +223,47 @@ function distribution() {
   );
 }
 
+// ── CONVICTION HOLDS ("held well") — long-term survivors from the day/week before ──
+// A coin that ran 10x and still holds 7x (70% retention) is more bullish than one that
+// ran 10x and fell to 3x (30%). Ranks by current gain weighted by how well it held its ATH.
+// Only includes calls still in the GREEN (survived — didn't round-trip to zero).
+function survivors(period) {
+  _now = Date.now();
+  const wk = period === 'week';
+  const minAge = wk ? 24 * 3600 * 1000 : 12 * 3600 * 1000;         // day view: 12h+ old · week view: 1d+ old
+  const maxAge = wk ? 9 * 24 * 3600 * 1000 : 3 * 24 * 3600 * 1000; // week view: up to ~9d · day view: up to 3d
+  const scored = _state.calls
+    .filter(c => { const age = _now - c.ts; return age >= minAge && age <= maxAge && (c.curMult || 1) >= 1; })  // survived / still green
+    .map(c => {
+      const peak = c.peakMult || 1, cur = c.curMult || 1;
+      const retention = peak > 0 ? cur / peak : 0;                 // how much of ATH it holds
+      const held = cur * (0.4 + 0.6 * retention);                  // current gain, boosted when held near ATH
+      return { c, peak, cur, retention, held };
+    })
+    .sort((a, b) => b.held - a.held)
+    .slice(0, 8);
+  const ch = core.channel() || '@ShaddaiLabs';
+  const label = wk ? 'WEEK' : 'DAY';
+  if (!scored.length) {
+    return `💎 <b>SHADDAI CONVICTION HOLDS — ${label}</b>\n\n<i>No surviving calls in range yet — check back once calls mature.</i>\n\n📡 ${_esc(ch)}`;
+  }
+  const lines = scored.map(s => {
+    const sym = _esc(s.c.symbol || s.c.name || '?');
+    const ret = Math.round(s.retention * 100);
+    const bar = ret >= 70 ? '🟢' : ret >= 40 ? '🟡' : '🟠';
+    const ca = s.c.mint && !String(s.c.mint).startsWith('seed-') ? `\n   <code>${_esc(s.c.mint)}</code>` : '';
+    return `${bar} <b>$${sym}</b> — now <b>${s.cur.toFixed(1)}x</b> · ATH ${s.peak.toFixed(1)}x · held <b>${ret}%</b> · ${_ago(s.c.ts)}${ca}`;
+  }).join('\n');
+  return (
+    `💎 <b>SHADDAI CONVICTION HOLDS — ${label}</b>\n` +
+    `<i>Calls still in the green, ranked by how well they held their ATH</i>\n` +
+    `━━━━━━━━━━━━━\n` +
+    lines +
+    `\n\n🟢 held ATH well  ·  🟡 pulled back  ·  🟠 deep retrace\n` +
+    `📡 ${_esc(ch)}  ·  <i>Real holder conviction — long-term survivors. NFA.</i>`
+  );
+}
+
 // manually add a (historical) winning call — locked/closed so it isn't re-priced
 function seedCall(o) {
   _now = Date.now();
@@ -320,4 +361,4 @@ function _findCall(q) {
     || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, _findCall };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall };
