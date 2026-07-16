@@ -216,6 +216,28 @@ async function _validate() {
       if (score >= 70 && danger === 0) c.confidence += 10;
     }
 
+    // ── GoPlus cross-check (2nd risk source, fail-open) ──────────────────────
+    // Hard-reject unambiguous honeypots; penalize soft authority risks; bonus trusted tokens.
+    try {
+      const gp = await providers.gpSecurity(c.chain, mint);
+      const sec = gp && gp.result && gp.result[mint];
+      if (sec) {
+        const _s = (o) => (o && typeof o === 'object') ? o.status === '1' : String(o) === '1';
+        const honeypot = _s(sec.non_transferable);
+        const balMutable = _s(sec.balance_mutable_authority);
+        const mintable = _s(sec.mintable);
+        const freezable = _s(sec.freezable);
+        c.metrics.goplus = { honeypot, balMutable, mintable, freezable, trusted: Number(sec.trusted_token) === 1 };
+        // holders fallback from GoPlus when RugCheck gave none
+        if ((!c.metrics.holders || c.metrics.holders === 0) && sec.holder_count) c.metrics.holders = Number(sec.holder_count) || 0;
+        if (honeypot) { _reject(c, 'GoPlus: non-transferable (honeypot)'); continue; }
+        if (balMutable) { _reject(c, 'GoPlus: balance-mutable authority (rug vector)'); continue; }
+        if (c.metrics.goplus.trusted) c.confidence += 5;   // GoPlus-verified token
+        if (mintable) c.confidence -= 3;
+        if (freezable) c.confidence -= 2;
+      }
+    } catch (e) {}
+
     c.stage = 'validated';
   }
   _stats.validated = [..._candidates.values()].filter(x => x.stage === 'validated' || x.stage === 'enriched').length;

@@ -33,9 +33,14 @@ async function marketPulse() {
         Object.keys(prices).forEach(k => { if (!prices[k]) delete prices[k]; });
       }
     } catch (e) {}
-    // CoinGecko global mcap + BTC dominance — best-effort (may be blocked on Render → omitted).
-    let mcap, mcapChg, btcDom;
-    try { const g = (await (await fetch(`${CG}/global`)).json()).data; mcap = g.total_market_cap && g.total_market_cap.usd; mcapChg = g.market_cap_change_percentage_24h_usd; btcDom = g.market_cap_percentage && g.market_cap_percentage.btc; } catch (e) {}
+    // Global mcap + dominance — CoinLore (no key, US-cloud/Render friendly; CoinGecko IP-blocks Render).
+    let mcap, mcapChg, btcDom, ethDom, vol24;
+    try {
+      const g = (await (await fetch('https://api.coinlore.net/api/global/')).json())[0];
+      if (g) { mcap = Number(g.total_mcap) || 0; mcapChg = Number(g.mcap_change); btcDom = Number(g.btc_d); ethDom = Number(g.eth_d); vol24 = Number(g.total_volume) || 0; }
+    } catch (e) {}
+    // fallback: CoinGecko global (works locally / non-Render)
+    if (!mcap) { try { const g = (await (await fetch(`${CG}/global`)).json()).data; mcap = g.total_market_cap && g.total_market_cap.usd; mcapChg = g.market_cap_change_percentage_24h_usd; btcDom = g.market_cap_percentage && g.market_cap_percentage.btc; } catch (e) {} }
     const line = (s, label) => prices[s] ? `${label}: <b>$${prices[s].p.toLocaleString(undefined, { maximumFractionDigits: prices[s].p < 10 ? 2 : 0 })}</b>  ${_pct(prices[s].c)}` : '';
     const coins = [line('BTCUSDT', '₿ BTC'), line('ETHUSDT', 'Ξ ETH'), line('SOLUSDT', '◎ SOL')].filter(Boolean);
     if (!coins.length && !mcap) return null;   // nothing to show — don't post an empty card
@@ -43,7 +48,8 @@ async function marketPulse() {
       `📊 <b>SHADDAI MARKET PULSE</b>\n` +
       `━━━━━━━━━━━━━\n` +
       (mcap ? `🌐 Total mcap: <b>${_usd(mcap)}</b>  ${_pct(mcapChg)}\n` : '') +
-      (btcDom ? `👑 BTC dominance: <b>${btcDom.toFixed(1)}%</b>\n` : '') +
+      (vol24 ? `📈 24h vol: <b>${_usd(vol24)}</b>\n` : '') +
+      (btcDom ? `👑 BTC dom: <b>${btcDom.toFixed(1)}%</b>${ethDom ? `   Ξ ETH dom: <b>${ethDom.toFixed(1)}%</b>` : ''}\n` : '') +
       (mcap || btcDom ? '\n' : '') +
       coins.join('\n') +
       `\n\n<i>NFA · DYOR</i>`

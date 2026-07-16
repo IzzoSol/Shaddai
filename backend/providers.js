@@ -194,7 +194,9 @@ async function rugSummary(mint) { return _fetch('rugcheck', `https://api.rugchec
 register({ name: 'goplus', role: 'risk', baseUrl: 'https://api.gopluslabs.io', ttlMs: 300000, intervalMs: 0, maxPerMin: 10, timeoutMs: 8000 });
 
 async function gpSecurity(chain, addr) {
-  const chainId = { solana: 'solana', eth: '1', ethereum: '1', bsc: '56', base: '8453', polygon: '137', arbitrum: '42161', avax: '43114' }[chain] || '1';
+  // Solana uses a dedicated endpoint; EVM chains use numeric chain IDs on the generic one.
+  if (chain === 'solana' || chain === 'sol') return _fetch('goplus', `https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=${addr}`);
+  const chainId = { eth: '1', ethereum: '1', bsc: '56', base: '8453', polygon: '137', arbitrum: '42161', avax: '43114' }[chain] || '1';
   return _fetch('goplus', `https://api.gopluslabs.io/api/v1/token_security/${chainId}?contract_addresses=${addr}`);
 }
 
