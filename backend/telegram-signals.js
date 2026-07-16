@@ -83,8 +83,8 @@ function _top10Ok(cfg, rs) { return !(rs && rs.checked && rs.top10Pct && cfg.max
 // locked LP gate — LP must be ≥50% locked
 function _lpLockedOk(cfg, rs) {
   if (!cfg.requireLocked) return true;
-  if (!rs || !rs.checked) return true;   // no data = pass (rugCheck stage will catch it)
-  return rs.lp >= 50;
+  if (!rs || !rs.checked) return false;   // OWNER MUST: locked liq — no lock proof = reject (fail-closed)
+  return rs.lp >= 80;
 }
 // sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders
 function _snipersOk(cfg, rs) {

@@ -192,8 +192,8 @@ async function _validate() {
       // apply filters — HARD REJECTS (locked liq, sniper/bundler cap under 10%)
       if (score < (cfg.rugMinScore || 45)) { _reject(c, 'rug score ' + score + ' < ' + (cfg.rugMinScore || 45)); continue; }
       if ((holders || 0) < (cfg.minHolders || 5)) { _reject(c, 'holders ' + (holders || 0) + ' < ' + (cfg.minHolders || 5)); continue; }   // missing holder data = reject
-      // locked LP: LP must be ≥50% locked — only enforce when RugCheck actually returned LP data (fresh tokens aren't indexed yet)
-      if (cfg.requireLocked && lpDataPresent && lpPct < 50) { _reject(c, 'LP not locked: ' + lpPct.toFixed(1) + '% < 50%'); continue; }
+      // OWNER MUST-RULE: liquidity locked & not removable — FAIL-CLOSED: no lock proof = no call.
+      if (cfg.requireLocked && (!lpDataPresent || lpPct < 80)) { _reject(c, 'LP not confirmed locked (' + (lpDataPresent ? lpPct.toFixed(0) + '%' : 'no lock data') + ')'); continue; }
       // OWNER RULE: top holder must be < 30% unless LP is locked
       if (topHolderPct > 30 && lpPct < 50) { _reject(c, 'top holder ' + topHolderPct.toFixed(1) + '% (unlocked)'); continue; }
       // OWNER RULE: sniper/insider share of SUPPLY must be under the cap (was count/holders — almost never tripped)
@@ -223,9 +223,10 @@ async function _validate() {
         if ((!c.metrics.holders || c.metrics.holders === 0) && sec.holder_count) c.metrics.holders = Number(sec.holder_count) || 0;
         if (honeypot) { _reject(c, 'GoPlus: non-transferable (honeypot)'); continue; }
         if (balMutable) { _reject(c, 'GoPlus: balance-mutable authority (rug vector)'); continue; }
+        // OWNER MUST-RULE: "not removable" — mint & freeze authority must be revoked.
+        if (mintable) { _reject(c, 'GoPlus: mint authority active (supply dilutable)'); continue; }
+        if (freezable) { _reject(c, 'GoPlus: freeze authority active (can lock holders out)'); continue; }
         if (c.metrics.goplus.trusted) c.confidence += 5;   // GoPlus-verified token
-        if (mintable) c.confidence -= 3;
-        if (freezable) c.confidence -= 2;
       }
     } catch (e) {}
 
