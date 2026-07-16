@@ -212,6 +212,18 @@ async function hpCheck(chain, addr) {
 register({ name: 'coinlore', role: 'context', baseUrl: 'https://api.coinlore.net', ttlMs: 120000, intervalMs: 60000, maxPerMin: 10, timeoutMs: 8000 });
 
 async function clGlobal() { return _fetch('coinlore', 'https://api.coinlore.net/api/global/'); }
+// Live market regime (risk-on / risk-off) from CoinLore global — cached via the registry TTL.
+async function marketRegime() {
+  try {
+    const g = await clGlobal();
+    const row = Array.isArray(g) ? g[0] : g;
+    if (!row) return null;
+    const chg = Number(row.mcap_change);
+    if (!isFinite(chg)) return null;
+    const risk = chg <= -2 ? 'off' : chg >= 2 ? 'on' : 'neutral';
+    return { risk, mcapChg: chg, btcDom: Number(row.btc_d) || 0, label: risk === 'off' ? '🥶 Risk-off' : risk === 'on' ? '🔥 Risk-on' : '😐 Neutral' };
+  } catch (e) { return null; }
+}
 async function clTickers(ids) { return _fetch('coinlore', `https://api.coinlore.net/api/tickers/?id=${ids || '0,1,2,3,2710'}`); }
 
 // ── 8. CoinPaprika — fallback ticker/search/history ───────────────────────
@@ -235,6 +247,8 @@ module.exports = {
   dexBoosts, dexToken, dexSearch,
   gtPools,
   cgTrending, cgCoin,
+  // context
+  marketRegime,
   // risk
   rugReport, rugSummary,
   gpSecurity,

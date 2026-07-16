@@ -596,6 +596,7 @@ async function _pipelineCycle(pipeline) {
     const enriched = await pipeline._cycle();
     if (!enriched || !enriched.length) return;
     const cfg = _cfg();
+    let regime = null; try { regime = await require('./providers').marketRegime(); } catch (e) {}
     let posted = 0;
     for (const c of enriched) {
       if (posted >= cfg.maxPer) break;
@@ -604,7 +605,17 @@ async function _pipelineCycle(pipeline) {
       const socialLabel = c.sourceNames ? '📡 ' + c.sourceNames.join('+') : '';
       let card = _signalCard(c.chain, { baseToken: { symbol: c.symbol, name: c.name, address: c.mint }, priceUsd: c.metrics.price, fdv: c.metrics.fdv, marketCap: c.metrics.fdv, liquidity: { usd: c.metrics.liq }, volume: { h24: c.metrics.vol24h }, priceChange: { h24: c.metrics.change24h }, url: c.metrics.url }, socialLabel);
       if (c.conviction && c.conviction.score) { try { card += '\n' + require('./lib/conviction').convictionLine(c.conviction); } catch (e) {} }
+      // risk/quality flag chips — show subscribers WHY this scored where it did
+      const m = c.metrics || {}, flags = [];
+      if (m.lpPct >= 99) flags.push('🔒 LP');
+      if (m.goplus && m.goplus.trusted) flags.push('✅ trusted');
+      if (m.goplus && m.goplus.mintable) flags.push('⚠️ mintable');
+      if (m.goplus && m.goplus.freezable) flags.push('⚠️ freezable');
+      if (m.bundlers) flags.push('📦 bundlers');
+      if ((m.insiders || 0) > 0) flags.push('🔫 ' + m.insiders + ' insider');
+      if (flags.length) card += '\n' + flags.join('  ');
       if (c.confidence > 0) card += `\n🎯 Confidence: <b>+${c.confidence}</b>`;
+      if (regime && regime.label) card += `\n🌐 Market: ${regime.label} (${regime.mcapChg >= 0 ? '+' : ''}${regime.mcapChg.toFixed(1)}%)`;
       const ok = (await core.broadcast(card)) > 0;
       if (ok) {
         core.markAlerted(c.mint);
