@@ -32,12 +32,16 @@ const PF_HEADERS = { accept: 'application/json', origin: 'https://pump.fun', 'us
 
 const _seen = new Set();          // trending token addresses already posted (dedupe)
 const _seenBond = new Set();      // bonded mints already posted (dedupe)
+const _boostMap = new Map();      // tokenAddress → { amount, totalAmount, description, links } — DexScreener paid boosts
 let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of existing graduates)
 let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
 const _ENRICH_CAP = 10;           // max token-detail fetches per trending poll (rate safety — was 18, lowered)
+
+// look up DexScreener boost info for a token address — returns null if not boosted
+function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
 function _cfg() {
   const cc = core.getConfig();   // dashboard-editable filter params + feed toggles
@@ -329,6 +333,16 @@ function _chgStr(pct) {
   const e = v >= 100 ? '🔥' : v > 0 ? '🟢' : v === 0 ? '⚪' : '🔴';
   return e + ' ' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
 }
+function _ageStr(ms) {
+  if (!ms || ms < 0) return '';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return '<1m';
+  if (mins < 60) return mins + 'm';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h' + (mins % 60 ? (mins % 60) + 'm' : '');
+  const days = Math.floor(hrs / 24);
+  return days + 'd' + (hrs % 24 ? (hrs % 24) + 'h' : '');
+}
 
 function _signalCard(chain, pair, socialLabel) {
   const b = pair.baseToken || {};
@@ -338,15 +352,27 @@ function _signalCard(chain, pair, socialLabel) {
   const mc = _fmtUsd(pair.fdv || pair.marketCap || 0);
   const liq = _fmtUsd(pair.liquidity && pair.liquidity.usd);
   const vol = _fmtUsd(pair.volume && pair.volume.h24);
+  const vol1h = _fmtUsd(pair.volume && pair.volume.h1);
   const chg = _chgStr(pair.priceChange && pair.priceChange.h24);
+  const chg1h = _chgStr(pair.priceChange && pair.priceChange.h1);
   const url = _esc(pair.url || '');
   const ca = _esc((b.address) || '');
+  // age
+  const age = pair.pairCreatedAt ? _ageStr(Date.now() - pair.pairCreatedAt) : '';
+  // boost info
+  const boost = _boostInfo(ca);
+  const boostLine = boost && boost.amount > 0 ? `⚡ <b>PAID BOOST</b> — ${boost.amount} credits\n` : '';
+  // volume-to-liq ratio (organic indicator)
+  const volLiqRatio = (Number(pair.volume && pair.volume.h24) || 0) / Math.max(Number(pair.liquidity && pair.liquidity.usd) || 1, 1);
+  const volHealth = volLiqRatio > 10 ? '🟢' : volLiqRatio > 3 ? '🟡' : '⚪';
   return (
+    boostLine +
     `⚡️ <b>$${sym}</b>${nm && nm.toLowerCase() !== sym.toLowerCase() ? '  ' + nm : ''}\n` +
-    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}${socialLabel ? '   ' + socialLabel : ''}\n` +
+    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}${chg1h ? '  1h' + chg1h : ''}${socialLabel ? '   ' + socialLabel : ''}\n` +
     `━━━━━━━━━━━━━\n` +
     `💰 MC <b>${mc}</b>   💧 Liq <b>${liq}</b>\n` +
-    `📊 Vol <b>${vol}</b>   💵 <b>${_esc(price)}</b>\n` +
+    `📊 Vol24h <b>${vol}</b>   Vol1h <b>${vol1h}</b>\n` +
+    `💵 <b>${_esc(price)}</b>${age ? '   ⏱ ' + age : ''}   ${volHealth} Vol/Liq ${volLiqRatio.toFixed(1)}x\n` +
     (ca ? `\n<code>${ca}</code>\n` : '') +
     (url ? `🔗 <a href="${url}">Chart</a>` : '') +
     `\n\n<i>NFA · DYOR</i>`
@@ -363,6 +389,18 @@ async function _pollOnce() {
     boosts = await r.json();
   } catch (e) { return; }
   if (!Array.isArray(boosts)) return;
+  // populate boost map — every boosted token gets tracked (for cards + PnL)
+  for (const item of boosts) {
+    if (item && item.tokenAddress) {
+      _boostMap.set(item.tokenAddress, {
+        amount: Number(item.amount) || 0,
+        totalAmount: Number(item.totalAmount) || 0,
+        description: item.description || '',
+        icon: item.icon || '',
+        links: item.links || [],
+      });
+    }
+  }
   // first poll after (re)start only SEEDS — prevents re-posting the whole trending list on Render redeploys
   if (!_trendSeeded) { for (const item of boosts) { if (item && item.tokenAddress) _seen.add(item.tokenAddress); } _trendSeeded = true; return; }
 
@@ -409,7 +447,7 @@ async function _pollOnce() {
     if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
-    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0) }), { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
     _seen.add(addr);
     if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
@@ -424,6 +462,7 @@ function _bondCard(c) {
   const mc = c.usdMc ? _fmtUsd(c.usdMc) : '';
   const ath = c.athUsd ? _fmtUsd(c.athUsd) : '';
   const liq = c.liq ? _fmtUsd(c.liq) : '';
+  const vol = c.vol24h ? _fmtUsd(c.vol24h) : '';
   const mint = c.mint || c.address || '';
   const url = mint ? 'https://pump.fun/' + mint : '';
   const extra = [];
@@ -435,7 +474,7 @@ function _bondCard(c) {
     `Graduated → Raydium\n` +
     `━━━━━━━━━━━━━\n` +
     (mc ? `💰 MC <b>${mc}</b>${ath ? `   🏔 ATH <b>${ath}</b>` : ''}\n` : '') +
-    (liq ? `💧 Liq <b>${liq}</b>\n` : '') +
+    (liq ? `💧 Liq <b>${liq}</b>` : '') + (vol ? `   📊 Vol <b>${vol}</b>` : '') + '\n' +
     (extra.length ? extra.join('   ') + '\n' : '') +
     (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
     (url ? `🔗 <a href="${_esc(url)}">pump.fun</a>` : '') +
@@ -493,7 +532,7 @@ async function _pollBonded() {
     const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
     if (usdMc <= 0 || liq <= 0) continue;
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
-    c.usdMc = usdMc; c.liq = liq;                     // reliable USD numbers for card + PNL entry
+    c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
     let card = _bondCard(c);
     let rs = null;
     if (cfg.rugFilter) {
@@ -505,7 +544,7 @@ async function _pollBonded() {
       if (!_lpLockedOk(cfg, rs)) continue;            // LP MUST be locked
       if (!_snipersOk(cfg, rs)) continue;
     }
-    const ok = (await core.broadcast(card + _detailBlock(rs, null, { liq, fdv: usdMc }), { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, null, { liq, fdv: usdMc, mint, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
     if (ok) {
       core.markAlerted(mint); posted++;
       try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
@@ -526,16 +565,21 @@ function _poolCard(net, kind, a, addr) {
   const price = a.base_token_price_usd ? '$' + Number(a.base_token_price_usd).toPrecision(4) : 'n/a';
   const liq = _fmtUsd(a.reserve_in_usd);
   const vol = _fmtUsd(a.volume_usd && a.volume_usd.h24);
+  const vol1h = _fmtUsd(a.volume_usd && a.volume_usd.h1);
   const fdv = a.fdv_usd ? _fmtUsd(a.fdv_usd) : '';
   const url = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
   const tag = kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT';
   const chg = _chgStr(a.price_change_percentage && (a.price_change_percentage.h24 || a.price_change_percentage.h1));
+  const age = a.pool_created_at ? _ageStr(Date.now() - new Date(a.pool_created_at).getTime()) : '';
+  const volLiqRatio = (Number(a.volume_usd && a.volume_usd.h24) || 0) / Math.max(Number(a.reserve_in_usd) || 1, 1);
+  const volHealth = volLiqRatio > 10 ? '🟢' : volLiqRatio > 3 ? '🟡' : '⚪';
   return (
     `${tag}  <b>${name}</b>\n` +
-    `${_esc(net.toUpperCase())}${chg ? '   ' + chg : ''}\n` +
+    `${_esc(net.toUpperCase())}${chg ? '   ' + chg : ''}${age ? '   ⏱ ' + age : ''}\n` +
     `━━━━━━━━━━━━━\n` +
     (fdv ? `💰 MC <b>${fdv}</b>   ` : '') + `💧 Liq <b>${liq}</b>\n` +
-    `📊 Vol <b>${vol}</b>   💵 <b>${_esc(price)}</b>\n` +
+    `📊 Vol24h <b>${vol}</b>   Vol1h <b>${vol1h}</b>\n` +
+    `💵 <b>${_esc(price)}</b>   ${volHealth} Vol/Liq ${volLiqRatio.toFixed(1)}x\n` +
     (addr ? `\n<code>${_esc(addr)}</code>\n` : '') +
     (url ? `🔗 <a href="${_esc(url)}">Chart</a>` : '') +
     `\n\n<i>NFA · rug-check first</i>`
@@ -547,6 +591,25 @@ function _poolCard(net, kind, a, addr) {
 function _detailBlock(rs, social, extra) {
   const lines = [];
   const e = extra || {};
+
+  // ── AGE + VOLUME (from DexScreener pair data) ──────────────────────────
+  const age = e.createdAt ? _ageStr(Date.now() - e.createdAt) : '';
+  const vol24 = e.vol24 ? _fmtUsd(e.vol24) : '';
+  const vol1h = e.vol1h ? _fmtUsd(e.vol1h) : '';
+  if (age || vol24) {
+    let market = '';
+    if (age) market += '⏱ ' + age;
+    if (vol24) market += (market ? '  ·  ' : '') + '📊 Vol24h ' + vol24;
+    if (vol1h) market += '  ·  Vol1h ' + vol1h;
+    lines.push(market);
+  }
+
+  // ── BOOST STATUS ──────────────────────────────────────────────────────
+  const mint = e.mint || (rs && rs.mint) || '';
+  const boost = mint ? _boostInfo(mint) : null;
+  if (boost && boost.amount > 0) {
+    lines.push('⚡ <b>PAID BOOST</b> — ' + boost.amount + ' DexScreener credits');
+  }
 
   // ── SAFETY SCORE (from RugCheck) ──────────────────────────────────────
   if (rs && rs.checked) {
@@ -590,8 +653,19 @@ function _detailBlock(rs, social, extra) {
     lines.push(health + ' Liquidity <b>' + ratio.toFixed(1) + '%</b> of mcap');
   }
 
-  // ── SOCIAL PRESENCE ───────────────────────────────────────────────────
-  if (social && social.has) {
+  // ── WEBSITES & SOCIAL LINKS (from DexScreener info) ───────────────────
+  const sites = e.websites || [];
+  const socialLinks = e.socialLinks || [];
+  if (sites.length || socialLinks.length) {
+    const parts = [];
+    for (const w of sites) { if (w.url) parts.push('🌐 <a href="' + _esc(w.url) + '">' + _esc(w.label || 'Website') + '</a>'); }
+    for (const s of socialLinks) {
+      const icon = s.type === 'twitter' ? '🐦' : s.type === 'telegram' ? '📱' : s.type === 'discord' ? '💬' : '🔗';
+      if (s.url) parts.push(icon + ' <a href="' + _esc(s.url) + '">' + _esc(s.type || 'social') + '</a>');
+    }
+    if (parts.length) lines.push(parts.join('  '));
+  } else if (social && social.has) {
+    // fallback to social score icons
     const icons = [];
     if (social.has.website) icons.push('🌐');
     if (social.has.twitter) icons.push('🐦');
@@ -653,7 +727,7 @@ async function _pollGecko() {
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
-          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
