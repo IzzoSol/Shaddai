@@ -46,9 +46,10 @@ function _help() {
     '/news — live market pulse\n' +
     '/lb — leaderboard (top calls ranked by Xs)\n' +
     '/pnl <code>&lt;ticker&gt;</code> — PNL card for a specific token\n' +
+    '/held — conviction holds: calls still green, ranked by ATH hold\n' +
     '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
     '/dist — performance distribution (1-2x / 2-5x / 5-10x / 10x+)\n' +
-    '/preset — view/switch filter presets\n' +
+    '/preset — view/switch filter presets (locked liq + whale conviction)\n' +
     '/signals — the free live signals channel\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
@@ -224,13 +225,13 @@ async function _handle(cfg, update) {
         '• Min Vol: <code>$' + result.minVol24h + '</code>\n' +
         '• Min Holders: <code>' + result.minHolders + '</code>\n' +
         '• Rug Score: <code>' + result.rugMinScore + '+</code>\n' +
-        (result.maxTop10Pct && result.maxTop10Pct < 100 ? '• 👥 Top10: <code>≤' + result.maxTop10Pct + '%</code>\n' : '') +
-        (result.requireNoSnipers ? '• 🔫 No snipers\n' : '') +
-        (result.requireNoBundlers ? '• 📦 No bundlers\n' : '') +
+        '• 🔒 Locked LP: <code>required</code>\n' +
+        (result.maxSnipersPct ? '• 🔫 Snipers+Bundlers: <code>&lt;' + result.maxSnipersPct + '%</code>\n' : '') +
+        (result.minTop10Pct ? '• 🐊 Whale Top10: <code>≥' + result.minTop10Pct + '%</code> (bullish)\n' : '') +
+        (result.top10BullishBonus ? '• 🏋️ Whale Bonus: <code>+' + result.top10BullishBonus + '</code> confidence\n' : '') +
         (result.requireWebsite ? '• 🌐 Website required\n' : '') +
         (result.requireTwitter ? '• 𝕏 Twitter required\n' : '') +
         (result.requireSocial ? '• 📱 Social required (3+)\n' : '') +
-        (result.requireLocked ? '• 🔒 Locked supply required\n' : '') +
         '\nFilters updated instantly.'
       );
     }
@@ -264,6 +265,7 @@ async function _registerCommands(token) {
         { command: 'help', description: 'List all commands' },
         { command: 'lb', description: 'Leaderboard — top calls ranked by Xs' },
         { command: 'pnl', description: 'PNL card for a token (e.g. /pnl SOLANDIER)' },
+        { command: 'held', description: 'Conviction holds — calls still green' },
         { command: 'price', description: 'Live DEX price of a token' },
         { command: 'rug', description: 'Rug-check a Solana mint' },
         { command: 'preset', description: 'View/switch filter presets' },
