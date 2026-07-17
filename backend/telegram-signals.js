@@ -21,7 +21,7 @@ const core = require('./telegram-core');   // shared broadcast (channel + every 
 const pnl = require('./telegram-pnl');     // call performance tracker (entry → Xs)
 const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 // log the full feature fingerprint of a posted call → token-db (powers ZEROX winner/loser analysis)
-function _logFeatures(o) { try { require('./token-db').recordOutcome(o); } catch (e) {} }
+function _logFeatures(o) { try { require('./token-db').recordOutcome(o); } catch (e) { console.warn('[token-db] _logFeatures error:', e.message); } }
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
 // pump.fun graduated ("bonded") coins — unofficial public API, best-effort.
@@ -75,8 +75,12 @@ function _cfg() {
     geckoInterval: Math.max(120000, parseInt(process.env.TG_GECKO_INTERVAL || '300000', 10) || 300000),  // 5 min default (GeckoTerminal: generous)
   };
 }
-// min FDV only (max handled post-rug so premium coins can be waived over the cap)
-function _passesFdv(cfg, fdv) { if (cfg.minFdv && fdv < cfg.minFdv) return false; return true; }
+// FDV gate — min + max (was min-only; max was deferred to _overCap but that allowed billion-FDV leaks)
+function _passesFdv(cfg, fdv) {
+  if (cfg.minFdv && fdv < cfg.minFdv) return false;
+  if (cfg.maxFdv && fdv > cfg.maxFdv) return false;
+  return true;
+}
 // over the max-mcap cap? allowed only if it's a premium-safety coin (fits all params)
 function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs && rs.checked && rs.score >= 80); }
 // liquidity must "match" the token — at least minLiqPct% of mcap (thin book vs big mcap = red flag)
@@ -85,10 +89,10 @@ function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; r
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
 // top10 concentration gate — must be under the max
 function _top10Ok(cfg, rs) { return !(rs && rs.checked && rs.top10Pct && cfg.maxTop10Pct && rs.top10Pct > cfg.maxTop10Pct); }
-// locked LP gate — LP must be ≥50% locked
+// locked LP gate — LP must be ≥80% locked (with grace: new pools re-checked next cycle)
 function _lpLockedOk(cfg, rs) {
   if (!cfg.requireLocked) return true;
-  if (!rs || !rs.checked) return false;   // OWNER MUST: locked liq — no lock proof = reject (fail-closed)
+  if (!rs || !rs.checked) return false;   // no data = reject
   return rs.lp >= 80;
 }
 // sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders
@@ -244,6 +248,7 @@ async function _rugScore(mint) {
     const conviction = _holderConvictionScore(j.topHolders || [], holders, {});
     return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, insiders,
       conviction: conviction.score, convictionLabel: conviction.label, convictionSignals: conviction.signals,
+      risks: risks,
       label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
   } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
 }
@@ -404,10 +409,7 @@ async function _pollOnce() {
     if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
-    if (rs && rs.label) card += '\n' + rs.label;
-    // holder conviction bonus — separate bullish signal
-    if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
-    const ok = (await core.broadcast(card, { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0) }), { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
     _seen.add(addr);
     if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
@@ -502,10 +504,8 @@ async function _pollBonded() {
       if (!_top10Ok(cfg, rs)) continue;
       if (!_lpLockedOk(cfg, rs)) continue;            // LP MUST be locked
       if (!_snipersOk(cfg, rs)) continue;
-      if (rs.label) card += '\n' + rs.label;
-      if (rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
     }
-    const ok = (await core.broadcast(card, { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, null, { liq, fdv: usdMc }), { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
     if (ok) {
       core.markAlerted(mint); posted++;
       try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
@@ -541,6 +541,77 @@ function _poolCard(net, kind, a, addr) {
     `\n\n<i>NFA · rug-check first</i>`
   );
 }
+
+// ── RICH DETAIL BLOCK — appends deep coin intel to any signal card ──────────
+// Pulls from rugScore, social, and pool data. Safe to call with nulls.
+function _detailBlock(rs, social, extra) {
+  const lines = [];
+  const e = extra || {};
+
+  // ── SAFETY SCORE (from RugCheck) ──────────────────────────────────────
+  if (rs && rs.checked) {
+    const badge = rs.score >= 80 ? '🟢' : rs.score >= 50 ? '🟡' : '🔴';
+    let safety = badge + ' Safety <b>' + rs.score + '/100</b>';
+    // LP lock status
+    if (rs.lp >= 99) safety += '  ·  🔒 LP 100%';
+    else if (rs.lp >= 80) safety += '  ·  🔐 LP ' + rs.lp.toFixed(0) + '%';
+    else if (rs.lp > 0) safety += '  ·  ⚠️ LP ' + rs.lp.toFixed(0) + '%';
+    else safety += '  ·  ⚠️ LP unknown';
+    lines.push(safety);
+  }
+
+  // ── HOLDERS & WHALE DISTRIBUTION ──────────────────────────────────────
+  if (rs && rs.checked && rs.holders) {
+    let holders = '👥 <b>' + rs.holders + '</b> holders';
+    if (rs.top10Pct) {
+      const quality = rs.top10Pct < 50 ? '🟢' : rs.top10Pct < 70 ? '🟡' : '🔴';
+      holders += '  ·  Top10 ' + quality + ' ' + rs.top10Pct.toFixed(0) + '%';
+    }
+    if (rs.insiders) holders += '  ·  🕵️ ' + rs.insiders + ' insider(s)';
+    if (rs.hasBundlers) holders += '  ·  📦 bundler';
+    if (rs.hasSnipers) holders += '  ·  🔫 sniper';
+    lines.push(holders);
+  }
+
+  // ── CONVICTION (whale buying signal) ──────────────────────────────────
+  if (rs && rs.convictionLabel) {
+    lines.push('🐋 <b>Conviction:</b> ' + rs.convictionLabel);
+    if (rs.convictionSignals && rs.convictionSignals.length) {
+      lines.push('   ' + rs.convictionSignals.join('  ·  '));
+    }
+  }
+
+  // ── LIQUIDITY HEALTH (liq/mcap ratio) ─────────────────────────────────
+  const liqNum = Number(e.liq || 0);
+  const fdvNum = Number(e.fdv || 0);
+  if (liqNum > 0 && fdvNum > 0) {
+    const ratio = (liqNum / fdvNum * 100);
+    const health = ratio >= 10 ? '🟢' : ratio >= 5 ? '🟡' : '🔴';
+    lines.push(health + ' Liquidity <b>' + ratio.toFixed(1) + '%</b> of mcap');
+  }
+
+  // ── SOCIAL PRESENCE ───────────────────────────────────────────────────
+  if (social && social.has) {
+    const icons = [];
+    if (social.has.website) icons.push('🌐');
+    if (social.has.twitter) icons.push('🐦');
+    if (social.has.telegram) icons.push('📱');
+    if (social.has.discord) icons.push('💬');
+    if (icons.length) {
+      lines.push('🔗 Social ' + icons.join(' ') + '  (score ' + (social.score || 0) + '/8)');
+    } else {
+      lines.push('⚠️ No social presence detected');
+    }
+  }
+
+  // ── RISK FLAGS (top 2 from RugCheck) ──────────────────────────────────
+  if (rs && rs.checked && rs.risks && rs.risks.length) {
+    const topRisks = rs.risks.slice(0, 2).map(r => r.name).filter(Boolean);
+    if (topRisks.length) lines.push('⚠️ Risks: ' + topRisks.join(', '));
+  }
+
+  return lines.length ? '\n' + lines.join('\n') : '';
+}
 async function _pollGecko() {
   const cfg = _cfg();
   if (!cfg.token || (!cfg.newpools && !cfg.trending)) return;
@@ -557,7 +628,6 @@ async function _pollGecko() {
         const a = p && p.attributes; const id = p && p.id; if (!a || !id) continue;
         if (_seenPool.has(id)) continue;
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
-        _seenPool.add(id);
         if (liq < cfg.minLiq || vol < cfg.minVol24h || !_passesFdv(cfg, fdv)) continue;
         const _chg = Number(a.price_change_percentage && a.price_change_percentage.h24);
         if (cfg.bullishOnly && isFinite(_chg) && _chg < -10) continue;   // skip bearish (funnel)
@@ -573,24 +643,27 @@ async function _pollGecko() {
             social = await _socialScore(null, _taddr);
             if (!_passesSocial(cfg, social)) continue;
           }
-          if (social && social.label) card += '\n' + social.label;
           let rs = null;
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) rs = await _rugScore(mint); }
           if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
           if (!_holdersOk(cfg, rs)) continue;                            // must have holders
           if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
-          if (!_lpLockedOk(cfg, rs)) continue;                           // LP must be locked ≥50%
+          if (!_lpLockedOk(cfg, rs)) continue;                           // LP must be locked ≥80%
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
-          if (rs && rs.label) card += '\n' + rs.label;
-          if (rs && rs.convictionLabel) card += '\n🐋 Conviction: ' + rs.convictionLabel;
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
-          const ok = (await core.broadcast(card, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
-          if (ok) { core.markAlerted(_dk); posted++; try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {}
+          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          if (ok) {
+            core.markAlerted(_dk);
+            _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
+            posted++;
+            try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {}
             const _venue = (p.relationships && p.relationships.dex && p.relationships.dex.data && p.relationships.dex.data.id) || '';
-            _logFeatures({ mint: _taddr || _dk, chain: net, name: a.name, source: kind, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: _venue, vol24h: vol, liquidity: liq, sourceCount: 1 }); }
+            _logFeatures({ mint: _taddr || _dk, chain: net, name: a.name, source: kind, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: _venue, vol24h: vol, liquidity: liq, sourceCount: 1 });
+          }
         }
+        // cap _seenPool size (only posted pools are in here now, so this rarely triggers)
         if (_seenPool.size > _SEEN_CAP) { const f = _seenPool.values().next().value; _seenPool.delete(f); }
       }
     }
@@ -619,8 +692,15 @@ function startTelegramSignals() {
   _pipelineTimer = setInterval(() => { _pipelineCycle(pipeline).catch(() => {}); }, 20000);
   if (_pipelineTimer.unref) _pipelineTimer.unref();
 
-  // ZEROX learning: every 30 min re-analyze call outcomes → weights the pipeline applies (closes the learning loop)
-  const _learnTimer = setInterval(() => { try { require('./token-db').analyzeOutcomes(); } catch (e) {} }, 30 * 60000);
+  // ZEROX learning: every 30 min re-analyze call outcomes → weights + failure patterns + auto-tune suggestions
+  const _learnTimer = setInterval(() => {
+    try {
+      const tokenDb = require('./token-db');
+      tokenDb.analyzeOutcomes();
+      tokenDb.analyzeFailures();
+      tokenDb.autoTune();
+    } catch (e) {}
+  }, 30 * 60000);
   if (_learnTimer.unref) _learnTimer.unref();
 
   // trending feed (DexScreener boosts) — first run after a short delay so it doesn't fight boot

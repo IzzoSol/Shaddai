@@ -73,7 +73,9 @@ function recordCall(c) {
     });
     if (_state.calls.length > 5000) _state.calls = _state.calls.slice(-5000);
     _write(_state);
-  } catch (e) {}
+    // Also log to token-db for ZEROX learning (bridge the two databases)
+    try { require('./token-db').recordOutcome(c); } catch (e) { console.warn('[pnl] token-db recordOutcome error:', e.message); }
+  } catch (e) { console.warn('[pnl] recordCall error:', e.message); }
 }
 
 async function _priceMap(mints) {
@@ -119,7 +121,7 @@ async function trackTick() {
     if (call.curMult > call.peakMult) {
       call.peakMult = call.curMult; changed = true;
       // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
-      try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) {}
+      try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
     }
     // fire the highest newly-crossed milestone (winners only → funnel)
     let hit = 0;
