@@ -13,7 +13,8 @@ const fs = require('fs');
 const path = require('path');
 const core = require('./telegram-core');
 
-const FILE = path.join(__dirname, 'data', 'tg-calls.json');
+const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, 'data');
+const FILE = path.join(DATA_DIR, 'tg-calls.json');
 const BOT_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot');
 const MILESTONES_DIR = path.join(BOT_DIR, 'milestones');
 // pick a random existing PNL celebration image (pnl-1..10.png) or null

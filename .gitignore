@@ -158,7 +158,7 @@ audit.js
 audit_script.js
 public/_pixeloffice_preview.html
 
-# Telegram bot runtime data + tracked wallets (never commit — chat IDs, config, and smart-money edge)
-backend/data/tg-*.json
+# Telegram bot runtime data + tracked wallets
+backend/data/tg-lock.json
 backend/data/tracked-wallets.json
 backend/data/tracked-wallets*.txt
