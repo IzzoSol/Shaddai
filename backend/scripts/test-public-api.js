@@ -110,6 +110,16 @@ const server = app.listen(0, async () => {
     ok('GET /news without key → 401', r.status === 401);
     r = await J('/api/v1/news/trending', auth);
     ok('GET /news/trending with key → 200 {ok,data}', r.status === 200 && r.body.ok);
+    // SCOPES: signals-only key can hit /calls but NOT /news; news-only the reverse
+    r = await J('/api/v1/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product: 'signals' }) });
+    const sigAuth = { headers: { Authorization: 'Bearer ' + r.body.key } };
+    ok('mint scope=signals returns scopes:[signals]', JSON.stringify(r.body.scopes) === JSON.stringify(['signals']));
+    ok('signals key → /calls 200', (await J('/api/v1/calls?limit=1', sigAuth)).status === 200);
+    ok('signals key → /news 403 (not entitled)', (await J('/api/v1/news', sigAuth)).status === 403);
+    r = await J('/api/v1/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product: 'news' }) });
+    const newsAuth = { headers: { Authorization: 'Bearer ' + r.body.key } };
+    ok('news key → /news 200', (await J('/api/v1/news?limit=2', newsAuth)).status === 200);
+    ok('news key → /calls 403 (not entitled)', (await J('/api/v1/calls', newsAuth)).status === 403);
   } catch (e) {
     console.error('✗ integration error:', e.message); process.exitCode = 1;
   } finally {

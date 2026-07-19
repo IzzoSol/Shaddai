@@ -54,6 +54,11 @@
   <h2>1 · Get a free key</h2>
   <div class="panel">
     <p class="lim">Mint a free API key instantly. Free tier: <b style="color:var(--emerald)">60 requests/min · 10,000/day</b>. Send it as a Bearer token on every request.</p>
+    <select id="product" style="background:#05070a;border:1px solid var(--line);border-radius:9px;padding:12px 14px;color:var(--txt);font-family:inherit;font-size:14px;width:100%;margin-bottom:12px;">
+      <option value="both">Signals + News (everything)</option>
+      <option value="signals">Signals only (calls, leaderboard, stats)</option>
+      <option value="news">News only (headlines, trending)</option>
+    </select>
     <input id="label" placeholder="Label or email (optional) — helps you remember this key" maxlength="80" />
     <button class="btn" id="getKey">Get free key →</button>
     <div class="keybox" id="keybox">
@@ -115,7 +120,7 @@
     try {
       const r = await fetch('/api/v1/keys', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label: $('label').value || '' })
+        body: JSON.stringify({ label: $('label').value || '', product: $('product').value || 'both' })
       });
       const j = await r.json();
       if (j.ok && j.key) {

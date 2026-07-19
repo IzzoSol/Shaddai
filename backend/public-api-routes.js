@@ -75,6 +75,14 @@ function requireKey(req, res, next) {
   next();
 }
 
+// Product-entitlement gate — lets signals and news be sold/offered separately.
+function requireScope(scope) {
+  return (req, res, next) => {
+    if (!keys.hasScope(req.apiKey, scope)) return res.status(403).json({ ok: false, error: 'this key is not authorized for "' + scope + '" — mint a ' + scope + ' key at /api' });
+    next();
+  };
+}
+
 // ── key minting (no key required; throttled per IP) ─────────────────────────
 router.post('/keys', express.json({ limit: '2kb' }), (req, res) => {
   // req.ip is the trusted client IP (Express resolves it via `trust proxy`). Do NOT
@@ -83,9 +91,10 @@ router.post('/keys', express.json({ limit: '2kb' }), (req, res) => {
   const ip = req.ip || 'unknown';
   if (!keys.mintAllowed(ip)) return res.status(429).json({ ok: false, error: 'too many keys created from this IP — try again later' });
   const label = (req.body && (req.body.label || req.body.email)) || '';
-  const minted = keys.mint(label);
+  const scope = req.body && (req.body.scope || req.body.product);   // 'signals' | 'news' | 'both'
+  const minted = keys.mint(label, scope);
   if (!minted) return res.status(503).json({ ok: false, error: 'key capacity reached — please try again later' });
-  res.json({ ok: true, key: minted.key, id: minted.id, tier: minted.tier, note: 'Save this key now — it is shown only once.' });
+  res.json({ ok: true, key: minted.key, id: minted.id, tier: minted.tier, scopes: minted.scopes, note: 'Save this key now — it is shown only once.' });
 });
 
 router.get('/me', requireKey, (req, res) => res.json({ ok: true, data: keys.info(req.apiKey) }));
@@ -98,21 +107,22 @@ router.post('/keys/:id/revoke', express.json({ limit: '2kb' }), (req, res) => {
 });
 
 // ── read endpoints ──────────────────────────────────────────────────────────
-router.get('/calls', requireKey, (req, res) =>
+const signals = requireScope('signals');
+router.get('/calls', requireKey, signals, (req, res) =>
   res.json({ ok: true, data: pnl.callsJson({ limit: req.query.limit, since: req.query.since, chain: req.query.chain, source: req.query.source }) }));
 
-router.get('/leaderboard', requireKey, (req, res) =>
+router.get('/leaderboard', requireKey, signals, (req, res) =>
   res.json({ ok: true, data: pnl.leaderboardJson({ limit: req.query.limit, period: req.query.period }) }));
 
-router.get('/stats', requireKey, (req, res) =>
+router.get('/stats', requireKey, signals, (req, res) =>
   res.json({ ok: true, data: pnl.statsJson() }));
 
-router.get('/token/:q', requireKey, (req, res) =>
+router.get('/token/:q', requireKey, signals, (req, res) =>
   res.json({ ok: true, data: pnl.findTokenJson(String(req.params.q || '').slice(0, 64)) }));
 
 // ── NEWS (separate resource, same key) ───────────────────────────────────────
 // GET /api/v1/news — latest crypto headlines (RSS: CoinTelegraph/CoinDesk/Decrypt + more).
-router.get('/news', requireKey, async (req, res) => {
+router.get('/news', requireKey, requireScope('news'), async (req, res) => {
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 15));
   const q = req.query.q ? String(req.query.q).slice(0, 64) : undefined;
   const ck = 'news:' + (q || '') + ':' + limit;
@@ -129,7 +139,7 @@ router.get('/news', requireKey, async (req, res) => {
 });
 
 // GET /api/v1/news/trending — trending coins/topics (CoinGecko).
-router.get('/news/trending', requireKey, async (req, res) => {
+router.get('/news/trending', requireKey, requireScope('news'), async (req, res) => {
   try {
     let data = _cacheGet('trending', 300000);
     if (!data) {

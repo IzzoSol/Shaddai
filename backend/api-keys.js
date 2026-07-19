@@ -26,6 +26,15 @@ const FILE = path.join(DATA_DIR, 'api-keys.json');
 const TMP = FILE + '.tmp';
 
 const LIMITS = { free: { perMin: 60, perDay: 10000 } };  // add paid tiers here later
+// Products a key can be entitled to — lets you sell/offer signals and news SEPARATELY.
+const SCOPES = ['signals', 'news'];
+function _normScopes(scope) {
+  if (Array.isArray(scope)) { const v = scope.map(s => String(s).toLowerCase()).filter(s => SCOPES.includes(s)); return v.length ? v : SCOPES.slice(); }
+  const s = String(scope || 'both').toLowerCase();
+  if (s === 'signals') return ['signals'];
+  if (s === 'news') return ['news'];
+  return SCOPES.slice();   // 'both'/default → all
+}
 const MAX_KEYS = 20000;                 // cap on stored keys (evict spent/expired first)
 const IDLE_TTL_MS = 90 * 24 * 3600 * 1000;   // keys idle > 90d are considered expired
 const MAX_IP_WINDOWS = 20000;
@@ -78,7 +87,7 @@ function _makeRoom() {
 }
 
 // Returns { key,id,tier } on success, or null if the store is at capacity (503).
-function mint(label) {
+function mint(label, scope) {
   if (!_makeRoom()) return null;
   const raw = 'sk_live_' + crypto.randomBytes(24).toString('hex');
   const rec = {
@@ -87,6 +96,7 @@ function mint(label) {
     prefix: raw.slice(0, 14) + '…',
     label: _sanitizeLabel(label),
     tier: 'free',
+    scopes: _normScopes(scope),   // which products this key can access (signals/news)
     createdAt: Date.now(),
     lastUsedAt: 0,
     count: 0,
@@ -95,8 +105,12 @@ function mint(label) {
   _state.keys.push(rec);
   _byHash.set(rec.hash, rec);
   _persist();
-  return { key: raw, id: rec.id, tier: rec.tier };
+  return { key: raw, id: rec.id, tier: rec.tier, scopes: rec.scopes };
 }
+
+// Is this key entitled to a product? Keys minted before scopes existed (no scopes
+// field) are treated as full-access for backward compatibility.
+function hasScope(rec, scope) { return !rec || !rec.scopes || rec.scopes.includes(scope); }
 
 // Validate a raw key → record, or null. O(1). Rejects disabled/expired keys.
 function validate(raw) {
@@ -153,6 +167,7 @@ function info(rec) {
   const w = _win.get(rec.id) || {};
   return {
     tier: rec.tier,
+    scopes: rec.scopes || SCOPES.slice(),
     created: rec.createdAt,
     count: rec.count || 0,
     limits: LIMITS[rec.tier] || LIMITS.free,
@@ -173,4 +188,4 @@ function mintAllowed(ip) {
   return w.count <= 5;   // max 5 keys/hour/IP
 }
 
-module.exports = { mint, validate, revoke, rateCheck, recordUse, info, mintAllowed, LIMITS, _hash, _persistSync, _state };
+module.exports = { mint, validate, revoke, rateCheck, recordUse, info, mintAllowed, hasScope, LIMITS, SCOPES, _hash, _persistSync, _state };
