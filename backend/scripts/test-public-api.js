@@ -103,6 +103,13 @@ const server = app.listen(0, async () => {
     // long :q must not crash (length-capped)
     r = await J('/api/v1/token/' + 'A'.repeat(500), auth);
     ok('GET /token with 500-char q → 200 (no crash)', r.status === 200);
+    // news endpoints (keyed) — envelope + array, must not throw
+    r = await J('/api/v1/news?limit=3', auth);
+    ok('GET /news with key → 200 {ok,data[]}', r.status === 200 && r.body.ok && Array.isArray(r.body.data));
+    r = await J('/api/v1/news', {});
+    ok('GET /news without key → 401', r.status === 401);
+    r = await J('/api/v1/news/trending', auth);
+    ok('GET /news/trending with key → 200 {ok,data}', r.status === 200 && r.body.ok);
   } catch (e) {
     console.error('✗ integration error:', e.message); process.exitCode = 1;
   } finally {

@@ -72,6 +72,8 @@
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/leaderboard</code><div class="d">Top calls ranked by peak multiple. Params: <code>limit</code>≤100, <code>period</code> = all&nbsp;|&nbsp;week&nbsp;|&nbsp;day.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/stats</code><div class="d">Aggregate scorecard: total calls, 2x+ hit rate, average peak, distribution.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/token/:idOrSymbol</code><div class="d">Was this token called? Entry, current &amp; peak multiple. e.g. <code>/api/v1/token/JIMOTHY</code>.</div></div></div>
+    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news</code><div class="d">Latest crypto headlines (CoinTelegraph/CoinDesk/Decrypt). Params: <code>limit</code>≤50, <code>q</code> (filter).</div></div></div>
+    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news/trending</code><div class="d">Trending coins/topics right now.</div></div></div>
     <div class="ep"><span class="m post">POST</span><div><code>/api/v1/keys</code><div class="d">Mint a free key. Body: <code>{ "label": "..." }</code>. Throttled per IP.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/me</code><div class="d">Your key's tier, limits, and current usage.</div></div></div>
   </div>

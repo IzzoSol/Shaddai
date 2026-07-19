@@ -45,6 +45,7 @@ function _help() {
     '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis + sentiment\n' +
     '/news — live market pulse\n' +
     '/lb — leaderboard (top calls ranked by Xs)\n' +
+    '/last25 /last50 /last75 /last100 — last N calls with live PNLs\n' +
     '/pnl <code>&lt;ticker&gt;</code> — PNL card for a specific token\n' +
     '/held — conviction holds: calls still green, ranked by ATH hold\n' +
     '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
@@ -175,6 +176,12 @@ async function _handle(cfg, update) {
     // /lb — leaderboard (text only, no image, no HF)
     case 'lb': return _send(t, chatId, _pnl.pnlCaption(arg || 'week'));
 
+    // /last, /last25, /last50, /last75, /last100 — last N calls with live PNLs
+    case 'last': case 'last25': case 'last50': case 'last75': case 'last100': {
+      const n = cmd === 'last' ? (parseInt(arg, 10) || 25) : parseInt(cmd.slice(4), 10);
+      return _send(t, chatId, _pnl.lastCalls(n));
+    }
+
     // /pnl <ticker> — PNL card for one token (milestone image if at that level, text always)
     case 'pnl': {
       if (!arg) return _send(t, chatId, 'Usage: /pnl <code>&lt;ticker&gt;</code>  e.g. <code>/pnl SOLANDIER</code>');
@@ -264,7 +271,10 @@ async function _registerCommands(token) {
         { command: 'start', description: 'Welcome + links' },
         { command: 'help', description: 'List all commands' },
         { command: 'lb', description: 'Leaderboard — top calls ranked by Xs' },
-        { command: 'pnl', description: 'PNL card for a token (e.g. /pnl SOLANDIER)' },
+        { command: 'last25', description: 'Last 25 calls with live PNLs' },
+        { command: 'last50', description: 'Last 50 calls with live PNLs' },
+        { command: 'last100', description: 'Last 100 calls with live PNLs' },
+        { command: 'pnl', description: 'PNL card for a token' },
         { command: 'held', description: 'Conviction holds — calls still green' },
         { command: 'price', description: 'Live DEX price of a token' },
         { command: 'rug', description: 'Rug-check a Solana mint' },

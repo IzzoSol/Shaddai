@@ -71,6 +71,7 @@ function _cfg() {
     minSocialScore: Number(cc.minSocialScore) || 0,
     // holder/sniper requirements
     maxTop10Pct: Number(cc.maxTop10Pct) || 100,
+    maxBundlerPct: Number(cc.maxBundlerPct) || 12,
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
     // poll cadences (env-tunable) — balanced for free tier rate limits
@@ -98,6 +99,12 @@ function _lpLockedOk(cfg, rs) {
   if (!cfg.requireLocked) return true;
   if (!rs || !rs.checked) return false;   // no data = reject
   return rs.lp >= 80;
+}
+// BIG-bundler gate — a small bundle is fine, but a bundle holding more than
+// maxBundlerPct (default 12%) of supply will dump. Reject only the big ones.
+function _bundlersOk(cfg, rs) {
+  if (!rs || !rs.checked || !cfg.maxBundlerPct) return true;
+  return !(rs.hasBundlers && (rs.bundlePct || 0) > cfg.maxBundlerPct);
 }
 // sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders
 function _snipersOk(cfg, rs) {
@@ -213,31 +220,43 @@ async function _rugScore(mint) {
     let top10Pct = 0;
     let hasSnipers = false;
     let hasBundlers = false;
+    let bundlePct = 0;        // combined supply % held by a detected bundle cluster
+    let lockedHeldPct = 0;    // % of top holders that are LP/lock/burn (NOT dumping whales)
     let insiders = 0;
     try {
       const th = j.topHolders || [];
+      // Lock/burn/LP holders aren't whales that dump. A project that BURNS or LOCKS a big
+      // chunk of supply shows up as "high top-holder concentration" but is actually safer.
+      // Exclude those from the concentration metrics so they don't trip the whale gate.
+      const BURN_RE = /1nc1nerator|^1{20,}$|dead0000|burn/i;
+      const LOCK_RE = /lp|amm|pool|lock|burn|vault|market|escrow|stream|raydium|meteora|orca/i;
+      const isLocked = (h) => { const o = String(h.owner || h.address || ''); return BURN_RE.test(o) || LOCK_RE.test(o); };
       insiders = th.filter(h => h.insider).length;
-      // calculate top 10 concentration
-      top10Pct = th.slice(0, 10).reduce((sum, h) => sum + (Number(h.pct) || 0), 0);
-      // sniper detection: holders with very similar amounts (batch buys)
-      const amounts = th.slice(0, 10).map(h => Number(h.amount) || 0).filter(a => a > 0).sort((a, b) => b - a);
-      if (amounts.length >= 3) {
-        // check if top 3-5 holders have suspiciously similar amounts (bundler pattern)
-        for (let i = 0; i < Math.min(5, amounts.length - 1); i++) {
-          const ratio = amounts[i] > 0 ? amounts[i + 1] / amounts[i] : 0;
-          if (ratio > 0.85 && ratio < 1.15) { hasBundlers = true; break; }
+      const ranked = th.slice(0, 10);
+      lockedHeldPct = ranked.filter(isLocked).reduce((s, h) => s + (Number(h.pct) || 0), 0);
+      top10Pct = ranked.filter(h => !isLocked(h)).reduce((s, h) => s + (Number(h.pct) || 0), 0);
+      // Bundler detection over REAL (non-lock) holders: a cluster of ≥3 near-equal amounts
+      // = a bundle. Sum their supply % → bundlePct. Small bundles are fine; big ones dump.
+      const real = th.filter(h => !isLocked(h)).slice(0, 12)
+        .map(h => ({ amt: Number(h.amount) || 0, pct: Number(h.pct) || 0 })).filter(a => a.amt > 0)
+        .sort((a, b) => b.amt - a.amt);
+      if (real.length >= 3) {
+        const bundle = new Set();
+        for (let i = 0; i < real.length - 1; i++) {
+          const ratio = real[i].amt > 0 ? real[i + 1].amt / real[i].amt : 0;
+          if (ratio > 0.85 && ratio < 1.15) { bundle.add(i); bundle.add(i + 1); }
         }
+        if (bundle.size >= 3) { hasBundlers = true; bundlePct = [...bundle].reduce((s, i) => s + real[i].pct, 0); }
       }
-      // insider flag count
       hasSnipers = insiders > 0;
-      // single holder concentration
-      const nonLp = th.filter(h => !h.insider && !(h.owner && /lp|amm|pool/i.test(String(h.owner))));
-      topPct = (nonLp[0] && Number(nonLp[0].pct)) || (th[0] && Number(th[0].pct)) || 0;
+      const nonLp = th.filter(h => !isLocked(h) && !h.insider);
+      topPct = (nonLp[0] && Number(nonLp[0].pct)) || 0;
     } catch (e) {}
     if (topPct > 30) { score -= (lp >= 99 ? 8 : 25); notes.push('🐋 top ' + topPct.toFixed(0) + '%'); }
     if (top10Pct > 50) { score -= 15; notes.push('👥 top10 ' + top10Pct.toFixed(0) + '%'); }
     if (hasSnipers) { score -= 10; notes.push('🔫 ' + insiders + ' insider(s)'); }
-    if (hasBundlers) { score -= 15; notes.push('📦 bundler pattern'); }
+    if (hasBundlers) { score -= (bundlePct > 12 ? 20 : 8); notes.push('📦 bundle ' + bundlePct.toFixed(0) + '%'); }
+    if (lockedHeldPct >= 10) notes.push('🔐 ' + lockedHeldPct.toFixed(0) + '% locked/burned');
     // holders — must have some
     let holders = Number(j.totalHolders || (j.token && j.token.holders) || 0);
     if (holders) { notes.push('👥 ' + holders); if (holders < 40) score -= 30; }
@@ -250,7 +269,7 @@ async function _rugScore(mint) {
     const badge = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
     // compute holder conviction score (separate bullish signal)
     const conviction = _holderConvictionScore(j.topHolders || [], holders, {});
-    return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, insiders,
+    return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, bundlePct, lockedHeldPct, insiders,
       conviction: conviction.score, convictionLabel: conviction.label, convictionSignals: conviction.signals,
       risks: risks,
       label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
@@ -445,6 +464,7 @@ async function _pollOnce() {
     if (!_top10Ok(cfg, rs)) { _seen.add(addr); continue; }     // top10 concentration
     if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP must be locked ≥50%
     if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
+    if (!_bundlersOk(cfg, rs)) { _seen.add(addr); continue; }  // no BIG bundles (>maxBundlerPct)
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
     const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
@@ -543,6 +563,7 @@ async function _pollBonded() {
       if (!_top10Ok(cfg, rs)) continue;
       if (!_lpLockedOk(cfg, rs)) continue;            // LP MUST be locked
       if (!_snipersOk(cfg, rs)) continue;
+      if (!_bundlersOk(cfg, rs)) continue;                          // no BIG bundles (>maxBundlerPct)
     }
     const ok = (await core.broadcast(card + _detailBlock(rs, null, { liq, fdv: usdMc, mint, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
     if (ok) {
@@ -724,6 +745,7 @@ async function _pollGecko() {
           if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
           if (!_lpLockedOk(cfg, rs)) continue;                           // LP must be locked ≥80%
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
+          if (!_bundlersOk(cfg, rs)) continue;                           // no BIG bundles (>maxBundlerPct)
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';

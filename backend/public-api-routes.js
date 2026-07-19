@@ -9,6 +9,12 @@ const express = require('express');
 const router = express.Router();
 const keys = require('./api-keys');
 const pnl = require('./telegram-pnl');
+let news = null; try { news = require('./tools-news'); } catch (e) { /* news optional */ }
+
+// tiny shared cache so keyed news requests don't hammer the RSS/CoinGecko upstreams.
+const _cache = new Map();
+function _cacheGet(k, ttlMs) { const h = _cache.get(k); return h && (Date.now() - h.ts) < ttlMs ? h.data : null; }
+function _cacheSet(k, data) { _cache.set(k, { ts: Date.now(), data }); if (_cache.size > 200) _cache.delete(_cache.keys().next().value); return data; }
 
 // Permissive CORS — this namespace is a public read API, so browser apps can call it.
 router.use((req, res, next) => {
@@ -103,5 +109,37 @@ router.get('/stats', requireKey, (req, res) =>
 
 router.get('/token/:q', requireKey, (req, res) =>
   res.json({ ok: true, data: pnl.findTokenJson(String(req.params.q || '').slice(0, 64)) }));
+
+// ── NEWS (separate resource, same key) ───────────────────────────────────────
+// GET /api/v1/news — latest crypto headlines (RSS: CoinTelegraph/CoinDesk/Decrypt + more).
+router.get('/news', requireKey, async (req, res) => {
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 15));
+  const q = req.query.q ? String(req.query.q).slice(0, 64) : undefined;
+  const ck = 'news:' + (q || '') + ':' + limit;
+  try {
+    let data = _cacheGet(ck, 300000);
+    if (!data) {
+      if (!news) return res.json({ ok: true, data: [] });
+      const parsed = JSON.parse(await news.TOOLS_NEWS.get_crypto_news.execute({ query: q, limit }));
+      data = (parsed && parsed.results) || [];
+      _cacheSet(ck, data);
+    }
+    res.json({ ok: true, data });
+  } catch (e) { res.json({ ok: true, data: [] }); }
+});
+
+// GET /api/v1/news/trending — trending coins/topics (CoinGecko).
+router.get('/news/trending', requireKey, async (req, res) => {
+  try {
+    let data = _cacheGet('trending', 300000);
+    if (!data) {
+      if (!news) return res.json({ ok: true, data: [] });
+      const parsed = JSON.parse(await news.TOOLS_NEWS.get_trending_topics.execute({}));
+      data = parsed.trending || parsed.results || parsed.categories || [];
+      _cacheSet('trending', data);
+    }
+    res.json({ ok: true, data });
+  } catch (e) { res.json({ ok: true, data: [] }); }
+});
 
 module.exports = router;

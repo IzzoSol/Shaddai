@@ -259,7 +259,7 @@ function survivors(period) {
       return { c, peak, cur, retention, held };
     })
     .sort((a, b) => b.held - a.held)
-    .slice(0, 8);
+    .slice(0, 25);
   const ch = core.channel() || '@ShaddaiLabs';
   const label = wk ? 'WEEK' : 'DAY';
   if (!scored.length) {
@@ -394,6 +394,28 @@ function _findCall(q) {
     || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
 }
 
+// /last<N> — the last N calls with their live PNL (newest first). Length-guarded
+// to Telegram's 4096-char cap; shows as many as fit then "…and N more".
+function lastCalls(n) {
+  _now = Date.now();
+  const N = Math.min(100, Math.max(1, parseInt(n, 10) || 25));
+  const rows = _state.calls.filter(c => c.symbol || c.name).slice()
+    .sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, N);
+  const ch = core.channel() || '@ShaddaiLabs';
+  if (!rows.length) return `📄 <b>Last ${N} calls</b>\n\n(no calls tracked yet)`;
+  let body = '', shown = 0;
+  for (const c of rows) {
+    const sym = _esc(c.symbol || c.name || 'TOKEN');
+    const cur = Number(c.curMult || 1), peak = Number(c.peakMult || 1);
+    const emoji = peak >= 10 ? '🚀' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
+    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>\n`;
+    if (body.length + line.length > 3600) break;
+    body += line; shown++;
+  }
+  const more = rows.length > shown ? `\n…and ${rows.length - shown} more` : '';
+  return `📄 <b>LAST ${shown} CALLS</b> · ${_esc(ch)}\n\n${body}${more}\n\n📡 ${_esc(ch)}  ·  <i>Not financial advice. DYOR.</i>`;
+}
+
 // ── PUBLIC API JSON accessors ────────────────────────────────────────────────
 // Clean, developer-friendly JSON over the tracked calls (used by /api/v1/*).
 // Deliberately separate from the HTML formatters above — no markup, stable shape.
@@ -461,4 +483,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls };
