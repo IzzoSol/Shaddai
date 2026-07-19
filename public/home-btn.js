@@ -44,12 +44,16 @@
 
     var css = document.createElement('style');
     css.textContent =
-      '#shd-home{position:fixed;top:14px;left:14px;z-index:2147483000;display:flex;gap:8px;'+
-      'font-family:"Chakra Petch","IBM Plex Mono",ui-monospace,monospace;'+
+      '#shd-home{position:fixed!important;top:14px!important;left:14px!important;z-index:2147483000;display:flex!important;'+
+      'flex-wrap:nowrap!important;align-items:center!important;gap:10px!important;margin:0!important;padding:0!important;'+
+      'font-family:"Chakra Petch","IBM Plex Mono",ui-monospace,monospace;line-height:1;'+
       'padding-top:env(safe-area-inset-top,0)}'+
-      '#shd-home a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;'+
+      /* hard resets so no page style can make the two pills overlap or shift */
+      '#shd-home a{display:inline-flex!important;align-items:center!important;gap:6px;text-decoration:none!important;'+
+      'position:relative!important;float:none!important;margin:0!important;transform:none;vertical-align:middle;'+
+      'white-space:nowrap;box-sizing:border-box;line-height:1;'+
       'padding:8px 13px;border-radius:11px;font-size:12.5px;font-weight:600;letter-spacing:.08em;'+
-      'color:#eafff6;background:rgba(6,8,11,.72);border:1px solid rgba(0,255,156,.28);'+
+      'color:#eafff6;background:rgba(6,8,11,.82);border:1px solid rgba(0,255,156,.28);'+
       'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);'+
       'box-shadow:0 4px 18px rgba(0,0,0,.45);transition:border-color .18s,color .18s,background .18s,transform .18s}'+
       '#shd-home a:hover{border-color:rgba(0,255,156,.75);color:#00ff9c;background:rgba(6,8,11,.9);transform:translateY(-1px)}'+
