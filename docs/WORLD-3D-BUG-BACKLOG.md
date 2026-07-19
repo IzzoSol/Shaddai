@@ -39,7 +39,8 @@ Local server: `node backend/server-production.js` on :3000 (running in backgroun
 - ⬜ **Random chair-circle in map** — not found as an orphan in any module; likely a legit lounge/nexus element the owner didn't recognize, or needs a screenshot location.
 - ⬜ Second floors unfinished/janky (not yet started — needs in-world investigation of the upper building floors).
 - ✅ Arcade re-skin to emerald/obsidian theme (arcade.html: palette + Chakra Petch/IBM Plex Mono). (a99df5c)
-- ⬜ Font drift on marketplace-shop-v2 (Orbitron/Rajdhani/violet) + zerox-markets (Share Tech Mono/cyan) — same re-skin approach as arcade (next).
+- ✅ Font drift on marketplace-shop-v2 + zerox-markets — standardized to Cinzel/Chakra Petch/IBM Plex Mono + emerald/obsidian palette. (44a60d0)
+- ⬜ forge.html font drift (Spectral/amber) — same approach (next), then second floors + shading/lighting.
 - ⬜ General: shading/lighting polish, lag/slow-down audit.
 - ✅ TG: "Signals on Telegram" (t.me/ShaddaiSignalsBot) added to Signals nav (dropdown + mobile). (f2595b4)
 
