@@ -277,6 +277,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <!-- SHADDAI theme-skin fonts: VT323 (terminal display), Cabinet Grotesk (brutalist), Zodiak+General Sans (serif) -->
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<!-- SHADDAI UI refresh fonts: Space Grotesk (display), Chakra Petch (HUD/body), IBM Plex Mono (data) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800,900&f[]=zodiak@400,500,600,700&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
 <link rel="manifest" href="data:application/json,{%22name%22:%22SHADDAI%20Agent%20Empire%22,%22short_name%22:%22SHADDAI%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23020817%22,%22theme_color%22:%22%2300e5a0%22}">
 <style>
@@ -55093,8 +55095,8 @@ window.hireAgentX402=async function(){
 (function(){
   window.openAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.add('on'); var b=document.getElementById('axiomBanner'); if(b)b.src='/assets/bot/img-'+(1+Math.floor(Math.random()*10))+'.png'; };
   window.closeAxiom=function(){ var m=document.getElementById('axiomModal'); if(m)m.classList.remove('on'); try{localStorage.setItem('axiomSeen','1');}catch(e){} };
-  // auto-show once per browser (dismiss = never auto-again; reopen via window.openAxiom)
-  setTimeout(function(){ try{ if(!localStorage.getItem('axiomSeen')) window.openAxiom(); }catch(e){} }, 9000);
+  // Auto-popup DISABLED — the AXIOM referral now lives in ZEROX Markets (Sentiment tab),
+  // not as an intrusive dashboard modal. window.openAxiom() still works if called manually.
 })();
 </script>
 

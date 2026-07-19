@@ -173,7 +173,7 @@
               btn.id = 'shdResults-navBtn';
               btn.type = 'button';
               btn.className = 'hh-btn shdR-navbtn';
-              btn.textContent = '📥 Results';
+              btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M4 13h4l2 3h4l2-3h4"/><path d="M12 3v9m0 0 3-3m-3 3-3-3"/></svg><span>Results</span>';
               btn.addEventListener('click', open);
               bar.appendChild(btn);
             }

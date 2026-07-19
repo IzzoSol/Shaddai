@@ -210,7 +210,7 @@
       if (bar && !document.getElementById('hhPowerBtn')) {
         var b = document.createElement('button');
         b.id = 'hhPowerBtn'; b.className = 'hh-btn'; b.type = 'button';
-        b.textContent = '⚡ Power Up';
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><span>Power Up</span>';
         b.title = 'Connect a free AI key so your agents run on real models';
         b.addEventListener('click', open);
         bar.appendChild(b);

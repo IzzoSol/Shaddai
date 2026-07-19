@@ -121,6 +121,21 @@
   #foot{position:fixed;bottom:0;left:0;right:0;z-index:35;height:44px;display:flex;align-items:center;gap:18px;overflow:hidden;
     padding:0 clamp(14px,3vw,30px);background:linear-gradient(0deg,rgba(2,10,20,.96),rgba(2,10,20,.4));border-top:1px solid rgba(0,240,255,.3);font-size:12px;color:#7fd6ea}
   #foot .z{color:var(--mag)} #foot a{color:var(--cy);text-decoration:none} #foot a:hover{text-decoration:underline}
+  /* ── AXIOM referral card (on-theme cyan/gold, non-intrusive) ── */
+  .spanel.axiom{border-color:rgba(232,196,92,.4);box-shadow:0 0 30px -8px rgba(232,196,92,.28)}
+  .spanel.axiom #axiomBanner{width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:14px;display:block;border:1px solid rgba(0,240,255,.25)}
+  .spanel.axiom .ax-sub{color:#9fbfd0;font-size:12px;line-height:1.55;margin-bottom:12px}
+  .spanel.axiom .ax-sub b,.spanel.axiom .ax-li b,.spanel.axiom .ax-gift b{color:#dff4ff}
+  .spanel.axiom .ax-link{display:block;background:rgba(0,240,255,.07);border:1px solid rgba(0,240,255,.35);border-radius:8px;padding:8px 11px;color:var(--cy);font-size:12px;margin:8px 0;text-align:center;word-break:break-all;text-decoration:none;transition:.15s}
+  .spanel.axiom .ax-link:hover{background:rgba(0,240,255,.14)}
+  .spanel.axiom .ax-note{font-size:10px;color:#7fa8b8;text-align:center;margin-bottom:8px}
+  .spanel.axiom .ax-sec{font-family:'Chakra Petch',sans-serif;font-size:10px;letter-spacing:.16em;color:var(--cy);text-transform:uppercase;margin:13px 0 6px}
+  .spanel.axiom .ax-li{font-size:12px;color:#cfe0e8;line-height:1.6;margin:2px 0}
+  .spanel.axiom .ax-li a{color:#7ef9ff;text-decoration:none} .spanel.axiom .ax-li a:hover{text-decoration:underline}
+  .spanel.axiom .ax-gift{background:rgba(232,196,92,.07);border:1px solid rgba(232,196,92,.35);border-radius:10px;padding:11px 13px;margin:13px 0}
+  .spanel.axiom .ax-gift b{color:var(--gold)}
+  .spanel.axiom .ax-cta{display:block;background:linear-gradient(135deg,var(--cy),#7ef9ff);color:#02121a;font-family:'Chakra Petch',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-align:center;padding:13px;border-radius:10px;text-decoration:none;margin-top:14px;box-shadow:0 0 22px rgba(0,240,255,.35);transition:.15s}
+  .spanel.axiom .ax-cta:hover{box-shadow:0 0 30px rgba(0,240,255,.6)}
 </style></head>
 <body>
 <div id="room"><div id="glow"></div><div id="ceil"></div><div id="floor"></div><div class="vign"></div></div>
@@ -169,6 +184,28 @@
       <div class="two">
         <div class="spanel"><h3 style="color:#38ffb0">▲ TOP GAINERS (24H)</h3><div class="movers" id="gainers"></div></div>
         <div class="spanel"><h3 style="color:#ff6a8a">▼ TOP LOSERS (24H)</h3><div class="movers" id="losers"></div></div>
+      </div>
+      <!-- ── AXIOM referral surface (persistent, non-intrusive) ── -->
+      <div class="spanel axiom">
+        <img id="axiomBanner" alt="" onerror="this.style.display='none'">
+        <h3 style="color:var(--gold)">⚡ UNLOCK THE AXIOM EDGE</h3>
+        <p class="ax-sub">Trade like the sharks. If you're on <b>Phantom</b>, Axiom bolts a pro trading layer on top — <b>stop-losses</b>, advanced order tools, and <b>wallet tracking</b> so you can copy the winners and dodge the dev wallets, KOLs &amp; known bad actors.</p>
+        <a class="ax-link" href="https://axiom.trade/@emeraldog" target="_blank" rel="noopener">🔗 axiom.trade/@emeraldog</a>
+        <div class="ax-note">Rewards go to users who <b>actively trade</b> — not just sign up.</div>
+        <div class="ax-sec">Trade 1+ month via the link → you unlock</div>
+        <div class="ax-li">• <b>200+ curated tracked wallets</b> — KOLs, high-PnL traders, dev wallets</div>
+        <div class="ax-li">• <b>200+ linked X profiles</b> mapped to on-chain activity</div>
+        <div class="ax-sec">Caller incentives</div>
+        <div class="ax-li">• 35%+ average performance → <b>VIP at 50% off</b></div>
+        <div class="ax-li">• Top Caller of the Month → <b>VIP free</b></div>
+        <div class="ax-li">• Already won? 2nd or 3rd place takes it</div>
+        <div class="ax-gift">
+          🎁 <b>Free week of SHADDAI Premium Signals.</b> Do all three, then DM us:
+          <div class="ax-li" style="margin-top:5px">1. ⭐ Star the <a href="https://github.com/IzzoSol" target="_blank" rel="noopener">GitHub</a></div>
+          <div class="ax-li">2. Follow <a href="https://x.com/shaddaiai" target="_blank" rel="noopener">@shaddaiai</a> + <a href="https://x.com/IzzoSol" target="_blank" rel="noopener">@IzzoSol</a> on X</div>
+          <div class="ax-li">3. Sign up &amp; trade via the Axiom link above</div>
+        </div>
+        <a class="ax-cta" href="https://axiom.trade/@emeraldog" target="_blank" rel="noopener">Trade on Axiom →</a>
       </div>
     </div>
   </div>
@@ -263,8 +300,11 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t===btn));
   document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.dataset.tab===name));
   if(name==='tufish' && !tufishLoaded){ document.getElementById('tufish-frame').src='/tufish.html'; tufishLoaded=true; }
-  if(name==='sentiment' && !sentimentLoaded){ loadSentiment(); sentimentLoaded=true; setInterval(loadSentiment, 90000); }
+  if(name==='sentiment' && !sentimentLoaded){ loadSentiment(); loadAxiomBanner(); sentimentLoaded=true; setInterval(loadSentiment, 90000); }
 });
+
+/* ── AXIOM banner (same rotating /assets/bot/img-N.png source as dashboard) ── */
+function loadAxiomBanner(){ const b=document.getElementById('axiomBanner'); if(b&&!b.src) b.src='/assets/bot/img-'+(1+Math.floor(Math.random()*10))+'.png'; }
 
 /* ── SENTIMENT: Fear & Greed + trending + movers (free APIs) ── */
 const fgColor = v => v<25?'#ff6a8a':v<45?'#ffb347':v<55?'#ffd24a':v<75?'#7ef98a':'#38ffb0';

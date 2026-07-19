@@ -262,20 +262,33 @@
     var bar = el('div', 'hh-bar');
     bar.appendChild(el('div', 'hh-title', '⚡ COMMAND HUB'));
 
-    var editBtn = el('button', 'hh-btn', '✎ Edit Layout');
+    // Crisp inline-SVG glyphs (stroke inherits button color) — aligned icon + label.
+    var ICON = {
+      edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M13.5 6.5l3 3"/></svg>',
+      wall: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5L5 20"/></svg>',
+      add:  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+    };
+
+    var editBtn = el('button', 'hh-btn');
     editBtn.id = 'hhEditBtn';
     editBtn.setAttribute('type', 'button');
+    editBtn.setAttribute('title', 'Rearrange & remove tiles');
+    editBtn.innerHTML = ICON.edit + '<span>Edit Layout</span>';
     editBtn.addEventListener('click', function () { setEditing(!editing); });
 
-    var wallBtn = el('button', 'hh-btn', '🖼 Wallpaper');
+    var wallBtn = el('button', 'hh-btn');
     wallBtn.id = 'hhWallpaperBtn';
     wallBtn.setAttribute('type', 'button');
+    wallBtn.setAttribute('title', 'Change the dashboard wallpaper');
+    wallBtn.innerHTML = ICON.wall + '<span>Wallpaper</span>';
     /* Wallpaper is handled entirely by home-wallpaper.js (preset picker +
        upload, no URL prompt). No click handler here. */
 
-    var addBtn = el('button', 'hh-btn', '＋ Add Tile');
+    var addBtn = el('button', 'hh-btn');
     addBtn.id = 'hhAddBtn';
     addBtn.setAttribute('type', 'button');
+    addBtn.setAttribute('title', 'Add a tile to the hub');
+    addBtn.innerHTML = ICON.add + '<span>Add Tile</span>';
     addBtn.addEventListener('click', showAddMenu);
 
     bar.appendChild(editBtn);

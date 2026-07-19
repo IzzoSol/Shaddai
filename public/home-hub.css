@@ -7,17 +7,18 @@
 
 /* ---- Local theme tokens (fall back to neon green/cyan) ---- */
 #shaddaiHome {
-  --hh-accent: var(--accent, #00ff88);   /* primary neon (green)  */
-  --hh-cyan:   #00f0ff;                    /* secondary neon (cyan) */
-  --hh-glass:  rgba(10, 14, 12, 0.55);     /* semi-transparent dark */
-  --hh-glass-hi: rgba(18, 26, 22, 0.72);   /* brighter glass (hover)*/
+  --hh-accent: #a855f7;                    /* primary neon (refined purple) */
+  --hh-cyan:   #22d3ee;                     /* secondary neon (cyan)         */
+  --hh-emerald:#00e5a0;                     /* triadic emerald pop           */
+  --hh-glass:  rgba(14, 10, 26, 0.55);      /* semi-transparent indigo-dark  */
+  --hh-glass-hi: rgba(24, 16, 46, 0.74);    /* brighter glass (hover)        */
   --hh-radius: 14px;
 
   position: relative;
   display: block;
   padding: 18px;
-  color: #e8fff4;
-  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  color: #efe9ff;
+  font-family: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ============================================================
@@ -37,10 +38,10 @@
 #shaddaiHome .hh-title {
   flex: 1 1 auto;
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(18px, 2.4vw, 26px);
-  font-weight: 800;
-  letter-spacing: 2px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(18px, 2.4vw, 25px);
+  font-weight: 700;
+  letter-spacing: .8px;
   text-transform: uppercase;
   color: #fff;
   text-shadow:
@@ -49,18 +50,25 @@
     0 0 36px color-mix(in srgb, var(--hh-cyan)   25%, transparent);
 }
 
-/* Small glassy header buttons (Edit Layout, Wallpaper, Add Tile) */
-#shaddaiHome .hh-btn {
+/* Header buttons (Edit Layout, Wallpaper, Add Tile, Power Up, Results) — vector
+   icon + label, consistently aligned. .shdR-navbtn = the Results button module. */
+#shaddaiHome .hh-btn,
+#shaddaiHome .hh-bar .shdR-navbtn {
   appearance: none;
   cursor: pointer;
-  font-family: 'Share Tech Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 12px;
-  letter-spacing: 1px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  line-height: 1;
   text-transform: uppercase;
-  color: #cffff0;
-  padding: 8px 14px;
+  color: #e7ddff;
+  padding: 9px 13px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--hh-accent) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hh-accent) 42%, transparent);
   background: var(--hh-glass);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -68,8 +76,16 @@
   transition: transform .18s ease, border-color .18s ease,
               box-shadow .18s ease, color .18s ease, background .18s ease;
 }
-#shaddaiHome .hh-btn:hover {
-  color: #001b12;
+/* Inline SVG glyphs inherit the button's text color and sit optically centered */
+#shaddaiHome .hh-btn svg,
+#shaddaiHome .hh-bar .shdR-navbtn svg {
+  width: 15px; height: 15px; flex: none;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+}
+#shaddaiHome .hh-btn:hover,
+#shaddaiHome .hh-bar .shdR-navbtn:hover {
+  color: #0b0416;
   background: var(--hh-accent);
   border-color: var(--hh-accent);
   transform: translateY(-1px);
@@ -77,7 +93,8 @@
     0 0 14px color-mix(in srgb, var(--hh-accent) 55%, transparent),
     0 0 28px color-mix(in srgb, var(--hh-accent) 30%, transparent);
 }
-#shaddaiHome .hh-btn:active { transform: translateY(0); }
+#shaddaiHome .hh-btn:active,
+#shaddaiHome .hh-bar .shdR-navbtn:active { transform: translateY(0); }
 
 /* ============================================================
    TILE GRID
