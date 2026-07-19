@@ -223,6 +223,7 @@
     // Each entry { x, z, y, r2 } is a solid elevated floor. When the player is
     // over one at (near) its height, they stand on it. Populated at build time.
     var deckList = [];
+    if (window.clearWorldBridges) window.clearWorldBridges();   // reset bridge corridors on (re)build
 
     // _checkDeck() — is the player currently standing on an arrival deck?
     // Writes the deck height into _deckHitY and returns true if so. ZERO alloc:
@@ -237,6 +238,12 @@
           _deckHitY = d.y;
           return true;
         }
+      }
+      // continuous mini-bridge corridors (registered via world-collision.js addWorldBridge) —
+      // gives a real floor height the whole span so the anti-fall clamp doesn't wall the bridge.
+      if (window.WORLD_BRIDGE_GROUNDY) {
+        var _by = window.WORLD_BRIDGE_GROUNDY(px, pz, py, DECK_STAND_TOL);
+        if (_by !== null) { _deckHitY = _by; return true; }
       }
       _deckHitY = null;
       return false;
@@ -857,6 +864,9 @@
       var len   = Math.max(6, brOut - inR);
       var floor = new THREE.Mesh(new THREE.BoxGeometry(len, 0.7, 7.0), _skyFloorMat);
       floor.position.set(cA * midR, -0.35, sA * midR); floor.rotation.y = -az; _plaza.add(floor);
+      // register the bridge as a CONTINUOUS walkable corridor (fixes the invisible line that
+      // blocked the mini-bridges — the sparse deckList patches below left dead gaps).
+      if (window.addWorldBridge) window.addWorldBridge(cA * inR, sA * inR, PLAZA_Y, cA * brOut, sA * brOut, PLAZA_Y, 3.6);
       var seam = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, 2.0), haloMat(col));
       seam.position.set(cA * midR, 0.1, sA * midR); seam.rotation.y = -az; _plaza.add(seam);
       for (var rr = 0; rr < 2; rr++) {
@@ -1665,8 +1675,38 @@
           // Transit pods: only XZ — they hover at constant height, Y unchanged
 
         } else if (wasRiding && p.type === 'elev') {
-          // Just stepped off an elevator — begin Y lerp back to ground
-          _yReturnLerp = 0;
+          // ── STEP-OFF HAND-OFF (STUCK FIX 2026-07-19) ─────────────────────
+          // Owner bug: "when you walk off an elevator you're stuck in a glitch."
+          // Root cause: on the exit frame the rider was left standing on the LIVE
+          // pad Y (which immediately dwells → descends). _ridingElevY nulls, so
+          // groundY() falls to _checkDeck(); if the pad had already eased a hair
+          // off the true floor (> DECK_STAND_TOL), _checkDeck() returned null and
+          // the host's anti-fall edge-clamp then reverted the player's XZ move
+          // every frame — pinning them on the pad edge, unable to walk off (and
+          // the camera sinking as the pad dropped away). FIX: the instant the ride
+          // ends, SNAP the player's Y to the NEAREST real floor of THIS lift
+          // (a fixed stop / lowY / highY — never the moving pad), so they land
+          // level on solid destination ground. This puts them squarely inside a
+          // deckList patch → _checkDeck() succeeds → host clamp sees a valid floor
+          // and movement is fully restored. Works identically at TOP and BOTTOM.
+          var _padY = p.curPos.y;
+          var _floorY;
+          if (p.stops) {
+            // Multi-stop: snap to whichever registered floor the pad is nearest.
+            _floorY = p.stops[0];
+            var _bestD = Math.abs(_padY - _floorY);
+            for (var _si2 = 1; _si2 < p.stops.length; _si2++) {
+              var _dS = Math.abs(_padY - p.stops[_si2]);
+              if (_dS < _bestD) { _bestD = _dS; _floorY = p.stops[_si2]; }
+            }
+          } else {
+            // 2-point lift: snap to the nearer end (low or high floor).
+            _floorY = (Math.abs(_padY - p.highY) <= Math.abs(_padY - p.lowY))
+              ? p.highY : p.lowY;
+          }
+          playerPos.y   = _floorY;   // place cleanly on the destination floor
+          _ridingElevY  = null;      // no longer carried by the pad
+          _yReturnLerp  = 0;
         }
 
         // ── Visual animation ──────────────────────────────────────────────

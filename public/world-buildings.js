@@ -481,12 +481,20 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
     const n      = layoutSpec.length;
     const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
     const span   = Math.min(Math.PI * 0.92, Math.PI * 0.30 * n);   // narrower arc for fewer screens
-    // Screens ring: the lounge pillars sit at fp*0.375 with a fat shaft (rS≈fp*0.052), so their
-    // INNER surface is ~fp*0.323. Placing screens out at the pillar ring made any screen that
-    // lined up with a pillar punch straight through it. Seat the screens fully INSIDE the pillars'
-    // inner surface (fp*0.32) so they clear the legs at every angle — no clipping into the pillars.
-    const rW     = fp * 0.32;
-    const sw     = fp * 0.150, sh = fp * 0.100;        // screen width / height
+    // Screens ring: the lounge pillars sit at rP=fp*0.375 with a fat shaft (rS=max(3.4,fp*0.052)).
+    // The pillars' widest INNER elements are the square plinth feet / abaci (box ≈ rS*3.1 → half
+    // ≈ rS*1.55) and the flared echinus caps (rS*1.78), so the innermost pillar surface sits at
+    // rP - rS*1.78. The old fp*0.32 ring put screens OUTSIDE that surface, so any screen that
+    // lined up with a pillar punched straight through it (owner: "billboards glitched into the
+    // pillars"). Seat the ring at min(fp*0.26, pillarInner - clearance) so screens clear the legs
+    // AND the feet/caps at every angle and every building size — no clipping into the pillars.
+    const _rP    = fp * 0.375;                          // pillar ring radius (mirror of _buildPillarPavilion)
+    const _rS    = Math.max(3.4, fp * 0.052);           // fat shaft radius
+    const pillarInner = _rP - _rS * 1.78;               // innermost pillar surface (echinus cap)
+    const sw     = fp * 0.150, sh = fp * 0.100;         // screen width / height
+    // Ring must clear the pillar inner surface by at least half the screen's diagonal footprint
+    // (screens are ~0.4 deep incl. bezel offsets) plus a comfort margin.
+    const rW     = Math.max(fp * 0.16, Math.min(fp * 0.26, pillarInner - Math.max(3.0, fp * 0.03)));
     const clear  = undersideY - groundY;
     const yC     = groundY + Math.min(clear * 0.56, 9.5) + sh * 0.5;   // eye-level, under the podium
 

@@ -237,12 +237,78 @@
     return _resultArr;
   }
 
+  /* ── WALKABLE BRIDGE CORRIDORS (fixes the "invisible line on the mini-bridges") ──
+   * Owner bug (2026-07-19): "the top ceiling level is closed off — you can't walk on the
+   * mini bridges to each agent station, there's a line there that stops you", "stuck getting
+   * on the bridge the other way as well."
+   *
+   * ROOT CAUSE (diagnosed, lives in OTHER files): the ANTI-FALL EDGE CLAMP in
+   * SHADDAI-WORLD-3D.html (~L3937) only treats a spot as walkable-elevated-floor when
+   * _elevators.groundY() returns a height. groundY() recognizes ONLY the circular arrival
+   * DECKS (deckList, radius 8.5) in world-elevators.js — the skybridges connecting the Sky
+   * Nexus deck to each agent station are visual meshes that are NEVER registered as floor.
+   * So the instant the player steps off a deck onto a bridge, groundY() → null while
+   * _lastDeckY !== null, and the clamp REVERTS the move. The bridge rim behaves like a wall
+   * in BOTH directions. There is no collider in this file causing it — building colliders are
+   * OFF (BUILDINGS_SOLID=false) — the block is purely the missing floor + the fall guard.
+   *
+   * THE WALKABLE-CARVEOUT (this file provides the mechanism; wiring is one line in each of the
+   * other two files — see the summary): register each bridge as an oriented rectangular
+   * corridor (segment from the deck to the station, with a half-width). WORLD_BRIDGE_GROUNDY(x,z)
+   * then returns the bridge's floor height when the player is over a span (interpolated end→end),
+   * or null otherwise. The anti-fall clamp / elevators groundY() can consult this so the bridge
+   * spans read as solid walkable floor — passable both ways — WITHOUT widening any deck, without
+   * disabling collision, and without letting the player off the bridge sides (outside the
+   * half-width it still returns null, so the fall guard keeps them from walking off into air).
+   */
+  var _bridges = [];   // { ax, az, ay, bx, bz, by, hw, hw2, len2 }
+
+  function clearWorldBridges() { _bridges = []; return _bridges; }
+
+  // Register one bridge span from A(ax,az,ay) to B(bx,bz,by), walkable within `halfWidth`.
+  function addWorldBridge(ax, az, ay, bx, bz, by, halfWidth) {
+    var hw = (isFinite(halfWidth) && halfWidth > 0) ? halfWidth : 3.5;
+    var dx = bx - ax, dz = bz - az;
+    var len2 = dx * dx + dz * dz;
+    _bridges.push({
+      ax: ax, az: az, ay: (isFinite(ay) ? ay : 0),
+      bx: bx, bz: bz, by: (isFinite(by) ? by : (isFinite(ay) ? ay : 0)),
+      hw: hw, hw2: hw * hw, len2: (len2 > 0 ? len2 : 1e-6)
+    });
+    return _bridges[_bridges.length - 1];
+  }
+
+  // Is (x,z) over a bridge corridor? Returns the (interpolated) walkable floor height there,
+  // or null if not over any bridge span. Zero allocation. `tolY` (optional): if the caller
+  // passes the player's current Y, only match bridges whose deck height is within tolY (so a
+  // bridge far below/above doesn't grab a grounded player); omit to ignore height.
+  function WORLD_BRIDGE_GROUNDY(x, z, py, tolY) {
+    for (var i = 0; i < _bridges.length; i++) {
+      var b = _bridges[i];
+      // Project point onto the segment A→B, clamped to [0,1].
+      var t = ((x - b.ax) * (b.bx - b.ax) + (z - b.az) * (b.bz - b.az)) / b.len2;
+      if (t < 0) t = 0; else if (t > 1) t = 1;
+      var px = b.ax + (b.bx - b.ax) * t;
+      var pz = b.az + (b.bz - b.az) * t;
+      var ddx = x - px, ddz = z - pz;
+      if (ddx * ddx + ddz * ddz <= b.hw2) {
+        var y = b.ay + (b.by - b.ay) * t;      // walkable floor height at this point along the span
+        if (py != null && isFinite(tolY) && Math.abs(py - y) > tolY) continue;
+        return y;
+      }
+    }
+    return null;
+  }
+
   /* ── Expose globals ─────────────────────────────────────────────────────── */
   global.buildWorldCollision   = buildWorldCollision;
   global.setBuildingFootprints = setBuildingFootprints;
   global.WORLD_COLLIDES        = WORLD_COLLIDES;
   global.WORLD_RESOLVE         = WORLD_RESOLVE;
   global.WORLD_RESOLVE_POS     = WORLD_RESOLVE_POS;
+  global.addWorldBridge        = addWorldBridge;
+  global.clearWorldBridges     = clearWorldBridges;
+  global.WORLD_BRIDGE_GROUNDY  = WORLD_BRIDGE_GROUNDY;
 
   /* ── Auto-run on load if WORLD_LAYOUT is already present ───────────────── */
   if (global.WORLD_LAYOUT) {
