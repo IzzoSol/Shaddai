@@ -18,6 +18,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
+// Shared response/error contract + secret-redaction helpers.
+const { redactUrl, redactObject } = require('./lib/respond');
 
 // Core systems
 const DatabaseReal = require('./database-real');
@@ -122,15 +124,26 @@ class Logger {
   }
 
   _write(level, component, message, data = {}) {
+    // Secret redaction on the write path: strip tokens/keys/wallets/coords from
+    // the logged data, and redact any URL-bearing fields, so secrets never land
+    // in logs/*.log or the console. Never throws — falls back to raw on error.
+    let safeData = data;
+    try {
+      safeData = redactObject(data);
+      for (const k of ['url', 'originalUrl', 'path', 'requestUrl', 'href', 'endpoint']) {
+        if (safeData && typeof safeData[k] === 'string') safeData[k] = redactUrl(safeData[k]);
+      }
+    } catch (_) { safeData = data; }
+
     const logEntry = {
       timestamp: this._formatTimestamp(),
       level,
       component,
       message,
-      ...data
+      ...safeData
     };
 
-    console.log(`[${level}] [${component}] ${message}`, data);
+    console.log(`[${level}] [${component}] ${message}`, safeData);
 
     // Write to file (daily rotation)
     const date = new Date().toISOString().split('T')[0];
@@ -316,6 +329,11 @@ class BatchJobQueue {
 // ============================================
 
 const app = express();
+// Behind Render's reverse proxy: trust the first proxy hop so req.ip and
+// rate-limit keys use the real client IP (X-Forwarded-For), not the proxy.
+app.set('trust proxy', 1);
+// Don't advertise the framework.
+app.disable('x-powered-by');
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const logger = new Logger();
@@ -647,7 +665,23 @@ app.get('/api/providers/learning', (req, res) => {
   try {
     const tokenDb = require('./token-db');
     const learning = tokenDb.analyzeOutcomes();
-    res.json({ learning, stats: tokenDb.historicalStats(), weights: tokenDb.getWeights() });
+    const failures = tokenDb.analyzeFailures();
+    const autotune = tokenDb.autoTune();
+    res.json({ learning, stats: tokenDb.historicalStats(), weights: tokenDb.getWeights(), failures, autotune });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/providers/failures', (req, res) => {
+  try {
+    const tokenDb = require('./token-db');
+    res.json(tokenDb.getFailures());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/providers/autotune', (req, res) => {
+  try {
+    const tokenDb = require('./token-db');
+    res.json(tokenDb.getAutoTune());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -781,11 +815,38 @@ app.get('/api/polymarket/prices', async (req, res) => {
 // SECURITY: global rate limiter — a hard backstop against cost-amplification /
 // shared-key drain / brute abuse. Applies to ALL /api routes. Generous cap so
 // normal dashboard use is unaffected; blocks only runaway/scripted floods.
-try { app.use('/api', require('./auth-guard').rateLimit({ windowMs: 60000, max: 150 })); } catch (e) { console.warn('[security] rate limiter not mounted:', e.message); }
+// Public API developer docs + "get a free key" page. Registered BEFORE the /api
+// middleware chain so an exact GET /api serves the HTML (not the API router).
+{
+  const apiDocsPage = (req, res) => res.sendFile(path.join(__dirname, '../public/api.html'));
+  app.get('/api', apiDocsPage);
+  app.get('/developers', apiDocsPage);
+}
+
+// Use the battle-tested `express-rate-limit` (already a dependency) instead of the
+// hand-rolled in-memory Map (which never evicted → slow leak, and keyed on a
+// spoofable X-Forwarded-For with no `trust proxy`). Same window/cap (60s/150) so
+// legitimate traffic is unaffected. 429 body matches the previous shape.
+try {
+  const expressRateLimit = require('express-rate-limit');
+  app.use('/api', expressRateLimit({
+    windowMs: 60000,
+    max: 150,
+    standardHeaders: true,   // RateLimit-* headers
+    legacyHeaders: false,    // drop deprecated X-RateLimit-*
+    handler: (req, res) => {
+      res.status(429).json({ ok: false, error: 'rate limit exceeded — slow down' });
+    }
+  }));
+} catch (e) {
+  console.warn('[security] express-rate-limit not mounted, falling back:', e.message);
+  try { app.use('/api', require('./auth-guard').rateLimit({ windowMs: 60000, max: 150 })); } catch (e2) { console.warn('[security] fallback rate limiter not mounted:', e2.message); }
+}
 
 app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
+app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals)
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
@@ -858,6 +919,9 @@ app.use('/api/llm', require('./llm-proxy-routes'));
 app.use('/api/worlds', require('./routes/worlds-api'));
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
 app.use('/api/gridiron', require('./routes/gridiron-routes'));
+// CRYPTO DATA API — keyless, read-only façade over existing market proxies (/api/data/v1/*)
+try { app.use(require('./crypto-data-routes')); console.log('[prod] crypto data API (/api/data/v1) mounted'); }
+catch (e) { console.warn('[startup] crypto-data-routes not mounted:', e.message); }
 
 // ============================================
 // AGENTS API
@@ -1678,16 +1742,33 @@ app.get('*', (req, res) => {
 // ============================================
 
 app.use((err, req, res, next) => {
+  const errorId = crypto.randomBytes(6).toString('hex');
   logger.error('HTTP', 'Unhandled error', {
     error: err.message,
     stack: err.stack,
-    requestId: req.id
+    url: redactUrl(req.originalUrl || req.url || ''),
+    method: req.method,
+    requestId: req.id,
+    errorId
   });
 
-  res.status(err.status || 500).json({
+  // Double-send guard: if the response already started, hand off to Express.
+  if (res.headersSent || res.writableEnded) return next(err);
+
+  try {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Cache-Control', 'no-store');
+  } catch (_) {}
+
+  const status = err.status || 500;
+  res.status(status).json({
     error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' ? undefined : err.message,
-    requestId: req.id
+    // Never leak internal message/stack in production for 5xx.
+    message: (process.env.NODE_ENV === 'production' && status >= 500) ? undefined : err.message,
+    requestId: req.id,
+    errorId
   });
 });
 

@@ -392,4 +392,71 @@ function _findCall(q) {
     || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s) || (x.name || '').toLowerCase().includes(s));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall };
+// ── PUBLIC API JSON accessors ────────────────────────────────────────────────
+// Clean, developer-friendly JSON over the tracked calls (used by /api/v1/*).
+// Deliberately separate from the HTML formatters above — no markup, stable shape.
+function _shape(c) {
+  return {
+    id: (c.mint || '') + '-' + (c.ts || 0),
+    symbol: c.symbol || c.name || '',
+    mint: c.mint || '',
+    chain: c.chain || '',
+    source: c.source || '',
+    entryFdv: Number(c.entryFdv) || 0,
+    entryPrice: Number(c.entryPrice) || 0,
+    currentMult: Number((c.curMult || 1).toFixed ? +Number(c.curMult || 1).toFixed(4) : c.curMult) || 1,
+    peakMult: +Number(c.peakMult || 1).toFixed(4),
+    ts: c.ts || 0,
+  };
+}
+function _clampLimit(v) { const n = parseInt(v, 10); return Math.min(100, Math.max(1, isFinite(n) ? n : 50)); }
+// Recent calls feed. opts: { limit, since(ms cursor), chain, source }
+function callsJson(opts) {
+  opts = opts || {}; _now = Date.now();
+  let rows = _state.calls.slice();
+  if (opts.chain) { const c = String(opts.chain).toLowerCase(); rows = rows.filter(x => (x.chain || '').toLowerCase() === c); }
+  if (opts.source) { const s = String(opts.source).toLowerCase(); rows = rows.filter(x => (x.source || '').toLowerCase() === s); }
+  const since = Number(opts.since) || 0;
+  if (since > 0) rows = rows.filter(x => (x.ts || 0) > since);
+  rows.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  return rows.slice(0, _clampLimit(opts.limit)).map(_shape);
+}
+// Top calls by peak multiple. opts: { limit, period(all|week|day) }
+function leaderboardJson(opts) {
+  opts = opts || {}; _now = Date.now();
+  let rows = _state.calls.filter(c => c.symbol || c.name);
+  if (opts.period === 'day' || opts.period === 'week') {
+    const ms = (opts.period === 'week' ? 7 : 1) * 24 * 3600 * 1000;
+    rows = rows.filter(c => (_now - (c.ts || 0)) <= ms);
+  }
+  rows.sort((a, b) => (b.peakMult || 0) - (a.peakMult || 0));
+  return rows.slice(0, _clampLimit(opts.limit)).map(_shape);
+}
+// Aggregate scorecard.
+function statsJson() {
+  _now = Date.now();
+  const rows = _state.calls; const total = rows.length;
+  const inB = (lo, hi) => rows.filter(c => c.peakMult >= lo && (hi ? c.peakMult < hi : true)).length;
+  const x1_2 = inB(1, 2), x2_5 = inB(2, 5), x5_10 = inB(5, 10), x10 = inB(10, 0);
+  const hits = x2_5 + x5_10 + x10;
+  return {
+    totalCalls: total,
+    hitRate2x: total ? Math.round((hits / total) * 100) : 0,
+    avgPeak: total ? +(rows.reduce((s, c) => s + (c.peakMult || 0), 0) / total).toFixed(2) : 0,
+    distribution: { x1_2, x2_5, x5_10, x10 },
+    updatedAt: _now,
+  };
+}
+// Single-token lookup by mint or symbol.
+function findTokenJson(q) {
+  _now = Date.now();
+  const s = String(q || '').toLowerCase().replace(/^\$/, '').trim();
+  if (!s) return { called: false };
+  const c = _state.calls.find(x => (x.mint || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase() === s || (x.name || '').toLowerCase() === s)
+    || _state.calls.find(x => (x.symbol || '').toLowerCase().includes(s));
+  if (!c) return { called: false };
+  return Object.assign({ called: true }, _shape(c));
+}
+
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson };
