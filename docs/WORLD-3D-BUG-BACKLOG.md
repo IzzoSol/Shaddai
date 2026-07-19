@@ -24,19 +24,20 @@ Local server: `node backend/server-production.js` on :3000 (running in backgroun
 ### Telegram — "fix all the stuff we said with the TG"
 - ⬜ CLARIFY/RECALL scope. Candidates: surface the SHADDAI Telegram bot/signals on the landing (a TG CTA in the Signals area), and/or the TG bot config from memory [[TG_SIGNALS_BOT_20260718]] (`backend/telegram-*.js`). The API terminal already did the bot rug-cut optimization. Likely landing-side: add a "Get signals on Telegram" link. Owner to confirm exact ask in AM.
 
-### 3D world bugs (owner screenshots 2026-07-19)
-- ⬜ ZEROX standing sideways at default (body rotation.y in queueAgentBody).
-- ⬜ PIKADON on the bike/elevator pole (mis-placement).
-- ⬜ No walk animation for NEXUS/QUILL/SHADDAI (SHADDAI tilts; gliding ok — add walk clips).
-- ⬜ Weird spawn at QUILL's spawn.
-- ⬜ Walking off an elevator = stuck glitch (collision/ground snap on exit, both dirs).
-- ⬜ Second floors unfinished/janky.
-- ⬜ Top ceiling mini-bridges blocked by an invisible collider line (both directions).
-- ⬜ Portal rental cramped/janky + unknown object behind it.
-- ⬜ Random circle w/ chair-like things placed in map.
-- ⬜ Floating glitch square boxes in the sky (stray meshes).
-- ⬜ Square boxes around the ATTACK move (debug boxes on attack VFX).
-- ⬜ Billboards glitched into pillars; one empty billboard.
+### 3D world bugs (owner screenshots 2026-07-19) — waves 1+2 pushed (d1051a6, a7b2c90)
+- ✅ ZEROX sideways — per-agent yaw fix +90° (SHADDAI-WORLD-3D.html). ⚠ VERIFY direction in-world; if opposite, flip to -PI/2 in `_AGENT_YAW_FIX`.
+- 🔧 PIKADON on the bike — nudged his sector off the back-left elevator corridor (world-layout.js). ⚠ his lounge-lift moves WITH his sector, so if still on the pole the real fix is the lift tangent offset in world-elevators.js.
+- ✅ No walk anim for NEXUS/QUILL/SHADDAI + SHADDAI tilt — upright in-place march + zeroed x/z rotation (boneless rigs; true leg-walk needs rigged GLBs). ⚠ verify tilt gone.
+- ✅ Weird QUILL spawn — landing pull-back 84→145 clears the enlarged Library (world-spawn.js). ⚠ verify lands facing the door.
+- ✅ Elevator step-off stuck glitch — snap to nearest fixed floor on exit (world-elevators.js).
+- ✅ Ceiling mini-bridges blocked — continuous walkable bridge-corridor primitive (world-collision.js) wired into world-elevators.js `_checkDeck`.
+- ✅ Portal rental cramped — pad 22x18→40x34, recentered (portal-plots.js). The "thing behind it" = the legit NEXUS dome ~40u back (portals-registry.js) — left in place; owner decides if they want them separated.
+- ✅ Attack-move square boxes — hardened projectile VFX (map=null, alphaTest 0.35) so no square around the orb. ⚠ verify (if it's the LMB swing not Q, source is elsewhere).
+- ✅ Billboards clipping pillars — lounge screens reseated inside the pillar ring (world-buildings.js).
+- ⬜ **Floating glitch square boxes in the sky** — NOT in world-buildings/npcs/world-HTML. Next: grep `world-interiors.js` + `world-biomes.js` for high-Y BoxGeometry.
+- ⬜ **Empty billboard** — not found in world-buildings/npcs/HTML; check world-interiors.js.
+- ⬜ **Random chair-circle in map** — not found as orphan; check world-interiors.js / world-biomes.js.
+- ⬜ Second floors unfinished/janky (not yet started).
 - ⬜ General: shading/lighting polish, lag/slow-down audit.
 
 ### Security (PIKADON)
