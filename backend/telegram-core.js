@@ -114,10 +114,13 @@ const _defaults = {
   minSocialScore: 0,
 };
 let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
-// HARD ENFORCE: these filters are non-negotiable — always override saved config
-_config.requireLocked = true;
-if (!_config.maxSnipersPct || _config.maxSnipersPct > 10) _config.maxSnipersPct = 10;
-if (!_config.minTop10Pct || _config.minTop10Pct < 15) _config.minTop10Pct = 15;
+// FLOW MODE (2026-07-18): the hard-enforced LP-locked + sniper/concentration gates were
+// rejecting nearly every current token (zero calls). Owner opted to loosen for more flow.
+// Saved config now drives these gates; rugFilter (rugMinScore) stays on as the safety net so
+// clear honeypots/danger tokens are still filtered. Re-tighten by restoring the overrides below.
+if (_config.requireLocked == null) _config.requireLocked = _defaults.requireLocked;
+if (!_config.maxSnipersPct) _config.maxSnipersPct = _defaults.maxSnipersPct;
+if (_config.minTop10Pct == null) _config.minTop10Pct = 0;
 _config.top10BullishBonus = 5;
 function getConfig() { return Object.assign({}, _config); }
 function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _write(CFG_FILE, _config); return getConfig(); }
