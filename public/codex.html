@@ -316,7 +316,7 @@
       <div class="rule2"></div>
       <h1 class="title">SHADDAI</h1>
       <div class="sub">an empire of seven minds &amp; the ledger of their labour</div>
-      <p class="lede dropcap">Herein are recorded the standing of the Council, the readings of the AURA engine — that layered contrivance of remembered answers, reckonings worked without a model, pulls drawn from its own cache, and — newly wrought — the paring of bloated instruction from a prompt ere it is ever sent (the <em>Distillation</em>, which strips what repeats yet spares every rule of safety, of form, and of routing) — by which coin is spared upon every labour, and the instruments through which the work is wrought — set in ink, not glass.</p>
+      <p class="lede dropcap">Herein are recorded the standing of the Council, the readings of the AURA engine — that layered contrivance of remembered answers, reckonings worked without a model, pulls drawn from its own cache, the <em>Distillation</em> that pares bloated instruction from a prompt ere it is sent (yet spares every rule of safety, of form, and of routing), and — newly wrought — the <em>selective arming</em>, whereby only the tools a labour truly requires are sent, and not the whole armoury. By one rite, <em>optimise</em>, all are wrought at once upon every call — that coin be spared four ways: in the tools, the history, the instruction, and the answer — and the instruments through which the work is done, set in ink, not glass.</p>
       <div style="margin:30px auto 4px;display:flex;flex-direction:column;align-items:center;gap:10px">
         <button id="enterBtn" onclick="enterShaddai()"
           style="font-family:'Cinzel',serif;font-weight:900;letter-spacing:.18em;text-transform:uppercase;font-size:clamp(15px,2.2vw,20px);color:var(--paper);background:var(--ink);border:2px solid var(--gold);padding:18px 46px;cursor:pointer;position:relative;box-shadow:0 6px 0 var(--gold),0 10px 26px rgba(156,124,38,.35);transition:transform .12s ease, box-shadow .12s ease, background .3s ease">
@@ -418,7 +418,7 @@
       <div class="head"><span class="num">IV.</span><span class="name">How It Works</span><span class="tail">the empire at a glance</span></div>
       <p class="lede" style="margin:14px auto 0;max-width:640px">Your context passes through the Seven, is refined by the AURA engine, and returns as wrought output — all upon open rails.</p>
       <div class="arch">
-        <svg class="arch-svg" viewBox="0 0 960 420" role="img" aria-label="SHADDAI architecture: your context flows to the seven agents, through the AURA engine (compress, compute, cache, distill), to output — over x402 payment rails, MCP, and BYOK.">
+        <svg class="arch-svg" viewBox="0 0 960 420" role="img" aria-label="SHADDAI architecture: your context flows to the seven agents, through the AURA engine (arm tools, compress, distill, cache, compute), to output — over x402 payment rails, MCP, and BYOK.">
           <defs>
             <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--gold,#9c7c26)"/></marker>
           </defs>
@@ -458,19 +458,21 @@
           </g>
 
           <!-- AURA engine -->
-          <rect class="a-aura" x="500" y="120" width="230" height="180" rx="8"/>
-          <text class="t-h" x="615" y="150" font-size="16" text-anchor="middle">AURA ENGINE</text>
+          <rect class="a-aura" x="500" y="120" width="230" height="200" rx="8"/>
+          <text class="t-h" x="615" y="146" font-size="16" text-anchor="middle">AURA ENGINE</text>
           <g>
-            <circle class="a-pillar" cx="548" cy="188" r="4"/><text class="t-m" x="562" y="192" font-size="11">Compress</text>
-            <circle class="a-pillar" cx="548" cy="216" r="4"/><text class="t-m" x="562" y="220" font-size="11">Compute</text>
-            <circle class="a-pillar" cx="548" cy="244" r="4"/><text class="t-m" x="562" y="248" font-size="11">Cache</text>
-            <circle class="a-pillar" cx="548" cy="272" r="4"/><text class="t-m" x="562" y="276" font-size="11">Distill</text>
+            <circle class="a-pillar" cx="548" cy="176" r="4"/><text class="t-m" x="562" y="180" font-size="11">Arm tools</text>
+            <circle class="a-pillar" cx="548" cy="204" r="4"/><text class="t-m" x="562" y="208" font-size="11">Compress</text>
+            <circle class="a-pillar" cx="548" cy="232" r="4"/><text class="t-m" x="562" y="236" font-size="11">Distill</text>
+            <circle class="a-pillar" cx="548" cy="260" r="4"/><text class="t-m" x="562" y="264" font-size="11">Cache</text>
+            <circle class="a-pillar" cx="548" cy="288" r="4"/><text class="t-m" x="562" y="292" font-size="11">Compute</text>
           </g>
-          <text class="t-m" x="700" y="192" font-size="8.5" fill="#3b342a">trim bloat</text>
-          <text class="t-m" x="700" y="220" font-size="8.5" fill="#3b342a">answer free</text>
-          <text class="t-m" x="700" y="248" font-size="8.5" fill="#3b342a">reuse pulls</text>
-          <text class="t-m" x="686" y="276" font-size="8.5" fill="#3b342a">strip repeats,</text>
-          <text class="t-m" x="686" y="287" font-size="8.5" fill="#3b342a">spare safety</text>
+          <text class="t-m" x="686" y="180" font-size="8.5" fill="#3b342a">only what's used</text>
+          <text class="t-m" x="700" y="208" font-size="8.5" fill="#3b342a">trim history</text>
+          <text class="t-m" x="686" y="232" font-size="8.5" fill="#3b342a">strip repeats,</text>
+          <text class="t-m" x="686" y="243" font-size="8.5" fill="#3b342a">spare safety</text>
+          <text class="t-m" x="700" y="264" font-size="8.5" fill="#3b342a">reuse pulls</text>
+          <text class="t-m" x="700" y="292" font-size="8.5" fill="#3b342a">answer free</text>
 
           <!-- output -->
           <rect class="a-node" x="800" y="150" width="130" height="120" rx="6"/>
@@ -489,7 +491,7 @@
         <span><b>MCP</b> — model-context protocol tools</span>
         <span><b>BYOK</b> — bring your own free key</span>
       </div>
-      <p class="arch-note"><strong>Distillation</strong> is AURA's fourth pillar: it strips the instruction that merely repeats itself from a prompt before it is ever sent — yet spares every rule of <em>safety</em>, of <em>format</em>, and of <em>routing</em> — so coin is pared without dulling the blade.</p>
+      <p class="arch-note"><strong>Selective tool injection</strong> is AURA's newest surface: it sends only the tools a task requires — not the whole armoury — the single greatest saving on every call, yet it fails open, so a tool that might be needed is never withheld. With <strong>Distillation</strong> (which pares repeated instruction yet spares every rule of <em>safety</em>, of <em>format</em>, and of <em>routing</em>) and history <strong>compression</strong>, one rite — <strong>optimise</strong> — works all three at once before a prompt is ever sent, and can fit the whole to a fixed measure of coin.</p>
     </section>
 
     <section class="sect">

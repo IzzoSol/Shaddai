@@ -10199,7 +10199,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           SHADDAI's open-source <b>token-saver</b>. It answers repeat &amp; known prompts for <b>free</b> — from cache and local compute — <i>before</i> the AI ever spends a token, and caches live API pulls inside their freshness window. It sits under every agent call here, so the more the empire works, the cheaper it runs. Repeat work saves the most; a novel one-off saves nothing (we keep the numbers honest).
         </div>
         <div class="aura-lead" style="margin-top:8px">
-          <b style="color:var(--aura-cy)">AURA saves on three surfaces:</b> the <b>answer</b> (cache · compute · skills), the <b>history</b> (compress long conversations before each turn), and — new in v0.5.0 — the <b>instructions</b>: <b style="color:var(--aura-cy)">DISTILL</b> trims redundant rules from a bloated system prompt (which you pay for on <i>every</i> call), while never removing safety, output-shape, success, or tool-routing constraints. Per OpenAI's GPT-5.6 guidance, leaner prompts score ~10-15% higher while cutting 41-66% of tokens.
+          <b style="color:var(--aura-cy)">Now a context optimizer — it trims what you re-send on <i>every</i> call across four surfaces:</b> the <b>tools</b> (<b style="color:var(--aura-cy)">selective injection</b> — send only the tools a turn needs, not all 40; ~82% of tool-schema tokens saved, fails open so a needed tool is never dropped), the <b>history</b> (compress long conversations — dedup re-read files, collapse log spam, truncate stale dumps), the <b>instructions</b> (<b style="color:var(--aura-cy)">DISTILL</b> a bloated system prompt while never removing safety, output-shape, success, or routing rules), and the <b>answer</b> (cache · compute · skills).
+        </div>
+        <div class="aura-lead" style="margin-top:8px">
+          New in <b style="color:var(--aura-cy)">v0.6.0</b>: <b style="color:var(--aura-cy)">aura.optimize(request)</b> runs all three per-call savers in one call and can hard-fit a token budget — on a real 40-tool agent session that's <b>~60% of total request tokens saved</b>, deterministic, with every cut reported per surface (tools · history · instructions).
         </div>
         <div class="aura-cta-row">
           <a class="aura-gh" href="https://github.com/IzzoSol/aura" target="_blank" rel="noopener" id="auraGhLink">
@@ -10211,7 +10214,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
             <code id="auraNpmPill">npx -y -p shaddai-aura aura-mcp</code>
             <button onclick="_auraCopy('auraNpmPill')">⧉ COPY</button>
           </span>
-          <span class="aura-pill"><span class="aura-mut">shaddai-aura v0.5.0 · CLI · library · MCP · 6 tools (+ distill)</span></span>
+          <span class="aura-pill"><span class="aura-mut">shaddai-aura v0.6.0 · CLI · library · MCP · optimize() · tool injection</span></span>
         </div>
       </div>
 
