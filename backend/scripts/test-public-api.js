@@ -54,6 +54,9 @@ const server = app.listen(0, async () => {
     // no key → 401
     let r = await J('/api/v1/calls');
     ok('GET /calls without key → 401', r.status === 401 && r.body.ok === false);
+    // SECURITY: query-param key must NOT authenticate (keys must not travel in URLs)
+    r = await J('/api/v1/calls?key=anything');
+    ok('GET /calls?key=… (query param) → 401 (header-only)', r.status === 401);
     // mint a key over HTTP
     r = await J('/api/v1/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'http-test' }) });
     ok('POST /keys mints a key', r.status === 200 && r.body.ok && r.body.key);

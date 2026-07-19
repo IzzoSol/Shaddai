@@ -19,10 +19,12 @@ router.use((req, res, next) => {
   next();
 });
 
+// Key comes ONLY from the Authorization header — never a query param, which would
+// leak the credential into access logs, proxy logs, and Referer headers.
 function _extractKey(req) {
   const h = req.headers['authorization'] || '';
   const m = /^Bearer\s+(.+)$/i.exec(h);
-  return (m && m[1].trim()) || req.query.key || '';
+  return (m && m[1].trim()) || '';
 }
 
 // Auth + rate-limit gate for the read endpoints.
@@ -41,7 +43,10 @@ function requireKey(req, res, next) {
 
 // ── key minting (no key required; throttled per IP) ─────────────────────────
 router.post('/keys', express.json({ limit: '2kb' }), (req, res) => {
-  const ip = String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+  // req.ip is the trusted client IP (Express resolves it via `trust proxy`). Do NOT
+  // read X-Forwarded-For directly — it is attacker-controlled and would let a caller
+  // mint unlimited keys by rotating fake IPs, defeating all per-key rate limits.
+  const ip = req.ip || 'unknown';
   if (!keys.mintAllowed(ip)) return res.status(429).json({ ok: false, error: 'too many keys created from this IP — try again later' });
   const label = (req.body && (req.body.label || req.body.email)) || '';
   const minted = keys.mint(label);
