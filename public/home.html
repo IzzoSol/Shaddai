@@ -1263,12 +1263,27 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   function init(){
     if(!window.gsap || !window.ScrollTrigger) return;
     gsap.registerPlugin(ScrollTrigger);
+    // invalidateOnRefresh → recompute start/end whenever layout changes, so scrubbing back to
+    // the top ALWAYS fully restores the hero title + button (was getting stale on the slower
+    // deployed load — fonts settling after init left the title "cut off / not showing").
     gsap.to('.hero-center', { yPercent:-26, opacity:0, ease:'none',
-      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:0.6 } });
+      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:0.6, invalidateOnRefresh:true } });
     gsap.to('#sky', { yPercent:-12, scale:1.08, ease:'none', transformOrigin:'50% 40%',
-      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:0.8 } });
+      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:0.8, invalidateOnRefresh:true } });
     gsap.to('.scrollcue', { opacity:0, ease:'none',
-      scrollTrigger:{ trigger:'#hero', start:'top top', end:'12% top', scrub:true } });
+      scrollTrigger:{ trigger:'#hero', start:'top top', end:'12% top', scrub:true, invalidateOnRefresh:true } });
+    // refresh positions once fonts / images / the descent iframe have settled
+    function refresh(){ try{ ScrollTrigger.refresh(); }catch(e){} }
+    addEventListener('load', refresh);
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refresh); }
+    var bg=document.getElementById('descentBg'); if(bg){ bg.addEventListener('load', refresh); }
+    [350,1000,2200].forEach(function(d){ setTimeout(refresh, d); });
+    // hard safety net: at the very top, force the hero fully visible even if a scrub frame lags
+    addEventListener('scroll', function(){
+      if((window.scrollY||document.documentElement.scrollTop||0) < 2){
+        var h=document.querySelector('.hero-center'); if(h){ gsap.set(h,{opacity:1,yPercent:0}); }
+      }
+    }, {passive:true});
   }
   if(window.gsap && window.ScrollTrigger) init(); else addEventListener('load', init);
 })();
