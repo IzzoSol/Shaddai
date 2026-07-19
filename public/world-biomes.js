@@ -764,7 +764,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
       color: 0x3a1a5a, emissive: 0x9b59f5, emissiveIntensity: 0.40, flatShading: true,
     }));
     pulsers.push({ mat: shMat, base: 0.40, amp: 0.18, speed: 0.9 });
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 0; i++) {   // owner: floating sky clutter → disabled (read as glitch boxes)
       const p = scatter(b, 4); if (!p) continue;
       const m = new THREE.Mesh(shGeo, shMat);
       m.scale.setScalar(rrange(0.8, 2.2));
@@ -853,7 +853,8 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     group.add(pylons);
 
     // ── HOLO-PANELS (instanced thin boxes, transparent glow) ──────────
-    const PANEL = 18;
+    // owner: these floating box panels read as "glitch square boxes in the air" → disabled.
+    const PANEL = 0;
     const panGeo = track(new THREE.BoxGeometry(6, 4, 0.12));
     const panMat = track(new THREE.MeshStandardMaterial({
       color: 0x0d1f30, emissive: 0x00d4ff, emissiveIntensity: 0.32,
