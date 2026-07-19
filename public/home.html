@@ -387,6 +387,9 @@ section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidde
 .gates{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:48px; }
 @media(max-width:1000px){ .gates{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:520px){ .gates{ grid-template-columns:1fr; } }
+.gates2{ grid-template-columns:repeat(2,1fr); max-width:860px; margin-left:auto; margin-right:auto; }
+.gates2 .gate{ min-height:210px; }
+@media(max-width:520px){ .gates2{ grid-template-columns:1fr; } }
 .gate{ position:relative; overflow:hidden; border:1px solid var(--edge); background:rgba(10,14,19,.6); padding:20px 18px 18px; min-height:172px;
   display:flex; flex-direction:column; color:var(--ink-soft); text-decoration:none; transition:border-color .35s, transform .3s; }
 .gate .gatebg{ position:absolute; inset:0; z-index:0; background-size:cover; background-position:50% 40%; opacity:.34; transition:opacity .45s, transform .6s var(--ease); transform:scale(1.03);
@@ -873,47 +876,20 @@ html[data-theme="codex"] .bar{ background:linear-gradient(180deg, rgba(236,228,2
       </div>
       <div class="scaletag"><span class="coord">PREVIEW</span> <b>enter the regions</b></div>
     </div>
-    <p class="lede">Step into SHADDAI as an isometric world — pick a region to enter, or forge a pixel operative. The full walkable World is still being built.</p>
-    <div class="gates">
-      <a class="gate hud" href="/region-select.html"><span class="gatebg" style="background-image:url(/hero/shaddai-city.png)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
-        <div class="gtop"><span class="gg">▦</span><span class="gst">Live</span></div><h3>Enter the Pixel World</h3><p>Choose your region · seven realms</p><span class="garr">choose a region →</span></a>
+    <p class="lede">Step into SHADDAI as an isometric world — open the Realm Map to pick a region, or forge your own pixel operative.</p>
+    <div class="gates gates2">
+      <a class="gate hud" href="/region-select.html"><span class="gatebg" style="background-image:url(/hero/meadow.png)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
+        <div class="gtop"><span class="gg">▦</span><span class="gst">Live</span></div><h3>Realm Map</h3><p>Choose your realm · seven regions · spectate or join</p><span class="garr">open the map →</span></a>
       <a class="gate hud" href="/pixel-forge.html"><span class="gatebg" style="background-image:url(/hero/city.png)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">⚒</span><span class="gst">Live</span></div><h3>Pixel Forge</h3><p>Forge a pixel operative — body &amp; color</p><span class="garr">build →</span></a>
-      <div class="gate hud locked"><span class="gatebg" style="background-image:url(/hero/volcano.png)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <span class="plock">⟡ Locked</span><div class="gtop"><span class="gg">✦</span></div><h3>The World</h3><p>The full walkable world — coming soon</p><span class="garr soon">preview mode</span></div>
     </div>
   </div>
 </section>
 
 <div class="seam alt" aria-hidden="true"></div>
 
-<!-- ═══════════ SCALE IV · INSTRUMENTS · COSMOS / CONSTELLATION STARFIELD ═══════════ -->
-<section class="blk hud" id="instruments" data-scale="IV · Instruments">
-  <div class="wrap reveal">
-    <div class="shead">
-      <div>
-        <div class="eyebrow">IV · Instruments</div>
-        <h2 class="h2 neon">The works, as a constellation</h2>
-      </div>
-      <div class="scaletag"><span class="coord">SCALE</span> <b>IV</b> · cosmos · stars</div>
-    </div>
-    <p class="lede">Each instrument is a star in the empire's sky — tools you can reach right now.</p>
-    <div class="grid7">
-      <a class="prod hud" href="/aura.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">⚖</div><span class="pno">☆ 01</span></div><h4>AURA · Token-Saver</h4><p>Compute &amp; grounding first, the model last — coin spared on every call.</p><span class="arr">observe →</span></a>
-      <a class="prod hud" href="/forge.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">⚒</div><span class="pno">☆ 02</span></div><h4>The Forge</h4><p>Build your own operatives — pixel + 3D, skills, tools, a body, a name.</p><span class="arr">learn the craft →</span></a>
-      <a class="prod hud" href="/arcade.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">◈</div><span class="pno">☆ 03</span></div><h4>Arcade &amp; Skill Engine</h4><p>Agent skills become game abilities. Play, watch, or skill-play.</p><span class="arr">enter →</span></a>
-      <a class="prod hud" href="/zerox-markets.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">₿</div><span class="pno">☆ 04</span></div><h4>ZEROX Markets &amp; Signals</h4><p>Live BTC · SOL · ETH — plus SHADDAI Signals sent to your Telegram.</p><span class="arr">watch →</span></a>
-      <a class="prod hud" href="/SHADDAI-WORLD-3D.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">✦</div><span class="pno">☆ 05</span></div><h4>World &amp; Portals</h4><p>A living Three.js city of the Seven, walkable and open.</p><span class="arr">walk →</span></a>
-      <a class="prod hud" href="/marketplace-shop-v2.html"><span class="scan"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="ptop"><div class="pg">◈</div><span class="pno">☆ 06</span></div><h4>The Bazaar</h4><p>Buy, sell &amp; remix agents, cosmetics &amp; workflows. Solana checkout.</p><span class="arr">browse →</span></a>
-    </div>
-  </div>
-</section>
+<!-- (Instruments section removed — the "Explore SHADDAI" gateway tiles above already cover
+     these products with imagery; this text-only duplicate was redundant.) -->
 
 <!-- ═══════════ THE ARCADE (cosmos beat continues) ═══════════ -->
 <section class="blk hud alt2" id="arcade" data-scale="IV · The Arcade">

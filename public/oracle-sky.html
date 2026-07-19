@@ -3,29 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ORACLE · OBSERVATORY</title>
+<title>ORACLE · ASTRAL OBSERVATORY</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#06040d;
-    --panel:#100a1f;
-    --violet:#c084fc;
-    --gold:#ffcf4a;
-    --line:rgba(192,132,252,.20);
-    --text:#eadfff;
-    --dim:#9a8bbf;
+    --bg:#06080b;
+    --panel:#0b1016;
+    --emerald:#00ff9c;
+    --gold:#e8c45c;
+    --cyan:#5fe0ff;
+    /* legacy alias kept so downstream rules still resolve */
+    --violet:#5fe0ff;
+    --line:rgba(0,255,156,.18);
+    --text:#e7f6ee;
+    --dim:#7c9a8c;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
     background:
-      radial-gradient(1000px 600px at 85% -5%, rgba(192,132,252,.12), transparent 60%),
-      radial-gradient(800px 500px at 5% 105%, rgba(255,207,74,.06), transparent 60%),
+      radial-gradient(1000px 600px at 85% -5%, rgba(0,255,156,.10), transparent 60%),
+      radial-gradient(800px 500px at 5% 105%, rgba(232,196,92,.06), transparent 60%),
       var(--bg);
     color:var(--text);
-    font-family:'Share Tech Mono',monospace;
+    font-family:'IBM Plex Mono',monospace;
     overflow-x:hidden;overflow-y:auto;
     display:flex;flex-direction:column;min-height:100%;
   }
@@ -33,32 +36,33 @@
   #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
   .topbar{
     position:relative;z-index:5;
-    display:flex;align-items:center;gap:16px;padding:12px 20px;
-    background:linear-gradient(180deg, rgba(16,10,31,.95), rgba(16,10,31,.7));
+    display:flex;align-items:center;gap:16px;padding:12px 20px;flex-wrap:wrap;
+    background:linear-gradient(180deg, rgba(11,16,22,.96), rgba(6,8,11,.78));
     border-bottom:1px solid var(--line);box-shadow:0 4px 30px rgba(0,0,0,.6);
   }
   .brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
   .mark{
     width:38px;height:38px;border-radius:9px;flex:none;
-    background:linear-gradient(135deg,var(--violet),#6b3fa0);
-    display:grid;place-items:center;font-family:'Orbitron';font-weight:900;color:#160a24;
-    box-shadow:0 0 18px rgba(192,132,252,.5);
+    background:linear-gradient(135deg,var(--emerald),#0b6b45);
+    display:grid;place-items:center;font-family:'Cinzel Decorative';font-weight:900;color:#04140d;
+    box-shadow:0 0 18px rgba(0,255,156,.45);
   }
-  .title{font-family:'Orbitron';font-weight:900;letter-spacing:2px;font-size:16px;color:#fff}
-  .title small{display:block;font-family:'Share Tech Mono';font-weight:400;letter-spacing:3px;color:var(--violet);font-size:11px}
+  .title{font-family:'Cinzel Decorative';font-weight:900;letter-spacing:1.5px;font-size:16px;color:#fff}
+  .title small{display:block;font-family:'Chakra Petch';font-weight:500;letter-spacing:3px;color:var(--emerald);font-size:11px;text-transform:uppercase}
+  /* HUD pill controls — shared look for top-bar buttons */
   .close-btn{
-    border:1px solid rgba(255,207,74,.5);background:rgba(255,207,74,.06);color:var(--gold);
-    font-family:'Orbitron';font-weight:700;letter-spacing:1px;padding:9px 16px;border-radius:8px;
-    cursor:pointer;font-size:12px;transition:.15s;
+    border:1px solid rgba(232,196,92,.5);background:rgba(232,196,92,.07);color:var(--gold);
+    font-family:'Chakra Petch';font-weight:700;letter-spacing:1px;padding:9px 16px;border-radius:999px;
+    cursor:pointer;font-size:12px;transition:.15s;text-transform:uppercase;
   }
-  .close-btn:hover{background:var(--gold);color:#1a1400;box-shadow:0 0 18px rgba(255,207,74,.5)}
+  .close-btn:hover{background:var(--gold);color:#1a1400;box-shadow:0 0 16px rgba(232,196,92,.45)}
 
   .clockbar{
     position:relative;z-index:5;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;
-    padding:12px;border-bottom:1px solid var(--line);background:rgba(6,4,13,.55);
+    padding:12px;border-bottom:1px solid var(--line);background:rgba(6,8,11,.6);
   }
-  .clockbar .c{font-family:'Orbitron';font-size:22px;color:var(--gold);letter-spacing:2px}
-  .clockbar .d{color:var(--dim);letter-spacing:2px;align-self:center}
+  .clockbar .c{font-family:'IBM Plex Mono';font-weight:500;font-size:22px;color:var(--gold);letter-spacing:2px}
+  .clockbar .d{font-family:'Chakra Petch';color:var(--dim);letter-spacing:2px;align-self:center}
 
   .grid{
     position:relative;z-index:5;flex:1;
@@ -67,41 +71,41 @@
     max-width:1200px;margin:0 auto;width:100%;
   }
   .card{
-    background:linear-gradient(180deg, rgba(16,10,31,.9), rgba(10,6,20,.9));
+    background:linear-gradient(180deg, rgba(11,16,22,.9), rgba(6,8,11,.92));
     border:1px solid var(--line);border-radius:14px;padding:20px;
     box-shadow:0 10px 40px rgba(0,0,0,.5);position:relative;overflow:hidden;
   }
   .card h3{
-    font-family:'Orbitron';font-weight:700;letter-spacing:2px;font-size:13px;
-    color:var(--violet);text-transform:uppercase;margin-bottom:14px;
+    font-family:'Chakra Petch';font-weight:700;letter-spacing:2px;font-size:13px;
+    color:var(--emerald);text-transform:uppercase;margin-bottom:14px;
     display:flex;align-items:center;gap:8px;
   }
   .card h3 .ic{font-size:16px}
-  .big-val{font-family:'Orbitron';font-weight:900;font-size:26px;color:#fff;letter-spacing:1px}
-  .sub{color:var(--dim);font-size:12px;margin-top:6px;line-height:1.6}
-  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(192,132,252,.12);font-size:13px}
+  .big-val{font-family:'Chakra Petch';font-weight:700;font-size:26px;color:#fff;letter-spacing:1px}
+  .sub{font-family:'IBM Plex Mono';color:var(--dim);font-size:12px;margin-top:6px;line-height:1.6}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(0,255,156,.12);font-size:13px}
   .row:last-child{border-bottom:none}
-  .row .k{color:var(--dim)}
-  .row .v{color:var(--text);font-weight:bold}
+  .row .k{font-family:'Chakra Petch';color:var(--dim)}
+  .row .v{font-family:'IBM Plex Mono';color:var(--text);font-weight:500}
   .accent{color:var(--gold)}
 
   /* moon card layout */
   .moon-wrap{display:flex;align-items:center;gap:20px}
   #moonCanvas{width:120px;height:120px;flex:none;border-radius:50%;
-    box-shadow:0 0 30px rgba(192,132,252,.35), inset 0 0 20px rgba(0,0,0,.6);background:#05030a}
+    box-shadow:0 0 30px rgba(0,255,156,.25), inset 0 0 20px rgba(0,0,0,.6);background:#05070a}
   .moon-info{flex:1;min-width:0}
   .illum-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden}
-  .illum-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--gold));width:0%;transition:width .6s}
+  .illum-fill{height:100%;background:linear-gradient(90deg,var(--emerald),var(--gold));width:0%;transition:width .6s}
 
-  .zodiac-glyph{font-size:52px;line-height:1;text-align:center;margin:4px 0;filter:drop-shadow(0 0 10px rgba(192,132,252,.6))}
+  .zodiac-glyph{font-size:52px;line-height:1;text-align:center;margin:4px 0;color:var(--cyan)}
 
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;border:1px solid var(--line);
-    color:var(--violet);font-size:11px;letter-spacing:1px;margin-top:8px}
-  .api-note{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:10px;opacity:.7}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid var(--line);
+    font-family:'Chakra Petch';color:var(--emerald);font-size:11px;letter-spacing:1px;margin-top:8px}
+  .api-note{font-family:'IBM Plex Mono';font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:10px;opacity:.7}
 
-  .foot{position:relative;z-index:5;padding:8px 20px 16px;color:var(--dim);font-size:10px;
+  .foot{font-family:'Chakra Petch';position:relative;z-index:5;padding:8px 20px 16px;color:var(--dim);font-size:10px;
     letter-spacing:1.5px;text-align:center;text-transform:uppercase}
-  .foot b{color:var(--violet)}
+  .foot b{color:var(--emerald)}
 </style>
 </head>
 <body>
@@ -110,7 +114,7 @@
   <div class="topbar">
     <div class="brand">
       <div class="mark">O</div>
-      <div class="title">ORACLE OBSERVATORY<small>ASTRONOMY · ASTROLOGY CONSOLE</small></div>
+      <div class="title">ORACLE · ASTRAL OBSERVATORY<small>ASTRONOMY · ASTROLOGY CONSOLE</small></div>
     </div>
     <button class="close-btn" onclick="closePanel()">✕ CLOSE</button>
   </div>
@@ -171,7 +175,7 @@
     for(var i=0;i<stars.length;i++){var st=stars[i];st.t+=st.s;
       var a=.4+.6*Math.abs(Math.sin(st.t));
       ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,6.28);
-      ctx.fillStyle='rgba(200,180,255,'+a+')';ctx.fill();}
+      ctx.fillStyle='rgba(190,255,225,'+a+')';ctx.fill();}
     requestAnimationFrame(draw);}
   addEventListener('resize',resize);resize();draw();
 })();
@@ -339,7 +343,7 @@ function drawMoon(phase){
   ctx.restore();
   // subtle craters on lit side omitted for clarity; outline glow
   ctx.beginPath();ctx.arc(cx,cy,r,0,6.28);
-  ctx.strokeStyle='rgba(192,132,252,.4)';ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle='rgba(0,255,156,.4)';ctx.lineWidth=2;ctx.stroke();
 }
 
 /* ============ RENDER ============ */
