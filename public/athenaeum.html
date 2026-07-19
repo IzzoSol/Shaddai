@@ -124,6 +124,14 @@ body::before{
 .hall.oracle .enter{color:var(--cyan)}
 .hall.quill  .enter{color:var(--gold)}
 .hall:hover .enter{gap:14px}
+/* Oracle's two-way entry buttons */
+.hall .enter2{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.hall .enterbtn{font-family:'Chakra Petch',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;padding:9px 13px;border-radius:8px;text-decoration:none;transition:.18s;
+  color:#04140c;background:linear-gradient(90deg,#5fe0ff,#00ff9c);border:1px solid transparent}
+.hall .enterbtn.alt{color:var(--cyan);background:rgba(6,8,11,.55);border:1px solid rgba(95,224,255,.4)}
+.hall .enterbtn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.hall .enterbtn.alt:hover{background:rgba(6,8,11,.8);border-color:var(--cyan)}
 .hall .hair{height:1px;background:linear-gradient(90deg,var(--hair),transparent);margin-top:2px}
 
 /* ── FOOTER LINE ── */
@@ -169,23 +177,26 @@ body::before{
 <!-- ═══════════ HALL CARDS ═══════════ -->
 <main class="halls">
 
-  <!-- Oracle's Observatory -->
-  <a class="hall oracle" href="/oracle-sky.html">
-    <div class="bg" style="background-image:url('/assets/agents/ORACLE-council.png')"></div>
+  <!-- Oracle's Observatory — two ways in -->
+  <div class="hall oracle">
+    <div class="bg" style="background-image:url('/assets/halls/observatory.png')"></div>
     <div class="scrim"></div><div class="tint"></div>
     <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
     <div class="body">
       <div class="glyph">◎ Hall I</div>
       <div class="name">Oracle's Observatory</div>
       <div class="hair"></div>
-      <div class="desc">research &amp; foresight · the astral observatory</div>
-      <span class="enter">Enter →</span>
+      <div class="desc">research &amp; foresight · two ways in</div>
+      <div class="enter2">
+        <a class="enterbtn" href="/oracle-sky.html">◉ Astral Observatory →</a>
+        <a class="enterbtn alt" href="/SHADDAI-WORLD-3D.html">✦ In the World →</a>
+      </div>
     </div>
-  </a>
+  </div>
 
   <!-- Quill's Library -->
   <a class="hall quill" href="/library.html">
-    <div class="bg" style="background-image:url('/assets/agents/QUILL-council.png')"></div>
+    <div class="bg" style="background-image:url('/assets/halls/library.png')"></div>
     <div class="scrim"></div><div class="tint"></div>
     <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
     <div class="body">
@@ -199,7 +210,7 @@ body::before{
 
   <!-- Turtle's Museum -->
   <a class="hall turtle" href="/museum.html">
-    <div class="bg" style="background-image:url('/assets/agents/TURTLE-action.png')"></div>
+    <div class="bg" style="background-image:url('/assets/halls/museum.png')"></div>
     <div class="scrim"></div><div class="tint"></div>
     <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
     <div class="body">
