@@ -4,13 +4,43 @@
    or an existing link to home.html, so it never doubles up. */
 (function(){
   if (window.__shaddaiHomeBtn) return; window.__shaddaiHomeBtn = 1;
+
+  /* SITE-WIDE SELF-HEAL — a leftover cache-first service worker from an old build keeps
+     serving STALE cached pages (broken AURA / NFTs / nav, dashboard-behind-landing, etc.).
+     Since this script is on ~every page, evict it everywhere: when an old worker exists,
+     register the kill-switch /sw.js (skipWaiting→claim→purge all caches→unregister→reload).
+     Guarded once per session so it never loops. */
+  try{
+    if ('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        if (!rs || !rs.length) return;
+        if (sessionStorage.getItem('sw-killed')) return;
+        sessionStorage.setItem('sw-killed','1');
+        navigator.serviceWorker.register('/sw.js').catch(function(){
+          rs.forEach(function(r){ try{ r.unregister(); }catch(e){} });
+          if (window.caches && caches.keys) caches.keys().then(function(k){ k.forEach(function(x){ try{caches.delete(x);}catch(e){} }); });
+          location.reload();
+        });
+      }).catch(function(){});
+    }
+  }catch(e){}
+
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
-    // already has a way home? -> skip. Check the nav.js SCRIPT TAG (present
-    // synchronously) so we don't race nav.js's async wordmark injection.
+    // already has ANY return chrome (nav, home link, dashboard/back/exit button)?
+    // -> skip, so we never double up or overlap a page's own top bar.
     if (document.querySelector('script[src*="nav.js"]')) return;
     if (document.getElementById('shd-nav-host') || document.querySelector('.shd-nav')) return;
-    if (document.querySelector('a[href="/home.html"], a[href="home.html"], a[href$="/home.html"]')) return;
+    if (document.querySelector(
+      'a[href="/home.html"],a[href="home.html"],a[href$="/home.html"],'+
+      'a[href="/"],a[href="/dashboard"],a[href="/index.html"],a[href$="/dashboard"]'
+    )) return;
+    // text-based check for a back/exit/dashboard/home control already in the page
+    var ctrls = document.querySelectorAll('a,button');
+    for (var i=0; i<ctrls.length && i<120; i++){
+      var t = (ctrls[i].textContent||'').trim().toLowerCase();
+      if (/(^|\s)(home|dashboard|back|exit)(\s|$)/.test(t) || /dashboard|back to|← *dashboard|◄/.test(t)) return;
+    }
 
     var css = document.createElement('style');
     css.textContent =

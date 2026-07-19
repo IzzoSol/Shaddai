@@ -1174,8 +1174,9 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   /* Descent runs as the living background in light ?bg=1 mode (DPR1, 0.5 renderScale, 30fps).
      Auto-load after the hero paints; also exposed for the View button. */
   window.__loadDescent = lazyLoad;
-  if(document.readyState==='complete') setTimeout(lazyLoad, 450);
-  else addEventListener('load', function(){ setTimeout(lazyLoad, 450); });
+  /* start the Ascent background ASAP (was 450ms after full load) so it "starts" fast */
+  if(document.readyState!=='loading') setTimeout(lazyLoad, 120);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(lazyLoad, 120); });
 })();
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1251,8 +1252,15 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   document.querySelectorAll('.reveal').forEach(function(sec){
     Array.prototype.slice.call(sec.querySelectorAll('.op, .view, .prod, .read, .step, .agame')).forEach(function(t,i){ t.style.setProperty('--i', i); });
   });
-  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.14});
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.06, rootMargin:'0px 0px -8% 0px'});
   document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  /* SAFETY NET: never let a section stay hidden. On scroll, force-reveal anything already
+     in (or above) the viewport; and after 4s reveal everything, so content can't "disappear". */
+  function forceReveal(){ document.querySelectorAll('.reveal:not(.in)').forEach(function(el){
+    var r=el.getBoundingClientRect(); if(r.top < innerHeight*0.96){ el.classList.add('in'); }
+  }); }
+  addEventListener('scroll', forceReveal, {passive:true});
+  setTimeout(function(){ document.querySelectorAll('.reveal:not(.in)').forEach(function(el){ el.classList.add('in'); }); }, 4000);
 })();
 
 /* ── depth rail + scale readout (which beat you're in) ── */
