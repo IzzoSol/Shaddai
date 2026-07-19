@@ -500,9 +500,9 @@ body.booting #feed .sn, body.booting #tcTop{ opacity:.5; animation:skel 1.15s ea
         <div class="rmap-num">03</div>
         <div class="rmap-body">
           <div class="rmap-title">Native Prompt Caching</div>
-          <div class="rmap-desc">Reuse large system prompts across agent turns via <code>cache_control</code> so they aren't re-billed on every call.</div>
+          <div class="rmap-desc">Reuse large system prompts across agent turns via <code>cache_control</code> so they aren't re-billed on every call. Live in <code>aura.optimize({cache:true})</code> — marks the distilled system prefix cacheable (~90% off after the first call); tools are cached only when not trimmed per turn.</div>
         </div>
-        <span class="rmap-tag planned">planned</span>
+        <span class="rmap-tag live">live</span>
       </div>
       <div class="rmap-row">
         <div class="rmap-num">04</div>
