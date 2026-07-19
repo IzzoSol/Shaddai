@@ -34,11 +34,13 @@ Local server: `node backend/server-production.js` on :3000 (running in backgroun
 - ✅ Portal rental cramped — pad 22x18→40x34, recentered (portal-plots.js). The "thing behind it" = the legit NEXUS dome ~40u back (portals-registry.js) — left in place; owner decides if they want them separated.
 - ✅ Attack-move square boxes — hardened projectile VFX (map=null, alphaTest 0.35) so no square around the orb. ⚠ verify (if it's the LMB swing not Q, source is elsewhere).
 - ✅ Billboards clipping pillars — lounge screens reseated inside the pillar ring (world-buildings.js).
-- ⬜ **Floating glitch square boxes in the sky** — NOT in world-buildings/npcs/world-HTML. Next: grep `world-interiors.js` + `world-biomes.js` for high-Y BoxGeometry.
-- ⬜ **Empty billboard** — not found in world-buildings/npcs/HTML; check world-interiors.js.
-- ⬜ **Random chair-circle in map** — not found as orphan; check world-interiors.js / world-biomes.js.
+- ✅ **Floating glitch square boxes in the sky** — were the biome "FLOATING DEBRIS" mid-air cubes (world-biomes.js:777) → DEBRIS=0. (f2595b4)
+- ⬜ **Empty billboard** — still not conclusively located (biome holo-panels are intentional glow decor, left them); likely a specific plaza sign — needs owner to point it out in-world.
+- ⬜ **Random chair-circle in map** — not found as an orphan in any module; likely a legit lounge/nexus element the owner didn't recognize, or needs a screenshot location.
 - ⬜ Second floors unfinished/janky (not yet started).
+- ⬜ Arcade re-skin to emerald/obsidian theme (arcade.html off-theme).
 - ⬜ General: shading/lighting polish, lag/slow-down audit.
+- ✅ TG: "Signals on Telegram" (t.me/ShaddaiSignalsBot) added to Signals nav (dropdown + mobile). (f2595b4)
 
 ### Security (PIKADON)
 - ⬜ backend `npm audit`: 42 findings (33 mod, 9 high) — almost all transitive Solana/metaplex deps + one `ws` DoS via engine.io-client. DO NOT `npm audit fix --force` (breaks Solana + risks re-breaking deploy). Plan: after deploy stable, non-force `npm audit fix` in isolation, boot-test, then push. Most not in direct request attack surface.
