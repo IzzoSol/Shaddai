@@ -3,10 +3,12 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZEROX · Market Nexus</title>
 <link rel="preconnect" href="https://s3.tradingview.com">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{ --cy:#00f0ff; --cy2:#12d4ff; --mag:#ff2bd6; --gold:#ffd24a; --bg:#03060e; --pan:rgba(6,16,30,.72); }
+  :root{ --cy:#5fe0ff; --cy2:#12d4ff; --mag:#ff2bd6; --gold:#e8c45c; --bg:#06080b; --pan:rgba(6,16,30,.72); }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%;background:var(--bg);color:#dff4ff;font-family:'Share Tech Mono',ui-monospace,monospace;overflow:hidden}
+  html,body{height:100%;background:var(--bg);color:#dff4ff;font-family:'IBM Plex Mono',ui-monospace,monospace;overflow:hidden}
   /* ── neon room: receding floor grid + side walls + ceiling glow ── */
   #room{position:fixed;inset:0;overflow:hidden;z-index:0}
   #floor{position:absolute;left:-20%;right:-20%;bottom:0;height:46%;
@@ -38,20 +40,20 @@
   /* ── header ── */
   header{position:fixed;top:40px;left:0;right:0;z-index:35;display:flex;align-items:center;gap:14px;
     padding:12px clamp(14px,3vw,30px);pointer-events:none}
-  .brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:4px;font-size:clamp(16px,2.6vw,26px);
+  .brand{font-family:'Chakra Petch',sans-serif;font-weight:900;letter-spacing:4px;font-size:clamp(16px,2.6vw,26px);
     background:linear-gradient(90deg,#00f0ff,#7ef9ff,#00f0ff);-webkit-background-clip:text;background-clip:text;color:transparent;
     text-shadow:0 0 30px rgba(0,240,255,.4)}
-  .brand small{display:block;font-family:'Share Tech Mono',monospace;font-weight:400;font-size:10px;letter-spacing:3px;color:#5ac7e0;-webkit-text-fill-color:#5ac7e0}
+  .brand small{display:block;font-family:'IBM Plex Mono',monospace;font-weight:400;font-size:10px;letter-spacing:3px;color:#5ac7e0;-webkit-text-fill-color:#5ac7e0}
   .spacer{flex:1}
   .nav{pointer-events:auto;display:flex;gap:8px}
-  .nav a{font-family:'Orbitron',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;text-decoration:none;
+  .nav a{font-family:'Chakra Petch',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;text-decoration:none;
     color:var(--cy);border:1px solid rgba(0,240,255,.4);border-radius:8px;padding:8px 14px;background:rgba(4,14,24,.6);
     backdrop-filter:blur(6px);transition:.15s;white-space:nowrap}
   .nav a:hover{background:var(--cy);color:#02121a;box-shadow:0 0 22px rgba(0,240,255,.6)}
   .nav a.mag{color:var(--mag);border-color:rgba(255,43,214,.5)} .nav a.mag:hover{background:var(--mag);color:#120017;box-shadow:0 0 22px rgba(255,43,214,.6)}
   /* ── tabs ── */
   .tabs{pointer-events:auto;display:flex;gap:6px}
-  .tab{font-family:'Orbitron',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;cursor:pointer;
+  .tab{font-family:'Chakra Petch',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;cursor:pointer;
     color:#7fd6ea;border:1px solid rgba(0,240,255,.25);border-radius:9px;padding:8px 15px;background:rgba(4,14,24,.55);
     backdrop-filter:blur(6px);transition:.15s;white-space:nowrap}
   .tab:hover{color:var(--cy);border-color:rgba(0,240,255,.6)}
@@ -70,13 +72,13 @@
   @media(max-width:900px){.sgrid{grid-template-columns:1fr;height:auto}}
   .spanel{border:1px solid rgba(0,240,255,.3);border-radius:14px;background:var(--pan);backdrop-filter:blur(4px);
     box-shadow:0 0 30px -8px rgba(0,240,255,.3);padding:18px 20px;overflow:hidden}
-  .spanel h3{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;color:#eaffff;margin-bottom:14px;
+  .spanel h3{font-family:'Chakra Petch',sans-serif;font-size:13px;letter-spacing:2px;color:#eaffff;margin-bottom:14px;
     padding-bottom:8px;border-bottom:1px solid rgba(0,240,255,.2)}
   /* fear/greed gauge */
   #gauge{position:relative;width:230px;height:135px;margin:6px auto 0}
   #gauge svg{width:100%;height:100%;overflow:visible}
-  #fg-val{position:absolute;left:0;right:0;top:74px;text-align:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:40px}
-  #fg-label{text-align:center;margin-top:16px;font-family:'Orbitron',sans-serif;font-weight:800;letter-spacing:2px;font-size:15px}
+  #fg-val{position:absolute;left:0;right:0;top:74px;text-align:center;font-family:'Chakra Petch',sans-serif;font-weight:900;font-size:40px}
+  #fg-label{text-align:center;margin-top:16px;font-family:'Chakra Petch',sans-serif;font-weight:800;letter-spacing:2px;font-size:15px}
   #fg-sub{text-align:center;font-size:11px;color:#7fd6ea;margin-top:4px}
   #fg-hist{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:16px}
   #fg-hist .b{flex:1;border-radius:2px 2px 0 0;min-height:3px;transition:.3s}
@@ -101,7 +103,7 @@
     padding:8px 12px;background:linear-gradient(180deg,rgba(3,12,22,.92),rgba(3,12,22,.35));border-bottom:1px solid rgba(0,240,255,.22)}
   .screen .bar .dot{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:pulse 1.6s infinite alternate}
   @keyframes pulse{to{opacity:.35}}
-  .screen .bar .t{font-family:'Orbitron',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#eaffff}
+  .screen .bar .t{font-family:'Chakra Petch',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#eaffff}
   .screen .bar .live{margin-left:auto;font-size:10px;letter-spacing:2px;color:#38ffb0;border:1px solid rgba(56,255,176,.4);border-radius:5px;padding:2px 7px}
   .screen .body{position:absolute;inset:38px 0 0 0}
   .screen .body iframe,.tv-wrap{width:100%!important;height:100%!important;border:0}
@@ -110,8 +112,8 @@
   .screen.mag .bar .t{color:#ffdaf6}
   /* SpaceX panel */
   #spx{position:absolute;inset:38px 0 0 0;padding:16px 18px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
-  #spx .big{font-family:'Orbitron',sans-serif;font-size:clamp(18px,2.4vw,26px);font-weight:900;color:#ffdaf6;text-shadow:0 0 18px rgba(255,43,214,.4)}
-  #spx .cd{font-family:'Orbitron',sans-serif;font-size:clamp(22px,3.4vw,40px);font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(255,210,74,.4)}
+  #spx .big{font-family:'Chakra Petch',sans-serif;font-size:clamp(18px,2.4vw,26px);font-weight:900;color:#ffdaf6;text-shadow:0 0 18px rgba(255,43,214,.4)}
+  #spx .cd{font-family:'Chakra Petch',sans-serif;font-size:clamp(22px,3.4vw,40px);font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(255,210,74,.4)}
   #spx .row{display:flex;justify-content:space-between;font-size:12px;color:#cbb6e6;border-bottom:1px dashed rgba(255,43,214,.18);padding:5px 0}
   #spx .row b{color:#fff}
   #spx .patch{width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,43,214,.5));align-self:center;margin:2px 0}
