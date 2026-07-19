@@ -2722,9 +2722,12 @@ try { if(window.buildWorldDialogue) _dialogue = window.buildWorldDialogue({
   onHire: function(code){ try{ const s=agentSprites.find(function(s){ return (s.a && s.a.codename)===code; }); if(s && typeof openDossier==='function') openDossier(s.a); }catch(e){} }
 }); } catch(e){ console.warn('dialogue init', e && e.message); }
 try { if(window.buildShaddaiRadio){ _radio = window.buildShaddaiRadio(); window._radio=_radio; } } catch(e){ console.warn('radio init', e && e.message); }
-try { if(window.buildPortalPlots) _portalPlots = window.buildPortalPlots({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalPlots init', e && e.message); }
+// OWNER: the two portal-rental structures behind NEXUS (rental plot + dome) aren't designed
+// well yet — disabled for now to keep the area clean. Flip WORLD_PORTALS_ON=true to restore.
+var WORLD_PORTALS_ON = false;
+try { if(WORLD_PORTALS_ON && window.buildPortalPlots) _portalPlots = window.buildPortalPlots({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalPlots init', e && e.message); }
 let _portalDome=null;
-try { if(window.buildPortalDome && window.PORTALS_REGISTRY && window.PORTALS_REGISTRY.dome) _portalDome = window.buildPortalDome({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalDome init', e && e.message); }
+try { if(WORLD_PORTALS_ON && window.buildPortalDome && window.PORTALS_REGISTRY && window.PORTALS_REGISTRY.dome) _portalDome = window.buildPortalDome({ THREE, scene, layout: window.WORLD_LAYOUT, registry: window.PORTALS_REGISTRY }); } catch(e){ console.warn('portalDome init', e && e.message); }
 let _elevators=null;
 try { if(window.buildWorldElevators && window.WORLD_LAYOUT) _elevators = window.buildWorldElevators({ THREE, scene, layout: window.WORLD_LAYOUT, playerPos, getGroundY:(x,z)=> (worldTerrain&&worldTerrain.heightAt)?worldTerrain.heightAt(x,z):0 }); } catch(e){ console.warn('elevators init', e && e.message); }
 // ── SHADDAI BODY FIX ──────────────────────────────────────────────────────
