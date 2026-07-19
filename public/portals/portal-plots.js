@@ -57,19 +57,19 @@
   'use strict';
 
   // ── shared geometry constants (same scale language as world-spawn.js) ──────
-  var ARCH_W = 11.0;                           // plot arch is slightly wider than spawn arches
-  var ARCH_H = 14.0;
+  var ARCH_W = 13.0;                           // plot arch — widened so the gateway feels roomy
+  var ARCH_H = 15.5;
   var PIL_R  = 0.65;
   var PIL_H  = ARCH_H + 1.8;
   var LIN_W  = ARCH_W + PIL_R * 2.0 + 0.5;
   var LIN_H  = 1.6;
-  var DISC_R = ARCH_W * 0.80;                  // floor disc a bit larger
+  var DISC_R = ARCH_W * 1.15;                  // floor disc noticeably larger — room to stand
 
-  // Floating platform dimensions
-  var PAD_W  = 22;
-  var PAD_D  = 18;
+  // Floating platform dimensions — enlarged so a player can walk around the plot
+  var PAD_W  = 40;     // was 22 — nearly doubled width
+  var PAD_D  = 34;     // was 18 — nearly doubled depth
   var PAD_H  = 0.6;
-  var PAD_Y  = -1.2;   // sits just below ground level so it blends as a raised pad
+  var PAD_Y  = -0.4;   // sits just below ground level so it blends as a raised pad
 
   // Sign canvas (world-space sprite)
   var SIGN_PX_W = 512;
@@ -263,17 +263,20 @@
       new THREE.BoxGeometry(PAD_W, PAD_H, PAD_D),
       padMat
     );
-    pad.position.set(0, PAD_Y, PAD_D / 2 - 3);    // centred behind arch, slight Z offset
+    // Centre the pad on the arch so the plot reads as one open standing area
+    // (previously offset PAD_D/2-3 which shoved the whole slab backward and looked cramped/janky).
+    pad.position.set(0, PAD_Y, 0);
     grp.add(pad);
 
-    // Pad edge glow (additive, same colour)
+    // Pad edge glow (additive, same colour) — flush outline, kept subtle so it
+    // doesn't read as a separate floating box behind the gateway.
     var padEdgeMat = new THREE.MeshBasicMaterial({
-      color: baseCol.clone(), transparent: true, opacity: 0.08,
+      color: baseCol.clone(), transparent: true, opacity: 0.06,
       blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
       wireframe: true,
     });
     var padEdge = new THREE.Mesh(
-      new THREE.BoxGeometry(PAD_W + 0.4, PAD_H + 0.2, PAD_D + 0.4),
+      new THREE.BoxGeometry(PAD_W + 0.3, PAD_H + 0.15, PAD_D + 0.3),
       padEdgeMat
     );
     padEdge.position.copy(pad.position);

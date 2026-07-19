@@ -18,6 +18,19 @@
   var SIDE_R  = vtx(90),  SIDE_L  = vtx(-90);   // [260, 0]    / [-260, 0]
   var BACK_R  = vtx(150), BACK_L  = vtx(-150);  // [130,-225]  / [-130,-225]
 
+  // ── PIKADON PLACEMENT NUDGE (2026-07-19) — "pikadon on bike" fix ──────────────
+  // Owner reported PIKADON's body standing on an elevator pole/lift instead of at
+  // his own station door. His station previously sat on the pure hexagon vertex
+  // BACK_L (vtx −150 → xz-azimuth −120°), which put his whole cluster on the
+  // −Z/back-left bisector shared with the grand-lift station corridor. We rotate
+  // PIKADON ~6° counter-clockwise onto vtx(−156) so his door-front standing spot
+  // moves into the OPEN back-left gap, off that corridor, while keeping the same
+  // sacred radius R and staying clearly back-left (symmetric-adjacent to TURTLE).
+  // NOTE: his lounge lift (built by world-elevators.js from this same pos) moves
+  // WITH him, so their relative geometry is preserved — this only shifts the whole
+  // station off the shared corridor line. See return notes.
+  var PIKADON_POS = vtx(-156);                  // ≈ [-106,-238], xz-azimuth −114°
+
   window.WORLD_LAYOUT = {
     half: 380,
     spawn: [0, 2, 70],          // player start: on the central axis, just south of the Source
@@ -39,7 +52,7 @@
       { code: 'QUILL',   name: 'Library Entrance', pos: FRONT_R,  biome: 'forest', building: 'library',  color: 0xb98cff },
       { code: 'ORACLE',  name: 'The Esoteric Wing',pos: SIDE_R,   biome: 'forest', building: 'spires',   color: 0xc084fc },
       { code: 'TURTLE',  name: 'The Museum',       pos: BACK_R,   biome: 'desert', building: 'gallery',  color: 0x1fd6c4 },
-      { code: 'PIKADON', name: 'The Aegis',        pos: BACK_L,   biome: 'arctic', building: 'fortress', color: 0xff5a6e },
+      { code: 'PIKADON', name: 'The Aegis',        pos: PIKADON_POS, biome: 'arctic', building: 'fortress', color: 0xff5a6e },
       { code: 'ZEROX',   name: 'The Markets',      pos: SIDE_L,   biome: 'grid',   building: 'exchange', color: 0x27e0ff },
     ],
 
@@ -61,7 +74,7 @@
       { code: 'QUILL',   name: 'The Library',       pos: FRONT_R, color: 0xb98cff },
       { code: 'ORACLE',  name: 'The Esoteric Wing', pos: SIDE_R,  color: 0xc084fc },
       { code: 'TURTLE',  name: 'The Museum',        pos: BACK_R,  color: 0x1fd6c4 },
-      { code: 'PIKADON', name: 'The Aegis',         pos: BACK_L,  color: 0xff5a6e },
+      { code: 'PIKADON', name: 'The Aegis',         pos: PIKADON_POS, color: 0xff5a6e },
       { code: 'ZEROX',   name: 'The Markets',       pos: SIDE_L,  color: 0x27e0ff },
     ],
 

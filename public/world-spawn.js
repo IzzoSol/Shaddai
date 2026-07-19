@@ -891,7 +891,14 @@
       var gy = groundAt(px, pz);
 
       var _cd  = Math.hypot(px, pz);
-      var _off = 84;
+      // Pull-back distance toward world-centre so the player lands IN FRONT OF the
+      // door (agent doors face centre) on open ground, not inside the building.
+      // QUILL's Library was enlarged ~1.5× (footprint 258 → facade faceR ≈ 118 in
+      // world-buildings.js / collider bumped to match in SHADDAI-WORLD-3D.html), so
+      // the shared 84u pull-back now drops the player ON/INSIDE the library. Give
+      // QUILL a larger pull-back (~145u) so the landing clears the ~118 facade with
+      // room to stand, still facing the entrance. Other portals keep the 84u value.
+      var _off = (code === 'QUILL') ? 145 : 84;
       var landX, landZ;
       // Land IN FRONT OF THE DOOR. Agent buildings' doors face world-center, so offset toward center.
       // The world CENTRE is now an OPEN COMMUNITY FORUM (the SHADDAI temple moved up to the Sky
