@@ -3,17 +3,25 @@
 <head>
 <script>document.documentElement.setAttribute('data-theme','neon');</script>
 <script>
-/* Self-heal: a leftover cache-first service worker from a past dashboard visit was
-   serving stale content into the background iframe (the "dashboard/login showing
-   behind the landing" bug). Unregister any SW + purge all caches on the landing,
-   then reload ONCE so the page + iframes refetch clean. */
+/* Self-heal: a leftover CACHE-FIRST service worker from a past dashboard visit keeps
+   serving stale content into the background iframe (the "Enter the Council login showing
+   behind the landing" bug). A plain unregister() doesn't help — the worker keeps
+   CONTROLLING the page through the reload. Fix: register the kill-switch /sw.js, which
+   skipWaiting→claims this client, deletes every cache, unregisters ITSELF, then reloads
+   all open pages. That forcibly replaces + removes the old worker. Guarded so it runs
+   only when an old worker actually exists, and only once per session. */
 (function(){
   if(!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.getRegistrations().then(function(rs){
-    if(!rs || !rs.length) return;
-    rs.forEach(function(r){ try{ r.unregister(); }catch(e){} });
-    if(window.caches && caches.keys){ caches.keys().then(function(ks){ ks.forEach(function(k){ try{ caches.delete(k); }catch(e){} }); }); }
-    if(!sessionStorage.getItem('sw-purged')){ sessionStorage.setItem('sw-purged','1'); location.reload(); }
+    if(!rs || !rs.length) return;                      // no worker → normal state, do nothing
+    if(sessionStorage.getItem('sw-killed')) return;    // already handled this session
+    sessionStorage.setItem('sw-killed','1');
+    navigator.serviceWorker.register('/sw.js').catch(function(){
+      // fallback if registration is blocked: manual purge + reload
+      rs.forEach(function(r){ try{ r.unregister(); }catch(e){} });
+      if(window.caches && caches.keys){ caches.keys().then(function(ks){ ks.forEach(function(k){ try{ caches.delete(k); }catch(e){} }); }); }
+      location.reload();
+    });
   }).catch(function(){});
 })();
 </script>
