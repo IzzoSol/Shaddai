@@ -5,18 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SHADDAI Signals API — Developer Docs</title>
 <meta name="description" content="Free JSON API for SHADDAI's rug-filtered crypto signals: recent calls, leaderboard, performance, and per-token lookup." />
+<meta name="theme-color" content="#06080b" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#06080b; --panel:#0c1016; --line:#1b2430; --emerald:#00ff9c; --gold:#e8c45c; --cyan:#4fd1ff; --txt:#d7e2ec; --dim:#8091a3; }
+  :root { --bg:#06080b; --panel:#0c1016; --line:#1b2430; --emerald:#00ff9c; --gold:#e8c45c; --cyan:#4fd1ff; --txt:#d7e2ec; --dim:#8091a3;
+    --f-display:'Cinzel Decorative',serif; --f-hud:'Chakra Petch',sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace; }
   * { box-sizing:border-box; }
   body { margin:0; background:radial-gradient(1200px 600px at 50% -10%, #0d1622 0%, var(--bg) 60%); color:var(--txt);
-    font-family:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; line-height:1.55; }
-  .wrap { max-width:920px; margin:0 auto; padding:48px 20px 80px; }
-  header { text-align:center; margin-bottom:40px; }
-  .sig { color:var(--emerald); letter-spacing:.35em; font-size:12px; text-transform:uppercase; }
-  h1 { font-size:34px; margin:12px 0 8px; font-weight:700; }
-  h1 .x { color:var(--emerald); }
-  .sub { color:var(--dim); font-size:15px; max-width:620px; margin:0 auto; }
-  h2 { font-size:16px; text-transform:uppercase; letter-spacing:.2em; color:var(--gold); margin:44px 0 14px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+    font-family:var(--f-hud); line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:960px; margin:0 auto; padding:64px 20px 80px; }
+  header { text-align:center; margin-bottom:44px; }
+  .sig { font-family:var(--f-hud); color:var(--gold); letter-spacing:.34em; font-size:11px; text-transform:uppercase; display:inline-flex; align-items:center; gap:12px; }
+  .sig::before,.sig::after { content:''; width:28px; height:1px; background:rgba(232,196,92,.5); }
+  h1 { font-family:var(--f-display); font-size:clamp(34px,6vw,58px); margin:18px 0 12px; font-weight:900; letter-spacing:.06em; line-height:1.02;
+    color:transparent; -webkit-text-stroke:1.5px var(--emerald); paint-order:stroke fill;
+    text-shadow:0 0 8px rgba(0,255,156,.5),0 0 26px rgba(0,255,156,.24),0 0 54px rgba(232,196,92,.12); }
+  h1 .x { -webkit-text-stroke-color:var(--gold); text-shadow:0 0 8px rgba(232,196,92,.5),0 0 26px rgba(232,196,92,.22); }
+  .sub { font-family:var(--f-hud); color:var(--dim); font-size:15px; max-width:640px; margin:0 auto; }
+  .prodtag { display:inline-flex; gap:8px; margin-top:18px; }
+  .prodtag span { font-family:var(--f-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; padding:5px 12px; border:1px solid var(--line); border-radius:999px; }
+  .prodtag .s { color:var(--emerald); border-color:rgba(0,255,156,.35); }
+  .prodtag .n { color:var(--cyan); border-color:rgba(79,209,255,.35); }
+  h2 { font-family:var(--f-display); font-size:15px; text-transform:uppercase; letter-spacing:.12em; color:var(--gold); margin:44px 0 14px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+  .ep code, pre, td code, .keyval code, input, .m { font-family:var(--f-mono); }
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px; }
   .ep { display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); }
   .ep:last-child { border-bottom:0; }
@@ -46,9 +59,10 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="sig">◇ SHADDAI · ancient wisdom, future tech ◇</div>
-    <h1>Signals <span class="x">API</span></h1>
-    <p class="sub">A free JSON API for SHADDAI's rug-filtered crypto calls — recent signals, the leaderboard of top runners, live performance, and per-token lookup. Build your own bots, dashboards, and alerts on top of the feed.</p>
+    <div class="sig">SHADDAI · Developer API</div>
+    <h1>SHADDAI <span class="x">API</span></h1>
+    <p class="sub">Two free JSON products on one key — <b style="color:var(--emerald)">Signals</b> (rug-filtered crypto calls, leaderboard, performance, per-token lookup) and <b style="color:var(--cyan)">News</b> (crypto headlines &amp; trending). Build bots, dashboards, and alerts on top of the feed.</p>
+    <div class="prodtag"><span class="s">◈ Signals API</span><span class="n">✎ News API</span></div>
   </header>
 
   <h2>1 · Get a free key</h2>
@@ -71,19 +85,27 @@
   <pre>curl https://shaddai-g81x.onrender.com/api/v1/stats \
   -H "Authorization: Bearer YOUR_KEY"</pre>
 
-  <h2>3 · Endpoints</h2>
+  <h2>3 · Signals API <span style="color:var(--emerald);font-size:11px">◈ scope: signals</span></h2>
   <div class="panel">
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/calls</code><div class="d">Recent calls, newest first. Params: <code>limit</code>≤100, <code>since</code> (ms cursor — poll for live delivery), <code>chain</code>, <code>source</code>.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/leaderboard</code><div class="d">Top calls ranked by peak multiple. Params: <code>limit</code>≤100, <code>period</code> = all&nbsp;|&nbsp;week&nbsp;|&nbsp;day.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/stats</code><div class="d">Aggregate scorecard: total calls, 2x+ hit rate, average peak, distribution.</div></div></div>
     <div class="ep"><span class="m get">GET</span><div><code>/api/v1/token/:idOrSymbol</code><div class="d">Was this token called? Entry, current &amp; peak multiple. e.g. <code>/api/v1/token/JIMOTHY</code>.</div></div></div>
-    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news</code><div class="d">Latest crypto headlines (CoinTelegraph/CoinDesk/Decrypt). Params: <code>limit</code>≤50, <code>q</code> (filter).</div></div></div>
-    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news/trending</code><div class="d">Trending coins/topics right now.</div></div></div>
-    <div class="ep"><span class="m post">POST</span><div><code>/api/v1/keys</code><div class="d">Mint a free key. Body: <code>{ "label": "..." }</code>. Throttled per IP.</div></div></div>
-    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/me</code><div class="d">Your key's tier, limits, and current usage.</div></div></div>
   </div>
 
-  <h2>4 · The call object</h2>
+  <h2>4 · News API <span style="color:var(--cyan);font-size:11px">✎ scope: news</span></h2>
+  <div class="panel">
+    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news</code><div class="d">Latest crypto headlines (CoinTelegraph/CoinDesk/Decrypt). Params: <code>limit</code>≤50, <code>q</code> (filter).</div></div></div>
+    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/news/trending</code><div class="d">Trending coins/topics right now.</div></div></div>
+  </div>
+
+  <h2>5 · Account</h2>
+  <div class="panel">
+    <div class="ep"><span class="m post">POST</span><div><code>/api/v1/keys</code><div class="d">Mint a free key. Body: <code>{ "product":"signals|news|both", "label":"..." }</code>. Throttled per IP.</div></div></div>
+    <div class="ep"><span class="m get">GET</span><div><code>/api/v1/me</code><div class="d">Your key's tier, scopes, limits, and current usage.</div></div></div>
+  </div>
+
+  <h2>6 · The call object</h2>
   <pre>{
   "id": "So1111...-1784200000000",
   "symbol": "JIMOTHY",
@@ -97,12 +119,12 @@
   "ts": 1784200000000
 }</pre>
 
-  <h2>5 · Live delivery (polling)</h2>
+  <h2>7 · Live delivery (polling)</h2>
   <p class="lim">Save the highest <code>ts</code> you receive, then pass it as <code>since</code> to get only newer calls — no duplicates missed. De-dupe on <code>id</code>.</p>
   <pre>curl "https://shaddai-g81x.onrender.com/api/v1/calls?since=1784200000000&limit=20" \
   -H "Authorization: Bearer YOUR_KEY"</pre>
 
-  <h2>6 · Rate limits &amp; errors</h2>
+  <h2>8 · Rate limits &amp; errors</h2>
   <table>
     <tr><th>Code</th><th>Meaning</th></tr>
     <tr><td><code>200</code></td><td><code>{ ok:true, data:… }</code></td></tr>
@@ -142,5 +164,6 @@
     });
   });
 </script>
+<script src="/home-btn.js" defer></script>
 </body>
 </html>

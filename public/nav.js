@@ -198,7 +198,6 @@
   '        <a href="/zerox-markets.html" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">ZEROX Markets</span><span class="s">BTC · SOL · ETH · SpaceX</span></span><span class="badge live">live</span></a>'+
   '        <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Signals API</span><span class="s">live rug-filtered calls · JSON · free key</span></span><span class="badge live">live</span></a>'+
   '        <a href="/api" role="menuitem"><span class="gi">✎</span><span class="lk"><span class="t">News API</span><span class="s">crypto headlines &amp; trending · free key</span></span><span class="badge live">live</span></a>'+
-  '        <span class="soon"><span class="gi">✈</span><span class="lk"><span class="t">SHADDAI Signals</span><span class="s">choose what\'s sent — news · memecoins</span></span><span class="badge">soon</span></span>'+
   '      </div>'+
   '    </div>'+
   '    <div class="pillar" data-pillar data-key="aura">'+
@@ -257,7 +256,8 @@
   '  </div>'+
   '  <div class="mgroup"><div class="mh">Signals</div>'+
   '    <a href="/zerox-markets.html"><span class="gi">₿</span>ZEROX Markets<span class="badge">live</span></a>'+
-  '    <span class="soon"><span class="gi">✈</span>SHADDAI Signals · news · memecoins · soon</span>'+
+  '    <a href="/api"><span class="gi">◈</span>Signals API<span class="badge">live</span></a>'+
+  '    <a href="/api"><span class="gi">✎</span>News API<span class="badge">live</span></a>'+
   '  </div>'+
   '  <div class="mgroup"><div class="mh">AURA</div>'+
   '    <a href="/aura.html"><span class="gi">⚖</span>What AURA is<span class="badge">live</span></a>'+
