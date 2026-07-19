@@ -6,6 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { fail, ok, asyncHandler } = require('./lib/respond'); // shared response/error contract
 const { softAuth, requireAdmin } = require('./auth-guard');
 router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=true
 const axios = require('axios');
@@ -280,7 +281,7 @@ router.post('/ollama', async (req, res) => {
       return res.json(response.data);
     }
   } catch (error) {
-    return res.status(500).json({ error: error.message, message: { content: `Ollama error: ${error.message}` } });
+    return fail(res, 500, 'internal_error', error.message, { message: { content: `Ollama error: ${error.message}` } });
   }
 });
 
@@ -397,20 +398,22 @@ async function callGemini(prompt, key) {
 router.post('/gemini', async (req, res) => {
   try {
     const { prompt, key } = req.body;
+    if (!key && !GEMINI_KEY) return res.status(400).json({ error: 'No Gemini API key. Add GEMINI_API_KEY to .env or paste a key in Settings.' });
     const text = await callGemini(prompt || '', key);
     res.json({ choices: [{ message: { content: text } }], response: text });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    fail(res, 500, 'internal_error', error.message);
   }
 });
 
 router.post('/gemini-key', async (req, res) => {
   try {
     const { prompt, key } = req.body;
+    if (!key && !GEMINI_KEY) return res.status(400).json({ error: 'No Gemini API key. Add GEMINI_API_KEY to .env or paste a key in Settings.' });
     const text = await callGemini(prompt || '', key);
     res.json({ choices: [{ message: { content: text } }], response: text });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    fail(res, 500, 'internal_error', error.message);
   }
 });
 
@@ -510,7 +513,7 @@ router.post('/shaddai/chat', async (req, res) => {
     return res.json({ response: r.data.message?.content || 'No response', model: useModel, source: 'ollama-direct', agent: 'SHADDAI' });
   } catch (error) {
     recordAgentCall('SHADDAI', Date.now() - t0, false);
-    return res.status(500).json({ error: error.message, response: `SHADDAI: ${error.message}` });
+    return fail(res, 500, 'internal_error', error.message, { response: `SHADDAI: ${error.message}` });
   }
 });
 
@@ -587,7 +590,7 @@ router.post('/openclaw', async (req, res) => {
     }, { timeout: 120000 });
     res.json({ choices: [{ message: { content: r.data.message?.content || 'No response' } }] });
   } catch (error) {
-    res.status(500).json({ error: error.message, choices: [{ message: { content: `OpenClaw error: ${error.message}` } }] });
+    fail(res, 500, 'internal_error', error.message, { choices: [{ message: { content: `OpenClaw error: ${error.message}` } }] });
   }
 });
 
@@ -601,7 +604,7 @@ router.get('/dexscreener/search', async (req, res) => {
     const { q } = req.query;
     const r = await axios.get(`${DS_BASE}/dex/search?q=${encodeURIComponent(q || 'SOL')}`, { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message, pairs: [] }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { pairs: [] }); }
 });
 
 router.get('/dexscreener/pairs/:chainId/:token', async (req, res) => {
@@ -609,14 +612,14 @@ router.get('/dexscreener/pairs/:chainId/:token', async (req, res) => {
     const { chainId, token } = req.params;
     const r = await axios.get(`${DS_BASE}/dex/pairs/${chainId}/${token}`, { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 router.get('/dexscreener/tokens/:address', async (req, res) => {
   try {
     const r = await axios.get(`${DS_BASE}/dex/search?q=${encodeURIComponent(req.params.address)}`, { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -630,7 +633,7 @@ router.get('/coinlore/global/', async (req, res) => {
     const r = await axios.get('https://api.coinlore.net/api/global/', { timeout: 10000 });
     setCache(cacheKey, r.data, 60000); // cache 60s
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 router.get('/coinlore/tickers/', async (req, res) => {
@@ -642,7 +645,7 @@ router.get('/coinlore/tickers/', async (req, res) => {
     const r = await axios.get(`https://api.coinlore.net/api/tickers/${qs ? '?' + qs : ''}`, { timeout: 10000 });
     setCache(cacheKey, r.data, 30000); // cache 30s
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 router.get('/coinlore/ticker/', async (req, res) => {
@@ -654,7 +657,7 @@ router.get('/coinlore/ticker/', async (req, res) => {
     const r = await axios.get(`https://api.coinlore.net/api/ticker/${qs ? '?' + qs : ''}`, { timeout: 10000 });
     setCache(cacheKey, r.data, 30000);
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -677,7 +680,7 @@ router.get('/market/fear-greed', async (req, res) => {
     };
     setCache(cacheKey, result, 10 * 60 * 1000); // cache 10 minutes
     res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // 2. Global crypto market data — CoinGecko
@@ -690,7 +693,7 @@ router.get('/market/global', async (req, res) => {
     const result = r.data.data;
     setCache(cacheKey, result, 5 * 60 * 1000); // cache 5 minutes
     res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // 3. Trending coins — CoinGecko
@@ -702,7 +705,7 @@ router.get('/market/trending', async (req, res) => {
     const r = await axios.get('https://api.coingecko.com/api/v3/search/trending', { timeout: 10000 });
     setCache(cacheKey, r.data, 5 * 60 * 1000); // cache 5 minutes
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // 4. BTC/ETH dominance — derived from CoinGecko global
@@ -719,7 +722,7 @@ router.get('/market/dominance', async (req, res) => {
     const result = { btc, eth, others };
     setCache(cacheKey, result, 5 * 60 * 1000); // cache 5 minutes
     res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // 5. Top exchanges — CoinGecko
@@ -731,7 +734,7 @@ router.get('/market/exchanges', async (req, res) => {
     const r = await axios.get('https://api.coingecko.com/api/v3/exchanges?per_page=10&page=1', { timeout: 10000 });
     setCache(cacheKey, r.data, 30 * 60 * 1000); // cache 30 minutes
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -882,7 +885,7 @@ router.post('/serpapi', async (req, res) => {
     });
     res.json(r.data);
   } catch (e) {
-    res.status(500).json({ error: e.message, organic_results: [] });
+    fail(res, 500, 'internal_error', e.message, { organic_results: [] });
   }
 });
 
@@ -911,7 +914,7 @@ router.post('/fetch-url', async (req, res) => {
     const content = typeof r.data === 'object' ? JSON.stringify(r.data) : String(r.data);
     res.json({ content, status: r.status, headers: r.headers });
   } catch (e) {
-    res.status(500).json({ error: e.message, content: '' });
+    fail(res, 500, 'internal_error', e.message, { content: '' });
   }
 });
 
@@ -958,7 +961,7 @@ router.post('/write-file', (req, res) => {
     fs.mkdirSync(parent, { recursive: true });
     fs.writeFileSync(safe, content, 'utf8');
     res.json({ ok: true, path: safe, size: content.length });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+  } catch(e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 router.post('/scan-folder', (req, res) => {
@@ -987,7 +990,7 @@ router.post('/scan-folders', (req, res) => {
     }
     res.json(results);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1094,13 +1097,13 @@ router.get('/skills/catalog', (req, res) => {
     const total = items.length;
     res.json({ ok: true, total, offset, limit, count: Math.min(limit, Math.max(0, total - offset)),
       skills: items.slice(offset, offset + limit), source: 'baked+recipes (no obsidian)' });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // GET /api/skills/catalog/stats — counts (recipes / md / baked / total), no Obsidian
 router.get('/skills/catalog/stats', (req, res) => {
   try { res.json({ ok: true, ...require('./skill-index').getStats() }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // ─── CUSTOM SKILLS (user-created / uploaded) ────────────────────────────────
@@ -1126,7 +1129,7 @@ router.get('/agents/:name/docs', (req, res) => {
     }).filter(Boolean);
     res.json({ name, content, skills, skillCount: skills.length });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1150,7 +1153,7 @@ router.get('/agents/:name/manifest', (req, res) => {
     } catch (_) { /* avatar layer optional */ }
     res.json(manifest);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1163,7 +1166,7 @@ router.post('/agents/:name/avatar', (req, res) => {
     const entry = generateAvatar(name, (req.body && req.body.prompt) || null);
     res.json({ ok: true, agent: name, ...entry });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1191,7 +1194,7 @@ router.get('/nft/mint-authority', async (req, res) => {
       funded: lamports >= 5000000,
       faucet: 'https://faucet.solana.com'
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // POST /api/collectibles/:id/mint-nft — mint a collectible as a real Solana NFT (devnet-first).
@@ -1206,7 +1209,7 @@ router.post('/collectibles/:id/mint-nft', async (req, res) => {
     const out = await tool.execute({ name, collectibleId: req.params.id, uri: b.uri, description: b.description, confirm: b.confirm === true });
     res.json(typeof out === 'string' ? JSON.parse(out) : out);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1223,7 +1226,7 @@ router.get('/agents/:name/skill/:skillId', (req, res) => {
     if (!m) return res.status(404).json({ error: 'Skill not found', skillId });
     res.json({ id: skillId, name: m[1].trim(), description: m[2].trim(), agent: name });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1258,7 +1261,7 @@ router.get('/skills/search', (req, res) => {
     const results = filtered.slice(0, limit).map(({ _score, ...s }) => s);
     res.json({ skills: results, total: results.length, query, agent });
   } catch (e) {
-    res.status(500).json({ error: e.message, skills: [] });
+    fail(res, 500, 'internal_error', e.message, { skills: [] });
   }
 });
 
@@ -1272,7 +1275,7 @@ router.get('/skills/semantic-search', async (req, res) => {
     const results = semanticFindSkills(q, parseInt(k), agent || null);
     res.json({ query: q, results, count: results.length });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1282,7 +1285,7 @@ router.get('/skills/semantic-search/stats', (req, res) => {
     const { getIndexStats } = require('./skill-embeddings');
     res.json(getIndexStats());
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1333,7 +1336,7 @@ router.get('/skills/content/:name', (req, res) => {
     if (!content) return res.status(404).json({ error: 'skill not found', name });
     res.json({ name, content, source, filePath, length: content.length });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -1491,7 +1494,7 @@ router.post('/shaddai/skill/:skillName', async (req, res) => {
         skill: skillName, agent: agentName, status: 'completed', source: 'ollama-skill'
       });
     } catch (e) {
-      res.status(500).json({ error: e.message, skill: skillName });
+      fail(res, 500, 'internal_error', e.message, { skill: skillName });
     }
   }
 });
@@ -1535,7 +1538,7 @@ router.post('/shaddai/skill/:skillName/:action', async (req, res) => {
         skill: skillName, action, agent: agentName, status: 'completed', source: 'ollama-skill'
       });
     } catch (e) {
-      res.status(500).json({ error: e.message, skill: skillName, action });
+      fail(res, 500, 'internal_error', e.message, { skill: skillName, action });
     }
   }
 });
@@ -1642,7 +1645,7 @@ router.post('/elevenlabs/tts', async (req, res) => {
     );
     res.set('Content-Type', 'audio/mpeg');
     res.send(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1661,7 +1664,7 @@ router.post('/core-research', async (req, res) => {
     }, { timeout: 60000 });
     res.json({ content: r.data.message?.content || '', source: 'ollama', topic });
   } catch (e) {
-    res.status(500).json({ error: e.message, content: '' });
+    fail(res, 500, 'internal_error', e.message, { content: '' });
   }
 });
 
@@ -1678,7 +1681,7 @@ router.post('/telegraph', async (req, res) => {
       return_content: false
     }, { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1803,7 +1806,7 @@ router.post('/helius/rpc', async (req, res) => {
       { timeout: 10000 }
     );
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1814,7 +1817,7 @@ router.get('/coingecko/simple/price', async (req, res) => {
     const qs = new URLSearchParams(req.query).toString();
     const r = await axios.get(`https://api.coingecko.com/api/v3/simple/price?${qs}`, { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1828,7 +1831,7 @@ router.get('/jupiter/quote', async (req, res) => {
       timeout: 10000
     });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message, data: {} }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { data: {} }); }
 });
 
 router.post('/jupiter-swap', async (req, res) => {
@@ -1916,7 +1919,7 @@ router.get('/dexscreener/token-profiles/latest/v1', async (req, res) => {
   try {
     const r = await axios.get('https://api.dexscreener.com/token-profiles/latest/v1', { timeout: 10000 });
     res.json(r.data);
-  } catch (e) { res.status(500).json({ error: e.message, data: [] }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { data: [] }); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1932,7 +1935,7 @@ router.post('/trade/analyze', async (req, res) => {
       stream: false
     }, { timeout: 30000 });
     res.json({ analysis: r.data.message?.content || 'Analysis unavailable', symbol, signal });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -1948,7 +1951,7 @@ router.post('/content/generate', async (req, res) => {
       stream: false
     }, { timeout: 60000 });
     res.json({ content: r.data.message?.content || '', type, platform, topic });
-  } catch (e) { res.status(500).json({ error: e.message, content: '' }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { content: '' }); }
 });
 
 router.post('/image/generate', require('./demo-limit').middleware, async (req, res) => {
@@ -2079,7 +2082,7 @@ router.get('/proxy-image', async (req, res) => {
     const ct = r.headers['content-type'] || 'image/jpeg';
     res.set('Content-Type', ct);
     res.send(r.data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -2299,7 +2302,7 @@ router.post('/rag/embed', async (req, res) => {
     if (e.code === 'ECONNREFUSED' || (e.response?.status === 404)) {
       return res.status(503).json({ error: `Ollama embedding failed. Run: ollama pull ${RAG_EMBED_MODEL}` });
     }
-    return res.status(500).json({ error: e.message });
+    return fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -2328,7 +2331,7 @@ router.post('/rag/upload', async (req, res) => {
     const result = ragIndex.addDocument(user, name || 'untitled.txt', text);
     res.json({ ok: true, data: result });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -2338,7 +2341,7 @@ router.get('/rag/docs/:user', (req, res) => {
     const docs = ragIndex.listUserDocs(req.params.user);
     res.json({ ok: true, data: docs });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -2348,7 +2351,7 @@ router.delete('/rag/docs/:user/:docId', (req, res) => {
     const result = ragIndex.deleteDocument(req.params.user, req.params.docId);
     res.json({ ok: true, data: result });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -2363,7 +2366,7 @@ router.post('/rag/search', async (req, res) => {
       const results = ragIndex.searchUser(user, query, Number(topK) || 3);
       return res.json({ ok: true, data: { results } });
     } catch (e) {
-      return res.status(500).json({ ok: false, error: e.message });
+      return fail(res, 500, 'internal_error', e.message, { ok: false });
     }
   }
   try {
@@ -2424,7 +2427,7 @@ router.post('/rag/ask', async (req, res) => {
         },
       });
     } catch (e) {
-      return res.status(500).json({ ok: false, error: e.message });
+      return fail(res, 500, 'internal_error', e.message, { ok: false });
     }
   }
   if (!question) return res.status(400).json({ error: 'question required' });
@@ -2505,7 +2508,7 @@ router.delete('/rag/files/:fileId', (req, res) => {
   try {
     if (fs.existsSync(fp)) fs.unlinkSync(fp);
     res.json({ status: 'ok' });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+  } catch(e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -3805,7 +3808,7 @@ router.post('/shaddai/perplexity', async (req, res) => {
       stream: false
     }, { timeout: 60000 });
     res.json({ answer: r.data.message?.content || '', query, sources: [] });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message); }
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -3870,7 +3873,7 @@ for (const [agentKey, cfg] of Object.entries(AGENT_MAP)) {
       res.json({ response, model: useModel, source: 'ollama-fallback', agent: cfg.name });
     } catch (e) {
       recordAgentCall(cfg.name, Date.now() - t0, false);
-      res.status(500).json({ error: e.message, agent: cfg.name });
+      fail(res, 500, 'internal_error', e.message, { agent: cfg.name });
     }
   });
 
@@ -3892,7 +3895,7 @@ for (const [agentKey, cfg] of Object.entries(AGENT_MAP)) {
         }, { timeout: 90000 });
         res.json({ output: r.data.message?.content, agent: cfg.name, status: 'completed', taskId: `task_${Date.now()}` });
       } catch (e) {
-        res.status(500).json({ error: e.message });
+        fail(res, 500, 'internal_error', e.message);
       }
     }
   });
@@ -3927,7 +3930,7 @@ for (const [agentKey, cfg] of Object.entries(AGENT_MAP)) {
         }, { timeout: 90000 });
         res.json({ result: r.data.message?.content, skill: skillName, agent: cfg.name, status: 'completed', source: 'ollama' });
       } catch (e) {
-        res.status(500).json({ error: e.message });
+        fail(res, 500, 'internal_error', e.message);
       }
     }
   });
@@ -4034,7 +4037,7 @@ router.get('/persistence/health', async (req, res) => {
     let beta = null; try { const bc = require('./beta-cap'); beta = { cap: bc.CAP, count: bc.count() }; } catch (_) {}
     res.json({ ok: true, ready: store.ready(), adminApps, diag, firestore: ping, writeBudget, beta });
   } catch (e) {
-    res.status(500).json({ ok: false, diag, error: String(e.message || e) });
+    fail(res, 500, 'internal_error', String(e.message || e), { ok: false, diag });
   }
 });
 
@@ -4107,7 +4110,7 @@ router.post('/webhooks/:id/test', async (req, res) => {
     await axios.post(wh.url, { event: 'test', payload: { message: 'SHADDAI webhook test' }, timestamp: new Date().toISOString() }, { timeout: 5000, maxRedirects: 0 });
     res.json({ success: true, url: wh.url });
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { success: false });
   }
 });
 
@@ -4537,7 +4540,7 @@ router.post('/llm/chat', async (req, res) => {
     try { if (result && result.response) require('./lib/aura').recordAnswer(message, result.response); } catch (_) {}
     res.json({ ...result, fallbackUsed: result.fallbackUsed || false });
   } catch (e) {
-    res.status(500).json({ error: e.message, provider });
+    fail(res, 500, 'internal_error', e.message, { provider });
   }
 });
 
@@ -4594,7 +4597,7 @@ router.post('/files/upload', fileHandler.upload.single('file'), async (req, res)
 
     res.json({ fileId, ...meta, message: 'File uploaded and text extracted. Use fileId to query agents.' });
   } catch (e) {
-    res.status(500).json({ error: `Failed to extract text: ${e.message}` });
+    fail(res, 500, 'internal_error', `Failed to extract text: ${e.message}`);
   }
 });
 
@@ -4667,7 +4670,7 @@ router.post('/files/:fileId/ask', async (req, res) => {
     broadcastEvent('file:analyzed', { fileId: meta.fileId, agent: agent.toUpperCase(), question: question.slice(0, 80) });
     res.json({ response, agent: agent.toUpperCase(), fileId: meta.fileId, fileName: meta.originalName, model: useModel });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -4787,7 +4790,7 @@ router.post('/image/generate-premium', async (req, res) => {
     }
     res.json({ success: true, image_url: result.image_url || result.url, prompt, model });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -4803,7 +4806,7 @@ router.post('/image/edit', async (req, res) => {
     }
     res.json({ success: true, image_url: result.image_url || result.url });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -4839,7 +4842,7 @@ router.post('/image/agent/:name', async (req, res) => {
     broadcastEvent('agent:image:generated', { name, image_url: imageUrl });
     res.json({ success: true, ...data });
   } catch(e) {
-    res.status(500).json({ error: e.message, name, prompt });
+    fail(res, 500, 'internal_error', e.message, { name, prompt });
   }
 });
 
@@ -5094,7 +5097,7 @@ router.post('/agent/:name/task', async (req, res) => {
       response = r.data.message?.content || '';
       usedModel = model || 'phi:latest';
     } catch (e) {
-      return res.status(500).json({ error: `All backends failed: ${e.message}`, apisUsed: connectedAPIs });
+      return fail(res, 500, 'internal_error', `All backends failed: ${e.message}`, { apisUsed: connectedAPIs });
     }
   }
 
@@ -5603,7 +5606,7 @@ router.post('/content/thread', async (req, res) => {
 
     res.json({ thread, tweets, count: tweets.length, topic: topic || 'custom', tone: toneStr });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -5635,7 +5638,7 @@ router.post('/content/email', async (req, res) => {
     }
     res.json({ email, subject, tone: tone || 'professional' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -5686,7 +5689,7 @@ router.post('/content/lyrics', async (req, res) => {
       note: 'Copy lyrics and sunoPrompt into Suno.ai for music generation'
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -5731,7 +5734,7 @@ router.post('/content/insights', async (req, res) => {
     }
     res.json({ insights, dataSources: parts.length, coins: coins || [], question: q });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -6406,7 +6409,7 @@ router.post('/agent/run', require('./demo-limit').middleware, async (req, res) =
       const result = await agentEngine.runWorkflow(workflow);
       return res.json({ success: true, workflow: true, ...result });
     } catch(e) {
-      return res.status(500).json({ error: e.message });
+      return fail(res, 500, 'internal_error', e.message);
     }
   }
 
@@ -6473,7 +6476,7 @@ router.get('/agent/stats', (req, res) => {
       }
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -6519,7 +6522,7 @@ router.post('/subscribe', (req, res) => {
     if (!list.some(s => s && s.email === email)) list.push({ email, source, ts: Date.now() });
     require('fs').writeFileSync(fp, JSON.stringify(list, null, 2));
     return res.json({ ok: true, count: list.length });
-  } catch (e) { return res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { return fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // POST /api/tools/run — run ANY registered tool by name (reuses the agent-engine
@@ -6595,7 +6598,7 @@ router.post('/social/keys', (req, res) => {
 // GET /api/social/status — { x:boolean, telegram:boolean } (env OR saved file)
 router.get('/social/status', (req, res) => {
   try { res.json(require('./social-keys').status()); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // ─── PROVIDER GATEWAY ────────────────────────────────────────────────────────
@@ -6668,7 +6671,7 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
       costUSD: r.costUSD
     });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -6693,24 +6696,24 @@ router.get('/model/health', async (req, res) => {
 // GET /api/pay/config — current guard config (caps, budget, enabled)
 router.get('/pay/config', (req, res) => {
   try { res.json({ ok: true, config: require('./pay-guard').getConfig() }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 // POST /api/pay/config — update guard config (enable, set caps, allowlist). ADMIN ONLY — this controls the real-money spend guard.
 router.post('/pay/config', requireAdmin, (req, res) => {
   try { res.json({ ok: true, config: require('./pay-guard').setConfig(req.body || {}) }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 // GET /api/pay/ledger — spend history + today's total
 router.get('/pay/ledger', (req, res) => {
   try {
     const g = require('./pay-guard');
     res.json({ ok: true, spentToday: g.spentToday(), ledger: g.getLedger() });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 // GET /api/pay/pending — calls awaiting human approval
 router.get('/pay/pending', (req, res) => {
   try { res.json({ ok: true, pending: require('./pay-guard').getPending().filter(p => p.status === 'pending') }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 // POST /api/pay/approve { id, decision } — approve/deny a pending payment
 router.post('/pay/approve', (req, res) => {
@@ -6720,14 +6723,14 @@ router.post('/pay/approve', (req, res) => {
     const e = require('./pay-guard').resolvePending(id, decision === 'deny' ? 'deny' : 'approve');
     if (!e) return res.status(404).json({ ok: false, error: 'pending request not found' });
     res.json({ ok: true, request: e });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // ─── MCP (Model Context Protocol) routes ────────────────────────────────────
 // GET /api/mcp/servers — list configured MCP servers + connection status
 router.get('/mcp/servers', (req, res) => {
   try { res.json({ ok: true, servers: require('./mcp-client').listServers() }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // POST /api/mcp/connect { serverId } — connect to a server, import its tools
@@ -6737,7 +6740,7 @@ router.post('/mcp/connect', async (req, res) => {
     if (!serverId) return res.status(400).json({ ok: false, error: 'serverId required' });
     const result = await require('./mcp-client').connect(serverId);
     res.json({ ok: true, server: result.id, tools: result.tools.map(t => ({ name: t.name, description: t.description })) });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // POST /api/mcp/disconnect { serverId }
@@ -6746,13 +6749,13 @@ router.post('/mcp/disconnect', (req, res) => {
     const { serverId } = req.body || {};
     const ok = require('./mcp-client').disconnect(serverId);
     res.json({ ok, serverId });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // GET /api/mcp/tools?server= — list tools from connected MCP server(s)
 router.get('/mcp/tools', (req, res) => {
   try { res.json({ ok: true, tools: require('./mcp-client').listTools(req.query.server) }); }
-  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // POST /api/mcp/call { tool, args } — call an MCP tool directly (tool = mcp__server__name)
@@ -6762,7 +6765,7 @@ router.post('/mcp/call', async (req, res) => {
     if (!tool) return res.status(400).json({ ok: false, error: 'tool required (mcp__server__name)' });
     const result = await require('./mcp-client').callTool(tool, args || {});
     res.json({ ok: true, result });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // POST /api/mcp/servers/add { id, transport, command?, args?, url?, headers?, description }
@@ -6775,7 +6778,7 @@ router.post('/mcp/servers/add', (req, res) => {
     servers.push({ disabled: false, ...def });
     mcp.saveConfig(servers);
     res.json({ ok: true, servers: mcp.listServers() });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  } catch (e) { fail(res, 500, 'internal_error', e.message, { ok: false }); }
 });
 
 // GET /api/agent/agents — List all agents with their tool grants
@@ -6798,7 +6801,7 @@ router.post('/agent/tool', async (req, res) => {
     let parsed; try { parsed = JSON.parse(result); } catch { parsed = result; }
     res.json({ success: true, tool: toolName, result: parsed });
   } catch(e) {
-    res.status(500).json({ error: e.message, tool: toolName });
+    fail(res, 500, 'internal_error', e.message, { tool: toolName });
   }
 });
 
@@ -6840,7 +6843,7 @@ router.get('/agent/test', async (req, res) => {
     const result = await agentEngine.selfTest();
     res.json({ success: result.status === 'completed', task: result });
   } catch(e) {
-    res.status(500).json({ success: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { success: false });
   }
 });
 
@@ -6865,7 +6868,7 @@ router.post('/agent/workflow/:id/run', async (req, res) => {
     const result = await agentEngine.runWorkflow(steps);
     res.json({ success: true, workflow: req.params.id, name: wf.name, ...result });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -6891,7 +6894,7 @@ router.post('/agent/autonomous-sync', async (req, res) => {
     const result = await agentEngine.runAutonomousCommander(goal);
     res.json({ success: result.status === 'completed', ...result });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -6985,7 +6988,7 @@ router.post('/skills/run', async (req, res) => {
       const result = await agentEngine.runSkill(skillId, input, agent);
       return res.json(result);
     } catch(e) {
-      return res.status(500).json({ error: e.message });
+      return fail(res, 500, 'internal_error', e.message);
     }
   }
 
@@ -7004,7 +7007,7 @@ router.post('/skills/run', async (req, res) => {
     const tid = tasks[0]?.id || taskId;
     return res.json({ taskId: tid, status: 'running', async: true, skillId });
   } catch(e) {
-    return res.status(500).json({ error: e.message });
+    return fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7020,7 +7023,7 @@ router.post('/skills/auto', async (req, res) => {
     const result = await agentEngine.runSkill(top.id, input);
     res.json({ matched: top, ...result });
   } catch(e) {
-    res.status(500).json({ error: e.message, matched: top });
+    fail(res, 500, 'internal_error', e.message, { matched: top });
   }
 });
 
@@ -7048,7 +7051,7 @@ router.post('/agent/skill/run', async (req, res) => {
     const done = agentEngine.getTask(task.id);
     res.json({ success: done.status === 'completed', taskId: task.id, agentName: agentUp, skillId, ...done });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7223,7 +7226,7 @@ router.post('/pay/create', async (req, res) => {
     res.json({ success: true, payment });
   } catch(e) {
     console.error('[pay/create]', e.message);
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7368,7 +7371,7 @@ router.post('/pay/nl', async (req, res) => {
     res.json({ success: true, payment, parsed: match });
   } catch(e) {
     console.error('[pay/nl]', e.message);
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7629,7 +7632,7 @@ router.post('/clip', async (req, res) => {
     });
     res.json({ downloadUrl: `/api/clip/files/${filename}`, filename, quality });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7706,7 +7709,7 @@ router.post('/clip/transcribe', require('./demo-limit').middleware, async (req, 
 
   } catch (e) {
     try { fs.unlinkSync(tmpFile); } catch {}
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7720,7 +7723,7 @@ router.get('/llm/traces', (req, res) => {
     const tracer = require('./llm-tracer');
     res.json(tracer.getStats());
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7734,7 +7737,7 @@ router.get('/cache/stats', (req, res) => {
     const cache = require('./cache-analytics');
     res.json(cache.getStats());
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7745,7 +7748,7 @@ router.post('/cache/clear', (req, res) => {
     const cleared = cache.clearExpired();
     res.json({ cleared, message: `Cleared ${cleared} expired cache entries` });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7817,7 +7820,7 @@ router.post('/byok/set', (req, res) => {
     return res.json({ ok: true, message: `Key set for ${provider}` });
   } catch (e) {
     console.error('[BYOK] set error:', (e && e.stack) || e);   // full stack surfaces the real cause in Render logs
-    return res.status(500).json({ error: (e && e.message) || 'byok set failed' });
+    return fail(res, 500, 'internal_error', (e && e.message) || 'byok set failed');
   }
 });
 
@@ -7835,7 +7838,7 @@ router.get('/byok/status', (req, res) => {
     }
     return res.json(status);
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return fail(res, 500, 'internal_error', e.message);
   }
 });
 
@@ -7854,13 +7857,13 @@ router.post('/collectibles/mint', async (req, res) => {
     const { name, rarity, owner } = req.body || {};
     if (!name || !rarity || !owner) return res.status(400).json({ ok: false, error: 'name, rarity, owner required' });
     const tool = agentEngine.TOOLS.mint_collectible;
-    if (!tool) return res.status(500).json({ ok: false, error: 'mint_collectible tool not available' });
+    if (!tool) return fail(res, 500, 'internal_error', 'mint_collectible tool not available', { ok: false });
     const result = await tool.execute({ name, rarity, owner });
     const list = _readCollectibles();
     const minted = list[list.length - 1] || null;
     res.json({ ok: true, data: { message: result, collectible: minted } });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -7869,7 +7872,7 @@ router.get('/collectibles', (req, res) => {
   try {
     res.json({ ok: true, data: _readCollectibles() });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -7879,13 +7882,13 @@ router.post('/collectibles/list', async (req, res) => {
     const { id, priceCredits } = req.body || {};
     if (id === undefined || priceCredits === undefined) return res.status(400).json({ ok: false, error: 'id and priceCredits required' });
     const tool = agentEngine.TOOLS.list_collectible;
-    if (!tool) return res.status(500).json({ ok: false, error: 'list_collectible tool not available' });
+    if (!tool) return fail(res, 500, 'internal_error', 'list_collectible tool not available', { ok: false });
     const result = await tool.execute({ id, priceCredits });
     const list = _readCollectibles();
     const item = list.find(c => Number(c.id) === Number(id)) || null;
     res.json({ ok: true, data: { message: result, collectible: item } });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -7895,7 +7898,7 @@ router.get('/collectibles/listings', (req, res) => {
     const listings = _readCollectibles().filter(c => c && c.listing);
     res.json({ ok: true, data: listings });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -7908,12 +7911,12 @@ router.post('/collectibles/trade', async (req, res) => {
     }
     const agentEngine = require('./agent-engine');
     const tool = agentEngine.TOOLS && agentEngine.TOOLS.execute_trade;
-    if (!tool) return res.status(500).json({ ok: false, error: 'execute_trade tool not loaded' });
+    if (!tool) return fail(res, 500, 'internal_error', 'execute_trade tool not loaded', { ok: false });
     const result = await tool.execute({ collectible_id, buyer, buyer_credits });
     const failed = /not found|not listed|Insufficient/i.test(String(result));
     res.status(failed ? 400 : 200).json({ ok: !failed, data: { message: result } });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 
@@ -7925,7 +7928,7 @@ router.get('/collectibles/trades', (req, res) => {
     try { trades = JSON.parse(require('fs').readFileSync(fp, 'utf8')); } catch {}
     res.json({ ok: true, data: trades });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    fail(res, 500, 'internal_error', e.message, { ok: false });
   }
 });
 

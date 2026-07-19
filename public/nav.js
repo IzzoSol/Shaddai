@@ -160,7 +160,7 @@
   '        <div class="phdr"><span>The ways in</span><span class="cd">SCALE · 0</span></div>'+
   '        <a href="/dashboard" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Command Deck</span><span class="s">your 2D control surface</span></span><span class="badge live">live</span></a>'+
   '        <a href="/SHADDAI-WORLD-3D.html" role="menuitem"><span class="gi">✦</span><span class="lk"><span class="t">3D World</span><span class="s">walk among the Seven</span></span><span class="badge live">live</span></a>'+
-  '        <a href="/pixel-city.html" role="menuitem"><span class="gi">▦</span><span class="lk"><span class="t">Pixel City</span><span class="s">isometric agent city</span></span><span class="badge prev">preview</span></a>'+
+  '        <a href="/_LAUNCH.html" role="menuitem"><span class="gi">▦</span><span class="lk"><span class="t">Pixel World</span><span class="s">isometric multiplayer city · 7 realms</span></span><span class="badge live">live</span></a>'+
   '      </div>'+
   '    </div>'+
   '    <div class="pillar" data-pillar data-key="council">'+
@@ -237,7 +237,7 @@
   '  <div class="mgroup"><div class="mh">Worlds</div>'+
   '    <a href="/dashboard"><span class="gi">◈</span>Command Deck<span class="badge">live</span></a>'+
   '    <a href="/SHADDAI-WORLD-3D.html"><span class="gi">✦</span>3D World<span class="badge">live</span></a>'+
-  '    <a href="/pixel-city.html"><span class="gi">▦</span>Pixel City · preview</a>'+
+  '    <a href="/_LAUNCH.html"><span class="gi">▦</span>Pixel World<span class="badge">live</span></a>'+
   '  </div>'+
   '  <div class="mgroup"><div class="mh">The Council</div>'+
   '    <a href="/agents.html"><span class="gi">◈</span>Meet the Seven<span class="badge">live</span></a>'+

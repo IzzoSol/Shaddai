@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>LEARN · the codex — SHADDAI</title>
+<meta name="description" content="LEARN · the codex — the lore, made legible. The Codex, the Covenant (pricing), docs and open source of the SHADDAI empire." />
+<meta name="theme-color" content="#06080b" />
+<meta property="og:title" content="LEARN · the codex — SHADDAI" />
+<meta property="og:description" content="The lore, made legible. Codex · Covenant · Docs · Open Source." />
+<meta property="og:image" content="/assets/agents/SHADDAI-portrait.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SHADDAI · DESIGN TOKENS  (verbatim from public/home.html)
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+  /* palette — obsidian sacred-tech */
+  --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
+  --emerald:#00ff9c; --emerald-dim:#0e6b4d; --gold:#e8c45c; --gold-dim:#8a6f2c;
+  --cyan:#5fe0ff; --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57;
+  /* type */
+  --f-display:'Cinzel', serif; --f-serif:'Fraunces', Georgia, serif; --f-mono:'IBM Plex Mono', monospace;
+  /* space + motion */
+  --gutter:clamp(20px,5vw,64px); --maxw:1180px;
+  --ease:cubic-bezier(.22,.7,.2,1);
+  --spot: 190px; /* flashlight radius */
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; }
+body{
+  background:var(--void); color:var(--ink); font-family:var(--f-serif);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden; line-height:1.55;
+  cursor:none; /* replaced by custom flashlight dot */
+}
+a{ color:inherit; text-decoration:none; }
+::selection{ background:var(--emerald); color:#022; }
+img{ display:block; max-width:100%; }
+
+/* faint grain + vignette over everything */
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:60; mix-blend-mode:overlay; opacity:.5;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:55;
+  background:radial-gradient(120% 90% at 50% 0%, transparent 52%, rgba(4,6,8,.55) 100%);
+}
+
+/* ── custom cursor: emerald ring + dot ── */
+#cursor{ position:fixed; top:0; left:0; z-index:200; pointer-events:none; width:26px; height:26px; margin:-13px 0 0 -13px;
+  border:1px solid rgba(0,255,156,.6); border-radius:50%; transition:width .18s var(--ease),height .18s var(--ease),border-color .2s; mix-blend-mode:screen; }
+#cursor::after{ content:''; position:absolute; inset:0; margin:auto; width:3px; height:3px; background:var(--emerald); border-radius:50%; box-shadow:0 0 8px var(--emerald); }
+#cursor.hot{ width:46px; height:46px; margin:-23px 0 0 -23px; border-color:var(--gold); }
+@media (hover:none){ body{cursor:auto;} #cursor{display:none;} }
+
+/* ══════════════ TOP LEDGER BAR ══════════════ */
+.bar{ position:fixed; top:0; left:0; right:0; z-index:80; display:flex; align-items:center; justify-content:space-between;
+  padding:14px var(--gutter); font-family:var(--f-mono); font-size:10.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--ink-soft);
+  background:linear-gradient(180deg, rgba(6,8,11,.82), rgba(6,8,11,0)); backdrop-filter:blur(3px); }
+.bar .mark{ color:var(--ink); letter-spacing:.34em; font-weight:600; }
+.bar .mark b{ color:var(--emerald); font-weight:600; }
+.bar .live::before{ content:'●'; color:var(--emerald); margin-right:7px; animation:beat 2.6s ease-in-out infinite; }
+@keyframes beat{ 50%{ opacity:.25; } }
+
+/* ══════════════ ETCHED-NEON TYPOGRAPHY ══════════════ */
+.neon{ color:transparent; -webkit-text-stroke:1.4px var(--emerald); text-stroke:1.4px var(--emerald);
+  text-shadow:0 0 6px rgba(0,255,156,.55), 0 0 20px rgba(0,255,156,.32), 0 0 40px rgba(0,255,156,.15); paint-order:stroke fill; }
+.neon.gold{ -webkit-text-stroke:1.4px var(--gold); text-stroke:1.4px var(--gold);
+  text-shadow:0 0 6px rgba(232,196,92,.55), 0 0 20px rgba(232,196,92,.32), 0 0 40px rgba(232,196,92,.15); }
+/* restrained breathe/flicker on the hero wordmark only */
+@keyframes neonBreathe{
+  0%,100%{ text-shadow:0 0 6px rgba(0,255,156,.55), 0 0 20px rgba(0,255,156,.32), 0 0 40px rgba(0,255,156,.15); }
+  46%{ text-shadow:0 0 5px rgba(0,255,156,.42), 0 0 16px rgba(0,255,156,.24), 0 0 34px rgba(0,255,156,.12); }
+  49%{ text-shadow:0 0 8px rgba(0,255,156,.7), 0 0 26px rgba(0,255,156,.4), 0 0 48px rgba(0,255,156,.2); }
+  52%{ text-shadow:0 0 5px rgba(0,255,156,.42), 0 0 16px rgba(0,255,156,.24), 0 0 34px rgba(0,255,156,.12); }
+}
+.wordmark.neon{ background:none; -webkit-background-clip:border-box; background-clip:border-box; -webkit-text-fill-color:transparent;
+  color:transparent; filter:none; animation:rise 1.1s .35s var(--ease) forwards, neonBreathe 6.5s 1.6s ease-in-out infinite; }
+
+/* ══════════════ ILLUMINATED MEGA-NAV ══════════════ */
+.bar nav.mega{ display:flex; gap:2px; align-items:center; }
+.pillar{ position:relative; }
+.pillar>button{ font:inherit; color:var(--ink-soft); background:none; border:0; cursor:none; padding:14px 15px;
+  letter-spacing:.24em; text-transform:uppercase; transition:color .3s; display:flex; align-items:center; gap:7px; }
+.pillar>button .cx{ font-size:8px; opacity:.5; transition:transform .3s, color .3s, opacity .3s; }
+.pillar:hover>button, .pillar.open>button, .pillar>button:focus-visible{ color:var(--emerald); outline:none; }
+.pillar:hover>button .cx, .pillar.open>button .cx{ transform:rotate(180deg); color:var(--emerald); opacity:1; }
+.pillar>button::after{ content:''; position:absolute; left:15px; right:15px; bottom:8px; height:1px;
+  background:linear-gradient(90deg,var(--emerald),var(--gold)); transform:scaleX(0); transform-origin:left; transition:transform .32s var(--ease); }
+.pillar:hover>button::after, .pillar.open>button::after{ transform:scaleX(1); }
+/* mark LEARN as the current pillar */
+.pillar.current>button{ color:var(--gold); }
+.pillar.current>button::after{ transform:scaleX(1); background:linear-gradient(90deg,var(--gold),var(--emerald)); }
+
+/* manuscript dropdown panel */
+.panel{ position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%) translateY(-8px);
+  min-width:264px; background:linear-gradient(180deg, rgba(12,17,23,.98), rgba(8,11,15,.98));
+  border:1px solid var(--edge); box-shadow:0 24px 60px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(0,255,156,.05) inset;
+  padding:10px; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .28s var(--ease), transform .28s var(--ease), visibility .28s; z-index:90; }
+.panel::before{ content:''; position:absolute; top:-1px; left:16px; right:16px; height:1px; background:linear-gradient(90deg,transparent,var(--gold-dim),transparent); }
+.pillar:hover>.panel, .pillar.open>.panel{ opacity:1; visibility:visible; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+.panel a, .panel span.soon{ display:flex; align-items:baseline; gap:9px; padding:10px 12px; position:relative;
+  border-bottom:1px solid rgba(120,150,140,.07); transition:background .25s, padding-left .25s;
+  opacity:0; transform:translateY(6px); }
+.panel a:last-child, .panel span.soon:last-child{ border-bottom:0; }
+.pillar:hover>.panel a, .pillar.open>.panel a, .pillar:hover>.panel span.soon, .pillar.open>.panel span.soon{ opacity:1; transform:none;
+  transition:opacity .4s var(--ease) calc(var(--i,0)*45ms), transform .4s var(--ease) calc(var(--i,0)*45ms), background .25s, padding-left .25s; }
+.panel a:hover{ background:rgba(0,255,156,.06); padding-left:16px; }
+.panel a:focus-visible{ outline:1px solid var(--emerald); outline-offset:-1px; }
+.panel .lk{ display:flex; flex-direction:column; gap:2px; }
+.panel .t{ font-family:var(--f-display); font-weight:700; letter-spacing:.05em; font-size:14px; color:var(--ink); }
+.panel a:hover .t{ color:var(--emerald); }
+.panel .s{ font-family:var(--f-mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); }
+.panel .gi{ font-family:var(--f-display); font-size:15px; color:var(--gold); flex:0 0 auto; width:18px; text-align:center; }
+.panel .badge{ font-family:var(--f-mono); font-size:8px; letter-spacing:.16em; padding:2px 6px; margin-left:auto; align-self:center; border:1px solid; }
+.panel .badge.live{ color:var(--emerald); border-color:rgba(0,255,156,.35); }
+.panel .badge.live::before{ content:'● '; }
+.panel .badge.prev{ color:var(--gold); border-color:var(--gold-dim); }
+.panel span.soon{ color:var(--ink-faint); cursor:default; }
+.panel span.soon .t{ color:var(--ink-faint); }
+.panel span.soon .badge{ color:var(--ink-faint); border-color:rgba(120,150,140,.2); margin-left:auto; align-self:center; }
+
+/* mobile menu button + full-screen sacred panel */
+.menuBtn{ display:none; font-family:var(--f-mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--emerald); background:none; border:1px solid rgba(0,255,156,.3); padding:9px 14px; cursor:none; }
+#mobileNav{ position:fixed; inset:0; z-index:120; background:radial-gradient(120% 90% at 50% 0%, rgba(10,20,16,.98), rgba(6,8,11,.99));
+  backdrop-filter:blur(6px); padding:76px var(--gutter) 40px; overflow-y:auto; opacity:0; visibility:hidden; transform:translateY(-12px);
+  transition:opacity .4s var(--ease), transform .4s var(--ease), visibility .4s; }
+#mobileNav.open{ opacity:1; visibility:visible; transform:none; }
+#mobileNav .mclose{ position:absolute; top:20px; right:var(--gutter); font-family:var(--f-mono); font-size:12px; letter-spacing:.2em;
+  color:var(--gold); background:none; border:0; cursor:none; }
+.mgroup{ border-top:1px solid var(--edge); padding:18px 0; }
+.mgroup>.mh{ font-family:var(--f-display); font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:15px; color:var(--emerald); margin-bottom:12px; }
+.mgroup.current>.mh{ color:var(--gold); }
+.mgroup a, .mgroup span.soon{ display:flex; align-items:center; gap:10px; padding:9px 0; font-family:var(--f-mono); font-size:12px; letter-spacing:.1em; color:var(--ink-soft); }
+.mgroup a .gi{ color:var(--gold); }
+.mgroup a:active{ color:var(--emerald); }
+.mgroup span.soon{ color:var(--ink-faint); }
+.mgroup .badge{ font-size:8px; letter-spacing:.14em; padding:1px 5px; border:1px solid var(--emerald-dim); color:var(--emerald); margin-left:auto; }
+@media(max-width:960px){ .bar nav.mega{ display:none; } .menuBtn{ display:inline-block; } }
+
+.bar nav.mega a:hover{ color:var(--emerald); }
+@media(min-width:961px){ #mobileNav{ display:none; } }
+
+/* ══════════════ HERO — LEARN · the codex ══════════════ */
+.hero{ position:relative; min-height:92svh; display:grid; place-items:center; overflow:hidden; padding:120px 0 80px; }
+#codexSky{ position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; }
+.hero-glow{ position:absolute; inset:0; pointer-events:none; z-index:1; mix-blend-mode:screen;
+  background:radial-gradient(circle var(--spot) at var(--mx,50%) var(--my,42%), rgba(232,196,92,.09), rgba(0,255,156,.03) 42%, transparent 72%); }
+.hero::after{ content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(6,8,11,.35) 0%, transparent 22%, transparent 62%, var(--void) 100%); }
+
+.hero-center{ position:relative; z-index:5; text-align:center; padding:0 var(--gutter); }
+.hero-center .kick{ font-family:var(--f-mono); font-size:11px; letter-spacing:.55em; text-transform:uppercase; color:var(--gold);
+  opacity:0; animation:rise 1s .2s var(--ease) forwards; }
+.wordmark{ font-family:var(--f-display); font-weight:900; letter-spacing:.14em; line-height:.9;
+  font-size:clamp(52px,13vw,150px);
+  opacity:0; animation:rise 1.1s .35s var(--ease) forwards; }
+.hero-center .subline{ font-family:var(--f-mono); font-size:clamp(10px,1.5vw,12.5px); letter-spacing:.42em; text-transform:uppercase;
+  color:var(--emerald); margin-top:18px; opacity:0; animation:rise 1s .5s var(--ease) forwards; }
+.hero-center .subline b{ color:var(--gold); font-weight:600; }
+.hero-center .tag{ font-family:var(--f-serif); font-style:italic; font-size:clamp(16px,2.3vw,23px); color:var(--ink-soft); margin-top:16px;
+  max-width:600px; margin-left:auto; margin-right:auto; opacity:0; animation:rise 1s .6s var(--ease) forwards; }
+@keyframes rise{ from{ opacity:0; transform:translateY(22px); } to{ opacity:1; transform:none; } }
+
+/* gold hairline flourish under the hero */
+.flourish{ width:min(420px,72vw); height:24px; margin:30px auto 0; position:relative; opacity:0; animation:rise 1s .8s var(--ease) forwards; }
+.flourish::before, .flourish::after{ content:''; position:absolute; top:50%; height:1px; width:calc(50% - 22px);
+  background:linear-gradient(90deg,transparent,var(--gold-dim),var(--gold)); }
+.flourish::before{ left:0; } .flourish::after{ right:0; transform:scaleX(-1); }
+.flourish .di{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-family:var(--f-display); color:var(--gold);
+  font-size:15px; text-shadow:0 0 12px rgba(232,196,92,.5); }
+
+.ctas{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:34px; opacity:0; animation:rise 1s .95s var(--ease) forwards; }
+.cta{ font-family:var(--f-mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; padding:15px 26px; position:relative;
+  border:1px solid var(--edge); color:var(--ink); background:rgba(10,14,19,.5); overflow:hidden; transition:color .3s,border-color .3s,transform .12s; cursor:none; }
+.cta::before{ content:''; position:absolute; inset:0; z-index:-1; transform:translateY(101%); transition:transform .38s var(--ease);
+  background:linear-gradient(120deg,var(--emerald),var(--cyan)); }
+.cta:hover{ color:#022; border-color:transparent; } .cta:hover::before{ transform:none; } .cta:active{ transform:translateY(1px); }
+.cta.primary{ border-color:rgba(232,196,92,.4); color:var(--gold); }
+.cta.primary::before{ background:linear-gradient(120deg,var(--gold),#fff2c8); }
+.cta.primary:hover{ color:#241a03; }
+.cta .g{ margin-right:9px; opacity:.7; }
+
+.scrollcue{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--f-mono); font-size:9.5px; letter-spacing:.4em;
+  text-transform:uppercase; color:var(--ink-faint); z-index:5; opacity:0; animation:rise 1s 1.2s var(--ease) forwards; }
+.scrollcue span{ display:block; width:1px; height:34px; margin:8px auto 0; background:linear-gradient(var(--gold),transparent); animation:drop 2.2s ease-in-out infinite; transform-origin:top; }
+@keyframes drop{ 0%,100%{ transform:scaleY(.3); opacity:.4; } 50%{ transform:scaleY(1); opacity:1; } }
+
+/* ══════════════ SECTIONS ══════════════ */
+.wrap{ max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter); }
+section.blk{ padding:clamp(70px,11vw,140px) 0; position:relative; }
+.eyebrow{ font-family:var(--f-mono); font-size:11px; letter-spacing:.4em; text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:12px; }
+.eyebrow::before{ content:''; width:34px; height:1px; background:var(--gold-dim); }
+.h2{ font-family:var(--f-display); font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-size:clamp(26px,4.4vw,46px); margin:16px 0 10px; }
+.lede{ max-width:640px; color:var(--ink-soft); font-size:clamp(15px,1.8vw,18px); }
+.reveal{ opacity:0; transform:translateY(30px); transition:opacity .9s var(--ease), transform .9s var(--ease); }
+.reveal.in{ opacity:1; transform:none; }
+
+/* gold hairline divider between sections */
+.rule{ max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter); }
+.rule i{ display:block; height:1px; background:linear-gradient(90deg,transparent,var(--gold-dim) 30%,var(--gold-dim) 70%,transparent); }
+
+/* ══════════════ THE TWO PILLAR TILES (Codex + Covenant) ══════════════ */
+.duo{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:44px; }
+@media(max-width:820px){ .duo{ grid-template-columns:1fr; } }
+.folio{ position:relative; border:1px solid var(--edge); background:linear-gradient(180deg,var(--void2),var(--void)); padding:34px 30px 30px;
+  overflow:hidden; transition:border-color .4s, transform .35s; display:flex; flex-direction:column; min-height:270px; cursor:none; }
+.folio::before{ content:''; position:absolute; inset:10px; border:1px solid rgba(232,196,92,.10); pointer-events:none; transition:border-color .4s; }
+.folio::after{ content:''; position:absolute; top:-40%; right:-30%; width:70%; height:180%; pointer-events:none; transition:opacity .4s; opacity:0;
+  background:radial-gradient(circle at 60% 40%, rgba(0,255,156,.10), transparent 62%); }
+.folio:hover{ border-color:rgba(0,255,156,.4); transform:translateY(-5px); }
+.folio:hover::before{ border-color:rgba(232,196,92,.28); }
+.folio:hover::after{ opacity:1; }
+.folio .cap{ font-family:var(--f-display); font-size:34px; color:var(--gold); text-shadow:0 0 18px rgba(232,196,92,.3); }
+.folio .num{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; color:var(--ink-faint); position:absolute; top:26px; right:28px; }
+.folio h3{ font-family:var(--f-display); font-weight:700; letter-spacing:.05em; font-size:clamp(22px,3vw,30px); margin:16px 0 4px; color:var(--ink); }
+.folio .cr{ font-family:var(--f-serif); font-style:italic; color:var(--gold); font-size:14px; margin-bottom:12px; }
+.folio p{ color:var(--ink-soft); font-size:14.5px; max-width:46ch; }
+.folio .foot-row{ margin-top:auto; padding-top:22px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.folio .go{ font-family:var(--f-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--emerald); transition:letter-spacing .3s; }
+.folio:hover .go{ letter-spacing:.26em; }
+.folio .badge{ font-family:var(--f-mono); font-size:8px; letter-spacing:.18em; text-transform:uppercase; padding:3px 9px; border:1px solid; }
+.folio .badge.live{ color:var(--emerald); border-color:rgba(0,255,156,.35); }
+.folio .badge.live::before{ content:'● '; }
+
+/* ══════════════ THE SECONDARY LEDGER (Docs + Open Source) ══════════════ */
+.grid7{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1px; margin-top:44px; background:var(--edge); border:1px solid var(--edge); }
+.prod{ background:var(--void2); padding:30px 26px; transition:background .35s; position:relative; }
+.prod:hover{ background:var(--panel); }
+.prod .pg{ font-family:var(--f-display); font-size:22px; color:var(--gold); }
+.prod h4{ font-family:var(--f-display); font-weight:700; letter-spacing:.05em; font-size:18px; margin:12px 0 4px; }
+.prod .cr{ font-family:var(--f-serif); font-style:italic; color:var(--emerald); font-size:12.5px; margin-bottom:8px; }
+.prod p{ font-size:13.5px; color:var(--ink-soft); }
+.prod .arr{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-top:14px; display:inline-block; }
+.prod code{ color:var(--emerald); font-family:var(--f-mono); font-size:12px; }
+.prod .soontag{ font-family:var(--f-mono); font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+  border:1px solid rgba(120,150,140,.2); padding:3px 9px; margin-top:14px; display:inline-block; }
+
+/* ══════════════ THE ILLUMINATED PROVERB ══════════════ */
+.proverb{ text-align:center; max-width:820px; margin:0 auto; }
+.proverb .mark{ font-family:var(--f-display); font-size:40px; color:var(--gold); opacity:.5; }
+.proverb blockquote{ font-family:var(--f-serif); font-style:italic; font-size:clamp(20px,3.4vw,34px); line-height:1.4; color:var(--ink);
+  margin:14px 0 18px; }
+.proverb blockquote em{ color:var(--emerald); font-style:italic; }
+.proverb cite{ font-family:var(--f-mono); font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--ink-faint); font-style:normal; }
+
+/* CTA band */
+.band{ border-top:1px solid var(--edge); border-bottom:1px solid var(--edge); text-align:center; padding:clamp(60px,9vw,110px) var(--gutter); position:relative; overflow:hidden; }
+.band::before{ content:''; position:absolute; inset:0; background:radial-gradient(600px 300px at 50% 0%, rgba(232,196,92,.06), transparent 70%); pointer-events:none; }
+.band .h2{ margin-bottom:22px; }
+
+.foot{ padding:44px var(--gutter); display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px;
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); }
+.foot a:hover{ color:var(--emerald); }
+
+@media(max-width:480px){
+  .folio{ padding:26px 22px 24px; min-height:0; }
+  .proverb blockquote{ font-size:22px; }
+}
+
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; }
+  .panel, #mobileNav{ transition:opacity .01s !important; }
+  .panel a, .panel span.soon{ opacity:1 !important; transform:none !important; }
+  .wordmark, .hero-center .kick, .hero-center .subline, .hero-center .tag, .flourish, .ctas, .scrollcue{ opacity:1 !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+
+<header class="bar">
+  <a class="mark" href="/home.html">◈ <b>SHADDAI</b></a>
+  <nav class="mega" aria-label="Primary">
+
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Enter <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/lab-molecules.html" role="menuitem"><span class="gi">▶</span><span class="lk"><span class="t">The Descent</span><span class="s">full-screen cinematic</span></span><span class="badge live">live</span></a>
+        <a href="/dashboard" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Command Deck</span><span class="s">your 2D control surface</span></span><span class="badge live">live</span></a>
+        <a href="/SHADDAI-WORLD-3D.html" role="menuitem"><span class="gi">✦</span><span class="lk"><span class="t">3D World</span><span class="s">walk among the Seven</span></span><span class="badge live">live</span></a>
+        <a href="/_LAUNCH.html" role="menuitem"><span class="gi">▦</span><span class="lk"><span class="t">Pixel World</span><span class="s">isometric multiplayer city · 7 realms</span></span><span class="badge live">live</span></a>
+      </div>
+    </div>
+
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">The Council <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/agents.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Meet the Seven</span><span class="s">personas & loadouts</span></span><span class="badge live">live</span></a>
+        <a href="/forge-about.html" role="menuitem"><span class="gi">⚒</span><span class="lk"><span class="t">The Forge</span><span class="s">craft your own operative</span></span><span class="badge live">live</span></a>
+        <span class="soon"><span class="gi">▣</span><span class="lk"><span class="t">Agent Rooms</span><span class="s">private command decks</span></span><span class="badge">soon</span></span>
+        <span class="soon"><span class="gi">☠</span><span class="lk"><span class="t">The Villain</span><span class="s">the Crimson Sentinel</span></span><span class="badge">soon</span></span>
+      </div>
+    </div>
+
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Create <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/create.html" role="menuitem"><span class="gi">◧</span><span class="lk"><span class="t">Overview</span><span class="s">the studios</span></span></a>
+        <a href="/forge-about.html" role="menuitem"><span class="gi">⚒</span><span class="lk"><span class="t">The Forge</span><span class="s">skills · tools · a body</span></span><span class="badge live">live</span></a>
+        <a href="/model-gallery.html" role="menuitem"><span class="gi">✧</span><span class="lk"><span class="t">Model Gallery</span><span class="s">the rigged 3D bodies</span></span><span class="badge live">live</span></a>
+        <span class="soon"><span class="gi">◨</span><span class="lk"><span class="t">Media Studio</span><span class="s">image & video gen</span></span><span class="badge">soon</span></span>
+        <span class="soon"><span class="gi">⚙</span><span class="lk"><span class="t">Skills &amp; Tools</span><span class="s">the ability registry</span></span><span class="badge">soon</span></span>
+      </div>
+    </div>
+
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Play <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/play.html" role="menuitem"><span class="gi">◧</span><span class="lk"><span class="t">Overview</span><span class="s">the arcade</span></span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Arcade</span><span class="s">skill-driven neon sports</span></span><span class="badge live">live</span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">🏈</span><span class="lk"><span class="t">Gridiron</span><span class="s">Madden-style franchise</span></span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">🏀</span><span class="lk"><span class="t">Neon Hoops</span><span class="s">2.5D NBA-Jam</span></span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">⚡</span><span class="lk"><span class="t">Dodgeball</span><span class="s">5v5 multiball</span></span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">🌠</span><span class="lk"><span class="t">Starfall</span><span class="s">arcade skill-play</span></span></a>
+      </div>
+    </div>
+
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Intelligence <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/intelligence.html" role="menuitem"><span class="gi">◧</span><span class="lk"><span class="t">Overview</span><span class="s">markets · data · AURA</span></span></a>
+        <a href="/data-api.html" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">Markets &amp; Data</span><span class="s">keyless crypto data</span></span><span class="badge live">live</span></a>
+        <a href="/aura.html" role="menuitem"><span class="gi">⚖</span><span class="lk"><span class="t">AURA token-saver</span><span class="s">coin spared per call</span></span><span class="badge live">live</span></a>
+      </div>
+    </div>
+
+    <div class="pillar current" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false" aria-current="page">Learn <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <a href="/learn.html" role="menuitem"><span class="gi">◧</span><span class="lk"><span class="t">Overview</span><span class="s">the codex</span></span><span class="badge live">here</span></a>
+        <a href="/codex.html" role="menuitem"><span class="gi">📜</span><span class="lk"><span class="t">The Codex</span><span class="s">the empire's lore</span></span><span class="badge live">live</span></a>
+        <a href="/pricing.html" role="menuitem"><span class="gi">☽</span><span class="lk"><span class="t">The Covenant</span><span class="s">pricing & tiers</span></span><span class="badge live">live</span></a>
+        <span class="soon"><span class="gi">▤</span><span class="lk"><span class="t">Docs</span><span class="s">build & integrate</span></span><span class="badge">soon</span></span>
+        <span class="soon"><span class="gi">⌘</span><span class="lk"><span class="t">Open source</span><span class="s">AURA · Clipper · rails</span></span><span class="badge">soon</span></span>
+      </div>
+    </div>
+
+  </nav>
+  <button class="menuBtn" id="menuBtn" aria-expanded="false" aria-controls="mobileNav">☰ Menu</button>
+  <span class="live" id="statusPill" style="font-family:var(--f-mono);font-size:10px;letter-spacing:.22em">THE CODEX</span>
+</header>
+
+<!-- ═══════════ MOBILE SACRED-TECH NAV ═══════════ -->
+<div id="mobileNav" aria-hidden="true">
+  <button class="mclose" id="mClose">✕ close</button>
+  <div class="mgroup"><div class="mh">Enter</div>
+    <a href="/lab-molecules.html"><span class="gi">▶</span>The Descent<span class="badge">live</span></a>
+    <a href="/dashboard"><span class="gi">◈</span>Command Deck<span class="badge">live</span></a>
+    <a href="/SHADDAI-WORLD-3D.html"><span class="gi">✦</span>3D World<span class="badge">live</span></a>
+    <a href="/_LAUNCH.html"><span class="gi">▦</span>Pixel World<span class="badge">live</span></a>
+  </div>
+  <div class="mgroup"><div class="mh">The Council</div>
+    <a href="/agents.html"><span class="gi">◈</span>Meet the Seven<span class="badge">live</span></a>
+    <a href="/forge-about.html"><span class="gi">⚒</span>The Forge<span class="badge">live</span></a>
+    <span class="soon"><span class="gi">▣</span>Agent Rooms · soon</span>
+    <span class="soon"><span class="gi">☠</span>The Villain · soon</span>
+  </div>
+  <div class="mgroup"><div class="mh">Create</div>
+    <a href="/create.html"><span class="gi">◧</span>Overview</a>
+    <a href="/forge-about.html"><span class="gi">⚒</span>The Forge<span class="badge">live</span></a>
+    <a href="/model-gallery.html"><span class="gi">✧</span>Model Gallery<span class="badge">live</span></a>
+    <span class="soon"><span class="gi">◨</span>Media Studio · soon</span>
+    <span class="soon"><span class="gi">⚙</span>Skills &amp; Tools · soon</span>
+  </div>
+  <div class="mgroup"><div class="mh">Play</div>
+    <a href="/play.html"><span class="gi">◧</span>Overview</a>
+    <a href="/arcade.html"><span class="gi">◈</span>The Arcade<span class="badge">live</span></a>
+    <a href="/arcade.html"><span class="gi">🏈</span>Gridiron · Hoops · Dodgeball · Starfall</a>
+  </div>
+  <div class="mgroup"><div class="mh">Intelligence</div>
+    <a href="/intelligence.html"><span class="gi">◧</span>Overview</a>
+    <a href="/data-api.html"><span class="gi">₿</span>Markets &amp; Data<span class="badge">live</span></a>
+    <a href="/aura.html"><span class="gi">⚖</span>AURA token-saver<span class="badge">live</span></a>
+  </div>
+  <div class="mgroup current"><div class="mh">Learn</div>
+    <a href="/learn.html"><span class="gi">◧</span>Overview<span class="badge">here</span></a>
+    <a href="/codex.html"><span class="gi">📜</span>The Codex<span class="badge">live</span></a>
+    <a href="/pricing.html"><span class="gi">☽</span>The Covenant<span class="badge">live</span></a>
+    <span class="soon"><span class="gi">▤</span>Docs · soon</span>
+    <span class="soon"><span class="gi">⌘</span>Open source · soon</span>
+  </div>
+</div>
+
+<!-- ═══════════ HERO · LEARN · THE CODEX ═══════════ -->
+<section class="hero" id="hero">
+  <canvas id="codexSky" aria-hidden="true"></canvas>
+  <div class="hero-glow" id="heroGlow" aria-hidden="true"></div>
+
+  <div class="hero-center">
+    <div class="kick">The Learning Pillar</div>
+    <h1 class="wordmark neon gold">LEARN</h1>
+    <div class="subline"><b>◈</b> The Codex &nbsp;·&nbsp; The Covenant &nbsp;·&nbsp; Docs &nbsp;·&nbsp; Open Source <b>◈</b></div>
+    <p class="tag">The lore, made legible — the whole empire, set down in ink and light.</p>
+
+    <div class="flourish"><span class="di">❦</span></div>
+
+    <div class="ctas">
+      <a class="cta primary" href="/codex.html"><span class="g">📜</span>Open the Codex</a>
+      <a class="cta" href="/pricing.html"><span class="g">☽</span>Read the Covenant</a>
+    </div>
+  </div>
+  <div class="scrollcue">Turn the page · scroll to read<span></span></div>
+</section>
+
+<!-- ═══════════ THE TWO LIVE FOLIOS ═══════════ -->
+<section class="blk" id="folios">
+  <div class="wrap reveal">
+    <div class="eyebrow">I · The Living Volumes</div>
+    <h2 class="h2 neon gold">Two books, both open</h2>
+    <p class="lede">The empire keeps two texts you can read today: the lore that gives it meaning, and the covenant that governs its worth.</p>
+    <div class="duo">
+
+      <a class="folio" href="/codex.html">
+        <span class="num">Folio I</span>
+        <div class="cap">📜</div>
+        <h3>The Codex</h3>
+        <div class="cr">the lore, illuminated</div>
+        <p>The illuminated history of the empire — the Seven and their archetypes, the sacred-geometry cosmology, the descent from molecule to Crown. Every myth behind the machine, set down in gold and emerald.</p>
+        <div class="foot-row"><span class="go">Read the Codex →</span><span class="badge live">live</span></div>
+      </a>
+
+      <a class="folio" href="/pricing.html">
+        <span class="num">Folio II</span>
+        <div class="cap">☽</div>
+        <h3>The Covenant</h3>
+        <div class="cr">pricing, plainly sworn</div>
+        <p>The terms of the empire — fiat-first now, token-later by design. Pay for scarce work, not basic chat; bring your own key and spend coin last. Tiers, limits, and the founders' oath, written without fine print.</p>
+        <div class="foot-row"><span class="go">Read the Covenant →</span><span class="badge live">live</span></div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<div class="rule reveal"><i></i></div>
+
+<!-- ═══════════ THE FORTHCOMING TEXTS ═══════════ -->
+<section class="blk" id="forthcoming" style="background:var(--void2)">
+  <div class="wrap reveal">
+    <div class="eyebrow">II · The Forthcoming Texts</div>
+    <h2 class="h2 neon">Chapters still in the scriptorium</h2>
+    <p class="lede">Two more volumes are being copied out — the builder's manual and the open canon. Marked <em style="color:var(--gold);font-style:normal">soon</em> until the ink dries.</p>
+    <div class="grid7">
+
+      <div class="prod">
+        <div class="pg">▤</div>
+        <h4>Docs</h4>
+        <div class="cr">build &amp; integrate</div>
+        <p>SDKs, API references, and guides for wiring SHADDAI into your own stack — agents, tools, workflows, and the rails beneath them.</p>
+        <span class="soontag">✦ soon</span>
+      </div>
+
+      <div class="prod">
+        <div class="pg">⌘</div>
+        <h4>Open Source</h4>
+        <div class="cr">the open canon</div>
+        <p>The parts we gave away. <strong style="color:var(--ink)">AURA</strong> — the token-saver on npm as <code>shaddai-aura</code> with an MCP server — and <strong style="color:var(--ink)">the Clipper</strong>, the one-click video engine. Public docs and repos to follow.</p>
+        <span class="soontag">✦ soon</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="rule reveal"><i></i></div>
+
+<!-- ═══════════ THE ILLUMINATED PROVERB ═══════════ -->
+<section class="blk" id="proverb">
+  <div class="wrap reveal">
+    <div class="proverb">
+      <div class="mark">❝</div>
+      <blockquote>Ancient wisdom in future tech — <em>the lore, made legible</em>, so that anyone who reads may build.</blockquote>
+      <cite>SHADDAI · Vol. I · The Codex</cite>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CTA BAND ═══════════ -->
+<div class="band reveal">
+  <div class="eyebrow" style="justify-content:center">Begin the Reading</div>
+  <h2 class="h2 neon gold">Turn to the first page</h2>
+  <div class="ctas" style="animation:none;opacity:1">
+    <a class="cta primary" href="/codex.html"><span class="g">📜</span>Enter the Codex</a>
+    <a class="cta" href="/pricing.html"><span class="g">☽</span>Read the Covenant</a>
+  </div>
+</div>
+
+<footer class="foot">
+  <span>SHADDAI · Vol. I · Anno MMXXVI</span>
+  <span><a href="https://x.com/shaddaiai" target="_blank" rel="noopener">𝕏 @shaddaiai</a> &nbsp;·&nbsp; <a href="/codex.html">Codex</a> &nbsp;·&nbsp; <a href="/pricing.html">Covenant</a></span>
+  <span>Bound in ink · gold · emerald</span>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CODEX HERO — illuminated-manuscript sacred geometry.
+   A breathing Seed of Life + gold hairline flourishes + drifting motes,
+   lit under the gaze. Palette-locked (gold lead, emerald secondary).
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  var cv=document.getElementById('codexSky'); if(!cv) return;
+  var ctx=cv.getContext('2d');
+  var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W=0,H=0,DPR=1,R=0,cxp=0,cyp=0;
+  var EM='#00ff9c', GD='#e8c45c', CY='#5fe0ff';
+  var glow=document.getElementById('heroGlow');
+  var mx=innerWidth/2, my=innerHeight*0.42, ex=mx, ey=my;
+  var motes=[];
+
+  function hexA(hex,a){ var n=parseInt(hex.slice(1),16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+
+  function size(){ DPR=Math.min(devicePixelRatio||1,2); W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    cxp=W/2; cyp=H*0.44; R=Math.min(W,H)*0.20;
+    motes=[]; var n=Math.round(W*H/16000);
+    for(var i=0;i<n;i++) motes.push({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.3+0.3, z:Math.random(), tw:Math.random()*6.28 }); }
+
+  /* Seed of Life — center + 6 ring circles */
+  var SEED=(function(){ var p=[[0,0]], A=Math.PI/3;
+    for(var i=0;i<6;i++) p.push([Math.cos(i*A),Math.sin(i*A)]); return p; })();
+
+  function gazeBoost(x,y){ var d=Math.hypot(x-ex,y-ey); return Math.max(0, 1 - d/(R*2.2)); }
+
+  function frame(t){
+    var breathe=0.5+0.5*Math.sin(t*0.0006);
+    var px=(ex-cxp)/W, py=(ey-cyp)/H;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#06080b'; ctx.fillRect(0,0,W,H);
+
+    /* parchment-warm radial vignette behind the geometry */
+    var vg=ctx.createRadialGradient(cxp+px*30,cyp+py*30,0,cxp,cyp,R*3.2);
+    vg.addColorStop(0, hexA(GD, 0.05+0.03*breathe)); vg.addColorStop(0.5, hexA(EM,0.02)); vg.addColorStop(1,'rgba(6,8,11,0)');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+    /* drifting gold motes (ink dust) */
+    for(var s=0;s<motes.length;s++){ var mo=motes[s];
+      mo.y-=0.10+mo.z*0.20; if(mo.y< -4){ mo.y=H+4; mo.x=Math.random()*W; }
+      var sx=mo.x+px*24*mo.z, sy=mo.y+py*14*mo.z;
+      var tw=0.4+0.6*Math.abs(Math.sin(t*0.001+mo.tw));
+      ctx.fillStyle=hexA(mo.z>0.6?GD:EM, tw*(0.14+mo.z*0.28));
+      ctx.fillRect(sx,sy,mo.r,mo.r); }
+
+    ctx.save(); ctx.translate(cxp+px*20, cyp+py*20);
+    ctx.lineCap='round'; ctx.lineJoin='round';
+
+    /* ── outer hairline flourish rings (gold, illuminated) ── */
+    ctx.save(); ctx.rotate(t*0.00006);
+    var GR=R*2.35;
+    ctx.beginPath(); ctx.arc(0,0,GR,0,6.28); ctx.strokeStyle=hexA(GD,0.10+0.05*breathe); ctx.lineWidth=0.7; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,GR*0.90,0,6.28); ctx.strokeStyle=hexA(GD,0.06); ctx.lineWidth=0.6; ctx.stroke();
+    /* corner diamonds around the ring — manuscript border studs */
+    ctx.font='12px "IBM Plex Mono", serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    var gn=16;
+    for(var gi=0;gi<gn;gi++){ var ga=gi/gn*6.28, gx=Math.cos(ga)*GR, gy=Math.sin(ga)*GR;
+      ctx.save(); ctx.translate(gx,gy); ctx.rotate(ga+Math.PI/2);
+      ctx.fillStyle=hexA(GD,0.12+0.12*Math.sin(t*0.001+gi)); ctx.fillText('❖',0,0); ctx.restore(); }
+    ctx.restore();
+
+    /* ── Seed of Life (breathing, gaze-lit emerald+gold) ── */
+    ctx.save(); ctx.rotate(t*0.00003);
+    for(var i=0;i<SEED.length;i++){ var cx2=SEED[i][0]*R, cy2=SEED[i][1]*R;
+      var b=gazeBoost(cxp+cx2, cyp+cy2);
+      ctx.beginPath(); ctx.arc(cx2,cy2, R*(1+0.014*Math.sin(t*0.0009+i)), 0, 6.28);
+      var col=(i===0)?GD:EM;
+      ctx.strokeStyle=hexA(col, 0.10+0.30*b + 0.05*breathe);
+      ctx.lineWidth=1+1.6*b; ctx.shadowColor=col; ctx.shadowBlur=b>0.15?16*b:0; ctx.stroke(); }
+    ctx.shadowBlur=0; ctx.restore();
+
+    /* ── inner vesica petals / lit sephira node at center ── */
+    var cb=gazeBoost(cxp,cyp);
+    ctx.beginPath(); ctx.arc(0,0, 4+6*(0.4+cb), 0, 6.28);
+    ctx.fillStyle=hexA(GD, 0.18+0.5*(0.3+cb)); ctx.shadowColor=GD; ctx.shadowBlur=18*(0.4+cb); ctx.fill(); ctx.shadowBlur=0;
+
+    ctx.restore();
+    if(!reduced) requestAnimationFrame(frame);
+  }
+
+  function pump(){ ex+=(mx-ex)*0.12; ey+=(my-ey)*0.12;
+    if(glow){ glow.style.setProperty('--mx',(ex/W*100).toFixed(2)+'%'); glow.style.setProperty('--my',(ey/H*100).toFixed(2)+'%'); }
+    var cur=document.getElementById('cursor'); if(cur){ cur.style.transform='translate('+ex+'px,'+ey+'px)'; }
+    requestAnimationFrame(pump); }
+
+  window.addEventListener('mousemove',function(e){ mx=e.clientX; my=e.clientY;
+    var cur=document.getElementById('cursor'); if(cur){ var h=e.target.closest('a,button'); cur.classList.toggle('hot', !!h); } },{passive:true});
+  window.addEventListener('touchmove',function(e){ if(e.touches[0]){ mx=e.touches[0].clientX; my=e.touches[0].clientY; } },{passive:true});
+
+  size(); window.addEventListener('resize', size, {passive:true});
+  pump();
+  if(reduced) frame(0); else requestAnimationFrame(frame);
+})();
+
+/* ── scroll reveals ── */
+(function(){
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.16});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   MEGA-NAV — hover on desktop (CSS), click/keyboard toggling for a11y.
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  var pillars=Array.prototype.slice.call(document.querySelectorAll('.pillar[data-pillar]'));
+  pillars.forEach(function(p){
+    Array.prototype.slice.call(p.querySelectorAll('.panel > a, .panel > .soon')).forEach(function(row,i){ row.style.setProperty('--i', i); });
+  });
+  function closeAll(except){ pillars.forEach(function(p){ if(p!==except){ p.classList.remove('open');
+    var b=p.querySelector('button'); if(b) b.setAttribute('aria-expanded','false'); } }); }
+  pillars.forEach(function(p){
+    var btn=p.querySelector('button');
+    btn.addEventListener('click', function(e){ e.preventDefault();
+      var isOpen=p.classList.contains('open'); closeAll(p);
+      p.classList.toggle('open', !isOpen); btn.setAttribute('aria-expanded', String(!isOpen)); });
+    btn.addEventListener('keydown', function(e){
+      if(e.key==='ArrowDown'){ e.preventDefault(); p.classList.add('open'); btn.setAttribute('aria-expanded','true');
+        var first=p.querySelector('.panel a'); if(first) first.focus(); }
+      else if(e.key==='Escape'){ p.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
+    p.querySelector('.panel').addEventListener('keydown', function(e){
+      if(e.key==='Escape'){ p.classList.remove('open'); btn.setAttribute('aria-expanded','false'); btn.focus(); } });
+  });
+  document.addEventListener('click', function(e){ if(!e.target.closest('.pillar[data-pillar]')) closeAll(null); });
+})();
+
+/* ── mobile sacred-tech nav ── */
+(function(){
+  var btn=document.getElementById('menuBtn'), nav=document.getElementById('mobileNav'), close=document.getElementById('mClose');
+  if(!btn||!nav) return;
+  function open(){ nav.classList.add('open'); nav.setAttribute('aria-hidden','false'); btn.setAttribute('aria-expanded','true'); }
+  function shut(){ nav.classList.remove('open'); nav.setAttribute('aria-hidden','true'); btn.setAttribute('aria-expanded','false'); }
+  btn.addEventListener('click', open); close.addEventListener('click', shut);
+  nav.addEventListener('click', function(e){ var a=e.target.closest('a'); if(a) shut(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && nav.classList.contains('open')) shut(); });
+})();
+</script>
+</body>
+</html>
