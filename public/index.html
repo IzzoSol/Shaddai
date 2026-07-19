@@ -36912,7 +36912,9 @@ function popoutProjects() {
     + topbar + stats
     + '<div class="main"><div class="grid" id="grid">' + cards + '</div></div>'
     + '<script>' + js + '<\/script>'
-    + '</body></html>');
+    + '
+<script src="/home-btn.js" defer></script>
+</body></html>');
   w.document.close();
   notify('Projects popout — ' + projects.length + ' projects');
 }

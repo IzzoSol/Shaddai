@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI Crypto Data API — Free & Keyless</title>
+<meta name="description" content="Keyless, read-only crypto market data. Price, trending, new pairs, token snapshots and search over DexScreener, CoinGecko and more. No API key required." />
+<style>
+  :root {
+    --bg: #05070d; --panel: #0c111c; --panel2: #111827; --line: #1f2937;
+    --text: #e6edf6; --dim: #8b98ad; --accent: #35e0c8; --accent2: #7c6bff;
+    --ok: #3fd67a; --err: #ff5c72; --code-bg: #0a0e17;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1200px 600px at 70% -10%, #101a2e 0%, var(--bg) 55%); color: var(--text); font-family: var(--sans); line-height: 1.55; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px 80px; }
+  header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--line); }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; margin-bottom: 18px; background: var(--panel); }
+  h1 { font-size: 42px; margin: 0 0 12px; letter-spacing: -.02em; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--dim); font-size: 18px; max-width: 640px; }
+  .pills { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill { font-family: var(--mono); font-size: 12px; color: var(--dim); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--panel); }
+  .pill b { color: var(--text); }
+  h2 { font-size: 24px; margin: 48px 0 8px; letter-spacing: -.01em; }
+  h2 .anchor { color: var(--dim); font-weight: 400; font-size: 14px; }
+  p.lead { color: var(--dim); margin-top: 0; }
+  .ep { border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(180deg, var(--panel), var(--panel2)); padding: 20px; margin: 18px 0; }
+  .ep h3 { margin: 0 0 6px; font-family: var(--mono); font-size: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .method { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 3px 8px; border-radius: 6px; background: rgba(53,224,200,.14); color: var(--accent); border: 1px solid rgba(53,224,200,.3); }
+  .path { color: var(--text); }
+  .ep p { color: var(--dim); margin: 6px 0 14px; font-size: 15px; }
+  table.params { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px; }
+  table.params th, table.params td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.params th { color: var(--dim); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  table.params td code { font-family: var(--mono); color: var(--accent2); }
+  .tryrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .tryrow input { flex: 1; min-width: 180px; background: var(--code-bg); border: 1px solid var(--line); color: var(--text); font-family: var(--mono); font-size: 13px; border-radius: 8px; padding: 9px 11px; }
+  button.try { font-family: var(--sans); font-weight: 600; font-size: 13px; cursor: pointer; border: none; border-radius: 8px; padding: 9px 16px; color: #06110f; background: linear-gradient(90deg, var(--accent), #59f0dc); }
+  button.try:hover { filter: brightness(1.08); }
+  button.try:disabled { opacity: .5; cursor: default; }
+  pre.out { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow: auto; font-family: var(--mono); font-size: 12.5px; color: #b9e8de; max-height: 340px; }
+  pre.out.empty { color: var(--dim); }
+  .status { font-family: var(--mono); font-size: 12px; margin-left: 8px; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--err); }
+  code.inline { font-family: var(--mono); background: var(--code-bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 13px; color: var(--accent); }
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--dim); font-size: 14px; }
+  .note { border-left: 3px solid var(--accent2); background: rgba(124,107,255,.07); padding: 12px 16px; border-radius: 0 8px 8px 0; color: var(--dim); font-size: 14px; margin: 20px 0; }
+</style>
+</head>
+<body>
+<script src="/nav.js" data-active="markets" defer></script>
+<style>body{padding-top:56px}</style>
+<div class="wrap">
+  <header class="hero">
+    <span class="badge">● Keyless · Read-only · Free</span>
+    <h1>SHADDAI Crypto Data API</h1>
+    <p class="sub">One clean, documented front door to live crypto market data — price, trending, new launches, token snapshots and search. No API key. No sign-up. No writes.</p>
+    <div class="pills">
+      <span class="pill">Base <b>/api/data/v1</b></span>
+      <span class="pill">Auth <b>none</b></span>
+      <span class="pill">Format <b>JSON</b></span>
+      <span class="pill">Sources <b>DexScreener · CoinGecko</b></span>
+      <span class="pill"><a href="/api/data/v1/openapi.json">OpenAPI spec ↗</a></span>
+    </div>
+  </header>
+
+  <h2>Overview</h2>
+  <p class="lead">Every response uses a uniform envelope. Success returns
+    <code class="inline">{ ok:true, source, cachedAt, data }</code>. When an upstream source is
+    temporarily down the API is <b>honest</b> — it returns
+    <code class="inline">{ ok:false, error:"source unavailable, retry" }</code> with HTTP 503,
+    never fabricated zeros. Data is lightly cached server-side to respect free-tier rate limits.</p>
+
+  <div class="note">This is a thin façade over the market-data proxies SHADDAI already runs. It exists to give developers a clean, versioned, keyless surface — not to add new upstreams.</div>
+
+  <h2>Endpoints <span class="anchor">— click “Try it” to run a live request</span></h2>
+
+  <div class="ep" data-base="/api/data/v1/health">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/health</span></h3>
+    <p>Service liveness, version, and shallow upstream reachability. Always returns 200.</p>
+    <div class="tryrow">
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <div class="ep" data-base="/api/data/v1/price/" data-arg="SOL">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/price/{mintOrId}</span></h3>
+    <p>Price + market data for a symbol (<code class="inline">SOL</code>), a CoinGecko id (<code class="inline">solana</code>), or a token mint/contract address (routed to DexScreener).</p>
+    <table class="params">
+      <tr><th>Param</th><th>In</th><th>Description</th></tr>
+      <tr><td><code>mintOrId</code></td><td>path</td><td>Symbol, CoinGecko id, or token address</td></tr>
+      <tr><td><code>vs</code></td><td>query</td><td>Quote currency (default <code>usd</code>)</td></tr>
+    </table>
+    <div class="tryrow">
+      <input value="SOL" aria-label="mintOrId" />
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <div class="ep" data-base="/api/data/v1/trending">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/trending</span></h3>
+    <p>Trending tokens right now (CoinGecko), normalized to a flat list.</p>
+    <div class="tryrow">
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <div class="ep" data-base="/api/data/v1/new?chain=" data-arg="solana">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/new</span></h3>
+    <p>Newest pairs / launches for a chain (DexScreener), sorted newest-first.</p>
+    <table class="params">
+      <tr><th>Param</th><th>In</th><th>Description</th></tr>
+      <tr><td><code>chain</code></td><td>query</td><td>Chain id, e.g. <code>solana</code>, <code>ethereum</code> (default solana)</td></tr>
+      <tr><td><code>limit</code></td><td>query</td><td>1–50 (default 20)</td></tr>
+    </table>
+    <div class="tryrow">
+      <input value="solana" aria-label="chain" />
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <div class="ep" data-base="/api/data/v1/token/" data-arg="So11111111111111111111111111111111111111112">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/token/{mint}</span></h3>
+    <p>Full token snapshot: price, price-change windows, liquidity, FDV, volume, txns, and social links (DexScreener).</p>
+    <table class="params">
+      <tr><th>Param</th><th>In</th><th>Description</th></tr>
+      <tr><td><code>mint</code></td><td>path</td><td>Token mint / contract address</td></tr>
+    </table>
+    <div class="tryrow">
+      <input value="So11111111111111111111111111111111111111112" aria-label="mint" />
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <div class="ep" data-base="/api/data/v1/search?q=" data-arg="bonk">
+    <h3><span class="method">GET</span> <span class="path">/api/data/v1/search</span></h3>
+    <p>Search tokens by name/symbol/address (DexScreener).</p>
+    <table class="params">
+      <tr><th>Param</th><th>In</th><th>Description</th></tr>
+      <tr><td><code>q</code></td><td>query</td><td>Search term (required)</td></tr>
+      <tr><td><code>limit</code></td><td>query</td><td>1–50 (default 20)</td></tr>
+    </table>
+    <div class="tryrow">
+      <input value="bonk" aria-label="q" />
+      <button class="try">Try it</button><span class="status"></span>
+    </div>
+    <pre class="out empty">Response appears here…</pre>
+  </div>
+
+  <h2>Example response</h2>
+  <pre class="out">{
+  "ok": true,
+  "source": "coingecko",
+  "cachedAt": "2026-07-16T20:00:00.000Z",
+  "data": {
+    "id": "solana",
+    "symbol": "SOL",
+    "name": "Solana",
+    "price": 168.42,
+    "vs": "usd",
+    "change24h": 3.11,
+    "marketCap": 81234567890,
+    "volume24h": 2456789012
+  }
+}</pre>
+
+  <footer>
+    SHADDAI Crypto Data API · keyless read-only market data · <a href="/api/data/v1/openapi.json">OpenAPI 3</a> · <a href="/api/data/v1/health">/health</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('.ep').forEach(function (ep) {
+    var btn = ep.querySelector('button.try');
+    var out = ep.querySelector('pre.out');
+    var status = ep.querySelector('.status');
+    var input = ep.querySelector('input');
+    var base = ep.getAttribute('data-base');
+    btn.addEventListener('click', async function () {
+      var url = base;
+      if (input) url += encodeURIComponent(input.value.trim());
+      btn.disabled = true; status.textContent = '…'; status.className = 'status';
+      out.classList.remove('empty'); out.textContent = 'Loading ' + url + ' …';
+      var t0 = performance.now();
+      try {
+        var r = await fetch(url, { headers: { accept: 'application/json' } });
+        var j = await r.json();
+        var ms = Math.round(performance.now() - t0);
+        out.textContent = JSON.stringify(j, null, 2);
+        status.textContent = r.status + ' · ' + ms + 'ms';
+        status.className = 'status ' + (r.ok && j.ok !== false ? 'ok' : 'err');
+      } catch (e) {
+        out.textContent = 'Request failed: ' + e.message;
+        status.textContent = 'network error'; status.className = 'status err';
+      } finally { btn.disabled = false; }
+    });
+  });
+})();
+</script>
+
+<script src="/home-btn.js" defer></script>
+</body>
+</html>

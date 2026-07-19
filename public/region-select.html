@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · The Mandala of Realms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --obsidian:#06080b; --obsidian2:#0b1016;
+    --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#c9a6ff;
+    --ink:#e7ecf2; --muted:#7a8794; --crimson:#ff5a4d;
+    --glass:rgba(8,11,16,.82);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--obsidian);color:var(--ink);
+    font-family:"Fraunces",Georgia,serif;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0}
+  canvas{position:absolute;inset:0;display:block}
+
+  /* ---- top wordmark bar ---- */
+  .bar{position:fixed;top:0;left:0;right:0;height:74px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 30px;z-index:20;pointer-events:none;
+    background:linear-gradient(180deg,rgba(6,8,11,.72),rgba(6,8,11,0))}
+  .brand{display:flex;align-items:baseline;gap:16px}
+  .sigil{font-family:"Cinzel",serif;font-weight:700;font-size:22px;letter-spacing:3px;
+    color:var(--gold);text-shadow:0 0 18px rgba(232,196,92,.35);position:relative}
+  .sigil::before{content:"◈";margin-right:12px;color:var(--emerald);
+    text-shadow:0 0 16px rgba(0,255,156,.5)}
+  .sub{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:5px;
+    color:var(--cyan);opacity:.72;text-transform:uppercase}
+  .tools{display:flex;gap:14px;pointer-events:auto}
+  .tbtn{font-family:"IBM Plex Mono",monospace;font-size:15px;width:38px;height:38px;
+    display:grid;place-items:center;border:1px solid rgba(122,135,148,.28);border-radius:50%;
+    background:rgba(10,14,20,.5);color:var(--muted);cursor:pointer;transition:.25s}
+  .tbtn:hover{color:var(--gold);border-color:var(--gold);box-shadow:0 0 16px rgba(232,196,92,.25)}
+
+  /* ---- region info card ---- */
+  .card{position:fixed;top:50%;right:-360px;transform:translateY(-50%);width:312px;z-index:20;
+    padding:22px 22px 24px;border-radius:18px;background:var(--glass);
+    border:1px solid rgba(232,196,92,.28);backdrop-filter:blur(10px);
+    box-shadow:0 24px 60px rgba(0,0,0,.6), 0 0 30px rgba(0,0,0,.4);
+    transition:right .5s cubic-bezier(.16,.84,.24,1), border-color .4s;opacity:.98}
+  .card.show{right:26px}
+  .card .ct{display:flex;align-items:center;gap:12px}
+  .card .cico{width:30px;height:30px;flex:none}
+  .card h2{font-family:"Cinzel",serif;font-weight:600;font-size:18px;letter-spacing:1.5px}
+  .card .seph{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .rule{height:1px;background:linear-gradient(90deg,currentColor,transparent);opacity:.3;margin:15px 0}
+  .row{display:grid;grid-template-columns:64px 1fr;gap:10px;margin:9px 0;align-items:center}
+  .row .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:1.5px;
+    color:var(--muted);text-transform:uppercase}
+  .row .v{font-size:14.5px;line-height:1.35}
+  .dots{display:flex;gap:5px}
+  .dot{width:9px;height:9px;border-radius:50%;background:rgba(122,135,148,.24);
+    box-shadow:inset 0 0 0 1px rgba(122,135,148,.35)}
+  .dot.on{background:var(--crimson);box-shadow:0 0 8px rgba(255,90,77,.6)}
+  .lockmsg{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--crimson);
+    letter-spacing:1px;margin-top:6px;display:none}
+  .card.locked .lockmsg{display:block}
+
+  /* ---- legend ---- */
+  .legend{position:fixed;left:26px;bottom:24px;z-index:20;font-family:"IBM Plex Mono",monospace;
+    font-size:10.5px;letter-spacing:1px;color:var(--muted);display:flex;flex-direction:column;gap:7px;
+    background:rgba(6,8,11,.5);padding:13px 15px;border-radius:12px;border:1px solid rgba(122,135,148,.16)}
+  .legend .lr{display:flex;align-items:center;gap:9px}
+  .swatch{width:26px;height:0;border-top-width:2px;border-top-style:solid}
+
+  /* ---- confirm bar ---- */
+  .confirm{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:20;
+    display:flex;align-items:center;gap:20px;padding:11px 12px 11px 26px;border-radius:999px;
+    background:rgba(6,8,11,.9);border:1px solid rgba(122,135,148,.22);
+    box-shadow:0 18px 44px rgba(0,0,0,.55)}
+  .sel{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:2px;color:var(--muted);
+    text-transform:uppercase;min-width:210px}
+  .sel b{color:var(--ink);font-weight:500}
+  .travel{font-family:"Cinzel",serif;font-weight:600;font-size:14px;letter-spacing:3px;
+    padding:12px 30px;border-radius:999px;border:none;cursor:pointer;text-transform:uppercase;
+    background:linear-gradient(120deg,#2a2411,#3a3316);color:#5a5a52;pointer-events:none;
+    transition:.35s;position:relative;overflow:hidden}
+  .travel.ready{color:#0a0a06;pointer-events:auto;
+    background:linear-gradient(120deg,var(--gold),#fff0c0);
+    box-shadow:0 0 26px rgba(232,196,92,.5);animation:pulseb 2.2s ease-in-out infinite}
+  @keyframes pulseb{0%,100%{box-shadow:0 0 20px rgba(232,196,92,.35)}50%{box-shadow:0 0 34px rgba(232,196,92,.7)}}
+
+  /* node labels (crisp DOM chips) */
+  #labels{position:fixed;inset:0;z-index:15;pointer-events:none}
+  .nlab{position:absolute;transform:translate(-50%,0);text-align:center;transition:opacity .3s}
+  .nlab .nm{font-family:"Cinzel",serif;font-weight:600;font-size:12.5px;letter-spacing:1.5px;
+    white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+  .nlab .rl{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-top:2px}
+
+  .flash{position:fixed;inset:0;z-index:50;background:radial-gradient(circle,#fff,#e8c45c 40%,transparent 70%);
+    opacity:0;pointer-events:none}
+  .vig{position:fixed;inset:0;z-index:10;pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 46%,transparent 40%,rgba(0,0,0,.55) 100%)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div class="vig"></div>
+  <div id="labels"></div>
+</div>
+
+<div class="bar">
+  <div class="brand">
+    <div class="sigil">SHADDAI</div>
+    <div class="sub">Choose Your Realm</div>
+  </div>
+  <div class="tools">
+    <div class="tbtn" id="dn" title="Toggle day / night">☾</div>
+  </div>
+</div>
+
+<div class="card" id="card">
+  <div class="ct"><canvas class="cico" id="cico" width="60" height="60"></canvas>
+    <div><h2 id="cname">—</h2></div></div>
+  <div class="rule" id="crule"></div>
+  <div class="row"><div class="k">Biome</div><div class="v" id="cbiome">—</div></div>
+  <div class="row"><div class="k">Danger</div><div class="v"><div class="dots" id="cdanger"></div></div></div>
+  <div class="row"><div class="k">Here</div><div class="v" id="chere">—</div></div>
+  <div class="row"><div class="k">Work</div><div class="v" id="cjobs">—</div></div>
+  <div class="lockmsg" id="clock">🔒 LOCKED</div>
+</div>
+
+<div class="legend">
+  <div class="lr"><span class="swatch" style="border-color:var(--gold)"></span> Road</div>
+  <div class="lr"><span class="swatch" style="border-color:var(--cyan);border-top-style:dashed"></span> Rail</div>
+  <div class="lr"><span class="swatch" style="border-color:var(--violet);border-top-style:dotted"></span> Boat</div>
+  <div class="lr"><span class="swatch" style="border-color:#fff;border-top-style:dashed;opacity:.5"></span> Air</div>
+</div>
+
+<div class="confirm">
+  <div class="sel" id="sel">▸ Selected: <b>—</b></div>
+  <button class="travel" id="travel">Travel</button>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H,DPR;
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=innerHeight;
+  cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize',resize); resize();
+
+// ---------- REALM DATA ----------
+// hub = SHADDAI City. 6 regions on the ring, CW from top.
+const HUB={ id:'agentcity', name:'SHADDAI City', seph:'KETER · The Crown', accent:'#c9a6ff', accent2:'#e8c45c',
+  biome:'Sacred Capital', danger:1, here:'Volcano · Agents', jobs:'Forge · Exchange', emblem:'city', locked:false };
+const REGIONS=[
+  {id:'meadow', name:'Green Meadow', seph:'CHESED · Mercy',   accent:'#5bd06a', biome:'Farm Valley',  danger:1, here:'Fields · Windmill', jobs:'Harvest · Milling', emblem:'meadow', locked:false},
+  {id:'beach',  name:'Sunny Harbor', seph:'MALKUTH · Kingdom', accent:'#42c8e0', biome:'Coastal Town', danger:2, here:'Docks · Lighthouse', jobs:'Fishing · Cargo',  emblem:'harbor', locked:true,  need:'Reach Lv.3'},
+  {id:'city',   name:'Downtown',     seph:'TIFERET · Beauty',  accent:'#9fb0c4', biome:'Dense City',   danger:1, here:'Towers · Rail',      jobs:'Courier · Banking', emblem:'down',  locked:false},
+  {id:'forest', name:'Wildwood',     seph:'NETZACH · Victory', accent:'#3fae63', biome:'Deep Forest',  danger:4, here:'Trail · Castle',     jobs:'Hunting · Ranger',  emblem:'wood',  locked:true,  need:'Reach Lv.5'},
+  {id:'volcano',name:'Emberfields',  seph:'GEVURAH · Severity',accent:'#ff7a3c', biome:'Volcanic',     danger:5, here:'Vent · Forges',      jobs:'Forging · Mining',  emblem:'ember', locked:true,  need:'Reach Lv.12'},
+  {id:'desert', name:'Dust Canyon',  seph:'HOD · Splendor',    accent:'#e0a85a', biome:'Desert Mesas', danger:3, here:'Oasis · Switchbacks',jobs:'Mining · Escort',   emblem:'dust',  locked:true,  need:'Reach Lv.8'},
+];
+const ALL=[HUB,...REGIONS];
+
+// ---- PREVIEW LOCK: block all worlds while the world is under construction ----
+// Flip to false when the world is ready to enter.
+const WORLDS_LOCKED = true;
+if(WORLDS_LOCKED){ ALL.forEach(r=>{ r.locked=true; r.need=r.need||'Coming soon'; }); }
+
+let dayNight=1;           // 0 day, 1 night
+let hovIdx=-1, selIdx=-1; // -1 none; 0=hub, 1..6 = REGIONS[i-1]
+let shake=0, flying=false;
+
+// ---------- hero backdrops (AI-generated, fal FLUX) ----------
+const heroImgs={};
+['agentcity','meadow','beach','city','forest','volcano','desert'].forEach(id=>{
+  const im=new Image(); im.src='hero/'+(id==='agentcity'?'shaddai-city':id)+'.png'; heroImgs[id]=im; });
+const HERO_BASE=0.34;
+let heroCur='agentcity', heroCurA=HERO_BASE, heroNext=null, heroNextA=0;
+function setHero(id){ if(id===heroCur||id===heroNext) return; heroNext=id; heroNextA=0; }
+function coverDraw(im,alpha){ if(!im||!im.complete||!im.naturalWidth) return;
+  const s=Math.max(W/im.naturalWidth, H/im.naturalHeight);
+  const dw=im.naturalWidth*s, dh=im.naturalHeight*s;
+  ctx.save(); ctx.globalAlpha=alpha; ctx.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh); ctx.restore(); }
+function drawHero(){
+  if(heroNext){ heroNextA=Math.min(HERO_BASE,heroNextA+0.03); heroCurA=Math.max(0,heroCurA-0.03);
+    if(heroNextA>=HERO_BASE){ heroCur=heroNext; heroCurA=HERO_BASE; heroNext=null; heroNextA=0; } }
+  coverDraw(heroImgs[heroCur],heroCurA);
+  if(heroNext) coverDraw(heroImgs[heroNext],heroNextA);
+  // darken so the mandala + text stay legible over the photo
+  ctx.save(); ctx.fillStyle='rgba(4,6,10,0.52)'; ctx.fillRect(0,0,W,H); ctx.restore();
+}
+
+// ---------- geometry ----------
+function center(){ return {x:W*0.5, y:H*0.5-14}; }
+function ringR(){ return Math.min(W,H)*0.335; }
+function nodePos(i){ // i:0 hub, 1..6 ring
+  const c=center();
+  if(i===0) return {x:c.x, y:c.y};
+  const R=ringR(), th=(-90 + (i-1)*60)*Math.PI/180;
+  return {x:c.x+R*Math.cos(th), y:c.y+R*Math.sin(th)};
+}
+function nodeR(i){ return ringR()*(i===0?0.205:0.155); }
+function realm(i){ return i===0?HUB:REGIONS[i-1]; }
+
+// ---------- stars ----------
+const stars=Array.from({length:120},(_,i)=>({x:Math.random(),y:Math.random(),
+  r:Math.random()*1.3+0.2, s:Math.random()*3+1, ph:Math.random()*6.28}));
+
+// ---------- emblems (code-drawn) ----------
+function emblem(g,kind,x,y,s,col){
+  g.save(); g.translate(x,y); g.lineWidth=Math.max(1.4,s*0.09); g.lineJoin='round';g.lineCap='round';
+  g.strokeStyle=col; g.fillStyle=col;
+  if(kind==='city'){ // heptagram + seed
+    g.globalAlpha=1; g.beginPath();
+    for(let k=0;k<7;k++){ const a=(-90+k*(360/7)*3)*Math.PI/180, R=s*0.9;
+      const px=R*Math.cos(a), py=R*Math.sin(a); k?g.lineTo(px,py):g.moveTo(px,py); }
+    g.closePath(); g.stroke();
+    g.globalAlpha=.5; g.beginPath(); g.arc(0,0,s*0.42,0,6.28); g.stroke();
+  } else if(kind==='meadow'){ // hills + tree
+    g.globalAlpha=.95;
+    g.beginPath();g.moveTo(-s,s*.5);g.quadraticCurveTo(-s*.4,-s*.1,0,s*.3);
+    g.quadraticCurveTo(s*.4,-s*.15,s,s*.5);g.stroke();
+    g.beginPath();g.moveTo(s*.25,s*.3);g.lineTo(s*.25,-s*.2);g.stroke();
+    g.beginPath();g.moveTo(s*.25,-s*.55);g.lineTo(s*.55,-s*.1);g.lineTo(-s*.05,-s*.1);g.closePath();g.fill();
+  } else if(kind==='harbor'){ // waves + sail
+    g.globalAlpha=.95;
+    g.beginPath();g.moveTo(0,-s*.85);g.lineTo(0,s*.2);g.lineTo(s*.7,s*.2);g.closePath();g.fill();
+    g.globalAlpha=.85;
+    for(let r=0;r<2;r++){ const yy=s*.5+r*s*.32; g.beginPath();
+      g.moveTo(-s,yy);g.quadraticCurveTo(-s*.5,yy-s*.22,0,yy);
+      g.quadraticCurveTo(s*.5,yy+s*.22,s,yy);g.stroke(); }
+  } else if(kind==='down'){ // skyscrapers
+    g.globalAlpha=.95;
+    const bars=[[-.75,.5,.55],[-.15,.05,.9],[.5,.35,.7]];
+    bars.forEach(([bx,ty,hh])=>{ g.strokeRect(bx*s,-ty*s,s*.4,(ty+.5)*s); });
+    g.globalAlpha=.7; g.fillRect(-s*.02,-s*.55,s*.05,s*.12);
+  } else if(kind==='wood'){ // pines
+    g.globalAlpha=.95;
+    [[-s*.4,0],[s*.4,-s*.1]].forEach(([bx,by])=>{
+      g.beginPath();g.moveTo(bx,by-s*.7);g.lineTo(bx+s*.35,by+s*.25);g.lineTo(bx-s*.35,by+s*.25);g.closePath();g.fill();
+      g.beginPath();g.moveTo(bx,by-s*.35);g.lineTo(bx+s*.42,by+s*.5);g.lineTo(bx-s*.42,by+s*.5);g.closePath();g.fill();});
+  } else if(kind==='ember'){ // volcano + lava
+    g.globalAlpha=.95;
+    g.beginPath();g.moveTo(-s*.85,s*.55);g.lineTo(-s*.3,-s*.4);g.lineTo(s*.3,-s*.4);g.lineTo(s*.85,s*.55);g.closePath();g.stroke();
+    g.beginPath();g.moveTo(-s*.3,-s*.4);g.quadraticCurveTo(0,-s*.55,s*.3,-s*.4);g.stroke();
+    [[-s*.1,-.7],[s*.15,-.85],[0,-.55]].forEach(([px,py])=>{g.beginPath();g.arc(px,py*s,s*.09,0,6.28);g.fill();});
+  } else if(kind==='dust'){ // mesa + cactus
+    g.globalAlpha=.95;
+    g.beginPath();g.moveTo(-s*.9,s*.5);g.lineTo(-s*.55,-s*.2);g.lineTo(s*.3,-s*.2);g.lineTo(s*.6,s*.5);g.closePath();g.stroke();
+    g.beginPath();g.moveTo(s*.55,s*.5);g.lineTo(s*.55,-s*.15);g.moveTo(s*.55,s*.05);g.lineTo(s*.8,s*.05);g.lineTo(s*.8,-s*.15);g.stroke();
+  }
+  g.restore();
+}
+
+// ---------- draw ----------
+function line(g,a,b,col,alpha,dash){ g.save(); g.globalAlpha=alpha; g.strokeStyle=col; g.lineWidth=1.6;
+  if(dash)g.setLineDash(dash); g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke(); g.restore(); }
+
+function frame(t){
+  const c=center(), R=ringR();
+  // bg
+  const bg=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,Math.max(W,H)*0.75);
+  const nightMix=dayNight;
+  bg.addColorStop(0, mix('#12161f','#0b1016',nightMix));
+  bg.addColorStop(1,'#04060a'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  drawHero();
+  // stars
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  for(const s of stars){ const a=(0.25+0.35*(0.5+0.5*Math.sin(t/1000*s.s+s.ph)))*(0.5+0.5*nightMix);
+    ctx.globalAlpha=a; ctx.fillStyle='#dfeaff'; ctx.beginPath();
+    ctx.arc(s.x*W,s.y*H,s.r,0,6.28); ctx.fill(); }
+  ctx.restore();
+
+  // --- sacred underlay: seed of life (hub + 6) + metatron lattice ---
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  ctx.strokeStyle='rgba(0,255,156,0.9)'; ctx.globalAlpha=0.05; ctx.lineWidth=1;
+  const seedR=R*0.5;
+  ctx.beginPath(); ctx.arc(c.x,c.y,seedR,0,6.28); ctx.stroke();
+  for(let k=0;k<6;k++){ const a=k*Math.PI/3; ctx.beginPath();
+    ctx.arc(c.x+seedR*Math.cos(a),c.y+seedR*Math.sin(a),seedR,0,6.28); ctx.stroke(); }
+  // metatron: connect all ring nodes to each other + hub
+  ctx.strokeStyle='rgba(232,196,92,0.9)'; ctx.globalAlpha=0.07;
+  const pts=[nodePos(0),...[1,2,3,4,5,6].map(nodePos)];
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
+  // outer ring circle
+  ctx.strokeStyle='rgba(95,224,255,0.9)'; ctx.globalAlpha=0.08; ctx.beginPath();
+  ctx.arc(c.x,c.y,R,0,6.28); ctx.stroke();
+  ctx.restore();
+
+  // --- travel lines ---
+  const P=i=>nodePos(i);
+  // road: hub -> each open node (gold); ghost if locked
+  for(let i=1;i<=6;i++){ const rg=realm(i); line(ctx,P(0),P(i),'#e8c45c', rg.locked?0.10:0.5, null); }
+  // ring roads between adjacent
+  for(let i=1;i<=6;i++){ const n=(i%6)+1; line(ctx,P(i),P(n),'#e8c45c',0.16,null); }
+  // rail: Downtown(3) <-> Harbor(2) main line + hub->downtown
+  line(ctx,P(3),P(2),'#5fe0ff',0.34,[6,6]); line(ctx,P(0),P(3),'#5fe0ff',0.3,[6,6]);
+  // boat: Harbor(2) <-> Dust(6) estuary
+  line(ctx,P(2),P(6),'#c9a6ff',0.22,[2,8]);
+
+  // --- nodes ---
+  for(let i=0;i<=6;i++){ drawNode(ctx,i,t); }
+
+  // hub light column (ladder to crown)
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  const lg=ctx.createLinearGradient(c.x,c.y-R,c.x,c.y);
+  lg.addColorStop(0,'rgba(0,255,156,0)'); lg.addColorStop(1,'rgba(0,255,156,0.08)');
+  ctx.fillStyle=lg; ctx.fillRect(c.x-14,c.y-R,28,R); ctx.restore();
+
+  // day/night tint
+  ctx.save(); ctx.globalAlpha=1;
+  if(nightMix>0.5){ ctx.fillStyle='rgba(24,20,60,'+(0.14*nightMix)+')'; }
+  else { ctx.fillStyle='rgba(232,196,92,'+(0.05*(1-nightMix))+')'; }
+  ctx.fillRect(0,0,W,H); ctx.restore();
+
+  positionLabels();
+  requestAnimationFrame(frame);
+}
+
+function drawNode(g,i,t){
+  const p=nodePos(i), nr=nodeR(i), rg=realm(i);
+  const hovered=(hovIdx===i), selected=(selIdx===i);
+  let sx=p.x, sy=p.y;
+  if(hovered && rg.locked && shake>0){ sx+=Math.sin(t/30)*shake; }
+  const breathe=1+0.03*Math.sin(t/600+i*1.3);
+  const rr=nr*breathe*(hovered?1.08:1);
+  const acc=rg.accent, acc2=rg.accent2||rg.accent;
+
+  // territory glow
+  g.save(); g.globalCompositeOperation='lighter';
+  const gl=g.createRadialGradient(sx,sy,0,sx,sy,rr*(hovered?2.8:2.2));
+  const gA=rg.locked?0.04:(hovered?0.34:0.2);
+  gl.addColorStop(0,hexA(acc,gA)); gl.addColorStop(1,hexA(acc,0));
+  g.fillStyle=gl; g.beginPath(); g.arc(sx,sy,rr*2.8,0,6.28); g.fill(); g.restore();
+
+  // disc well
+  const dg=g.createRadialGradient(sx,sy,0,sx,sy,rr);
+  dg.addColorStop(0,'#0c1218'); dg.addColorStop(1,'#05070b');
+  g.fillStyle=dg; g.beginPath(); g.arc(sx,sy,rr,0,6.28); g.fill();
+
+  // chakra double ring
+  g.save();
+  g.globalAlpha=rg.locked?0.4:1;
+  g.strokeStyle=acc; g.lineWidth=rr*0.11; g.shadowColor=acc; g.shadowBlur=rg.locked?0:14;
+  g.beginPath(); g.arc(sx,sy,rr,0,6.28); g.stroke();
+  g.shadowBlur=0; g.globalAlpha=(rg.locked?0.2:0.35);
+  g.strokeStyle=acc2; g.lineWidth=rr*0.05; g.beginPath(); g.arc(sx,sy,rr*0.8,0,6.28); g.stroke();
+  g.restore();
+
+  // emblem
+  g.save(); g.globalAlpha=rg.locked?0.32:1;
+  emblem(g, rg.emblem, sx, sy, rr*0.52, rg.locked?'#7a8794':(i===0?'#d9c9ff':acc));
+  // hub rotating heptagram overlay
+  if(i===0){ g.save(); g.translate(sx,sy); g.rotate(performance.now()/4000);
+    g.globalAlpha=0.5; emblem(g,'city',0,0,rr*0.52,'#e8c45c'); g.restore(); }
+  g.restore();
+
+  // lock padlock
+  if(rg.locked){ g.save(); g.translate(sx,sy+rr*0.02); g.strokeStyle='#e8c45c'; g.fillStyle='#e8c45c';
+    g.globalAlpha=0.9; g.lineWidth=rr*0.06;
+    g.strokeRect(-rr*0.2,0,rr*0.4,rr*0.32);
+    g.beginPath(); g.arc(0,0,rr*0.15,Math.PI,0); g.stroke(); g.restore(); }
+
+  // selection ring
+  if(selected){ g.save(); g.strokeStyle='#e8c45c'; g.lineWidth=2.2; g.globalAlpha=0.9;
+    g.setLineDash([7,7]); g.lineDashOffset=-performance.now()/60;
+    g.shadowColor='#e8c45c'; g.shadowBlur=16;
+    g.beginPath(); g.arc(sx,sy,rr*1.26,0,6.28); g.stroke(); g.restore(); }
+}
+
+// ---------- labels ----------
+const lwrap=document.getElementById('labels'); let labelEls=[];
+function buildLabels(){ lwrap.innerHTML=''; labelEls=[];
+  for(let i=0;i<=6;i++){ const rg=realm(i);
+    const d=document.createElement('div'); d.className='nlab';
+    d.innerHTML='<div class="nm" style="color:'+(rg.locked?'#8a94a0':rg.accent)+'">'+rg.name+'</div>'+
+                '<div class="rl">'+rg.biome+'</div>';
+    lwrap.appendChild(d); labelEls.push(d); } }
+function positionLabels(){ for(let i=0;i<=6;i++){ const p=nodePos(i), nr=nodeR(i);
+  const e=labelEls[i]; e.style.left=p.x+'px'; e.style.top=(p.y+nr+9)+'px';
+  e.style.opacity=(hovIdx===-1||hovIdx===i||i===0)?1:0.4; } }
+
+// ---------- interaction ----------
+function pick(mx,my){ for(let i=0;i<=6;i++){ const p=nodePos(i), nr=nodeR(i);
+  if(Math.hypot(mx-p.x,my-p.y) < nr*1.3) return i; } return -1; }
+cv.addEventListener('mousemove',e=>{ const i=pick(e.clientX,e.clientY);
+  if(i!==hovIdx){ hovIdx=i; cv.style.cursor=i>=0?'pointer':'default';
+    if(i>=0){ showCard(realm(i)); if(realm(i).locked){shake=2;setTimeout(()=>shake=0,320);} }
+    else if(selIdx<0) hideCard(); else showCard(realm(selIdx)); } });
+cv.addEventListener('click',e=>{ const i=pick(e.clientX,e.clientY); if(i<0) return;
+  const rg=realm(i);
+  if(rg.locked){ shake=3; setTimeout(()=>shake=0,340); return; }
+  selIdx=i; showCard(rg);
+  document.getElementById('sel').innerHTML='▸ Selected: <b style="color:'+rg.accent+'">'+rg.name+'</b>';
+  const tb=document.getElementById('travel'); tb.classList.add('ready');
+  tb.style.background='linear-gradient(120deg,'+rg.accent+',#fff)';
+});
+
+// card
+const card=document.getElementById('card');
+function showCard(rg){
+  setHero(rg.id);
+  card.classList.add('show'); card.classList.toggle('locked',!!rg.locked);
+  card.style.borderColor=hexA(rg.accent,0.4); card.style.color=rg.accent;
+  document.getElementById('cname').textContent=rg.name;
+  document.getElementById('cname').style.color=rg.accent;
+  document.getElementById('cbiome').textContent=rg.biome;
+  document.getElementById('chere').textContent=rg.here;
+  document.getElementById('cjobs').textContent=rg.jobs;
+  const dd=document.getElementById('cdanger'); dd.innerHTML='';
+  for(let k=0;k<5;k++){ const s=document.createElement('span');
+    s.className='dot'+(k<rg.danger?' on':''); dd.appendChild(s); }
+  document.getElementById('clock').textContent='🔒 '+(rg.need||'LOCKED');
+  const ic=document.getElementById('cico'), g=ic.getContext('2d');
+  g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,60,60);
+  emblem(g,rg.emblem,30,30,17,rg.locked?'#8a94a0':rg.accent);
+}
+function hideCard(){ card.classList.remove('show'); }
+
+// day/night
+let dnTarget=1; document.getElementById('dn').addEventListener('click',function(){
+  dnTarget=dnTarget>0.5?0:1; this.textContent=dnTarget>0.5?'☾':'☀'; });
+setInterval(()=>{ dayNight+=(dnTarget-dayNight)*0.12; },16);
+
+// travel fly-in
+document.getElementById('travel').addEventListener('click',()=>{
+  if(selIdx<0||flying) return; flying=true;
+  const fl=document.getElementById('flash');
+  fl.style.transition='opacity .7s ease-in'; fl.style.opacity='1';
+  setTimeout(()=>{
+    const rg=realm(selIdx);
+    // hand off to the game world with the chosen region + forged character
+    try{ localStorage.setItem('shaddai.region', rg.id); }catch(e){}
+    location.href='game.html?v='+Math.floor(performance.now());
+  },700);
+});
+
+if(WORLDS_LOCKED){ document.getElementById('travel').textContent='Coming Soon';
+  document.getElementById('sel').innerHTML='▸ <b style="color:var(--gold)">Realms open soon</b>'; }
+buildLabels(); requestAnimationFrame(frame);
+
+// ---------- color utils ----------
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+function mix(h1,h2,t){ const a=parseInt(h1.slice(1),16),b=parseInt(h2.slice(1),16);
+  const r=Math.round(((a>>16&255)*(1-t))+((b>>16&255)*t));
+  const g=Math.round(((a>>8&255)*(1-t))+((b>>8&255)*t));
+  const bl=Math.round(((a&255)*(1-t))+((b&255)*t));
+  return 'rgb('+r+','+g+','+bl+')'; }
+</script>
+
+<script src="/home-btn.js" defer></script>
+</body>
+</html>

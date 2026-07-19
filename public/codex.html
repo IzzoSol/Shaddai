@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>(function(){try{var t=localStorage.getItem('shaddai-theme');document.documentElement.setAttribute('data-theme',(t==='neon'||t==='codex')?t:'codex');}catch(e){document.documentElement.setAttribute('data-theme','codex');}})();</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SHADDAI — Sovereign AI Agent Empire · The Celestial Almanac</title>
@@ -111,6 +112,45 @@
   .lede{ max-width:640px; margin:14px auto 0; text-align:center; font-size:17px; color:var(--ink2); font-style:italic; }
   @media(max-width:720px){ .ledger{ grid-template-columns:1fr; } .read{ border-right:none; border-bottom:1px solid rgba(25,21,16,.25); } .op{ grid-template-columns:38px 1fr; } .op .sig{ display:none; } }
 
+  /* bar left cluster */
+  .barL{ display:flex; align-items:center; gap:18px; }
+  .barEnter{ color:var(--gold); }
+
+  /* the Seven — one light line */
+  .seven-line{ margin-top:16px; font-style:italic; font-size:16px; color:var(--ink2); }
+  .seven-line .nm{ font-family:'Cinzel',serif; font-style:normal; font-weight:700; letter-spacing:.06em; color:var(--ink); font-size:14px; }
+  .seven-line a.more{ display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-style:normal; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); border-bottom:1px solid var(--gold); }
+
+  /* directory — grouped index */
+  .dir-group{ margin-top:26px; }
+  .dir-group .gh{ display:flex; align-items:baseline; gap:12px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); border-bottom:1px solid rgba(156,124,38,.4); padding-bottom:6px; }
+  .dir-group .gh .gg{ font-family:'Cinzel',serif; font-size:15px; }
+  .dir-rows{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:0 28px; margin-top:4px; }
+  .dir-item{ display:flex; align-items:baseline; gap:10px; padding:11px 4px; border-bottom:1px solid rgba(25,21,16,.16); position:relative; transition:padding-left .3s, background .3s; }
+  .dir-item:hover{ background:var(--paper2); padding-left:12px; }
+  .dir-item::before{ content:''; position:absolute; left:0; top:50%; width:0; height:1px; background:var(--gold); transition:width .3s; }
+  .dir-item:hover::before{ width:7px; }
+  .dir-item .dn{ font-family:'Cinzel',serif; font-weight:700; font-size:15px; letter-spacing:.05em; }
+  .dir-item .dp{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--gold); white-space:nowrap; }
+  .dir-item .sub-note{ display:block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); margin-top:3px; }
+
+  /* architecture diagram */
+  .arch{ margin-top:14px; }
+  .arch-svg{ width:100%; height:auto; display:block; font-family:'IBM Plex Mono',monospace; }
+  .arch-legend{ display:flex; flex-wrap:wrap; gap:10px 20px; margin-top:16px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); }
+  .arch-legend b{ color:var(--gold); font-weight:600; }
+  .arch-note{ font-style:italic; font-size:14px; color:var(--ink2); margin-top:14px; max-width:680px; }
+
+  /* prose blocks (docs / whitepaper / roadmap) */
+  .prose{ margin-top:14px; max-width:720px; font-size:16px; color:var(--ink2); line-height:1.6; }
+  .prose p{ margin:0 0 14px; }
+  .wip{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--gold); border:1px solid var(--gold); padding:3px 10px; border-radius:2px; margin-bottom:12px; }
+  .road{ list-style:none; padding:0; margin:14px 0 0; }
+  .road li{ display:flex; gap:14px; align-items:baseline; padding:12px 4px; border-bottom:1px solid rgba(25,21,16,.16); font-size:15.5px; color:var(--ink); }
+  .road li .rp{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; padding:3px 8px; border:1px solid var(--gold); color:var(--gold); border-radius:2px; white-space:nowrap; }
+  .road li .rp.done{ background:var(--gold); color:var(--paper); }
+  .road li em{ font-style:italic; color:var(--ink2); }
+
   /* ═══════════ THEME SYSTEM + PREMIUM ACCENTS (Almanac ⇄ Obsidian) ═══════════ */
   :root{
     --edge:var(--ink);
@@ -125,7 +165,7 @@
     --moteColor:rgba(156,124,38,.5);
     --lineColor:rgba(123,45,38,.18);
   }
-  html[data-theme="obsidian"]{
+  html[data-theme="neon"]{
     --paper:#0a0910; --paper2:#15121f; --ink:#f0e7cf; --ink2:#a99f86;
     --gold:#e8c45c; --gold2:#ffe38f; --ox:var(--ink2); --faint:#5f5943;
     --edge:rgba(232,196,92,.5);
@@ -141,15 +181,28 @@
     --moteColor:rgba(232,196,92,.72);
     --lineColor:rgba(79,214,224,.20);
   }
-  html[data-theme="obsidian"] body{
+  html[data-theme="neon"] body{
     background-image:
       radial-gradient(1200px 700px at 78% -10%, rgba(232,196,92,.12), transparent 60%),
       radial-gradient(900px 600px at -5% 108%, rgba(79,214,224,.10), transparent 55%),
       radial-gradient(700px 520px at 50% 60%, rgba(239,95,79,.045), transparent 60%);
   }
-  html[data-theme="obsidian"] .read,
-  html[data-theme="obsidian"] .op,
-  html[data-theme="obsidian"] .steps li{ border-color:rgba(232,196,92,.16); }
+  html[data-theme="neon"] .read,
+  html[data-theme="neon"] .op,
+  html[data-theme="neon"] .steps li,
+  html[data-theme="neon"] .dir-item,
+  html[data-theme="neon"] .road li{ border-color:rgba(232,196,92,.16); }
+  html[data-theme="neon"] .dir-group .gh{ border-bottom-color:rgba(232,196,92,.35); }
+  html[data-theme="neon"] .dir-item:hover,
+  html[data-theme="neon"] .seven-line .nm{ color:var(--ink); }
+  html[data-theme="neon"] .arch-svg .a-node{ fill:#15121f; stroke:var(--gold); }
+  html[data-theme="neon"] .arch-svg .a-aura{ fill:rgba(232,196,92,.08); }
+  html[data-theme="neon"] .arch-svg text{ fill:var(--ink); }
+  html[data-theme="neon"] .arch-svg .a-flow{ stroke:var(--gold); }
+  html[data-theme="neon"] .arch-svg .a-rail{ stroke:rgba(79,214,224,.55); }
+  html[data-theme="neon"] .arch-svg .a-rail-t{ fill:#7fe3ea; }
+  html[data-theme="neon"] .arch-svg .a-pillar{ fill:var(--gold); }
+  html[data-theme="neon"] .arch-svg .a-glow{ filter:drop-shadow(0 0 6px rgba(232,196,92,.4)); }
   body{ transition:background-color .5s ease, color .5s ease; }
 
   /* glow accents wired to theme tokens */
@@ -242,7 +295,10 @@
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
   <div id="cursorGlow" aria-hidden="true"></div>
   <div class="bar">
-    <a class="back" href="/dashboard">← Enter the Dashboard</a>
+    <span class="barL">
+      <a class="back" href="/home.html" title="Return home">⌂ Home</a>
+      <a class="back barEnter" href="/dashboard" title="Enter the Command Deck">→ Enter Dashboard</a>
+    </span>
     <span class="mid" id="edition">Vol. I · Anno MMXXVI</span>
     <span class="st" id="status">Council convened</span>
     <button id="themeBtn" type="button" onclick="__toggleTheme()" title="Switch theme"><span class="dot"></span><span class="lbl">Almanac</span></button>
@@ -271,12 +327,16 @@
     </header>
 
     <section class="sect">
-      <div class="head"><span class="num">I.</span><span class="name">The Council</span><span class="tail" id="councilTail">seven seated</span></div>
-      <div class="roster" id="roster"><div class="op"><span class="idx">·</span><span><span class="nm">Summoning…</span></span></div></div>
+      <div class="head"><span class="num">I.</span><span class="name">Preamble</span><span class="tail">the seven, seated</span></div>
+      <p class="seven-line" id="sevenLine">The Council numbers seven —
+        <span class="nm">SHADDAI</span>, <span class="nm">NEXUS</span>, <span class="nm">ZEROX</span>, <span class="nm">ORACLE</span>, <span class="nm">TURTLE</span>, <span class="nm">QUILL</span> &amp; <span class="nm">PIKADON</span> —
+        each a mind unto its craft: strategy, architecture, wealth, research, design, word, and ward.
+        <a class="more" href="/agents.html">Meet the Seven in full →</a>
+      </p>
     </section>
 
     <section class="sect">
-      <div class="head"><span class="num">II.</span><span class="name">The AURA Ledger</span><span class="tail" id="ledgerTail">coin spared</span></div>
+      <div class="head"><span class="num">II.</span><span class="name">The Ledger of Labour</span><span class="tail" id="ledgerTail">coin spared</span></div>
       <div id="auraEveryUse" style="display:none;margin:0 auto 14px;padding:8px 18px;border:1px solid var(--gold);background:rgba(0,0,0,0.12);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-align:center;max-width:460px">
         ✦ Every use saves tokens — compression fires on cache hits and LLM misses alike ✦
       </div>
@@ -292,21 +352,194 @@
     </section>
 
     <section class="sect">
-      <div class="head"><span class="num">III.</span><span class="name">Instruments</span><span class="tail">enter the works</span></div>
-      <div class="instr">
-        <a class="lk" href="/aura.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⚖</span>The AURA Ledger<span class="arrow">observe the savings →</span></a>
-        <a class="lk" href="/forge-about.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⚒</span>The Forge<span class="arrow">learn the craft →</span></a>
-        <a class="lk" href="/world"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">✦</span>Shaddai World<span class="arrow">walk among them →</span></a>
-        <a class="lk" href="/arcade.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">◈</span>Shaddai Games<span class="arrow">enter the arcade →</span></a>
-        <a class="lk" href="/athenaeum.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⟁</span>The Athenaeum<span class="arrow">Oracle's observatory · Quill's library · Turtle's Museum →</span></a>
-        <a class="lk" href="/zerox-markets.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">₿</span>ZEROX · Market Nexus<span class="arrow">live BTC · SOL · ETH · SpaceX →</span></a>
-        <a class="lk" href="/creative-studio.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">✦</span>TURTLE · Creative Studio<span class="arrow">beats · melody · sonify · hertz · art →</span></a>
-        <a class="lk" href="/pricing.html"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">☽</span>The Covenant<span class="arrow">choose thy plan →</span></a>
+      <div class="head"><span class="num">III.</span><span class="name">The Directory</span><span class="tail">nothing buried</span></div>
+      <p class="lede" style="margin:14px auto 0;max-width:640px">An index of every hall, tool &amp; surface — grouped under the eight tabs, so nothing is ever lost to the margins.</p>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">⟐</span> Worlds — the ways in</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/dashboard"><span class="dn">Command Deck</span><span class="dp">/dashboard</span></a>
+          <a class="dir-item" href="/SHADDAI-WORLD-3D.html"><span class="dn">3D World</span><span class="dp">/SHADDAI-WORLD-3D.html</span></a>
+          <a class="dir-item" href="/pixel-city.html"><span class="dn">Pixel City</span><span class="dp">/pixel-city.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">☰</span> Council — the seven &amp; their halls</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/agents.html"><span class="dn">Meet the Seven</span><span class="dp">/agents.html</span></a>
+          <a class="dir-item" href="/athenaeum.html"><span class="dn">The Athenaeum<span class="sub-note">Observatory · Library · Museum</span></span><span class="dp">/athenaeum.html</span></a>
+          <a class="dir-item" href="/oracle-sky.html"><span class="dn">Oracle's Observatory</span><span class="dp">/oracle-sky.html</span></a>
+          <a class="dir-item" href="/library.html"><span class="dn">Quill's Library</span><span class="dp">/library.html</span></a>
+          <a class="dir-item" href="/museum.html"><span class="dn">Turtle's Museum</span><span class="dp">/museum.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">⚒</span> Create — make things</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/forge.html"><span class="dn">The Forge</span><span class="dp">/forge.html</span></a>
+          <a class="dir-item" href="/creative-studio.html"><span class="dn">Creative Studio</span><span class="dp">/creative-studio.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">◇</span> Play — the arcade</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/arcade.html"><span class="dn">The Arcade</span><span class="dp">/arcade.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">₿</span> Signals — ZEROX markets &amp; signals</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/zerox-markets.html"><span class="dn">ZEROX Markets</span><span class="dp">/zerox-markets.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">⚖</span> AURA — the token-saver</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/aura.html"><span class="dn">The AURA Engine</span><span class="dp">/aura.html</span></a>
+        </div>
+      </div>
+
+      <div class="dir-group">
+        <div class="gh"><span class="gg">◈</span> Shop — the bazaar &amp; economy</div>
+        <div class="dir-rows">
+          <a class="dir-item" href="/marketplace-shop-v2.html"><span class="dn">The Bazaar</span><span class="dp">/marketplace-shop-v2.html</span></a>
+          <a class="dir-item" href="/collectibles-nft.html"><span class="dn">Collectibles</span><span class="dp">/collectibles-nft.html</span></a>
+          <a class="dir-item" href="/solana-pay.html"><span class="dn">Checkout · Solana Pay</span><span class="dp">/solana-pay.html</span></a>
+        </div>
       </div>
     </section>
 
     <section class="sect">
-      <div class="head"><span class="num">IV.</span><span class="name">Join the Circle</span><span class="tail">be counted</span></div>
+      <div class="head"><span class="num">IV.</span><span class="name">How It Works</span><span class="tail">the empire at a glance</span></div>
+      <p class="lede" style="margin:14px auto 0;max-width:640px">Your context passes through the Seven, is refined by the AURA engine, and returns as wrought output — all upon open rails.</p>
+      <div class="arch">
+        <svg class="arch-svg" viewBox="0 0 960 420" role="img" aria-label="SHADDAI architecture: your context flows to the seven agents, through the AURA engine (compress, compute, cache, distill), to output — over x402 payment rails, MCP, and BYOK.">
+          <defs>
+            <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--gold,#9c7c26)"/></marker>
+          </defs>
+          <style>
+            .arch-svg .a-node{ fill:#f4eedf; stroke:#191510; stroke-width:1.4; }
+            .arch-svg .a-aura{ fill:rgba(156,124,38,.09); stroke:#9c7c26; stroke-width:1.6; }
+            .arch-svg text{ fill:#191510; }
+            .arch-svg .t-h{ font-family:'Cinzel',serif; font-weight:700; letter-spacing:.06em; }
+            .arch-svg .t-m{ font-family:'IBM Plex Mono',monospace; }
+            .arch-svg .a-flow{ stroke:#9c7c26; stroke-width:2; fill:none; }
+            .arch-svg .a-rail{ stroke:#7b2d26; stroke-width:1.3; stroke-dasharray:5 5; fill:none; }
+            .arch-svg .a-rail-t{ fill:#7b2d26; }
+            .arch-svg .a-pillar{ fill:#9c7c26; }
+          </style>
+
+          <!-- side rails -->
+          <line class="a-rail" x1="40" y1="70" x2="920" y2="70"/>
+          <line class="a-rail" x1="40" y1="352" x2="920" y2="352"/>
+          <text class="t-m a-rail-t" x="48" y="60" font-size="12" letter-spacing="2">x402 PAYMENT RAILS</text>
+          <text class="t-m a-rail-t" x="48" y="372" font-size="12" letter-spacing="2">MCP · BYOK (YOUR OWN KEY)</text>
+
+          <!-- your context -->
+          <rect class="a-node" x="30" y="150" width="150" height="120" rx="6"/>
+          <text class="t-h" x="105" y="200" font-size="16" text-anchor="middle">YOUR</text>
+          <text class="t-h" x="105" y="222" font-size="16" text-anchor="middle">CONTEXT</text>
+          <text class="t-m" x="105" y="246" font-size="10" text-anchor="middle">prompt · files · task</text>
+
+          <!-- the seven / council -->
+          <rect class="a-node" x="250" y="130" width="180" height="160" rx="6"/>
+          <text class="t-h" x="340" y="168" font-size="16" text-anchor="middle">THE COUNCIL</text>
+          <text class="t-m" x="340" y="188" font-size="10" text-anchor="middle">the 7 agents</text>
+          <g class="t-m" font-size="9.5" text-anchor="middle" fill="#3b342a">
+            <text x="285" y="214">SHADDAI</text><text x="395" y="214">NEXUS</text>
+            <text x="285" y="234">ZEROX</text><text x="395" y="234">ORACLE</text>
+            <text x="285" y="254">TURTLE</text><text x="395" y="254">QUILL</text>
+            <text x="340" y="274">PIKADON</text>
+          </g>
+
+          <!-- AURA engine -->
+          <rect class="a-aura" x="500" y="120" width="230" height="180" rx="8"/>
+          <text class="t-h" x="615" y="150" font-size="16" text-anchor="middle">AURA ENGINE</text>
+          <g>
+            <circle class="a-pillar" cx="548" cy="188" r="4"/><text class="t-m" x="562" y="192" font-size="11">Compress</text>
+            <circle class="a-pillar" cx="548" cy="216" r="4"/><text class="t-m" x="562" y="220" font-size="11">Compute</text>
+            <circle class="a-pillar" cx="548" cy="244" r="4"/><text class="t-m" x="562" y="248" font-size="11">Cache</text>
+            <circle class="a-pillar" cx="548" cy="272" r="4"/><text class="t-m" x="562" y="276" font-size="11">Distill</text>
+          </g>
+          <text class="t-m" x="700" y="192" font-size="8.5" fill="#3b342a">trim bloat</text>
+          <text class="t-m" x="700" y="220" font-size="8.5" fill="#3b342a">answer free</text>
+          <text class="t-m" x="700" y="248" font-size="8.5" fill="#3b342a">reuse pulls</text>
+          <text class="t-m" x="686" y="276" font-size="8.5" fill="#3b342a">strip repeats,</text>
+          <text class="t-m" x="686" y="287" font-size="8.5" fill="#3b342a">spare safety</text>
+
+          <!-- output -->
+          <rect class="a-node" x="800" y="150" width="130" height="120" rx="6"/>
+          <text class="t-h" x="865" y="205" font-size="16" text-anchor="middle">OUTPUT</text>
+          <text class="t-m" x="865" y="228" font-size="10" text-anchor="middle">wrought &amp;</text>
+          <text class="t-m" x="865" y="242" font-size="10" text-anchor="middle">returned</text>
+
+          <!-- flows -->
+          <line class="a-flow" x1="180" y1="210" x2="248" y2="210" marker-end="url(#arw)"/>
+          <line class="a-flow" x1="430" y1="210" x2="498" y2="210" marker-end="url(#arw)"/>
+          <line class="a-flow" x1="730" y1="210" x2="798" y2="210" marker-end="url(#arw)"/>
+        </svg>
+      </div>
+      <div class="arch-legend">
+        <span><b>x402</b> — pay-per-call rails</span>
+        <span><b>MCP</b> — model-context protocol tools</span>
+        <span><b>BYOK</b> — bring your own free key</span>
+      </div>
+      <p class="arch-note"><strong>Distillation</strong> is AURA's fourth pillar: it strips the instruction that merely repeats itself from a prompt before it is ever sent — yet spares every rule of <em>safety</em>, of <em>format</em>, and of <em>routing</em> — so coin is pared without dulling the blade.</p>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">V.</span><span class="name">Docs</span><span class="tail">guides &amp; setup</span></div>
+      <a id="docs"></a>
+      <div class="prose">
+        <span class="wip">Dedicated page in progress</span>
+        <p>The full Docs — setup guides, the Forge walkthrough, BYOK key configuration, and Telegram-bot instructions — are being bound into their own volume. Until then, the <a class="more" href="/aura.html" style="border-bottom:1px solid var(--gold);color:var(--gold)">AURA page</a> and the diagram above stand as the working reference.</p>
+      </div>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">VI.</span><span class="name">Whitepaper</span><span class="tail">the full account</span></div>
+      <a id="whitepaper"></a>
+      <div class="prose">
+        <span class="wip">Work in progress</span>
+        <p>The SHADDAI whitepaper — the sovereign-agent economy, the AURA savings model, and the open rails (x402 · MCP · BYOK) that carry it — is being written. For now, the <a href="#" onclick="document.querySelector('.arch').scrollIntoView({behavior:'smooth'});return false;" class="more" style="border-bottom:1px solid var(--gold);color:var(--gold)">architecture diagram</a> stands in as the canonical overview.</p>
+      </div>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">VII.</span><span class="name">Plans · Roadmap</span><span class="tail">where it goes</span></div>
+      <ul class="road">
+        <li><span class="rp done">Now</span> <span><strong>Public Beta</strong> — the Council, the Forge, the 3D world, AURA live, and open browsing. <em>Sign in to create &amp; save.</em></span></li>
+        <li><span class="rp">Next</span> <span><strong>Pixel Forge + 3D Forge</strong> — two build modes, both open; forged agents flow Forge → Rooms → Dashboard.</span></li>
+        <li><span class="rp">Next</span> <span><strong>Expanded Markets</strong> — Sentiment, Signals, and the SHADDAI Telegram bot.</span></li>
+        <li><span class="rp">Next</span> <span><strong>The Economy</strong> — bazaar, cosmetics, workflows &amp; knowledge packs, on Solana rails.</span></li>
+        <li><span class="rp">Later</span> <span><strong>AURA deepened</strong> — richer distillation, semantic caching, and the open-source MCP server.</span></li>
+      </ul>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">VIII.</span><span class="name">GitHub</span><span class="tail">the source</span></div>
+      <div class="instr" style="margin-top:14px">
+        <a class="lk" href="https://github.com/IzzoSol" target="_blank" rel="noopener"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⌥</span>SHADDAI on GitHub<span class="arrow">IzzoSol · repos (general link) →</span></a>
+        <a class="lk" href="https://www.npmjs.com/package/shaddai-aura" target="_blank" rel="noopener"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">⚖</span>AURA · npm<span class="arrow">shaddai-aura (open source) →</span></a>
+      </div>
+      <p class="arch-note" style="margin-top:10px">Note: the GitHub link points to the <strong>IzzoSol</strong> profile as a general entry point — swap in the exact public repo URLs once confirmed.</p>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">IX.</span><span class="name">Socials</span><span class="tail">walk on the wires</span></div>
+      <div class="instr" style="margin-top:14px">
+        <a class="lk" href="https://t.me/shaddaicircle" target="_blank" rel="noopener"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">✈</span>Telegram · @shaddaicircle<span class="arrow">join the circle →</span></a>
+        <a class="lk" href="https://x.com/shaddaiai" target="_blank" rel="noopener"><span class="corner c1"></span><span class="corner c2"></span><span class="lk-glyph">𝕏</span>X · @shaddaiai<span class="arrow">follow the empire →</span></a>
+      </div>
+    </section>
+
+    <section class="sect">
+      <div class="head"><span class="num">X.</span><span class="name">Join the Circle</span><span class="tail">be counted</span></div>
       <p class="lede" style="margin:14px auto 18px">SHADDAI is in <strong>public beta</strong>. Leave thy mark to receive word of new powers, and walk with the Council on the wires.</p>
       <form id="joinForm" onsubmit="return joinCircle(event)" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:22px">
         <input id="joinEmail" type="email" required placeholder="thy@email.address"
@@ -367,23 +600,6 @@
       el.innerHTML = v.toLocaleString() + (suffix?`<small>${suffix}</small>`:''); if(k<1) requestAnimationFrame(s); })(t0);
   }
 
-  async function loadCouncil(){
-    let agents=null;
-    try{ const r=await fetch('/api/agents'); const j=await r.json(); agents=Array.isArray(j)?j:(j.agents||j.data||null); }catch(e){}
-    const names = (agents&&agents.length)
-      ? agents.map(a=>String(a.name||a.id||'').toUpperCase()).filter(Boolean)
-      : ORDER;
-    const seen = ORDER.filter(n=>names.includes(n)).concat(names.filter(n=>!ORDER.includes(n)));
-    const list = seen.length?seen:ORDER;
-    $('roster').innerHTML = list.slice(0,9).map((n,i)=>`
-      <div class="op">
-        <span class="idx">${roman[i]||i+1}</span>
-        <span><span class="nm">${esc(n)}</span><div class="rl">${esc(ROLES[n]||'Operative of the Empire')}</div></span>
-        <span class="sig">seated</span>
-      </div>`).join('');
-    $('councilTail').textContent = list.length+' seated';
-  }
-
   async function loadLedger(){
     try{
       const s = await (await fetch('/api/aura/stats')).json();
@@ -405,17 +621,17 @@
     }catch(e){ $('rHit').textContent='—'; }
   }
 
-  loadCouncil(); loadLedger(); setInterval(loadLedger, 4000);
+  loadLedger(); setInterval(loadLedger, 4000);
 </script>
 <script>
 /* ═══ Theme switcher + premium mouse/3D effects (shared with forge-about.html) ═══ */
 (function(){
-  var root=document.documentElement, KEY='shaddai-theme', THEMES=['almanac','obsidian'];
-  function applyTheme(t){ if(THEMES.indexOf(t)<0)t='almanac'; root.setAttribute('data-theme',t);
-    var b=document.getElementById('themeBtn'); if(b){ var lbl=b.querySelector('.lbl'); if(lbl)lbl.textContent=(t==='obsidian'?'Obsidian':'Almanac'); b.setAttribute('aria-label','Theme: '+t); } }
+  var root=document.documentElement, KEY='shaddai-theme', THEMES=['codex','neon'];  /* unified with home.html */
+  function applyTheme(t){ if(THEMES.indexOf(t)<0)t='codex'; root.setAttribute('data-theme',t);
+    var b=document.getElementById('themeBtn'); if(b){ var lbl=b.querySelector('.lbl'); if(lbl)lbl.textContent=(t==='neon'?'Terminal':'Codex'); b.setAttribute('aria-label','Theme: '+t); } }
   var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
-  applyTheme(saved||'almanac');
-  window.__toggleTheme=function(){ var cur=root.getAttribute('data-theme')||'almanac', next=cur==='almanac'?'obsidian':'almanac'; applyTheme(next); try{ localStorage.setItem(KEY,next); }catch(e){} };
+  applyTheme(saved||'codex');
+  window.__toggleTheme=function(){ var cur=root.getAttribute('data-theme')||'codex', next=cur==='codex'?'neon':'codex'; applyTheme(next); try{ localStorage.setItem(KEY,next); }catch(e){} };
 
   var reduce=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false;
   var touch=window.matchMedia?matchMedia('(hover: none), (pointer: coarse)').matches:false;
@@ -468,5 +684,45 @@
   }
 })();
 </script>
+<script>
+/* ═══ Cinematic scroll layer (additive) — reveals + progress rule ═══ */
+(function(){
+  var reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+
+  // inject styles (avoids touching <head>)
+  var css = document.createElement('style');
+  css.textContent =
+    '.cx-rv{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}'+
+    '.cx-rv.cx-in{opacity:1;transform:none}'+
+    '#cxProg{position:fixed;top:0;left:0;height:2px;width:0;z-index:120;pointer-events:none;'+
+      'background:linear-gradient(90deg,var(--gold,#c4a24e),var(--gold2,#e8c45c));box-shadow:0 0 10px rgba(196,162,78,.6);transition:width .1s linear}'+
+    '@media(prefers-reduced-motion:reduce){.cx-rv{opacity:1!important;transform:none!important;transition:none}}';
+  document.head.appendChild(css);
+
+  // scroll-progress hairline
+  var prog=document.createElement('div'); prog.id='cxProg'; document.body.appendChild(prog);
+  function onScroll(){ var h=document.documentElement.scrollHeight-innerHeight;
+    prog.style.width=(h>0?Math.min(100,Math.max(0,scrollY/h*100)):0)+'%'; }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+  if(reduce) return; // reveals off for reduced-motion (progress rule still shows)
+
+  // tag elements for staggered reveal
+  var targets=[];
+  function add(sel,stagger){ var els=document.querySelectorAll(sel);
+    for(var i=0;i<els.length;i++){ els[i].classList.add('cx-rv'); els[i].style.transitionDelay=(stagger?Math.min(i*70,420):0)+'ms'; targets.push(els[i]); } }
+  add('.mast',0); add('.sect .head',0); add('.dir-group',1); add('.read',1); add('.lk',1);
+  add('.colophon span',1); add('.instr',0); add('.ledger',0); add('.mast .lede',0);
+  add('.arch',0); add('.road li',1); add('.seven-line',0); add('.prose',0);
+
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+    if(e.isIntersecting){ e.target.classList.add('cx-in'); io.unobserve(e.target); } }); },{threshold:.14,rootMargin:'0px 0px -8% 0px'});
+  targets.forEach(function(el){ io.observe(el); });
+  // failsafe: anything still hidden after 2.5s (e.g., above the fold quirks) reveals
+  setTimeout(function(){ targets.forEach(function(el){ el.classList.add('cx-in'); }); },2500);
+})();
+</script>
+
+<script src="/home-btn.js" defer></script>
 </body>
 </html>

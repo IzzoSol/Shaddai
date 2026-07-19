@@ -109,4 +109,6 @@ fetch('/api/collectables/list?owner='+encodeURIComponent(OWNER)).then(r=>r.json(
   render();
 }).catch(e=>{ sub.textContent='failed to load: '+e.message; });
 </script>
+
+<script src="/home-btn.js" defer></script>
 </body></html>

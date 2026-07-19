@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · The Pixel Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --obsidian:#06080b; --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#c9a6ff;
+    --ink:#e7ecf2; --muted:#7a8794; --glass:rgba(8,11,16,.82);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--obsidian);color:var(--ink);
+    font-family:"Fraunces",Georgia,serif;-webkit-font-smoothing:antialiased}
+  #pv{position:absolute;inset:0;display:block}
+  .vig{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 70% 70% at 50% 45%,transparent 45%,rgba(0,0,0,.6) 100%)}
+
+  /* header */
+  .bar{position:fixed;top:0;left:0;right:0;height:64px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 26px;z-index:20;
+    background:linear-gradient(180deg,rgba(6,8,11,.85),rgba(6,8,11,0))}
+  .brand{display:flex;align-items:baseline;gap:14px}
+  .sigil{font-family:"Cinzel",serif;font-weight:700;font-size:19px;letter-spacing:3px;color:var(--gold);
+    text-shadow:0 0 16px rgba(232,196,92,.35)}
+  .sigil::before{content:"◈";margin-right:11px;color:var(--emerald);text-shadow:0 0 14px rgba(0,255,156,.5)}
+  .sub{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:5px;color:var(--cyan);
+    opacity:.72;text-transform:uppercase}
+
+  /* left tab rail */
+  .tabs{position:fixed;left:0;top:64px;bottom:150px;width:148px;z-index:12;
+    display:flex;flex-direction:column;gap:3px;padding:14px 10px;overflow-y:auto}
+  .tab{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--muted);padding:10px 12px;border-radius:9px;cursor:pointer;border-left:2px solid transparent;
+    transition:.2s;white-space:nowrap}
+  .tab:hover{color:var(--cyan)}
+  .tab.on{color:var(--gold);background:rgba(232,196,92,.08);border-left-color:var(--gold)}
+
+  /* right customize panel */
+  .cust{position:fixed;right:0;top:64px;bottom:150px;width:280px;z-index:12;padding:16px 18px;
+    overflow-y:auto;background:linear-gradient(270deg,rgba(6,8,11,.6),transparent)}
+  .crow{margin:0 0 13px}
+  .clabel{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:7px}
+  .sw{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid rgba(255,255,255,.14);
+    transition:.15s;position:relative}
+  .chip:hover{transform:scale(1.12)}
+  .chip.on{border-color:var(--gold);box-shadow:0 0 10px rgba(232,196,92,.5)}
+  .chip.none{background:transparent!important;display:grid;place-items:center;color:var(--muted);font-size:13px}
+  .chip.none::after{content:"○"}
+  .toggles{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .tg{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:1px;padding:6px 11px;border-radius:20px;
+    border:1px solid rgba(122,135,148,.3);color:var(--muted);cursor:pointer;transition:.18s;text-transform:uppercase}
+  .tg:hover{border-color:var(--cyan);color:var(--cyan)}
+  .tg.on{background:var(--emerald);color:#04120b;border-color:var(--emerald);font-weight:600}
+  .styrow{display:flex;flex-wrap:wrap;gap:5px}
+  .sty{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:1px;padding:5px 9px;border-radius:7px;
+    border:1px solid rgba(122,135,148,.28);color:var(--muted);cursor:pointer;text-transform:uppercase}
+  .sty.on{border-color:var(--gold);color:var(--gold)}
+
+  /* bottom: filmstrip + confirm */
+  .film{position:fixed;left:0;right:0;bottom:66px;height:84px;z-index:14;display:flex;align-items:center;
+    gap:9px;padding:0 20px;overflow-x:auto;overflow-y:hidden}
+  .cell{flex:none;width:56px;height:74px;border-radius:10px;background:rgba(10,14,20,.6);
+    border:1.5px solid rgba(122,135,148,.2);cursor:pointer;transition:.16s;position:relative}
+  .cell:hover{border-color:var(--cyan)}
+  .cell.on{border-color:var(--gold);box-shadow:0 0 14px rgba(232,196,92,.4);transform:translateY(-3px)}
+  .cell canvas{width:100%;height:100%;display:block}
+  .dice{flex:none;width:52px;height:74px;border-radius:10px;display:grid;place-items:center;font-size:22px;
+    cursor:pointer;background:rgba(232,196,92,.1);border:1.5px solid rgba(232,196,92,.4);color:var(--gold);
+    transition:.16s;margin-right:4px}
+  .dice:hover{background:rgba(232,196,92,.2);transform:translateY(-3px)}
+
+  .confirm{position:fixed;bottom:0;left:0;right:0;height:66px;z-index:16;display:flex;align-items:center;
+    justify-content:space-between;padding:0 24px;background:rgba(6,8,11,.92);
+    border-top:1px solid rgba(122,135,148,.15)}
+  .namew{display:flex;align-items:center;gap:12px}
+  .namew label{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  #nameIn{font-family:"Fraunces",serif;font-size:16px;background:rgba(12,17,25,.9);border:1px solid rgba(122,135,148,.3);
+    color:var(--ink);border-radius:10px;padding:9px 14px;width:220px;outline:none}
+  #nameIn:focus{border-color:var(--gold)}
+  .enter{font-family:"Cinzel",serif;font-weight:600;font-size:15px;letter-spacing:3px;text-transform:uppercase;
+    padding:13px 34px;border-radius:999px;border:none;cursor:pointer;
+    background:linear-gradient(120deg,var(--gold),#fff0c0);color:#0a0a06;
+    box-shadow:0 0 24px rgba(232,196,92,.45);transition:.3s}
+  .enter:hover{box-shadow:0 0 36px rgba(232,196,92,.75)}
+  .enter:disabled{background:linear-gradient(120deg,#2a2411,#3a3316);color:#5a5a52;box-shadow:none;cursor:not-allowed}
+  .flash{position:fixed;inset:0;z-index:40;background:radial-gradient(circle,#fff,#e8c45c 40%,transparent 70%);
+    opacity:0;pointer-events:none;transition:opacity .6s}
+  ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(122,135,148,.3);border-radius:4px}
+</style>
+</head>
+<body>
+<canvas id="pv"></canvas>
+<div class="vig"></div>
+
+<div class="bar">
+  <div class="brand"><div class="sigil">THE PIXEL FORGE</div><div class="sub">Forge Your Traveler</div></div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="cust" id="cust">
+  <div class="crow"><div class="clabel">Skin</div><div class="sw" id="sw-skin"></div></div>
+  <div class="crow"><div class="clabel">Hair</div><div class="sw" id="sw-hair"></div></div>
+  <div class="crow"><div class="clabel">Outfit</div><div class="styrow" id="sty-top"></div></div>
+  <div class="crow"><div class="clabel">Outfit Color</div><div class="sw" id="sw-top"></div></div>
+  <div class="crow"><div class="clabel">Pants</div><div class="sw" id="sw-pants"></div></div>
+  <div class="crow"><div class="clabel">Shoes</div><div class="sw" id="sw-shoe"></div>
+    <div class="styrow" id="sty-shoe" style="margin-top:6px"></div></div>
+  <div class="crow"><div class="clabel">Cap</div><div class="sw" id="sw-cap"></div></div>
+  <div class="crow"><div class="clabel">Extras</div><div class="toggles" id="toggles"></div></div>
+</div>
+
+<div class="film" id="film"></div>
+
+<div class="confirm">
+  <div class="namew"><label>Name</label><input id="nameIn" maxlength="16" placeholder="Traveler" value="Traveler"></div>
+  <button class="enter" id="enter">Enter World</button>
+</div>
+<div class="flash" id="flash"></div>
+
+<script src="pixel-people.js"></script>
+<script>
+const PP=window.PixelPeople;
+const pv=document.getElementById('pv'), px=pv.getContext('2d');
+let W,H,DPR;
+function resize(){ DPR=Math.min(2,devicePixelRatio||1); W=innerWidth; H=innerHeight;
+  pv.width=W*DPR; pv.height=H*DPR; pv.style.width=W+'px'; pv.style.height=H+'px'; px.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize',resize); resize();
+
+// ---- palettes (from pixel-people.js) ----
+const SKIN=['#ffe0bd','#f2c9a0','#e7b58a','#d19a6a','#b07c4f','#8a5a3a','#6b4423','#4a2f1c'];
+const HAIR=['#2a1c12','#5a3a1a','#111111','#e8a23a','#d8d2c8','#7a5a3a','#c0392b','#e83a3a','#3a5ac0','#7a3ac0','#2aa050','#f2c84a','#b0b0b0'];
+const TOPC=['#e0662e','#2f6fe8','#3f9e4d','#e8433a','#f2a01e','#8b5cf6','#12b3b3','#eef1f4','#d94f8f','#00a3a3','#1f3a63','#20242c'];
+const PANTS=['#20242c','#2b3a4a','#37414f','#203a5a','#3a2a1f','#eef1f4','#111111'];
+const SHOE=['#2a2a2a','#111111','#8a2a2a','#e8e8e8','#2a3a5a','#5a3a1a'];
+const CAP=['#e8c33a','#e8433a','#2f6fe8','#1a1a1a','#00a3a3','#2aa050','#d94f8f'];
+const LED=['#5fe0ff','#ff5a4d','#00ff9c','#f2c84a','#c9a6ff'];
+const TOPTYPES=['shirt','hoodie','suit','jacket','dress'];
+const SHOETYPES=['sneaker','boot','dress','heel'];
+
+// ---- working rig ----
+let rig=JSON.parse(JSON.stringify(PP.PRESETS[1].rig)); rig.anim='idle';
+function topField(){ for(const f of ['suit','hoodie','jacket','dress']) if(rig[f]) return f; return 'shirt'; }
+function topColor(){ return rig[topField()]; }
+
+// ---- tabs (by archetype name) ----
+const ARCHES=['All','Suit','Casual','Hoodie','Athlete','Punk','Elder','Dress','Worker','Robot'];
+let curTab='All';
+const tabsEl=document.getElementById('tabs');
+ARCHES.forEach(a=>{ const d=document.createElement('div'); d.className='tab'+(a==='All'?' on':'');
+  d.textContent=a==='Robot'?'Robots':a; d.onclick=()=>{ curTab=a;
+    [...tabsEl.children].forEach(x=>x.classList.remove('on')); d.classList.add('on'); buildFilm(); };
+  tabsEl.appendChild(d); });
+function tabPresets(){ if(curTab==='All') return PP.PRESETS.map((p,i)=>i);
+  return PP.PRESETS.map((p,i)=>i).filter(i=>PP.PRESETS[i].rig.name===curTab); }
+
+// ---- filmstrip ----
+const filmEl=document.getElementById('film');
+function buildFilm(){ filmEl.innerHTML='';
+  const dice=document.createElement('div'); dice.className='dice'; dice.textContent='🎲';
+  dice.title='Random'; dice.onclick=()=>{ const r=PP.randomRig(); r.anim='idle'; rig=r; syncUI(); markCell(-1); };
+  filmEl.appendChild(dice);
+  tabPresets().forEach(idx=>{ const cell=document.createElement('div'); cell.className='cell'; cell.dataset.idx=idx;
+    const cc=document.createElement('canvas'); cc.width=56*2; cc.height=74*2; const cg=cc.getContext('2d');
+    cg.setTransform(2,0,0,2,0,0); const pr=PP.PRESETS[idx].rig;
+    PP.draw(cg, pr, 28, 66, 2.05, 500+idx*90);
+    cell.appendChild(cc);
+    cell.onclick=()=>{ rig=JSON.parse(JSON.stringify(pr)); rig.anim='idle'; syncUI(); markCell(idx); };
+    filmEl.appendChild(cell); });
+}
+function markCell(idx){ [...filmEl.querySelectorAll('.cell')].forEach(c=>c.classList.toggle('on',+c.dataset.idx===idx)); }
+
+// ---- swatch builders ----
+function swatches(hostId, arr, getter, setter, allowNone){
+  const host=document.getElementById(hostId); host.innerHTML='';
+  if(allowNone){ const n=document.createElement('div'); n.className='chip none';
+    n.onclick=()=>{ setter(null); refreshSel(hostId,getter); }; host.appendChild(n); }
+  arr.forEach(col=>{ const ch=document.createElement('div'); ch.className='chip'; ch.style.background=col;
+    ch.dataset.col=col; ch.onclick=()=>{ setter(col); refreshSel(hostId,getter); }; host.appendChild(ch); });
+  refreshSel(hostId,getter);
+}
+function refreshSel(hostId,getter){ const v=getter();
+  [...document.getElementById(hostId).children].forEach(ch=>{
+    if(ch.classList.contains('none')) ch.classList.toggle('on', v==null||v===undefined);
+    else ch.classList.toggle('on', ch.dataset.col===v); }); }
+
+function buildCust(){
+  swatches('sw-skin',SKIN,()=>rig.skin,v=>rig.skin=v,false);
+  swatches('sw-hair',HAIR,()=>rig.hair,v=>rig.hair=v,false);
+  swatches('sw-top',TOPC,()=>topColor(),v=>{ rig[topField()]=v; },false);
+  swatches('sw-pants',PANTS,()=>rig.pants,v=>rig.pants=v,false);
+  swatches('sw-shoe',SHOE,()=>rig.shoe,v=>rig.shoe=v,false);
+  swatches('sw-cap',CAP,()=>rig.cap,v=>rig.cap=v,true);
+  // outfit type
+  const st=document.getElementById('sty-top'); st.innerHTML='';
+  TOPTYPES.forEach(tp=>{ const b=document.createElement('div'); b.className='sty'; b.textContent=tp;
+    b.dataset.tp=tp; b.onclick=()=>{ const col=topColor()||'#3f9e4d';
+      ['shirt','hoodie','suit','jacket','dress'].forEach(f=>delete rig[f]); rig[tp]=col;
+      if(tp!=='hoodie') delete rig.hoodUp; syncUI(); };
+    st.appendChild(b); });
+  // shoe style
+  const ss=document.getElementById('sty-shoe'); ss.innerHTML='';
+  SHOETYPES.forEach(tp=>{ const b=document.createElement('div'); b.className='sty'; b.textContent=tp;
+    b.dataset.tp=tp; b.onclick=()=>{ rig.shoeStyle=tp; syncUI(); }; ss.appendChild(b); });
+  // toggles
+  const tgs=[['Glasses','glasses'],['Hood Up','hoodUp'],['Short','short'],['Mohawk','mohawk'],['Tie','tie'],['Watch','watch'],['Robot','robot']];
+  const th=document.getElementById('toggles'); th.innerHTML='';
+  tgs.forEach(([lbl,f])=>{ const b=document.createElement('div'); b.className='tg'; b.textContent=lbl; b.dataset.f=f;
+    b.onclick=()=>{ toggle(f); syncUI(); }; th.appendChild(b); });
+  syncUI();
+}
+function toggle(f){
+  if(f==='robot'){ if(rig.robot){ delete rig.robot; delete rig.led; } else { rig.robot=true; rig.led=rig.led||'#5fe0ff'; rig.emblem=rig.led; } return; }
+  if(f==='tie'){ rig.tie=rig.tie?null:'#c0392b'; return; }
+  if(f==='watch'){ rig.watch=rig.watch?null:'#e8c33a'; return; }
+  rig[f]=!rig[f]; if(!rig[f]) delete rig[f];
+}
+function syncUI(){
+  refreshSel('sw-skin',()=>rig.skin); refreshSel('sw-hair',()=>rig.hair);
+  refreshSel('sw-top',()=>topColor()); refreshSel('sw-pants',()=>rig.pants);
+  refreshSel('sw-shoe',()=>rig.shoe); refreshSel('sw-cap',()=>rig.cap);
+  [...document.getElementById('sty-top').children].forEach(b=>b.classList.toggle('on',b.dataset.tp===topField()));
+  [...document.getElementById('sty-shoe').children].forEach(b=>b.classList.toggle('on',b.dataset.tp===(rig.shoeStyle||'sneaker')));
+  [...document.getElementById('toggles').children].forEach(b=>{ const f=b.dataset.f; b.classList.toggle('on',!!rig[f]); });
+}
+
+// ---- preview loop ----
+function frame(t){
+  px.clearRect(0,0,W,H);
+  const bg=px.createRadialGradient(W*0.42,H*0.42,0,W*0.42,H*0.42,H); bg.addColorStop(0,'#0e131c'); bg.addColorStop(1,'#05070b');
+  px.fillStyle=bg; px.fillRect(0,0,W,H);
+  const stageCx=(148 + (W-280))/2, feetY=H*0.66, radius=Math.min(190,(W-430)*0.34);
+  // pedestal seed of life
+  px.save(); px.globalCompositeOperation='lighter';
+  const pu=0.25+0.14*Math.sin(t/700);
+  px.strokeStyle='rgba(0,255,156,'+pu.toFixed(2)+')'; px.lineWidth=2;
+  for(let ring=1;ring<=3;ring++){ px.beginPath();
+    px.ellipse(stageCx,feetY+6,radius*ring/3,radius*ring/3*0.34,0,0,6.28); px.stroke(); }
+  px.strokeStyle='rgba(232,196,92,0.18)';
+  for(let k=0;k<6;k++){ const a=k*Math.PI/3; px.beginPath();
+    px.ellipse(stageCx+radius*0.33*Math.cos(a),feetY+6+radius*0.33*0.34*Math.sin(a),radius*0.33,radius*0.33*0.34,0,0,6.28); px.stroke(); }
+  px.restore();
+  // contact shadow
+  px.save(); px.fillStyle='rgba(0,0,0,0.4)'; px.beginPath();
+  px.ellipse(stageCx,feetY+6,radius*0.42,radius*0.42*0.28,0,0,6.28); px.fill(); px.restore();
+  // character
+  const scale=Math.min(9, H/70);
+  PP.draw(px, rig, stageCx, feetY, scale, t);
+  requestAnimationFrame(frame);
+}
+
+// ---- enter ----
+document.getElementById('enter').addEventListener('click',()=>{
+  const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
+  const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
+  try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
+  const fl=document.getElementById('flash'); fl.style.opacity='1';
+  setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
+});
+
+buildCust(); buildFilm(); markCell(1); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{--grn:#00ff88;--gold:#ffd45c;--ink:#eaf3fb;--dim:#9fb2c4;--font:'Fredoka','Segoe UI',system-ui,sans-serif;--retro:'Press Start 2P',monospace;}
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  html,body{margin:0;height:100%;background:#0d1017;color:var(--ink);font-family:var(--font);overflow:hidden;}
+  #c{position:fixed;inset:0;width:100vw;height:100vh;display:block;image-rendering:pixelated;}
+  .panel{position:fixed;z-index:5;background:rgba(14,19,27,.92);border:1px solid #223;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .hide{display:none!important;}
+  h1{margin:0 0 10px;font-family:var(--retro);font-size:13px;line-height:1.6;letter-spacing:.5px}h1 b{color:var(--grn)}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:14px}
+  button{cursor:pointer;font-family:var(--font);font-weight:600;border-radius:10px;border:1px solid #2a3346;background:#182031;color:var(--ink);padding:10px 16px;font-size:14px;transition:.12s}
+  button:hover{background:#20293c;border-color:#33405a}
+  button.primary{background:var(--grn);color:#04120b;border:none;font-weight:700}
+  button.primary:hover{filter:brightness(1.08)}
+  input{font-family:inherit;background:#0c1119;border:1px solid #2a3346;color:var(--ink);border-radius:9px;padding:9px 12px;font-size:14px;width:100%}
+  /* create */
+  #create{left:50%;top:50%;transform:translate(-50%,-50%);width:min(720px,94vw);padding:18px 20px;text-align:center}
+  #createCanvasWrap{background:radial-gradient(120% 90% at 50% 12%,#1a2740,#0c1119 72%);border-radius:12px;border:1px solid #1c2740;height:300px;margin:10px 0;position:relative}
+  #ccv{width:100%;height:100%}
+  .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:11px;color:var(--dim);border:1px solid #26314a;border-radius:20px;padding:3px 10px}
+  /* region */
+  #region{left:50%;top:50%;transform:translate(-50%,-50%);width:min(860px,95vw);padding:18px 20px}
+  .regions{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin:16px 0}
+  .rcard{cursor:pointer;border-radius:16px;padding:16px;border:2px solid rgba(255,255,255,.12);color:#0a1408;font-weight:700;position:relative;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.35);transition:.14s}
+  .rcard .rem{position:absolute;top:8px;right:10px;font-size:34px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  .rcard .rnm{font-size:16px;font-weight:700}
+  .rcard small{display:block;font-weight:500;opacity:.85;font-size:12px;margin-top:3px}
+  .rcard:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.4)}
+  .rcard.sel{outline:3px solid #fff;transform:translateY(-3px)}
+  /* hud */
+  #hud{left:16px;top:16px;padding:10px 14px}
+  #hud .who{font-size:14px}#hud .where{color:var(--grn);font-size:12px}
+  #controls{right:16px;bottom:16px;padding:10px 14px;font-size:12px;color:var(--dim)}
+  #controls b{color:var(--ink)}
+  #shopBtn{position:fixed;right:16px;top:16px;z-index:5}
+  #prompt{left:50%;bottom:24px;transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
+</style></head><body>
+<canvas id="c"></canvas>
+
+<!-- CREATE -->
+<div id="create" class="panel">
+  <h1>Create your <b>character</b></h1>
+  <div class="sub">100 presets · 10 robots · pick one, then choose where to spawn</div>
+  <div id="createCanvasWrap"><canvas id="ccv"></canvas></div>
+  <div class="row">
+    <button onclick="cyclePreset(-1)">◀ Prev</button>
+    <span class="pill" id="presetLabel">Preset 1 / 100</span>
+    <button onclick="cyclePreset(1)">Next ▶</button>
+    <button onclick="randomChar()">🎲 Random</button>
+  </div>
+  <div class="row"><input id="nameInput" placeholder="Name your character" maxlength="16" value="Wanderer"></div>
+  <div class="row"><button class="primary" onclick="goRegion()">Choose region →</button></div>
+</div>
+
+<!-- REGION -->
+<div id="region" class="panel hide" style="left:50%;bottom:18px;transform:translateX(-50%);width:min(660px,94vw);padding:12px 18px;text-align:center;z-index:6">
+  <h1>Tap the <b>map</b> to choose your region</h1>
+  <div class="sub" id="regionSelName">🌀 SHADDAI City</div>
+  <div class="row" style="justify-content:space-between">
+    <button onclick="backToCreate()">← Back</button>
+    <button class="primary" onclick="enterWorld()">Enter <span id="enterRegionName">SHADDAI City</span> →</button>
+  </div>
+</div>
+
+<!-- WORLD HUD -->
+<div id="hud" class="panel hide"><div class="who" id="hudWho">—</div><div class="where" id="hudWhere">—</div></div>
+<button id="shopBtn" class="panel hide" style="padding:9px 14px" onclick="openShop()">🛒 Shop · x402</button>
+<div id="controls" class="panel hide"><b>WASD</b> move · <b>E</b> door · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom</div>
+<div id="prompt" class="panel hide"></div>
+
+<!-- TRAVEL MENU -->
+<div id="travel" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(780px,95vw);padding:18px 20px;z-index:7">
+  <h1>🚉 <b>Transit Hub</b> · travel anywhere</h1>
+  <div class="sub">Board the airport / train and hop to another region</div>
+  <div class="regions" id="travelGrid"></div>
+  <div class="row"><button onclick="closeTravel()">Cancel</button></div>
+</div>
+
+<script src="interiors.js" onerror="window.__noInteriors=1"></script>
+<script src="landmarks.js" onerror="window.__noLandmarks=1"></script>
+<script src="terrain.js" onerror="window.__noTerrain=1"></script>
+<script src="region-map.js" onerror="window.__noMap=1"></script>
+<script src="pixel-people.js"></script>
+<script>
+'use strict';
+const PP = window.PixelPeople;
+const TW = 84, TH = 42;
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const ccv = document.getElementById('ccv'), cctx = ccv.getContext('2d');
+let DPR = Math.min(devicePixelRatio||1, 2), W=0, H=0;
+function fit(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
+  const wr=document.getElementById('createCanvasWrap'); ccv.width=wr.clientWidth*DPR; ccv.height=wr.clientHeight*DPR; cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false; }
+addEventListener('resize', fit);
+
+// ---------- player + state ----------
+let state='create';
+let presetIdx=0;
+const player={ rig: JSON.parse(JSON.stringify(PP.PRESETS[0].rig)), name:'Wanderer', col:10, row:10, anim:'idle' };
+function setPreset(i){ presetIdx=(i+PP.PRESETS.length)%PP.PRESETS.length; player.rig=JSON.parse(JSON.stringify(PP.PRESETS[presetIdx].rig));
+  document.getElementById('presetLabel').textContent='Preset '+(presetIdx+1)+' / 100'+(player.rig.robot?' · ROBOT':''); }
+function cyclePreset(d){ setPreset(presetIdx+d); }
+function randomChar(){ presetIdx=(Math.random()*PP.PRESETS.length)|0; setPreset(presetIdx); }
+
+// ---------- regions ----------
+const REGIONS=[
+  {id:'agentcity',name:'SHADDAI City', color:'#4a4370', grass:'#3f4a52', water:'#2f5f9a', sand:'#b9b09a', tree:'oak', transit:'rail', density:0.02, desc:'Home of the 7 agents', emoji:'🌀', city:true},
+  {id:'meadow',  name:'Green Meadow', color:'#4fb04f', grass:'#4fa84f', water:'#2f7fd0', sand:'#e0cf9a', tree:'oak',    transit:'rail', density:0.12, desc:'Grass, trees, a fishing dock', emoji:'🌳'},
+  {id:'beach',   name:'Sunny Harbor', color:'#e6c86a', grass:'#5bb85b', water:'#2f9fd0', sand:'#e8d8a0', tree:'palm',   transit:'air',  density:0.06, desc:'Sand, sea & boats', emoji:'⛵'},
+  {id:'city',    name:'Downtown',     color:'#8a93a3', grass:'#6f8a5f', water:'#3f7fb0', sand:'#b9b09a', tree:'oak',    transit:'rail', density:0.05, desc:'Towers, shops, traffic', emoji:'🏙️'},
+  {id:'forest',  name:'Wildwood',     color:'#2f8a4f', grass:'#3a9a55', water:'#2f7fb0', sand:'#c9b98a', tree:'pine',   transit:'rail', density:0.24, desc:'Deep forest & trails', emoji:'🌲'},
+  {id:'desert',  name:'Dust Canyon',  color:'#d3a35a', grass:'#c9a86a', water:'#3f9fd0', sand:'#e2c079', tree:'cactus', transit:'air',  density:0.04, desc:'Mesas & warm sand', emoji:'🌵'},
+  {id:'volcano', name:'Emberfields',  color:'#b04a3a', grass:'#5a4a3a', water:'#c85a2a', sand:'#6b4a3a', tree:'lava',   transit:'air',  density:0.05, desc:'Obsidian & lava', emoji:'🌋'},
+];
+let regionSel='agentcity';
+function updateRegionName(){ const r=REGIONS.find(x=>x.id===regionSel)||REGIONS[0]; const a=document.getElementById('regionSelName'); if(a)a.textContent=r.emoji+' '+r.name; const b=document.getElementById('enterRegionName'); if(b)b.textContent=r.name; }
+function buildRegionGrid(){ const g=document.getElementById('regionGrid'); g.innerHTML='';
+  REGIONS.forEach(r=>{ const d=document.createElement('div'); d.className='rcard'+(r.id===regionSel?' sel':''); d.style.background='linear-gradient(150deg,'+r.color+','+shadeHex(r.color,-0.22)+')';
+    d.innerHTML='<div class="rem">'+r.emoji+'</div><div class="rnm">'+r.name+'</div><small>'+r.desc+'</small>'; d.onclick=()=>{regionSel=r.id; buildRegionGrid();}; g.appendChild(d); }); }
+function shadeHex(hex,amt){ return PP&&PP.shade?PP.shade(hex,amt):hex; }
+
+// ---------- screen switching ----------
+function show(id){ ['create','region','hud','shopBtn','controls','prompt'].forEach(x=>document.getElementById(x).classList.add('hide')); }
+function goRegion(){ player.name=(document.getElementById('nameInput').value||'Wanderer').slice(0,16);
+  state='region'; document.getElementById('create').classList.add('hide'); document.getElementById('region').classList.remove('hide'); updateRegionName(); }
+c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); } } });
+function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
+function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
+  genWorld(regionSel); document.getElementById('hud').classList.remove('hide'); document.getElementById('shopBtn').classList.remove('hide'); document.getElementById('controls').classList.remove('hide');
+  const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; }
+
+// ---------- WORLD ----------
+const GW=60, GH=60; let zoom=0.66;
+let tiles=[], props=[], npcs=[], region=null, cam={col:30,row:30}, tod=0.34;
+// The 7 SHADDAI agents as themed pixel characters (chakra accents)
+const AGENTS=[
+  {name:'SHADDAI', role:'Orchestrator', accent:'#c9a6ff', rig:{suit:'#241f44',cap:'#c9a6ff',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'}},
+  {name:'ORACLE',  role:'Research',     accent:'#8b7bf0', rig:{hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a'}},
+  {name:'QUILL',   role:'Writing',      accent:'#5fe0ff', rig:{suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199'}},
+  {name:'TURTLE',  role:'Design',       accent:'#00ff9c', rig:{hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f'}},
+  {name:'NEXUS',   role:'Architect',    accent:'#e8c45c', rig:{robot:true,skin:'#8a9199',cap:'#e8c45c',shirt:'#6b7280',pants:'#3a3f47',led:'#e8c45c',emblem:'#e8c45c'}},
+  {name:'ZEROX',   role:'Revenue',      accent:'#ff9a3c', rig:{suit:'#3a2a1a',cap:'#ff9a3c',tie:'#ff9a3c',emblem:'#ff9a3c',skin:'#caa06f'}},
+  {name:'PIKADON', role:'Security',     accent:'#ff5a4d', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'}},
+];
+addEventListener('wheel',e=>{ if(state==='world'){ zoom=Math.max(0.5,Math.min(1.7,zoom-Math.sign(e.deltaY)*0.08)); } },{passive:true});
+const GRASS=0,WATER=1,SAND=2,PATH=3,DOCK=4,LAVA=5;
+const CARCOLS=['#e0662e','#2f6fe8','#3f9e4d','#e8433a','#f2a01e','#8b5cf6','#eef1f4','#12b3b3'];
+function spawnCitizens(n){ for(let i=0;i<n;i++){ const rig=JSON.parse(JSON.stringify(PP.PRESETS[(Math.random()*PP.PRESETS.length)|0].rig)); rig.__phase=Math.random()*6;
+  const c={rig,col:2+Math.random()*(GW-4),row:2+Math.random()*(GH-4),tc:0,tr:0,pause:Math.random()*2,speed:1+Math.random()*0.8}; npcRetarget(c); npcs.push(c); } }
+// ---- sacred geometry spacing engine ----
+function heptagonHQs(cc,cr,R){ const h=[]; for(let i=0;i<7;i++){ const t=(-Math.PI/2)+i*(2*Math.PI/7); h.push({col:Math.round(cc+R*Math.cos(t)),row:Math.round(cr+R*Math.sin(t))}); } return h; }
+function flowerLattice(cc,cr,rings,base){ const pts=[{col:cc,row:cr,ring:0}]; for(let ring=1;ring<=rings;ring++){ const n=ring*6,r=base*ring; for(let i=0;i<n;i++){ const t=(i/n)*2*Math.PI; pts.push({col:Math.round(cc+r*Math.cos(t)),row:Math.round(cr+r*Math.sin(t)),ring}); } } return pts; }
+function genWorld(rid){
+  region=REGIONS.find(r=>r.id===rid);
+  tiles=[]; props=[]; npcs=[];
+  for(let r=0;r<GH;r++){ tiles[r]=[]; for(let col=0;col<GW;col++) tiles[r][col]=(region.city?PATH:GRASS); }
+
+  if(region.city){
+    // ===== SHADDAI CITY: SACRED-GEOMETRY MANDALA (Seed of Life) =====
+    const CC=30, CR=30, R=16;
+    for(let r=0;r<GH;r++)for(let col=0;col<GW;col++) tiles[r][col]=GRASS; // dark plaza base
+    const road=(c,rr)=>{ if(tiles[rr]&&tiles[rr][c]!==undefined) tiles[rr][c]=PATH; };
+    const ring=(radius)=>{ const steps=Math.round(radius*16)+40; for(let s=0;s<steps;s++){ const t=(s/steps)*2*Math.PI; const c=Math.round(CC+radius*Math.cos(t)), rr=Math.round(CR+radius*Math.sin(t)); road(c,rr); road(c+1,rr); } };
+    ring(R*0.62); ring(R+3);                                   // inner petal ring + outer HQ ring
+    const HQ=heptagonHQs(CC,CR,R);
+    HQ.forEach((h,i)=>{ const steps=R+2; for(let s=0;s<=steps;s++){ road(Math.round(CC+(h.col-CC)*s/steps), Math.round(CR+(h.row-CR)*s/steps)); } // radial spoke
+      const a=AGENTS[i], col=h.col-1, row=h.row-1;
+      for(let rr=row-1;rr<row+4;rr++)for(let cc=col-1;cc<col+4;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=GRASS;
+      props.push({type:'building',col,row,w:3,d:3,floors:5, wall:shade(a.accent,0.16),roof:shade(a.accent,-0.32),glass:shade(a.accent,-0.16),name:a.name,kind:'agent',accent:a.accent});
+      const rig=JSON.parse(JSON.stringify(a.rig)); rig.__phase=i*0.7;
+      npcs.push({rig,name:a.name,accent:a.accent,agent:true,col:col+1.5,row:row+3.5,tc:col+1.5,tr:row+3.5,pause:1e9,speed:0.6}); });
+    // massive dormant volcano dead center
+    for(let rr=26;rr<35;rr++)for(let cc=26;cc<35;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=GRASS;
+    props.push({type:'volcano',col:28,row:28,w:5,d:5});
+    // flower-of-life lattice → outer neon tech towers (ring 3+)
+    flowerLattice(CC,CR,5,6).forEach(p=>{ if(p.ring<3||p.col<3||p.col>=GW-3||p.row<3||p.row>=GH-3) return;
+      if((p.col*3+p.row)%3!==0) return;
+      if(props.some(b=>b.type==='building'&&Math.abs(b.col-p.col)<4&&Math.abs(b.row-p.row)<4)) return;
+      for(let rr=p.row;rr<p.row+2;rr++)for(let cc=p.col;cc<p.col+2;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=GRASS;
+      props.push({type:'building',col:p.col,row:p.row,w:2,d:2,floors:2+((p.col+p.row)%5), wall:'#18202f',roof:'#5fe0ff',glass:'#5fe0ff',name:'',kind:'office',accent:'#5fe0ff'}); });
+    // transit + hover traffic + citizens
+    for(let rr=50;rr<53;rr++)for(let cc=50;cc<53;cc++) if(tiles[rr]) tiles[rr][cc]=GRASS;
+    props.push({type:'building',col:50,row:50,w:3,d:3,floors:1, wall:'#1a2438',roof:'#3a6a9a',glass:'#5fe0ff',name:'STATION',kind:'transit',landmark:'station'});
+    for(let i=0;i<18;i++){ let col,r,k=0; do{ col=(Math.random()*GW)|0; r=(Math.random()*GH)|0; k++; }while(tiles[r][col]!==PATH&&k<50); if(tiles[r][col]===PATH) props.push({type:'hovercar',col,row:r,color:CARCOLS[i%CARCOLS.length]}); }
+    spawnCitizens(14);
+    player.col=CC; player.row=CR+R+4; cam.col=player.col; cam.row=player.row; return;
+  }
+
+  // ===== NATURE REGIONS (organic layout) =====
+  const waterKind = rid==='volcano'?LAVA:WATER;
+  const treeType={oak:'tree',palm:'palm',pine:'pine',cactus:'cactus',lava:'lavarock'}[region.tree]||'tree';
+  // organic water: a sea coast for beach, else a blobby lake — with a sandy shore ring
+  if(rid==='beach'){
+    for(let r=0;r<GH;r++)for(let col=0;col<GW;col++){ const d=(col+r) - (GW+GH)*0.62 + Math.sin(col*0.4)*2 + Math.cos(r*0.4)*2;
+      if(d>4) tiles[r][col]=WATER; else if(d>1) tiles[r][col]=SAND; }
+    tiles[46][40]=DOCK; tiles[46][41]=DOCK;
+  } else {
+    const lcx=15+((Math.random()*8)|0), lcy=13+((Math.random()*8)|0);
+    for(let r=0;r<GH;r++)for(let col=0;col<GW;col++){ const d=Math.hypot((col-lcx)*1.0,(r-lcy)*1.35)+Math.sin(col*0.5)*1.3+Math.cos(r*0.45)*1.3;
+      if(d<6.5) tiles[r][col]=waterKind; else if(d<8) tiles[r][col]=(rid==='volcano'?GRASS:SAND); }
+    tiles[lcy][lcx+7]=DOCK; tiles[lcy+1][lcx+7]=DOCK;
+  }
+  // curvy roads (sine) instead of a rigid grid
+  for(let col=0;col<GW;col++){ const rr=31+Math.round(Math.sin(col*0.17)*6); if(tiles[rr]&&tiles[rr][col]===GRASS){tiles[rr][col]=PATH; if(tiles[rr+1]&&tiles[rr+1][col]===GRASS)tiles[rr+1][col]=PATH;} }
+  for(let r=0;r<GH;r++){ const cc=34+Math.round(Math.cos(r*0.17)*6); if(tiles[r]&&tiles[r][cc]===GRASS){tiles[r][cc]=PATH; if(tiles[r][cc+1]===GRASS)tiles[r][cc+1]=PATH;} }
+  // tree CLUSTERS (forests) + clearings, not uniform scatter
+  const nCl = rid==='forest'?30 : (rid==='desert'||rid==='volcano')?7 : 15;
+  for(let c=0;c<nCl;c++){ const cx=(Math.random()*GW)|0, cy=(Math.random()*GH)|0, rad=2+Math.random()*4;
+    for(let r=Math.max(0,cy-rad|0);r<=Math.min(GH-1,cy+rad);r++)for(let col=Math.max(0,cx-rad|0);col<=Math.min(GW-1,cx+rad);col++){
+      if(tiles[r][col]!==GRASS) continue; if(Math.abs(col-30)<3&&Math.abs(r-30)<3) continue;
+      if(Math.hypot(col-cx,r-cy)<rad && Math.random()<0.62) props.push({type:treeType,col,row:r}); } }
+  for(let i=0;i<50;i++){ const col=(Math.random()*GW)|0, r=(Math.random()*GH)|0; if(tiles[r][col]===GRASS) props.push({type:rid==='volcano'?'lavarock':'rock',col,row:r}); }
+  // VILLAGE cluster around a central plaza + landmark; transit at a far edge
+  const isAir=region.transit==='air';
+  const LM={meadow:'windmill',beach:'lighthouse',forest:'treehouse',desert:'pyramid',volcano:'forge'}[region.id]||'tower';
+  const BLD=[
+    {col:29,row:23,w:3,d:3,floors:5, wall:'#cfd6dc',roof:'#3a4a6a',glass:'#2f4f7a',name:region.name.toUpperCase(),kind:'office',landmark:LM},
+    {col:24,row:34,w:2,d:2,floors:2, wall:'#e8b85a',roof:'#c0392b',glass:'#bfe4ff',name:'HOME',kind:'home'},
+    {col:37,row:33,w:3,d:2,floors:2, wall:'#e35b5b',roof:'#8a2a2a',glass:'#ffd27a',name:'DINER',kind:'shop'},
+    {col:24,row:24,w:2,d:2,floors:2, wall:'#5bb0e0',roof:'#2f6f9a',glass:'#eaf6ff',name:'SHOP',kind:'shop'},
+    {col:48,row:48,w:3,d:3,floors:1, wall:'#dfe6ec',roof:'#3a6a9a',glass:'#bfe4ff',name:(isAir?'AIRPORT':'STATION'),kind:'transit',landmark:(isAir?'airport':'station')},
+  ];
+  BLD.forEach(b=>{ for(let r=b.row-1;r<=b.row+b.d;r++)for(let col=b.col-1;col<=b.col+b.w;col++){ if(!tiles[r]||tiles[r][col]===undefined||tiles[r][col]===WATER||tiles[r][col]===LAVA) continue;
+    tiles[r][col]=(r<b.row||col<b.col||r>=b.row+b.d||col>=b.col+b.w)?PATH:GRASS; } props.push({type:'building',...b}); });
+  props=props.filter(p=> p.type==='building' || !props.some(b=>b.type==='building'&&p.col>=b.col&&p.col<b.col+b.w&&p.row>=b.row&&p.row<b.row+b.d));
+  spawnCitizens(14);
+  player.col=30; player.row=30; cam.col=30; cam.row=30;
+}
+function walkable(col,row){ col|=0; row|=0; if(col<0||row<0||col>=GW||row>=GH) return false; const t=tiles[row][col]; if(t===WATER||t===LAVA) return false;
+  // buildings block
+  for(const p of props){ if((p.type==='building'||p.type==='volcano') && col>=p.col&&col<p.col+p.w && row>=p.row&&row<p.row+p.d) return false; } return true; }
+function npcRetarget(n){ let k=0; do{ n.tc=1+Math.random()*(GW-2); n.tr=1+Math.random()*(GH-2); k++;}while(!walkable(n.tc,n.tr)&&k<20); }
+
+function w2s(col,row){ return [ ((col-cam.col)-(row-cam.row))*TW/2, ((col-cam.col)+(row-cam.row))*TH/2 ]; }
+function shade(hex,a){ return PP.shade(hex,a); }
+function diamond(sx,sy,color,edge){ ctx.fillStyle=color; ctx.beginPath();ctx.moveTo(sx,sy-TH/2);ctx.lineTo(sx+TW/2,sy);ctx.lineTo(sx,sy+TH/2);ctx.lineTo(sx-TW/2,sy);ctx.closePath();ctx.fill(); if(edge){ctx.strokeStyle=edge;ctx.lineWidth=1;ctx.stroke();} }
+function isoBox(sx,sy,w,d,h,top){ // w,d in tiles, h in px; anchored at tile center
+  const dx=(dc,dr)=>(dc-dr)*TW/2, dy=(dc,dr)=>(dc+dr)*TH/2, hw=w/2, hd=d/2;
+  const bk=[sx+dx(-hw,-hd),sy+dy(-hw,-hd)],rt=[sx+dx(hw,-hd),sy+dy(hw,-hd)],fr=[sx+dx(hw,hd),sy+dy(hw,hd)],lf=[sx+dx(-hw,hd),sy+dy(-hw,hd)];
+  const up=p=>[p[0],p[1]-h]; const tB=up(bk),tR=up(rt),tF=up(fr),tL=up(lf);
+  function P(a){ctx.beginPath();ctx.moveTo(a[0][0],a[0][1]);for(let i=1;i<a.length;i++)ctx.lineTo(a[i][0],a[i][1]);ctx.closePath();}
+  ctx.fillStyle=shade(top,-0.17);P([lf,fr,tF,tL]);ctx.fill();
+  ctx.fillStyle=shade(top,-0.33);P([fr,rt,tR,tF]);ctx.fill();
+  ctx.fillStyle=top;P([tB,tR,tF,tL]);ctx.fill();
+  return {tB,tR,tF,tL,fr,lf,rt};
+}
+function drawTree(sx,sy){ ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(sx,sy+2,20,9,0,0,7);ctx.fill();
+  isoBox(sx,sy,0.16,0.16,16,'#7a5230'); isoBox(sx,sy-16,0.62,0.62,14,'#2fae4f'); isoBox(sx,sy-30,0.4,0.4,11,'#37c95f'); }
+function drawCactus(sx,sy){ isoBox(sx,sy,0.2,0.2,22,'#3f9e55'); isoBox(sx-6,sy-8,0.1,0.1,8,'#3f9e55'); }
+function drawRock(sx,sy){ isoBox(sx,sy,0.28,0.28,7,'#8a8f96'); }
+function drawPalm(sx,sy){ ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(sx,sy+2,16,7,0,0,7);ctx.fill(); isoBox(sx,sy,0.14,0.14,24,'#9a6a3a'); isoBox(sx,sy-24,0.5,0.5,7,'#2fae4f'); isoBox(sx-11,sy-22,0.28,0.12,4,'#37c95f'); isoBox(sx+11,sy-22,0.28,0.12,4,'#2f9e45'); }
+function drawPine(sx,sy){ ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(sx,sy+2,15,7,0,0,7);ctx.fill(); isoBox(sx,sy,0.14,0.14,10,'#6a4a2a'); isoBox(sx,sy-10,0.52,0.52,10,'#1f7a3a'); isoBox(sx,sy-20,0.36,0.36,10,'#2a8a45'); isoBox(sx,sy-30,0.22,0.22,9,'#37a555'); }
+function drawLavaRock(sx,sy){ isoBox(sx,sy,0.3,0.3,8,'#2a2226'); ctx.fillStyle='#ff7a2a';ctx.fillRect(Math.round(sx)-5,Math.round(sy)-9,10,3); }
+function drawCar(sx,sy,color){ ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(sx,sy+3,20,8,0,0,7);ctx.fill();
+  isoBox(sx,sy,0.72,0.42,7,color); isoBox(sx-2,sy-2,0.42,0.34,7,shade(color,0.12)); ctx.fillStyle='#bfe4ff'; ctx.fillRect(Math.round(sx)-6,Math.round(sy)-14,12,4); }
+function roundRectC(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+function agentLabel(sx,sy,name,accent){ ctx.font="bold 13px 'Fredoka',sans-serif"; ctx.textAlign='center'; const lw=ctx.measureText(name).width+16;
+  ctx.fillStyle='rgba(8,10,20,.9)'; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.fill();
+  ctx.strokeStyle=accent; ctx.lineWidth=1; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.stroke();
+  ctx.fillStyle=accent||'#fff'; ctx.fillText(name,sx,sy-49); }
+function tronDiamond(sx,sy){ ctx.beginPath();ctx.moveTo(sx,sy-TH/2);ctx.lineTo(sx+TW/2,sy);ctx.lineTo(sx,sy+TH/2);ctx.lineTo(sx-TW/2,sy);ctx.closePath(); }
+function tronTile(sx,sy,t,col,r,time){ ctx.fillStyle=t===PATH?'#0a1a2e':'#0d1420'; tronDiamond(sx,sy); ctx.fill();
+  if(t===PATH){ const pu=Math.sin(time/700+(col+r)*0.6)*0.5+0.5;
+    ctx.fillStyle='rgba(95,224,255,'+(0.13+pu*0.09).toFixed(2)+')'; tronDiamond(sx,sy); ctx.fill();
+    ctx.strokeStyle='rgba(95,224,255,'+(0.55+pu*0.4).toFixed(2)+')'; ctx.lineWidth=2; tronDiamond(sx,sy); ctx.stroke(); }
+}
+function drawHoverCar(sx,sy,color,time){ const lift=11+Math.sin(time/500+sx*0.1)*2;
+  ctx.fillStyle='rgba(95,224,255,0.34)'; ctx.beginPath();ctx.ellipse(sx,sy+2,17,6,0,0,7);ctx.fill();
+  isoBox(sx,sy-lift,0.66,0.4,6,color); isoBox(sx-2,sy-lift-2,0.42,0.3,5,shade(color,0.16));
+  ctx.fillStyle='#5fe0ff'; ctx.fillRect(Math.round(sx)-7,Math.round(sy)-Math.round(lift)-12,14,3); }
+function drawVolcano(sx,sy,time){ ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(sx,sy+6,94,34,0,0,7);ctx.fill();
+  isoBox(sx,sy,5,5,24,'#2b2028'); isoBox(sx,sy-24,3.7,3.7,22,'#241a22'); isoBox(sx,sy-46,2.4,2.4,18,'#1d1620'); isoBox(sx,sy-64,1.4,1.4,10,'#171018');
+  const g=Math.sin(time/1000)*0.5+0.5; ctx.fillStyle='rgba(255,90,40,'+(0.15+g*0.16).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx,sy-74,13,5,0,0,7);ctx.fill();
+  ctx.fillStyle='rgba(170,170,185,'+(0.05+g*0.05).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx+5,sy-86,9,5,0,0,7);ctx.fill(); }
+function tileTypeName(t){ return t===WATER?'water':t===LAVA?'lava':t===SAND?'sand':t===PATH?'path':t===DOCK?'dock':'grass'; }
+function nameplate(sx,y,name){ ctx.font="8px 'Press Start 2P',monospace"; ctx.textAlign='center'; const lw=Math.max(38,name.length*8+8);
+  ctx.fillStyle='rgba(10,15,24,.82)'; ctx.fillRect(Math.round(sx-lw/2),Math.round(y),lw,14); ctx.fillStyle='#eaf3fb'; ctx.fillText(name,Math.round(sx),Math.round(y+10)); }
+function drawBuilding(b,sx,sy,time){
+  if(b.landmark && window.Landmarks && window.Landmarks.draw && !window.__noLandmarks){
+    window.Landmarks.draw(ctx, b.landmark, sx, sy, time);
+    if(b.accent){ ctx.save();ctx.shadowColor=b.accent;ctx.shadowBlur=14;ctx.fillStyle=b.accent;ctx.fillRect(Math.round(sx)-12,Math.round(sy)-100,24,3);ctx.restore(); }
+    nameplate(sx,sy-104,b.name); return;
+  }
+  const floorH=18, h=b.floors*floorH;
+  isoBox(sx,sy,b.w,b.d,h,b.wall);
+  ctx.fillStyle=b.glass;
+  for(let f=0;f<b.floors;f++){ const yy=sy-(f*floorH)-floorH+4;
+    for(let wx=-1;wx<=1;wx++){ ctx.globalAlpha=0.9; ctx.fillRect(sx-14+wx*10, yy-((b.w-1)*TH*0.25), 6,8); ctx.fillRect(sx+8+wx*10, yy-((b.d-1)*TH*0.25), 6,8);} }
+  ctx.globalAlpha=1;
+  isoBox(sx,sy-h,b.w+0.06,b.d+0.06,6,b.roof);
+  if(b.accent){ ctx.save();ctx.shadowColor=b.accent;ctx.shadowBlur=12;ctx.fillStyle=b.accent;ctx.fillRect(Math.round(sx)-11,Math.round(sy-h)-3,22,3);ctx.restore(); }
+  ctx.fillStyle=(b.accent||'rgba(255,220,120,.9)'); ctx.fillRect(sx-4,sy-14,8,12);
+  nameplate(sx,sy-h-16,b.name);
+}
+
+// ---------- input ----------
+const keys={};
+addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E') tryDoor(); if(e.key==='t'||e.key==='T') tod=(tod+0.28)%1; });
+addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+let inInterior=null, interiorType='office';
+function tryDoor(){
+  if(state==='interior'){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); return; }
+  if(state==='travel'){ closeTravel(); return; }
+  if(state!=='world') return;
+  for(const p of props){ if(p.type!=='building') continue;
+    const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
+      if(p.kind==='transit') openTravel(); else enterInterior(p); return; } }
+}
+function enterInterior(b){ state='interior'; inInterior=b; interiorType=b.kind||'office';
+  const pr=document.getElementById('prompt'); pr.classList.remove('hide');
+  pr.textContent=(interiorType==='home'?'🏠 Your Home':('Inside '+b.name))+' — press E to exit'; player.icol=4;player.irow=6; }
+function openShop(){ document.getElementById('prompt').classList.remove('hide'); document.getElementById('prompt').textContent='🛒 x402 micropayment shop — wiring coming next (testnet)'; setTimeout(()=>document.getElementById('prompt').classList.add('hide'),2600); }
+// ---- travel ----
+let fadeV=0, fadeDir=0, pendingRegion=null;
+function openTravel(){ if(state!=='world')return; state='travel'; const g=document.getElementById('travelGrid'); g.innerHTML='';
+  REGIONS.forEach(r=>{ const d=document.createElement('div'); d.className='rcard'+(r.id===regionSel?' sel':''); d.style.background=r.color;
+    d.style.background='linear-gradient(150deg,'+r.color+','+shadeHex(r.color,-0.22)+')';
+    d.innerHTML='<div class="rem">'+r.emoji+'</div><div class="rnm">'+r.name+'</div><small>'+(r.id===regionSel?'You are here':r.desc)+'</small>';
+    if(r.id!==regionSel) d.onclick=()=>travelTo(r.id); g.appendChild(d); });
+  document.getElementById('travel').classList.remove('hide'); }
+function closeTravel(){ state='world'; document.getElementById('travel').classList.add('hide'); }
+function travelTo(id){ document.getElementById('travel').classList.add('hide'); state='world'; pendingRegion=id; fadeDir=1; }
+
+// ---------- update ----------
+let last=0;
+function update(dt){
+  if(state==='world') tod=(tod+dt*0.012)%1;   // ~85s day/night cycle
+  if(fadeDir!==0){ fadeV+=fadeDir*dt*2.6;
+    if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; pendingRegion=null; fadeV=1; fadeDir=-1; }
+    else if(fadeV<=0){ fadeV=0; fadeDir=0; } }
+  if(state==='world'){
+    const run=keys['shift']?1.9:1, v=3.2*run*dt; let mc=0,mr=0;
+    if(keys['w']||keys['arrowup']){mc-=1;mr-=1;} if(keys['s']||keys['arrowdown']){mc+=1;mr+=1;}
+    if(keys['a']||keys['arrowleft']){mc-=1;mr+=1;} if(keys['d']||keys['arrowright']){mc+=1;mr-=1;}
+    if(mc||mr){ const nc=player.col+mc*v*0.5, nr=player.row+mr*v*0.5;
+      if(walkable(nc,player.row)) player.col=nc; if(walkable(player.col,nr)) player.row=nr; player.rig.anim='walk'; }
+    else player.rig.anim='idle';
+    cam.col+=(player.col-cam.col)*Math.min(1,dt*6); cam.row+=(player.row-cam.row)*Math.min(1,dt*6);
+    // npcs
+    for(const n of npcs){ if(n.pause>0){n.pause-=dt;n.rig.anim='idle';continue;} const dx=n.tc-n.col,dy=n.tr-n.row,d=Math.hypot(dx,dy);
+      if(d<0.1){n.pause=0.5+Math.random()*2;npcRetarget(n);n.rig.anim='idle';} else{ const s=n.speed*dt; const nc=n.col+dx/d*s,nr=n.row+dy/d*s; if(walkable(nc,nr)){n.col=nc;n.row=nr;n.rig.anim='walk';} else npcRetarget(n);} }
+    // door prompt
+    let near=null; for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
+    const pr=document.getElementById('prompt'); if(near){ pr.classList.remove('hide'); pr.textContent='Press E to enter '+near.name; } else if(!inInterior) pr.classList.add('hide');
+  }
+}
+
+// ---------- render ----------
+function tileColor(t){ const g=region; if(t===GRASS)return g.grass; if(t===WATER)return g.water; if(t===LAVA)return '#c8501f'; if(t===SAND)return g.sand; if(t===PATH)return '#b7ac86'; if(t===DOCK)return '#8a6a42'; return g.grass; }
+// glowing sacred-geometry mandala painted on SHADDAI City ground (world-space, ctx already translated+scaled)
+function isoRing(cc,cr,rad,steps){ ctx.beginPath(); for(let i=0;i<=steps;i++){ const t=i/steps*2*Math.PI; const p=w2s(cc+rad*Math.cos(t), cr+rad*Math.sin(t)); if(i===0)ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]); } ctx.closePath(); }
+function drawCityMandala(time){
+  const CC=30,CR=30,R=16, pu=Math.sin(time/900)*0.5+0.5;
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineJoin='round';
+  // Flower of Life — center + 6 petals
+  const fr=R*0.5; ctx.shadowColor='#5fe0ff'; ctx.shadowBlur=16;
+  ctx.strokeStyle='rgba(95,224,255,'+(0.16+pu*0.10).toFixed(2)+')'; ctx.lineWidth=2.2;
+  isoRing(CC,CR,fr,64); ctx.stroke();
+  for(let i=0;i<6;i++){ const a=i*Math.PI/3; isoRing(CC+fr*Math.cos(a),CR+fr*Math.sin(a),fr,64); ctx.stroke(); }
+  // gold petal + HQ rings
+  ctx.strokeStyle='rgba(232,196,92,'+(0.24+pu*0.16).toFixed(2)+')'; ctx.shadowColor='#e8c45c'; ctx.lineWidth=3.2;
+  isoRing(CC,CR,R*0.62,80); ctx.stroke(); isoRing(CC,CR,R+3,96); ctx.stroke();
+  // violet heptagon + radial spokes to the 7 HQs
+  const H=heptagonHQs(CC,CR,R), c=w2s(CC,CR);
+  ctx.strokeStyle='rgba(201,166,255,'+(0.34+pu*0.20).toFixed(2)+')'; ctx.shadowColor='#c9a6ff'; ctx.lineWidth=2.6;
+  ctx.beginPath(); H.forEach((h,i)=>{ const p=w2s(h.col,h.row); if(i===0)ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]); }); ctx.closePath(); ctx.stroke();
+  H.forEach(h=>{ const p=w2s(h.col,h.row); ctx.beginPath(); ctx.moveTo(c[0],c[1]); ctx.lineTo(p[0],p[1]); ctx.stroke(); });
+  ctx.restore();
+}
+function renderWorld(time){
+  ctx.clearRect(0,0,W,H);
+  const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,region.id==='volcano'?'#3a1a12':'#8ecbe6'); sky.addColorStop(1,region.id==='volcano'?'#180b08':'#bfe6c8'); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.translate(Math.round(W/2), Math.round(H*0.42)); ctx.scale(zoom,zoom);
+  const cull=(sx,sy)=>{ const X=sx*zoom+W/2, Y=sy*zoom+H*0.42; return X<-120||X>W+120||Y<-160||Y>H+120; };
+  const order=[]; for(let r=0;r<GH;r++)for(let col=0;col<GW;col++) order.push([col,r]);
+  order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  for(const [col,r] of order){ const [sx,sy]=w2s(col,r); if(cull(sx,sy)) continue; const t=tiles[r][col];
+    if(window.Terrain&&window.Terrain.tile&&!window.__noTerrain){ window.Terrain.tile(ctx, region.id, tileTypeName(t), sx, sy, col, r, time); continue; }
+    if(region.city){ tronTile(sx,sy,t,col,r,time); continue; }
+    let cl=tileColor(t); if((col+r)&1) cl=shade(cl,-0.05); diamond(sx,sy,cl, shade(cl,-0.10));
+    if(t===WATER||t===LAVA){ ctx.fillStyle='rgba(255,255,255,'+(t===LAVA?0.10:0.14)+')'; const wob=Math.sin(time/500+col+r)*3; ctx.fillRect(sx-6,sy-1+wob*0.1,12,2); } }
+  if(region.city) drawCityMandala(time);
+  const obj=[];
+  for(const p of props){ const [sx,sy]=w2s(p.col+(p.w?(p.w-1)/2:0),p.row+(p.d?(p.d-1)/2:0)); if(cull(sx,sy)) continue;
+    obj.push({k:p.col+p.row+(p.type==='building'?(p.w+p.d)/2:0), draw:()=>{
+      if(p.type==='tree')drawTree(sx,sy); else if(p.type==='palm')drawPalm(sx,sy); else if(p.type==='pine')drawPine(sx,sy); else if(p.type==='cactus')drawCactus(sx,sy); else if(p.type==='lavarock')drawLavaRock(sx,sy); else if(p.type==='rock')drawRock(sx,sy); else if(p.type==='car')drawCar(sx,sy,p.color); else if(p.type==='hovercar')drawHoverCar(sx,sy,p.color,time); else if(p.type==='volcano')drawVolcano(sx,sy,time); else if(p.type==='building')drawBuilding(p,sx,sy,time); }}); }
+  for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,1,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); }}); }
+  { const [sx,sy]=w2s(player.col,player.row); obj.push({k:player.col+player.row+0.01, draw:()=>{ PP.draw(ctx,player.rig,sx,sy,1,time); }}); }
+  obj.sort((a,b)=>a.k-b.k); for(const o of obj) o.draw();
+  ctx.restore();
+  // day/night: dk = 1 at midnight, 0 at noon
+  const dk=(Math.cos(tod*6.283185)+1)/2;
+  if(dk>0.02){ ctx.fillStyle='rgba(14,20,52,'+(dk*0.62).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
+    if(dk>0.45){ ctx.fillStyle='rgba(150,170,255,'+((dk-0.45)*0.14).toFixed(3)+')'; ctx.fillRect(0,0,W,H); } }
+  if(fadeV>0){ ctx.fillStyle='rgba(0,0,0,'+fadeV.toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
+}
+function renderInterior(time){
+  if(window.Interiors && window.Interiors.draw && !window.__noInteriors){ ctx.clearRect(0,0,W,H); try{ window.Interiors.draw(ctx, interiorType, W, H, PP, time); }catch(e){} PP.draw(ctx, player.rig, W*0.5, H*0.62, 1.3, time); return; }
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#e9e6da'; ctx.fillRect(0,0,W,H);
+  const gw=9,gh=7, ox=W/2, oy=H*0.32;
+  function is(col,row){ return [ox+(col-row)*TW/2, oy+(col+row)*TH/2]; }
+  // walls
+  (function(){ const s=is((gw-1)/2,-0.6); })();
+  // floor
+  const ord=[]; for(let r=0;r<gh;r++)for(let col=0;col<gw;col++)ord.push([col,r]); ord.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  for(const [col,r] of ord){ const [sx,sy]=is(col,r); let cl=(col+r)&1?'#cbb89a':'#d8c8a8'; diamond2(sx,sy,cl); }
+  function diamond2(sx,sy,color){ ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(sx,sy-TH/2);ctx.lineTo(sx+TW/2,sy);ctx.lineTo(sx,sy+TH/2);ctx.lineTo(sx-TW/2,sy);ctx.closePath();ctx.fill();ctx.strokeStyle='#00000012';ctx.stroke(); }
+  // simple furniture via PP.shade-based boxes
+  function ibox(col,row,w,d,h,top){ const [sx,sy]=is(col,row); const save=[ctx.fillStyle]; const dx=(dc,dr)=>(dc-dr)*TW/2,dy=(dc,dr)=>(dc+dr)*TH/2,hw=w/2,hd=d/2;
+    const bk=[sx+dx(-hw,-hd),sy+dy(-hw,-hd)],rt=[sx+dx(hw,-hd),sy+dy(hw,-hd)],fr=[sx+dx(hw,hd),sy+dy(hw,hd)],lf=[sx+dx(-hw,hd),sy+dy(-hw,hd)];const up=p=>[p[0],p[1]-h];
+    function P(a){ctx.beginPath();ctx.moveTo(a[0][0],a[0][1]);for(let i=1;i<a.length;i++)ctx.lineTo(a[i][0],a[i][1]);ctx.closePath();}
+    ctx.fillStyle=PP.shade(top,-0.17);P([lf,fr,up(fr),up(lf)]);ctx.fill();ctx.fillStyle=PP.shade(top,-0.33);P([fr,rt,up(rt),up(fr)]);ctx.fill();ctx.fillStyle=top;P([up(bk),up(rt),up(fr),up(lf)]);ctx.fill(); }
+  ibox(1,1,2.4,0.7,14,'#b89a6a'); // reception desk
+  ibox(7,1,0.9,1.6,10,'#9a4a4a'); ibox(1,5,0.9,1.6,10,'#9a4a4a'); // couches
+  ibox(7,5,0.35,0.35,26,'#c9c2b2'); // plant pot base
+  // player inside + an NPC
+  const [px,py]=is(player.icol||4,player.irow||6); PP.draw(ctx,player.rig,px,py,1,time);
+  const [nx,ny]=is(2,2); PP.draw(ctx,PP.PRESETS[1].rig,nx,ny,1,time);
+}
+function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time; update(dt);
+  if(state==='create'){ cctx.clearRect(0,0,ccv.width,ccv.height); PP.draw(cctx, player.rig, ccv.clientWidth/2, ccv.clientHeight*0.86, 2.6, time); }
+  else if(state==='region'){ if(window.RegionMap&&window.RegionMap.draw&&!window.__noMap){ ctx.clearRect(0,0,W,H); window.RegionMap.draw(ctx,W,H,REGIONS,regionSel,time/1000); } }
+  else if(state==='world') renderWorld(time);
+  else if(state==='interior') renderInterior(time);
+  requestAnimationFrame(loop);
+}
+fit(); setPreset(0); requestAnimationFrame(loop);
+</script>
+<script src="/home-btn.js" defer></script>
+</body></html>
