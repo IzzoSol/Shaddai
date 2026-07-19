@@ -56,10 +56,10 @@
 
     // ── TUNING ─────────────────────────────────────────────────────────────
     var ELEV_HIGH        = 26;     // elevator upper floor height (world-Y)
-    var ELEV_PAUSE       = 2.6;   // dwell seconds at each end
-    var ELEV_SPEED       = 9;     // units/s vertical
+    var ELEV_PAUSE       = 1.6;   // dwell seconds at each end (was 2.6 — owner: elevators too slow)
+    var ELEV_SPEED       = 17;    // units/s vertical (was 9 — owner: elevators too slow)
     var TRANSIT_HEIGHT   = 1.9;   // transit pod hover above ground
-    var TRANSIT_SPEED    = 16;    // units/s horizontal
+    var TRANSIT_SPEED    = 24;    // units/s horizontal (was 16)
     var TRANSIT_PAUSE    = 3.0;   // dwell at each terminus
     var ELEV_PAD_R       = 5.4;   // elevator pad ride-detection radius (forgiving; pad disc R≈4.0)
     var TRANSIT_PAD_R    = 6.8;   // transit pod ride-detection radius (forgiving; pad disc R≈5.4)
