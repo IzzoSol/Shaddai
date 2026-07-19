@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Desert of the Pyramid — Yesod · SHADDAI</title>
+<style>
+  /* ============================================================
+     DESERT OF THE PYRAMID — "the drone climbs into night"
+     Sacred-tech cinematic beat. WebGL2 + GLSL.
+     One continuous scroll-driven aerial moment:
+       p=0.00  near a great Egyptian PYRAMID (gold rim-lit, apex glint)
+       p~0.15  drone zooms OUT past the pyramid -> vast DESERT revealed
+       p~0.45  aerial GLIDE low over rolling dunes, wind ripples,
+               emerald/cyan mineral sheen, far techno-city glow
+       p~0.75  camera tilts/zooms UPWARD as it turns to NIGHT:
+               sky warm gold -> cool cyan -> obsidian, stars fade in
+       p=1.00  looking up at the early star-field (sets up a
+               constellation dome — NOT built here)
+     Palette lock: obsidian #06080b (~80%) · emerald #00ff9c ·
+                   gold #e8c45c · cyan #5fe0ff. Nothing else glows.
+     Pipeline: HDR scene -> bright pass -> gaussian bloom -> ACES
+               composite (grain, chromatic aberration, vignette).
+     Mouse: ripples the sand like water + steers/parallaxes camera.
+     ============================================================ */
+  :root{
+    --obsidian:#06080b;
+    --emerald:#00ff9c;
+    --gold:#e8c45c;
+    --cyan:#5fe0ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{background:var(--obsidian);}
+  body{width:100%;background:var(--obsidian);overflow-x:hidden;}
+  body{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color:var(--emerald);
+    cursor:crosshair;
+  }
+  #stage{position:fixed;inset:0;background:var(--obsidian);z-index:0;}
+  /* invisible tall scroll driver — its height defines the journey length */
+  #scrollDriver{position:relative;width:1px;height:900vh;pointer-events:none;opacity:0;}
+  #scrollHint{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    z-index:3;pointer-events:none;color:var(--cyan);
+    font:11px "IBM Plex Mono",monospace;letter-spacing:.22em;opacity:.55;
+    text-shadow:0 0 18px rgba(95,224,255,.35);transition:opacity .6s ease;
+  }
+  #scrollHint .arw{display:block;text-align:center;margin-top:6px;font-size:14px;
+    color:var(--emerald);animation:bob 1.8s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(5px);opacity:1;}}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #hud{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+
+  #fallback{
+    position:absolute;inset:0;display:none;place-items:center;
+    background:
+      radial-gradient(120% 90% at 50% 40%, rgba(232,196,92,.05), transparent 60%),
+      var(--obsidian);
+    text-align:center;padding:8vw;
+  }
+  #fallback .box{max-width:640px;}
+  #fallback h1{
+    font-size:clamp(22px,4vw,42px);letter-spacing:.35em;
+    color:var(--gold);font-weight:400;margin-bottom:22px;
+    text-shadow:0 0 30px rgba(232,196,92,.25);
+  }
+  #fallback p{
+    font-size:13px;line-height:2;color:rgba(95,224,255,.7);
+    letter-spacing:.14em;
+  }
+  #fallback .glyph{
+    font-size:64px;color:var(--gold);margin-bottom:30px;
+    text-shadow:0 0 40px rgba(232,196,92,.4);opacity:.85;
+  }
+  #vig{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 46%, transparent 42%, rgba(2,3,5,.55) 100%);
+    mix-blend-mode:multiply;
+  }
+  .noscript-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <canvas id="hud"></canvas>
+  <div id="vig"></div>
+  <div id="fallback">
+    <div class="box">
+      <div class="glyph">&#9651;</div>
+      <h1>YESOD</h1>
+      <p>The desert of the pyramid requires WebGL2 to breathe.<br/>
+         Your vessel cannot render the aerial field.<br/>
+         &mdash; the dunes rest under a darkening sky &mdash;</p>
+    </div>
+  </div>
+</div>
+<div id="scrollHint">SCROLL TO CLIMB INTO NIGHT<span class="arw">&#8595;</span></div>
+<div id="scrollDriver"></div>
+
+<noscript><div class="noscript-msg">JavaScript required to render the Desert of the Pyramid.</div></noscript>
+
+<script>
+"use strict";
+/* ================================================================
+   DESERT OF THE PYRAMID
+   Pipeline (same proven bloom chain as the parent journey):
+     PASS 1  scene   -> HDR-ish float FBO (RGBA16F if available)
+                        procedural pyramid + raymarched dune field +
+                        day->night sky + star-field
+     PASS 2  bright  -> threshold bright pass, downsampled 1/2
+     PASS 3  blur    -> separable gaussian (H then V), 2 iters, 1/2 res
+     PASS 4  final   -> composite scene + additive bloom, ACES tonemap,
+                        film grain, chromatic aberration, vignette
+   All geometry is procedural. No external assets. No libraries.
+   ================================================================ */
+
+(function(){
+
+  const glCanvas  = document.getElementById('gl');
+  const hudCanvas = document.getElementById('hud');
+  const fallback  = document.getElementById('fallback');
+
+  // ---- acquire WebGL2, degrade gracefully ---------------------
+  let gl = null;
+  try {
+    gl = glCanvas.getContext('webgl2', {
+      antialias:false, alpha:false, depth:false, stencil:false,
+      premultipliedAlpha:false, preserveDrawingBuffer:false,
+      powerPreference:'high-performance'
+    });
+  } catch(e){ gl = null; }
+
+  if(!gl){
+    fallback.style.display = 'grid';
+    console.warn('[DesertPyramid] WebGL2 unavailable — showing fallback.');
+    return; // do not throw
+  }
+
+  // float color-buffer support (for real HDR bloom). Fall back to RGBA8.
+  const extF16 = gl.getExtension('EXT_color_buffer_float');
+  const extHF  = gl.getExtension('EXT_color_buffer_half_float');
+  let HDR_INTERNAL, HDR_TYPE;
+  if(extF16){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else if(extHF){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else { HDR_INTERNAL = gl.RGBA8; HDR_TYPE = gl.UNSIGNED_BYTE; }
+  gl.getExtension('OES_texture_float_linear');
+
+  // ---- shader helpers -----------------------------------------
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      const log = gl.getShaderInfoLog(s);
+      console.error('[DesertPyramid] shader compile error:\n'+log+'\n---SRC---\n'+
+        src.split('\n').map((l,i)=>(i+1)+': '+l).join('\n'));
+      throw new Error('shader compile failed');
+    }
+    return s;
+  }
+  function program(vsSrc, fsSrc){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      console.error('[DesertPyramid] link error: '+gl.getProgramInfoLog(p));
+      throw new Error('program link failed');
+    }
+    return p;
+  }
+  function uni(p){
+    const cache = {};
+    return (name)=>{
+      if(!(name in cache)) cache[name] = gl.getUniformLocation(p, name);
+      return cache[name];
+    };
+  }
+
+  // fullscreen triangle
+  const quadVAO = gl.createVertexArray();
+  gl.bindVertexArray(quadVAO);
+  const quadBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+
+  const VS_FULL = `#version 300 es
+  layout(location=0) in vec2 aPos;
+  out vec2 vUv;
+  void main(){
+    vUv = aPos*0.5 + 0.5;
+    gl_Position = vec4(aPos,0.0,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 1 — SCENE (aerial drone flight: pyramid -> dunes -> night)
+  //  A raymarched heightfield desert with an analytic pyramid SDF.
+  //  Camera is scroll-driven: banks past the pyramid, glides low over
+  //  the dunes, then pitches UP into a darkening starry sky.
+  //  Writes linear HDR color; encodes a soft depth in .a for the far DOF.
+  // ============================================================
+  const FS_SCENE = `#version 300 es
+  precision highp float;
+  out vec4 outColor;
+  in vec2 vUv;
+
+  uniform vec2  uRes;
+  uniform float uTime;
+  uniform vec2  uMouse;      // -1..1 eased cursor (steers camera + ripple)
+  uniform vec2  uMouseRaw;   // -1..1 raw cursor
+  uniform float uExcite;     // 0..1 global excitation (mouse energy)
+  uniform float uP;          // 0..1 eased scroll progress (whole beat)
+
+  // palette (linear-ish light colors)
+  const vec3 EMERALD = vec3(0.00, 1.00, 0.612);
+  const vec3 GOLD    = vec3(0.910,0.769,0.361);
+  const vec3 CYAN    = vec3(0.373,0.878,1.00);
+  const vec3 OBS     = vec3(0.0235,0.0314,0.0431);
+
+  // -------- hash / noise --------
+  float hash11(float p){ p=fract(p*0.1031); p*=p+33.33; p*=p+p; return fract(p); }
+  float hash21(vec2 p){
+    vec3 p3 = fract(vec3(p.xyx)*0.1031);
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.x+p3.y)*p3.z);
+  }
+  vec2 hash22(vec2 p){
+    vec3 a = fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973));
+    a += dot(a, a.yzx+33.33);
+    return fract((a.xx+a.yz)*a.zy);
+  }
+  float noise(vec2 p){
+    vec2 i=floor(p), f=fract(p);
+    vec2 u=f*f*(3.0-2.0*f);
+    float a=hash21(i);
+    float b=hash21(i+vec2(1,0));
+    float c=hash21(i+vec2(0,1));
+    float d=hash21(i+vec2(1,1));
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+  }
+  float fbm(vec2 p){
+    float v=0.0, a=0.5;
+    for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.5; }
+    return v;
+  }
+  mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+
+  // ---- ripple state: mouse pushes luminous rings across the sand ----
+  // world-space cursor target (filled in main); a decaying wave field.
+  vec2  gRipCenter;
+  float gRipAmp;
+
+  // -------- DUNE HEIGHTFIELD (world XZ -> height Y) --------
+  // Rolling sand dunes: big swells + wind-carved ripples. The mouse adds a
+  // luminous radial ripple that displaces the surface like water.
+  float duneH(vec2 w){
+    float h = 0.0;
+    // large rolling swells
+    h += fbm(w*0.12 + vec2(0.0, uTime*0.010))*3.2;
+    h += fbm(w*0.28 - vec2(uTime*0.006, 0.0))*1.1;
+    // fine wind ripples (directional, high-frequency)
+    vec2 wr = w; wr = rot(0.6)*wr;
+    h += sin(wr.x*2.2 + fbm(w*0.5)*3.0)*0.10;
+    h += sin(wr.x*5.5 - uTime*0.15)*0.04;
+    // mouse ripple — expanding luminous ring displaces the sand (water-like)
+    float rr = length(w - gRipCenter);
+    float ring = sin(rr*1.4 - uTime*3.5) * exp(-rr*0.10) * gRipAmp;
+    h += ring*0.9;
+    return h;
+  }
+
+  // surface normal via finite differences on the heightfield
+  vec3 duneN(vec2 w){
+    float e = 0.35;
+    float hL = duneH(w-vec2(e,0.0));
+    float hR = duneH(w+vec2(e,0.0));
+    float hD = duneH(w-vec2(0.0,e));
+    float hU = duneH(w+vec2(0.0,e));
+    return normalize(vec3(hL-hR, 2.0*e, hD-hU));
+  }
+
+  // -------- PYRAMID SDF (Great Pyramid, ~52 deg slope) --------
+  // centered at pyrC (world XZ), base half-width b, apex height hgt.
+  // returns signed distance; we only need it near the surface for ray hit.
+  float sdPyramid(vec3 p, float b, float hgt){
+    p.y += 0.0;
+    // fold into first octant symmetry about center
+    p.xz = abs(p.xz);
+    // 4 slanted faces; ~52deg -> slope = hgt/b tuned for Giza-like ratio
+    float m = hgt/max(b,1e-4);
+    float d = max( (p.x)*m + p.y - hgt,
+                   (p.z)*m + p.y - hgt );
+    float base = -p.y; // ground plane cap
+    return max(d*0.62, base);
+  }
+
+  // layered-stone course banding on the pyramid faces (for gold rim courses)
+  float pyrCourses(float worldY){
+    return 0.5 + 0.5*sin(worldY*7.5);
+  }
+
+  void main(){
+    vec2 fragUv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y; // aspect-correct, center 0
+    float t = uTime;
+    float p = clamp(uP,0.0,1.0);
+    // smootherstep the whole beat so the flight glides
+    float ps = p*p*p*(p*(p*6.0-15.0)+10.0);
+
+    // ---- beat weights along the single continuous move ----
+    float bPyr   = 1.0 - smoothstep(0.02, 0.28, p);   // 1 near pyramid, fades as we pull out
+    float bOut   = smoothstep(0.05, 0.30, p);         // zoom-OUT past the pyramid
+    float bGlide = smoothstep(0.26, 0.62, p);         // low aerial glide over dunes
+    float bTilt  = smoothstep(0.60, 0.90, p);         // pitch UP toward sky
+    float bNight = smoothstep(0.58, 1.0, p);          // day -> night
+
+    // =====================================================================
+    //  DRONE CAMERA — dynamic aerial, banking, scroll-driven
+    // =====================================================================
+    // The pyramid sits at world origin XZ. We start close & low beside it,
+    // pull OUT and UP as we scan the dunes, then pitch the camera skyward.
+    vec2  pyrXZ = vec2(0.0, 0.0);
+    float pyrB  = 26.0;     // base half-width
+    float pyrH  = 34.0;     // apex height (~52deg: H/B ~ 1.31)
+
+    // altitude: start ~ mid-pyramid height, climb high over the dunes
+    float camAlt = mix(14.0, 96.0, ps) + sin(t*0.06)*1.4 + uMouse.y*10.0;
+    // horizontal distance from pyramid: start close, sweep out across desert
+    float camRad = mix(46.0, 240.0, ps);
+    // a slow banking arc around/past the pyramid, plus forward desert travel
+    float camAng = 0.7 + ps*1.7 + t*0.012 + uMouse.x*0.5;
+    // forward glide bias so the dunes stream beneath us during the mid beat
+    float glideZ = bGlide * (t*3.0);
+
+    vec3 camPos = vec3(
+      pyrXZ.x + sin(camAng)*camRad + uMouse.x*8.0,
+      camAlt,
+      pyrXZ.y - cos(camAng)*camRad - glideZ
+    );
+
+    // look target: at the pyramid early; drift onto the dunes ahead; then UP.
+    vec3 lookDunes = camPos + vec3(sin(camAng)* -30.0, -18.0, -60.0);
+    vec3 lookPyr   = vec3(pyrXZ.x, mix(18.0, 6.0, ps), pyrXZ.y);
+    vec3 target = mix(lookPyr, lookDunes, bOut);
+    // TILT UP: raise the look target into the sky at the end. We stop a touch
+    // short of straight-up so the glowing dune horizon lingers at the bottom of
+    // frame — a clean bridge into the constellation dome that follows.
+    target.y = mix(target.y, camPos.y + 110.0, bTilt);
+    // mouse steer/parallax on the look target (vivid)
+    target.xz += uMouse.xy * mix(6.0, 22.0, bGlide);
+    target.y  += uMouse.y * 14.0 * (1.0 - bTilt);
+
+    vec3 fwd = normalize(target - camPos);
+    vec3 rgt = normalize(cross(vec3(0,1,0), fwd));
+    if(length(rgt) < 1e-3) rgt = vec3(1,0,0);
+    rgt = normalize(rgt);
+    vec3 upv = cross(fwd, rgt);
+    // banking roll: bank into the arc + a little from the mouse
+    float roll = sin(camAng*0.5)*0.16*(1.0-bTilt*0.7) + uMouse.x*0.12 + sin(t*0.05)*0.03;
+    { float cr=cos(roll), sr=sin(roll);
+      vec3 r2 = rgt*cr + upv*sr;
+      vec3 u2 = -rgt*sr + upv*cr;
+      rgt=r2; upv=u2; }
+
+    // field of view: a touch wider on the zoom-out, tighter tilting up
+    float focal = mix(1.15, 1.30, bOut);
+    focal = mix(focal, 1.10, bTilt);
+
+    // primary ray
+    vec3 rd = normalize(fwd*focal + rgt*fragUv.x + upv*fragUv.y);
+
+    // ---- mouse ripple world center: project cursor onto ground plane ----
+    // aim a ray from cam through the eased cursor position and hit y=0.
+    {
+      vec3 crd = normalize(fwd*focal + rgt*uMouse.x + upv*uMouse.y);
+      float td = (crd.y < -0.01) ? (-camPos.y / crd.y) : 1e5;
+      td = clamp(td, 0.0, 600.0);
+      gRipCenter = (camPos + crd*td).xz;
+      gRipAmp = uExcite; // decays when the mouse is still (set from JS)
+    }
+
+    // =====================================================================
+    //  RAYMARCH THE DUNE HEIGHTFIELD (and test the pyramid along the way)
+    // =====================================================================
+    vec3 col = OBS*0.4;
+    float hitDist = -1.0;
+    vec3  hitPos  = vec3(0.0);
+    bool  hitSand = false;
+    bool  hitPyr  = false;
+    float pyrY    = 0.0; // world Y at pyramid hit (for stone courses)
+
+    // heightfield march: step along ray, detect when ray dips below terrain.
+    {
+      float tt = 1.0;
+      float prevGap = 1.0;
+      const int STEPS = 96;
+      for(int i=0;i<STEPS;i++){
+        vec3 pos = camPos + rd*tt;
+        if(pos.y > 130.0 && rd.y > 0.0) break;          // shot into the sky
+        float terr = duneH(pos.xz);
+        float gap  = pos.y - terr;                       // >0 above sand
+        if(gap < 0.0){
+          // refine hit with a couple bisection steps
+          float a = tt - (tt*0.0 + (0.0));                // placeholder
+          float lo = tt - (prevGap>0.0 ? (tt* (prevGap/(prevGap - gap))) *0.0 : 0.0);
+          // simple secant between prev and current
+          float t0 = tt - max(1.0, tt*0.02);
+          float t1 = tt;
+          for(int k=0;k<5;k++){
+            float tm = 0.5*(t0+t1);
+            vec3 pm = camPos + rd*tm;
+            float gm = pm.y - duneH(pm.xz);
+            if(gm > 0.0) t0 = tm; else t1 = tm;
+          }
+          tt = 0.5*(t0+t1);
+          hitPos = camPos + rd*tt;
+          hitDist = tt; hitSand = true;
+          break;
+        }
+        prevGap = gap;
+        // adaptive step: bigger when high above the surface
+        tt += max(0.9, gap*0.55);
+        if(tt > 520.0) break;
+      }
+    }
+
+    // pyramid: analytic ray-vs-SDF sphere-trace (cheap, few steps) — only
+    // meaningful when the pyramid is near frame (early beat), but always safe.
+    {
+      float tt = 1.0;
+      const int PS = 64;
+      for(int i=0;i<PS;i++){
+        vec3 pos = camPos + rd*tt;
+        vec3 lp = pos - vec3(pyrXZ.x, 0.0, pyrXZ.y);
+        float d = sdPyramid(lp, pyrB, pyrH);
+        if(d < 0.05){
+          // accept only if closer than the sand hit (or sand missed)
+          if(!hitSand || tt < hitDist){
+            hitPyr = true; hitSand = false;
+            hitDist = tt; hitPos = pos; pyrY = pos.y;
+          }
+          break;
+        }
+        tt += max(0.15, d*0.9);
+        if(tt > 420.0) break;
+        if(hitSand && tt > hitDist) break; // sand already in front
+      }
+    }
+
+    // =====================================================================
+    //  SKY — warm gold (day) -> cool cyan -> obsidian (night), stars fade in
+    // =====================================================================
+    // sky is what we see where no geometry was hit (and it dominates on tilt-up).
+    vec3 skyCol;
+    {
+      float h = clamp(rd.y*0.5 + 0.5, 0.0, 1.0);   // 0 horizon .. 1 zenith
+      // DAY gradient: warm gold low horizon -> cyan mid -> deep obsidian high
+      vec3 dayHorizon = mix(GOLD*0.85, vec3(0.9,0.55,0.28)*0.9, 0.35);
+      vec3 dayMid     = mix(CYAN*0.5, GOLD*0.4, 0.4);
+      vec3 dayHigh    = OBS*1.4 + CYAN*0.06;
+      vec3 day = mix(dayHorizon, dayMid, smoothstep(0.0,0.45,h));
+      day = mix(day, dayHigh, smoothstep(0.4,1.0,h));
+      // NIGHT gradient: a lingering warm/cyan glow band at the horizon (the
+      // afterglow of the set sun) fading up to a deep — but not empty — obsidian
+      // dome tinted faint emerald/cyan so it reads as a living night sky.
+      vec3 nightHorizon = OBS*1.6 + CYAN*0.16 + GOLD*0.05;
+      vec3 nightHigh    = OBS*0.85 + CYAN*0.03;
+      vec3 night = mix(nightHorizon, nightHigh, smoothstep(0.0,0.55,h));
+      skyCol = mix(day, night, bNight);
+
+      // low sun/void glow bloom near horizon in the travel direction (gold)
+      float sun = pow(max(0.0, 1.0 - abs(h-0.28)*4.0), 3.0);
+      skyCol += GOLD * sun * mix(0.55, 0.10, bNight);
+
+      // ---- STARS: fade in with night, denser toward zenith ----
+      float starF = smoothstep(0.30, 0.85, bNight);
+      if(starF > 0.001){
+        // direction-based star cells (stable in sky, twinkle in time)
+        vec2 sdir = vec2(atan(rd.x, rd.z), asin(clamp(rd.y,-1.0,1.0)));
+        for(int L=0; L<3; L++){
+          float sc = 34.0 + float(L)*34.0;
+          vec2 gp = sdir*sc;
+          vec2 cell = floor(gp);
+          vec2 f = fract(gp);
+          vec2 rnd = hash22(cell + float(L)*17.0);
+          vec2 star = rnd*0.7 + 0.15;
+          float d = length(f - star);
+          float tw = 0.55 + 0.45*sin(t*(1.2+rnd.x*2.5) + rnd.y*6.28);
+          // denser field (lower threshold) + brighter, tighter cores
+          float m = exp(-d*d/0.0011) * step(0.48, rnd.x);
+          // star tint: mostly cool white-cyan, a few gold
+          vec3 sc3 = mix(mix(CYAN,vec3(1.0),0.6), GOLD, step(0.88,rnd.y));
+          float zenithBias = smoothstep(-0.25, 0.7, rd.y);
+          skyCol += sc3 * m * tw * starF * zenithBias * (1.9 - float(L)*0.5);
+        }
+        // faint milky band of dust (emerald/cyan sacred haze), toward zenith
+        float band = fbm(sdir*6.0 + vec2(0.0,t*0.01));
+        band = pow(band,2.5)*smoothstep(0.0,0.7,rd.y);
+        skyCol += mix(CYAN,EMERALD,0.4) * band * starF * 0.14;
+      }
+    }
+
+    // start with sky; overwrite where geometry is hit
+    col = skyCol;
+
+    // =====================================================================
+    //  SHADE THE SAND (dunes) — gold rim-lit crests + mineral sheen
+    // =====================================================================
+    if(hitSand){
+      vec2 w = hitPos.xz;
+      vec3 N = duneN(w);
+      // low warm key light raking across the dunes (from the horizon sun dir)
+      vec3 sunDir = normalize(vec3(0.55, mix(0.32,0.14,bNight), 0.78));
+      float diff = max(dot(N, sunDir), 0.0);
+      float rim  = pow(1.0 - max(dot(N, -rd),0.0), 2.5); // crest rim light
+      // base sand: dark obsidian-brown, NEVER bright (obsidian dominates)
+      vec3 sand = OBS*1.5 + vec3(0.10,0.075,0.045)*(0.4+diff*0.9);
+      // GOLD rim-lit crests
+      sand += GOLD * rim * mix(0.9, 0.35, bNight) * (0.4+diff);
+      sand += GOLD * pow(diff,3.0) * 0.18 * (1.0-bNight);
+      // subtle EMERALD / CYAN mineral sheen in the troughs (sacred-tech)
+      float sheen = fbm(w*0.35 + 12.0);
+      sand += EMERALD * pow(sheen,3.0) * 0.10 * (0.5+0.5*diff);
+      sand += CYAN * pow(1.0-sheen,4.0) * 0.06;
+      // wind-ripple micro glints
+      float micro = pow(max(0.0, sin(w.x*4.0 + fbm(w*0.6)*4.0)),8.0);
+      sand += GOLD * micro * 0.05 * diff;
+
+      // ---- MOUSE RIPPLE HIGHLIGHT: luminous cyan/emerald rings on the sand ----
+      float rr = length(w - gRipCenter);
+      float ring = sin(rr*1.4 - t*3.5) * exp(-rr*0.10) * gRipAmp;
+      float crest = pow(max(ring,0.0), 1.5);
+      col = sand;
+      col += mix(CYAN,EMERALD,0.35) * crest * (0.6 + uExcite*2.2);
+      // bright luminous core right under the cursor (excited "wet" sand)
+      col += mix(CYAN,vec3(1.0),0.4) * exp(-rr*rr*0.02) * (0.3+uExcite*1.6) * 0.6;
+      // concentric ring filaments
+      col += CYAN * exp(-abs(fract(rr*0.5 - t*0.5)-0.5)*7.0) * exp(-rr*0.09) * gRipAmp * 0.9;
+
+      // distance haze -> blend toward sky (aerial perspective)
+      float haze = smoothstep(120.0, 480.0, hitDist);
+      col = mix(col, skyCol, haze*0.85);
+    }
+
+    // =====================================================================
+    //  SHADE THE PYRAMID — layered stone, gold rim-lit edges, apex glint
+    // =====================================================================
+    if(hitPyr){
+      // approximate face normal via SDF gradient
+      vec3 lp = hitPos - vec3(pyrXZ.x,0.0,pyrXZ.y);
+      float e=0.15;
+      vec3 n = normalize(vec3(
+        sdPyramid(lp+vec3(e,0,0),pyrB,pyrH)-sdPyramid(lp-vec3(e,0,0),pyrB,pyrH),
+        sdPyramid(lp+vec3(0,e,0),pyrB,pyrH)-sdPyramid(lp-vec3(0,e,0),pyrB,pyrH),
+        sdPyramid(lp+vec3(0,0,e),pyrB,pyrH)-sdPyramid(lp-vec3(0,0,e),pyrB,pyrH)
+      ));
+      vec3 sunDir = normalize(vec3(0.55, mix(0.32,0.14,bNight), 0.78));
+      float diff = max(dot(n, sunDir), 0.0);
+      float rim  = pow(1.0 - max(dot(n,-rd),0.0), 2.0);
+      // layered stone courses (horizontal banding on world Y)
+      float course = pyrCourses(pyrY);
+      float coursesLine = smoothstep(0.85,1.0,course);
+      // base stone: dark, warm — obsidian with a faint sand tone
+      vec3 stone = OBS*1.6 + vec3(0.09,0.07,0.045)*(0.35+diff*0.8);
+      stone *= 0.85 + course*0.25;                 // course shading
+      // GOLD rim-light along the sunlit edges
+      stone += GOLD * rim * mix(1.0,0.4,bNight) * (0.4+diff);
+      stone += GOLD * coursesLine * 0.10 * diff;   // gilded course seams
+      // faint emerald sacred glyph glow low on the face
+      float glyph = pow(fbm(lp.xz*0.4 + lp.y*0.2),4.0);
+      stone += EMERALD * glyph * 0.06;
+      // APEX GLINT: bright gold spark at the capstone
+      float apex = smoothstep(pyrH-2.5, pyrH, pyrY);
+      stone += GOLD * apex * (1.2 + 0.6*sin(t*2.0)) * 1.4;
+      stone += vec3(1.0,0.95,0.7) * apex * 0.8;    // hot white core
+
+      float haze = smoothstep(120.0, 420.0, hitDist);
+      col = mix(stone, skyCol, haze*0.7);
+    }
+
+    // ---------- FAINT TECHNO-CITY GLOW on the far horizon (dunes beat) ----------
+    // a low band of emerald/cyan light where the desert meets the sky, ahead.
+    {
+      float horizonBand = exp(-abs(rd.y - 0.0)*22.0);   // right at the horizon line
+      float cityDir = smoothstep(-0.3, 0.6, rd.x);      // biased to one side
+      float flick = 0.7 + 0.3*fbm(vec2(rd.x*20.0, t*0.5));
+      float cityAmt = horizonBand * cityDir * bGlide * (1.0-bTilt) * flick;
+      col += mix(EMERALD,CYAN,0.5) * cityAmt * 0.16;
+      col += GOLD * horizonBand * cityDir * bGlide * flick * 0.05;
+    }
+
+    // ---------- gentle god-ray lift toward the horizon sun (day only) ----------
+    {
+      float gr = pow(smoothstep(1.2,0.0,length(fragUv - vec2(0.35,-0.15))),3.0);
+      col += GOLD * gr * 0.04 * (1.0-bNight);
+    }
+
+    // encode a soft depth for the far-DOF pass (0 near .. 1 far)
+    float depthEnc = (hitDist>0.0)? clamp((hitDist-40.0)/460.0, 0.0, 1.0) : 1.0;
+
+    outColor = vec4(max(col,0.0), depthEnc);
+  }`;
+
+  // ============================================================
+  //  PASS 2 — BRIGHT PASS (threshold, keep only luminous bits)
+  // ============================================================
+  const FS_BRIGHT = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform float uThreshold;
+  void main(){
+    vec3 c = texture(uScene, vUv).rgb;
+    float l = dot(c, vec3(0.299,0.587,0.114));
+    float k = smoothstep(uThreshold, uThreshold+0.6, l);
+    outColor = vec4(c*k, 1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 3 — SEPARABLE GAUSSIAN BLUR (9-tap), direction via uDir
+  // ============================================================
+  const FS_BLUR = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uTex;
+  uniform vec2 uDir;
+  void main(){
+    float w[5];
+    w[0]=0.227027; w[1]=0.1945946; w[2]=0.1216216; w[3]=0.054054; w[4]=0.016216;
+    vec3 acc = texture(uTex, vUv).rgb * w[0];
+    for(int i=1;i<5;i++){
+      vec2 o = uDir*float(i);
+      acc += texture(uTex, vUv+o).rgb * w[i];
+      acc += texture(uTex, vUv-o).rgb * w[i];
+    }
+    outColor = vec4(acc,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 4 — FINAL COMPOSITE
+  //   scene + additive bloom, far DOF haze, chromatic aberration,
+  //   film grain, vignette, ACES-ish filmic tonemap.
+  // ============================================================
+  const FS_FINAL = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform sampler2D uBloom;
+  uniform vec2  uRes;
+  uniform float uTime;
+  uniform vec2  uMouse;
+
+  vec3 tonemap(vec3 x){
+    const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;
+    return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
+  }
+
+  void main(){
+    vec2 uv = vUv;
+    // chromatic aberration, stronger toward edges
+    vec2 dir = uv-0.5;
+    float edge = dot(dir,dir);
+    float ca = (0.0015 + edge*0.006);
+    vec3 scene;
+    scene.r = texture(uScene, uv + dir*ca).r;
+    scene.g = texture(uScene, uv).g;
+    scene.b = texture(uScene, uv - dir*ca).b;
+
+    // depth -> only the VERY farthest softens (crisp > dreamy)
+    float depth = texture(uScene, uv).a;
+    float coc = smoothstep(0.78, 1.0, depth);
+
+    vec3 bloom = texture(uBloom, uv).rgb;
+
+    // additive bloom — the glow that sells the cinematic look
+    vec3 col = scene + bloom*1.35;
+    col += bloom*coc*0.18;   // whisper of far-field softening
+
+    // subtle god-ray-ish streaks from bloom toward center
+    vec2 sdir = (0.5-uv);
+    vec3 god = vec3(0.0);
+    for(int i=0;i<6;i++){
+      float s = float(i)/6.0;
+      god += texture(uBloom, uv + sdir*s*0.12).rgb;
+    }
+    col += god*0.05;
+
+    // filmic tonemap + slight lift
+    col = tonemap(col*1.05);
+
+    // film grain (fine, animated, low)
+    float g = fract(sin(dot(gl_FragCoord.xy + uTime*60.0, vec2(12.9898,78.233)))*43758.5453);
+    col += (g-0.5)*0.035;
+
+    // vignette (darkness dominates)
+    float vig = smoothstep(1.25,0.35,length((uv-0.5)*vec2(uRes.x/uRes.y,1.0)*2.0));
+    col *= mix(0.35,1.0,vig);
+
+    // reverent emerald/gold split-tone
+    float lum = dot(col, vec3(0.299,0.587,0.114));
+    vec3 shadowTint = vec3(0.0,0.05,0.04);
+    vec3 highTint   = vec3(0.02,0.015,0.0);
+    col += mix(shadowTint, highTint, smoothstep(0.1,0.7,lum))*0.5;
+
+    // clamp black to obsidian (never pure black)
+    col = max(col, vec3(0.0235,0.0314,0.0431)*0.55);
+
+    outColor = vec4(col,1.0);
+  }`;
+
+  // ---- build programs -----------------------------------------
+  const progScene  = program(VS_FULL, FS_SCENE);
+  const progBright = program(VS_FULL, FS_BRIGHT);
+  const progBlur   = program(VS_FULL, FS_BLUR);
+  const progFinal  = program(VS_FULL, FS_FINAL);
+  const uScene  = uni(progScene);
+  const uBright = uni(progBright);
+  const uBlur   = uni(progBlur);
+  const uFinal  = uni(progFinal);
+
+  // ---- framebuffer factory ------------------------------------
+  function makeTex(w,h,internal,type,filter){
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,internal,w,h,0,gl.RGBA,type,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+  function makeFBO(w,h,internal,type,filter){
+    const tex = makeTex(w,h,internal,type,filter);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    return {fbo,tex,w,h};
+  }
+
+  let sceneFBO, brightFBO, blurA, blurB;
+  let W=0,H=0,DPR=1;
+
+  function allocTargets(){
+    sceneFBO  = makeFBO(W,H,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    const bw = Math.max(2,W>>1), bh = Math.max(2,H>>1);
+    brightFBO = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurA     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurB     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+  }
+  function freeTargets(){
+    [sceneFBO,brightFBO,blurA,blurB].forEach(t=>{
+      if(t){ gl.deleteFramebuffer(t.fbo); gl.deleteTexture(t.tex); }
+    });
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    const cssW = window.innerWidth, cssH = window.innerHeight;
+    const w = Math.max(2,Math.floor(cssW*DPR));
+    const h = Math.max(2,Math.floor(cssH*DPR));
+    if(w===W && h===H) return;
+    W=w; H=h;
+    glCanvas.width=W; glCanvas.height=H;
+    glCanvas.style.width=cssW+'px'; glCanvas.style.height=cssH+'px';
+    hudCanvas.width=W; hudCanvas.height=H;
+    hudCanvas.style.width=cssW+'px'; hudCanvas.style.height=cssH+'px';
+    freeTargets(); allocTargets();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---- mouse (eased, reverent inertia; drives ripple + steer) --
+  const mouse   = {x:0,y:0};
+  const mRaw    = {x:0,y:0};
+  let excite = 0;
+  let exciteTarget = 0;
+  function onMove(e){
+    const r = glCanvas.getBoundingClientRect();
+    const px = (e.clientX!==undefined)? e.clientX : (e.touches&&e.touches[0].clientX);
+    const py = (e.clientY!==undefined)? e.clientY : (e.touches&&e.touches[0].clientY);
+    mRaw.x = ((px-r.left)/r.width)*2-1;
+    mRaw.y = -(((py-r.top)/r.height)*2-1);
+    exciteTarget = Math.min(1, exciteTarget+0.18); // moving stirs the sand
+  }
+  window.addEventListener('mousemove', onMove, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:true});
+  window.addEventListener('mousedown', ()=>{ exciteTarget = 1.0; });
+
+  // ---- SCROLL DRIVER : scrollY/maxScroll -> normalized target, eased ----
+  let pTarget = 0;
+  let p       = 0;
+  const scrollHint = document.getElementById('scrollHint');
+  function readScroll(){
+    const doc = document.documentElement;
+    const max = Math.max(1, (doc.scrollHeight - window.innerHeight));
+    const y   = window.scrollY || window.pageYOffset || doc.scrollTop || 0;
+    pTarget = Math.min(1, Math.max(0, y / max));
+    if(scrollHint) scrollHint.style.opacity = String(Math.max(0, 0.55 - pTarget*3.0));
+  }
+  window.addEventListener('scroll', readScroll, {passive:true});
+  readScroll();
+
+  // ---- HUD (2D readout + wordmark) ----------------------------
+  const hud = hudCanvas.getContext('2d');
+  const readout = [
+    {sym:'ALT', base:0x14}, {sym:'HDG', base:0x88}, {sym:'PIT', base:0x33},
+    {sym:'DST', base:0x5A}, {sym:'TMP', base:0x2E}, {sym:'WND', base:0x91},
+    {sym:'LUX', base:0x77}, {sym:'STR', base:0x39}
+  ];
+  const hexRnd = new Array(readout.length).fill(0).map(()=>Math.random());
+  const bars   = new Array(readout.length).fill(0).map(()=>Math.random());
+  let HUD_STAGE = 'יסוד · the desert of the pyramid · SCENE 04';
+
+  function drawHUD(t){
+    hud.clearRect(0,0,W,H);
+    hud.save();
+    hud.scale(DPR,DPR);
+    const cssH = H/DPR, cssW = W/DPR;
+    const x = 34, lineH = 22, top = cssH*0.5 - (readout.length*lineH)/2;
+    hud.globalAlpha = 0.28;
+    hud.font = '11px "IBM Plex Mono", monospace';
+    hud.textBaseline = 'middle';
+    for(let i=0;i<readout.length;i++){
+      const y = top + i*lineH;
+      if(Math.random()<0.06) hexRnd[i]=Math.random();
+      const val = ((readout[i].base + Math.floor(hexRnd[i]*0x30 + Math.sin(t*2+i)*8))&0xFFF)>>>0;
+      const hex = '0x'+val.toString(16).toUpperCase().padStart(3,'0');
+      hud.fillStyle = '#00ff9c';
+      hud.fillText(readout[i].sym.padEnd(3,' '), x, y);
+      hud.fillStyle = '#5fe0ff';
+      hud.fillText(hex, x+40, y);
+      bars[i] += (Math.sin(t*1.5+i*0.7)*0.5+0.5 - bars[i])*0.05;
+      const bw = 46, bh = 3, bx = x+98, by = y-1;
+      hud.fillStyle = 'rgba(0,255,156,0.25)';
+      hud.fillRect(bx,by,bw,bh);
+      hud.fillStyle = '#00ff9c';
+      hud.fillRect(bx,by,bw*bars[i],bh);
+    }
+    hud.globalAlpha = 0.34;
+    hud.fillStyle = '#e8c45c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText('◈ DRONE TELEMETRY — YESOD', x, top - 26);
+    hud.fillStyle = 'rgba(95,224,255,0.5)';
+    hud.fillText('aerial.stable  · climb.engaged', x, top - 12);
+
+    hud.globalAlpha = 0.5;
+    hud.textAlign = 'right';
+    hud.fillStyle = '#e8c45c';
+    hud.font = '13px "IBM Plex Mono", monospace';
+    hud.fillText('DESERT OF THE PYRAMID', cssW-34, cssH-46);
+    hud.globalAlpha = 0.3;
+    hud.fillStyle = '#00ff9c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText(HUD_STAGE, cssW-34, cssH-30);
+    hud.textAlign = 'left';
+    hud.restore();
+  }
+
+  // ---- render helpers -----------------------------------------
+  function bindFBO(target){
+    if(target){ gl.bindFramebuffer(gl.FRAMEBUFFER,target.fbo); gl.viewport(0,0,target.w,target.h); }
+    else { gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,W,H); }
+  }
+  function drawFS(){ gl.bindVertexArray(quadVAO); gl.drawArrays(gl.TRIANGLES,0,3); gl.bindVertexArray(null); }
+
+  // ---- main loop (pause-safe) ---------------------------------
+  let running = true;
+  let startT = performance.now();
+  document.addEventListener('visibilitychange', ()=>{
+    running = !document.hidden;
+    if(running) requestAnimationFrame(frame);
+  });
+
+  function frame(now){
+    if(!running) return;
+    const t = (now - startT)/1000;
+
+    // ease mouse + excitation (reverent inertia; excite decays when still)
+    mouse.x += (mRaw.x - mouse.x)*0.05;
+    mouse.y += (mRaw.y - mouse.y)*0.05;
+    excite  += (exciteTarget - excite)*0.07;
+    exciteTarget *= 0.955;
+
+    // ease scroll progress so the camera glides
+    p += (pTarget - p)*0.075;
+    if(typeof window.__forceP === 'number') p = window.__forceP;
+
+    // ---------- PASS 1 : SCENE -> HDR fbo ----------
+    bindFBO(sceneFBO);
+    gl.useProgram(progScene);
+    gl.uniform2f(uScene('uRes'), W, H);
+    gl.uniform1f(uScene('uTime'), t);
+    gl.uniform2f(uScene('uMouse'), mouse.x, mouse.y);
+    gl.uniform2f(uScene('uMouseRaw'), mRaw.x, mRaw.y);
+    gl.uniform1f(uScene('uExcite'), 0.20 + excite*0.80); // baseline ambient ripple
+    gl.uniform1f(uScene('uP'), p);
+    window.__DBG = {p:p};
+    // HUD stage label follows the beat
+    if(p < 0.28)      HUD_STAGE = 'יסוד · past the pyramid · SCENE 04';
+    else if(p < 0.62) HUD_STAGE = 'יסוד · aerial over the dunes · SCENE 04';
+    else              HUD_STAGE = 'יסוד · climbing into night · SCENE 04';
+    drawFS();
+
+    // ---------- PASS 2 : BRIGHT PASS (half res) ----------
+    bindFBO(brightFBO);
+    gl.useProgram(progBright);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uBright('uScene'), 0);
+    gl.uniform1f(uBright('uThreshold'), 0.42);
+    drawFS();
+
+    // ---------- PASS 3 : SEPARABLE BLUR (2 iterations) ----------
+    const bw = brightFBO.w, bh = brightFBO.h;
+    let src = brightFBO;
+    for(let it=0; it<2; it++){
+      bindFBO(blurA);
+      gl.useProgram(progBlur);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      gl.uniform1i(uBlur('uTex'),0);
+      gl.uniform2f(uBlur('uDir'), (1.0/bw)*(1.0+it*0.8), 0.0);
+      drawFS();
+      bindFBO(blurB);
+      gl.bindTexture(gl.TEXTURE_2D, blurA.tex);
+      gl.uniform2f(uBlur('uDir'), 0.0, (1.0/bh)*(1.0+it*0.8));
+      drawFS();
+      src = blurB;
+    }
+
+    // ---------- PASS 4 : FINAL COMPOSITE -> screen ----------
+    bindFBO(null);
+    gl.useProgram(progFinal);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uFinal('uScene'),0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, blurB.tex);
+    gl.uniform1i(uFinal('uBloom'),1);
+    gl.uniform2f(uFinal('uRes'), W, H);
+    gl.uniform1f(uFinal('uTime'), t);
+    gl.uniform2f(uFinal('uMouse'), mouse.x, mouse.y);
+    drawFS();
+
+    drawHUD(t);
+    requestAnimationFrame(frame);
+  }
+
+  try {
+    requestAnimationFrame(frame);
+    console.log('[DesertPyramid] WebGL2 acquired. HDR='+(HDR_TYPE===gl.HALF_FLOAT?'half-float':'rgba8')+' — rendering.');
+  } catch(err){
+    console.error('[DesertPyramid] render failed, showing fallback:', err);
+    fallback.style.display='grid';
+  }
+
+})();
+</script>
+</body>
+</html>

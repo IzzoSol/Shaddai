@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kether — the Living Dome · SHADDAI</title>
+<style>
+  /* ============================================================
+     THE LIVING DOME — "Kether, the crown of stars"
+     The FINALE of the cinematic journey. The camera looks UPWARD;
+     constellations grow larger and spread into a 3D planetarium
+     dome overhead — stars joined by hairline GOLD lines, the whole
+     sky rotating with the mouse (look around the night sky).
+     WebGL2 + GLSL. Palette lock:
+       obsidian #06080b · emerald #00ff9c · gold #e8c45c · cyan #5fe0ff
+     ============================================================ */
+  :root{
+    --obsidian:#06080b;
+    --emerald:#00ff9c;
+    --gold:#e8c45c;
+    --cyan:#5fe0ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{background:var(--obsidian);}
+  body{width:100%;background:var(--obsidian);overflow-x:hidden;}
+  body{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color:var(--emerald);
+    cursor:crosshair;
+  }
+  #stage{position:fixed;inset:0;background:var(--obsidian);z-index:0;}
+  /* invisible tall scroll driver — its height defines the reveal length */
+  #scrollDriver{position:relative;width:1px;height:800vh;pointer-events:none;opacity:0;}
+  /* scroll / look hint, fades once the dome opens */
+  #scrollHint{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    z-index:3;pointer-events:none;color:var(--cyan);
+    font:11px "IBM Plex Mono",monospace;letter-spacing:.22em;opacity:.55;
+    text-shadow:0 0 18px rgba(95,224,255,.35);transition:opacity .6s ease;
+    text-align:center;
+  }
+  #scrollHint .arw{display:block;text-align:center;margin-top:6px;font-size:14px;
+    color:var(--emerald);animation:bob 1.8s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(5px);opacity:1;}}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #hud{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+
+  /* Graceful fallback if WebGL2 is unavailable */
+  #fallback{
+    position:absolute;inset:0;display:none;place-items:center;
+    background:
+      radial-gradient(120% 90% at 50% 30%, rgba(0,255,156,.05), transparent 60%),
+      var(--obsidian);
+    text-align:center;padding:8vw;
+  }
+  #fallback .box{max-width:640px;}
+  #fallback h1{
+    font-size:clamp(22px,4vw,42px);letter-spacing:.35em;
+    color:var(--gold);font-weight:400;margin-bottom:22px;
+    text-shadow:0 0 30px rgba(232,196,92,.25);
+  }
+  #fallback p{
+    font-size:13px;line-height:2;color:rgba(95,224,255,.7);
+    letter-spacing:.14em;
+  }
+  #fallback .glyph{
+    font-size:64px;color:var(--gold);margin-bottom:30px;
+    text-shadow:0 0 40px rgba(232,196,92,.4);opacity:.85;
+  }
+  #vig{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 46%, transparent 42%, rgba(2,3,5,.55) 100%);
+    mix-blend-mode:multiply;
+  }
+  .noscript-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <canvas id="hud"></canvas>
+  <div id="vig"></div>
+  <div id="fallback">
+    <div class="box">
+      <div class="glyph">&#1499;</div>
+      <h1>KETHER</h1>
+      <p>The living dome of stars requires WebGL2 to open.<br/>
+         Your vessel cannot render the constellation sky.<br/>
+         &mdash; the crown waits above the darkness &mdash;</p>
+    </div>
+  </div>
+</div>
+<div id="scrollHint">SCROLL TO RISE UNDER THE DOME · CLICK &amp; DRAG TO LOOK AROUND THE SKY<span class="arw">&#8593;</span></div>
+<div id="scrollDriver"></div>
+
+<noscript><div class="noscript-msg">JavaScript required to render the Living Dome.</div></noscript>
+
+<script>
+"use strict";
+/* ================================================================
+   THE LIVING DOME (finale)
+   Pipeline (mirrors the parent journey scenes):
+     PASS 1  scene   -> HDR float FBO : a hemisphere of stars projected
+                        overhead in perspective (planetarium dome), gold
+                        hairline constellation lines, Milky-Way dust band.
+     PASS 2  bright  -> threshold bright pass, 1/2 res
+     PASS 3  blur    -> separable gaussian (H then V), 2 iters, 1/2 res
+     PASS 4  final   -> composite scene + additive bloom, ACES tonemap,
+                        chromatic aberration, film grain, vignette.
+   Scroll p (eased) : tilt the gaze UP + spread the dome to fill the view.
+   Mouse            : rotate/pan the dome (look around the night sky),
+                      brighten the constellation under the cursor.
+   All geometry procedural. No external assets. No libraries.
+   ================================================================ */
+
+(function(){
+
+  const glCanvas  = document.getElementById('gl');
+  const hudCanvas = document.getElementById('hud');
+  const fallback  = document.getElementById('fallback');
+
+  // ---- acquire WebGL2, degrade gracefully ---------------------
+  let gl = null;
+  try {
+    gl = glCanvas.getContext('webgl2', {
+      antialias:false, alpha:false, depth:false, stencil:false,
+      premultipliedAlpha:false, preserveDrawingBuffer:false,
+      powerPreference:'high-performance'
+    });
+  } catch(e){ gl = null; }
+
+  if(!gl){
+    fallback.style.display = 'grid';
+    console.warn('[LivingDome] WebGL2 unavailable — showing fallback.');
+    return;
+  }
+
+  // float color-buffer support (for real HDR bloom). Fall back to RGBA8.
+  const extF16 = gl.getExtension('EXT_color_buffer_float');
+  const extHF  = gl.getExtension('EXT_color_buffer_half_float');
+  let HDR_INTERNAL, HDR_TYPE;
+  if(extF16){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else if(extHF){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else { HDR_INTERNAL = gl.RGBA8; HDR_TYPE = gl.UNSIGNED_BYTE; }
+  gl.getExtension('OES_texture_float_linear');
+
+  // ---- shader helpers -----------------------------------------
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      const log = gl.getShaderInfoLog(s);
+      console.error('[LivingDome] shader compile error:\n'+log+'\n---SRC---\n'+
+        src.split('\n').map((l,i)=>(i+1)+': '+l).join('\n'));
+      throw new Error('shader compile failed');
+    }
+    return s;
+  }
+  function program(vsSrc, fsSrc){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      console.error('[LivingDome] link error: '+gl.getProgramInfoLog(p));
+      throw new Error('program link failed');
+    }
+    return p;
+  }
+  function uni(p){
+    const cache = {};
+    return (name)=>{
+      if(!(name in cache)) cache[name] = gl.getUniformLocation(p, name);
+      return cache[name];
+    };
+  }
+
+  // fullscreen triangle
+  const quadVAO = gl.createVertexArray();
+  gl.bindVertexArray(quadVAO);
+  const quadBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+
+  const VS_FULL = `#version 300 es
+  layout(location=0) in vec2 aPos;
+  out vec2 vUv;
+  void main(){
+    vUv = aPos*0.5 + 0.5;
+    gl_Position = vec4(aPos,0.0,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 1 — SCENE : THE CONSTELLATION DOME
+  //  We build a view ray per pixel, then look UP into a hemisphere
+  //  ("dome") of stars painted on the celestial sphere. The dome
+  //  rotates with the mouse (yaw/pitch) so you look around the sky.
+  //  Constellations = fixed clusters of bright stars on the sphere,
+  //  joined by hairline GOLD great-circle-ish line segments.
+  //  A faint Milky-Way dust band arcs across. p spreads the dome up
+  //  to fill the view (arrival). ~80% obsidian.
+  // ============================================================
+  const FS_SCENE = `#version 300 es
+  precision highp float;
+  out vec4 outColor;
+  in vec2 vUv;
+
+  uniform vec2  uRes;
+  uniform float uTime;
+  uniform vec2  uMouse;      // -1..1 eased cursor (hover nudge only)
+  uniform vec2  uMouseRaw;   // -1..1 raw cursor
+  uniform float uExcite;     // 0..1 hover/click energy
+  uniform float uP;          // 0..1 eased scroll progress (rise into the dome)
+  uniform float uYaw;        // radians — planetarium yaw (drag look-around)
+  uniform float uPitch;      // radians below zenith — planetarium pitch
+
+  const vec3 EMERALD = vec3(0.00, 1.00, 0.612);
+  const vec3 GOLD    = vec3(0.910,0.769,0.361);
+  const vec3 CYAN    = vec3(0.373,0.878,1.00);
+  const vec3 OBS     = vec3(0.0235,0.0314,0.0431);
+
+  // -------- hash / noise --------
+  float hash11(float p){ p=fract(p*0.1031); p*=p+33.33; p*=p+p; return fract(p); }
+  vec2  hash22(vec2 p){
+    vec3 a = fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973));
+    a += dot(a, a.yzx+33.33);
+    return fract((a.xx+a.yz)*a.zy);
+  }
+  vec3 hash33(vec3 p){
+    p = fract(p*vec3(0.1031,0.1030,0.0973));
+    p += dot(p, p.yxz+33.33);
+    return fract((p.xxy+p.yxx)*p.zyx);
+  }
+  float noise(vec2 p){
+    vec2 i=floor(p), f=fract(p);
+    vec2 u=f*f*(3.0-2.0*f);
+    float a=hash11(dot(i,vec2(1.0,57.0)));
+    float b=hash11(dot(i+vec2(1,0),vec2(1.0,57.0)));
+    float c=hash11(dot(i+vec2(0,1),vec2(1.0,57.0)));
+    float d=hash11(dot(i+vec2(1,1),vec2(1.0,57.0)));
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+  }
+  float fbm(vec2 p){
+    float v=0.0, a=0.5;
+    // 4 octaves (was 5): the dust band is a sub-luminance whisper; the 5th
+    // octave's ~0.03 contribution is imperceptible — saves one noise()/px.
+    for(int i=0;i<4;i++){ v+=a*noise(p); p*=2.02; a*=0.5; }
+    return v;
+  }
+  mat3 rotY(float a){ float c=cos(a),s=sin(a); return mat3(c,0,-s, 0,1,0, s,0,c); }
+  mat3 rotX(float a){ float c=cos(a),s=sin(a); return mat3(1,0,0, 0,c,-s, 0,s,c); }
+
+  // ---------- constellation catalogue (REAL constellations) ----------
+  // Each figure is authored as a flat 2D star pattern (matching the real
+  // sky shape, x=right y=up in the figure's own plane), then PLACED on the
+  // celestial dome: we give each figure a center direction + a local
+  // right/up tangent basis + an angular scale. A 2D star offset (sx,sy)
+  // becomes a direction:  normalize(center + right*sx*scale + up*sy*scale).
+  // This keeps every figure reading as its true recognizable shape while
+  // wrapping onto the dome. y-up = zenith. 8 figures, up to 12 stars each.
+  //
+  // Figures (index): 0 Orion · 1 Ursa Major (Big Dipper) · 2 Cassiopeia (W)
+  //   · 3 Leo (sickle) · 4 Scorpius · 5 Cygnus (Northern Cross)
+  //   · 6 Lyra (Vega) · 7 Pleiades · 8 Kether crown (zenith).
+  const int NFIG = 9;
+  const int NSTARS = 66;
+
+  // place a figure: returns center dir + tangent basis + scale
+  void figFrame(int f, out vec3 c, out vec3 rt, out vec3 up, out float sc){
+    // center direction on the dome (roughly unit; will normalize)
+    vec3 cd;
+    float roll = 0.0;   // in-plane rotation of the figure
+    if(f==0){ cd=vec3(-0.18, 0.72,-0.62); sc=0.115; roll= 0.10; }  // Orion (S-ish, lowish)
+    else if(f==1){ cd=vec3(-0.70, 0.66, 0.18); sc=0.075; roll=-0.35; } // Big Dipper (N)
+    else if(f==2){ cd=vec3( 0.30, 0.80,-0.42); sc=0.085; roll= 0.15; } // Cassiopeia (W)
+    else if(f==3){ cd=vec3(-0.55, 0.62, 0.48); sc=0.090; roll= 0.05; } // Leo
+    else if(f==4){ cd=vec3( 0.42, 0.56, 0.60); sc=0.088; roll=-0.10; } // Scorpius
+    else if(f==5){ cd=vec3( 0.66, 0.66,-0.20); sc=0.085; roll= 0.20; } // Cygnus
+    else if(f==6){ cd=vec3( 0.56, 0.74, 0.20); sc=0.060; roll= 0.0; }  // Lyra
+    else if(f==7){ cd=vec3(-0.30, 0.86, 0.30); sc=0.028; roll= 0.0; }  // Pleiades
+    else         { cd=vec3( 0.00, 1.00, 0.00); sc=0.070; roll= 0.0; }  // Kether zenith
+    c = normalize(cd);
+    // tangent basis (stable even at the zenith)
+    vec3 ref = abs(c.y) > 0.95 ? vec3(0.0,0.0,1.0) : vec3(0.0,1.0,0.0);
+    rt = normalize(cross(ref, c));
+    up = normalize(cross(c, rt));
+    // apply in-plane roll so figures aren't all axis-aligned
+    float cr=cos(roll), sr=sin(roll);
+    vec3 r2 = rt*cr + up*sr;
+    vec3 u2 = -rt*sr + up*cr;
+    rt=r2; up=u2;
+  }
+
+  // 2D pattern offset (sx,sy) + magnitude for star j of figure f.
+  // magnitude: 0 = brightest hero star, 1 = faint.
+  void figStar(int f, int j, out vec2 o, out float m){
+    o=vec2(0.0); m=0.4;
+    if(f==0){ // ---- ORION ----
+      if(j==0){ o=vec2(-0.90, 1.60); m=0.02; }      // Betelgeuse (shoulder, hero)
+      else if(j==1){ o=vec2( 0.80, 1.55); m=0.18; } // Bellatrix (shoulder)
+      else if(j==2){ o=vec2(-0.40, 0.05); m=0.14; } // Alnitak (belt L)
+      else if(j==3){ o=vec2( 0.00, 0.10); m=0.12; } // Alnilam (belt M)
+      else if(j==4){ o=vec2( 0.40, 0.16); m=0.14; } // Mintaka (belt R)
+      else if(j==5){ o=vec2( 1.00,-1.70); m=0.02; } // Rigel (foot, hero)
+      else if(j==6){ o=vec2(-0.85,-1.55); m=0.20; } // Saiph (foot)
+      else if(j==7){ o=vec2( 0.02,-0.75); m=0.34; } // sword top
+      else         { o=vec2( 0.10,-1.15); m=0.34; } // sword tip (Nebula)
+    } else if(f==1){ // ---- BIG DIPPER (Ursa Major) ----
+      if(j==0){ o=vec2( 0.00, 0.00); m=0.10; }      // Alkaid (handle end)
+      else if(j==1){ o=vec2( 0.72, 0.16); m=0.12; } // Mizar
+      else if(j==2){ o=vec2( 1.42, 0.22); m=0.12; } // Alioth
+      else if(j==3){ o=vec2( 2.02, 0.02); m=0.20; } // Megrez (bowl NE)
+      else if(j==4){ o=vec2( 2.66, 0.58); m=0.06; } // Dubhe (bowl top, hero)
+      else if(j==5){ o=vec2( 2.60,-0.14); m=0.10; } // Merak (bowl bottom)
+      else         { o=vec2( 2.00,-0.36); m=0.16; } // Phecda (bowl SW)
+    } else if(f==2){ // ---- CASSIOPEIA (the W) ----
+      if(j==0){ o=vec2( 0.00, 0.05); m=0.16; }
+      else if(j==1){ o=vec2( 0.70, 0.62); m=0.12; }
+      else if(j==2){ o=vec2( 1.40, 0.10); m=0.10; } // Gamma Cas (center, bright)
+      else if(j==3){ o=vec2( 2.10, 0.66); m=0.14; }
+      else         { o=vec2( 2.80, 0.14); m=0.16; }
+    } else if(f==3){ // ---- LEO (sickle + hindquarters triangle) ----
+      if(j==0){ o=vec2( 0.00, 0.00); m=0.05; }      // Regulus (hero)
+      else if(j==1){ o=vec2( 0.10, 0.72); m=0.22; } // sickle
+      else if(j==2){ o=vec2( 0.34, 1.12); m=0.18; }
+      else if(j==3){ o=vec2( 0.76, 1.26); m=0.24; } // Algieba region
+      else if(j==4){ o=vec2( 1.06, 0.94); m=0.26; }
+      else if(j==5){ o=vec2( 0.88, 0.54); m=0.28; } // back to Regulus loop
+      else if(j==6){ o=vec2( 2.55, 0.18); m=0.10; } // Denebola (tail, bright)
+      else         { o=vec2( 2.15,-0.55); m=0.26; } // Chertan (hindquarter)
+    } else if(f==4){ // ---- SCORPIUS (head + curved tail + Antares) ----
+      if(j==0){ o=vec2(-0.35, 0.55); m=0.20; }      // head claw
+      else if(j==1){ o=vec2( 0.05, 0.62); m=0.22; } // head
+      else if(j==2){ o=vec2( 0.42, 0.50); m=0.20; } // head claw
+      else if(j==3){ o=vec2( 0.05, 0.00); m=0.04; } // Antares (hero, ruddy)
+      else if(j==4){ o=vec2( 0.25,-0.60); m=0.22; } // body
+      else if(j==5){ o=vec2( 0.55,-1.15); m=0.24; }
+      else if(j==6){ o=vec2( 0.95,-1.45); m=0.24; } // tail curve
+      else if(j==7){ o=vec2( 1.38,-1.48); m=0.26; }
+      else if(j==8){ o=vec2( 1.66,-1.20); m=0.20; } // stinger Shaula
+      else         { o=vec2( 1.55,-0.80); m=0.28; } // stinger tip
+    } else if(f==5){ // ---- CYGNUS (Northern Cross) ----
+      if(j==0){ o=vec2( 0.00, 1.25); m=0.08; }      // Deneb (top, hero)
+      else if(j==1){ o=vec2( 0.00, 0.15); m=0.16; } // Sadr (center)
+      else if(j==2){ o=vec2( 0.00,-1.20); m=0.14; } // Albireo (foot/beak)
+      else if(j==3){ o=vec2(-1.15, 0.30); m=0.18; } // wing L (Gienah)
+      else         { o=vec2( 1.10, 0.05); m=0.18; } // wing R (Delta)
+    } else if(f==6){ // ---- LYRA (Vega + parallelogram) ----
+      if(j==0){ o=vec2( 0.00, 0.00); m=0.03; }      // Vega (hero)
+      else if(j==1){ o=vec2( 0.28,-0.42); m=0.30; }
+      else if(j==2){ o=vec2( 0.62,-0.34); m=0.32; }
+      else if(j==3){ o=vec2( 0.56,-0.80); m=0.30; }
+      else         { o=vec2( 0.22,-0.86); m=0.32; }
+    } else if(f==7){ // ---- PLEIADES (tight cluster, 7 sisters) ----
+      if(j==0){ o=vec2( 0.00, 0.00); m=0.20; }
+      else if(j==1){ o=vec2( 0.35, 0.22); m=0.24; }
+      else if(j==2){ o=vec2(-0.30, 0.30); m=0.26; }
+      else if(j==3){ o=vec2( 0.20,-0.30); m=0.24; }
+      else if(j==4){ o=vec2(-0.25,-0.20); m=0.28; }
+      else if(j==5){ o=vec2( 0.55,-0.10); m=0.28; }
+      else         { o=vec2( 0.05, 0.45); m=0.26; }
+    } else { // ---- KETHER crown (zenith halo of 5) ----
+      if(j==0){ o=vec2( 0.00, 0.00); m=0.02; }      // crown hero
+      else if(j==1){ o=vec2( 0.00, 0.55); m=0.24; }
+      else if(j==2){ o=vec2( 0.52, 0.17); m=0.24; }
+      else if(j==3){ o=vec2(-0.52, 0.17); m=0.24; }
+      else         { o=vec2( 0.00,-0.55); m=0.24; }
+    }
+  }
+  // Figure star counts (Orion 9 · Dipper 7 · Cassiopeia 5 · Leo 8 · Scorpius 10
+  // · Cygnus 5 · Lyra 5 · Pleiades 7 · Kether 5) → prefix-sum bases inlined below.
+  // global star index -> figure + local index.
+  // Direct boundary cascade (bases 0,9,16,21,29,39,44,49,56) — replaces the
+  // NFIG-iteration prefix scan that re-called figBase() 9× per lookup; this
+  // runs 66×/pixel in the star loop, so the cheaper form is a real per-pixel win.
+  void starToFig(int i, out int f, out int j){
+    int b;
+    if(i>=56){ f=8; b=56; }
+    else if(i>=49){ f=7; b=49; }
+    else if(i>=44){ f=6; b=44; }
+    else if(i>=39){ f=5; b=39; }
+    else if(i>=29){ f=4; b=29; }
+    else if(i>=21){ f=3; b=21; }
+    else if(i>=16){ f=2; b=16; }
+    else if(i>=9 ){ f=1; b=9;  }
+    else          { f=0; b=0;  }
+    j = i - b;
+  }
+  // (star direction is resolved via starDirFigC() below, off the cached frames.)
+  // which figure a star belongs to (for hover-highlight grouping)
+  int starFigure(int i){ int f,j; starToFig(i,f,j); return f; }
+  // center direction of a figure (for name labels / hover pick)
+  vec3 figCenter(int f){ vec3 c,rt,up; float sc; figFrame(f,c,rt,up,sc); return c; }
+
+  // ---- PRECOMPUTED FRAME CACHE (FPS) -------------------------------
+  // figFrame() is pixel-invariant AND shared by every star in a figure
+  // (Orion's 9 stars all rebuilt the SAME cross/normalize basis). We build
+  // all NFIG frames ONCE per pixel into these arrays, then the star loop and
+  // the hover loop read them — collapsing 66 figFrame() calls (+ the NFIG
+  // figCenter() calls) down to 9. Same math, computed once. This packed
+  // {center,right,up,scale} set is ALSO the self-contained star basis the
+  // merge reuses to lerp planar→spherical.
+  vec3  gFC[NFIG];   // figure center dirs (unit)
+  vec3  gFR[NFIG];   // figure right tangents
+  vec3  gFU[NFIG];   // figure up tangents
+  float gFSc[NFIG];  // figure angular scales
+  void buildFrames(){
+    for(int f=0; f<NFIG; f++){
+      vec3 c,rt,up; float sc; figFrame(f,c,rt,up,sc);
+      gFC[f]=c; gFR[f]=rt; gFU[f]=up; gFSc[f]=sc;
+    }
+  }
+  // star direction from the CACHED frame (no figFrame rebuild).
+  void starDirFigC(int i, out vec3 d, out float mag, out int fig){
+    int f,j; starToFig(i,f,j);
+    vec2 o; float m; figStar(f,j,o,m);
+    d = normalize(gFC[f] + gFR[f]*o.x*gFSc[f] + gFU[f]*o.y*gFSc[f]);
+    mag = m; fig = f;
+  }
+
+  // additive star glow: crisp core + soft halo + cyan glint spikes
+  vec3 starGlow(vec2 uv, vec2 c, float rad, vec3 col, float bright, float glint){
+    vec2 d = uv - c;
+    float r = length(d);
+    float core = exp(-r*r/(rad*rad*0.055));
+    float halo = exp(-r/(rad*1.9));
+    // 4-point diffraction spike (cold cyan glint)
+    float sx = exp(-abs(d.y)/(rad*0.06)) * exp(-abs(d.x)/(rad*5.0));
+    float sy = exp(-abs(d.x)/(rad*0.06)) * exp(-abs(d.y)/(rad*5.0));
+    float spike = (sx+sy)*glint;
+    vec3 outc = col*(core*1.8 + halo*0.6)*bright;
+    outc += mix(CYAN,vec3(1.0),0.4)*spike*bright*0.7;
+    return outc;
+  }
+
+  // project a direction on the sky sphere to screen via a look camera.
+  // camRot orients the dome; focal sets FOV. Returns screen uv + front flag + scale.
+  struct SkyProj { vec2 uv; float scale; bool front; float depth; };
+  SkyProj projectDir(vec3 dir, mat3 camRot, float focal){
+    vec3 v = camRot * dir;               // into camera space (look up the +? axis)
+    SkyProj r;
+    r.front = v.z > 0.02;
+    float z = max(v.z, 0.02);
+    r.uv = v.xy * focal / z;
+    r.scale = focal / z;                 // stars near center-of-view (zenith) get bigger
+    r.depth = z;                         // 1 = looking straight at it
+    return r;
+  }
+
+  void main(){
+    vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y; // aspect-correct, center 0
+    float t = uTime;
+
+    // ---------- SCROLL : RISE + TILT UP INTO THE DOME ----------
+    float p = clamp(uP,0.0,1.0);
+    float ps = p*p*p*(p*(p*6.0-15.0)+10.0);   // smootherstep
+
+    // p spreads the dome overhead: the gaze pitches UP toward the zenith,
+    // FOV widens so constellations grow larger and fill the sky.
+    // pitch: at p=0 we look near the horizon (dome small, high up);
+    //        at p=1 we look straight up (fully under the dome).
+    float basePitch = mix(0.62, 0.02, ps);    // radians below zenith (0 = straight up)
+
+    // ---------- LOOK AROUND THE NIGHT SKY (click-drag yaw/pitch + inertia) ----
+    // uYaw/uPitch come from the JS drag controller (full 360° yaw, generous
+    // pitch, momentum + drift). A small hover-nudge from the eased cursor makes
+    // even undragged mouse motion pan the view a little.
+    float yaw   = uYaw   + uMouse.x * 0.22 + t*0.008;   // drag + hover nudge + slow procession
+    float pitch = clamp(basePitch + uPitch + uMouse.y * 0.12, -0.55, 1.45);
+
+    // Build a camera that looks generally UPWARD (+Y) then tilts by pitch/yaw.
+    // Start from "looking straight up": forward = +Y. Then pitch tilts toward
+    // horizon, yaw spins around vertical. We compose rotations to get camRot
+    // such that camRot maps a sky direction into camera space (z = forward).
+    // forward dir in world:
+    float cp = cos(pitch), sp = sin(pitch);
+    float cy = cos(yaw),   sy = sin(yaw);
+    // forward: tilt from zenith(+Y) by pitch, then yaw around Y
+    vec3 fwd = vec3( sp*sy, cp, sp*cy );
+    vec3 wup = vec3(0.0,1.0,0.0);
+    vec3 rgt = normalize(cross(wup, fwd));
+    if(length(cross(wup,fwd)) < 1e-3) rgt = vec3(1.0,0.0,0.0);
+    vec3 upv = cross(fwd, rgt);
+    // slight barrel roll for a living, hand-held planetarium feel
+    float roll = sin(t*0.02)*0.03 + uMouse.x*0.02;
+    { float cr=cos(roll), sr=sin(roll);
+      vec3 r2 = rgt*cr + upv*sr;
+      vec3 u2 = -rgt*sr + upv*cr;
+      rgt=r2; upv=u2; }
+    mat3 camRot = mat3(
+      rgt.x, upv.x, fwd.x,
+      rgt.y, upv.y, fwd.y,
+      rgt.z, upv.z, fwd.z
+    );
+    // FOV: widen as we rise so the dome curves overhead & stars grow.
+    float focal = mix(1.55, 0.86, ps);
+
+    // reconstruct the view ray for this pixel (for field stars & dust band)
+    vec3 ray = normalize(camRot * vec3(uv.x, uv.y, focal));
+    // ^ camRot is orthonormal; transpose(camRot) maps camera->world.
+    ray = normalize( transpose(camRot) * vec3(uv, focal) );
+
+    vec3 col = OBS*0.14;   // true obsidian night — darkness dominates (~80%+)
+
+    // reveal envelope: everything strengthens as we rise under the dome
+    float reveal = 0.35 + 0.65*ps;
+
+    // ---------- ATMOSPHERE : TRUE OBSIDIAN — zenith is the DEEPEST dark ----------
+    // 'height' = how close the ray is to the zenith (+Y). 1 at zenith.
+    // The zenith is held at the deepest obsidian and NEVER lifted grey; only
+    // the very lowest horizon carries a barely-there whisper. Bloom alone lifts
+    // the stars — the top of the dome stays true #06080b.
+    float height = clamp(ray.y, -0.2, 1.0);
+    float horizonWhisper = smoothstep(0.35, -0.15, height); // rises only near horizon
+    col += mix(OBS*0.10, OBS*0.15, horizonWhisper) * reveal;
+
+    // ---------- MILKY-WAY : faint cool desaturated star-dust whisper ----------
+    // A soft great-circle band, but rendered as fine sub-luminance star-dust
+    // grain (procedural density gradient) rather than a bright stripe — must
+    // never compete with the gold constellation lines. Cool + desaturated.
+    {
+      // band plane normal — tilted; distance of ray from the band plane.
+      vec3 bandN = normalize(vec3(0.35, 0.55, -0.75));
+      float d = dot(ray, bandN);                    // 0 = on the band
+      float band = exp(-d*d*7.0);                   // soft, wide band
+      // large-scale density gradient along the band (fbm dust clouds)
+      vec2 bp = vec2(atan(ray.x,ray.z)*1.6, ray.y*2.2);
+      float dust = fbm(bp*2.0 + vec2(t*0.008,0.0));
+      dust = pow(dust, 1.9);                         // sparser, cleaner
+      // fine sub-pixel star-dust grain modulated by the cloud density
+      vec2 gp = vec2(atan(ray.z,ray.x), acos(clamp(ray.y,-1.0,1.0)));
+      float grainA = hash11(dot(floor(gp*180.0), vec2(1.0,57.0)));
+      float grainB = hash11(dot(floor(gp*300.0+11.0), vec2(1.0,57.0)));
+      float grain  = pow(max(grainA,grainB), 30.0); // rare tiny motes
+      float milky  = band * (0.20 + dust*0.55) * smoothstep(0.0,0.5,height);
+      // cool desaturated dust colour — a whisper, no gold in the band.
+      // pushed cooler + greyer so it never competes with the gold lines.
+      vec3 milkCol = mix(CYAN, vec3(0.70,0.77,0.90), 0.68);
+      col += milkCol * milky * 0.024 * reveal;                 // sub-luminance base
+      col += milkCol * band * grain * dust * 0.085 * reveal;   // fine grain sparkle
+    }
+
+    // ---------- BACKGROUND STARFIELD (tiny, mostly-dim depth layers) ----------
+    // 3 DEPTH layers give real 3D parallax on drag-look: the near layer is
+    // displaced along screen-tangent by camera motion (shifts more), the deep
+    // layer barely moves. Stars are tiny + dim; only a rare few read as hero
+    // glints. Colour clamped to cyan-white↔gold ONLY. Twinkle on brighter only.
+    {
+      // camera tangent vectors (world space) for a subtle parallax offset
+      vec3 camR = transpose(camRot)*vec3(1.0,0.0,0.0);
+      vec3 camU = transpose(camRot)*vec3(0.0,1.0,0.0);
+      float hf = smoothstep(-0.02, 0.30, height);   // recede toward horizon
+      for(int L=0; L<3; L++){
+        float fl=float(L);
+        // near layer (L=0) parallax-shifts most; deep layer (L=2) almost still.
+        float par = (2.0-fl) * 0.010;
+        vec3 pray = normalize(ray + (camR*uMouse.x + camU*uMouse.y)*par);
+        vec2 sph = vec2(atan(pray.z, pray.x), acos(clamp(pray.y,-1.0,1.0)));
+        float sc = 30.0 + fl*26.0;
+        vec2 gp = sph*sc;
+        vec2 cell = floor(gp);
+        vec2 f = fract(gp);
+        vec2 rnd = hash22(cell + fl*37.0);
+        vec2 pos = rnd*0.7 + 0.15;
+        float dd = length((f-pos));
+        float thr = 0.86 + fl*0.04;            // MUCH sparser — kill starfield noise
+        float on = step(thr, rnd.x);
+        // per-star brightness; most are dim, a rare few are hero glints
+        float mag = rnd.y;                     // 0..1
+        float heroic = smoothstep(0.93,1.0, rnd.x*rnd.y);
+        // twinkle only on the brighter stars; dim stars steady
+        float bright01 = (1.0-mag);
+        float tw = mix(1.0, 0.6+0.4*sin(t*(0.9+rnd.y*1.4)+rnd.x*6.28), bright01);
+        float s = exp(-dd*dd/0.00045) * on * tw; // tiny, crisp
+        // cyan-white↔gold ONLY (nudge the cool end to a neutral cyan-white,
+        // never a blue tint), most stars land near cool-white.
+        vec3 sc3 = mix(vec3(0.86,0.93,0.99), GOLD, rnd.y*0.30);
+        float amp = (0.026 - fl*0.007) + heroic*0.12;          // mostly dim
+        col += sc3 * s * hf * amp * reveal;
+      }
+    }
+
+    // ---------- pick which figure the cursor is hovering (highlight) ----------
+    // We test the eased-cursor's ray against each figure's mean direction.
+    vec3 curRay;
+    {
+      // cursor maps to a point on screen -> a ray, same camera.
+      vec2 cuv = uMouse * vec2(uRes.x/uRes.y,1.0) * 0.7;
+      curRay = normalize( transpose(camRot) * vec3(cuv, focal) );
+    }
+
+    // ---------- CONSTELLATION STARS (bright hero stars) ----------
+    // and gather projected positions for the gold lines afterwards.
+    vec2 SP[NSTARS];
+    float SF[NSTARS];       // front flag (1/0)
+    float hoverFig[NFIG];
+    for(int k=0;k<NFIG;k++) hoverFig[k]=0.0;
+
+    // gaze-forward direction (center of the view) — used so that DRAG-centering
+    // a constellation completes/brightens its lines (rewards exploration).
+    vec3 gazeFwd = normalize( transpose(camRot) * vec3(0.0,0.0,focal) );
+
+    // Build the 9 figure frames ONCE (shared by the hover loop + star loop).
+    buildFrames();
+
+    // Each figure's activation = max of (cursor-hover) and (centered-in-gaze).
+    // Centered figures light up fully; off-center ones stay quiet.
+    for(int k=0;k<NFIG;k++){
+      vec3 fc = gFC[k];
+      float hover  = smoothstep(0.90, 0.995, dot(fc, curRay)) * uExcite;
+      float center = smoothstep(0.965, 0.999, dot(fc, gazeFwd)); // tight = only the one you look at
+      hoverFig[k] = max(hover, center);
+    }
+
+    // SINGLE pass over all stars: project once, cache SP/SF for the gold
+    // line macro, AND accumulate the star glow in the same iteration
+    // (was two full NSTARS loops = 132 iters/px; now one = 66).
+    for(int i=0;i<NSTARS;i++){
+      vec3 d; float mag; int fig; starDirFigC(i,d,mag,fig);
+      SkyProj pr = projectDir(d, camRot, focal);
+      SP[i] = pr.uv;
+      float front = pr.front ? 1.0 : 0.0;
+      SF[i] = front;
+      if(front < 0.5) continue;
+      float hov = hoverFig[fig];
+      // brightness sized by MAGNITUDE — hero stars (mag~0) markedly brighter,
+      // faint stars pulled down so the shape reads by its bright anchors.
+      float m2 = mag*mag;                        // steepen the magnitude curve
+      float bmag = mix(1.45, 0.30, m2);          // hero cores tamed so the lowered
+                                                 // bloom threshold blooms gracefully
+      // stars near the center-of-gaze read a little larger — clamp so a centered
+      // hero star can't balloon into a white blowout under the matched bloom.
+      float sizeScale = clamp(pr.scale, 0.6, 1.6);
+      // twinkle only on the brighter stars (dim ones steady), low amplitude
+      float bright01 = 1.0-mag;
+      float twk = mix(1.0, 0.82+0.18*sin(t*(1.0+mag*1.6) + float(i)*1.3), bright01);
+      // node radius scales with magnitude: hero stars are visibly bigger
+      float rad = (0.0050 + (1.0-m2)*0.0100) * sizeScale;
+      float bright = bmag * 0.78 * twk * reveal * (1.0 + hov*2.2);
+      rad *= (1.0 + hov*0.5);
+      // hero stars gold-tinged; others cool cyan-white (NO blue/other tints)
+      vec3 scol = mix(vec3(0.88,0.94,0.99), GOLD, smoothstep(0.30,0.0,mag));
+      scol = mix(scol, mix(GOLD,vec3(1.0),0.5), hov*0.5);
+      float glint = (0.35 + (1.0-m2)*0.9) * (1.0 + hov);
+      col += starGlow(uv, pr.uv, rad, scol, bright, glint);
+      // bright inner pip
+      col += mix(scol,vec3(1.0),0.7) * starGlow(uv, pr.uv, rad*0.4, scol, bright*0.7, 0.0);
+    }
+
+    // ---------- GOLD HAIRLINE CONSTELLATION LINES ----------
+    // connect stars within each figure (index pairs). Draw as thin glowing
+    // screen-space segments; brighten the hovered figure's lines.
+    // Line list encoded as pairs (a,b). We unroll per figure.
+    #define LINE(a,b, figv) { \
+      if(SF[a]>0.5 && SF[b]>0.5){ \
+        vec2 pa=uv-SP[a]; vec2 ba=SP[b]-SP[a]; \
+        float hh=clamp(dot(pa,ba)/max(dot(ba,ba),1e-6),0.0,1.0); \
+        float dl=length(pa-ba*hh); \
+        float hv = hoverFig[figv]; \
+        /* hairline gold: tight falloff so the line stays a fine thread */ \
+        float ln = exp(-dl*dl/0.000090); \
+        /* off-center figures barely draw; centered/hovered ones complete */ \
+        float on = 0.16 + hv*0.84; \
+        /* faint traveling shimmer bead running along EVERY segment (always on, \
+           stronger when the figure is centered) — a slow light walking the lines */ \
+        float bead = pow(0.5+0.5*sin(hh*6.2831 - t*0.9 + float(a+b)), 8.0); \
+        col += GOLD * ln * (0.055*on + bead*(0.035 + 0.09*hv)) * reveal; \
+        float core = exp(-dl*dl/0.000015); \
+        col += mix(GOLD,vec3(1.0),0.35) * core * (0.05*on + hv*0.22) * reveal; \
+      } }
+
+    // ORION (0-8): shoulders 0,1 · belt 2,3,4 · feet 5,6 · sword 7,8
+    LINE(0,2,0) LINE(2,3,0) LINE(3,4,0) LINE(4,1,0)   // shoulders to belt
+    LINE(2,6,0) LINE(4,5,0) LINE(6,5,0)               // belt to feet + skirt
+    LINE(0,1,0)                                        // shoulder bar
+    LINE(3,7,0) LINE(7,8,0)                            // sword hanging from belt
+    // BIG DIPPER (9-15): handle 9,10,11 · bowl 12,13,14,15
+    LINE(9,10,1) LINE(10,11,1) LINE(11,12,1)          // handle to bowl
+    LINE(12,13,1) LINE(13,15,1) LINE(15,14,1) LINE(14,12,1) // bowl loop
+    // CASSIOPEIA (16-20): the W
+    LINE(16,17,2) LINE(17,18,2) LINE(18,19,2) LINE(19,20,2)
+    // LEO (21-28): sickle 21..26 (Regulus 21) · triangle 21,27,28
+    LINE(21,22,3) LINE(22,23,3) LINE(23,24,3) LINE(24,25,3) LINE(25,26,3) LINE(26,21,3)
+    LINE(21,28,3) LINE(28,27,3) LINE(27,25,3)
+    // SCORPIUS (29-38): head 29,30,31 · Antares 32 · tail 33..38
+    LINE(29,30,4) LINE(30,31,4) LINE(30,32,4)
+    LINE(32,33,4) LINE(33,34,4) LINE(34,35,4) LINE(35,36,4) LINE(36,37,4) LINE(37,38,4)
+    // CYGNUS (39-43): Northern Cross · spine 39,40,41 · wings 42,40,43
+    LINE(39,40,5) LINE(40,41,5) LINE(42,40,5) LINE(40,43,5)
+    // LYRA (44-48): Vega 44 + parallelogram 45,46,47,48
+    LINE(44,45,6) LINE(45,46,6) LINE(46,47,6) LINE(47,48,6) LINE(48,45,6)
+    // KETHER crown (56-60): cross at the zenith
+    LINE(57,56,8) LINE(56,60,8) LINE(59,56,8) LINE(56,58,8)
+
+    // ---------- ZENITH KETHER CROWN — fine gold line-FILIGREE ----------
+    // The 4th gold sacred-geometry payoff: a delicate crown of hairline gold
+    // arcs, radiating spokes and points that ASSEMBLE and brighten as the gaze
+    // approaches the zenith. Never solid — a whisper of filigree.
+    {
+      vec3 zdir = vec3(0.0,1.0,0.0);                 // the zenith
+      SkyProj zp = projectDir(zdir, camRot, focal);
+      if(zp.front){
+        // 'assemble' = how centered the zenith is in the gaze × risen envelope.
+        float centered = smoothstep(0.86, 0.999, dot(gazeFwd, zdir));
+        float assemble = centered * ps;
+        if(assemble > 0.001){
+          vec2 q  = uv - zp.uv;
+          float r = length(q);
+          float ang = atan(q.y, q.x);
+          float sc = clamp(zp.scale, 0.5, 2.2);
+
+          // faint gold aura seed
+          col += mix(EMERALD,GOLD,0.5) * exp(-r*r/(0.05*sc)) * 0.030 * assemble;
+
+          // three concentric hairline arcs (the crown bands), radii grow w/ scale
+          for(int b=0;b<3;b++){
+            float rr = (0.055 + float(b)*0.045) * sc;
+            // arc reveals progressively (assembles) sweeping around
+            float sweep = smoothstep(-1.0, 1.0, sin(ang*1.0 - t*0.15 + float(b)*2.1));
+            float band = exp(-pow((r-rr)/(0.0032*sc),2.0));
+            col += GOLD * band * (0.05 + 0.05*sweep) * assemble;
+          }
+
+          // radiating spokes — a crown of fine points/rays (7-fold)
+          float spokes = pow(abs(cos(ang*3.5)), 26.0);
+          float spokeMask = smoothstep(0.02*sc, 0.16*sc, r) * smoothstep(0.22*sc, 0.10*sc, r);
+          col += mix(GOLD,vec3(1.0),0.25) * spokes * spokeMask * 0.11 * assemble;
+
+          // crown points sitting on the outer band (bright gold nodes)
+          float pts = pow(abs(cos(ang*3.5 + 0.4)), 60.0);
+          float ptRing = exp(-pow((r-0.145*sc)/(0.006*sc),2.0));
+          col += mix(GOLD,vec3(1.0),0.5) * pts * ptRing * 0.16 * assemble
+                 * (0.7+0.3*sin(t*0.6));
+        }
+      }
+    }
+
+    // ---------- soft radial lift toward gaze center (god-ray seed) ----------
+    {
+      float gr = pow(smoothstep(1.1,0.0,length(uv)),3.0);
+      col += mix(EMERALD,GOLD,0.5)*gr*0.015*ps;
+    }
+
+    outColor = vec4(max(col,0.0), 1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 2 — BRIGHT PASS
+  // ============================================================
+  const FS_BRIGHT = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform float uThreshold;
+  void main(){
+    vec3 c = texture(uScene, vUv).rgb;
+    float l = dot(c, vec3(0.299,0.587,0.114));
+    float k = smoothstep(uThreshold, uThreshold+0.6, l);
+    outColor = vec4(c*k, 1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 3 — SEPARABLE GAUSSIAN BLUR (9-tap)
+  // ============================================================
+  const FS_BLUR = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uTex;
+  uniform vec2 uDir;
+  void main(){
+    float w[5];
+    w[0]=0.227027; w[1]=0.1945946; w[2]=0.1216216; w[3]=0.054054; w[4]=0.016216;
+    vec3 acc = texture(uTex, vUv).rgb * w[0];
+    for(int i=1;i<5;i++){
+      vec2 o = uDir*float(i);
+      acc += texture(uTex, vUv+o).rgb * w[i];
+      acc += texture(uTex, vUv-o).rgb * w[i];
+    }
+    outColor = vec4(acc,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 4 — FINAL COMPOSITE
+  // ============================================================
+  const FS_FINAL = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform sampler2D uBloom;
+  uniform vec2  uRes;
+  uniform vec2  uSceneTexel;   // 1/sceneWidth, 1/sceneHeight (renderScale-scaled)
+  uniform float uTime;
+
+  vec3 tonemap(vec3 x){
+    const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;
+    return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
+  }
+  void main(){
+    vec2 uv = vUv;
+    // chromatic aberration, stronger toward edges
+    vec2 dir = uv-0.5;
+    float edge = dot(dir,dir);
+    float ca = (0.0012 + edge*0.006);
+    vec3 scene;
+    scene.r = texture(uScene, uv + dir*ca).r;
+    scene.g = texture(uScene, uv).g;
+    scene.b = texture(uScene, uv - dir*ca).b;
+
+    // ---- UNSHARP-MASK SHARPEN (crispness PARITY with the journey master) ----
+    // 4-neighbour cross at ±1 SCENE-texel (renderScale-aware, NOT native): the
+    // scene FBO is rendered at SW×SH then LINEAR-upscaled, so the real edges to
+    // re-crisp live at the scene texel — sampling there (like lab-molecules)
+    // gives star cores a hard micro-contrast centre with the bloom halo AROUND
+    // it. sharp = c + amt*(c - avgNeighbours); amt 0.32 matches the master.
+    // Same op on all channels (hue preserved), clamped >=0 so it can't ring or
+    // blow the already-bloomed hero cores past where they already sit.
+    {
+      vec3 n0 = texture(uScene, uv + vec2( uSceneTexel.x, 0.0)).rgb;
+      vec3 n1 = texture(uScene, uv + vec2(-uSceneTexel.x, 0.0)).rgb;
+      vec3 n2 = texture(uScene, uv + vec2(0.0,  uSceneTexel.y)).rgb;
+      vec3 n3 = texture(uScene, uv + vec2(0.0, -uSceneTexel.y)).rgb;
+      vec3 avg = (n0+n1+n2+n3)*0.25;
+      float amt = 0.32;
+      scene = max(scene + amt*(scene - avg), 0.0);
+    }
+
+    vec3 bloom = texture(uBloom, uv).rgb;
+    vec3 col = scene + bloom*1.35;   // molecule-reference bloom intensity (parity)
+
+    // gentle radial star-streaks pulled from bloom toward center
+    vec2 sdir = (0.5-uv);
+    vec3 god = vec3(0.0);
+    for(int i=0;i<6;i++){
+      float s = float(i)/6.0;
+      god += texture(uBloom, uv + sdir*s*0.11).rgb;
+    }
+    col += god*0.035;
+
+    col = tonemap(col*1.0);
+
+    // film grain
+    float g = fract(sin(dot(gl_FragCoord.xy + uTime*60.0, vec2(12.9898,78.233)))*43758.5453);
+    col += (g-0.5)*0.032;
+
+    // vignette (darkness dominates)
+    float vig = smoothstep(1.28,0.32,length((uv-0.5)*vec2(uRes.x/uRes.y,1.0)*2.0));
+    col *= mix(0.30,1.0,vig);
+
+    // reverent split-tone: emerald shadows, gold highlights
+    float lum = dot(col, vec3(0.299,0.587,0.114));
+    vec3 shadowTint = vec3(0.0,0.045,0.035);
+    vec3 highTint   = vec3(0.02,0.016,0.0);
+    col += mix(shadowTint, highTint, smoothstep(0.1,0.7,lum))*0.5;
+
+    // never pure black — keep a true-obsidian floor (kept low for ~80%+ dark)
+    col = max(col, vec3(0.0235,0.0314,0.0431)*0.42);
+
+    outColor = vec4(col,1.0);
+  }`;
+
+  // ---- build programs -----------------------------------------
+  const progScene  = program(VS_FULL, FS_SCENE);
+  const progBright = program(VS_FULL, FS_BRIGHT);
+  const progBlur   = program(VS_FULL, FS_BLUR);
+  const progFinal  = program(VS_FULL, FS_FINAL);
+  const uScene  = uni(progScene);
+  const uBright = uni(progBright);
+  const uBlur   = uni(progBlur);
+  const uFinal  = uni(progFinal);
+
+  // ---- framebuffer factory ------------------------------------
+  function makeTex(w,h,internal,type,filter){
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,internal,w,h,0,gl.RGBA,type,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+  function makeFBO(w,h,internal,type,filter){
+    const tex = makeTex(w,h,internal,type,filter);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    return {fbo,tex,w,h};
+  }
+
+  let sceneFBO, brightFBO, blurA, blurB;
+  let W=0,H=0,DPR=1;
+
+  // ---- adaptive frame-time governor -------------------------------------
+  // The SCENE HDR FBO + bloom FBOs render at (renderScale * native). The final
+  // composite + HUD always run at native W,H so stars/lines/text stay crisp;
+  // an unsharp mask in the composite re-crisps the upscaled scene. LINEAR
+  // filtering on all HDR targets makes the upscale clean.
+  let renderScale = 1.0;              // ∈ [0.62, 1.0]
+  const RS_MIN = 0.62, RS_MAX = 1.0;
+  let allocScale = -1;               // renderScale the current FBOs were sized to
+  let SW = 0, SH = 0;                // scene FBO dimensions (scaled)
+  function scaledDim(){
+    SW = Math.max(2, Math.floor(W*renderScale));
+    SH = Math.max(2, Math.floor(H*renderScale));
+  }
+
+  function allocTargets(){
+    scaledDim();
+    sceneFBO  = makeFBO(SW,SH,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    const bw = Math.max(2,SW>>1), bh = Math.max(2,SH>>1);
+    brightFBO = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurA     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurB     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    allocScale = renderScale;
+  }
+  // reallocate scene/bloom FBOs when the governor changes renderScale.
+  function reallocForScale(){
+    if(renderScale === allocScale) return;
+    freeTargets();
+    allocTargets();
+  }
+  function freeTargets(){
+    [sceneFBO,brightFBO,blurA,blurB].forEach(t=>{
+      if(t){ gl.deleteFramebuffer(t.fbo); gl.deleteTexture(t.tex); }
+    });
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    const cssW = window.innerWidth, cssH = window.innerHeight;
+    const w = Math.max(2,Math.floor(cssW*DPR));
+    const h = Math.max(2,Math.floor(cssH*DPR));
+    if(w===W && h===H) return;
+    W=w; H=h;
+    glCanvas.width=W; glCanvas.height=H;
+    glCanvas.style.width=cssW+'px'; glCanvas.style.height=cssH+'px';
+    hudCanvas.width=W; hudCanvas.height=H;
+    hudCanvas.style.width=cssW+'px'; hudCanvas.style.height=cssH+'px';
+    freeTargets(); allocTargets();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---- LOOK-AROUND CONTROLLER (click-drag planetarium pan + inertia) ----
+  // Hover: eased cursor -> uMouse (small view nudge + constellation highlight).
+  // Drag : pointer down + move accumulates yaw/pitch with weighty momentum;
+  //        on release the sky keeps a gentle drift that eases to rest.
+  const mouse   = {x:0,y:0};   // eased cursor -1..1 (hover)
+  const mRaw    = {x:0,y:0};   // raw cursor -1..1
+  let excite = 0, exciteTarget = 0;
+
+  // yaw/pitch state + angular velocity (radians)
+  let yaw = 0, pitch = 0;          // eased/displayed
+  let yawTarget = 0, pitchTarget = 0;
+  let yawVel = 0, pitchVel = 0;    // momentum (rad per frame-ish)
+  let dragging = false;
+  let lastPX = 0, lastPY = 0;
+
+  const DRAG_YAW_GAIN   = 3.4;     // full 360°+ yaw across the screen width
+  const DRAG_PITCH_GAIN = 2.2;     // generous pitch up/down
+  const PITCH_MIN = -0.95;         // how far past the zenith you can pan down
+  const PITCH_MAX =  1.35;         // toward the horizon
+
+  function clientXY(e){
+    const px = (e.clientX!==undefined)? e.clientX : (e.touches&&e.touches[0]&&e.touches[0].clientX);
+    const py = (e.clientY!==undefined)? e.clientY : (e.touches&&e.touches[0]&&e.touches[0].clientY);
+    return {px,py};
+  }
+  function onMove(e){
+    const r = glCanvas.getBoundingClientRect();
+    const {px,py} = clientXY(e);
+    if(px===undefined||py===undefined) return;
+    mRaw.x = ((px-r.left)/r.width)*2-1;
+    mRaw.y = -(((py-r.top)/r.height)*2-1);
+    exciteTarget = Math.min(1, exciteTarget+0.12);
+    if(dragging){
+      const dx = (px-lastPX)/r.width;    // fraction of viewport
+      const dy = (py-lastPY)/r.height;
+      lastPX = px; lastPY = py;
+      // drag right -> pan sky left (natural grab). accumulate into targets.
+      const dYaw   = -dx*DRAG_YAW_GAIN;
+      const dPitch =  dy*DRAG_PITCH_GAIN;   // drag down -> look lower (toward horizon)
+      yawTarget   += dYaw;
+      pitchTarget = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitchTarget + dPitch));
+      // feed momentum so release keeps drifting
+      yawVel   = yawVel*0.6   + dYaw*0.4;
+      pitchVel = pitchVel*0.6 + dPitch*0.4;
+      exciteTarget = 1.0;
+    }
+  }
+  function onDown(e){
+    dragging = true;
+    const {px,py} = clientXY(e);
+    lastPX = px; lastPY = py;
+    exciteTarget = 1.0;
+    glCanvas.style.cursor = 'grabbing';
+  }
+  function onUp(){
+    dragging = false;
+    glCanvas.style.cursor = '';
+  }
+  window.addEventListener('mousemove', onMove, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:true});
+  window.addEventListener('mousedown', onDown, {passive:true});
+  window.addEventListener('touchstart', onDown, {passive:true});
+  window.addEventListener('mouseup', onUp, {passive:true});
+  window.addEventListener('touchend', onUp, {passive:true});
+  window.addEventListener('mouseleave', onUp, {passive:true});
+  document.body.style.cursor = 'grab';
+
+  // ---- SCROLL DRIVER ----
+  let pTarget = 0;
+  let p       = 0;
+  const scrollHint = document.getElementById('scrollHint');
+  function readScroll(){
+    const doc = document.documentElement;
+    const max = Math.max(1, (doc.scrollHeight - window.innerHeight));
+    const y   = window.scrollY || window.pageYOffset || doc.scrollTop || 0;
+    pTarget = Math.min(1, Math.max(0, y / max));
+    if(scrollHint) scrollHint.style.opacity = String(Math.max(0, 0.55 - pTarget*3.0));
+  }
+  window.addEventListener('scroll', readScroll, {passive:true});
+  readScroll();
+
+  // ---- HUD (celestial readout + wordmark) ----
+  const hud = hudCanvas.getContext('2d');
+  const cons = ['ORION','URSA MAJOR','CASSIOPEIA','LEO','SCORPIUS','CYGNUS','LYRA','PLEIADES','KETHER'];
+  const bars = new Array(cons.length).fill(0).map(()=>Math.random());
+
+  // JS mirror of the figure centers (must match figFrame() in the shader),
+  // used to float the name of whichever constellation is near the gaze center.
+  const FIG = [
+    {name:'ORION',      c:[-0.18,0.72,-0.62]},
+    {name:'URSA MAJOR', c:[-0.70,0.66, 0.18]},
+    {name:'CASSIOPEIA', c:[ 0.30,0.80,-0.42]},
+    {name:'LEO',        c:[-0.55,0.62, 0.48]},
+    {name:'SCORPIUS',   c:[ 0.42,0.56, 0.60]},
+    {name:'CYGNUS',     c:[ 0.66,0.66,-0.20]},
+    {name:'LYRA',       c:[ 0.56,0.74, 0.20]},
+    {name:'PLEIADES',   c:[-0.30,0.86, 0.30]},
+    {name:'KETHER',     c:[ 0.00,1.00, 0.00]},
+  ].map(f=>{ const n=Math.hypot(...f.c); f.c=f.c.map(v=>v/n); return f; });
+  function gazeForward(){
+    // matches shader fwd = (sp*sy, cp, sp*cy) with the eased yaw/pitch below
+    const ps = (function(x){x=Math.max(0,Math.min(1,x));return x*x*x*(x*(x*6-15)+10);})(p);
+    const basePitch = 0.62*(1-ps)+0.02*ps;
+    const yw = yaw + mouse.x*0.22;
+    const pt = Math.max(-0.55, Math.min(1.45, basePitch + pitch + mouse.y*0.12));
+    const cp=Math.cos(pt), sp=Math.sin(pt), cy=Math.cos(yw), sy=Math.sin(yw);
+    return [sp*sy, cp, sp*cy];
+  }
+  let HUD_STAGE = 'כתר · the crown of stars · FINALE';
+
+  function drawHUD(t){
+    hud.clearRect(0,0,W,H);
+    const dpr = DPR;
+    hud.save();
+    hud.scale(dpr,dpr);
+    const cssH = H/dpr, cssW = W/dpr;
+
+    // left celestial readout
+    const x = 34, lineH = 22, top = cssH*0.5 - (cons.length*lineH)/2;
+    hud.globalAlpha = 0.26;
+    hud.font = '11px "IBM Plex Mono", monospace';
+    hud.textBaseline = 'middle';
+    for(let i=0;i<cons.length;i++){
+      const y = top + i*lineH;
+      const ra = ((i*53 + Math.floor(Math.sin(t*0.5+i)*30+30))%360);
+      hud.fillStyle = '#e8c45c';
+      hud.fillText(cons[i].padEnd(11,' '), x, y);
+      hud.fillStyle = '#5fe0ff';
+      hud.fillText(('RA '+String(ra).padStart(3,'0')+'°'), x+108, y);
+      bars[i] += (Math.sin(t*1.2+i*0.7)*0.5+0.5 - bars[i])*0.05;
+      const bw = 40, bh = 3, bx = x+170, by = y-1;
+      hud.fillStyle = 'rgba(0,255,156,0.22)';
+      hud.fillRect(bx,by,bw,bh);
+      hud.fillStyle = '#00ff9c';
+      hud.fillRect(bx,by,bw*bars[i],bh);
+    }
+    hud.globalAlpha = 0.32;
+    hud.fillStyle = '#e8c45c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText('◈ CELESTIAL SPHERE — KETHER', x, top - 26);
+    hud.fillStyle = 'rgba(95,224,255,0.5)';
+    hud.fillText('dome.locked  · stars.risen', x, top - 12);
+
+    // lower-right wordmark
+    hud.globalAlpha = 0.5;
+    hud.textAlign = 'right';
+    hud.fillStyle = '#e8c45c';
+    hud.font = '13px "IBM Plex Mono", monospace';
+    hud.fillText('THE  LIVING  DOME', cssW-34, cssH-46);
+    hud.globalAlpha = 0.3;
+    hud.fillStyle = '#00ff9c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText(HUD_STAGE, cssW-34, cssH-30);
+    hud.textAlign = 'left';
+
+    // ---- floating constellation name (gold, faint) for the centered figure ----
+    const fwd = gazeForward();
+    let best=-1, bestDot=0.90;
+    for(let i=0;i<FIG.length;i++){
+      const c=FIG[i].c, dp=c[0]*fwd[0]+c[1]*fwd[1]+c[2]*fwd[2];
+      if(dp>bestDot){ bestDot=dp; best=i; }
+    }
+    if(best>=0){
+      const a = Math.min(0.5, (bestDot-0.90)/0.09) * (0.45+0.55*excite);
+      hud.globalAlpha = a;
+      hud.textAlign = 'center';
+      hud.fillStyle = '#e8c45c';
+      hud.font = '15px "IBM Plex Mono", monospace';
+      hud.fillText(FIG[best].name, cssW*0.5, cssH*0.5 - 90);
+      hud.globalAlpha = a*0.6;
+      hud.font = '9px "IBM Plex Mono", monospace';
+      hud.fillStyle = '#5fe0ff';
+      hud.fillText('· constellation ·', cssW*0.5, cssH*0.5 - 74);
+      hud.textAlign = 'left';
+    }
+    hud.restore();
+  }
+
+  // ---- render helpers ----
+  function bindFBO(target){
+    if(target){ gl.bindFramebuffer(gl.FRAMEBUFFER,target.fbo); gl.viewport(0,0,target.w,target.h); }
+    else { gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,W,H); }
+  }
+  function drawFS(){ gl.bindVertexArray(quadVAO); gl.drawArrays(gl.TRIANGLES,0,3); gl.bindVertexArray(null); }
+
+  // ---- main loop ----
+  let running = true;
+  let startT = performance.now();
+  let lastNow = startT;
+  let emaMs = 16.7;                 // rolling avg frame time (EMA ~30 frames)
+  const EMA_A = 2/(30+1);
+  let rsCooldown = 0;              // frames to wait between scale steps (anti-oscillation)
+  document.addEventListener('visibilitychange', ()=>{
+    running = !document.hidden;
+    if(running){ lastNow = performance.now(); requestAnimationFrame(frame); }
+  });
+
+  function frame(now){
+    if(!running) return;
+    if(document.hidden){ requestAnimationFrame(frame); return; }
+    const t = (now - startT)/1000;
+
+    // ---- frame-time governor (adaptive renderScale w/ hysteresis) ----
+    let dt = now - lastNow; lastNow = now;
+    if(!(dt>0) || dt>200) dt = 16.7;        // clamp spikes (tab switch etc.)
+    emaMs += (dt - emaMs)*EMA_A;
+    const forcing = (typeof window.__forceP === 'number');
+    if(forcing){
+      renderScale = RS_MAX;                 // PIN full-res for screenshots
+    } else if(rsCooldown>0){
+      rsCooldown--;
+    } else {
+      if(emaMs > 22.0 && renderScale > RS_MIN){
+        renderScale = Math.max(RS_MIN, renderScale - 0.08); rsCooldown = 12;
+      } else if(emaMs < 13.0 && renderScale < RS_MAX){
+        renderScale = Math.min(RS_MAX, renderScale + 0.05); rsCooldown = 12;
+      }
+    }
+    reallocForScale();
+
+    mouse.x += (mRaw.x - mouse.x)*0.045;
+    mouse.y += (mRaw.y - mouse.y)*0.045;
+    excite  += (exciteTarget - excite)*0.06;
+    exciteTarget *= 0.965;
+
+    // ---- look-around inertia (weighty planetarium drift) ----
+    if(!dragging){
+      // when released, momentum carries the target, then friction stops it
+      yawTarget   += yawVel;
+      pitchTarget  = Math.max(-0.95, Math.min(1.35, pitchTarget + pitchVel));
+      yawVel   *= 0.94;    // gentle friction -> long, weighty drift
+      pitchVel *= 0.92;
+      if(Math.abs(yawVel)   < 1e-5) yawVel = 0;
+      if(Math.abs(pitchVel) < 1e-5) pitchVel = 0;
+    }
+    // ease displayed angle toward target (adds smoothness/weight on top)
+    yaw   += (yawTarget   - yaw)*0.12;
+    pitch += (pitchTarget - pitch)*0.12;
+
+    p += (pTarget - p)*0.075;
+    if(typeof window.__forceP === 'number') p = window.__forceP;
+    // test hooks: pin look direction / drive drag from the harness
+    if(window.__forceMouse){ mouse.x = window.__forceMouse.x; mouse.y = window.__forceMouse.y; }
+    if(window.__forceYaw   !== undefined){ yaw = yawTarget = window.__forceYaw; }
+    if(window.__forcePitch !== undefined){ pitch = pitchTarget = window.__forcePitch; }
+
+    // PASS 1 : SCENE  (renders at scaled resolution SW×SH)
+    bindFBO(sceneFBO);
+    gl.useProgram(progScene);
+    gl.uniform2f(uScene('uRes'), SW, SH);
+    gl.uniform1f(uScene('uTime'), t);
+    gl.uniform2f(uScene('uMouse'), mouse.x, mouse.y);
+    gl.uniform2f(uScene('uMouseRaw'), mRaw.x, mRaw.y);
+    gl.uniform1f(uScene('uExcite'), 0.30 + excite*0.70);
+    gl.uniform1f(uScene('uP'), p);
+    gl.uniform1f(uScene('uYaw'), yaw);
+    gl.uniform1f(uScene('uPitch'), pitch);
+    window.__DBG = {p:p, mouse:{x:mouse.x,y:mouse.y}, yaw:yaw, pitch:pitch, dragging:dragging};
+    drawFS();
+
+    // PASS 2 : BRIGHT
+    bindFBO(brightFBO);
+    gl.useProgram(progBright);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uBright('uScene'), 0);
+    gl.uniform1f(uBright('uThreshold'), 0.42);   // match the molecule master (parity)
+    drawFS();
+
+    // PASS 3 : BLUR
+    const bw = brightFBO.w, bh = brightFBO.h;
+    let src = brightFBO;
+    for(let it=0; it<2; it++){
+      bindFBO(blurA);
+      gl.useProgram(progBlur);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      gl.uniform1i(uBlur('uTex'),0);
+      gl.uniform2f(uBlur('uDir'), (1.0/bw)*(1.0+it*0.8), 0.0);
+      drawFS();
+      bindFBO(blurB);
+      gl.bindTexture(gl.TEXTURE_2D, blurA.tex);
+      gl.uniform2f(uBlur('uDir'), 0.0, (1.0/bh)*(1.0+it*0.8));
+      drawFS();
+      src = blurB;
+    }
+
+    // PASS 4 : FINAL
+    bindFBO(null);
+    gl.useProgram(progFinal);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uFinal('uScene'),0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, blurB.tex);
+    gl.uniform1i(uFinal('uBloom'),1);
+    gl.uniform2f(uFinal('uRes'), W, H);
+    gl.uniform2f(uFinal('uSceneTexel'), 1.0/SW, 1.0/SH);   // scene texel = renderScale-aware
+    gl.uniform1f(uFinal('uTime'), t);
+    drawFS();
+
+    drawHUD(t);
+    requestAnimationFrame(frame);
+  }
+
+  try {
+    requestAnimationFrame(frame);
+    console.log('[LivingDome] WebGL2 acquired. HDR='+(HDR_TYPE===gl.HALF_FLOAT?'half-float':'rgba8')+' — rendering the dome.');
+  } catch(err){
+    console.error('[LivingDome] render failed, showing fallback:', err);
+    fallback.style.display='grid';
+  }
+
+})();
+</script>
+</body>
+</html>

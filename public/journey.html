@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SHADDAI · The Descent Through Scale</title>
+<meta name="description" content="A cinematic scroll journey through the scales of reality — from the quantum lattice to the cosmos, arriving at SHADDAI." />
+<meta name="theme-color" content="#06080b" />
+<meta property="og:title" content="SHADDAI — The Descent Through Scale" />
+<meta property="og:description" content="Scroll through the scales of reality. One world, three views." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SHADDAI · THE DESCENT THROUGH SCALE — tokens mirror /public/home.html
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
+  --emerald:#00ff9c; --emerald-dim:#0e6b4d; --gold:#e8c45c; --gold-dim:#8a6f2c;
+  --cyan:#5fe0ff; --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57; --red:#ff3b56;
+  --f-display:'Cinzel', serif; --f-serif:'Fraunces', Georgia, serif; --f-mono:'IBM Plex Mono', monospace;
+  --ease:cubic-bezier(.22,.7,.2,1);
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ background:var(--void); }
+body{
+  background:var(--void); color:var(--ink); font-family:var(--f-serif);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden; line-height:1.55;
+}
+a{ color:inherit; text-decoration:none; }
+::selection{ background:var(--emerald); color:#022; }
+
+/* ── the fixed cinematic viewport (canvas + overlays live here) ── */
+.viewport{ position:fixed; inset:0; z-index:0; overflow:hidden; background:var(--void); }
+#scene{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+/* film grain */
+.grain{ position:fixed; inset:0; pointer-events:none; z-index:40; mix-blend-mode:overlay; opacity:.4;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>"); }
+/* vignette */
+.vignette{ position:fixed; inset:0; pointer-events:none; z-index:38;
+  background:radial-gradient(125% 95% at 50% 42%, transparent 52%, rgba(0,0,0,.72) 100%); }
+/* dynamic color-grade wash — hue/opacity driven by JS via CSS vars */
+.grade{ position:fixed; inset:0; pointer-events:none; z-index:36; mix-blend-mode:soft-light;
+  background:radial-gradient(120% 120% at 50% 45%, var(--grade-a,rgba(0,255,156,.10)), var(--grade-b,rgba(6,8,11,.4)) 80%);
+  opacity:.9; transition:none; }
+/* chromatic aberration flash overlay (opacity driven by JS) */
+.aberr{ position:fixed; inset:0; pointer-events:none; z-index:37; mix-blend-mode:screen; opacity:0;
+  background:
+    radial-gradient(60% 60% at 48% 50%, rgba(0,255,156,.05), transparent 60%),
+    radial-gradient(60% 60% at 52% 50%, rgba(95,224,255,.05), transparent 60%); }
+
+/* ── scroll driver: a tall spacer that gives us scroll length ── */
+.scroll-driver{ position:relative; z-index:5; }
+.seg{ height:100vh; } /* one per stage-ish; total defines journey length */
+
+/* ── progress rail ── */
+.rail{ position:fixed; right:26px; top:50%; transform:translateY(-50%); z-index:50; height:44vh;
+  width:2px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border-radius:2px; }
+.rail .fill{ position:absolute; left:0; top:0; width:100%; border-radius:2px;
+  background:linear-gradient(180deg, var(--emerald), var(--cyan) 55%, var(--gold)); box-shadow:0 0 10px rgba(0,255,156,.5); height:0%; }
+.rail .dot{ position:absolute; left:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%;
+  background:rgba(233,239,233,.28); }
+.rail .dot.on{ background:var(--emerald); box-shadow:0 0 8px var(--emerald); }
+@media(max-width:640px){ .rail{ right:12px; } }
+
+/* stage label (mono, top-left) */
+.stagelabel{ position:fixed; left:26px; top:22px; z-index:50; font-family:var(--f-mono);
+  font-size:10px; letter-spacing:.36em; text-transform:uppercase; color:var(--ink-soft); }
+.stagelabel .idx{ color:var(--emerald); }
+.stagelabel .nm{ display:block; color:var(--ink); margin-top:5px; letter-spacing:.28em; font-size:11px;
+  transition:opacity .5s var(--ease); }
+.brandtag{ position:fixed; left:26px; bottom:22px; z-index:50; font-family:var(--f-display); font-weight:700;
+  letter-spacing:.28em; font-size:12px; color:var(--ink-soft); opacity:.65; }
+.brandtag b{ color:var(--emerald); }
+
+/* skip + replay affordances */
+.hud-btns{ position:fixed; right:26px; bottom:22px; z-index:50; display:flex; gap:10px; }
+.hud-btns button{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-soft); background:rgba(10,14,19,.6); border:1px solid var(--edge); padding:9px 13px;
+  cursor:pointer; transition:.28s var(--ease); backdrop-filter:blur(4px); }
+.hud-btns button:hover{ color:var(--emerald); border-color:rgba(0,255,156,.4); }
+
+/* scroll cue at very top */
+.scrollcue{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:50; font-family:var(--f-mono);
+  font-size:9.5px; letter-spacing:.4em; text-transform:uppercase; color:var(--ink-faint); text-align:center;
+  transition:opacity .6s var(--ease); }
+.scrollcue span{ display:block; width:1px; height:30px; margin:8px auto 0; transform-origin:top;
+  background:linear-gradient(var(--emerald),transparent); animation:drop 2.2s ease-in-out infinite; }
+@keyframes drop{ 0%,100%{ transform:scaleY(.3); opacity:.4; } 50%{ transform:scaleY(1); opacity:1; } }
+
+/* ══════════════ ARRIVAL (final stage DOM overlay) ══════════════ */
+.arrival{ position:fixed; inset:0; z-index:45; display:grid; place-items:center; text-align:center;
+  pointer-events:none; opacity:0; }
+.arrival.show{ pointer-events:auto; }
+.arrival .kick{ font-family:var(--f-mono); font-size:11px; letter-spacing:.55em; text-transform:uppercase; color:var(--gold); }
+.glitch{ position:relative; font-family:var(--f-display); font-weight:900; letter-spacing:.12em; line-height:1;
+  font-size:clamp(58px,16vw,190px); color:#f4fff9; user-select:none; margin:14px 0 6px; cursor:pointer;
+  pointer-events:auto; transition:letter-spacing .5s var(--ease), filter .5s var(--ease), color .4s var(--ease);
+  filter:drop-shadow(0 8px 46px rgba(0,255,156,.22)); }
+.glitch::before,.glitch::after{ content:attr(data-t); position:absolute; inset:0; clip-path:inset(0); }
+/* on-theme aberration: cyan front-ghost, gold back-ghost, emerald body */
+.glitch::before{ color:var(--cyan); text-shadow:-2px 0 var(--cyan); }
+.glitch::after{ color:var(--gold); text-shadow:2px 0 var(--gold); }
+.glitch.go::before{ animation:g1 .55s steps(3) 1; }
+.glitch.go::after{ animation:g2 .55s steps(3) 1; }
+.glitch.go{ animation:gbase .55s steps(2) 1; }
+/* hover shimmer — name breathes emerald→gold and widens */
+.glitch:hover{ letter-spacing:.18em; color:var(--emerald);
+  filter:drop-shadow(0 8px 60px rgba(0,255,156,.4)) drop-shadow(0 0 24px rgba(232,196,92,.25)); }
+.glitch:hover::before{ animation:g1 .7s steps(4) infinite; }
+.glitch:hover::after{ animation:g2 .7s steps(4) infinite; }
+@keyframes gbase{ 0%,100%{transform:none} 20%{transform:translate(-3px,1px)} 40%{transform:translate(3px,-2px)} 60%{transform:translate(-2px,0)} }
+@keyframes g1{ 0%{clip-path:inset(20% 0 60% 0);transform:translate(-6px,-2px)} 30%{clip-path:inset(70% 0 5% 0);transform:translate(5px,1px)} 60%{clip-path:inset(35% 0 40% 0);transform:translate(-8px,2px)} 100%{clip-path:inset(0);transform:none} }
+@keyframes g2{ 0%{clip-path:inset(55% 0 20% 0);transform:translate(6px,2px)} 30%{clip-path:inset(10% 0 78% 0);transform:translate(-5px,-1px)} 60%{clip-path:inset(48% 0 30% 0);transform:translate(8px,-2px)} 100%{clip-path:inset(0);transform:none} }
+.arrival .tag{ font-family:var(--f-serif); font-style:italic; font-size:clamp(15px,2.2vw,22px); color:var(--ink-soft); }
+.arrival .ctas{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:34px; }
+.arrival .cta{ font-family:var(--f-mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; padding:15px 26px;
+  position:relative; border:1px solid var(--edge); color:var(--ink); background:rgba(10,14,19,.55); overflow:hidden;
+  transition:color .3s,border-color .3s,transform .12s; }
+.arrival .cta::before{ content:''; position:absolute; inset:0; z-index:-1; transform:translateY(101%); transition:transform .38s var(--ease);
+  background:linear-gradient(120deg,var(--emerald),var(--cyan)); }
+.arrival .cta:hover{ color:#022; border-color:transparent; } .arrival .cta:hover::before{ transform:none; } .arrival .cta:active{ transform:translateY(1px); }
+.arrival .cta.primary{ border-color:rgba(0,255,156,.4); color:var(--emerald); }
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .scrollcue span{ animation:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- fixed cinematic viewport -->
+<div class="viewport">
+  <canvas id="scene"></canvas>
+</div>
+<div class="grade"></div>
+<div class="aberr"></div>
+<div class="vignette"></div>
+<div class="grain"></div>
+
+<!-- HUD -->
+<div class="stagelabel">
+  <span class="idx" id="stgIdx">01 / 07</span>
+  <span class="nm" id="stgName">Quantum Lattice</span>
+</div>
+<div class="brandtag"><b>◆</b> SHADDAI</div>
+<div class="rail" id="rail"><div class="fill" id="railFill"></div></div>
+<div class="hud-btns">
+  <button id="skipBtn">Skip to SHADDAI ↓</button>
+  <button id="replayBtn">↺ Replay</button>
+</div>
+<div class="scrollcue" id="scrollcue">Scroll to descend<span></span></div>
+
+<!-- final DOM overlay -->
+<div class="arrival" id="arrival">
+  <div>
+    <div class="kick">The scales resolve</div>
+    <div class="glitch" id="glitch" data-t="SHADDAI">SHADDAI</div>
+    <div class="tag">One world, three views.</div>
+    <div class="ctas">
+      <a class="cta primary" href="/SHADDAI-WORLD-3D.html">Enter 3D World →</a>
+      <a class="cta" href="/dashboard">Command Deck →</a>
+    </div>
+  </div>
+</div>
+
+<!-- scroll driver: defines how long the journey is (7 stages × ~1.5vh each) -->
+<div class="scroll-driver" id="driver">
+  <div class="seg"></div><div class="seg"></div><div class="seg"></div>
+  <div class="seg"></div><div class="seg"></div><div class="seg"></div>
+  <div class="seg"></div><div class="seg"></div><div class="seg"></div>
+  <div class="seg"></div><div class="seg"></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+/* ─────────── global eased pointer (drives interactivity across ALL stages) ─────────── */
+const mouse = { x: 0, y: 0, ex: 0, ey: 0, active: false };
+function setPointer(px, py){ mouse.x = px; mouse.y = py; mouse.active = true; }
+window.addEventListener('pointermove', e => setPointer(e.clientX, e.clientY), {passive:true});
+window.addEventListener('touchmove', e => { if(e.touches && e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+// normalized pointer offset from centre, -1..1 (for parallax steer)
+function mouseNX(){ return W ? (mouse.ex - W/2) / (W/2) : 0; }
+function mouseNY(){ return H ? (mouse.ey - H/2) / (H/2) : 0; }
+
+/* ─────────── stage definitions ─────────── */
+const STAGES = [
+  { name:'Quantum Lattice',  gradeA:'rgba(60,150,255,.10)', gradeB:'rgba(6,10,20,.45)' },
+  { name:'Blades of Grass',  gradeA:'rgba(70,220,120,.11)', gradeB:'rgba(6,14,8,.45)' },
+  { name:'Cinematic Water',  gradeA:'rgba(20,180,190,.11)', gradeB:'rgba(230,180,90,.10)' },
+  { name:'Golden Horizon',   gradeA:'rgba(255,180,80,.14)', gradeB:'rgba(120,40,20,.16)' },
+  { name:'Into the Cosmos',  gradeA:'rgba(70,90,180,.10)',  gradeB:'rgba(4,4,12,.6)' },
+  { name:'Sacred Lattice',   gradeA:'rgba(0,255,156,.12)',  gradeB:'rgba(232,196,92,.10)' },
+  { name:'SHADDAI',          gradeA:'rgba(0,255,156,.14)',  gradeB:'rgba(232,196,92,.10)' },
+];
+const NST = STAGES.length;
+
+/* progress state */
+let t = 0;              // global 0..1
+let stageF = 0;         // continuous stage float 0..(NST-1)
+let stage = 0;          // int stage index
+let local = 0;          // 0..1 within stage
+let scrollTarget = 0, scrollSmooth = 0;
+
+/* ─────────── resize ─────────── */
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!mouse.active){ mouse.x=mouse.ex=W/2; mouse.y=mouse.ey=H/2; }
+  buildStars(); buildLattice(); buildGrass(); buildContinuity();
+}
+window.addEventListener('resize', resize);
+
+/* ─────────── continuity particles (carry across all stages) ─────────── */
+let cont = [];
+function buildContinuity(){
+  const n = RM ? 40 : Math.min(120, Math.floor(W*H/16000));
+  cont = new Array(n);
+  for(let i=0;i<n;i++){
+    cont[i] = { x:Math.random()*W, y:Math.random()*H, z:Math.random(), r:Math.random()*1.8+.4,
+      vx:(Math.random()-.5)*.15, vy:(Math.random()-.5)*.15, ph:Math.random()*Math.PI*2 };
+  }
+}
+function drawContinuity(time, hueMix){
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  // depth parallax: nearer motes drift more with the cursor
+  const pxN = mouseNX(), pyN = mouseNY();
+  for(let i=0;i<cont.length;i++){
+    const p = cont[i];
+    p.x += p.vx * (0.4+p.z); p.y += p.vy * (0.4+p.z);
+    if(p.x<-10)p.x=W+10; if(p.x>W+10)p.x=-10; if(p.y<-10)p.y=H+10; if(p.y>H+10)p.y=-10;
+    const par = (0.3+p.z) * 26;
+    const dx = p.x - pxN*par, dy = p.y - pyN*par;
+    const tw = 0.5 + 0.5*Math.sin(time*0.002 + p.ph);
+    const a = (0.10 + 0.22*tw) * (0.4+p.z*0.6);
+    // hueMix 0=emerald,1=gold-ish blend for light carrying color across stages
+    const g = Math.floor(200 + 55*(1-hueMix)), b = Math.floor(140 + 16*hueMix), rr = Math.floor(120 + 130*hueMix);
+    ctx.fillStyle = 'rgba('+rr+','+g+','+b+','+a.toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(dx, dy, p.r*(0.6+p.z), 0, 6.2832); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 1 · QUANTUM LATTICE ══════════════ */
+let lat = [];
+let latPulses = [];          // expanding sonar rings emitted from atoms
+let latHud = [];             // left-edge quantum-readout rows
+const LAT_ELEMENTS = ['H','O','N','C','P','S','Fe','Mg','Zn','Ca','K','Na','Cl','Cu','Mn','Co','Se','I'];
+function buildLattice(){
+  const n = RM ? 20 : 40;
+  lat = new Array(n);
+  for(let i=0;i<n;i++){
+    lat[i] = { bx:Math.random(), by:Math.random(), z:Math.random(),
+      ph:Math.random()*6.28, amp:6+Math.random()*16,
+      shells: (RM?2 : (Math.random()<0.5?2:3)),           // electron-shell count
+      spin:(Math.random()<0.5?1:-1)*(0.4+Math.random()*0.7),
+      emitPh:Math.random()*6.28,                           // sonar-pulse phase offset
+      exc:0 };                                             // excitation (mouse-driven, eased)
+  }
+  latPulses = [];
+  // HUD readout rows (element + animated hex value + animated bar)
+  const rows = RM ? 10 : 18;
+  latHud = new Array(rows);
+  for(let i=0;i<rows;i++){
+    latHud[i] = { sym: LAT_ELEMENTS[i % LAT_ELEMENTS.length],
+      seed: Math.floor(Math.random()*0xFFF), rate:0.6+Math.random()*2.2,
+      barPh:Math.random()*6.28, barSp:0.4+Math.random()*1.2 };
+  }
+}
+function drawLattice(alpha, time){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha = alpha;
+  const cx=W/2, cy=H/2;
+  const mx = mouse.ex, my = mouse.ey;
+  const pxN = mouseNX(), pyN = mouseNY();
+  const paraX = pxN * 34, paraY = pyN * 34;      // whole-lattice parallax steer
+
+  // faint radial vignette on pure obsidian (source-over so it darkens edges)
+  const vig = ctx.createRadialGradient(cx - paraX*0.4, cy - paraY*0.4, Math.min(W,H)*0.15, cx, cy, Math.max(W,H)*0.72);
+  vig.addColorStop(0,'rgba(10,16,20,0)');
+  vig.addColorStop(1,'rgba(2,4,6,'+(0.55*alpha).toFixed(3)+')');
+  ctx.fillStyle = vig; ctx.fillRect(0,0,W,H);
+
+  // resolve node positions with drift + slow parallax swirl + parallax steer (near = more)
+  const pts = lat.map(nd=>{
+    const ang = time*0.00012*(0.5+nd.z);
+    let x = (nd.bx-0.5)*W*1.05, y=(nd.by-0.5)*H*1.05;
+    const rx = x*Math.cos(ang)-y*Math.sin(ang), ry=x*Math.sin(ang)+y*Math.cos(ang);
+    const steer = 0.35 + nd.z*0.9;
+    return {
+      x: cx+rx + Math.sin(time*0.001+nd.ph)*nd.amp + paraX*steer,
+      y: cy+ry + Math.cos(time*0.0013+nd.ph)*nd.amp + paraY*steer,
+      z: nd.z, nd
+    };
+  });
+
+  // per-atom mouse excitation (eased), and sonar-pulse emission
+  const hoverR = Math.min(W,H)*0.28;
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i], nd=p.nd;
+    const dm = mouse.active ? Math.hypot(p.x-mx, p.y-my) : 1e9;
+    const target = dm < hoverR ? (1 - dm/hoverR) : 0;
+    nd.exc += (target - nd.exc) * 0.12;
+    // emit an expanding sonar ring periodically (rate lifts near cursor)
+    if(!RM){
+      const period = 1600 - nd.exc*700;
+      const phase = (time + nd.emitPh*period) % period;
+      if(phase < 20 && (!nd._lastEmit || time-nd._lastEmit>200)){
+        nd._lastEmit = time;
+        latPulses.push({x:p.x,y:p.y,r:6,max:34+nd.exc*46,life:1,z:nd.z});
+      }
+    }
+  }
+
+  ctx.globalCompositeOperation='lighter';
+
+  // ── expanding sonar pulse rings ──
+  ctx.lineWidth = 1;
+  for(let k=latPulses.length-1;k>=0;k--){
+    const pu=latPulses[k];
+    pu.r += 0.9 + pu.z*0.8; pu.life -= 0.018;
+    if(pu.life<=0 || pu.r>pu.max){ latPulses.splice(k,1); continue; }
+    const a = pu.life*0.32*alpha*(0.4+pu.z*0.6);
+    ctx.strokeStyle='rgba(95,224,255,'+a.toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(pu.x,pu.y,pu.r,0,6.2832); ctx.stroke();
+  }
+  if(latPulses.length>240) latPulses.splice(0, latPulses.length-240);
+
+  // ── dense bond network (with occasional double bonds) ──
+  const maxD = Math.min(W,H)*0.24;
+  for(let i=0;i<pts.length;i++){
+    for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y; const d=Math.hypot(dx,dy);
+      if(d<maxD){
+        const closeness = 1-d/maxD;
+        const dof = 0.5+0.5*(pts[i].z+pts[j].z)*0.5;
+        // bond glow lifts when either endpoint is excited by the cursor
+        const exc = Math.max(pts[i].nd.exc, pts[j].nd.exc);
+        const a=(closeness*0.5 + closeness*closeness*0.35 + exc*0.4)*alpha*dof;
+        ctx.strokeStyle='rgba('+Math.floor(70+exc*40)+','+Math.floor(210+exc*40)+','+Math.floor(200+exc*55)+','+a.toFixed(3)+')';
+        ctx.lineWidth = 0.8 + closeness*0.8 + exc*0.9;
+        // deterministic "double bond" for the closest ~15% of pairs
+        const dbl = closeness > 0.85;
+        if(dbl){
+          const nx = -dy/d, ny = dx/d, off = 1.6;
+          ctx.beginPath(); ctx.moveTo(pts[i].x+nx*off,pts[i].y+ny*off); ctx.lineTo(pts[j].x+nx*off,pts[j].y+ny*off); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(pts[i].x-nx*off,pts[i].y-ny*off); ctx.lineTo(pts[j].x-nx*off,pts[j].y-ny*off); ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke();
+        }
+      }
+    }
+  }
+  ctx.lineWidth = 1;
+
+  // ── atoms: glow halo + concentric electron shells + bright core ──
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i], nd=p.nd;
+    const near = 0.4 + p.z;                       // near atoms bigger/brighter (DOF)
+    const exc = nd.exc;
+    const coreR = (3 + near*7) * (1 + exc*0.5);
+    const bright = (0.55 + exc*0.45);
+
+    // soft radial glow halo
+    const gR = coreR*3.4;
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,gR);
+    g.addColorStop(0,'rgba(180,255,245,'+(0.85*near*bright*alpha).toFixed(3)+')');
+    g.addColorStop(.32,'rgba(0,255,190,'+(0.4*near*bright*alpha).toFixed(3)+')');
+    g.addColorStop(1,'rgba(0,120,150,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,gR,0,6.2832); ctx.fill();
+
+    // concentric electron shells (thin luminous rings, pulsing + rotating)
+    if(!(RM && nd.shells<2) ){
+      for(let s=1;s<=nd.shells;s++){
+        const basePulse = RM ? 1 : (0.85 + 0.15*Math.sin(time*0.003 + nd.ph + s));
+        const shellR = coreR * (1.9 + s*1.15) * basePulse * (1 + exc*0.28*s);
+        const rot = time*0.0006*nd.spin*(1+exc*1.5) + s*0.7;
+        const sa = (0.30 - s*0.05) * near * (0.7+exc*0.7) * alpha;
+        const col = s%2 ? '95,224,255' : '0,255,156';
+        ctx.strokeStyle='rgba('+col+','+Math.max(0,sa).toFixed(3)+')';
+        ctx.lineWidth = 1;
+        // draw ring as an arc with a small gap that rotates (orbit feel)
+        ctx.beginPath(); ctx.arc(p.x,p.y,shellR, rot, rot+Math.PI*1.78); ctx.stroke();
+        // orbiting electron dot on this shell
+        if(!RM){
+          const ex = p.x+Math.cos(rot*2.1+s)*shellR, ey=p.y+Math.sin(rot*2.1+s)*shellR;
+          ctx.fillStyle='rgba('+col+','+(0.7*near*alpha).toFixed(3)+')';
+          ctx.beginPath(); ctx.arc(ex,ey,1.2+near*0.8,0,6.2832); ctx.fill();
+        }
+      }
+    }
+
+    // bright white-cyan core
+    ctx.fillStyle='rgba(210,255,252,'+Math.min(1,(0.9*near*bright))*alpha+')';
+    ctx.beginPath(); ctx.arc(p.x,p.y,coreR*0.6,0,6.2832); ctx.fill();
+  }
+
+  // ── mono "quantum readout" HUD column down the LEFT edge ──
+  ctx.globalCompositeOperation='source-over';
+  ctx.font='11px "IBM Plex Mono", monospace';
+  ctx.textBaseline='middle';
+  const rowH = Math.min(26, (H*0.82)/latHud.length);
+  const startY = H*0.09;
+  const barMaxW = 52;
+  for(let i=0;i<latHud.length;i++){
+    const r=latHud[i], y=startY + i*rowH;
+    // ticking hex value
+    const val = (r.seed + Math.floor(time*0.001*r.rate)) & 0xFFF;
+    const hex = val.toString(16).toUpperCase().padStart(3,'0');
+    const em = (i%2===0);
+    const col = em ? '0,255,156' : '95,224,255';
+    ctx.fillStyle='rgba('+col+','+(0.28*alpha).toFixed(3)+')';
+    ctx.fillText(r.sym.padEnd(2,' ')+' 0x'+hex, 14, y);
+    // animated bar
+    const bw = barMaxW*(0.25 + 0.75*(0.5+0.5*Math.sin(time*0.001*r.barSp + r.barPh)));
+    ctx.fillStyle='rgba('+col+','+(0.18*alpha).toFixed(3)+')';
+    ctx.fillRect(72, y-1.5, bw, 3);
+  }
+
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 2 · BLADES OF GRASS ══════════════ */
+let grass = [], fireflies = [], dew = [];
+function buildGrass(){
+  // MUCH denser blade field, layered by depth
+  const n = RM ? 90 : Math.min(340, Math.floor(W/3.2));
+  grass = new Array(n);
+  for(let i=0;i<n;i++){
+    const depth = Math.random();
+    grass[i] = { x:Math.random(), h:0.3+Math.random()*0.55, w:1.4+Math.random()*3.4,
+      ph:Math.random()*6.28, lean:(Math.random()-.5)*0.34, depth,
+      hue:(Math.random()-.5)*0.4 };
+  }
+  grass.sort((a,b)=>a.depth-b.depth);
+  // drifting gold firefly bokeh
+  const fn = RM ? 8 : 26;
+  fireflies = new Array(fn);
+  for(let i=0;i<fn;i++){
+    fireflies[i] = { x:Math.random(), y:0.2+Math.random()*0.6, r:2+Math.random()*7,
+      sp:0.02+Math.random()*0.05, ph:Math.random()*6.28, z:Math.random() };
+  }
+  // dew droplets clinging near blade tips
+  const dn = RM ? 10 : 30;
+  dew = new Array(dn);
+  for(let i=0;i<dn;i++){
+    dew[i] = { x:Math.random(), y:0.45+Math.random()*0.5, r:1.4+Math.random()*2.6, ph:Math.random()*6.28 };
+  }
+}
+function drawGrass(alpha, time){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+  const pxN = mouseNX(), pyN = mouseNY();
+  // atmospheric dawn sky wash behind (parallax with cursor)
+  const skyShift = pyN*20;
+  const sky=ctx.createLinearGradient(0,skyShift,0,H);
+  sky.addColorStop(0,'rgba(18,40,26,'+(0.55*alpha)+')');
+  sky.addColorStop(0.55,'rgba(40,80,42,'+(0.45*alpha)+')');
+  sky.addColorStop(1,'rgba(96,150,64,'+(0.28*alpha)+')');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  // warm gold sun-haze low on the right, drifts with cursor
+  const hx=W*(0.72 - pxN*0.05), hy=H*(0.44 + pyN*0.03);
+  const hg=ctx.createRadialGradient(hx,hy,0,hx,hy,Math.min(W,H)*0.7);
+  ctx.globalCompositeOperation='lighter';
+  hg.addColorStop(0,'rgba(232,196,92,'+(0.14*alpha)+')'); hg.addColorStop(1,'rgba(232,196,92,0)');
+  ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(hx,hy,Math.min(W,H)*0.7,0,6.2832); ctx.fill();
+
+  // gold firefly bokeh drifting across
+  for(let i=0;i<fireflies.length;i++){
+    const f=fireflies[i];
+    const fx=(((f.x + time*0.00004*f.sp*20)%1)+1)%1 * W - pxN*30*f.z;
+    const fy=f.y*H + Math.sin(time*0.0006+f.ph)*24 - pyN*20*f.z;
+    const tw=0.4+0.6*Math.sin(time*0.0018+f.ph);
+    const fr=f.r*(0.7+f.z);
+    const g=ctx.createRadialGradient(fx,fy,0,fx,fy,fr*3);
+    g.addColorStop(0,'rgba(255,235,150,'+(0.5*tw*alpha)+')');
+    g.addColorStop(0.4,'rgba(232,196,92,'+(0.18*tw*alpha)+')');
+    g.addColorStop(1,'rgba(232,196,92,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(fx,fy,fr*3,0,6.2832); ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
+
+  // ── blades, back-to-front — bend/part AWAY from the cursor ──
+  const mx = mouse.ex, my = mouse.ey;
+  const influence = Math.min(W,H)*0.34;   // how far the "hand wind" reaches
+  const inv = 1/influence;
+  for(let i=0;i<grass.length;i++){
+    const b=grass[i]; const bx=b.x*W; const baseY=H+12; const bh=b.h*H*(0.55+b.depth*0.8);
+    const tipY0=baseY-bh;
+    // time sway
+    let sway=Math.sin(time*0.0016+b.ph)*(14+26*b.depth);
+    let bendX = bx + sway + b.lean*150;
+    // cursor push: distance from blade tip to mouse, push tip away with falloff
+    const dxm = (bx+b.lean*150) - mx;
+    const dym = tipY0 - my;
+    const dm = Math.hypot(dxm, dym);
+    if(dm < influence){
+      const fall = (1 - dm*inv); const f2 = fall*fall;             // smooth falloff
+      const push = (dxm/(dm||1)) * f2 * (120 + 160*b.depth);       // stronger on near blades
+      bendX += push;
+      // also push up slightly (blade flattens as hand passes)
+      // (kept subtle to preserve silhouette)
+    }
+    const midY = baseY-bh*0.5;
+    const shade=0.28+b.depth*0.62;
+    const gr=Math.floor(90+120*b.depth + b.hue*30);
+    ctx.strokeStyle='rgba('+Math.floor(18+38*b.depth)+','+gr+','+Math.floor(28+42*b.depth)+','+(shade*alpha)+')';
+    ctx.lineWidth=b.w*(0.55+b.depth); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(bx,baseY);
+    ctx.quadraticCurveTo(bx+(bendX-bx)*0.45, midY, bendX, tipY0); ctx.stroke();
+    // warm gold rim-light on near blades
+    if(b.depth>0.55){
+      ctx.strokeStyle='rgba(232,196,92,'+((0.10+0.28*b.depth)*alpha)+')'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(bx+1.2,baseY); ctx.quadraticCurveTo(bx+(bendX-bx)*0.45+1.2, midY, bendX+1.2, tipY0); ctx.stroke();
+    }
+  }
+  // dew droplets — tiny bright refractive dots that twinkle
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<dew.length;i++){
+    const d=dew[i]; const dx=d.x*W - pxN*10; const dy=d.y*H + Math.sin(time*0.0009+d.ph)*3;
+    const tw=0.4+0.6*Math.sin(time*0.003+d.ph);
+    const g=ctx.createRadialGradient(dx,dy,0,dx,dy,d.r*3.2);
+    g.addColorStop(0,'rgba(210,255,220,'+(0.6*tw*alpha)+')');
+    g.addColorStop(0.5,'rgba(120,255,190,'+(0.2*tw*alpha)+')');
+    g.addColorStop(1,'rgba(0,255,156,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(dx,dy,d.r*3.2,0,6.2832); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 3 · CINEMATIC WATER — CYMATIC FLOWER OF LIFE ══════════════
+   A hex-packed lattice of equal circles (the Flower/Seed of Life) rendered as
+   thin luminous caustic LINES over dark obsidian water. Cold-cyan dominant with
+   emerald accents; intersections brighten additively. The lattice breathes on a
+   slow idle sine, recedes in perspective toward a horizon, and warps radially
+   around the cursor + every active ripple — then settles back to the perfect
+   sacred pattern when the pointer holds still.                                     */
+let ripples = [];
+// cached lattice centres (built once per size, in NORMALIZED lattice space)
+let _folCells = null, _folKey = '';
+function buildFOL(){
+  const key = W+'x'+H;
+  if(_folCells && _folKey===key) return _folCells;
+  _folKey = key;
+  const cells = [];
+  // circle radius scales with viewport; hex packing: dx = 1.5R spacing gives the
+  // classic overlapping-petal look. Rows offset by R for the honeycomb weave.
+  const R = Math.max(46, Math.min(W,H)*0.085);   // base circle radius (screen px near-field)
+  const dx = R;                                   // horizontal centre step (overlap)
+  const dy = R * 0.866;                            // vertical step (hex)
+  const cols = Math.ceil(W/dx) + 4;
+  const rows = Math.ceil(H/dy) + 4;
+  for(let j=-2;j<rows;j++){
+    const off = (j & 1) ? dx*0.5 : 0;
+    for(let i=-2;i<cols;i++){
+      cells.push({ x: i*dx + off, y: j*dy, seed: (i*73.13 + j*128.7) });
+    }
+  }
+  _folCells = { cells, R };
+  return _folCells;
+}
+
+function drawWater(alpha, time){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+
+  // ── 1. OBSIDIAN WATER BASE — deep cold blue, darker toward the horizon ──
+  const horizonY = H*0.30;                          // sacred pattern recedes to here
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,   'rgba(6,10,18,'   +(0.96*alpha)+')');   // near-black horizon
+  g.addColorStop(0.30,'rgba(7,16,30,'   +(0.95*alpha)+')');
+  g.addColorStop(0.62,'rgba(8,26,46,'   +(0.94*alpha)+')');   // cold blue mid
+  g.addColorStop(1,   'rgba(6,18,34,'   +(0.96*alpha)+')');   // deep foreground
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  const t2 = time*0.001;
+  const breathe = RM ? 0 : 1;                       // idle animation gate
+  const pxE = mouse.ex, pyE = mouse.ey;
+
+  // collect active ripple emitters (cursor is always one) for the warp field
+  const emitters = [];
+  emitters.push({ x:pxE, y:pyE, r: 0, str: (mouse.active?1:0.4), wl: 90, decay: 1 });
+  for(let i=ripples.length-1;i>=0;i--){
+    const rp=ripples[i]; rp.age+=16; const pr=rp.age/rp.life;
+    if(pr>=1){ ripples.splice(i,1); continue; }
+    emitters.push({ x:rp.x, y:rp.y, r: pr*rp.max, str: (1-pr), wl: 70, decay: pr, ring:true });
+  }
+
+  // ── radial warp: sum of sine waves from each emitter, returns {dx,dy} px offset ──
+  function warp(x, y){
+    let ox=0, oy=0;
+    for(let e=0; e<emitters.length; e++){
+      const em=emitters[e];
+      const ddx=x-em.x, ddy=y-em.y;
+      const d=Math.hypot(ddx,ddy);
+      if(d<1 || d>380) continue;                    // bounded influence for perf
+      const fall=1 - d/380;                         // 0..1
+      // wave crest travels outward from the ripple's current radius
+      const phase = (d - em.r) / em.wl;
+      const amp = Math.sin(phase*6.2832 - t2*2.2) * fall*fall * 14 * em.str;
+      ox += (ddx/d) * amp;
+      oy += (ddy/d) * amp;
+    }
+    return { ox, oy };
+  }
+
+  // ── 2. THE FLOWER-OF-LIFE CAUSTIC LATTICE ──
+  const fol = buildFOL();
+  const cells = fol.cells, R0 = fol.R;
+  ctx.globalCompositeOperation='lighter';          // intersections build to light
+  const step = RM ? 0.5236 : 0.3491;               // arc segment (30° / 20°)
+
+  for(let c=0;c<cells.length;c++){
+    const cell = cells[c];
+    // perspective: cells above horizon shrink & dim toward the vanishing line
+    const belowH = (cell.y - horizonY) / (H - horizonY);   // <0 above horizon
+    if(belowH < -0.25) continue;                            // cull far sky
+    const persp = clamp01(0.12 + belowH*1.05);              // 0(far) .. 1(near)
+
+    // idle breathing: radius + centre gently pulse on a low-freq sine (per-cell phase)
+    const br = breathe ? Math.sin(t2*0.9 + cell.seed*0.13) : 0;
+    const R = R0 * (0.30 + persp*0.72) * (1 + br*0.05);
+    const cxB = cell.x + (breathe ? Math.sin(t2*0.6 + cell.seed)*3 : 0);
+    const cyB = cell.y + (breathe ? Math.cos(t2*0.5 + cell.seed*0.7)*3 : 0);
+
+    // cold-cyan dominant, emerald accent on a slow spatial wave
+    const accent = 0.5+0.5*Math.sin(cell.seed*0.21 + t2*0.7);   // 0..1
+    const rC = Math.floor( 40 + 55*(1-accent) );
+    const gC = Math.floor( 210 + 45*accent );                  // green rich in both
+    const bC = Math.floor( 190 + 65*(1-accent) );              // cyan when not accent
+    const shimmer = 0.5 + 0.5*Math.sin(t2*1.6 + cell.seed*0.4);
+    const aBase = (0.05 + 0.16*persp) * (0.55 + 0.45*shimmer) * alpha;
+
+    ctx.lineWidth = 0.8 + persp*1.1;
+    ctx.beginPath();
+    let started=false;
+    for(let a=0;a<=6.2832+0.001;a+=step){
+      let px = cxB + Math.cos(a)*R;
+      let py = cyB + Math.sin(a)*R;
+      const w = warp(px,py);
+      px += w.ox; py += w.oy;
+      if(!started){ ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+    }
+    ctx.strokeStyle='rgba('+rC+','+gC+','+bC+','+aBase.toFixed(3)+')';
+    ctx.stroke();
+  }
+
+  // ── 3. HORIZON GLOW — soft cold band where the lattice vanishes ──
+  const hg=ctx.createLinearGradient(0,horizonY-H*0.10,0,horizonY+H*0.06);
+  hg.addColorStop(0,'rgba(60,120,180,0)');
+  hg.addColorStop(0.6,'rgba(70,160,220,'+(0.10*alpha)+')');
+  hg.addColorStop(1,'rgba(40,100,150,0)');
+  ctx.fillStyle=hg; ctx.fillRect(0,horizonY-H*0.10,W,H*0.16);
+
+  // ── 4. GOLD SUN-GLINT COLUMN (accent only) low on the surface ──
+  const sx=W*0.60 + mouseNX()*30;
+  const sg=ctx.createLinearGradient(sx,horizonY,sx,H);
+  sg.addColorStop(0,'rgba(232,196,92,0)');
+  sg.addColorStop(0.5,'rgba(232,196,92,'+(0.10*alpha)+')');
+  sg.addColorStop(1,'rgba(200,150,60,0)');
+  ctx.fillStyle=sg; ctx.fillRect(sx-W*0.10,horizonY,W*0.20,H-horizonY);
+
+  // ── 5. RIPPLE RINGS — crisp expanding cymatic rings (cursor + pointer trail) ──
+  for(let e=1;e<emitters.length;e++){         // skip cursor-only emitter (index 0)
+    const em=emitters[e]; if(!em.ring) continue;
+    const a=(em.str)*0.5*alpha;
+    for(let k=0;k<2;k++){
+      const rr=em.r - k*22; if(rr<=2) continue;
+      ctx.lineWidth=1.4 - k*0.5;
+      ctx.strokeStyle='rgba(95,224,255,'+(a/(k+1)).toFixed(3)+')';
+      ctx.beginPath(); ctx.arc(em.x, em.y, rr, 0, 6.2832); ctx.stroke();
+    }
+  }
+  // cursor-centred living pulse ring (always, subtle)
+  if(mouse.active && !RM){
+    const pr=(1+Math.sin(t2*2.4))*0.5;
+    ctx.lineWidth=1; ctx.strokeStyle='rgba(0,255,156,'+(0.14*(1-pr)*alpha).toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(pxE,pyE, 10+pr*40, 0, 6.2832); ctx.stroke();
+  }
+
+  // ── 6. BIOLUMINESCENT MOTES — drifting additive glimmers ──
+  const motes = RM ? 14 : 40;
+  for(let i=0;i<motes;i++){
+    const mx=((i*97.13)%100)/100*W;
+    const drift=(t2*8 + i*13) % (H+40);
+    const my=horizonY + ((i*53.7)%100)/100*(H-horizonY) - drift*0.15;
+    const yy=my<horizonY? my + (H-horizonY) : my;
+    const tw=0.4+0.6*Math.sin(t2*3 + i);
+    const persp=clamp01((yy-horizonY)/(H-horizonY));
+    const rad=(0.8+persp*2.2);
+    const gm=ctx.createRadialGradient(mx,yy,0,mx,yy,rad*3);
+    gm.addColorStop(0,'rgba(150,240,255,'+(0.5*tw*persp*alpha)+')');
+    gm.addColorStop(0.5,'rgba(0,255,156,'+(0.15*tw*persp*alpha)+')');
+    gm.addColorStop(1,'rgba(0,255,156,0)');
+    ctx.fillStyle=gm; ctx.beginPath(); ctx.arc(mx,yy,rad*3,0,6.2832); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 4 · GOLDEN HORIZON — DAY↔NIGHT (sun & moon arc) ══════════════ */
+function drawHorizon(alpha, time, local4){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+  const pxN = mouseNX(), pyN = mouseNY();
+  // ── slow day↔night cycle: driven by scroll-within-stage + gentle time drift ──
+  // cyc 0..1..(back): 0 = full day, 0.5 = dusk, 1 = full night, then eases back
+  const base = local4 + Math.sin(time*0.00006)*0.06;      // scroll leads, time nudges
+  const cyc = 0.5 - 0.5*Math.cos(clamp01(base)*Math.PI);  // smooth 0..1 (day->night)
+  // sun arc: rises left, peaks, sets right as cycle -> night. Moon is opposite phase.
+  const horizonY = H*0.66;
+  const arcH = H*0.5;
+  const mouseSteer = pxN*40;
+  // sun param: at day(0) high, at night(1) below horizon
+  const sunP = cyc;                 // 0 day .. 1 night
+  const moonP = 1 - cyc;            // opposite
+  function bodyPos(p, dir){
+    // p 0 = high noon, 1 = set. angle sweeps 0..PI across sky (left->right)
+    const ang = p*Math.PI;
+    const x = W*0.5 + dir*Math.cos(ang - Math.PI/2)*W*0.42 + mouseSteer;
+    const y = horizonY - Math.sin(Math.PI - ang)*arcH*0 - (Math.sin((1-p)*Math.PI))*arcH;
+    return { x, y, above: y < horizonY+ Math.min(W,H)*0.16 };
+  }
+  const sun = bodyPos(sunP, -1);
+  const moon = bodyPos(moonP, 1);
+
+  // ── sky gradient blends golden-day -> deep-night by cyc ──
+  const dawn = 1-cyc;  // 1 day .. 0 night
+  const topR=Math.floor(28 + 20*dawn), topG=Math.floor(24+22*dawn), topB=Math.floor(52+30*dawn);
+  const midR=Math.floor(30 + 190*dawn), midG=Math.floor(24+110*dawn), midB=Math.floor(60+10*dawn);
+  const loR=Math.floor(30 + 220*dawn), loG=Math.floor(30+150*dawn), loB=Math.floor(60+30*dawn);
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'rgba('+topR+','+topG+','+topB+','+(0.92*alpha)+')');
+  sky.addColorStop(0.5,'rgba('+midR+','+midG+','+midB+','+(0.85*alpha)+')');
+  sky.addColorStop(0.66,'rgba('+loR+','+loG+','+loB+','+(0.85*alpha)+')');
+  sky.addColorStop(1,'rgba('+Math.floor(20+90*dawn)+','+Math.floor(16+44*dawn)+','+Math.floor(30+20*dawn)+','+(0.7*alpha)+')');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  // ── night-side stars fade in ──
+  ctx.globalCompositeOperation='lighter';
+  const starA = cyc*alpha;
+  if(starA>0.02){
+    for(let i=0;i<70;i++){
+      const sx=((i*97.13)%100)/100*W, sy=((i*53.7)%100)/100*horizonY*0.95;
+      const tw=0.4+0.6*Math.sin(time*0.003+i);
+      ctx.fillStyle='rgba(200,225,255,'+(starA*0.6*tw).toFixed(3)+')';
+      ctx.beginPath(); ctx.arc(sx - pxN*8*(i%3), sy, (i%3===0?1.4:0.8), 0, 6.2832); ctx.fill();
+    }
+  }
+
+  // ── SUN (warm gold) ──
+  if(sun.above){
+    const sunR=Math.min(W,H)*0.12;
+    const glowA = alpha*(0.4+0.6*dawn);
+    // god-rays
+    ctx.save(); ctx.translate(sun.x,sun.y);
+    const rays=RM?8:20;
+    for(let i=0;i<rays;i++){
+      ctx.rotate((6.2832/rays));
+      const len=Math.max(W,H); const ww=0.018+0.018*Math.sin(time*0.001+i);
+      const rg=ctx.createLinearGradient(0,0,len,0);
+      rg.addColorStop(0,'rgba(255,220,150,'+(0.045*glowA)+')'); rg.addColorStop(1,'rgba(255,200,120,0)');
+      ctx.fillStyle=rg; ctx.beginPath(); ctx.moveTo(0,0);
+      ctx.lineTo(len,-len*ww); ctx.lineTo(len,len*ww); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    const sg=ctx.createRadialGradient(sun.x,sun.y,0,sun.x,sun.y,sunR*2.4);
+    sg.addColorStop(0,'rgba(255,250,230,'+(0.95*glowA)+')');
+    sg.addColorStop(0.35,'rgba(255,214,140,'+(0.7*glowA)+')');
+    sg.addColorStop(1,'rgba(255,160,80,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sun.x,sun.y,sunR*2.4,0,6.2832); ctx.fill();
+  }
+  // ── MOON (cool cyan) with soft craters ──
+  if(moon.above){
+    const moonR=Math.min(W,H)*0.075;
+    const mA=alpha*(0.35+0.65*cyc);
+    const halo=ctx.createRadialGradient(moon.x,moon.y,0,moon.x,moon.y,moonR*3);
+    halo.addColorStop(0,'rgba(150,220,255,'+(0.35*mA)+')'); halo.addColorStop(1,'rgba(95,224,255,0)');
+    ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(moon.x,moon.y,moonR*3,0,6.2832); ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    const mg=ctx.createRadialGradient(moon.x-moonR*0.3,moon.y-moonR*0.3,0,moon.x,moon.y,moonR);
+    mg.addColorStop(0,'rgba(235,248,255,'+mA+')'); mg.addColorStop(0.7,'rgba(180,215,235,'+mA+')'); mg.addColorStop(1,'rgba(120,160,190,'+mA+')');
+    ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(moon.x,moon.y,moonR,0,6.2832); ctx.fill();
+    // craters
+    ctx.fillStyle='rgba(120,150,180,'+(0.35*mA)+')';
+    [[0.2,-0.1,0.22],[-0.25,0.2,0.18],[0.1,0.3,0.14]].forEach(c=>{
+      ctx.beginPath(); ctx.arc(moon.x+c[0]*moonR,moon.y+c[1]*moonR,c[2]*moonR,0,6.2832); ctx.fill();
+    });
+    ctx.globalCompositeOperation='lighter';
+  }
+
+  ctx.globalCompositeOperation='source-over';
+  // ── layered atmospheric MOUNTAIN ridgelines (4 parallax, haze between) ──
+  const warm = [Math.floor(60+120*dawn), Math.floor(40+70*dawn), Math.floor(50+30*dawn)];
+  const layers=[
+    {y:0.60,amp:0.06,seed:2.1,tint:0.55},
+    {y:0.70,amp:0.09,seed:6.3,tint:0.4},
+    {y:0.80,amp:0.12,seed:11.7,tint:0.25},
+    {y:0.92,amp:0.15,seed:17.2,tint:0.12}
+  ];
+  layers.forEach((L,li)=>{
+    const px = (parallaxShift*(li+1)*16) + pxN*(li+1)*10;
+    const shade=L.tint;
+    const rr=Math.floor(8+warm[0]*shade), gg=Math.floor(8+warm[1]*shade), bb=Math.floor(14+warm[2]*shade);
+    // haze glow above the ridge (warm on sun side / cool on moon side)
+    const hazeCol = dawn>0.5 ? '255,200,130' : '120,180,220';
+    const hz=ctx.createLinearGradient(0,H*(L.y-0.12),0,H*L.y);
+    hz.addColorStop(0,'rgba('+hazeCol+',0)');
+    hz.addColorStop(1,'rgba('+hazeCol+','+(0.10*alpha*(0.5+0.5*li/3))+')');
+    ctx.fillStyle=hz; ctx.fillRect(0,H*(L.y-0.12),W,H*0.12);
+    // ridge body
+    ctx.fillStyle='rgba('+rr+','+gg+','+bb+','+(0.94*alpha)+')';
+    ctx.beginPath(); ctx.moveTo(-40,H);
+    for(let x=-40;x<=W+40;x+=W/24){
+      const n=Math.sin((x*0.005)+L.seed)+Math.sin((x*0.012)+L.seed*2)*0.5+Math.sin((x*0.028)+L.seed*3)*0.22;
+      const yy=H*L.y + n*H*L.amp;
+      ctx.lineTo(x - px, yy);
+    }
+    ctx.lineTo(W+40,H); ctx.closePath(); ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 5 · COSMOS ══════════════ */
+let stars = [];
+function buildStars(){
+  const n = RM ? 120 : Math.min(520, Math.floor(W*H/4200));
+  stars = new Array(n);
+  for(let i=0;i<n;i++){
+    stars[i]={ x:(Math.random()-.5)*2, y:(Math.random()-.5)*2, z:Math.random()*0.9+0.1,
+      r:Math.random()*1.4+0.2, ph:Math.random()*6.28,
+      col: Math.random()<0.2 ? 'g' : (Math.random()<0.3?'c':'w') };
+  }
+}
+/* planet definitions for the fly-through — each drifts toward & past the camera */
+const PLANETS = [
+  { type:'gas',   base:[210,150,80],  band:[240,200,120], lane:-0.28, tSpan:[0.05,0.42], rmax:0.30, atmo:[255,200,120] },
+  { type:'ring',  base:[160,180,210], band:[120,150,190], lane: 0.30, tSpan:[0.28,0.66], rmax:0.24, atmo:[150,200,255] },
+  { type:'moon',  base:[150,155,165], band:[110,115,125], lane:-0.34, tSpan:[0.50,0.82], rmax:0.16, atmo:[180,190,210] },
+  { type:'world', base:[40,150,120],  band:[60,200,150],  lane: 0.24, tSpan:[0.70,1.02], rmax:0.28, atmo:[0,255,156] }
+];
+function drawPlanet(cx, cy, r, P, time, alpha, appr){
+  // body radial gradient with rim-light from upper-left
+  ctx.globalCompositeOperation='source-over';
+  const b=P.base;
+  const bg=ctx.createRadialGradient(cx-r*0.35,cy-r*0.35,r*0.05,cx,cy,r);
+  bg.addColorStop(0,'rgba('+Math.min(255,b[0]+70)+','+Math.min(255,b[1]+70)+','+Math.min(255,b[2]+70)+','+alpha+')');
+  bg.addColorStop(0.55,'rgba('+b[0]+','+b[1]+','+b[2]+','+alpha+')');
+  bg.addColorStop(1,'rgba('+Math.floor(b[0]*0.25)+','+Math.floor(b[1]*0.25)+','+Math.floor(b[2]*0.3)+','+alpha+')');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(cx,cy,r,0,6.2832); ctx.fill();
+  // clip to the body for surface detail
+  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,6.2832); ctx.clip();
+  const bd=P.band;
+  if(P.type==='gas' || P.type==='world' || P.type==='ring'){
+    // surface banding
+    ctx.globalCompositeOperation='source-over';
+    const nb= P.type==='gas'?7:4;
+    for(let i=0;i<nb;i++){
+      const yy=cy - r + (i+0.5)/nb*2*r + Math.sin(time*0.0004+i)*r*0.03;
+      const bh=r*(0.10+0.06*Math.sin(i*1.7));
+      ctx.fillStyle='rgba('+bd[0]+','+bd[1]+','+bd[2]+','+(0.16*alpha)+')';
+      ctx.beginPath(); ctx.ellipse(cx,yy,r*1.1,bh,0,0,6.2832); ctx.fill();
+    }
+  }
+  if(P.type==='moon'){
+    // craters
+    ctx.fillStyle='rgba(90,92,100,'+(0.5*alpha)+')';
+    for(let i=0;i<8;i++){
+      const a=i*2.399; const rr=r*(0.15+0.5*((i*0.37)%1));
+      const cxx=cx+Math.cos(a)*rr, cyy=cy+Math.sin(a)*rr; const cr=r*(0.05+0.09*((i*0.53)%1));
+      ctx.beginPath(); ctx.arc(cxx,cyy,cr,0,6.2832); ctx.fill();
+    }
+  }
+  // shaded terminator (night side lower-right)
+  const sh=ctx.createRadialGradient(cx-r*0.4,cy-r*0.4,r*0.2,cx+r*0.3,cy+r*0.3,r*1.35);
+  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(2,3,8,'+(0.75*alpha)+')');
+  ctx.fillStyle=sh; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  ctx.restore();
+  // rim-light crescent (upper-left, star direction)
+  ctx.globalCompositeOperation='lighter';
+  const rl=ctx.createRadialGradient(cx-r*0.55,cy-r*0.55,r*0.4,cx-r*0.4,cy-r*0.4,r*1.1);
+  rl.addColorStop(0,'rgba('+P.atmo[0]+','+P.atmo[1]+','+P.atmo[2]+','+(0.35*alpha)+')');
+  rl.addColorStop(0.5,'rgba('+P.atmo[0]+','+P.atmo[1]+','+P.atmo[2]+',0)');
+  rl.addColorStop(1,'rgba('+P.atmo[0]+','+P.atmo[1]+','+P.atmo[2]+',0)');
+  ctx.fillStyle=rl; ctx.beginPath(); ctx.arc(cx,cy,r,0,6.2832); ctx.fill();
+  // atmosphere glow
+  const ag=ctx.createRadialGradient(cx,cy,r*0.92,cx,cy,r*1.28);
+  ag.addColorStop(0,'rgba('+P.atmo[0]+','+P.atmo[1]+','+P.atmo[2]+','+(0.28*alpha)+')');
+  ag.addColorStop(1,'rgba('+P.atmo[0]+','+P.atmo[1]+','+P.atmo[2]+',0)');
+  ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(cx,cy,r*1.28,0,6.2832); ctx.fill();
+  // rings
+  if(P.type==='ring'){
+    ctx.globalCompositeOperation='lighter';
+    ctx.lineWidth=Math.max(2,r*0.06);
+    for(let k=0;k<4;k++){
+      const rr=r*(1.35+k*0.14);
+      ctx.strokeStyle='rgba('+(180-k*10)+','+(200-k*8)+',255,'+((0.22-k*0.04)*alpha)+')';
+      ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.32,-0.4,0,6.2832); ctx.stroke();
+    }
+  }
+}
+function drawPlanets(alpha, time, pullback){
+  // pullback 0..1 across the cosmos band = camera travel
+  const cx0=W/2, cy0=H*0.5; const S=Math.min(W,H);
+  const pxN=mouseNX(), pyN=mouseNY();
+  // sort by approach so nearer draws on top
+  const order = PLANETS.map((P,i)=>{
+    const span=P.tSpan; const local=(pullback - span[0])/(span[1]-span[0]); // -inf..+inf
+    return {P, local, i};
+  }).filter(o=>o.local>-0.15 && o.local<1.25).sort((a,b)=>a.local-b.local);
+  for(const o of order){
+    const P=o.P; const lp=o.local;
+    // approach curve: r grows as it nears (lp~0.5 = closest pass), then slides off
+    const appr = Math.sin(clamp01(lp)*Math.PI);          // 0..1..0 grow/shrink
+    const r = S*(0.03 + P.rmax*appr) + S*0.02;
+    // slide across a lane: enters from centre, drifts to its lane edge as it passes
+    const slide = (lp-0.5)*2;                             // -1..1
+    const cx = cx0 + P.lane*W*0.55*slide + pxN*40*(0.4+appr) ;
+    const cy = cy0 + slide*H*0.10 + P.lane*H*0.12 + pyN*30*(0.4+appr);
+    const a = alpha * clamp01(1 - Math.abs(slide)*0.55) * clamp01(lp*3) * clamp01((1.2-lp)*3);
+    if(a<=0.01 || r<2) continue;
+    drawPlanet(cx, cy, r, P, time, a, appr);
+  }
+  ctx.globalCompositeOperation='lighter';
+}
+function drawCosmos(alpha, time, pullback){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+  // deep space base
+  ctx.fillStyle='rgba(3,4,10,'+(0.9*alpha)+')'; ctx.fillRect(0,0,W,H);
+  // nebula clouds
+  ctx.globalCompositeOperation='lighter';
+  const neb=[{x:0.3,y:0.4,c:'80,60,160'},{x:0.7,y:0.55,c:'20,120,120'},{x:0.5,y:0.3,c:'120,50,90'}];
+  neb.forEach((nb,i)=>{
+    const nx=nb.x*W + Math.sin(time*0.0002+i)*30, ny=nb.y*H+Math.cos(time*0.00017+i)*24;
+    const nr=Math.min(W,H)*(0.35+0.1*Math.sin(time*0.0003+i));
+    const g=ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+    g.addColorStop(0,'rgba('+nb.c+','+(0.10*alpha)+')'); g.addColorStop(1,'rgba('+nb.c+',0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(nx,ny,nr,0,6.2832); ctx.fill();
+  });
+  // earth shrinking to a point at the START of the stage (pullback 0->~0.25)
+  const eScale = clamp01(1-pullback*4);
+  if(eScale>0.01){
+    const ex=W*0.5, ey=H*0.52, er=Math.min(W,H)*0.16*eScale + 1.2;
+    const eg=ctx.createRadialGradient(ex-er*0.3,ey-er*0.3,0,ex,ey,er);
+    eg.addColorStop(0,'rgba(120,200,255,'+(alpha*eScale)+')'); eg.addColorStop(0.6,'rgba(30,90,160,'+(alpha*eScale)+')'); eg.addColorStop(1,'rgba(10,20,50,'+(alpha*eScale)+')');
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(ex,ey,er,0,6.2832); ctx.fill();
+    ctx.globalCompositeOperation='lighter';
+    const hg=ctx.createRadialGradient(ex,ey,er*0.9,ex,ey,er*1.5);
+    hg.addColorStop(0,'rgba(120,200,255,'+(0.4*alpha*eScale)+')'); hg.addColorStop(1,'rgba(120,200,255,0)');
+    ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(ex,ey,er*1.5,0,6.2832); ctx.fill();
+  }
+
+  // ── PLANET FLY-THROUGH: scroll drives us past a chain of worlds ──
+  drawPlanets(alpha, time, pullback);
+
+  // starfield with pullback expansion (stars stream outward)
+  const cx=W/2, cy=H/2; const fov=Math.min(W,H)*0.6;
+  const spread=0.6+pullback*1.8;
+  for(let i=0;i<stars.length;i++){
+    const s=stars[i];
+    const px=cx + s.x*fov*spread*(0.4+s.z);
+    const py=cy + s.y*fov*spread*(0.4+s.z);
+    if(px<0||px>W||py<0||py>H) continue;
+    const tw=0.5+0.5*Math.sin(time*0.003+s.ph);
+    const a=(0.4+0.6*tw)*s.z*alpha;
+    let col = s.col==='g'?'160,255,200':(s.col==='c'?'150,220,255':'240,245,255');
+    ctx.fillStyle='rgba('+col+','+a.toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(px,py,s.r*(0.6+s.z),0,6.2832); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ══════════════ STAGE 6 · SACRED LATTICE ══════════════ */
+function drawSacred(alpha, time, form){
+  // form 0..1 = how "connected/formed" the geometry is
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.fillStyle='rgba(4,8,10,'+(0.5*alpha)+')'; ctx.fillRect(0,0,W,H);
+  const cx=W/2, cy=H/2; const R=Math.min(W,H)*0.19;
+  ctx.globalCompositeOperation='lighter';
+  ctx.translate(cx,cy); ctx.rotate(time*0.00008);
+  // seed of life: center + 6 around
+  const centers=[[0,0]];
+  for(let i=0;i<6;i++){ const a=i*Math.PI/3; centers.push([Math.cos(a)*R, Math.sin(a)*R]); }
+  // circuit wires tracing between centers (pulse)
+  ctx.lineWidth=1.2;
+  for(let i=0;i<centers.length;i++){
+    for(let j=i+1;j<centers.length;j++){
+      const dx=centers[i][0]-centers[j][0], dy=centers[i][1]-centers[j][1]; const d=Math.hypot(dx,dy);
+      if(d>R*2.1) continue;
+      const pulse=0.5+0.5*Math.sin(time*0.004 - d*0.02);
+      const a=(0.12+0.35*pulse)*form*alpha;
+      ctx.strokeStyle='rgba(95,224,255,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(centers[i][0],centers[i][1]); ctx.lineTo(centers[j][0],centers[j][1]); ctx.stroke();
+    }
+  }
+  // the flower circles
+  centers.forEach((c,idx)=>{
+    const grow = Math.min(1, form*1.4 - idx*0.05);
+    if(grow<=0) return;
+    ctx.strokeStyle='rgba(0,255,156,'+(0.7*form*alpha)+')'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(c[0],c[1],R*grow,0,6.2832); ctx.stroke();
+    // gold accent ring on outer
+    if(idx>0){ ctx.strokeStyle='rgba(232,196,92,'+(0.3*form*alpha)+')'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(c[0],c[1],R*grow*0.7,0,6.2832); ctx.stroke(); }
+    // node glow
+    const g=ctx.createRadialGradient(c[0],c[1],0,c[0],c[1],10);
+    g.addColorStop(0,'rgba(160,255,220,'+(0.9*form*alpha)+')'); g.addColorStop(1,'rgba(0,255,156,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(c[0],c[1],10,0,6.2832); ctx.fill();
+  });
+  // opening portal rings (bloom)
+  for(let k=0;k<3;k++){
+    const pr=R*(2.0+k*0.5)*form; const pa=(0.2-k*0.05)*form*alpha*(0.6+0.4*Math.sin(time*0.002+k));
+    ctx.strokeStyle='rgba('+(k===1?'232,196,92':'0,255,156')+','+Math.max(0,pa).toFixed(3)+')';
+    ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,pr,0,6.2832); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ══════════════ MAIN LOOP ══════════════ */
+let parallaxShift = 0;
+let lastGlitch = -1;
+
+function crossfade(a){ // smoothstep for transitions
+  return a*a*(3-2*a);
+}
+
+function render(time){
+  // ease pointer toward raw position each frame (whole journey reacts to cursor)
+  const me = RM ? 1 : 0.09;
+  mouse.ex += (mouse.x - mouse.ex) * me;
+  mouse.ey += (mouse.y - mouse.ey) * me;
+
+  // smooth scroll follow
+  scrollSmooth += (scrollTarget - scrollSmooth) * (RM ? 1 : 0.12);
+  t = scrollSmooth;
+  stageF = t * (NST-1);
+  stage = Math.min(NST-1, Math.floor(stageF));
+  local = stageF - stage;
+  parallaxShift = local;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--void')||'#06080b';
+  ctx.fillRect(0,0,W,H);
+
+  // Determine active stage + next for crossfade. Each stage 'owns' its band;
+  // near band edges we crossfade to the neighbour.
+  // alpha of stage i based on distance of stageF from i
+  // narrow crossfade: stage is full across its band, blends only in the last/first ~35%
+  function alphaOf(i){
+    const d = Math.abs(stageF - i);
+    if(d>=1) return 0;
+    const FADE = 0.4;               // width of the blend zone
+    if(d <= 1-FADE) return 1;       // fully dominant
+    return crossfade((1-d)/FADE);   // ramp within the blend zone
+  }
+  // hue mix for continuity particles: cool(0) early -> gold(1) late
+  const hueMix = Math.min(1, t*1.05);
+
+  // draw only active + neighbours (perf)
+  // Stage 1 lattice
+  drawLattice(alphaOf(0), time);
+  // Stage 2 grass
+  drawGrass(alphaOf(1), time);
+  // Stage 3 water
+  drawWater(alphaOf(2), time);
+  // Stage 4 horizon (day↔night driven by scroll-within-stage)
+  drawHorizon(alphaOf(3), time, clamp01(stageF-3));
+  // Stage 5 cosmos (pullback progresses through its band)
+  drawCosmos(alphaOf(4), time, clamp01(stageF-4));
+  // Stage 6 sacred (form grows through its band, into stage 7)
+  drawSacred(Math.max(alphaOf(5), stage>=6?1:0), time, clamp01((stageF-5)));
+
+  // continuity light layer on top (always)
+  drawContinuity(time, hueMix);
+
+  // ── update grade / aberration CSS vars ──
+  const A = STAGES[stage], B = STAGES[Math.min(NST-1,stage+1)];
+  document.documentElement.style.setProperty('--grade-a', mixColor(A.gradeA,B.gradeA,local));
+  document.documentElement.style.setProperty('--grade-b', mixColor(A.gradeB,B.gradeB,local));
+  // chromatic aberration peaks at stage boundaries (transitions) & cosmos pullback
+  const boundaryHeat = 1 - Math.abs(local-0.5)*2; // 0..1 peak mid-transition
+  document.querySelector('.aberr').style.opacity = (boundaryHeat*0.5).toFixed(3);
+
+  updateHUD();
+  if(!RM) rafId = requestAnimationFrame(render);
+}
+
+function clamp01(v){ return v<0?0:v>1?1:v; }
+
+// parse rgba(...) and lerp
+function parseC(s){
+  const m = s.match(/rgba?\(([^)]+)\)/); if(!m) return [0,0,0,1];
+  const p = m[1].split(',').map(x=>parseFloat(x)); if(p.length<4)p.push(1); return p;
+}
+function mixColor(a,b,f){
+  const ca=parseC(a), cb=parseC(b);
+  const r=Math.round(ca[0]+(cb[0]-ca[0])*f), g=Math.round(ca[1]+(cb[1]-ca[1])*f),
+        bl=Math.round(ca[2]+(cb[2]-ca[2])*f), al=(ca[3]+(cb[3]-ca[3])*f).toFixed(3);
+  return 'rgba('+r+','+g+','+bl+','+al+')';
+}
+
+/* ─────────── HUD ─────────── */
+const stgIdx=document.getElementById('stgIdx'), stgName=document.getElementById('stgName');
+const railFill=document.getElementById('railFill'), rail=document.getElementById('rail');
+const arrival=document.getElementById('arrival'), glitch=document.getElementById('glitch');
+const scrollcue=document.getElementById('scrollcue');
+// build rail dots
+for(let i=0;i<NST;i++){ const d=document.createElement('div'); d.className='dot'; d.style.top=(i/(NST-1)*100)+'%'; d.dataset.i=i; rail.appendChild(d); }
+const dots=[...rail.querySelectorAll('.dot')];
+
+let lastStage=-1;
+function updateHUD(){
+  const shown = Math.round(stageF);
+  stgIdx.textContent = String(shown+1).padStart(2,'0')+' / '+String(NST).padStart(2,'0');
+  if(shown!==lastStage){
+    stgName.style.opacity=0;
+    setTimeout(()=>{ stgName.textContent=STAGES[shown].name; stgName.style.opacity=1; },180);
+    lastStage=shown;
+    dots.forEach((d,i)=>d.classList.toggle('on', i<=shown));
+  }
+  railFill.style.height=(t*100).toFixed(1)+'%';
+  scrollcue.style.opacity = t>0.02 ? 0 : 1;
+
+  // arrival reveal in last stage band
+  const arr = t>0.9;
+  arrival.style.opacity = clamp01((t-0.9)/0.08).toFixed(2);
+  arrival.classList.toggle('show', arr);
+  if(arr && lastGlitch<1){ triggerGlitch(); lastGlitch=1; }
+  if(!arr) lastGlitch=0;
+}
+function triggerGlitch(){ glitch.classList.remove('go'); void glitch.offsetWidth; glitch.classList.add('go'); }
+// fire the glitch when the cursor moves over the SHADDAI name (throttled)
+let lastHoverGlitch=0;
+glitch.addEventListener('pointermove', ()=>{
+  const now=performance.now(); if(now-lastHoverGlitch<520) return; lastHoverGlitch=now;
+  triggerGlitch();
+});
+glitch.addEventListener('pointerenter', triggerGlitch);
+
+/* ─────────── scroll wiring ─────────── */
+const driver=document.getElementById('driver');
+function onScroll(){
+  const max = driver.offsetHeight - window.innerHeight;
+  scrollTarget = max>0 ? clamp01(window.scrollY / max) : 0;
+  if(RM){ scrollSmooth=scrollTarget; renderOnce(); }
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+window.addEventListener('touchmove', onScroll, {passive:true});
+
+/* water ripple on pointer/idle (only meaningful in water stage but harmless) */
+let lastRipple=0;
+function addRipple(x,y){
+  if(stage!==2) return;
+  const now=performance.now(); if(now-lastRipple<120) return; lastRipple=now;
+  if(ripples.length>16) ripples.shift();
+  ripples.push({x,y,age:0,life:1600,max:Math.min(W,H)*0.28});
+}
+window.addEventListener('pointermove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; mouse.active=true; addRipple(e.clientX,e.clientY); });
+window.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; mouse.active=true; });
+window.addEventListener('touchmove', e=>{ if(e.touches&&e.touches[0]){ mouse.x=e.touches[0].clientX; mouse.y=e.touches[0].clientY; mouse.active=true; } }, {passive:true});
+
+/* buttons */
+document.getElementById('skipBtn').addEventListener('click',()=>{
+  const max=driver.offsetHeight-window.innerHeight;
+  window.scrollTo({top:max, behavior: RM?'auto':'smooth'});
+});
+document.getElementById('replayBtn').addEventListener('click',()=>{
+  window.scrollTo({top:0, behavior: RM?'auto':'smooth'});
+});
+
+/* reduced-motion: render single frame on scroll (snap) */
+function renderOnce(){ render(performance.now()); }
+
+/* ─────────── boot ─────────── */
+let rafId=null;
+resize();
+onScroll();
+if(RM){ renderOnce(); }
+else { rafId=requestAnimationFrame(render); }
+
+// expose a tiny hook for headless verification
+window.__journey = { get t(){return t;}, get stage(){return stage;} };
+})();
+</script>
+</body>
+</html>

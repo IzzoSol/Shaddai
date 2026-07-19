@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>The Crossing — Bird &amp; Water · SHADDAI</title>
+<style>
+  /* ============================================================
+     THE CROSSING — a bird dives DOWN into a glowing sacred pool
+     (splash + cymatic rings), then flies UP into the night sky.
+     The connective beat between "water" and "sky".
+     Self-contained WebGL2 + GLSL. No libraries, no images.
+     Palette lock: obsidian #06080b · emerald #00ff9c ·
+                   gold #e8c45c · cyan #5fe0ff. Nothing else glows.
+     ============================================================ */
+  :root{
+    --obsidian:#06080b;
+    --emerald:#00ff9c;
+    --gold:#e8c45c;
+    --cyan:#5fe0ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{background:var(--obsidian);}
+  body{width:100%;background:var(--obsidian);overflow-x:hidden;}
+  body{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color:var(--emerald);
+    cursor:crosshair;
+  }
+  #stage{position:fixed;inset:0;background:var(--obsidian);z-index:0;}
+  /* invisible tall scroll driver — its height defines the moment length */
+  #scrollDriver{position:relative;width:1px;height:700vh;pointer-events:none;opacity:0;}
+  #scrollHint{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    z-index:3;pointer-events:none;color:var(--cyan);
+    font:11px "IBM Plex Mono",monospace;letter-spacing:.22em;opacity:.55;
+    text-shadow:0 0 18px rgba(95,224,255,.35);transition:opacity .6s ease;
+  }
+  #scrollHint .arw{display:block;text-align:center;margin-top:6px;font-size:14px;
+    color:var(--emerald);animation:bob 1.8s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(5px);opacity:1;}}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #fallback{
+    position:absolute;inset:0;display:none;place-items:center;
+    background:
+      radial-gradient(120% 90% at 50% 40%, rgba(0,255,156,.05), transparent 60%),
+      var(--obsidian);
+    text-align:center;padding:8vw;
+  }
+  #fallback .box{max-width:640px;}
+  #fallback .glyph{font-size:64px;color:var(--emerald);margin-bottom:30px;
+    text-shadow:0 0 40px rgba(0,255,156,.4);opacity:.85;}
+  #fallback h1{font-size:clamp(22px,4vw,42px);letter-spacing:.35em;
+    color:var(--gold);font-weight:400;margin-bottom:22px;
+    text-shadow:0 0 30px rgba(232,196,92,.25);}
+  #fallback p{font-size:13px;line-height:2;color:rgba(95,224,255,.7);letter-spacing:.14em;}
+  #vig{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 46%, transparent 42%, rgba(2,3,5,.55) 100%);
+    mix-blend-mode:multiply;}
+  #cap{position:fixed;left:24px;top:22px;z-index:3;pointer-events:none;
+    font:10px "IBM Plex Mono",monospace;letter-spacing:.28em;color:rgba(232,196,92,.55);
+    text-shadow:0 0 16px rgba(232,196,92,.25);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="fallback"><div class="box">
+    <div class="glyph">&#x1F54A;</div>
+    <h1>THE CROSSING</h1>
+    <p>This moment renders with WebGL2. Your browser or device does not expose it,
+       so the living scene is resting. The bird still crosses the water — in silence.</p>
+  </div></div>
+  <div id="vig"></div>
+</div>
+<div id="cap">THE&nbsp;CROSSING&nbsp;&middot;&nbsp;water&nbsp;&rarr;&nbsp;sky</div>
+<div id="scrollHint">SCROLL TO CROSS<span class="arw">&#x2193;</span></div>
+<div id="scrollDriver"></div>
+
+<script>
+"use strict";
+(function(){
+  const glCanvas = document.getElementById('gl');
+  const fallback = document.getElementById('fallback');
+  let gl = null;
+  try {
+    gl = glCanvas.getContext('webgl2', {
+      antialias:false, alpha:false, depth:false, stencil:false,
+      premultipliedAlpha:false, preserveDrawingBuffer:true,
+      powerPreference:'high-performance'
+    });
+  } catch(e){ gl = null; }
+
+  if(!gl){
+    fallback.style.display = 'grid';
+    document.getElementById('scrollHint').style.display='none';
+    window.__forceP = window.__forceP; // keep hook harmless
+    return;
+  }
+
+  // ---- HDR float buffer support (for real bloom); graceful RGBA8 fallback
+  const extCBF = gl.getExtension('EXT_color_buffer_float');
+  const extLIN = gl.getExtension('OES_texture_float_linear');
+  const HDR = !!extCBF;
+  const HDR_INTERNAL = HDR ? gl.RGBA16F : gl.RGBA8;
+  const HDR_TYPE     = HDR ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
+  const HDR_FILTER   = (HDR && extLIN) ? gl.LINEAR : gl.LINEAR; // half-float linear widely ok
+
+  // ---- shader helpers --------------------------------------------------
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      console.error('[lab-bird] shader compile error:\n'+gl.getShaderInfoLog(s)+'\n---\n'+src.split('\n').map((l,i)=>(i+1)+': '+l).join('\n'));
+      return null;
+    }
+    return s;
+  }
+  function program(vsSrc, fsSrc){
+    const vs = compile(gl.VERTEX_SHADER, vsSrc);
+    const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+    if(!vs||!fs) return null;
+    const p = gl.createProgram();
+    gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      console.error('[lab-bird] link error: '+gl.getProgramInfoLog(p));
+      return null;
+    }
+    return p;
+  }
+
+  // fullscreen triangle
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vbo = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+
+  const VERT = `#version 300 es
+  layout(location=0) in vec2 a;
+  out vec2 vUv;
+  void main(){ vUv = a*0.5+0.5; gl_Position = vec4(a,0.0,1.0); }`;
+
+  // =====================================================================
+  //  SCENE PASS — the whole moment in one raymarch-lite/analytic shader
+  // =====================================================================
+  const SCENE_FS = `#version 300 es
+  precision highp float;
+  out vec4 o;
+  in vec2 vUv;
+  uniform vec2  uRes;
+  uniform float uTime;
+  uniform float uP;       // scroll progress 0..1
+  uniform vec2  uMouse;   // -1..1 (steer)
+  uniform float uMouseA;  // mouse activity 0..1
+  uniform vec2  uRipple[6]; // recent click/hover ripple centers (water uv space)
+  uniform float uRippleT[6];// ripple ages (seconds since spawn), <0 = inactive
+
+  const vec3 OBS = vec3(0.024,0.031,0.043);
+  const vec3 EM  = vec3(0.0,1.0,0.612);
+  const vec3 GD  = vec3(0.910,0.769,0.361);
+  const vec3 CY  = vec3(0.373,0.878,1.0);
+
+  float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+  float noise(vec2 p){
+    vec2 i=floor(p), f=fract(p);
+    float a=hash(i), b=hash(i+vec2(1,0)), c=hash(i+vec2(0,1)), d=hash(i+vec2(1,1));
+    vec2 u=f*f*(3.0-2.0*f);
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+  }
+  float fbm(vec2 p){
+    float v=0.0, a=0.5;
+    for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.5; }
+    return v;
+  }
+
+  // ---------- BIRD -----------------------------------------------------
+  // signed-ish silhouette of a stylized bird in local 2D space.
+  // origin = body center. wings flap with 'flap' phase.
+  float birdShape(vec2 q, float flap, out float rim){
+    rim = 0.0;
+    // body: a slim tapered ellipse tilted slightly
+    vec2 b = q;
+    float body = 1.0 - smoothstep(0.0, 1.0, length(b*vec2(1.7,4.2)));
+    // head + slight beak forward (+x)
+    vec2 h = q - vec2(0.11,0.05);
+    float head = 1.0 - smoothstep(0.0,1.0, length(h*vec2(4.4,5.0)));
+    // beak sliver
+    vec2 bk = q - vec2(0.19,0.055);
+    float beak = 1.0 - smoothstep(0.0,1.0, length(bk*vec2(9.0,16.0)));
+    // tail (-x)
+    vec2 tl = q - vec2(-0.16,-0.01);
+    float tail = 1.0 - smoothstep(0.0,1.0, length(tl*vec2(3.0,10.0)));
+
+    // WINGS — two swept arcs whose vertical bend = flap
+    float wing = 0.0;
+    float bend = sin(flap)*0.16;             // vertical sweep of the wingtip
+    float span = 0.30 + 0.02*cos(flap*2.0);
+    for(int s=-1;s<=1;s+=2){
+      float sf = float(s);
+      // parametric arc from shoulder outward
+      // build distance to a quadratic wing curve
+      float best = 1e3;
+      for(int k=0;k<10;k++){
+        float t = float(k)/9.0;
+        vec2 wp = vec2(sf*t*span, 0.02 + bend*t*t - 0.06*t);
+        // give the wing a slight backward sweep
+        wp.x -= sf*0.05*t*t;
+        best = min(best, length(q-wp));
+      }
+      float thick = mix(0.055,0.012,0.0);     // wing membrane thickness (tapers)
+      wing = max(wing, 1.0 - smoothstep(0.0, 0.05, best));
+    }
+
+    float m = max(max(body,head), max(max(beak,tail), wing));
+    // rim: outline brightness (edge of silhouette)
+    rim = smoothstep(0.35,0.85,m) - smoothstep(0.85,1.0,m);
+    return clamp(m,0.0,1.0);
+  }
+
+  // ---------- WATER cymatics -------------------------------------------
+  // returns luminous water contribution given a "surface" uv (world-ish)
+  vec3 waterField(vec2 wuv, float t, float energy, float splash, out float wet){
+    wet = 0.0;
+    // base dark reflective plane with faint emerald bed glow
+    vec3 col = OBS*0.5;
+    // cymatic standing waves (sacred pool) — radial + interfering sines
+    float d = length(wuv);
+    float cym = 0.0;
+    cym += sin(d*20.0 - t*1.6);
+    cym += 0.6*sin(d*34.0 - t*2.3 + 1.7);
+    cym += 0.5*sin((wuv.x+wuv.y)*22.0 - t*1.1);
+    cym += 0.4*fbm(wuv*3.0 + t*0.15);
+    cym *= 0.5;
+    float crest = smoothstep(0.55,1.0, 0.5+0.5*cym);
+    // pool bed glow, tighter + emerald-led so obsidian stays dominant
+    float bed = exp(-d*d*3.0);
+    col += EM * bed * 0.09;
+    col += CY * crest * (0.03+0.06*energy);
+    // filigree glint on crest tips (this is what earns the bloom)
+    col += mix(CY,vec3(1.0),0.5) * pow(crest,5.0) * 0.14;
+    col += GD * pow(crest,7.0) * 0.05;   // rare gold spark on the sharpest tips
+
+    // ---- expanding cymatic RIPPLE RINGS from the splash (concentric)
+    // main splash rings centered at pool origin, born at splash>0
+    for(int r=0;r<5;r++){
+      float ph = float(r)*0.9;
+      float age = splash;                   // 0..1 grows after impact
+      float radius = age*1.6 + ph*0.12;
+      float ring = exp(-pow((d - radius)*9.0,2.0));
+      float fade = smoothstep(1.7,0.0,radius) * splash;
+      vec3 rc = mix(CY, EM, fract(ph*0.5));
+      col += rc * ring * fade * 0.55;
+    }
+
+    // ---- mouse / click ripples
+    for(int i=0;i<6;i++){
+      float age = uRippleT[i];
+      if(age < 0.0) continue;
+      float rd = length(wuv - uRipple[i]);
+      float rr = age*0.9;
+      float ring = exp(-pow((rd-rr)*11.0,2.0));
+      float fade = exp(-age*1.6);
+      col += mix(CY,EM,0.35) * ring * fade * 0.5;
+    }
+
+    wet = crest*0.5 + bed*0.4;
+    return col;
+  }
+
+  // rotate helper
+  mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+
+  void main(){
+    vec2 res = uRes;
+    vec2 uv = (gl_FragCoord.xy - 0.5*res)/res.y;   // aspect-correct, y up-ish
+    float t = uTime;
+    float p = uP;
+
+    // ============ MOMENT TIMELINE ============
+    // p 0.00 -> 0.40 : descend to water
+    // p 0.40 -> 0.50 : IMPACT / splash
+    // p 0.50 -> 1.00 : rise into sky
+    float pImpact = smoothstep(0.34,0.44,p);            // 0 before, 1 after impact
+    float splash  = smoothstep(0.40,0.44,p) * (1.0 - smoothstep(0.44,0.78,p)); // splash energy pulse
+    float rise    = smoothstep(0.46,1.0,p);
+    float descend = 1.0 - smoothstep(0.0,0.40,p);
+
+    // ---- DRONE CAMERA: a vertical crane that banks around the splash.
+    // We fake a 3D-ish scene by placing a virtual horizon and a bird
+    // in screen space, driven by an eased camera height + bank.
+    // camera height: high (looking down toward water) -> low at impact -> up into sky
+    float camY = mix(0.85, -0.05, smoothstep(0.0,0.42,p));   // approach water
+    camY = mix(camY, 1.35, rise);                            // crane up
+    // bank (roll) — banks INTO the dive, whips at impact, banks out on rise
+    float bank = 0.0;
+    bank += 0.18*sin(p*6.28) * (1.0-pImpact);
+    bank += 0.35*splash*sin(t*3.0);
+    bank += -0.12*rise*sin(t*0.7);
+    // mouse steers/parallaxes the camera
+    vec2 steer = uMouse*vec2(0.16,0.10);
+    bank += uMouse.x*0.10;
+
+    // apply camera roll + parallax to the view uv
+    vec2 cuv = uv;
+    cuv -= steer;
+    cuv = rot(bank) * cuv;
+
+    // ---- HORIZON / WATER PLANE position on screen
+    // The water sits at screen-y = horizonY. When diving we look down (water low),
+    // at impact the water fills more of frame, rising we look up (water drops away).
+    float horizonY = mix(-0.55, -0.10, smoothstep(0.0,0.42,p));  // water rises toward center as we approach
+    horizonY = mix(horizonY, -1.4, rise);                        // water drops below frame as we ascend
+    horizonY += steer.y*0.5;
+
+    // ================= SKY =================
+    vec3 col = OBS;
+    // vertical gradient: deep obsidian, faint emerald wash low, colder up high
+    float sky = smoothstep(-0.6,1.2,cuv.y);
+    col = mix(OBS*1.3, OBS*0.7, sky);
+    col += EM * 0.015 * (1.0-sky);                 // faint emerald bed near horizon
+    // subtle gold zenith kiss (only appears as we rise)
+    col += GD * 0.02 * smoothstep(0.2,1.3,cuv.y) * rise;
+
+    // ---- STARS (begin as we rise past impact)
+    float starAmt = rise;
+    {
+      vec2 sp = cuv*vec2(res.y/res.x,1.0);
+      vec2 g = sp*7.0;
+      vec2 gi = floor(g);
+      float h = hash(gi);
+      vec2 gf = fract(g)-0.5;
+      float star = 0.0;
+      if(h>0.86){
+        float tw = 0.6+0.4*sin(t*2.0 + h*30.0);
+        star = exp(-dot(gf,gf)*90.0) * tw;
+      }
+      // star colors: mostly cyan, some gold
+      vec3 sc = mix(CY, GD, step(0.93,h));
+      col += sc * star * starAmt * 1.1;
+    }
+
+    // ================= WATER =================
+    // map screen space below horizon to a perspective water plane uv
+    float below = horizonY - cuv.y;              // >0 => we're on the water side
+    float wmask = smoothstep(0.0,0.02, below);
+    if(wmask>0.001){
+      // perspective: farther (near horizon) => compressed
+      float depth = 1.0/max(below+0.06, 0.05);
+      vec2 wuv;
+      wuv.x = cuv.x * depth * 0.5;
+      wuv.y = depth*0.5 - t*0.06;                // scroll the pool subtly
+      // recenter the pool under the bird/impact point
+      wuv -= vec2(0.0, 0.0);
+      float wet;
+      vec3 w = waterField(wuv, t, 0.5+0.5*pImpact, splash, wet);
+      // reflect a faint bird/sky streak vertically
+      w += EM*0.02*wet;
+      // fade water toward horizon into obsidian mist
+      float fade = smoothstep(0.0,0.25, below);
+      col = mix(col, w, wmask*fade);
+      // luminous horizon lip where sky meets water
+      float lip = exp(-below*below*180.0);
+      col += CY * lip * (0.15+0.35*pImpact);
+    }
+
+    // ================= THE BIRD =================
+    // bird screen position: descends from top toward horizon, plunges,
+    // then rises. It's the focal point; camera keeps it near center.
+    vec2 bpos;
+    // x: gentle drift + veers toward the mouse
+    bpos.x = 0.10*sin(p*3.5) + uMouse.x*0.14*(0.4+0.6*(1.0-splash));
+    // y: from high, down to the water line at impact, then up
+    float diveY = mix(0.62, horizonY+0.02, smoothstep(0.0,0.42,p));
+    float riseY = mix(horizonY+0.02, 0.9, rise);
+    bpos.y = mix(diveY, riseY, step(0.44,p));
+    // during the impact window the bird momentarily sinks slightly then bursts up
+    bpos.y -= 0.06*splash;
+    bpos += steer*0.3;
+
+    // bird local coords (camera roll applied so it banks with the drone)
+    vec2 q = (cuv - bpos);
+    // orient: point down while diving, up while rising, roll with bank
+    float dive = 1.0 - step(0.44,p);
+    float aim = mix(-1.25, 1.15, smoothstep(0.30,0.60,p)); // pitch from down to up
+    aim += uMouse.x*0.15;                                   // veer toward cursor
+    q = rot(aim) * q;
+    // flap faster on ascent, slow glide on dive
+    float flapRate = mix(7.0, 15.0, rise);
+    float flap = t*flapRate + p*4.0;
+    // wings pull in during the plunge (dart shape), spread on rise
+    float wingScale = mix(0.7, 1.0, 0.5+0.5*sin(flap));
+    q /= mix(0.16, 0.15, rise);   // bird size
+
+    float rim;
+    float bm = birdShape(q, flap, rim);
+
+    if(bm>0.001){
+      // hide/dim the bird briefly while submerged (just after impact)
+      float submerged = smoothstep(0.44,0.47,p)*(1.0-smoothstep(0.47,0.55,p));
+      float vis = 1.0 - submerged*0.75;
+      // rim-lit emerald/gold silhouette
+      vec3 bcol = mix(EM, GD, 0.35+0.35*sin(flap*0.5));
+      vec3 fill = OBS*0.2;                       // dark body core (silhouette)
+      vec3 shade = mix(fill, bcol, smoothstep(0.2,0.9,bm));
+      // bright rim
+      shade += bcol * rim * 1.6;
+      // gold leading-edge kiss on the head/beak
+      shade += GD * smoothstep(0.6,1.0,bm) * 0.4;
+      // additive so it blooms
+      col = mix(col, col+shade, clamp(bm,0.0,1.0)*vis);
+      // tiny cyan speed-glints trailing on the plunge
+      col += CY * rim * descend * 0.2;
+    }
+
+    // ---- IMPACT FLASH: a luminous burst at the moment of entry
+    {
+      vec2 ip = uv - vec2(bpos.x, horizonY+0.01);
+      float burst = exp(-dot(ip,ip)*26.0) * splash;
+      col += mix(CY,EM,0.5) * burst * 1.5;
+      col += GD * exp(-dot(ip,ip)*90.0) * splash * 0.6;  // gold core at the point of entry
+      // upward spray droplets on exit
+      float spray = 0.0;
+      for(int i=0;i<8;i++){
+        float fi=float(i);
+        vec2 dp = uv - vec2(bpos.x + (hash(vec2(fi,3.0))-0.5)*0.5*splash,
+                            horizonY + splash*(0.2+0.6*hash(vec2(fi,7.0))));
+        spray += exp(-dot(dp,dp)*260.0);
+      }
+      col += CY * spray * splash * 0.6;
+    }
+
+    // ---- mouse glow bed under the cursor (vivid interaction cue)
+    {
+      vec2 mp = uv - uMouse*vec2(res.x/res.y,1.0)*0.5;
+      float mg = exp(-dot(mp,mp)*22.0);
+      col += mix(CY,EM,0.5) * mg * (0.04 + 0.30*uMouseA);
+      // crisp inner pip so the cursor reads as a bright point, not a haze
+      col += CY * exp(-dot(mp,mp)*140.0) * (0.10+0.4*uMouseA);
+    }
+
+    o = vec4(max(col,0.0), 1.0);
+  }`;
+
+  // =====================================================================
+  //  BLOOM PASSES
+  // =====================================================================
+  const BRIGHT_FS = `#version 300 es
+  precision highp float;
+  out vec4 o; in vec2 vUv;
+  uniform sampler2D uTex;
+  void main(){
+    vec3 c = texture(uTex, vUv).rgb;
+    float l = dot(c, vec3(0.299,0.587,0.114));
+    // higher knee so only genuine highlights bloom -> keeps obsidian dominant
+    float k = smoothstep(0.75, 1.35, l);
+    o = vec4(c*k, 1.0);
+  }`;
+
+  const BLUR_FS = `#version 300 es
+  precision highp float;
+  out vec4 o; in vec2 vUv;
+  uniform sampler2D uTex;
+  uniform vec2 uDir;      // texel-scaled direction
+  void main(){
+    vec3 sum = vec3(0.0);
+    float w[5]; w[0]=0.227; w[1]=0.194; w[2]=0.121; w[3]=0.054; w[4]=0.016;
+    sum += texture(uTex, vUv).rgb * w[0];
+    for(int i=1;i<5;i++){
+      sum += texture(uTex, vUv + uDir*float(i)).rgb * w[i];
+      sum += texture(uTex, vUv - uDir*float(i)).rgb * w[i];
+    }
+    o = vec4(sum,1.0);
+  }`;
+
+  const COMPOSITE_FS = `#version 300 es
+  precision highp float;
+  out vec4 o; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform sampler2D uBloom;
+  uniform vec2 uRes;
+  uniform float uTime;
+  // ACES-ish filmic tonemap
+  vec3 tonemap(vec3 x){
+    const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;
+    return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
+  }
+  float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+  void main(){
+    vec2 uv = vUv;
+    // subtle chromatic aberration toward edges
+    vec2 d = uv-0.5;
+    float ca = dot(d,d)*0.010;
+    vec3 scene;
+    scene.r = texture(uScene, uv + d*ca).r;
+    scene.g = texture(uScene, uv).g;
+    scene.b = texture(uScene, uv - d*ca).b;
+    vec3 bloom = texture(uBloom, uv).rgb;
+    vec3 col = scene + bloom*1.05;
+    // filmic tonemap w/ slight lift of the obsidian floor
+    col = tonemap(col*1.06);
+    col = max(col, vec3(0.020,0.026,0.036)*0.4);
+    // film grain
+    float g = hash(uv*uRes + uTime)*2.0-1.0;
+    col += g*0.018;
+    // vignette
+    float vig = smoothstep(1.25,0.35,length(d)*1.5);
+    col *= mix(0.55,1.0,vig);
+    o = vec4(col,1.0);
+  }`;
+
+  // ---- build programs
+  const progScene = program(VERT, SCENE_FS);
+  const progBright = program(VERT, BRIGHT_FS);
+  const progBlur = program(VERT, BLUR_FS);
+  const progComp = program(VERT, COMPOSITE_FS);
+  if(!progScene||!progBright||!progBlur||!progComp){
+    fallback.style.display='grid';
+    document.getElementById('scrollHint').style.display='none';
+    return;
+  }
+
+  // uniform lookup cache
+  function U(p, names){ const o={}; names.forEach(n=>o[n]=gl.getUniformLocation(p,n)); return o; }
+  const uS = U(progScene, ['uRes','uTime','uP','uMouse','uMouseA','uRipple','uRippleT']);
+  const uBr= U(progBright,['uTex']);
+  const uBl= U(progBlur,  ['uTex','uDir']);
+  const uC = U(progComp,  ['uScene','uBloom','uRes','uTime']);
+
+  // ---- framebuffer factory
+  function makeFbo(w,h,internal,type,filter){
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,internal,w,h,0,gl.RGBA,type,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    return {fb,tex,w,h};
+  }
+
+  let sceneFbo, brightFbo, blurA, blurB;
+  let W=1,H=1,BW=1,BH=1;
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio||1, 1.75);
+    W = Math.max(2, Math.floor(glCanvas.clientWidth * dpr));
+    H = Math.max(2, Math.floor(glCanvas.clientHeight* dpr));
+    glCanvas.width = W; glCanvas.height = H;
+    BW = Math.max(1, W>>1); BH = Math.max(1, H>>1);
+    // (re)build fbos
+    [sceneFbo,brightFbo,blurA,blurB].forEach(f=>{ if(f){ gl.deleteTexture(f.tex); gl.deleteFramebuffer(f.fb);} });
+    sceneFbo  = makeFbo(W,H, HDR_INTERNAL, HDR_TYPE, HDR_FILTER);
+    brightFbo = makeFbo(BW,BH, HDR_INTERNAL, HDR_TYPE, HDR_FILTER);
+    blurA     = makeFbo(BW,BH, HDR_INTERNAL, HDR_TYPE, HDR_FILTER);
+    blurB     = makeFbo(BW,BH, HDR_INTERNAL, HDR_TYPE, HDR_FILTER);
+  }
+  glCanvas.style.width='100%'; glCanvas.style.height='100%';
+  new ResizeObserver(resize).observe(glCanvas);
+  resize();
+
+  function drawFS(){ gl.bindVertexArray(vao); gl.drawArrays(gl.TRIANGLES,0,3); }
+
+  // =====================================================================
+  //  INTERACTION STATE
+  // =====================================================================
+  let mouse = {x:0,y:0, tx:0,ty:0, act:0};
+  const RIP_N = 6;
+  const ripCenter = new Float32Array(RIP_N*2);   // uv space
+  const ripAge = new Float32Array(RIP_N).fill(-1);
+  const ripBornT = new Float32Array(RIP_N).fill(-1);
+  let ripHead = 0;
+
+  function screenToWaterUv(nx, ny){
+    // rough inverse of the water uv mapping in the shader, for placing ripples.
+    // Use a simple centered mapping; good enough for a vivid cue.
+    return [nx*1.2, ny*1.2];
+  }
+  function spawnRipple(nx, ny){
+    const uvp = screenToWaterUv(nx,ny);
+    ripCenter[ripHead*2] = uvp[0];
+    ripCenter[ripHead*2+1] = uvp[1];
+    ripBornT[ripHead] = performance.now()*0.001;
+    ripHead = (ripHead+1)%RIP_N;
+  }
+
+  window.addEventListener('mousemove', (e)=>{
+    const nx = (e.clientX/window.innerWidth)*2-1;
+    const ny = -((e.clientY/window.innerHeight)*2-1);
+    mouse.tx = nx; mouse.ty = ny; mouse.act = 1.0;
+    // occasional trailing ripple while moving
+    if(Math.random()<0.10) spawnRipple(nx*0.6, ny*0.6);
+  }, {passive:true});
+  window.addEventListener('mousedown', (e)=>{
+    const nx = (e.clientX/window.innerWidth)*2-1;
+    const ny = -((e.clientY/window.innerHeight)*2-1);
+    spawnRipple(nx*0.6, ny*0.6);
+  }, {passive:true});
+  window.addEventListener('touchmove',(e)=>{
+    if(!e.touches[0])return;
+    const nx=(e.touches[0].clientX/window.innerWidth)*2-1;
+    const ny=-((e.touches[0].clientY/window.innerHeight)*2-1);
+    mouse.tx=nx;mouse.ty=ny;mouse.act=1.0;
+    if(Math.random()<0.2) spawnRipple(nx*0.6,ny*0.6);
+  },{passive:true});
+
+  // ---- scroll progress
+  const driver = document.getElementById('scrollDriver');
+  const hint = document.getElementById('scrollHint');
+  let pTarget=0, pSmooth=0;
+  function readScroll(){
+    const max = driver.getBoundingClientRect().height - window.innerHeight;
+    const y = window.scrollY || window.pageYOffset || 0;
+    pTarget = max>1 ? Math.min(1, Math.max(0, y/max)) : 0;
+    if(y>40) hint.style.opacity='0';
+  }
+  window.addEventListener('scroll', readScroll, {passive:true});
+  readScroll();
+
+  const ripCenterU = gl.getUniformLocation(progScene,'uRipple');
+  const ripAgeU = gl.getUniformLocation(progScene,'uRippleT');
+
+  // =====================================================================
+  //  RENDER LOOP
+  // =====================================================================
+  const t0 = performance.now();
+  function frame(){
+    const now = performance.now();
+    const t = (now - t0)*0.001;
+
+    // progress: forced (for screenshots) or eased scroll
+    let p;
+    if(typeof window.__forceP === 'number'){
+      p = Math.min(1, Math.max(0, window.__forceP));
+      pSmooth = p;
+    } else {
+      pSmooth += (pTarget - pSmooth)*0.08;
+      p = pSmooth;
+    }
+
+    // ease mouse
+    mouse.x += (mouse.tx - mouse.x)*0.10;
+    mouse.y += (mouse.ty - mouse.y)*0.10;
+    mouse.act += (0 - mouse.act)*0.03;
+
+    // ripple ages
+    for(let i=0;i<RIP_N;i++){
+      if(ripBornT[i]<0){ ripAge[i]=-1; continue; }
+      const age = t - (ripBornT[i]-t0*0);
+      const a = (now*0.001) - ripBornT[i];
+      ripAge[i] = a > 2.4 ? -1 : a;   // ripple lifetime ~2.4s
+    }
+
+    // ---- PASS 1: scene -> HDR fbo
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFbo.fb);
+    gl.viewport(0,0,W,H);
+    gl.useProgram(progScene);
+    gl.uniform2f(uS.uRes, W, H);
+    gl.uniform1f(uS.uTime, t);
+    gl.uniform1f(uS.uP, p);
+    gl.uniform2f(uS.uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uS.uMouseA, Math.min(1,mouse.act));
+    gl.uniform2fv(ripCenterU, ripCenter);
+    gl.uniform1fv(ripAgeU, ripAge);
+    drawFS();
+
+    // ---- PASS 2: bright pass -> 1/2 res
+    gl.bindFramebuffer(gl.FRAMEBUFFER, brightFbo.fb);
+    gl.viewport(0,0,BW,BH);
+    gl.useProgram(progBright);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sceneFbo.tex);
+    gl.uniform1i(uBr.uTex,0);
+    drawFS();
+
+    // ---- PASS 3: separable gaussian (H then V), twice for a wide soft glow
+    let src = brightFbo, dst = blurA;
+    gl.useProgram(progBlur);
+    for(let pass=0; pass<2; pass++){
+      // horizontal
+      gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fb);
+      gl.viewport(0,0,BW,BH);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      gl.uniform1i(uBl.uTex,0);
+      gl.uniform2f(uBl.uDir, (1.0+pass)/BW, 0.0);
+      drawFS();
+      // vertical
+      const tmp = (dst===blurA)?blurB:blurA;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, tmp.fb);
+      gl.viewport(0,0,BW,BH);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, dst.tex);
+      gl.uniform1i(uBl.uTex,0);
+      gl.uniform2f(uBl.uDir, 0.0, (1.0+pass)/BH);
+      drawFS();
+      src = tmp; dst = (tmp===blurA)?blurB:blurA;
+    }
+    const bloomTex = src.tex;
+
+    // ---- PASS 4: composite to screen
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0,0,W,H);
+    gl.useProgram(progComp);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sceneFbo.tex);
+    gl.uniform1i(uC.uScene,0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bloomTex);
+    gl.uniform1i(uC.uBloom,1);
+    gl.uniform2f(uC.uRes, W, H);
+    gl.uniform1f(uC.uTime, t);
+    drawFS();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // signal ready + expose debug hook
+  window.__labBirdReady = true;
+  window.__forceP = window.__forceP; // ensure property exists as a hook
+})();
+</script>
+</body>
+</html>
