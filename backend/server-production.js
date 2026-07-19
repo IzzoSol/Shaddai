@@ -817,11 +817,12 @@ app.get('/api/polymarket/prices', async (req, res) => {
 // normal dashboard use is unaffected; blocks only runaway/scripted floods.
 // Public API developer docs + "get a free key" page. Registered BEFORE the /api
 // middleware chain so an exact GET /api serves the HTML (not the API router).
-{
-  const apiDocsPage = (req, res) => res.sendFile(path.join(__dirname, '../public/api.html'));
-  app.get('/api', apiDocsPage);
-  app.get('/developers', apiDocsPage);
-}
+// OFFLINE pending PIKADON security audit (2026-07-19). Re-enable with /api/v1 after sign-off.
+// {
+//   const apiDocsPage = (req, res) => res.sendFile(path.join(__dirname, '../public/api.html'));
+//   app.get('/api', apiDocsPage);
+//   app.get('/developers', apiDocsPage);
+// }
 
 // Use the battle-tested `express-rate-limit` (already a dependency) instead of the
 // hand-rolled in-memory Map (which never evicted → slow leak, and keyed on a
@@ -846,7 +847,8 @@ try {
 app.use('/api', apiProxyRoutes);
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
-app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals)
+// PUBLIC developer API — OFFLINE pending PIKADON security audit (2026-07-19). Re-enable after sign-off.
+// app.use('/api/v1', require('./public-api-routes'));    // PUBLIC developer API (free keys + JSON signals)
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
