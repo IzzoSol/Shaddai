@@ -2,6 +2,21 @@
 <html lang="en">
 <head>
 <script>document.documentElement.setAttribute('data-theme','neon');</script>
+<script>
+/* Self-heal: a leftover cache-first service worker from a past dashboard visit was
+   serving stale content into the background iframe (the "dashboard/login showing
+   behind the landing" bug). Unregister any SW + purge all caches on the landing,
+   then reload ONCE so the page + iframes refetch clean. */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(rs){
+    if(!rs || !rs.length) return;
+    rs.forEach(function(r){ try{ r.unregister(); }catch(e){} });
+    if(window.caches && caches.keys){ caches.keys().then(function(ks){ ks.forEach(function(k){ try{ caches.delete(k); }catch(e){} }); }); }
+    if(!sessionStorage.getItem('sw-purged')){ sessionStorage.setItem('sw-purged','1'); location.reload(); }
+  }).catch(function(){});
+})();
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>SHADDAI — Sovereign AI Agent Empire</title>
