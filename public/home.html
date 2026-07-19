@@ -158,9 +158,9 @@ body::before{
 /* ══════════════ ILLUMINATED MEGA-NAV (HUD instrument panels) ══════════════ */
 .bar nav.mega{ display:flex; gap:2px; align-items:center; }
 .pillar{ position:relative; }
-.pillar>button{ font:inherit; color:var(--ink-soft); background:none; border:0; cursor:none; padding:14px 11px;
-  letter-spacing:.12em; text-transform:uppercase; font-weight:600; font-size:12.5px; transition:color .3s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
-@media(max-width:1360px){ .pillar>button{ padding:14px 9px; letter-spacing:.10em; } }
+.pillar>button{ font:inherit; color:var(--ink-soft); background:none; border:0; cursor:none; padding:16px 14px;
+  letter-spacing:.13em; text-transform:uppercase; font-weight:600; font-size:14px; transition:color .3s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+@media(max-width:1360px){ .pillar>button{ padding:16px 10px; letter-spacing:.10em; font-size:13px; } }
 .pillar>button .cx{ font-size:8px; opacity:.5; transition:transform .3s, color .3s, opacity .3s; }
 .pillar:hover>button, .pillar.open>button, .pillar>button:focus-visible{ color:var(--emerald); outline:none; }
 .pillar:hover>button .cx, .pillar.open>button .cx{ transform:rotate(180deg); color:var(--emerald); opacity:1; }
@@ -273,7 +273,7 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
   background:linear-gradient(180deg, rgba(6,8,11,.55) 0%, transparent 12%, transparent 88%, rgba(6,8,11,.55) 100%); }
 
 /* ══════════════ HERO ══════════════ */
-.hero{ position:relative; height:100svh; min-height:660px; display:grid; place-items:center; overflow:hidden; }
+.hero{ position:relative; height:100svh; min-height:700px; display:grid; place-items:center; overflow:hidden; padding-top:clamp(64px,9vh,120px); }
 #sky{ position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; }
 .hero-glow{ position:absolute; inset:0; pointer-events:none; z-index:1;
   background:radial-gradient(circle var(--spot) at var(--mx,50%) var(--my,42%), rgba(0,255,156,.14), rgba(95,224,255,.05) 42%, transparent 72%); }
