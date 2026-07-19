@@ -22,8 +22,14 @@
     font-family:var(--hud);-webkit-font-smoothing:antialiased}
   body{overflow-x:hidden}
 
-  /* ambient canvas mandala (kept from original, dimmed to a backdrop) */
-  #ambient{position:fixed;inset:0;z-index:0;opacity:.32;pointer-events:none}
+  /* ambient canvas mandala (glow lives here, brighter than before) */
+  #ambient{position:fixed;inset:0;z-index:0;opacity:.5;pointer-events:none}
+  /* subtle CSS sacred-geometry aura layer, reinforces the canvas */
+  .aura{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 50% 34%,rgba(0,255,156,.10),transparent 42%),
+      radial-gradient(circle at 50% 34%,rgba(95,224,255,.07),transparent 60%),
+      radial-gradient(ellipse 120% 80% at 50% 120%,rgba(201,166,255,.08),transparent 55%)}
   /* subtle grain + vignette — cheap, static */
   .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.6'/></svg>")}
@@ -51,17 +57,27 @@
   .nbtn:hover{color:var(--gold);border-color:var(--gold)}
 
   /* ---- hero heading ---- */
-  .head{text-align:center;padding:26px 0 6px;position:relative}
-  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:6px;color:var(--emerald);
-    text-transform:uppercase;opacity:.85;margin-bottom:14px}
-  h1{font-family:var(--disp);font-weight:900;font-size:clamp(34px,6vw,62px);
-    letter-spacing:2px;line-height:1;color:transparent;
-    -webkit-text-stroke:1.5px var(--emerald);
-    text-shadow:0 0 24px rgba(0,255,156,.28)}
-  .tag{font-family:var(--hud);font-weight:500;font-size:14px;color:var(--muted);
-    letter-spacing:1px;margin-top:14px}
-  .hair{height:1px;max-width:320px;margin:20px auto 0;
+  .head{text-align:center;padding:30px 0 6px;position:relative}
+  .kicker{display:inline-flex;align-items:center;gap:12px;
+    font-family:var(--mono);font-size:11px;letter-spacing:6px;color:var(--emerald);
+    text-transform:uppercase;opacity:.9;margin-bottom:16px}
+  .kicker::before,.kicker::after{content:"";width:34px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(0,255,156,.7))}
+  .kicker::after{transform:scaleX(-1)}
+  h1{font-family:var(--disp);font-weight:900;font-size:clamp(34px,6vw,64px);
+    letter-spacing:3px;line-height:1;color:transparent;position:relative;
+    background:linear-gradient(180deg,#eafff6 0%,#8effd0 46%,#00ff9c 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-stroke:1.2px rgba(0,255,156,.55);
+    filter:drop-shadow(0 0 22px rgba(0,255,156,.32)) drop-shadow(0 0 46px rgba(0,255,156,.14))}
+  .tag{font-family:var(--hud);font-weight:500;font-size:14.5px;color:var(--muted);
+    letter-spacing:1px;margin-top:16px}
+  .tag b{color:var(--gold);font-weight:600}
+  .hair{height:1px;max-width:360px;margin:22px auto 0;position:relative;
     background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
+  .hair::after{content:"◈";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:11px;color:var(--gold);background:var(--obsidian);padding:0 10px;
+    text-shadow:0 0 12px rgba(232,196,92,.6)}
 
   /* ---- mode row ---- */
   .modes{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:26px 0 8px}
@@ -81,62 +97,119 @@
     gap:18px;margin-top:28px}
   .realm{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;
     aspect-ratio:16/10;border:1px solid rgba(122,135,148,.22);
-    background:#0b1016;transition:transform .18s,border-color .2s;isolation:isolate}
-  .realm:hover{transform:translateY(-4px);border-color:var(--gold)}
-  .realm.sel{border-color:var(--emerald);box-shadow:0 0 0 1px var(--emerald)}
+    background:#0b1016;isolation:isolate;
+    transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .3s;
+    /* staggered load-in */
+    opacity:0;transform:translateY(16px);
+    animation:cardIn .55s cubic-bezier(.2,.7,.2,1) forwards;
+    animation-delay:var(--d,0ms)}
+  @keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+  .realm:hover{transform:translateY(-6px);border-color:var(--gold);
+    box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 22px rgba(232,196,92,.22)}
+  .realm.sel{border-color:var(--emerald);
+    box-shadow:0 0 0 1px var(--emerald),0 0 26px rgba(0,255,156,.3)}
+  .realm.sel:hover{box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 0 1px var(--emerald),0 0 30px rgba(0,255,156,.4)}
   .realm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    z-index:0;transition:transform .3s;filter:saturate(1.05)}
-  .realm:hover img{transform:scale(1.06)}
-  .realm .shade{position:absolute;inset:0;z-index:1;
-    background:linear-gradient(180deg,rgba(6,8,11,.15) 0%,rgba(6,8,11,.35) 45%,rgba(6,8,11,.9) 100%)}
-  /* HUD corner brackets — cheap static borders */
+    z-index:0;transition:transform .5s cubic-bezier(.2,.7,.2,1),filter .3s;
+    filter:saturate(1.05)}
+  .realm:hover img{transform:scale(1.08);filter:saturate(1.15) brightness(1.05)}
+  .realm.sel img{filter:saturate(1.15)}
+  .realm .shade{position:absolute;inset:0;z-index:1;transition:background .3s;
+    background:linear-gradient(180deg,rgba(6,8,11,.12) 0%,rgba(6,8,11,.32) 45%,rgba(6,8,11,.9) 100%)}
+  .realm:hover .shade{background:linear-gradient(180deg,rgba(6,8,11,.05) 0%,rgba(6,8,11,.28) 45%,rgba(6,8,11,.88) 100%)}
+  /* accent glow wash keyed to each realm's colour */
+  .realm .glow{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;
+    transition:opacity .3s;mix-blend-mode:screen;
+    background:radial-gradient(120% 80% at 50% 100%,var(--ac,transparent),transparent 62%)}
+  .realm:hover .glow,.realm.sel .glow{opacity:.5}
+  /* HUD corner brackets — brighten on hover/select */
   .realm .br{position:absolute;width:16px;height:16px;z-index:3;pointer-events:none;
-    border-color:var(--gold);opacity:.55}
+    border-color:var(--gold);opacity:.5;
+    transition:opacity .25s,width .25s,height .25s,border-color .25s;
+    filter:drop-shadow(0 0 0 transparent)}
+  .realm:hover .br{opacity:1;width:22px;height:22px;
+    filter:drop-shadow(0 0 6px rgba(232,196,92,.6))}
   .realm .br.tl{top:9px;left:9px;border-top:2px solid;border-left:2px solid}
   .realm .br.tr{top:9px;right:9px;border-top:2px solid;border-right:2px solid}
   .realm .br.bl{bottom:9px;left:9px;border-bottom:2px solid;border-left:2px solid}
   .realm .br.brr{bottom:9px;right:9px;border-bottom:2px solid;border-right:2px solid}
-  .realm.sel .br{border-color:var(--emerald);opacity:.9}
+  .realm.sel .br{border-color:var(--emerald);opacity:1;
+    filter:drop-shadow(0 0 7px rgba(0,255,156,.7))}
   .realm .meta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px 15px 13px}
   .realm .seph{font-family:var(--mono);font-size:9px;letter-spacing:2px;
     color:var(--cyan);text-transform:uppercase;opacity:.85;margin-bottom:3px}
   .realm h3{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:.5px;
-    line-height:1.1}
+    line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.6)}
   .realm .biome{font-family:var(--mono);font-size:10px;letter-spacing:1px;
     color:var(--muted);margin-top:4px;text-transform:uppercase}
   .realm .enter{position:absolute;top:12px;right:14px;z-index:3;
     font-family:var(--hud);font-weight:700;font-size:10px;letter-spacing:1.5px;
     color:var(--obsidian);background:var(--gold);padding:4px 9px;border-radius:5px;
-    text-transform:uppercase;opacity:0;transform:translateY(-4px);transition:.2s}
+    text-transform:uppercase;opacity:0;transform:translateY(-4px);transition:.2s;
+    box-shadow:0 0 14px rgba(232,196,92,.5)}
   .realm:hover .enter,.realm.sel .enter{opacity:1;transform:translateY(0)}
-  .realm.sel .enter{background:var(--emerald)}
-  .realm .lockb{position:absolute;top:12px;left:12px;z-index:3;
-    font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--gold);
-    background:rgba(6,8,11,.7);border:1px solid var(--line);border-radius:5px;
-    padding:3px 8px;text-transform:uppercase;display:none}
-  .realm.locked .lockb{display:inline-block}
-  .realm.locked img{filter:grayscale(.55) brightness(.7)}
+  .realm.sel .enter{background:var(--emerald);box-shadow:0 0 14px rgba(0,255,156,.55)}
+  /* ---- refined locked state ---- */
+  .realm .lockb{position:absolute;top:11px;left:11px;z-index:3;
+    display:none;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--gold);
+    background:rgba(6,8,11,.72);border:1px solid rgba(232,196,92,.4);border-radius:999px;
+    padding:4px 10px 4px 8px;text-transform:uppercase;backdrop-filter:blur(3px)}
+  .realm .lockb svg{width:11px;height:11px;fill:none;
+    stroke:var(--gold);stroke-width:1.6}
+  .realm.locked{cursor:default}
+  .realm.locked .lockb{display:inline-flex}
+  .realm.locked img{filter:grayscale(.6) brightness(.62) saturate(.7)}
+  .realm.locked:hover{transform:translateY(-2px);border-color:rgba(232,196,92,.55);
+    box-shadow:0 10px 26px rgba(0,0,0,.45)}
+  .realm.locked:hover img{transform:scale(1.03);filter:grayscale(.5) brightness(.7) saturate(.8)}
+  .realm.locked .enter{display:none}
+  .realm.locked .shade{background:linear-gradient(180deg,rgba(6,8,11,.35) 0%,rgba(6,8,11,.5) 45%,rgba(6,8,11,.92) 100%)}
+  /* centered padlock crest on locked realms */
+  .realm .crest{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);
+    z-index:3;display:none;flex-direction:column;align-items:center;gap:7px;
+    pointer-events:none;opacity:.9}
+  .realm.locked .crest{display:flex}
+  .realm .crest .ring{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+    border:1px solid rgba(232,196,92,.45);background:rgba(6,8,11,.4);
+    box-shadow:0 0 22px rgba(232,196,92,.18) inset,0 0 16px rgba(0,0,0,.4)}
+  .realm .crest svg{width:22px;height:22px;fill:none;stroke:var(--gold);stroke-width:1.5;
+    filter:drop-shadow(0 0 6px rgba(232,196,92,.4))}
+  .realm .crest .cl{font-family:var(--mono);font-size:8px;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--gold);opacity:.8}
 
   /* ---- footer action bar ---- */
-  .actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-    gap:16px;margin-top:34px;padding:18px 22px;border-radius:14px;
-    background:rgba(8,11,16,.7);border:1px solid var(--line)}
+  .actions{position:relative;display:flex;flex-wrap:wrap;align-items:center;
+    justify-content:space-between;gap:16px;margin-top:36px;padding:20px 24px;
+    border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(11,16,22,.85),rgba(8,11,16,.72));
+    border:1px solid var(--line);
+    box-shadow:0 12px 40px rgba(0,0,0,.4),0 0 0 1px rgba(232,196,92,.04) inset}
+  .actions::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(232,196,92,.5),transparent)}
   .sel-info{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--muted);
-    text-transform:uppercase}
-  .sel-info b{color:var(--ink);font-weight:500}
+    text-transform:uppercase;display:flex;align-items:center;gap:8px}
+  .sel-info b{color:var(--ink);font-weight:600}
   .act-btns{display:flex;gap:12px;flex-wrap:wrap}
-  .enter-realm{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:2px;
-    padding:13px 30px;border-radius:10px;border:none;cursor:pointer;text-transform:uppercase;
-    background:linear-gradient(120deg,#2a2411,#3a3316);color:#5a5a52;pointer-events:none;
-    transition:.2s}
+  .enter-realm{position:relative;overflow:hidden;
+    font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:2px;
+    padding:14px 32px;border-radius:11px;border:none;cursor:pointer;text-transform:uppercase;
+    background:linear-gradient(120deg,#211d10,#2f2915);color:#66665c;pointer-events:none;
+    transition:.25s}
   .enter-realm.ready{color:#05070b;pointer-events:auto;
     background:linear-gradient(120deg,var(--emerald),#baffe4);
-    box-shadow:0 0 22px rgba(0,255,156,.35)}
+    box-shadow:0 0 24px rgba(0,255,156,.4),0 6px 20px rgba(0,255,156,.2)}
+  .enter-realm.ready::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,.45),transparent);
+    transform:translateX(-120%);transition:transform .6s}
+  .enter-realm.ready:hover::after{transform:translateX(120%)}
+  .enter-realm.ready:hover{filter:brightness(1.06)}
   .forge{font-family:var(--hud);font-weight:700;font-size:13px;letter-spacing:1.5px;
-    padding:13px 24px;border-radius:10px;border:1px solid var(--gold);cursor:pointer;
+    padding:14px 26px;border-radius:11px;border:1px solid var(--gold);cursor:pointer;
     text-transform:uppercase;background:transparent;color:var(--gold);text-decoration:none;
-    display:inline-flex;align-items:center;transition:.2s}
-  .forge:hover{background:rgba(232,196,92,.1)}
+    display:inline-flex;align-items:center;gap:8px;transition:.2s;
+    box-shadow:0 0 0 rgba(232,196,92,0)}
+  .forge:hover{background:rgba(232,196,92,.1);box-shadow:0 0 18px rgba(232,196,92,.25)}
 
   .flash{position:fixed;inset:0;z-index:50;
     background:radial-gradient(circle,#fff,var(--emerald) 40%,transparent 70%);
@@ -148,10 +221,22 @@
     .enter-realm,.forge{flex:1;text-align:center;justify-content:center}
     .sub{display:none}
   }
+
+  /* ---- respect reduced motion ---- */
+  @media(prefers-reduced-motion:reduce){
+    *{scroll-behavior:auto!important}
+    .realm{opacity:1!important;transform:none!important;
+      animation:none!important;transition:border-color .2s,box-shadow .2s}
+    .realm:hover{transform:none}
+    .realm img,.realm .br,.realm .enter,.enter-realm.ready::after{transition:none!important}
+    .realm:hover img{transform:none}
+    .enter-realm.ready:hover::after{transform:translateX(-120%)}
+  }
 </style>
 </head>
 <body>
 <canvas id="ambient"></canvas>
+<div class="aura"></div>
 <div class="grain"></div>
 <div class="vig"></div>
 
@@ -170,13 +255,13 @@
   <div class="head">
     <div class="kicker">Ancient Wisdom · Future Tech</div>
     <h1>CHOOSE YOUR REALM</h1>
-    <div class="tag">Seven lands await across the SHADDAI world. Select a realm, then enter.</div>
+    <div class="tag">Seven lands await across the SHADDAI world &mdash; each bound to a <b>Sephirah</b> on the Tree of Life. Select a realm, then enter.</div>
     <div class="hair"></div>
   </div>
 
   <div class="modes">
-    <div class="mode active" data-mode="guest">➜ Join as guest</div>
-    <div class="mode" data-mode="spectate">◉ Spectate <span class="soon">soon</span></div>
+    <div class="mode active" data-mode="guest">➜ Join &amp; play</div>
+    <div class="mode" data-mode="spectate">◉ Spectate</div>
     <div class="mode" data-mode="profile">✦ Create profile <span class="soon">soon</span></div>
   </div>
 
@@ -211,26 +296,33 @@ const REALMS=[
 
 /* PREVIEW LOCK — worlds under construction. Flip to false when ready.
    (Preserved from the original page.) */
-const WORLDS_LOCKED = true;
-if(WORLDS_LOCKED){ REALMS.forEach(r=>{ r.locked=true; }); }
+const WORLDS_LOCKED = false;   // true = whole map is a locked preview; false = open realms are playable
+const OPEN=['meadow','city','agentcity'];   // playable now · frontier realms (forest/beach/desert/volcano) stay gated
+if(WORLDS_LOCKED) REALMS.forEach(r=>{ r.locked=true; });
+else REALMS.forEach(r=>{ r.locked = OPEN.indexOf(r.id)<0; });
 
 let selId = null;
 let flying = false;
 
 /* ---- build cards ---- */
 const grid=document.getElementById('grid');
+const LOCK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 REALMS.forEach((r,idx)=>{
   const el=document.createElement('div');
   el.className='realm'+(r.locked?' locked':'');
   el.dataset.id=r.id;
+  el.style.setProperty('--d',(idx*70)+'ms');   /* staggered load-in */
+  el.style.setProperty('--ac',r.accent);        /* accent glow wash */
   el.innerHTML =
     '<img src="'+r.img+'" alt="'+r.name+'" loading="lazy" '+
       'onerror="this.style.display=\'none\'">'+
     '<div class="shade"></div>'+
+    '<div class="glow"></div>'+
     '<span class="br tl"></span><span class="br tr"></span>'+
     '<span class="br bl"></span><span class="br brr"></span>'+
     '<span class="enter">Enter ▸</span>'+
-    '<span class="lockb">🔒 Soon</span>'+
+    '<span class="lockb">'+LOCK_SVG+'Locked</span>'+
+    '<div class="crest"><span class="ring">'+LOCK_SVG+'</span><span class="cl">Coming Soon</span></div>'+
     '<div class="meta">'+
       '<div class="seph" style="color:'+r.accent+'">'+r.seph+'</div>'+
       '<h3 style="color:'+(r.locked?'#c6cdd6':r.accent)+'">'+r.name+'</h3>'+
@@ -300,41 +392,46 @@ select('meadow');
     ctx.setTransform(DPR,0,0,DPR,0,0); }
   addEventListener('resize',resize); resize();
 
-  const stars=Array.from({length:90},()=>({x:Math.random(),y:Math.random(),
-    r:Math.random()*1.2+0.2, s:Math.random()*3+1, ph:Math.random()*6.28}));
+  const REDUCE = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const stars=Array.from({length:110},()=>({x:Math.random(),y:Math.random(),
+    r:Math.random()*1.3+0.2, s:Math.random()*3+1, ph:Math.random()*6.28}));
 
   function frame(t){
     ctx.clearRect(0,0,W,H);
-    const cx=W*0.5, cy=H*0.42, R=Math.min(W,H)*0.34;
+    const cx=W*0.5, cy=H*0.42, R=Math.min(W,H)*0.36;
     // radial base
     const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.75);
-    bg.addColorStop(0,'#0b1016'); bg.addColorStop(1,'#04060a');
+    bg.addColorStop(0,'#0d131b'); bg.addColorStop(0.6,'#070b11'); bg.addColorStop(1,'#04060a');
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
     // stars
     ctx.save(); ctx.globalCompositeOperation='lighter';
-    for(const s of stars){ const a=0.2+0.3*(0.5+0.5*Math.sin(t/1000*s.s+s.ph));
-      ctx.globalAlpha=a; ctx.fillStyle='#dfeaff'; ctx.beginPath();
+    for(const s of stars){ const a=0.22+0.32*(0.5+0.5*Math.sin(t/1000*s.s+s.ph));
+      ctx.globalAlpha=REDUCE?0.3:a; ctx.fillStyle='#dfeaff'; ctx.beginPath();
       ctx.arc(s.x*W,s.y*H,s.r,0,6.28); ctx.fill(); }
     ctx.restore();
-    // seed of life (slow rotate)
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(t/40000);
+    // seed of life (slow rotate) — two nested rings for a richer flower-of-life feel
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(REDUCE?0:t/40000);
     ctx.globalCompositeOperation='lighter';
     const seedR=R*0.5;
-    ctx.strokeStyle='rgba(0,255,156,0.9)'; ctx.globalAlpha=0.06; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(0,255,156,0.9)'; ctx.globalAlpha=0.09; ctx.lineWidth=1.1;
     ctx.beginPath(); ctx.arc(0,0,seedR,0,6.28); ctx.stroke();
     for(let k=0;k<6;k++){ const a=k*Math.PI/3; ctx.beginPath();
       ctx.arc(seedR*Math.cos(a),seedR*Math.sin(a),seedR,0,6.28); ctx.stroke(); }
+    // second petal ring, offset — deeper mandala
+    ctx.strokeStyle='rgba(95,224,255,0.9)'; ctx.globalAlpha=0.05;
+    for(let k=0;k<6;k++){ const a=k*Math.PI/3+Math.PI/6; ctx.beginPath();
+      ctx.arc(seedR*Math.cos(a),seedR*Math.sin(a),seedR,0,6.28); ctx.stroke(); }
     // outer ring
-    ctx.strokeStyle='rgba(95,224,255,0.9)'; ctx.globalAlpha=0.06;
+    ctx.strokeStyle='rgba(95,224,255,0.9)'; ctx.globalAlpha=0.09;
     ctx.beginPath(); ctx.arc(0,0,R,0,6.28); ctx.stroke();
-    // gold heptagram
-    ctx.strokeStyle='rgba(232,196,92,0.9)'; ctx.globalAlpha=0.05;
+    // gold heptagram (7 realms · 7 sephirot)
+    ctx.strokeStyle='rgba(232,196,92,0.9)'; ctx.globalAlpha=0.08; ctx.lineWidth=1;
     ctx.beginPath();
     for(let k=0;k<7;k++){ const a=(-90+k*(360/7)*3)*Math.PI/180, rr=R*0.72;
       const px=rr*Math.cos(a), py=rr*Math.sin(a); k?ctx.lineTo(px,py):ctx.moveTo(px,py); }
     ctx.closePath(); ctx.stroke();
     ctx.restore();
-    requestAnimationFrame(frame);
+    if(!REDUCE) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 })();

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · Enter the World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;600&family=IBM+Plex+Mono&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --obsidian:#06080b; --emerald:#00ff9c; --gold:#e8c45c;
+    --cyan:#5fe0ff; --violet:#c9a6ff; --ink:#e7ecf2; --dim:#8a97a6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:var(--obsidian);color:var(--ink);
+    font-family:"Fraunces",serif;overflow:hidden}
+  a{text-decoration:none;color:inherit}
+
+  /* ---------- Cinematic hero backdrop ---------- */
+  .stage{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+  .bg{position:absolute;inset:-4%;background:url("hero/shaddai-hero.png") center/cover no-repeat;
+    transform:scale(1.06);animation:ken 42s ease-in-out infinite alternate;will-change:transform;
+    filter:saturate(1.05) contrast(1.03)}
+  @keyframes ken{
+    0%{transform:scale(1.06) translate3d(0,0,0)}
+    100%{transform:scale(1.16) translate3d(-1.5%,-2%,0)}
+  }
+  /* dark gradient + vignette for legibility */
+  .veil{position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(120% 80% at 50% 8%, rgba(0,255,156,.10), transparent 55%),
+      linear-gradient(180deg, rgba(4,6,10,.72) 0%, rgba(4,6,10,.30) 32%, rgba(4,6,10,.55) 66%, rgba(4,6,10,.92) 100%),
+      radial-gradient(130% 100% at 50% 45%, transparent 40%, rgba(3,4,7,.72) 100%)}
+  /* faint film grain */
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    animation:grain 6s steps(6) infinite}
+  @keyframes grain{
+    0%,100%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)}
+    40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-2%)} 80%{transform:translate(3%,2%)}
+  }
+
+  /* ---------- Content ---------- */
+  .wrap{position:relative;z-index:3;text-align:center;padding:32px 24px;
+    display:flex;flex-direction:column;align-items:center;max-width:1080px}
+
+  .crest{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:9px;
+    color:var(--emerald);text-transform:uppercase;opacity:0;
+    text-shadow:0 0 16px rgba(0,255,156,.5);
+    animation:rise .9s cubic-bezier(.2,.7,.2,1) .1s forwards}
+  .crest::before,.crest::after{content:"◈";margin:0 14px;color:var(--gold);opacity:.7}
+
+  .sig{font-family:"Cinzel Decorative","Cinzel",serif;font-weight:900;
+    font-size:clamp(52px,11vw,128px);line-height:.95;letter-spacing:.06em;
+    color:var(--gold);margin:14px 0 6px;opacity:0;
+    background:linear-gradient(180deg,#fff4d0,#e8c45c 45%,#b8912f);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 26px rgba(0,255,156,.28)) drop-shadow(0 4px 30px rgba(232,196,92,.35));
+    animation:rise 1.1s cubic-bezier(.2,.7,.2,1) .22s forwards}
+
+  .rule{width:0;height:1px;margin:6px 0 16px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.8;
+    animation:grow 1.2s ease .5s forwards}
+  @keyframes grow{to{width:min(420px,70vw)}}
+
+  .tag{font-family:"Fraunces",serif;font-style:italic;font-size:clamp(15px,2.2vw,21px);
+    color:#dfe6ee;opacity:0;max-width:640px;
+    animation:rise 1s ease .6s forwards}
+  .tag b{font-style:normal;color:var(--cyan);font-weight:500}
+
+  /* ---------- Cards ---------- */
+  .cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:46px}
+  .card{width:250px;height:196px;border-radius:20px;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;padding:22px;
+    border:1px solid rgba(150,165,180,.20);
+    background:linear-gradient(160deg,rgba(16,22,30,.42),rgba(6,9,13,.66));
+    backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
+    box-shadow:0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
+    opacity:0;transform:translateY(26px);
+    transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
+    animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards}
+  .card.forge{animation-delay:.85s;--ac:var(--emerald);--acRGB:0,255,156}
+  .card.realm{animation-delay:1s;--ac:var(--violet);--acRGB:201,166,255}
+  .card.world{animation-delay:1.15s;--ac:var(--cyan);--acRGB:95,224,255}
+
+  /* accent wash per card */
+  .card::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 118%,rgba(var(--acRGB),.28),transparent 60%)}
+
+  /* sacred-geometry corner motif */
+  .card .glyph{position:absolute;top:-24px;right:-24px;width:110px;height:110px;opacity:.22;
+    color:var(--ac);transition:opacity .3s,transform .5s}
+  .card .glyph svg{width:100%;height:100%}
+
+  .card .ico{position:absolute;top:20px;left:22px;width:46px;height:46px;
+    display:grid;place-items:center;border-radius:12px;color:var(--ac);
+    border:1px solid rgba(var(--acRGB),.4);background:rgba(var(--acRGB),.08);
+    box-shadow:0 0 18px rgba(var(--acRGB),.18);transition:box-shadow .3s,transform .3s}
+  .card .ico svg{width:24px;height:24px}
+
+  .card h2{position:relative;font-family:"Cinzel",serif;font-weight:600;
+    font-size:21px;letter-spacing:2px;color:#f3f6fa}
+  .card .kicker{font-family:"Chakra Petch","IBM Plex Mono",monospace;font-size:9px;
+    letter-spacing:3px;text-transform:uppercase;color:var(--ac);opacity:.85;margin-bottom:4px}
+  .card p{position:relative;font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.5px;color:var(--dim);margin-top:6px;text-transform:uppercase}
+  .card .enter{position:relative;margin-top:12px;font-family:"IBM Plex Mono",monospace;
+    font-size:10px;letter-spacing:2px;color:var(--ac);opacity:0;transform:translateX(-6px);
+    transition:opacity .3s,transform .3s}
+
+  .card:hover{transform:translateY(-10px);border-color:rgba(var(--acRGB),.7);
+    box-shadow:0 26px 60px rgba(0,0,0,.6),0 0 40px rgba(var(--acRGB),.35),
+      inset 0 1px 0 rgba(255,255,255,.09)}
+  .card:hover .glyph{opacity:.5;transform:rotate(90deg)}
+  .card:hover .ico{box-shadow:0 0 30px rgba(var(--acRGB),.5);transform:translateY(-2px)}
+  .card:hover .enter{opacity:1;transform:translateX(0)}
+  .card:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+
+  .note{margin-top:40px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    color:var(--dim);letter-spacing:1px;opacity:0;animation:rise 1s ease 1.4s forwards}
+  .note b{color:var(--gold);font-weight:400}
+
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+  @media (max-width:600px){
+    .cards{gap:16px;margin-top:34px}
+    .card{width:min(88vw,300px);height:150px;padding:18px}
+    .card .glyph{width:88px;height:88px}
+    .rule{animation-name:growSm}
+    @keyframes growSm{to{width:70vw}}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .bg,.grain{animation:none}
+    .crest,.sig,.tag,.card,.note{animation:none;opacity:1;transform:none}
+    .rule{animation:none;width:min(420px,70vw)}
+    .card{transition:border-color .2s,box-shadow .2s}
+  }
+</style></head>
+<body>
+<div class="stage">
+  <div class="bg"></div>
+  <div class="veil"></div>
+  <div class="grain"></div>
+
+  <div class="wrap">
+    <div class="crest">Ancient Wisdom · Future Tech</div>
+    <h1 class="sig">SHADDAI</h1>
+    <div class="rule"></div>
+    <p class="tag">A living continent where the seven councils walk. Forge a traveler, choose your <b>sacred realm</b>, and step through the gate.</p>
+
+    <div class="cards" style="margin-top:52px">
+      <a class="card realm" id="a-enter" style="width:min(460px,92vw);height:auto;flex-direction:row;align-items:center;gap:20px;padding:26px 30px">
+        <span class="ico" style="position:static;width:56px;height:56px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".55"/><path d="M12 6a6 6 0 010 12 6 6 0 010-12z" opacity=".55"/></svg></span>
+        <div style="text-align:left;flex:1">
+          <div class="kicker">Enter</div>
+          <h2 style="font-size:26px">Begin the Descent</h2>
+          <p>Choose a realm · forge · spectate</p>
+        </div>
+        <div class="enter" style="position:static;opacity:1;transform:none;font-size:22px">➜</div>
+      </a>
+    </div>
+
+    <div class="note">One gate — from the <b>Realm Map</b> you can forge a traveler, play a realm, or spectate the living world.</div>
+  </div>
+</div>
+
+<script>
+  // cache-bust every link so you never see a stale build
+  var v = Date.now();
+  document.getElementById('a-enter').href = 'region-select.html?v=' + v;  // single gate → the Realm Map hub
+</script>
+</body></html>

@@ -162,3 +162,5 @@ public/_pixeloffice_preview.html
 backend/data/tg-lock.json
 backend/data/tracked-wallets.json
 backend/data/tracked-wallets*.txt
+_secret.local
+.env

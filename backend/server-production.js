@@ -501,22 +501,40 @@ const AGENTS = {
 // WebSocket connections
 const wsConnections = new Map();
 
+// ── SHADDAI multiplayer relay (grafted from mp-server.js — shares this same WS server).
+//    Game clients (game.html) speak {t:'hello'|'move'|'region'|'chat'}; the app speaks
+//    {action,...}. We route by that and tag game clients on 'hello', relaying player state
+//    only among game clients so the pixel-world multiplayer works on this single service. ──
+const mpPlayers = new Map(); let mpNextId = 1;
+function mpBcast(obj, exceptWs){ const s = JSON.stringify(obj);
+  for (const c of wss.clients){ if (c !== exceptWs && c.readyState === WebSocket.OPEN && c.__isGame){ try { c.send(s); } catch(e){} } } }
+
 wss.on('connection', (ws, req) => {
   const clientId = crypto.randomBytes(8).toString('hex');
   wsConnections.set(clientId, ws);
   logger.info('WEBSOCKET', `Client connected: ${clientId}`);
 
+  // multiplayer: hand this connection an id + the current game roster (ignored by app clients)
+  const mpid = 'mp' + (mpNextId++); ws.__mpid = mpid;
+  try { ws.send(JSON.stringify({ t:'welcome', id: mpid }));
+        for (const [, pl] of mpPlayers) ws.send(JSON.stringify({ t:'state', ...pl })); } catch(e){}
+
   ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      handleWebSocketMessage(clientId, data, ws);
-    } catch (error) {
-      ws.send(JSON.stringify({ error: 'Invalid message format' }));
+    let data; try { data = JSON.parse(message); } catch (error) { try { ws.send(JSON.stringify({ error: 'Invalid message format' })); } catch(_){} return; }
+    if (data && data.t) {   // ── game (pixel-world) relay message ──
+      const t = data.t;
+      if (t === 'hello') { ws.__isGame = true; mpPlayers.set(mpid, { id:mpid, name:String(data.name||'Traveler').slice(0,16), region:data.region||null, col:(data.col|0)||30, row:(data.row|0)||30, anim:'idle', rig:data.rig||null }); mpBcast({ t:'state', ...mpPlayers.get(mpid) }, ws); }
+      else if (t === 'move') { const pl = mpPlayers.get(mpid); if (pl) { pl.col=data.col; pl.row=data.row; pl.anim=data.anim; if (data.region) pl.region=data.region; mpBcast({ t:'state', ...pl }, ws); } }
+      else if (t === 'region') { const pl = mpPlayers.get(mpid); if (pl) { pl.region=data.region; mpBcast({ t:'state', ...pl }, ws); } }
+      else if (t === 'chat') { const pl = mpPlayers.get(mpid); const text=String(data.text||'').slice(0,200); if (pl && text) mpBcast({ t:'chat', id:mpid, name:pl.name, region:pl.region, text }); }
+      return;
     }
+    try { handleWebSocketMessage(clientId, data, ws); } catch (error) { try { ws.send(JSON.stringify({ error: 'Invalid message format' })); } catch(_){} }
   });
 
   ws.on('close', () => {
     wsConnections.delete(clientId);
+    if (mpPlayers.has(mpid)) { mpPlayers.delete(mpid); mpBcast({ t:'leave', id: mpid }); }
     logger.info('WEBSOCKET', `Client disconnected: ${clientId}`);
   });
 
