@@ -41,6 +41,41 @@
   function j(u,o){return fetch(u,o).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
   function el(id){return document.getElementById(id);}
 
+  /* ---- null-safe localStorage helpers (degrade silently) ---- */
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+  function lsJSON(k){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(_){ return null; } }
+  function lsSetJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
+
+  var LSK = { tab:'shd_room_tab', dir:'shd_last_directive', skill:'shd_last_skill', histPfx:'shd_runhist_' };
+
+  /* ---- module-level catalog cache (lazy-loaded on first SKILLS tab open) ---- */
+  var CATALOG_CACHE = null;   // null = not fetched yet; array once loaded
+  var CATALOG_PROMISE = null; // in-flight fetch guard
+
+  function loadCatalog(){
+    if (CATALOG_CACHE) return Promise.resolve(CATALOG_CACHE);
+    if (CATALOG_PROMISE) return CATALOG_PROMISE;
+    CATALOG_PROMISE = j('/api/skills/catalog?limit=5000').then(function(res){
+      CATALOG_CACHE = (res&&res.skills)||[];
+      CATALOG_PROMISE = null;
+      return CATALOG_CACHE;
+    }).catch(function(){ CATALOG_PROMISE=null; return []; });
+    return CATALOG_PROMISE;
+  }
+
+  /* ---- per-agent run history (localStorage, newest first, cap ~20) ---- */
+  function histKey(agent){ return LSK.histPfx + String(agent||'agent'); }
+  function histGet(agent){ var h=lsJSON(histKey(agent)); return (h&&h.length)?h:[]; }
+  function histPush(agent,input,output){
+    try{
+      var arr=histGet(agent);
+      arr.unshift({ ts:Date.now(), agent:String(agent||''), input:String(input==null?'':input), output:String(output==null?'':output).slice(0,4000) });
+      if(arr.length>20) arr=arr.slice(0,20);
+      lsSetJSON(histKey(agent),arr);
+    }catch(_){}
+  }
+
   /* ---- one-time CSS inject ---- */
   function injectCss(){
     if (el('cdCss')) return;
@@ -111,6 +146,11 @@
     ".cd .list{width:100%;margin-top:8px;padding:7px;border-radius:7px;border:1px solid rgba(var(--acg),.4);background:rgba(var(--acg),.08);color:var(--ac);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}.cd .list:hover{background:rgba(var(--acg),.16)}",
     ".cd .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}.cd .sw{width:34px;height:34px;border-radius:9px;border:2px solid rgba(255,255,255,.14);cursor:pointer;transition:.15s}.cd .sw:hover{transform:scale(1.08)}",
     ".cd .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cd .opt{padding:10px 11px;border-radius:10px;background:rgba(var(--acg),.05);border:1px solid rgba(var(--acg),.2);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:space-between}.cd .opt:hover{border-color:var(--ac)}.cd .opt.on{border-color:var(--ac);background:rgba(var(--acg),.12);color:var(--ac)}.cd .opt .pill{font-size:7px;padding:3px 6px;border-radius:20px;border:1px solid rgba(255,255,255,.18);color:var(--mut)}.cd .opt.on .pill{border-color:var(--ac);color:var(--ac)}",
+    ".cd .cdqa{display:flex;gap:7px;flex-wrap:wrap;padding:10px 12px 2px}",
+    ".cd .cdqab{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:20px;background:rgba(var(--acg),.08);border:1px solid rgba(var(--acg),.32);color:var(--ac);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.5px;cursor:pointer;transition:.15s}.cd .cdqab:hover{background:rgba(var(--acg),.18);transform:translateY(-1px)}.cd .cdqab svg.i{width:.95em;height:.95em}",
+    ".cd .cdhist{display:flex;flex-direction:column;gap:6px}",
+    ".cd .cdhrow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;background:rgba(var(--acg),.04);border:1px solid rgba(var(--acg),.16);cursor:pointer;transition:.15s}.cd .cdhrow:hover{border-color:var(--ac);background:rgba(var(--acg),.1)}",
+    ".cd .cdhrow .cdhin{flex:1;min-width:0;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cd .cdhrow .cdhts{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--mut);flex-shrink:0}.cd .cdhrow .cdhre{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ac);flex-shrink:0;opacity:0;transition:.15s}.cd .cdhrow:hover .cdhre{opacity:1}",
     "@media (prefers-reduced-motion:reduce){.cd *{animation:none!important;transition:none!important}}"
     ].join('\n');
     document.head.appendChild(s);
@@ -157,6 +197,7 @@
 
   function open(agentId){
     injectCss();
+    _skillsFilled=false; ST.catalog=null;                   // reset per-room; SKILLS tab lazy-fills (cache preserved in CATALOG_CACHE)
     if(ST.poll){ clearInterval(ST.poll); ST.poll=null; }   // don't leak a running Operate poll across room switches
     try { window._roomViewer && window._roomViewer.dispose && window._roomViewer.dispose(); } catch(_){}
     try { window._chamberViewer && window._chamberViewer.dispose && window._chamberViewer.dispose(); } catch(_){}
@@ -169,10 +210,13 @@
       ST.agentId=agentId; ST.forged=d.forged; ST.op=d.op; ST.glb=d.glb; ST.acg=d.acg; ST.color=color(d.acg); ST.view='2d';
       ST.sceneKey=d.sceneKey;
       render(d);
-      // fetch brains + catalog in background to fill brain panel + skills
-      Promise.all([ j('/api/brains'), j('/api/skills/catalog?limit=5000') ]).then(function(res){
-        ST.brains=res[0]; ST.catalog=(res[1]&&res[1].skills)||[];
-        fillBrain(d); fillSkills(d);
+      // fetch brains in background to fill the brain panel.
+      // NOTE: the ~3.4k-skill catalog is LAZY-loaded — only when the SKILLS tab is first opened (see openSkillsTab).
+      j('/api/brains').then(function(res){
+        ST.brains=res;
+        // if catalog was already cached from a previous room, adopt it so SKILLS is instant.
+        if(CATALOG_CACHE) ST.catalog=CATALOG_CACHE;
+        fillBrain(d);
       });
     });
   }
@@ -201,6 +245,11 @@
         '<div class="lvl"><small>OPERATOR</small>'+esc(d.nm)+'</div>'+
       '</div>'+
       '<div class="panel">'+
+        '<div class="cdqa" id="cdQA">'+
+          '<button class="cdqab" id="cdQARun" title="Re-run the last directive you issued">'+IC.run+' Run last directive</button>'+
+          '<button class="cdqab" id="cdQASkill" title="Equip the last skill you used">'+IC.add+' Equip last skill</button>'+
+          '<button class="cdqab" id="cdQAImg" title="Generate an image via the generate_image skill">'+IC.st+' Generate image</button>'+
+        '</div>'+
         '<div class="tabs" id="cdTabs">'+
           '<div class="tab on" data-t="ov"><span class="ic">'+IC.ov+'</span>OVERVIEW</div>'+
           '<div class="tab" data-t="op"><span class="ic">'+IC.op+'</span>OPERATE</div>'+
@@ -212,6 +261,7 @@
           '<div class="pane on" data-p="ov">'+
             '<div class="sec">DOSSIER</div><div class="lore">"'+esc(d.lore)+'"</div>'+
             '<div class="sec mt">BRAIN &amp; CONNECTIONS</div><div id="cdBrain" class="brain"><div class="brow"><div class="bic">'+IC.cpu+'</div><div class="bmeta"><b>loading…</b><span>querying /api/brains</span></div></div></div>'+
+            '<div class="sec mt">HISTORY</div><div class="cap" style="margin-bottom:6px">Recent runs · click to reuse (re-fills the directive input).</div><div id="cdHist" class="cdhist"></div>'+
           '</div>'+
           '<div class="pane" data-p="op">'+
             '<div class="sec">ISSUE DIRECTIVE — runs the agent\'s real skills</div>'+
@@ -252,12 +302,22 @@
     // tabs + indicator
     var tabs=el('cdTabs'), ind=document.createElement('div'); ind.className='tabInd'; tabs.appendChild(ind);
     function mv(t){ind.style.left=t.offsetLeft+'px';ind.style.width=t.offsetWidth+'px';}
-    [].forEach.call(tabs.querySelectorAll('.tab'),function(t){ t.onclick=function(){
+    function selectTab(t){
+      if(!t)return;
       [].forEach.call(tabs.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
       [].forEach.call(document.querySelectorAll('.cd .pane'),function(x){x.classList.remove('on');});
       t.classList.add('on'); var p=document.querySelector('.cd .pane[data-p="'+t.dataset.t+'"]'); if(p)p.classList.add('on'); mv(t);
-    };});
-    setTimeout(function(){mv(tabs.querySelector('.tab.on'));},80);
+      lsSet(LSK.tab, t.dataset.t);                       // remember last tab
+      if(t.dataset.t==='sk') openSkillsTab(d);            // lazy-load catalog on first SKILLS open
+    }
+    [].forEach.call(tabs.querySelectorAll('.tab'),function(t){ t.onclick=function(){ selectTab(t); }; });
+    // restore last-opened tab (default = OVERVIEW if none / invalid)
+    var _lastTab=lsGet(LSK.tab);
+    var _restore=_lastTab && tabs.querySelector('.tab[data-t="'+_lastTab+'"]');
+    setTimeout(function(){ if(_restore){ selectTab(_restore); } else { mv(tabs.querySelector('.tab.on')); } },80);
+    // quick-action bar + history
+    wireQuickActions(d);
+    renderHistory(d);
     // parallax
     var holo=el('cdHolo'), fig=el('cdFig');
     holo.addEventListener('mousemove',function(e){var r=holo.getBoundingClientRect(),dx=(e.clientX-r.left)/r.width-.5,dy=(e.clientY-r.top)/r.height-.5;fig.style.transform='translateX('+(dx*20)+'px) rotateY('+(dx*13)+'deg) rotateX('+(-dy*7)+'deg)';});
@@ -282,6 +342,76 @@
   }
 
   function setAccent(g){ ST.acg=g; ST.color=color(g); var root=el('cdRoot'); if(root){root.style.setProperty('--acg',g);root.style.setProperty('--ac',ST.color);} }
+
+  /* ---- LAZY-LOAD the skill catalog the first time the SKILLS tab is opened ---- */
+  var _skillsFilled=false;
+  function openSkillsTab(d){
+    try{
+      if(_skillsFilled) return;                 // already rendered this room
+      var cap=el('cdSkCap'); if(cap && !ST.catalog) cap.textContent='loading skill library…';
+      loadCatalog().then(function(cat){
+        ST.catalog=cat||[];
+        _skillsFilled=true;
+        fillSkills(d);
+      });
+    }catch(_){}
+  }
+
+  /* ---- QUICK-ACTION BAR (one-click, uses last-used values from localStorage) ---- */
+  function wireQuickActions(d){
+    try{
+      var qRun=el('cdQARun'), qSk=el('cdQASkill'), qImg=el('cdQAImg');
+      if(qRun) qRun.onclick=function(){
+        var last=lsGet(LSK.dir);
+        var g=el('cdGoal');
+        if(!last){ if(g){ selectPane('op'); g.focus(); } return; }   // no-op → focus the directive input
+        if(g) g.value=last;
+        selectPane('op');
+        operate(d);
+      };
+      if(qSk) qSk.onclick=function(){
+        var last=lsGet(LSK.skill);
+        selectPane('sk'); openSkillsTab(d);
+        if(!last){ var ab=el('cdAddBtn'); if(ab && ab.style.display!=='none'){ var p=el('cdPicker'); if(p){p.classList.add('on'); var ps=el('cdPSearch'); if(ps)ps.focus();} } return; }
+        var agentNm=(ST.forged?((ST.op&&ST.op.codename)||'OP'):(d&&d.nm)||'SHADDAI');
+        if(ST.forged){ addSkill(last); }                            // forged → equip it
+        else { cdRunSkill(last, agentNm); }                         // council read-only → run it instead
+      };
+      if(qImg) qImg.onclick=function(){
+        var agentNm=(ST.forged?((ST.op&&ST.op.codename)||'OP'):(d&&d.nm)||'SHADDAI');
+        selectPane('sk'); openSkillsTab(d);
+        cdRunSkill('generate_image', agentNm);                      // reuse existing skill runner
+      };
+    }catch(_){}
+  }
+
+  /* switch panes programmatically (mirrors the tab click, keeps last-tab persisted) */
+  function selectPane(t){
+    try{
+      var tabs=el('cdTabs'); if(!tabs)return;
+      var tab=tabs.querySelector('.tab[data-t="'+t+'"]'); if(tab) tab.click();
+    }catch(_){}
+  }
+
+  /* ---- PER-AGENT RUN HISTORY list (click-to-reuse) ---- */
+  function renderHistory(d){
+    try{
+      var box=el('cdHist'); if(!box)return;
+      var agentNm=(ST.forged?((ST.op&&ST.op.codename)||'OP'):(d&&d.nm)||'SHADDAI');
+      var arr=histGet(agentNm);
+      if(!arr.length){ box.innerHTML='<div class="cap" style="opacity:.6">No runs yet — issue a directive or run a skill.</div>'; return; }
+      box.innerHTML=arr.map(function(h,i){
+        var when='';
+        try{ var dt=new Date(h.ts); when=dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch(_){}
+        return '<div class="cdhrow" data-hi="'+i+'"><span class="cdhin">'+esc((h.input||'(skill run)').slice(0,72))+'</span><span class="cdhts">'+esc(when)+'</span><span class="cdhre">↻ reuse</span></div>';
+      }).join('');
+      [].forEach.call(box.querySelectorAll('.cdhrow'),function(row){ row.onclick=function(){
+        var h=arr[+row.dataset.hi]; if(!h)return;
+        var g=el('cdGoal'); if(g){ g.value=h.input||''; }
+        selectPane('op'); if(g) g.focus();
+      };});
+    }catch(_){}
+  }
 
   /* Load the <model-viewer> web component once (same unpkg build the Forge uses; already CSP-allowed). */
   function ensureMV(){
@@ -419,6 +549,7 @@
   // E6a: run a single equipped skill in-room via the SAME engine as the Skills tab (window.runSkill → /api/skills/run),
   // show the result in #cdSkResult, and reuse the global Save-to-Notes / Gallery / Download helpers from index.html.
   function cdRunSkill(skillId, agentNm){
+    lsSet(LSK.skill, skillId);   // remember last skill for the quick-action bar
     // Unified runner: let the user pick an agent + add context before running (falls back to direct run).
     if (typeof window.openSkillRunner === 'function') { try { window.openSkillRunner(skillId, null, agentNm); return; } catch(_){} }
     var box=el('cdSkResult'); if(!box)return;
@@ -431,6 +562,7 @@
       var text = (typeof raw==='string')?raw:JSON.stringify(raw,null,2);
       window._roomToolLast = window._roomToolLast || {};
       var slot='deck:'+skillId; window._roomToolLast[slot]={tool:skillId,agent:agentNm,text:text};
+      try{ histPush(agentNm, '▶ '+skillId, text); if(ST.agentId!=null) renderHistory({nm:agentNm}); }catch(_){}  // per-agent run history
       var isImg=/^(https?:\/\/|data:image)/.test(String(text).trim());
       box.innerHTML =
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">'+
@@ -464,6 +596,7 @@
   function operate(d){
     var goal=(el('cdGoal').value||'').trim(); var con=el('cdCon'); var btn=el('cdRun');
     if(!goal){ con.innerHTML='<span class="m">enter a directive first.</span>'; return; }
+    lsSet(LSK.dir, goal);                                   // remember last directive for the quick-action bar
     if(ST.poll){ clearInterval(ST.poll); ST.poll=null; }   // cancel any in-flight run before starting a new one
     btn.disabled=true; con.innerHTML='<span class="l">▸ dispatching to '+esc(d.nm)+'…</span>';
     var body={goal:goal, agent:d.nm}; if(ST.forged&&ST.op&&ST.op.tools) body.options={tools:ST.op.tools};
@@ -479,6 +612,7 @@
             var used=(t.tools_used&&t.tools_used.length)?'\n<span class="g">⚡ tools: '+esc(Array.from(new Set(t.tools_used)).join(', '))+'</span>':'';
             con.innerHTML='<span class="l">▸ '+esc(d.nm)+':</span>\n'+esc(t.result||t.error||'(no output)')+used;
             con.scrollTop=con.scrollHeight;
+            try{ histPush(d.nm, goal, (t.result||t.error||'')); renderHistory(d); }catch(_){}  // per-agent run history
           } else {
             con.innerHTML='<span class="l">▸ dispatching to '+esc(d.nm)+'…</span>\n<span class="m">'+esc(t.status||'running')+' · '+(t.steps?t.steps.length:0)+' steps…</span>';
           }
