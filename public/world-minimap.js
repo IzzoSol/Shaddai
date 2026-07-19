@@ -26,8 +26,8 @@
   'use strict';
 
   /* ── Constants ─────────────────────────────────────────────────────────── */
-  var SIZE   = 172;             // canvas px (square bounding box)
-  var PAD    = 16;              // inner padding px on each side
+  var SIZE   = 210;             // canvas px (square bounding box) — bigger, clearer HUD
+  var PAD    = 18;              // inner padding px on each side
   var DRAW   = SIZE - PAD * 2;  // 140px drawable area (map bbox)
   var CTR    = SIZE / 2;        // 86 — center of the disc
   var RAD    = DRAW / 2;        // 70 — inner map radius
@@ -76,8 +76,10 @@
     cs.height          = SIZE + 'px';
     cs.zIndex          = '9999';
     cs.borderRadius    = '50%';
-    cs.boxShadow       = '0 0 26px rgba(39,224,255,0.40), 0 0 10px rgba(255,207,74,0.28), inset 0 0 18px rgba(0,0,0,0.65)';
-    cs.background      = 'radial-gradient(circle at 50% 42%, rgba(10,28,48,0.35), rgba(2,8,15,0.15))';
+    /* on-theme HUD: emerald ring + gold inner accent + soft glow (obsidian core) */
+    cs.border          = '2px solid rgba(0,255,156,0.55)';
+    cs.boxShadow       = '0 0 30px rgba(0,255,156,0.32), 0 0 12px rgba(232,196,92,0.24), inset 0 0 0 1px rgba(232,196,92,0.35), inset 0 0 22px rgba(0,0,0,0.7)';
+    cs.background      = 'radial-gradient(circle at 50% 42%, rgba(8,20,16,0.45), rgba(2,8,6,0.2))';
     cs.pointerEvents   = 'none';
     cs.userSelect      = 'none';
     cs.overflow        = 'hidden';
@@ -93,6 +95,17 @@
     cvs.borderRadius = '50%';
     container.appendChild(canvas);
     document.body.appendChild(container);
+
+    /* small on-theme label above the map (toggles with it) */
+    var label = document.createElement('div');
+    label.textContent = '◈ WORLD MAP · [M]';
+    var lb = label.style;
+    lb.position = 'fixed'; lb.right = '18px'; lb.bottom = (18 + SIZE + 7) + 'px';
+    lb.zIndex = '9999'; lb.pointerEvents = 'none'; lb.textAlign = 'right';
+    lb.font = '600 9px/1 "Chakra Petch","IBM Plex Mono",monospace'; lb.letterSpacing = '.24em';
+    lb.textTransform = 'uppercase'; lb.color = 'rgba(0,255,156,0.72)';
+    lb.textShadow = '0 0 8px rgba(0,255,156,0.4)';
+    document.body.appendChild(label);
 
     var ctx = canvas.getContext('2d');
     ctx.scale(DPR, DPR);                // draw in logical units; auto-upscaled
@@ -152,6 +165,7 @@
     /* setVisible(bool) — bind to M key externally */
     function setVisible(v) {
       container.style.display = v ? 'block' : 'none';
+      label.style.display = v ? 'block' : 'none';
     }
 
     return { update: update, setVisible: setVisible, el: container };
