@@ -835,6 +835,11 @@ try {
     max: 150,
     standardHeaders: true,   // RateLimit-* headers
     legacyHeaders: false,    // drop deprecated X-RateLimit-*
+    // /api/v1 (public developer API) is exempt here — it has its own per-key limiter
+    // + per-IP backstop, so it isn't double-limited (which would cause NAT/CGNAT users
+    // to hit a shared 150/min bucket and get confusing 429s). Anchor the match on a
+    // path boundary (strip query) so lookalikes like /api/v1beta are NOT exempted.
+    skip: (req) => { const p = String(req.originalUrl || req.url || '').split('?')[0]; return p === '/api/v1' || p.startsWith('/api/v1/'); },
     handler: (req, res) => {
       res.status(429).json({ ok: false, error: 'rate limit exceeded — slow down' });
     }

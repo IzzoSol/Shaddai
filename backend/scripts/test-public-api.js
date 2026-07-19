@@ -25,6 +25,21 @@ ok('rateCheck blocks past 60/min', lastOk === false);
 let ipOk = true; for (let i = 0; i < 6; i++) ipOk = keys.mintAllowed('1.2.3.4');
 ok('mintAllowed blocks past 5/hour/IP', ipOk === false);
 
+// revocation + disabled-key rejection
+const rk = keys.mint('to-revoke');
+ok('minted key validates before revoke', keys.validate(rk.key) !== null);
+ok('revoke(id) returns true', keys.revoke(rk.id) === true);
+ok('validate rejects a revoked key', keys.validate(rk.key) === null);
+ok('revoke(unknown) returns false', keys.revoke('nope-nope') === false);
+// label control-char sanitizing (log-injection safe)
+const lk = keys.mint('bad\nlabel\x00\x1b[31m');
+const lrec = keys._state.keys.find(k => k.id === lk.id);
+ok('label strips control chars', lrec && !/[\x00-\x1f\x7f]/.test(lrec.label));
+// token-bucket: remaining decrements, blocks when empty
+const tk = keys.mint('bucket'); const trec = keys.validate(tk.key);
+const r1 = keys.rateCheck(trec); const r2 = keys.rateCheck(trec);
+ok('rateCheck remaining decrements', r2.remaining < r1.remaining);
+
 // ── unit: pnl JSON accessors ─────────────────────────────────────────────────
 const pnl = require('../telegram-pnl');
 const calls = pnl.callsJson({ limit: 5 });
@@ -73,6 +88,21 @@ const server = app.listen(0, async () => {
     ok('GET /me with key → 200 tier=free', r.status === 200 && r.body.data.tier === 'free');
     r = await J('/api/v1/token/__nope__', auth);
     ok('GET /token miss → {called:false}', r.status === 200 && r.body.data.called === false);
+    // admin revoke route (ADMIN_TOKEN unset in tests → open) then key must 401
+    r = await J('/api/v1/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'revoke-http' }) });
+    const rid = r.body.id, rkey = r.body.key;
+    r = await J('/api/v1/keys/' + rid + '/revoke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    ok('POST /keys/:id/revoke → ok', r.status === 200 && r.body.revoked === true);
+    r = await J('/api/v1/calls', { headers: { Authorization: 'Bearer ' + rkey } });
+    ok('revoked key → 401', r.status === 401);
+    // F4: revoke must FAIL-CLOSED in production when ADMIN_TOKEN is unset
+    const savedEnv = process.env.NODE_ENV; delete process.env.ADMIN_TOKEN; process.env.NODE_ENV = 'production';
+    r = await J('/api/v1/keys/whatever/revoke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    ok('revoke without ADMIN_TOKEN in prod → 401 (fail-closed)', r.status === 401);
+    process.env.NODE_ENV = savedEnv;
+    // long :q must not crash (length-capped)
+    r = await J('/api/v1/token/' + 'A'.repeat(500), auth);
+    ok('GET /token with 500-char q → 200 (no crash)', r.status === 200);
   } catch (e) {
     console.error('✗ integration error:', e.message); process.exitCode = 1;
   } finally {

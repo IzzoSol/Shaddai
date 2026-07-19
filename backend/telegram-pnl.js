@@ -54,7 +54,9 @@ function nowMs() { return _now; }
 let _now = 0;   // stamped per tick (Date.now unavailable in some sandboxes; set on each call)
 
 function _read() { try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) { return { calls: [] }; } }
-function _write(o) { try { const d = path.dirname(FILE); if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(o, null, 2)); } catch (e) {} }
+// Atomic write (temp-file + rename) so a crash mid-write can't truncate/corrupt
+// tg-calls.json and silently wipe the call history.
+function _write(o) { try { const d = path.dirname(FILE); if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); const tmp = FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(o, null, 2)); fs.renameSync(tmp, FILE); } catch (e) { try { console.warn('[tg-pnl] write failed:', e && e.message); } catch (_) {} } }
 
 let _state = _read();
 
