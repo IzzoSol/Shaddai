@@ -10255,16 +10255,76 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           <button class="aura-gh" style="width:100%;justify-content:center" onclick="activateAura();try{notify('Run BENCHMARK inside the live console')}catch(e){}">▶ RUN BENCHMARK</button>
           <div class="aura-mut" style="margin-top:9px;text-align:center">opens the live console below — counters move as it runs</div>
         </div>
-        <!-- ══ 3b · TRY AURA ══ -->
-        <div class="aura-sec">
-          <div class="aura-sec-h"><span class="ico" id="auraIcoTry">⚡</span><span class="aura-sec-t">Try AURA</span></div>
-          <div class="aura-sec-sub">Type a prompt and watch it answer <b style="color:var(--aura-cy)">free</b> from cache / compute / skills — or teach it a new answer. It computes any input; it's not a script.</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"12.5% of 4800"</span>
-            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"convert 3 miles to km"</span>
-            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="activateAura()">"sha256 of hello"</span>
+        <!-- ══ 3b · TRY IT — LIVE OPTIMIZER (client-side, real behavior) ══ -->
+        <div class="aura-sec cy" id="auraOpt" style="grid-column:1/-1">
+          <div class="aura-sec-h"><span class="ico" id="auraIcoTry">⚡</span><span class="aura-sec-t">Try it — live optimizer</span><span class="aura-sec-n">runs in your browser · real behavior</span></div>
+          <div class="aura-sec-sub">A real agent request — <b>40 tools</b>, a bloated <b>system prompt</b>, and a long <b>history</b>, all re-sent on <i>every</i> call. Type what you'd ask the agent; AURA trims what it doesn't need before the model ever runs.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px">
+            <input id="auraOptIn" class="input" placeholder="e.g. commit and push my changes" style="flex:1;min-width:220px;font-family:'Share Tech Mono',monospace;font-size:12px" onkeydown="if(event.key==='Enter')runAuraOpt()">
+            <button class="aura-btn-cy" style="padding:0 20px" onclick="runAuraOpt()">⚡ OPTIMIZE</button>
           </div>
-          <button class="aura-btn-cy" style="width:100%;padding:11px 0" onclick="activateAura()">⚡ OPEN LIVE TESTER</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="auraOptSet('commit and push my changes')">commit and push my changes</span>
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="auraOptSet('what is the weather in Tokyo tomorrow')">what's the weather in Tokyo</span>
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="auraOptSet('search the codebase for the auth bug')">search the codebase</span>
+            <span class="aura-pill" style="cursor:pointer;font-size:10px" onclick="auraOptSet('email the investors the Q3 report')">email the investors</span>
+          </div>
+          <div id="auraOptOut" style="display:none;margin-top:12px">
+            <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:14px;border:1px solid rgba(0,229,255,.25);border-radius:12px;background:linear-gradient(180deg,rgba(0,229,255,.06),transparent)">
+              <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--text-muted)">BEFORE</div><div id="auraOptBefore" style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:26px;color:var(--text-muted)">—</div><div style="font-size:8px;color:var(--text-muted)">tokens / call</div></div>
+              <div style="font-size:22px;color:var(--aura-cy)">➔</div>
+              <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--text-muted)">AFTER</div><div id="auraOptAfter" style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:26px;color:var(--aura-cy)">—</div><div style="font-size:8px;color:var(--text-muted)">tokens / call</div></div>
+              <div style="text-align:center;padding-left:14px;border-left:1px solid rgba(255,255,255,.08)"><div id="auraOptPct" style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:34px;color:var(--aura-grn)">—</div><div style="font-size:8px;color:var(--text-muted)">saved · every call</div></div>
+            </div>
+            <div class="aura-tiles" style="grid-template-columns:repeat(3,1fr);margin-top:12px">
+              <div class="aura-tile"><div class="tk">Tools sent</div><div class="tv" id="auraOptTools">—</div><div class="ts" id="auraOptToolsNote">of 40</div></div>
+              <div class="aura-tile"><div class="tk">Instructions</div><div class="tv" id="auraOptSys">—</div><div class="ts">system prompt trimmed</div></div>
+              <div class="aura-tile"><div class="tk">History</div><div class="tv" id="auraOptHist">—</div><div class="ts">stale blocks elided</div></div>
+            </div>
+            <div id="auraOptKept" style="margin-top:12px;font-size:11px;line-height:1.9"></div>
+            <details style="margin-top:10px"><summary style="cursor:pointer;font-size:10px;color:var(--aura-cy);font-family:'Share Tech Mono',monospace">▸ SYSTEM PROMPT — before vs after (safety rules stay)</summary>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+                <div><div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">BEFORE</div><pre id="auraOptSysBefore" style="white-space:pre-wrap;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.3);border-radius:8px;padding:10px;margin:0;max-height:220px;overflow:auto"></pre></div>
+                <div><div style="font-size:8px;color:var(--aura-cy);margin-bottom:4px">AFTER · distilled</div><pre id="auraOptSysAfter" style="white-space:pre-wrap;font-size:10px;color:#bfe8d6;background:rgba(0,255,136,.05);border-radius:8px;padding:10px;margin:0;max-height:220px;overflow:auto"></pre></div>
+              </div>
+            </details>
+            <div style="font-size:9px;color:var(--text-muted);margin-top:10px;text-align:center">This is <b style="color:var(--aura-cy)">aura.optimize()</b> behavior — deterministic, fails open (a tool it can't rule out is never dropped), every cut reported. The full engine ships in <b style="color:var(--aura-cy)">shaddai-aura</b>.</div>
+          </div>
+          <script>/* AURA live optimizer — self-contained client-side demo of real optimize() behavior */
+          (function(){
+            if(window.__auraOptInit)return; window.__auraOptInit=1;
+            var T=[["read_file","read the contents of a file from disk"],["write_file","create or overwrite a file on disk"],["edit_file","apply a find and replace edit to a file"],["delete_file","delete a file from disk"],["list_directory","list files in a directory"],["search_code","search the codebase for a pattern or text"],["run_shell","execute a shell command in the terminal"],["git_status","show git working tree status"],["git_commit","create a git commit with a message"],["git_push","push commits to the remote repository"],["git_diff","show the diff of uncommitted changes"],["open_pull_request","open a github pull request"],["search_web","search the internet for information"],["fetch_url","fetch the contents of a web page by url"],["get_weather","get the current weather and forecast for a city"],["send_email","send an email message to a recipient"],["send_slack","post a message to a slack channel"],["create_calendar_event","create an event on the calendar"],["run_sql","run a sql query against the database"],["list_tables","list the database tables"],["describe_table","show a database table schema"],["upload_s3","upload a file to an s3 bucket"],["download_s3","download a file from an s3 bucket"],["deploy_service","deploy the application to an environment"],["rollback_deploy","roll back the last deployment"],["get_logs","fetch recent application logs from a service"],["create_ticket","create a jira ticket or support issue"],["convert_currency","convert money from one currency to another"],["book_flight","book a flight between two airports"],["translate_text","translate text from one language to another"],["summarize_text","summarize a long piece of text"],["generate_image","generate an image from a text prompt"],["transcribe_audio","transcribe spoken audio into text"],["create_chart","create a chart or graph from a dataset"],["read_spreadsheet","read rows from a spreadsheet"],["geocode_address","convert a street address into coordinates"],["get_stock_quote","get the current stock price for a ticker symbol"],["sign_document","send a document out for e-signature"],["schedule_meeting","schedule a meeting with attendees"],["list_branches","list the git branches"]].map(function(b){return {name:b[0],description:b[1],input_schema:{type:"object",properties:{arg:{type:"string"}}}};});
+            var SYS=["You are an autonomous senior engineering agent working in a real repository.","Be concise and clear in your explanations.","Be concise and clear in your explanations.","I want you to always run the tests after making a change.","Please note that responses may go to paying customers.","Never delete or overwrite files without explicit confirmation.","Always confirm before deploying to production.","Thank you."].join("\n");
+            var F="// src/server.js\nexport function server(app){\n"+Array.apply(null,{length:16}).map(function(_,i){return "  app.get('/r"+i+"',(req,res)=>res.send("+i+"));";}).join("\n")+"\n}";
+            var H=[{role:"user",content:"help me fix the auth bug in the server"},{role:"assistant",content:"Reading the server file now."},{role:"user",content:F},{role:"assistant",content:"I can see the token check is missing an expiry test."},{role:"user",content:"can you show me the file again"},{role:"assistant",content:"Sure, reading it again."},{role:"user",content:F},{role:"assistant",content:"Here it is once more."},{role:"user",content:"ok that makes sense"},{role:"assistant",content:"Great, ready for the next step."}];
+            function tk(s){return (s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").split(" ").filter(function(w){return w.length>2;});}
+            function est(s){s=(typeof s==="string")?s:JSON.stringify(s);return Math.max(1,Math.ceil(s.length/4));}
+            function sel(q,k){var qs={};tk(q).forEach(function(w){qs[w]=1;});var sc=T.map(function(t){var d=tk(t.name+" "+t.description),s=0,seen={};d.forEach(function(w){if(qs[w]&&!seen[w]){s++;seen[w]=1;}});return {t:t,s:s};});var h=sc.filter(function(x){return x.s>0;}).sort(function(a,b){return b.s-a.s;});if(!h.length)return {kept:T.slice(),fo:true};return {kept:h.slice(0,k).map(function(x){return x.t;}),fo:false};}
+            function dist(sy){var ls=sy.split("\n"),seen={},out=[];var HD=/^(please note that|i want you to|keep in mind that|your task is to|make sure(?: that you| to)?|be sure to|it'?s important to|you should|remember to)\s+/i;var PO=/^(thank you|thanks|cheers|much appreciated)[.!]?$/i;ls.forEach(function(l){var t=l.trim();if(!t)return;var key=t.toLowerCase();if(seen[key])return;if(PO.test(t))return;seen[key]=1;var nl=l.replace(HD,"");nl=nl.charAt(0).toUpperCase()+nl.slice(1);out.push(nl);});return out.join("\n");}
+            function comp(ms,keep){var n=ms.length,last={};ms.forEach(function(m,i){if(m.content.length>=120)last[m.content]=i;});return ms.map(function(m,i){if(i===0||i>=n-keep)return m;if(m.content.length>=120&&last[m.content]>i)return {role:m.role,content:"[AURA: identical to a later message, elided (~"+est(m.content)+" tokens)]"};return m;});}
+            function anim(el,to){var t0=null;function st(ts){if(!t0)t0=ts;var p=Math.min(1,(ts-t0)/650);el.textContent=Math.round(to*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)requestAnimationFrame(st);}requestAnimationFrame(st);}
+            function g(id){return document.getElementById(id);}
+            window.auraOptSet=function(v){var el=g("auraOptIn");if(el){el.value=v;window.runAuraOpt();}};
+            window.runAuraOpt=function(){
+              if(!g("auraOptIn"))return;
+              var q=(g("auraOptIn").value||"").trim()||"commit and push my changes";
+              var s=sel(q,3),ds=dist(SYS),hist=H.concat([{role:"user",content:q}]),ch=comp(hist,6);
+              var bT=est(JSON.stringify(T)),aT=est(JSON.stringify(s.kept)),bS=est(SYS),aS=est(ds);
+              var bH=hist.reduce(function(a,m){return a+est(m.content);},0),aH=ch.reduce(function(a,m){return a+est(m.content);},0);
+              var bef=bT+bS+bH,aft=aT+aS+aH,pct=Math.round((bef-aft)/bef*100);
+              g("auraOptOut").style.display="block";
+              anim(g("auraOptBefore"),bef); anim(g("auraOptAfter"),aft); g("auraOptPct").textContent=pct+"%";
+              g("auraOptTools").textContent=s.kept.length;
+              g("auraOptToolsNote").textContent=s.fo?"of 40 · fail-open (no clear match → sent all, nothing risked)":"of 40 · saved "+(bT-aT).toLocaleString()+" tok";
+              g("auraOptSys").textContent="−"+(bS-aS)+" tok";
+              var el=ch.filter(function(m){return /elided/.test(m.content);}).length;
+              g("auraOptHist").textContent=el+" block"+(el===1?"":"s");
+              g("auraOptKept").innerHTML="<b style=\"color:var(--aura-cy)\">Tools sent:</b> "+(s.fo?"<span style=\"color:var(--text-muted)\">all 40 — fail-open, no clear match</span>":s.kept.map(function(t){return "<span class=\"aura-pill\" style=\"font-size:10px\">"+t.name+"</span>";}).join(" ")+" &nbsp;<span style=\"color:var(--text-muted)\">· "+(40-s.kept.length)+" dropped</span>");
+              g("auraOptSysBefore").textContent=SYS; g("auraOptSysAfter").textContent=ds;
+            };
+            setTimeout(function(){try{window.runAuraOpt();}catch(e){}},60);
+          })();
+          </script>
         </div>
       </div>
 
@@ -10301,7 +10361,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 
       <!-- ══ 4 · MCP SETUP + 6 · RECENT SAVES / 7 · ROADMAP link ══ -->
       <div class="aura-sec cy">
-        <div class="aura-sec-h"><span class="ico" id="auraIcoMcp">🔌</span><span class="aura-sec-t">MCP setup</span><span class="aura-sec-n">v0.4.0 · 5 tools · zero deps</span></div>
+        <div class="aura-sec-h"><span class="ico" id="auraIcoMcp">🔌</span><span class="aura-sec-t">MCP setup</span><span class="aura-sec-n">v0.6.0 · optimize · zero deps</span></div>
         <div class="aura-sec-sub">Add AURA to Claude Desktop, Claude Code or Cursor and it saves tokens automatically — answering repeat prompts for free from cache, compute, skills or your own docs before your model spends anything.</div>
 
         <div class="aura-code-lbl">CLAUDE CODE — one line</div>
@@ -36915,9 +36975,8 @@ function popoutProjects() {
     + topbar + stats
     + '<div class="main"><div class="grid" id="grid">' + cards + '</div></div>'
     + '<script>' + js + '<\/script>'
-    + '
-<script src="/home-btn.js" defer></script>
-</body></html>');
+    + '<script src="/home-btn.js" defer><\/script>'
+    + '</body></html>');
   w.document.close();
   notify('Projects popout — ' + projects.length + ' projects');
 }

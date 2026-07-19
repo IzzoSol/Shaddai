@@ -24,7 +24,19 @@
   #c3d{position:fixed;inset:0;display:block}
   /* HUD */
   .hud{position:fixed;z-index:20;pointer-events:none}
-  #top{top:18px;left:24px}
+  /* WORLD RETURN NAV — top-left return pills; title/buttons below are shifted down to coexist. */
+  #worldNav{position:fixed;top:14px;left:14px;z-index:40;display:flex;align-items:center;gap:9px;
+    font-family:'Chakra Petch','IBM Plex Mono',ui-monospace,monospace;line-height:1;pointer-events:auto}
+  #worldNav a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;
+    padding:7px 12px;border-radius:10px;font-size:12px;font-weight:600;letter-spacing:.07em;color:#eafff6;
+    background:rgba(6,8,11,.8);border:1px solid rgba(0,255,156,.28);backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,.45);
+    transition:border-color .18s,color .18s,background .18s,transform .18s}
+  #worldNav a:hover{border-color:rgba(0,255,156,.75);color:#00ff9c;background:rgba(6,8,11,.9);transform:translateY(-1px)}
+  #worldNav a.dash{border-color:rgba(95,224,255,.28)}
+  #worldNav a.dash:hover{border-color:rgba(95,224,255,.75);color:#5fe0ff}
+  @media(max-width:560px){#worldNav a span{display:none}#worldNav a{padding:8px 10px}}
+  #top{top:56px;left:24px}
   #top h1{font-family:'Orbitron',sans-serif;font-weight:900;font-size:20px;letter-spacing:6px;color:#fff;text-shadow:0 0 18px rgba(255,207,74,.6)}
   #top h1 b{color:var(--gold)}
   #top .sub{font-size:9px;letter-spacing:4px;color:var(--cyan);opacity:.8;margin-top:3px}
@@ -125,14 +137,21 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
   show('PROMISE: '+msg);});})();
 </script>
 
+<!-- WORLD RETURN NAV: the world's own explicit way home. Declared in-page (not relying on the site-wide
+     home-btn.js text-guard, which this page's "✕ EXIT" district button falsely trips → cluster was suppressed
+     = NO way home). Sits top-left ABOVE the title; the title + ⚙/walk buttons are nudged down to clear it. -->
+<nav id="worldNav" aria-label="Return">
+  <a href="/home.html" title="Home">⌂ <span>Home</span></a>
+  <a class="dash" href="/index.html" title="Dashboard">▦ <span>Dashboard</span></a>
+</nav>
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
 <div class="hud" id="hint"><span class="k">TAB</span> cursor⇄play · <span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">N</span> news · <span class="k">ESC</span> cursor</div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
-<button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:58px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
-<div id="terrPanel" style="display:none;position:fixed;top:102px;left:24px;z-index:25;background:rgba(8,12,22,.96);border:1px solid rgba(39,224,255,.3);border-radius:10px;padding:10px">
+<button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:112px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
+<div id="terrPanel" style="display:none;position:fixed;top:156px;left:24px;z-index:25;background:rgba(8,12,22,.96);border:1px solid rgba(39,224,255,.3);border-radius:10px;padding:10px">
   <div style="font-size:8px;letter-spacing:2px;color:#7e8aa3;margin-bottom:8px;font-family:'Share Tech Mono',monospace">ENVIRONMENT</div>
   <button class="terrOpt" onclick="applyTerrain('grid')">⬡ Tron Grid</button>
   <button class="terrOpt" onclick="applyTerrain('meadow')">🌿 Meadow</button>
@@ -280,7 +299,7 @@ const canvas = document.getElementById('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;  // ATMOSPHERE POLISH: 0.85→0.9 — a hair brighter so agents/buildings read fuller under the moody night palette without washing out the blacks (ACES rolls the highlights, so the night vibe stays).
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.97;  // ATMOSPHERE POLISH: 0.85→0.9→0.97 — lifts the muddy mid-tones so agents/buildings read richer & more cohesive, still <1.0 so ACES keeps the night mood and never blows out the blacks/highlights.
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -2768,7 +2787,7 @@ try { if(window.buildWorldChat){ window.__shaddaiChat = window.buildWorldChat();
   var btn=document.createElement('button');
   btn.textContent='💬 CHAT';
   btn.title='Open chat';
-  btn.style.cssText='position:fixed;top:58px;left:70px;z-index:26;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#8fefff;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:8px;cursor:pointer';
+  btn.style.cssText='position:fixed;top:112px;left:70px;z-index:26;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#8fefff;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:8px;cursor:pointer';
   document.body.appendChild(btn);
   btn.onclick=function(){ try{ if(window.__shaddaiChat) window.__shaddaiChat.toggle(); }catch(_){} };
 })();

@@ -35,11 +35,13 @@
       'a[href="/home.html"],a[href="home.html"],a[href$="/home.html"],'+
       'a[href="/"],a[href="/dashboard"],a[href="/index.html"],a[href$="/dashboard"]'
     )) return;
-    // text-based check for a back/exit/dashboard/home control already in the page
+    // skip ONLY if the page already has a real HOME or DASHBOARD control of its own.
+    // (Do NOT match back/exit/mode — a page with just an EXIT still needs a Home button;
+    // matching "exit" previously suppressed Home on the world/observatory/games.)
     var ctrls = document.querySelectorAll('a,button');
-    for (var i=0; i<ctrls.length && i<120; i++){
+    for (var i=0; i<ctrls.length && i<160; i++){
       var t = (ctrls[i].textContent||'').trim().toLowerCase();
-      if (/(^|\s)(home|dashboard|back|exit)(\s|$)/.test(t) || /dashboard|back to|← *dashboard|◄/.test(t)) return;
+      if (/(^|\s)home(\s|$)/.test(t) || /(^|\s)dashboard(\s|$)/.test(t)) return;
     }
 
     var css = document.createElement('style');
