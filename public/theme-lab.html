@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en" data-theme="sacred">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Theme & Type Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=VT323&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════
+   SHADDAI — THEME & TYPE LAB
+   Each theme sets CSS variables + fonts + a wallpaper layer.
+   The preview components below consume only the variables,
+   so flipping [data-theme] restyles the entire dashboard mock.
+   ══════════════════════════════════════════════════════════ */
+:root{
+  --bg:#06080b; --bg2:#0b0f15; --panel:#0d1219; --ink:#eaf2ee; --muted:#8aa0a8;
+  --line:rgba(255,255,255,.09); --a1:#00ff9c; --a2:#e8c45c; --a3:#5fe0ff;
+  --disp:"Cinzel Decorative",serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --radius:14px; --wall:radial-gradient(120% 90% at 80% -10%, rgba(0,255,156,.08), transparent 60%);
+  --glow:0 0 22px rgba(0,255,156,.22); --tilebg:rgba(255,255,255,.02);
+}
+
+/* ─────────── THEME 1 · SACRED TECH (emerald & gold, obsidian) ─────────── */
+[data-theme="sacred"]{
+  --bg:#06080b; --bg2:#0a0e14; --panel:#0d1219; --ink:#eaf2ee; --muted:#8398a0;
+  --line:rgba(120,220,180,.12); --a1:#00ff9c; --a2:#e8c45c; --a3:#5fe0ff;
+  --disp:"Cinzel Decorative",serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:radial-gradient(130% 100% at 82% -18%, rgba(0,255,156,.10), transparent 55%),
+         radial-gradient(90% 80% at 8% 120%, rgba(232,196,92,.06), transparent 60%);
+  --glow:0 0 24px rgba(0,255,156,.22); --tilebg:rgba(120,220,180,.03);
+}
+/* ─────────── THEME 2 · OBSIDIAN BRUTALIST (mono, acid lime) ─────────── */
+[data-theme="obsidian"]{
+  --bg:#0a0a0a; --bg2:#101010; --panel:#141414; --ink:#f4f4f0; --muted:#8f8f88;
+  --line:rgba(255,255,255,.14); --a1:#c6f833; --a2:#ffffff; --a3:#9a9a92;
+  --disp:"Space Grotesk",sans-serif; --body:"General Sans","Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 46px),
+         repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, transparent 1px 46px);
+  --radius:4px; --glow:0 0 0 1px rgba(198,248,51,.5); --tilebg:rgba(255,255,255,.015);
+}
+/* ─────────── THEME 3 · TERMINAL PHOSPHOR (CRT green) ─────────── */
+[data-theme="terminal"]{
+  --bg:#020604; --bg2:#04120a; --panel:#051810; --ink:#7dfcb0; --muted:#3f9c6c;
+  --line:rgba(60,240,150,.20); --a1:#39ff97; --a2:#c8ff6a; --a3:#39ff97;
+  --disp:"VT323",monospace; --body:"IBM Plex Mono",monospace; --mono:"IBM Plex Mono",monospace;
+  --wall:repeating-linear-gradient(0deg, rgba(60,255,150,.05) 0 2px, transparent 2px 4px),
+         radial-gradient(120% 100% at 50% 0%, rgba(60,255,150,.10), transparent 60%);
+  --radius:2px; --glow:0 0 18px rgba(60,255,150,.4); --tilebg:rgba(60,255,150,.03);
+}
+/* ─────────── THEME 4 · PARCHMENT CODEX (light, ink & gold) ─────────── */
+[data-theme="codex"]{
+  --bg:#efe6d2; --bg2:#f5eede; --panel:#fbf6ea; --ink:#2a2118; --muted:#7c6f57;
+  --line:rgba(60,45,25,.16); --a1:#9a6b1e; --a2:#3a6b4a; --a3:#8a3d2e;
+  --disp:"Fraunces",serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:radial-gradient(120% 100% at 80% -10%, rgba(154,107,30,.10), transparent 55%),
+         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  --glow:0 6px 18px rgba(60,45,25,.14); --tilebg:rgba(60,45,25,.03);
+}
+/* ─────────── THEME 5 · NEON DUSK (vaporwave, magenta/cyan) ─────────── */
+[data-theme="dusk"]{
+  --bg:#0b0620; --bg2:#130a2e; --panel:#180d38; --ink:#f2e9ff; --muted:#9a86c8;
+  --line:rgba(255,120,220,.20); --a1:#ff4fd8; --a2:#4fe0ff; --a3:#ffd24f;
+  --disp:"Orbitron",sans-serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:linear-gradient(180deg, transparent 60%, rgba(255,79,216,.10) 100%),
+         radial-gradient(90% 80% at 15% 0%, rgba(79,224,255,.14), transparent 55%),
+         radial-gradient(90% 80% at 85% 10%, rgba(255,79,216,.14), transparent 55%);
+  --glow:0 0 26px rgba(255,79,216,.35); --tilebg:rgba(255,120,220,.04);
+}
+/* ─────────── THEME 6 · MOLTEN FORGE (ember & steel) ─────────── */
+[data-theme="ember"]{
+  --bg:#0c0705; --bg2:#160c07; --panel:#1b0f08; --ink:#ffe9d6; --muted:#b78a70;
+  --line:rgba(255,120,50,.16); --a1:#ff6a2b; --a2:#ffb347; --a3:#7fb0c0;
+  --disp:"Cinzel Decorative",serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:radial-gradient(100% 90% at 50% 120%, rgba(255,106,43,.18), transparent 55%),
+         radial-gradient(80% 70% at 85% -10%, rgba(255,179,71,.08), transparent 60%);
+  --glow:0 0 24px rgba(255,106,43,.30); --tilebg:rgba(255,120,50,.03);
+}
+[data-theme="dusk"]{ --onA:#0b0620; }
+
+/* ─────────── THEME 7 · IVORY (black & white, bright) ─────────── */
+[data-theme="ivory"]{
+  --bg:#f6f6f4; --bg2:#ffffff; --panel:#ffffff; --ink:#0a0a0a; --muted:#6a6a66;
+  --line:rgba(0,0,0,.13); --a1:#0a0a0a; --a2:#5a5a56; --a3:#0a0a0a; --onA:#ffffff;
+  --disp:"Space Grotesk",sans-serif; --body:"General Sans","Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:repeating-linear-gradient(0deg, rgba(0,0,0,.018) 0 1px, transparent 1px 52px),
+         repeating-linear-gradient(90deg, rgba(0,0,0,.018) 0 1px, transparent 1px 52px);
+  --radius:6px; --glow:0 6px 18px rgba(0,0,0,.12); --tilebg:rgba(0,0,0,.018);
+}
+/* ─────────── THEME 8 · SOLAR (bright, warm daylight) ─────────── */
+[data-theme="solar"]{
+  --bg:#fff7ec; --bg2:#fffdf7; --panel:#ffffff; --ink:#1c140c; --muted:#8c7658;
+  --line:rgba(150,95,20,.16); --a1:#00b36b; --a2:#f2a400; --a3:#1a9fff; --onA:#ffffff;
+  --disp:"Fraunces",serif; --body:"Chakra Petch",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:radial-gradient(120% 90% at 82% -10%, rgba(0,179,107,.12), transparent 52%),
+         radial-gradient(90% 80% at 6% 118%, rgba(242,164,0,.12), transparent 58%);
+  --glow:0 8px 22px rgba(0,179,107,.18); --tilebg:rgba(150,95,20,.03);
+}
+/* ─────────── THEME 9 · MIST (bright, cool porcelain) ─────────── */
+[data-theme="mist"]{
+  --bg:#eaf1f6; --bg2:#f5f9fc; --panel:#ffffff; --ink:#0f1a24; --muted:#5f7488;
+  --line:rgba(20,60,95,.14); --a1:#0a84ff; --a2:#00a88f; --a3:#ff5b8a; --onA:#ffffff;
+  --disp:"Space Grotesk",sans-serif; --body:"General Sans","Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --wall:radial-gradient(120% 90% at 80% -12%, rgba(10,132,255,.12), transparent 52%),
+         radial-gradient(90% 80% at 10% 120%, rgba(0,168,143,.10), transparent 58%);
+  --glow:0 8px 22px rgba(20,60,95,.14); --tilebg:rgba(20,60,95,.02);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--wall), var(--bg);
+  background-attachment:fixed;
+  color:var(--ink); font-family:var(--body);
+  -webkit-font-smoothing:antialiased; transition:background .5s, color .3s;
+  display:flex; min-height:100vh;
+}
+
+/* ───── left rail : theme picker ───── */
+.rail{
+  width:230px; flex:none; background:color-mix(in srgb, var(--bg2) 88%, transparent);
+  border-right:1px solid var(--line); padding:20px 16px; position:sticky; top:0; height:100vh; overflow:auto;
+}
+.rail h1{font-family:var(--disp); font-size:15px; letter-spacing:.06em; margin:0 0 2px; color:var(--ink)}
+.rail .sub{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:20px}
+.swatch{
+  display:block; width:100%; text-align:left; cursor:pointer; margin-bottom:10px; padding:12px 12px;
+  background:var(--tilebg); border:1px solid var(--line); border-radius:var(--radius); color:var(--ink);
+  font-family:var(--body); transition:.18s; position:relative;
+}
+.swatch:hover{transform:translateX(3px); border-color:var(--a1)}
+.swatch.on{border-color:var(--a1); box-shadow:var(--glow)}
+.swatch .nm{font-family:var(--disp); font-size:14px; letter-spacing:.02em; display:block; margin-bottom:2px}
+.swatch .fp{font-family:var(--mono); font-size:9px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase}
+.swatch .dots{display:flex; gap:5px; margin-top:9px}
+.swatch .dots i{width:15px; height:15px; border-radius:50%; display:block; border:1px solid rgba(255,255,255,.15)}
+
+/* ───── main preview ───── */
+.stage{flex:1; padding:26px 32px 60px; max-width:1100px; margin:0 auto; width:100%}
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px}
+.wordmark{display:flex; align-items:center; gap:11px; font-family:var(--disp); font-size:22px; letter-spacing:.04em}
+.wordmark .sig{color:var(--a1); text-shadow:var(--glow)}
+.chips{display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:7px 12px; border:1px solid var(--line);
+  border-radius:999px; background:var(--tilebg); color:var(--muted)}
+.chip.pro{color:var(--a2); border-color:color-mix(in srgb,var(--a2) 45%, transparent)}
+.chip.cr{color:var(--a1); border-color:color-mix(in srgb,var(--a1) 40%, transparent)}
+.themename{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+
+/* command hub */
+.hub{border:1px solid var(--line); border-radius:var(--radius); background:color-mix(in srgb,var(--panel) 80%, transparent);
+  padding:16px 18px; margin-bottom:20px; backdrop-filter:blur(6px)}
+.hub .hd{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px}
+.hub .hd .t{font-family:var(--disp); font-size:17px; letter-spacing:.04em; display:flex; align-items:center; gap:9px}
+.hub .hd .t b{color:var(--a1); text-shadow:var(--glow); font-weight:inherit}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+.act{font-family:var(--body); font-weight:600; font-size:12.5px; letter-spacing:.03em; padding:9px 13px; cursor:pointer;
+  border:1px solid var(--line); border-radius:calc(var(--radius) - 5px); background:var(--tilebg); color:var(--ink); transition:.16s; display:flex; align-items:center; gap:6px}
+.act:hover{border-color:var(--a1); color:var(--a1); transform:translateY(-1px)}
+.act.key{background:color-mix(in srgb,var(--a1) 16%, transparent); border-color:color-mix(in srgb,var(--a1) 55%, transparent); color:var(--ink)}
+
+/* tile grid */
+.grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px}
+@media(max-width:820px){.grid{grid-template-columns:1fr 1fr}}
+.tile{border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(160deg, color-mix(in srgb,var(--panel) 82%, transparent), var(--tilebg));
+  padding:17px 16px; min-height:118px; cursor:pointer; transition:.18s; position:relative; overflow:hidden}
+.tile:hover{transform:translateY(-3px); border-color:var(--a1); box-shadow:var(--glow)}
+.tile .ic{font-size:22px; margin-bottom:10px; filter:drop-shadow(0 0 8px currentColor)}
+.tile h3{font-family:var(--disp); font-size:15px; margin:0 0 4px; letter-spacing:.02em}
+.tile p{font-family:var(--body); font-size:12px; color:var(--muted); margin:0; line-height:1.45}
+.tile .bar{position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acc)}
+.tile .st{position:absolute; right:12px; top:14px; font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--acc)}
+
+/* agent chips */
+.sect{font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin:0 0 12px}
+.agents{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px}
+.agent{display:flex; flex-direction:column; align-items:center; gap:7px; width:86px; padding:13px 6px; border:1px solid var(--line);
+  border-radius:var(--radius); background:var(--tilebg); cursor:pointer; transition:.16s}
+.agent:hover{transform:translateY(-2px); border-color:var(--ac)}
+.agent .orb{width:38px; height:38px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #fff3, transparent), var(--ac);
+  box-shadow:0 0 16px var(--ac); display:grid; place-items:center; font-family:var(--disp); font-size:15px; color:#0009; font-weight:900}
+.agent .nm{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; color:var(--ink)}
+.agent .rl{font-family:var(--body); font-size:9px; color:var(--muted)}
+
+/* console + controls */
+.console{border:1px solid var(--line); border-radius:var(--radius); background:color-mix(in srgb,var(--bg2) 70%, transparent);
+  padding:14px 16px; font-family:var(--mono); font-size:12.5px; line-height:1.7; margin-bottom:20px}
+.console .ln{color:var(--muted)} .console .ln b{color:var(--a1); font-weight:500}
+.console .ln em{color:var(--a2); font-style:normal}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.inp{flex:1; min-width:200px; font-family:var(--mono); font-size:13px; padding:11px 14px; background:var(--tilebg);
+  border:1px solid var(--line); border-radius:calc(var(--radius) - 4px); color:var(--ink); outline:none}
+.inp:focus{border-color:var(--a1)}
+.btn{font-family:var(--body); font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase; padding:12px 20px; cursor:pointer; border-radius:calc(var(--radius) - 4px); border:1px solid transparent; transition:.16s}
+.btn.pri{background:var(--a1); color:var(--onA,#04120a); box-shadow:var(--glow)} .btn.pri:hover{filter:brightness(1.1)}
+.btn.gh{background:transparent; border-color:var(--line); color:var(--ink)} .btn.gh:hover{border-color:var(--a1); color:var(--a1)}
+.typo{margin-top:26px; padding-top:18px; border-top:1px solid var(--line)}
+.typo .disp{font-family:var(--disp); font-size:34px; letter-spacing:.02em; margin:0 0 4px}
+.typo .bd{font-family:var(--body); font-size:14px; color:var(--muted); max-width:560px; line-height:1.6; margin:6px 0 0}
+.typo .mn{font-family:var(--mono); font-size:11px; color:var(--a1); letter-spacing:.1em; margin-top:8px}
+.foot{margin-top:30px; font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<aside class="rail">
+  <h1>Theme &amp; Type Lab</h1>
+  <div class="sub">SHADDAI · pick a direction</div>
+  <div id="picker"></div>
+  <div class="foot" style="margin-top:22px">Winner rolls across the<br>dashboard + pixel office +<br>pixel universe so they match.</div>
+</aside>
+
+<main class="stage">
+  <div class="topbar">
+    <div class="wordmark"><span class="sig">◈</span> SHADDAI</div>
+    <div class="chips">
+      <span class="chip">◷ ONLINE</span>
+      <span class="chip pro">✦ PRO</span>
+      <span class="chip cr">◆ 500 CR</span>
+      <span class="themename" id="tn">SACRED TECH</span>
+    </div>
+  </div>
+
+  <!-- COMMAND HUB (matches your screenshot) -->
+  <section class="hub">
+    <div class="hd">
+      <div class="t"><b>⚡</b> COMMAND HUB</div>
+      <div class="actions">
+        <button class="act">✎ Edit Layout</button>
+        <button class="act">🖼 Wallpaper</button>
+        <button class="act">＋ Add Tile</button>
+        <button class="act key">⚡ Power Up</button>
+        <button class="act">📥 Results</button>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="tile" style="--acc:var(--a1)"><span class="bar"></span><span class="st">live</span><div class="ic" style="color:var(--a1)">☰</div><h3>The Council</h3><p>The seven &amp; their halls</p></div>
+      <div class="tile" style="--acc:var(--a3)"><span class="bar"></span><span class="st">enter</span><div class="ic" style="color:var(--a3)">▦</div><h3>Pixel World</h3><p>Your rooms &amp; roster in the universe</p></div>
+      <div class="tile" style="--acc:var(--a2)"><span class="bar"></span><span class="st">forge</span><div class="ic" style="color:var(--a2)">⚒</div><h3>The Forge</h3><p>2D free · 3D archetype (Pro)</p></div>
+      <div class="tile" style="--acc:var(--a3)"><span class="bar"></span><span class="st">markets</span><div class="ic" style="color:var(--a3)">◈</div><h3>ZEROX Markets</h3><p>Signals · data · the nexus</p></div>
+      <div class="tile" style="--acc:var(--a1)"><span class="bar"></span><span class="st">ledger</span><div class="ic" style="color:var(--a1)">⟐</div><h3>AURA Ledger</h3><p>Token-saver, live engine</p></div>
+      <div class="tile" style="--acc:var(--a2)"><span class="bar"></span><span class="st">wallet</span><div class="ic" style="color:var(--a2)">◆</div><h3>Credits &amp; Wallet</h3><p>500 cr · earn by working agents</p></div>
+    </div>
+  </section>
+
+  <div class="sect">The Seven · your council</div>
+  <div class="agents">
+    <div class="agent" style="--ac:#f0b429"><div class="orb" style="--ac:#f0b429">S</div><div class="nm">SHADDAI</div><div class="rl">Orchestrator</div></div>
+    <div class="agent" style="--ac:#3ad1ff"><div class="orb" style="--ac:#3ad1ff">Z</div><div class="nm">ZEROX</div><div class="rl">Revenue</div></div>
+    <div class="agent" style="--ac:#b06bff"><div class="orb" style="--ac:#b06bff">O</div><div class="nm">ORACLE</div><div class="rl">Research</div></div>
+    <div class="agent" style="--ac:#4f9dff"><div class="orb" style="--ac:#4f9dff">N</div><div class="nm">NEXUS</div><div class="rl">Architect</div></div>
+    <div class="agent" style="--ac:#25e6a4"><div class="orb" style="--ac:#25e6a4">T</div><div class="nm">TURTLE</div><div class="rl">Design</div></div>
+    <div class="agent" style="--ac:#ff8bd0"><div class="orb" style="--ac:#ff8bd0">Q</div><div class="nm">QUILL</div><div class="rl">Writing</div></div>
+    <div class="agent" style="--ac:#ff5b5b"><div class="orb" style="--ac:#ff5b5b">P</div><div class="nm">PIKADON</div><div class="rl">Security</div></div>
+  </div>
+
+  <div class="console">
+    <div class="ln"><b>[SHADDAI]</b> Council assembled. <em>7 agents</em> · 200+ tools online.</div>
+    <div class="ln"><b>[ZEROX]</b> MRR flywheel nominal — credits earned this cycle: <em>+142</em>.</div>
+    <div class="ln"><b>[NEXUS]</b> Pixel universe synced · your room in <em>The Suburbs</em> is live.</div>
+  </div>
+
+  <div class="row">
+    <input class="inp" placeholder="Command the council…  /brainstorm  /forge  /world">
+    <button class="btn pri">Deploy</button>
+    <button class="btn gh">Cancel</button>
+  </div>
+
+  <div class="typo">
+    <div class="disp">Ancient wisdom, future tech.</div>
+    <p class="bd">Body copy in the theme's reading font — this is where tile descriptions, guides, and agent replies live. Legible, characterful, never generic.</p>
+    <div class="mn">MONO · data · 500 CR · 0x9f…a1 · latency 42ms</div>
+  </div>
+
+  <div class="foot">Display / Body / Mono fonts + palette all swap with the theme. Click a swatch on the left ◂</div>
+</main>
+
+<script>
+const THEMES=[
+  {g:'◐ LIGHT / BRIGHT'},
+  {k:'ivory',   nm:'Ivory · B&W',      fp:'Space Grotesk · General Sans · Plex Mono', dots:['#0a0a0a','#5a5a56','#f6f6f4']},
+  {k:'solar',   nm:'Solar Daylight',   fp:'Fraunces · Chakra Petch · Plex Mono',      dots:['#00b36b','#f2a400','#fff7ec']},
+  {k:'mist',    nm:'Mist Porcelain',   fp:'Space Grotesk · General Sans · Plex Mono', dots:['#0a84ff','#00a88f','#eaf1f6']},
+  {k:'codex',   nm:'Parchment Codex',  fp:'Fraunces · Chakra Petch · Plex Mono',      dots:['#9a6b1e','#3a6b4a','#efe6d2']},
+  {g:'◑ DARK / DEEP'},
+  {k:'sacred',  nm:'Sacred Tech',      fp:'Cinzel Decorative · Chakra Petch · Plex Mono', dots:['#00ff9c','#e8c45c','#06080b']},
+  {k:'ember',   nm:'Molten Forge',     fp:'Cinzel Decorative · Chakra Petch · Plex Mono', dots:['#ff6a2b','#ffb347','#0c0705']},
+  {k:'dusk',    nm:'Neon Dusk',        fp:'Orbitron · Chakra Petch · Plex Mono',          dots:['#ff4fd8','#4fe0ff','#0b0620']},
+  {k:'terminal',nm:'Terminal Phosphor',fp:'VT323 · IBM Plex Mono',                        dots:['#39ff97','#c8ff6a','#020604']},
+  {k:'obsidian',nm:'Obsidian Brutalist',fp:'Space Grotesk · General Sans · Plex Mono',    dots:['#c6f833','#ffffff','#0a0a0a']},
+];
+const picker=document.getElementById('picker'), tn=document.getElementById('tn');
+const keyed=THEMES.filter(t=>t.k);
+THEMES.forEach(t=>{
+  if(t.g){ const h=document.createElement('div'); h.className='sub'; h.style.margin='16px 0 8px'; h.textContent=t.g; picker.appendChild(h); return; }
+  const b=document.createElement('button'); b.className='swatch'+(t.k==='sacred'?' on':''); b.dataset.k=t.k;
+  b.innerHTML=`<span class="nm">${t.nm}</span><span class="fp">${t.fp}</span><span class="dots">${t.dots.map(c=>`<i style="background:${c}"></i>`).join('')}</span>`;
+  b.onclick=()=>{ document.documentElement.dataset.theme=t.k; tn.textContent=t.nm.toUpperCase();
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('on', s.dataset.k===t.k));
+    window.scrollTo({top:0,behavior:'smooth'}); };
+  picker.appendChild(b);
+});
+// keyboard 1-9 walks the swatches in listed order
+addEventListener('keydown',e=>{ const i=parseInt(e.key)-1; if(keyed[i]) document.querySelector(`.swatch[data-k="${keyed[i].k}"]`).click(); });
+</script>
+</body>
+</html>

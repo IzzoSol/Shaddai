@@ -10896,6 +10896,48 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <div class="card">
       <div class="card-head"><span class="card-title">Application Settings</span></div>
 
+      <!-- ══ SETTINGS SUB-TABS (reorg: group the flat section list) ══ -->
+      <style id="setTabsCss">
+        #setTabs .setTab{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:8px 13px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;transition:.15s}
+        #setTabs .setTab:hover{border-color:var(--accent);color:var(--text-primary)}
+        #setTabs .setTab.on{background:var(--accent);border-color:var(--accent);color:#04120a}
+      </style>
+      <div id="setTabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <button class="setTab" data-g="appearance" onclick="shdSetTab('appearance')">🎨 Appearance</button>
+        <button class="setTab" data-g="usage" onclick="shdSetTab('usage')">💳 Plan &amp; Usage</button>
+        <button class="setTab" data-g="ai" onclick="shdSetTab('ai')">🔑 AI &amp; Keys</button>
+        <button class="setTab" data-g="advanced" onclick="shdSetTab('advanced')">⚙ Advanced</button>
+        <button class="setTab" data-g="all" onclick="shdSetTab('all')" style="margin-left:auto">▤ All</button>
+      </div>
+      <script>
+      (function(){
+        // Group the flat settings sections by their title → sub-tab category. No section
+        // markup/IDs change; we only assign data-sgrp + toggle display. Runs after DOM ready.
+        var MAP=[
+          ['theme / skin','appearance'],['display settings','appearance'],['color studio','appearance'],['appearance','appearance'],
+          ['plan &','usage'],['cost & aura','usage'],['app information','usage'],['quick integration','usage'],['budget alerts','usage'],['data','usage'],
+          ['ai backend','ai'],['github integration','ai'],['remote ai','ai'],['openclaw','ai'],['plug & play','ai'],['api registry','ai'],['tools','ai'],
+          ['admin panel','advanced'],['terms of service','advanced']
+        ];
+        function groupOf(title){ var t=(title||'').toLowerCase().trim();
+          for(var i=0;i<MAP.length;i++){ if(t.indexOf(MAP[i][0])===0) return MAP[i][1]; }
+          for(var j=0;j<MAP.length;j++){ if(t.indexOf(MAP[j][0])>=0) return MAP[j][1]; }
+          return 'usage'; }
+        window.shdSetTab=function(g){ try{ localStorage.setItem('shd_setTab',g); }catch(e){}
+          document.querySelectorAll('#settingsView .settings-section').forEach(function(sec){
+            var gg=sec.getAttribute('data-sgrp')||'usage'; sec.style.display=(g==='all'||gg===g)?'':'none'; });
+          document.querySelectorAll('#setTabs .setTab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-g')===g); }); };
+        window.shdSettingsOrganize=function(){
+          document.querySelectorAll('#settingsView .settings-section').forEach(function(sec){
+            if(sec.hasAttribute('data-sgrp')) return;
+            var tt=sec.querySelector('.settings-title'); sec.setAttribute('data-sgrp', groupOf(tt?tt.textContent:'')); });
+          var saved='appearance'; try{ saved=localStorage.getItem('shd_setTab')||'appearance'; }catch(e){}
+          window.shdSetTab(saved); };
+        if(document.readyState!=='loading') window.shdSettingsOrganize();
+        else document.addEventListener('DOMContentLoaded', window.shdSettingsOrganize);
+      })();
+      </script>
+
       <!-- ══ THEME / SKIN — owner's own reference designs ══ -->
       <div class="settings-section" id="settingsThemeSkin" style="border:1px solid var(--sk-border,var(--border));background:var(--sk-surface2,rgba(255,255,255,0.02));border-radius:var(--sk-radius,10px);padding:16px;margin-bottom:16px">
         <div style="margin-bottom:12px">
@@ -18966,6 +19008,8 @@ function renderSettingsPanel() {
   const v = document.querySelector('#settingsView .settings-value'); if(v && v.textContent.startsWith('v')) v.textContent = 'v80';
   // Profile / Account section
   try { renderUserProfile(); } catch(e) {}
+  // Re-apply the settings sub-tab grouping (idempotent)
+  try { if (window.shdSettingsOrganize) shdSettingsOrganize(); } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
