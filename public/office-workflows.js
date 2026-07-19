@@ -7,6 +7,12 @@
 (function () {
   'use strict';
 
+  // Internal agent-orchestration status is owner-facing; keep it out of a guest's chat feed.
+  function sysMsg(t) {
+    try { if (typeof window.SHD_IS_GUEST === 'function' && window.SHD_IS_GUEST()) return; } catch (e) {}
+    if (typeof addSysMsg === 'function') addSysMsg(t);
+  }
+
   function moveAgentsToWork() {
     try {
       if (window.S && S.agents) {
@@ -25,7 +31,7 @@
   window.officeRunWF = function (id, label) {
     try {
       moveAgentsToWork();
-      if (typeof addSysMsg === 'function') addSysMsg('▶ Deploying agents for: ' + (label || id));
+      sysMsg('▶ Deploying agents for: ' + (label || id));
       if (window.SHADDAI_WF && SHADDAI_WF.openRun) {
         var ok = SHADDAI_WF.openRun(id);
         if (!ok && typeof notify === 'function') notify('Workflow not found: ' + id);
@@ -46,7 +52,7 @@
         if (typeof renderAgents === 'function') renderAgents();
       }
       if (typeof _officeCommandAll === 'function') _officeCommandAll(m === 'break' ? 'break' : 'desk');
-      if (typeof addSysMsg === 'function') addSysMsg(m === 'break' ? '☕ Agents on break.' : '⚙ Agents at work.');
+      sysMsg(m === 'break' ? '☕ Agents on break.' : '⚙ Agents at work.');
     } catch (e) { /* ignore */ }
   };
 })();

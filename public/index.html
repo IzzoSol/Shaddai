@@ -23020,7 +23020,7 @@ function cmdBreak() {
     }
   });
   _officeCommandAll('break');
-  addSysMsg('All agents on BREAK. Moving to break room.');
+  if (!(window.SHD_IS_GUEST && window.SHD_IS_GUEST())) addSysMsg('All agents on BREAK. Moving to break room.');
   renderAgents();
   renderStatus();
   log('Command: BREAK executed', 'info', 'SYSTEM');
@@ -23052,7 +23052,7 @@ function cmdBrainstorm() {
   showPanel('commands');
   document.getElementById('cmdIn').value = '/brainstorm ';
   document.getElementById('cmdIn').focus();
-  addSysMsg('Enter your brainstorm topic after /brainstorm');
+  if (!(window.SHD_IS_GUEST && window.SHD_IS_GUEST())) addSysMsg('Enter your brainstorm topic after /brainstorm');
 }
 
 function cmdAudit() {
