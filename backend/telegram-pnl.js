@@ -215,9 +215,19 @@ function distribution() {
   const hits = b25 + b510 + b10;
   const hitRate = total ? Math.round((hits / total) * 100) : 0;
   const avg = total ? (rows.reduce((s, c) => s + c.peakMult, 0) / total) : 0;
-  const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
+  const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 250);
   const ch = core.channel() || '@ShaddaiLabs';
-  const topTxt = top.length ? top.map(c => `• <b>$${_esc(c.symbol || c.name)}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n') : '• (tracking…)';
+  // Show as many top performers as fit — Telegram hard-caps a message at 4096 chars, so build the
+  // list up to a safe budget (leaves room for the header/footer) then note how many more there are.
+  let topTxt = '', shown = 0;
+  for (const c of top) {
+    const line = `• <b>$${_esc(c.symbol || c.name)}</b> — <b>${c.peakMult.toFixed(1)}x</b>\n`;
+    if (topTxt.length + line.length > 3600) break;
+    topTxt += line; shown++;
+  }
+  if (!shown) topTxt = '• (tracking…)\n';
+  if (top.length > shown) topTxt += `…and ${top.length - shown} more\n`;
+  topTxt = topTxt.replace(/\n+$/, '');
   return (
     `📊 <b>SHADDAI PERFORMANCE</b> · ${_esc(ch)}\n\n` +
     `<b>Distribution</b> (${total} calls)\n` +
