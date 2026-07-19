@@ -213,7 +213,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260719fix"></script>
 <script src="/world-terrain.js?v=20260704u"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
-<script src="/world-buildings.js?v=20260719fix"></script>
+<script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260719fix"></script>
 <script src="/world-themes.js?v=20260703h"></script>
@@ -2274,13 +2274,12 @@ addEventListener('keydown',e=>{ if(e.code==='Digit1'){MKT.symbol='btc';refreshMa
 
 // ── NEWS kiosk — live crypto headlines (ORACLE / ZEROX) ──
 const NEWS = { pos:new THREE.Vector3(-54,0,-74), items:[], idx:0 };
-{ const pillar=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.8,15,12), new THREE.MeshStandardMaterial({color:0x0a0a14,emissive:0xff7a18,emissiveIntensity:0.22,metalness:0.6,roughness:0.4}));
-  pillar.position.set(NEWS.pos.x,7.5,NEWS.pos.z); scene.add(pillar);
-  const board=new THREE.Mesh(new THREE.BoxGeometry(17,9.5,0.5), new THREE.MeshStandardMaterial({color:0x140c06,emissive:0xff7a18,emissiveIntensity:0.28,metalness:0.5,roughness:0.5}));
-  board.position.set(NEWS.pos.x,16,NEWS.pos.z); scene.add(board);
-  const edge=new THREE.Mesh(new THREE.BoxGeometry(17.6,10.1,0.3), new THREE.MeshBasicMaterial({color:0xff7a18,transparent:true,opacity:0.32,toneMapped:false}));
-  edge.position.set(NEWS.pos.x,16,NEWS.pos.z-0.15); scene.add(edge);
-}
+// NOTE (2026-07-19 billboard fix): the physical news board+pole 3D meshes were REMOVED.
+// They were a large dark/untextured BoxGeometry plate (color 0x140c06) on a pole with an
+// orange emissive frame — an EMPTY billboard in the open (owner: "empty black billboard on a
+// pole"). The board never carried any content: the live headlines render entirely through the
+// floating HTML `newsLabel` overlay (positioned at NEWS.pos below) + the full-screen N-feed panel.
+// So the mesh was pure visual clutter. Data pipeline (fetch/render/label) is left fully intact.
 const newsLabel=document.createElement('div'); newsLabel.className='lbl'; labelLayer.appendChild(newsLabel);
 function renderNewsLabel(){ const it=NEWS.items[NEWS.idx%Math.max(1,NEWS.items.length)]; if(!it){ return; }
   newsLabel.innerHTML='<div class="nm" style="color:#ff7a18;font-size:14px;text-shadow:0 0 12px #ff7a18">📰 SHADDAI NEWS</div>'+

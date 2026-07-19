@@ -482,19 +482,24 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
     const backA  = faceAng + Math.PI;                 // wall hangs opposite the entrance
     const span   = Math.min(Math.PI * 0.92, Math.PI * 0.30 * n);   // narrower arc for fewer screens
     // Screens ring: the lounge pillars sit at rP=fp*0.375 with a fat shaft (rS=max(3.4,fp*0.052)).
-    // The pillars' widest INNER elements are the square plinth feet / abaci (box ≈ rS*3.1 → half
-    // ≈ rS*1.55) and the flared echinus caps (rS*1.78), so the innermost pillar surface sits at
-    // rP - rS*1.78. The old fp*0.32 ring put screens OUTSIDE that surface, so any screen that
-    // lined up with a pillar punched straight through it (owner: "billboards glitched into the
-    // pillars"). Seat the ring at min(fp*0.26, pillarInner - clearance) so screens clear the legs
-    // AND the feet/caps at every angle and every building size — no clipping into the pillars.
+    // The pillars' TRUE widest inner element is NOT the round echinus cap (rS*1.78) but the SQUARE
+    // plinth foot (BoxGeometry rS*3.1 → half rS*1.55) and abacus (rS*3.0 → half rS*1.5). Those boxes
+    // are rotated to face radially, so their nearest CORNER swings in to rP - rS*1.55*√2 ≈ rP - rS*2.19
+    // (√2 for the box diagonal). The prior fix used rS*1.78 (echinus only) → it under-counted the foot
+    // corners, so the ring sat right ON them and screens still poked through (owner: still clipping).
+    // Now seat the ring so the screen's OUTER tangential corner (center rW + half the screen width sw/2,
+    // whose bezel also juts ox*0.25 outward) clears the plinth-foot corner by a real margin, at every
+    // building size. This intentionally shrinks/pulls the screens inward vs. before — they clear cleanly.
     const _rP    = fp * 0.375;                          // pillar ring radius (mirror of _buildPillarPavilion)
     const _rS    = Math.max(3.4, fp * 0.052);           // fat shaft radius
-    const pillarInner = _rP - _rS * 1.78;               // innermost pillar surface (echinus cap)
-    const sw     = fp * 0.150, sh = fp * 0.100;         // screen width / height
-    // Ring must clear the pillar inner surface by at least half the screen's diagonal footprint
-    // (screens are ~0.4 deep incl. bezel offsets) plus a comfort margin.
-    const rW     = Math.max(fp * 0.16, Math.min(fp * 0.26, pillarInner - Math.max(3.0, fp * 0.03)));
+    const pillarInner = _rP - _rS * 2.19;               // innermost pillar surface (rotated plinth-foot CORNER)
+    const sw     = fp * 0.130, sh = fp * 0.088;         // screen width / height (trimmed a touch for clearance)
+    // The screen's furthest-out point from the ring center is the bezel corner: it sits at
+    // sqrt(rW² approx) but conservatively rW + bezel push (ox*0.25 ≈ 0.25) tangentially bounded by sw*0.62
+    // (bezel is sw*1.24 wide). Require: rW + max(sw*0.62, 0.9) + margin ≤ pillarInner.  Solve for rW.
+    const screenReach = Math.max(sw * 0.62, 0.9) + 0.4; // half bezel width + bezel depth push
+    const margin      = Math.max(6.0, fp * 0.045);      // ≥6 units clearance from the pillar corners
+    const rW     = Math.max(fp * 0.10, Math.min(fp * 0.24, pillarInner - screenReach - margin));
     const clear  = undersideY - groundY;
     const yC     = groundY + Math.min(clear * 0.56, 9.5) + sh * 0.5;   // eye-level, under the podium
 
