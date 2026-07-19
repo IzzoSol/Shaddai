@@ -819,7 +819,7 @@ app.get('/api/polymarket/prices', async (req, res) => {
 // middleware chain so an exact GET /api serves the HTML (not the API router).
 // OFFLINE pending PIKADON security audit (2026-07-19). Re-enable with /api/v1 after sign-off.
 // {
-//   const apiDocsPage = (req, res) => res.sendFile(path.join(__dirname, '../public/api.html'));
+//   const apiDocsPage = (req, res) => { res.set('X-Frame-Options', 'DENY'); res.sendFile(path.join(__dirname, '../public/api.html')); };
 //   app.get('/api', apiDocsPage);
 //   app.get('/developers', apiDocsPage);
 // }
