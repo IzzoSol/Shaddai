@@ -429,6 +429,10 @@ body.booting #feed .sn, body.booting #tcTop{ opacity:.5; animation:skel 1.15s ea
     <div class="panel-box hud" id="mcpBox">
       <div class="panel-h"><span class="gi">⬡</span> MCP SETUP</div>
       <div class="panel-sub">AURA is open-source, zero-dependency and published to npm as <b>shaddai-aura</b> (v0.4.0) — it ships as a CLI, a library, and an <b>MCP server</b> (Claude, Claude Code &amp; Cursor · 5 tools) that serves AURA's whole free-answer engine over the Model Context Protocol, so any MCP-capable AI client answers repeats for free before the model spends anything.</div>
+      <div class="opensrc-links" style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 4px">
+        <a href="https://github.com/IzzoSol/aura" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--f-hud,'Chakra Petch',sans-serif);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#04140c;background:linear-gradient(90deg,#00ff9c,#5fe0ff);padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:700">⌥ View on GitHub</a>
+        <a href="https://www.npmjs.com/package/shaddai-aura" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--f-hud,'Chakra Petch',sans-serif);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#00ff9c;background:rgba(0,255,156,.06);border:1px solid rgba(0,255,156,.32);padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:600">◈ npm · shaddai-aura</a>
+      </div>
       <div class="codelbl">Command</div>
       <div class="codeblk"><code id="mcpCmd">npx -y -p shaddai-aura aura-mcp</code><button class="cp" data-copy="mcpCmd" aria-label="Copy install command">copy</button></div>
       <div class="codelbl">Client config <span class="n">— add to your MCP client's <code>mcpServers</code> block</span></div>
