@@ -1723,8 +1723,12 @@ app.get('/realms/*', (req, res) => res.sendFile(path.join(REALMS_DIST, 'index.ht
 // Self-heal the 7 council character images on boot (forge-art is gitignored → regenerate from HF env keys)
 try { require('./lib/char-gen').ensureCouncilChars(); } catch (e) { console.warn('[prod] council self-heal skipped:', e.message); }
 
-// Landing page = the Codex (The Celestial Almanac). The full dashboard app lives at /dashboard.
+// Landing page = the cinematic home (home.html). The Codex almanac lives at /codex,
+// the full dashboard app at /dashboard.
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/home.html'));
+});
+app.get('/codex', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/codex.html'));
 });
 app.get('/dashboard', (req, res) => {
