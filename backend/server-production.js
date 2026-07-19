@@ -361,9 +361,11 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.static(path.join(__dirname, '../public'), {
-  index: false,   // don't auto-serve index.html for '/' — the '/' route serves the Codex landing; '/dashboard' serves the app
+  index: false,   // don't auto-serve index.html for '/' — the '/' route serves the landing (home.html); '/dashboard' serves the app
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
+    // HTML + the service worker must never be cached, so new builds + the kill-switch
+    // always reach the browser (a cached sw.js would let a stale worker survive updates).
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
   }
