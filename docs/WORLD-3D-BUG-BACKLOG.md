@@ -1,39 +1,45 @@
-# SHADDAI 3D WORLD — BUG / POLISH BACKLOG (owner-reported 2026-07-19)
+# SHADDAI OVERNIGHT LOOP — BACKLOG & STATE (owner asleep, autonomous)
 
-Loop task: fix bugs, lag, slow-downs; full audit; polish shading + lighting; keep on-theme with the landing page (obsidian / emerald `#00ff9c` / gold `#e8c45c` / cyan `#5fe0ff`). Owner runs `/loop every 20 mins` — work a batch each iteration, owner tests in-world between iterations.
+Owner ran `/loop` overnight: finish tasks thoroughly, audit the landing 3×, fix issues, push to Render each batch. Owner views the LIVE Render site (`shaddai-g81x.onrender.com`, deploys from `IzzoSol/Shaddai` main). Theme = obsidian `#06080b` / emerald `#00ff9c` / gold `#e8c45c` / cyan `#5fe0ff`; Cinzel Decorative / Chakra Petch / Fraunces / IBM Plex Mono.
 
-Files: `public/SHADDAI-WORLD-3D.html` (main), `world-elevators.js`, `world-buildings.js`, `world-collision.js`, `world-interiors.js`, `world-layout.js`, `world-terrain.js`, character system (`_pcPreload` / queueAgentBody in the main file).
+Local server: `node backend/server-production.js` on :3000 (running in background). Verify with headless Chrome (`C:/Program Files/Google/Chrome/Application/chrome.exe`).
 
-## STATUS KEY  ✅ done · 🔧 in progress · ⬜ todo
+## ✅ DONE THIS SESSION (all pushed to main)
+- **DEPLOY CRASH FIXED** — `backend/lib/respond.js` + `backend/crypto-data-routes.js` were untracked; `server-production.js:22` top-level `require('./lib/respond')` crashed Render on boot. Committed (5a71e0a). Server now boots through all mounts.
+- **Landing = site root** — `app.get('/')` served codex.html → now serves **home.html**; Codex → `/codex`, dashboard → `/dashboard` (823efa4). Verified locally.
+- **Landing page** — Explore-SHADDAI 8 gateways, faint step art, agent action backgrounds, arcade cover art, Signals API + News API in Signals nav → `/api`, "SHADDAI World · Preview" section (Region Selector + Pixel Forge live, The World locked). Home button on every page. data-api retired from nav.
+- **Council portraits** — SHADDAI/ORACLE/ZEROX PuLID face portraits (exact likeness) + QUILL darker; cache-busted; 3D viewer shows all clips.
+- **3D world** — intro de-lagged + re-themed emerald; demo/test operatives filtered from plaza; elevators faster (speed 9→17, dwell 2.6→1.6).
+- **pixel-forge.html** — Home button added (was a dead-end).
+- **Landing audit ×3** (parallel agents): 0 broken links, 0 broken assets, 13/14 pages 0 JS errors.
 
-### Loading / performance
-- ⬜ **Loading freezes / janky** — world build blocks the main thread so the loading screen stutters. GOAL: build the world in the BACKGROUND (chunk/yield across frames) so the loader animates smoothly and entry is instant. The loading screen middle-man exists precisely to hide build time — it must not freeze.
-- 🔧 **Intro de-lag** — removed animated box-shadow/filter/mix-blend; canvas DPR 1.5→1, 30→24fps, streaks 160→90, dust 50→28. Owner still reports lag → investigate the synchronous world build (above) as the real culprit.
-- ⬜ **Intro colors/theme still don't match** — title is now emerald Cinzel neon, but the portal canvas is cyan/gold/purple and the world palette skews purple. Re-tint the intro portal canvas toward emerald-dominant landing palette.
-- ⬜ General: bugs, lag, slow-downs full audit; polish shading + lighting everywhere.
+## ⬜ REMAINING — work a batch per loop iteration, then commit+push
 
-### Agents
-- ✅ **Two test agents in the middle** — filtered demo/test/seed operatives out of the world spawn (SHADDAI-WORLD-3D.html ~L264).
-- ⬜ **ZEROX standing sideways at default** — body rotation.y wrong at spawn (queueAgentBody / body placement).
-- ⬜ **PIKADON on the bike** — PIKADON mis-placed onto an elevator pole/bike ride.
-- ⬜ **No walking animation for NEXUS / QUILL / SHADDAI** — SHADDAI tilts to the side (gliding is acceptable, but add a walk). Add/assign walk clips for these rigs.
-- ⬜ **Weird spawn at QUILL's spawn** — player spawns in a bad spot/orientation near Quill.
+### Landing / theme (from the 3× audit)
+- ⬜ **`/api` serves the OLD glitch dashboard locally** (green `#00ff88`, `opOwner is not defined` + 2 inline-script syntax errors at ~line 6595). The Signals/News API nav links point to `/api`. On Render the API terminal's `public-api-routes.js` should serve `public/api.html` instead — VERIFY post-deploy that `/api` = the themed docs+signup page, not the dashboard. If `/api` still falls through to the SPA, add an explicit `app.get('/api'…)` → api.html (coordinate: the other terminal owns public-api-routes.js).
+- ⬜ **arcade.html off-theme** — Orbitron + Share Tech Mono + neon-magenta (old look). Re-skin to obsidian/emerald/gold + Chakra Petch/Cinzel.
+- ⬜ **Font drift** on marketplace-shop-v2 (Orbitron/Rajdhani/violet), zerox-markets (Share Tech Mono/cyan), forge (Spectral/amber) — standardize to Chakra Petch (HUD) / IBM Plex Mono (data), per-page accent OK.
+- ⬜ codex parchment theme — confirmed intentional (has Home). Leave.
 
-### Geometry / collision / navigation
-- ⬜ **Elevators too slow** — raise lift speed.
-- ⬜ **Walking off an elevator = stuck in a glitch** — collision/ground snap issue on elevator exit (both directions).
-- ⬜ **Second floors unfinished / janky** — upper floors need completion + cleanup.
-- ⬜ **Top ceiling level closed off** — can't walk the mini-bridges to each agent station; an invisible line/collider blocks you (both directions of the bridge).
-- ⬜ **Portal rental too cramped / janky** + a random unknown object behind it.
-- ⬜ **Random circle with chair-like things** placed randomly in the map — identify + remove or fix.
-- ⬜ **Floating glitch square boxes in the air** (visible in sky) — stray meshes to remove.
-- ⬜ **Square boxes around the ATTACK move** — remove/fix the debug boxes on the attack VFX.
+### Telegram — "fix all the stuff we said with the TG"
+- ⬜ CLARIFY/RECALL scope. Candidates: surface the SHADDAI Telegram bot/signals on the landing (a TG CTA in the Signals area), and/or the TG bot config from memory [[TG_SIGNALS_BOT_20260718]] (`backend/telegram-*.js`). The API terminal already did the bot rug-cut optimization. Likely landing-side: add a "Get signals on Telegram" link. Owner to confirm exact ask in AM.
 
-### Props / decoration
-- ⬜ **Billboards glitched into pillars** — reposition so they don't intersect columns.
-- ⬜ **Empty billboard** — populate or remove.
+### 3D world bugs (owner screenshots 2026-07-19)
+- ⬜ ZEROX standing sideways at default (body rotation.y in queueAgentBody).
+- ⬜ PIKADON on the bike/elevator pole (mis-placement).
+- ⬜ No walk animation for NEXUS/QUILL/SHADDAI (SHADDAI tilts; gliding ok — add walk clips).
+- ⬜ Weird spawn at QUILL's spawn.
+- ⬜ Walking off an elevator = stuck glitch (collision/ground snap on exit, both dirs).
+- ⬜ Second floors unfinished/janky.
+- ⬜ Top ceiling mini-bridges blocked by an invisible collider line (both directions).
+- ⬜ Portal rental cramped/janky + unknown object behind it.
+- ⬜ Random circle w/ chair-like things placed in map.
+- ⬜ Floating glitch square boxes in the sky (stray meshes).
+- ⬜ Square boxes around the ATTACK move (debug boxes on attack VFX).
+- ⬜ Billboards glitched into pillars; one empty billboard.
+- ⬜ General: shading/lighting polish, lag/slow-down audit.
 
-## Notes
-- Backups: `SHADDAI-WORLD-3D.html.bak-introdelag-*`, `.bak-intro`.
-- Owner views the live site; verify in-world each loop. Serve on :3000 (`node backend/server-production.js`).
-- BUILDINGS_SOLID must stay false (owner: "buildings stay walkable 1000%").
+### Security (PIKADON)
+- ⬜ backend `npm audit`: 42 findings (33 mod, 9 high) — almost all transitive Solana/metaplex deps + one `ws` DoS via engine.io-client. DO NOT `npm audit fix --force` (breaks Solana + risks re-breaking deploy). Plan: after deploy stable, non-force `npm audit fix` in isolation, boot-test, then push. Most not in direct request attack surface.
+
+## Push cadence: commit + push after each coherent batch. Keep commits frontend/world-scoped; never re-touch backend/*.js without syntax+boot check (avoid re-breaking deploy).
