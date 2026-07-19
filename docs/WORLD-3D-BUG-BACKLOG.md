@@ -37,8 +37,9 @@ Local server: `node backend/server-production.js` on :3000 (running in backgroun
 - ✅ **Floating glitch square boxes in the sky** — were the biome "FLOATING DEBRIS" mid-air cubes (world-biomes.js:777) → DEBRIS=0. (f2595b4)
 - ⬜ **Empty billboard** — still not conclusively located (biome holo-panels are intentional glow decor, left them); likely a specific plaza sign — needs owner to point it out in-world.
 - ⬜ **Random chair-circle in map** — not found as an orphan in any module; likely a legit lounge/nexus element the owner didn't recognize, or needs a screenshot location.
-- ⬜ Second floors unfinished/janky (not yet started).
-- ⬜ Arcade re-skin to emerald/obsidian theme (arcade.html off-theme).
+- ⬜ Second floors unfinished/janky (not yet started — needs in-world investigation of the upper building floors).
+- ✅ Arcade re-skin to emerald/obsidian theme (arcade.html: palette + Chakra Petch/IBM Plex Mono). (a99df5c)
+- ⬜ Font drift on marketplace-shop-v2 (Orbitron/Rajdhani/violet) + zerox-markets (Share Tech Mono/cyan) — same re-skin approach as arcade (next).
 - ⬜ General: shading/lighting polish, lag/slow-down audit.
 - ✅ TG: "Signals on Telegram" (t.me/ShaddaiSignalsBot) added to Signals nav (dropdown + mobile). (f2595b4)
 
