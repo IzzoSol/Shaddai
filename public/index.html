@@ -449,7 +449,7 @@ body::after {
   letter-spacing: 4px;
   text-transform: uppercase;
   color: var(--accent);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(11px);
   gap: 10px;
 }
 /* Token meter expand toggle */
@@ -469,7 +469,7 @@ body::after {
   right: 0;
   height: 44px;
   background: rgba(4,12,28,0.97);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(11px);
   border-bottom: 1px solid rgba(0,229,160,0.08);
   display: flex;
   align-items: center;
@@ -513,7 +513,7 @@ body::after {
   right: 0;
   height: 44px;
   background: rgba(3,10,22,0.95);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(11px);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   display: flex;
   align-items: center;
@@ -652,7 +652,7 @@ body::after {
   display: flex;
   flex-direction: column;
   transition: transform 0.25s;
-  backdrop-filter: blur(15px);
+  backdrop-filter: blur(10px);
 }
 
 #fileSidebar.collapsed {
@@ -810,7 +810,7 @@ body::after {
   box-sizing: border-box;
   padding: 10px;
   margin-bottom: 8px;
-  backdrop-filter: blur(15px);
+  backdrop-filter: blur(10px);
 }
 
 .view > * { margin-top: 0 !important; }
@@ -1484,7 +1484,7 @@ input[type="range"]::-moz-range-track {
   right: 0;
   height: 52px;
   background: rgba(2,8,20,0.98);
-  backdrop-filter: blur(24px);
+  backdrop-filter: blur(12px);
   border-top: 1px solid rgba(0,229,160,0.2);
   z-index: 10005;
   display: flex;
@@ -1714,7 +1714,7 @@ input[type="range"]::-moz-range-track {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 40px rgba(0,229,160,.08);
-  backdrop-filter: blur(24px);
+  backdrop-filter: blur(12px);
   transition: width .2s, height .2s;
 }
 #popout.maximized {
@@ -2135,7 +2135,7 @@ body {
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(11px);
   box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 24px rgba(0,0,0,0.3);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -2175,7 +2175,7 @@ body {
   border-radius: 24px;
   border: 1px solid rgba(0,229,160,0.15);
   background: rgba(4,12,28,0.95);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(11px);
   font-size: 9px;
   gap: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.4);
@@ -3716,7 +3716,7 @@ body[data-theme="dark"]::before {
 #lyBtn{display:flex;align-items:center;gap:4px;cursor:pointer;background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);border-radius:5px;padding:3px 8px;font-size:9px;font-weight:700;color:#00ff88;letter-spacing:1px;font-family:'Orbitron',monospace;transition:all .2s;white-space:nowrap}
 #lyBtn:hover{background:rgba(0,229,160,.12);border-color:rgba(0,229,160,.4)}
 /* sidebar */
-#sbNav{display:none;position:fixed;left:0;top:0;bottom:0;width:210px;z-index:1002;flex-direction:column;background:rgba(2,6,18,.99);border-right:1px solid rgba(0,229,160,.12);backdrop-filter:blur(20px)}
+#sbNav{display:none;position:fixed;left:0;top:0;bottom:0;width:210px;z-index:1002;flex-direction:column;background:rgba(2,6,18,.99);border-right:1px solid rgba(0,229,160,.12);backdrop-filter:blur(11px)}
 #sbNav .sb-brand{padding:14px 16px 12px;border-bottom:1px solid rgba(0,229,160,.08);font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:#00ff88;letter-spacing:3px;flex-shrink:0}
 #sbNav .sb-brand span{display:block;font-size:7px;color:rgba(0,229,160,.4);letter-spacing:2px;margin-top:3px;font-family:'Share Tech Mono',monospace}
 #sbNav .sb-list{flex:1;overflow-y:auto;padding:6px 0;scrollbar-width:thin;scrollbar-color:rgba(0,229,160,.2) transparent}
@@ -12372,7 +12372,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     if(localStorage.getItem('shd_popbtn_min')==='1') btn.classList.add('shd-min');
   }catch(e){}
   var drag=null, sx=0, sy=0, moved=false;
-  function down(e){ var p=e.touches?e.touches[0]:e; var r=btn.getBoundingClientRect(); drag={dx:p.clientX-r.left,dy:p.clientY-r.top}; sx=p.clientX; sy=p.clientY; moved=false; }
+  function down(e){ var p=e.touches?e.touches[0]:e; var r=btn.getBoundingClientRect(); drag={dx:p.clientX-r.left,dy:p.clientY-r.top}; sx=p.clientX; sy=p.clientY; moved=false;
+    // PERF: attach move/up only while dragging (was always-on every mousemove).
+    document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+    document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up); }
   function move(e){ if(!drag) return; var p=e.touches?e.touches[0]:e;
     if(!moved && (Math.abs(p.clientX-sx)>5 || Math.abs(p.clientY-sy)>5)){ moved=true; btn.classList.add('shd-dragging'); }
     if(!moved) return;
@@ -12384,9 +12387,11 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   function up(){ if(!drag) return; btn.classList.remove('shd-dragging');
     if(moved){ try{ localStorage.setItem('shd_popbtn_pos', JSON.stringify({left:parseInt(btn.style.left,10), top:parseInt(btn.style.top,10)})); }catch(e){} }
     drag=null;
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
   }
-  btn.addEventListener('mousedown',down); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
-  btn.addEventListener('touchstart',down,{passive:false}); document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+  btn.addEventListener('mousedown',down);
+  btn.addEventListener('touchstart',down,{passive:false});
   // Suppress the open-popout click when the button was dragged.
   btn.addEventListener('click',function(e){ if(moved){ e.stopImmediatePropagation(); e.preventDefault(); moved=false; } }, true);
   // Double-click = minimize / restore (collapse to a small ◈ dot).
@@ -17857,31 +17862,31 @@ async function approveAllAgentTx(name) {
 }
 
 // ── 3D AGENT CARD TILT ENGINE ─────────────────────────────────
+// PERF: was querySelectorAll(all cards) + write on EVERY mousemove pixel (layout thrash,
+// the #1 page-wide lag). Now: on-demand rAF (one write/frame max), tilt ONLY the hovered
+// card (via closest), reset the previous one, and skip entirely on touch/reduced-motion.
 (function init3DTilt() {
+  const noTilt = matchMedia('(hover: none)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (noTilt) return;
+  let queued = false, lastEvt = null, activeInner = null;
+  function reset(inner) { if (inner) inner.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)'; }
+  function apply() {
+    queued = false;
+    const e = lastEvt; if (!e) return;
+    const card = e.target && e.target.closest ? e.target.closest('.agent-3d-card') : null;
+    const inner = card ? card.querySelector('.agent-3d-card-inner') : null;
+    if (inner !== activeInner) { reset(activeInner); activeInner = inner; }
+    if (!inner) return;
+    const rect = card.getBoundingClientRect();
+    const mx = e.clientX - (rect.left + rect.width / 2);
+    const my = e.clientY - (rect.top + rect.height / 2);
+    inner.style.transform = `rotateX(${-(my/(rect.height/2))*10}deg) rotateY(${(mx/(rect.width/2))*10}deg) scale(1.02)`;
+  }
   document.addEventListener('mousemove', (e) => {
-    const cards = document.querySelectorAll('.agent-3d-card-inner');
-    cards.forEach(inner => {
-      const card = inner.closest('.agent-3d-card');
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      // Only tilt if mouse is within 80px of the card
-      const mx = e.clientX - (rect.left + rect.width / 2);
-      const my = e.clientY - (rect.top + rect.height / 2);
-      const dist = Math.sqrt(mx * mx + my * my);
-      if (dist > Math.max(rect.width, rect.height) * 0.8) {
-        inner.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
-        return;
-      }
-      const rx = -(my / (rect.height / 2)) * 10;
-      const ry =  (mx / (rect.width  / 2)) * 10;
-      inner.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
-    });
-  });
-  document.addEventListener('mouseleave', () => {
-    document.querySelectorAll('.agent-3d-card-inner').forEach(c => {
-      c.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
-    });
-  });
+    lastEvt = e;
+    if (!queued) { queued = true; requestAnimationFrame(apply); }
+  }, { passive: true });
+  document.addEventListener('mouseleave', () => { reset(activeInner); activeInner = null; });
 })();
 
 // ── NANO BANANA: generate image for one agent ─────────────────
@@ -24120,12 +24125,14 @@ function initPopoutDrag() {
     if (isDragging) { isDragging = false; header.style.cursor = 'grab'; save(); }
   }
 
-  header.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); e.preventDefault(); });
-  document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
-  document.addEventListener('mouseup', onEnd);
+  // PERF: attach the doc move/up listeners only WHILE dragging (was always-on every mousemove).
+  function dragMove(e) { onMove(e.clientX, e.clientY); }
+  function dragUp() { onEnd(); document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragUp); }
+  header.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); e.preventDefault();
+    document.addEventListener('mousemove', dragMove, { passive: true }); document.addEventListener('mouseup', dragUp); });
   // Touch support
   header.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
-  document.addEventListener('touchmove', e => { if (isDragging) { const t = e.touches[0]; onMove(t.clientX, t.clientY); } });
+  document.addEventListener('touchmove', e => { if (isDragging) { const t = e.touches[0]; onMove(t.clientX, t.clientY); } }, { passive: true });
   document.addEventListener('touchend', onEnd);
 
   // Resize handle — bottom-left corner
@@ -24134,17 +24141,18 @@ function initPopoutDrag() {
   resizer.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" style="position:absolute;bottom:2px;left:2px;opacity:0.3"><path d="M0 12L12 0M0 12L8 4M0 12L4 8" stroke="currentColor" stroke-width="1.5"/></svg>';
   popout.appendChild(resizer);
   let isResizing = false, rStartX, rStartY, rStartW, rStartH;
+  function resizeMove(e) {
+    popout.style.width = Math.max(320, rStartW - (e.clientX - rStartX)) + 'px';
+    popout.style.height = Math.max(400, rStartH + (e.clientY - rStartY)) + 'px';
+  }
+  function resizeUp() { isResizing = false; document.removeEventListener('mousemove', resizeMove); document.removeEventListener('mouseup', resizeUp); }
   resizer.addEventListener('mousedown', e => {
     isResizing = true; rStartX = e.clientX; rStartY = e.clientY;
     rStartW = popout.offsetWidth; rStartH = popout.offsetHeight;
     e.preventDefault(); e.stopPropagation();
+    // PERF: attach move/up only while resizing (was always-on every mousemove).
+    document.addEventListener('mousemove', resizeMove, { passive: true }); document.addEventListener('mouseup', resizeUp);
   });
-  document.addEventListener('mousemove', e => {
-    if (!isResizing) return;
-    popout.style.width = Math.max(320, rStartW - (e.clientX - rStartX)) + 'px';
-    popout.style.height = Math.max(400, rStartH + (e.clientY - rStartY)) + 'px';
-  });
-  document.addEventListener('mouseup', () => { if (isResizing) { isResizing = false; } });
 }
 
 function openPopout() {
@@ -30150,7 +30158,7 @@ function openTraderPanel(pairAddress, symbol) {
   if (!panel) {
     panel = document.createElement('div');
     panel.id = 'traderPanel';
-    panel.style.cssText = 'position:fixed;top:0;right:0;width:480px;max-width:100vw;height:100vh;background:var(--bg-card);border-left:1px solid var(--border);z-index:20000;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.5);backdrop-filter:blur(20px)';
+    panel.style.cssText = 'position:fixed;top:0;right:0;width:480px;max-width:100vw;height:100vh;background:var(--bg-card);border-left:1px solid var(--border);z-index:20000;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.5);backdrop-filter:blur(11px)';
     document.body.appendChild(panel);
   }
 
@@ -44033,13 +44041,18 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     if (pWrap && !pWrap._tiltWired) {
       pWrap._tiltWired = true;
       const img = () => document.getElementById('chamberPortraitImg');
+      let ptQueued = false, ptEvt = null;   // PERF: rAF-throttle to one write/frame, passive
       pWrap.addEventListener('mousemove', e => {
-        const r = pWrap.getBoundingClientRect(); const im = img(); if (!im) return;
-        const rx = ((e.clientY - r.top) / r.height - 0.5) * -18;
-        const ry = ((e.clientX - r.left) / r.width - 0.5) * 32;
-        pWrap.classList.add('tilting');
-        im.style.transform = 'rotateX(' + rx.toFixed(1) + 'deg) rotateY(' + ry.toFixed(1) + 'deg)';
-      });
+        ptEvt = e; if (ptQueued) return; ptQueued = true;
+        requestAnimationFrame(() => {
+          ptQueued = false; const ev = ptEvt, im = img(); if (!ev || !im) return;
+          const r = pWrap.getBoundingClientRect();
+          const rx = ((ev.clientY - r.top) / r.height - 0.5) * -18;
+          const ry = ((ev.clientX - r.left) / r.width - 0.5) * 32;
+          pWrap.classList.add('tilting');
+          im.style.transform = 'rotateX(' + rx.toFixed(1) + 'deg) rotateY(' + ry.toFixed(1) + 'deg)';
+        });
+      }, { passive: true });
       pWrap.addEventListener('mouseleave', () => { const im = img(); pWrap.classList.remove('tilting'); if (im) im.style.transform = ''; });
     }
 
@@ -44379,7 +44392,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <div style="pointer-events:none;position:absolute;bottom:0;right:0;width:520px;height:360px;background:radial-gradient(ellipse at bottom right,rgba(${a.glow},0.1) 0%,transparent 70%);z-index:2"></div>
 
       <!-- ══ HEADER BAR ══ -->
-      <div style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,0.75);backdrop-filter:blur(18px);border-bottom:1px solid rgba(${a.glow},0.38)">
+      <div style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,0.75);backdrop-filter:blur(11px);border-bottom:1px solid rgba(${a.glow},0.38)">
         <div style="display:flex;align-items:center;gap:12px">
           <button onclick="_closeAgentRoom()"
             style="padding:5px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);border-radius:5px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;transition:all 0.15s"
@@ -49742,18 +49755,18 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
     let mx = -100, my = -100, rx = -100, ry = -100;
     let hovering = false;
 
-    // Dot: direct rAF write — frame-perfect, no event lag
-    document.addEventListener('pointermove', e => {
-      mx = e.clientX; my = e.clientY;
-      dot.style.transform = `translate(${mx}px,${my}px)`;
-    }, { passive: true });
+    // PERF: pointermove only stores coords now; both dot + ring are written ONCE per frame
+    // in the loop below (was a dot style-write on every pointermove = per-pixel thrash).
+    document.addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
 
     // Ring: lerp 0.98 = nearly instant, tiny 1-frame ghost trail
     (function animate() {
+      requestAnimationFrame(animate);
+      if (document.hidden) return;                 // PERF: don't animate the cursor on hidden tabs
+      dot.style.transform = `translate(${mx}px,${my}px)`;
       rx += (mx - rx) * 0.98;
       ry += (my - ry) * 0.98;
       ring.style.transform = `translate(${Math.round(rx * 10) / 10}px,${Math.round(ry * 10) / 10}px)`;
-      requestAnimationFrame(animate);
     })();
 
     document.addEventListener('mouseover', e => {
@@ -53928,16 +53941,19 @@ try{ document.addEventListener('DOMContentLoaded', window.shdRenderAuth); setTim
     try{ var sv=JSON.parse(localStorage.getItem('shaddai_navpicker_pos')||'null');
       if(sv&&typeof sv.left==='number'){ box.style.left=sv.left+'px'; box.style.top=sv.top+'px'; box.style.right='auto'; box.style.bottom='auto'; } }catch(e){}
     function down(e){ var p=e.touches?e.touches[0]:e; var r=box.getBoundingClientRect();
-      drag={dx:p.clientX-r.left, dy:p.clientY-r.top}; box.classList.add('dragging'); e.preventDefault(); }
+      drag={dx:p.clientX-r.left, dy:p.clientY-r.top}; box.classList.add('dragging'); e.preventDefault();
+      // PERF: attach move/up only while dragging (was always-on every mousemove).
+      window.addEventListener('mousemove',move,{passive:true}); window.addEventListener('touchmove',move,{passive:true});
+      window.addEventListener('mouseup',up); window.addEventListener('touchend',up); }
     function move(e){ if(!drag) return; var p=e.touches?e.touches[0]:e;
       var L=Math.max(4,Math.min(window.innerWidth-box.offsetWidth-4, p.clientX-drag.dx));
       var T=Math.max(4,Math.min(window.innerHeight-box.offsetHeight-4, p.clientY-drag.dy));
       box.style.left=L+'px'; box.style.top=T+'px'; box.style.right='auto'; box.style.bottom='auto'; }
     function up(){ if(!drag) return; drag=null; box.classList.remove('dragging');
-      try{ localStorage.setItem('shaddai_navpicker_pos', JSON.stringify({left:box.offsetLeft, top:box.offsetTop})); }catch(e){} }
+      try{ localStorage.setItem('shaddai_navpicker_pos', JSON.stringify({left:box.offsetLeft, top:box.offsetTop})); }catch(e){}
+      window.removeEventListener('mousemove',move); window.removeEventListener('touchmove',move);
+      window.removeEventListener('mouseup',up); window.removeEventListener('touchend',up); }
     grip.addEventListener('mousedown',down); grip.addEventListener('touchstart',down,{passive:false});
-    window.addEventListener('mousemove',move); window.addEventListener('touchmove',move,{passive:false});
-    window.addEventListener('mouseup',up); window.addEventListener('touchend',up);
   })();
   /* REQ-1.4: minimize / restore the nav-position mover */
   window.toggleNavPicker=function(e){ if(e&&e.stopPropagation)e.stopPropagation();
