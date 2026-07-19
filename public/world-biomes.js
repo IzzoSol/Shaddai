@@ -775,7 +775,8 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     }
 
     // ── FLOATING DEBRIS (instanced small boxes at mid-air) ────────────
-    const DEBRIS = 32;
+    // Owner: these read as "floating glitch square boxes in the air" → disabled.
+    const DEBRIS = 0;
     const dbGeo  = track(new THREE.BoxGeometry(1, 1, 1));
     const dbMat  = track(new THREE.MeshStandardMaterial({
       color: 0x1a0a2a, emissive: 0x6a10c8, emissiveIntensity: 0.28,
