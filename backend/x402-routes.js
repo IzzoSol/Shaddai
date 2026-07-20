@@ -11,6 +11,7 @@ const path = require('path');
 const router = express.Router();
 const json = express.json();
 const { requireAdmin, softAuth } = require('./auth-guard');
+const X = require('./x402-security');   // Phase 0 #2: kill-switch / replay / budgets / PII-safe log
 
 const LEDGER = path.join(__dirname, 'data', 'x402-ledger.json');
 const START_CREDITS = 100;        // every new wallet starts with demo credits
@@ -37,9 +38,14 @@ router.post('/api/x402/charge', softAuth, json, (req, res) => {
   // Anti-drain: a signed-in caller can ONLY charge their OWN account — never name a
   // victim in the body. body.user is a fallback for the unauthenticated demo world.
   const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
-  const { amount, reason, payee } = req.body || {};
+  const { amount, reason, payee, nonce } = req.body || {};
   const amt = Number(amount);
   if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive number' });
+  // ── Phase 0 #2 hardening ──
+  if (X.isPaused()) return res.status(503).json({ error: 'x402 payments temporarily paused', gated: true });
+  if (nonce) { const rp = X.checkReplay('charge:' + user + ':' + nonce); if (!rp.ok) return res.status(409).json({ error: 'replay detected' }); }
+  const bud = X.checkDailyBudget(user, amt);
+  if (!bud.ok) return res.status(402).json({ error: 'daily spend limit reached', x402: { limit: bud.limit, spent: bud.spent, remaining: bud.remaining, currency: 'SHAD-Credits' }, gated: true });
   const db = read(); const balance = bal(db, user);
   if (balance < amt) {
     return res.status(402).json({ error: 'Insufficient SHAD-Credits.', x402: { required: amt, balance, currency: 'SHAD-Credits', topup: '/api/x402/grant' }, gated: true });
@@ -51,7 +57,14 @@ router.post('/api/x402/charge', softAuth, json, (req, res) => {
   db.balances[TREASURY] = Math.round((bal(db, TREASURY) + fee) * 100) / 100;       // treasury takes the fee
   const tx = { id: Date.now().toString(36), user, payee: payee || null, amount: amt, fee, net, reason: reason || 'agent call', at: Date.now() };
   db.txns.unshift(tx); db.txns = db.txns.slice(0, 1000); write(db);
+  X.recordSpend(user, amt);   // count against the daily budget
   res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx });
+});
+
+// Phase 0 #2: admin kill-switch for x402 (pause/resume all charges).
+router.post('/api/x402/pause', requireAdmin, json, (req, res) => {
+  const paused = X.setPaused(!!(req.body && req.body.paused));
+  res.json({ ok: true, paused });
 });
 
 router.post('/api/x402/grant', requireAdmin, json, (req, res) => {
