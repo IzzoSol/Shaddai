@@ -1360,9 +1360,10 @@
       const rooms = (d && d.rooms) || [];
       const ring = Math.max(DIST.slots, rooms.length);
       DIST.rooms = rooms.map((rm, i) => distRingPos(i, ring, rm));
+      // Office is your OWNED PROPERTY — no generic claim plots in the command chamber.
+      // (Cohesion spec: claim/expansion lives in the world/parcel layer, not the office center.)
       DIST.plots = [];
-      for (let i = rooms.length; i < ring; i++) DIST.plots.push(distRingPos(i, ring, null));
-    } catch (e) { /* offline → just show HQ + claim plots */ if (!DIST.plots.length && !DIST.rooms.length) { const ring = DIST.slots; for (let i = 0; i < ring; i++) DIST.plots.push(distRingPos(i, ring, null)); } }
+    } catch (e) { DIST.plots = []; }
     DIST.loaded = true;
   }
   function dPoly(pts, fill, stroke, lw) { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = (lw || 1); ctx.stroke(); } }
@@ -1749,8 +1750,9 @@
         showToast('◈ Opening ' + (ag.name || 'agent') + "'s Command Deck…", ag.badgeColor || '#22d3ee', [dh.col, dh.row]);
         try { if (ag.id && typeof window.openAgentRoom === 'function') window.openAgentRoom(ag.id); } catch (_) {}
       } else {
-        showToast('＋ Forge an agent to claim this room', '#22d3ee', [dh.col, dh.row]);
-        try { if (typeof window.showView === 'function') window.showView('forge'); } catch (_) {}
+        // Forge from the office → PIXEL FORGE by default (the world-facing 2D embodiment).
+        showToast('◈ Opening the Pixel Forge…', '#22d3ee', [dh.col, dh.row]);
+        try { window.location.href = '/pixel-forge.html'; } catch (_) {}
       }
       return;
     }
