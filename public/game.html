@@ -1219,13 +1219,34 @@ function openJobs(){ if(state!=='world')return; state='jobs'; const j=JOBS[regio
   el.innerHTML='<h1>💼 <b>'+j.name+'</b></h1><div class="sub" style="margin:10px 0 16px">Pays 💵'+j.pay[0]+'–'+j.pay[1]+' + XP a shift.<br>💵 '+money+' · Lv '+levelFor(credits)+(jobCooldown>0?'<br><span style="color:#ff9a3c">resting '+Math.ceil(jobCooldown)+'s</span>':'')+'</div><div class="row" style="justify-content:center;gap:10px"><button class="primary" onclick="doJob()">Work a shift</button><button onclick="closePanel()">Close</button></div>';
   el.classList.remove('hide'); }
 function doJob(){ if(jobCooldown>0){ toast('Rest a moment ('+Math.ceil(jobCooldown)+'s)'); return; } const j=JOBS[region&&region.id]||JOBS.meadow; const pay=j.pay[0]+((Math.random()*(j.pay[1]-j.pay[0]+1))|0); money+=pay; quest.earn+=pay; addXP(Math.ceil(pay*0.6)); jobCooldown=6; saveEcon(); toast('+💵'+pay+' · +'+Math.ceil(pay*0.6)+' XP'); if(state==='jobs') openJobs(); }
-// ---- fishing ----
+// ---- fishing (click near water → cast → random 15–30s bite → random-size fish) ----
+let fishingActive=false, fishBonus=0, fishTimer=null;
 function rollFish(){ let total=FISH.reduce((s,f)=>s+f.w,0), r=Math.random()*total; for(const f of FISH){ r-=f.w; if(r<=0) return f; } return FISH[0]; }
-function castFish(){ if(fishCooldown>0){ toast('Reel in first… ('+Math.ceil(fishCooldown)+'s)'); return; } fishCooldown=3.4; toast('🎣 Casting…');
-  setTimeout(()=>{ const f=rollFish(); fish[f.id]=(fish[f.id]||0)+1; quest.fish++; addXP(f.big?12:4); saveEcon(); toast((f.big?'🎉 BIG catch! ':'🎣 Caught a ')+f.name+'! +'+(f.big?12:4)+' XP'); }, 1500); }
-function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } if(!n){ toast('No fish to sell'); return; } money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g); if(state==='inv') openInv(); }
+function isNearWater(){ for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0,t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK)return true; } return false; }
+function castFish(){
+  if(fishingActive){ toast('🎣 Line\'s already out — wait for a bite…'); return; }
+  if(fishCooldown>0){ toast('Reel in first… ('+Math.ceil(fishCooldown)+'s)'); return; }
+  if(!isNearWater()){ toast('🎣 Stand by the water to cast'); return; }
+  fishingActive=true; toast('🎣 Cast! Line out — waiting for a bite…');
+  const wait=15000+Math.random()*15000;                 // random 15–30s hit
+  fishTimer=setTimeout(()=>{ fishingActive=false; fishCooldown=2;
+    if(Math.random()<0.22){ toast('🎣 …the one that got away.'); return; }   // random hit rate
+    const f=rollFish(), sr=Math.random();
+    const size = sr<0.45?{k:'small',m:0.6,l:'a small '} : sr<0.82?{k:'med',m:1.0,l:'a '} : sr<0.96?{k:'big',m:1.9,l:'a BIG '} : {k:'huge',m:3.4,l:'a HUGE '};
+    fish[f.id]=(fish[f.id]||0)+1;
+    if(size.m>1) fishBonus+=Math.round(f.val*(size.m-1));               // bigger fish → higher price
+    const xp=Math.round((f.big?12:5)*size.m); quest.fish++; addXP(xp); saveEcon();
+    toast('🎣 Caught '+size.l+f.name+' '+(f.ico||'🐟')+' · ~💵'+Math.round(f.val*size.m)+' · +'+xp+' XP');
+  }, wait);
+}
+function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } g+=fishBonus; if(!n&&!fishBonus){ toast('No fish to sell'); return; } fishBonus=0; money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g+' — haggle bigger catches at the 🤝 market'); if(state==='inv') openInv(); }
 function bottleWater(){ if(gatherCooldown>0){ toast('One moment…'); return; } gatherCooldown=1.5; inv.water=(inv.water||0)+1; addXP(1); saveEcon(); toast('💧 Bottled fresh water (+1) — sells hot in the desert & volcano!'); }
-function doGather(){ if(gatherCooldown>0){ toast('One moment…'); return; } if(gatherTarget==='wood'){ gatherCooldown=1.7; inv.wood=(inv.wood||0)+1; addXP(2); saveEcon(); toast('🪵 Chopped wood (+1)'); } else if(gatherTarget==='ore'){ gatherCooldown=2.1; inv.ore=(inv.ore||0)+1; addXP(2); saveEcon(); toast('🪨 Mined ore (+1)'); } else toast('Nothing to gather here'); }
+function doGather(){ if(gatherCooldown>0){ toast('One moment…'); return; } if(gatherTarget==='wood'){ gatherCooldown=1.7; inv.wood=(inv.wood||0)+1; addXP(2); saveEcon(); toast('🪵 Chopped wood (+1) → bag'); } else if(gatherTarget==='ore'){ gatherCooldown=2.1; inv.ore=(inv.ore||0)+1; addXP(2); saveEcon(); toast('🪨 Mined ore (+1) → bag'); } else toast('Nothing to gather here'); }
+// CLICK-TO-INTERACT: click near a tree/rock → chop/mine into bag; near water → cast the rod.
+c.addEventListener('click',function(){ if(state!=='world'||spectate) return;
+  if(gatherTarget){ doGather(); }            // wood/ore proximity (from the gather scan)
+  else if(isNearWater()){ castFish(); }      // stand by water → fishing rod out
+});
 let fishes=[];
 function spawnFishes(){ fishes=[]; if(!waterTiles||!waterTiles.length) return; const n=Math.min(26,Math.max(4,(waterTiles.length/10)|0));
   for(let i=0;i<n;i++){ const t=waterTiles[(Math.random()*waterTiles.length)|0], big=Math.random()<0.12;
