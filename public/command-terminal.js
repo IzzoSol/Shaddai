@@ -90,7 +90,7 @@
       '</div>';
     document.body.appendChild(root);
     root.querySelector('#shdtClose').addEventListener('click', close);
-    root.querySelector('#shdtEnter').addEventListener('click', function () { window.location.href = '/game.html?menu'; });
+    root.querySelector('#shdtEnter').addEventListener('click', function () { window.location.href = '/_LAUNCH.html'; }); // the good intro + region picker
     root.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.t); }); });
   }
 

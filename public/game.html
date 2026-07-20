@@ -69,9 +69,11 @@
 </div>
 
 <!-- WORLD HUD -->
-<div id="hud" class="panel hide"><div class="who" id="hudWho">—</div><div class="where" id="hudWhere">—</div><div id="wallet" style="color:#e8c45c;font-size:13px;margin-top:3px">💰 250 cr</div></div>
+<div id="hud" class="panel hide"><div class="who" id="hudWho">—</div><div class="where" id="hudWhere">—</div><div id="wallet" style="color:#e8c45c;font-size:13px;margin-top:3px">💰 250 cr</div>
+  <div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span id="hpTxt" style="color:#ff8a8a;font-size:12px;min-width:34px">❤ 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="hpFill" style="width:100%;height:100%;background:#4fe07a;transition:width .2s,background .2s"></div></div></div></div>
 <div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px">
   <button class="panel" style="padding:9px 13px" onclick="openStore()">🛒 Store</button>
+  <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
   <button class="panel" style="padding:9px 13px" onclick="openJobs()">💼 Work</button>
   <button class="panel" style="padding:9px 13px" onclick="openInv()">🎒 Bag</button>
 </div>
@@ -82,6 +84,26 @@
 <div id="specHud" class="panel hide" style="left:50%;bottom:20px;transform:translateX(-50%);z-index:7;display:flex;gap:12px;align-items:center;padding:9px 16px">
   <span style="color:#5fe0ff;font-size:13px;letter-spacing:1px">👁 Spectating — watching the living world</span>
   <button class="primary" style="padding:7px 14px;font-size:13px" onclick="joinPlay()">▶ Join &amp; Play</button>
+</div>
+<div id="intActions" class="hide" style="position:fixed;left:16px;bottom:64px;z-index:7;display:flex;gap:8px"></div>
+<div id="decorBar" class="panel hide" style="left:50%;bottom:16px;transform:translateX(-50%);z-index:8;display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;max-width:94vw"></div>
+<div id="wardrobe" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);padding:18px 20px;z-index:9"></div>
+<div id="storage" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);padding:18px 20px;z-index:9"></div>
+<div id="bank" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,94vw);padding:18px 20px;z-index:9"></div>
+<div id="forge" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);padding:18px 20px;z-index:9"></div>
+<div id="quests" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,94vw);padding:18px 20px;z-index:9"></div>
+<div id="market" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,94vw);padding:18px 20px;z-index:9"></div>
+<div id="hubrooms" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
+<div id="agentlive" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,94vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
+<div id="fishBar" class="panel hide" style="right:16px;bottom:64px;z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
+  <span style="color:#5fe0ff;font-size:12px">🌊 Waterside</span>
+  <button style="padding:6px 12px" onclick="castFish()">🎣 Cast</button>
+  <button style="padding:6px 12px" onclick="bottleWater()">💧 Bottle</button>
+  <button style="padding:6px 12px" onclick="sellFish()">💰 Sell fish</button>
+</div>
+<div id="gatherBar" class="panel hide" style="right:16px;bottom:108px;z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
+  <span class="glabel" style="color:#8fe08f;font-size:12px">🌲 Woods</span>
+  <button class="gbtn" style="padding:6px 12px" onclick="doGather()">🪓 Chop wood</button>
 </div>
 <div id="splash" class="hide" style="position:fixed;inset:0;z-index:30;background:#06080b;transition:opacity 1s ease;pointer-events:none">
   <img id="splashImg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
@@ -114,6 +136,7 @@
 <script src="world-regions/desert.js" onerror="0"></script>
 <script src="world-regions/volcano.js" onerror="0"></script>
 <script src="world-regions/suburb.js" onerror="0"></script>
+<script src="combat.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
 <script>
 'use strict';
@@ -164,7 +187,7 @@ function goRegion(){ player.name=(document.getElementById('nameInput').value||'W
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
-  genWorld(regionSel); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  genWorld(regionSel); updateHP(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
   const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; mpHello(); showSplash(regionSel);
   const sh=document.getElementById('specHud');
   if(spectate){ document.getElementById('topbtns').classList.add('hide'); specTarget=npcs[(Math.random()*npcs.length)|0]||null; specTimer=6;
@@ -197,8 +220,14 @@ function bakeGround(){
   for(const [col,r] of drawOrder){ const bx=(col-r)*TW/2+OX0, by=(col+r)*TH/2+OY0;
     if(tiles[r][col]===WATER) waterTiles.push([col,r]);
     try{ window.Terrain.tile(g, region.id, tileTypeName(tiles[r][col]), bx, by, col, r, 0); }catch(e){} }
+  if(typeof spawnFishes==='function') spawnFishes();
+  if(window.Combat && region){ const night=((Math.cos(tod*6.283185)+1)/2)>0.5; try{ enemies=Combat.spawnFor(region.id,night,walkable,GW,GH)||[]; }catch(_){ enemies=[]; } }
 }
 let tiles=[], props=[], npcs=[], region=null, cam={col:30,row:30}, tod=0.34;
+let enemies=[], playerHP=100, playerMaxHP=100, hurtFlash=0, atkSwing=0;   // combat
+const WEAPON_POWER={ shield:1.2, sword:1.7, bow:2.0, axe:2.6, staff:3.4 };
+function activeWeapon(){ if(equippedWeapon&&inv[equippedWeapon]) return equippedWeapon; let best=null,bp=0; for(const id in WEAPON_POWER){ if(inv[id]&&WEAPON_POWER[id]>bp){ bp=WEAPON_POWER[id]; best=id; } } return best; }
+function weaponPower(){ const id=activeWeapon(); if(!id) return 1; return WEAPON_POWER[id]+((weaponUp[id]||0)*0.5); }
 // The 7 SHADDAI agents as themed pixel characters (chakra accents)
 const AGENTS=[
   {name:'SHADDAI', role:'Orchestrator', accent:'#c9a6ff', rig:{suit:'#241f44',cap:'#c9a6ff',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'}},
@@ -249,14 +278,28 @@ function makeGenApi(rid){
   };
 }
 function finalizeGen(){ props=props.filter(p=> p.type==='building'||p.type==='volcano' || !props.some(b=>b.type==='building'&&p.col>=b.col&&p.col<b.col+b.w&&p.row>=b.row&&p.row<b.row+b.d)); }
+// every town gets the essentials — auto-place a Bank, Forge & Swap Market if the region generator didn't
+function freeSpot(w,d){ for(let t=0;t<500;t++){ const c=3+((Math.random()*(GW-w-6))|0), r=3+((Math.random()*(GH-d-6))|0); let ok=true;
+  for(let rr=r-1;rr<=r+d&&ok;rr++)for(let cc=c-1;cc<=c+w&&ok;cc++){ const tl=tiles[rr]&&tiles[rr][cc]; if(tl===undefined||tl===WATER||tl===LAVA) ok=false; }
+  if(!ok) continue; if(props.some(p=>(p.type==='building'||p.type==='volcano')&&c<p.col+p.w+1&&c+w>p.col-1&&r<p.row+p.d+1&&r+d>p.row-1)) continue;
+  if(Math.hypot((c+w/2)-player.col,(r+d/2)-player.row)<5) continue; return {col:c,row:r}; } return null; }
+function addCivic(name,kind,wall,roof,accent){ const s=freeSpot(2,2); if(!s)return false;
+  for(let rr=s.row-1;rr<=s.row+2;rr++)for(let cc=s.col-1;cc<=s.col+2;cc++){ if(!(tiles[rr]&&tiles[rr][cc]!==undefined))continue;
+    const inside=(rr>=s.row&&rr<s.row+2&&cc>=s.col&&cc<s.col+2); if(inside) tiles[rr][cc]=GRASS; else if(tiles[rr][cc]===GRASS) tiles[rr][cc]=PATH; }
+  props.push({type:'building',col:s.col,row:s.row,w:2,d:2,floors:2,wall,roof,accent,glass:'#cfeaff',name,kind}); return true; }
+function ensureCivic(rid){ if(rid==='suburb'||rid==='agentcity') return; const names=props.filter(p=>p.type==='building').map(p=>(p.name||'').toUpperCase()).join(' ');
+  if(!/BANK|EXCHANGE|VAULT/.test(names)) addCivic('BANK','bank','#9a9a72','#4a4a34','#e8c45c');
+  if(!/FORGE|SMELTER/.test(names)) addCivic('FORGE','forge','#4a3a34','#281f1c','#ff7a3c');
+  if(!/MARKET|BAZAAR|SWAP|TRADING/.test(names)) addCivic('SWAP MARKET','market','#6a5a8a','#3a2f52','#c9a6ff'); }
 function genWorld(rid){
+  if(rid==='suburb' && region && region.id && region.id!=='suburb') window.SUBURB_FROM=region.id;  // theme suburb by where you arrived from
   region=REGIONS.find(r=>r.id===rid);
   tiles=[]; props=[]; npcs=[];
   for(let r=0;r<GH;r++){ tiles[r]=[]; for(let col=0;col<GW;col++) tiles[r][col]=(region.city?PATH:GRASS); }
   // distinct per-region generator (loaded from world-regions/*.js) takes priority
   if(window.RegionGen && typeof window.RegionGen[rid]==='function'){
     try{ for(let r=0;r<GH;r++)for(let col=0;col<GW;col++) tiles[r][col]=GRASS;
-      window.RegionGen[rid](makeGenApi(rid)); finalizeGen(); bakeGround(); return; }
+      window.RegionGen[rid](makeGenApi(rid)); finalizeGen(); ensureCivic(rid); bakeGround(); return; }
     catch(e){ console.warn('RegionGen fail '+rid,e); tiles=[]; for(let r=0;r<GH;r++){ tiles[r]=[]; for(let col=0;col<GW;col++) tiles[r][col]=(region.city?PATH:GRASS); } props=[]; npcs=[]; }
   }
 
@@ -274,9 +317,10 @@ function genWorld(rid){
       props.push({type:'building',col,row,w:3,d:3,floors:5, wall:shade(a.accent,0.16),roof:shade(a.accent,-0.32),glass:shade(a.accent,-0.16),name:a.name,kind:'agent',accent:a.accent});
       const rig=JSON.parse(JSON.stringify(a.rig)); rig.__phase=i*0.7;
       npcs.push({rig,name:a.name,accent:a.accent,agent:true,col:col+1.5,row:row+3.5,tc:col+1.5,tr:row+3.5,pause:1e9,speed:0.6}); });
-    // massive dormant volcano dead center
-    for(let rr=26;rr<35;rr++)for(let cc=26;cc<35;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=GRASS;
-    props.push({type:'volcano',col:28,row:28,w:5,d:5});
+    // TOWN SQUARE — the Grand Bazaar plaza + SHADDAI HQ (the Pro users' dashboard rooms) at the sacred center
+    for(let rr=25;rr<36;rr++)for(let cc=25;cc<36;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-30.5,rr-30.5)<5.2?PATH:GRASS);
+    props.push({type:'building',col:28,row:28,w:5,d:5,floors:8, wall:'#1b2440',roof:'#e8c45c',glass:'#c9a6ff',accent:'#e8c45c',name:'SHADDAI HQ',kind:'hub',landmark:'hq'});
+    for(const a of [[27,27],[34,27],[27,34],[34,34]]){ if(tiles[a[1]]&&tiles[a[1]][a[0]]!==undefined) props.push({type:'stall',col:a[0],row:a[1],color:AGENTS[(a[0]+a[1])%7].accent}); }  // market stalls ring the square
     // flower-of-life lattice → outer neon tech towers (ring 3+)
     flowerLattice(CC,CR,5,6).forEach(p=>{ if(p.ring<3||p.col<3||p.col>=GW-3||p.row<3||p.row>=GH-3) return;
       if((p.col*3+p.row)%3!==0) return;
@@ -329,7 +373,7 @@ function genWorld(rid){
     tiles[r][col]=(r<b.row||col<b.col||r>=b.row+b.d||col>=b.col+b.w)?PATH:GRASS; } props.push({type:'building',...b}); });
   props=props.filter(p=> p.type==='building' || !props.some(b=>b.type==='building'&&p.col>=b.col&&p.col<b.col+b.w&&p.row>=b.row&&p.row<b.row+b.d));
   spawnCitizens(14);
-  player.col=30; player.row=30; cam.col=30; cam.row=30; bakeGround();
+  player.col=30; player.row=30; cam.col=30; cam.row=30; ensureCivic(rid); bakeGround();
 }
 function walkable(col,row){ col|=0; row|=0; if(col<0||row<0||col>=GW||row>=GH) return false; const t=tiles[row][col]; if(t===WATER||t===LAVA) return false;
   // buildings + solid props block
@@ -409,19 +453,27 @@ function drawHoverCar(sx,sy,color,time){ const lift=11+Math.sin(time/500+sx*0.1)
   isoBox(sx,sy-lift,0.66,0.4,6,color); isoBox(sx-2,sy-lift-2,0.42,0.3,5,shade(color,0.18));
   ctx.fillStyle='#bfeeff'; ctx.fillRect(Math.round(sx)-6,Math.round(sy)-Math.round(lift)-11,12,3);
   ctx.fillStyle='#5fe0ff'; ctx.fillRect(Math.round(sx)-8,Math.round(sy)-Math.round(lift)-4,16,1); }
-function drawVolcano(sx,sy,time){ const g=Math.sin(time/1000)*0.5+0.5;
-  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(sx,sy+6,94,34,0,0,7);ctx.fill();
-  isoBox(sx,sy,5,5,24,'#2b2028'); isoBox(sx,sy-24,3.7,3.7,22,'#241a22'); isoBox(sx,sy-46,2.4,2.4,18,'#1d1620'); isoBox(sx,sy-64,1.4,1.4,10,'#171018');
-  ctx.strokeStyle='rgba(255,110,40,'+(0.4+g*0.3).toFixed(2)+')';ctx.lineWidth=2; // lava veins down the cone
-  ctx.beginPath();ctx.moveTo(sx,sy-68);ctx.lineTo(sx-14,sy-30);ctx.moveTo(sx,sy-68);ctx.lineTo(sx+12,sy-20);ctx.moveTo(sx,sy-68);ctx.lineTo(sx-4,sy-10);ctx.stroke();
+function drawVolcano(sx,sy,time,scale){ scale=scale||1; const g=Math.sin(time/1000)*0.5+0.5;
+  ctx.save(); ctx.translate(sx,sy); ctx.scale(scale,scale);
+  ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(0,8,86,30,0,0,7); ctx.fill();   // ground shadow
+  // broad conical body (wide base → crater) with a vertical rock gradient
+  const grd=ctx.createLinearGradient(0,-96,0,4); grd.addColorStop(0,'#3c2c31'); grd.addColorStop(0.55,'#241a22'); grd.addColorStop(1,'#160f15');
+  ctx.fillStyle=grd; ctx.beginPath();
+  ctx.moveTo(-78,2); ctx.quadraticCurveTo(-52,-52,-24,-90); ctx.lineTo(24,-90); ctx.quadraticCurveTo(52,-52,78,2); ctx.quadraticCurveTo(0,26,-78,2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.moveTo(6,-88); ctx.quadraticCurveTo(44,-50,78,2); ctx.quadraticCurveTo(22,24,6,-6); ctx.closePath(); ctx.fill();   // right-face shading
+  ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(-8,-86); ctx.quadraticCurveTo(-30,-40,-52,0); ctx.moveTo(10,-84); ctx.quadraticCurveTo(28,-42,50,0); ctx.stroke();   // ridges
+  ctx.fillStyle='#130c11'; ctx.beginPath(); ctx.ellipse(0,-90,26,9,0,0,7); ctx.fill();   // crater rim
+  ctx.strokeStyle='rgba(255,110,40,'+(0.5+g*0.3).toFixed(2)+')'; ctx.lineWidth=2.4; ctx.lineCap='round';   // lava streaks down the front
+  ctx.beginPath(); ctx.moveTo(-6,-86); ctx.quadraticCurveTo(-16,-40,-22,-2); ctx.moveTo(4,-86); ctx.quadraticCurveTo(10,-38,6,0); ctx.moveTo(-1,-86); ctx.quadraticCurveTo(-2,-44,-4,-6); ctx.stroke();
   ctx.save(); ctx.globalCompositeOperation='lighter';
-  ctx.fillStyle='rgba(255,120,40,'+(0.28+g*0.22).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx,sy-72,15,6,0,0,7);ctx.fill(); // crater glow
-  ctx.fillStyle='rgba(255,200,90,'+(0.3+g*0.3).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx,sy-72,8,3,0,0,7);ctx.fill();
-  for(let i=0;i<5;i++){ const ph=(time/700+i*1.3), rise=((ph*20)%60), ey=sy-74-rise, ex=sx+Math.sin(ph*2+i)*10, a=1-rise/60; // rising embers
-    ctx.fillStyle='rgba(255,'+(140+i*10)+',60,'+(a*0.7).toFixed(2)+')'; ctx.fillRect(Math.round(ex),Math.round(ey),2,2); }
+  ctx.fillStyle='rgba(255,120,40,'+(0.42+g*0.28).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(0,-90,22,8,0,0,7); ctx.fill();   // crater lava glow
+  ctx.fillStyle='rgba(255,212,110,'+(0.5+g*0.34).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(0,-91,12,4,0,0,7); ctx.fill();
+  for(let i=0;i<9;i++){ const ph=(time/650+i*1.1), rise=((ph*26)%150), ey=-92-rise, ex=Math.sin(ph*2+i)*18, a=1-rise/150;   // rising embers
+    ctx.fillStyle='rgba(255,'+(150+i*8)+',60,'+(a*0.8).toFixed(2)+')'; ctx.fillRect(Math.round(ex),Math.round(ey),3,3); }
   ctx.restore();
-  ctx.fillStyle='rgba(150,150,165,'+(0.05+g*0.05).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx+4,sy-88,10,6,0,0,7);ctx.fill(); // smoke
-  ctx.fillStyle='rgba(130,130,145,'+(0.04+g*0.04).toFixed(2)+')'; ctx.beginPath();ctx.ellipse(sx-3,sy-100,12,7,0,0,7);ctx.fill(); }
+  ctx.fillStyle='rgba(150,150,165,'+(0.06+g*0.05).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(6,-120,20,11,0,0,7); ctx.fill();   // smoke plume
+  ctx.fillStyle='rgba(120,120,140,'+(0.05+g*0.04).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(-8,-140,26,14,0,0,7); ctx.fill();
+  ctx.restore(); }
 function tileTypeName(t){ return t===WATER?'water':t===LAVA?'lava':t===SAND?'sand':t===PATH?'path':t===DOCK?'dock':'grass'; }
 function nameplate(sx,y,name){ ctx.font="8px 'Press Start 2P',monospace"; ctx.textAlign='center'; const lw=Math.max(40,name.length*8+14), x=Math.round(sx-lw/2), yy=Math.round(y);
   ctx.fillStyle='rgba(8,12,20,.86)'; roundRectC(x,yy,lw,15,4); ctx.fill();
@@ -576,11 +628,12 @@ addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput');
   if(e.key==='Enter'){ if(document.activeElement===ci){ const t=ci.value.trim(); if(t&&MP&&MP.readyState===1) MP.send(JSON.stringify({t:'chat',text:t})); ci.value=''; ci.blur(); }
     else if(state==='world'||state==='interior'){ ci.classList.remove('hide'); ci.focus(); } return; }
   if(document.activeElement===ci){ if(e.key==='Escape'){ci.blur();} return; } // typing — don't move
-  keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E') tryDoor(); if(e.key==='t'||e.key==='T') tod=(tod+0.28)%1; });
+  keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E') tryDoor(); if(e.key==='t'||e.key==='T') tod=(tod+0.28)%1;
+  if(e.key===' '||e.code==='Space'){ e.preventDefault(); doAttack(); } });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
 let inInterior=null, interiorType='office';
 function tryDoor(){
-  if(state==='interior'){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); return; }
+  if(state==='interior'){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); return; }
   if(state==='travel'){ closeTravel(); return; }
   if(state!=='world'||spectate) return;
   for(const p of props){ if(p.type!=='building') continue;
@@ -588,8 +641,11 @@ function tryDoor(){
       if(p.kind==='transit') openTravel(); else enterInterior(p); return; } }
 }
 let intRoom={w:9,h:7,door:{col:4,row:6},furniture:[],order:[],npc:1};
+let intView={ox:0,oy:0,S:1}, decorMode=false, decorPick=null, wardrobeOpen=false;
 function fitem(col,row,w,d,h,color,type){ return {col,row,w,d,h,color,type:type||'box'}; }
 function interiorKindFor(b){ const n=(b.name||'').toUpperCase(), k=b.kind;
+  if(k==='hub'||/\bHQ\b|BAZAAR|TOWN SQUARE/.test(n)) return 'hub';
+  if(k==='market') return 'market';
   if(k==='transit') return 'transit';
   if(/DINER|CAFE/.test(n)) return 'diner';
   if(/BANK|EXCHANGE|VAULT|TREAS/.test(n)) return 'bank';
@@ -619,9 +675,18 @@ function buildInterior(kind){
   else if(kind==='transit'){ F=[fitem(4,0.35,2,0.4,9,'#15151c','tv'), fitem(1.2,1.4,2,0.8,10,'#5a6a8a','counter'), fitem(6,2,1.4,0.5,5,'#6a5636'),fitem(6,3.4,1.4,0.5,5,'#6a5636'), plant(7.6,4.6)]; }
   else if(kind==='agent'){ F=[fitem(3.6,1,1.8,1.4,14,'#2a2440','screen'), fitem(4,0.35,1.4,0.4,10,'#1a1a30','tv'),
     fitem(0.8,0.8,0.6,0.6,24,'#3a3f5a'),fitem(7.6,0.8,0.6,0.6,24,'#3a3f5a'),fitem(0.8,4.4,0.6,0.6,24,'#3a3f5a'),fitem(7.6,4.4,0.6,0.6,24,'#3a3f5a')]; }
+  else if(kind==='market'){ F=[fitem(0.9,1.1,2.6,0.8,10,'#8a6a4a','counter'), fitem(4.9,1.1,2.6,0.8,10,'#8a6a4a','counter'), fitem(0.9,4.1,2.6,0.8,10,'#8a6a4a','counter'),
+    fitem(3.6,2.7,1.4,1.2,7,'#6a4a2a','table'), fitem(6.4,4.2,0.6,0.6,10,'#7a5636','barrel'), plant(7.6,0.8),plant(7.6,4.7)]; }
+  else if(kind==='hub'){ F=[fitem(3.5,0.4,2,0.5,13,'#1a1a30','tv'),
+    fitem(0.9,1.1,1.3,1.1,17,'#2a2440','screen'), fitem(6.1,1.1,1.3,1.1,17,'#2a2440','screen'), fitem(0.9,4,1.3,1.1,17,'#2a2440','screen'), fitem(6.1,4,1.3,1.1,17,'#2a2440','screen'),
+    fitem(3.5,2.5,1.8,1.6,4,'#c9a6ff','rug'), fitem(3.95,2.95,0.9,0.9,11,'#e8c45c'), plant(0.7,4.7),plant(7.6,4.7)]; }
   else { F=[fitem(4,1.5,2,0.9,10,'#5a6a8a','counter'), plant(7.3,4.5)]; }
-  const order=[]; for(let r=0;r<7;r++)for(let col=0;col<9;col++) order.push([col,r]); order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
-  intRoom={w:9,h:7,door,furniture:F,order,npc:((kind.charCodeAt(0)*7)%98)+1};
+  const IW=13, IH=9, sx=(IW-1)/8, sy=(IH-1)/6;   // BIGGER room — scale the 9x7 layout up so there's room to walk
+  F.forEach(it=>{ it.col=+(it.col*sx).toFixed(2); it.row=+(it.row*sy).toFixed(2); });
+  const bigDoor={col:+(door.col*sx).toFixed(2), row:+(door.row*sy).toFixed(2)};
+  if(inInterior && inInterior.suburb && isMyHome(inInterior)) F=F.concat(loadDecor(inInterior.houseId));  // your placed furniture
+  const order=[]; for(let r=0;r<IH;r++)for(let col=0;col<IW;col++) order.push([col,r]); order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  intRoom={w:IW,h:IH,door:bigDoor,furniture:F,order,npc:((kind.charCodeAt(0)*7)%98)+1};
 }
 function walkableInt(col,row){ if(col<0.5||row<0.5||col>intRoom.w-1.5||row>intRoom.h-1.5) return false;
   for(const it of intRoom.furniture){ if(it.type==='rug') continue; if(col>it.col-0.45&&col<it.col+it.w+0.05&&row>it.row-0.45&&row<it.row+it.d+0.05) return false; } return true; }
@@ -629,31 +694,80 @@ function isMyHome(b){ try{ const h=JSON.parse(localStorage.getItem('shaddai.home
 function moveIn(){ if(!inInterior||!inInterior.suburb) return; const h={region:'suburb',houseId:inInterior.houseId,name:inInterior.name};
   try{localStorage.setItem('shaddai.home',JSON.stringify(h));}catch(_){}
   toast('🏠 '+(inInterior.name==='FOR SALE'?'This house':inInterior.name)+' is now your home!');
-  document.getElementById('moveinBtn').textContent='🏠 This is your home ✓'; }
+  document.getElementById('moveinBtn').textContent='🏠 This is your home ✓'; buildInterior(interiorType); refreshIntActions(); }
+// ---- home decorating ----
+const DECOR=[ {t:'sofa',ico:'🛋️',w:2,d:0.9,h:8,c:'#9a4a4a',ty:'box'},{t:'tv',ico:'📺',w:0.9,d:0.5,h:10,c:'#15151c',ty:'tv'},
+  {t:'bed',ico:'🛏️',w:2,d:1,h:9,c:'#6a5a8a',ty:'bed'},{t:'table',ico:'🪑',w:1.2,d:1.2,h:7,c:'#8a6a4a',ty:'table'},
+  {t:'shelf',ico:'📚',w:0.7,d:1.6,h:16,c:'#6a7a8a',ty:'shelf'},{t:'plant',ico:'🪴',w:0.5,d:0.5,h:13,c:'#5a3a2a',ty:'plant'},
+  {t:'rug',ico:'🟫',w:2.5,d:2,h:0,c:'#4a2f42',ty:'rug'},{t:'lamp',ico:'💡',w:0.4,d:0.4,h:16,c:'#c9a24a',ty:'box'},
+  {t:'chest',ico:'📦',w:0.6,d:0.6,h:8,c:'#7a5636',ty:'box'},{t:'screen',ico:'🖥️',w:1.4,d:0.4,h:12,c:'#1a1a30',ty:'screen'} ];
+function loadDecor(hid){ try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); return (d[hid]||[]).map(x=>{ const f=fitem(x.col,x.row,x.w,x.d,x.h,x.color,x.type); f._decor=true; return f; }); }catch(e){ return []; } }
+function saveDecorNow(){ if(!inInterior||!inInterior.suburb) return; const items=intRoom.furniture.filter(f=>f._decor).map(f=>({col:f.col,row:f.row,w:f.w,d:f.d,h:f.h,color:f.color,type:f.type}));
+  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[inInterior.houseId]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} }
+function openDecorate(){ if(!inInterior||!isMyHome(inInterior)){ toast('You can only decorate your own home'); return; } decorMode=true; decorPick=DECOR[0];
+  const bar=document.getElementById('decorBar'); bar.innerHTML=DECOR.map((d,i)=>'<button class="dpick" data-i="'+i+'" style="font-size:20px;padding:5px 7px;border:1px solid '+(i===0?'#e8c45c':'#2a3346')+';border-radius:8px;background:#182031;cursor:pointer">'+d.ico+'</button>').join('')+'<button class="primary" style="margin-left:6px;padding:7px 12px" onclick="doneDecorate()">✓ Done</button>';
+  bar.querySelectorAll('.dpick').forEach(btn=>btn.onclick=()=>{ decorPick=DECOR[+btn.dataset.i]; bar.querySelectorAll('.dpick').forEach(x=>x.style.borderColor='#2a3346'); btn.style.borderColor='#e8c45c'; });
+  bar.classList.remove('hide'); toast('Pick an item, then click the floor to place it'); }
+function doneDecorate(){ decorMode=false; document.getElementById('decorBar').classList.add('hide'); saveDecorNow(); toast('🏠 Home saved'); }
+function placeDecorAt(col,row){ if(!decorPick||col<0.6||row<0.6||col>intRoom.w-1.6||row>intRoom.h-1.6) return;
+  const f=fitem(+col.toFixed(2),+row.toFixed(2),decorPick.w,decorPick.d,decorPick.h,decorPick.c,decorPick.ty); f._decor=true; intRoom.furniture.push(f); saveDecorNow(); }
+// ---- wardrobe ----
+const W_SKIN=['#ffe0bd','#f2c9a0','#e7b58a','#d19a6a','#b07c4f','#8a5a3a','#6b4423','#4a2f1c'];
+const W_HAIR=['#2a1c12','#5a3a1a','#111111','#e8a23a','#d8d2c8','#c0392b','#3a5ac0','#7a3ac0','#2aa050','#b0b0b0'];
+const W_OUT=['#e0662e','#2f6fe8','#3f9e4d','#e8433a','#f2a01e','#8b5cf6','#12b3b3','#eef1f4','#d94f8f','#1f3a63'];
+function topField2(){ for(const f of['suit','hoodie','jacket','dress']) if(player.rig[f]) return f; return 'shirt'; }
+function persistPlayer(){ try{ localStorage.setItem('shaddai.player',JSON.stringify({name:player.name,rig:player.rig,source:'forge'})); }catch(e){} mpHello(); }
+function openWardrobe(){ wardrobeOpen=true; const el=document.getElementById('wardrobe');
+  const rowH=(label,arr,cur,slot)=>'<div style="margin:9px 0"><div style="font-size:11px;color:#9fb2c4;letter-spacing:1px;margin-bottom:6px">'+label+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+arr.map(c=>'<span class="wsw" data-slot="'+slot+'" data-c="'+c+'" style="width:26px;height:26px;border-radius:7px;background:'+c+';cursor:pointer;border:2px solid '+(c===cur?'#e8c45c':'rgba(255,255,255,.15)')+'"></span>').join('')+'</div></div>';
+  el.innerHTML='<h1>👕 <b>Wardrobe</b></h1>'+rowH('Skin',W_SKIN,player.rig.skin,'skin')+rowH('Hair',W_HAIR,player.rig.hair,'hair')+rowH('Outfit',W_OUT,player.rig[topField2()],'top')+
+    '<div class="row" style="margin-top:12px;justify-content:space-between"><button onclick="toggleRobot()">🤖 Robot: '+(player.rig.robot?'On':'Off')+'</button><button class="primary" onclick="closeWardrobe()">Done</button></div>';
+  el.querySelectorAll('.wsw').forEach(s=>s.onclick=()=>{ const sl=s.dataset.slot,c=s.dataset.c; if(sl==='skin')player.rig.skin=c; else if(sl==='hair')player.rig.hair=c; else player.rig[topField2()]=c; persistPlayer(); openWardrobe(); });
+  el.classList.remove('hide'); }
+function toggleRobot(){ if(player.rig.robot){ delete player.rig.robot; delete player.rig.led; } else { player.rig.robot=true; player.rig.led='#5fe0ff'; player.rig.emblem='#5fe0ff'; } persistPlayer(); openWardrobe(); }
+function closeWardrobe(){ wardrobeOpen=false; document.getElementById('wardrobe').classList.add('hide'); }
+function hideIntUI(){ decorMode=false; wardrobeOpen=false; storageOpen=false; bankOpen=false; forgeOpen=false; questsOpen=false; hubOpen=false; agentLiveOpen=false; ['intActions','decorBar','wardrobe','storage','bank','forge','quests','hubrooms','agentlive'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
+c.addEventListener('click',e=>{ if(state==='interior'&&decorMode){ const mx=e.clientX, my=e.clientY;
+  const X=(mx-intView.ox)/((TW/2)*intView.S), Y=(my-intView.oy)/((TH/2)*intView.S); placeDecorAt((X+Y)/2,(Y-X)/2); } });
+function restHere(){ toast('😴 You rest a while… fully refreshed.'); }
+function refreshIntActions(){ const ia=document.getElementById('intActions'); if(!ia)return; let b='';
+  if(inInterior&&inInterior.suburb&&isMyHome(inInterior)) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openWardrobe()">👕 Wardrobe</button><button onclick="openStorage()">📦 Storage</button>';
+  else if(interiorType==='shop') b='<button onclick="openStore()">🛒 Browse</button>';
+  else if(interiorType==='tavern') b='<button onclick="restHere()">😴 Rest</button><button onclick="openQuests()">📜 Bounties</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
+  else if(interiorType==='bank') b='<button onclick="openBank()">🏦 Bank &amp; Coin Market</button>';
+  else if(interiorType==='forge') b='<button onclick="openForge()">⚒️ Forge</button>';
+  else if(interiorType==='market') b='<button onclick="openMarket()">🤝 Trade at the Swap Market</button>';
+  else if(interiorType==='hub') b='<button onclick="openMarket()">🤝 Grand Bazaar</button><button onclick="openHubRooms()">🏛️ Pro Rooms</button>';
+  if(b){ ia.innerHTML=b; ia.classList.remove('hide'); } else ia.classList.add('hide'); }
 function enterInterior(b){ state='interior'; inInterior=b; interiorType=interiorKindFor(b); buildInterior(interiorType);
   player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   const pr=document.getElementById('prompt'); pr.classList.remove('hide');
   pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+' — WASD to walk · reach the door or press E to exit';
-  const mb=document.getElementById('moveinBtn'); if(b.suburb){ mb.classList.remove('hide'); mb.textContent=isMyHome(b)?'🏠 This is your home ✓':'🏠 Move in here'; } else mb.classList.add('hide'); }
+  const mb=document.getElementById('moveinBtn'); if(b.suburb){ mb.classList.remove('hide'); mb.textContent=isMyHome(b)?'🏠 This is your home ✓':'🏠 Move in here'; } else mb.classList.add('hide');
+  refreshIntActions(); }
 function openShop(){ document.getElementById('prompt').classList.remove('hide'); document.getElementById('prompt').textContent='🛒 x402 micropayment shop — wiring coming next (testnet)'; setTimeout(()=>document.getElementById('prompt').classList.add('hide'),2600); }
 // ---- travel ----
 let fadeV=0, fadeDir=0, pendingRegion=null;
+const FARE={ meadow:8, beach:10, forest:9, city:12, desert:14, volcano:16, agentcity:20, suburb:6 };   // travel fare by destination
+let travelClockAdd=0;
 function openTravel(){ if(state!=='world')return; state='travel'; const g=document.getElementById('travelGrid'); g.innerHTML='';
   REGIONS.forEach(r=>{ const d=document.createElement('div'); d.className='rcard'+(r.id===regionSel?' sel':''); d.style.background=r.color;
     d.style.background='linear-gradient(150deg,'+r.color+','+shadeHex(r.color,-0.22)+')';
-    d.innerHTML='<div class="rem">'+r.emoji+'</div><div class="rnm">'+r.name+'</div><small>'+(r.id===regionSel?'You are here':r.desc)+'</small>';
-    if(r.id!==regionSel) d.onclick=()=>travelTo(r.id); g.appendChild(d); });
+    const fare=FARE[r.id]||10, afford=money>=fare;
+    d.innerHTML='<div class="rem">'+r.emoji+'</div><div class="rnm">'+r.name+'</div><small>'+(r.id===regionSel?'You are here':r.desc+' · 🎫 💵'+fare+(afford?'':' (need more)'))+'</small>';
+    if(r.id!==regionSel){ d.style.opacity=afford?'1':'0.55'; d.onclick=()=>travelTo(r.id); } g.appendChild(d); });
   document.getElementById('travel').classList.remove('hide'); }
 function closeTravel(){ state='world'; document.getElementById('travel').classList.add('hide'); }
-function travelTo(id){ document.getElementById('travel').classList.add('hide'); state='world'; pendingRegion=id; fadeDir=1; }
+function travelTo(id){ const fare=FARE[id]||10; if(money<fare){ toast('The fare to '+(REGIONS.find(x=>x.id===id)||{}).name+' is 💵'+fare+' — earn a bit more first'); return; }
+  money-=fare; travelClockAdd=0.1+Math.random()*0.06; saveEcon(); document.getElementById('travel').classList.add('hide'); state='world'; pendingRegion=id; fadeDir=1; toast('🎫 Paid 💵'+fare+' — the journey takes a few hours…'); }
 
 // ---------- update ----------
 let last=0;
 function update(dt){
-  if(jobCooldown>0) jobCooldown-=dt;
+  if(jobCooldown>0) jobCooldown-=dt; if(fishCooldown>0) fishCooldown-=dt; if(gatherCooldown>0) gatherCooldown-=dt;
+  if(state!=='world'){ ['fishBar','gatherBar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
   if(state==='world') tod=(tod+dt*0.012)%1;   // ~85s day/night cycle
   if(fadeDir!==0){ fadeV+=fadeDir*dt*2.6;
-    if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; pendingRegion=null; fadeV=1; fadeDir=-1; }
+    if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; if(travelClockAdd){ tod=(tod+travelClockAdd)%1; travelClockAdd=0; } updateHP(); pendingRegion=null; fadeV=1; fadeDir=-1; }
     else if(fadeV<=0){ fadeV=0; fadeDir=0; } }
   if(state==='world'){
     if(!spectate){ const run=keys['shift']?1.9:1, v=3.2*run*dt; let mc=0,mr=0;
@@ -674,14 +788,25 @@ function update(dt){
     // door prompt (not while spectating)
     if(!spectate){ let near=null; for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
       const pr=document.getElementById('prompt'); if(near){ pr.classList.remove('hide'); pr.textContent='Press E to enter '+near.name; } else if(!inInterior) pr.classList.add('hide'); }
+    updateFishes(dt);
+    if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
+    if(window.Combat && enemies.length && !spectate){ const dmg=Combat.update(enemies, player, dt, walkable);
+      if(dmg>0){ playerHP-=dmg; hurtFlash=0.35; updateHP(); if(playerHP<=0) respawnPlayer(); } }
+    let nw=false; for(let dr=-2;dr<=2&&!nw;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0, t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK){nw=true;} }
+    const fb=document.getElementById('fishBar'); if(fb) fb.classList.toggle('hide', !nw||spectate);
+    // gather: near a tree → chop wood, near rocks → mine ore
+    let gt=null; for(const p of props){ const t=p.type; const near=Math.abs(p.col-player.col)<1.9&&Math.abs(p.row-player.row)<1.9;
+      if(near&&(t==='tree'||t==='pine'||t==='palm'||t==='cactus')){ gt='wood'; break; } if(near&&(t==='rock'||t==='lavarock')){ gt='ore'; } }
+    gatherTarget=gt; const gb=document.getElementById('gatherBar'); if(gb){ gb.classList.toggle('hide', !gt||spectate); if(gt){ gb.querySelector('.glabel').textContent=(gt==='wood'?'🌲 Woods':'⛏️ Rocks'); gb.querySelector('.gbtn').textContent=(gt==='wood'?'🪓 Chop wood':'⛏️ Mine ore'); } }
   }
   else if(state==='interior'){
+    if(decorMode||wardrobeOpen||storageOpen||bankOpen||forgeOpen||questsOpen||hubOpen||agentLiveOpen){ player.rig.anim='idle'; return; }   // pause while a panel is open
     const v=2.6*dt; let mc=0,mr=0;
     if(keys['w']||keys['arrowup']){mc-=1;mr-=1;} if(keys['s']||keys['arrowdown']){mc+=1;mr+=1;}
     if(keys['a']||keys['arrowleft']){mc-=1;mr+=1;} if(keys['d']||keys['arrowright']){mc+=1;mr-=1;}
     if(mc||mr){ const nc=player.icol+mc*v*0.5, nr=player.irow+mr*v*0.5;
       if(walkableInt(nc,player.irow)) player.icol=nc; if(walkableInt(player.icol,nr)) player.irow=nr; player.rig.anim='walk';
-      if(Math.hypot(player.icol-intRoom.door.col,player.irow-intRoom.door.row)<0.75){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); }
+      if(Math.hypot(player.icol-intRoom.door.col,player.irow-intRoom.door.row)<0.75){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); }
     } else player.rig.anim='idle';
   }
 }
@@ -775,14 +900,16 @@ function renderWorld(time){
       ctx.fillStyle='rgba(210,240,255,'+(0.05+w*0.11).toFixed(2)+')';
       ctx.fillRect(sx-9, sy-1+Math.sin(t2+col)*2, 18, 1.4); }
     ctx.restore(); }
+  if(fishes.length) drawFishes(time);
   const obj=[];
   for(const p of props){ const [sx,sy]=w2s(p.col+(p.w?(p.w-1)/2:0),p.row+(p.d?(p.d-1)/2:0)); if(cull(sx,sy)) continue;
     obj.push({k:p.col+p.row+(p.type==='building'?(p.w+p.d)/2:0), draw:()=>{
       const sd=(p.col*7+p.row*13)&7;
-      if(p.type==='tree')drawTree(sx,sy,sd); else if(p.type==='palm')drawPalm(sx,sy,sd); else if(p.type==='pine')drawPine(sx,sy,sd); else if(p.type==='cactus')drawCactus(sx,sy,sd); else if(p.type==='lavarock')drawLavaRock(sx,sy,sd); else if(p.type==='rock')drawRock(sx,sy,sd); else if(p.type==='car')drawCar(sx,sy,p.color); else if(p.type==='hovercar')drawHoverCar(sx,sy,p.color,time); else if(p.type==='volcano')drawVolcano(sx,sy,time); else if(p.type==='building')drawBuilding(p,sx,sy,time);
+      if(p.type==='tree')drawTree(sx,sy,sd); else if(p.type==='palm')drawPalm(sx,sy,sd); else if(p.type==='pine')drawPine(sx,sy,sd); else if(p.type==='cactus')drawCactus(sx,sy,sd); else if(p.type==='lavarock')drawLavaRock(sx,sy,sd); else if(p.type==='rock')drawRock(sx,sy,sd); else if(p.type==='car')drawCar(sx,sy,p.color); else if(p.type==='hovercar')drawHoverCar(sx,sy,p.color,time); else if(p.type==='volcano')drawVolcano(sx,sy,time,p.scale||1); else if(p.type==='building')drawBuilding(p,sx,sy,time);
       else if(p.type==='fence')drawFence(sx,sy); else if(p.type==='lamp')drawLamp(sx,sy,time); else if(p.type==='bench')drawBench(sx,sy); else if(p.type==='stall')drawStall(sx,sy,p.color); else if(p.type==='farm')drawFarm(sx,sy,p.ready!==false); else if(p.type==='chicken')drawChicken(sx,sy); else if(p.type==='sheep')drawSheep(sx,sy); else if(p.type==='crate')drawCrate(sx,sy); else if(p.type==='boat')drawBoat(sx,sy,time);
       else if(p.type==='tractor')drawTractor(sx,sy); else if(p.type==='haybale')drawHaybale(sx,sy); else if(p.type==='flowers')drawFlowers(sx,sy); else if(p.type==='well')drawWell(sx,sy); else if(p.type==='foodcart')drawFoodcart(sx,sy); }}); }
   for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); }}); }
+  if(window.Combat) for(const e of enemies){ const [sx,sy]=w2s(e.col,e.row); if(cull(sx,sy)) continue; obj.push({k:e.col+e.row+0.003, draw:()=>Combat.draw(ctx,e,sx,sy,time)}); }
   for(const rid in remote){ const r=remote[rid]; if(!r.rig||r.region!==region.id||r.col===undefined) continue; const [sx,sy]=w2s(r.col,r.row); if(cull(sx,sy)) continue;
     obj.push({k:r.col+r.row+0.005, draw:()=>{ PP.draw(ctx,r.rig,sx,sy,0.8,time); agentLabel(sx,sy,r.name||'Traveler','#5fe0ff'); }}); }
   if(!spectate){ const [sx,sy]=w2s(player.col,player.row); obj.push({k:player.col+player.row+0.01, draw:()=>{ PP.draw(ctx,player.rig,sx,sy,0.8,time); }}); }
@@ -801,8 +928,9 @@ function renderInterior(time){
   const tint={home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
   const bg=ctx.createRadialGradient(W/2,H*0.34,60,W/2,H*0.34,H); bg.addColorStop(0,shade(tint,0.05)); bg.addColorStop(1,'#070a0f');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  const IW=intRoom.w,IH=intRoom.h, ox=W/2, oy=H*0.27, S=1.3;
+  const IW=intRoom.w,IH=intRoom.h, ox=W/2, oy=H*0.22, S=Math.min(1.15, W/((IW+IH)*46));
   const is=(col,row)=>[ox+(col-row)*(TW/2)*S, oy+(col+row)*(TH/2)*S];
+  intView={ox,oy,S};
   function ibox(ccol,crow,w,d,h,top){ const [sx,sy]=is(ccol,crow); const dx=(dc,dr)=>(dc-dr)*(TW/2)*S,dy=(dc,dr)=>(dc+dr)*(TH/2)*S,hw=w/2,hd=d/2;
     const bk=[sx+dx(-hw,-hd),sy+dy(-hw,-hd)],rt=[sx+dx(hw,-hd),sy+dy(hw,-hd)],fr=[sx+dx(hw,hd),sy+dy(hw,hd)],lf=[sx+dx(-hw,hd),sy+dy(-hw,hd)];
     const up=p=>[p[0],p[1]-h]; const P=a=>{ctx.beginPath();ctx.moveTo(a[0][0],a[0][1]);for(let i=1;i<a.length;i++)ctx.lineTo(a[i][0],a[i][1]);ctx.closePath();};
@@ -854,6 +982,21 @@ function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time;
 fit(); setPreset(0);
 // ---- hand-off from Pixel Forge + Region Selector ----
 (function boot(){ try{
+  // ?embed=office / ?office → COMMAND VIEW: this is the dashboard "Office" — the same
+  // 2D world engine + art, loaded straight into SHADDAI City (your command district).
+  // Skips create/region so the office view matches the world EXACTLY (it IS the world).
+  if(/[?&](embed=office|office=1|view=office)/.test(location.search)){
+    try{ document.body.classList.add('office-embed');
+      // integrate cleanly inside the dashboard terminal: hide page chrome that belongs to
+      // the standalone game (home/dashboard pill, game topbtns, mp status, shop) so the
+      // embedded office doesn't show duplicate Home/Dashboard buttons.
+      var _s=document.createElement('style'); _s.textContent='body.office-embed #shd-home,body.office-embed #topbtns,body.office-embed #mpstatus,body.office-embed #shopBtn,body.office-embed #specHud{display:none!important}'; document.head.appendChild(_s);
+      regionSel = REGIONS.some(x=>x.id==='city') ? 'city' : (REGIONS[0]&&REGIONS[0].id);
+      document.getElementById('create').classList.add('hide');
+      document.getElementById('region').classList.add('hide');
+      enterWorld(); return;
+    }catch(e){ console.warn('office-embed boot',e); }
+  }
   // ?menu (or ?fresh) clears any saved region so the create + region picker always shows
   if(/[?&](menu|fresh)/.test(location.search)){ localStorage.removeItem('shaddai.region'); }
   try{ if(localStorage.getItem('shaddai.mode')==='spectate') spectate=true; localStorage.removeItem('shaddai.mode'); }catch(e){}
@@ -903,29 +1046,198 @@ const STORE=[
   {id:'hplant',name:'House Plant',price:30,cat:'home',ico:'🪴'},{id:'hlamp',name:'Floor Lamp',price:35,cat:'home',ico:'💡'},
   {id:'rug',name:'Rug',price:40,cat:'home',ico:'🟫'},{id:'art',name:'Painting',price:55,cat:'home',ico:'🖼️'} ];
 const JOBS={ meadow:{name:'Harvest the Fields',pay:[15,35]}, beach:{name:'Haul Dock Cargo',pay:[18,40]}, city:{name:'Courier Run',pay:[20,45]}, forest:{name:'Hunt & Forage',pay:[16,38]}, desert:{name:'Mine the Mesa',pay:[18,42]}, volcano:{name:'Work the Forge',pay:[25,55]}, agentcity:{name:'Agent Bounty',pay:[30,60]} };
-let credits=250; const inv={}; let jobCooldown=0;
-function loadEcon(){ try{ const e=JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); if(typeof e.credits==='number')credits=e.credits; if(e.inv)Object.assign(inv,e.inv); }catch(_){} }
-function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({credits,inv})); }catch(_){} updateWallet(); }
-function updateWallet(){ const el=document.getElementById('wallet'); if(el)el.textContent='💰 '+credits+' cr'; }
+let money=120, credits=0; const inv={}, fish={}; let jobCooldown=0, fishCooldown=0, gatherCooldown=0, gatherTarget=null;   // money = spend · credits = XP toward levels
+let bank=0, coin=0, coinPrice=100; const stash={};   // bank savings · SHADDAI Coin market · home storage chest
+let storageOpen=false, bankOpen=false, forgeOpen=false, questsOpen=false;
+let equippedWeapon=null; const weaponUp={};   // active weapon + forge upgrade levels (id→0..3)
+const quest={fish:0,kills:0,earn:0}, questDone={};   // bounty-board progress
+let marketOpen=false, marketPrevState='world', marketQueue=[], marketIdx=0, marketCountered=false;   // town-square barter
+let hubOpen=false, agentLiveOpen=false;   // SHADDAI HQ pro-rooms panel + live agent view
+const API_BASES=['','http://localhost:3000'];   // same-origin (deployed) → local backend fallback
+let agentStatus={};   // live status cache from /api/agents
+async function apiGet(path){ for(const base of API_BASES){ try{ const r=await fetch(base+path,{cache:'no-store'}); if(r.ok) return await r.json(); }catch(e){} } return null; }
+async function apiPost(path,body){ for(const base of API_BASES){ try{ const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(r.ok) return await r.json(); }catch(e){} } return null; }
+// tradable goods (gathered/looted) — sold at the swap market; fish are tradable too (use their val)
+const GOODS=[ {id:'wood',name:'Wood',ico:'🪵',base:5},{id:'hide',name:'Animal Hide',ico:'🟫',base:9},{id:'water',name:'Fresh Water',ico:'💧',base:4},{id:'ore',name:'Raw Ore',ico:'🪨',base:8},{id:'trinket',name:'Trinket',ico:'💎',base:16} ];
+// per-region demand & premiums (multiplier on base; missing good = weak 0.55 price; ALL = big bazaar buys everything)
+const MARKET_DEMAND={ meadow:{wood:1.0,hide:1.1,fish:0.9,trinket:1.1,water:0.7,ore:0.8}, beach:{fish:1.3,water:0.6,trinket:1.2,hide:0.9,wood:0.9}, forest:{wood:0.7,hide:0.8,fish:1.0,water:0.9,trinket:1.0,ore:0.9}, desert:{wood:1.6,water:1.9,hide:1.2,ore:1.1,trinket:1.1,fish:0.8}, city:{fish:1.1,trinket:1.4,ore:1.3,hide:1.1,wood:1.0,water:1.0}, volcano:{water:2.3,fish:1.3,hide:1.4,wood:1.5,ore:0.9}, agentcity:{ALL:1.5}, suburb:{ALL:1.0} };
+const FISH=[ {id:'minnow',name:'Minnow',ico:'🐟',val:6,w:5},{id:'bass',name:'Bass',ico:'🐟',val:12,w:4},{id:'salmon',name:'Salmon',ico:'🐠',val:22,w:2.5},{id:'tuna',name:'Big Tuna',ico:'🐡',val:48,w:1,big:true},{id:'levi',name:'Leviathan',ico:'🐋',val:130,w:0.3,big:true} ];
+function levelFor(c){ return 1+Math.floor(Math.sqrt(c/45)); }
+function loadEcon(){ try{ const e=JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); if(typeof e.money==='number')money=e.money; if(typeof e.credits==='number')credits=e.credits; if(e.inv)Object.assign(inv,e.inv); if(e.fish)Object.assign(fish,e.fish); if(typeof e.bank==='number')bank=e.bank; if(typeof e.coin==='number')coin=e.coin; if(typeof e.coinPrice==='number')coinPrice=e.coinPrice; if(e.stash)Object.assign(stash,e.stash); if(e.weaponUp)Object.assign(weaponUp,e.weaponUp); if(typeof e.equippedWeapon==='string')equippedWeapon=e.equippedWeapon; if(e.quest)Object.assign(quest,e.quest); if(e.questDone)Object.assign(questDone,e.questDone); }catch(_){} }
+function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); }
+function updateWallet(){ const el=document.getElementById('wallet'); if(!el)return; el.innerHTML='💵 '+money+' &nbsp;·&nbsp; <span style="color:#5fe0ff">Lv '+levelFor(credits)+'</span> <span style="opacity:.55">'+credits+' XP</span><br><span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; }
+function updateHP(){ const f=document.getElementById('hpFill'), t=document.getElementById('hpTxt'); if(!f)return; const pct=Math.max(0,playerHP)/playerMaxHP*100; f.style.width=pct+'%'; f.style.background=pct>50?'#4fe07a':pct>25?'#e0c14f':'#e05a4f'; if(t)t.textContent='❤ '+Math.max(0,Math.ceil(playerHP)); }
+function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSwing=0.25; if(player.rig)player.rig.anim='attack';
+  const killed=Combat.playerAttack(enemies, player, weaponPower())||[]; enemies=enemies.filter(e=>!e.dead);
+  if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
+function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } player.col=Math.round(GW/2); player.row=Math.round(GH/2); if(!walkable(player.col,player.row)){ for(let r=1;r<GH;r++){ if(walkable(GW/2|0,r)){ player.row=r; break; } } } cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
+function addXP(n){ const b=levelFor(credits); credits+=n; if(levelFor(credits)>b) toast('⭐ Level up! You are now Level '+levelFor(credits)); }
 function toast(msg){ const pr=document.getElementById('prompt'); if(!pr)return; pr.classList.remove('hide'); pr.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>pr.classList.add('hide'),1900); }
 function closePanel(){ state='world'; ['store','inv','jobs'].forEach(id=>document.getElementById(id).classList.add('hide')); }
-function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(credits<it.price){ toast('Not enough credits'); return; } credits-=it.price; inv[id]=(inv[id]||0)+1; saveEcon(); openStore(); }
+function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.price){ toast('Not enough money'); return; } money-=it.price; inv[id]=(inv[id]||0)+1; saveEcon(); openStore(); }
 function openStore(){ if(state==='jobs')return; state='store'; const el=document.getElementById('store');
-  let h='<h1>🛒 <b>General Store</b></h1><div class="sub" style="margin-bottom:12px">Balance: <b style="color:#e8c45c">💰 '+credits+' cr</b> · weapons · tools · home goods</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
-  for(const it of STORE){ const owned=inv[it.id]||0, can=credits>=it.price;
-    h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+it.ico+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💰 '+it.price+'</button></div>'; }
+  let h='<h1>🛒 <b>General Store</b></h1><div class="sub" style="margin-bottom:12px">💵 <b style="color:#e8c45c">'+money+'</b> · weapons · tools · home goods</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
+  for(const it of STORE){ const owned=inv[it.id]||0, can=money>=it.price;
+    h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+it.ico+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💵 '+it.price+'</button></div>'; }
   h+='</div><div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openInv()">🎒 Inventory</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('inv').classList.add('hide'); }
-function openInv(){ state='inv'; const el=document.getElementById('inv'); const items=Object.keys(inv).filter(k=>inv[k]>0);
-  let h='<h1>🎒 <b>Inventory</b></h1><div class="sub" style="margin-bottom:12px">💰 '+credits+' credits</div>';
-  if(!items.length) h+='<div class="sub">Empty — buy gear & furniture at the Store.</div>';
-  else { h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of items){ const it=STORE.find(x=>x.id===k)||{name:k,ico:'📦'}; h+='<div class="rcard" style="min-height:78px;background:#141a26;cursor:default;color:#eaf3fb"><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+'</div><small>×'+inv[k]+'</small></div>'; } h+='</div>'; }
+function openInv(){ state='inv'; const el=document.getElementById('inv'); const items=Object.keys(inv).filter(k=>inv[k]>0), fitems=Object.keys(fish).filter(k=>fish[k]>0);
+  let h='<h1>🎒 <b>Inventory</b></h1><div class="sub" style="margin-bottom:12px">💵 '+money+' · Lv '+levelFor(credits)+' · '+credits+' XP</div>';
+  if(!items.length&&!fitems.length) h+='<div class="sub">Empty — buy gear at the Store, or fish by the water.</div>';
+  if(items.length){ h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of items){ const it=STORE.find(x=>x.id===k)||{name:k,ico:'📦'}; const isW=WEAPON_POWER[k]!==undefined, up=weaponUp[k]||0, eq=activeWeapon()===k;
+    h+='<div class="rcard" style="min-height:78px;background:'+(eq?'#1c2c22':'#141a26')+';cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+(up?' <span style="color:#f2c14e">+'+up+'</span>':'')+'</div><small>×'+inv[k]+(isW?' · pow '+(WEAPON_POWER[k]+up*0.5).toFixed(1):'')+'</small></div>'+
+      (isW?'<button style="margin-top:5px;padding:4px 8px;font-size:11px'+(eq?';border-color:#4fe07a;color:#4fe07a':'')+'" onclick="equipWeapon(\''+k+'\')">'+(eq?'✓ Equipped':'Equip')+'</button>':'')+'</div>'; } h+='</div>'; }
+  if(fitems.length){ h+='<div class="sub" style="margin:14px 0 8px">🎣 Your catch <button style="float:right;padding:4px 10px;font-size:12px" onclick="sellFish()">💰 Sell all</button></div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of fitems){ const it=FISH.find(x=>x.id===k)||{name:k,ico:'🐟',val:0}; h+='<div class="rcard" style="min-height:78px;background:#12202a;cursor:default;color:#eaf3fb"><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+'</div><small>×'+fish[k]+' · '+it.val+'💵</small></div>'; } h+='</div>'; }
   h+='<div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openStore()">🛒 Store</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('store').classList.add('hide'); }
+// ---- item metadata (spans store + fish) ----
+function itemMeta(id){ const s=STORE.find(x=>x.id===id); if(s)return {name:s.name,ico:s.ico}; const f=FISH.find(x=>x.id===id); if(f)return {name:f.name,ico:f.ico}; const g=GOODS.find(x=>x.id===id); if(g)return {name:g.name,ico:g.ico}; return {name:id,ico:'📦'}; }
+function bagCount(id){ return (inv[id]||0)+(FISH.find(x=>x.id===id)?(fish[id]||0):0); }
+// ---- home storage chest ----
+function openStorage(){ storageOpen=true; const el=document.getElementById('storage'); if(!el)return;
+  const bag=[...Object.keys(inv).filter(k=>inv[k]>0), ...Object.keys(fish).filter(k=>fish[k]>0)];
+  const st=Object.keys(stash).filter(k=>stash[k]>0);
+  const cell=(id,cnt,btn,fn)=>{ const m=itemMeta(id); return '<div class="rcard" style="min-height:74px;background:#141a26;cursor:pointer;color:#eaf3fb" onclick="'+fn+'(\''+id+'\')"><div style="font-size:22px">'+m.ico+'</div><div class="rnm" style="font-size:12px">'+m.name+'</div><small>×'+cnt+' '+btn+'</small></div>'; };
+  let h='<h1>📦 <b>Home Storage</b></h1><div class="sub" style="margin-bottom:10px">Click an item to move it. Stored items are safe here.</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+  h+='<div><div class="sub" style="margin-bottom:6px">🎒 Your Bag →</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(94px,1fr))">'+(bag.length?bag.map(k=>cell(k,(inv[k]||fish[k]),'▸ store','toStash')).join(''):'<small style="opacity:.6">bag empty</small>')+'</div></div>';
+  h+='<div><div class="sub" style="margin-bottom:6px">← 📦 Storage</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(94px,1fr))">'+(st.length?st.map(k=>cell(k,stash[k],'◂ take','fromStash')).join(''):'<small style="opacity:.6">storage empty</small>')+'</div></div>';
+  h+='</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="primary" onclick="closeStorage()">Done</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function toStash(id){ if(inv[id]>0){ inv[id]--; if(inv[id]<=0)delete inv[id]; } else if(fish[id]>0){ fish[id]--; if(fish[id]<=0)delete fish[id]; } else return; stash[id]=(stash[id]||0)+1; saveEcon(); openStorage(); }
+function fromStash(id){ if(!(stash[id]>0))return; stash[id]--; if(stash[id]<=0)delete stash[id]; if(FISH.find(x=>x.id===id)) fish[id]=(fish[id]||0)+1; else inv[id]=(inv[id]||0)+1; saveEcon(); openStorage(); }
+function closeStorage(){ storageOpen=false; const el=document.getElementById('storage'); if(el)el.classList.add('hide'); saveEcon(); }
+// ---- bank + SHADDAI Coin market ----
+function coinTick(){ const drift=(Math.random()-0.48)*coinPrice*0.06; coinPrice=Math.max(8,Math.round((coinPrice+drift)*100)/100); }
+function openBank(){ bankOpen=true; coinTick(); const el=document.getElementById('bank'); if(!el)return;
+  const val=Math.round(coin*coinPrice);
+  let h='<h1>🏦 <b>SHADDAI Bank</b></h1>';
+  h+='<div class="sub" style="margin-bottom:10px">💵 Wallet <b style="color:#e8c45c">'+money+'</b> &nbsp;·&nbsp; 🏦 Savings <b style="color:#5fe0ff">'+bank+'</b></div>';
+  h+='<div class="row" style="gap:8px;flex-wrap:wrap"><button onclick="deposit(50)">＋ Deposit 50</button><button onclick="deposit(1e9)">＋ Deposit all</button><button onclick="withdraw(50)">－ Withdraw 50</button><button onclick="withdraw(1e9)">－ Withdraw all</button></div>';
+  h+='<div style="height:1px;background:#223049;margin:16px 0"></div>';
+  h+='<div class="sub" style="margin-bottom:8px">🪙 <b style="color:#f2c14e">SHADDAI Coin</b> — market price <b style="color:#4fe07a">💵'+coinPrice.toFixed(2)+'</b><br>You hold <b>'+coin+'</b> coin (worth 💵'+val+')</div>';
+  h+='<div class="row" style="gap:8px;flex-wrap:wrap"><button class="primary" onclick="buyCoin(1)">Buy 1</button><button class="primary" onclick="buyCoin(10)">Buy 10</button><button onclick="sellCoin(1)">Sell 1</button><button onclick="sellCoin(1e9)">Sell all</button></div>';
+  h+='<div class="sub" style="margin-top:10px;opacity:.6;font-size:11px">Price moves every visit — buy low, sell high. Speculative; you can lose money.</div>';
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeBank()">Done</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function deposit(a){ a=Math.min(a,money); if(a<=0){toast('No money to deposit');return;} money-=a; bank+=a; saveEcon(); openBank(); }
+function withdraw(a){ a=Math.min(a,bank); if(a<=0){toast('Savings empty');return;} bank-=a; money+=a; saveEcon(); openBank(); }
+function buyCoin(n){ const cost=Math.round(n*coinPrice); if(money<cost){ toast('Not enough money'); return; } money-=cost; coin+=n; saveEcon(); toast('🪙 Bought '+n+' for 💵'+cost); openBank(); }
+function sellCoin(n){ n=Math.min(n,coin); if(n<=0){ toast('No coin to sell'); return; } const gain=Math.round(n*coinPrice); coin-=n; money+=gain; quest.earn+=gain; saveEcon(); toast('💰 Sold '+n+' for 💵'+gain); openBank(); }
+function closeBank(){ bankOpen=false; const el=document.getElementById('bank'); if(el)el.classList.add('hide'); saveEcon(); }
+// ---- equip active weapon ----
+function equipWeapon(id){ equippedWeapon=(equippedWeapon===id?null:id); saveEcon(); if(state==='inv')openInv(); toast(equippedWeapon?('⚔️ Equipped '+(itemMeta(id).name)):'Weapon unequipped'); }
+function weaponLabel(){ const id=activeWeapon(); if(!id)return '👊 Fists'; const u=weaponUp[id]||0; return itemMeta(id).ico+' '+itemMeta(id).name+(u?' +'+u:''); }
+// ---- FORGE: craft weapons from fish + money, and upgrade them ----
+const FORGE=[ {id:'sword',ico:'🗡️',fish:3,money:30},{id:'bow',ico:'🏹',fish:4,money:45},{id:'axe',ico:'🪓',fish:6,money:70},{id:'staff',ico:'🔱',fish:10,money:120} ];
+function totalFish(){ let n=0; for(const k in fish) n+=fish[k]; return n; }
+function spendFish(n){ for(const k of Object.keys(fish)){ while(n>0&&fish[k]>0){ fish[k]--; n--; } if(fish[k]<=0)delete fish[k]; } }
+function craftWeapon(id){ const r=FORGE.find(x=>x.id===id); if(!r)return; if(totalFish()<r.fish){ toast('Need '+r.fish+' fish (have '+totalFish()+')'); return; } if(money<r.money){ toast('Need 💵'+r.money); return; } spendFish(r.fish); money-=r.money; inv[id]=(inv[id]||0)+1; saveEcon(); toast('⚒️ Forged '+itemMeta(id).name+'!'); openForge(); }
+function upgradeWeapon(id){ const lvl=weaponUp[id]||0; if(lvl>=3){ toast('Max upgrade'); return; } const mc=40*(lvl+1), fc=2*(lvl+1); if(money<mc||totalFish()<fc){ toast('Upgrade needs 💵'+mc+' + '+fc+' fish'); return; } money-=mc; spendFish(fc); weaponUp[id]=lvl+1; saveEcon(); toast('🔥 '+itemMeta(id).name+' upgraded to +'+(lvl+1)+'!'); openForge(); }
+function openForge(){ forgeOpen=true; const el=document.getElementById('forge'); if(!el)return;
+  let h='<h1>⚒️ <b>The Forge</b></h1><div class="sub" style="margin-bottom:10px">💵 '+money+' · 🐟 '+totalFish()+' fish (materials) · active: '+weaponLabel()+'</div>';
+  h+='<div class="sub" style="margin:6px 0 6px">Craft</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">';
+  for(const r of FORGE){ const can=totalFish()>=r.fish&&money>=r.money; h+='<div class="rcard" style="min-height:96px;background:#1c1712;cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:24px">'+r.ico+'</div><div class="rnm" style="font-size:13px">'+itemMeta(r.id).name+'</div><small style="opacity:.75">🐟'+r.fish+' + 💵'+r.money+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:5px 9px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="craftWeapon(\''+r.id+'\')">Forge</button></div>'; }
+  h+='</div>';
+  const owned=Object.keys(WEAPON_POWER).filter(k=>inv[k]);
+  if(owned.length){ h+='<div class="sub" style="margin:14px 0 6px">Upgrade your weapons</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">';
+    for(const id of owned){ const lvl=weaponUp[id]||0, mc=40*(lvl+1), fc=2*(lvl+1), max=lvl>=3; h+='<div class="rcard" style="min-height:92px;background:#231a14;cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:22px">'+itemMeta(id).ico+'</div><div class="rnm" style="font-size:12px">'+itemMeta(id).name+' '+(lvl?'<span style="color:#f2c14e">+'+lvl+'</span>':'')+'</div><small style="opacity:.75">'+(max?'MAX':('🐟'+fc+' + 💵'+mc))+'</small></div><button '+(max?'':'class="primary"')+' style="margin-top:6px;padding:5px 9px;font-size:12px'+(max?';opacity:.5':'')+'" onclick="upgradeWeapon(\''+id+'\')">'+(max?'Max':'🔥 +1')+'</button></div>'; }
+    h+='</div>'; }
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeForge()">Done</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function closeForge(){ forgeOpen=false; const el=document.getElementById('forge'); if(el)el.classList.add('hide'); saveEcon(); }
+// ---- QUEST / BOUNTY BOARD ----
+const QUESTS=[ {id:'fish',ico:'🎣',name:'Master Angler',desc:'Catch 5 fish',goal:5,rw:{m:60,x:30}},
+  {id:'kills',ico:'⚔️',name:'Monster Hunter',desc:'Defeat 8 foes',goal:8,rw:{m:90,x:50}},
+  {id:'earn',ico:'💰',name:'Enterprising',desc:'Earn 200 money',goal:200,rw:{m:120,x:40}} ];
+function openQuests(){ questsOpen=true; const el=document.getElementById('quests'); if(!el)return;
+  let h='<h1>📜 <b>Bounty Board</b></h1><div class="sub" style="margin-bottom:12px">Complete bounties for 💵 + XP.</div>';
+  for(const q of QUESTS){ const prog=Math.min(quest[q.id]||0,q.goal), done=questDone[q.id], met=prog>=q.goal;
+    h+='<div class="rcard" style="background:#141c26;cursor:default;color:#eaf3fb;margin-bottom:10px;align-items:stretch"><div class="row" style="justify-content:space-between;align-items:center"><div><b style="font-size:14px">'+q.ico+' '+q.name+'</b><div style="font-size:11px;opacity:.7">'+q.desc+' · reward 💵'+q.rw.m+' + '+q.rw.x+' XP</div></div>'+
+      (done?'<span style="color:#4fe07a;font-size:12px">✓ Claimed</span>':(met?'<button class="primary" style="padding:6px 12px" onclick="claimQuest(\''+q.id+'\')">Claim</button>':'<span style="font-size:12px;opacity:.7">'+prog+'/'+q.goal+'</span>'))+'</div>'+
+      '<div style="height:6px;background:rgba(255,255,255,.12);border-radius:4px;margin-top:8px;overflow:hidden"><div style="width:'+Math.round(prog/q.goal*100)+'%;height:100%;background:'+(done?'#4fe07a':met?'#f2c14e':'#5fe0ff')+'"></div></div></div>'; }
+  h+='<div class="row" style="margin-top:6px;justify-content:flex-end"><button onclick="closeQuests()">Done</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function claimQuest(id){ const q=QUESTS.find(x=>x.id===id); if(!q||questDone[id]||(quest[id]||0)<q.goal)return; questDone[id]=1; money+=q.rw.m; addXP(q.rw.x); saveEcon(); toast('🏆 Bounty complete! +💵'+q.rw.m+' · +'+q.rw.x+' XP'); openQuests(); }
+function closeQuests(){ questsOpen=false; const el=document.getElementById('quests'); if(el)el.classList.add('hide'); saveEcon(); }
+// ---- TOWN SQUARE SWAP MARKET (bartering NPCs + regional arbitrage) ----
+function goodBase(id){ const g=GOODS.find(x=>x.id===id); if(g)return g.base; const f=FISH.find(x=>x.id===id); if(f)return f.val; return 5; }
+function haveGood(id){ return (inv[id]||0)+(FISH.find(x=>x.id===id)?(fish[id]||0):0); }
+function removeGood(id,n){ let left=n; if(FISH.find(x=>x.id===id)){ const t=Math.min(fish[id]||0,left); if(t){ fish[id]-=t; if(fish[id]<=0)delete fish[id]; left-=t; } } const t2=Math.min(inv[id]||0,left); if(t2){ inv[id]-=t2; if(inv[id]<=0)delete inv[id]; } }
+function priceFor(rid,id){ const d=MARKET_DEMAND[rid]||{}; const m=(d[id]!==undefined?d[id]:(d.ALL!==undefined?d.ALL:0.55)); return Math.max(1,Math.round(goodBase(id)*m)); }
+function tradableOwned(){ const ids=[...GOODS.map(g=>g.id),...FISH.map(f=>f.id)]; return ids.filter(id=>haveGood(id)>0); }
+const TRADER_NAMES=['Bram','Sela','Oona','Dax','Mira','Tobin','Wren','Juno','Kesh','Pol','Ada','Fen'];
+function genOffers(rid){ const owned=tradableOwned(); if(!owned.length) return []; const big=(MARKET_DEMAND[rid]||{}).ALL!==undefined; const q=[]; const n=Math.min(owned.length+(big?2:1),6);
+  for(let i=0;i<n;i++){ const id=owned[(Math.random()*owned.length)|0], have=haveGood(id); const qty=Math.max(1,1+((Math.random()*Math.min(3,have))|0)); const fair=priceFor(rid,id)*qty; const offer=Math.max(1,Math.round(fair*(0.8+Math.random()*0.22)));
+    q.push({name:TRADER_NAMES[(Math.random()*TRADER_NAMES.length)|0], id, qty, fair, offer}); }
+  return q; }
+function openMarket(){ if(marketOpen)return; if(state!=='world'&&state!=='interior'){ toast('Find a town square'); return; } marketPrevState=state; marketOpen=true; state='market'; const rid=region?region.id:'meadow'; marketQueue=genOffers(rid); marketIdx=0; marketCountered=false; renderMarket(); }
+function renderMarket(){ const el=document.getElementById('market'); if(!el)return; const rid=region?region.id:'meadow', d=MARKET_DEMAND[rid]||{}, big=d.ALL!==undefined;
+  let h='<h1>🤝 <b>'+(big?'SHADDAI Grand Bazaar':'Swap Market')+'</b></h1>';
+  const wants=big?'everything, at a premium':Object.keys(d).filter(k=>k!=='ALL'&&d[k]>=1).map(k=>itemMeta(k).ico+' '+itemMeta(k).name).join(' · ');
+  h+='<div class="sub" style="margin-bottom:12px">💵 '+money+' &nbsp;·&nbsp; Buyers here want: '+(wants||'not much')+'</div>';
+  const o=marketQueue[marketIdx];
+  if(!o){ h+='<div class="rcard" style="background:#141c26;color:#eaf3fb;cursor:default;min-height:70px;justify-content:center">The square is quiet… bring goods to sell — fish 🐟, wood 🪵, hides 🟫, water 💧.</div>'; }
+  else { const m=itemMeta(o.id), premium=o.offer>o.fair;
+    h+='<div class="rcard" style="background:#161f2c;color:#eaf3fb;cursor:default;align-items:stretch;min-height:132px"><div style="font-size:13px;opacity:.85">🧑 <b>'+o.name+'</b> steps up to your stall…</div>';
+    h+='<div style="font-size:17px;margin:10px 0">“I\'ll take <b>'+o.qty+' × '+m.ico+' '+m.name+'</b> for <b style="color:#4fe07a">💵'+o.offer+'</b>”</div>';
+    h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px"><button class="primary" onclick="acceptOffer()">✓ Accept 💵'+o.offer+'</button>'+(marketCountered?'':'<button onclick="counterOffer()">⤴ Haggle (ask +20%)</button>')+'<button onclick="declineOffer()">✗ No deal</button></div>';
+    h+='<div style="font-size:11px;opacity:.6;margin-top:9px">Fair ~💵'+o.fair+(premium?' · <span style="color:#4fe07a">they\'re paying over!</span>':'')+' · you hold '+haveGood(o.id)+' '+m.name+'</div></div>'; }
+  h+='<div class="row" style="margin-top:12px;justify-content:space-between"><span style="font-size:12px;opacity:.6">Trader '+Math.min(marketIdx+1,Math.max(1,marketQueue.length))+' / '+Math.max(1,marketQueue.length)+'</span><button onclick="closeMarket()">Leave market</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function nextTrader(){ marketCountered=false; marketIdx++; if(marketIdx>=marketQueue.length && tradableOwned().length){ marketQueue=genOffers(region?region.id:'meadow'); marketIdx=0; } renderMarket(); }
+function acceptOffer(){ const o=marketQueue[marketIdx]; if(!o)return; if(haveGood(o.id)<o.qty){ toast('You don\'t have that anymore'); nextTrader(); return; } removeGood(o.id,o.qty); money+=o.offer; quest.earn+=o.offer; saveEcon(); toast('🤝 Sold '+o.qty+' '+itemMeta(o.id).name+' → 💵'+o.offer); nextTrader(); }
+function counterOffer(){ const o=marketQueue[marketIdx]; if(!o||marketCountered)return; marketCountered=true; const ask=Math.round(o.offer*1.2), ratio=ask/o.fair;
+  const accept = ratio<=1.02 || (ratio<=1.18 && Math.random()<0.6) || (ratio<=1.4 && Math.random()<0.22);
+  if(accept){ o.offer=ask; toast('🧑 “…alright, you drive a hard bargain. Deal.”'); renderMarket(); }
+  else { toast('🧑 “Too rich for my blood.” They move on.'); nextTrader(); } }
+function declineOffer(){ nextTrader(); }
+function closeMarket(){ marketOpen=false; const el=document.getElementById('market'); if(el)el.classList.add('hide'); state=(marketPrevState==='interior'?'interior':'world'); saveEcon(); }
+// ---- SHADDAI HQ: the Pro users' dashboard rooms ----
+function hubRoomsHtml(){ let h='<h1>🏛️ <b>SHADDAI HQ — Pro Rooms</b></h1><div class="sub" style="margin-bottom:12px">The living rooms of SHADDAI\'s operatives — synced from your dashboard. Step into one.</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">';
+  AGENTS.forEach((a,i)=>{ const st=agentStatus[a.name.toUpperCase()], on=st?(st.status||'online'):null;
+    h+='<div class="rcard" style="min-height:110px;background:linear-gradient(150deg,'+a.accent+'22,#0f1420);border:1px solid '+a.accent+'55;cursor:pointer;color:#eaf3fb;justify-content:space-between" onclick="enterAgentRoom('+i+')"><div><div style="font-size:13px;font-weight:700;color:'+a.accent+'">'+a.name+'</div><div style="font-size:11px;opacity:.7;margin-top:2px">'+(a.role||'Operative')+'</div></div><div style="margin-top:8px;font-size:11px">'+(on?'<span style="color:#4fe07a">● '+on+'</span>':'<span style="opacity:.5">○ offline</span>')+' &nbsp; <span style="opacity:.7">↦ Enter</span></div></div>'; });
+  h+='</div><div class="row" style="margin-top:14px;justify-content:space-between"><span style="font-size:11px;opacity:.55">'+(Object.keys(agentStatus).length?'live from SHADDAI backend':'backend offline — showing council')+'</span><button onclick="closeHubRooms()">Done</button></div>'; return h; }
+function openHubRooms(){ hubOpen=true; const el=document.getElementById('hubrooms'); if(!el)return; el.innerHTML=hubRoomsHtml(); el.classList.remove('hide');
+  apiGet('/api/agents').then(d=>{ if(d&&d.agents){ agentStatus={}; d.agents.forEach(a=>{ agentStatus[(a.id||a.name||'').toUpperCase()]=a; }); if(hubOpen) el.innerHTML=hubRoomsHtml(); } }); }
+function enterAgentRoom(i){ const a=AGENTS[i]; if(!a)return; closeHubRooms(); interiorType='agent'; buildInterior('agent'); player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
+  document.getElementById('prompt').classList.remove('hide'); document.getElementById('prompt').textContent='🏛️ '+a.name+'\'s Room — WASD to walk · reach the door to leave'; refreshIntActions(); showAgentLive(i); }
+function closeHubRooms(){ hubOpen=false; const el=document.getElementById('hubrooms'); if(el)el.classList.add('hide'); }
+// live agent view — pulls the operative's real dashboard data + lets you task them
+let liveAgentIdx=0;
+function showAgentLive(i){ liveAgentIdx=i; agentLiveOpen=true; const a=AGENTS[i], el=document.getElementById('agentlive'); if(!el)return;
+  const base='<h1 style="color:'+a.accent+'">'+a.name+'</h1><div class="sub" style="margin-bottom:10px">'+(a.role||'Operative')+' · SHADDAI HQ</div>';
+  el.innerHTML=base+'<div id="alBody" class="sub">loading live profile…</div><div style="margin-top:12px"><textarea id="alTask" rows="2" placeholder="Ask '+a.name+' to do a task…" style="width:100%;box-sizing:border-box;background:#0e1420;color:#eaf3fb;border:1px solid #2a3346;border-radius:8px;padding:8px"></textarea></div><div class="row" style="margin-top:8px;justify-content:space-between"><button class="primary" onclick="askAgent()">💬 Send to '+a.name+'</button><button onclick="closeAgentLive()">Leave room</button></div><div id="alReply" class="sub" style="margin-top:10px"></div>';
+  el.classList.remove('hide');
+  apiGet('/api/agents/'+a.name.toUpperCase()).then(d=>{ const body=document.getElementById('alBody'); if(!body)return;
+    if(d){ const skills=d.skills?(Array.isArray(d.skills)?d.skills.length:d.skills):(d.skillCount||'—'); body.innerHTML='<span style="color:#4fe07a">● online</span> · brain <b>'+(d.brain||d.model||'default')+'</b> · '+skills+' skills equipped'+(d.description?'<div style="margin-top:6px;opacity:.8">'+String(d.description).slice(0,160)+'</div>':''); }
+    else body.innerHTML='<span style="opacity:.6">Backend offline — run the SHADDAI server on :3000 to sync '+a.name+'\'s live brain, skills & tasks. (Room is still fully walkable.)</span>'; }); }
+function askAgent(){ const a=AGENTS[liveAgentIdx], t=(document.getElementById('alTask')||{}).value; if(!t||!t.trim())return; const rep=document.getElementById('alReply'); if(rep)rep.innerHTML='⏳ '+a.name+' is working…';
+  apiPost('/api/agents/task',{agentName:a.name,task:t.trim()}).then(d=>{ if(!rep)return; const out=d&&(d.output&&(d.output.text||d.output.result||JSON.stringify(d.output))||d.result||d.message); rep.innerHTML=out?('<b style="color:'+a.accent+'">'+a.name+':</b> '+String(out).slice(0,600)):'<span style="opacity:.6">No backend reachable — connect the SHADDAI server to task agents live.</span>'; }); }
+function closeAgentLive(){ agentLiveOpen=false; const el=document.getElementById('agentlive'); if(el)el.classList.add('hide'); }
 function openJobs(){ if(state!=='world')return; state='jobs'; const j=JOBS[region&&region.id]||JOBS.meadow; const el=document.getElementById('jobs');
-  el.innerHTML='<h1>💼 <b>'+j.name+'</b></h1><div class="sub" style="margin:10px 0 16px">Pays '+j.pay[0]+'–'+j.pay[1]+' credits a shift.<br>Balance: 💰 '+credits+' cr'+(jobCooldown>0?'<br><span style="color:#ff9a3c">resting '+Math.ceil(jobCooldown)+'s</span>':'')+'</div><div class="row" style="justify-content:center;gap:10px"><button class="primary" onclick="doJob()">Work a shift</button><button onclick="closePanel()">Close</button></div>';
+  el.innerHTML='<h1>💼 <b>'+j.name+'</b></h1><div class="sub" style="margin:10px 0 16px">Pays 💵'+j.pay[0]+'–'+j.pay[1]+' + XP a shift.<br>💵 '+money+' · Lv '+levelFor(credits)+(jobCooldown>0?'<br><span style="color:#ff9a3c">resting '+Math.ceil(jobCooldown)+'s</span>':'')+'</div><div class="row" style="justify-content:center;gap:10px"><button class="primary" onclick="doJob()">Work a shift</button><button onclick="closePanel()">Close</button></div>';
   el.classList.remove('hide'); }
-function doJob(){ if(jobCooldown>0){ toast('Rest a moment ('+Math.ceil(jobCooldown)+'s)'); return; } const j=JOBS[region&&region.id]||JOBS.meadow; const pay=j.pay[0]+((Math.random()*(j.pay[1]-j.pay[0]+1))|0); credits+=pay; jobCooldown=6; saveEcon(); toast('+'+pay+' cr · '+j.name); if(state==='jobs') openJobs(); }
+function doJob(){ if(jobCooldown>0){ toast('Rest a moment ('+Math.ceil(jobCooldown)+'s)'); return; } const j=JOBS[region&&region.id]||JOBS.meadow; const pay=j.pay[0]+((Math.random()*(j.pay[1]-j.pay[0]+1))|0); money+=pay; quest.earn+=pay; addXP(Math.ceil(pay*0.6)); jobCooldown=6; saveEcon(); toast('+💵'+pay+' · +'+Math.ceil(pay*0.6)+' XP'); if(state==='jobs') openJobs(); }
+// ---- fishing ----
+function rollFish(){ let total=FISH.reduce((s,f)=>s+f.w,0), r=Math.random()*total; for(const f of FISH){ r-=f.w; if(r<=0) return f; } return FISH[0]; }
+function castFish(){ if(fishCooldown>0){ toast('Reel in first… ('+Math.ceil(fishCooldown)+'s)'); return; } fishCooldown=3.4; toast('🎣 Casting…');
+  setTimeout(()=>{ const f=rollFish(); fish[f.id]=(fish[f.id]||0)+1; quest.fish++; addXP(f.big?12:4); saveEcon(); toast((f.big?'🎉 BIG catch! ':'🎣 Caught a ')+f.name+'! +'+(f.big?12:4)+' XP'); }, 1500); }
+function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } if(!n){ toast('No fish to sell'); return; } money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g); if(state==='inv') openInv(); }
+function bottleWater(){ if(gatherCooldown>0){ toast('One moment…'); return; } gatherCooldown=1.5; inv.water=(inv.water||0)+1; addXP(1); saveEcon(); toast('💧 Bottled fresh water (+1) — sells hot in the desert & volcano!'); }
+function doGather(){ if(gatherCooldown>0){ toast('One moment…'); return; } if(gatherTarget==='wood'){ gatherCooldown=1.7; inv.wood=(inv.wood||0)+1; addXP(2); saveEcon(); toast('🪵 Chopped wood (+1)'); } else if(gatherTarget==='ore'){ gatherCooldown=2.1; inv.ore=(inv.ore||0)+1; addXP(2); saveEcon(); toast('🪨 Mined ore (+1)'); } else toast('Nothing to gather here'); }
+let fishes=[];
+function spawnFishes(){ fishes=[]; if(!waterTiles||!waterTiles.length) return; const n=Math.min(26,Math.max(4,(waterTiles.length/10)|0));
+  for(let i=0;i<n;i++){ const t=waterTiles[(Math.random()*waterTiles.length)|0], big=Math.random()<0.12;
+    fishes.push({col:t[0]+0.5,row:t[1]+0.5,tc:t[0]+0.5,tr:t[1]+0.5,big,ph:Math.random()*6,speed:big?0.3:0.6,dir:1}); } }
+function updateFishes(dt){ for(const f of fishes){ const dx=f.tc-f.col,dy=f.tr-f.row,d=Math.hypot(dx,dy);
+  if(d<0.2){ let k=0,t; do{ t=waterTiles[(Math.random()*waterTiles.length)|0]; k++; }while(Math.hypot(t[0]+0.5-f.col,t[1]+0.5-f.row)>7&&k<8); f.tc=t[0]+0.5; f.tr=t[1]+0.5; }
+  else { const s=f.speed*dt; f.col+=dx/d*s; f.row+=dy/d*s; f.dir=dx<0?-1:1; } f.ph+=dt*4; } }
+function drawFishes(time){ for(const f of fishes){ const [sx,sy]=w2s(f.col,f.row); const wob=Math.sin(f.ph)*1.4, sz=f.big?7:4;
+  ctx.fillStyle=f.big?'rgba(80,115,160,0.85)':'rgba(120,165,205,0.78)';
+  ctx.beginPath(); ctx.ellipse(sx,sy+wob,sz,sz*0.55,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(sx-f.dir*sz,sy+wob); ctx.lineTo(sx-f.dir*sz*1.7,sy+wob-sz*0.5); ctx.lineTo(sx-f.dir*sz*1.7,sy+wob+sz*0.5); ctx.closePath(); ctx.fill();
+  if(f.big){ ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.fillRect(Math.round(sx+f.dir*sz*0.4),Math.round(sy+wob)-1,1,1); } } }
 function openShop(){ openStore(); }
 loadEcon();
 connectMP();
