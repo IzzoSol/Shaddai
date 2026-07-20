@@ -349,6 +349,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), requi
 app.post('/api/sub-billing/webhook', express.raw({ type: 'application/json' }), require('./sub-billing-webhook'));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
+// Phase 0 · DID identity — attach req.did/req.didDocument when a did:key is presented
+// (X-DID header / Authorization: DID <did> / ?did= / body.did). Never blocks a request.
+try { app.use(require('./middleware/did-resolver').didResolverMiddleware); } catch (e) { console.warn('[did] resolver not mounted:', e.message); }
 // Never let browsers cache HTML pages — they must always fetch the latest build. (Static assets like
 // JS/images still cache normally; those are cache-busted with ?v= query strings.) This stops the
 // recurring "it's still broken / showing the old version" problem where a stale cached page is served.
