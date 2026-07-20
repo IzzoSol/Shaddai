@@ -213,8 +213,7 @@
         b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><span>Power Up</span>';
         b.title = 'Connect a free AI key so your agents run on real models';
         b.addEventListener('click', open);
-        bar.appendChild(b);
-        clearInterval(t);
+        clearInterval(t); // owner: Power Up removed from the hub bar (reachable elsewhere)
       } else if (tries > 80) { clearInterval(t); }
     }, 120);
   }

@@ -260,7 +260,7 @@
     rootEl.id = 'shaddaiHome';
 
     var bar = el('div', 'hh-bar');
-    bar.appendChild(el('div', 'hh-title', '⚡ COMMAND HUB'));
+    // (owner: no "COMMAND HUB" title; bar keeps only Wallpaper + Add Tile)
 
     // Crisp inline-SVG glyphs (stroke inherits button color) — aligned icon + label.
     var ICON = {
@@ -291,7 +291,7 @@
     addBtn.innerHTML = ICON.add + '<span>Add Tile</span>';
     addBtn.addEventListener('click', showAddMenu);
 
-    bar.appendChild(editBtn);
+    // (owner: removed Edit Layout — keep only Wallpaper + Add Tile)
     bar.appendChild(wallBtn);
     bar.appendChild(addBtn);
 
