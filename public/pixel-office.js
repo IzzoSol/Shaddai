@@ -1332,6 +1332,114 @@
   }
 
   // ---- MAIN RENDER ----------------------------------------------------------
+  // ===========================================================================
+  // CAPITAL DISTRICT — forged agents as room-buildings, live from /api/agent-rooms.
+  // "One agent, many surfaces": each building = a real operative; click → its
+  // Command Deck. HQ shrine anchors the plaza; empty slots = holographic claim
+  // plots. The walking agents + multiplayer keep running as the ambient life.
+  // ===========================================================================
+  const DIST = { center: [10, 14], radius: 4.4, slots: 6, rooms: [], plots: [], loaded: false, lastFetch: 0 };
+  function distRingPos(i, ring, data) {
+    const a = (-90 + i * (360 / ring)) * Math.PI / 180;
+    return { data, col: DIST.center[0] + Math.cos(a) * DIST.radius, row: DIST.center[1] + Math.sin(a) * DIST.radius, phase: i * 1.1 };
+  }
+  async function fetchDistrict() {
+    DIST.lastFetch = performance.now();
+    try {
+      const owner = (typeof window.opOwner === 'function') ? window.opOwner() : 'guest';
+      const res = await fetch('/api/agent-rooms?owner=' + encodeURIComponent(owner));
+      const d = await res.json();
+      const rooms = (d && d.rooms) || [];
+      const ring = Math.max(DIST.slots, rooms.length);
+      DIST.rooms = rooms.map((rm, i) => distRingPos(i, ring, rm));
+      DIST.plots = [];
+      for (let i = rooms.length; i < ring; i++) DIST.plots.push(distRingPos(i, ring, null));
+    } catch (e) { /* offline → just show HQ + claim plots */ if (!DIST.plots.length && !DIST.rooms.length) { const ring = DIST.slots; for (let i = 0; i < ring; i++) DIST.plots.push(distRingPos(i, ring, null)); } }
+    DIST.loaded = true;
+  }
+  function dPoly(pts, fill, stroke, lw) { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = (lw || 1); ctx.stroke(); } }
+  function dFacePt(c, u, v) { const bx = c[0][0] + (c[1][0] - c[0][0]) * u, by = c[0][1] + (c[1][1] - c[0][1]) * u; const tx = c[3][0] + (c[2][0] - c[3][0]) * u, ty = c[3][1] + (c[2][1] - c[3][1]) * u; return [bx + (tx - bx) * v, by + (ty - by) * v]; }
+  function dFaceRect(c, u0, v0, u1, v1, fill, stroke, lw) { dPoly([dFacePt(c, u0, v0), dFacePt(c, u1, v0), dFacePt(c, u1, v1), dFacePt(c, u0, v1)], fill, stroke, lw); }
+  function dBox(col, row, footW, footH, hgt, cols) {
+    const p = isoToScreen(col, row); const w = (TILE_W * scale / 2) * footW, d = (TILE_H * scale / 2) * footH, h = hgt * scale;
+    const bR = [p.x + w, p.y], bB = [p.x, p.y + d], bL = [p.x - w, p.y]; const tR = [p.x + w, p.y - h], tB = [p.x, p.y + d - h], tL = [p.x - w, p.y - h], tT = [p.x, p.y - d - h];
+    dPoly([bL, bB, tB, tL], cols.left); dPoly([bB, bR, tR, tB], cols.right); dPoly([tT, tR, tB, tL], cols.top, cols.trim, 1);
+    return { front: [bB, bR, tR, tB], cx: p.x, cy: p.y, w, d, h, topY: p.y - d - h };
+  }
+  function distLabel(x, y, text, color, big) {
+    ctx.font = (big ? 'bold ' + (12 * scale | 0) : (10 * scale | 0)) + "px 'Space Grotesk','Share Tech Mono',sans-serif";
+    const tw = ctx.measureText(text).width + 12 * scale, bx = x - tw / 2, by = y - 18 * scale, bh = 15 * scale;
+    ctx.fillStyle = 'rgba(8,4,18,0.85)'; ctx.strokeStyle = color; ctx.lineWidth = 1; roundRect(bx, by, tw, bh, 4 * scale); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, by + bh / 2); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  function drawDistrict(now) {
+    const t = now / 1000;
+    // plaza medallion (seed-of-life sigil) + district ring + spokes
+    const cP = isoToScreen(DIST.center[0], DIST.center[1]);
+    ctx.save(); ctx.strokeStyle = 'rgba(232,196,92,0.4)'; ctx.lineWidth = 1;
+    const rr = 1.9 * (TILE_H * scale / 2) * 2;
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; ctx.beginPath(); ctx.ellipse(cP.x + Math.cos(a) * rr * 0.5, cP.y + Math.sin(a) * rr * 0.25, rr * 0.5, rr * 0.25, 0, 0, 7); ctx.stroke(); }
+    ctx.beginPath(); ctx.ellipse(cP.x, cP.y, rr * 0.5, rr * 0.25, 0, 0, 7); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.ellipse(cP.x, cP.y, (DIST.radius + 1.1) * TILE_W * scale / 2, (DIST.radius + 1.1) * TILE_H * scale / 2, 0, 0, 7); ctx.strokeStyle = 'rgba(168,85,247,0.28)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    [...DIST.rooms, ...DIST.plots].forEach(o => { const bp = isoToScreen(o.col, o.row); const nx = bp.y - cP.y, ny = -(bp.x - cP.x); const L = Math.hypot(nx, ny) || 1; const wx = nx / L * 5 * scale, wy = ny / L * 5 * scale; dPoly([[cP.x + wx, cP.y + wy], [bp.x + wx, bp.y + wy], [bp.x - wx, bp.y - wy], [cP.x - wx, cP.y - wy]], 'rgba(168,85,247,0.14)'); });
+    // depth-sorted structures (HQ + rooms + plots), back to front
+    const structs = [{ hq: true, col: DIST.center[0], row: DIST.center[1] }, ...DIST.rooms.map(r => ({ room: r, col: r.col, row: r.row })), ...DIST.plots.map(p => ({ plot: p, col: p.col, row: p.row }))];
+    structs.sort((a, b) => (a.col + a.row) - (b.col + b.row));
+    for (const s of structs) { if (s.hq) drawDistHQ(now); else if (s.room) drawDistRoom(s.room, DIST_HOVER === s.room, now); else drawDistPlot(s.plot, now); }
+  }
+  function drawDistHQ(now) {
+    const t = now / 1000; const C = DIST.center;
+    dBox(C[0], C[1], 2.0, 2.0, 22, { top: '#3a2568', left: '#241245', right: '#2f1c56', trim: '#a855f7' });
+    const b2 = dBox(C[0], C[1], 1.5, 1.5, 46, { top: '#a855f7', left: '#3a2568', right: '#6d3fb0', trim: '#e8c45c' });
+    dFaceRect(b2.front, 0, 0.9, 1, 1, '#e8c45c');
+    dFaceRect(b2.front, 0.4, 0, 0.6, 0.5, 'rgba(8,4,18,0.9)', '#e8c45c', 1.4);
+    ctx.save(); ctx.shadowColor = '#e8c45c'; ctx.shadowBlur = 14 * scale; dFaceRect(b2.front, 0.44, 0, 0.56, 0.42, 'rgba(232,196,92,0.3)'); ctx.restore();
+    const b3 = dBox(C[0], C[1], 0.7, 0.7, 66, { top: '#e8c45c', left: '#7a5a1a', right: '#b78a2a', trim: '#fff' });
+    const cols = ['#e8c45c', '#22d3ee', '#a855f7', '#4f9dff', '#00e5a0', '#ff8bd0', '#ff5b5b'];
+    cols.forEach((c, k) => { const a = (-90 + (k - 3) * 17) * Math.PI / 180; ctx.fillStyle = c; ctx.save(); ctx.shadowColor = c; ctx.shadowBlur = 7 * scale; ctx.beginPath(); ctx.arc(b3.cx + Math.cos(a) * 14 * scale, b3.topY + 4 * scale + Math.sin(a) * 8 * scale, 2.4 * scale, 0, 7); ctx.fill(); ctx.restore(); });
+    const bp = 0.5 + 0.5 * Math.sin(t * 1.6); const gr = ctx.createLinearGradient(b3.cx, b3.topY - 70 * scale, b3.cx, b3.topY); gr.addColorStop(0, 'rgba(232,196,92,0)'); gr.addColorStop(1, 'rgba(232,196,92,' + (0.26 + 0.16 * bp) + ')');
+    dPoly([[b3.cx - 2.5 * scale, b3.topY], [b3.cx + 2.5 * scale, b3.topY], [b3.cx + 7 * scale, b3.topY - 72 * scale], [b3.cx - 7 * scale, b3.topY - 72 * scale]], gr);
+    ctx.save(); ctx.shadowColor = '#e8c45c'; ctx.shadowBlur = (12 + 7 * bp) * scale; ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(b3.cx, b3.topY - 12 * scale, 3.6 * scale, 0, 7); ctx.fill(); ctx.restore();
+    distLabel(b3.cx, b3.topY - 26 * scale, 'COUNCIL HQ', '#e8c45c', true);
+  }
+  function drawDistRoom(rm, hot, now) {
+    const t = now / 1000; const d = rm.data; const agent = d.agent || {}; const room = d.room || {};
+    const col = agent.badgeColor || room.badgeColor || '#22d3ee';
+    const b = dBox(rm.col, rm.row, 1.25, 1.25, 34 * (hot ? 1.05 : 1), { top: shade(col, hot ? 0.14 : 0.02), left: shade(col, -0.55), right: shade(col, -0.28), trim: shade(col, 0.3) });
+    const F = b.front;
+    dFaceRect(F, 0, 0.9, 1, 1, shade(col, 0.3));
+    dFaceRect(F, 0.42, 0, 0.6, 0.46, 'rgba(8,4,18,0.9)', shade(col, 0.35), 1.2);   // door
+    const fl = 0.5 + 0.5 * Math.sin(t * 3 + rm.phase);
+    dFaceRect(F, 0.15, 0.55, 0.32, 0.78, 'rgba(255,245,200,' + (0.3 + 0.4 * fl) + ')', shade(col, 0.2), 1);
+    dFaceRect(F, 0.68, 0.55, 0.85, 0.78, 'rgba(255,245,200,' + (0.3 + 0.4 * (1 - fl)) + ')', shade(col, 0.2), 1);
+    // glyph plaque
+    dFaceRect(F, 0.44, 0.52, 0.58, 0.74, 'rgba(8,4,18,0.7)', shade(col, 0.3), 1);
+    const g = dFacePt(F, 0.51, 0.63); ctx.fillStyle = shade(col, 0.4); ctx.font = 'bold ' + (10 * scale | 0) + "px 'Space Grotesk'"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText((agent.name || 'A')[0], g[0], g[1]); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    // permission cue: private=calm, showroom=glow ring, hireable=bright + $ badge
+    const vis = (d.permissions && d.permissions.visibility) || 'private';
+    if (vis !== 'private') { ctx.save(); ctx.beginPath(); ctx.ellipse(b.cx, b.cy, b.w * 1.5, b.d * 1.5, 0, 0, 7); ctx.strokeStyle = vis === 'hireable-studio' ? 'rgba(0,229,160,0.6)' : 'rgba(34,211,238,0.5)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); }
+    // roof emblem + glow
+    ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = (hot ? 14 : 8) * scale; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(b.cx, b.topY + 2 * scale, 4.5 * scale, 0, 7); ctx.fill(); ctx.restore();
+    let lbl = agent.name || 'AGENT'; if (vis === 'hireable-studio') lbl += ' · ⚡'; else if (vis === 'public-showroom') lbl += ' · ◈';
+    distLabel(b.cx, b.topY - 4 * scale, lbl, col, false);
+  }
+  function drawDistPlot(p, now) {
+    const t = now / 1000; const pt = isoToScreen(p.col, p.row); const w = TILE_W * scale / 2 * 1.15, d = TILE_H * scale / 2 * 1.15, h = 30 * scale; const pulse = 0.5 + 0.5 * Math.sin(t * 2.4 + p.phase);
+    ctx.save(); ctx.globalAlpha = 0.3 + 0.22 * pulse; const c = '#22d3ee';
+    const bB = [pt.x, pt.y + d], bR = [pt.x + w, pt.y], bL = [pt.x - w, pt.y], tB = [pt.x, pt.y + d - h], tR = [pt.x + w, pt.y - h], tL = [pt.x - w, pt.y - h], tT = [pt.x, pt.y - d - h];
+    dPoly([bL, bB, tB, tL], null, c, 1); dPoly([bB, bR, tR, tB], null, c, 1); dPoly([tT, tR, tB, tL], null, c, 1); ctx.restore();
+    ctx.setLineDash([6 * scale, 4 * scale]); ctx.lineWidth = 2; ctx.strokeStyle = DIST_HOVER === p ? '#bfffff' : c; dPoly([[pt.x, pt.y - d], [pt.x + w, pt.y], [pt.x, pt.y + d], [pt.x - w, pt.y]], 'rgba(34,211,238,' + (0.08 + 0.09 * pulse) + ')', DIST_HOVER === p ? '#bfffff' : c, 2); ctx.setLineDash([]);
+    ctx.save(); ctx.shadowColor = c; ctx.shadowBlur = (5 + 5 * pulse) * scale; ctx.fillStyle = DIST_HOVER === p ? '#bfffff' : c; ctx.font = 'bold ' + (10 * scale | 0) + "px 'Space Grotesk'"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('＋ CLAIM', pt.x, pt.y); ctx.restore(); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  // screen-space hit test for district structures (rooms + claim plots)
+  let DIST_HOVER = null;
+  function distHitAt(px, py) {
+    let hit = null, best = 40 * scale;
+    for (const rm of DIST.rooms) { const p = isoToScreen(rm.col, rm.row); const dd = Math.hypot(px - p.x, py - (p.y - 12 * scale)); if (dd < best) { best = dd; hit = rm; } }
+    for (const pl of DIST.plots) { const p = isoToScreen(pl.col, pl.row); const dd = Math.hypot(px - p.x, py - p.y); if (dd < best) { best = dd; hit = pl; } }
+    return hit;
+  }
+
   function render(now) {
     const w = canvas.width / dpr, h = canvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1447,6 +1555,10 @@
     });
 
     ctx.restore(); // rooms alpha
+
+    // ---- CAPITAL DISTRICT (forged-agent room-buildings) — behind the walking agents
+    if (!DIST.lastFetch || (now - DIST.lastFetch > 30000)) fetchDistrict();
+    if (DIST.loaded) drawDistrict(now);
 
     // agents + multiplayer avatars, depth-sorted together (draw back first) so
     // occlusion between AI agents and real players reads correctly.
@@ -1578,7 +1690,8 @@
     hoverTile = (c >= 0 && r >= 0 && c < GRID_W && r < GRID_H) ? { c, r } : null;
     hoverDoor = doorAtIso(iso.col, iso.row);
     const overBuilding = hoverTile && buildingAtTile(hoverTile.c, hoverTile.r);
-    canvas.style.cursor = (agentAt(p.x, p.y) || overBuilding || hoverDoor) ? 'pointer' : 'default';
+    DIST_HOVER = distHitAt(p.x, p.y);   // forged-agent room-buildings / claim plots
+    canvas.style.cursor = (agentAt(p.x, p.y) || overBuilding || hoverDoor || DIST_HOVER) ? 'pointer' : 'default';
   }
   // Which clickable building (if any) owns the clicked tile?
   function buildingAtTile(c, r) {
@@ -1647,6 +1760,19 @@
           window.dispatchEvent(new CustomEvent('pixeloffice:agent-click', { detail: { name: a.name } }));
         }
       } catch (_) {}
+      return;
+    }
+    // CAPITAL DISTRICT: a forged-agent room-building opens its real Command Deck; a claim plot → Forge.
+    const dh = distHitAt(p.x, p.y);
+    if (dh) {
+      if (dh.data && dh.data.agent) {
+        const ag = dh.data.agent;
+        showToast('◈ Opening ' + (ag.name || 'agent') + "'s Command Deck…", ag.badgeColor || '#22d3ee', [dh.col, dh.row]);
+        try { if (ag.id && typeof window.openAgentRoom === 'function') window.openAgentRoom(ag.id); } catch (_) {}
+      } else {
+        showToast('＋ Forge an agent to claim this room', '#22d3ee', [dh.col, dh.row]);
+        try { if (typeof window.showView === 'function') window.showView('forge'); } catch (_) {}
+      }
       return;
     }
     const iso = screenToIso(p.x, p.y);
