@@ -1708,6 +1708,8 @@ try { app.use(require('./museum-routes')); console.log('[prod] museum mounted');
 catch (e) { console.warn('[prod] museum failed:', e.message); }
 try { app.use(require('./x402-routes')); console.log('[prod] x402 ledger mounted'); }
 catch (e) { console.warn('[prod] x402 failed:', e.message); }
+try { app.use(require('./reputation-routes')); console.log('[prod] reputation + VCs mounted'); }
+catch (e) { console.warn('[prod] reputation failed:', e.message); }
 try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'); }
 catch (e) { console.warn('[prod] markets failed:', e.message); }
 try { app.use(require('./admin-routes')); console.log('[prod] admin privileges mounted'); }

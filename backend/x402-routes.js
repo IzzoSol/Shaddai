@@ -58,6 +58,8 @@ router.post('/api/x402/charge', softAuth, json, (req, res) => {
   const tx = { id: Date.now().toString(36), user, payee: payee || null, amount: amt, fee, net, reason: reason || 'agent call', at: Date.now() };
   db.txns.unshift(tx); db.txns = db.txns.slice(0, 1000); write(db);
   X.recordSpend(user, amt);   // count against the daily budget
+  // Phase 0 #3: a successful paid call builds the caller's DID reputation.
+  try { if (req.did) require('./services/reputation-service').recordAttestation(req.did, 'x402_success', 'success', { endpoint: '/api/x402/charge', amount: amt, counterpartyDid: payee || null }); } catch (e) {}
   res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx });
 });
 
