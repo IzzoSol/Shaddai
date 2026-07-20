@@ -1338,7 +1338,7 @@
   // Command Deck. HQ shrine anchors the plaza; empty slots = holographic claim
   // plots. The walking agents + multiplayer keep running as the ambient life.
   // ===========================================================================
-  const DIST = { center: [10, 14], radius: 4.4, slots: 6, rooms: [], plots: [], loaded: false, lastFetch: 0 };
+  const DIST = { center: [11, 10], radius: 4.8, slots: 6, rooms: [], plots: [], loaded: false, lastFetch: 0 };
   function distRingPos(i, ring, data) {
     const a = (-90 + i * (360 / ring)) * Math.PI / 180;
     return { data, col: DIST.center[0] + Math.cos(a) * DIST.radius, row: DIST.center[1] + Math.sin(a) * DIST.radius, phase: i * 1.1 };
@@ -1476,24 +1476,10 @@
       ctx.restore();
     }
 
-    // ---- PROPS (depth-sorted roughly by row) ----
-    drawStatue(3, 2, now);                                    // reception centerpiece
-    drawBox(1, 1, 0.8, 26, '#3a3f4a', '#22262e', 'rgba(0,229,255,0.4)'); // elevator
-    drawBox(1, 2, 0.8, 26, '#3a3f4a', '#22262e', 'rgba(0,229,255,0.4)');
-    // Break room: couches + coffee table w/ steam
-    drawCouch(2, 5); drawCouch(3, 6);
-    drawCoffee(2, 6, now);
-    drawPlant(3, 5);
-    // Boss office: rug emblem + big desk + throne (top gold rug)
-    drawEmblem(10.5, 1.4, now);
-    drawBox(10.5, 2.2, 1.1, 12, '#5a4a1c', '#3a300f', 'rgba(240,180,41,0.35)'); // big desk
-    drawBox(10.5, 1.4, 0.7, 16, '#6a5620', '#463913');       // throne
-    // Boardroom: long table + chairs + screen (center cyan)
-    drawBox(9, 8.5, 1.8, 9, '#20404c', '#132a33');
-    drawBox(12.5, 8.5, 1.8, 9, '#20404c', '#132a33');
-    drawScreen(10.5, 7.2, now);
-    // Collectables shelf (top-right)
-    drawBox(19.5, 1.5, 0.7, 18, '#3a2c52', '#241a33', 'rgba(167,139,250,0.4)');
+    // ---- PROPS — composition pass A: legacy office decor removed so the
+    //      CAPITAL DISTRICT reads as the hero. Reception/break-room/boss-office/
+    //      boardroom/shelf cleared; the Forge + nav doors + district remain, and
+    //      the 7 council agents walk the plaza as ambient life.
 
     // ---- THE FORGE (marquee workshop, bottom-right warm room) ----
     drawForgeEmblem(19, 11, now);
@@ -1507,25 +1493,8 @@
       drawNavDoor(d, now, hovered);
     });
 
-    // ---- COMING-SOON city footprints (bank / market / docks) ----
-    BUILDINGS.forEach(b => { if (b.soon) drawSoonFootprint(b, now); });
-    // docks water accent beside the docks planks
-    drawTree(4, 18);
-
-    // Plants dotted around the roomier floor
-    drawPlant(6, 4); drawPlant(15, 4); drawPlant(6, 12); drawPlant(15, 11); drawPlant(9, 14);
-
-    // Agent desks: colored nameplates on desk tiles
-    AGENTS.forEach(a => {
-      const [c, r] = a.tile;
-      drawBox(c, r, 0.7, 7, shade(a.color, -0.35), shade(a.color, -0.5));
-      const p = isoToScreen(c, r);
-      ctx.save();
-      ctx.shadowColor = a.color; ctx.shadowBlur = 6;
-      ctx.fillStyle = a.color;
-      ctx.fillRect(p.x - 9 * scale, p.y - (7 + 3) * scale, 18 * scale, 3 * scale);
-      ctx.restore();
-    });
+    // (coming-soon footprints, tree, scattered plants, and per-agent desks removed
+    //  in pass A — the district's HQ + forged-agent room-buildings carry the scene.)
 
     // collectables (hook-fed) with glow + float
     collectables.forEach(cl => {
@@ -1541,18 +1510,7 @@
       ctx.textAlign = 'left';
     });
 
-    // zone labels (floating tags)
-    ZONES.forEach(z => {
-      const p = isoToScreen(z.at[0], z.at[1]);
-      ctx.font = "8px 'Share Tech Mono', monospace"; ctx.textAlign = 'center';
-      const tw = ctx.measureText(z.label).width;
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(p.x - tw / 2 - 6, p.y - 7, tw + 12, 13, 3); ctx.fill();
-      ctx.strokeStyle = z.color + '77'; ctx.lineWidth = 1;
-      roundRect(p.x - tw / 2 - 6, p.y - 7, tw + 12, 13, 3); ctx.stroke();
-      ctx.fillStyle = z.color; ctx.fillText(z.label, p.x, p.y + 2.5);
-      ctx.textAlign = 'left';
-    });
+    // (legacy zone labels removed in pass A — the district labels its own structures.)
 
     ctx.restore(); // rooms alpha
 
