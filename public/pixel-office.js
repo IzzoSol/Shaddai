@@ -298,6 +298,14 @@
     // origin maps unscaled (0,0); box min corner sits at origin + min*scale.
     camTargetX = boxLeft - minSX * scale;
     camTargetY = boxTop - minSY * scale;
+    // ZOOM + FRAME on the capital district so the office fills the frame (not a
+    // miniature board): scale up and center the district on-screen.
+    try {
+      scale = Math.min(1.8, scale * 1.32);
+      const dc = DIST.center[0], dr = DIST.center[1];
+      camTargetX = w / 2 - (dc - dr) * (TILE_W * scale) / 2;
+      camTargetY = h * 0.52 - (dc + dr) * (TILE_H * scale) / 2;
+    } catch (e) {}
     if (!originX && !originY) { originX = camTargetX; originY = camTargetY; }
   }
 
@@ -539,12 +547,12 @@
     if (c) {
       top = c[0]; side = c[1]; edge = 'rgba(0,0,0,0.16)';
     } else {
-      const light = (col + row) % 2 === 0;               // beige checker lobby
-      // soft per-tile variation so the checker never reads flat
+      const light = (col + row) % 2 === 0;               // obsidian holo-deck (world palette)
+      // soft per-tile variation so the deck never reads flat
       const v = (((col * 7 + row * 13) % 5) - 2) * 3;
-      top = light ? shade('#d9c9a3', v / 255) : shade('#c9b892', v / 255);
-      side = light ? '#b3a074' : '#a08c60';
-      edge = 'rgba(0,0,0,0.10)';
+      top = light ? shade('#0f1826', v / 255) : shade('#0b111c', v / 255);
+      side = light ? '#0a1220' : '#070c15';
+      edge = 'rgba(34,211,238,0.09)';                    // teal gridlight seams
     }
 
     // water gets a gentle animated shimmer band
@@ -1372,10 +1380,22 @@
     ctx.fillStyle = 'rgba(8,4,18,0.85)'; ctx.strokeStyle = color; ctx.lineWidth = 1; roundRect(bx, by, tw, bh, 4 * scale); ctx.fill(); ctx.stroke();
     ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, by + bh / 2); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
+  let DIST_MOTES = null;
+  function drawDistMotes(now, cP) {
+    if (!DIST_MOTES) DIST_MOTES = Array.from({ length: 26 }, () => ({ col: DIST.center[0] + (Math.random() * 2 - 1) * (DIST.radius + 2), row: DIST.center[1] + (Math.random() * 2 - 1) * (DIST.radius + 2), z: Math.random() * 50, sp: 5 + Math.random() * 10, c: Math.random() < 0.5 ? '#a855f7' : '#22d3ee' }));
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const m of DIST_MOTES) { m.z += m.sp * 0.016; if (m.z > 52) { m.z = 0; m.col = DIST.center[0] + (Math.random() * 2 - 1) * (DIST.radius + 2); m.row = DIST.center[1] + (Math.random() * 2 - 1) * (DIST.radius + 2); }
+      const p = isoToScreen(m.col, m.row); ctx.globalAlpha = Math.max(0, 1 - m.z / 52) * 0.5; ctx.fillStyle = m.c; ctx.beginPath(); ctx.arc(p.x + Math.sin(m.z * 0.2) * 4 * scale, p.y - m.z * scale, 1.5 * scale, 0, 7); ctx.fill(); }
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
   function drawDistrict(now) {
     const t = now / 1000;
-    // plaza medallion (seed-of-life sigil) + district ring + spokes
     const cP = isoToScreen(DIST.center[0], DIST.center[1]);
+    // "Source" aura — soft radial glow spill so HQ reads as the focal landmark
+    const aura = ctx.createRadialGradient(cP.x, cP.y - 26 * scale, 0, cP.x, cP.y - 26 * scale, (DIST.radius + 3) * TILE_W * scale / 2);
+    aura.addColorStop(0, 'rgba(168,85,247,0.18)'); aura.addColorStop(0.5, 'rgba(34,211,238,0.07)'); aura.addColorStop(1, 'rgba(168,85,247,0)');
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = aura; ctx.fillRect(cP.x - 460 * scale, cP.y - 460 * scale, 920 * scale, 920 * scale); ctx.restore();
+    // plaza medallion (seed-of-life sigil) + district ring + spokes
     ctx.save(); ctx.strokeStyle = 'rgba(232,196,92,0.4)'; ctx.lineWidth = 1;
     const rr = 1.9 * (TILE_H * scale / 2) * 2;
     for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; ctx.beginPath(); ctx.ellipse(cP.x + Math.cos(a) * rr * 0.5, cP.y + Math.sin(a) * rr * 0.25, rr * 0.5, rr * 0.25, 0, 0, 7); ctx.stroke(); }
@@ -1386,6 +1406,7 @@
     const structs = [{ hq: true, col: DIST.center[0], row: DIST.center[1] }, ...DIST.rooms.map(r => ({ room: r, col: r.col, row: r.row })), ...DIST.plots.map(p => ({ plot: p, col: p.col, row: p.row }))];
     structs.sort((a, b) => (a.col + a.row) - (b.col + b.row));
     for (const s of structs) { if (s.hq) drawDistHQ(now); else if (s.room) drawDistRoom(s.room, DIST_HOVER === s.room, now); else drawDistPlot(s.plot, now); }
+    drawDistMotes(now, cP);   // drifting ambient motes over the plaza
   }
   function drawDistHQ(now) {
     const t = now / 1000; const C = DIST.center;
