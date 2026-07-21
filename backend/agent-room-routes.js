@@ -38,6 +38,33 @@ router.get('/api/office', softAuth, (req, res) => {
   res.json({ ok: true, office: o ? o.office : null, rooms: o ? o.rooms : [], summary: o ? o.summary : null, canClaim: !o });
 });
 
+// Preset office looks + visibility options for the office customizer.
+// (declared BEFORE /api/office/:userId so 'presets'/'lots' aren't read as a userId)
+router.get('/api/office/presets', (req, res) => {
+  res.json({ ok: true, presets: office.PRESETS, visibilities: office.VISIBILITIES });
+});
+
+// Founders' Row lot map (open vs taken) for the lot picker.
+router.get('/api/office/lots', softAuth, (req, res) => {
+  res.json({ ok: true, total: office.TOTAL_LOTS, lots: office.lotMap(req.userId) });
+});
+
+// Update your office look/identity (name · preset · visibility).
+router.patch('/api/office', softAuth, json, (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'sign in first', needSignIn: true });
+  const o = office.updateOffice(req.userId, req.body || {});
+  if (!o) return res.status(404).json({ error: 'no office — claim one first' });
+  res.json({ ok: true, office: o });
+});
+
+// Set up at / switch to a different Founders' Row lot (rejects taken lots).
+router.post('/api/office/switch-lot', softAuth, json, (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'sign in first', needSignIn: true });
+  const r = office.switchLot(req.userId, req.body && req.body.slot);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ ok: true, office: r.office });
+});
+
 // A specific user's office (public exterior + rooms honoring visibility).
 router.get('/api/office/:userId', (req, res) => {
   const o = office.officeWithRooms(req.params.userId);

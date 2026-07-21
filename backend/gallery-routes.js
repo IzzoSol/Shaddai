@@ -64,13 +64,15 @@ router.post('/api/gallery/save', json, (req, res) => {
 });
 
 // ── GET — view a user's gallery, optionally a single agent's room and/or one type ──
+// SECURITY: this is a PER-USER gallery. Without a user we return NOTHING — never the
+// whole store — so leftover / other people's items can't surface in your gallery.
 router.get('/api/gallery', (req, res) => {
   const user = String(req.query.user || '').trim();
   const agent = String(req.query.agent || '').trim().toUpperCase();
   const type = String(req.query.type || '').trim().toLowerCase();
+  if (!user) return res.json({ ok: true, count: 0, items: [] });
   const db = readGal();
-  let items = db.items;
-  if (user) items = items.filter(it => it.user === user);
+  let items = db.items.filter(it => it.user === user);
   if (agent) items = items.filter(it => it.agent === agent);
   if (type) items = items.filter(it => it.type === type);
   items = items.slice(0, 100).map(pub); // already newest-first; cap 100

@@ -174,22 +174,80 @@
       }
       claim.style.display = 'none';
       var o = (d && d.office) || {}, sm = (d && d.summary) || {};
-      // load the REAL world focused on the office (exact match — it IS the world).
-      // Pass uid so the city warps you to YOUR office (emerald "Source") on Founders' Row.
-      var ofsrc = '/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '');
-      document.getElementById('shdtOfmap').innerHTML = '<iframe src="' + ofsrc + '" title="Your office in SHADDAI City" allow="autoplay"></iframe>';
-      window.__shdtOfSrc = ofsrc;
-      cmdp.innerHTML = '<h3>' + esc(o.name || 'My Command Office') + '</h3><div class="st">◈ SHADDAI City · ' + esc((o.visibility || 'private').replace('-', ' ')) + '</div>' +
-        '<div class="stat"><span>Rooms</span><b>' + (sm.rooms || 0) + '</b></div>' +
-        '<div class="stat"><span>Agents</span><b>' + (sm.agents || 0) + '</b></div>' +
-        '<div class="stat"><span>Public rooms</span><b>' + (sm.public || 0) + '</b></div>' +
-        '<div class="stat"><span>Hireable</span><b>' + (sm.hireable || 0) + '</b></div>' +
-        '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:7px">' +
-        '<button class="cl" onclick="openCommandTerminal(\'rooms\')">🚪 Rooms</button><button class="cl" onclick="openCommandTerminal(\'forge\')">⬡ Forge</button>' +
-        '<button class="cl" onclick="openCommandTerminal(\'bazaar\')">◈ Bazaar</button><button class="cl" onclick="openCommandTerminal(\'treasury\')">◆ Treasury</button></div>' +
-        '<button class="cl" style="margin-top:7px;width:100%" onclick="window.open((window.__shdtOfSrc||\'/game.html?embed=office\'),\'_blank\')">⛶ Enter SHADDAI City (full screen)</button>' +
-        '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:14px;line-height:1.5">This is your office — the same place lives in the shared 2D world. Others can visit by permission.</div>';
-    }).catch(function () { document.getElementById('shdtOfmap').innerHTML = '<iframe src="/game.html?embed=office"></iframe>'; });
+      paintOffice(o, sm);
+    }).catch(function () { var m = document.getElementById('shdtOfmap'); if (m) m.innerHTML = '<div class="empty" style="margin:24px">Office unavailable — try again.</div>'; });
+  }
+
+  // The office is ONLY your office — a customizable space, persistent to your lot in
+  // the real game. No city/game engine is loaded inline (that opened the whole city).
+  function paintOffice(o, sm) {
+    var map = document.getElementById('shdtOfmap'), cmdp = document.getElementById('shdtCmdp');
+    map.innerHTML = '<div id="shdtOfMgr" style="flex:1;overflow:auto;padding:18px 22px">' +
+      '<div class="oneagent"><b>Your office.</b> Pick a look, name it, choose who can visit, and set up on an open lot in SHADDAI City. This is the <b>same office</b> people find in the game. <span class="gate">3D-world office comes later.</span></div>' +
+      '<div class="rsec">Office look <span class="c">preset</span></div><div class="grid" id="shdtOfPresets"><div class="empty">Loading…</div></div>' +
+      '<div class="rsec">Identity <span class="c">name · who can visit</span></div>' +
+      '<div class="card" style="padding:15px"><div style="display:grid;gap:10px">' +
+      '<label style="font-size:11px;color:#9a86c8">Office name<input id="shdtOfName" maxlength="48" value="' + esc(o.name || 'My Command Office') + '" style="width:100%;margin-top:5px;background:rgba(8,4,18,.7);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#efe9ff;padding:9px 11px;font-family:inherit;font-size:13px"></label>' +
+      '<label style="font-size:11px;color:#9a86c8">Who can visit<select id="shdtOfVis" style="width:100%;margin-top:5px;background:rgba(8,4,18,.7);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#efe9ff;padding:9px 11px;font-family:inherit;font-size:13px">' +
+      ['private', 'public-showroom', 'hireable-studio'].map(function (v) { return '<option value="' + v + '"' + (o.visibility === v ? ' selected' : '') + '>' + v.replace('-', ' ') + '</option>'; }).join('') + '</select></label>' +
+      '<button class="pri" id="shdtOfSave" style="justify-self:start;font-family:\'Chakra Petch\';font-weight:700;padding:9px 18px;border:none;border-radius:8px;background:#a855f7;color:#0b0416;cursor:pointer">Save office</button>' +
+      '</div></div>' +
+      '<div class="rsec">Your lot <span class="c">Founders\' Row · pick an open lot to set up / switch</span></div><div class="grid" id="shdtOfLots" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"><div class="empty">Loading…</div></div>' +
+      '</div>';
+    // side summary + visit-in-game (opens FULL — never embedded)
+    cmdp.innerHTML = '<h3>' + esc(o.name || 'My Command Office') + '</h3><div class="st">◈ SHADDAI City · lot #' + ((o.slot != null ? o.slot : 0) + 1) + ' · ' + esc((o.visibility || 'private').replace('-', ' ')) + '</div>' +
+      '<div class="stat"><span>Rooms</span><b>' + (sm.rooms || 0) + '</b></div>' +
+      '<div class="stat"><span>Agents</span><b>' + (sm.agents || 0) + '</b></div>' +
+      '<div class="stat"><span>Public rooms</span><b>' + (sm.public || 0) + '</b></div>' +
+      '<div class="stat"><span>Hireable</span><b>' + (sm.hireable || 0) + '</b></div>' +
+      '<button class="cl" style="margin-top:14px;width:100%" onclick="window.open(\'/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◈ Visit my office in the game →</button>' +
+      '<div style="margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:7px">' +
+      '<button class="cl" onclick="openCommandTerminal(\'rooms\')">Rooms</button><button class="cl" onclick="openCommandTerminal(\'forge\')">Forge</button></div>' +
+      '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:14px;line-height:1.5">Your office is persistent — the same lot shows up in the shared 2D game. Others visit by permission.</div>';
+    // load presets + lots
+    Promise.all([
+      fetch('/api/office/presets').then(function (r) { return r.json(); }).catch(function () { return { presets: [] }; }),
+      fetch('/api/office/lots').then(function (r) { return r.json(); }).catch(function () { return { lots: [] }; })
+    ]).then(function (res) {
+      var presets = (res[0] && res[0].presets) || [], lots = (res[1] && res[1].lots) || [];
+      var pe = document.getElementById('shdtOfPresets');
+      pe.innerHTML = presets.map(function (p) {
+        return '<div class="card" data-preset="' + esc(p.id) + '" style="cursor:pointer;border-color:' + (o.preset === p.id ? esc(p.accent) : 'rgba(168,85,247,.2)') + '">' + (o.preset === p.id ? '<span class="pub public" style="background:' + esc(p.accent) + '">in use</span>' : '') +
+          '<div class="hd"><span class="ic" style="color:' + esc(p.accent) + '">◈</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.d) + '</div></div></div></div>';
+      }).join('');
+      pe.querySelectorAll('.card[data-preset]').forEach(function (c) {
+        c.addEventListener('click', function () {
+          patchOffice({ preset: c.getAttribute('data-preset') }, function () { loaded.office = false; renderOffice(); });
+        });
+      });
+      var le = document.getElementById('shdtOfLots');
+      le.innerHTML = lots.map(function (l) {
+        var mine = l.state === 'you', open = l.state === 'open', taken = l.state === 'taken';
+        var col = mine ? '#00e5a0' : taken ? '#5a4a7a' : '#a855f7';
+        return '<div class="card" data-lot="' + l.slot + '" data-state="' + l.state + '" style="text-align:center;padding:11px;cursor:' + (taken ? 'not-allowed' : 'pointer') + ';opacity:' + (taken ? '.5' : '1') + ';border-color:' + (mine ? '#00e5a0' : 'rgba(168,85,247,.2)') + '">' +
+          '<div style="font-family:\'Space Grotesk\';font-weight:700;font-size:15px;color:' + col + '">Lot ' + (l.slot + 1) + '</div>' +
+          '<div class="role" style="font-size:10px">' + (mine ? 'your office' : open ? 'open' : 'taken') + '</div></div>';
+      }).join('');
+      le.querySelectorAll('.card[data-lot]').forEach(function (c) {
+        if (c.getAttribute('data-state') === 'taken') return;
+        c.addEventListener('click', function () {
+          if (c.getAttribute('data-state') === 'you') return;
+          fetch('/api/office/switch-lot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot: parseInt(c.getAttribute('data-lot'), 10) }) })
+            .then(function (r) { return r.json(); }).then(function (d) { if (d && d.error) { try { if (window.notify) notify('Lot ' + d.error); } catch (e) {} return; } loaded.office = false; renderOffice(); });
+        });
+      });
+    });
+    var save = document.getElementById('shdtOfSave');
+    if (save) save.addEventListener('click', function () {
+      var name = (document.getElementById('shdtOfName') || {}).value || '';
+      var vis = (document.getElementById('shdtOfVis') || {}).value || 'private';
+      save.textContent = 'Saving…';
+      patchOffice({ name: name, visibility: vis }, function () { loaded.office = false; renderOffice(); });
+    });
+  }
+  function patchOffice(body, done) {
+    fetch('/api/office', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); }).then(function () { if (done) done(); }).catch(function () { if (done) done(); });
   }
 
   function visClass(v) { return { 'private': 'private', 'public-showroom': 'showroom', 'hireable-studio': 'hireable' }[v] || 'private'; }
@@ -225,45 +283,45 @@
     }).catch(function () { ah.innerHTML = '<div class="empty">Rooms unavailable.</div>'; });
   }
 
-  // ── FORGE: make-your-own (image→3D · three.js · Meshy · pixel · upload) + presets ──
+  // ── FORGE: Create · Embed · Earn. Only "make model" (credits) — COMING SOON until
+  //    the pipeline is fixed — plus presets. No 3D-world access to these yet. ──
   function renderForge() {
     var host = document.getElementById('shdtForge');
-    var makes = [
-      { k: 'pixel', ic: '◧', name: '2D Pixel Forge', tag: 'free · ready', d: 'Code-drawn pixel agent — pick color, body, tools and name. Lives in your office and the 2D world.', src: '/pixel-forge.html' },
-      { k: 'image', ic: '❖', name: 'Image → 3D', tag: 'AI sculpt', d: 'Upload or generate an image and we sculpt it into a rigged 3D model.', src: '/forge.html?mode=image' },
-      { k: 'three', ic: '▣', name: 'Three.js Builder', tag: 'no key needed', d: 'Build a low-poly 3D hero procedurally, right in the browser — works with no API key.', src: '/forge.html?mode=three' },
-      { k: 'meshy', ic: '✦', name: 'Meshy Studio', tag: 'text → 3D · Pro', d: 'Describe your agent in words and Meshy generates a full 3D model.', src: '/forge.html?mode=meshy' },
-      { k: 'other', ic: '⬡', name: 'Upload / Other', tag: 'GLB · OBJ', d: 'Bring your own model or another pipeline into the world.', src: '/forge.html?mode=upload' }
+    var steps = [
+      { ic: '❖', name: 'Create', d: 'A 3D AI agent from a text prompt or a selfie — in about a minute.' },
+      { ic: '⬡', name: 'Embed', d: 'Drop it on any website with two lines of HTML.' },
+      { ic: '◆', name: 'Earn', d: 'USDC per chat, paid through x402 micropayments.' }
     ];
     var presets = [
-      { ic: '◈', name: 'TURTLE — Emerald Enforcer', tag: 'rigged · 7 anims', d: 'Green enforcer with ball-and-chain flail. Ready for the 3D world.', id: 'turtle' },
+      { ic: '◈', name: 'TURTLE — Emerald Enforcer', tag: 'rigged · 7 anims', d: 'Green enforcer with ball-and-chain flail.', id: 'turtle' },
       { ic: '◈', name: 'ZEROX — Neon Valkyrie', tag: 'rigged · 7 anims', d: 'Cyan katana valkyrie.', id: 'zerox' },
       { ic: '◈', name: 'PIKADON — Crimson Sentinel', tag: 'rigged · combat', d: 'Heavy guardian sentinel.', id: 'pikadon' },
       { ic: '◈', name: 'ORACLE — Astral Seer', tag: 'rigged', d: 'Robed cosmic seer.', id: 'oracle' }
     ];
     host.innerHTML =
-      '<div class="oneagent"><b>One agent, two embodiments.</b> Build a <b>2D pixel</b> body (office + 2D world) or a <b>3D hero</b> form your way — image→3D, three.js, Meshy or upload. No time to build? Drop in a <b style="color:#22d3ee">ready-made preset</b> and enter the 3D world now. <span class="gate">Free to make — placing in office/world needs an upgrade.</span></div>' +
-      '<div class="rsec">Make your own <span class="c">image→3D · three.js · Meshy · pixel · upload</span></div>' +
-      '<div class="grid">' + makes.map(function (m) {
-        return '<div class="card" data-mk="' + m.k + '" data-src="' + esc(m.src) + '"><div class="hd"><span class="ic">' + m.ic + '</span><div><h4>' + esc(m.name) + '</h4><div class="role">' + esc(m.tag) + '</div></div></div><div class="d">' + esc(m.d) + '</div><div class="acts"><button class="pri">Open →</button></div></div>';
+      '<div class="oneagent"><b>The Forge.</b> Make a 3D AI agent, embed it anywhere, and earn from every chat. <span class="gate">Model-making runs on credits — 3D-world placement isn\'t open yet.</span></div>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">' + steps.map(function (s) {
+        return '<div class="card"><div class="hd"><span class="ic">' + s.ic + '</span><h4>' + esc(s.name) + '</h4></div><div class="d">' + esc(s.d) + '</div></div>';
       }).join('') + '</div>' +
-      '<div class="rsec">Ready-made presets <span class="c">skip the build · enter the 3D world instantly</span></div>' +
+      '<div class="rsec">Make your model <span class="c">text or selfie → 3D · pay with credits</span></div>' +
+      '<div class="card" style="text-align:center;padding:22px">' +
+        '<div style="font-family:\'Space Grotesk\';font-weight:700;font-size:15px;margin-bottom:4px">Make a 3D AI agent <span class="pub draft" style="position:static;margin-left:6px">coming soon</span></div>' +
+        '<div class="d" style="max-width:440px;margin:0 auto 14px">Text-prompt or selfie → a rigged 3D agent in ~1 minute, then embed it with two lines of HTML and earn USDC per chat. We\'re finishing this pipeline — join the list and we\'ll open it to you first.</div>' +
+        '<button class="pri" id="shdtForgeNotify" style="font-family:\'Chakra Petch\';font-weight:700;padding:10px 20px;border:none;border-radius:9px;background:#a855f7;color:#0b0416;cursor:pointer">Notify me when it opens</button>' +
+      '</div>' +
+      '<div class="rsec">Ready-made presets <span class="c">use one now · 3D-world access opening later</span></div>' +
       '<div class="grid">' + presets.map(function (p) {
-        return '<div class="card" data-preset="' + esc(p.id) + '"><span class="pub public">preset</span><div class="hd"><span class="ic">' + p.ic + '</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.tag) + '</div></div></div><div class="d">' + esc(p.d) + '</div><div class="acts"><button class="pri">Enter 3D world →</button></div></div>';
-      }).join('') + '</div>' +
-      '<div id="shdtForgeStage" style="margin-top:12px"></div>';
-    host.querySelectorAll('.card[data-mk]').forEach(function (c) {
-      c.querySelector('button').addEventListener('click', function () {
-        document.getElementById('shdtForgeStage').innerHTML =
-          '<div class="rsec">' + esc(c.querySelector('h4').textContent) + ' <span class="c">building</span></div>' +
-          '<iframe class="forgeframe" src="' + esc(c.getAttribute('data-src')) + '" title="Forge"></iframe>';
-        try { document.getElementById('shdtForgeStage').scrollIntoView({ behavior: 'smooth' }); } catch (e) {}
-      });
+        return '<div class="card" data-preset="' + esc(p.id) + '"><span class="pub public">preset</span><div class="hd"><span class="ic">' + p.ic + '</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.tag) + '</div></div></div><div class="d">' + esc(p.d) + '</div><div class="acts"><button class="pri">Use this agent</button></div></div>';
+      }).join('') + '</div>';
+    var nb = document.getElementById('shdtForgeNotify');
+    if (nb) nb.addEventListener('click', function () {
+      if (window.SHDFree) { SHDFree.gate('forge', { label: '3D agent forge', hookMsg: 'The 3D agent forge is almost ready — <b style="color:#fff">sign in and we\'ll open it to you first</b>.', onAllowed: function () { try { if (window.notify) notify('You\'re on the list — we\'ll notify you when the Forge opens.'); } catch (e) {} } }); }
+      else { try { if (window.notify) notify('You\'re on the list — we\'ll notify you when the Forge opens.'); } catch (e) {} }
     });
     host.querySelectorAll('.card[data-preset]').forEach(function (c) {
       c.querySelector('button').addEventListener('click', function () {
         try { localStorage.setItem('shaddai.preset', c.getAttribute('data-preset')); } catch (e) {}
-        window.location.href = '/_LAUNCH.html';
+        try { if (window.notify) notify('Preset selected — 3D-world access opens soon.'); } catch (e) {}
       });
     });
   }

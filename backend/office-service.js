@@ -12,6 +12,18 @@ const rooms = require('./agent-room-service');
 
 const STORE = path.join(__dirname, 'data', 'offices.json');
 const REGION = 'shaddai-city';
+const TOTAL_LOTS = 30;   // Founders' Row capacity (mirrors game.html)
+
+// Ready-made office looks so a user can set up without building one.
+const PRESETS = [
+  { id: 'command-loft', name: 'Command Loft', accent: '#00e5a0', d: 'Sleek emerald command deck.' },
+  { id: 'obsidian-hq', name: 'Obsidian HQ', accent: '#a855f7', d: 'Dark violet executive suite.' },
+  { id: 'neon-studio', name: 'Neon Studio', accent: '#22d3ee', d: 'Cyan creator studio.' },
+  { id: 'gold-atrium', name: 'Gold Atrium', accent: '#e8c45c', d: 'Warm gilded atrium.' },
+  { id: 'terminal-bay', name: 'Terminal Bay', accent: '#39ff97', d: 'Phosphor-green ops bay.' },
+  { id: 'crimson-forge', name: 'Crimson Forge', accent: '#ff5470', d: 'Molten red workshop.' },
+];
+const VISIBILITIES = ['private', 'public-showroom', 'hireable-studio'];
 
 function read() { try { return JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch (e) { return { offices: {}, slots: 0 }; } }
 function write(d) { try { fs.writeFileSync(STORE, JSON.stringify(d, null, 2)); } catch (e) {} }
@@ -45,6 +57,7 @@ function claimOffice(userId, opts = {}) {
     slot,
     cityCoords: c,
     visibility: opts.visibility || 'private',   // private | public-showroom | hireable-studio
+    preset: opts.preset || 'command-loft',       // one of PRESETS[].id
     verified: !!opts.verified,                   // signed-in now; email/wallet verify later
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -53,6 +66,47 @@ function claimOffice(userId, opts = {}) {
   db.slots = slot + 1;
   write(db);
   return office;
+}
+
+// Update the owner's office look/identity. Only known fields, validated.
+function updateOffice(userId, patch = {}) {
+  if (!userId) return null;
+  const db = read();
+  const o = db.offices[userId];
+  if (!o) return null;
+  if (patch.name != null) o.name = String(patch.name).slice(0, 48);
+  if (patch.preset != null && PRESETS.some(p => p.id === patch.preset)) o.preset = patch.preset;
+  if (patch.visibility != null && VISIBILITIES.includes(patch.visibility)) o.visibility = patch.visibility;
+  o.updatedAt = new Date().toISOString();
+  write(db);
+  return o;
+}
+
+// Move the owner's office to a different Founders' Row lot. Rejects taken lots.
+function switchLot(userId, slot) {
+  if (!userId) return { error: 'no user' };
+  slot = parseInt(slot, 10);
+  if (!Number.isInteger(slot) || slot < 0 || slot >= TOTAL_LOTS) return { error: 'invalid lot' };
+  const db = read();
+  const o = db.offices[userId];
+  if (!o) return { error: 'no office' };
+  const taken = Object.values(db.offices).some(x => x.ownerUserId !== userId && x.slot === slot);
+  if (taken) return { error: 'lot taken' };
+  o.slot = slot;
+  o.cityCoords = slotCoords(slot);
+  o.updatedAt = new Date().toISOString();
+  write(db);
+  return { office: o };
+}
+
+// Which Founders' Row lots are open vs taken (for the office lot picker).
+function lotMap(userId) {
+  const db = read();
+  const taken = {};
+  Object.values(db.offices).forEach(x => { taken[x.slot] = { owner: x.ownerUserId === userId ? 'you' : 'taken', name: x.name }; });
+  const lots = [];
+  for (let i = 0; i < TOTAL_LOTS; i++) lots.push({ slot: i, coords: slotCoords(i), state: taken[i] ? taken[i].owner : 'open' });
+  return lots;
 }
 
 // The office + the rooms it owns (canonical agent-rooms for this owner) + a summary.
@@ -77,8 +131,8 @@ function cityOffices() {
   const db = read();
   return Object.values(db.offices).map(o => ({
     officeId: o.officeId, ownerUserId: o.ownerUserId, name: o.name,
-    slot: o.slot, cityCoords: o.cityCoords, visibility: o.visibility,
+    slot: o.slot, cityCoords: o.cityCoords, visibility: o.visibility, preset: o.preset || 'command-loft',
   }));
 }
 
-module.exports = { getOffice, claimOffice, officeWithRooms, cityOffices, slotCoords };
+module.exports = { getOffice, claimOffice, updateOffice, switchLot, lotMap, officeWithRooms, cityOffices, slotCoords, PRESETS, VISIBILITIES, TOTAL_LOTS };

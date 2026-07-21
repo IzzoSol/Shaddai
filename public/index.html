@@ -4027,7 +4027,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
-<script src="/command-terminal.js?v=5" defer></script>
+<script src="/command-terminal.js?v=6" defer></script>
 <script src="/theme-switcher.js?v=1" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
@@ -10395,8 +10395,13 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   </div>
   <script>
   window._auraCopy = function(id){ var el=document.getElementById(id); if(!el) return; var t=el.innerText||el.textContent; try{ if(navigator.clipboard) navigator.clipboard.writeText(t); }catch(e){} try{ notify('Copied to clipboard'); }catch(e){} };
-  window.activateAura = function(){ var f=document.getElementById('auraFrame'); if(f && !f.src) f.src='/aura.html'; if(f) f.style.display='block'; var w=document.getElementById('auraLaunchWrap'); if(w) w.style.display='none'; var b=document.getElementById('auraFrameBar'); if(b) b.style.display='flex'; };
-  window.deactivateAura = function(){ var f=document.getElementById('auraFrame'); if(f) f.style.display='none'; var w=document.getElementById('auraLaunchWrap'); if(w) w.style.display='block'; var b=document.getElementById('auraFrameBar'); if(b) b.style.display='none'; };
+  // AURA lives NATIVELY in this tab. The "Live console" used to embed aura.html in
+  // an iframe — a window-in-window whose inner home button navigated the whole
+  // dashboard to the home page. Removed: any console action now opens the full
+  // monitor in a NEW TAB, and the leftover demo widgets are stripped on load.
+  window.activateAura = function(){ try{ window.open('/aura.html','_blank'); }catch(e){} };
+  window.deactivateAura = function(){};
+  (function(){ try{ ['auraOpt','auraActivateCard'].forEach(function(id){ var el=document.getElementById(id); if(el) el.remove(); }); }catch(e){} })();
   (function(){ try{ var s=document.createElement('style'); s.textContent='@keyframes auraPulse{0%,100%{box-shadow:0 0 30px rgba(39,224,255,0.5),0 8px 24px rgba(0,0,0,0.4)}50%{box-shadow:0 0 48px rgba(39,224,255,0.9),0 8px 24px rgba(0,0,0,0.4)}}'; document.head.appendChild(s);}catch(e){} })();
   // TURTLE: inject branded SHADDAI icons into the redesigned AURA hero + section heads.
   window._auraIcons = function(){
