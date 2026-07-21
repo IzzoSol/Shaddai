@@ -68,7 +68,9 @@
     { id: 'gallery', label: '🖼 Gallery', sub: 'your creations' },
     { id: 'showcase', label: '✦ Showcase', sub: '3D marketplace' },
     { id: 'bazaar', label: '◈ Bazaar', sub: 'storefront' },
-    { id: 'treasury', label: '◆ Treasury', sub: 'sparks · rep' }
+    { id: 'reputation', label: '✦ Reputation', sub: 'X · Discord · share' },
+    { id: 'referrals', label: '🔗 Referrals', sub: 'links · rewards' },
+    { id: 'treasury', label: '◆ Treasury', sub: 'value flow' }
   ];
 
   function build() {
@@ -86,6 +88,8 @@
       '<div class="pane" data-pane="gallery"><div class="body" id="shdtGallery"></div></div>' +
       '<div class="pane" data-pane="showcase"><div class="body" id="shdtShowcase"></div></div>' +
       '<div class="pane" data-pane="bazaar"><div class="body" id="shdtBazaar"></div></div>' +
+      '<div class="pane" data-pane="reputation"><div class="body" id="shdtReputation"></div></div>' +
+      '<div class="pane" data-pane="referrals"><div class="body" id="shdtReferrals"></div></div>' +
       '<div class="pane" data-pane="treasury"><div class="body" id="shdtTreasury"></div></div>' +
       '</div>';
     document.body.appendChild(root);
@@ -107,6 +111,15 @@
     if (id === 'gallery') return renderGallery();
     if (id === 'showcase') return renderShowcase();
     if (id === 'bazaar') return document.getElementById('shdtBazaar').innerHTML = section('Bazaar', 'your public storefront', [card('◈', 'Your services', 'agent hires', 'Buyers pay via credits / x402 — you take the spread.', 'Manage'), card('🎫', 'Skill & MD packs', 'bundles', 'Bundle tools & workflows for sale.', 'Create pack')]);
+    if (id === 'reputation') return document.getElementById('shdtReputation').innerHTML =
+      '<div class="oneagent">Build reputation across surfaces. <b>Sign in</b>, connect your socials, and <b style="color:#22d3ee">share what you make</b> → rep points → later exchange for credits.</div>' +
+      section('Connect', 'earn rep + verify', [card('𝕏', 'Connect X', 'verify + automate', 'Link your X — later: run a built agent that posts for you (with disclosure).', 'Connect X'), card('🎮', 'Connect Discord', 'community', 'Link Discord for community rep + roles.', 'Connect Discord')]) +
+      section('Share to earn', 'creations → rep points', [card('🖼', 'Share an image', '+ rep', 'Post an image you made in the dashboard.', 'Share'), card('▣', 'Share a 3D model', '+ rep', 'Show a model you forged.', 'Share'), card('✦', 'Share an agent', '+ rep', 'Showcase a forged agent.', 'Share')]) +
+      section('Your reputation', 'utility only', [card('◆', 'Rep → Credits', 'exchange', 'Convert reputation points into platform credits.', 'Exchange')]);
+    if (id === 'referrals') return document.getElementById('shdtReferrals').innerHTML =
+      '<div class="oneagent">Invite creators. Rewards fire as <b>Sparks + reputation + status perks</b> always; <b class="gate">real-money settlement only on real money</b> (pending pools, no cash-out yet).</div>' +
+      section('Your link', 'attribution trail', [card('🔗', 'Referral link', 'share it', 'shaddai.app/r/you — every signup + purchase is attributed to you.', 'Copy link'), card('📊', 'Attribution', 'who you brought', 'See your referred users + their activity.', 'View')]) +
+      section('Rewards', 'the flywheel', [card('◆', 'Sparks earned', 'always fires', 'From any good referral event.', 'Open'), card('💰', 'Revenue pool', 'pending', 'Fills on real-money events; transparent, cash-out later.', 'Details')]);
     if (id === 'treasury') return document.getElementById('shdtTreasury').innerHTML = section('Treasury', 'Sparks · reputation · referrals · payouts', [card('◆', 'Sparks', 'earned from work', 'Balance 500 · owed pools accruing (cash-out later).', 'Open'), card('✦', 'Reputation', 'verifiable', 'Your score across all surfaces.', 'View'), card('🔗', 'Referrals', 'attribution', 'Your code · reward trail.', 'Open')]);
   }
 
