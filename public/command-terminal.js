@@ -287,32 +287,37 @@
   //    the pipeline is fixed — plus presets. No 3D-world access to these yet. ──
   function renderForge() {
     var host = document.getElementById('shdtForge');
-    var steps = [
-      { ic: '❖', name: 'Create', d: 'A 3D AI agent from a text prompt or a selfie — in about a minute.' },
-      { ic: '⬡', name: 'Embed', d: 'Drop it on any website with two lines of HTML.' },
-      { ic: '◆', name: 'Earn', d: 'USDC per chat, paid through x402 micropayments.' }
-    ];
     var presets = [
       { ic: '◈', name: 'TURTLE — Emerald Enforcer', tag: 'rigged · 7 anims', d: 'Green enforcer with ball-and-chain flail.', id: 'turtle' },
       { ic: '◈', name: 'ZEROX — Neon Valkyrie', tag: 'rigged · 7 anims', d: 'Cyan katana valkyrie.', id: 'zerox' },
       { ic: '◈', name: 'PIKADON — Crimson Sentinel', tag: 'rigged · combat', d: 'Heavy guardian sentinel.', id: 'pikadon' },
       { ic: '◈', name: 'ORACLE — Astral Seer', tag: 'rigged', d: 'Robed cosmic seer.', id: 'oracle' }
     ];
+    var embed = '<script src="https://shaddai.app/agent-3d.js"><\/script>\n<agent-3d id="your-agent-id"><\/agent-3d>';
     host.innerHTML =
-      '<div class="oneagent"><b>The Forge.</b> Make a 3D AI agent, embed it anywhere, and earn from every chat. <span class="gate">Model-making runs on credits — 3D-world placement isn\'t open yet.</span></div>' +
-      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">' + steps.map(function (s) {
-        return '<div class="card"><div class="hd"><span class="ic">' + s.ic + '</span><h4>' + esc(s.name) + '</h4></div><div class="d">' + esc(s.d) + '</div></div>';
-      }).join('') + '</div>' +
-      '<div class="rsec">Make your model <span class="c">text or selfie → 3D · pay with credits</span></div>' +
-      '<div class="card" style="text-align:center;padding:22px">' +
-        '<div style="font-family:\'Space Grotesk\';font-weight:700;font-size:15px;margin-bottom:4px">Make a 3D AI agent <span class="pub draft" style="position:static;margin-left:6px">coming soon</span></div>' +
-        '<div class="d" style="max-width:440px;margin:0 auto 14px">Text-prompt or selfie → a rigged 3D agent in ~1 minute, then embed it with two lines of HTML and earn USDC per chat. We\'re finishing this pipeline — join the list and we\'ll open it to you first.</div>' +
-        '<button class="pri" id="shdtForgeNotify" style="font-family:\'Chakra Petch\';font-weight:700;padding:10px 20px;border:none;border-radius:9px;background:#a855f7;color:#0b0416;cursor:pointer">Notify me when it opens</button>' +
-      '</div>' +
+      '<div class="oneagent"><b>The Forge.</b> A 3D AI agent you can build, embed anywhere, and earn from. <span class="gate">Open beta — model-making runs on credits; keep 100% of earnings.</span></div>' +
+      // 01 BUILD
+      '<div class="card" style="padding:16px;margin-bottom:12px"><div class="hd"><span class="ic">01</span><div><h4>Build</h4><div class="role">Prompt to agent in 60 seconds</div></div></div>' +
+        '<div class="d">Type a description, snap a selfie, or upload a GLB. Add a personality prompt, pick a voice, wire up your AI. Publish to the marketplace or keep it private.</div>' +
+        '<div class="acts" style="margin-top:10px"><button class="pri" id="shdtForgeNotify">Start building</button> <span class="pub draft" style="position:static;align-self:center">coming soon</span></div></div>' +
+      // 02 EMBED
+      '<div class="card" style="padding:16px;margin-bottom:12px"><div class="hd"><span class="ic">02</span><div><h4>Embed</h4><div class="role">Two lines. Any page.</div></div></div>' +
+        '<div class="d">Drop <b style="color:#22d3ee">&lt;agent-3d&gt;</b> into any page — React, Vue, Svelte, plain HTML. Voice, memory, animation and payments built-in. Lazy-loaded by default.</div>' +
+        '<pre style="margin:10px 0 0;background:rgba(8,4,18,.7);border:1px solid rgba(168,85,247,.25);border-radius:9px;padding:11px 13px;font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#c7b6ef;white-space:pre-wrap;overflow:auto">' + esc(embed) + '</pre>' +
+        '<div class="acts" style="margin-top:10px"><button class="pri" id="shdtForgeCopy">Copy snippet</button> <button class="cl" id="shdtForgeDocs">Read the docs</button></div></div>' +
+      // 03 EARN
+      '<div class="card" style="padding:16px;margin-bottom:6px"><div class="hd"><span class="ic">03</span><div><h4>Earn</h4><div class="role">Charge per chat. Keep everything.</div></div></div>' +
+        '<div style="font-family:\'Space Grotesk\';font-weight:800;font-size:30px;color:#00e5a0;line-height:1;margin:4px 0 2px">$128.40</div><div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-bottom:9px">example earnings · USDC</div>' +
+        '<div class="d">Gate skills behind pay-per-call micropayments (USDC via x402). Keep <b style="color:#00e5a0">100% during open beta</b>. Watch earnings flow in real time from your dashboard.</div></div>' +
+      // PRESETS
       '<div class="rsec">Ready-made presets <span class="c">use one now · 3D-world access opening later</span></div>' +
       '<div class="grid">' + presets.map(function (p) {
         return '<div class="card" data-preset="' + esc(p.id) + '"><span class="pub public">preset</span><div class="hd"><span class="ic">' + p.ic + '</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.tag) + '</div></div></div><div class="d">' + esc(p.d) + '</div><div class="acts"><button class="pri">Use this agent</button></div></div>';
       }).join('') + '</div>';
+    var cpy = document.getElementById('shdtForgeCopy');
+    if (cpy) cpy.addEventListener('click', function () { try { navigator.clipboard.writeText(embed); if (window.notify) notify('Embed snippet copied'); } catch (e) {} });
+    var dcs = document.getElementById('shdtForgeDocs');
+    if (dcs) dcs.addEventListener('click', function () { try { if (window.notify) notify('Docs coming with the beta.'); } catch (e) {} });
     var nb = document.getElementById('shdtForgeNotify');
     if (nb) nb.addEventListener('click', function () {
       if (window.SHDFree) { SHDFree.gate('forge', { label: '3D agent forge', hookMsg: 'The 3D agent forge is almost ready — <b style="color:#fff">sign in and we\'ll open it to you first</b>.', onAllowed: function () { try { if (window.notify) notify('You\'re on the list — we\'ll notify you when the Forge opens.'); } catch (e) {} } }); }
