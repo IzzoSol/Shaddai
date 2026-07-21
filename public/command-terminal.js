@@ -307,7 +307,7 @@
         var oc = b.getAttribute('onclick') || '', t = (b.textContent || '').trim();
         var isOffice = /showView\('office'\)/.test(oc);
         var isForge = /showView\('forge'\)/.test(oc);
-        var isRooms = /openRoomsManager/.test(oc) || (/showView\('marketplace'\)/.test(oc) && /rooms?/i.test(t));
+        var isRooms = /openRoomsManager/.test(oc) || /showView\('marketplace'\)/.test(oc);
         if (isOffice || isForge || isRooms) { b.style.display = 'none'; b.setAttribute('data-shd-consolidated', '1'); }
       });
       var anchor = document.querySelector('.nav-btn');
