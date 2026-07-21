@@ -10,6 +10,25 @@
   'use strict';
   if (window.__worldGateV1) return; window.__worldGateV1 = true;
 
+  // Tag every same-origin /api call with the caller's id (Player Code / signed-in uid)
+  // so the world's office/gallery/etc. scope to THIS player, never a shared 'local'.
+  (function () {
+    if (window.__shdFetchScoped || !window.fetch) return; window.__shdFetchScoped = true;
+    var _f = window.fetch;
+    window.fetch = function (input, init) {
+      try {
+        var url = (typeof input === 'string') ? input : (input && input.url) || '';
+        if (/^\/api\//.test(url) || url.indexOf(location.origin + '/api/') === 0) {
+          init = init || {};
+          var h = new Headers(init.headers || (typeof input !== 'string' && input && input.headers) || {});
+          if (!h.has('x-user-id')) { var id = ''; try { id = localStorage.getItem('shd_userid') || ''; } catch (e) {} if (id) h.set('x-user-id', id); }
+          init.headers = h;
+        }
+      } catch (e) {}
+      return _f.call(this, input, init);
+    };
+  })();
+
   function hasAccess() {
     try {
       if (localStorage.getItem('shd_world_pass')) return true;               // redeemed a beta code

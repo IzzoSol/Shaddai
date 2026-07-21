@@ -1371,7 +1371,7 @@ function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!
   // grant starter tools once boot + loadEcon have settled (fresh players start playable)
   setTimeout(function(){ try{ grantStarter(); renderHotbar(); }catch(_){} }, 900);
   addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput'); if(ci&&document.activeElement===ci) return; const k=e.key;
-    if(k>='1'&&k<='6'){ selectSlot(+k-1); } else if(k==='0'){ activeSlot=-1; renderHotbar(); } else if(k==='i'||k==='I'){ toggleBackpack(); } else if(k==='Escape'&&backpackOpen){ toggleBackpack(false); } });
+    if(k>='1'&&k<='6'){ selectSlot(+k-1); } else if(k==='0'){ activeSlot=-1; renderHotbar(); } else if(k==='i'||k==='I'){ toggleBackpack(); } else if(k==='o'||k==='O'){ if(typeof officeOpen!=='undefined'&&officeOpen)closeOffice(); else openOffice(); } else if(k==='Escape'&&backpackOpen){ toggleBackpack(false); } else if(k==='Escape'&&typeof officeOpen!=='undefined'&&officeOpen){ closeOffice(); } });
 })();
 // CLICK-TO-INTERACT: uses the active hotbar tool (chop/mine/fish/heal/attack).
 c.addEventListener('click',function(){ useActiveTool(); });
@@ -1388,6 +1388,49 @@ function drawFishes(time){ for(const f of fishes){ const [sx,sy]=w2s(f.col,f.row
   ctx.beginPath(); ctx.moveTo(sx-f.dir*sz,sy+wob); ctx.lineTo(sx-f.dir*sz*1.7,sy+wob-sz*0.5); ctx.lineTo(sx-f.dir*sz*1.7,sy+wob+sz*0.5); ctx.closePath(); ctx.fill();
   if(f.big){ ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.fillRect(Math.round(sx+f.dir*sz*0.4),Math.round(sy+wob)-1,1,1); } } }
 function openShop(){ openStore(); }
+
+/* ── OFFICE: earn your own office in SHADDAI City by leveling up + spending Gold.
+   The office is the SAME one that appears in the dashboard (scoped to your id). ── */
+const OFFICE_REQ_LVL=5, OFFICE_COST=500;
+let officeOpen=false;
+async function openOffice(){
+  officeOpen=true;
+  let el=document.getElementById('officePanel');
+  if(!el){ el=document.createElement('div'); el.id='officePanel'; const bk=document.getElementById('bank'); el.className=bk?bk.className:'panel'; document.body.appendChild(el); }
+  el.classList.remove('hide');
+  el.innerHTML='<h1>🏢 <b>Your Office</b></h1><div class="sub">Checking SHADDAI City records…</div>';
+  let d={}; try{ d=await (await fetch('/api/office')).json(); }catch(e){}
+  const lvl=levelFor(credits), has=d&&d.office&&!d.canClaim;
+  let h='<h1>🏢 <b>Office · SHADDAI City</b></h1>';
+  if(d&&d.needSignIn){
+    h+='<div class="sub" style="margin:8px 0 14px">Forge a character or enter a code first so your office saves to you.</div><div class="row" style="justify-content:flex-end"><button onclick="closeOffice()">Close</button></div>';
+  } else if(has){
+    h+='<div class="sub" style="margin:8px 0 12px">You own <b style="color:#00e5a0">'+(d.office.name||'your office')+'</b> — Founders\' Row lot #'+((d.office.slot!=null?d.office.slot:0)+1)+'. It shows in your dashboard too.</div>';
+    h+='<div class="row" style="gap:8px;justify-content:flex-end"><button class="primary" onclick="window.open(\'/game.html?embed=office&uid='+encodeURIComponent(d.office.ownerUserId||'')+'\',\'_blank\')">Visit office</button><button onclick="closeOffice()">Done</button></div>';
+  } else {
+    const okL=lvl>=OFFICE_REQ_LVL, okM=money>=OFFICE_COST, ready=okL&&okM;
+    h+='<div class="sub" style="margin:8px 0 12px">Earn your own office building — customize it in the dashboard, and let others visit. One office per player.</div>';
+    h+='<div class="sub" style="margin-bottom:12px">Requires <b style="color:'+(okL?'#00e5a0':'#ff9a3c')+'">Level '+OFFICE_REQ_LVL+'</b> <span style="opacity:.7">(you: Lv '+lvl+')</span> &nbsp;·&nbsp; <b style="color:'+(okM?'#00e5a0':'#ff9a3c')+'">💵'+OFFICE_COST+' Gold</b> <span style="opacity:.7">(you: 💵'+money+')</span></div>';
+    h+='<div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-end">';
+    h+='<button class="primary" '+(ready?'':'disabled style="opacity:.45;cursor:not-allowed"')+' onclick="claimOfficeGame()">Claim office · 💵'+OFFICE_COST+'</button>';
+    h+='<button onclick="toast(\'⚡ Pro instant-unlock arrives with billing — for now, level up and earn it!\')">Unlock with Pro ⚡</button>';
+    h+='<button onclick="closeOffice()">Close</button></div>';
+  }
+  el.innerHTML=h;
+}
+function closeOffice(){ officeOpen=false; const el=document.getElementById('officePanel'); if(el)el.classList.add('hide'); }
+async function claimOfficeGame(){
+  if(levelFor(credits)<OFFICE_REQ_LVL){ toast('Reach Level '+OFFICE_REQ_LVL+' first'); return; }
+  if(money<OFFICE_COST){ toast('Need 💵'+OFFICE_COST+' Gold'); return; }
+  try{
+    const r=await fetch('/api/office/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d=await r.json();
+    if(d&&(d.office||d.claimed)){ money-=OFFICE_COST; saveEcon(); toast('🏢 Office claimed on Founders\' Row! Customize it in the dashboard.'); openOffice(); }
+    else if(d&&d.needSignIn){ toast('Enter a code or sign in first'); }
+    else toast('Could not claim — try again');
+  }catch(e){ toast('Network error — try again'); }
+}
+
 loadEcon();
 connectMP();
 requestAnimationFrame(loop);
