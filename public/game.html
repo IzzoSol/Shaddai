@@ -188,6 +188,7 @@ c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.Re
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
   genWorld(regionSel); updateHP(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  try{ if(typeof grantStarter==='function') grantStarter(); if(typeof renderHotbar==='function') renderHotbar(); }catch(_){}
   const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; mpHello(); showSplash(regionSel);
   const sh=document.getElementById('specHud');
   if(spectate){ document.getElementById('topbtns').classList.add('hide'); specTarget=npcs[(Math.random()*npcs.length)|0]||null; specTimer=6;
@@ -792,6 +793,7 @@ let last=0;
 function update(dt){
   if(jobCooldown>0) jobCooldown-=dt; if(fishCooldown>0) fishCooldown-=dt; if(gatherCooldown>0) gatherCooldown-=dt;
   updateFx(dt);
+  { const _hbEl=document.getElementById('rpgHotbar'); if(_hbEl){ const vis=(state==='world'&&!spectate)?'flex':'none'; if(_hbEl.style.display!==vis) _hbEl.style.display=vis; } }
   if(state!=='world'){ ['fishBar','gatherBar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
   if(state==='world') tod=(tod+dt*0.012)%1;   // ~85s day/night cycle
   if(fadeDir!==0){ fadeV+=fadeDir*dt*2.6;
@@ -1098,7 +1100,7 @@ const MARKET_DEMAND={ meadow:{wood:1.0,hide:1.1,fish:0.9,trinket:1.1,water:0.7,o
 const FISH=[ {id:'minnow',name:'Minnow',ico:'🐟',val:6,w:5},{id:'bass',name:'Bass',ico:'🐟',val:12,w:4},{id:'salmon',name:'Salmon',ico:'🐠',val:22,w:2.5},{id:'tuna',name:'Big Tuna',ico:'🐡',val:48,w:1,big:true},{id:'levi',name:'Leviathan',ico:'🐋',val:130,w:0.3,big:true} ];
 function levelFor(c){ return 1+Math.floor(Math.sqrt(c/45)); }
 function loadEcon(){ try{ const e=JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); if(typeof e.money==='number')money=e.money; if(typeof e.credits==='number')credits=e.credits; if(e.inv)Object.assign(inv,e.inv); if(e.fish)Object.assign(fish,e.fish); if(typeof e.bank==='number')bank=e.bank; if(typeof e.coin==='number')coin=e.coin; if(typeof e.coinPrice==='number')coinPrice=e.coinPrice; if(e.stash)Object.assign(stash,e.stash); if(e.weaponUp)Object.assign(weaponUp,e.weaponUp); if(typeof e.equippedWeapon==='string')equippedWeapon=e.equippedWeapon; if(e.quest)Object.assign(quest,e.quest); if(e.questDone)Object.assign(questDone,e.questDone); }catch(_){} }
-function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); }
+function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); try{ if(typeof renderHotbar==='function') renderHotbar(); }catch(_){} }
 function updateWallet(){ const el=document.getElementById('wallet'); if(!el)return; el.innerHTML='💵 '+money+' &nbsp;·&nbsp; <span style="color:#5fe0ff">Lv '+levelFor(credits)+'</span> <span style="opacity:.55">'+credits+' XP</span><br><span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; }
 function updateHP(){ const f=document.getElementById('hpFill'), t=document.getElementById('hpTxt'); if(!f)return; const pct=Math.max(0,playerHP)/playerMaxHP*100; f.style.width=pct+'%'; f.style.background=pct>50?'#4fe07a':pct>25?'#e0c14f':'#e05a4f'; if(t)t.textContent='❤ '+Math.max(0,Math.ceil(playerHP)); }
 function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSwing=0.25; if(player.rig)player.rig.anim='attack';
@@ -1304,11 +1306,74 @@ function doGather(){ if(gatherCooldown>0) return; const p=gatherProp;
       gatherTarget=null; gatherProp=null; const gb=document.getElementById('gatherBar'); if(gb) gb.classList.add('hide'); }
     saveEcon(); }
   else toast('Nothing to gather here'); }
-// CLICK-TO-INTERACT: click near a tree/rock → chop/mine into bag; near water → cast the rod.
-c.addEventListener('click',function(){ if(state!=='world'||spectate) return;
-  if(gatherTarget){ doGather(); }            // wood/ore proximity (from the gather scan)
-  else if(isNearWater()){ castFish(); }      // stand by water → fishing rod out
-});
+// ══════════════════════════════════════════════════════════════════════════
+//  RPG HUD — on-screen backpack + hotbar (keys 1–6 select · I opens the bag).
+//  SHADDAI-styled. The active hotbar tool gates the world action:
+//  🪓 chop · ⛏️ mine · 🎣 fish · 🧪 heal · ⚔️ fight. Forgiving: if you own the
+//  right tool it still works, with a nudge to slot it. Stacks show up to 999.
+// ══════════════════════════════════════════════════════════════════════════
+let hotbar=['axe','pick','rod','sword','potion',null], activeSlot=0, backpackOpen=false;
+try{ const _hb=JSON.parse(localStorage.getItem('shaddai.hotbar')||'null'); if(Array.isArray(_hb)&&_hb.length===6) hotbar=_hb; }catch(_){}
+function saveHotbar(){ try{ localStorage.setItem('shaddai.hotbar',JSON.stringify(hotbar)); }catch(_){} }
+function grantStarter(){ try{ if(localStorage.getItem('shaddai.starter'))return; }catch(_){ return; } ['axe','pick','rod','sword'].forEach(t=>{ if(!inv[t]) inv[t]=1; }); if(!inv.potion) inv.potion=3; try{ localStorage.setItem('shaddai.starter','1'); }catch(_){} saveEcon(); }
+function toolFor(kind){ return kind==='wood'?'axe':kind==='ore'?'pick':null; }
+function drinkPotion(){ if(!(inv.potion>0)){ toast('No 🧪 potions — buy some at the Store'); return; } if(playerHP>=playerMaxHP){ toast('❤ Already at full health'); return; } inv.potion--; if(inv.potion<=0)delete inv.potion; playerHP=Math.min(playerMaxHP,playerHP+40); updateHP(); if(typeof addFloat==='function')addFloat(player.col,player.row,'+40 ❤','#ff6b8a'); saveEcon(); toast('🧪 Drank a potion (+40 ❤)'); }
+// use the active hotbar item on the world (tool-gated but forgiving)
+function useActiveTool(){ if(state!=='world'||spectate) return; const act=hotbar[activeSlot];
+  if(act==='potion'){ drinkPotion(); return; }
+  if(gatherTarget){ const need=toolFor(gatherTarget); if(act===need||inv[need]){ doGather(); } else { const m=itemMeta(need); toast('Equip a '+m.ico+' '+m.name+' to '+(gatherTarget==='wood'?'chop':'mine')+' — buy one at the Store'); } return; }
+  if(isNearWater()){ if(act==='rod'||inv.rod){ castFish(); } else { toast('Equip a 🎣 Fishing Rod (Store) to fish here'); } return; }
+  if(window.Combat && enemies && enemies.length){ const near=enemies.some(e=>Math.hypot(e.col-player.col,e.row-player.row)<1.7); if(near){ doAttack(); return; } }
+}
+function selectSlot(i){ activeSlot=i; const it=hotbar[i]; if(it&&WEAPON_POWER[it]!==undefined){ equippedWeapon=it; saveEcon(); } renderHotbar(); }
+function assignToHotbar(id){ if(!id) return; let slot=activeSlot; if(slot<0||slot>5) slot=hotbar.indexOf(null); if(slot<0) slot=0;
+  const old=hotbar.indexOf(id); if(old>=0) hotbar[old]=null; hotbar[slot]=id; activeSlot=slot;
+  if(WEAPON_POWER[id]!==undefined) equippedWeapon=id; saveHotbar(); renderHotbar(); renderBackpack(); }
+function toggleBackpack(force){ backpackOpen=(force===undefined?!backpackOpen:force); const el=document.getElementById('rpgBackpack'); if(el) el.style.display=backpackOpen?'flex':'none'; if(backpackOpen) renderBackpack(); }
+function renderHotbar(){ const bar=document.getElementById('rpgHotbar'); if(!bar) return; let h='';
+  for(let i=0;i<6;i++){ const id=hotbar[i], m=id?itemMeta(id):null, cnt=id?bagCount(id):0, own=id?(inv[id]||fish[id]||0):0;
+    h+='<div class="hbslot'+(i===activeSlot?' on':'')+(id&&!own?' gone':'')+'" data-i="'+i+'"><span class="hbk">'+(i+1)+'</span>'+(id?('<span class="hbico">'+m.ico+'</span>'+((cnt>1)?'<span class="hbc">'+(cnt>999?999:cnt)+'</span>':'')):'')+'</div>'; }
+  bar.innerHTML=h;
+  bar.querySelectorAll('.hbslot').forEach(s=>{ s.onclick=()=>{ const i=+s.dataset.i; if(i===activeSlot && hotbar[i]==='potion') drinkPotion(); else selectSlot(i); }; s.oncontextmenu=(e)=>{ e.preventDefault(); hotbar[+s.dataset.i]=null; saveHotbar(); renderHotbar(); }; }); }
+function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!el) return;
+  const tools=Object.keys(inv).filter(k=>inv[k]>0), fishK=Object.keys(fish).filter(k=>fish[k]>0);
+  const cell=(id,cnt,assignable)=>{ const m=itemMeta(id); return '<div class="bpcell'+(assignable?' assign':'')+(hotbar.indexOf(id)>=0?' inbar':'')+'" data-id="'+(assignable?id:'')+'"><span class="bpico">'+m.ico+'</span><span class="bpn">'+m.name+'</span><span class="bpc">'+(cnt>999?999:cnt)+'</span></div>'; };
+  let h='<div class="bpwrap"><div class="bphead"><b>🎒 Backpack</b><span class="bphint">Click a tool/weapon to slot it on your hotbar · keys 1–6 · I to close</span><button id="bpClose">✕</button></div><div class="bpgrid">';
+  if(!tools.length&&!fishK.length) h+='<div class="bpempty">Empty — chop trees, mine rocks, fish the water, or buy gear at the Store.</div>';
+  for(const k of tools){ const assignable=(WEAPON_POWER[k]!==undefined||k==='axe'||k==='pick'||k==='rod'||k==='potion'||k==='lantern'); h+=cell(k,inv[k],assignable); }
+  for(const k of fishK){ h+=cell(k,fish[k],false); }
+  h+='</div><div class="bpfoot">💰 '+money+' Gold · Lv '+levelFor(credits)+' · '+credits+' XP</div></div>';
+  el.innerHTML=h;
+  const cl=document.getElementById('bpClose'); if(cl) cl.onclick=()=>toggleBackpack(false);
+  el.querySelectorAll('.bpcell.assign').forEach(cEl=>{ cEl.onclick=()=>{ if(cEl.dataset.id) assignToHotbar(cEl.dataset.id); }; }); }
+(function buildRpgHud(){ if(!document.body){ addEventListener('DOMContentLoaded',buildRpgHud); return; } if(document.getElementById('rpgHotbar')) return;
+  const css=document.createElement('style'); css.textContent=
+  "#rpgHotbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:none;gap:7px;z-index:40;font-family:'Chakra Petch',system-ui,sans-serif}"+
+  ".hbslot{width:52px;height:52px;border-radius:10px;background:linear-gradient(160deg,#101827,#0a0f1a);border:1.5px solid rgba(0,229,160,.28);position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;box-shadow:0 4px 12px rgba(0,0,0,.4)}"+
+  ".hbslot:hover{border-color:rgba(0,229,160,.6)}.hbslot.on{border-color:#00e5a0;box-shadow:0 0 14px rgba(0,229,160,.55),inset 0 0 12px rgba(0,229,160,.15)}.hbslot.gone{opacity:.35}"+
+  ".hbico{font-size:26px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}.hbk{position:absolute;top:2px;left:5px;font-size:10px;font-weight:700;color:#e8c45c;opacity:.85}"+
+  ".hbc{position:absolute;bottom:1px;right:4px;font-size:11px;font-weight:700;color:#ffe9a8;text-shadow:0 1px 2px #000}"+
+  "#rpgBackpack{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(5,8,16,.55);backdrop-filter:blur(3px);font-family:'Chakra Petch',system-ui,sans-serif}"+
+  ".bpwrap{width:min(560px,92vw)}.bphead{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,#141d2e,#0b111c);border:1px solid rgba(0,229,160,.3);border-bottom:none;border-radius:14px 14px 0 0;padding:12px 16px;color:#eafff6}"+
+  ".bphead b{font-size:16px}.bphint{font-size:11px;color:#7fa08f;flex:1}#bpClose{background:none;border:1px solid rgba(255,255,255,.2);color:#cfe;border-radius:8px;width:28px;height:28px;cursor:pointer}"+
+  ".bpgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;background:linear-gradient(180deg,#0d1420,#0a0f19);border:1px solid rgba(0,229,160,.3);border-top:none;border-bottom:none;padding:14px;max-height:56vh;overflow:auto}"+
+  ".bpempty{grid-column:1/-1;color:#6b8296;text-align:center;padding:24px;font-size:13px}"+
+  ".bpcell{background:#111a28;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 6px;text-align:center;position:relative;color:#dbe7f0}"+
+  ".bpcell.assign{cursor:pointer}.bpcell.assign:hover{border-color:#00e5a0;background:#12251d}.bpcell.inbar{border-color:rgba(232,196,92,.5)}"+
+  ".bpico{font-size:26px;display:block}.bpn{font-size:11px;display:block;margin-top:3px;color:#aebfcc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"+
+  ".bpc{position:absolute;top:4px;right:6px;font-size:11px;font-weight:700;color:#ffe9a8}"+
+  ".bpfoot{background:linear-gradient(160deg,#141d2e,#0b111c);border:1px solid rgba(0,229,160,.3);border-top:none;border-radius:0 0 14px 14px;padding:10px 16px;color:#e8c45c;font-size:12px;text-align:right}";
+  document.head.appendChild(css);
+  const hb=document.createElement('div'); hb.id='rpgHotbar'; document.body.appendChild(hb);
+  const bp=document.createElement('div'); bp.id='rpgBackpack'; document.body.appendChild(bp);
+  renderHotbar();
+  // grant starter tools once boot + loadEcon have settled (fresh players start playable)
+  setTimeout(function(){ try{ grantStarter(); renderHotbar(); }catch(_){} }, 900);
+  addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput'); if(ci&&document.activeElement===ci) return; const k=e.key;
+    if(k>='1'&&k<='6'){ selectSlot(+k-1); } else if(k==='0'){ activeSlot=-1; renderHotbar(); } else if(k==='i'||k==='I'){ toggleBackpack(); } else if(k==='Escape'&&backpackOpen){ toggleBackpack(false); } });
+})();
+// CLICK-TO-INTERACT: uses the active hotbar tool (chop/mine/fish/heal/attack).
+c.addEventListener('click',function(){ useActiveTool(); });
 let fishes=[];
 function spawnFishes(){ fishes=[]; if(!waterTiles||!waterTiles.length) return; const n=Math.min(26,Math.max(4,(waterTiles.length/10)|0));
   for(let i=0;i<n;i++){ const t=waterTiles[(Math.random()*waterTiles.length)|0], big=Math.random()<0.12;
