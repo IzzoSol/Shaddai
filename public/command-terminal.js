@@ -397,4 +397,21 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', consolidateNav); else consolidateNav();
   setTimeout(consolidateNav, 1600);
+
+  // Any lingering call to the OLD consolidated views (office/forge/rooms) now routes
+  // into the Command Hub instead of rendering a stale view — the office one pinged
+  // dead local agent ports (8000-8003) and forge rendered empty. One clean entry.
+  function wrapShowView() {
+    if (window.__shdSvWrapped || typeof window.showView !== 'function') return;
+    window.__shdSvWrapped = true;
+    var _sv = window.showView;
+    window.showView = function (v) {
+      if (v === 'office' || v === 'forge' || v === 'marketplace') {
+        try { return window.openCommandTerminal(v === 'marketplace' ? 'rooms' : v); } catch (e) {}
+      }
+      return _sv.apply(this, arguments);
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wrapShowView); else wrapShowView();
+  setTimeout(wrapShowView, 1200);
 })();
