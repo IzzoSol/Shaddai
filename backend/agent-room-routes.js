@@ -10,6 +10,8 @@ const json = express.json();
 const svc = require('./agent-room-service');
 const office = require('./office-service');
 const { softAuth } = require('./auth-guard');
+const fs = require('fs');
+const path = require('path');
 
 router.get('/api/agent-rooms', softAuth, (req, res) => {
   const owner = req.query.owner ? String(req.query.owner) : (req.userId || null);
@@ -82,6 +84,24 @@ router.post('/api/office/claim', softAuth, json, (req, res) => {
 // All offices as city map markers (exteriors) — for placing office buildings in the world.
 router.get('/api/city/offices', (req, res) => {
   res.json({ ok: true, region: 'shaddai-city', offices: office.cityOffices() });
+});
+
+// ── 2D WORLD access gate — sign-in OR a beta code (beta-friendly). ──
+// Codes come from data/world-beta-codes.json {codes:[...]} and/or env WORLD_BETA_CODES
+// (comma-separated). Falls back to a default so the gate works out of the box.
+function betaCodes() {
+  let codes = [];
+  try { codes = (JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'world-beta-codes.json'), 'utf8')).codes || []); } catch (e) {}
+  const env = String(process.env.WORLD_BETA_CODES || '').split(',');
+  const all = codes.concat(env).map(c => String(c).trim().toUpperCase()).filter(Boolean);
+  if (!all.length) all.push('SHADDAI-BETA');
+  return all;
+}
+router.post('/api/world/redeem', json, (req, res) => {
+  const code = String((req.body && req.body.code) || '').trim().toUpperCase();
+  if (!code) return res.status(400).json({ ok: false, error: 'code required' });
+  if (betaCodes().includes(code)) return res.json({ ok: true, pass: code });
+  return res.status(403).json({ ok: false, error: 'invalid code' });
 });
 
 module.exports = router;

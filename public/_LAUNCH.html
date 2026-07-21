@@ -2,6 +2,7 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHADDAI · Enter the World</title>
+<script src="/world-gate.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;600&family=IBM+Plex+Mono&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
@@ -137,6 +138,26 @@
   }
 </style></head>
 <body>
+<!-- one-time cinematic intro (Seedance) -->
+<div id="introCine" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;align-items:center;justify-content:center">
+  <video id="introVid" src="hero/intro.mp4" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover"></video>
+  <button id="introSkip" style="position:absolute;right:22px;bottom:22px;padding:9px 16px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:rgba(0,0,0,.4);color:#e7ecf2;font-family:'Chakra Petch',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;backdrop-filter:blur(4px)">Skip ▸</button>
+</div>
+<script>
+(function(){ try{
+  var seen = localStorage.getItem('shaddai.introSeen');
+  var force = /[?&]intro/.test(location.search);
+  if(seen && !force) return;
+  var box=document.getElementById('introCine'), vid=document.getElementById('introVid'), skip=document.getElementById('introSkip');
+  box.style.display='flex';
+  function done(){ box.style.transition='opacity .6s'; box.style.opacity='0'; setTimeout(function(){ box.style.display='none'; },650); try{ localStorage.setItem('shaddai.introSeen','1'); }catch(e){} }
+  vid.addEventListener('ended', done);
+  vid.addEventListener('error', done);   // missing/blocked video → just skip to launcher
+  skip.addEventListener('click', done);
+  var pl=vid.play(); if(pl&&pl.catch) pl.catch(function(){ /* autoplay allowed since muted */ });
+  setTimeout(function(){ if(box.style.display!=='none' && vid.readyState<2) done(); }, 4000);   // safety: never trap the user
+}catch(e){} })();
+</script>
 <div class="stage">
   <div class="bg"></div>
   <div class="veil"></div>
