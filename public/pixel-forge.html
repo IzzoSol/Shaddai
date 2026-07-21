@@ -338,16 +338,23 @@ function frame(t){
 
 // ---- enter ----
 document.getElementById('enter').addEventListener('click',()=>{
-  const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
-  const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
-  try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
-  const fl=document.getElementById('flash'); fl.style.opacity='1';
-  setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
+  const doEnter=()=>{
+    const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
+    const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
+    try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
+    const fl=document.getElementById('flash'); fl.style.opacity='1';
+    setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
+  };
+  // Funnel: free forges, then "keep your customized agent — sign in" hook.
+  if(window.SHDFree){ SHDFree.gate('forge',{ label:'pixel agents', onAllowed:doEnter,
+    hookMsg:'You customized this pixel agent — <b style="color:#fff">sign in to keep it forever</b>, place your office in SHADDAI City, and forge unlimited.' }); }
+  else doEnter();
 });
 
 buildCust(); buildFilm(); markCell(1); requestAnimationFrame(frame);
 </script>
 
+<script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/home-btn.js" defer></script>
 </body>
 </html>
