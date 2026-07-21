@@ -86,9 +86,13 @@ router.get('/api/city/offices', (req, res) => {
   res.json({ ok: true, region: 'shaddai-city', offices: office.cityOffices() });
 });
 
-// ── 2D WORLD access gate — sign-in OR a beta code (beta-friendly). ──
-// Codes come from data/world-beta-codes.json {codes:[...]} and/or env WORLD_BETA_CODES
-// (comma-separated). Falls back to a default so the gate works out of the box.
+// ── IDENTITY: Player Code (your save) · fixed beta code (tester entry) · email ──
+// A Player Code IS your identity — character, office, gallery, level all key to it
+// (it becomes shd_userid). Fixed beta codes just grant entry. Email sign-in (Firebase)
+// links to the same id, unified across the whole dashboard.
+const PLAYERS = path.join(__dirname, 'data', 'player-codes.json');
+function readPlayers() { try { return JSON.parse(fs.readFileSync(PLAYERS, 'utf8')); } catch (e) { return { codes: {} }; } }
+function writePlayers(d) { try { fs.writeFileSync(PLAYERS, JSON.stringify(d, null, 2)); } catch (e) {} }
 function betaCodes() {
   let codes = [];
   try { codes = (JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'world-beta-codes.json'), 'utf8')).codes || []); } catch (e) {}
@@ -97,10 +101,40 @@ function betaCodes() {
   if (!all.length) all.push('SHADDAI-BETA');
   return all;
 }
+// Ambiguous letters/numbers dropped so codes are easy to read back.
+function genCode() {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const p = n => { let s = ''; for (let i = 0; i < n; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+  return 'SHD-' + p(4) + '-' + p(4);
+}
+
+// Issue a new Player Code (your save + identity). No account needed.
+router.post('/api/player/new', json, (req, res) => {
+  const db = readPlayers(); let code;
+  do { code = genCode(); } while (db.codes[code]);
+  db.codes[code] = { createdAt: Date.now(), email: null };
+  writePlayers(db);
+  res.json({ ok: true, code: code, userId: code });
+});
+
+// Link an email to a Player Code (the optional "secure it / sign in anywhere" upgrade).
+router.post('/api/player/link-email', json, (req, res) => {
+  const code = String((req.body && req.body.code) || '').trim().toUpperCase();
+  const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+  if (!code || !email) return res.status(400).json({ ok: false, error: 'code and email required' });
+  const db = readPlayers();
+  if (!db.codes[code]) return res.status(404).json({ ok: false, error: 'unknown code' });
+  db.codes[code].email = email; writePlayers(db);
+  res.json({ ok: true });
+});
+
+// Enter with a code — a personal Player Code (restores identity) OR a fixed beta code.
 router.post('/api/world/redeem', json, (req, res) => {
   const code = String((req.body && req.body.code) || '').trim().toUpperCase();
   if (!code) return res.status(400).json({ ok: false, error: 'code required' });
-  if (betaCodes().includes(code)) return res.json({ ok: true, pass: code });
+  const db = readPlayers();
+  if (db.codes[code]) return res.json({ ok: true, pass: code, userId: code });  // player code → identity
+  if (betaCodes().includes(code)) return res.json({ ok: true, pass: code });     // tester entry (no identity)
   return res.status(403).json({ ok: false, error: 'invalid code' });
 });
 

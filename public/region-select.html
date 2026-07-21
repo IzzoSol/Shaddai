@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHADDAI · Realm Map</title>
+<script>window.SHD_WORLDGATE_MANUAL=true;</script>
+<script src="/world-gate.js?v=2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -262,7 +264,7 @@
   <div class="modes">
     <div class="mode active" data-mode="guest">➜ Join &amp; play</div>
     <div class="mode" data-mode="spectate">◉ Spectate</div>
-    <div class="mode" data-mode="profile">✦ Create profile <span class="soon">soon</span></div>
+    <div class="mode" data-mode="profile">✦ Create profile</div>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -270,7 +272,8 @@
   <div class="actions">
     <div class="sel-info" id="selInfo">▸ Selected: <b>—</b></div>
     <div class="act-btns">
-      <a class="forge" href="/pixel-forge.html">⚒ Pixel Forge</a>
+      <a class="forge" href="/pixel-forge.html">⚒ Forge Agent</a>
+      <button class="forge" id="signInBtn" type="button">◈ Sign in / Code</button>
       <button class="enter-realm" id="enterBtn">▸ Enter Realm</button>
     </div>
   </div>
@@ -297,9 +300,12 @@ const REALMS=[
 /* PREVIEW LOCK — worlds under construction. Flip to false when ready.
    (Preserved from the original page.) */
 const WORLDS_LOCKED = false;   // true = whole map is a locked preview; false = open realms are playable
-const OPEN=['meadow','city','agentcity'];   // playable now · frontier realms (forest/beach/desert/volcano) stay gated
+const OPEN=['meadow','beach','city','forest','agentcity'];   // playable from the start
+const REQ={ desert:3, volcano:5 };   // gated realms unlock when you reach this level (credits/XP → level)
+const curLevel=()=>{ try{ return parseInt(localStorage.getItem('shaddai.level')||'1',10)||1; }catch(e){ return 1; } };
 if(WORLDS_LOCKED) REALMS.forEach(r=>{ r.locked=true; });
-else REALMS.forEach(r=>{ r.locked = OPEN.indexOf(r.id)<0; });
+else REALMS.forEach(r=>{ const gated=OPEN.indexOf(r.id)<0; r.req=REQ[r.id]||null; r.locked = gated && curLevel() < (r.req||99); });
+const curMode=()=>{ try{ return localStorage.getItem('shaddai.mode')||'guest'; }catch(e){ return 'guest'; } };
 
 let selId = null;
 let flying = false;
@@ -322,14 +328,14 @@ REALMS.forEach((r,idx)=>{
     '<span class="br bl"></span><span class="br brr"></span>'+
     '<span class="enter">Enter ▸</span>'+
     '<span class="lockb">'+LOCK_SVG+'Locked</span>'+
-    '<div class="crest"><span class="ring">'+LOCK_SVG+'</span><span class="cl">Coming Soon</span></div>'+
+    '<div class="crest"><span class="ring">'+LOCK_SVG+'</span><span class="cl">'+(r.req?('Reach Lv '+r.req):'Coming Soon')+'</span></div>'+
     '<div class="meta">'+
       '<div class="seph" style="color:'+r.accent+'">'+r.seph+'</div>'+
       '<h3 style="color:'+(r.locked?'#c6cdd6':r.accent)+'">'+r.name+'</h3>'+
       '<div class="biome">'+r.biome+'</div>'+
     '</div>';
   el.addEventListener('click',()=>select(r.id));
-  el.addEventListener('dblclick',()=>{ if(!r.locked){ select(r.id); enter(); }});
+  el.addEventListener('dblclick',()=>{ if(!r.locked || curMode()==='spectate'){ select(r.id); enter(); }});
   grid.appendChild(el);
 });
 
@@ -340,13 +346,13 @@ function select(id){
     el.classList.toggle('sel', el.dataset.id===id));
   document.getElementById('selInfo').innerHTML =
     '▸ Selected: <b style="color:'+r.accent+'">'+r.name+'</b>';
-  const btn=document.getElementById('enterBtn');
-  if(r.locked || WORLDS_LOCKED){
+  const btn=document.getElementById('enterBtn'); const spec=curMode()==='spectate';
+  if((r.locked||WORLDS_LOCKED) && !spec){
     btn.classList.remove('ready');
-    btn.textContent='Coming Soon';
+    btn.textContent = r.req ? ('🔒 Reach Lv '+r.req+' (you are Lv '+curLevel()+')') : 'Coming Soon';
   } else {
     btn.classList.add('ready');
-    btn.textContent='▸ Enter Realm';
+    btn.textContent = spec ? '◉ Spectate Realm' : '▸ Enter Realm';
   }
 }
 
@@ -354,7 +360,10 @@ function select(id){
 function enter(){
   if(!selId || flying) return;
   const r=REALMS.find(x=>x.id===selId); if(!r) return;
-  if(r.locked || WORLDS_LOCKED) return;   // preview lock guard
+  if((r.locked || WORLDS_LOCKED) && curMode()!=='spectate') return;   // play needs unlock; spectate can preview locked realms
+  // Identity gate: must have forged a character (has a Player Code), entered a code,
+  // or signed in. Spectating is open. Otherwise open the unified sign-in/code gate.
+  if(curMode()!=='spectate' && window.worldHasAccess && !window.worldHasAccess()){ if(window.openWorldGate) window.openWorldGate(); return; }
   flying=true;
   const fl=document.getElementById('flash');
   fl.style.opacity='1';
@@ -369,11 +378,17 @@ document.getElementById('enterBtn').addEventListener('click',enter);
 /* ---- mode row (guest wired; others are labeled stubs) ---- */
 document.querySelectorAll('.mode').forEach(m=>{
   m.addEventListener('click',()=>{
+    // Create profile → the forge/profile screen (make your character, get your code).
+    if(m.dataset.mode==='profile'){ location.href='/pixel-forge.html'; return; }
     document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));
     m.classList.add('active');
     try{ localStorage.setItem('shaddai.mode', m.dataset.mode); }catch(e){}
+    if(selId) select(selId);   // refresh enter button (spectate can preview locked realms)
   });
 });
+/* Sign in / Code — the unified identity gate (Player Code or email sign-in). */
+var _si=document.getElementById('signInBtn');
+if(_si) _si.addEventListener('click',function(){ if(window.openWorldGate) window.openWorldGate(); else location.href='/index.html'; });
 
 /* default-highlight Green Meadow */
 select('meadow');

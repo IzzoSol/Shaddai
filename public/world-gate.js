@@ -40,13 +40,14 @@
     document.head.appendChild(s);
   }
 
-  function mount() {
-    if (hasAccess() || document.getElementById('shdWorldGate')) return;
+  function mount(force) {
+    if ((!force && hasAccess()) || document.getElementById('shdWorldGate')) return;
     css();
     var g = document.createElement('div'); g.id = 'shdWorldGate';
     g.innerHTML =
-      '<div class="box"><div class="sig">◈</div><h2>Enter SHADDAI City</h2>' +
-      '<p>The 2D world is in private beta. Sign in, or enter a beta code to come in — we\'ll remember you on this device.</p>' +
+      '<div class="box">' + (force ? '<button id="shdWgClose" style="position:absolute;top:10px;right:12px;background:none;border:0;color:#9a86c8;font-size:18px;cursor:pointer">✕</button>' : '') +
+      '<div class="sig">◈</div><h2>Enter beta code or sign in</h2>' +
+      '<p>The 2D world is in private beta. Sign in (works across the whole dashboard), or enter a beta code — we\'ll remember you on this device.</p>' +
       '<button class="signin" id="shdWgSignin">Sign in →</button>' +
       '<div class="or">OR</div>' +
       '<div class="row"><input id="shdWgCode" placeholder="BETA CODE" maxlength="32" autocomplete="off"><button class="go" id="shdWgGo">Enter →</button></div>' +
@@ -54,6 +55,7 @@
       '<div class="foot">SHADDAI · private beta</div></div>';
     document.body.appendChild(g);
     document.documentElement.style.overflow = 'hidden';
+    if (force) { var cl = document.getElementById('shdWgClose'); if (cl) cl.onclick = function () { document.documentElement.style.overflow = ''; g.remove(); }; }
 
     document.getElementById('shdWgSignin').onclick = function () {
       // Sign-in lives on the dashboard; send them there and return here after.
@@ -69,8 +71,12 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (d && d.ok) {
-            try { localStorage.setItem('shd_world_pass', d.pass || code.toUpperCase()); } catch (e) {}
-            msg.style.color = '#00e5a0'; msg.textContent = 'Welcome in.';
+            try {
+              localStorage.setItem('shd_world_pass', d.pass || code.toUpperCase());
+              // A Player Code IS your identity → restore it across the whole dashboard.
+              if (d.userId) localStorage.setItem('shd_userid', d.userId);
+            } catch (e) {}
+            msg.style.color = '#00e5a0'; msg.textContent = d.userId ? 'Welcome back — save restored.' : 'Welcome in.';
             document.documentElement.style.overflow = '';
             var el = document.getElementById('shdWorldGate'); if (el) el.remove();
           } else { msg.style.color = '#ff8fa3'; msg.textContent = (d && d.error === 'invalid code') ? 'That code isn\'t valid.' : (d && d.error) || 'Try again.'; }
@@ -82,5 +88,12 @@
     input.focus();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  // Manual open (dismissable) — used by "Sign in / Code" buttons even when access exists.
+  window.openWorldGate = function () { mount(true); };
+  window.worldHasAccess = hasAccess;
+  // Pages that want to gate only on a specific action (e.g. region-select gates on
+  // Enter, not on load) set window.SHD_WORLDGATE_MANUAL = true before including this.
+  if (!window.SHD_WORLDGATE_MANUAL) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { mount(false); }); else mount(false);
+  }
 })();

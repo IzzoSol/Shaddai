@@ -337,17 +337,44 @@ function frame(t){
 }
 
 // ---- enter ----
+// Show the issued Player Code (the user's save) and wait for acknowledge.
+function showPlayerCode(code){
+  return new Promise(function(resolve){
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:100060;display:grid;place-items:center;background:rgba(4,6,11,.86);backdrop-filter:blur(6px);font-family:inherit';
+    ov.innerHTML='<div style="width:min(92vw,400px);text-align:center;padding:28px 24px;border:1px solid rgba(0,229,160,.35);border-radius:16px;background:rgba(10,14,25,.95)">'+
+      '<div style="font-size:26px;color:#00e5a0">◈</div>'+
+      '<h2 style="font-family:\'Space Grotesk\',sans-serif;margin:6px 0 4px;color:#eafff5">Your Player Code</h2>'+
+      '<p style="color:#9ab;font-size:13px;margin:0 0 14px;line-height:1.5">This is your save. Write it down — enter it to log back in and keep your character, office and level. You can add an email later to secure it.</p>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:22px;letter-spacing:.14em;color:#00e5a0;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);border-radius:10px;padding:13px;margin-bottom:12px">'+code+'</div>'+
+      '<div style="display:flex;gap:8px"><button id="pcCopy" style="flex:1;padding:11px;border:1px solid rgba(0,229,160,.4);border-radius:9px;background:rgba(0,229,160,.1);color:#00e5a0;cursor:pointer;font-family:inherit;font-weight:700">Copy</button>'+
+      '<button id="pcGo" style="flex:1;padding:11px;border:none;border-radius:9px;background:linear-gradient(100deg,#00e5a0,#22d3ee);color:#04121a;cursor:pointer;font-family:inherit;font-weight:700">Saved it — enter →</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#pcCopy').onclick=function(){ try{navigator.clipboard.writeText(code);this.textContent='Copied ✓';}catch(e){} };
+    ov.querySelector('#pcGo').onclick=function(){ ov.remove(); resolve(); };
+  });
+}
 document.getElementById('enter').addEventListener('click',()=>{
-  const doEnter=()=>{
+  const doEnter=async ()=>{
     const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
     const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
     try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
+    // Identity: keep an existing signed-in / player-code id; otherwise issue a Player Code (the save).
+    let uid=''; try{ uid=localStorage.getItem('shd_userid')||''; }catch(e){}
+    if(!(uid && uid.indexOf('guest')!==0)){
+      try{
+        const r=await fetch('/api/player/new',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        const d=await r.json();
+        if(d&&d.code){ try{ localStorage.setItem('shd_userid',d.code); localStorage.setItem('shd_world_pass',d.code); }catch(e){}
+          await showPlayerCode(d.code); }
+      }catch(e){}
+    }
     const fl=document.getElementById('flash'); fl.style.opacity='1';
     setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
   };
-  // Funnel: free forges, then "keep your customized agent — sign in" hook.
+  // Funnel: free forges; issuing the Player Code is the "keep it forever" moment.
   if(window.SHDFree){ SHDFree.gate('forge',{ label:'pixel agents', onAllowed:doEnter,
-    hookMsg:'You customized this pixel agent — <b style="color:#fff">sign in to keep it forever</b>, place your office in SHADDAI City, and forge unlimited.' }); }
+    hookMsg:'You customized this pixel agent — <b style="color:#fff">get your Player Code to keep it forever</b>, place your office in SHADDAI City, and forge unlimited.' }); }
   else doEnter();
 });
 
