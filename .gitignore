@@ -164,3 +164,7 @@ backend/data/tracked-wallets.json
 backend/data/tracked-wallets*.txt
 _secret.local
 .env
+
+# Forge 3D sculptor working files (specs/renders/cache churn)
+tools/object-sculptor/workspace/
+**/.sculpt-cache/
