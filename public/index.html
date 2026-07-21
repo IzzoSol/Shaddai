@@ -17294,8 +17294,10 @@ async function checkAllApiStatus() {
 
   // AltFins
   const altFinsKey = _apiAuthValues['altfins_key'] || localStorage.getItem('shaddai_altfins_key') || '';
-  // AltFins — try Python agent, fallback to ZEROX trending
-  fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(4000) })
+  // AltFins — try local Python agent ONLY on localhost (avoids a dead localhost:8000
+  // call + CSP console error on the deployed site); otherwise go straight to ZEROX trending.
+  var _try8000 = /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname);
+  (_try8000 ? fetch('http://localhost:8000/chart/altfins/signals', { signal: AbortSignal.timeout(4000) }) : Promise.reject())
     .then(r => setTile('altfins', r.ok))
     .catch(() => fetch('/api/zerox/trending', { signal: AbortSignal.timeout(6000) }).then(r => setTile('altfins', r.ok)).catch(() => setTile('altfins', false)));
 
