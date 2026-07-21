@@ -19039,9 +19039,31 @@ function profileGetUid() {
 // Used so each user only sees/creates THEIR OWN operatives (not everyone's).
 window.opOwner = function () {
   try { var u = (typeof profileGetUid === 'function') ? profileGetUid() : null; if (u) return u; } catch (e) {}
-  try { var g = localStorage.getItem('shd_userid'); if (!g) { g = 'guest-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('shd_userid', g); } return g; } catch (e) {}
-  return 'guest';
+  try { var g = localStorage.getItem('shd_userid'); if (!g) { g = 'guest-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('shd_userid', g); } return g; } catch (e) {}
+  // SECURITY: never fall back to a SHARED 'guest' bucket — that let two guests
+  // collide and see each other's data. Always a unique per-session id instead.
+  if (!window.__shdEphemeralGuest) window.__shdEphemeralGuest = 'guest-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  return window.__shdEphemeralGuest;
 };
+// SECURITY: tag every same-origin /api call with the caller's stable id so the
+// server scopes reads/writes per user. This is what stops one person's chat /
+// task receipts from ever surfacing for another guest or account.
+(function () {
+  if (window.__shdFetchScoped || !window.fetch) return; window.__shdFetchScoped = true;
+  var _f = window.fetch;
+  window.fetch = function (input, init) {
+    try {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (/^\/api\//.test(url) || url.indexOf(location.origin + '/api/') === 0) {
+        init = init || {};
+        var h = new Headers(init.headers || (typeof input !== 'string' && input && input.headers) || {});
+        if (!h.has('x-user-id')) { try { h.set('x-user-id', window.opOwner ? window.opOwner() : 'anon'); } catch (e) {} }
+        init.headers = h;
+      }
+    } catch (e) {}
+    return _f.call(this, input, init);
+  };
+})();
 function profileIsSignedIn() {
   try { if (window.SHD_AUTH && SHD_AUTH.user) return true; } catch(e) {}
   // Guests get a synthetic shd_userid but no Firebase user — treat as signed-out

@@ -5109,6 +5109,9 @@ router.post('/agent/:name/task', async (req, res) => {
   const receipts = loadJSON(RECEIPTS_FILE, []);
   const receipt = {
     id: `task_${Date.now()}`,
+    // SECURITY: stamp the owner so reads can be scoped per-user. Verified uid when
+    // authenticated, else the caller's stable client id. Never global.
+    owner: (req.userId && req.userId !== 'local') ? req.userId : (String(req.headers['x-user-id'] || (req.body && req.body.owner) || '').trim() || 'anon'),
     agent: agentKey.toUpperCase(),
     task: task.slice(0, 300),
     response: response.slice(0, 8000),
@@ -5126,13 +5129,18 @@ router.post('/agent/:name/task', async (req, res) => {
   res.json({ ...receipt, success: true });
 });
 
-// GET /api/tasks/receipts — task history
+// GET /api/tasks/receipts — task history, SCOPED PER USER.
+// SECURITY: only ever returns the caller's OWN receipts. Legacy receipts with no
+// owner are never returned (they predate per-user scoping and must not leak).
 router.get('/tasks/receipts', (req, res) => {
   const receipts = loadJSON(path.join(DATA_DIR, 'task_receipts.json'), []);
   const limit = parseInt(req.query.limit) || 50;
   const agent = req.query.agent?.toLowerCase();
-  const filtered = agent ? receipts.filter(r => r.agent?.toLowerCase() === agent) : receipts;
-  res.json({ receipts: filtered.slice(0, limit), total: filtered.length, count: filtered.length });
+  const owner = (req.userId && req.userId !== 'local') ? req.userId
+    : (String(req.headers['x-user-id'] || req.query.owner || '').trim() || 'anon');
+  let mine = receipts.filter(r => r.owner && r.owner === owner);
+  if (agent) mine = mine.filter(r => r.agent?.toLowerCase() === agent);
+  res.json({ receipts: mine.slice(0, limit), total: mine.length, count: mine.length });
 });
 
 // POST /api/tasks/create — create a background task (Content Studio Task Queue mode)
@@ -5158,7 +5166,7 @@ router.post('/tasks/create', async (req, res) => {
       task.status = 'done'; task.result = resp.data?.response || ''; task.completed = new Date().toISOString();
       // Save to receipts
       const receipts = loadJSON(path.join(DATA_DIR, 'task_receipts.json'), []);
-      receipts.unshift({ task_id, agent, task: prompt.slice(0,100), result: task.result.slice(0,500), timestamp: task.completed, model: resp.data?.model });
+      receipts.unshift({ task_id, owner: (req.userId && req.userId !== 'local') ? req.userId : (String(req.headers['x-user-id'] || (req.body && req.body.owner) || '').trim() || 'anon'), agent, task: prompt.slice(0,100), result: task.result.slice(0,500), timestamp: task.completed, model: resp.data?.model });
       saveJSON(path.join(DATA_DIR, 'task_receipts.json'), receipts.slice(0,500));
     } catch(e) {
       task.status = 'failed'; task.error = e.message; task.completed = new Date().toISOString();
