@@ -280,7 +280,7 @@
 <!-- SHADDAI UI refresh fonts: Space Grotesk (display), Chakra Petch (HUD/body), IBM Plex Mono (data) -->
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800,900&f[]=zodiak@400,500,600,700&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
-<link rel="manifest" href="data:application/json,{%22name%22:%22SHADDAI%20Agent%20Empire%22,%22short_name%22:%22SHADDAI%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23020817%22,%22theme_color%22:%22%2300e5a0%22}">
+<!-- removed duplicate data: manifest (start_url ".") — the single /manifest.webmanifest above (start_url "/") governs the PWA so the installed app always opens on the cinematic landing, never the dashboard/codex -->
 <style>
 :root {
   --bg-deep: #020817;
@@ -4027,7 +4027,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
-<script src="/command-terminal.js?v=2" defer></script>
+<script src="/command-terminal.js?v=3" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=1" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>

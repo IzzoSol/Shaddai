@@ -141,9 +141,12 @@
         return;
       }
       claim.style.display = 'none';
-      // load the REAL world focused on the office (exact match — it IS the world)
-      document.getElementById('shdtOfmap').innerHTML = '<iframe src="/game.html?embed=office" title="Your office in SHADDAI City" allow="autoplay"></iframe>';
       var o = (d && d.office) || {}, sm = (d && d.summary) || {};
+      // load the REAL world focused on the office (exact match — it IS the world).
+      // Pass uid so the city warps you to YOUR office (emerald "Source") on Founders' Row.
+      var ofsrc = '/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '');
+      document.getElementById('shdtOfmap').innerHTML = '<iframe src="' + ofsrc + '" title="Your office in SHADDAI City" allow="autoplay"></iframe>';
+      window.__shdtOfSrc = ofsrc;
       cmdp.innerHTML = '<h3>' + esc(o.name || 'My Command Office') + '</h3><div class="st">◈ SHADDAI City · ' + esc((o.visibility || 'private').replace('-', ' ')) + '</div>' +
         '<div class="stat"><span>Rooms</span><b>' + (sm.rooms || 0) + '</b></div>' +
         '<div class="stat"><span>Agents</span><b>' + (sm.agents || 0) + '</b></div>' +
@@ -152,6 +155,7 @@
         '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:7px">' +
         '<button class="cl" onclick="openCommandTerminal(\'rooms\')">🚪 Rooms</button><button class="cl" onclick="openCommandTerminal(\'forge\')">⬡ Forge</button>' +
         '<button class="cl" onclick="openCommandTerminal(\'bazaar\')">◈ Bazaar</button><button class="cl" onclick="openCommandTerminal(\'treasury\')">◆ Treasury</button></div>' +
+        '<button class="cl" style="margin-top:7px;width:100%" onclick="window.open((window.__shdtOfSrc||\'/game.html?embed=office\'),\'_blank\')">⛶ Enter SHADDAI City (full screen)</button>' +
         '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:14px;line-height:1.5">This is your office — the same place lives in the shared 2D world. Others can visit by permission.</div>';
     }).catch(function () { document.getElementById('shdtOfmap').innerHTML = '<iframe src="/game.html?embed=office"></iframe>'; });
   }

@@ -16,8 +16,10 @@ const REGION = 'shaddai-city';
 function read() { try { return JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch (e) { return { offices: {}, slots: 0 }; } }
 function write(d) { try { fs.writeFileSync(STORE, JSON.stringify(d, null, 2)); } catch (e) {} }
 
-// Deterministic office plot coords in SHADDAI City (a grid of building lots).
-function slotCoords(i) { const cols = 6; return { col: 22 + (i % cols) * 7, row: 20 + Math.floor(i / cols) * 7 }; }
+// Deterministic office plot coords in SHADDAI City — "Founders' Row", a northern
+// boulevard of 30 lots. MUST mirror game.html's FLOT() so the city renders each
+// office on the exact lot the backend assigned it.
+function slotCoords(i) { return { col: 6 + (i % 10) * 5, row: 4 + Math.floor(i / 10) * 5 }; }
 
 function getOffice(userId) {
   if (!userId) return null;
@@ -75,7 +77,7 @@ function cityOffices() {
   const db = read();
   return Object.values(db.offices).map(o => ({
     officeId: o.officeId, ownerUserId: o.ownerUserId, name: o.name,
-    cityCoords: o.cityCoords, visibility: o.visibility,
+    slot: o.slot, cityCoords: o.cityCoords, visibility: o.visibility,
   }));
 }
 

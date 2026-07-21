@@ -321,6 +321,33 @@ function genWorld(rid){
     for(let rr=25;rr<36;rr++)for(let cc=25;cc<36;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-30.5,rr-30.5)<5.2?PATH:GRASS);
     props.push({type:'building',col:28,row:28,w:5,d:5,floors:8, wall:'#1b2440',roof:'#e8c45c',glass:'#c9a6ff',accent:'#e8c45c',name:'SHADDAI HQ',kind:'hub',landmark:'hq'});
     for(const a of [[27,27],[34,27],[27,34],[34,34]]){ if(tiles[a[1]]&&tiles[a[1]][a[0]]!==undefined) props.push({type:'stall',col:a[0],row:a[1],color:AGENTS[(a[0]+a[1])%7].accent}); }  // market stalls ring the square
+    // ═══ FOUNDERS' ROW — the offices YOU own in SHADDAI City (World → OFFICE → Rooms → Agents) ═══
+    // 30 lots along a northern boulevard, fetched live from /api/city/offices. Your office glows emerald.
+    (function foundersRow(){
+      const FLOT=i=>({col:6+(i%10)*5, row:4+((i/10)|0)*5});   // mirrors office-service.slotCoords (Founders' Row)
+      for(let band=0;band<3;band++){ const ry=4+band*5+2; for(let cc=4;cc<54;cc++) if(tiles[ry]&&tiles[ry][cc]===GRASS) tiles[ry][cc]=PATH; } // paved boulevard
+      const lots=[];
+      for(let i=0;i<30;i++){ const L=FLOT(i);
+        if(props.some(b=>b.type==='building'&&Math.abs(b.col-L.col)<3&&Math.abs(b.row-L.row)<3)) continue;  // skip if it clashes with an HQ
+        for(let rr=L.row-1;rr<L.row+2;rr++)for(let cc=L.col-1;cc<L.col+2;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=GRASS;
+        const p={type:'building',col:L.col,row:L.row,w:2,d:2,floors:2, wall:'#141a2a',roof:'#2a3550',glass:'#3a4a6a',name:'',kind:'office',accent:'#5a6a9a',__lot:i,__office:true,__unclaimed:true};
+        props.push(p); lots.push(p);
+      }
+      window.__officeLots=lots;
+      // paint the claimed offices (gold) from the live registry
+      fetch('/api/city/offices').then(r=>r.json()).then(d=>{ const list=(d&&d.offices)||[]; list.forEach(o=>{
+        const p=lots.find(x=>x.__lot===o.slot); if(!p) return;
+        p.__unclaimed=false; p.name=(o.name||'Office').toUpperCase().slice(0,18); p.wall='#1b2440'; p.roof='#e8c45c'; p.glass='#c9a6ff'; p.accent='#e8c45c';
+      }); }).catch(()=>{});
+      // highlight + warp to MY office (emerald "Source"), when embedded with a uid
+      if(window.OFFICE_EMBED && window.OFFICE_UID){
+        fetch('/api/office/'+encodeURIComponent(window.OFFICE_UID)).then(r=>r.json()).then(d=>{ const o=d&&d.office; if(!o) return;
+          const p=lots.find(x=>x.__lot===o.slot); if(!p) return;
+          p.__unclaimed=false; p.__source=true; p.name='★ '+((o.name||'My Office').toUpperCase().slice(0,16)); p.wall='#0e2a22'; p.roof='#00e5a0'; p.glass='#8affe0'; p.accent='#00e5a0'; p.floors=3;
+          player.col=p.col+0.5; player.row=p.row+2.5; cam.col=player.col; cam.row=player.row;
+        }).catch(()=>{});
+      }
+    })();
     // flower-of-life lattice → outer neon tech towers (ring 3+)
     flowerLattice(CC,CR,5,6).forEach(p=>{ if(p.ring<3||p.col<3||p.col>=GW-3||p.row<3||p.row>=GH-3) return;
       if((p.col*3+p.row)%3!==0) return;
@@ -987,11 +1014,14 @@ fit(); setPreset(0);
   // Skips create/region so the office view matches the world EXACTLY (it IS the world).
   if(/[?&](embed=office|office=1|view=office)/.test(location.search)){
     try{ document.body.classList.add('office-embed');
+      window.OFFICE_EMBED=true;
+      try{ window.OFFICE_UID=new URLSearchParams(location.search).get('uid')||''; }catch(_e){ window.OFFICE_UID=''; }
       // integrate cleanly inside the dashboard terminal: hide page chrome that belongs to
       // the standalone game (home/dashboard pill, game topbtns, mp status, shop) so the
       // embedded office doesn't show duplicate Home/Dashboard buttons.
       var _s=document.createElement('style'); _s.textContent='body.office-embed #shd-home,body.office-embed #topbtns,body.office-embed #mpstatus,body.office-embed #shopBtn,body.office-embed #specHud{display:none!important}'; document.head.appendChild(_s);
-      regionSel = REGIONS.some(x=>x.id==='city') ? 'city' : (REGIONS[0]&&REGIONS[0].id);
+      // Office lives in SHADDAI City (the agents' city — HQ, bazaar, Founders' Row), NOT generic Downtown.
+      regionSel = REGIONS.some(x=>x.id==='agentcity') ? 'agentcity' : (REGIONS.some(x=>x.id==='city') ? 'city' : (REGIONS[0]&&REGIONS[0].id));
       document.getElementById('create').classList.add('hide');
       document.getElementById('region').classList.add('hide');
       enterWorld(); return;
