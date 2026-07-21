@@ -60,6 +60,31 @@
     document.head.appendChild(s);
   }
 
+  // ── THEME SWITCHER (default purple — never changes the code, just the accent) ──
+  var THEMES = {
+    purple: { a: '#a855f7', g: '168,85,247' },
+    cyan: { a: '#22d3ee', g: '34,211,238' },
+    emerald: { a: '#00e5a0', g: '0,229,160' },
+    gold: { a: '#e8c45c', g: '232,196,92' },
+    crimson: { a: '#ff5470', g: '255,84,112' }
+  };
+  function applyTheme(k) {
+    var t = THEMES[k] || THEMES.purple;
+    var st = document.getElementById('shdterm-theme');
+    if (!st) { st = document.createElement('style'); st.id = 'shdterm-theme'; document.head.appendChild(st); }
+    st.textContent =
+      '#shdterm{background:radial-gradient(90% 60% at 50% -10%,rgba(' + t.g + ',.15),transparent 60%),#0a0518}' +
+      '#shdterm .sig{color:' + t.a + ';text-shadow:0 0 16px rgba(' + t.g + ',.6)}' +
+      '#shdterm .top,#shdterm .tabs{border-color:rgba(' + t.g + ',.2)}' +
+      '#shdterm .tab.on{background:linear-gradient(180deg,rgba(' + t.g + ',.16),transparent);border-color:rgba(' + t.g + ',.2);box-shadow:inset 0 2px 0 ' + t.a + '}' +
+      '#shdterm .card:hover{border-color:rgba(' + t.g + ',.55)}' +
+      '#shdterm .acts button.pri,#shdterm .lanes button.on{background:' + t.a + ';border-color:' + t.a + '}' +
+      '#shdterm #shdCmdHubBtn{color:' + t.a + ' !important;border-color:rgba(' + t.g + ',.55) !important}' +
+      '#shdterm .claim button{background:linear-gradient(100deg,' + t.a + ',#22d3ee)}';
+    try { localStorage.setItem('shd.termTheme', k); } catch (e) {}
+    var hub = document.getElementById('shdCmdHubBtn'); if (hub) { hub.style.color = t.a; hub.style.borderColor = 'rgba(' + t.g + ',.55)'; }
+  }
+
   var root, loaded = {};
   var TABS = [
     { id: 'office', label: '◈ Office', sub: 'your property' },
@@ -79,6 +104,7 @@
     root.innerHTML =
       '<div class="top"><div class="brand"><span class="sig">◈</span><div><b>SHADDAI</b> <span class="term">· Command Terminal</span></div></div>' +
       '<div class="chips"><span class="chip">◷ ONLINE</span><span class="chip cr">◆ 500 CR</span>' +
+      '<select class="cl" id="shdtTheme" title="Command Hub theme" style="cursor:pointer;font-family:inherit"><option value="purple">✦ Purple</option><option value="cyan">✦ Cyan</option><option value="emerald">✦ Emerald</option><option value="gold">✦ Gold</option><option value="crimson">✦ Crimson</option></select>' +
       '<button class="ew" id="shdtEnter">✦ Enter 2D World →</button><button class="cl" id="shdtClose">✕ Close</button></div></div>' +
       '<div class="tabs">' + TABS.map(function (t) { return '<button class="tab" data-t="' + t.id + '">' + t.label + '<span class="s">' + t.sub + '</span></button>'; }).join('') + '</div>' +
       '<div class="stage">' +
@@ -96,6 +122,9 @@
     root.querySelector('#shdtClose').addEventListener('click', close);
     root.querySelector('#shdtEnter').addEventListener('click', function () { window.location.href = '/_LAUNCH.html'; }); // the good intro + region picker
     root.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.t); }); });
+    var savedTheme = 'purple'; try { savedTheme = localStorage.getItem('shd.termTheme') || 'purple'; } catch (e) {}
+    var themeSel = root.querySelector('#shdtTheme'); if (themeSel) { themeSel.value = savedTheme; themeSel.addEventListener('change', function () { applyTheme(themeSel.value); }); }
+    applyTheme(savedTheme);
   }
 
   function showTab(id) {
@@ -193,16 +222,47 @@
     }).catch(function () { ah.innerHTML = '<div class="empty">Rooms unavailable.</div>'; });
   }
 
-  // ── FORGE: your existing 2D Pixel Forge (default) + 3D Hero Forge (Pro) ──
+  // ── FORGE: make-your-own (image→3D · three.js · Meshy · pixel · upload) + presets ──
   function renderForge() {
     var host = document.getElementById('shdtForge');
+    var makes = [
+      { k: 'pixel', ic: '◧', name: '2D Pixel Forge', tag: 'free · ready', d: 'Code-drawn pixel agent — pick color, body, tools and name. Lives in your office and the 2D world.', src: '/pixel-forge.html' },
+      { k: 'image', ic: '❖', name: 'Image → 3D', tag: 'AI sculpt', d: 'Upload or generate an image and we sculpt it into a rigged 3D model.', src: '/forge.html?mode=image' },
+      { k: 'three', ic: '▣', name: 'Three.js Builder', tag: 'no key needed', d: 'Build a low-poly 3D hero procedurally, right in the browser — works with no API key.', src: '/forge.html?mode=three' },
+      { k: 'meshy', ic: '✦', name: 'Meshy Studio', tag: 'text → 3D · Pro', d: 'Describe your agent in words and Meshy generates a full 3D model.', src: '/forge.html?mode=meshy' },
+      { k: 'other', ic: '⬡', name: 'Upload / Other', tag: 'GLB · OBJ', d: 'Bring your own model or another pipeline into the world.', src: '/forge.html?mode=upload' }
+    ];
+    var presets = [
+      { ic: '◈', name: 'TURTLE — Emerald Enforcer', tag: 'rigged · 7 anims', d: 'Green enforcer with ball-and-chain flail. Ready for the 3D world.', id: 'turtle' },
+      { ic: '◈', name: 'ZEROX — Neon Valkyrie', tag: 'rigged · 7 anims', d: 'Cyan katana valkyrie.', id: 'zerox' },
+      { ic: '◈', name: 'PIKADON — Crimson Sentinel', tag: 'rigged · combat', d: 'Heavy guardian sentinel.', id: 'pikadon' },
+      { ic: '◈', name: 'ORACLE — Astral Seer', tag: 'rigged', d: 'Robed cosmic seer.', id: 'oracle' }
+    ];
     host.innerHTML =
-      '<div class="oneagent"><b>One agent, two embodiments.</b> Pixel Forge edits the agent\'s <b>pixel2D</b> body (office & 2D world). 3D Forge edits the same agent\'s <b>hero3D</b> form. <span class="gate">Make for yourself free — placing in office/world needs an upgrade.</span></div>' +
-      '<div class="lanes"><button class="on" id="shdtLanePixel">◧ 2D Pixel Forge</button><button class="adv" id="shdtLane3d">▣ 3D Hero Forge · Pro</button></div>' +
-      '<div id="shdtForgeFrameWrap"><iframe class="forgeframe" id="shdtForgeFrame" src="/pixel-forge.html" title="Pixel Forge"></iframe></div>';
-    var lp = document.getElementById('shdtLanePixel'), l3 = document.getElementById('shdtLane3d'), fr = document.getElementById('shdtForgeFrame');
-    lp.onclick = function () { lp.classList.add('on'); l3.classList.remove('on'); fr.src = '/pixel-forge.html'; };
-    l3.onclick = function () { l3.classList.add('on'); lp.classList.remove('on'); fr.src = '/forge.html'; };
+      '<div class="oneagent"><b>One agent, two embodiments.</b> Build a <b>2D pixel</b> body (office + 2D world) or a <b>3D hero</b> form your way — image→3D, three.js, Meshy or upload. No time to build? Drop in a <b style="color:#22d3ee">ready-made preset</b> and enter the 3D world now. <span class="gate">Free to make — placing in office/world needs an upgrade.</span></div>' +
+      '<div class="rsec">Make your own <span class="c">image→3D · three.js · Meshy · pixel · upload</span></div>' +
+      '<div class="grid">' + makes.map(function (m) {
+        return '<div class="card" data-mk="' + m.k + '" data-src="' + esc(m.src) + '"><div class="hd"><span class="ic">' + m.ic + '</span><div><h4>' + esc(m.name) + '</h4><div class="role">' + esc(m.tag) + '</div></div></div><div class="d">' + esc(m.d) + '</div><div class="acts"><button class="pri">Open →</button></div></div>';
+      }).join('') + '</div>' +
+      '<div class="rsec">Ready-made presets <span class="c">skip the build · enter the 3D world instantly</span></div>' +
+      '<div class="grid">' + presets.map(function (p) {
+        return '<div class="card" data-preset="' + esc(p.id) + '"><span class="pub public">preset</span><div class="hd"><span class="ic">' + p.ic + '</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.tag) + '</div></div></div><div class="d">' + esc(p.d) + '</div><div class="acts"><button class="pri">Enter 3D world →</button></div></div>';
+      }).join('') + '</div>' +
+      '<div id="shdtForgeStage" style="margin-top:12px"></div>';
+    host.querySelectorAll('.card[data-mk]').forEach(function (c) {
+      c.querySelector('button').addEventListener('click', function () {
+        document.getElementById('shdtForgeStage').innerHTML =
+          '<div class="rsec">' + esc(c.querySelector('h4').textContent) + ' <span class="c">building</span></div>' +
+          '<iframe class="forgeframe" src="' + esc(c.getAttribute('data-src')) + '" title="Forge"></iframe>';
+        try { document.getElementById('shdtForgeStage').scrollIntoView({ behavior: 'smooth' }); } catch (e) {}
+      });
+    });
+    host.querySelectorAll('.card[data-preset]').forEach(function (c) {
+      c.querySelector('button').addEventListener('click', function () {
+        try { localStorage.setItem('shaddai.preset', c.getAttribute('data-preset')); } catch (e) {}
+        window.location.href = '/_LAUNCH.html';
+      });
+    });
   }
 
   // ── GALLERY: your pixel agents (+ 3D models placeholder) ──
@@ -238,17 +298,37 @@
   };
   function close() { if (root) root.classList.remove('on'); document.body.style.overflow = ''; }
 
-  // Collapse the scattered Office / Rooms / Forge navs into this ONE terminal tab.
-  function wireNav() {
+  // Collapse ONLY the scattered Office / Rooms / Forge navs into one Command Hub
+  // button. Every other dashboard button stays exactly where it is.
+  function consolidateNav() {
     try {
       document.querySelectorAll('button,a').forEach(function (b) {
-        var t = (b.textContent || '').trim(), oc = b.getAttribute('onclick') || '';
-        if (/showView\('office'\)/.test(oc)) b.setAttribute('onclick', "openCommandTerminal('office')");
-        else if (/openRoomsManager/.test(oc) || (/^(\W*\s*)?Rooms\b/i.test(t) && /marketplace|showView/.test(oc))) b.setAttribute('onclick', "openCommandTerminal('rooms')");
-        else if (/showView\('forge'\)/.test(oc)) b.setAttribute('onclick', "openCommandTerminal('forge')");
+        if (b.id === 'shdCmdHubBtn' || b.id === 'shdCmdHubSb') return;
+        var oc = b.getAttribute('onclick') || '', t = (b.textContent || '').trim();
+        var isOffice = /showView\('office'\)/.test(oc);
+        var isForge = /showView\('forge'\)/.test(oc);
+        var isRooms = /openRoomsManager/.test(oc) || (/showView\('marketplace'\)/.test(oc) && /rooms?/i.test(t));
+        if (isOffice || isForge || isRooms) { b.style.display = 'none'; b.setAttribute('data-shd-consolidated', '1'); }
       });
+      var anchor = document.querySelector('.nav-btn');
+      if (anchor && anchor.parentNode && !document.getElementById('shdCmdHubBtn')) {
+        var btn = document.createElement('button');
+        btn.id = 'shdCmdHubBtn'; btn.className = 'nav-btn';
+        btn.style.cssText = 'color:#a855f7;font-weight:700;border-color:rgba(168,85,247,.55)';
+        btn.textContent = '◈ Command Hub';
+        btn.onclick = function () { openCommandTerminal('office'); };
+        anchor.parentNode.insertBefore(btn, anchor);
+      }
+      var sb = document.querySelector('.sbt');
+      if (sb && sb.parentNode && !document.getElementById('shdCmdHubSb')) {
+        var sbtn = document.createElement('button');
+        sbtn.id = 'shdCmdHubSb'; sbtn.className = 'sbt'; sbtn.style.color = '#a855f7';
+        sbtn.innerHTML = '<span class="ic">◈</span>Command Hub';
+        sbtn.onclick = function () { openCommandTerminal('office'); };
+        sb.parentNode.insertBefore(sbtn, sb);
+      }
     } catch (e) {}
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireNav); else wireNav();
-  setTimeout(wireNav, 1600);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', consolidateNav); else consolidateNav();
+  setTimeout(consolidateNav, 1600);
 })();

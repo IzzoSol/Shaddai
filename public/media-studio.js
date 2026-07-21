@@ -150,15 +150,8 @@
   window.openMediaStudio = function (tool) { if (!root) build(); root.classList.add('on'); document.body.style.overflow = 'hidden'; show(tool && TOOLS.some(function (t) { return t.id === tool; }) ? tool : 'image'); };
   function close() { if (root) root.classList.remove('on'); document.body.style.overflow = ''; }
 
-  // Repoint Media Studio / Creative Studio nav → this module.
-  function wireNav() {
-    try {
-      document.querySelectorAll('button,a').forEach(function (b) {
-        var t = (b.textContent || '').trim(), oc = b.getAttribute('onclick') || '', href = b.getAttribute('href') || '';
-        if (/media.?studio|creative.?studio/i.test(t) || /creative-studio\.html|showView\('(media|studio|creative)/i.test(oc + href)) b.setAttribute('onclick', "openMediaStudio('image');return false;");
-      });
-    } catch (e) {}
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireNav); else wireNav();
-  setTimeout(wireNav, 1700);
+  // REVERTED (owner): do NOT hijack the Media nav button. The original in-dashboard
+  // Media tab — showView('media') — stays the primary experience. openMediaStudio()
+  // remains available on demand for anything that explicitly calls it, but nothing
+  // is auto-repointed, so the original tab and the dashboard buttons stay intact.
 })();
