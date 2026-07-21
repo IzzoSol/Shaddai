@@ -60,16 +60,19 @@
     document.head.appendChild(s);
   }
 
-  // ── THEME SWITCHER (default purple — never changes the code, just the accent) ──
+  // ── THEME SWITCHER — the SAME 6 dashboard skins, so this one control restyles
+  //    both the Command Terminal accent AND the whole dashboard (via setThemeSkin). ──
   var THEMES = {
-    purple: { a: '#a855f7', g: '168,85,247' },
-    cyan: { a: '#22d3ee', g: '34,211,238' },
-    emerald: { a: '#00e5a0', g: '0,229,160' },
-    gold: { a: '#e8c45c', g: '232,196,92' },
-    crimson: { a: '#ff5470', g: '255,84,112' }
+    glitch: { a: '#00ff88', g: '0,255,136' },
+    terminal: { a: '#00ff41', g: '0,255,65' },
+    brutalist: { a: '#f5c000', g: '245,192,0' },
+    serif: { a: '#3a6b4a', g: '58,107,74' },
+    void: { a: '#e8e8e8', g: '232,232,232' },
+    amber: { a: '#ffb000', g: '255,176,0' }
   };
   function applyTheme(k) {
-    var t = THEMES[k] || THEMES.purple;
+    var t = THEMES[k] || THEMES.glitch;
+    try { if (window.setThemeSkin) window.setThemeSkin(k); } catch (e) {}
     var st = document.getElementById('shdterm-theme');
     if (!st) { st = document.createElement('style'); st.id = 'shdterm-theme'; document.head.appendChild(st); }
     st.textContent =
@@ -81,7 +84,7 @@
       '#shdterm .acts button.pri,#shdterm .lanes button.on{background:' + t.a + ';border-color:' + t.a + '}' +
       '#shdterm #shdCmdHubBtn{color:' + t.a + ' !important;border-color:rgba(' + t.g + ',.55) !important}' +
       '#shdterm .claim button{background:linear-gradient(100deg,' + t.a + ',#22d3ee)}';
-    try { localStorage.setItem('shd.termTheme', k); } catch (e) {}
+    try { localStorage.setItem('shd_theme_skin', k); } catch (e) {}
     var hub = document.getElementById('shdCmdHubBtn'); if (hub) { hub.style.color = t.a; hub.style.borderColor = 'rgba(' + t.g + ',.55)'; }
   }
 
@@ -104,7 +107,7 @@
     root.innerHTML =
       '<div class="top"><div class="brand"><span class="sig">◈</span><div><b>SHADDAI</b> <span class="term">· Command Terminal</span></div></div>' +
       '<div class="chips"><span class="chip">◷ ONLINE</span><span class="chip cr">◆ 500 CR</span>' +
-      '<select class="cl" id="shdtTheme" title="Command Hub theme" style="cursor:pointer;font-family:inherit"><option value="purple">✦ Purple</option><option value="cyan">✦ Cyan</option><option value="emerald">✦ Emerald</option><option value="gold">✦ Gold</option><option value="crimson">✦ Crimson</option></select>' +
+      '<select class="cl" id="shdtTheme" title="Theme — restyles the whole dashboard" style="cursor:pointer;font-family:inherit"><option value="glitch">◈ Neon Glitch</option><option value="terminal">◈ Terminal</option><option value="brutalist">◈ Brutalist</option><option value="serif">◈ Serif</option><option value="void">◈ Void</option><option value="amber">◈ Amber</option></select>' +
       '<button class="ew" id="shdtEnter">✦ Enter 2D World →</button><button class="cl" id="shdtClose">✕ Close</button></div></div>' +
       '<div class="tabs">' + TABS.map(function (t) { return '<button class="tab" data-t="' + t.id + '">' + t.label + '<span class="s">' + t.sub + '</span></button>'; }).join('') + '</div>' +
       '<div class="stage">' +
@@ -122,7 +125,7 @@
     root.querySelector('#shdtClose').addEventListener('click', close);
     root.querySelector('#shdtEnter').addEventListener('click', function () { window.location.href = '/_LAUNCH.html'; }); // the good intro + region picker
     root.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.t); }); });
-    var savedTheme = 'purple'; try { savedTheme = localStorage.getItem('shd.termTheme') || 'purple'; } catch (e) {}
+    var savedTheme = 'glitch'; try { savedTheme = localStorage.getItem('shd_theme_skin') || 'glitch'; } catch (e) {}
     var themeSel = root.querySelector('#shdtTheme'); if (themeSel) { themeSel.value = savedTheme; themeSel.addEventListener('change', function () { applyTheme(themeSel.value); }); }
     applyTheme(savedTheme);
   }
