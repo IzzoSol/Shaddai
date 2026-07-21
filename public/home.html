@@ -1131,17 +1131,17 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
       var b=gazeBoost((P.ox+Q.ox)/2,(P.oy+Q.oy)/2);
       ctx.beginPath(); ctx.moveTo(P.ox,P.oy); ctx.lineTo(Q.ox,Q.oy);
       ctx.strokeStyle=hexA(GD, 0.03+0.10*fade+0.22*b*fade); ctx.lineWidth=b>0.3?1.2:0.6;
-      if(b>0.4){ ctx.shadowColor=GD; ctx.shadowBlur=8*b; } else ctx.shadowBlur=0;
       ctx.stroke(); }
-    ctx.shadowBlur=0;
+    /* PERF: shadowBlur was the frame killer (fires per-element when the cursor is
+       near the lattice — the "laggy when I move the mouse" feel). Replaced with a
+       cheap alpha halo: one extra faint arc, no per-element blur. */
     for(var k2=0;k2<atoms.length;k2++){ var N=atoms[k2];
       var bb=gazeBoost(N.ox,N.oy), pulse=0.5+0.5*Math.sin(t*0.0016+N.ph);
       var rr=1.4+1.6*pulse+3*bb;
+      if(bb>0.22){ ctx.beginPath(); ctx.arc(N.ox,N.oy,rr+5*bb,0,6.28); ctx.fillStyle=hexA(EM,0.12*bb); ctx.fill(); }
       ctx.beginPath(); ctx.arc(N.ox,N.oy,rr,0,6.28);
-      ctx.fillStyle=hexA(EM, 0.22+0.5*bb+0.12*pulse);
-      if(bb>0.3){ ctx.shadowColor=EM; ctx.shadowBlur=14*bb; } else ctx.shadowBlur=0;
+      ctx.fillStyle=hexA(EM, 0.24+0.5*bb+0.12*pulse);
       ctx.fill(); }
-    ctx.shadowBlur=0;
 
     /* ── Seed-of-Life watermark (breathing) centered ── */
     ctx.save(); ctx.translate(cxp+px*22, cyp+py*22); ctx.rotate(t*0.00002);
@@ -1149,19 +1149,20 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
       var wb=gazeBoost(cxp+cxx, cyp+cyy);
       ctx.beginPath(); ctx.arc(cxx, cyy, R*(1+0.012*Math.sin(t*0.0009+f)), 0, 6.28);
       ctx.strokeStyle=hexA(EM, 0.035+0.14*wb+0.03*breathe);
-      ctx.lineWidth=0.8+1.2*wb; if(wb>0.2){ ctx.shadowColor=EM; ctx.shadowBlur=12*wb; } else ctx.shadowBlur=0; ctx.stroke(); }
-    ctx.shadowBlur=0; ctx.restore();
+      ctx.lineWidth=0.8+1.2*wb; ctx.stroke(); }
+    ctx.restore();
 
     if(running && !REDUCED) raf=requestAnimationFrame(frame);
   }
 
+  /* pump eases only the glow/parallax (ex/ey). The CURSOR is set directly in the
+     mousemove handler so it tracks the pointer 1:1 — no trailing/lag. */
   function pump(){ ex+=(mx-ex)*0.12; ey+=(my-ey)*0.12;
     var pctX=(ex/W*100).toFixed(2)+'%', pctY=(ey/H*100).toFixed(2)+'%';
     if(glow){ glow.style.setProperty('--mx',pctX); glow.style.setProperty('--my',pctY); }
-    if(cur){ cur.style.transform='translate('+ex+'px,'+ey+'px)'; }
-    requestAnimationFrame(pump); }
+    if(!REDUCED) requestAnimationFrame(pump); }
   window.addEventListener('mousemove',function(e){ mx=e.clientX; my=e.clientY;
-    if(cur){ var h=e.target.closest('a,button,#shGate,.op'); cur.classList.toggle('hot', !!h); } },{passive:true});
+    if(cur){ cur.style.transform='translate('+e.clientX+'px,'+e.clientY+'px)'; var h=e.target.closest('a,button,#shGate,.op'); cur.classList.toggle('hot', !!h); } },{passive:true});
   window.addEventListener('touchmove',function(e){ if(e.touches[0]){ mx=e.touches[0].clientX; my=e.touches[0].clientY; } },{passive:true});
 
   size(); window.addEventListener('resize', size, {passive:true});
