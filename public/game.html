@@ -791,6 +791,7 @@ function travelTo(id){ const fare=FARE[id]||10; if(money<fare){ toast('The fare 
 let last=0;
 function update(dt){
   if(jobCooldown>0) jobCooldown-=dt; if(fishCooldown>0) fishCooldown-=dt; if(gatherCooldown>0) gatherCooldown-=dt;
+  updateFx(dt);
   if(state!=='world'){ ['fishBar','gatherBar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
   if(state==='world') tod=(tod+dt*0.012)%1;   // ~85s day/night cycle
   if(fadeDir!==0){ fadeV+=fadeDir*dt*2.6;
@@ -822,9 +823,9 @@ function update(dt){
     let nw=false; for(let dr=-2;dr<=2&&!nw;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0, t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK){nw=true;} }
     const fb=document.getElementById('fishBar'); if(fb) fb.classList.toggle('hide', !nw||spectate);
     // gather: near a tree → chop wood, near rocks → mine ore
-    let gt=null; for(const p of props){ const t=p.type; const near=Math.abs(p.col-player.col)<1.9&&Math.abs(p.row-player.row)<1.9;
-      if(near&&(t==='tree'||t==='pine'||t==='palm'||t==='cactus')){ gt='wood'; break; } if(near&&(t==='rock'||t==='lavarock')){ gt='ore'; } }
-    gatherTarget=gt; const gb=document.getElementById('gatherBar'); if(gb){ gb.classList.toggle('hide', !gt||spectate); if(gt){ gb.querySelector('.glabel').textContent=(gt==='wood'?'🌲 Woods':'⛏️ Rocks'); gb.querySelector('.gbtn').textContent=(gt==='wood'?'🪓 Chop wood':'⛏️ Mine ore'); } }
+    let gt=null,gp=null; for(const p of props){ const t=p.type; const near=Math.abs(p.col-player.col)<1.9&&Math.abs(p.row-player.row)<1.9;
+      if(near&&(t==='tree'||t==='pine'||t==='palm'||t==='cactus')){ gt='wood'; gp=p; break; } if(near&&(t==='rock'||t==='lavarock')){ gt='ore'; gp=p; } }
+    gatherTarget=gt; gatherProp=gp; const gb=document.getElementById('gatherBar'); if(gb){ gb.classList.toggle('hide', !gt||spectate); if(gt){ gb.querySelector('.glabel').textContent=(gt==='wood'?'🌲 Woods':'⛏️ Rocks'); gb.querySelector('.gbtn').textContent=(gt==='wood'?'🪓 Chop wood':'⛏️ Mine ore'); } }
   }
   else if(state==='interior'){
     if(decorMode||wardrobeOpen||storageOpen||bankOpen||forgeOpen||questsOpen||hubOpen||agentLiveOpen){ player.rig.anim='idle'; return; }   // pause while a panel is open
@@ -932,15 +933,18 @@ function renderWorld(time){
   for(const p of props){ const [sx,sy]=w2s(p.col+(p.w?(p.w-1)/2:0),p.row+(p.d?(p.d-1)/2:0)); if(cull(sx,sy)) continue;
     obj.push({k:p.col+p.row+(p.type==='building'?(p.w+p.d)/2:0), draw:()=>{
       const sd=(p.col*7+p.row*13)&7;
+      var _sh=p.__shake||0; if(_sh>0){ ctx.save(); ctx.translate((Math.random()-0.5)*_sh*7,(Math.random()-0.5)*_sh*3.5); }
       if(p.type==='tree')drawTree(sx,sy,sd); else if(p.type==='palm')drawPalm(sx,sy,sd); else if(p.type==='pine')drawPine(sx,sy,sd); else if(p.type==='cactus')drawCactus(sx,sy,sd); else if(p.type==='lavarock')drawLavaRock(sx,sy,sd); else if(p.type==='rock')drawRock(sx,sy,sd); else if(p.type==='car')drawCar(sx,sy,p.color); else if(p.type==='hovercar')drawHoverCar(sx,sy,p.color,time); else if(p.type==='volcano')drawVolcano(sx,sy,time,p.scale||1); else if(p.type==='building')drawBuilding(p,sx,sy,time);
       else if(p.type==='fence')drawFence(sx,sy); else if(p.type==='lamp')drawLamp(sx,sy,time); else if(p.type==='bench')drawBench(sx,sy); else if(p.type==='stall')drawStall(sx,sy,p.color); else if(p.type==='farm')drawFarm(sx,sy,p.ready!==false); else if(p.type==='chicken')drawChicken(sx,sy); else if(p.type==='sheep')drawSheep(sx,sy); else if(p.type==='crate')drawCrate(sx,sy); else if(p.type==='boat')drawBoat(sx,sy,time);
-      else if(p.type==='tractor')drawTractor(sx,sy); else if(p.type==='haybale')drawHaybale(sx,sy); else if(p.type==='flowers')drawFlowers(sx,sy); else if(p.type==='well')drawWell(sx,sy); else if(p.type==='foodcart')drawFoodcart(sx,sy); }}); }
+      else if(p.type==='tractor')drawTractor(sx,sy); else if(p.type==='haybale')drawHaybale(sx,sy); else if(p.type==='flowers')drawFlowers(sx,sy); else if(p.type==='well')drawWell(sx,sy); else if(p.type==='foodcart')drawFoodcart(sx,sy);
+      if(_sh>0) ctx.restore(); }}); }
   for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); }}); }
   if(window.Combat) for(const e of enemies){ const [sx,sy]=w2s(e.col,e.row); if(cull(sx,sy)) continue; obj.push({k:e.col+e.row+0.003, draw:()=>Combat.draw(ctx,e,sx,sy,time)}); }
   for(const rid in remote){ const r=remote[rid]; if(!r.rig||r.region!==region.id||r.col===undefined) continue; const [sx,sy]=w2s(r.col,r.row); if(cull(sx,sy)) continue;
     obj.push({k:r.col+r.row+0.005, draw:()=>{ PP.draw(ctx,r.rig,sx,sy,0.8,time); agentLabel(sx,sy,r.name||'Traveler','#5fe0ff'); }}); }
   if(!spectate){ const [sx,sy]=w2s(player.col,player.row); obj.push({k:player.col+player.row+0.01, draw:()=>{ PP.draw(ctx,player.rig,sx,sy,0.8,time); }}); }
   obj.sort((a,b)=>a.k-b.k); for(const o of obj) o.draw();
+  drawFx();
   ctx.restore();
   // day/night: dk = 1 at midnight, 0 at noon
   const dk=(Math.cos(tod*6.283185)+1)/2;
@@ -1076,7 +1080,7 @@ const STORE=[
   {id:'hplant',name:'House Plant',price:30,cat:'home',ico:'🪴'},{id:'hlamp',name:'Floor Lamp',price:35,cat:'home',ico:'💡'},
   {id:'rug',name:'Rug',price:40,cat:'home',ico:'🟫'},{id:'art',name:'Painting',price:55,cat:'home',ico:'🖼️'} ];
 const JOBS={ meadow:{name:'Harvest the Fields',pay:[15,35]}, beach:{name:'Haul Dock Cargo',pay:[18,40]}, city:{name:'Courier Run',pay:[20,45]}, forest:{name:'Hunt & Forage',pay:[16,38]}, desert:{name:'Mine the Mesa',pay:[18,42]}, volcano:{name:'Work the Forge',pay:[25,55]}, agentcity:{name:'Agent Bounty',pay:[30,60]} };
-let money=120, credits=0; const inv={}, fish={}; let jobCooldown=0, fishCooldown=0, gatherCooldown=0, gatherTarget=null;   // money = spend · credits = XP toward levels
+let money=120, credits=0; const inv={}, fish={}; let jobCooldown=0, fishCooldown=0, gatherCooldown=0, gatherTarget=null, gatherProp=null;   // money = spend · credits = XP toward levels
 let bank=0, coin=0, coinPrice=100; const stash={};   // bank savings · SHADDAI Coin market · home storage chest
 let storageOpen=false, bankOpen=false, forgeOpen=false, questsOpen=false;
 let equippedWeapon=null; const weaponUp={};   // active weapon + forge upgrade levels (id→0..3)
@@ -1271,7 +1275,35 @@ function castFish(){
 }
 function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } g+=fishBonus; if(!n&&!fishBonus){ toast('No fish to sell'); return; } fishBonus=0; money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g+' — haggle bigger catches at the 🤝 market'); if(state==='inv') openInv(); }
 function bottleWater(){ if(gatherCooldown>0){ toast('One moment…'); return; } gatherCooldown=1.5; inv.water=(inv.water||0)+1; addXP(1); saveEcon(); toast('💧 Bottled fresh water (+1) — sells hot in the desert & volcano!'); }
-function doGather(){ if(gatherCooldown>0){ toast('One moment…'); return; } if(gatherTarget==='wood'){ gatherCooldown=1.7; inv.wood=(inv.wood||0)+1; addXP(2); saveEcon(); toast('🪵 Chopped wood (+1) → bag'); } else if(gatherTarget==='ore'){ gatherCooldown=2.1; inv.ore=(inv.ore||0)+1; addXP(2); saveEcon(); toast('🪨 Mined ore (+1) → bag'); } else toast('Nothing to gather here'); }
+// ── world FX: floating pickups + impact chips + prop shake (makes hitting things feel real) ──
+let fx=[];
+function addFloat(col,row,text,color){ fx.push({col,row,text:text,color:color||'#fff',t:0,life:1.0}); }
+function addChips(col,row,color){ for(let i=0;i<7;i++) fx.push({col,row,chip:true,color:color||'#b98a5a',t:0,life:0.5,x:0,y:-8,vx:(Math.random()-0.5)*34,vy:-22-Math.random()*22}); }
+function updateFx(dt){ if(fx.length){ for(const f of fx){ f.t+=dt; if(f.chip){ f.x+=f.vx*dt; f.y+=f.vy*dt; f.vy+=100*dt; } } fx=fx.filter(f=>f.t<f.life); }
+  for(const p of props){ if(p.__shake>0){ p.__shake-=dt*4; if(p.__shake<0) p.__shake=0; } } }
+function drawFx(){ if(!fx.length) return; ctx.save(); ctx.textAlign='center';
+  for(const f of fx){ const s=w2s(f.col,f.row), k=Math.max(0,1-f.t/f.life);
+    if(f.chip){ ctx.globalAlpha=k; ctx.fillStyle=f.color; ctx.fillRect(s[0]+f.x-1.5, s[1]-14+f.y-1.5, 3.5,3.5); }
+    else { ctx.globalAlpha=k; ctx.font='bold 13px "Segoe UI",system-ui,sans-serif'; ctx.lineWidth=3.5; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.fillStyle=f.color; const yy=s[1]-22-(1-k)*22; ctx.strokeText(f.text,s[0],yy); ctx.fillText(f.text,s[0],yy); } }
+  ctx.globalAlpha=1; ctx.restore(); }
+// chop / mine — targets the actual tree/rock you're next to; it shakes, sheds chips, and after a
+// few swings it's felled (dropping bonus wood) then regrows. Wood/ore auto-bank into your bag.
+function doGather(){ if(gatherCooldown>0) return; const p=gatherProp;
+  if(gatherTarget==='wood'){ gatherCooldown=0.85;
+    if(p){ p.__shake=1; p.__hp=(p.__hp==null?3:p.__hp)-1; addChips(p.col,p.row,'#b98a5a'); addFloat(p.col,p.row,'+1 🪵','#e8c45c'); }
+    inv.wood=(inv.wood||0)+1; addXP(2);
+    if(p&&p.__hp<=0){ const idx=props.indexOf(p); if(idx>=0){ const felled=props.splice(idx,1)[0]; inv.wood+=2; addFloat(p.col,p.row,'TIMBER! +2🪵','#7CFC00');
+      setTimeout(()=>{ felled.__hp=null; felled.__shake=0; props.push(felled); }, 30000); }  // regrows in 30s
+      gatherTarget=null; gatherProp=null; const gb=document.getElementById('gatherBar'); if(gb) gb.classList.add('hide'); }
+    saveEcon(); }
+  else if(gatherTarget==='ore'){ gatherCooldown=1.05;
+    if(p){ p.__shake=1; p.__hp=(p.__hp==null?4:p.__hp)-1; addChips(p.col,p.row,'#9aa4b0'); addFloat(p.col,p.row,'+1 🪨','#cfe6ff'); }
+    inv.ore=(inv.ore||0)+1; addXP(2);
+    if(p&&p.__hp<=0){ const idx=props.indexOf(p); if(idx>=0){ const r=props.splice(idx,1)[0]; inv.ore+=1; addFloat(p.col,p.row,'+1 💎 gem','#7CFC00');
+      setTimeout(()=>{ r.__hp=null; props.push(r); }, 40000); }
+      gatherTarget=null; gatherProp=null; const gb=document.getElementById('gatherBar'); if(gb) gb.classList.add('hide'); }
+    saveEcon(); }
+  else toast('Nothing to gather here'); }
 // CLICK-TO-INTERACT: click near a tree/rock → chop/mine into bag; near water → cast the rod.
 c.addEventListener('click',function(){ if(state!=='world'||spectate) return;
   if(gatherTarget){ doGather(); }            // wood/ore proximity (from the gather scan)
