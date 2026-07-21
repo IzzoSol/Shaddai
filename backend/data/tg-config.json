@@ -25,7 +25,7 @@
   "minHolders": 20,
   "minLiqPct": 2,
   "bullishOnly": false,
-  "requireLocked": true,
+  "requireLocked": false,
   "maxSnipersPct": 30,
   "maxBundlerPct": 12,
   "maxTop10Pct": 80,

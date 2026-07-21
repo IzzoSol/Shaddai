@@ -102,7 +102,7 @@ const _defaults = {
   minLiqPct: 2,           // liquidity MUST be ≥ this % of mcap (liq that "matches" the token)
   bullishOnly: false,     // don't filter bearish — some 2x+ calls come from dip-buying
   // HARD REQUIREMENTS — every token must pass these
-  requireLocked: true,       // LP MUST be locked (≥50% locked) — no unlock rugs
+  requireLocked: false,      // FLOW MODE (owner): LP-lock no longer HARD-required — rugFilter/rugMinScore stays as the safety net. Was rejecting nearly every token.
   maxSnipersPct: 10,         // snipers + bundlers combined < 10% of holders
   // whale signal — high top10 concentration is BULLISH (early accumulation = conviction)
   minTop10Pct: 15,           // top 10 holders SHOULD be ≥15% — shows whale conviction
