@@ -296,6 +296,12 @@
     var embed = '<script src="https://shaddai.app/agent-3d.js"><\/script>\n<agent-3d id="your-agent-id"><\/agent-3d>';
     host.innerHTML =
       '<div class="oneagent"><b>The Forge.</b> A 3D AI agent you can build, embed anywhere, and earn from. <span class="gate">Open beta — model-making runs on credits; keep 100% of earnings.</span></div>' +
+      // The ACTUAL working forges — restored (open the real tools)
+      '<div class="rsec">Open the forge <span class="c">build your agent now</span></div>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">' +
+      '<div class="card"><div class="hd"><span class="ic">◧</span><div><h4>2D Pixel Forge</h4><div class="role">pixel agent · office + 2D world</div></div></div><div class="d">Design a pixel agent — color, body, tools, name — and drop it into the 2D world.</div><div class="acts"><button class="pri" onclick="window.open(\'/pixel-forge.html\',\'_blank\')">Open Pixel Forge →</button></div></div>' +
+      '<div class="card"><div class="hd"><span class="ic">▣</span><div><h4>3D Forge</h4><div class="role">3D hero form</div></div></div><div class="d">Build or preview a 3D agent model for the 3D world.</div><div class="acts"><button class="pri" onclick="window.open(\'/forge.html\',\'_blank\')">Open 3D Forge →</button></div></div>' +
+      '</div>' +
       // 01 BUILD
       '<div class="card" style="padding:16px;margin-bottom:12px"><div class="hd"><span class="ic">01</span><div><h4>Build</h4><div class="role">Prompt to agent in 60 seconds</div></div></div>' +
         '<div class="d">Type a description, snap a selfie, or upload a GLB. Add a personality prompt, pick a voice, wire up your AI. Publish to the marketplace or keep it private.</div>' +

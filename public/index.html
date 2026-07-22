@@ -3690,7 +3690,10 @@ body[data-theme="dark"]::before {
 
 /* Desktop: hide mobile-only elements */
 @media (min-width: 769px) {
-  #mobileQuickActions { display: none !important; }
+  /* Home quick-actions: shown on desktop too, as a themed image launcher grid
+     (these are the buttons button-art.js covers with full HF images). */
+  #mobileQuickActions { display: grid !important; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 0 0 16px !important; }
+  #mobileQuickActions .mqa-btn { min-height: 104px; }
   #shdOnboardBtn { display: none !important; }
   #shdOnboardOverlay { display: none !important; }
 }
@@ -4027,7 +4030,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
-<script src="/command-terminal.js?v=8" defer></script>
+<script src="/command-terminal.js?v=9" defer></script>
 <script src="/theme-switcher.js?v=1" defer></script>
 <script src="/button-art.js?v=2" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
