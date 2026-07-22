@@ -902,9 +902,18 @@ function renderWorld(time){
     ctx.save(); ctx.globalCompositeOperation='lighter';
     if(dk<0.55){ const s=1-dk*1.6; ctx.fillStyle='rgba(255,238,185,'+(0.28*s+0.06).toFixed(2)+')'; ctx.beginPath();ctx.arc(mx,my,42,0,7);ctx.fill();
       ctx.fillStyle='rgba(255,246,214,'+(0.5*s+0.3).toFixed(2)+')'; ctx.beginPath();ctx.arc(mx,my,16,0,7);ctx.fill(); }
-    else { ctx.fillStyle='rgba(200,215,255,0.22)'; ctx.beginPath();ctx.arc(mx,my,30,0,7);ctx.fill();
-      ctx.fillStyle='#e8eeff'; ctx.beginPath();ctx.arc(mx,my,13,0,7);ctx.fill();
-      ctx.fillStyle='rgba(180,195,235,0.5)'; ctx.beginPath();ctx.arc(mx+4,my-3,4,0,7);ctx.fill(); }
+    else {
+      // moonlight bloom — soft radial halo for real glow
+      const mg=ctx.createRadialGradient(mx,my,5,mx,my,48);
+      mg.addColorStop(0,'rgba(214,226,255,0.55)'); mg.addColorStop(0.4,'rgba(180,200,255,0.16)'); mg.addColorStop(1,'rgba(180,200,255,0)');
+      ctx.fillStyle=mg; ctx.beginPath();ctx.arc(mx,my,48,0,7);ctx.fill();
+      ctx.fillStyle='#eef3ff'; ctx.beginPath();ctx.arc(mx,my,14,0,7);ctx.fill();
+      // craters (drawn normally so they read as shadow, then back to additive)
+      ctx.globalCompositeOperation='source-over'; ctx.fillStyle='rgba(166,182,222,0.5)';
+      ctx.beginPath();ctx.arc(mx+4,my-3,3.2,0,7);ctx.fill();
+      ctx.beginPath();ctx.arc(mx-4,my+3,2.3,0,7);ctx.fill();
+      ctx.beginPath();ctx.arc(mx+2,my+5,1.7,0,7);ctx.fill();
+      ctx.globalCompositeOperation='lighter'; }
     ctx.restore(); }
   // drifting clouds in the open sky (day, non-volcanic skies) — render behind the landscape
   if(region.id!=='volcano' && region.id!=='agentcity'){ const cd=(Math.cos(tod*6.283185)+1)/2;
