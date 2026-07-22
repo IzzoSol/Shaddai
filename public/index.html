@@ -4033,6 +4033,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
+<style id="shd-perf">/* Open-lag fix: the dashboard holds ~24 views in one huge DOM. Let the browser
+   SKIP rendering the ones you're not looking at until they're shown — big cut to
+   initial paint/layout/style cost. Inactive views only; active renders normally. */
+.view:not(.active){content-visibility:auto;contain-intrinsic-size:1px 1200px;}</style>
 </head>
 <body data-theme="dark">
 <div id="shaddaiScanlines"></div>
