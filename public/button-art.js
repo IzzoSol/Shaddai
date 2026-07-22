@@ -28,12 +28,15 @@
     var s = document.createElement('style'); s.id = 'shd-btnart-css';
     s.textContent =
       '.shd-btn-art{background-size:cover !important;background-position:center !important;position:relative !important;color:#fff !important;' +
-      'border:1px solid rgba(0,229,160,.32) !important;text-shadow:0 1px 5px rgba(0,0,0,.95) !important;overflow:hidden !important;' +
-      'min-height:84px !important;transition:filter .16s,border-color .16s,transform .16s !important}' +
-      '.shd-btn-art::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,11,.22),rgba(4,6,11,.80));z-index:0;pointer-events:none}' +
+      'border:1px solid rgba(0,229,160,.3) !important;overflow:hidden !important;border-radius:13px !important;' +
+      'min-height:104px !important;transition:filter .18s,border-color .18s,transform .18s,box-shadow .18s !important}' +
+      // image visible up top; a dark plate anchored at the bottom keeps the label crisp
+      '.shd-btn-art::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,11,.02) 34%,rgba(4,6,11,.52) 72%,rgba(4,6,11,.9));z-index:0;pointer-events:none}' +
       '.shd-btn-art > *{position:relative;z-index:1}' +
-      '.shd-btn-art:hover{filter:brightness(1.14) !important;border-color:rgba(0,229,160,.7) !important;transform:translateY(-2px) !important;box-shadow:0 8px 22px rgba(0,0,0,.45) !important}' +
-      '.shd-btn-art .mqa-icon,.shd-btn-art .ic{filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}';
+      '.shd-btn-art *{text-shadow:0 2px 7px rgba(0,0,0,.96) !important}' +
+      '.shd-btn-art .mqa-label{font-weight:800 !important;letter-spacing:.02em !important;font-size:12.5px !important}' +
+      '.shd-btn-art .mqa-icon,.shd-btn-art .ic{filter:drop-shadow(0 2px 6px rgba(0,0,0,.95));font-size:21px !important}' +
+      '.shd-btn-art:hover{filter:brightness(1.16) saturate(1.08) !important;border-color:rgba(0,229,160,.8) !important;transform:translateY(-3px) !important;box-shadow:0 12px 28px rgba(0,0,0,.52),0 0 22px rgba(0,229,160,.28) !important}';
     document.head.appendChild(s);
   }
 
@@ -48,7 +51,7 @@
       for (var k in MAP) {
         if (oc.indexOf(k.replace(/\s+/g, '')) !== -1) {
           el.classList.add('shd-btn-art');
-          el.style.backgroundImage = 'url(/assets/buttons/' + MAP[k] + '.png)';
+          el.style.backgroundImage = 'url(/assets/buttons/' + MAP[k] + '.png?v=2)';
           el.setAttribute('data-btn-art-done', '1');
           break;
         }
