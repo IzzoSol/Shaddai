@@ -41,6 +41,10 @@ const OUTPUT_DIR = path.join(__dirname, '..', 'generated-output');
 const LOGS_DIR   = path.join(__dirname, 'execution-logs');
 const INBOX_FILE = path.join(__dirname, 'data', 'inbox.json');
 const MEMORY_FILE = path.join(__dirname, 'data', 'agent-memory.json');
+// Owner of the current run — set by the API route before running so save_to_inbox can
+// tag entries per-user (the inbox GET only returns the caller's own entries).
+let _inboxOwner = null;
+function setInboxOwner(u) { _inboxOwner = (u && String(u).trim()) || null; }
 
 [OUTPUT_DIR, LOGS_DIR, path.dirname(INBOX_FILE)].forEach(d => {
   try { fs.mkdirSync(d, { recursive: true }); } catch {}
@@ -728,7 +732,7 @@ const TOOLS = {
     agents: ['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'],
     async execute({ subject, content, agent = 'AGENT' }) {
       const inbox = loadInbox();
-      const entry = { id: crypto.randomUUID(), subject, content, agent, ts: new Date().toISOString(), read: false };
+      const entry = { id: crypto.randomUUID(), subject, content, agent, ts: new Date().toISOString(), read: false, owner: _inboxOwner };
       inbox.unshift(entry);
       saveInbox(inbox.slice(0,200));
       return JSON.stringify({ success: true, id: entry.id });
@@ -3870,4 +3874,4 @@ try {
   console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
 } catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
 
-module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat };
+module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };

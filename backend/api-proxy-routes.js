@@ -9,6 +9,8 @@ const router = express.Router();
 const { fail, ok, asyncHandler } = require('./lib/respond'); // shared response/error contract
 const { softAuth, requireAdmin } = require('./auth-guard');
 router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=true
+// Tag the current run's owner so agent tools (save_to_inbox) write per-user entries.
+router.use((req, res, next) => { try { require('./agent-engine').setInboxOwner((req.userId && req.userId !== 'local') ? req.userId : (req.headers['x-user-id'] || '')); } catch (_) {} next(); });
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -1746,7 +1748,10 @@ router.broadcastEvent = broadcastEvent;
 // Recent events history — dashboard loads this on connect to see what happened
 router.get('/events/recent', (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 50, 200);
-  res.json({ events: _eventHistory.slice(-limit), total: _eventHistory.length });
+  // System events (no owner) are shared; any owner-tagged event is caller-only.
+  const uid = String(req.headers['x-user-id'] || '').trim();
+  const evs = _eventHistory.filter(e => !e || !e.owner || e.owner === uid);
+  res.json({ events: evs.slice(-limit), total: evs.length });
 });
 
 // LLM queue status
@@ -2090,7 +2095,9 @@ router.get('/proxy-image', async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 router.get('/wallet/earnings', async (req, res) => {
   const { address } = req.query;
-  const completed = _jobs.filter(j => j.status === 'completed');
+  // SECURITY: only the caller's own completed jobs (was totalling everyone's earnings).
+  const uid = String(req.headers['x-user-id'] || '').trim() || String(address || '').trim();
+  const completed = _jobs.filter(j => j.status === 'completed' && uid && (j.owner === uid || j.awardedTo === uid || j.postedBy === uid || j.address === uid));
   const totalBudget = completed.reduce((s, j) => s + (parseFloat(j.budget) || 0), 0);
   const history = completed.slice(-20).reverse().map(j => ({
     jobId: j.id, title: j.title || 'Job', amount: parseFloat(j.budget) || 0,
@@ -5840,7 +5847,9 @@ router.post('/webhook/trigger', async (req, res) => {
 
 // GET /api/webhook/log — recent webhook events
 router.get('/webhook/log', (req, res) => {
-  res.json({ log: _webhookLog.slice(0, 50), count: _webhookLog.length });
+  const uid = String(req.headers['x-user-id'] || '').trim();
+  const mine = uid ? _webhookLog.filter(w => w && (w.owner === uid || w.userId === uid)) : [];
+  res.json({ log: mine.slice(0, 50), count: mine.length });
 });
 
 // ── FREE STOCK QUOTES — multi-source fallback ─────────────────────────────
@@ -7296,9 +7305,11 @@ router.get('/pay/status/:reference', async (req, res) => {
   }
 });
 
-// GET /api/pay/list — list recent payments
+// GET /api/pay/list — list the CALLER'S recent payments (scoped, not global)
 router.get('/pay/list', (req, res) => {
-  res.json({ payments: _payments.slice(0, 50), count: _payments.length });
+  const uid = String(req.headers['x-user-id'] || '').trim();
+  const mine = uid ? _payments.filter(p => p && (p.owner === uid || p.userId === uid || p.from === uid)) : [];
+  res.json({ payments: mine.slice(0, 50), count: mine.length });
 });
 
 // POST /api/pay/nl — natural language → Solana Pay (Claude-style: "buy some water with pay")
