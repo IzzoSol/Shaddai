@@ -28,6 +28,16 @@ const VISIBILITIES = ['private', 'public-showroom', 'hireable-studio'];
 function read() { try { return JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch (e) { return { offices: {}, slots: 0 }; } }
 function write(d) { try { fs.writeFileSync(STORE, JSON.stringify(d, null, 2)); } catch (e) {} }
 
+// ADMIN: wipe offices. Pass a userId to remove just that owner's office, or nothing to
+// clear them all (frees every Founders' Row lot). Returns how many were removed.
+function clearOffices(userId) {
+  const db = read(); const before = Object.keys(db.offices || {}).length;
+  if (userId) { if (db.offices) delete db.offices[userId]; }
+  else { db.offices = {}; }
+  write(db);
+  return before - Object.keys(db.offices || {}).length;
+}
+
 // Deterministic office plot coords in SHADDAI City — "Founders' Row", a northern
 // boulevard of 30 lots. MUST mirror game.html's FLOT() so the city renders each
 // office on the exact lot the backend assigned it.
@@ -135,4 +145,4 @@ function cityOffices() {
   }));
 }
 
-module.exports = { getOffice, claimOffice, updateOffice, switchLot, lotMap, officeWithRooms, cityOffices, slotCoords, PRESETS, VISIBILITIES, TOTAL_LOTS };
+module.exports = { getOffice, claimOffice, updateOffice, switchLot, lotMap, officeWithRooms, cityOffices, slotCoords, clearOffices, PRESETS, VISIBILITIES, TOTAL_LOTS };

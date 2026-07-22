@@ -67,6 +67,25 @@ router.post('/api/admin/revoke', json, (req, res) => {
   res.json({ ok: true, world: world || 'shaddai', admins: w.admins });
 });
 
+// ── Email-verified admin (ADMIN_EMAILS allowlist) — the secure per-login admin ──
+const { requireAdminUser, isAdminUser } = require('./auth-guard');
+
+// Non-blocking check the CLIENT uses to decide whether to reveal admin UI. The email is
+// verified server-side from the Firebase token — a spoofed client just gets isAdmin:false.
+router.get('/api/admin/whoami', async (req, res) => {
+  try { res.json({ ok: true, isAdmin: await isAdminUser(req) }); }
+  catch (e) { res.json({ ok: true, isAdmin: false }); }
+});
+
+// ADMIN: wipe offices (frees Founders' Row lots). Body { userId? } — omit to clear all.
+// Enforced server-side by requireAdminUser (verified email OR master token).
+router.post('/api/admin/clear-offices', json, requireAdminUser, (req, res) => {
+  try {
+    const removed = require('./office-service').clearOffices((req.body && req.body.userId) || '');
+    res.json({ ok: true, removed });
+  } catch (e) { res.status(500).json({ ok: false, error: 'clear failed' }); }
+});
+
 module.exports = router;
 module.exports.canManage = canManage;
 module.exports.SYSTEM_OWNER = SYSTEM_OWNER;

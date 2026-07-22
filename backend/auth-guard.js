@@ -121,6 +121,7 @@ async function verifyFirebaseToken(req, res, next) {
     try {
       const decoded = await firebaseAuth.verifyIdToken(bearerToken);
       req.userId = decoded.uid;
+      req.userEmail = (decoded.email || '').toLowerCase();  // VERIFIED email (safe for admin allowlist)
       return next();
     } catch (err) {
       // Token is present but invalid / expired.
@@ -161,4 +162,69 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ ok: false, error: 'admin token required for this operation' });
 }
 
-module.exports = { rateLimit, softAuth, verifyFirebaseToken, requireAdmin };
+// ── Email-based admin (SECURE) ───────────────────────────────────────────────
+// Admin is decided by the caller's VERIFIED Firebase email (from the signed ID token),
+// checked against the ADMIN_EMAILS allowlist — NOT a client-claimed string. This is the
+// safe way to make a specific login (e.g. cloudzncrownz@gmail.com) an admin.
+function adminEmails() {
+  return (process.env.ADMIN_EMAILS || '')
+    .split(',').map(function (e) { return e.trim().toLowerCase(); }).filter(Boolean);
+}
+
+// requireAdminUser — for owner/admin control endpoints. Passes if EITHER:
+//   • the caller's verified Firebase email is in ADMIN_EMAILS, OR
+//   • the master admin header matches ADMIN_TOKEN (x-shaddai-admin).
+// Dev-permissive: if NODE_ENV!=='production' and neither ADMIN_EMAILS nor ADMIN_TOKEN is
+// configured, allow through so local tooling works. Fails CLOSED in production.
+async function requireAdminUser(req, res, next) {
+  const emails = adminEmails();
+  const tok = process.env.ADMIN_TOKEN;
+  const notConfigured = emails.length === 0 && !tok;
+  if (notConfigured) {
+    if (process.env.NODE_ENV === 'production') return res.status(500).json({ ok: false, error: 'admin not configured' });
+    return next(); // dev convenience
+  }
+  // master token path
+  if (tok && (req.headers['x-shaddai-admin'] || '') === tok) return next();
+  // verified-email path — verify the Bearer token now (independent of route order)
+  if (emails.length) {
+    const firebaseAuth = _getAdminAuth();
+    const authHeader = req.headers.authorization || '';
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    if (firebaseAuth && bearer) {
+      try {
+        const decoded = await firebaseAuth.verifyIdToken(bearer);
+        const email = (decoded.email || '').toLowerCase();
+        req.userId = decoded.uid; req.userEmail = email;
+        if (email && emails.indexOf(email) !== -1) return next();
+      } catch (e) { /* fall through to 403 */ }
+    }
+    // dev fallback: allow an x-user-email header ONLY off-prod (never trust it in prod)
+    if (process.env.NODE_ENV !== 'production') {
+      const devEmail = (req.headers['x-user-email'] || '').toLowerCase();
+      if (devEmail && emails.indexOf(devEmail) !== -1) return next();
+    }
+  }
+  return res.status(403).json({ ok: false, error: 'admin only' });
+}
+
+// isAdminUser — non-blocking check for a /whoami style endpoint. Returns a Promise<bool>.
+async function isAdminUser(req) {
+  const emails = adminEmails();
+  const tok = process.env.ADMIN_TOKEN;
+  if (tok && (req.headers['x-shaddai-admin'] || '') === tok) return true;
+  if (!emails.length) return false;
+  const firebaseAuth = _getAdminAuth();
+  const authHeader = req.headers.authorization || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  if (firebaseAuth && bearer) {
+    try { const d = await firebaseAuth.verifyIdToken(bearer); return emails.indexOf((d.email || '').toLowerCase()) !== -1; } catch (e) {}
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    const devEmail = (req.headers['x-user-email'] || '').toLowerCase();
+    if (devEmail && emails.indexOf(devEmail) !== -1) return true;
+  }
+  return false;
+}
+
+module.exports = { rateLimit, softAuth, verifyFirebaseToken, requireAdmin, requireAdminUser, isAdminUser, adminEmails };
