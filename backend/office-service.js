@@ -38,6 +38,12 @@ function clearOffices(userId) {
   return before - Object.keys(db.offices || {}).length;
 }
 
+// One-shot cleanup: set env WIPE_OFFICES=1 (e.g. in Render) to clear ALL offices/lots on
+// the next server boot (they're test offices). Logs how many were removed. Unset it after.
+if (process.env.WIPE_OFFICES === '1' || process.env.WIPE_OFFICES === 'true') {
+  try { const n = clearOffices(); console.log('[office] WIPE_OFFICES set — cleared ' + n + ' office(s); Founders\' Row is empty.'); } catch (e) {}
+}
+
 // Deterministic office plot coords in SHADDAI City — "Founders' Row", a northern
 // boulevard of 30 lots. MUST mirror game.html's FLOT() so the city renders each
 // office on the exact lot the backend assigned it.
