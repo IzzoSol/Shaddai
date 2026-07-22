@@ -325,7 +325,11 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
 
 /* ══════════════ SECTIONS ══════════════ */
 .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter); position:relative; z-index:2; }
-section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidden; }
+section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidden;
+  /* PERF: skip layout/paint of off-screen sections until scrolled near — this is the fix
+     for the desktop "freezes on load": the browser renders only the hero at first, not the
+     whole long descent page. contain-intrinsic-size keeps the scrollbar/anchors sane. */
+  content-visibility:auto; contain-intrinsic-size:1px 900px; }
 /* section instrument header: eyebrow + scale readout */
 .shead{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .eyebrow{ font-family:var(--f-hud); font-weight:600; font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:12px; }
