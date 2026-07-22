@@ -50,14 +50,45 @@
     // The old data-theme system sets body[data-theme="glitch"]{background} which fought
     // the skin. Inline !important on <body> + <html> always wins, and we clear the stale
     // body data-theme so nothing overrides the whole-page background.
+    // SAFETY: 'glitch' is the shipped default. For it we DON'T repaint — instead we CLEAR
+    // any inline paint we previously added, so the original design (accent cards, gradients)
+    // is 100% untouched. The aggressive repaint only runs for the other, opt-in skins.
+    if (id === 'glitch') {
+      try {
+        document.querySelectorAll('[data-skin-painted]').forEach(function (el) {
+          ['background', 'background-color', 'background-image', 'border-color', 'color'].forEach(function (pr) { el.style.removeProperty(pr); });
+          el.removeAttribute('data-skin-painted');
+        });
+        ['background-color', 'background-image', 'color'].forEach(function (pr) { document.body.style.removeProperty(pr); });
+        document.documentElement.style.removeProperty('background-color');
+      } catch (e) {}
+      return;
+    }
     try {
-      // Strip the hardcoded body data-theme (e.g. "dark"/"glitch") so its background rule
-      // can't fight the skin, then pin the page bg/text inline (highest priority).
       document.body.removeAttribute('data-theme');
       document.body.style.setProperty('background-color', P.bg, 'important');
       document.body.style.setProperty('background-image', 'none', 'important');
       document.body.style.setProperty('color', P.text, 'important');
       document.documentElement.style.setProperty('background-color', P.bg, 'important');
+    } catch (e) {}
+    // The dashboard paints backgrounds INLINE (gradients) which beat any stylesheet — so
+    // repaint the structural surfaces inline with !important (the only thing that wins).
+    try {
+      var PAGE = '#app,#mainContent,.view,.main-content,#mainNav,#sbNav,#agentBar,#statusBar,footer';
+      document.querySelectorAll(PAGE).forEach(function (el) {
+        el.style.setProperty('background', el.matches('.view,#app,#mainContent,.main-content') ? P.bg : P.panel, 'important');
+        el.style.setProperty('background-image', 'none', 'important');
+        el.setAttribute('data-skin-painted', '1');
+      });
+      document.querySelectorAll('.card,.panel,.stat-box,.stat-card,.settings-section,.settings-plan-card,.side-panel,.kpi,.dossier,#resourcePanel').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.width < 60 || r.height < 34) return;   // skip tiny chips/badges
+        el.style.setProperty('background', P.panel, 'important');
+        el.style.setProperty('background-image', 'none', 'important');
+        el.style.setProperty('border-color', P.border, 'important');
+        el.style.setProperty('color', P.text, 'important');
+        el.setAttribute('data-skin-painted', '1');
+      });
     } catch (e) {}
   }
 
@@ -65,6 +96,9 @@
     if (!SKINS.some(function (s) { return s.id === id; })) id = 'glitch';
     document.documentElement.setAttribute('data-theme-skin', id);
     try { applyForce(id); } catch (e) {}
+    // Cards/panels are re-rendered after a view switch (wiping the inline paint), so
+    // re-apply a couple beats later to catch freshly-rendered surfaces.
+    [250, 800].forEach(function (t) { setTimeout(function () { try { applyForce(id); } catch (e) {} }, t); });
     try { localStorage.setItem(KEY, id); } catch (e) {}
     // reflect selection in the picker if it's mounted
     document.querySelectorAll('.shd-skin-opt').forEach(function (b) {
@@ -73,6 +107,21 @@
     return id;
   };
   window.getThemeSkin = function () { return document.documentElement.getAttribute('data-theme-skin') || 'glitch'; };
+
+  // Re-apply the skin whenever the dashboard switches views (views render fresh, dark
+  // cards). Wrap showView once it exists.
+  (function wrapSV(tries) {
+    if (window.__shdSkinSVWrapped) return;
+    if (typeof window.showView === 'function') {
+      window.__shdSkinSVWrapped = true;
+      var _sv = window.showView;
+      window.showView = function () {
+        var r = _sv.apply(this, arguments);
+        try { var id = window.getThemeSkin(); applyForce(id); setTimeout(function () { try { applyForce(id); } catch (e) {} }, 220); } catch (e) {}
+        return r;
+      };
+    } else if ((tries || 0) < 40) { setTimeout(function () { wrapSV((tries || 0) + 1); }, 250); }
+  })(0);
 
   // Apply the saved skin immediately (script is deferred → runs after parse).
   var start = saved(); if (start) window.setThemeSkin(start);
