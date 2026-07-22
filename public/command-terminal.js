@@ -184,7 +184,6 @@
     var map = document.getElementById('shdtOfmap'), cmdp = document.getElementById('shdtCmdp');
     map.innerHTML = '<div id="shdtOfMgr" style="flex:1;overflow:auto;padding:18px 22px">' +
       '<div class="oneagent"><b>Your office.</b> Pick a look, name it, choose who can visit, and set up on an open lot in SHADDAI City. This is the <b>same office</b> people find in the game. <span class="gate">3D-world office comes later.</span></div>' +
-      '<div class="rsec">Office look <span class="c">preset</span></div><div class="grid" id="shdtOfPresets"><div class="empty">Loading…</div></div>' +
       '<div class="rsec">Identity <span class="c">name · who can visit</span></div>' +
       '<div class="card" style="padding:15px"><div style="display:grid;gap:10px">' +
       '<label style="font-size:11px;color:#9a86c8">Office name<input id="shdtOfName" maxlength="48" value="' + esc(o.name || 'My Command Office') + '" style="width:100%;margin-top:5px;background:rgba(8,4,18,.7);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#efe9ff;padding:9px 11px;font-family:inherit;font-size:13px"></label>' +
@@ -205,22 +204,11 @@
       '<div style="margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:7px">' +
       '<button class="cl" onclick="openCommandTerminal(\'rooms\')">Rooms</button><button class="cl" onclick="openCommandTerminal(\'forge\')">Forge</button></div>' +
       '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:14px;line-height:1.5">Your office is persistent — the same lot shows up in the shared 2D game. Others visit by permission.</div>';
-    // load presets + lots
+    // load lots
     Promise.all([
-      fetch('/api/office/presets').then(function (r) { return r.json(); }).catch(function () { return { presets: [] }; }),
       fetch('/api/office/lots').then(function (r) { return r.json(); }).catch(function () { return { lots: [] }; })
     ]).then(function (res) {
-      var presets = (res[0] && res[0].presets) || [], lots = (res[1] && res[1].lots) || [];
-      var pe = document.getElementById('shdtOfPresets');
-      pe.innerHTML = presets.map(function (p) {
-        return '<div class="card" data-preset="' + esc(p.id) + '" style="cursor:pointer;border-color:' + (o.preset === p.id ? esc(p.accent) : 'rgba(168,85,247,.2)') + '">' + (o.preset === p.id ? '<span class="pub public" style="background:' + esc(p.accent) + '">in use</span>' : '') +
-          '<div class="hd"><span class="ic" style="color:' + esc(p.accent) + '">◈</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.d) + '</div></div></div></div>';
-      }).join('');
-      pe.querySelectorAll('.card[data-preset]').forEach(function (c) {
-        c.addEventListener('click', function () {
-          patchOffice({ preset: c.getAttribute('data-preset') }, function () { loaded.office = false; renderOffice(); });
-        });
-      });
+      var lots = (res[0] && res[0].lots) || [];
       var le = document.getElementById('shdtOfLots');
       le.innerHTML = lots.map(function (l) {
         var mine = l.state === 'you', open = l.state === 'open', taken = l.state === 'taken';

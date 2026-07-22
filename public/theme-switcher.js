@@ -47,6 +47,15 @@
       H + '.card,' + H + '.panel,' + H + '.stat-box,' + H + '.stat-card,' + H + '.settings-section,' + H + '.side-panel,' + H + '.kpi,' + H + '.dossier,' + H + '#mainNav,' + H + '#sbNav,' + H + '#agentBar,' + H + '#statusBar{background:' + P.panel + ' !important;border-color:' + P.border + ' !important;color:' + P.text + ' !important}' +
       H + '.card-title,' + H + '.view-title,' + H + '.settings-title,' + H + 'h1,' + H + 'h2,' + H + 'h3,' + H + '.sb-brand{color:' + P.text + ' !important}' +
       H + '.text-muted,' + H + '.muted,' + H + 'small,' + H + '.sub{color:' + P.muted + ' !important}';
+    // LIGHT skins: the dashboard's hardcoded inline text colors are pale (built for a dark
+    // bg) and would be unreadable on white. Those inline colors aren't !important, so force
+    // readable dark text on painted surfaces (excluding buttons/links, which keep their own
+    // contrast) + a faint light outline so text stays crisp.
+    if (id === 'brutalist' || id === 'serif') {
+      st.textContent +=
+        H + '[data-skin-painted] *:not(button):not(.pri):not(.cl):not(a):not(.mqa-btn){color:' + P.text + ' !important}' +
+        H + '[data-skin-painted]{text-shadow:0 1px 0 rgba(255,255,255,.35)}';
+    }
     // The old data-theme system sets body[data-theme="glitch"]{background} which fought
     // the skin. Inline !important on <body> + <html> always wins, and we clear the stale
     // body data-theme so nothing overrides the whole-page background.
