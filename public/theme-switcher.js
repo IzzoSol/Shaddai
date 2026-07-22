@@ -47,6 +47,18 @@
       H + '.card,' + H + '.panel,' + H + '.stat-box,' + H + '.stat-card,' + H + '.settings-section,' + H + '.side-panel,' + H + '.kpi,' + H + '.dossier,' + H + '#mainNav,' + H + '#sbNav,' + H + '#agentBar,' + H + '#statusBar{background:' + P.panel + ' !important;border-color:' + P.border + ' !important;color:' + P.text + ' !important}' +
       H + '.card-title,' + H + '.view-title,' + H + '.settings-title,' + H + 'h1,' + H + 'h2,' + H + 'h3,' + H + '.sb-brand{color:' + P.text + ' !important}' +
       H + '.text-muted,' + H + '.muted,' + H + 'small,' + H + '.sub{color:' + P.muted + ' !important}';
+    // The old data-theme system sets body[data-theme="glitch"]{background} which fought
+    // the skin. Inline !important on <body> + <html> always wins, and we clear the stale
+    // body data-theme so nothing overrides the whole-page background.
+    try {
+      // Strip the hardcoded body data-theme (e.g. "dark"/"glitch") so its background rule
+      // can't fight the skin, then pin the page bg/text inline (highest priority).
+      document.body.removeAttribute('data-theme');
+      document.body.style.setProperty('background-color', P.bg, 'important');
+      document.body.style.setProperty('background-image', 'none', 'important');
+      document.body.style.setProperty('color', P.text, 'important');
+      document.documentElement.style.setProperty('background-color', P.bg, 'important');
+    } catch (e) {}
   }
 
   window.setThemeSkin = function (id) {

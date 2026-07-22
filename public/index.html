@@ -4031,7 +4031,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
 <script src="/command-terminal.js?v=10" defer></script>
-<script src="/theme-switcher.js?v=2" defer></script>
+<script src="/theme-switcher.js?v=4" defer></script>
 <script src="/button-art.js?v=2" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
@@ -11119,7 +11119,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
           
           <!-- Theme Selector -->
           <div style="margin-bottom:16px">
-            <div style="font-size:9px;font-weight:700;color:#00ff88;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Theme <span id="activeThemeLabel" style="font-weight:400;color:rgba(255,255,255,0.35);text-transform:none;letter-spacing:0;font-size:8px"></span></div>
+            <div onclick="var g=document.getElementById('themeGrid');var open=g.style.display!=='none';g.style.display=open?'none':'grid';var c=this.querySelector('.thmChev');if(c)c.textContent=open?'▸':'▾';" style="font-size:9px;font-weight:700;color:#00ff88;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none"><span class="thmChev">▸</span>Theme <span id="activeThemeLabel" style="font-weight:400;color:rgba(255,255,255,0.35);text-transform:none;letter-spacing:0;font-size:8px"></span><span style="margin-left:auto;font-weight:400;font-size:7px;opacity:.5">tap to change</span></div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px" id="themeGrid">
               <button data-theme-btn="dark"     onclick="applyTheme('dark')"     style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px">
                 <div style="display:flex;gap:3px"><div style="width:10px;height:10px;border-radius:50%;background:#020817;border:1.5px solid #00ff88"></div><div style="width:10px;height:10px;border-radius:50%;background:#00ff88"></div></div>
@@ -11151,6 +11151,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
                 var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['brutalist','Brutalist','#f5c000'],['serif','Serif','#3a6b4a'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
                 var grid=document.getElementById('themeGrid'); if(!grid) return;
                 grid.style.gridTemplateColumns='repeat(3,1fr)';
+                grid.style.display='none'; // collapsed by default — tap the Theme header to expand
                 function cur(){ try{ return (window.getThemeSkin&&getThemeSkin())||localStorage.getItem('shd_theme_skin')||'glitch'; }catch(e){ return 'glitch'; } }
                 function paint(){ var c=cur(); grid.querySelectorAll('button').forEach(function(b){ b.style.borderColor=(b.getAttribute('data-skin')===c)?b.getAttribute('data-dot'):'rgba(255,255,255,0.08)'; }); var el=document.getElementById('activeThemeLabel'); if(el){ var s=SKINS.filter(function(x){return x[0]===c;})[0]; el.textContent='— '+(s?s[1]:c); } }
                 grid.innerHTML=SKINS.map(function(s){ return '<button data-skin="'+s[0]+'" data-dot="'+s[2]+'" style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:'+s[2]+';box-shadow:0 0 8px '+s[2]+'"></span>'+s[1]+'</button>'; }).join('');
