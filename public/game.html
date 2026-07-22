@@ -1440,6 +1440,34 @@ async function claimOfficeGame(){
   }catch(e){ toast('Network error — try again'); }
 }
 
+/* ── MOBILE controls: a D-PAD (up/down/left/right) + action buttons drive the SAME
+   keys[] the keyboard uses, so the game is playable on touch devices. ── */
+(function(){
+  if(!('ontouchstart' in window) && !(navigator.maxTouchPoints>0)) return;
+  const pad=document.createElement('div'); pad.id='dpad';
+  pad.style.cssText='position:fixed;left:18px;bottom:22px;width:150px;height:150px;z-index:60;touch-action:none;user-select:none';
+  document.body.appendChild(pad);
+  // key held true while its button is pressed; multiple can be held for diagonals
+  function dbtn(key,label,x,y){
+    const b=document.createElement('button'); b.textContent=label;
+    b.style.cssText='position:absolute;'+x+y+'width:50px;height:50px;border-radius:12px;border:1px solid rgba(0,229,160,.4);background:rgba(10,14,25,.5);color:#dff;font-size:20px;font-family:inherit;touch-action:none;backdrop-filter:blur(3px)';
+    const on=e=>{ e.preventDefault(); keys[key]=true; b.style.background='rgba(0,229,160,.32)'; };
+    const off=e=>{ if(e)e.preventDefault(); keys[key]=false; b.style.background='rgba(10,14,25,.5)'; };
+    b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off,{passive:false});
+    b.addEventListener('touchcancel',off,{passive:false});
+    pad.appendChild(b); return b;
+  }
+  dbtn('w','▲','left:50px;','top:0;');
+  dbtn('a','◀','left:0;','top:50px;');
+  dbtn('d','▶','left:100px;','top:50px;');
+  dbtn('s','▼','left:50px;','top:100px;');
+  function mkBtn(txt,right,bottom,col,fn){ const b=document.createElement('button'); b.textContent=txt;
+    b.style.cssText='position:fixed;right:'+right+'px;bottom:'+bottom+'px;width:62px;height:62px;border-radius:50%;z-index:60;border:1px solid '+col+';background:rgba(10,14,25,.5);color:'+col+';font-size:22px;font-family:inherit;touch-action:manipulation;backdrop-filter:blur(3px)';
+    b.addEventListener('touchstart',e=>{ e.preventDefault(); try{ fn(); }catch(_){} },{passive:false}); document.body.appendChild(b); return b; }
+  mkBtn('✦',24,104,'rgba(0,229,160,.75)',()=>{ if(typeof useActiveTool==='function') useActiveTool(); });   // use active tool (chop/mine/fish/attack)
+  mkBtn('E',98,32,'rgba(232,196,92,.75)',()=>{ if(typeof tryDoor==='function') tryDoor(); });               // enter/exit buildings
+})();
+
 loadEcon();
 connectMP();
 requestAnimationFrame(loop);
