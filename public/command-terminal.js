@@ -200,7 +200,8 @@
       '<div class="stat"><span>Agents</span><b>' + (sm.agents || 0) + '</b></div>' +
       '<div class="stat"><span>Public rooms</span><b>' + (sm.public || 0) + '</b></div>' +
       '<div class="stat"><span>Hireable</span><b>' + (sm.hireable || 0) + '</b></div>' +
-      '<button class="cl" style="margin-top:14px;width:100%" onclick="window.open(\'/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◈ Visit my office in the game →</button>' +
+      '<button class="cl" style="margin-top:14px;width:100%" onclick="window.open(\'/game.html?embed=office&walk=1' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◈ Enter & walk your office →</button>' +
+      '<button class="cl" style="margin-top:7px;width:100%" onclick="window.open(\'/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◇ View from the city</button>' +
       '<div style="margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:7px">' +
       '<button class="cl" onclick="openCommandTerminal(\'rooms\')">Rooms</button><button class="cl" onclick="openCommandTerminal(\'forge\')">Forge</button></div>' +
       '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:14px;line-height:1.5">Your office is persistent — the same lot shows up in the shared 2D game. Others visit by permission.</div>';

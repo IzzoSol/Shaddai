@@ -111,7 +111,7 @@
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 80% at 50% 44%,transparent 28%,rgba(3,4,7,.9) 100%)"></div>
   <div id="splashTitle" style="position:absolute;left:0;right:0;bottom:16%;text-align:center;font-family:var(--retro);color:#fff;font-size:clamp(16px,3vw,28px);letter-spacing:2px;text-shadow:0 2px 24px #000,0 0 30px rgba(0,255,156,.4)"></div>
 </div>
-<div id="controls" class="panel hide"><b>WASD</b> move · <b>E</b> door · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom</div>
+<div id="controls" class="panel hide"><b>WASD</b> move · <b>E</b> door · <b>C</b> chat · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom</div>
 <div id="prompt" class="panel hide"></div>
 <div id="mpstatus" class="panel hide" style="left:16px;top:70px;padding:6px 12px;font-size:12px;color:#00ff9c;z-index:6">🟢 1 online</div>
 <div id="chatlog" class="panel hide" style="left:16px;bottom:130px;width:min(340px,44vw);max-height:170px;overflow-y:auto;padding:8px 12px;font-size:12.5px;line-height:1.5;z-index:6"></div>
@@ -347,6 +347,8 @@ function genWorld(rid){
           const p=lots.find(x=>x.__lot===o.slot); if(!p) return;
           p.__unclaimed=false; p.__source=true; p.name='★ '+((o.name||'My Office').toUpperCase().slice(0,16)); p.wall='#0e2a22'; p.roof='#00e5a0'; p.glass='#8affe0'; p.accent='#00e5a0'; p.floors=3;
           player.col=p.col+0.5; player.row=p.row+2.5; cam.col=player.col; cam.row=player.row;
+          // ?walk=1 → drop straight INSIDE the office (walkable interior + decor mode)
+          if(window.OFFICE_WALK){ setTimeout(function(){ try{ if(typeof enterInterior==='function') enterInterior(p); }catch(e){} }, 1100); }
         }).catch(()=>{});
       }
     })();
@@ -654,9 +656,10 @@ function drawBuilding(b,sx,sy,time){
 // ---------- input ----------
 const keys={};
 addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput');
-  if(e.key==='Enter'){ if(document.activeElement===ci){ const t=ci.value.trim(); if(t&&MP&&MP.readyState===1) MP.send(JSON.stringify({t:'chat',text:t})); ci.value=''; ci.blur(); }
-    else if(state==='world'||state==='interior'){ ci.classList.remove('hide'); ci.focus(); } return; }
-  if(document.activeElement===ci){ if(e.key==='Escape'){ci.blur();} return; } // typing — don't move
+  if(e.key==='Enter'){ if(document.activeElement===ci){ const t=ci.value.trim(); if(t&&MP&&MP.readyState===1) MP.send(JSON.stringify({t:'chat',text:t})); ci.value=''; }
+    else if(state==='world'||state==='interior'){ openChat(); } return; }
+  if(document.activeElement===ci){ if(e.key==='Escape'){ closeChat(); } return; } // typing — don't move
+  if((e.key==='c'||e.key==='C') && (state==='world'||state==='interior')){ e.preventDefault(); openChat(); return; }
   keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E') tryDoor(); if(e.key==='t'||e.key==='T') tod=(tod+0.28)%1;
   if(e.key===' '||e.code==='Space'){ e.preventDefault(); doAttack(); } });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
@@ -1032,6 +1035,7 @@ fit(); setPreset(0);
     try{ document.body.classList.add('office-embed');
       window.OFFICE_EMBED=true;
       try{ window.OFFICE_UID=new URLSearchParams(location.search).get('uid')||''; }catch(_e){ window.OFFICE_UID=''; }
+      try{ window.OFFICE_WALK=new URLSearchParams(location.search).get('walk')==='1'; }catch(_e){ window.OFFICE_WALK=false; }
       // integrate cleanly inside the dashboard terminal: hide page chrome that belongs to
       // the standalone game (home/dashboard pill, game topbtns, mp status, shop) so the
       // embedded office doesn't show duplicate Home/Dashboard buttons.
@@ -1076,11 +1080,21 @@ function connectMP(){
 function mpHello(){ if(MP&&MP.readyState===1) MP.send(JSON.stringify({t:'hello',name:player.name,rig:player.rig,region:region?region.id:regionSel})); }
 function mpMove(){ if(MP&&MP.readyState===1){ const now=performance.now(); if(now-lastSent<80)return; lastSent=now;
   MP.send(JSON.stringify({t:'move',col:+player.col.toFixed(2),row:+player.row.toFixed(2),anim:player.rig.anim,region:region?region.id:regionSel})); } }
-function updateCount(){ const el=document.getElementById('mpstatus'); if(!el)return; let n=1; for(const k in remote){ if(remote[k].region===(region?region.id:regionSel)) n++; } el.textContent='🟢 '+n+' here · '+(Object.keys(remote).length+1)+' online'; }
+function updateCount(){ const el=document.getElementById('mpstatus'); if(!el)return; let n=1; for(const k in remote){ if(remote[k].region===(region?region.id:regionSel)) n++; } el.textContent='🟢 '+n+' here · '+(Object.keys(remote).length+1)+' online'; if(chatPinned){ try{ renderChatHdr(); }catch(_){} } }
+// ── Chat window: open with C, close with ✕/Esc, shows who's online in this region ──
+let chatPinned=false;
+function chatOnlineNames(){ const rid=region?region.id:regionSel; const names=[(player&&player.name)||'You']; for(const k in remote){ if(remote[k].region===rid) names.push(remote[k].name||'traveler'); } return names; }
+function renderChatHdr(){ let h=document.getElementById('chathdr');
+  if(!h){ h=document.createElement('div'); h.id='chathdr'; h.className='panel'; h.style.cssText='left:16px;bottom:306px;width:min(340px,44vw);padding:6px 10px;font-size:11.5px;z-index:7;display:flex;align-items:center;gap:8px'; document.body.appendChild(h); }
+  const n=chatOnlineNames();
+  h.innerHTML='<b style="color:#00ff9c;white-space:nowrap">💬 '+n.length+' here:</b><span style="color:#9ab;opacity:.85;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+n.map(esc).join(', ')+'</span><span style="cursor:pointer;color:#eaf3fb;font-size:15px;padding:0 2px" onclick="closeChat()">✕</span>';
+  h.classList.remove('hide'); }
+function openChat(){ const ci=document.getElementById('chatinput'), log=document.getElementById('chatlog'); if(!ci)return; chatPinned=true; if(log)log.classList.remove('hide'); ci.classList.remove('hide'); renderChatHdr(); ci.focus(); }
+function closeChat(){ const ci=document.getElementById('chatinput'), log=document.getElementById('chatlog'), h=document.getElementById('chathdr'); chatPinned=false; if(ci){ci.classList.add('hide');ci.blur();} if(log)log.classList.add('hide'); if(h)h.classList.add('hide'); }
 function chatAdd(name,text,me){ const log=document.getElementById('chatlog'); if(!log)return; log.classList.remove('hide');
   const d=document.createElement('div'); d.innerHTML='<b style="color:'+(me?'#00ff9c':'#5fe0ff')+'">'+esc(name)+':</b> '+esc(text); log.appendChild(d);
   while(log.children.length>40) log.removeChild(log.firstChild); log.scrollTop=log.scrollHeight;
-  clearTimeout(log._t); log._t=setTimeout(()=>{ if(document.activeElement!==document.getElementById('chatinput')) log.classList.add('hide'); },9000); }
+  clearTimeout(log._t); log._t=setTimeout(()=>{ if(!chatPinned && document.activeElement!==document.getElementById('chatinput')) log.classList.add('hide'); },9000); }
 // ---------- ECONOMY (in-game credits, saved locally) ----------
 const STORE=[
   {id:'sword',name:'Iron Sword',price:60,cat:'weapon',ico:'🗡️'},{id:'bow',name:'Short Bow',price:80,cat:'weapon',ico:'🏹'},
@@ -1466,6 +1480,7 @@ async function claimOfficeGame(){
     b.addEventListener('touchstart',e=>{ e.preventDefault(); try{ fn(); }catch(_){} },{passive:false}); document.body.appendChild(b); return b; }
   mkBtn('✦',24,104,'rgba(0,229,160,.75)',()=>{ if(typeof useActiveTool==='function') useActiveTool(); });   // use active tool (chop/mine/fish/attack)
   mkBtn('E',98,32,'rgba(232,196,92,.75)',()=>{ if(typeof tryDoor==='function') tryDoor(); });               // enter/exit buildings
+  mkBtn('💬',24,178,'rgba(95,224,255,.75)',()=>{ if(typeof openChat==='function') openChat(); });            // open chat
 })();
 
 loadEcon();
