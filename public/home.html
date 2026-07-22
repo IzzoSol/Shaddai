@@ -1259,7 +1259,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   var hover=false, open=0, opening=false, spin=0, spinV=0.15, running=true, raf=0;
 
   function ring(cx,cy,r,col,a,w){ ctx.beginPath(); ctx.arc(cx,cy,r,0,6.28);
-    ctx.strokeStyle=col; ctx.globalAlpha=a; ctx.lineWidth=w||1.5; ctx.shadowColor=col; ctx.shadowBlur=hover?14:8; ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1; }
+    ctx.strokeStyle=col; ctx.globalAlpha=a; ctx.lineWidth=w||1.5; if(hover){ ctx.shadowColor=col; ctx.shadowBlur=10; } ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1; }
 
   function draw(t){
     var cx=S/2, cy=S/2;
@@ -1269,7 +1269,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     ctx.save(); ctx.translate(cx,cy); ctx.rotate(spin);
     ring(0,0,96,GD,0.5+0.2*bren,1.4);
     for(var i=0;i<12;i++){ var a=i/12*6.28, x=Math.cos(a)*96, y=Math.sin(a)*96;
-      ctx.beginPath(); ctx.arc(x,y,2.4,0,6.28); ctx.fillStyle=GD; ctx.globalAlpha=0.7; ctx.shadowColor=GD; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(x,y,2.4,0,6.28); ctx.fillStyle=GD; ctx.globalAlpha=0.7; ctx.fill(); ctx.globalAlpha=1;
       ctx.beginPath(); ctx.moveTo(Math.cos(a)*86,Math.sin(a)*86); ctx.lineTo(Math.cos(a)*92,Math.sin(a)*92);
       ctx.strokeStyle=GD; ctx.globalAlpha=0.4; ctx.lineWidth=1; ctx.stroke(); ctx.globalAlpha=1; }
     ctx.restore();
