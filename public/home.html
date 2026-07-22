@@ -35,7 +35,9 @@
 <meta property="og:image" content="/assets/agents/SHADDAI-portrait.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@500;700;900&family=Chakra+Petch:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Fonts load ASYNC (non-render-blocking) so the page paints instantly, then swaps. -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cinzel+Decorative:wght@700&family=Chakra+Petch:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Chakra+Petch:wght@400;600;700&display=swap"></noscript>
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    SHADDAI · THE DESCENT · design tokens
@@ -757,9 +759,9 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       <button aria-haspopup="true" aria-expanded="false">Shop <span class="cx">▾</span></button>
       <div class="panel" role="menu">
         <div class="phdr"><span>The bazaar &amp; economy</span><span class="cd">MARKET</span></div>
-        <a href="/marketplace-shop-v2.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Bazaar</span><span class="s">agents · skills · knowledge · workflows · cosmetics</span></span><span class="badge live">live</span></a>
+        <span class="soon"><span class="gi">◈</span><span class="lk"><span class="t">The Bazaar</span><span class="s">agents · skills · knowledge · workflows · cosmetics</span></span><span class="badge">soon</span></span>
+        <span class="soon"><span class="gi">▣</span><span class="lk"><span class="t">3D Marketplace</span><span class="s">buy &amp; sell 3D agent models</span></span><span class="badge">soon</span></span>
         <a href="/collectibles-nft.html" role="menuitem"><span class="gi">◆</span><span class="lk"><span class="t">NFTs</span><span class="s">redeemable collectables</span></span><span class="badge live">live</span></a>
-        <span class="soon"><span class="gi">▣</span><span class="lk"><span class="t">3D Portals</span><span class="s">collaborate — your own portal world</span></span><span class="badge">soon</span></span>
       </div>
     </div>
 
@@ -933,8 +935,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
         <div class="gtop"><span class="gg">⟐</span><span class="gst">Live</span></div><h3>Worlds</h3><p>Command Deck · Pixel World · 3D World</p><span class="garr">enter →</span></a>
       <a class="gate hud" href="/agents.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-council.png)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">☰</span><span class="gst">Live</span></div><h3>The Council</h3><p>The seven &amp; their halls</p><span class="garr">meet them →</span></a>
-      <a class="gate hud" href="/forge.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-create.png)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
-        <div class="gtop"><span class="gg">⚒</span><span class="gst">Live</span></div><h3>Create</h3><p>Forge agents · studio · clipper</p><span class="garr">build →</span></a>
       <a class="gate hud" href="/arcade.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-play.png)"></span><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">◇</span><span class="gst">Live</span></div><h3>Play</h3><p>Skill-driven neon sports</p><span class="garr">enter the arcade →</span></a>
       <a class="gate hud" href="/zerox-markets.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-signals.png)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
@@ -1067,8 +1067,12 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   var mx=innerWidth/2, my=innerHeight*0.42, ex=mx, ey=my;
   var running=true, raf=0;
 
-  function size(){ DPR=1; W=cv.clientWidth; H=cv.clientHeight;  /* hero DPR=1 for perf on weak GPUs */
-    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  function size(){ W=cv.clientWidth; H=cv.clientHeight;
+    // PERF: cap the internal render resolution (~1280px). On a 1080p+ desktop this halves
+    // the per-frame fill-rate (the cause of the desktop-only lag/freeze); CSS scales the
+    // canvas back up and the soft background looks the same. Mobile (small) is unaffected.
+    DPR = Math.min(1, 1280 / Math.max(W, H));
+    cv.width=Math.max(1,Math.round(W*DPR)); cv.height=Math.max(1,Math.round(H*DPR)); ctx.setTransform(DPR,0,0,DPR,0,0);
     cxp=W/2; cyp=H*0.46; R=Math.min(W,H)*0.30; buildStars(); }
 
   var stars=[], neb=[], atoms=[], bonds=[];
