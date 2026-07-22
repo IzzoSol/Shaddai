@@ -55,7 +55,18 @@
     <button onclick="randomChar()">🎲 Random</button>
   </div>
   <div class="row"><input id="nameInput" placeholder="Name your character" maxlength="16" value="Wanderer"></div>
-  <div class="row"><button class="primary" onclick="goRegion()">Choose region →</button></div>
+  <div class="row"><button id="galleryBtn" onclick="openGallery()">🖼 Pick from my Gallery</button><button class="primary" onclick="goRegion()">Choose region →</button></div>
+</div>
+
+<!-- GALLERY PICKER (enter the world as one of your forged agents) -->
+<div id="galleryPick" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(680px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9;text-align:center">
+  <h1>Your <b>Gallery</b></h1>
+  <div class="sub">Pick a forged agent to play as — or forge a new one.</div>
+  <div id="galleryGrid" class="regions" style="margin-top:12px"></div>
+  <div class="row" style="justify-content:space-between;margin-top:14px">
+    <button onclick="closeGallery()">← Back</button>
+    <button onclick="location.href='/pixel-forge.html'">✦ Forge a new agent</button>
+  </div>
 </div>
 
 <!-- REGION -->
@@ -160,6 +171,44 @@ function setPreset(i){ presetIdx=(i+PP.PRESETS.length)%PP.PRESETS.length; player
   document.getElementById('presetLabel').textContent='Preset '+(presetIdx+1)+' / 100'+(player.rig.robot?' · ROBOT':''); }
 function cyclePreset(d){ setPreset(presetIdx+d); }
 function randomChar(){ presetIdx=(Math.random()*PP.PRESETS.length)|0; setPreset(presetIdx); }
+
+// ---------- Gallery: enter the world as one of YOUR forged agents ----------
+// Forged pixel agents accumulate in localStorage 'shaddai.gallery' (array of {name,rig}).
+// The single most-recent forge also lives in 'shaddai.player' — include it so nothing is lost.
+function loadGallery(){
+  var list=[];
+  try{ var g=JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); if(Array.isArray(g)) list=g.filter(function(e){return e&&e.rig;}); }catch(e){}
+  try{ var p=JSON.parse(localStorage.getItem('shaddai.player')||'null'); if(p&&p.rig&&!list.some(function(e){return e.name===p.name;})) list.unshift({name:p.name||'My Agent',rig:p.rig}); }catch(e){}
+  return list;
+}
+function openGallery(){
+  var list=loadGallery(), grid=document.getElementById('galleryGrid');
+  if(!list.length){ grid.innerHTML='<div class="sub" style="grid-column:1/-1;padding:20px 0">No forged agents yet. Forge one to play as your own character.</div>'; }
+  else {
+    grid.innerHTML='';
+    list.forEach(function(entry,i){
+      var d=document.createElement('div'); d.className='rcard'; d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px';
+      var cw=document.createElement('canvas'); cw.width=72; cw.height=90; cw.style.cssText='width:72px;height:90px';
+      d.appendChild(cw);
+      var nm=document.createElement('div'); nm.className='rnm'; nm.textContent=entry.name||('Agent '+(i+1)); d.appendChild(nm);
+      try{ var cx=cw.getContext('2d'); PP.draw(cx, entry.rig, 36, 62, 30, 0); }catch(e){}
+      d.onclick=function(){ pickGalleryChar(entry); };
+      grid.appendChild(d);
+    });
+  }
+  document.getElementById('create').classList.add('hide');
+  document.getElementById('galleryPick').classList.remove('hide');
+}
+function closeGallery(){ document.getElementById('galleryPick').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
+function pickGalleryChar(entry){
+  try{ player.rig=JSON.parse(JSON.stringify(entry.rig)); }catch(e){ return; }
+  player.name=(entry.name||'My Agent').slice(0,16);
+  document.getElementById('nameInput').value=player.name;
+  var lbl=document.getElementById('presetLabel'); if(lbl) lbl.textContent='◈ '+player.name+' (Gallery)';
+  closeGallery();
+  try{ setPreset; }catch(e){}
+  // reflect on the create preview if it redraws from player.rig
+}
 
 // ---------- regions ----------
 const REGIONS=[

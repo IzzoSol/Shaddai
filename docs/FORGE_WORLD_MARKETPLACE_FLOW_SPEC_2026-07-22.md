@@ -60,13 +60,14 @@ world.*
 4. From Gallery you can: run it as a dashboard tool · copy an **embed snippet** for websites ·
    **send it into the 2D world**.
 
-### 3B. 2D World entry (organize account vs guest)
-- **Signed-in / dashboard user:** enter via **Player Code** or **pick an agent from Gallery**,
-  drop it in as your character. Gets an **office** (persistent lot).
-- **Guest (came straight from main page, no dashboard):** can **PLAY** the 2D world (pick from
-  the preset characters, or forge a quick pixel agent) but **cannot claim an office** — office
-  is gated to accounts. Guest identity persists via a localStorage guest Player Code, with an
-  "upgrade to save everything" hook.
+### 3B. 2D World entry (DECIDED 2026-07-22 — sign-in required, no anonymous guests)
+- **Sign-in is REQUIRED to enter the 2D world.** No fully-anonymous guest play. A user can
+  come straight from the main page, sign in, and go straight to play **without engaging the
+  dashboard** — sign-in is just the identity.
+- **Enter via Player Code OR pick an agent from your Gallery**, drop it in as your character.
+- **Office is a dashboard feature, NOT part of world entry.** A signed-in user who only plays
+  (never sets up an office in the dashboard) simply **has no office** — they can still play.
+  Office setup lives in the dashboard Office tab as today.
 - **Rooms:** clicking **Rooms** shows **Create room / View room**; room presets are **walkable**
   pixel spaces.
 
@@ -104,12 +105,13 @@ rewire later). SP-1 first because Gallery is the hub every other piece plugs int
 
 ---
 
-## 5. Open decisions (need owner sign-off before SP-1 starts)
-1. **Build order** — confirm SP-1 first, or reprioritize.
-2. **Guest identity** — persist guests with a localStorage guest Player Code + "upgrade to
-   save" hook (recommended), or require sign-in to play at all?
-3. **3D forge access** — which combination unlocks it: paid plan, admin approval, access code,
-   or all three (recommended: any-of, so giveaways + Pro both work)?
+## 5. Decisions (owner sign-off 2026-07-22)
+1. **Build order** — **SP-2 first** (World entry + rooms), then revisit. SP-5 gate-hooks
+   stubbed as needed.
+2. **Guest identity** — **Sign-in REQUIRED to play.** No anonymous guests. (Office remains a
+   separate, dashboard-only feature; a play-only signed-in user just has no office.)
+3. **3D forge access** — **Access code only** (admin-issued codes; giveaway=one-time,
+   Pro-issued=reusable). Decoupled from billing — no paid-plan check.
 
 ---
 

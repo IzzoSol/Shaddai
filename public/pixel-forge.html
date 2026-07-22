@@ -359,6 +359,14 @@ document.getElementById('enter').addEventListener('click',()=>{
     const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
     const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
     try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
+    // Accumulate every forged agent into your Gallery (pick any of them when entering the
+    // 2D world). Dedup by name, keep the 24 most recent.
+    try{
+      var gal=JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); if(!Array.isArray(gal)) gal=[];
+      gal=gal.filter(function(e){ return e&&e.name!==name; });
+      gal.unshift({ name:name, rig:out.rig });
+      localStorage.setItem('shaddai.gallery', JSON.stringify(gal.slice(0,24)));
+    }catch(e){}
     // Identity: keep an existing signed-in / player-code id; otherwise issue a Player Code (the save).
     let uid=''; try{ uid=localStorage.getItem('shd_userid')||''; }catch(e){}
     if(!(uid && uid.indexOf('guest')!==0)){
