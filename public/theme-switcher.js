@@ -23,9 +23,36 @@
   function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
 
   // The single source of truth — anything (picker, Command Hub, Settings) calls this.
+  // Full-dashboard palette per skin. The data-theme-skin CSS remaps variables but the
+  // dashboard has many hardcoded colors (incl. the black body) that ignore them, and
+  // late-linked CSS wins. This forces the main surfaces + text so the WHOLE dashboard
+  // re-skins — and light skins invert to dark text.
+  var PAL = {
+    glitch:   { bg: '#000000', panel: '#0a0a0a', text: '#e8e8e8', muted: '#8a8a8a', border: 'rgba(255,255,255,.09)' },
+    terminal: { bg: '#030a03', panel: '#041004', text: '#00ff41', muted: 'rgba(0,255,65,.62)', border: 'rgba(0,255,65,.25)' },
+    brutalist:{ bg: '#f5f4f0', panel: '#ffffff', text: '#0a0804', muted: '#5a5248', border: 'rgba(10,8,4,.18)' },
+    serif:    { bg: '#f8f6f0', panel: '#ffffff', text: '#1c1710', muted: '#6b5f4e', border: 'rgba(38,28,8,.10)' },
+    void:     { bg: '#000000', panel: '#080808', text: '#f2f2f2', muted: '#8f8f8f', border: 'rgba(255,255,255,.10)' },
+    amber:    { bg: '#0a0600', panel: '#120c02', text: '#ffcf7a', muted: 'rgba(255,176,32,.65)', border: 'rgba(255,176,32,.22)' }
+  };
+  function applyForce(id) {
+    var P = PAL[id] || PAL.glitch;
+    var st = document.getElementById('shd-skin-force');
+    // append to BODY (last in source order) so it beats late-linked stylesheets
+    if (!st) { st = document.createElement('style'); st.id = 'shd-skin-force'; (document.body || document.documentElement).appendChild(st); }
+    var H = 'html[data-theme-skin] ';
+    st.textContent =
+      H + 'body{background:' + P.bg + ' !important;color:' + P.text + ' !important}' +
+      H + '.view,' + H + '#app,' + H + '#mainContent{background:' + P.bg + ' !important}' +
+      H + '.card,' + H + '.panel,' + H + '.stat-box,' + H + '.stat-card,' + H + '.settings-section,' + H + '.side-panel,' + H + '.kpi,' + H + '.dossier,' + H + '#mainNav,' + H + '#sbNav,' + H + '#agentBar,' + H + '#statusBar{background:' + P.panel + ' !important;border-color:' + P.border + ' !important;color:' + P.text + ' !important}' +
+      H + '.card-title,' + H + '.view-title,' + H + '.settings-title,' + H + 'h1,' + H + 'h2,' + H + 'h3,' + H + '.sb-brand{color:' + P.text + ' !important}' +
+      H + '.text-muted,' + H + '.muted,' + H + 'small,' + H + '.sub{color:' + P.muted + ' !important}';
+  }
+
   window.setThemeSkin = function (id) {
     if (!SKINS.some(function (s) { return s.id === id; })) id = 'glitch';
     document.documentElement.setAttribute('data-theme-skin', id);
+    try { applyForce(id); } catch (e) {}
     try { localStorage.setItem(KEY, id); } catch (e) {}
     // reflect selection in the picker if it's mounted
     document.querySelectorAll('.shd-skin-opt').forEach(function (b) {
@@ -65,11 +92,21 @@
       '<div id="shdSkinMenu"><div class="hd">Dashboard theme</div>' +
       SKINS.map(function (s) {
         return '<button class="shd-skin-opt" data-skin="' + s.id + '"><span class="sw" style="background:' + s.dot + ';color:' + s.dot + '"></span>' + s.name + '<span class="chk">✓</span></button>';
-      }).join('') + '</div>';
+      }).join('') +
+      '<div class="hd" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">Privacy</div>' +
+      '<button class="shd-skin-opt" id="shdWipe" style="color:#ff8fa3"><span class="sw" style="background:#ff5470;color:#ff5470"></span>Wipe my data (this device)</button>' +
+      '</div>';
     document.body.appendChild(dock);
     document.getElementById('shdSkinFab').addEventListener('click', function () { dock.classList.toggle('open'); });
-    dock.querySelectorAll('.shd-skin-opt').forEach(function (b) {
+    dock.querySelectorAll('.shd-skin-opt[data-skin]').forEach(function (b) {
       b.addEventListener('click', function () { window.setThemeSkin(b.getAttribute('data-skin')); dock.classList.remove('open'); });
+    });
+    var wipe = document.getElementById('shdWipe');
+    if (wipe) wipe.addEventListener('click', function () {
+      if (!confirm('Wipe ALL SHADDAI data stored in THIS browser (chats, notes, projects, settings, identity) and reload? This cannot be undone.')) return;
+      try { Object.keys(localStorage).filter(function (k) { return /^shaddai|^shd/i.test(k); }).forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      location.reload();
     });
     document.addEventListener('click', function (e) { if (!dock.contains(e.target)) dock.classList.remove('open'); });
     // reflect current selection
