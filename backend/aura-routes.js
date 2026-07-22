@@ -24,7 +24,7 @@ router.post('/chat', (req, res) => {
   try {
     const prompt = lastUserPrompt(req.body && req.body.messages);
     if (!prompt) return res.json({ ok: true, cached: false });
-    const r = aura.route(prompt);
+    const r = aura.route(prompt, { scope: req.headers['x-user-id'] || '' });
     if (r.hit) {
       return res.json({ ok: true, cached: true, response: r.answer, method: r.method,
         tokens_saved: r.savedTokensEst, similarity: r.similarity });
@@ -37,7 +37,7 @@ router.post('/chat', (req, res) => {
 router.post('/record', (req, res) => {
   try {
     const { prompt, answer } = req.body || {};
-    const ok = aura.recordAnswer(prompt, answer);
+    const ok = aura.recordAnswer(prompt, answer, { scope: req.headers['x-user-id'] || '' });
     res.json({ ok });
   } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
 });

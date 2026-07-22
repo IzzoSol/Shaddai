@@ -1610,7 +1610,8 @@ function route(prompt, opts = {}) {
     // 1) FETCH — exact normalized match (O(1) hash lookup — always cheapest first)
     const key = hashKey(p);
     const exact = cache[key];
-    if (!volatile && exact && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
+    // Only serve a cached answer that is the caller's own (or unowned/shared).
+    if (!volatile && exact && (!exact.owner || exact.owner === opts.scope) && (exact.ts + (exact.ttl || DEFAULT_TTL_MS)) >= Date.now()) {
       const saved = estTokens(p) + estTokens(exact.answer);
       bumpStats((s) => {
         s.hits++; s.byMethod.fetch++; s.tokensSaved += saved;
@@ -1682,6 +1683,8 @@ function route(prompt, opts = {}) {
     for (const k of Object.keys(cache)) {
       const e = cache[k];
       if (!e) continue;
+      // SECURITY: never fuzzy-match another user's cached answer (unowned/shared only).
+      if (e.owner && e.owner !== opts.scope) continue;
       // Raw cosine similarity (existing path)
       const simRaw = cosineSim(p, e.prompt);
       // Stop-word-filtered cosine — catches "what is X?" vs "X" near-duplicates
@@ -1777,7 +1780,10 @@ function recordAnswer(prompt, answer, opts = {}) {
       });
     }
 
-    cache[key] = { prompt: p, answer: String(answer), ts: Date.now(), ttl };
+    // SECURITY: tag the owner so a recorded LLM answer is only re-served to the SAME
+    // user (opts.scope). Deterministic/compute entries pass scope too; unowned entries
+    // (legacy) stay shared. Prevents one user's cached answer leaking to another.
+    cache[key] = { prompt: p, answer: String(answer), ts: Date.now(), ttl, owner: opts.scope || null };
     pruneCache(cache);
     return writeJson(CACHE_FILE, cache);
   } catch (_) {
