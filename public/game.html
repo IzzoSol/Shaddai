@@ -232,8 +232,16 @@ function shadeHex(hex,amt){ return PP&&PP.shade?PP.shade(hex,amt):hex; }
 // ---------- screen switching ----------
 function show(id){ ['create','region','hud','shopBtn','controls','prompt'].forEach(x=>document.getElementById(x).classList.add('hide')); }
 function goRegion(){ player.name=(document.getElementById('nameInput').value||'Wanderer').slice(0,16);
-  if(regionSel==='agentcity') regionSel='meadow';
-  state='region'; document.getElementById('create').classList.add('hide'); document.getElementById('region').classList.remove('hide'); buildRegionGrid(); updateRegionName(); }
+  // Region picking now uses the WEBBED selector (region-select.html — Seed-of-Life circles
+  // + realm backgrounds). Persist the chosen character so it survives the page handoff;
+  // region-select sets shaddai.region, then game.html boots straight into the world.
+  try{
+    var prev=JSON.parse(localStorage.getItem('shaddai.player')||'null');
+    var src=(prev&&prev.source)||'create';
+    localStorage.setItem('shaddai.player', JSON.stringify({name:player.name, rig:player.rig, source:src}));
+  }catch(e){}
+  location.href='region-select.html?v='+Math.floor(performance.now());
+}
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
