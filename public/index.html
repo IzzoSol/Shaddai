@@ -11144,11 +11144,19 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
                 <span>☀️ Light</span></button>
             </div>
             <script>
+              // Simplified: ONE theme system — the 6 dashboard skins via setThemeSkin
+              // (same as the floating picker + Command Hub). Rebuilds this grid so there's
+              // no competing old data-theme picker.
               (function(){
-                var cur = (typeof S!=='undefined'&&S.settings&&S.settings.ui&&S.settings.ui.theme)||'glitch';
-                if(cur==='dark') cur='glitch'; /* glitch is the SHADDAI signature theme — migrate legacy default */
-                var el=document.getElementById('activeThemeLabel'); if(el)el.textContent='— '+(cur.charAt(0).toUpperCase()+cur.slice(1));
-                if(typeof applyTheme==='function') applyTheme(cur);
+                var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['brutalist','Brutalist','#f5c000'],['serif','Serif','#3a6b4a'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
+                var grid=document.getElementById('themeGrid'); if(!grid) return;
+                grid.style.gridTemplateColumns='repeat(3,1fr)';
+                function cur(){ try{ return (window.getThemeSkin&&getThemeSkin())||localStorage.getItem('shd_theme_skin')||'glitch'; }catch(e){ return 'glitch'; } }
+                function paint(){ var c=cur(); grid.querySelectorAll('button').forEach(function(b){ b.style.borderColor=(b.getAttribute('data-skin')===c)?b.getAttribute('data-dot'):'rgba(255,255,255,0.08)'; }); var el=document.getElementById('activeThemeLabel'); if(el){ var s=SKINS.filter(function(x){return x[0]===c;})[0]; el.textContent='— '+(s?s[1]:c); } }
+                grid.innerHTML=SKINS.map(function(s){ return '<button data-skin="'+s[0]+'" data-dot="'+s[2]+'" style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:'+s[2]+';box-shadow:0 0 8px '+s[2]+'"></span>'+s[1]+'</button>'; }).join('');
+                grid.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ if(window.setThemeSkin) setThemeSkin(b.getAttribute('data-skin')); paint(); }; });
+                paint();
+                document.addEventListener('click',function(e){ if(e.target&&e.target.closest&&e.target.closest('#shdSkinDock,#shdtTheme')) setTimeout(paint,60); });
               })();
             </script>
           </div>
