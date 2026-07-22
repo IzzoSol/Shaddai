@@ -10364,13 +10364,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
       <!-- ══ 5 · HOW IT SAVED — method breakdown ══ -->
       <div class="aura-sec">
         <div class="aura-sec-h"><span class="ico" id="auraIcoHow">✦</span><span class="aura-sec-t">How it saved</span><span class="aura-sec-n">the cheapest path wins</span></div>
-        <div class="aura-sec-sub">Every free answer comes from one of five deterministic layers — tried cheapest-first before any paid model runs. Prices, news and anything "live" are <b style="color:var(--text-primary)">never</b> stale-cached.</div>
+        <div class="aura-sec-sub">Free answers come from five deterministic layers, tried cheapest-first before any paid model runs — and when a paid call is unavoidable, a sixth layer (<b style="color:#9becff">DISTILL</b>) shrinks the request first. Prices, news and anything "live" are <b style="color:var(--text-primary)">never</b> stale-cached.</div>
         <div class="aura-meth">
           <div class="aura-meth-row"><div class="ml" style="color:var(--danger)">📚 SEED</div><div class="md">Curated stable facts from a knowledge base — answered with zero AI.</div></div>
           <div class="aura-meth-row"><div class="ml" style="color:var(--aura-cy)">⌕ FETCH</div><div class="md">Exact-match cache — this identical prompt was seen before, served instantly.</div></div>
           <div class="aura-meth-row"><div class="ml" style="color:var(--aura-grn)">∑ COMPUTE</div><div class="md">Math, units, hashes and conversions solved locally with zero AI.</div></div>
           <div class="aura-meth-row"><div class="ml" style="color:var(--warning)">≈ QUERY</div><div class="md">A close paraphrase of a known prompt, reused via BM25 similarity ranking.</div></div>
           <div class="aura-meth-row"><div class="ml" style="color:#8b5cf6">⬡ RECIPE</div><div class="md">A known task runs its real tool-chain directly — no AI deciding the steps.</div></div>
+          <div class="aura-meth-row"><div class="ml" style="color:#27e0ff">⚗ DISTILL</div><div class="md">When a paid call is unavoidable, it still shrinks the request first — drops tools the prompt can't use, de-duplicates a bloated system prompt, and elides stale history. Up to ~60% fewer tokens per call, same answer. This is <b style="color:#9becff">aura.optimize()</b>.</div></div>
         </div>
       </div>
 
