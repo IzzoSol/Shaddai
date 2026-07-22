@@ -6840,7 +6840,12 @@ router.post('/agent/skill/:agentName/:skillId', async (req, res) => {
 router.get('/agent/inbox', (req, res) => {
   try {
     const inboxFile = path.join(__dirname, 'data', 'inbox.json');
-    const inbox = fs.existsSync(inboxFile) ? JSON.parse(fs.readFileSync(inboxFile, 'utf8')) : [];
+    const all = fs.existsSync(inboxFile) ? JSON.parse(fs.readFileSync(inboxFile, 'utf8')) : [];
+    // SECURITY: the inbox is per-user. Only return the caller's own entries — never the
+    // whole shared file (that leaked every user's agent outputs). Owner-less legacy
+    // entries are withheld. TODO: tag save_to_inbox writes with the run's userId.
+    const uid = String(req.headers['x-user-id'] || '').trim();
+    const inbox = uid ? all.filter(it => it && it.owner === uid) : [];
     res.json({ inbox, total: inbox.length });
   } catch(e) { res.json({ inbox: [], error: e.message }); }
 });

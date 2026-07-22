@@ -2733,7 +2733,9 @@ if (window.buildWorldInteriors) {
 // ── NEW WORLD SYSTEMS: minimap · ambient audio · in-world dialogue · Shaddai Radio · rentable portal-plots ──
 let _minimap=null, _audio=null, _dialogue=null, _radio=null, _portalPlots=null, _minimapVis=true;
 const _mmDir = new THREE.Vector3();
-try { if(window.buildWorldMinimap) _minimap = window.buildWorldMinimap({ layout: window.WORLD_LAYOUT, getPlayer: function(){ camera.getWorldDirection(_mmDir); return { x: playerPos.x, z: playerPos.z, angle: Math.atan2(_mmDir.x, -_mmDir.z) }; } }); } catch(e){ console.warn('minimap init', e && e.message); }
+// Minimap disabled (owner: huge/janky/unneeded). _minimap stays null; all later
+// code guards with `if(_minimap)` so this is a safe no-op removal.
+// try { if(window.buildWorldMinimap) _minimap = window.buildWorldMinimap({ layout: window.WORLD_LAYOUT, getPlayer: function(){ camera.getWorldDirection(_mmDir); return { x: playerPos.x, z: playerPos.z, angle: Math.atan2(_mmDir.x, -_mmDir.z) }; } }); } catch(e){ console.warn('minimap init', e && e.message); }
 try { if(window.buildWorldAudio) _audio = window.buildWorldAudio(); } catch(e){ console.warn('audio init', e && e.message); }
 try { if(window.buildWorldDialogue) _dialogue = window.buildWorldDialogue({
   agents: AGENTS.map(function(a){ return { code:a.codename, name:a.codename, role:a.role, color:a.color, skills:a.skills||[], portrait: portraitOf(a) }; }),
