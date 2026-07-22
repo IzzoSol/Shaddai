@@ -1100,13 +1100,19 @@ fit(); setPreset(0);
   if(/[?&](menu|fresh)/.test(location.search)){ localStorage.removeItem('shaddai.region'); }
   try{ if(localStorage.getItem('shaddai.mode')==='spectate') spectate=true; localStorage.removeItem('shaddai.mode'); }catch(e){}
   const pj=localStorage.getItem('shaddai.player');
-  if(pj){ const pp=JSON.parse(pj); if(pp&&pp.rig){ player.rig=pp.rig; player.name=(pp.name||'Traveler').slice(0,16); document.getElementById('nameInput').value=player.name; } }
+  let forgedIn=false;
+  if(pj){ const pp=JSON.parse(pj); if(pp&&pp.rig){ player.rig=pp.rig; player.name=(pp.name||'Traveler').slice(0,16); document.getElementById('nameInput').value=player.name; if(pp.source==='forge') forgedIn=true; } }
   const rg=localStorage.getItem('shaddai.region');
   if(rg && REGIONS.some(x=>x.id===rg)){
     regionSel=rg;
     document.getElementById('create').classList.add('hide');
     document.getElementById('region').classList.add('hide');
     enterWorld();
+  }
+  // No redundant "create your character" if you JUST forged one (and aren't forcing ?menu):
+  // your agent is already built — go straight to picking where to spawn.
+  else if(forgedIn && !/[?&](menu|fresh)/.test(location.search)){
+    try{ goRegion(); }catch(e){}
   }
 }catch(e){ console.warn('boot hand-off',e); } })();
 

@@ -164,26 +164,37 @@
         claim.querySelector('#shdtSignIn').onclick = function () { try { if (window.shdSignIn) window.shdSignIn(); } catch (e) {} };
         return;
       }
-      if (d && d.canClaim) {
-        claim.style.display = ''; claim.innerHTML = '<div><h2>Claim your office</h2><p>Create your one office property in SHADDAI City. Your forged agents will get rooms inside it.</p><button id="shdtClaimBtn">◈ Claim my office</button></div>';
-        claim.querySelector('#shdtClaimBtn').onclick = function () {
-          this.textContent = 'Claiming…';
-          fetch('/api/office/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }).then(function (r) { return r.json(); }).then(function () { loaded.office = false; renderOffice(); });
-        };
-        return;
-      }
       claim.style.display = 'none';
       var o = (d && d.office) || {}, sm = (d && d.summary) || {};
-      paintOffice(o, sm);
+      // canClaim = you don't have an office yet. Don't create one automatically (keeps
+      // Founders' Row empty until people actually set up). Show the full editor as an
+      // UNCLAIMED preview — naming a lot / Save is what actually claims it.
+      paintOffice(o, sm, !!(d && d.canClaim));
     }).catch(function () { var m = document.getElementById('shdtOfmap'); if (m) m.innerHTML = '<div class="empty" style="margin:24px">Office unavailable — try again.</div>'; });
   }
 
   // The office is ONLY your office — a customizable space, persistent to your lot in
   // the real game. No city/game engine is loaded inline (that opened the whole city).
-  function paintOffice(o, sm) {
+  // ensureOffice: for an UNCLAIMED preview, actually create the office on first real action
+  // (Save or lot-pick), then run cb. For an already-claimed office it just runs cb.
+  function ensureOffice(unclaimed, cb) {
+    if (!unclaimed) return cb();
+    fetch('/api/office/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      .then(function (r) { return r.json(); }).then(function () { cb(); }).catch(function () { cb(); });
+  }
+  function paintOffice(o, sm, unclaimed) {
     var map = document.getElementById('shdtOfmap'), cmdp = document.getElementById('shdtCmdp');
-    map.innerHTML = '<div id="shdtOfMgr" style="flex:1;overflow:auto;padding:18px 22px">' +
-      '<div class="oneagent"><b>Your office.</b> Pick a look, name it, choose who can visit, and set up on an open lot in SHADDAI City. This is the <b>same office</b> people find in the game. <span class="gate">3D-world office comes later.</span></div>' +
+    var uidq = ''; try { var _u = o.ownerUserId || localStorage.getItem('shd_userid') || ''; if (_u) uidq = '&uid=' + encodeURIComponent(_u); } catch (e) {}
+    // VISUAL office — the office-only walkable 2D view (forged agents + pixel citizens walk
+    // it). Office-only embed, not the whole city. For an unclaimed preview we show a soft
+    // prompt instead of a live office.
+    var visual = unclaimed
+      ? '<div style="height:300px;display:grid;place-items:center;border-radius:12px;border:1px dashed rgba(34,211,238,.35);background:radial-gradient(120% 90% at 50% 10%,rgba(34,211,238,.10),rgba(8,4,18,.6));color:#8fd9e8;font-size:13px;text-align:center;margin-bottom:14px">Your walkable office appears here once you set it up.<br><span style="opacity:.7;font-size:11px">Name it &amp; pick a lot below.</span></div>'
+      : '<div style="position:relative;height:340px;border-radius:12px;overflow:hidden;border:1px solid rgba(168,85,247,.28);margin-bottom:14px;background:#0a0518"><iframe src="/game.html?embed=office&walk=1' + uidq + '" title="Your office" style="width:100%;height:100%;border:0;display:block" loading="lazy"></iframe></div>';
+    map.innerHTML = '<div id="shdtOfMgr" style="flex:1;overflow:auto;padding:18px 22px">' + visual +
+      (unclaimed
+        ? '<div class="oneagent" style="border-color:rgba(34,211,238,.4)"><b>Set up your office.</b> Name it, choose who can visit, and pick an open lot in SHADDAI City — it\'s claimed the moment you <b>Save</b> or pick a lot. Nothing exists until you do. <span class="gate">3D-world office comes later.</span></div>'
+        : '<div class="oneagent"><b>Your office.</b> Pick a look, name it, choose who can visit, and set up on an open lot in SHADDAI City. This is the <b>same office</b> people find in the game. <span class="gate">3D-world office comes later.</span></div>') +
       '<div class="rsec">Identity <span class="c">name · who can visit</span></div>' +
       '<div class="card" style="padding:15px"><div style="display:grid;gap:10px">' +
       '<label style="font-size:11px;color:#9a86c8">Office name<input id="shdtOfName" maxlength="48" value="' + esc(o.name || 'My Command Office') + '" style="width:100%;margin-top:5px;background:rgba(8,4,18,.7);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#efe9ff;padding:9px 11px;font-family:inherit;font-size:13px"></label>' +
@@ -221,8 +232,10 @@
         if (c.getAttribute('data-state') === 'taken') return;
         c.addEventListener('click', function () {
           if (c.getAttribute('data-state') === 'you') return;
-          fetch('/api/office/switch-lot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot: parseInt(c.getAttribute('data-lot'), 10) }) })
-            .then(function (r) { return r.json(); }).then(function (d) { if (d && d.error) { try { if (window.notify) notify('Lot ' + d.error); } catch (e) {} return; } loaded.office = false; renderOffice(); });
+          ensureOffice(unclaimed, function () {
+            fetch('/api/office/switch-lot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot: parseInt(c.getAttribute('data-lot'), 10) }) })
+              .then(function (r) { return r.json(); }).then(function (d) { if (d && d.error) { try { if (window.notify) notify('Lot ' + d.error); } catch (e) {} return; } loaded.office = false; renderOffice(); });
+          });
         });
       });
     });
@@ -231,7 +244,9 @@
       var name = (document.getElementById('shdtOfName') || {}).value || '';
       var vis = (document.getElementById('shdtOfVis') || {}).value || 'private';
       save.textContent = 'Saving…';
-      patchOffice({ name: name, visibility: vis }, function () { loaded.office = false; renderOffice(); });
+      ensureOffice(unclaimed, function () {
+        patchOffice({ name: name, visibility: vis }, function () { loaded.office = false; renderOffice(); });
+      });
     });
   }
   function patchOffice(body, done) {
@@ -247,10 +262,41 @@
   }
   function section(title, sub, cards) { return '<div class="rsec">' + esc(title) + ' <span class="c">' + esc(sub) + '</span></div><div class="grid">' + cards.join('') + '</div>'; }
 
-  // ── ROOMS: live from /api/agent-rooms ──
+  // Walkable pixel-room presets — pick one as your room, or step in and walk it.
+  var ROOM_PRESETS = [
+    { id: 'loft',    ic: '◈', name: 'Command Loft',  tag: 'sleek deck',    d: 'Open emerald command deck with a wide desk + wall screens.' },
+    { id: 'studio',  ic: '⬡', name: 'Creator Studio', tag: 'maker space',   d: 'Bright studio — easels, capture rig, gallery wall.' },
+    { id: 'lab',     ic: '⚗', name: 'The Lab',        tag: 'research bay',  d: 'Phosphor-green ops bay with terminals + server racks.' },
+    { id: 'lounge',  ic: '☕', name: 'The Lounge',     tag: 'social room',   d: 'Warm hangout — sofas, plants, a low table.' },
+    { id: 'archive', ic: '📚', name: 'The Archive',    tag: 'library',      d: 'Quiet stacks, reading desk, codex shelves.' }
+  ];
+  window.shdtRoomView = function (id) {
+    // "walk it" — open the walkable office view in the game with the chosen room style.
+    var uid = ''; try { uid = localStorage.getItem('shd_userid') || ''; } catch (e) {}
+    window.open('/game.html?embed=office&walk=1&room=' + encodeURIComponent(id) + (uid ? '&uid=' + encodeURIComponent(uid) : ''), '_blank');
+  };
+  window.shdtRoomCreate = function (id) {
+    try { localStorage.setItem('shaddai.room', id); } catch (e) {}
+    try { if (window.notify) notify('Room set — “' + id + '”. Step in with View to walk it.'); } catch (e) {}
+    renderRooms();
+  };
+
+  // ── ROOMS: create/view walkable presets + live agent rooms ──
   function renderRooms() {
     var host = document.getElementById('shdtRooms');
-    host.innerHTML = '<div class="rsec">Permanent Modules <span class="c">office infrastructure</span></div><div class="grid">' +
+    var cur = ''; try { cur = localStorage.getItem('shaddai.room') || ''; } catch (e) {}
+    var presetGrid = '<div class="rsec">Your room <span class="c">create · view (walkable presets)</span></div><div class="grid">' +
+      ROOM_PRESETS.map(function (p) {
+        var inUse = cur === p.id;
+        return '<div class="card" style="border-color:' + (inUse ? '#00e5a0' : 'rgba(168,85,247,.2)') + '">' +
+          (inUse ? '<span class="pub public" style="background:#00e5a0">in use</span>' : '') +
+          '<div class="hd"><span class="ic" style="color:#22d3ee">' + p.ic + '</span><div><h4>' + esc(p.name) + '</h4><div class="role">' + esc(p.tag) + '</div></div></div>' +
+          '<div class="d">' + esc(p.d) + '</div>' +
+          '<div class="acts"><button class="pri" onclick="shdtRoomView(\'' + p.id + '\')">◈ View (walk)</button>' +
+          '<button class="cl" onclick="shdtRoomCreate(\'' + p.id + '\')">' + (inUse ? 'Selected' : 'Use this room') + '</button></div></div>';
+      }).join('') + '</div>';
+    host.innerHTML = presetGrid +
+      '<div class="rsec">Permanent Modules <span class="c">office infrastructure</span></div><div class="grid">' +
       card('☰', 'Command Sanctum', 'HQ · the 7 core agents', 'Your headquarters — the seven system agents.', 'Enter', ['public', 'public']) +
       card('⬡', 'Pixel Forge', 'world embodiments', 'Create & update your 2D world-facing agents.', 'Open', null) +
       card('◈', 'Bazaar', 'storefront', 'Showcase & sell — credits / x402.', 'Open', ['showroom', 'showroom']) +
