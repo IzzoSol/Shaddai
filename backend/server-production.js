@@ -967,7 +967,17 @@ app.get('/api/agents', (req, res) => {
   res.json({ agents, total: agents.length });
 });
 
-app.get('/api/agents/:name', (req, res) => {
+// SECURITY: executions are indexed by agent, not user. Redact the content-bearing
+// fields of executions that aren't the caller's so one user's prompts/results can't
+// leak via these endpoints (metadata like agent/timestamp/status stays).
+function _scopeExecs(list, uid) {
+  return (list || []).map(function (e) {
+    if (!e || e.userId === uid) return e;
+    return Object.assign({}, e, { goal: undefined, prompt: undefined, input: undefined, result: undefined, output: undefined, response: undefined, answer: undefined, messages: undefined, _redacted: true });
+  });
+}
+
+app.get('/api/agents/:name', softAuth, (req, res) => {
   const agent = AGENTS[req.params.name.toUpperCase()];
   if (!agent) {
     return res.status(404).json({ error: 'Agent not found' });
@@ -980,11 +990,11 @@ app.get('/api/agents/:name', (req, res) => {
     ...agent,
     stats,
     executionCount: history.length,
-    recentExecutions: history
+    recentExecutions: _scopeExecs(history, req.userId)
   });
 });
 
-app.get('/api/agents/:name/history', (req, res) => {
+app.get('/api/agents/:name/history', softAuth, (req, res) => {
   const agent = AGENTS[req.params.name.toUpperCase()];
   if (!agent) {
     return res.status(404).json({ error: 'Agent not found' });
@@ -994,7 +1004,7 @@ app.get('/api/agents/:name/history', (req, res) => {
   const offset = parseInt(req.query.offset) || 0;
 
   const history = database.getExecutionsForAgent(agent.name, limit + offset);
-  const paginated = history.slice(offset, offset + limit);
+  const paginated = _scopeExecs(history.slice(offset, offset + limit), req.userId);
 
   res.json({
     agent: agent.name,
@@ -1387,7 +1397,7 @@ app.get('/api/executions', (req, res) => {
 });
 
 // Named sub-routes must come before /:id wildcard
-app.get('/api/executions/history', (req, res) => {
+app.get('/api/executions/history', softAuth, (req, res) => {
   try {
     const history = agentInvocation.getExecutionHistory({
       agentName: req.query.agentName,
@@ -1395,6 +1405,13 @@ app.get('/api/executions/history', (req, res) => {
       page: parseInt(req.query.page) || 1,
       pageSize: parseInt(req.query.pageSize) || 50
     });
+    // SECURITY: redact content of executions that aren't the caller's.
+    if (Array.isArray(history)) return res.json(_scopeExecs(history, req.userId));
+    if (history && typeof history === 'object') {
+      ['executions', 'items', 'history', 'results'].forEach(function (k) {
+        if (Array.isArray(history[k])) history[k] = _scopeExecs(history[k], req.userId);
+      });
+    }
     res.json(history);
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -1710,6 +1727,8 @@ try { app.use(require('./x402-routes')); console.log('[prod] x402 ledger mounted
 catch (e) { console.warn('[prod] x402 failed:', e.message); }
 try { app.use(require('./reputation-routes')); console.log('[prod] reputation + VCs mounted'); }
 catch (e) { console.warn('[prod] reputation failed:', e.message); }
+try { app.use(require('./referral-routes')); console.log('[prod] referral flywheel mounted'); }
+catch (e) { console.warn('[prod] referral failed:', e.message); }
 try { app.use(require('./agent-room-routes')); console.log('[prod] canonical agent-rooms mounted'); }
 catch (e) { console.warn('[prod] agent-rooms failed:', e.message); }
 try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'); }
