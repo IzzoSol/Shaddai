@@ -4768,5 +4768,25 @@ window._x402refresh();
 <script src="/markets-chart.js"></script>
 
 <script src="/home-btn.js" defer></script>
+<script>
+// Remove the ◈ SHADDAI + ○ SHOP corner pills — not needed in the 3D world (owner).
+(function(){
+  function clean(){
+    document.querySelectorAll('a,button,div,nav').forEach(function(el){
+      try{
+        if(getComputedStyle(el).position!=='fixed') return;
+        var t=(el.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
+        var r=el.getBoundingClientRect();
+        var bottomRight = r.bottom>innerHeight*0.6 && r.right>innerWidth*0.62;
+        if(bottomRight && (/^(◈\s*)?SHADDAI$/.test(t) || /^[○◎]?\s*SHOP$/.test(t) || t==='SHOP' || t==='SHADDAI')){ el.style.display='none'; }
+      }catch(e){}
+    });
+  }
+  if(document.readyState==='loading') addEventListener('DOMContentLoaded',clean); else clean();
+  [400,1200,2500,5000].forEach(function(t){ setTimeout(clean,t); });
+  // Catch pills added later by shop-client / other modules once the world finishes init.
+  try{ new MutationObserver(function(){ clean(); }).observe(document.body||document.documentElement,{childList:true,subtree:true}); }catch(e){}
+})();
+</script>
 </body>
 </html>
