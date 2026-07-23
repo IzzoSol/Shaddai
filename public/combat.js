@@ -138,6 +138,15 @@
       if (e.atkCd > 0) e.atkCd -= dt;
       e.bob += dt * 6;
 
+      // knockback from a player hit — a quick slide, wall-aware
+      if (e.knock && e.knock.t > 0) {
+        var kstep = Math.min(dt, e.knock.t) / 0.16;
+        var knx = e.col + e.knock.x * kstep, kny = e.row + e.knock.y * kstep;
+        if (wf(Math.floor(knx), Math.floor(e.row))) e.col = knx;
+        if (wf(Math.floor(e.col), Math.floor(kny))) e.row = kny;
+        e.knock.t -= dt;
+      }
+
       var dToP = dist(e.col, e.row, px, py);
       var tx, ty;
 
@@ -396,12 +405,14 @@
   }
 
   // ---- playerAttack --------------------------------------------------------
+  // Returns { dead:[...], hits:[{e,dmg,crit,dead}] } so the game can pop damage numbers,
+  // sparks and knockback. (Back-compat: .dead is also iterable as before via result.dead.)
   function playerAttack(enemies, player, weaponPower) {
-    var dead = [];
-    if (!enemies || !enemies.length || !player) return dead;
+    var dead = [], hits = [];
+    if (!enemies || !enemies.length || !player) return { dead: dead, hits: hits };
     weaponPower = weaponPower || 1;
-    var reach = 1.6; // tiles
-    var dmg = 8 * weaponPower;
+    var reach = 1.7; // tiles — slightly generous so swings connect
+    var base = 8 * weaponPower;
 
     for (var i = 0; i < enemies.length; i++) {
       var e = enemies[i];
@@ -409,12 +420,19 @@
       var d = dist(e.col, e.row, player.col, player.row);
       if (d > reach) continue;
 
+      var crit = Math.random() < 0.16;            // 16% crit for pop
+      var dmg = Math.round(base * (crit ? 1.9 : 1) * rnd(0.9, 1.1));
       e.hp -= dmg;
-      e.hitFlash = 0.15;
+      e.hitFlash = crit ? 0.24 : 0.15;
 
+      // knockback: shove the enemy away from the player (a short lunge)
+      var kdx = e.col - player.col, kdy = e.row - player.row, kl = Math.sqrt(kdx * kdx + kdy * kdy) || 1;
+      var kb = (crit ? 0.9 : 0.55);
+      e.knock = { x: (kdx / kl) * kb, y: (kdy / kl) * kb, t: 0.16 };
+
+      var killed = false;
       if (e.hp <= 0) {
-        e.hp = 0;
-        e.dead = true;
+        e.hp = 0; e.dead = true; killed = true;
         var t = TYPES[e.kind] || TYPES.wolf;
         var tough = t.tough || 1;
         e.loot = {
@@ -423,8 +441,9 @@
         };
         dead.push(e);
       }
+      hits.push({ e: e, dmg: dmg, crit: crit, dead: killed });
     }
-    return dead;
+    return { dead: dead, hits: hits };
   }
 
   // ---- publish -------------------------------------------------------------

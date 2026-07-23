@@ -149,6 +149,7 @@
 <script src="world-regions/volcano.js" onerror="0"></script>
 <script src="world-regions/suburb.js" onerror="0"></script>
 <script src="combat.js" onerror="0"></script>
+<script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
 <script>
 'use strict';
@@ -882,7 +883,7 @@ function update(dt){
     updateFishes(dt);
     if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
     if(window.Combat && enemies.length && !spectate){ const dmg=Combat.update(enemies, player, dt, walkable);
-      if(dmg>0){ playerHP-=dmg; hurtFlash=0.35; updateHP(); if(playerHP<=0) respawnPlayer(); } }
+      if(dmg>0){ playerHP-=dmg; hurtFlash=0.35; try{ addFloat(player.col,player.row,'-'+Math.round(dmg),'#ff5a5a'); }catch(_){} player.__shake=Math.max(player.__shake||0,0.5); updateHP(); if(playerHP<=0) respawnPlayer(); } }
     let nw=false; for(let dr=-2;dr<=2&&!nw;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0, t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK){nw=true;} }
     const fb=document.getElementById('fishBar'); if(fb) fb.classList.toggle('hide', !nw||spectate);
     // gather: near a tree → chop wood, near rocks → mine ore
@@ -1195,8 +1196,15 @@ function updateWallet(){ const el=document.getElementById('wallet'); if(!el)retu
     '<span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; }
 function updateHP(){ const f=document.getElementById('hpFill'), t=document.getElementById('hpTxt'); if(!f)return; const pct=Math.max(0,playerHP)/playerMaxHP*100; f.style.width=pct+'%'; f.style.background=pct>50?'#4fe07a':pct>25?'#e0c14f':'#e05a4f'; if(t)t.textContent='❤ '+Math.max(0,Math.ceil(playerHP)); }
 function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSwing=0.25; if(player.rig)player.rig.anim='attack';
-  const killed=Combat.playerAttack(enemies, player, weaponPower())||[]; enemies=enemies.filter(e=>!e.dead);
-  if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
+  const res=Combat.playerAttack(enemies, player, weaponPower());
+  const hits=(res&&res.hits)||[], killed=(res&&res.dead)||(Array.isArray(res)?res:[]);
+  // JUICE: floating damage numbers + hit sparks per enemy hit; a small screen shake.
+  for(const h of hits){ if(!h||!h.e) continue;
+    try{ addFloat(h.e.col, h.e.row, (h.crit?'✸':'')+ '-'+h.dmg, h.crit?'#ffd24a':'#ff8a8a'); addChips(h.e.col, h.e.row, h.crit?'#ffef9a':'#ffd0d0'); }catch(_){}
+  }
+  if(hits.length){ player.__shake=Math.max(player.__shake||0, hits.some(h=>h.crit)?0.7:0.4); }
+  enemies=enemies.filter(e=>!e.dead);
+  if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; try{ addFloat(k.col,k.row,'💥','#fff'); }catch(_){} if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
 function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } player.col=Math.round(GW/2); player.row=Math.round(GH/2); if(!walkable(player.col,player.row)){ for(let r=1;r<GH;r++){ if(walkable(GW/2|0,r)){ player.row=r; break; } } } cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
 function addXP(n){ const b=levelFor(credits); credits+=n; if(levelFor(credits)>b) toast('⭐ Level up! You are now Level '+levelFor(credits)); }
 function toast(msg){ const pr=document.getElementById('prompt'); if(!pr)return; pr.classList.remove('hide'); pr.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>pr.classList.add('hide'),1900); }
@@ -1212,13 +1220,15 @@ function openInv(){ state='inv'; const el=document.getElementById('inv'); const 
   let h='<h1>🎒 <b>Inventory</b></h1><div class="sub" style="margin-bottom:12px">💵 '+money+' · Lv '+levelFor(credits)+' · '+credits+' XP</div>';
   if(!items.length&&!fitems.length) h+='<div class="sub">Empty — buy gear at the Store, or fish by the water.</div>';
   if(items.length){ h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of items){ const it=STORE.find(x=>x.id===k)||{name:k,ico:'📦'}; const isW=WEAPON_POWER[k]!==undefined, up=weaponUp[k]||0, eq=activeWeapon()===k;
-    h+='<div class="rcard" style="min-height:78px;background:'+(eq?'#1c2c22':'#141a26')+';cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+(up?' <span style="color:#f2c14e">+'+up+'</span>':'')+'</div><small>×'+inv[k]+(isW?' · pow '+(WEAPON_POWER[k]+up*0.5).toFixed(1):'')+'</small></div>'+
+    h+='<div class="rcard" style="min-height:78px;background:'+(eq?'#1c2c22':'#141a26')+';cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:24px">'+itemIcon(k,30,it.ico)+'</div><div class="rnm" style="font-size:13px">'+it.name+(up?' <span style="color:#f2c14e">+'+up+'</span>':'')+'</div><small>×'+inv[k]+(isW?' · pow '+(WEAPON_POWER[k]+up*0.5).toFixed(1):'')+'</small></div>'+
       (isW?'<button style="margin-top:5px;padding:4px 8px;font-size:11px'+(eq?';border-color:#4fe07a;color:#4fe07a':'')+'" onclick="equipWeapon(\''+k+'\')">'+(eq?'✓ Equipped':'Equip')+'</button>':'')+'</div>'; } h+='</div>'; }
   if(fitems.length){ h+='<div class="sub" style="margin:14px 0 8px">🎣 Your catch <button style="float:right;padding:4px 10px;font-size:12px" onclick="sellFish()">💰 Sell all</button></div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of fitems){ const it=FISH.find(x=>x.id===k)||{name:k,ico:'🐟',val:0}; h+='<div class="rcard" style="min-height:78px;background:#12202a;cursor:default;color:#eaf3fb"><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+'</div><small>×'+fish[k]+' · '+it.val+'💵</small></div>'; } h+='</div>'; }
   h+='<div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openStore()">🛒 Store</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('store').classList.add('hide'); }
 // ---- item metadata (spans store + fish) ----
 function itemMeta(id){ const s=STORE.find(x=>x.id===id); if(s)return {name:s.name,ico:s.ico}; const f=FISH.find(x=>x.id===id); if(f)return {name:f.name,ico:f.ico}; const g=GOODS.find(x=>x.id===id); if(g)return {name:g.name,ico:g.ico}; return {name:id,ico:'📦'}; }
+// Prefer a code-drawn PIXEL weapon/tool sprite; fall back to the emoji for materials/food.
+function itemIcon(id,px,emoji){ try{ if(window.WeaponArt && WeaponArt.has(id)) return WeaponArt.iconHTML(id,px||30,emoji); }catch(_){} return '<span>'+(emoji||'📦')+'</span>'; }
 function bagCount(id){ return (inv[id]||0)+(FISH.find(x=>x.id===id)?(fish[id]||0):0); }
 // ---- home storage chest ----
 function openStorage(){ storageOpen=true; const el=document.getElementById('storage'); if(!el)return;
@@ -1423,12 +1433,12 @@ function assignToHotbar(id){ if(!id) return; let slot=activeSlot; if(slot<0||slo
 function toggleBackpack(force){ backpackOpen=(force===undefined?!backpackOpen:force); const el=document.getElementById('rpgBackpack'); if(el) el.style.display=backpackOpen?'flex':'none'; if(backpackOpen) renderBackpack(); }
 function renderHotbar(){ const bar=document.getElementById('rpgHotbar'); if(!bar) return; let h='';
   for(let i=0;i<6;i++){ const id=hotbar[i], m=id?itemMeta(id):null, cnt=id?bagCount(id):0, own=id?(inv[id]||fish[id]||0):0;
-    h+='<div class="hbslot'+(i===activeSlot?' on':'')+(id&&!own?' gone':'')+'" data-i="'+i+'"><span class="hbk">'+(i+1)+'</span>'+(id?('<span class="hbico">'+m.ico+'</span>'+((cnt>1)?'<span class="hbc">'+(cnt>999?999:cnt)+'</span>':'')):'')+'</div>'; }
+    h+='<div class="hbslot'+(i===activeSlot?' on':'')+(id&&!own?' gone':'')+'" data-i="'+i+'"><span class="hbk">'+(i+1)+'</span>'+(id?('<span class="hbico">'+itemIcon(id,30,m.ico)+'</span>'+((cnt>1)?'<span class="hbc">'+(cnt>999?999:cnt)+'</span>':'')):'')+'</div>'; }
   bar.innerHTML=h;
   bar.querySelectorAll('.hbslot').forEach(s=>{ s.onclick=()=>{ const i=+s.dataset.i; if(i===activeSlot && hotbar[i]==='potion') drinkPotion(); else selectSlot(i); }; s.oncontextmenu=(e)=>{ e.preventDefault(); hotbar[+s.dataset.i]=null; saveHotbar(); renderHotbar(); }; }); }
 function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!el) return;
   const tools=Object.keys(inv).filter(k=>inv[k]>0), fishK=Object.keys(fish).filter(k=>fish[k]>0);
-  const cell=(id,cnt,assignable)=>{ const m=itemMeta(id); return '<div class="bpcell'+(assignable?' assign':'')+(hotbar.indexOf(id)>=0?' inbar':'')+'" data-id="'+(assignable?id:'')+'"><span class="bpico">'+m.ico+'</span><span class="bpn">'+m.name+'</span><span class="bpc">'+(cnt>999?999:cnt)+'</span></div>'; };
+  const cell=(id,cnt,assignable)=>{ const m=itemMeta(id); return '<div class="bpcell'+(assignable?' assign':'')+(hotbar.indexOf(id)>=0?' inbar':'')+'" data-id="'+(assignable?id:'')+'"><span class="bpico">'+itemIcon(id,26,m.ico)+'</span><span class="bpn">'+m.name+'</span><span class="bpc">'+(cnt>999?999:cnt)+'</span></div>'; };
   let h='<div class="bpwrap"><div class="bphead"><b>🎒 Backpack</b><span class="bphint">Click a tool/weapon to slot it on your hotbar · keys 1–6 · I to close</span><button id="bpClose">✕</button></div><div class="bpgrid">';
   if(!tools.length&&!fishK.length) h+='<div class="bpempty">Empty — chop trees, mine rocks, fish the water, or buy gear at the Store.</div>';
   for(const k of tools){ const assignable=(WEAPON_POWER[k]!==undefined||k==='axe'||k==='pick'||k==='rod'||k==='potion'||k==='lantern'); h+=cell(k,inv[k],assignable); }
