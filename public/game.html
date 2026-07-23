@@ -793,7 +793,8 @@ function buildInterior(kind){
   const IW=13, IH=9, sx=(IW-1)/8, sy=(IH-1)/6;   // BIGGER room — scale the 9x7 layout up so there's room to walk
   F.forEach(it=>{ it.col=+(it.col*sx).toFixed(2); it.row=+(it.row*sy).toFixed(2); });
   const bigDoor={col:+(door.col*sx).toFixed(2), row:+(door.row*sy).toFixed(2)};
-  if(inInterior && inInterior.suburb && isMyHome(inInterior)) F=F.concat(loadDecor(inInterior.houseId));  // your placed furniture
+  const _dk=(kind==='office')?'__office__':((inInterior&&inInterior.suburb&&isMyHome(inInterior))?inInterior.houseId:null);
+  if(_dk) F=F.concat(loadDecorFor(_dk));  // your placed/moved furniture (home or office)
   const order=[]; for(let r=0;r<IH;r++)for(let col=0;col<IW;col++) order.push([col,r]); order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
   intRoom={w:IW,h:IH,door:bigDoor,furniture:F,order,npc:((kind.charCodeAt(0)*7)%98)+1};
 }
@@ -810,14 +811,18 @@ const DECOR=[ {t:'sofa',ico:'🛋️',w:2,d:0.9,h:8,c:'#9a4a4a',ty:'box'},{t:'tv
   {t:'shelf',ico:'📚',w:0.7,d:1.6,h:16,c:'#6a7a8a',ty:'shelf'},{t:'plant',ico:'🪴',w:0.5,d:0.5,h:13,c:'#5a3a2a',ty:'plant'},
   {t:'rug',ico:'🟫',w:2.5,d:2,h:0,c:'#4a2f42',ty:'rug'},{t:'lamp',ico:'💡',w:0.4,d:0.4,h:16,c:'#c9a24a',ty:'box'},
   {t:'chest',ico:'📦',w:0.6,d:0.6,h:8,c:'#7a5636',ty:'box'},{t:'screen',ico:'🖥️',w:1.4,d:0.4,h:12,c:'#1a1a30',ty:'screen'} ];
-function loadDecor(hid){ try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); return (d[hid]||[]).map(x=>{ const f=fitem(x.col,x.row,x.w,x.d,x.h,x.color,x.type); f._decor=true; return f; }); }catch(e){ return []; } }
-function saveDecorNow(){ if(!inInterior||!inInterior.suburb) return; const items=intRoom.furniture.filter(f=>f._decor).map(f=>({col:f.col,row:f.row,w:f.w,d:f.d,h:f.h,color:f.color,type:f.type}));
-  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[inInterior.houseId]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} }
-function openDecorate(){ if(!inInterior||!isMyHome(inInterior)){ toast('You can only decorate your own home'); return; } decorMode=true; decorPick=DECOR[0];
+// Decorating works in your OWN suburb home AND in your office interior (persists per space).
+function decorKey(){ if(inInterior && inInterior.suburb && isMyHome(inInterior)) return inInterior.houseId; if(interiorType==='office') return '__office__'; return null; }
+function canDecorate(){ return !!decorKey(); }
+function loadDecorFor(key){ try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); return (d[key]||[]).map(x=>{ const f=fitem(x.col,x.row,x.w,x.d,x.h,x.color,x.type); f._decor=true; return f; }); }catch(e){ return []; } }
+function loadDecor(hid){ return loadDecorFor(hid); }
+function saveDecorNow(){ const key=decorKey(); if(!key) return; const items=intRoom.furniture.filter(f=>f._decor).map(f=>({col:f.col,row:f.row,w:f.w,d:f.d,h:f.h,color:f.color,type:f.type}));
+  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[key]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} }
+function openDecorate(){ if(!canDecorate()){ toast('You can only decorate your own home or office'); return; } decorMode=true; decorPick=DECOR[0];
   const bar=document.getElementById('decorBar'); bar.innerHTML=DECOR.map((d,i)=>'<button class="dpick" data-i="'+i+'" style="font-size:20px;padding:5px 7px;border:1px solid '+(i===0?'#e8c45c':'#2a3346')+';border-radius:8px;background:#182031;cursor:pointer">'+d.ico+'</button>').join('')+'<button class="primary" style="margin-left:6px;padding:7px 12px" onclick="doneDecorate()">✓ Done</button>';
   bar.querySelectorAll('.dpick').forEach(btn=>btn.onclick=()=>{ decorPick=DECOR[+btn.dataset.i]; bar.querySelectorAll('.dpick').forEach(x=>x.style.borderColor='#2a3346'); btn.style.borderColor='#e8c45c'; });
-  bar.classList.remove('hide'); toast('Pick an item, then click the floor to place it'); }
-function doneDecorate(){ decorMode=false; document.getElementById('decorBar').classList.add('hide'); saveDecorNow(); toast('🏠 Home saved'); }
+  bar.classList.remove('hide'); toast('Place: pick an item → click floor · Move: click an item to grab it · Remove: right-click it'); }
+function doneDecorate(){ decorMode=false; document.getElementById('decorBar').classList.add('hide'); saveDecorNow(); toast('✓ '+(interiorType==='office'?'Office':'Home')+' saved'); }
 function placeDecorAt(col,row){ if(!decorPick||col<0.6||row<0.6||col>intRoom.w-1.6||row>intRoom.h-1.6) return;
   const f=fitem(+col.toFixed(2),+row.toFixed(2),decorPick.w,decorPick.d,decorPick.h,decorPick.c,decorPick.ty); f._decor=true; intRoom.furniture.push(f); saveDecorNow(); }
 // ---- wardrobe ----
@@ -835,11 +840,22 @@ function openWardrobe(){ wardrobeOpen=true; const el=document.getElementById('wa
 function toggleRobot(){ if(player.rig.robot){ delete player.rig.robot; delete player.rig.led; } else { player.rig.robot=true; player.rig.led='#5fe0ff'; player.rig.emblem='#5fe0ff'; } persistPlayer(); openWardrobe(); }
 function closeWardrobe(){ wardrobeOpen=false; document.getElementById('wardrobe').classList.add('hide'); }
 function hideIntUI(){ decorMode=false; wardrobeOpen=false; storageOpen=false; bankOpen=false; forgeOpen=false; questsOpen=false; hubOpen=false; agentLiveOpen=false; ['intActions','decorBar','wardrobe','storage','bank','forge','quests','hubrooms','agentlive'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
+function decorHitAt(col,row){ for(let i=intRoom.furniture.length-1;i>=0;i--){ const f=intRoom.furniture[i]; if(!f._decor) continue;
+  if(col>f.col-0.4&&col<f.col+f.w+0.2&&row>f.row-0.4&&row<f.row+f.d+0.2) return i; } return -1; }
 c.addEventListener('click',e=>{ if(state==='interior'&&decorMode){ const mx=e.clientX, my=e.clientY;
-  const X=(mx-intView.ox)/((TW/2)*intView.S), Y=(my-intView.oy)/((TH/2)*intView.S); placeDecorAt((X+Y)/2,(Y-X)/2); } });
+  const X=(mx-intView.ox)/((TW/2)*intView.S), Y=(my-intView.oy)/((TH/2)*intView.S); const col=(X+Y)/2, row=(Y-X)/2;
+  // GRAB an existing placed item to move it (pick up → next click drops it)
+  const hit=decorHitAt(col,row);
+  if(hit>=0){ const f=intRoom.furniture[hit]; decorPick={w:f.w,d:f.d,h:f.h,c:f.color,ty:f.type,ico:'✋'}; intRoom.furniture.splice(hit,1); saveDecorNow(); toast('✋ Moving — click a spot to drop it'); return; }
+  placeDecorAt(col,row); } });
+// right-click a placed item to remove it
+c.addEventListener('contextmenu',e=>{ if(state==='interior'&&decorMode){ e.preventDefault();
+  const X=(e.clientX-intView.ox)/((TW/2)*intView.S), Y=(e.clientY-intView.oy)/((TH/2)*intView.S); const hit=decorHitAt((X+Y)/2,(Y-X)/2);
+  if(hit>=0){ intRoom.furniture.splice(hit,1); saveDecorNow(); toast('🗑️ Removed'); } } });
 function restHere(){ toast('😴 You rest a while… fully refreshed.'); }
 function refreshIntActions(){ const ia=document.getElementById('intActions'); if(!ia)return; let b='';
   if(inInterior&&inInterior.suburb&&isMyHome(inInterior)) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openWardrobe()">👕 Wardrobe</button><button onclick="openStorage()">📦 Storage</button>';
+  else if(interiorType==='office') b='<button onclick="openDecorate()">🎨 Decorate office</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
   else if(interiorType==='shop') b='<button onclick="openStore()">🛒 Browse</button>';
   else if(interiorType==='tavern') b='<button onclick="restHere()">😴 Rest</button><button onclick="openQuests()">📜 Bounties</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
   else if(interiorType==='bank') b='<button onclick="openBank()">🏦 Bank &amp; Coin Market</button>';
