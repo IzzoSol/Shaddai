@@ -1,0 +1,11 @@
+[
+  {
+    "id": "planet-saturn-spin",
+    "type": "video",
+    "register": "cinematic",
+    "input": "public/assets/journey/planet-saturn.png",
+    "duration": "5",
+    "out": "public/assets/journey/planet-saturn-spin.mp4",
+    "body": "The ringed gas-giant rotates very slowly on its axis, luminous storm-bands of emerald and gold flowing across its surface, the gold glyph-inscribed ring drifting and shimmering, a gentle cold-cyan lens-flare sweeping past from the off-frame star. Seamless loop, locked majestic camera, weightless, cinematic, deep space."
+  }
+]

@@ -1,0 +1,1 @@
+{"before":584.6,"after":652.4,"deltaPct":11.6,"allBefore":[576,585,590],"allAfter":[628,652,679]}

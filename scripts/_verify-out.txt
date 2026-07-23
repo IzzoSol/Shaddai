@@ -1,0 +1,12 @@
+{
+  "status": {
+    "fbShown": false,
+    "gl2": true
+  },
+  "obsidian_apex": 1,
+  "obsidian_night": 1,
+  "errors": [],
+  "frameMedian072_BEFORE": 1353.3,
+  "frameMedian072_AFTER": 1570.6,
+  "frameDeltaPct": 16.1
+}

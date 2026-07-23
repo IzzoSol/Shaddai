@@ -1,0 +1,42 @@
+[
+  {
+    "id": "planet-mars",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/planet-mars.png",
+    "body": "A single hero Mars-like world centered, about half the frame height, three-quarter angle, rust-dark obsidian crust veined with glowing emerald and gold sacred-tech circuitry; vast canyon systems cracked open to reveal luminous cyan cavern-light glowing from deep within the planet (caverns inside the world, like a lantern of light beneath the shell); a razor-thin orbiting ring of faint Hebrew and alchemical glyph-particles; a soft terminator dropping the far hemisphere into obsidian shadow; pure black void behind, no second planet; rim-lit by a cold cyan off-frame star; photoreal Octane render, 8k, deep shadows."
+  },
+  {
+    "id": "cavern-world",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/cavern-world.png",
+    "body": "A cracked hollow planet centered, its obsidian shell fractured open along glowing gold Metatron's-Cube fault-lines to reveal an entire luminous inner world of emerald and cyan crystal caverns, hanging cities of light, and a tiny sun glowing at its core — a universe within a world seen through the cracks; drifting gold glyph-particles around it; pure black void behind; rim-lit by a cold cyan star; hyper-detailed photoreal 3D render, cinematic depth, 8k, no text."
+  },
+  {
+    "id": "ice-world",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/ice-world.png",
+    "body": "A single hero ice world centered, about half the frame height, a frozen cold-cyan crystalline planet with deep emerald sub-glacial light glowing through translucent ice, hairline gold Flower-of-Life frost-patterns spreading across its surface, thin orbiting glyph-ring, pure black void behind, no second planet, rim-lit by a cold cyan off-frame star, photoreal Octane render, deep shadows, 8k, no text."
+  },
+  {
+    "id": "constellation-field",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/constellation-field.jpg",
+    "body": "A vast deep-space night sky, about 85 percent obsidian black, with astronomically accurate constellations — Orion, Ursa Major, Cassiopeia, the Pleiades cluster, Draco — their real star patterns drawn as luminous gold star-points connected by hairline gold constellation lines that subtly form the shapes of ancient Hebrew letters and alchemical sigils; long streaking warp light-trails of cold-cyan and emerald arcing across the frame; several shooting stars with bright anamorphic flares and trailing gold sparks; faint emerald nebula haze; extreme depth, film grain, chromatic aberration at edges, the sky writing itself in the sacred alphabet, 8k, no readable typeset text."
+  },
+  {
+    "id": "fractal-universe",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/fractal-universe.jpg",
+    "body": "Universes within universes — an infinite fractal cosmos in obsidian black where a great spiral galaxy is composed of countless smaller galaxies, each smaller galaxy's core opening into another nebula that contains yet more galaxies, self-similar recursive nesting collapsing inward toward a single point of emerald-gold light; Metatron's-Cube geometry faintly framing each scale; cold-cyan and emerald filament chains linking the scales; as above so below, sacred infinite regress, anamorphic bokeh, extreme depth of field, museum-grade, 8k, no text."
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "did:key:zSmoke": [
+    {
+      "id": "att_mrtasi7otnc6",
+      "type": "referral_conversion",
+      "outcome": 1,
+      "at": "2026-07-20T14:06:18.420Z",
+      "meta": {
+        "counterpartyDid": null,
+        "endpoint": "hire",
+        "amount": 12
+      }
+    }
+  ]
+}

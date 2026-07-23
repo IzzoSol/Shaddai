@@ -1,0 +1,10 @@
+const puppeteer=require('puppeteer-core');const path=require('path');
+(async()=>{
+  const b=await puppeteer.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:'new',userDataDir:require('os').tmpdir()+'/ppf'+Date.now(),args:['--no-sandbox']});
+  const p=await b.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('console',m=>{if(m.type()==='error')errs.push(m.text());});
+  await p.setViewport({width:1440,height:900,deviceScaleFactor:1});
+  await p.goto('file:///'+path.resolve(__dirname,'public','pixel-forge.html').split(path.sep).join('/'),{waitUntil:'networkidle0'});
+  await new Promise(r=>setTimeout(r,1200));
+  await p.screenshot({path:path.resolve(__dirname,'_forge.png')});
+  await b.close(); console.log('forge shot saved. errors:',errs.length?errs.slice(0,5).join('\n'):'none');
+})().catch(e=>{console.error(e.message);process.exit(1);});

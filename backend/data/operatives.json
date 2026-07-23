@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 21,
+  "nextTokenId": 25,
   "operatives": {
     "op_cb564d97_1783480230467": {
       "id": "op_cb564d97_1783480230467",
@@ -52,6 +52,228 @@
       },
       "createdAt": 1783480230467,
       "updatedAt": 1783605629989
+    },
+    "op_2e0d277b_1784428691923": {
+      "id": "op_2e0d277b_1784428691923",
+      "tokenId": 21,
+      "owner": "demo",
+      "codename": "Test",
+      "archetype": "artisan",
+      "model": "SHADDAI",
+      "rarity": "epic",
+      "look": {
+        "archetype": "artisan",
+        "organic": true,
+        "slots": {
+          "body": "humanoid",
+          "headwear": "mage-hood",
+          "outfit": "leaf-woven-mantle",
+          "aura": "neon",
+          "handheld": "coffee-cup",
+          "hair": "natural",
+          "eyes": "normal",
+          "background": "neon-city",
+          "accent": "gold"
+        }
+      },
+      "portrait": "/api/forge/art/arch-artisan.png",
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "artisan",
+          "organic": true,
+          "slots": {
+            "body": "humanoid",
+            "headwear": "mage-hood",
+            "outfit": "leaf-woven-mantle",
+            "aura": "neon",
+            "handheld": "coffee-cup",
+            "hair": "natural",
+            "eyes": "normal",
+            "background": "neon-city",
+            "accent": "gold"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 70,
+        "power": 70,
+        "iq": 70
+      },
+      "createdAt": 1784428691923,
+      "updatedAt": 1784428691923
+    },
+    "op_2e0d277b_1784428691988": {
+      "id": "op_2e0d277b_1784428691988",
+      "tokenId": 22,
+      "owner": "demo",
+      "codename": "Test",
+      "archetype": "artisan",
+      "model": "SHADDAI",
+      "rarity": "epic",
+      "look": {
+        "archetype": "artisan"
+      },
+      "portrait": "/api/forge/art/arch-artisan.png",
+      "brain": {
+        "tier": "light",
+        "brainId": "ollama-local",
+        "persona": "You are Test, a SHADDAI Artisan operative."
+      },
+      "tools": [
+        "test-data-pack"
+      ],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "artisan"
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 77,
+        "power": 75,
+        "iq": 70
+      },
+      "createdAt": 1784428691988,
+      "updatedAt": 1784428691988
+    },
+    "op_11e8a06c_1784498851925": {
+      "id": "op_11e8a06c_1784498851925",
+      "tokenId": 23,
+      "owner": "demo",
+      "codename": "m",
+      "archetype": "ghost",
+      "model": "SHADDAI",
+      "rarity": "epic",
+      "look": {
+        "archetype": "ghost",
+        "organic": false,
+        "slots": {
+          "body": "android",
+          "headwear": "neural-crown",
+          "outfit": "hoodie",
+          "aura": "neon",
+          "handheld": "cyber-katana",
+          "hair": "silver",
+          "eyes": "scanner",
+          "background": "matrix-rain",
+          "accent": "azure"
+        }
+      },
+      "portrait": "/api/forge/art/arch-ghost.png",
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "ghost",
+          "organic": false,
+          "slots": {
+            "body": "android",
+            "headwear": "neural-crown",
+            "outfit": "hoodie",
+            "aura": "neon",
+            "handheld": "cyber-katana",
+            "hair": "silver",
+            "eyes": "scanner",
+            "background": "matrix-rain",
+            "accent": "azure"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 70,
+        "power": 70,
+        "iq": 70
+      },
+      "createdAt": 1784498851925,
+      "updatedAt": 1784498851925
+    },
+    "op_11e8a06c_1784498851973": {
+      "id": "op_11e8a06c_1784498851973",
+      "tokenId": 24,
+      "owner": "demo",
+      "codename": "m",
+      "archetype": "ghost",
+      "model": "SHADDAI",
+      "rarity": "epic",
+      "look": {
+        "archetype": "ghost"
+      },
+      "portrait": "/api/forge/art/arch-ghost.png",
+      "brain": {
+        "tier": "light",
+        "brainId": "ollama-local",
+        "persona": "You are m, a SHADDAI Ghost operative."
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "ghost"
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 70,
+        "power": 70,
+        "iq": 70
+      },
+      "createdAt": 1784498851973,
+      "updatedAt": 1784498851973
     }
   }
 }

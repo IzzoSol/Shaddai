@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 8,
+  "nextTokenId": 10,
   "operatives": [
     {
       "tokenId": 7,
@@ -25,6 +25,56 @@
       },
       "image": "/api/forge/image/forge-7.png",
       "at": 1783480230383
+    },
+    {
+      "tokenId": 8,
+      "codename": "Test",
+      "owner": "demo",
+      "rarity": "epic",
+      "archetype": "artisan",
+      "buildHash": "2e0d277b",
+      "build": {
+        "archetype": "artisan",
+        "organic": true,
+        "slots": {
+          "body": "humanoid",
+          "headwear": "mage-hood",
+          "outfit": "leaf-woven-mantle",
+          "aura": "neon",
+          "handheld": "coffee-cup",
+          "hair": "natural",
+          "eyes": "normal",
+          "background": "neon-city",
+          "accent": "gold"
+        }
+      },
+      "image": "/api/forge/art/arch-artisan.png",
+      "at": 1784428691910
+    },
+    {
+      "tokenId": 9,
+      "codename": "m",
+      "owner": "demo",
+      "rarity": "epic",
+      "archetype": "ghost",
+      "buildHash": "11e8a06c",
+      "build": {
+        "archetype": "ghost",
+        "organic": false,
+        "slots": {
+          "body": "android",
+          "headwear": "neural-crown",
+          "outfit": "hoodie",
+          "aura": "neon",
+          "handheld": "cyber-katana",
+          "hair": "silver",
+          "eyes": "scanner",
+          "background": "matrix-rain",
+          "accent": "azure"
+        }
+      },
+      "image": "/api/forge/art/arch-ghost.png",
+      "at": 1784498851914
     }
   ]
 }

@@ -1,0 +1,40 @@
+{
+  "errorsAfterSweep": [],
+  "seamDBG": {
+    "p": 0.8,
+    "pMol": 1,
+    "pWater": 1,
+    "pDesert": 0.6333638863428048,
+    "pDome": 0.41176470588235303,
+    "yaw": 0,
+    "pitch": 0,
+    "dragging": false
+  },
+  "seamMeanLum": 12.36,
+  "domeDBG": {
+    "p": 0.95,
+    "pMol": 1,
+    "pWater": 1,
+    "pDesert": 0.9083409715857012,
+    "pDome": 0.8529411764705881,
+    "yaw": 0,
+    "pitch": 0,
+    "dragging": false
+  },
+  "domeMeanLum": 29.98,
+  "ab": {
+    "beforeMs": 649.9,
+    "afterMs": 469.4,
+    "deltaPct": -27.8,
+    "allBefore": [
+      649.9,
+      null,
+      516.8
+    ],
+    "allAfter": [
+      null,
+      null,
+      469.4
+    ]
+  }
+}

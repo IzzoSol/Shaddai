@@ -1,0 +1,132 @@
+{
+  "offices": {
+    "local": {
+      "officeId": "office_local",
+      "ownerUserId": "local",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 0,
+      "cityCoords": {
+        "col": 22,
+        "row": 20
+      },
+      "visibility": "private",
+      "verified": true,
+      "createdAt": "2026-07-20T20:02:31.230Z",
+      "updatedAt": "2026-07-20T20:02:31.230Z"
+    },
+    "guest-hr13vjr3": {
+      "officeId": "office_guest-hr13vjr3",
+      "ownerUserId": "guest-hr13vjr3",
+      "name": "Test 1",
+      "regionId": "shaddai-city",
+      "slot": 1,
+      "cityCoords": {
+        "col": 11,
+        "row": 4
+      },
+      "visibility": "public-showroom",
+      "verified": true,
+      "createdAt": "2026-07-21T15:47:46.303Z",
+      "updatedAt": "2026-07-22T17:22:50.461Z",
+      "preset": "command-loft"
+    },
+    "SHD-GAME-4878": {
+      "officeId": "office_SHD-GAME-4878",
+      "ownerUserId": "SHD-GAME-4878",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 3,
+      "cityCoords": {
+        "col": 21,
+        "row": 4
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-21T23:13:54.507Z",
+      "updatedAt": "2026-07-21T23:13:54.507Z"
+    },
+    "SHD-OFF-6230": {
+      "officeId": "office_SHD-OFF-6230",
+      "ownerUserId": "SHD-OFF-6230",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 4,
+      "cityCoords": {
+        "col": 26,
+        "row": 4
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-22T04:33:14.044Z",
+      "updatedAt": "2026-07-22T04:33:14.044Z"
+    },
+    "SHD-WALK-2159": {
+      "officeId": "office_SHD-WALK-2159",
+      "ownerUserId": "SHD-WALK-2159",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 5,
+      "cityCoords": {
+        "col": 31,
+        "row": 4
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-22T04:45:24.159Z",
+      "updatedAt": "2026-07-22T04:45:24.159Z"
+    },
+    "guest-h78vydosmrwcpsvg": {
+      "officeId": "office_guest-h78vydosmrwcpsvg",
+      "ownerUserId": "guest-h78vydosmrwcpsvg",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 6,
+      "cityCoords": {
+        "col": 36,
+        "row": 4
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-22T17:24:04.452Z",
+      "updatedAt": "2026-07-22T17:25:56.058Z"
+    },
+    "7PpVWZ9hnxOYbQh0c1kC8KSXPkR2": {
+      "officeId": "office_7PpVWZ9hnxOYbQh0c1kC8KSXPkR2",
+      "ownerUserId": "7PpVWZ9hnxOYbQh0c1kC8KSXPkR2",
+      "name": "Z",
+      "regionId": "shaddai-city",
+      "slot": 10,
+      "cityCoords": {
+        "col": 6,
+        "row": 9
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-22T23:03:50.615Z",
+      "updatedAt": "2026-07-22T23:14:43.204Z"
+    },
+    "offuser_new2": {
+      "officeId": "office_offuser_new2",
+      "ownerUserId": "offuser_new2",
+      "name": "My Command Office",
+      "regionId": "shaddai-city",
+      "slot": 8,
+      "cityCoords": {
+        "col": 46,
+        "row": 4
+      },
+      "visibility": "private",
+      "preset": "command-loft",
+      "verified": true,
+      "createdAt": "2026-07-22T23:14:14.743Z",
+      "updatedAt": "2026-07-22T23:14:14.743Z"
+    }
+  },
+  "slots": 9
+}

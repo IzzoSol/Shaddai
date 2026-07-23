@@ -1,0 +1,12 @@
+[
+  {
+    "id": "grass-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/grass.jpg",
+    "strength": 0.6,
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/grass-hd.jpg",
+    "body": "Extreme macro of a living meadow at golden-blue hour, camera at ground level looking slightly upward. Foreground: thousands of individual blades of grass razor-sharp, each catching thin emerald and gold rim-light. Scattered small six-petal wildflowers echoing the Seed of Life, centers glowing faint cyan. Dew droplets as tiny lenses. Background falls to deep black-green with gold firefly bokeh. One faint circular sacred-geometry sigil etched in the haze behind. Photoreal macro, f/1.4, volumetric rays."
+  }
+]

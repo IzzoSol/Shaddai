@@ -1,0 +1,1 @@
+{"fp0.66":{"maxd":0,"mean":0,"pctDiff":0},"fp0.72":{"maxd":0,"mean":0,"pctDiff":0}}

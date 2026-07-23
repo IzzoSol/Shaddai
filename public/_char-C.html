@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Voxel Character C — STYLIZED / DYNAMIC · code-only</title>
+<style>
+  :root { --bg:#0d1017; --panel:#141924; --ink:#cfe3f2; --dim:#7d8ea3; --grn:#00ff88; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Segoe UI',system-ui,sans-serif; }
+  header { padding:16px 22px; border-bottom:1px solid #202838; }
+  header h1 { margin:0; font-size:16px; letter-spacing:.5px; }
+  header h1 b { color:var(--grn); }
+  header p { margin:5px 0 0; font-size:12px; color:var(--dim); max-width:900px; line-height:1.5; }
+  .wrap { padding:18px 22px 40px; }
+  .stage { background:radial-gradient(120% 90% at 50% 20%, #1b2333 0%, #0f141d 70%);
+    border:1px solid #202838; border-radius:12px; padding:10px;
+    box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  canvas { display:block; width:100%; height:auto; border-radius:8px; image-rendering:pixelated; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-size:12px; color:var(--dim); }
+  .legend b { color:var(--ink); }
+  .tag { display:inline-block; padding:2px 8px; border:1px solid #2a3346; border-radius:20px;
+    color:var(--grn); font-size:11px; letter-spacing:.4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SHADDAI · <b>Voxel Character C</b> — STYLIZED / DYNAMIC <span class="tag">$0 · no API · no assets</span></h1>
+  <p>Same slim voxel rig, pushed for polish: rounded silhouette corners, ambient-occlusion bands where
+  arms/legs meet the torso, a soft contact shadow, and a gentle 3/4 corner-on tilt so you read two faces
+  of every body. One rig — outfit, hair, glasses, beard, dress, hat and held item are just data.</p>
+</header>
+<div class="wrap">
+  <div class="stage"><canvas id="c"></canvas></div>
+  <div class="legend">
+    <span><b>1 rig · many skins</b> — each character = one data object</span>
+    <span><b>Cosmetic slots</b> — hair/hat, glasses, beard, emblem, dress</span>
+    <span><b>Item slot</b> — basketball / blade</span>
+    <span><b>Polish</b> — rounded edges · AO · 3-tone cel · soft shadow</span>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ============================================================================
+// PIXEL-CORE C — stylized/dynamic voxel atom
+// ============================================================================
+const TW = 88, TH = 44;                       // 2:1 iso tile
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let DPR = Math.min(window.devicePixelRatio || 1, 2);
+let CSSW = 0, CSSH = 560, OX = 0, OY = 0;
+
+function resize() {
+  CSSW = Math.min(document.querySelector('.stage').clientWidth - 20, 1180);
+  canvas.style.width = CSSW + 'px'; canvas.style.height = CSSH + 'px';
+  canvas.width = CSSW * DPR; canvas.height = CSSH * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  OX = CSSW * 0.5; OY = 150;
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const f = amt < 0 ? 0 : 255, t = Math.abs(amt);
+  r = Math.round((f - r) * t + r); g = Math.round((f - g) * t + g); b = Math.round((f - b) * t + b);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function iso(col, row) { return [OX + (col - row) * TW / 2, OY + (col + row) * TH / 2]; }
+function P(pts) {
+  ctx.beginPath(); ctx.moveTo(Math.round(pts[0][0]), Math.round(pts[0][1]));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(Math.round(pts[i][0]), Math.round(pts[i][1]));
+  ctx.closePath();
+}
+
+// ----------------------------------------------------------------------------
+// THE STYLIZED ISOMETRIC VOXEL
+//   * 3-tone cel: lit TOP, mid-dark LEFT face, darkest RIGHT face (light @ UL 45)
+//   * rounded silhouette: corners eased with tiny bevel notches instead of hard points
+//   * top-face highlight gradient (subtle) for a "polished plastic" read
+//   * opts.hull strokes a crisp 1px darker silhouette
+//   * opts.aoTop paints a faint AO band into the TOP of this box (limb-meets-torso)
+// ----------------------------------------------------------------------------
+function box(col, row, w, d, h, top, opts) {
+  opts = opts || {};
+  const cx = OX + (col - row) * TW / 2, cy = OY + (col + row) * TH / 2;
+  const dx = (dc, dr) => (dc - dr) * TW / 2, dy = (dc, dr) => (dc + dr) * TH / 2;
+  const hw = w / 2, hd = d / 2;
+  const back = [cx+dx(-hw,-hd), cy+dy(-hw,-hd)], right = [cx+dx(hw,-hd), cy+dy(hw,-hd)];
+  const front = [cx+dx(hw,hd), cy+dy(hw,hd)],   left  = [cx+dx(-hw,hd), cy+dy(-hw,hd)];
+  const up = p => [p[0], p[1] - h];
+  const tB = up(back), tR = up(right), tF = up(front), tL = up(left);
+
+  const leftC  = opts.left  || shade(top, -0.20);
+  const rightC = opts.right || shade(top, -0.36);
+
+  // LEFT face (mid) + AO gradient near the bottom for grounded feel
+  const lg = ctx.createLinearGradient(tL[0], tL[1], left[0], left[1]);
+  lg.addColorStop(0, shade(leftC, 0.06)); lg.addColorStop(0.7, leftC); lg.addColorStop(1, shade(leftC, -0.14));
+  ctx.fillStyle = lg; P([left, front, tF, tL]); ctx.fill();
+
+  // RIGHT face (dark)
+  const rg = ctx.createLinearGradient(tR[0], tR[1], right[0], right[1]);
+  rg.addColorStop(0, shade(rightC, 0.05)); rg.addColorStop(0.7, rightC); rg.addColorStop(1, shade(rightC, -0.14));
+  ctx.fillStyle = rg; P([front, right, tR, tF]); ctx.fill();
+
+  // TOP face (lit) with a soft UL->DR highlight sweep = polished sheen
+  const tg = ctx.createLinearGradient(tB[0], tB[1], tF[0], tF[1]);
+  tg.addColorStop(0, shade(top, 0.12)); tg.addColorStop(0.55, top); tg.addColorStop(1, shade(top, -0.05));
+  ctx.fillStyle = tg; P([tB, tR, tF, tL]); ctx.fill();
+
+  // AO band painted into the top (used where a limb/head sits ON the torso)
+  if (opts.aoTop) {
+    ctx.save(); P([tB, tR, tF, tL]); ctx.clip();
+    ctx.fillStyle = 'rgba(0,0,0,' + opts.aoTop + ')';
+    P([tB, tR, tF, tL]); ctx.fill();
+    ctx.restore();
+  }
+
+  if (opts.hull) {
+    ctx.strokeStyle = opts.hull === true ? 'rgba(0,0,0,0.30)' : opts.hull;
+    ctx.lineWidth = 1; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    P([tB, tR, right, front, left, tL]); ctx.stroke();
+    // front vertical seam separates the two lit faces
+    ctx.beginPath(); ctx.moveTo(Math.round(tF[0]), Math.round(tF[1]));
+    ctx.lineTo(Math.round(front[0]), Math.round(front[1])); ctx.stroke();
+  }
+  // subtle top-edge highlight (rounded-corner illusion) along the two lit ridges
+  if (opts.gloss !== false) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.11)'; ctx.lineWidth = 1; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(Math.round(tL[0]), Math.round(tL[1]));
+    ctx.lineTo(Math.round(tB[0]), Math.round(tB[1]));
+    ctx.lineTo(Math.round(tR[0]), Math.round(tR[1]));
+    ctx.stroke();
+  }
+}
+function boxL(col, row, w, d, h, color, lift, opts) {
+  const save = OY; OY -= lift; box(col, row, w, d, h, color, opts); OY = save;
+}
+function tile(col, row, color) {
+  const [cx, cy] = iso(col, row);
+  ctx.fillStyle = color;
+  P([[cx, cy-TH/2],[cx+TW/2, cy],[cx, cy+TH/2],[cx-TW/2, cy]]); ctx.fill();
+  ctx.strokeStyle = shade(color, -0.12); ctx.lineWidth = 1;
+  P([[cx, cy-TH/2],[cx+TW/2, cy],[cx, cy+TH/2],[cx-TW/2, cy]]); ctx.stroke();
+}
+
+// ============================================================================
+// VOXEL CHARACTER RIG C — STYLIZED / DYNAMIC
+//   Slim, tall reference proportions (px heights, stacked):
+//     shoe 0-8 · leg 8-34 · torso 34-68 · arms 30-68 · head 68-92 · hair 92+
+//   Polish: AO band under head + at arm tops, rounded gloss ridges, 3/4 tilt is
+//   inherent to the iso box (two faces always read). Arms sit FLUSH on torso.
+// ============================================================================
+function HULL(top, ao) {
+  return { hull: true, left: shade(top,-0.18), right: shade(top,-0.34), aoTop: ao || 0 };
+}
+function legs(col, row, pants, shoe, L, s, str) {
+  const e = 0.095;
+  const stances = [[col-e + s*str, row+e + s*str], [col+e - s*str, row-e - s*str]];
+  for (const [c, r] of stances) {
+    boxL(c, r+0.05, 0.20, 0.26, 8, shoe, 0 + L, HULL(shoe));            // shoe
+    boxL(c, r, 0.17, 0.17, 26, pants, 8 + L, HULL(pants, 0.16));        // leg w/ AO where it meets torso
+  }
+}
+// arm hangs shoulder->waist, FLUSH against the torso side (slight inset so it overlaps)
+function arm(col, row, sleeve, hand, L) {
+  boxL(col, row, 0.155, 0.155, 8, hand, 30 + L, HULL(hand));            // hand
+  boxL(col, row, 0.155, 0.155, 30, sleeve, 38 + L, HULL(sleeve, 0.14)); // sleeve, AO at shoulder top
+}
+function drawCharacter(col, row, rig, t, phase) {
+  const tt = t / 1000 + (phase || 0);
+  const anim = rig.anim || 'idle';
+  const s = anim === 'walk' ? Math.sin(tt * 6) : 0;
+  const L = anim === 'walk' ? Math.abs(Math.cos(tt * 6)) * 2.2 : Math.sin(tt * 1.6) * 0.8;
+  const str = anim === 'walk' ? 0.12 : 0;
+  const skinC = rig.skin || '#f0c199', shirt = rig.shirt || '#2f6fe8';
+  const pants = rig.pants || '#2b3a4a', shoe = rig.shoe || shade(pants, -0.34);
+  const hair = rig.hair || '#33241a';
+  // arm offset: small — arms hug the torso side, overlapping it (NO floating gap)
+  const ae = 0.155;
+  const [cx, cy] = iso(col, row);
+
+  // soft layered contact shadow (two ellipses = feathered edge)
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 6, 26, 12, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 5, 19, 8.5, 0, 0, 7); ctx.fill();
+
+  // BACK arm first (behind torso) — draw right-side arm, then torso, then front arm => flush overlap
+  arm(col + ae, row - ae, shirt, skinC, L);
+
+  if (rig.dress) {
+    boxL(col, row+0.05, 0.2, 0.26, 8, shoe, 0 + L, HULL(shoe));
+    boxL(col, row, 0.44, 0.34, 26, rig.dress, 8 + L, HULL(rig.dress));   // flared skirt
+    boxL(col, row, 0.32, 0.24, 22, rig.dress, 34 + L, HULL(rig.dress, 0.10)); // slim bodice
+  } else {
+    legs(col, row, pants, shoe, L, s, str);
+    boxL(col, row, 0.40, 0.30, 34, shirt, 34 + L, HULL(shirt, 0.12));    // torso w/ AO under neck
+  }
+  // chest emblem / tie
+  if (rig.tie) { ctx.fillStyle = rig.tie;
+    ctx.fillRect(Math.round(cx)-2, Math.round(cy)-(52+L), 3, 15);
+    ctx.fillStyle = shade(rig.tie,-0.2); ctx.fillRect(Math.round(cx)-2, Math.round(cy)-(40+L), 3, 3); }
+  else if (rig.emblem) { ctx.fillStyle = rig.emblem;
+    ctx.fillRect(Math.round(cx)-3, Math.round(cy)-(52+L), 7, 7);
+    ctx.fillStyle = shade(rig.emblem,0.3); ctx.fillRect(Math.round(cx)-3, Math.round(cy)-(52+L), 3, 3); }
+
+  // FRONT arm (left side, toward viewer) — overlaps torso front-left corner => flush
+  arm(col - ae, row + ae, shirt, skinC, L);
+
+  // head (≈ torso width, no bobblehead) with AO band on its underside not needed; AO is on torso top
+  boxL(col, row, 0.38, 0.31, 23, skinC, 68 + L, HULL(skinC));
+  // face
+  const ey = cy - (68 + L) - 11;
+  ctx.fillStyle = '#241a12';
+  ctx.fillRect(Math.round(cx)-6, Math.round(ey), 3, 4);
+  ctx.fillRect(Math.round(cx)+3, Math.round(ey), 3, 4);
+  // tiny eye-shine for the premium read
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(Math.round(cx)-6, Math.round(ey), 1, 1);
+  ctx.fillRect(Math.round(cx)+3, Math.round(ey), 1, 1);
+  if (rig.glasses) { ctx.strokeStyle = '#12151b'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(Math.round(cx)-8, Math.round(ey)-2, 6, 6);
+    ctx.strokeRect(Math.round(cx)+2, Math.round(ey)-2, 6, 6);
+    ctx.beginPath(); ctx.moveTo(cx-2, ey+1); ctx.lineTo(cx+2, ey+1); ctx.stroke(); }
+  if (rig.beard) boxL(col, row, 0.36, 0.29, 7, rig.beardCol || '#8a6a44', 68 + L, HULL(rig.beardCol||'#8a6a44'));
+  // hair / hat
+  if (rig.hat) boxL(col, row, 0.44, 0.36, 7, rig.hat, 91 + L, HULL(rig.hat, 0.08));
+  else boxL(col, row, 0.42, 0.34, 8, hair, 91 + L, HULL(hair, 0.08));
+  if (rig.mohawk) boxL(col, row, 0.1, 0.3, 11, rig.hair, 99 + L, HULL(rig.hair));
+  // held item slot
+  const hx = cx + ae * TW * 0.5;
+  if (rig.hold === 'ball') { ctx.fillStyle = '#f2882b';
+    ctx.beginPath(); ctx.arc(hx, cy - (30 + L), 8, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.arc(hx-2.5, cy-(32.5+L), 2.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#a04e10'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hx, cy-(30+L), 8, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx-8, cy-(30+L)); ctx.lineTo(hx+8, cy-(30+L)); ctx.stroke(); }
+  else if (rig.hold === 'blade') {
+    ctx.fillStyle = '#cdefff';
+    ctx.fillRect(Math.round(hx)-1, Math.round(cy)-(58+L), 3, 30);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(Math.round(hx)-1, Math.round(cy)-(58+L), 1, 30);
+    ctx.fillStyle = '#8a6a44'; ctx.fillRect(Math.round(hx)-2, Math.round(cy)-(30+L), 5, 5); }
+}
+
+// ============================================================================
+// FOUNDRY SCENE — hero row + one walking. Same rig, all data.
+// ============================================================================
+const CAST = [
+  { name:'suit',      rig:{ shirt:'#1f3a63', pants:'#16223a', hair:'#2a1c12', glasses:true, tie:'#eef3f7' } },
+  { name:'rockstar',  rig:{ shirt:'#151515', pants:'#20242c', hair:'#e83a3a', mohawk:true, emblem:'#f2c02a' } },
+  { name:'sage',      rig:{ shirt:'#3f9e4d', pants:'#2b3a4a', skin:'#caa06f', hair:'#d8d2c8', beard:true, beardCol:'#d8d2c8' } },
+  { name:'baller',    rig:{ shirt:'#eef1f4', pants:'#e07a2f', hair:'#1c1c1c', skin:'#8a5a3a', hold:'ball' } },
+  { name:'dress',     rig:{ dress:'#e84f8f', hair:'#f2c84a', skin:'#f0c199' } },
+  { name:'ninja',     rig:{ shirt:'#111318', pants:'#111318', hat:'#0a0a0a', skin:'#caa06f', hold:'blade' } },
+];
+
+function drawFloor() {
+  for (let r = 0; r < 7; r++) for (let c = 0; c < 9; c++) {
+    const base = (c + r) % 2 ? '#26313f' : '#222c39';
+    tile(c - 4, r - 1, base);
+  }
+}
+
+const INSPECT = location.search.indexOf('inspect') >= 0;
+function frame(t) {
+  ctx.clearRect(0, 0, CSSW, CSSH);
+  if (INSPECT) {
+    drawCharacter(2, 2, { shirt:'#1f3a63', pants:'#16223a', hair:'#2a1c12', glasses:true, tie:'#eef3f7' }, t, 0);
+    requestAnimationFrame(frame); return;
+  }
+  drawFloor();
+  CAST.forEach((ch, i) => {
+    const col = 0.2 + i * 1.15, row = 5.0 - i * 1.15;
+    drawCharacter(col, row, ch.rig, t, i * 1.5);
+  });
+  const wc = ((t / 1200) % 8);
+  drawCharacter(wc - 1, 6.2 - wc + 1, { shirt:'#12b3b3', pants:'#203a5a', hair:'#e8433a', anim:'walk' }, t, 0);
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize', () => { DPR = Math.min(window.devicePixelRatio||1,2); resize(); });
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

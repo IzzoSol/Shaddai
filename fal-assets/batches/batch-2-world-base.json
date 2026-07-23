@@ -1,0 +1,42 @@
+[
+  {
+    "id": "terrain-atlas",
+    "type": "text2img",
+    "register": "pixel",
+    "size": "square_hd",
+    "out": "public/assets/world/terrain-atlas.png",
+    "body": "A clean isometric tile reference sheet, tidy rows of diamond tiles: emerald sacred-grass with faint gold Seed-of-Life etching, obsidian cracked-earth with glowing cyan veins, pale-gold sand with hairline glyphs, amethyst crystal-stone, luminous cyan water with soft ripple highlights, and a molten-lava tile of deep obsidian crust cracked by rivers of glowing gold-orange magma with tiny emerald mineral flecks. Include corner and edge transition tiles for grass-to-water, grass-to-stone, stone-to-lava. Each tile a perfect isometric diamond, top face plus two side faces, subtle AO at edges."
+  },
+  {
+    "id": "prop-cluster",
+    "type": "text2img",
+    "register": "pixel",
+    "size": "square_hd",
+    "out": "public/assets/world/prop-cluster.png",
+    "body": "An isometric prop sheet: small and large amethyst-crystal rock clusters, a glowing cyan water-droplet cluster, an emerald sacred-shrub with gold-glow berries, a charred driftwood log, a jagged obsidian mini-spire, and a mini SH-sigil obelisk. Each on its own baseline shadow, drop-ready onto any terrain tile."
+  },
+  {
+    "id": "humanoid-rig",
+    "type": "text2img",
+    "register": "pixel",
+    "size": "square_hd",
+    "out": "public/assets/world/humanoid-rig.png",
+    "body": "A neutral isometric humanoid base body, voxel-blocky proportions, shown in four rotations (front, back, left, right) plus a T-pose reference. Plain light-grey mannequin, no clothing, clearly divided into swappable regions: head, torso, legs, back-accessory slot, hand slot. Reference sheet only, flat clean lighting."
+  },
+  {
+    "id": "vehicle-grid",
+    "type": "text2img",
+    "register": "pixel",
+    "size": "landscape_4_3",
+    "out": "public/assets/world/vehicle-grid.png",
+    "body": "A tidy grid of isometric vehicles, one per cell, muted neutral base colors (charcoal, slate, bone-white): compact car, delivery van, hover-scooter, armored transport, sleek two-seater, cargo truck, motorcycle, with slight silhouette variation. Identical scale and angle across the grid, dark neutral background for contrast, no logos."
+  },
+  {
+    "id": "building-grid",
+    "type": "text2img",
+    "register": "pixel",
+    "size": "landscape_4_3",
+    "out": "public/assets/world/building-grid.png",
+    "body": "A grid of isometric building icons in flat style: small shop, two-story townhouse, mid-rise apartment, tower with antenna, domed hall, warehouse, plaza pavilion, control tower, market stall row, harbor warehouse. Neutral stone and obsidian material, no signage, consistent light direction, each on its own tile."
+  }
+]

@@ -45,5 +45,5 @@ wss.on('connection', (ws) => {
   ws.on('error', () => {});
 });
 
-const PORT = process.env.MP_PORT || 8790;
-server.listen(PORT, () => console.log('SHADDAI multiplayer live → http://localhost:' + PORT + '/_LAUNCH.html  (open in 2 tabs)'));
+const PORT = process.env.PORT || process.env.MP_PORT || 8790;   // Render sets PORT
+server.listen(PORT, '0.0.0.0', () => console.log('SHADDAI multiplayer live → http://localhost:' + PORT + '/_LAUNCH.html  (open in 2 tabs)'));

@@ -250,3 +250,5 @@
 {"ts":"2026-07-14T01:05:49.781Z","qHash":"216450b77e341e49","query":"Write an engaging social post (2-3 sentences + 2 hashtags) about this headline. Output ONLY the post: \"Donna police warn","method":"miss","hit":false,"latencyMs":54}
 {"ts":"2026-07-14T06:58:49.383Z","qHash":"bdcf5ef4eca54c51","query":"Execute your skill \"api-endpoint-builder\" now on my behalf and return the result directly.","method":"miss","hit":false,"latencyMs":60}
 {"ts":"2026-07-14T06:58:49.510Z","qHash":"bdcf5ef4eca54c51","query":"Execute your skill \"api-endpoint-builder\" now on my behalf and return the result directly.","method":"miss","hit":false,"latencyMs":22}
+{"ts":"2026-07-19T04:38:00.626Z","qHash":"b94f1a8782f569fa","query":"average of 12, 18, 30","method":"compute","hit":true,"latencyMs":19}
+{"ts":"2026-07-19T23:15:16.247Z","qHash":"004ab24c6ad51e3b","query":"You are ZEROX, the markets & intelligence agent of SHADDAI. A user is researching: \"Bitcoin\". Give a concise, insightful","method":"miss","hit":false,"latencyMs":75}

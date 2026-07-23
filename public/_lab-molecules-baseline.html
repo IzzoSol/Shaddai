@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Quantum Lattice — Malkuth · SHADDAI</title>
+<style>
+  /* ============================================================
+     QUANTUM LATTICE — "Malkuth, the seed of matter"
+     Sacred-tech cinematic opener. WebGL2 + GLSL.
+     Palette lock: obsidian #06080b · emerald #00ff9c ·
+                   gold #e8c45c · cyan #5fe0ff. Nothing else glows.
+     ============================================================ */
+  :root{
+    --obsidian:#06080b;
+    --emerald:#00ff9c;
+    --gold:#e8c45c;
+    --cyan:#5fe0ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  /* page scrolls to drive the camera; the render stage stays fixed */
+  html{background:var(--obsidian);}
+  body{width:100%;background:var(--obsidian);overflow-x:hidden;}
+  body{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color:var(--emerald);
+    cursor:crosshair;
+  }
+  #stage{position:fixed;inset:0;background:var(--obsidian);z-index:0;}
+  /* invisible tall scroll driver — its height defines the journey length */
+  #scrollDriver{position:relative;width:1px;height:1600vh;pointer-events:none;opacity:0;}
+  /* scroll hint, fades once the journey begins */
+  #scrollHint{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    z-index:3;pointer-events:none;color:var(--cyan);
+    font:11px "IBM Plex Mono",monospace;letter-spacing:.22em;opacity:.55;
+    text-shadow:0 0 18px rgba(95,224,255,.35);transition:opacity .6s ease;
+  }
+  #scrollHint .arw{display:block;text-align:center;margin-top:6px;font-size:14px;
+    color:var(--emerald);animation:bob 1.8s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(5px);opacity:1;}}
+  /* WebGL render target */
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  /* 2D HUD overlay (readout + wordmark) */
+  #hud{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+
+  /* Graceful fallback if WebGL2 is unavailable */
+  #fallback{
+    position:absolute;inset:0;display:none;place-items:center;
+    background:
+      radial-gradient(120% 90% at 50% 40%, rgba(0,255,156,.05), transparent 60%),
+      var(--obsidian);
+    text-align:center;padding:8vw;
+  }
+  #fallback .box{max-width:640px;}
+  #fallback h1{
+    font-size:clamp(22px,4vw,42px);letter-spacing:.35em;
+    color:var(--gold);font-weight:400;margin-bottom:22px;
+    text-shadow:0 0 30px rgba(232,196,92,.25);
+  }
+  #fallback p{
+    font-size:13px;line-height:2;color:rgba(95,224,255,.7);
+    letter-spacing:.14em;
+  }
+  #fallback .glyph{
+    font-size:64px;color:var(--emerald);margin-bottom:30px;
+    text-shadow:0 0 40px rgba(0,255,156,.4);opacity:.85;
+  }
+  /* faint vignette on top of everything, pure CSS, cheap */
+  #vig{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 46%, transparent 42%, rgba(2,3,5,.55) 100%);
+    mix-blend-mode:multiply;
+  }
+  .noscript-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <canvas id="hud"></canvas>
+  <div id="vig"></div>
+  <div id="fallback">
+    <div class="box">
+      <div class="glyph">&#1488;</div>
+      <h1>MALKUTH</h1>
+      <p>The quantum lattice requires WebGL2 to breathe.<br/>
+         Your vessel cannot render the volumetric field.<br/>
+         &mdash; the seed of matter rests in darkness &mdash;</p>
+    </div>
+  </div>
+</div>
+<div id="scrollHint">SCROLL TO DESCEND THROUGH SCALE<span class="arw">&#8595;</span></div>
+<div id="scrollDriver"></div>
+
+<noscript><div class="noscript-msg">JavaScript required to render the Quantum Lattice.</div></noscript>
+
+<script>
+"use strict";
+/* ================================================================
+   QUANTUM LATTICE
+   Pipeline:
+     PASS 1  scene   -> HDR-ish float FBO (RGBA16F if available)
+                        raymarched-ish point-splat lattice + DNA helix
+     PASS 2  bright  -> threshold bright pass, downsampled 1/2
+     PASS 3a blur H  -> separable gaussian (horizontal) 1/2 res
+     PASS 3b blur V  -> separable gaussian (vertical)   1/2 res
+     PASS 4  final   -> composite scene + additive bloom,
+                        + DOF (cheap depth-tint), grain,
+                        chromatic aberration, vignette, god-ray lift
+   All geometry is procedural. No external assets.
+   ================================================================ */
+
+(function(){
+
+  const glCanvas  = document.getElementById('gl');
+  const hudCanvas = document.getElementById('hud');
+  const fallback  = document.getElementById('fallback');
+
+  // ---- acquire WebGL2, degrade gracefully ---------------------
+  let gl = null;
+  try {
+    gl = glCanvas.getContext('webgl2', {
+      antialias:false, alpha:false, depth:false, stencil:false,
+      premultipliedAlpha:false, preserveDrawingBuffer:false,
+      powerPreference:'high-performance'
+    });
+  } catch(e){ gl = null; }
+
+  if(!gl){
+    fallback.style.display = 'grid';
+    console.warn('[QuantumLattice] WebGL2 unavailable — showing fallback.');
+    return; // do not throw
+  }
+
+  // float color-buffer support (for real HDR bloom). Fall back to RGBA8.
+  const extF16 = gl.getExtension('EXT_color_buffer_float');
+  const extHF  = gl.getExtension('EXT_color_buffer_half_float');
+  let HDR_INTERNAL, HDR_TYPE;
+  if(extF16){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else if(extHF){ HDR_INTERNAL = gl.RGBA16F; HDR_TYPE = gl.HALF_FLOAT; }
+  else { HDR_INTERNAL = gl.RGBA8; HDR_TYPE = gl.UNSIGNED_BYTE; }
+  // linear filtering on float textures (needed for smooth bloom)
+  gl.getExtension('OES_texture_float_linear');
+
+  // ---- shader helpers -----------------------------------------
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      const log = gl.getShaderInfoLog(s);
+      console.error('[QuantumLattice] shader compile error:\n'+log+'\n---SRC---\n'+
+        src.split('\n').map((l,i)=>(i+1)+': '+l).join('\n'));
+      throw new Error('shader compile failed');
+    }
+    return s;
+  }
+  function program(vsSrc, fsSrc){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      console.error('[QuantumLattice] link error: '+gl.getProgramInfoLog(p));
+      throw new Error('program link failed');
+    }
+    return p;
+  }
+  function uni(p){ // cache all uniform locations by name lazily
+    const cache = {};
+    return (name)=>{
+      if(!(name in cache)) cache[name] = gl.getUniformLocation(p, name);
+      return cache[name];
+    };
+  }
+
+  // fullscreen triangle
+  const quadVAO = gl.createVertexArray();
+  gl.bindVertexArray(quadVAO);
+  const quadBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+
+  const VS_FULL = `#version 300 es
+  layout(location=0) in vec2 aPos;
+  out vec2 vUv;
+  void main(){
+    vUv = aPos*0.5 + 0.5;
+    gl_Position = vec4(aPos,0.0,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 1 — SCENE (the raymarched quantum lattice + DNA helix)
+  //  Rendered fullscreen; a compact analytic scene:
+  //  - hex Seed-of-Life atom field (emerald points, gold bonds)
+  //  - drifting cyan probability haze
+  //  - rotating DNA double-helix hero, gold rungs
+  //  - electron shells + sonar pulses
+  //  Camera: slow dolly-in + gentle orbit, mouse parallax.
+  //  Writes linear HDR color; also encodes a soft depth in .a for DOF.
+  // ============================================================
+  const FS_SCENE = `#version 300 es
+  precision highp float;
+  out vec4 outColor;
+  in vec2 vUv;
+
+  uniform vec2  uRes;
+  uniform float uTime;
+  uniform vec2  uMouse;      // -1..1 eased cursor
+  uniform vec2  uMouseRaw;   // -1..1 raw cursor
+  uniform float uExcite;     // 0..1 global excitation on click/hover
+  uniform float uP;          // 0..1 eased scroll progress (whole journey)
+  uniform float uPMol;       // 0..1 remapped MOLECULE progress
+  uniform float uPWater;     // 0..1 remapped WATER progress (atoms condense -> flowing water)
+  uniform float uPDesert;    // 0..1 remapped DESERT progress (pool -> oasis -> dunes -> night stars, END)
+
+  // palette (linear-ish light colors)
+  const vec3 EMERALD = vec3(0.00, 1.00, 0.612);
+  const vec3 GOLD    = vec3(0.910,0.769,0.361);
+  const vec3 CYAN    = vec3(0.373,0.878,1.00);
+  const vec3 OBS     = vec3(0.0235,0.0314,0.0431);
+
+  // -------- hash / noise --------
+  float hash11(float p){ p=fract(p*0.1031); p*=p+33.33; p*=p+p; return fract(p); }
+  float hash21(vec2 p){
+    vec3 p3 = fract(vec3(p.xyx)*0.1031);
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.x+p3.y)*p3.z);
+  }
+  vec2  hash22(vec2 p){
+    vec3 a = fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973));
+    a += dot(a, a.yzx+33.33);
+    return fract((a.xx+a.yz)*a.zy);
+  }
+  float noise(vec2 p){
+    vec2 i=floor(p), f=fract(p);
+    vec2 u=f*f*(3.0-2.0*f);
+    float a=hash11(dot(i,vec2(1.0,57.0)));
+    float b=hash11(dot(i+vec2(1,0),vec2(1.0,57.0)));
+    float c=hash11(dot(i+vec2(0,1),vec2(1.0,57.0)));
+    float d=hash11(dot(i+vec2(1,1),vec2(1.0,57.0)));
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+  }
+  float fbm(vec2 p){
+    // 5 -> 4 octaves. Only feeds soft terms (cyan haze, water micro-facets); the
+    // dropped 5th octave is sub-perceptual there. Dune silhouette uses dfbm (kept).
+    float v=0.0, a=0.5;
+    for(int i=0;i<4;i++){ v+=a*noise(p); p*=2.02; a*=0.5; }
+    return v;
+  }
+
+  // rotation
+  mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+
+  // ============================================================
+  //  DESERT helpers (ported from lab-desert.html — preserve its
+  //  loved sand + pyramid. Uses its own hash21-based noise so the
+  //  dune field matches the original exactly.)
+  // ============================================================
+  float dnoise(vec2 p){
+    vec2 i=floor(p), f=fract(p);
+    vec2 u=f*f*(3.0-2.0*f);
+    float a=hash21(i);
+    float b=hash21(i+vec2(1,0));
+    float c=hash21(i+vec2(0,1));
+    float d=hash21(i+vec2(1,1));
+    return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+  }
+  float dfbm(vec2 p){
+    float v=0.0, a=0.5;
+    for(int i=0;i<5;i++){ v+=a*dnoise(p); p*=2.02; a*=0.5; }
+    return v;
+  }
+  // ripple state: mouse pushes luminous rings across the sand (same
+  // vocabulary as the water surface). Filled in main().
+  vec2  gRipCenter;
+  float gRipAmp;
+  // DUNE HEIGHTFIELD (world XZ -> height Y): rolling swells + wind ripples
+  float duneH(vec2 w){
+    float h = 0.0;
+    h += dfbm(w*0.12 + vec2(0.0, uTime*0.010))*3.2;
+    h += dfbm(w*0.28 - vec2(uTime*0.006, 0.0))*1.1;
+    vec2 wr = rot(0.6)*w;
+    h += sin(wr.x*2.2 + dfbm(w*0.5)*3.0)*0.10;
+    h += sin(wr.x*5.5 - uTime*0.15)*0.04;
+    float rr = length(w - gRipCenter);
+    float ring = sin(rr*1.4 - uTime*3.5) * exp(-rr*0.10) * gRipAmp;
+    h += ring*0.9;
+    return h;
+  }
+  vec3 duneN(vec2 w){
+    float e = 0.35;
+    float hL = duneH(w-vec2(e,0.0));
+    float hR = duneH(w+vec2(e,0.0));
+    float hD = duneH(w-vec2(0.0,e));
+    float hU = duneH(w+vec2(0.0,e));
+    return normalize(vec3(hL-hR, 2.0*e, hD-hU));
+  }
+  // PYRAMID SDF (Great Pyramid, ~52 deg slope) at origin
+  float sdPyramid(vec3 p, float b, float hgt){
+    p.xz = abs(p.xz);
+    float m = hgt/max(b,1e-4);
+    float d = max( (p.x)*m + p.y - hgt, (p.z)*m + p.y - hgt );
+    float base = -p.y;
+    return max(d*0.62, base);
+  }
+  float pyrCourses(float worldY){ return 0.5 + 0.5*sin(worldY*7.5); }
+
+  // ============================================================
+  //  SHARED STAR RENDERER (desert-night AND the future dome use this ONE
+  //  function so the tilt-up opens directly into the dome). Magnitude curve
+  //  makes most stars tiny/dim + a few hero stars bright; subtle twinkle on
+  //  the brighter ones only. Palette: cyan-white + a rare gold. 3 depth layers.
+  // ============================================================
+  vec3 starField(vec2 sdir, float rdy, float t){
+    vec3 acc = vec3(0.0);
+    for(int L=0; L<3; L++){
+      float fl = float(L);
+      float sc = 34.0 + fl*34.0;
+      vec2 gp = sdir*sc;
+      vec2 cell = floor(gp);
+      vec2 f = fract(gp);
+      vec2 rnd = hash22(cell + fl*17.0);
+      vec2 star = rnd*0.7 + 0.15;
+      float d = length(f - star);
+      // MAGNITUDE curve: most stars dim, a few hero stars bright.
+      float mag = pow(hash11(dot(cell,vec2(7.3,19.7))+fl), 6.0); // 0..1, skewed dim
+      float radius = mix(0.0011, 0.0026, mag);
+      float m = exp(-d*d/radius) * step(0.5, rnd.x);
+      // twinkle only on the brighter stars
+      float tw = mix(0.85, 0.55 + 0.45*sin(t*(1.2+rnd.x*2.5)+rnd.y*6.28), smoothstep(0.3,0.8,mag));
+      // cyan-white default, rare gold hero
+      vec3 sc3 = mix(mix(CYAN,vec3(1.0),0.6), GOLD, step(0.92,rnd.y)*step(0.5,mag));
+      float zenithBias = smoothstep(-0.25, 0.7, rdy);
+      acc += sc3 * m * tw * zenithBias * (0.8 + mag*2.2) * (1.0 - fl*0.22);
+    }
+    return acc;
+  }
+
+  // project a 3D point to screen with a simple perspective camera.
+  // returns vec3(screenXY, invDepthScale). w component = view z (for DOF).
+  struct Proj { vec2 uv; float scale; float z; bool front; };
+  Proj project(vec3 p, vec3 camPos, mat3 camRot, float focal){
+    vec3 v = camRot*(p-camPos);
+    Proj r; r.front = v.z>0.05;
+    float z = max(v.z, 0.05);
+    r.uv = v.xy * focal / z;
+    r.scale = focal / z;
+    r.z = v.z;
+    return r;
+  }
+
+  // additive glow disc with anamorphic bokeh flare for far atoms
+  vec3 atomGlow(vec2 uv, vec2 c, float rad, vec3 col, float bright, float bokeh){
+    vec2 d = uv - c;
+    float r = length(d);
+    // sharp core
+    float core = exp(-r*r/(rad*rad*0.18));
+    // soft halo
+    float halo = exp(-r/(rad*1.9));
+    // anamorphic horizontal streak (cinematic bokeh)
+    float streak = exp(-abs(d.y)/(rad*0.10)) * exp(-abs(d.x)/(rad*3.5)) * bokeh;
+    float g = core*1.7 + halo*0.75 + streak*0.7;
+    return col*g*bright;
+  }
+
+  // thin electron shell ring
+  float shellRing(vec2 uv, vec2 c, float R, float w){
+    float r = length(uv-c);
+    return exp(-pow((r-R)/w,2.0));
+  }
+
+  void main(){
+    vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y; // aspect-correct, center 0
+    float t = uTime;
+
+    // ---------- CAMERA : SCROLL-DRIVEN CONTINUOUS ZOOM-OUT FLIGHT ----------
+    // The journey now spans TWO scales in ONE continuous move:
+    //   pMol   0..1 : molecule zoom-out (first ~45% of scroll) — UNCHANGED feel
+    //   pWater 0..1 : atoms condense into flowing water — the END of the journey,
+    //                 the camera settles/holds gently on the glowing pool.
+    float p = clamp(uPMol, 0.0, 1.0);   // molecule uses its OWN remapped progress
+    // smootherstep the progress so the flight glides (never linear/jumpy)
+    float ps = p*p*p*(p*(p*6.0-15.0)+10.0);
+
+    // ===== MOLECULE-SCALE CAMERA (the beloved zoom-out) =====
+    // radial distance from the lattice heart: exponential growth = "through scales".
+    float dist = mix(0.85, 3.4, ps) * exp(ps*1.35);
+    // gentle breathing dolly on top so it's alive even when scroll is still
+    dist += sin(t*0.05)*0.06*(0.3+dist*0.04);
+
+    // continuous drone bank/arc: orbit angle advances with BOTH time and p,
+    // and the arc speeds up as we pull back (a slow sweeping turn, not a dolly).
+    float orbit = t*0.045 + ps*3.1 + uMouse.x*0.5;
+    // vertical travel: start low among atoms, climb so the rising DNA helix
+    // passes through frame mid-flight, then settle looking slightly down.
+    float camY = mix(-0.15, 1.05, ps) + sin(t*0.07)*0.12 + uMouse.y*0.6;
+    // bank the whole rig (roll) as it turns — drone-like
+    float roll = sin(ps*3.14159 + t*0.03)*0.16 + uMouse.x*0.10;
+
+    vec3 camPos = vec3(sin(orbit)*dist, camY, cos(orbit)*dist);
+
+    // look target lifts a touch with the helix, biased by eased mouse (steer)
+    vec3 target = vec3(uMouse.x*0.25, mix(0.0,0.35,ps) + uMouse.y*0.2, 0.0);
+    float pitch = -0.10 - ps*0.18 + uMouse.y*0.22; // tilt down more as we ascend
+
+    // ===== WATER-SCALE CAMERA (skim low over a flowing water surface) =====
+    // As the molecule pull-back finishes, the atoms condense into droplets that
+    // fall & merge into a reflective water surface. The camera drops out of the
+    // void and glides LOW over the water, continuing the continuous flight.
+    // Water plane sits at y = 0 (world). Camera skims just above it.
+    float pw = clamp(uPWater, 0.0, 1.0);
+    if(pw > 0.0001){
+      float pwe = pw*pw*pw*(pw*(pw*6.0-15.0)+10.0);       // eased water progress
+      float bDrop  = smoothstep(0.0, 0.24, pwe);          // drop from void toward water
+      float bSkim  = smoothstep(0.20, 0.86, pwe);         // long low skim across the surface
+      float bHold  = smoothstep(0.84, 1.0, pwe);          // settle & HOLD gently on the glowing water (END)
+
+      // TUNED (2026-07-17 cut): a longer, LOWER, more cinematic skim that is now the
+      // FINALE. The rig races forward across the surface (worbit advances -> caustics
+      // stream past), then at the end it eases its travel and SETTLES into a gentle
+      // hovering hold just above the glowing pool — the journey rests here.
+      float wspeed = mix(1.6, 0.55, bHold);               // travel gain eases as we settle
+      float worbit = 0.05 + pwe*wspeed + uMouse.x*0.30;   // faster drift = surface streams past
+      float wdist  = mix(8.4, 2.6, bDrop);                // come down from far
+      wdist        = mix(wdist, 3.0, bSkim);              // hold a low, close skim distance
+      wdist        = mix(wdist, 2.7, bHold);              // draw in a touch as it settles
+      wdist       += sin(t*0.05)*0.10;
+      float wcamY  = mix(4.0, 0.30, bDrop);               // descend to JUST above the water
+      wcamY        = mix(wcamY, 0.22, bSkim) + uMouse.y*0.35; // skim lower than before
+      wcamY        = mix(wcamY, 0.26, bHold);             // settle & hover just above the pool
+      wcamY       += sin(t*0.06)*0.05 + sin(t*0.13)*0.02; // subtle undulation over swells
+      // dynamic bank: roll couples to how fast we're turning (banking into travel)
+      float wroll  = sin(worbit*0.5)*0.10*(1.0-bHold*0.7) + sin(t*0.04)*0.05 + uMouse.x*0.08;
+
+      vec3 wcamPos = vec3(sin(worbit)*wdist, wcamY, cos(worbit)*wdist + 0.6);
+      float wlookY = mix(-0.9, -0.02, bDrop);             // look down at the surface
+      wlookY       = mix(wlookY, 0.05, bSkim);            // level, gaze racing along the water
+      wlookY       = mix(wlookY, 0.00, bHold);            // rest level over the pool at the end
+      // aim the look slightly AHEAD of travel so the horizon of caustics rushes in
+      float wlead  = 0.20;
+      vec3 wtarget = vec3(sin(worbit+wlead)*0.6 + uMouse.x*0.5, wlookY + uMouse.y*0.3, cos(worbit+wlead)*0.3);
+      float wpitch = mix(-0.34, -0.03, bDrop) + uMouse.y*0.2;
+
+      float wb = smoothstep(0.0, 0.32, pw);               // hand off from molecule rig
+      camPos = mix(camPos, wcamPos, wb);
+      target = mix(target, wtarget, wb);
+      pitch  = mix(pitch,  wpitch,  wb);
+      roll   = mix(roll,   wroll,   wb);
+    }
+
+    vec3 fwd = normalize(target - camPos);
+    vec3 rgt = normalize(cross(vec3(0,1,0), fwd));
+    vec3 upv = cross(fwd, rgt);
+    // apply pitch
+    upv = normalize(upv + fwd*(-pitch));
+    fwd = normalize(fwd + upv*pitch);
+    // apply roll (bank) — rotate right/up about forward
+    {
+      float cr=cos(roll), sr=sin(roll);
+      vec3 r2 = rgt*cr + upv*sr;
+      vec3 u2 = -rgt*sr + upv*cr;
+      rgt = r2; upv = u2;
+    }
+    // build view matrix for project() which does view*(p-cam)
+    mat3 view = mat3(
+      rgt.x, upv.x, fwd.x,
+      rgt.y, upv.y, fwd.y,
+      rgt.z, upv.z, fwd.z
+    );
+    // widen field slightly as we pull back (more of the lattice fits in frame)
+    float focal = mix(1.30, 0.98, ps);
+    focal = mix(focal, 1.12, smoothstep(0.0,0.35,pw)); // settle focal for the water skim
+
+    // CLEAN (TURTLE): true obsidian void — base-plane luminance ~0, let bloom lift.
+    vec3 col = OBS*0.06; // obsidian void base, darkness dominates (was 0.35)
+    float nearestZ = 999.0;
+
+    // molFade: molecule contributions dissolve as we cross into the WATER scale.
+    // (the lattice/motes literally condense into falling droplets — see water layer)
+    float molFade = 1.0 - smoothstep(0.02, 0.40, pw);
+
+    // ---------- CYAN PROBABILITY HAZE (drifting volumetric) ----------
+    {
+      vec2 hp = uv*1.6;
+      float h = fbm(hp*1.2 + vec2(t*0.03, -t*0.02));
+      h = pow(h, 2.3);
+      float h2 = fbm(hp*2.7 - vec2(t*0.015, t*0.025));
+      float haze = h*0.55 + h2*0.25;
+      // confine haze toward center (heavy negative space at edges) — tighter now
+      haze *= smoothstep(0.85, 0.10, length(uv));
+      col += CYAN*haze*0.055; // CLEAN: dimmer + tighter haze so the void stays truly obsidian
+    }
+
+    // ---------- SEED-OF-LIFE HEX ATOM LATTICE ----------
+    // 7-circle seed of life node ring on a plane, plus a couple shells.
+    // Build node positions in 3D (a slab of hexagonal cells).
+    const int NODES = 19;
+    vec3 nodePos[NODES];
+    // central atom
+    nodePos[0]=vec3(0.0,0.0,0.0);
+    // seed-of-life inner hex (6)
+    for(int i=0;i<6;i++){
+      float a = float(i)*1.04719755 + 0.2; // 60deg
+      nodePos[1+i]=vec3(cos(a),sin(a),0.0)*1.0;
+    }
+    // outer hex ring (6) scaled + rotated, offset in z for depth
+    for(int i=0;i<6;i++){
+      float a = float(i)*1.04719755 + 0.5236;
+      nodePos[7+i]=vec3(cos(a),sin(a),0.0)*1.9 + vec3(0.0,0.0, (mod(float(i),2.0)-0.5)*0.9);
+    }
+    // a few deep far atoms for bokeh depth
+    for(int i=0;i<6;i++){
+      float a=float(i)*1.04719755;
+      nodePos[13+i]=vec3(cos(a+1.3),sin(a+1.3),0.0)*3.0 + vec3(0.0,0.0,-1.8 - float(i)*0.4);
+    }
+
+    // slow global rotation of the whole lattice about Y and Z (majestic)
+    float ly = t*0.06;
+    mat2 rY = rot(ly);
+    mat2 rZ = rot(t*0.02);
+
+    // project mouse ray to lattice plane center for excitation focus
+    // (approx: excite atoms whose screen pos is near cursor)
+    vec2 mUv = uMouse * vec2(uRes.x/uRes.y, 1.0) * 0.9;
+
+    for(int i=0;i<NODES;i++){
+      vec3 p = nodePos[i];
+      // animate: rotate in Y (xz) and gentle Z
+      vec2 xz = rY*p.xz; p.x=xz.x; p.z=xz.y;
+      vec2 xy = rZ*p.xy; p.x=xy.x; p.y=xy.y;
+      // subtle quantum jitter
+      p += 0.03*vec3(
+        sin(t*1.3+float(i)*2.1),
+        cos(t*1.1+float(i)*1.7),
+        sin(t*0.9+float(i)));
+
+      Proj pr = project(p, camPos, view, focal);
+      if(!pr.front) continue;
+      vec2 sp = pr.uv;
+
+      // per-atom excitation from cursor proximity (screen space) — VIVID reaction
+      float mdist = length(sp - mUv);
+      float excite = smoothstep(0.62,0.0,mdist)*uExcite;   // wider reach = livelier
+      float pulse = 0.5+0.5*sin(t*(2.0+excite*8.0)+float(i)*1.7);
+
+      // depth affects size + bokeh (near sharp, far only slightly softened)
+      float depth = pr.z;
+      float radBase = 0.010*pr.scale;
+      float bokeh = smoothstep(6.0,12.0,depth)*0.5; // far atoms flare only faintly
+      float rad = radBase*(1.0+bokeh*0.3+excite*0.9);      // atoms swell more toward cursor
+      float bright = (0.9+pulse*0.5)*(0.6+0.6/depth) * (1.0+excite*3.2); // bloom brighter
+
+      // hero-cluster falloff: central + inner-6 are the heroes; outer/far rings
+      // are dimmed so the field reads as ONE cluster + falloff (no uniform noise).
+      float heroW = (i<7)? 1.0 : ((i<13)? 0.62 : 0.34);
+
+      // core atom = emerald; deepest ring tinted slightly cyan
+      vec3 acol = mix(EMERALD, mix(EMERALD,CYAN,0.5), smoothstep(2.5,5.0,depth));
+      // GLASS-PLASMA 3-STOP RADIAL CORE (hot near-white-emerald center ->
+      // emerald mid -> obsidian edge) for depth. Layered additive discs.
+      vec3 hotCenter = mix(acol, vec3(0.85,1.0,0.92), 0.72);   // near-white-emerald
+      col += atomGlow(uv, sp, rad*1.9, acol*0.5, bright*0.5, bokeh)*heroW;   // obsidian-edge falloff halo
+      col += atomGlow(uv, sp, rad,     acol,     bright,     bokeh)*heroW;   // emerald mid
+      col += hotCenter * atomGlow(uv, sp, rad*0.38, acol, bright*0.85, 0.0)*heroW; // hot core
+      col += GOLD * exp(-mdist*mdist*7.0) * excite * (0.5+0.5*pulse) * 0.5;
+
+      // electron shells (≤3 hairline rings) — EXPAND ~8% toward cursor on excite,
+      // each with ONE bright orbiting electron-dot riding the ring.
+      float sc = pr.scale;
+      float R1 = (0.045 + 0.02*pulse + excite*0.11)*sc;    // shells push out farther
+      col += EMERALD*shellRing(uv, sp, R1, 0.005*sc)*(0.22+excite*1.0)*heroW;
+      float R2 = (0.085 + excite*0.16)*sc;
+      col += CYAN*shellRing(uv, sp, R2, 0.006*sc)*(0.09+excite*0.6)*(0.5+0.5*sin(t*1.2))*heroW;
+      // a THIRD finer electron-shell detail ring, only really visible when excited
+      float R3 = (0.125 + excite*0.20)*sc;
+      col += mix(CYAN,EMERALD,0.4)*shellRing(uv, sp, R3, 0.004*sc)*excite*0.55*heroW;
+      // ONE bright orbiting electron-dot per shell (hero atoms only — keep clean)
+      if(i<7){
+        float ea1 = t*1.7 + float(i)*2.3;
+        vec2  ed1 = sp + vec2(cos(ea1),sin(ea1))*R1;
+        col += mix(EMERALD,vec3(1.0),0.4) * exp(-dot(uv-ed1,uv-ed1)/(0.00010*sc*sc+1e-6)) * (0.7+excite*0.9);
+        float ea2 = -t*1.1 + float(i)*1.7;
+        vec2  ed2 = sp + vec2(cos(ea2),sin(ea2))*R2;
+        col += mix(CYAN,vec3(1.0),0.35) * exp(-dot(uv-ed2,uv-ed2)/(0.00012*sc*sc+1e-6)) * (0.5+excite*0.7);
+      }
+
+      // sonar pulse ring (expanding, faint gold) keyed off center atom
+      if(i==0){
+        float sonar = fract(t*0.22);
+        float Rs = sonar*0.9*sc + 0.02*sc;
+        float ring = shellRing(uv, sp, Rs, 0.012*sc)*(1.0-sonar);
+        col += GOLD*ring*0.35;
+      }
+      nearestZ = min(nearestZ, depth);
+    }
+
+    // ---------- MOUSE-EXCITE SPARK MOTES (2-3 short, no explosion) ----------
+    // A few tiny gold/emerald spark motes drift off the excited center toward
+    // the cursor, then ease back — punctuation, not a burst.
+    {
+      for(int s=0;s<3;s++){
+        float fs = float(s);
+        float ph = fract(t*0.5 + fs*0.37);          // 0..1 life
+        vec2 dirm = normalize(mUv + 1e-4);
+        float rad = ph*0.5;
+        vec2 sc = dirm*rad + vec2(sin(t*3.0+fs*2.0),cos(t*2.6+fs))*0.03;
+        float life = (1.0-ph)*ph*4.0;               // fade in/out
+        float d = length(uv - sc);
+        col += mix(GOLD,EMERALD,0.4) * exp(-d*d/0.00008) * life * uExcite * 0.9;
+      }
+    }
+
+    // ---------- GOLD BOND FILAMENTS (hairline, hex connectivity) ----------
+    // connect central atom to inner-6 and inner-ring neighbors.
+    // draw as thin glowing line segments in screen space.
+    {
+      // recompute needed projected points for bonds (central + inner 6)
+      vec2 sp[7];
+      for(int i=0;i<7;i++){
+        vec3 p=nodePos[i];
+        vec2 xz=rY*p.xz; p.x=xz.x; p.z=xz.y;
+        vec2 xy=rZ*p.xy; p.x=xy.x; p.y=xy.y;
+        Proj pr=project(p,camPos,view,focal);
+        sp[i]=pr.uv;
+      }
+      // helper: distance to segment
+      for(int i=1;i<7;i++){
+        // center -> ring
+        vec2 a=sp[0], b=sp[i];
+        vec2 pa=uv-a, ba=b-a;
+        float hh=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.0,1.0);
+        float d=length(pa-ba*hh);
+        // CLEAN: hairline gold filament only (thinner than before).
+        float line=exp(-d*d/ (0.00014));
+        // staggered "breathing" emerald energy pulse travelling core->core
+        float stag = float(i)*0.9;                       // per-bond phase offset
+        float flow=0.5+0.5*sin(hh*14.0 - t*3.0 + stag);
+        float breath=0.5+0.5*sin(t*0.8 + stag);          // slow overall breathe
+        col += GOLD*line*(0.11+0.06*flow)*(0.6+0.4*breath);
+        // hairline-thin bright core riding each bond
+        float coreLine = exp(-d*d/0.00003);
+        col += mix(GOLD,vec3(1.0),0.4)*coreLine*(0.08+0.06*flow);
+        // EMERALD energy pulse bead travelling core->core (the "breathing")
+        float bead = exp(-d*d/0.00004) * pow(0.5+0.5*sin(hh*6.283 - t*2.2 + stag), 6.0);
+        col += EMERALD*bead*0.22*(0.5+0.5*breath);
+        // ring-to-ring (hex perimeter) — hairline
+        int j = (i==6)?1:(i+1);
+        vec2 c=sp[j];
+        vec2 ba2=c-b; vec2 pb=uv-b;
+        float h2=clamp(dot(pb,ba2)/max(dot(ba2,ba2),1e-5),0.0,1.0);
+        float d2=length(pb-ba2*h2);
+        col += GOLD*exp(-d2*d2/0.00016)*0.08;
+        col += mix(GOLD,vec3(1.0),0.4)*exp(-d2*d2/0.00003)*0.05; // hairline perimeter core
+      }
+    }
+
+    // ---------- DNA DOUBLE-HELIX HERO (rising through lattice) ----------
+    // Two intertwined strands along Y, gold rungs, emerald base atoms.
+    {
+      // helix samples: 46 -> 34. The fade windows cull the top/bottom anyway, so
+      // the visible strand count is unchanged; only off-screen samples are cut.
+      const int STEPS = 34;
+      float helixR = 0.62;
+      float pitchY = 0.20;
+      float baseY = -2.4;
+      float spin = t*0.5;
+      float rise = mod(t*0.15, pitchY*2.0);
+      // lean toward cursor (helix responds)
+      float lean = uMouse.x*0.25;
+
+      for(int k=0;k<STEPS;k++){
+        float fk=float(k);
+        float y = baseY + fk*pitchY - rise;
+        float ang = fk*0.55 + spin;
+        // two strands 180 apart
+        for(int s=0;s<2;s++){
+          float aa = ang + float(s)*3.14159265;
+          vec3 p = vec3(cos(aa)*helixR + lean*(y*0.2), y, sin(aa)*helixR);
+          // lattice global rot applies subtly
+          vec2 xz=rot(t*0.03)*p.xz; p.x=xz.x; p.z=xz.y;
+
+          Proj pr=project(p,camPos,view,focal);
+          if(!pr.front) continue;
+          float depth=pr.z;
+          float sc=pr.scale;
+          float fade = smoothstep(2.6,-2.2,y);          // fade top
+          fade *= smoothstep(-2.6,-1.6,y+0.6);          // fade bottom emerge
+          if(fade<=0.001) continue;
+
+          // excitation for helix atoms near cursor too
+          float mdist=length(pr.uv - mUv);
+          float ex = smoothstep(0.5,0.0,mdist)*uExcite;
+
+          float rad=0.009*sc*(1.0+ex*0.6);
+          float br=(0.9+0.4*sin(t*2.0+fk))*fade*(0.7+0.6/depth)*(1.0+ex*1.8);
+          float bokeh=smoothstep(6.5,12.0,depth)*0.4;
+          vec3 acol = (s==0)? EMERALD : mix(EMERALD,CYAN,0.35);
+          col += atomGlow(uv, pr.uv, rad, acol, br*0.9, bokeh);
+          // tiny shell
+          col += acol*shellRing(uv,pr.uv,(0.03+ex*0.03)*sc,0.005*sc)*0.2*fade;
+
+          nearestZ=min(nearestZ, depth);
+        }
+        // gold rung between the two strands (every other step)
+        if(mod(fk,2.0)<0.5){
+          float y = baseY + fk*pitchY - rise;
+          float ang = fk*0.55 + spin;
+          vec3 p1=vec3(cos(ang)*helixR + lean*(y*0.2), y, sin(ang)*helixR);
+          vec3 p2=vec3(cos(ang+3.14159265)*helixR + lean*(y*0.2), y, sin(ang+3.14159265)*helixR);
+          vec2 xz1=rot(t*0.03)*p1.xz; p1.x=xz1.x; p1.z=xz1.y;
+          vec2 xz2=rot(t*0.03)*p2.xz; p2.x=xz2.x; p2.z=xz2.y;
+          Proj a=project(p1,camPos,view,focal);
+          Proj b=project(p2,camPos,view,focal);
+          if(a.front&&b.front){
+            float fade=smoothstep(2.6,-2.2,y)*smoothstep(-2.6,-1.6,y+0.6);
+            vec2 pa=uv-a.uv, ba=b.uv-a.uv;
+            float hh=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.0,1.0);
+            float d=length(pa-ba*hh);
+            // hairline gold base-pair rung
+            col += GOLD*exp(-d*d/0.00009)*0.20*fade;
+            // bright base-pair node at EACH end of the rung
+            col += mix(GOLD,vec3(1.0),0.4)*exp(-dot(uv-a.uv,uv-a.uv)/0.00006)*0.30*fade;
+            col += mix(GOLD,vec3(1.0),0.4)*exp(-dot(uv-b.uv,uv-b.uv)/0.00006)*0.30*fade;
+          }
+        }
+      }
+    }
+
+    // ---------- FAINT HAIRLINE GOLD GLYPHS deep in bokeh (subtle) ----------
+    {
+      vec2 gp = uv*3.0;
+      gp += vec2(t*0.01,-t*0.008);
+      vec2 cell = floor(gp);
+      vec2 f = fract(gp)-0.5;
+      float seed = hash11(dot(cell,vec2(12.9,78.2)));
+      if(seed>0.86){
+        // draw a faint alchemical stroke (cross / triangle-ish)
+        float g = exp(-abs(f.x)*30.0)*step(abs(f.y),0.28);
+        g += exp(-abs(f.y)*30.0)*step(abs(f.x),0.28);
+        float depthFade = smoothstep(0.9,0.2,length(uv));
+        col += GOLD*g*0.010*depthFade;
+      }
+    }
+
+    // ---------- HAIRLINE SEED-OF-LIFE / METATRON GEOMETRY (deep field) ----------
+    // A faint, slowly rotating sacred-geometry watermark sits far behind the
+    // lattice: seven overlapping hairline circles (Seed of Life) + thin Metatron
+    // connectors. Subtle (~1-2% lift), depth-faded, so the field stays ~80% dark.
+    {
+      // 2-LAYER PARALLAX Seed-of-Life watermark (front layer drifts faster on
+      // mouse for depth). Total lift kept UNDER 8% — a whisper only.
+      float sogTotal = 0.0;
+      for(int LP=0; LP<2; LP++){
+        float fl = float(LP);
+        float par = (LP==0)? 1.0 : 0.55;               // back layer larger, slower
+        float scl = mix(2.05, 3.0, fl);
+        // front layer (LP=0) parallaxes MORE with the eased mouse
+        vec2 gp = rot(t*0.02*(1.0+fl*0.4))*(uv - uMouse*(0.12*(1.0-fl))) * scl;
+        float sog = 0.0;
+        for(int i=0;i<7;i++){
+          vec2 c = (i==0)? vec2(0.0) : vec2(cos(float(i)*1.04719755), sin(float(i)*1.04719755));
+          float d = abs(length(gp - c) - 1.0);         // hairline circle edge
+          sog += exp(-d*d*300.0);                        // finer hairline
+        }
+        for(int i=0;i<6;i++){
+          vec2 a = vec2(cos(float(i)*1.04719755), sin(float(i)*1.04719755));
+          vec2 b = vec2(cos(float(i+2)*1.04719755), sin(float(i+2)*1.04719755));
+          vec2 pa=gp-a, ba=b-a;
+          float hh=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.0,1.0);
+          float dl=length(pa-ba*hh);
+          sog += exp(-dl*dl*560.0)*0.5;
+        }
+        sogTotal += sog * par;
+      }
+      float depthFade = smoothstep(1.35,0.15,length(uv));
+      // brighten a touch near the cursor so mousing over reveals the geometry
+      float near = smoothstep(0.9,0.0,length(uv - uMouse*0.9));
+      // CLEAN: capped so the watermark never exceeds ~7% — a whisper.
+      col += mix(GOLD,EMERALD,0.35) * sogTotal * depthFade * (0.010 + near*0.016 + uExcite*0.008) * molFade;
+    }
+
+    // ---------- GOD-RAY LIFT (very subtle radial toward center) ----------
+    // CLEAN (TURTLE): the broad gold-tinted radial was washing the whole frame
+    // olive-green (off obsidian). Tightened + emerald-biased + halved so the void
+    // stays true obsidian; gold no longer keys the background.
+    {
+      float gr = pow(smoothstep(0.7,0.0,length(uv)),4.0);
+      col += mix(EMERALD,GOLD,0.18)*gr*0.010;
+    }
+
+    // ---------- DRIFTING STAR-MOTES ("more beyond" — the next scale) ----------
+    // Fade in as we finish the molecule pull-back; these motes will BECOME the
+    // falling seeds/pollen of the life scale (handled in the life layer).
+    {
+      float reveal = smoothstep(0.55, 1.0, uPMol);   // far end of molecule flight
+      if(reveal > 0.001){
+        for(int L=0; L<3; L++){
+          float fl = float(L);
+          float sc = 5.0 + fl*4.0;
+          vec2 gp = uv*sc + vec2(t*(0.006+fl*0.004), -t*0.004) + fl*7.3;
+          vec2 cell = floor(gp);
+          vec2 fpos = fract(gp);
+          vec2 rnd  = hash22(cell + fl*31.0);
+          vec2 star = rnd*0.7 + 0.15;
+          float d = length(fpos - star);
+          float tw = 0.5 + 0.5*sin(t*(1.0+rnd.x*2.0) + rnd.y*6.28);
+          float m = exp(-d*d/0.0012) * step(0.55, rnd.x);
+          vec3 sc3 = mix(CYAN, vec3(1.0), 0.3);
+          col += sc3 * m * tw * reveal * (0.06 - fl*0.012);
+        }
+        col = mix(col, col*0.72 + OBS*0.15, reveal*0.35);
+      }
+    }
+
+    // ================================================================
+    //  fade the whole molecule scene out as we cross into the WATER scale
+    // ================================================================
+    col = mix(OBS*0.06, col, molFade);
+
+    // ================================================================
+    //  WATER SCALE — "the waters gather" (SCENE 02)
+    //  Atoms condense into DROPLETS that fall & merge into a dark reflective
+    //  water surface. Cool cyan/emerald cymatic Flower-of-Life caustic ripple
+    //  rings crawl over obsidian depth; gold glints; drifting bioluminescent
+    //  motes. MOUSE ripples the surface — rings emanate from the cursor and
+    //  distort the caustic grid, settling back when still. Camera skims low.
+    // ================================================================
+    if(uPWater > 0.0001){
+      float pw2 = clamp(uPWater,0.0,1.0);
+      float pwE = pw2*pw2*pw2*(pw2*(pw2*6.0-15.0)+10.0);  // eased
+      float dropB  = smoothstep(0.0, 0.30, pwE);          // droplets condense & fall
+      float poolB  = smoothstep(0.14, 0.62, pwE);         // water surface forms
+      float flowB  = smoothstep(0.40, 1.0, pwE);          // full flowing caustic surface
+
+      vec3 water = vec3(0.0);
+
+      // water horizon: the reflective surface fills the lower frame as it forms.
+      float why = mix(0.42, 0.10, poolB) + uMouse.y*0.08;
+
+      // ---- CONDENSING DROPLETS (the atoms literally become water, falling) ----
+      // strongest at the seam, thinning as the pool takes over. Emerald/cyan
+      // droplet cores with a bright specular pip — they streak DOWN and splash.
+      {
+        float amt = (1.0 - poolB*0.75);
+        for(int L=0; L<3; L++){
+          float fl=float(L);
+          float sc=6.5+fl*5.0;
+          // gentle sideways sway + gravity fall; mouse wake nudges them
+          vec2 mw = (uv - uMouse*vec2(uRes.x/uRes.y,1.0)*0.7);
+          float swirl = 0.05*exp(-dot(mw,mw)*3.0);
+          vec2 gp = uv*sc + vec2(sin(uv.y*3.0+t*0.5)*0.12 + swirl, t*(0.55+fl*0.18));
+          vec2 cell=floor(gp); vec2 f=fract(gp);
+          vec2 rnd=hash22(cell+fl*19.0);
+          vec2 pos=rnd*0.7+0.15;
+          float d=length((f-pos)*vec2(1.0,1.6));         // vertically stretched (droplet)
+          float m=exp(-d*d/0.0016)*step(0.60,rnd.x);
+          // bright specular pip at the top of the droplet
+          float pip=exp(-length(f-pos-vec2(0.0,0.10))*40.0)*step(0.60,rnd.x);
+          vec3 dc = mix(CYAN, EMERALD, rnd.y);
+          float fade = smoothstep(why-0.15, why+1.2, uv.y); // in the air, above surface
+          water += dc*m*dropB*fade*(0.06-fl*0.010);
+          water += vec3(0.8,0.95,1.0)*pip*dropB*fade*(0.04-fl*0.008);
+        }
+      }
+
+      // ---- THE WATER SURFACE (below the water horizon) ----
+      {
+        float below = smoothstep(why+0.02, why-0.02, uv.y); // 1 below the surface
+        // obsidian depth beneath — cool, but with a subtle EMERALD SUB-SURFACE
+        // GLOW rising from the depths so the pool reads as luminous, not near-black.
+        float depthGlow = smoothstep(0.9, 0.0, (why - uv.y));      // brighter toward foreground
+        vec3 depthCol = OBS*0.7 + CYAN*0.035 + EMERALD*0.045*depthGlow;
+        water += depthCol * below * poolB * 0.85;
+        // gentle emerald bloom bed deep in the water (glowing sacred pool)
+        float subGlow = (0.5+0.5*sin(t*0.4 + (why-uv.y)*3.0));
+        water += EMERALD * below * poolB * subGlow * 0.05;
+
+        // perspective: map screen-y below the horizon to a receding surface coord.
+        // farther from camera (near horizon) = compressed; near foreground = spread.
+        float depthT = clamp((why - uv.y), 0.0, 1.6);      // 0 at horizon
+        float persp  = 1.0/(depthT+0.28);                  // fake perspective scale
+        vec2 surf = vec2(uv.x*persp*1.4, depthT*persp*2.2 + t*0.10); // flowing toward camera
+
+        // ---- MOUSE RIPPLE : rings emanate STRONGLY from the cursor on the surface ----
+        // project the cursor onto the same surface space.
+        float mDepthT = clamp((why - uMouse.y*0.5), 0.02, 1.6);
+        float mPersp  = 1.0/(mDepthT+0.28);
+        vec2  mSurf   = vec2(uMouse.x*mPersp*1.4*(uRes.x/uRes.y), mDepthT*mPersp*2.2 + t*0.10);
+        float rr = length(surf - mSurf);
+        // VIVID expanding ring driven by excitation; big amplitude, luminous, and
+        // it settles back when still (uExcite decays). Twin-frequency = livelier wake.
+        float rEnv   = exp(-rr*1.7);                       // reaches a little farther now
+        float ripple = (sin(rr*22.0 - t*5.5) + 0.5*sin(rr*44.0 - t*8.0))
+                       * rEnv * (0.55 + uExcite*2.6);
+        // the ripple DISTORTS the caustic sample coords (settling grid) — strongly
+        vec2 rdir = normalize(surf - mSurf + 1e-4);
+        surf += rdir * ripple * 0.14 * below;              // deeper warp around cursor
+
+        // ---- TWO FLOWER-OF-LIFE CAUSTIC PASSES (counter-rotating, additive) ----
+        // ONE coherent breathing mandala at TWO scales instead of ring-soup.
+        // Each pass = a 7-node Flower-of-Life (center + 6 ring circles); the two
+        // passes rotate in OPPOSITE directions at different scales -> refractive
+        // depth. Cheap: 7 sin() per pass.
+        float caus = 0.0;
+        // fine procedural normal-noise so bloom catches thousands of tiny facets
+        float facet = fbm(surf*7.0 + vec2(t*0.12,-t*0.09));
+        vec2 surfF = surf + (facet-0.5)*0.06;              // micro-displace sample
+        for(int pass=0; pass<2; pass++){
+          float fp = float(pass);
+          float rotp = (pass==0)? t*0.05 : -t*0.055;       // COUNTER-rotating
+          float scl  = (pass==0)? 1.0 : 1.7;               // different scale
+          float amp  = (pass==0)? 1.0 : 0.7;
+          float ca = 0.0;
+          for(int i=0;i<7;i++){
+            float a = float(i)*1.04719755 + rotp;          // 60deg Flower-of-Life
+            vec2 c = (i==0)? vec2(0.0) : vec2(cos(a),sin(a))*0.9;
+            float rC = length(surfF*scl - c);
+            ca += sin(rC*9.0 - t*1.6);
+          }
+          caus += (ca/7.0)*amp;
+        }
+        caus *= 0.6;
+        // breathing scale pulse so the whole mandala gently inhales/exhales
+        float breathe = 0.85 + 0.15*sin(t*0.5);
+        float causW = caus * breathe;
+        // sharpen the crests into CRISP, high-contrast caustic filaments so the
+        // sacred Flower-of-Life ripple clearly GLOWS.
+        float causC = pow(max(causW*0.5+0.5, 0.0), 2.4);
+        // grid distortion from the same fine facet field (crisp facets, not mush)
+        causC *= 0.7 + facet*0.6;
+        // luminous cyan caustics with emerald undertone; crisp + BRIGHT
+        vec3 causCol = mix(CYAN, EMERALD, 0.28);
+        water += causCol * causC * below * flowB * 0.72;
+        // fine normal-noise HIGHLIGHT FACETS: thousands of tiny crisp cyan glints
+        // that bloom catches (procedural, cheap) — clamped to emerald<->cyan.
+        float facetHi = pow(max(facet,0.0),3.0) * pow(max(causW*0.5+0.5,0.0),4.0);
+        water += mix(CYAN,EMERALD,0.3) * facetHi * below * flowB * 0.5;
+        // bright inner-crest highlight (thin cyan filament riding each crest) —
+        // clamped OFF pure-white to avoid blowout (kept in emerald<->cyan band).
+        float crestHi = pow(max(causW*0.5+0.5,0.0), 9.0);
+        water += mix(CYAN,vec3(0.8,1.0,0.95),0.5) * crestHi * below * flowB * 0.42;
+        // ---- VIVID cursor-reaction crest rings right on the mouse ripple ----
+        float ripHi = exp(-abs(fract(rr*3.5 - t*0.8)-0.5)*8.0) * exp(-rr*1.5) * (0.5+uExcite*1.6);
+        water += CYAN * ripHi * below * flowB * 1.2;
+        // bright luminous core bloom directly under the cursor (excited water)
+        float mCore = exp(-rr*rr*3.2) * (0.4+uExcite*1.8);
+        water += mix(CYAN,EMERALD,0.35) * mCore * below * flowB * 0.7;
+
+        // ---- GOLD SPECULAR TWINKLES (5-8 PLACED on caustic-crest nodes only) ----
+        // The gold sacred-motif here: precise twinkles sit on Flower-of-Life node
+        // intersections, each with its own slow shimmer. NO fbm blowout field.
+        {
+          for(int gi=0; gi<7; gi++){
+            float a = float(gi)*0.8975979 + t*0.05;         // spread 7 around
+            float rr2 = 0.42 + 0.30*hash11(float(gi)*3.1);
+            vec2  gc = vec2(cos(a),sin(a))*rr2;             // node on the mandala
+            gc += 0.05*vec2(sin(t*0.3+float(gi)),cos(t*0.27+float(gi)));
+            float gd = length(surf - gc);
+            float tw = pow(0.5+0.5*sin(t*(1.5+hash11(float(gi))*2.0)+float(gi)*2.1), 3.0);
+            // only fire where a caustic crest actually is (intersection)
+            float onCrest = smoothstep(0.55,0.9,causW*0.5+0.5);
+            water += GOLD * exp(-gd*gd/0.0018) * tw * onCrest * below * flowB * 0.42;
+          }
+        }
+
+        // ---- backlit rim at the water horizon (surface catches the void light) ----
+        float rim = exp(-depthT*depthT/0.015);
+        water += mix(CYAN,EMERALD,0.4) * rim * poolB * below * 0.20;
+        // a second, brighter emerald sheen line just below the horizon
+        float rim2 = exp(-depthT*depthT/0.045);
+        water += EMERALD * rim2 * poolB * below * 0.10;
+      }
+
+      // ---- DRIFTING BIOLUMINESCENT MOTES (FEWER + SLOWER + PRECIOUS) ----
+      // CLEAN: rarer field (<~40 on screen), slow drift, each with a soft bloom
+      // halo and an OCCASIONAL single bright pulse.
+      {
+        for(int L=0; L<2; L++){                            // 3 -> 2 layers (fewer)
+          float fl=float(L);
+          float sc=7.0+fl*5.0;
+          vec2 mw = (uv - uMouse*vec2(uRes.x/uRes.y,1.0)*0.7);
+          vec2 swirl = 0.05*vec2(-mw.y,mw.x)*exp(-dot(mw,mw)*4.0);
+          // slower drift
+          vec2 gp = uv*sc + vec2(t*(0.010+fl*0.008), sin(t*0.18+fl)*0.06) + swirl*sc;
+          vec2 cell=floor(gp); vec2 f=fract(gp);
+          vec2 rnd=hash22(cell+fl*27.0);
+          vec2 pos=rnd*0.7+0.15;
+          float d=length(f-pos);
+          float tw=0.5+0.5*sin(t*(1.2+rnd.x*1.6)+rnd.y*6.28);
+          float m=exp(-d*d/0.0011)*step(0.82,rnd.y);       // HIGHER threshold = rare
+          vec3 mc = mix(CYAN,EMERALD,rnd.x);
+          // soft bloom halo around each mote
+          float halo = exp(-d/0.06)*step(0.82,rnd.y);
+          water += mc*(m*1.0 + halo*0.20)*tw*poolB*0.12;
+          // occasional single bright pulse (rare, per-cell phased)
+          float pulse = pow(0.5+0.5*sin(t*0.7 + rnd.x*30.0), 16.0);
+          water += mix(mc,vec3(0.85,1.0,0.95),0.4)*exp(-d*d/0.00020)*pulse*step(0.82,rnd.y)*poolB*0.35;
+        }
+      }
+      // ---- in-shader EDGE VIGNETTE so the pool glows from center ----
+      water *= mix(0.55, 1.0, smoothstep(1.25, 0.35, length(uv*vec2(uRes.x/uRes.y,1.0))));
+
+      // water fades IN across the molecule seam. It no longer HOLDS as the
+      // finale — the desert beat pulls back from this same glowing pool to
+      // reveal it as a sacred oasis at the base of the great Pyramid.
+      float waterMix = smoothstep(0.02, 0.30, uPWater);
+      col += water * waterMix;
+    }
+
+    // ================================================================
+    //  DESERT SCALE — "the drone climbs into night" (SCENE 03, FINALE)
+    //  The glowing water we were skimming is revealed to be a sacred OASIS
+    //  pool in the sand at the base of a great Egyptian PYRAMID. The drone
+    //  pulls BACK and UP: pyramid rim-lit in gold, vast obsidian dunes
+    //  (sand ripples with the SAME mouse vocabulary as the water), then it
+    //  banks over the dunes and pitches UP as day turns to NIGHT, rising
+    //  toward a star-field (sets up a future constellation dome — not built).
+    //  Ported from lab-desert.html; obsidian-disciplined, gold only as
+    //  rim-light. Rendered as its own raymarched drone camera and
+    //  cross-faded over the water across the shared oasis pool.
+    // ================================================================
+    if(uPDesert > 0.0001){
+      float pd = clamp(uPDesert, 0.0, 1.0);
+      float pds = pd*pd*pd*(pd*(pd*6.0-15.0)+10.0);   // eased desert beat
+
+      // ---- beat weights along the single continuous move ----
+      float bReveal= smoothstep(0.0,  0.22, pd);        // pull back off the oasis pool
+      float bPyr   = 1.0 - smoothstep(0.04, 0.34, pd);  // pyramid dominant early
+      float bOut   = smoothstep(0.06, 0.36, pd);        // zoom OUT to reveal desert
+      float bGlide = smoothstep(0.30, 0.66, pd);        // low aerial glide over dunes
+      float bTilt  = smoothstep(0.62, 0.92, pd);        // pitch UP toward sky
+      float bNight = smoothstep(0.58, 1.0,  pd);        // day -> night
+
+      // ===== DRONE CAMERA (aerial, banking) =====
+      vec2  pyrXZ = vec2(0.0, 0.0);
+      float pyrB  = 26.0;
+      float pyrH  = 34.0;
+      // oasis pool sits just in front of the pyramid base
+      vec2  oasisXZ = vec2(6.0, 34.0);
+
+      // START very low & close over the oasis pool (continues the water skim),
+      // then climb high over the dunes as we pull back.
+      float camAlt = mix(6.0, 96.0, pds) + sin(t*0.06)*1.2 + uMouse.y*10.0;
+      float camRad = mix(30.0, 240.0, pds);
+      float camAng = 0.7 + pds*1.7 + t*0.012 + uMouse.x*0.5;
+      float glideZ = bGlide * (t*3.0);
+
+      vec3 camPosD = vec3(
+        oasisXZ.x + sin(camAng)*camRad*mix(0.35,1.0,bOut) + uMouse.x*8.0,
+        camAlt,
+        oasisXZ.y - cos(camAng)*camRad*mix(0.35,1.0,bOut) - glideZ
+      );
+
+      // look target: at the oasis/pyramid early; onto the dunes ahead; then UP.
+      vec3 lookDunes = camPosD + vec3(sin(camAng)*-30.0, -18.0, -60.0);
+      vec3 lookPyr   = vec3(pyrXZ.x, mix(14.0, 6.0, pds), pyrXZ.y);
+      // early on, gaze rests on the oasis pool itself (continuity with water)
+      vec3 lookPool  = vec3(oasisXZ.x, mix(1.0, 8.0, bReveal), oasisXZ.y);
+      vec3 target = mix(mix(lookPool, lookPyr, bReveal), lookDunes, bOut);
+      target.y = mix(target.y, camPosD.y + 110.0, bTilt);
+      target.xz += uMouse.xy * mix(6.0, 22.0, bGlide);
+      target.y  += uMouse.y * 14.0 * (1.0 - bTilt);
+
+      vec3 fwd = normalize(target - camPosD);
+      vec3 rgt = normalize(cross(vec3(0,1,0), fwd));
+      if(length(rgt) < 1e-3) rgt = vec3(1,0,0);
+      rgt = normalize(rgt);
+      vec3 upv = cross(fwd, rgt);
+      float rollD = sin(camAng*0.5)*0.16*(1.0-bTilt*0.7) + uMouse.x*0.12 + sin(t*0.05)*0.03;
+      { float cr=cos(rollD), sr=sin(rollD);
+        vec3 r2 = rgt*cr + upv*sr;
+        vec3 u2 = -rgt*sr + upv*cr;
+        rgt=r2; upv=u2; }
+
+      float focalD = mix(1.12, 1.30, bOut);
+      focalD = mix(focalD, 1.10, bTilt);
+      vec3 rd = normalize(fwd*focalD + rgt*uv.x + upv*uv.y);
+
+      // ---- mouse ripple world center: project cursor onto ground plane ----
+      {
+        vec3 crd = normalize(fwd*focalD + rgt*uMouse.x + upv*uMouse.y);
+        float td = (crd.y < -0.01) ? (-camPosD.y / crd.y) : 1e5;
+        td = clamp(td, 0.0, 600.0);
+        gRipCenter = (camPosD + crd*td).xz;
+        gRipAmp = 0.20 + uExcite*0.80;   // baseline ambient + mouse energy
+      }
+
+      // ===== RAYMARCH the dune heightfield + pyramid =====
+      vec3 dcol = OBS*0.4;
+      float hitDist = -1.0;
+      vec3  hitPos  = vec3(0.0);
+      bool  hitSand = false;
+      bool  hitPyr  = false;
+      float pyrY    = 0.0;
+      {
+        // ADAPTIVE SPHERE-TRACE: larger, distance-proportional strides with an
+        // early-out the instant the ray dips below the heightfield; the fine
+        // normal/detail refine (was a per-step k-loop) now runs ONLY on the hit.
+        // 96 steps -> 52 steps; step grows with distance so far dunes need fewer.
+        float tt = 1.0;
+        float prevGap = 1.0;
+        const int STEPS = 52;
+        for(int i=0;i<STEPS;i++){
+          vec3 pos = camPosD + rd*tt;
+          if(pos.y > 130.0 && rd.y > 0.0) break;
+          float terr = duneH(pos.xz);
+          float gap  = pos.y - terr;
+          if(gap < 0.0){
+            // 3-iter bisection refine (down from 5) — only on the hit
+            float t0 = tt - max(1.0, tt*0.02);
+            float t1 = tt;
+            for(int k=0;k<3;k++){
+              float tm = 0.5*(t0+t1);
+              vec3 pm = camPosD + rd*tm;
+              float gm = pm.y - duneH(pm.xz);
+              if(gm > 0.0) t0 = tm; else t1 = tm;
+            }
+            tt = 0.5*(t0+t1);
+            hitPos = camPosD + rd*tt;
+            hitDist = tt; hitSand = true;
+            break;
+          }
+          prevGap = gap;
+          // adaptive stride: grow with distance (larger initial step, refine near
+          // surface via the gap term). Far-plane early-out.
+          tt += max(0.9, gap*0.6) * (1.0 + tt*0.004);
+          if(tt > 520.0) break;
+        }
+      }
+      {
+        // Pyramid march: 64 -> 36 steps. It already early-outs against the sand
+        // hit (below) and the far plane; sdPyramid is a real SDF so a full-stride
+        // sphere-trace stays crisp with fewer steps.
+        float tt = 1.0;
+        const int PS = 36;
+        for(int i=0;i<PS;i++){
+          vec3 pos = camPosD + rd*tt;
+          vec3 lp = pos - vec3(pyrXZ.x, 0.0, pyrXZ.y);
+          float d = sdPyramid(lp, pyrB, pyrH);
+          if(d < 0.05){
+            if(!hitSand || tt < hitDist){
+              hitPyr = true; hitSand = false;
+              hitDist = tt; hitPos = pos; pyrY = pos.y;
+            }
+            break;
+          }
+          tt += max(0.2, d*0.98);   // near-full SDF stride (crisp, fewer steps)
+          if(tt > 420.0) break;
+          if(hitSand && tt > hitDist) break;
+        }
+      }
+
+      // ===== SKY: cold day -> true-obsidian night + shared star renderer =====
+      vec3 skyCol;
+      {
+        float h = clamp(rd.y*0.5 + 0.5, 0.0, 1.0);
+        // CLEAN: NO orange/warm sunset gradient. Day sky = cold obsidian with a
+        // faint cyan lift + a disciplined thin gold horizon rim (rim-light only).
+        vec3 dayHorizon = OBS*1.5 + CYAN*0.10 + GOLD*0.06;   // thin cold horizon
+        vec3 dayMid     = OBS*1.2 + CYAN*0.05;
+        vec3 dayHigh    = OBS*0.9 + CYAN*0.03;
+        vec3 day = mix(dayHorizon, dayMid, smoothstep(0.0,0.45,h));
+        day = mix(day, dayHigh, smoothstep(0.4,1.0,h));
+        // CLEAN: night -> TRUE obsidian at zenith (no grey haze lift).
+        vec3 nightHorizon = OBS*1.15 + CYAN*0.08;
+        vec3 nightHigh    = OBS*0.6;                          // true obsidian zenith
+        vec3 night = mix(nightHorizon, nightHigh, smoothstep(0.0,0.5,h));
+        skyCol = mix(day, night, bNight);
+        // cold key glint low on horizon (never a warm sun flood)
+        float sun = pow(max(0.0, 1.0 - abs(h-0.30)*4.5), 3.0);
+        skyCol += mix(GOLD,vec3(0.8,0.95,1.0),0.4) * sun * mix(0.28, 0.06, bNight);
+
+        // ---- TIGHT CYAN-WHITE MOON-GLOW low on the horizon (night key) ----
+        // Same single cold light vector as pyramid/sand rim.
+        {
+          vec3 moonDir = normalize(vec3(-0.55, 0.16, 0.78));
+          float md = max(dot(rd, moonDir), 0.0);
+          float moon = pow(md, 220.0);                        // tight disc
+          float glow = pow(md, 12.0);                         // soft halo
+          // POLISH: a tighter low bloom lobe sitting right on the horizon — a
+          // crisp cyan-white moon-glow bloom, NOT a wash (high exponent = small).
+          float lowBand = smoothstep(0.14, 0.0, abs(h-0.24));  // hug the horizon line
+          float bloom = pow(md, 40.0) * lowBand;               // tight, low, bright
+          vec3 moonC = mix(CYAN, vec3(1.0), 0.55);
+          skyCol += moonC * (moon*1.6 + glow*0.10 + bloom*0.22) * bNight;
+        }
+
+        // ---- FINER GRADED COLD MOON-HAZE at the dune/sky seam ----
+        // A thin, disciplined cold falloff hugging the horizon so the band where
+        // dunes meet sky reads soft — kept UNDER palette (no sky-lightening wash).
+        {
+          float seam = smoothstep(0.10, 0.0, abs(h-0.20));     // tight horizon band
+          skyCol += mix(CYAN, EMERALD, 0.25) * seam * mix(0.020, 0.030, bNight);
+        }
+
+        // ---- SHARED STAR RENDERER (cross-fades UP; feeds the future dome) ----
+        float starF = smoothstep(0.20, 0.80, bNight);         // fades UP, not popped
+        if(starF > 0.001){
+          vec2 sdir = vec2(atan(rd.x, rd.z), asin(clamp(rd.y,-1.0,1.0)));
+          skyCol += starField(sdir, rd.y, t) * starF;
+          // faint cool Milky-Way dust whisper (sub-luminance, never competes)
+          float band = dfbm(sdir*6.0 + vec2(0.0,t*0.01));
+          band = pow(band,2.6)*smoothstep(0.0,0.7,rd.y);
+          skyCol += mix(CYAN,EMERALD,0.35) * band * starF * 0.10;
+        }
+      }
+      dcol = skyCol;
+
+      // ===== SAND (dunes) =====
+      if(hitSand){
+        vec2 w = hitPos.xz;
+        vec3 N = duneN(w);
+        // FINE WIND-RIPPLE normal texture: perturb the normal with a fast, fine
+        // directional ripple so the cold rim grazes thousands of hairline crests.
+        {
+          vec2 wr = rot(0.6)*w;
+          float rip = sin(wr.x*9.0 + dfbm(w*1.4)*3.0)*0.5 + sin(wr.x*22.0 - t*0.4)*0.22;
+          float ripD = cos(wr.x*9.0)*0.5;                   // slope of the ripple
+          N = normalize(N + vec3(ripD*0.16, 0.0, 0.0));
+          N = normalize(N + vec3(0.0,0.0, sin(wr.y*17.0)*0.05));
+        }
+        // ONE light direction: cold cyan-white moonlight key (shared vector)
+        vec3 sunDir = normalize(vec3(-0.55, mix(0.28,0.16,bNight), 0.78));
+        float diff = max(dot(N, sunDir), 0.0);
+        float rim  = pow(1.0 - max(dot(N, -rd),0.0), 2.5);
+        // base sand: DARK obsidian sculpted by COLD moonlight only (no warm flood,
+        // no ambient bounce). Diffuse is cyan-white, never beige.
+        vec3 coldKey = mix(CYAN, vec3(1.0), 0.5);
+        vec3 sand = OBS*1.2 + coldKey*vec3(0.028,0.034,0.05)*(0.25+diff*0.9);
+        // gold ONLY as a thin crest rim-light (leading edge)
+        sand += GOLD * rim * mix(0.7, 0.30, bNight) * (0.3+diff*0.7);
+        // slow surface shimmer catching the cold key on fine crests
+        float shimmer = pow(max(0.0, sin(w.x*4.0 + dfbm(w*0.6)*4.0 + t*0.3)),8.0);
+        sand += coldKey * shimmer * 0.06 * diff;
+        float sheen = dfbm(w*0.35 + 12.0);
+        sand += EMERALD * pow(sheen,3.0) * 0.07 * (0.4+0.5*diff);
+
+        // ---- MOONLIGHT ON THE SAND (cold cyan-white — the headline detail) ----
+        // Reuses the EXISTING hit normal N + the shared cold moon key. No new
+        // marches: analytic grazing spec + a broad sheen lobe + grain sparkle.
+        {
+          // grazing-angle GLINT: half-vector spec of the moon key against the
+          // view, tightened by grazing (Fresnel-ish) so crests facing the moon
+          // flash cold cyan-white — richer than a plain rim, at the crests.
+          vec3 hV   = normalize(sunDir - rd);
+          float spec = pow(max(dot(N, hV), 0.0), 42.0);        // tight spec lobe
+          float graze= pow(1.0 - max(dot(N,-rd),0.0), 1.5);    // stronger at grazing
+          sand += coldKey * spec * graze * (0.10 + 0.35*diff) * mix(0.5,1.0,bNight);
+          // broad low-intensity moon-SHEEN that tracks across the nearest dune
+          // faces (wide soft spec lobe) — sand stays dark, just kissed by light.
+          float sheenLobe = pow(max(dot(N, sunDir), 0.0), 3.0);
+          sand += coldKey * sheenLobe * 0.030 * mix(0.4,1.0,bNight);
+          // moonlit-GRAIN sparkle scatter across the LIT sand (cheap hash grain,
+          // gated by diffuse so only moon-facing grains catch light) — fine + cold.
+          float grain = hash21(floor(w*22.0));
+          float spk   = pow(smoothstep(0.985, 1.0, grain + shimmer*0.02), 1.0);
+          sand += mix(CYAN,vec3(1.0),0.6) * spk * diff * 0.10 * bNight;
+        }
+
+        // ---- SACRED OASIS POOL: the glowing water we skimmed, in the sand ----
+        // a luminous emerald/cyan pool at the pyramid base — shared object.
+        float poolR = length(w - oasisXZ);
+        float pool  = smoothstep(9.0, 3.0, poolR);        // pool disc
+        float poolCaus = 0.5+0.5*sin(poolR*2.2 - t*1.6);  // caustic echo of the water
+        vec3 poolCol = OBS*0.6 + EMERALD*0.12 + CYAN*0.08*poolCaus;
+        poolCol += mix(CYAN,EMERALD,0.3) * pow(poolCaus,3.0) * 0.18;
+        sand = mix(sand, poolCol, pool);
+
+        // ---- MOUSE RIPPLE on the sand: shallower/FASTER water-like rings ----
+        float rr = length(w - gRipCenter);
+        float ring = sin(rr*2.1 - t*5.2) * exp(-rr*0.12) * gRipAmp;   // faster+shallower
+        float crest = pow(max(ring,0.0), 1.5);
+        dcol = sand;
+        dcol += mix(CYAN,EMERALD,0.35) * crest * (0.5 + uExcite*1.8);
+        dcol += mix(CYAN,vec3(1.0),0.4) * exp(-rr*rr*0.02) * (0.25+uExcite*1.4) * 0.6;
+        dcol += CYAN * exp(-abs(fract(rr*0.8 - t*0.8)-0.5)*7.0) * exp(-rr*0.11) * gRipAmp * 0.8;
+        // brief SPARSE gold dust kick-up on the ripple crest (excite-driven)
+        {
+          float dustN = dfbm(w*3.0 + vec2(t*0.6,-t*0.4));
+          float dust = pow(smoothstep(0.6,0.95,dustN),3.0) * crest;
+          dcol += GOLD * dust * uExcite * 1.4;
+        }
+
+        // CLEAN: minimal distance haze (no fog greying) — night stays obsidian.
+        float haze = smoothstep(160.0, 520.0, hitDist);
+        dcol = mix(dcol, skyCol, haze*mix(0.7,0.55,bNight));
+        // POLISH: the FARTHEST silhouette melts toward obsidian (distant-dune
+        // haze) so the horizon reads as receding depth, not a hard cut.
+        float farMelt = smoothstep(360.0, 540.0, hitDist);
+        dcol = mix(dcol, OBS*0.5, farMelt*mix(0.45,0.65,bNight));
+      }
+
+      // ===== PYRAMID (sacred-geometry apex) =====
+      if(hitPyr){
+        vec3 lp = hitPos - vec3(pyrXZ.x,0.0,pyrXZ.y);
+        float e=0.15;
+        vec3 n = normalize(vec3(
+          sdPyramid(lp+vec3(e,0,0),pyrB,pyrH)-sdPyramid(lp-vec3(e,0,0),pyrB,pyrH),
+          sdPyramid(lp+vec3(0,e,0),pyrB,pyrH)-sdPyramid(lp-vec3(0,e,0),pyrB,pyrH),
+          sdPyramid(lp+vec3(0,0,e),pyrB,pyrH)-sdPyramid(lp-vec3(0,0,e),pyrB,pyrH)
+        ));
+        // ONE cold cyan-white moonlight key: lights two faces, one stays obsidian.
+        vec3 sunDir = normalize(vec3(-0.55, mix(0.28,0.16,bNight), 0.78));
+        float diff = max(dot(n, sunDir), 0.0);
+        float lit  = smoothstep(0.02, 0.35, diff);          // is this a lit face?
+        float rim  = pow(1.0 - max(dot(n,-rd),0.0), 2.0);
+        vec3 coldKey = mix(CYAN, vec3(1.0), 0.5);
+        // per-course tonal STEP (clean courses, not mushy noise)
+        float course = pyrCourses(pyrY);
+        float courseStep = floor(course*6.0)/6.0;           // crisp tonal steps
+        float coursesLine = smoothstep(0.86,1.0,course);    // crisp edge line
+        // base stone: dark obsidian + COLD moonlight rim on the lit faces;
+        // shadow face stays near-obsidian.
+        vec3 stone = OBS*1.3 + coldKey*vec3(0.03,0.036,0.05)*(0.2+diff*0.9);
+        stone *= 0.9 + courseStep*0.16;
+
+        // ---- FINE ANALYTIC MASONRY / WEATHERED BRICKS (lit faces only) ----
+        // Layered UNDER the course steps: a 2D brick grid keyed to face position.
+        // Horizontal courses (the existing pyrCourses cadence) x vertical joints,
+        // with a half-brick offset per course. Purely analytic + one cheap hash;
+        // NO loops, NO extra marches. Subtle, crisp, works with the sharpen.
+        {
+          // face-tangent horizontal coord: which face are we on? pick the axis
+          // most orthogonal to the surface normal so bricks run ALONG the slope.
+          float faceH = (abs(n.x) > abs(n.z)) ? lp.z : lp.x;   // along-face position
+          float cN = pyrY * 7.5 / 6.2831853;                    // course index (matches pyrCourses)
+          float row = floor(cN);
+          float offs = mod(row, 2.0) * 0.5;                     // half-brick stagger per course
+          float bw = 3.0;                                       // brick width (world units)
+          float bx = faceH / bw + offs;
+          float col2 = floor(bx);
+          float fx = fract(bx);                                 // 0..1 across a brick
+          float fy = fract(cN);                                 // 0..1 up a course
+          // soft recessed MORTAR lines = cheap fake AO (dark thin band at borders)
+          float mortarX = smoothstep(0.0, 0.06, fx) * smoothstep(0.0, 0.06, 1.0-fx);
+          float mortarY = smoothstep(0.0, 0.09, fy) * smoothstep(0.0, 0.09, 1.0-fy);
+          float mortar  = mortarX * mortarY;                    // 1 on brick face, ->0 in the joint
+          // per-brick tonal variation via a cheap hash (weathering)
+          float bh = hash21(vec2(col2, row));
+          float weather = 0.82 + bh*0.30;                       // per-brick albedo jitter
+          // apply: darken mortar (recessed AO), vary brick tone — LIT faces only
+          float mask = lit;
+          stone *= mix(1.0, mix(0.55, weather, mortar), mask);  // joints go dark, faces vary
+          // occasional worn/chipped edge catches a hairline COLD moonlight glint
+          float chip = step(0.90, hash21(vec2(col2*1.7, row*2.3)+11.0));
+          float chipEdge = chip * (1.0 - mortarX) * mortarY;    // on the vertical joint edge
+          stone += coldKey * chipEdge * (0.10 + diff*0.22) * mask;
+        }
+
+        // gold ONLY on the leading edge (rim), stronger by day, thin at night
+        stone += GOLD * rim * mix(0.9,0.35,bNight) * (0.3+diff*0.7);
+        // faint gold seam on the LIT face only (per-course), hairline weight
+        stone += GOLD * coursesLine * 0.09 * lit;
+        // apex glint: intensifies as we tilt UP (bTilt)
+        float apex = smoothstep(pyrH-2.5, pyrH, pyrY);
+        float apexGlint = apex * (1.0 + bTilt*1.6);
+        stone += GOLD * apexGlint * (1.0 + 0.5*sin(t*2.0)) * 1.2;
+        stone += mix(CYAN,vec3(1.0),0.5) * apex * 0.5 * (0.5+bTilt);
+        // CLEAN: minimal haze, night stays obsidian
+        float haze = smoothstep(160.0, 460.0, hitDist);
+        dcol = mix(stone, skyCol, haze*mix(0.6,0.45,bNight));
+      }
+
+      // faint techno-city glow band at the far horizon during the glide
+      {
+        float horizonBand = exp(-abs(rd.y - 0.0)*22.0);
+        float cityDir = smoothstep(-0.3, 0.6, rd.x);
+        float flick = 0.7 + 0.3*dfbm(vec2(rd.x*20.0, t*0.5));
+        float cityAmt = horizonBand * cityDir * bGlide * (1.0-bTilt) * flick;
+        dcol += mix(EMERALD,CYAN,0.5) * cityAmt * 0.16;
+        dcol += GOLD * horizonBand * cityDir * bGlide * flick * 0.05;
+      }
+      // gentle god-ray lift toward the horizon (day only) — upper-left biased
+      {
+        float gr = pow(smoothstep(1.2,0.0,length(uv - vec2(-0.35,-0.15))),3.0);
+        dcol += GOLD * gr * 0.04 * (1.0-bNight);
+      }
+
+      // ---- SEAM: cross-fade water -> desert across the shared oasis pool ----
+      // Over the first slice of the desert beat both are on screen; the desert
+      // reveal pulls back off the same glowing pool so there is NO cut.
+      float desMix = smoothstep(0.0, 0.16, uPDesert);
+      col = mix(col, dcol, desMix);
+
+      // far-DOF depth: let the desert drive it once it dominates
+      nearestZ = mix(nearestZ, mix(2.0, 8.0, clamp((hitDist>0.0?(hitDist-40.0)/460.0:1.0),0.0,1.0)), desMix);
+    }
+
+    // encode approx depth of nearest emitter into alpha for DOF pass
+    // map view-z ~ [1.5 .. 8] to [0..1]; focus plane picked in final.
+    float depthEnc = clamp((nearestZ-1.2)/6.0, 0.0, 1.0);
+
+    outColor = vec4(max(col,0.0), depthEnc);
+  }`;
+
+  // ============================================================
+  //  PASS 2 — BRIGHT PASS (threshold, keep only luminous bits)
+  // ============================================================
+  const FS_BRIGHT = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform float uThreshold;
+  void main(){
+    vec3 c = texture(uScene, vUv).rgb;
+    float l = dot(c, vec3(0.299,0.587,0.114));
+    float k = smoothstep(uThreshold, uThreshold+0.6, l);
+    outColor = vec4(c*k, 1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 3 — SEPARABLE GAUSSIAN BLUR (9-tap), direction via uDir
+  // ============================================================
+  const FS_BLUR = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uTex;
+  uniform vec2 uDir;      // texel-scaled direction
+  void main(){
+    // 9-tap gaussian
+    float w[5];
+    w[0]=0.227027; w[1]=0.1945946; w[2]=0.1216216; w[3]=0.054054; w[4]=0.016216;
+    vec3 acc = texture(uTex, vUv).rgb * w[0];
+    for(int i=1;i<5;i++){
+      vec2 o = uDir*float(i);
+      acc += texture(uTex, vUv+o).rgb * w[i];
+      acc += texture(uTex, vUv-o).rgb * w[i];
+    }
+    outColor = vec4(acc,1.0);
+  }`;
+
+  // ============================================================
+  //  PASS 4 — FINAL COMPOSITE
+  //   scene + additive bloom, DOF haze, chromatic aberration,
+  //   film grain, vignette, gentle filmic tonemap.
+  // ============================================================
+  const FS_FINAL = `#version 300 es
+  precision highp float;
+  out vec4 outColor; in vec2 vUv;
+  uniform sampler2D uScene;
+  uniform sampler2D uBloom;
+  uniform vec2  uRes;
+  uniform vec2  uSceneTexel;   // 1/sceneWidth, 1/sceneHeight (scaled res)
+  uniform float uTime;
+  uniform vec2  uMouse;
+
+  // ACES-ish filmic tonemap (keeps highlights from clipping harshly)
+  vec3 tonemap(vec3 x){
+    const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;
+    return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
+  }
+
+  void main(){
+    vec2 uv = vUv;
+    // ---- chromatic aberration: sample scene with tiny per-channel offset
+    // stronger toward edges (edge chromatic aberration).
+    vec2 dir = uv-0.5;
+    float edge = dot(dir,dir);
+    float ca = (0.0015 + edge*0.006);
+    vec3 scene;
+    scene.r = texture(uScene, uv + dir*ca).r;
+    scene.g = texture(uScene, uv).g;
+    scene.b = texture(uScene, uv - dir*ca).b;
+
+    // ---- UNSHARP-MASK SHARPEN (restores crisp edges, esp. when renderScale<1)
+    // 4-neighbor cross at ±1 scene-texel. sharp = c + amt*(c - avgNeighbors).
+    // Subtle amount + clamp so it never rings or over-brightens; hue preserved
+    // (same op on all channels, result clamped to >=0).
+    {
+      vec3 n0 = texture(uScene, uv + vec2( uSceneTexel.x, 0.0)).rgb;
+      vec3 n1 = texture(uScene, uv + vec2(-uSceneTexel.x, 0.0)).rgb;
+      vec3 n2 = texture(uScene, uv + vec2(0.0,  uSceneTexel.y)).rgb;
+      vec3 n3 = texture(uScene, uv + vec2(0.0, -uSceneTexel.y)).rgb;
+      vec3 avg = (n0+n1+n2+n3)*0.25;
+      float amt = 0.32;
+      scene = max(scene + amt*(scene - avg), 0.0);
+    }
+
+    // depth from scene.a -> DOF: only the VERY farthest softens (crisp > dreamy)
+    float depth = texture(uScene, uv).a;
+    // focus plane fixed near-front, wide depth of field
+    float focus = 0.30;
+    // circle of confusion: near-zero except at the far extreme of the field
+    float coc = smoothstep(0.72, 1.0, depth); // only the farthest bokeh softens
+
+    vec3 bloom = texture(uBloom, uv).rgb;
+
+    // additive bloom (this is what sells the glow — KEEP it strong)
+    vec3 col = scene + bloom*1.35;
+    // DOF: minimal — a whisper of far-field softening only
+    col += bloom*coc*0.18;
+
+    // ---- god-ray-ish streaks from bloom toward center (very subtle)
+    // (cheap radial accumulation of bloom) — CLEAN: halved so bloom is not
+    // smeared across the whole frame (was lifting the obsidian void olive).
+    vec2 sdir = (0.5-uv);
+    vec3 god = vec3(0.0);
+    for(int i=0;i<6;i++){
+      float s = float(i)/6.0;
+      god += texture(uBloom, uv + sdir*s*0.12).rgb;
+    }
+    col += god*0.024;
+
+    // ---- filmic tonemap + slight lift of obsidian floor
+    col = tonemap(col*1.05);
+
+    // ---- film grain (fine, animated, low)
+    float g = fract(sin(dot(gl_FragCoord.xy + uTime*60.0, vec2(12.9898,78.233)))*43758.5453);
+    col += (g-0.5)*0.035;
+
+    // ---- vignette (darkness dominates the frame)
+    float vig = smoothstep(1.25,0.35,length((uv-0.5)*vec2(uRes.x/uRes.y,1.0)*2.0));
+    col *= mix(0.35,1.0,vig);
+
+    // subtle emerald/gold split-tone in shadows/highs (reverent grade)
+    // CLEAN: the flat shadow-tint lift was greening the whole obsidian void.
+    // Gate the emerald shadow tint OFF the deepest blacks (only lifts mid-shadows)
+    // and reduce overall strength so ~80% of the frame reads true obsidian.
+    float lum = dot(col, vec3(0.299,0.587,0.114));
+    vec3 shadowTint = vec3(0.0,0.05,0.04); // deep emerald shadow
+    vec3 highTint   = vec3(0.02,0.015,0.0);// warm gold highlight
+    float shadowGate = smoothstep(0.015, 0.10, lum); // don't tint the true void
+    col += mix(shadowTint*shadowGate, highTint, smoothstep(0.1,0.7,lum))*0.32;
+
+    // clamp black to obsidian (never pure black — keeps it cinematic)
+    // pulled down toward true obsidian so the floor is not a lifted grey-green.
+    col = max(col, vec3(0.0235,0.0314,0.0431)*0.42);
+
+    outColor = vec4(col,1.0);
+  }`;
+
+  // ---- build programs -----------------------------------------
+  const progScene  = program(VS_FULL, FS_SCENE);
+  const progBright = program(VS_FULL, FS_BRIGHT);
+  const progBlur   = program(VS_FULL, FS_BLUR);
+  const progFinal  = program(VS_FULL, FS_FINAL);
+  const uScene  = uni(progScene);
+  const uBright = uni(progBright);
+  const uBlur   = uni(progBlur);
+  const uFinal  = uni(progFinal);
+
+  // ---- framebuffer factory ------------------------------------
+  function makeTex(w,h,internal,type,filter){
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,internal,w,h,0,gl.RGBA,type,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+  function makeFBO(w,h,internal,type,filter){
+    const tex = makeTex(w,h,internal,type,filter);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    return {fbo,tex,w,h};
+  }
+
+  let sceneFBO, brightFBO, blurA, blurB;
+  let W=0,H=0,DPR=1;
+  // SW = scaled scene/bloom width, SH = scaled height (governor-driven).
+  // The scene HDR FBO + bloom chain render at SW×SH (renderScale·W,H); the final
+  // composite + HUD stay at native W,H so text & final image remain crisp.
+  let SW=0, SH=0;
+
+  function allocTargets(){
+    // scene HDR at scaled res (SW,SH), LINEAR so the upscale is smooth (sharpen re-crisps)
+    sceneFBO  = makeFBO(SW,SH,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    // half-of-scaled bloom chain
+    const bw = Math.max(2,SW>>1), bh = Math.max(2,SH>>1);
+    brightFBO = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurA     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+    blurB     = makeFBO(bw,bh,HDR_INTERNAL,HDR_TYPE,gl.LINEAR);
+  }
+  function freeTargets(){
+    [sceneFBO,brightFBO,blurA,blurB].forEach(t=>{
+      if(t){ gl.deleteFramebuffer(t.fbo); gl.deleteTexture(t.tex); }
+    });
+  }
+
+  // ---- ADAPTIVE FRAME-TIME GOVERNOR -----------------------------
+  // Rolling EMA of frame time; renderScale ∈ [0.62,1.0] applied ONLY to the
+  // scene HDR FBO + bloom backing res. Composite + HUD stay native. Hysteresis
+  // avoids oscillation. Pinned to 1.0 whenever __forceP is set (headless shots).
+  let renderScale = 1.0;
+  let emaFrame = 16.0;          // ms, seeded ~60fps
+  let govCooldown = 0;          // frames to wait after a scale change
+  function govScaledSize(){
+    SW = Math.max(2, Math.round(W*renderScale));
+    SH = Math.max(2, Math.round(H*renderScale));
+  }
+  function reallocScene(){
+    freeTargets();
+    govScaledSize();
+    allocTargets();
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 2); // cap DPR for perf
+    const cssW = window.innerWidth, cssH = window.innerHeight;
+    const w = Math.max(2,Math.floor(cssW*DPR));
+    const h = Math.max(2,Math.floor(cssH*DPR));
+    if(w===W && h===H) return;
+    W=w; H=h;
+    glCanvas.width=W; glCanvas.height=H;
+    glCanvas.style.width=cssW+'px'; glCanvas.style.height=cssH+'px';
+    // HUD at CSS res * dpr for crisp text
+    hudCanvas.width=W; hudCanvas.height=H;
+    hudCanvas.style.width=cssW+'px'; hudCanvas.style.height=cssH+'px';
+    reallocScene();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Adjust renderScale from the measured EMA. Reallocs the scaled FBOs on change.
+  function updateGovernor(dtMs){
+    // headless / pinned beat -> always full-res for exact screenshots
+    if(typeof window.__forceP === 'number'){
+      if(renderScale !== 1.0){ renderScale = 1.0; reallocScene(); }
+      return;
+    }
+    // EMA over ~30 frames
+    emaFrame += (dtMs - emaFrame) * (1.0/30.0);
+    if(govCooldown > 0){ govCooldown--; return; }
+    let next = renderScale;
+    if(emaFrame > 22.0 && renderScale > 0.62){        // below ~45fps -> ease down
+      next = Math.max(0.62, renderScale - 0.08);
+    } else if(emaFrame < 13.0 && renderScale < 1.0){  // headroom -> ease back up
+      next = Math.min(1.0, renderScale + 0.05);
+    }
+    if(next !== renderScale){
+      renderScale = next;
+      reallocScene();
+      govCooldown = 12;   // settle before next adjustment (no oscillation)
+    }
+  }
+
+  // ---- mouse (eased, reverent inertia) ------------------------
+  const mouse   = {x:0,y:0};   // eased -1..1
+  const mRaw    = {x:0,y:0};   // raw -1..1
+  let excite = 0;              // 0..1 eased
+  let exciteTarget = 0;
+  function onMove(e){
+    const r = glCanvas.getBoundingClientRect();
+    const px = (e.clientX!==undefined)? e.clientX : (e.touches&&e.touches[0].clientX);
+    const py = (e.clientY!==undefined)? e.clientY : (e.touches&&e.touches[0].clientY);
+    mRaw.x = ((px-r.left)/r.width)*2-1;
+    mRaw.y = -(((py-r.top)/r.height)*2-1);
+    exciteTarget = Math.min(1, exciteTarget+0.15);
+  }
+  window.addEventListener('mousemove', onMove, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:true});
+  window.addEventListener('mousedown', ()=>{ exciteTarget = 1.0; });
+  window.addEventListener('mouseup',   ()=>{ /* let it ease down */ });
+
+  // ---- SCROLL DRIVER : scrollY/maxScroll -> normalized target, eased ----
+  let pTarget = 0;      // raw normalized scroll 0..1
+  let p       = 0;      // eased scroll progress fed to the shader
+  const scrollHint = document.getElementById('scrollHint');
+  function readScroll(){
+    const doc = document.documentElement;
+    const max = Math.max(1, (doc.scrollHeight - window.innerHeight));
+    const y   = window.scrollY || window.pageYOffset || doc.scrollTop || 0;
+    pTarget = Math.min(1, Math.max(0, y / max));
+    if(scrollHint) scrollHint.style.opacity = String(Math.max(0, 0.55 - pTarget*3.0));
+  }
+  window.addEventListener('scroll', readScroll, {passive:true});
+  readScroll();
+
+  // ---- HUD (2D quantum readout column + wordmark) -------------
+  const hud = hudCanvas.getContext('2d');
+  const elements = [
+    {sym:'H',  base:0x816}, {sym:'O', base:0x833}, {sym:'N', base:0xE30},
+    {sym:'C',  base:0x5A1}, {sym:'Fe',base:0x2E2}, {sym:'Mg',base:0x918},
+    {sym:'Na', base:0x77C}, {sym:'K', base:0x391}, {sym:'Ca',base:0xAD4},
+    {sym:'Zn', base:0x6B0}, {sym:'P', base:0xF12}, {sym:'S', base:0x4E9}
+  ];
+  const hexRnd = new Array(elements.length).fill(0).map(()=>Math.random());
+  const bars   = new Array(elements.length).fill(0).map(()=>Math.random());
+  // scene sub-label reflects the current scale of the continuous flight
+  let HUD_STAGE = 'מלכות · the seed of matter · SCENE 01/02';
+
+  function drawHUD(t){
+    hud.clearRect(0,0,W,H);
+    const dpr = DPR;
+    hud.save();
+    hud.scale(dpr,dpr);
+    const cssH = H/dpr;
+    // ---- left readout column
+    const x = 34, lineH = 22, top = cssH*0.5 - (elements.length*lineH)/2;
+    hud.globalAlpha = 0.28;
+    hud.font = '11px "IBM Plex Mono", monospace';
+    hud.textBaseline = 'middle';
+    for(let i=0;i<elements.length;i++){
+      const y = top + i*lineH;
+      // ticking hex value
+      if(Math.random()<0.06) hexRnd[i]=Math.random();
+      const val = ((elements[i].base + Math.floor(hexRnd[i]*0x30 + Math.sin(t*2+i)*8))&0xFFF)>>>0;
+      const hex = '0x'+val.toString(16).toUpperCase().padStart(3,'0');
+      // symbol (emerald)
+      hud.fillStyle = '#00ff9c';
+      hud.fillText(elements[i].sym.padEnd(3,' '), x, y);
+      // hex (cyan)
+      hud.fillStyle = '#5fe0ff';
+      hud.fillText(hex, x+34, y);
+      // tiny animated bar
+      bars[i] += (Math.sin(t*1.5+i*0.7)*0.5+0.5 - bars[i])*0.05;
+      const bw = 46, bh = 3;
+      const bx = x+92, by = y-1;
+      hud.fillStyle = 'rgba(0,255,156,0.25)';
+      hud.fillRect(bx,by,bw,bh);
+      hud.fillStyle = '#00ff9c';
+      hud.fillRect(bx,by,bw*bars[i],bh);
+    }
+    // header line
+    hud.globalAlpha = 0.34;
+    hud.fillStyle = '#e8c45c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText('◈ QUANTUM READOUT — MALKUTH', x, top - 26);
+    hud.fillStyle = 'rgba(95,224,255,0.5)';
+    hud.fillText('lattice.stable  · shells.coupled', x, top - 12);
+
+    // ---- lower-right wordmark / scene id
+    hud.globalAlpha = 0.5;
+    const cssW = W/dpr;
+    hud.textAlign = 'right';
+    hud.fillStyle = '#e8c45c';
+    hud.font = '13px "IBM Plex Mono", monospace';
+    hud.fillText('QUANTUM  LATTICE', cssW-34, cssH-46);
+    hud.globalAlpha = 0.3;
+    hud.fillStyle = '#00ff9c';
+    hud.font = '10px "IBM Plex Mono", monospace';
+    hud.fillText(HUD_STAGE, cssW-34, cssH-30);
+    hud.textAlign = 'left';
+    hud.restore();
+  }
+
+  // ---- render passes helpers ----------------------------------
+  function bindFBO(target){
+    if(target){ gl.bindFramebuffer(gl.FRAMEBUFFER,target.fbo); gl.viewport(0,0,target.w,target.h); }
+    else { gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,W,H); }
+  }
+  function drawFS(){ gl.bindVertexArray(quadVAO); gl.drawArrays(gl.TRIANGLES,0,3); gl.bindVertexArray(null); }
+
+  // ---- main loop (pause-safe) ---------------------------------
+  let running = true;
+  let startT = performance.now();
+  let lastT  = startT;
+  document.addEventListener('visibilitychange', ()=>{
+    running = !document.hidden;
+    if(running){ lastT = performance.now(); requestAnimationFrame(frame); }
+  });
+
+  function frame(now){
+    if(!running) return;
+    if(document.hidden){ requestAnimationFrame(frame); return; } // skip while hidden
+    const t = (now - startT)/1000;
+    // clamped delta for the governor EMA (ignore tab-switch spikes)
+    const dtMs = Math.min(100, Math.max(1, now - lastT));
+    lastT = now;
+    updateGovernor(dtMs);
+
+    // ease mouse + excitation (heavy reverent inertia)
+    mouse.x += (mRaw.x - mouse.x)*0.045;
+    mouse.y += (mRaw.y - mouse.y)*0.045;
+    excite  += (exciteTarget - excite)*0.06;
+    exciteTarget *= 0.965; // decay so it settles
+
+    // ease scroll progress so the camera glides (cinematic, never jumpy)
+    p += (pTarget - p)*0.075;
+    // (test-only) allow a headless harness to pin p directly, so screenshots
+    // reflect an exact scale without waiting for slow-framerate convergence.
+    if(typeof window.__forceP === 'number') p = window.__forceP;
+
+    // ---------- PASS 1 : SCENE -> HDR fbo ----------
+    bindFBO(sceneFBO);
+    gl.useProgram(progScene);
+    // scene renders at scaled res -> feed the SCALED size as uRes so aspect &
+    // fragcoord math stay correct (composite/HUD below still use native W,H).
+    gl.uniform2f(uScene('uRes'), SW, SH);
+    gl.uniform1f(uScene('uTime'), (typeof window.__forceT === 'number') ? window.__forceT : t);
+    gl.uniform2f(uScene('uMouse'), mouse.x, mouse.y);
+    gl.uniform2f(uScene('uMouseRaw'), mRaw.x, mRaw.y);
+    gl.uniform1f(uScene('uExcite'), 0.35 + excite*0.65);
+    gl.uniform1f(uScene('uP'), p);
+    // remap the single eased scroll p into THREE continuous scale-beats.
+    // EXTENDED (2026-07-17): journey is molecule -> water -> DESERT (finale).
+    // The scroll driver was lengthened (1000vh -> 1600vh) so molecule+water keep
+    // their ORIGINAL scroll distance/feel and the desert occupies the added tail.
+    //   molecule zoom-out :  0.0000 .. 0.2063 -> pMol   (unchanged feel)
+    //   WATER (skim/pool) :  0.2063 .. 0.6250 -> pWater (unchanged feel)
+    //   DESERT (finale)   :  0.6250 .. 1.0000 -> pDesert (oasis pull-back ->
+    //                        pyramid -> dunes -> tilt-up to NIGHT star-field)
+    const SEAM_MW = 0.2063;  // molecule -> water
+    const SEAM_WD = 0.6250;  // water    -> desert
+    const pMol    = Math.min(1, p / SEAM_MW);
+    const pWater  = Math.min(1, Math.max(0, (p - SEAM_MW) / (SEAM_WD - SEAM_MW)));
+    const pDesert = Math.max(0, (p - SEAM_WD) / (1.0 - SEAM_WD));
+    gl.uniform1f(uScene('uPMol'),    pMol);
+    gl.uniform1f(uScene('uPWater'),  pWater);
+    gl.uniform1f(uScene('uPDesert'), pDesert);
+    window.__DBG = {p:p, pMol:pMol, pWater:pWater, pDesert:pDesert};
+    // update HUD stage label to match the scale we're flying through
+    if(p < SEAM_MW)      HUD_STAGE = 'מלכות · the seed of matter · SCENE 01/03';
+    else if(p < SEAM_WD) HUD_STAGE = 'מים · the waters gather · SCENE 02/03';
+    else if(pDesert < 0.34) HUD_STAGE = 'יסוד · the oasis & the pyramid · SCENE 03/03';
+    else if(pDesert < 0.62) HUD_STAGE = 'יסוד · aerial over the dunes · SCENE 03/03';
+    else                 HUD_STAGE = 'יסוד · climbing into night · SCENE 03/03';
+    drawFS();
+
+    // ---------- PASS 2 : BRIGHT PASS (half res) ----------
+    bindFBO(brightFBO);
+    gl.useProgram(progBright);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uBright('uScene'), 0);
+    gl.uniform1f(uBright('uThreshold'), 0.42);
+    drawFS();
+
+    // ---------- PASS 3 : SEPARABLE BLUR (2 iterations) ----------
+    const bw = brightFBO.w, bh = brightFBO.h;
+    let src = brightFBO;
+    for(let it=0; it<2; it++){
+      // horizontal -> blurA
+      bindFBO(blurA);
+      gl.useProgram(progBlur);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      gl.uniform1i(uBlur('uTex'),0);
+      gl.uniform2f(uBlur('uDir'), (1.0/bw)*(1.0+it*0.8), 0.0);
+      drawFS();
+      // vertical -> blurB
+      bindFBO(blurB);
+      gl.bindTexture(gl.TEXTURE_2D, blurA.tex);
+      gl.uniform2f(uBlur('uDir'), 0.0, (1.0/bh)*(1.0+it*0.8));
+      drawFS();
+      src = blurB;
+    }
+
+    // ---------- PASS 4 : FINAL COMPOSITE -> screen ----------
+    bindFBO(null);
+    gl.useProgram(progFinal);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneFBO.tex);
+    gl.uniform1i(uFinal('uScene'),0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, blurB.tex);
+    gl.uniform1i(uFinal('uBloom'),1);
+    gl.uniform2f(uFinal('uRes'), W, H);
+    gl.uniform2f(uFinal('uSceneTexel'), 1.0/SW, 1.0/SH);
+    gl.uniform1f(uFinal('uTime'), t);
+    gl.uniform2f(uFinal('uMouse'), mouse.x, mouse.y);
+    drawFS();
+
+    // ---------- HUD overlay ----------
+    drawHUD(t);
+
+    requestAnimationFrame(frame);
+  }
+
+  // small guard: if first frame throws, show fallback rather than blank
+  try {
+    requestAnimationFrame(frame);
+    console.log('[QuantumLattice] WebGL2 acquired. HDR='+(HDR_TYPE===gl.HALF_FLOAT?'half-float':'rgba8')+' — rendering.');
+  } catch(err){
+    console.error('[QuantumLattice] render failed, showing fallback:', err);
+    fallback.style.display='grid';
+  }
+
+})();
+</script>
+</body>
+</html>

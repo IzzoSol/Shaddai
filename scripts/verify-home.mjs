@@ -1,0 +1,21 @@
+import puppeteer from 'puppeteer';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { dirname, resolve } from 'path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const url = pathToFileURL(resolve(__dirname, '..', 'public', 'home.html')).href;
+const errors = [];
+const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });
+page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
+page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
+page.on('requestfailed', r => { const u = r.url(); if (!/fonts\.g|\/api\//.test(u)) errors.push('REQFAIL: ' + u); });
+await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+// nudge the gaze so geometry ignites near center
+await page.mouse.move(640, 360); await new Promise(r => setTimeout(r, 400));
+await page.mouse.move(700, 330); await new Promise(r => setTimeout(r, 1400));
+await page.screenshot({ path: resolve(__dirname, 'shot-home-hero.png') });
+await browser.close();
+console.log('errors:', errors.length);
+if (errors.length) console.log(errors.join('\n'));
+process.exit(errors.length ? 1 : 0);

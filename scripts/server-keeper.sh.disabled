@@ -1,0 +1,7 @@
+#!/bin/bash
+cd "C:/Users/Brittany/Desktop/SHADDAI MASTER FINAL BUILD"
+while true; do
+  node --max-old-space-size=1024 backend/server-production.js >> scripts/server.log 2>&1
+  echo "[keeper] server exited $(date), restarting in 2s" >> scripts/server.log
+  sleep 2
+done

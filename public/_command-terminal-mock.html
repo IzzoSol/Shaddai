@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Command Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0a0518; --panel:#140d2e; --panel2:#180f38; --ink:#efe9ff; --muted:#9a86c8; --purple:#a855f7; --cyan:#22d3ee; --emerald:#00e5a0; --gold:#e8c45c; --line:rgba(168,85,247,.20); }
+  *{box-sizing:border-box} html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'Chakra Petch',sans-serif}
+  body{background:radial-gradient(90% 60% at 50% -10%, rgba(168,85,247,.15), transparent 60%),radial-gradient(60% 50% at 10% 110%, rgba(34,211,238,.07), transparent 60%), var(--bg);display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--line);gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .sig{color:var(--purple);font-size:19px;text-shadow:0 0 16px rgba(168,85,247,.6)}
+  .brand b{font-family:'Space Grotesk';font-weight:700;font-size:15px;letter-spacing:.14em}
+  .brand .term{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase}
+  .chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.06em;padding:6px 11px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+  .chip.pro{color:var(--gold);border-color:rgba(232,196,92,.4)} .chip.cr{color:var(--emerald);border-color:rgba(0,229,160,.4)}
+  .enterw{font-family:'Space Grotesk';font-weight:700;font-size:12px;letter-spacing:.04em;padding:8px 15px;border-radius:9px;cursor:pointer;border:1px solid rgba(34,211,238,.5);background:rgba(34,211,238,.1);color:var(--cyan)}
+  .enterw:hover{background:rgba(34,211,238,.2)}
+  .tabs{display:flex;gap:3px;padding:9px 14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;background:rgba(10,5,24,.4)}
+  .tab{font-family:'Space Grotesk';font-weight:700;font-size:13px;padding:9px 16px;cursor:pointer;color:var(--muted);background:none;border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;transition:.15s;text-align:left}
+  .tab:hover{color:var(--ink)} .tab.on{color:var(--ink);background:linear-gradient(180deg,rgba(168,85,247,.16),transparent);border-color:var(--line);box-shadow:inset 0 2px 0 var(--purple)}
+  .tab .sub{display:block;font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;font-weight:400;margin-top:2px}
+  .stage{flex:1;position:relative;overflow:hidden}
+  .pane{position:absolute;inset:0;display:none}.pane.on{display:flex}.pane.simple.on{display:block}
+
+  /* OFFICE = map + command panel + dock */
+  #paneOffice{flex-direction:column}
+  .ofmain{flex:1;display:flex;min-height:0}
+  .ofmap{flex:1;position:relative;min-width:0}
+  .ofmap iframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+  .cmdpanel{width:290px;flex:none;border-left:1px solid var(--line);background:rgba(16,10,36,.6);padding:16px;overflow:auto}
+  .cmdpanel h3{font-family:'Space Grotesk';font-size:14px;margin:0 0 3px;letter-spacing:.02em}
+  .cmdpanel .st{font-family:'IBM Plex Mono';font-size:10px;color:var(--emerald);letter-spacing:.08em;margin-bottom:14px}
+  .stat{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(168,85,247,.1);font-size:12.5px}
+  .stat b{font-family:'Space Grotesk';color:var(--ink)} .stat span{color:var(--muted)}
+  .qa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .qa button{font-family:'Chakra Petch';font-weight:600;font-size:11.5px;padding:9px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:rgba(168,85,247,.07);color:var(--ink)}
+  .qa button:hover{border-color:var(--purple);background:rgba(168,85,247,.18)}
+  .dock{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line);background:rgba(10,5,24,.55);overflow-x:auto}
+  .dock button{font-family:'Chakra Petch';font-weight:600;font-size:12px;white-space:nowrap;padding:8px 14px;border-radius:9px;cursor:pointer;border:1px solid var(--line);background:rgba(168,85,247,.06);color:var(--ink);display:flex;gap:6px;align-items:center}
+  .dock button:hover{border-color:var(--purple)}
+
+  /* ROOMS */
+  #paneRooms{flex-direction:column;overflow:auto;padding:18px 22px}
+  .filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+  .filters button{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.06em;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer}
+  .filters button.on{color:#0b0416;background:var(--purple);border-color:var(--purple)}
+  .rsec{font-family:'Space Grotesk';font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--ink);margin:16px 0 11px;display:flex;align-items:center;gap:9px}
+  .rsec .c{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;margin-bottom:8px}
+  .card{border:1px solid var(--line);background:linear-gradient(160deg,rgba(24,16,46,.7),rgba(14,10,26,.5));border-radius:14px;padding:14px;transition:.16s;position:relative}
+  .card:hover{transform:translateY(-2px);border-color:rgba(168,85,247,.55)}
+  .card .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .card .ic{font-size:20px;width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:rgba(168,85,247,.1)}
+  .card h4{font-family:'Space Grotesk';font-size:14.5px;margin:0} .card .role{font-size:11px;color:var(--muted)}
+  .card .desc{font-size:11.5px;color:var(--muted);line-height:1.45;margin:2px 0 10px}
+  .pub{position:absolute;top:12px;right:12px;font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+  .pub.public{color:#0b0416;background:var(--cyan)} .pub.hireable{color:#0b0416;background:var(--emerald)} .pub.showroom{color:var(--cyan);border:1px solid var(--cyan)} .pub.private{color:var(--muted);border:1px solid var(--line)} .pub.draft{color:var(--gold);border:1px solid var(--gold)}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+  .tag{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px;border:1px solid var(--line);color:#c7b6ef}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .acts button{flex:1;min-width:60px;font-family:'Chakra Petch';font-weight:600;font-size:11px;padding:7px;border-radius:7px;cursor:pointer;border:1px solid var(--line);background:rgba(168,85,247,.07);color:#e7ddff}
+  .acts button.pri{background:var(--purple);color:#0b0416;border-color:var(--purple)} .acts button:hover{filter:brightness(1.12)}
+  .fixed .card{border-color:rgba(232,196,92,.22)} .public-sp .card{border-color:rgba(34,211,238,.22)}
+
+  /* FORGE — two lanes + operational panel */
+  #paneForge{flex-direction:column;overflow:auto;padding:16px 20px}
+  .oneagent{font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);margin-bottom:12px}
+  .oneagent b{color:var(--cyan)}
+  .lanes{display:inline-flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:16px}
+  .lanes button{font-family:'Space Grotesk';font-weight:700;font-size:13px;padding:11px 20px;border:none;background:none;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+  .lanes button .s{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.06em;text-transform:uppercase;font-weight:400}
+  .lanes button.on{background:var(--purple);color:#0b0416} .lanes button.adv.on{background:var(--gold);color:#1a1206}
+  .lanes button.adv{color:var(--gold)}
+  .forgewrap{display:grid;grid-template-columns:280px 1fr 260px;gap:18px}
+  @media(max-width:980px){.forgewrap{grid-template-columns:1fr}}
+  .fcol{border:1px solid var(--line);border-radius:14px;background:rgba(16,10,36,.5);padding:15px}
+  .fcol h5{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6f5aa8;margin:0 0 12px}
+  .forgeprev{min-height:300px;display:grid;place-items:center;background:radial-gradient(80% 60% at 50% 30%,rgba(168,85,247,.2),transparent)}
+  .body{width:120px;height:170px;position:relative} .body i{position:absolute;border-radius:6px;box-shadow:0 0 14px rgba(34,211,238,.4)}
+  .plaque{text-align:center;margin-top:10px;font-family:'Space Grotesk';font-weight:700;font-size:13px;color:var(--ink)}
+  .frow{margin:12px 0} .frow label{display:block;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6f5aa8;margin-bottom:6px}
+  .frow input,.frow select{width:100%;background:rgba(8,4,18,.7);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:8px 10px;font-family:'Chakra Petch';font-size:12px}
+  .swatches{display:flex;gap:7px;flex-wrap:wrap} .sw{width:26px;height:26px;border-radius:7px;cursor:pointer;border:2px solid transparent} .sw.on{border-color:#fff}
+  .parts{display:flex;gap:6px;flex-wrap:wrap} .part{font-family:'Chakra Petch';font-size:11px;padding:6px 11px;border:1px solid var(--line);border-radius:7px;color:var(--ink);background:rgba(168,85,247,.06);cursor:pointer}
+  .part:hover,.part.on{border-color:var(--purple);background:rgba(168,85,247,.2)}
+  .toolrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(168,85,247,.1);font-size:12px}
+  .toolrow input{width:auto;margin:0} .toolrow .cat{margin-left:auto;font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)}
+  .pipe{margin-top:14px} .pipe .step{display:flex;align-items:center;gap:9px;font-size:12px;padding:6px 0;color:var(--muted)}
+  .pipe .step b{color:var(--ink);font-family:'Space Grotesk';font-weight:600} .pipe .n{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:9px;background:rgba(168,85,247,.2);color:var(--purple)}
+  .cta{width:100%;font-family:'Space Grotesk';font-weight:700;font-size:14px;padding:13px;border-radius:11px;cursor:pointer;border:none;margin-top:14px;background:linear-gradient(100deg,var(--purple),var(--cyan));color:#0b0416;box-shadow:0 0 22px rgba(168,85,247,.3)}
+  .lock{background:rgba(232,196,92,.08);border:1px solid rgba(232,196,92,.35);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px}
+  .lock b{color:var(--gold);font-family:'Space Grotesk'} .lock p{font-size:12px;color:var(--muted);margin:6px 0 12px}
+  .lock button{font-family:'Space Grotesk';font-weight:700;font-size:13px;padding:10px 18px;border-radius:9px;border:none;background:var(--gold);color:#1a1206;cursor:pointer}
+
+  .simple{overflow:auto;padding:18px 22px} .simple .rsec{margin-top:0}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><span class="sig">◈</span><div><b>SHADDAI</b> <span class="term">· Command Terminal</span></div></div>
+  <div class="chips"><span class="chip">◷ ONLINE</span><span class="chip pro">✦ PRO</span><span class="chip cr">◆ 500 CR</span>
+    <button class="enterw">✦ Enter 2D World →</button></div>
+</div>
+<div class="tabs">
+  <button class="tab on" data-p="office">◈ Office<span class="sub">Your property</span></button>
+  <button class="tab" data-p="rooms">🚪 Rooms<span class="sub">Interior modules</span></button>
+  <button class="tab" data-p="forge">⬡ Forge<span class="sub">Embodiments</span></button>
+  <button class="tab" data-p="gallery">🖼 Gallery<span class="sub">your creations</span></button>
+  <button class="tab" data-p="showcase">✦ Showcase<span class="sub">3D marketplace</span></button>
+  <button class="tab" data-p="bazaar">◈ Bazaar<span class="sub">Storefront</span></button>
+  <button class="tab" data-p="treasury">◆ Treasury<span class="sub">Sparks · rep · payouts</span></button>
+</div>
+<div class="stage">
+  <!-- OFFICE -->
+  <div class="pane on" id="paneOffice">
+    <div class="ofmain">
+      <div class="ofmap"><iframe src="/_townsquare-mock.html" title="Office property"></iframe></div>
+      <aside class="cmdpanel">
+        <h3>Brittany's Command Property</h3><div class="st">◈ SHADDAI City · Capital District · PUBLIC</div>
+        <div class="stat"><span>Rooms</span><b>8</b></div>
+        <div class="stat"><span>Active agents</span><b>3</b></div>
+        <div class="stat"><span>Visitors now</span><b>12</b></div>
+        <div class="stat"><span>Requests pending</span><b>2</b></div>
+        <div class="stat"><span>Total reputation</span><b>19,299</b></div>
+        <div class="stat"><span>Storefront items</span><b>5</b></div>
+        <div class="qa">
+          <button>🚪 Rooms</button><button>⬡ Pixel Forge</button>
+          <button>◈ Bazaar</button><button>◆ Treasury</button>
+          <button>🏆 Achievements</button><button>✉ Requests</button>
+        </div>
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-top:16px;line-height:1.5">Click a building on the map to select a room — its details &amp; actions appear here.</div>
+      </aside>
+    </div>
+    <div class="dock">
+      <button>🚪 Rooms</button><button>⬡ Pixel Forge</button><button>◈ Bazaar</button><button>◆ Treasury</button><button>🏆 Achievements</button><button>✉ Request Work</button><button style="margin-left:auto;border-color:rgba(34,211,238,.5);color:var(--cyan)">✦ Enter World →</button>
+    </div>
+  </div>
+
+  <!-- ROOMS grouped -->
+  <div class="pane simple" id="paneRooms">
+    <div class="filters"><button class="on">All</button><button>Public</button><button>Private</button><button>Hireable</button><button>Showroom</button><button>Active</button><button>Idle</button></div>
+    <div class="rsec">Permanent Modules <span class="c">office infrastructure</span></div>
+    <div class="grid fixed">
+      <div class="card"><span class="pub public">public</span><div class="hd"><span class="ic">☰</span><div><h4>Command Sanctum</h4><div class="role">HQ · the 7 core agents</div></div></div><div class="desc">Your headquarters. The seven system agents live here as permanent stations.</div><div class="tags"><span class="tag">sanctum</span><span class="tag">permanent</span></div><div class="acts"><button class="pri">Enter →</button></div></div>
+      <div class="card"><span class="pub public">public</span><div class="hd"><span class="ic">⬡</span><div><h4>Pixel Forge</h4><div class="role">world embodiments</div></div></div><div class="desc">Create &amp; update the 2D agents that appear in your office and the world.</div><div class="tags"><span class="tag">forge-room</span></div><div class="acts"><button class="pri">Open →</button></div></div>
+      <div class="card"><span class="pub showroom">showroom</span><div class="hd"><span class="ic">◈</span><div><h4>Bazaar</h4><div class="role">public storefront</div></div></div><div class="desc">Showcase &amp; sell services, packs, and cosmetics. Buyers pay via credits / x402.</div><div class="tags"><span class="tag">shop</span></div><div class="acts"><button class="pri">Open →</button><button>Configure</button></div></div>
+      <div class="card"><span class="pub private">private</span><div class="hd"><span class="ic">◆</span><div><h4>Treasury</h4><div class="role">value flow</div></div></div><div class="desc">Sparks, reputation, referrals, and payout pools (accruing, cash-out later).</div><div class="tags"><span class="tag">treasury</span></div><div class="acts"><button class="pri">Open →</button></div></div>
+      <div class="card"><span class="pub public">public</span><div class="hd"><span class="ic">🏆</span><div><h4>Achievements</h4><div class="role">wins &amp; impact</div></div></div><div class="desc">Your verified wall of wins, client proofs, and impact metrics.</div><div class="tags"><span class="tag">gallery</span></div><div class="acts"><button class="pri">Open →</button></div></div>
+    </div>
+    <div class="rsec">Agent Rooms <span class="c">forged operatives · dynamic</span></div>
+    <div class="grid">
+      <div class="card"><span class="pub hireable">hireable</span><div class="hd"><span class="ic" style="color:#22d3ee">✦</span><div><h4>NOVA's Studio</h4><div class="role">Research · Summaries</div></div></div><div class="desc">Tools: web-research, summarize, digest · Queue 2 · Rep 7,799</div><div class="tags"><span class="tag">studio</span><span class="tag">2 tools</span><span class="tag">● active</span></div><div class="acts"><button class="pri">Enter</button><button>Configure</button><button>Publish</button></div></div>
+      <div class="card"><span class="pub showroom">showroom</span><div class="hd"><span class="ic" style="color:#a855f7">⚒</span><div><h4>VECTOR's Forge-Room</h4><div class="role">Code · Build</div></div></div><div class="desc">Tools: codegen, review, deploy · Idle · Rep 6,100</div><div class="tags"><span class="tag">forge-room</span><span class="tag">3 tools</span><span class="tag">idle</span></div><div class="acts"><button class="pri">Enter</button><button>Configure</button><button>Publish</button></div></div>
+      <div class="card"><span class="pub private">private</span><div class="hd"><span class="ic" style="color:#00e5a0">☰</span><div><h4>SAGE's Sanctum</h4><div class="role">Oracle · Horoscope</div></div></div><div class="desc">Tools: research, astrology · Private · Rep 5,400</div><div class="tags"><span class="tag">sanctum</span><span class="tag">2 tools</span></div><div class="acts"><button class="pri">Enter</button><button>Configure</button><button>Publish</button></div></div>
+      <div class="card" style="border-style:dashed;opacity:.85"><span class="pub draft">draft</span><div class="hd"><span class="ic">＋</span><div><h4>New Agent</h4><div class="role">unforged slot</div></div></div><div class="desc">Forge an agent in the Pixel Forge and it claims a room here.</div><div class="tags"><span class="tag">empty</span></div><div class="acts"><button class="pri">⬡ Forge →</button></div></div>
+    </div>
+    <div class="rsec">Public Spaces <span class="c">visitor-facing</span></div>
+    <div class="grid public-sp">
+      <div class="card"><span class="pub public">public</span><div class="hd"><span class="ic">◈</span><div><h4>Storefront</h4><div class="role">your offers</div></div></div><div class="desc">5 items listed · agent hires, packs, cosmetics.</div><div class="tags"><span class="tag">bazaar</span></div><div class="acts"><button class="pri">Manage →</button></div></div>
+      <div class="card"><span class="pub showroom">showroom</span><div class="hd"><span class="ic">✉</span><div><h4>Request Hall</h4><div class="role">work intake</div></div></div><div class="desc">2 pending client requests · route to a hireable agent.</div><div class="tags"><span class="tag">intake</span><span class="tag">2 pending</span></div><div class="acts"><button class="pri">Review →</button></div></div>
+    </div>
+  </div>
+
+  <!-- FORGE two lanes -->
+  <div class="pane simple" id="paneForge">
+    <div class="oneagent"><b>One agent, two embodiments.</b> Pixel Forge edits the agent's <b>pixel2D</b> body (office &amp; 2D world). 3D Forge edits the same agent's <b>hero3D</b> form. Tools, room &amp; reputation belong to the agent.</div>
+    <div class="lanes">
+      <button class="on" id="lanePixel">◧ 2D Pixel Forge<span class="s">world embodiment · default</span></button>
+      <button class="adv" id="lane3d">▣ 3D Hero Forge<span class="s">premium · Pro</span></button>
+    </div>
+    <div id="forgePixel">
+      <div class="forgewrap">
+        <div class="fcol"><h5>Embodiment preview</h5><div class="forgeprev"><div class="body" id="fbody"></div></div><div class="plaque" id="fplaque">◈ NOVA</div></div>
+        <div class="fcol"><h5>Edit pixel embodiment</h5>
+          <div class="frow"><label>Agent name</label><input value="NOVA"></div>
+          <div class="frow"><label>Colorway</label><div class="swatches" id="fsw"></div></div>
+          <div class="frow"><label>Body parts</label><div class="parts"><span class="part on">Cap</span><span class="part">Visor</span><span class="part on">Jacket</span><span class="part">Emblem</span><span class="part">Aura ring</span></div></div>
+          <div class="frow"><label>Plaque &amp; signage</label><div class="parts"><span class="part on">◈ Sigil</span><span class="part">Nameplate</span><span class="part">Role badge</span></div></div>
+        </div>
+        <div class="fcol"><h5>Operational setup</h5>
+          <div class="frow"><label>Tool loadout</label>
+            <div class="toolrow"><input type="checkbox" checked> web-research <span class="cat">research</span></div>
+            <div class="toolrow"><input type="checkbox" checked> summarize <span class="cat">content</span></div>
+            <div class="toolrow"><input type="checkbox"> generate-image <span class="cat">media</span></div>
+          </div>
+          <div class="frow"><label>Room assignment</label><select><option>NOVA's Studio (new)</option><option>Command Sanctum</option><option>+ Create room</option></select></div>
+          <div class="frow"><label>Visibility</label><select><option>Hireable Studio</option><option>Public Showroom</option><option>Private</option></select></div>
+          <div class="pipe"><label style="font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6f5aa8">Publish pipeline</label>
+            <div class="step"><span class="n">1</span><b>Save embodiment</b></div>
+            <div class="step"><span class="n">2</span><b>Assign room</b> · attach tools</div>
+            <div class="step"><span class="n">3</span><b>Set visibility</b></div>
+            <div class="step"><span class="n">4</span><b>Publish to Office</b></div>
+            <div class="step"><span class="n">5</span><b>Publish to World</b></div>
+          </div>
+          <button class="cta">◈ Save &amp; Publish to Office →</button>
+        </div>
+      </div>
+    </div>
+    <div id="forge3d" style="display:none">
+      <div class="oneagent" style="margin-bottom:14px">Build a real 3D model for this agent with 3D tools. <b style="color:var(--emerald)">Make it for yourself free</b> — export &amp; use in games, your realm, anywhere. <b style="color:var(--gold)">Placing it in your office or the shared world needs an upgrade.</b></div>
+      <div class="frow" style="max-width:680px"><label>3D creation lane (pay slightly)</label><div class="parts">
+        <span class="part on">◇ Base body · free</span><span class="part">⬡ Meshy · rigged · 40 CR</span><span class="part">◈ three.js · procedural · 15 CR</span><span class="part">▲ NVIDIA · 60 CR</span></div></div>
+      <div class="forgewrap">
+        <div class="fcol"><h5>Hero preview</h5><div class="forgeprev" style="background:radial-gradient(80% 60% at 50% 30%,rgba(232,196,92,.2),transparent)"><div style="font-size:60px">▣</div></div></div>
+        <div class="fcol"><h5>Edit hero embodiment</h5><div class="frow"><label>3D archetype</label><select><option>Vanguard</option><option>Valkyrie</option><option>Sentinel</option></select></div><div class="frow"><label>Cinematic skin</label><select><option>Neon Valkyrie</option><option>Emerald Enforcer</option></select></div><div style="font-size:11px;color:var(--muted)">Same canonical agent — tools, room &amp; reputation carry over.</div></div>
+        <div class="fcol"><h5>Use &amp; publish</h5>
+          <div class="frow"><label>Personal use</label><div style="font-size:12px;color:var(--emerald)">✓ Free — export · games · your realm</div></div>
+          <div class="frow"><label>Place in office / world</label><div style="font-size:12px;color:var(--gold)">🔒 Requires Pro upgrade</div></div>
+          <button class="cta" style="background:var(--gold);color:#1a1206">▣ Generate 3D Model</button>
+          <button class="cta" style="background:none;border:1px solid var(--gold);color:var(--gold);box-shadow:none">🔒 Upgrade to place in world</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="pane simple" id="paneGallery">
+    <div class="oneagent">Your creations — pixel agents &amp; 3D models. <b style="color:var(--emerald)">Yours to use anywhere</b> (games, exports, your realm); placing in your office/world needs the upgrade.</div>
+    <div class="rsec">Pixel Agents <span class="c">2D embodiments</span></div>
+    <div class="grid">
+      <div class="card"><span class="pub public">in office</span><div class="hd"><span class="ic" style="color:#22d3ee">✦</span><div><h4>NOVA</h4><div class="role">pixel2D</div></div></div><div class="desc">Research studio · published to office.</div><div class="acts"><button class="pri">Edit</button><button>Export</button></div></div>
+      <div class="card"><span class="pub showroom">in office</span><div class="hd"><span class="ic" style="color:#a855f7">⚒</span><div><h4>VECTOR</h4><div class="role">pixel2D</div></div></div><div class="desc">Forge-room · showroom.</div><div class="acts"><button class="pri">Edit</button><button>Export</button></div></div>
+      <div class="card"><span class="pub draft">draft</span><div class="hd"><span class="ic">◇</span><div><h4>ATLAS</h4><div class="role">pixel2D</div></div></div><div class="desc">Not yet published.</div><div class="acts"><button class="pri">Publish</button><button>Edit</button></div></div>
+    </div>
+    <div class="rsec">3D Models <span class="c">hero &amp; personal</span></div>
+    <div class="grid">
+      <div class="card"><span class="pub draft">personal</span><div class="hd"><span class="ic" style="color:#e8c45c">▣</span><div><h4>NOVA · Hero</h4><div class="role">Meshy · rigged</div></div></div><div class="desc">Yours to use — game/export ready. Office/world 🔒 Pro.</div><div class="acts"><button class="pri">Download</button><button>Use in game</button></div></div>
+      <div class="card"><span class="pub draft">personal</span><div class="hd"><span class="ic">◈</span><div><h4>Sentinel</h4><div class="role">three.js · procedural</div></div></div><div class="desc">Personal build. Upgrade to place in world.</div><div class="acts"><button class="pri">Download</button><button style="border-color:var(--gold);color:var(--gold)">🔒 To world</button></div></div>
+    </div>
+  </div>
+  <!-- SHOWCASE = community 3D marketplace -->
+  <div class="pane simple" id="paneShowcase">
+    <div class="oneagent">Community <b style="color:var(--gold)">3D model marketplace</b> — models people made with Meshy, three.js &amp; more. Buy for <b style="color:var(--emerald)">personal / game use</b>; putting one in your office or the shared world needs an upgrade.</div>
+    <div class="rsec">Featured 3D models <span class="c">Meshy · three.js · community</span></div>
+    <div class="grid">
+      <div class="card"><span class="pub public">45 CR</span><div class="hd"><span class="ic" style="color:#22d3ee">▣</span><div><h4>Neon Valkyrie</h4><div class="role">by @emeraldog · Meshy</div></div></div><div class="desc">Rigged hero · 7 anims. Personal/game use.</div><div class="tags"><span class="tag">rigged</span><span class="tag">★ 4.8</span></div><div class="acts"><button class="pri">Buy</button><button>Preview</button></div></div>
+      <div class="card"><span class="pub public">30 CR</span><div class="hd"><span class="ic" style="color:#a855f7">◈</span><div><h4>Obsidian Sentinel</h4><div class="role">by @nexus · three.js</div></div></div><div class="desc">Procedural mech · low-poly.</div><div class="tags"><span class="tag">low-poly</span><span class="tag">★ 4.6</span></div><div class="acts"><button class="pri">Buy</button><button>Preview</button></div></div>
+      <div class="card"><span class="pub public">free</span><div class="hd"><span class="ic" style="color:#00e5a0">✦</span><div><h4>Grid Drone</h4><div class="role">by @turtle · three.js</div></div></div><div class="desc">Community freebie · personal use.</div><div class="tags"><span class="tag">free</span><span class="tag">★ 4.9</span></div><div class="acts"><button class="pri">Get</button><button>Preview</button></div></div>
+      <div class="card" style="border-style:dashed"><div class="hd"><span class="ic">＋</span><div><h4>List your model</h4><div class="role">sell to the community</div></div></div><div class="desc">Publish a Meshy/three.js model · set a price · earn Sparks.</div><div class="acts"><button class="pri">Publish model</button></div></div>
+    </div>
+  </div>
+  <div class="pane simple" id="paneBazaar"><div class="rsec">Bazaar <span class="c">your public storefront</span></div><div class="grid"><div class="card"><div class="hd"><span class="ic">◈</span><div><h4>Your services</h4><div class="role">agent hires</div></div></div><div class="desc">List agent hires — buyers pay via credits / x402, you take the spread.</div><div class="acts"><button class="pri">Manage</button></div></div><div class="card"><div class="hd"><span class="ic">🎫</span><div><h4>Skill &amp; MD packs</h4><div class="role">bundles</div></div></div><div class="desc">Bundle tools &amp; workflows for sale.</div><div class="acts"><button class="pri">Create pack</button></div></div><div class="card"><div class="hd"><span class="ic">✦</span><div><h4>Cosmetics</h4><div class="role">later</div></div></div><div class="desc">Room skins &amp; agent cosmetics — coming soon.</div><div class="acts"><button>Soon</button></div></div></div></div>
+  <div class="pane simple" id="paneTreasury"><div class="rsec">Treasury <span class="c">Sparks · reputation · referrals · payouts</span></div><div class="grid"><div class="card"><div class="hd"><span class="ic">◆</span><div><h4>Sparks</h4><div class="role">earned from real work</div></div></div><div class="desc">Balance 500 · owed pools accruing (cash-out later).</div></div><div class="card"><div class="hd"><span class="ic">✦</span><div><h4>Reputation</h4><div class="role">19,299 total</div></div></div><div class="desc">Verifiable score across all surfaces.</div></div><div class="card"><div class="hd"><span class="ic">🔗</span><div><h4>Referrals</h4><div class="role">attribution</div></div></div><div class="desc">Your code · reward trail.</div></div><div class="card"><div class="hd"><span class="ic">📊</span><div><h4>Room performance</h4><div class="role">footfall · revenue</div></div></div><div class="desc">Which rooms earn &amp; draw visitors.</div></div></div></div>
+</div>
+<script>
+  document.querySelectorAll('.tab').forEach(function(t){ t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+    var id='pane'+t.dataset.p.charAt(0).toUpperCase()+t.dataset.p.slice(1); document.getElementById(id).classList.add('on');
+  };});
+  var COLORS=['#22d3ee','#a855f7','#00e5a0','#e8c45c','#ff8bd0','#ff5b5b'],pick=COLORS[0];
+  function drawBody(){ var b=document.getElementById('fbody'); if(!b)return; b.innerHTML='';
+    [[42,0,36,30,pick],[36,32,48,60,pick],[24,44,14,44,pick],[82,44,14,44,pick],[38,96,18,50,'#1a1030'],[64,96,18,50,'#1a1030']].forEach(function(p){var i=document.createElement('i');i.style.cssText='left:'+p[0]+'px;top:'+p[1]+'px;width:'+p[2]+'px;height:'+p[3]+'px;background:'+p[4];b.appendChild(i);}); }
+  var sw=document.getElementById('fsw'); COLORS.forEach(function(c,i){var s=document.createElement('span');s.className='sw'+(i===0?' on':'');s.style.background=c;s.onclick=function(){pick=c;document.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));s.classList.add('on');drawBody();};sw.appendChild(s);}); drawBody();
+  document.querySelectorAll('.parts .part').forEach(function(p){p.onclick=function(){p.classList.toggle('on');};});
+  var lp=document.getElementById('lanePixel'),l3=document.getElementById('lane3d');
+  lp.onclick=function(){lp.classList.add('on');l3.classList.remove('on');document.getElementById('forgePixel').style.display='';document.getElementById('forge3d').style.display='none';};
+  l3.onclick=function(){l3.classList.add('on');lp.classList.remove('on');document.getElementById('forge3d').style.display='';document.getElementById('forgePixel').style.display='none';};
+</script>
+</body>
+</html>

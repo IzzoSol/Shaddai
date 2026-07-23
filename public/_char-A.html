@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Voxel Character Foundry — code-only</title>
+<style>
+  :root { --bg:#0d1017; --panel:#141924; --ink:#cfe3f2; --dim:#7d8ea3; --grn:#00ff88; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Segoe UI',system-ui,sans-serif; }
+  header { padding:16px 22px; border-bottom:1px solid #202838; }
+  header h1 { margin:0; font-size:16px; letter-spacing:.5px; }
+  header h1 b { color:var(--grn); }
+  header p { margin:5px 0 0; font-size:12px; color:var(--dim); max-width:860px; line-height:1.5; }
+  .wrap { padding:18px 22px 40px; }
+  .stage { background:radial-gradient(120% 90% at 50% 20%, #1b2333 0%, #0f141d 70%);
+    border:1px solid #202838; border-radius:12px; padding:10px;
+    box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  canvas { display:block; width:100%; height:auto; border-radius:8px; image-rendering:pixelated; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-size:12px; color:var(--dim); }
+  .legend b { color:var(--ink); }
+  .tag { display:inline-block; padding:2px 8px; border:1px solid #2a3346; border-radius:20px;
+    color:var(--grn); font-size:11px; letter-spacing:.4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SHADDAI · <b>Voxel Character Foundry</b> <span class="tag">$0 · no API · no assets</span></h1>
+  <p>All drawn by JavaScript — no images. Every figure is the <b>same rig</b>: head / torso / two
+  arms / two legs / feet as real isometric voxels, cel-shaded with one upper-left light. The outfit,
+  hair, glasses, beard, dress, hat, and held item are <b>just data</b> — that's the wardrobe engine.
+  Far right walks to show the arm+leg stride.</p>
+</header>
+<div class="wrap">
+  <div class="stage"><canvas id="c"></canvas></div>
+  <div class="legend">
+    <span><b>1 rig · many skins</b> — each character = one data object</span>
+    <span><b>Cosmetic slots</b> — hair/hat, glasses, beard, emblem, dress</span>
+    <span><b>Item slot</b> — basketball / blade (sports + attacks)</span>
+    <span><b>Animation</b> — idle breath + walk stride</span>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ============================================================================
+// PIXEL-CORE (spike subset)
+// ============================================================================
+const TW = 88, TH = 44;                       // zoomed 2:1 iso tile (bigger = crisp hero view)
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let DPR = Math.min(window.devicePixelRatio || 1, 2);
+let CSSW = 0, CSSH = 560, OX = 0, OY = 0;
+
+function resize() {
+  CSSW = Math.min(document.querySelector('.stage').clientWidth - 20, 1180);
+  canvas.style.width = CSSW + 'px'; canvas.style.height = CSSH + 'px';
+  canvas.width = CSSW * DPR; canvas.height = CSSH * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  OX = CSSW * 0.5; OY = 150;
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const f = amt < 0 ? 0 : 255, t = Math.abs(amt);
+  r = Math.round((f - r) * t + r); g = Math.round((f - g) * t + g); b = Math.round((f - b) * t + b);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function iso(col, row) { return [OX + (col - row) * TW / 2, OY + (col + row) * TH / 2]; }
+function P(pts) {
+  ctx.beginPath(); ctx.moveTo(Math.round(pts[0][0]), Math.round(pts[0][1]));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(Math.round(pts[i][0]), Math.round(pts[i][1]));
+  ctx.closePath();
+}
+// The isometric voxel — atom of the whole look. opts.hull strokes the crisp silhouette.
+function box(col, row, w, d, h, top, opts) {
+  opts = opts || {};
+  const cx = OX + (col - row) * TW / 2, cy = OY + (col + row) * TH / 2;
+  const dx = (dc, dr) => (dc - dr) * TW / 2, dy = (dc, dr) => (dc + dr) * TH / 2;
+  const hw = w / 2, hd = d / 2;
+  const back = [cx+dx(-hw,-hd), cy+dy(-hw,-hd)], right = [cx+dx(hw,-hd), cy+dy(hw,-hd)];
+  const front = [cx+dx(hw,hd), cy+dy(hw,hd)],   left  = [cx+dx(-hw,hd), cy+dy(-hw,hd)];
+  const up = p => [p[0], p[1] - h];
+  const tB = up(back), tR = up(right), tF = up(front), tL = up(left);
+  ctx.fillStyle = opts.left  || shade(top, -0.20); P([left, front, tF, tL]); ctx.fill();   // left face
+  ctx.fillStyle = opts.right || shade(top, -0.36); P([front, right, tR, tF]); ctx.fill();   // right face
+  ctx.fillStyle = top;                              P([tB, tR, tF, tL]); ctx.fill();        // top face
+  if (opts.hull) {                                  // crisp voxel edge
+    ctx.strokeStyle = opts.hull === true ? 'rgba(0,0,0,0.28)' : opts.hull;
+    ctx.lineWidth = 1; ctx.lineJoin = 'round';
+    P([tB, tR, right, front, left, tL]); ctx.stroke();
+    // interior top seams for readability
+    ctx.beginPath(); ctx.moveTo(Math.round(tF[0]), Math.round(tF[1]));
+    ctx.lineTo(Math.round(front[0]), Math.round(front[1])); ctx.stroke();
+  }
+}
+function boxL(col, row, w, d, h, color, lift, opts) {
+  const save = OY; OY -= lift; box(col, row, w, d, h, color, opts); OY = save;
+}
+function tile(col, row, color) {
+  const [cx, cy] = iso(col, row);
+  ctx.fillStyle = color;
+  P([[cx, cy-TH/2],[cx+TW/2, cy],[cx, cy+TH/2],[cx-TW/2, cy]]); ctx.fill();
+  ctx.strokeStyle = shade(color, -0.12); ctx.lineWidth = 1;
+  P([[cx, cy-TH/2],[cx+TW/2, cy],[cx, cy+TH/2],[cx-TW/2, cy]]); ctx.stroke();
+}
+
+// ============================================================================
+// VOXEL CHARACTER RIG  — CHUNKY-CUTE (TURTLE take). Stocky, friendly, readable.
+//   Stacked px heights (single light, upper-left 45°):
+//     shoe 0-9 · leg 9-30 · torso 30-64 · arms 30-60 (FLUSH to torso) ·
+//     head 64-90 (≈ torso width, NOT bobblehead) · hair/hat 90+.
+//   Widths (tile units, TW=88 → 1.0u ≈ 44px screen-x):
+//     torso 0.62 · head 0.60 (≈torso) · arm 0.15 · leg 0.24.
+//   AE = arm lateral offset so the arm's inner face OVERLAPS the torso edge
+//     (torsoHalf 0.31 − armHalf 0.075 − overlap 0.02 = 0.215) → NO floating gap.
+// ============================================================================
+function HULL(top) { return { hull: true, left: shade(top,-0.18), right: shade(top,-0.34) }; }
+
+const TORSO_W = 0.64, TORSO_D = 0.42, TORSO_H = 34, TORSO_Z = 30;
+const HEAD_W = 0.58,  HEAD_D = 0.44, HEAD_H = 26,  HEAD_Z = 64;   // ≈ torso, never overhangs
+const ARM_W = 0.15,   ARM_H = 31,    ARM_Z = 30;                 // hangs shoulder→waist
+const LEG_W = 0.24,   LEG_H = 21,    SHOE_H = 9;
+const AE = 0.225;   // arm lateral offset → arms sit FLUSH against the torso sides
+
+function legs(col, row, pants, shoe, L, s, str) {
+  const e = 0.13;   // half-gap between the two legs (small gap, stocky stance)
+  const stances = [[col-e + s*str, row+e + s*str], [col+e - s*str, row-e - s*str]];
+  for (const [c, r] of stances) {
+    boxL(c, r+0.04, LEG_W, 0.30, SHOE_H, shoe, 0 + L, HULL(shoe));   // shoe (nudged forward)
+    boxL(c, r, LEG_W, LEG_W, LEG_H, pants, SHOE_H + L, HULL(pants)); // leg (short, chunky)
+  }
+}
+function arm(col, row, sleeve, hand, L) {
+  boxL(col, row, ARM_W, ARM_W, 7, hand, (ARM_Z - 3) + L, HULL(hand));         // hand at bottom
+  boxL(col, row, ARM_W, ARM_W, ARM_H, sleeve, (ARM_Z + 4) + L, HULL(sleeve)); // sleeve shoulder→wrist
+}
+function drawCharacter(col, row, rig, t, phase) {
+  const tt = t / 1000 + (phase || 0);
+  const anim = rig.anim || 'idle';
+  const s = anim === 'walk' ? Math.sin(tt * 6) : 0;
+  const L = anim === 'walk' ? Math.abs(Math.cos(tt * 6)) * 2.0 : Math.sin(tt * 1.6) * 0.7;
+  const str = anim === 'walk' ? 0.12 : 0;
+  const armSw = anim === 'walk' ? Math.sin(tt * 6) * 1.4 : 0;   // arm counter-swing
+  const skinC = rig.skin || '#f0c199', shirt = rig.shirt || '#2f6fe8';
+  const pants = rig.pants || '#2b3a4a', shoe = rig.shoe || shade(pants, -0.34);
+  const hair = rig.hair || '#33241a';
+  const [cx, cy] = iso(col, row);
+
+  // contact shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 4, 22, 10, 0, 0, 7); ctx.fill();
+
+  if (rig.dress) {
+    // shoes peek under the skirt
+    boxL(col-0.11, row+0.11+0.04, LEG_W, 0.30, SHOE_H, shoe, 0 + L, HULL(shoe));
+    boxL(col+0.11, row-0.11+0.04, LEG_W, 0.30, SHOE_H, shoe, 0 + L, HULL(shoe));
+    boxL(col, row, 0.72, 0.52, 24, rig.dress, SHOE_H + L, HULL(rig.dress));   // flared skirt
+    boxL(col, row, TORSO_W, TORSO_D, 20, rig.dress, 30 + L, HULL(rig.dress)); // bodice
+  } else {
+    legs(col, row, pants, shoe, L, s, str);
+    boxL(col, row, TORSO_W, TORSO_D, TORSO_H, shirt, TORSO_Z + L, HULL(shirt)); // chunky torso
+  }
+  // ARMS — flush to the torso sides (inner face overlaps the torso edge).
+  // walk: the two arms counter-swing via opposite lift; overlap always kept.
+  arm(col - AE, row + AE, rig.dress ? skinC : shirt, skinC, L + armSw);
+  arm(col + AE, row - AE, rig.dress ? skinC : shirt, skinC, L - armSw);
+
+  // chest emblem / tie (glyph-only)
+  if (rig.tie) { ctx.fillStyle = rig.tie;
+    ctx.fillRect(Math.round(cx)-2, Math.round(cy)-(48+L), 3, 14); }
+  else if (rig.emblem) { ctx.fillStyle = rig.emblem;
+    ctx.fillRect(Math.round(cx)-3, Math.round(cy)-(50+L), 7, 7); }
+
+  // head (≈ torso width, so NO bobblehead)
+  boxL(col, row, HEAD_W, HEAD_D, HEAD_H, skinC, HEAD_Z + L, HULL(skinC));
+  // face — eyes on the FRONT face
+  const ey = cy - (HEAD_Z + L) - 11;
+  ctx.fillStyle = '#241a12';
+  ctx.fillRect(Math.round(cx)-7, Math.round(ey), 4, 5);
+  ctx.fillRect(Math.round(cx)+3, Math.round(ey), 4, 5);
+  if (rig.glasses) { ctx.strokeStyle = '#12151b'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(Math.round(cx)-9, Math.round(ey)-2, 7, 7);
+    ctx.strokeRect(Math.round(cx)+2, Math.round(ey)-2, 7, 7);
+    ctx.beginPath(); ctx.moveTo(cx-2, ey+1); ctx.lineTo(cx+2, ey+1); ctx.stroke(); }
+  if (rig.beard) boxL(col, row, HEAD_W-0.02, HEAD_D-0.02, 8, rig.beardCol || '#8a6a44', HEAD_Z + L, HULL(rig.beardCol||'#8a6a44'));
+  // hair / hat — slightly larger cap on top
+  if (rig.hat) boxL(col, row, HEAD_W+0.06, HEAD_D+0.06, 8, rig.hat, (HEAD_Z+HEAD_H) + L, HULL(rig.hat));
+  else boxL(col, row, HEAD_W+0.04, HEAD_D+0.04, 8, hair, (HEAD_Z+HEAD_H) + L, HULL(hair));
+  if (rig.mohawk) boxL(col, row, 0.10, HEAD_D+0.02, 12, rig.hair, (HEAD_Z+HEAD_H+4) + L, HULL(rig.hair));
+
+  // held item slot (in the front hand)
+  const hx = cx + AE * TW * 0.5;
+  if (rig.hold === 'ball') { ctx.fillStyle = '#f2882b';
+    ctx.beginPath(); ctx.arc(hx, cy - (28 + L), 9, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#a04e10'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx-9, cy-(28+L)); ctx.lineTo(hx+9, cy-(28+L)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx, cy-(28+L)-9); ctx.lineTo(hx, cy-(28+L)+9); ctx.stroke(); }
+  else if (rig.hold === 'blade') { ctx.fillStyle = '#cdefff';
+    ctx.fillRect(Math.round(hx)-1, Math.round(cy)-(58+L), 3, 32);
+    ctx.strokeStyle = '#7fb8d8'; ctx.lineWidth = 1; ctx.strokeRect(Math.round(hx)-1, Math.round(cy)-(58+L), 3, 32);
+    ctx.fillStyle = '#8a6a44'; ctx.fillRect(Math.round(hx)-2, Math.round(cy)-(28+L), 5, 5); }
+}
+
+// ============================================================================
+// FOUNDRY SCENE — a row of hero characters + one walking. Same rig, all data.
+// ============================================================================
+const CAST = [
+  { name:'suit',      rig:{ shirt:'#1f3a63', pants:'#16223a', hair:'#2a1c12', glasses:true, tie:'#eef3f7' } },
+  { name:'rockstar',  rig:{ shirt:'#151515', pants:'#20242c', hair:'#e83a3a', mohawk:true, emblem:'#f2c02a' } },
+  { name:'sage',      rig:{ shirt:'#3f9e4d', pants:'#2b3a4a', skin:'#caa06f', hair:'#d8d2c8', beard:true, beardCol:'#d8d2c8' } },
+  { name:'baller',    rig:{ shirt:'#eef1f4', pants:'#e07a2f', hair:'#1c1c1c', skin:'#8a5a3a', hold:'ball' } },
+  { name:'dress',     rig:{ dress:'#e84f8f', hair:'#f2c84a', skin:'#f0c199' } },
+  { name:'ninja',     rig:{ shirt:'#111318', pants:'#111318', hat:'#0a0a0a', skin:'#caa06f', hold:'blade' } },
+];
+
+function drawFloor() {
+  // a soft studio dais of tiles
+  for (let r = 0; r < 7; r++) for (let c = 0; c < 9; c++) {
+    const base = (c + r) % 2 ? '#26313f' : '#222c39';
+    tile(c - 4, r - 1, base);
+  }
+}
+
+const INSPECT = location.search.indexOf('inspect') >= 0;
+function frame(t) {
+  ctx.clearRect(0, 0, CSSW, CSSH);
+  if (INSPECT) {                         // one big isolated character to inspect the rig
+    const Z = 2.6;                       // zoom so the rig fills the frame for review
+    const px = OX, py = OY + 40;          // zoom about the character's mid point
+    ctx.save();
+    ctx.translate(px, py); ctx.scale(Z, Z); ctx.translate(-px, -py);
+    drawCharacter(2, 2, { shirt:'#1f3a63', pants:'#16223a', hair:'#2a1c12', glasses:true, tie:'#eef3f7' }, t, 0);
+    ctx.restore();
+    requestAnimationFrame(frame); return;
+  }
+  drawFloor();
+  // hero row: keep (col+row) constant so they line up horizontally on screen
+  CAST.forEach((ch, i) => {
+    const col = 0.2 + i * 1.15, row = 5.0 - i * 1.15;
+    drawCharacter(col, row, ch.rig, t, i * 1.5);
+  });
+  // walking demo across the front row
+  const wc = ((t / 1200) % 8);
+  drawCharacter(wc - 1, 6.2 - wc + 1, { shirt:'#12b3b3', pants:'#203a5a', hair:'#e8433a', anim:'walk' }, t, 0);
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize', () => { DPR = Math.min(window.devicePixelRatio||1,2); resize(); });
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

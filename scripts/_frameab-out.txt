@@ -1,0 +1,1 @@
+{"before":1152.2,"after":1255.7,"deltaPct":9,"allBefore":[1146,1152,1167],"allAfter":[1243,1256,1269]}

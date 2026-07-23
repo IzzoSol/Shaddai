@@ -1,0 +1,35 @@
+ERROR: The process with PID 15152 (child process of PID 13040) could not be terminated.
+Reason: There is no running instance of the task.
+ERROR: The process with PID 10208 (child process of PID 13040) could not be terminated.
+Reason: There is no running instance of the task.
+ERROR: The process with PID 9684 (child process of PID 13040) could not be terminated.
+Reason: There is no running instance of the task.
+file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js:82
+            this._reject(callback, new TargetCloseError('Target closed'));
+                                   ^
+
+TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed
+    at CallbackRegistry.clear (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js:82:36)
+    at CdpCDPSession.onClosed (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js:121:25)
+    at #onClose (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js:210:21)
+    at WebSocket.<anonymous> (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js:43:30)
+    at callListener (C:\Users\Brittany\Desktop\SHADDAI MASTER FINAL BUILD\node_modules\ws\lib\event-target.js:290:14)
+    at WebSocket.onClose (C:\Users\Brittany\Desktop\SHADDAI MASTER FINAL BUILD\node_modules\ws\lib\event-target.js:220:9)
+    at WebSocket.emit (node:events:509:20)
+    at WebSocket.emitClose (C:\Users\Brittany\Desktop\SHADDAI MASTER FINAL BUILD\node_modules\ws\lib\websocket.js:279:10)
+    at Socket.socketOnClose (C:\Users\Brittany\Desktop\SHADDAI MASTER FINAL BUILD\node_modules\ws\lib\websocket.js:1360:15)
+    at Socket.emit (node:events:509:20) {
+  cause: ProtocolError
+      at <instance_members_initializer> (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js:102:14)
+      at new Callback (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js:106:16)
+      at CallbackRegistry.create (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js:25:26)
+      at Connection._rawSend (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js:118:26)
+      at CdpCDPSession.send (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js:72:14)
+      at #evaluate (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js:360:50)
+      at ExecutionContext.evaluate (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js:274:36)
+      at IsolatedWorld.evaluate (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js:102:30)
+      at CdpFrame.evaluate (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js:359:43)
+      at CdpFrame.<anonymous> (file:///C:/Users/Brittany/Desktop/SHADDAI%20MASTER%20FINAL%20BUILD/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js:101:27)
+}
+
+Node.js v25.9.0

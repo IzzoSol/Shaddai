@@ -192,8 +192,19 @@ async function _validate() {
       // apply filters — HARD REJECTS (locked liq, sniper/bundler cap under 10%)
       if (score < (cfg.rugMinScore || 45)) { _reject(c, 'rug score ' + score + ' < ' + (cfg.rugMinScore || 45)); continue; }
       if ((holders || 0) < (cfg.minHolders || 5)) { _reject(c, 'holders ' + (holders || 0) + ' < ' + (cfg.minHolders || 5)); continue; }   // missing holder data = reject
-      // OWNER MUST-RULE: liquidity locked & not removable — FAIL-CLOSED: no lock proof = no call.
-      if (cfg.requireLocked && (!lpDataPresent || lpPct < 80)) { _reject(c, 'LP not confirmed locked (' + (lpDataPresent ? lpPct.toFixed(0) + '%' : 'no lock data') + ')'); continue; }
+      // OWNER MUST-RULE: liquidity locked & not removable — fail-closed BUT re-checkable:
+      // If RugCheck has no LP data yet (brand-new pool), defer to next cycle instead of hard-rejecting
+      if (cfg.requireLocked) {
+        if (!lpDataPresent) {
+          // brand-new pool — RugCheck hasn't indexed LP data yet. Don't hard-reject; re-check next cycle.
+          if (!c._lpRetries) c._lpRetries = 0;
+          c._lpRetries++;
+          if (c._lpRetries < 6) { console.log('[pipeline] DEFERRED ' + (c.symbol || c.mint) + ' — no LP lock data yet (retry ' + c._lpRetries + '/6)'); continue; }
+          // after 6 retries (~2 min at 20s cycle), still no data — reject
+          _reject(c, 'LP lock data unavailable after 6 retries'); continue;
+        }
+        if (lpPct < 80) { _reject(c, 'LP locked ' + lpPct.toFixed(0) + '% < 80%'); continue; }
+      }
       // OWNER RULE: top holder must be < 30% unless LP is locked
       if (topHolderPct > 30 && lpPct < 50) { _reject(c, 'top holder ' + topHolderPct.toFixed(1) + '% (unlocked)'); continue; }
       // OWNER RULE: sniper/insider share of SUPPLY must be under the cap (was count/holders — almost never tripped)
@@ -240,6 +251,8 @@ function _reject(c, reason) {
   _stats.rejected++;
   _cooldowns.set(c.mint, Date.now());
   console.log(`[pipeline] REJECTED ${c.symbol || c.mint}: ${reason}`);
+  // log failure for ZEROX learning — track WHY tokens get rejected
+  try { require('./token-db').recordFailure(c.mint, (c.metrics && c.metrics.source) || 'pipeline', reason, c.metrics); } catch (e) {}
 }
 
 // ══════════════════════════════════════════════════════════════════════════

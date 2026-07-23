@@ -1,0 +1,84 @@
+[
+  {
+    "id": "grass-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/grass.jpg",
+    "strength": 0.62,
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/grass-hd.jpg",
+    "body": "Hyper-real cinematic meadow shot from an extreme low worm's-eye angle looking up through towering blades of grass, each blade individually rendered with translucent emerald backlight and dew droplets refracting cold-cyan light, wildflowers with gold-leaf illuminated petals arranged in subtle Flower-of-Life radial symmetry, volumetric god-rays raking low through the stems, deep layered depth of field with foreground blades blurred into anamorphic bokeh and razor-sharp mid-ground, faint gold sacred-geometry and planetary glyphs ghosted into the soft background, obsidian shadowed earth below, dewdrops like tiny lenses, reverent living cathedral of plants, 8k."
+  },
+  {
+    "id": "water-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/water.jpg",
+    "strength": 0.62,
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/water-hd.jpg",
+    "body": "Cinematic underwater-to-surface shot of a vast dark ocean, obsidian depths below and a luminous surface above, cold-cyan and emerald caustic light-nets dancing across the water in cymatics ripple patterns forming concentric Flower-of-Life interference rings, gold bioluminescent particles suspended like drifting stars, volumetric god-rays shafting down from above through the surface, hairline gold alchemical water-glyphs shimmering in the caustics, anamorphic bokeh from floating motes, heavy depth of field, sacred and fluid, mirror-still yet alive, 8k."
+  },
+  {
+    "id": "earth-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/earth.jpg",
+    "strength": 0.6,
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/earth-hd.jpg",
+    "body": "Epic cinematic view of Earth's curved horizon from high atmosphere, a radiant sun cresting with emerald-and-gold corona flares, the day-side terminator sweeping into a deep obsidian night-side glittering with cold-cyan city-light constellations, volumetric atmospheric god-rays and anamorphic lens flares raking across frame, a faint gold Metatron's-Cube wireframe ghosted over the planet's curvature as an unseen skeleton, illuminated-manuscript sun-glyphs in the corona, deep space depth of field, the heart of the journey, reverent and vast, 8k."
+  },
+  {
+    "id": "cosmos-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/cosmos.jpg",
+    "strength": 0.58,
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/cosmos-hd.jpg",
+    "body": "Awe-scale cinematic deep-space vista, about 80 percent obsidian black threaded with a cosmic web of galaxies, nebulae and supernova remnants strung in luminous filament chains of emerald and cold-cyan, a great ringed gas-giant in the mid-ground with gold-leaf rings catching the light, faint gold planetary and Hebrew glyph engravings and a ghosted rainbow oscilloscope grid-horizon in the far background as a digital-sublime data layer, volumetric nebula god-rays, anamorphic bokeh star-orbs, extreme depth of field, sacred cosmic sublime, 8k."
+  },
+  {
+    "id": "planet-saturn",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/planet-saturn.png",
+    "body": "A single hero ringed gas-giant planet centered, about half the frame height, three-quarter angle, seen from just above its ring-plane so the gold-leaf rings sweep dramatically across frame in dimensional perspective; storm-bands woven from emerald and gold circuit-traces and data-rivers swirling into sacred geometry; a razor-thin orbiting glyph-ring of faint Hebrew and alchemical symbols; soft terminator dropping the far hemisphere into obsidian shadow; pure black void behind with a whisper of cyan-gold nebula, no second planet; rim-lit by a cold cyan off-frame star; photoreal Octane render, telephoto compression, 8k."
+  },
+  {
+    "id": "planet-2",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/planet-2.png",
+    "body": "A single hero planet centered, about half the frame height, an obsidian world whose glowing gold continents form Flower-of-Life patterns over cyan seas, a thin orbiting glyph-ring, background pure black void with faint gold nebula haze, no other planets, rim-lit by a cold cyan star off-frame, photoreal 3D render, deep shadows, 8k."
+  },
+  {
+    "id": "planet-3",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "square_hd",
+    "out": "public/assets/journey/planet-3.png",
+    "body": "A single hero molten planet centered, about half the frame height, cracked obsidian crust with rivers of glowing gold-orange lava forming Metatron's Cube fissures and faint emerald mineral flecks, a thin orbiting glyph-ring, background pure black void, no other planets, rim-lit by a cold cyan star off-frame, photoreal 3D render, deep shadows, 8k."
+  },
+  {
+    "id": "tree-hd",
+    "type": "img2img",
+    "register": "cinematic",
+    "input": "public/assets/journey/tree.jpg",
+    "strength": 0.5,
+    "size": "portrait_16_9",
+    "out": "public/assets/journey/tree-hd.jpg",
+    "body": "The Kabbalistic Tree of Life materializing in obsidian cosmic space, ten Sephiroth as radiant spheres each glowing a distinct chakra-mapped light but unified in emerald, gold-leaf and cold-cyan, connected by 22 luminous gold pathways of pure light, a faint Metatron's-Cube wireframe underlying the entire structure and now fully visible, hairline Hebrew letters and planetary glyphs engraved in gold along each path, a Jacob's-ladder shaft of light rising toward the top, volumetric god-rays, deep depth of field, sacred architecture of the divine, reverent and luminous, 8k."
+  },
+  {
+    "id": "hero-space",
+    "type": "text2img",
+    "register": "cinematic",
+    "size": "landscape_16_9",
+    "out": "public/assets/journey/hero-space.jpg",
+    "body": "An endless deep-space field, about 85 percent pure black, with a faint gold Flower-of-Life mandala dissolving edge-first into a distant emerald nebula and a scatter of cold-cyan stars with anamorphic flares, one faint Metatron's-Cube lattice ghosted in the dust, extreme central negative space reserved for a logo, layered volumetric depth, particulate gold dust, filmic vignette, restrained and vast."
+  }
+]

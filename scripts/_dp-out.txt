@@ -1,0 +1,19 @@
+{
+  "errorsAfterSweep": [],
+  "seamMeanLum": 0,
+  "ab": {
+    "beforeMs": 1848.8,
+    "afterMs": 1933.9,
+    "deltaPct": 4.6,
+    "allBefore": [
+      1156.7,
+      1848.8,
+      2037.1
+    ],
+    "allAfter": [
+      1167.6,
+      1933.9,
+      2732.6
+    ]
+  }
+}

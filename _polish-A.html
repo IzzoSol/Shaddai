@@ -1,0 +1,251 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Wardrobe Prototypes</title>
+<style>
+  html,body{margin:0;background:#0d1017;color:#cfe3f2;font-family:'Segoe UI',system-ui,sans-serif}
+  header{padding:14px 22px;border-bottom:1px solid #202838}
+  h1{margin:0;font-size:16px}h1 b{color:#00ff88}
+  .sub{color:#7d8ea3;font-size:12px;margin-top:3px}
+  .wrap{padding:14px 22px}
+  .stage{background:radial-gradient(120% 90% at 50% 10%,#1a212d,#0e131b 70%);border:1px solid #202838;border-radius:12px;padding:6px}
+  canvas{display:block;width:100%;height:auto;border-radius:8px;image-rendering:pixelated}
+</style></head><body>
+<header><h1>SHADDAI · <b>Polish Pass A</b> — expressive faces · skin shading · hair &amp; cloth detail</h1>
+<div class="sub">Variant A (TURTLE): larger defined eyes (white+iris+pupil+glint), real brows, per-character expressions, dimensional skin, per-style hair (messy/side-part/short/ponytail), shaded clothing (cuffs, hems, folds).</div></header>
+<div class="wrap"><div class="stage"><canvas id="c"></canvas></div></div>
+<script>
+'use strict';
+const TW=84, TH=42;
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+let DPR=Math.min(devicePixelRatio||1,2);
+const COLS=3, ROWS=3, CELLW=260, CELLH=280, SC=2.4;
+let OX=0, OY=0;
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;const f=amt<0?0:255,t=Math.abs(amt);r=Math.round((f-r)*t+r);g=Math.round((f-g)*t+g);b=Math.round((f-b)*t+b);return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
+function iso(col,row){return [OX+(col-row)*TW/2, OY+(col+row)*TH/2];}
+function Pth(pts){ctx.beginPath();ctx.moveTo(Math.round(pts[0][0]),Math.round(pts[0][1]));for(let i=1;i<pts.length;i++)ctx.lineTo(Math.round(pts[i][0]),Math.round(pts[i][1]));ctx.closePath();}
+function box(col,row,w,d,h,top,opts){opts=opts||{};const cx=OX+(col-row)*TW/2,cy=OY+(col+row)*TH/2;const dx=(dc,dr)=>(dc-dr)*TW/2,dy=(dc,dr)=>(dc+dr)*TH/2;const hw=w/2,hd=d/2;const back=[cx+dx(-hw,-hd),cy+dy(-hw,-hd)],right=[cx+dx(hw,-hd),cy+dy(hw,-hd)],front=[cx+dx(hw,hd),cy+dy(hw,hd)],left=[cx+dx(-hw,hd),cy+dy(-hw,hd)];const up=p=>[p[0],p[1]-h];const tB=up(back),tR=up(right),tF=up(front),tL=up(left);ctx.fillStyle=opts.left||shade(top,-0.17);Pth([left,front,tF,tL]);ctx.fill();ctx.fillStyle=opts.right||shade(top,-0.33);Pth([front,right,tR,tF]);ctx.fill();ctx.fillStyle=top;Pth([tB,tR,tF,tL]);ctx.fill();if(opts.edge){ctx.strokeStyle='rgba(0,0,0,0.22)';ctx.lineWidth=1;ctx.lineJoin='round';Pth([tB,tR,right,front,left,tL]);ctx.stroke();}}
+function boxL(col,row,w,d,h,color,lift,opts){const s=OY;OY-=lift;box(col,row,w,d,h,color,opts);OY=s;}
+const E={edge:true};
+
+// ---- shoe styles ----
+function shoePart(c,r,style,color,L){
+  if(style==='boot'){boxL(c,r+0.02,0.17,0.19,8,color,0+L,E);}
+  else if(style==='dress'){boxL(c,r+0.05,0.15,0.22,3,color,0+L,E);}
+  else if(style==='heel'){boxL(c,r+0.02,0.13,0.15,3,color,0+L,E);boxL(c,r+0.12,0.05,0.05,2,color,0+L);}
+  else{ boxL(c,r+0.05,0.17,0.2,1.6,'#eef1f4',0+L); boxL(c,r+0.02,0.16,0.18,4,color,1.6+L,E); } // sneaker: white sole + upper
+}
+// ---- arm with sleeve length + watch ----
+function armPart(c,r,sleeve,skinC,L,o){o=o||{};
+  boxL(c,r,0.1,0.1,3,skinC,8+L,E);                                   // hand
+  if(o.short){boxL(c,r,0.1,0.1,7,skinC,11+L,E);boxL(c,r,0.12,0.12,3,shade(sleeve,-0.22),18+L,E);boxL(c,r,0.11,0.11,5,sleeve,21+L,E);} // forearm skin + short-sleeve hem(dark)+body
+  else{boxL(c,r,0.105,0.105,3,shade(sleeve,-0.24),11+L,E);boxL(c,r,0.1,0.1,10,sleeve,14+L,E);} // dark cuff + long sleeve
+  if(o.watch){ctx.fillStyle=o.watch;const[wx,wy]=iso(c,r);ctx.fillRect(Math.round(wx)-3,Math.round(wy)-(11+L),6,2);ctx.fillStyle=shade(o.watch,0.4);ctx.fillRect(Math.round(wx)-1,Math.round(wy)-(11+L),2,2);}
+}
+
+function guy(rig,t,phase){
+  const col=0,row=0, tt=t/1000+(phase||0), L=Math.sin(tt*1.7)*0.4;
+  const skin=rig.skin||'#f0c199', shirt=rig.shirt||'#e0662e', pants=rig.pants||'#37414f';
+  const shoe=rig.shoe||'#2a2a2a', hair=rig.hair||'#3a2a1a', cap=rig.cap;
+  const top=rig.suit||rig.hoodie||rig.jacket||shirt;
+  const sleeve=top;
+  const [cx,cy]=iso(0,0);
+  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(cx,cy+3,14,6,0,0,7);ctx.fill();
+  // BACK arm
+  armPart(col+0.18,row-0.18,sleeve,skin,L,{short:rig.short,watch:rig.watch});
+  // legs / dress
+  if(rig.dress){shoePart(col-0.02,row+0.02,'heel',shoe,L);shoePart(col+0.02,row-0.02,'heel',shoe,L);boxL(col,row,0.5,0.4,13,rig.dress,3+L,E);boxL(col,row,0.36,0.26,12,rig.dress,16+L,E);}
+  else{for(const g of [[-0.08,0.08],[0.08,-0.08]]){const c=col+g[0],r=row+g[1];shoePart(c,r,rig.shoeStyle,shoe,L);boxL(c,r,0.13,0.13,6,pants,4+L,E);}
+    boxL(col,row,0.4,0.3,15,top,10+L,E);}
+  // ---- clothing detail on the torso front ----
+  const T=(o)=>cy-(10+o+L);
+  if(!rig.dress){ // fabric shading on the torso front: lit highlight + fold shadow + hem
+    const fxc=Math.round(cx);
+    ctx.fillStyle=shade(top,0.14);ctx.fillRect(fxc-7,T(15),2,10);        // lit-left vertical highlight
+    ctx.fillStyle=shade(top,-0.16);ctx.fillRect(fxc+5,T(14),2,9);        // shadowed-right side
+    ctx.fillStyle=shade(top,-0.10);ctx.fillRect(fxc+1,T(9),1,7);         // soft center fold
+    ctx.fillStyle=shade(top,-0.22);ctx.fillRect(fxc-6,T(5),12,1);        // hem line at the base
+  }
+  if(rig.hoodie && !rig.hoodUp){ // real hood bunched behind the neck + collar + drawstrings
+    boxL(col,row-0.13,0.44,0.2,11,shade(rig.hoodie,-0.05),27+L,E);        // hood roll rising behind the head
+    boxL(col,row-0.06,0.34,0.12,5,shade(rig.hoodie,-0.2),28+L,E);         // hood inner shadow
+    ctx.fillStyle=shade(rig.hoodie,-0.26);ctx.fillRect(Math.round(cx)-6,T(16),12,3);ctx.fillStyle=shade(rig.hoodie,-0.12);ctx.fillRect(Math.round(cx)-5,T(17),10,1); // bunched hood collar (front)
+    ctx.fillStyle='#eef1f4';ctx.fillRect(Math.round(cx)-3,T(12),1,6);ctx.fillRect(Math.round(cx)+2,T(12),1,6); // drawstrings
+  }
+  if(rig.suit){ ctx.fillStyle=shade(rig.suit,-0.22); // lapels V
+    Pth([[cx-5,T(15)],[cx,T(7)],[cx-1,T(15)]]);ctx.fill();
+    Pth([[cx+5,T(15)],[cx,T(7)],[cx+1,T(15)]]);ctx.fill();
+  }
+  if(rig.tie){ctx.fillStyle=rig.tie;ctx.fillRect(Math.round(cx)-1,T(13),2,10);ctx.fillStyle=shade(rig.tie,-0.3);ctx.fillRect(Math.round(cx)-1,T(13),2,2);}
+  else if(!rig.suit){ctx.fillStyle=shade(top,0.16);ctx.fillRect(Math.round(cx)-4,T(14),8,2);} // collar
+  if(rig.logo){ctx.strokeStyle=rig.logo;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(cx-4,T(7));ctx.lineTo(cx-1,T(9));ctx.lineTo(cx+5,T(13));ctx.stroke();} // swoosh
+  if(rig.emblem){ctx.fillStyle=rig.emblem;ctx.fillRect(Math.round(cx)-3,T(8),6,6);}
+  // FRONT arm
+  armPart(col-0.18,row+0.18,sleeve,skin,L,{short:rig.short,watch:rig.watch2});
+  // ==== HEAD (variant C: MAX POLISH) ====
+  boxL(col,row,0.44,0.35,15,skin,25+L,E);
+  if(!rig.robot&&rig.ears!==false){const earC=shade(skin,-0.08);
+    boxL(col-0.185,row,0.05,0.08,4.5,earC,28.5+L,E);boxL(col+0.185,row,0.05,0.08,4.5,earC,28.5+L,E);
+    const[ex,ey0]=iso(0,0);ctx.fillStyle=shade(skin,-0.28);
+    ctx.fillRect(Math.round(ex)-14,Math.round(ey0)-(31+L),1,2);ctx.fillRect(Math.round(ex)+13,Math.round(ey0)-(31+L),1,2);
+  }
+  // hair / cap  (hood-up replaces hair)
+  if(rig.robot){boxL(col,row,0.48,0.38,5,rig.cap||'#9aa4ad',39+L,E);boxL(col,row,0.04,0.04,6,'#9aa4ad',44+L,E);ctx.fillStyle=rig.led||'#ff5a4d';const[ax,ay]=iso(0,0);ctx.beginPath();ctx.arc(ax,ay-(50+L),2.5,0,7);ctx.fill();}
+  else if(rig.hoodUp){const hc=rig.hoodie||'#555';
+    boxL(col,row-0.05,0.6,0.52,20,hc,24+L,E);            // hood shell over the whole head
+    boxL(col,row+0.19,0.34,0.05,13,skin,24.5+L,E);       // face opening — skin comes forward
+    boxL(col,row-0.03,0.5,0.16,7,hc,44+L,E);             // hood crown/peak
+    const[hx,hy]=iso(0,0);ctx.fillStyle=shade(hc,-0.24);ctx.fillRect(Math.round(hx)-8,Math.round(hy)-(40+L),16,2);} // opening rim
+  else if(cap){boxL(col,row,0.5,0.4,6,cap,40+L,E);boxL(col,row+0.15,0.42,0.07,3,hair,38.5+L,E);boxL(col-0.12,row,0.05,0.14,4.5,hair,31.5+L,E);boxL(col+0.12,row,0.05,0.14,4.5,hair,31.5+L,E);
+    boxL(col,row+0.15,0.42,0.02,1,shade(cap,0.18),40+L);}
+  else if(rig.mohawk){boxL(col,row,0.1,0.34,12,hair,39+L,E);boxL(col-0.1,row,0.05,0.15,4,hair,32+L,E);boxL(col+0.1,row,0.05,0.15,4,hair,32+L,E);}
+  else{
+    const HS=rig.hairStyle||'messy';
+    const[hx,hy]=iso(0,0), hlit=shade(hair,0.20), hlo=shade(hair,-0.16);
+    if(HS==='short'){
+      // cropped: thin snug cap, tight to the skull, low fringe, tapered temples
+      boxL(col,row,0.47,0.38,3.5,hair,39.5+L,E);
+      boxL(col-0.135,row,0.06,0.24,7,hair,29.5+L,E);boxL(col+0.135,row,0.06,0.24,7,hair,29.5+L,E); // short sideburns/temple
+      boxL(col,row+0.17,0.42,0.06,2.5,hair,38.5+L,E);                         // low fringe edge
+      ctx.fillStyle=hlit;ctx.fillRect(Math.round(hx)-6,Math.round(hy)-(42+L),4,1); // subtle sheen
+    } else if(HS==='sidepart'){
+      // neat business hair: fuller on lit-left, a clean part gap, swept fringe
+      boxL(col,row,0.46,0.37,6.5,hair,39.5+L,E);
+      boxL(col-0.05,row,0.34,0.26,3,hair,46+L,E);                             // rounded top
+      boxL(col-0.14,row,0.09,0.27,10.5,hair,30+L,E);boxL(col+0.13,row,0.075,0.26,9.5,hlo,30+L,E); // fuller lit side + shadowed side
+      boxL(col+0.02,row+0.16,0.4,0.07,4,hair,38+L,E);                         // swept fringe (heavier to one side)
+      ctx.fillStyle=shade(hair,-0.3);ctx.fillRect(Math.round(hx)-1,Math.round(hy)-(46+L),1,6); // the PART line
+      ctx.fillStyle=hlit;ctx.fillRect(Math.round(hx)-7,Math.round(hy)-(45+L),4,1);ctx.fillRect(Math.round(hx)-6,Math.round(hy)-(43+L),3,1); // sidepart sheen strands
+    } else if(HS==='ponytail'){
+      // gathered top + a ponytail tail off the shadowed-back-right, plus a tie
+      boxL(col,row,0.46,0.37,6,hair,39.5+L,E);
+      boxL(col,row,0.32,0.25,3.5,hair,46+L,E);                                // rounded crown
+      boxL(col-0.13,row,0.075,0.24,9,hair,31+L,E);boxL(col+0.13,row,0.075,0.24,9,hair,31+L,E);
+      boxL(col,row+0.16,0.4,0.06,3,hair,38.5+L,E);                            // side-swept bangs
+      boxL(col+0.12,row-0.28,0.12,0.12,4,shade(hair,0.05),34+L,E);            // ponytail base bump (behind, upper-right)
+      boxL(col+0.20,row-0.30,0.1,0.1,13,hair,20+L,E);                         // the tail hanging down back
+      boxL(col+0.20,row-0.30,0.11,0.11,2,'#d94f7f',33+L,E);                   // hair tie
+      ctx.fillStyle=hlit;ctx.fillRect(Math.round(hx)-6,Math.round(hy)-(45+L),5,1);
+    } else {
+      // MESSY: chunky volume, uneven tufts, split fringe, layered sheen
+      boxL(col,row,0.47,0.38,6.5,hair,39.5+L,E);                              // main mass
+      boxL(col,row,0.33,0.26,4,hair,46+L,E);                                  // rounded crown
+      boxL(col-0.10,row-0.02,0.1,0.16,4,hair,50+L,E);boxL(col+0.09,row+0.03,0.09,0.14,3.5,hair,49+L,E); // uneven top tufts
+      boxL(col-0.135,row,0.09,0.28,10.5,hair,29.5+L,E);boxL(col+0.135,row,0.09,0.28,10.5,hair,29.5+L,E); // fuller sides
+      boxL(col,row+0.16,0.44,0.07,4,hair,38+L,E);                             // fringe
+      const fxx=Math.round(hx);ctx.fillStyle=shade(hair,-0.28);ctx.fillRect(fxx-1,Math.round(hy)-(41+L),2,3); // split in the fringe
+      ctx.fillStyle=hlit;ctx.fillRect(fxx-7,Math.round(hy)-(46+L),4,1);ctx.fillRect(fxx+1,Math.round(hy)-(44+L),3,1); // 2 messy sheen strands
+      ctx.fillStyle=hlo;ctx.fillRect(fxx+3,Math.round(hy)-(41+L),3,1);        // shadow strand
+    }
+  }
+  if(rig.beard&&!rig.hoodUp)boxL(col,row+0.13,0.4,0.09,6,rig.beardCol||shade(hair,0.05),25+L,E);
+  // ---- FACE LAST (always clean, on top) ====================================
+  const fx=Math.round(cx);
+  const ey=Math.round(cy-(25+L)-7);   // eyebrow/eye baseline row (raised for balance)
+  if(rig.robot){
+    // robot: glowing cyan eyes with soft bloom + brow bar
+    const led=rig.led||'#5fe0ff';
+    ctx.fillStyle=shade(led,-0.5);ctx.fillRect(fx-8,ey-2,6,1);ctx.fillRect(fx+2,ey-2,6,1); // dark brow slots
+    ctx.fillStyle='rgba(95,224,255,0.30)';ctx.fillRect(fx-8,ey-1,6,6);ctx.fillRect(fx+2,ey-1,6,6); // bloom
+    ctx.fillStyle=led;ctx.fillRect(fx-7,ey,4,4);ctx.fillRect(fx+3,ey,4,4);
+    ctx.fillStyle='#eafcff';ctx.fillRect(fx-6,ey,1,1);ctx.fillRect(fx+4,ey,1,1);              // hot glint
+    ctx.fillStyle=shade(led,-0.35);ctx.fillRect(fx-3,ey+7,6,1);                                // mouth vent line
+  }
+  else{
+    const exp=rig.expr||'neutral';
+    // ---- dimensional skin shading (single top-left light) --------------------
+    ctx.fillStyle=shade(skin,0.16);ctx.fillRect(fx-8,ey+2,3,4);          // lit-left cheek highlight
+    ctx.fillStyle=shade(skin,0.10);ctx.fillRect(fx-9,ey-2,1,5);          // lit temple edge
+    ctx.fillStyle=shade(skin,-0.10);ctx.fillRect(fx+8,ey+2,2,5);         // shadowed-right cheek (pulled off the eye)
+    ctx.fillStyle=shade(skin,-0.18);ctx.fillRect(fx+5,ey+8,4,2);ctx.fillRect(fx+3,ey+10,3,1); // jaw/chin shadow
+    ctx.fillStyle=shade(skin,0.06);ctx.fillRect(fx-1,ey+1,2,5);          // center brow ridge lift
+    // ---- eyebrows (expression-driven, real brows over each eye) --------------
+    const browC=shade(hair||'#2a1c12',-0.10);
+    ctx.fillStyle=browC;
+    if(exp==='confident'){ // slight inward tilt, sharper
+      ctx.fillRect(fx-8,ey-3,4,1);ctx.fillRect(fx-5,ey-2,1,1);
+      ctx.fillRect(fx+4,ey-3,4,1);ctx.fillRect(fx+4,ey-2,1,1);
+    } else if(exp==='surprise'){ // raised, arched high
+      ctx.fillRect(fx-8,ey-4,4,1);ctx.fillRect(fx+4,ey-4,4,1);
+      ctx.fillRect(fx-7,ey-5,2,1);ctx.fillRect(fx+5,ey-5,2,1);
+    } else if(exp==='smug'){ // one up one flat
+      ctx.fillRect(fx-8,ey-4,4,1);ctx.fillRect(fx+4,ey-3,4,1);
+    } else if(exp==='cool'){ // low relaxed brows
+      ctx.fillRect(fx-8,ey-2,4,1);ctx.fillRect(fx+4,ey-2,4,1);
+    } else { // neutral / happy — gentle rounded brows
+      ctx.fillRect(fx-8,ey-3,4,1);ctx.fillRect(fx-8,ey-2,1,1);
+      ctx.fillRect(fx+4,ey-3,4,1);ctx.fillRect(fx+7,ey-2,1,1);
+    }
+    // ---- eyes: wider-set, white sclera + iris + pupil + glint ----------------
+    // sockets: left eye fx-8..fx-4 (4w), right eye fx+4..fx+8 (4w), 8px gap → clearly two eyes
+    const sclera='#f7f4ee', iris=rig.eye||'#3a2a1a', pupil='#141014';
+    const drawEye=(x)=>{
+      ctx.fillStyle=shade(skin,-0.24);ctx.fillRect(x-1,ey,6,5);        // eye-socket outline shade
+      ctx.fillStyle=sclera;ctx.fillRect(x,ey+1,4,3);                   // big white
+      ctx.fillStyle=shade(sclera,-0.14);ctx.fillRect(x,ey+1,4,1);      // upper-lid shadow on the white
+      ctx.fillStyle=iris;ctx.fillRect(x+1,ey+1,2,3);                   // iris (centered)
+      ctx.fillStyle=pupil;ctx.fillRect(x+1,ey+2,2,1);                  // pupil
+      ctx.fillStyle='#ffffff';ctx.fillRect(x+1,ey+1,1,1);             // main glint (top-left, lit)
+      ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fillRect(x+2,ey+3,1,1);// tiny lower reflected light
+    };
+    if(exp==='cool'){ // half-lidded lids for a chill look
+      drawEye(fx-8);drawEye(fx+4);
+      ctx.fillStyle=shade(skin,-0.14);ctx.fillRect(fx-8,ey+1,4,1);ctx.fillRect(fx+4,ey+1,4,1);
+    } else { drawEye(fx-8);drawEye(fx+4); }
+    // upper lash line for definition
+    ctx.fillStyle=shade(iris,-0.35);ctx.fillRect(fx-8,ey,4,1);ctx.fillRect(fx+4,ey,4,1);
+    // ---- nose (small, centered, 2-tone) --------------------------------------
+    ctx.fillStyle=shade(skin,-0.22);ctx.fillRect(fx,ey+5,2,2);
+    ctx.fillStyle=shade(skin,0.14);ctx.fillRect(fx-1,ey+5,1,2);       // lit side of nose
+    // ---- mouth (expression-driven) -------------------------------------------
+    const lip=shade(skin,-0.42);
+    ctx.fillStyle=lip;
+    if(exp==='happy'){ // open smile
+      ctx.fillRect(fx-3,ey+9,6,1);ctx.fillRect(fx-2,ey+10,4,1);ctx.fillStyle='#f7f4ee';ctx.fillRect(fx-2,ey+9,4,1);
+    } else if(exp==='smug'||exp==='smile'||exp==='confident'){ // one-sided smirk
+      ctx.fillStyle=lip;ctx.fillRect(fx-2,ey+9,5,1);ctx.fillRect(fx+2,ey+8,1,1);
+    } else if(exp==='surprise'){ // small 'o'
+      ctx.fillStyle=lip;ctx.fillRect(fx-1,ey+9,3,1);ctx.fillRect(fx-1,ey+10,3,1);ctx.fillStyle=shade(skin,-0.5);ctx.fillRect(fx,ey+10,1,1);
+    } else if(rig.frown){
+      ctx.fillStyle=lip;ctx.fillRect(fx-2,ey+9,4,1);ctx.fillRect(fx-3,ey+10,1,1);ctx.fillRect(fx+2,ey+10,1,1);
+    } else { // neutral / cool — soft closed smile
+      ctx.fillStyle=lip;ctx.fillRect(fx-2,ey+9,4,1);ctx.fillRect(fx-3,ey+8,1,1);ctx.fillRect(fx+2,ey+8,1,1);
+    }
+    ctx.fillStyle=shade(skin,0.10);ctx.fillRect(fx-1,ey+11,3,1);       // chin light under lip
+    // ---- cheek blush (cute factor) -------------------------------------------
+    if(rig.blush!==false){ctx.fillStyle='rgba(232,110,130,0.26)';ctx.fillRect(fx-8,ey+6,2,2);ctx.fillRect(fx+6,ey+6,2,2);}
+    // ---- glasses -------------------------------------------------------------
+    if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.3;ctx.lineJoin='round';
+      ctx.strokeRect(fx-9,ey,6,6);ctx.strokeRect(fx+3,ey,6,6);
+      ctx.beginPath();ctx.moveTo(fx-3,ey+2);ctx.lineTo(fx+3,ey+2);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.beginPath();ctx.moveTo(fx-8,ey+4);ctx.lineTo(fx-6,ey+1);ctx.stroke();
+    }
+  }
+}
+
+const CAST=[
+  ['Nike Hoodie',{hoodie:'#6b7280',logo:'#ffffff',shoeStyle:'sneaker',shoe:'#1e1e1e',skin:'#e7b58a',hair:'#2a1c12',hairStyle:'messy',expr:'cool',eye:'#4a3420'}],
+  ['Business Suit',{suit:'#1f3a63',tie:'#c0392b',shoeStyle:'dress',shoe:'#20161a',watch:'#e8c33a',pants:'#182a48',skin:'#f0c199',hair:'#2a1c12',hairStyle:'sidepart',glasses:true,expr:'confident',eye:'#3a2a1a'}],
+  ['Long-Sleeve Tee',{shirt:'#3f9e4d',pants:'#2b3a4a',shoeStyle:'sneaker',shoe:'#c0392b',skin:'#caa06f',hair:'#5a3a1a',hairStyle:'messy',expr:'happy',eye:'#4a3018'}],
+  ['Tank + Shorts',{shirt:'#e8433a',short:true,pants:'#37506e',shoeStyle:'sneaker',shoe:'#eef1f4',cap:'#2f6fe8',skin:'#8a5a3a',hair:'#141414',hairStyle:'short',expr:'happy',eye:'#241812'}],
+  ['Bomber Jacket',{jacket:'#2b3a4a',shirt:'#e0662e',shoeStyle:'boot',shoe:'#3a2a1a',skin:'#d19a6a',hair:'#c0392b',hairStyle:'messy',watch:'#8a9199',expr:'smug',eye:'#5a4020'}],
+  ['Hoodie (Up)',{hoodie:'#8b5cf6',hoodUp:true,pants:'#20242c',shoeStyle:'sneaker',shoe:'#eef1f4',skin:'#f0c199',expr:'cool',eye:'#3a2a1a'}],
+  ['Dress + Heels',{dress:'#e84f8f',shoe:'#20161a',watch:'#e8c33a',skin:'#f2c9a0',hair:'#e8a23a',hairStyle:'ponytail',expr:'smile',eye:'#5a7a3a'}],
+  ['Athlete',{shirt:'#f2a01e',short:true,pants:'#20242c',shoeStyle:'sneaker',shoe:'#eef1f4',cap:'#e8433a',skin:'#6b4423',hair:'#141414',hairStyle:'short',expr:'confident',eye:'#241812'}],
+  ['Robot',{robot:true,skin:'#8a9199',cap:'#b8c0c8',shirt:'#6b7280',pants:'#3a3f47',shoe:'#3a3f47',led:'#5fe0ff',emblem:'#5fe0ff'}],
+];
+
+function resize(){const W=Math.min(document.querySelector('.stage').clientWidth-12,1000);canvas.style.width=W+'px';canvas.style.height=W*(ROWS*CELLH)/(COLS*CELLW)+'px';canvas.width=COLS*CELLW*DPR;canvas.height=ROWS*CELLH*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;}
+function frame(t){
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,COLS*CELLW,ROWS*CELLH);
+  for(let i=0;i<CAST.length;i++){
+    const r=(i/COLS)|0,c=i%COLS, cxc=c*CELLW+CELLW/2, cyc=r*CELLH+CELLH-70;
+    ctx.setTransform(DPR*SC,0,0,DPR*SC,cxc*DPR,cyc*DPR);OX=0;OY=0;ctx.imageSmoothingEnabled=false;
+    guy(CAST[i][1],t,i*0.5);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle='#aebccb';ctx.font='13px Segoe UI';ctx.textAlign='center';ctx.fillText(CAST[i][0],cxc,r*CELLH+CELLH-24);
+  }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize',()=>{DPR=Math.min(devicePixelRatio||1,2);resize();});
+resize();requestAnimationFrame(frame);
+</script></body></html>

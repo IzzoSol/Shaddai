@@ -1,0 +1,3 @@
+B0=402 A0=400 B1=405 A1=386 B2=401 A2=380 B3=400 A3=397 B4=427 A4=388 
+{"beforeMs":401.9,"afterMs":388.3,"deltaPct":-3.4,"nBefore":5,"nAfter":5,"allBefore":[402,405,401,400,427],"allAfter":[400,386,380,397,388]}
+EXIT=0

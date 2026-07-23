@@ -58,8 +58,8 @@ window.RegionGen['volcano'] = function(api){
   bridge(41, 34);   // east fissure crossing
   bridge(26, 40);   // south fissure crossing
 
-  // ---- THE VENT: big glowing landmark over the lava core ----
-  api.prop('volcano', 24, 24, { w: 5, d: 5 });
+  // ---- THE GREAT VOLCANO: massive erupting landmark dominating the region ----
+  api.prop('volcano', 24, 24, { w: 8, d: 8, scale: 2.7 });
 
   // =========================================================
   // BUILDINGS
