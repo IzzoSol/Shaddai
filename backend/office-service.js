@@ -38,11 +38,21 @@ function clearOffices(userId) {
   return before - Object.keys(db.offices || {}).length;
 }
 
-// One-shot cleanup: set env WIPE_OFFICES=1 (e.g. in Render) to clear ALL offices/lots on
-// the next server boot (they're test offices). Logs how many were removed. Unset it after.
-if (process.env.WIPE_OFFICES === '1' || process.env.WIPE_OFFICES === 'true') {
-  try { const n = clearOffices(); console.log('[office] WIPE_OFFICES set — cleared ' + n + ' office(s); Founders\' Row is empty.'); } catch (e) {}
-}
+// One-time reset of Founders' Row — the existing offices were all test data. This runs
+// automatically ONCE (gated by a version marker persisted in the store), so it clears now
+// but will NOT wipe real offices on future deploys. WIPE_OFFICES=1 env forces a re-clear.
+(function officeReset() {
+  const WIPE_V = 1;
+  try {
+    const forced = (process.env.WIPE_OFFICES === '1' || process.env.WIPE_OFFICES === 'true');
+    const db = read();
+    if (forced || db._wipeVersion !== WIPE_V) {
+      const n = Object.keys(db.offices || {}).length;
+      db.offices = {}; db._wipeVersion = WIPE_V; write(db);
+      console.log('[office] Founders\' Row reset — cleared ' + n + ' office(s)' + (forced ? ' [forced]' : ' [one-time v' + WIPE_V + ']') + '.');
+    }
+  } catch (e) {}
+})();
 
 // Deterministic office plot coords in SHADDAI City — "Founders' Row", a northern
 // boulevard of 30 lots. MUST mirror game.html's FLOT() so the city renders each
