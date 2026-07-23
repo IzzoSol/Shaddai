@@ -1472,13 +1472,18 @@ function renderHotbar(){ const bar=document.getElementById('rpgHotbar'); if(!bar
   bar.innerHTML=h;
   bar.querySelectorAll('.hbslot').forEach(s=>{ s.onclick=()=>{ const i=+s.dataset.i; if(i===activeSlot && hotbar[i]==='potion') drinkPotion(); else selectSlot(i); }; s.oncontextmenu=(e)=>{ e.preventDefault(); hotbar[+s.dataset.i]=null; saveHotbar(); renderHotbar(); }; }); }
 function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!el) return;
-  const tools=Object.keys(inv).filter(k=>inv[k]>0), fishK=Object.keys(fish).filter(k=>fish[k]>0);
-  const cell=(id,cnt,assignable)=>{ const m=itemMeta(id); return '<div class="bpcell'+(assignable?' assign':'')+(hotbar.indexOf(id)>=0?' inbar':'')+'" data-id="'+(assignable?id:'')+'"><span class="bpico">'+itemIcon(id,26,m.ico)+'</span><span class="bpn">'+m.name+'</span><span class="bpc">'+(cnt>999?999:cnt)+'</span></div>'; };
-  let h='<div class="bpwrap"><div class="bphead"><b>🎒 Backpack</b><span class="bphint">Click a tool/weapon to slot it on your hotbar · keys 1–6 · I to close</span><button id="bpClose">✕</button></div><div class="bpgrid">';
-  if(!tools.length&&!fishK.length) h+='<div class="bpempty">Empty — chop trees, mine rocks, fish the water, or buy gear at the Store.</div>';
-  for(const k of tools){ const assignable=(WEAPON_POWER[k]!==undefined||k==='axe'||k==='pick'||k==='rod'||k==='potion'||k==='lantern'); h+=cell(k,inv[k],assignable); }
-  for(const k of fishK){ h+=cell(k,fish[k],false); }
-  h+='</div><div class="bpfoot">💰 '+money+' Gold · Lv '+levelFor(credits)+' · '+credits+' XP</div></div>';
+  const isTool=k=>['axe','pick','rod','lantern','potion'].indexOf(k)>=0;
+  const isWeap=k=>WEAPON_POWER[k]!==undefined && !isTool(k);
+  const invK=Object.keys(inv).filter(k=>inv[k]>0), fishK=Object.keys(fish).filter(k=>fish[k]>0);
+  const weapons=invK.filter(isWeap), tools=invK.filter(isTool), mats=invK.filter(k=>!isTool(k)&&!isWeap(k));
+  const eqW=(typeof activeWeapon==='function')?activeWeapon():equippedWeapon;
+  const cell=(id,cnt,assignable)=>{ const m=itemMeta(id); const isW=WEAPON_POWER[id]!==undefined; const eq=(id===eqW); const pw=isW?(WEAPON_POWER[id]+((weaponUp[id]||0)*0.5)):0;
+    return '<div class="bpcell'+(assignable?' assign':'')+(hotbar.indexOf(id)>=0?' inbar':'')+'" data-id="'+(assignable?id:'')+'" title="'+m.name+(isW?' · power '+pw.toFixed(1):'')+(assignable?' · click to slot on hotbar':'')+'" style="position:relative;'+(eq?'border-color:#00e5a0;box-shadow:0 0 10px rgba(0,229,160,.4)':'')+'">'+(eq?'<span style="position:absolute;top:2px;right:4px;font-size:8px;font-weight:700;color:#00e5a0;letter-spacing:.06em">EQUIP</span>':'')+'<span class="bpico">'+itemIcon(id,26,m.ico)+'</span><span class="bpn">'+m.name+(isW?' <b style="color:#ffcf5a">'+pw.toFixed(1)+'</b>':'')+'</span><span class="bpc">×'+(cnt>999?999:cnt)+'</span></div>'; };
+  const sec=(title,arr,assignable)=>arr.length?('<div style="grid-column:1/-1;font-size:11px;letter-spacing:.1em;color:#9fb2c4;text-transform:uppercase;margin:9px 2px 3px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:3px">'+title+' <span style="opacity:.5">'+arr.length+'</span></div>'+arr.map(k=>cell(k,inv[k]||fish[k],assignable)).join('')):'';
+  let h='<div class="bpwrap"><div class="bphead"><b>🎒 Backpack</b><span class="bphint">Click a weapon/tool to slot it on your hotbar · keys 1–6 · I to close</span><button id="bpClose">✕</button></div><div class="bpgrid">';
+  if(!invK.length&&!fishK.length) h+='<div class="bpempty">Empty — chop trees, mine rocks, fish the water, or buy gear at the Store.</div>';
+  h+=sec('⚔ Weapons',weapons,true)+sec('🛠 Tools',tools,true)+sec('🧱 Materials',mats,false)+sec('🐟 Catch',fishK,false);
+  h+='</div><div class="bpfoot">💰 '+money+' Gold · Lv '+levelFor(credits)+' · '+credits+' XP'+(eqW?' · ⚔ '+itemMeta(eqW).name:'')+'</div></div>';
   el.innerHTML=h;
   const cl=document.getElementById('bpClose'); if(cl) cl.onclick=()=>toggleBackpack(false);
   el.querySelectorAll('.bpcell.assign').forEach(cEl=>{ cEl.onclick=()=>{ if(cEl.dataset.id) assignToHotbar(cEl.dataset.id); }; }); }
