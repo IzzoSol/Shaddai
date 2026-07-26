@@ -1,0 +1,16 @@
+{
+  "name": "drone",
+  "size": "24x24",
+  "frames": 4,
+  "animations": ["hover_1", "hover_2", "hover_3", "hover_4", "attack", "destroyed"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "20x20",
+  "colors": {
+    "body": "#5F6C7B",
+    "lights": "#FF3D57",
+    "glass": "#48C6FF",
+    "propellers": "#2F3943"
+  }
+}

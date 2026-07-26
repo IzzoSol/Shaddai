@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI · Growth Engine — the plan to 1,000 users</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --void:#06060d; --panel:#0e0b1c; --panel2:#080611; --gold:#c4a24e; --gold2:#e8c45c; --em:#00ff9c; --em2:#00e5a0; --violet:#7c56c8; --cy:#39d0ff; --ink:#f0e7cf; --ink2:#a99f86; --dim:#6b6350; --line:rgba(196,162,78,.16); --lineEm:rgba(0,255,156,.22); }
+  *{ box-sizing:border-box; } html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{ font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased; line-height:1.62; padding-bottom:90px; background-image:radial-gradient(900px 520px at 82% -8%,rgba(124,86,200,.14),transparent 60%); background-attachment:fixed; }
+  ::selection{ background:var(--gold); color:#100b02; } a{ color:var(--em2); }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:13px 22px; background:rgba(6,6,13,.82); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  .brand{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.26em; font-size:13px; } .brand span{ color:var(--em); }
+  .top a{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); }
+  .top a:hover{ color:var(--gold2); }
+  .wrap{ max-width:860px; margin:0 auto; padding:0 20px; }
+  .head{ text-align:center; padding:48px 0 6px; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.36em; text-transform:uppercase; color:var(--gold2); }
+  h1{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(32px,5.6vw,52px); margin:12px 0 8px; background:linear-gradient(135deg,#e8c45c,#f4ecd6 45%,#c4a24e 75%,#e8c45c); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .sub{ color:var(--ink2); font-style:italic; max-width:600px; margin:0 auto; }
+  .thesis{ border:1px solid var(--line); border-radius:14px; padding:18px 22px; margin:26px 0; background:rgba(124,86,200,.06); text-align:center; }
+  .thesis b{ color:#fff; }
+  h2{ font-family:'Cinzel',serif; font-weight:700; font-size:23px; color:#fff; margin:48px 0 6px; }
+  h2 .c{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--em2); display:block; letter-spacing:.16em; margin-bottom:4px; }
+  h3{ font-family:'Cinzel',serif; color:var(--gold2); font-size:16px; margin:20px 0 4px; }
+  .ch{ border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin:14px 0; background:linear-gradient(170deg,var(--panel),var(--panel2)); }
+  .ch .tag{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:4px 11px; border-radius:100px; margin-bottom:8px; }
+  .ch ul{ margin:8px 0 0; padding-left:2px; } .ch li{ list-style:none; position:relative; padding-left:24px; margin:8px 0; }
+  .ch li::before{ content:'▸'; position:absolute; left:2px; color:var(--em); }
+  .ch li b{ color:#fff; }
+  .why{ font-size:14px; color:var(--ink2); font-style:italic; margin:2px 0 10px; }
+  .pri{ color:var(--gold2); font-weight:600; }
+  /* pins */
+  .pins{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:18px; margin-top:16px; }
+  .pinwrap{ }
+  .pin{ aspect-ratio:2/3; border-radius:14px; overflow:hidden; position:relative; display:flex; flex-direction:column; justify-content:space-between; padding:22px 20px; border:1px solid var(--line); }
+  .pin .kick{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.75); }
+  .pin .big{ font-family:'Cinzel',serif; font-weight:900; font-size:26px; line-height:1.15; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.5); }
+  .pin .foot{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; color:rgba(255,255,255,.85); }
+  .pin.p1{ background:linear-gradient(160deg,#0d3b2e,#06120d); }
+  .pin.p2{ background:linear-gradient(160deg,#3a2c0e,#120c02); }
+  .pin.p3{ background:linear-gradient(160deg,#2a1466,#0a0818); }
+  .pin.p4{ background:linear-gradient(160deg,#0b2a3a,#06121a); }
+  .pin.p5{ background:linear-gradient(160deg,#3a0e2c,#160612); }
+  .pinmeta{ margin-top:9px; font-size:13px; }
+  .pinmeta .k{ font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-top:6px; }
+  .pinmeta .v{ color:var(--ink); }
+  .copy{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:7px; border:1px solid var(--lineEm); background:rgba(0,255,156,.08); color:var(--em2); cursor:pointer; margin-top:6px; }
+  .copy.done{ background:var(--em2); color:#100b02; }
+  .note{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin-top:8px; line-height:1.6; }
+  .tool{ border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:10px 0; background:var(--panel2); }
+  .tool b{ color:#fff; font-family:'Cinzel',serif; } .tool .gh{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--cy); }
+  table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:13.5px; }
+  td,th{ border:1px solid var(--line); padding:9px 11px; text-align:left; } th{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--em2); }
+  .cta{ display:inline-block; margin-top:10px; font-family:'Cinzel',serif; font-weight:700; font-size:13px; letter-spacing:.05em; text-transform:uppercase; background:var(--gold2); color:#100b02; padding:12px 22px; border-radius:10px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">◈ SHADDAI <span>· Growth Engine</span></div>
+    <a href="/launch-kit.html">→ Copy bank (posts)</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">The plan to your first 1,000 users</div>
+      <h1>The Growth Engine</h1>
+      <p class="sub">Which channel, how its algorithm actually works in 2026, what to post, and the free tool to automate it. Pick one lane, run it daily.</p>
+    </div>
+
+    <div class="thesis">The funnel is one line: <b>content → free demo / playbook → email → $30.</b><br>You have the product. This is the traffic. <b>Consistency is the whole game.</b></div>
+
+    <!-- ============ X ============ -->
+    <h2><span class="c">CHANNEL 01</span>X / Twitter — the fastest flywheel</h2>
+    <div class="ch">
+      <span class="tag" style="background:rgba(255,255,255,.08);color:#fff">Best for: fast, founder-led reach</span>
+      <p class="why">The 2026 algorithm rewards <b>early engagement velocity</b> (first 30–60 min) and weights <b>replies ~15× a like</b>. It groups you into topic clusters, so staying on one niche trains it who to show you to.</p>
+      <ul>
+        <li><b>Kill your links in the post.</b> External links are suppressed — put the link in your <span class="pri">first reply</span>, not the tweet.</li>
+        <li><b>Reply-first strategy (the cheat code):</b> spend ~70% of your time leaving sharp replies on big accounts in your niche (agency/ecom/AI founders), 30% on original posts. Their audience becomes yours.</li>
+        <li><b>Post 1–3×/day</b> when your people are online, then engage hard for 30 min after — that window decides your reach.</li>
+        <li><b>Get X Premium.</b> It's a documented <span class="pri">2–4× reach boost</span> + your replies rank to the top. At $30/mo target revenue, this pays for itself fast.</li>
+        <li><b>Stay on ONE topic</b> (AI that makes you money) so the cluster targeting locks on.</li>
+      </ul>
+      <a class="cta" href="/launch-kit.html">Grab the ready X posts →</a>
+    </div>
+
+    <!-- ============ PINTEREST ============ -->
+    <h2><span class="c">CHANNEL 02</span>Pinterest — the evergreen sleeper</h2>
+    <div class="ch">
+      <span class="tag" style="background:rgba(232,196,92,.14);color:var(--gold2)">Best for: free, compounding, hands-off traffic</span>
+      <p class="why">Pinterest is a <b>visual search engine</b>, not social media. A single optimized pin drives traffic for <b>months or years</b>, and a brand-new site ranks from day one — no domain authority needed. This is perfect for your free playbooks.</p>
+      <ul>
+        <li><b>It's keyword SEO.</b> Put your target keywords in the <span class="pri">pin title, description, and board name</span> — Pinterest's search is keyword-driven.</li>
+        <li><b>Vertical pins (2:3)</b> with a bold, readable <b>text overlay</b> win. The 5 below are done for you — screenshot each and upload.</li>
+        <li><b>Link each pin to the exact playbook/demo</b> it promises.</li>
+        <li><b>Fresh pins several times a week</b> beats bulk dumps. Consistency &gt; volume.</li>
+      </ul>
+      <h3>Your 5 ready pins — screenshot &amp; upload</h3>
+      <p class="note">Screenshot each card (2:3), upload to Pinterest, paste the title/description below it, link it to the page shown. Add keyword-rich board names like "AI tools for business", "make money online 2026", "small business tips".</p>
+      <div class="pins" id="pins"></div>
+    </div>
+
+    <!-- ============ TIKTOK ============ -->
+    <h2><span class="c">CHANNEL 03</span>TikTok / Reels / Shorts — the demo IS the content</h2>
+    <div class="ch">
+      <span class="tag" style="background:rgba(57,208,255,.12);color:var(--cy)">Best for: viral reach, screen-recordings</span>
+      <p class="why">Short-form rewards a <b>hook in the first 1 second</b> and <b>watch-through</b>. Your demo doing real work — text appearing, a receipt, an image generating — is inherently watchable. You don't need a face.</p>
+      <ul>
+        <li><b>Hook line on screen at 0s:</b> "I told an AI to make me $1,000." Then screen-record <span class="pri">/prove.html</span> doing it.</li>
+        <li><b>30–60s</b>, trending audio, captions on, "link in bio."</li>
+        <li><b>Post 1–3×/day</b> — volume + hooks is the whole game early on.</li>
+        <li><b>Repurpose</b> the same clip to Reels + Shorts. One record, three posts.</li>
+      </ul>
+      <a class="cta" href="/launch-kit.html">Grab the video scripts →</a>
+    </div>
+
+    <!-- ============ REDDIT ============ -->
+    <h2><span class="c">CHANNEL 04</span>Reddit &amp; communities — high-intent, be careful</h2>
+    <div class="ch">
+      <span class="tag" style="background:rgba(255,120,60,.12);color:#ff9d55">Best for: high-intent buyers, honest feedback</span>
+      <p class="why">Redditors buy — but they nuke ads. Lead with genuine value and a soft link, and read each sub's rules first (some ban links outright — use "DM me" or link in profile).</p>
+      <ul>
+        <li><b>Subs:</b> r/Entrepreneur, r/juststart, r/agency, r/ecommerce, r/SaaS, r/smallbusiness, r/artificial.</li>
+        <li><b>Build a little karma first</b> by commenting helpfully, then post the value-first launch posts.</li>
+        <li><b>Frame as "I built a free thing, brutal feedback welcome"</b> — the free, no-signup demo is your unfair advantage here.</li>
+      </ul>
+      <a class="cta" href="/launch-kit.html">Grab the Reddit posts →</a>
+    </div>
+
+    <!-- ============ SEO ============ -->
+    <h2><span class="c">CHANNEL 05</span>SEO — your playbooks are the asset</h2>
+    <div class="ch">
+      <p class="why">Every playbook page (<b>/playbooks/agency.html</b> etc.) is an evergreen, indexable SEO asset that pulls "how to scale a [business]" searches — and doubles as Pinterest fuel. This compounds for years with zero ongoing cost.</p>
+      <ul>
+        <li><b>Target keywords</b> like "how to scale an agency", "e-commerce scaling playbook", "make money with AI agents".</li>
+        <li><b>Cross-link</b> every book → the demo → pricing (already done).</li>
+        <li><b>Later:</b> a simple blog that spins each playbook chapter into a standalone post = dozens more indexed pages. Your S ENGINE + QUILL can mass-produce these.</li>
+      </ul>
+    </div>
+
+    <!-- ============ TOOLS ============ -->
+    <h2><span class="c">AUTOMATE IT</span>Open-source tools to run this hands-off</h2>
+    <div class="tool"><b>Postiz</b> <span class="gh">github.com/gitroomhq/postiz-app</span><br>Open-source, self-hostable social scheduler — schedules X, TikTok, Reddit, Pinterest, IG, LinkedIn from one place, with AI assist. <b>This is the one to use</b> to batch a week of the launch-kit content and auto-post it. Free if self-hosted.</div>
+    <div class="tool"><b>Mixpost</b> <span class="gh">github.com/inovector/mixpost</span><br>Self-hosted social media management (schedule + analytics). A solid Postiz alternative.</div>
+    <div class="tool"><b>Remotion</b> <span class="gh">github.com/remotion-dev/remotion</span><br>Make short-form videos programmatically in React — auto-generate TikTok/Reels from templates + your demo recordings at scale.</div>
+    <div class="tool"><b>Image generation</b> — you already have it: SHADDAI's <b>/api/image/generate</b> (used in the demo) makes pin backgrounds and post visuals for free. No extra tool needed.</div>
+
+    <!-- ============ CALENDAR ============ -->
+    <h2><span class="c">THE CADENCE</span>Your first 7 days (repeat)</h2>
+    <table>
+      <tr><th>Day</th><th>X</th><th>Pinterest</th><th>Short-form</th><th>Reddit</th></tr>
+      <tr><td>Mon</td><td>1 post + 10 replies</td><td>1 pin</td><td>1 video</td><td>—</td></tr>
+      <tr><td>Tue</td><td>2 posts + 10 replies</td><td>1 pin</td><td>—</td><td>1 value comment</td></tr>
+      <tr><td>Wed</td><td>1 post + 10 replies</td><td>1 pin</td><td>1 video</td><td>—</td></tr>
+      <tr><td>Thu</td><td>2 posts + 10 replies</td><td>1 pin</td><td>—</td><td>1 launch post</td></tr>
+      <tr><td>Fri</td><td>1 post + 10 replies</td><td>1 pin</td><td>1 video</td><td>—</td></tr>
+      <tr><td>Sat</td><td>1 thread</td><td>2 pins</td><td>1 video</td><td>—</td></tr>
+      <tr><td>Sun</td><td>engage only</td><td>1 pin</td><td>—</td><td>reply to threads</td></tr>
+    </table>
+    <p class="note" style="margin-top:16px">Batch it Sunday with Postiz → auto-posts all week → you just show up to reply. That's the closest thing to autopilot that actually works.</p>
+  </div>
+
+<script>
+  var SITE = 'shaddai.app';
+  var PINS = [
+    { cls:'p1', kick:'Free Playbook', big:'How to Scale an Agency in 90 Days', foot:SITE+'/playbooks.html',
+      title:'How to Scale a Service Business in 90 Days (Free Playbook)',
+      desc:'Free agency scaling playbook: offers, lead generation, pricing, delivery and hiring. The frameworks that actually grow a service business. #agency #smallbusiness #makemoneyonline',
+      board:'Small business tips' },
+    { cls:'p2', kick:'Free AI Tool', big:'Make Your First $1,000 With AI', foot:SITE+'/prove.html',
+      title:'Make Your First $1,000 With AI Agents (Free Tool, No Signup)',
+      desc:'Give an AI agent a real money-making job and watch it work — free, no signup. 7 AI agents that research, write and build for you. #aitools #sidehustle #makemoneyonline2026',
+      board:'AI tools for business' },
+    { cls:'p3', kick:'Free Playbook', big:'The E-commerce Scaling Playbook', foot:SITE+'/playbooks.html',
+      title:'E-commerce Scaling Playbook: Offers, Ads, AOV & Retention (Free)',
+      desc:'Free DTC / e-commerce scaling guide — product offers, paid acquisition, average order value and retention that compounds. #ecommerce #shopify #onlinebusiness',
+      board:'Ecommerce tips' },
+    { cls:'p4', kick:'$30/mo', big:'7 AI Agents That Run Your Business', foot:SITE+'/pricing.html',
+      title:'7 AI Agents That Do Your Business Work for $30/mo',
+      desc:'A team of 7 AI agents with 3,000 skills and 300 tools — research, writing, markets, design — on your own key. Cheaper than a VA. #aiagents #productivity #entrepreneur',
+      board:'AI tools for business' },
+    { cls:'p5', kick:'Free Playbook', big:'The Creator’s Scaling Playbook', foot:SITE+'/playbooks.html',
+      title:'The Creator’s Scaling Playbook: Audience → Offer → Income (Free)',
+      desc:'Free playbook for creators and coaches: turn your audience into an offer, products and income you own. #creatoreconomy #digitalproducts #passiveincome',
+      board:'Creator tips' }
+  ];
+  function cbtn(txt,label){ return '<button class="copy" onclick="(function(b){navigator.clipboard.writeText('+JSON.stringify(txt)+').then(function(){b.textContent=\'Copied ✓\';b.classList.add(\'done\');setTimeout(function(){b.textContent=\''+label+'\';b.classList.remove(\'done\')},1200)})})(this)">'+label+'</button>'; }
+  var box = document.getElementById('pins');
+  PINS.forEach(function(p){
+    var w = document.createElement('div'); w.className='pinwrap';
+    w.innerHTML =
+      '<div class="pin '+p.cls+'"><div class="kick">'+p.kick+'</div><div class="big">'+p.big+'</div><div class="foot">◈ '+p.foot+'</div></div>'+
+      '<div class="pinmeta">'+
+        '<div class="k">Pin title</div><div class="v">'+p.title+'</div>'+ cbtn(p.title,'Copy title')+
+        '<div class="k">Description</div><div class="v">'+p.desc+'</div>'+ cbtn(p.desc,'Copy description')+
+        '<div class="k">Board</div><div class="v">'+p.board+'</div>'+
+      '</div>';
+    box.appendChild(w);
+  });
+</script>
+</body>
+</html>

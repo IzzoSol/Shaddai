@@ -1,0 +1,16 @@
+{
+  "name": "balloon",
+  "size": "16x32",
+  "frames": 1,
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "12x28",
+  "colors": {
+    "purple": "#6A3DF0",
+    "yellow": "#FFD84D",
+    "blue": "#48C6FF",
+    "green": "#00C96B",
+    "string": "#5F6C7B"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "hawk",
+  "size": "48x48",
+  "frames": 6,
+  "animations": ["glide", "flap", "attack", "idle"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "40x40",
+  "colors": {
+    "feathers_light": "#8B4513",
+    "feathers_dark": "#5D3A1A",
+    "beak": "#F4B400",
+    "eyes": "#FFD84D",
+    "claws": "#2F3943"
+  }
+}

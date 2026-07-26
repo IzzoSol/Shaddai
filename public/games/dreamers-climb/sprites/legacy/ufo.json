@@ -1,0 +1,15 @@
+{
+  "name": "ufo",
+  "size": "32x16",
+  "frames": 2,
+  "animations": ["hover_1", "hover_2"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "28x12",
+  "colors": {
+    "body": "#5F6C7B",
+    "lights": "#FF3D57",
+    "glass": "#48C6FF"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "player",
+  "size": "32x48",
+  "frames": 8,
+  "animations": ["idle", "climb", "jump", "fall", "grab", "grapple", "victory"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "20x40",
+  "colors": {
+    "helmet": "#FF7A1A",
+    "suit": "#FF7A1A",
+    "suit_highlight": "#FFD84D",
+    "gloves": "#C24D00",
+    "boots": "#C24D00",
+    "visor": "#48C6FF",
+    "outline": "#0A0F1A"
+  },
+  "sprite": [
+    [0,0,0,0,0,0,0,0],
+    [0,7,7,7,7,7,7,0],
+    [0,7,4,4,4,4,7,0],
+    [0,7,4,5,5,4,7,0],
+    [0,7,7,7,7,7,7,0],
+    [0,0,2,2,2,2,0,0],
+    [0,2,2,2,2,2,2,0],
+    [0,2,2,2,2,2,2,0],
+    [0,0,8,8,8,8,0,0],
+    [0,8,8,8,8,8,8,0],
+    [0,8,8,8,8,8,8,0],
+    [0,0,0,0,0,0,0,0]
+  ]
+}

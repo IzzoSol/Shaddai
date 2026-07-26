@@ -1,0 +1,17 @@
+{
+  "name": "witch",
+  "size": "32x48",
+  "frames": 6,
+  "animations": ["idle", "cast", "float", "teleport"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "24x44",
+  "colors": {
+    "hat": "#8E5BFF",
+    "robe": "#3B1E8A",
+    "skin": "#F4F8FF",
+    "eyes": "#FFD84D",
+    "staff": "#00C96B"
+  }
+}

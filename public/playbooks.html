@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Free Scaling Playbooks — SHADDAI</title>
+<meta name="description" content="Pick your business and get a tailored scaling playbook — the offer, leads, pricing, delivery and team, built on proven frameworks. Free." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Free Scaling Playbooks — pick your business" />
+<meta property="og:description" content="Tailored playbooks built on the frameworks that scale companies — agency, e-com, creator, local, SaaS, freelancer. Free." />
+<meta property="og:image" content="/growth-assets/playbook.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Free Scaling Playbooks — pick your business" />
+<meta name="twitter:description" content="Tailored playbooks built on the frameworks that scale companies. Free." />
+<meta name="twitter:image" content="/growth-assets/playbook.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#06060d; --void2:#0a0817; --panel:#0e0b1c; --gold:#c4a24e; --gold2:#e8c45c;
+    --em:#00ff9c; --em2:#00e5a0; --violet:#7c56c8; --ink:#f0e7cf; --ink2:#a99f86; --dim:#6b6350;
+    --line:rgba(196,162,78,.16); --lineEm:rgba(0,255,156,.22);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{ font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased; min-height:100vh; line-height:1.55;
+    background-image:radial-gradient(1000px 620px at 82% -6%,rgba(124,86,200,.16),transparent 60%),linear-gradient(180deg,#07060f,#05040b); background-attachment:fixed; overflow-x:hidden; }
+  ::selection{ background:var(--gold); color:#100b02; } a{ color:inherit; text-decoration:none; }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:14px 24px;
+    border-bottom:1px solid var(--line); backdrop-filter:blur(9px); background:rgba(6,6,13,.72); }
+  .brand{ display:flex; align-items:center; gap:11px; font-family:'Cinzel',serif; font-weight:900; letter-spacing:.3em; font-size:14px; }
+  .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--em); box-shadow:0 0 10px var(--em); animation:pulse 2.8s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.4} }
+  .top .cta{ font-family:'Cinzel',serif; font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase; background:var(--gold2); color:#100b02; padding:9px 16px; border-radius:9px; }
+  .wrap{ max-width:940px; margin:0 auto; padding:0 22px 90px; }
+  .head{ text-align:center; padding:56px 0 12px; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.4em; text-transform:uppercase; color:var(--gold2); }
+  h1{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.04em; font-size:clamp(34px,6.4vw,60px); line-height:1.03; margin:14px 0 12px;
+    background:linear-gradient(135deg,#e8c45c,#f4ecd6 42%,#c4a24e 72%,#e8c45c); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 30px rgba(196,162,78,.3)); }
+  .sub{ max-width:600px; margin:0 auto; color:var(--ink2); font-style:italic; font-size:clamp(15px,2vw,18px); }
+  .sub b{ color:var(--ink); font-style:normal; font-weight:600; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:34px; }
+  .card{ position:relative; border:1px solid var(--line); border-radius:14px; padding:22px; background:linear-gradient(170deg,var(--panel),var(--void2)); cursor:pointer; transition:transform .18s,border-color .18s,box-shadow .18s; overflow:hidden; }
+  .card:hover{ transform:translateY(-5px); border-color:var(--em); box-shadow:0 16px 40px rgba(0,0,0,.45); }
+  .card .ic{ font-size:26px; }
+  .card h3{ font-family:'Cinzel',serif; font-weight:700; font-size:18px; color:#fff; margin:10px 0 4px; letter-spacing:.02em; }
+  .card p{ color:var(--ink2); font-size:14px; margin:0 0 14px; min-height:38px; }
+  .tagr{ display:flex; align-items:center; justify-content:space-between; }
+  .rdy{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; }
+  .rdy.on{ color:var(--em2); } .rdy.soon{ color:var(--dim); }
+  .go{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold2); }
+  .card.on::after{ content:'FREE'; position:absolute; top:12px; right:-28px; transform:rotate(45deg); background:linear-gradient(90deg,var(--gold2),var(--gold)); color:#100b02; font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:600; letter-spacing:.14em; padding:3px 34px; }
+  .note{ text-align:center; margin-top:30px; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.06em; color:var(--dim); }
+
+  /* modal */
+  #modal{ position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center; padding:22px; background:rgba(4,3,10,.86); backdrop-filter:blur(6px); }
+  #modal.on{ display:flex; }
+  .mcard{ position:relative; max-width:440px; width:100%; text-align:center; border:1px solid rgba(196,162,78,.4); border-radius:18px; padding:32px 26px;
+    background:radial-gradient(120% 140% at 50% -20%,rgba(0,255,156,.1),transparent 55%),linear-gradient(160deg,#100c20,#0a0814); box-shadow:0 0 70px rgba(124,86,200,.3); }
+  .mcard .mi{ font-size:30px; } .mcard h2{ font-family:'Cinzel',serif; font-weight:900; font-size:22px; color:#fff; margin:8px 0 6px; }
+  .mcard p{ color:var(--ink2); font-size:14.5px; margin:0 auto 18px; max-width:340px; }
+  .erow{ display:flex; gap:8px; }
+  .erow input{ flex:1; background:#070610; border:1px solid var(--line); border-radius:10px; color:var(--ink); padding:13px 14px; font-family:'Fraunces',serif; font-size:15px; outline:none; }
+  .erow input:focus{ border-color:var(--em); }
+  .erow button{ font-family:'Cinzel',serif; font-weight:700; font-size:13px; letter-spacing:.04em; padding:0 20px; border-radius:10px; border:none; background:linear-gradient(100deg,var(--gold2),var(--gold)); color:#100b02; cursor:pointer; }
+  #mMsg{ min-height:18px; margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--em2); }
+  .mclose{ display:block; margin:14px auto 0; background:none; border:none; color:var(--dim); font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
+  .mclose:hover{ color:var(--ink2); }
+  @media(max-width:520px){ .erow{ flex-direction:column; } .erow button{ padding:13px; } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="brand" href="/home.html"><span class="dot"></span>SHADDAI</a>
+    <a class="cta" href="/pricing.html">Get Pro · $30/mo</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">The SHADDAI Playbooks · Free</div>
+      <h1>Scaling Playbooks</h1>
+      <p class="sub">Pick your business. Get a <b>tailored playbook</b> — the offer, leads, pricing, delivery and team — built on the frameworks that actually scale companies. Free.</p>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="note">More playbooks drop every week · Pro members get custom, on-demand books written for their exact business.</div>
+  </div>
+
+  <div id="modal">
+    <div class="mcard">
+      <div class="mi" id="mIcon">📕</div>
+      <h2 id="mTitle">Get the Playbook</h2>
+      <p id="mSub">Drop your email and it's yours — instantly, free.</p>
+      <div class="erow">
+        <input id="mEmail" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email">
+        <button onclick="submitEmail()" id="mBtn">Get it →</button>
+      </div>
+      <div id="mMsg"></div>
+      <button class="mclose" onclick="closeModal()">maybe later</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var BOOKS = [
+    { slug:'agency',    ic:'🎯', title:'Agency / Service',    p:'Offers, lead-gen, pricing, delivery, hiring — scale the service you run.', file:'/playbooks/agency.html', ready:true },
+    { slug:'ecom',      ic:'🛒', title:'E-commerce / DTC',     p:'Product offers, paid acquisition, AOV & LTV, retention that compounds.', file:'/playbooks/ecom.html', ready:true },
+    { slug:'creator',   ic:'🎬', title:'Creator / Coach',      p:'Audience → offer → monetization. Digital products and high-ticket.', file:'/playbooks/creator.html', ready:true },
+    { slug:'local',     ic:'📍', title:'Local Service',        p:'Trades, gyms, salons — lead-gen, reviews, booking and lifetime value.', file:'/playbooks/local.html', ready:true },
+    { slug:'saas',      ic:'⚙',  title:'SaaS / App',           p:'Activation, pricing tiers, churn, and the growth loops that scale.', file:'/playbooks/saas.html', ready:true },
+    { slug:'freelance', ic:'✍️', title:'Freelancer / Consultant', p:'Productize, raise rates, build a pipeline, escape trading time for money.', file:'/playbooks/freelance.html', ready:true }
+  ];
+  var pending = null;
+  function esc(s){ return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+  var savedEmail=''; try{ savedEmail = localStorage.getItem('shd_playbook_email')||''; }catch(e){}
+
+  (function build(){
+    var g = document.getElementById('grid');
+    BOOKS.forEach(function(b){
+      var el = document.createElement('div'); el.className='card'+(b.ready?' on':'');
+      el.innerHTML = '<div class="ic">'+b.ic+'</div><h3>'+esc(b.title)+'</h3><p>'+esc(b.p)+'</p>'+
+        '<div class="tagr"><span class="rdy '+(b.ready?'on':'soon')+'">'+(b.ready?'● Ready now':'○ Coming soon')+'</span>'+
+        '<span class="go">'+(b.ready?'Get it →':'Get notified →')+'</span></div>';
+      el.onclick = function(){ pick(b); };
+      g.appendChild(el);
+    });
+  })();
+
+  function pick(b){
+    pending = b;
+    // returning readers skip the gate for ready books
+    if(b.ready && savedEmail){ window.location.href = b.file; return; }
+    document.getElementById('mIcon').textContent = b.ic;
+    document.getElementById('mTitle').textContent = b.ready ? ('Get the '+b.title+' Playbook') : (b.title+' — coming soon');
+    document.getElementById('mSub').textContent = b.ready ? 'Drop your email and it’s yours — instantly, free.' : 'Be first in line — we’ll send it the moment it drops.';
+    document.getElementById('mBtn').textContent = b.ready ? 'Get it →' : 'Notify me →';
+    document.getElementById('mMsg').textContent = '';
+    document.getElementById('mEmail').value = savedEmail || '';
+    document.getElementById('modal').classList.add('on');
+    document.getElementById('mEmail').focus();
+  }
+  window.closeModal = function(){ document.getElementById('modal').classList.remove('on'); };
+  window.submitEmail = function(){
+    var email = (document.getElementById('mEmail').value||'').trim();
+    var msg = document.getElementById('mMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.style.color='#ff9d90'; msg.textContent='Enter a valid email.'; return; }
+    msg.style.color='var(--ink2)'; msg.textContent='One sec…';
+    var slug = pending ? pending.slug : 'library';
+    fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email, source:'playbook-'+slug }) })
+      .then(function(r){ return r.json().catch(function(){return {};}); }).then(function(){ done(email); })
+      .catch(function(){ done(email); });
+  };
+  function done(email){
+    try{ localStorage.setItem('shd_playbook_email', email); }catch(e){} savedEmail = email;
+    var msg = document.getElementById('mMsg');
+    if(pending && pending.ready){
+      msg.style.color='var(--em2)'; msg.textContent='✓ Opening your playbook…';
+      setTimeout(function(){ window.location.href = pending.file; }, 700);
+    } else {
+      msg.style.color='var(--em2)'; msg.textContent="✓ You're first in line — we'll email it when it drops.";
+      setTimeout(closeModal, 1800);
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "cloud",
+  "size": "48x24",
+  "frames": 1,
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "44x20",
+  "colors": {
+    "cloud": "#F4F8FF",
+    "shadow": "#48C6FF"
+  }
+}

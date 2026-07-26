@@ -1,0 +1,16 @@
+{
+  "name": "loch_ness",
+  "size": "64x64",
+  "frames": 4,
+  "animations": ["surface", "swim", "dive", "attack"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "56x56",
+  "colors": {
+    "body": "#007A45",
+    "belly": "#48C6FF",
+    "eyes": "#FFD84D",
+    "water_splash": "#F4F8FF"
+  }
+}

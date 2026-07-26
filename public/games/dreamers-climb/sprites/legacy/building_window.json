@@ -1,0 +1,15 @@
+{
+  "name": "building_window",
+  "size": "32x32",
+  "frames": 1,
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "0px",
+  "tileable": true,
+  "collision": "32x32",
+  "colors": {
+    "glass": "#FFD84D",
+    "frame": "#2F3943",
+    "glow": "#FFD84D"
+  }
+}

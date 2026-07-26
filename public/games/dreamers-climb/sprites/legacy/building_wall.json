@@ -1,0 +1,15 @@
+{
+  "name": "building_wall",
+  "size": "32x32",
+  "frames": 1,
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "tileable": true,
+  "collision": "32x32",
+  "colors": {
+    "wall": "#3B1E8A",
+    "frame": "#2F3943",
+    "brick": "#2F3943"
+  }
+}

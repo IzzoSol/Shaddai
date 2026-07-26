@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI · Monetize Your Agents</title>
+<style>
+:root{--bg:#06080b;--sf:#0d1117;--sf2:#141b24;--bd:#1e2a36;--tx:#e6edf3;--tx2:#7d8da0;--em:#00e5a0;--gd:#e8c45c;--cy:#39d0ff;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Chakra Petch',system-ui,sans-serif;background:radial-gradient(120% 90% at 50% -10%,#0f1622,#06080b 70%);color:var(--tx);padding:22px;min-height:100vh}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:22px;letter-spacing:1.5px;color:var(--gd)}h1 b{color:var(--em)}
+.sub{color:var(--tx2);font-size:13px;margin:6px 0 18px;line-height:1.5}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+input{background:var(--sf2);border:1px solid var(--bd);border-radius:9px;color:var(--tx);padding:10px 12px;font:inherit;font-size:13px;outline:none}
+input:focus{border-color:var(--em)}
+.btn{background:var(--em);color:#04120b;border:none;border-radius:9px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.btn.ghost{background:transparent;border:1px solid var(--bd);color:var(--tx)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:13px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;transition:.15s}
+.card.on{border-color:var(--em);box-shadow:0 0 16px rgba(0,229,160,.16)}
+.pf{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#0a0e14;border:1px solid var(--bd);float:right}
+.nm{font-weight:700;font-size:15px}.meta{color:var(--tx2);font-size:11px;margin:2px 0 10px}
+.pill{display:inline-block;font-size:10px;padding:3px 9px;border-radius:11px;background:var(--sf2);color:var(--tx2)}
+.pill.live{background:rgba(0,229,160,.16);color:var(--em)}
+.priced{display:flex;gap:7px;align-items:center;margin:10px 0}.priced input{width:80px}
+.invoke{background:#0a0e14;border:1px solid var(--bd);border-radius:9px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cy);word-break:break-all;margin-top:9px;cursor:pointer}
+.invoke:hover{border-color:var(--cy)}
+.note{color:var(--tx2);font-size:13px;padding:26px;text-align:center;grid-column:1/-1}
+.err{color:#ff6b6b;font-size:13px;margin-top:8px}
+.badge{display:inline-block;font-size:10px;color:var(--gd);border:1px solid rgba(232,196,92,.4);border-radius:20px;padding:3px 10px;margin-left:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>◆ SHADDAI · <b>Monetize</b><span class="badge">x402 · Base · USDC</span></h1>
+  <div class="sub">Publish any forged operative as a <b>paid x402 endpoint</b>. Every call runs your agent and settles USDC on Base — you own the revenue.</div>
+  <div class="row">
+    <input id="owner" placeholder="Your account id" style="flex:1;min-width:200px">
+    <button class="btn" id="loadBtn" onclick="load()">Load my agents</button>
+  </div>
+  <div id="out" class="grid"></div>
+  <div id="msg"></div>
+</div>
+<script>
+var X402_BASE='/x402/shaddai-agent';
+function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+try{ document.getElementById('owner').value=localStorage.getItem('shd_userid')||''; }catch(e){}
+async function api(path,opts){ var r=await fetch(path,opts); return await r.json(); }
+async function load(){
+  var owner=document.getElementById('owner').value.trim();
+  var out=document.getElementById('out'), msg=document.getElementById('msg'); msg.innerHTML=''; out.innerHTML='<div class="note">Loading…</div>';
+  try{
+    var d=await api('/api/operatives'+(owner?('?owner='+encodeURIComponent(owner)):''));
+    var ops=(d&&d.operatives)||[];
+    if(!ops.length){ out.innerHTML='<div class="note">No forged agents for that id yet. Forge one in the Pixel Forge or dashboard first.</div>'; return; }
+    out.innerHTML=''; ops.forEach(function(o){ out.appendChild(card(o)); });
+  }catch(e){ out.innerHTML=''; msg.innerHTML='<div class="err">'+esc(e.message)+'</div>'; }
+}
+function card(o){
+  var pub=!!o.monetized, price=o.monetizePrice||0.02;
+  var d=document.createElement('div'); d.className='card'+(pub?' on':'');
+  d.innerHTML=
+    (o.portrait?'<img class="pf" src="'+esc(o.portrait)+'" onerror="this.style.display=\'none\'">':'')+
+    '<div class="nm">'+esc(o.codename||'Agent')+'</div>'+
+    '<div class="meta">'+esc(o.archetype||'operative')+' · '+esc(o.rarity||'common')+'</div>'+
+    '<span class="pill'+(pub?' live':'')+'">'+(pub?('● Live · $'+price+'/call'):'○ Not published')+'</span>'+
+    '<div class="priced"><span style="font-size:12px;color:var(--tx2)">USDC/call</span><input type="number" step="0.01" min="0" value="'+price+'"></div>'+
+    '<button class="btn'+(pub?' ghost':'')+'" style="width:100%">'+(pub?'Unpublish':'Publish as x402 →')+'</button>'+
+    '<div class="invoke" style="display:'+(pub?'block':'none')+'" title="Click to copy">'+(pub?endpointFor(o.codename):'')+'</div>';
+  var priceEl=d.querySelector('input'), btn=d.querySelector('button'), inv=d.querySelector('.invoke');
+  inv.onclick=function(){ try{ navigator.clipboard.writeText(inv.textContent); inv.style.borderColor='var(--em)'; setTimeout(function(){inv.style.borderColor='';},700);}catch(e){} };
+  btn.onclick=async function(){
+    btn.disabled=true; var publish=!pub, np=parseFloat(priceEl.value)||0.02;
+    try{
+      var r=await api('/api/operatives/'+encodeURIComponent(o.id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({monetized:publish,monetizePrice:np})});
+      if(r&&r.ok){ pub=publish; price=np;
+        d.className='card'+(pub?' on':'');
+        var pill=d.querySelector('.pill'); pill.className='pill'+(pub?' live':''); pill.textContent=pub?('● Live · $'+price+'/call'):'○ Not published';
+        btn.className='btn'+(pub?' ghost':''); btn.textContent=pub?'Unpublish':'Publish as x402 →';
+        inv.style.display=pub?'block':'none'; inv.textContent=pub?endpointFor(o.codename):'';
+      }
+    }catch(e){}
+    btn.disabled=false;
+  };
+  return d;
+}
+function endpointFor(codename){ return X402_BASE+'?agent='+encodeURIComponent((codename||'').toUpperCase())+'&task=Summarize+the+latest+Base+memecoin+trends'; }
+if(document.getElementById('owner').value) load();
+</script>
+</body>
+</html>

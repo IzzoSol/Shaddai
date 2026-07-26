@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHADDAI · Launch Kit — content to get your first 1,000 users</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --void:#06060d; --panel:#0e0b1c; --gold:#c4a24e; --gold2:#e8c45c; --em:#00ff9c; --em2:#00e5a0; --violet:#7c56c8; --ink:#f0e7cf; --ink2:#a99f86; --dim:#6b6350; --line:rgba(196,162,78,.16); --lineEm:rgba(0,255,156,.22); }
+  *{ box-sizing:border-box; } html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{ font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased; line-height:1.6; background-image:radial-gradient(900px 500px at 82% -8%,rgba(124,86,200,.14),transparent 60%); background-attachment:fixed; padding-bottom:80px; }
+  ::selection{ background:var(--gold); color:#100b02; } a{ color:var(--em2); }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 22px; background:rgba(6,6,13,.8); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .brand{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.26em; font-size:13px; }
+  .brand span{ color:var(--em); }
+  .urlrow{ display:flex; align-items:center; gap:8px; }
+  .urlrow label{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); }
+  .urlrow input{ background:#070610; border:1px solid var(--line); border-radius:8px; color:var(--ink); padding:8px 11px; font-family:'IBM Plex Mono',monospace; font-size:12px; width:230px; outline:none; }
+  .urlrow input:focus{ border-color:var(--em); }
+  .wrap{ max-width:820px; margin:0 auto; padding:0 20px; }
+  .head{ text-align:center; padding:46px 0 8px; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.36em; text-transform:uppercase; color:var(--gold2); }
+  h1{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(30px,5.5vw,50px); margin:12px 0 8px; background:linear-gradient(135deg,#e8c45c,#f4ecd6 45%,#c4a24e 75%,#e8c45c); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .sub{ color:var(--ink2); font-style:italic; max-width:560px; margin:0 auto; }
+  .plan{ border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin:26px 0; background:rgba(124,86,200,.06); }
+  .plan h3{ font-family:'Cinzel',serif; color:var(--gold2); font-size:15px; letter-spacing:.06em; margin:0 0 10px; }
+  .plan ol{ margin:0; padding-left:20px; } .plan li{ margin:7px 0; }
+  .plan b{ color:#fff; }
+  h2{ font-family:'Cinzel',serif; font-weight:700; font-size:22px; color:#fff; margin:44px 0 4px; }
+  h2 .c{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--em2); display:block; letter-spacing:.16em; margin-bottom:4px; }
+  .hint{ color:var(--ink2); font-size:14px; font-style:italic; margin:0 0 16px; }
+  .post{ position:relative; border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:12px 0; background:linear-gradient(170deg,var(--panel),#080611); }
+  .post .body{ white-space:pre-wrap; font-family:'IBM Plex Mono',monospace; font-size:13.5px; line-height:1.65; color:var(--ink); }
+  .post .copy{ position:absolute; top:12px; right:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:6px 12px; border-radius:7px; border:1px solid var(--lineEm); background:rgba(0,255,156,.08); color:var(--em2); cursor:pointer; }
+  .post .copy:hover{ background:rgba(0,255,156,.16); }
+  .post .copy.done{ color:#100b02; background:var(--em2); }
+  .foot{ margin-top:50px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">◈ SHADDAI <span>· Launch Kit</span></div>
+    <div class="urlrow"><label>Your link</label><input id="siteUrl" value="shaddai.app" oninput="rerender()"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">Your first 1,000 users</div>
+      <h1>The Launch Kit</h1>
+      <p class="sub">Ready-to-post content pointing at your free demo &amp; playbooks. Set your link above, copy, post. Every day.</p>
+    </div>
+
+    <div class="plan">
+      <h3>◈ The 90-day distribution plan (the honest version)</h3>
+      <ol>
+        <li><b>Pick ONE channel</b> you'll actually show up on daily — X, TikTok/Reels, or Reddit/communities. One, done well, beats five half-done.</li>
+        <li><b>Post daily.</b> Every post shows an agent doing real work → links to the free demo (<code>/prove.html</code>) or a playbook (<code>/playbooks.html</code>). No signup = low friction = shares.</li>
+        <li><b>Capture emails</b> via the playbooks → nurture → the $30 offer. Traffic → lead → proof → sale.</li>
+        <li><b>Reality check:</b> 1,000 paying users is a 6–12 month grind of consistent content, not a launch-day spike. ~1–3% of visitors convert, so you're driving tens of thousands of visits over time. The kit below is fuel — <b>consistency is the engine.</b></li>
+      </ol>
+    </div>
+
+    <h2><span class="c">01 · X / TWITTER</span>Daily posts</h2>
+    <p class="hint">Post 1–3/day. Mix hooks. Always end with the free link.</p>
+    <div id="tw"></div>
+
+    <h2><span class="c">02 · SHORT-FORM VIDEO</span>TikTok · Reels · Shorts</h2>
+    <p class="hint">Screen-record the demo. These are 30–60s scripts — the demo IS the content.</p>
+    <div id="vid"></div>
+
+    <h2><span class="c">03 · REDDIT / COMMUNITIES</span>Value-first posts</h2>
+    <p class="hint">Post in your ICP's subs (r/entrepreneur, r/agency, r/ecommerce, r/juststart…). Give value, soft link. Read each sub's rules first.</p>
+    <div id="red"></div>
+
+    <h2><span class="c">04 · COLD DM</span>One-to-one outreach</h2>
+    <p class="hint">For warm-ish leads and small, targeted outreach. Lead with help, not a pitch.</p>
+    <div id="dm"></div>
+
+    <h2><span class="c">05 · EMAIL</span>Playbook → offer nurture</h2>
+    <p class="hint">Auto-send after someone grabs a playbook. Deliver value, then the soft ask.</p>
+    <div id="em"></div>
+
+    <div class="foot">Post daily. Track what lands. Do more of what works. — the whole game.</div>
+  </div>
+
+<script>
+  var URL0 = 'shaddai.app';
+  function u(){ return (document.getElementById('siteUrl').value || 'shaddai.app').trim().replace(/\/+$/,''); }
+
+  var TW = [
+    "I gave an AI agent one job: “make my first $1,000 with what I already have.”\n\n30 seconds later it handed me a real plan — with a receipt proving it ran.\n\nNo signup. Try it free 👇\n{{U}}/prove.html",
+    "Everyone uses ChatGPT like a smarter Google.\n\nMeanwhile 7 AI agents just built my offer, wrote the sales page, and flagged my security holes — in one place.\n\nWatch them work (free, no signup):\n{{U}}/prove.html",
+    "A team of 7 AI agents that research, write, build and sell — for $30/mo.\n\nThat’s cheaper than one afternoon with a freelancer.\n\nSee what it does 👇\n{{U}}/pricing.html",
+    "I don’t want a chatbot. I want a team.\n\nSo I gave 7 AI agents a real business task and watched them do it — live, with a signed receipt for every run.\n\nTry the council free:\n{{U}}/prove.html",
+    "Bring your own model (yes, even Claude) and SHADDAI turns it into a 7-agent team with 3,000 skills and 300 tools.\n\nThis shouldn’t be possible for $30/mo:\n{{U}}/prove.html",
+    "Free scaling playbook 📕\n\nPick your business → get a tailored plan built on the frameworks that actually scale companies. No fluff, no upsell to read it.\n\n{{U}}/playbooks.html",
+    "Asked an AI agent: “where is the money moving in my market right now?”\n\nGot a sharper answer than Perplexity — in one second — and a receipt proving what ran.\n\nTry it free 👇\n{{U}}/prove.html",
+    "Most people will spend 2026 typing prompts into a chat box.\n\nA few will hand the work to a team of agents that just… do it.\n\nBe the second kind:\n{{U}}/prove.html",
+    "“AI won’t replace you.”\n\nSure. But 7 agents that find leads, write outreach, build offers and ship content — for $30/mo — might replace your $2,000 VA.\n\n{{U}}/pricing.html",
+    "I built a thing: give an AI agent a real job → watch it work → get a signed receipt proving it ran.\n\nFree. No signup. Takes 60 seconds.\n\nWould genuinely love your feedback 👇\n{{U}}/prove.html",
+    "Your business type → a free, tailored scaling playbook.\n\nAgency. E-com. Creator. Local. SaaS. Freelancer.\n\nBuilt on what actually works. Grab yours:\n{{U}}/playbooks.html",
+    "Stop paying per token. Plug in your free key, and 7 AI agents run your work at near-zero cost — with tools, workflows and receipts a chatbot doesn’t have.\n\nSee it 👇\n{{U}}/prove.html"
+  ];
+
+  var VID = [
+    "🎬 “I told an AI to make me $1,000”\n\n[0–3s] Hook (talk to camera): “I told an AI agent to make me a thousand dollars. Watch.”\n[3–18s] Screen-record: open {{U}}/prove.html, pick the ZEROX “$1,000” job, hit Run.\n[18–45s] Agents work → show the plan appearing + the signed receipt.\n[45–55s] “Seven agents. Three thousand skills. Thirty bucks a month. Free to try.”\n[CTA] “Link in bio. Go break it.”",
+    "🎬 “ChatGPT vs a team of 7”\n\n[0–3s] “Everyone’s using one AI. I’m using seven.”\n[3–20s] Split idea: type the same business task into ChatGPT (just an answer) vs {{U}}/prove.html (agent + tools + receipt).\n[20–45s] Show SHADDAI producing a finished deliverable, not just text.\n[45–55s] “A chatbot answers. A team delivers.”\n[CTA] “Free, no signup — link in bio.”",
+    "🎬 “Free playbook for your business”\n\n[0–3s] “Whatever business you run, I made you a free playbook.”\n[3–25s] Screen-record {{U}}/playbooks.html — tap through the business types, open one, scroll the chapters.\n[25–45s] “Offer, leads, pricing, delivery, team — the stuff that actually scales you.”\n[CTA] “Grab yours free — link in bio.”"
+  ];
+
+  var RED = [
+    "Title: I built a free tool where 7 AI agents do real business work (no signup) — would love brutal feedback\n\nBody:\nI got tired of copy-pasting between ChatGPT tabs, so I built something: you give one of 7 specialist AI agents a real job (find leads, build an offer, write a product, scan for security holes) and watch it work — it comes back with a signed “receipt” of what actually ran.\n\nIt’s free and needs no signup. You can also bring your own API key (even Claude) so it runs on the model you trust.\n\nHonestly just want feedback from people who’d actually use this. Link: {{U}}/prove.html\n(Happy to answer anything in the comments.)",
+    "Title: Made free scaling playbooks for 6 business types — no email wall to read the ideas\n\nBody:\nI wrote tailored playbooks (agency, e-com, creator, local service, SaaS, freelancer) that pull together the frameworks that actually scale a business — offer, lead-gen, pricing, delivery, retention — applied to each type.\n\nSharing because they helped me organize my own stuff. Curious which one fits you and whether the advice holds up. {{U}}/playbooks.html"
+  ];
+
+  var DM = [
+    "Hey [name] — saw you run [their business]. Not pitching anything, genuinely think this might help you:\n\nI built a free tool where a few AI agents do real work — like turning your service into a stronger offer or finding where the money’s moving in your market. No signup, takes a minute: {{U}}/prove.html\n\nIf it’s useful, great. If not, no worries at all. Would love your honest take."
+  ];
+
+  var EM = [
+    "Subject: Your Scaling Playbook is inside 📕 (+ the team that runs it for you)\n\nHey [name],\n\nHere’s your playbook — it’s yours to keep: {{U}}/playbooks.html\n\nQuick tip: don’t just read it. The whole point of that playbook is stuff you have to *do* — build the offer, write the outreach, ship the content. That’s exactly what SHADDAI is for.\n\nIt’s a team of 7 AI agents that do the work for you — on your own free API key, with a receipt for every run. You can watch one do a real job in 60 seconds (no signup): {{U}}/prove.html\n\nIf you like it, it’s $30/mo for the whole team. Cancel anytime.\n\nEither way — go run the playbook.\n\n— The SHADDAI Council"
+  ];
+
+  function card(text){
+    var d = document.createElement('div'); d.className='post';
+    var body = document.createElement('div'); body.className='body'; body.textContent = text.replace(/\{\{U\}\}/g, u());
+    var btn = document.createElement('button'); btn.className='copy'; btn.textContent='Copy';
+    btn.onclick = function(){ navigator.clipboard.writeText(body.textContent).then(function(){ btn.textContent='Copied ✓'; btn.classList.add('done'); setTimeout(function(){ btn.textContent='Copy'; btn.classList.remove('done'); },1200); }); };
+    d.appendChild(btn); d.appendChild(body); return d;
+  }
+  function fill(id, arr){ var el=document.getElementById(id); el.innerHTML=''; arr.forEach(function(t){ el.appendChild(card(t)); }); }
+  function rerender(){ fill('tw',TW); fill('vid',VID); fill('red',RED); fill('dm',DM); fill('em',EM); }
+  rerender();
+</script>
+</body>
+</html>

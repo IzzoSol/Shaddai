@@ -1,0 +1,17 @@
+{
+  "name": "water_surface",
+  "size": "32x32",
+  "frames": 4,
+  "animations": ["wave_1", "wave_2", "wave_3", "wave_4"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "0px",
+  "tileable": true,
+  "collision": "32x4",
+  "colors": {
+    "surface": "#1E7BFF",
+    "deep": "#003B7A",
+    "foam": "#F4F8FF",
+    "highlight": "#48C6FF"
+  }
+}

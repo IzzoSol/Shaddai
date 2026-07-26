@@ -186,7 +186,8 @@
 
 <div class="confirm">
   <div class="namew"><label>Name</label><input id="nameIn" maxlength="16" placeholder="Traveler" value="Traveler"></div>
-  <button class="enter" id="enter">Enter World</button>
+  <button class="enter" id="saveGal" style="background:transparent;border:1px solid rgba(0,229,160,.5);color:#00e5a0">💾 Save to Gallery</button>
+  <button class="enter" id="enter">Enter World →</button>
 </div>
 <div class="flash" id="flash"></div>
 
@@ -354,36 +355,43 @@ function showPlayerCode(code){
     ov.querySelector('#pcGo').onclick=function(){ ov.remove(); resolve(); };
   });
 }
+// Sign-in = your identity (no Player Codes, no free-use gate). localhost bypass for dev.
+function pfRequireSignIn(){
+  var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+  var signed=false; try{ signed=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
+  if(!local && !signed){ location.href='index.html'; return false; }
+  return true;
+}
+// Forge the current agent → save as your player + into your Gallery. Returns the agent.
+function pfForge(){
+  const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
+  const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
+  try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
+  try{
+    var gal=JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); if(!Array.isArray(gal)) gal=[];
+    gal=gal.filter(function(e){ return e&&e.name!==name; });
+    gal.unshift({ name:name, rig:out.rig });
+    localStorage.setItem('shaddai.gallery', JSON.stringify(gal.slice(0,24)));
+  }catch(e){}
+  // Register in the UNIFIED gallery (/api/operatives) — account-scoped, shows up across
+  // dashboard + 2D + 3D. The pixel rig rides in look.rig. Fire-and-forget; localStorage = offline fallback.
+  try{
+    var owner=localStorage.getItem('shd_userid')||'me';
+    fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ codename:name, owner:owner, archetype:'pixel', rarity:'common', look:{archetype:'pixel', rig:out.rig}, source:'pixel-forge' })}).catch(function(){});
+  }catch(e){}
+  return out;
+}
+document.getElementById('saveGal').addEventListener('click',()=>{
+  if(!pfRequireSignIn())return;
+  pfForge();
+  var b=document.getElementById('saveGal'), t=b.textContent; b.textContent='✓ Saved to Gallery'; setTimeout(()=>{ b.textContent=t; },1400);
+});
 document.getElementById('enter').addEventListener('click',()=>{
-  const doEnter=async ()=>{
-    const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
-    const out={ name, rig:JSON.parse(JSON.stringify(rig)), source:'forge' };
-    try{ localStorage.setItem('shaddai.player', JSON.stringify(out)); }catch(e){}
-    // Accumulate every forged agent into your Gallery (pick any of them when entering the
-    // 2D world). Dedup by name, keep the 24 most recent.
-    try{
-      var gal=JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); if(!Array.isArray(gal)) gal=[];
-      gal=gal.filter(function(e){ return e&&e.name!==name; });
-      gal.unshift({ name:name, rig:out.rig });
-      localStorage.setItem('shaddai.gallery', JSON.stringify(gal.slice(0,24)));
-    }catch(e){}
-    // Identity: keep an existing signed-in / player-code id; otherwise issue a Player Code (the save).
-    let uid=''; try{ uid=localStorage.getItem('shd_userid')||''; }catch(e){}
-    if(!(uid && uid.indexOf('guest')!==0)){
-      try{
-        const r=await fetch('/api/player/new',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-        const d=await r.json();
-        if(d&&d.code){ try{ localStorage.setItem('shd_userid',d.code); localStorage.setItem('shd_world_pass',d.code); }catch(e){}
-          await showPlayerCode(d.code); }
-      }catch(e){}
-    }
-    const fl=document.getElementById('flash'); fl.style.opacity='1';
-    setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
-  };
-  // Funnel: free forges; issuing the Player Code is the "keep it forever" moment.
-  if(window.SHDFree){ SHDFree.gate('forge',{ label:'pixel agents', onAllowed:doEnter,
-    hookMsg:'You customized this pixel agent — <b style="color:#fff">get your Player Code to keep it forever</b>, place your office in SHADDAI City, and forge unlimited.' }); }
-  else doEnter();
+  if(!pfRequireSignIn())return;
+  pfForge();
+  const fl=document.getElementById('flash'); fl.style.opacity='1';
+  setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
 });
 
 buildCust(); buildFilm(); markCell(1); requestAnimationFrame(frame);

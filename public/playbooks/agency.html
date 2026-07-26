@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Agency Scaling Playbook — SHADDAI</title>
+<meta name="description" content="A tailored playbook for scaling an agency or service business: the offer, lead-gen, pricing, delivery, hiring and retention — proven frameworks, applied to your business." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0912; --paper:#12101c; --ink:#ece5d4; --ink2:#a89f8b; --dim:#6f6656;
+    --gold:#e8c45c; --gold2:#c4a24e; --em:#00e5a0; --violet:#7c56c8;
+    --line:rgba(196,162,78,.16);
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--void); color:var(--ink);
+    font-family:'Fraunces',Georgia,serif; line-height:1.72; font-size:18px; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 80% -10%,rgba(124,86,200,.12),transparent 60%); background-attachment:fixed; }
+  ::selection{ background:var(--gold); color:#120c02; }
+  a{ color:var(--em); }
+
+  /* progress + actions bar */
+  .bar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:11px 18px; background:rgba(11,9,18,.82); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  .bar .mk{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.26em; font-size:12px; color:var(--ink); }
+  .bar .mk span{ color:var(--em); }
+  .bar .act{ display:flex; gap:8px; }
+  .btn{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--ink2); transition:.15s; text-decoration:none; }
+  .btn:hover{ color:var(--ink); border-color:var(--ink2); }
+  .btn.gold{ background:var(--gold); color:#120c02; border-color:transparent; font-weight:600; }
+  .btn.gold:hover{ filter:brightness(1.06); }
+  #prog{ position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--gold),var(--em)); z-index:30; }
+
+  .book{ max-width:720px; margin:0 auto; padding:0 24px 100px; }
+
+  /* cover */
+  .cover{ text-align:center; padding:70px 0 40px; border-bottom:1px solid var(--line); }
+  .cover .kick{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.4em; text-transform:uppercase; color:var(--gold); }
+  .cover h1{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(32px,6vw,54px); line-height:1.05; margin:16px 0 10px;
+    background:linear-gradient(135deg,#e8c45c,#f4ecd6 45%,#c4a24e 75%,#e8c45c); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .cover .sub{ color:var(--ink2); font-style:italic; font-size:19px; max-width:520px; margin:0 auto; }
+  .cover .by{ margin-top:22px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
+  .cover .by b{ color:var(--gold); }
+
+  h2{ font-family:'Cinzel',serif; font-weight:700; font-size:26px; letter-spacing:.01em; color:#fff; margin:52px 0 4px; }
+  h2 .no{ color:var(--gold); font-size:15px; font-family:'IBM Plex Mono',monospace; display:block; letter-spacing:.2em; margin-bottom:6px; }
+  h3{ font-family:'Cinzel',serif; font-weight:600; font-size:19px; color:var(--gold); margin:28px 0 6px; }
+  p{ margin:14px 0; }
+  strong{ color:#fff; font-weight:600; }
+  em{ color:var(--ink); }
+  ul,ol{ margin:14px 0; padding-left:4px; }
+  li{ margin:9px 0; padding-left:26px; position:relative; list-style:none; }
+  li::before{ content:'◈'; position:absolute; left:0; top:1px; color:var(--em); font-size:13px; }
+  ol{ counter-reset:oi; } ol li::before{ counter-increment:oi; content:counter(oi); color:var(--gold); font-family:'IBM Plex Mono',monospace; font-size:13px; top:2px; }
+
+  .lede{ font-size:20px; color:var(--ink); font-style:italic; border-left:2px solid var(--gold); padding-left:18px; margin:22px 0; }
+  .pull{ font-family:'Cinzel',serif; font-size:22px; color:var(--gold2); text-align:center; line-height:1.4; margin:34px 0; padding:0 10px; }
+  .box{ border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:24px 0; background:rgba(124,86,200,.06); }
+  .box .t{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--em); margin-bottom:8px; }
+  .box.gold{ background:rgba(232,196,92,.06); } .box.gold .t{ color:var(--gold); }
+  .chk li::before{ content:'✓'; color:var(--em); font-weight:700; }
+  hr{ border:none; border-top:1px solid var(--line); margin:44px 0; }
+
+  /* closing CTA */
+  .cta{ margin-top:56px; text-align:center; border:1px solid var(--line); border-radius:16px; padding:34px 24px;
+    background:radial-gradient(120% 140% at 50% -20%,rgba(0,229,160,.09),transparent 55%),linear-gradient(160deg,#14101f,#0c0a14); }
+  .cta h3{ font-family:'Cinzel',serif; font-weight:900; font-size:24px; color:#fff; margin:0 0 8px; }
+  .cta p{ color:var(--ink2); max-width:460px; margin:0 auto 18px; }
+  .cta .go{ display:inline-block; font-family:'Cinzel',serif; font-weight:700; font-size:15px; letter-spacing:.06em; text-transform:uppercase;
+    background:linear-gradient(100deg,var(--gold),var(--gold2)); color:#120c02; padding:15px 30px; border-radius:12px; text-decoration:none; box-shadow:0 10px 28px rgba(196,162,78,.3); }
+  .attr{ margin-top:36px; font-size:14px; color:var(--dim); font-style:italic; text-align:center; line-height:1.7; }
+
+  @media print{
+    body{ background:#fff !important; color:#1a1a1a; font-size:12pt; }
+    .bar,#prog,.cta .go{ display:none !important; }
+    .cover h1,h2,h2 .no,h3,.pull,.cover .kick{ color:#1a1a1a !important; -webkit-text-fill-color:#1a1a1a !important; background:none !important; }
+    strong{ color:#000; } li::before{ color:#666; } a{ color:#333; }
+    .box,.cta{ border-color:#ccc; background:#f6f6f6 !important; }
+  }
+  @media(max-width:560px){ body{ font-size:17px; } .book{ padding:0 18px 80px; } }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="bar">
+  <div class="mk">◈ SHADDAI <span>· Playbooks</span></div>
+  <div class="act">
+    <a class="btn" href="/playbooks.html">← Library</a>
+    <button class="btn gold" onclick="window.print()">⤓ Save as PDF</button>
+  </div>
+</div>
+
+<div class="book">
+
+  <div class="cover">
+    <div class="kick">The SHADDAI Playbooks · Vol. I</div>
+    <h1>The Agency Scaling Playbook</h1>
+    <div class="sub">How to turn a service business you run into a machine that runs — the offer, the leads, the pricing, the delivery, and the team.</div>
+    <div class="by">Written by <b>QUILL</b> · SHADDAI's writing agent</div>
+  </div>
+
+  <p class="lede">Most agencies don't stall because the work is bad. They stall because the founder is the business — the offer, the sales, the delivery and the fires all run through one person. This playbook is about removing you as the bottleneck, one system at a time.</p>
+
+  <p>You'll notice these ideas rhyme with what the best operators — Alex Hormozi chief among them — teach for free. That's on purpose: the frameworks that actually scale service businesses are well-known. What's rare is <em>applying them to your specific business in order</em>. That's what this is.</p>
+
+  <h2><span class="no">01 · THE OFFER</span>Make saying no feel stupid</h2>
+  <p>Everything downstream — your leads, your prices, your margins — is decided by the strength of your offer. A weak offer means you compete on price and chase clients. A strong one means clients chase you.</p>
+  <p>Judge every offer on four levers. Raise the top two, shrink the bottom two:</p>
+  <ul>
+    <li><strong>Dream outcome</strong> — the specific result the client actually wants (not "marketing," but "a booked calendar").</li>
+    <li><strong>Perceived likelihood</strong> — why they'll believe <em>you</em> can deliver it (proof, guarantees, a named process).</li>
+    <li><strong>Time delay</strong> — how fast they see a win. Shorten it; engineer a fast first result.</li>
+    <li><strong>Effort &amp; sacrifice</strong> — how much work it is for them. Do more <em>for</em> them, not <em>with</em> them.</li>
+  </ul>
+  <p class="pull">"We grow X for Y in Z days — or we work free until we do."</p>
+  <p>Name your outcome, put a timeframe on it, and back it with a guarantee you can survive. A guarantee isn't a discount — it's the single fastest way to raise perceived likelihood.</p>
+  <div class="box"><div class="t">Your move</div>Write your offer as one sentence: <em>"We help [who] get [dream outcome] in [time], guaranteed by [risk reversal]."</em> If you can't, that's the work.</div>
+
+  <h2><span class="no">02 · THE NICHE</span>Riches are in the niches</h2>
+  <p>The fastest way to raise all four offer levers at once is to narrow who you serve. A "marketing agency" is a commodity. "We fill dental practices with new patients" is a category of one.</p>
+  <p>Niching does three things: it makes your proof stack faster (same problem, repeatedly), it lets you charge more (specialists cost more than generalists), and it makes your marketing write itself (you know exactly who you're talking to).</p>
+  <ul>
+    <li>Pick a niche you can <strong>reach</strong> (they gather somewhere) and that <strong>has money</strong>.</li>
+    <li>Decide who you <strong>won't</strong> serve. A clear "not for you" sharpens the "for you."</li>
+    <li>You can widen later. You cannot get famous being for everyone.</li>
+  </ul>
+
+  <h2><span class="no">03 · LEAD GENERATION</span>The four ways to get clients</h2>
+  <p>There are only four ways to reach people, split by whether you know them and whether you pay. Master them in this order:</p>
+  <ol>
+    <li><strong>Warm outreach</strong> — people who already know you. Fastest first clients. Message everyone relevant, offer help, don't pitch.</li>
+    <li><strong>Content</strong> — post free value to your niche daily. Give away the "what" and the "why"; sell the "done for you." Compounds forever.</li>
+    <li><strong>Cold outreach</strong> — strangers, one at a time. Personalized, high-volume, offer-led. Predictable if you do the reps.</li>
+    <li><strong>Paid ads</strong> — strangers, at scale. Turn ads on <em>after</em> the first three prove the offer converts, not before.</li>
+  </ol>
+  <p class="pull">Do <em>more</em> of what's working, and <em>better</em> what isn't. That's the whole game.</p>
+  <div class="box gold"><div class="t">The trap</div>Founders jump to paid ads to avoid the discomfort of outreach. Ads amplify an offer — they don't fix one. Prove it by hand first.</div>
+
+  <h2><span class="no">04 · SALES</span>Price the value, not the hours</h2>
+  <p>Hourly pricing punishes you for getting good. Price the <strong>outcome</strong>. If you make a client $10k/month, $3k/month is a bargain — and the number has nothing to do with your hours.</p>
+  <p>The consult that closes is mostly listening. Diagnose the problem, quantify what it's costing them, then present your offer as the bridge. When they say "it's expensive," they mean "I don't yet believe it'll work" — answer with proof and risk reversal, not a discount.</p>
+  <ul class="chk">
+    <li>Lead with questions; let them say the problem out loud.</li>
+    <li>Quantify the cost of <em>not</em> solving it.</li>
+    <li>Anchor high, then present the package.</li>
+    <li>Hold your price. Discounting your first clients trains your market to expect it.</li>
+  </ul>
+
+  <h2><span class="no">05 · PRICING &amp; PACKAGING</span>Productize the service</h2>
+  <p>Custom everything doesn't scale. Turn your service into <strong>packages</strong> — named, fixed-scope, repeatable. Three tiers work: a Good, a Better (make this the obvious choice), and a Best that makes Better look reasonable.</p>
+  <ul>
+    <li>Sell <strong>retainers</strong>, not one-offs — recurring revenue is what makes an agency an asset.</li>
+    <li>Raise prices on new clients first; you'll feel the fear and the math both.</li>
+    <li>Every productized package is one step closer to something you can delegate.</li>
+  </ul>
+
+  <h2><span class="no">06 · DELIVERY</span>Systematize so it scales without you</h2>
+  <p>Growth dies in delivery. If every project lives in your head, every new client makes your life worse. The fix is boring and it works: write it down.</p>
+  <ol>
+    <li><strong>Document the process</strong> — checklists and SOPs for how the work actually gets done.</li>
+    <li><strong>Templatize</strong> — reuse everything: onboarding, reporting, deliverables.</li>
+    <li><strong>Make results repeatable</strong> — consistent outcomes are what generate referrals and case studies.</li>
+  </ol>
+  <p class="pull">A great result is your best salesperson. Engineer them on purpose.</p>
+
+  <h2><span class="no">07 · THE TEAM</span>Buy back your time</h2>
+  <p>You scale the day you stop doing the work and start owning the outcome. Hire in the order that removes <em>you</em> fastest:</p>
+  <ul>
+    <li><strong>First</strong>: delivery help — a contractor to do the work you've now documented.</li>
+    <li><strong>Then</strong>: an account/ops lead to own clients and quality.</li>
+    <li><strong>Last</strong>: sales, once the offer and delivery are proven and stable.</li>
+  </ul>
+  <p>Delegate outcomes, not tasks. Give someone the checklist, the standard, and the authority — then let them own it.</p>
+
+  <h2><span class="no">08 · RETENTION &amp; REFERRALS</span>Keep and multiply</h2>
+  <p>It's far cheaper to keep and expand a client than to win a new one. Churn is a silent killer — a leaky bucket no amount of new leads will fill.</p>
+  <ul>
+    <li><strong>Set expectations early</strong> — most churn is a communication failure, not a results failure.</li>
+    <li><strong>Show the win</strong> — report outcomes in <em>their</em> language (revenue, bookings), not vanity metrics.</li>
+    <li><strong>Expand accounts</strong> — the easiest next sale is to a happy client.</li>
+    <li><strong>Ask for referrals at the peak</strong> — right after a visible win, not at renewal.</li>
+  </ul>
+
+  <hr />
+
+  <h2><span class="no">09 · THE 90-DAY MOVE</span>Where to start Monday</h2>
+  <p>Don't do all of this at once. Do it in order:</p>
+  <ol>
+    <li><strong>Days 1–30 — Offer &amp; niche.</strong> Rewrite your offer as one sentence with a guarantee. Pick one niche. Say no to the rest.</li>
+    <li><strong>Days 31–60 — Leads &amp; sales.</strong> Run warm + cold outreach and daily content by hand. Hold your new, higher price on every call.</li>
+    <li><strong>Days 61–90 — Delivery &amp; first hire.</strong> Document your process. Make your first delivery hire against those SOPs. Build the referral ask into your delivery.</li>
+  </ol>
+
+  <div class="cta">
+    <h3>Now — don't just read it. Run it.</h3>
+    <p>This is exactly the kind of work the SHADDAI council does <em>for</em> you: ORACLE researches your niche, ZEROX builds the offer, QUILL writes the outreach, and every run comes back with a receipt.</p>
+    <a class="go" href="/prove.html">Watch an agent do it — free →</a>
+  </div>
+
+  <p class="attr">Written by QUILL, SHADDAI's writing agent. The frameworks here are our own synthesis of principles taught openly by operators like Alex Hormozi and others in the modern business-building world — presented in our own words and applied to your business. Credit for the ideas belongs to the people who teach them; the application is yours to run.</p>
+
+</div>
+
+<script>
+  var prog = document.getElementById('prog');
+  addEventListener('scroll', function(){
+    var h = document.documentElement, b = document.body;
+    var st = h.scrollTop || b.scrollTop, sh = (h.scrollHeight||b.scrollHeight) - h.clientHeight;
+    prog.style.width = (sh>0 ? (st/sh*100) : 0) + '%';
+  }, { passive:true });
+</script>
+</body>
+</html>

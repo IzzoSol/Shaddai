@@ -45,17 +45,25 @@
 
 <!-- CREATE -->
 <div id="create" class="panel">
-  <h1>Create your <b>character</b></h1>
-  <div class="sub">100 presets · 10 robots · pick one, then choose where to spawn</div>
+  <h1>Choose your <b>operative</b></h1>
+  <div class="sub">Forge a character or pick one from your Gallery, then enter the world.</div>
   <div id="createCanvasWrap"><canvas id="ccv"></canvas></div>
-  <div class="row">
-    <button onclick="cyclePreset(-1)">◀ Prev</button>
-    <span class="pill" id="presetLabel">Preset 1 / 100</span>
-    <button onclick="cyclePreset(1)">Next ▶</button>
-    <button onclick="randomChar()">🎲 Random</button>
+  <div class="row" style="gap:8px">
+    <button onclick="location.href='pixel-forge.html'" style="flex:1;font-size:13px">🔨 Forge a character</button>
+    <button onclick="openGallery()" style="flex:1;font-size:13px">🖼 Pick from Gallery</button>
   </div>
-  <div class="row"><input id="nameInput" placeholder="Name your character" maxlength="16" value="Wanderer"></div>
-  <div class="row"><button id="galleryBtn" onclick="openGallery()">🖼 Pick from my Gallery</button><button class="primary" onclick="goRegion()">Choose region →</button></div>
+  <div class="row"><input id="nameInput" placeholder="Name" maxlength="16" value="Wanderer"></div>
+  <div class="row"><button class="primary" onclick="goRegion()" style="flex:1;font-size:15px;padding:12px">▶ Enter the World</button></div>
+</div>
+<!-- SIGN-IN GATE: signed in = you can play. no guests. -->
+<div id="signGate" style="position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 38%,rgba(10,20,30,.97),rgba(4,7,12,.99));font-family:'Chakra Petch',system-ui,sans-serif">
+  <div style="text-align:center;max-width:360px;padding:36px 30px;background:linear-gradient(160deg,#101827,#0a0f1a);border:1px solid rgba(0,229,160,.35);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <div style="font-size:42px;margin-bottom:4px">🔐</div>
+    <div style="font-size:21px;font-weight:800;color:#eafff6">Sign in to play SHADDAI</div>
+    <div style="font-size:13px;color:#8fb2a4;margin:10px 0 22px;line-height:1.55">An account lets you enter the world, forge agents, and build rooms that save across devices.</div>
+    <button onclick="location.href='index.html'" style="width:100%;padding:13px;border:none;border-radius:11px;background:linear-gradient(100deg,#00e5a0,#22d3ee);color:#04121a;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Sign in / Create account →</button>
+    <div onclick="recheckSignGate()" style="margin-top:14px;font-size:12px;color:#6a8698;cursor:pointer">Already signed in? Tap to continue →</div>
+  </div>
 </div>
 
 <!-- GALLERY PICKER (enter the world as one of your forged agents) -->
@@ -88,7 +96,9 @@
   <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
   <button class="panel" style="padding:9px 13px" onclick="openJobs()">💼 Work</button>
   <button class="panel" style="padding:9px 13px" onclick="openInv()">🎒 Bag</button>
+  <button class="panel" style="padding:9px 13px" onclick="openRooms()">🏠 Rooms</button>
 </div>
+<div id="ftue" style="position:fixed;left:16px;top:132px;z-index:6;display:none;width:236px;background:linear-gradient(160deg,rgba(16,24,39,.96),rgba(10,15,26,.96));border:1px solid rgba(0,229,160,.35);border-radius:12px;padding:11px 13px;box-shadow:0 6px 18px rgba(0,0,0,.45);font-family:'Chakra Petch',system-ui,sans-serif"></div>
 <div id="store" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(780px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:8"></div>
 <div id="inv" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:82vh;overflow:auto;padding:18px 20px;z-index:8"></div>
 <div id="jobs" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,92vw);padding:18px 20px;z-index:8;text-align:center"></div>
@@ -106,6 +116,7 @@
 <div id="quests" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,94vw);padding:18px 20px;z-index:9"></div>
 <div id="market" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,94vw);padding:18px 20px;z-index:9"></div>
 <div id="hubrooms" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
+<div id="roomsPanel" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="agentlive" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,94vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="fishBar" class="panel hide" style="right:16px;bottom:64px;z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
   <span style="color:#5fe0ff;font-size:12px">🌊 Waterside</span>
@@ -169,7 +180,7 @@ let spectate=false, specTarget=null, specTimer=0;   // spectate mode (watch the 
 let presetIdx=0;
 const player={ rig: JSON.parse(JSON.stringify(PP.PRESETS[0].rig)), name:'Wanderer', col:10, row:10, anim:'idle' };
 function setPreset(i){ presetIdx=(i+PP.PRESETS.length)%PP.PRESETS.length; player.rig=JSON.parse(JSON.stringify(PP.PRESETS[presetIdx].rig));
-  document.getElementById('presetLabel').textContent='Preset '+(presetIdx+1)+' / 100'+(player.rig.robot?' · ROBOT':''); }
+  var lbl=document.getElementById('presetLabel'); if(lbl) lbl.textContent='Preset '+(presetIdx+1)+' / 100'+(player.rig.robot?' · ROBOT':''); }
 function cyclePreset(d){ setPreset(presetIdx+d); }
 function randomChar(){ presetIdx=(Math.random()*PP.PRESETS.length)|0; setPreset(presetIdx); }
 
@@ -182,23 +193,36 @@ function loadGallery(){
   try{ var p=JSON.parse(localStorage.getItem('shaddai.player')||'null'); if(p&&p.rig&&!list.some(function(e){return e.name===p.name;})) list.unshift({name:p.name||'My Agent',rig:p.rig}); }catch(e){}
   return list;
 }
+function renderGallery(list){
+  var grid=document.getElementById('galleryGrid');
+  if(!list.length){ grid.innerHTML='<div class="sub" style="grid-column:1/-1;padding:20px 0">No forged agents yet. Forge one in the Pixel Forge to play as your own character.</div>'; return; }
+  grid.innerHTML='';
+  list.forEach(function(entry,i){
+    var d=document.createElement('div'); d.className='rcard'; d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px';
+    var cw=document.createElement('canvas'); cw.width=72; cw.height=90; cw.style.cssText='width:72px;height:90px';
+    d.appendChild(cw);
+    var nm=document.createElement('div'); nm.className='rnm'; nm.textContent=entry.name||('Agent '+(i+1)); d.appendChild(nm);
+    try{ var cx=cw.getContext('2d'); PP.draw(cx, entry.rig, 36, 62, 30, 0); }catch(e){}
+    d.onclick=function(){ pickGalleryChar(entry); };
+    grid.appendChild(d);
+  });
+}
 function openGallery(){
-  var list=loadGallery(), grid=document.getElementById('galleryGrid');
-  if(!list.length){ grid.innerHTML='<div class="sub" style="grid-column:1/-1;padding:20px 0">No forged agents yet. Forge one to play as your own character.</div>'; }
-  else {
-    grid.innerHTML='';
-    list.forEach(function(entry,i){
-      var d=document.createElement('div'); d.className='rcard'; d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px';
-      var cw=document.createElement('canvas'); cw.width=72; cw.height=90; cw.style.cssText='width:72px;height:90px';
-      d.appendChild(cw);
-      var nm=document.createElement('div'); nm.className='rnm'; nm.textContent=entry.name||('Agent '+(i+1)); d.appendChild(nm);
-      try{ var cx=cw.getContext('2d'); PP.draw(cx, entry.rig, 36, 62, 30, 0); }catch(e){}
-      d.onclick=function(){ pickGalleryChar(entry); };
-      grid.appendChild(d);
-    });
-  }
+  renderGallery(loadGallery());   // instant, offline-safe
   document.getElementById('create').classList.add('hide');
   document.getElementById('galleryPick').classList.remove('hide');
+  // Merge in your account-scoped agents from the UNIFIED store (/api/operatives?owner=<you>)
+  try{
+    var owner=localStorage.getItem('shd_userid')||'me';
+    fetch('/api/operatives?owner='+encodeURIComponent(owner)).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.operatives)return;
+      var merged=loadGallery();
+      d.operatives.forEach(function(o){ var rig=o&&o.look&&o.look.rig; if(!rig)return;
+        var nm=o.codename||o.name||'Agent'; if(merged.some(function(e){return e.name===nm;}))return;
+        merged.push({name:nm, rig:rig}); });
+      renderGallery(merged);
+    }).catch(function(){});
+  }catch(e){}
 }
 function closeGallery(){ document.getElementById('galleryPick').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function pickGalleryChar(entry){
@@ -232,7 +256,8 @@ function shadeHex(hex,amt){ return PP&&PP.shade?PP.shade(hex,amt):hex; }
 
 // ---------- screen switching ----------
 function show(id){ ['create','region','hud','shopBtn','controls','prompt'].forEach(x=>document.getElementById(x).classList.add('hide')); }
-function goRegion(){ player.name=(document.getElementById('nameInput').value||'Wanderer').slice(0,16);
+function goRegion(){ if(!isSignedIn()){ checkSignGate(); return; }
+  player.name=(document.getElementById('nameInput').value||'Wanderer').slice(0,16);
   // Region picking now uses the WEBBED selector (region-select.html — Seed-of-Life circles
   // + realm backgrounds). Persist the chosen character so it survives the page handoff;
   // region-select sets shaddai.region, then game.html boots straight into the world.
@@ -723,12 +748,12 @@ addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput');
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
 let inInterior=null, interiorType='office';
 function tryDoor(){
-  if(state==='interior'){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); return; }
+  if(state==='interior'){ if(leaveInterior()) return; state='world'; inInterior=null; currentRoomKey=null; roomTheme=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); return; }
   if(state==='travel'){ closeTravel(); return; }
   if(state!=='world'||spectate) return;
   for(const p of props){ if(p.type!=='building') continue;
     const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
-      if(p.kind==='transit') openTravel(); else enterInterior(p); return; } }
+      if(p.kind==='transit') openTravel(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
 }
 let intRoom={w:9,h:7,door:{col:4,row:6},furniture:[],order:[],npc:1};
 let intView={ox:0,oy:0,S:1}, decorMode=false, decorPick=null, wardrobeOpen=false;
@@ -793,8 +818,8 @@ function buildInterior(kind){
   const IW=13, IH=9, sx=(IW-1)/8, sy=(IH-1)/6;   // BIGGER room — scale the 9x7 layout up so there's room to walk
   F.forEach(it=>{ it.col=+(it.col*sx).toFixed(2); it.row=+(it.row*sy).toFixed(2); });
   const bigDoor={col:+(door.col*sx).toFixed(2), row:+(door.row*sy).toFixed(2)};
-  const _dk=(kind==='office')?'__office__':((inInterior&&inInterior.suburb&&isMyHome(inInterior))?inInterior.houseId:null);
-  if(_dk) F=F.concat(loadDecorFor(_dk));  // your placed/moved furniture (home or office)
+  const _dk=(inInterior&&inInterior.__customRoom)?null:((kind==='office')?'__office__':((inInterior&&inInterior.suburb&&isMyHome(inInterior))?inInterior.houseId:null));
+  if(_dk) F=F.concat(loadDecorFor(_dk));  // your placed/moved furniture (home or office; custom rooms load their own after)
   const order=[]; for(let r=0;r<IH;r++)for(let col=0;col<IW;col++) order.push([col,r]); order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
   intRoom={w:IW,h:IH,door:bigDoor,furniture:F,order,npc:((kind.charCodeAt(0)*7)%98)+1};
 }
@@ -810,9 +835,15 @@ const DECOR=[ {t:'sofa',ico:'🛋️',w:2,d:0.9,h:8,c:'#9a4a4a',ty:'box'},{t:'tv
   {t:'bed',ico:'🛏️',w:2,d:1,h:9,c:'#6a5a8a',ty:'bed'},{t:'table',ico:'🪑',w:1.2,d:1.2,h:7,c:'#8a6a4a',ty:'table'},
   {t:'shelf',ico:'📚',w:0.7,d:1.6,h:16,c:'#6a7a8a',ty:'shelf'},{t:'plant',ico:'🪴',w:0.5,d:0.5,h:13,c:'#5a3a2a',ty:'plant'},
   {t:'rug',ico:'🟫',w:2.5,d:2,h:0,c:'#4a2f42',ty:'rug'},{t:'lamp',ico:'💡',w:0.4,d:0.4,h:16,c:'#c9a24a',ty:'box'},
-  {t:'chest',ico:'📦',w:0.6,d:0.6,h:8,c:'#7a5636',ty:'box'},{t:'screen',ico:'🖥️',w:1.4,d:0.4,h:12,c:'#1a1a30',ty:'screen'} ];
+  {t:'chest',ico:'📦',w:0.6,d:0.6,h:8,c:'#7a5636',ty:'box'},{t:'screen',ico:'🖥️',w:1.4,d:0.4,h:12,c:'#1a1a30',ty:'screen'},
+  {t:'couch',ico:'🛋️',w:2,d:0.9,h:8,c:'#5a6a8a',ty:'couch'},{t:'desk',ico:'🗄️',w:1.5,d:0.9,h:8,c:'#6a6a72',ty:'desk'},
+  {t:'hearth',ico:'🔥',w:1.1,d:0.9,h:14,c:'#3a2622',ty:'hearth'},{t:'barrel',ico:'🛢️',w:0.6,d:0.6,h:10,c:'#7a5636',ty:'barrel'},
+  {t:'vault',ico:'🔐',w:1.5,d:1.5,h:18,c:'#3a3f4a',ty:'vault'},{t:'crate',ico:'🧰',w:0.9,d:0.9,h:9,c:'#8a6a4a',ty:'crate'},
+  {t:'counter',ico:'🍸',w:2.4,d:0.8,h:10,c:'#8a6a4a',ty:'counter'},{t:'monitor',ico:'💻',w:0.5,d:0.5,h:10,c:'#15151c',ty:'monitor'},
+  {t:'stool',ico:'🪑',w:0.4,d:0.4,h:6,c:'#6a4a2a',ty:'box'},{t:'pillar',ico:'🏛️',w:0.5,d:0.5,h:22,c:'#c9b98a',ty:'box'},
+  {t:'banner',ico:'🚩',w:0.4,d:0.4,h:20,c:'#00e5a0',ty:'box'},{t:'crystal',ico:'💎',w:0.5,d:0.5,h:12,c:'#5fe0ff',ty:'box'} ];
 // Decorating works in your OWN suburb home AND in your office interior (persists per space).
-function decorKey(){ if(inInterior && inInterior.suburb && isMyHome(inInterior)) return inInterior.houseId; if(interiorType==='office') return '__office__'; return null; }
+function decorKey(){ if(currentRoomKey && inInterior && inInterior.__customRoom) return currentRoomKey; if(inInterior && inInterior.suburb && isMyHome(inInterior)) return inInterior.houseId; if(interiorType==='office') return '__office__'; return null; }
 function canDecorate(){ return !!decorKey(); }
 function loadDecorFor(key){ try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); return (d[key]||[]).map(x=>{ const f=fitem(x.col,x.row,x.w,x.d,x.h,x.color,x.type); f._decor=true; return f; }); }catch(e){ return []; } }
 function loadDecor(hid){ return loadDecorFor(hid); }
@@ -855,7 +886,8 @@ c.addEventListener('contextmenu',e=>{ if(state==='interior'&&decorMode){ e.preve
 function restHere(){ toast('😴 You rest a while… fully refreshed.'); }
 function refreshIntActions(){ const ia=document.getElementById('intActions'); if(!ia)return; let b='';
   if(inInterior&&inInterior.suburb&&isMyHome(inInterior)) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openWardrobe()">👕 Wardrobe</button><button onclick="openStorage()">📦 Storage</button>';
-  else if(interiorType==='office') b='<button onclick="openDecorate()">🎨 Decorate office</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
+  else if(inInterior&&inInterior.__customRoom) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openRoomTheme()">🖌️ Theme</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
+  else if(interiorType==='office') b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openRoomTheme()">🖌️ Theme</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
   else if(interiorType==='shop') b='<button onclick="openStore()">🛒 Browse</button>';
   else if(interiorType==='tavern') b='<button onclick="restHere()">😴 Rest</button><button onclick="openQuests()">📜 Bounties</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
   else if(interiorType==='bank') b='<button onclick="openBank()">🏦 Bank &amp; Coin Market</button>';
@@ -863,13 +895,15 @@ function refreshIntActions(){ const ia=document.getElementById('intActions'); if
   else if(interiorType==='market') b='<button onclick="openMarket()">🤝 Trade at the Swap Market</button>';
   else if(interiorType==='hub') b='<button onclick="openMarket()">🤝 Grand Bazaar</button><button onclick="openHubRooms()">🏛️ Pro Rooms</button>';
   if(b){ ia.innerHTML=b; ia.classList.remove('hide'); } else ia.classList.add('hide'); }
-function enterInterior(b){ state='interior'; inInterior=b; interiorType=interiorKindFor(b); buildInterior(interiorType);
+function enterInterior(b){ roomTheme=null; state='interior'; inInterior=b; interiorType=interiorKindFor(b);
+  if(interiorType==='office'){ try{ var _ot=localStorage.getItem('shaddai.officeTheme'); if(_ot) roomTheme=themeById(_ot); }catch(e){} }
+  buildInterior(interiorType);
   player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   const pr=document.getElementById('prompt'); pr.classList.remove('hide');
   pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+' — WASD to walk · reach the door or press E to exit';
   const mb=document.getElementById('moveinBtn'); if(b.suburb){ mb.classList.remove('hide'); mb.textContent=isMyHome(b)?'🏠 This is your home ✓':'🏠 Move in here'; } else mb.classList.add('hide');
   refreshIntActions(); }
-function openShop(){ document.getElementById('prompt').classList.remove('hide'); document.getElementById('prompt').textContent='🛒 x402 micropayment shop — wiring coming next (testnet)'; setTimeout(()=>document.getElementById('prompt').classList.add('hide'),2600); }
+// (removed dead 'coming soon' shop stub — openShop opens the real Store, defined below)
 // ---- travel ----
 let fadeV=0, fadeDir=0, pendingRegion=null;
 const FARE={ meadow:8, beach:10, forest:9, city:12, desert:14, volcano:16, agentcity:20, suburb:6 };   // travel fare by destination
@@ -933,7 +967,7 @@ function update(dt){
     if(keys['a']||keys['arrowleft']){mc-=1;mr+=1;} if(keys['d']||keys['arrowright']){mc+=1;mr-=1;}
     if(mc||mr){ const nc=player.icol+mc*v*0.5, nr=player.irow+mr*v*0.5;
       if(walkableInt(nc,player.irow)) player.icol=nc; if(walkableInt(player.icol,nr)) player.irow=nr; player.rig.anim='walk';
-      if(Math.hypot(player.icol-intRoom.door.col,player.irow-intRoom.door.row)<0.75){ state='world'; inInterior=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); }
+      if(Math.hypot(player.icol-intRoom.door.col,player.irow-intRoom.door.row)<0.75){ if(!leaveInterior()){ state='world'; inInterior=null; currentRoomKey=null; roomTheme=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); } }
     } else player.rig.anim='idle';
   }
 }
@@ -1064,7 +1098,7 @@ function renderWorld(time){
 }
 function renderInterior(time){
   ctx.clearRect(0,0,W,H);
-  const tint={home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
+  const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
   const bg=ctx.createRadialGradient(W/2,H*0.34,60,W/2,H*0.34,H); bg.addColorStop(0,shade(tint,0.05)); bg.addColorStop(1,'#070a0f');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   const IW=intRoom.w,IH=intRoom.h, ox=W/2, oy=H*0.22, S=Math.min(1.15, W/((IW+IH)*46));
@@ -1091,12 +1125,12 @@ function renderInterior(time){
     else if(t==='vault'){ ctx.strokeStyle='#c9a24a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(sx,sy-it.h*0.5-8);ctx.lineTo(sx,sy-it.h*0.5+8);ctx.moveTo(sx-8,sy-it.h*0.5);ctx.lineTo(sx+8,sy-it.h*0.5);ctx.stroke();ctx.fillStyle='#c9a24a';ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,2,0,7);ctx.fill(); }
     else if(t==='barrel'){ ctx.strokeStyle=shade(it.color,-0.35);ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.65,it.w*TW/2.6*S,3,0,0,7);ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.35,it.w*TW/2.4*S,3,0,0,7);ctx.stroke(); } }
   // back walls (L-shape behind the room)
-  const wallH=72, wc={home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
+  const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
   const wall=(a,b,cl)=>{ ctx.fillStyle=cl; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(b[0],b[1]-wallH);ctx.lineTo(a[0],a[1]-wallH);ctx.closePath();ctx.fill(); };
   wall(is(-0.5,-0.5), is(IW-0.5,-0.5), shade(wc,-0.04));
   wall(is(-0.5,IH-0.5), is(-0.5,-0.5), shade(wc,-0.2));
   // floor
-  const fl={home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
+  const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
   for(const [col,r] of intRoom.order){ const [sx,sy]=is(col,r);
     ctx.fillStyle=(col+r)&1?fl[0]:fl[1]; ctx.beginPath();ctx.moveTo(sx,sy-TH/2*S);ctx.lineTo(sx+TW/2*S,sy);ctx.lineTo(sx,sy+TH/2*S);ctx.lineTo(sx-TW/2*S,sy);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.stroke(); }
@@ -1228,7 +1262,23 @@ function updateWallet(){ const el=document.getElementById('wallet'); if(!el)retu
   const L=levelFor(credits), cur=45*(L-1)*(L-1), next=45*L*L, into=credits-cur, span=next-cur, pct=Math.max(0,Math.min(100,into/span*100));
   el.innerHTML='💵 '+money+' &nbsp;·&nbsp; <span style="color:#5fe0ff">Lv '+L+'</span> <span style="opacity:.55">'+into+' / '+span+' XP</span>'+
     '<div style="height:5px;background:rgba(255,255,255,.13);border-radius:3px;margin:3px 0 2px;overflow:hidden"><div style="height:100%;width:'+pct.toFixed(0)+'%;background:linear-gradient(90deg,#5fe0ff,#00e5a0);border-radius:3px;transition:width .3s"></div></div>'+
-    '<span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; }
+    '<span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; try{ ftueRender(); }catch(_){} }
+// ---- FIRST-TIME ONBOARDING (FTUE): a guided quest that reveals the game's depth ----
+let ftue={}; try{ ftue=JSON.parse(localStorage.getItem('shaddai.ftue')||'{}'); }catch(_){ ftue={}; }
+function ftueSave(){ try{ localStorage.setItem('shaddai.ftue',JSON.stringify(ftue)); }catch(_){} }
+const FTUE_STEPS=[
+  {id:'earn', label:'Earn your first Gold — Work 💼, fish, or fight', done:()=>(quest.earn||0)>0},
+  {id:'gear', label:'Gear up — buy an item at the Store 🛒', done:()=>!!ftue.bought},
+  {id:'bounty', label:'Claim a Bounty at the board 📜', done:()=>Object.keys(questDone).length>0},
+  {id:'level', label:'Reach Level 2 ⭐', done:()=>levelFor(credits)>=2} ];
+function ftueRender(){ const el=document.getElementById('ftue'); if(!el) return;
+  if(ftue.done || state!=='world'){ el.style.display='none'; return; }
+  const cur=FTUE_STEPS.findIndex(s=>{ try{return !s.done();}catch(_){return true;} });
+  if(cur<0){ ftue.done=true; ftueSave(); el.style.display='none'; try{toast('🎉 You know the ropes, operative — the world is yours.');}catch(_){}; return; }
+  let h='<div style="font-weight:700;color:#e8c45c;font-size:11px;letter-spacing:.12em;margin-bottom:7px">◈ GETTING STARTED</div>';
+  FTUE_STEPS.forEach((s,i)=>{ let d=false; try{d=s.done();}catch(_){}
+    h+='<div style="font-size:12px;line-height:1.35;margin:4px 0;color:'+(d?'#4fe07a':(i===cur?'#eaf3fb':'#5a6a7a'))+'">'+(d?'✓':(i===cur?'▸':'○'))+' '+s.label+'</div>'; });
+  el.innerHTML=h; el.style.display='block'; }
 function updateHP(){ const f=document.getElementById('hpFill'), t=document.getElementById('hpTxt'); if(!f)return; const pct=Math.max(0,playerHP)/playerMaxHP*100; f.style.width=pct+'%'; f.style.background=pct>50?'#4fe07a':pct>25?'#e0c14f':'#e05a4f'; if(t)t.textContent='❤ '+Math.max(0,Math.ceil(playerHP)); }
 function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSwing=0.25; if(player.rig)player.rig.anim='attack';
   const res=Combat.playerAttack(enemies, player, weaponPower());
@@ -1241,25 +1291,36 @@ function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSw
   enemies=enemies.filter(e=>!e.dead);
   if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; try{ addFloat(k.col,k.row,'💥','#fff'); }catch(_){} if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
 function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } player.col=Math.round(GW/2); player.row=Math.round(GH/2); if(!walkable(player.col,player.row)){ for(let r=1;r<GH;r++){ if(walkable(GW/2|0,r)){ player.row=r; break; } } } cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
-function addXP(n){ const b=levelFor(credits); credits+=n; if(levelFor(credits)>b) toast('⭐ Level up! You are now Level '+levelFor(credits)); }
+function addXP(n){ const b=levelFor(credits); credits+=n; const nl=levelFor(credits); if(nl>b){ toast('⭐ Level up! You are now Level '+nl); try{ celebrateLevelUp(nl); }catch(_){} } }
+// JUICE: a real level-up celebration (self-contained overlay — no render-loop coupling)
+function celebrateLevelUp(lvl){
+  let el=document.getElementById('levelUpFx'), glow=document.getElementById('levelUpGlow');
+  if(!el){
+    const st=document.createElement('style');
+    st.textContent='@keyframes luPop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}16%{opacity:1}68%{opacity:1}100%{transform:translate(-50%,-50%) scale(1.18);opacity:0}}@keyframes luGlow{0%{opacity:0}22%{opacity:.6}100%{opacity:0}}';
+    document.head.appendChild(st);
+    glow=document.createElement('div'); glow.id='levelUpGlow';
+    glow.style.cssText='position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 44%,rgba(232,196,92,.55),rgba(0,229,160,.14) 42%,transparent 70%)';
+    document.body.appendChild(glow);
+    el=document.createElement('div'); el.id='levelUpFx';
+    el.style.cssText="position:fixed;left:50%;top:44%;z-index:71;pointer-events:none;transform:translate(-50%,-50%);text-align:center;font-family:'Cinzel','Chakra Petch',serif;opacity:0;text-shadow:0 2px 20px rgba(232,196,92,.9),0 0 6px #000";
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<div style="font-size:15px;letter-spacing:.42em;color:#e8c45c;font-weight:700">L E V E L&nbsp; U P</div><div style="font-size:66px;font-weight:800;line-height:1;margin-top:4px;background:linear-gradient(180deg,#ffffff,#e8c45c);-webkit-background-clip:text;background-clip:text;color:transparent">Lv '+lvl+'</div>';
+  el.style.animation='none'; if(glow) glow.style.animation='none'; void el.offsetWidth;
+  el.style.animation='luPop 1.7s ease-out'; if(glow) glow.style.animation='luGlow 1.7s ease-out';
+}
 function toast(msg){ const pr=document.getElementById('prompt'); if(!pr)return; pr.classList.remove('hide'); pr.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>pr.classList.add('hide'),1900); }
 function closePanel(){ state='world'; ['store','inv','jobs'].forEach(id=>document.getElementById(id).classList.add('hide')); }
-function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.price){ toast('Not enough money'); return; } money-=it.price; inv[id]=(inv[id]||0)+1; saveEcon(); openStore(); }
+function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.price){ toast('Not enough money'); return; } money-=it.price; inv[id]=(inv[id]||0)+1; ftue.bought=1; ftueSave(); saveEcon(); openStore(); }
 function openStore(){ if(state==='jobs')return; state='store'; const el=document.getElementById('store');
   let h='<h1>🛒 <b>General Store</b></h1><div class="sub" style="margin-bottom:12px">💵 <b style="color:#e8c45c">'+money+'</b> · weapons · tools · home goods</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
   for(const it of STORE){ const owned=inv[it.id]||0, can=money>=it.price;
     h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+it.ico+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💵 '+it.price+'</button></div>'; }
   h+='</div><div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openInv()">🎒 Inventory</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('inv').classList.add('hide'); }
-function openInv(){ state='inv'; const el=document.getElementById('inv'); const items=Object.keys(inv).filter(k=>inv[k]>0), fitems=Object.keys(fish).filter(k=>fish[k]>0);
-  let h='<h1>🎒 <b>Inventory</b></h1><div class="sub" style="margin-bottom:12px">💵 '+money+' · Lv '+levelFor(credits)+' · '+credits+' XP</div>';
-  if(!items.length&&!fitems.length) h+='<div class="sub">Empty — buy gear at the Store, or fish by the water.</div>';
-  if(items.length){ h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of items){ const it=STORE.find(x=>x.id===k)||{name:k,ico:'📦'}; const isW=WEAPON_POWER[k]!==undefined, up=weaponUp[k]||0, eq=activeWeapon()===k;
-    h+='<div class="rcard" style="min-height:78px;background:'+(eq?'#1c2c22':'#141a26')+';cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:24px">'+itemIcon(k,30,it.ico)+'</div><div class="rnm" style="font-size:13px">'+it.name+(up?' <span style="color:#f2c14e">+'+up+'</span>':'')+'</div><small>×'+inv[k]+(isW?' · pow '+(WEAPON_POWER[k]+up*0.5).toFixed(1):'')+'</small></div>'+
-      (isW?'<button style="margin-top:5px;padding:4px 8px;font-size:11px'+(eq?';border-color:#4fe07a;color:#4fe07a':'')+'" onclick="equipWeapon(\''+k+'\')">'+(eq?'✓ Equipped':'Equip')+'</button>':'')+'</div>'; } h+='</div>'; }
-  if(fitems.length){ h+='<div class="sub" style="margin:14px 0 8px">🎣 Your catch <button style="float:right;padding:4px 10px;font-size:12px" onclick="sellFish()">💰 Sell all</button></div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(116px,1fr))">'; for(const k of fitems){ const it=FISH.find(x=>x.id===k)||{name:k,ico:'🐟',val:0}; h+='<div class="rcard" style="min-height:78px;background:#12202a;cursor:default;color:#eaf3fb"><div style="font-size:24px">'+it.ico+'</div><div class="rnm" style="font-size:13px">'+it.name+'</div><small>×'+fish[k]+' · '+it.val+'💵</small></div>'; } h+='</div>'; }
-  h+='<div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openStore()">🛒 Store</button><button onclick="closePanel()">Close</button></div>';
-  el.innerHTML=h; el.classList.remove('hide'); document.getElementById('store').classList.add('hide'); }
+// Inventory is unified into the RPG Backpack (I key / Bag button). openInv now opens it.
+function openInv(){ toggleBackpack(true); }
 // ---- item metadata (spans store + fish) ----
 function itemMeta(id){ const s=STORE.find(x=>x.id===id); if(s)return {name:s.name,ico:s.ico}; const f=FISH.find(x=>x.id===id); if(f)return {name:f.name,ico:f.ico}; const g=GOODS.find(x=>x.id===id); if(g)return {name:g.name,ico:g.ico}; return {name:id,ico:'📦'}; }
 // Prefer a code-drawn PIXEL weapon/tool sprite; fall back to the emoji for materials/food.
@@ -1319,18 +1380,21 @@ function openForge(){ forgeOpen=true; const el=document.getElementById('forge');
   el.innerHTML=h; el.classList.remove('hide'); }
 function closeForge(){ forgeOpen=false; const el=document.getElementById('forge'); if(el)el.classList.add('hide'); saveEcon(); }
 // ---- QUEST / BOUNTY BOARD ----
-const QUESTS=[ {id:'fish',ico:'🎣',name:'Master Angler',desc:'Catch 5 fish',goal:5,rw:{m:60,x:30}},
-  {id:'kills',ico:'⚔️',name:'Monster Hunter',desc:'Defeat 8 foes',goal:8,rw:{m:90,x:50}},
-  {id:'earn',ico:'💰',name:'Enterprising',desc:'Earn 200 money',goal:200,rw:{m:120,x:40}} ];
+const QUESTS=[ {id:'fish',stat:'fish',ico:'🎣',name:'Master Angler',desc:'Catch 5 fish',goal:5,rw:{m:60,x:30}},
+  {id:'kills',stat:'kills',ico:'⚔️',name:'Monster Hunter',desc:'Defeat 8 foes',goal:8,rw:{m:90,x:50}},
+  {id:'earn',stat:'earn',ico:'💰',name:'Enterprising',desc:'Earn 200 Gold',goal:200,rw:{m:120,x:40}},
+  {id:'fish2',stat:'fish',ico:'🐟',name:'Deep Sea Master',desc:'Catch 20 fish',goal:20,rw:{m:200,x:110}},
+  {id:'kills2',stat:'kills',ico:'🗡️',name:'Beast Slayer',desc:'Defeat 25 foes',goal:25,rw:{m:280,x:160}},
+  {id:'earn2',stat:'earn',ico:'🏦',name:'Tycoon',desc:'Earn 1000 Gold total',goal:1000,rw:{m:400,x:220}} ];
 function openQuests(){ questsOpen=true; const el=document.getElementById('quests'); if(!el)return;
   let h='<h1>📜 <b>Bounty Board</b></h1><div class="sub" style="margin-bottom:12px">Complete bounties for 💵 + XP.</div>';
-  for(const q of QUESTS){ const prog=Math.min(quest[q.id]||0,q.goal), done=questDone[q.id], met=prog>=q.goal;
+  for(const q of QUESTS){ const prog=Math.min(quest[q.stat||q.id]||0,q.goal), done=questDone[q.id], met=prog>=q.goal;
     h+='<div class="rcard" style="background:#141c26;cursor:default;color:#eaf3fb;margin-bottom:10px;align-items:stretch"><div class="row" style="justify-content:space-between;align-items:center"><div><b style="font-size:14px">'+q.ico+' '+q.name+'</b><div style="font-size:11px;opacity:.7">'+q.desc+' · reward 💵'+q.rw.m+' + '+q.rw.x+' XP</div></div>'+
       (done?'<span style="color:#4fe07a;font-size:12px">✓ Claimed</span>':(met?'<button class="primary" style="padding:6px 12px" onclick="claimQuest(\''+q.id+'\')">Claim</button>':'<span style="font-size:12px;opacity:.7">'+prog+'/'+q.goal+'</span>'))+'</div>'+
       '<div style="height:6px;background:rgba(255,255,255,.12);border-radius:4px;margin-top:8px;overflow:hidden"><div style="width:'+Math.round(prog/q.goal*100)+'%;height:100%;background:'+(done?'#4fe07a':met?'#f2c14e':'#5fe0ff')+'"></div></div></div>'; }
   h+='<div class="row" style="margin-top:6px;justify-content:flex-end"><button onclick="closeQuests()">Done</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); }
-function claimQuest(id){ const q=QUESTS.find(x=>x.id===id); if(!q||questDone[id]||(quest[id]||0)<q.goal)return; questDone[id]=1; money+=q.rw.m; addXP(q.rw.x); saveEcon(); toast('🏆 Bounty complete! +💵'+q.rw.m+' · +'+q.rw.x+' XP'); openQuests(); }
+function claimQuest(id){ const q=QUESTS.find(x=>x.id===id); if(!q||questDone[id]||(quest[q.stat||q.id]||0)<q.goal)return; questDone[id]=1; money+=q.rw.m; addXP(q.rw.x); saveEcon(); toast('🏆 Bounty complete! +💵'+q.rw.m+' · +'+q.rw.x+' XP'); openQuests(); }
 function closeQuests(){ questsOpen=false; const el=document.getElementById('quests'); if(el)el.classList.add('hide'); saveEcon(); }
 // ---- TOWN SQUARE SWAP MARKET (bartering NPCs + regional arbitrage) ----
 function goodBase(id){ const g=GOODS.find(x=>x.id===id); if(g)return g.base; const f=FISH.find(x=>x.id===id); if(f)return f.val; return 5; }
@@ -1375,6 +1439,127 @@ function openHubRooms(){ hubOpen=true; const el=document.getElementById('hubroom
 function enterAgentRoom(i){ const a=AGENTS[i]; if(!a)return; closeHubRooms(); interiorType='agent'; buildInterior('agent'); player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   document.getElementById('prompt').classList.remove('hide'); document.getElementById('prompt').textContent='🏛️ '+a.name+'\'s Room — WASD to walk · reach the door to leave'; refreshIntActions(); showAgentLive(i); }
 function closeHubRooms(){ hubOpen=false; const el=document.getElementById('hubrooms'); if(el)el.classList.add('hide'); }
+// ---- MY ROOMS (SP-2): create/view your own walkable rooms ----
+let currentRoomKey=null, roomReturn='world', roomTheme=null;
+const ROOM_PRESETS=[
+  {kind:'home',emoji:'🛋️',label:'Lounge'}, {kind:'office',emoji:'💼',label:'Studio'},
+  {kind:'library',emoji:'📚',label:'Athenaeum'}, {kind:'hub',emoji:'🏛️',label:'Temple Hall'},
+  {kind:'tavern',emoji:'🍺',label:'Tavern'}, {kind:'forge',emoji:'⚒️',label:'Forge'},
+  {kind:'shop',emoji:'🛒',label:'Shop'}, {kind:'diner',emoji:'🍽️',label:'Diner'} ];
+// Theme palettes — a room carries its own vibe (walls + floor + ambiance).
+const ROOM_THEMES=[
+  {id:'obsidian',name:'Obsidian',tint:'#161b26',wall:'#232a38',floor:['#c2c6cc','#b4b8be']},
+  {id:'emerald',name:'Emerald Temple',tint:'#0e2620',wall:'#123a2e',floor:['#1f4a3a','#184030']},
+  {id:'violet',name:'Royal Violet',tint:'#241c2c',wall:'#3a2e44',floor:['#5a4a6a','#4e3f5c']},
+  {id:'sunset',name:'Sunset Lounge',tint:'#2a1e1a',wall:'#3a281a',floor:['#7a5a44','#6b4d38']},
+  {id:'cyber',name:'Cyber Neon',tint:'#0a1420',wall:'#122238',floor:['#123350','#0e2740']},
+  {id:'ivory',name:'Ivory Studio',tint:'#20242a',wall:'#3a3f48',floor:['#d8dce2','#cacfd6']},
+  {id:'gold',name:'Gold Hall',tint:'#241f14',wall:'#3a3120',floor:['#8a7a4a','#7c6d40']},
+  {id:'rose',name:'Rose Quartz',tint:'#2a1a20',wall:'#3a2430',floor:['#8a5a6a','#7c4e5e']},
+  {id:'ocean',name:'Deep Ocean',tint:'#0c1c26',wall:'#123040',floor:['#1a4258','#154a5a']},
+  {id:'ember',name:'Ember Forge',tint:'#1e1410',wall:'#2a1e18',floor:['#4a3630','#3e2c26']} ];
+function themeById(id){ return ROOM_THEMES.find(t=>t.id===id)||ROOM_THEMES[0]; }
+function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; const raw=prompt('Rename room:', r.name||''); if(raw===null)return; r.name=(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }
+function setRoomTheme(themeId){ roomTheme=themeById(themeId);
+  if(inInterior&&inInterior.__customRoom){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===inInterior.roomId); if(r){ r.theme=themeId; saveRooms(rooms); } }
+  else if(interiorType==='office'){ try{ localStorage.setItem('shaddai.officeTheme',themeId); }catch(e){} }
+  try{toast('🖌️ '+roomTheme.name);}catch(_){} }
+function openRoomTheme(){ const el=document.getElementById('roomsPanel'); if(!el)return;
+  var isRoom=inInterior&&inInterior.__customRoom, isOffice=(interiorType==='office'); if(!isRoom&&!isOffice)return;
+  const cur=isRoom?((loadRooms().find(x=>x.id===inInterior.roomId)||{}).theme||'obsidian'):(localStorage.getItem('shaddai.officeTheme')||'obsidian');
+  let h='<h1>🖌️ <b>'+(isOffice?'Office':'Room')+' Theme</b></h1><div class="sub" style="margin-bottom:10px">Pick a vibe — walls, floor & ambiance change instantly.</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">';
+  ROOM_THEMES.forEach(t=>{ const on=t.id===cur; h+='<div class="rcard" style="cursor:pointer;min-height:80px;justify-content:flex-end;border:'+(on?'2px solid #00e5a0':'1px solid rgba(255,255,255,.12)')+';background:linear-gradient(160deg,'+t.wall+','+t.tint+')" onclick="setRoomTheme(\''+t.id+'\');openRoomTheme()"><div style="display:flex;gap:3px;margin-bottom:7px">'+[t.floor[0],t.floor[1],t.wall].map(c=>'<span style="display:inline-block;width:15px;height:15px;border-radius:3px;background:'+c+';border:1px solid rgba(0,0,0,.35)"></span>').join('')+'</div><div style="font-size:12px;font-weight:700;color:#eaf3fb">'+(on?'✓ ':'')+t.name+'</div></div>'; });
+  h+='</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeRooms()">Back to room</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function roomsKey(){ return 'shaddai.rooms.'+(localStorage.getItem('shd_userid')||'guest'); }
+function loadRooms(){ try{ const a=JSON.parse(localStorage.getItem(roomsKey())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveRooms(a){ try{ localStorage.setItem(roomsKey(), JSON.stringify(a)); }catch(e){} }
+function openRooms(){ if(!isSignedIn()){ checkSignGate(); return; } const el=document.getElementById('roomsPanel'); if(!el)return; el.innerHTML=roomsHtml(); el.classList.remove('hide'); }
+function closeRooms(){ const el=document.getElementById('roomsPanel'); if(el)el.classList.add('hide'); }
+function roomsHtml(){
+  const rooms=loadRooms();
+  let h='<h1>🏠 <b>My Rooms</b></h1><div class="sub" style="margin-bottom:10px">Create your own walkable space. Signed in, your rooms follow you across devices.</div>';
+  h+='<div style="font-size:12px;opacity:.7;margin:6px 0 4px">Create a room</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">';
+  ROOM_PRESETS.forEach(p=>{ h+='<div class="rcard" style="cursor:pointer;min-height:70px;justify-content:center;text-align:center" onclick="createRoom(\''+p.kind+'\')"><div style="font-size:24px">'+p.emoji+'</div><div style="font-size:12px;font-weight:700;margin-top:4px">'+p.label+'</div></div>'; });
+  h+='</div><div style="font-size:12px;opacity:.7;margin:14px 0 4px">Your rooms ('+rooms.length+')</div>';
+  if(!rooms.length){ h+='<div style="opacity:.5;font-size:12px;padding:6px 0">No rooms yet — pick a preset above to make one.</div>'; }
+  else { h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">';
+    rooms.forEach(r=>{ const pre=ROOM_PRESETS.find(p=>p.kind===r.kind)||{emoji:'🏠',label:r.kind};
+      h+='<div class="rcard" style="min-height:82px;justify-content:space-between;color:#eaf3fb"><div style="cursor:pointer" onclick="enterRoom(\''+r.id+'\')"><div style="font-size:13px;font-weight:700">'+pre.emoji+' '+(r.name||pre.label)+'</div><div style="font-size:11px;opacity:.6;margin-top:2px">'+pre.label+' &nbsp;↦ Enter</div></div><div class="row" style="margin-top:6px;gap:5px"><button style="font-size:11px;padding:3px 8px" onclick="enterRoom(\''+r.id+'\')">Enter</button><button style="font-size:11px;padding:3px 8px" onclick="renameRoom(\''+r.id+'\')">✏️</button><button style="font-size:11px;padding:3px 8px" onclick="deleteRoom(\''+r.id+'\')">🗑️</button></div></div>'; });
+    h+='</div>'; }
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeRooms()">Done</button></div>';
+  return h; }
+function createRoom(kind){
+  const pre=ROOM_PRESETS.find(p=>p.kind===kind)||{label:kind};
+  const raw=prompt('Name your '+pre.label+':', pre.label); if(raw===null) return;
+  const name=(raw||'').trim().slice(0,24) || pre.label;
+  const rooms=loadRooms(); const id='r'+Date.now().toString(36);
+  rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id); }
+function deleteRoom(id){ if(!confirm('Delete this room? (its decor is also removed)'))return;
+  saveRooms(loadRooms().filter(r=>r.id!==id));
+  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); delete d['room_'+id]; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){}
+  openRooms(); }
+function enterRoom(id){
+  const room=loadRooms().find(r=>r.id===id); if(!room)return;
+  closeRooms(); if(typeof closeHubRooms==='function')closeHubRooms();
+  roomReturn=(state==='world')?'world':'menu';
+  currentRoomKey='room_'+room.id; roomTheme=themeById(room.theme);
+  state='interior'; inInterior={__customRoom:true, roomId:room.id, name:room.name};
+  interiorType=room.kind; buildInterior(room.kind);
+  intRoom.furniture=intRoom.furniture.concat(loadDecorFor(currentRoomKey));
+  player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
+  const cr=document.getElementById('create'); if(cr)cr.classList.add('hide');
+  const rg=document.getElementById('region'); if(rg)rg.classList.add('hide');
+  const pr=document.getElementById('prompt'); pr.classList.remove('hide');
+  pr.textContent='🏠 '+(room.name||'Your Room')+' — WASD to walk · Decorate it · reach the door to leave';
+  document.getElementById('moveinBtn').classList.add('hide');
+  refreshIntActions(); }
+// return to where you came from when leaving a custom room (menu vs world)
+function leaveInterior(){
+  if(currentRoomKey && roomReturn==='menu'){
+    currentRoomKey=null; roomTheme=null; inInterior=null; state='create';
+    document.getElementById('prompt').classList.add('hide');
+    document.getElementById('moveinBtn').classList.add('hide');
+    hideIntUI(); const cr=document.getElementById('create'); if(cr)cr.classList.remove('hide');
+    openRooms(); return true; }
+  return false; }
+// ---- SIGN-IN GATE (signed in = play; no guests) ----
+function isSignedIn(){ try{ if(location.hostname==='localhost'||location.hostname==='127.0.0.1') return true; /* dev bypass — gate still enforces in production */ return localStorage.getItem('shd_signed_in')==='1'; }catch(e){ return false; } }
+function checkSignGate(){ const g=document.getElementById('signGate'); if(!g) return; g.style.display=isSignedIn()?'none':'flex'; }
+function recheckSignGate(){ if(isSignedIn()) checkSignGate(); else { try{toast('Not signed in yet — tap the sign-in button above.');}catch(_){} } }
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) checkSignGate(); });
+window.addEventListener('focus', checkSignGate);
+if(document.readyState!=='loading') checkSignGate(); else document.addEventListener('DOMContentLoaded', checkSignGate);
+// ---- FOUNDERS' ROW: claim + brand your own office lot (reuses backend /api/office/claim) ----
+var OFFICE_PRESETS=[
+  {id:'command-loft',name:'Command Loft',accent:'#00e5a0'},
+  {id:'obsidian-hq',name:'Obsidian HQ',accent:'#a855f7'},
+  {id:'neon-studio',name:'Neon Studio',accent:'#22d3ee'},
+  {id:'gold-atrium',name:'Gold Atrium',accent:'#e8c45c'},
+  {id:'terminal-bay',name:'Terminal Bay',accent:'#39ff97'},
+  {id:'crimson-forge',name:'Crimson Forge',accent:'#ff5470'} ];
+var _claimLot=null;
+function claimLot(lotProp){
+  if(!isSignedIn()){ checkSignGate(); return; }
+  _claimLot=lotProp;
+  var el=document.getElementById('roomsPanel'); if(!el)return;
+  var h='<h1>🏛️ <b>Claim this Lot</b></h1><div class="sub" style="margin-bottom:10px">Reserve this Founders\' Row lot as your office. Pick a look — decorate & brand it after you walk in.</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">';
+  OFFICE_PRESETS.forEach(function(p){ h+='<div class="rcard" style="cursor:pointer;min-height:78px;justify-content:flex-end;background:linear-gradient(160deg,'+p.accent+'22,#0f1420);border:1px solid '+p.accent+'55" onclick="doClaim(\''+p.id+'\')"><div style="width:22px;height:22px;border-radius:6px;background:'+p.accent+';margin-bottom:7px"></div><div style="font-size:12px;font-weight:700;color:#eaf3fb">'+p.name+'</div></div>'; });
+  h+='</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeRooms()">Cancel</button></div>';
+  el.innerHTML=h; el.classList.remove('hide');
+}
+function doClaim(presetId){
+  var raw=prompt('Name your office (your brand):','My Command Office'); if(raw===null)return;
+  var name=(raw||'').trim().slice(0,40)||'My Command Office';
+  var uid=localStorage.getItem('shd_userid')||'';
+  var pre=OFFICE_PRESETS.find(function(p){return p.id===presetId;})||{accent:'#00e5a0'};
+  fetch('/api/office/claim',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':uid},body:JSON.stringify({preset:presetId,name:name})})
+    .then(function(r){return r.json();}).then(function(d){ closeRooms();
+      if(d&&d.ok&&d.office){ var lot=_claimLot; if(lot){ lot.__unclaimed=false; lot.__source=true; lot.name='★ '+name.toUpperCase().slice(0,16); lot.accent=pre.accent; lot.roof=pre.accent; lot.glass='#8affe0'; lot.wall='#0e2a22'; }
+        toast('🏛️ Lot claimed — '+name+' is yours! Walk in to decorate & brand it.'); }
+      else { toast('Could not claim: '+((d&&d.error)||'try again')); }
+    }).catch(function(){ toast('Claim failed — check your connection.'); });
+}
 // live agent view — pulls the operative's real dashboard data + lets you task them
 let liveAgentIdx=0;
 function showAgentLive(i){ liveAgentIdx=i; agentLiveOpen=true; const a=AGENTS[i], el=document.getElementById('agentlive'); if(!el)return;
@@ -1483,9 +1668,10 @@ function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!
   let h='<div class="bpwrap"><div class="bphead"><b>🎒 Backpack</b><span class="bphint">Click a weapon/tool to slot it on your hotbar · keys 1–6 · I to close</span><button id="bpClose">✕</button></div><div class="bpgrid">';
   if(!invK.length&&!fishK.length) h+='<div class="bpempty">Empty — chop trees, mine rocks, fish the water, or buy gear at the Store.</div>';
   h+=sec('⚔ Weapons',weapons,true)+sec('🛠 Tools',tools,true)+sec('🧱 Materials',mats,false)+sec('🐟 Catch',fishK,false);
-  h+='</div><div class="bpfoot">💰 '+money+' Gold · Lv '+levelFor(credits)+' · '+credits+' XP'+(eqW?' · ⚔ '+itemMeta(eqW).name:'')+'</div></div>';
+  h+='</div><div class="bpfoot"><span>💰 '+money+' Gold · Lv '+levelFor(credits)+' · '+credits+' XP'+(eqW?' · ⚔ '+itemMeta(eqW).name:'')+'</span>'+(fishK.length?' <button id="bpSell" style="padding:4px 12px;font-size:11px;background:#123a2a;border:1px solid #00e5a0;color:#7ffcd0;border-radius:8px;cursor:pointer">💰 Sell Catch</button>':'')+'</div></div>';
   el.innerHTML=h;
   const cl=document.getElementById('bpClose'); if(cl) cl.onclick=()=>toggleBackpack(false);
+  const sb=document.getElementById('bpSell'); if(sb) sb.onclick=()=>{ sellFish(); renderBackpack(); };
   el.querySelectorAll('.bpcell.assign').forEach(cEl=>{ cEl.onclick=()=>{ if(cEl.dataset.id) assignToHotbar(cEl.dataset.id); }; }); }
 (function buildRpgHud(){ if(!document.body){ addEventListener('DOMContentLoaded',buildRpgHud); return; } if(document.getElementById('rpgHotbar')) return;
   const css=document.createElement('style'); css.textContent=
@@ -1503,7 +1689,7 @@ function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!
   ".bpcell.assign{cursor:pointer}.bpcell.assign:hover{border-color:#00e5a0;background:#12251d}.bpcell.inbar{border-color:rgba(232,196,92,.5)}"+
   ".bpico{font-size:26px;display:block}.bpn{font-size:11px;display:block;margin-top:3px;color:#aebfcc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"+
   ".bpc{position:absolute;top:4px;right:6px;font-size:11px;font-weight:700;color:#ffe9a8}"+
-  ".bpfoot{background:linear-gradient(160deg,#141d2e,#0b111c);border:1px solid rgba(0,229,160,.3);border-top:none;border-radius:0 0 14px 14px;padding:10px 16px;color:#e8c45c;font-size:12px;text-align:right}";
+  ".bpfoot{background:linear-gradient(160deg,#141d2e,#0b111c);border:1px solid rgba(0,229,160,.3);border-top:none;border-radius:0 0 14px 14px;padding:10px 16px;color:#e8c45c;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}";
   document.head.appendChild(css);
   const hb=document.createElement('div'); hb.id='rpgHotbar'; document.body.appendChild(hb);
   const bp=document.createElement('div'); bp.id='rpgBackpack'; document.body.appendChild(bp);

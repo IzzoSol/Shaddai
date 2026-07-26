@@ -1,0 +1,17 @@
+{
+  "name": "dragon",
+  "size": "64x64",
+  "frames": 6,
+  "animations": ["hover", "wing_flap", "fire_breath", "attack", "damage", "death"],
+  "palette": "dreamers_master_palette",
+  "lighting": "top_left",
+  "outline": "1px",
+  "hitbox": "48x48",
+  "colors": {
+    "body": "#00C96B",
+    "wings": "#2D7A42",
+    "underbelly": "#FFD84D",
+    "eyes": "#FF7A1A",
+    "scales": "#007A45"
+  }
+}

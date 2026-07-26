@@ -71,6 +71,11 @@
       firebase.auth().onAuthStateChanged(async function(u){
         window.SHD_AUTH.user=u||null;
         window.SHD_AUTH.ready=true;
+        // Canonical sign-in flag, readable by every page (game, forge, rooms).
+        try{ if(u){ localStorage.setItem('shd_signed_in','1'); if(u.email) localStorage.setItem('shd_email',u.email); if(u.displayName) localStorage.setItem('shd_displayName',u.displayName);
+          // Unify identity: your account uid becomes shd_userid, so gallery/rooms/office follow your account across devices.
+          try{ var _uid=u.uid, _old=localStorage.getItem('shd_userid'); if(_uid){ if(_old&&_old!==_uid){ try{ var _r=localStorage.getItem('shaddai.rooms.'+_old); if(_r&&!localStorage.getItem('shaddai.rooms.'+_uid)) localStorage.setItem('shaddai.rooms.'+_uid,_r); }catch(_e){} } localStorage.setItem('shd_userid',_uid); } }catch(_e){}
+        } else { localStorage.setItem('shd_signed_in','0'); } }catch(e){}
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
       });
@@ -82,7 +87,7 @@
   }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
   // Sign-in: open the email/password gate (Google disabled — cross-domain cookie issue on onrender).
   window.shdSignIn=function(){ try{ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }catch(e){} };
-  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.removeItem('shd_mode'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
+  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.setItem('shd_signed_in','0'); localStorage.removeItem('shd_mode'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
 })();
 
 // ── GUEST MODE: no memory persistence ────────────────────────────────────────
@@ -202,9 +207,8 @@
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
       <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
-    <button class="bg skip" onclick="shdGate.guest()">Skip — continue as guest →</button>
     <div class="msg" id="shdAuthMsg"></div>
-    <div class="fine">Guest mode works fully, but your data won't be saved after you close the tab.</div>
+    <div class="fine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account.</div>
   </div></div>
 </div>
 <div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
@@ -261,10 +265,10 @@
       var b=document.getElementById('shdGuestBadge'); if(b) b.classList.remove('on'); }
   };
   function decide(){
+    // Sign-in REQUIRED (no guest bypass). localhost = dev bypass so the owner is never locked out.
+    var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signed=window.SHD_AUTH&&window.SHD_AUTH.user;
-    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
-    if(signed){ G.hide(); return; }
-    if(guest){ var b=document.getElementById('shdGuestBadge'); if(b) b.classList.add('on'); return; }
+    if(signed||local){ G.hide(); return; }
     G.show();
   }
   // Wait briefly for Firebase to restore any existing session before deciding.
@@ -4195,9 +4199,23 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700" title="Plans & pricing">◈ Plans</button>
-  <button class="nav-btn" onclick="showView('grid');if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter Shaddai World"><img src="/api/forge/art/hero-light-cycle.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 6px rgba(0,229,255,0.55)"> SHADDAI WORLD</button>
+  <button class="nav-btn" onclick="location.href='game.html'" id="nav2DBtn" style="color:#00ff9c;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,255,156,0.5);border-color:rgba(0,255,156,0.25)" title="Enter the 2D World">▦ 2D WORLD</button>
+  <button class="nav-btn" onclick="enter3DWorld()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter the 3D World">◈ 3D WORLD</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
+
+<script>
+/* 3D World = sign-in gated only (Pro tier later). NO access/beta codes. localhost bypasses for dev. */
+window.enter3DWorld=function(){
+  try{
+    var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+    var signedIn=false; try{ signedIn=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
+    if(!local && !signedIn){ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }
+    try{ showView('grid'); }catch(e){}
+    if(window._playWorldPortal){ try{ window._playWorldPortal(); }catch(e){} }
+  }catch(e){ if(window._playWorldPortal) window._playWorldPortal(); }
+};
+</script>
 
 <script>
 /* ═══ SHADDAI NAV ICON WIRING ═══════════════════════════════════════════════
@@ -4418,13 +4436,17 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <!-- E3: repointed to Office sub-tabs (standalone Projects/Skills views retired) -->
     <!-- Skills / Billing / Library removed from the sidebar — they live INSIDE the Office tab (sub-tabs), not as standalone tabs (owner). -->
     <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Forge</button>
+    <style>@keyframes sbtGlow{0%,100%{box-shadow:0 0 2px rgba(232,196,92,.22)}50%{box-shadow:0 0 13px rgba(232,196,92,.6)}}.sbt-glow{animation:sbtGlow 2.6s ease-in-out infinite;border-radius:8px}.sbt-glow .ic{filter:drop-shadow(0 0 5px rgba(232,196,92,.9))}.sbt-glow:hover{animation-duration:1.1s}</style>
+    <button class="sbt sbt-glow" onclick="location.href='pricing.html'" style="color:#e8c45c;font-weight:700"><span class="ic">⭐</span>Upgrade to Pro</button>
+    <button class="sbt" onclick="location.href='monetize.html'" style="color:#00e5a0"><span class="ic">💸</span>Monetize</button>
     <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">⚡</span>AURA</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
     <!-- Sign in (sidebar) removed — unwired -->
-    <button class="sbt" onclick="showView('grid');lySetSb(this);if(window._playWorldPortal)window._playWorldPortal()" id="navGridBtnSb" style="color:#00e5ff"><span class="ic">⬡</span>World</button>
+    <button class="sbt" onclick="location.href='game.html'" style="color:#00ff9c"><span class="ic">▦</span>2D World</button>
+    <button class="sbt" onclick="lySetSb(this);enter3DWorld()" id="navGridBtnSb" style="color:#00e5ff"><span class="ic">◈</span>3D World</button>
     <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3)" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
   </div>
   <div class="sb-foot">OLLAMA → GROQ → GEMINI<br>7 AGENTS ONLINE</div>
