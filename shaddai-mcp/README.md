@@ -28,7 +28,15 @@ Restart your client. SHADDAI's tools now appear.
 |------|--------------|
 | `shaddai_orchestrate` | Give SHADDAI a goal → it decomposes it and routes each part to the right specialist (plan, or plan + execute). |
 | `shaddai_run_agent` | Run one specialist (ORACLE/ZEROX/NEXUS/TURTLE/QUILL/PIKADON) — it uses its real tools and returns the result + which tools fired. |
+| `shaddai_generate_image` | Generate an image with TURTLE — logos, illustrations, concept art, thumbnails, pins. Returns an image URL. |
 | `shaddai_list_agents` | List the 7 agents and their domains. |
+
+## What people use it for
+- **Content + visuals in one go** — "write my launch post *and* make the header image" → QUILL + TURTLE.
+- **Logos & brand art** — "make me a clean logo for a coffee brand" → `shaddai_generate_image`.
+- **Research with live data** — "what's moving in crypto right now?" → ORACLE fires real market tools.
+- **Code & security** — in Cursor: "audit this for security holes" → PIKADON; "trending GitHub repos in my niche" → NEXUS.
+- **Whole projects** — "break the human body into modules with images + descriptions" → `shaddai_orchestrate` routes ORACLE → TURTLE → QUILL → NEXUS.
 
 ## The agents
 - **SHADDAI** — orchestrator; decomposes goals and coordinates the team

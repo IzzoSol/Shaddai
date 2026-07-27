@@ -50,8 +50,21 @@ const TOOLS = [
     },
   },
   {
+    name: 'shaddai_generate_image',
+    description: 'Generate an image with TURTLE (SHADDAI\'s design agent). Use for logos, illustrations, concept art, thumbnails, social pins, brand visuals. Give a detailed prompt; returns an image URL you can show or embed.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prompt: { type: 'string', description: 'Detailed description of the image to create.' },
+        width: { type: 'number', description: 'optional pixel width (default 1024)' },
+        height: { type: 'number', description: 'optional pixel height (default 1024)' },
+      },
+      required: ['prompt'],
+    },
+  },
+  {
     name: 'shaddai_list_agents',
-    description: 'List the 7 SHADDAI agents and what each specializes in.',
+    description: 'List the 7 SHADDAI agents and what each specializes in. Call this first if unsure which agent fits a task.',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
 ];
@@ -87,6 +100,15 @@ async function callTool(name, args) {
     const tools = d.toolsUsed && d.toolsUsed.length ? '[tools used: ' + d.toolsUsed.join(', ') + ']\n\n' : '';
     return tools + (d.response || '');
   }
+
+  if (name === 'shaddai_generate_image') {
+    const d = await callAPI('/api/image/generate', {
+      prompt: args.prompt, width: args.width || 1024, height: args.height || 1024,
+    });
+    const url = d.url || d.image_url;
+    if (!url) return 'Error: ' + (d.error || 'no image returned');
+    return 'TURTLE generated an image:\n' + url + '\n\n![generated image](' + url + ')';
+  }
   return 'Unknown tool: ' + name;
 }
 
@@ -104,7 +126,7 @@ rl.on('line', async (line) => {
       send({ jsonrpc: '2.0', id, result: {
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'shaddai', version: '0.1.0' },
+        serverInfo: { name: 'shaddai', version: '0.2.0' },
       } });
     } else if (method === 'tools/list') {
       send({ jsonrpc: '2.0', id, result: { tools: TOOLS } });
