@@ -15,6 +15,8 @@ const axios = require('axios');
 
 let _engine = null;
 function eng() { if (!_engine) _engine = require('../agent-engine'); return _engine; }
+let _kb = null;
+function kb() { if (!_kb) { try { _kb = require('./knowledge'); } catch (_) { _kb = { contextFor: () => '', learn: () => {} }; } } return _kb; }
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = process.env.GROQ_TOOL_MODEL || 'llama-3.3-70b-versatile';
@@ -111,11 +113,13 @@ async function runAgentWithTools(agentName, task, opts = {}) {
     .slice(0, MAX_TOOLS_SHOWN);
   const oaTools = toolNames.map(n => toOpenAITool(TOOLS[n]));
 
+  let sysContent =
+    'You are ' + A + ', a specialist on the SHADDAI team. Use the provided tools to actually DO the task with real data — ' +
+    'call a tool when it gives you real information, then answer concisely and concretely based on what the tools returned. ' +
+    'Do not invent data a tool could fetch. No self-description, no product pitch.';
+  try { const kctx = kb().contextFor(A, task); if (kctx) sysContent += '\n\n' + kctx; } catch (_) {}
   const messages = [
-    { role: 'system', content:
-      'You are ' + A + ', a specialist on the SHADDAI team. Use the provided tools to actually DO the task with real data — ' +
-      'call a tool when it gives you real information, then answer concisely and concretely based on what the tools returned. ' +
-      'Do not invent data a tool could fetch. No self-description, no product pitch.' },
+    { role: 'system', content: sysContent },
     { role: 'user', content: String(task) },
   ];
 
@@ -126,6 +130,7 @@ async function runAgentWithTools(agentName, task, opts = {}) {
     messages.push(msg);
     const calls = msg.tool_calls || [];
     if (!calls.length) {
+      try { kb().learn(A, task, msg.content || ''); } catch (_) {}
       return { response: msg.content || '', toolsUsed, steps: step + 1, model: MODEL };
     }
     for (const c of calls) {
