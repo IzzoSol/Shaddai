@@ -69,6 +69,21 @@ const TOOLS = [
   },
 ];
 
+// Per-agent specialist tools — one named tool per agent so the model auto-picks the right one.
+const SPECIALISTS = [
+  { key: 'oracle',  agent: 'ORACLE',  desc: 'ORACLE — research & intelligence. Use for: researching a topic, comparing options, market/knowledge questions, science, health/body, psychology, and anything needing live/current data.' },
+  { key: 'zerox',   agent: 'ZEROX',   desc: 'ZEROX — revenue & business. Use for: pricing a product, building an irresistible offer, monetization strategy, and market/crypto analysis.' },
+  { key: 'nexus',   agent: 'NEXUS',   desc: 'NEXUS — engineering & systems. Use for: technical plans, code, architecture, github/npm lookups, and structuring/assembling deliverables.' },
+  { key: 'turtle',  agent: 'TURTLE',  desc: 'TURTLE — design direction. Use for: brand and visual concepts, UX ideas, color/type direction. (For an actual image, use shaddai_generate_image.)' },
+  { key: 'quill',   agent: 'QUILL',   desc: 'QUILL — writing & copy. Use for: posts, sales pages, emails, docs, product descriptions, and any clear written content.' },
+  { key: 'pikadon', agent: 'PIKADON', desc: 'PIKADON — security & risk. Use for: security audits, pre-launch checklists, vulnerability review, and "is this safe?" questions.' },
+];
+SPECIALISTS.forEach(s => TOOLS.push({
+  name: 'shaddai_' + s.key,
+  description: s.desc,
+  inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'What you want this specialist to do.' } }, required: ['task'] },
+}));
+
 async function callAPI(path, body) {
   const headers = { 'Content-Type': 'application/json' };
   if (API_KEY) headers['x-shaddai-key'] = API_KEY;
@@ -109,6 +124,14 @@ async function callTool(name, args) {
     if (!url) return 'Error: ' + (d.error || 'no image returned');
     return 'TURTLE generated an image:\n' + url + '\n\n![generated image](' + url + ')';
   }
+
+  const spec = SPECIALISTS.find(s => name === 'shaddai_' + s.key);
+  if (spec) {
+    const d = await callAPI('/api/agentic/run', { agent: spec.agent, task: args.task });
+    if (d.error) return 'Error: ' + d.error;
+    const tools = d.toolsUsed && d.toolsUsed.length ? '[tools used: ' + d.toolsUsed.join(', ') + ']\n\n' : '';
+    return tools + (d.response || '');
+  }
   return 'Unknown tool: ' + name;
 }
 
@@ -126,7 +149,7 @@ rl.on('line', async (line) => {
       send({ jsonrpc: '2.0', id, result: {
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'shaddai', version: '0.2.0' },
+        serverInfo: { name: 'shaddai', version: '0.3.0' },
       } });
     } else if (method === 'tools/list') {
       send({ jsonrpc: '2.0', id, result: { tools: TOOLS } });
