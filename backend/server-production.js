@@ -944,6 +944,8 @@ try { app.use('/api/achievements', require('./achievements').router); console.lo
 catch (e) { console.warn('[prod] achievements failed:', e.message); }
 // Server-side LLM proxy — browser calls this so provider keys never ship to the client
 app.use('/api/llm', require('./llm-proxy-routes'));
+app.post('/api/agentic/run', express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools
+app.post('/api/orchestrate', express.json(), require('./lib/orchestrate').handler);      // SHADDAI orchestrator — decompose a task & route to the right specialists
 // ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
 app.use('/api/worlds', require('./routes/worlds-api'));
 // GRIDIRON PROSPECT — Game character saves, loads, and exports

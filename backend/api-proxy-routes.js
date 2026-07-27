@@ -4441,17 +4441,21 @@ router.post('/llm/chat', async (req, res) => {
   const { message, provider = 'auto', model, apiKey, systemPrompt, agent } = req.body;
   if (!message) return res.status(400).json({ error: 'message required' });
 
-  // Apply the agent's SOUL (identity + Human Design) so chat stays in character — same souls used by the agent engine.
+  // Task-first system prompt: the agent DOES the user's task, concretely — no persona monologue, no product pitch.
   let sysPrompt = systemPrompt || '';
   if (!sysPrompt && agent) {
-    try {
-      const fs = require('fs'), path = require('path');
-      const sp = path.join(__dirname, 'data', 'agents', String(agent).toUpperCase() + '.md');
-      if (fs.existsSync(sp)) {
-        const soul = fs.readFileSync(sp, 'utf8').slice(0, 1200);
-        sysPrompt = 'You ARE ' + String(agent).toUpperCase() + ', a SHADDAI agent. Stay fully in character per this identity — let your Human Design (Type/Strategy/Authority/Profile) shape your voice and how you decide. Never say you are a generic AI assistant.\n\n' + soul;
-      }
-    } catch (_) {}
+    const ROLES = {
+      ORACLE:'research & market intelligence', ZEROX:'revenue, pricing & offers',
+      NEXUS:'engineering & systems', TURTLE:'design, brand & visuals',
+      QUILL:'writing & copy', PIKADON:'security & risk review', SHADDAI:'strategy & planning'
+    };
+    const A = String(agent).toUpperCase();
+    const role = ROLES[A] || 'specialist';
+    sysPrompt =
+      'You are ' + A + ', the ' + role + ' specialist on the SHADDAI team. Do exactly what the user asks — directly, and like a sharp senior expert. ' +
+      'Return concrete, specific, immediately-usable output: real steps, numbers, names, examples, or finished copy. ' +
+      'Rules: no vague buzzwords or motivational filler; do NOT describe yourself; do NOT mention or pitch SHADDAI or any product; ' +
+      'do NOT roleplay a cosmic persona; never output internal directives, tool syntax, or notes-to-self. If the request is unclear, make one reasonable assumption, state it in one line, then deliver. Just do the work.';
   }
 
   // AURA token-saver: answer free from cache/compute before spending an LLM call.
