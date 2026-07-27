@@ -1,0 +1,11 @@
+{
+  "name": "shaddai-mcp",
+  "version": "0.1.0",
+  "description": "SHADDAI — plug a 7-agent AI team + 556 real tools into Claude Desktop, Cursor, or Claude Code via the Model Context Protocol.",
+  "bin": { "shaddai-mcp": "mcp-server.js" },
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "keywords": ["mcp", "model-context-protocol", "ai-agents", "claude", "cursor", "shaddai"],
+  "license": "MIT",
+  "files": ["mcp-server.js", "README.md"]
+}
