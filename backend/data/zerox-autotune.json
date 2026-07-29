@@ -1,10 +1,10 @@
 {
-  "lastRun": 1784764541082,
+  "lastRun": 1785086090783,
   "suggestions": [
     {
       "filter": "rugMinScore",
       "direction": "tighten",
-      "reason": "safe rug: 1% vs risky: 18%",
+      "reason": "safe rug: 0% vs risky: 19%",
       "confidence": "medium"
     },
     {
@@ -22,9 +22,9 @@
     {
       "filter": "minHolders",
       "direction": "raise",
-      "reason": "100+ holders win rate: 16%, <20 holders: 3%",
+      "reason": "100+ holders win rate: 15%, <20 holders: 3%",
       "confidence": "medium"
     }
   ],
-  "timestamp": 1784764541082
+  "timestamp": 1785086090783
 }

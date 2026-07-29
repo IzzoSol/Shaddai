@@ -6671,7 +6671,7 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
       const lastUser = [...msgs].reverse().find(m => m && m.role === 'user');
       auraPrompt = (lastUser && typeof lastUser.content === 'string') ? lastUser.content : '';
       if (auraPrompt) {
-        const hit = require('./lib/aura').route(auraPrompt);
+        const hit = require('./lib/aura').route(auraPrompt, { scope: agent || '' });
         if (hit && hit.hit && hit.answer) {
           return res.json({ ok: true, content: hit.answer, provider: 'aura-cache',
             model: hit.method || 'aura', tokens: { input: 0, output: 0, total: 0 },
@@ -6682,14 +6682,15 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
 
     const r = await agentEngine.modelChat(msgs, agent || 'SHADDAI');
     // Record the real answer so future identical/similar prompts are free.
-    try { if (auraPrompt && r && r.content) require('./lib/aura').recordAnswer(auraPrompt, r.content); } catch (_) {}
+    try { if (auraPrompt && r && r.content) require('./lib/aura').recordAnswer(auraPrompt, r.content, { scope: agent || '' }); } catch (_) {}
     res.json({
       ok: true,
       content: r.content,
       provider: r.provider,
       model: r.model,
       tokens: { input: r.inputTokens, output: r.outputTokens, total: r.inputTokens + r.outputTokens, exact: r.exact },
-      costUSD: r.costUSD
+      costUSD: r.costUSD,
+      ragSources: r.ragSources
     });
   } catch (e) {
     fail(res, 500, 'internal_error', e.message, { ok: false });

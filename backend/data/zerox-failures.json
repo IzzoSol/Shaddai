@@ -1,21 +1,21 @@
 {
   "reasons": {
     "low_rug_score": {
-      "count": 457,
-      "avgCurMult": 1.12,
+      "count": 601,
+      "avgCurMult": 1.14,
       "sources": {
         "new_pools": 332,
-        "bonded": 112,
-        "trending": 13
+        "bonded": 252,
+        "trending": 17
       }
     },
     "bundler_dump": {
-      "count": 361,
+      "count": 507,
       "avgCurMult": 1,
       "sources": {
         "new_pools": 186,
-        "bonded": 152,
-        "trending": 23
+        "bonded": 288,
+        "trending": 33
       }
     },
     "whale_dump": {
@@ -34,21 +34,21 @@
       }
     },
     "sniper_dump": {
-      "count": 6,
+      "count": 10,
       "avgCurMult": 1,
       "sources": {
-        "bonded": 6
+        "bonded": 10
       }
     },
     "unlocked_lp": {
-      "count": 20,
+      "count": 55,
       "avgCurMult": 1,
       "sources": {
-        "bonded": 20
+        "bonded": 55
       }
     }
   },
   "bySource": {},
   "byFdv": {},
-  "lastUpdated": 1784764541081
+  "lastUpdated": 1785086090782
 }
