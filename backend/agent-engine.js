@@ -3068,6 +3068,30 @@ async function callLLM(messages, agentName, options = {}) {
     }
   } catch {}
 
+  // ── RAG knowledge from mastery cards ──────────────────────────────
+  let ragContext = '';
+  callLLM._lastRag = [];
+  try {
+    const userGoal = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+    if (userGoal) {
+      const agentKey = String(agentName || 'SHADDAI').toUpperCase();
+      const rag = require('./rag-index');
+      const results = rag.searchUser('kb_' + agentKey.toLowerCase(), userGoal, 3);
+      if (results.length) {
+        callLLM._lastRag = results.map(r => ({ agent: agentKey, source: r.docName, chunk: r.chunkText.slice(0, 120), score: r.score }));
+        ragContext = '\n\nMASTERY KNOWLEDGE — relevant chapters from your training:\n' +
+          results.map(r => '• ' + r.chunkText.slice(0, 500)).join('\n');
+      }
+      try {
+        const kb = require('./knowledge/index');
+        const kbr = kb.lookup(agentKey, userGoal);
+        if (kbr && kbr.text) {
+          ragContext += '\n\nDOMAIN KNOWLEDGE:\n' + kbr.text.slice(0, 800);
+        }
+      } catch (_) {}
+    }
+  } catch (e) { console.warn('[ENGINE] RAG lookup error:', e.message); }
+
   // Inject installed skill pack system prompts for this user/agent
   let skillPackPrompt = '';
   try {
@@ -3090,13 +3114,13 @@ async function callLLM(messages, agentName, options = {}) {
   const system = options.plainChat ? {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-${agent.goal}${skillPackPrompt}${equippedNote}
+${agent.goal}${ragContext}${skillPackPrompt}${equippedNote}
 
 Respond conversationally and helpfully. Do NOT output tool syntax or code unless asked. Be concise and clear.`
   } : {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-Goal: ${agent.goal}${skillContext}${skillPackPrompt}${equippedNote}
+Goal: ${agent.goal}${ragContext}${skillContext}${skillPackPrompt}${equippedNote}
 
 TOOL SYSTEM — call tools by writing EXACTLY:
 [TOOL:tool_name:{"param":"value"}]
@@ -3821,6 +3845,9 @@ async function runSkill(skillId, input = {}, agentOverride) {
 async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
   const before = llmTracer.getStats().totalCalls;
   const raw = await callLLM(messages, agentName, { ...options, plainChat: true });
+  // Capture RAG sources that callLLM gathered
+  const ragSources = (callLLM._lastRag || []).map(r => ({ ...r, chunk: r.chunk.slice(0, 200) }));
+  callLLM._lastRag = [];
   // Safety net: strip any stray [TOOL:...] syntax so plain chat never shows it
   const content = stripToolCalls(raw) || raw;
   // The trace just recorded by callLLM is the newest entry — read its metadata.
@@ -3834,7 +3861,8 @@ async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
     inputTokens: recorded ? (last.inputTokens || 0) : 0,
     outputTokens: recorded ? (last.outputTokens || 0) : 0,
     costUSD: recorded ? (last.costUSD || 0) : 0,
-    exact: recorded ? !!last.exact : false
+    exact: recorded ? !!last.exact : false,
+    ragSources
   };
 }
 

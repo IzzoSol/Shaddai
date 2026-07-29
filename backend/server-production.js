@@ -1898,6 +1898,33 @@ if (!process.env.VERCEL_ENV) {
       }
     } catch (e) { console.warn('[keep-alive] init skipped:', e && e.message); }
 
+    // ── RAG rebuild: populate agent knowledge from mastery cards on startup ────
+    try {
+      const rag = require('./rag-index');
+      const masteryRoot = path.join(__dirname, 'knowledge', 'mastery');
+      if (fs.existsSync(masteryRoot)) {
+        let loaded = 0;
+        for (const agentDir of fs.readdirSync(masteryRoot, { withFileTypes: true })) {
+          if (!agentDir.isDirectory()) continue;
+          const agentKey = 'kb_' + agentDir.name.toLowerCase();
+          const dir = path.join(masteryRoot, agentDir.name);
+          for (const file of fs.readdirSync(dir)) {
+            if (!file.endsWith('.md')) continue;
+            const docName = 'MASTERY_' + file.replace(/\.md$/, '');
+            // Skip if already indexed
+            const existing = rag.listUserDocs(agentKey);
+            if (existing.some(d => d.name === docName)) continue;
+            const text = fs.readFileSync(path.join(dir, file), 'utf8');
+            if (text.length > 200) {
+              rag.addDocument(agentKey, docName, text);
+              loaded++;
+            }
+          }
+        }
+        if (loaded) console.log(`[RAG] loaded ${loaded} mastery cards into agent knowledge`);
+      }
+    } catch (e) { console.warn('[RAG] rebuild skipped:', e && e.message); }
+
     console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  SHADDAI PRODUCTION SERVER v62                        ║
