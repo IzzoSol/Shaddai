@@ -3843,6 +3843,27 @@ async function runSkill(skillId, input = {}, agentOverride) {
 // and never talks to a vendor directly. callLLM already does the free-first chain
 // (Ollama → Groq → Ollama), so this just wraps it and returns uniform metadata.
 async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
+  // ── Aura cache (exact + fuzzy) — $0, free for identical/similar questions ──
+  const lastUser = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+  if (lastUser) {
+    try {
+      const aura = require('./lib/aura');
+      const r = aura.route(lastUser, { scope: agentName });
+      if (r && r.hit) {
+        return {
+          content: r.answer,
+          provider: 'aura',
+          model: r.method || 'cache',
+          inputTokens: 0,
+          outputTokens: Math.ceil((r.answer || '').length / 4),
+          costUSD: 0,
+          exact: true,
+          ragSources: []
+        };
+      }
+    } catch (_) {}
+  }
+  // ── Cache miss — RAG search + LLM call ──────────────────────────────────
   const before = llmTracer.getStats().totalCalls;
   const raw = await callLLM(messages, agentName, { ...options, plainChat: true });
   // Capture RAG sources that callLLM gathered
@@ -3854,6 +3875,10 @@ async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
   const stats = llmTracer.getStats();
   const last = (stats.last10 && stats.last10.length) ? stats.last10[stats.last10.length - 1] : {};
   const recorded = stats.totalCalls > before;
+  // Cache the answer for future identical/similar questions
+  try {
+    require('./lib/aura').recordAnswer(lastUser, content, { scope: agentName });
+  } catch (_) {}
   return {
     content,
     provider: recorded ? (last.provider || 'unknown') : 'unknown',
