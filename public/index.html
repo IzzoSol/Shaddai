@@ -265,10 +265,14 @@
       var b=document.getElementById('shdGuestBadge'); if(b) b.classList.remove('on'); }
   };
   function decide(){
-    // Sign-in REQUIRED (no guest bypass). localhost = dev bypass so the owner is never locked out.
+    // Allow signed-in users, localhost (dev bypass for the owner), AND guests who clicked
+    // "Continue as guest" (session flag). Guests get a fully working dashboard — their
+    // app data is just written to sessionStorage instead of localStorage (see GUEST MODE block above)
+    // and wiped when the tab closes. No data is lost; nothing is gated except cross-session persistence.
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signed=window.SHD_AUTH&&window.SHD_AUTH.user;
-    if(signed||local){ G.hide(); return; }
+    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(signed||local||guest){ G.hide(); return; }
     G.show();
   }
   // Wait briefly for Firebase to restore any existing session before deciding.
@@ -4210,7 +4214,8 @@ window.enter3DWorld=function(){
   try{
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signedIn=false; try{ signedIn=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
-    if(!local && !signedIn){ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }
+    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(!local && !signedIn && !guest){ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }
     try{ showView('grid'); }catch(e){}
     if(window._playWorldPortal){ try{ window._playWorldPortal(); }catch(e){} }
   }catch(e){ if(window._playWorldPortal) window._playWorldPortal(); }
@@ -43728,7 +43733,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           if (gltf.animations && gltf.animations.length) {
             mixer = new THREE.AnimationMixer(obj);
             const A = gltf.animations;
-            const def = A.find(a => /dance/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
+            const def = A.find(a => /dance|breath|sway|bounce|groove|strut|swing|waltz/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
             mixer.clipAction(def).reset().play(); mixer.update(0.3);
             obj.updateMatrixWorld(true);
           }
@@ -43847,7 +43852,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           var A = mv.availableAnimations || [];
           _clips = A.slice();
           // Default to a lively clip: dance → vault/flip → idle → first.
-          var pick = A.findIndex(function(n){ return /dance/i.test(n); });
+          var pick = A.findIndex(function(n){ return /dance|breath|sway|bounce|groove|strut|swing|waltz/i.test(n); });
           if (pick < 0) pick = A.findIndex(function(n){ return /vault|flip|parkour|spin/i.test(n); });
           if (pick < 0) pick = A.findIndex(function(n){ return /idle/i.test(n); });
           if (pick < 0) pick = 0;

@@ -355,11 +355,12 @@ function showPlayerCode(code){
     ov.querySelector('#pcGo').onclick=function(){ ov.remove(); resolve(); };
   });
 }
-// Sign-in = your identity (no Player Codes, no free-use gate). localhost bypass for dev.
+// Sign-in = your identity (no Player Codes, no free-use gate). localhost bypass for dev. Guests also allowed.
 function pfRequireSignIn(){
   var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
   var signed=false; try{ signed=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
-  if(!local && !signed){ location.href='index.html'; return false; }
+  var guest=false; try{ guest=(sessionStorage.getItem('shd_guest')==='1'); }catch(e){}
+  if(!local && !signed && !guest){ location.href='index.html'; return false; }
   return true;
 }
 // Forge the current agent → save as your player + into your Gallery. Returns the agent.

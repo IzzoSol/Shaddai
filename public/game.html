@@ -1524,7 +1524,7 @@ function leaveInterior(){
     openRooms(); return true; }
   return false; }
 // ---- SIGN-IN GATE (signed in = play; no guests) ----
-function isSignedIn(){ try{ if(location.hostname==='localhost'||location.hostname==='127.0.0.1') return true; /* dev bypass — gate still enforces in production */ return localStorage.getItem('shd_signed_in')==='1'; }catch(e){ return false; } }
+function isSignedIn(){ try{ if(location.hostname==='localhost'||location.hostname==='127.0.0.1') return true; /* dev bypass — gate still enforces in production */ if(localStorage.getItem('shd_signed_in')==='1') return true; if(sessionStorage.getItem('shd_guest')==='1') return true; return false; }catch(e){ return false; } }
 function checkSignGate(){ const g=document.getElementById('signGate'); if(!g) return; g.style.display=isSignedIn()?'none':'flex'; }
 function recheckSignGate(){ if(isSignedIn()) checkSignGate(); else { try{toast('Not signed in yet — tap the sign-in button above.');}catch(_){} } }
 document.addEventListener('visibilitychange',function(){ if(!document.hidden) checkSignGate(); });
