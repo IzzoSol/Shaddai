@@ -148,6 +148,18 @@ diag_*.txt
 
 backend/data/user-keys.json
 
+# dev screenshots and test scripts (dev artifacts, not part of build)
+_*.png
+_*.js
+_*.mjs
+_*.html
+_*.ps1
+_*.json
+*.orig-*
+public/_audit_shots/
+public/Shaddai UI test/
+public/assets/characters/
+
 # scratch/test files (do not commit)
 _dodgeball_test.js
 _soccer_goaltest.js
