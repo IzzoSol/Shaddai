@@ -47,6 +47,8 @@ backend/agent-logs/
 backend/logs/
 
 # runtime data (regenerable — keep out of git)
+backend/data/rag/          # TF-IDF index rebuilt from mastery cards on startup
+backend/data/mastery-run.log*    # distiller runtime logs
 backend/data/aura-cache.json
 backend/data/aura-stats.json
 backend/data/api-vault.json
