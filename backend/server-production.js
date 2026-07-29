@@ -946,6 +946,19 @@ catch (e) { console.warn('[prod] achievements failed:', e.message); }
 app.use('/api/llm', require('./llm-proxy-routes'));
 app.post('/api/agentic/run', express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools
 app.post('/api/orchestrate', express.json(), require('./lib/orchestrate').handler);      // SHADDAI orchestrator — decompose a task & route to the right specialists
+// Mastery card RAG search — used by the MCP server, dashboards, and external clients
+app.post('/api/mastery/search', express.json(), (req, res) => {
+  try {
+    const { query, agent } = req.body || {};
+    if (!query) return res.status(400).json({ error: 'query required' });
+    const rag = require('./rag-index');
+    const namespace = 'kb_' + (String(agent || 'SHADDAI').toLowerCase());
+    const results = rag.searchUser(namespace, query, 5);
+    res.json({ ok: true, results: results.map(r => ({ source: r.docName, chunk: r.chunkText.slice(0, 300), score: r.score })) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String((e && e.message) || e) });
+  }
+});
 // ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
 app.use('/api/worlds', require('./routes/worlds-api'));
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
