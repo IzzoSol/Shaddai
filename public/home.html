@@ -211,6 +211,8 @@ body::before{
 .corner .cc-theme:hover, .corner .cc-link:hover{ color:var(--emerald); border-color:color-mix(in srgb,var(--emerald) 40%,transparent); }
 .corner .cc-deck{ color:var(--ink); }
 .corner .cc-deck:hover{ color:var(--emerald); border-color:color-mix(in srgb,var(--emerald) 45%,transparent); }
+.corner .cc-startfree{ color:#241a03; background:var(--gold); border-color:transparent; font-weight:700; padding:8px 13px; font-size:11px; }
+.corner .cc-startfree:hover{ background:var(--gold-2); filter:brightness(1.08); border-color:transparent; }
 .corner .cc-ascend{ color:var(--gold); border-color:color-mix(in srgb,var(--gold) 42%,transparent); background:rgba(232,196,92,.08); }
 .corner .cc-ascend:hover{ color:#241a03; background:var(--gold); border-color:transparent; }
 .corner .cc-theme:focus-visible, .corner .cc-link:focus-visible, .corner .cc-ascend:focus-visible{ outline:1px solid var(--emerald); outline-offset:2px; }
@@ -772,11 +774,13 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       <button type="button" onclick="location.href='/codex.html'">Codex</button>
     </div>
 
+    <div class="pillar" data-key="playbooks">
+      <button type="button" onclick="location.href='/playbooks.html'">📕 Playbooks</button>
+    </div>
+
   </nav>
   <div class="corner" id="cornerCluster">
-    <a class="cc-link" id="cornerDocs" href="/codex.html" title="Docs — the Codex">Docs</a>
-    <a class="cc-link" href="/prove.html" title="Watch the Council work — live, free">▶ Watch it work</a>
-    <a class="cc-link" href="/pricing.html" title="Plans &amp; pricing — $30/mo" style="color:#241a03;background:var(--gold);border-color:transparent;font-weight:700">Join · $30/mo</a>
+    <a class="cc-link cc-startfree" id="cornerStart" href="/pricing.html#start-free" title="Start free — no card required">Start free</a>
     <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Deck">Enter Dashboard</a>
     <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the full-screen Ascent player">▶ Ascend</button>
   </div>
