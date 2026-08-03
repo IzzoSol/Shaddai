@@ -97,6 +97,66 @@ async function _pollHeadlines() {
   _newsSeeded = true;   // first poll only seeds — then post only NEW headlines
 }
 
+// ── TOP 25 DEXSCREENER BOOSTED (every 4h) ───────────────────────────────────
+const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
+async function dexTop25() {
+  try {
+    const r = await fetch(DS_BOOSTS);
+    if (!r.ok) return null;
+    const items = await r.json();
+    if (!Array.isArray(items)) return null;
+    const sol = items.filter(i => String(i.chainId || '').toLowerCase() === 'solana').slice(0, 25);
+    if (!sol.length) return null;
+    const rows = sol.map((t, i) => {
+      const sym = _esc((t.data && t.data.symbol) || t.tokenAddress.slice(0, 6) + '…');
+      const boost = Number(t.amount || t.totalAmount || 0);
+      const desc = _esc((t.description || '').slice(0, 40));
+      return `${i + 1}. <b>$${sym}</b>  🚀 ${boost} credits${desc ? '  <i>' + desc + '</i>' : ''}`;
+    });
+    const ts = new Date().toUTCString().replace(/.*(\d{2}:\d{2}).*/, '$1');
+    return (
+      `🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA</b>\n` +
+      `━━━━━━━━━━━━━\n` +
+      `Updated ${ts} UTC\n\n` +
+      rows.join('\n') +
+      `\n\n<i>Paid boosts ≠ endorsement · NFA · DYOR</i>`
+    );
+  } catch (e) { return null; }
+}
+
+// ── TOP MOVERS LEADERBOARD (1d / 1w / 1m) ───────────────────────────────────
+async function topMoversLeaderboard() {
+  try {
+    const base = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=5&page=1&sparkline=false';
+    const [d1r, d7r, d30r] = await Promise.all([
+      fetch(base + '&order=price_change_percentage_24h_desc&price_change_percentage=24h'),
+      fetch(base + '&order=price_change_percentage_7d_desc&price_change_percentage=7d'),
+      fetch(base + '&order=price_change_percentage_30d_desc&price_change_percentage=30d'),
+    ]);
+    const [d1, d7, d30] = await Promise.all([
+      d1r.ok ? d1r.json() : [],
+      d7r.ok ? d7r.json() : [],
+      d30r.ok ? d30r.json() : [],
+    ]);
+    const fmt = (coins, field) => (Array.isArray(coins) ? coins : []).slice(0, 5).map((c, i) => {
+      const pct = Number(c[field] || c.price_change_percentage_24h);
+      const tag = pct >= 100 ? '🔥' : pct >= 0 ? '🟢' : '🔴';
+      return `${i + 1}. <b>$${_esc((c.symbol || '').toUpperCase())}</b>  ${tag} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+    }).join('\n');
+    const s1  = fmt(d1,  'price_change_percentage_24h');
+    const s7  = fmt(d7,  'price_change_percentage_7d_in_currency');
+    const s30 = fmt(d30, 'price_change_percentage_30d_in_currency');
+    if (!s1 && !s7 && !s30) return null;
+    return (
+      `📈 <b>TOP MOVERS — 1D · 1W · 1M</b>\n━━━━━━━━━━━━━\n\n` +
+      (s1  ? `<b>🕐 24H</b>\n${s1}\n\n`  : '') +
+      (s7  ? `<b>📅 7D</b>\n${s7}\n\n`   : '') +
+      (s30 ? `<b>🗓 30D</b>\n${s30}`     : '') +
+      `\n\n<i>NFA · DYOR</i>`
+    );
+  } catch (e) { return null; }
+}
+
 // ── SHADDAI PROJECT PROMO (timely brand signal) ─────────────────────────────
 function projectPromo() {
   const web = process.env.SHADDAI_WEBSITE || 'https://shaddai-g81x.onrender.com';
@@ -118,36 +178,67 @@ function projectPromo() {
   );
 }
 
-let _timer = null, _newsTimer = null, _promoTimer = null;
+let _timer = null, _newsTimer = null, _promoTimer = null, _dexTimer = null, _moversTimer = null;
 function startNewsPoster() {
   if (!core.token()) { return; }
   if (_timer) return;
   if (!core.acquireBroadcastLock()) { console.log('[tg-news] another instance owns broadcasting — news not started here.'); return; }
+
+  // ── MARKET PULSE (slowed to 4h default — was flooding) ──────────────────
   const tick = async () => {
     const cfg = core.getConfig();
-    if (!cfg.news) return;                       // toggled off from dashboard
+    if (!cfg.news) return;
     const html = await marketPulse();
     if (html) { const img = _botImage(); await (img ? core.broadcastPhoto(img, html) : core.broadcast(html)); }
   };
-  // re-evaluate the interval every minute so dashboard changes take effect without a restart
   let last = 0;
   _timer = setInterval(async () => {
     const cfg = core.getConfig();
-    const everyMs = Math.max(15, cfg.newsIntervalMin || 60) * 60000;
+    const everyMs = Math.max(60, cfg.newsIntervalMin || 240) * 60000;   // default 4h (was 2h)
     if (Date.now() - last >= everyMs) { last = Date.now(); tick().catch(() => {}); }
   }, 60000);
   if (_timer.unref) _timer.unref();
-  // RSS headlines — seed first, then post only NEW headlines on its own cadence
+
+  // ── RSS HEADLINES (seed first, then every 90min) ─────────────────────────
   setTimeout(() => { _pollHeadlines().catch(() => {}); }, 6000);
   let lastN = 0;
   _newsTimer = setInterval(async () => {
     const cfg = core.getConfig();
-    const everyMs = Math.max(15, cfg.headlinesIntervalMin || 45) * 60000;
+    const everyMs = Math.max(30, cfg.headlinesIntervalMin || 90) * 60000;
     if (Date.now() - lastN >= everyMs) { lastN = Date.now(); _pollHeadlines().catch(() => {}); }
   }, 60000);
   if (_newsTimer.unref) _newsTimer.unref();
-  // SHADDAI project promo — periodic brand/GitHub-star/socials broadcast
-  let lastP = Date.now();   // wait a full interval before the first promo (no spam on restart)
+
+  // ── TOP 25 DEXSCREENER (every 4h) ────────────────────────────────────────
+  let lastD = 0;
+  _dexTimer = setInterval(async () => {
+    const cfg = core.getConfig();
+    if (cfg.dexTop25 === false) return;
+    const everyMs = Math.max(60, cfg.dexTop25IntervalMin || 240) * 60000;
+    if (Date.now() - lastD >= everyMs) {
+      lastD = Date.now();
+      const html = await dexTop25().catch(() => null);
+      if (html) { const img = _botImage(); (img ? core.broadcastPhoto(img, html) : core.broadcast(html)).catch(() => {}); }
+    }
+  }, 60000);
+  if (_dexTimer.unref) _dexTimer.unref();
+
+  // ── TOP MOVERS 1D/1W/1M (every 6h) ──────────────────────────────────────
+  let lastM = 0;
+  _moversTimer = setInterval(async () => {
+    const cfg = core.getConfig();
+    if (cfg.topMovers === false) return;
+    const everyMs = Math.max(60, cfg.topMoversIntervalMin || 360) * 60000;
+    if (Date.now() - lastM >= everyMs) {
+      lastM = Date.now();
+      const html = await topMoversLeaderboard().catch(() => null);
+      if (html) { const img = _botImage(); (img ? core.broadcastPhoto(img, html) : core.broadcast(html)).catch(() => {}); }
+    }
+  }, 60000);
+  if (_moversTimer.unref) _moversTimer.unref();
+
+  // ── SHADDAI PROJECT PROMO (wait full interval, no spam on restart) ────────
+  let lastP = Date.now();
   _promoTimer = setInterval(async () => {
     const cfg = core.getConfig();
     if (cfg.promo === false) return;
@@ -155,7 +246,8 @@ function startNewsPoster() {
     if (Date.now() - lastP >= everyMs) { lastP = Date.now(); const img = _botImage(); (img ? core.broadcastPhoto(img, projectPromo()) : core.broadcast(projectPromo())).catch(() => {}); }
   }, 60000);
   if (_promoTimer.unref) _promoTimer.unref();
-  console.log('[tg-news] market-pulse + RSS headlines + project promo armed.');
+
+  console.log('[tg-news] market-pulse(4h) + headlines(90m) + dex-top25(4h) + movers(6h) + promo armed.');
 }
 
-module.exports = { startNewsPoster, marketPulse, projectPromo, _pollHeadlines, _botImage };
+module.exports = { startNewsPoster, marketPulse, projectPromo, dexTop25, topMoversLeaderboard, _pollHeadlines, _botImage };
