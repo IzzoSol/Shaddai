@@ -338,8 +338,8 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
 #shGate:focus-visible{ outline:none; }
 #iris{ position:fixed; inset:0; z-index:150; pointer-events:none; opacity:0;
   background:radial-gradient(circle at 50% 46%, #eafff6 0%, #00ff9c 22%, #063d2c 46%, #06080b 70%); }
-.scrollcue{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--f-mono); font-size:9.5px; letter-spacing:.4em;
-  text-transform:uppercase; color:var(--ink-faint); z-index:5; opacity:0; animation:rise 1s 1.1s var(--ease) forwards; text-align:center; }
+.scrollcue{ position:relative; margin-top:22px; left:auto; transform:none; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.4em;
+  text-transform:uppercase; color:var(--ink-faint); z-index:2; opacity:0; animation:rise 1s 1.1s var(--ease) forwards; text-align:center; }
 .scrollcue span{ display:block; width:1px; height:34px; margin:8px auto 0; background:linear-gradient(var(--emerald),transparent); animation:drop 2.2s ease-in-out infinite; transform-origin:top; }
 @keyframes drop{ 0%,100%{ transform:scaleY(.3); opacity:.4; } 50%{ transform:scaleY(1); opacity:1; } }
 
@@ -533,6 +533,17 @@ section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidde
 /* value strip — what the council-in-Claude actually does for you */
 .mcp-value{ margin-top:30px; display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--edge); border:1px solid var(--edge); position:relative; z-index:3; }
 @media(max-width:900px){ .mcp-value{ grid-template-columns:1fr; } }
+/* agent KB table */
+.akt-wrap{ margin-top:32px; border:1px solid var(--edge); position:relative; z-index:3; }
+.akt-head{ font-family:var(--f-mono); font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); padding:10px 18px; background:rgba(232,196,92,.06); border-bottom:1px solid var(--edge); }
+.akt-table{ display:flex; flex-direction:column; }
+.akt-row{ display:grid; grid-template-columns:160px 120px 1fr; gap:0; padding:9px 18px; border-bottom:1px solid rgba(255,255,255,.04); font-size:12px; color:var(--ink-soft); align-items:center; }
+.akt-row:last-child{ border-bottom:none; }
+.akt-row.hdr{ font-family:var(--f-mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); background:rgba(0,0,0,.2); padding:7px 18px; }
+.akt-row span:first-child{ font-family:var(--f-hud); font-size:10.5px; font-weight:700; letter-spacing:.08em; }
+@media(max-width:640px){ .akt-row{ grid-template-columns:1fr; gap:2px; } .akt-row.hdr{ display:none; } }
+/* mc-sub tool list */
+.mcp-side .mc-sub b{ color:var(--emerald); font-family:var(--f-mono); font-size:11px; }
 .mcp-value .mv{ background:rgba(10,14,19,.7); padding:18px 18px 16px; }
 .mcp-value .mv .mv-ic{ font-size:16px; color:var(--emerald); text-shadow:0 0 14px rgba(0,255,156,.35); }
 .mcp-value .mv h4{ font-family:var(--f-hud); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink); margin:9px 0 6px; }
@@ -779,90 +790,62 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   <nav class="mega" aria-label="Primary">
 
     <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Worlds <span class="cx">▾</span></button>
+      <button aria-haspopup="true" aria-expanded="false">Enter <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>The ways in</span><span class="cd">SCALE · 0</span></div>
+        <div class="phdr"><span>Your worlds</span><span class="cd">SCALE · 0</span></div>
         <a href="/dashboard" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Command Deck</span><span class="s">your 2D control surface</span></span><span class="badge live">live</span></a>
         <a href="/SHADDAI-WORLD-3D.html" role="menuitem"><span class="gi">✦</span><span class="lk"><span class="t">3D World</span><span class="s">walk among the Seven</span></span><span class="badge live">live</span></a>
         <a href="/_LAUNCH.html" role="menuitem"><span class="gi">▦</span><span class="lk"><span class="t">Pixel World</span><span class="s">isometric multiplayer city · 7 realms</span></span><span class="badge live">live</span></a>
+        <a href="/arcade.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Arcade</span><span class="s">skill-driven neon sports</span></span><span class="badge live">live</span></a>
       </div>
     </div>
 
     <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">The Council <span class="cx">▾</span></button>
+      <button aria-haspopup="true" aria-expanded="false">The Seven <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>The Seven + their halls</span><span class="cd">SCALE · I</span></div>
-        <a href="/agents.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Meet the Seven</span><span class="s">personas &amp; loadouts</span></span><span class="badge live">live</span></a>
-        <a href="/athenaeum.html" role="menuitem"><span class="gi">☰</span><span class="lk"><span class="t">The Athenaeum</span><span class="s">the halls of knowledge</span></span><span class="badge live">live</span></a>
-        <a href="/oracle-sky.html" role="menuitem"><span class="gi">◉</span><span class="lk"><span class="t">Oracle's Observatory</span><span class="s">research &amp; foresight</span></span><span class="badge live">live</span></a>
-        <a href="/library.html" role="menuitem"><span class="gi">✒</span><span class="lk"><span class="t">Quill's Library</span><span class="s">words &amp; codices</span></span><span class="badge live">live</span></a>
-        <a href="/museum.html" role="menuitem"><span class="gi">❂</span><span class="lk"><span class="t">Turtle's Museum</span><span class="s">art &amp; creation</span></span><span class="badge live">live</span></a>
-      </div>
-    </div>
-
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Create <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>Make things</span><span class="cd">FORGE</span></div>
+        <div class="phdr"><span>The council + their halls</span><span class="cd">SCALE · I</span></div>
+        <a href="/agents.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Meet the Seven</span><span class="s">personas · roles · knowledge bases</span></span><span class="badge live">live</span></a>
+        <a href="/athenaeum.html" role="menuitem"><span class="gi">☰</span><span class="lk"><span class="t">The Athenaeum</span><span class="s">SHADDAI &amp; NEXUS halls</span></span><span class="badge live">live</span></a>
+        <a href="/oracle-sky.html" role="menuitem"><span class="gi">◉</span><span class="lk"><span class="t">Oracle's Observatory</span><span class="s">research · manifestation · foresight</span></span><span class="badge live">live</span></a>
+        <a href="/library.html" role="menuitem"><span class="gi">✒</span><span class="lk"><span class="t">Quill's Library</span><span class="s">stoic writing · craft</span></span><span class="badge live">live</span></a>
+        <a href="/museum.html" role="menuitem"><span class="gi">❂</span><span class="lk"><span class="t">Turtle's Museum</span><span class="s">art · design · creative process</span></span><span class="badge live">live</span></a>
         <a href="/creative-studio.html" role="menuitem"><span class="gi">◨</span><span class="lk"><span class="t">Creative Studio</span><span class="s">beats · melody · art · hertz</span></span><span class="badge live">live</span></a>
-        <span class="soon"><span class="gi">✂</span><span class="lk"><span class="t">Video Clipper</span><span class="s">cut &amp; caption clips</span></span><span class="badge">soon</span></span>
       </div>
     </div>
 
     <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Play <span class="cx">▾</span></button>
+      <button aria-haspopup="true" aria-expanded="false">Markets <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>The arcade</span><span class="cd">SKILL ENGINE</span></div>
-        <a href="/play.html" role="menuitem"><span class="gi">✧</span><span class="lk"><span class="t">Overview</span><span class="s">the arcade</span></span><span class="badge live">live</span></a>
-        <a href="/arcade.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Arcade</span><span class="s">skill-driven neon sports</span></span><span class="badge live">live</span></a>
-      </div>
-    </div>
-
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Signals <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>Markets &amp; signals</span><span class="cd">SCALE · V</span></div>
+        <div class="phdr"><span>Signals &amp; markets</span><span class="cd">ZEROX ENGINE</span></div>
         <a href="/zerox-markets.html" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">ZEROX Markets</span><span class="s">BTC · SOL · ETH · SpaceX</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Signals API</span><span class="s">live rug-filtered calls · JSON · free key</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">✎</span><span class="lk"><span class="t">News API</span><span class="s">crypto headlines &amp; trending · free key</span></span><span class="badge live">live</span></a>
         <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener" role="menuitem"><span class="gi">✈</span><span class="lk"><span class="t">Signals on Telegram</span><span class="s">live rug-filtered calls in your DMs</span></span><span class="badge live">live</span></a>
-      </div>
-    </div>
-
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">AURA <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>The token-saver</span><span class="cd">LEDGER</span></div>
-        <a href="/aura.html" role="menuitem"><span class="gi">⚖</span><span class="lk"><span class="t">What AURA is</span><span class="s">coin spared per call</span></span><span class="badge live">live</span></a>
-        <a href="#aura" role="menuitem"><span class="gi">◷</span><span class="lk"><span class="t">Live ledger</span><span class="s">coin spared, in ink</span></span><span class="badge live">live</span></a>
-        <a href="/aura.html#opensource" role="menuitem"><span class="gi">⌘</span><span class="lk"><span class="t">Open-source</span><span class="s">npm shaddai-aura + MCP</span></span><span class="badge live">live</span></a>
-        <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council in your Claude</span></span><span class="badge live">live</span></a>
-      </div>
-    </div>
-
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Shop <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>The bazaar &amp; economy</span><span class="cd">MARKET</span></div>
-        <span class="soon"><span class="gi">◈</span><span class="lk"><span class="t">The Bazaar</span><span class="s">agents · skills · knowledge · workflows · cosmetics</span></span><span class="badge">soon</span></span>
-        <span class="soon"><span class="gi">▣</span><span class="lk"><span class="t">3D Marketplace</span><span class="s">buy &amp; sell 3D agent models</span></span><span class="badge">soon</span></span>
-        <a href="/collectibles-nft.html" role="menuitem"><span class="gi">◆</span><span class="lk"><span class="t">NFTs</span><span class="s">redeemable collectables</span></span><span class="badge live">live</span></a>
+        <a href="/collectibles-nft.html" role="menuitem"><span class="gi">◆</span><span class="lk"><span class="t">NFTs</span><span class="s">redeemable collectibles</span></span><span class="badge live">live</span></a>
       </div>
     </div>
 
     <div class="pillar" data-pillar>
       <button aria-haspopup="true" aria-expanded="false">Docs <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>Guides &amp; integrations</span><span class="cd">KNOWLEDGE</span></div>
+        <div class="phdr"><span>Guides, tools &amp; open source</span><span class="cd">KNOWLEDGE</span></div>
+        <a href="/codex.html" role="menuitem"><span class="gi">📖</span><span class="lk"><span class="t">Codex</span><span class="s">full product docs · agent guide · API</span></span><span class="badge live">live</span></a>
         <a href="/playbooks.html" role="menuitem"><span class="gi">📕</span><span class="lk"><span class="t">Playbooks</span><span class="s">free scaling guides · print &amp; ship</span></span><span class="badge live">live</span></a>
-        <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council in your Claude · 85 docs</span></span><span class="badge live">live</span></a>
+        <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council in your Claude · 86 docs</span></span><span class="badge live">live</span></a>
+        <a href="/aura.html" role="menuitem"><span class="gi">⚖</span><span class="lk"><span class="t">AURA — token saver</span><span class="s">coin spared per call · live ledger</span></span><span class="badge live">live</span></a>
         <a href="/aura.html#opensource" role="menuitem"><span class="gi">⌘</span><span class="lk"><span class="t">Open Source</span><span class="s">npm shaddai-aura · npm shaddai-mcp</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">API Reference</span><span class="s">Signals · Data · free key</span></span><span class="badge live">live</span></a>
       </div>
     </div>
 
-    <div class="pillar" data-key="codex">
-      <button type="button" onclick="location.href='/codex.html'">Codex</button>
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Pricing <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <div class="phdr"><span>Plans &amp; access</span><span class="cd">TIERS</span></div>
+        <a href="/pricing.html#start-free" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Start Free</span><span class="s">no card · 2 agents · MCP access · arcade</span></span><span class="badge live">live</span></a>
+        <a href="/pricing.html" role="menuitem"><span class="gi">▲</span><span class="lk"><span class="t">Pro · $30/mo</span><span class="s">all 7 agents · forge · AURA · full signals</span></span><span class="badge live">live</span></a>
+        <a href="/prove.html" role="menuitem"><span class="gi">▶</span><span class="lk"><span class="t">Watch it work</span><span class="s">60-second live demo · no signup</span></span><span class="badge live">live</span></a>
+      </div>
     </div>
 
   </nav>
@@ -879,51 +862,39 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   <button class="mclose" id="mClose">✕ close</button>
   <a href="/prove.html" style="display:block;margin:6px 0 8px;padding:13px;text-align:center;border:1px solid rgba(0,255,156,.4);color:#00ff9c;font-weight:600;border-radius:11px;letter-spacing:.08em;font-family:'Cinzel',serif">▶ Watch it work — free</a>
   <a href="/pricing.html" style="display:block;margin:0 0 16px;padding:14px;text-align:center;background:#e8c45c;color:#241a03;font-weight:700;border-radius:11px;letter-spacing:.1em;font-family:'Cinzel',serif">Join · $30/mo →</a>
-  <div class="mgroup"><div class="mh">Worlds</div>
+  <div class="mgroup"><div class="mh">Enter</div>
     <a href="/dashboard"><span class="gi">◈</span>Command Deck<span class="badge">live</span></a>
     <a href="/SHADDAI-WORLD-3D.html"><span class="gi">✦</span>3D World<span class="badge">live</span></a>
     <a href="/_LAUNCH.html"><span class="gi">▦</span>Pixel World<span class="badge">live</span></a>
+    <a href="/arcade.html"><span class="gi">◈</span>Arcade<span class="badge">live</span></a>
   </div>
-  <div class="mgroup"><div class="mh">The Council</div>
+  <div class="mgroup"><div class="mh">The Seven</div>
     <a href="/agents.html"><span class="gi">◈</span>Meet the Seven<span class="badge">live</span></a>
     <a href="/athenaeum.html"><span class="gi">☰</span>The Athenaeum<span class="badge">live</span></a>
     <a href="/oracle-sky.html"><span class="gi">◉</span>Oracle's Observatory<span class="badge">live</span></a>
     <a href="/library.html"><span class="gi">✒</span>Quill's Library<span class="badge">live</span></a>
     <a href="/museum.html"><span class="gi">❂</span>Turtle's Museum<span class="badge">live</span></a>
-  </div>
-  <div class="mgroup"><div class="mh">Create</div>
     <a href="/creative-studio.html"><span class="gi">◨</span>Creative Studio<span class="badge">live</span></a>
-    <span class="soon"><span class="gi">✂</span>Video Clipper · soon</span>
   </div>
-  <div class="mgroup"><div class="mh">Play</div>
-    <a href="/play.html"><span class="gi">✧</span>Overview<span class="badge">live</span></a>
-    <a href="/arcade.html"><span class="gi">◈</span>The Arcade<span class="badge">live</span></a>
-  </div>
-  <div class="mgroup"><div class="mh">Signals</div>
+  <div class="mgroup"><div class="mh">Markets</div>
     <a href="/zerox-markets.html"><span class="gi">₿</span>ZEROX Markets<span class="badge">live</span></a>
     <a href="/api"><span class="gi">◈</span>Signals API<span class="badge">live</span></a>
     <a href="/api"><span class="gi">✎</span>News API<span class="badge">live</span></a>
     <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener"><span class="gi">✈</span>Signals on Telegram<span class="badge">live</span></a>
-  </div>
-  <div class="mgroup"><div class="mh">AURA</div>
-    <a href="/aura.html"><span class="gi">⚖</span>What AURA is<span class="badge">live</span></a>
-    <a href="#aura"><span class="gi">◷</span>Live ledger<span class="badge">live</span></a>
-    <a href="/aura.html#opensource"><span class="gi">⌘</span>Open-source · npm + MCP<span class="badge">live</span></a>
-    <a href="#mcp"><span class="gi">⌗</span>MCP &amp; RAG · the council in Claude<span class="badge">live</span></a>
-  </div>
-  <div class="mgroup"><div class="mh">Shop</div>
-    <a href="/marketplace-shop-v2.html"><span class="gi">◈</span>The Bazaar · agents · skills · workflows<span class="badge">live</span></a>
-    <a href="/collectibles-nft.html"><span class="gi">◆</span>NFTs · redeemable collectables<span class="badge">live</span></a>
-    <span class="soon"><span class="gi">▣</span>3D Portals · collaborate · soon</span>
+    <a href="/collectibles-nft.html"><span class="gi">◆</span>NFTs · redeemable collectibles<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">Docs</div>
+    <a href="/codex.html"><span class="gi">📖</span>Codex · product docs · agent guide<span class="badge">live</span></a>
     <a href="/playbooks.html"><span class="gi">📕</span>Playbooks · free scaling guides<span class="badge">live</span></a>
     <a href="#mcp"><span class="gi">⌗</span>MCP &amp; RAG · the council in Claude<span class="badge">live</span></a>
+    <a href="/aura.html"><span class="gi">⚖</span>AURA · token saver &amp; ledger<span class="badge">live</span></a>
     <a href="/aura.html#opensource"><span class="gi">⌘</span>Open Source · npm packages<span class="badge">live</span></a>
     <a href="/api"><span class="gi">◈</span>API Reference · Signals &amp; Data<span class="badge">live</span></a>
   </div>
-  <div class="mgroup"><div class="mh">Codex</div>
-    <a href="/codex.html"><span class="gi">📜</span>The Codex · the almanac<span class="badge">live</span></a>
+  <div class="mgroup"><div class="mh">Pricing</div>
+    <a href="/pricing.html#start-free"><span class="gi">◈</span>Start Free · 2 agents · MCP · arcade<span class="badge">live</span></a>
+    <a href="/pricing.html"><span class="gi">▲</span>Pro · $30/mo · all 7 agents<span class="badge">live</span></a>
+    <a href="/prove.html"><span class="gi">▶</span>Watch it work · 60s demo<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">Quick</div>
     <a href="#" data-descent><span class="gi">▶</span>Ascend · full screen<span class="badge">film</span></a>
@@ -972,8 +943,8 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
         <span class="sub">7 agents · one council · your key</span>
       </a>
     </div>
+    <div class="scrollcue">Move to awaken the lattice · scroll to descend<span></span></div>
   </div>
-  <div class="scrollcue">Move to awaken the lattice · scroll to descend<span></span></div>
 </section>
 
 <!-- ═══════════ SCALE I · THE COUNCIL · SEVEN SPECIALISTS ═══════════ -->
@@ -1176,12 +1147,34 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       <div class="mv"><span class="mv-ic">⌗</span><h4>One line. No keys.</h4><p>No API keys, no external LLM, no localhost server. Wire the whole council into Claude with a single <code>npx</code> command.</p></div>
     </div>
 
+    <!-- Agent KB Table -->
+    <div class="akt-wrap">
+      <div class="akt-head">◈ Agent · Role · Knowledge Base</div>
+      <div class="akt-table">
+        <div class="akt-row hdr"><span>Agent</span><span>Role</span><span>Knowledge Base</span></div>
+        <div class="akt-row"><span style="color:#ffd700">⚡ SHADDAI</span><span>Orchestrator</span><span>Strategy, decisions, manifestation</span></div>
+        <div class="akt-row"><span style="color:#00ff88">🕸 NEXUS</span><span>Architect</span><span>Scalable system design, engineering</span></div>
+        <div class="akt-row"><span style="color:#00f0ff">₿ ZEROX</span><span>Markets</span><span>Money, investing, unit economics</span></div>
+        <div class="akt-row"><span style="color:#b07cff">◉ ORACLE</span><span>Research</span><span>Manifestation, law of attraction, research</span></div>
+        <div class="akt-row"><span style="color:#ff7b3d">🐢 TURTLE</span><span>Creative</span><span>Art, design, creative process</span></div>
+        <div class="akt-row"><span style="color:#ffb020">✒ QUILL</span><span>Writing</span><span>Stoic discipline, writing craft</span></div>
+        <div class="akt-row"><span style="color:#ff4070">🛡 PIKADON</span><span>Security</span><span>Privacy, online security, hardening</span></div>
+      </div>
+    </div>
+
     <div class="mcp-console">
       <div class="mcp-side">
         <span class="scan"></span>
         <span class="mc-version">SHADDAI MCP · <span id="mcpVer2">…</span></span>
         <div class="mc-title">5 tools · 7 kb:// resources</div>
-        <div class="mc-sub">list_agents · list_rag_docs · rag_search · rag_ask · run_agent — each with the agent's own knowledge injected. 86 master documents, ready to ground answers.</div>
+        <div class="mc-sub">
+          <b>list_agents</b> — returns all 7 council agents with their roles, KB size, and tool count.<br>
+          <b>list_rag_docs</b> — browse the mastery library for any agent. Pass <code>agent: "ORACLE"</code> to filter.<br>
+          <b>rag_search</b> — semantic keyword search across any agent's knowledge store. Returns ranked passages with source citations.<br>
+          <b>rag_ask</b> — ask a full question grounded in an agent's KB. Claude synthesizes the answer from retrieved chunks, citing <code>[Source n]</code>.<br>
+          <b>run_agent</b> — activate any agent with their full persona + injected KB context. <code>run_agent QUILL, write a stoic essay on discipline</code> returns the writer armed with its mastery store.<br>
+          <span style="opacity:.6">86 master documents · 7 knowledge bases · no keys · no localhost</span>
+        </div>
         <div class="mc-stats">
           <div class="mc-stat"><div class="f" id="mcpDocs">—</div><div class="l">knowledge docs</div></div>
           <div class="mc-stat"><div class="f" id="mcpMB">—</div><div class="l">MB of mastery text</div></div>
