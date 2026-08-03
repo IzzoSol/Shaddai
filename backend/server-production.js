@@ -588,6 +588,30 @@ function handleWebSocketMessage(clientId, data, ws) {
 // x402 payment discovery (HTTP 402 micropayments — primary rail; free unless X402_ENABLED)
 app.get('/.well-known/x402.json', (req, res) => res.json(require('./lib/x402').discovery()));
 
+// ===== CITY ROUTES — Phase A =====
+app.get('/api/city/plots', (req, res) => {
+  const plots = Array.from({length: 30}, (_, i) => ({
+    id: 'plot-founders-' + i, slot: i,
+    col: 6 + (i % 10) * 5, row: 4 + ((i / 10) | 0) * 5,
+    district: 'agentcity', rate: 0.5,
+  }));
+  res.json({ plots });
+});
+app.post('/api/city/signal-drop', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'] || (req.body && req.body.userId);
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const { getInstance } = require('./economy-service');
+    const econ = getInstance();
+    const key = 'signal-drop-' + userId + '-' + Date.now();
+    await econ.spend(userId, 50, 'Signal rescue taxi fee', key);
+    res.json({ ok: true, deducted: 50 });
+  } catch (err) {
+    res.json({ ok: true, note: 'client-side only', reason: err.message });
+  }
+});
+// ===== END CITY ROUTES =====
+
 app.get('/api/health', (req, res) => {
   const health = {
     status: 'operational',

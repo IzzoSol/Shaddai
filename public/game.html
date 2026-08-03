@@ -92,6 +92,13 @@
 <div id="hud" class="panel hide"><div class="who" id="hudWho">—</div><div class="where" id="hudWhere">—</div><div id="wallet" style="color:#e8c45c;font-size:13px;margin-top:3px">💰 250 cr</div>
   <div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span id="hpTxt" style="color:#ff8a8a;font-size:12px;min-width:34px">❤ 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="hpFill" style="width:100%;height:100%;background:#4fe07a;transition:width .2s,background .2s"></div></div></div>
   <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span id="sigTxt" style="color:#00e5a0;font-size:12px;min-width:34px">📡 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="sigFill" style="width:100%;height:100%;background:#00e5a0;transition:width .3s,background .3s"></div></div></div></div>
+<!-- CITY CLAIM PANEL -->
+<div id="claimPanel" class="panel hide" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:10;padding:14px 20px;text-align:center;min-width:200px">
+  <div id="claimTitle" style="font-weight:700;font-size:14px;margin-bottom:4px">📦 Your Plot</div>
+  <div id="claimAmt" style="color:#00e5a0;font-size:22px;font-weight:700;margin-bottom:10px">0 Sparks</div>
+  <button onclick="claimYield()" style="background:#00e5a0;color:#06080b;font-weight:700;border:none;padding:8px 22px;border-radius:6px;cursor:pointer;font-size:14px">Claim</button>
+  <div style="font-size:11px;color:#5a6a7a;margin-top:6px" id="claimReserve"></div>
+</div>
 <div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px">
   <button class="panel" style="padding:9px 13px" onclick="openStore()">🛒 Store</button>
   <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
@@ -968,7 +975,7 @@ function travelTo(id){ const fare=FARE[id]||10; if(money<fare){ toast('The fare 
 // ---------- update ----------
 let last=0;
 function update(dt){
-  if(jobCooldown>0) jobCooldown-=dt; if(fishCooldown>0) fishCooldown-=dt; if(gatherCooldown>0) gatherCooldown-=dt;
+  if(jobCooldown>0) jobCooldown-=dt; if(fishCooldown>0) fishCooldown-=dt; if(gatherCooldown>0) gatherCooldown-=dt; if(_sigDropCooldown>0) _sigDropCooldown-=dt;
   updateFx(dt);
   { const _hbEl=document.getElementById('rpgHotbar'); if(_hbEl){ const vis=(state==='world'&&!spectate)?'flex':'none'; if(_hbEl.style.display!==vis) _hbEl.style.display=vis; } }
   if(state!=='world'){ ['fishBar','gatherBar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
@@ -989,7 +996,7 @@ function update(dt){
         for(const p of props){ const dc=Math.abs((p.col+(p.w||1)/2)-player.col),dr2=Math.abs((p.row+(p.d||1)/2)-player.row);
           if(dc<3&&dr2<3){ if(p.__source&&p.__office) regen=Math.max(regen,5); else if(p.kind==='transit') regen=Math.max(regen,2); } }
         playerSignal=Math.max(0,Math.min(playerMaxSignal,playerSignal+(regen-drain)*dt));
-        updateSignal(); if(playerSignal<=0) signalDrop(); }
+        updateSignal(); if(playerSignal<=0) signalDrop(); updateClaimPanel(); }
       cam.col+=(player.col-cam.col)*Math.min(1,dt*6); cam.row+=(player.row-cam.row)*Math.min(1,dt*6);
     } else { // spectate: drift the camera across the world following wandering citizens
       specTimer-=dt; if(specTimer<=0||!specTarget){ specTarget=npcs.length?npcs[(Math.random()*npcs.length)|0]:null; specTimer=7; }
@@ -1292,6 +1299,49 @@ const STORE=[
   {id:'hplant',name:'House Plant',price:30,cat:'home',ico:'🪴'},{id:'hlamp',name:'Floor Lamp',price:35,cat:'home',ico:'💡'},
   {id:'rug',name:'Rug',price:40,cat:'home',ico:'🟫'},{id:'art',name:'Painting',price:55,cat:'home',ico:'🖼️'} ];
 const JOBS={ meadow:{name:'Harvest the Fields',pay:[15,35]}, beach:{name:'Haul Dock Cargo',pay:[18,40]}, city:{name:'Courier Run',pay:[20,45]}, forest:{name:'Hunt & Forage',pay:[16,38]}, desert:{name:'Mine the Mesa',pay:[18,42]}, volcano:{name:'Work the Forge',pay:[25,55]}, agentcity:{name:'Agent Bounty',pay:[30,60]} };
+// ===== UTOPIA LAND ECONOMY — Phase A =====
+const DISTRICT_YIELD={agentcity:'Sparks',meadow:'Quill Credits',forest:'Turtle Credits',beach:'Oracle Credits',desert:'Pikadon Credits',city:'Sparks',volcano:'Nexus Credits',suburb:'Sparks'};
+const CITY_RESERVE=(()=>{ const r={};
+  ['agentcity','meadow','forest','beach','desert','city','volcano','suburb'].forEach(id=>{
+    r[id]={ balance:10000, _committed:{},
+      available(plotId){ const used=Object.entries(this._committed).filter(([k])=>k!==plotId).reduce((s,[,v])=>s+v,0); return Math.max(0,this.balance-used); }};
+  }); return r; })();
+const CITY_PLOTS=Array.from({length:30},(_,i)=>({
+  id:'plot-founders-'+i, slot:i, col:6+(i%10)*5, row:4+((i/10)|0)*5, district:'agentcity',
+  owner:null, deed:null, rate:0.5, lastAccrual:Date.now(), claimable:0,
+  boostLock:{amount:0,until:0}, rooms:Array(8).fill(null), amenities:[], style:'default', name:null }));
+function accrue(plot){ const now=Date.now(), elapsed=(now-plot.lastAccrual)/1000;
+  plot.claimable+=plot.rate*elapsed; plot.lastAccrual=now;
+  const res=CITY_RESERVE[plot.district]; if(res) plot.claimable=Math.min(plot.claimable,res.available(plot.id)); }
+function cityTick(){ CITY_PLOTS.forEach(p=>{ if(p.owner) accrue(p); }); saveCity(); }
+setInterval(cityTick,5000);
+function saveCity(){ try{ localStorage.setItem('shaddai.city',JSON.stringify(
+  CITY_PLOTS.map(p=>({id:p.id,slot:p.slot,owner:p.owner,deed:p.deed,claimable:p.claimable,lastAccrual:p.lastAccrual,boostLock:p.boostLock,name:p.name,rooms:p.rooms,amenities:p.amenities})))); }catch(_){} }
+function loadCity(){ try{ const saved=JSON.parse(localStorage.getItem('shaddai.city')||'[]');
+  saved.forEach(s=>{ const p=CITY_PLOTS.find(x=>x.id===s.id); if(!p)return;
+    p.owner=s.owner||null; p.deed=s.deed||null; p.claimable=typeof s.claimable==='number'?s.claimable:0;
+    p.lastAccrual=Date.now(); p.boostLock=s.boostLock||{amount:0,until:0};
+    p.name=s.name||null; p.rooms=s.rooms||Array(8).fill(null); p.amenities=s.amenities||[]; }); }catch(_){} }
+function updateClaimPanel(){
+  const panel=document.getElementById('claimPanel'); if(!panel)return;
+  if(state!=='world'||spectate||regionSel!=='agentcity'){ panel.classList.add('hide'); return; }
+  const uid=window.__shd_uid||localStorage.getItem('shd_signed_in'); if(!uid){ panel.classList.add('hide'); return; }
+  const myPlot=CITY_PLOTS.find(p=>p.owner===uid&&props.some(b=>b.type==='building'&&b.__office&&Math.abs(b.col-p.col)<4&&Math.abs(b.row-p.row)<4&&Math.abs((b.col+1)-player.col)<4&&Math.abs((b.row+2)-player.row)<4));
+  if(!myPlot){ panel.classList.add('hide'); return; }
+  accrue(myPlot); panel.classList.remove('hide');
+  document.getElementById('claimTitle').textContent='📦 '+(myPlot.name||'Plot #'+(myPlot.slot+1));
+  document.getElementById('claimAmt').textContent=myPlot.claimable.toFixed(2)+' '+DISTRICT_YIELD[myPlot.district];
+  const res=CITY_RESERVE[myPlot.district]; document.getElementById('claimReserve').textContent='Reserve: '+(res?res.available(myPlot.id).toFixed(0):0)+' available'; }
+function claimYield(){
+  const uid=window.__shd_uid||localStorage.getItem('shd_signed_in'); if(!uid){ toast('Sign in to claim yield'); return; }
+  const myPlot=CITY_PLOTS.find(p=>p.owner===uid); if(!myPlot||myPlot.claimable<0.01){ toast('Nothing to claim yet'); return; }
+  accrue(myPlot); const amt=Math.floor(myPlot.claimable); if(amt<1){ toast('Accruing — check back soon'); return; }
+  const res=CITY_RESERVE[myPlot.district];
+  if(res){ const avail=res.available(myPlot.id); if(amt>avail){ toast('Reserve low — only '+avail.toFixed(0)+' available'); return; } res.balance-=amt; }
+  myPlot.claimable-=amt; money+=amt; saveEcon(); saveCity(); updateClaimPanel();
+  toast('✅ Claimed '+amt+' '+DISTRICT_YIELD[myPlot.district]+' → wallet');
+  try{ addFloat(player.col,player.row,'+'+amt+' 📡','#00e5a0'); }catch(_){} }
+// ===== END UTOPIA LAND ECONOMY =====
 let money=120, credits=0; const inv={}, fish={}; let jobCooldown=0, fishCooldown=0, gatherCooldown=0, gatherTarget=null, gatherProp=null;   // money = spend · credits = XP toward levels
 let bank=0, coin=0, coinPrice=100; const stash={};   // bank savings · SHADDAI Coin market · home storage chest
 let storageOpen=false, bankOpen=false, forgeOpen=false, questsOpen=false;
@@ -1918,6 +1968,7 @@ async function claimOfficeGame(){
 })();
 
 loadEcon();
+loadCity();
 connectMP();
 requestAnimationFrame(loop);
 </script>

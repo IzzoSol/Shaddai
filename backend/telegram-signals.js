@@ -75,6 +75,35 @@ function _trackSym(sym) {
 // look up DexScreener boost info for a token address — returns null if not boosted
 function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
+// ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
+// Real data from 863 calls: peak hours = 17.3% hit rate, dead hours = 4.3%.
+// Dead zone: UTC 11h-17h (EU daytime, low US pre-market). Peak: UTC 20-22h + 02-04h.
+function _utcHour() { return new Date().getUTCHours(); }
+function _isPeakHour() { const h = _utcHour(); return (h >= 20 && h <= 22) || (h >= 2 && h <= 4); }
+function _isDeadHour() { const h = _utcHour(); return h >= 11 && h <= 17; }
+// Return multipliers on quality gates based on current hour
+// dead hours: require 2x holders + 2x vol momentum; peak hours: relaxed (1x); others: 1.25x
+function _qualityMult() {
+  if (_isPeakHour()) return 1;
+  if (_isDeadHour()) return 2;
+  return 1.25;
+}
+function _hourLabel() {
+  if (_isPeakHour()) return '⭐ PEAK HOUR';
+  if (_isDeadHour()) return '⚠️ LOW VOL WINDOW';
+  return null;
+}
+
+// ── VOLUME ACCELERATION CHECK ─────────────────────────────────────────────────
+// h1 volume at > 1.5x the h24 hourly average = token is accelerating RIGHT NOW.
+// From data: most winners were called during active momentum, not stale accumulation.
+function _isAccelerating(pair) {
+  const h24 = Number(pair && pair.volume && pair.volume.h24) || 0;
+  const h1  = Number(pair && pair.volume && pair.volume.h1)  || 0;
+  if (!h24 || !h1) return false;
+  return (h1 * 24) > (h24 * 1.5);   // current-hour pace > 1.5x daily average
+}
+
 function _cfg() {
   const cc = core.getConfig();   // dashboard-editable filter params + feed toggles
   return {
@@ -447,9 +476,34 @@ function _signalCard(chain, pair, socialLabel) {
   return out;
 }
 
+const _profileMap = new Map();   // tokenAddress → {icon, description, links, cto, hasDescription}
+const DS_PROFILES = 'https://api.dexscreener.com/token-profiles/latest/v1';
+async function _refreshProfiles() {
+  try {
+    const r = await fetch(DS_PROFILES);
+    if (!r.ok) return;
+    const items = await r.json();
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (item && item.tokenAddress) {
+        _profileMap.set(item.tokenAddress, {
+          icon: item.icon || '',
+          header: item.header || '',
+          description: item.description || '',
+          links: item.links || [],
+          cto: !!item.cto,
+          hasDescription: !!(item.description && item.description.length > 5),
+        });
+      }
+    }
+  } catch (e) {}
+}
+
 async function _pollOnce() {
   const cfg = _cfg();
   if (!cfg.token || !cfg.signals) return;   // disabled or trending feed toggled off
+  // Refresh profiles in parallel (free data — enhances images + social data)
+  _refreshProfiles().catch(() => {});
   let boosts;
   try {
     const r = await fetch(DS_BOOSTS);
@@ -499,6 +553,15 @@ async function _pollOnce() {
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
+    // TIME-QUALITY GATE: dead hours (UTC 11-17) require 2x vol momentum to pass
+    const _qm = _qualityMult();
+    if (_qm > 1) {
+      const h1Vol = Number(pair.volume && pair.volume.h1) || 0;
+      const m5Vol = Number(pair.volume && pair.volume.m5) || 0;
+      const minH1 = (cfg.minVol24h / 24) * _qm;   // scaled hourly minimum
+      const minM5 = (cfg.minVolM5 || 0) * _qm;
+      if (h1Vol < minH1 || (minM5 && m5Vol < minM5)) { _seen.add(addr); continue; }
+    }
 
     // social scoring (fail-open — missing data doesn't block)
     let social = null;
@@ -540,10 +603,15 @@ async function _pollOnce() {
     if (_sym && _SCAM_SYM_RE.test(_sym)) { _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
+    const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
-    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _flexLine;
+    const _profData = _profileMap.get(addr);
+    const _ctoTag = (_profData && _profData.cto) ? '\n👥 <b>CTO</b> — community takeover project' : '';
+    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _accel + _hourTag + _ctoTag + _flexLine;
     const _boostData = _boostInfo(addr);
-    const _imgUrl = (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
+    // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
+    const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _btns = core.buildButtons(addr, chain, pair.url);
     const ok = (_imgUrl
       ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
@@ -635,6 +703,15 @@ async function _pollBonded() {
     if (usdMc <= 0 || liq <= 0) continue;
     if (cfg.minVolM5 && Number(pair.volume && pair.volume.m5 || 0) < cfg.minVolM5) continue;   // 5-min momentum gate
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
+    // TIME-QUALITY GATE: during dead hours (UTC 11-17), require 2x momentum (volume accel must exist)
+    const _bQm = _qualityMult();
+    if (_bQm > 1) {
+      const bH1 = Number(pair.volume && pair.volume.h1) || 0;
+      const bM5 = Number(pair.volume && pair.volume.m5) || 0;
+      const bMinH1 = (cfg.minVol24h / 24) * _bQm;
+      const bMinM5 = (cfg.minVolM5 || 0) * _bQm;
+      if (bH1 < bMinH1 || (bMinM5 && bM5 < bMinM5)) continue;
+    }
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
     let card = _bondCard(c);
     let rs = null;
@@ -661,9 +738,13 @@ async function _pollBonded() {
     if (_bondSym && _SCAM_SYM_RE.test(_bondSym)) continue;
     if (!_symCooldownOk(_bondSym)) continue;
     const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
-    const _bondMsg = card + _detailBlock(rs, null, _bondExtra);
+    const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
+    const _bondHourTag = _hourLabel() ? '\n' + _hourLabel() : '';
+    const _bondDevWarn = (c.devPct === 0 && c.snipers > 15) ? '\n⚠️ Dev hold 0% + high snipers — dev may have sold at launch' : '';
+    const _bondMsg = card + _detailBlock(rs, null, _bondExtra) + _bondAccel + _bondHourTag + _bondDevWarn;
+    const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
-    const _bondImg = (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
     const ok = (_bondImg
       ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
