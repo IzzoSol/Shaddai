@@ -186,33 +186,35 @@ function extractTags(agent, card) {
 // ── quality gates ────────────────────────────────────────────────────────────
 function qualityCheck(card, agent) {
   const issues = [];
+  const isRequired = [];
+
   const thesis = card.match(/## Thesis\n([\s\S]*?)(?=\n## |$)/);
-  if (!thesis) { issues.push('missing THESIS section'); }
+  if (!thesis) { isRequired.push('missing THESIS'); }
   else {
     const wc = thesis[1].trim().split(/\s+/).length;
-    if (wc > MAX_THESIS_WORDS) issues.push(`thesis too long (${wc} words, max ${MAX_THESIS_WORDS})`);
-    if (wc < 10) issues.push(`thesis too short (${wc} words)`);
+    if (wc > MAX_THESIS_WORDS) isRequired.push(`thesis ${wc}w (max ${MAX_THESIS_WORDS})`);
+    if (wc < 80) isRequired.push(`thesis ${wc}w (min 80)`);
   }
 
   const questions = card.match(/## Questions This Answers\n([\s\S]*?)(?=\n## |$)/);
   const qCount = questions ? (questions[1].match(/^- /g) || []).length : 0;
-  if (qCount < MIN_QUESTIONS) issues.push(`only ${qCount} questions (min ${MIN_QUESTIONS})`);
+  if (qCount < MIN_QUESTIONS) isRequired.push(`questions:${qCount} (min ${MIN_QUESTIONS})`);
 
-  const frameworks = card.match(/## Core Frameworks\n([\s\S]*?)(?=\n## |$)/);
+  const frameworks = card.match(/## Core Frameworks[&\s]*Models?\n([\s\S]*?)(?=\n## |$)/);
   const fCount = frameworks ? (frameworks[1].match(/^- /g) || []).length : 0;
-  if (fCount < MIN_FRAMEWORKS) issues.push(`only ${fCount} frameworks (min ${MIN_FRAMEWORKS})`);
+  if (fCount < MIN_FRAMEWORKS) isRequired.push(`frameworks:${fCount} (min ${MIN_FRAMEWORKS})`);
 
-  const chapters = card.match(/## Key Chapters\n([\s\S]*?)(?=\n## |$)/);
-  const chCount = chapters ? (chapters[1].match(/^### /gm) || []).length : 0;
-  if (chCount < 2) issues.push(`only ${chCount} chapters (min 2)`);
+  const examples = card.match(/## Important Examples/)
+  if (!examples) issues.push('no Examples section (recommended)');
 
-  const wordCount = card.split(/\s+/).length;
-  if (wordCount < 150) issues.push(`card too short (${wordCount} words)`);
+  const quotes = card.match(/## Notable Quotes/)
+  if (!quotes) issues.push('no Quotes section (recommended)');
 
-  const transcriptDump = (card.match(/transcript|the speaker said|in this video/i) || []).length > 3;
-  if (transcriptDump) issues.push('appears to be a transcript dump, not distilled');
+  const transcriptDump = (card.match(/transcript|the speaker said|in this video/i) || []).length > 5;
+  if (transcriptDump) issues.push('possible transcript dump');
 
-  return { pass: issues.length === 0, issues };
+  if (isRequired.length) issues.push('REQUIRED: ' + isRequired.join('; '));
+  return { pass: isRequired.length === 0, issues };
 }
 
 // ── 4-pass progressive distillation ──────────────────────────────────────────
@@ -223,14 +225,17 @@ async function distillVideo(v) {
   const segs = segments(raw);
   const lens = AGENT_LENS[v.agent] || 'general knowledge';
 
-  // ── Pass 1: Chapter outline ────────────────────────────────────────────────
+  // ── Pass 1: Chapter outline with timestamps ────────────────────────────────
   const pass1Parts = [];
   for (let i = 0; i < segs.length; i++) {
     const result = await callAI(
       `You are a master note-taker for the ${v.agent} domain. Your lens: ${lens}\n\n` +
-      `Given a portion of a talk transcript, produce a raw chapter outline. For each distinct topic:\n` +
-      `### Chapter title\n- Key point (1 sentence)\n- Key point (1 sentence)\n\n` +
-      `Stay faithful to the transcript. No preamble, no summary. Only what's actually in this portion.`,
+      `Given a portion of a talk transcript, produce a detailed chapter/section outline with approximate timestamps. For each distinct topic:\n` +
+      `### Chapter title (≈MM:SS)\n` +
+      `- <key claim / argument>\n` +
+      `- <key claim / argument>\n` +
+      `- <key claim / argument>\n\n` +
+      `Estimate timestamps based on position in the transcript portion. Stay faithful to the transcript. Capture ALL major topics, not just the first few. No preamble.`,
       segs[i], 0.25
     );
     pass1Parts.push(result.trim());
@@ -239,62 +244,75 @@ async function distillVideo(v) {
   const rawChapters = pass1Parts.join('\n\n');
   await sleep(SLEEP_MS);
 
-  // ── Pass 2: Signal extraction ──────────────────────────────────────────────
+  // ── Pass 2: Signal extraction (high-fidelity — keep detail) ─────────────────
   const pass2 = await callAI(
     `You are a signal extractor for the ${v.agent} domain. Your lens: ${lens}\n\n` +
-    `Given the raw chapter outline below, extract ONLY the highest-signal sentences — the ones with:\n` +
-    `- Specific frameworks, models, or principles\n` +
-    `- Counterintuitive insights\n` +
-    `- Actionable heuristics or rules of thumb\n` +
-    `- Data points or evidence\n` +
-    `- Memorable quotes\n\n` +
-    `Preserve the chapter structure. Drop filler, repetition, and generic statements.\n` +
+    `Given the detailed chapter outline, extract nearly everything important into structured chapter bullets. Err on the side of inclusion — it is better to have a longer, richer section than to lose useful nuance.\n\n` +
+    `For each chapter, extract:\n` +
+    `- Every specific claim, argument, or thesis point\n` +
+    `- Frameworks, models, or principles mentioned\n` +
+    `- Concrete examples, stories, case studies, data points\n` +
+    `- Notable quotes or precise statements\n` +
+    `- Actionable advice or heuristics\n\n` +
     `Output format:\n` +
-    `### Chapter title\n- 💡 Signal: <the high-signal sentence>\n` +
-    `- 💡 Signal: <the high-signal sentence>\n\n` +
-    `Only include what passes the signal bar. It's OK to have zero signals for a chapter if it had none.`,
+    `### Chapter title (≈MM:SS)\n` +
+    `- <extracted point>\n` +
+    `- <extracted point>\n` +
+    `(5-15 bullets per chapter is normal for rich content — do not compress away useful detail)`,
     rawChapters, 0.3
   ).catch(() => rawChapters);
   await sleep(SLEEP_MS);
 
-  // ── Pass 3: Synthesis (thesis + frameworks + questions + takeaways) ─────────
+  // ── Pass 3: Synthesis (high-fidelity card) ──────────────────────────────────
   const titleGuess = extractTitle(raw);
   const pass3 = await callAI(
     `You are a mastery card writer for the ${v.agent} domain. Your lens: ${lens}\n\n` +
-    `Given the extracted signals below, produce EXACTLY this structure (no extra text, no preamble):\n\n` +
+    `Given the detailed signals below, produce a structured high-fidelity mastery card using EXACTLY this schema. This is NOT about maximum compression — it is about structured high-fidelity extraction. Preserve names, numbers, examples, arguments, and nuance.\n\n` +
+    `Schema:\n\n` +
     `## Thesis\n` +
-    `A tight 80-100 word paragraph capturing the core argument. Write in the agent's voice — what would ${v.agent} need to retrieve later?\n\n` +
-    `## Core Frameworks\n` +
-    `- <Framework name> — <description, when to use it>\n` +
-    `(List every named framework, model, or principle from the material)\n\n` +
-    `## Questions This Answers\n` +
-    `- <A real question a user would type that this card answers>\n` +
-    `- <Another real question — use everyday language>\n` +
-    `(At least ${MIN_QUESTIONS}. Cover different angles.)\n\n` +
-    `## Actionable Takeaways\n` +
-    `- <Portable rule or heuristic>\n` +
-    `- <Portable rule or heuristic>\n\n` +
+    `A tight 80-120 word paragraph capturing the core argument in the voice of ${v.agent}. Must be tight enough for fast RAG retrieval.\n\n` +
     `## Key Chapters\n` +
-    `(Copy the chapter titles and signals from the input below, reformatting as plain bullets for each chapter)\n\n` +
-    `## Open Loops / Connections\n` +
-    `- Links to other knowledge domains or agents this connects to (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON)\n` +
-    `- Open questions this raises\n\n` +
+    `For each major section of the talk, produce rich detail:\n` +
+    `### Chapter Title (≈MM:SS)\n` +
+    `- Detailed bullet capturing claims, arguments, data\n` +
+    `- Detailed bullet — aim for 5-15 per major chapter\n` +
+    `- Include specific names, numbers, examples when present\n\n` +
+    `## Core Frameworks & Models\n` +
+    `- **Name** → Full explanation + how it works + when ${v.agent} should use it\n` +
+    `(Keep these rich — don't over-compress)\n\n` +
+    `## Important Examples & Evidence\n` +
+    `- Concrete cases, stories, data points, studies, or historical examples from the video\n` +
+    `- Preserve names, numbers, and key details\n\n` +
+    `## Questions This Answers\n` +
+    `- 4-7 real-world questions a user would type that this card specifically answers\n` +
+    `- Use everyday language — "How do I...", "What's the best way to...", "Why does..."\n` +
+    `(Make them specific enough that the detailed content above actually answers them)\n\n` +
+    `## Actionable Takeaways & Heuristics\n` +
+    `- Portable rules, decision criteria, and principles\n` +
+    `- Keep the reasoning behind them when the source provides it\n\n` +
+    `## Notable Quotes & High-Signal Passages\n` +
+    `- "Quote or near-verbatim statement" (≈MM:SS)\n` +
+    `- 3-8 of the strongest statements from the talk\n\n` +
+    `## Open Loops & Connections\n` +
+    `- Links to other knowledge domains (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON)\n` +
+    `- Unresolved questions or further implications\n\n` +
+    `Write in the voice of ${v.agent} — what would this agent actually need to retrieve later?\n\n` +
     `Signals:\n${pass2.slice(0, 9000)}`, 0.35
   );
   await sleep(SLEEP_MS);
 
-  // ── Pass 4: Self-critique ───────────────────────────────────────────────────
+  // ── Pass 4: Self-critique (relaxed for fidelity) ────────────────────────────
   const critique = await callAI(
-    `You are a quality critic for the ${v.agent} knowledge base. Review the mastery card below.\n\n` +
-    `Check for:\n` +
-    `1. Is the thesis tight (80-100 words) and written in agent voice?\n` +
-    `2. Does it have at least ${MIN_QUESTIONS} real-world questions a user would type (not generic)?\n` +
-    `3. Does it name at least ${MIN_FRAMEWORKS} specific framework or model?\n` +
-    `4. Are the takeaways genuinely actionable (not vague)?\n` +
-    `5. Is it free of transcript-filler ("in this video", "the speaker said")?\n\n` +
-    `If it PASSES all checks, output ONLY: PASS\n` +
-    `If it FAILS, output: FAIL: <specific issue to fix>\n\n` +
-    `Card:\n${pass3.slice(0, 5000)}`, 0.2
+    `You are a quality critic for the ${v.agent} knowledge base. Review the mastery card below with these relaxed gates:\n\n` +
+    `1. Is the thesis 80-120 words and written in ${v.agent}'s voice? (REQUIRED)\n` +
+    `2. Does it have at least ${MIN_QUESTIONS} real-world questions? (REQUIRED)\n` +
+    `3. Does it name at least ${MIN_FRAMEWORKS} specific framework or model? (REQUIRED)\n` +
+    `4. Are Key Chapters richly detailed (not 2-bullet summaries)? (RECOMMENDED)\n` +
+    `5. Are specific names, numbers, examples, and arguments preserved? (RECOMMENDED)\n` +
+    `6. Is it free of unformatted transcript walls? (RECOMMENDED)\n\n` +
+    `If all REQUIRED gates pass, output ONLY: PASS\n` +
+    `If any REQUIRED gate fails, output: FAIL: <specific issue>\n\n` +
+    `Card:\n${pass3.slice(0, 6000)}`, 0.2
   );
 
   // Build the final card
@@ -303,14 +321,19 @@ async function distillVideo(v) {
   const finalBody = critique.trim().startsWith('FAIL')
     ? pass3 + '\n\n<!-- NEEDS RE-DISTILL: ' + critique.trim().slice(5).trim() + ' -->'
     : pass3;
+  const sourceUrl = 'https://youtube.com/watch?v=' + v.id;
 
   const card = `---
 agent: ${v.agent}
 source_id: ${v.id}
 source_title: "${titleGuess.replace(/"/g, '\\"')}"
+source_url: ${sourceUrl}
+duration_min: ~30
 date_distilled: ${today}
 tags: [${tags.join(', ')}]
-quality: ${critique.trim().startsWith('FAIL') ? 'needs_review' : 'pass'}
+quality_score: ${critique.trim().startsWith('FAIL') ? 0 : 1}
+linked_cards: []
+status: ${critique.trim().startsWith('FAIL') ? 'review' : 'draft'}
 ---
 
 # ${v.agent} — ${titleGuess}

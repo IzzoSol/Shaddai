@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SHADDAI World Map — Transit Concept</title>
+<style>
+  :root {
+    --void:#06080b; --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff;
+    --ink:#eaf4f0; --ink-soft:#8fb2a4; --edge:rgba(95,224,255,.1);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--void); color:var(--ink); font-family:'Courier New',monospace;
+    display:flex; flex-direction:column; align-items:center; padding:36px 20px; min-height:100vh; gap:32px; }
+  h1 { font-size:12px; letter-spacing:.4em; color:var(--gold); text-transform:uppercase; }
+  .sub { font-size:9px; letter-spacing:.2em; color:var(--ink-soft); margin-top:4px; }
+
+  /* ── WORLD MAP ── */
+  .map-wrap { position:relative; width:min(720px,95vw); aspect-ratio:1; }
+  svg.map { width:100%; height:100%; position:absolute; inset:0; }
+
+  /* district cells */
+  .d-cell {
+    position:absolute; border:1px solid rgba(255,255,255,.08);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:5px; text-align:center; transition:border-color .25s;
+    cursor:default;
+  }
+  .d-cell:hover { border-color:rgba(255,255,255,.22); z-index:2; }
+  .d-cell .gi { font-size:20px; line-height:1; }
+  .d-cell .nm { font-size:8px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; }
+  .d-cell .tg { font-size:7.5px; letter-spacing:.08em; color:var(--ink-soft); line-height:1.4; }
+  .d-cell .badge { font-size:7px; letter-spacing:.14em; padding:1px 6px; border:1px solid; border-radius:1px; }
+
+  /* district color map */
+  .forest { --dc:#4ade80; background:rgba(0,40,15,.5); }
+  .nexus  { --dc:#5fe0ff; background:rgba(0,20,40,.5); }
+  .beach  { --dc:#60a5fa; background:rgba(0,15,40,.5); }
+  .desert { --dc:#fbbf24; background:rgba(40,25,0,.5); }
+  .hub    { --dc:#00ff9c; background:rgba(0,24,14,.75); border:1px solid rgba(0,255,156,.3) !important; }
+  .meadow { --dc:#86efac; background:rgba(0,30,10,.5); }
+  .suburb { --dc:#c4b5fd; background:rgba(20,10,40,.5); }
+  .oracle { --dc:#a78bfa; background:rgba(20,10,40,.5); }
+  .zerox  { --dc:#f87171; background:rgba(40,0,0,.5); }
+
+  .d-cell .nm { color:var(--dc); }
+  .d-cell .badge { color:var(--dc); border-color:color-mix(in srgb, var(--dc) 40%, transparent); }
+
+  /* 3×3 grid positioning — cell size = 33.33% */
+  .c00 { left:0;       top:0;       width:33.33%; height:33.33%; }
+  .c10 { left:33.33%;  top:0;       width:33.33%; height:33.33%; }
+  .c20 { left:66.66%;  top:0;       width:33.33%; height:33.33%; }
+  .c01 { left:0;       top:33.33%;  width:33.33%; height:33.33%; }
+  .c11 { left:33.33%;  top:33.33%;  width:33.33%; height:33.33%; }
+  .c21 { left:66.66%;  top:33.33%;  width:33.33%; height:33.33%; }
+  .c02 { left:0;       top:66.66%;  width:33.33%; height:33.33%; }
+  .c12 { left:33.33%;  top:66.66%;  width:33.33%; height:33.33%; }
+  .c22 { left:66.66%;  top:66.66%;  width:33.33%; height:33.33%; }
+
+  /* station dots */
+  .station {
+    position:absolute; width:10px; height:10px; border-radius:50%;
+    border:2px solid var(--void); transform:translate(-50%,-50%);
+    z-index:4;
+  }
+  .station.ring { background:var(--gold); }
+  .station.sub  { background:var(--emerald); }
+  .station.both { background:linear-gradient(135deg,var(--gold) 50%,var(--emerald) 50%); }
+
+  /* ── METRO MAP (bottom section) ── */
+  .metro-wrap { width:min(720px,95vw); }
+  .metro-title { font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:var(--gold);
+    margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+  .metro-title::after { content:''; flex:1; height:1px; background:rgba(232,196,92,.2); }
+
+  .metro-lines { display:flex; flex-direction:column; gap:18px; }
+
+  .metro-line { display:flex; align-items:center; gap:0; }
+  .ml-label { font-size:8px; letter-spacing:.18em; text-transform:uppercase; width:80px;
+    flex-shrink:0; }
+  .ml-track { flex:1; display:flex; align-items:center; position:relative; }
+  .ml-track::before { content:''; position:absolute; left:0; right:0; top:50%;
+    transform:translateY(-50%); height:2px; }
+
+  /* Ring Line = gold */
+  .ring-line .ml-label { color:var(--gold); }
+  .ring-line .ml-track::before { background:linear-gradient(90deg,var(--gold),rgba(232,196,92,.3)); }
+
+  /* Subway lines per agent color */
+  .sub-nexus  .ml-label { color:#5fe0ff; }  .sub-nexus  .ml-track::before { background:#5fe0ff; }
+  .sub-turtle .ml-label { color:#4ade80; }  .sub-turtle .ml-track::before { background:#4ade80; }
+  .sub-oracle .ml-label { color:#a78bfa; }  .sub-oracle .ml-track::before { background:#a78bfa; }
+  .sub-zerox  .ml-label { color:#f87171; }  .sub-zerox  .ml-track::before { background:#f87171; }
+  .sub-quill  .ml-label { color:#86efac; }  .sub-quill  .ml-track::before { background:#86efac; }
+  .sub-pikadon .ml-label { color:#fbbf24; } .sub-pikadon .ml-track::before { background:#fbbf24; }
+
+  .stop {
+    position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;
+    gap:3px; flex:1;
+  }
+  .stop-dot { width:10px; height:10px; border-radius:50%; border:2px solid var(--void); }
+  .stop-name { font-size:6.5px; letter-spacing:.1em; text-transform:uppercase; text-align:center;
+    color:var(--ink-soft); white-space:nowrap; margin-top:1px; }
+  .stop-name b { display:block; font-size:8px; }
+  .stop.hub .stop-dot { width:14px; height:14px; background:var(--emerald);
+    box-shadow:0 0 8px rgba(0,255,156,.5); }
+
+  /* legend */
+  .legend { width:min(720px,95vw); display:flex; gap:24px; flex-wrap:wrap; }
+  .leg-item { display:flex; align-items:center; gap:8px; font-size:9px; letter-spacing:.12em;
+    color:var(--ink-soft); text-transform:uppercase; }
+  .leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .leg-line { width:24px; height:2px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<div>
+  <h1>◈ SHADDAI — World + Transit</h1>
+  <div class="sub">Ring Train + Subway Spokes · one connected world</div>
+</div>
+
+<!-- WORLD MAP -->
+<div class="map-wrap">
+
+  <!-- SVG transit lines drawn UNDER the cells -->
+  <svg class="map" viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- RING TRAIN — gold loop around the 8 outer districts (station centres) -->
+    <!-- stations at cell centres: col*240+120, row*240+120 — outer ring only -->
+    <!-- Forest(120,120) → Nexus(360,120) → Beach(600,120) → Zerox(600,360)
+         → Meadow(600,600→ Oracle(360,600) → Suburb(120,600) → Desert(120,360) → back -->
+    <polyline
+      points="120,120 360,120 600,120 600,360 600,600 360,600 120,600 120,360 120,120"
+      fill="none" stroke="#e8c45c" stroke-width="3" stroke-dasharray="8,4"
+      opacity=".55" filter="url(#glow)" />
+
+    <!-- SUBWAY SPOKES — emerald lines from center (360,360) to each outer station -->
+    <g stroke="#00ff9c" stroke-width="2" opacity=".45" filter="url(#glow)">
+      <line x1="360" y1="360" x2="120" y2="120"/> <!-- → Forest -->
+      <line x1="360" y1="360" x2="360" y2="120"/> <!-- → Nexus -->
+      <line x1="360" y1="360" x2="600" y2="120"/> <!-- → Beach -->
+      <line x1="360" y1="360" x2="120" y2="360"/> <!-- → Desert -->
+      <line x1="360" y1="360" x2="600" y2="360"/> <!-- → Meadow -->
+      <line x1="360" y1="360" x2="120" y2="600"/> <!-- → Suburb -->
+      <line x1="360" y1="360" x2="360" y2="600"/> <!-- → Oracle -->
+      <line x1="360" y1="360" x2="600" y2="600"/> <!-- → Zerox -->
+    </g>
+
+    <!-- Ring station dots -->
+    <g fill="#e8c45c" filter="url(#glow)">
+      <circle cx="120" cy="120" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="360" cy="120" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="600" cy="120" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="600" cy="360" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="600" cy="600" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="360" cy="600" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="120" cy="600" r="6" stroke="#06080b" stroke-width="2"/>
+      <circle cx="120" cy="360" r="6" stroke="#06080b" stroke-width="2"/>
+    </g>
+
+    <!-- Subway hub dot (center) -->
+    <circle cx="360" cy="360" r="10" fill="#00ff9c" stroke="#06080b" stroke-width="2" filter="url(#glow)"/>
+    <circle cx="360" cy="360" r="5" fill="#06080b"/>
+  </svg>
+
+  <!-- DISTRICT CELLS -->
+  <div class="d-cell forest c00">
+    <div class="gi">🌲</div>
+    <div class="nm">Forest</div>
+    <div class="tg">TURTLE<br>art · nature</div>
+    <div class="badge">TURTLE Cr.</div>
+  </div>
+
+  <div class="d-cell nexus c10">
+    <div class="gi">⚡</div>
+    <div class="nm">Nexus Heights</div>
+    <div class="tg">NEXUS<br>tech · infra</div>
+    <div class="badge">NEXUS Cr.</div>
+  </div>
+
+  <div class="d-cell beach c20">
+    <div class="gi">🌊</div>
+    <div class="nm">Beach</div>
+    <div class="tg">ORACLE<br>signals · sea</div>
+    <div class="badge">ORACLE Cr.</div>
+  </div>
+
+  <div class="d-cell desert c01">
+    <div class="gi">🏜</div>
+    <div class="nm">Desert</div>
+    <div class="tg">PIKADON<br>security · silence</div>
+    <div class="badge">PIKADON Cr.</div>
+  </div>
+
+  <div class="d-cell hub c11">
+    <div class="gi">◈</div>
+    <div class="nm">SHADDAI City</div>
+    <div class="tg" style="color:rgba(0,255,156,.6)">30 Founders' Row offices<br>earn from all 8 districts</div>
+    <div class="badge">★ Residuals</div>
+    <div class="badge" style="margin-top:2px;border-color:rgba(0,255,156,.3)">Office-only</div>
+  </div>
+
+  <div class="d-cell meadow c21">
+    <div class="gi">🌿</div>
+    <div class="nm">Meadow</div>
+    <div class="tg">QUILL<br>words · lore</div>
+    <div class="badge">QUILL Cr.</div>
+  </div>
+
+  <div class="d-cell suburb c02">
+    <div class="gi">🏘</div>
+    <div class="nm">Suburb</div>
+    <div class="tg">community<br>rooms · rent</div>
+    <div class="badge">Sparks</div>
+  </div>
+
+  <div class="d-cell oracle c12">
+    <div class="gi">🔮</div>
+    <div class="nm">Oracle Sky</div>
+    <div class="tg">research<br>intelligence</div>
+    <div class="badge">ORACLE Cr.</div>
+  </div>
+
+  <div class="d-cell zerox c22">
+    <div class="gi">₿</div>
+    <div class="nm">Zerox District</div>
+    <div class="tg">ZEROX<br>markets · wealth</div>
+    <div class="badge">ZEROX Cr.</div>
+  </div>
+
+</div>
+
+<!-- METRO MAP -->
+<div class="metro-wrap">
+  <div class="metro-title">◈ Transit Map</div>
+
+  <div class="metro-lines">
+
+    <!-- RING TRAIN -->
+    <div class="metro-line ring-line">
+      <div class="ml-label">🚂 Ring Train</div>
+      <div class="ml-track">
+        <div class="stop"><div class="stop-dot" style="background:#4ade80"></div><div class="stop-name">Forest</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#5fe0ff"></div><div class="stop-name">Nexus</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#60a5fa"></div><div class="stop-name">Beach</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#f87171"></div><div class="stop-name">Zerox</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#86efac"></div><div class="stop-name">Meadow</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#a78bfa"></div><div class="stop-name">Oracle</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#c4b5fd"></div><div class="stop-name">Suburb</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#fbbf24"></div><div class="stop-name">Desert</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#4ade80"></div><div class="stop-name">Forest</div></div>
+      </div>
+    </div>
+
+    <!-- SUBWAY LINES — each is a direct spoke from SHADDAI City hub -->
+    <div class="metro-line sub-nexus">
+      <div class="ml-label">🚇 Nexus Line</div>
+      <div class="ml-track">
+        <div class="stop hub"><div class="stop-dot"></div><div class="stop-name"><b>SHADDAI</b>Central</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#5fe0ff"></div><div class="stop-name">Nexus Heights</div></div>
+      </div>
+    </div>
+
+    <div class="metro-line sub-turtle">
+      <div class="ml-label">🚇 Forest Line</div>
+      <div class="ml-track">
+        <div class="stop hub"><div class="stop-dot"></div><div class="stop-name"><b>SHADDAI</b>Central</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#4ade80"></div><div class="stop-name">Forest</div></div>
+      </div>
+    </div>
+
+    <div class="metro-line sub-oracle">
+      <div class="ml-label">🚇 Oracle Line</div>
+      <div class="ml-track">
+        <div class="stop hub"><div class="stop-dot"></div><div class="stop-name"><b>SHADDAI</b>Central</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#a78bfa"></div><div class="stop-name">Oracle Sky</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#60a5fa"></div><div class="stop-name">Beach</div></div>
+      </div>
+    </div>
+
+    <div class="metro-line sub-zerox">
+      <div class="ml-label">🚇 Zerox Line</div>
+      <div class="ml-track">
+        <div class="stop hub"><div class="stop-dot"></div><div class="stop-name"><b>SHADDAI</b>Central</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#86efac"></div><div class="stop-name">Meadow</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#f87171"></div><div class="stop-name">Zerox District</div></div>
+      </div>
+    </div>
+
+    <div class="metro-line sub-pikadon">
+      <div class="ml-label">🚇 Outer Line</div>
+      <div class="ml-track">
+        <div class="stop hub"><div class="stop-dot"></div><div class="stop-name"><b>SHADDAI</b>Central</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#fbbf24"></div><div class="stop-name">Desert</div></div>
+        <div class="stop"><div class="stop-dot" style="background:#c4b5fd"></div><div class="stop-name">Suburb</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-item">
+    <div class="leg-line" style="background:var(--gold)"></div>
+    Ring Train — loops all 8 outer districts
+  </div>
+  <div class="leg-item">
+    <div class="leg-line" style="background:var(--emerald)"></div>
+    Subway spokes — direct from SHADDAI City
+  </div>
+  <div class="leg-item">
+    <div class="leg-dot" style="background:var(--gold)"></div>
+    Ring stop
+  </div>
+  <div class="leg-item">
+    <div class="leg-dot" style="background:var(--emerald)"></div>
+    Subway hub (Central Station)
+  </div>
+</div>
+
+</body>
+</html>

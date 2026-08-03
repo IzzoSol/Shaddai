@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SHADDAI · World</title>
-<script src="/world-gate.js?v=1"></script>
+<script src="/world-gate.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -90,13 +90,15 @@
 
 <!-- WORLD HUD -->
 <div id="hud" class="panel hide"><div class="who" id="hudWho">—</div><div class="where" id="hudWhere">—</div><div id="wallet" style="color:#e8c45c;font-size:13px;margin-top:3px">💰 250 cr</div>
-  <div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span id="hpTxt" style="color:#ff8a8a;font-size:12px;min-width:34px">❤ 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="hpFill" style="width:100%;height:100%;background:#4fe07a;transition:width .2s,background .2s"></div></div></div></div>
+  <div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span id="hpTxt" style="color:#ff8a8a;font-size:12px;min-width:34px">❤ 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="hpFill" style="width:100%;height:100%;background:#4fe07a;transition:width .2s,background .2s"></div></div></div>
+  <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span id="sigTxt" style="color:#00e5a0;font-size:12px;min-width:34px">📡 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="sigFill" style="width:100%;height:100%;background:#00e5a0;transition:width .3s,background .3s"></div></div></div></div>
 <div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px">
   <button class="panel" style="padding:9px 13px" onclick="openStore()">🛒 Store</button>
   <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
   <button class="panel" style="padding:9px 13px" onclick="openJobs()">💼 Work</button>
   <button class="panel" style="padding:9px 13px" onclick="openInv()">🎒 Bag</button>
   <button class="panel" style="padding:9px 13px" onclick="openRooms()">🏠 Rooms</button>
+  <button class="panel" style="padding:9px 13px;border-color:rgba(0,255,156,.35);color:#00ff9c" onclick="openTactics()">⚔ Tactics</button>
 </div>
 <div id="ftue" style="position:fixed;left:16px;top:132px;z-index:6;display:none;width:236px;background:linear-gradient(160deg,rgba(16,24,39,.96),rgba(10,15,26,.96));border:1px solid rgba(0,229,160,.35);border-radius:12px;padding:11px 13px;box-shadow:0 6px 18px rgba(0,0,0,.45);font-family:'Chakra Petch',system-ui,sans-serif"></div>
 <div id="store" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(780px,95vw);max-height:88vh;overflow:auto;padding:18px 20px;z-index:8"></div>
@@ -107,7 +109,7 @@
   <span style="color:#5fe0ff;font-size:13px;letter-spacing:1px">👁 Spectating — watching the living world</span>
   <button class="primary" style="padding:7px 14px;font-size:13px" onclick="joinPlay()">▶ Join &amp; Play</button>
 </div>
-<div id="intActions" class="hide" style="position:fixed;left:16px;bottom:64px;z-index:7;display:flex;gap:8px"></div>
+<div id="intActions" class="hide" style="position:fixed;left:16px;top:70px;z-index:7;display:flex;gap:8px;flex-wrap:wrap"></div>
 <div id="decorBar" class="panel hide" style="left:50%;bottom:16px;transform:translateX(-50%);z-index:8;display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;max-width:94vw"></div>
 <div id="wardrobe" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);padding:18px 20px;z-index:9"></div>
 <div id="storage" class="panel hide" style="left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);padding:18px 20px;z-index:9"></div>
@@ -133,7 +135,7 @@
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 80% at 50% 44%,transparent 28%,rgba(3,4,7,.9) 100%)"></div>
   <div id="splashTitle" style="position:absolute;left:0;right:0;bottom:16%;text-align:center;font-family:var(--retro);color:#fff;font-size:clamp(16px,3vw,28px);letter-spacing:2px;text-shadow:0 2px 24px #000,0 0 30px rgba(0,255,156,.4)"></div>
 </div>
-<div id="controls" class="panel hide"><b>WASD</b> move · <b>Space</b> use/attack · <b>E</b> enter door · <b>C</b> chat · <b>1–6</b> tools · <b>I</b> bag · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom</div>
+<div id="controls" class="panel hide"><b>WASD</b> move · <b>Space</b> use/attack · <b>E</b> enter door · <b>C</b> chat · <b>1–6</b> tools · <b>I</b> bag · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom · <b>⚔ Tactics</b> top-right</div>
 <div id="prompt" class="panel hide"></div>
 <div id="mpstatus" class="panel hide" style="left:16px;top:70px;padding:6px 12px;font-size:12px;color:#00ff9c;z-index:6">🟢 1 online</div>
 <div id="chatlog" class="panel hide" style="left:16px;bottom:130px;width:min(340px,44vw);max-height:170px;overflow-y:auto;padding:8px 12px;font-size:12.5px;line-height:1.5;z-index:6"></div>
@@ -146,6 +148,37 @@
   <div class="regions" id="travelGrid"></div>
   <div class="row"><button onclick="closeTravel()">Cancel</button></div>
 </div>
+
+<!-- TACTICS OVERLAY (FFTA tactical combat system) -->
+<div id="tacticsOverlay" class="hide" style="position:fixed;inset:0;z-index:20;background:rgba(4,6,12,.96);display:none;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:linear-gradient(180deg,rgba(6,9,15,.96),rgba(6,9,15,.7));border-bottom:1px solid rgba(95,224,255,.18);z-index:2">
+    <span style="font-family:'Press Start 2P',monospace;font-size:12px;color:#e8c45c">◈ TACTICS</span>
+    <span style="font-size:11px;color:#7a8794;letter-spacing:1px">FFTA-style tactical combat</span>
+    <button onclick="closeTactics()" style="padding:7px 14px;border:1px solid rgba(95,224,255,.18);border-radius:6px;background:rgba(15,21,32,.5);color:#7a8794;font-size:11px;cursor:pointer;font-family:inherit">✕ Close</button>
+  </div>
+  <iframe id="tacticsFrame" style="flex:1;width:100%;border:none;background:#06090f" src="/games/tactics.html"></iframe>
+</div>
+
+<script>
+function openTactics(){
+  var el=document.getElementById('tacticsOverlay');
+  if(!el) return;
+  el.style.display='flex';
+  el.classList.remove('hide');
+  var f=document.getElementById('tacticsFrame');
+  if(f) f.src='/games/tactics.html';
+}
+function closeTactics(){
+  var el=document.getElementById('tacticsOverlay');
+  if(!el) return;
+  el.style.display='none';
+  el.classList.add('hide');
+}
+function openTacticsFromPub(){
+  closeTravel(); hideIntUI();
+  openTactics();
+}
+</script>
 
 <script src="interiors.js" onerror="window.__noInteriors=1"></script>
 <script src="landmarks.js" onerror="window.__noLandmarks=1"></script>
@@ -236,6 +269,8 @@ function pickGalleryChar(entry){
 }
 
 // ---------- regions ----------
+const HOME_DISTRICT='agentcity';
+const SIGNAL_DRAIN={agentcity:0,meadow:0.8,forest:0.8,suburb:0,beach:1.5,city:1.2,desert:3.0,volcano:3.0};
 const REGIONS=[
   {id:'agentcity',name:'SHADDAI City', color:'#4a4370', grass:'#3f4a52', water:'#2f5f9a', sand:'#b9b09a', tree:'oak', transit:'rail', density:0.02, desc:'Home of the 7 agents', emoji:'🌀', city:true},
   {id:'meadow',  name:'Green Meadow', color:'#4fb04f', grass:'#4fa84f', water:'#2f7fd0', sand:'#e0cf9a', tree:'oak',    transit:'rail', density:0.12, desc:'Grass, trees, a fishing dock', emoji:'🌳'},
@@ -271,7 +306,7 @@ function goRegion(){ if(!isSignedIn()){ checkSignGate(); return; }
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
-  genWorld(regionSel); updateHP(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  genWorld(regionSel); updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
   try{ if(typeof grantStarter==='function') grantStarter(); if(typeof renderHotbar==='function') renderHotbar(); }catch(_){}
   const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; mpHello(); showSplash(regionSel);
   const sh=document.getElementById('specHud');
@@ -310,6 +345,7 @@ function bakeGround(){
 }
 let tiles=[], props=[], npcs=[], region=null, cam={col:30,row:30}, tod=0.34;
 let enemies=[], playerHP=100, playerMaxHP=100, hurtFlash=0, atkSwing=0;   // combat
+let playerSignal=100, playerMaxSignal=100;   // travel Signal — drains in unfamiliar districts
 const WEAPON_POWER={ shield:1.2, sword:1.7, bow:2.0, axe:2.6, staff:3.4 };
 function activeWeapon(){ if(equippedWeapon&&inv[equippedWeapon]) return equippedWeapon; let best=null,bp=0; for(const id in WEAPON_POWER){ if(inv[id]&&WEAPON_POWER[id]>bp){ bp=WEAPON_POWER[id]; best=id; } } return best; }
 function weaponPower(){ const id=activeWeapon(); if(!id) return 1; return WEAPON_POWER[id]+((weaponUp[id]||0)*0.5); }
@@ -765,6 +801,7 @@ function interiorKindFor(b){ const n=(b.name||'').toUpperCase(), k=b.kind;
   if(/DINER|CAFE/.test(n)) return 'diner';
   if(/BANK|EXCHANGE|VAULT|TREAS/.test(n)) return 'bank';
   if(/TAVERN|INN|BAR|KEEPER/.test(n)) return 'tavern';
+  if(/PUB|FIGHT CLUB|ARENA/.test(n)) return 'pub';
   if(/FORGE|SMELTER/.test(n)) return 'forge';
   if(/LIBRARY|ATHEN|CODEX/.test(n)) return 'library';
   if(/SHOP|STORE|MARKET|GROCER|BAKERY|TRAPPER|TRADING|POST/.test(n)) return 'shop';
@@ -796,6 +833,14 @@ function buildInterior(kind){
     fitem(7.3,0.8,1.1,0.9,14,'#4a3230','hearth'), fitem(0.8,5,0.6,0.6,10,'#7a5636','barrel'),fitem(1.6,5,0.6,0.6,10,'#7a5636','barrel'),fitem(7.4,4.7,0.6,0.6,10,'#7a5636','barrel'),
     fitem(4.4,1.4,1.3,1,7,'#6a4a2a','table'), stool(4,1),stool(5.4,1.8), fitem(4.4,3.6,1.3,1,7,'#6a4a2a','table'), stool(4,3.2),stool(5.4,4),
     rug(3.8,2.2,2.6,1.8,'#5a2a2a'), fitem(6.6,2.4,0.7,1.4,16,'#5a4636','shelf')]; }
+  else if(kind==='pub'){ F=[fitem(0.9,1.1,0.9,3.6,12,'#5a3a1a','counter'), stool(2.1,1.4),stool(2.1,2.4),stool(2.1,3.4),
+    fitem(7,0.8,1.1,0.9,6,'#4a2820','hearth'), fitem(0.8,5,0.6,0.6,10,'#7a5636','barrel'),fitem(1.6,5,0.6,0.6,10,'#7a5636','barrel'),
+    fitem(4.4,1.4,1.3,1,7,'#6a4a2a','table'), stool(4,1),stool(5.4,1.8),
+    fitem(4.4,3.6,1.3,1,7,'#6a4a2a','table'), stool(4,3.2),stool(5.4,4),
+    fitem(6.6,2.6,1.4,0.7,10,'#2a3a2a','table'), fitem(6.7,2.3,0.4,0.4,8,'#e8c45c'),
+    fitem(7.2,4.7,0.7,0.7,10,'#5a3a1a','barrel'),
+    fitem(3,1.2,0.6,1.2,20,'#5a4636','shelf'), fitem(3.2,1.25,0.3,0.3,9,'#5fe0ff'),
+    rug(3.8,2.2,2.6,1.8,'#3a2a2a')]; }
   else if(kind==='forge'){ F=[fitem(7,0.7,1.5,1.2,16,'#3a2622','hearth'), fitem(6.9,0.75,0.5,0.4,8,'#ff7a3a','ember'),
     fitem(3.9,2.2,1,0.7,8,'#3a3f47','anvil'), fitem(5.2,0.8,1.5,0.7,7,'#4a3a2a','bench'),
     fitem(0.6,0.8,0.7,2.6,18,'#5a4636','shelf'), fitem(0.6,3.8,0.7,1.8,16,'#5a4636','shelf'),
@@ -890,6 +935,7 @@ function refreshIntActions(){ const ia=document.getElementById('intActions'); if
   else if(interiorType==='office') b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openRoomTheme()">🖌️ Theme</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
   else if(interiorType==='shop') b='<button onclick="openStore()">🛒 Browse</button>';
   else if(interiorType==='tavern') b='<button onclick="restHere()">😴 Rest</button><button onclick="openQuests()">📜 Bounties</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
+  else if(interiorType==='pub') b='<button onclick="openTacticsFromPub()">⚔ Tactics Battle</button><button onclick="openQuests()">📜 Missions</button><button onclick="restHere()">😴 Rest</button>';
   else if(interiorType==='bank') b='<button onclick="openBank()">🏦 Bank &amp; Coin Market</button>';
   else if(interiorType==='forge') b='<button onclick="openForge()">⚒️ Forge</button>';
   else if(interiorType==='market') b='<button onclick="openMarket()">🤝 Trade at the Swap Market</button>';
@@ -928,7 +974,7 @@ function update(dt){
   if(state!=='world'){ ['fishBar','gatherBar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.add('hide'); }); }
   if(state==='world') tod=(tod+dt*0.012)%1;   // ~85s day/night cycle
   if(fadeDir!==0){ fadeV+=fadeDir*dt*2.6;
-    if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; if(travelClockAdd){ tod=(tod+travelClockAdd)%1; travelClockAdd=0; } updateHP(); pendingRegion=null; fadeV=1; fadeDir=-1; }
+    if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; if(travelClockAdd){ tod=(tod+travelClockAdd)%1; travelClockAdd=0; } updateHP(); playerSignal=playerMaxSignal; updateSignal(); pendingRegion=null; fadeV=1; fadeDir=-1; }
     else if(fadeV<=0){ fadeV=0; fadeDir=0; } }
   if(state==='world'){
     if(!spectate){ const run=keys['shift']?1.9:1, v=3.2*run*dt; let mc=0,mr=0;
@@ -937,6 +983,13 @@ function update(dt){
       if(mc||mr){ const nc=player.col+mc*v*0.5, nr=player.row+mr*v*0.5;
         if(walkable(nc,player.row)) player.col=nc; if(walkable(player.col,nr)) player.row=nr; player.rig.anim='walk'; mpMove(); }
       else player.rig.anim='idle';
+      // Signal drain (walking in unfamiliar districts) + regen near offices/transit
+      { const moving=mc||mr; const drain=(SIGNAL_DRAIN[regionSel]||1.2)*(moving?1:0);
+        let regen=0.05;
+        for(const p of props){ const dc=Math.abs((p.col+(p.w||1)/2)-player.col),dr2=Math.abs((p.row+(p.d||1)/2)-player.row);
+          if(dc<3&&dr2<3){ if(p.__source&&p.__office) regen=Math.max(regen,5); else if(p.kind==='transit') regen=Math.max(regen,2); } }
+        playerSignal=Math.max(0,Math.min(playerMaxSignal,playerSignal+(regen-drain)*dt));
+        updateSignal(); if(playerSignal<=0) signalDrop(); }
       cam.col+=(player.col-cam.col)*Math.min(1,dt*6); cam.row+=(player.row-cam.row)*Math.min(1,dt*6);
     } else { // spectate: drift the camera across the world following wandering citizens
       specTimer-=dt; if(specTimer<=0||!specTarget){ specTarget=npcs.length?npcs[(Math.random()*npcs.length)|0]:null; specTimer=7; }
@@ -1098,7 +1151,7 @@ function renderWorld(time){
 }
 function renderInterior(time){
   ctx.clearRect(0,0,W,H);
-  const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
+  const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',pub:'#1a1810',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
   const bg=ctx.createRadialGradient(W/2,H*0.34,60,W/2,H*0.34,H); bg.addColorStop(0,shade(tint,0.05)); bg.addColorStop(1,'#070a0f');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   const IW=intRoom.w,IH=intRoom.h, ox=W/2, oy=H*0.22, S=Math.min(1.15, W/((IW+IH)*46));
@@ -1125,12 +1178,12 @@ function renderInterior(time){
     else if(t==='vault'){ ctx.strokeStyle='#c9a24a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(sx,sy-it.h*0.5-8);ctx.lineTo(sx,sy-it.h*0.5+8);ctx.moveTo(sx-8,sy-it.h*0.5);ctx.lineTo(sx+8,sy-it.h*0.5);ctx.stroke();ctx.fillStyle='#c9a24a';ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,2,0,7);ctx.fill(); }
     else if(t==='barrel'){ ctx.strokeStyle=shade(it.color,-0.35);ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.65,it.w*TW/2.6*S,3,0,0,7);ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.35,it.w*TW/2.4*S,3,0,0,7);ctx.stroke(); } }
   // back walls (L-shape behind the room)
-  const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
+  const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
   const wall=(a,b,cl)=>{ ctx.fillStyle=cl; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(b[0],b[1]-wallH);ctx.lineTo(a[0],a[1]-wallH);ctx.closePath();ctx.fill(); };
   wall(is(-0.5,-0.5), is(IW-0.5,-0.5), shade(wc,-0.04));
   wall(is(-0.5,IH-0.5), is(-0.5,-0.5), shade(wc,-0.2));
   // floor
-  const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
+  const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],pub:['#5a3a28','#4e3222'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
   for(const [col,r] of intRoom.order){ const [sx,sy]=is(col,r);
     ctx.fillStyle=(col+r)&1?fl[0]:fl[1]; ctx.beginPath();ctx.moveTo(sx,sy-TH/2*S);ctx.lineTo(sx+TW/2*S,sy);ctx.lineTo(sx,sy+TH/2*S);ctx.lineTo(sx-TW/2*S,sy);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.stroke(); }
@@ -1280,6 +1333,7 @@ function ftueRender(){ const el=document.getElementById('ftue'); if(!el) return;
     h+='<div style="font-size:12px;line-height:1.35;margin:4px 0;color:'+(d?'#4fe07a':(i===cur?'#eaf3fb':'#5a6a7a'))+'">'+(d?'✓':(i===cur?'▸':'○'))+' '+s.label+'</div>'; });
   el.innerHTML=h; el.style.display='block'; }
 function updateHP(){ const f=document.getElementById('hpFill'), t=document.getElementById('hpTxt'); if(!f)return; const pct=Math.max(0,playerHP)/playerMaxHP*100; f.style.width=pct+'%'; f.style.background=pct>50?'#4fe07a':pct>25?'#e0c14f':'#e05a4f'; if(t)t.textContent='❤ '+Math.max(0,Math.ceil(playerHP)); }
+function updateSignal(){ const f=document.getElementById('sigFill'),t=document.getElementById('sigTxt'); if(!f)return; const pct=Math.max(0,playerSignal)/playerMaxSignal*100; f.style.width=pct+'%'; f.style.background=pct>50?'#00e5a0':pct>20?'#e8c45c':'#e05a4f'; if(t)t.textContent='📡 '+Math.max(0,Math.ceil(playerSignal)); }
 function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSwing=0.25; if(player.rig)player.rig.anim='attack';
   const res=Combat.playerAttack(enemies, player, weaponPower());
   const hits=(res&&res.hits)||[], killed=(res&&res.dead)||(Array.isArray(res)?res:[]);
@@ -1290,6 +1344,22 @@ function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSw
   if(hits.length){ player.__shake=Math.max(player.__shake||0, hits.some(h=>h.crit)?0.7:0.4); }
   enemies=enemies.filter(e=>!e.dead);
   if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; try{ addFloat(k.col,k.row,'💥','#fff'); }catch(_){} if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
+let _sigDropCooldown=0;
+function signalDrop(){
+  if(_sigDropCooldown>0||playerSignal>0) return;
+  _sigDropCooldown=4;
+  playerSignal=50; updateSignal();
+  const fee=50; money=Math.max(0,money-fee); saveEcon();
+  hurtFlash=0.6;
+  let rx=Math.round(GW/2), ry=Math.round(GH/2);
+  const office=props.find(p=>p.__source&&p.__office);
+  if(office){ rx=office.col+1; ry=office.row+2; }
+  player.col=rx; player.row=ry; cam.col=rx; cam.row=ry;
+  if(!walkable(player.col,player.row)){ player.col=Math.round(GW/2); player.row=Math.round(GH/2); cam.col=player.col; cam.row=player.row; }
+  const uid=window.__shd_uid||localStorage.getItem('shd_signed_in');
+  if(uid) fetch('/api/city/signal-drop',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':uid},body:'{}',keepalive:true}).catch(()=>{});
+  toast('📡 Signal lost — rescue taxi 💵'+fee+' · signal restored');
+}
 function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } player.col=Math.round(GW/2); player.row=Math.round(GH/2); if(!walkable(player.col,player.row)){ for(let r=1;r<GH;r++){ if(walkable(GW/2|0,r)){ player.row=r; break; } } } cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
 function addXP(n){ const b=levelFor(credits); credits+=n; const nl=levelFor(credits); if(nl>b){ toast('⭐ Level up! You are now Level '+nl); try{ celebrateLevelUp(nl); }catch(_){} } }
 // JUICE: a real level-up celebration (self-contained overlay — no render-loop coupling)
@@ -1494,7 +1564,9 @@ function createRoom(kind){
   const raw=prompt('Name your '+pre.label+':', pre.label); if(raw===null) return;
   const name=(raw||'').trim().slice(0,24) || pre.label;
   const rooms=loadRooms(); const id='r'+Date.now().toString(36);
-  rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id); }
+  rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id);
+  try{ toast('🏠 "'+name+'" created — you are inside. WASD to walk · door to leave.'); }catch(_){}
+}
 function deleteRoom(id){ if(!confirm('Delete this room? (its decor is also removed)'))return;
   saveRooms(loadRooms().filter(r=>r.id!==id));
   try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); delete d['room_'+id]; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){}
@@ -1524,7 +1596,7 @@ function leaveInterior(){
     openRooms(); return true; }
   return false; }
 // ---- SIGN-IN GATE (signed in = play; no guests) ----
-function isSignedIn(){ try{ if(location.hostname==='localhost'||location.hostname==='127.0.0.1') return true; /* dev bypass — gate still enforces in production */ if(localStorage.getItem('shd_signed_in')==='1') return true; if(sessionStorage.getItem('shd_guest')==='1') return true; return false; }catch(e){ return false; } }
+function isSignedIn(){ try{ if(location.hostname==='localhost'||location.hostname==='127.0.0.1') return true; /* dev bypass — gate still enforces in production */ if(typeof window.worldHasAccess==='function') return window.worldHasAccess(); /* single source of truth = world-gate (beta code / uid / guest) */ return !!localStorage.getItem('shd_userid'); }catch(e){ return false; } }
 function checkSignGate(){ const g=document.getElementById('signGate'); if(!g) return; g.style.display=isSignedIn()?'none':'flex'; }
 function recheckSignGate(){ if(isSignedIn()) checkSignGate(); else { try{toast('Not signed in yet — tap the sign-in button above.');}catch(_){} } }
 document.addEventListener('visibilitychange',function(){ if(!document.hidden) checkSignGate(); });
@@ -1758,37 +1830,82 @@ async function claimOfficeGame(){
 }
 
 /* ── MOBILE controls: a D-PAD (up/down/left/right) + action buttons drive the SAME
-   keys[] the keyboard uses, so the game is playable on touch devices. ── */
+   keys[] the keyboard uses, so the game is playable on touch devices.
+
+   LAYOUT FIX (2026-07-29):
+   • D-pad moved to bottom-left, smaller, transparent — doesn't fight the office
+     action bar (#intActions: Decorate/Theme/Wardrobe at bottom-left, ~64px up).
+   • Action buttons collapsed into ONE toggle button (top-right). Tap it once to
+     reveal USE / ENTER; tap again to hide. CHAT was an unnecessary third button
+     (chat lives in the top-bar chat panel anyway — same UX as desktop).
+   • Single use-active-tool key = SPACE; ENTER = E — already documented in the
+     prompt bar. Touch players still get on-screen USE/ENTER via the toggle. */
 (function(){
   if(!('ontouchstart' in window) && !(navigator.maxTouchPoints>0)) return;
+  // Bottom-left D-pad — small, lifted so it sits BELOW the office action bar.
+  // Office actions sit at bottom: 64px (height ~36px) → top of bar ≈ 100px from bottom.
+  // D-pad is 130px tall + 24px bottom margin = 154px → safely below the bar.
   const pad=document.createElement('div'); pad.id='dpad';
-  pad.style.cssText='position:fixed;left:18px;bottom:22px;width:150px;height:150px;z-index:60;touch-action:none;user-select:none';
+  pad.style.cssText='position:fixed;left:14px;bottom:14px;width:130px;height:130px;z-index:55;touch-action:none;user-select:none;pointer-events:none;display:none';
   document.body.appendChild(pad);
-  // key held true while its button is pressed; multiple can be held for diagonals
   function dbtn(key,label,x,y){
     const b=document.createElement('button'); b.textContent=label;
-    b.style.cssText='position:absolute;'+x+y+'width:50px;height:50px;border-radius:12px;border:1px solid rgba(0,229,160,.4);background:rgba(10,14,25,.5);color:#dff;font-size:20px;font-family:inherit;touch-action:none;backdrop-filter:blur(3px)';
+    b.style.cssText='position:absolute;'+x+y+'width:42px;height:42px;border-radius:10px;border:1px solid rgba(0,229,160,.45);background:rgba(10,14,25,.55);color:#dff;font-size:17px;font-family:inherit;touch-action:none;backdrop-filter:blur(3px);pointer-events:auto';
     const on=e=>{ e.preventDefault(); keys[key]=true; b.style.background='rgba(0,229,160,.32)'; };
-    const off=e=>{ if(e)e.preventDefault(); keys[key]=false; b.style.background='rgba(10,14,25,.5)'; };
+    const off=e=>{ if(e)e.preventDefault(); keys[key]=false; b.style.background='rgba(10,14,25,.55)'; };
     b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off,{passive:false});
     b.addEventListener('touchcancel',off,{passive:false});
     pad.appendChild(b); return b;
   }
-  dbtn('w','▲','left:50px;','top:0;');
-  dbtn('a','◀','left:0;','top:50px;');
-  dbtn('d','▶','left:100px;','top:50px;');
-  dbtn('s','▼','left:50px;','top:100px;');
-  // Labelled action buttons (icon + a small caption so it's obvious what each does).
-  // Works on BOTH tap and desktop click (the old version only fired on touch).
-  function mkBtn(icon,label,right,bottom,col,fn){ const b=document.createElement('button');
-    b.innerHTML='<span style="font-size:21px;line-height:1">'+icon+'</span><span style="font-size:8px;letter-spacing:.06em;opacity:.92;margin-top:2px;white-space:nowrap">'+label+'</span>';
-    b.style.cssText='position:fixed;right:'+right+'px;bottom:'+bottom+'px;width:64px;height:64px;border-radius:50%;z-index:60;border:1px solid '+col+';background:rgba(10,14,25,.62);color:'+col+';font-family:inherit;touch-action:manipulation;backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer';
+  dbtn('w','▲','left:44px;','top:0;');
+  dbtn('a','◀','left:0;','top:44px;');
+  dbtn('d','▶','left:88px;','top:44px;');
+  dbtn('s','▼','left:44px;','top:88px;');
+
+  // Single TOGGLE button (top-right) — replaces CHAT/USE/ENTER clutter.
+  const tog=document.createElement('button'); tog.id='actToggle';
+  tog.innerHTML='<span style="font-size:14px;line-height:1">⚙</span>';
+  tog.title='Show action buttons';
+  tog.style.cssText='position:fixed;right:14px;top:90px;z-index:58;width:42px;height:42px;border-radius:50%;border:1px solid rgba(232,196,92,.5);background:rgba(10,14,25,.7);color:#e8c45c;font-size:14px;backdrop-filter:blur(3px);cursor:pointer;display:flex;align-items:center;justify-content:center';
+  document.body.appendChild(tog);
+
+  // Hidden action cluster — slides in/out on toggle tap.
+  const cluster=document.createElement('div'); cluster.id='actCluster';
+  cluster.style.cssText='position:fixed;right:14px;top:140px;z-index:58;display:none;flex-direction:column;gap:10px;align-items:center';
+  document.body.appendChild(cluster);
+
+  function mkBtn(icon,label,col,fn){
+    const b=document.createElement('button');
+    b.innerHTML='<span style="font-size:18px;line-height:1">'+icon+'</span><span style="font-size:7px;letter-spacing:.06em;opacity:.92;margin-top:2px;white-space:nowrap">'+label+'</span>';
+    b.style.cssText='width:54px;height:54px;border-radius:50%;border:1px solid '+col+';background:rgba(10,14,25,.78);color:'+col+';font-family:inherit;touch-action:manipulation;backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer';
     b.addEventListener('touchstart',e=>{ e.preventDefault(); try{ fn(); }catch(_){} },{passive:false});
     b.addEventListener('click',e=>{ e.preventDefault(); try{ fn(); }catch(_){} });
-    document.body.appendChild(b); return b; }
-  mkBtn('⚔','USE / HIT',24,104,'rgba(0,229,160,.85)',()=>{ if(typeof useActiveTool==='function') useActiveTool(); });  // active tool: chop/mine/fish/attack
-  mkBtn('🚪','ENTER',100,32,'rgba(232,196,92,.85)',()=>{ if(typeof tryDoor==='function') tryDoor(); });               // enter/exit buildings
-  mkBtn('💬','CHAT',24,182,'rgba(95,224,255,.85)',()=>{ if(typeof openChat==='function') openChat(); });              // open chat
+    cluster.appendChild(b);
+    return b;
+  }
+  mkBtn('⚔','USE',  'rgba(0,229,160,.85)', ()=>{ if(typeof useActiveTool==='function') useActiveTool(); });
+  mkBtn('🚪','ENTER','rgba(232,196,92,.85)',()=>{ if(typeof tryDoor==='function') tryDoor(); });
+
+  let _open=false;
+  tog.addEventListener('click', ()=>{
+    _open=!_open;
+    cluster.style.display=_open?'flex':'none';
+    tog.innerHTML=_open?'<span style="font-size:14px;line-height:1">✕</span>':'<span style="font-size:14px;line-height:1">⚙</span>';
+    tog.title=_open?'Hide action buttons':'Show action buttons';
+  });
+
+  // Hide the D-pad whenever a panel/modal is open (decor/wardrobe/chat etc.)
+  // so it doesn't float over the buttons.
+  function syncDpadVisibility(){
+    const open = document.querySelector('.modal.show, .panel:not(.hide), #intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide)');
+    pad.style.display = open ? 'none' : 'block';
+  }
+  // Cheap mutation observer — re-eval when any panel toggles.
+  try{
+    const mo = new MutationObserver(syncDpadVisibility);
+    mo.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style'] });
+  }catch(_){}
+  setInterval(syncDpadVisibility, 600);
 
   // SPACE = use/attack with the equipped tool (owner request). Ignored while typing in chat.
   window.addEventListener('keydown',function(e){

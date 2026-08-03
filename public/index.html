@@ -78,6 +78,7 @@
         } else { localStorage.setItem('shd_signed_in','0'); } }catch(e){}
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
+        if(window.SHDTier&&window.SHDTier.onAuthChange) window.SHDTier.onAuthChange();   // re-resolve guest/free/pro after auth settles
       });
       // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
       firebase.auth().getRedirectResult().catch(function(e){
@@ -187,6 +188,22 @@
   border:1px solid rgba(255,207,74,.35);color:#ffcf4a;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.12em;
   padding:6px 12px;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);cursor:pointer;}
 #shdGuestBadge.on{display:flex;}
+/* ── GUEST LOCK: features that need an account are greyed + carry a 🔒 chip ── */
+[data-guest-lock].shd-guest-locked{position:relative;filter:grayscale(1) opacity(.5) !important;cursor:not-allowed !important;}
+[data-guest-lock].shd-guest-locked::after{content:"🔒 Sign in";position:absolute;top:5px;right:6px;z-index:3;
+  font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.08em;color:#0b0416;
+  background:linear-gradient(100deg,#ffcf4a,#27e0ff);padding:2px 6px;border-radius:100px;pointer-events:none;}
+#shdGuestNudge{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;display:none;
+  align-items:center;gap:10px;background:rgba(8,12,22,.95);border:1px solid rgba(255,207,74,.4);
+  color:#eaf4ff;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.08em;
+  padding:9px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);border-radius:2px;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);}
+#shdGuestNudge.on{display:flex;}
+#shdGuestNudge button{cursor:pointer;background:linear-gradient(100deg,#27e0ff,#ffcf4a);border:none;color:#04060a;
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;padding:7px 14px;
+  text-transform:uppercase;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);}
+#shdGuestNudge .nx{background:none;color:#7d94a0;box-shadow:inset 0 0 0 1px rgba(95,124,134,.35);}
+@media(max-width:560px){#shdGuestNudge{left:12px;right:12px;transform:none;justify-content:center;flex-wrap:wrap;font-size:10px}}
 </style>
 <div id="shdAuthGate" role="dialog" aria-modal="true">
   <div class="card"><div class="in">
@@ -207,11 +224,13 @@
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
       <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
+    <button class="bg skip" onclick="shdGate.guest()">Continue as Guest</button>
     <div class="msg" id="shdAuthMsg"></div>
-    <div class="fine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account.</div>
+    <div class="fine" id="shdAuthFine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account. Guests can browse — your work just won't persist.</div>
   </div></div>
 </div>
 <div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
+<div id="shdGuestNudge"><span>◈ You're in guest mode — <b style="color:#ffcf4a">sign in</b> to unlock Office, AURA, Gallery &amp; Treasury and save your work.</span><button onclick="shdGate.show()">Sign in →</button><button class="nx" onclick="document.getElementById('shdGuestNudge').classList.remove('on')">Not now</button></div>
 <script>
 (function(){
   function gate(){ return document.getElementById('shdAuthGate'); }
@@ -277,6 +296,71 @@
   }
   // Wait briefly for Firebase to restore any existing session before deciding.
   document.addEventListener('DOMContentLoaded',function(){ setTimeout(decide, 700); });
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   GUEST MODE (dashboard): grey out account-scoped features + nudge.
+   Non-destructive: signed-in users and localhost see everything live.
+   Anything marked data-guest-lock gets greyed + its click routes to the
+   sign-in gate instead. Guests also get a bottom nudge bar.
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  if (window.__shdGuestGate) return; window.__shdGuestGate = true;
+  var GUEST='shd_guest';
+  function isGuest(){
+    try{ return sessionStorage.getItem(GUEST)==='1'; }catch(e){ return false; }
+  }
+  function isDev(){ return location.hostname==='localhost'||location.hostname==='127.0.0.1'; }
+  function signedIn(){
+    try{
+      if (window.SHD_AUTH && SHD_AUTH.user) return true;
+      if (localStorage.getItem('shd_signed_in')==='1') return true;
+      var u=localStorage.getItem('shd_userid');
+      if (u && u.indexOf('guest')!==0 && u!=='local') return true;
+    }catch(e){}
+    return false;
+  }
+  var gateShownOnce=false;
+  function showGate(feature){
+    gateShownOnce=true;
+    try{
+      if (window.shdGate && shdGate.show){
+        var fine=document.getElementById('shdAuthFine');
+        if (fine && feature) fine.textContent='“'+feature+'” needs an account — sign in (or continue as guest to browse).';
+        shdGate.show();
+      } else { location.href='/dashboard'; }
+    }catch(e){ location.href='/dashboard'; }
+  }
+  function apply(){
+    var guest=isGuest();
+    // A visitor with no session and no guest flag is still gate-blocked, so
+    // the grey-out only matters once they're actually IN as a guest.
+    var locked = !isDev() && guest;
+    var nudge=document.getElementById('shdGuestNudge');
+    if (nudge) nudge.classList.toggle('on', locked && !gateShownOnce && !signedIn());
+    document.querySelectorAll('[data-guest-lock]').forEach(function(el){
+      if (locked){
+        el.classList.add('shd-guest-locked');
+        if (!el.getAttribute('data-guest-lock-wired')){
+          el.setAttribute('data-guest-lock-wired','1');
+          el.addEventListener('click',function(ev){
+            ev.preventDefault(); ev.stopPropagation();
+            showGate(this.getAttribute('data-guest-lock')||'this feature');
+          }, true);
+        }
+      } else {
+        el.classList.remove('shd-guest-locked');
+      }
+    });
+  }
+  window.shdRenderGuestGate=apply;
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(apply,1100); });
+  else setTimeout(apply,1100);
+  // Re-run on auth changes + occasionally (nav re-renders may swap buttons).
+  setInterval(apply, 4000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) apply(); });
+  try{ window.shdSignIn=window.shdSignIn||function(){ showGate(); }; }catch(e){}
 })();
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -3693,6 +3777,7 @@ body[data-theme="dark"]::before {
   /* ── "?" onboarding re-open button (always visible on mobile) ── */
   #shdOnboardBtn {
     display: flex;
+    bottom: 78px !important;
   }
 }
 
@@ -4037,12 +4122,13 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
-<script src="/command-terminal.js?v=10" defer></script>
-<script src="/theme-switcher.js?v=8" defer></script>
+<script src="/command-terminal.js?v=12" defer></script>
+ <script src="/theme-switcher.js?v=10" defer></script>
 <!-- button-art.js disabled: HF-image button overlays were out of place; using clean themed buttons instead -->
-<script src="/admin-panel.js?v=1" defer></script>
+<script src="/admin-panel.js?v=2" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
+<script src="/shd-tier.js?v=1" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
 <style id="shd-perf">/* Open-lag fix: the dashboard holds ~24 views in one huge DOM. Let the browser
    SKIP rendering the ones you're not looking at until they're shown — big cut to
@@ -4174,39 +4260,77 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </div>
 
 <nav id="mainNav">
-  <button class="nav-btn active" onclick="showView('dash')">🎛️ Dashboard</button>
-  <button class="nav-btn" onclick="showView('agents')"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
-  <button class="nav-btn" onclick="showView('workflow')"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
-  <button class="nav-btn" onclick="showView('pipeline')"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
-  <button class="nav-btn" onclick="showView('office')" style="color:#ffd700;font-weight:700">🏢 Office</button>
-  <button class="nav-btn" onclick="showView('chat')"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
+  <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
+  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
+  <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
+  <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
+  <button class="nav-btn nav-img" onclick="showView('office')" data-guest-lock="Office" style="color:#ffd700;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏢 Office</button>
+  <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <!-- E3 REMOVED: 📖 Lib & Notes nav — now lives inside Office ▸ Library sub-tab -->
   <!-- E3 REMOVED: 🗂️ Projects nav — now lives inside Office ▸ Projects sub-tab -->
-  <button class="nav-btn" onclick="showView('apis')">🔌 APIs</button>
-  <button class="nav-btn" onclick="showView('social')">📡 Social</button>
-  <button class="nav-btn" onclick="showView('media')"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
-  <button class="nav-btn" onclick="showView('automation')"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
+  <button class="nav-btn nav-img" onclick="showView('apis')" style="--nav-img:url(/assets/nav/apis.jpg)">🔌 APIs</button>
+  <button class="nav-btn nav-img" onclick="showView('social')" style="--nav-img:url(/assets/nav/social.jpg)">📡 Social</button>
+  <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
+  <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <!-- E3 REMOVED: ⚡ Skills nav — now lives inside Office ▸ Skills sub-tab -->
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
   <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
-  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700"><img src="/api/forge/art/module-gallery.png" alt="" onerror="this.outerHTML='🏛️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(255,123,61,0.4)"> Rooms</button>
+  <!-- Rooms moved into the 🌐 Worlds chooser — out of the main work-flow -->
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <!-- Commerce tab removed -->
   <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
-  <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
-  <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
+  <button class="nav-btn nav-img" onclick="showView('forge')" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
-  <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700" title="Plans & pricing">◈ Plans</button>
-  <button class="nav-btn" onclick="location.href='game.html'" id="nav2DBtn" style="color:#00ff9c;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,255,156,0.5);border-color:rgba(0,255,156,0.25)" title="Enter the 2D World">▦ 2D WORLD</button>
-  <button class="nav-btn" onclick="enter3DWorld()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter the 3D World">◈ 3D WORLD</button>
+  <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
+  <button class="nav-btn nav-img" id="navWorldsBtn" onclick="toggleWorldsMenu(event, this)" style="color:#7c3aed;font-weight:700;letter-spacing:0.06em;border-color:rgba(124,58,237,0.35);--nav-img:url(/assets/nav/worlds.jpg)" title="Worlds · Rooms · Bazaar · Gallery · Treasury">🌐 Worlds ▾</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
+
+<!-- Worlds chooser dropdown — launched from the 🌐 Worlds nav button -->
+<div id="worldsMenu" style="display:none;position:fixed;z-index:3000;background:var(--bg-card,#0b1220);border:1px solid rgba(124,58,237,0.45);border-radius:10px;padding:6px;box-shadow:0 12px 36px rgba(0,0,0,0.5);min-width:190px;font-family:inherit">
+  <div style="font-size:8px;letter-spacing:2px;color:#7c3aed;text-transform:uppercase;padding:4px 10px 6px;font-weight:700">Empire Worlds</div>
+  <button class="worlds-item" onclick="location.href='game.html'" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">▦</span><span>2D World</span></button>
+  <button class="worlds-item" onclick="enter3DWorld()" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">◈</span><span>3D World</span></button>
+  <button class="worlds-item" onclick="location.href='game.html?embed=office&walk=1'" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">🏛️</span><span>Rooms (2D World)</span></button>
+  <button class="worlds-item" onclick="window.open('pixel-forge.html','_blank')" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">⬡</span><span>Forge (2D world · 3D realms later)</span></button>
+  <button class="worlds-item" onclick="try{if(window.Shop&&Shop.open){Shop.open();}else{window.open('marketplace-shop-v2.html','_blank');}}catch(e){window.open('marketplace-shop-v2.html','_blank');}" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">🏪</span><span>Bazaar</span></button>
+  <button class="worlds-item" onclick="showView('office');switchOfficeTab('gallery')" data-guest-lock="Gallery" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">🖼️</span><span>Gallery / Showcase</span></button>
+  <button class="worlds-item" onclick="showView('office');switchOfficeTab('treasury')" data-guest-lock="Treasury" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;background:none;border:none;color:inherit;font-family:inherit;font-size:10px;cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(124,58,237,0.18)'" onmouseout="this.style.background='none'"><span style="font-size:13px">◆</span><span>Treasury · Rep · Referrals</span></button>
+</div>
+<script>
+/* Open the worlds menu anchored under a given button (or by id). Close on outside click / ESC. */
+(function(){
+  var menu = document.getElementById('worldsMenu');
+  window.toggleWorldsMenu = function(e, anchor){
+    if(e){ e.stopPropagation(); }
+    if(!menu) return;
+    if(menu.style.display === 'none'){
+      var r = (anchor || e && e.currentTarget || document.getElementById('navWorldsBtn')).getBoundingClientRect();
+      menu.style.top  = (r.bottom + 6) + 'px';
+      menu.style.left = Math.min(r.left, (window.innerWidth - 220)) + 'px';
+      menu.style.display = 'block';
+    } else {
+      menu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', function(ev){
+    if(!menu || menu.style.display === 'none') return;
+    var btns = document.querySelectorAll('#navWorldsBtn, #navWorldsBtnSb');
+    var onBtn = false;
+    btns.forEach(function(b){ if(ev.target === b) onBtn = true; });
+    if(onBtn || menu.contains(ev.target)) return;
+    menu.style.display = 'none';
+  });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && menu) menu.style.display = 'none'; });
+})();
+</script>
 
 <script>
 /* 3D World = sign-in gated only (Pro tier later). NO access/beta codes. localhost bypasses for dev. */
@@ -4430,7 +4554,7 @@ window.enter3DWorld=function(){
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
     <button class="sbt" onclick="showView('agents');lySetSb(this)"><span class="ic">🤖</span>Agents</button>
-    <button class="sbt" onclick="showView('marketplace');lySetSb(this)"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="location.href='game.html?embed=office&walk=1'" title="Walk your rooms in the 2D World"><span class="ic">🚪</span>Rooms</button>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
@@ -4443,15 +4567,13 @@ window.enter3DWorld=function(){
     <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Forge</button>
     <style>@keyframes sbtGlow{0%,100%{box-shadow:0 0 2px rgba(232,196,92,.22)}50%{box-shadow:0 0 13px rgba(232,196,92,.6)}}.sbt-glow{animation:sbtGlow 2.6s ease-in-out infinite;border-radius:8px}.sbt-glow .ic{filter:drop-shadow(0 0 5px rgba(232,196,92,.9))}.sbt-glow:hover{animation-duration:1.1s}</style>
     <button class="sbt sbt-glow" onclick="location.href='pricing.html'" style="color:#e8c45c;font-weight:700"><span class="ic">⭐</span>Upgrade to Pro</button>
-    <button class="sbt" onclick="location.href='monetize.html'" style="color:#00e5a0"><span class="ic">💸</span>Monetize</button>
     <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">⚡</span>AURA</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
     <!-- Sign in (sidebar) removed — unwired -->
-    <button class="sbt" onclick="location.href='game.html'" style="color:#00ff9c"><span class="ic">▦</span>2D World</button>
-    <button class="sbt" onclick="lySetSb(this);enter3DWorld()" id="navGridBtnSb" style="color:#00e5ff"><span class="ic">◈</span>3D World</button>
+    <button class="sbt" onclick="lySetSb(this);toggleWorldsMenu(event, this)" id="navWorldsBtnSb" style="color:#7c3aed"><span class="ic">🌐</span>Worlds</button>
     <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3)" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
   </div>
   <div class="sb-foot">OLLAMA → GROQ → GEMINI<br>7 AGENTS ONLINE</div>
@@ -4495,7 +4617,7 @@ window.enter3DWorld=function(){
         <span class="mqa-icon">📈</span>
         <span class="mqa-label">Markets</span>
       </button>
-      <button class="mqa-btn" onclick="showView('marketplace')">
+      <button class="mqa-btn" onclick="showView('office');switchOfficeTab('bazaar')">
         <span class="mqa-icon">🛒</span>
         <span class="mqa-label">Marketplace</span>
       </button>
@@ -5965,7 +6087,7 @@ window.enter3DWorld=function(){
   <!-- Office / Pixel Office -->
   <div id="officeView" class="view">
     <div style="display:flex;gap:8px;padding:12px 0;flex-wrap:wrap;position:relative;z-index:10;margin-bottom:8px">
-      <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">⚡ Work Board</button>
+      <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">🏢 Office</button>
       <button class="nav-btn" id="officeTab7" onclick="switchOfficeTab('projects')">🗂️ Projects</button>
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
       <!-- A4: Workflows sub-tab REMOVED (owner) — Workflow lives ONLY as its own top-level tab. officeTab5 retired. -->
@@ -5974,6 +6096,12 @@ window.enter3DWorld=function(){
       <button class="nav-btn" id="officeTab2" onclick="switchOfficeTab('boardroom')">🏢 Boardroom</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
       <button class="nav-btn" id="officeTab4" onclick="switchOfficeTab('safety')">🛡 Safety</button>
+      <!-- Command Hub merge: the hub panels now live INSIDE the Office tab. World-facing
+           Rooms & Forge moved OUT to the 2D/3D World (Worlds menu + sidebar) — not sub-tabs here. -->
+      <button class="nav-btn" id="officeTab10" onclick="switchOfficeTab('gallery')" style="color:#00e5a0;font-weight:700">🖼 Gallery</button>
+      <button class="nav-btn" id="officeTab11" onclick="switchOfficeTab('showcase')" style="color:#a855f7;font-weight:700">✦ Showcase</button>
+      <button class="nav-btn" id="officeTab12" onclick="switchOfficeTab('bazaar')" style="color:#e8b84b;font-weight:700">◈ Bazaar</button>
+      <button class="nav-btn" id="officeTab13" onclick="switchOfficeTab('treasury')" style="color:#00e5a0;font-weight:700">◆ Treasury</button>
     </div>
     
     <!-- E3: Projects sub-panel — standalone #projectsView content relocated here at runtime by switchOfficeTab('projects') -->
@@ -6046,6 +6174,11 @@ window.enter3DWorld=function(){
       </div>
 
       <!-- E3 REMOVED: ROW 3 quick-action-strip (NEW JOB / AGENTS / SKILLS / FORGE·GALLERY / ROOMS / WORLD / BILLING / CSV / PIXEL OFFICE) — duplicated main nav; owner removed whole strip -->
+      <!-- Command Hub merge: ◈ Your Property — the hub's office manager now lives with the Command Center -->
+      <div class="shdterm-scope" style="margin-top:14px;border-top:1px solid rgba(168,85,247,.18);padding-top:6px">
+        <div class="rsec">◈ Your Property <span class="c">Founders' Row · office manager</span></div>
+        <div id="officeCommandProp"></div>
+      </div>
     </div>
     
     <!-- Pixel Office — Shaddai's command throne with 6 agent desks -->
@@ -6271,6 +6404,12 @@ window.enter3DWorld=function(){
         </div>
       </div>
     </div>
+
+    <!-- Command Hub merge: hub panels rendered into these office rooms by command-terminal.js -->
+    <div id="officeGallery" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+    <div id="officeShowcase" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+    <div id="officeBazaar" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+    <div id="officeTreasury" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
   </div>
 
   <!-- Chat -->
@@ -6465,7 +6604,7 @@ window.enter3DWorld=function(){
             <div class="of-tiers" id="ofTiers">
               <button data-tier="light"  data-brain="ollama-local">⚡ LIGHT<small>cheap · chat &amp; basics</small></button>
               <button data-tier="balanced" data-brain="groq-70b">⚙ BALANCED<small>mid · multi-step</small></button>
-              <button data-tier="heavy"  data-brain="claude-premium">🔥 HEAVY<small>premium · deep work</small></button>
+              <button data-tier="heavy"  data-brain="claude-premium" data-pro="Premium brains">🔥 HEAVY<small>premium · deep work</small></button>
             </div>
           </div>
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
@@ -7614,7 +7753,6 @@ window.enter3DWorld=function(){
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('pitch')">Pitch</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('spec')">Tech Spec</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('marketing')">Marketing</button>
-        <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('monetize')">Monetize</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('mvp')">MVP</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="runProjectWorkflow('research-to-build')">Research→Build</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('risks')">Risk Analysis</button>
@@ -7680,7 +7818,6 @@ window.enter3DWorld=function(){
         <button class="proj-section-tab" id="pst-mvp" onclick="switchProjSection('mvp')">🚀 MVP</button>
         <button class="proj-section-tab" id="pst-marketing" onclick="switchProjSection('marketing')">📣 Marketing</button>
         <button class="proj-section-tab" id="pst-pitch" onclick="switchProjSection('pitch')">💼 Pitch</button>
-        <button class="proj-section-tab" id="pst-monetize" onclick="switchProjSection('monetize')">💰 Monetize</button>
         <button class="proj-section-tab" id="pst-log" onclick="switchProjSection('log')">📋 Build Log</button>
       </div>
       <div id="pbContent" style="padding:16px;min-height:280px;max-height:520px;overflow-y:auto;font-size:11px;line-height:1.7"></div>
@@ -25248,7 +25385,7 @@ function showView(v) {
   if (v === 'zerox')         { if (typeof pingZerox === 'function') pingZerox(); if (typeof loadFearGreed === 'function') loadFearGreed(); }
   if (v === 'oracle')        { if (typeof pingOracle === 'function') pingOracle(); if (typeof loadMoonPhase === 'function') loadMoonPhase(); }
   if (v === 'turtle')        { if (typeof pingTurtle === 'function') pingTurtle(); }
-  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'pixel'); window._officeEntrySub = null; }
+  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'command'); window._officeEntrySub = null; }
   if (v === 'agents')     { if (typeof render3DAgentCards === 'function') render3DAgentCards(); if (typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); }
 }
 
@@ -27349,16 +27486,17 @@ function _e3RelocateIntoOffice(sourceViewId, panelId, initFn) {
 function switchOfficeTab(tab) {
   // A4: 'workflows' removed (owner) → Workflow is top-level only. 'billing' added as an Office sub-tab.
   if (tab === 'workflows') { try { showView('workflow'); } catch(e){} return; } // legacy callers still work
-  const rooms = ['Command', 'Projects', 'Skills', 'Billing', 'Pixel', 'Boardroom', 'Library', 'Studio', 'Safety'];
+  // World-facing Rooms & Forge are NOT Office sub-tabs — they live in the 2D/3D World.
+  const rooms = ['Command', 'Projects', 'Skills', 'Billing', 'Pixel', 'Boardroom', 'Library', 'Studio', 'Safety', 'Gallery', 'Showcase', 'Bazaar', 'Treasury'];
   rooms.forEach(r => {
     const el = document.getElementById('office' + r);
     if (el) { el.style.display = r.toLowerCase() === tab ? (r === 'Command' || r === 'Pixel' ? 'flex' : 'block') : 'none'; }
   });
-  for (let i = 1; i <= 9; i++) {
+  for (let i = 1; i <= 13; i++) {
     const btn = document.getElementById('officeTab' + i);
     if (btn) btn.classList.remove('active');
   }
-  const tabMap = { command: 1, projects: 7, skills: 8, billing: 9, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4 };
+  const tabMap = { command: 1, projects: 7, skills: 8, billing: 9, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4, gallery: 10, showcase: 11, bazaar: 12, treasury: 13 };
   const activeBtn = document.getElementById('officeTab' + tabMap[tab]);
   if (activeBtn) activeBtn.classList.add('active');
   // Wave C: free the Pixel Office MMO render loop whenever we leave the Pixel tab
@@ -27407,6 +27545,11 @@ function switchOfficeTab(tab) {
         if (el) { el.textContent = '● OFFLINE'; el.style.color = 'rgba(255,255,255,0.3)'; }
       }
     });
+  }
+  // Command Hub merge: hydrate the merged hub panels inside the Office tab
+  if (window.renderOfficeTab) {
+    if (tab === 'command') { window.renderOfficeTab('command'); }
+    else if (tab === 'gallery' || tab === 'showcase' || tab === 'bazaar' || tab === 'treasury') { window.renderOfficeTab(tab); }
   }
 }
 
@@ -27625,29 +27768,146 @@ function renderUserWorkflows() {
     </div>`).join('');
 }
 
+// ── UNIFIED WORKFLOW RUNNER ────────────────────────────────────────────
+// Runs ANY chain on the server engine (POST /api/workflows/run → SSE). Each step
+// executes on the real agent engine (its actual tools/skills), results are logged
+// to workflow_runs.json, and live progress streams back. Callers fall back to the
+// raw /api/agent/run endpoint if this one is unreachable, so chains always work.
+async function runWorkflowServer(def, opts) {
+  const steps = (def && def.steps ? def.steps : []).map(s => ({
+    agent: String(s.agent || '').toUpperCase(),
+    task: String(s.task || s.prompt || s.goal || '')
+  }));
+  if (!steps.length) return { ok: false, error: 'no steps' };
+  let res;
+  try {
+    res = await fetch('/api/workflows/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workflowId: def.builtinId || '',
+        input: (opts && opts.input) || '',
+        customSteps: steps
+      }),
+      signal: AbortSignal.timeout(900000)
+    });
+  } catch (e) { return { ok: false, error: (e && e.message) || 'network error' }; }
+  if (!res.ok) {
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    return { ok: false, status: res.status, data, error: (data && data.error) || ('HTTP ' + res.status) };
+  }
+  if (!res.body || typeof res.body.getReader !== 'function') return { ok: false, error: 'streaming not supported' };
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  let results = [];
+  let finalOutput = '';
+  let overallStatus = 'running';
+  for (;;) {
+    let chunk;
+    try { chunk = await reader.read(); } catch (e) { break; }
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      const line = block.split('\n').find(l => l.indexOf('data:') === 0);
+      if (!line) continue;
+      let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch (_) { continue; }
+      if (ev.type === 'step_done' || ev.type === 'step_error') {
+        results.push({ step: ev.step, agent: ev.agent, status: ev.type === 'step_done' ? (ev.status || 'completed') : 'failed', result: ev.output || ev.error || '', tools: ev.tools || [] });
+      }
+      if (ev.type === 'complete') { overallStatus = ev.status || 'completed'; finalOutput = ev.finalOutput || ''; }
+      if (opts && opts.onEvent) { try { opts.onEvent(ev); } catch (_) {} }
+    }
+  }
+  return { ok: true, results, finalOutput, status: overallStatus };
+}
+
+// Live step-by-step render of the SSE stream into the Workflow Center's Results Inbox.
+function _wfLiveRender(ev) {
+  const inbox = document.getElementById('wfResultsInbox');
+  if (!inbox) return;
+  if (ev.type === 'start') {
+    inbox.innerHTML = `<div style="padding:10px">
+      <div id="wf-live-head" style="font-size:12px;font-weight:700;color:#ffd700;margin-bottom:4px">▶ ${escH(ev.workflow || 'Chain')} — running</div>
+      <div id="wf-live-sub" style="font-size:9px;color:var(--text-muted);margin-bottom:8px">${ev.steps} steps · server agent engine</div>
+      <div id="wf-live-steps"></div>
+    </div>`;
+    return;
+  }
+  if (ev.type === 'step_start') {
+    const wrap = document.getElementById('wf-live-steps');
+    if (!wrap) return;
+    const div = document.createElement('div');
+    div.id = 'wf-live-step-' + ev.step;
+    div.style.cssText = 'margin-bottom:10px;border-left:2px solid #ffb020;padding-left:8px';
+    div.innerHTML = `<div style="font-size:10px;font-weight:700;color:#ffd700">Step ${ev.step}/${ev.total}: ${escH(ev.agent)} — running…</div>`;
+    wrap.appendChild(div);
+    inbox.scrollTop = inbox.scrollHeight;
+    return;
+  }
+  if (ev.type === 'step_done' || ev.type === 'step_error') {
+    const div = document.getElementById('wf-live-step-' + ev.step);
+    if (!div) return;
+    const ok = ev.type === 'step_done';
+    div.style.borderLeftColor = ok ? 'var(--accent)' : '#ff5a6e';
+    div.innerHTML = `<div style="font-size:10px;font-weight:700;color:${ok ? '#00ff88' : '#ff5a6e'}">Step ${ev.step}: ${escH(ev.agent)} ${ok ? '✓' : ('⚠ ' + escH(ev.error || 'failed'))}</div>
+      ${(ev.tools && ev.tools.length) ? `<div style="font-size:8px;color:#00f0ff;font-family:'Share Tech Mono',monospace;margin:2px 0">🔧 ${ev.tools.map(escH).join(' · ')}</div>` : ''}
+      <div style="white-space:pre-wrap;font-size:10px;line-height:1.5;color:var(--text);max-height:150px;overflow-y:auto">${escH(ok ? (ev.output || '(no output)') : (ev.error || 'failed'))}</div>`;
+    inbox.scrollTop = inbox.scrollHeight;
+    return;
+  }
+  if (ev.type === 'complete') {
+    const head = document.getElementById('wf-live-head');
+    if (head) head.innerHTML = `✓ ${escH(ev.workflow || 'Chain')} — ${escH(String(ev.status || 'complete').toUpperCase())}`;
+    const sub = document.getElementById('wf-live-sub');
+    if (sub) sub.textContent = ((ev.steps && ev.steps.length) ? ev.steps.length + ' steps · ' : '') + 'server agent engine';
+    window._wfFinal = ev.finalOutput || (ev.steps && ev.steps.length && ev.steps[ev.steps.length-1].output) || '';
+    const wrap = document.getElementById('wf-live-steps');
+    if (wrap) wrap.appendChild(document.createElement('div')).innerHTML = '<button onclick="copyToClip(window._wfFinal||\'\')" class="btn btn-ghost" style="font-size:9px;margin-top:4px">Copy Final Result</button>';
+    inbox.scrollTop = inbox.scrollHeight;
+  }
+}
+
 async function executeWorkflowChain(wf) {
   const inbox = document.getElementById('wfResultsInbox');
   if (inbox) inbox.innerHTML = `<div style="color:#ffb020;font-size:11px;padding:10px">▶ Running "${escH(wf.name||'')}" on the real agent engine — each agent uses its real tools…</div>`;
   officeLog(`[CHAIN] "${wf.name}" → ${wf.steps.map(s=>String(s.agent).toUpperCase()).join(' → ')}`);
-  // REAL execution: send the whole chain to the agent engine. It runs each step on the
-  // actual agent (with that agent's real tools/skills) and feeds output → next step.
-  const workflow = wf.steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
+  // REAL execution: unified server engine first (POST /api/workflows/run → SSE, live
+  // per-step progress streamed via _wfLiveRender). If that path is unreachable/unbilled,
+  // fall back to the older sync /api/agent/run workflow route (same agent engine).
   let stepResults = [];
+  let finalResult = '';
   try {
-    const r = await fetch('/api/agent/run', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ workflow }), signal: AbortSignal.timeout(180000)
-    });
-    const data = await r.json();
-    if (!r.ok || data.error) throw new Error(data.error || ('HTTP '+r.status));
-    stepResults = data.steps || [];
-  } catch(e) {
-    officeLog(`[CHAIN] failed: ${e.message}`);
-    if (inbox) inbox.innerHTML = `<div style="padding:10px;color:#ff5a6e;font-size:11px">⚠ Chain failed: ${escH(e.message)}<div style="color:var(--text-muted);font-size:9px;margin-top:4px">The agent engine (server-production.js) must be running on this server.</div></div>`;
-    notify('⚠ Chain failed: '+e.message); return;
+    const r = await runWorkflowServer(wf, { onEvent: _wfLiveRender });
+    if (r && r.ok && r.results && r.results.length) {
+      stepResults = r.results;
+      finalResult = r.finalOutput || (r.results[r.results.length-1] && r.results[r.results.length-1].result) || '';
+    } else if (r && r.error) {
+      officeLog(`[CHAIN] server engine unavailable (${r.error}) — falling back to /api/agent/run`);
+    }
+  } catch(e) { officeLog(`[CHAIN] server engine threw: ${e.message}`); }
+  if (!stepResults.length) {
+    const workflow = wf.steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
+    try {
+      const r = await fetch('/api/agent/run', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ workflow }), signal: AbortSignal.timeout(180000)
+      });
+      const data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP '+r.status));
+      stepResults = data.steps || [];
+      finalResult = data.finalOutput || '';
+    } catch(e) {
+      officeLog(`[CHAIN] failed: ${e.message}`);
+      if (inbox) inbox.innerHTML = `<div style="padding:10px;color:#ff5a6e;font-size:11px">⚠ Chain failed: ${escH(e.message)}<div style="color:var(--text-muted);font-size:9px;margin-top:4px">The agent engine (server-production.js) must be running on this server.</div></div>`;
+      notify('⚠ Chain failed: '+e.message); return;
+    }
   }
+  if (!stepResults.length) { notify('⚠ Chain produced no output'); return; }
   const results = stepResults.map(s => s.result || '');
-  const finalResult = results[results.length - 1] || 'No output';
+  finalResult = finalResult || results[results.length - 1] || 'No output';
   // step-by-step inbox render (agent + REAL tools used + output) — overridden below for other destinations
   if ((wf.output === 'inbox' || !wf.output) && inbox) {
     const okN = stepResults.filter(s => s.status !== 'failed').length;
@@ -27819,6 +28079,13 @@ const _PREBUILT_STEPS = {
 async function _runScheduledJobChain(job) {
   const steps = (job.steps && job.steps.length) ? job.steps : (_PREBUILT_STEPS[job.workflowId] || []);
   if (!steps.length) throw new Error('No steps for job');
+  // Preferred: unified server engine (SSE). Fallback: sync /api/agent/run.
+  try {
+    const r = await runWorkflowServer({ name: job.name || 'Scheduled Job', steps });
+    if (r && r.ok && (r.finalOutput || (r.results && r.results.length))) {
+      return r.finalOutput || (r.results[r.results.length-1] && r.results[r.results.length-1].result) || 'No output';
+    }
+  } catch(e) { /* fall through to sync route */ }
   const workflow = steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
   const r = await fetch('/api/agent/run', {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -31122,6 +31389,20 @@ const AGENTS_V2 = {
     skills: ['create', 'brand', 'content', 'design', 'write', 'chat', 'read-files', 'opinion'],
     desc: 'Creative direction, branding, content creation, visual design. Reads files and provides creative input.',
     delegatesTo: ['gemma2:2b', 'phi3:mini']
+  },
+  QUILL: {
+    port: 8005, color: '#ffb020', emoji: '✍️', role: 'Writing & Comms',
+    rank: 'support', aiPrefs: ['groq', 'ollama:llama3.2:3b'],
+    skills: ['write', 'document', 'copy', 'guide', 'review', 'chat', 'read-files', 'opinion'],
+    desc: 'Clear communication, documentation, copy, user guides. Reviews for clarity and tone.',
+    delegatesTo: ['gemma2:2b']
+  },
+  PIKADON: {
+    port: 8008, color: '#ff4070', emoji: '🛡', role: 'Security & Compliance',
+    rank: 'support', aiPrefs: ['groq', 'ollama:llama3.2:3b'],
+    skills: ['audit', 'security', 'permissions', 'secrets', 'compliance', 'review', 'chat'],
+    desc: 'Security hardening, PII protection, audit trails, approval gates. Assumes worst-case scenarios.',
+    delegatesTo: []
   },
 };
 
@@ -39303,14 +39584,19 @@ async function pingAllAgents() {
     { name:'PIKADON', color:'#ff4070', port:8008, emoji:'🛡', role:'Security' },
   ];
   grid.innerHTML = AGENTS.map(a =>
-    `<div id="ping_${a.name}" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid ${a.color}33;border-left:3px solid ${a.color};border-radius:4px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="font-size:14px">${a.emoji}</span>
-        <span style="font-size:10px;font-weight:700;color:${a.color}">${a.name}</span>
-        <span style="font-size:7px;color:var(--text-muted);margin-left:auto">:${a.port}</span>
+    `<div id="ping_${a.name}" style="padding:0;background:rgba(0,0,0,0.2);border:1px solid ${a.color}33;border-left:3px solid ${a.color};border-radius:4px;overflow:hidden;position:relative">
+      <img src="/assets/agents/${a.name}-action.png" alt="${a.name}" loading="lazy"
+        style="width:100%;height:80px;object-fit:cover;object-position:top;display:block;opacity:0.85"
+        onerror="this.style.display='none'">
+      <div style="padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="font-size:12px">${a.emoji}</span>
+          <span style="font-size:10px;font-weight:700;color:${a.color}">${a.name}</span>
+          <span style="font-size:7px;color:var(--text-muted);margin-left:auto">:${a.port}</span>
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">${a.role}</div>
+        <div id="pingstat_${a.name}" style="font-size:8px;color:#ffb020">⏳ pinging...</div>
       </div>
-      <div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">${a.role}</div>
-      <div id="pingstat_${a.name}" style="font-size:8px;color:#ffb020">⏳ pinging...</div>
     </div>`
   ).join('');
   for (const a of AGENTS) {
@@ -44699,7 +44985,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">💬 Chat with ${a.name}</button>
-                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('marketplace')"
+                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('office');if(typeof switchOfficeTab==='function')switchOfficeTab('bazaar')"
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">🏪 Open Marketplace</button>
@@ -55692,6 +55978,29 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',consolidate); else consolidate();
 })();
 </script>
+
+<!-- ════════ FULL-BLEED HF NAV BANNERS (assets/nav/*.jpg, generated by backend/scripts/generate-nav-hf.js) ════════ -->
+<style id="nav-img-css">
+  /* Each #mainNav button carrying `--nav-img` gets a full-bleed FLUX banner with a dark
+     overlay so the label stays legible. Landed last so it outranks every nav override. */
+  #mainNav button.nav-btn.nav-img {
+    background-image: linear-gradient(rgba(2,8,23,0.68), rgba(2,8,23,0.68)), var(--nav-img) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    color: #eafaf3 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.6) !important;
+    border-radius: 3px;
+  }
+  #mainNav button.nav-btn.nav-img:hover,
+  #mainNav button.nav-btn.nav-img.active {
+    background-image: linear-gradient(rgba(2,8,23,0.42), rgba(2,8,23,0.42)), var(--nav-img) !important;
+    color: #ffffff !important;
+    border-bottom-color: rgba(0,229,160,0.6) !important;
+  }
+  /* The tiny forge-art thumbnails are redundant over a full-bleed banner — hide them. */
+  #mainNav button.nav-btn.nav-img img { display: none !important; }
+</style>
 
 </body>
 </html>

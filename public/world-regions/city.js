@@ -119,6 +119,9 @@ window.RegionGen['city'] = function(api){
   // Green copper-dome CITY HALL.
   tryPlace({col:14,row:38,w:4,d:3,floors:3,kind:'office',wall:'#c0bcb0',roof:'#5a7a6a',glass:'#d8e0e6',accent:'#7aa890',name:'CITY HALL'});
 
+  // PUB — a beer-hall near the plaza for tactical missions
+  tryPlace({col:32,row:20,w:3,d:3,floors:1,kind:'shop',wall:'#5a3a1a',roof:'#3a2210',accent:'#e8c45c',name:'PUB'});
+
   // ---- 3) CENTRAL FOUNTAIN PLAZA ~ (26,26) ----
   api.rect(23,23,29,29,T.PATH);            // ~5x5+ open plaza
   api.disc(26,26,1.5,T.WATER);             // fountain

@@ -310,6 +310,24 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
 .cta:hover{ color:#022; border-color:transparent; } .cta:hover::before{ transform:none; } .cta:active{ transform:translateY(1px); }
 .cta.primary{ border-color:rgba(0,255,156,.4); color:var(--emerald); }
 .cta .g{ margin-right:9px; opacity:.7; }
+/* ── hero command-deck CTA — the BIG "enter dashboard" button ── */
+.cta.dash{ display:inline-flex; flex-direction:column; align-items:center; gap:9px;
+  font-size:20px; padding:28px 60px 22px; margin:2px 8px; letter-spacing:.24em; line-height:1.1;
+  color:var(--emerald); border-color:rgba(0,255,156,.6); background:rgba(0,20,14,.6);
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  animation:ctaPulse 3.4s ease-in-out infinite; }
+.cta.dash .dash-row{ display:inline-flex; align-items:center; gap:13px; }
+.cta.dash .g{ margin:0; opacity:1; font-size:21px; }
+.cta.dash .agents{ display:inline-flex; gap:6px; margin-left:6px; }
+.cta.dash .agents i{ width:9px; height:9px; border-radius:50%; background:var(--ac); box-shadow:0 0 9px var(--ac); }
+.cta.dash .sub{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.36em; text-transform:uppercase;
+  color:rgba(0,255,156,.65); transition:color .3s; }
+.cta.dash:hover{ color:#022; background:linear-gradient(120deg,var(--emerald),var(--cyan)); border-color:transparent;
+  box-shadow:0 0 46px rgba(0,255,156,.42); }
+.cta.dash:hover .sub{ color:#033; }
+.cta.dash:hover .agents i{ background:#033; box-shadow:0 0 6px rgba(0,0,0,.4); }
+@keyframes ctaPulse{ 0%,100%{ box-shadow:0 0 20px rgba(0,255,156,.12), inset 0 0 16px rgba(0,255,156,.05); }
+  50%{ box-shadow:0 0 44px rgba(0,255,156,.30), inset 0 0 24px rgba(0,255,156,.10); } }
 /* ── SH machine-iris portal (KEEP → /lab-molecules.html) ── */
 #shGate{ position:relative; width:200px; height:200px; margin:34px auto 8px; cursor:pointer;
   opacity:0; animation:rise 1s .68s var(--ease) forwards; }
@@ -509,6 +527,66 @@ section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidde
 .auraline .auraMore{ position:relative; z-index:2; font-family:var(--f-hud); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--emerald); }
 .auraline .auraMore:hover{ color:var(--gold); }
 
+/* ── MCP & RAG · the council in your Claude ── */
+.mcp-console{ margin-top:44px; display:grid; grid-template-columns:1.1fr 1.9fr; gap:1px; background:var(--edge); border:1px solid var(--edge); }
+@media(max-width:900px){ .mcp-console{ grid-template-columns:1fr; } }
+/* value strip — what the council-in-Claude actually does for you */
+.mcp-value{ margin-top:30px; display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--edge); border:1px solid var(--edge); position:relative; z-index:3; }
+@media(max-width:900px){ .mcp-value{ grid-template-columns:1fr; } }
+.mcp-value .mv{ background:rgba(10,14,19,.7); padding:18px 18px 16px; }
+.mcp-value .mv .mv-ic{ font-size:16px; color:var(--emerald); text-shadow:0 0 14px rgba(0,255,156,.35); }
+.mcp-value .mv h4{ font-family:var(--f-hud); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink); margin:9px 0 6px; }
+.mcp-value .mv p{ font-size:12.5px; color:var(--ink-soft); line-height:1.55; margin:0; }
+.mcp-value .mv code{ font-family:var(--f-mono); font-size:10px; color:var(--cyan); }
+.mcp-side{ background:rgba(10,14,19,.72); padding:26px 24px; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+.mcp-side .scan{ opacity:.3; }
+.mcp-side .mc-version{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); border:1px solid var(--gold-dim); padding:3px 9px; display:inline-block; align-self:flex-start; }
+.mcp-side .mc-title{ font-family:var(--f-display); font-weight:700; letter-spacing:.04em; font-size:clamp(19px,2.6vw,24px); color:var(--ink); margin:16px 0 8px; position:relative; z-index:3; }
+.mcp-side .mc-sub{ font-size:13.5px; color:var(--ink-soft); position:relative; z-index:3; }
+.mcp-side .mc-stats{ margin-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--edge); border:1px solid var(--edge); position:relative; z-index:3; }
+.mcp-side .mc-stat{ background:rgba(6,8,11,.6); padding:12px 14px; }
+.mcp-side .mc-stat .f{ font-family:var(--f-display); font-weight:900; font-size:clamp(18px,2.4vw,26px); color:var(--emerald); line-height:1; text-shadow:0 0 16px rgba(0,255,156,.22); }
+.mcp-side .mc-stat .l{ font-family:var(--f-mono); font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-top:5px; }
+.mcp-right{ background:rgba(10,14,19,.72); padding:26px 24px; position:relative; overflow:hidden; }
+.mcp-right .mcp-live{ font-family:var(--f-mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.mcp-right .mcp-live .dot{ width:8px; height:8px; border-radius:50%; background:var(--emerald); box-shadow:0 0 10px var(--emerald); animation:chakraPulse 2.4s ease-in-out infinite; }
+.mcp-kb{ display:flex; flex-direction:column; gap:1px; background:var(--edge); border:1px solid var(--edge); }
+.mcp-kb-row{ display:flex; align-items:center; gap:12px; padding:9px 12px; background:rgba(6,8,11,.6); }
+.mcp-kb-row .g{ font-family:var(--f-cinzel); font-size:14px; width:18px; text-align:center; }
+.mcp-kb-row .n{ font-family:var(--f-hud); font-weight:600; font-size:11px; letter-spacing:.1em; width:84px; color:var(--ink); flex-shrink:0; }
+.mcp-kb-row .bar{ flex:1; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; position:relative; }
+.mcp-kb-row .bar i{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,var(--emerald),var(--cyan)); border-radius:2px; transition:width 1s var(--ease); }
+.mcp-kb-row .d{ font-family:var(--f-mono); font-size:10px; color:var(--ink-soft); width:56px; text-align:right; flex-shrink:0; }
+.mcp-kb-row .mb{ font-family:var(--f-mono); font-size:9px; color:var(--ink-faint); width:46px; text-align:right; flex-shrink:0; }
+/* gate + download + setup */
+.mcp-gate{ margin-top:22px; border:1px solid var(--edge); background:rgba(6,8,11,.55); padding:16px 18px; position:relative; z-index:3; }
+.mcp-gate .mcp-gate-hint{ font-family:var(--f-mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+.mcp-gate form{ display:flex; gap:8px; flex-wrap:wrap; }
+.mcp-gate input{ flex:1; min-width:180px; background:rgba(6,8,11,.8); border:1px solid var(--edge); color:var(--ink); font-family:var(--f-mono); font-size:12px; padding:11px 14px; letter-spacing:.1em; outline:none; }
+.mcp-gate input:focus{ border-color:rgba(0,255,156,.45); }
+.mcp-gate .mcp-err{ font-family:var(--f-mono); font-size:10px; letter-spacing:.1em; color:#ff6f6f; margin-top:8px; display:none; }
+.mcp-btn{ font-family:var(--f-hud); font-weight:700; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#04140c; background:linear-gradient(90deg,var(--emerald),var(--cyan)); border:none; padding:12px 20px; cursor:pointer; transition:filter .3s, transform .3s; }
+.mcp-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+.mcp-btn.alt{ color:var(--emerald); background:rgba(0,255,156,.07); border:1px solid rgba(0,255,156,.32); }
+.mcp-dl{ display:none; margin-top:22px; position:relative; z-index:3; }
+.mcp-dl.open{ display:block; }
+.mcp-dl .mcp-dl-head{ font-family:var(--f-hud); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--emerald); margin-bottom:12px; }
+.mcp-dl .mcp-dl-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.mcp-setup{ margin-top:22px; display:none; position:relative; z-index:3; }
+.mcp-setup.open{ display:block; }
+.mcp-setup .mcp-setup-head{ font-family:var(--f-hud); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+.codeblk{ position:relative; border:1px solid var(--edge); background:rgba(6,8,11,.7); margin-bottom:10px; }
+.codeblk code{ display:block; padding:12px 14px; font-family:var(--f-mono); font-size:11px; line-height:1.6; color:var(--cyan); white-space:pre-wrap; word-break:break-all; }
+.codeblk .cp{ position:absolute; top:8px; right:8px; font-family:var(--f-mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); background:rgba(10,14,19,.9); border:1px solid var(--edge); padding:4px 9px; cursor:pointer; }
+.codeblk .cp:hover{ color:var(--emerald); border-color:rgba(0,255,156,.4); }
+.mcp-setup .mcp-step{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.05em; color:var(--ink-soft); margin:12px 0 6px; }
+.mcp-setup .mcp-step b{ color:var(--ink); }
+.mcp-setup ol{ margin:0 0 14px 0; padding:0; list-style:none; }
+.mcp-setup ol li{ font-size:13px; color:var(--ink-soft); padding:3px 0 3px 20px; position:relative; }
+.mcp-setup ol li::before{ content:'◈'; position:absolute; left:0; color:var(--emerald-dim); font-size:9px; top:8px; }
+.mcp-setup a.more{ font-family:var(--f-hud); font-weight:600; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--emerald); margin-top:6px; display:inline-block; }
+.mcp-setup a.more:hover{ color:var(--gold); }
+
 /* ── CTA band / arrival ── */
 .band{ position:relative; border-top:1px solid var(--edge); border-bottom:1px solid var(--edge); text-align:center; padding:clamp(90px,13vw,170px) var(--gutter); overflow:hidden; }
 .band .wrap{ position:relative; z-index:5; }
@@ -545,6 +623,7 @@ body.player-open #mobileNav, body.player-open #depthRail{ opacity:0; transition:
   #shGate{ width:168px; height:168px; }
   .ctas{ gap:10px; margin-top:26px; }
   .cta, .descent-btn{ padding:14px 20px; font-size:11px; letter-spacing:.12em; }
+  .ctas .cta.dash{ width:100%; padding:18px 26px 15px; font-size:13px; letter-spacing:.16em; }
   .views{ grid-template-columns:1fr !important; }
   .grid7{ grid-template-columns:1fr; }
   .system{ grid-template-columns:1fr; }
@@ -757,6 +836,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
         <a href="/aura.html" role="menuitem"><span class="gi">⚖</span><span class="lk"><span class="t">What AURA is</span><span class="s">coin spared per call</span></span><span class="badge live">live</span></a>
         <a href="#aura" role="menuitem"><span class="gi">◷</span><span class="lk"><span class="t">Live ledger</span><span class="s">coin spared, in ink</span></span><span class="badge live">live</span></a>
         <a href="/aura.html#opensource" role="menuitem"><span class="gi">⌘</span><span class="lk"><span class="t">Open-source</span><span class="s">npm shaddai-aura + MCP</span></span><span class="badge live">live</span></a>
+        <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council in your Claude</span></span><span class="badge live">live</span></a>
       </div>
     </div>
 
@@ -770,18 +850,25 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       </div>
     </div>
 
-    <div class="pillar" data-key="codex">
-      <button type="button" onclick="location.href='/codex.html'">Codex</button>
+    <div class="pillar" data-pillar>
+      <button aria-haspopup="true" aria-expanded="false">Docs <span class="cx">▾</span></button>
+      <div class="panel" role="menu">
+        <div class="phdr"><span>Guides &amp; integrations</span><span class="cd">KNOWLEDGE</span></div>
+        <a href="/playbooks.html" role="menuitem"><span class="gi">📕</span><span class="lk"><span class="t">Playbooks</span><span class="s">free scaling guides · print &amp; ship</span></span><span class="badge live">live</span></a>
+        <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council in your Claude · 85 docs</span></span><span class="badge live">live</span></a>
+        <a href="/aura.html#opensource" role="menuitem"><span class="gi">⌘</span><span class="lk"><span class="t">Open Source</span><span class="s">npm shaddai-aura · npm shaddai-mcp</span></span><span class="badge live">live</span></a>
+        <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">API Reference</span><span class="s">Signals · Data · free key</span></span><span class="badge live">live</span></a>
+      </div>
     </div>
 
-    <div class="pillar" data-key="playbooks">
-      <button type="button" onclick="location.href='/playbooks.html'">📕 Playbooks</button>
+    <div class="pillar" data-key="codex">
+      <button type="button" onclick="location.href='/codex.html'">Codex</button>
     </div>
 
   </nav>
   <div class="corner" id="cornerCluster">
     <a class="cc-link cc-startfree" id="cornerStart" href="/pricing.html#start-free" title="Start free — no card required">Start free</a>
-    <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Deck">Enter Dashboard</a>
+    <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Hub">Command Hub</a>
     <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the full-screen Ascent player">▶ Ascend</button>
   </div>
   <button class="menuBtn" id="menuBtn" aria-expanded="false" aria-controls="mobileNav">☰ Menu</button>
@@ -791,8 +878,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 <div id="mobileNav" aria-hidden="true">
   <button class="mclose" id="mClose">✕ close</button>
   <a href="/prove.html" style="display:block;margin:6px 0 8px;padding:13px;text-align:center;border:1px solid rgba(0,255,156,.4);color:#00ff9c;font-weight:600;border-radius:11px;letter-spacing:.08em;font-family:'Cinzel',serif">▶ Watch it work — free</a>
-  <a href="/pricing.html" style="display:block;margin:0 0 8px;padding:14px;text-align:center;background:#e8c45c;color:#241a03;font-weight:700;border-radius:11px;letter-spacing:.1em;font-family:'Cinzel',serif">Join · $30/mo →</a>
-  <a href="/playbooks.html" style="display:block;margin:0 0 16px;padding:12px;text-align:center;border:1px solid rgba(196,162,78,.35);color:#e8c45c;font-weight:600;border-radius:11px;letter-spacing:.06em;font-family:'Cinzel',serif">📕 Free Scaling Playbooks</a>
+  <a href="/pricing.html" style="display:block;margin:0 0 16px;padding:14px;text-align:center;background:#e8c45c;color:#241a03;font-weight:700;border-radius:11px;letter-spacing:.1em;font-family:'Cinzel',serif">Join · $30/mo →</a>
   <div class="mgroup"><div class="mh">Worlds</div>
     <a href="/dashboard"><span class="gi">◈</span>Command Deck<span class="badge">live</span></a>
     <a href="/SHADDAI-WORLD-3D.html"><span class="gi">✦</span>3D World<span class="badge">live</span></a>
@@ -823,18 +909,25 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     <a href="/aura.html"><span class="gi">⚖</span>What AURA is<span class="badge">live</span></a>
     <a href="#aura"><span class="gi">◷</span>Live ledger<span class="badge">live</span></a>
     <a href="/aura.html#opensource"><span class="gi">⌘</span>Open-source · npm + MCP<span class="badge">live</span></a>
+    <a href="#mcp"><span class="gi">⌗</span>MCP &amp; RAG · the council in Claude<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">Shop</div>
     <a href="/marketplace-shop-v2.html"><span class="gi">◈</span>The Bazaar · agents · skills · workflows<span class="badge">live</span></a>
     <a href="/collectibles-nft.html"><span class="gi">◆</span>NFTs · redeemable collectables<span class="badge">live</span></a>
     <span class="soon"><span class="gi">▣</span>3D Portals · collaborate · soon</span>
   </div>
+  <div class="mgroup"><div class="mh">Docs</div>
+    <a href="/playbooks.html"><span class="gi">📕</span>Playbooks · free scaling guides<span class="badge">live</span></a>
+    <a href="#mcp"><span class="gi">⌗</span>MCP &amp; RAG · the council in Claude<span class="badge">live</span></a>
+    <a href="/aura.html#opensource"><span class="gi">⌘</span>Open Source · npm packages<span class="badge">live</span></a>
+    <a href="/api"><span class="gi">◈</span>API Reference · Signals &amp; Data<span class="badge">live</span></a>
+  </div>
   <div class="mgroup"><div class="mh">Codex</div>
     <a href="/codex.html"><span class="gi">📜</span>The Codex · the almanac<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">Quick</div>
     <a href="#" data-descent><span class="gi">▶</span>Ascend · full screen<span class="badge">film</span></a>
-    <a href="/dashboard"><span class="gi">◈</span>Enter Dashboard<span class="badge">live</span></a>
+    <a href="/dashboard"><span class="gi">◈</span>Command Hub<span class="badge">live</span></a>
   </div>
 </div>
 
@@ -874,8 +967,10 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     </div>
 
     <div class="ctas">
-      <a class="cta" href="/SHADDAI-WORLD-3D.html"><span class="g">◈</span>Enter the World</a>
-      <a class="cta" href="/dashboard"><span class="g">▲</span>Command Deck</a>
+      <a class="cta dash" href="/dashboard">
+        <span class="dash-row"><span class="g">▲</span>Command Hub<span class="agents" aria-hidden="true"><i style="--ac:#b07cff"></i><i style="--ac:#7c5cff"></i><i style="--ac:#5fe0ff"></i><i style="--ac:#00ff9c"></i><i style="--ac:#e8c45c"></i><i style="--ac:#ff8a5c"></i><i style="--ac:#ff6f6f"></i></span></span>
+        <span class="sub">7 agents · one council · your key</span>
+      </a>
     </div>
   </div>
   <div class="scrollcue">Move to awaken the lattice · scroll to descend<span></span></div>
@@ -1061,6 +1156,76 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   </div>
 </section>
 
+<div class="seam alt" aria-hidden="true"></div>
+
+<!-- ═══════════ SCALE VI · MCP & RAG · THE COUNCIL IN YOUR CLAUDE ═══════════ -->
+<section class="blk hud g" id="mcp" data-scale="VI · MCP & RAG">
+  <div class="wrap reveal">
+    <div class="shead">
+      <div>
+        <div class="eyebrow">VI · MCP &amp; RAG</div>
+        <h2 class="h2 neon gold">The council, in your Claude</h2>
+      </div>
+      <div class="scaletag"><span class="coord">MCP</span> <b>bridge v<span id="mcpVer">…</span></b></div>
+    </div>
+    <p class="lede">The seven agents and their mastery knowledge bases, exposed as a <em>Model Context Protocol</em> server — plug them into Claude Desktop, Claude Code, or Cursor and ask anything grounded in the stores. <b>No API keys. No localhost. One line.</b></p>
+
+    <div class="mcp-value">
+      <div class="mv"><span class="mv-ic">◈</span><h4>Seven agents, on call</h4><p>SHADDAI, NEXUS, ZEROX, ORACLE, TURTLE, QUILL, PIKADON — each with its own mastery knowledge base. <code>run_agent — NEXUS, design a scalable system</code> returns the architect, armed with its store.</p></div>
+      <div class="mv"><span class="mv-ic">◎</span><h4>Grounded answers, cited</h4><p>Claude answers from the retrieved passages and cites <code>[Source n]</code> — no invention. <code>rag_ask — using the ORACLE KB, what is manifestation?</code></p></div>
+      <div class="mv"><span class="mv-ic">⌗</span><h4>One line. No keys.</h4><p>No API keys, no external LLM, no localhost server. Wire the whole council into Claude with a single <code>npx</code> command.</p></div>
+    </div>
+
+    <div class="mcp-console">
+      <div class="mcp-side">
+        <span class="scan"></span>
+        <span class="mc-version">SHADDAI MCP · <span id="mcpVer2">…</span></span>
+        <div class="mc-title">5 tools · 7 kb:// resources</div>
+        <div class="mc-sub">list_agents · list_rag_docs · rag_search · rag_ask · run_agent — each with the agent's own knowledge injected. 86 master documents, ready to ground answers.</div>
+        <div class="mc-stats">
+          <div class="mc-stat"><div class="f" id="mcpDocs">—</div><div class="l">knowledge docs</div></div>
+          <div class="mc-stat"><div class="f" id="mcpMB">—</div><div class="l">MB of mastery text</div></div>
+        </div>
+      </div>
+      <div class="mcp-right">
+        <div class="mcp-live"><span class="dot"></span> live from <b>/api/mcp/status</b> · <span id="mcpState">reading…</span></div>
+        <div class="mcp-kb" id="mcpKb"><!-- rendered from /api/mcp/status --></div>
+
+        <!-- ONE-LINE INSTALL (public edition — npm / GitHub, no keys, no gate) -->
+        <div class="mcp-gate" id="mcpOne">
+          <div class="mcp-gate-hint">◈ Public edition is on npm — one line, no keys, no setup</div>
+          <div class="codeblk"><code id="mcpCodeNpx">claude mcp add shaddai -- npx -y shaddai-mcp</code><button class="cp" data-copy="mcpCodeNpx">copy</button></div>
+        </div>
+
+        <div class="mcp-dl" id="mcpDl">
+          <div class="mcp-dl-head">✓ Live on npm &amp; GitHub</div>
+          <div class="mcp-dl-actions">
+            <a class="mcp-btn" href="https://www.npmjs.com/package/shaddai-mcp" target="_blank" rel="noopener">↗ npm · shaddai-mcp</a>
+            <a class="mcp-btn alt" href="https://github.com/IzzoSol/shaddai-mcp" target="_blank" rel="noopener">↗ GitHub · public edition</a>
+            <button class="mcp-btn alt" id="mcpSetupBtn" type="button">Show Claude setup ↓</button>
+          </div>
+        </div>
+
+        <div class="mcp-setup" id="mcpSetup">
+          <div class="mcp-setup-head">Wiring it into Claude</div>
+          <div class="mcp-step"><b>1 ·</b> Claude Code:</div>
+          <div class="codeblk"><code id="mcpCodeCli">claude mcp add shaddai -- npx -y shaddai-mcp</code><button class="cp" data-copy="mcpCodeCli">copy</button></div>
+          <div class="mcp-step"><b>2 ·</b> Claude Desktop — edit the config (File ▸ Settings ▸ Developer ▸ Edit Config) and paste:</div>
+          <div class="codeblk"><code id="mcpCodeCfg">{"mcpServers":{"shaddai":{"command":"npx","args":["-y","shaddai-mcp"]}}}</code><button class="cp" data-copy="mcpCodeCfg">copy</button></div>
+          <div class="mcp-step"><b>or</b> Cursor — Settings ▸ Features ▸ MCP ▸ Add new server ▸ stdio, command <span style="color:var(--cyan)">npx -y shaddai-mcp</span>.</div>
+          <ol>
+            <li>Then ask: <b>"rag_ask — using the ORACLE knowledge base, what is manifestation?"</b></li>
+            <li>Or run the full agent: <b>"run_agent — QUILL, write a stoic essay on discipline using your knowledge."</b></li>
+          </ol>
+          <div class="mcp-step" style="color:var(--ink-faint)">Requires Node ≥ 18 anywhere. The package ships the 7 agents + their knowledge bases; Claude synthesizes grounded answers from the retrieved passages. No API keys, no external LLM, no localhost.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="seam" aria-hidden="true"></div>
+
 <!-- ═══════════ ARRIVAL · THE CROWN ═══════════ -->
 <div class="band hud g arrival-fade" id="arrival" data-scale="VII · Arrival">
   <div class="wrap reveal" style="max-width:var(--maxw)">
@@ -1069,9 +1234,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     <h2 class="h2 neon gold">Step into the empire</h2>
     <p class="lede" style="margin:0 auto 6px">You have ascended from the molecule to the Crown. Now enter it for real.</p>
     <div class="ctas" style="animation:none;opacity:1">
-      <a class="cta primary" href="/SHADDAI-WORLD-3D.html"><span class="g">✦</span>Enter 3D World</a>
-      <a class="cta" href="/dashboard"><span class="g">◈</span>Open Command Deck</a>
-      <a class="cta" href="/region-select.html"><span class="g">▦</span>Enter the Pixel World</a>
+      <a class="cta primary" href="/dashboard"><span class="g">◈</span>Open Command Deck</a>
     </div>
   </div>
 </div>
@@ -1480,6 +1643,58 @@ function tick(el,to,suf){ if(!el) return; suf=suf||''; var t0=performance.now();
   var sec=document.getElementById('aura');
   if(sec && 'IntersectionObserver' in window){
     var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ pull(); io.disconnect(); } }); },{threshold:.2});
+    io.observe(sec);
+  } else pull();
+})();
+
+/* ── MCP & RAG section: live status, gate, download, setup ── */
+(function(){
+  var sec=document.getElementById('mcp'); if(!sec) return;
+  var KB_COLORS={SHADDAI:'#b07cff',NEXUS:'#7c5cff',ZEROX:'#5fe0ff',ORACLE:'#00ff9c',TURTLE:'#00ff9c',QUILL:'#e8c45c',PIKADON:'#ff6f6f'};
+  var fired=false;
+  async function pull(){
+    try{
+      var s=await (await fetch('/api/mcp/status')).json();
+      if(!s.ok) throw new Error(s.status);
+      var v=s.bridge&&s.bridge.version?s.bridge.version:'?';
+      var a=s.agents||[];
+      var docs=s.totals?s.totals.kbChars:0;
+      function set(id,t){ var el=document.getElementById(id); if(el) el.textContent=t; }
+      set('mcpVer',v); set('mcpVer2',v);
+      set('mcpDocs',docs?(a.reduce(function(n,x){return n+(x.docs||0);},0)).toLocaleString():'0');
+      set('mcpMB',s.totals?s.totals.kbMB+'': '0');
+      set('mcpState', s.mcpClientLoaded?'bridge live · mcp client loaded':'bridge live');
+      var kb=document.getElementById('mcpKb'); if(kb&&a.length){
+        var max=Math.max.apply(null,a.map(function(x){return x.chars||0;}).concat([1]));
+        kb.innerHTML=a.map(function(x){ var c=KB_COLORS[x.agent]||'#00ff9c';
+          return '<div class="mcp-kb-row"><span class="g" style="color:'+c+'">'+(x.agent==='SHADDAI'?'♛':x.agent==='NEXUS'?'✧':x.agent==='ZEROX'?'₿':x.agent==='ORACLE'?'◉':x.agent==='TURTLE'?'❂':x.agent==='QUILL'?'✒':'⛨')+'</span>'+
+            '<span class="n" style="color:'+c+'">'+x.agent+'</span>'+
+            '<span class="bar"><i style="width:'+Math.max(4,Math.round((x.chars||0)/max*100))+'%;background:linear-gradient(90deg,'+c+',var(--cyan))"></i></span>'+
+            '<span class="d">'+((x.docs||0))+' docs</span>'+
+            '<span class="mb">'+((x.chars||0)/1048576).toFixed(2)+'MB</span></div>';
+        }).join('');
+      }
+    }catch(e){ set('mcpState','bridge unreachable'); var kb2=document.getElementById('mcpKb'); if(kb2) kb2.innerHTML='<div style="color:var(--ink-faint);font-size:12px">Status unavailable — /api/mcp/status did not respond.</div>'; }
+  }
+  /* public edition is one npx line — no gate, no passphrase, no localhost download */
+  var dl=document.getElementById('mcpDl'), setup=document.getElementById('mcpSetup');
+  if(dl) dl.classList.add('open');
+  var setupBtn=document.getElementById('mcpSetupBtn');
+  if(setupBtn){ setupBtn.addEventListener('click',function(){ if(setup) setup.classList.toggle('open'); }); }
+  /* copy buttons */
+  Array.prototype.slice.call(document.querySelectorAll('.cp[data-copy]')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var el=document.getElementById(b.getAttribute('data-copy'));
+      if(!el) return;
+      var txt=el.textContent;
+      function done(){ b.textContent='copied'; setTimeout(function(){ b.textContent='copy'; },1600); }
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(function(){ fallback(); }); }
+      else fallback();
+      function fallback(){ try{ var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(_){} }
+    });
+  });
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ pull(); io.disconnect(); } }); },{threshold:.15});
     io.observe(sec);
   } else pull();
 })();

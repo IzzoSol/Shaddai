@@ -126,7 +126,10 @@
       var _sv = window.showView;
       window.showView = function () {
         var r = _sv.apply(this, arguments);
-        try { var id = window.getThemeSkin(); applyForce(id); setTimeout(function () { try { applyForce(id); } catch (e) {} }, 220); } catch (e) {}
+        // PERF: the default 'glitch' skin is the untouched original design — nothing to
+        // repaint. Skip the querySelectorAll + repaint entirely on every view switch
+        // (huge DOM), so switching views stays cheap for everyone on the default skin.
+        try { var id = window.getThemeSkin(); if (id !== 'glitch') { applyForce(id); setTimeout(function () { try { applyForce(id); } catch (e) {} }, 220); } } catch (e) {}
         return r;
       };
     } else if ((tries || 0) < 40) { setTimeout(function () { wrapSV((tries || 0) + 1); }, 250); }
@@ -140,8 +143,9 @@
     var s = document.createElement('style'); s.id = 'shd-skin-css';
     s.textContent =
       '#shdSkinDock{position:fixed;left:14px;bottom:14px;z-index:100040;font-family:"Chakra Petch",system-ui,sans-serif}' +
-      '#shdSkinDock .fab{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(12,10,24,.85);color:#efe9ff;cursor:pointer;font-size:17px;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.4);backdrop-filter:blur(6px)}' +
+      '#shdSkinDock .fab{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(12,10,24,.85);color:#efe9ff;cursor:grab;font-size:17px;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.4);backdrop-filter:blur(6px);touch-action:none}' +
       '#shdSkinDock .fab:hover{border-color:rgba(255,255,255,.4)}' +
+      '#shdSkinDock .fab.dragging{cursor:grabbing}' +
       '#shdSkinMenu{position:absolute;left:0;bottom:52px;display:none;flex-direction:column;gap:3px;padding:8px;min-width:172px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(12,10,24,.94);box-shadow:0 10px 34px rgba(0,0,0,.5);backdrop-filter:blur(10px)}' +
       '#shdSkinDock.open #shdSkinMenu{display:flex}' +
       '#shdSkinMenu .hd{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#9a86c8;padding:2px 6px 6px}' +
@@ -149,7 +153,9 @@
       '.shd-skin-opt:hover{background:rgba(255,255,255,.06)}' +
       '.shd-skin-opt.on{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05)}' +
       '.shd-skin-opt .sw{width:13px;height:13px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}' +
-      '.shd-skin-opt .chk{margin-left:auto;opacity:0;font-size:11px}.shd-skin-opt.on .chk{opacity:1}';
+      '.shd-skin-opt .chk{margin-left:auto;opacity:0;font-size:11px}.shd-skin-opt.on .chk{opacity:1}' +
+      '#shdSkinChip{position:fixed;left:14px;bottom:14px;z-index:100040;display:none;width:38px;height:38px;border-radius:50%;border:1px solid rgba(0,255,156,.45);background:rgba(10,16,12,.92);color:#00ff9c;cursor:pointer;font-size:14px;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 14px rgba(0,255,156,.22);backdrop-filter:blur(6px)}' +
+      '#shdSkinChip:hover{border-color:rgba(0,255,156,.8);box-shadow:0 0 22px rgba(0,255,156,.45)}';
     document.head.appendChild(s);
   }
 
@@ -158,19 +164,85 @@
     css();
     var dock = document.createElement('div'); dock.id = 'shdSkinDock';
     dock.innerHTML =
-      '<button class="fab" id="shdSkinFab" title="Theme">◈</button>' +
+      '<button class="fab" id="shdSkinFab" title="Theme — drag me · tap to open">◈</button>' +
       '<div id="shdSkinMenu"><div class="hd">Dashboard theme</div>' +
       SKINS.map(function (s) {
         return '<button class="shd-skin-opt" data-skin="' + s.id + '"><span class="sw" style="background:' + s.dot + ';color:' + s.dot + '"></span>' + s.name + '<span class="chk">✓</span></button>';
       }).join('') +
+      '<div class="hd" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">Widget</div>' +
+      '<button class="shd-skin-opt" id="shdSkinMin" title="Minimize the theme button"><span class="sw" style="background:#9a86c8;color:#9a86c8"></span>Minimize<span class="chk">–</span></button>' +
       '<div class="hd" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">Privacy</div>' +
       '<button class="shd-skin-opt" id="shdWipe" style="color:#ff8fa3"><span class="sw" style="background:#ff5470;color:#ff5470"></span>Wipe my data (this device)</button>' +
       '</div>';
     document.body.appendChild(dock);
-    document.getElementById('shdSkinFab').addEventListener('click', function () { dock.classList.toggle('open'); });
-    dock.querySelectorAll('.shd-skin-opt[data-skin]').forEach(function (b) {
-      b.addEventListener('click', function () { window.setThemeSkin(b.getAttribute('data-skin')); dock.classList.remove('open'); });
+    // Restore a saved drag position.
+    try { var sv = JSON.parse(localStorage.getItem('shd_skin_dock_pos') || 'null');
+      if (sv && typeof sv.left === 'number') { dock.style.left = sv.left + 'px'; dock.style.top = sv.top + 'px'; dock.style.right = 'auto'; dock.style.bottom = 'auto'; } } catch (e) {}
+    var fab = document.getElementById('shdSkinFab');
+    // Drag the FAB to move the dock anywhere; a tap (no movement) still toggles the menu.
+    var drag = null, suppress = false;
+    // ── AUTO-HIDE: after a few seconds idle (menu closed, not hovered, not dragging) the dock
+    // collapses to the tiny chip so it stays OUT OF THE WAY on the dashboard. One tap brings it
+    // back. Persisted, so it starts collapsed on the next visit.
+    var hideTimer = null;
+    function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; } }
+    function scheduleHide() {
+      cancelHide();
+      hideTimer = setTimeout(function () {
+        hideTimer = null;
+        if (dock.classList.contains('open')) { scheduleHide(); return; }  // picking a skin → wait
+        if (dock.style.display !== 'none') window.toggleSkinDock();        // expanded → collapse to chip
+      }, 4200);
+    }
+    function down(e) { var p = e.touches ? e.touches[0] : e; var r = dock.getBoundingClientRect();
+      cancelHide();
+      drag = { dx: p.clientX - r.left, dy: p.clientY - r.top, sx: p.clientX, sy: p.clientY, moved: false };
+      fab.classList.add('dragging'); e.preventDefault();
+      window.addEventListener('mousemove', move, { passive: true }); window.addEventListener('touchmove', move, { passive: true });
+      window.addEventListener('mouseup', up); window.addEventListener('touchend', up); }
+    function move(e) { if (!drag) return; var p = e.touches ? e.touches[0] : e;
+      if (!drag.moved && (Math.abs(p.clientX - drag.sx) > 4 || Math.abs(p.clientY - drag.sy) > 4)) drag.moved = true;
+      if (!drag.moved) return;
+      var L = Math.max(4, Math.min(window.innerWidth - dock.offsetWidth - 4, p.clientX - drag.dx));
+      var T = Math.max(4, Math.min(window.innerHeight - dock.offsetHeight - 4, p.clientY - drag.dy));
+      dock.style.left = L + 'px'; dock.style.top = T + 'px'; dock.style.right = 'auto'; dock.style.bottom = 'auto'; }
+    function up() { if (!drag) return; var moved = drag.moved; drag = null; fab.classList.remove('dragging');
+      if (moved) suppress = true;
+      try { localStorage.setItem('shd_skin_dock_pos', JSON.stringify({ left: dock.offsetLeft, top: dock.offsetTop })); } catch (e) {}
+      window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
+      window.removeEventListener('mouseup', up); window.removeEventListener('touchend', up);
+      scheduleHide(); }
+    fab.addEventListener('mousedown', down); fab.addEventListener('touchstart', down, { passive: false });
+    fab.addEventListener('click', function (ev) {
+      if (suppress) { suppress = false; ev.preventDefault(); return; }
+      dock.classList.toggle('open');
+      if (dock.classList.contains('open')) cancelHide(); else scheduleHide();
     });
+    // Minimize / restore chip (parked where the dock currently is).
+    var chip = document.createElement('button'); chip.id = 'shdSkinChip'; chip.title = 'Theme — show the switcher'; chip.textContent = '◈';
+    chip.addEventListener('click', function () { window.toggleSkinDock(); cancelHide(); scheduleHide(); });
+    document.body.appendChild(chip);
+    window.toggleSkinDock = function () {
+      var isMin = dock.style.display === 'none';
+      dock.style.display = isMin ? 'block' : 'none';
+      var pos = null; try { pos = JSON.parse(localStorage.getItem('shd_skin_dock_pos') || 'null'); } catch (e) {}
+      var hadPos = pos && typeof pos.left === 'number';
+      chip.style.left = hadPos ? pos.left + 'px' : (dock.style.left || '14px');
+      chip.style.top = hadPos ? pos.top + 'px' : 'auto';
+      chip.style.right = hadPos ? 'auto' : 'auto';
+      chip.style.bottom = hadPos ? 'auto' : (dock.style.bottom || '14px');
+      chip.style.display = isMin ? 'flex' : 'none';
+      try { localStorage.setItem('shd_skin_dock_min', isMin ? '0' : '1'); } catch (e) {}
+    };
+    document.getElementById('shdSkinMin').addEventListener('click', function () { dock.classList.remove('open'); window.toggleSkinDock(); cancelHide(); scheduleHide(); });
+    dock.querySelectorAll('.shd-skin-opt[data-skin]').forEach(function (b) {
+      b.addEventListener('click', function () { window.setThemeSkin(b.getAttribute('data-skin')); dock.classList.remove('open'); scheduleHide(); });
+    });
+    // Keep the dock visible while the pointer is over it (so it never vanishes mid-pick).
+    dock.addEventListener('mouseenter', cancelHide);
+    dock.addEventListener('mouseleave', scheduleHide);
+    chip.addEventListener('mouseenter', cancelHide);
+    chip.addEventListener('mouseleave', scheduleHide);
     var wipe = document.getElementById('shdWipe');
     if (wipe) wipe.addEventListener('click', function () {
       if (!confirm('Wipe ALL SHADDAI data stored in THIS browser (chats, notes, projects, settings, identity) and reload? This cannot be undone.')) return;
@@ -178,10 +250,15 @@
       try { sessionStorage.clear(); } catch (e) {}
       location.reload();
     });
-    document.addEventListener('click', function (e) { if (!dock.contains(e.target)) dock.classList.remove('open'); });
-    // reflect current selection
+    document.addEventListener('click', function (e) { if (!dock.contains(e.target) && !chip.contains(e.target)) { dock.classList.remove('open'); scheduleHide(); } });
+    // reflect current selection + restore a previously minimized state
     window.setThemeSkin(window.getThemeSkin());
+    try { if (localStorage.getItem('shd_skin_dock_min') === '1') window.toggleSkinDock(); } catch (e) {}
+    scheduleHide();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  // PERF: mount the FAB widget on idle so it never competes with the dashboard's first paint.
+  var idleMount = function (cb) { return (window.requestIdleCallback || function (f) { setTimeout(f, 350); })(cb); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { idleMount(mount); });
+  else idleMount(mount);
 })();

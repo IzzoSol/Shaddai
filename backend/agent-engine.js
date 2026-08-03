@@ -3319,8 +3319,10 @@ Use tools for real data, then give a concise final answer.` };
 // ═══════════════════════════════════════════════════════════════════
 
 async function extractAndRunTools(text, agentName, taskId = null, allowed = null) {
-  // Match [TOOL:name:{...}] — allow MCP-prefixed names (mcp__server__tool), digits, hyphens
-  const re = /\[TOOL:([a-zA-Z0-9_-]+):(\{(?:[^{}]|\{[^{}]*\})*\})\]/g;
+  // Match [TOOL:name:{...}] — allow MCP-prefixed names (mcp__server__tool), digits, hyphens.
+  // The `TOOL:` prefix is optional: smaller local models (phi4-mini) sometimes emit [name:{...}]
+  // directly, which we still want to execute as a tool call.
+  const re = /\[(?:TOOL:)?([a-zA-Z0-9_-]+):(\{(?:[^{}]|\{[^{}]*\})*\})\]/g;
   const results = [];
   let match;
   while ((match = re.exec(text)) !== null) {

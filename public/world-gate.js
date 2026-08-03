@@ -31,6 +31,7 @@
 
   function hasAccess() {
     try {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return true; // dev bypass — gate still enforces in production
       if (localStorage.getItem('shd_world_pass')) return true;               // redeemed a beta code
       var uid = localStorage.getItem('shd_userid') || '';
       if (uid && uid.indexOf('guest') !== 0) return true;                    // a real signed-in uid

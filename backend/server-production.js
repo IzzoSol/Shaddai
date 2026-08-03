@@ -611,6 +611,95 @@ app.get('/api/health', (req, res) => {
   res.json(health);
 });
 
+// MCP + RAG status — powers the landing page MCP/RAG section (also handy for
+// verifying the bridge + knowledge bases are ready for Claude Desktop/Code).
+// Cached: the KB stats read several MB of JSON, so don't recompute per hit.
+app.get('/api/mcp/status', (req, res) => {
+  const cached = cache.get('mcpStatus');
+  if (cached) return res.json(cached);
+
+  const fsx = require('fs');
+  const pathx = require('path');
+  const bridgePath = pathx.join(__dirname, 'mcp-server-rag.js');
+  const bridge = fsx.existsSync(bridgePath);
+  let bridgeVersion = null;
+  if (bridge) {
+    const m = /const VERSION = '([^']+)'/.exec(fsx.readFileSync(bridgePath, 'utf8'));
+    bridgeVersion = m ? m[1] : null;
+  }
+
+  // Per-agent RAG knowledge base stats (docs, chars, source names — trimmed).
+  const agents = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+  const kbs = [];
+  let totalChars = 0;
+  try {
+    const rag = require('./rag-index');
+    for (const id of agents) {
+      const ns = 'kb_' + id.toLowerCase();
+      let docs = [];
+      try { docs = rag.listUserDocs(ns) || []; } catch (_) {}
+      let chars = 0;
+      try {
+        const p = pathx.join(__dirname, 'data', 'rag', ns, 'docs.json');
+        if (fsx.existsSync(p)) {
+          const parsed = JSON.parse(fsx.readFileSync(p, 'utf8'));
+          chars = (parsed || []).reduce((s, d) => s + (d.text ? d.text.length : 0), 0);
+        }
+      } catch (_) {}
+      totalChars += chars;
+      kbs.push({
+        agent: id, kb: ns, docs: docs.length, chars,
+        sources: docs.slice(0, 8).map(d => d.name),
+      });
+    }
+  } catch (e) {
+    kbs.push({ error: String((e && e.message) || e) });
+  }
+
+  // Connected MCP servers (filesystem/fetch/memory + any disabled ones).
+  let mcpServers = null;
+  try {
+    const mcp = require('./mcp-client');
+    const servers = mcp.listServers ? mcp.listServers() : [];
+    mcpServers = (servers || []).map(s => ({
+      id: s.id,
+      transport: s.transport,
+      disabled: !!s.disabled,
+      status: s.status || 'unknown',
+      tools: s.toolCount || 0,
+    }));
+  } catch (_) {}
+
+  const out = {
+    ok: true,
+    status: bridge ? 'ready' : 'missing-bridge',
+    bridge: { file: bridgePath, exists: bridge, version: bridgeVersion },
+    agents: kbs,
+    totals: { kbChars: totalChars, kbMB: +(totalChars / 1048576).toFixed(2) },
+    mcpServers,
+    mcpClientLoaded: mcpServers !== null,
+    timestamp: new Date().toISOString(),
+  };
+  cache.set('mcpStatus', out, 30000); // 30s TTL — fresh enough for a status panel
+  res.json(out);
+});
+
+// Gated download of the private SHADDAI MCP package (full engine closure).
+// Query param ?code= unlocks it — defaults to the landing page's gate phrase.
+// The zip is built by backend/build-mcp-package.js.
+app.get('/api/mcp/package', (req, res) => {
+  const zip = path.join(__dirname, 'shaddai-mcp-dist.zip');
+  if (!fs.existsSync(zip)) {
+    return res.status(404).json({ ok: false, error: 'Package not built yet. Run `node build-mcp-package.js` in backend/.' });
+  }
+  const gate = process.env.MCP_PACKAGE_CODE || 'ASCEND-MCP';
+  const code = String(req.query.code || '').trim();
+  if (code !== gate) {
+    return res.status(403).json({ ok: false, error: 'Enter the gate passphrase to download the SHADDAI MCP package.' });
+  }
+  res.download(zip, 'shaddai-mcp.zip');
+});
+
 app.get('/api/status', (req, res) => {
   const cached = cache.get('status');
   if (cached) {
@@ -1986,6 +2075,19 @@ if (!process.env.VERCEL_ENV) {
     console.log('  • job_awarded');
 
     logger.info('SERVER', 'All services ready');
+
+    // Boot auto-connect for enabled MCP servers (non-blocking) so agents
+    // see their tools immediately. Failures are logged, never crash boot.
+    try {
+      require('./mcp-client').autoConnectAll().then(results => {
+        for (const r of results) {
+          if (r.ok) logger.info('MCP', `connected ${r.id} (${r.tools} tools)`);
+          else logger.warn('MCP', `auto-connect ${r.id} failed: ${r.error}`);
+        }
+      }).catch(e => logger.warn('MCP', `auto-connect error: ${e.message}`));
+    } catch (e) {
+      logger.warn('MCP', `auto-connect init failed: ${e.message}`);
+    }
   });
 }
 
