@@ -107,17 +107,41 @@ async function dexTop25() {
     if (!Array.isArray(items)) return null;
     const sol = items.filter(i => String(i.chainId || '').toLowerCase() === 'solana').slice(0, 25);
     if (!sol.length) return null;
+
+    // Enrich top 12 tokens with pair data to get real symbols + mcap/liq
+    const enriched = new Map();
+    await Promise.all(sol.slice(0, 12).map(async (t) => {
+      try {
+        const r2 = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + t.tokenAddress);
+        if (!r2.ok) return;
+        const j2 = await r2.json();
+        const pairs = (j2 && j2.pairs) || [];
+        const best = pairs.sort((a, b) => (b.liquidity && b.liquidity.usd || 0) - (a.liquidity && a.liquidity.usd || 0))[0];
+        if (best) enriched.set(t.tokenAddress, {
+          symbol: best.baseToken && best.baseToken.symbol,
+          fdv: Number(best.fdv || best.marketCap) || 0,
+          liq: Number(best.liquidity && best.liquidity.usd) || 0,
+          change24: Number(best.priceChange && best.priceChange.h24) || null,
+        });
+      } catch (e) {}
+    }));
+
+    const _fmtUsd = (n) => { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(0); };
     const rows = sol.map((t, i) => {
-      const sym = _esc((t.data && t.data.symbol) || t.tokenAddress.slice(0, 6) + '…');
+      const info = enriched.get(t.tokenAddress);
+      const sym = info && info.symbol ? `<b>$${_esc(info.symbol)}</b>` : `<code>${t.tokenAddress.slice(0, 8)}…</code>`;
       const boost = Number(t.amount || t.totalAmount || 0);
-      const desc = _esc((t.description || '').slice(0, 40));
-      return `${i + 1}. <b>$${sym}</b>  🚀 ${boost} credits${desc ? '  <i>' + desc + '</i>' : ''}`;
+      const fdvStr = info && info.fdv > 0 ? `  MC ${_fmtUsd(info.fdv)}` : '';
+      const liqStr = info && info.liq > 0 ? `  Liq ${_fmtUsd(info.liq)}` : '';
+      const chg = info && info.change24 != null ? (info.change24 >= 0 ? `  🟢+${info.change24.toFixed(0)}%` : `  🔴${info.change24.toFixed(0)}%`) : '';
+      const dsUrl = t.url || ('https://dexscreener.com/solana/' + t.tokenAddress);
+      return `${i + 1}. ${sym}  🚀${boost}${fdvStr}${liqStr}${chg}  <a href="${_esc(dsUrl)}">↗</a>`;
     });
     const ts = new Date().toUTCString().replace(/.*(\d{2}:\d{2}).*/, '$1');
     return (
-      `🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA</b>\n` +
+      `🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA BOOSTS</b>\n` +
       `━━━━━━━━━━━━━\n` +
-      `Updated ${ts} UTC\n\n` +
+      `${ts} UTC\n\n` +
       rows.join('\n') +
       `\n\n<i>Paid boosts ≠ endorsement · NFA · DYOR</i>`
     );
@@ -191,7 +215,7 @@ function startNewsPoster() {
     const html = await marketPulse();
     if (html) { const img = _botImage(); await (img ? core.broadcastPhoto(img, html) : core.broadcast(html)); }
   };
-  let last = 0;
+  let last = Date.now();   // start at now — prevents immediate fire on Render restart
   _timer = setInterval(async () => {
     const cfg = core.getConfig();
     const everyMs = Math.max(60, cfg.newsIntervalMin || 240) * 60000;   // default 4h (was 2h)
@@ -201,7 +225,7 @@ function startNewsPoster() {
 
   // ── RSS HEADLINES (seed first, then every 90min) ─────────────────────────
   setTimeout(() => { _pollHeadlines().catch(() => {}); }, 6000);
-  let lastN = 0;
+  let lastN = Date.now();   // prevents second fire 60s after the seed-setTimeout above
   _newsTimer = setInterval(async () => {
     const cfg = core.getConfig();
     const everyMs = Math.max(30, cfg.headlinesIntervalMin || 90) * 60000;
@@ -210,7 +234,7 @@ function startNewsPoster() {
   if (_newsTimer.unref) _newsTimer.unref();
 
   // ── TOP 25 DEXSCREENER (every 4h) ────────────────────────────────────────
-  let lastD = 0;
+  let lastD = Date.now();   // wait a full interval before first post — prevents restart flood
   _dexTimer = setInterval(async () => {
     const cfg = core.getConfig();
     if (cfg.dexTop25 === false) return;
@@ -224,7 +248,7 @@ function startNewsPoster() {
   if (_dexTimer.unref) _dexTimer.unref();
 
   // ── TOP MOVERS 1D/1W/1M (every 6h) ──────────────────────────────────────
-  let lastM = 0;
+  let lastM = Date.now();   // prevents immediate fire on restart
   _moversTimer = setInterval(async () => {
     const cfg = core.getConfig();
     if (cfg.topMovers === false) return;

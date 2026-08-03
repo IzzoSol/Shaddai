@@ -55,6 +55,23 @@ const _ENRICH_CAP = 10;           // max token-detail fetches per trending poll 
 // pumpswap/pump-fun graduates still allowed — our quality gates (rug/holders/vol) filter the bad ones
 const _BAD_VENUES = new Set(['meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
+// Scam symbol blocklist: impostor stablecoin names (USUR, USOX, USOP, USOR, AORP-type)
+// These match zero-utility fake USD-adjacent tokens that consistently exit as rugs per call history.
+const _SCAM_SYM_RE = /^(USO[A-Z]|USU[A-Z]|AOR[A-Z]|USDX[A-Z0-9]?|USR[A-Z]{1,2}|USDU|XUS[A-Z]{1,2})$/i;
+// Symbol cooldown: block same symbol if already called within 2h (stops TNOS x3 relaunches)
+const _recentSymbols = new Map();
+function _symCooldownOk(sym) {
+  if (!sym) return true;
+  const s = sym.toUpperCase();
+  const last = _recentSymbols.get(s);
+  return !(last && Date.now() - last < 2 * 60 * 60000);
+}
+function _trackSym(sym) {
+  if (!sym) return;
+  _recentSymbols.set(sym.toUpperCase(), Date.now());
+  if (_recentSymbols.size > 500) { const f = _recentSymbols.keys().next().value; _recentSymbols.delete(f); }
+}
+
 // look up DexScreener boost info for a token address — returns null if not boosted
 function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
@@ -86,9 +103,13 @@ function _cfg() {
     minSocialScore: Number(cc.minSocialScore) || 0,
     // holder/sniper requirements
     maxTop10Pct: Number(cc.maxTop10Pct) || 100,
+    minTop10Pct: Number(cc.minTop10Pct) || 0,
     maxBundlerPct: Number(cc.maxBundlerPct) || 12,
+    maxSnipersPct: Number(cc.maxSnipersPct) || 0,
+    minVolM5: Number(cc.minVolM5) || 0,
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
+    preBonding: cc.preBonding !== false,   // pre-bonding curve feed (pump.fun tokens approaching graduation)
     // poll cadences (env-tunable) — balanced for free tier rate limits
     interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),      // 5 min default (DexScreener: ~60 req/min free)
     bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000), // 2 min default (pump.fun: generous)
@@ -514,17 +535,22 @@ async function _pollOnce() {
     // launch wallet / dev analysis
     let launchLine = '';
     try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
+    // scam filter — block impostor stablecoin symbol patterns + symbol cooldown (stops relaunch rugs)
+    const _sym = pair.baseToken && pair.baseToken.symbol;
+    if (_sym && _SCAM_SYM_RE.test(_sym)) { _seen.add(addr); continue; }
+    if (!_symCooldownOk(_sym)) { _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
     const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _flexLine;
-    const _imgUrl = (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _boostData = _boostInfo(addr);
+    const _imgUrl = (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _btns = core.buildButtons(addr, chain, pair.url);
     const ok = (_imgUrl
       ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
       : (await core.broadcast(_msg, { buttons: _btns }))
     ) > 0;
     _seen.add(addr);
-    if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
+    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
@@ -630,21 +656,95 @@ async function _pollBonded() {
       }
       card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
     }
+    // scam filter — block impostor stablecoin symbol patterns + symbol relaunch cooldown
+    const _bondSym = c.symbol || (pair.baseToken && pair.baseToken.symbol);
+    if (_bondSym && _SCAM_SYM_RE.test(_bondSym)) continue;
+    if (!_symCooldownOk(_bondSym)) continue;
     const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _bondMsg = card + _detailBlock(rs, null, _bondExtra);
-    const _bondImg = (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _bondBoost = _boostInfo(mint);
+    const _bondImg = (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
     const ok = (_bondImg
       ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
       : (await core.broadcast(_bondMsg, { buttons: _bondBtns }))
     ) > 0;
     if (ok) {
-      core.markAlerted(mint); posted++;
+      _trackSym(_bondSym); core.markAlerted(mint); posted++;
       try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
       _logFeatures({ mint, chain: 'solana', name: c.name, symbol: c.symbol, source: 'bonded', entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: c.holders || (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), devPct: c.devPct || 0, venue: pair.dexId || 'pump', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: liq, sourceCount: 1 });
     }
   }
   _bondSeeded = true;   // subsequent polls only post NEWLY-bonded tokens
+}
+
+// ── PRE-BONDING FEED (pump.fun bonding curve — approaching graduation) ────────
+// Watches the hottest NON-graduated pump.fun tokens. Posts when they're approaching
+// graduation ($45K-$68K MC) with strong volume + community, before the bond-dump crowd.
+const PF_VOLUME_HOT = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=volume&order=DESC&includeNsfw=false';
+const _seenPreBond = new Set();
+let _preBondSeeded = false;
+
+function _preBondCard(c) {
+  const sym = _esc(c.symbol || '');
+  const name = _esc(c.name || 'Token');
+  const mc = c.usd_market_cap ? _fmtUsd(c.usd_market_cap) : '';
+  const replies = c.reply_count || 0;
+  const mint = c.mint || '';
+  return (
+    `⚡ <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — PRE-BOND\n` +
+    `Still in bonding curve · approaching graduation\n` +
+    `━━━━━━━━━━━━━\n` +
+    (mc ? `💰 MC <b>${mc}</b>  <i>(graduation ~$69K)</i>\n` : '') +
+    (c.holder_count ? `👥 <b>${c.holder_count}</b> holders\n` : '') +
+    (replies ? `💬 <b>${replies}</b> replies\n` : '') +
+    (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
+    (mint ? `🔗 <a href="https://pump.fun/${_esc(mint)}">pump.fun</a>` : '') +
+    `\n\n⚡ <b>HIGH RISK</b> — pre-graduation, can fail · NFA`
+  );
+}
+
+async function _pollPreBonded() {
+  const cfg = _cfg();
+  if (!cfg.token || !cfg.preBonding) return;
+  try {
+    const r = await fetch(PF_VOLUME_HOT, { headers: PF_HEADERS });
+    if (!r.ok) return;
+    const coins = await r.json();
+    const arr = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
+    // Filter: NOT graduated, approaching graduation ($40K-$68K MC), some community
+    const candidates = arr.filter(c =>
+      !c.complete && !c.raydium_pool &&
+      (c.usd_market_cap || 0) >= 40000 &&
+      (c.usd_market_cap || 0) < 68500 &&
+      (c.reply_count || 0) >= 5 &&
+      c.mint
+    );
+    if (!_preBondSeeded) {
+      for (const c of candidates) _seenPreBond.add(c.mint);
+      _preBondSeeded = true;
+      return;
+    }
+    let posted = 0;
+    for (const c of candidates) {
+      if (posted >= 2) break;
+      const mint = c.mint;
+      if (_seenPreBond.has(mint) || core.wasAlerted(mint)) continue;
+      _seenPreBond.add(mint);
+      const sym = c.symbol || '';
+      if (sym && _SCAM_SYM_RE.test(sym)) continue;
+      if (!_symCooldownOk(sym)) continue;
+      const card = _preBondCard(c);
+      const imgUrl = c.image_uri || _randomBotImg();
+      const btns = core.buildButtons(mint, 'solana', 'https://pump.fun/' + mint);
+      const ok = (imgUrl
+        ? await core.broadcastPhoto(imgUrl, card, btns)
+        : await core.broadcast(card, { buttons: btns })
+      ) > 0;
+      if (ok) { _trackSym(sym); core.markAlerted(mint); posted++; }
+    }
+    if (_seenPreBond.size > 2000) { const f = _seenPreBond.values().next().value; _seenPreBond.delete(f); }
+  } catch (e) { console.warn('[tg-signals] pre-bond poll error:', e && e.message); }
 }
 
 // ── GECKOTERMINAL (free, no key) — brand-new pools + trending pools ──────────
@@ -846,6 +946,12 @@ function startTelegramSignals() {
     setTimeout(() => { _pollBonded().catch(() => {}); }, 4000);
     _bondTimer = setInterval(() => { _pollBonded().catch(() => {}); }, cfg.bondedInterval);
     if (_bondTimer.unref) _bondTimer.unref();
+  }
+  // pre-bonding feed (pump.fun tokens approaching graduation — early entry before the bond)
+  if (cfg.preBonding) {
+    setTimeout(() => { _pollPreBonded().catch(() => {}); }, 5000);
+    const _preBondTimer = setInterval(() => { _pollPreBonded().catch(() => {}); }, 3 * 60000);   // every 3 min
+    if (_preBondTimer.unref) _preBondTimer.unref();
   }
   // GeckoTerminal new/trending pools — seed first, then post only NEW pools
   setTimeout(() => { _pollGecko().catch(() => {}); }, 6000);
