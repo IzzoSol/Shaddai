@@ -28,7 +28,7 @@
   "maxPer": 6,
   "rugFilter": true,
   "rugMinScore": 45,
-  "minHolders": 20,
+  "minHolders": 100,
   "minLiqPct": 5,
   "bullishOnly": false,
   "requireLocked": false,
