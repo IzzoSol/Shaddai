@@ -80,7 +80,7 @@ function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 // Dead zone: UTC 11h-17h (EU daytime, low US pre-market). Peak: UTC 20-22h + 02-04h.
 function _utcHour() { return new Date().getUTCHours(); }
 function _isPeakHour() { const h = _utcHour(); return (h >= 20 && h <= 22) || (h >= 2 && h <= 4); }
-function _isDeadHour() { const h = _utcHour(); return h >= 11 && h <= 17; }
+function _isDeadHour() { const h = _utcHour(); return (h >= 11 && h <= 13) || (h >= 15 && h <= 17); }   // 14h UTC = US market open (17% win rate) — excluded from dead zone
 // Return multipliers on quality gates based on current hour
 // dead hours: require 2x holders + 2x vol momentum; peak hours: relaxed (1x); others: 1.25x
 function _qualityMult() {
@@ -526,9 +526,10 @@ async function _pollOnce() {
   // first poll after (re)start only SEEDS — prevents re-posting the whole trending list on Render redeploys
   if (!_trendSeeded) { for (const item of boosts) { if (item && item.tokenAddress) _seen.add(item.tokenAddress); } _trendSeeded = true; return; }
 
+  const _effMaxPer = _isDeadHour() ? 1 : cfg.maxPer;   // dead hours: 1 call max (11-13h, 15-17h UTC)
   let posted = 0, enrich = 0;
   for (const item of boosts) {
-    if (posted >= cfg.maxPer) break;
+    if (posted >= _effMaxPer) break;
     if (enrich >= _ENRICH_CAP) break;              // rate safety: cap token-detail fetches per poll
     const chain = String(item.chainId || '').toLowerCase();
     const addr = item.tokenAddress;
@@ -553,7 +554,7 @@ async function _pollOnce() {
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
-    // TIME-QUALITY GATE: dead hours (UTC 11-17) require 2x vol momentum to pass
+    // TIME-QUALITY GATE: dead hours require 2x vol momentum; cap maxPer to 1 during dead windows
     const _qm = _qualityMult();
     if (_qm > 1) {
       const h1Vol = Number(pair.volume && pair.volume.h1) || 0;
@@ -678,9 +679,10 @@ async function _pollBonded() {
                 .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0 }));
     } catch (e) { return; }
   }
+  const _bondEffMaxPer = _isDeadHour() ? 1 : cfg.maxPer;   // dead hours: 1 call max
   let posted = 0;
   for (const c of list) {
-    if (posted >= cfg.maxPer) break;
+    if (posted >= _bondEffMaxPer) break;
     const mint = c.mint;
     if (!mint || _seenBond.has(mint)) continue;
     _seenBond.add(mint);
