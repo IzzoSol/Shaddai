@@ -77,21 +77,33 @@ function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
 // ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
 // Real data from 863 calls: peak hours = 17.3% hit rate, dead hours = 4.3%.
-// Dead zone: UTC 11h-17h (EU daytime, low US pre-market). Peak: UTC 20-22h + 02-04h.
+// Time quality system — data-driven from 863 calls:
+//   Weekend (Sat+Sun): 13.1% 5x+ hit rate   vs   Weekday: 4.6%
+//   Peak UTC hours: 02-04h + 20-22h = 17.3% hit rate
+//   Dead hours: 11-13h + 15-17h UTC = 0% hit rate
+//   14h UTC = US market open = 17% — excluded from dead zone
 function _utcHour() { return new Date().getUTCHours(); }
+function _isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
 function _isPeakHour() { const h = _utcHour(); return (h >= 20 && h <= 22) || (h >= 2 && h <= 4); }
-function _isDeadHour() { const h = _utcHour(); return (h >= 11 && h <= 13) || (h >= 15 && h <= 17); }   // 14h UTC = US market open (17% win rate) — excluded from dead zone
-// Return multipliers on quality gates based on current hour
-// dead hours: require 2x holders + 2x vol momentum; peak hours: relaxed (1x); others: 1.25x
+function _isDeadHour() { const h = _utcHour(); return (h >= 11 && h <= 13) || (h >= 15 && h <= 17); }
 function _qualityMult() {
   if (_isPeakHour()) return 1;
   if (_isDeadHour()) return 2;
+  if (_isWeekend()) return 0.85;  // weekend: relax gates 15% — higher base hit rate
   return 1.25;
 }
 function _hourLabel() {
-  if (_isPeakHour()) return '⭐ PEAK HOUR';
+  if (_isPeakHour()) return _isWeekend() ? '🌙⭐ WEEKEND PEAK' : '⭐ PEAK HOUR';
   if (_isDeadHour()) return '⚠️ LOW VOL WINDOW';
+  if (_isWeekend()) return '📅 WEEKEND';
   return null;
+}
+// Weekend-aware minFdv: weekends allow ultra-low-FDV post-graduation dip recoveries (data: 45% win rate at <15K weekend)
+// Weekdays: raise effective floor to $15K (5K-15K weekday = 0/4 calls = 0%)
+function _effectiveMinFdv(cfg) {
+  if (_isWeekend()) return Math.min(cfg.minFdv || 0, 1000);   // weekend: floor = $1K
+  if (!_isWeekend() && !_isPeakHour()) return Math.max(cfg.minFdv || 0, 15000); // weekday: floor = $15K
+  return cfg.minFdv || 0;
 }
 
 // ── VOLUME ACCELERATION CHECK ─────────────────────────────────────────────────
@@ -145,9 +157,12 @@ function _cfg() {
     geckoInterval: Math.max(120000, parseInt(process.env.TG_GECKO_INTERVAL || '180000', 10) || 180000),  // 3 min default (GeckoTerminal: generous)
   };
 }
-// FDV gate — min + max (was min-only; max was deferred to _overCap but that allowed billion-FDV leaks)
+// FDV gate — weekend/weekday-aware min, hard max cap
+// Weekend: floor drops to $1K (post-grad dip recoveries win at 45% on weekends)
+// Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
 function _passesFdv(cfg, fdv) {
-  if (cfg.minFdv && fdv < cfg.minFdv) return false;
+  const effMin = _effectiveMinFdv(cfg);
+  if (effMin && fdv < effMin) return false;
   if (cfg.maxFdv && fdv > cfg.maxFdv) return false;
   return true;
 }
