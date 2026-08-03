@@ -210,10 +210,6 @@ async function _validate() {
       // OWNER RULE: sniper/insider share of SUPPLY must be under the cap (was count/holders — almost never tripped)
       const insiderSupplyPct = topHolders.filter(h => h.insider).reduce((s, h) => s + (Number(h.pct) || 0), 0);
       if (cfg.maxSnipersPct && insiderSupplyPct >= cfg.maxSnipersPct) { _reject(c, 'insider supply ' + insiderSupplyPct.toFixed(1) + '% >= ' + cfg.maxSnipersPct + '%'); continue; }
-      // whale conviction bonus: top10 ≥15% = bullish, ≥50% = extra conviction
-      if (top10Pct >= 50) c.confidence += (cfg.top10BullishBonus || 5);
-      else if (top10Pct >= (cfg.minTop10Pct || 15)) c.confidence += 3;
-
       // risk bonus
       if (score >= 70 && danger === 0) c.confidence += 10;
     }

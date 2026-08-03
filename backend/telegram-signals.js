@@ -19,6 +19,17 @@
 
 const core = require('./telegram-core');   // shared broadcast (channel + every chat the bot is in)
 const pnl = require('./telegram-pnl');     // call performance tracker (entry → Xs)
+const wallets = require('./telegram-wallets');  // tracked wallet cross-reference + ape alerts
+const path = require('path');
+const fs = require('fs');
+
+// bot banner images — used as fallback when a token has no DexScreener imageUrl
+const _BOT_IMG_DIR = path.join(__dirname, '../public/assets/bot');
+const _BOT_IMGS = (() => {
+  try { return fs.readdirSync(_BOT_IMG_DIR).filter(f => f.startsWith('img-') && f.endsWith('.png')).map(f => path.join(_BOT_IMG_DIR, f)); }
+  catch (e) { return []; }
+})();
+function _randomBotImg() { return _BOT_IMGS.length ? _BOT_IMGS[Math.floor(Math.random() * _BOT_IMGS.length)] : null; }
 const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 // log the full feature fingerprint of a posted call → token-db (powers ZEROX winner/loser analysis)
 function _logFeatures(o) { try { require('./token-db').recordOutcome(o); } catch (e) { console.warn('[token-db] _logFeatures error:', e.message); } }
@@ -39,6 +50,10 @@ const _SEEN_CAP = 4000;
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
 const _ENRICH_CAP = 10;           // max token-detail fetches per trending poll (rate safety — was 18, lowered)
+
+// ZEROX corpus: block only pre-graduation bonding curve (no liq/vol anyway) + confirmed-dead DEX types
+// pumpswap/pump-fun graduates still allowed — our quality gates (rug/holders/vol) filter the bad ones
+const _BAD_VENUES = new Set(['meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
 // look up DexScreener boost info for a token address — returns null if not boosted
 function _boostInfo(addr) { return _boostMap.get(addr) || null; }
@@ -75,9 +90,9 @@ function _cfg() {
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
     // poll cadences (env-tunable) — balanced for free tier rate limits
-    interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '600000', 10) || 600000),      // 10 min default (DexScreener: ~60 req/min free)
-    bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '180000', 10) || 180000), // 3 min default (pump.fun: generous)
-    geckoInterval: Math.max(120000, parseInt(process.env.TG_GECKO_INTERVAL || '300000', 10) || 300000),  // 5 min default (GeckoTerminal: generous)
+    interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),      // 5 min default (DexScreener: ~60 req/min free)
+    bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000), // 2 min default (pump.fun: generous)
+    geckoInterval: Math.max(120000, parseInt(process.env.TG_GECKO_INTERVAL || '180000', 10) || 180000),  // 3 min default (GeckoTerminal: generous)
   };
 }
 // FDV gate — min + max (was min-only; max was deferred to _overCap but that allowed billion-FDV leaks)
@@ -363,39 +378,52 @@ function _ageStr(ms) {
   return days + 'd' + (hrs % 24 ? (hrs % 24) + 'h' : '');
 }
 
+function _fmtPrice(n) {
+  if (!n || !isFinite(n)) return '';
+  if (n >= 1000) return '$' + n.toLocaleString('en', { maximumFractionDigits: 2 });
+  if (n >= 1) return '$' + n.toFixed(4);
+  if (n >= 0.01) return '$' + n.toFixed(6);
+  const decs = Math.min(Math.max(2 - Math.floor(Math.log10(n)), 4), 12);
+  return '$' + n.toFixed(decs);
+}
+
 function _signalCard(chain, pair, socialLabel) {
   const b = pair.baseToken || {};
   const sym = _esc(b.symbol || 'TOKEN');
   const nm = _esc(b.name || '');
-  const price = pair.priceUsd ? '$' + Number(pair.priceUsd).toPrecision(3) : 'n/a';
-  const mc = _fmtUsd(pair.fdv || pair.marketCap || 0);
-  const liq = _fmtUsd(pair.liquidity && pair.liquidity.usd);
-  const vol = _fmtUsd(pair.volume && pair.volume.h24);
-  const vol1h = _fmtUsd(pair.volume && pair.volume.h1);
-  const chg = _chgStr(pair.priceChange && pair.priceChange.h24);
+  const liqNum = Number(pair.liquidity && pair.liquidity.usd) || 0;
+  const fdvNum = Number(pair.fdv || pair.marketCap) || 0;
+  const volNum = Number(pair.volume && pair.volume.h24) || 0;
+  const vol1hNum = Number(pair.volume && pair.volume.h1) || 0;
+  const liqPct = fdvNum > 0 ? (liqNum / fdvNum * 100) : 0;
+  const volLiq = liqNum > 0 ? volNum / liqNum : 0;
+  const liqTag = liqPct >= 10 ? '🟢' : liqPct >= 5 ? '🟡' : '🔴';
+  const volTag = volLiq > 10 ? '🟢' : volLiq > 3 ? '🟡' : '⚪';
+  const chg24 = _chgStr(pair.priceChange && pair.priceChange.h24);
   const chg1h = _chgStr(pair.priceChange && pair.priceChange.h1);
-  const url = _esc(pair.url || '');
-  const ca = _esc((b.address) || '');
-  // age
+  const price = pair.priceUsd ? _esc(_fmtPrice(Number(pair.priceUsd))) : '';
   const age = pair.pairCreatedAt ? _ageStr(Date.now() - pair.pairCreatedAt) : '';
-  // boost info
-  const boost = _boostInfo(ca);
-  const boostLine = boost && boost.amount > 0 ? `⚡ <b>PAID BOOST</b> — ${boost.amount} credits\n` : '';
-  // volume-to-liq ratio (organic indicator)
-  const volLiqRatio = (Number(pair.volume && pair.volume.h24) || 0) / Math.max(Number(pair.liquidity && pair.liquidity.usd) || 1, 1);
-  const volHealth = volLiqRatio > 10 ? '🟢' : volLiqRatio > 3 ? '🟡' : '⚪';
-  return (
-    boostLine +
-    `⚡️ <b>$${sym}</b>${nm && nm.toLowerCase() !== sym.toLowerCase() ? '  ' + nm : ''}\n` +
-    `${_esc(chain.toUpperCase())}${chg ? '   ' + chg : ''}${chg1h ? '  1h' + chg1h : ''}${socialLabel ? '   ' + socialLabel : ''}\n` +
-    `━━━━━━━━━━━━━\n` +
-    `💰 MC <b>${mc}</b>   💧 Liq <b>${liq}</b>\n` +
-    `📊 Vol24h <b>${vol}</b>   Vol1h <b>${vol1h}</b>\n` +
-    `💵 <b>${_esc(price)}</b>${age ? '   ⏱ ' + age : ''}   ${volHealth} Vol/Liq ${volLiqRatio.toFixed(1)}x\n` +
-    (ca ? `\n<code>${ca}</code>\n` : '') +
-    (url ? `🔗 <a href="${url}">Chart</a>` : '') +
-    `\n\n<i>NFA · DYOR</i>`
-  );
+  const boost = _boostInfo(b.address || '');
+  const chainLabel = chain === 'solana' ? '◎ SOL' : chain === 'ethereum' ? 'Ξ ETH' : chain === 'bsc' ? '⬡ BSC' : _esc(chain.toUpperCase());
+  const venueLabel = pair.dexId ? _esc(pair.dexId.replace(/-/g, ' ').toUpperCase()) : '';
+  const title = nm && nm.toLowerCase() !== sym.toLowerCase()
+    ? `⚡ <b>$${sym}</b>  <i>${nm}</i>`
+    : `⚡ <b>$${sym}</b>`;
+  const metaParts = [chainLabel];
+  if (venueLabel) metaParts.push(venueLabel);
+  if (age) metaParts.push('⏱ ' + age);
+  if (chg24) metaParts.push(chg24);
+  if (chg1h) metaParts.push('1h ' + chg1h);
+  if (socialLabel) metaParts.push(socialLabel);
+  let out = title + '\n' + metaParts.join('  ·  ') + '\n';
+  if (boost && boost.amount > 0) out += `\n🚀 <b>BOOSTED</b> — ${boost.amount} DexScreener credits\n`;
+  out += `\n━━ 📊 MARKET ━━\n`;
+  out += `💰 MCap   <b>${_fmtUsd(fdvNum)}</b>\n`;
+  out += `💧 Liq    <b>${_fmtUsd(liqNum)}</b>  ${liqTag} ${liqPct >= 1 ? liqPct.toFixed(0) : liqPct.toFixed(1)}% of MC\n`;
+  out += `📈 Vol    <b>${_fmtUsd(volNum)}</b> 24h  /  <b>${_fmtUsd(vol1hNum)}</b> 1h\n`;
+  out += `${volTag} Vol/Liq <b>${volLiq.toFixed(1)}x</b>`;
+  if (price) out += `   💵 <b>${price}</b>`;
+  return out;
 }
 
 async function _pollOnce() {
@@ -442,7 +470,9 @@ async function _pollOnce() {
       const pairs = (j && j.pairs) || [];
       pair = pairs.filter(p => (p.liquidity && p.liquidity.usd || 0) >= cfg.minLiq
                             && (p.volume && p.volume.h24 || 0) >= cfg.minVol24h
-                            && _passesFdv(cfg, p.fdv || p.marketCap || 0))
+                            && _passesFdv(cfg, p.fdv || p.marketCap || 0)
+                            && !_BAD_VENUES.has(p.dexId)
+                            && (!cfg.minVolM5 || (p.volume && p.volume.m5 || 0) >= cfg.minVolM5))
                   .sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
     } catch (e) { continue; }
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
@@ -461,13 +491,38 @@ async function _pollOnce() {
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
     if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
-    if (!_top10Ok(cfg, rs)) { _seen.add(addr); continue; }     // top10 concentration
-    if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP must be locked ≥50%
-    if (!_snipersOk(cfg, rs)) { _seen.add(addr); continue; }   // no snipers/bundlers
-    if (!_bundlersOk(cfg, rs)) { _seen.add(addr); continue; }  // no BIG bundles (>maxBundlerPct)
+    if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP lock — not flexed (exit risk)
+    // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
+    let _isDexFlex = false;
+    if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
+      const _boost = _boostInfo(addr);
+      if (_boost && _boost.amount > 0) {
+        const _fc = Object.assign({}, cfg, {
+          maxTop10Pct:   (cfg.maxTop10Pct   || 25) + 5,   // 25→30
+          maxBundlerPct: (cfg.maxBundlerPct  || 3)  + 7,   // 3→10
+          maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,   // 5→10
+        });
+        if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _isDexFlex = true;
+        else { _seen.add(addr); continue; }
+      } else { _seen.add(addr); continue; }
+    }
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
-    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(addr, chain, pair.url) })) > 0;
+    // tracked wallet cross-reference — show which alpha wallets are already in this token
+    let walletLine = '';
+    try { const wc = wallets.checkWatchedInHolders((rs && rs.topHolders) || []); walletLine = wc.alertLine || ''; } catch (e) {}
+    // launch wallet / dev analysis
+    let launchLine = '';
+    try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
+    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
+    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _flexLine;
+    const _imgUrl = (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _btns = core.buildButtons(addr, chain, pair.url);
+    const ok = (_imgUrl
+      ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
+      : (await core.broadcast(_msg, { buttons: _btns }))
+    ) > 0;
     _seen.add(addr);
     if (ok) { core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
@@ -548,9 +603,11 @@ async function _pollBonded() {
       if (r.ok) { const j = await r.json(); pair = ((j && j.pairs) || []).sort((a, b) => (b.liquidity && b.liquidity.usd || 0) - (a.liquidity && a.liquidity.usd || 0))[0]; }
     } catch (e) {}
     if (!pair) continue;                              // not indexed/tradeable yet — catch it next poll
+    if (_BAD_VENUES.has(pair.dexId)) { _seenBond.add(mint); continue; }   // 0% win rate per ZEROX corpus
     const usdMc = Number(pair.fdv || pair.marketCap) || 0;
     const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
     if (usdMc <= 0 || liq <= 0) continue;
+    if (cfg.minVolM5 && Number(pair.volume && pair.volume.m5 || 0) < cfg.minVolM5) continue;   // 5-min momentum gate
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
     let card = _bondCard(c);
@@ -560,12 +617,27 @@ async function _pollBonded() {
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
       if (_overCap(cfg, usdMc, rs)) continue;         // >maxFdv unless premium-safe
       if (!_holdersOk(cfg, rs)) continue;
-      if (!_top10Ok(cfg, rs)) continue;
-      if (!_lpLockedOk(cfg, rs)) continue;            // LP MUST be locked
-      if (!_snipersOk(cfg, rs)) continue;
-      if (!_bundlersOk(cfg, rs)) continue;                          // no BIG bundles (>maxBundlerPct)
+      if (!_lpLockedOk(cfg, rs)) continue;            // LP — not flexed
+      // DEX FLEX for bonded: paid boost gets headroom on top10/bundlers/snipers
+      let _bondFlex = false;
+      if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
+        const _bst = _boostInfo(mint);
+        if (_bst && _bst.amount > 0) {
+          const _fc = Object.assign({}, cfg, { maxTop10Pct: (cfg.maxTop10Pct || 25) + 5, maxBundlerPct: (cfg.maxBundlerPct || 3) + 7, maxSnipersPct: (cfg.maxSnipersPct || 5) + 5 });
+          if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _bondFlex = true;
+          else continue;
+        } else continue;
+      }
+      card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
     }
-    const ok = (await core.broadcast(card + _detailBlock(rs, null, { liq, fdv: usdMc, mint, createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] }), { buttons: core.buildButtons(mint, 'solana', pair.url) })) > 0;
+    const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    const _bondMsg = card + _detailBlock(rs, null, _bondExtra);
+    const _bondImg = (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
+    const ok = (_bondImg
+      ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
+      : (await core.broadcast(_bondMsg, { buttons: _bondBtns }))
+    ) > 0;
     if (ok) {
       core.markAlerted(mint); posted++;
       try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
@@ -610,102 +682,65 @@ function _poolCard(net, kind, a, addr) {
 // ── RICH DETAIL BLOCK — appends deep coin intel to any signal card ──────────
 // Pulls from rugScore, social, and pool data. Safe to call with nulls.
 function _detailBlock(rs, social, extra) {
-  const lines = [];
   const e = extra || {};
+  const parts = [];
 
-  // ── AGE + VOLUME (from DexScreener pair data) ──────────────────────────
-  const age = e.createdAt ? _ageStr(Date.now() - e.createdAt) : '';
-  const vol24 = e.vol24 ? _fmtUsd(e.vol24) : '';
-  const vol1h = e.vol1h ? _fmtUsd(e.vol1h) : '';
-  if (age || vol24) {
-    let market = '';
-    if (age) market += '⏱ ' + age;
-    if (vol24) market += (market ? '  ·  ' : '') + '📊 Vol24h ' + vol24;
-    if (vol1h) market += '  ·  Vol1h ' + vol1h;
-    lines.push(market);
-  }
-
-  // ── BOOST STATUS ──────────────────────────────────────────────────────
-  const mint = e.mint || (rs && rs.mint) || '';
-  const boost = mint ? _boostInfo(mint) : null;
-  if (boost && boost.amount > 0) {
-    lines.push('⚡ <b>PAID BOOST</b> — ' + boost.amount + ' DexScreener credits');
-  }
-
-  // ── SAFETY SCORE (from RugCheck) ──────────────────────────────────────
+  // ── SAFETY BLOCK ──────────────────────────────────────────────────────
   if (rs && rs.checked) {
+    parts.push('\n━━ 🛡 SAFETY ━━');
     const badge = rs.score >= 80 ? '🟢' : rs.score >= 50 ? '🟡' : '🔴';
-    let safety = badge + ' Safety <b>' + rs.score + '/100</b>';
-    // LP lock status
-    if (rs.lp >= 99) safety += '  ·  🔒 LP 100%';
-    else if (rs.lp >= 80) safety += '  ·  🔐 LP ' + rs.lp.toFixed(0) + '%';
-    else if (rs.lp > 0) safety += '  ·  ⚠️ LP ' + rs.lp.toFixed(0) + '%';
-    else safety += '  ·  ⚠️ LP unknown';
-    lines.push(safety);
-  }
-
-  // ── HOLDERS & WHALE DISTRIBUTION ──────────────────────────────────────
-  if (rs && rs.checked && rs.holders) {
-    let holders = '👥 <b>' + rs.holders + '</b> holders';
-    if (rs.top10Pct) {
-      const quality = rs.top10Pct < 50 ? '🟢' : rs.top10Pct < 70 ? '🟡' : '🔴';
-      holders += '  ·  Top10 ' + quality + ' ' + rs.top10Pct.toFixed(0) + '%';
+    parts.push(`Score    ${badge} <b>${rs.score}/100</b>`);
+    // LP lock
+    if (rs.lp >= 99)      parts.push(`LP Lock  🔒 <b>100%</b>`);
+    else if (rs.lp >= 80) parts.push(`LP Lock  🔐 <b>${rs.lp.toFixed(0)}%</b>`);
+    else if (rs.lp > 0)   parts.push(`LP Lock  ⚠️ <b>${rs.lp.toFixed(0)}%</b> — unlocked`);
+    else                  parts.push(`LP Lock  ⚠️ unknown`);
+    // Holders + top10 concentration
+    if (rs.holders) {
+      const top10badge = rs.top10Pct < 30 ? '🟢' : rs.top10Pct < 50 ? '🟡' : '🔴';
+      let h = `Holders  <b>${rs.holders}</b>`;
+      if (rs.top10Pct) h += `   Top10 ${top10badge} <b>${rs.top10Pct.toFixed(0)}%</b>`;
+      if (rs.insiders)  h += `   🕵️ ${rs.insiders}`;
+      parts.push(h);
     }
-    if (rs.insiders) holders += '  ·  🕵️ ' + rs.insiders + ' insider(s)';
-    if (rs.hasBundlers) holders += '  ·  📦 bundler';
-    if (rs.hasSnipers) holders += '  ·  🔫 sniper';
-    lines.push(holders);
-  }
-
-  // ── CONVICTION (whale buying signal) ──────────────────────────────────
-  if (rs && rs.convictionLabel) {
-    lines.push('🐋 <b>Conviction:</b> ' + rs.convictionLabel);
-    if (rs.convictionSignals && rs.convictionSignals.length) {
-      lines.push('   ' + rs.convictionSignals.join('  ·  '));
+    // Bundlers / Snipers status
+    const bSt = rs.hasBundlers ? `📦 ${rs.bundlePct ? rs.bundlePct.toFixed(0) + '%' : 'yes'}` : '✅ clean';
+    const sSt = rs.hasSnipers  ? `🔫 ${rs.insiders || '?'} insider(s)` : '✅ clean';
+    parts.push(`Bundlers ${bSt}   Snipers ${sSt}`);
+    // Whale conviction
+    if (rs.convictionLabel) parts.push(`🐋 Conviction  <b>${rs.convictionLabel}</b>`);
+    // Top risk flags (max 2)
+    if (rs.risks && rs.risks.length) {
+      const topR = rs.risks.slice(0, 2).map(r => r.name).filter(Boolean);
+      if (topR.length) parts.push(`⚠️ ${topR.join('  ·  ')}`);
     }
   }
 
-  // ── LIQUIDITY HEALTH (liq/mcap ratio) ─────────────────────────────────
-  const liqNum = Number(e.liq || 0);
-  const fdvNum = Number(e.fdv || 0);
-  if (liqNum > 0 && fdvNum > 0) {
-    const ratio = (liqNum / fdvNum * 100);
-    const health = ratio >= 10 ? '🟢' : ratio >= 5 ? '🟡' : '🔴';
-    lines.push(health + ' Liquidity <b>' + ratio.toFixed(1) + '%</b> of mcap');
-  }
-
-  // ── WEBSITES & SOCIAL LINKS (from DexScreener info) ───────────────────
+  // ── LINKS BLOCK ───────────────────────────────────────────────────────
   const sites = e.websites || [];
-  const socialLinks = e.socialLinks || [];
-  if (sites.length || socialLinks.length) {
-    const parts = [];
-    for (const w of sites) { if (w.url) parts.push('🌐 <a href="' + _esc(w.url) + '">' + _esc(w.label || 'Website') + '</a>'); }
-    for (const s of socialLinks) {
-      const icon = s.type === 'twitter' ? '🐦' : s.type === 'telegram' ? '📱' : s.type === 'discord' ? '💬' : '🔗';
-      if (s.url) parts.push(icon + ' <a href="' + _esc(s.url) + '">' + _esc(s.type || 'social') + '</a>');
-    }
-    if (parts.length) lines.push(parts.join('  '));
-  } else if (social && social.has) {
-    // fallback to social score icons
-    const icons = [];
-    if (social.has.website) icons.push('🌐');
-    if (social.has.twitter) icons.push('🐦');
-    if (social.has.telegram) icons.push('📱');
-    if (social.has.discord) icons.push('💬');
-    if (icons.length) {
-      lines.push('🔗 Social ' + icons.join(' ') + '  (score ' + (social.score || 0) + '/8)');
-    } else {
-      lines.push('⚠️ No social presence detected');
-    }
+  const socials = e.socialLinks || [];
+  const linkParts = [];
+  for (const w of sites) if (w.url) linkParts.push(`🌐 <a href="${_esc(w.url)}">${_esc(w.label || 'Website')}</a>`);
+  for (const s of socials) {
+    const icon = s.type === 'twitter' ? '𝕏' : s.type === 'telegram' ? '📱' : s.type === 'discord' ? '💬' : '🔗';
+    if (s.url) linkParts.push(`${icon} <a href="${_esc(s.url)}">${_esc(s.type || 'social')}</a>`);
   }
-
-  // ── RISK FLAGS (top 2 from RugCheck) ──────────────────────────────────
-  if (rs && rs.checked && rs.risks && rs.risks.length) {
-    const topRisks = rs.risks.slice(0, 2).map(r => r.name).filter(Boolean);
-    if (topRisks.length) lines.push('⚠️ Risks: ' + topRisks.join(', '));
+  if (!linkParts.length && social && social.has) {
+    if (social.has.website) linkParts.push('🌐 Web');
+    if (social.has.twitter) linkParts.push('𝕏 Twitter');
+    if (social.has.telegram) linkParts.push('📱 TG');
+    if (social.has.discord) linkParts.push('💬 Discord');
   }
+  if (e.url) linkParts.push(`📊 <a href="${_esc(e.url)}">Chart</a>`);
+  if (linkParts.length) parts.push('\n' + linkParts.join('  '));
 
-  return lines.length ? '\n' + lines.join('\n') : '';
+  // ── CONTRACT ADDRESS ──────────────────────────────────────────────────
+  if (e.mint) parts.push(`\n<code>${_esc(e.mint)}</code>`);
+
+  // ── FOOTER ────────────────────────────────────────────────────────────
+  parts.push('\n<i>NFA · DYOR</i>');
+
+  return '\n' + parts.join('\n');
 }
 async function _pollGecko() {
   const cfg = _cfg();
@@ -749,7 +784,7 @@ async function _pollGecko() {
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
-          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
@@ -780,6 +815,9 @@ function startTelegramSignals() {
 
   // Start token-db auto-save
   try { require('./token-db').startAutoSave(); } catch (e) {}
+
+  // Start wallet watcher (ape alerts for tracked wallets)
+  try { wallets.startWalletWatcher(); } catch (e) { console.warn('[wallets] watcher start error:', e && e.message); }
 
   // Pipeline: 4-stage discovery → confirm → validate → enrich (20s cycle)
   const pipeline = require('./pipeline');

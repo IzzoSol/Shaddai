@@ -103,10 +103,11 @@ const _defaults = {
   bullishOnly: false,     // don't filter bearish — some 2x+ calls come from dip-buying
   // HARD REQUIREMENTS — every token must pass these
   requireLocked: false,      // FLOW MODE (owner): LP-lock no longer HARD-required — rugFilter/rugMinScore stays as the safety net. Was rejecting nearly every token.
-  maxSnipersPct: 10,         // snipers + bundlers combined < 10% of holders
-  // whale signal — high top10 concentration is BULLISH (early accumulation = conviction)
-  minTop10Pct: 15,           // top 10 holders SHOULD be ≥15% — shows whale conviction
-  top10BullishBonus: 5,      // confidence +5 if top10 ≥ 50% (whale-heavy = bullish)
+  minVolM5: 10000,           // 5-min volume ≥ $10K — corpus: "$10K/5-min" momentum gate (0 = disabled)
+  maxSnipersPct: 5,          // insider supply < 5% — per corpus: any snipers = 0% win rate
+  maxBundlerPct: 3,          // bundle cluster supply < 3% — per corpus: any bundlers = 0% win rate
+  minTop10Pct: 0,            // no floor — high top10 is a RISK signal per ZEROX corpus, not a bonus
+  top10BullishBonus: 0,      // removed: corpus shows high top-10 = dump risk, not whale conviction
   // social requirements (off by default for sniper_seed, on for higher presets)
   requireWebsite: false,
   requireTwitter: false,
@@ -120,14 +121,16 @@ let _config = Object.assign({}, _defaults, _read(CFG_FILE, {}));
 // clear honeypots/danger tokens are still filtered. Re-tighten by restoring the overrides below.
 if (_config.requireLocked == null) _config.requireLocked = _defaults.requireLocked;
 if (!_config.maxSnipersPct) _config.maxSnipersPct = _defaults.maxSnipersPct;
-if (_config.minTop10Pct == null) _config.minTop10Pct = 0;
-_config.top10BullishBonus = 5;
 function getConfig() { return Object.assign({}, _config); }
 function setConfig(patch) { _config = Object.assign({}, _config, patch || {}); _write(CFG_FILE, _config); return getConfig(); }
 
 // ── PRESETS: one-click filter bundles (tuned to actual win data) ────────────
 // Social scoring: website=+2, twitter=+2, telegram=+1, discord=+1, locked=+2, ANY=+1
 // Holder scoring: top10<18%=+3, no insiders=+2, no snipers=+2
+// NOTE: maxSnipersPct, maxBundlerPct, minTop10Pct, maxTop10Pct, top10BullishBonus are intentionally
+// ABSENT from all presets — they are global quality gates owned by tg-config.json and must never
+// be silently overridden by a preset switch. Presets only control: FDV range, liquidity, volume,
+// holder count, rug score, social requirements, and which feeds are active.
 const PRESETS = {
   sniper_seed: {
     label: '🏆 Sniper Seed',
@@ -137,7 +140,6 @@ const PRESETS = {
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
     requireLocked: true, minSocialScore: 0,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   anti_sniper: {
     label: '🎯 Anti-Sniper',
@@ -147,7 +149,6 @@ const PRESETS = {
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
     requireLocked: true, minSocialScore: 0,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   social_micro: {
     label: '💎 Social Micro',
@@ -157,7 +158,6 @@ const PRESETS = {
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: true, requireTwitter: true, requireSocial: false,
     requireLocked: true, minSocialScore: 3,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   full_stack: {
     label: '🔥 Full Stack',
@@ -167,7 +167,6 @@ const PRESETS = {
     newpools: true, trending: false, maxPer: 4,
     requireWebsite: true, requireTwitter: true, requireSocial: true,
     requireLocked: true, minSocialScore: 5,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   momentum: {
     label: '⚡ Momentum',
@@ -177,7 +176,6 @@ const PRESETS = {
     newpools: true, trending: false, maxPer: 3,
     requireWebsite: true, requireTwitter: true, requireSocial: false,
     requireLocked: true, minSocialScore: 4,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
   safe_swing: {
     label: '🛡 Safe Swing',
@@ -187,7 +185,6 @@ const PRESETS = {
     newpools: false, trending: false, maxPer: 2,
     requireWebsite: true, requireTwitter: true, requireSocial: true,
     requireLocked: true, minSocialScore: 6,
-    maxSnipersPct: 10, minTop10Pct: 15, top10BullishBonus: 5,
   },
 };
 function listPresets() { return Object.keys(PRESETS).map(k => ({ key: k, label: PRESETS[k].label, desc: PRESETS[k].desc })); }
