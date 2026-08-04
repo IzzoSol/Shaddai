@@ -707,6 +707,7 @@ async function _pollBonded() {
         pumpMc: Number(c.marketCap) || 0, pumpAth: Number(c.allTimeHighMarketCap) || 0,
         holders: Number(c.numHolders) || 0, snipers: Number(c.sniperCount) || 0,
         devPct: Number(c.devHoldingsPercentage) || 0, bcProg: Number(c.bondingCurveProgress) || 0,
+        imageUri: c.image_uri || c.imageUri || '',
       })).filter(c => c.mint);
     }
   } catch (e) {}
@@ -717,7 +718,7 @@ async function _pollBonded() {
       const coins = await r.json();
       const arr = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
       list = arr.filter(c => c.complete === true || !!c.raydium_pool || c.graduated === true)
-                .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0 }));
+                .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0, imageUri: c.image_uri || '' }));
     } catch (e) { return; }
   }
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
@@ -760,6 +761,9 @@ async function _pollBonded() {
     const usdMc = Number(pair.fdv || pair.marketCap) || 0;
     const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
     if (usdMc <= 0 || liq <= 0) continue;
+    // NO-MAN'S-LAND: $5K-$15K FDV = 0% 5x+ win rate (12 calls, 0 five-baggers in 7-day corpus).
+    // Sweet spot is <$5K (61-72% 5x+) OR >$15K (validated project, 7% but 23x avg like ANMOND 49x).
+    if (usdMc >= 5000 && usdMc < 15000) { _seenBond.add(mint); continue; }
     // 5-min momentum gate — for micro-FDV (<$5K) use relative check (5% of mcap) instead of
     // absolute $10K which is physically impossible for a just-graduated $1.5K token.
     // Data: micro-FDV bonded tokens with low holders = 52-72% win rate, 15-18x avg.
@@ -814,7 +818,7 @@ async function _pollBonded() {
     const _bondMsg = card + _detailBlock(rs, null, _bondExtra) + _bondAccel + _bondHourTag + _bondDevWarn;
     const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
-    const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
+    const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
     const ok = (_bondImg
       ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
