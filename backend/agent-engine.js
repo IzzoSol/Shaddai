@@ -3084,9 +3084,9 @@ async function callLLM(messages, agentName, options = {}) {
       }
       try {
         const kb = require('./knowledge/index');
-        const kbr = kb.lookup(agentKey, userGoal);
-        if (kbr && kbr.text) {
-          ragContext += '\n\nDOMAIN KNOWLEDGE:\n' + kbr.text.slice(0, 800);
+        const kbHits = kb.lookupTop ? kb.lookupTop(agentKey, userGoal, 2) : [kb.lookup(agentKey, userGoal)].filter(Boolean);
+        if (kbHits.length) {
+          ragContext += '\n\nDOMAIN KNOWLEDGE:\n' + kbHits.map(h => `${h.title}: ${h.text}`).join('\n\n').slice(0, 1600);
         }
       } catch (_) {}
     }

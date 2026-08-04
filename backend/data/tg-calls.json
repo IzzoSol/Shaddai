@@ -192,8 +192,8 @@
       "entryPrice": 0.0001617,
       "ts": 1784090917566,
       "peakMult": 1.3871077404241379,
-      "curMult": 0.019111547899398593,
-      "curFdv": 3092,
+      "curMult": 0.01899410953908534,
+      "curFdv": 3073,
       "milestones": [],
       "closed": false
     },
@@ -846,8 +846,8 @@
       "entryPrice": 0.00003989,
       "ts": 1784093891919,
       "peakMult": 1,
-      "curMult": 0.03591928813134478,
-      "curFdv": 1433,
+      "curMult": 0.03461586664995613,
+      "curFdv": 1381,
       "milestones": [],
       "closed": false
     },
@@ -876,8 +876,8 @@
       "entryPrice": 0.0001448,
       "ts": 1784095084033,
       "peakMult": 1.2792853740533898,
-      "curMult": 0.012646780662575331,
-      "curFdv": 1832,
+      "curMult": 0.012743426366328636,
+      "curFdv": 1846,
       "milestones": [],
       "closed": false
     },
@@ -953,8 +953,8 @@
       "holders": 0,
       "ts": 1784061327981,
       "peakMult": 5.2038529411764705,
-      "curMult": 1.464735294117647,
-      "curFdv": 49801,
+      "curMult": 1.3326764705882352,
+      "curFdv": 45311,
       "milestones": [
         2,
         5
@@ -1172,8 +1172,8 @@
       "holders": 0,
       "ts": 1784398055688,
       "peakMult": 1.056489609681099,
-      "curMult": 0.1974408570153251,
-      "curFdv": 3981,
+      "curMult": 0.21415463968655457,
+      "curFdv": 4318,
       "milestones": [],
       "closed": false
     },
@@ -1268,8 +1268,8 @@
       "holders": 785,
       "ts": 1784398595139,
       "peakMult": 1.056558740567516,
-      "curMult": 0.043636538971527764,
-      "curFdv": 1810,
+      "curMult": 0.043564213216326336,
+      "curFdv": 1807,
       "milestones": [],
       "closed": false
     },
@@ -1300,8 +1300,8 @@
       "holders": 557,
       "ts": 1784398596165,
       "peakMult": 3.1248096007385184,
-      "curMult": 0.8565889683821832,
-      "curFdv": 37116,
+      "curMult": 0.7682437110546965,
+      "curFdv": 33288,
       "milestones": [
         2
       ],
@@ -1583,8 +1583,8 @@
       "holders": 936,
       "ts": 1784400395956,
       "peakMult": 3.1043342269883825,
-      "curMult": 0.15173518022043492,
-      "curFdv": 4075,
+      "curMult": 0.1495382782246053,
+      "curFdv": 4016,
       "milestones": [
         2
       ],
@@ -1633,8 +1633,8 @@
       "holders": 5520,
       "ts": 1784406472907,
       "peakMult": 1.2308310691862299,
-      "curMult": 0.24122070600685858,
-      "curFdv": 23705,
+      "curMult": 0.20580842771519572,
+      "curFdv": 20225,
       "milestones": [],
       "closed": false
     },
@@ -1835,8 +1835,8 @@
       "holders": 177,
       "ts": 1784407013244,
       "peakMult": 1.2255272727272728,
-      "curMult": 0.2024,
-      "curFdv": 5566,
+      "curMult": 0.24523636363636364,
+      "curFdv": 6744,
       "milestones": [],
       "closed": false
     },
@@ -2195,8 +2195,8 @@
       "holders": 311,
       "ts": 1784410015164,
       "peakMult": 18.306967164415575,
-      "curMult": 0.14191785162593576,
-      "curFdv": 3583,
+      "curMult": 0.1323721630292708,
+      "curFdv": 3342,
       "milestones": [
         2,
         5,
@@ -2370,8 +2370,8 @@
       "holders": 3021,
       "ts": 1784410432637,
       "peakMult": 1.4682776876440953,
-      "curMult": 0.4988472376398258,
-      "curFdv": 5842,
+      "curMult": 0.4800614806592093,
+      "curFdv": 5622,
       "milestones": [],
       "closed": false
     },
@@ -2468,8 +2468,8 @@
       "holders": 2253,
       "ts": 1784411032597,
       "peakMult": 4.665297365822738,
-      "curMult": 1.4017455538354644,
-      "curFdv": 114995,
+      "curMult": 1.7081926447822324,
+      "curFdv": 140135,
       "milestones": [
         2
       ],
@@ -2552,8 +2552,8 @@
       "holders": 94,
       "ts": 1784411272623,
       "peakMult": 2.7879610849461995,
-      "curMult": 1.2477225067895081,
-      "curFdv": 36295,
+      "curMult": 1.3260338959744233,
+      "curFdv": 38573,
       "milestones": [
         2
       ],
@@ -2570,8 +2570,8 @@
       "holders": 538,
       "ts": 1784411274077,
       "peakMult": 6.5838152076440215,
-      "curMult": 0.26156498345650764,
-      "curFdv": 33835,
+      "curMult": 0.2609156127276663,
+      "curFdv": 33751,
       "milestones": [
         2,
         5
@@ -2669,8 +2669,8 @@
       "holders": 1810,
       "ts": 1784411632445,
       "peakMult": 3.346617053439426,
-      "curMult": 0.05129653316500274,
-      "curFdv": 6176,
+      "curMult": 0.051437731523779465,
+      "curFdv": 6193,
       "milestones": [
         2
       ],
@@ -2703,8 +2703,8 @@
       "holders": 6665,
       "ts": 1784411633473,
       "peakMult": 1.814471414846454,
-      "curMult": 0.08989362317834033,
-      "curFdv": 7766,
+      "curMult": 0.07707978840388466,
+      "curFdv": 6659,
       "milestones": [],
       "closed": false
     },
@@ -2883,8 +2883,8 @@
       "holders": 7956,
       "ts": 1784413753018,
       "peakMult": 1.6098775388553346,
-      "curMult": 0.25786968451133885,
-      "curFdv": 29417,
+      "curMult": 0.25656354918169305,
+      "curFdv": 29268,
       "milestones": [],
       "closed": false
     },
@@ -3303,8 +3303,8 @@
       "holders": 139,
       "ts": 1784415387104,
       "peakMult": 1,
-      "curMult": 0.034560557891498304,
-      "curFdv": 1348,
+      "curMult": 0.034227258742693056,
+      "curFdv": 1335,
       "milestones": [],
       "closed": false
     },
@@ -3423,8 +3423,8 @@
       "holders": 127,
       "ts": 1784417264340,
       "peakMult": 1.9874240497385898,
-      "curMult": 0.20239272761527954,
-      "curFdv": 4297,
+      "curMult": 0.2138382553812821,
+      "curFdv": 4540,
       "milestones": [],
       "closed": false
     },
@@ -3603,8 +3603,8 @@
       "holders": 182,
       "ts": 1784418162090,
       "peakMult": 2.2352457668913366,
-      "curMult": 0.11889692585895117,
-      "curFdv": 2893,
+      "curMult": 0.11749958901857636,
+      "curFdv": 2859,
       "milestones": [
         2
       ],
@@ -3820,8 +3820,8 @@
       "holders": 1316,
       "ts": 1784420465322,
       "peakMult": 3.1545424943015306,
-      "curMult": 0.361413220449365,
-      "curFdv": 11099,
+      "curMult": 0.3058612829697167,
+      "curFdv": 9393,
       "milestones": [
         2
       ],
@@ -3986,8 +3986,8 @@
       "holders": 397,
       "ts": 1784421987258,
       "peakMult": 4.26804733360803,
-      "curMult": 0.04874080947792739,
-      "curFdv": 1775,
+      "curMult": 0.04824653648040474,
+      "curFdv": 1757,
       "milestones": [
         2
       ],
@@ -4020,8 +4020,8 @@
       "holders": 5064,
       "ts": 1784422286013,
       "peakMult": 3.6127963373332777,
-      "curMult": 1.8354831291549945,
-      "curFdv": 175597,
+      "curMult": 1.4360601245975666,
+      "curFdv": 137385,
       "milestones": [
         2
       ],
@@ -4490,8 +4490,8 @@
       "holders": 464,
       "ts": 1784426430215,
       "peakMult": 4.279034641274011,
-      "curMult": 0.05133803973075029,
-      "curFdv": 3127,
+      "curMult": 0.05657527499589558,
+      "curFdv": 3446,
       "milestones": [
         2
       ],
@@ -4540,8 +4540,8 @@
       "holders": 1785,
       "ts": 1784426608666,
       "peakMult": 1.6745415250653846,
-      "curMult": 0.3235948193506961,
-      "curFdv": 82650,
+      "curMult": 0.2874375518769674,
+      "curFdv": 73415,
       "milestones": [],
       "closed": false
     },
@@ -4686,8 +4686,8 @@
       "holders": 1934,
       "ts": 1784427627531,
       "peakMult": 2.204306706020502,
-      "curMult": 0.1937065600304675,
-      "curFdv": 12207,
+      "curMult": 0.19905423847154782,
+      "curFdv": 12544,
       "milestones": [
         2
       ],
@@ -5060,8 +5060,8 @@
       "holders": 193,
       "ts": 1784429130020,
       "peakMult": 6.342044031508786,
-      "curMult": 0.4090082811553222,
-      "curFdv": 2025,
+      "curMult": 0.414057766107857,
+      "curFdv": 2050,
       "milestones": [
         2,
         5
@@ -5292,8 +5292,8 @@
       "holders": 318,
       "ts": 1784430388926,
       "peakMult": 1.051166729943635,
-      "curMult": 0.0414999561928682,
-      "curFdv": 1421,
+      "curMult": 0.03960164714815572,
+      "curFdv": 1356,
       "milestones": [],
       "closed": false
     },
@@ -5330,8 +5330,8 @@
       "holders": 257,
       "ts": 1784430627476,
       "peakMult": 1.7623529411764707,
-      "curMult": 0.17186412593206296,
-      "curFdv": 5186,
+      "curMult": 0.17033968516984258,
+      "curFdv": 5140,
       "milestones": [],
       "closed": false
     },
@@ -5490,8 +5490,8 @@
       "holders": 174,
       "ts": 1784431469161,
       "peakMult": 3.308669873123808,
-      "curMult": 0.08402438013102247,
-      "curFdv": 4053,
+      "curMult": 0.09673273074052575,
+      "curFdv": 4666,
       "milestones": [
         2
       ],
@@ -5802,8 +5802,8 @@
       "holders": 1072,
       "ts": 1784434828795,
       "peakMult": 1.9018038528896672,
-      "curMult": 0.08131348511383538,
-      "curFdv": 4643,
+      "curMult": 0.08112084063047285,
+      "curFdv": 4632,
       "milestones": [],
       "closed": false
     },
@@ -5850,8 +5850,8 @@
       "holders": 378,
       "ts": 1784435249115,
       "peakMult": 4.601836237586659,
-      "curMult": 0.08008244332021736,
-      "curFdv": 2137,
+      "curMult": 0.07899569046280681,
+      "curFdv": 2108,
       "milestones": [
         2
       ],
@@ -6157,8 +6157,8 @@
       "holders": 376,
       "ts": 1784437049619,
       "peakMult": 29.217606231587357,
-      "curMult": 0.854047036500724,
-      "curFdv": 17104,
+      "curMult": 0.9516153193189194,
+      "curFdv": 19058,
       "milestones": [
         2,
         5,
@@ -6340,8 +6340,8 @@
       "holders": 114,
       "ts": 1784438128977,
       "peakMult": 8.017309772809233,
-      "curMult": 0.993869455463397,
-      "curFdv": 2756,
+      "curMult": 1.0183916336098089,
+      "curFdv": 2824,
       "milestones": [
         2,
         5
@@ -6525,8 +6525,8 @@
       "holders": 387,
       "ts": 1784439211216,
       "peakMult": 2.3742347271069426,
-      "curMult": 0.08380009552342495,
-      "curFdv": 1930,
+      "curMult": 0.09087751291737224,
+      "curFdv": 2093,
       "milestones": [
         2
       ],
@@ -6721,8 +6721,8 @@
       "holders": 0,
       "ts": 1784440290342,
       "peakMult": 1.7105263157894737,
-      "curMult": 0.4845029239766082,
-      "curFdv": 1657,
+      "curMult": 0.4619883040935672,
+      "curFdv": 1580,
       "milestones": [],
       "closed": false
     },
@@ -6881,8 +6881,8 @@
       "holders": 459,
       "ts": 1784441189667,
       "peakMult": 2.0068335993615323,
-      "curMult": 0.038457701516360736,
-      "curFdv": 1542,
+      "curMult": 0.04120111731843575,
+      "curFdv": 1652,
       "milestones": [
         2
       ],
@@ -6981,8 +6981,8 @@
       "holders": 181,
       "ts": 1784442034416,
       "peakMult": 1,
-      "curMult": 0.05091107637209898,
-      "curFdv": 1530,
+      "curMult": 0.05087780115878388,
+      "curFdv": 1529,
       "milestones": [],
       "closed": false
     },
@@ -7311,8 +7311,8 @@
       "holders": 48,
       "ts": 1784444132237,
       "peakMult": 4.213550190430274,
-      "curMult": 0.5234019563498772,
-      "curFdv": 2194.61,
+      "curMult": 0.527561296787924,
+      "curFdv": 2212.05,
       "milestones": [
         2
       ],
@@ -7694,8 +7694,8 @@
       "holders": 291,
       "ts": 1784445992634,
       "peakMult": 1.5214562530055726,
-      "curMult": 0.04483607252977285,
-      "curFdv": 1585,
+      "curMult": 0.043449973126644226,
+      "curFdv": 1536,
       "milestones": [],
       "closed": false
     },
@@ -7888,8 +7888,8 @@
       "holders": 286,
       "ts": 1784448290966,
       "peakMult": 3.2365674526478547,
-      "curMult": 0.22762162460654922,
-      "curFdv": 8244,
+      "curMult": 0.1927494615936827,
+      "curFdv": 6981,
       "milestones": [
         2
       ],
@@ -8058,8 +8058,8 @@
       "holders": 3544,
       "ts": 1784448706887,
       "peakMult": 4.218026487121669,
-      "curMult": 0.0528630863530981,
-      "curFdv": 3329,
+      "curMult": 0.053180677740019694,
+      "curFdv": 3349,
       "milestones": [
         2
       ],
@@ -8188,8 +8188,8 @@
       "holders": 1875,
       "ts": 1784449906810,
       "peakMult": 3.1165488289880687,
-      "curMult": 0.12107821475916924,
-      "curFdv": 3288,
+      "curMult": 0.11956841950213581,
+      "curFdv": 3247,
       "milestones": [
         2
       ],
@@ -8434,8 +8434,8 @@
       "holders": 125,
       "ts": 1784451408571,
       "peakMult": 10.21979993291287,
-      "curMult": 0.2823489357495466,
-      "curFdv": 1559,
+      "curMult": 0.28361669877087237,
+      "curFdv": 1566,
       "milestones": [
         2,
         5,
@@ -8552,8 +8552,8 @@
       "holders": 3167,
       "ts": 1784452906892,
       "peakMult": 2.150430212292956,
-      "curMult": 0.06989749008521909,
-      "curFdv": 10187,
+      "curMult": 0.13166417367677127,
+      "curFdv": 19189,
       "milestones": [
         2
       ],
@@ -8928,8 +8928,8 @@
       "holders": 222,
       "ts": 1784456209225,
       "peakMult": 5.53733991419078,
-      "curMult": 0.050775831478434785,
-      "curFdv": 1574,
+      "curMult": 0.05071131326816994,
+      "curFdv": 1572,
       "milestones": [
         2,
         5
@@ -9223,8 +9223,8 @@
       "holders": 805,
       "ts": 1784578615129,
       "peakMult": 1.20699139418397,
-      "curMult": 0.00022874457246934026,
-      "curFdv": 2497,
+      "curMult": 0.00018165818470432588,
+      "curFdv": 1983,
       "milestones": [],
       "closed": false
     },
@@ -9528,8 +9528,8 @@
       "holders": 253,
       "ts": 1784617063219,
       "peakMult": 8.63238512035011,
-      "curMult": 0.03305804569304251,
-      "curFdv": 1405,
+      "curMult": 0.03326980541634315,
+      "curFdv": 1414,
       "milestones": [
         2,
         5
@@ -9627,8 +9627,8 @@
       "holders": 382,
       "ts": 1784663392272,
       "peakMult": 3.111695663031716,
-      "curMult": 0.07143927411970366,
-      "curFdv": 4291,
+      "curMult": 0.0704903021726463,
+      "curFdv": 4234,
       "milestones": [
         2
       ],
@@ -9645,8 +9645,8 @@
       "holders": 1428,
       "ts": 1784664530043,
       "peakMult": 1.430239111827833,
-      "curMult": 0.00017718771174599348,
-      "curFdv": 1393,
+      "curMult": 0.00018100367108007804,
+      "curFdv": 1423,
       "milestones": [],
       "closed": false
     },
@@ -9731,8 +9731,8 @@
       "holders": 651,
       "ts": 1784673890256,
       "peakMult": 1.190728541348136,
-      "curMult": 0.00015215828540385108,
-      "curFdv": 1343,
+      "curMult": 0.00014796628498691699,
+      "curFdv": 1306,
       "milestones": [],
       "closed": false
     },
@@ -10109,8 +10109,8 @@
       "holders": 376,
       "ts": 1784737003173,
       "peakMult": 1.5045182816627276,
-      "curMult": 0.11340886973446407,
-      "curFdv": 3263,
+      "curMult": 0.10645766717642152,
+      "curFdv": 3063,
       "milestones": [],
       "closed": false
     },
@@ -10223,8 +10223,8 @@
       "holders": 201,
       "ts": 1784743484320,
       "peakMult": 2.7536083109204017,
-      "curMult": 0.01885765906337898,
-      "curFdv": 1837,
+      "curMult": 0.019155357546143264,
+      "curFdv": 1866,
       "milestones": [
         2
       ],
@@ -10543,8 +10543,8 @@
       "holders": 525,
       "ts": 1784776629568,
       "peakMult": 2.077666840711901,
-      "curMult": 0.0006242926896654322,
-      "curFdv": 2585,
+      "curMult": 0.0005339694920117102,
+      "curFdv": 2211,
       "milestones": [
         2
       ],
@@ -10595,8 +10595,8 @@
       "holders": 201,
       "ts": 1784779508220,
       "peakMult": 48.7482151044737,
-      "curMult": 0.0859697386519945,
-      "curFdv": 2625,
+      "curMult": 0.08836051614593568,
+      "curFdv": 2698,
       "milestones": [
         2,
         5,
@@ -10706,8 +10706,8 @@
       "holders": 261,
       "ts": 1784814052553,
       "peakMult": 1.294484671083038,
-      "curMult": 0.024896009859805886,
-      "curFdv": 1616,
+      "curMult": 0.024680326606069943,
+      "curFdv": 1602,
       "milestones": [],
       "closed": false
     },
@@ -10898,8 +10898,8 @@
       "holders": 1159,
       "ts": 1784826053432,
       "peakMult": 1.505265219421805,
-      "curMult": 0.07631178535380165,
-      "curFdv": 10131,
+      "curMult": 0.11165428825381521,
+      "curFdv": 14823,
       "milestones": [],
       "closed": false
     },
@@ -10914,8 +10914,8 @@
       "holders": 360,
       "ts": 1784826661682,
       "peakMult": 1,
-      "curMult": 0.04398657570422535,
-      "curFdv": 1599,
+      "curMult": 0.043821522887323945,
+      "curFdv": 1593,
       "milestones": [],
       "closed": false
     },
@@ -10994,8 +10994,8 @@
       "holders": 449,
       "ts": 1784835660686,
       "peakMult": 1.0203761147731678,
-      "curMult": 0.02787902287708414,
-      "curFdv": 1438,
+      "curMult": 0.02758821248545948,
+      "curFdv": 1423,
       "milestones": [],
       "closed": false
     },
@@ -11058,8 +11058,8 @@
       "holders": 282,
       "ts": 1784839255775,
       "peakMult": 1.3446464646464646,
-      "curMult": 0.02674747474747475,
-      "curFdv": 1655,
+      "curMult": 0.027022222222222222,
+      "curFdv": 1672,
       "milestones": [],
       "closed": false
     },
@@ -11430,8 +11430,8 @@
       "holders": 878,
       "ts": 1784890849165,
       "peakMult": 1,
-      "curMult": 0.009965544105114008,
-      "curFdv": 1906,
+      "curMult": 0.009808688741444848,
+      "curFdv": 1876,
       "milestones": [],
       "closed": false
     },
@@ -11608,8 +11608,8 @@
       "holders": 1426,
       "ts": 1784903980848,
       "peakMult": 1.6933232418987907,
-      "curMult": 0.0006288552983994722,
-      "curFdv": 2142,
+      "curMult": 0.0005155321680623124,
+      "curFdv": 1756,
       "milestones": [],
       "closed": false
     },
@@ -11676,8 +11676,8 @@
       "holders": 230,
       "ts": 1784905960925,
       "peakMult": 1.0439720097254344,
-      "curMult": 0.041273794698452236,
-      "curFdv": 1392,
+      "curMult": 0.041184842554705565,
+      "curFdv": 1389,
       "milestones": [],
       "closed": false
     },
@@ -11820,8 +11820,8 @@
       "holders": 1536,
       "ts": 1784916640573,
       "peakMult": 1.7967663060640784,
-      "curMult": 0.013867710880333475,
-      "curFdv": 1537,
+      "curMult": 0.013975981882652278,
+      "curFdv": 1549,
       "milestones": [],
       "closed": false
     },
@@ -11903,8 +11903,8 @@
       "holders": 466,
       "ts": 1784931162838,
       "peakMult": 2.307899741690085,
-      "curMult": 0.044593942490561755,
-      "curFdv": 1571,
+      "curMult": 0.04391268557154617,
+      "curFdv": 1547,
       "milestones": [
         2
       ],
@@ -11973,8 +11973,8 @@
       "holders": 271,
       "ts": 1784938841505,
       "peakMult": 2.9413778232979353,
-      "curMult": 0.0478410867338688,
-      "curFdv": 3550,
+      "curMult": 0.04723465042315778,
+      "curFdv": 3505,
       "milestones": [
         2
       ],
@@ -12009,8 +12009,8 @@
       "holders": 417,
       "ts": 1784941242735,
       "peakMult": 2.016796833208516,
-      "curMult": 0.07708355622124746,
-      "curFdv": 1441,
+      "curMult": 0.07692307692307693,
+      "curFdv": 1438,
       "milestones": [
         2
       ],
@@ -12027,8 +12027,8 @@
       "holders": 1580,
       "ts": 1784941243706,
       "peakMult": 1.234670778955657,
-      "curMult": 0.00012763983080474174,
-      "curFdv": 1444,
+      "curMult": 0.00011438084561034336,
+      "curFdv": 1294,
       "milestones": [],
       "closed": false
     },
@@ -12173,8 +12173,8 @@
       "holders": 386,
       "ts": 1784952763260,
       "peakMult": 1,
-      "curMult": 0.03329331882807518,
-      "curFdv": 1775,
+      "curMult": 0.03312450763401733,
+      "curFdv": 1766,
       "milestones": [],
       "closed": false
     },
@@ -12243,8 +12243,8 @@
       "holders": 318,
       "ts": 1784984890892,
       "peakMult": 2.238137616030647,
-      "curMult": 0.10549580079563872,
-      "curFdv": 1432,
+      "curMult": 0.11065271843229704,
+      "curFdv": 1502,
       "milestones": [
         2
       ],
@@ -12277,8 +12277,8 @@
       "holders": 1303,
       "ts": 1784984898064,
       "peakMult": 3.9657511221846513,
-      "curMult": 0.011508572106543276,
-      "curFdv": 2328,
+      "curMult": 0.011330604496648277,
+      "curFdv": 2292,
       "milestones": [
         2
       ],
@@ -12295,8 +12295,8 @@
       "holders": 504,
       "ts": 1784985965392,
       "peakMult": 3.08873622396262,
-      "curMult": 0.0005311099960930296,
-      "curFdv": 1339,
+      "curMult": 0.000512467598918741,
+      "curFdv": 1292,
       "milestones": [
         2
       ],
@@ -12481,8 +12481,8 @@
       "holders": 6420,
       "ts": 1784994965885,
       "peakMult": 1,
-      "curMult": 0.11104768050832733,
-      "curFdv": 4474,
+      "curMult": 0.10903720618531113,
+      "curFdv": 4393,
       "milestones": [],
       "closed": false
     },
@@ -12723,8 +12723,8 @@
       "holders": 347,
       "ts": 1785007027834,
       "peakMult": 14.15927338989807,
-      "curMult": 3.6870337680086553,
-      "curFdv": 64748,
+      "curMult": 3.6867490461818804,
+      "curFdv": 64743,
       "milestones": [
         2,
         5,
@@ -13155,8 +13155,8 @@
       "holders": 853,
       "ts": 1785047887757,
       "peakMult": 2.322820088877727,
-      "curMult": 0.013066560627306531,
-      "curFdv": 1873,
+      "curMult": 0.012885177511284122,
+      "curFdv": 1847,
       "milestones": [
         2
       ],
@@ -13237,8 +13237,8 @@
       "holders": 1391,
       "ts": 1785049687791,
       "peakMult": 1.0815132888090424,
-      "curMult": 0.01450127691799528,
-      "curFdv": 1800,
+      "curMult": 0.01472685233671965,
+      "curFdv": 1828,
       "milestones": [],
       "closed": false
     },
@@ -13301,8 +13301,8 @@
       "holders": 465,
       "ts": 1785077273444,
       "peakMult": 5.991936430892081,
-      "curMult": 0.012346990700613436,
-      "curFdv": 2208,
+      "curMult": 0.012100945596072225,
+      "curFdv": 2164,
       "milestones": [
         2,
         5
@@ -13480,8 +13480,8 @@
       "holders": 421,
       "ts": 1785084833360,
       "peakMult": 4.294118553444583,
-      "curMult": 0.03747361284457388,
-      "curFdv": 2432,
+      "curMult": 0.040539915869273795,
+      "curFdv": 2631,
       "milestones": [
         2
       ],
@@ -13530,8 +13530,8 @@
       "holders": 221,
       "ts": 1785552408782,
       "peakMult": 8.178861662771078,
-      "curMult": 0.028094670526136557,
-      "curFdv": 1815,
+      "curMult": 0.027521941705493554,
+      "curFdv": 1778,
       "milestones": [
         2,
         5
@@ -13613,8 +13613,8 @@
       "holders": 415,
       "ts": 1785565360250,
       "peakMult": 1,
-      "curMult": 0.014245445021654372,
-      "curFdv": 1319,
+      "curMult": 0.014504649479971056,
+      "curFdv": 1343,
       "milestones": [],
       "closed": false
     },
@@ -13629,8 +13629,8 @@
       "holders": 263,
       "ts": 1785566619757,
       "peakMult": 1.0205934743884955,
-      "curMult": 0.03010818090976235,
-      "curFdv": 1386,
+      "curMult": 0.030238519355259157,
+      "curFdv": 1392,
       "milestones": [],
       "closed": false
     },
@@ -13683,8 +13683,8 @@
       "holders": 0,
       "ts": 1785594166253,
       "peakMult": 1.1625655671301032,
-      "curMult": 0.05464677626572179,
-      "curFdv": 6678,
+      "curMult": 0.04939322275230559,
+      "curFdv": 6036,
       "milestones": [],
       "closed": false
     },
@@ -13717,8 +13717,8 @@
       "holders": 10036,
       "ts": 1785594170866,
       "peakMult": 2.6583411664652434,
-      "curMult": 1.0561523656058367,
-      "curFdv": 47191,
+      "curMult": 1.0645002461841457,
+      "curFdv": 47564,
       "milestones": [
         2
       ],
@@ -13802,8 +13802,8 @@
       "holders": 262,
       "ts": 1785603446845,
       "peakMult": 4.8382944727186645,
-      "curMult": 0.10261569416498995,
-      "curFdv": 3468,
+      "curMult": 0.11773582672505623,
+      "curFdv": 3979,
       "milestones": [
         2
       ],
@@ -13868,8 +13868,8 @@
       "holders": 0,
       "ts": 1785612368144,
       "peakMult": 3.15979209702139,
-      "curMult": 0.26187779036449654,
-      "curFdv": 3930,
+      "curMult": 0.21689878056906778,
+      "curFdv": 3255,
       "milestones": [
         2
       ],
@@ -13885,10 +13885,12 @@
       "entryPrice": 0.00003951,
       "holders": 597,
       "ts": 1785614518093,
-      "peakMult": 1.3090550184744647,
-      "curMult": 0.0398339828921395,
-      "curFdv": 1574,
-      "milestones": [],
+      "peakMult": 2.0767576048995293,
+      "curMult": 2.0767576048995293,
+      "curFdv": 82061,
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -13921,8 +13923,8 @@
       "holders": 219,
       "ts": 1785680486336,
       "peakMult": 1.0412842642679148,
-      "curMult": 0.02264024797909196,
-      "curFdv": 1490,
+      "curMult": 0.02248830000607792,
+      "curFdv": 1480,
       "milestones": [],
       "closed": false
     },
@@ -13953,8 +13955,8 @@
       "holders": 1168,
       "ts": 1785695080587,
       "peakMult": 1.634218643592517,
-      "curMult": 0.018574156418165552,
-      "curFdv": 1391,
+      "curMult": 0.018373859979436233,
+      "curFdv": 1376,
       "milestones": [],
       "closed": false
     },
@@ -13985,8 +13987,8 @@
       "holders": 973,
       "ts": 1785697960914,
       "peakMult": 1.3123294040918863,
-      "curMult": 0.0038980410154834657,
-      "curFdv": 1291,
+      "curMult": 0.003635353510954371,
+      "curFdv": 1204,
       "milestones": [],
       "closed": false
     },
@@ -14035,8 +14037,8 @@
       "holders": 237,
       "ts": 1785701980079,
       "peakMult": 2.654875697407286,
-      "curMult": 0.02234780111585166,
-      "curFdv": 2179,
+      "curMult": 0.023332376107646866,
+      "curFdv": 2275,
       "milestones": [
         2
       ],
@@ -14053,8 +14055,8 @@
       "holders": 0,
       "ts": 1785704383269,
       "peakMult": 1,
-      "curMult": 0.5583983140147524,
-      "curFdv": 13248,
+      "curMult": 0.4461538461538462,
+      "curFdv": 10585,
       "milestones": [],
       "closed": false
     },
@@ -14069,8 +14071,8 @@
       "holders": 564,
       "ts": 1785705882261,
       "peakMult": 1,
-      "curMult": 0.030138815259861382,
-      "curFdv": 1535,
+      "curMult": 0.02996210559384265,
+      "curFdv": 1526,
       "milestones": [],
       "closed": false
     },
@@ -14085,8 +14087,8 @@
       "holders": 100,
       "ts": 1785706420933,
       "peakMult": 1,
-      "curMult": 0.03176774585803314,
-      "curFdv": 1881,
+      "curMult": 0.03156508081268683,
+      "curFdv": 1869,
       "milestones": [],
       "closed": false
     },
@@ -14135,8 +14137,8 @@
       "holders": 1584,
       "ts": 1785731136180,
       "peakMult": 3.446848663069181,
-      "curMult": 0.015847632328866792,
-      "curFdv": 2091,
+      "curMult": 0.014604680773661553,
+      "curFdv": 1927,
       "milestones": [
         2
       ],
@@ -14153,8 +14155,8 @@
       "holders": 414,
       "ts": 1785731196801,
       "peakMult": 1.0141172332567696,
-      "curMult": 0.013658916133295673,
-      "curFdv": 2563,
+      "curMult": 0.013664245402173276,
+      "curFdv": 2564,
       "milestones": [],
       "closed": false
     },
@@ -14169,8 +14171,8 @@
       "holders": 105,
       "ts": 1785732636737,
       "peakMult": 1.1592673030103953,
-      "curMult": 0.058855354175522664,
-      "curFdv": 1523,
+      "curMult": 0.05761873478378483,
+      "curFdv": 1491,
       "milestones": [],
       "closed": false
     },
@@ -14184,9 +14186,9 @@
       "entryPrice": 0.002529,
       "holders": 804,
       "ts": 1785732996511,
-      "peakMult": 1.3571492108046137,
-      "curMult": 1.3571492108046137,
-      "curFdv": 3432875,
+      "peakMult": 1.3767335118947608,
+      "curMult": 0.0005107779282262129,
+      "curFdv": 1292,
       "milestones": [],
       "closed": false
     },
@@ -14217,8 +14219,8 @@
       "holders": 346,
       "ts": 1785756536565,
       "peakMult": 1.098658515877059,
-      "curMult": 0.04044263315786495,
-      "curFdv": 1429,
+      "curMult": 0.03976340069055301,
+      "curFdv": 1405,
       "milestones": [],
       "closed": false
     },
@@ -14233,8 +14235,8 @@
       "holders": 2223,
       "ts": 1785756954861,
       "peakMult": 1.222905328226836,
-      "curMult": 0.6949674124840421,
-      "curFdv": 103432,
+      "curMult": 0.05053416649868978,
+      "curFdv": 7521,
       "milestones": [],
       "closed": false
     },
@@ -14249,8 +14251,8 @@
       "holders": 266,
       "ts": 1785758154880,
       "peakMult": 1.403703159441587,
-      "curMult": 0.04064658339456282,
-      "curFdv": 1383,
+      "curMult": 0.040675973548861134,
+      "curFdv": 1384,
       "milestones": [],
       "closed": false
     },
@@ -14265,8 +14267,8 @@
       "holders": 185,
       "ts": 1785759772387,
       "peakMult": 4.027311615663047,
-      "curMult": 0.34227659474451183,
-      "curFdv": 29125,
+      "curMult": 0.3020730503455084,
+      "curFdv": 25704,
       "milestones": [
         2
       ],
@@ -14283,8 +14285,8 @@
       "holders": 406,
       "ts": 1785763732883,
       "peakMult": 1.099082942962572,
-      "curMult": 1.0719883722121195,
-      "curFdv": 1151293,
+      "curMult": 1.0572003735641013,
+      "curFdv": 1135411,
       "milestones": [],
       "closed": false
     },
@@ -14299,8 +14301,8 @@
       "holders": 408,
       "ts": 1785763912424,
       "peakMult": 1.0734864699528324,
-      "curMult": 1.052756474560183,
-      "curFdv": 683200,
+      "curMult": 1.0644782522270144,
+      "curFdv": 690807,
       "milestones": [],
       "closed": false
     },
@@ -14314,9 +14316,9 @@
       "entryPrice": 0.0009948,
       "holders": 221,
       "ts": 1785766792591,
-      "peakMult": 1.2336159455615474,
-      "curMult": 1.2336159455615474,
-      "curFdv": 1227306,
+      "peakMult": 1.4113098498821472,
+      "curMult": 1.1792589093211778,
+      "curFdv": 1173227,
       "milestones": [],
       "closed": false
     },
@@ -14346,9 +14348,9 @@
       "entryPrice": 0.0000959890137303676,
       "holders": 0,
       "ts": 1785791043199,
-      "peakMult": 1,
-      "curMult": 0.9508518071398739,
-      "curFdv": 89755,
+      "peakMult": 1.3167319125734411,
+      "curMult": 1.3125049628653602,
+      "curFdv": 123893,
       "milestones": [],
       "closed": false
     },
@@ -14363,8 +14365,156 @@
       "holders": 6509,
       "ts": 1785791044718,
       "peakMult": 1.1540612014150775,
-      "curMult": 1.1540612014150775,
-      "curFdv": 654687,
+      "curMult": 1.0011446151679775,
+      "curFdv": 567939,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "FVZhiS1uXdxpVMyGZTS22fz3caHUxxxXPkHPG21Zpump",
+      "chain": "solana",
+      "name": "FROGE / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 146181.118921405,
+      "entryPrice": 0.00014655608092546172,
+      "holders": 0,
+      "ts": 1785817346292,
+      "peakMult": 1.3600251623938602,
+      "curMult": 0.8509101648543085,
+      "curFdv": 124387,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "3XEe11RMNqNTka33ik2yEmr3siUWmFQWSESP9Ejepump",
+      "chain": "solana",
+      "name": "wiwiwi / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 372103.025623085,
+      "entryPrice": 0.00038717708648011896,
+      "holders": 0,
+      "ts": 1785817356290,
+      "peakMult": 1.0400022933218298,
+      "curMult": 0.7382820914718109,
+      "curFdv": 274717,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "EVY4xJ3ytMHa77sjgs2uVj7fgXj1ha98QSQxPadApump",
+      "chain": "solana",
+      "name": "Slop / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 462997.2344,
+      "entryPrice": 0.0004482863455819765,
+      "holders": 0,
+      "ts": 1785817366318,
+      "peakMult": 2.09304705946209,
+      "curMult": 2.09304705946209,
+      "curFdv": 969075,
+      "milestones": [
+        2
+      ],
+      "closed": false
+    },
+    {
+      "mint": "9tWD7CuW2g59fgMUnggo4cZqB6XHEZrHtBaa8q7dpump",
+      "chain": "solana",
+      "name": "lmeow / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 485534.9245,
+      "entryPrice": 0.00048050345941326103,
+      "holders": 0,
+      "ts": 1785817517319,
+      "peakMult": 1.135930645087921,
+      "curMult": 0.8285789130705468,
+      "curFdv": 402304,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "8rWNVQoFyhWgKfBQGo1o7va5imP9rYT9jNroDqN4pump",
+      "chain": "solana",
+      "name": "OFFICIAL / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 449633.682455291,
+      "entryPrice": 0.00046466447111483545,
+      "holders": 0,
+      "ts": 1785817518183,
+      "peakMult": 2.386740677744285,
+      "curMult": 2.386740677744285,
+      "curFdv": 1073159,
+      "milestones": [
+        2
+      ],
+      "closed": false
+    },
+    {
+      "mint": "6EMZtWhb8Ar8uCMP5b4WjptPwQu6FtQhSm2oNvHTpump",
+      "chain": "solana",
+      "name": "Puww",
+      "symbol": "PUWW",
+      "source": "trending",
+      "entryFdv": 132566,
+      "entryPrice": 0.0001356,
+      "holders": 1390,
+      "ts": 1785818537222,
+      "peakMult": 1.023346861186126,
+      "curMult": 0.22787072099935127,
+      "curFdv": 30207.91,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "GjXJE3nEbrZezRUTVcTfbf9suRCgUWNWfzi8AzJ5pump",
+      "chain": "solana",
+      "name": "TNOS",
+      "symbol": "TNOS",
+      "source": "bonded",
+      "entryFdv": 114474,
+      "entryPrice": 0.0001144,
+      "holders": 518,
+      "ts": 1785826698699,
+      "peakMult": 1,
+      "curMult": 0.9144172475846044,
+      "curFdv": 104677,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "9McR3kxw4x3Nfgvkm3ZPLHQAGMuG19aJ1QCXSNypump",
+      "chain": "solana",
+      "name": "SPIDORK",
+      "symbol": "SPIDORK",
+      "source": "trending",
+      "entryFdv": 87545,
+      "entryPrice": 0.00008754,
+      "holders": 713,
+      "ts": 1785827537507,
+      "peakMult": 1,
+      "curMult": 0.34547821120566563,
+      "curFdv": 30244.89,
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "ftqt1ZJA3VqopX4tjSWwCA8abDSSBAjLCDh2K2hpump",
+      "chain": "solana",
+      "name": "United States Oil Vault",
+      "symbol": "USOV",
+      "source": "bonded",
+      "entryFdv": 362361,
+      "entryPrice": 0.0003623,
+      "holders": 969,
+      "ts": 1785837378403,
+      "peakMult": 1.1429596452156827,
+      "curMult": 1.1429596452156827,
+      "curFdv": 414164,
       "milestones": [],
       "closed": false
     }

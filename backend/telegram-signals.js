@@ -52,8 +52,12 @@ const _SEEN_CAP = 4000;
 const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (DexScreener 300 req/min, well within limit)
 
 // ZEROX corpus: block only pre-graduation bonding curve (no liq/vol anyway) + confirmed-dead DEX types
-// pumpswap/pump-fun graduates still allowed — our quality gates (rug/holders/vol) filter the bad ones
-const _BAD_VENUES = new Set(['meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
+// Venues with 0% 5x+ win rate in 7-day corpus (1642 calls):
+//   pumpswap:417, pump-fun:314 — pump.fun's own AMM/bonding; not Raydium graduates
+//   pancakeswap:43 — BSC DEX leaking into Solana feed; zero wins
+//   meteora-dbc:36, meteora-damm-v2:9, raydium-launchlab:3 — historically dead
+// venue:unknown (818 calls, 21% win rate) = real Raydium pairs — intentionally NOT blocked
+const _BAD_VENUES = new Set(['pumpswap', 'pump-fun', 'pancakeswap', 'meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
 // Scam symbol blocklist: impostor stablecoin names + known persistent spam launchers.
 // Strip non-alphanumeric before testing so "$USOX" / "USOX!" still match.
