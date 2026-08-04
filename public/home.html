@@ -35,9 +35,11 @@
 <meta property="og:image" content="/assets/agents/SHADDAI-portrait.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts load ASYNC (non-render-blocking) so the page paints instantly, then swaps. -->
-<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cinzel+Decorative:wght@700&family=Chakra+Petch:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- Critical fonts first (Cinzel for wordmark hero), secondary fonts deferred further -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cinzel+Decorative:wght@700&family=Chakra+Petch:wght@400;600;700&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Chakra+Petch:wght@400;600;700&display=swap"></noscript>
+<!-- Secondary fonts (body text + mono code) loaded after first paint -->
+<script>window.addEventListener('load',function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&display=swap';document.head.appendChild(l);});</script>
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    SHADDAI · THE DESCENT · design tokens
@@ -775,8 +777,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   html[data-theme="codex"] #tabBar{ background:linear-gradient(180deg, rgba(236,228,211,.9), rgba(236,228,211,.99)); }
 }
 </style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<!-- GSAP removed: replaced with lightweight native scroll handlers below -->
 </head>
 <body>
 <div id="descentFallback" aria-hidden="true"></div>
@@ -1013,8 +1014,13 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--gold)">a receipt every run</span>
     </div>
     <div style="position:relative;border:1px solid rgba(0,255,156,.22);border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5);background:#06060d">
-      <iframe src="/prove.html?embed=1" title="Watch the SHADDAI council work — live"
-        style="width:100%;height:clamp(660px,88vh,940px);border:0;display:block" loading="lazy"></iframe>
+      <!-- data-src: truly lazy — only loaded once this section enters viewport -->
+      <iframe id="proveEmbed" data-src="/prove.html?embed=1" src="about:blank" title="Watch the SHADDAI council work — live"
+        style="width:100%;height:clamp(660px,88vh,940px);border:0;display:block"></iframe>
+      <div id="provePlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;pointer-events:none">
+        <div style="font-family:'Chakra Petch',monospace;font-size:11px;letter-spacing:.2em;color:rgba(0,255,156,.5);text-transform:uppercase">Loading live demo…</div>
+        <div style="width:44px;height:1px;background:linear-gradient(90deg,transparent,#00ff9c,transparent);animation:drop 1.8s ease-in-out infinite"></div>
+      </div>
     </div>
     <div style="text-align:center;margin-top:18px">
       <a href="/prove.html" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(232,196,92,.5);padding-bottom:2px">Open the full demo in its own page →</a>
@@ -1260,7 +1266,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   var W=0,H=0,DPR=1, R=0, cxp=0, cyp=0;
   var glow=document.getElementById('heroGlow'), cur=document.getElementById('cursor');
   var mx=innerWidth/2, my=innerHeight*0.42, ex=mx, ey=my;
-  var running=true, raf=0;
+  var running=true, raf=0, _skyLast=0, _skyMs=1000/24; /* 24fps cap */
 
   function size(){ W=cv.clientWidth; H=cv.clientHeight;
     // PERF: cap the internal render resolution (~1280px). On a 1080p+ desktop this halves
@@ -1290,8 +1296,8 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     for(var y=step*0.5;y<H+step;y+=step*0.86,row++){ var off=(row%2)*step*0.5;
       for(var x=step*0.5+off;x<W+step;x+=step){ atoms.push({ x:x+(Math.random()*2-1)*jitter, y:y+(Math.random()*2-1)*jitter,
         ph:Math.random()*6.28, ox:0, oy:0 }); } }
-    /* cap for safety, then build edges within bond radius */
-    if(atoms.length>120) atoms.length=120;
+    /* cap for perf: fewer atoms = O(n²) bond build is much faster */
+    if(atoms.length>70) atoms.length=70;
     bonds=[]; var maxB=step*1.5;
     for(var i=0;i<atoms.length;i++) for(var j=i+1;j<atoms.length;j++){
       var dx=atoms[i].x-atoms[j].x, dy=atoms[i].y-atoms[j].y, d=Math.sqrt(dx*dx+dy*dy);
@@ -1306,6 +1312,8 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   function gazeBoost(x,y){ var d=Math.hypot(x-ex, y-ey); return Math.max(0, 1 - d/(R*1.25)); }
 
   function frame(t){
+    if(t - _skyLast < _skyMs){ raf=requestAnimationFrame(frame); return; }
+    _skyLast = t;
     var breathe=0.5+0.5*Math.sin(t*0.0006);
     var px=(ex-cxp)/W, py=(ey-cyp)/H;
     ctx.clearRect(0,0,W,H); ctx.fillStyle='#06080b'; ctx.fillRect(0,0,W,H);
@@ -1441,9 +1449,9 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   /* Descent runs as the living background in light ?bg=1 mode (DPR1, 0.5 renderScale, 30fps).
      Auto-load after the hero paints; also exposed for the View button. */
   window.__loadDescent = lazyLoad;
-  /* start the Ascent background ASAP (was 450ms after full load) so it "starts" fast */
-  if(document.readyState!=='loading') setTimeout(lazyLoad, 120);
-  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(lazyLoad, 120); });
+  /* delay background descent iframe so hero + fonts paint first */
+  if(document.readyState!=='loading') setTimeout(lazyLoad, 2000);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(lazyLoad, 2000); });
 })();
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1455,12 +1463,14 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   if(!gate||!cv) return;
   var ctx=cv.getContext('2d'), DPR=Math.min(devicePixelRatio||1,DPRCAP);
   var S=220; cv.width=S*DPR; cv.height=S*DPR; ctx.scale(DPR,DPR);
-  var hover=false, open=0, opening=false, spin=0, spinV=0.15, running=true, raf=0;
+  var hover=false, open=0, opening=false, spin=0, spinV=0.15, running=true, raf=0, _gLast=0, _gMs=1000/30;
 
   function ring(cx,cy,r,col,a,w){ ctx.beginPath(); ctx.arc(cx,cy,r,0,6.28);
     ctx.strokeStyle=col; ctx.globalAlpha=a; ctx.lineWidth=w||1.5; if(hover){ ctx.shadowColor=col; ctx.shadowBlur=10; } ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1; }
 
   function draw(t){
+    if(t - _gLast < _gMs){ if(running) raf=requestAnimationFrame(draw); return; }
+    _gLast = t;
     var cx=S/2, cy=S/2;
     ctx.clearRect(0,0,S,S);
     spinV += ((opening?1.6:(hover?0.55:0.15))-spinV)*0.06; spin += REDUCED?0:spinV*0.016;
@@ -1548,45 +1558,49 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   addEventListener('resize',upd,{passive:true}); upd();
 })();
 
-/* ── GSAP ScrollTrigger: cinematic hero parallax (additive, guarded) ── */
+/* ── Hero parallax + fade (native, no GSAP — 60fps would cost us GSAP's 300KB) ── */
 (function(){
   if(REDUCED) return;
-  /* HERO TITLE/BUTTON fade — MANUAL, driven directly from scroll position (NO GSAP scrub).
-     GSAP scrub was going out of sync on the slower deployed load (fonts/layout settling after
-     init left stale trigger positions), so scrolling back to the top sometimes left the
-     "SHADDAI" title + button cut off / not showing. This is deterministic: opacity is ALWAYS
-     exactly 1 at the top, computed each scroll frame — no lag, no stale positions. */
-  (function(){
-    var hero=document.querySelector('.hero-center');
-    var heroSec=document.getElementById('hero')||document.querySelector('.hero');
-    if(!hero) return;
-    var ticking=false;
-    function fade(){
-      ticking=false;
-      var h=(heroSec?heroSec.offsetHeight:innerHeight)||innerHeight;
-      var y=window.scrollY||document.documentElement.scrollTop||0;
-      var p=y/(h*0.82); if(p<0)p=0; if(p>1)p=1;   // 0 at top → 1 by ~82% of hero height
-      hero.style.opacity=String(1-p);
-      hero.style.transform='translateY('+(-26*p).toFixed(2)+'%)';
-    }
-    addEventListener('scroll', function(){ if(!ticking){ ticking=true; requestAnimationFrame(fade); } }, {passive:true});
-    addEventListener('resize', fade, {passive:true});
-    fade();
-  })();
-  /* #sky parallax + scroll-cue keep GSAP ScrollTrigger (they weren't the reported issue). */
-  function init(){
-    if(!window.gsap || !window.ScrollTrigger) return;
-    gsap.registerPlugin(ScrollTrigger);
-    gsap.to('#sky', { yPercent:-12, scale:1.08, ease:'none', transformOrigin:'50% 40%',
-      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:0.8, invalidateOnRefresh:true } });
-    gsap.to('.scrollcue', { opacity:0, ease:'none',
-      scrollTrigger:{ trigger:'#hero', start:'top top', end:'12% top', scrub:true, invalidateOnRefresh:true } });
-    function refresh(){ try{ ScrollTrigger.refresh(); }catch(e){} }
-    addEventListener('load', refresh);
-    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refresh); }
-    [350,1000,2200].forEach(function(d){ setTimeout(refresh, d); });
+  var hero=document.querySelector('.hero-center');
+  var sky=document.getElementById('sky');
+  var scrollcue=document.querySelector('.scrollcue');
+  var heroSec=document.getElementById('hero');
+  if(!hero) return;
+  var ticking=false, lastY=0;
+  function update(){
+    ticking=false;
+    var h=(heroSec?heroSec.offsetHeight:innerHeight)||innerHeight;
+    var y=window.scrollY||document.documentElement.scrollTop||0;
+    if(Math.abs(y-lastY)<1) return; lastY=y;
+    var p=Math.min(1, y/(h*0.82));
+    hero.style.opacity=String(1-p);
+    hero.style.transform='translateY('+(-26*p).toFixed(1)+'%)';
+    /* subtle sky parallax: slight upward drift as you scroll */
+    if(sky){ var sp=Math.min(1, y/h); sky.style.transform='translateY('+(-6*sp).toFixed(1)+'%) scale(1.04)'; sky.style.transformOrigin='50% 40%'; }
+    /* scrollcue fades out quickly */
+    if(scrollcue){ scrollcue.style.opacity=String(Math.max(0, 1-p*8)); }
   }
-  if(window.gsap && window.ScrollTrigger) init(); else addEventListener('load', init);
+  addEventListener('scroll', function(){ if(!ticking){ ticking=true; requestAnimationFrame(update); } }, {passive:true});
+  addEventListener('resize', function(){ ticking=true; requestAnimationFrame(update); }, {passive:true});
+  update();
+})();
+
+/* ── Prove.html iframe: truly lazy — only load once the section enters viewport ── */
+(function(){
+  var frame=document.getElementById('proveEmbed');
+  var placeholder=document.getElementById('provePlaceholder');
+  if(!frame||!frame.dataset.src) return;
+  if(!('IntersectionObserver' in window)){ frame.src=frame.dataset.src; return; }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        frame.src=frame.dataset.src;
+        frame.addEventListener('load',function(){ if(placeholder) placeholder.style.display='none'; },{once:true});
+        io.disconnect();
+      }
+    });
+  },{ rootMargin:'300px 0px' }); /* start loading when 300px above viewport */
+  io.observe(frame);
 })();
 
 /* ── live council roster from /api/agents (plain-English role + glyph + signature color) ── */
