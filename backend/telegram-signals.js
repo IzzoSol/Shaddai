@@ -59,11 +59,25 @@ const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll 
 // venue:unknown (818 calls, 21% win rate) = real Raydium pairs — intentionally NOT blocked
 const _BAD_VENUES = new Set(['pumpswap', 'pump-fun', 'pancakeswap', 'meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
-// Scam symbol blocklist: impostor stablecoin names + known persistent spam launchers.
-// Strip non-alphanumeric before testing so "$USOX" / "USOX!" still match.
-// TNOS: persistent relaunch spam (4 calls in 7 days, 0% win rate, different mints).
-const _SCAM_SYM_RE = /^(USO[A-Z]|USU[A-Z]|AOR[A-Z]|USDX[A-Z0-9]?|USR[A-Z]{1,2}|USDU|XUS[A-Z]{1,2}|TNOS|USOX|USUR|USOP|USOR|AORP)$/i;
-function _isScamSym(sym) { return !!(sym && _SCAM_SYM_RE.test(String(sym).replace(/[^A-Z0-9]/gi, ''))); }
+// Scam symbol + name blocklist. Strip non-alphanumeric before testing.
+// Patterns confirmed 0% win rate over 700+ calls in 7-day corpus:
+//   USO*/USU*/USR*/USW*/AOR*/XUS* = fake stablecoin family
+//   USOS:11x, NTFS:11x, GDWR:8x, USWR:6x, AORP:9x, MODA:16x = persistent scam relaunchers
+//   OIL*/RESERVE*/USSR*/UNITED* = commodity/nation impersonators (0% win, >90% rug)
+//   Non-ASCII dominant = targeting foreign communities with rug tokens
+const _SCAM_SYM_RE = /^(USO[A-Z0-9]+|USU[A-Z0-9]+|AOR[A-Z0-9]+|USDX[A-Z0-9]?|USR[A-Z0-9]+|USW[A-Z0-9]+|USDU|XUS[A-Z0-9]+|TNOS|USOS|NTFS|GDWR|OIL[A-Z0-9]*|RESERVE[A-Z0-9]*|USSR[A-Z0-9]*|UNITED[A-Z0-9]*)$/i;
+function _isScamSym(sym) {
+  if (!sym) return false;
+  const s = String(sym).replace(/[^A-Z0-9]/gi, '');
+  if (_SCAM_SYM_RE.test(s)) return true;
+  // Block non-ASCII dominant symbols (Chinese/Japanese chars etc.) — consistently rug
+  const nonAscii = (String(sym).match(/[^\x00-\x7F]/g) || []).length;
+  if (nonAscii > 0 && nonAscii >= String(sym).length * 0.4) return true;
+  return false;
+}
+// Name-level scam check for token full names (catches "United States Dollar", "Oil Reserve", etc.)
+const _SCAM_NAME_RE = /\b(reserve|united|ussr|soviet|petroleum|crude oil|federal|treasury|central bank)\b/i;
+function _isScamName(name) { return !!(name && _SCAM_NAME_RE.test(String(name))); }
 // Symbol cooldown: block same symbol if already called within 2h (stops TNOS x3 relaunches)
 // Symbol cooldown — persisted to disk so Render deploys don't reset it.
 // Prevents MODA/USOH/AORP relaunches from spamming every restart.
@@ -644,9 +658,11 @@ async function _pollOnce() {
     // launch wallet / dev analysis
     let launchLine = '';
     try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
-    // scam filter — block impostor stablecoin symbol patterns + symbol cooldown (stops relaunch rugs)
+    // scam filter — symbol + name patterns + cooldown
     const _sym = pair.baseToken && pair.baseToken.symbol;
+    const _tName = pair.baseToken && pair.baseToken.name;
     if (_sym && _isScamSym(_sym)) { _seen.add(addr); continue; }
+    if (_tName && _isScamName(_tName)) { _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
@@ -746,14 +762,16 @@ async function _pollBonded() {
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
     if (!_bondSeeded) continue;                       // first poll only seeds (no dump on restart)
     if (core.wasAlerted(mint)) continue;              // global de-dupe
-    // SCAM CHECK FIRST — before any enrichment/API calls, block known scam symbol patterns.
-    // Done early so USOX/USUR/AORP can't slip through via the rug-score-≥80 maxFdv exception.
+    // SCAM CHECK FIRST — before any enrichment/API calls, block known scam symbol/name patterns.
+    // Done early so USOX/USUR/AORP/UNITED*/OIL*/RESERVE* can't slip through downstream.
     const _earlyBondSym = c.symbol;
+    const _earlyBondName = c.name;
     if (_isScamSym(_earlyBondSym)) { _seenBond.add(mint); continue; }
+    if (_isScamName(_earlyBondName)) { _seenBond.add(mint); continue; }
     if (!_symCooldownOk(_earlyBondSym)) { _seenBond.add(mint); continue; }
     // pump's own rich data as early gates (owner rules), when present
     if (c.holders && cfg.minHolders && c.holders < cfg.minHolders) continue;
-    if (c.devPct && c.devPct > 30) continue;          // dev holding >30% = rug risk
+    if (c.devPct && c.devPct > 25) continue;          // tightened: dev holding >25% = rug risk (was 30%)
     // ENRICH via DexScreener for reliable USD mcap/liq + confirm it's live on Raydium (else too fresh → next poll)
     let pair = null;
     try {
@@ -814,9 +832,17 @@ async function _pollBonded() {
       }
       card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
     }
-    // scam filter — block impostor stablecoin symbol patterns + symbol relaunch cooldown
+    // DEX BOOST REQUIRED at $40K+ FDV: corpus shows bonded tokens >$40K without paid DexScreener
+    // visibility are 90%+ rugs. Projects with real communities pay for boost at this MC.
+    if (usdMc >= 40000) {
+      const _hiBoost = _boostInfo(mint);
+      if (!_hiBoost || _hiBoost.amount <= 0) { _seenBond.add(mint); continue; }
+    }
+    // scam filter — block impostor stablecoin symbol patterns + name patterns + relaunch cooldown
     const _bondSym = c.symbol || (pair.baseToken && pair.baseToken.symbol);
+    const _bondName = c.name || (pair.baseToken && pair.baseToken.name);
     if (_bondSym && _isScamSym(_bondSym)) continue;
+    if (_bondName && _isScamName(_bondName)) continue;
     if (!_symCooldownOk(_bondSym)) continue;
     const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
