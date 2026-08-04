@@ -691,6 +691,9 @@ async function _pollOnce() {
     // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _btns = core.buildButtons(addr, chain, pair.url);
+    // CA first — bare address so trading bots (Phanes etc.) catch it immediately
+    const _tSym = pair.baseToken && pair.baseToken.symbol;
+    await core.broadcast(`<b>$${_esc(_tSym || '')}</b> — ◎ SOL\n<code>${_esc(addr)}</code>`);
     const ok = (_imgUrl
       ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
       : (await core.broadcast(_msg, { buttons: _btns }))
@@ -703,27 +706,31 @@ async function _pollOnce() {
 }
 
 // ── BONDED (pump.fun graduation) — "as soon as a token bonds" ──────────────
-function _bondCard(c, socialLabel) {
+function _bondCard(c, socialLabel, opts) {
+  const o = opts || {};
   const name = _esc(c.name || 'Token');
   const sym = _esc(c.symbol || '');
   const mc = c.usdMc ? _fmtUsd(c.usdMc) : '';
   const ath = c.athUsd ? _fmtUsd(c.athUsd) : '';
   const liq = c.liq ? _fmtUsd(c.liq) : '';
-  const vol = c.vol24h ? _fmtUsd(c.vol24h) : '';
+  const vol24 = c.vol24h ? _fmtUsd(c.vol24h) : '';
+  const vol1h = o.vol1h ? _fmtUsd(o.vol1h) : '';
+  const price = o.price ? _fmtPrice(o.price) : '';
   const mint = c.mint || c.address || '';
   const url = mint ? 'https://pump.fun/' + mint : '';
-  const extra = [];
-  if (c.holders) extra.push('👥 ' + c.holders);
-  if (c.devPct != null && c.devPct > 0) extra.push('👨‍💻 dev ' + Number(c.devPct).toFixed(0) + '%');
-  if (c.snipers != null && c.snipers > 0) extra.push('🔫 ' + c.snipers + ' snipers');
-  if (socialLabel) extra.push(socialLabel);
+  const statRow = [];
+  if (c.holders) statRow.push('👥 ' + c.holders + ' holders');
+  if (c.devPct != null && c.devPct > 0) statRow.push('👨‍💻 dev ' + Number(c.devPct).toFixed(0) + '%');
+  if (c.snipers != null && c.snipers > 0) statRow.push('🔫 ' + c.snipers + ' snipers');
   return (
-    `🎓 <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — BONDED\n` +
-    `Graduated → Raydium\n` +
+    `🎓 <b>$${sym || name}</b>${sym && name && name !== sym ? '  <i>' + name + '</i>' : ''} — BONDED\n` +
+    `Graduated → Raydium${price ? '   💵 ' + _esc(price) : ''}\n` +
     `━━━━━━━━━━━━━\n` +
-    (mc ? `💰 MC <b>${mc}</b>${ath ? `   🏔 ATH <b>${ath}</b>` : ''}\n` : '') +
-    (liq ? `💧 Liq <b>${liq}</b>` : '') + (vol ? `   📊 Vol <b>${vol}</b>` : '') + '\n' +
-    (extra.length ? extra.join('   ') + '\n' : '') +
+    (mc ? `💰 MC  <b>${mc}</b>${ath ? `   🏔 ATH <b>${ath}</b>` : ''}\n` : '') +
+    (liq ? `💧 Liq  <b>${liq}</b>\n` : '') +
+    (vol24 ? `📊 Vol  <b>${vol24}</b> 24h${vol1h ? `   <b>${vol1h}</b> 1h` : ''}\n` : '') +
+    (statRow.length ? statRow.join('   ') + '\n' : '') +
+    (o.bannerLabel ? o.bannerLabel + (socialLabel ? '   ' + socialLabel : '') + '\n' : (socialLabel ? socialLabel + '\n' : '')) +
     (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
     (url ? `🔗 <a href="${_esc(url)}">pump.fun</a>` : '') +
     `\n\n<i>NFA · rug-check first</i>`
@@ -827,14 +834,14 @@ async function _pollBonded() {
     }
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
     // Social presence — enriched from pump.fun coin data AND DexScreener pair.info.
+    // Socials are a BULLISH INDICATOR displayed on the card, not a hard gate.
     // Having Twitter/X, website, Discord, Telegram, or Instagram = more committed project.
     const _bondSocial = await _socialScore(c, mint, pair);
-    // $30K–$75K range (already requires DexScreener banner): also require at least Twitter or website.
-    // A project spending $200 on a banner with zero socials is almost always a burner.
-    if (usdMc >= 30000 && usdMc <= 75000 && !_bondSocial.has.twitter && !_bondSocial.has.website) {
-      _seenBond.add(mint); continue;
-    }
-    let card = _bondCard(c, _bondSocial.label);
+    // Banner status check (for card display)
+    const _bondProfChk = _profileMap.get(mint);
+    const _bondHasBanner = !!(_bondProfChk && _bondProfChk.header) || !!(pair.info && pair.info.header);
+    const _bondBannerLabel = usdMc >= 15000 ? (_bondHasBanner ? '✅ DEX BANNER' : '❌ no banner') : '';
+    let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel });
     let rs = null;
     if (cfg.rugFilter) {
       rs = await _rugScore(mint);
@@ -882,6 +889,9 @@ async function _pollBonded() {
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
+    // Send CA-only message first so trading bots (Phanes etc.) that scan for a bare
+    // Solana address can parse and auto-buy before the full card arrives.
+    await core.broadcast(`<b>$${_esc(_bondSym || c.name)}</b> — BONDED ◎ SOL\n<code>${_esc(mint)}</code>`);
     const ok = (_bondImg
       ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
       : (await core.broadcast(_bondMsg, { buttons: _bondBtns }))
@@ -900,6 +910,7 @@ async function _pollBonded() {
 // graduation ($45K-$68K MC) with strong volume + community, before the bond-dump crowd.
 const PF_VOLUME_HOT = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=volume&order=DESC&includeNsfw=false';
 const _seenPreBond = new Set();
+const _preBondBannerAlerted = new Set();  // track which pre-bond mints we've sent a "DEX BANNER PAID" alert for
 let _preBondSeeded = false;
 
 function _preBondCard(c) {
@@ -943,6 +954,34 @@ async function _pollPreBonded() {
       return;
     }
     let posted = 0;
+    // BANNER UPGRADE ALERT: check if any already-seeded pre-bond token just got a DexScreener banner/profile
+    // (project paid for branding BEFORE graduation = strong commitment signal → high-priority alert)
+    for (const c of candidates) {
+      if (posted >= 1) break;
+      const mint = c.mint;
+      if (!_seenPreBond.has(mint)) continue;         // only for already-seeded tokens
+      if (_preBondBannerAlerted.has(mint)) continue; // already sent this alert
+      const prof = _profileMap.get(mint);
+      if (!prof || !prof.header) continue;            // no banner yet
+      _preBondBannerAlerted.add(mint);
+      const sym = c.symbol || c.ticker || '';
+      const fdv = Number(c.usd_market_cap) || 0;
+      const fdvLabel = fdv ? _fmtUsd(fdv) : '';
+      const bannerMsg = (
+        `🚨 <b>DEX BANNER PAID — PRE-BOND</b>\n` +
+        `$${_esc(sym)}${c.name && c.name !== sym ? '  <i>' + _esc(c.name) + '</i>' : ''} just paid for a DexScreener banner BEFORE graduation.\n` +
+        `${fdvLabel ? `💰 MC <b>${fdvLabel}</b>  ` : ''}${c.holder_count ? `👥 <b>${c.holder_count}</b> holders  ` : ''}⚡ approaching graduation\n` +
+        `This is a strong commitment signal — teams that pay ~$200 pre-bond believe in their token.\n` +
+        `\n<code>${_esc(mint)}</code>\n` +
+        `🔗 <a href="https://pump.fun/${_esc(mint)}">pump.fun</a>  📊 <a href="https://dexscreener.com/solana/${_esc(mint)}">DexScreener</a>\n` +
+        `\n<i>NFA · still in bonding curve · can fail to graduate</i>`
+      );
+      const imgUrl = (prof && prof.icon) || c.image_uri || _randomBotImg();
+      const btns = core.buildButtons(mint, 'solana', 'https://dexscreener.com/solana/' + mint);
+      if (imgUrl) await core.broadcastPhoto(imgUrl, bannerMsg, btns);
+      else await core.broadcast(bannerMsg, { buttons: btns });
+      posted++;
+    }
     for (const c of candidates) {
       if (posted >= 2) break;
       const mint = c.mint;
@@ -952,6 +991,8 @@ async function _pollPreBonded() {
       if (sym && _isScamSym(sym)) continue;
       if (!_symCooldownOk(sym)) continue;
       const card = _preBondCard(c);
+      // CA first so trading bots can parse the address immediately
+      await core.broadcast(`<b>$${_esc(sym || c.name)}</b> — PRE-BOND ◎ SOL\n<code>${_esc(mint)}</code>`);
       const imgUrl = c.image_uri || _randomBotImg();
       const btns = core.buildButtons(mint, 'solana', 'https://pump.fun/' + mint);
       const ok = (imgUrl
