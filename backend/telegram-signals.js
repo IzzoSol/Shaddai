@@ -76,16 +76,14 @@ function _trackSym(sym) {
 function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
 // ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
-// Real data from 863 calls: peak hours = 17.3% hit rate, dead hours = 4.3%.
-// Time quality system — data-driven from 863 calls:
-//   Weekend (Sat+Sun): 13.1% 5x+ hit rate   vs   Weekday: 4.6%
-//   Peak UTC hours: 02-04h + 20-22h = 17.3% hit rate
-//   Dead hours: 11-13h + 15-17h UTC = 0% hit rate
-//   14h UTC = US market open = 17% — excluded from dead zone
+// Updated from 300-call 14-day analysis (2026-08-03):
+//   Peak: 20h (44%), 22h (44%), 00h (54% — best!), 01h (33%) → extend to 20-01h window
+//   Dead: 07-10h (0%), 17h (5%) → drop 11-13h (13h=36%, not dead); keep 15-17h → narrow to 17h+15-16h
+//   13h = 36% win rate — was wrongly in dead zone. Now treated as normal.
 function _utcHour() { return new Date().getUTCHours(); }
 function _isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
-function _isPeakHour() { const h = _utcHour(); return (h >= 20 && h <= 22) || (h >= 2 && h <= 4); }
-function _isDeadHour() { const h = _utcHour(); return (h >= 11 && h <= 13) || (h >= 15 && h <= 17); }
+function _isPeakHour() { const h = _utcHour(); return h >= 20 || h <= 1; }  // 8pm-1am UTC (00h=54%, 20h/22h=44%)
+function _isDeadHour() { const h = _utcHour(); return (h >= 7 && h <= 10) || (h >= 15 && h <= 17); }  // 0-5% death zone (drop 11-13h: 13h=36%)
 function _qualityMult() {
   if (_isPeakHour()) return 1;
   if (_isDeadHour()) return 2;
@@ -98,8 +96,8 @@ function _hourLabel() {
   if (_isWeekend()) return '📅 WEEKEND';
   return null;
 }
-// Weekend/peak-aware minFdv. Peak hours (02-04h, 20-22h UTC) allow full micro-FDV access —
-// peak-hour micro-FDV tokens show 68.8% win rate (JIMOTHY 31x, Raccbit 21x, RACOIN 20x all peak-hour).
+// Peak-aware minFdv. Peak hours (20h-01h UTC) allow full micro-FDV access —
+// peak-hour micro-FDV tokens show 54-68% win rate (00h=54% best hour; JIMOTHY 31x, Raccbit 21x all peak).
 // Weekday non-peak: raise floor to $15K ($5K-$15K weekday non-peak = 0% win rate per corpus).
 // Weekend: cfg.minFdv already=$1K — no adjustment needed.
 function _effectiveMinFdv(cfg) {
