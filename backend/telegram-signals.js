@@ -59,17 +59,28 @@ const _BAD_VENUES = new Set(['meteora-dbc', 'meteora-damm-v2', 'raydium-launchla
 // These match zero-utility fake USD-adjacent tokens that consistently exit as rugs per call history.
 const _SCAM_SYM_RE = /^(USO[A-Z]|USU[A-Z]|AOR[A-Z]|USDX[A-Z0-9]?|USR[A-Z]{1,2}|USDU|XUS[A-Z]{1,2})$/i;
 // Symbol cooldown: block same symbol if already called within 2h (stops TNOS x3 relaunches)
-const _recentSymbols = new Map();
+// Symbol cooldown — persisted to disk so Render deploys don't reset it.
+// Prevents MODA/USOH/AORP relaunches from spamming every restart.
+const _SYM_CD_FILE = path.join(__dirname, 'data', 'tg-sym-cooldown.json');
+const _SYM_CD_TTL = 4 * 60 * 60 * 1000;  // 4h cooldown per symbol (was 2h in-memory)
+function _loadSymCooldown() {
+  try { const raw = JSON.parse(fs.readFileSync(_SYM_CD_FILE, 'utf8')); const now = Date.now(); const m = new Map(); for (const [k,v] of Object.entries(raw)) { if (now - v < _SYM_CD_TTL) m.set(k, v); } return m; } catch (e) { return new Map(); }
+}
+function _saveSymCooldown(m) {
+  try { const now = Date.now(); const obj = {}; for (const [k,v] of m.entries()) { if (now - v < _SYM_CD_TTL) obj[k] = v; } fs.writeFileSync(_SYM_CD_FILE, JSON.stringify(obj)); } catch (e) {}
+}
+const _recentSymbols = _loadSymCooldown();
 function _symCooldownOk(sym) {
   if (!sym) return true;
   const s = sym.toUpperCase();
   const last = _recentSymbols.get(s);
-  return !(last && Date.now() - last < 2 * 60 * 60000);
+  return !(last && Date.now() - last < _SYM_CD_TTL);
 }
 function _trackSym(sym) {
   if (!sym) return;
   _recentSymbols.set(sym.toUpperCase(), Date.now());
   if (_recentSymbols.size > 500) { const f = _recentSymbols.keys().next().value; _recentSymbols.delete(f); }
+  _saveSymCooldown(_recentSymbols);
 }
 
 // look up DexScreener boost info for a token address — returns null if not boosted
