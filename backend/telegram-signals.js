@@ -98,12 +98,14 @@ function _hourLabel() {
   if (_isWeekend()) return '📅 WEEKEND';
   return null;
 }
-// Weekend-aware minFdv: weekends allow ultra-low-FDV post-graduation dip recoveries (data: 45% win rate at <15K weekend)
-// Weekdays: raise effective floor to $15K (5K-15K weekday = 0/4 calls = 0%)
+// Weekend/peak-aware minFdv. Peak hours (02-04h, 20-22h UTC) allow full micro-FDV access —
+// peak-hour micro-FDV tokens show 68.8% win rate (JIMOTHY 31x, Raccbit 21x, RACOIN 20x all peak-hour).
+// Weekday non-peak: raise floor to $15K ($5K-$15K weekday non-peak = 0% win rate per corpus).
+// Weekend: cfg.minFdv already=$1K — no adjustment needed.
 function _effectiveMinFdv(cfg) {
-  if (_isWeekend()) return Math.min(cfg.minFdv || 0, 1000);   // weekend: floor = $1K
-  if (!_isWeekend() && !_isPeakHour()) return Math.max(cfg.minFdv || 0, 15000); // weekday: floor = $15K
-  return cfg.minFdv || 0;
+  if (_isPeakHour()) return cfg.minFdv || 0;               // peak hour: full micro-FDV access
+  if (!_isWeekend()) return Math.max(cfg.minFdv || 0, 15000); // weekday non-peak: raise to $15K
+  return cfg.minFdv || 0;                                  // weekend: use cfg value ($1K)
 }
 
 // ── VOLUME ACCELERATION CHECK ─────────────────────────────────────────────────
@@ -743,15 +745,23 @@ async function _pollBonded() {
     const usdMc = Number(pair.fdv || pair.marketCap) || 0;
     const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
     if (usdMc <= 0 || liq <= 0) continue;
-    if (cfg.minVolM5 && Number(pair.volume && pair.volume.m5 || 0) < cfg.minVolM5) continue;   // 5-min momentum gate
+    // 5-min momentum gate — for micro-FDV (<$5K) use relative check (5% of mcap) instead of
+    // absolute $10K which is physically impossible for a just-graduated $1.5K token.
+    // Data: micro-FDV bonded tokens with low holders = 52-72% win rate, 15-18x avg.
+    const _m5Vol = Number(pair.volume && pair.volume.m5) || 0;
+    if (usdMc >= 5000) {
+      if (cfg.minVolM5 && _m5Vol < cfg.minVolM5) continue;
+    } else {
+      if (_m5Vol < Math.max(50, usdMc * 0.05)) continue;  // 5% of FDV in 5 min, min $50
+    }
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
     // TIME-QUALITY GATE: during dead hours (UTC 11-17), require 2x momentum (volume accel must exist)
     const _bQm = _qualityMult();
     if (_bQm > 1) {
       const bH1 = Number(pair.volume && pair.volume.h1) || 0;
-      const bM5 = Number(pair.volume && pair.volume.m5) || 0;
+      const bM5 = _m5Vol;
       const bMinH1 = (cfg.minVol24h / 24) * _bQm;
-      const bMinM5 = (cfg.minVolM5 || 0) * _bQm;
+      const bMinM5 = (usdMc >= 5000 ? (cfg.minVolM5 || 0) : Math.max(50, usdMc * 0.05)) * _bQm;
       if (bH1 < bMinH1 || (bMinM5 && bM5 < bMinM5)) continue;
     }
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
