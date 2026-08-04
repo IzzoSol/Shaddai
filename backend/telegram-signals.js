@@ -95,7 +95,7 @@ function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 //   13h = 36% win rate — was wrongly in dead zone. Now treated as normal.
 function _utcHour() { return new Date().getUTCHours(); }
 function _isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
-function _isPeakHour() { const h = _utcHour(); return h >= 20 || h <= 1; }  // 8pm-1am UTC (00h=54%, 20h/22h=44%)
+function _isPeakHour() { const h = _utcHour(); return h >= 20 || h <= 5; }  // 8pm-5am UTC (00h=54%, 20h/22h=44%, 04h=5 winners incl ANMOND49x/MrSue29x)
 function _isDeadHour() { const h = _utcHour(); return (h >= 7 && h <= 10) || (h >= 15 && h <= 17); }  // 0-5% death zone (drop 11-13h: 13h=36%)
 function _qualityMult() {
   if (_isPeakHour()) return 1;
@@ -764,6 +764,9 @@ async function _pollBonded() {
     // NO-MAN'S-LAND: $5K-$15K FDV = 0% 5x+ win rate (12 calls, 0 five-baggers in 7-day corpus).
     // Sweet spot is <$5K (61-72% 5x+) OR >$15K (validated project, 7% but 23x avg like ANMOND 49x).
     if (usdMc >= 5000 && usdMc < 15000) { _seenBond.add(mint); continue; }
+    // HIGH-FDV HOLDER GATE: $15K+ bonded = only 7% 5x+ but those winners all had 200+ holders (ANMOND=201,
+    // MrSue=376, SUB=311, Blackmothy=277). Require 100+ holders for $15K+ to filter low-distribution pumps.
+    if (usdMc >= 15000 && c.holders > 0 && c.holders < 100) { _seenBond.add(mint); continue; }
     // 5-min momentum gate — for micro-FDV (<$5K) use relative check (5% of mcap) instead of
     // absolute $10K which is physically impossible for a just-graduated $1.5K token.
     // Data: micro-FDV bonded tokens with low holders = 52-72% win rate, 15-18x avg.
