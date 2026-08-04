@@ -6452,66 +6452,461 @@ window.enter3DWorld=function(){
     <div id="officeGallery" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
     <div id="officeShowcase" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
     <div id="officeBazaar" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
-    <div id="officeTreasury" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
 
-    <!-- 🌆 CITY TAB — 2D world entry hub, plot deeds, Signal status -->
-    <div id="officeCity" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:20px;gap:16px;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <!-- ◆ ECONOMY TAB (Treasury) — Sparks ledger, faucets/sinks, reserves, referrals -->
+    <div id="officeTreasury" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto">
+    <style>
+      #officeTreasury { font-family:'Share Tech Mono',monospace; }
+      .ec-pad { padding:18px 20px; }
+      .ec-sec { font-size:8px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px; }
+      .ec-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px; }
+      .ec-row2 { display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px 0; }
+      @media(max-width:620px){.ec-row2{grid-template-columns:1fr}}
+      .ec-faucet-row,.ec-sink-row { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:10px; }
+      .ec-faucet-row:last-child,.ec-sink-row:last-child{border-bottom:none}
+      .ec-hist-row { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:9px; }
+      .ec-hist-row:last-child{border-bottom:none}
+      .ec-vault-bar-bg { height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex:1; }
+      .ec-vault-bar { height:100%;border-radius:3px;transition:width .8s; }
+      .ec-inf-dot { width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px; }
+    </style>
+
+    <!-- BIG BALANCE -->
+    <div style="padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
         <div>
-          <div style="font-size:20px;font-weight:800;letter-spacing:0.04em">🌆 SHADDAI City</div>
-          <div style="font-size:12px;color:#5a6a7a;margin-top:2px">Your plot · Signal · Founders Row</div>
+          <div style="font-size:9px;letter-spacing:2px;color:#5a6a7a;text-transform:uppercase;margin-bottom:4px">◆ Sparks Balance</div>
+          <div style="font-size:42px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#e8c45c;line-height:1" id="ecSparksDisplay">0</div>
+          <div style="font-size:10px;color:#4a4030;margin-top:3px">SPARKS · sovereign economy token</div>
         </div>
-        <button onclick="location.href='game.html'" style="background:linear-gradient(135deg,#00e5a0,#00b57a);color:#06080b;font-weight:800;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;letter-spacing:0.05em">▦ ENTER 2D WORLD</button>
-      </div>
-      <!-- Signal status card -->
-      <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:10px;padding:16px 20px">
-        <div style="font-size:11px;letter-spacing:2px;color:#00e5a0;text-transform:uppercase;margin-bottom:8px">📡 Your Signal</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="flex:1;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden">
-            <div id="citySignalFill" style="width:100%;height:100%;background:#00e5a0;border-radius:5px;transition:width .3s"></div>
+        <div style="flex:1;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding-bottom:4px">
+          <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#2a5a3a;letter-spacing:1px;margin-bottom:2px">TODAY'S YIELD</div>
+            <div style="font-size:16px;font-weight:700;color:#00e5a0" id="ecTodayYield">+0.00</div>
           </div>
-          <span id="citySignalTxt" style="font-size:13px;font-weight:700;color:#00e5a0;min-width:50px">100 / 100</span>
-        </div>
-        <div style="font-size:11px;color:#5a6a7a;margin-top:6px">Signal drains while traveling · regens at your office &amp; transit stations</div>
-      </div>
-      <!-- Plot deed card -->
-      <div style="background:rgba(232,196,92,0.06);border:1px solid rgba(232,196,92,0.2);border-radius:10px;padding:16px 20px">
-        <div style="font-size:11px;letter-spacing:2px;color:#e8c45c;text-transform:uppercase;margin-bottom:8px">📦 Founders Row Plot</div>
-        <div id="cityPlotStatus" style="font-size:13px;color:#8a9ab0">Sign in to see your plot status.</div>
-        <button onclick="location.href='game.html#plot'" style="margin-top:10px;background:rgba(232,196,92,0.12);border:1px solid rgba(232,196,92,0.3);color:#e8c45c;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">Claim Yield in World →</button>
-      </div>
-      <!-- Pixel office embed -->
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px">
-        <div style="font-size:11px;letter-spacing:2px;color:#7a8a9a;text-transform:uppercase;margin-bottom:8px">📍 Pixel Office</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button onclick="location.href='game.html?embed=office&walk=1'" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">Walk Your Office</button>
-          <button onclick="window.open('pixel-forge.html','_blank')" style="background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.25);color:#f0b429;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">⬡ Pixel Forge</button>
-          <button onclick="enter3DWorld&&enter3DWorld()" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:#a78bfa;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">◈ 3D World (Pro)</button>
+          <div style="background:rgba(255,64,112,0.06);border:1px solid rgba(255,64,112,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#5a1a2a;letter-spacing:1px;margin-bottom:2px">LOCKED (BOOST)</div>
+            <div style="font-size:16px;font-weight:700;color:#ff4070" id="ecLockedAmt">0</div>
+          </div>
+          <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#3a1a6a;letter-spacing:1px;margin-bottom:2px">STREAM RATE</div>
+            <div style="font-size:16px;font-weight:700;color:#a78bfa" id="ecStreamRate">0/sec</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 🚪 ROOMS TAB — your rooms, tenants, rent -->
-    <div id="officeRooms" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:20px;gap:16px;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:20px;font-weight:800;letter-spacing:0.04em">🚪 Your Rooms</div>
-          <div style="font-size:12px;color:#5a6a7a;margin-top:2px">Rooms you own · tenants · rent earned</div>
-        </div>
-        <button onclick="location.href='game.html?embed=office&walk=1'" style="background:linear-gradient(135deg,#e8c45c,#c8a430);color:#06080b;font-weight:800;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px">Walk Rooms →</button>
+    <!-- FAUCETS + SINKS -->
+    <div class="ec-row2">
+      <!-- FAUCETS -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#00e5a0">↑ Faucets (In)</div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Plot stream</span><span id="ecFPlot" style="color:#00e5a0;font-weight:700">+0.50/s</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Room rent</span><span id="ecFRent" style="color:#00e5a0;font-weight:700">+0/week</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Office residuals</span><span id="ecFOffice" style="color:#00e5a0;font-weight:700">+0/week</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Referral bonuses</span><span id="ecFRef" style="color:#00e5a0;font-weight:700">+0</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Mission rewards</span><span id="ecFMission" style="color:#00e5a0;font-weight:700">+0</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Daily login</span><span style="color:#00e5a0;font-weight:700">+2/day</span></div>
       </div>
-      <div id="roomsTabContent" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-        <div style="padding:20px;border:1px dashed rgba(255,255,255,0.1);border-radius:10px;text-align:center;color:#3a4a5a;font-size:13px">
-          <div style="font-size:28px;margin-bottom:8px">🚪</div>
-          <div style="font-weight:700;margin-bottom:4px">No rooms yet</div>
-          <div style="font-size:11px">Enter the 2D world and buy a room in any building to start earning rent.</div>
-          <button onclick="location.href='game.html'" style="margin-top:12px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);color:#00e5a0;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px">Enter World</button>
-        </div>
-      </div>
-      <div style="background:rgba(232,196,92,0.05);border:1px solid rgba(232,196,92,0.15);border-radius:8px;padding:12px 16px;font-size:12px;color:#8a9ab0">
-        <strong style="color:#e8c45c">How rooms work:</strong> Buy a room in any district building → tenants move in → weekly rent accrues in Sparks → claim from the 2D world or here.
+      <!-- SINKS -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#ff4070">↓ Sinks (Out)</div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Boost locked</span><span id="ecSBoost" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Amenity burns</span><span id="ecSAmenity" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Transit fares</span><span id="ecSTransit" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Signal rescues</span><span id="ecSRescue" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Market fees (5%)</span><span id="ecSMarket" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">3D Forge credits</span><span id="ecSForge" style="color:#ff4070;font-weight:700">0</span></div>
       </div>
     </div>
+
+    <!-- VAULT ALLOCATION + TREASURY + INFLATION -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 20px 0">
+
+      <!-- VAULT ALLOCATION -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#e8c45c">⬡ Vault Allocation</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:9px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Play (50%)</span><span style="color:#00e5a0">▓▓▓▓▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:50%;background:#00e5a0"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Daily (10%)</span><span style="color:#e8c45c">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#e8c45c"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Referral (10%)</span><span style="color:#a78bfa">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#a78bfa"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Boost (10%)</span><span style="color:#ff7b3d">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ff7b3d"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Staking (10%)</span><span style="color:#ffd700">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ffd700"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Reserve (10%)</span><span style="color:#ff4070">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ff4070"></div></div></div>
+        </div>
+      </div>
+
+      <!-- CITY TREASURY -->
+      <div style="background:rgba(0,229,160,0.04);border:1px solid rgba(0,229,160,0.15);border-radius:10px;padding:14px 15px">
+        <div class="ec-sec" style="color:#00e5a0">◆ City Treasury</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">Transit Pool</span><span id="ecTres0" style="color:#e8c45c;font-weight:700">0 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar0" class="ec-vault-bar" style="width:0%;background:#e8c45c"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">District Reserves</span><span id="ecTres1" style="color:#00e5a0;font-weight:700">10,000 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar1" class="ec-vault-bar" style="width:80%;background:#00e5a0"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">Buyback Reserve</span><span id="ecTres2" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar2" class="ec-vault-bar" style="width:0%;background:#a78bfa"></div></div>
+          </div>
+          <div style="font-size:8px;color:#2a4a3a;margin-top:4px;padding-top:6px;border-top:1px solid rgba(0,229,160,0.1)">60% Founders · 30% Districts · 10% Buyback</div>
+        </div>
+      </div>
+
+      <!-- INFLATION MONITOR -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#ffd700">📊 Inflation Monitor</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:9px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Supply velocity</span>
+            <span><span class="ec-inf-dot" id="ecInf0" style="background:#00e5a0"></span><span id="ecInfV0" style="color:#00e5a0">Normal</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Median price drift</span>
+            <span><span class="ec-inf-dot" id="ecInf1" style="background:#00e5a0"></span><span id="ecInfV1" style="color:#00e5a0">Stable</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Trade volume</span>
+            <span><span class="ec-inf-dot" id="ecInf2" style="background:#e8c45c"></span><span id="ecInfV2" style="color:#e8c45c">Low</span></span>
+          </div>
+          <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);font-size:8px;color:#3a4a5a">Alerts fire at 15% drift in 7 days</div>
+        </div>
+        <!-- REFERRAL STRIP -->
+        <div style="margin-top:10px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:9px 11px">
+          <div style="font-size:8px;letter-spacing:1px;color:#5a3a9a;margin-bottom:6px">REFERRAL PROGRAM</div>
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#8a9ab0">Code: <span id="ecRefCode" style="color:#a78bfa;font-weight:700">—</span></span>
+            <span style="color:#8a9ab0">Refs: <span id="ecRefCount" style="color:#a78bfa;font-weight:700">0</span></span>
+          </div>
+          <div style="font-size:9px;color:#5a3a9a;margin-top:3px">Earned: <span id="ecRefEarned" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+        </div>
+      </div>
+    </div><!-- /3-col -->
+
+    <!-- TRANSACTION HISTORY -->
+    <div class="ec-pad" style="padding-top:12px">
+      <div class="ec-sec" style="color:#8a9ab0">📋 Recent Transactions</div>
+      <div id="ecHistList" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;max-height:160px;overflow-y:auto">
+        <div class="ec-hist-row"><span style="color:#3a4a5a">System boot</span><span style="color:#3a4a5a">—</span><span style="color:#3a4a5a;min-width:60px;text-align:right">Now</span></div>
+      </div>
+    </div>
+
+    <!-- CASH OUT PLACEHOLDER -->
+    <div style="margin:0 20px 18px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px">🏦</span>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#3a4a5a;margin-bottom:2px">Cash Out — Coming Phase G</div>
+        <div style="font-size:9px;color:#2a3a4a">Sparks → USDC via on-chain bridge · marketplace withdrawal · NFT deed transfer</div>
+      </div>
+      <span style="margin-left:auto;font-size:9px;color:#2a3a4a;white-space:nowrap">Phase G</span>
+    </div>
+
+    </div><!-- /officeTreasury -->
+
+    <!-- 🌆 CITY TAB — full economy hub -->
+    <div id="officeCity" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto">
+    <style>
+      #officeCity { font-family:'Share Tech Mono',monospace; }
+      .ct-pad { padding:18px 20px; }
+      .ct-sec { font-size:8px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px; }
+      .ct-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px; }
+      .ct-card-em { background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.18);border-radius:10px; }
+      .ct-card-gold { background:rgba(232,196,92,0.05);border:1px solid rgba(232,196,92,0.18);border-radius:10px; }
+      .ct-card-pur { background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.18);border-radius:10px; }
+      /* TOPBAR */
+      #ctTopbar { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap; }
+      #ctTopbar .ct-title { font-size:18px;font-weight:800;letter-spacing:0.04em;flex:1;min-width:160px; }
+      .ct-stat-pill { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:5px 12px;font-size:11px;display:flex;align-items:center;gap:7px;white-space:nowrap; }
+      .ct-stat-pill .csp-val { font-size:14px;font-weight:700; }
+      .ct-enter-btn { background:linear-gradient(135deg,#00e5a0,#00b57a);color:#03110a;font-weight:800;border:none;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:12px;letter-spacing:1px;font-family:inherit;white-space:nowrap; }
+      .ct-enter-btn:hover { filter:brightness(1.1); }
+      /* SIGNAL + YIELD row */
+      #ctSigYieldRow { display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px 0; }
+      @media(max-width:600px){#ctSigYieldRow{grid-template-columns:1fr}}
+      .ct-sig-bar-wrap { height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;flex:1; }
+      .ct-sig-bar { height:100%;border-radius:4px;transition:width .4s,background .4s; }
+      .ct-yield-num { font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1; }
+      /* FOUNDERS ROW GRID */
+      #ctFoundersGrid { display:grid;grid-template-columns:repeat(10,1fr);gap:5px; }
+      .ct-slot { aspect-ratio:1;border-radius:5px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;color:rgba(255,255,255,0.25);cursor:pointer;transition:all .2s;position:relative; }
+      .ct-slot:hover { border-color:rgba(0,229,160,0.4);background:rgba(0,229,160,0.06); }
+      .ct-slot.mine { border-color:#00e5a0;background:rgba(0,229,160,0.12);color:#00e5a0;box-shadow:0 0 10px rgba(0,229,160,0.25); }
+      .ct-slot.mine::after { content:'◆';position:absolute;bottom:2px;font-size:6px;color:#00e5a0; }
+      .ct-slot.owned { border-color:rgba(232,196,92,0.35);background:rgba(232,196,92,0.05);color:rgba(232,196,92,0.6); }
+      /* DISTRICTS */
+      #ctDistrictsGrid { display:grid;grid-template-columns:repeat(4,1fr);gap:10px; }
+      @media(max-width:700px){#ctDistrictsGrid{grid-template-columns:repeat(2,1fr)}}
+      .ct-dist { border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden; }
+      .ct-dist:hover { filter:brightness(1.12);transform:translateY(-1px); }
+      .ct-dist-icon { font-size:20px;margin-bottom:5px; }
+      .ct-dist-name { font-size:10px;font-weight:700;letter-spacing:0.5px; }
+      .ct-dist-yield { font-size:9px;opacity:.7;margin-top:2px; }
+      .ct-dist-drain { font-size:8px;opacity:.55;margin-top:3px; }
+      .ct-dist-badge { position:absolute;top:6px;right:7px;font-size:7px;background:rgba(0,229,160,0.2);color:#00e5a0;border:1px solid rgba(0,229,160,0.4);border-radius:4px;padding:1px 5px;letter-spacing:.5px; }
+      /* BOTTOM 3-COL */
+      #ctBottomRow { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 20px 18px; }
+      @media(max-width:700px){#ctBottomRow{grid-template-columns:1fr}}
+      .ct-boost-slider { -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.12);outline:none; }
+      .ct-boost-slider::-webkit-slider-thumb { -webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#e8c45c;cursor:pointer;box-shadow:0 0 6px rgba(232,196,92,.6); }
+      .ct-transit-row { display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05); }
+      .ct-transit-row:last-child { border-bottom:none; }
+      .ct-transit-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+      .ct-res-bar-bg { height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex:1; }
+      .ct-res-bar { height:100%;border-radius:3px;transition:width .6s; }
+      @keyframes ctPulse { 0%,100%{opacity:1}50%{opacity:.5} }
+      .ct-live { animation:ctPulse 2s ease-in-out infinite; }
+    </style>
+
+    <!-- TOPBAR -->
+    <div id="ctTopbar">
+      <div class="ct-title">▦ SHADDAI City</div>
+      <div class="ct-stat-pill"><span style="color:#00e5a0">📡</span><span class="csp-val" id="ctSigVal" style="color:#00e5a0">100</span><span style="color:#3a5a4a;font-size:9px">SIGNAL</span></div>
+      <div class="ct-stat-pill"><span style="color:#e8c45c">◆</span><span class="csp-val" id="ctSparksVal" style="color:#e8c45c">0</span><span style="color:#5a5030;font-size:9px">SPARKS</span></div>
+      <div class="ct-stat-pill ct-live"><span style="color:#a78bfa">⬆</span><span id="ctYieldRate" style="color:#a78bfa;font-size:12px;font-weight:700">+0.00</span><span style="color:#3a2a6a;font-size:9px">/SEC</span></div>
+      <button class="ct-enter-btn" onclick="location.href='game.html'">▦ ENTER WORLD</button>
+    </div>
+
+    <!-- SIGNAL + YIELD -->
+    <div id="ctSigYieldRow">
+      <div class="ct-card-em ct-pad" style="padding:14px 16px">
+        <div class="ct-sec" style="color:#00e5a0">📡 Signal Strength</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="ct-sig-bar-wrap"><div id="citySignalFill" class="ct-sig-bar" style="width:100%;background:#00e5a0"></div></div>
+          <span id="citySignalTxt" style="color:#00e5a0;font-size:13px;font-weight:700;min-width:54px">100 / 100</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:9px;color:#3a5a4a;flex-wrap:wrap">
+          <span>🏢 Office: +5/s</span><span>🚉 Transit: +2/s</span><span>🌍 Travel drains</span>
+        </div>
+        <div style="margin-top:10px;font-size:9px;color:#2a4a3a;padding-top:8px;border-top:1px solid rgba(0,229,160,0.1)">Signal Drop → 50 Sparks rescue fee · respawn at office</div>
+      </div>
+      <div class="ct-card-gold ct-pad" style="padding:14px 16px">
+        <div class="ct-sec" style="color:#e8c45c">◆ Plot Yield — Live</div>
+        <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:6px">
+          <div class="ct-yield-num" id="ctYieldNum" style="color:#e8c45c">0.00</div>
+          <span style="color:#5a5030;font-size:11px;margin-bottom:4px">SPARKS</span>
+        </div>
+        <div id="cityPlotStatus" style="font-size:10px;color:#5a5030;margin-bottom:10px">No plot owned yet</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="location.href='game.html#plot'" style="background:rgba(232,196,92,0.15);border:1px solid rgba(232,196,92,0.35);color:#e8c45c;padding:6px 13px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Claim in World →</button>
+          <button onclick="switchOfficeTab('city');document.getElementById('ctBoostInput').focus()" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:#a78bfa;padding:6px 13px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">⬆ Boost Rate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOUNDERS ROW -->
+    <div class="ct-pad" style="padding-top:14px">
+      <div class="ct-sec" style="color:#e8c45c">◆ Founders Row — 30 Office Lots</div>
+      <div id="ctFoundersGrid"></div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:9px;color:#3a4a5a">
+        <span><span style="color:#00e5a0">◆</span> Your slot</span>
+        <span><span style="color:rgba(232,196,92,0.6)">◆</span> Owned</span>
+        <span><span style="color:rgba(255,255,255,0.15)">□</span> Available</span>
+      </div>
+    </div>
+
+    <!-- DISTRICTS -->
+    <div class="ct-pad" style="padding-top:10px">
+      <div class="ct-sec" style="color:#a78bfa">🌍 Districts — Walk Anywhere</div>
+      <div id="ctDistrictsGrid">
+        <div class="ct-dist" style="background:rgba(255,123,61,0.08);border:1px solid rgba(255,123,61,0.2)" onclick="location.href='game.html?region=forest'">
+          <div class="ct-dist-icon">🌲</div>
+          <div class="ct-dist-name" style="color:#ff7b3d">Forest</div>
+          <div class="ct-dist-yield" style="color:#ff7b3d">TURTLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Low ▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18)" onclick="location.href='game.html?region=city'">
+          <div class="ct-dist-icon">🏙️</div>
+          <div class="ct-dist-name" style="color:#00ff88">Nexus Heights</div>
+          <div class="ct-dist-yield" style="color:#00ff88">NEXUS Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18)" onclick="location.href='game.html?region=beach'">
+          <div class="ct-dist-icon">🏖️</div>
+          <div class="ct-dist-name" style="color:#b06aff">Beach</div>
+          <div class="ct-dist-yield" style="color:#b06aff">ORACLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(255,64,112,0.06);border:1px solid rgba(255,64,112,0.18)" onclick="location.href='game.html?region=desert'">
+          <div class="ct-dist-icon">🏜️</div>
+          <div class="ct-dist-name" style="color:#ff4070">Desert</div>
+          <div class="ct-dist-yield" style="color:#ff4070">PIKADON Credits</div>
+          <div class="ct-dist-drain">Signal drain: HIGH ▲▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.18)" onclick="location.href='game.html?region=meadow'">
+          <div class="ct-dist-icon">🌿</div>
+          <div class="ct-dist-name" style="color:#9b59b6">Meadow</div>
+          <div class="ct-dist-yield" style="color:#9b59b6">QUILL Credits</div>
+          <div class="ct-dist-drain">Signal drain: Low ▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(138,154,176,0.06);border:1px solid rgba(138,154,176,0.18)" onclick="location.href='game.html?region=suburb'">
+          <div class="ct-dist-icon">🏘️</div>
+          <div class="ct-dist-name" style="color:#8a9ab0">Suburb</div>
+          <div class="ct-dist-yield" style="color:#8a9ab0">Sparks</div>
+          <div class="ct-dist-drain">Signal drain: None ✓</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18)" onclick="location.href='game.html?region=beach'">
+          <div class="ct-dist-icon">☁️</div>
+          <div class="ct-dist-name" style="color:#b06aff">Oracle Sky</div>
+          <div class="ct-dist-yield" style="color:#b06aff">ORACLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.18)" onclick="location.href='game.html?region=volcano'">
+          <div class="ct-dist-icon">⚡</div>
+          <div class="ct-dist-name" style="color:#00f0ff">Zerox District</div>
+          <div class="ct-dist-yield" style="color:#00f0ff">ZEROX Credits</div>
+          <div class="ct-dist-drain">Signal drain: HIGH ▲▲▲</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOST + TRANSIT + TREASURY -->
+    <div id="ctBottomRow">
+
+      <!-- BOOST VAULT -->
+      <div class="ct-card-pur" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#a78bfa">⬆ Boost Vault</div>
+        <div style="font-size:9px;color:#4a3a7a;margin-bottom:10px">Lock Sparks to multiply your stream rate up to 4×</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <input id="ctBoostInput" type="range" min="0" max="1000" value="0" class="ct-boost-slider" oninput="ctUpdateBoostPreview(this.value)">
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:10px">
+          <span style="color:#6a5aaa">Lock: <span id="ctBoostAmt" style="color:#a78bfa;font-weight:700">0</span> ◆</span>
+          <span style="color:#6a5aaa">Rate: <span id="ctBoostMult" style="color:#e8c45c;font-weight:700">1.00×</span></span>
+        </div>
+        <button onclick="ctDoBoost()" style="width:100%;background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(124,58,237,0.2));border:1px solid rgba(124,58,237,0.5);color:#a78bfa;padding:7px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">LOCK & BOOST</button>
+        <div id="ctBoostActive" style="margin-top:8px;font-size:9px;color:#4a3a7a">No active boost</div>
+      </div>
+
+      <!-- TRANSIT STATUS -->
+      <div class="ct-card" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#e8c45c">🚉 Transit Unlocks</div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" style="background:#00e5a0"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#e2e8f0">Walk</div>
+            <div style="font-size:8px;color:#3a4a5a">Always available · free</div>
+          </div>
+          <span style="font-size:9px;color:#00e5a0;font-weight:700">ACTIVE</span>
+        </div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" id="ctTrainDot" style="background:rgba(255,215,0,0.3)"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#ffd700">Ring Train</div>
+            <div style="font-size:8px;color:#3a4a5a">10 Sparks/stop · visit 3 districts</div>
+          </div>
+          <span id="ctTrainStatus" style="font-size:9px;color:#4a4020;font-weight:700">LOCKED</span>
+        </div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" id="ctSubwayDot" style="background:rgba(0,229,160,0.2)"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#00e5a0">Subway</div>
+            <div style="font-size:8px;color:#3a4a5a">25 Sparks · own any room</div>
+          </div>
+          <span id="ctSubwayStatus" style="font-size:9px;color:#1a3a2a;font-weight:700">LOCKED</span>
+        </div>
+        <div style="margin-top:10px;padding:7px 9px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:9px;color:#3a4a5a">
+          Districts visited: <span id="ctDistVisited" style="color:#e8c45c;font-weight:700">0</span> / 3 to unlock Ring Train
+        </div>
+      </div>
+
+      <!-- TREASURY RESERVES -->
+      <div class="ct-card-em" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#00e5a0">◆ City Treasury</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">Transit Fee Pool</span><span id="ctRes0" style="color:#e8c45c;font-weight:700">0 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar0" class="ct-res-bar" style="width:0%;background:#e8c45c"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">District Reserves</span><span id="ctRes1" style="color:#00e5a0;font-weight:700">10,000 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar1" class="ct-res-bar" style="width:80%;background:#00e5a0"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">Buyback Reserve</span><span id="ctRes2" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar2" class="ct-res-bar" style="width:0%;background:#a78bfa"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px solid rgba(0,229,160,0.1);padding-top:8px;font-size:9px;color:#2a4a3a">
+          60% Founders Row · 30% Districts · 10% Buyback
+        </div>
+      </div>
+
+    </div><!-- /ctBottomRow -->
+
+    <!-- QUICK LINKS -->
+    <div style="display:flex;gap:8px;padding:0 20px 18px;flex-wrap:wrap">
+      <button onclick="location.href='game.html?embed=office&walk=1'" style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:#00e5a0;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Walk Office</button>
+      <button onclick="window.open('pixel-forge.html','_blank')" style="background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);color:#f0b429;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">⬡ Pixel Forge</button>
+      <button onclick="enter3DWorld&&enter3DWorld()" style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">◈ 3D World (Pro)</button>
+      <button onclick="switchOfficeTab('treasury')" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#8a9ab0;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">◆ Economy →</button>
+    </div>
+
+    </div><!-- /officeCity -->
+
+    <!-- 🚪 ROOMS TAB -->
+    <div id="officeRooms" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto;font-family:'Share Tech Mono',monospace">
+
+      <!-- PORTFOLIO HEADER -->
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;margin-bottom:2px">🚪 Your Rooms</div>
+          <div style="font-size:10px;color:#3a4a5a">Rooms owned · tenants · passive rent</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#00e5a0" id="rmTotalRooms">0</div>
+            <div style="font-size:8px;color:#2a4a3a;letter-spacing:1px">ROOMS</div>
+          </div>
+          <div style="background:rgba(232,196,92,0.06);border:1px solid rgba(232,196,92,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#e8c45c" id="rmWeeklyRent">0</div>
+            <div style="font-size:8px;color:#4a4020;letter-spacing:1px">◆/WEEK</div>
+          </div>
+          <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#a78bfa" id="rmPending">0</div>
+            <div style="font-size:8px;color:#3a1a6a;letter-spacing:1px">PENDING ◆</div>
+          </div>
+          <button onclick="rmClaimAll()" style="background:linear-gradient(135deg,#00e5a0,#00b57a);color:#03110a;font-weight:800;border:none;padding:8px 16px;border-radius:7px;cursor:pointer;font-size:10px;font-family:inherit;letter-spacing:1px">CLAIM ALL ◆</button>
+        </div>
+        <button onclick="location.href='game.html'" style="background:rgba(232,196,92,0.12);border:1px solid rgba(232,196,92,0.3);color:#e8c45c;padding:8px 16px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Walk World →</button>
+      </div>
+
+      <!-- ROOM CARDS GRID -->
+      <div id="roomsTabContent" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px 20px">
+        <!-- populated by rmRenderRooms() -->
+        <div style="grid-column:1/-1;padding:32px;border:1px dashed rgba(255,255,255,0.08);border-radius:10px;text-align:center">
+          <div style="font-size:36px;margin-bottom:10px;opacity:.4">🚪</div>
+          <div style="font-size:13px;font-weight:700;color:#3a4a5a;margin-bottom:6px">No rooms yet</div>
+          <div style="font-size:10px;color:#2a3a4a;margin-bottom:14px;line-height:1.7">Enter the 2D world · walk into a building · buy a room slot<br>Tenants move in · weekly rent accrues in Sparks</div>
+          <button onclick="location.href='game.html'" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:8px 18px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Enter World</button>
+        </div>
+      </div>
+
+      <!-- DISTRICT PICKER (buy a room) -->
+      <div style="padding:0 20px 16px">
+        <div style="font-size:8px;letter-spacing:2px;color:#3a4a5a;text-transform:uppercase;font-weight:700;margin-bottom:10px">Buy a Room — Pick a District</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button onclick="location.href='game.html?region=forest'" style="background:rgba(255,123,61,0.07);border:1px solid rgba(255,123,61,0.2);color:#ff7b3d;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🌲 Forest<br><span style="font-size:8px;opacity:.6">TURTLE Credits</span></button>
+          <button onclick="location.href='game.html?region=city'" style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18);color:#00ff88;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🏙️ Nexus<br><span style="font-size:8px;opacity:.6">NEXUS Credits</span></button>
+          <button onclick="location.href='game.html?region=beach'" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18);color:#b06aff;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🏖️ Beach<br><span style="font-size:8px;opacity:.6">ORACLE Credits</span></button>
+          <button onclick="location.href='game.html?region=meadow'" style="background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.18);color:#9b59b6;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🌿 Meadow<br><span style="font-size:8px;opacity:.6">QUILL Credits</span></button>
+        </div>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div style="margin:0 20px 18px;background:rgba(232,196,92,0.04);border:1px solid rgba(232,196,92,0.12);border-radius:8px;padding:12px 16px">
+        <div style="font-size:9px;letter-spacing:1px;color:#5a5030;margin-bottom:7px">HOW ROOMS WORK</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:9px;color:#5a5030;text-align:center">
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">🏗️</div>Buy a room slot<br>500–2000 ◆</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">👥</div>Tenant moves in<br>within 24h</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">⏰</div>Weekly rent<br>accrues in ◆</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">◆</div>Claim here<br>or in world</div>
+        </div>
+      </div>
+
+    </div><!-- /officeRooms -->
 
   </div>
 
@@ -27659,11 +28054,256 @@ function switchOfficeTab(tab) {
       }
     });
   }
-  // Command Hub merge: hydrate the merged hub panels inside the Office tab
+  // Command Hub merge: hydrate the merged hub panels (treasury now owns its own content — skip)
   if (window.renderOfficeTab) {
     if (tab === 'command') { window.renderOfficeTab('command'); }
-    else if (tab === 'gallery' || tab === 'showcase' || tab === 'bazaar' || tab === 'treasury') { window.renderOfficeTab(tab); }
+    else if (tab === 'gallery' || tab === 'showcase' || tab === 'bazaar') { window.renderOfficeTab(tab); }
   }
+  // Drive tab-specific init
+  if (tab === 'city')     { try { initCityTab(); } catch(e){} }
+  if (tab === 'treasury') { try { initEconomyTab(); } catch(e){} }
+  if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} }
+}
+
+// ═══════════════════════════════════════════════════════
+// CITY TAB ENGINE
+// ═══════════════════════════════════════════════════════
+var _ctYieldTimer = null;
+
+function initCityTab() {
+  var uid = localStorage.getItem('shd_signed_in');
+  // Signal
+  try {
+    var sig = Number(localStorage.getItem('shaddai.signal') || 100);
+    var pct = Math.max(0, Math.min(100, sig));
+    var fill = document.getElementById('citySignalFill');
+    var txt  = document.getElementById('citySignalTxt');
+    var val  = document.getElementById('ctSigVal');
+    if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? '#00e5a0' : pct > 20 ? '#e8c45c' : '#ff4070'; }
+    if (txt)  txt.textContent = Math.ceil(sig) + ' / 100';
+    if (val)  val.textContent = Math.ceil(sig);
+  } catch(_) {}
+
+  // Sparks balance
+  try {
+    var sparks = Number(localStorage.getItem('shd_sparks') || localStorage.getItem('shaddai.sparks') || 0);
+    var sv = document.getElementById('ctSparksVal'); if (sv) sv.textContent = sparks.toFixed(0);
+  } catch(_) {}
+
+  // City plots — Founders Row
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var myPlot = uid ? city.find(function(p){ return p.owner === uid; }) : null;
+    var grid   = document.getElementById('ctFoundersGrid');
+    if (grid) {
+      grid.innerHTML = '';
+      for (var i = 0; i < 30; i++) {
+        var slotData = city.find(function(p){ return p.slot === i; });
+        var isMine   = myPlot && myPlot.slot === i;
+        var isOwned  = slotData && slotData.owner && !isMine;
+        var el = document.createElement('div');
+        el.className = 'ct-slot' + (isMine ? ' mine' : isOwned ? ' owned' : '');
+        el.title = 'Plot #' + (i + 1) + (isMine ? ' — YOURS' : isOwned ? ' — Owned' : ' — Available');
+        el.textContent = i + 1;
+        el.onclick = (function(slot, mine) { return function(){ if (mine) { location.href = 'game.html#plot'; } }; })(i, isMine);
+        grid.appendChild(el);
+      }
+    }
+
+    // Plot yield card
+    if (myPlot) {
+      var acc = typeof myPlot.claimable === 'number' ? myPlot.claimable : 0;
+      var rate = typeof myPlot.rate === 'number' ? myPlot.rate : 0.5;
+      var ps = document.getElementById('cityPlotStatus');
+      if (ps) ps.textContent = 'Plot #' + (myPlot.slot + 1) + ' · ' + rate.toFixed(2) + ' ◆/sec';
+      var rateEl = document.getElementById('ctYieldRate'); if (rateEl) rateEl.textContent = '+' + rate.toFixed(2);
+      // Live yield ticker
+      if (_ctYieldTimer) clearInterval(_ctYieldTimer);
+      var _rate = rate, _base = acc, _t0 = Date.now();
+      _ctYieldTimer = setInterval(function() {
+        var now = Date.now(), elapsed = (now - _t0) / 1000;
+        var cur = _base + _rate * elapsed;
+        var yn = document.getElementById('ctYieldNum'); if (yn) yn.textContent = cur.toFixed(2);
+      }, 500);
+    } else {
+      var yn = document.getElementById('ctYieldNum'); if (yn) yn.textContent = '0.00';
+      var ps = document.getElementById('cityPlotStatus'); if (ps) ps.textContent = 'No plot owned — visit Founders Row in-world';
+    }
+
+    // Boost active display
+    if (myPlot && myPlot.boostLock && myPlot.boostLock.until > Date.now()) {
+      var ba = document.getElementById('ctBoostActive');
+      if (ba) ba.textContent = myPlot.boostLock.amount + ' ◆ locked · expires ' + new Date(myPlot.boostLock.until).toLocaleDateString();
+    }
+  } catch(_) {}
+
+  // Transit unlocks (rough heuristics from localStorage)
+  try {
+    var visited = Number(localStorage.getItem('shd_dist_visited') || 0);
+    var hasRoom  = (JSON.parse(localStorage.getItem('shaddai.city') || '[]')).some(function(p){
+      return p.rooms && p.rooms.some(function(r){ return r && r.owner === uid; });
+    });
+    var dv = document.getElementById('ctDistVisited'); if (dv) dv.textContent = Math.min(visited, 3);
+    var trainStatus = document.getElementById('ctTrainStatus');
+    var trainDot    = document.getElementById('ctTrainDot');
+    if (visited >= 3) {
+      if (trainStatus) { trainStatus.textContent = 'ACTIVE'; trainStatus.style.color = '#ffd700'; }
+      if (trainDot)    trainDot.style.background = '#ffd700';
+    }
+    var subStatus = document.getElementById('ctSubwayStatus');
+    var subDot    = document.getElementById('ctSubwayDot');
+    if (hasRoom) {
+      if (subStatus) { subStatus.textContent = 'ACTIVE'; subStatus.style.color = '#00e5a0'; }
+      if (subDot)    subDot.style.background = '#00e5a0';
+    }
+  } catch(_) {}
+}
+
+function ctUpdateBoostPreview(val) {
+  val = Number(val);
+  var amtEl = document.getElementById('ctBoostAmt'); if (amtEl) amtEl.textContent = val;
+  // boostMultiplier: 1 + 3*r/(1+1.5*r), cap=1000
+  var r = Math.min(val, 1000) / 1000;
+  var mult = 1 + 3 * r / (1 + 1.5 * r);
+  var mEl = document.getElementById('ctBoostMult'); if (mEl) mEl.textContent = mult.toFixed(2) + '×';
+}
+
+function ctDoBoost() {
+  var slider = document.getElementById('ctBoostInput');
+  if (!slider) return;
+  var amt = Number(slider.value);
+  if (amt <= 0) { if (typeof toast === 'function') toast('Set a boost amount first'); return; }
+  var uid = localStorage.getItem('shd_signed_in');
+  if (!uid) { if (typeof toast === 'function') toast('Sign in to boost'); return; }
+  fetch('/api/city/boost', { method:'POST', headers:{'Content-Type':'application/json','x-user-id':uid}, body: JSON.stringify({amount: amt}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (typeof toast === 'function') toast('⬆ Boost locked: ' + amt + ' ◆'); initCityTab(); })
+    .catch(function(){ if (typeof toast === 'function') toast('Boost queued locally'); });
+}
+
+// ═══════════════════════════════════════════════════════
+// ECONOMY TAB ENGINE
+// ═══════════════════════════════════════════════════════
+function initEconomyTab() {
+  var uid = localStorage.getItem('shd_signed_in');
+  try {
+    var sparks = Number(localStorage.getItem('shd_sparks') || 0);
+    var disp = document.getElementById('ecSparksDisplay');
+    if (disp) { disp.textContent = sparks.toFixed(0); }
+  } catch(_) {}
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var myPlot = uid ? city.find(function(p){ return p.owner===uid; }) : null;
+    if (myPlot) {
+      var r = document.getElementById('ecStreamRate'); if (r) r.textContent = (myPlot.rate||0.5).toFixed(2)+'/sec';
+      var fp = document.getElementById('ecFPlot'); if (fp) fp.textContent = '+' + (myPlot.rate||0.5).toFixed(2)+'/s';
+      var ty = document.getElementById('ecTodayYield'); if (ty) ty.textContent = '+' + ((myPlot.claimable||0)).toFixed(2);
+      if (myPlot.boostLock && myPlot.boostLock.amount) {
+        var la = document.getElementById('ecLockedAmt'); if (la) la.textContent = myPlot.boostLock.amount;
+        var sb = document.getElementById('ecSBoost'); if (sb) sb.textContent = myPlot.boostLock.amount;
+      }
+    }
+  } catch(_) {}
+  // Referral code
+  try {
+    var ref = localStorage.getItem('shaddai_ref_code') || (uid ? uid.slice(0,8).toUpperCase() : '—');
+    var rc = document.getElementById('ecRefCode'); if (rc) rc.textContent = ref;
+  } catch(_) {}
+  // Transaction history (signal drops from game state)
+  try {
+    var hist = JSON.parse(localStorage.getItem('shd_tx_history') || '[]');
+    var listEl = document.getElementById('ecHistList');
+    if (listEl && hist.length) {
+      listEl.innerHTML = hist.slice(-20).reverse().map(function(tx){
+        var color = tx.amount > 0 ? '#00e5a0' : '#ff4070';
+        return '<div class="ec-hist-row"><span style="color:#8a9ab0">'+tx.type+'</span><span style="color:'+color+';font-weight:700">'+(tx.amount>0?'+':'')+tx.amount+' ◆</span><span style="color:#3a4a5a;min-width:70px;text-align:right">'+new Date(tx.ts).toLocaleTimeString()+'</span></div>';
+      }).join('');
+    }
+  } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// ROOMS TAB ENGINE
+// ═══════════════════════════════════════════════════════
+var _TENANT_ARCHETYPES = ['Night Baker','Data Trader','Chess Hustler','Clockmaker','Street Artist','Signal Broker','Code Runner','Archivist'];
+var _DIST_META = { agentcity:{name:'SHADDAI City',color:'#00e5a0'}, forest:{name:'Forest',color:'#ff7b3d'}, city:{name:'Nexus Heights',color:'#00ff88'}, beach:{name:'Beach',color:'#b06aff'}, desert:{name:'Desert',color:'#ff4070'}, meadow:{name:'Meadow',color:'#9b59b6'}, suburb:{name:'Suburb',color:'#8a9ab0'}, volcano:{name:'Zerox',color:'#00f0ff'} };
+
+function rmRenderRooms() {
+  var uid = localStorage.getItem('shd_signed_in');
+  var grid = document.getElementById('roomsTabContent');
+  if (!grid) return;
+  var myRooms = [];
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    city.forEach(function(plot) {
+      if (!plot.rooms) return;
+      plot.rooms.forEach(function(room, idx) {
+        if (room && room.owner === uid) myRooms.push({plot:plot, room:room, idx:idx});
+      });
+    });
+  } catch(_) {}
+
+  var totalRent = 0, totalPending = 0;
+  myRooms.forEach(function(r){ totalRent += (r.room.weeklyRent||50); totalPending += (r.room.pending||0); });
+  var tr = document.getElementById('rmTotalRooms'); if (tr) tr.textContent = myRooms.length;
+  var wr = document.getElementById('rmWeeklyRent'); if (wr) wr.textContent = totalRent;
+  var rp = document.getElementById('rmPending');    if (rp) rp.textContent = totalPending.toFixed(1);
+
+  if (!myRooms.length) return; // keep empty state
+
+  grid.innerHTML = myRooms.map(function(item, i) {
+    var d  = item.plot.district || 'agentcity';
+    var dm = _DIST_META[d] || {name:d, color:'#8a9ab0'};
+    var tn = _TENANT_ARCHETYPES[Math.abs((item.plot.slot||0)*7 + item.idx) % _TENANT_ARCHETYPES.length];
+    var rent = item.room.weeklyRent || 50;
+    var pend = item.room.pending || 0;
+    var rating = item.room.rating || 3;
+    var stars = '★'.repeat(rating) + '☆'.repeat(5-rating);
+    return '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;font-family:\'Share Tech Mono\',monospace">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div><span style="background:'+dm.color+'22;border:1px solid '+dm.color+'44;color:'+dm.color+';font-size:8px;padding:2px 7px;border-radius:4px;letter-spacing:1px">'+dm.name+'</span>'
+      + '<div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-top:6px">Room '+(item.idx+1)+' · Plot #'+(item.plot.slot+1)+'</div></div>'
+      + '<span style="color:#e8c45c;font-size:11px" title="Tenant rating">'+stars+'</span></div>'
+      + '<div style="font-size:10px;color:#8a9ab0;margin-bottom:8px">👤 Tenant: <span style="color:#e2e8f0;font-weight:700">'+tn+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:10px">'
+      + '<span style="color:#5a6a7a">Weekly: <span style="color:#00e5a0;font-weight:700">'+rent+' ◆</span></span>'
+      + '<span style="color:#5a6a7a">Pending: <span style="color:#e8c45c;font-weight:700">'+pend.toFixed(1)+' ◆</span></span></div>'
+      + '<button onclick="rmClaimRoom(\''+item.plot.id+'\','+item.idx+')" style="width:100%;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:6px;border-radius:6px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit;letter-spacing:1px">CLAIM '+pend.toFixed(1)+' ◆</button>'
+      + '</div>';
+  }).join('');
+}
+
+function rmClaimAll() {
+  if (typeof toast === 'function') toast('◆ Claiming all room rent...');
+  // Aggregate pending from localStorage rooms
+  try {
+    var uid = localStorage.getItem('shd_signed_in');
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var total = 0;
+    city.forEach(function(plot) {
+      if (!plot.rooms) return;
+      plot.rooms.forEach(function(room, idx) {
+        if (room && room.owner === uid && room.pending > 0) { total += room.pending; room.pending = 0; }
+      });
+    });
+    localStorage.setItem('shaddai.city', JSON.stringify(city));
+    if (total > 0 && typeof toast === 'function') toast('◆ Claimed ' + total.toFixed(1) + ' Sparks from all rooms!');
+    rmRenderRooms();
+  } catch(_) {}
+}
+
+function rmClaimRoom(plotId, idx) {
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var plot = city.find(function(p){ return p.id === plotId; });
+    if (plot && plot.rooms && plot.rooms[idx]) {
+      var amt = plot.rooms[idx].pending || 0;
+      plot.rooms[idx].pending = 0;
+      localStorage.setItem('shaddai.city', JSON.stringify(city));
+      if (typeof toast === 'function') toast('◆ Claimed ' + amt.toFixed(1) + ' Sparks from room ' + (idx+1));
+      rmRenderRooms();
+    }
+  } catch(_) {}
 }
 
 // ── Pixel Office building routing ─────────────────────────────────────────────
