@@ -1,6 +1,25 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SHADDAI · World</title>
+<script>
+(function(){
+  var CLR='shd_gamedata_clear_v3';
+  try{ if(localStorage.getItem(CLR)) return; }catch(e){ return; }
+  var keys=['shaddai.decor','shaddai.home','shaddai.city','shaddai.econ',
+            'shaddai.level','shaddai.ftue','shaddai.officeTheme','shaddai.mode',
+            'shaddai.region','shaddai.player','shaddai.gallery'];
+  keys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
+  try{
+    var rk=[]; for(var i=0;i<localStorage.length;i++){
+      var k2=localStorage.key(i);
+      if(k2&&(k2.indexOf('shaddai.rooms.')===0||k2.indexOf('shd_city')===0||k2.indexOf('shd_office')===0))
+        rk.push(k2);
+    }
+    rk.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+  try{localStorage.setItem(CLR,'1');}catch(e){}
+})();
+</script>
 <script src="/world-gate.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -54,6 +73,7 @@
   </div>
   <div class="row"><input id="nameInput" placeholder="Name" maxlength="16" value="Wanderer"></div>
   <div class="row"><button class="primary" onclick="goRegion()" style="flex:1;font-size:15px;padding:12px">▶ Enter the World</button></div>
+  <div class="row" style="margin-top:8px"><button onclick="location.href='index.html'" style="width:100%;background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.25);color:#5ca08a;font-size:12px;padding:8px">← Back to Dashboard</button></div>
 </div>
 <!-- SIGN-IN GATE: signed in = you can play. no guests. -->
 <div id="signGate" style="position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 38%,rgba(10,20,30,.97),rgba(4,7,12,.99));font-family:'Chakra Petch',system-ui,sans-serif">
@@ -84,6 +104,7 @@
   <div class="regions" id="regionGrid"></div>
   <div class="row" style="justify-content:space-between">
     <button onclick="backToCreate()">← Back</button>
+    <button onclick="location.href='index.html'" style="font-size:12px;color:#5ca08a;background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.2)">⌂ Dashboard</button>
     <button class="primary" onclick="enterWorld()">Enter <span id="enterRegionName">Green Meadow</span> →</button>
   </div>
 </div>
@@ -100,6 +121,7 @@
   <div style="font-size:11px;color:#5a6a7a;margin-top:6px" id="claimReserve"></div>
 </div>
 <div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px">
+  <button class="panel" style="padding:9px 13px;border-color:rgba(0,229,160,.3);color:#00e5a0;font-weight:700" onclick="location.href='index.html'">← Dashboard</button>
   <button class="panel" style="padding:9px 13px" onclick="openStore()">🛒 Store</button>
   <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
   <button class="panel" style="padding:9px 13px" onclick="openJobs()">💼 Work</button>

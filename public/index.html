@@ -4118,6 +4118,26 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     }catch(e){}
   };
 })();
+// ── ONE-TIME GAME DATA CLEAR (v3) ─────────────────────────────────────────────
+// Clears persisted office/room/city/economy data that was accumulating across sessions.
+// Re-run by bumping the version key below.
+(function(){
+  var CLR='shd_gamedata_clear_v3';
+  try{ if(localStorage.getItem(CLR)) return; }catch(e){ return; }
+  var keys=['shaddai.decor','shaddai.home','shaddai.city','shaddai.econ',
+            'shaddai.level','shaddai.ftue','shaddai.officeTheme','shaddai.mode','shaddai.region',
+            'shaddai.player','shaddai.gallery'];
+  keys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
+  try{
+    var rk=[]; for(var i=0;i<localStorage.length;i++){
+      var k2=localStorage.key(i);
+      if(k2&&(k2.indexOf('shaddai.rooms.')===0||k2.indexOf('shd_city')===0||k2.indexOf('shd_office')===0||k2.indexOf('shd_room')===0))
+        rk.push(k2);
+    }
+    rk.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+  try{localStorage.setItem(CLR,'1');}catch(e){}
+})();
 </script>
 <!-- SHADDAI icon set (window.SHADDAI_ICONS / window.shaddaiIcon) — loaded before nav renders -->
 <script src="/assets/shaddai-icons.js"></script>
@@ -4601,36 +4621,6 @@ window.enter3DWorld=function(){
   <div class="sb-foot">OLLAMA → GROQ → GEMINI<br>7 AGENTS ONLINE</div>
 </div>
 
-<!-- Persistent Pro Upgrade Strip -->
-<div id="proUpgradeStrip" style="position:fixed;bottom:0;left:0;right:0;z-index:2900;background:linear-gradient(90deg,#0b1220 0%,rgba(124,58,237,0.15) 40%,rgba(232,196,92,0.12) 100%);border-top:1px solid rgba(124,58,237,0.35);padding:0 20px;height:44px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;backdrop-filter:blur(12px)">
-  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
-    <span style="font-size:14px">⭐</span>
-    <div style="min-width:0">
-      <span id="proStripMsg" style="font-size:11px;font-weight:600;color:#e8c45c;white-space:nowrap">Unlock Pro — 3D Forge · Premium Worlds · Agent Residuals</span>
-    </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-    <button onclick="location.href='pricing.html'" style="background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;font-family:inherit;font-size:11px;font-weight:700;padding:6px 16px;border-radius:6px;cursor:pointer;white-space:nowrap;letter-spacing:0.5px">Upgrade → $30/mo</button>
-    <button onclick="document.getElementById('proUpgradeStrip').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="Dismiss">×</button>
-  </div>
-</div>
-<!-- End Pro Strip -->
-<script>
-(function(){
-  function _checkProStrip(){
-    var tier = (window.S && window.S.billing && window.S.billing.subscription && window.S.billing.subscription.tier) || 'free';
-    if(tier !== 'free'){
-      var el = document.getElementById('proUpgradeStrip');
-      if(el) el.style.display = 'none';
-      document.body.style.paddingBottom = '';
-    }
-  }
-  // Check immediately and after a delay for async auth
-  _checkProStrip();
-  setTimeout(_checkProStrip, 2500);
-  setTimeout(_checkProStrip, 6000);
-})();
-</script>
 
 <div id="resourcePanel">
   <div class="res-item"><span class="res-label">CPU</span><span class="res-value" id="cpuVal">0%</span></div>
@@ -7404,7 +7394,7 @@ window.enter3DWorld=function(){
                tool loop inside the forge (that was the glitch). Tools run when you chat with the agent.
                "Make in 2D Pixel" = the mirror of the Pixel Forge's "3D Body": one agent, manifested across
                realities (SHADDAI · 2D · 3D). It opens the Pixel Forge pre-filled with this agent's name. -->
-          <div class="of-actions"><button id="ofForge">⬡ FORGE &amp; AWAKEN</button><button id="ofPixel" onclick="(function(){var n=(document.getElementById('ofName')||{}).value||'';if(window.openPixelForge){openPixelForge();var pn=document.getElementById('pxfName');if(pn&&n)pn.value=n;}})()" title="Manifest this agent in the 2D pixel world — pick its pixel body & color">◧ Make in 2D Pixel</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
+          <div class="of-actions"><button id="ofForge">⬡ FORGE AGENT</button><button id="ofPixel" onclick="(function(){var n=(document.getElementById('ofName')||{}).value||'';if(window.openPixelForge){openPixelForge();var pn=document.getElementById('pxfName');if(pn&&n)pn.value=n;}})()" title="Manifest this agent in the 2D pixel world — pick its pixel body & color">◧ Make in 2D Pixel</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
           <div class="of-console" id="ofConsole">// forge an operator, equip skills, pick a brain, then TEST RUN.</div>
         </div>
       </div>
@@ -12152,23 +12142,20 @@ window.enter3DWorld=function(){
               <button data-theme-btn="solar"    onclick="applyTheme('solar')"    style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#ffe8b0;font-size:8.5px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px">
                 <div style="display:flex;gap:3px"><div style="width:10px;height:10px;border-radius:50%;background:#0f0800;border:1.5px solid #f59e0b"></div><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div></div>
                 <span>🌅 Solar</span></button>
-              <button data-theme-btn="light"    onclick="applyTheme('light')"    style="padding:10px 6px;background:rgba(240,245,250,0.12);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px">
-                <div style="display:flex;gap:3px"><div style="width:10px;height:10px;border-radius:50%;background:#f0f5fa;border:1.5px solid #0070cc"></div><div style="width:10px;height:10px;border-radius:50%;background:#0070cc"></div></div>
-                <span>☀️ Light</span></button>
             </div>
             <script>
               // Simplified: ONE theme system — the 6 dashboard skins via setThemeSkin
               // (same as the floating picker + Command Hub). Rebuilds this grid so there's
               // no competing old data-theme picker.
               (function(){
-                var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['brutalist','Brutalist','#f5c000'],['serif','Serif','#3a6b4a'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
+                var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
                 var grid=document.getElementById('themeGrid'); if(!grid) return;
-                grid.style.gridTemplateColumns='repeat(3,1fr)';
+                grid.style.gridTemplateColumns='repeat(4,1fr)';
                 grid.style.display='none'; // collapsed by default — tap the Theme header to expand
-                function cur(){ try{ return (window.getThemeSkin&&getThemeSkin())||localStorage.getItem('shd_theme_skin')||'glitch'; }catch(e){ return 'glitch'; } }
+                function cur(){ try{ return localStorage.getItem('shaddai_skin')||'glitch'; }catch(e){ return 'glitch'; } }
                 function paint(){ var c=cur(); grid.querySelectorAll('button').forEach(function(b){ b.style.borderColor=(b.getAttribute('data-skin')===c)?b.getAttribute('data-dot'):'rgba(255,255,255,0.08)'; }); var el=document.getElementById('activeThemeLabel'); if(el){ var s=SKINS.filter(function(x){return x[0]===c;})[0]; el.textContent='— '+(s?s[1]:c); } }
                 grid.innerHTML=SKINS.map(function(s){ return '<button data-skin="'+s[0]+'" data-dot="'+s[2]+'" style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:'+s[2]+';box-shadow:0 0 8px '+s[2]+'"></span>'+s[1]+'</button>'; }).join('');
-                grid.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ if(window.setThemeSkin) setThemeSkin(b.getAttribute('data-skin')); paint(); }; });
+                grid.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ if(window.setShaddaiSkin) setShaddaiSkin(b.getAttribute('data-skin')); paint(); }; });
                 paint();
                 document.addEventListener('click',function(e){ if(e.target&&e.target.closest&&e.target.closest('#shdSkinDock,#shdtTheme')) setTimeout(paint,60); });
               })();
@@ -15419,7 +15406,7 @@ function _seedDemoData() {
 function init() {
   load();
   _seedDemoData();
-  if (!S.settings.ui.theme || S.settings.ui.theme === 'dark') S.settings.ui.theme = 'glitch';
+  if (!S.settings.ui.theme || S.settings.ui.theme === 'dark' || S.settings.ui.theme === 'light' || S.settings.ui.theme === 'soft') S.settings.ui.theme = 'glitch';
   if (S.settings.ui.accentColor === '#00e5a0' || S.settings.ui.accentColor === '#00c8ff') S.settings.ui.accentColor = '#00ff88';
   applyTheme(S.settings.ui.theme);
   applyFontSize(S.settings.ui.fontSize);
@@ -16700,7 +16687,6 @@ const _THEMES = {
   crimson:   { label:'🔴 Crimson',   bg:'#120308', bgPrimary:'#200a0e', bgCard:'#2a0e14', accent:'#ff4a6a', text:'#ffd5de', textMuted:'#a85070', swatch:['#120308','#ff4a6a'] },
   forest:    { label:'🌿 Forest',    bg:'#030e08', bgPrimary:'#071a0d', bgCard:'#0a2214', accent:'#22c55e', text:'#c8f0d8', textMuted:'#4a8a60', swatch:['#030e08','#22c55e'] },
   solar:     { label:'🌅 Solar',     bg:'#0f0800', bgPrimary:'#1e1000', bgCard:'#2a1800', accent:'#f59e0b', text:'#ffe8b0', textMuted:'#9a7030', swatch:['#0f0800','#f59e0b'] },
-  light:     { label:'☀️ Light',    bg:'#f0f5fa', bgPrimary:'#ffffff', bgCard:'#f8fbff', accent:'#0070cc', text:'#1a1f35', textMuted:'#6a7a9a', swatch:['#f0f5fa','#0070cc'] },
 };
 
 function applyTheme(themeKey) {
