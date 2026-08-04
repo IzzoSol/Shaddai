@@ -147,6 +147,69 @@ function _isAccelerating(pair) {
   return (h1 * 24) > (h24 * 1.5);   // current-hour pace > 1.5x daily average
 }
 
+// ── BUY PRESSURE (from DexScreener pair.txns — zero extra API calls) ──────────
+// Uses buy/sell tx counts across m5+h1 windows to measure accumulation vs dump.
+// Returns { ratio: 0-1, label, bullish }  where ratio > 0.55 = net buying.
+function _buyPressure(pair) {
+  const t = pair && pair.txns;
+  if (!t) return { ratio: 0.5, label: '', bullish: null };
+  const m5B = Number(t.m5 && t.m5.buys) || 0;
+  const m5S = Number(t.m5 && t.m5.sells) || 0;
+  const h1B = Number(t.h1 && t.h1.buys) || 0;
+  const h1S = Number(t.h1 && t.h1.sells) || 0;
+  // Weight 5-min heavier (most recent sentiment)
+  const buys = h1B + m5B * 3;
+  const total = buys + h1S + m5S * 3;
+  if (total < 3) return { ratio: 0.5, label: '', bullish: null };
+  const ratio = buys / total;
+  const pct = Math.round(ratio * 100);
+  const label = ratio >= 0.65
+    ? `🟢 ${pct}% buys` : ratio >= 0.55
+    ? `🟡 ${pct}% buys` : ratio <= 0.35
+    ? `🔴 ${pct}% buys (dump)` : `⚪ ${pct}% buys`;
+  return { ratio, label, bullish: ratio >= 0.55 };
+}
+
+// ── PUMP.FUN COIN DETAIL (free, no key) ───────────────────────────────────────
+// Extra fields vs the list API: twitter, website, reply_count, last_reply,
+// ath_market_cap, ath_market_cap_timestamp, is_banned, nsfw, created_timestamp.
+// Fail-open: returns null if not found or network error.
+async function _pumpDetail(mint) {
+  if (!mint) return null;
+  try {
+    const r = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(5000)
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+// ── RAYDIUM POOL TVL + PRICE RANGE (free, no key) ────────────────────────────
+// Provides: tvl, day/week/month volume, price min/max (volatility), fee APR.
+// Only meaningful for Raydium pools (pump.fun graduates).
+async function _raydiumPool(mint) {
+  if (!mint) return null;
+  try {
+    const url = `https://api-v3.raydium.io/pools/info/mint?mint1=${mint}&poolType=all&poolSortField=liquidity&sortType=desc&pageSize=1&page=1`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const pool = (j.data && j.data.data && j.data.data[0]) || (j.data && Array.isArray(j.data) && j.data[0]);
+    if (!pool) return null;
+    const d = pool.day || {}; const w = pool.week || {};
+    return {
+      tvl:      Number(pool.tvl) || 0,
+      dayVol:   Number(d.volume) || 0,
+      weekVol:  Number(w.volume) || 0,
+      dayPriceMin: Number(d.priceMin) || 0,
+      dayPriceMax: Number(d.priceMax) || 0,
+      feeApr:   Number(d.feeApr) || 0,
+      poolType: pool.type || '',
+    };
+  } catch (e) { return null; }
+}
+
 function _cfg() {
   const cc = core.getConfig();   // dashboard-editable filter params + feed toggles
   return {
@@ -752,6 +815,7 @@ function _bondCard(c, socialLabel, opts) {
   const price = o.price ? _fmtPrice(o.price) : '';
   const mint = c.mint || c.address || '';
   const url = mint ? 'https://pump.fun/' + mint : '';
+  const bpLabel = o.buyPressure || '';
   const statRow = [];
   if (c.holders) statRow.push('👥 ' + c.holders + ' holders');
   if (c.devPct != null && c.devPct > 0) statRow.push('👨‍💻 dev ' + Number(c.devPct).toFixed(0) + '%');
@@ -763,6 +827,7 @@ function _bondCard(c, socialLabel, opts) {
     (mc ? `💰 MC  <b>${mc}</b>${ath ? `   🏔 ATH <b>${ath}</b>` : ''}\n` : '') +
     (liq ? `💧 Liq  <b>${liq}</b>\n` : '') +
     (vol24 ? `📊 Vol  <b>${vol24}</b> 24h${vol1h ? `   <b>${vol1h}</b> 1h` : ''}\n` : '') +
+    (bpLabel ? bpLabel + '\n' : '') +
     (statRow.length ? statRow.join('   ') + '\n' : '') +
     (o.bannerLabel ? o.bannerLabel + (socialLabel ? '   ' + socialLabel : '') + '\n' : (socialLabel ? socialLabel + '\n' : '')) +
     (mint ? `\n<code>${_esc(mint)}</code>\n` : '') +
@@ -875,19 +940,32 @@ async function _pollBonded() {
     const _bondProfChk = _profileMap.get(mint);
     const _bondHasBanner = !!(_bondProfChk && _bondProfChk.header) || !!(pair.info && pair.info.header);
     const _bondBannerLabel = usdMc >= 15000 ? (_bondHasBanner ? '✅ DEX BANNER' : '❌ no banner') : '';
-    // GoPlus security check — run in parallel with rugScore (fail-open, no key needed)
-    let gp = null;
-    let rs = null;
+    // Buy pressure from DexScreener pair.txns (zero extra API calls)
+    const _bp = _buyPressure(pair);
+    // DUMP FILTER: if m5+h1 txns are clearly net selling (< 35% buys), skip — dump already underway
+    if (_bp.bullish === false && _bp.ratio < 0.35) { _seenBond.add(mint); continue; }
+    // Run enrichment APIs in parallel: rugScore + GoPlus + pump.fun detail + Raydium pool
+    let gp = null; let rs = null; let pumpDet = null; let raydPool = null;
     if (cfg.rugFilter) {
-      [rs, gp] = await Promise.all([_rugScore(mint), _goplusCheck(mint)]);
+      [rs, gp, pumpDet, raydPool] = await Promise.all([_rugScore(mint), _goplusCheck(mint), _pumpDetail(mint), _raydiumPool(mint)]);
       // HARD BLOCKS from GoPlus: mintable supply, hidden owner, pausable transfers, sell tax >10%
       if (gp && !gp.ok) { _seenBond.add(mint); continue; }
     } else {
-      gp = await _goplusCheck(mint);
+      [gp, pumpDet, raydPool] = await Promise.all([_goplusCheck(mint), _pumpDetail(mint), _raydiumPool(mint)]);
       if (gp && !gp.ok) { _seenBond.add(mint); continue; }
     }
+    // pump.fun detail enrichment: ban check, better socials, ATH pump-era MC, reply activity
+    if (pumpDet && pumpDet.is_banned) { _seenBond.add(mint); continue; }
+    if (pumpDet && pumpDet.nsfw)      { _seenBond.add(mint); continue; }
+    // Enrich social with pump.fun detail fields if we didn't already get them
+    if (pumpDet) {
+      if (!_bondSocial.has.twitter && pumpDet.twitter) { _bondSocial.has.twitter = true; _bondSocial.score += 2; _bondSocial.label = (_bondSocial.label + ' 𝕏').trim(); }
+      if (!_bondSocial.has.website && pumpDet.website) { _bondSocial.has.website = true; _bondSocial.score += 2; _bondSocial.label = (_bondSocial.label + ' 🌐').trim(); }
+    }
     const _gpLabel = (gp && gp.label) ? '\n' + gp.label : '';
-    let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel });
+    // Raydium TVL label — confirms DexScreener liq with an independent source
+    const _raydLabel = raydPool && raydPool.tvl > 500 ? `\n📊 Raydium TVL <b>${_fmtUsd(raydPool.tvl)}</b>${raydPool.weekVol ? `  7d vol <b>${_fmtUsd(raydPool.weekVol)}</b>` : ''}` : '';
+    let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel, buyPressure: _bp.label });
     if (cfg.rugFilter) {
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
       // Bonded hard cap: $75K — no rug-score exception. $100K-$200K bonded = 0% win rate (7-day data).
@@ -924,11 +1002,28 @@ async function _pollBonded() {
     if (_bondSym && _isScamSym(_bondSym)) continue;
     if (_bondName && _isScamName(_bondName)) continue;
     if (!_symCooldownOk(_bondSym)) continue;
-    const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    // Merge social links: DexScreener + pump.fun detail socials
+    const _pumpSocials = [];
+    if (pumpDet && pumpDet.twitter && !_bondSocial.has.twitter) _pumpSocials.push({ type: 'twitter', url: pumpDet.twitter });
+    if (pumpDet && pumpDet.website && !_bondSocial.has.website) _pumpSocials.push({ type: 'website', url: pumpDet.website });
+    const _bondExtra = {
+      liq, fdv: usdMc, mint, url: pair.url || '',
+      createdAt: (pumpDet && pumpDet.created_timestamp) || pair.pairCreatedAt || 0,
+      vol24: Number(pair.volume && pair.volume.h24) || 0,
+      vol1h: Number(pair.volume && pair.volume.h1) || 0,
+      websites: [...(pair.info && pair.info.websites || []), ...(pumpDet && pumpDet.website ? [{ url: pumpDet.website }] : [])],
+      socialLinks: [...(pair.info && pair.info.socials || []), ..._pumpSocials],
+      pumpReplies: pumpDet && pumpDet.reply_count > 0 ? pumpDet.reply_count : 0,
+      pumpAth: pumpDet && pumpDet.ath_market_cap ? pumpDet.ath_market_cap : 0,
+    };
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _bondHourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _bondDevWarn = (c.devPct === 0 && c.snipers > 15) ? '\n⚠️ Dev hold 0% + high snipers — dev may have sold at launch' : '';
-    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _gpLabel + _bondAccel + _bondHourTag + _bondDevWarn;
+    // pump.fun community activity line
+    const _pumpCommunity = pumpDet && pumpDet.reply_count >= 10
+      ? `\n💬 <b>${pumpDet.reply_count}</b> pump.fun replies — active community`
+      : (pumpDet && pumpDet.reply_count >= 3 ? `\n💬 ${pumpDet.reply_count} replies` : '');
+    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _gpLabel + _raydLabel + _bondAccel + _pumpCommunity + _bondHourTag + _bondDevWarn;
     const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
