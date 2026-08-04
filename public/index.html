@@ -4574,7 +4574,9 @@ window.enter3DWorld=function(){
     <!-- WORLDS -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Worlds</div>
     <button class="sbt" onclick="lySetSb(this);toggleWorldsMenu(event, this)" id="navWorldsBtnSb" style="color:#7c3aed"><span class="ic">🌐</span>Worlds</button>
-    <button class="sbt" onclick="showView('office');if(typeof switchOfficeTab==='function')switchOfficeTab('rooms');lySetSb(this)" title="Your rooms &amp; tenants" style="color:#e8c45c"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="window._officeEntrySub='city';showView('office');lySetSb(this)" title="City economy, plots &amp; Signal" style="color:#00e5a0;font-weight:700"><span class="ic">🌆</span>City</button>
+    <button class="sbt" onclick="window._officeEntrySub='rooms';showView('office');lySetSb(this)" title="Your rooms &amp; tenants" style="color:#e8c45c"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="window._officeEntrySub='treasury';showView('office');lySetSb(this)" title="Sparks, vaults &amp; economy" style="color:#00e5a0"><span class="ic">◆</span>Economy</button>
     <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Pixel Forge</button>
     <!-- MARKETS -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Markets</div>
@@ -4668,7 +4670,7 @@ window.enter3DWorld=function(){
         <span class="mqa-icon">📈</span>
         <span class="mqa-label">Markets</span>
       </button>
-      <button class="mqa-btn" onclick="showView('office');switchOfficeTab('treasury')">
+      <button class="mqa-btn" onclick="window._officeEntrySub='treasury';showView('office')">
         <span class="mqa-icon">◆</span>
         <span class="mqa-label">Economy</span>
       </button>
@@ -4723,6 +4725,46 @@ window.enter3DWorld=function(){
       <div class="card-head"><span class="card-title">Quick Actions</span></div>
       <div id="quickRows"></div>
     </div>
+    <!-- CITY EMPIRE LIVE WIDGET -->
+    <div class="card" id="dashCityWidget" style="background:linear-gradient(135deg,rgba(0,229,160,0.05),rgba(232,196,92,0.04));border:1px solid rgba(0,229,160,0.25);cursor:pointer" onclick="window._officeEntrySub='city';showView('office')">
+      <div class="card-head">
+        <span class="card-title" style="color:#00e5a0">🌆 City Empire — Live Status</span>
+        <span style="font-size:8px;color:rgba(0,229,160,0.5)">Click to manage →</span>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">⚡ Sparks</div><div class="stat-value good" id="dashSparks">—</div></div>
+        <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">📡 Signal</div><div class="stat-value" id="dashSignal" style="color:#00e5a0">—</div></div>
+        <div class="stat-box" style="border-color:rgba(232,196,92,0.25)"><div class="stat-label">◆ Plots</div><div class="stat-value" id="dashPlots" style="color:#e8c45c">0 / 30</div></div>
+        <div class="stat-box" style="border-color:rgba(124,58,237,0.25)"><div class="stat-label">🚪 Rooms</div><div class="stat-value" id="dashRooms" style="color:#a78bfa">0</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button onclick="event.stopPropagation();window._officeEntrySub='city';showView('office')" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🌆 City</button>
+        <button onclick="event.stopPropagation();window._officeEntrySub='treasury';showView('office')" style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">◆ Economy</button>
+        <button onclick="event.stopPropagation();window._officeEntrySub='rooms';showView('office')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.2);color:#e8c45c;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🚪 Rooms</button>
+        <button onclick="event.stopPropagation();location.href='game.html'" style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">▦ Enter World</button>
+      </div>
+    </div>
+    <script>
+    (function(){
+      function _dashCitySync() {
+        try {
+          var sp = parseFloat(localStorage.getItem('shd_sparks')||'0');
+          var sig = parseFloat(localStorage.getItem('shaddai.signal')||'100');
+          var city = []; try{ city=JSON.parse(localStorage.getItem('shaddai.city')||'[]'); }catch(_){}
+          var uid = localStorage.getItem('shd_signed_in');
+          var myPlots = city.filter(function(p){return p.owner===uid;});
+          var rooms=0; myPlots.forEach(function(p){if(p.rooms)rooms+=p.rooms.length;});
+          var dsp=document.getElementById('dashSparks'); if(dsp) dsp.textContent=sp>=1000?(sp/1000).toFixed(1)+'k':sp.toFixed(0);
+          var dsg=document.getElementById('dashSignal'); if(dsg){dsg.textContent=sig.toFixed(0)+'%'; dsg.style.color=sig>60?'#00e5a0':sig>30?'#ffb020':'#ef4444';}
+          var dpl=document.getElementById('dashPlots'); if(dpl) dpl.textContent=myPlots.length+' / 30';
+          var drm=document.getElementById('dashRooms'); if(drm) drm.textContent=rooms;
+        }catch(_){}
+      }
+      _dashCitySync();
+      setInterval(_dashCitySync, 3000);
+    })();
+    </script>
+
     <!-- SHADDAI Value Meter (SHADDAI suggested: show cost-benefit) -->
     <div class="card" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(255,176,32,0.04));border:1px solid rgba(0,229,160,0.3)">
       <div class="card-head">
@@ -6135,7 +6177,55 @@ window.enter3DWorld=function(){
     </script>
   </div>
 
-  <!-- Office / Pixel Office -->
+  <!-- Office / Pixel Office — TOP TIER VISUAL UPGRADE -->
+  <style>
+    /* ── Office tab bar ── */
+    #officeView > div:first-child {
+      background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 10px 4px 10px !important;
+      margin-bottom: 0 !important;
+      border-radius: 8px 8px 0 0;
+    }
+    #officeView .nav-btn.active {
+      box-shadow: 0 0 14px rgba(0,229,160,0.25), inset 0 0 12px rgba(0,229,160,0.08);
+    }
+    #officeTabCity.active { box-shadow: 0 0 18px rgba(0,229,160,0.4) !important; }
+    #officeTabRooms.active { box-shadow: 0 0 18px rgba(232,196,92,0.4) !important; }
+    #officeTab13.active { box-shadow: 0 0 18px rgba(0,229,160,0.35) !important; }
+    #officeTab10.active { box-shadow: 0 0 18px rgba(168,85,247,0.4) !important; }
+
+    /* ── Command Hub city cards ── */
+    @keyframes cardGlowEm { 0%,100%{box-shadow:0 0 10px rgba(0,229,160,0.12)} 50%{box-shadow:0 0 22px rgba(0,229,160,0.28)} }
+    @keyframes cardGlowGold { 0%,100%{box-shadow:0 0 10px rgba(232,196,92,0.1)} 50%{box-shadow:0 0 22px rgba(232,196,92,0.25)} }
+    @keyframes cardGlowPur { 0%,100%{box-shadow:0 0 10px rgba(168,85,247,0.1)} 50%{box-shadow:0 0 22px rgba(168,85,247,0.25)} }
+    @keyframes sigPulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+    @keyframes sparkFloat { 0%{transform:translateY(0)}50%{transform:translateY(-2px)}100%{transform:translateY(0)} }
+    @keyframes glowBorder { 0%,100%{border-color:rgba(0,229,160,0.18)}50%{border-color:rgba(0,229,160,0.45)} }
+
+    /* ── City tab premium ── */
+    #ctTopbar { background: linear-gradient(135deg, rgba(0,229,160,0.04) 0%, rgba(0,0,0,0) 60%) !important; }
+    #ctTopbar .ct-title { background: linear-gradient(90deg, #00e5a0, #e8c45c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .ct-card-em { backdrop-filter: blur(8px); animation: glowBorder 3s ease-in-out infinite; }
+    .ct-slot.mine { animation: cardGlowEm 2.5s ease-in-out infinite; }
+    .ct-dist { backdrop-filter: blur(6px); }
+    .ct-dist:hover { transform: translateY(-2px) scale(1.02) !important; }
+
+    /* ── Economy tab premium ── */
+    #ecSparksDisplay { animation: sparkFloat 2.8s ease-in-out infinite; }
+
+    /* ── HUD strip live indicator ── */
+    .hud-strip { background: linear-gradient(135deg, rgba(0,229,160,0.04), rgba(232,196,92,0.04)); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+    .hud-stat { position: relative; }
+    .hud-val { background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* ── Rooms tab premium ── */
+    .rm-card { transition: transform .2s, box-shadow .2s; }
+    .rm-card:hover { transform: translateY(-2px); }
+
+    /* ── Signal bar glow ── */
+    #citySignalFill { box-shadow: 0 0 8px rgba(0,229,160,0.5); }
+  </style>
   <div id="officeView" class="view">
     <div style="display:flex;gap:8px;padding:12px 0;flex-wrap:wrap;position:relative;z-index:10;margin-bottom:8px">
       <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">🏢 Command</button>
@@ -6155,23 +6245,47 @@ window.enter3DWorld=function(){
     <!-- Command Center — SHADDAI Agent Work Board (TURTLE design spec) -->
     <div id="officeCommand" class="office-room" style="flex-direction:column;padding:12px;align-items:stretch">
 
-      <!-- ROW 1: COCKPIT HUD STRIP -->
+      <!-- ROW 1: COCKPIT HUD STRIP (live data from localStorage) -->
       <div class="hud-strip">
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudRevenue">$0</div>
-          <div class="hud-lab">EST. MONTHLY REV</div>
+          <div class="hud-val" id="officeHudSparks">—</div>
+          <div class="hud-lab">SPARKS BALANCE</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudJobs">0</div>
-          <div class="hud-lab">ACTIVE JOBS</div>
+          <div class="hud-val" id="officeHudSignal">—%</div>
+          <div class="hud-lab">SIGNAL LEVEL</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudDone">0</div>
-          <div class="hud-lab">TASKS COMPLETE</div>
+          <div class="hud-val" id="officeHudRooms">0</div>
+          <div class="hud-lab">ACTIVE ROOMS</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudHealth" style="font-size:14px">●●●●●●●</div>
-          <div class="hud-lab">AGENT STATUS</div>
+          <div class="hud-val" id="officeHudPlots">0 / 30</div>
+          <div class="hud-lab">CITY PLOTS</div>
+        </div>
+      </div>
+
+      <!-- CITY EMPIRE QUICK-NAV CARDS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 4px">
+        <div onclick="switchOfficeTab('city')" style="background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.14)'" onmouseout="this.style.background='rgba(0,229,160,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🌆</div>
+          <div style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.04em">CITY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdCitySnap">Founders' Row · 30 plots</div>
+        </div>
+        <div onclick="switchOfficeTab('treasury')" style="background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.18);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='rgba(0,229,160,0.05)'">
+          <div style="font-size:18px;margin-bottom:4px">◆</div>
+          <div style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.04em">ECONOMY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdEconSnap">6-Vault · Faucets · Sinks</div>
+        </div>
+        <div onclick="switchOfficeTab('rooms')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(232,196,92,0.14)'" onmouseout="this.style.background='rgba(232,196,92,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🚪</div>
+          <div style="font-size:10px;font-weight:700;color:#e8c45c;letter-spacing:.04em">ROOMS</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdRoomsSnap">Rent · Tenants · Yield</div>
+        </div>
+        <div onclick="switchOfficeTab('gallery')" style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(168,85,247,0.14)'" onmouseout="this.style.background='rgba(168,85,247,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🖼</div>
+          <div style="font-size:10px;font-weight:700;color:#a855f7;letter-spacing:.04em">GALLERY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdGallerySnap">Agents · Cosmetics · Art</div>
         </div>
       </div>
 
@@ -25883,7 +25997,7 @@ function showView(v) {
   if (v === 'zerox')         { if (typeof pingZerox === 'function') pingZerox(); if (typeof loadFearGreed === 'function') loadFearGreed(); }
   if (v === 'oracle')        { if (typeof pingOracle === 'function') pingOracle(); if (typeof loadMoonPhase === 'function') loadMoonPhase(); }
   if (v === 'turtle')        { if (typeof pingTurtle === 'function') pingTurtle(); }
-  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'command'); window._officeEntrySub = null; }
+  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'command'); window._officeEntrySub = null; try { initCommandHub(); } catch(e){} }
   if (v === 'agents')     { if (typeof render3DAgentCards === 'function') render3DAgentCards(); if (typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); }
 }
 
@@ -28060,9 +28174,57 @@ function switchOfficeTab(tab) {
     else if (tab === 'gallery' || tab === 'showcase' || tab === 'bazaar') { window.renderOfficeTab(tab); }
   }
   // Drive tab-specific init
+  if (tab === 'command')  { try { initCommandHub(); } catch(e){} }
   if (tab === 'city')     { try { initCityTab(); } catch(e){} }
   if (tab === 'treasury') { try { initEconomyTab(); } catch(e){} }
   if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} }
+}
+
+// ═══════════════════════════════════════════════════════
+// COMMAND HUB ENGINE — wires HUD strip + city-empire cards
+// ═══════════════════════════════════════════════════════
+function initCommandHub() {
+  // Sparks
+  var sparks = parseFloat(localStorage.getItem('shd_sparks') || '0');
+  var el = document.getElementById('officeHudSparks');
+  if (el) el.textContent = sparks >= 1000 ? (sparks/1000).toFixed(1)+'k ⚡' : sparks.toFixed(0)+' ⚡';
+
+  // Signal
+  var sig = parseFloat(localStorage.getItem('shaddai.signal') || '100');
+  var sigEl = document.getElementById('officeHudSignal');
+  if (sigEl) {
+    sigEl.textContent = sig.toFixed(0) + '%';
+    sigEl.style.color = sig >= 60 ? '#00e5a0' : sig >= 30 ? '#ffb020' : '#ef4444';
+  }
+
+  // City plots
+  var city = [];
+  try { city = JSON.parse(localStorage.getItem('shaddai.city') || '[]'); } catch(_) {}
+  var uid = localStorage.getItem('shd_signed_in');
+  var myPlots = city.filter(function(p){ return p.owner === uid; });
+  var plotEl = document.getElementById('officeHudPlots');
+  if (plotEl) plotEl.textContent = myPlots.length + ' / 30';
+
+  // Rooms count
+  var totalRooms = 0;
+  var pendingRent = 0;
+  myPlots.forEach(function(p) {
+    if (p.rooms) { totalRooms += p.rooms.length; p.rooms.forEach(function(r){ pendingRent += (r.pending||0); }); }
+  });
+  var roomEl = document.getElementById('officeHudRooms');
+  if (roomEl) roomEl.textContent = totalRooms;
+
+  // Card snapshots
+  var citySnap = document.getElementById('cmdCitySnap');
+  if (citySnap) {
+    var yld = myPlots.reduce(function(a,p){ return a + (p.claimable||0); }, 0);
+    citySnap.textContent = myPlots.length + ' plot' + (myPlots.length!==1?'s':'') + ' · ' + yld.toFixed(1) + ' Sparks accrued';
+  }
+  var econSnap = document.getElementById('cmdEconSnap');
+  if (econSnap) econSnap.textContent = sparks.toFixed(0) + ' Sparks · 6 vaults active';
+  var roomSnap = document.getElementById('cmdRoomsSnap');
+  if (roomSnap) roomSnap.textContent = totalRooms + ' rooms · ' + pendingRent.toFixed(1) + ' Sparks pending';
+
 }
 
 // ═══════════════════════════════════════════════════════
