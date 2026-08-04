@@ -1,0 +1,56 @@
+[
+  {
+    "id": "doc_1785616399491_wwhp7v",
+    "name": "shaddai.md",
+    "text": "SHADDAI is an AI agent marketplace with subscription billing and a workflow engine. Seven specialized agents form a council: SHADDAI orchestrates, NEXUS builds backend and infrastructure, ZEROX handles billing and revenue, ORACLE researches, TURTLE designs UI/UX, QUILL writes documentation, and PIKADON audits security. The workflow engine lets users chain agents together with goals and share results.",
+    "uploadedAt": "2026-08-01T20:33:19.491Z",
+    "chunks": [
+      {
+        "id": "doc_1785616399491_wwhp7v_c0",
+        "text": "SHADDAI is an AI agent marketplace with subscription billing and a workflow engine. Seven specialized agents form a council: SHADDAI orchestrates, NEXUS builds backend and infrastructure, ZEROX handles billing and revenue, ORACLE researches, TURTLE designs UI/UX, QUILL writes documentation, and PIKADON audits security. The workflow engine lets users chain agents together with goals and share results.",
+        "tfIdfVector": {
+          "shaddai": 0.2696799449852966,
+          "ai": 0.1348399724926483,
+          "agent": 0.1348399724926483,
+          "marketplace": 0.1348399724926483,
+          "subscription": 0.1348399724926483,
+          "billing": 0.2696799449852966,
+          "workflow": 0.2696799449852966,
+          "engine": 0.2696799449852966,
+          "seven": 0.1348399724926483,
+          "specialized": 0.1348399724926483,
+          "agents": 0.2696799449852966,
+          "form": 0.1348399724926483,
+          "council": 0.1348399724926483,
+          "orchestrates": 0.1348399724926483,
+          "nexus": 0.1348399724926483,
+          "builds": 0.1348399724926483,
+          "backend": 0.1348399724926483,
+          "infrastructure": 0.1348399724926483,
+          "zerox": 0.1348399724926483,
+          "handles": 0.1348399724926483,
+          "revenue": 0.1348399724926483,
+          "oracle": 0.1348399724926483,
+          "researches": 0.1348399724926483,
+          "turtle": 0.1348399724926483,
+          "designs": 0.1348399724926483,
+          "ui": 0.1348399724926483,
+          "ux": 0.1348399724926483,
+          "quill": 0.1348399724926483,
+          "writes": 0.1348399724926483,
+          "documentation": 0.1348399724926483,
+          "pikadon": 0.1348399724926483,
+          "audits": 0.1348399724926483,
+          "security": 0.1348399724926483,
+          "lets": 0.1348399724926483,
+          "users": 0.1348399724926483,
+          "chain": 0.1348399724926483,
+          "together": 0.1348399724926483,
+          "goals": 0.1348399724926483,
+          "share": 0.1348399724926483,
+          "results": 0.1348399724926483
+        }
+      }
+    ]
+  }
+]

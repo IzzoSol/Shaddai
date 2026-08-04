@@ -1,0 +1,28 @@
+[
+  {
+    "id": "doc_1785601327911_y1hale",
+    "name": "agents.txt",
+    "text": "The SHADDAI dashboard has workflow chains, subscription billing, seven council agents, and a 2D office world.",
+    "uploadedAt": "2026-08-01T16:22:07.912Z",
+    "chunks": [
+      {
+        "id": "doc_1785601327911_y1hale_c0",
+        "text": "The SHADDAI dashboard has workflow chains, subscription billing, seven council agents, and a 2D office world.",
+        "tfIdfVector": {
+          "shaddai": 0.2886751345948128,
+          "dashboard": 0.2886751345948128,
+          "workflow": 0.2886751345948128,
+          "chains": 0.2886751345948128,
+          "subscription": 0.2886751345948128,
+          "billing": 0.2886751345948128,
+          "seven": 0.2886751345948128,
+          "council": 0.2886751345948128,
+          "agents": 0.2886751345948128,
+          "2d": 0.2886751345948128,
+          "office": 0.2886751345948128,
+          "world": 0.2886751345948128
+        }
+      }
+    ]
+  }
+]

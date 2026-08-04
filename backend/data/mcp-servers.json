@@ -4,17 +4,17 @@
       "id": "filesystem",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Brittany\\SHADDAI-FINAL-BUILD\\backend\\data"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Brittany\\Desktop\\SHADDAI MASTER FINAL BUILD\\backend\\data"],
       "description": "Read/write files in the SHADDAI data directory",
       "disabled": false
     },
     {
       "id": "fetch",
       "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "command": "python",
+      "args": ["-m", "mcp_server_fetch"],
       "description": "Fetch and convert web pages to markdown",
-      "disabled": true
+      "disabled": false
     },
     {
       "id": "memory",
@@ -22,7 +22,7 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"],
       "description": "Persistent knowledge-graph memory for agents",
-      "disabled": true
+      "disabled": false
     },
     {
       "id": "example-http",

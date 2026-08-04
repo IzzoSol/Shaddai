@@ -314,3 +314,6 @@
 {"ts":"2026-07-26T01:57:47.833Z","qHash":"4d87a5be83bb35f7","query":"You are TURTLE's art director. Write ONE richly detailed image-generation prompt for a premium, scroll-stopping marketin","method":"query","hit":true,"latencyMs":57}
 {"ts":"2026-07-26T17:38:54.912Z","qHash":"b9706d03685b54ef","query":"Scan my market � where is the money moving right now, and why?","method":"miss","hit":false,"latencyMs":47}
 {"ts":"2026-07-26T17:43:12.665Z","qHash":"156a35afcf2b3c89","query":"Compare Shopify vs WooCommerce for a small clothing store � cost, pros, cons.","method":"miss","hit":false,"latencyMs":42}
+{"ts":"2026-08-02T12:27:13.588Z","qHash":"00804278edd465c5","query":"Question: What are the three components of an AI agent? Knowledge base excerpts: [first_ai_agent_25min] AI agents are on","method":"miss","hit":false,"latencyMs":210}
+{"ts":"2026-08-03T17:51:50.367Z","qHash":"5601d4085d411677","query":"We are designing a 2D pixel-world city game with 9 districts connected by a ring train and subway system. Players walk b","method":"miss","hit":false,"latencyMs":67}
+{"ts":"2026-08-03T17:52:22.997Z","qHash":"376ad37afc9b7e78","query":"Design the minimal viable data model for a 2D city game adding onto an existing Sparks economy. Need: player stamina/hea","method":"miss","hit":false,"latencyMs":37}

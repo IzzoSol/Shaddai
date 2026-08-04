@@ -1,21 +1,22 @@
 {
   "reasons": {
     "low_rug_score": {
-      "count": 601,
+      "count": 639,
       "avgCurMult": 1.14,
       "sources": {
         "new_pools": 332,
-        "bonded": 252,
-        "trending": 17
+        "bonded": 284,
+        "trending": 21,
+        "trending_pools": 2
       }
     },
     "bundler_dump": {
-      "count": 507,
+      "count": 542,
       "avgCurMult": 1,
       "sources": {
         "new_pools": 186,
-        "bonded": 288,
-        "trending": 33
+        "bonded": 318,
+        "trending": 38
       }
     },
     "whale_dump": {
@@ -27,28 +28,39 @@
       }
     },
     "no_holders": {
-      "count": 82,
+      "count": 86,
       "avgCurMult": 1,
       "sources": {
-        "new_pools": 82
+        "new_pools": 82,
+        "trending": 3,
+        "trending_pools": 1
       }
     },
     "sniper_dump": {
-      "count": 10,
+      "count": 13,
       "avgCurMult": 1,
       "sources": {
-        "bonded": 10
+        "bonded": 13
       }
     },
     "unlocked_lp": {
-      "count": 55,
+      "count": 60,
       "avgCurMult": 1,
       "sources": {
-        "bonded": 55
+        "bonded": 60
+      }
+    },
+    "stale_call": {
+      "count": 5,
+      "avgCurMult": 1,
+      "sources": {
+        "bonded": 3,
+        "trending": 1,
+        "trending_pools": 1
       }
     }
   },
   "bySource": {},
   "byFdv": {},
-  "lastUpdated": 1785086090782
+  "lastUpdated": 1785801134316
 }
