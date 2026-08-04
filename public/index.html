@@ -4653,6 +4653,163 @@ window.enter3DWorld=function(){
 </div>
 <button id="fileSidebarToggle" onclick="toggleFileSidebar()">◀</button>
 
+<!-- ════ TOP-TIER GLOBAL VISUAL SYSTEM — applies to all views ════ -->
+<style id="topTierGlobal">
+  /* ── View entrance animation ── */
+  .view.active { animation: vwFadeIn .18s ease-out both; }
+  @keyframes vwFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Card premium upgrade ── */
+  .card {
+    border-color: rgba(90,107,138,0.18) !important;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(135deg, rgba(0,229,160,0.025) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card:hover {
+    border-color: rgba(0,229,160,0.22) !important;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,229,160,0.06);
+  }
+
+  /* ── Card head upgrade ── */
+  .card-head {
+    background: linear-gradient(90deg, rgba(0,229,160,0.04) 0%, transparent 100%);
+    margin: -10px -10px 8px !important;
+    padding: 8px 10px 7px !important;
+    border-radius: 5px 5px 0 0;
+  }
+  .card-title {
+    font-family: 'Chakra Petch', 'Share Tech Mono', monospace !important;
+    font-size: 9px !important; letter-spacing: 2px !important;
+  }
+
+  /* ── Stat box premium ── */
+  .stat-box {
+    transition: all .18s; border-radius: 7px !important;
+    background: rgba(255,255,255,0.02) !important;
+  }
+  .stat-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,229,160,0.3) !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .stat-value { font-family: 'JetBrains Mono', monospace !important; }
+  .stat-label { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1px !important; }
+
+  /* ── Button upgrades ── */
+  .btn { transition: all .15s !important; font-family: 'Chakra Petch', monospace !important; letter-spacing: .5px; }
+  .btn-accent:hover { box-shadow: 0 0 18px rgba(0,229,160,0.5) !important; filter: brightness(1.1); }
+  .btn-ghost:hover { border-color: rgba(0,229,160,0.45) !important; color: #00e5a0 !important; box-shadow: 0 0 8px rgba(0,229,160,0.15); }
+  .btn-secondary:hover { box-shadow: 0 0 14px rgba(168,85,247,0.35); }
+  .btn-danger:hover { box-shadow: 0 0 14px rgba(255,64,112,0.4); }
+
+  /* ── Global scrollbar ── */
+  * { scrollbar-width: thin; scrollbar-color: rgba(0,229,160,0.25) transparent; }
+  *::-webkit-scrollbar { width: 3px; height: 3px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: rgba(0,229,160,0.28); border-radius: 2px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(0,229,160,0.5); }
+
+  /* ── View header system (applies to all module banners) ── */
+  .view-banner {
+    display: flex; align-items: center; gap: 14px; padding: 14px 0 12px;
+    border-bottom: 1px solid rgba(0,229,160,0.12); margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .view-banner-title {
+    font-size: 20px; font-weight: 800; letter-spacing: .04em;
+    font-family: 'Chakra Petch', 'Orbitron', monospace;
+    background: linear-gradient(90deg, #e8edf5 0%, rgba(232,237,245,0.7) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.2;
+  }
+  .view-banner-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 2px; font-family: 'Share Tech Mono', monospace; }
+  .view-banner-body { flex: 1; min-width: 180px; }
+  .view-banner-stats { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .view-banner-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .view-banner-icon { font-size: 26px; line-height: 1; width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.15); flex-shrink: 0; }
+  .view-banner-stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 5px 12px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 1px; white-space: nowrap; text-align: center; }
+  .view-banner-stat span { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', 'Share Tech Mono', monospace; color: #00e5a0; line-height: 1; }
+  .view-banner-stat small { font-size: 8px; color: var(--text-muted); letter-spacing: .08em; line-height: 1; }
+  .view-banner-stat b { color: #00e5a0; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Agent card upgrades (Agents view) ── */
+  .agent-3d-grid .card { transition: all .2s; }
+  .agent-3d-grid .card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important; }
+
+  /* ── Chat premium ── */
+  .chat-main { background: var(--bg-card) !important; }
+  .chat-header { background: linear-gradient(135deg, rgba(0,229,160,0.06) 0%, rgba(0,0,0,0) 80%) !important; border-bottom: 1px solid rgba(0,229,160,0.15) !important; }
+  .chat-msg.bot { background: rgba(0,229,160,0.04) !important; border-color: rgba(0,229,160,0.15) !important; }
+  .chat-msg.user { background: rgba(124,58,237,0.08) !important; border-color: rgba(124,58,237,0.2) !important; }
+  .chat-input-wrap { border-top: 1px solid rgba(0,229,160,0.12) !important; background: rgba(0,0,0,0.3) !important; }
+
+  /* ── Kanban cards ── */
+  .kanban-card { transition: all .15s; }
+  .kanban-card:hover { transform: translateX(2px); }
+  .kanban-col { border-radius: 8px !important; background: rgba(255,255,255,0.015) !important; }
+  .kanban-col-head { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1.5px !important; }
+
+  /* ── HUD strip ── */
+  .hud-strip { border-radius: 10px; }
+  .hud-val { font-family: 'JetBrains Mono', monospace !important; font-size: 20px !important; font-weight: 700 !important; }
+  .hud-lab { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1.5px !important; font-size: 7px !important; }
+
+  /* ── Empty states ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 20px; gap: 10px; opacity: .7;
+  }
+  .empty-state-icon { font-size: 40px; filter: grayscale(0.3); }
+  .empty-state-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .empty-state-desc { font-size: 10px; color: var(--text-muted); text-align: center; max-width: 300px; line-height: 1.7; }
+
+  /* ── Security view red glow on card ── */
+  #securityView .card { border-color: rgba(255,64,112,0.12) !important; }
+  #securityView .card:hover { border-color: rgba(255,64,112,0.28) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,64,112,0.08) !important; }
+
+  /* ── AURA view cyan glow ── */
+  #auraView .card:hover { border-color: rgba(39,224,255,0.3) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(39,224,255,0.08) !important; }
+
+  /* ── Markets/Pipeline ── */
+  #pipelineView .card:hover { border-color: rgba(0,255,136,0.25) !important; }
+
+  /* ── Social view ── */
+  #socialView .card:hover { border-color: rgba(29,155,240,0.25) !important; }
+
+  /* ── Forge glow ── */
+  #forgeView .card:hover { border-color: rgba(240,180,41,0.3) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(240,180,41,0.08) !important; }
+
+  /* ── Input/select premium ── */
+  input[type=text], input[type=email], input[type=password], textarea, select {
+    font-family: 'Share Tech Mono', monospace !important;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, textarea:focus, select:focus {
+    border-color: rgba(0,229,160,0.5) !important;
+    box-shadow: 0 0 0 2px rgba(0,229,160,0.1) !important;
+    outline: none !important;
+  }
+
+  /* ── Nav button active glow ── */
+  .nav-btn.active {
+    background: rgba(0,229,160,0.12) !important;
+    color: #00e5a0 !important;
+    border-color: rgba(0,229,160,0.4) !important;
+    box-shadow: 0 0 12px rgba(0,229,160,0.2);
+  }
+  .nav-btn { transition: all .15s !important; }
+  .nav-btn:hover:not(.active) { border-color: rgba(0,229,160,0.3) !important; color: rgba(0,229,160,0.8) !important; }
+
+  /* ── Sidebar button active ── */
+  .sbt.on { border-left: 2px solid #00e5a0 !important; background: rgba(0,229,160,0.08) !important; }
+  .sbt { transition: all .12s !important; }
+  .sbt:hover { background: rgba(255,255,255,0.05) !important; padding-left: 14px !important; }
+</style>
 <main id="mainArea">
   <!-- Dashboard -->
   <div id="dashView" class="view active">
@@ -4910,6 +5067,17 @@ window.enter3DWorld=function(){
 
   <!-- Tasks -->
   <div id="workflowView" class="view">
+    <div class="view-banner" style="border-color:rgba(255,179,0,0.22)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(255,179,0,0.18),rgba(255,100,0,0.1))">⚡</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#ffb300,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Workflow Engine</div>
+        <div class="view-banner-sub">Chain agents · schedule jobs · delegate tasks · simple → pro automation</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="wfBannerRuns">—</span><small>runs today</small></div>
+        <div class="view-banner-stat"><span id="wfBannerActive">—</span><small>active jobs</small></div>
+      </div>
+    </div>
     <!-- ⚡ SIMPLE MODE — 3-step wizard (What → Who → GO), real /api/agent/run engine -->
     <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
@@ -5326,6 +5494,17 @@ window.enter3DWorld=function(){
 
   <!-- Pipeline -->
   <div id="pipelineView" class="view cyber-scanlines">
+    <div class="view-banner" style="border-color:rgba(0,200,255,0.25)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(0,200,255,0.15),rgba(0,229,160,0.08))">📊</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#00c4ff,#00e5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Markets Intelligence</div>
+        <div class="view-banner-sub">Live prices · whale watch · on-chain signals · AI-powered technical analysis</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="mktBannerTicker" style="font-family:'Share Tech Mono',monospace">NVDA</span><small>active ticker</small></div>
+        <div class="view-banner-stat"><span id="mktBannerStatus" style="color:#00e5a0">●</span><small>live feed</small></div>
+      </div>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          MARKETS — Native multi-agent analysis + free chart + free price feeds
@@ -8139,8 +8318,11 @@ window.enter3DWorld=function(){
 
   <div id="chatView" class="view">
     <div class="chat-main">
-      <div class="chat-header">
-        <span class="card-title">Direct Communication</span>
+      <div class="chat-header" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,0,0,0)) !important;border-bottom:1px solid rgba(0,229,160,0.15) !important;padding:12px 16px !important">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span class="card-title" style="font-size:12px !important;letter-spacing:2px">💬 DIRECT CHAT</span>
+          <span style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:1px" id="chatModelBadge">Groq · Llama-70B · Free tier</span>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">
           <select id="chatAgentSelect" onchange="pickAgent(this.value)" title="Choose which agent you're talking to" style="padding:6px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:'Share Tech Mono',monospace">
             <option value="SHADDAI">👑 SHADDAI</option><option value="NEXUS">🔧 NEXUS</option><option value="ZEROX">💰 ZEROX</option><option value="ORACLE">🔮 ORACLE</option><option value="TURTLE">🐢 TURTLE</option><option value="QUILL">✍️ QUILL</option><option value="PIKADON">🛡️ PIKADON</option><option value="ALL">◉ ALL AIs</option>
@@ -8249,6 +8431,17 @@ window.enter3DWorld=function(){
 
   <!-- Library & Notes -->
   <div id="library-notesView" class="view">
+    <div class="view-banner" style="border-color:rgba(176,106,255,0.22)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(176,106,255,0.15),rgba(100,60,200,0.08))">📚</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#b06aff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Knowledge Base</div>
+        <div class="view-banner-sub">Library · notes · RAG search · ORACLE-powered semantic answers</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="libBannerDocs">—</span><small>documents</small></div>
+        <div class="view-banner-stat"><span id="libBannerNotes">—</span><small>notes</small></div>
+      </div>
+    </div>
     <!-- Library Section -->
     <details style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden">
       <summary style="padding:14px;background:rgba(0,229,160,0.06);cursor:pointer;font-weight:700;color:var(--accent);display:flex;justify-content:space-between;align-items:center">
@@ -8445,6 +8638,18 @@ window.enter3DWorld=function(){
 
   <!-- APIs -->
   <div id="apisView" class="view">
+    <div class="view-banner" style="border-color:rgba(0,229,160,0.2)">
+      <div class="view-banner-icon">🔌</div>
+      <div>
+        <div class="view-banner-title">API Command Center</div>
+        <div class="view-banner-sub">Connect keys once — powers every tool · HF · FAL · Groq · Stripe · 200+ more</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><b id="apiBannerCount">—</b> <span style="color:var(--text-muted)">Keys Active</span></div>
+        <div class="view-banner-stat"><b id="apiBannerCalls">—</b> <span style="color:var(--text-muted)">Total Calls</span></div>
+        <button onclick="showAddAPIModal()" style="background:linear-gradient(135deg,rgba(0,229,160,0.2),rgba(0,229,160,0.08));border:1px solid rgba(0,229,160,0.4);color:#00e5a0;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">+ Add Key</button>
+      </div>
+    </div>
 
     <!-- ── CONNECT YOUR APIs — paste once, powers every tool ── -->
     <div class="card cyber-card" style="border:1px solid rgba(0,229,160,.35);margin-bottom:12px">
@@ -8998,6 +9203,18 @@ window.enter3DWorld=function(){
 
   <!-- Security (PIKADON) -->
   <div id="securityView" class="view">
+    <div class="view-banner" style="border-color:rgba(239,68,68,0.2)">
+      <div class="view-banner-icon">🛡</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#ef4444,#ff7b7b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">PIKADON — Security Command</div>
+        <div class="view-banner-sub">Threat detection · PII audit · permission gates · secret rotation</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><span style="color:#ef4444">🔴</span> <b id="secScoreBig">A+</b> <span style="color:var(--text-muted)">Score</span></div>
+        <div class="view-banner-stat"><b id="secBlockedBig">0</b> <span style="color:var(--text-muted)">Blocked</span></div>
+        <button onclick="renderPhantomSecurityUI()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">↺ Refresh Audit</button>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
       <div class="card">
         <div class="card-head"><span class="card-title" style="color:#ef4444">PIKADON — Security Command</span><span style="font-size:9px;color:var(--text-muted)">PORT 8008</span></div>
@@ -11234,8 +11451,17 @@ window.enter3DWorld=function(){
   <!-- Audit -->
   <!-- Automation Hub -->
   <div id="automationView" class="view">
+    <div class="view-banner" style="border-color:rgba(168,85,247,0.2)">
+      <div class="view-banner-icon">⚙</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#a855f7,#d8b4fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Automation Hub</div>
+        <div class="view-banner-sub">Delegate · schedule · chain workflows · cron jobs · webhooks</div>
+      </div>
+      <div class="view-banner-actions">
+        <button onclick="showView('workflow')" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#a855f7;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">⚡ Workflows →</button>
+      </div>
+    </div>
     <!-- Agent Delegation Bar -->
-    
 
     <div class="card" style="margin-bottom:14px;padding:12px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -11643,6 +11869,17 @@ window.enter3DWorld=function(){
 
   <!-- Settings -->
   <div id="settingsView" class="view">
+    <div class="view-banner" style="border-color:rgba(0,229,160,0.2)">
+      <div class="view-banner-icon">⚙</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#00e5a0,#00c4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Control Center</div>
+        <div class="view-banner-sub">Profile · API keys · billing plan · agent endpoints · security preferences</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="settBannerPlan">Free</span><small>plan</small></div>
+        <div class="view-banner-stat"><span id="settBannerKeys">—</span><small>keys wired</small></div>
+      </div>
+    </div>
 
     <!-- ══ PROFILE / ACCOUNT — who you are (saved to Firestore for free) ══ -->
     <div class="card" id="profileCard" style="border:1px solid var(--accent);background:rgba(0,229,160,0.03)">
@@ -19661,6 +19898,10 @@ function renderDeals() {
 
 function renderLibrary() {
   const el = document.getElementById('libGrid');
+  try {
+    var bd = document.getElementById('libBannerDocs'); if(bd) bd.textContent = S.files.length || '0';
+    var bn = document.getElementById('libBannerNotes'); if(bn) bn.textContent = S.notes ? S.notes.length : '0';
+  } catch(e) {}
   if (S.files.length === 0) {
     el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:50px;grid-column:1/-1">Drag and drop files here or click Upload Files</p>';
     return;
@@ -19823,6 +20064,13 @@ function renderSettingsPanel() {
   try { renderUserProfile(); } catch(e) {}
   // Re-apply the settings sub-tab grouping (idempotent)
   try { if (window.shdSettingsOrganize) shdSettingsOrganize(); } catch(e) {}
+  // banner stats
+  try {
+    var plan = localStorage.getItem('shd_plan') || (S.billing && S.billing.plan) || 'Free';
+    var bp = document.getElementById('settBannerPlan'); if(bp) bp.textContent = plan.charAt(0).toUpperCase()+plan.slice(1);
+    var keys = S.apiKeys ? Object.keys(S.apiKeys).filter(function(k){ return S.apiKeys[k]; }).length : 0;
+    var bk = document.getElementById('settBannerKeys'); if(bk) bk.textContent = keys || '—';
+  } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -20107,10 +20355,15 @@ function renderAPIs() {
   const totalCalls = (S.apis || []).reduce((sum, a) => sum + (a.totalCalls || 0), 0);
   const totalCost = (S.apis || []).reduce((sum, a) => sum + (a.totalCost || 0), 0);
   const myApiCount = (S.apis || []).length;
-  
+
   document.getElementById('myApiCount').textContent = myApiCount;
   document.getElementById('totalApiCalls').textContent = totalCalls;
   document.getElementById('totalApiCost').textContent = '$' + totalCost.toFixed(2);
+  // banner stats
+  try {
+    var bc = document.getElementById('apiBannerCount'); if(bc) bc.textContent = myApiCount || '—';
+    var bcc = document.getElementById('apiBannerCalls'); if(bcc) bcc.textContent = totalCalls > 999 ? (totalCalls/1000).toFixed(1)+'k' : (totalCalls || '—');
+  } catch(e) {}
   
   const filtered = _apiFilter === 'all' ? S.apis : S.apis.filter(a => a.category === _apiFilter);
 
@@ -25972,7 +26225,7 @@ function showView(v) {
   if (v === 'pipeline')     { renderDeals(); renderPipeline(); setTimeout(function(){ if (window.MK && MK.onShow) MK.onShow(); else if (typeof loadTickerData === 'function') loadTickerData(); }, 200); }
   if (v === 'settings')     renderSettingsPanel();
   if (v === 'wallet')     { if (window._walletPubkey) { document.getElementById('walletNotConnected').style.display='none'; document.getElementById('walletConnected').style.display='block'; } if (typeof loadPaymentList === 'function') loadPaymentList(); if (typeof renderAgentEarnings === 'function') renderAgentEarnings(); }
-  if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; }
+  if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; try { var sb = document.getElementById('secScoreBig'); if(sb) { var score = PHANTOM_SECURITY.requireApproval ? (PHANTOM_SECURITY.requireAgentApproval ? 'A+' : 'B+') : 'C'; sb.textContent = score; } var sbl = document.getElementById('secBlockedBig'); if(sbl) sbl.textContent = PHANTOM_SECURITY._dailyCount || 0; } catch(e) {} }
   if (v === 'chat')       { updateChatRoutingDisplay(); }
   if (v === 'forge')      {
     // A3: if the swivel was relocated into the Agents tab, bring it home before rendering Forge.
@@ -28528,6 +28781,13 @@ function initWorkflowsTab() {
   setTimeout(_refreshWorkflowAgentSelects, 1500); // re-fill once forged operatives load
   if (typeof loadScheduledJobs === 'function') loadScheduledJobs();
   if (typeof loadWebhookLog === 'function') loadWebhookLog();
+  // update banner stats
+  try {
+    var runs = (window.S && S.tasks) ? S.tasks.filter(function(t){ var d=new Date(t.time||t.created); return t.done && (Date.now()-d)<86400000; }).length : 0;
+    var active = (window.S && S.tasks) ? S.tasks.filter(function(t){ return !t.done; }).length : 0;
+    var br = document.getElementById('wfBannerRuns'); if(br) br.textContent = runs;
+    var ba = document.getElementById('wfBannerActive'); if(ba) ba.textContent = active;
+  } catch(e) {}
 }
 
 // E4: swivel between the Workflow Center sub-panes (Chains / Scheduled / Webhooks).
@@ -33048,6 +33308,22 @@ function updateChatRoutingDisplay() {
     };
     currentEl.textContent = labels[_chatCurrentAPI] || _chatCurrentAPI.toUpperCase();
   }
+  // update model badge in chat header
+  try {
+    const badge = document.getElementById('chatModelBadge');
+    if (badge) {
+      const priority = S.settings?.aiPriority || 'ollama';
+      const badgeLabels = {
+        'ollama': 'Ollama · local model', 'ollama-only': 'Ollama · forced local',
+        'groq': 'Groq · Llama-70B · free', 'groq-only': 'Groq · forced',
+        'gemini': 'Gemini · Flash', 'gemini-only': 'Gemini · forced',
+        'openrouter': 'OpenRouter · multi-model', 'claude': 'Claude · Anthropic',
+        'minimax': 'MiniMax · free'
+      };
+      const cfg = window._routerConfig || {};
+      badge.textContent = badgeLabels[priority] || (cfg.provider ? cfg.provider.toUpperCase() + ' · ' + cfg.model : 'Groq · Llama-70B · Free tier');
+    }
+  } catch(e) {}
   if (tokensEl) tokensEl.textContent = _chatTokensUsed;
   if (chainEl) {
     const priority = S.settings?.aiPriority || 'ollama';
@@ -40759,6 +41035,11 @@ function loadTickerData() {
   // Only load OHLC chart for crypto tickers
   const exchange = document.getElementById('mkExchange')?.value || '';
   if (exchange === 'CRYPTO' || exchange === 'SOLANA') loadOhlcChart();
+  // update banner
+  try {
+    var t = (document.getElementById('mkTicker')?.value || 'NVDA').toUpperCase();
+    var bt = document.getElementById('mktBannerTicker'); if(bt) bt.textContent = t;
+  } catch(e) {}
 }
 
 // ── OHLC Candlestick Chart ────────────────────────────────────────────────────
@@ -43378,11 +43659,18 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
        DOCUMENTS VIEW (RAG — Ask My Docs)
   ═══════════════════════════════════════════════════════════════════ -->
   <div id="documentsView" class="view">
+    <div class="view-banner" style="border-color:rgba(176,106,255,0.2)">
+      <div class="view-banner-icon">📄</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#b06aff,#d4a0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Ask My Docs</div>
+        <div class="view-banner-sub">RAG · upload PDFs/text · semantic search · ORACLE-powered answers</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><b id="docBannerCount">—</b> <span style="color:var(--text-muted)">Docs</span></div>
+      </div>
+    </div>
     <div style="padding:12px;max-width:1100px;margin:0 auto">
       <div style="margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:#b06aff">📄 Ask My Docs</div>
-        <div style="font-size:9px;color:var(--text-muted)">Upload documents, then ask questions across them (RAG)</div>
-      </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <!-- Upload -->
