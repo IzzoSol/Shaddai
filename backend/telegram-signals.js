@@ -832,11 +832,14 @@ async function _pollBonded() {
       }
       card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
     }
-    // DEX BOOST REQUIRED at $40K+ FDV: corpus shows bonded tokens >$40K without paid DexScreener
-    // visibility are 90%+ rugs. Projects with real communities pay for boost at this MC.
-    if (usdMc >= 40000) {
-      const _hiBoost = _boostInfo(mint);
-      if (!_hiBoost || _hiBoost.amount <= 0) { _seenBond.add(mint); continue; }
+    // BANNER REQUIRED at $30K–$75K FDV: legit projects set up a DexScreener profile banner
+    // (free, takes 2 min) before or right after bonding. No banner in this range = red flag.
+    // Boost is NOT required — banner only. Check profileMap (global profiles endpoint) and
+    // pair.info.header (pairs endpoint) so we catch it from either data source.
+    if (usdMc >= 30000 && usdMc <= 75000) {
+      const _prof = _profileMap.get(mint);
+      const _hasBanner = (_prof && _prof.header) || (pair.info && pair.info.header);
+      if (!_hasBanner) { _seenBond.add(mint); continue; }
     }
     // scam filter — block impostor stablecoin symbol patterns + name patterns + relaunch cooldown
     const _bondSym = c.symbol || (pair.baseToken && pair.baseToken.symbol);
