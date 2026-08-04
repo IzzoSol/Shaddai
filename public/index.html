@@ -4313,8 +4313,13 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     if(!menu) return;
     if(menu.style.display === 'none'){
       var r = (anchor || e && e.currentTarget || document.getElementById('navWorldsBtn')).getBoundingClientRect();
-      menu.style.top  = (r.bottom + 6) + 'px';
-      menu.style.left = Math.min(r.left, (window.innerWidth - 220)) + 'px';
+      var menuH = 300;
+      menu.style.left = Math.max(4, Math.min(r.left, window.innerWidth - 220)) + 'px';
+      if (r.top - menuH - 6 > 0) {
+        menu.style.top = 'auto'; menu.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        menu.style.bottom = 'auto'; menu.style.top = (r.bottom + 6) + 'px';
+      }
       menu.style.display = 'block';
     } else {
       menu.style.display = 'none';
@@ -4554,7 +4559,7 @@ window.enter3DWorld=function(){
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
     <button class="sbt" onclick="showView('agents');lySetSb(this)"><span class="ic">🤖</span>Agents</button>
-    <button class="sbt" onclick="location.href='game.html?embed=office&walk=1'" title="Walk your rooms in the 2D World"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="showView('office');if(typeof switchOfficeTab==='function')switchOfficeTab('rooms')" title="Your rooms &amp; tenants"><span class="ic">🚪</span>Rooms</button>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
