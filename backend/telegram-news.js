@@ -108,9 +108,9 @@ async function dexTop25() {
     const sol = items.filter(i => String(i.chainId || '').toLowerCase() === 'solana').slice(0, 25);
     if (!sol.length) return null;
 
-    // Enrich top 12 tokens with pair data to get real symbols + mcap/liq
+    // Enrich all 25 tokens with pair data to get real symbols + mcap/liq
     const enriched = new Map();
-    await Promise.all(sol.slice(0, 12).map(async (t) => {
+    await Promise.all(sol.map(async (t) => {
       try {
         const r2 = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + t.tokenAddress);
         if (!r2.ok) return;

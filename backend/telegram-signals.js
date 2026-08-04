@@ -55,9 +55,11 @@ const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll 
 // pumpswap/pump-fun graduates still allowed — our quality gates (rug/holders/vol) filter the bad ones
 const _BAD_VENUES = new Set(['meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
-// Scam symbol blocklist: impostor stablecoin names (USUR, USOX, USOP, USOR, AORP-type)
-// These match zero-utility fake USD-adjacent tokens that consistently exit as rugs per call history.
-const _SCAM_SYM_RE = /^(USO[A-Z]|USU[A-Z]|AOR[A-Z]|USDX[A-Z0-9]?|USR[A-Z]{1,2}|USDU|XUS[A-Z]{1,2})$/i;
+// Scam symbol blocklist: impostor stablecoin names + known persistent spam launchers.
+// Strip non-alphanumeric before testing so "$USOX" / "USOX!" still match.
+// TNOS: persistent relaunch spam (4 calls in 7 days, 0% win rate, different mints).
+const _SCAM_SYM_RE = /^(USO[A-Z]|USU[A-Z]|AOR[A-Z]|USDX[A-Z0-9]?|USR[A-Z]{1,2}|USDU|XUS[A-Z]{1,2}|TNOS|USOX|USUR|USOP|USOR|AORP)$/i;
+function _isScamSym(sym) { return !!(sym && _SCAM_SYM_RE.test(String(sym).replace(/[^A-Z0-9]/gi, ''))); }
 // Symbol cooldown: block same symbol if already called within 2h (stops TNOS x3 relaunches)
 // Symbol cooldown — persisted to disk so Render deploys don't reset it.
 // Prevents MODA/USOH/AORP relaunches from spamming every restart.
@@ -640,7 +642,7 @@ async function _pollOnce() {
     try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
     // scam filter — block impostor stablecoin symbol patterns + symbol cooldown (stops relaunch rugs)
     const _sym = pair.baseToken && pair.baseToken.symbol;
-    if (_sym && _SCAM_SYM_RE.test(_sym)) { _seen.add(addr); continue; }
+    if (_sym && _isScamSym(_sym)) { _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
@@ -739,6 +741,11 @@ async function _pollBonded() {
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
     if (!_bondSeeded) continue;                       // first poll only seeds (no dump on restart)
     if (core.wasAlerted(mint)) continue;              // global de-dupe
+    // SCAM CHECK FIRST — before any enrichment/API calls, block known scam symbol patterns.
+    // Done early so USOX/USUR/AORP can't slip through via the rug-score-≥80 maxFdv exception.
+    const _earlyBondSym = c.symbol;
+    if (_isScamSym(_earlyBondSym)) { _seenBond.add(mint); continue; }
+    if (!_symCooldownOk(_earlyBondSym)) { _seenBond.add(mint); continue; }
     // pump's own rich data as early gates (owner rules), when present
     if (c.holders && cfg.minHolders && c.holders < cfg.minHolders) continue;
     if (c.devPct && c.devPct > 30) continue;          // dev holding >30% = rug risk
@@ -778,7 +785,10 @@ async function _pollBonded() {
     if (cfg.rugFilter) {
       rs = await _rugScore(mint);
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
-      if (_overCap(cfg, usdMc, rs)) continue;         // >maxFdv unless premium-safe
+      // Bonded hard cap: $75K — no rug-score exception. $100K-$200K bonded = 0% win rate (7-day data).
+      // _overCap's rug-score≥80 exception is disabled here to stop USOX/USUR slipping through as "safe".
+      if (usdMc > 75000) { _seenBond.add(mint); continue; }
+      if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
       if (!_lpLockedOk(cfg, rs)) continue;            // LP — not flexed
       // DEX FLEX for bonded: paid boost gets headroom on top10/bundlers/snipers
@@ -795,7 +805,7 @@ async function _pollBonded() {
     }
     // scam filter — block impostor stablecoin symbol patterns + symbol relaunch cooldown
     const _bondSym = c.symbol || (pair.baseToken && pair.baseToken.symbol);
-    if (_bondSym && _SCAM_SYM_RE.test(_bondSym)) continue;
+    if (_bondSym && _isScamSym(_bondSym)) continue;
     if (!_symCooldownOk(_bondSym)) continue;
     const _bondExtra = { liq, fdv: usdMc, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
@@ -873,7 +883,7 @@ async function _pollPreBonded() {
       if (_seenPreBond.has(mint) || core.wasAlerted(mint)) continue;
       _seenPreBond.add(mint);
       const sym = c.symbol || '';
-      if (sym && _SCAM_SYM_RE.test(sym)) continue;
+      if (sym && _isScamSym(sym)) continue;
       if (!_symCooldownOk(sym)) continue;
       const card = _preBondCard(c);
       const imgUrl = c.image_uri || _randomBotImg();
