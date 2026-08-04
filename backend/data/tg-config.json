@@ -27,7 +27,7 @@
   "maxFdv": 200000,
   "maxPer": 6,
   "rugFilter": true,
-  "rugMinScore": 40,
+  "rugMinScore": 25,
   "minHolders": 10,
   "minLiqPct": 5,
   "bullishOnly": false,

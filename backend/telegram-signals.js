@@ -49,7 +49,7 @@ let _trendSeeded = false;         // first trending poll only SEEDS (prevents re
 const _SEEN_CAP = 4000;
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
-const _ENRICH_CAP = 10;           // max token-detail fetches per trending poll (rate safety — was 18, lowered)
+const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (DexScreener 300 req/min, well within limit)
 
 // ZEROX corpus: block only pre-graduation bonding curve (no liq/vol anyway) + confirmed-dead DEX types
 // pumpswap/pump-fun graduates still allowed — our quality gates (rug/holders/vol) filter the bad ones
@@ -624,9 +624,8 @@ async function _pollOnce() {
     }
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
     if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
-    // tracked wallet cross-reference — show which alpha wallets are already in this token
-    let walletLine = '';
-    try { const wc = wallets.checkWatchedInHolders((rs && rs.topHolders) || []); walletLine = wc.alertLine || ''; } catch (e) {}
+    // wallet cross-reference disabled (wallet tracker turned off — too many rug alerts from seeded wallets)
+    const walletLine = '';
     // launch wallet / dev analysis
     let launchLine = '';
     try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
@@ -1052,8 +1051,8 @@ function startTelegramSignals() {
   // Start token-db auto-save
   try { require('./token-db').startAutoSave(); } catch (e) {}
 
-  // Start wallet watcher (ape alerts for tracked wallets)
-  try { wallets.startWalletWatcher(); } catch (e) { console.warn('[wallets] watcher start error:', e && e.message); }
+  // Wallet watcher disabled — ape alerts from seeded RAC-cluster wallets were flagging rugs
+  // Re-enable: wallets.startWalletWatcher() here when better wallet sources are identified
 
   // Pipeline: 4-stage discovery → confirm → validate → enrich (20s cycle)
   const pipeline = require('./pipeline');
