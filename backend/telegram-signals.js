@@ -227,6 +227,35 @@ function _snipersOk(cfg, rs) {
   return pct < cfg.maxSnipersPct;
 }
 
+// ── GOPLUS SECURITY (Solana, free, no key) ────────────────────────────────────
+// Detects: mintable supply, sell tax (honeypot), hidden owner, transfer pause.
+// Fail-open: brand-new tokens may not be indexed yet → no-op, don't block.
+// Returns { ok, mintable, sellTax, buyTax, hiddenOwner, pausable, label }
+async function _goplusCheck(mint) {
+  const CLEAN = { ok: true, mintable: false, sellTax: 0, buyTax: 0, hiddenOwner: false, pausable: false, label: '' };
+  if (!mint) return CLEAN;
+  try {
+    const r = await fetch(`https://api.gopluslabs.io/api/v1/token_security/solana?contract_addresses=${mint}`, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return CLEAN;
+    const j = await r.json();
+    const d = j && j.result && (j.result[mint] || j.result[mint.toLowerCase()]);
+    if (!d) return CLEAN;
+    const mintable = d.is_mintable === '1';
+    const sellTax = Math.round(Number(d.sell_tax || 0) * 100);   // 0.05 → 5%
+    const buyTax = Math.round(Number(d.buy_tax || 0) * 100);
+    const hiddenOwner = d.hidden_owner === '1' || d.can_take_back_ownership === '1';
+    const pausable = d.transfer_pausable === '1';
+    const flags = [];
+    if (mintable)    flags.push('⚠️ MINTABLE');
+    if (sellTax > 5) flags.push(`⚠️ SELL TAX ${sellTax}%`);
+    if (buyTax > 5)  flags.push(`⚠️ BUY TAX ${buyTax}%`);
+    if (hiddenOwner) flags.push('⚠️ HIDDEN OWNER');
+    if (pausable)    flags.push('⚠️ PAUSABLE');
+    const isRisky = mintable || sellTax > 10 || hiddenOwner || pausable;
+    return { ok: !isRisky, mintable, sellTax, buyTax, hiddenOwner, pausable, label: flags.join('  ') };
+  } catch (e) { return CLEAN; }
+}
+
 // rugcheck.xyz (Solana only, free) — safety gate + label. Returns {risky, label, checked}.
 // Fail-open: if the API errors/rate-limits, we DON'T block the call (checked=false).
 async function _rugCheck(mint) {
@@ -686,7 +715,12 @@ async function _pollOnce() {
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
     const _profData = _profileMap.get(addr);
     const _ctoTag = (_profData && _profData.cto) ? '\n👥 <b>CTO</b> — community takeover project' : '';
-    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _accel + _hourTag + _ctoTag + _flexLine;
+    // GoPlus: warn on mintable/honeypot flags but don't hard-block trending (already rug-checked)
+    let _gpTrendLabel = '';
+    if (chain === 'solana') {
+      try { const _gpT = await _goplusCheck(addr); if (_gpT && _gpT.label) _gpTrendLabel = '\n' + _gpT.label; } catch (e) {}
+    }
+    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     const _boostData = _boostInfo(addr);
     // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
@@ -841,10 +875,20 @@ async function _pollBonded() {
     const _bondProfChk = _profileMap.get(mint);
     const _bondHasBanner = !!(_bondProfChk && _bondProfChk.header) || !!(pair.info && pair.info.header);
     const _bondBannerLabel = usdMc >= 15000 ? (_bondHasBanner ? '✅ DEX BANNER' : '❌ no banner') : '';
-    let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel });
+    // GoPlus security check — run in parallel with rugScore (fail-open, no key needed)
+    let gp = null;
     let rs = null;
     if (cfg.rugFilter) {
-      rs = await _rugScore(mint);
+      [rs, gp] = await Promise.all([_rugScore(mint), _goplusCheck(mint)]);
+      // HARD BLOCKS from GoPlus: mintable supply, hidden owner, pausable transfers, sell tax >10%
+      if (gp && !gp.ok) { _seenBond.add(mint); continue; }
+    } else {
+      gp = await _goplusCheck(mint);
+      if (gp && !gp.ok) { _seenBond.add(mint); continue; }
+    }
+    const _gpLabel = (gp && gp.label) ? '\n' + gp.label : '';
+    let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel });
+    if (cfg.rugFilter) {
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
       // Bonded hard cap: $75K — no rug-score exception. $100K-$200K bonded = 0% win rate (7-day data).
       // _overCap's rug-score≥80 exception is disabled here to stop USOX/USUR slipping through as "safe".
@@ -884,7 +928,7 @@ async function _pollBonded() {
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _bondHourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _bondDevWarn = (c.devPct === 0 && c.snipers > 15) ? '\n⚠️ Dev hold 0% + high snipers — dev may have sold at launch' : '';
-    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _bondAccel + _bondHourTag + _bondDevWarn;
+    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _gpLabel + _bondAccel + _bondHourTag + _bondDevWarn;
     const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();

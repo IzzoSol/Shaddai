@@ -72,6 +72,9 @@ function recordCall(c) {
       mint, chain: (c.chain || '').toLowerCase(), name: c.name || '', symbol: c.symbol || '',
       source: c.source || '', entryFdv: entry, entryPrice: Number(c.entryPrice) || 0,
       holders: Number(c.holders) || 0,
+      liq: Number(c.liq) || 0,
+      vol1h: Number(c.vol1h) || 0,
+      vol24: Number(c.vol24) || 0,
       ts: _now, peakMult: 1, curMult: 1, curFdv: entry, milestones: [], closed: false,
     });
     if (_state.calls.length > 5000) _state.calls = _state.calls.slice(-5000);
