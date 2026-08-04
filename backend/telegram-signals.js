@@ -387,17 +387,30 @@ async function _rugScore(mint) {
   } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
 }
 
-// ── SOCIAL SCORE (website, X, TG, Discord, locked) — 0..8 ───────────────────
-// Returns { score, has, label } where has = { website, twitter, telegram, discord, locked }
-// Pump.fun tokens have social data in their API response
-async function _socialScore(pumpData, mint) {
-  const has = { website: false, twitter: false, telegram: false, discord: false, locked: false };
+// ── SOCIAL SCORE (website, X, TG, Discord, Instagram, locked) — 0..10 ────────
+// Returns { score, has, label } where has = { website, twitter, telegram, discord, instagram, locked }
+// Enriched from: pump.fun coin data, DexScreener pair.info (socials + websites), rugcheck LP lock
+async function _socialScore(pumpData, mint, pairData) {
+  const has = { website: false, twitter: false, telegram: false, discord: false, instagram: false, locked: false };
   let score = 0;
   if (pumpData) {
     if (pumpData.website) { has.website = true; score += 2; }
     if (pumpData.twitter) { has.twitter = true; score += 2; }
     if (pumpData.telegram) { has.telegram = true; score += 1; }
     if (pumpData.discord) { has.discord = true; score += 1; }
+  }
+  // Enrich from DexScreener pair.info (covers bonded tokens + tokens with DexScreener profiles)
+  if (pairData) {
+    const pairSocials = (pairData.info && pairData.info.socials) || [];
+    const pairWebsites = (pairData.info && pairData.info.websites) || [];
+    if (!has.website && pairWebsites.some(w => w && w.url)) { has.website = true; score += 2; }
+    for (const s of pairSocials) {
+      const t = String(s && s.type || '').toLowerCase();
+      if (!has.twitter && (t === 'twitter' || t === 'x')) { has.twitter = true; score += 2; }
+      else if (!has.telegram && t === 'telegram') { has.telegram = true; score += 1; }
+      else if (!has.discord && t === 'discord') { has.discord = true; score += 1; }
+      else if (!has.instagram && t === 'instagram') { has.instagram = true; score += 1; }
+    }
   }
   // Check locked supply via rugcheck if we have mint
   if (mint && !has.locked) {
@@ -419,6 +432,7 @@ async function _socialScore(pumpData, mint) {
   if (has.twitter) tags.push('𝕏');
   if (has.telegram) tags.push('📱');
   if (has.discord) tags.push('💬');
+  if (has.instagram) tags.push('📸');
   if (has.locked) tags.push('🔒');
   const label = tags.length ? tags.join(' ') : '';
   return { score, has, label };
@@ -621,10 +635,12 @@ async function _pollOnce() {
       if (h1Vol < minH1 || (minM5 && m5Vol < minM5)) { _seen.add(addr); continue; }
     }
 
-    // social scoring (fail-open — missing data doesn't block)
+    // social scoring — always compute to display icons; also enforce config-gated requirements
     let social = null;
-    if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
-      social = await _socialScore(null, addr);  // will check rugcheck for locked
+    try {
+      social = await _socialScore(null, addr, pair);  // enriches from pair.info + rugcheck LP
+    } catch (e) {}
+    if (social && (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore)) {
       if (!_passesSocial(cfg, social)) { _seen.add(addr); continue; }
     }
 
@@ -687,7 +703,7 @@ async function _pollOnce() {
 }
 
 // ── BONDED (pump.fun graduation) — "as soon as a token bonds" ──────────────
-function _bondCard(c) {
+function _bondCard(c, socialLabel) {
   const name = _esc(c.name || 'Token');
   const sym = _esc(c.symbol || '');
   const mc = c.usdMc ? _fmtUsd(c.usdMc) : '';
@@ -700,6 +716,7 @@ function _bondCard(c) {
   if (c.holders) extra.push('👥 ' + c.holders);
   if (c.devPct != null && c.devPct > 0) extra.push('👨‍💻 dev ' + Number(c.devPct).toFixed(0) + '%');
   if (c.snipers != null && c.snipers > 0) extra.push('🔫 ' + c.snipers + ' snipers');
+  if (socialLabel) extra.push(socialLabel);
   return (
     `🎓 <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — BONDED\n` +
     `Graduated → Raydium\n` +
@@ -809,7 +826,15 @@ async function _pollBonded() {
       if (bH1 < bMinH1 || (bMinM5 && bM5 < bMinM5)) continue;
     }
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
-    let card = _bondCard(c);
+    // Social presence — enriched from pump.fun coin data AND DexScreener pair.info.
+    // Having Twitter/X, website, Discord, Telegram, or Instagram = more committed project.
+    const _bondSocial = await _socialScore(c, mint, pair);
+    // $30K–$75K range (already requires DexScreener banner): also require at least Twitter or website.
+    // A project spending $200 on a banner with zero socials is almost always a burner.
+    if (usdMc >= 30000 && usdMc <= 75000 && !_bondSocial.has.twitter && !_bondSocial.has.website) {
+      _seenBond.add(mint); continue;
+    }
+    let card = _bondCard(c, _bondSocial.label);
     let rs = null;
     if (cfg.rugFilter) {
       rs = await _rugScore(mint);
@@ -852,7 +877,7 @@ async function _pollBonded() {
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _bondHourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _bondDevWarn = (c.devPct === 0 && c.snipers > 15) ? '\n⚠️ Dev hold 0% + high snipers — dev may have sold at launch' : '';
-    const _bondMsg = card + _detailBlock(rs, null, _bondExtra) + _bondAccel + _bondHourTag + _bondDevWarn;
+    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _bondAccel + _bondHourTag + _bondDevWarn;
     const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
@@ -1002,8 +1027,18 @@ function _detailBlock(rs, social, extra) {
     const bSt = rs.hasBundlers ? `📦 ${rs.bundlePct ? rs.bundlePct.toFixed(0) + '%' : 'yes'}` : '✅ clean';
     const sSt = rs.hasSnipers  ? `🔫 ${rs.insiders || '?'} insider(s)` : '✅ clean';
     parts.push(`Bundlers ${bSt}   Snipers ${sSt}`);
-    // Whale conviction
-    if (rs.convictionLabel) parts.push(`🐋 Conviction  <b>${rs.convictionLabel}</b>`);
+    // Whale conviction + social commitment composite
+    if (rs.convictionLabel || (social && social.score > 0)) {
+      let convLine = '';
+      if (rs.convictionLabel) convLine = `🐋 Conviction  <b>${rs.convictionLabel}</b>`;
+      if (social && social.score >= 3) {
+        const socialStr = `🔗 Socials ${social.score >= 6 ? '🟢' : '🟡'} <b>${social.label}</b>`;
+        convLine = convLine ? convLine + '   ' + socialStr : socialStr;
+      } else if (social && social.score > 0 && social.label) {
+        convLine = (convLine ? convLine + '   ' : '') + `🔗 <b>${social.label}</b>`;
+      }
+      if (convLine) parts.push(convLine);
+    }
     // Top risk flags (max 2)
     if (rs.risks && rs.risks.length) {
       const topR = rs.risks.slice(0, 2).map(r => r.name).filter(Boolean);
@@ -1017,7 +1052,7 @@ function _detailBlock(rs, social, extra) {
   const linkParts = [];
   for (const w of sites) if (w.url) linkParts.push(`🌐 <a href="${_esc(w.url)}">${_esc(w.label || 'Website')}</a>`);
   for (const s of socials) {
-    const icon = s.type === 'twitter' ? '𝕏' : s.type === 'telegram' ? '📱' : s.type === 'discord' ? '💬' : '🔗';
+    const icon = s.type === 'twitter' || s.type === 'x' ? '𝕏' : s.type === 'telegram' ? '📱' : s.type === 'discord' ? '💬' : s.type === 'instagram' ? '📸' : '🔗';
     if (s.url) linkParts.push(`${icon} <a href="${_esc(s.url)}">${_esc(s.type || 'social')}</a>`);
   }
   if (!linkParts.length && social && social.has) {
@@ -1062,6 +1097,15 @@ async function _pollGecko() {
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
           let card = _poolCard(net, kind, a, _taddr);
+          // Sleeper revival detection: pool/token created >30 days ago but showing fresh momentum.
+          // Old tokens that have been dormant then suddenly spike 15%+ = high-asymmetry recovery play.
+          const _poolCreatedAt = a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0;
+          const _poolAgeMs = _poolCreatedAt > 0 ? Date.now() - _poolCreatedAt : 0;
+          const _isRevival = _poolAgeMs > 30 * 86400000 && isFinite(_chg) && _chg >= 15;
+          if (_isRevival) {
+            const _ageLabel = _ageStr(_poolAgeMs);
+            card = `🌅 <b>REVIVAL PLAY</b> — ${_ageLabel} old · +${Math.round(_chg)}% today\n` + card;
+          }
           // social scoring for gecko pools
           let social = null;
           if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
