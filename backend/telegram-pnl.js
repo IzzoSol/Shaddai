@@ -101,11 +101,15 @@ async function _priceMap(mints) {
 }
 
 function _milestoneCard(call, x) {
+  // 5x is the 2nd milestone (2x → 5x). Data: every token that hits 2+ milestones goes further.
+  const confirmedRunner = x === 5 && call.milestones && call.milestones.includes(2)
+    ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
   return (
     `🎯 <b>CALL UPDATE — ${x}x</b> 🚀\n` +
     `<b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> is up <b>${x}x</b> since our call (${_ago(call.ts)} ago)\n` +
-    `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>\n` +
-    `\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
+    `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>` +
+    confirmedRunner +
+    `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
 

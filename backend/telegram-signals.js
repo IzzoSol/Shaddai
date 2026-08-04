@@ -709,6 +709,17 @@ async function _pollBonded() {
     } catch (e) { return; }
   }
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
+  // Weekend priority sort: process low-FDV tokens first (weekend <15K FDV = 46% win rate vs 15.9% overall)
+  // pumpMc is approximate — sort ascending so low-MC fresh graduates get first slot in the maxPer budget
+  if (_isWeekend() && list.some(c => c.pumpMc > 0)) {
+    list = [...list].sort((a, b) => {
+      const aLow = a.pumpMc > 0 && a.pumpMc < 15000;
+      const bLow = b.pumpMc > 0 && b.pumpMc < 15000;
+      if (aLow && !bLow) return -1;
+      if (!aLow && bLow) return 1;
+      return (a.pumpMc || Infinity) - (b.pumpMc || Infinity);
+    });
+  }
   let posted = 0;
   for (const c of list) {
     if (posted >= _bondEffMaxPer) break;
@@ -853,7 +864,10 @@ async function _pollPreBonded() {
         ? await core.broadcastPhoto(imgUrl, card, btns)
         : await core.broadcast(card, { buttons: btns })
       ) > 0;
-      if (ok) { _trackSym(sym); core.markAlerted(mint); posted++; }
+      if (ok) {
+        _trackSym(sym); core.markAlerted(mint); posted++;
+        try { pnl.recordCall({ source: 'pre_bonding', chain: 'solana', mint, name: c.name || sym, symbol: sym, entryFdv: Number(c.usd_market_cap) || 0, entryPrice: 0, holders: Number(c.holder_count) || 0, vol1h: 0, vol24: 0, liq: 0 }); } catch (e) {}
+      }
     }
     if (_seenPreBond.size > 2000) { const f = _seenPreBond.values().next().value; _seenPreBond.delete(f); }
   } catch (e) { console.warn('[tg-signals] pre-bond poll error:', e && e.message); }
