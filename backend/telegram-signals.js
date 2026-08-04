@@ -538,10 +538,21 @@ async function _pollOnce() {
       });
     }
   }
-  // first poll after (re)start only SEEDS — prevents re-posting the whole trending list on Render redeploys
-  if (!_trendSeeded) { for (const item of boosts) { if (item && item.tokenAddress) _seen.add(item.tokenAddress); } _trendSeeded = true; return; }
+  // First poll seeds only tokens already alerted (persistent file-based dedup).
+  // Previously seeded ALL boosts which killed legitimate new boosts on every Render deploy.
+  // Now only tokens in tg-alerted.json (already posted) are seeded — fresh boosts still fire.
+  if (!_trendSeeded) {
+    for (const item of boosts) {
+      if (item && item.tokenAddress && core.wasAlerted(item.tokenAddress)) {
+        _seen.add(item.tokenAddress);
+      }
+    }
+    _trendSeeded = true;
+    // Don't return — fall through so this poll cycle can still call fresh boosts
+  }
 
-  const _effMaxPer = _isDeadHour() ? 1 : cfg.maxPer;   // dead hours: 1 call max (11-13h, 15-17h UTC)
+  // Dead hours: cap at 1. Weekends: allow extra (13.1% hit rate vs 4.6% weekday). Normal: cfg value.
+  const _effMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   let posted = 0, enrich = 0;
   for (const item of boosts) {
     if (posted >= _effMaxPer) break;
@@ -589,7 +600,10 @@ async function _pollOnce() {
     let card = _signalCard(chain, pair, social ? social.label : '');
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
-    if (rs && rs.checked && rs.score < cfg.rugMinScore) { _seen.add(addr); continue; }
+    // Trending tokens get a LOWER rug bar: ZEROX corpus shows trending+rug:bad = 50% win rate.
+    // These are already DexScreener-boosted (paid) so they have social proof. Use half the threshold.
+    const _trendRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.6));
+    if (rs && rs.checked && rs.score < _trendRugMin) { _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
     if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP lock — not flexed (exit risk)
     // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
@@ -634,7 +648,7 @@ async function _pollOnce() {
       : (await core.broadcast(_msg, { buttons: _btns }))
     ) > 0;
     _seen.add(addr);
-    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0 }); } catch (e) {}
+    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
@@ -694,7 +708,7 @@ async function _pollBonded() {
                 .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0 }));
     } catch (e) { return; }
   }
-  const _bondEffMaxPer = _isDeadHour() ? 1 : cfg.maxPer;   // dead hours: 1 call max
+  const _bondEffMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   let posted = 0;
   for (const c of list) {
     if (posted >= _bondEffMaxPer) break;
@@ -769,7 +783,7 @@ async function _pollBonded() {
     ) > 0;
     if (ok) {
       _trackSym(_bondSym); core.markAlerted(mint); posted++;
-      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0 }); } catch (e) {}
+      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0 }); } catch (e) {}
       _logFeatures({ mint, chain: 'solana', name: c.name, symbol: c.symbol, source: 'bonded', entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: c.holders || (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), devPct: c.devPct || 0, venue: pair.dexId || 'pump', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: liq, sourceCount: 1 });
     }
   }
