@@ -832,8 +832,9 @@ async function _pollBonded() {
       }
       card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
     }
-    // BANNER REQUIRED at $30K–$75K FDV: legit projects set up a DexScreener profile banner
-    // (free, takes 2 min) before or right after bonding. No banner in this range = red flag.
+    // BANNER REQUIRED at $30K–$75K FDV: DexScreener banners cost ~$200 to publish.
+    // Projects that paid for a banner at this MC are committed — rugs don't pay $200 to brand
+    // a token they're about to dump. No banner in this FDV range = major red flag.
     // Boost is NOT required — banner only. Check profileMap (global profiles endpoint) and
     // pair.info.header (pairs endpoint) so we catch it from either data source.
     if (usdMc >= 30000 && usdMc <= 75000) {
