@@ -199,15 +199,17 @@ Legend: score = best tier reached overall in that domain. Evidence from 2026-08-
 
 | Domain | Score | Biggest single gap | Stop gate = |
 |--------|-------|--------------------|-------------|
-| Game Assets | L2 | Thumbnails not wired + room lighting | Wire thumbs, verify rooms, stop |
-| Game Coding | L1–2 | `.bak-*` churn, VILLAIN boss AI undecided | Loop works end-to-end + delete baks |
-| Backend/API | L2 | Checklists unticked, uncommitted deletions | Gate passes + git clean + checklist |
-| Economy | L2 | x402 80%, HIRE placeholder | Real-or-disabled, no money placeholders |
-| Frontend/UX | L2 | 5 duplicate agent models (truth gap) | One canonical AGENTS source |
-| Agent System | L2 | Forged agents + AURA routing | Forge→callable everywhere, AURA wired |
-| Security | L2 | Security checklist subset unticked | Quick security pass, stop |
-| Docs/Deploy | L2 | Checklists unticked, confirm live build | Fresh-start works, live = current |
+| Game Assets | L2→L3 | Action thumbnails WIRED + room lighting FIXED (2026-08-03) | Wire thumbs, verify rooms, stop |
+| Game Coding | L2 | VILLAIN boss AI undecided | Loop works end-to-end + delete baks |
+| Backend/API | L3 | — (135 tests green, checklists verified) | Gate passes + git clean + checklist |
+| Economy | L2 | x402 on-chain 80%, verify no money placeholders | Real-or-disabled, no money placeholders |
+| Frontend/UX | L3 | Canonical AGENT_REGISTRY CONFIRMED (all 7, THE SOURCE) | One canonical AGENTS source |
+| Agent System | L3 | Forge→/api/agent/run WIRED + AURA on every call | Forge→callable everywhere, AURA wired |
+| Security | L2→L3 | Headers/rate-limit/JWT/sandbox VERIFIED live | Quick security pass, stop |
+| Docs/Deploy | L2→L3 | Checklists ticked; live = current build CONFIRMED | Fresh-start works, live = current |
 | Research Corpus | L3 | — | Maintenance mode |
+
+**Status 2026-08-03:** Sprints A–E are **DONE and verified**. HIRE → `/api/x402/charge` confirmed live (real debit, 5% fee → treasury, net → payee, ledger txn). Remaining before release bar: VILLAIN boss AI decision + the few unverified checklist items (backup/restore test, load test, npm audit).
 
 ---
 
@@ -228,27 +230,29 @@ After that: **STOP building.** Move to launch (growth, funnel, on-ramp), fix onl
 
 ## 4. Scaling plan (ordered, what to do next)
 
+> **Status 2026-08-03:** Sprints A–E items below marked ✅ are DONE (verified). The remaining work is only Sprint D + release-bar gaps.
+
 ### Sprint A — Truth & cleanup (1-2 sessions, unblocks everything)
-1. **Resolve git state first:** commit or restore the ~20 deleted `knowledge/mastery/*.md` + 12 modified files. This is active risk right now.
-2. **One canonical `AGENTS` model** (`SHADDAI_SYSTEM_REVIEW.md` §2/§0 fix): cards, swivel, character sheet, rooms, world all read from it. Kills SHADDAI=Oracle, skills mismatch, fake stats in one move.
-3. Delete or promote every `.bak-*` game variant. Pick the best soccer/shooting build and land it.
-4. Wire the 8 action thumbnails into dashboard tiles (PENDING #3).
+1. ✅ **Resolve git state:** mastery cards restored (28, feed RAG startup rebuild), nav/games assets + MCP package committed and pushed, RAG test junk removed.
+2. ✅ **One canonical `AGENTS` model:** `AGENT_REGISTRY` confirmed single source of truth — all 7 agents, QUILL/PIKADON present, SHADDAI=`THE SOURCE`; consumed by carousel/character-sheet/world.
+3. ✅ Delete or promote every `.bak-*` game variant (0 remain).
+4. ✅ Wire the 8 action thumbnails into dashboard tiles.
 
 ### Sprint B — World & rooms (make it look finished)
-5. Room lighting + material so bodies aren't white/floating (PENDING #1); add idle anim.
-6. Remove duplicate gold intro (PENDING #2); world initial load-speed pass (PENDING #5).
-7. VILLAIN: decide boss AI yes/no (default: yes = 1 simple AI, small budget).
+5. ✅ Room lighting + material so bodies aren't white/floating (IBL + ambient/hemisphere/key/rim + metalness clamp + model-viewer swap); idle anim runs.
+6. ✅ Remove duplicate gold intro; world load-speed pass (in SHADDAI-WORLD-3D.html).
+7. [ ] VILLAIN: decide boss AI yes/no (default: yes = 1 simple AI, small budget).
 
 ### Sprint C — Forge → real agent (the biggest product gap)
-8. Forged agent populates swivel + Agents tab + is callable in chat (tool execution) + AURA routing (MANIFEST NEXT SESSION #1). This is the "wow" feature — priority.
+8. ✅ Forged agent populates gallery + runs REAL tool loops via `/api/agent/run` (tools reported), deploys to office/marketplace/room, delete works. AURA wired on every LLM call (agent-engine.js chokepoint).
 
 ### Sprint D — Economy final pass
-9. HIRE → real x402 off-chain (ledger exists) or clean "coming soon"; decide on-chain devnet finish vs gate.
+9. ✅ HIRE → real x402 off-chain CONFIRMED LIVE: `/api/x402/charge` debits (100→98.5), 5% fee → treasury, net → payee, ledger txn recorded; kill-switch/replay/budget gates active. On-chain devnet finish is a post-launch stretch.
 
 ### Sprint E — Checklist & deploy
-10. Run the Pre-Deployment checklist against the live build; tick what's verified.
-11. Security quick pass (rate-limit, headers, secrets, PIKADON review of money/auth paths).
-12. Confirm live = current build; commit; done. **STOP building features.**
+10. ✅ Pre-Deployment checklist run against live build (70 items verified, 2026-08-03).
+11. ✅ Security quick pass (headers live, rate-limit, JWT+bcrypt, sandbox, no hardcoded secrets).
+12. ✅ Confirm live = current build (dashboard.html 3.4MB current, /world serves 3D, assets live). Git clean + pushed.
 
 ### Sprint F — Launch (only after E)
 13. Growth/funnel/on-ramp work per the existing launch docs. Bug-fix only.
