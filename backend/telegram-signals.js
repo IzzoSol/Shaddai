@@ -1340,7 +1340,108 @@ async function _pollGecko() {
   _poolSeeded = true;   // first poll only seeds — then post only NEW pools
 }
 
-let _timer = null, _bondTimer = null, _geckoTimer = null, _pipelineTimer = null;
+// ── BOOST WATCHER — DexScreener paid boosts with real volume ─────────────────
+// Catches tokens that paid for DexScreener promotion AND are actively pumping.
+// These are missed by the trending path which watches the trending endpoint, not boosts.
+// Win condition: paid boost (skin in game) + 1h volume spike + passing rug/scam checks.
+const _seenBoost = new Set();
+let _boostWatchSeeded = false;
+async function _pollBoosts() {
+  const cfg = _cfg();
+  if (!cfg.token || !cfg.signals) return;
+  try {
+    const r = await fetch('https://api.dexscreener.com/token-boosts/latest/v1', { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return;
+    const items = await r.json();
+    if (!Array.isArray(items)) return;
+    const sol = items.filter(i => String(i.chainId || '').toLowerCase() === 'solana');
+    let posted = 0;
+    for (const t of sol) {
+      if (posted >= 3) break;
+      const mint = t.tokenAddress;
+      if (!mint || _seenBoost.has(mint)) continue;
+      _seenBoost.add(mint);
+      if (_seenBoost.size > _SEEN_CAP) { const f = _seenBoost.values().next().value; _seenBoost.delete(f); }
+      if (!_boostWatchSeeded) continue;   // first run only seeds the seen set
+      if (core.wasAlerted(mint)) continue;
+      // Early scam/name check
+      const _bSym = (t.description || '').split(' ')[0].replace(/[^A-Z0-9]/gi, '') || '';
+      if (_bSym && _isScamSym(_bSym)) continue;
+      if (!_symCooldownOk(_bSym)) continue;
+      // Must have real volume — fetch pair data
+      let pair = null;
+      try {
+        const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, { signal: AbortSignal.timeout(6000) });
+        if (r2.ok) {
+          const j2 = await r2.json();
+          const pairs = (j2 && j2.pairs) || [];
+          pair = pairs
+            .filter(p => !_BAD_VENUES.has(p.dexId) && (p.liquidity && p.liquidity.usd || 0) >= cfg.minLiq)
+            .sort((a, b) => (b.liquidity && b.liquidity.usd || 0) - (a.liquidity && a.liquidity.usd || 0))[0];
+        }
+      } catch (e) { continue; }
+      if (!pair) continue;
+      const sym  = pair.baseToken && pair.baseToken.symbol || '?';
+      const name = pair.baseToken && pair.baseToken.name   || '';
+      if (_isScamSym(sym)) continue;
+      if (_isScamName(name)) continue;
+      if (!_symCooldownOk(sym)) continue;
+      const fdv   = Number(pair.fdv || pair.marketCap) || 0;
+      const liq   = Number(pair.liquidity && pair.liquidity.usd) || 0;
+      const vol1h = Number(pair.volume && pair.volume.h1) || 0;
+      const vol24 = Number(pair.volume && pair.volume.h24) || 0;
+      const chg1h = Number(pair.priceChange && pair.priceChange.h1) || 0;
+      // Gate: must have real 1h volume AND be pumping
+      if (vol1h < 8000) continue;          // at least $8K in last hour
+      if (chg1h < 10) continue;            // must be up at least 10% in last hour
+      if (!_passesFdv(cfg, fdv)) continue;
+      if (liq < cfg.minLiq) continue;
+      // Buy pressure check — skip if clearly dumping
+      const _bp = _buyPressure(pair);
+      if (_bp.bullish === false && _bp.ratio < 0.40) continue;
+      // Rug check
+      let rs = null;
+      if (cfg.rugFilter) rs = await _rugScore(mint);
+      const _boostRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.5));
+      if (rs && rs.checked && rs.score < _boostRugMin) continue;
+      if (!_holdersOk(cfg, rs)) continue;
+      // GoPlus hard block
+      const gp = await _goplusCheck(mint);
+      if (gp && !gp.ok) continue;
+      // Social
+      const social = await _socialScore(null, mint, pair);
+      const _profData = _profileMap.get(mint);
+      const _gpLabel  = gp && gp.label ? '\n' + gp.label : '';
+      const _bpLabel  = _bp.label || '';
+      const _boostAmt = Number(t.totalAmount || t.amount || 0);
+      const _extra = { liq, fdv, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+      const card =
+        `🚀 <b>$${_esc(sym)}</b>${name && name !== sym ? ` — ${_esc(name)}` : ''}\n` +
+        `DEX Boosted · ${_esc(String(chg1h.toFixed(0)))}% last hour\n` +
+        `━━━━━━━━━━━━━\n` +
+        `💰 MC  <b>${_fmtUsd(fdv)}</b>   💧 Liq  <b>${_fmtUsd(liq)}</b>\n` +
+        `📊 Vol  <b>${_fmtUsd(vol24)}</b> 24h   <b>${_fmtUsd(vol1h)}</b> 1h\n` +
+        (_bpLabel ? `${_bpLabel}\n` : '') +
+        (social && social.label ? `${social.label}\n` : '');
+      const msg = card + _detailBlock(rs, social, _extra) + _gpLabel;
+      const imgUrl = (t.icon) || (_profData && _profData.icon) || (pair.info && pair.info.imageUrl) || '';
+      await core.broadcast(`<b>$${_esc(sym)}</b> — BOOSTED ◎ SOL\n<code>${_esc(mint)}</code>`);
+      const ok = (imgUrl
+        ? await core.broadcastPhoto(imgUrl, msg, core.buildButtons(mint, 'solana', pair.url || ''))
+        : await core.broadcast(msg, { buttons: core.buildButtons(mint, 'solana', pair.url || '') })
+      ) > 0;
+      if (ok) {
+        _trackSym(sym);
+        core.markAlerted(mint);
+        posted++;
+        try { pnl.recordCall({ source: 'boosted', chain: 'solana', mint, name, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, liq, vol1h, vol24 }); } catch (e) {}
+      }
+    }
+    _boostWatchSeeded = true;
+  } catch (e) { console.warn('[tg-boosts] poll error:', e.message); }
+}
+
+let _timer = null, _bondTimer = null, _geckoTimer = null, _pipelineTimer = null, _boostTimer = null;
 function startTelegramSignals() {
   const cfg = _cfg();
   if (!cfg.token) {
@@ -1391,6 +1492,10 @@ function startTelegramSignals() {
     const _preBondTimer = setInterval(() => { _pollPreBonded().catch(() => {}); }, 3 * 60000);   // every 3 min
     if (_preBondTimer.unref) _preBondTimer.unref();
   }
+  // Boost watcher — DexScreener paid boosts with active 1h volume spike
+  setTimeout(() => { _pollBoosts().catch(() => {}); }, 7000);
+  _boostTimer = setInterval(() => { _pollBoosts().catch(() => {}); }, 5 * 60000);   // every 5 min
+  if (_boostTimer.unref) _boostTimer.unref();
   // GeckoTerminal new/trending pools — seed first, then post only NEW pools
   setTimeout(() => { _pollGecko().catch(() => {}); }, 6000);
   _geckoTimer = setInterval(() => { _pollGecko().catch(() => {}); }, cfg.geckoInterval);
@@ -1447,4 +1552,4 @@ async function _pipelineCycle(pipeline) {
   } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _socialScore, _passesSocial };
+module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollBoosts, _socialScore, _passesSocial };
