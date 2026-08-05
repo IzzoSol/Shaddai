@@ -921,9 +921,10 @@ async function _pollBonded() {
     // NO-MAN'S-LAND: $5K-$15K FDV = 0% 5x+ win rate (12 calls, 0 five-baggers in 7-day corpus).
     // Sweet spot is <$5K (61-72% 5x+) OR >$15K (validated project, 7% but 23x avg like ANMOND 49x).
     if (usdMc >= 5000 && usdMc < 15000) { _seenBond.add(mint); continue; }
-    // HIGH-FDV HOLDER GATE: $15K+ bonded = only 7% 5x+ but those winners all had 200+ holders (ANMOND=201,
-    // MrSue=376, SUB=311, Blackmothy=277). Require 100+ holders for $15K+ to filter low-distribution pumps.
-    if (usdMc >= 15000 && c.holders > 0 && c.holders < 100) { _seenBond.add(mint); continue; }
+    // HIGH-FDV HOLDER GATE: only apply at $50K+ FDV. Fresh graduates ($15K-$50K) often have 60-99 holders
+    // right at graduation and are exactly the early plays we want (PORK $29K 5x, ROPE $29K 3.7x, SUB $25K 18x).
+    // At $50K+ it's been trading long enough that low holders = red flag (low distribution = whale dump risk).
+    if (usdMc >= 50000 && c.holders > 0 && c.holders < 100) { _seenBond.add(mint); continue; }
     // 5-min momentum gate — for micro-FDV (<$5K) use relative check (5% of mcap) instead of
     // absolute $10K which is physically impossible for a just-graduated $1.5K token.
     // Data: micro-FDV bonded tokens with low holders = 52-72% win rate, 15-18x avg.
