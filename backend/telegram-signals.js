@@ -1276,6 +1276,13 @@ async function _pollGecko() {
         const _dk = _taddr || id;   // dedupe key: token address if present, else the pool id (always present)
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_poolSeeded) {
+          // For new_pools on Solana: only call tokens that graduated from pump.fun.
+          // Direct Raydium launches (no pump.fun history) have a near-zero win rate vs pump.fun graduates.
+          if (kind === 'new_pools' && net === 'solana' && _taddr) {
+            const _pumpCheck = await _pumpDetail(_taddr);
+            if (!_pumpCheck) { _seenPool.add(id); continue; }   // not pump.fun origin — skip silently
+            if (_pumpCheck.is_banned || _pumpCheck.nsfw) { _seenPool.add(id); continue; }
+          }
           let card = _poolCard(net, kind, a, _taddr);
           // Sleeper revival detection: pool/token created >30 days ago but showing fresh momentum.
           // Old tokens that have been dormant then suddenly spike 15%+ = high-asymmetry recovery play.
