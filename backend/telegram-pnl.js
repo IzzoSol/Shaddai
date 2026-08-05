@@ -133,15 +133,17 @@ async function trackTick() {
       // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
       try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
     }
-    // fire the highest newly-crossed milestone (winners only → funnel)
+    // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
+    // Never skip straight to 5x just because the token moved fast between ticks.
     let hit = 0;
-    for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) hit = m; }
+    for (const m of MILESTONES) {
+      if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
+    }
     if (hit) {
-      // record EVERY newly-crossed milestone ≤ peak so skipped lower ones don't re-fire (out of order) on later ticks
-      for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) call.milestones.push(m); }
+      call.milestones.push(hit);   // record only the one being fired; next tick fires the next
       changed = true;
       const img = milestoneImage(hit) || _pnlImage();
-      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });   // Chart + 📸 PNL Card tap-button
+      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
       if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
       else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
     }
