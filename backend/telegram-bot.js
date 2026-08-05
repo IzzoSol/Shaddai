@@ -301,38 +301,49 @@ async function _getUpdates(token, offset) {
 }
 
 // Register commands so they show up in Telegram's "/" menu
+// Must register for EACH scope — default only covers private chats
 async function _registerCommands(token) {
-  try {
-    await fetch(TG(token, 'setMyCommands'), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commands: [
-        { command: 'start', description: 'Welcome + links' },
-        { command: 'help', description: 'List all commands' },
-        { command: 'lb', description: 'Leaderboard — top calls ranked by Xs' },
-        { command: 'last25', description: 'Last 25 calls with live PNLs' },
-        { command: 'last50', description: 'Last 50 calls with live PNLs' },
-        { command: 'last100', description: 'Last 100 calls with live PNLs' },
-        { command: 'pnl', description: 'PNL card for a token' },
-        { command: 'held', description: 'Conviction holds — calls still green' },
-        { command: 'price', description: 'Live DEX price of a token' },
-        { command: 'rug', description: 'Rug-check a Solana mint' },
-        { command: 'preset', description: 'View/switch filter presets' },
-        { command: 'stats', description: 'Hit-rate + best calls scorecard' },
-        { command: 'dist', description: 'Performance distribution + top' },
-        { command: 'ask', description: 'Ask a SHADDAI agent' },
-        { command: 'zerox', description: 'ZEROX market analysis + sentiment' },
-        { command: 'news', description: 'Live market pulse' },
-        { command: 'signals', description: 'Free live signals channel' },
-        { command: 'agents', description: 'What is SHADDAI' },
-        { command: 'wallets', description: 'List tracked wallets (smart money)' },
-        { command: 'watch', description: 'Track a wallet — ape alerts' },
-        { command: 'unwatch', description: 'Stop tracking a wallet' },
-        { command: 'wallet', description: 'Wallet profile + links' },
-        { command: 'axiom', description: 'Axiom trading edge' },
-        { command: 'gm', description: 'gm ☀️' },
-      ] }),
-    });
-  } catch (e) { /* non-fatal */ }
+  const commands = [
+    { command: 'start',   description: 'Welcome + links' },
+    { command: 'help',    description: 'All commands list' },
+    { command: 'lb',      description: 'Leaderboard — top calls ranked by Xs' },
+    { command: 'last25',  description: 'Last 25 calls with live PNLs' },
+    { command: 'last50',  description: 'Last 50 calls with live PNLs' },
+    { command: 'last100', description: 'Last 100 calls with live PNLs' },
+    { command: 'pnl',     description: 'PNL card for a token  e.g. /pnl PORK' },
+    { command: 'held',    description: 'Conviction holds — calls still green' },
+    { command: 'stats',   description: 'Hit-rate + best calls scorecard' },
+    { command: 'dist',    description: 'Performance distribution breakdown' },
+    { command: 'price',   description: 'Live DEX price  e.g. /price BONK' },
+    { command: 'rug',     description: 'Rug-check a Solana mint' },
+    { command: 'preset',  description: 'View/switch signal filter presets' },
+    { command: 'ask',     description: 'Ask a SHADDAI agent anything' },
+    { command: 'zerox',   description: 'ZEROX market analysis + sentiment' },
+    { command: 'news',    description: 'Live market pulse' },
+    { command: 'signals', description: 'Free live signals channel link' },
+    { command: 'agents',  description: 'What is SHADDAI' },
+    { command: 'wallets', description: 'List tracked wallets (smart money)' },
+    { command: 'watch',   description: 'Track a wallet — get ape alerts' },
+    { command: 'unwatch', description: 'Stop tracking a wallet' },
+    { command: 'wallet',  description: 'Wallet profile + links' },
+    { command: 'axiom',   description: 'Axiom trading edge + referral' },
+    { command: 'gm',      description: 'gm ☀️' },
+  ];
+  // Register for all scopes so "/" menu works in private chats, groups, and channels
+  const scopes = [
+    { type: 'default' },
+    { type: 'all_private_chats' },
+    { type: 'all_group_chats' },
+    { type: 'all_chat_administrators' },
+  ];
+  for (const scope of scopes) {
+    try {
+      await fetch(TG(token, 'setMyCommands'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commands, scope }),
+      });
+    } catch (e) { /* non-fatal */ }
+  }
 }
 
 let _running = false;

@@ -147,6 +147,28 @@ async function trackTick() {
       if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
       else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
     }
+
+    // SLOW CLIMBER UPDATE — for calls up 15%+ but below 2x milestone, send a "still climbing" nudge
+    // every 6 hours so subscribers stay informed on positions that move gradually not explosively.
+    const _pct = Math.round((call.curMult - 1) * 100);
+    const _lastUpd = call.lastClimbUpdate || call.ts;
+    const _sixHrs = 6 * 3600 * 1000;
+    if (
+      hit === 0 &&                              // no milestone fired this tick
+      call.curMult >= 1.15 &&                   // at least 15% up
+      call.curMult < 2 &&                       // below first milestone
+      call.curMult >= (call.peakMult - 0.05) && // holding near peak (not dumping back)
+      _now - _lastUpd >= _sixHrs               // hasn't had an update in 6h
+    ) {
+      call.lastClimbUpdate = _now;
+      changed = true;
+      const _climbCard =
+        `📈 <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> still climbing — <b>+${_pct}%</b>\n` +
+        `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>  (${_ago(call.ts)} ago)\n` +
+        `\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`;
+      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
+      await core.broadcast(_climbCard, { buttons: btns }).catch(() => {});
+    }
   }
   if (changed) _write(_state);
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
