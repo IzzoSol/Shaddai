@@ -99,6 +99,8 @@ async function _pollHeadlines() {
 
 // ── TOP 25 DEXSCREENER BOOSTED (every 4h) ───────────────────────────────────
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
+const _fmtUsdN = (n) => { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v/1e9).toFixed(2)+'B'; if (v >= 1e6) return '$' + (v/1e6).toFixed(2)+'M'; if (v >= 1e3) return '$' + (v/1e3).toFixed(1)+'K'; return '$'+v.toFixed(0); };
+
 async function dexTop25() {
   try {
     const r = await fetch(DS_BOOSTS);
@@ -108,43 +110,49 @@ async function dexTop25() {
     const sol = items.filter(i => String(i.chainId || '').toLowerCase() === 'solana').slice(0, 25);
     if (!sol.length) return null;
 
-    // Enrich all 25 tokens with pair data to get real symbols + mcap/liq
+    // Enrich all 25 tokens with pair data — symbol, name, mcap, liq, 24h change
     const enriched = new Map();
     await Promise.all(sol.map(async (t) => {
       try {
-        const r2 = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + t.tokenAddress);
+        const r2 = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + t.tokenAddress, { signal: AbortSignal.timeout(5000) });
         if (!r2.ok) return;
         const j2 = await r2.json();
         const pairs = (j2 && j2.pairs) || [];
         const best = pairs.sort((a, b) => (b.liquidity && b.liquidity.usd || 0) - (a.liquidity && a.liquidity.usd || 0))[0];
         if (best) enriched.set(t.tokenAddress, {
-          symbol: best.baseToken && best.baseToken.symbol,
-          fdv: Number(best.fdv || best.marketCap) || 0,
-          liq: Number(best.liquidity && best.liquidity.usd) || 0,
-          change24: Number(best.priceChange && best.priceChange.h24) || null,
+          symbol:   best.baseToken && best.baseToken.symbol || '',
+          name:     best.baseToken && best.baseToken.name   || '',
+          fdv:      Number(best.fdv || best.marketCap) || 0,
+          liq:      Number(best.liquidity && best.liquidity.usd) || 0,
+          vol24:    Number(best.volume && best.volume.h24) || 0,
+          change24: best.priceChange && best.priceChange.h24 != null ? Number(best.priceChange.h24) : null,
+          url:      best.url || '',
         });
       } catch (e) {}
     }));
 
-    const _fmtUsd = (n) => { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(0); };
-    const rows = sol.map((t, i) => {
-      const info = enriched.get(t.tokenAddress);
-      const sym = info && info.symbol ? `<b>$${_esc(info.symbol)}</b>` : `<code>${t.tokenAddress.slice(0, 8)}…</code>`;
-      const boost = Number(t.amount || t.totalAmount || 0);
-      const fdvStr = info && info.fdv > 0 ? `  MC ${_fmtUsd(info.fdv)}` : '';
-      const liqStr = info && info.liq > 0 ? `  Liq ${_fmtUsd(info.liq)}` : '';
-      const chg = info && info.change24 != null ? (info.change24 >= 0 ? `  🟢+${info.change24.toFixed(0)}%` : `  🔴${info.change24.toFixed(0)}%`) : '';
-      const dsUrl = t.url || ('https://dexscreener.com/solana/' + t.tokenAddress);
-      return `${i + 1}. ${sym}  🚀${boost}${fdvStr}${liqStr}${chg}  <a href="${_esc(dsUrl)}">↗</a>`;
+    // Build one card per token — send as separate messages for top 5, list for 6-25
+    const cards = sol.map((t, i) => {
+      const info = enriched.get(t.tokenAddress) || {};
+      const sym    = info.symbol ? `$${_esc(info.symbol)}` : '?';
+      const name   = info.name && info.name !== info.symbol ? ` — ${_esc(info.name)}` : '';
+      const ca     = t.tokenAddress || '';
+      const dsUrl  = info.url || t.url || `https://dexscreener.com/solana/${ca}`;
+      const mcStr  = info.fdv  > 0 ? `MC ${_fmtUsdN(info.fdv)}`   : '';
+      const liqStr = info.liq  > 0 ? `Liq ${_fmtUsdN(info.liq)}`  : '';
+      const volStr = info.vol24> 0 ? `Vol ${_fmtUsdN(info.vol24)}` : '';
+      const chg    = info.change24 != null
+        ? (info.change24 >= 0 ? `🟢 +${info.change24.toFixed(1)}%` : `🔴 ${info.change24.toFixed(1)}%`)
+        : '';
+      const icon   = t.icon || '';   // token's own DexScreener icon
+      const stats  = [mcStr, liqStr, volStr].filter(Boolean).join(' · ');
+      return { rank: i + 1, sym, name, ca, dsUrl, stats, chg, icon, totalBoost: Number(t.totalAmount || t.amount || 0) };
     });
+
     const ts = new Date().toUTCString().replace(/.*(\d{2}:\d{2}).*/, '$1');
-    return (
-      `🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA BOOSTS</b>\n` +
-      `━━━━━━━━━━━━━\n` +
-      `${ts} UTC\n\n` +
-      rows.join('\n') +
-      `\n\n<i>Paid boosts ≠ endorsement · NFA · DYOR</i>`
-    );
+
+    // Return structured object so caller can use images
+    return { cards, ts };
   } catch (e) { return null; }
 }
 
@@ -241,8 +249,37 @@ function startNewsPoster() {
     const everyMs = Math.max(60, cfg.dexTop25IntervalMin || 240) * 60000;
     if (Date.now() - lastD >= everyMs) {
       lastD = Date.now();
-      const html = await dexTop25().catch(() => null);
-      if (html) { const img = _botImage(); (img ? core.broadcastPhoto(img, html) : core.broadcast(html)).catch(() => {}); }
+      const result = await dexTop25().catch(() => null);
+      if (!result || !result.cards || !result.cards.length) return;
+      const { cards, ts } = result;
+
+      // Header
+      await core.broadcast(`🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA BOOSTS</b>\n━━━━━━━━━━━━━\n${ts} UTC\n<i>Paid boosts signal project commitment · NFA · DYOR</i>`).catch(() => {});
+
+      // Top 10: one photo card each (token art + full details + copyable CA)
+      for (const c of cards.slice(0, 10)) {
+        const caption =
+          `${c.rank}. <b>${c.sym}</b>${c.name}\n` +
+          (c.stats ? `${c.stats}\n` : '') +
+          (c.chg   ? `${c.chg}\n`   : '') +
+          `\n<code>${c.ca}</code>\n` +
+          `<a href="${c.dsUrl}">📊 DexScreener</a>`;
+        if (c.icon) {
+          await core.broadcastPhoto(c.icon, caption).catch(() => core.broadcast(caption).catch(() => {}));
+        } else {
+          await core.broadcast(caption).catch(() => {});
+        }
+        await new Promise(res => setTimeout(res, 400));   // small delay to avoid flood
+      }
+
+      // 11-25: compact list
+      if (cards.length > 10) {
+        const tail = cards.slice(10).map(c =>
+          `${c.rank}. <b>${c.sym}</b>${c.name}  ${c.chg || ''}\n` +
+          `${c.stats || ''}\n<code>${c.ca}</code>`
+        ).join('\n\n');
+        await core.broadcast(`<b>11–25</b>\n━━━━━━━━━━━━━\n${tail}`).catch(() => {});
+      }
     }
   }, 60000);
   if (_dexTimer.unref) _dexTimer.unref();
