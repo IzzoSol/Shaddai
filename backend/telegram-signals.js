@@ -106,6 +106,16 @@ function _trackSym(sym) {
 // look up DexScreener boost info for a token address — returns null if not boosted
 function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 
+// Rejection logger — rolling 200-entry file so we can audit why trending tokens get filtered
+const _REJECT_LOG_FILE = path.join(__dirname, 'data', 'tg-rejected.json');
+let _rejectLog = [];
+try { _rejectLog = JSON.parse(fs.readFileSync(_REJECT_LOG_FILE, 'utf8')); if (!Array.isArray(_rejectLog)) _rejectLog = []; } catch (e) { _rejectLog = []; }
+function _logReject(reason, sym, fdv, extra) {
+  _rejectLog.push({ ts: Date.now(), reason, sym: sym || '?', fdv: Math.round(fdv || 0), ...extra });
+  if (_rejectLog.length > 200) _rejectLog = _rejectLog.slice(-200);
+  try { fs.writeFileSync(_REJECT_LOG_FILE, JSON.stringify(_rejectLog)); } catch (e) {}
+}
+
 // ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
 // Updated from 300-call 14-day analysis (2026-08-03):
 //   Peak: 20h (44%), 22h (44%), 00h (54% — best!), 01h (33%) → extend to 20-01h window
@@ -742,25 +752,27 @@ async function _pollOnce() {
     // Trending tokens get a LOWER rug bar: ZEROX corpus shows trending+rug:bad = 50% win rate.
     // These are already DexScreener-boosted (paid) so they have social proof. Use half the threshold.
     const _trendRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.6));
-    if (rs && rs.checked && rs.score < _trendRugMin) { _seen.add(addr); continue; }
-    if (!_holdersOk(cfg, rs)) { _seen.add(addr); continue; }   // must have holders
-    if (!_lpLockedOk(cfg, rs)) { _seen.add(addr); continue; }  // LP lock — not flexed (exit risk)
+    const _tSym2 = pair.baseToken && pair.baseToken.symbol;
+    const _tFdv2 = Number(pair.fdv || pair.marketCap || 0);
+    if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }); _seen.add(addr); continue; }
+    if (!_holdersOk(cfg, rs)) { _logReject('min_holders', _tSym2, _tFdv2, { holders: rs && rs.holders }); _seen.add(addr); continue; }
+    if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
     // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
     let _isDexFlex = false;
     if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
       const _boost = _boostInfo(addr);
       if (_boost && _boost.amount > 0) {
         const _fc = Object.assign({}, cfg, {
-          maxTop10Pct:   (cfg.maxTop10Pct   || 25) + 5,   // 25→30
-          maxBundlerPct: (cfg.maxBundlerPct  || 3)  + 7,   // 3→10
-          maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,   // 5→10
+          maxTop10Pct:   (cfg.maxTop10Pct   || 55) + 5,
+          maxBundlerPct: (cfg.maxBundlerPct  || 3)  + 7,
+          maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,
         });
         if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _isDexFlex = true;
-        else { _seen.add(addr); continue; }
-      } else { _seen.add(addr); continue; }
+        else { _logReject('top10_bundlers_snipers_flex_fail', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }); _seen.add(addr); continue; }
+      } else { _logReject('top10_bundlers_snipers', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }); _seen.add(addr); continue; }
     }
-    if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), Number(pair.fdv || pair.marketCap || 0))) { _seen.add(addr); continue; }   // liq must match mcap
-    if (_overCap(cfg, Number(pair.fdv || pair.marketCap || 0), rs)) { _seen.add(addr); continue; }   // >maxFdv unless premium
+    if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), _tFdv2)) { _logReject('liq_mismatch', _tSym2, _tFdv2, { liq: Number(pair.liquidity && pair.liquidity.usd || 0) }); _seen.add(addr); continue; }
+    if (_overCap(cfg, _tFdv2, rs)) { _logReject('over_fdv_cap', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
     // wallet cross-reference disabled (wallet tracker turned off — too many rug alerts from seeded wallets)
     const walletLine = '';
     // launch wallet / dev analysis
@@ -769,9 +781,9 @@ async function _pollOnce() {
     // scam filter — symbol + name patterns + cooldown
     const _sym = pair.baseToken && pair.baseToken.symbol;
     const _tName = pair.baseToken && pair.baseToken.name;
-    if (_sym && _isScamSym(_sym)) { _seen.add(addr); continue; }
-    if (_tName && _isScamName(_tName)) { _seen.add(addr); continue; }
-    if (!_symCooldownOk(_sym)) { _seen.add(addr); continue; }
+    if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}); _seen.add(addr); continue; }
+    if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }); _seen.add(addr); continue; }
+    if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
