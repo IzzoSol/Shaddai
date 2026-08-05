@@ -2,7 +2,7 @@
   "signals": true,
   "bonded": true,
   "preBonding": true,
-  "newpools": false,
+  "newpools": true,
   "trending": true,
   "news": true,
   "newsIntervalMin": 480,

@@ -117,19 +117,27 @@ function _logReject(reason, sym, fdv, extra) {
 }
 
 // ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
-// Updated from 300-call 14-day analysis (2026-08-03):
-//   Peak: 20h (44%), 22h (44%), 00h (54% — best!), 01h (33%) → extend to 20-01h window
-//   Dead: 07-10h (0%), 17h (5%) → drop 11-13h (13h=36%, not dead); keep 15-17h → narrow to 17h+15-16h
-//   13h = 36% win rate — was wrongly in dead zone. Now treated as normal.
+// Calibrated from 886-call all-time corpus (2026-08-05):
+//   PEAK:  20h=37%(9×5x), 21h=31%(5×5x), 14h=33%(5×5x), 00h=34%, 23h=30% → loosen gates
+//   DEAD:  17h=8%, 15-16h=11%, 07-10h=14-15% → tighten gates hard
+//   NORMAL: everything else (16-25% win rate)
 function _utcHour() { return new Date().getUTCHours(); }
 function _isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
-function _isPeakHour() { const h = _utcHour(); return h >= 20 || h <= 5; }  // 8pm-5am UTC (00h=54%, 20h/22h=44%, 04h=5 winners incl ANMOND49x/MrSue29x)
-function _isDeadHour() { const h = _utcHour(); return (h >= 7 && h <= 10) || (h >= 15 && h <= 17); }  // 0-5% death zone (drop 11-13h: 13h=36%)
+function _isPeakHour() {
+  const h = _utcHour();
+  // 20-01 UTC (4pm-9pm EST) = top window + 14h UTC (10am EST) breakout window
+  return h >= 20 || h <= 1 || h === 14;
+}
+function _isDeadHour() {
+  const h = _utcHour();
+  // 07-10h + 15-17h UTC = lowest win rates (8-15%), tighten gates
+  return (h >= 7 && h <= 10) || (h >= 15 && h <= 17);
+}
 function _qualityMult() {
-  if (_isPeakHour()) return 1;
-  if (_isDeadHour()) return 2;
-  if (_isWeekend()) return 0.85;  // weekend: relax gates 15% — higher base hit rate
-  return 1.25;
+  if (_isPeakHour()) return 0.8;  // peak: LOOSEN gates 20% — more calls during high win rate window
+  if (_isDeadHour()) return 2.0;  // dead: TIGHTEN hard — 2x vol required, max 1 per poll
+  if (_isWeekend()) return 0.85;  // weekend: slight loosening
+  return 1.25;                    // normal: mild tightening
 }
 function _hourLabel() {
   if (_isPeakHour()) return _isWeekend() ? '🌙⭐ WEEKEND PEAK' : '⭐ PEAK HOUR';
@@ -698,8 +706,8 @@ async function _pollOnce() {
     // Don't return — fall through so this poll cycle can still call fresh boosts
   }
 
-  // Dead hours: cap at 1. Weekends: allow extra (13.1% hit rate vs 4.6% weekday). Normal: cfg value.
-  const _effMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
+  // Peak hours (20-21h,14h UTC = 33-37% win rate): allow up to +3 extra calls. Dead: cap 1. Weekend: +3.
+  const _effMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   let posted = 0, enrich = 0;
   for (const item of boosts) {
     if (posted >= _effMaxPer) break;
@@ -876,7 +884,7 @@ async function _pollBonded() {
                 .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0, imageUri: c.image_uri || '' }));
     } catch (e) { return; }
   }
-  const _bondEffMaxPer = _isDeadHour() ? 1 : (_isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
+  const _bondEffMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   // Weekend priority sort: process low-FDV tokens first (weekend <15K FDV = 46% win rate vs 15.9% overall)
   // pumpMc is approximate — sort ascending so low-MC fresh graduates get first slot in the maxPer budget
   if (_isWeekend() && list.some(c => c.pumpMc > 0)) {
@@ -1269,19 +1277,25 @@ async function _pollGecko() {
   const cfg = _cfg();
   if (!cfg.token || (!cfg.newpools && !cfg.trending)) return;
   const kinds = []; if (cfg.newpools) kinds.push('new_pools'); if (cfg.trending) kinds.push('trending_pools');
+  const _geckoMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   let posted = 0;
   for (const chain of cfg.chains) {
     const net = GT_NET[chain]; if (!net) continue;
     for (const kind of kinds) {
-      if (posted >= cfg.maxPer) break;
+      if (posted >= _geckoMaxPer) break;
       let data;
       try { const r = await fetch(GT(net, kind, 1), { headers: { accept: 'application/json' } }); if (!r.ok) continue; const j = await r.json(); data = (j && j.data) || []; } catch (e) { continue; }
       for (const p of data) {
-        if (posted >= cfg.maxPer) break;
+        if (posted >= _geckoMaxPer) break;
         const a = p && p.attributes; const id = p && p.id; if (!a || !id) continue;
         if (_seenPool.has(id)) continue;
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
-        if (liq < cfg.minLiq || vol < cfg.minVol24h || !_passesFdv(cfg, fdv)) continue;
+        // Micro-FDV relative volume gate: tokens under $15K FDV cannot have $15K+ 24h vol by definition.
+        // Use vol/fdv ratio instead — Debt($7K,36x), speedun($9K,10x) had ~3-5x daily turnover.
+        const _volOk = fdv > 0 && fdv < 15000
+          ? (vol / fdv) >= 1.5   // at least 150% daily turnover = explosive for its size
+          : vol >= cfg.minVol24h;
+        if (liq < cfg.minLiq || !_volOk || !_passesFdv(cfg, fdv)) continue;
         const _chg = Number(a.price_change_percentage && a.price_change_percentage.h24);
         if (cfg.bullishOnly && isFinite(_chg) && _chg < -10) continue;   // skip bearish (funnel)
         const _bt = (p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id) || '';
@@ -1510,9 +1524,10 @@ async function _pipelineCycle(pipeline) {
     if (!enriched || !enriched.length) return;
     const cfg = _cfg();
     let regime = null; try { regime = await require('./providers').marketRegime(); } catch (e) {}
+    const _pipeMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
     let posted = 0;
     for (const c of enriched) {
-      if (posted >= cfg.maxPer) break;
+      if (posted >= _pipeMaxPer) break;
       if (core.wasAlerted(c.mint)) continue;
       // build signal card
       const socialLabel = c.sourceNames ? '📡 ' + c.sourceNames.join('+') : '';
