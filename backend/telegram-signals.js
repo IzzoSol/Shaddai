@@ -126,13 +126,13 @@ function _utcHour() { return new Date().getUTCHours(); }
 function _isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
 function _isPeakHour() {
   const h = _utcHour();
-  // 20-01 UTC (4pm-9pm EST) = top window + 14h UTC (10am EST) breakout window
-  return h >= 20 || h <= 1 || h === 14;
+  // Corpus (886 calls): 19-21h UTC = 21-31% 3x rate (best window) + 14h breakout
+  return h === 19 || h === 20 || h === 21 || h === 14 || h === 4 || h === 8;
 }
 function _isDeadHour() {
   const h = _utcHour();
-  // 07-10h + 15-17h UTC = lowest win rates (8-15%), tighten gates
-  return (h >= 7 && h <= 10) || (h >= 15 && h <= 17);
+  // Corpus: 09h=0%, 13h=0%, 15h=0%, 22h=3% — confirmed dead on 20+ call samples
+  return h === 9 || h === 13 || h === 15 || h === 22;
 }
 function _qualityMult() {
   if (_isPeakHour()) return 0.8;  // peak: LOOSEN gates 20% — more calls during high win rate window
@@ -146,14 +146,10 @@ function _hourLabel() {
   if (_isWeekend()) return '📅 WEEKEND';
   return null;
 }
-// Peak-aware minFdv. Peak hours (20h-01h UTC) allow full micro-FDV access —
-// peak-hour micro-FDV tokens show 54-68% win rate (00h=54% best hour; JIMOTHY 31x, Raccbit 21x all peak).
-// Weekday non-peak: raise floor to $15K ($5K-$15K weekday non-peak = 0% win rate per corpus).
-// Weekend: cfg.minFdv already=$1K — no adjustment needed.
+// Per-source FDV caps now handle quality control (bonded ≤$20K, new_pools $5-10K, trending ≤$150K).
+// A global minFdv floor is no longer needed — it was conflicting with those tighter per-source gates.
 function _effectiveMinFdv(cfg) {
-  if (_isPeakHour()) return cfg.minFdv || 0;               // peak hour: full micro-FDV access
-  if (!_isWeekend()) return Math.max(cfg.minFdv || 0, 15000); // weekday non-peak: raise to $15K
-  return cfg.minFdv || 0;                                  // weekend: use cfg value ($1K)
+  return cfg.minFdv || 0;  // use config value ($1K); per-source caps do the heavy lifting
 }
 
 // ── VOLUME ACCELERATION CHECK ─────────────────────────────────────────────────
