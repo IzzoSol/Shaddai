@@ -1411,7 +1411,8 @@ async function _pollBoosts() {
       // Gate: must have real 1h volume AND be pumping
       if (vol1h < 8000) continue;          // at least $8K in last hour
       if (chg1h < 10) continue;            // must be up at least 10% in last hour
-      if (!_passesFdv(cfg, fdv)) continue;
+      if (fdv < cfg.minFdv) continue;
+      if (fdv > 500000) continue;          // boosted plays up to $500K (BULLMOJI/WIZCAT/WALRUS range)
       if (liq < cfg.minLiq) continue;
       // Buy pressure check — skip if clearly dumping
       const _bp = _buyPressure(pair);
