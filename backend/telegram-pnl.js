@@ -148,6 +148,29 @@ async function trackTick() {
       else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
     }
 
+    // RUG ALERT — when a call drops below 30% of entry, notify subscribers once
+    if (!call.rugAlerted && call.curMult < 0.3 && call.curMult > 0) {
+      call.rugAlerted = true; changed = true;
+      const _rugPct = Math.round((1 - call.curMult) * 100);
+      const _rugCard =
+        `⚠️ <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> — down <b>${_rugPct}%</b> from entry\n` +
+        `Called at: <b>${_usd(call.entryFdv)}</b> · now: <b>${_usd(call.curFdv || 0)}</b>  (${_ago(call.ts)} ago)\n` +
+        (call.peakMult >= 1.5 ? `Peak was <b>${call.peakMult.toFixed(1)}x</b> — hope you took some profits.\n` : '') +
+        `\n📡 ${core.channel() || '@ShaddaiLabs'}  ·  <i>Stay disciplined. NFA.</i>`;
+      await core.broadcast(_rugCard).catch(() => {});
+    }
+
+    // ROUND-TRIP ALERT — peaked at 2x+ but retraced back near entry (missed exit window)
+    if (!call.roundTripAlerted && call.peakMult >= 2 && call.curMult < 0.95 && !call.rugAlerted) {
+      call.roundTripAlerted = true; changed = true;
+      const _rt =
+        `🔄 <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> — round trip\n` +
+        `Peaked at <b>${call.peakMult.toFixed(1)}x</b> · now back to <b>${call.curMult.toFixed(2)}x</b> (${_ago(call.ts)} ago)\n` +
+        `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
+        `\n💡 Set limit orders at 1.5x-2x on the next one.\n📡 ${core.channel() || '@ShaddaiLabs'}`;
+      await core.broadcast(_rt).catch(() => {});
+    }
+
     // SLOW CLIMBER UPDATE — for calls up 15%+ but below 2x milestone, send a "still climbing" nudge
     // every 6 hours so subscribers stay informed on positions that move gradually not explosively.
     const _pct = Math.round((call.curMult - 1) * 100);
