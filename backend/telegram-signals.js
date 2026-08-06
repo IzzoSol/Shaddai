@@ -60,12 +60,13 @@ const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll 
 const _BAD_VENUES = new Set(['pumpswap', 'pump-fun', 'pancakeswap', 'meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
 // Scam symbol + name blocklist. Strip non-alphanumeric before testing.
-// Patterns confirmed 0% win rate over 700+ calls in 7-day corpus:
-//   USO*/USU*/USR*/USW*/AOR*/XUS* = fake stablecoin family
-//   USOS:11x, NTFS:11x, GDWR:8x, USWR:6x, AORP:9x, MODA:16x = persistent scam relaunchers
-//   OIL*/RESERVE*/USSR*/UNITED* = commodity/nation impersonators (0% win, >90% rug)
+// Patterns confirmed 0% win rate over 700+ calls in corpus:
+//   US[A-Z0-9]{2,} = entire fake stablecoin/nation family (USOR/USOP/USOV/USDT-fake/USDC-fake/USWR etc)
+//   AOR*/XUS* = fake stablecoin relaunchers
+//   USOS/TNOS/NTFS/GDWR = persistent scam relaunchers
+//   OIL*/RESERVE*/USSR*/UNITED* = commodity/nation impersonators (>90% rug)
 //   Non-ASCII dominant = targeting foreign communities with rug tokens
-const _SCAM_SYM_RE = /^(USO[A-Z0-9]+|USU[A-Z0-9]+|AOR[A-Z0-9]+|USDX[A-Z0-9]?|USR[A-Z0-9]+|USW[A-Z0-9]+|USDU|XUS[A-Z0-9]+|TNOS|USOS|NTFS|GDWR|OIL[A-Z0-9]*|RESERVE[A-Z0-9]*|USSR[A-Z0-9]*|UNITED[A-Z0-9]*)$/i;
+const _SCAM_SYM_RE = /^(US[A-Z0-9]{2,}|AOR[A-Z0-9]+|XUS[A-Z0-9]+|TNOS|USOS|NTFS|GDWR|OIL[A-Z0-9]*|RESERVE[A-Z0-9]*|USSR[A-Z0-9]*|UNITED[A-Z0-9]*)$/i;
 function _isScamSym(sym) {
   if (!sym) return false;
   const s = String(sym).replace(/[^A-Z0-9]/gi, '');
@@ -1304,6 +1305,13 @@ async function _pollGecko() {
         const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
         const _dk = _taddr || id;   // dedupe key: token address if present, else the pool id (always present)
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
+        // SCAM FILTER — extract base token symbol from pair name ("USOR / SOL" → "USOR")
+        // This was missing from gecko path — USOR/USOP/USOV type tokens were slipping through here.
+        const _gSym = (a.name || '').split('/')[0].trim().replace(/[^A-Z0-9]/gi, '');
+        const _gName = a.name || '';
+        if (_gSym && _isScamSym(_gSym)) { _seenPool.add(id); continue; }
+        if (_isScamName(_gName)) { _seenPool.add(id); continue; }
+        if (_gSym && !_symCooldownOk(_gSym)) { _seenPool.add(id); continue; }
         if (_poolSeeded) {
           // For new_pools on Solana: only call tokens that graduated from pump.fun.
           // Direct Raydium launches (no pump.fun history) have a near-zero win rate vs pump.fun graduates.
