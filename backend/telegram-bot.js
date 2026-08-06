@@ -187,6 +187,10 @@ async function _handle(cfg, update) {
       return _send(t, chatId, _pnl.lastCalls(n));
     }
 
+    // /active — live calls right now (not rugged, <72h), sorted by current gain
+    case 'active': case 'live': case 'open': case 'now':
+      return _send(t, chatId, _pnl.activeCalls ? _pnl.activeCalls() : _pnl.lastCalls(25));
+
     // /pnl <ticker> — PNL card for one token (milestone image if at that level, text always)
     case 'pnl': {
       if (!arg) return _send(t, chatId, 'Usage: /pnl <code>&lt;ticker&gt;</code>  e.g. <code>/pnl SOLANDIER</code>');
@@ -306,6 +310,7 @@ async function _registerCommands(token) {
   const commands = [
     { command: 'start',   description: 'Welcome + links' },
     { command: 'help',    description: 'All commands list' },
+    { command: 'active',  description: 'Live calls right now — not rugged, sorted by gain' },
     { command: 'lb',      description: 'Leaderboard — top calls ranked by Xs' },
     { command: 'last25',  description: 'Last 25 calls with live PNLs' },
     { command: 'last50',  description: 'Last 50 calls with live PNLs' },

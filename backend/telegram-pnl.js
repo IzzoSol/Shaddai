@@ -438,13 +438,54 @@ function lastCalls(n) {
   for (const c of rows) {
     const sym = _esc(c.symbol || c.name || 'TOKEN');
     const cur = Number(c.curMult || 1), peak = Number(c.peakMult || 1);
-    const emoji = peak >= 10 ? '🚀' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
-    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>\n`;
+    const emoji = peak >= 10 ? '🚀' : peak >= 5 ? '🔥' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
+    const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
+    const age = c.ts ? ` · ${_ago(c.ts)}` : '';
+    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>${entryFdv}${age}\n`;
     if (body.length + line.length > 3600) break;
     body += line; shown++;
   }
   const more = rows.length > shown ? `\n…and ${rows.length - shown} more` : '';
   return `📄 <b>LAST ${shown} CALLS</b> · ${_esc(ch)}\n\n${body}${more}\n\n📡 ${_esc(ch)}  ·  <i>Not financial advice. DYOR.</i>`;
+}
+
+// /active — currently live calls (not rugged, <72h old, still above 0.4x), sorted by current gain.
+// Helps subscribers know what's still worth watching right now.
+function activeCalls() {
+  _now = Date.now();
+  const MAX_AGE = 72 * 3600 * 1000;   // 72h window — beyond that, treat as closed
+  const rows = _state.calls
+    .filter(c => {
+      if (!c.ts || c.source === 'seed') return false;
+      if (_now - c.ts > MAX_AGE) return false;
+      if ((c.curMult || 1) < 0.4) return false;   // assume rugged
+      return true;
+    })
+    .sort((a, b) => (b.curMult || 1) - (a.curMult || 1));
+  const ch = core.channel() || '@ShaddaiLabs';
+  if (!rows.length) {
+    return `⚡ <b>ACTIVE CALLS</b> · ${_esc(ch)}\n\n<i>No live calls in the last 72h. Fresh plays incoming.</i>\n\n📡 ${_esc(ch)}`;
+  }
+  let body = '', shown = 0;
+  for (const c of rows) {
+    const sym = _esc(c.symbol || c.name || 'TOKEN');
+    const cur = Number(c.curMult || 1), peak = Number(c.peakMult || 1);
+    const emoji = cur >= 2 ? '🟢' : cur >= 1 ? '⚡' : '🟡';
+    const pct = Math.round((cur - 1) * 100);
+    const pctStr = pct >= 0 ? `+${pct}%` : `${pct}%`;
+    const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
+    const ca = c.mint && !String(c.mint).startsWith('seed-') ? `\n   <code>${_esc(c.mint)}</code>` : '';
+    const line = `${emoji} <b>$${sym}</b>  <b>${pctStr}</b> (${cur.toFixed(2)}x) · ATH ${peak.toFixed(1)}x${entryFdv} · ${_ago(c.ts)}${ca}\n`;
+    if (body.length + line.length > 3600) break;
+    body += line; shown++;
+  }
+  return (
+    `⚡ <b>ACTIVE CALLS</b> (${shown}/${rows.length} live) · ${_esc(ch)}\n` +
+    `<i>Last 72h · sorted by current gain · not rugged</i>\n` +
+    `━━━━━━━━━━━━━\n` +
+    body +
+    `\n📡 ${_esc(ch)}  ·  <i>NFA. Always DYOR.</i>`
+  );
 }
 
 // ── PUBLIC API JSON accessors ────────────────────────────────────────────────
@@ -514,4 +555,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls };
