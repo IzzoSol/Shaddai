@@ -1339,6 +1339,8 @@ async function _pollGecko() {
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
+          // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
+          if (_taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
           const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
