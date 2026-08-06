@@ -984,9 +984,9 @@ async function _pollBonded() {
     let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel, buyPressure: _bp.label });
     if (cfg.rugFilter) {
       if (rs.checked && rs.score < cfg.rugMinScore) continue;
-      // Bonded hard cap: $75K — no rug-score exception. $100K-$200K bonded = 0% win rate (7-day data).
-      // _overCap's rug-score≥80 exception is disabled here to stop USOX/USUR slipping through as "safe".
-      if (usdMc > 75000) { _seenBond.add(mint); continue; }
+      // Bonded hard cap: $20K — corpus shows $25-75K bonded = 52% rug rate, 19% 2x (net negative).
+      // <$10K bonded = 60% 2x, 5% rug. $10-25K = 31% 2x, 31% rug. Cut everything above $20K.
+      if (usdMc > 20000) { _seenBond.add(mint); continue; }
       if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
       if (!_lpLockedOk(cfg, rs)) continue;            // LP — not flexed
@@ -1293,6 +1293,11 @@ async function _pollGecko() {
         const a = p && p.attributes; const id = p && p.id; if (!a || !id) continue;
         if (_seenPool.has(id)) continue;
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
+        // new_pools FDV gates (corpus audit 2026-08-06):
+        // <$5K = 2% 3x rate — let bonded handle micro-FDV via pump.fun graduation
+        // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
+        if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
+        if (kind === 'new_pools' && fdv > 10000) { _seenPool.add(id); continue; }
         // Micro-FDV relative volume gate: tokens under $15K FDV cannot have $15K+ 24h vol by definition.
         // Use vol/fdv ratio instead — Debt($7K,36x), speedun($9K,10x) had ~3-5x daily turnover.
         const _volOk = fdv > 0 && fdv < 15000

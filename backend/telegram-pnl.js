@@ -125,73 +125,33 @@ async function trackTick() {
   let changed = false;
   for (const call of active) {
     const cur = prices[call.mint];
-    if (!cur) continue;
-    call.curFdv = cur;
-    call.curMult = cur / call.entryFdv;
-    if (call.curMult > call.peakMult) {
-      call.peakMult = call.curMult; changed = true;
-      // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
-      try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
-    }
-    // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
-    // Never skip straight to 5x just because the token moved fast between ticks.
     let hit = 0;
-    for (const m of MILESTONES) {
-      if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
-    }
-    if (hit) {
-      call.milestones.push(hit);   // record only the one being fired; next tick fires the next
-      changed = true;
-      const img = milestoneImage(hit) || _pnlImage();
-      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
-      if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
-      else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+    if (cur) {
+      call.curFdv = cur;
+      call.curMult = cur / call.entryFdv;
+      if (call.curMult > call.peakMult) {
+        call.peakMult = call.curMult; changed = true;
+        // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
+        try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
+      }
+      // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
+      // Never skip straight to 5x just because the token moved fast between ticks.
+      for (const m of MILESTONES) {
+        if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
+      }
+      if (hit) {
+        call.milestones.push(hit);   // record only the one being fired; next tick fires the next
+        changed = true;
+        const img = milestoneImage(hit) || _pnlImage();
+        const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
+        if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
+        else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+      }
+
+      // Slow climber updates removed — channel posts wins (milestones) only.
     }
 
-    // RUG ALERT — when a call drops below 30% of entry, notify subscribers once
-    if (!call.rugAlerted && call.curMult < 0.3 && call.curMult > 0) {
-      call.rugAlerted = true; changed = true;
-      const _rugPct = Math.round((1 - call.curMult) * 100);
-      const _rugCard =
-        `⚠️ <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> — down <b>${_rugPct}%</b> from entry\n` +
-        `Called at: <b>${_usd(call.entryFdv)}</b> · now: <b>${_usd(call.curFdv || 0)}</b>  (${_ago(call.ts)} ago)\n` +
-        (call.peakMult >= 1.5 ? `Peak was <b>${call.peakMult.toFixed(1)}x</b> — hope you took some profits.\n` : '') +
-        `\n📡 ${core.channel() || '@ShaddaiLabs'}  ·  <i>Stay disciplined. NFA.</i>`;
-      await core.broadcast(_rugCard).catch(() => {});
-    }
-
-    // ROUND-TRIP ALERT — peaked at 2x+ but retraced back near entry (missed exit window)
-    if (!call.roundTripAlerted && call.peakMult >= 2 && call.curMult < 0.95 && !call.rugAlerted) {
-      call.roundTripAlerted = true; changed = true;
-      const _rt =
-        `🔄 <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> — round trip\n` +
-        `Peaked at <b>${call.peakMult.toFixed(1)}x</b> · now back to <b>${call.curMult.toFixed(2)}x</b> (${_ago(call.ts)} ago)\n` +
-        `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
-        `\n💡 Set limit orders at 1.5x-2x on the next one.\n📡 ${core.channel() || '@ShaddaiLabs'}`;
-      await core.broadcast(_rt).catch(() => {});
-    }
-
-    // SLOW CLIMBER UPDATE — for calls up 15%+ but below 2x milestone, send a "still climbing" nudge
-    // every 6 hours so subscribers stay informed on positions that move gradually not explosively.
-    const _pct = Math.round((call.curMult - 1) * 100);
-    const _lastUpd = call.lastClimbUpdate || call.ts;
-    const _sixHrs = 6 * 3600 * 1000;
-    if (
-      hit === 0 &&                              // no milestone fired this tick
-      call.curMult >= 1.15 &&                   // at least 15% up
-      call.curMult < 2 &&                       // below first milestone
-      call.curMult >= (call.peakMult - 0.05) && // holding near peak (not dumping back)
-      _now - _lastUpd >= _sixHrs               // hasn't had an update in 6h
-    ) {
-      call.lastClimbUpdate = _now;
-      changed = true;
-      const _climbCard =
-        `📈 <b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> still climbing — <b>+${_pct}%</b>\n` +
-        `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>  (${_ago(call.ts)} ago)\n` +
-        `\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`;
-      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
-      await core.broadcast(_climbCard, { buttons: btns }).catch(() => {});
-    }
+    // Rug alerts and round-trip alerts removed — wins only channel.
   }
   if (changed) _write(_state);
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
