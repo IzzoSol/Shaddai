@@ -24,7 +24,7 @@
   "minVol24h": 15000,
   "minVolM5": 5000,
   "minFdv": 1000,
-  "maxFdv": 200000,
+  "maxFdv": 75000,
   "maxPer": 6,
   "rugFilter": true,
   "rugMinScore": 25,
