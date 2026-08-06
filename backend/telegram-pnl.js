@@ -203,20 +203,35 @@ function stats(period) {
   _now = Date.now();
   const span = period === 'week' ? 7 : period === 'month' ? 30 : 1;
   const since = _now - span * 24 * 3600 * 1000;
-  const rows = _state.calls.filter(c => c.ts >= since);
+  const rows = _state.calls.filter(c => c.ts >= since && c.source !== 'seed');
   const total = rows.length;
-  const hits = rows.filter(c => c.peakMult >= 2).length;         // "hit" = 2x+
-  const hitRate = total ? Math.round((hits / total) * 100) : 0;
+  const hits2 = rows.filter(c => c.peakMult >= 2).length;
+  const hits5 = rows.filter(c => c.peakMult >= 5).length;
+  const hits10 = rows.filter(c => c.peakMult >= 10).length;
+  const hitRate = total ? Math.round((hits2 / total) * 100) : 0;
+  const avgPeak = total ? (rows.reduce((s, c) => s + (c.peakMult || 0), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
   const bestTxt = best.length
     ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n')
     : '• (no calls in range yet)';
+  // Per-source breakdown
+  const sources = ['bonded', 'new_pools', 'trending', 'boosted'];
+  const srcLines = sources.map(src => {
+    const s = rows.filter(c => c.source === src);
+    if (!s.length) return null;
+    const r2 = s.filter(c => c.peakMult >= 2).length;
+    const r5 = s.filter(c => c.peakMult >= 5).length;
+    return `  ${src.padEnd(10)} ${String(s.length).padStart(3)} calls · 2x: ${Math.round(r2/s.length*100)}% · 5x: ${Math.round(r5/s.length*100)}%`;
+  }).filter(Boolean).join('\n');
+  const ch = core.channel() || '@ShaddaiLabs';
   return (
     `📊 <b>SHADDAI ${label} SCORECARD</b>\n\n` +
-    `Calls: <b>${total}</b>  ·  Hits (2x+): <b>${hits}</b>  ·  Hit rate: <b>${hitRate}%</b>\n\n` +
-    `🏆 <b>Best calls</b>\n${bestTxt}\n\n` +
-    `<i>Public shows winners — full PNL on every call (incl. misses & live positions) is a Pro feature.</i>`
+    `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>)  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
+    `Avg peak: <b>${avgPeak}x</b>\n\n` +
+    (srcLines ? `<b>By source</b>\n<pre>${srcLines}</pre>\n\n` : '') +
+    `🏆 <b>Best ${label.toLowerCase()}</b>\n${bestTxt}\n\n` +
+    `📡 ${_esc(ch)}  ·  <i>NFA. Track your own entries.</i>`
   );
 }
 
