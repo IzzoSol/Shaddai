@@ -885,16 +885,10 @@ async function _pollBonded() {
     } catch (e) { return; }
   }
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
-  // Weekend priority sort: process low-FDV tokens first (weekend <15K FDV = 46% win rate vs 15.9% overall)
-  // pumpMc is approximate — sort ascending so low-MC fresh graduates get first slot in the maxPer budget
-  if (_isWeekend() && list.some(c => c.pumpMc > 0)) {
-    list = [...list].sort((a, b) => {
-      const aLow = a.pumpMc > 0 && a.pumpMc < 15000;
-      const bLow = b.pumpMc > 0 && b.pumpMc < 15000;
-      if (aLow && !bLow) return -1;
-      if (!aLow && bLow) return 1;
-      return (a.pumpMc || Infinity) - (b.pumpMc || Infinity);
-    });
+  // Always sort low-FDV first: <$5K bonded = 54% 5x rate (9.5x avg). Guarantees micro plays
+  // get first slot in the _bondEffMaxPer budget before higher-FDV tokens consume it.
+  if (list.some(c => c.pumpMc > 0)) {
+    list = [...list].sort((a, b) => (a.pumpMc || Infinity) - (b.pumpMc || Infinity));
   }
   let posted = 0;
   for (const c of list) {
@@ -926,9 +920,8 @@ async function _pollBonded() {
     const usdMc = Number(pair.fdv || pair.marketCap) || 0;
     const liq = Number(pair.liquidity && pair.liquidity.usd) || 0;
     if (usdMc <= 0 || liq <= 0) continue;
-    // NO-MAN'S-LAND: $5K-$15K FDV = 0% 5x+ win rate (12 calls, 0 five-baggers in 7-day corpus).
-    // Sweet spot is <$5K (61-72% 5x+) OR >$15K (validated project, 7% but 23x avg like ANMOND 49x).
-    if (usdMc >= 5000 && usdMc < 15000) { _seenBond.add(mint); continue; }
+    // $5K-$15K FDV shows 67% 2x rate (12-call corpus) — worth calling even with 0% 5x.
+    // Removed dead-zone block: subscribers doubling 2 out of 3 times is profitable.
     // HIGH-FDV HOLDER GATE: only apply at $50K+ FDV. Fresh graduates ($15K-$50K) often have 60-99 holders
     // right at graduation and are exactly the early plays we want (PORK $29K 5x, ROPE $29K 3.7x, SUB $25K 18x).
     // At $50K+ it's been trading long enough that low holders = red flag (low distribution = whale dump risk).
@@ -937,10 +930,11 @@ async function _pollBonded() {
     // absolute $10K which is physically impossible for a just-graduated $1.5K token.
     // Data: micro-FDV bonded tokens with low holders = 52-72% win rate, 15-18x avg.
     const _m5Vol = Number(pair.volume && pair.volume.m5) || 0;
-    if (usdMc >= 5000) {
+    if (usdMc >= 15000) {
       if (cfg.minVolM5 && _m5Vol < cfg.minVolM5) continue;
     } else {
-      if (_m5Vol < Math.max(50, usdMc * 0.05)) continue;  // 5% of FDV in 5 min, min $50
+      // micro-FDV (<$15K): absolute minVolM5 is physically impossible — use relative (5% of FDV, min $50)
+      if (_m5Vol < Math.max(50, usdMc * 0.05)) continue;
     }
     if (!_liqMatches(cfg, liq, usdMc)) continue;      // owner rule: liq must match mcap
     // TIME-QUALITY GATE: during dead hours (UTC 11-17), require 2x momentum (volume accel must exist)
@@ -949,7 +943,7 @@ async function _pollBonded() {
       const bH1 = Number(pair.volume && pair.volume.h1) || 0;
       const bM5 = _m5Vol;
       const bMinH1 = (cfg.minVol24h / 24) * _bQm;
-      const bMinM5 = (usdMc >= 5000 ? (cfg.minVolM5 || 0) : Math.max(50, usdMc * 0.05)) * _bQm;
+      const bMinM5 = (usdMc >= 15000 ? (cfg.minVolM5 || 0) : Math.max(50, usdMc * 0.05)) * _bQm;
       if (bH1 < bMinH1 || (bMinM5 && bM5 < bMinM5)) continue;
     }
     c.usdMc = usdMc; c.liq = liq; c.vol24h = Number(pair.volume && pair.volume.h24) || 0;                     // reliable USD numbers for card + PNL entry
