@@ -438,7 +438,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <button class="gate-btn" id="gateBtn" onclick="unlock()">UNLOCK</button>
   <div class="gate-err" id="gateErr"></div>
   <a class="gate-link" href="/index.html">← back to dashboard</a>
-  <span class="gate-bypass" onclick="devBypass()">localhost dev bypass</span>
 </div>
 
 <!-- TOPBAR -->
@@ -653,7 +652,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <div class="rpane-scroll">
         <div class="mw">
           <div class="mwh"><span class="mwi">🐟</span><span class="mwt">MIROFISH SWARM</span></div>
-          <div class="mws" id="mws">CHECKING localhost:5001…</div>
+          <div class="mws" id="mws">MiroFish swarm — connecting…</div>
           <div id="mwsim" style="display:none;flex-direction:column;">
             <input class="mwinp" id="mwtok" placeholder="Token (e.g. BONK)">
             <input class="mwinp" id="mwnws" placeholder="Announcement to simulate…">
@@ -920,7 +919,7 @@ function demoData(){
     {symbol:'DOGE',name:'Dogecoin',source:'boosted',entryFdv:8500,curFdv:52000,peakMult:6.1,curMult:6.1,ts:Date.now()-10800000,holders:2100,liq:88000,milestones:[2,5],mint:''},
     {symbol:'PEPE',name:'Pepe',source:'trending_pools',entryFdv:2900,curFdv:12000,peakMult:4.1,curMult:4.1,ts:Date.now()-5400000,holders:380,liq:9200,milestones:[2],mint:''},
   ];
-  renderSigs();toast('DEMO MODE — START SERVER :3000 FOR LIVE DATA');
+  renderSigs();toast('Loading live signals…');
 }
 
 /* STATS */
@@ -1071,7 +1070,7 @@ async function checkMiro(){
       sim.style.display='flex';sim.style.flexDirection='column';btn.style.display='inline-block';
     }else throw new Error('HTTP '+r.status);
   }catch(e){
-    el.innerHTML='<span style="color:var(--A)">● OFFLINE</span> — run START_MIROFISH.bat';
+    el.innerHTML='<span style="color:var(--A)">● STANDALONE</span> — open MiroFish Swarm ↗';
     sim.style.display='none';btn.style.display='none';
   }
 }
