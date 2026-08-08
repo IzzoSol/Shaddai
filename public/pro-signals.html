@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI // ORACLE TERMINAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+/* ════════════════════════════════════════════════
+   ORACLE TERMINAL — 4 PREMIUM THEMES
+   phosphor / neon-noir / blood-market / ice
+   ════════════════════════════════════════════════ */
+:root {
+  --bg0:    #030201;
+  --bg1:    #080605;
+  --bg2:    #0f0d08;
+  --bg3:    #18150d;
+  --bg4:    #221e13;
+  --border: rgba(232,160,32,0.18);
+  --border2:rgba(232,160,32,0.36);
+  --P:      #e8a020;
+  --P2:     #ffc84a;
+  --P3:     #b07a14;
+  --S:      #00ff9c;
+  --A:      #ff3c2a;
+  --C:      #22d3ee;
+  --text:   #f8eece;
+  --text2:  #d4ae78;   /* boosted gold text */
+  --label:  #a88848;   /* brighter section labels */
+  --muted:  rgba(248,238,206,0.72); /* bright muted */
+  --cgrd:   linear-gradient(135deg,rgba(232,160,32,.06),rgba(232,160,32,.01));
+  --ctop:   linear-gradient(90deg,rgba(232,160,32,.18),transparent);
+  --gP:     0 0 14px rgba(232,160,32,.4);
+  --gS:     0 0 12px rgba(0,255,156,.4);
+  --gA:     0 0 10px rgba(255,60,42,.4);
+  --bgrd:   linear-gradient(90deg,#b07a14,#e8a020,#ffc84a);
+  --scan:   repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+  --hdrgrd: linear-gradient(90deg,var(--bg1),var(--bg2));
+  --card-border: rgba(232,160,32,0.14);
+}
+[data-theme="neon-noir"] {
+  --bg0:#050009;--bg1:#0a0012;--bg2:#10001c;--bg3:#1a0030;--bg4:#220042;
+  --border:rgba(200,0,255,.22);--border2:rgba(200,0,255,.48);
+  --P:#cc00ff;--P2:#ee44ff;--P3:#880099;--S:#00f5c4;--A:#ff2060;--C:#00aaff;
+  --text:#f8eeff;--text2:#d898f8;--label:#a060cc;--muted:rgba(240,210,255,.78);
+  --cgrd:linear-gradient(135deg,rgba(200,0,255,.06),rgba(200,0,255,.01));
+  --ctop:linear-gradient(90deg,rgba(200,0,255,.2),transparent);
+  --gP:0 0 16px rgba(200,0,255,.5);--gS:0 0 12px rgba(0,245,196,.4);--gA:0 0 10px rgba(255,32,96,.5);
+  --bgrd:linear-gradient(90deg,#880099,#cc00ff,#ee44ff);
+  --hdrgrd:linear-gradient(90deg,#0a0012,#10001c);
+  --card-border:rgba(200,0,255,0.14);
+}
+[data-theme="blood"] {
+  --bg0:#040000;--bg1:#090100;--bg2:#110200;--bg3:#1c0400;--bg4:#280700;
+  --border:rgba(220,40,20,.24);--border2:rgba(220,40,20,.5);
+  --P:#dc2814;--P2:#ff5a40;--P3:#8a1a0a;--S:#ffc030;--A:#ff0066;--C:#ff8020;
+  --text:#fff0ea;--text2:#e09888;--label:#a84830;--muted:rgba(255,220,200,.78);
+  --cgrd:linear-gradient(135deg,rgba(220,40,20,.08),rgba(220,40,20,.01));
+  --ctop:linear-gradient(90deg,rgba(220,40,20,.22),transparent);
+  --gP:0 0 14px rgba(220,40,20,.5);--gS:0 0 12px rgba(255,192,48,.4);--gA:0 0 10px rgba(255,0,102,.5);
+  --bgrd:linear-gradient(90deg,#8a1a0a,#dc2814,#ff5a40);
+  --hdrgrd:linear-gradient(90deg,#090100,#110200);
+  --card-border:rgba(220,40,20,0.14);
+}
+[data-theme="ice"] {
+  --bg0:#f0f4fb;--bg1:#e6eef8;--bg2:#dce6f4;--bg3:#cdd9ee;--bg4:#bccce8;
+  --border:rgba(30,60,160,.18);--border2:rgba(30,60,160,.36);
+  --P:#1e3ca0;--P2:#3d5cc8;--P3:#102070;--S:#007a3d;--A:#b01818;--C:#0070a8;
+  --text:#060d20;--text2:#2c3e7a;--label:#7080b0;--muted:rgba(6,13,32,.65);
+  --cgrd:linear-gradient(135deg,rgba(30,60,160,.06),rgba(30,60,160,.01));
+  --ctop:linear-gradient(90deg,rgba(30,60,160,.14),transparent);
+  --gP:0 0 10px rgba(30,60,160,.2);--gS:0 0 8px rgba(0,122,61,.3);--gA:0 0 8px rgba(176,24,24,.2);
+  --bgrd:linear-gradient(90deg,#102070,#1e3ca0,#3d5cc8);
+  --scan:none;
+  --hdrgrd:linear-gradient(90deg,#dce6f4,#e6eef8);
+  --card-border:rgba(30,60,160,0.14);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Exo 2',sans-serif;overflow:hidden;}
+
+/* scanline */
+body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-events:none;z-index:9990;}
+
+/* ── GATE ─────────────────────────────────────────── */
+#gate{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(232,160,32,.06) 0%,var(--bg0) 70%);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+}
+.gate-hex{
+  width:70px;height:70px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  background:var(--cgrd);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  box-shadow:var(--gP);animation:hexglow 3s ease-in-out infinite;
+}
+@keyframes hexglow{
+  0%,100%{box-shadow:var(--gP);}
+  50%{box-shadow:var(--gP),0 0 45px rgba(232,160,32,.12);}
+}
+.gate-logo{font-family:'Syncopate',sans-serif;font-size:clamp(18px,3vw,26px);font-weight:700;color:var(--P);text-shadow:var(--gP);letter-spacing:8px;}
+.gate-rule{width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--P),transparent);}
+.gate-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-align:center;}
+.gate-btn{
+  padding:11px 42px;background:transparent;border:1px solid var(--P);
+  color:var(--P);font-family:'Syncopate',sans-serif;font-size:9px;letter-spacing:5px;
+  cursor:pointer;text-decoration:none;position:relative;overflow:hidden;transition:color .25s;
+}
+.gate-btn::before{content:'';position:absolute;inset:0;background:var(--P);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1;}
+.gate-btn:hover{color:var(--bg0);}.gate-btn:hover::before{transform:scaleX(1);}
+.gate-bypass{font-size:9px;color:rgba(232,160,32,.2);cursor:pointer;letter-spacing:1px;text-decoration:underline;text-underline-offset:3px;}
+.gate-bypass:hover{color:var(--muted);}
+
+/* ── TOPBAR ───────────────────────────────────────── */
+#topbar{
+  height:50px;background:var(--hdrgrd);
+  border-bottom:2px solid var(--border2);
+  display:flex;align-items:center;padding:0 14px;gap:9px;flex-shrink:0;z-index:100;
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 1px 0 rgba(232,160,32,.1);
+}
+.tb-logo{font-family:'Syncopate',sans-serif;font-size:16px;font-weight:700;color:var(--P);text-shadow:var(--gP);letter-spacing:3px;white-space:nowrap;}
+.tb-sep{color:var(--border2);font-size:20px;margin:0 1px;}
+.tb-title{font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:4px;white-space:nowrap;}
+.tb-pill{padding:4px 12px;font-family:'Syncopate',sans-serif;font-size:9px;letter-spacing:2px;border:1px solid currentColor;}
+.tb-live{color:var(--S);animation:liveblink 2s steps(1) infinite;box-shadow:0 0 8px rgba(0,255,156,.2);}
+.tb-pro{color:var(--P);box-shadow:0 0 8px rgba(232,160,32,.2);}
+@keyframes liveblink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+.tb-sp{flex:1;}
+.tb-osc{width:80px;height:26px;opacity:.6;flex-shrink:0;}
+.tb-stat{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--text2);white-space:nowrap;}
+.tb-stat em{color:var(--P);font-style:normal;text-shadow:var(--gP);}
+.tb-dot{width:8px;height:8px;border-radius:50%;background:var(--A);flex-shrink:0;transition:all .3s;}
+.tb-dot.on{background:var(--S);box-shadow:var(--gS);}
+.tb-clk{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--P);text-shadow:var(--gP);min-width:90px;text-align:right;}
+/* theme swatch */
+.th-row{display:flex;gap:3px;flex-shrink:0;}
+.th-sw{
+  width:16px;height:16px;border-radius:2px;
+  border:1px solid var(--border2);cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+}
+.th-sw:hover{transform:scale(1.25);}
+.th-sw.active{box-shadow:0 0 0 1px var(--P);}
+.sw0{background:linear-gradient(135deg,#e8a020,#ffc84a);}
+.sw1{background:linear-gradient(135deg,#cc00ff,#00f5c4);}
+.sw2{background:linear-gradient(135deg,#dc2814,#ff5a40);}
+.sw3{background:linear-gradient(135deg,#1e3ca0,#3d5cc8);}
+
+/* ── LAYOUT ───────────────────────────────────────── */
+#app{height:calc(100vh - 50px);display:grid;grid-template-columns:1fr 340px;background:var(--border);transition:grid-template-columns .22s ease;}
+#app.rc-hidden{grid-template-columns:1fr 0;}
+#app.rc-hidden #rc{overflow:hidden;pointer-events:none;opacity:0;}
+
+/* ── RC TOGGLE BUTTON ────────────────────────────── */
+.rc-toggle{
+  padding:3px 10px;border:1px solid var(--border2);color:var(--text2);
+  background:transparent;font-family:'Share Tech Mono',monospace;font-size:9px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.5px;
+}
+.rc-toggle:hover{border-color:var(--P);color:var(--P);}
+
+/* ── LEFT ─────────────────────────────────────────── */
+.left-col{background:var(--bg0);display:flex;flex-direction:column;overflow:hidden;}
+
+#ltabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ltab{
+  flex:1;padding:10px 4px;text-align:center;
+  font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:2px;
+  color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;
+}
+.ltab:hover{color:var(--text2);}
+.ltab.active{color:var(--P);border-bottom-color:var(--P);text-shadow:var(--gP);background:linear-gradient(180deg,rgba(232,160,32,.06),transparent);}
+.ltp{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+.ltp.on{display:flex;}
+
+/* ── FILTER BAR ───────────────────────────────────── */
+#fw{flex-shrink:0;border-bottom:2px solid var(--border2);}
+#fr1{padding:8px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:linear-gradient(90deg,var(--bg1),var(--bg0));}
+.fb{
+  padding:7px 16px;border:2px solid var(--border2);background:rgba(255,255,255,.03);
+  color:var(--text2);font-family:'Syncopate',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .18s;white-space:nowrap;border-radius:3px;
+  text-shadow:none;
+}
+.fb:hover{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.06);box-shadow:0 0 12px rgba(232,160,32,.2);}
+.fb.on{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.1);box-shadow:0 0 0 1px var(--P),var(--gP);text-shadow:var(--gP);font-weight:800;}
+.fb[data-s="bonded"].on{border-color:#f4c842;color:#f4c842;box-shadow:0 0 0 1px #f4c842,0 0 14px rgba(244,200,66,.35);background:rgba(244,200,66,.08);text-shadow:0 0 10px rgba(244,200,66,.5);}
+.fb[data-s="trending"].on{border-color:#22d3ee;color:#22d3ee;box-shadow:0 0 0 1px #22d3ee,0 0 14px rgba(34,211,238,.35);background:rgba(34,211,238,.08);text-shadow:0 0 10px rgba(34,211,238,.5);}
+.fb[data-s="new_pools"].on{border-color:#ff7c44;color:#ff7c44;box-shadow:0 0 0 1px #ff7c44,0 0 14px rgba(255,124,68,.35);background:rgba(255,124,68,.08);text-shadow:0 0 10px rgba(255,124,68,.5);}
+.fb[data-s="boosted"].on{border-color:var(--S);color:var(--S);box-shadow:0 0 0 1px var(--S),0 0 14px rgba(0,255,156,.35);background:rgba(0,255,156,.08);text-shadow:0 0 10px rgba(0,255,156,.5);}
+#fr2{padding:8px 10px 10px;display:none;flex-wrap:wrap;gap:12px 14px;background:var(--bg1);}
+#fr2.on{display:flex;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fl{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:2px;color:var(--muted);}
+.fv{color:var(--P);font-size:11px;font-family:'Share Tech Mono',monospace;text-shadow:var(--gP);}
+.frng{
+  -webkit-appearance:none;width:110px;height:2px;outline:none;cursor:pointer;
+  background:linear-gradient(90deg,var(--P) var(--pct,0%),var(--bg3) var(--pct,0%));
+}
+.frng::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--P);box-shadow:var(--gP);cursor:pointer;}
+.fsel{background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 6px;outline:none;cursor:pointer;}
+.fcnt{padding:1px 6px;font-size:8px;letter-spacing:1px;border:1px solid var(--A);color:var(--A);display:none;}
+.fcnt.on{display:inline-block;}
+
+/* ── SIGNALS LIST ─────────────────────────────────── */
+#slist{flex:1;overflow-y:auto;overflow-x:hidden;counter-reset:sn;}
+#slist::-webkit-scrollbar{width:2px;}
+#slist::-webkit-scrollbar-thumb{background:var(--P3);}
+
+.sc{
+  border-bottom:1px solid rgba(232,160,32,.08);
+  padding:11px 12px 11px 44px;position:relative;
+  background:var(--cgrd);transition:background .15s;
+  animation:sIn .3s ease both;counter-increment:sn;
+}
+.sc::before{
+  content:counter(sn,decimal-leading-zero);
+  position:absolute;left:0;top:0;bottom:0;width:40px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:rgba(232,160,32,.18);border-right:1px solid rgba(232,160,32,.05);
+}
+.sc::after{content:'';position:absolute;top:0;left:40px;right:0;height:1px;background:var(--ctop);opacity:0;transition:opacity .2s;}
+.sc:hover::after{opacity:1;}
+.sc:hover{background:rgba(232,160,32,.03);}
+.sc.moon{background:linear-gradient(135deg,rgba(244,200,66,.08),transparent);border-left:3px solid rgba(244,200,66,.7);box-shadow:inset 2px 0 12px rgba(244,200,66,.06);}
+.sc.moon::before{color:rgba(244,200,66,.5);}
+.sc.win{background:linear-gradient(135deg,rgba(0,255,156,.05),transparent);border-left:3px solid rgba(0,255,156,.45);box-shadow:inset 2px 0 10px rgba(0,255,156,.04);}
+.sc.win::before{color:rgba(0,255,156,.38);}
+@keyframes sIn{from{opacity:0;transform:translateX(-5px);}to{opacity:1;transform:none;}}
+
+.stop{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.simg{width:26px;height:26px;border-radius:3px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--bg3);}
+.sav{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;flex-shrink:0;border:1px solid;}
+.ssym{font-family:'Exo 2',sans-serif;font-size:15px;font-weight:800;letter-spacing:.5px;}
+.ssp{flex:1;}
+.smlt{font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:700;min-width:55px;text-align:right;}
+.smlt.up{color:var(--S);text-shadow:var(--gS);}
+.smlt.moon{color:#f4c842;animation:mpulse 1.8s ease-in-out infinite;}
+@keyframes mpulse{
+  0%,100%{text-shadow:0 0 14px rgba(244,200,66,.7),0 0 32px rgba(244,200,66,.25);}
+  50%{text-shadow:0 0 22px rgba(244,200,66,.9),0 0 55px rgba(244,200,66,.4);}
+}
+.smlt.flat{color:var(--muted);}
+
+.sbar{height:2px;background:var(--bg3);margin:5px 0;border-radius:1px;overflow:hidden;position:relative;}
+.sbar-f{height:100%;background:var(--bgrd);border-radius:1px;box-shadow:0 0 6px var(--P);transition:width 1s cubic-bezier(.4,0,.2,1);}
+.sbar-f::after{content:'';position:absolute;right:0;top:-2px;bottom:-2px;width:5px;background:radial-gradient(ellipse,var(--P2),transparent);}
+
+.smeta{display:flex;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap;font-family:'Share Tech Mono',monospace;}
+.smeta b{color:var(--text);}
+.sms{margin-top:5px;font-size:10px;color:#f4c842;letter-spacing:1px;text-shadow:0 0 10px rgba(244,200,66,.5);}
+.sacts{display:flex;gap:5px;margin-top:7px;}
+.sa{padding:6px 14px;border:2px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:3px;}
+.sa:hover{border-color:var(--P);color:var(--P);box-shadow:var(--gP);background:rgba(232,160,32,.07);}
+.sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);background:rgba(0,255,156,.07);}
+.sa:hover{border-color:var(--P);color:var(--P);box-shadow:var(--gP);}
+.sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);}
+
+.sp{padding:2px 7px;font-size:8px;letter-spacing:1px;font-family:'Syncopate',sans-serif;flex-shrink:0;}
+.sp-bonded{color:#f4c842;border:1px solid rgba(244,200,66,.25);background:rgba(244,200,66,.07);}
+.sp-trending{color:#22d3ee;border:1px solid rgba(34,211,238,.25);background:rgba(34,211,238,.06);}
+.sp-new_pools{color:#ff7c44;border:1px solid rgba(255,124,68,.25);background:rgba(255,124,68,.06);}
+.sp-boosted{color:#00ff9c;border:1px solid rgba(0,255,156,.25);background:rgba(0,255,156,.06);}
+.sp-trending_pools{color:#22d3ee;border:1px solid rgba(34,211,238,.25);background:rgba(34,211,238,.06);}
+
+/* ── MARKETS TAB ──────────────────────────────────── */
+.ltp#tab-mkt{overflow-y:auto;}
+.ltp#tab-mkt::-webkit-scrollbar{width:2px;}
+.ltp#tab-mkt::-webkit-scrollbar-thumb{background:var(--P3);}
+.mhd{padding:7px 12px;font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:3px;color:var(--text2);background:linear-gradient(90deg,var(--bg1),var(--bg0));border-bottom:2px solid var(--border);position:sticky;top:0;z-index:1;}
+.mc{padding:9px 12px;border-bottom:1px solid rgba(232,160,32,.07);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .12s;background:var(--cgrd);}
+.mc:hover{background:rgba(232,160,32,.05);}
+.micon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;box-shadow:var(--gP);}
+.mname{flex:1;min-width:0;}
+.msym{font-family:'Exo 2',sans-serif;font-size:15px;font-weight:700;}
+.mfull{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mprc{text-align:right;}
+.mpv{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:700;}
+.up{color:var(--S);text-shadow:var(--gS);}
+.dn{color:var(--A);text-shadow:var(--gA);}
+.mchg{font-size:13px;font-weight:600;}
+.mload{padding:24px;text-align:center;color:var(--muted);font-size:12px;font-family:'Share Tech Mono',monospace;}
+
+/* ── ALERTS TAB ───────────────────────────────────── */
+.ltp#tab-al{padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+.alf{padding:10px;background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.ali,.als{padding:5px 8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;width:100%;}
+.ali:focus,.als:focus{border-color:var(--P);}
+.alrow{display:flex;gap:5px;}
+.alrow .ali{width:auto;flex:1;}
+.nbr{padding:7px 10px;background:linear-gradient(90deg,rgba(0,255,156,.04),transparent);border:1px solid rgba(0,255,156,.12);display:flex;align-items:center;gap:8px;font-size:9px;color:var(--muted);}
+#nbtn{padding:2px 8px;border:1px solid var(--S);color:var(--S);background:none;font-family:'Share Tech Mono',monospace;font-size:8px;cursor:pointer;text-shadow:var(--gS);white-space:nowrap;}
+.ait{padding:7px 10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.adot{width:5px;height:5px;border-radius:50%;background:var(--P);box-shadow:var(--gP);flex-shrink:0;}
+.adot.f{background:#f4c842;box-shadow:0 0 8px rgba(244,200,66,.5);}
+.amet{flex:1;font-size:9px;color:var(--text2);font-family:'Share Tech Mono',monospace;line-height:1.5;}
+.adel{color:var(--A);border:none;background:none;cursor:pointer;font-size:11px;padding:0 3px;}
+.empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:10px;font-family:'Share Tech Mono',monospace;line-height:2.2;}
+
+/* ── RIGHT COL ────────────────────────────────────── */
+#rc{background:var(--bg1);display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);transition:opacity .22s ease;box-shadow:-3px 0 18px rgba(0,0,0,.3);}
+
+/* right panel tabs */
+#rc-tabs{display:flex;background:var(--bg2);border-bottom:2px solid var(--border2);flex-shrink:0;}
+.rtab{flex:1;padding:9px 2px;text-align:center;font-family:'Syncopate',sans-serif;font-size:9px;letter-spacing:1.5px;color:var(--label);cursor:pointer;border-bottom:3px solid transparent;transition:all .18s;margin-bottom:-2px;}
+.rtab:hover{color:var(--text2);}
+.rtab.on{color:var(--P);border-bottom-color:var(--P);text-shadow:var(--gP);background:linear-gradient(180deg,rgba(232,160,32,.06),transparent);}
+.rpane{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.rpane.on{display:flex;}
+.rpane-scroll{flex:1;overflow-y:auto;}
+.rpane-scroll::-webkit-scrollbar{width:3px;}
+.rpane-scroll::-webkit-scrollbar-thumb{background:var(--P3);}
+
+/* data feed item styles */
+.di-sect{padding:5px 12px;font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:3px;color:var(--text2);background:linear-gradient(90deg,var(--bg2),var(--bg1));border-bottom:2px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;z-index:1;}
+.di{padding:8px 12px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:9px;transition:background .1s;}
+.di:hover{background:rgba(232,160,32,.03);}
+.di-icon{font-size:16px;width:26px;text-align:center;flex-shrink:0;}
+.di-main{flex:1;min-width:0;}
+.di-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.di-sub{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.di-val{text-align:right;flex-shrink:0;}
+.di-prc{font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;}
+.di-chg{font-size:10px;font-weight:600;}
+
+/* Fear & Greed */
+.fng-box{margin:10px 12px;padding:12px 14px;border:2px solid var(--border2);background:var(--cgrd);box-shadow:var(--gP);}
+.fng-title{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:3px;color:var(--text2);margin-bottom:10px;}
+.fng-gauge{position:relative;height:10px;background:linear-gradient(90deg,#ff3c2a,#ff8c2a,#ffc84a,#00d4dc,#00ff9c);border-radius:5px;margin-bottom:10px;border:1px solid var(--border2);box-shadow:0 0 10px rgba(0,0,0,.3);}
+.fng-needle{position:absolute;top:-5px;width:4px;height:20px;background:var(--text);border-radius:2px;transform:translateX(-50%);transition:left .6s ease;box-shadow:0 0 8px rgba(0,0,0,.6);}
+.fng-num{font-family:'Share Tech Mono',monospace;font-size:38px;font-weight:700;line-height:1;text-shadow:var(--gP);}
+.fng-lbl{font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:2px;margin-top:3px;}
+.fng-hist{display:flex;gap:4px;margin-top:10px;}
+.fng-hd{flex:1;text-align:center;}
+.fng-hd-v{font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;}
+.fng-hd-l{font-size:9px;color:var(--label);margin-top:2px;}
+
+/* global stats strip */
+.gst{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border2);flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.gst-c{background:var(--bg2);padding:9px 12px;}
+.gst-v{font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:700;color:var(--P);text-shadow:var(--gP);}
+.gst-l{font-family:'Syncopate',sans-serif;font-size:8px;color:var(--text2);letter-spacing:2px;margin-top:3px;}
+
+/* trending badge */
+.trend-rank{width:18px;height:18px;border-radius:2px;background:var(--bg3);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:8px;display:flex;align-items:center;justify-content:center;color:var(--label);flex-shrink:0;}
+.trend-fire{color:var(--P2);font-size:10px;}
+
+/* sol network */
+.net-row{padding:8px 12px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:9px;}
+.net-lbl{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:2px;color:var(--text2);width:65px;flex-shrink:0;}
+.net-val{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:700;color:var(--P);text-shadow:var(--gP);}
+.net-unit{font-size:10px;color:var(--text2);margin-left:3px;}
+.net-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;border:1px solid var(--border);}
+.net-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--P3),var(--P));transition:width .6s ease;box-shadow:0 0 6px var(--P);}
+
+/* poly improved */
+.pc{border-bottom:1px solid var(--card-border);padding:9px 12px;}
+.pq{font-size:11px;color:var(--text);line-height:1.6;margin-bottom:4px;}
+.pc-meta{display:flex;align-items:center;gap:6px;}
+.pc-bar{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;border:1px solid var(--border);}
+.pc-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+
+.rh{padding:8px 12px;background:linear-gradient(90deg,var(--bg2),var(--bg1));border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.rt{font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;color:var(--text2);letter-spacing:3px;}
+.rsp{flex:1;}
+
+/* stat grid */
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--border2);flex-shrink:0;}
+.sc2{background:linear-gradient(180deg,var(--bg2),var(--bg1));padding:11px 6px;text-align:center;}
+.sv{font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--P);text-shadow:var(--gP);line-height:1;}
+.sl{font-family:'Syncopate',sans-serif;font-size:7px;color:var(--muted);letter-spacing:2px;margin-top:4px;}
+.pdb{display:flex;gap:3px;}
+.pdbtn{padding:6px 12px;border:2px solid var(--border2);color:var(--text2);font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;cursor:pointer;background:transparent;transition:all .15s;border-radius:3px;}
+.pdbtn:hover{border-color:var(--P);color:var(--P);}
+.pdbtn.on{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.1);box-shadow:var(--gP);}
+.pdbtn.on{border-color:var(--P);color:var(--P);box-shadow:var(--gP);}
+
+.sr{padding:6px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(232,160,32,.05);}
+.srn{font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:1px;color:var(--text2);min-width:66px;}
+.srb{flex:1;height:3px;background:var(--bg3);overflow:hidden;border-radius:1px;}
+.srf{height:100%;border-radius:1px;transition:width .6s ease;}
+.srp{font-family:'Share Tech Mono',monospace;font-size:11px;min-width:30px;text-align:right;}
+.srt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);min-width:24px;text-align:right;}
+.subhd{padding:5px 12px;font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:3px;color:var(--text2);background:var(--bg2);border-bottom:2px solid var(--border);border-top:1px solid var(--border);}
+
+/* poly (kept for compat — main styles now above) */
+.pp{font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;min-width:38px;text-align:right;flex-shrink:0;}
+.phi{color:var(--S);text-shadow:var(--gS);}
+.pmi{color:var(--P);text-shadow:var(--gP);}
+.plo{color:var(--A);text-shadow:var(--gA);}
+
+/* miro */
+.mw{margin:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(176,127,255,.08),rgba(176,127,255,.01));border:2px solid rgba(176,127,255,.3);box-shadow:0 0 16px rgba(176,127,255,.12);}
+.mwh{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mwi{font-size:16px;}
+.mwt{font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:#b07fff;text-shadow:0 0 10px rgba(176,127,255,.5);}
+.mws{font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace;margin-bottom:8px;}
+.mwinp{width:100%;padding:6px 10px;background:var(--bg3);border:2px solid rgba(176,127,255,.22);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;margin-bottom:6px;}
+.mwinp:focus{border-color:#b07fff;box-shadow:0 0 10px rgba(176,127,255,.3);}
+.mwacts{display:flex;gap:5px;flex-wrap:wrap;}
+.mwb{padding:8px 16px;border:2px solid rgba(176,127,255,.45);color:#c090ff;background:rgba(176,127,255,.06);font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:3px;}
+.mwb:hover{border-color:#b07fff;box-shadow:0 0 14px rgba(176,127,255,.4);color:#d8b8ff;background:rgba(176,127,255,.12);}
+.mwb:hover{border-color:#b07fff;text-shadow:0 0 10px rgba(176,127,255,.6);box-shadow:0 0 12px rgba(176,127,255,.2);}
+.mwr{margin-top:10px;font-size:11px;line-height:1.8;color:var(--text2);font-family:'Share Tech Mono',monospace;max-height:100px;overflow-y:auto;display:none;}
+
+/* toast */
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 22px;background:var(--bg2);border:1px solid var(--P);color:var(--P);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;text-shadow:var(--gP);opacity:0;transition:opacity .25s;pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:var(--gP),0 4px 24px rgba(0,0,0,.4);}
+#toast.on{opacity:1;}
+
+@media(max-width:860px){#app{grid-template-columns:1fr;}#rc{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <div class="gate-hex">⬡</div>
+  <div class="gate-logo">SHADDAI</div>
+  <div class="gate-rule"></div>
+  <div class="gate-sub">ORACLE TERMINAL — PRO ACCESS REQUIRED</div>
+  <a class="gate-btn" href="/index.html">ACCESS DASHBOARD</a>
+  <span class="gate-bypass" onclick="devBypass()">localhost dev bypass</span>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar" style="display:none">
+  <div class="tb-logo">⬡ SHADDAI</div>
+  <div class="tb-sep">//</div>
+  <div class="tb-title">ORACLE TERMINAL</div>
+  <div class="tb-pill tb-pro">PRO</div>
+  <div class="tb-pill tb-live">● LIVE</div>
+  <div class="tb-sp"></div>
+  <canvas class="tb-osc" id="osc"></canvas>
+  <div class="tb-stat" id="tbhr">rate <em>—</em></div>
+  <div class="tb-stat" id="tbcalls">calls <em>—</em></div>
+  <div class="tb-dot" id="wsdot"></div>
+  <div class="th-row">
+    <div class="th-sw sw0 active" title="Phosphor"    onclick="setTheme('')"         data-t=""></div>
+    <div class="th-sw sw1"        title="Neon Noir"   onclick="setTheme('neon-noir')" data-t="neon-noir"></div>
+    <div class="th-sw sw2"        title="Blood Mkt"   onclick="setTheme('blood')"     data-t="blood"></div>
+    <div class="th-sw sw3"        title="Ice Terminal" onclick="setTheme('ice')"       data-t="ice"></div>
+  </div>
+  <div class="tb-pill" id="tbmiro" onclick="toggleMiro()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Show / hide MiroFish">🐟 MIRO</div>
+  <div class="tb-pill" onclick="window.open('/mirofish-terminal.html','_blank','width=1440,height=900,menubar=no,toolbar=no')" style="cursor:pointer;border-color:rgba(0,212,220,.3);color:rgba(0,212,220,.6);" title="Open MiroFish terminal">⧉</div>
+  <div class="tb-clk" id="clk">--:--:--</div>
+  <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+  <!-- LEFT -->
+  <div class="left-col">
+    <div id="ltabs">
+      <div class="ltab on"  onclick="switchTab('sig',this)">📡 SIGNALS</div>
+      <div class="ltab"     onclick="switchTab('mkt',this)">📈 MARKETS</div>
+      <div class="ltab"     onclick="switchTab('al',this)">🔔 ALERTS</div>
+      <div class="ltab"     onclick="switchTab('swarm',this)">🌊 SWARM</div>
+    </div>
+
+    <!-- signals -->
+    <div class="ltp on" id="tab-sig">
+      <div id="fw">
+        <div id="fr1">
+          <button class="fb on" data-s="all">ALL</button>
+          <button class="fb" data-s="bonded">BONDED</button>
+          <button class="fb" data-s="trending">TREND</button>
+          <button class="fb" data-s="new_pools">POOLS</button>
+          <button class="fb" data-s="boosted">BOOST</button>
+          <div style="flex:1"></div>
+          <span class="fcnt" id="fcnt"></span>
+          <button class="fb" id="ftog" onclick="togFilters()">⚙ FILTER</button>
+          <button class="fb" onclick="rstFilters()">✕</button>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-left:4px" id="scnt">—</span>
+        </div>
+        <div id="fr2">
+          <div class="fg"><div class="fl">MIN MULT <span class="fv" id="fvM">0×</span></div><input type="range" class="frng" id="fmult" min="0" max="10" step=".5" value="0" oninput="onFil('mult',this.value)"></div>
+          <div class="fg"><div class="fl">MAX ENTRY FDV</div><select class="fsel" id="ffdv" onchange="onFil('fdv',this.value)"><option value="0">Any</option><option value="5000">Under $5K</option><option value="10000">Under $10K</option><option value="25000">Under $25K</option><option value="50000">Under $50K</option><option value="100000">Under $100K</option></select></div>
+          <div class="fg"><div class="fl">AGE</div><select class="fsel" id="fage" onchange="onFil('age',this.value)"><option value="0">Any</option><option value="3600000">1H</option><option value="86400000">24H</option><option value="604800000">7D</option></select></div>
+          <div class="fg"><div class="fl">STATUS</div><select class="fsel" id="fst" onchange="onFil('status',this.value)"><option value="all">All</option><option value="active">Active</option><option value="2x">2×+</option><option value="5x">5×+</option><option value="10x">10×+</option></select></div>
+          <div class="fg"><div class="fl">SORT</div><select class="fsel" id="fsrt" onchange="onFil('sort',this.value)"><option value="newest">Newest</option><option value="mult">Highest ×</option><option value="fdv">Entry FDV</option><option value="holders">Holders</option></select></div>
+        </div>
+      </div>
+      <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
+    </div>
+
+    <!-- markets -->
+    <div class="ltp" id="tab-mkt">
+      <div class="mload">FETCHING LIVE MARKET DATA…</div>
+    </div>
+
+    <!-- alerts -->
+    <div class="ltp" id="tab-al">
+      <div class="nbr">
+        <span style="flex:1">Desktop alerts for price targets</span>
+        <button id="nbtn" onclick="reqNotif()">ENABLE</button>
+      </div>
+      <div class="alf">
+        <div class="fl" style="margin-bottom:2px">NEW ALERT</div>
+        <input class="ali" id="alm" placeholder="Mint address or symbol (e.g. BONK)">
+        <div class="alrow">
+          <select class="als" id="alt" style="flex:1"><option value="mult">When mult reaches (×)</option><option value="fdv">When FDV reaches ($)</option></select>
+          <input class="ali" id="alv" type="number" placeholder="5" style="width:72px">
+        </div>
+        <button class="fb on" onclick="addAl()" style="padding:4px 14px;align-self:flex-start">+ ARM ALERT</button>
+      </div>
+      <div id="allist"><div class="empty">NO ALERTS ARMED<br><span style="font-size:8px;color:rgba(232,160,32,.12)">configure above</span></div></div>
+    </div>
+
+    <!-- swarm tab -->
+    <div class="ltp" id="tab-swarm" style="position:relative;overflow:hidden;background:#010b10;">
+      <canvas id="swarm-canvas" style="position:absolute;inset:0;"></canvas>
+      <div style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:8px;padding:7px 10px;background:linear-gradient(180deg,rgba(1,11,16,.9),transparent);pointer-events:none;">
+        <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH SWARM</span>
+        <span style="flex:1"></span>
+        <span id="sw-status" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;pointer-events:auto">CHECKING…</span>
+        <a href="/mirofish-terminal.html" target="_blank" style="padding:2px 8px;border:1px solid rgba(0,212,220,.2);color:rgba(0,212,220,.6);font-family:'Syncopate',sans-serif;font-size:6px;letter-spacing:2px;text-decoration:none;pointer-events:auto;">FULL ↗</a>
+      </div>
+      <div id="sw-hud" style="position:absolute;top:36px;left:10px;z-index:10;font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;line-height:1.8;pointer-events:none;"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px;background:linear-gradient(0deg,rgba(1,11,16,.95),rgba(1,11,16,.65));border-top:1px solid rgba(0,212,220,.1);">
+        <div id="sw-res" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a8a94;margin-bottom:5px;min-height:14px;line-height:1.5;"></div>
+        <div id="sw-form" style="display:none;flex-direction:column;gap:5px;">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <input id="sw-tok" placeholder="Token (e.g. BONK)" style="flex:1;min-width:80px;padding:5px 8px;background:rgba(3,22,32,.8);border:1px solid rgba(0,212,220,.2);color:#c8f0f4;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
+            <input id="sw-news" placeholder="Scenario to simulate…" style="flex:3;min-width:160px;padding:5px 8px;background:rgba(3,22,32,.8);border:1px solid rgba(0,212,220,.2);color:#c8f0f4;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
+            <button id="sw-go" onclick="runSwarm()" style="padding:5px 14px;border:1px solid #00d4dc;background:transparent;color:#00d4dc;font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:2px;cursor:pointer;white-space:nowrap;">LAUNCH</button>
+          </div>
+          <div id="sw-prog-wrap" style="display:none;height:2px;background:rgba(0,212,220,.08);">
+            <div id="sw-prog-f" style="height:100%;background:linear-gradient(90deg,#005f65,#00d4dc,#40eef6);transition:width .5s;width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /left -->
+
+  <!-- RIGHT PANEL -->
+  <div id="rc">
+    <!-- perf strip (always visible) -->
+    <div class="rh" style="flex-shrink:0;">
+      <span class="rt">PERF</span>
+      <div class="rsp"></div>
+      <div class="pdb">
+        <button class="pdbtn" id="pd-day"   onclick="setPd('day')">24H</button>
+        <button class="pdbtn on" id="pd-week"  onclick="setPd('week')">7D</button>
+        <button class="pdbtn" id="pd-month" onclick="setPd('month')">30D</button>
+      </div>
+    </div>
+    <div class="sg" style="flex-shrink:0;">
+      <div class="sc2"><div class="sv" id="stot">—</div><div class="sl">CALLS</div></div>
+      <div class="sc2"><div class="sv" id="s2x">—</div><div class="sl">2× RATE</div></div>
+      <div class="sc2"><div class="sv" id="s5x">—</div><div class="sl">5× HITS</div></div>
+      <div class="sc2"><div class="sv" id="s10x">—</div><div class="sl">10×+</div></div>
+    </div>
+    <div id="sbk" style="max-height:130px;overflow-y:auto;flex-shrink:0;border-bottom:1px solid var(--border)"></div>
+
+    <!-- tabs -->
+    <div id="rc-tabs">
+      <div class="rtab on"  onclick="rTab('intel',this)">📡 INTEL</div>
+      <div class="rtab"     onclick="rTab('poly',this)">🎯 POLY <span id="polycnt" style="font-size:5px;opacity:.6"></span></div>
+      <div class="rtab"     onclick="rTab('miro',this)">🐟 MIRO</div>
+    </div>
+
+    <!-- INTEL tab -->
+    <div class="rpane on" id="rpane-intel">
+      <div class="rpane-scroll">
+        <!-- Fear & Greed -->
+        <div class="fng-box" id="fng-box">
+          <div class="fng-title">FEAR &amp; GREED INDEX</div>
+          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:8px;">
+            <div>
+              <div class="fng-num" id="fng-val" style="color:var(--P)">—</div>
+              <div class="fng-lbl" id="fng-lbl" style="color:var(--text2)">LOADING…</div>
+            </div>
+            <div style="flex:1">
+              <div class="fng-gauge"><div class="fng-needle" id="fng-needle" style="left:50%"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--label);font-family:'Syncopate',sans-serif;letter-spacing:1px;">
+                <span>FEAR</span><span>NEUTRAL</span><span>GREED</span>
+              </div>
+            </div>
+          </div>
+          <div class="fng-hist" id="fng-hist"></div>
+        </div>
+
+        <!-- Global market stats -->
+        <div class="di-sect">GLOBAL MARKETS</div>
+        <div class="gst" id="gst-box">
+          <div class="gst-c"><div class="gst-v" id="gst-mcap">—</div><div class="gst-l">TOTAL MCAP</div></div>
+          <div class="gst-c"><div class="gst-v" id="gst-dom">—</div><div class="gst-l">BTC DOMINANCE</div></div>
+          <div class="gst-c"><div class="gst-v" id="gst-alts">—</div><div class="gst-l">ALT SEASON</div></div>
+          <div class="gst-c"><div class="gst-v" id="gst-vol">—</div><div class="gst-l">24H VOLUME</div></div>
+        </div>
+
+        <!-- Solana network -->
+        <div class="di-sect">SOLANA NETWORK</div>
+        <div id="sol-net-box">
+          <div class="net-row">
+            <div class="net-lbl">TPS</div>
+            <div class="net-val" id="sol-tps">—</div><div class="net-unit">tx/s</div>
+            <div class="net-bar"><div class="net-fill" id="sol-tps-bar" style="width:0%"></div></div>
+          </div>
+          <div class="net-row">
+            <div class="net-lbl">SLOT</div>
+            <div class="net-val" id="sol-slot" style="font-size:10px">—</div>
+          </div>
+          <div class="net-row">
+            <div class="net-lbl">CIRCULATING</div>
+            <div class="net-val" id="sol-supply" style="font-size:10px">—</div><div class="net-unit">SOL</div>
+          </div>
+        </div>
+
+        <!-- Jupiter prices -->
+        <div class="di-sect">SOLANA TOKEN PRICES <span style="font-size:5px;color:var(--label)">(DEXSCREENER)</span></div>
+        <div id="jup-list"><div class="mload" style="padding:12px">FETCHING…</div></div>
+
+        <!-- Trending coins -->
+        <div class="di-sect">TRENDING COINS <span style="font-size:5px;color:var(--label)">(COINGECKO)</span></div>
+        <div id="trend-list"><div class="mload" style="padding:12px">FETCHING…</div></div>
+
+        <!-- DexScreener hot -->
+        <div class="di-sect">HOT SOLANA PAIRS <span style="font-size:5px;color:var(--label)">(DEXSCREENER)</span></div>
+        <div id="dex-hot-list"><div class="mload" style="padding:12px">FETCHING…</div></div>
+      </div>
+    </div>
+
+    <!-- POLYMARKET tab -->
+    <div class="rpane" id="rpane-poly">
+      <div class="rpane-scroll">
+        <div id="polym"><div class="mload">LOADING PREDICTION MARKETS…</div></div>
+      </div>
+    </div>
+
+    <!-- MIRO tab -->
+    <div class="rpane" id="rpane-miro">
+      <div class="rpane-scroll">
+        <div class="mw">
+          <div class="mwh"><span class="mwi">🐟</span><span class="mwt">MIROFISH SWARM</span></div>
+          <div class="mws" id="mws">CHECKING localhost:5001…</div>
+          <div id="mwsim" style="display:none;flex-direction:column;">
+            <input class="mwinp" id="mwtok" placeholder="Token (e.g. BONK)">
+            <input class="mwinp" id="mwnws" placeholder="Announcement to simulate…">
+          </div>
+          <div class="mwacts">
+            <button class="mwb" onclick="checkMiro()">PING</button>
+            <button class="mwb" id="mwrun" onclick="runMiro()" style="display:none">SIMULATE →</button>
+            <button class="mwb" onclick="window.open('/mirofish-terminal.html','_blank')" style="border-color:rgba(176,127,255,.35)">FULL TERMINAL ↗</button>
+          </div>
+          <div class="mwr" id="mwres"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+const DEV = location.hostname==='localhost'||location.hostname==='127.0.0.1';
+const BASE = DEV ? 'http://localhost:3000' : '';
+const MIRO = 'http://localhost:5001';
+
+/* AUTH */
+function ok(){
+  const si = localStorage.getItem('shd_signed_in')==='1';
+  const pl = (localStorage.getItem('shd_plan')||'').toLowerCase();
+  return (si&&['pro','alpha','builder'].includes(pl))||(DEV&&localStorage.getItem('shd_prodev')==='1');
+}
+function devBypass(){
+  if(!DEV){toast('LOCALHOST ONLY');return;}
+  localStorage.setItem('shd_prodev','1'); go();
+}
+function go(){
+  document.getElementById('gate').style.display='none';
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('app').style.display='grid';
+  applyMiroPref();
+  init();
+}
+if(ok()) go();
+
+/* THEME */
+function setTheme(t){
+  document.documentElement.dataset.theme=t;
+  document.querySelectorAll('.th-sw').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  localStorage.setItem('ot_theme',t);
+}
+(()=>{const t=localStorage.getItem('ot_theme');if(t!==null)setTheme(t);})();
+
+/* STATE */
+let _calls=[],_period='week',_src='all';
+const _img={};
+const _F=JSON.parse(localStorage.getItem('ot_fil')||'{}');
+let _alerts=JSON.parse(localStorage.getItem('ot_al')||'[]');
+let _notif=Notification.permission==='granted';
+let _mktLoaded=false;
+
+/* OSC */
+function initOsc(){
+  const c=document.getElementById('osc'); if(!c)return;
+  const ctx=c.getContext('2d'); c.width=80;c.height=26; let t=0;
+  (function d(){ctx.clearRect(0,0,80,26);ctx.strokeStyle='rgba(232,160,32,.7)';ctx.lineWidth=1.3;ctx.shadowBlur=7;ctx.shadowColor='rgba(232,160,32,.5)';ctx.beginPath();for(let x=0;x<80;x++){const y=13+Math.sin((x+t)*.17)*4.5+Math.sin((x+t)*.065)*3.5+(Math.random()-.5);x?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();t+=1.4;requestAnimationFrame(d);})();
+}
+
+/* INIT */
+function init(){
+  tickClk();initOsc();reqNotif();
+  fetchCalls();fetchStats();fetchPoly();
+  setTimeout(checkMiro,2000);
+  // New data feeds
+  fetchFearGreed();fetchGlobal();fetchTrending();fetchDexHot();fetchJupiter();fetchSolNet();
+  setInterval(fetchCalls,30000);setInterval(fetchStats,60000);setInterval(fetchPoly,120000);setInterval(tickAlerts,30000);
+  setInterval(fetchFearGreed,3600000);setInterval(fetchGlobal,300000);
+  setInterval(fetchTrending,900000);setInterval(fetchDexHot,120000);
+  setInterval(fetchJupiter,30000);setInterval(fetchSolNet,30000);
+  setupSrc();renderAlerts();restoreFil();
+  // Restore panel state
+  if(localStorage.getItem('rc_hidden')==='1') document.getElementById('app').classList.add('rc-hidden');
+}
+
+/* CLOCK */
+function tickClk(){
+  const el=document.getElementById('clk');
+  const f=()=>el.textContent=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  f();setInterval(f,1000);
+}
+
+/* TABS */
+function switchTab(n,el){
+  document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.ltp').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on'); document.getElementById('tab-'+n).classList.add('on');
+  if(n==='mkt'&&!_mktLoaded) fetchMkts();
+  if(n==='swarm'){ initSwarmCanvas(); checkMiroSwarm(); }
+  else stopSwarmCanvas();
+}
+
+/* FETCH CALLS */
+async function fetchCalls(){
+  try{
+    const r=await fetch(BASE+'/api/signals/calls?limit=300&all=1');
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'err');
+    _calls=j.calls||[];
+    dot(true);
+    document.getElementById('tbcalls').innerHTML='calls <em>'+(j.total||_calls.length)+'</em>';
+    renderSigs();
+    const mints=_calls.slice(0,60).map(c=>c.mint).filter(m=>m&&!_img[m]);
+    if(mints.length) fetchImgs(mints);
+    tickAlerts();
+  }catch(e){dot(false);if(!_calls.length)demoData();}
+}
+function dot(on){const d=document.getElementById('wsdot');d.className='tb-dot'+(on?' on':'');}
+
+/* DEXSCREENER IMAGES */
+async function fetchImgs(mints){
+  for(let i=0;i<mints.length;i+=30){
+    try{
+      const r=await fetch('https://api.dexscreener.com/latest/dex/tokens/'+mints.slice(i,i+30).join(','),{signal:AbortSignal.timeout(7000)});
+      if(!r.ok) continue;
+      const j=await r.json();
+      (j.pairs||[]).forEach(p=>{const a=p.baseToken&&p.baseToken.address,img=p.info&&p.info.imageUrl;if(a&&img)_img[a]=img;});
+    }catch(e){}
+  }
+  renderSigs();
+}
+
+/* SOURCE BUTTONS */
+function setupSrc(){
+  document.querySelectorAll('.fb[data-s]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.fb[data-s]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); _src=b.dataset.s; renderSigs();
+    });
+  });
+}
+
+/* FILTERS */
+function onFil(k,v){
+  if(k==='mult'){_F.mult=parseFloat(v);document.getElementById('fvM').textContent=v+'×';document.getElementById('fmult').style.setProperty('--pct',(parseFloat(v)/10*100)+'%');}
+  else if(k==='fdv')   _F.fdv   =parseInt(v)||0;
+  else if(k==='age')   _F.age   =parseInt(v)||0;
+  else if(k==='status')_F.status=v;
+  else if(k==='sort')  _F.sort  =v;
+  localStorage.setItem('ot_fil',JSON.stringify(_F));
+  updFcnt(); renderSigs();
+}
+function updFcnt(){
+  const n=[(_F.mult||0)>0,(_F.fdv||0)>0,(_F.age||0)>0,(_F.status&&_F.status!=='all'),(_F.sort&&_F.sort!=='newest')].filter(Boolean).length;
+  const el=document.getElementById('fcnt');el.textContent=n+' FILTER'+(n>1?'S':'');el.classList.toggle('on',n>0);
+}
+function togFilters(){
+  const r=document.getElementById('fr2'),b=document.getElementById('ftog');
+  r.classList.toggle('on'); b.textContent=r.classList.contains('on')?'⚙ CLOSE':'⚙ FILTER';
+}
+function rstFilters(){
+  Object.keys(_F).forEach(k=>delete _F[k]);
+  localStorage.removeItem('ot_fil');
+  document.getElementById('fmult').value=0;document.getElementById('fvM').textContent='0×';
+  document.getElementById('fmult').style.setProperty('--pct','0%');
+  ['ffdv','fage','fst','fsrt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='fst'?'all':id==='fsrt'?'newest':'0';});
+  updFcnt();renderSigs();
+}
+function restoreFil(){
+  if(_F.mult!=null){document.getElementById('fmult').value=_F.mult;document.getElementById('fvM').textContent=_F.mult+'×';document.getElementById('fmult').style.setProperty('--pct',(_F.mult/10*100)+'%');}
+  if(_F.fdv)   document.getElementById('ffdv').value=_F.fdv;
+  if(_F.age)   document.getElementById('fage').value=_F.age;
+  if(_F.status)document.getElementById('fst').value=_F.status;
+  if(_F.sort)  document.getElementById('fsrt').value=_F.sort;
+  updFcnt();
+}
+
+/* RENDER SIGNALS */
+const SC={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee'};
+
+function renderSigs(){
+  const el=document.getElementById('slist');
+  let rows=_calls.slice();
+  if(_src!=='all') rows=rows.filter(c=>c.source===_src);
+  const mM=parseFloat(_F.mult)||0,mF=parseInt(_F.fdv)||0,mA=parseInt(_F.age)||0,st=_F.status||'all';
+  if(mM>0)  rows=rows.filter(c=>(c.peakMult||0)>=mM);
+  if(mF>0)  rows=rows.filter(c=>(c.entryFdv||0)<=mF);
+  if(mA>0)  rows=rows.filter(c=>(Date.now()-(c.ts||0))<=mA);
+  if(st==='active')rows=rows.filter(c=>!c.closed);
+  else if(st==='2x')rows=rows.filter(c=>(c.peakMult||0)>=2);
+  else if(st==='5x')rows=rows.filter(c=>(c.peakMult||0)>=5);
+  else if(st==='10x')rows=rows.filter(c=>(c.peakMult||0)>=10);
+  const s=_F.sort||'newest';
+  if(s==='mult')    rows.sort((a,b)=>(b.peakMult||0)-(a.peakMult||0));
+  else if(s==='fdv') rows.sort((a,b)=>(a.entryFdv||0)-(b.entryFdv||0));
+  else if(s==='holders')rows.sort((a,b)=>(b.holders||0)-(a.holders||0));
+  else rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  document.getElementById('scnt').textContent=rows.length;
+  const hits=rows.filter(c=>(c.peakMult||0)>=2).length;
+  document.getElementById('tbhr').innerHTML='rate <em>'+(rows.length?Math.round(hits/rows.length*100):0)+'%</em>';
+  if(!rows.length){el.innerHTML='<div class="empty">NO CALLS MATCH<br><span style="font-size:8px;color:rgba(232,160,32,.12)">relax filters</span></div>';return;}
+  el.innerHTML=rows.slice(0,120).map((c,i)=>card(c,i)).join('');
+}
+
+function card(c,i){
+  const m=c.peakMult||1,cur=c.curMult||1;
+  const cls=m>=5?'moon':m>=2?'win':'';
+  const mcs=m>=5?'moon':m>=2?'up':'flat';
+  const ms=m>=2?m.toFixed(1)+'×':cur<.7?'↓'+Math.round(cur*100)+'%':'—';
+  const bw=Math.min(100,Math.round(Math.log10(Math.max(1,m))*100));
+  const src=c.source||'unknown';
+  const col=SC[src]||'#888';
+  const img=c.mint&&_img[c.mint];
+  const L=(c.symbol||c.name||'?').charAt(0).toUpperCase();
+  const ih=img
+    ?`<img class="simg" src="${img}" onerror="this.outerHTML='<div class=sav style=border-color:${col}44;color:${col};background:${col}0e>${L}</div>'">`
+    :`<div class="sav" style="border-color:${col}44;color:${col};background:${col}0e">${L}</div>`;
+  return `<div class="sc ${cls}" style="animation-delay:${Math.min(i*.025,1.2)}s">
+    <div class="stop">
+      ${ih}
+      <span class="ssym" style="color:${col};text-shadow:0 0 10px ${col}55">${esc(c.symbol||c.name||'???')}</span>
+      <span class="sp sp-${src}">${src.replace('_',' ')}</span>
+      <span class="ssp"></span>
+      <span class="smlt ${mcs}">${ms}</span>
+    </div>
+    <div class="sbar"><div class="sbar-f" style="width:${bw}%"></div></div>
+    <div class="smeta">
+      <span>entry <b>${usd(c.entryFdv)}</b></span>
+      ${c.curFdv?`<span>now <b>${usd(c.curFdv)}</b></span>`:''}
+      <span><b>${ago(c.ts)}</b> ago</span>
+      ${c.holders?`<span>h <b>${c.holders.toLocaleString()}</b></span>`:''}
+      ${c.liq?`<span>liq <b>${usd(c.liq)}</b></span>`:''}
+    </div>
+    ${c.milestones&&c.milestones.length?`<div class="sms">▸ ${c.milestones.join('× ▸ ')}× CONFIRMED</div>`:''}
+    <div class="sacts">
+      <button class="sa" onclick="window.open('https://dexscreener.com/solana/${c.mint||''}','_blank')">DEXSCREENER</button>
+      <button class="sa" onclick="cca('${c.mint||''}')">COPY CA</button>
+      <button class="sa g" onclick="armCard('${c.mint||''}','${esc(c.symbol||c.name||'')}')">+ ALERT</button>
+    </div>
+  </div>`;
+}
+function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
+function armCard(m,s){document.getElementById('alm').value=m||s;switchTab('al',document.querySelectorAll('.ltab')[2]);toast('ARMING: '+s);}
+
+/* DEMO */
+function demoData(){
+  _calls=[
+    {symbol:'BONK',name:'Bonk',source:'bonded',entryFdv:3200,curFdv:22400,peakMult:7,curMult:7,ts:Date.now()-3600000,holders:850,liq:14000,milestones:[2,5],mint:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'},
+    {symbol:'WIF',name:'dogwifhat',source:'trending',entryFdv:42000,curFdv:126000,peakMult:3,curMult:3,ts:Date.now()-7200000,holders:1420,liq:42000,milestones:[2],mint:'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm'},
+    {symbol:'NOVA',name:'Nova Signal',source:'new_pools',entryFdv:7800,curFdv:7800,peakMult:1.1,curMult:1.1,ts:Date.now()-900000,holders:72,liq:5800,milestones:[],mint:''},
+    {symbol:'DOGE',name:'Dogecoin',source:'boosted',entryFdv:8500,curFdv:52000,peakMult:6.1,curMult:6.1,ts:Date.now()-10800000,holders:2100,liq:88000,milestones:[2,5],mint:''},
+    {symbol:'PEPE',name:'Pepe',source:'trending_pools',entryFdv:2900,curFdv:12000,peakMult:4.1,curMult:4.1,ts:Date.now()-5400000,holders:380,liq:9200,milestones:[2],mint:''},
+  ];
+  renderSigs();toast('DEMO MODE — START SERVER :3000 FOR LIVE DATA');
+}
+
+/* STATS */
+async function fetchStats(){
+  try{const r=await fetch(BASE+'/api/signals/stats?period='+_period);const j=await r.json();if(j.ok)renderStats(j);}catch(e){}
+}
+function setPd(p){
+  _period=p;
+  ['day','week','month'].forEach(x=>document.getElementById('pd-'+x).classList.toggle('on',x===p));
+  fetchStats();
+}
+function renderStats(j){
+  const t=j.total||0,src=j.sources||{};
+  let x2=0,x5=0,x10=0;
+  Object.values(src).forEach(s=>{x2+=s.x2||0;x5+=s.x5||0;x10+=s.x10||0;});
+  document.getElementById('stot').textContent=t;
+  document.getElementById('s2x').textContent=(t?Math.round(x2/t*100):0)+'%';
+  document.getElementById('s5x').textContent=x5;
+  document.getElementById('s10x').textContent=x10;
+  const C={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee'};
+  const rows=Object.entries(src).sort((a,b)=>(b[1].total||0)-(a[1].total||0)).map(([n,s])=>{
+    const pct=s.total?Math.round((s.x2||0)/s.total*100):0;const c=C[n]||'#888';
+    return `<div class="sr"><span class="srn">${n.replace('_',' ')}</span><div class="srb"><div class="srf" style="width:${pct}%;background:${c};box-shadow:0 0 4px ${c}66"></div></div><span class="srp" style="color:${c}">${pct}%</span><span class="srt">${s.total||0}</span></div>`;
+  }).join('');
+  const best=(j.best||[]).slice(0,6).map(c=>{
+    const w=Math.min(100,((c.peakMult||1)-1)/9*100);
+    return `<div class="sr"><span class="srn" style="color:var(--P)">${esc((c.symbol||c.name||'?').slice(0,10))}</span><div class="srb"><div class="srf" style="width:${w}%;background:#f4c842;box-shadow:0 0 4px rgba(244,200,66,.5)"></div></div><span class="srp" style="color:#f4c842">${(c.peakMult||1).toFixed(1)}×</span><span class="srt">${ago(c.ts)}</span></div>`;
+  }).join('');
+  document.getElementById('sbk').innerHTML='<div class="subhd">BY SOURCE</div>'+(rows||'<div style="padding:6px 12px;font-size:8px;color:var(--muted)">no data yet</div>')+'<div class="subhd">TOP CALLS</div>'+(best||'<div style="padding:6px 12px;font-size:8px;color:var(--muted)">no data yet</div>');
+}
+
+/* MARKETS */
+const SI={SPY:'📊',QQQ:'💻',AAPL:'🍎',NVDA:'🟢',TSLA:'⚡',META:'🔵',MSFT:'🪟',AMZN:'📦','GC=F':'🥇','CL=F':'🛢️','BTC-USD':'₿','ETH-USD':'Ξ','SOL-USD':'◎'};
+const CI={btc:'₿',eth:'Ξ',sol:'◎',bonk:'🐶',doge:'🐕',pepe:'🐸',ton:'💎',ada:'🔵',avax:'🔺',link:'⛓'};
+
+async function fetchMkts(){
+  _mktLoaded=true;
+  const el=document.getElementById('tab-mkt');
+  try{
+    const [sR,cR,fR]=await Promise.allSettled([
+      fetch(BASE+'/api/markets/stocks').then(r=>r.json()),
+      fetch(BASE+'/api/markets/crypto').then(r=>r.json()),
+      fetch(BASE+'/api/markets/forex').then(r=>r.json()),
+    ]);
+    let h='';
+    const sd=(sR.status==='fulfilled'&&sR.value.ok)?sR.value.data:[];
+    if(sd.length){
+      const eq=sd.filter(s=>s.type==='stock'),cm=sd.filter(s=>s.type==='commodity'),cr=sd.filter(s=>s.type==='crypto');
+      if(eq.length) h+=`<div class="mhd">EQUITIES</div>`+eq.map(mkc).join('');
+      if(cm.length) h+=`<div class="mhd">COMMODITIES</div>`+cm.map(mkc).join('');
+      if(cr.length) h+=`<div class="mhd">CRYPTO (YF)</div>`+cr.map(mkc).join('');
+    }
+    const cd=(cR.status==='fulfilled'&&cR.value.ok)?cR.value.data:[];
+    if(cd.length){
+      h+=`<div class="mhd">CRYPTO MARKETS</div>`;
+      h+=cd.map(c=>{
+        const chg=c.price_change_percentage_24h||0;
+        return `<div class="mc" onclick="window.open('https://www.coingecko.com/en/coins/${c.id}','_blank')">
+          <div class="micon">${CI[(c.symbol||c.id||'').toLowerCase()]||'🪙'}</div>
+          <div class="mname"><div class="msym">${(c.symbol||'').toUpperCase()}</div><div class="mfull">${c.name||''} · MKT ${usd(c.market_cap)}</div></div>
+          <div class="mprc"><div class="mpv ${chg>=0?'up':'dn'}">${usd(c.current_price||0)}</div><div class="mchg ${chg>=0?'up':'dn'}">${chg>=0?'+':''}${chg.toFixed(2)}%</div></div>
+        </div>`;
+      }).join('');
+    }
+    const fd=(fR.status==='fulfilled'&&fR.value.ok)?fR.value.data:[];
+    if(fd.length){
+      h+=`<div class="mhd">FOREX // USD BASE</div>`;
+      h+=fd.map(f=>`<div class="mc"><div class="micon" style="font-family:'Syncopate',sans-serif;font-size:7px;color:var(--P);letter-spacing:0">${f.quote}</div><div class="mname"><div class="msym">${f.pair}</div><div class="mfull">US Dollar / ${f.quote}</div></div><div class="mprc"><div class="mpv" style="color:var(--P);font-size:11px">${f.rate?f.rate.toFixed(4):'—'}</div></div></div>`).join('');
+    }
+    if(!h) h='<div class="mload" style="color:var(--A)">BACKEND UNREACHABLE — START SERVER :3000</div>';
+    el.innerHTML=h;
+  }catch(e){
+    el.innerHTML='<div class="mload" style="color:var(--A)">ERROR: '+esc(e.message)+'</div>';
+  }
+}
+function mkc(s){
+  const chg=s.changePct||0;
+  const tv=(s.symbol||'').replace('=F','1!');
+  return `<div class="mc" onclick="window.open('https://www.tradingview.com/chart/?symbol=${tv}','_blank')">
+    <div class="micon">${SI[s.symbol]||'📈'}</div>
+    <div class="mname"><div class="msym">${s.symbol}</div><div class="mfull">${(s.name||'').slice(0,22)} · ${s.marketState||''}</div></div>
+    <div class="mprc"><div class="mpv ${chg>=0?'up':'dn'}">${s.price?s.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</div><div class="mchg ${chg>=0?'up':'dn'}">${chg>=0?'+':''}${chg.toFixed(2)}%</div></div>
+  </div>`;
+}
+
+/* POLYMARKET */
+async function fetchPoly(){
+  _polyLoaded=true;
+  try{
+    const r=await fetch(BASE+'/api/polymarket/markets');
+    const j=await r.json();
+    const m=Array.isArray(j)?j:(j.markets||j.data||[]);
+    const polyCntEl=document.getElementById('polycnt');
+    if(polyCntEl) polyCntEl.textContent=m.length+' markets';
+    const kw=/bitcoin|btc|eth|solana|crypto|fed|rate|inflation/i;
+    let list=m.filter(x=>kw.test(x.question||x.title||'')).slice(0,20);
+    if(!list.length) list=m.slice(0,20);
+    const html=list.map(mkt=>{
+      const q=mkt.question||mkt.title||'';
+      const raw=mkt.outcomePrices?(Array.isArray(mkt.outcomePrices)?mkt.outcomePrices[0]:mkt.outcomePrices):(mkt.bestBid||mkt.price||null);
+      const pct=raw!==null?Math.round(parseFloat(raw)*100):null;
+      const barColor=pct===null?'var(--P3)':pct>=70?'var(--S)':pct>=40?'var(--P)':'var(--A)';
+      const cls=pct===null?'':(pct>=70?'phi':pct>=40?'pmi':'plo');
+      return `<div class="pc" onclick="document.getElementById('sw-news').value=${JSON.stringify(esc(q))};toast('SCENARIO LOADED — switch to SWARM tab')"
+        <div class="pq">${esc(q.slice(0,120))}</div>
+        <div class="pc-meta">
+          <div class="pc-bar"><div class="pc-fill" style="width:${pct||0}%;background:${barColor}"></div></div>
+          <span class="pp ${cls}" style="font-size:11px">${pct!==null?pct+'%':'—'}</span>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('polym').innerHTML=html||'<div class="mload" style="padding:12px">NO MARKETS</div>';
+  }catch(e){
+    const el=document.getElementById('polym');
+    if(el) el.innerHTML='<div class="mload" style="color:var(--A);padding:12px">Polymarket unavailable</div>';
+  }
+}
+
+/* MIROFISH */
+let _miroHidden = localStorage.getItem('ot_miro_hidden')==='1';
+
+function applyMiroPref(){
+  const tab=document.querySelector('#ltabs .ltab[onclick*="swarm"]');
+  const mw =document.querySelector('.mw');
+  const pill=document.getElementById('tbmiro');
+  if(pill) pill.style.opacity=_miroHidden?'.4':'1';
+  if(tab){
+    tab.style.display=_miroHidden?'none':'';
+    if(_miroHidden && document.getElementById('tab-swarm').classList.contains('on')){
+      switchTab('sig',document.querySelectorAll('.ltab')[0]);
+    }
+  }
+  if(mw) mw.style.display=_miroHidden?'none':'';
+}
+function toggleMiro(){
+  _miroHidden=!_miroHidden;
+  localStorage.setItem('ot_miro_hidden',_miroHidden?'1':'0');
+  applyMiroPref();
+  toast(_miroHidden?'MIROFISH HIDDEN':'MIROFISH SHOWN');
+}
+
+async function checkMiro(){
+  const el=document.getElementById('mws'),sim=document.getElementById('mwsim'),btn=document.getElementById('mwrun');
+  try{
+    const r=await fetch(MIRO+'/',{signal:AbortSignal.timeout(3000)});
+    if(r.ok||r.status<500){
+      el.innerHTML='<span style="color:var(--S);text-shadow:var(--gS)">● ONLINE</span> — swarm engine ready';
+      sim.style.display='flex';sim.style.flexDirection='column';btn.style.display='inline-block';
+    }else throw new Error('HTTP '+r.status);
+  }catch(e){
+    el.innerHTML='<span style="color:var(--A)">● OFFLINE</span> — run START_MIROFISH.bat';
+    sim.style.display='none';btn.style.display='none';
+  }
+}
+async function runMiro(){
+  const tok=document.getElementById('mwtok').value.trim();
+  const nws=document.getElementById('mwnws').value.trim();
+  const res=document.getElementById('mwres');
+  if(!tok||!nws){toast('ENTER TOKEN + ANNOUNCEMENT');return;}
+  res.style.display='block';res.textContent='⏳ uploading seed…';
+  try{
+    await fetch(MIRO+'/api/upload/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`TOKEN: ${tok}\nNEWS: ${nws}\nCONTEXT: Solana Twitter`,title:tok}),signal:AbortSignal.timeout(10000)});
+    res.textContent='⏳ launching swarm…';
+    const sv=await fetch(MIRO+'/api/simulate/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prediction_goal:`How will "${nws}" affect ${tok} in 7d?`,num_agents:50,max_rounds:5,platform:'twitter'}),signal:AbortSignal.timeout(15000)});
+    const {simulation_id:sid}=await sv.json();
+    let done=false,tries=0;
+    while(!done&&tries<24){
+      await new Promise(r=>setTimeout(r,3000));tries++;
+      const st=await fetch(MIRO+'/api/simulate/status/'+sid,{signal:AbortSignal.timeout(5000)});
+      const stj=await st.json();
+      res.textContent='⏳ '+(stj.progress||'?')+'% complete…';
+      if(stj.status==='completed'||(stj.progress||0)>=100){done=true;}
+    }
+    const rp=await fetch(MIRO+'/api/report/'+sid,{signal:AbortSignal.timeout(10000)});
+    const rpj=await rp.json();
+    const sum=rpj.summary||rpj.prediction||rpj.result||JSON.stringify(rpj).slice(0,400);
+    res.innerHTML='<span style="color:#b07fff">🐟 SWARM:</span><br>'+esc(sum);
+    toast('SIMULATION COMPLETE');
+  }catch(e){res.innerHTML='<span style="color:var(--A)">ERROR: '+esc(e.message)+'</span>';}
+}
+
+/* ALERTS */
+async function reqNotif(){
+  if(Notification.permission==='default') _notif=(await Notification.requestPermission())==='granted';
+  else _notif=Notification.permission==='granted';
+  if(_notif) document.querySelector('.nbr').style.display='none';
+}
+function addAl(){
+  const m=document.getElementById('alm').value.trim();
+  const t=document.getElementById('alt').value;
+  const v=parseFloat(document.getElementById('alv').value);
+  if(!m||!v){toast('FILL ALL FIELDS');return;}
+  _alerts.push({id:Date.now(),mint:m,type:t,val:v,fired:false,ts:Date.now()});
+  localStorage.setItem('ot_al',JSON.stringify(_alerts));
+  document.getElementById('alm').value='';document.getElementById('alv').value='';
+  renderAlerts();toast('ALERT ARMED');
+}
+function delAl(id){_alerts=_alerts.filter(a=>a.id!==id);localStorage.setItem('ot_al',JSON.stringify(_alerts));renderAlerts();}
+function renderAlerts(){
+  const el=document.getElementById('allist');
+  if(!_alerts.length){el.innerHTML='<div class="empty">NO ALERTS ARMED</div>';return;}
+  el.innerHTML=_alerts.map(a=>`<div class="ait">
+    <div class="adot ${a.fired?'f':''}"></div>
+    <div class="amet">
+      <div style="color:var(--text)">${esc(a.mint.length>18?a.mint.slice(0,16)+'…':a.mint)}</div>
+      <div>${a.type==='mult'?'target '+a.val+'×':'FDV ≥ '+usd(a.val)}${a.fired?' <span style="color:#f4c842">▸ FIRED</span>':''}</div>
+    </div>
+    <button class="adel" onclick="delAl(${a.id})">✕</button>
+  </div>`).join('');
+}
+function tickAlerts(){
+  if(!_alerts.length||!_calls.length) return;
+  let ch=false;
+  _alerts.forEach(a=>{
+    if(a.fired) return;
+    const c=_calls.find(x=>x.mint===a.mint||x.symbol===a.mint||x.name===a.mint);
+    if(!c) return;
+    const hit=(a.type==='mult'&&(c.peakMult||0)>=a.val)||(a.type==='fdv'&&(c.curFdv||0)>=a.val);
+    if(hit){a.fired=true;ch=true;const msg=`SHADDAI: ${a.mint.slice(0,8)} hit ${a.type==='mult'?a.val+'×':usd(a.val)}`;toast('🚨 '+msg);if(_notif)new Notification('SHADDAI ALERT',{body:msg});}
+  });
+  if(ch){localStorage.setItem('ot_al',JSON.stringify(_alerts));renderAlerts();}
+}
+
+/* UTILS */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function usd(n){const v=Number(n)||0;if(v>=1e9)return'$'+(v/1e9).toFixed(2)+'B';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+v.toFixed(0);}
+function ago(ts){const s=Math.max(0,(Date.now()-(ts||0))/1000);if(s<60)return Math.round(s)+'s';if(s<3600)return Math.round(s/60)+'m';if(s<86400)return Math.round(s/3600)+'h';return Math.round(s/86400)+'d';}
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2600);}
+
+/* ── RIGHT PANEL TOGGLE ──────────────────────────── */
+function toggleRC(){
+  const app=document.getElementById('app');
+  const btn=document.getElementById('rc-toggle-btn');
+  const hidden=app.classList.toggle('rc-hidden');
+  btn.textContent=hidden?'▌ PANEL':'▐ PANEL';
+  btn.style.color=hidden?'var(--P)':'';
+  localStorage.setItem('rc_hidden', hidden?'1':'0');
+}
+
+/* ── RIGHT PANEL TABS ───────────────────────────── */
+function rTab(name, el){
+  document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.rpane').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('rpane-'+name).classList.add('on');
+  if(name==='poly'&&!_polyLoaded) fetchPoly();
+}
+let _polyLoaded=false;
+
+/* ══════════════════════════════════════════════════════
+   EXTENDED DATA FEEDS
+   ══════════════════════════════════════════════════════ */
+
+/* ── FEAR & GREED ───────────────────────────────── */
+const FNG_LABELS={
+  'Extreme Fear':{c:'#ff3c2a',l:'EXTREME FEAR'},
+  'Fear':{c:'#ff7c44',l:'FEAR'},
+  'Neutral':{c:'var(--C)',l:'NEUTRAL'},
+  'Greed':{c:'var(--S)',l:'GREED'},
+  'Extreme Greed':{c:'#00ff9c',l:'EXTREME GREED'}
+};
+async function fetchFearGreed(){
+  try{
+    const r=await fetch(BASE+'/api/markets/fear-greed');
+    const j=await r.json();
+    if(!j.ok||!j.data||!j.data.length) return;
+    const d=j.data; // newest first
+    const cur=d[0];
+    const v=parseInt(cur.value);
+    const cfg=FNG_LABELS[cur.value_classification]||{c:'var(--P)',l:cur.value_classification};
+    document.getElementById('fng-val').textContent=v;
+    document.getElementById('fng-val').style.color=cfg.c;
+    document.getElementById('fng-lbl').textContent=cfg.l;
+    document.getElementById('fng-lbl').style.color=cfg.c;
+    document.getElementById('fng-needle').style.left=(v)+'%';
+    // history (last 7 days)
+    document.getElementById('fng-hist').innerHTML=d.slice(0,7).map(x=>{
+      const vv=parseInt(x.value);
+      const cc=FNG_LABELS[x.value_classification]||{c:'var(--text2)'};
+      const lbl=new Date(parseInt(x.timestamp)*1000).toLocaleDateString('en-US',{weekday:'short'});
+      return `<div class="fng-hd"><div class="fng-hd-v" style="color:${cc.c}">${vv}</div><div class="fng-hd-l">${lbl}</div></div>`;
+    }).join('');
+  }catch(e){}
+}
+
+/* ── GLOBAL MARKET STATS ────────────────────────── */
+function fmtCap(n){if(!n)return'—';if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T';if(n>=1e9)return'$'+(n/1e9).toFixed(0)+'B';return'$'+(n/1e6).toFixed(0)+'M';}
+async function fetchGlobal(){
+  try{
+    const r=await fetch(BASE+'/api/markets/global');
+    const j=await r.json();
+    if(!j.ok||!j.data) return;
+    const d=j.data;
+    const mcap=d.total_market_cap&&d.total_market_cap.usd;
+    const vol =d.total_volume&&d.total_volume.usd;
+    const btcDom=(d.market_cap_percentage&&d.market_cap_percentage.btc)||0;
+    const ethDom=(d.market_cap_percentage&&d.market_cap_percentage.eth)||0;
+    const altSeason=Math.round(100-(btcDom+ethDom));
+    const el=n=>document.getElementById(n);
+    if(el('gst-mcap')) el('gst-mcap').textContent=fmtCap(mcap);
+    if(el('gst-dom'))  el('gst-dom').textContent=btcDom.toFixed(1)+'%';
+    if(el('gst-alts')) el('gst-alts').textContent=altSeason+'%';
+    if(el('gst-vol'))  el('gst-vol').textContent=fmtCap(vol);
+  }catch(e){}
+}
+
+/* ── TRENDING COINS ─────────────────────────────── */
+async function fetchTrending(){
+  try{
+    const r=await fetch(BASE+'/api/markets/trending');
+    const j=await r.json();
+    if(!j.ok||!j.data) return;
+    const coins=(j.data.coins||[]).slice(0,8);
+    document.getElementById('trend-list').innerHTML=coins.map((c,i)=>{
+      const item=c.item||c;
+      const sym=(item.symbol||'').toUpperCase();
+      const name=item.name||'';
+      const rank=item.market_cap_rank||'—';
+      const score=(item.score||i)+1;
+      const thumb=item.thumb||item.small||'';
+      return `<div class="di">
+        <div class="trend-rank">${score}</div>
+        ${thumb?`<img src="${esc(thumb)}" style="width:22px;height:22px;border-radius:3px;flex-shrink:0;" onerror="this.style.display='none'">`:'<div class="trend-fire">🔥</div>'}
+        <div class="di-main"><div class="di-name">${esc(sym)}</div><div class="di-sub">${esc(name)} · MCap #${rank}</div></div>
+      </div>`;
+    }).join('')||'<div class="mload" style="padding:12px">NO DATA</div>';
+  }catch(e){}
+}
+
+/* ── DEXSCREENER HOT PAIRS ──────────────────────── */
+async function fetchDexHot(){
+  try{
+    const r=await fetch(BASE+'/api/markets/dex-hot');
+    const j=await r.json();
+    if(!j.ok||!j.data) return;
+    const pairs=j.data.slice(0,12);
+    if(!pairs.length){document.getElementById('dex-hot-list').innerHTML='<div class="mload" style="padding:12px">NO SOL PAIRS</div>';return;}
+    document.getElementById('dex-hot-list').innerHTML=pairs.map(p=>{
+      const sym=(p.symbol||p.tokenAddress||'').slice(0,8).toUpperCase();
+      const name=p.description||(p.tokenAddress||'').slice(0,8)+'…';
+      const icon=p.icon||p.image||'';
+      const links=(p.links||[]).find(l=>l.type==='twitter')||{};
+      return `<div class="di" onclick="${p.url?`window.open('${esc(p.url)}','_blank')`:''}">
+        ${icon?`<img src="${esc(icon)}" style="width:22px;height:22px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">`:`<div class="di-icon">🔥</div>`}
+        <div class="di-main">
+          <div class="di-name">${esc(sym)}</div>
+          <div class="di-sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${esc(name)}</div>
+        </div>
+        <div style="font-size:7px;color:var(--S);font-family:'Syncopate',sans-serif;letter-spacing:1px">SOL</div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+/* ── SOLANA TOKEN PRICES (DexScreener) ──────────── */
+const SOL_ICONS={SOL:'◎',BONK:'🐶',WIF:'🐕',POPCAT:'🐱',BOME:'💣',TRUMP:'🇺🇸',PNUT:'🥜',MOODENG:'🦛',GOAT:'🐐',AI16Z:'🤖',PENGU:'🐧',MEW:'🐈'};
+async function fetchJupiter(){
+  try{
+    const r=await fetch(BASE+'/api/markets/jupiter');
+    const j=await r.json();
+    if(!j.ok||!j.data||!j.data.data) return;
+    const prices=j.data.data;
+    const list=Object.entries(prices).slice(0,12);
+    if(!list.length){document.getElementById('jup-list').innerHTML='<div class="mload" style="padding:12px">NO DATA</div>';return;}
+    document.getElementById('jup-list').innerHTML=list.map(([sym,p])=>{
+      const price=p.price||0;
+      const chg=p.priceChange24h||0;
+      const icon=SOL_ICONS[sym]||'🪙';
+      const fmt=price>1000?'$'+price.toLocaleString(undefined,{maximumFractionDigits:0}):price>1?'$'+price.toFixed(4):'$'+price.toFixed(8);
+      const chgStr=chg?`<div class="di-chg ${chg>=0?'up':'dn'}">${chg>=0?'+':''}${chg.toFixed(1)}%</div>`:'';
+      return `<div class="di" onclick="document.getElementById('alm').value='${esc(sym)}';switchTab('al',document.querySelectorAll('.ltab')[2])" title="Click to arm alert for ${esc(sym)}">
+        <div class="di-icon">${icon}</div>
+        <div class="di-main"><div class="di-name">${esc(sym)}</div><div class="di-sub">Solana · DexScreener</div></div>
+        <div class="di-val"><div class="di-prc" style="color:var(--P)">${fmt}</div>${chgStr}</div>
+      </div>`;
+    }).join('');
+  }catch(e){document.getElementById('jup-list').innerHTML='<div class="mload" style="padding:12px;color:var(--A)">FETCH ERROR</div>';}
+}
+
+/* ── SOLANA NETWORK ─────────────────────────────── */
+async function fetchSolNet(){
+  try{
+    const r=await fetch(BASE+'/api/network/solana');
+    const j=await r.json();
+    if(!j.ok||!j.data) return;
+    const d=j.data;
+    const tps=d.tps;
+    const slot=d.slot;
+    const circ=d.circulatingSupply;
+    const tpsEl=document.getElementById('sol-tps');
+    const barEl=document.getElementById('sol-tps-bar');
+    const slotEl=document.getElementById('sol-slot');
+    const supEl=document.getElementById('sol-supply');
+    if(tpsEl&&tps!==null){ tpsEl.textContent=tps.toLocaleString(); if(barEl) barEl.style.width=Math.min(100,tps/50)+'%'; }
+    if(slotEl&&slot!==null) slotEl.textContent=slot.toLocaleString();
+    if(supEl&&circ!==null) supEl.textContent=(circ/1e9).toFixed(2)+'B';
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════
+   SWARM CANVAS (inline ocean visualization)
+   ══════════════════════════════════════════════════════ */
+let _sraf=null, _sAgents=[], _sT=0, _sPhase='idle', _sBull=0, _sBear=0, _sMiroOk=false, _sRunning=false;
+
+function initSwarmCanvas(){
+  const cv = document.getElementById('swarm-canvas');
+  if(!cv) return;
+  const tab = document.getElementById('tab-swarm');
+  cv.width  = tab.offsetWidth  || cv.parentElement.offsetWidth;
+  cv.height = tab.offsetHeight || cv.parentElement.offsetHeight;
+  _sInitAgents(30);
+  if(_sraf) cancelAnimationFrame(_sraf);
+  _sraf = null;
+  _sLoop();
+}
+function stopSwarmCanvas(){ if(_sraf){cancelAnimationFrame(_sraf);_sraf=null;} }
+
+function _sInitAgents(n){
+  const cv=document.getElementById('swarm-canvas');
+  if(!cv) return;
+  _sAgents = Array.from({length:n},(_, i)=>{
+    const a = {
+      x:Math.random()*cv.width, y:60+Math.random()*(cv.height-130),
+      vx:(Math.random()-.5)*1.2, vy:(Math.random()-.5)*1.2,
+      phase:Math.random()*Math.PI*2, depth:0.2+Math.random()*0.8,
+      opinion:'neut', opStr:0, trail:[]
+    };
+    a.size=1.5+a.depth*2; a.speed=(1-a.depth*0.4)*1.3;
+    return a;
+  });
+}
+
+function _sLoop(){
+  const cv=document.getElementById('swarm-canvas');
+  if(!cv||!cv.closest('#tab-swarm.on')){_sraf=null;return;}
+  const ctx=cv.getContext('2d');
+  _sT+=0.016;
+  const W=cv.width, H=cv.height;
+
+  // bg
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#010b10'); bg.addColorStop(0.5,'#011520'); bg.addColorStop(1,'#010a0e');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // light rays
+  for(let i=0;i<4;i++){
+    const xp=W*(0.15+i*0.24)+Math.sin(_sT*0.1+i)*12;
+    const g=ctx.createLinearGradient(xp,0,xp+20,H*0.55);
+    g.addColorStop(0,'rgba(0,212,220,0.022)'); g.addColorStop(1,'rgba(0,212,220,0)');
+    ctx.beginPath(); ctx.moveTo(xp,0); ctx.lineTo(xp+20,H*0.55); ctx.lineTo(xp-4,0);
+    ctx.fillStyle=g; ctx.fill();
+  }
+
+  // connections
+  if(_sPhase==='simulating'||_sPhase==='resolving'){
+    const cx=W/2, cy=(H-80)/2+46;
+    for(let i=0;i<_sAgents.length;i++){
+      const a=_sAgents[i];
+      const d=Math.hypot(a.x-cx,a.y-cy);
+      if(d<120){
+        const al=(1-d/120)*0.1*(1+Math.sin(_sT*3+i)*0.5);
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(cx,cy);
+        ctx.strokeStyle=`rgba(0,212,220,${al})`; ctx.lineWidth=0.5; ctx.stroke();
+      }
+    }
+  }
+
+  // agents
+  const CX=W/2, CY=(H-80)/2+46;
+  _sAgents.forEach((a,i)=>{
+    // target
+    let tx=null,ty=null;
+    if(_sPhase==='warming'||_sPhase==='simulating'){
+      tx=CX+Math.cos(_sT*0.5+i*0.13)*45; ty=CY+Math.sin(_sT*0.5+i*0.13)*45;
+    } else if(_sPhase==='resolving'){
+      tx=a.opinion==='bull'?CX-W*0.2:CX+W*0.2; ty=CY+(i%5-2)*14;
+    }
+    if(tx!==null){ a.vx+=(tx-a.x)*0.05; a.vy+=(ty-a.y)*0.05; }
+    a.vx+=Math.sin(_sT*a.depth*8+a.phase)*0.04;
+    a.vy+=Math.cos(_sT*a.depth*7+a.phase)*0.04;
+    // bounds
+    if(a.x<10)a.vx+=0.3; if(a.x>W-10)a.vx-=0.3;
+    if(a.y<50)a.vy+=0.3; if(a.y>H-90)a.vy-=0.3;
+    a.vx*=0.9; a.vy*=0.9;
+    const sp=Math.hypot(a.vx,a.vy), mx=a.speed*(_sPhase==='idle'?1:2.5);
+    if(sp>mx){a.vx=a.vx/sp*mx; a.vy=a.vy/sp*mx;}
+    a.trail.push({x:a.x,y:a.y}); if(a.trail.length>8)a.trail.shift();
+    a.x+=a.vx; a.y+=a.vy;
+
+    // color
+    let r=0,g=180,b=200;
+    if(a.opinion==='bull'&&a.opStr>0){g=Math.round(180+(255-180)*a.opStr);b=Math.round(200+(156-200)*a.opStr);}
+    else if(a.opinion==='bear'&&a.opStr>0){r=Math.round(200+(255-200)*a.opStr);g=Math.round(80*(1-a.opStr));b=Math.round(180*(1-a.opStr));}
+    const col=`rgba(${r},${g},${b},`;
+
+    // trail
+    if(a.trail.length>1){
+      ctx.beginPath(); ctx.moveTo(a.trail[0].x,a.trail[0].y);
+      for(let k=1;k<a.trail.length;k++) ctx.lineTo(a.trail[k].x,a.trail[k].y);
+      ctx.strokeStyle=col+(a.depth*0.15)+')'; ctx.lineWidth=a.size*0.5; ctx.lineCap='round'; ctx.stroke();
+    }
+    // glow
+    const gr=ctx.createRadialGradient(a.x,a.y,0,a.x,a.y,a.size*3.5);
+    gr.addColorStop(0,col+(a.depth*0.55)+')'); gr.addColorStop(1,col+'0)');
+    ctx.beginPath(); ctx.arc(a.x,a.y,a.size*3.5,0,Math.PI*2);
+    ctx.fillStyle=gr; ctx.fill();
+    // core
+    ctx.beginPath(); ctx.arc(a.x,a.y,a.size*(0.8+Math.sin(_sT*3+a.phase)*0.15),0,Math.PI*2);
+    ctx.fillStyle=col+a.depth+')'; ctx.fill();
+  });
+
+  // data node
+  if(_sPhase!=='idle'){
+    const pr=1+Math.sin(_sT*3)*0.12;
+    const nr=16*pr;
+    const ng=ctx.createRadialGradient(CX,CY,0,CX,CY,nr*2.5);
+    ng.addColorStop(0,'rgba(0,212,220,0.5)'); ng.addColorStop(1,'rgba(0,212,220,0)');
+    ctx.beginPath(); ctx.arc(CX,CY,nr*2.5,0,Math.PI*2); ctx.fillStyle=ng; ctx.fill();
+    ctx.beginPath(); ctx.arc(CX,CY,nr*0.5,0,Math.PI*2); ctx.fillStyle='rgba(0,212,220,0.8)'; ctx.fill();
+  }
+
+  // scanlines
+  ctx.fillStyle='rgba(0,0,0,0.04)';
+  for(let y=0;y<H;y+=4) ctx.fillRect(0,y,W,1);
+
+  _sraf=requestAnimationFrame(_sLoop);
+}
+
+async function checkMiroSwarm(){
+  const el=document.getElementById('sw-status');
+  const form=document.getElementById('sw-form');
+  try{
+    const r=await fetch(MIRO+'/',{signal:AbortSignal.timeout(3000)});
+    _sMiroOk=r.ok||r.status<500;
+  }catch(e){_sMiroOk=false;}
+  if(el) el.innerHTML=_sMiroOk?'<span style="color:#00ff9c">● ONLINE</span>':'<span style="color:#ff3d5a">● OFFLINE</span>';
+  if(form){ form.style.display=_sMiroOk?'flex':'none'; }
+}
+
+async function runSwarm(){
+  if(_sRunning) return;
+  const tok  = (document.getElementById('sw-tok').value||'').trim();
+  const news = (document.getElementById('sw-news').value||'').trim();
+  const res  = document.getElementById('sw-res');
+  const prog = document.getElementById('sw-prog-wrap');
+  const progF= document.getElementById('sw-prog-f');
+  if(!tok||!news){toast('ENTER TOKEN + SCENARIO');return;}
+  _sRunning=true; _sPhase='warming';
+  document.getElementById('sw-go').disabled=true;
+  prog.style.display='block'; progF.style.width='5%';
+  res.innerHTML='<span style="color:#00d4dc">⌛ launching swarm…</span>';
+  _sInitAgents(30);
+  try{
+    await fetch(MIRO+'/api/upload/text',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:`TOKEN:${tok}\nSCENARIO:${news}\nCONTEXT:Solana crypto`,title:tok}),signal:AbortSignal.timeout(12000)});
+    progF.style.width='20%'; _sPhase='simulating';
+    const sv=await fetch(MIRO+'/api/simulate/start',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prediction_goal:`How will "${news}" impact ${tok} in 7 days? Bull or bear?`,num_agents:30,max_rounds:5,platform:'twitter'}),
+      signal:AbortSignal.timeout(15000)});
+    const {simulation_id:sid}=await sv.json();
+    let done=false,tries=0;
+    while(!done&&tries<24){
+      await new Promise(r=>setTimeout(r,3000)); tries++;
+      try{
+        const st=await fetch(MIRO+'/api/simulate/status/'+sid,{signal:AbortSignal.timeout(5000)});
+        const stj=await st.json();
+        const p=Math.min(88,20+(stj.progress||0)*0.68);
+        progF.style.width=p+'%';
+        res.innerHTML=`<span style="color:#00d4dc">⌛ round ${stj.current_round||tries} · ${stj.agents_active||30} agents</span>`;
+        const pp=(stj.progress||0)/100;
+        if(pp>0.3) _sAgents.forEach((a,i)=>{
+          if(Math.random()<0.08){ a.opinion=i<_sAgents.length*(_sBull||0.5)?'bull':'bear'; a.opStr=Math.min(1,a.opStr+0.06);}
+        });
+        if(stj.status==='completed'||(stj.progress||0)>=100){done=true;}
+      }catch(e){}
+    }
+    progF.style.width='95%'; _sPhase='resolving';
+    const rp=await fetch(MIRO+'/api/report/'+sid,{signal:AbortSignal.timeout(12000)});
+    const rpj=await rp.json();
+    progF.style.width='100%';
+    const sum=(rpj.summary||rpj.prediction||rpj.result||'').slice(0,250);
+    const isUp=/bull|up|buy|positive|rise|pump/i.test(sum);
+    const isDn=/bear|down|sell|negative|fall|dump/i.test(sum);
+    _sBull=rpj.bullish_pct||rpj.bull_pct||(isUp?0.65:0.35);
+    _sBear=1-_sBull;
+    _sAgents.forEach((a,i)=>{ a.opinion=i<_sAgents.length*_sBull?'bull':'bear'; a.opStr=1; });
+    _sAgents.sort(()=>Math.random()-0.5);
+    _sPhase='done';
+    res.innerHTML=`<span style="color:${isUp?'#00ff9c':isDn?'#ff3d5a':'#00d4dc'}">${isUp?'▲ BULLISH':isDn?'▼ BEARISH':'─ NEUTRAL'} — ${esc(tok.toUpperCase())}</span><br><span style="color:rgba(200,240,244,.4)">${esc(sum)}</span>`;
+    toast('SWARM: '+(isUp?'BULLISH':isDn?'BEARISH':'NEUTRAL')+' on '+tok);
+  }catch(e){
+    _sPhase='idle'; res.innerHTML='<span style="color:#ff3d5a">ERROR: '+esc(e.message.slice(0,50))+'</span>';
+  }finally{
+    _sRunning=false; document.getElementById('sw-go').disabled=false;
+    setTimeout(()=>{prog.style.display='none';progF.style.width='0%';},3000);
+  }
+}
+</script>
+</body>
+</html>

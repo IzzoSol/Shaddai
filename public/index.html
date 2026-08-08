@@ -224,9 +224,8 @@
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
       <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
-    <button class="bg skip" onclick="shdGate.guest()">Continue as Guest</button>
     <div class="msg" id="shdAuthMsg"></div>
-    <div class="fine" id="shdAuthFine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account. Guests can browse — your work just won't persist.</div>
+    <div class="fine" id="shdAuthFine">Sign in to enter your world, forge agents, and claim your office in SHADDAI City. Everything saves to your account across sessions.</div>
   </div></div>
 </div>
 <div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
@@ -259,7 +258,17 @@
       if(!e||!p){ msg('Enter email and password.'); return; }
       msg(mode==='create'?'Creating your account…':'Signing in…','#8ba0a0');
       try{
-        if(mode==='create'){ await firebase.auth().createUserWithEmailAndPassword(e,p); msg('Account created ✓ — welcome!','#00e5a0'); }
+        if(mode==='create'){
+          var _cred=await firebase.auth().createUserWithEmailAndPassword(e,p);
+          msg('Account created ✓ — welcome!','#00e5a0');
+          // Referral cookie attribution — fires once, safe to ignore failures
+          try{
+            var _rc=document.cookie.split(';').map(function(c){return c.trim();}).find(function(c){return c.startsWith('shd_ref=');});
+            if(_rc){var _rcode=decodeURIComponent(_rc.split('=').slice(1).join('=')),_ruid=_cred&&_cred.user&&_cred.user.uid;
+              if(_rcode&&_ruid){fetch('/api/referral/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:_rcode,newUserId:_ruid,newUserEmail:e})}).catch(function(){});
+              document.cookie='shd_ref=; max-age=0; path=/; samesite=lax';}}
+          }catch(_){}
+        }
         else { await firebase.auth().signInWithEmailAndPassword(e,p); msg('Signed in ✓','#00e5a0'); }
         G.hide();  // close the gate right away on success (don't wait on anything)
       }catch(err){
@@ -3869,98 +3878,114 @@ body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePa
 /* GLITCH — dark neon CRT, cyan topbar + green action (DEFAULT) */
 html[data-theme-skin="glitch"]{
   --sk-bg:#000000; --sk-surface:#080808; --sk-surface2:#0d0d0d; --sk-surface3:#111111;
-  --sk-border:rgba(255,255,255,.08); --sk-border-bright:rgba(255,255,255,.18);
-  --sk-text:#e8e8e8; --sk-muted:#8a8a8a; --sk-faint:#444444;
+  --sk-border:rgba(0,255,136,.18); --sk-border-bright:rgba(0,255,136,.4);
+  --sk-text:#f0f4f0; --sk-muted:#b8c8b8; --sk-faint:#5a6a5a;
   --sk-accent:#00ff88; --sk-accent2:#00f0ff; --sk-danger:#ff1a1a; --sk-warning:#f5e000; --sk-purple:#ee00ff;
   --sk-btn-text:#000000; --sk-radius:3px; --sk-bw:1px;
   --sk-display:'Orbitron', monospace; --sk-body:'Share Tech Mono', ui-monospace, monospace;
-  --sk-shadow:0 0 0 1px rgba(0,255,136,.06); --sk-glow:0 0 6px rgba(0,255,136,.5);
+  --sk-shadow:0 0 0 1px rgba(0,255,136,.08); --sk-glow:0 0 8px rgba(0,255,136,.6);
   /* remap dashboard vars */
   --bg-deep:#000; --bg-primary:#050505; --bg:#000; --bg-card:#080808; --bg-glass:rgba(6,8,8,.92); --c:#080808; --panel:#080808;
-  --accent:#00ff88; --a:#00ff88; --accent-dim:rgba(0,255,136,.10); --accent-glow:rgba(0,255,136,.30);
+  --accent:#00ff88; --a:#00ff88; --accent-dim:rgba(0,255,136,.12); --accent-glow:rgba(0,255,136,.35);
   --secondary:#00f0ff; --tertiary:#00f0ff; --warning:#f5e000; --danger:#ff1a1a; --gold:#f5e000;
-  --border:rgba(255,255,255,.08); --b:rgba(255,255,255,.08); --border-glow:rgba(0,255,136,.28);
-  --text-primary:#e8e8e8; --text:#e8e8e8; --t:#e8e8e8; --text-secondary:#8a8a8a; --text-muted:#8a8a8a; --s:#8a8a8a; --m:#444;
+  --border:rgba(0,255,136,.18); --b:rgba(0,255,136,.18); --border-glow:rgba(0,255,136,.35);
+  --text-primary:#f0f4f0; --text:#f0f4f0; --t:#f0f4f0; --text-secondary:#b8c8b8; --text-muted:#a0b4a0; --s:#a0b4a0; --m:#5a6a5a;
 }
 
-/* TERMINAL — phosphor-green CRT on near-black */
+/* TERMINAL — LIME phosphor CRT on green-black (distinct from glitch's spring-green) */
 html[data-theme-skin="terminal"]{
-  --sk-bg:#030a03; --sk-surface:#041004; --sk-surface2:#061a06; --sk-surface3:#082208;
-  --sk-border:rgba(0,255,65,.25); --sk-border-bright:rgba(0,255,65,.5);
-  --sk-text:#00ff41; --sk-muted:rgba(0,255,65,.55); --sk-faint:rgba(0,255,65,.3);
-  --sk-accent:#00ff41; --sk-accent2:#00c030; --sk-danger:#ff3b30; --sk-warning:#ffb000; --sk-purple:#ffb000;
-  --sk-btn-text:#000000; --sk-radius:2px; --sk-bw:1px;
+  --sk-bg:#0a1403; --sk-surface:#0f1e05; --sk-surface2:#152808; --sk-surface3:#1b330a;
+  --sk-border:rgba(150,255,60,.35); --sk-border-bright:rgba(150,255,60,.7);
+  --sk-text:#ddff99; --sk-muted:#b8e870; --sk-faint:rgba(150,255,60,.45);
+  --sk-accent:#9dff2f; --sk-accent2:#d6ff33; --sk-danger:#ff6a52; --sk-warning:#eaff3a; --sk-purple:#d6ff33;
+  --sk-btn-text:#0a1400; --sk-radius:2px; --sk-bw:1px;
   --sk-display:'VT323', monospace; --sk-body:'Share Tech Mono', ui-monospace, monospace;
-  --sk-shadow:0 0 0 1px rgba(0,255,65,.10); --sk-glow:0 0 6px rgba(0,255,65,.5);
-  --bg-deep:#020602; --bg-primary:#030a03; --bg:#030a03; --bg-card:#041004; --bg-glass:rgba(4,16,4,.92); --c:#041004; --panel:#041004;
-  --accent:#00ff41; --a:#00ff41; --accent-dim:rgba(0,255,65,.08); --accent-glow:rgba(0,255,65,.4);
-  --secondary:#00c030; --tertiary:#00c030; --warning:#ffb000; --danger:#ff3b30; --gold:#ffb000;
-  --border:rgba(0,255,65,.25); --b:rgba(0,255,65,.25); --border-glow:rgba(0,255,65,.4);
-  --text-primary:#00ff41; --text:#00ff41; --t:#00ff41; --text-secondary:rgba(0,255,65,.7); --text-muted:rgba(0,255,65,.55); --s:rgba(0,255,65,.55); --m:rgba(0,255,65,.3);
-}
-
-/* BRUTALIST — light, hard black borders, yellow accent, no radius */
-html[data-theme-skin="brutalist"]{
-  --sk-bg:#f5f4f0; --sk-surface:#ffffff; --sk-surface2:#f0ede6; --sk-surface3:#e8e4dc;
-  --sk-border:#0a0804; --sk-border-bright:#0a0804;
-  --sk-text:#0a0804; --sk-muted:#5a5248; --sk-faint:#a8a09a;
-  --sk-accent:#f5c000; --sk-accent2:#0a0804; --sk-danger:#d92d20; --sk-warning:#b54708; --sk-purple:#6941c6;
-  --sk-btn-text:#0a0804; --sk-radius:0px; --sk-bw:2px;
-  --sk-display:"Cabinet Grotesk", system-ui, sans-serif; --sk-body:"Cabinet Grotesk", system-ui, sans-serif;
-  --sk-shadow:4px 4px 0 #0a0804; --sk-glow:none;
-  --bg-deep:#e8e4dc; --bg-primary:#f5f4f0; --bg:#f5f4f0; --bg-card:#ffffff; --bg-glass:rgba(255,255,255,.96); --c:#ffffff; --panel:#ffffff;
-  --accent:#f5c000; --a:#f5c000; --accent-dim:rgba(245,192,0,.14); --accent-glow:rgba(10,8,4,.12);
-  --secondary:#0a0804; --tertiary:#6941c6; --warning:#b54708; --danger:#d92d20; --gold:#f5c000;
-  --border:#0a0804; --b:#0a0804; --border-glow:#0a0804;
-  --text-primary:#0a0804; --text:#0a0804; --t:#0a0804; --text-secondary:#5a5248; --text-muted:#5a5248; --s:#5a5248; --m:#a8a09a;
-}
-
-/* SERIF — premium cream, forest-green accent, soft radius */
-html[data-theme-skin="serif"]{
-  --sk-bg:#f8f6f0; --sk-surface:#ffffff; --sk-surface2:#f2ede4; --sk-surface3:#ece7dc;
-  --sk-border:rgba(38,28,8,.08); --sk-border-bright:rgba(38,28,8,.14);
-  --sk-text:#1c1710; --sk-muted:#6b5f4e; --sk-faint:#b8ac9a;
-  --sk-accent:#26614a; --sk-accent2:#1e4080; --sk-danger:#a02828; --sk-warning:#8a5500; --sk-purple:#1e4080;
-  --sk-btn-text:#ffffff; --sk-radius:8px; --sk-bw:1px;
-  --sk-display:"Zodiak", Georgia, serif; --sk-body:"General Sans", system-ui, sans-serif;
-  --sk-shadow:0 1px 4px rgba(38,28,8,.06),0 6px 20px rgba(38,28,8,.05); --sk-glow:none;
-  --bg-deep:#ece7dc; --bg-primary:#f8f6f0; --bg:#f8f6f0; --bg-card:#ffffff; --bg-glass:rgba(253,252,249,.94); --c:#ffffff; --panel:#ffffff;
-  --accent:#26614a; --a:#26614a; --accent-dim:rgba(38,97,74,.08); --accent-glow:rgba(38,97,74,.20);
-  --secondary:#1e4080; --tertiary:#8a5500; --warning:#8a5500; --danger:#a02828; --gold:#8a5500;
-  --border:rgba(38,28,8,.08); --b:rgba(38,28,8,.08); --border-glow:rgba(38,97,74,.25);
-  --text-primary:#1c1710; --text:#1c1710; --t:#1c1710; --text-secondary:#6b5f4e; --text-muted:#6b5f4e; --s:#6b5f4e; --m:#b8ac9a;
+  --sk-shadow:0 0 0 1px rgba(150,255,60,.14); --sk-glow:0 0 9px rgba(150,255,60,.6);
+  --bg-deep:#060d02; --bg-primary:#0a1403; --bg:#0a1403; --bg-card:#0f1e05; --bg-glass:rgba(15,30,5,.92); --c:#0f1e05; --panel:#0f1e05;
+  --accent:#9dff2f; --a:#9dff2f; --accent-dim:rgba(150,255,60,.14); --accent-glow:rgba(150,255,60,.5);
+  --secondary:#d6ff33; --tertiary:#d6ff33; --warning:#eaff3a; --danger:#ff6a52; --gold:#d6ff33;
+  --border:rgba(150,255,60,.35); --b:rgba(150,255,60,.35); --border-glow:rgba(150,255,60,.55);
+  --text-primary:#ddff99; --text:#ddff99; --t:#ddff99; --text-secondary:#c4f076; --text-muted:#b8e870; --s:#b8e870; --m:rgba(150,255,60,.42);
 }
 
 /* VOID — pure all-black, monochrome silver, minimal */
 html[data-theme-skin="void"]{
   --sk-bg:#000000; --sk-surface:#050505; --sk-surface2:#0a0a0a; --sk-surface3:#0f0f0f;
-  --sk-border:rgba(255,255,255,.09); --sk-border-bright:rgba(255,255,255,.22);
-  --sk-text:#f2f2f2; --sk-muted:#8f8f8f; --sk-faint:#3a3a3a;
-  --sk-accent:#ffffff; --sk-accent2:#c8c8c8; --sk-danger:#ff5a52; --sk-warning:#e0e0e0; --sk-purple:#b8b8b8;
+  --sk-border:rgba(255,255,255,.16); --sk-border-bright:rgba(255,255,255,.35);
+  --sk-text:#f8f8f8; --sk-muted:#c0c0c0; --sk-faint:#606060;
+  --sk-accent:#ffffff; --sk-accent2:#d0d0d0; --sk-danger:#ff5a52; --sk-warning:#f0f0f0; --sk-purple:#d0c8ff;
   --sk-btn-text:#000000; --sk-radius:2px; --sk-bw:1px;
   --sk-display:'Orbitron', monospace; --sk-body:'Share Tech Mono', ui-monospace, monospace;
-  --sk-shadow:0 0 0 1px rgba(255,255,255,.05); --sk-glow:0 0 6px rgba(255,255,255,.28);
+  --sk-shadow:0 0 0 1px rgba(255,255,255,.07); --sk-glow:0 0 8px rgba(255,255,255,.35);
   --bg-deep:#000; --bg-primary:#030303; --bg:#000; --bg-card:#080808; --bg-glass:rgba(4,4,4,.94); --c:#080808; --panel:#080808;
-  --accent:#ffffff; --a:#ffffff; --accent-dim:rgba(255,255,255,.08); --accent-glow:rgba(255,255,255,.22);
-  --secondary:#c8c8c8; --tertiary:#c8c8c8; --warning:#e0e0e0; --danger:#ff5a52; --gold:#e0e0e0;
-  --border:rgba(255,255,255,.09); --b:rgba(255,255,255,.09); --border-glow:rgba(255,255,255,.2);
-  --text-primary:#f2f2f2; --text:#f2f2f2; --t:#f2f2f2; --text-secondary:#9a9a9a; --text-muted:#8f8f8f; --s:#8f8f8f; --m:#3a3a3a;
+  --accent:#ffffff; --a:#ffffff; --accent-dim:rgba(255,255,255,.10); --accent-glow:rgba(255,255,255,.28);
+  --secondary:#d0d0d0; --tertiary:#d0d0d0; --warning:#f0f0f0; --danger:#ff5a52; --gold:#f0e8c0;
+  --border:rgba(255,255,255,.16); --b:rgba(255,255,255,.16); --border-glow:rgba(255,255,255,.3);
+  --text-primary:#f8f8f8; --text:#f8f8f8; --t:#f8f8f8; --text-secondary:#c8c8c8; --text-muted:#b4b4b4; --s:#b4b4b4; --m:#606060;
 }
 
 /* AMBER — gold phosphor on black, warm CRT */
 html[data-theme-skin="amber"]{
   --sk-bg:#0a0600; --sk-surface:#120c02; --sk-surface2:#1a1104; --sk-surface3:#221706;
-  --sk-border:rgba(255,176,32,.22); --sk-border-bright:rgba(255,176,32,.5);
-  --sk-text:#ffcf7a; --sk-muted:rgba(255,176,32,.6); --sk-faint:rgba(255,176,32,.3);
+  --sk-border:rgba(255,176,32,.32); --sk-border-bright:rgba(255,176,32,.65);
+  --sk-text:#ffe4a0; --sk-muted:#e8c070; --sk-faint:rgba(255,176,32,.45);
   --sk-accent:#ffb020; --sk-accent2:#ff8a00; --sk-danger:#ff5a3c; --sk-warning:#ffd24a; --sk-purple:#ff8a00;
   --sk-btn-text:#1a0e00; --sk-radius:3px; --sk-bw:1px;
   --sk-display:'Orbitron', monospace; --sk-body:'Share Tech Mono', ui-monospace, monospace;
-  --sk-shadow:0 0 0 1px rgba(255,176,32,.09); --sk-glow:0 0 7px rgba(255,176,32,.5);
+  --sk-shadow:0 0 0 1px rgba(255,176,32,.12); --sk-glow:0 0 9px rgba(255,176,32,.6);
   --bg-deep:#060400; --bg-primary:#0a0600; --bg:#0a0600; --bg-card:#120c02; --bg-glass:rgba(18,12,2,.93); --c:#120c02; --panel:#120c02;
-  --accent:#ffb020; --a:#ffb020; --accent-dim:rgba(255,176,32,.10); --accent-glow:rgba(255,176,32,.4);
+  --accent:#ffb020; --a:#ffb020; --accent-dim:rgba(255,176,32,.14); --accent-glow:rgba(255,176,32,.5);
   --secondary:#ff8a00; --tertiary:#ff8a00; --warning:#ffd24a; --danger:#ff5a3c; --gold:#ffb020;
-  --border:rgba(255,176,32,.22); --b:rgba(255,176,32,.22); --border-glow:rgba(255,176,32,.4);
-  --text-primary:#ffcf7a; --text:#ffcf7a; --t:#ffcf7a; --text-secondary:rgba(255,207,122,.75); --text-muted:rgba(255,176,32,.6); --s:rgba(255,176,32,.6); --m:rgba(255,176,32,.3);
+  --border:rgba(255,176,32,.32); --b:rgba(255,176,32,.32); --border-glow:rgba(255,176,32,.52);
+  --text-primary:#ffe4a0; --text:#ffe4a0; --t:#ffe4a0; --text-secondary:#e8c870; --text-muted:#d4b060; --s:#d4b060; --m:rgba(255,176,32,.42);
+}
+
+/* NEON DUSK — vaporwave deep-purple base, hot magenta + cyan accents (from theme-lab "dusk") */
+html[data-theme-skin="dusk"]{
+  --sk-bg:#07021a; --sk-surface:#100530; --sk-surface2:#17083f; --sk-surface3:#1e0c4e;
+  --sk-border:rgba(255,110,225,.35); --sk-border-bright:rgba(255,110,225,.7);
+  --sk-text:#fdf0ff; --sk-muted:#c8a8f0; --sk-faint:rgba(200,168,240,.5);
+  --sk-accent:#ff2fd6; --sk-accent2:#42e8ff; --sk-danger:#ff5e78; --sk-warning:#ffcf3d; --sk-purple:#a060ff;
+  --sk-btn-text:#0b0620; --sk-radius:6px; --sk-bw:1px;
+  --sk-display:'Orbitron', monospace; --sk-body:'Chakra Petch', 'Share Tech Mono', ui-monospace, monospace;
+  --sk-shadow:0 0 0 1px rgba(255,47,214,.14); --sk-glow:0 0 14px rgba(255,47,214,.6);
+  --bg-deep:#050113; --bg-primary:#07021a; --bg:#07021a; --bg-card:#100530; --bg-glass:rgba(16,5,48,.92); --c:#100530; --panel:#100530;
+  --accent:#ff2fd6; --a:#ff2fd6; --accent-dim:rgba(255,47,214,.15); --accent-glow:rgba(255,47,214,.5);
+  --secondary:#42e8ff; --tertiary:#42e8ff; --warning:#ffcf3d; --danger:#ff5e78; --gold:#ffcf3d;
+  --border:rgba(255,110,225,.35); --b:rgba(255,110,225,.35); --border-glow:rgba(255,47,214,.55);
+  --text-primary:#fdf0ff; --text:#fdf0ff; --t:#fdf0ff; --text-secondary:#d8bef8; --text-muted:#c0a0e0; --s:#c0a0e0; --m:rgba(200,168,240,.5);
+}
+
+/* SOLAR — emerald-forward "green sun": warm-olive dark, vivid EMERALD primary + amber (PRO) */
+html[data-theme-skin="solar"]{
+  --sk-bg:#0e1109; --sk-surface:#161a0e; --sk-surface2:#1d2213; --sk-surface3:#252b18;
+  --sk-border:rgba(0,228,136,.32); --sk-border-bright:rgba(0,228,136,.65);
+  --sk-text:#f4ffea; --sk-muted:#c8d89a; --sk-faint:rgba(200,216,154,.6);
+  --sk-accent:#00e488; --sk-accent2:#ffb020; --sk-danger:#ff6b3d; --sk-warning:#ffc23a; --sk-purple:#5fe0ff;
+  --sk-btn-text:#04120a; --sk-radius:8px; --sk-bw:1px;
+  --sk-display:'Fraunces', 'Georgia', serif; --sk-body:'Chakra Petch', ui-sans-serif, sans-serif;
+  --sk-shadow:0 8px 24px rgba(0,0,0,.5); --sk-glow:0 0 16px rgba(0,228,136,.52);
+  --bg-deep:#080b05; --bg-primary:#0e1109; --bg:#0e1109; --bg-card:#161a0e; --bg-glass:rgba(22,26,14,.92); --c:#161a0e; --panel:#1d2213;
+  --accent:#00e488; --a:#00e488; --accent-dim:rgba(0,228,136,.16); --accent-glow:rgba(0,228,136,.5);
+  --secondary:#ffb020; --tertiary:#ffb020; --warning:#ffc23a; --danger:#ff6b3d; --gold:#ffb020;
+  --border:rgba(0,228,136,.32); --b:rgba(0,228,136,.32); --border-glow:rgba(0,228,136,.52);
+  --text-primary:#f4ffea; --text:#f4ffea; --t:#f4ffea; --text-secondary:#dce8b8; --text-muted:#c4d498; --s:#c4d498; --m:rgba(200,216,154,.6);
+}
+
+/* PARCHMENT CODEX — espresso base, TERRACOTTA/rust primary + sage-green ink (PRO) */
+html[data-theme-skin="parchment"]{
+  --sk-bg:#17110b; --sk-surface:#201810; --sk-surface2:#2a2015; --sk-surface3:#33281a;
+  --sk-border:rgba(221,107,58,.38); --sk-border-bright:rgba(221,107,58,.68);
+  --sk-text:#faf0da; --sk-muted:#dcc8a4; --sk-faint:rgba(220,200,164,.62);
+  --sk-accent:#dd6b3a; --sk-accent2:#93a55f; --sk-danger:#cf4327; --sk-warning:#e0a63a; --sk-purple:#93a55f;
+  --sk-btn-text:#160f08; --sk-radius:6px; --sk-bw:1px;
+  --sk-display:'Fraunces', 'Georgia', serif; --sk-body:'Chakra Petch', ui-sans-serif, sans-serif;
+  --sk-shadow:0 8px 22px rgba(0,0,0,.5); --sk-glow:0 0 14px rgba(221,107,58,.48);
+  --bg-deep:#0f0b07; --bg-primary:#17110b; --bg:#17110b; --bg-card:#201810; --bg-glass:rgba(32,24,16,.93); --c:#201810; --panel:#2a2015;
+  --accent:#dd6b3a; --a:#dd6b3a; --accent-dim:rgba(221,107,58,.18); --accent-glow:rgba(221,107,58,.52);
+  --secondary:#93a55f; --tertiary:#e0a63a; --warning:#e0a63a; --danger:#cf4327; --gold:#e0a63a;
+  --border:rgba(221,107,58,.38); --b:rgba(221,107,58,.38); --border-glow:rgba(221,107,58,.56);
+  --text-primary:#faf0da; --text:#faf0da; --t:#faf0da; --text-secondary:#e8d4b0; --text-muted:#d4bc94; --s:#d4bc94; --m:rgba(220,200,164,.62);
 }
 
 /* ═══════ SHARED ELEMENT OVERRIDES (driven by --sk-* so one block covers all 4 skins) ═══════ */
@@ -4108,7 +4133,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     document.documentElement.setAttribute('data-theme-skin', skin);
   }catch(e){ document.documentElement.setAttribute('data-theme-skin','glitch'); }
   window.setShaddaiSkin = function(id){
-    if(['glitch','terminal','void','amber'].indexOf(id) === -1) id = 'glitch';
+    if(['glitch','terminal','void','amber','dusk','solar','parchment'].indexOf(id) === -1) id = 'glitch';
     document.documentElement.setAttribute('data-theme-skin', id);
     try{ localStorage.setItem('shaddai_skin', id); }catch(e){}
     try{
@@ -4144,7 +4169,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
 <script src="/command-terminal.js?v=12" defer></script>
- <script src="/theme-switcher.js?v=10" defer></script>
+ <script src="/theme-switcher.js?v=12" defer></script>
 <!-- button-art.js disabled: HF-image button overlays were out of place; using clean themed buttons instead -->
 <script src="/admin-panel.js?v=2" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
@@ -4155,8 +4180,25 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
    SKIP rendering the ones you're not looking at until they're shown — big cut to
    initial paint/layout/style cost. Inactive views only; active renders normally. */
 .view:not(.active){content-visibility:auto;contain-intrinsic-size:1px 1200px;}</style>
+<script>
+/* SELF-HEAL: an older cache-first service worker used to cache the dashboard, so pre-fix
+   builds (old image launcher, white chat) kept getting served stale. Kill any registered SW
+   + purge all caches once per session, then reload once to pull fresh assets. */
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+  try { if (sessionStorage.getItem('shd_sw_healed')) return; } catch(e){ return; }
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var had = regs && regs.length;
+    Promise.all((regs||[]).map(function(r){ return r.unregister().catch(function(){}); }))
+      .then(function(){ return (window.caches ? caches.keys().then(function(ks){ return Promise.all(ks.map(function(k){ return caches.delete(k); })); }) : null); })
+      .then(function(){ try { sessionStorage.setItem('shd_sw_healed','1'); } catch(e){}
+        if (had) location.reload(); })
+      .catch(function(){ try { sessionStorage.setItem('shd_sw_healed','1'); } catch(e){} });
+  }).catch(function(){});
+})();
+</script>
 </head>
-<body data-theme="dark">
+<body data-theme="dark" class="at-home">
 <div id="shaddaiScanlines"></div>
 <script>
 /* v93 GLOBAL FETCH GUARD — kills the "Unexpected token '<' … not valid JSON" errors
@@ -4207,6 +4249,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <span class="tbs-item" title="AI backend / models" style="display:flex;align-items:center;gap:5px;cursor:pointer;pointer-events:auto" onclick="checkOllama();refreshOllamaModels()"><span class="status-dot checking" id="ollamaDotHdr" style="width:6px;height:6px;border-radius:50%;flex:none"></span><span id="ollamaTxtHdr">Checking</span></span>
     <span class="tbs-item" title="Queued jobs">Queue: <b id="queueNumHdr" style="color:#00e5a0;font-weight:900">0</b></span>
     <span class="tbs-item" title="Session cost">Cost: <b id="totalCostHdr" style="color:#ffce63;font-weight:900">$0.0000</b></span>
+    <span class="tbs-item" title="Your Sparks — click to open Economy" style="cursor:pointer" onclick="window._officeEntrySub='treasury';showView('office')">⚡ <b id="navSparks" style="color:#00e5a0;font-weight:900">—</b></span>
   </div>
   <!-- CENTER cell — brand/version (grid-centered, can't collide) -->
   <div id="tbBrand" style="justify-self:center;display:flex;align-items:center;gap:10px;white-space:nowrap">
@@ -4280,6 +4323,18 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   </div>
 </div>
 
+<script>
+(function(){
+  function _syncNavSparks(){
+    var el=document.getElementById('navSparks'); if(!el) return;
+    var sp=parseFloat(localStorage.getItem('shd_sparks')||localStorage.getItem('shaddai.sparks')||'0');
+    el.textContent=sp>=1000?(sp/1000).toFixed(1)+'k':Math.floor(sp).toString();
+  }
+  _syncNavSparks();
+  setInterval(_syncNavSparks,4000);
+  window.addEventListener('storage',function(e){ if(e.key==='shd_sparks'||e.key==='shaddai.sparks') _syncNavSparks(); });
+})();
+</script>
 <nav id="mainNav">
   <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
   <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
@@ -4309,7 +4364,11 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('forge')" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
+  <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
+  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Model Forge & Bazaar — generate, buy, sell GLB models">⬡ Bazaar</button>
   <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
+  <button class="nav-btn" onclick="window.open('/pro-signals.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="Pro Signal Terminal — live calls, P&L, Polymarket">📡 Signals</button>
+  <button class="nav-btn" onclick="window.open('/mirofish-terminal.html','_blank')" style="color:#b07fff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="MiroFish Swarm Prediction Terminal">🐟 MiroFish</button>
   <button class="nav-btn nav-img" id="navWorldsBtn" onclick="toggleWorldsMenu(event, this)" style="color:#7c3aed;font-weight:700;letter-spacing:0.06em;border-color:rgba(124,58,237,0.35);--nav-img:url(/assets/nav/worlds.jpg)" title="Worlds · Rooms · Bazaar · Gallery · Treasury">🌐 Worlds ▾</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
@@ -4593,11 +4652,11 @@ window.enter3DWorld=function(){
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <!-- WORLDS -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Worlds</div>
-    <button class="sbt" onclick="lySetSb(this);toggleWorldsMenu(event, this)" id="navWorldsBtnSb" style="color:#7c3aed"><span class="ic">🌐</span>Worlds</button>
-    <button class="sbt" onclick="window._officeEntrySub='city';showView('office');lySetSb(this)" title="City economy, plots &amp; Signal" style="color:#00e5a0;font-weight:700"><span class="ic">🌆</span>City</button>
-    <button class="sbt" onclick="window._officeEntrySub='rooms';showView('office');lySetSb(this)" title="Your rooms &amp; tenants" style="color:#e8c45c"><span class="ic">🚪</span>Rooms</button>
-    <button class="sbt" onclick="window._officeEntrySub='treasury';showView('office');lySetSb(this)" title="Sparks, vaults &amp; economy" style="color:#00e5a0"><span class="ic">◆</span>Economy</button>
-    <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Pixel Forge</button>
+    <button class="sbt" onclick="window._worldsEntrySub='worlds';showView('worlds');lySetSb(this)" id="navWorldsBtnSb" style="color:#7c3aed"><span class="ic">🌐</span>Worlds</button>
+    <button class="sbt" onclick="window._worldsEntrySub='city';showView('worlds');lySetSb(this)" title="City economy, plots &amp; Signal" style="color:#00e5a0;font-weight:700"><span class="ic">🌆</span>City</button>
+    <button class="sbt" onclick="window._worldsEntrySub='rooms';showView('worlds');lySetSb(this)" title="Your rooms &amp; tenants" style="color:#e8c45c"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="window._worldsEntrySub='economy';showView('worlds');lySetSb(this)" title="Sparks, vaults &amp; economy" style="color:#00e5a0"><span class="ic">◆</span>Economy</button>
+    <button class="sbt" onclick="window._worldsEntrySub='forge';showView('worlds');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Pixel Forge</button>
     <!-- MARKETS -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Markets</div>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
@@ -4825,25 +4884,196 @@ window.enter3DWorld=function(){
         <span class="mqa-icon">🤖</span>
         <span class="mqa-label">Agents</span>
       </button>
+      <button class="mqa-btn" onclick="location.href='/affiliate.html'" style="border-color:rgba(232,196,92,0.4);color:#e8c45c">
+        <span class="mqa-icon">🤝</span>
+        <span class="mqa-label">Earn 25%</span>
+      </button>
     </div>
-    <div class="card">
-      <div class="mission-banner">
-        <div class="scan-line"></div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,229,160,0.5);letter-spacing:3px">SYS-ID: SHA-73.35 · CLEARANCE: ALPHA</span>
-          <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.6);margin-left:auto"></span>
-        </div>
-        <div class="mission-title">SHADDAI AGENT EMPIRE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,215,0,0.8);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px">SEVEN MINDS · ONE WILL · ZERO RENT</div>
-        <div class="mission-text"><strong>Intelligence you own, not intelligence you rent.</strong> Forge operatives, chain autonomous workflows, walk a living 3D world, and trade in the Bazaar — 200+ real, executable tools running on Llama-70B via <em>your own free key</em>.<br><span style="opacity:.72">Your council: SHADDAI · ZEROX · ORACLE · NEXUS · TURTLE · QUILL · PIKADON</span></div>
-        <!-- Agent online dots — populated by initSovereignTerminal() -->
-        <div id="agentPulseLine" style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap"></div>
-        <!-- MRR ticker row — separate from agentPulseLine so it isn't overwritten -->
-        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.4);letter-spacing:2px">MRR: <span id="missionMRR" style="color:#ffd700;font-weight:700">$0</span> · TARGET: <span style="color:rgba(0,229,160,0.6)">$1,000</span> · <span id="missionMRRBar" style="display:inline-block;height:6px;width:0px;background:#ffd700;border-radius:2px;vertical-align:middle;transition:width 0.6s"></span> <span id="missionMRRPct" style="color:rgba(0,229,160,0.6)">0%</span></span>
-        </div>
+    <!-- ═══════════ APP LAUNCHER GRID ═══════════ -->
+    <style>
+    /* One nav only — outrank any competing !important rule */
+    html body.at-home #mainNav{display:none!important}
+    html body.at-home #mainArea{margin-top:38px!important}
+    #dashLauncherCard{padding:16px 18px 20px;background:var(--panel,rgba(4,8,18,0.96));border:1px solid var(--border,rgba(0,229,160,0.12));border-radius:16px;box-shadow:var(--sk-shadow,0 10px 34px rgba(0,0,0,0.4));}
+    #dashLauncherMeta{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+    #dashLauncherMeta .dl-title{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent,rgba(0,229,160,0.5));opacity:.72;text-transform:uppercase}
+    #dashLauncherMeta .dl-mrr{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--gold,rgba(255,215,0,0.45));opacity:.7;margin-left:auto}
+    #dashLauncher{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    @media(max-width:1000px){#dashLauncher{grid-template-columns:repeat(5,1fr)}}
+    @media(max-width:700px){#dashLauncher{grid-template-columns:repeat(3,1fr);gap:10px}}
+    /* ── Premium launcher tile ── */
+    .dl-tile{position:relative;border-radius:18px;border:1px solid rgba(255,255,255,0.07);background:#060b16;cursor:pointer;overflow:hidden;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0;-webkit-tap-highlight-color:transparent;
+      transition:transform .28s cubic-bezier(.2,.8,.2,1),border-color .28s ease,box-shadow .28s ease;
+      opacity:0;transform:translateY(14px) scale(.96);animation:dlIn .5s cubic-bezier(.2,.8,.2,1) forwards}
+    @keyframes dlIn{to{opacity:1;transform:translateY(0) scale(1)}}
+    @media(prefers-reduced-motion:reduce){.dl-tile{animation:none;opacity:1;transform:none}}
+    /* stagger entrance */
+    #dashLauncher .dl-tile:nth-child(1){animation-delay:.02s}
+    #dashLauncher .dl-tile:nth-child(2){animation-delay:.06s}
+    #dashLauncher .dl-tile:nth-child(3){animation-delay:.10s}
+    #dashLauncher .dl-tile:nth-child(4){animation-delay:.14s}
+    #dashLauncher .dl-tile:nth-child(5){animation-delay:.18s}
+    #dashLauncher .dl-tile:nth-child(6){animation-delay:.22s}
+    #dashLauncher .dl-tile:nth-child(7){animation-delay:.26s}
+    #dashLauncher .dl-tile:nth-child(8){animation-delay:.30s}
+    #dashLauncher .dl-tile:nth-child(9){animation-delay:.34s}
+    #dashLauncher .dl-tile:nth-child(10){animation-delay:.38s}
+    /* top-light sheen — adds gradient depth over each tile's radial bg */
+    .dl-tile::before{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;z-index:3;
+      background:linear-gradient(155deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.02) 22%,rgba(255,255,255,0) 46%);
+      opacity:.65;transition:opacity .28s ease}
+    /* inner ring + bottom vignette for depth */
+    .dl-tile::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;z-index:4;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -40px 46px -30px rgba(0,0,0,.75);transition:box-shadow .28s ease}
+    .dl-tile:hover{transform:translateY(-6px) scale(1.045);border-color:rgba(255,255,255,0.18);box-shadow:0 20px 52px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.12)}
+    .dl-tile:hover::before{opacity:.95}
+    .dl-tile:hover::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -40px 46px -30px rgba(0,0,0,.6),inset 0 0 30px rgba(255,255,255,.05)}
+    /* click feedback — snappy GPU-only punch + glow burst (transform/opacity/filter, no layout = no lag) */
+    .dl-tile:active{transform:translateY(0) scale(0.955);transition-duration:.07s;
+      box-shadow:0 0 0 2px rgba(255,255,255,.22),0 10px 34px rgba(0,0,0,.6),0 0 40px rgba(255,255,255,.16)}
+    .dl-tile:active .dl-icon{opacity:1;transform:translate(-50%,-62%) scale(1.3);animation-play-state:paused;
+      filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 10px currentColor) brightness(1.45)}
+    .dl-tile:active .dl-bg{transform:scale(1.16);filter:saturate(1.55) brightness(1.4)}
+    .dl-tile:active::before{opacity:1}
+    /* release ripple — a quick expanding ring, plays on click via .dl-burst (JS toggles it) */
+    .dl-tile .dl-ring{position:absolute;inset:0;border-radius:18px;pointer-events:none;z-index:6;
+      box-shadow:0 0 0 0 rgba(255,255,255,.5) inset;opacity:0}
+    .dl-tile.dl-burst .dl-ring{animation:dlBurst .5s ease-out}
+    @keyframes dlBurst{0%{opacity:.9;box-shadow:0 0 0 0 rgba(255,255,255,.55) inset,0 0 22px rgba(255,255,255,.4)}
+      100%{opacity:0;box-shadow:0 0 0 26px rgba(255,255,255,0) inset,0 0 42px rgba(255,255,255,0)}}
+    @media(prefers-reduced-motion:reduce){.dl-tile.dl-burst .dl-ring{animation:none}}
+    .dl-tile:focus-visible{outline:none;border-color:rgba(255,255,255,.28);box-shadow:0 0 0 2px rgba(0,229,160,.5)}
+    .dl-bg{position:absolute;inset:0;border-radius:18px;z-index:1;transition:transform .5s cubic-bezier(.2,.8,.2,1),filter .28s ease}
+    .dl-tile:hover .dl-bg{transform:scale(1.12);filter:saturate(1.25) brightness(1.12)}
+    .dl-overlay{position:absolute;inset:0;z-index:2;background:linear-gradient(to bottom,rgba(0,0,0,0) 14%,rgba(0,0,0,0.55) 62%,rgba(0,0,0,0.88) 100%)}
+    /* large centered thematic glyph — refined glow + idle float */
+    .dl-icon{position:absolute;top:48%;left:50%;transform:translate(-50%,-58%);font-size:50px;opacity:0.4;pointer-events:none;line-height:1;user-select:none;font-style:normal;z-index:3;
+      filter:drop-shadow(0 3px 10px rgba(0,0,0,.6));animation:dlFloat 6s ease-in-out infinite;
+      transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.2,1),filter .3s ease}
+    @keyframes dlFloat{0%,100%{transform:translate(-50%,-58%)}50%{transform:translate(-50%,-64%)}}
+    @media(prefers-reduced-motion:reduce){.dl-icon{animation:none}}
+    .dl-tile:hover .dl-icon{opacity:0.9;transform:translate(-50%,-66%) scale(1.16);animation-play-state:paused;filter:drop-shadow(0 6px 18px rgba(0,0,0,.7)) brightness(1.15)}
+    .dl-lbl{position:relative;z-index:5;font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:2.5px;text-transform:uppercase;color:#eef4ee;text-shadow:0 1px 10px rgba(0,0,0,0.95);padding:0 6px 12px;text-align:center;width:100%;transition:letter-spacing .28s ease,color .28s ease}
+    .dl-tile:hover .dl-lbl{letter-spacing:3.2px;color:#fff}
+    .dl-badge{position:absolute;top:8px;right:8px;z-index:5;font-size:7px;padding:2px 6px;border-radius:5px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;backdrop-filter:blur(4px);transition:transform .28s ease}
+    .dl-tile:hover .dl-badge{transform:translateY(-1px) scale(1.06)}
+    .dl-badge.live{background:rgba(0,229,160,0.15);color:#00e5a0;border:1px solid rgba(0,229,160,0.3)}
+    .dl-badge.pro{background:rgba(232,196,92,0.15);color:#e8c45c;border:1px solid rgba(232,196,92,0.35)}
+    .dl-badge.new{background:rgba(124,58,237,0.18);color:#a78bfa;border:1px solid rgba(124,58,237,0.4)}
+    </style>
+    <div class="card" id="dashLauncherCard">
+      <div id="dashLauncherMeta">
+        <span class="dl-title">◈ SHADDAI EMPIRE · COMMAND DECK</span>
+        <span id="missionClock" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,0.55)"></span>
+        <div id="agentPulseLine" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+        <span class="dl-mrr">MRR <span id="missionMRR" style="color:#ffd700;font-weight:700">$0</span> · <span id="missionMRRBar" style="display:inline-block;height:5px;width:0px;background:#ffd700;border-radius:2px;vertical-align:middle;transition:width .6s"></span> <span id="missionMRRPct" style="color:rgba(0,229,160,0.6)">0%</span></span>
+      </div>
+      <div id="dashLauncher">
+
+        <button class="dl-tile" onclick="showView('agents')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 35% 38%, rgba(0,255,156,0.26) 0%, rgba(0,80,50,0.12) 45%, #01090a 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#00ff9c;text-shadow:0 0 22px #00ff9c,0 0 55px rgba(0,255,156,0.4)">◈</span>
+          <span class="dl-badge live">7 live</span>
+          <span class="dl-lbl">AGENTS</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('forge')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 50% 80%, rgba(255,120,0,0.46) 0%, rgba(180,40,0,0.22) 45%, #0c0300 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#ff8c00;text-shadow:0 0 22px #ff8c00,0 0 55px rgba(255,100,0,0.45)">⬡</span>
+          <span class="dl-badge live">forge</span>
+          <span class="dl-lbl">FORGE</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('workflow')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 65% 28%, rgba(0,180,255,0.3) 0%, rgba(0,55,130,0.15) 45%, #010510 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#00b4ff;text-shadow:0 0 22px #00b4ff,0 0 55px rgba(0,180,255,0.38)">↻</span>
+          <span class="dl-badge live">engine</span>
+          <span class="dl-lbl">WORKFLOWS</span>
+        </button>
+
+        <button class="dl-tile" onclick="window.open('/forge-3d.html','_blank')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 38% 42%, rgba(255,200,0,0.36) 0%, rgba(140,30,200,0.2) 45%, #07010c 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#ffd700;text-shadow:0 0 22px #ffd700,0 0 55px rgba(255,200,0,0.38)">◆</span>
+          <span class="dl-badge new">3D</span>
+          <span class="dl-lbl">BAZAAR</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('chat')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 50% 52%, rgba(80,160,255,0.3) 0%, rgba(15,55,180,0.15) 45%, #010412 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#50a0ff;text-shadow:0 0 22px #50a0ff,0 0 55px rgba(80,160,255,0.38)">◎</span>
+          <span class="dl-badge live">live</span>
+          <span class="dl-lbl">CHAT</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('pipeline')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 62% 65%, rgba(0,230,100,0.3) 0%, rgba(0,80,25,0.15) 45%, #010901 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#00e664;text-shadow:0 0 22px #00e664,0 0 55px rgba(0,230,100,0.38)">↗</span>
+          <span class="dl-badge live">live</span>
+          <span class="dl-lbl">MARKETS</span>
+        </button>
+
+        <button class="dl-tile" onclick="window.open('/pro-signals.html','_blank')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 40% 45%, rgba(232,160,32,0.34) 0%, rgba(120,60,0,0.16) 45%, #0c0601 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#ffc84a;text-shadow:0 0 22px #e8a020,0 0 55px rgba(232,160,32,0.4)">📡</span>
+          <span class="dl-badge live">live</span>
+          <span class="dl-lbl">SIGNALS</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('skills')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 50% 42%, rgba(160,80,255,0.34) 0%, rgba(75,15,160,0.18) 45%, #050108 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#a050ff;text-shadow:0 0 22px #a050ff,0 0 55px rgba(160,80,255,0.38)">✦</span>
+          <span class="dl-badge live">350+</span>
+          <span class="dl-lbl">SKILLS</span>
+        </button>
+
+        <button class="dl-tile" onclick="location.href='game.html'">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 40% 32%, rgba(0,220,195,0.3) 0%, rgba(0,85,90,0.15) 45%, #01080a 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#00dcc3;text-shadow:0 0 22px #00dcc3,0 0 55px rgba(0,220,195,0.38)">⊕</span>
+          <span class="dl-badge new">2D</span>
+          <span class="dl-lbl">WORLD</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('automation')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 50% 42%, rgba(255,45,45,0.3) 0%, rgba(120,8,8,0.18) 45%, #090101 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#ff2d2d;text-shadow:0 0 22px #ff2d2d,0 0 55px rgba(255,45,45,0.38)">⊛</span>
+          <span class="dl-badge pro">pro</span>
+          <span class="dl-lbl">ORCHESTRATOR</span>
+        </button>
+
+        <button class="dl-tile" onclick="showView('settings')">
+          <span class="dl-bg" style="background:radial-gradient(ellipse at 50% 50%, rgba(100,140,175,0.26) 0%, rgba(35,55,80,0.13) 45%, #030507 88%)"></span>
+          <span class="dl-overlay"></span>
+          <span class="dl-icon" style="color:#8aaabb;text-shadow:0 0 18px #8aaabb,0 0 38px rgba(100,140,175,0.32)">⚙</span>
+          <span class="dl-lbl">SETTINGS</span>
+        </button>
+
       </div>
     </div>
+    <script>
+      /* Launcher click-glow: inject a ripple ring per tile + fire the burst on press
+         (pointerdown → before showView navigates away, so the animation is visible). GPU-only. */
+      (function(){
+        var L = document.getElementById('dashLauncher'); if (!L) return;
+        L.querySelectorAll('.dl-tile').forEach(function(t){
+          if (!t.querySelector('.dl-ring')) { var r = document.createElement('span'); r.className = 'dl-ring'; t.appendChild(r); }
+        });
+        L.addEventListener('pointerdown', function(e){
+          var t = e.target.closest('.dl-tile'); if (!t) return;
+          t.classList.remove('dl-burst'); void t.offsetWidth; t.classList.add('dl-burst');
+          setTimeout(function(){ t.classList.remove('dl-burst'); }, 500);
+        }, true);
+      })();
+    </script>
     <div class="card">
       <div class="card-head">
         <span class="card-title">System Health</span>
@@ -4878,21 +5108,53 @@ window.enter3DWorld=function(){
         <span class="card-title" style="color:#00e5a0">🌆 City Empire — Live Status</span>
         <span style="font-size:8px;color:rgba(0,229,160,0.5)">Click to manage →</span>
       </div>
-      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">⚡ Sparks</div><div class="stat-value good" id="dashSparks">—</div></div>
         <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">📡 Signal</div><div class="stat-value" id="dashSignal" style="color:#00e5a0">—</div></div>
         <div class="stat-box" style="border-color:rgba(232,196,92,0.25)"><div class="stat-label">◆ Plots</div><div class="stat-value" id="dashPlots" style="color:#e8c45c">0 / 30</div></div>
         <div class="stat-box" style="border-color:rgba(124,58,237,0.25)"><div class="stat-label">🚪 Rooms</div><div class="stat-value" id="dashRooms" style="color:#a78bfa">0</div></div>
+        <div class="stat-box" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)"><div class="stat-label" style="color:#ff6b6b">⚔️ Siege</div><div class="stat-value" id="dashSiege" style="color:#ff6b6b;font-size:11px">—</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
         <button onclick="event.stopPropagation();window._officeEntrySub='city';showView('office')" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🌆 City</button>
         <button onclick="event.stopPropagation();window._officeEntrySub='treasury';showView('office')" style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">◆ Economy</button>
         <button onclick="event.stopPropagation();window._officeEntrySub='rooms';showView('office')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.2);color:#e8c45c;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🚪 Rooms</button>
         <button onclick="event.stopPropagation();location.href='game.html'" style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">▦ Enter World</button>
+        <button onclick="event.stopPropagation();location.href='/affiliate.html'" style="background:rgba(232,196,92,0.1);border:1px solid rgba(232,196,92,0.3);color:#e8c45c;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🤝 Earn 25%</button>
       </div>
     </div>
     <script>
     (function(){
+      function _nextSiegeSunday() {
+        var now = new Date();
+        var y = now.getFullYear(), m = now.getMonth();
+        // Last Sunday of the current month
+        var lastDay = new Date(y, m+1, 0);
+        var lastSun = new Date(lastDay);
+        lastSun.setDate(lastDay.getDate() - lastDay.getDay());
+        // If last Sunday already passed (or is today), use last Sunday of next month
+        if (lastSun <= now) {
+          var nextMonth = new Date(y, m+2, 0);
+          lastSun = new Date(nextMonth);
+          lastSun.setDate(nextMonth.getDate() - nextMonth.getDay());
+        }
+        lastSun.setHours(18, 0, 0, 0); // 6 PM siege start
+        return lastSun;
+      }
+      function _siegeCountdown() {
+        var el = document.getElementById('dashSiege');
+        if (!el) return;
+        var siege = _nextSiegeSunday();
+        var diff = siege - new Date();
+        if (diff <= 0) { el.textContent = 'NOW'; el.style.color='#ff3333'; return; }
+        var days = Math.floor(diff / 86400000);
+        var hrs = Math.floor((diff % 86400000) / 3600000);
+        if (days > 0) { el.textContent = days+'d '+(hrs>0?hrs+'h':''); }
+        else { var mins=Math.floor((diff%3600000)/60000); el.textContent=hrs+'h '+mins+'m'; }
+        var urgent = days < 3;
+        el.style.color = urgent ? '#ff3333' : '#ff8a8a';
+        el.style.animation = urgent ? 'pulse 1.5s infinite' : 'none';
+      }
       function _dashCitySync() {
         try {
           var sp = parseFloat(localStorage.getItem('shd_sparks')||'0');
@@ -4908,7 +5170,9 @@ window.enter3DWorld=function(){
         }catch(_){}
       }
       _dashCitySync();
+      _siegeCountdown();
       setInterval(_dashCitySync, 3000);
+      setInterval(_siegeCountdown, 60000);
     })();
     </script>
 
@@ -8143,6 +8407,288 @@ window.enter3DWorld=function(){
     #skillsView .sk-model-card .badges{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
     #skillsView .sk-model-card .b{font-size:7.5px;letter-spacing:1px;padding:3px 7px;border-radius:20px;border:1px solid currentColor;font-weight:700}
   </style>
+
+  <!-- ═══════════ WORLDS HUB ═══════════ -->
+  <style>
+    #worldsView{background:var(--bg-primary);min-height:85vh}
+    .wh-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 20px 0}
+    .wh-kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:11px;padding:12px 15px;display:flex;flex-direction:column;gap:3px}
+    .wh-kpi-card .kl{font-size:7.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-muted);font-weight:800}
+    .wh-kpi-card .kv{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--accent)}
+    .wh-kpi-card .ks{font-size:8.5px;color:var(--text-muted)}
+    .wh-tab-bar{display:flex;gap:2px;padding:14px 20px 0;border-bottom:1px solid var(--border)}
+    .wh-tb{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Orbitron',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.2px;padding:9px 13px 11px;cursor:pointer;transition:all .18s;white-space:nowrap}
+    .wh-tb:hover{color:var(--text-primary)}
+    .wh-tb.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 10px var(--accent-glow)}
+    .wh-panels{padding:18px 20px 36px}
+    .wh-panel{display:none}
+    .wh-panel.wh-active{display:block}
+    .wh-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+    .wh-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .wh-card-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;letter-spacing:2px;color:var(--accent)}
+    .wh-card-badge{font-size:7.5px;letter-spacing:1px;padding:3px 9px;border-radius:20px;border:1px solid;font-weight:700}
+    .wh-portals{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .wh-portal{border-radius:16px;padding:28px 20px 22px;cursor:pointer;transition:all .2s;text-align:center;overflow:hidden}
+    .wh-portal:hover{transform:translateY(-3px)}
+    .wh-portal.p2d{background:linear-gradient(135deg,#0a1a10,#062012,#0d2518);border:1px solid #00e5a030}
+    .wh-portal.p2d:hover{border-color:#00e5a0;box-shadow:0 0 32px #00e5a020}
+    .wh-portal.p3d{background:linear-gradient(135deg,#0e0a1a,#12062a,#1a0d3a);border:1px solid #7c3aed30}
+    .wh-portal.p3d:hover{border-color:#7c3aed;box-shadow:0 0 32px #7c3aed20}
+    .wh-portal .pi{font-size:42px;margin-bottom:12px;display:block}
+    .wh-portal .pt{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;letter-spacing:2px;margin-bottom:6px}
+    .wh-portal.p2d .pt{color:#00e5a0}
+    .wh-portal.p3d .pt{color:#a78bfa}
+    .wh-portal .pd{font-size:9.5px;color:var(--text-muted);line-height:1.6;max-width:200px;margin:0 auto 14px}
+    .wh-portal-btn{display:inline-block;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:900;letter-spacing:1.5px;padding:8px 20px;border-radius:8px;border:none;cursor:pointer;transition:all .18s}
+    .wh-portal.p2d .wh-portal-btn{background:#00e5a0;color:#000}
+    .wh-portal.p3d .wh-portal-btn{background:#7c3aed;color:#fff}
+    .wh-plot-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+    .wh-plot{aspect-ratio:1;border-radius:5px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+    .wh-plot.mine{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+    .wh-plot.taken{background:#1a2530;border-color:#1e2a3a}
+    .wh-plot.open{background:#0a1218;border-color:#1a2530}
+    .wh-plot:hover{transform:scale(1.2);z-index:2;position:relative}
+    .wh-sig{display:flex;align-items:center;gap:10px}
+    .wh-sig-track{flex:1;height:8px;background:#0a1218;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+    .wh-sig-fill{height:100%;background:linear-gradient(90deg,#e8c45c,#00e5a0);border-radius:4px;transition:width .6s}
+    .wh-sparks-hero{text-align:center;padding:24px 0 16px}
+    .wh-sparks-hero .sv{font-family:'Orbitron',sans-serif;font-size:52px;font-weight:900;color:var(--accent);letter-spacing:2px;line-height:1}
+    .wh-sparks-hero .sl{font-size:9px;color:var(--text-muted);letter-spacing:2.5px;text-transform:uppercase;margin-top:8px}
+    .wh-earn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .wh-earn-card{background:#06080d;border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center}
+    .wh-earn-card .ev{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#e8c45c}
+    .wh-earn-card .el{font-size:7.5px;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:5px}
+    .wh-burn-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0}
+    .wh-burn-fill{height:100%;background:linear-gradient(90deg,#00e5a0,#e8c45c);border-radius:3px;transition:width .6s}
+    .wh-room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+    .wh-room-card{background:#06080d;border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
+    .wh-room-card:hover{border-color:var(--accent);box-shadow:0 0 16px var(--accent-glow)}
+    .wh-room-name{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
+    .wh-room-stat{font-size:9px;color:var(--text-muted);display:flex;justify-content:space-between;margin-top:5px}
+    .wh-forge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .wh-forge-card{background:#06080d;border:1px solid #1a2a12;border-radius:12px;overflow:hidden;transition:all .2s}
+    .wh-forge-card:hover{border-color:#f0b429;box-shadow:0 0 16px #f0b42920}
+    .wh-forge-head{height:88px;background:#080d04;display:flex;align-items:center;justify-content:center;font-size:38px}
+    .wh-forge-meta{padding:10px 12px}
+    .wh-forge-name{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;letter-spacing:1px;color:#f0b429;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .wh-forge-role{font-size:8px;color:var(--text-muted);margin-top:2px}
+    .wh-forge-actions{display:flex;gap:5px;margin-top:9px}
+    .wh-forge-actions button{flex:1;font-size:7.5px;padding:5px 0;border-radius:6px;border:1px solid;cursor:pointer;font-weight:700;background:transparent;transition:all .15s}
+    .wh-btn-p{background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px 18px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;letter-spacing:1px;cursor:pointer;transition:all .18s}
+    .wh-btn-p:hover{opacity:.85;transform:translateY(-1px)}
+    .wh-btn-g{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:9px 18px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .18s}
+    .wh-btn-g:hover{background:var(--accent);color:#000}
+  </style>
+  <div id="worldsView" class="view">
+    <div class="wh-kpi">
+      <div class="wh-kpi-card"><div class="kl">✦ Sparks</div><div class="kv" id="whKpiSparks">—</div><div class="ks">Balance</div></div>
+      <div class="wh-kpi-card"><div class="kl">📡 Signal</div><div class="kv" id="whKpiSignal">—</div><div class="ks">World strength</div></div>
+      <div class="wh-kpi-card"><div class="kl">🚪 Rooms</div><div class="kv" id="whKpiRooms">—</div><div class="ks">Owned</div></div>
+      <div class="wh-kpi-card"><div class="kl">🌆 Plots</div><div class="kv" id="whKpiPlots">—</div><div class="ks">City footprint</div></div>
+    </div>
+    <div class="wh-tab-bar">
+      <button class="wh-tb active" data-wbtn="worlds" onclick="switchWorldsTab('worlds')">🌐 Worlds</button>
+      <button class="wh-tb" data-wbtn="city" onclick="switchWorldsTab('city')">🌆 City</button>
+      <button class="wh-tb" data-wbtn="rooms" onclick="switchWorldsTab('rooms')">🚪 Rooms</button>
+      <button class="wh-tb" data-wbtn="economy" onclick="switchWorldsTab('economy')">◆ Economy</button>
+      <button class="wh-tb" data-wbtn="forge" onclick="switchWorldsTab('forge')">⬡ Forge</button>
+    </div>
+    <div class="wh-panels">
+
+      <!-- WORLDS -->
+      <div class="wh-panel wh-active" data-wtab="worlds">
+        <div class="wh-portals">
+          <div class="wh-portal p2d" onclick="location.href='game.html'">
+            <span class="pi">🌆</span>
+            <div class="pt">2D WORLD</div>
+            <div class="pd">Enter Agent City. Walk districts, visit offices, claim plots, trade with agents.</div>
+            <button class="wh-portal-btn">Enter World →</button>
+          </div>
+          <div class="wh-portal p3d" onclick="showView('grid')">
+            <span class="pi">🌌</span>
+            <div class="pt">3D REALM</div>
+            <div class="pd">Step into the dimensional grid. Interact with forged 3D agent bodies.</div>
+            <button class="wh-portal-btn">Enter Realm →</button>
+          </div>
+        </div>
+        <div class="wh-card">
+          <div class="wh-card-hd">
+            <div><div class="wh-card-title">LIVE WORLD STATUS</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px">Agent City · Founders Row · 8 Districts</div></div>
+            <button class="wh-btn-g" onclick="location.href='game.html?region=agentcity'" style="font-size:8px;padding:7px 14px">⚡ Quick Enter</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+              <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:900;color:#00e5a0">7</div>
+              <div style="font-size:7.5px;color:var(--text-muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase">Council Agents</div>
+            </div>
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+              <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:900;color:#e8c45c">8</div>
+              <div style="font-size:7.5px;color:var(--text-muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase">Regions Open</div>
+            </div>
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+              <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:900;color:#7c3aed" id="whWorldClaimed">—</div>
+              <div style="font-size:7.5px;color:var(--text-muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase">Plots Claimed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CITY -->
+      <div class="wh-panel" data-wtab="city">
+        <div class="wh-card">
+          <div class="wh-card-hd">
+            <div><div class="wh-card-title">📡 SIGNAL STRENGTH</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px">Drain in hostile zones · Regen near your office</div></div>
+            <span class="wh-card-badge" id="whSignalPct" style="color:#00e5a0;border-color:#00e5a040">100%</span>
+          </div>
+          <div class="wh-sig">
+            <span style="font-size:11px;min-width:20px">📡</span>
+            <div class="wh-sig-track"><div class="wh-sig-fill" id="whSignalFill" style="width:100%"></div></div>
+            <span id="whSignalLbl" style="font-size:9px;color:var(--text-muted);min-width:55px;text-align:right">100 / 100</span>
+          </div>
+          <div style="margin-top:10px;font-size:9px;color:var(--text-muted)" id="whSignalStatus">Signal full — explore freely.</div>
+        </div>
+        <div class="wh-card">
+          <div class="wh-card-hd">
+            <div><div class="wh-card-title">🌆 FOUNDERS ROW — 30 PLOTS</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px" id="whPlotStatus">Walk city to claim your deed</div></div>
+            <button class="wh-btn-g" onclick="location.href='game.html?region=agentcity'" style="font-size:8px;padding:7px 14px">Walk City</button>
+          </div>
+          <div class="wh-plot-grid" id="whCityGrid"></div>
+          <div style="display:flex;gap:14px;margin-top:12px;font-size:8.5px;color:var(--text-muted)">
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Yours</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#1a2530;border:1px solid #1e2a3a;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Taken</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#0a1218;border:1px solid #1a2530;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Open</span>
+          </div>
+        </div>
+        <div class="wh-card">
+          <div class="wh-card-hd"><div class="wh-card-title">◆ ACCRUED PLOT REWARDS</div><button class="wh-btn-p" onclick="notify('Enter the 2D World to claim your plot rewards')">Claim in World</button></div>
+          <div style="font-size:11px;color:var(--text-muted);padding:6px 0" id="whPlotReward">Enter the 2D world to view accrued plot rewards.</div>
+        </div>
+      </div>
+
+      <!-- ROOMS -->
+      <div class="wh-panel" data-wtab="rooms">
+        <div class="wh-card-hd" style="margin-bottom:14px">
+          <div>
+            <div style="font-family:Orbitron,sans-serif;font-size:13px;font-weight:900;letter-spacing:1.5px">YOUR PROPERTIES</div>
+            <div style="font-size:9.5px;color:var(--text-muted);margin-top:3px">Rent-earning spaces for agents and tenants</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="wh-btn-g" onclick="window._officeEntrySub='rooms';showView('office')">Full View</button>
+            <button class="wh-btn-p" onclick="_whClaimAllRent()">Claim All ✦</button>
+          </div>
+        </div>
+        <div class="wh-room-grid" id="whRoomsGrid"><div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--text-muted)">Loading…</div></div>
+      </div>
+
+      <!-- ECONOMY -->
+      <div class="wh-panel" data-wtab="economy">
+        <div class="wh-card">
+          <div class="wh-sparks-hero">
+            <div class="sv" id="whSparksVal">—</div>
+            <div class="sl">✦ SPARKS BALANCE</div>
+          </div>
+          <div class="wh-earn-grid">
+            <div class="wh-earn-card"><div class="ev" id="whEarnPlots">+0</div><div class="el">Plot Yield</div></div>
+            <div class="wh-earn-card"><div class="ev" id="whEarnTasks">+0</div><div class="el">Task Rewards</div></div>
+            <div class="wh-earn-card"><div class="ev" id="whEarnRefs">+0</div><div class="el">Referrals</div></div>
+          </div>
+        </div>
+        <div class="wh-card">
+          <div class="wh-card-hd"><div><div class="wh-card-title">🔥 BURN MECHANICS</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px">2.5% marketplace fee · Spinner · Wishing Well</div></div></div>
+          <div class="wh-burn-track"><div class="wh-burn-fill" id="whBurnFill" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:8.5px;color:var(--text-muted);margin-top:6px">
+            <span id="whBurnTotal">0 Sparks burned</span>
+            <span id="whBurnPct">0% of supply</span>
+          </div>
+        </div>
+        <div class="wh-card">
+          <div class="wh-card-hd"><div class="wh-card-title">◈ BAZAAR &amp; MARKETPLACE</div><button class="wh-btn-g" onclick="showView('marketplace')">Open Bazaar →</button></div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px"><div style="font-size:8px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Listings</div><div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#e8c45c" id="whBazaarListings">—</div></div>
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px"><div style="font-size:8px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Volume (✦)</div><div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#e8c45c" id="whBazaarVol">—</div></div>
+          </div>
+        </div>
+        <!-- STAKING POOL -->
+        <div class="wh-card">
+          <div class="wh-card-hd">
+            <div><div class="wh-card-title">📈 SPARKS STAKING POOL</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px">1% of Bazaar sales flow here · Proportional rewards</div></div>
+            <button class="wh-btn-p" onclick="_whStakeSparks()">Stake Sparks</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:7.5px;color:var(--text-muted);margin-bottom:4px">MY STAKE</div><div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:#00e5a0" id="whMyStake">—</div></div>
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:7.5px;color:var(--text-muted);margin-bottom:4px">POOL TOTAL</div><div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:#e8c45c" id="whPoolTotal">—</div></div>
+            <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:7.5px;color:var(--text-muted);margin-bottom:4px">PENDING</div><div style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:#c9a6ff" id="whPending">—</div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="flex:1;font-size:9px;color:var(--text-muted)" id="whStakeShare">Share: —</div>
+            <button class="wh-btn-g" style="color:#c9a6ff;border-color:#c9a6ff40" onclick="_whClaimStake()">Claim Rewards</button>
+          </div>
+        </div>
+        <!-- LIVE AUCTIONS -->
+        <div class="wh-card">
+          <div class="wh-card-hd"><div class="wh-card-title">🔨 PLOT AUCTIONS</div><button class="wh-btn-g" onclick="_whLoadAuctions()">Refresh</button></div>
+          <div id="whAuctionList" style="font-size:11px;color:var(--text-muted)">Loading…</div>
+        </div>
+      </div>
+
+      <!-- FORGE -->
+      <div class="wh-panel" data-wtab="forge">
+        <div class="wh-card-hd" style="margin-bottom:14px">
+          <div>
+            <div style="font-family:Orbitron,sans-serif;font-size:13px;font-weight:900;letter-spacing:1.5px;color:#f0b429">⬡ YOUR AGENTS</div>
+            <div style="font-size:9.5px;color:var(--text-muted);margin-top:3px">Forge AI agents — deploy to world, trade in Bazaar</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="wh-btn-g" style="color:#f0b429;border-color:#f0b42940" onclick="if(typeof openPixelForge==='function')openPixelForge();else showView('forge')">⬡ Forge New</button>
+            <button class="wh-btn-p" style="background:#f0b429" onclick="showView('marketplace')">List in Bazaar</button>
+          </div>
+        </div>
+        <div class="wh-forge-grid" id="whForgeGrid"><div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Loading…</div></div>
+        <div style="margin-top:20px;background:linear-gradient(135deg,#0e0a1a,#1a0d3a);border:1px solid #7c3aed30;border-radius:14px;padding:18px 20px">
+          <div style="font-family:Orbitron,sans-serif;font-size:10px;font-weight:900;letter-spacing:1.5px;color:#a78bfa;margin-bottom:6px">🌌 3D BODY STUDIO</div>
+          <div style="font-size:9.5px;color:var(--text-muted);line-height:1.6;margin-bottom:12px">Generate a 3D GLB mesh for your agent — powered by TRELLIS (image→3D) or Meshy (text→3D).</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input id="meshPrompt" placeholder="Describe your agent (e.g. futuristic obsidian warrior with emerald armor)" style="background:#06080d;border:1px solid #2a3346;color:#eaf3fb;border-radius:8px;padding:9px 12px;font-size:12px;font-family:inherit;outline:none">
+            <div style="display:flex;gap:8px">
+              <button onclick="_whGenMesh('meshy')" style="flex:1;background:#1a0d3a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px;font-size:11px;font-weight:700;cursor:pointer">✦ Text→3D (Meshy)</button>
+              <button onclick="_whGenMesh('trellis')" style="flex:1;background:#1a0d3a;color:#c9a6ff;border:1px solid #9c6fff;border-radius:8px;padding:9px;font-size:11px;font-weight:700;cursor:pointer">⬆ Image→3D (TRELLIS)</button>
+            </div>
+            <div id="meshStatusDash" style="font-size:10.5px;color:#5a6a7a;min-height:16px;text-align:center"></div>
+            <div id="meshResultDash" style="display:none;padding:10px;background:#06080d;border:1px solid #7c3aed30;border-radius:8px;font-size:11px">
+              <span style="color:#00e5a0;font-weight:700">✅ GLB Ready:</span>
+              <a id="meshResultLink" href="#" target="_blank" style="color:#a78bfa;margin-left:6px">View 3D Model</a>
+              <button id="meshListBtn" onclick="_whListCurrentModel()" style="margin-left:8px;background:#0a1628;color:#e8c45c;border:1px solid #e8c45c40;border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:inherit">⬡ List on Bazaar</button>
+              <span style="font-size:9px;color:#5a6a7a;margin-left:8px" id="meshResultNote"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3D MARKETPLACE ── -->
+        <div style="margin-top:16px;background:radial-gradient(120% 120% at 50% -10%,rgba(196,162,78,0.06),transparent 55%),#08080f;border:1px solid rgba(196,162,78,0.18);border-radius:16px;padding:20px 22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div>
+              <div style="font-family:Orbitron,sans-serif;font-size:9px;font-weight:900;letter-spacing:2px;color:#e8c45c;text-transform:uppercase">⬡ 3D Bazaar</div>
+              <div style="font-family:Cinzel,serif;font-size:15px;font-weight:700;letter-spacing:0.04em;color:#f0e7cf;margin-top:2px">Model Marketplace</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="_whLoadModelMarket()" style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:#5a6a7a;border-radius:8px;padding:6px 11px;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:0.06em">↻</button>
+              <button onclick="window.open('/forge-3d.html','_blank')" style="background:rgba(196,162,78,0.08);border:1px solid rgba(196,162,78,0.3);color:#e8c45c;border-radius:8px;padding:6px 12px;font-size:10px;cursor:pointer;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:0.08em">Full Bazaar ↗</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;margin:12px 0;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <div style="text-align:center"><div id="whMktCount" style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#00e5a0">—</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#3a4a5a;margin-top:2px">Listed</div></div>
+            <div style="text-align:center"><div id="whMktSales" style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#e8c45c">—</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#3a4a5a;margin-top:2px">Sold</div></div>
+            <div style="text-align:center"><div id="whMktFloor" style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#a78bfa">—</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#3a4a5a;margin-top:2px">Floor ✦</div></div>
+          </div>
+          <div id="whModelMarket" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
+            <div style="grid-column:1/-1;text-align:center;padding:28px;color:#3a4a5a;font-family:'IBM Plex Mono',monospace;font-size:11px">Loading 3D marketplace…</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <div id="skillsView" class="view">
     <!-- E3: sk-tabs bar removed — single Skills Library only (Models & Images deleted per owner) -->
     <!-- E3 REMOVED: skTabBtn_models button (⬡ Models & Images) -->
@@ -8312,11 +8858,13 @@ window.enter3DWorld=function(){
         <div style="display:flex;flex-direction:column;gap:3px">
           <span class="card-title" style="font-size:12px !important;letter-spacing:2px">💬 DIRECT CHAT</span>
           <span style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:1px" id="chatModelBadge">Groq · Llama-70B · Free tier</span>
+          <span id="wsearchBadge" title="Web Search — click to search the web and inject results as context" onclick="toggleWebResearch();document.getElementById('wsTab2')&&document.getElementById('wsTab2').click()" style="font-size:8px;font-family:'Share Tech Mono',monospace;cursor:pointer;padding:2px 7px;border-radius:3px;border:1px solid rgba(0,200,255,0.25);background:rgba(0,200,255,0.06);color:#00c8ff;white-space:nowrap;letter-spacing:0.5px">🔍 Web <b id="wsearchCount">0</b>/<b id="wsearchLimit">5</b></span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <select id="chatAgentSelect" onchange="pickAgent(this.value)" title="Choose which agent you're talking to" style="padding:6px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:'Share Tech Mono',monospace">
             <option value="SHADDAI">👑 SHADDAI</option><option value="NEXUS">🔧 NEXUS</option><option value="ZEROX">💰 ZEROX</option><option value="ORACLE">🔮 ORACLE</option><option value="TURTLE">🐢 TURTLE</option><option value="QUILL">✍️ QUILL</option><option value="PIKADON">🛡️ PIKADON</option><option value="ALL">◉ ALL AIs</option>
           </select>
+          <button class="btn btn-ghost" onclick="exportChatMd()" title="Export conversation as Markdown" style="padding:6px 10px;font-size:10px;white-space:nowrap">📥 Export</button>
           <button class="btn btn-ghost" onclick="clearCurrentChat()" title="Clear this conversation" style="padding:6px 10px;font-size:10px;white-space:nowrap">🧹 Clear</button>
           <input type="text" id="chatSearch" class="input" placeholder="Search…" style="width:140px;padding:6px 10px;margin:0" oninput="searchConversations(this.value)">
           <div class="chat-indicator" id="chatInd"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span><span id="chatIndTxt">SHADDAI</span></div>
@@ -8376,25 +8924,41 @@ window.enter3DWorld=function(){
 
       <!-- 🌐 Web Research Panel — any agent can use this -->
       <div id="webResearchPanel" style="display:none;padding:10px 12px;background:rgba(0,100,200,0.08);border-top:1px solid rgba(0,200,255,0.2);border-bottom:1px solid rgba(0,200,255,0.2)">
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
           <span style="font-size:8px;font-weight:700;color:#00f0ff;text-transform:uppercase;letter-spacing:1px;font-family:'Share Tech Mono',monospace">🌐 WEB RESEARCH</span>
-          <span style="font-size:8px;color:var(--text-muted)">— scraped content becomes context for the active agent</span>
+          <button id="wsTab1" onclick="_wsTab(1)" style="font-size:8px;padding:2px 8px;border-radius:3px;border:1px solid rgba(0,200,255,0.3);background:rgba(0,200,255,0.15);color:#00c8ff;cursor:pointer" class="active">🔍 Live Search</button>
+          <button id="wsTab2" onclick="_wsTab(2)" style="font-size:8px;padding:2px 8px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer">🔗 Scrape URL</button>
           <button onclick="document.getElementById('webResearchPanel').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1">✕</button>
         </div>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="webResearchUrl" class="input" placeholder="https://example.com/article" style="flex:1;font-size:9px;padding:5px 8px;margin:0" onkeypress="if(event.key==='Enter')researchUrl()">
-          <button class="btn btn-accent" style="font-size:8px;padding:5px 12px;white-space:nowrap" onclick="researchUrl()" id="webResearchBtn">🔍 Fetch</button>
-        </div>
-        <div id="webResearchResult" style="display:none;margin-top:8px">
-          <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(0,200,255,0.2);border-radius:4px;padding:8px;max-height:120px;overflow-y:auto">
-            <div id="webResearchTitle" style="font-size:9px;font-weight:700;color:#00f0ff;margin-bottom:4px"></div>
-            <div id="webResearchPreview" style="font-size:8px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap"></div>
+        <!-- Tab 1: Live Search -->
+        <div id="wsBody1">
+          <div style="display:flex;gap:6px">
+            <input type="text" id="wsSearchQ" class="input" placeholder="Search the web…" style="flex:1;font-size:9px;padding:5px 8px;margin:0" onkeypress="if(event.key==='Enter')runWebSearch()">
+            <button class="btn btn-accent" style="font-size:8px;padding:5px 12px;white-space:nowrap" onclick="runWebSearch()" id="wsSearchBtn">Search</button>
           </div>
+          <div id="wsSearchResults" style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
           <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
-            <span id="webResearchWordCount" style="font-size:8px;color:var(--text-muted)"></span>
-            <button class="btn btn-accent" style="font-size:8px;padding:3px 10px" onclick="injectResearchContext()">+ Inject as Context</button>
-            <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="clearResearchContext()">Clear</button>
-            <span id="webResearchInjected" style="font-size:8px;color:var(--accent);display:none">✓ Context injected</span>
+            <span id="wsSearchInjected" style="font-size:8px;color:var(--accent);display:none">✓ Injected as context</span>
+            <span id="wsLimitNote" style="font-size:8px;color:var(--text-muted)"></span>
+          </div>
+        </div>
+        <!-- Tab 2: Scrape URL (original) -->
+        <div id="wsBody2" style="display:none">
+          <div style="display:flex;gap:6px">
+            <input type="text" id="webResearchUrl" class="input" placeholder="https://example.com/article" style="flex:1;font-size:9px;padding:5px 8px;margin:0" onkeypress="if(event.key==='Enter')researchUrl()">
+            <button class="btn btn-accent" style="font-size:8px;padding:5px 12px;white-space:nowrap" onclick="researchUrl()" id="webResearchBtn">🔗 Fetch</button>
+          </div>
+          <div id="webResearchResult" style="display:none;margin-top:8px">
+            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(0,200,255,0.2);border-radius:4px;padding:8px;max-height:120px;overflow-y:auto">
+              <div id="webResearchTitle" style="font-size:9px;font-weight:700;color:#00f0ff;margin-bottom:4px"></div>
+              <div id="webResearchPreview" style="font-size:8px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+              <span id="webResearchWordCount" style="font-size:8px;color:var(--text-muted)"></span>
+              <button class="btn btn-accent" style="font-size:8px;padding:3px 10px" onclick="injectResearchContext()">+ Inject as Context</button>
+              <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="clearResearchContext()">Clear</button>
+              <span id="webResearchInjected" style="font-size:8px;color:var(--accent);display:none">✓ Context injected</span>
+            </div>
           </div>
         </div>
       </div>
@@ -8408,11 +8972,21 @@ window.enter3DWorld=function(){
         </div>
         <div id="chatQuickPills" class="qa-pillrow"></div>
       </div>
+      <!-- 📝 Custom Instructions Panel -->
+      <div id="chatCustomPanel" style="display:none;padding:10px 12px;background:rgba(0,229,160,0.04);border-top:1px solid rgba(0,229,160,0.18)">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <span style="font-size:8px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-family:'Share Tech Mono',monospace">📝 NOTE TO AGENT</span>
+          <span style="font-size:8px;color:var(--text-muted)">— context prepended to every message this session</span>
+          <button onclick="document.getElementById('chatCustomPanel').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1">✕</button>
+        </div>
+        <textarea id="chatCustomInst" class="input" placeholder="e.g. Always respond in bullet points. Focus on actionable steps. Treat me as an expert developer." style="width:100%;min-height:60px;font-size:9px;padding:6px 8px;margin:0;resize:vertical;font-family:'Share Tech Mono',monospace;line-height:1.5;box-sizing:border-box"></textarea>
+      </div>
       <div class="chat-input-row">
         <button class="btn btn-ghost" id="voiceBtnFull" onclick="startVoiceFull()" style="padding:10px 14px">REC</button>
         <button class="btn btn-ghost" id="ttsBtn" onclick="toggleTTS()" style="padding:10px 14px">TTS</button>
         <button class="btn btn-ghost" title="Web Research — give any agent live URL context" onclick="toggleWebResearch()" style="padding:10px 12px;font-size:11px" id="webResearchToggle">🌐</button>
         <button class="btn btn-ghost" title="Quick actions — make a picture/song/post, research a coin, check the market, safety check — run on this agent" onclick="toggleChatQuick()" style="padding:10px 12px;font-size:11px" id="chatQuickToggle">⚡</button>
+        <button class="btn btn-ghost" title="Note to agent — prepend custom instructions to every message" onclick="var p=document.getElementById('chatCustomPanel');p.style.display=p.style.display==='none'?'block':'none'" style="padding:10px 12px;font-size:11px" id="chatCustomToggle">📝</button>
         <input type="text" class="chat-input" id="chatInFull" placeholder="Type message to agent..." onkeypress="if(event.key==='Enter')sendMsgFull()">
         <button class="chat-send" id="sendBtnFull" onclick="sendMsgFull()">SEND</button>
       </div>
@@ -8432,6 +9006,28 @@ window.enter3DWorld=function(){
         <div class="view-banner-stat"><span id="libBannerNotes">—</span><small>notes</small></div>
       </div>
     </div>
+    <!-- ── RAG BRAIN SEARCH ── -->
+    <div style="margin-bottom:12px;border:1px solid rgba(124,58,237,0.35);border-radius:10px;padding:16px 18px;background:rgba(124,58,237,0.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:Orbitron,sans-serif;font-size:10px;font-weight:900;letter-spacing:1.5px;color:#a78bfa">🧠 RAG BRAIN — <span id="ragChunkCount">…</span> CHUNKS</div>
+        <select id="ragAgentFilter" style="background:#06080d;border:1px solid #2a3346;color:#a78bfa;border-radius:6px;padding:4px 8px;font-size:10px;font-family:inherit">
+          <option value="">All Agents</option>
+          <option value="SHADDAI">SHADDAI</option>
+          <option value="ORACLE">ORACLE</option>
+          <option value="ZEROX">ZEROX</option>
+          <option value="NEXUS">NEXUS</option>
+          <option value="TURTLE">TURTLE</option>
+          <option value="QUILL">QUILL</option>
+          <option value="PIKADON">PIKADON</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="ragQuery" placeholder="Search the council's mastery knowledge base…" style="flex:1;background:#06080d;border:1px solid #2a3346;color:#eaf3fb;border-radius:8px;padding:9px 12px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')searchRAGBrain()">
+        <button onclick="searchRAGBrain()" style="background:#4c1d95;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 16px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Search</button>
+      </div>
+      <div id="ragResults" style="font-size:11px;color:#5a6a7a;min-height:20px;line-height:1.65"></div>
+    </div>
+
     <!-- Library Section -->
     <details style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden">
       <summary style="padding:14px;background:rgba(0,229,160,0.06);cursor:pointer;font-weight:700;color:var(--accent);display:flex;justify-content:space-between;align-items:center">
@@ -11859,17 +12455,179 @@ window.enter3DWorld=function(){
 
   <!-- Settings -->
   <div id="settingsView" class="view">
-    <div class="view-banner" style="border-color:rgba(0,229,160,0.2)">
-      <div class="view-banner-icon">⚙</div>
-      <div class="view-banner-body">
-        <div class="view-banner-title" style="background:linear-gradient(90deg,#00e5a0,#00c4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Control Center</div>
-        <div class="view-banner-sub">Profile · API keys · billing plan · agent endpoints · security preferences</div>
-      </div>
-      <div class="view-banner-stats">
-        <div class="view-banner-stat"><span id="settBannerPlan">Free</span><small>plan</small></div>
-        <div class="view-banner-stat"><span id="settBannerKeys">—</span><small>keys wired</small></div>
+    <style>
+      #settingsView .sett-hero{position:relative;background:linear-gradient(135deg,#010812 0%,#050d1a 50%,#020c18 100%);border:1px solid rgba(0,229,160,0.18);border-radius:16px;padding:28px 24px 20px;margin-bottom:18px;overflow:hidden}
+      #settingsView .sett-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 50%,rgba(0,229,160,0.07) 0%,transparent 70%);pointer-events:none}
+      #settingsView .sett-hero-title{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;letter-spacing:.06em;background:linear-gradient(90deg,#00e5a0 0%,#00c8ff 60%,#a060ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+      #settingsView .sett-hero-sub{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:.06em;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+      #settingsView .sett-hero-stats{display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)}
+      #settingsView .sett-stat{display:flex;flex-direction:column;gap:2px}
+      #settingsView .sett-stat-val{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#00e5a0}
+      #settingsView .sett-stat-lbl{font-size:8px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.08em}
+      #settingsView .sett-hero-badge{position:absolute;top:18px;right:20px;font-size:9px;font-weight:700;padding:5px 14px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.35);color:#00e5a0;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+      /* ══ TURTLE redesign — bigger text, breathing room, clear hierarchy ══ */
+      /* Sub-tabs: 48px pills, bold, glowing active state */
+      #setTabs{border:none!important;padding-bottom:0!important;gap:8px!important}
+      #setTabs .setTab{height:48px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:14px!important;font-weight:700!important;letter-spacing:.02em!important;text-transform:none!important;padding:0 20px!important;border-radius:24px!important;border:1px solid rgba(255,255,255,0.1)!important;background:rgba(255,255,255,0.03)!important;color:var(--text-muted)!important;transition:all .2s!important}
+      #setTabs .setTab:hover{border-color:var(--sk-accent,var(--accent))!important;color:var(--text-primary)!important}
+      #setTabs .setTab.on{background:var(--sk-accent,var(--accent))!important;border-color:var(--sk-accent,var(--accent))!important;color:#04120a!important;font-weight:800!important;box-shadow:0 0 22px var(--sk-accent,rgba(0,229,160,.55)),0 0 0 1px rgba(255,255,255,.08)!important}
+      /* Skin picker: taller cards with a real gradient preview bar on top */
+      .skin-opt{position:relative;padding:0!important;border-radius:14px!important;min-height:120px;display:flex!important;flex-direction:column!important;gap:0!important;overflow:hidden!important}
+      .skin-opt .sk-preview{height:60px;width:100%;border-radius:12px 12px 0 0;display:block}
+      .skin-opt .sk-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1;justify-content:space-between}
+      .skin-opt .sk-dots{display:flex;gap:5px}
+      .skin-opt .sk-dot{width:12px;height:12px;border-radius:50%}
+      .skin-opt .sk-name{font-size:16px!important;font-weight:900!important;letter-spacing:.04em!important;line-height:1.1}
+      .skin-opt .sk-desc{font-size:9px!important;opacity:.7}
+      .skin-opt.active{box-shadow:0 0 0 3px var(--sk-accent,#00ff88),0 0 24px rgba(0,255,136,0.22)!important;transform:translateY(-2px)!important}
+      /* Section headers: left accent stripe, bigger, more breathing room */
+      #settingsView .settings-title{font-size:16px!important;font-weight:800!important;padding-left:12px!important;border-left:3px solid var(--sk-accent,var(--accent))!important;line-height:1.2}
+      #settingsView .settings-section{margin-bottom:24px!important;padding:20px!important}
+      /* All buttons in settings: min 44px tall, readable text */
+      #settingsView .btn{min-height:44px!important;font-size:13px!important;display:inline-flex;align-items:center;justify-content:center}
+      #settingsView #settingsPlanSection .btn{font-size:14px!important;font-weight:800!important;min-height:46px!important}
+    </style>
+    <!-- ══ TURTLE polish — Plan&Usage + AI&Keys content panels, entrance motion, row micro-interactions ══ -->
+    <style id="settings-polish">
+      /* ── local token: resolve active skin accent once ── */
+      #settingsView{--sp-accent:var(--sk-accent,var(--accent))}
+
+      /* ── 3. ORCHESTRATED ENTRANCE — one gentle staggered reveal on the section cards ── */
+      @keyframes spReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+      #settingsView .settings-section{
+        animation:spReveal .5s cubic-bezier(.22,.61,.36,1) both;
+        will-change:opacity,transform;
+      }
+      #settingsView .settings-section:nth-of-type(1){animation-delay:.02s}
+      #settingsView .settings-section:nth-of-type(2){animation-delay:.07s}
+      #settingsView .settings-section:nth-of-type(3){animation-delay:.12s}
+      #settingsView .settings-section:nth-of-type(4){animation-delay:.17s}
+      #settingsView .settings-section:nth-of-type(5){animation-delay:.22s}
+      #settingsView .settings-section:nth-of-type(n+6){animation-delay:.27s}
+      @media (prefers-reduced-motion:reduce){
+        #settingsView .settings-section{animation:none}
+      }
+
+      /* ── 4. ROW MICRO-INTERACTIONS — subtle lift + accent border on interactive rows ── */
+      #settingsView .settings-row{
+        border-radius:8px;
+        padding:9px 10px;
+        margin:2px -10px;
+        border:1px solid transparent;
+        transition:background .18s ease,border-color .18s ease,transform .18s ease;
+      }
+      #settingsView .settings-row:hover{
+        background:rgba(255,255,255,.03);
+        border-color:color-mix(in srgb,var(--sp-accent) 30%,transparent);
+        transform:translateX(2px);
+      }
+
+      /* ══ 1. PLAN & USAGE — premium status + animated meter + anchor CTA ══ */
+      #settingsPlanSection{position:relative;overflow:hidden}
+      #settingsPlanSection::before{
+        content:'';position:absolute;top:-40%;right:-10%;width:55%;height:180%;
+        background:radial-gradient(ellipse at center,rgba(255,215,0,.10),transparent 70%);
+        pointer-events:none;filter:blur(6px);
+      }
+      /* Credits meter → taller rounded track with animated shimmer sweep on the fill */
+      #settingsCreditBar{
+        position:relative;
+        background:linear-gradient(90deg,var(--sp-accent),#00f0ff)!important;
+        box-shadow:0 0 12px color-mix(in srgb,var(--sp-accent) 45%,transparent);
+        transition:width 1s cubic-bezier(.22,.61,.36,1)!important;
+      }
+      #settingsPlanSection [style*="height:6px"]{height:9px!important;border-radius:6px!important}
+      #settingsCreditBar::after{
+        content:'';position:absolute;inset:0;border-radius:inherit;
+        background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.45) 50%,transparent 80%);
+        background-size:220% 100%;
+        animation:spShimmer 2.6s linear infinite;
+      }
+      @keyframes spShimmer{0%{background-position:200% 0}100%{background-position:-120% 0}}
+      /* Tier cards — clear hierarchy, hover lift, active tier reads first */
+      #settingsPlanSection .settings-plan-card{
+        position:relative;
+        transition:transform .2s cubic-bezier(.22,.61,.36,1),border-color .2s,box-shadow .2s,opacity .2s;
+      }
+      #settingsPlanSection .settings-plan-card:hover{
+        transform:translateY(-3px);
+        opacity:1!important;
+        box-shadow:0 8px 22px rgba(0,0,0,.4);
+      }
+      #settingsPlanSection .settings-plan-card[data-tier="free"]{
+        border-color:color-mix(in srgb,var(--sp-accent) 55%,transparent)!important;
+        background:color-mix(in srgb,var(--sp-accent) 8%,transparent);
+      }
+      /* The upgrade CTA is the visual anchor — big, bold, gradient + accent glow */
+      #settingsPlanSection .btn.btn-accent{
+        background:linear-gradient(120deg,var(--sp-accent),#00f0ff)!important;
+        color:#04120a!important;font-weight:900!important;letter-spacing:.02em;
+        border:none!important;
+        box-shadow:0 6px 20px color-mix(in srgb,var(--sp-accent) 40%,transparent),
+                   inset 0 1px 0 rgba(255,255,255,.25);
+        transition:transform .2s cubic-bezier(.22,.61,.36,1),box-shadow .2s;
+      }
+      #settingsPlanSection .btn.btn-accent:hover{
+        transform:translateY(-2px);
+        box-shadow:0 10px 30px color-mix(in srgb,var(--sp-accent) 60%,transparent),
+                   inset 0 1px 0 rgba(255,255,255,.3);
+      }
+      #settingsTierBadge{
+        box-shadow:0 0 12px color-mix(in srgb,var(--sp-accent) 35%,transparent);
+        letter-spacing:.08em;
+      }
+
+      /* ══ 2. AI & KEYS — consistent 44px inputs, monospace keys, deliberate buttons ══ */
+      #settingsView .settings-section input.input,
+      #settingsView .settings-section select.select{
+        min-height:44px!important;
+        border-radius:10px!important;
+        font-size:12px!important;
+        transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+      }
+      /* key/password inputs read as keys — monospace, letter-spaced */
+      #settingsView .settings-section input[type="password"].input,
+      #claudeKeyInput,#openrouterKeyInput,#remoteAiKeyInput__dup2,
+      #remoteAiEndpoint__dup2,#remoteAiModel__dup2{
+        font-family:'Share Tech Mono','SFMono-Regular',ui-monospace,monospace!important;
+        letter-spacing:.04em!important;
+      }
+      #settingsView .settings-section input.input:focus,
+      #settingsView .settings-section select.select:focus{
+        border-color:var(--sp-accent)!important;
+        box-shadow:0 0 0 3px color-mix(in srgb,var(--sp-accent) 18%,transparent)!important;
+        outline:none!important;
+      }
+      /* labels: clearer, calmer hierarchy */
+      #settingsView .settings-section .settings-label{
+        font-weight:600;letter-spacing:.01em;
+      }
+      /* Show / test / save buttons feel deliberate — min 44px, crisp hover */
+      #settingsView .settings-section .btn.btn-ghost{
+        min-height:44px!important;border-radius:10px!important;
+        transition:border-color .18s,color .18s,background .18s,transform .18s;
+      }
+      #settingsView .settings-section .btn.btn-ghost:hover{
+        border-color:var(--sp-accent)!important;
+        color:var(--sp-accent)!important;
+        transform:translateY(-1px);
+      }
+    </style>
+    <!-- Cinematic hero header -->
+    <div class="sett-hero">
+      <div class="sett-hero-badge" id="settBannerPlanBadge">FREE PLAN</div>
+      <div class="sett-hero-title">Control Center</div>
+      <div class="sett-hero-sub">Profile · keys · billing · security · appearance</div>
+      <div class="sett-hero-stats">
+        <div class="sett-stat"><div class="sett-stat-val" id="settBannerPlan">Free</div><div class="sett-stat-lbl">Current Plan</div></div>
+        <div class="sett-stat"><div class="sett-stat-val" id="settBannerKeys" style="color:#00c8ff">—</div><div class="sett-stat-lbl">Keys Wired</div></div>
+        <div class="sett-stat"><div class="sett-stat-val" style="color:#a060ff">v80</div><div class="sett-stat-lbl">Version</div></div>
       </div>
     </div>
+    <script>
+    // Sync the old plan badge with the new one
+    (function(){try{var p=localStorage.getItem('shd_plan')||'Free';var el=document.getElementById('settBannerPlanBadge');if(el)el.textContent=(p.toUpperCase()||'FREE')+' PLAN';}catch(e){}})();
+    </script>
 
     <!-- ══ PROFILE / ACCOUNT — who you are (saved to Firestore for free) ══ -->
     <div class="card" id="profileCard" style="border:1px solid var(--accent);background:rgba(0,229,160,0.03)">
@@ -11968,26 +12726,65 @@ window.enter3DWorld=function(){
           <div class="settings-title" style="color:var(--sk-accent,var(--accent));margin-bottom:2px">THEME / SKIN</div>
           <div style="font-size:8px;color:var(--text-muted)">Full reskin — pick a look. Saved to this device. Default: GLITCH.</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-          <button type="button" class="skin-opt" data-skin="glitch" onclick="setShaddaiSkin('glitch')" style="cursor:pointer;text-align:left;padding:10px;border:2px solid var(--sk-border,var(--border));border-radius:var(--sk-radius,6px);background:#080808">
-            <div style="display:flex;gap:4px;margin-bottom:8px"><span style="width:14px;height:14px;border-radius:2px;background:#00ff88"></span><span style="width:14px;height:14px;border-radius:2px;background:#00f0ff"></span><span style="width:14px;height:14px;border-radius:2px;background:#ff1a1a"></span></div>
-            <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:#00f0ff;letter-spacing:.05em">GLITCH</div>
-            <div style="font-size:7px;color:#8a8a8a;margin-top:2px">Neon CRT · default</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+          <!-- GLITCH -->
+          <button type="button" class="skin-opt" data-skin="glitch" onclick="if(window.setThemeSkin)setThemeSkin('glitch');if(window.setShaddaiSkin)setShaddaiSkin('glitch')" style="cursor:pointer;text-align:left;border:2px solid rgba(0,255,136,.25);background:linear-gradient(135deg,#060c0c 0%,#020808 100%)">
+            <span class="sk-preview" style="background:linear-gradient(120deg,#00ff88 0%,#00f0ff 55%,#ff1a1a 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#00ff88;box-shadow:0 0 8px #00ff88"></span><span class="sk-dot" style="background:#00f0ff;box-shadow:0 0 8px #00f0ff"></span><span class="sk-dot" style="background:#ff1a1a;box-shadow:0 0 8px #ff1a1a"></span></span>
+              <span><span class="sk-name" style="font-family:'Orbitron',monospace;color:#00f0ff;display:block">GLITCH</span><span class="sk-desc" style="color:#8a8a8a;display:block">Neon CRT · default</span></span>
+            </span>
           </button>
-          <button type="button" class="skin-opt" data-skin="terminal" onclick="setShaddaiSkin('terminal')" style="cursor:pointer;text-align:left;padding:10px;border:2px solid var(--sk-border,var(--border));border-radius:var(--sk-radius,6px);background:#041004">
-            <div style="display:flex;gap:4px;margin-bottom:8px"><span style="width:14px;height:14px;border-radius:2px;background:#00ff41"></span><span style="width:14px;height:14px;border-radius:2px;background:#00c030"></span><span style="width:14px;height:14px;border-radius:2px;background:#ffb000"></span></div>
-            <div style="font-family:'VT323',monospace;font-size:14px;font-weight:400;color:#00ff41;letter-spacing:.03em">TERMINAL</div>
-            <div style="font-size:7px;color:rgba(0,255,65,.55);margin-top:2px">Phosphor green</div>
+          <!-- TERMINAL -->
+          <button type="button" class="skin-opt" data-skin="terminal" onclick="if(window.setThemeSkin)setThemeSkin('terminal');if(window.setShaddaiSkin)setShaddaiSkin('terminal')" style="cursor:pointer;text-align:left;border:2px solid rgba(150,255,60,.3);background:linear-gradient(135deg,#0f1e05 0%,#0a1403 100%)">
+            <span class="sk-preview" style="background:linear-gradient(120deg,#9dff2f 0%,#d6ff33 60%,#eaff3a 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#9dff2f;box-shadow:0 0 8px #9dff2f"></span><span class="sk-dot" style="background:#d6ff33"></span><span class="sk-dot" style="background:#eaff3a;box-shadow:0 0 6px #eaff3a"></span></span>
+              <span><span class="sk-name" style="font-family:'VT323',monospace;color:#9dff2f;display:block">TERMINAL</span><span class="sk-desc" style="color:rgba(150,255,60,.6);display:block">Lime phosphor · CRT</span></span>
+            </span>
           </button>
-          <button type="button" class="skin-opt" data-skin="void" onclick="setShaddaiSkin('void')" style="cursor:pointer;text-align:left;padding:10px;border:2px solid rgba(255,255,255,.14);border-radius:2px;background:#000000">
-            <div style="display:flex;gap:4px;margin-bottom:8px"><span style="width:14px;height:14px;border-radius:2px;background:#ffffff"></span><span style="width:14px;height:14px;border-radius:2px;background:#8f8f8f"></span><span style="width:14px;height:14px;border-radius:2px;background:#1a1a1a;border:1px solid #333"></span></div>
-            <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:#ffffff;letter-spacing:.05em">VOID</div>
-            <div style="font-size:7px;color:#8f8f8f;margin-top:2px">Pure black · mono</div>
+          <!-- VOID -->
+          <button type="button" class="skin-opt" data-skin="void" onclick="if(window.setThemeSkin)setThemeSkin('void');if(window.setShaddaiSkin)setShaddaiSkin('void')" style="cursor:pointer;text-align:left;border:2px solid rgba(255,255,255,.14);background:linear-gradient(135deg,#050505 0%,#000000 100%)">
+            <span class="sk-preview" style="background:linear-gradient(120deg,#ffffff 0%,#8f8f8f 55%,#1a1a1a 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#ffffff;box-shadow:0 0 8px #fff"></span><span class="sk-dot" style="background:#8f8f8f"></span><span class="sk-dot" style="background:#1a1a1a;border:1px solid #333"></span></span>
+              <span><span class="sk-name" style="font-family:'Orbitron',monospace;color:#ffffff;display:block">VOID</span><span class="sk-desc" style="color:#8f8f8f;display:block">Pure black · monochrome</span></span>
+            </span>
           </button>
-          <button type="button" class="skin-opt" data-skin="amber" onclick="setShaddaiSkin('amber')" style="cursor:pointer;text-align:left;padding:10px;border:2px solid rgba(255,176,32,.3);border-radius:3px;background:#0a0600">
-            <div style="display:flex;gap:4px;margin-bottom:8px"><span style="width:14px;height:14px;border-radius:2px;background:#ffb020"></span><span style="width:14px;height:14px;border-radius:2px;background:#ff8a00"></span><span style="width:14px;height:14px;border-radius:2px;background:#ffd24a"></span></div>
-            <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:#ffb020;letter-spacing:.05em">AMBER</div>
-            <div style="font-size:7px;color:rgba(255,176,32,.6);margin-top:2px">Gold CRT · warm</div>
+          <!-- AMBER -->
+          <button type="button" class="skin-opt" data-skin="amber" onclick="if(window.setThemeSkin)setThemeSkin('amber');if(window.setShaddaiSkin)setShaddaiSkin('amber')" style="cursor:pointer;text-align:left;border:2px solid rgba(255,176,32,.3);background:linear-gradient(135deg,#120c02 0%,#0a0600 100%)">
+            <span class="sk-preview" style="background:linear-gradient(120deg,#ffd24a 0%,#ffb020 55%,#ff8a00 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#ffb020;box-shadow:0 0 8px #ffb020"></span><span class="sk-dot" style="background:#ff8a00"></span><span class="sk-dot" style="background:#ffd24a;box-shadow:0 0 6px #ffd24a"></span></span>
+              <span><span class="sk-name" style="font-family:'Orbitron',monospace;color:#ffb020;display:block">AMBER</span><span class="sk-desc" style="color:rgba(255,176,32,.5);display:block">Gold CRT · warm analog</span></span>
+            </span>
+          </button>
+          <!-- ══ NEW live skins (dusk / solar / parchment — real palettes wired in setShaddaiSkin) ══ -->
+          <!-- NEON DUSK -->
+          <button type="button" class="skin-opt" data-skin="dusk" onclick="if(window.setThemeSkin)setThemeSkin('dusk');if(window.setShaddaiSkin)setShaddaiSkin('dusk')" style="cursor:pointer;text-align:left;border:2px solid rgba(255,64,160,.28);background:linear-gradient(135deg,#12040f 0%,#0a0210 100%)">
+            <span class="sk-preview" style="background:linear-gradient(120deg,#ff40a0 0%,#a060ff 55%,#3040ff 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#ff40a0;box-shadow:0 0 8px #ff40a0"></span><span class="sk-dot" style="background:#a060ff;box-shadow:0 0 8px #a060ff"></span><span class="sk-dot" style="background:#3040ff;box-shadow:0 0 8px #3040ff"></span></span>
+              <span><span class="sk-name" style="font-family:'Orbitron',monospace;color:#ff40a0;display:block">NEON DUSK</span><span class="sk-desc" style="color:rgba(255,64,160,.55);display:block">Synthwave magenta</span></span>
+            </span>
+          </button>
+          <!-- SOLAR (PRO) -->
+          <button type="button" class="skin-opt" data-skin="solar" onclick="if(window.setThemeSkin)setThemeSkin('solar');if(window.setShaddaiSkin)setShaddaiSkin('solar')" style="position:relative;cursor:pointer;text-align:left;border:2px solid rgba(0,228,136,.3);background:linear-gradient(135deg,#1d2213 0%,#0e1109 100%)">
+            <span style="position:absolute;top:6px;right:6px;font-size:7px;background:rgba(255,215,0,0.18);color:#ffd700;border:1px solid rgba(255,215,0,0.4);border-radius:3px;padding:1px 5px;letter-spacing:1px;font-family:monospace;z-index:2">PRO</span>
+            <span class="sk-preview" style="background:linear-gradient(120deg,#161a0e 0%,#00e488 50%,#ffb020 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#00e488;box-shadow:0 0 8px #00e488"></span><span class="sk-dot" style="background:#ffb020;box-shadow:0 0 8px #ffb020"></span><span class="sk-dot" style="background:#5fe0ff;box-shadow:0 0 8px #5fe0ff"></span></span>
+              <span><span class="sk-name" style="font-family:'Fraunces','Georgia',serif;color:#00e488;display:block">SOLAR</span><span class="sk-desc" style="color:rgba(0,228,136,.7);display:block">Emerald sun · warm</span></span>
+            </span>
+          </button>
+          <!-- PARCHMENT (PRO) -->
+          <button type="button" class="skin-opt" data-skin="parchment" onclick="if(window.setThemeSkin)setThemeSkin('parchment');if(window.setShaddaiSkin)setShaddaiSkin('parchment')" style="position:relative;cursor:pointer;text-align:left;border:2px solid rgba(221,107,58,.35);background:linear-gradient(135deg,#2a2015 0%,#17110b 100%)">
+            <span style="position:absolute;top:6px;right:6px;font-size:7px;background:rgba(255,215,0,0.18);color:#ffd700;border:1px solid rgba(255,215,0,0.4);border-radius:3px;padding:1px 5px;letter-spacing:1px;font-family:monospace;z-index:2">PRO</span>
+            <span class="sk-preview" style="background:linear-gradient(120deg,#201810 0%,#dd6b3a 55%,#93a55f 100%)"></span>
+            <span class="sk-body">
+              <span class="sk-dots"><span class="sk-dot" style="background:#dd6b3a;box-shadow:0 0 8px #dd6b3a"></span><span class="sk-dot" style="background:#93a55f;box-shadow:0 0 8px #93a55f"></span><span class="sk-dot" style="background:#e0a63a;box-shadow:0 0 8px #e0a63a"></span></span>
+              <span><span class="sk-name" style="font-family:'Fraunces','Georgia',serif;color:#dd6b3a;display:block">PARCHMENT</span><span class="sk-desc" style="color:rgba(221,107,58,.7);display:block">Terracotta &amp; sage</span></span>
+            </span>
           </button>
         </div>
       </div>
@@ -15452,6 +16249,8 @@ function init() {
   setInterval(updateRes, 5000);
   // Auto-refresh task receipts every 45 seconds when dashboard is open
   setInterval(() => { if (S.view === 'dash' && typeof loadTaskReceipts === 'function') loadTaskReceipts(); }, 45000);
+  // Dashboard is the default active view — hide nav bar on load
+  document.body.classList.add('at-home');
   // Sovereign Terminal: mission clock + agent pulse line
   initSovereignTerminal();
   // Office Work Board
@@ -21629,6 +22428,26 @@ window.clearCurrentChat = function () {
     if (typeof notify === 'function') notify('🧹 Conversation cleared');
   } catch (e) { if (typeof notify === 'function') notify('Could not clear: ' + e.message); }
 };
+// Export current conversation as a Markdown file.
+window.exportChatMd = function () {
+  const key = S.agent === 'ALL' ? '_all' : S.agent;
+  const msgs = (S.msgs && S.msgs[key]) || [];
+  if (!msgs.length) { if (typeof notify === 'function') notify('No messages to export'); return; }
+  let md = `# Chat with ${S.agent}\n_Exported ${new Date().toLocaleString()}_\n\n---\n\n`;
+  msgs.forEach(function (m) {
+    const who = m.sender === 'user' ? 'You' : (m.sender || 'Agent');
+    const ts = m.time ? new Date(m.time).toLocaleTimeString() : '';
+    md += `**${who}**${ts ? ' _(' + ts + ')_' : ''}\n\n${m.text || ''}\n\n---\n\n`;
+  });
+  try {
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'chat-' + S.agent + '-' + Date.now() + '.md';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    if (typeof notify === 'function') notify('📥 Chat exported as Markdown');
+  } catch (e) { if (typeof notify === 'function') notify('Export failed: ' + e.message); }
+};
 // Keep the chat header agent dropdown in sync when the agent changes elsewhere.
 window._syncChatAgentSelect = function () { var s = document.getElementById('chatAgentSelect'); if (s && S.agent) s.value = S.agent; };
 
@@ -21636,6 +22455,8 @@ async function sendMsgFull() {
   const inp = document.getElementById('chatInFull');
   const txt = inp.value.trim();
   if (!txt || S.proc) return;
+  const _custInst = (document.getElementById('chatCustomInst')?.value || '').trim();
+  const apiTxt = _custInst ? `[System context — apply throughout this response]\n${_custInst}\n\n---\n\n${txt}` : txt;
 
   inp.value = '';
   S.proc = true;
@@ -21759,7 +22580,7 @@ async function sendMsgFull() {
       const r = await fetch(`/api/agents/custom/${encodeURIComponent(S.agent)}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: txt, history }),
+        body: JSON.stringify({ message: apiTxt, history }),
         signal: AbortSignal.timeout(90000)
       });
       const d = await r.json();
@@ -21808,7 +22629,7 @@ async function sendMsgFull() {
       const r = await fetch(`/api/agent/${agentKey}/task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: txt, sessionApis: _agentAPIConnections[agentKey] || [] }),
+        body: JSON.stringify({ task: apiTxt, sessionApis: _agentAPIConnections[agentKey] || [] }),
         signal: AbortSignal.timeout(180000)
       });
       const data = await r.json();
@@ -21853,7 +22674,7 @@ async function sendMsgFull() {
     const contentEl = bubble.querySelector('.chat-content');
     const _streamT0 = Date.now();
     try {
-      const resp = await streamAgentChat(agentName, txt, contentEl);
+      const resp = await streamAgentChat(agentName, apiTxt, contentEl);
       recordAgentPerf(agentName, Date.now()-_streamT0, true);
       S.msgs[key].push({ id: Date.now(), text: resp, sender: agentName, type: 'agent', time: new Date().toISOString() });
     } catch(e) {
@@ -21866,7 +22687,7 @@ async function sendMsgFull() {
     const _fallT0 = Date.now();
     try {
       const _resolvedAgent = (!S.agent || S.agent === 'auto' || S.agent === 'AUTO') ? (typeof _autoRouteAgent === 'function' ? _autoRouteAgent(txt) : 'SHADDAI') : S.agent;
-      const resp = await getResp(txt, _resolvedAgent);
+      const resp = await getResp(apiTxt, _resolvedAgent);
       recordAgentPerf(_resolvedAgent, Date.now()-_fallT0, true);
       hideTyping();
       S.msgs[key].push({ id: Date.now(), text: resp, sender: S.agent, type: 'agent', time: new Date().toISOString() });
@@ -24459,6 +25280,44 @@ function sendToChat(name) {
   sendPanelMsg();
 }
 
+// ── RAG Brain Search — hits /api/mastery/search (live chunk count from 7 agent KBs) ──
+async function loadRagBrainStats() {
+  try {
+    const r = await fetch('/api/mcp/status', { signal: AbortSignal.timeout(8000) });
+    const d = await r.json();
+    const t = (d && d.totals) || {};
+    const el = document.getElementById('ragChunkCount');
+    if (el && (t.chunks || t.chunks === 0)) el.textContent = Number(t.chunks).toLocaleString();
+    const lb = document.getElementById('libBannerDocs');
+    if (lb && (t.docs || t.docs === 0)) lb.textContent = Number(t.docs).toLocaleString();
+  } catch (_) {}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadRagBrainStats); else loadRagBrainStats();
+
+async function searchRAGBrain() {
+  const q = (document.getElementById('ragQuery')||{}).value||'';
+  const agent = (document.getElementById('ragAgentFilter')||{}).value||'';
+  const out = document.getElementById('ragResults');
+  if (!q.trim()) { if(out) out.textContent='Enter a search query.'; return; }
+  if (out) out.innerHTML='<span style="color:#a78bfa">⟳ Searching RAG brain…</span>';
+  try {
+    const r = await fetch('/api/mastery/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,agent:agent||undefined})});
+    const d = await r.json();
+    if (!d.ok||!d.results||!d.results.length) { if(out) out.textContent='No matches found for "'+q+'". Try different keywords.'; return; }
+    if (out) out.innerHTML = d.results.map(function(r,i){
+      return '<div style="border:1px solid rgba(124,58,237,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:rgba(0,0,0,0.3)">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
+          +'<span style="font-family:Orbitron,sans-serif;font-size:8px;color:#a78bfa;letter-spacing:1px">'+r.source+'</span>'
+          +'<span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:#3a4a5a">score: '+parseFloat(r.score||0).toFixed(3)+'</span>'
+        +'</div>'
+        +'<div style="color:#c4b8d8;line-height:1.6;font-size:11px">'+r.chunk.slice(0,400).replace(/</g,'&lt;')+(r.chunk.length>400?'…':'')+'</div>'
+      +'</div>';
+    }).join('');
+  } catch(e) {
+    if(out) out.innerHTML='<span style="color:#ff6b6b">Search error: '+e.message+'</span>';
+  }
+}
+
 function showScanFolderUI() {
   const panel = document.getElementById('scanFolderPanel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
@@ -26145,6 +27004,7 @@ function showView(v) {
   // In the 3D world, hide the dashboard chrome (top nav + side rail) so the SHADDAI/Shop/nav
   // buttons don't overlay the world. Any other view restores it.
   document.body.classList.toggle('in-world', v === 'grid');
+  document.body.classList.toggle('at-home', v === 'dash');
   // E3/A4: retired standalone views now live as Office sub-tabs — route through Office.
   if (v === 'projects' || v === 'skills' || v === 'library-notes' || v === 'billing') {
     const _sub = (v === 'library-notes') ? 'library' : v;
@@ -26230,6 +27090,7 @@ function showView(v) {
   if (v === 'chainRunner')    { if (typeof wfRenderRunner === 'function') wfRenderRunner(); }
   if (v === 'billing')       renderBillingView();
   if (v === 'toolbrowser')   { if (typeof tbLoad === 'function') tbLoad(false); }
+  if (v === 'worlds')        { try { if (typeof initWorldsView === 'function') initWorldsView(); } catch(e){} }
   if (v === 'commandCenter') switchCommandTab('agents');
   if (v === 'earnings')      { renderEarningsDashboard(); _renderEarningsPanel(); }
   if (v === 'jobBoard')      _renderStandaloneJobBoard();
@@ -28318,6 +29179,405 @@ ${tool} TIPS:
     out.textContent = 'Error: ' + e.message;
     out.style.display = 'block';
   }
+}
+
+// ======= WORLDS HUB =======
+function initWorldsView() {
+  _whLoadKpis();
+  var sub = window._worldsEntrySub || 'worlds';
+  window._worldsEntrySub = null;
+  switchWorldsTab(sub);
+}
+function switchWorldsTab(tab) {
+  document.querySelectorAll('#worldsView .wh-panel').forEach(function(p){ p.classList.remove('wh-active'); });
+  document.querySelectorAll('#worldsView .wh-tb').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.querySelector('#worldsView [data-wtab="' + tab + '"]');
+  if (panel) panel.classList.add('wh-active');
+  var btn = document.querySelector('#worldsView [data-wbtn="' + tab + '"]');
+  if (btn) btn.classList.add('active');
+  if (tab === 'city')    _whLoadCity();
+  if (tab === 'rooms')   _whLoadRooms();
+  if (tab === 'economy') _whLoadEconomy();
+  if (tab === 'forge')   { _whLoadForge(); _whLoadModelMarket(); }
+}
+function _whLoadKpis() {
+  var uid = localStorage.getItem('shd_signed_in') || '';
+  var sparks = 0;
+  try { var e = JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); sparks = e.sparks||0; } catch(_){}
+  var sel = document.querySelector('#sparksDisplay,[data-sparks]');
+  if (sel) { var n=parseInt(sel.textContent); if(!isNaN(n)) sparks=n; }
+  var ks = document.getElementById('whKpiSparks'); if(ks) ks.textContent = sparks.toLocaleString();
+  var sig = parseInt(localStorage.getItem('shaddai.signal')||'100'); if(isNaN(sig)) sig=100;
+  var ksg = document.getElementById('whKpiSignal'); if(ksg) ksg.textContent = sig;
+  var rooms = []; try { rooms = JSON.parse(localStorage.getItem('shaddai.rooms.'+uid)||'[]'); } catch(_){}
+  var kr = document.getElementById('whKpiRooms'); if(kr) kr.textContent = rooms.length;
+  var cityArr = []; try { cityArr = JSON.parse(localStorage.getItem('shaddai.city')||'[]'); } catch(_){}
+  var myPlots = Array.isArray(cityArr) ? cityArr.filter(function(p){ return p&&p.owner===uid; }).length : 0;
+  var kp = document.getElementById('whKpiPlots'); if(kp) kp.textContent = myPlots;
+  var allClaimed = Array.isArray(cityArr) ? cityArr.filter(function(p){ return p&&p.owner; }).length : 0;
+  var wc = document.getElementById('whWorldClaimed'); if(wc) wc.textContent = allClaimed;
+}
+function _whLoadCity() {
+  var uid = localStorage.getItem('shd_signed_in') || '';
+  var sig = parseInt(localStorage.getItem('shaddai.signal')||'100'); if(isNaN(sig)) sig=100;
+  var fill = document.getElementById('whSignalFill'); if(fill) fill.style.width=sig+'%';
+  var lbl  = document.getElementById('whSignalLbl');  if(lbl)  lbl.textContent=sig+' / 100';
+  var pct  = document.getElementById('whSignalPct');  if(pct)  pct.textContent=sig+'%';
+  var st   = document.getElementById('whSignalStatus');
+  if(st) st.textContent = sig>=80?'Signal strong — explore freely.':sig>=40?'Signal moderate — avoid hostile zones.':'Signal low — return to your office to regen.';
+  var cityArr = []; try { cityArr = JSON.parse(localStorage.getItem('shaddai.city')||'[]'); } catch(_){}
+  var PLOT_TIER_DATA=[
+    {name:'RAW',     color:'#4a5a6a',rate:'0.5/s'},
+    {name:'DEV',     color:'#00b4e5',rate:'1.0/s'},
+    {name:'LANDMARK',color:'#e8c45c',rate:'2.0/s'}
+  ];
+  var grid = document.getElementById('whCityGrid'); if(!grid) return;
+  grid.innerHTML = '';
+  for (var i=0;i<30;i++) {
+    var plot = Array.isArray(cityArr) ? (cityArr[i]||{}) : {};
+    var mine = uid && plot.owner===uid;
+    var taken = plot.owner && !mine;
+    var tier = typeof plot.tier==='number'?plot.tier:0;
+    var ti = PLOT_TIER_DATA[tier]||PLOT_TIER_DATA[0];
+    var d = document.createElement('div');
+    d.className = 'wh-plot '+(mine?'mine':taken?'taken':'open');
+    d.title = mine?'🏠 Your Plot · Slot '+(i+1)+' · '+ti.name+' ('+ti.rate+')':taken?'🔒 Owned':'◆ Plot '+(i+1)+' · Available';
+    if(mine && tier>0){ d.style.boxShadow='0 0 8px '+ti.color+'88'; d.style.borderColor=ti.color+'66'; }
+    if(mine){ var badge=document.createElement('span');
+      badge.style.cssText='position:absolute;top:2px;right:3px;font-size:7px;font-weight:700;color:'+ti.color+';letter-spacing:.3px;line-height:1';
+      badge.textContent=tier>0?ti.name:''; d.style.position='relative'; d.appendChild(badge); }
+    grid.appendChild(d);
+  }
+  var myPlot = Array.isArray(cityArr) ? cityArr.find(function(p){ return p&&p.owner===uid; }) : null;
+  var rw = document.getElementById('whPlotReward');
+  if (rw) {
+    if (myPlot) {
+      var acc=parseFloat(myPlot.claimable||0).toFixed(2);
+      var mti=PLOT_TIER_DATA[myPlot.tier||0]||PLOT_TIER_DATA[0];
+      rw.innerHTML='Plot #'+(myPlot.slot+1)+' · <span style="color:'+mti.color+';font-weight:700">'+mti.name+'</span> · '+mti.rate+' · Accrued: <strong style="color:#e8c45c">'+acc+' ✦ Sparks</strong>';
+    }
+    else if (uid) rw.textContent='No plot owned yet. Enter the 2D world and visit Founders Row.';
+    else rw.textContent='Sign in to view your plot rewards.';
+  }
+  var ps = document.getElementById('whPlotStatus');
+  if(ps) { var mp=Array.isArray(cityArr)?cityArr.filter(function(p){return p&&p.owner===uid;}).length:0; ps.textContent='30 plots · '+mp+' owned by you'; }
+}
+function _whLoadRooms() {
+  var uid = localStorage.getItem('shd_signed_in') || 'guest';
+  var rooms = []; try { rooms = JSON.parse(localStorage.getItem('shaddai.rooms.'+uid)||'[]'); } catch(_){}
+  var container = document.getElementById('whRoomsGrid'); if(!container) return;
+  if (!rooms.length) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--text-muted)"><div style="font-size:32px;margin-bottom:10px">🚪</div><div style="font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1.5px;margin-bottom:8px">NO PROPERTIES YET</div><div style="font-size:10px;margin-bottom:18px">Walk city districts to discover and claim rooms.</div><button class="wh-btn-p" onclick="location.href=\'game.html\'">Enter 2D World</button></div>';
+    return;
+  }
+  container.innerHTML = rooms.map(function(r,i){
+    return '<div class="wh-room-card" onclick="window._officeEntrySub=\'rooms\';showView(\'office\')">'+
+      '<div class="wh-room-name">'+(r.name||'Room '+i)+'</div>'+
+      '<div class="wh-room-stat"><span>Tenants</span><span>'+(r.tenants||0)+'</span></div>'+
+      '<div class="wh-room-stat"><span>Pending Rent</span><span style="color:#00e5a0">+'+(r.pendingRent||0)+' ✦</span></div>'+
+      '<div class="wh-room-stat"><span>District</span><span>'+(r.district||'Agent City')+'</span></div>'+
+    '</div>';
+  }).join('');
+}
+function _whLoadEconomy() {
+  var econ = {}; try { econ = JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); } catch(_){}
+  var sparks = econ.sparks||0;
+  var sel = document.querySelector('#sparksDisplay,[data-sparks]');
+  if (sel) { var n=parseInt(sel.textContent); if(!isNaN(n)) sparks=n; }
+  var sv = document.getElementById('whSparksVal'); if(sv) sv.textContent = sparks.toLocaleString();
+  var earnings = econ.earnings||{};
+  var ep=document.getElementById('whEarnPlots'); if(ep) ep.textContent='+'+( earnings.plots||0);
+  var et=document.getElementById('whEarnTasks'); if(et) et.textContent='+'+( earnings.tasks||0);
+  var er=document.getElementById('whEarnRefs');  if(er) er.textContent='+'+( earnings.referrals||0);
+  var burned = econ.burned||0; var supply = econ.totalSupply||1000000;
+  var burnPct = supply>0?Math.min(burned/supply*100,100):0;
+  var bf=document.getElementById('whBurnFill'); if(bf) bf.style.width=burnPct.toFixed(1)+'%';
+  var bt=document.getElementById('whBurnTotal'); if(bt) bt.textContent=burned.toLocaleString()+' Sparks burned';
+  var bp=document.getElementById('whBurnPct');  if(bp) bp.textContent=burnPct.toFixed(2)+'% of supply';
+  fetch('/api/marketplace/stats').then(function(r){return r.json();}).then(function(d){
+    var bl=document.getElementById('whBazaarListings'); if(bl) bl.textContent=(d.listings||d.count||0);
+    var bv=document.getElementById('whBazaarVol');      if(bv) bv.textContent=((d.volume||0)).toLocaleString();
+  }).catch(function(){ });
+  _whLoadStake();
+  _whLoadAuctions();
+}
+function _whLoadForge() {
+  var gallery = []; try { gallery = JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); } catch(_){}
+  var grid = document.getElementById('whForgeGrid'); if(!grid) return;
+  if (!gallery.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--text-muted)"><div style="font-size:40px;margin-bottom:12px">⬡</div><div style="font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1.5px;color:#f0b429;margin-bottom:8px">NO AGENTS FORGED</div><div style="font-size:10px;margin-bottom:18px">Create your first AI agent — forge gives it skills, personality &amp; a pixel sprite.</div><button class="wh-btn-p" style="background:#f0b429" onclick="if(typeof openPixelForge===\'function\')openPixelForge();else showView(\'forge\')">⬡ Forge First Agent</button></div>';
+    return;
+  }
+  grid.innerHTML = gallery.slice(0,16).map(function(a){
+    var em=a.emoji||a.sprite||'🤖';
+    return '<div class="wh-forge-card">'+
+      '<div class="wh-forge-head">'+em+'</div>'+
+      '<div class="wh-forge-meta">'+
+        '<div class="wh-forge-name">'+(a.name||'Agent')+'</div>'+
+        '<div class="wh-forge-role">'+(a.role||'Custom Agent')+'</div>'+
+        '<div class="wh-forge-actions">'+
+          '<button style="color:#00e5a0;border-color:#00e5a040" onclick="event.stopPropagation();notify(\'Deploying '+(a.name||'agent')+'...\')">Deploy</button>'+
+          '<button style="color:#f0b429;border-color:#f0b42940" onclick="event.stopPropagation();showView(\'marketplace\')">Sell</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+// ── Staking pool ──
+function _whLoadStake() {
+  var uid = localStorage.getItem('shd_signed_in')||''; if(!uid) return;
+  fetch('/api/stake/'+encodeURIComponent(uid)).then(function(r){return r.json();}).then(function(d){
+    var ms=document.getElementById('whMyStake');      if(ms) ms.textContent=(d.staked||0).toLocaleString();
+    var pt=document.getElementById('whPoolTotal');    if(pt) pt.textContent=parseFloat(d.totalPool||0).toFixed(0);
+    var pd=document.getElementById('whPending');      if(pd) pd.textContent=parseFloat(d.pendingReward||0).toFixed(2);
+    var ss=document.getElementById('whStakeShare');   if(ss) ss.textContent='Your share: '+(d.sharePct||'0.00')+'% of pool';
+  }).catch(function(){});
+}
+function _whStakeSparks() {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in first');return;}
+  var amt=parseInt(prompt('How many Sparks to stake? (minimum 10)','100'),10);
+  if(!amt||amt<10){notify('Minimum stake is 10 Sparks');return;}
+  fetch('/api/stake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,amount:amt})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.ok){notify('✅ Staked '+amt+' Sparks! Your share: '+(d.totalStaked>0?(amt/d.totalStaked*100).toFixed(2):0)+'%'); _whLoadStake();}
+      else notify('❌ '+(d.error||'Stake failed'));
+    }).catch(function(e){notify('Error: '+e.message);});
+}
+function _whClaimStake() {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in first');return;}
+  fetch('/api/stake/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.ok&&d.claimed>0){notify('💰 Claimed '+d.claimed.toFixed(2)+' Sparks from staking pool!'); _whLoadStake();}
+      else if(d.ok) notify('Nothing to claim yet — pool accrues from Bazaar sales.');
+      else notify('❌ '+(d.error||'Claim failed'));
+    }).catch(function(e){notify('Error: '+e.message);});
+}
+// ── Plot auctions ──
+function _whLoadAuctions() {
+  var el=document.getElementById('whAuctionList'); if(!el) return;
+  el.innerHTML='<span style="color:#5a6a7a">Loading…</span>';
+  fetch('/api/auction').then(function(r){return r.json();}).then(function(d){
+    var auctions=(d.auctions||[]);
+    if(!auctions.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#3a4a5a">No active auctions.<br><span style="font-size:9px">Auctions start when plot owners list their plots.</span></div>';return;}
+    el.innerHTML=auctions.map(function(a){
+      var left=Math.max(0,a.endsAt-Date.now()); var hrs=Math.floor(left/3600000); var mins=Math.floor((left%3600000)/60000);
+      return '<div style="border:1px solid #1a2438;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#06080d">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<span style="font-weight:700;font-size:11px">Plot #'+(a.slot+1)+' · Founders Row</span>'+
+          '<span style="font-size:9px;color:#e8c45c">'+(a.endsAt>Date.now()?hrs+'h '+mins+'m left':'ENDED')+'</span>'+
+        '</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">'+
+          '<span style="font-size:10px;color:#00e5a0">High bid: <strong>'+(a.highBid||a.startPrice)+' ✦</strong> '+(a.highBidder?'('+a.highBidder.slice(0,8)+'…)':'no bids')+'</span>'+
+          '<button onclick="_whBid('+a.slot+','+Math.max(a.highBid+1,a.startPrice)+')" style="font-size:10px;padding:4px 10px;background:#1a2438;color:#00e5a0;border:1px solid #00e5a040;border-radius:6px;cursor:pointer">Bid</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }).catch(function(){ el.innerHTML='<span style="color:#ff7a5a">Failed to load auctions</span>'; });
+}
+function _whBid(slot, minBid) {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in first');return;}
+  var amt=parseInt(prompt('Your bid (minimum '+minBid+' Sparks):',minBid),10);
+  if(!amt||amt<minBid){notify('Bid must be at least '+minBid+' Sparks');return;}
+  fetch('/api/auction/bid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,slot,amount:amt})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.ok){notify('✅ Bid placed: '+amt+' ✦ Sparks on Plot #'+(slot+1)); _whLoadAuctions();}
+      else notify('❌ '+(d.error||'Bid failed'));
+    }).catch(function(e){notify('Error: '+e.message);});
+}
+// ── 3D Model Marketplace ──
+var _whCurrentMeshJobId = null;
+function _whLoadModelMarket() {
+  var el=document.getElementById('whModelMarket'); if(!el) return;
+  el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:28px;color:#3a4a5a;font-family:\'IBM Plex Mono\',monospace;font-size:11px">Loading…</div>';
+  fetch('/api/forge/models').then(function(r){return r.json();}).then(function(d){
+    var models=d.models||[];
+    // Update stats bar
+    var totalSales=models.reduce(function(s,m){return s+(m.sales||0);},0);
+    var prices=models.map(function(m){return m.price;}).filter(Boolean);
+    var floor=prices.length?Math.min.apply(null,prices):'—';
+    var cEl=document.getElementById('whMktCount'); if(cEl) cEl.textContent=models.length;
+    var sEl=document.getElementById('whMktSales'); if(sEl) sEl.textContent=totalSales;
+    var fEl=document.getElementById('whMktFloor'); if(fEl) fEl.textContent=floor;
+    if(!models.length){
+      el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:36px 20px">'+
+        '<div style="font-size:44px;opacity:0.25;margin-bottom:12px">⬡</div>'+
+        '<div style="font-family:Cinzel,serif;font-size:14px;color:#5a6a7a;margin-bottom:6px">No models listed yet</div>'+
+        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#3a4a5a;letter-spacing:0.1em">Generate one above → List on Bazaar</div>'+
+        '</div>';
+      return;
+    }
+    var uid=localStorage.getItem('shd_signed_in')||'';
+    el.innerHTML=models.map(function(m){
+      var mine=m.uid===uid;
+      var typeLabel=m.type==='trellis'?'IMG→3D':'TXT→3D';
+      var typeColor=m.type==='trellis'?'#27e0ff':'#a78bfa';
+      var preview=m.glbUrl
+        ? '<model-viewer src="'+m.glbUrl+'" auto-rotate camera-controls style="width:100%;height:100%;--poster-color:transparent" environment-image="neutral" exposure="0.8" shadow-intensity="0.5"></model-viewer>'
+        : '<div style="font-size:38px;opacity:0.3">⬡</div>';
+      return (
+        '<div style="border:1px solid rgba(196,162,78,0.15);border-radius:14px;overflow:hidden;background:#07060e;display:flex;flex-direction:column;transition:transform 0.2s,border-color 0.2s" '+
+            'onmouseenter="this.style.transform=\'translateY(-3px)\';this.style.borderColor=\'rgba(124,58,237,0.5)\'" '+
+            'onmouseleave="this.style.transform=\'translateY(0)\';this.style.borderColor=\'rgba(196,162,78,0.15)\'">' +
+          // Preview area
+          '<div style="height:148px;background:radial-gradient(ellipse at 50% 30%,rgba(124,58,237,0.15),transparent 65%),#07060e;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'+
+            preview+
+            '<div style="position:absolute;top:8px;right:8px;font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:100px;background:rgba(0,0,0,0.6);border:1px solid '+typeColor+'40;color:'+typeColor+'">'+typeLabel+'</div>'+
+          '</div>'+
+          // Body
+          '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1">'+
+            '<div style="font-family:Cinzel,serif;font-size:12px;font-weight:700;letter-spacing:0.03em;color:#f0e7cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+_whEsc(m.title)+'">'+_whEsc(m.title)+'</div>'+
+            '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#3a4a5a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_whEsc((m.prompt||'').slice(0,50))+'</div>'+
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'+
+              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:700;color:#e8c45c">'+m.price+' ✦</span>'+
+              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#3a4a5a">'+(m.sales||0)+' sold</span>'+
+            '</div>'+
+            (mine
+              ? '<div style="margin-top:6px;text-align:center;padding:8px;border:1px solid rgba(196,162,78,0.2);border-radius:8px;color:#e8c45c;font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase">Your listing</div>'
+              : '<button onclick="_whBuyModel(\''+m.id+'\','+m.price+',\''+_whEsc(m.title)+'\',\''+m.glbUrl+'\')" '+
+                  'style="margin-top:6px;padding:9px;border:1px solid rgba(0,229,160,0.25);background:rgba(0,229,160,0.05);border-radius:9px;color:#00e5a0;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s" '+
+                  'onmouseenter="this.style.background=\'rgba(0,229,160,0.12)\'" onmouseleave="this.style.background=\'rgba(0,229,160,0.05)\'">'
+                  +'Buy for '+m.price+' ✦</button>'
+            )+
+          '</div>'+
+        '</div>'
+      );
+    }).join('');
+    // model-viewer already loaded by dashboard (ensureMV)
+  }).catch(function(e){ el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#ff6b6b;font-family:\'IBM Plex Mono\',monospace;font-size:11px">Failed to load marketplace</div>'; });
+}
+function _whEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function _whBuyModel(id, price, title, glbUrl) {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in to buy');return;}
+  var econ={}; try{econ=JSON.parse(localStorage.getItem('shaddai.econ')||'{}');}catch(_){}
+  var sparks=econ.sparks||econ.money||0;
+  if(sparks<price){notify('Need '+price+' ✦ — you have '+sparks);return;}
+  if(!confirm('Buy "'+title+'" for '+price+' ✦ Sparks?\n\nThe GLB downloads automatically.')) return;
+  fetch('/api/forge/models/'+id+'/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.ok){
+        econ.sparks=(sparks-price); econ.money=econ.sparks; localStorage.setItem('shaddai.econ',JSON.stringify(econ));
+        notify('✅ Purchased! Downloading…');
+        var a=document.createElement('a'); a.href=d.glbUrl||glbUrl; a.download=(d.title||title)+'.glb'; a.target='_blank'; a.click();
+        _whLoadModelMarket();
+      } else notify('❌ '+(d.error||'Purchase failed'));
+    }).catch(function(e){notify('Error: '+e.message);});
+}
+function _whListCurrentModel() {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in to list');return;}
+  if(!_whCurrentMeshJobId){notify('Generate a model first');return;}
+  // Show inline listing panel (overlay on the forge tab)
+  var existingModal=document.getElementById('_whListModal');
+  if(existingModal) existingModal.remove();
+  var promptVal=(document.getElementById('meshPrompt')||{}).value||'';
+  var modal=document.createElement('div');
+  modal.id='_whListModal';
+  modal.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(4,3,10,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=
+    '<div style="max-width:420px;width:100%;border:1px solid rgba(124,58,237,0.4);border-radius:18px;padding:28px;'+
+      'background:radial-gradient(120% 140% at 50% -20%,rgba(124,58,237,0.1),transparent 55%),linear-gradient(160deg,#0f0c1f,#0a0814);'+
+      'box-shadow:0 0 80px rgba(124,58,237,0.25)">'+
+      '<div style="font-family:Cinzel,serif;font-weight:700;font-size:18px;letter-spacing:0.04em;margin-bottom:6px;color:#f0e7cf">List on 3D Bazaar</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#5a6a7a;margin-bottom:20px;line-height:1.6">2% burn + 1% stake on each sale. Your earnings go directly to your Sparks balance.</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#e8c45c;margin-bottom:5px">Model Title</div>'+
+      '<input id="_wlTitle" type="text" maxlength="80" value="'+_whEsc(promptVal.slice(0,60))+'" '+
+        'placeholder="e.g. Obsidian Sentinel v1" '+
+        'style="width:100%;background:#07060e;border:1px solid rgba(124,58,237,0.3);border-radius:9px;color:#f0e7cf;padding:11px 13px;font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;margin-bottom:14px;box-sizing:border-box"/>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#e8c45c;margin-bottom:5px">Price (Sparks)</div>'+
+      '<input id="_wlPrice" type="number" min="10" value="250" '+
+        'style="width:100%;background:#07060e;border:1px solid rgba(124,58,237,0.3);border-radius:9px;color:#f0e7cf;padding:11px 13px;font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;margin-bottom:18px;box-sizing:border-box"/>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button onclick="document.getElementById(\'_whListModal\').remove()" '+
+          'style="padding:12px 18px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:transparent;color:#5a6a7a;font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">'+
+          'Cancel</button>'+
+        '<button onclick="_whSubmitListing()" '+
+          'style="flex:1;padding:13px;border:none;border-radius:10px;background:linear-gradient(100deg,#e8c45c,#c4a24e);color:#100b02;font-family:Cinzel,serif;font-weight:700;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">'+
+          '⬡ Publish Listing</button>'+
+      '</div>'+
+      '<div id="_wlMsg" style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#00e5a0;min-height:16px"></div>'+
+    '</div>';
+  document.body.appendChild(modal);
+  var titleInput=document.getElementById('_wlTitle'); if(titleInput) titleInput.focus();
+}
+function _whSubmitListing() {
+  var uid=localStorage.getItem('shd_signed_in')||''; if(!uid){notify('Sign in to list');return;}
+  var title=(document.getElementById('_wlTitle')||{}).value||'';
+  var price=parseInt((document.getElementById('_wlPrice')||{}).value,10);
+  var msgEl=document.getElementById('_wlMsg');
+  if(!title.trim()){if(msgEl)msgEl.textContent='Add a title'; return;}
+  if(!price||price<10){if(msgEl)msgEl.textContent='Minimum price is 10 Sparks'; return;}
+  var prompt2=(document.getElementById('meshPrompt')||{}).value||'Unnamed 3D Model';
+  if(msgEl) msgEl.textContent='⟳ Publishing…';
+  fetch('/api/forge/list-model',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({uid,jobId:_whCurrentMeshJobId,price,prompt:prompt2,title:title})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.ok){
+        var m=document.getElementById('_whListModal'); if(m) m.remove();
+        notify('✅ Listed "'+title+'" for '+price+' ✦ Sparks!');
+        _whLoadModelMarket();
+      } else {
+        if(msgEl) msgEl.textContent='❌ '+(d.error||'Listing failed');
+      }
+    }).catch(function(e){if(msgEl) msgEl.textContent='❌ '+e.message;});
+}
+var _whMeshPollTimer = null;
+function _whGenMesh(type) {
+  var prompt = (document.getElementById('meshPrompt')||{}).value || '';
+  if (!prompt.trim()) { prompt = 'futuristic SHADDAI AI agent with obsidian armor and emerald energy'; }
+  var statusEl = document.getElementById('meshStatusDash');
+  var resultEl = document.getElementById('meshResultDash');
+  var linkEl   = document.getElementById('meshResultLink');
+  var noteEl   = document.getElementById('meshResultNote');
+  if (statusEl) statusEl.textContent = '⏳ ' + (type==='trellis'?'Generating preview image…':'Queuing Meshy text→3D…');
+  if (resultEl) resultEl.style.display='none';
+  if (_whMeshPollTimer) clearInterval(_whMeshPollTimer);
+
+  if (type === 'trellis') {
+    // Step 1: FLUX image → Step 2: TRELLIS
+    fetch('/api/forge/flux-image', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt+', isometric 3D render, white background, single subject'})})
+      .then(function(r){return r.json();}).then(function(d){
+        if (!d.ok || !d.imageUrl) { if(statusEl) statusEl.textContent='❌ Image failed: '+(d.error||'unknown'); return; }
+        if (statusEl) statusEl.textContent = '🎨 Image ready → queuing TRELLIS…';
+        return fetch('/api/forge/generate-mesh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'trellis',imageUrl:d.imageUrl,agentName:prompt.slice(0,30)})}).then(function(r){return r.json();});
+      }).then(function(d){ if(d) _whPollMesh(d, statusEl, resultEl, linkEl, noteEl); })
+      .catch(function(e){ if(statusEl) statusEl.textContent='❌ '+e.message.slice(0,60); });
+  } else {
+    // Meshy text→3D direct
+    fetch('/api/forge/generate-mesh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'meshy',prompt,agentName:prompt.slice(0,30)})})
+      .then(function(r){return r.json();}).then(function(d){ _whPollMesh(d, statusEl, resultEl, linkEl, noteEl); })
+      .catch(function(e){ if(statusEl) statusEl.textContent='❌ '+e.message.slice(0,60); });
+  }
+}
+function _whPollMesh(d, statusEl, resultEl, linkEl, noteEl) {
+  if (!d || !d.ok || !d.jobId) { if(statusEl) statusEl.textContent='❌ Queue failed: '+((d&&d.error)||'unknown'); return; }
+  if (statusEl) statusEl.textContent = '🔄 Building 3D mesh… ('+d.jobId.slice(0,8)+'…)';
+  var jobId = d.jobId, attempts = 0;
+  _whMeshPollTimer = setInterval(function(){
+    if (++attempts > 60) { clearInterval(_whMeshPollTimer); if(statusEl) statusEl.textContent='⏰ Timed out — try again'; return; }
+    fetch('/api/forge/mesh-status/'+encodeURIComponent(jobId)).then(function(r){return r.json();}).then(function(s){
+      if (s.status === 'COMPLETED') {
+        clearInterval(_whMeshPollTimer);
+        if (statusEl) statusEl.textContent = '';
+        if (resultEl) { resultEl.style.display='block'; }
+        if (linkEl && s.glbUrl) { linkEl.href = s.glbUrl; linkEl.textContent = 'View 3D Model'; }
+        if (noteEl) noteEl.textContent = d.type==='trellis'?'TRELLIS GLB':'Meshy GLB';
+        _whCurrentMeshJobId = jobId;
+        // save to gallery mesh slot
+        try { var g=JSON.parse(localStorage.getItem('shaddai.gallery')||'[]'); if(g[0]) g[0].__glbUrl=s.glbUrl; localStorage.setItem('shaddai.gallery',JSON.stringify(g)); } catch(_){}
+      } else if (s.status === 'FAILED') {
+        clearInterval(_whMeshPollTimer); if(statusEl) statusEl.textContent='❌ Mesh generation failed';
+      } else { if(statusEl) statusEl.textContent='🔄 Building mesh… ('+s.status+')'; }
+    }).catch(function(){});
+  }, 8000);
+}
+function _whClaimAllRent() {
+  var uid = localStorage.getItem('shd_signed_in')||'guest';
+  var rooms=[]; try{rooms=JSON.parse(localStorage.getItem('shaddai.rooms.'+uid)||'[]');}catch(_){}
+  var total=rooms.reduce(function(s,r){return s+(r.pendingRent||0);},0);
+  if(!total){notify('No pending rent to claim.');return;}
+  rooms.forEach(function(r){r.pendingRent=0;});
+  try{localStorage.setItem('shaddai.rooms.'+uid,JSON.stringify(rooms));}catch(_){}
+  notify('Claimed +'+total+' ✦ Sparks');
+  _whLoadRooms(); _whLoadKpis();
 }
 
 // ======= PIXEL OFFICE TABS =======
@@ -43686,7 +44946,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <div class="card" style="padding:14px;margin-top:14px;border:1px solid rgba(139,92,246,0.3)">
         <div style="font-size:11px;font-weight:700;color:#b06aff;margin-bottom:8px">❓ Ask a Question</div>
         <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-          <textarea id="ragQuery" class="input" rows="2" style="flex:1;min-width:220px;font-size:10px;resize:none;box-sizing:border-box" placeholder="Ask anything about your uploaded documents…"></textarea>
+          <textarea id="ragDocQuery" class="input" rows="2" style="flex:1;min-width:220px;font-size:10px;resize:none;box-sizing:border-box" placeholder="Ask anything about your uploaded documents…"></textarea>
           <button class="btn btn-accent" style="font-size:10px;padding:8px 16px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;font-weight:700;white-space:nowrap" onclick="ragAskDocs()">❓ ASK MY DOCS</button>
         </div>
         <div id="ragAskResult" style="display:none;margin-top:12px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:6px;padding:12px">
@@ -47728,13 +48988,80 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   // ── Web Research Tool — any agent can use this in Chat ──────────────────
   let _webResearchContext = null; // stored scraped content to inject
 
+  // ── Web Research tab switcher ─────────────────────────────────────────────
+  function _wsTab(t) {
+    [1,2].forEach(k => {
+      const body = document.getElementById('wsBody'+k);
+      const btn  = document.getElementById('wsTab'+k);
+      if (body) body.style.display = k===t ? 'block' : 'none';
+      if (btn)  { btn.style.background = k===t ? 'rgba(0,200,255,0.15)' : 'transparent'; btn.style.color = k===t ? '#00c8ff' : 'var(--text-muted)'; }
+    });
+    if (t===1) setTimeout(() => document.getElementById('wsSearchQ')?.focus(), 50);
+    if (t===2) setTimeout(() => document.getElementById('webResearchUrl')?.focus(), 50);
+  }
+
+  // ── Web Search tier limits (tracked in localStorage per day) ─────────────
+  const _WS_LIMITS = { '': 5, free: 5, starter: 10, builder: 15, pro: 50, alpha: 9999, elite: 9999 };
+  function _wsToday() { return new Date().toISOString().slice(0,10); }
+  function _wsUsed()  { try { const d=JSON.parse(localStorage.getItem('shd_ws_'+_wsToday())||'0'); return typeof d==='number'?d:0; } catch(_){return 0;} }
+  function _wsLimit() { const t=(localStorage.getItem('shd_tier')||'free').toLowerCase(); return _WS_LIMITS[t]??5; }
+  function _wsIncrement() { try { localStorage.setItem('shd_ws_'+_wsToday(), _wsUsed()+1); } catch(_){} }
+  function _wsSyncBadge() {
+    const used=_wsUsed(), lim=_wsLimit(), badge=document.getElementById('wsearchBadge');
+    const cu=document.getElementById('wsearchCount'), cl=document.getElementById('wsearchLimit');
+    if (cu) cu.textContent=used; if (cl) cl.textContent=lim==='9999'?'∞':lim;
+    if (badge) badge.style.borderColor = used>=lim ? 'rgba(255,100,100,0.4)' : 'rgba(0,200,255,0.25)';
+    const note=document.getElementById('wsLimitNote');
+    if (note) note.textContent = lim===9999||lim==='9999' ? '' : `${Math.max(0,lim-used)} searches left today · Pro = 50/day`;
+  }
+  _wsSyncBadge();
+
+  // ── Live Web Search ───────────────────────────────────────────────────────
+  async function runWebSearch() {
+    const q=(document.getElementById('wsSearchQ')?.value||'').trim();
+    if(!q){notify('Enter a search query');return;}
+    const used=_wsUsed(), lim=_wsLimit();
+    if(used>=lim){ notify(`Web search limit reached (${lim}/day). Upgrade to Pro for 50/day.`); return; }
+    const btn=document.getElementById('wsSearchBtn');
+    const resEl=document.getElementById('wsSearchResults');
+    if(btn){btn.textContent='Searching…';btn.disabled=true;}
+    try {
+      const r=await fetch('/api/search/web?q='+encodeURIComponent(q),{signal:AbortSignal.timeout(15000)});
+      const data=await r.json();
+      _wsIncrement(); _wsSyncBadge();
+      if(!data.results||!data.results.length){if(resEl)resEl.innerHTML='<div style="font-size:8px;color:var(--text-muted);padding:6px">No results found.</div>';resEl.style.display='flex';return;}
+      if(resEl){
+        resEl.style.display='flex';
+        resEl.innerHTML=data.results.map(function(res,i){
+          return `<div style="padding:6px 8px;background:rgba(0,0,0,0.25);border:1px solid rgba(0,200,255,0.12);border-radius:4px;cursor:pointer" onclick="_wsInject(${i})">
+            <div style="font-size:8px;font-weight:700;color:#00c8ff;margin-bottom:2px">${escH(res.title||'')}</div>
+            <div style="font-size:8px;color:var(--text-secondary);line-height:1.4">${escH((res.snippet||'').slice(0,180))}</div>
+            ${res.url?`<div style="font-size:7px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(res.url.slice(0,80))}</div>`:''}
+            <button style="font-size:7px;margin-top:3px;padding:1px 6px;background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.3);color:var(--accent);border-radius:2px;cursor:pointer" onclick="event.stopPropagation();_wsInject(${i})">+ Inject</button>
+          </div>`;
+        }).join('');
+        window._wsResults=data.results;
+      }
+    } catch(e){ notify('Search failed: '+(e.message||e)); }
+    finally { if(btn){btn.textContent='Search';btn.disabled=false;} }
+  }
+  window._wsInject=function(i){
+    const res=(window._wsResults||[])[i]; if(!res) return;
+    const ctx=`[Web Search — ${res.url||'web'}]\nTitle: ${res.title}\nSummary: ${res.snippet}\n\n---\nUsing the above, `;
+    const inp=document.getElementById('chatInFull'); if(!inp) return;
+    inp.value=ctx; inp.focus(); inp.setSelectionRange(ctx.length,ctx.length);
+    document.getElementById('webResearchPanel').style.display='none';
+    const el=document.getElementById('wsSearchInjected'); if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2500);}
+    notify('✓ Result injected — finish your question and send');
+  };
+
   function toggleWebResearch() {
     const panel = document.getElementById('webResearchPanel');
     const btn = document.getElementById('webResearchToggle');
     const visible = panel.style.display !== 'none';
     panel.style.display = visible ? 'none' : 'block';
     btn.style.color = visible ? '' : 'var(--tertiary)';
-    if (!visible) setTimeout(() => document.getElementById('webResearchUrl')?.focus(), 50);
+    if (!visible) { _wsSyncBadge(); setTimeout(() => document.getElementById('wsSearchQ')?.focus(), 50); }
   }
 
   async function researchUrl() {
@@ -54357,7 +55684,7 @@ async function ragDeleteDoc(id) {
   } catch (e) { notify('⚠ Delete failed — server offline?'); }
 }
 async function ragAskDocs() {
-  var query = ((document.getElementById('ragQuery') || {}).value || '').trim();
+  var query = ((document.getElementById('ragDocQuery') || {}).value || '').trim();
   var wrap = document.getElementById('ragAskResult');
   var ansEl = document.getElementById('ragAskAnswer');
   var srcEl = document.getElementById('ragAskSources');
@@ -57170,22 +58497,49 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 
 <!-- ════════ FULL-BLEED HF NAV BANNERS (assets/nav/*.jpg, generated by backend/scripts/generate-nav-hf.js) ════════ -->
 <style id="nav-img-css">
-  /* Each #mainNav button carrying `--nav-img` gets a full-bleed FLUX banner with a dark
-     overlay so the label stays legible. Landed last so it outranks every nav override. */
+  /* Each #mainNav button carrying `--nav-img` gets a full-bleed FLUX banner.
+     Ultra-light overlay — artwork dominates, label anchors to the dark base only. */
   #mainNav button.nav-btn.nav-img {
-    background-image: linear-gradient(rgba(2,8,23,0.68), rgba(2,8,23,0.68)), var(--nav-img) !important;
+    background-image:
+      linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(2,8,23,0.06) 40%, rgba(2,8,23,0.80) 100%),
+      var(--nav-img) !important;
     background-size: cover !important;
-    background-position: center !important;
+    background-position: center 25% !important;
     background-repeat: no-repeat !important;
-    color: #eafaf3 !important;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.6) !important;
-    border-radius: 3px;
-  }
-  #mainNav button.nav-btn.nav-img:hover,
-  #mainNav button.nav-btn.nav-img.active {
-    background-image: linear-gradient(rgba(2,8,23,0.42), rgba(2,8,23,0.42)), var(--nav-img) !important;
     color: #ffffff !important;
-    border-bottom-color: rgba(0,229,160,0.6) !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    text-shadow: 0 1px 6px rgba(0,0,0,1), 0 0 14px rgba(0,0,0,0.9) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    min-height: 68px !important;
+    padding-top: 4px !important;
+    padding-bottom: 8px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    transition: transform 0.15s, filter 0.15s, border-color 0.15s, box-shadow 0.15s !important;
+    letter-spacing: 0.02em !important;
+  }
+  #mainNav button.nav-btn.nav-img:hover {
+    background-image:
+      linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(2,8,23,0.02) 35%, rgba(2,8,23,0.65) 100%),
+      var(--nav-img) !important;
+    filter: brightness(1.15) saturate(1.1) !important;
+    border-color: rgba(0,229,160,0.6) !important;
+    transform: translateY(-3px) !important;
+    color: #00ff9c !important;
+    text-shadow: 0 0 12px rgba(0,229,160,0.7), 0 1px 6px rgba(0,0,0,1) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(0,229,160,0.18) !important;
+  }
+  #mainNav button.nav-btn.nav-img.active {
+    background-image:
+      linear-gradient(to bottom, rgba(0,229,160,0.04) 0%, rgba(2,8,23,0.04) 38%, rgba(0,8,18,0.84) 100%),
+      var(--nav-img) !important;
+    border-color: rgba(0,229,160,0.85) !important;
+    box-shadow: 0 0 20px rgba(0,229,160,0.32), inset 0 0 26px rgba(0,229,160,0.09), inset 0 -1px 0 rgba(0,229,160,0.4) !important;
+    color: #00ff9c !important;
+    text-shadow: 0 0 10px rgba(0,229,160,0.8), 0 1px 6px rgba(0,0,0,1) !important;
   }
   /* The tiny forge-art thumbnails are redundant over a full-bleed banner — hide them. */
   #mainNav button.nav-btn.nav-img img { display: none !important; }
