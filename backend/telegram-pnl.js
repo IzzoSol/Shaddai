@@ -72,6 +72,9 @@ function recordCall(c) {
       mint, chain: (c.chain || '').toLowerCase(), name: c.name || '', symbol: c.symbol || '',
       source: c.source || '', entryFdv: entry, entryPrice: Number(c.entryPrice) || 0,
       holders: Number(c.holders) || 0,
+      liq: Number(c.liq) || 0,
+      vol1h: Number(c.vol1h) || 0,
+      vol24: Number(c.vol24) || 0,
       ts: _now, peakMult: 1, curMult: 1, curFdv: entry, milestones: [], closed: false,
     });
     if (_state.calls.length > 5000) _state.calls = _state.calls.slice(-5000);
@@ -101,11 +104,15 @@ async function _priceMap(mints) {
 }
 
 function _milestoneCard(call, x) {
+  // 5x is the 2nd milestone (2x → 5x). Data: every token that hits 2+ milestones goes further.
+  const confirmedRunner = x === 5 && call.milestones && call.milestones.includes(2)
+    ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
   return (
     `🎯 <b>CALL UPDATE — ${x}x</b> 🚀\n` +
     `<b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> is up <b>${x}x</b> since our call (${_ago(call.ts)} ago)\n` +
-    `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>\n` +
-    `\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
+    `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>` +
+    confirmedRunner +
+    `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
 
@@ -118,26 +125,33 @@ async function trackTick() {
   let changed = false;
   for (const call of active) {
     const cur = prices[call.mint];
-    if (!cur) continue;
-    call.curFdv = cur;
-    call.curMult = cur / call.entryFdv;
-    if (call.curMult > call.peakMult) {
-      call.peakMult = call.curMult; changed = true;
-      // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
-      try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
-    }
-    // fire the highest newly-crossed milestone (winners only → funnel)
     let hit = 0;
-    for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) hit = m; }
-    if (hit) {
-      // record EVERY newly-crossed milestone ≤ peak so skipped lower ones don't re-fire (out of order) on later ticks
-      for (const m of MILESTONES) { if (call.peakMult >= m && !call.milestones.includes(m)) call.milestones.push(m); }
-      changed = true;
-      const img = milestoneImage(hit) || _pnlImage();
-      const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });   // Chart + 📸 PNL Card tap-button
-      if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
-      else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+    if (cur) {
+      call.curFdv = cur;
+      call.curMult = cur / call.entryFdv;
+      if (call.curMult > call.peakMult) {
+        call.peakMult = call.curMult; changed = true;
+        // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
+        try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
+      }
+      // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
+      // Never skip straight to 5x just because the token moved fast between ticks.
+      for (const m of MILESTONES) {
+        if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
+      }
+      if (hit) {
+        call.milestones.push(hit);   // record only the one being fired; next tick fires the next
+        changed = true;
+        const img = milestoneImage(hit) || _pnlImage();
+        const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
+        if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
+        else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+      }
+
+      // Slow climber updates removed — channel posts wins (milestones) only.
     }
+
+    // Rug alerts and round-trip alerts removed — wins only channel.
   }
   if (changed) _write(_state);
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
@@ -149,20 +163,35 @@ function stats(period) {
   _now = Date.now();
   const span = period === 'week' ? 7 : period === 'month' ? 30 : 1;
   const since = _now - span * 24 * 3600 * 1000;
-  const rows = _state.calls.filter(c => c.ts >= since);
+  const rows = _state.calls.filter(c => c.ts >= since && c.source !== 'seed');
   const total = rows.length;
-  const hits = rows.filter(c => c.peakMult >= 2).length;         // "hit" = 2x+
-  const hitRate = total ? Math.round((hits / total) * 100) : 0;
+  const hits2 = rows.filter(c => c.peakMult >= 2).length;
+  const hits5 = rows.filter(c => c.peakMult >= 5).length;
+  const hits10 = rows.filter(c => c.peakMult >= 10).length;
+  const hitRate = total ? Math.round((hits2 / total) * 100) : 0;
+  const avgPeak = total ? (rows.reduce((s, c) => s + (c.peakMult || 0), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
   const bestTxt = best.length
     ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n')
     : '• (no calls in range yet)';
+  // Per-source breakdown
+  const sources = ['bonded', 'new_pools', 'trending', 'boosted'];
+  const srcLines = sources.map(src => {
+    const s = rows.filter(c => c.source === src);
+    if (!s.length) return null;
+    const r2 = s.filter(c => c.peakMult >= 2).length;
+    const r5 = s.filter(c => c.peakMult >= 5).length;
+    return `  ${src.padEnd(10)} ${String(s.length).padStart(3)} calls · 2x: ${Math.round(r2/s.length*100)}% · 5x: ${Math.round(r5/s.length*100)}%`;
+  }).filter(Boolean).join('\n');
+  const ch = core.channel() || '@ShaddaiLabs';
   return (
     `📊 <b>SHADDAI ${label} SCORECARD</b>\n\n` +
-    `Calls: <b>${total}</b>  ·  Hits (2x+): <b>${hits}</b>  ·  Hit rate: <b>${hitRate}%</b>\n\n` +
-    `🏆 <b>Best calls</b>\n${bestTxt}\n\n` +
-    `<i>Public shows winners — full PNL on every call (incl. misses & live positions) is a Pro feature.</i>`
+    `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>)  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
+    `Avg peak: <b>${avgPeak}x</b>\n\n` +
+    (srcLines ? `<b>By source</b>\n<pre>${srcLines}</pre>\n\n` : '') +
+    `🏆 <b>Best ${label.toLowerCase()}</b>\n${bestTxt}\n\n` +
+    `📡 ${_esc(ch)}  ·  <i>NFA. Track your own entries.</i>`
   );
 }
 
@@ -407,13 +436,54 @@ function lastCalls(n) {
   for (const c of rows) {
     const sym = _esc(c.symbol || c.name || 'TOKEN');
     const cur = Number(c.curMult || 1), peak = Number(c.peakMult || 1);
-    const emoji = peak >= 10 ? '🚀' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
-    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>\n`;
+    const emoji = peak >= 10 ? '🚀' : peak >= 5 ? '🔥' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
+    const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
+    const age = c.ts ? ` · ${_ago(c.ts)}` : '';
+    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>${entryFdv}${age}\n`;
     if (body.length + line.length > 3600) break;
     body += line; shown++;
   }
   const more = rows.length > shown ? `\n…and ${rows.length - shown} more` : '';
   return `📄 <b>LAST ${shown} CALLS</b> · ${_esc(ch)}\n\n${body}${more}\n\n📡 ${_esc(ch)}  ·  <i>Not financial advice. DYOR.</i>`;
+}
+
+// /active — currently live calls (not rugged, <72h old, still above 0.4x), sorted by current gain.
+// Helps subscribers know what's still worth watching right now.
+function activeCalls() {
+  _now = Date.now();
+  const MAX_AGE = 72 * 3600 * 1000;   // 72h window — beyond that, treat as closed
+  const rows = _state.calls
+    .filter(c => {
+      if (!c.ts || c.source === 'seed') return false;
+      if (_now - c.ts > MAX_AGE) return false;
+      if ((c.curMult || 1) < 0.4) return false;   // assume rugged
+      return true;
+    })
+    .sort((a, b) => (b.curMult || 1) - (a.curMult || 1));
+  const ch = core.channel() || '@ShaddaiLabs';
+  if (!rows.length) {
+    return `⚡ <b>ACTIVE CALLS</b> · ${_esc(ch)}\n\n<i>No live calls in the last 72h. Fresh plays incoming.</i>\n\n📡 ${_esc(ch)}`;
+  }
+  let body = '', shown = 0;
+  for (const c of rows) {
+    const sym = _esc(c.symbol || c.name || 'TOKEN');
+    const cur = Number(c.curMult || 1), peak = Number(c.peakMult || 1);
+    const emoji = cur >= 2 ? '🟢' : cur >= 1 ? '⚡' : '🟡';
+    const pct = Math.round((cur - 1) * 100);
+    const pctStr = pct >= 0 ? `+${pct}%` : `${pct}%`;
+    const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
+    const ca = c.mint && !String(c.mint).startsWith('seed-') ? `\n   <code>${_esc(c.mint)}</code>` : '';
+    const line = `${emoji} <b>$${sym}</b>  <b>${pctStr}</b> (${cur.toFixed(2)}x) · ATH ${peak.toFixed(1)}x${entryFdv} · ${_ago(c.ts)}${ca}\n`;
+    if (body.length + line.length > 3600) break;
+    body += line; shown++;
+  }
+  return (
+    `⚡ <b>ACTIVE CALLS</b> (${shown}/${rows.length} live) · ${_esc(ch)}\n` +
+    `<i>Last 72h · sorted by current gain · not rugged</i>\n` +
+    `━━━━━━━━━━━━━\n` +
+    body +
+    `\n📡 ${_esc(ch)}  ·  <i>NFA. Always DYOR.</i>`
+  );
 }
 
 // ── PUBLIC API JSON accessors ────────────────────────────────────────────────
@@ -483,4 +553,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls };
+module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls };

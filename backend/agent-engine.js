@@ -3068,6 +3068,30 @@ async function callLLM(messages, agentName, options = {}) {
     }
   } catch {}
 
+  // ── RAG knowledge from mastery cards ──────────────────────────────
+  let ragContext = '';
+  callLLM._lastRag = [];
+  try {
+    const userGoal = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+    if (userGoal) {
+      const agentKey = String(agentName || 'SHADDAI').toUpperCase();
+      const rag = require('./rag-index');
+      const results = rag.searchUser('kb_' + agentKey.toLowerCase(), userGoal, 3);
+      if (results.length) {
+        callLLM._lastRag = results.map(r => ({ agent: agentKey, source: r.docName, chunk: r.chunkText.slice(0, 120), score: r.score }));
+        ragContext = '\n\nMASTERY KNOWLEDGE — relevant chapters from your training:\n' +
+          results.map(r => '• ' + r.chunkText.slice(0, 500)).join('\n');
+      }
+      try {
+        const kb = require('./knowledge/index');
+        const kbHits = kb.lookupTop ? kb.lookupTop(agentKey, userGoal, 2) : [kb.lookup(agentKey, userGoal)].filter(Boolean);
+        if (kbHits.length) {
+          ragContext += '\n\nDOMAIN KNOWLEDGE:\n' + kbHits.map(h => `${h.title}: ${h.text}`).join('\n\n').slice(0, 1600);
+        }
+      } catch (_) {}
+    }
+  } catch (e) { console.warn('[ENGINE] RAG lookup error:', e.message); }
+
   // Inject installed skill pack system prompts for this user/agent
   let skillPackPrompt = '';
   try {
@@ -3090,13 +3114,13 @@ async function callLLM(messages, agentName, options = {}) {
   const system = options.plainChat ? {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-${agent.goal}${skillPackPrompt}${equippedNote}
+${agent.goal}${ragContext}${skillPackPrompt}${equippedNote}
 
 Respond conversationally and helpfully. Do NOT output tool syntax or code unless asked. Be concise and clear.`
   } : {
     role: 'system',
     content: `You are ${agent.name}, ${agent.role} of SHADDAI.
-Goal: ${agent.goal}${skillContext}${skillPackPrompt}${equippedNote}
+Goal: ${agent.goal}${ragContext}${skillContext}${skillPackPrompt}${equippedNote}
 
 TOOL SYSTEM — call tools by writing EXACTLY:
 [TOOL:tool_name:{"param":"value"}]
@@ -3295,8 +3319,10 @@ Use tools for real data, then give a concise final answer.` };
 // ═══════════════════════════════════════════════════════════════════
 
 async function extractAndRunTools(text, agentName, taskId = null, allowed = null) {
-  // Match [TOOL:name:{...}] — allow MCP-prefixed names (mcp__server__tool), digits, hyphens
-  const re = /\[TOOL:([a-zA-Z0-9_-]+):(\{(?:[^{}]|\{[^{}]*\})*\})\]/g;
+  // Match [TOOL:name:{...}] — allow MCP-prefixed names (mcp__server__tool), digits, hyphens.
+  // The `TOOL:` prefix is optional: smaller local models (phi4-mini) sometimes emit [name:{...}]
+  // directly, which we still want to execute as a tool call.
+  const re = /\[(?:TOOL:)?([a-zA-Z0-9_-]+):(\{(?:[^{}]|\{[^{}]*\})*\})\]/g;
   const results = [];
   let match;
   while ((match = re.exec(text)) !== null) {
@@ -3819,14 +3845,42 @@ async function runSkill(skillId, input = {}, agentOverride) {
 // and never talks to a vendor directly. callLLM already does the free-first chain
 // (Ollama → Groq → Ollama), so this just wraps it and returns uniform metadata.
 async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
+  // ── Aura cache (exact + fuzzy) — $0, free for identical/similar questions ──
+  const lastUser = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+  if (lastUser) {
+    try {
+      const aura = require('./lib/aura');
+      const r = aura.route(lastUser, { scope: agentName });
+      if (r && r.hit) {
+        return {
+          content: r.answer,
+          provider: 'aura',
+          model: r.method || 'cache',
+          inputTokens: 0,
+          outputTokens: Math.ceil((r.answer || '').length / 4),
+          costUSD: 0,
+          exact: true,
+          ragSources: []
+        };
+      }
+    } catch (_) {}
+  }
+  // ── Cache miss — RAG search + LLM call ──────────────────────────────────
   const before = llmTracer.getStats().totalCalls;
   const raw = await callLLM(messages, agentName, { ...options, plainChat: true });
+  // Capture RAG sources that callLLM gathered
+  const ragSources = (callLLM._lastRag || []).map(r => ({ ...r, chunk: r.chunk.slice(0, 200) }));
+  callLLM._lastRag = [];
   // Safety net: strip any stray [TOOL:...] syntax so plain chat never shows it
   const content = stripToolCalls(raw) || raw;
   // The trace just recorded by callLLM is the newest entry — read its metadata.
   const stats = llmTracer.getStats();
   const last = (stats.last10 && stats.last10.length) ? stats.last10[stats.last10.length - 1] : {};
   const recorded = stats.totalCalls > before;
+  // Cache the answer for future identical/similar questions
+  try {
+    require('./lib/aura').recordAnswer(lastUser, content, { scope: agentName });
+  } catch (_) {}
   return {
     content,
     provider: recorded ? (last.provider || 'unknown') : 'unknown',
@@ -3834,7 +3888,8 @@ async function modelChat(messages, agentName = 'SHADDAI', options = {}) {
     inputTokens: recorded ? (last.inputTokens || 0) : 0,
     outputTokens: recorded ? (last.outputTokens || 0) : 0,
     costUSD: recorded ? (last.costUSD || 0) : 0,
-    exact: recorded ? !!last.exact : false
+    exact: recorded ? !!last.exact : false,
+    ragSources
   };
 }
 

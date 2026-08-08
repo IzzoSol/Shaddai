@@ -227,6 +227,9 @@ window.RegionGen['forest'] = function(api){
   put('chicken',43,18); put('chicken',46,18);
   scatter('rock',43,12,3,3);
 
+  // ---- Jz) PUB in the giant ancient tree clearing, near the ranger lodge ----
+  api.building({col:24,row:30,w:3,d:3,floors:1,kind:'shop',wall:'#5a3a1a',roof:'#3a2210',accent:'#e8c45c',name:'PUB'});
+
   // ---- J) One extra landmark: a lone lookout tower in an open pocket ----
   // sits in a naturally clear NW pocket, off the trail, no trees displaced.
   api.building({col:5,row:8,w:2,d:2,floors:3,landmark:'tower',name:'FOREST LOOKOUT'});

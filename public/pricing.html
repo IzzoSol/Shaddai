@@ -183,6 +183,34 @@
     font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
   .foot a:hover{ color:var(--em); }
 
+  /* ── tier matrix (gray-out comparison) ── */
+  .matrixwrap{ overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 18px 44px rgba(0,0,0,.35); }
+  .matrix{ width:100%; border-collapse:collapse; min-width:600px; background:rgba(10,8,23,.6); }
+  .matrix th,.matrix td{ padding:13px 16px; text-align:left; font-size:13.5px; border-bottom:1px solid rgba(196,162,78,.08); }
+  .matrix thead th{ font-family:'Cinzel',serif; font-weight:700; font-size:14px; letter-spacing:.04em; color:#fff; }
+  .matrix thead th.plan{ text-align:center; }
+  .matrix td.plan{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.04em; }
+  .matrix tr.headrow th{ background:linear-gradient(180deg,rgba(124,86,200,.10),transparent); }
+  .matrix .gated{ color:var(--dim); }
+  .matrix .live{ color:var(--em2); }
+  .matrix .feature{ color:var(--ink); }
+  .matrix .feature b{ color:var(--gold2); font-weight:600; }
+  .matrix tfoot td{ border-bottom:none; padding:16px; }
+  .matrix .pill{ display:inline-block; margin-top:5px; padding:3px 10px; border-radius:100px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; border:1px solid var(--line); color:var(--ink2); }
+  .matrix .pill.pro{ border-color:rgba(232,196,92,.4); color:var(--gold2); background:rgba(232,196,92,.07); }
+  .matrix .free-cta,.matrix .pro-cta{ cursor:pointer; border:none; border-radius:10px; padding:10px 16px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase; transition:filter .15s,transform .15s; }
+  .matrix .free-cta{ background:rgba(0,255,156,.08); color:var(--em2); border:1px solid rgba(0,255,156,.25); }
+  .matrix .free-cta:hover{ filter:brightness(1.15); transform:translateY(-1px); }
+  .matrix .pro-cta{ background:linear-gradient(100deg,var(--gold2),var(--gold)); color:#100b02; }
+  .matrix .pro-cta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  .matrix .pro-cta.on{ background:rgba(232,196,92,.1); color:var(--gold2); border:1px solid rgba(232,196,92,.35); cursor:default; }
+  .matrix .free-cta.on{ background:rgba(0,255,156,.07); color:var(--em2); border:1px solid rgba(0,255,156,.22); cursor:default; }
+  .guestBanner{ display:none; margin:18px auto 0; max-width:760px; text-align:center; padding:11px 18px; border-radius:12px; border:1px solid rgba(0,255,156,.2); background:rgba(0,255,156,.05); font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.08em; color:var(--em2); }
+  .guestBanner.on{ display:block; }
+  .mcpCall{ margin-top:18px; padding:14px 16px; border:1px dashed rgba(0,255,156,.35); border-radius:12px; background:rgba(0,255,156,.05); font-size:14px; color:var(--ink); }
+  .mcpCall b{ color:var(--em2); font-weight:600; }
+  .mcpCall .k{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--em2); text-transform:uppercase; display:block; margin-bottom:5px; }
+
   @media(max-width:820px){
     .ladder{ grid-template-columns:1fr; }
     .faq{ grid-template-columns:1fr; }
@@ -233,8 +261,8 @@
     <div class="inner">
       <div class="kicker">Pro · the whole Council, working for you</div>
       <h2>Everything, unlocked</h2>
-      <p class="lead">One plan. The full council, the Forge, the workflows, the world — running at near-zero
-        inference cost on your own free API key.</p>
+      <p class="lead">One plan. The full council, the Forge, the workflows, the <b>SHADDAI MCP</b>, the world —
+        running at near-zero inference cost on your own free API key.</p>
 
       <div class="priceRow">
         <span class="amt">$30</span>
@@ -246,33 +274,93 @@
       <ul class="perks">
         <li><b>All seven agents</b> — Oracle, Zerox, Nexus, Turtle, Quill, Pikadon, Shaddai</li>
         <li><b>3,000+ skills · 300+ tools</b> — markets, research, code, design</li>
-        <li><b>Text + image generation</b> — write, analyze &amp; create visuals</li>
+        <li><b>SHADDAI MCP</b> — the Council inside Claude, Cursor &amp; any MCP client</li>
         <li><b>Multi-agent workflow chains</b> — agent feeds agent</li>
+        <li><b>Premium brains</b> — Groq, Claude &amp; Gemini pro routing</li>
+        <li><b>Text + image generation</b> — write, analyze &amp; create visuals</li>
         <li><b>Forge your own agents</b> — 2D pixel + 3D bodies</li>
-        <li><b>The SHADDAI API</b> — one key, every model, on autopilot</li>
         <li><b>Live signals</b> — Telegram bot + news API included</li>
         <li><b>A receipt for every run</b> — proof, not screenshots</li>
         <li><b>Your 3D world + Founders office</b></li>
         <li><b>AURA token-saver</b> — near-zero cost on your key</li>
       </ul>
 
-      <button class="btn primary" onclick="goCheckout('pro')">Start Pro — $30/mo →</button>
+      <div class="mcpCall"><span class="k">✦ Included · Pro</span><b>SHADDAI MCP</b> — expose all seven agents as a Model Context
+        Protocol server: drive Oracle, Zerox, Nexus, Turtle, Quill, Pikadon &amp; Shaddai straight from Claude, Cursor, or any MCP
+        client — their 300+ tools and signed receipts included, running on the key you already own.</div>
+
+      <button class="btn primary" id="proCta" onclick="goCheckout('pro')">Start Pro — $30/mo →</button>
       <div class="micro"><b>Cancel anytime · no contract · keep everything you make</b></div>
-      <div style="text-align:center;margin-top:12px"><a href="/prove.html" style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--em2);border-bottom:1px solid rgba(0,255,156,.4);padding-bottom:1px">▶ Watch it work first — free, no signup</a></div>
+      <div style="text-align:center;margin-top:12px"><a href="/prove.html" style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--em2);border-bottom:1px solid rgba(0,255,156,.4);padding-bottom:1px">▶ Run a 30-second demo first — free, capped</a></div>
     </div>
   </div>
 
-  <!-- ── PROOF: live demo, right at the decision ── -->
+  <!-- ── PROOF: one live run, right at the decision ── -->
   <section class="sect" style="margin-top:34px">
     <div class="shead">
       <span class="n">◆</span>
-      <h3>Don't trust us — watch it work</h3>
-      <span class="flag">Live · no signup</span>
+      <h3>Try one live run before you pay</h3>
+      <span class="flag">Free demo · capped</span>
     </div>
-    <p class="ssub">Give a real agent a real job right now. It runs on our key, does the work, and hands back a signed receipt — free, in about a minute. This is the thing you're paying $30 for.</p>
+    <p class="ssub">Pick a job, watch one of the seven do the actual work, and read the signed receipt it hands back.
+      The demo pool is capped to keep it honest — sign in to claim your free runs and keep the results.</p>
     <div style="position:relative;border:1px solid var(--lineEm);border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5);background:#06060d">
-      <iframe src="/prove.html?embed=1" title="Watch a SHADDAI agent work — live" style="width:100%;height:clamp(640px,84vh,900px);border:0;display:block" loading="lazy"></iframe>
+      <iframe src="/prove.html?embed=1" title="Run a real SHADDAI agent — live demo" style="width:100%;height:clamp(440px,60vh,620px);border:0;display:block" loading="lazy"></iframe>
     </div>
+  </section>
+
+  <!-- ── TIER MATRIX: what each level unlocks (gray-out) ── -->
+  <section class="sect">
+    <div class="shead">
+      <span class="n">◈</span>
+      <h3>Compare the three levels</h3>
+      <span class="flag">Guest → Free → Pro</span>
+    </div>
+    <p class="ssub">Try it as a guest, sign in for free to keep it forever, and go Pro when you want the premium unlocks.</p>
+    <div class="matrixwrap">
+      <table class="matrix">
+        <thead>
+          <tr class="headrow">
+            <th>What you get</th>
+            <th class="plan">Guest<br><span class="pill">teaser</span></th>
+            <th class="plan">Free<br><span class="pill">sign in</span></th>
+            <th class="plan">Pro<br><span class="pill pro">$30/mo</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="feature">Run the 7 agents — research, writing, markets, code, security</td>
+            <td class="plan gated">capped runs</td><td class="plan live">✓ unlimited</td><td class="plan live">✓ unlimited</td></tr>
+          <tr><td class="feature">Signed receipt on every run</td>
+            <td class="plan gated">demo only</td><td class="plan live">✓</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Keep your work — agents, office, world</td>
+            <td class="plan gated">🔒 device only</td><td class="plan live">✓ cross-device</td><td class="plan live">✓ cross-device</td></tr>
+          <tr><td class="feature">Forge your own agents (2D + 3D)</td>
+            <td class="plan gated">a few</td><td class="plan live">✓</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Workflow chains — agent feeds agent</td>
+            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature"><b>SHADDAI MCP</b> — the Council inside Claude, Cursor &amp; any MCP client</td>
+            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Premium brains (Groq / Claude / Gemini pro)</td>
+            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Text + image generation</td>
+            <td class="plan gated">capped</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Telegram bot + live signals</td>
+            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
+          <tr><td class="feature">Priority compute + AURA token-saver</td>
+            <td class="plan gated">—</td><td class="plan gated">—</td><td class="plan live">✓</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td class="plan"><button class="free-cta" onclick="location.href='/dashboard'">Start free →</button></td>
+            <td class="plan"><button class="free-cta" id="freeCta2" onclick="freeCta()">Sign in free →</button></td>
+            <td class="plan"><button class="pro-cta" id="proCta2" onclick="goCheckout('pro')">Go Pro — $30/mo</button></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="guestBanner" id="guestBanner">You're exploring as a guest — your work won't be saved across devices.
+      <b style="color:#efe9ff">Sign in — it's free.</b></div>
   </section>
 
   <!-- ── SECONDARY LADDER: Free / Founder ── -->
@@ -283,11 +371,11 @@
       <div class="amt">$0<span> forever</span></div>
       <ul>
         <li>Meet all seven agents</li>
-        <li>Limited daily runs</li>
+        <li>Unlimited core runs</li>
         <li>Core tools + live data</li>
         <li>Your dashboard &amp; office</li>
       </ul>
-      <button class="btn ghost" onclick="location.href='/dashboard'">Start free →</button>
+      <button class="btn ghost" id="freeCta" onclick="freeCta()">Start free →</button>
     </div>
 
     <div class="card gold">
@@ -351,7 +439,8 @@
       <div class="qa"><b>What's "bring your own key"?</b><p>Plug in a free API key (Groq, Ollama and more). Your agents run on it, so inference is near-zero cost — you pay $30 for the platform, not per token.</p></div>
       <div class="qa"><b>What's a "receipt"?</b><p>Every run returns a signed record — which agent ran, which tools fired, what came back. Proof of work you can trust and re-check.</p></div>
       <div class="qa"><b>Can I cancel?</b><p>Anytime, in one click. No lock-in, no contract. Your forged agents and office stay with your account.</p></div>
-      <div class="qa"><b>What does Pro unlock?</b><p>Everything: all seven agents, the Forge, workflow chains, premium tools, the 3D world and your office — one flat $30/mo.</p></div>
+      <div class="qa"><b>What does Pro unlock?</b><p>Everything: all seven agents, the Forge, workflow chains, the SHADDAI MCP, premium brains, image generation, the 3D world and your office — one flat $30/mo.</p></div>
+      <div class="qa"><b>What is SHADDAI MCP?</b><p>Your paid plan turns the whole Council into a Model Context Protocol server. From Claude, Cursor or any MCP client you can call the agents, fire their 300+ tools, and read their receipts — on your own key.</p></div>
       <div class="qa"><b>Is this just a ChatGPT wrapper?</b><p>No. Seven persona-tuned agents route across models, fire 300+ real tools and a 3,000-skill library, chain into multi-agent workflows, and log a receipt every run. Try it above — that's not a chat box.</p></div>
       <div class="qa"><b>Do I need to be technical?</b><p>No. Pick a job, hit run, approve the result. If you can send an email, you can run the Council.</p></div>
     </div>
@@ -375,11 +464,55 @@
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d && d.url) { window.location.href = d.url; }
-        else { alert('Checkout for "' + item + '" isn’t live yet — check back soon.'); } })
+        else { alert('Checkout for "' + item + '" isn\'t live yet — check back soon.'); } })
       .catch(function(){ alert('Could not start checkout — please try again.'); });
   };
+
+  // Free-tier CTA: signed-in → straight to dashboard; guest → sign-in overlay.
+  window.freeCta = function(){
+    if (window.SHDTier && window.SHDTier.isSignedIn()) { location.href = '/dashboard'; return; }
+    try { if (window.shdSignIn) { shdSignIn(); return; } } catch(e){}
+    location.href = '/dashboard';
+  };
+
+  // Re-render every CTA from the real plan state (guest / free / pro).
+  function renderTier(){
+    var s = (window.SHDTier && window.SHDTier.state()) || { mode:'guest', signedIn:false, tier:'free' };
+    var pro = s.mode === 'pro';
+    var guest = s.mode === 'guest';
+    var b = document.getElementById('guestBanner');
+    if (b) b.classList.toggle('on', guest);
+
+    var pc = document.getElementById('proCta');
+    if (pc){
+      if (pro){ pc.textContent = "You're on Pro — open the dashboard →"; pc.onclick = function(){ location.href = '/dashboard'; }; }
+      else { pc.textContent = 'Start Pro — $30/mo →'; pc.onclick = function(){ goCheckout('pro'); }; }
+    }
+    var pc2 = document.getElementById('proCta2');
+    if (pc2){
+      if (pro){ pc2.textContent = "You're on Pro ✓"; pc2.classList.add('on'); pc2.onclick = function(){ location.href = '/dashboard'; }; }
+      else { pc2.textContent = 'Go Pro — $30/mo'; pc2.classList.remove('on'); pc2.onclick = function(){ goCheckout('pro'); }; }
+    }
+    var fc2 = document.getElementById('freeCta2');
+    if (fc2){
+      if (pro){ fc2.textContent = '—'; fc2.disabled = true; fc2.classList.add('on'); }
+      else if (guest){ fc2.textContent = 'Sign in free →'; fc2.disabled = false; fc2.classList.remove('on'); fc2.onclick = function(){ freeCta(); }; }
+      else { fc2.textContent = "You're on Free ✓"; fc2.classList.add('on'); fc2.onclick = function(){ location.href = '/dashboard'; }; }
+    }
+    var fc = document.getElementById('freeCta');
+    if (fc){
+      if (pro){ fc.textContent = '—'; fc.disabled = true; fc.classList.add('on'); }
+      else if (guest){ fc.textContent = "Sign in — it's free →"; fc.disabled = false; fc.classList.remove('on'); }
+      else { fc.textContent = "You're on Free ✓"; fc.classList.add('on'); fc.onclick = function(){ location.href = '/dashboard'; }; }
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', renderTier);
+  if (window.SHDTier){ window.SHDTier.refresh().then(renderTier); }
+  else { window.addEventListener('shdTierReady', renderTier); }
 })();
 </script>
+<script src="/shd-tier.js" defer></script>
 <script src="/home-btn.js" defer></script>
 </body>
 </html>

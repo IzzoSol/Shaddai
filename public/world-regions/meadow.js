@@ -162,6 +162,7 @@ window.RegionGen['meadow'] = function(api){
   api.building({col:40, row:29, w:2, d:2, floors:2, kind:'shop', wall:'#b06a3a', roof:'#6a3320', accent:'#f0b040', name:'STORE'});
   api.building({col:41, row:35, w:2, d:2, floors:2, kind:'shop', wall:'#d0a050', roof:'#8a5a2a', accent:'#e8c45c', name:'INN'});
   api.building({col:29, row:36, w:2, d:2, floors:1, kind:'shop', wall:'#c07850', roof:'#7a3b2a', accent:'#f0c060', name:'BAKERY'});
+  api.building({col:33, row:38, w:3, d:3, floors:1, kind:'shop', wall:'#5a3a1a', roof:'#3a2210', accent:'#e8c45c', name:'PUB'});
 
   // ------------------------------------------------------------
   // 6) SE = TIGHT COTTAGE KNOT (cul-de-sac loop of curved lanes)

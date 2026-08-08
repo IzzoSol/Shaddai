@@ -1,0 +1,12 @@
+{
+  "name": "shaddai-rag",
+  "version": "1.0.0",
+  "description": "Zero-dependency TF-IDF RAG (Retrieval-Augmented Generation) for Node.js. Per-user document stores, chunked indexing, cosine-similarity search — pure Node, no external packages.",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": { "node": ">=16" },
+  "keywords": ["rag", "retrieval-augmented-generation", "tf-idf", "cosine-similarity", "vector-search", "semantic-search", "zero-dependency", "shaddai"],
+  "license": "MIT",
+  "files": ["index.js", "README.md"],
+  "repository": { "type": "git", "url": "https://github.com/IzzoSol/Shaddai" }
+}

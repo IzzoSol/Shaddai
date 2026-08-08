@@ -78,6 +78,7 @@
         } else { localStorage.setItem('shd_signed_in','0'); } }catch(e){}
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
+        if(window.SHDTier&&window.SHDTier.onAuthChange) window.SHDTier.onAuthChange();   // re-resolve guest/free/pro after auth settles
       });
       // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
       firebase.auth().getRedirectResult().catch(function(e){
@@ -187,6 +188,22 @@
   border:1px solid rgba(255,207,74,.35);color:#ffcf4a;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.12em;
   padding:6px 12px;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);cursor:pointer;}
 #shdGuestBadge.on{display:flex;}
+/* ── GUEST LOCK: features that need an account are greyed + carry a 🔒 chip ── */
+[data-guest-lock].shd-guest-locked{position:relative;filter:grayscale(1) opacity(.5) !important;cursor:not-allowed !important;}
+[data-guest-lock].shd-guest-locked::after{content:"🔒 Sign in";position:absolute;top:5px;right:6px;z-index:3;
+  font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.08em;color:#0b0416;
+  background:linear-gradient(100deg,#ffcf4a,#27e0ff);padding:2px 6px;border-radius:100px;pointer-events:none;}
+#shdGuestNudge{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;display:none;
+  align-items:center;gap:10px;background:rgba(8,12,22,.95);border:1px solid rgba(255,207,74,.4);
+  color:#eaf4ff;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.08em;
+  padding:9px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);border-radius:2px;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);}
+#shdGuestNudge.on{display:flex;}
+#shdGuestNudge button{cursor:pointer;background:linear-gradient(100deg,#27e0ff,#ffcf4a);border:none;color:#04060a;
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;padding:7px 14px;
+  text-transform:uppercase;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);}
+#shdGuestNudge .nx{background:none;color:#7d94a0;box-shadow:inset 0 0 0 1px rgba(95,124,134,.35);}
+@media(max-width:560px){#shdGuestNudge{left:12px;right:12px;transform:none;justify-content:center;flex-wrap:wrap;font-size:10px}}
 </style>
 <div id="shdAuthGate" role="dialog" aria-modal="true">
   <div class="card"><div class="in">
@@ -207,11 +224,13 @@
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
       <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
+    <button class="bg skip" onclick="shdGate.guest()">Continue as Guest</button>
     <div class="msg" id="shdAuthMsg"></div>
-    <div class="fine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account.</div>
+    <div class="fine" id="shdAuthFine">Sign in to enter your world, forge agents, and claim your office — everything saves to your account. Guests can browse — your work just won't persist.</div>
   </div></div>
 </div>
 <div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
+<div id="shdGuestNudge"><span>◈ You're in guest mode — <b style="color:#ffcf4a">sign in</b> to unlock Office, AURA, Gallery &amp; Treasury and save your work.</span><button onclick="shdGate.show()">Sign in →</button><button class="nx" onclick="document.getElementById('shdGuestNudge').classList.remove('on')">Not now</button></div>
 <script>
 (function(){
   function gate(){ return document.getElementById('shdAuthGate'); }
@@ -265,14 +284,83 @@
       var b=document.getElementById('shdGuestBadge'); if(b) b.classList.remove('on'); }
   };
   function decide(){
-    // Sign-in REQUIRED (no guest bypass). localhost = dev bypass so the owner is never locked out.
+    // Allow signed-in users, localhost (dev bypass for the owner), AND guests who clicked
+    // "Continue as guest" (session flag). Guests get a fully working dashboard — their
+    // app data is just written to sessionStorage instead of localStorage (see GUEST MODE block above)
+    // and wiped when the tab closes. No data is lost; nothing is gated except cross-session persistence.
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signed=window.SHD_AUTH&&window.SHD_AUTH.user;
-    if(signed||local){ G.hide(); return; }
+    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(signed||local||guest){ G.hide(); return; }
     G.show();
   }
   // Wait briefly for Firebase to restore any existing session before deciding.
   document.addEventListener('DOMContentLoaded',function(){ setTimeout(decide, 700); });
+})();
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   GUEST MODE (dashboard): grey out account-scoped features + nudge.
+   Non-destructive: signed-in users and localhost see everything live.
+   Anything marked data-guest-lock gets greyed + its click routes to the
+   sign-in gate instead. Guests also get a bottom nudge bar.
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  if (window.__shdGuestGate) return; window.__shdGuestGate = true;
+  var GUEST='shd_guest';
+  function isGuest(){
+    try{ return sessionStorage.getItem(GUEST)==='1'; }catch(e){ return false; }
+  }
+  function isDev(){ return location.hostname==='localhost'||location.hostname==='127.0.0.1'; }
+  function signedIn(){
+    try{
+      if (window.SHD_AUTH && SHD_AUTH.user) return true;
+      if (localStorage.getItem('shd_signed_in')==='1') return true;
+      var u=localStorage.getItem('shd_userid');
+      if (u && u.indexOf('guest')!==0 && u!=='local') return true;
+    }catch(e){}
+    return false;
+  }
+  var gateShownOnce=false;
+  function showGate(feature){
+    gateShownOnce=true;
+    try{
+      if (window.shdGate && shdGate.show){
+        var fine=document.getElementById('shdAuthFine');
+        if (fine && feature) fine.textContent='“'+feature+'” needs an account — sign in (or continue as guest to browse).';
+        shdGate.show();
+      } else { location.href='/dashboard'; }
+    }catch(e){ location.href='/dashboard'; }
+  }
+  function apply(){
+    var guest=isGuest();
+    // A visitor with no session and no guest flag is still gate-blocked, so
+    // the grey-out only matters once they're actually IN as a guest.
+    var locked = !isDev() && guest;
+    var nudge=document.getElementById('shdGuestNudge');
+    if (nudge) nudge.classList.toggle('on', locked && !gateShownOnce && !signedIn());
+    document.querySelectorAll('[data-guest-lock]').forEach(function(el){
+      if (locked){
+        el.classList.add('shd-guest-locked');
+        if (!el.getAttribute('data-guest-lock-wired')){
+          el.setAttribute('data-guest-lock-wired','1');
+          el.addEventListener('click',function(ev){
+            ev.preventDefault(); ev.stopPropagation();
+            showGate(this.getAttribute('data-guest-lock')||'this feature');
+          }, true);
+        }
+      } else {
+        el.classList.remove('shd-guest-locked');
+      }
+    });
+  }
+  window.shdRenderGuestGate=apply;
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(apply,1100); });
+  else setTimeout(apply,1100);
+  // Re-run on auth changes + occasionally (nav re-renders may swap buttons).
+  setInterval(apply, 4000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) apply(); });
+  try{ window.shdSignIn=window.shdSignIn||function(){ showGate(); }; }catch(e){}
 })();
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -411,6 +499,7 @@ body {
   width: 100%;
   margin: 0;
   padding: 0;
+  padding-bottom: 44px; /* Pro upgrade strip height */
 }
 
 body::before {
@@ -3689,6 +3778,7 @@ body[data-theme="dark"]::before {
   /* ── "?" onboarding re-open button (always visible on mobile) ── */
   #shdOnboardBtn {
     display: flex;
+    bottom: 78px !important;
   }
 }
 
@@ -4028,17 +4118,38 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     }catch(e){}
   };
 })();
+// ── ONE-TIME GAME DATA CLEAR (v3) ─────────────────────────────────────────────
+// Clears persisted office/room/city/economy data that was accumulating across sessions.
+// Re-run by bumping the version key below.
+(function(){
+  var CLR='shd_gamedata_clear_v3';
+  try{ if(localStorage.getItem(CLR)) return; }catch(e){ return; }
+  var keys=['shaddai.decor','shaddai.home','shaddai.city','shaddai.econ',
+            'shaddai.level','shaddai.ftue','shaddai.officeTheme','shaddai.mode','shaddai.region',
+            'shaddai.player','shaddai.gallery'];
+  keys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
+  try{
+    var rk=[]; for(var i=0;i<localStorage.length;i++){
+      var k2=localStorage.key(i);
+      if(k2&&(k2.indexOf('shaddai.rooms.')===0||k2.indexOf('shd_city')===0||k2.indexOf('shd_office')===0||k2.indexOf('shd_room')===0))
+        rk.push(k2);
+    }
+    rk.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+  try{localStorage.setItem(CLR,'1');}catch(e){}
+})();
 </script>
 <!-- SHADDAI icon set (window.SHADDAI_ICONS / window.shaddaiIcon) — loaded before nav renders -->
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
 <script src="/rooms-manager.js?v=1" defer></script>
-<script src="/command-terminal.js?v=10" defer></script>
-<script src="/theme-switcher.js?v=8" defer></script>
+<script src="/command-terminal.js?v=12" defer></script>
+ <script src="/theme-switcher.js?v=10" defer></script>
 <!-- button-art.js disabled: HF-image button overlays were out of place; using clean themed buttons instead -->
-<script src="/admin-panel.js?v=1" defer></script>
+<script src="/admin-panel.js?v=2" defer></script>
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
+<script src="/shd-tier.js?v=1" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
 <style id="shd-perf">/* Open-lag fix: the dashboard holds ~24 views in one huge DOM. Let the browser
    SKIP rendering the ones you're not looking at until they're shown — big cut to
@@ -4170,39 +4281,90 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </div>
 
 <nav id="mainNav">
-  <button class="nav-btn active" onclick="showView('dash')">🎛️ Dashboard</button>
-  <button class="nav-btn" onclick="showView('agents')"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
-  <button class="nav-btn" onclick="showView('workflow')"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
-  <button class="nav-btn" onclick="showView('pipeline')"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
-  <button class="nav-btn" onclick="showView('office')" style="color:#ffd700;font-weight:700">🏢 Office</button>
-  <button class="nav-btn" onclick="showView('chat')"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
+  <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
+  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
+  <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
+  <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
+  <button class="nav-btn nav-img" onclick="showView('office')" data-guest-lock="Office" style="color:#ffd700;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏢 Office</button>
+  <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <!-- E3 REMOVED: 📖 Lib & Notes nav — now lives inside Office ▸ Library sub-tab -->
   <!-- E3 REMOVED: 🗂️ Projects nav — now lives inside Office ▸ Projects sub-tab -->
-  <button class="nav-btn" onclick="showView('apis')">🔌 APIs</button>
-  <button class="nav-btn" onclick="showView('social')">📡 Social</button>
-  <button class="nav-btn" onclick="showView('media')"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
-  <button class="nav-btn" onclick="showView('automation')"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
+  <button class="nav-btn nav-img" onclick="showView('apis')" style="--nav-img:url(/assets/nav/apis.jpg)">🔌 APIs</button>
+  <button class="nav-btn nav-img" onclick="showView('social')" style="--nav-img:url(/assets/nav/social.jpg)">📡 Social</button>
+  <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
+  <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <!-- E3 REMOVED: ⚡ Skills nav — now lives inside Office ▸ Skills sub-tab -->
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
   <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
-  <button class="nav-btn" onclick="showView('marketplace')" style="color:#ff7b3d;font-weight:700"><img src="/api/forge/art/module-gallery.png" alt="" onerror="this.outerHTML='🏛️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(255,123,61,0.4)"> Rooms</button>
+  <!-- Rooms moved into the 🌐 Worlds chooser — out of the main work-flow -->
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <!-- Commerce tab removed -->
   <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
-  <button class="nav-btn" onclick="showView('forge')" style="color:#f0b429;font-weight:700" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
-  <button class="nav-btn" onclick="showView('aura');try{loadAuraTab()}catch(e){}" style="color:#27e0ff;font-weight:700" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
+  <button class="nav-btn nav-img" onclick="showView('forge')" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
-  <button class="nav-btn" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700" title="Plans & pricing">◈ Plans</button>
-  <button class="nav-btn" onclick="location.href='game.html'" id="nav2DBtn" style="color:#00ff9c;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,255,156,0.5);border-color:rgba(0,255,156,0.25)" title="Enter the 2D World">▦ 2D WORLD</button>
-  <button class="nav-btn" onclick="enter3DWorld()" id="navGridBtn" style="color:#00e5ff;font-weight:700;letter-spacing:0.12em;text-shadow:0 0 8px rgba(0,229,255,0.6);border-color:rgba(0,229,255,0.25)" title="Enter the 3D World">◈ 3D WORLD</button>
+  <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
+  <button class="nav-btn nav-img" id="navWorldsBtn" onclick="toggleWorldsMenu(event, this)" style="color:#7c3aed;font-weight:700;letter-spacing:0.06em;border-color:rgba(124,58,237,0.35);--nav-img:url(/assets/nav/worlds.jpg)" title="Worlds · Rooms · Bazaar · Gallery · Treasury">🌐 Worlds ▾</button>
   <button class="nav-btn" onclick="enterStandby()" style="color:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.1)" title="Ctrl+Shift+L">⏾ Standby</button>
 </nav>
+
+<!-- Worlds chooser dropdown — launched from the 🌐 Worlds nav button -->
+<div id="worldsMenu" style="display:none;position:fixed;z-index:3000;background:var(--bg-card,#0b1220);border:1px solid rgba(124,58,237,0.45);border-radius:12px;padding:8px;box-shadow:0 16px 48px rgba(0,0,0,0.65);min-width:220px;font-family:inherit">
+  <div style="font-size:8px;letter-spacing:2px;color:#7c3aed;text-transform:uppercase;padding:6px 12px 8px;font-weight:800">🌐 Empire Worlds</div>
+  <!-- ENTER -->
+  <div style="font-size:8px;letter-spacing:1.5px;color:#3a4a5a;text-transform:uppercase;padding:4px 12px 2px">Enter</div>
+  <button class="worlds-item" onclick="location.href='game.html';document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:inherit;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">▦</span><span style="flex:1;text-align:left">2D World <span style="color:#3a4a5a;font-weight:400;font-size:10px">· walk the city</span></span></button>
+  <button class="worlds-item" onclick="enter3DWorld();document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#a78bfa;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(124,58,237,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">◈</span><span style="flex:1;text-align:left">3D World <span style="color:#6a4aaa;font-weight:400;font-size:10px">· Pro</span></span></button>
+  <button class="worlds-item" onclick="showView('office');switchOfficeTab('rooms');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#e8c45c;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(232,196,92,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">🚪</span><span style="flex:1;text-align:left">My Rooms <span style="color:#7a6a3a;font-weight:400;font-size:10px">· tenants &amp; rent</span></span></button>
+  <!-- FORGE -->
+  <div style="border-top:1px solid rgba(255,255,255,0.06);margin:6px 0"></div>
+  <div style="font-size:8px;letter-spacing:1.5px;color:#3a4a5a;text-transform:uppercase;padding:4px 12px 2px">Forge</div>
+  <button class="worlds-item" onclick="window.open('pixel-forge.html','_blank');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#f0b429;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(240,180,41,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">⬡</span><span style="flex:1;text-align:left">Pixel Forge <span style="color:#7a6a2a;font-weight:400;font-size:10px">· free · 2D agents</span></span></button>
+  <button class="worlds-item" onclick="enter3DWorld();document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#a78bfa;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(124,58,237,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">◈</span><span style="flex:1;text-align:left">3D Realms Forge <span style="color:#6a4aaa;font-weight:400;font-size:10px">· Pro · GLB models</span></span></button>
+  <!-- ECONOMY -->
+  <div style="border-top:1px solid rgba(255,255,255,0.06);margin:6px 0"></div>
+  <div style="font-size:8px;letter-spacing:1.5px;color:#3a4a5a;text-transform:uppercase;padding:4px 12px 2px">Economy</div>
+  <button class="worlds-item" onclick="showView('office');switchOfficeTab('gallery');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:inherit;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">🖼️</span><span style="flex:1;text-align:left">Gallery &amp; Showcase</span></button>
+  <button class="worlds-item" onclick="showView('office');switchOfficeTab('treasury');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#00e5a0;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(0,229,160,0.08)'" onmouseout="this.style.background='none'"><span style="font-size:16px">◆</span><span style="flex:1;text-align:left">Economy <span style="color:#2a6a5a;font-weight:400;font-size:10px">· Treasury · Bazaar · Referrals</span></span></button>
+</div>
+<script>
+/* Open the worlds menu anchored under a given button (or by id). Close on outside click / ESC. */
+(function(){
+  var menu = document.getElementById('worldsMenu');
+  window.toggleWorldsMenu = function(e, anchor){
+    if(e){ e.stopPropagation(); }
+    if(!menu) return;
+    if(menu.style.display === 'none'){
+      var r = (anchor || e && e.currentTarget || document.getElementById('navWorldsBtn')).getBoundingClientRect();
+      var menuH = 300;
+      menu.style.left = Math.max(4, Math.min(r.left, window.innerWidth - 220)) + 'px';
+      if (r.top - menuH - 6 > 0) {
+        menu.style.top = 'auto'; menu.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        menu.style.bottom = 'auto'; menu.style.top = (r.bottom + 6) + 'px';
+      }
+      menu.style.display = 'block';
+    } else {
+      menu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', function(ev){
+    if(!menu || menu.style.display === 'none') return;
+    var btns = document.querySelectorAll('#navWorldsBtn, #navWorldsBtnSb');
+    var onBtn = false;
+    btns.forEach(function(b){ if(ev.target === b) onBtn = true; });
+    if(onBtn || menu.contains(ev.target)) return;
+    menu.style.display = 'none';
+  });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && menu) menu.style.display = 'none'; });
+})();
+</script>
 
 <script>
 /* 3D World = sign-in gated only (Pro tier later). NO access/beta codes. localhost bypasses for dev. */
@@ -4210,7 +4372,8 @@ window.enter3DWorld=function(){
   try{
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signedIn=false; try{ signedIn=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
-    if(!local && !signedIn){ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }
+    var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(!local && !signedIn && !guest){ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }
     try{ showView('grid'); }catch(e){}
     if(window._playWorldPortal){ try{ window._playWorldPortal(); }catch(e){} }
   }catch(e){ if(window._playWorldPortal) window._playWorldPortal(); }
@@ -4422,35 +4585,42 @@ window.enter3DWorld=function(){
 <div id="sbNav">
   <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v91</span></div>
   <div class="sb-list">
+    <!-- CORE -->
+    <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:6px 10px 3px;font-weight:800">Core</div>
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
     <button class="sbt" onclick="showView('agents');lySetSb(this)"><span class="ic">🤖</span>Agents</button>
-    <button class="sbt" onclick="showView('marketplace');lySetSb(this)"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
+    <!-- WORLDS -->
+    <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Worlds</div>
+    <button class="sbt" onclick="lySetSb(this);toggleWorldsMenu(event, this)" id="navWorldsBtnSb" style="color:#7c3aed"><span class="ic">🌐</span>Worlds</button>
+    <button class="sbt" onclick="window._officeEntrySub='city';showView('office');lySetSb(this)" title="City economy, plots &amp; Signal" style="color:#00e5a0;font-weight:700"><span class="ic">🌆</span>City</button>
+    <button class="sbt" onclick="window._officeEntrySub='rooms';showView('office');lySetSb(this)" title="Your rooms &amp; tenants" style="color:#e8c45c"><span class="ic">🚪</span>Rooms</button>
+    <button class="sbt" onclick="window._officeEntrySub='treasury';showView('office');lySetSb(this)" title="Sparks, vaults &amp; economy" style="color:#00e5a0"><span class="ic">◆</span>Economy</button>
+    <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Pixel Forge</button>
+    <!-- MARKETS -->
+    <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Markets</div>
     <button class="sbt" onclick="showView('pipeline');lySetSb(this)"><span class="ic">📈</span>Markets</button>
     <button class="sbt" onclick="showView('sentiment');lySetSb(this)"><span class="ic">📊</span>Sentiment</button>
     <button class="sbt" onclick="showView('news');lySetSb(this)"><span class="ic">📰</span>News</button>
+    <!-- STUDIO -->
+    <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Studio</div>
     <button class="sbt" onclick="showView('media');lySetSb(this)"><span class="ic">🎵</span>Media</button>
     <button class="sbt" onclick="showView('social');lySetSb(this)"><span class="ic">📱</span>Social</button>
     <button class="sbt" onclick="showView('workflow');lySetSb(this)"><span class="ic">⚡</span>Workflow</button>
     <button class="sbt" onclick="showView('automation');lySetSb(this)"><span class="ic">⚙</span>Automation</button>
-    <!-- E3: repointed to Office sub-tabs (standalone Projects/Skills views retired) -->
-    <!-- Skills / Billing / Library removed from the sidebar — they live INSIDE the Office tab (sub-tabs), not as standalone tabs (owner). -->
-    <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429"><span class="ic">⬡</span>Forge</button>
-    <style>@keyframes sbtGlow{0%,100%{box-shadow:0 0 2px rgba(232,196,92,.22)}50%{box-shadow:0 0 13px rgba(232,196,92,.6)}}.sbt-glow{animation:sbtGlow 2.6s ease-in-out infinite;border-radius:8px}.sbt-glow .ic{filter:drop-shadow(0 0 5px rgba(232,196,92,.9))}.sbt-glow:hover{animation-duration:1.1s}</style>
-    <button class="sbt sbt-glow" onclick="location.href='pricing.html'" style="color:#e8c45c;font-weight:700"><span class="ic">⭐</span>Upgrade to Pro</button>
-    <button class="sbt" onclick="location.href='monetize.html'" style="color:#00e5a0"><span class="ic">💸</span>Monetize</button>
-    <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">⚡</span>AURA</button>
-    <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
+    <button class="sbt" onclick="showView('aura');try{loadAuraTab()}catch(e){};lySetSb(this)" style="color:#27e0ff"><span class="ic">✦</span>AURA</button>
+    <!-- SYSTEM -->
+    <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">System</div>
     <button class="sbt" onclick="showView('apis');lySetSb(this)"><span class="ic">🔌</span>APIs</button>
     <button class="sbt" onclick="showView('settings');lySetSb(this)"><span class="ic">⚙</span>Settings</button>
     <button class="sbt" onclick="showView('security');lySetSb(this)" style="color:#ef4444"><span class="ic">🛡</span>Security</button>
-    <!-- Sign in (sidebar) removed — unwired -->
-    <button class="sbt" onclick="location.href='game.html'" style="color:#00ff9c"><span class="ic">▦</span>2D World</button>
-    <button class="sbt" onclick="lySetSb(this);enter3DWorld()" id="navGridBtnSb" style="color:#00e5ff"><span class="ic">◈</span>3D World</button>
     <button class="sbt" onclick="enterStandby()" style="color:rgba(255,255,255,0.3)" title="Ctrl+Shift+L · ESC to exit"><span class="ic">⏾</span>Standby</button>
   </div>
+  <style>@keyframes sbtGlow{0%,100%{box-shadow:0 0 2px rgba(232,196,92,.22)}50%{box-shadow:0 0 13px rgba(232,196,92,.6)}}.sbt-glow{animation:sbtGlow 2.6s ease-in-out infinite;border-radius:8px}.sbt-glow .ic{filter:drop-shadow(0 0 5px rgba(232,196,92,.9))}.sbt-glow:hover{animation-duration:1.1s}</style>
   <div class="sb-foot">OLLAMA → GROQ → GEMINI<br>7 AGENTS ONLINE</div>
 </div>
+
 
 <div id="resourcePanel">
   <div class="res-item"><span class="res-label">CPU</span><span class="res-value" id="cpuVal">0%</span></div>
@@ -4473,6 +4643,163 @@ window.enter3DWorld=function(){
 </div>
 <button id="fileSidebarToggle" onclick="toggleFileSidebar()">◀</button>
 
+<!-- ════ TOP-TIER GLOBAL VISUAL SYSTEM — applies to all views ════ -->
+<style id="topTierGlobal">
+  /* ── View entrance animation ── */
+  .view.active { animation: vwFadeIn .18s ease-out both; }
+  @keyframes vwFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Card premium upgrade ── */
+  .card {
+    border-color: rgba(90,107,138,0.18) !important;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(135deg, rgba(0,229,160,0.025) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card:hover {
+    border-color: rgba(0,229,160,0.22) !important;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,229,160,0.06);
+  }
+
+  /* ── Card head upgrade ── */
+  .card-head {
+    background: linear-gradient(90deg, rgba(0,229,160,0.04) 0%, transparent 100%);
+    margin: -10px -10px 8px !important;
+    padding: 8px 10px 7px !important;
+    border-radius: 5px 5px 0 0;
+  }
+  .card-title {
+    font-family: 'Chakra Petch', 'Share Tech Mono', monospace !important;
+    font-size: 9px !important; letter-spacing: 2px !important;
+  }
+
+  /* ── Stat box premium ── */
+  .stat-box {
+    transition: all .18s; border-radius: 7px !important;
+    background: rgba(255,255,255,0.02) !important;
+  }
+  .stat-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,229,160,0.3) !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .stat-value { font-family: 'JetBrains Mono', monospace !important; }
+  .stat-label { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1px !important; }
+
+  /* ── Button upgrades ── */
+  .btn { transition: all .15s !important; font-family: 'Chakra Petch', monospace !important; letter-spacing: .5px; }
+  .btn-accent:hover { box-shadow: 0 0 18px rgba(0,229,160,0.5) !important; filter: brightness(1.1); }
+  .btn-ghost:hover { border-color: rgba(0,229,160,0.45) !important; color: #00e5a0 !important; box-shadow: 0 0 8px rgba(0,229,160,0.15); }
+  .btn-secondary:hover { box-shadow: 0 0 14px rgba(168,85,247,0.35); }
+  .btn-danger:hover { box-shadow: 0 0 14px rgba(255,64,112,0.4); }
+
+  /* ── Global scrollbar ── */
+  * { scrollbar-width: thin; scrollbar-color: rgba(0,229,160,0.25) transparent; }
+  *::-webkit-scrollbar { width: 3px; height: 3px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: rgba(0,229,160,0.28); border-radius: 2px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(0,229,160,0.5); }
+
+  /* ── View header system (applies to all module banners) ── */
+  .view-banner {
+    display: flex; align-items: center; gap: 14px; padding: 14px 0 12px;
+    border-bottom: 1px solid rgba(0,229,160,0.12); margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .view-banner-title {
+    font-size: 20px; font-weight: 800; letter-spacing: .04em;
+    font-family: 'Chakra Petch', 'Orbitron', monospace;
+    background: linear-gradient(90deg, #e8edf5 0%, rgba(232,237,245,0.7) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.2;
+  }
+  .view-banner-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 2px; font-family: 'Share Tech Mono', monospace; }
+  .view-banner-body { flex: 1; min-width: 180px; }
+  .view-banner-stats { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .view-banner-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .view-banner-icon { font-size: 26px; line-height: 1; width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.15); flex-shrink: 0; }
+  .view-banner-stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 5px 12px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 1px; white-space: nowrap; text-align: center; }
+  .view-banner-stat span { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', 'Share Tech Mono', monospace; color: #00e5a0; line-height: 1; }
+  .view-banner-stat small { font-size: 8px; color: var(--text-muted); letter-spacing: .08em; line-height: 1; }
+  .view-banner-stat b { color: #00e5a0; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Agent card upgrades (Agents view) ── */
+  .agent-3d-grid .card { transition: all .2s; }
+  .agent-3d-grid .card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important; }
+
+  /* ── Chat premium ── */
+  .chat-main { background: var(--bg-card) !important; }
+  .chat-header { background: linear-gradient(135deg, rgba(0,229,160,0.06) 0%, rgba(0,0,0,0) 80%) !important; border-bottom: 1px solid rgba(0,229,160,0.15) !important; }
+  .chat-msg.bot { background: rgba(0,229,160,0.04) !important; border-color: rgba(0,229,160,0.15) !important; }
+  .chat-msg.user { background: rgba(124,58,237,0.08) !important; border-color: rgba(124,58,237,0.2) !important; }
+  .chat-input-wrap { border-top: 1px solid rgba(0,229,160,0.12) !important; background: rgba(0,0,0,0.3) !important; }
+
+  /* ── Kanban cards ── */
+  .kanban-card { transition: all .15s; }
+  .kanban-card:hover { transform: translateX(2px); }
+  .kanban-col { border-radius: 8px !important; background: rgba(255,255,255,0.015) !important; }
+  .kanban-col-head { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1.5px !important; }
+
+  /* ── HUD strip ── */
+  .hud-strip { border-radius: 10px; }
+  .hud-val { font-family: 'JetBrains Mono', monospace !important; font-size: 20px !important; font-weight: 700 !important; }
+  .hud-lab { font-family: 'Chakra Petch', monospace !important; letter-spacing: 1.5px !important; font-size: 7px !important; }
+
+  /* ── Empty states ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 20px; gap: 10px; opacity: .7;
+  }
+  .empty-state-icon { font-size: 40px; filter: grayscale(0.3); }
+  .empty-state-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .empty-state-desc { font-size: 10px; color: var(--text-muted); text-align: center; max-width: 300px; line-height: 1.7; }
+
+  /* ── Security view red glow on card ── */
+  #securityView .card { border-color: rgba(255,64,112,0.12) !important; }
+  #securityView .card:hover { border-color: rgba(255,64,112,0.28) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,64,112,0.08) !important; }
+
+  /* ── AURA view cyan glow ── */
+  #auraView .card:hover { border-color: rgba(39,224,255,0.3) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(39,224,255,0.08) !important; }
+
+  /* ── Markets/Pipeline ── */
+  #pipelineView .card:hover { border-color: rgba(0,255,136,0.25) !important; }
+
+  /* ── Social view ── */
+  #socialView .card:hover { border-color: rgba(29,155,240,0.25) !important; }
+
+  /* ── Forge glow ── */
+  #forgeView .card:hover { border-color: rgba(240,180,41,0.3) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(240,180,41,0.08) !important; }
+
+  /* ── Input/select premium ── */
+  input[type=text], input[type=email], input[type=password], textarea, select {
+    font-family: 'Share Tech Mono', monospace !important;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, textarea:focus, select:focus {
+    border-color: rgba(0,229,160,0.5) !important;
+    box-shadow: 0 0 0 2px rgba(0,229,160,0.1) !important;
+    outline: none !important;
+  }
+
+  /* ── Nav button active glow ── */
+  .nav-btn.active {
+    background: rgba(0,229,160,0.12) !important;
+    color: #00e5a0 !important;
+    border-color: rgba(0,229,160,0.4) !important;
+    box-shadow: 0 0 12px rgba(0,229,160,0.2);
+  }
+  .nav-btn { transition: all .15s !important; }
+  .nav-btn:hover:not(.active) { border-color: rgba(0,229,160,0.3) !important; color: rgba(0,229,160,0.8) !important; }
+
+  /* ── Sidebar button active ── */
+  .sbt.on { border-left: 2px solid #00e5a0 !important; background: rgba(0,229,160,0.08) !important; }
+  .sbt { transition: all .12s !important; }
+  .sbt:hover { background: rgba(255,255,255,0.05) !important; padding-left: 14px !important; }
+</style>
 <main id="mainArea">
   <!-- Dashboard -->
   <div id="dashView" class="view active">
@@ -4490,9 +4817,9 @@ window.enter3DWorld=function(){
         <span class="mqa-icon">📈</span>
         <span class="mqa-label">Markets</span>
       </button>
-      <button class="mqa-btn" onclick="showView('marketplace')">
-        <span class="mqa-icon">🛒</span>
-        <span class="mqa-label">Marketplace</span>
+      <button class="mqa-btn" onclick="window._officeEntrySub='treasury';showView('office')">
+        <span class="mqa-icon">◆</span>
+        <span class="mqa-label">Economy</span>
       </button>
       <button class="mqa-btn" onclick="showView('agents')">
         <span class="mqa-icon">🤖</span>
@@ -4545,6 +4872,46 @@ window.enter3DWorld=function(){
       <div class="card-head"><span class="card-title">Quick Actions</span></div>
       <div id="quickRows"></div>
     </div>
+    <!-- CITY EMPIRE LIVE WIDGET -->
+    <div class="card" id="dashCityWidget" style="background:linear-gradient(135deg,rgba(0,229,160,0.05),rgba(232,196,92,0.04));border:1px solid rgba(0,229,160,0.25);cursor:pointer" onclick="window._officeEntrySub='city';showView('office')">
+      <div class="card-head">
+        <span class="card-title" style="color:#00e5a0">🌆 City Empire — Live Status</span>
+        <span style="font-size:8px;color:rgba(0,229,160,0.5)">Click to manage →</span>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">⚡ Sparks</div><div class="stat-value good" id="dashSparks">—</div></div>
+        <div class="stat-box" style="border-color:rgba(0,229,160,0.25)"><div class="stat-label">📡 Signal</div><div class="stat-value" id="dashSignal" style="color:#00e5a0">—</div></div>
+        <div class="stat-box" style="border-color:rgba(232,196,92,0.25)"><div class="stat-label">◆ Plots</div><div class="stat-value" id="dashPlots" style="color:#e8c45c">0 / 30</div></div>
+        <div class="stat-box" style="border-color:rgba(124,58,237,0.25)"><div class="stat-label">🚪 Rooms</div><div class="stat-value" id="dashRooms" style="color:#a78bfa">0</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button onclick="event.stopPropagation();window._officeEntrySub='city';showView('office')" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🌆 City</button>
+        <button onclick="event.stopPropagation();window._officeEntrySub='treasury';showView('office')" style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);color:#00e5a0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">◆ Economy</button>
+        <button onclick="event.stopPropagation();window._officeEntrySub='rooms';showView('office')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.2);color:#e8c45c;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">🚪 Rooms</button>
+        <button onclick="event.stopPropagation();location.href='game.html'" style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:inherit;font-weight:700">▦ Enter World</button>
+      </div>
+    </div>
+    <script>
+    (function(){
+      function _dashCitySync() {
+        try {
+          var sp = parseFloat(localStorage.getItem('shd_sparks')||'0');
+          var sig = parseFloat(localStorage.getItem('shaddai.signal')||'100');
+          var city = []; try{ city=JSON.parse(localStorage.getItem('shaddai.city')||'[]'); }catch(_){}
+          var uid = localStorage.getItem('shd_signed_in');
+          var myPlots = city.filter(function(p){return p.owner===uid;});
+          var rooms=0; myPlots.forEach(function(p){if(p.rooms)rooms+=p.rooms.length;});
+          var dsp=document.getElementById('dashSparks'); if(dsp) dsp.textContent=sp>=1000?(sp/1000).toFixed(1)+'k':sp.toFixed(0);
+          var dsg=document.getElementById('dashSignal'); if(dsg){dsg.textContent=sig.toFixed(0)+'%'; dsg.style.color=sig>60?'#00e5a0':sig>30?'#ffb020':'#ef4444';}
+          var dpl=document.getElementById('dashPlots'); if(dpl) dpl.textContent=myPlots.length+' / 30';
+          var drm=document.getElementById('dashRooms'); if(drm) drm.textContent=rooms;
+        }catch(_){}
+      }
+      _dashCitySync();
+      setInterval(_dashCitySync, 3000);
+    })();
+    </script>
+
     <!-- SHADDAI Value Meter (SHADDAI suggested: show cost-benefit) -->
     <div class="card" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(255,176,32,0.04));border:1px solid rgba(0,229,160,0.3)">
       <div class="card-head">
@@ -4690,6 +5057,17 @@ window.enter3DWorld=function(){
 
   <!-- Tasks -->
   <div id="workflowView" class="view">
+    <div class="view-banner" style="border-color:rgba(255,179,0,0.22)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(255,179,0,0.18),rgba(255,100,0,0.1))">⚡</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#ffb300,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Workflow Engine</div>
+        <div class="view-banner-sub">Chain agents · schedule jobs · delegate tasks · simple → pro automation</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="wfBannerRuns">—</span><small>runs today</small></div>
+        <div class="view-banner-stat"><span id="wfBannerActive">—</span><small>active jobs</small></div>
+      </div>
+    </div>
     <!-- ⚡ SIMPLE MODE — 3-step wizard (What → Who → GO), real /api/agent/run engine -->
     <div class="card cyber-card" id="simpleModeCard" style="border:1px solid rgba(0,229,160,.35)">
       <div class="card-head">
@@ -5106,6 +5484,17 @@ window.enter3DWorld=function(){
 
   <!-- Pipeline -->
   <div id="pipelineView" class="view cyber-scanlines">
+    <div class="view-banner" style="border-color:rgba(0,200,255,0.25)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(0,200,255,0.15),rgba(0,229,160,0.08))">📊</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#00c4ff,#00e5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Markets Intelligence</div>
+        <div class="view-banner-sub">Live prices · whale watch · on-chain signals · AI-powered technical analysis</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="mktBannerTicker" style="font-family:'Share Tech Mono',monospace">NVDA</span><small>active ticker</small></div>
+        <div class="view-banner-stat"><span id="mktBannerStatus" style="color:#00e5a0">●</span><small>live feed</small></div>
+      </div>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          MARKETS — Native multi-agent analysis + free chart + free price feeds
@@ -5957,18 +6346,64 @@ window.enter3DWorld=function(){
     </script>
   </div>
 
-  <!-- Office / Pixel Office -->
+  <!-- Office / Pixel Office — TOP TIER VISUAL UPGRADE -->
+  <style>
+    /* ── Office tab bar ── */
+    #officeView > div:first-child {
+      background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 10px 4px 10px !important;
+      margin-bottom: 0 !important;
+      border-radius: 8px 8px 0 0;
+    }
+    #officeView .nav-btn.active {
+      box-shadow: 0 0 14px rgba(0,229,160,0.25), inset 0 0 12px rgba(0,229,160,0.08);
+    }
+    #officeTabCity.active { box-shadow: 0 0 18px rgba(0,229,160,0.4) !important; }
+    #officeTabRooms.active { box-shadow: 0 0 18px rgba(232,196,92,0.4) !important; }
+    #officeTab13.active { box-shadow: 0 0 18px rgba(0,229,160,0.35) !important; }
+    #officeTab10.active { box-shadow: 0 0 18px rgba(168,85,247,0.4) !important; }
+
+    /* ── Command Hub city cards ── */
+    @keyframes cardGlowEm { 0%,100%{box-shadow:0 0 10px rgba(0,229,160,0.12)} 50%{box-shadow:0 0 22px rgba(0,229,160,0.28)} }
+    @keyframes cardGlowGold { 0%,100%{box-shadow:0 0 10px rgba(232,196,92,0.1)} 50%{box-shadow:0 0 22px rgba(232,196,92,0.25)} }
+    @keyframes cardGlowPur { 0%,100%{box-shadow:0 0 10px rgba(168,85,247,0.1)} 50%{box-shadow:0 0 22px rgba(168,85,247,0.25)} }
+    @keyframes sigPulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+    @keyframes sparkFloat { 0%{transform:translateY(0)}50%{transform:translateY(-2px)}100%{transform:translateY(0)} }
+    @keyframes glowBorder { 0%,100%{border-color:rgba(0,229,160,0.18)}50%{border-color:rgba(0,229,160,0.45)} }
+
+    /* ── City tab premium ── */
+    #ctTopbar { background: linear-gradient(135deg, rgba(0,229,160,0.04) 0%, rgba(0,0,0,0) 60%) !important; }
+    #ctTopbar .ct-title { background: linear-gradient(90deg, #00e5a0, #e8c45c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .ct-card-em { backdrop-filter: blur(8px); animation: glowBorder 3s ease-in-out infinite; }
+    .ct-slot.mine { animation: cardGlowEm 2.5s ease-in-out infinite; }
+    .ct-dist { backdrop-filter: blur(6px); }
+    .ct-dist:hover { transform: translateY(-2px) scale(1.02) !important; }
+
+    /* ── Economy tab premium ── */
+    #ecSparksDisplay { animation: sparkFloat 2.8s ease-in-out infinite; }
+
+    /* ── HUD strip live indicator ── */
+    .hud-strip { background: linear-gradient(135deg, rgba(0,229,160,0.04), rgba(232,196,92,0.04)); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+    .hud-stat { position: relative; }
+    .hud-val { background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* ── Rooms tab premium ── */
+    .rm-card { transition: transform .2s, box-shadow .2s; }
+    .rm-card:hover { transform: translateY(-2px); }
+
+    /* ── Signal bar glow ── */
+    #citySignalFill { box-shadow: 0 0 8px rgba(0,229,160,0.5); }
+  </style>
   <div id="officeView" class="view">
     <div style="display:flex;gap:8px;padding:12px 0;flex-wrap:wrap;position:relative;z-index:10;margin-bottom:8px">
-      <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">⚡ Work Board</button>
-      <button class="nav-btn" id="officeTab7" onclick="switchOfficeTab('projects')">🗂️ Projects</button>
+      <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">🏢 Command</button>
+      <button class="nav-btn" id="officeTabCity" onclick="switchOfficeTab('city')" style="color:#00e5a0;font-weight:700">🌆 City</button>
+      <button class="nav-btn" id="officeTabRooms" onclick="switchOfficeTab('rooms')" style="color:#e8c45c;font-weight:700">🚪 Rooms</button>
+      <button class="nav-btn" id="officeTab10" onclick="switchOfficeTab('gallery')" style="color:#a855f7;font-weight:700">🖼 Gallery</button>
+      <button class="nav-btn" id="officeTab13" onclick="switchOfficeTab('treasury')" style="color:#00e5a0;font-weight:700">◆ Economy</button>
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
-      <!-- A4: Workflows sub-tab REMOVED (owner) — Workflow lives ONLY as its own top-level tab. officeTab5 retired. -->
-      <button class="nav-btn" id="officeTab9" onclick="switchOfficeTab('billing')" style="color:#ffd700;font-weight:700">💳 Billing</button>
-      <button class="nav-btn" id="officeTab6" onclick="switchOfficeTab('pixel')" style="color:#ffd700;font-weight:700">📍 Pixel Office</button>
-      <button class="nav-btn" id="officeTab2" onclick="switchOfficeTab('boardroom')">🏢 Boardroom</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
-      <button class="nav-btn" id="officeTab4" onclick="switchOfficeTab('safety')">🛡 Safety</button>
     </div>
     
     <!-- E3: Projects sub-panel — standalone #projectsView content relocated here at runtime by switchOfficeTab('projects') -->
@@ -5979,23 +6414,47 @@ window.enter3DWorld=function(){
     <!-- Command Center — SHADDAI Agent Work Board (TURTLE design spec) -->
     <div id="officeCommand" class="office-room" style="flex-direction:column;padding:12px;align-items:stretch">
 
-      <!-- ROW 1: COCKPIT HUD STRIP -->
+      <!-- ROW 1: COCKPIT HUD STRIP (live data from localStorage) -->
       <div class="hud-strip">
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudRevenue">$0</div>
-          <div class="hud-lab">EST. MONTHLY REV</div>
+          <div class="hud-val" id="officeHudSparks">—</div>
+          <div class="hud-lab">SPARKS BALANCE</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudJobs">0</div>
-          <div class="hud-lab">ACTIVE JOBS</div>
+          <div class="hud-val" id="officeHudSignal">—%</div>
+          <div class="hud-lab">SIGNAL LEVEL</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudDone">0</div>
-          <div class="hud-lab">TASKS COMPLETE</div>
+          <div class="hud-val" id="officeHudRooms">0</div>
+          <div class="hud-lab">ACTIVE ROOMS</div>
         </div>
         <div class="hud-stat">
-          <div class="hud-val" id="officeHudHealth" style="font-size:14px">●●●●●●●</div>
-          <div class="hud-lab">AGENT STATUS</div>
+          <div class="hud-val" id="officeHudPlots">0 / 30</div>
+          <div class="hud-lab">CITY PLOTS</div>
+        </div>
+      </div>
+
+      <!-- CITY EMPIRE QUICK-NAV CARDS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 4px">
+        <div onclick="switchOfficeTab('city')" style="background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.14)'" onmouseout="this.style.background='rgba(0,229,160,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🌆</div>
+          <div style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.04em">CITY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdCitySnap">Founders' Row · 30 plots</div>
+        </div>
+        <div onclick="switchOfficeTab('treasury')" style="background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.18);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='rgba(0,229,160,0.05)'">
+          <div style="font-size:18px;margin-bottom:4px">◆</div>
+          <div style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.04em">ECONOMY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdEconSnap">6-Vault · Faucets · Sinks</div>
+        </div>
+        <div onclick="switchOfficeTab('rooms')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(232,196,92,0.14)'" onmouseout="this.style.background='rgba(232,196,92,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🚪</div>
+          <div style="font-size:10px;font-weight:700;color:#e8c45c;letter-spacing:.04em">ROOMS</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdRoomsSnap">Rent · Tenants · Yield</div>
+        </div>
+        <div onclick="switchOfficeTab('gallery')" style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(168,85,247,0.14)'" onmouseout="this.style.background='rgba(168,85,247,0.07)'">
+          <div style="font-size:18px;margin-bottom:4px">🖼</div>
+          <div style="font-size:10px;font-weight:700;color:#a855f7;letter-spacing:.04em">GALLERY</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdGallerySnap">Agents · Cosmetics · Art</div>
         </div>
       </div>
 
@@ -6041,6 +6500,11 @@ window.enter3DWorld=function(){
       </div>
 
       <!-- E3 REMOVED: ROW 3 quick-action-strip (NEW JOB / AGENTS / SKILLS / FORGE·GALLERY / ROOMS / WORLD / BILLING / CSV / PIXEL OFFICE) — duplicated main nav; owner removed whole strip -->
+      <!-- Command Hub merge: ◈ Your Property — the hub's office manager now lives with the Command Center -->
+      <div class="shdterm-scope" style="margin-top:14px;border-top:1px solid rgba(168,85,247,.18);padding-top:6px">
+        <div class="rsec">◈ Your Property <span class="c">Founders' Row · office manager</span></div>
+        <div id="officeCommandProp"></div>
+      </div>
     </div>
     
     <!-- Pixel Office — Shaddai's command throne with 6 agent desks -->
@@ -6266,6 +6730,467 @@ window.enter3DWorld=function(){
         </div>
       </div>
     </div>
+
+    <!-- Command Hub merge: hub panels rendered into these office rooms by command-terminal.js -->
+    <div id="officeGallery" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+    <div id="officeShowcase" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+    <div id="officeBazaar" class="office-room shdterm-scope" style="display:none;padding:18px 22px;align-items:stretch"></div>
+
+    <!-- ◆ ECONOMY TAB (Treasury) — Sparks ledger, faucets/sinks, reserves, referrals -->
+    <div id="officeTreasury" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto">
+    <style>
+      #officeTreasury { font-family:'Share Tech Mono',monospace; }
+      .ec-pad { padding:18px 20px; }
+      .ec-sec { font-size:8px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px; }
+      .ec-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px; }
+      .ec-row2 { display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px 0; }
+      @media(max-width:620px){.ec-row2{grid-template-columns:1fr}}
+      .ec-faucet-row,.ec-sink-row { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:10px; }
+      .ec-faucet-row:last-child,.ec-sink-row:last-child{border-bottom:none}
+      .ec-hist-row { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:9px; }
+      .ec-hist-row:last-child{border-bottom:none}
+      .ec-vault-bar-bg { height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex:1; }
+      .ec-vault-bar { height:100%;border-radius:3px;transition:width .8s; }
+      .ec-inf-dot { width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px; }
+    </style>
+
+    <!-- BIG BALANCE -->
+    <div style="padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;color:#5a6a7a;text-transform:uppercase;margin-bottom:4px">◆ Sparks Balance</div>
+          <div style="font-size:42px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#e8c45c;line-height:1" id="ecSparksDisplay">0</div>
+          <div style="font-size:10px;color:#4a4030;margin-top:3px">SPARKS · sovereign economy token</div>
+        </div>
+        <div style="flex:1;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding-bottom:4px">
+          <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#2a5a3a;letter-spacing:1px;margin-bottom:2px">TODAY'S YIELD</div>
+            <div style="font-size:16px;font-weight:700;color:#00e5a0" id="ecTodayYield">+0.00</div>
+          </div>
+          <div style="background:rgba(255,64,112,0.06);border:1px solid rgba(255,64,112,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#5a1a2a;letter-spacing:1px;margin-bottom:2px">LOCKED (BOOST)</div>
+            <div style="font-size:16px;font-weight:700;color:#ff4070" id="ecLockedAmt">0</div>
+          </div>
+          <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.18);border-radius:8px;padding:8px 14px;min-width:110px">
+            <div style="font-size:8px;color:#3a1a6a;letter-spacing:1px;margin-bottom:2px">STREAM RATE</div>
+            <div style="font-size:16px;font-weight:700;color:#a78bfa" id="ecStreamRate">0/sec</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAUCETS + SINKS -->
+    <div class="ec-row2">
+      <!-- FAUCETS -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#00e5a0">↑ Faucets (In)</div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Plot stream</span><span id="ecFPlot" style="color:#00e5a0;font-weight:700">+0.50/s</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Room rent</span><span id="ecFRent" style="color:#00e5a0;font-weight:700">+0/week</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Office residuals</span><span id="ecFOffice" style="color:#00e5a0;font-weight:700">+0/week</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Referral bonuses</span><span id="ecFRef" style="color:#00e5a0;font-weight:700">+0</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Mission rewards</span><span id="ecFMission" style="color:#00e5a0;font-weight:700">+0</span></div>
+        <div class="ec-faucet-row"><span style="color:#8a9ab0">Daily login</span><span style="color:#00e5a0;font-weight:700">+2/day</span></div>
+      </div>
+      <!-- SINKS -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#ff4070">↓ Sinks (Out)</div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Boost locked</span><span id="ecSBoost" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Amenity burns</span><span id="ecSAmenity" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Transit fares</span><span id="ecSTransit" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Signal rescues</span><span id="ecSRescue" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">Market fees (5%)</span><span id="ecSMarket" style="color:#ff4070;font-weight:700">0</span></div>
+        <div class="ec-sink-row"><span style="color:#8a9ab0">3D Forge credits</span><span id="ecSForge" style="color:#ff4070;font-weight:700">0</span></div>
+      </div>
+    </div>
+
+    <!-- VAULT ALLOCATION + TREASURY + INFLATION -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 20px 0">
+
+      <!-- VAULT ALLOCATION -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#e8c45c">⬡ Vault Allocation</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:9px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Play (50%)</span><span style="color:#00e5a0">▓▓▓▓▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:50%;background:#00e5a0"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Daily (10%)</span><span style="color:#e8c45c">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#e8c45c"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Referral (10%)</span><span style="color:#a78bfa">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#a78bfa"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Boost (10%)</span><span style="color:#ff7b3d">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ff7b3d"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Staking (10%)</span><span style="color:#ffd700">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ffd700"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#8a9ab0">Reserve (10%)</span><span style="color:#ff4070">▓</span></div><div class="ec-vault-bar-bg"><div class="ec-vault-bar" style="width:10%;background:#ff4070"></div></div></div>
+        </div>
+      </div>
+
+      <!-- CITY TREASURY -->
+      <div style="background:rgba(0,229,160,0.04);border:1px solid rgba(0,229,160,0.15);border-radius:10px;padding:14px 15px">
+        <div class="ec-sec" style="color:#00e5a0">◆ City Treasury</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">Transit Pool</span><span id="ecTres0" style="color:#e8c45c;font-weight:700">0 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar0" class="ec-vault-bar" style="width:0%;background:#e8c45c"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">District Reserves</span><span id="ecTres1" style="color:#00e5a0;font-weight:700">10,000 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar1" class="ec-vault-bar" style="width:80%;background:#00e5a0"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#5a7a6a">Buyback Reserve</span><span id="ecTres2" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+            <div class="ec-vault-bar-bg"><div id="ecTresBar2" class="ec-vault-bar" style="width:0%;background:#a78bfa"></div></div>
+          </div>
+          <div style="font-size:8px;color:#2a4a3a;margin-top:4px;padding-top:6px;border-top:1px solid rgba(0,229,160,0.1)">60% Founders · 30% Districts · 10% Buyback</div>
+        </div>
+      </div>
+
+      <!-- INFLATION MONITOR -->
+      <div class="ec-card" style="padding:14px 15px">
+        <div class="ec-sec" style="color:#ffd700">📊 Inflation Monitor</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:9px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Supply velocity</span>
+            <span><span class="ec-inf-dot" id="ecInf0" style="background:#00e5a0"></span><span id="ecInfV0" style="color:#00e5a0">Normal</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Median price drift</span>
+            <span><span class="ec-inf-dot" id="ecInf1" style="background:#00e5a0"></span><span id="ecInfV1" style="color:#00e5a0">Stable</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#8a9ab0">Trade volume</span>
+            <span><span class="ec-inf-dot" id="ecInf2" style="background:#e8c45c"></span><span id="ecInfV2" style="color:#e8c45c">Low</span></span>
+          </div>
+          <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);font-size:8px;color:#3a4a5a">Alerts fire at 15% drift in 7 days</div>
+        </div>
+        <!-- REFERRAL STRIP -->
+        <div style="margin-top:10px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:9px 11px">
+          <div style="font-size:8px;letter-spacing:1px;color:#5a3a9a;margin-bottom:6px">REFERRAL PROGRAM</div>
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#8a9ab0">Code: <span id="ecRefCode" style="color:#a78bfa;font-weight:700">—</span></span>
+            <span style="color:#8a9ab0">Refs: <span id="ecRefCount" style="color:#a78bfa;font-weight:700">0</span></span>
+          </div>
+          <div style="font-size:9px;color:#5a3a9a;margin-top:3px">Earned: <span id="ecRefEarned" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+        </div>
+      </div>
+    </div><!-- /3-col -->
+
+    <!-- TRANSACTION HISTORY -->
+    <div class="ec-pad" style="padding-top:12px">
+      <div class="ec-sec" style="color:#8a9ab0">📋 Recent Transactions</div>
+      <div id="ecHistList" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;max-height:160px;overflow-y:auto">
+        <div class="ec-hist-row"><span style="color:#3a4a5a">System boot</span><span style="color:#3a4a5a">—</span><span style="color:#3a4a5a;min-width:60px;text-align:right">Now</span></div>
+      </div>
+    </div>
+
+    <!-- CASH OUT PLACEHOLDER -->
+    <div style="margin:0 20px 18px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px">🏦</span>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#3a4a5a;margin-bottom:2px">Cash Out — Coming Phase G</div>
+        <div style="font-size:9px;color:#2a3a4a">Sparks → USDC via on-chain bridge · marketplace withdrawal · NFT deed transfer</div>
+      </div>
+      <span style="margin-left:auto;font-size:9px;color:#2a3a4a;white-space:nowrap">Phase G</span>
+    </div>
+
+    </div><!-- /officeTreasury -->
+
+    <!-- 🌆 CITY TAB — full economy hub -->
+    <div id="officeCity" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto">
+    <style>
+      #officeCity { font-family:'Share Tech Mono',monospace; }
+      .ct-pad { padding:18px 20px; }
+      .ct-sec { font-size:8px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px; }
+      .ct-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px; }
+      .ct-card-em { background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.18);border-radius:10px; }
+      .ct-card-gold { background:rgba(232,196,92,0.05);border:1px solid rgba(232,196,92,0.18);border-radius:10px; }
+      .ct-card-pur { background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.18);border-radius:10px; }
+      /* TOPBAR */
+      #ctTopbar { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap; }
+      #ctTopbar .ct-title { font-size:18px;font-weight:800;letter-spacing:0.04em;flex:1;min-width:160px; }
+      .ct-stat-pill { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:5px 12px;font-size:11px;display:flex;align-items:center;gap:7px;white-space:nowrap; }
+      .ct-stat-pill .csp-val { font-size:14px;font-weight:700; }
+      .ct-enter-btn { background:linear-gradient(135deg,#00e5a0,#00b57a);color:#03110a;font-weight:800;border:none;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:12px;letter-spacing:1px;font-family:inherit;white-space:nowrap; }
+      .ct-enter-btn:hover { filter:brightness(1.1); }
+      /* SIGNAL + YIELD row */
+      #ctSigYieldRow { display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px 0; }
+      @media(max-width:600px){#ctSigYieldRow{grid-template-columns:1fr}}
+      .ct-sig-bar-wrap { height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;flex:1; }
+      .ct-sig-bar { height:100%;border-radius:4px;transition:width .4s,background .4s; }
+      .ct-yield-num { font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1; }
+      /* FOUNDERS ROW GRID */
+      #ctFoundersGrid { display:grid;grid-template-columns:repeat(10,1fr);gap:5px; }
+      .ct-slot { aspect-ratio:1;border-radius:5px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;color:rgba(255,255,255,0.25);cursor:pointer;transition:all .2s;position:relative; }
+      .ct-slot:hover { border-color:rgba(0,229,160,0.4);background:rgba(0,229,160,0.06); }
+      .ct-slot.mine { border-color:#00e5a0;background:rgba(0,229,160,0.12);color:#00e5a0;box-shadow:0 0 10px rgba(0,229,160,0.25); }
+      .ct-slot.mine::after { content:'◆';position:absolute;bottom:2px;font-size:6px;color:#00e5a0; }
+      .ct-slot.owned { border-color:rgba(232,196,92,0.35);background:rgba(232,196,92,0.05);color:rgba(232,196,92,0.6); }
+      /* DISTRICTS */
+      #ctDistrictsGrid { display:grid;grid-template-columns:repeat(4,1fr);gap:10px; }
+      @media(max-width:700px){#ctDistrictsGrid{grid-template-columns:repeat(2,1fr)}}
+      .ct-dist { border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden; }
+      .ct-dist:hover { filter:brightness(1.12);transform:translateY(-1px); }
+      .ct-dist-icon { font-size:20px;margin-bottom:5px; }
+      .ct-dist-name { font-size:10px;font-weight:700;letter-spacing:0.5px; }
+      .ct-dist-yield { font-size:9px;opacity:.7;margin-top:2px; }
+      .ct-dist-drain { font-size:8px;opacity:.55;margin-top:3px; }
+      .ct-dist-badge { position:absolute;top:6px;right:7px;font-size:7px;background:rgba(0,229,160,0.2);color:#00e5a0;border:1px solid rgba(0,229,160,0.4);border-radius:4px;padding:1px 5px;letter-spacing:.5px; }
+      /* BOTTOM 3-COL */
+      #ctBottomRow { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 20px 18px; }
+      @media(max-width:700px){#ctBottomRow{grid-template-columns:1fr}}
+      .ct-boost-slider { -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.12);outline:none; }
+      .ct-boost-slider::-webkit-slider-thumb { -webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#e8c45c;cursor:pointer;box-shadow:0 0 6px rgba(232,196,92,.6); }
+      .ct-transit-row { display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05); }
+      .ct-transit-row:last-child { border-bottom:none; }
+      .ct-transit-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+      .ct-res-bar-bg { height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex:1; }
+      .ct-res-bar { height:100%;border-radius:3px;transition:width .6s; }
+      @keyframes ctPulse { 0%,100%{opacity:1}50%{opacity:.5} }
+      .ct-live { animation:ctPulse 2s ease-in-out infinite; }
+    </style>
+
+    <!-- TOPBAR -->
+    <div id="ctTopbar">
+      <div class="ct-title">▦ SHADDAI City</div>
+      <div class="ct-stat-pill"><span style="color:#00e5a0">📡</span><span class="csp-val" id="ctSigVal" style="color:#00e5a0">100</span><span style="color:#3a5a4a;font-size:9px">SIGNAL</span></div>
+      <div class="ct-stat-pill"><span style="color:#e8c45c">◆</span><span class="csp-val" id="ctSparksVal" style="color:#e8c45c">0</span><span style="color:#5a5030;font-size:9px">SPARKS</span></div>
+      <div class="ct-stat-pill ct-live"><span style="color:#a78bfa">⬆</span><span id="ctYieldRate" style="color:#a78bfa;font-size:12px;font-weight:700">+0.00</span><span style="color:#3a2a6a;font-size:9px">/SEC</span></div>
+      <button class="ct-enter-btn" onclick="location.href='game.html'">▦ ENTER WORLD</button>
+    </div>
+
+    <!-- SIGNAL + YIELD -->
+    <div id="ctSigYieldRow">
+      <div class="ct-card-em ct-pad" style="padding:14px 16px">
+        <div class="ct-sec" style="color:#00e5a0">📡 Signal Strength</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="ct-sig-bar-wrap"><div id="citySignalFill" class="ct-sig-bar" style="width:100%;background:#00e5a0"></div></div>
+          <span id="citySignalTxt" style="color:#00e5a0;font-size:13px;font-weight:700;min-width:54px">100 / 100</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:9px;color:#3a5a4a;flex-wrap:wrap">
+          <span>🏢 Office: +5/s</span><span>🚉 Transit: +2/s</span><span>🌍 Travel drains</span>
+        </div>
+        <div style="margin-top:10px;font-size:9px;color:#2a4a3a;padding-top:8px;border-top:1px solid rgba(0,229,160,0.1)">Signal Drop → 50 Sparks rescue fee · respawn at office</div>
+      </div>
+      <div class="ct-card-gold ct-pad" style="padding:14px 16px">
+        <div class="ct-sec" style="color:#e8c45c">◆ Plot Yield — Live</div>
+        <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:6px">
+          <div class="ct-yield-num" id="ctYieldNum" style="color:#e8c45c">0.00</div>
+          <span style="color:#5a5030;font-size:11px;margin-bottom:4px">SPARKS</span>
+        </div>
+        <div id="cityPlotStatus" style="font-size:10px;color:#5a5030;margin-bottom:10px">No plot owned yet</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="location.href='game.html#plot'" style="background:rgba(232,196,92,0.15);border:1px solid rgba(232,196,92,0.35);color:#e8c45c;padding:6px 13px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Claim in World →</button>
+          <button onclick="switchOfficeTab('city');document.getElementById('ctBoostInput').focus()" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:#a78bfa;padding:6px 13px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">⬆ Boost Rate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOUNDERS ROW -->
+    <div class="ct-pad" style="padding-top:14px">
+      <div class="ct-sec" style="color:#e8c45c">◆ Founders Row — 30 Office Lots</div>
+      <div id="ctFoundersGrid"></div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:9px;color:#3a4a5a">
+        <span><span style="color:#00e5a0">◆</span> Your slot</span>
+        <span><span style="color:rgba(232,196,92,0.6)">◆</span> Owned</span>
+        <span><span style="color:rgba(255,255,255,0.15)">□</span> Available</span>
+      </div>
+    </div>
+
+    <!-- DISTRICTS -->
+    <div class="ct-pad" style="padding-top:10px">
+      <div class="ct-sec" style="color:#a78bfa">🌍 Districts — Walk Anywhere</div>
+      <div id="ctDistrictsGrid">
+        <div class="ct-dist" style="background:rgba(255,123,61,0.08);border:1px solid rgba(255,123,61,0.2)" onclick="location.href='game.html?region=forest'">
+          <div class="ct-dist-icon">🌲</div>
+          <div class="ct-dist-name" style="color:#ff7b3d">Forest</div>
+          <div class="ct-dist-yield" style="color:#ff7b3d">TURTLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Low ▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18)" onclick="location.href='game.html?region=city'">
+          <div class="ct-dist-icon">🏙️</div>
+          <div class="ct-dist-name" style="color:#00ff88">Nexus Heights</div>
+          <div class="ct-dist-yield" style="color:#00ff88">NEXUS Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18)" onclick="location.href='game.html?region=beach'">
+          <div class="ct-dist-icon">🏖️</div>
+          <div class="ct-dist-name" style="color:#b06aff">Beach</div>
+          <div class="ct-dist-yield" style="color:#b06aff">ORACLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(255,64,112,0.06);border:1px solid rgba(255,64,112,0.18)" onclick="location.href='game.html?region=desert'">
+          <div class="ct-dist-icon">🏜️</div>
+          <div class="ct-dist-name" style="color:#ff4070">Desert</div>
+          <div class="ct-dist-yield" style="color:#ff4070">PIKADON Credits</div>
+          <div class="ct-dist-drain">Signal drain: HIGH ▲▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.18)" onclick="location.href='game.html?region=meadow'">
+          <div class="ct-dist-icon">🌿</div>
+          <div class="ct-dist-name" style="color:#9b59b6">Meadow</div>
+          <div class="ct-dist-yield" style="color:#9b59b6">QUILL Credits</div>
+          <div class="ct-dist-drain">Signal drain: Low ▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(138,154,176,0.06);border:1px solid rgba(138,154,176,0.18)" onclick="location.href='game.html?region=suburb'">
+          <div class="ct-dist-icon">🏘️</div>
+          <div class="ct-dist-name" style="color:#8a9ab0">Suburb</div>
+          <div class="ct-dist-yield" style="color:#8a9ab0">Sparks</div>
+          <div class="ct-dist-drain">Signal drain: None ✓</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18)" onclick="location.href='game.html?region=beach'">
+          <div class="ct-dist-icon">☁️</div>
+          <div class="ct-dist-name" style="color:#b06aff">Oracle Sky</div>
+          <div class="ct-dist-yield" style="color:#b06aff">ORACLE Credits</div>
+          <div class="ct-dist-drain">Signal drain: Medium ▲▲</div>
+        </div>
+        <div class="ct-dist" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.18)" onclick="location.href='game.html?region=volcano'">
+          <div class="ct-dist-icon">⚡</div>
+          <div class="ct-dist-name" style="color:#00f0ff">Zerox District</div>
+          <div class="ct-dist-yield" style="color:#00f0ff">ZEROX Credits</div>
+          <div class="ct-dist-drain">Signal drain: HIGH ▲▲▲</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOST + TRANSIT + TREASURY -->
+    <div id="ctBottomRow">
+
+      <!-- BOOST VAULT -->
+      <div class="ct-card-pur" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#a78bfa">⬆ Boost Vault</div>
+        <div style="font-size:9px;color:#4a3a7a;margin-bottom:10px">Lock Sparks to multiply your stream rate up to 4×</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <input id="ctBoostInput" type="range" min="0" max="1000" value="0" class="ct-boost-slider" oninput="ctUpdateBoostPreview(this.value)">
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:10px">
+          <span style="color:#6a5aaa">Lock: <span id="ctBoostAmt" style="color:#a78bfa;font-weight:700">0</span> ◆</span>
+          <span style="color:#6a5aaa">Rate: <span id="ctBoostMult" style="color:#e8c45c;font-weight:700">1.00×</span></span>
+        </div>
+        <button onclick="ctDoBoost()" style="width:100%;background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(124,58,237,0.2));border:1px solid rgba(124,58,237,0.5);color:#a78bfa;padding:7px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">LOCK & BOOST</button>
+        <div id="ctBoostActive" style="margin-top:8px;font-size:9px;color:#4a3a7a">No active boost</div>
+      </div>
+
+      <!-- TRANSIT STATUS -->
+      <div class="ct-card" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#e8c45c">🚉 Transit Unlocks</div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" style="background:#00e5a0"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#e2e8f0">Walk</div>
+            <div style="font-size:8px;color:#3a4a5a">Always available · free</div>
+          </div>
+          <span style="font-size:9px;color:#00e5a0;font-weight:700">ACTIVE</span>
+        </div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" id="ctTrainDot" style="background:rgba(255,215,0,0.3)"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#ffd700">Ring Train</div>
+            <div style="font-size:8px;color:#3a4a5a">10 Sparks/stop · visit 3 districts</div>
+          </div>
+          <span id="ctTrainStatus" style="font-size:9px;color:#4a4020;font-weight:700">LOCKED</span>
+        </div>
+        <div class="ct-transit-row">
+          <div class="ct-transit-dot" id="ctSubwayDot" style="background:rgba(0,229,160,0.2)"></div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#00e5a0">Subway</div>
+            <div style="font-size:8px;color:#3a4a5a">25 Sparks · own any room</div>
+          </div>
+          <span id="ctSubwayStatus" style="font-size:9px;color:#1a3a2a;font-weight:700">LOCKED</span>
+        </div>
+        <div style="margin-top:10px;padding:7px 9px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:9px;color:#3a4a5a">
+          Districts visited: <span id="ctDistVisited" style="color:#e8c45c;font-weight:700">0</span> / 3 to unlock Ring Train
+        </div>
+      </div>
+
+      <!-- TREASURY RESERVES -->
+      <div class="ct-card-em" style="padding:14px 15px">
+        <div class="ct-sec" style="color:#00e5a0">◆ City Treasury</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">Transit Fee Pool</span><span id="ctRes0" style="color:#e8c45c;font-weight:700">0 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar0" class="ct-res-bar" style="width:0%;background:#e8c45c"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">District Reserves</span><span id="ctRes1" style="color:#00e5a0;font-weight:700">10,000 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar1" class="ct-res-bar" style="width:80%;background:#00e5a0"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:#8a9ab0">Buyback Reserve</span><span id="ctRes2" style="color:#a78bfa;font-weight:700">0 ◆</span></div>
+            <div class="ct-res-bar-bg"><div id="ctResBar2" class="ct-res-bar" style="width:0%;background:#a78bfa"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px solid rgba(0,229,160,0.1);padding-top:8px;font-size:9px;color:#2a4a3a">
+          60% Founders Row · 30% Districts · 10% Buyback
+        </div>
+      </div>
+
+    </div><!-- /ctBottomRow -->
+
+    <!-- QUICK LINKS -->
+    <div style="display:flex;gap:8px;padding:0 20px 18px;flex-wrap:wrap">
+      <button onclick="location.href='game.html?embed=office&walk=1'" style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:#00e5a0;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Walk Office</button>
+      <button onclick="window.open('pixel-forge.html','_blank')" style="background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);color:#f0b429;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">⬡ Pixel Forge</button>
+      <button onclick="enter3DWorld&&enter3DWorld()" style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">◈ 3D World (Pro)</button>
+      <button onclick="switchOfficeTab('treasury')" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#8a9ab0;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">◆ Economy →</button>
+    </div>
+
+    </div><!-- /officeCity -->
+
+    <!-- 🚪 ROOMS TAB -->
+    <div id="officeRooms" class="office-room" style="display:none;flex-direction:column;align-items:stretch;padding:0;overflow-y:auto;font-family:'Share Tech Mono',monospace">
+
+      <!-- PORTFOLIO HEADER -->
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;margin-bottom:2px">🚪 Your Rooms</div>
+          <div style="font-size:10px;color:#3a4a5a">Rooms owned · tenants · passive rent</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#00e5a0" id="rmTotalRooms">0</div>
+            <div style="font-size:8px;color:#2a4a3a;letter-spacing:1px">ROOMS</div>
+          </div>
+          <div style="background:rgba(232,196,92,0.06);border:1px solid rgba(232,196,92,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#e8c45c" id="rmWeeklyRent">0</div>
+            <div style="font-size:8px;color:#4a4020;letter-spacing:1px">◆/WEEK</div>
+          </div>
+          <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px 12px;text-align:center">
+            <div style="font-size:16px;font-weight:700;color:#a78bfa" id="rmPending">0</div>
+            <div style="font-size:8px;color:#3a1a6a;letter-spacing:1px">PENDING ◆</div>
+          </div>
+          <button onclick="rmClaimAll()" style="background:linear-gradient(135deg,#00e5a0,#00b57a);color:#03110a;font-weight:800;border:none;padding:8px 16px;border-radius:7px;cursor:pointer;font-size:10px;font-family:inherit;letter-spacing:1px">CLAIM ALL ◆</button>
+        </div>
+        <button onclick="location.href='game.html'" style="background:rgba(232,196,92,0.12);border:1px solid rgba(232,196,92,0.3);color:#e8c45c;padding:8px 16px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Walk World →</button>
+      </div>
+
+      <!-- ROOM CARDS GRID -->
+      <div id="roomsTabContent" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px 20px">
+        <!-- populated by rmRenderRooms() -->
+        <div style="grid-column:1/-1;padding:32px;border:1px dashed rgba(255,255,255,0.08);border-radius:10px;text-align:center">
+          <div style="font-size:36px;margin-bottom:10px;opacity:.4">🚪</div>
+          <div style="font-size:13px;font-weight:700;color:#3a4a5a;margin-bottom:6px">No rooms yet</div>
+          <div style="font-size:10px;color:#2a3a4a;margin-bottom:14px;line-height:1.7">Enter the 2D world · walk into a building · buy a room slot<br>Tenants move in · weekly rent accrues in Sparks</div>
+          <button onclick="location.href='game.html'" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:8px 18px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Enter World</button>
+        </div>
+      </div>
+
+      <!-- DISTRICT PICKER (buy a room) -->
+      <div style="padding:0 20px 16px">
+        <div style="font-size:8px;letter-spacing:2px;color:#3a4a5a;text-transform:uppercase;font-weight:700;margin-bottom:10px">Buy a Room — Pick a District</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button onclick="location.href='game.html?region=forest'" style="background:rgba(255,123,61,0.07);border:1px solid rgba(255,123,61,0.2);color:#ff7b3d;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🌲 Forest<br><span style="font-size:8px;opacity:.6">TURTLE Credits</span></button>
+          <button onclick="location.href='game.html?region=city'" style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18);color:#00ff88;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🏙️ Nexus<br><span style="font-size:8px;opacity:.6">NEXUS Credits</span></button>
+          <button onclick="location.href='game.html?region=beach'" style="background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.18);color:#b06aff;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🏖️ Beach<br><span style="font-size:8px;opacity:.6">ORACLE Credits</span></button>
+          <button onclick="location.href='game.html?region=meadow'" style="background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.18);color:#9b59b6;padding:8px 6px;border-radius:7px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit">🌿 Meadow<br><span style="font-size:8px;opacity:.6">QUILL Credits</span></button>
+        </div>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div style="margin:0 20px 18px;background:rgba(232,196,92,0.04);border:1px solid rgba(232,196,92,0.12);border-radius:8px;padding:12px 16px">
+        <div style="font-size:9px;letter-spacing:1px;color:#5a5030;margin-bottom:7px">HOW ROOMS WORK</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:9px;color:#5a5030;text-align:center">
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">🏗️</div>Buy a room slot<br>500–2000 ◆</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">👥</div>Tenant moves in<br>within 24h</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">⏰</div>Weekly rent<br>accrues in ◆</div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 6px"><div style="font-size:16px;margin-bottom:4px">◆</div>Claim here<br>or in world</div>
+        </div>
+      </div>
+
+    </div><!-- /officeRooms -->
+
   </div>
 
   <!-- Chat -->
@@ -6460,7 +7385,7 @@ window.enter3DWorld=function(){
             <div class="of-tiers" id="ofTiers">
               <button data-tier="light"  data-brain="ollama-local">⚡ LIGHT<small>cheap · chat &amp; basics</small></button>
               <button data-tier="balanced" data-brain="groq-70b">⚙ BALANCED<small>mid · multi-step</small></button>
-              <button data-tier="heavy"  data-brain="claude-premium">🔥 HEAVY<small>premium · deep work</small></button>
+              <button data-tier="heavy"  data-brain="claude-premium" data-pro="Premium brains">🔥 HEAVY<small>premium · deep work</small></button>
             </div>
           </div>
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
@@ -6469,7 +7394,7 @@ window.enter3DWorld=function(){
                tool loop inside the forge (that was the glitch). Tools run when you chat with the agent.
                "Make in 2D Pixel" = the mirror of the Pixel Forge's "3D Body": one agent, manifested across
                realities (SHADDAI · 2D · 3D). It opens the Pixel Forge pre-filled with this agent's name. -->
-          <div class="of-actions"><button id="ofForge">⬡ FORGE &amp; AWAKEN</button><button id="ofPixel" onclick="(function(){var n=(document.getElementById('ofName')||{}).value||'';if(window.openPixelForge){openPixelForge();var pn=document.getElementById('pxfName');if(pn&&n)pn.value=n;}})()" title="Manifest this agent in the 2D pixel world — pick its pixel body & color">◧ Make in 2D Pixel</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
+          <div class="of-actions"><button id="ofForge">⬡ FORGE AGENT</button><button id="ofPixel" onclick="(function(){var n=(document.getElementById('ofName')||{}).value||'';if(window.openPixelForge){openPixelForge();var pn=document.getElementById('pxfName');if(pn&&n)pn.value=n;}})()" title="Manifest this agent in the 2D pixel world — pick its pixel body & color">◧ Make in 2D Pixel</button><button id="of3D" title="Spin the animated 3D base form">▣ 3D VIEW</button></div>
           <div class="of-console" id="ofConsole">// forge an operator, equip skills, pick a brain, then TEST RUN.</div>
         </div>
       </div>
@@ -7383,8 +8308,11 @@ window.enter3DWorld=function(){
 
   <div id="chatView" class="view">
     <div class="chat-main">
-      <div class="chat-header">
-        <span class="card-title">Direct Communication</span>
+      <div class="chat-header" style="background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(0,0,0,0)) !important;border-bottom:1px solid rgba(0,229,160,0.15) !important;padding:12px 16px !important">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span class="card-title" style="font-size:12px !important;letter-spacing:2px">💬 DIRECT CHAT</span>
+          <span style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:1px" id="chatModelBadge">Groq · Llama-70B · Free tier</span>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">
           <select id="chatAgentSelect" onchange="pickAgent(this.value)" title="Choose which agent you're talking to" style="padding:6px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:'Share Tech Mono',monospace">
             <option value="SHADDAI">👑 SHADDAI</option><option value="NEXUS">🔧 NEXUS</option><option value="ZEROX">💰 ZEROX</option><option value="ORACLE">🔮 ORACLE</option><option value="TURTLE">🐢 TURTLE</option><option value="QUILL">✍️ QUILL</option><option value="PIKADON">🛡️ PIKADON</option><option value="ALL">◉ ALL AIs</option>
@@ -7493,6 +8421,17 @@ window.enter3DWorld=function(){
 
   <!-- Library & Notes -->
   <div id="library-notesView" class="view">
+    <div class="view-banner" style="border-color:rgba(176,106,255,0.22)">
+      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(176,106,255,0.15),rgba(100,60,200,0.08))">📚</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#b06aff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Knowledge Base</div>
+        <div class="view-banner-sub">Library · notes · RAG search · ORACLE-powered semantic answers</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="libBannerDocs">—</span><small>documents</small></div>
+        <div class="view-banner-stat"><span id="libBannerNotes">—</span><small>notes</small></div>
+      </div>
+    </div>
     <!-- Library Section -->
     <details style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden">
       <summary style="padding:14px;background:rgba(0,229,160,0.06);cursor:pointer;font-weight:700;color:var(--accent);display:flex;justify-content:space-between;align-items:center">
@@ -7609,7 +8548,6 @@ window.enter3DWorld=function(){
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('pitch')">Pitch</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('spec')">Tech Spec</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('marketing')">Marketing</button>
-        <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('monetize')">Monetize</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('mvp')">MVP</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="runProjectWorkflow('research-to-build')">Research→Build</button>
         <button class="btn btn-ghost" style="font-size:8px;padding:3px 10px" onclick="projectQuickAction('risks')">Risk Analysis</button>
@@ -7675,7 +8613,6 @@ window.enter3DWorld=function(){
         <button class="proj-section-tab" id="pst-mvp" onclick="switchProjSection('mvp')">🚀 MVP</button>
         <button class="proj-section-tab" id="pst-marketing" onclick="switchProjSection('marketing')">📣 Marketing</button>
         <button class="proj-section-tab" id="pst-pitch" onclick="switchProjSection('pitch')">💼 Pitch</button>
-        <button class="proj-section-tab" id="pst-monetize" onclick="switchProjSection('monetize')">💰 Monetize</button>
         <button class="proj-section-tab" id="pst-log" onclick="switchProjSection('log')">📋 Build Log</button>
       </div>
       <div id="pbContent" style="padding:16px;min-height:280px;max-height:520px;overflow-y:auto;font-size:11px;line-height:1.7"></div>
@@ -7691,6 +8628,18 @@ window.enter3DWorld=function(){
 
   <!-- APIs -->
   <div id="apisView" class="view">
+    <div class="view-banner" style="border-color:rgba(0,229,160,0.2)">
+      <div class="view-banner-icon">🔌</div>
+      <div>
+        <div class="view-banner-title">API Command Center</div>
+        <div class="view-banner-sub">Connect keys once — powers every tool · HF · FAL · Groq · Stripe · 200+ more</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><b id="apiBannerCount">—</b> <span style="color:var(--text-muted)">Keys Active</span></div>
+        <div class="view-banner-stat"><b id="apiBannerCalls">—</b> <span style="color:var(--text-muted)">Total Calls</span></div>
+        <button onclick="showAddAPIModal()" style="background:linear-gradient(135deg,rgba(0,229,160,0.2),rgba(0,229,160,0.08));border:1px solid rgba(0,229,160,0.4);color:#00e5a0;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">+ Add Key</button>
+      </div>
+    </div>
 
     <!-- ── CONNECT YOUR APIs — paste once, powers every tool ── -->
     <div class="card cyber-card" style="border:1px solid rgba(0,229,160,.35);margin-bottom:12px">
@@ -8244,6 +9193,18 @@ window.enter3DWorld=function(){
 
   <!-- Security (PIKADON) -->
   <div id="securityView" class="view">
+    <div class="view-banner" style="border-color:rgba(239,68,68,0.2)">
+      <div class="view-banner-icon">🛡</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#ef4444,#ff7b7b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">PIKADON — Security Command</div>
+        <div class="view-banner-sub">Threat detection · PII audit · permission gates · secret rotation</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><span style="color:#ef4444">🔴</span> <b id="secScoreBig">A+</b> <span style="color:var(--text-muted)">Score</span></div>
+        <div class="view-banner-stat"><b id="secBlockedBig">0</b> <span style="color:var(--text-muted)">Blocked</span></div>
+        <button onclick="renderPhantomSecurityUI()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">↺ Refresh Audit</button>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
       <div class="card">
         <div class="card-head"><span class="card-title" style="color:#ef4444">PIKADON — Security Command</span><span style="font-size:9px;color:var(--text-muted)">PORT 8008</span></div>
@@ -10480,8 +11441,17 @@ window.enter3DWorld=function(){
   <!-- Audit -->
   <!-- Automation Hub -->
   <div id="automationView" class="view">
+    <div class="view-banner" style="border-color:rgba(168,85,247,0.2)">
+      <div class="view-banner-icon">⚙</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#a855f7,#d8b4fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Automation Hub</div>
+        <div class="view-banner-sub">Delegate · schedule · chain workflows · cron jobs · webhooks</div>
+      </div>
+      <div class="view-banner-actions">
+        <button onclick="showView('workflow')" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#a855f7;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:1px">⚡ Workflows →</button>
+      </div>
+    </div>
     <!-- Agent Delegation Bar -->
-    
 
     <div class="card" style="margin-bottom:14px;padding:12px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -10889,6 +11859,17 @@ window.enter3DWorld=function(){
 
   <!-- Settings -->
   <div id="settingsView" class="view">
+    <div class="view-banner" style="border-color:rgba(0,229,160,0.2)">
+      <div class="view-banner-icon">⚙</div>
+      <div class="view-banner-body">
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#00e5a0,#00c4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Control Center</div>
+        <div class="view-banner-sub">Profile · API keys · billing plan · agent endpoints · security preferences</div>
+      </div>
+      <div class="view-banner-stats">
+        <div class="view-banner-stat"><span id="settBannerPlan">Free</span><small>plan</small></div>
+        <div class="view-banner-stat"><span id="settBannerKeys">—</span><small>keys wired</small></div>
+      </div>
+    </div>
 
     <!-- ══ PROFILE / ACCOUNT — who you are (saved to Firestore for free) ══ -->
     <div class="card" id="profileCard" style="border:1px solid var(--accent);background:rgba(0,229,160,0.03)">
@@ -11161,23 +12142,20 @@ window.enter3DWorld=function(){
               <button data-theme-btn="solar"    onclick="applyTheme('solar')"    style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#ffe8b0;font-size:8.5px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px">
                 <div style="display:flex;gap:3px"><div style="width:10px;height:10px;border-radius:50%;background:#0f0800;border:1.5px solid #f59e0b"></div><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div></div>
                 <span>🌅 Solar</span></button>
-              <button data-theme-btn="light"    onclick="applyTheme('light')"    style="padding:10px 6px;background:rgba(240,245,250,0.12);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px">
-                <div style="display:flex;gap:3px"><div style="width:10px;height:10px;border-radius:50%;background:#f0f5fa;border:1.5px solid #0070cc"></div><div style="width:10px;height:10px;border-radius:50%;background:#0070cc"></div></div>
-                <span>☀️ Light</span></button>
             </div>
             <script>
               // Simplified: ONE theme system — the 6 dashboard skins via setThemeSkin
               // (same as the floating picker + Command Hub). Rebuilds this grid so there's
               // no competing old data-theme picker.
               (function(){
-                var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['brutalist','Brutalist','#f5c000'],['serif','Serif','#3a6b4a'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
+                var SKINS=[['glitch','Neon Glitch','#00ff88'],['terminal','Terminal','#00ff41'],['void','Void','#e8e8e8'],['amber','Amber','#ffb000']];
                 var grid=document.getElementById('themeGrid'); if(!grid) return;
-                grid.style.gridTemplateColumns='repeat(3,1fr)';
+                grid.style.gridTemplateColumns='repeat(4,1fr)';
                 grid.style.display='none'; // collapsed by default — tap the Theme header to expand
-                function cur(){ try{ return (window.getThemeSkin&&getThemeSkin())||localStorage.getItem('shd_theme_skin')||'glitch'; }catch(e){ return 'glitch'; } }
+                function cur(){ try{ return localStorage.getItem('shaddai_skin')||'glitch'; }catch(e){ return 'glitch'; } }
                 function paint(){ var c=cur(); grid.querySelectorAll('button').forEach(function(b){ b.style.borderColor=(b.getAttribute('data-skin')===c)?b.getAttribute('data-dot'):'rgba(255,255,255,0.08)'; }); var el=document.getElementById('activeThemeLabel'); if(el){ var s=SKINS.filter(function(x){return x[0]===c;})[0]; el.textContent='— '+(s?s[1]:c); } }
                 grid.innerHTML=SKINS.map(function(s){ return '<button data-skin="'+s[0]+'" data-dot="'+s[2]+'" style="padding:10px 6px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.08);border-radius:7px;color:#e8edf5;font-size:8.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:'+s[2]+';box-shadow:0 0 8px '+s[2]+'"></span>'+s[1]+'</button>'; }).join('');
-                grid.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ if(window.setThemeSkin) setThemeSkin(b.getAttribute('data-skin')); paint(); }; });
+                grid.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ if(window.setShaddaiSkin) setShaddaiSkin(b.getAttribute('data-skin')); paint(); }; });
                 paint();
                 document.addEventListener('click',function(e){ if(e.target&&e.target.closest&&e.target.closest('#shdSkinDock,#shdtTheme')) setTimeout(paint,60); });
               })();
@@ -14428,7 +15406,7 @@ function _seedDemoData() {
 function init() {
   load();
   _seedDemoData();
-  if (!S.settings.ui.theme || S.settings.ui.theme === 'dark') S.settings.ui.theme = 'glitch';
+  if (!S.settings.ui.theme || S.settings.ui.theme === 'dark' || S.settings.ui.theme === 'light' || S.settings.ui.theme === 'soft') S.settings.ui.theme = 'glitch';
   if (S.settings.ui.accentColor === '#00e5a0' || S.settings.ui.accentColor === '#00c8ff') S.settings.ui.accentColor = '#00ff88';
   applyTheme(S.settings.ui.theme);
   applyFontSize(S.settings.ui.fontSize);
@@ -15709,7 +16687,6 @@ const _THEMES = {
   crimson:   { label:'🔴 Crimson',   bg:'#120308', bgPrimary:'#200a0e', bgCard:'#2a0e14', accent:'#ff4a6a', text:'#ffd5de', textMuted:'#a85070', swatch:['#120308','#ff4a6a'] },
   forest:    { label:'🌿 Forest',    bg:'#030e08', bgPrimary:'#071a0d', bgCard:'#0a2214', accent:'#22c55e', text:'#c8f0d8', textMuted:'#4a8a60', swatch:['#030e08','#22c55e'] },
   solar:     { label:'🌅 Solar',     bg:'#0f0800', bgPrimary:'#1e1000', bgCard:'#2a1800', accent:'#f59e0b', text:'#ffe8b0', textMuted:'#9a7030', swatch:['#0f0800','#f59e0b'] },
-  light:     { label:'☀️ Light',    bg:'#f0f5fa', bgPrimary:'#ffffff', bgCard:'#f8fbff', accent:'#0070cc', text:'#1a1f35', textMuted:'#6a7a9a', swatch:['#f0f5fa','#0070cc'] },
 };
 
 function applyTheme(themeKey) {
@@ -18907,6 +19884,10 @@ function renderDeals() {
 
 function renderLibrary() {
   const el = document.getElementById('libGrid');
+  try {
+    var bd = document.getElementById('libBannerDocs'); if(bd) bd.textContent = S.files.length || '0';
+    var bn = document.getElementById('libBannerNotes'); if(bn) bn.textContent = S.notes ? S.notes.length : '0';
+  } catch(e) {}
   if (S.files.length === 0) {
     el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:50px;grid-column:1/-1">Drag and drop files here or click Upload Files</p>';
     return;
@@ -19069,6 +20050,13 @@ function renderSettingsPanel() {
   try { renderUserProfile(); } catch(e) {}
   // Re-apply the settings sub-tab grouping (idempotent)
   try { if (window.shdSettingsOrganize) shdSettingsOrganize(); } catch(e) {}
+  // banner stats
+  try {
+    var plan = localStorage.getItem('shd_plan') || (S.billing && S.billing.plan) || 'Free';
+    var bp = document.getElementById('settBannerPlan'); if(bp) bp.textContent = plan.charAt(0).toUpperCase()+plan.slice(1);
+    var keys = S.apiKeys ? Object.keys(S.apiKeys).filter(function(k){ return S.apiKeys[k]; }).length : 0;
+    var bk = document.getElementById('settBannerKeys'); if(bk) bk.textContent = keys || '—';
+  } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -19353,10 +20341,15 @@ function renderAPIs() {
   const totalCalls = (S.apis || []).reduce((sum, a) => sum + (a.totalCalls || 0), 0);
   const totalCost = (S.apis || []).reduce((sum, a) => sum + (a.totalCost || 0), 0);
   const myApiCount = (S.apis || []).length;
-  
+
   document.getElementById('myApiCount').textContent = myApiCount;
   document.getElementById('totalApiCalls').textContent = totalCalls;
   document.getElementById('totalApiCost').textContent = '$' + totalCost.toFixed(2);
+  // banner stats
+  try {
+    var bc = document.getElementById('apiBannerCount'); if(bc) bc.textContent = myApiCount || '—';
+    var bcc = document.getElementById('apiBannerCalls'); if(bcc) bcc.textContent = totalCalls > 999 ? (totalCalls/1000).toFixed(1)+'k' : (totalCalls || '—');
+  } catch(e) {}
   
   const filtered = _apiFilter === 'all' ? S.apis : S.apis.filter(a => a.category === _apiFilter);
 
@@ -25218,7 +26211,7 @@ function showView(v) {
   if (v === 'pipeline')     { renderDeals(); renderPipeline(); setTimeout(function(){ if (window.MK && MK.onShow) MK.onShow(); else if (typeof loadTickerData === 'function') loadTickerData(); }, 200); }
   if (v === 'settings')     renderSettingsPanel();
   if (v === 'wallet')     { if (window._walletPubkey) { document.getElementById('walletNotConnected').style.display='none'; document.getElementById('walletConnected').style.display='block'; } if (typeof loadPaymentList === 'function') loadPaymentList(); if (typeof renderAgentEarnings === 'function') renderAgentEarnings(); }
-  if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; }
+  if (v === 'security')   { renderPhantomSecurityUI(); document.getElementById('secTxToday').textContent = PHANTOM_SECURITY._dailyCount; document.getElementById('secDailySpent').textContent = '$' + PHANTOM_SECURITY._dailySpent.toLocaleString(); document.getElementById('secWalletStatus').textContent = window._walletPubkey ? 'Connected' : 'Not connected'; document.getElementById('secWalletStatus').style.color = window._walletPubkey ? 'var(--accent)' : 'var(--text-muted)'; try { var sb = document.getElementById('secScoreBig'); if(sb) { var score = PHANTOM_SECURITY.requireApproval ? (PHANTOM_SECURITY.requireAgentApproval ? 'A+' : 'B+') : 'C'; sb.textContent = score; } var sbl = document.getElementById('secBlockedBig'); if(sbl) sbl.textContent = PHANTOM_SECURITY._dailyCount || 0; } catch(e) {} }
   if (v === 'chat')       { updateChatRoutingDisplay(); }
   if (v === 'forge')      {
     // A3: if the swivel was relocated into the Agents tab, bring it home before rendering Forge.
@@ -25243,7 +26236,7 @@ function showView(v) {
   if (v === 'zerox')         { if (typeof pingZerox === 'function') pingZerox(); if (typeof loadFearGreed === 'function') loadFearGreed(); }
   if (v === 'oracle')        { if (typeof pingOracle === 'function') pingOracle(); if (typeof loadMoonPhase === 'function') loadMoonPhase(); }
   if (v === 'turtle')        { if (typeof pingTurtle === 'function') pingTurtle(); }
-  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'pixel'); window._officeEntrySub = null; }
+  if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'command'); window._officeEntrySub = null; try { initCommandHub(); } catch(e){} }
   if (v === 'agents')     { if (typeof render3DAgentCards === 'function') render3DAgentCards(); if (typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); }
 }
 
@@ -27342,20 +28335,31 @@ function _e3RelocateIntoOffice(sourceViewId, panelId, initFn) {
 }
 
 function switchOfficeTab(tab) {
-  // A4: 'workflows' removed (owner) → Workflow is top-level only. 'billing' added as an Office sub-tab.
-  if (tab === 'workflows') { try { showView('workflow'); } catch(e){} return; } // legacy callers still work
-  const rooms = ['Command', 'Projects', 'Skills', 'Billing', 'Pixel', 'Boardroom', 'Library', 'Studio', 'Safety'];
-  rooms.forEach(r => {
+  // Redirects for removed/merged tabs
+  if (tab === 'workflows') { try { showView('workflow'); } catch(e){} return; }
+  if (tab === 'showcase') tab = 'gallery';    // showcase → gallery
+  if (tab === 'boardroom') tab = 'command';   // boardroom → command
+  if (tab === 'bazaar') tab = 'treasury';     // bazaar → economy (treasury)
+  if (tab === 'safety') { try { showView('security'); } catch(e){} return; } // safety → security nav
+  if (tab === 'billing') tab = 'city';        // billing → city (pro upgrade lives in city/economy)
+  if (tab === 'pixel') tab = 'city';          // pixel office → city hub
+  if (tab === 'projects') tab = 'command';    // projects → command
+
+  const allRooms = ['Command','Skills','Library','Gallery','Showcase','Bazaar','Treasury','City','Rooms','Projects','Billing','Pixel','Boardroom','Safety'];
+  allRooms.forEach(r => {
     const el = document.getElementById('office' + r);
-    if (el) { el.style.display = r.toLowerCase() === tab ? (r === 'Command' || r === 'Pixel' ? 'flex' : 'block') : 'none'; }
+    if (el) el.style.display = r.toLowerCase() === tab ? 'flex' : 'none';
   });
-  for (let i = 1; i <= 9; i++) {
-    const btn = document.getElementById('officeTab' + i);
-    if (btn) btn.classList.remove('active');
-  }
-  const tabMap = { command: 1, projects: 7, skills: 8, billing: 9, pixel: 6, boardroom: 2, library: 3, studio: 4, safety: 4 };
-  const activeBtn = document.getElementById('officeTab' + tabMap[tab]);
+  // Clear all tab active states
+  document.querySelectorAll('#officeView .nav-btn').forEach(b => b.classList.remove('active'));
+  const tabMap = { command: 'officeTab1', city: 'officeTabCity', rooms: 'officeTabRooms', gallery: 'officeTab10', treasury: 'officeTab13', skills: 'officeTab8', library: 'officeTab3' };
+  const activeBtn = document.getElementById(tabMap[tab]);
   if (activeBtn) activeBtn.classList.add('active');
+  // City tab: sync signal display from game state if available
+  if (tab === 'city') {
+    try { const sig = Number(localStorage.getItem('shaddai.signal')||100); const pct=(sig/100*100).toFixed(0); const f=document.getElementById('citySignalFill'); const t=document.getElementById('citySignalTxt'); if(f)f.style.width=pct+'%'; if(t)t.textContent=sig+' / 100'; } catch(_) {}
+    try { const city = JSON.parse(localStorage.getItem('shaddai.city')||'[]'); const uid = localStorage.getItem('shd_signed_in'); const myPlot = city.find(p=>p.owner===uid); const el=document.getElementById('cityPlotStatus'); if(el&&myPlot){ const acc=myPlot.claimable||0; el.innerHTML='Plot #'+(myPlot.slot+1)+' · Accrued: <strong style="color:#e8c45c">'+acc.toFixed(2)+' Sparks</strong>'; } else if(el&&uid){ el.textContent='No plot owned yet — visit Founders Row in the 2D World.'; } } catch(_) {}
+  }
   // Wave C: free the Pixel Office MMO render loop whenever we leave the Pixel tab
   if (tab !== 'pixel' && window.PixelOffice) { try { window.PixelOffice.unmount(); } catch(e){} }
   if (tab === 'projects') {
@@ -27403,6 +28407,304 @@ function switchOfficeTab(tab) {
       }
     });
   }
+  // Command Hub merge: hydrate the merged hub panels (treasury now owns its own content — skip)
+  if (window.renderOfficeTab) {
+    if (tab === 'command') { window.renderOfficeTab('command'); }
+    else if (tab === 'gallery' || tab === 'showcase' || tab === 'bazaar') { window.renderOfficeTab(tab); }
+  }
+  // Drive tab-specific init
+  if (tab === 'command')  { try { initCommandHub(); } catch(e){} }
+  if (tab === 'city')     { try { initCityTab(); } catch(e){} }
+  if (tab === 'treasury') { try { initEconomyTab(); } catch(e){} }
+  if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} }
+}
+
+// ═══════════════════════════════════════════════════════
+// COMMAND HUB ENGINE — wires HUD strip + city-empire cards
+// ═══════════════════════════════════════════════════════
+function initCommandHub() {
+  // Sparks
+  var sparks = parseFloat(localStorage.getItem('shd_sparks') || '0');
+  var el = document.getElementById('officeHudSparks');
+  if (el) el.textContent = sparks >= 1000 ? (sparks/1000).toFixed(1)+'k ⚡' : sparks.toFixed(0)+' ⚡';
+
+  // Signal
+  var sig = parseFloat(localStorage.getItem('shaddai.signal') || '100');
+  var sigEl = document.getElementById('officeHudSignal');
+  if (sigEl) {
+    sigEl.textContent = sig.toFixed(0) + '%';
+    sigEl.style.color = sig >= 60 ? '#00e5a0' : sig >= 30 ? '#ffb020' : '#ef4444';
+  }
+
+  // City plots
+  var city = [];
+  try { city = JSON.parse(localStorage.getItem('shaddai.city') || '[]'); } catch(_) {}
+  var uid = localStorage.getItem('shd_signed_in');
+  var myPlots = city.filter(function(p){ return p.owner === uid; });
+  var plotEl = document.getElementById('officeHudPlots');
+  if (plotEl) plotEl.textContent = myPlots.length + ' / 30';
+
+  // Rooms count
+  var totalRooms = 0;
+  var pendingRent = 0;
+  myPlots.forEach(function(p) {
+    if (p.rooms) { totalRooms += p.rooms.length; p.rooms.forEach(function(r){ pendingRent += (r.pending||0); }); }
+  });
+  var roomEl = document.getElementById('officeHudRooms');
+  if (roomEl) roomEl.textContent = totalRooms;
+
+  // Card snapshots
+  var citySnap = document.getElementById('cmdCitySnap');
+  if (citySnap) {
+    var yld = myPlots.reduce(function(a,p){ return a + (p.claimable||0); }, 0);
+    citySnap.textContent = myPlots.length + ' plot' + (myPlots.length!==1?'s':'') + ' · ' + yld.toFixed(1) + ' Sparks accrued';
+  }
+  var econSnap = document.getElementById('cmdEconSnap');
+  if (econSnap) econSnap.textContent = sparks.toFixed(0) + ' Sparks · 6 vaults active';
+  var roomSnap = document.getElementById('cmdRoomsSnap');
+  if (roomSnap) roomSnap.textContent = totalRooms + ' rooms · ' + pendingRent.toFixed(1) + ' Sparks pending';
+
+}
+
+// ═══════════════════════════════════════════════════════
+// CITY TAB ENGINE
+// ═══════════════════════════════════════════════════════
+var _ctYieldTimer = null;
+
+function initCityTab() {
+  var uid = localStorage.getItem('shd_signed_in');
+  // Signal
+  try {
+    var sig = Number(localStorage.getItem('shaddai.signal') || 100);
+    var pct = Math.max(0, Math.min(100, sig));
+    var fill = document.getElementById('citySignalFill');
+    var txt  = document.getElementById('citySignalTxt');
+    var val  = document.getElementById('ctSigVal');
+    if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? '#00e5a0' : pct > 20 ? '#e8c45c' : '#ff4070'; }
+    if (txt)  txt.textContent = Math.ceil(sig) + ' / 100';
+    if (val)  val.textContent = Math.ceil(sig);
+  } catch(_) {}
+
+  // Sparks balance
+  try {
+    var sparks = Number(localStorage.getItem('shd_sparks') || localStorage.getItem('shaddai.sparks') || 0);
+    var sv = document.getElementById('ctSparksVal'); if (sv) sv.textContent = sparks.toFixed(0);
+  } catch(_) {}
+
+  // City plots — Founders Row
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var myPlot = uid ? city.find(function(p){ return p.owner === uid; }) : null;
+    var grid   = document.getElementById('ctFoundersGrid');
+    if (grid) {
+      grid.innerHTML = '';
+      for (var i = 0; i < 30; i++) {
+        var slotData = city.find(function(p){ return p.slot === i; });
+        var isMine   = myPlot && myPlot.slot === i;
+        var isOwned  = slotData && slotData.owner && !isMine;
+        var el = document.createElement('div');
+        el.className = 'ct-slot' + (isMine ? ' mine' : isOwned ? ' owned' : '');
+        el.title = 'Plot #' + (i + 1) + (isMine ? ' — YOURS' : isOwned ? ' — Owned' : ' — Available');
+        el.textContent = i + 1;
+        el.onclick = (function(slot, mine) { return function(){ if (mine) { location.href = 'game.html#plot'; } }; })(i, isMine);
+        grid.appendChild(el);
+      }
+    }
+
+    // Plot yield card
+    if (myPlot) {
+      var acc = typeof myPlot.claimable === 'number' ? myPlot.claimable : 0;
+      var rate = typeof myPlot.rate === 'number' ? myPlot.rate : 0.5;
+      var ps = document.getElementById('cityPlotStatus');
+      if (ps) ps.textContent = 'Plot #' + (myPlot.slot + 1) + ' · ' + rate.toFixed(2) + ' ◆/sec';
+      var rateEl = document.getElementById('ctYieldRate'); if (rateEl) rateEl.textContent = '+' + rate.toFixed(2);
+      // Live yield ticker
+      if (_ctYieldTimer) clearInterval(_ctYieldTimer);
+      var _rate = rate, _base = acc, _t0 = Date.now();
+      _ctYieldTimer = setInterval(function() {
+        var now = Date.now(), elapsed = (now - _t0) / 1000;
+        var cur = _base + _rate * elapsed;
+        var yn = document.getElementById('ctYieldNum'); if (yn) yn.textContent = cur.toFixed(2);
+      }, 500);
+    } else {
+      var yn = document.getElementById('ctYieldNum'); if (yn) yn.textContent = '0.00';
+      var ps = document.getElementById('cityPlotStatus'); if (ps) ps.textContent = 'No plot owned — visit Founders Row in-world';
+    }
+
+    // Boost active display
+    if (myPlot && myPlot.boostLock && myPlot.boostLock.until > Date.now()) {
+      var ba = document.getElementById('ctBoostActive');
+      if (ba) ba.textContent = myPlot.boostLock.amount + ' ◆ locked · expires ' + new Date(myPlot.boostLock.until).toLocaleDateString();
+    }
+  } catch(_) {}
+
+  // Transit unlocks (rough heuristics from localStorage)
+  try {
+    var visited = Number(localStorage.getItem('shd_dist_visited') || 0);
+    var hasRoom  = (JSON.parse(localStorage.getItem('shaddai.city') || '[]')).some(function(p){
+      return p.rooms && p.rooms.some(function(r){ return r && r.owner === uid; });
+    });
+    var dv = document.getElementById('ctDistVisited'); if (dv) dv.textContent = Math.min(visited, 3);
+    var trainStatus = document.getElementById('ctTrainStatus');
+    var trainDot    = document.getElementById('ctTrainDot');
+    if (visited >= 3) {
+      if (trainStatus) { trainStatus.textContent = 'ACTIVE'; trainStatus.style.color = '#ffd700'; }
+      if (trainDot)    trainDot.style.background = '#ffd700';
+    }
+    var subStatus = document.getElementById('ctSubwayStatus');
+    var subDot    = document.getElementById('ctSubwayDot');
+    if (hasRoom) {
+      if (subStatus) { subStatus.textContent = 'ACTIVE'; subStatus.style.color = '#00e5a0'; }
+      if (subDot)    subDot.style.background = '#00e5a0';
+    }
+  } catch(_) {}
+}
+
+function ctUpdateBoostPreview(val) {
+  val = Number(val);
+  var amtEl = document.getElementById('ctBoostAmt'); if (amtEl) amtEl.textContent = val;
+  // boostMultiplier: 1 + 3*r/(1+1.5*r), cap=1000
+  var r = Math.min(val, 1000) / 1000;
+  var mult = 1 + 3 * r / (1 + 1.5 * r);
+  var mEl = document.getElementById('ctBoostMult'); if (mEl) mEl.textContent = mult.toFixed(2) + '×';
+}
+
+function ctDoBoost() {
+  var slider = document.getElementById('ctBoostInput');
+  if (!slider) return;
+  var amt = Number(slider.value);
+  if (amt <= 0) { if (typeof toast === 'function') toast('Set a boost amount first'); return; }
+  var uid = localStorage.getItem('shd_signed_in');
+  if (!uid) { if (typeof toast === 'function') toast('Sign in to boost'); return; }
+  fetch('/api/city/boost', { method:'POST', headers:{'Content-Type':'application/json','x-user-id':uid}, body: JSON.stringify({amount: amt}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (typeof toast === 'function') toast('⬆ Boost locked: ' + amt + ' ◆'); initCityTab(); })
+    .catch(function(){ if (typeof toast === 'function') toast('Boost queued locally'); });
+}
+
+// ═══════════════════════════════════════════════════════
+// ECONOMY TAB ENGINE
+// ═══════════════════════════════════════════════════════
+function initEconomyTab() {
+  var uid = localStorage.getItem('shd_signed_in');
+  try {
+    var sparks = Number(localStorage.getItem('shd_sparks') || 0);
+    var disp = document.getElementById('ecSparksDisplay');
+    if (disp) { disp.textContent = sparks.toFixed(0); }
+  } catch(_) {}
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var myPlot = uid ? city.find(function(p){ return p.owner===uid; }) : null;
+    if (myPlot) {
+      var r = document.getElementById('ecStreamRate'); if (r) r.textContent = (myPlot.rate||0.5).toFixed(2)+'/sec';
+      var fp = document.getElementById('ecFPlot'); if (fp) fp.textContent = '+' + (myPlot.rate||0.5).toFixed(2)+'/s';
+      var ty = document.getElementById('ecTodayYield'); if (ty) ty.textContent = '+' + ((myPlot.claimable||0)).toFixed(2);
+      if (myPlot.boostLock && myPlot.boostLock.amount) {
+        var la = document.getElementById('ecLockedAmt'); if (la) la.textContent = myPlot.boostLock.amount;
+        var sb = document.getElementById('ecSBoost'); if (sb) sb.textContent = myPlot.boostLock.amount;
+      }
+    }
+  } catch(_) {}
+  // Referral code
+  try {
+    var ref = localStorage.getItem('shaddai_ref_code') || (uid ? uid.slice(0,8).toUpperCase() : '—');
+    var rc = document.getElementById('ecRefCode'); if (rc) rc.textContent = ref;
+  } catch(_) {}
+  // Transaction history (signal drops from game state)
+  try {
+    var hist = JSON.parse(localStorage.getItem('shd_tx_history') || '[]');
+    var listEl = document.getElementById('ecHistList');
+    if (listEl && hist.length) {
+      listEl.innerHTML = hist.slice(-20).reverse().map(function(tx){
+        var color = tx.amount > 0 ? '#00e5a0' : '#ff4070';
+        return '<div class="ec-hist-row"><span style="color:#8a9ab0">'+tx.type+'</span><span style="color:'+color+';font-weight:700">'+(tx.amount>0?'+':'')+tx.amount+' ◆</span><span style="color:#3a4a5a;min-width:70px;text-align:right">'+new Date(tx.ts).toLocaleTimeString()+'</span></div>';
+      }).join('');
+    }
+  } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// ROOMS TAB ENGINE
+// ═══════════════════════════════════════════════════════
+var _TENANT_ARCHETYPES = ['Night Baker','Data Trader','Chess Hustler','Clockmaker','Street Artist','Signal Broker','Code Runner','Archivist'];
+var _DIST_META = { agentcity:{name:'SHADDAI City',color:'#00e5a0'}, forest:{name:'Forest',color:'#ff7b3d'}, city:{name:'Nexus Heights',color:'#00ff88'}, beach:{name:'Beach',color:'#b06aff'}, desert:{name:'Desert',color:'#ff4070'}, meadow:{name:'Meadow',color:'#9b59b6'}, suburb:{name:'Suburb',color:'#8a9ab0'}, volcano:{name:'Zerox',color:'#00f0ff'} };
+
+function rmRenderRooms() {
+  var uid = localStorage.getItem('shd_signed_in');
+  var grid = document.getElementById('roomsTabContent');
+  if (!grid) return;
+  var myRooms = [];
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    city.forEach(function(plot) {
+      if (!plot.rooms) return;
+      plot.rooms.forEach(function(room, idx) {
+        if (room && room.owner === uid) myRooms.push({plot:plot, room:room, idx:idx});
+      });
+    });
+  } catch(_) {}
+
+  var totalRent = 0, totalPending = 0;
+  myRooms.forEach(function(r){ totalRent += (r.room.weeklyRent||50); totalPending += (r.room.pending||0); });
+  var tr = document.getElementById('rmTotalRooms'); if (tr) tr.textContent = myRooms.length;
+  var wr = document.getElementById('rmWeeklyRent'); if (wr) wr.textContent = totalRent;
+  var rp = document.getElementById('rmPending');    if (rp) rp.textContent = totalPending.toFixed(1);
+
+  if (!myRooms.length) return; // keep empty state
+
+  grid.innerHTML = myRooms.map(function(item, i) {
+    var d  = item.plot.district || 'agentcity';
+    var dm = _DIST_META[d] || {name:d, color:'#8a9ab0'};
+    var tn = _TENANT_ARCHETYPES[Math.abs((item.plot.slot||0)*7 + item.idx) % _TENANT_ARCHETYPES.length];
+    var rent = item.room.weeklyRent || 50;
+    var pend = item.room.pending || 0;
+    var rating = item.room.rating || 3;
+    var stars = '★'.repeat(rating) + '☆'.repeat(5-rating);
+    return '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;font-family:\'Share Tech Mono\',monospace">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div><span style="background:'+dm.color+'22;border:1px solid '+dm.color+'44;color:'+dm.color+';font-size:8px;padding:2px 7px;border-radius:4px;letter-spacing:1px">'+dm.name+'</span>'
+      + '<div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-top:6px">Room '+(item.idx+1)+' · Plot #'+(item.plot.slot+1)+'</div></div>'
+      + '<span style="color:#e8c45c;font-size:11px" title="Tenant rating">'+stars+'</span></div>'
+      + '<div style="font-size:10px;color:#8a9ab0;margin-bottom:8px">👤 Tenant: <span style="color:#e2e8f0;font-weight:700">'+tn+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:10px">'
+      + '<span style="color:#5a6a7a">Weekly: <span style="color:#00e5a0;font-weight:700">'+rent+' ◆</span></span>'
+      + '<span style="color:#5a6a7a">Pending: <span style="color:#e8c45c;font-weight:700">'+pend.toFixed(1)+' ◆</span></span></div>'
+      + '<button onclick="rmClaimRoom(\''+item.plot.id+'\','+item.idx+')" style="width:100%;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:6px;border-radius:6px;cursor:pointer;font-size:9px;font-weight:700;font-family:inherit;letter-spacing:1px">CLAIM '+pend.toFixed(1)+' ◆</button>'
+      + '</div>';
+  }).join('');
+}
+
+function rmClaimAll() {
+  if (typeof toast === 'function') toast('◆ Claiming all room rent...');
+  // Aggregate pending from localStorage rooms
+  try {
+    var uid = localStorage.getItem('shd_signed_in');
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var total = 0;
+    city.forEach(function(plot) {
+      if (!plot.rooms) return;
+      plot.rooms.forEach(function(room, idx) {
+        if (room && room.owner === uid && room.pending > 0) { total += room.pending; room.pending = 0; }
+      });
+    });
+    localStorage.setItem('shaddai.city', JSON.stringify(city));
+    if (total > 0 && typeof toast === 'function') toast('◆ Claimed ' + total.toFixed(1) + ' Sparks from all rooms!');
+    rmRenderRooms();
+  } catch(_) {}
+}
+
+function rmClaimRoom(plotId, idx) {
+  try {
+    var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
+    var plot = city.find(function(p){ return p.id === plotId; });
+    if (plot && plot.rooms && plot.rooms[idx]) {
+      var amt = plot.rooms[idx].pending || 0;
+      plot.rooms[idx].pending = 0;
+      localStorage.setItem('shaddai.city', JSON.stringify(city));
+      if (typeof toast === 'function') toast('◆ Claimed ' + amt.toFixed(1) + ' Sparks from room ' + (idx+1));
+      rmRenderRooms();
+    }
+  } catch(_) {}
 }
 
 // ── Pixel Office building routing ─────────────────────────────────────────────
@@ -27465,6 +28767,13 @@ function initWorkflowsTab() {
   setTimeout(_refreshWorkflowAgentSelects, 1500); // re-fill once forged operatives load
   if (typeof loadScheduledJobs === 'function') loadScheduledJobs();
   if (typeof loadWebhookLog === 'function') loadWebhookLog();
+  // update banner stats
+  try {
+    var runs = (window.S && S.tasks) ? S.tasks.filter(function(t){ var d=new Date(t.time||t.created); return t.done && (Date.now()-d)<86400000; }).length : 0;
+    var active = (window.S && S.tasks) ? S.tasks.filter(function(t){ return !t.done; }).length : 0;
+    var br = document.getElementById('wfBannerRuns'); if(br) br.textContent = runs;
+    var ba = document.getElementById('wfBannerActive'); if(ba) ba.textContent = active;
+  } catch(e) {}
 }
 
 // E4: swivel between the Workflow Center sub-panes (Chains / Scheduled / Webhooks).
@@ -27620,29 +28929,146 @@ function renderUserWorkflows() {
     </div>`).join('');
 }
 
+// ── UNIFIED WORKFLOW RUNNER ────────────────────────────────────────────
+// Runs ANY chain on the server engine (POST /api/workflows/run → SSE). Each step
+// executes on the real agent engine (its actual tools/skills), results are logged
+// to workflow_runs.json, and live progress streams back. Callers fall back to the
+// raw /api/agent/run endpoint if this one is unreachable, so chains always work.
+async function runWorkflowServer(def, opts) {
+  const steps = (def && def.steps ? def.steps : []).map(s => ({
+    agent: String(s.agent || '').toUpperCase(),
+    task: String(s.task || s.prompt || s.goal || '')
+  }));
+  if (!steps.length) return { ok: false, error: 'no steps' };
+  let res;
+  try {
+    res = await fetch('/api/workflows/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workflowId: def.builtinId || '',
+        input: (opts && opts.input) || '',
+        customSteps: steps
+      }),
+      signal: AbortSignal.timeout(900000)
+    });
+  } catch (e) { return { ok: false, error: (e && e.message) || 'network error' }; }
+  if (!res.ok) {
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    return { ok: false, status: res.status, data, error: (data && data.error) || ('HTTP ' + res.status) };
+  }
+  if (!res.body || typeof res.body.getReader !== 'function') return { ok: false, error: 'streaming not supported' };
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  let results = [];
+  let finalOutput = '';
+  let overallStatus = 'running';
+  for (;;) {
+    let chunk;
+    try { chunk = await reader.read(); } catch (e) { break; }
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      const line = block.split('\n').find(l => l.indexOf('data:') === 0);
+      if (!line) continue;
+      let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch (_) { continue; }
+      if (ev.type === 'step_done' || ev.type === 'step_error') {
+        results.push({ step: ev.step, agent: ev.agent, status: ev.type === 'step_done' ? (ev.status || 'completed') : 'failed', result: ev.output || ev.error || '', tools: ev.tools || [] });
+      }
+      if (ev.type === 'complete') { overallStatus = ev.status || 'completed'; finalOutput = ev.finalOutput || ''; }
+      if (opts && opts.onEvent) { try { opts.onEvent(ev); } catch (_) {} }
+    }
+  }
+  return { ok: true, results, finalOutput, status: overallStatus };
+}
+
+// Live step-by-step render of the SSE stream into the Workflow Center's Results Inbox.
+function _wfLiveRender(ev) {
+  const inbox = document.getElementById('wfResultsInbox');
+  if (!inbox) return;
+  if (ev.type === 'start') {
+    inbox.innerHTML = `<div style="padding:10px">
+      <div id="wf-live-head" style="font-size:12px;font-weight:700;color:#ffd700;margin-bottom:4px">▶ ${escH(ev.workflow || 'Chain')} — running</div>
+      <div id="wf-live-sub" style="font-size:9px;color:var(--text-muted);margin-bottom:8px">${ev.steps} steps · server agent engine</div>
+      <div id="wf-live-steps"></div>
+    </div>`;
+    return;
+  }
+  if (ev.type === 'step_start') {
+    const wrap = document.getElementById('wf-live-steps');
+    if (!wrap) return;
+    const div = document.createElement('div');
+    div.id = 'wf-live-step-' + ev.step;
+    div.style.cssText = 'margin-bottom:10px;border-left:2px solid #ffb020;padding-left:8px';
+    div.innerHTML = `<div style="font-size:10px;font-weight:700;color:#ffd700">Step ${ev.step}/${ev.total}: ${escH(ev.agent)} — running…</div>`;
+    wrap.appendChild(div);
+    inbox.scrollTop = inbox.scrollHeight;
+    return;
+  }
+  if (ev.type === 'step_done' || ev.type === 'step_error') {
+    const div = document.getElementById('wf-live-step-' + ev.step);
+    if (!div) return;
+    const ok = ev.type === 'step_done';
+    div.style.borderLeftColor = ok ? 'var(--accent)' : '#ff5a6e';
+    div.innerHTML = `<div style="font-size:10px;font-weight:700;color:${ok ? '#00ff88' : '#ff5a6e'}">Step ${ev.step}: ${escH(ev.agent)} ${ok ? '✓' : ('⚠ ' + escH(ev.error || 'failed'))}</div>
+      ${(ev.tools && ev.tools.length) ? `<div style="font-size:8px;color:#00f0ff;font-family:'Share Tech Mono',monospace;margin:2px 0">🔧 ${ev.tools.map(escH).join(' · ')}</div>` : ''}
+      <div style="white-space:pre-wrap;font-size:10px;line-height:1.5;color:var(--text);max-height:150px;overflow-y:auto">${escH(ok ? (ev.output || '(no output)') : (ev.error || 'failed'))}</div>`;
+    inbox.scrollTop = inbox.scrollHeight;
+    return;
+  }
+  if (ev.type === 'complete') {
+    const head = document.getElementById('wf-live-head');
+    if (head) head.innerHTML = `✓ ${escH(ev.workflow || 'Chain')} — ${escH(String(ev.status || 'complete').toUpperCase())}`;
+    const sub = document.getElementById('wf-live-sub');
+    if (sub) sub.textContent = ((ev.steps && ev.steps.length) ? ev.steps.length + ' steps · ' : '') + 'server agent engine';
+    window._wfFinal = ev.finalOutput || (ev.steps && ev.steps.length && ev.steps[ev.steps.length-1].output) || '';
+    const wrap = document.getElementById('wf-live-steps');
+    if (wrap) wrap.appendChild(document.createElement('div')).innerHTML = '<button onclick="copyToClip(window._wfFinal||\'\')" class="btn btn-ghost" style="font-size:9px;margin-top:4px">Copy Final Result</button>';
+    inbox.scrollTop = inbox.scrollHeight;
+  }
+}
+
 async function executeWorkflowChain(wf) {
   const inbox = document.getElementById('wfResultsInbox');
   if (inbox) inbox.innerHTML = `<div style="color:#ffb020;font-size:11px;padding:10px">▶ Running "${escH(wf.name||'')}" on the real agent engine — each agent uses its real tools…</div>`;
   officeLog(`[CHAIN] "${wf.name}" → ${wf.steps.map(s=>String(s.agent).toUpperCase()).join(' → ')}`);
-  // REAL execution: send the whole chain to the agent engine. It runs each step on the
-  // actual agent (with that agent's real tools/skills) and feeds output → next step.
-  const workflow = wf.steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
+  // REAL execution: unified server engine first (POST /api/workflows/run → SSE, live
+  // per-step progress streamed via _wfLiveRender). If that path is unreachable/unbilled,
+  // fall back to the older sync /api/agent/run workflow route (same agent engine).
   let stepResults = [];
+  let finalResult = '';
   try {
-    const r = await fetch('/api/agent/run', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ workflow }), signal: AbortSignal.timeout(180000)
-    });
-    const data = await r.json();
-    if (!r.ok || data.error) throw new Error(data.error || ('HTTP '+r.status));
-    stepResults = data.steps || [];
-  } catch(e) {
-    officeLog(`[CHAIN] failed: ${e.message}`);
-    if (inbox) inbox.innerHTML = `<div style="padding:10px;color:#ff5a6e;font-size:11px">⚠ Chain failed: ${escH(e.message)}<div style="color:var(--text-muted);font-size:9px;margin-top:4px">The agent engine (server-production.js) must be running on this server.</div></div>`;
-    notify('⚠ Chain failed: '+e.message); return;
+    const r = await runWorkflowServer(wf, { onEvent: _wfLiveRender });
+    if (r && r.ok && r.results && r.results.length) {
+      stepResults = r.results;
+      finalResult = r.finalOutput || (r.results[r.results.length-1] && r.results[r.results.length-1].result) || '';
+    } else if (r && r.error) {
+      officeLog(`[CHAIN] server engine unavailable (${r.error}) — falling back to /api/agent/run`);
+    }
+  } catch(e) { officeLog(`[CHAIN] server engine threw: ${e.message}`); }
+  if (!stepResults.length) {
+    const workflow = wf.steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
+    try {
+      const r = await fetch('/api/agent/run', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ workflow }), signal: AbortSignal.timeout(180000)
+      });
+      const data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP '+r.status));
+      stepResults = data.steps || [];
+      finalResult = data.finalOutput || '';
+    } catch(e) {
+      officeLog(`[CHAIN] failed: ${e.message}`);
+      if (inbox) inbox.innerHTML = `<div style="padding:10px;color:#ff5a6e;font-size:11px">⚠ Chain failed: ${escH(e.message)}<div style="color:var(--text-muted);font-size:9px;margin-top:4px">The agent engine (server-production.js) must be running on this server.</div></div>`;
+      notify('⚠ Chain failed: '+e.message); return;
+    }
   }
+  if (!stepResults.length) { notify('⚠ Chain produced no output'); return; }
   const results = stepResults.map(s => s.result || '');
-  const finalResult = results[results.length - 1] || 'No output';
+  finalResult = finalResult || results[results.length - 1] || 'No output';
   // step-by-step inbox render (agent + REAL tools used + output) — overridden below for other destinations
   if ((wf.output === 'inbox' || !wf.output) && inbox) {
     const okN = stepResults.filter(s => s.status !== 'failed').length;
@@ -27814,6 +29240,13 @@ const _PREBUILT_STEPS = {
 async function _runScheduledJobChain(job) {
   const steps = (job.steps && job.steps.length) ? job.steps : (_PREBUILT_STEPS[job.workflowId] || []);
   if (!steps.length) throw new Error('No steps for job');
+  // Preferred: unified server engine (SSE). Fallback: sync /api/agent/run.
+  try {
+    const r = await runWorkflowServer({ name: job.name || 'Scheduled Job', steps });
+    if (r && r.ok && (r.finalOutput || (r.results && r.results.length))) {
+      return r.finalOutput || (r.results[r.results.length-1] && r.results[r.results.length-1].result) || 'No output';
+    }
+  } catch(e) { /* fall through to sync route */ }
   const workflow = steps.map(s => ({ goal: s.prompt, agent: String(s.agent||'').toUpperCase() }));
   const r = await fetch('/api/agent/run', {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -31118,6 +32551,20 @@ const AGENTS_V2 = {
     desc: 'Creative direction, branding, content creation, visual design. Reads files and provides creative input.',
     delegatesTo: ['gemma2:2b', 'phi3:mini']
   },
+  QUILL: {
+    port: 8005, color: '#ffb020', emoji: '✍️', role: 'Writing & Comms',
+    rank: 'support', aiPrefs: ['groq', 'ollama:llama3.2:3b'],
+    skills: ['write', 'document', 'copy', 'guide', 'review', 'chat', 'read-files', 'opinion'],
+    desc: 'Clear communication, documentation, copy, user guides. Reviews for clarity and tone.',
+    delegatesTo: ['gemma2:2b']
+  },
+  PIKADON: {
+    port: 8008, color: '#ff4070', emoji: '🛡', role: 'Security & Compliance',
+    rank: 'support', aiPrefs: ['groq', 'ollama:llama3.2:3b'],
+    skills: ['audit', 'security', 'permissions', 'secrets', 'compliance', 'review', 'chat'],
+    desc: 'Security hardening, PII protection, audit trails, approval gates. Assumes worst-case scenarios.',
+    delegatesTo: []
+  },
 };
 
 // Agent routing: all tasks go through SHADDAI first, then delegated
@@ -31847,6 +33294,22 @@ function updateChatRoutingDisplay() {
     };
     currentEl.textContent = labels[_chatCurrentAPI] || _chatCurrentAPI.toUpperCase();
   }
+  // update model badge in chat header
+  try {
+    const badge = document.getElementById('chatModelBadge');
+    if (badge) {
+      const priority = S.settings?.aiPriority || 'ollama';
+      const badgeLabels = {
+        'ollama': 'Ollama · local model', 'ollama-only': 'Ollama · forced local',
+        'groq': 'Groq · Llama-70B · free', 'groq-only': 'Groq · forced',
+        'gemini': 'Gemini · Flash', 'gemini-only': 'Gemini · forced',
+        'openrouter': 'OpenRouter · multi-model', 'claude': 'Claude · Anthropic',
+        'minimax': 'MiniMax · free'
+      };
+      const cfg = window._routerConfig || {};
+      badge.textContent = badgeLabels[priority] || (cfg.provider ? cfg.provider.toUpperCase() + ' · ' + cfg.model : 'Groq · Llama-70B · Free tier');
+    }
+  } catch(e) {}
   if (tokensEl) tokensEl.textContent = _chatTokensUsed;
   if (chainEl) {
     const priority = S.settings?.aiPriority || 'ollama';
@@ -39298,14 +40761,19 @@ async function pingAllAgents() {
     { name:'PIKADON', color:'#ff4070', port:8008, emoji:'🛡', role:'Security' },
   ];
   grid.innerHTML = AGENTS.map(a =>
-    `<div id="ping_${a.name}" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid ${a.color}33;border-left:3px solid ${a.color};border-radius:4px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="font-size:14px">${a.emoji}</span>
-        <span style="font-size:10px;font-weight:700;color:${a.color}">${a.name}</span>
-        <span style="font-size:7px;color:var(--text-muted);margin-left:auto">:${a.port}</span>
+    `<div id="ping_${a.name}" style="padding:0;background:rgba(0,0,0,0.2);border:1px solid ${a.color}33;border-left:3px solid ${a.color};border-radius:4px;overflow:hidden;position:relative">
+      <img src="/assets/agents/${a.name}-action.png" alt="${a.name}" loading="lazy"
+        style="width:100%;height:80px;object-fit:cover;object-position:top;display:block;opacity:0.85"
+        onerror="this.style.display='none'">
+      <div style="padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="font-size:12px">${a.emoji}</span>
+          <span style="font-size:10px;font-weight:700;color:${a.color}">${a.name}</span>
+          <span style="font-size:7px;color:var(--text-muted);margin-left:auto">:${a.port}</span>
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">${a.role}</div>
+        <div id="pingstat_${a.name}" style="font-size:8px;color:#ffb020">⏳ pinging...</div>
       </div>
-      <div style="font-size:8px;color:var(--text-muted);margin-bottom:4px">${a.role}</div>
-      <div id="pingstat_${a.name}" style="font-size:8px;color:#ffb020">⏳ pinging...</div>
     </div>`
   ).join('');
   for (const a of AGENTS) {
@@ -39553,6 +41021,11 @@ function loadTickerData() {
   // Only load OHLC chart for crypto tickers
   const exchange = document.getElementById('mkExchange')?.value || '';
   if (exchange === 'CRYPTO' || exchange === 'SOLANA') loadOhlcChart();
+  // update banner
+  try {
+    var t = (document.getElementById('mkTicker')?.value || 'NVDA').toUpperCase();
+    var bt = document.getElementById('mktBannerTicker'); if(bt) bt.textContent = t;
+  } catch(e) {}
 }
 
 // ── OHLC Candlestick Chart ────────────────────────────────────────────────────
@@ -42172,11 +43645,18 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
        DOCUMENTS VIEW (RAG — Ask My Docs)
   ═══════════════════════════════════════════════════════════════════ -->
   <div id="documentsView" class="view">
+    <div class="view-banner" style="border-color:rgba(176,106,255,0.2)">
+      <div class="view-banner-icon">📄</div>
+      <div>
+        <div class="view-banner-title" style="background:linear-gradient(90deg,#b06aff,#d4a0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Ask My Docs</div>
+        <div class="view-banner-sub">RAG · upload PDFs/text · semantic search · ORACLE-powered answers</div>
+      </div>
+      <div class="view-banner-actions">
+        <div class="view-banner-stat"><b id="docBannerCount">—</b> <span style="color:var(--text-muted)">Docs</span></div>
+      </div>
+    </div>
     <div style="padding:12px;max-width:1100px;margin:0 auto">
       <div style="margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:#b06aff">📄 Ask My Docs</div>
-        <div style="font-size:9px;color:var(--text-muted)">Upload documents, then ask questions across them (RAG)</div>
-      </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <!-- Upload -->
@@ -43728,7 +45208,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           if (gltf.animations && gltf.animations.length) {
             mixer = new THREE.AnimationMixer(obj);
             const A = gltf.animations;
-            const def = A.find(a => /dance/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
+            const def = A.find(a => /dance|breath|sway|bounce|groove|strut|swing|waltz/i.test(a.name)) || A.find(a => /vault|flip|parkour|spin/i.test(a.name)) || A.find(a => /idle/i.test(a.name)) || A[0];
             mixer.clipAction(def).reset().play(); mixer.update(0.3);
             obj.updateMatrixWorld(true);
           }
@@ -43847,7 +45327,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
           var A = mv.availableAnimations || [];
           _clips = A.slice();
           // Default to a lively clip: dance → vault/flip → idle → first.
-          var pick = A.findIndex(function(n){ return /dance/i.test(n); });
+          var pick = A.findIndex(function(n){ return /dance|breath|sway|bounce|groove|strut|swing|waltz/i.test(n); });
           if (pick < 0) pick = A.findIndex(function(n){ return /vault|flip|parkour|spin/i.test(n); });
           if (pick < 0) pick = A.findIndex(function(n){ return /idle/i.test(n); });
           if (pick < 0) pick = 0;
@@ -44694,7 +46174,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">💬 Chat with ${a.name}</button>
-                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('marketplace')"
+                <button onclick="_closeAgentRoom();if(typeof showView==='function')showView('office');if(typeof switchOfficeTab==='function')switchOfficeTab('bazaar')"
                   style="padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.5);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:left;transition:all 0.15s"
                   onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateX(3px)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.transform=''">🏪 Open Marketplace</button>
@@ -55687,6 +57167,29 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',consolidate); else consolidate();
 })();
 </script>
+
+<!-- ════════ FULL-BLEED HF NAV BANNERS (assets/nav/*.jpg, generated by backend/scripts/generate-nav-hf.js) ════════ -->
+<style id="nav-img-css">
+  /* Each #mainNav button carrying `--nav-img` gets a full-bleed FLUX banner with a dark
+     overlay so the label stays legible. Landed last so it outranks every nav override. */
+  #mainNav button.nav-btn.nav-img {
+    background-image: linear-gradient(rgba(2,8,23,0.68), rgba(2,8,23,0.68)), var(--nav-img) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    color: #eafaf3 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.6) !important;
+    border-radius: 3px;
+  }
+  #mainNav button.nav-btn.nav-img:hover,
+  #mainNav button.nav-btn.nav-img.active {
+    background-image: linear-gradient(rgba(2,8,23,0.42), rgba(2,8,23,0.42)), var(--nav-img) !important;
+    color: #ffffff !important;
+    border-bottom-color: rgba(0,229,160,0.6) !important;
+  }
+  /* The tiny forge-art thumbnails are redundant over a full-bleed banner — hide them. */
+  #mainNav button.nav-btn.nav-img img { display: none !important; }
+</style>
 
 </body>
 </html>

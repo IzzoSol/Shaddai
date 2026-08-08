@@ -3158,14 +3158,96 @@ const BUILTIN_WORKFLOWS = {
       { agent: 'ZEROX',   task: 'Business audit: identify revenue leaks, inefficiencies, and growth blockers: {prev}' },
       { agent: 'SHADDAI', task: 'Compile a prioritized action plan from all audit findings: {prev}' }
     ]
+  },
+  // Aligned with the frontend canonical WF_AGENTS chains so backend and frontend
+  // agree on steps/order for every named workflow the dashboard exposes.
+  'content-pipeline': {
+    name: 'Content Pipeline',
+    steps: [
+      { agent: 'ORACLE', task: 'Research trending angles, stats, and viral hooks for this topic: {input}' },
+      { agent: 'QUILL',  task: 'Write platform-optimized content (Twitter thread + LinkedIn post + short-form caption) using this research:\n\n{prev}' },
+      { agent: 'TURTLE', task: 'Suggest visual formats, layout ideas, and design tips to make this content pop:\n\n{prev}' }
+    ]
+  },
+  'security-audit': {
+    name: 'Security Audit',
+    steps: [
+      { agent: 'NEXUS',  task: 'Review code architecture and surface-level risks for: {input}' },
+      { agent: 'PIKADON', task: 'Deep security audit — find vulnerabilities, attack vectors, and critical risks based on:\n\n{prev}' },
+      { agent: 'SHADDAI', task: 'Executive risk summary and ordered priority fixes from this audit:\n\n{prev}' }
+    ]
+  },
+  'agent-council': {
+    name: 'Agent Council',
+    steps: [
+      { agent: 'NEXUS',  task: 'Technical assessment of: {input}' },
+      { agent: 'ZEROX',  task: 'Business case and revenue model for:\n{prev}' },
+      { agent: 'ORACLE', task: 'Market validation and competitive landscape for:\n{prev}' },
+      { agent: 'TURTLE', task: 'UX, design, and user experience angle for:\n{prev}' },
+      { agent: 'SHADDAI', task: 'Council decision — synthesize all agent inputs into a single clear recommendation and action plan:\n\n{prev}' }
+    ]
+  },
+  'market-brief': {
+    name: 'Market Brief',
+    steps: [
+      { agent: 'ORACLE', task: 'Give a detailed crypto market brief right now. Cover BTC, ETH, SOL price levels, trends, fear/greed, and top movers. Topic focus: {input}' },
+      { agent: 'ZEROX',  task: 'From this market brief, identify the top 2 actionable opportunities for traders or builders:\n\n{prev}' },
+      { agent: 'QUILL',  task: 'Write a punchy 5-tweet thread from these insights that would get engagement:\n\n{prev}' }
+    ]
+  },
+  'revenue-intel': {
+    name: 'Revenue Intelligence',
+    steps: [
+      { agent: 'ZEROX',  task: 'Build a concrete $0 to $1,000/month roadmap for an AI agent marketplace. Topic: {input}' },
+      { agent: 'ORACLE', task: 'What are 3 specific things competitors are doing better, based on:\n{prev}' },
+      { agent: 'SHADDAI', task: 'The single most important strategic decision to make this week, given:\n{prev}' }
+    ]
+  },
+  'crypto-market-scan': {
+    name: 'Crypto Market Scan',
+    steps: [
+      { agent: 'ORACLE', task: 'Get the global crypto market overview (use the crypto_global tool) and the live price of SOL and BTC (use the jupiter_price and fetch_price tools). Summarize the market state.' },
+      { agent: 'ZEROX',  task: 'Based on this market data:\n{prev}\nGet the top DeFi protocols by TVL (use the defillama_protocols tool) and identify 2 opportunities.' },
+      { agent: 'QUILL',  task: 'Write an engaging 5-tweet crypto market thread from these insights:\n{prev}\n(use the write_thread tool)' }
+    ]
   }
 };
 
-async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
-  const task = taskTemplate
-    .replace(/\{input\}/g, input)
-    .replace(/\{prev\}/g, prevOutput || input);
+// Run ONE workflow step through the REAL agent engine (each agent's real tools/skills),
+// chaining forward. {input} = raw user input, {prev} = previous step's output,
+// {step1..stepN} = that step's output (aligns with the Workflow Center builder syntax).
+// Returns { output, tools, status } so the SSE stream can show which tools each agent used.
+async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outputs) {
+  let task = String(taskTemplate || '')
+    .replace(/\{input\}/g, input || '')
+    .replace(/\{prev\}/g, (prevOutput || '').slice(0, 4000) || (input || ''));
+  task = task.replace(/\{step(\d+)\}/g, function (m, n) {
+    const idx = parseInt(n, 10);
+    const out = (outputs && outputs[idx - 1]) ? String(outputs[idx - 1]) : '';
+    return out.slice(0, 4000);
+  });
+  task = task.trim();
+  if (!task) return { output: '', tools: [], status: 'completed' };
 
+  const agentNameUpper = String(agentName || 'ORACLE').toUpperCase();
+
+  // 1) Real agent engine (tools + skills) — the same engine the Workflow Center uses.
+  if (agentEngine && typeof agentEngine.createTask === 'function') {
+    try {
+      const t = agentEngine.createTask(task, agentNameUpper);
+      await agentEngine.runAgentLoop(t.id);
+      const done = agentEngine.getTask(t.id);
+      if (done && typeof done === 'object') {
+        return {
+          output: done.result || '',
+          tools: (done.tools_used && done.tools_used.length) ? done.tools_used : [],
+          status: done.status === 'failed' ? 'failed' : 'completed'
+        };
+      }
+    } catch (e) { console.warn('[workflow] agent engine step failed, falling back:', e.message); }
+  }
+
+  // 2) Fallback: Groq direct (fast) with agent persona.
   const agentPrompts = {
     SHADDAI: 'You are SHADDAI, supreme AI orchestrator. Be strategic, decisive, and thorough.',
     ZEROX:   'You are ZEROX, wealth and revenue specialist. Focus on financial impact and business value.',
@@ -3175,10 +3257,8 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
     QUILL:   'You are QUILL, master writer. Be clear, compelling, and professionally polished.',
     PIKADON: 'You are PIKADON, security specialist. Be rigorous, threat-aware, and defensive.'
   };
+  const systemPrompt = agentPrompts[agentNameUpper] || agentPrompts.SHADDAI;
 
-  const systemPrompt = agentPrompts[agentName] || agentPrompts.SHADDAI;
-
-  // Try Groq first
   if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
@@ -3186,10 +3266,10 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: task }],
         max_tokens: 1500, temperature: 0.7
       }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
-      return r.data.choices[0]?.message?.content || '';
+      return { output: r.data.choices[0]?.message?.content || '', tools: [], status: 'completed' };
     } catch (e) { console.warn('[workflow] Groq step failed:', e.message); }
   }
-  // Ollama fallback
+  // 3) Ollama fallback
   try {
     const tags = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 3000 });
     const model = (tags.data.models || [])[0]?.name || DEFAULT_OLLAMA_MODEL;
@@ -3198,13 +3278,15 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput) {
       messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: task }],
       stream: false
     }, { timeout: 120000 });
-    return r.data.message?.content || '';
-  } catch (e) { return `[Step failed: ${e.message}]`; }
+    return { output: r.data.message?.content || '', tools: [], status: 'completed' };
+  } catch (e) {
+    return { output: `[Step failed: ${e.message}]`, tools: [], status: 'failed' };
+  }
 }
 
 router.post('/workflows/run', async (req, res) => {
   const { workflowId, input, steps: customSteps } = req.body;
-  if (!input) return res.status(400).json({ error: 'input required' });
+  const runInput = typeof input === 'string' ? input : '';
 
   // Resolve workflow definition
   let workflowDef = BUILTIN_WORKFLOWS[workflowId];
@@ -3212,10 +3294,16 @@ router.post('/workflows/run', async (req, res) => {
     const saved = loadWorkflows().find(w => w.id === workflowId || w.name === workflowId);
     if (saved) workflowDef = saved;
   }
-  if (!workflowDef && customSteps) {
+  if (!workflowDef && customSteps && Array.isArray(customSteps) && customSteps.length) {
     workflowDef = { name: 'Custom Workflow', steps: customSteps };
   }
-  if (!workflowDef) return res.status(404).json({ error: 'Workflow not found. Built-ins: research-to-build, market-analysis, idea-to-product, full-audit' });
+  if (!workflowDef) return res.status(404).json({ error: 'Workflow not found. Built-ins: research-to-build, market-analysis, idea-to-product, full-audit, content-pipeline, security-audit, agent-council, market-brief, revenue-intel, crypto-market-scan' });
+
+  // Normalize step shapes ({task|prompt|goal} × any agent casing) to {agent, task} uppercase.
+  workflowDef.steps = (workflowDef.steps || []).map(s => ({
+    agent: String(s.agent || s.agentName || '').toUpperCase(),
+    task: String(s.task || s.prompt || s.goal || '').trim()
+  }));
 
   // Pre-run validation — catch broken definitions before the SSE stream opens
   const VALID_AGENTS_SET = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
@@ -3233,6 +3321,7 @@ router.post('/workflows/run', async (req, res) => {
 
   const runId = `wf_${Date.now()}`;
   const results = [];
+  const outputs = [];     // per-step outputs, for {step1..stepN} chaining
   let prevOutput = '';
   let failedCount = 0;
 
@@ -3248,16 +3337,20 @@ router.post('/workflows/run', async (req, res) => {
     const step = workflowDef.steps[i];
     send({ type: 'step_start', step: i + 1, total: workflowDef.steps.length, agent: step.agent });
     try {
-      const output = await runWorkflowStep(step.agent, step.task, input, prevOutput);
+      const stepRes = await runWorkflowStep(step.agent, step.task, runInput, prevOutput, outputs);
       // Record even empty/null output so the results array is always complete
-      const stepOutput = output || '';
-      results.push({ step: i + 1, agent: step.agent, status: 'completed', output: stepOutput });
+      const stepOutput = stepRes.output || '';
+      const stepTools = (stepRes.tools && stepRes.tools.length) ? stepRes.tools : [];
+      const stepStatus = stepRes.status === 'failed' ? 'failed' : 'completed';
+      outputs.push(stepOutput);
+      results.push({ step: i + 1, agent: step.agent, status: stepStatus, output: stepOutput, tools: stepTools });
       prevOutput = stepOutput || prevOutput; // keep last good output if step returned nothing
-      send({ type: 'step_done', step: i + 1, agent: step.agent, output: stepOutput });
+      send({ type: 'step_done', step: i + 1, agent: step.agent, output: stepOutput, tools: stepTools, status: stepStatus });
     } catch (e) {
       failedCount++;
+      outputs.push('');
       // Record the failure so results[] is always length === steps.length
-      results.push({ step: i + 1, agent: step.agent, status: 'failed', error: e.message, output: null });
+      results.push({ step: i + 1, agent: step.agent, status: 'failed', error: e.message, output: null, tools: [] });
       send({ type: 'step_error', step: i + 1, agent: step.agent, error: e.message });
       // Do NOT break — continue to next step so the workflow completes as much as possible
     }
@@ -3267,7 +3360,7 @@ router.post('/workflows/run', async (req, res) => {
 
   // Save run to history
   const history = loadJSON(path.join(DATA_DIR, 'workflow_runs.json'), []);
-  history.unshift({ runId, workflow: workflowDef.name, input: input.slice(0, 200), steps: results.length, failedSteps: failedCount, status: overallStatus, completedAt: new Date().toISOString(), output: prevOutput.slice(0, 500) });
+  history.unshift({ runId, workflow: workflowDef.name, input: runInput.slice(0, 200), steps: results.length, failedSteps: failedCount, status: overallStatus, completedAt: new Date().toISOString(), output: prevOutput.slice(0, 500), tools: results.reduce((acc, r) => acc.concat(r.tools || []), []).slice(0, 20) });
   saveJSON(path.join(DATA_DIR, 'workflow_runs.json'), history.slice(0, 100));
 
   send({ type: 'complete', runId, status: overallStatus, finalOutput: prevOutput, steps: results });
@@ -6671,7 +6764,7 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
       const lastUser = [...msgs].reverse().find(m => m && m.role === 'user');
       auraPrompt = (lastUser && typeof lastUser.content === 'string') ? lastUser.content : '';
       if (auraPrompt) {
-        const hit = require('./lib/aura').route(auraPrompt);
+        const hit = require('./lib/aura').route(auraPrompt, { scope: agent || '' });
         if (hit && hit.hit && hit.answer) {
           return res.json({ ok: true, content: hit.answer, provider: 'aura-cache',
             model: hit.method || 'aura', tokens: { input: 0, output: 0, total: 0 },
@@ -6682,14 +6775,15 @@ router.post('/model/chat', require('./demo-limit').middleware, async (req, res) 
 
     const r = await agentEngine.modelChat(msgs, agent || 'SHADDAI');
     // Record the real answer so future identical/similar prompts are free.
-    try { if (auraPrompt && r && r.content) require('./lib/aura').recordAnswer(auraPrompt, r.content); } catch (_) {}
+    try { if (auraPrompt && r && r.content) require('./lib/aura').recordAnswer(auraPrompt, r.content, { scope: agent || '' }); } catch (_) {}
     res.json({
       ok: true,
       content: r.content,
       provider: r.provider,
       model: r.model,
       tokens: { input: r.inputTokens, output: r.outputTokens, total: r.inputTokens + r.outputTokens, exact: r.exact },
-      costUSD: r.costUSD
+      costUSD: r.costUSD,
+      ragSources: r.ragSources
     });
   } catch (e) {
     fail(res, 500, 'internal_error', e.message, { ok: false });

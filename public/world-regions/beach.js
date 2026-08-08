@@ -135,6 +135,9 @@ window.RegionGen['beach'] = function(api){
       wall:cg.wall, roof:cg.roof, name:cg.name});
   }
 
+  // 3dz. PUB on the boardwalk near the pier — tactical missions
+  api.building({col:20,row:28,w:3,d:3,floors:1,kind:'shop',wall:'#5a3a1a',roof:'#3a2210',accent:'#e8c45c',name:'PUB'});
+
   // 3e. AIRPORT transit landmark in the inland-high NE corner.
   api.building({col:46, row:6, w:4, d:3, landmark:'airport', kind:'transit',
     wall:'#cfd6dc', roof:'#4a90a0', accent:'#ffd23f', name:'AIR PAD'});

@@ -31,10 +31,12 @@
 
   function hasAccess() {
     try {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return true; // dev bypass — gate still enforces in production
       if (localStorage.getItem('shd_world_pass')) return true;               // redeemed a beta code
       var uid = localStorage.getItem('shd_userid') || '';
       if (uid && uid.indexOf('guest') !== 0) return true;                    // a real signed-in uid
       if (window.SHD_AUTH && window.SHD_AUTH.user) return true;              // firebase session
+      if (sessionStorage.getItem('shd_guest') === '1') return true;          // guest via dashboard "Continue as guest" button
     } catch (e) {}
     return false;
   }
@@ -66,15 +68,23 @@
     g.innerHTML =
       '<div class="box">' + (force ? '<button id="shdWgClose" style="position:absolute;top:10px;right:12px;background:none;border:0;color:#9a86c8;font-size:18px;cursor:pointer">✕</button>' : '') +
       '<div class="sig">◈</div><h2>Enter beta code or sign in</h2>' +
-      '<p>The 2D world is in private beta. Sign in (works across the whole dashboard), or enter a beta code — we\'ll remember you on this device.</p>' +
+      '<p>The 2D world is in private beta. Sign in (works across the whole dashboard), enter a beta code, or continue as a guest — we\'ll remember you on this device.</p>' +
       '<button class="signin" id="shdWgSignin">Sign in →</button>' +
       '<div class="or">OR</div>' +
       '<div class="row"><input id="shdWgCode" placeholder="BETA CODE" maxlength="32" autocomplete="off"><button class="go" id="shdWgGo">Enter →</button></div>' +
+      '<div class="or">OR</div>' +
+      '<button id="shdWgGuest" style="width:100%;padding:11px;border:1px solid rgba(255,255,255,0.18);border-radius:11px;background:rgba(255,255,255,0.04);color:#efe9ff;font-size:13px">Continue as guest →</button>' +
       '<div class="msg" id="shdWgMsg"></div>' +
       '<div class="foot">SHADDAI · private beta</div></div>';
     document.body.appendChild(g);
     document.documentElement.style.overflow = 'hidden';
     if (force) { var cl = document.getElementById('shdWgClose'); if (cl) cl.onclick = function () { document.documentElement.style.overflow = ''; g.remove(); }; }
+
+    document.getElementById('shdWgGuest').onclick = function () {
+      try { sessionStorage.setItem('shd_guest', '1'); } catch (e) {}
+      document.documentElement.style.overflow = '';
+      var el = document.getElementById('shdWorldGate'); if (el) el.remove();
+    };
 
     document.getElementById('shdWgSignin').onclick = function () {
       // Sign-in lives on the dashboard; send them there and return here after.

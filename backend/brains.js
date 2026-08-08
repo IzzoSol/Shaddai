@@ -131,12 +131,13 @@ async function agentLLM({ agent = 'SHADDAI', messages = [], taskTier = 'standard
   // a REAL answer instead of vague filler. Look up the latest user message; if the KB knows it, inject
   // it as authoritative context. Never throws.
   try {
-    if (_kb) {
+    if (_kb && _kb.lookupTop) {
       const lastUser = [...messages].reverse().find(m => m && m.role === 'user');
       const q = lastUser && (typeof lastUser.content === 'string' ? lastUser.content : '');
-      const hit = q && (_kb.lookup(agent, q) || _kb.lookupAny(q));
-      if (hit && hit.text) {
-        sys += `\n\nAUTHORITATIVE KNOWLEDGE (this is correct — answer from it, do not hedge):\n${hit.title}: ${hit.text}`;
+      const hits = q ? _kb.lookupTop(agent, q, 2) : [];
+      if (hits.length) {
+        sys += `\n\nAUTHORITATIVE KNOWLEDGE (answer from this — do not hedge or contradict it):\n` +
+          hits.map(h => `## ${h.title}\n${h.text}`).join('\n\n');
       }
     }
   } catch (e) { /* grounding is best-effort */ }

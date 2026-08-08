@@ -63,6 +63,9 @@ window.RegionGen['desert'] = function(api){
     });
   }
 
+  // ---- PUB near the oasis/ring road ----
+  api.building({col:28,row:38,w:3,d:3,floors:1,kind:'shop',wall:'#5a3a1a',roof:'#3a2210',accent:'#e8c45c',name:'PUB'});
+
   // ---- GRAND FORGE landmark ----
   api.building({col:29,row:17,w:3,d:2,floors:2,landmark:'forge',kind:'shop',wall:'#b07038',roof:'#5a3a1c',accent:'#ff8a3c',name:'GRAND FORGE'});
 

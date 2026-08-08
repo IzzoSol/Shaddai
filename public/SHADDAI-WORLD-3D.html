@@ -1730,7 +1730,7 @@ function _animateAgentBody(s, t, dt){
     // the side because the generic idle applied an x-lean/z-sway that his authored mesh made
     // read as a tilt. _upright agents get a clean vertical march, no lean/no sway. ← WALK/TILT FIX
     const _code = (s.a && (s.a.codename||'').toUpperCase()) || '';
-    const _upright = (_code==='SHADDAI' || _code==='NEXUS' || _code==='QUILL');
+    const _upright = (_code==='SHADDAI' || _code==='NEXUS' || _code==='QUILL' || _code==='TURTLE' || _code==='PIKADON' || _code==='ORACLE' || _code==='ZEROX');
     if(_upright){
       s._wph += dt * 3.2;                                           // steady in-place step cadence
       b.position.y = baseY + Math.abs(Math.sin(s._wph)) * 0.12      // marching bob (reads as walking-in-place)

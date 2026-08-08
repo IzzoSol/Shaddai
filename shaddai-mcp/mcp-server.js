@@ -67,6 +67,18 @@ const TOOLS = [
     description: 'List the 7 SHADDAI agents and what each specializes in. Call this first if unsure which agent fits a task.',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
+  {
+    name: 'shaddai_search_mastery',
+    description: 'Search SHADDAI mastery cards (knowledge distilled from thousands of transcripts). Finds relevant chapters from any agent\'s training: SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON. Returns up to 5 matching passages with source names and relevance scores.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'What you want to know — the search question.' },
+        agent: { type: 'string', description: 'Optional — narrow to one agent (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Defaults to all.' },
+      },
+      required: ['query'],
+    },
+  },
 ];
 
 // Per-agent specialist tools — one named tool per agent so the model auto-picks the right one.
@@ -123,6 +135,15 @@ async function callTool(name, args) {
     const url = d.url || d.image_url;
     if (!url) return 'Error: ' + (d.error || 'no image returned');
     return 'TURTLE generated an image:\n' + url + '\n\n![generated image](' + url + ')';
+  }
+
+  if (name === 'shaddai_search_mastery') {
+    const d = await callAPI('/api/mastery/search', { query: args.query, agent: args.agent || '' });
+    if (d.error) return 'Error: ' + d.error;
+    if (!d.ok || !d.results || !d.results.length) return 'No mastery matches found for "' + args.query + '".';
+    return d.results.map((r, i) =>
+      '[' + (i + 1) + '] ' + r.source + ' (relevance: ' + r.score + ')\n' + r.chunk
+    ).join('\n\n');
   }
 
   const spec = SPECIALISTS.find(s => name === 'shaddai_' + s.key);

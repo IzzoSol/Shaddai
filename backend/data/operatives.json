@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 25,
+  "nextTokenId": 26,
   "operatives": {
     "op_cb564d97_1783480230467": {
       "id": "op_cb564d97_1783480230467",
@@ -51,7 +51,9 @@
         "iq": 70
       },
       "createdAt": 1783480230467,
-      "updatedAt": 1783605629989
+      "updatedAt": 1784989612493,
+      "monetized": true,
+      "monetizePrice": 0.03
     },
     "op_2e0d277b_1784428691923": {
       "id": "op_2e0d277b_1784428691923",
@@ -274,6 +276,57 @@
       },
       "createdAt": 1784498851973,
       "updatedAt": 1784498851973
+    },
+    "op_x_1784934004397": {
+      "id": "op_x_1784934004397",
+      "tokenId": 25,
+      "owner": "smoke_owner",
+      "codename": "SMOKEPIX",
+      "archetype": "pixel",
+      "model": "SHADDAI",
+      "rarity": "common",
+      "look": {
+        "archetype": "pixel",
+        "rig": {
+          "skin": "#c98",
+          "hat": "cap"
+        }
+      },
+      "portrait": null,
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "pixel",
+          "rig": {
+            "skin": "#c98",
+            "hat": "cap"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 40,
+        "power": 40,
+        "iq": 40
+      },
+      "createdAt": 1784934004397,
+      "updatedAt": 1784934004397
     }
   }
 }

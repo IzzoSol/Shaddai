@@ -588,6 +588,30 @@ function handleWebSocketMessage(clientId, data, ws) {
 // x402 payment discovery (HTTP 402 micropayments — primary rail; free unless X402_ENABLED)
 app.get('/.well-known/x402.json', (req, res) => res.json(require('./lib/x402').discovery()));
 
+// ===== CITY ROUTES — Phase A =====
+app.get('/api/city/plots', (req, res) => {
+  const plots = Array.from({length: 30}, (_, i) => ({
+    id: 'plot-founders-' + i, slot: i,
+    col: 6 + (i % 10) * 5, row: 4 + ((i / 10) | 0) * 5,
+    district: 'agentcity', rate: 0.5,
+  }));
+  res.json({ plots });
+});
+app.post('/api/city/signal-drop', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'] || (req.body && req.body.userId);
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const { getInstance } = require('./economy-service');
+    const econ = getInstance();
+    const key = 'signal-drop-' + userId + '-' + Date.now();
+    await econ.spend(userId, 50, 'Signal rescue taxi fee', key);
+    res.json({ ok: true, deducted: 50 });
+  } catch (err) {
+    res.json({ ok: true, note: 'client-side only', reason: err.message });
+  }
+});
+// ===== END CITY ROUTES =====
+
 app.get('/api/health', (req, res) => {
   const health = {
     status: 'operational',
@@ -609,6 +633,95 @@ app.get('/api/health', (req, res) => {
 
   cache.set('health', health, 5000);
   res.json(health);
+});
+
+// MCP + RAG status — powers the landing page MCP/RAG section (also handy for
+// verifying the bridge + knowledge bases are ready for Claude Desktop/Code).
+// Cached: the KB stats read several MB of JSON, so don't recompute per hit.
+app.get('/api/mcp/status', (req, res) => {
+  const cached = cache.get('mcpStatus');
+  if (cached) return res.json(cached);
+
+  const fsx = require('fs');
+  const pathx = require('path');
+  const bridgePath = pathx.join(__dirname, 'mcp-server-rag.js');
+  const bridge = fsx.existsSync(bridgePath);
+  let bridgeVersion = null;
+  if (bridge) {
+    const m = /const VERSION = '([^']+)'/.exec(fsx.readFileSync(bridgePath, 'utf8'));
+    bridgeVersion = m ? m[1] : null;
+  }
+
+  // Per-agent RAG knowledge base stats (docs, chars, source names — trimmed).
+  const agents = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+  const kbs = [];
+  let totalChars = 0;
+  try {
+    const rag = require('./rag-index');
+    for (const id of agents) {
+      const ns = 'kb_' + id.toLowerCase();
+      let docs = [];
+      try { docs = rag.listUserDocs(ns) || []; } catch (_) {}
+      let chars = 0;
+      try {
+        const p = pathx.join(__dirname, 'data', 'rag', ns, 'docs.json');
+        if (fsx.existsSync(p)) {
+          const parsed = JSON.parse(fsx.readFileSync(p, 'utf8'));
+          chars = (parsed || []).reduce((s, d) => s + (d.text ? d.text.length : 0), 0);
+        }
+      } catch (_) {}
+      totalChars += chars;
+      kbs.push({
+        agent: id, kb: ns, docs: docs.length, chars,
+        sources: docs.slice(0, 8).map(d => d.name),
+      });
+    }
+  } catch (e) {
+    kbs.push({ error: String((e && e.message) || e) });
+  }
+
+  // Connected MCP servers (filesystem/fetch/memory + any disabled ones).
+  let mcpServers = null;
+  try {
+    const mcp = require('./mcp-client');
+    const servers = mcp.listServers ? mcp.listServers() : [];
+    mcpServers = (servers || []).map(s => ({
+      id: s.id,
+      transport: s.transport,
+      disabled: !!s.disabled,
+      status: s.status || 'unknown',
+      tools: s.toolCount || 0,
+    }));
+  } catch (_) {}
+
+  const out = {
+    ok: true,
+    status: bridge ? 'ready' : 'missing-bridge',
+    bridge: { file: bridgePath, exists: bridge, version: bridgeVersion },
+    agents: kbs,
+    totals: { kbChars: totalChars, kbMB: +(totalChars / 1048576).toFixed(2) },
+    mcpServers,
+    mcpClientLoaded: mcpServers !== null,
+    timestamp: new Date().toISOString(),
+  };
+  cache.set('mcpStatus', out, 30000); // 30s TTL — fresh enough for a status panel
+  res.json(out);
+});
+
+// Gated download of the private SHADDAI MCP package (full engine closure).
+// Query param ?code= unlocks it — defaults to the landing page's gate phrase.
+// The zip is built by backend/build-mcp-package.js.
+app.get('/api/mcp/package', (req, res) => {
+  const zip = path.join(__dirname, 'shaddai-mcp-dist.zip');
+  if (!fs.existsSync(zip)) {
+    return res.status(404).json({ ok: false, error: 'Package not built yet. Run `node build-mcp-package.js` in backend/.' });
+  }
+  const gate = process.env.MCP_PACKAGE_CODE || 'ASCEND-MCP';
+  const code = String(req.query.code || '').trim();
+  if (code !== gate) {
+    return res.status(403).json({ ok: false, error: 'Enter the gate passphrase to download the SHADDAI MCP package.' });
+  }
+  res.download(zip, 'shaddai-mcp.zip');
 });
 
 app.get('/api/status', (req, res) => {
@@ -946,6 +1059,19 @@ catch (e) { console.warn('[prod] achievements failed:', e.message); }
 app.use('/api/llm', require('./llm-proxy-routes'));
 app.post('/api/agentic/run', express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools
 app.post('/api/orchestrate', express.json(), require('./lib/orchestrate').handler);      // SHADDAI orchestrator — decompose a task & route to the right specialists
+// Mastery card RAG search — used by the MCP server, dashboards, and external clients
+app.post('/api/mastery/search', express.json(), (req, res) => {
+  try {
+    const { query, agent } = req.body || {};
+    if (!query) return res.status(400).json({ error: 'query required' });
+    const rag = require('./rag-index');
+    const namespace = 'kb_' + (String(agent || 'SHADDAI').toLowerCase());
+    const results = rag.searchUser(namespace, query, 5);
+    res.json({ ok: true, results: results.map(r => ({ source: r.docName, chunk: r.chunkText.slice(0, 300), score: r.score })) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String((e && e.message) || e) });
+  }
+});
 // ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
 app.use('/api/worlds', require('./routes/worlds-api'));
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
@@ -1898,6 +2024,33 @@ if (!process.env.VERCEL_ENV) {
       }
     } catch (e) { console.warn('[keep-alive] init skipped:', e && e.message); }
 
+    // ── RAG rebuild: populate agent knowledge from mastery cards on startup ────
+    try {
+      const rag = require('./rag-index');
+      const masteryRoot = path.join(__dirname, 'knowledge', 'mastery');
+      if (fs.existsSync(masteryRoot)) {
+        let loaded = 0;
+        for (const agentDir of fs.readdirSync(masteryRoot, { withFileTypes: true })) {
+          if (!agentDir.isDirectory()) continue;
+          const agentKey = 'kb_' + agentDir.name.toLowerCase();
+          const dir = path.join(masteryRoot, agentDir.name);
+          for (const file of fs.readdirSync(dir)) {
+            if (!file.endsWith('.md')) continue;
+            const docName = 'MASTERY_' + file.replace(/\.md$/, '');
+            // Skip if already indexed
+            const existing = rag.listUserDocs(agentKey);
+            if (existing.some(d => d.name === docName)) continue;
+            const text = fs.readFileSync(path.join(dir, file), 'utf8');
+            if (text.length > 200) {
+              rag.addDocument(agentKey, docName, text);
+              loaded++;
+            }
+          }
+        }
+        if (loaded) console.log(`[RAG] loaded ${loaded} mastery cards into agent knowledge`);
+      }
+    } catch (e) { console.warn('[RAG] rebuild skipped:', e && e.message); }
+
     console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  SHADDAI PRODUCTION SERVER v62                        ║
@@ -1946,6 +2099,19 @@ if (!process.env.VERCEL_ENV) {
     console.log('  • job_awarded');
 
     logger.info('SERVER', 'All services ready');
+
+    // Boot auto-connect for enabled MCP servers (non-blocking) so agents
+    // see their tools immediately. Failures are logged, never crash boot.
+    try {
+      require('./mcp-client').autoConnectAll().then(results => {
+        for (const r of results) {
+          if (r.ok) logger.info('MCP', `connected ${r.id} (${r.tools} tools)`);
+          else logger.warn('MCP', `auto-connect ${r.id} failed: ${r.error}`);
+        }
+      }).catch(e => logger.warn('MCP', `auto-connect error: ${e.message}`));
+    } catch (e) {
+      logger.warn('MCP', `auto-connect init failed: ${e.message}`);
+    }
   });
 }
 

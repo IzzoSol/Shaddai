@@ -1,0 +1,46 @@
+{
+  "name": "shaddai-mcp",
+  "version": "2.3.0",
+  "description": "SHADDAI 7-agent council + RAG knowledge bases as a Model Context Protocol server. Key-free: no API keys, no external LLM, no localhost. Wire it into Claude with one npx line and instantly get a knowledge-grounded 7-agent system.",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "mcp-server-rag.js",
+  "bin": {
+    "shaddai-mcp": "mcp-server-rag.js"
+  },
+  "scripts": {
+    "start": "node mcp-server-rag.js",
+    "mcp": "node mcp-server-rag.js",
+    "self": "node mcp-server-rag.js --self-test",
+    "self-full": "node mcp-server-rag.js --self-test-full",
+    "test": "node mcp-server-rag.js --self-test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "rag",
+    "claude",
+    "agents",
+    "ai",
+    "knowledge-base",
+    "shaddai"
+  ],
+  "files": [
+    "mcp-server-rag.js",
+    "rag-index.js",
+    "data/",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IzzoSol/shaddai-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IzzoSol/shaddai-mcp/issues"
+  },
+  "homepage": "https://github.com/IzzoSol/shaddai-mcp"
+}

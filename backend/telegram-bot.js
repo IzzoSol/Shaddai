@@ -15,6 +15,7 @@ const DS_SEARCH = (q) => `https://api.dexscreener.com/latest/dex/search?q=${enco
 const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`;
 const _core = require('./telegram-core');
 const _pnl = require('./telegram-pnl');
+const _wallets = require('./telegram-wallets');
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -51,6 +52,10 @@ function _help() {
     '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
     '/dist — performance distribution (1-2x / 2-5x / 5-10x / 10x+)\n' +
     '/preset — view/switch filter presets (locked liq + whale conviction)\n' +
+    '/wallets — list tracked wallets (smart money / alpha wallets)\n' +
+    '/watch <code>&lt;address&gt; [label] [type]</code> — track a wallet (ape alerts)\n' +
+    '/unwatch <code>&lt;address&gt;</code> — stop tracking a wallet\n' +
+    '/wallet <code>&lt;address&gt;</code> — wallet profile + links\n' +
     '/signals — the free live signals channel\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
@@ -182,6 +187,10 @@ async function _handle(cfg, update) {
       return _send(t, chatId, _pnl.lastCalls(n));
     }
 
+    // /active — live calls right now (not rugged, <72h), sorted by current gain
+    case 'active': case 'live': case 'open': case 'now':
+      return _send(t, chatId, _pnl.activeCalls ? _pnl.activeCalls() : _pnl.lastCalls(25));
+
     // /pnl <ticker> — PNL card for one token (milestone image if at that level, text always)
     case 'pnl': {
       if (!arg) return _send(t, chatId, 'Usage: /pnl <code>&lt;ticker&gt;</code>  e.g. <code>/pnl SOLANDIER</code>');
@@ -243,6 +252,39 @@ async function _handle(cfg, update) {
       );
     }
 
+    // /watch <address> [label] [type] — add wallet to watchlist
+    case 'watch': {
+      if (!arg) return _send(t, chatId, 'Usage: <code>/watch &lt;address&gt; [label] [alpha|whale|smart|kol|dev]</code>\n\nExample: <code>/watch ABC...XYZ "Whale Wang" whale</code>');
+      const parts = arg.match(/^(\S+)(?:\s+"([^"]+)"|\s+(\S+))?(?:\s+(alpha|whale|smart|kol|dev|fund|team))?$/i);
+      const addr = parts ? parts[1] : arg.split(/\s+/)[0];
+      const label = parts ? (parts[2] || parts[3] || null) : null;
+      const type = (parts && parts[4]) || 'alpha';
+      const w = _wallets.addWallet(addr, label, type);
+      if (!w) return _send(t, chatId, '❌ Invalid address. Must be a valid Solana address (32-44 chars).');
+      _wallets.restartWatcher();
+      return _send(t, chatId,
+        `✅ <b>Watching</b> ${_wallets._walletEmoji ? '' : ''}wallet\n\n` +
+        `Label: <b>${_esc(w.label)}</b>\n` +
+        `Type: <b>${_esc(w.type)}</b>\n` +
+        `<code>${_esc(w.address)}</code>\n\n` +
+        `I'll alert when this wallet apes into something and show when it's in a signal's top holders.`
+      );
+    }
+
+    case 'unwatch': {
+      if (!arg) return _send(t, chatId, 'Usage: <code>/unwatch &lt;address&gt;</code>');
+      const removed = _wallets.removeWallet(arg.trim());
+      _wallets.restartWatcher();
+      return _send(t, chatId, removed ? `✅ Removed from watchlist.` : `❌ Address not found in watchlist.`);
+    }
+
+    case 'wallets': case 'watching': return _send(t, chatId, _wallets.walletsListCard());
+
+    case 'wallet': {
+      if (!arg) return _send(t, chatId, 'Usage: <code>/wallet &lt;address&gt;</code>\nOr use /wallets to see all watched.');
+      return _send(t, chatId, _wallets.walletCard(arg.trim()));
+    }
+
     case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}` : 'Signals channel not configured yet.');
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'about': case 'project': case 'info': { const news = require('./telegram-news'); const img = news._botImage(); const cap = news.projectPromo(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
@@ -263,34 +305,50 @@ async function _getUpdates(token, offset) {
 }
 
 // Register commands so they show up in Telegram's "/" menu
+// Must register for EACH scope — default only covers private chats
 async function _registerCommands(token) {
-  try {
-    await fetch(TG(token, 'setMyCommands'), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commands: [
-        { command: 'start', description: 'Welcome + links' },
-        { command: 'help', description: 'List all commands' },
-        { command: 'lb', description: 'Leaderboard — top calls ranked by Xs' },
-        { command: 'last25', description: 'Last 25 calls with live PNLs' },
-        { command: 'last50', description: 'Last 50 calls with live PNLs' },
-        { command: 'last100', description: 'Last 100 calls with live PNLs' },
-        { command: 'pnl', description: 'PNL card for a token' },
-        { command: 'held', description: 'Conviction holds — calls still green' },
-        { command: 'price', description: 'Live DEX price of a token' },
-        { command: 'rug', description: 'Rug-check a Solana mint' },
-        { command: 'preset', description: 'View/switch filter presets' },
-        { command: 'stats', description: 'Hit-rate + best calls scorecard' },
-        { command: 'dist', description: 'Performance distribution + top' },
-        { command: 'ask', description: 'Ask a SHADDAI agent' },
-        { command: 'zerox', description: 'ZEROX market analysis + sentiment' },
-        { command: 'news', description: 'Live market pulse' },
-        { command: 'signals', description: 'Free live signals channel' },
-        { command: 'agents', description: 'What is SHADDAI' },
-        { command: 'axiom', description: 'Axiom trading edge' },
-        { command: 'gm', description: 'gm ☀️' },
-      ] }),
-    });
-  } catch (e) { /* non-fatal */ }
+  const commands = [
+    { command: 'start',   description: 'Welcome + links' },
+    { command: 'help',    description: 'All commands list' },
+    { command: 'active',  description: 'Live calls right now — not rugged, sorted by gain' },
+    { command: 'lb',      description: 'Leaderboard — top calls ranked by Xs' },
+    { command: 'last25',  description: 'Last 25 calls with live PNLs' },
+    { command: 'last50',  description: 'Last 50 calls with live PNLs' },
+    { command: 'last100', description: 'Last 100 calls with live PNLs' },
+    { command: 'pnl',     description: 'PNL card for a token  e.g. /pnl PORK' },
+    { command: 'held',    description: 'Conviction holds — calls still green' },
+    { command: 'stats',   description: 'Hit-rate + best calls scorecard' },
+    { command: 'dist',    description: 'Performance distribution breakdown' },
+    { command: 'price',   description: 'Live DEX price  e.g. /price BONK' },
+    { command: 'rug',     description: 'Rug-check a Solana mint' },
+    { command: 'preset',  description: 'View/switch signal filter presets' },
+    { command: 'ask',     description: 'Ask a SHADDAI agent anything' },
+    { command: 'zerox',   description: 'ZEROX market analysis + sentiment' },
+    { command: 'news',    description: 'Live market pulse' },
+    { command: 'signals', description: 'Free live signals channel link' },
+    { command: 'agents',  description: 'What is SHADDAI' },
+    { command: 'wallets', description: 'List tracked wallets (smart money)' },
+    { command: 'watch',   description: 'Track a wallet — get ape alerts' },
+    { command: 'unwatch', description: 'Stop tracking a wallet' },
+    { command: 'wallet',  description: 'Wallet profile + links' },
+    { command: 'axiom',   description: 'Axiom trading edge + referral' },
+    { command: 'gm',      description: 'gm ☀️' },
+  ];
+  // Register for all scopes so "/" menu works in private chats, groups, and channels
+  const scopes = [
+    { type: 'default' },
+    { type: 'all_private_chats' },
+    { type: 'all_group_chats' },
+    { type: 'all_chat_administrators' },
+  ];
+  for (const scope of scopes) {
+    try {
+      await fetch(TG(token, 'setMyCommands'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commands, scope }),
+      });
+    } catch (e) { /* non-fatal */ }
+  }
 }
 
 let _running = false;

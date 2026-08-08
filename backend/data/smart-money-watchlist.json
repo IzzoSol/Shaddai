@@ -1,0 +1,413 @@
+{
+  "generated": "2026-08-03T23:26:56.100Z",
+  "winnersAnalyzed": 20,
+  "serialDeployers": [],
+  "repeatInsiders": [],
+  "smartMoneyHolders": [
+    {
+      "wallet": "11111111111111111111111111111111",
+      "appearances": 14,
+      "totalPeak": 277.4,
+      "tokens": [
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "Pippinkawa",
+          "peak": 21.6
+        },
+        {
+          "symbol": "RACCHUA",
+          "peak": 19.4
+        },
+        {
+          "symbol": "RACCHUA",
+          "peak": 19.4
+        },
+        {
+          "symbol": "RACCEM",
+          "peak": 18.5
+        },
+        {
+          "symbol": "RACCEM",
+          "peak": 18.5
+        },
+        {
+          "symbol": "Cupsey",
+          "peak": 7.2
+        }
+      ]
+    },
+    {
+      "wallet": "E6ZoKeRSuqa6VvQupDquRoDrfpT39bFmuY8pn3zC8fUv",
+      "appearances": 3,
+      "totalPeak": 61.3,
+      "tokens": [
+        {
+          "symbol": "Raccbit",
+          "peak": 21
+        },
+        {
+          "symbol": "RACOIN",
+          "peak": 20.8
+        },
+        {
+          "symbol": "ACTR",
+          "peak": 19.5
+        }
+      ]
+    },
+    {
+      "wallet": "FovyqU6mZc78ztaM4ygGLGxL8JZmFPuCtrEu3R6C258K",
+      "appearances": 3,
+      "totalPeak": 61.3,
+      "tokens": [
+        {
+          "symbol": "Raccbit",
+          "peak": 21
+        },
+        {
+          "symbol": "RACOIN",
+          "peak": 20.8
+        },
+        {
+          "symbol": "ACTR",
+          "peak": 19.5
+        }
+      ]
+    },
+    {
+      "wallet": "FUT1kN6BEbquHFaLvGdqepgtRfAnDni2MevFUNS7BC1X",
+      "appearances": 3,
+      "totalPeak": 61.3,
+      "tokens": [
+        {
+          "symbol": "Raccbit",
+          "peak": 21
+        },
+        {
+          "symbol": "RACOIN",
+          "peak": 20.8
+        },
+        {
+          "symbol": "ACTR",
+          "peak": 19.5
+        }
+      ]
+    },
+    {
+      "wallet": "5UZJ3b3BmDdwebD21HH6EtrqgtTT9Fa5UPAznBUFWpb1",
+      "appearances": 3,
+      "totalPeak": 61.3,
+      "tokens": [
+        {
+          "symbol": "Raccbit",
+          "peak": 21
+        },
+        {
+          "symbol": "RACOIN",
+          "peak": 20.8
+        },
+        {
+          "symbol": "ACTR",
+          "peak": 19.5
+        }
+      ]
+    },
+    {
+      "wallet": "GzyaVSRTQCsuaHAM7PFxbiGxrLHsxrXz4soCfPopc3BQ",
+      "appearances": 3,
+      "totalPeak": 53.7,
+      "tokens": [
+        {
+          "symbol": "RACCHUA",
+          "peak": 19.4
+        },
+        {
+          "symbol": "RACCEM",
+          "peak": 18.5
+        },
+        {
+          "symbol": "SUB2",
+          "peak": 15.8
+        }
+      ]
+    },
+    {
+      "wallet": "EL1yT5YcWBCpSHNzQstop4WW6RmuPG7GLmJRd8GuXGur",
+      "appearances": 2,
+      "totalPeak": 47.4,
+      "tokens": [
+        {
+          "symbol": "JIMOTHY",
+          "peak": 31.6
+        },
+        {
+          "symbol": "SUB2",
+          "peak": 15.8
+        }
+      ]
+    },
+    {
+      "wallet": "8m8yPDfbiLfxdAjiz1Zb2HArNNWf486KGZf4JAabPcRD",
+      "appearances": 2,
+      "totalPeak": 38.9,
+      "tokens": [
+        {
+          "symbol": "ACTR",
+          "peak": 19.5
+        },
+        {
+          "symbol": "RACCHUA",
+          "peak": 19.4
+        }
+      ]
+    },
+    {
+      "wallet": "8psNvWTrdNTiVRNzAgsou9kETXNJm2SXZyaKuJraVRtf",
+      "appearances": 2,
+      "totalPeak": 31.6,
+      "tokens": [
+        {
+          "symbol": "RACCEM",
+          "peak": 18.5
+        },
+        {
+          "symbol": "LEGEND",
+          "peak": 13.1
+        }
+      ]
+    }
+  ],
+  "perToken": [
+    {
+      "symbol": "ANMOND",
+      "peak": 48.7,
+      "mint": "4nA3PW6DPmVzNDeKKa3SmfpKeY7LS1yXsRFJm9oEpump",
+      "creator": "6o4ftwpB9LodPHwym9Sn3g2mb3SPTj1iE8uESMuZJryb",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "JIMOTHY",
+      "peak": 31.6,
+      "mint": "GgJq4UwLvsPrKxLV4xDKm3aJn9pvx7jXAVenKgePpump",
+      "creator": "8ZLorWmm3YHiYCqqen31UJwg8cuTYXLqpfqEd5t2FZoa",
+      "insiderCount": 0,
+      "graphInsiders": 32,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "MrSue",
+      "peak": 29.2,
+      "mint": "43mjozsTLTViop3seWnmgkcf1DRj6qMf1JWw7X8ypump",
+      "creator": "9Ws77Loy97odvDtXWHfMavVyk9pLFRYy7YDY3ttMxBtQ",
+      "insiderCount": 0,
+      "graphInsiders": 15,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "Mmm",
+      "peak": 23.3,
+      "mint": "DD8rKbR6rydyzKr4LSbZ34whoU39aPmQCnMK41V1pump",
+      "creator": "Ep9VvkJJfGz9mcfqNczLK88Jaai7eEVSCxC9HRpWRoAs",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "Pippinkawa",
+      "peak": 21.6,
+      "mint": "2jZYuNm65bGmY7T8ChQvdGq6oX9y9y99Z8kA6ozvpump",
+      "creator": "6nSRdkmBFfv5PjapecspcP2Sj2EHWbfcB9gh5zYNnh7q",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "Raccbit",
+      "peak": 21,
+      "mint": "59PGW8bfszAmFBmyEfUdm6Jp4X7UdcPM8DiVcvBcpump",
+      "creator": "BicV4ZfzjDKwe8nXxxWjq2za2J2ko7Q4CM4h9PVBPryC",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "RACOIN",
+      "peak": 20.8,
+      "mint": "8VB5j49CimiSRHXLjUXZupefEwHsVEJUbZc1gp11pump",
+      "creator": "Hox429BKEH4NxbmhbaWUvtVBq8wk1tYwUMggZpwygHVt",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "GLOOB",
+      "peak": 20,
+      "mint": "HmMNqFyy1rwSrGfASY1ajWktjjKmdtm4tLQn87rQpump",
+      "creator": "JAnbm5qdwdmvuqQb93ENSQoBw24ZTUx2Rm518BpHPZUi",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "ACTR",
+      "peak": 19.5,
+      "mint": "DoAG1HmKYcnQiHn6DnpRsy6LKvGTkBgv1776YMN8pump",
+      "creator": "J66bj6m2dAZ1HRNUBRTcoKCesqWHTCDhzU5g88smyuvs",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "Blackmothy",
+      "peak": 19.5,
+      "mint": "HekL5sMgvpsuypitEc7ThcrAtRCT59zMxqvcH7T4pump",
+      "creator": "G68jPUQFQvUyQLTp2WsiNPckceT3X1meXYvWbpCXYCL4",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "RACCHUA",
+      "peak": 19.4,
+      "mint": "J4Bd5mXnqy5tzQc8XSpbDV5qJ1s7kV5LJbe6wKvMpump",
+      "creator": "5GJTWjJjRza9Ffy93EtC2PpxTGzvLpjED3cYo6JmTxVU",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "RACSEM",
+      "peak": 19.3,
+      "mint": "9Gsj9bbmekAvDbaTX4EvEJu6opWTn66oFuDcybG3pump",
+      "creator": "8EedzHWaotKYyc1tQBmzb4gLiRyDj6oEBmWLcEVxyTqx",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "RACCEM",
+      "peak": 18.5,
+      "mint": "6YtBaPruY4oGLyYEeyW3XRbPSkes8qwr3vH5Wp7Spump",
+      "creator": "GBBWwGqGxcdJa2BDpnkwzRTpD9K9Sh4JEM7CVzWtQ2i",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "SUB",
+      "peak": 18.3,
+      "mint": "EPKPcUPmhcDfpRq1LtN46FuysHo49D5Q6W2L2oPmpump",
+      "creator": "A1jmc6mZGgCEJSSyj2BULXgYTHvAEShZERSiDQmnkufX",
+      "insiderCount": 0,
+      "graphInsiders": 14,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "HOG",
+      "peak": 16.7,
+      "mint": "6Ysh8UFncdyHrafGnNvKmHi96cuD1vQDjqk1iV2zpump",
+      "creator": "3SdRiCG8Cj2654rhaqRqhSbNjpqQEp9mhztZaet15nX5",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "SUB2",
+      "peak": 15.8,
+      "mint": "rt4yXXHYeQLr7H8YqUb8NCB3gcEuXbEieQ458q6pump",
+      "creator": "HpUNFLPgaZeQNVGiH2gTkPriVpcu3mdKxJYt1dHY4NK4",
+      "insiderCount": 0,
+      "graphInsiders": 4,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "bull",
+      "peak": 14.2,
+      "mint": "7hiJh2852KMUN2SSk5hK1tk97HpefbGYby1TLn24pump",
+      "creator": "8ZN71XTdVo8yRovnGLmNgW3Tgniw6A4J3JGLvPD686FP",
+      "insiderCount": 0,
+      "graphInsiders": 12,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "LEGEND",
+      "peak": 13.1,
+      "mint": "ChJpVy89fLPUzy2QBmBaAk3KVeR9ncnBYWL4knCxpump",
+      "creator": "Exn5JCcELPNioXfu2XKV4VvCyNwvbXtCtrseQxmDV9WB",
+      "insiderCount": 0,
+      "graphInsiders": 6,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "USOH",
+      "peak": 12.3,
+      "mint": "Nhr8g2MZzNPj3ygswfGas57arhzV2fH4gMV58M3pump",
+      "creator": "EFZxt7XY8nvdBFTTK9yahfQE35iwNVVjHYxnckz5MMu1",
+      "insiderCount": 0,
+      "graphInsiders": 13,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    },
+    {
+      "symbol": "Cupsey",
+      "peak": 7.2,
+      "mint": "C3R693DufymiZzUBxVMhWfRzqDgeFJtq9d6tbaC2pump",
+      "creator": "9YzsADihJcvGx4cgnZfHxQ1jM13dgLNV8CB21iiby9yo",
+      "insiderCount": 0,
+      "graphInsiders": 0,
+      "creatorTokens": 0,
+      "topHolderCount": 10
+    }
+  ]
+}

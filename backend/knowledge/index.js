@@ -31,17 +31,47 @@ function lookup(agentName, query) {
   try { return kb.lookup(query) || null; } catch (e) { return null; }
 }
 
-/** Best answer across ALL agents (for a generic ask with no specific agent). */
+/** Best answer across ALL agents (for a generic ask with no specific agent).
+ *  FIX: previously ranked by text.length (longest wins) — now calls each KB's
+ *  scorer and picks the one that returns a non-null result (first non-null wins,
+ *  ordered ZEROX first since it has the most signal-strategy context). */
 function lookupAny(query) {
   if (!query) return null;
-  let best = null, bestLen = 0;
-  for (const k of Object.keys(KBS)) {
+  // Priority: ZEROX first (richest signal/finance KB), then remaining agents.
+  const ordered = ['ZEROX', ...Object.keys(KBS).filter(k => k !== 'ZEROX')];
+  for (const k of ordered) {
+    const kb = KBS[k];
+    if (!kb) continue;
     try {
-      const r = KBS[k].lookup(query);
-      if (r && r.text && r.text.length > bestLen) { best = { agent: k, ...r }; bestLen = r.text.length; }
+      const r = kb.lookup(query);
+      if (r && r.text) return { agent: k, ...r };
     } catch (e) {}
   }
-  return best;
+  return null;
 }
 
-module.exports = { KBS, lookup, lookupAny, agents: Object.keys(KBS) };
+/** Return up to k relevant KB hits for (agentName, query), deduped by title.
+ *  Cross-KB lookup only consults ZEROX — it has the richest finance/signal context
+ *  and other KBs (NEXUS, PIKADON) match on noise words like "rate", "token", "limit". */
+function lookupTop(agentName, query, k = 2) {
+  if (!query) return [];
+  const agentKey = String(agentName || '').toUpperCase();
+  const seen = new Set();
+  const hits = [];
+  // 1. Primary: the specific agent's KB.
+  const h1 = lookup(agentName, query);
+  if (h1 && h1.text) { seen.add(h1.title); hits.push(h1); }
+  // 2. Cross-KB: only ZEROX for the second slot (avoids noise from NEXUS/PIKADON).
+  if (hits.length < k && agentKey !== 'ZEROX') {
+    const zerox = KBS['ZEROX'];
+    if (zerox) {
+      try {
+        const r = zerox.lookup(query);
+        if (r && r.text && !seen.has(r.title)) { seen.add(r.title); hits.push({ agent: 'ZEROX', ...r }); }
+      } catch (e) {}
+    }
+  }
+  return hits;
+}
+
+module.exports = { KBS, lookup, lookupAny, lookupTop, agents: Object.keys(KBS) };

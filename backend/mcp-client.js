@@ -54,7 +54,10 @@ function startStdio(def) {
     tools: [], status: 'connecting', proc: null
   };
   const env = { ...process.env, ...(def.env || {}) };
-  const proc = spawn(def.command, def.args || [], { env, stdio: ['pipe', 'pipe', 'pipe'], shell: process.platform === 'win32' });
+  // shell:true on Windows concatenates args with spaces → a path like "SHADDAI MASTER FINAL BUILD"
+  // would split into separate args. Quote any arg containing whitespace so it stays one argument.
+  const args = (def.args || []).map(a => /\s/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
+  const proc = spawn(def.command, args, { env, stdio: ['pipe', 'pipe', 'pipe'], shell: process.platform === 'win32' });
   conn.proc = proc;
   proc.stdout.on('data', (chunk) => {
     conn.buffer += chunk.toString('utf8');
@@ -197,6 +200,19 @@ function disconnect(serverId) {
   return true;
 }
 
+// Connect every enabled server at boot (fire-and-forget, never blocks startup).
+// Each server fails independently; failures are recorded in the status map.
+async function autoConnectAll(timeoutMs = 75000) {
+  const enabled = loadConfig().filter(s => !s.disabled);
+  const results = await Promise.allSettled(enabled.map(s => connect(s.id)));
+  return results.map((r, i) => ({
+    id: enabled[i].id,
+    ok: r.status === 'fulfilled',
+    tools: r.status === 'fulfilled' ? (r.value.tools || []).length : 0,
+    error: r.status === 'rejected' ? String(r.reason && r.reason.message || r.reason) : null
+  }));
+}
+
 function listServers() {
   const defs = loadConfig();
   return defs.map(d => {
@@ -268,5 +284,5 @@ function reloadConfig() { return loadConfig().length; }
 
 module.exports = {
   listServers, connect, disconnect, listTools, callTool, getAgentTools,
-  reloadConfig, loadConfig, saveConfig, getServerDef
+  autoConnectAll, reloadConfig, loadConfig, saveConfig, getServerDef
 };
