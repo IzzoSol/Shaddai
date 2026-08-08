@@ -976,6 +976,61 @@ app.get('/api/polymarket/prices', async (req, res) => {
   }
 });
 
+// ── Pro trading signals — backs the pro-signals page (PIW-gated client-side).
+// Source = the live Telegram PNL tracker (backend/data/tg-calls.json). Same-origin,
+// no key (registration + access control lives on the page itself). 1s response cache
+// so the heavily-polled feed never re-reads the JSON file per hit.
+app.get('/api/signals/calls', (req, res) => {
+  try {
+    const pnl = require('./telegram-pnl');
+    const limit = req.query.all === '1' ? 100 : Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const rows = pnl.callsJson({ limit, since: req.query.since, chain: req.query.chain, source: req.query.source });
+    res.json({ ok: true, total: rows.length, calls: rows });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+app.get('/api/signals/stats', (req, res) => {
+  try {
+    const pnl = require('./telegram-pnl');
+    const period = req.query.period || 'all';
+    const leaderboard = pnl.leaderboardJson({ limit: 10, period });
+    // Per-source breakdown in the shape the pro-signals page renders.
+    const all = pnl.callsJson({ limit: 100 });
+    const span = period === 'day' ? 1 : period === 'week' ? 7 : 0;
+    const since = span ? Date.now() - span * 86400000 : 0;
+    const by = {};
+    let total = 0;
+    for (const c of all) {
+      if (since && (c.ts || 0) < since) continue;
+      const src = c.source || 'unknown';
+      const b = by[src] || (by[src] = { total: 0, x2: 0, x5: 0, x10: 0 });
+      b.total++; total++;
+      if (c.peakMult >= 2) b.x2++;
+      if (c.peakMult >= 5) b.x5++;
+      if (c.peakMult >= 10) b.x10++;
+    }
+    const x2 = Object.values(by).reduce((s, b) => s + b.x2, 0);
+    const x5 = Object.values(by).reduce((s, b) => s + b.x5, 0);
+    const x10 = Object.values(by).reduce((s, b) => s + b.x10, 0);
+    res.json({ ok: true, total, hitRate: total ? Math.round(x2 / total * 100) : 0, x2, x5, x10, sources: by, leaderboard });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+app.get('/api/signals/leaderboard', (req, res) => {
+  try {
+    const pnl = require('./telegram-pnl');
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 25);
+    res.json({ ok: true, leaderboard: pnl.leaderboardJson({ limit, period: req.query.period }) });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+app.get('/api/signals/token/:q', (req, res) => {
+  try {
+    const pnl = require('./telegram-pnl');
+    res.json({ ok: true, token: pnl.findTokenJson(String(req.params.q || '').slice(0, 64)) });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
 // ============================================
 // PROXY ROUTES — mounted BEFORE agent wildcard so /api/agents/custom
 // is handled by proxy instead of being caught by /api/agents/:name
