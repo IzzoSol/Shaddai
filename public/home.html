@@ -130,8 +130,6 @@ body::before{
 .bar nav.mega .pillar:nth-child(4){ animation-delay:.28s; }
 .bar nav.mega .pillar:nth-child(5){ animation-delay:.32s; }
 .bar nav.mega .pillar:nth-child(6){ animation-delay:.36s; }
-.bar nav.mega .pillar:nth-child(7){ animation-delay:.40s; }
-.bar nav.mega .pillar:nth-child(8){ animation-delay:.44s; }
 .bar .menuBtn{ animation-delay:.2s; } .bar .corner{ animation-delay:.5s; }
 @keyframes barIn{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
 .bar .mark{ color:var(--ink); letter-spacing:.30em; font-weight:700; font-family:var(--f-display); }
@@ -309,13 +307,26 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
 .cta.primary{ border-color:rgba(0,255,156,.4); color:var(--emerald); }
 .cta .g{ margin-right:9px; opacity:.7; }
 /* ── SH machine-iris portal (KEEP → /lab-molecules.html) ── */
-#shGate{ position:relative; width:200px; height:200px; margin:34px auto 8px; cursor:pointer;
+#shGate{ position:relative; width:260px; height:260px; margin:34px auto 8px; cursor:pointer;
   opacity:0; animation:rise 1s .68s var(--ease) forwards; }
 #shGate canvas{ width:100%; height:100%; display:block; }
 #shGate .lbl{ position:absolute; left:0; right:0; bottom:-24px; text-align:center; font-family:var(--f-mono);
   font-size:9.5px; letter-spacing:.34em; text-transform:uppercase; color:var(--gold); opacity:.85; transition:color .3s, letter-spacing .3s; }
 #shGate:hover .lbl, #shGate:focus-visible .lbl{ color:var(--emerald); letter-spacing:.42em; }
 #shGate:focus-visible{ outline:none; }
+
+/* ── RAG Brain Overlay (fullscreen iframe) ── */
+#ragBrain{ position:fixed; inset:0; z-index:120;
+  opacity:0; pointer-events:none; transition:opacity .4s ease; background:#06080b; }
+#ragBrain.open{ opacity:1; pointer-events:all; }
+#ragBrain iframe{ width:100%; height:100%; border:none; display:block; }
+#ragBrainClose{ position:fixed; top:14px; right:18px; z-index:130; display:none;
+  background:rgba(6,8,11,.85); border:1px solid rgba(232,196,92,.3); color:#e8c45c;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; padding:8px 16px; cursor:pointer; transition:border-color .2s,background .2s; }
+#ragBrainClose:hover{ background:rgba(232,196,92,.12); border-color:rgba(232,196,92,.6); }
+#ragBrain.open #ragBrainClose{ display:block; }
+
 #iris{ position:fixed; inset:0; z-index:150; pointer-events:none; opacity:0;
   background:radial-gradient(circle at 50% 46%, #eafff6 0%, #00ff9c 22%, #063d2c 46%, #06080b 70%); }
 .scrollcue{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--f-mono); font-size:9.5px; letter-spacing:.4em;
@@ -540,7 +551,7 @@ body.player-open #mobileNav, body.player-open #depthRail{ opacity:0; transition:
 /* ══════════════ RESPONSIVE ══════════════ */
 @media(max-width:720px){
   .hero{ min-height:580px; }
-  #shGate{ width:168px; height:168px; }
+  #shGate{ width:210px; height:210px; }
   .ctas{ gap:10px; margin-top:26px; }
   .cta, .descent-btn{ padding:14px 20px; font-size:11px; letter-spacing:.12em; }
   .views{ grid-template-columns:1fr !important; }
@@ -720,31 +731,25 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     </div>
 
     <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Create <span class="cx">▾</span></button>
+      <button aria-haspopup="true" aria-expanded="false">Forge <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>Make things</span><span class="cd">FORGE</span></div>
+        <div class="phdr"><span>Create &amp; play</span><span class="cd">FORGE</span></div>
         <a href="/creative-studio.html" role="menuitem"><span class="gi">◨</span><span class="lk"><span class="t">Creative Studio</span><span class="s">beats · melody · art · hertz</span></span><span class="badge live">live</span></a>
-        <span class="soon"><span class="gi">✂</span><span class="lk"><span class="t">Video Clipper</span><span class="s">cut &amp; caption clips</span></span><span class="badge">soon</span></span>
-      </div>
-    </div>
-
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Play <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>The arcade</span><span class="cd">SKILL ENGINE</span></div>
-        <a href="/play.html" role="menuitem"><span class="gi">✧</span><span class="lk"><span class="t">Overview</span><span class="s">the arcade</span></span><span class="badge live">live</span></a>
         <a href="/arcade.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Arcade</span><span class="s">skill-driven neon sports</span></span><span class="badge live">live</span></a>
+        <span class="soon"><span class="gi">✂</span><span class="lk"><span class="t">Video Clipper</span><span class="s">contact admins or GitHub to self-host</span></span><span class="badge">soon</span></span>
       </div>
     </div>
 
     <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Signals <span class="cx">▾</span></button>
+      <button aria-haspopup="true" aria-expanded="false">Market <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>Markets &amp; signals</span><span class="cd">SCALE · V</span></div>
+        <div class="phdr"><span>Signals, data &amp; the bazaar</span><span class="cd">MARKET</span></div>
         <a href="/zerox-markets.html" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">ZEROX Markets</span><span class="s">BTC · SOL · ETH · SpaceX</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Signals API</span><span class="s">live rug-filtered calls · JSON · free key</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">✎</span><span class="lk"><span class="t">News API</span><span class="s">crypto headlines &amp; trending · free key</span></span><span class="badge live">live</span></a>
         <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener" role="menuitem"><span class="gi">✈</span><span class="lk"><span class="t">Signals on Telegram</span><span class="s">live rug-filtered calls in your DMs</span></span><span class="badge live">live</span></a>
+        <a href="/marketplace-shop-v2.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Bazaar</span><span class="s">agents · skills · workflows · cosmetics</span></span><span class="badge live">live</span></a>
+        <a href="/collectibles-nft.html" role="menuitem"><span class="gi">◆</span><span class="lk"><span class="t">NFTs</span><span class="s">redeemable collectables</span></span><span class="badge live">live</span></a>
       </div>
     </div>
 
@@ -758,16 +763,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       </div>
     </div>
 
-    <div class="pillar" data-pillar>
-      <button aria-haspopup="true" aria-expanded="false">Shop <span class="cx">▾</span></button>
-      <div class="panel" role="menu">
-        <div class="phdr"><span>The bazaar &amp; economy</span><span class="cd">MARKET</span></div>
-        <span class="soon"><span class="gi">◈</span><span class="lk"><span class="t">The Bazaar</span><span class="s">agents · skills · knowledge · workflows · cosmetics</span></span><span class="badge">soon</span></span>
-        <span class="soon"><span class="gi">▣</span><span class="lk"><span class="t">3D Marketplace</span><span class="s">buy &amp; sell 3D agent models</span></span><span class="badge">soon</span></span>
-        <a href="/collectibles-nft.html" role="menuitem"><span class="gi">◆</span><span class="lk"><span class="t">NFTs</span><span class="s">redeemable collectables</span></span><span class="badge live">live</span></a>
-      </div>
-    </div>
-
     <div class="pillar" data-key="codex">
       <button type="button" onclick="location.href='/codex.html'">Codex</button>
     </div>
@@ -775,9 +770,8 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   </nav>
   <div class="corner" id="cornerCluster">
     <a class="cc-link" id="cornerDocs" href="/codex.html" title="Docs — the Codex">Docs</a>
-    <a class="cc-link" href="/prove.html" title="Watch the Council work — live, free">▶ Watch it work</a>
     <a class="cc-link" href="/pricing.html" title="Plans &amp; pricing — $30/mo" style="color:#241a03;background:var(--gold);border-color:transparent;font-weight:700">Join · $30/mo</a>
-    <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Deck">Enter Dashboard</a>
+    <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Deck">Command Deck</a>
     <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the full-screen Ascent player">▶ Ascend</button>
   </div>
   <button class="menuBtn" id="menuBtn" aria-expanded="false" aria-controls="mobileNav">☰ Menu</button>
@@ -786,7 +780,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 <!-- ═══════════ MOBILE SACRED-TECH NAV ═══════════ -->
 <div id="mobileNav" aria-hidden="true">
   <button class="mclose" id="mClose">✕ close</button>
-  <a href="/prove.html" style="display:block;margin:6px 0 8px;padding:13px;text-align:center;border:1px solid rgba(0,255,156,.4);color:#00ff9c;font-weight:600;border-radius:11px;letter-spacing:.08em;font-family:'Cinzel',serif">▶ Watch it work — free</a>
   <a href="/pricing.html" style="display:block;margin:0 0 8px;padding:14px;text-align:center;background:#e8c45c;color:#241a03;font-weight:700;border-radius:11px;letter-spacing:.1em;font-family:'Cinzel',serif">Join · $30/mo →</a>
   <a href="/playbooks.html" style="display:block;margin:0 0 16px;padding:12px;text-align:center;border:1px solid rgba(196,162,78,.35);color:#e8c45c;font-weight:600;border-radius:11px;letter-spacing:.06em;font-family:'Cinzel',serif">📕 Free Scaling Playbooks</a>
   <div class="mgroup"><div class="mh">Worlds</div>
@@ -801,19 +794,18 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     <a href="/library.html"><span class="gi">✒</span>Quill's Library<span class="badge">live</span></a>
     <a href="/museum.html"><span class="gi">❂</span>Turtle's Museum<span class="badge">live</span></a>
   </div>
-  <div class="mgroup"><div class="mh">Create</div>
+  <div class="mgroup"><div class="mh">Forge</div>
     <a href="/creative-studio.html"><span class="gi">◨</span>Creative Studio<span class="badge">live</span></a>
+    <a href="/arcade.html"><span class="gi">◈</span>The Arcade<span class="badge">live</span></a>
     <span class="soon"><span class="gi">✂</span>Video Clipper · soon</span>
   </div>
-  <div class="mgroup"><div class="mh">Play</div>
-    <a href="/play.html"><span class="gi">✧</span>Overview<span class="badge">live</span></a>
-    <a href="/arcade.html"><span class="gi">◈</span>The Arcade<span class="badge">live</span></a>
-  </div>
-  <div class="mgroup"><div class="mh">Signals</div>
+  <div class="mgroup"><div class="mh">Market</div>
     <a href="/zerox-markets.html"><span class="gi">₿</span>ZEROX Markets<span class="badge">live</span></a>
     <a href="/api"><span class="gi">◈</span>Signals API<span class="badge">live</span></a>
     <a href="/api"><span class="gi">✎</span>News API<span class="badge">live</span></a>
     <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener"><span class="gi">✈</span>Signals on Telegram<span class="badge">live</span></a>
+    <a href="/marketplace-shop-v2.html"><span class="gi">◈</span>The Bazaar<span class="badge">live</span></a>
+    <a href="/collectibles-nft.html"><span class="gi">◆</span>NFTs<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">AURA</div>
     <a href="/aura.html"><span class="gi">⚖</span>What AURA is<span class="badge">live</span></a>
@@ -870,12 +862,18 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     </div>
 
     <div class="ctas">
-      <a class="cta" href="/SHADDAI-WORLD-3D.html"><span class="g">◈</span>Enter the World</a>
       <a class="cta" href="/dashboard"><span class="g">▲</span>Command Deck</a>
+      <a class="cta" href="#views"><span class="g">✦</span>Explore Everything</a>
     </div>
   </div>
   <div class="scrollcue">Move to awaken the lattice · scroll to descend<span></span></div>
 </section>
+
+<!-- ══ RAG Brain — fullscreen overlay ══ -->
+<div id="ragBrain" role="dialog" aria-modal="true" aria-label="SHADDAI RAG Brain">
+  <button id="ragBrainClose" onclick="closeRagBrain()">✕ close</button>
+  <iframe id="ragBrainFrame" src="" title="SHADDAI RAG Brain" allow="autoplay" loading="lazy"></iframe>
+</div>
 
 <!-- ═══════════ SCALE I · THE COUNCIL · SEVEN SPECIALISTS ═══════════ -->
 <section class="blk hud" id="council" data-scale="I · The Council">
@@ -925,29 +923,24 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 
 <div class="seam alt" aria-hidden="true"></div>
 
-<!-- ═══════════ SCALE II·b · SEE IT LIVE · THE PROOF ═══════════ -->
-<section class="blk hud g" id="proveit" data-scale="II·b · See it live">
+<!-- ═══════════ SCALE II·b · LIVE DEMO ═══════════ -->
+<section class="blk hud g" id="proveit" data-scale="II·b · Live demo">
   <div class="wrap reveal">
     <div class="shead">
       <div>
-        <div class="eyebrow">II·b · See it live</div>
-        <h2 class="h2 neon gold">Don't take our word for it — watch</h2>
+        <div class="eyebrow">II·b · Live demo</div>
+        <h2 class="h2 neon gold">See the council work</h2>
       </div>
-      <div class="scaletag"><span class="coord">LIVE</span> <b>runs on our key</b></div>
+      <div class="scaletag"><span class="coord">LIVE</span> <b>powered by SHADDAI</b></div>
     </div>
-    <p class="lede">Give a real agent a real job — right here, no signup. Watch it work and hand back a <b>signed receipt</b>. This is exactly what $30/mo unlocks, every day, with all seven working for you.</p>
+    <p class="lede">Give a real agent a real task — right here, no signup. The council runs it and hands back a <b>signed receipt</b>. This is exactly what $30/mo unlocks, every day.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0 22px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase">
       <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--gold)">7 agents</span>
       <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--emerald)">3,000+ skills</span>
-      <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--emerald)">300+ real tools</span>
-      <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--gold)">a receipt every run</span>
+      <span style="border:1px solid rgba(0,255,156,.28);border-radius:100px;padding:7px 14px;color:var(--gold)">signed receipt every run</span>
     </div>
-    <div style="position:relative;border:1px solid rgba(0,255,156,.22);border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5);background:#06060d">
-      <iframe src="/prove.html?embed=1" title="Watch the SHADDAI council work — live"
-        style="width:100%;height:clamp(660px,88vh,940px);border:0;display:block" loading="lazy"></iframe>
-    </div>
-    <div style="text-align:center;margin-top:18px">
-      <a href="/prove.html" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(232,196,92,.5);padding-bottom:2px">Open the full demo in its own page →</a>
+    <div style="text-align:center;margin:18px 0">
+      <a href="/prove.html" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--emerald);border:1px solid rgba(0,255,156,.35);padding:14px 36px;border-radius:8px;transition:background .3s,color .3s">▶ Run the live demo on its own page</a>
     </div>
   </div>
 </section>
@@ -1339,9 +1332,8 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     if(opening){ open=Math.min(1, open+0.045); if(open>=1 && !gate._navd){ gate._navd=true; flood(); } }
     if(running) raf=requestAnimationFrame(draw);
   }
-  function flood(){ iris.style.transition='opacity .5s ease'; iris.style.opacity='1';
-    setTimeout(function(){ location.href='/lab-molecules.html'; }, 520); }
-  function trigger(){ if(opening) return; opening=true; if(lbl) lbl.textContent='◆ descending'; }
+  function flood(){ openRagBrain(); opening=false; open=0; if(lbl) lbl.textContent='◈ open the gate'; }
+  function trigger(){ if(opening) return; opening=true; if(lbl) lbl.textContent='◆ awakening…'; }
   gate.addEventListener('mouseenter',function(){ hover=true; });
   gate.addEventListener('mouseleave',function(){ hover=false; });
   gate.addEventListener('click', trigger);
@@ -1352,6 +1344,38 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   io.observe(gate);
   document.addEventListener('visibilitychange',function(){ if(document.hidden){ running=false; cancelAnimationFrame(raf); } });
   if(REDUCED) draw(0); else raf=requestAnimationFrame(draw);
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   RAG BRAIN OVERLAY — fullscreen iframe triggered by SH gate
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  var panel = document.getElementById('ragBrain');
+  var frame = document.getElementById('ragBrainFrame');
+  if(!panel||!frame) return;
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && panel.classList.contains('open')) closeRagBrain();
+  });
+  // listen for brain.html → close message
+  window.addEventListener('message', function(e){
+    if(e.data==='close-brain') closeRagBrain();
+  });
+
+  window.closeRagBrain = function(){
+    panel.classList.remove('open');
+    document.body.style.overflow='';
+    // pause the iframe so the 3D loop doesn't run in background
+    setTimeout(function(){ frame.src=''; }, 500);
+  };
+
+  window.openRagBrain = function(){
+    if(!frame.src||frame.src==='about:blank'||frame.src===''||frame.contentDocument===null){
+      frame.src='/brain.html';
+    }
+    panel.classList.add('open');
+    document.body.style.overflow='hidden';
+  };
 })();
 
 /* ── scroll reveals (staggered grid-child cascade) ── */
