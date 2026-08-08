@@ -113,6 +113,18 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .gate-btn:hover{color:var(--bg0);}.gate-btn:hover::before{transform:scaleX(1);}
 .gate-bypass{font-size:9px;color:rgba(232,160,32,.2);cursor:pointer;letter-spacing:1px;text-decoration:underline;text-underline-offset:3px;}
 .gate-bypass:hover{color:var(--muted);}
+.gate-pin{
+  width:160px;padding:12px 14px;background:rgba(6,8,11,.9);border:1px solid var(--border2);
+  color:var(--text);font-family:'Share Tech Mono',monospace;font-size:24px;letter-spacing:14px;text-align:center;
+  outline:none;transition:border-color .2s,box-shadow .2s;border-radius:6px;text-transform:none;
+}
+.gate-pin::placeholder{color:rgba(232,160,32,.25);letter-spacing:14px;}
+.gate-pin:focus{border-color:var(--P);box-shadow:var(--gP);}
+.gate-err{font-size:9px;color:#ff8a65;letter-spacing:2px;min-height:12px;font-family:'Share Tech Mono',monospace;text-shadow:0 0 8px rgba(255,138,101,.4);}
+.gate-link{font-size:10px;color:var(--muted);letter-spacing:2px;text-decoration:none;border-bottom:1px solid rgba(232,160,32,.25);padding-bottom:2px;}
+.gate-link:hover{color:var(--text2);}
+.gate-shake{animation:gateshake .4s;}
+@keyframes gateshake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
 
 /* ── TOPBAR ───────────────────────────────────────── */
 #topbar{
@@ -421,8 +433,11 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="gate-hex">⬡</div>
   <div class="gate-logo">SHADDAI</div>
   <div class="gate-rule"></div>
-  <div class="gate-sub">ORACLE TERMINAL — PRO ACCESS REQUIRED</div>
-  <a class="gate-btn" href="/index.html">ACCESS DASHBOARD</a>
+  <div class="gate-sub">ORACLE TERMINAL — PRO SIGNALS · ENTER ACCESS CODE</div>
+  <input class="gate-pin" id="gatePin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••" autocomplete="off" aria-label="Access code" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')unlock()">
+  <button class="gate-btn" id="gateBtn" onclick="unlock()">UNLOCK</button>
+  <div class="gate-err" id="gateErr"></div>
+  <a class="gate-link" href="/index.html">← back to dashboard</a>
   <span class="gate-bypass" onclick="devBypass()">localhost dev bypass</span>
 </div>
 
@@ -664,10 +679,25 @@ const BASE = DEV ? 'http://localhost:3000' : '';
 const MIRO = 'http://localhost:5001';
 
 /* AUTH */
+const PRO_PIN='0444';
 function ok(){
   const si = localStorage.getItem('shd_signed_in')==='1';
   const pl = (localStorage.getItem('shd_plan')||'').toLowerCase();
-  return (si&&['pro','alpha','builder'].includes(pl))||(DEV&&localStorage.getItem('shd_prodev')==='1');
+  return (si&&['pro','alpha','builder'].includes(pl))||localStorage.getItem('shd_prosig')==='1'||(DEV&&localStorage.getItem('shd_prodev')==='1');
+}
+function unlock(){
+  const inp=document.getElementById('gatePin');
+  const p=(inp.value||'').trim();
+  if(p===PRO_PIN){
+    localStorage.setItem('shd_prosig','1');
+    document.getElementById('gateErr').textContent='';
+    go();
+  }else{
+    const g=document.getElementById('gate');
+    g.classList.remove('gate-shake'); void g.offsetWidth; g.classList.add('gate-shake');
+    document.getElementById('gateErr').textContent='ACCESS DENIED — TRY 0444';
+    inp.value=''; inp.focus();
+  }
 }
 function devBypass(){
   if(!DEV){toast('LOCALHOST ONLY');return;}
@@ -681,6 +711,7 @@ function go(){
   init();
 }
 if(ok()) go();
+else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){gi.focus();},300); }
 
 /* THEME */
 function setTheme(t){
