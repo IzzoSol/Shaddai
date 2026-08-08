@@ -724,6 +724,39 @@ app.get('/api/mcp/package', (req, res) => {
   res.download(zip, 'shaddai-mcp.zip');
 });
 
+// Cloud RAG search — semantic search over all 7 agent knowledge bases (or one).
+// Powers the brain page's live search + cross-talk when no local brain server runs.
+// Post: { q: string, agent?: string, topK?: number }
+app.post('/api/mcp/search', express.json(), (req, res) => {
+  try {
+    const q = String((req.body && req.body.q) || '').trim();
+    if (!q) return res.status(400).json({ ok: false, error: 'q required' });
+    const topK = Math.max(1, Math.min(10, parseInt(req.body.topK, 10) || 3));
+    const rag = require('./rag-index');
+    const all = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+    const agents = req.body.agent ? [String(req.body.agent).toUpperCase()] : all;
+    const perAgent = [];
+    let total = 0;
+    for (const id of agents) {
+      try {
+        const hits = rag.searchUser('kb_' + id.toLowerCase(), q, topK) || [];
+        if (hits.length) total++;
+        perAgent.push({
+          agent: id,
+          docs: hits.length,
+          results: hits.map(r => ({
+            source: r.docName, chunk: String(r.chunkText || '').slice(0, 300), score: +r.score.toFixed(4),
+          })),
+        });
+      } catch (_) { perAgent.push({ agent: id, docs: 0, results: [] }); }
+    }
+    const totalDocs = perAgent.reduce((s, a) => s + a.docs, 0);
+    res.json({ ok: true, q, agents_resonating: total, total_docs: totalDocs, results: perAgent });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String((e && e.message) || e) });
+  }
+});
+
 app.get('/api/status', (req, res) => {
   const cached = cache.get('status');
   if (cached) {
@@ -1908,6 +1941,10 @@ app.get('/codex', (req, res) => {
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
+// RAG brain — the 7-agent knowledge system UI (knowledge bases + live cloud search).
+app.get('/brain', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/brain.html'));
+});
 
 // API 404 GUARD — any unmatched /api/* path returns JSON, never the SPA HTML.
 // Without this the catch-all below serves index.html for a missing endpoint, and the
@@ -2013,7 +2050,7 @@ if (!process.env.VERCEL_ENV) {
     // instance stays awake 24/7 and the pollers keep running. (Render auto-sets RENDER_EXTERNAL_URL.)
     try {
       const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL;
-      if (selfUrl && process.env.TELEGRAM_BOT_TOKEN) {
+      if (selfUrl) {
         const ping = () => { fetch(selfUrl.replace(/\/$/, '') + '/api/model/health').then(() => {}).catch(() => {}); };
         const ka = setInterval(ping, 10 * 60 * 1000);   // every 10 min (< Render's ~15 min idle window)
         if (ka.unref) ka.unref();

@@ -748,30 +748,55 @@ async function renderFallback(q,agentId,body,status){
   }
 }
 async function loadLive(){
+  let d=null, from='';
+  // 1) local brain server (dev) — full overview
   try{
-    const res=await fetch(API+'/api/overview',{signal:AbortSignal.timeout(8000)});
+    const res=await fetch(API+'/api/overview',{signal:AbortSignal.timeout(5000)});
     if(!res.ok)throw 0;
-    const d=await res.json();
-    serverOnline=true;
-    document.getElementById('st-vids').textContent=fmt(d.videos);
-    document.getElementById('st-chunks').textContent=fmt(d.chunks);
-    document.getElementById('st-terms').textContent=fmt(d.terms);
-    document.getElementById('st-words').textContent=fmt(d.words);
-    document.getElementById('st-sys').textContent=d.systems.length;
-    document.getElementById('hdr-sub').textContent=`7 AGENT KNOWLEDGE SYSTEM · ${strip(d.videos)} VIDEOS · ${strip(d.chunks)} CHUNKS · ${strip(d.terms)} TERMS`;
-    (d.agents||[]).forEach(x=>{
-      const a=AGENTS.find(g=>g.id===x.id); if(!a)return;
-      a.docs=x.docs; a.tools=x.tools; a.words=x.words;
-      a.topics=(x.topics||[]); a.systems=(x.systems||[]); a.channels=(x.channels||[]);
-      a.top_terms=(x.top_terms||[]); a.titles=(x.titles||[]);
-    });
-    setNet(true,'LIVE RAG',d.chunks+' chunks');
-    rebuild();
-  }catch(e){
+    d=await res.json(); if(!d.agents)throw 0;
+    from='brain';
+  }catch(_e){}
+  // 2) Render cloud — same knowledge bases via /api/mcp/status
+  if(!d){
+    try{
+      const res=await fetch(RENDER_API+'/api/mcp/status',{signal:AbortSignal.timeout(8000)});
+      if(!res.ok)throw 0;
+      const m=await res.json();
+      if(!(m&&m.agents&&m.agents.length))throw 0;
+      const totalDocs=m.agents.reduce((s,a)=>s+(a.docs||0),0);
+      const totalChars=m.agents.reduce((s,a)=>s+(a.chars||0),0);
+      const src={}; m.agents.forEach(a=>(a.sources||[]).forEach(s=>{src[s]=1;}));
+      d={
+        videos:totalDocs, chunks:totalDocs, terms:Object.keys(src).length,
+        words:Math.round(totalChars/5), systems:m.agents.map(a=>a.agent),
+        agents:m.agents.map(a=>({ id:a.agent, docs:a.docs||0, tools:0,
+          words:Math.round((a.chars||0)/5), topics:[], systems:[], channels:[],
+          top_terms:[], titles:(a.sources||[]).map(s=>s) }))
+      };
+      from='render';
+    }catch(_e2){}
+  }
+  if(!d){
     serverOnline=false;
     setNet(false,'SERVER OFFLINE','run: python brain_server.py');
     rebuild();
+    return;
   }
+  serverOnline=(from==='brain');
+  document.getElementById('st-vids').textContent=fmt(d.videos||0);
+  document.getElementById('st-chunks').textContent=fmt(d.chunks||0);
+  document.getElementById('st-terms').textContent=fmt(d.terms||0);
+  document.getElementById('st-words').textContent=fmt(d.words||0);
+  document.getElementById('st-sys').textContent=(d.systems||[]).length;
+  document.getElementById('hdr-sub').textContent=`7 AGENT KNOWLEDGE SYSTEM · ${strip(d.videos||0)} VIDEOS · ${strip(d.chunks||0)} CHUNKS · ${strip(d.terms||0)} TERMS`;
+  (d.agents||[]).forEach(x=>{
+    const a=AGENTS.find(g=>g.id===x.id); if(!a)return;
+    a.docs=x.docs||0; a.tools=x.tools||0; a.words=x.words||0;
+    a.topics=(x.topics||[]); a.systems=(x.systems||[]); a.channels=(x.channels||[]);
+    a.top_terms=(x.top_terms||[]); a.titles=(x.titles||[]);
+  });
+  setNet(true, from==='render'?'CLOUD RAG':'LIVE RAG', from==='render'?(d.videos+' docs'):(d.chunks+' chunks'));
+  rebuild();
 }
 function setNet(ok,label,sub){
   const el=document.getElementById('net-status');
@@ -1132,14 +1157,11 @@ async function ragSearch(q){
   const ag=AGENTS[openCluster];
   tsrchGo.disabled=true;tsrchStatus.textContent='querying brain...';
   tsrchRes.innerHTML='';
-  const url=`${API}/api/search?q=${encodeURIComponent(q)}&agent=${ag.id}&k=6`;
   try{
-    const res=await fetch(url,{signal:AbortSignal.timeout(30000)});
-    if(!res.ok)throw 0;
-    const d=await res.json();
-    if(!d.results.length){tsrchStatus.textContent='// no matches in this brain';tsrchGo.disabled=false;return;}
-    tsrchStatus.textContent=`// ${d.results.length} hits · ${d.ms}ms`;
-    d.results.forEach(r=>{
+    const data=await perAgentSearch(q,ag.id,6);
+    if(!data.results.length){tsrchStatus.textContent='// no matches in this brain';tsrchGo.disabled=false;return;}
+    tsrchStatus.textContent=`// ${data.results.length} hits${data.ms?` · ${data.ms}ms`:''}${serverOnline?'':' · CLOUD'}`;
+    data.results.forEach(r=>{
       const div=document.createElement('div');div.className='rr';div.style.color=ag.color;
       div.innerHTML=`
         <div class="rr-top"><span class="rr-title">${fmtDoc(r.title)}</span><span class="rr-score">${(r.score*100).toFixed(0)}%</span></div>
@@ -1153,6 +1175,36 @@ async function ragSearch(q){
     tsrchStatus.textContent='// brain server offline';
   }
   tsrchGo.disabled=false;
+}
+
+async function perAgentSearch(q,agId,k){
+  if(serverOnline){
+    const d=await fetch(`${API}/api/search?q=${encodeURIComponent(q)}&agent=${agId}&k=${k||6}`,{signal:AbortSignal.timeout(30000)}).then(r=>r.json());
+    return {results:(d.results||[]).map(r=>({title:r.title,score:r.score,text:r.text,system:r.system||'',topic:r.topic||'',channel:r.channel||'',video_id:r.video_id||''})),ms:d.ms||0};
+  }
+  const d=await fetch(`${RENDER_API}/api/mcp/search`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({q,agent:agId,topK:k||6}),signal:AbortSignal.timeout(30000)}).then(r=>r.json());
+  const a=(d.results||[])[0];
+  return {results:(a&&a.results||[]).map(h=>({title:h.source,score:h.score,text:h.chunk,system:'',topic:'',channel:'',video_id:''})),ms:0};
+}
+
+async function cloudCouncil(q){
+  const res=await fetch(`${RENDER_API}/api/mcp/search`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({q,topK:2}),signal:AbortSignal.timeout(30000)});
+  if(!res.ok)throw 0;
+  const d=await res.json();
+  const agents=(d.results||[]).map(a=>{
+    const ag=AGENTS.find(x=>x.id===a.agent);
+    const r=a.results&&a.results[0];
+    return {
+      id:a.agent, color:ag?ag.color:'#888', role:ag?(ag.role||''):'',
+      score:r?r.score:0, chunks:a.docs||0,
+      results:(a.results||[]).map(h=>({title:h.source,text:h.chunk,channel:'',score:h.score})),
+    };
+  }).filter(a=>a.results.length);
+  return {agents,ms:0};
 }
 
 // ── SUMMARY ──
@@ -1199,10 +1251,7 @@ const sbtn=document.getElementById('sbtn');
 function doSearch(q){
   q=q.trim();
   if(!q){cresEl.classList.remove('on');matchSet.clear();applyHL();return;}
-  if(!serverOnline){
-    cresEl.textContent='// BRAIN SERVER OFFLINE — START IT TO SEARCH THE RAG';
-    cresEl.classList.add('on');return;
-  }
+  if(!serverOnline){cloudSearch(q);return;}
   sbtn.disabled=true;
   const ql=q.toLowerCase();
   act(`SCAN: "${q.slice(0,30)}"…`);
@@ -1233,6 +1282,44 @@ function doSearch(q){
       cresEl.textContent='// SEARCH FAILED';
       cresEl.classList.add('on');
     }).finally(()=>{sbtn.disabled=false;});
+}
+
+// Cloud semantic search — queries the Render RAG across all 7 agent knowledge
+// bases when the local brain server isn't running.
+async function cloudSearch(q){
+  sbtn.disabled=true;
+  act(`CLOUD SCAN: "${q.slice(0,30)}"...`,'#79c0ff');
+  cresEl.textContent=`// QUERYING ${strip(AGENTS.reduce((s,a)=>s+a.docs,0))} CLOUD DOCS...`;
+  cresEl.classList.add('on');
+  try{
+    const res=await fetch(`${RENDER_API}/api/mcp/search`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({q,topK:8}),signal:AbortSignal.timeout(30000)});
+    if(!res.ok)throw 0;
+    const d=await res.json();
+    matchSet.clear();
+    const byAgent={};
+    (d.results||[]).forEach(a=>{
+      const hits=(a.results||[]).map(r=>({agent:a.agent,title:r.source,score:r.score,text:r.chunk,system:'',topic:'',channel:'',video_id:''}));
+      if(hits.length){
+        byAgent[a.agent]=hits;
+        const ci=AGENTS.findIndex(x=>x.id===a.agent);
+        if(ci>=0){matchSet.add(ci);pulses[ci]=performance.now();}
+      }
+    });
+    const names=[...matchSet].map(i=>AGENTS[i].id).join(' · ')||'NO SIGNAL';
+    cresEl.textContent=`// CLOUD · ${d.agents_resonating} of 7 agents · SIGNAL IN: ${names}`;
+    addHistory(q);
+    cresEl.classList.add('on');applyHL();
+    if(matchSet.size){
+      const best=[...matchSet].sort((a,b)=>(byAgent[AGENTS[b].id]||[]).length-(byAgent[AGENTS[a].id]||[]).length)[0];
+      openPanel(best);showTab('rag');tsrchIn.value=q;
+      renderRagResults(byAgent[AGENTS[best].id]||[]);
+    }
+  }catch(_e){
+    cresEl.textContent='// CLOUD SEARCH FAILED — brain server also offline';
+    cresEl.classList.add('on');
+  }finally{sbtn.disabled=false;}
 }
 
 function renderRagResults(results){
@@ -1327,69 +1414,101 @@ async function doCrosstalk(q){
   crosstalkEl.classList.add('open');
   act('CROSS-TALK: chaining 7 agents...','#e8c45c');
   startThinking([0,1,2,3,4,5,6]);
-  if(!serverOnline){
-    ctStatus.textContent='// BRAIN SERVER OFFLINE';
-    ctThread.innerHTML='<div style="color:#ff8a65;padding:24px;font-size:11px;opacity:.6">Start brain server first: python Documents\\SHADDAI-SYSTEM\\brain_server.py</div>';
-    stopThinking([0,1,2,3,4,5,6]);return;
-  }
+  if(!serverOnline){cloudCrossTalk(q);return;}
   try{
     const res=await fetch(`${API}/api/crosstalk?q=${encodeURIComponent(q)}`,{signal:AbortSignal.timeout(60000)});
     if(!res.ok)throw 0;
     const d=await res.json();
     ctStatus.textContent=`// ${d.ms}ms · ${d.agents_with_signal} of 7 agents resonated`;
     act(`CROSS-TALK complete: ${d.agents_with_signal}/7 signal`,'#e8c45c');
-    const maxScore=d.thread.reduce((m,a)=>Math.max(m,a.score),0)||1;
-    // Build thread rows, then reveal them one-by-one with delay
-    d.thread.forEach((node,idx)=>{
-      const ci=AGENTS.findIndex(a=>a.id===node.agent);
-      const pct=maxScore>0?Math.round(node.score/maxScore*100):0;
-      const row=document.createElement('div');row.className='ct-row';
-      row.innerHTML=`
-        <div class="ct-spine">
-          <div class="ct-dot" style="color:${node.color};background:${node.color}${node.has_signal?'':'22'}" data-ci="${ci}"></div>
-          <div class="ct-line"></div>
-        </div>
-        <div style="flex:1;padding-bottom:4px">
-          <div class="ct-card" style="border-color:${node.has_signal?node.color+'22':'rgba(255,255,255,.04)'}">
-            <div class="ct-card-hdr">
-              <span class="ct-agent" style="color:${node.color}">${node.agent}</span>
-              <span class="ct-label">${node.label}</span>
-              ${node.has_signal?`<button class="ct-copy" data-text="${(node.snippet||'').replace(/"/g,'&quot;').slice(0,300)}">⎘</button>`:''}
-            </div>
-            <div class="ct-score-bar"><div class="ct-score-fill" style="width:0%;background:${node.color}" data-pct="${pct}"></div></div>
-            ${node.has_signal
-              ?`<div class="ct-snip" style="color:#e0e0e0">${node.snippet}</div>
-                <div class="ct-snip-src">${node.title?node.title.slice(0,50):''} ${node.channel?'· '+node.channel:''}</div>`
-              :`<div class="ct-empty">No resonance found in this brain</div>`}
-          </div>
-          ${idx<d.thread.length-1&&node.has_signal?`<div class="ct-arrow">↓ informed next agent</div>`:''}
-        </div>`;
-      ctThread.appendChild(row);
-      // Reveal with stagger
-      setTimeout(()=>{
-        row.classList.add('show');
-        const dot=row.querySelector('.ct-dot');
-        if(node.has_signal){
-          dot.classList.add('lit');
-          if(ci>=0){pulses[ci]=performance.now();matchSet.add(ci);}
-          act(`${node.agent}: ${node.label} — ${pct}%`,node.color);
-        }
-        // Animate bar fill
-        const fill=row.querySelector('.ct-score-fill');
-        if(fill)requestAnimationFrame(()=>requestAnimationFrame(()=>{fill.style.width=pct+'%';}));
-        // Wire copy button
-        const cpyBtn=row.querySelector('.ct-copy');
-        if(cpyBtn)cpyBtn.onclick=()=>{navigator.clipboard.writeText(cpyBtn.dataset.text||'').then(()=>{cpyBtn.textContent='✓';setTimeout(()=>cpyBtn.textContent='⎘',1200);}).catch(()=>{});};
-        // Stop thinking for this agent after reveal
-        stopThinking([ci]);
-      },idx*380);
-    });
+    renderThread(d);
     addHistory(q);
   }catch(e){
     ctStatus.textContent='// dialogue failed';
     act('CROSS-TALK failed','#ff8a65');
   }
   setTimeout(()=>stopThinking([0,1,2,3,4,5,6]),d=>d*400+600,d.thread?d.thread.length:7);
+  stopThinking([0,1,2,3,4,5,6]);
+}
+
+// Shared cross-talk thread renderer (used by the local brain server + cloud).
+function renderThread(d){
+  const thread=d.thread||[];
+  const maxScore=thread.reduce((m,a)=>Math.max(m,a.score),0)||1;
+  thread.forEach((node,idx)=>{
+    const ci=AGENTS.findIndex(a=>a.id===node.agent);
+    const pct=maxScore>0?Math.round(node.score/maxScore*100):0;
+    const row=document.createElement('div');row.className='ct-row';
+    row.innerHTML=`
+      <div class="ct-spine">
+        <div class="ct-dot" style="color:${node.color};background:${node.color}${node.has_signal?'':'22'}" data-ci="${ci}"></div>
+        <div class="ct-line"></div>
+      </div>
+      <div style="flex:1;padding-bottom:4px">
+        <div class="ct-card" style="border-color:${node.has_signal?node.color+'22':'rgba(255,255,255,.04)'}">
+          <div class="ct-card-hdr">
+            <span class="ct-agent" style="color:${node.color}">${node.agent}</span>
+            <span class="ct-label">${node.label}</span>
+            ${node.has_signal?`<button class="ct-copy" data-text="${(node.snippet||'').replace(/"/g,'&quot;').slice(0,300)}">⎘</button>`:''}
+          </div>
+          <div class="ct-score-bar"><div class="ct-score-fill" style="width:0%;background:${node.color}" data-pct="${pct}"></div></div>
+          ${node.has_signal
+            ?`<div class="ct-snip" style="color:#e0e0e0">${node.snippet}</div>
+              <div class="ct-snip-src">${node.title?node.title.slice(0,50):''} ${node.channel?'· '+node.channel:''}</div>`
+            :`<div class="ct-empty">No resonance found in this brain</div>`}
+        </div>
+        ${idx<thread.length-1&&node.has_signal?`<div class="ct-arrow">↓ informed next agent</div>`:''}
+      </div>`;
+    ctThread.appendChild(row);
+    setTimeout(()=>{
+      row.classList.add('show');
+      const dot=row.querySelector('.ct-dot');
+      if(node.has_signal){
+        dot.classList.add('lit');
+        if(ci>=0){pulses[ci]=performance.now();matchSet.add(ci);}
+        act(`${node.agent}: ${node.label} — ${pct}%`,node.color);
+      }
+      const fill=row.querySelector('.ct-score-fill');
+      if(fill)requestAnimationFrame(()=>requestAnimationFrame(()=>{fill.style.width=pct+'%';}));
+      const cpyBtn=row.querySelector('.ct-copy');
+      if(cpyBtn)cpyBtn.onclick=()=>{navigator.clipboard.writeText(cpyBtn.dataset.text||'').then(()=>{cpyBtn.textContent='✓';setTimeout(()=>cpyBtn.textContent='⎘',1200);}).catch(()=>{});};
+      stopThinking([ci]);
+    },idx*380);
+  });
+}
+
+// Cloud cross-talk — when the local brain server is down, chain all 7 agents via
+// the Render RAG search and show which knowledge bases resonate with the query.
+async function cloudCrossTalk(q){
+  try{
+    const res=await fetch(`${RENDER_API}/api/mcp/search`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({q,topK:3}),signal:AbortSignal.timeout(30000)});
+    if(!res.ok)throw 0;
+    const d=await res.json();
+    const thread=(d.results||[]).map(a=>{
+      const ag=AGENTS.find(x=>x.id===a.agent);
+      const best=a.results&&a.results[0];
+      return {
+        agent:a.agent,
+        color:ag?ag.color:'#888',
+        label:ag?(ag.role||ag.cat||''):'',
+        has_signal:!!best,
+        score:best?best.score:0,
+        snippet:best?String(best.chunk||'').slice(0,300):'',
+        title:best?best.source:'',
+        channel:'',
+      };
+    });
+    ctStatus.textContent=`// CLOUD · ${d.agents_resonating} of 7 agents resonated`;
+    act(`CLOUD CROSS-TALK complete: ${d.agents_resonating}/7 signal`,'#e8c45c');
+    renderThread({thread});
+    addHistory(q);
+  }catch(e){
+    ctStatus.textContent='// cloud dialogue failed';
+    act('CLOUD CROSS-TALK failed','#ff8a65');
+  }
+  setTimeout(()=>stopThinking([0,1,2,3,4,5,6]),600);
   stopThinking([0,1,2,3,4,5,6]);
 }
 
@@ -1424,7 +1543,7 @@ async function doResearch(q){
   const [ghRes,bkRes,ragRes]=await Promise.allSettled([
     fetchGitHub(q),
     fetchBooks(q),
-    serverOnline?fetch(`${API}/api/council?q=${encodeURIComponent(q)}&k=2`,{signal:AbortSignal.timeout(30000)}).then(r=>r.json()):Promise.reject('offline'),
+    serverOnline?fetch(`${API}/api/council?q=${encodeURIComponent(q)}&k=2`,{signal:AbortSignal.timeout(30000)}).then(r=>r.json()):cloudCouncil(q),
   ]);
   // GitHub
   if(ghRes.status==='fulfilled'&&ghRes.value.items?.length){
@@ -1932,9 +2051,7 @@ async function doIntrospect(q){
   const fetches=agents.map(async agId=>{
     const def=INTRO_AGENT_DEF[agId]||{label:'Lens',color:'#fff'};
     try{
-      const res=await fetch(`${API}/api/search?q=${encodeURIComponent(q)}&agent=${agId}&k=8`,{signal:AbortSignal.timeout(30000)});
-      if(!res.ok)return{agId,def,results:[],score:0,error:true};
-      const d=await res.json();
+      const d=await perAgentSearch(q,agId,8);
       const results=(d.results||[]).filter(r=>r.score>0.04&&(r.text||'').length>80);
       const best=results[0]?.score||0;
       return{agId,def,results,score:best};
