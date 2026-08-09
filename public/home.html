@@ -960,7 +960,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 <!-- ══ RAG Brain — fullscreen overlay ══ -->
 <div id="ragBrain" role="dialog" aria-modal="true" aria-label="SHADDAI RAG Brain">
   <button id="ragBrainClose" onclick="closeRagBrain()">✕ close</button>
-  <iframe id="ragBrainFrame" src="" title="SHADDAI RAG Brain" allow="autoplay" loading="lazy"></iframe>
+  <iframe id="ragBrainFrame" src="about:blank" title="SHADDAI RAG Brain" allow="autoplay"></iframe>
 </div>
 
 <!-- ═══════════ SCALE I · THE COUNCIL · SEVEN SPECIALISTS ═══════════ -->
@@ -1634,7 +1634,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     setTimeout(function(){ frame.src=''; },500);
   };
   window.openRagBrain=function(){
-    if(!frame.src||frame.src==='about:blank'||frame.src==='')frame.src='/brain.html';
+    if(!frame.src||!frame.src.endsWith('/brain.html'))frame.src='/brain.html';
     panel.classList.add('open');
     document.body.style.overflow='hidden';
   };
