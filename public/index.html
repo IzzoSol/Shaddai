@@ -5510,6 +5510,12 @@ window.enter3DWorld=function(){
           </div>
         </div>
 
+        <!-- ── MY FORGED AGENTS — click any to add as a chain step ── -->
+        <div id="wfMyAgentsBar" style="margin-bottom:14px;display:none">
+          <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.1em;color:#00e5a0;margin-bottom:8px">⬡ MY FORGED AGENTS — click to add as a step</div>
+          <div id="wfMyAgentsList" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 
           <!-- LEFT: Workflow Builder -->
@@ -5531,37 +5537,36 @@ window.enter3DWorld=function(){
                 <div style="font-size:8px;color:var(--text-muted);margin-top:3px">Pick daily/weekly/hourly and this chain auto-schedules when you Save &amp; Run.</div>
               </div>
               <div style="margin-bottom:8px">
-                <div style="font-size:8px;color:var(--text-muted);margin-bottom:5px">CHAIN STEPS (in order)</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                  <div style="font-size:8px;color:var(--text-muted)">CHAIN STEPS (in order)</div>
+                  <label title="Use RAG Knowledge Base per step (Pro — grounds each agent in SHADDAI intelligence)" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:8px;color:#5fe0ff">
+                    <input type="checkbox" id="wfRagAllToggle" style="accent-color:#5fe0ff" onchange="document.querySelectorAll('.wf-rag-cb').forEach(cb=>cb.checked=this.checked)">
+                    ⬡ RAG All Steps <span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:#00e5a0;font-size:7px;padding:1px 5px;border-radius:3px;margin-left:2px">PRO</span>
+                  </label>
+                </div>
                 <div id="wfStepsContainer" style="display:flex;flex-direction:column;gap:5px">
                   <!-- Steps added dynamically -->
-                  <div class="wf-step-row" style="display:grid;grid-template-columns:24px 1fr 1fr;gap:4px;align-items:center">
+                  <div class="wf-step-row" style="display:grid;grid-template-columns:20px 0.9fr 1.2fr auto;gap:4px;align-items:center">
                     <span style="font-size:9px;color:var(--text-muted);text-align:center">1</span>
-                    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">
-                      <option value="oracle">ORACLE — Research</option>
-                      <option value="quill">QUILL — Write</option>
-                      <option value="turtle">TURTLE — Design</option>
-                      <option value="nexus">NEXUS — Build</option>
-                      <option value="zerox">ZEROX — Revenue</option>
-                      <option value="shaddai">SHADDAI — Orchestrate</option>
-                      <option value="pikadon">PIKADON — Secure</option>
-                    </select>
+                    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">${_wfAgentOptions('')}</select>
                     <input placeholder="What should this agent do? e.g. Find today's top 3 crypto trends" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">
+                    <label title="Ground this step in RAG knowledge base (Pro)" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:32px"><input type="checkbox" class="wf-rag-cb" style="accent-color:#5fe0ff"><span style="font-size:7px;color:#5fe0ff">RAG</span></label>
                   </div>
-                  <div class="wf-step-row" style="display:grid;grid-template-columns:24px 1fr 1fr;gap:4px;align-items:center">
+                  <div class="wf-step-row" style="display:grid;grid-template-columns:20px 0.9fr 1.2fr auto;gap:4px;align-items:center">
                     <span style="font-size:9px;color:var(--text-muted);text-align:center">2</span>
-                    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">
-                      <option value="quill" selected>QUILL — Write</option>
-                      <option value="oracle">ORACLE — Research</option>
-                      <option value="turtle">TURTLE — Design</option>
-                      <option value="nexus">NEXUS — Build</option>
-                      <option value="zerox">ZEROX — Revenue</option>
-                      <option value="shaddai">SHADDAI — Orchestrate</option>
-                      <option value="pikadon">PIKADON — Secure</option>
-                    </select>
-                    <input placeholder="Build on the last result — type {step1} to reuse it, e.g. Write a tweet thread about {step1}" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">
+                    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">${_wfAgentOptions('quill')}</select>
+                    <input placeholder="Build on {step1} — e.g. Write a tweet thread about {step1}" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">
+                    <label title="Ground this step in RAG knowledge base (Pro)" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:32px"><input type="checkbox" class="wf-rag-cb" style="accent-color:#5fe0ff"><span style="font-size:7px;color:#5fe0ff">RAG</span></label>
                   </div>
                 </div>
                 <button onclick="addWorkflowStep()" style="margin-top:6px;font-size:8px;padding:3px 10px;background:transparent;border:1px dashed rgba(255,255,255,0.2);color:var(--text-muted);border-radius:3px;cursor:pointer;width:100%">+ Add Step</button>
+              </div>
+              <!-- AURA token tracker -->
+              <div id="wfAuraMeter" style="background:rgba(39,224,255,0.06);border:1px solid rgba(39,224,255,0.2);border-radius:6px;padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font-size:9px;color:#27e0ff;font-weight:700;letter-spacing:1px">⚡ AURA</span>
+                <span style="font-size:9px;color:var(--text-muted)">Est. tokens: <b id="wfTokenEst" style="color:#27e0ff">~2,000</b></span>
+                <span style="font-size:9px;color:var(--text-muted)">AURA savings: <b id="wfTokenSave" style="color:#00e5a0">~30%</b></span>
+                <span style="font-size:8px;color:var(--text-muted);margin-left:auto">Token-saver active · routes to cheapest provider</span>
               </div>
               <div style="margin-bottom:8px">
                 <div style="font-size:8px;color:var(--text-muted);margin-bottom:3px">OUTPUT DESTINATION</div>
@@ -27163,7 +27168,7 @@ function showView(v) {
   if (v === 'commerce')     renderCommerce();
   // Note: pixel office init happens in switchOfficeTab('pixel'), not here
   if (v === 'agents')       { renderAgents(); try { if (typeof setAgentsView === 'function') setAgentsView(_agentsViewMode || 'grid'); } catch(e) {} }
-  if (v === 'workflow')     { renderTasks(); if (typeof initWorkflowsTab === 'function') { try { initWorkflowsTab(); } catch(e){} } }
+  if (v === 'workflow')     { renderTasks(); if (typeof initWorkflowsTab === 'function') { try { initWorkflowsTab(); } catch(e){} } try { _loadOfficeOperatives(true); setTimeout(_wfRenderMyAgents, 800); } catch(e){} }
   if (v === 'library-notes'){ renderLibrary(); renderNotes(); if (typeof renderRagFileList === 'function') setTimeout(renderRagFileList, 200); }
   if (v === 'projects')     renderProjects();
   if (v === 'social')       { renderSocial(); renderSchedules(); try{ populateSocialNotes(); }catch(e){} }
@@ -30215,20 +30220,57 @@ function _wfEnhanceStep(row) {
 }
 window._wfEnhanceStep = _wfEnhanceStep;
 window._wfEnhanceSteps = function () { document.querySelectorAll('#wfStepsContainer .wf-step-row').forEach(_wfEnhanceStep); };
-document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { try { window._wfEnhanceSteps(); } catch (_) {} }, 900); });
+document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { try { window._wfEnhanceSteps(); _wfUpdateAuraMeter(); } catch (_) {} }, 900); });
+document.addEventListener('change', function(e){ if(e.target.classList.contains('wf-rag-cb')||e.target.id==='wfRagAllToggle') _wfUpdateAuraMeter(); });
 
-function addWorkflowStep() {
+// Render forged operatives as clickable chips above the chain builder
+function _wfRenderMyAgents() {
+  const bar = document.getElementById('wfMyAgentsBar');
+  const list = document.getElementById('wfMyAgentsList');
+  if (!bar || !list) return;
+  const ops = window._officeOperatives || [];
+  if (!ops.length) { bar.style.display='none'; return; }
+  bar.style.display='block';
+  list.innerHTML = '';
+  ops.forEach(op => {
+    const chip = document.createElement('button');
+    chip.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.3);border-radius:20px;cursor:pointer;color:#00e5a0;font-size:10px;font-family:inherit;transition:.15s';
+    chip.innerHTML=`<img src="${op.portrait||'/api/forge/art/arch-ghost.png'}" style="width:18px;height:18px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"><b>${op.name}</b><span style="color:var(--text-muted);font-size:9px">${op.role||''}</span><span style="color:rgba(0,229,160,0.5);font-size:9px">+ step</span>`;
+    chip.onclick=()=>{ addWorkflowStep(op.name.toLowerCase(), `Use your tools to `); _refreshWorkflowAgentSelects(); notify('⬡ '+op.name+' added as a step'); };
+    chip.onmouseover=()=>{chip.style.background='rgba(0,229,160,0.18)';chip.style.borderColor='rgba(0,229,160,0.6)';};
+    chip.onmouseout=()=>{chip.style.background='rgba(0,229,160,0.08)';chip.style.borderColor='rgba(0,229,160,0.3)';};
+    list.appendChild(chip);
+  });
+  // Also refresh all step dropdowns so new operatives appear
+  _refreshWorkflowAgentSelects();
+}
+
+// Estimate token cost based on step count and RAG usage
+function _wfUpdateAuraMeter() {
+  const rows=document.querySelectorAll('#wfStepsContainer .wf-step-row');
+  const ragOn=document.querySelectorAll('#wfStepsContainer .wf-rag-cb:checked').length;
+  const base=rows.length*700; const ragAdd=ragOn*500;
+  const est=base+ragAdd; const save=Math.round(est*0.30);
+  const el=document.getElementById('wfTokenEst'); const sl=document.getElementById('wfTokenSave');
+  if(el) el.textContent='~'+est.toLocaleString();
+  if(sl) sl.textContent='~'+save.toLocaleString()+' (30%)';
+}
+
+function addWorkflowStep(preAgent, preTask) {
   _wfStepCount++;
   const container = document.getElementById('wfStepsContainer');
   if (!container) return;
   const row = document.createElement('div');
   row.className = 'wf-step-row';
-  row.style.cssText = 'display:grid;grid-template-columns:22px 1fr 1.3fr;gap:6px;align-items:center';
-  row.innerHTML = `<span style="font-size:11px;color:var(--text-muted);text-align:center">${_wfStepCount}</span>
-    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">${_wfAgentOptions('')}</select>
-    <input placeholder="What should this agent do? (use {step${_wfStepCount-1}} for the previous result)" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">`;
+  row.style.cssText = 'display:grid;grid-template-columns:20px 0.9fr 1.2fr auto;gap:4px;align-items:center';
+  const ragAllOn = document.getElementById('wfRagAllToggle')?.checked;
+  row.innerHTML = `<span style="font-size:9px;color:var(--text-muted);text-align:center">${_wfStepCount}</span>
+    <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px">${_wfAgentOptions(preAgent||'')}</select>
+    <input value="${preTask||''}" placeholder="What should this agent do? (use {step${_wfStepCount-1}} for previous result)" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 7px;font-size:11px;box-sizing:border-box;width:100%">
+    <label title="RAG-ground this step in SHADDAI knowledge base (Pro)" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:32px"><input type="checkbox" class="wf-rag-cb" style="accent-color:#5fe0ff"${ragAllOn?' checked':''}><span style="font-size:7px;color:#5fe0ff">RAG</span></label>`;
   container.appendChild(row);
   try { if (window._wfEnhanceStep) window._wfEnhanceStep(row); else if (window._wfEnhanceSteps) window._wfEnhanceSteps(); } catch(_){}
+  _wfUpdateAuraMeter();
 }
 
 function createNewWorkflow() { /* Reset form */ _wfStepCount = 2; }
@@ -30242,12 +30284,13 @@ async function saveAndRunWorkflow() {
   rows.forEach((row, i) => {
     const sel = row.querySelector('select:not(.wf-tool)') || row.querySelector('select');
     const toolSel = row.querySelector('.wf-tool');
-    const inp = row.querySelector('input');
+    const inp = row.querySelector('input[type!=checkbox]') || row.querySelector('input');
+    const ragCb = row.querySelector('.wf-rag-cb');
     if (sel && inp && inp.value.trim()) {
       let prompt = inp.value.trim();
       const tool = toolSel && toolSel.value;
-      if (tool) prompt += ` (use the ${tool} tool)`;   // force this REAL tool through the agent engine
-      steps.push({ step: i+1, agent: sel.value, prompt, tool: tool || undefined });
+      if (tool) prompt += ` (use the ${tool} tool)`;
+      steps.push({ step: i+1, agent: sel.value, prompt, tool: tool || undefined, ragGrounded: !!(ragCb && ragCb.checked) });
     }
   });
   if (!steps.length) { notify('Add at least one step with a prompt'); return; }
@@ -30296,7 +30339,9 @@ function renderUserWorkflows() {
 async function runWorkflowServer(def, opts) {
   const steps = (def && def.steps ? def.steps : []).map(s => ({
     agent: String(s.agent || '').toUpperCase(),
-    task: String(s.task || s.prompt || s.goal || '')
+    task: String(s.task || s.prompt || s.goal || ''),
+    ragGrounded: Boolean(s.ragGrounded || s.rag),
+    tools: Array.isArray(s.tools) ? s.tools : []
   }));
   if (!steps.length) return { ok: false, error: 'no steps' };
   let res;

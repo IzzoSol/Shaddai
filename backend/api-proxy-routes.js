@@ -3217,7 +3217,7 @@ const BUILTIN_WORKFLOWS = {
 // chaining forward. {input} = raw user input, {prev} = previous step's output,
 // {step1..stepN} = that step's output (aligns with the Workflow Center builder syntax).
 // Returns { output, tools, status } so the SSE stream can show which tools each agent used.
-async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outputs) {
+async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outputs, allOps) {
   let task = String(taskTemplate || '')
     .replace(/\{input\}/g, input || '')
     .replace(/\{prev\}/g, (prevOutput || '').slice(0, 4000) || (input || ''));
@@ -3248,7 +3248,7 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outpu
   }
 
   // 2) Fallback: Groq direct (fast) with agent persona.
-  const agentPrompts = {
+  const councilPrompts = {
     SHADDAI: 'You are SHADDAI, supreme AI orchestrator. Be strategic, decisive, and thorough.',
     ZEROX:   'You are ZEROX, wealth and revenue specialist. Focus on financial impact and business value.',
     ORACLE:  'You are ORACLE, intelligence analyst. Be thorough, factual, and well-structured.',
@@ -3257,7 +3257,20 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outpu
     QUILL:   'You are QUILL, master writer. Be clear, compelling, and professionally polished.',
     PIKADON: 'You are PIKADON, security specialist. Be rigorous, threat-aware, and defensive.'
   };
-  const systemPrompt = agentPrompts[agentNameUpper] || agentPrompts.SHADDAI;
+  let systemPrompt = councilPrompts[agentNameUpper];
+  if (!systemPrompt) {
+    // Forged operative: look up persona from operatives list
+    const ops = Array.isArray(allOps) ? allOps : [];
+    const op = ops.find(o => String(o.codename||'').toUpperCase() === agentNameUpper);
+    if (op && op.brain && op.brain.persona) {
+      systemPrompt = op.brain.persona;
+    } else if (op) {
+      const toolList = Array.isArray(op.tools) && op.tools.length ? ` You have these tools: ${op.tools.slice(0,10).join(', ')}.` : '';
+      systemPrompt = `You are ${op.codename}, a ${op.archetype||'specialist'} operative in the SHADDAI empire.${toolList} Complete your task thoroughly and precisely.`;
+    } else {
+      systemPrompt = `You are ${agentNameUpper}, a skilled SHADDAI operative. Complete the assigned task thoroughly.`;
+    }
+  }
 
   if (process.env.GROQ_API_KEY) {
     try {
@@ -3300,17 +3313,25 @@ router.post('/workflows/run', async (req, res) => {
   if (!workflowDef) return res.status(404).json({ error: 'Workflow not found. Built-ins: research-to-build, market-analysis, idea-to-product, full-audit, content-pipeline, security-audit, agent-council, market-brief, revenue-intel, crypto-market-scan' });
 
   // Normalize step shapes ({task|prompt|goal} × any agent casing) to {agent, task} uppercase.
+  // Preserve ragGrounded + tools so forged operatives carry their skill loadout.
   workflowDef.steps = (workflowDef.steps || []).map(s => ({
     agent: String(s.agent || s.agentName || '').toUpperCase(),
-    task: String(s.task || s.prompt || s.goal || '').trim()
+    task: String(s.task || s.prompt || s.goal || '').trim(),
+    ragGrounded: Boolean(s.ragGrounded || s.rag),
+    tools: Array.isArray(s.tools) ? s.tools : []
   }));
 
-  // Pre-run validation — catch broken definitions before the SSE stream opens
-  const VALID_AGENTS_SET = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+  // Pre-run validation — council agents are always valid; forged operative codenames
+  // are validated against operatives.json so custom agents work in chains.
+  const COUNCIL_AGENTS = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+  let _allOps = [];
+  try { _allOps = loadJSON(path.join(DATA_DIR, 'operatives.json'), []); } catch(_) {}
+  const OPERATIVE_CODENAMES = new Set(_allOps.map(o => String(o.codename||'').toUpperCase()).filter(Boolean));
+  const VALID_AGENTS_SET = new Set([...COUNCIL_AGENTS, ...OPERATIVE_CODENAMES]);
   const validationErrors = [];
   (workflowDef.steps || []).forEach((s, idx) => {
     if (!s.agent) validationErrors.push(`Step ${idx + 1}: missing agent`);
-    else if (!VALID_AGENTS_SET.has(s.agent.toUpperCase())) validationErrors.push(`Step ${idx + 1}: unknown agent "${s.agent}"`);
+    else if (!VALID_AGENTS_SET.has(s.agent)) validationErrors.push(`Step ${idx + 1}: unknown agent "${s.agent}" — forge it first or use a council agent`);
     if (!s.task || !String(s.task).trim()) validationErrors.push(`Step ${idx + 1}: missing task text`);
   });
   if (!workflowDef.steps || workflowDef.steps.length === 0) validationErrors.push('Workflow has no steps');
@@ -3335,9 +3356,22 @@ router.post('/workflows/run', async (req, res) => {
 
   for (let i = 0; i < workflowDef.steps.length; i++) {
     const step = workflowDef.steps[i];
-    send({ type: 'step_start', step: i + 1, total: workflowDef.steps.length, agent: step.agent });
+    send({ type: 'step_start', step: i + 1, total: workflowDef.steps.length, agent: step.agent, ragGrounded: step.ragGrounded });
     try {
-      const stepRes = await runWorkflowStep(step.agent, step.task, runInput, prevOutput, outputs);
+      // RAG grounding (Pro): search knowledge base and prepend chunks to task
+      let taskWithContext = step.task;
+      if (step.ragGrounded) {
+        try {
+          const rag = require('./rag-index');
+          const ragAgent = COUNCIL_AGENTS.has(step.agent) ? step.agent.toLowerCase() : 'shaddai';
+          const hits = (rag.searchUser('kb_' + ragAgent, step.task, 5) || []).filter(h => h.score > 0.03).slice(0, 5);
+          if (hits.length) {
+            const ctx = hits.map(h => `[${h.docName}] ${String(h.chunkText||'').slice(0,350)}`).join('\n\n');
+            taskWithContext = `KNOWLEDGE BASE (${hits.length} passages from SHADDAI intelligence):\n${ctx}\n\n---\nTASK: ${step.task}`;
+          }
+        } catch(_) {}
+      }
+      const stepRes = await runWorkflowStep(step.agent, taskWithContext, runInput, prevOutput, outputs, _allOps);
       // Record even empty/null output so the results array is always complete
       const stepOutput = stepRes.output || '';
       const stepTools = (stepRes.tools && stepRes.tools.length) ? stepRes.tools : [];
