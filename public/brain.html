@@ -721,9 +721,38 @@ function updateQueryBadge(){
 
 async function renderFallback(q,agentId,body,status){
   const ag=agentId?AGENTS.find(a=>a.id===agentId):null;
-  const sys=ag
-    ?`You are ${ag.id.toUpperCase()}, an elite AI agent in the SHADDAI council. Your role: ${ag.role||ag.cat||'specialist'}. Answer with depth and authority in 3-4 sentences.`
+
+  // Step 1: RAG search — pull grounding chunks from Render knowledge bases
+  let ragCtx=''; let chunkCount=0;
+  try{
+    status.textContent='// searching knowledge bases...';
+    const ragRes=await fetch(`${RENDER_API}/api/mcp/search`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({q,agent:agentId||undefined,topK:5}),
+      signal:AbortSignal.timeout(12000)
+    });
+    if(ragRes.ok){
+      const ragD=await ragRes.json();
+      if(ragD.ok&&ragD.results){
+        const chunks=[];
+        ragD.results.forEach(r=>{
+          (r.results||[]).forEach(c=>{
+            if(c.chunk&&c.score>0.04) chunks.push(`[${r.agent}·${c.source}] ${c.chunk}`);
+          });
+        });
+        const top=chunks.slice(0,6);
+        if(top.length){ragCtx=top.join('\n\n');chunkCount=top.length;}
+      }
+    }
+  }catch(_){}
+
+  // Step 2: Build system prompt with RAG context injected
+  const sysBase=ag
+    ?`You are ${ag.id}, an elite AI agent in the SHADDAI council. Role: ${ag.role||ag.cat||'specialist'}. Answer with depth and authority.`
     :`You are the SHADDAI council of 7 AI specialists. Give a unified, powerful answer.`;
+  const sys=ragCtx?`${sysBase}\n\nUse this knowledge to ground your answer:\n${ragCtx}`:sysBase;
+
+  status.textContent='// synthesizing answer...';
   try{
     const res=await fetch(`${RENDER_API}/api/llm/chat`,{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -732,16 +761,20 @@ async function renderFallback(q,agentId,body,status){
     const d=await res.json();
     const color=ag?ag.color:'var(--g)';
     const text=d.ok&&d.content?d.content:'The council is momentarily unavailable.';
+    const ragBar=chunkCount
+      ?`<div style="margin-top:14px;padding-top:10px;border-top:1px solid ${color}22;font-family:'JetBrains Mono',monospace;font-size:9px;opacity:.38;color:${color}">◈ ${chunkCount} chunks retrieved from SHADDAI knowledge base</div>`
+      :'';
     body.innerHTML=`<div style="border:1px solid ${color}22;padding:20px;background:rgba(255,255,255,.01)">
       <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:${color};margin-bottom:14px;display:flex;align-items:center;gap:10px">
         <span>${agentId||'COUNCIL'}</span>
         <span style="width:4px;height:4px;border-radius:50%;background:${color};display:inline-block"></span>
         <span style="opacity:.5">${ag?ag.role||ag.cat||'':''}</span>
-        <span style="margin-left:auto;font-size:7px;opacity:.45;border:1px solid ${color}33;padding:2px 8px">CLOUD · ${d.provider||'LLM'}</span>
+        <span style="margin-left:auto;font-size:7px;opacity:.45;border:1px solid ${color}33;padding:2px 8px">CLOUD · ${chunkCount?'RAG+LLM':d.provider||'LLM'}</span>
       </div>
       <div style="font-family:'Fraunces',serif;font-size:14px;line-height:1.85;color:#f0e8d5;letter-spacing:.3px">${text}</div>
+      ${ragBar}
     </div>`;
-    status.textContent=`// cloud synthesis complete · ${d.provider||''}`;
+    status.textContent=`// ${chunkCount?'RAG-grounded':'cloud'} synthesis complete · ${chunkCount?'RAG+':''}${d.provider||''}`;
   }catch(err){
     body.innerHTML=`<div style="color:#f0a060;padding:20px;font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.7">Both brain server and cloud are unreachable.</div>`;
     status.textContent='// offline';
