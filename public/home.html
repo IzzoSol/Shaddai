@@ -1549,12 +1549,18 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
      fallback for browsers without rIC (Safari < 16). */
   var _descLoaded=false;
   function _triggerDescent(){if(_descLoaded)return;_descLoaded=true;lazyLoad();}
+  /* PERF: do NOT auto-load the descent WebGL iframe on idle/timeout — parsing its
+     126KB JS + booting a WebGL context blocks the main thread for ~1-3s, which is
+     the "scroll then freeze for a few seconds" jank users feel. Load ONLY on
+     explicit user action (the Ascend/View button via window.__loadDescent). */
+  /* (auto-load disabled for perf)
   if(window.requestIdleCallback){
     requestIdleCallback(_triggerDescent, {timeout:8000});
   } else {
     if(document.readyState!=='loading') setTimeout(_triggerDescent, 6000);
     else document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 6000); });
   }
+  */
 
   /* ── PERF: suspend the descent WebGL iframe while it isn't doing useful work ──
      The descent iframe (lab-molecules.html in ?bg=1 mode) renders a WebGL molecule
