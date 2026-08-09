@@ -977,6 +977,171 @@ app.get('/api/polymarket/prices', async (req, res) => {
   }
 });
 
+// ── Markets data routes — all free public APIs, no keys required ─────────────
+// Shared fetch helper with 10s timeout and basic caching
+const _mktCache = new Map();
+async function _mktFetch(url, ttl = 60000) {
+  const c = _mktCache.get(url);
+  if (c && Date.now() - c.ts < ttl) return c.data;
+  const r = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'SHADDAI/1.0' } });
+  if (!r.ok) throw new Error(`${r.status} from ${url}`);
+  const data = await r.json();
+  _mktCache.set(url, { data, ts: Date.now() });
+  return data;
+}
+
+// Crypto prices — CoinGecko free tier, no key
+app.get('/api/markets/crypto', async (req, res) => {
+  try {
+    const ids = (req.query.ids || 'bitcoin,ethereum,solana,chainlink,dogecoin').slice(0, 200);
+    const d = await _mktFetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=20&page=1&sparkline=false&price_change_percentage=24h,7d`, 90000);
+    res.json({ ok: true, coins: d });
+  } catch (e) { res.json({ ok: false, coins: [], error: String(e.message) }); }
+});
+
+// Global crypto market — CoinGecko
+app.get('/api/markets/global', async (req, res) => {
+  try {
+    const d = await _mktFetch('https://api.coingecko.com/api/v3/global', 120000);
+    res.json({ ok: true, data: d.data });
+  } catch (e) { res.json({ ok: false, data: null, error: String(e.message) }); }
+});
+
+// Trending coins — CoinGecko
+app.get('/api/markets/trending', async (req, res) => {
+  try {
+    const d = await _mktFetch('https://api.coingecko.com/api/v3/search/trending', 120000);
+    res.json({ ok: true, coins: (d.coins || []).map(c => c.item) });
+  } catch (e) { res.json({ ok: false, coins: [], error: String(e.message) }); }
+});
+
+// Fear & Greed Index — Alternative.me (free, no key)
+app.get('/api/markets/fear-greed', async (req, res) => {
+  try {
+    const d = await _mktFetch('https://api.alternative.me/fng/?limit=2&format=json', 300000);
+    const latest = d.data && d.data[0];
+    const prev = d.data && d.data[1];
+    res.json({ ok: true, value: latest ? parseInt(latest.value) : null, label: latest ? latest.value_classification : null, prev: prev ? parseInt(prev.value) : null, ts: latest ? latest.timestamp : null });
+  } catch (e) { res.json({ ok: false, value: null, error: String(e.message) }); }
+});
+
+// Forex rates — Frankfurter.app (free, no key, ECB data)
+app.get('/api/markets/forex', async (req, res) => {
+  try {
+    const d = await _mktFetch('https://api.frankfurter.app/latest?from=USD&to=EUR,GBP,JPY,AUD,CAD,CHF', 300000);
+    const pairs = Object.entries(d.rates || {}).map(([sym, rate]) => ({ sym: 'USD/' + sym, rate: +rate.toFixed(5), change24h: 0 }));
+    res.json({ ok: true, pairs });
+  } catch (e) { res.json({ ok: false, pairs: [], error: String(e.message) }); }
+});
+
+// Stock quotes — free Yahoo Finance unofficial (no key)
+app.get('/api/markets/stocks', async (req, res) => {
+  try {
+    const symbols = (req.query.symbols || 'SPY,QQQ,NVDA,TSLA,AAPL,MSFT,AMZN').split(',').slice(0, 10).map(s => encodeURIComponent(s.trim())).join(',');
+    const d = await _mktFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`, 60000);
+    const quotes = ((d.quoteResponse && d.quoteResponse.result) || []).map(q => ({
+      symbol: q.symbol, name: q.shortName || q.longName || q.symbol,
+      price: q.regularMarketPrice, change: q.regularMarketChange, changePct: q.regularMarketChangePercent,
+      open: q.regularMarketOpen, high: q.regularMarketDayHigh, low: q.regularMarketDayLow, volume: q.regularMarketVolume,
+    }));
+    res.json({ ok: true, quotes });
+  } catch (e) { res.json({ ok: false, quotes: [], error: String(e.message) }); }
+});
+
+// DexScreener hot pairs
+app.get('/api/markets/dex-hot', async (req, res) => {
+  try {
+    const chain = req.query.chain || 'solana';
+    const d = await _mktFetch(`https://api.dexscreener.com/latest/dex/pairs/${chain}/boosted`, 60000);
+    const pairs = (d.pairs || d || []).slice(0, 20).map(p => ({
+      address: p.pairAddress, baseToken: p.baseToken, quoteToken: p.quoteToken,
+      priceUsd: p.priceUsd, volume24h: p.volume && p.volume.h24, priceChange24h: p.priceChange && p.priceChange.h24,
+      liquidity: p.liquidity && p.liquidity.usd, dex: p.dexId, chain: p.chainId,
+    }));
+    res.json({ ok: true, pairs });
+  } catch (e) { res.json({ ok: false, pairs: [], error: String(e.message) }); }
+});
+
+// Jupiter token prices (Solana DEX aggregator) — free public API
+app.get('/api/markets/jupiter', async (req, res) => {
+  try {
+    const mints = (req.query.ids || 'So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v').slice(0, 500);
+    const d = await _mktFetch(`https://api.jup.ag/price/v2?ids=${mints}`, 30000);
+    res.json({ ok: true, data: d.data || {} });
+  } catch (e) { res.json({ ok: false, data: {}, error: String(e.message) }); }
+});
+
+// Solana network stats — free public RPC
+app.get('/api/network/solana', async (req, res) => {
+  try {
+    const rpc = process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    const [perfRes, supplyRes] = await Promise.allSettled([
+      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getRecentPerformanceSamples', params: [1] }), signal: AbortSignal.timeout(8000) }),
+      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getSupply', params: [{ commitment: 'finalized' }] }), signal: AbortSignal.timeout(8000) }),
+    ]);
+    let tps = null, supply = null;
+    if (perfRes.status === 'fulfilled' && perfRes.value.ok) {
+      const pj = await perfRes.value.json(); const s = pj.result && pj.result[0];
+      if (s) tps = Math.round(s.numTransactions / s.samplePeriodSecs);
+    }
+    if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
+      const sj = await supplyRes.value.json(); supply = sj.result && sj.result.value && sj.result.value.total;
+    }
+    res.json({ ok: true, tps, supply });
+  } catch (e) { res.json({ ok: false, tps: null, error: String(e.message) }); }
+});
+
+// ── MiroFish LLM swarm simulation — runs on Render when localhost:5001 unavailable ─
+// POST { token, scenario, numAgents, rounds, platform }
+// Returns structured swarm prediction via LLM chain
+app.post('/api/mirofish/simulate', express.json(), async (req, res) => {
+  try {
+    const { token = 'SOL', scenario = 'market rally', numAgents = 30, platform = 'twitter' } = req.body || {};
+    const tok = String(token).slice(0, 20).replace(/[<>]/g, '');
+    const scen = String(scenario).slice(0, 200).replace(/[<>]/g, '');
+
+    const llmProxy = require('./llm-proxy-routes');
+    const callLLM = llmProxy._callLLM || null;
+
+    // Build swarm agent personas and ask each one
+    const roles = ['Whale Tracker', 'Degen Trader', 'Technical Analyst', 'Fundamentals Researcher', 'Sentiment Reader', 'Risk Manager', 'Market Maker'];
+    const selected = roles.slice(0, Math.min(7, Math.max(3, Math.round(numAgents / 7))));
+
+    const systemPrompt = `You are a swarm of crypto market prediction agents analyzing "${tok}" given the scenario: "${scen}" on ${platform}.
+Respond ONLY with valid JSON in this exact shape:
+{
+  "consensus": "bull" | "bear" | "neutral",
+  "confidence": 0-100,
+  "summary": "2-sentence market outlook",
+  "agents": [
+    { "role": "string", "stance": "bull"|"bear"|"neutral", "strength": 0-100, "reasoning": "1 sentence" }
+  ],
+  "price_target": "short directional phrase e.g. +15-30% in 7d",
+  "risk": "low"|"medium"|"high",
+  "key_factors": ["factor1", "factor2", "factor3"]
+}
+Generate exactly ${selected.length} agents with roles: ${selected.join(', ')}. Base your analysis on real crypto market dynamics.`;
+
+    const llmRes = await fetch(`${req.protocol}://${req.get('host')}/api/llm/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Analyze ${tok}: ${scen}` }], agent: 'zerox', format: 'json' }),
+      signal: AbortSignal.timeout(30000),
+    });
+    const llmData = await llmRes.json();
+    const text = (llmData.content || llmData.message || '').trim();
+
+    // Extract JSON from LLM response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('LLM did not return valid JSON');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    res.json({ ok: true, token: tok, scenario: scen, platform, numAgents: selected.length, result: parsed, source: 'llm-swarm', provider: llmData.provider || 'cloud' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String((e && e.message) || e) });
+  }
+});
+
 // ── Pro trading signals — backs the pro-signals page (PIW-gated client-side).
 // Source = the live Telegram PNL tracker (backend/data/tg-calls.json). Same-origin,
 // no key (registration + access control lives on the page itself). 1s response cache
