@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI EMPIRE — Master Blueprint 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04070d;--bg2:#080f1c;--bg3:#0d1828;
+  --em:#00ff9c;--gold:#e8c45c;--cyan:#22d3ee;
+  --purple:#a78bfa;--red:#f87171;--blue:#60a5fa;
+  --muted:#2a4a3a;--border:rgba(0,229,160,.1);
+  --text:#eafff6;--dim:rgba(255,255,255,.45);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(4,7,13,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;overflow-x:auto}
+nav a{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);text-decoration:none;padding:5px 10px;border-radius:5px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+nav a:hover,nav a.active{color:var(--em);background:rgba(0,255,156,.08)}
+.nav-logo{font-family:'Oxanium',sans-serif;font-weight:800;font-size:14px;color:var(--em);margin-right:6px;flex-shrink:0;letter-spacing:.06em}
+.nav-sep{color:var(--muted);font-size:10px;flex-shrink:0}
+
+/* HERO */
+.hero{text-align:center;padding:80px 24px 60px;background:radial-gradient(ellipse 130% 80% at 50% 0%,rgba(0,255,156,.07),transparent 70%);border-bottom:1px solid var(--border)}
+.hero-sigil{font-size:72px;margin-bottom:22px;filter:drop-shadow(0 0 50px rgba(0,255,156,.5));line-height:1}
+.hero h1{font-family:'Oxanium',sans-serif;font-size:clamp(30px,7vw,60px);font-weight:800;letter-spacing:.05em;background:linear-gradient(135deg,var(--em) 0%,var(--cyan) 40%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:18px}
+.hero-sub{font-size:16px;color:var(--dim);max-width:680px;margin:0 auto 28px;line-height:1.75}
+.agent-byline{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.agent-badge{font-family:'Space Mono',monospace;font-size:9px;padding:5px 14px;border-radius:20px;border:1px solid;letter-spacing:.1em;font-weight:700}
+.badge-shaddai{color:var(--em);border-color:rgba(0,255,156,.35);background:rgba(0,255,156,.05)}
+.badge-zerox{color:var(--gold);border-color:rgba(232,196,92,.35);background:rgba(232,196,92,.05)}
+.badge-rag{color:var(--cyan);border-color:rgba(34,211,238,.35);background:rgba(34,211,238,.05)}
+
+/* SECTIONS */
+section{max-width:1300px;margin:0 auto;padding:64px 24px}
+.section-eyebrow{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--em);opacity:.6;margin-bottom:10px}
+h2{font-family:'Oxanium',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;letter-spacing:.04em;margin-bottom:8px}
+.section-desc{font-size:14px;color:var(--dim);margin-bottom:44px;max-width:800px;line-height:1.75}
+.divider{border:none;border-top:1px solid var(--border)}
+
+/* CALLOUTS */
+.callout{border-left:3px solid;padding:18px 22px;border-radius:0 10px 10px 0;margin:28px 0;font-size:14px;line-height:1.7}
+.callout-s{border-color:var(--em);background:rgba(0,255,156,.04)}
+.callout-z{border-color:var(--gold);background:rgba(232,196,92,.04)}
+.callout-r{border-color:var(--cyan);background:rgba(34,211,238,.04)}
+.callout-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;font-weight:700;margin-bottom:8px;display:block}
+.callout-s .callout-label{color:var(--em)}
+.callout-z .callout-label{color:var(--gold)}
+.callout-r .callout-label{color:var(--cyan)}
+
+/* ELI5 */
+.eli5{background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.15);border-radius:12px;padding:18px 22px;margin-top:20px}
+.eli5-lbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;color:#fbbf24;margin-bottom:8px;display:block}
+.eli5-text{font-size:14px;color:rgba(255,255,255,.78);line-height:1.7}
+
+/* CYCLE SECTION — massive visual */
+.cycle-section{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;text-align:center}
+.cycle-container{position:relative;width:min(560px,90vw);height:min(560px,90vw);margin:40px auto}
+.cycle-ring{position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(0,255,156,.12);animation:spinSlow 40s linear infinite}
+.cycle-node{position:absolute;width:110px;height:110px;transform:translate(-50%,-50%);background:var(--bg2);border:2px solid var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;transition:border-color .3s,box-shadow .3s;cursor:default}
+.cycle-node:hover{border-color:rgba(0,255,156,.4);box-shadow:0 0 20px rgba(0,255,156,.12);z-index:2}
+.cycle-num{font-family:'Oxanium',sans-serif;font-size:10px;font-weight:800;color:rgba(0,255,156,.4)}
+.cycle-icon{font-size:24px;line-height:1}
+.cycle-word{font-family:'Oxanium',sans-serif;font-size:11px;font-weight:800;text-align:center;color:var(--text);line-height:1.2}
+.cycle-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Oxanium',sans-serif;font-size:32px;font-weight:800;color:var(--em);text-align:center;line-height:1.1}
+.cycle-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:48px;max-width:900px;margin-left:auto;margin-right:auto}
+.cycle-step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;text-align:left;display:flex;gap:14px;align-items:flex-start}
+.cycle-step-num{font-family:'Oxanium',sans-serif;font-size:28px;font-weight:800;color:rgba(0,255,156,.25);flex-shrink:0;line-height:1}
+.cycle-step-text{font-size:13px;line-height:1.6}
+.cycle-step-bold{font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--em);display:block;margin-bottom:2px}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+
+/* SPARKS VALUE */
+.sparks-compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:28px}
+.spark-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 16px}
+.spark-amount{font-family:'Oxanium',sans-serif;font-size:28px;font-weight:800;color:var(--gold)}
+.spark-eq{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);margin:4px 0}
+.spark-usd{font-size:20px;font-weight:700;color:var(--em)}
+.spark-what{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5}
+.currency-bar{display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin:10px 0}
+.currency-sym{font-family:'Oxanium',sans-serif;font-size:20px;font-weight:800;width:80px;flex-shrink:0}
+.currency-desc{font-size:12px;color:var(--dim);flex:1}
+.currency-rate{font-family:'Space Mono',monospace;font-size:11px;color:var(--em);white-space:nowrap}
+
+/* PATHS */
+.path-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:36px}
+.path-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:26px 20px;transition:transform .2s,border-color .2s;position:relative;overflow:hidden}
+.path-card:hover{transform:translateY(-3px)}
+.path-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c)}
+.path-icon{font-size:28px;margin-bottom:12px;display:block}
+.path-name{font-family:'Oxanium',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px}
+.path-cost{font-family:'Space Mono',monospace;font-size:11px;color:var(--c);margin-bottom:10px}
+.path-desc{font-size:13px;color:var(--dim);line-height:1.65}
+.path-need{font-size:11px;margin-top:12px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;color:rgba(255,255,255,.55)}
+.path-need strong{color:var(--c)}
+
+/* TIER CARDS */
+.tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:36px}
+.tier-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:26px 20px;position:relative;overflow:hidden}
+.tier-card.featured{border-color:rgba(0,255,156,.4);box-shadow:0 0 30px rgba(0,255,156,.06)}
+.tier-rbadge{position:absolute;top:12px;right:12px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;padding:3px 8px;border-radius:10px;font-weight:700}
+.tier-name{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--dim);margin-bottom:10px;text-transform:uppercase}
+.tier-price{font-family:'Oxanium',sans-serif;font-size:40px;font-weight:800;color:var(--em);line-height:1}
+.tier-price sup{font-size:18px;vertical-align:top;margin-top:8px;display:inline-block}
+.tier-price span{font-size:13px;color:var(--dim);font-weight:400}
+.tier-note{font-family:'Space Mono',monospace;font-size:10px;color:var(--dim);margin:6px 0 18px}
+.tier-perks{list-style:none;display:flex;flex-direction:column;gap:8px}
+.tier-perks li{font-size:12px;display:flex;gap:8px;align-items:flex-start;color:rgba(255,255,255,.8)}
+.tier-perks li::before{content:'◈';color:var(--em);flex-shrink:0;margin-top:1px}
+.tier-perks li.highlight::before{content:'✦';color:var(--gold)}
+.tier-perks li.coming::before{content:'◇';color:var(--dim)}
+
+/* BAR CHARTS */
+.bar-chart{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--dim);width:120px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:28px;background:rgba(255,255,255,.04);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:12px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700}
+.bar-val{font-family:'Space Mono',monospace;font-size:11px;color:var(--em);width:90px;flex-shrink:0}
+
+/* DATA GRIDS */
+.data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:28px}
+.data-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px 16px}
+.dc-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.dc-val{font-family:'Oxanium',sans-serif;font-size:26px;font-weight:800;color:var(--em)}
+.dc-sub{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:24px}
+.tbl th{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;font-family:'Space Mono',monospace}
+.t-g{background:rgba(0,255,156,.1);color:var(--em)}
+.t-y{background:rgba(232,196,92,.1);color:var(--gold)}
+.t-b{background:rgba(96,165,250,.1);color:var(--blue)}
+.t-p{background:rgba(167,139,250,.1);color:var(--purple)}
+.t-r{background:rgba(248,113,113,.1);color:var(--red)}
+
+/* DISTRICT GRID */
+.district-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;max-width:500px;margin:28px auto}
+.d-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.07);font-size:10px;padding:6px;text-align:center;cursor:default;transition:transform .2s}
+.d-cell:hover{transform:scale(1.06);z-index:1}
+.d-name{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.08em;color:var(--dim)}
+.d-drain{font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700}
+
+/* WELL SPLIT */
+.well-split{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.w-piece{background:var(--bg2);border-radius:12px;padding:20px 16px;text-align:center;border:1px solid var(--border)}
+.w-pct{font-family:'Oxanium',sans-serif;font-size:40px;font-weight:800;line-height:1}
+.w-lbl{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.5}
+@media(max-width:580px){.well-split{grid-template-columns:repeat(2,1fr)}}
+
+/* BOOST */
+.boost-list{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.boost-row{display:flex;gap:12px;align-items:center}
+.boost-lock{font-family:'Space Mono',monospace;font-size:10px;width:120px;flex-shrink:0;color:var(--dim)}
+.boost-track{flex:1;height:32px;background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden}
+.boost-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,rgba(0,255,156,.35),rgba(0,255,156,.75));display:flex;align-items:center;padding-left:12px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--em)}
+
+/* NFT CARDS */
+.nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:32px}
+.nft-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px 18px;position:relative}
+.nft-card::after{content:attr(data-r);position:absolute;top:12px;right:12px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;padding:2px 8px;border-radius:10px;font-weight:700}
+.nft-soul::after{background:rgba(248,113,113,.15);color:var(--red)}
+.nft-trade::after{background:rgba(96,165,250,.15);color:var(--blue)}
+.nft-rare::after{background:rgba(167,139,250,.15);color:var(--purple)}
+.nft-live::after{background:rgba(0,255,156,.15);color:var(--em)}
+.nft-icon{font-size:32px;margin-bottom:10px;display:block;line-height:1}
+.nft-name{font-family:'Oxanium',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px}
+.nft-desc{font-size:12px;color:var(--dim);line-height:1.6}
+.nft-get{font-size:11px;margin-top:10px;color:var(--em);font-family:'Space Mono',monospace}
+
+/* SIGNAL HUD */
+.signal-hud{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:24px;max-width:500px}
+.sig-bar-wrap{height:24px;background:rgba(255,255,255,.04);border-radius:12px;overflow:hidden;margin:10px 0;position:relative}
+.sig-bar{height:100%;border-radius:12px;background:linear-gradient(90deg,#f87171,#fbbf24 50%,#00ff9c)}
+
+/* PIE CHART */
+.pie-wrap{display:flex;gap:32px;align-items:center;flex-wrap:wrap;margin-top:28px}
+.pie-legend{display:flex;flex-direction:column;gap:10px;flex:1;min-width:200px}
+.pie-item{display:flex;align-items:center;gap:10px;font-size:13px}
+.pie-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.pie-pct{font-family:'Space Mono',monospace;font-size:11px;color:var(--dim)}
+
+/* ROI */
+.roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:28px}
+.roi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center}
+.roi-num{font-family:'Oxanium',sans-serif;font-size:30px;font-weight:800;color:var(--em)}
+.roi-lbl{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.4}
+
+/* MISC */
+.code-block{font-family:'Space Mono',monospace;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:10px;padding:18px 20px;font-size:12px;line-height:1.8;overflow-x:auto;margin-top:16px}
+.code-block .c{color:var(--em)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+@media(max-width:700px){.two-col{grid-template-columns:1fr}}
+.hl{font-family:'Oxanium',sans-serif;font-size:20px;font-weight:800;color:var(--em)}
+.fn{font-size:11px;color:var(--dim);margin-top:8px;font-style:italic}
+footer{text-align:center;padding:48px 24px;border-top:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.12em}
+
+/* ── GATE (PIN 4444) ─────────────────────────────── */
+#gate{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(0,255,156,.06) 0%,var(--bg) 70%);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+  font-family:'Space Grotesk',sans-serif;
+}
+#gate.hide{display:none}
+.gate-hex{
+  width:70px;height:70px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  background:var(--bg2);border:1px solid var(--em);
+  display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--em);
+  text-shadow:0 0 18px rgba(0,255,156,.5);
+  box-shadow:0 0 18px rgba(0,255,156,.2);animation:hexglow 3s ease-in-out infinite;
+}
+@keyframes hexglow{0%,100%{box-shadow:0 0 18px rgba(0,255,156,.2);}50%{box-shadow:0 0 18px rgba(0,255,156,.2),0 0 42px rgba(0,255,156,.14);}}
+.gate-logo{font-family:'Oxanium',sans-serif;font-size:clamp(18px,3vw,26px);font-weight:800;color:var(--em);text-shadow:0 0 14px rgba(0,255,156,.4);letter-spacing:6px}
+.gate-rule{width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--em),transparent)}
+.gate-sub{font-size:10px;color:var(--dim);letter-spacing:3px;text-align:center;max-width:340px;line-height:1.6}
+.gate-btn{
+  padding:11px 42px;background:transparent;border:1px solid var(--em);
+  color:var(--em);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;
+  cursor:pointer;text-decoration:none;position:relative;overflow:hidden;transition:color .25s;
+}
+.gate-btn::before{content:'';position:absolute;inset:0;background:var(--em);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1}
+.gate-btn:hover{color:var(--bg)}
+.gate-btn:hover::before{transform:scaleX(1)}
+.gate-pin{
+  width:160px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--em);font-family:'Space Mono',monospace;font-size:24px;letter-spacing:14px;text-align:center;
+  outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;
+}
+.gate-pin::placeholder{color:rgba(0,255,156,.25);letter-spacing:14px}
+.gate-pin:focus{border-color:var(--em);box-shadow:0 0 14px rgba(0,255,156,.25)}
+.gate-err{font-size:9px;color:var(--red);letter-spacing:2px;min-height:12px;font-family:'Space Mono',monospace}
+.gate-link{font-size:10px;color:var(--dim);letter-spacing:2px;text-decoration:none;border-bottom:1px solid rgba(0,255,156,.2);padding-bottom:2px}
+.gate-link:hover{color:var(--text)}
+.gate-shake{animation:gateshake .4s}
+@keyframes gateshake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+/* screen the whole page until unlocked */
+body.gate-locked{overflow:hidden}
+body.gate-locked nav,body.gate-locked > *:not(#gate){visibility:hidden}
+</style>
+</head>
+<body class="gate-locked">
+
+<!-- GATE — PIN 4444 -->
+<div id="gate">
+  <div class="gate-hex">⬡</div>
+  <div class="gate-logo">SHADDAI</div>
+  <div class="gate-rule"></div>
+  <div class="gate-sub">MASTER BLUEPRINT — INTERNAL · ENTER ACCESS CODE</div>
+  <input class="gate-pin" id="gatePin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••" autocomplete="off" aria-label="Access code" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')unlock()">
+  <button class="gate-btn" id="gateBtn" onclick="unlock()">UNLOCK</button>
+  <div class="gate-err" id="gateErr"></div>
+  <a class="gate-link" href="/index.html">← back</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">◭ SHADDAI</span>
+  <span class="nav-sep">|</span>
+  <a href="#cycle">◉ The Cycle</a>
+  <a href="#why">⬡ Why SHADDAI</a>
+  <a href="#funnel">Funnel</a>
+  <a href="#paths">Paths</a>
+  <a href="#flywheel">Flywheel</a>
+  <a href="#tiers">Tiers</a>
+  <a href="#credits">Credits</a>
+  <a href="#sparks-value">⚡ Sparks</a>
+  <a href="#fees">Fees</a>
+  <a href="#tokens">Tokens</a>
+  <a href="#land">Land</a>
+  <a href="#signal">Signal</a>
+  <a href="#boost">Boost</a>
+  <a href="#rooms">Rooms</a>
+  <a href="#well">Well</a>
+  <a href="#amm">Stocks</a>
+  <a href="#nfts">NFTs</a>
+  <a href="#referral">Referral</a>
+  <a href="#shd">SHD</a>
+  <a href="#siege">Siege</a>
+  <a href="#roi">ROI</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-sigil">◭</div>
+  <h1>SHADDAI EMPIRE<br>Master Blueprint</h1>
+  <p class="hero-sub">
+    Every number. Every rule. Every mechanic — explained so simply that a 10-year-old gets it AND a seasoned investor gets it. No jargon left unexplained.
+  </p>
+  <div class="agent-byline">
+    <span class="agent-badge badge-shaddai">◭ SHADDAI · Strategy</span>
+    <span class="agent-badge badge-zerox">◈ ZEROX · Revenue</span>
+    <span class="agent-badge badge-rag">⟁ RAG BRAIN · Live Data</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     THE CYCLE — BIG BOLD SIMPLE VISUAL
+═══════════════════════════════════════════════════ -->
+<div class="cycle-section" id="cycle">
+  <div class="section-eyebrow" style="margin-bottom:16px">◉ THE SHADDAI CYCLE</div>
+  <h2 style="font-size:clamp(28px,6vw,52px);margin-bottom:12px">How It All Works</h2>
+  <p style="font-size:16px;color:var(--dim);max-width:560px;margin:0 auto 16px">Follow the arrow. Every step feeds the next. It never stops.</p>
+
+  <!-- CIRCLE DIAGRAM -->
+  <div class="cycle-container">
+    <div class="cycle-ring"></div>
+    <svg viewBox="0 0 560 560" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+      <!-- Center glow -->
+      <circle cx="280" cy="280" r="60" fill="rgba(0,255,156,.04)" stroke="rgba(0,255,156,.15)" stroke-width="1.5"/>
+      <!-- Curved arrows between nodes (clockwise) -->
+      <g stroke="rgba(0,255,156,.35)" stroke-width="1.5" fill="none">
+        <!-- 1→2 top to top-right -->
+        <path d="M280 65 Q370 100 420 155" marker-end="url(#arr)"/>
+        <!-- 2→3 top-right to right -->
+        <path d="M458 145 Q495 215 495 280" marker-end="url(#arr)"/>
+        <!-- 3→4 right to bottom-right -->
+        <path d="M495 310 Q468 390 420 420" marker-end="url(#arr)"/>
+        <!-- 4→5 bottom-right to bottom -->
+        <path d="M410 442 Q350 490 280 495" marker-end="url(#arr)"/>
+        <!-- 5→6 bottom to bottom-left -->
+        <path d="M250 495 Q185 480 148 435" marker-end="url(#arr)"/>
+        <!-- 6→7 bottom-left to left -->
+        <path d="M135 415 Q88 355 68 285" marker-end="url(#arr)"/>
+        <!-- 7→8 left to top-left -->
+        <path d="M72 255 Q95 175 143 135" marker-end="url(#arr)"/>
+        <!-- 8→1 top-left to top -->
+        <path d="M155 120 Q210 72 265 62" marker-end="url(#arr)"/>
+      </g>
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0 0 L6 3 L0 6 Z" fill="rgba(0,255,156,.6)"/>
+        </marker>
+      </defs>
+    </svg>
+    <!-- Center text -->
+    <div class="cycle-center">⬡<br><span style="font-size:14px;color:var(--dim);font-family:'Space Mono',monospace;letter-spacing:.1em">THE CYCLE</span></div>
+    <!-- 8 nodes positioned around circle (r≈220 in 560px container = r%≈39.3%) -->
+    <!-- Positions from center 50%,50%: offset by r*cos/sin for each 45° step starting at top -->
+    <div class="cycle-node" style="left:50%;top:8%"><div class="cycle-num">01</div><div class="cycle-icon">◭</div><div class="cycle-word">YOU JOIN</div></div>
+    <div class="cycle-node" style="left:82%;top:22%"><div class="cycle-num">02</div><div class="cycle-icon">⬡</div><div class="cycle-word">USE AI</div></div>
+    <div class="cycle-node" style="left:90%;top:50%"><div class="cycle-num">03</div><div class="cycle-icon">⚡</div><div class="cycle-word">EARN SPARKS</div></div>
+    <div class="cycle-node" style="left:82%;top:78%"><div class="cycle-num">04</div><div class="cycle-icon">✦</div><div class="cycle-word">BUY LAND</div></div>
+    <div class="cycle-node" style="left:50%;top:90%"><div class="cycle-num">05</div><div class="cycle-icon">⊛</div><div class="cycle-word">LAND STREAMS</div></div>
+    <div class="cycle-node" style="left:18%;top:78%"><div class="cycle-num">06</div><div class="cycle-icon">◈</div><div class="cycle-word">WELL BURNS</div></div>
+    <div class="cycle-node" style="left:10%;top:50%"><div class="cycle-num">07</div><div class="cycle-icon">⟁</div><div class="cycle-word">TOKEN GROWS</div></div>
+    <div class="cycle-node" style="left:18%;top:22%"><div class="cycle-num">08</div><div class="cycle-icon">◇</div><div class="cycle-word">MORE JOIN</div></div>
+  </div>
+
+  <!-- VERBAL STEPS — plain language for 10-year-olds -->
+  <div class="cycle-steps">
+    <div class="cycle-step"><div class="cycle-step-num">1</div><div><span class="cycle-step-bold">YOU JOIN</span>Sign up free. No card needed. You get 50 trial credits to test the AI agents — then buy more or plug in your own API key.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">2</div><div><span class="cycle-step-bold">USE AI</span>Run AI agents to do work. Write things, research things, build things.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">3</div><div><span class="cycle-step-bold">EARN SPARKS ⚡</span>Every time you use the system, you earn Sparks. Think of it like arcade tokens.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">4</div><div><span class="cycle-step-bold">BUY LAND</span>Use Sparks to claim a plot in SHADDAI City. You now OWN digital property.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">5</div><div><span class="cycle-step-bold">LAND STREAMS ⚡</span>Your plot automatically generates Sparks every second — even when you're asleep.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">6</div><div><span class="cycle-step-bold">WELL BURNS ◈</span>Throw Sparks in the Wishing Well. 40% burn forever. 35% seeds the SHD token.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">7</div><div><span class="cycle-step-bold">TOKEN GROWS ⬡</span>As more Sparks are thrown, the SHD token gets more backed value. It grows.</div></div>
+    <div class="cycle-step"><div class="cycle-step-num">8</div><div><span class="cycle-step-bold">MORE JOIN ◭</span>Bigger token + better economy attracts new users. More users = more Sparks = back to step 1.</div></div>
+  </div>
+</div>
+
+<!-- WHY SHADDAI — ungated (page-wide PIN 4444 gate protects this) -->
+<hr class="divider"><section id="why" style="position:relative">
+  <div id="why-content">
+  <div class="section-eyebrow">◭ SHADDAI — THE REAL ANSWER</div>
+  <h2>Why Not Just Use ChatGPT?</h2>
+  <p class="section-desc">Honest question. Here's the honest answer — feature by feature, dollar by dollar.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:8px">
+
+    <div style="background:var(--bg2);border:1px solid rgba(0,255,156,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--em);margin-bottom:10px">⟁ RAG BRAIN — Persistent Memory</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">ChatGPT forgets you every session.</strong> SHADDAI's RAG brain remembers your documents, your writing style, your agent history, your preferences — permanently. Every session picks up exactly where you left off. The longer you use it, the smarter it gets about YOU specifically. That's not possible on ChatGPT Plus or Claude.ai.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--em)">◈ Unlocked on: Free tier</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid rgba(232,196,92,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--gold);margin-bottom:10px">◭ SHADDAI SIGNALS — Real Alpha</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">ChatGPT can't tell you which token is about to move.</strong> SHADDAI Signals (@ShaddaiSignalsBot) does — with holder analysis, bonded token detection, smart money wallet tracking, and a minimum holder threshold before a signal fires. Real trading intelligence, not generic crypto news. CapCut doesn't have this. Claude doesn't have this.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--gold)">◈ Unlocked on: Pro · Alpha · Founder</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid rgba(34,211,238,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--cyan);margin-bottom:10px">⬡ SHADDAI CLIPPER — Full Pipeline</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">CapCut clips manually. SHADDAI Clipper finds the clip FOR you.</strong> Input a long video → AI identifies the best moments → writes the caption → formats for TikTok/Reels/Shorts. It's not a tool you use — it's a pipeline that runs. The difference between editing yourself and having an assistant who does it while you sleep.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--cyan)">◈ Unlocked on: Pro · Alpha · Founder</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid rgba(167,139,250,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--purple);margin-bottom:10px">⊛ MCP — Your Tools, Connected</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">OpenAI can't reach your files, your calendar, your browser, your database.</strong> SHADDAI's MCP layer (Model Context Protocol) connects your 7 agents to external tools — Notion, Slack, GitHub, databases, web browsers — so your agents actually DO things in the real world, not just chat about them. This is the difference between an AI assistant and an AI employee.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--purple)">◈ Unlocked on: Builder · Pro · Alpha · Founder</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid rgba(232,196,92,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--gold);margin-bottom:10px">✦ LAND + ROOMS — AI Pays YOU Back</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">Every dollar you put into ChatGPT is gone.</strong> Every dollar you put into SHADDAI builds equity. Your plot streams Sparks while you sleep. Your tenants pay you every week automatically. The longer you stay, the more your land is worth. This is the difference between renting a tool and owning a business.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--gold)">◈ Unlocked on: Pro · Alpha · Founder</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:24px 20px">
+      <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:800;color:var(--blue);margin-bottom:10px">◈ 7 AGENTS — Specialized, Not Generic</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7"><strong style="color:var(--text)">One GPT does everything badly.</strong> SHADDAI has 7 agents each built for one domain: NEXUS for backend code, ZEROX for revenue/pricing, ORACLE for research, TURTLE for UI/design, QUILL for writing, PIKADON for security, SHADDAI for strategy. Each knows its domain cold. You're not prompting — you're delegating to a specialist.</div>
+      <div style="margin-top:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--blue)">◈ Unlocked on: Free tier</div>
+    </div>
+
+  </div>
+
+  <div style="background:linear-gradient(135deg,rgba(0,255,156,.06),rgba(232,196,92,.06));border:1px solid rgba(0,255,156,.2);border-radius:14px;padding:28px 24px;margin-top:28px;text-align:center">
+    <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;margin-bottom:10px">Why the 2D Game Exists</div>
+    <div style="font-size:14px;color:var(--dim);max-width:680px;margin:0 auto;line-height:1.75">The 2D pixel world is the <strong style="color:var(--text)">physical layer of an invisible economy.</strong> Your plot streaming Sparks is real, but abstract. Walking to your plot and watching it glow — that's tangible. Meeting other land owners in the city, finding tenants, exploring districts — that's community. You don't have to play. But if you do, the economy stops feeling like a spreadsheet and starts feeling like a world you own.</div>
+  </div>
+  </div><!-- end why-content -->
+</section>
+
+<!-- THE FUNNEL -->
+<hr class="divider"><section id="funnel">
+  <div class="section-eyebrow">◈ ZEROX — CONVERSION FUNNEL</div>
+  <h2>Free → Paid: The Honest Funnel</h2>
+  <p class="section-desc">Every tier has one clear "aha moment" that drives the upgrade. Here's exactly what converts someone at each step.</p>
+
+  <div style="display:flex;flex-direction:column;gap:3px;margin-top:32px;max-width:860px">
+
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:0;border-radius:14px 14px 0 0;overflow:hidden">
+      <div style="background:rgba(0,255,156,.08);border:1px solid rgba(0,255,156,.2);padding:20px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:var(--em)">FREE</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim)">$0/mo</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid rgba(0,255,156,.1);border-left:none;padding:20px 22px">
+        <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--em);margin-bottom:6px">◈ AHA MOMENT: "This remembers me. ChatGPT doesn't."</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.65">You sign up. You run a few tasks. The RAG brain starts building your profile. Next session — it already knows your context. That's the hook. You also earn your first Sparks, see the pixel world for the first time, and realize this is bigger than a chatbot.</div>
+        <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace">WHAT DRIVES UPGRADE → hitting the 30 RPM cap or wanting BYOK</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:0">
+      <div style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);border-top:none;padding:20px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:var(--cyan)">BUILDER</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim)">$19/mo</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid rgba(34,211,238,.1);border-left:none;border-top:none;padding:20px 22px">
+        <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:6px">◈ AHA MOMENT: "I connected my own OpenAI key — it's basically free now."</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.65">BYOK unlocked. You paste your own API key and SHADDAI becomes a zero-marginal-cost workspace. 8 skill slots means your agents start getting specialized. MCP tools start connecting to your real workflow. You're not chatting — you're automating.</div>
+        <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace">WHAT DRIVES UPGRADE → wanting Signals, land, or the 3D world</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:0">
+      <div style="background:rgba(0,255,156,.1);border:2px solid rgba(0,255,156,.4);border-top:none;padding:20px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:var(--em)">PRO</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim)">$30/mo</div>
+        <div style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(0,255,156,.5);margin-top:3px">BEST VALUE</div>
+      </div>
+      <div style="background:rgba(0,255,156,.03);border:2px solid rgba(0,255,156,.25);border-left:none;border-top:none;padding:20px 22px">
+        <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--em);margin-bottom:6px">◈ AHA MOMENT: "My plot just earned Sparks while I was asleep. Signals just called a 3× move."</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.65">This is where compounding starts. You own land that earns while you sleep. ORACLE Terminal (Pro Signals) gives you market signals your competitors don't have. SHADDAI Clipper starts building your content pipeline. The subscription literally pays for itself via Sparks + signals alpha.</div>
+        <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace">WHAT DRIVES UPGRADE → volume (hitting 200 RPM) or wanting 50k credits</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:0">
+      <div style="background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-top:none;padding:20px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:var(--red)">ALPHA</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim)">$199/mo</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid rgba(248,113,113,.1);border-left:none;border-top:none;padding:20px 22px">
+        <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px">◈ AHA MOMENT: "One Signals call paid for my whole month. One client paid for the year."</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.65">
+          50,000 credits = <strong style="color:var(--text)">$500 retail value</strong> at market API pricing — you're getting 2.5× the subscription cost back in pure compute before you even touch Signals or land.<br><br>
+          1,000 RPM means you can run automated agent pipelines at agency scale. One retainer client using your custom SHADDAI agents = $199 covered many times. One good Signals call on a $1,000 position = month paid.<br><br>
+          This tier is for people who make money with AI, not just use it.
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(248,113,113,.1);border-radius:10px;color:var(--red)">50k credits = $500 value</span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(248,113,113,.1);border-radius:10px;color:var(--red)">1 client = ROI covered</span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(248,113,113,.1);border-radius:10px;color:var(--red)">1 signal call = month paid</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace">WHAT DRIVES UPGRADE → Founder tier (belief in token, ECA, one-time cost)</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:0;border-radius:0 0 14px 14px;overflow:hidden">
+      <div style="background:rgba(232,196,92,.1);border:1px solid rgba(232,196,92,.35);border-top:none;padding:20px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:var(--gold)">FOUNDER</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim)">$100 once</div>
+        <div style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(232,196,92,.6);margin-top:3px">25 SPOTS</div>
+      </div>
+      <div style="background:rgba(232,196,92,.03);border:1px solid rgba(232,196,92,.2);border-left:none;border-top:none;padding:20px 22px">
+        <div style="font-family:'Oxanium',sans-serif;font-size:13px;font-weight:700;color:var(--gold);margin-bottom:6px">◈ AHA MOMENT: "$100 gets you your slice of the token before it exists. 25 people ever."</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.65">
+          The Founder tier is not a subscription deal — it's a <strong style="color:var(--text)">token launch play.</strong> You pay $100 once to lock in your ECA: 1–2.5% of the SHD token allocation at launch. At a $1M market cap, 1% = <strong style="color:var(--text)">$10,000</strong>. At $10M, that's $100,000. You're not buying access — you're buying a founding stake in an AI economy before the public can touch it.<br><br>
+          On top: 5,000 credits to spend how you want, a Genesis Badge NFT that only 25 humans on Earth will ever hold, your name in Founders' Row, and 3 months of Pro included. After that, subscribe like everyone else — the token allocation is what you're really here for.
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(232,196,92,.1);border-radius:10px;color:var(--gold)">ECA 1–2.5% SHD at launch</span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(232,196,92,.1);border-radius:10px;color:var(--gold)">25 people ever · permanent</span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(232,196,92,.1);border-radius:10px;color:var(--gold)">5k credits included</span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;padding:3px 10px;background:rgba(232,196,92,.1);border-radius:10px;color:var(--gold)">3 months Pro trial</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:rgba(232,196,92,.5);font-family:'Space Mono',monospace">⊛ 25 SPOTS TOTAL · Live Stripe link active</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CHOOSE YOUR PATH -->
+<hr class="divider"><section id="paths">
+  <div class="section-eyebrow">◭ SHADDAI SAYS</div>
+  <h2>Choose Your Path</h2>
+  <p class="section-desc">Do I HAVE to play the 2D game? Do I HAVE to use their keys? What if I only want land? — Answered here, once and for all.</p>
+
+  <div class="path-grid">
+    <div class="path-card" style="--c:var(--em)">
+      <span class="path-icon">◭</span>
+      <div class="path-name">Dashboard Only</div>
+      <div class="path-cost">FREE → $30/mo</div>
+      <div class="path-desc">Run AI agents, use the command hub. Never touch the pixel world or own land. Still earns Sparks.</div>
+      <div class="path-need"><strong>Requires:</strong> Email sign-up only. No game. No land. No keys required.</div>
+    </div>
+    <div class="path-card" style="--c:var(--gold)">
+      <span class="path-icon">✦</span>
+      <div class="path-name">Land Investor</div>
+      <div class="path-cost">Pro $30 + Plot Deed</div>
+      <div class="path-desc">Own a plot. Let it stream Sparks 24/7. Rent rooms to tenants. Collect passive income. No 2D game required.</div>
+      <div class="path-need"><strong>Requires:</strong> Pro tier + Plot NFT. 2D game is optional.</div>
+    </div>
+    <div class="path-card" style="--c:var(--cyan)">
+      <span class="path-icon">⬡</span>
+      <div class="path-name">Player</div>
+      <div class="path-cost">Free → Builder $19</div>
+      <div class="path-desc">Walk the pixel world, earn Sparks by playing. No personal AI keys needed. SHADDAI covers free tier usage.</div>
+      <div class="path-need"><strong>Requires:</strong> Sign-in only. SHADDAI's keys power free tier.</div>
+    </div>
+    <div class="path-card" style="--c:var(--purple)">
+      <span class="path-icon">⊛</span>
+      <div class="path-name">Builder / BYOK</div>
+      <div class="path-cost">Any tier + Your Keys</div>
+      <div class="path-desc">Bring your own OpenAI / Anthropic / Gemini keys. Zero credit spend on SHADDAI. Build at unlimited scale.</div>
+      <div class="path-need"><strong>Requires:</strong> Settings → BYOK. Paste your keys. They stay in your browser session only.</div>
+    </div>
+    <div class="path-card" style="--c:var(--red)">
+      <span class="path-icon">◈</span>
+      <div class="path-name">Full Stack Founder</div>
+      <div class="path-cost">Alpha $199 or Founder $100</div>
+      <div class="path-desc">All agents, all land, all tools. Governance vote on SHD. ECA on token launch. 3D world + Founders' Row office. Maximum compounding.</div>
+      <div class="path-need"><strong>Requires:</strong> Alpha or Founder tier. Only 25 Founder spots total.</div>
+    </div>
+  </div>
+
+  <div class="eli5" style="margin-top:28px">
+    <span class="eli5-lbl">◇ EXPLAIN LIKE I'M 10</span>
+    <div class="eli5-text">Think of SHADDAI like a city with a mall, a neighborhood, and some arcade games. You can just <strong>shop in the mall</strong> (dashboard only), <strong>own a store</strong> (land investor), <strong>play the arcade games</strong> (player), <strong>bring your own food</strong> (BYOK), or <strong>own the whole mall block</strong> (Founder). You decide how deep you go. None of the parts are required — they just compound when combined.</div>
+  </div>
+</section>
+
+<!-- FLYWHEEL -->
+<hr class="divider"><section id="flywheel">
+  <div class="section-eyebrow">◭ SHADDAI + ◈ ZEROX</div>
+  <h2>The Value Flywheel</h2>
+  <p class="section-desc">Every action feeds the next. The economy rewards early participants and gets stronger as it grows — not by luck, by design.</p>
+
+  <div class="two-col">
+    <div>
+      <img src="/assets/blueprint/flywheel.png" alt="SHADDAI Energy Flywheel" style="width:100%;border-radius:16px;border:1px solid rgba(0,255,156,.15);box-shadow:0 0 50px rgba(0,255,156,.07)" loading="lazy">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">◭ 1 · Users Join</div><div style="font-size:12px;color:var(--dim)">Free tier. 500 credits/mo. Try the agents. See the world.</div></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">⚡ 2 · Earn Sparks</div><div style="font-size:12px;color:var(--dim)">Every task run earns Sparks. Sparks = the empire's heartbeat currency.</div></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">✦ 3 · Own Land → Stream</div><div style="font-size:12px;color:var(--dim)">Plots stream ⚡ passively. Stake more → earn more. Rent rooms → passive income.</div></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">◈ 4 · Wishing Well → LP</div><div style="font-size:12px;color:var(--dim)">40% burned ·  35% seeds SHD liquidity · 15% jackpot · 10% cosmetics</div></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">⬡ 5 · SHD Token Appreciates</div><div style="font-size:12px;color:var(--dim)">LP reserve grows → SHD has backed value. More value → more holders → more treasury.</div></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px"><div style="font-family:'Oxanium',sans-serif;font-size:12px;font-weight:700;color:var(--em);margin-bottom:4px">◭ 6 → 7 → 8 → Back</div><div style="font-size:12px;color:var(--dim)">Referrals → Revenue → Better product → More users. Cycle repeats, each turn stronger.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBSCRIPTION TIERS -->
+<hr class="divider"><section id="tiers">
+  <div class="section-eyebrow">◈ ZEROX — PRICING</div>
+  <h2>Subscription Tiers</h2>
+  <p class="section-desc">Five entry points. Pick the one that matches where you are today. No gotcha upgrades — you can see exactly what you get at every level.</p>
+
+  <div class="tier-grid">
+    <div class="tier-card">
+      <div class="tier-name">Free</div>
+      <div class="tier-price"><sup>$</sup>0<span>/mo</span></div>
+      <div class="tier-note">BYOK required · no card</div>
+      <ul class="tier-perks">
+        <li class="highlight">50 trial credits (one-time only)</li>
+        <li>BYOK: paste your own API key</li>
+        <li>30 requests / minute</li>
+        <li>2 agent skill slots</li>
+        <li>Pixel world access</li>
+        <li>Sparks ⚡ earning</li>
+        <li class="coming">Buy credit packs to add more</li>
+      </ul>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-name">Builder</div>
+      <div class="tier-price"><sup>$</sup>19<span>/mo</span></div>
+      <div class="tier-note">First paid tier</div>
+      <ul class="tier-perks">
+        <li>2,000 credits / month (included)</li>
+        <li>BYOK + SHADDAI keys both work</li>
+        <li>60 requests / minute</li>
+        <li>8 agent skill slots</li>
+        <li>Pixel world + gallery</li>
+        <li>Priority queue</li>
+      </ul>
+    </div>
+
+    <div class="tier-card featured">
+      <div class="tier-rbadge" style="background:rgba(0,255,156,.12);color:var(--em)">◈ BEST VALUE</div>
+      <div class="tier-name">Pro</div>
+      <div class="tier-price"><sup>$</sup>30<span>/mo</span></div>
+      <div class="tier-note">Marketing $30 · checkout $49</div>
+      <ul class="tier-perks">
+        <li>5,000 credits / month</li>
+        <li>200 requests / minute</li>
+        <li>20 agent skill slots</li>
+        <li>Office deed in Founders' Row</li>
+        <li>3D world access</li>
+        <li>Land ownership unlocked</li>
+        <li class="highlight">SHADDAI Clipper (coming)</li>
+        <li class="highlight">Pro Signals Dashboard (ORACLE Terminal)</li>
+      </ul>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-name">Alpha</div>
+      <div class="tier-price"><sup>$</sup>199<span>/mo</span></div>
+      <div class="tier-note">Unlimited agents</div>
+      <ul class="tier-perks">
+        <li>50,000 credits / month</li>
+        <li>1,000 requests / minute</li>
+        <li>Unlimited agent skills</li>
+        <li>All 3 worlds</li>
+        <li>Priority support</li>
+        <li>Early feature access</li>
+        <li class="highlight">SHADDAI Clipper</li>
+        <li class="highlight">Pro Signals Dashboard</li>
+      </ul>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-rbadge" style="background:rgba(232,196,92,.12);color:var(--gold)">◇ 25 SPOTS</div>
+      <div class="tier-name">Founder</div>
+      <div class="tier-price"><sup>$</sup>100<span> once</span></div>
+      <div class="tier-note">One-time · for the token launch</div>
+      <ul class="tier-perks">
+        <li class="highlight">ECA: 1–2.5% SHD token allocation</li>
+        <li class="highlight">Genesis Badge NFT (only 25 ever)</li>
+        <li>5,000 credit grant (one-time, no expiry)</li>
+        <li>SHD governance vote (founding member)</li>
+        <li>Founders' Row charter lot</li>
+        <li class="coming">3 months Pro access included</li>
+        <li class="coming">Subscription required after trial</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-z" style="margin-top:28px">
+    <span class="callout-label">◈ ZEROX — FOUNDER TIER: WHAT IT ACTUALLY IS</span>
+    The Founder tier is a <strong>pre-token-launch position</strong>, not a subscription. You pay $100 once. You get: 5,000 credits (one-time grant, no expiry), Genesis Badge NFT (provable founding membership, soul-bound, 25 total ever), ECA of 1–2.5% of SHD token supply at launch, governance vote, Founders' Row plot, and 3 months of Pro access. After 3 months, subscribe normally. The $100 is the price of your token allocation — everything else is the bonus.
+  </div>
+
+  <div class="eli5" style="margin-top:20px">
+    <span class="eli5-lbl">◇ ELI5 — WHAT DOES "ECA 1-2.5%" MEAN?</span>
+    <div class="eli5-text">Imagine a new cryptocurrency is about to launch. Before it's public, 25 people get to reserve a slice of the supply — 1 to 2.5% each. If the coin reaches $1M total value, your 1% is worth $10,000. You paid $100 to secure that reservation. That's ECA — Early Community Allocation. It's the "friends and family" round, but for a pixel-world AI economy. You don't have to do anything extra to claim it. It's yours at launch.</div>
+  </div>
+</section>
+
+<!-- CREDITS -->
+<hr class="divider"><section id="credits">
+  <div class="section-eyebrow">◈ ZEROX — UNIT ECONOMICS</div>
+  <h2>Credits — What Are They Really?</h2>
+  <p class="section-desc">1 credit = $0.001. They are the fuel that powers AI model calls. Here is exactly what you get at each tier, what packs cost, and when you should switch to BYOK.</p>
+
+  <div class="bar-chart">
+    <div class="bar-row"><div class="bar-label">FREE</div><div class="bar-track"><div class="bar-fill" style="width:0.5%;background:rgba(255,255,255,.2);min-width:80px;color:var(--text)">50 trial</div></div><div class="bar-val">50 cr one-time</div></div>
+    <div class="bar-row"><div class="bar-label">BUILDER</div><div class="bar-track"><div class="bar-fill" style="width:4%;background:rgba(34,211,238,.5)">2k</div></div><div class="bar-val">2,000 cr/mo</div></div>
+    <div class="bar-row"><div class="bar-label">PRO</div><div class="bar-track"><div class="bar-fill" style="width:10%;background:rgba(0,255,156,.6)">5k</div></div><div class="bar-val">5,000 cr/mo</div></div>
+    <div class="bar-row"><div class="bar-label">ALPHA</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,rgba(0,255,156,.5),rgba(232,196,92,.5))">50,000 credits per month</div></div><div class="bar-val">50,000 cr/mo</div></div>
+    <div class="bar-row"><div class="bar-label">FOUNDER GRANT</div><div class="bar-track"><div class="bar-fill" style="width:10%;background:rgba(232,196,92,.5)">5k one-time</div></div><div class="bar-val">5,000 cr grant</div></div>
+  </div>
+
+  <h3 style="font-family:'Oxanium',sans-serif;margin:36px 0 16px;font-size:17px">Credit Packs — Buy More Any Time</h3>
+  <table class="tbl">
+    <thead><tr><th>Pack</th><th>Pay</th><th>Credits</th><th>Retail Value</th><th>Best For</th></tr></thead>
+    <tbody>
+      <tr><td>◇ Starter</td><td class="hl">$10</td><td>1,000</td><td>$10</td><td>One-time top-up</td></tr>
+      <tr><td>◇ Boost</td><td class="hl">$25</td><td>2,750</td><td>$27.50</td><td>Regular top-up</td></tr>
+      <tr><td>◇ Power</td><td class="hl">$50</td><td>6,000</td><td>$60</td><td>Monthly heavy user</td></tr>
+      <tr><td>◇ Enterprise</td><td class="hl">$100</td><td>13,000</td><td>$130</td><td>Volume work</td></tr>
+    </tbody>
+  </table>
+
+  <div class="eli5" style="margin-top:24px">
+    <span class="eli5-lbl">◇ BYOK = BRING YOUR OWN KEYS</span>
+    <div class="eli5-text">If you already have an OpenAI, Anthropic, or Gemini account — you have an API key. Paste it into SHADDAI Settings → BYOK. Now SHADDAI is the interface, your own account pays the AI. You spend <strong>zero SHADDAI credits</strong>. It's like using your own phone's internet at someone else's app. Totally fine. Recommended for power users.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     SPARKS VALUE — CURRENCY COMPARISON
+═══════════════════════════════════════════════════ -->
+<hr class="divider"><section id="sparks-value">
+  <div class="section-eyebrow">◈ ZEROX — CURRENCY ECONOMICS</div>
+  <h2>What Are Sparks Worth?</h2>
+  <p class="section-desc">Sparks are SHADDAI's native in-world currency — the gas that runs everything inside the empire. You earn them just by <strong>using the dashboard</strong>. No game. No land. Just use AI. Or buy them directly. Here's how to think about value.</p>
+
+  <div class="callout callout-s" style="margin-bottom:16px">
+    <span class="callout-label">◭ SHADDAI — HOW TO EARN SPARKS (NO GAME REQUIRED)</span>
+    ◈ Run agents on the dashboard → earn Sparks per task<br>
+    ✦ Own a plot → it streams Sparks automatically 24/7<br>
+    ◇ Refer someone who signs up → Spark bonus fires<br>
+    ⊛ Win a siege event → Spark prize pool<br>
+    ⬡ Buy directly → credit packs can be converted to Sparks at the exchange rate<br>
+    <span style="opacity:.6;font-size:12px;margin-top:6px;display:block">Everything compounds. You never have to play the 2D game to earn.</span>
+  </div>
+
+  <div class="callout callout-z">
+    <span class="callout-label">◈ ZEROX — REFERENCE RATE</span>
+    Working reference rate: <strong>1,000 Sparks ≈ $1.00</strong> implied value (1 Spark ≈ $0.001 = same as 1 Credit). Not a fixed peg — a reference anchor based on what Sparks unlock vs. what that costs elsewhere. Future SHD bridge: 1,000 Sparks → 1 SHD (planned).
+  </div>
+
+  <div class="sparks-compare">
+    <div class="spark-card">
+      <div class="spark-amount">10 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$0.01</div>
+      <div class="spark-what">Small action reward. Earned from a single quick task or short game session.</div>
+    </div>
+    <div class="spark-card">
+      <div class="spark-amount">50 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$0.05</div>
+      <div class="spark-what">Signal Drop penalty. A slap on the wrist — you pay this if your signal hits zero in a district.</div>
+    </div>
+    <div class="spark-card">
+      <div class="spark-amount">500 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$0.50</div>
+      <div class="spark-what">Basic boost vault lock. Starts multiplying your plot's stream rate.</div>
+    </div>
+    <div class="spark-card">
+      <div class="spark-amount">2,500 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$2.50</div>
+      <div class="spark-what">Weekly Data Trader rent × 1 room. What your best tenant pays you in a week.</div>
+    </div>
+    <div class="spark-card">
+      <div class="spark-amount">10,000 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$10.00</div>
+      <div class="spark-what">Strong boost vault lock. Pushes your plot stream multiplier to ~3.7×.</div>
+    </div>
+    <div class="spark-card">
+      <div class="spark-amount">100,000 ⚡</div>
+      <div class="spark-eq">≈ implied value</div>
+      <div class="spark-usd">$100.00</div>
+      <div class="spark-what">Palace building cost. Grants +2× governance vote weight in SHD elections.</div>
+    </div>
+  </div>
+
+  <h3 style="font-family:'Oxanium',sans-serif;margin:40px 0 16px;font-size:17px">Sparks vs Other Currencies</h3>
+  <div class="currency-bar"><div class="currency-sym" style="color:var(--gold)">⚡ SPARKS</div><div class="currency-desc">SHADDAI native currency. Earned by doing. Spent on boosts, land, well. Cannot be bought directly. Future bridge to SHD planned.</div><div class="currency-rate">1,000 ⚡ ≈ $1 implied</div></div>
+  <div class="currency-bar"><div class="currency-sym" style="color:var(--blue)">◇ CREDITS</div><div class="currency-desc">SHADDAI compute tokens. Bought directly. Power AI model calls. Monthly allotment included in subscription.</div><div class="currency-rate">1 credit = $0.001</div></div>
+  <div class="currency-bar"><div class="currency-sym" style="color:var(--purple)">⬡ SHD</div><div class="currency-desc">Planned Solana SPL governance token. LP-reserve backed. Seeded by Sparks thrown in the Well. Not yet live.</div><div class="currency-rate">Planned: 1 SHD ← 1,000 ⚡</div></div>
+  <div class="currency-bar"><div class="currency-sym" style="color:#9945ff">◎ SOL</div><div class="currency-desc">Solana — the blockchain SHADDAI's Plot Deeds and SHD token are built on. Fast, cheap transactions (~$0.00025/tx).</div><div class="currency-rate">Future: SHD trades on Solana</div></div>
+  <div class="currency-bar"><div class="currency-sym" style="color:#627eea">◎ ETH</div><div class="currency-desc">Ethereum — potential future bridge for SHD liquidity pools on ETH-based DEXs (Uniswap, etc.). Evaluated later.</div><div class="currency-rate">Future consideration</div></div>
+
+  <div class="eli5" style="margin-top:24px">
+    <span class="eli5-lbl">◇ EXPLAIN LIKE I'M 10 — SPARKS VS REAL MONEY</span>
+    <div class="eli5-text">
+      Sparks are like the points currency inside SHADDAI. You can <strong>earn them</strong> just by using the dashboard — running agents, completing tasks, referring friends, owning land that streams. No game required. Or you can <strong>buy them directly</strong> with a credit pack. Either way, once you have them, you spend them on real things: boosts, land, market trades, well throws.<br><br>
+      Think of it like airline miles — you earn them by flying (using the platform) OR you can just buy miles directly. Both count. Both stack. In the future: 1,000 Sparks → 1 SHD token on Solana, which trades on real markets.
+    </div>
+  </div>
+</section>
+
+<!-- MARKETPLACE FEES -->
+<hr class="divider"><section id="fees">
+  <div class="section-eyebrow">◈ ZEROX — TRANSACTION REVENUE</div>
+  <h2>Marketplace Fees</h2>
+  <p class="section-desc">Every trade in the empire carries a small fee that flows back to the ecosystem treasury. Small per transaction, enormous in aggregate over time.</p>
+
+  <div class="bar-chart">
+    <div class="bar-row"><div class="bar-label">P2P Trade</div><div class="bar-track"><div class="bar-fill" style="width:33%;background:rgba(96,165,250,.5)">5%</div></div><div class="bar-val">5% fee</div></div>
+    <div class="bar-row"><div class="bar-label">Bazaar</div><div class="bar-track"><div class="bar-fill" style="width:33%;background:rgba(0,255,156,.5)">5%</div></div><div class="bar-val">5% fee</div></div>
+    <div class="bar-row"><div class="bar-label">Inn Rooms</div><div class="bar-track"><div class="bar-fill" style="width:53%;background:rgba(167,139,250,.5)">8%</div></div><div class="bar-val">8% fee</div></div>
+    <div class="bar-row"><div class="bar-label">Office Deeds</div><div class="bar-track"><div class="bar-fill" style="width:66%;background:rgba(232,196,92,.5)">10%</div></div><div class="bar-val">10% fee</div></div>
+    <div class="bar-row"><div class="bar-label">Collectibles</div><div class="bar-track"><div class="bar-fill" style="width:66%;background:rgba(34,211,238,.5)">10%</div></div><div class="bar-val">10% fee</div></div>
+    <div class="bar-row"><div class="bar-label">Agent Market</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:rgba(248,113,113,.5)">15% — highest value transactions</div></div><div class="bar-val">15% fee</div></div>
+  </div>
+</section>
+
+<!-- TOKENOMICS -->
+<hr class="divider"><section id="tokens">
+  <div class="section-eyebrow">◈ ZEROX + ◭ SHADDAI</div>
+  <h2>Three-Currency System</h2>
+  <p class="section-desc">Three currencies. Each has one job. They work together but are never confused for each other.</p>
+
+  <div class="data-grid">
+    <div class="data-card" style="border-color:rgba(96,165,250,.2)"><div class="dc-label">◇ CREDITS</div><div class="dc-val" style="color:var(--blue)">$0.001</div><div class="dc-sub">Compute fuel. Monthly allotment + buyable packs. Powers AI calls. Never earned in-world.</div></div>
+    <div class="data-card" style="border-color:rgba(232,196,92,.2)"><div class="dc-label">⚡ SPARKS</div><div class="dc-val" style="color:var(--gold)">Earned</div><div class="dc-sub">Closed-loop status currency. Earn by playing, owning land, siege wins. Spend on boosts, well, market.</div></div>
+    <div class="data-card" style="border-color:rgba(167,139,250,.2)"><div class="dc-label">⬡ SHD TOKEN</div><div class="dc-val" style="color:var(--purple)">Solana</div><div class="dc-sub">Planned governance token. LP-reserve backed. Utility: votes, access gates, district staking. Seeded by Sparks.</div></div>
+  </div>
+
+  <div class="eli5" style="margin-top:24px">
+    <span class="eli5-lbl">◇ THREE CURRENCIES — SIMPLY PUT</span>
+    <div class="eli5-text">
+      <strong>Credits</strong> = quarters in the arcade machine. Buy them, use them to play AI.<br>
+      <strong>Sparks</strong> = prize tickets you win from playing. Can't buy them — earn them. Spend inside.<br>
+      <strong>SHD</strong> = ownership shares in the arcade building itself. If it grows, your shares grow.
+    </div>
+  </div>
+</section>
+
+<!-- UTOPIA LAND -->
+<hr class="divider"><section id="land">
+  <div class="section-eyebrow">◭ SHADDAI — UTOPIA LAND ECONOMY</div>
+  <h2>Utopia Land & Plot System</h2>
+  <p class="section-desc">30 fixed plots in SHADDAI City. Each streams Sparks automatically. Each can be upgraded, boosted, and filled with tenants — turning a deed into passive income.</p>
+
+  <div class="two-col" style="margin-top:32px">
+    <div>
+      <div class="callout callout-s">
+        <span class="callout-label">◭ SHADDAI — CORE RULE</span>
+        Plots stream Sparks from their district's reserve. The reserve is funded by marketplace fees, transit fares, and Signal Drop penalties. A plot can <strong>never stream more than its district's CITY_RESERVE</strong> — this is the non-negotiable stability rule. You always know you can redeem what you earned.
+      </div>
+      <div class="code-block" style="margin-top:20px">
+<span class="c">// Plot Deed Model</span>
+CITY_PLOTS[30] = {
+  owner: <span class="c">"userId"</span>,
+  district: <span class="c">"forest"</span>,
+  baseRate: <span class="c">0.5</span>,    <span class="c">// ⚡/tick</span>
+  boostMulti: <span class="c">1.0</span>,  <span class="c">// 1× to 6× max</span>
+  rooms: <span class="c">[]</span>,         <span class="c">// 8 tenant slots</span>
+  amenities: <span class="c">[]</span>,
+  accrued: <span class="c">0</span>        <span class="c">// running balance</span>
+}
+      </div>
+    </div>
+    <div>
+      <img src="/assets/blueprint/wishing-well.png" alt="Wishing Well — center of SHADDAI City" style="width:100%;border-radius:14px;border:1px solid rgba(232,196,92,.2);box-shadow:0 0 40px rgba(232,196,92,.05)" loading="lazy">
+    </div>
+  </div>
+
+  <h3 style="font-family:'Oxanium',sans-serif;margin:44px 0 8px;font-size:18px">9 Districts — SHADDAI City</h3>
+  <div class="district-grid">
+    <div class="d-cell" style="background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.2)"><div style="font-size:22px">⬡</div><div class="d-name">FOREST</div><div class="d-drain" style="color:#4ade80">TURTLE · 0.5/s</div></div>
+    <div class="d-cell" style="background:rgba(34,211,238,.07);border-color:rgba(34,211,238,.2)"><div style="font-size:22px">◉</div><div class="d-name">BEACH</div><div class="d-drain" style="color:var(--cyan)">ORACLE · 1.0/s</div></div>
+    <div class="d-cell" style="background:rgba(34,211,238,.05);border-color:rgba(34,211,238,.12)"><div style="font-size:22px">◇</div><div class="d-name">ORACLE SKY</div><div class="d-drain" style="color:var(--cyan)">ORACLE · 1.5/s</div></div>
+    <div class="d-cell" style="background:rgba(96,165,250,.07);border-color:rgba(96,165,250,.2)"><div style="font-size:22px">◭</div><div class="d-name">SHADDAI CITY</div><div class="d-drain" style="color:var(--blue)">CENTER · 0/s</div></div>
+    <div class="d-cell" style="background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2)"><div style="font-size:22px">⊛</div><div class="d-name">SUBURB</div><div class="d-drain" style="color:#fbbf24">NEUTRAL · 0.8/s</div></div>
+    <div class="d-cell" style="background:rgba(167,139,250,.07);border-color:rgba(167,139,250,.2)"><div style="font-size:22px">✦</div><div class="d-name">MEADOW</div><div class="d-drain" style="color:var(--purple)">QUILL · 0.3/s</div></div>
+    <div class="d-cell" style="background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.2)"><div style="font-size:22px">⌬</div><div class="d-name">VOLCANO</div><div class="d-drain" style="color:var(--red)">NEXUS · 3.0/s</div></div>
+    <div class="d-cell" style="background:rgba(232,196,92,.07);border-color:rgba(232,196,92,.2)"><div style="font-size:22px">◈</div><div class="d-name">ZEROX DIST.</div><div class="d-drain" style="color:var(--gold)">ZEROX · 2.0/s</div></div>
+    <div class="d-cell" style="background:rgba(20,5,35,.6);border-color:rgba(100,40,200,.3)"><div style="font-size:22px">⊗</div><div class="d-name">DARK REALM</div><div class="d-drain" style="color:#c084fc">PIKADON · 5.0/s</div></div>
+  </div>
+</section>
+
+<!-- SIGNAL -->
+<hr class="divider"><section id="signal">
+  <div class="section-eyebrow">⟁ RAG BRAIN — SIGNAL MECHANIC</div>
+  <h2>Signal System</h2>
+  <p class="section-desc">Every player has a Signal bar (0–100). It drains when you're in high-intensity districts. Hit zero: you get rescued but pay 50 ⚡. That penalty seeds the LP reserve.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="signal-hud">
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--dim);margin-bottom:6px">◭ YOUR SIGNAL</div>
+        <div class="sig-bar-wrap"><div class="sig-bar" style="width:72%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:8px;color:var(--dim);margin-top:6px"><span>⊗ CRITICAL</span><span>⌬ CAUTION</span><span>◈ SAFE</span></div>
+      </div>
+      <div class="code-block" style="margin-top:20px">
+<span class="c">// Signal Drop Event (signal ≤ 0)</span>
+charge(user, <span class="c">50</span>);    <span class="c">// ⚡ penalty</span>
+LP_Reserve     += <span class="c">35%</span>;
+DistrictReserve+= <span class="c">60%</span>;
+Treasury       += <span class="c">10%</span>;
+rescue(user);       <span class="c">// teleport home</span>
+      </div>
+    </div>
+    <div>
+      <table class="tbl">
+        <thead><tr><th>District</th><th>Drain</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr><td>Meadow (Quill)</td><td><span class="tag t-g">0.3/s</span></td><td>◇ Very Low</td></tr>
+          <tr><td>Forest (Turtle)</td><td><span class="tag t-g">0.5/s</span></td><td>◇ Low</td></tr>
+          <tr><td>Suburb (Neutral)</td><td><span class="tag t-g">0.8/s</span></td><td>◈ Medium</td></tr>
+          <tr><td>Beach (Oracle)</td><td><span class="tag t-b">1.0/s</span></td><td>◈ Medium</td></tr>
+          <tr><td>Oracle Sky</td><td><span class="tag t-b">1.5/s</span></td><td>◈ Medium</td></tr>
+          <tr><td>Zerox District</td><td><span class="tag t-y">2.0/s</span></td><td>⌬ High</td></tr>
+          <tr><td>Volcano (Nexus)</td><td><span class="tag t-r">3.0/s</span></td><td>⌬ High</td></tr>
+          <tr><td>Dark Realm</td><td><span class="tag t-r">5.0/s</span></td><td>⊗ Extreme</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- BOOST VAULTS -->
+<hr class="divider"><section id="boost">
+  <div class="section-eyebrow">⟁ RAG BRAIN — BOOST SYSTEM</div>
+  <h2>Boost Vaults</h2>
+  <p class="section-desc">Lock Sparks into your plot's vault to multiply its stream rate. Commit more = earn more. Unlock triggers a 48-hour decay before you can re-lock.</p>
+
+  <div class="callout callout-r"><span class="callout-label">⟁ RAG BRAIN — FORMULA</span><span style="font-family:'Space Mono',monospace">multiplier = 1 + 3×r / (1 + 1.5×r)</span> where r = ratio of locked Sparks to base plot value. Max without amenities: ~4×. With amenities: up to <strong>6×</strong>.</div>
+
+  <div class="boost-list">
+    <div class="boost-row"><div class="boost-lock">Lock 100 ⚡</div><div class="boost-track"><div class="boost-bar" style="width:25%">1.5×</div></div></div>
+    <div class="boost-row"><div class="boost-lock">Lock 500 ⚡</div><div class="boost-track"><div class="boost-bar" style="width:38%">2.3×</div></div></div>
+    <div class="boost-row"><div class="boost-lock">Lock 2,000 ⚡</div><div class="boost-track"><div class="boost-bar" style="width:52%">3.1×</div></div></div>
+    <div class="boost-row"><div class="boost-lock">Lock 10,000 ⚡</div><div class="boost-track"><div class="boost-bar" style="width:62%">3.7×</div></div></div>
+    <div class="boost-row"><div class="boost-lock">Max + Amenities</div><div class="boost-track"><div class="boost-bar" style="width:100%">6.0× MAXIMUM</div></div></div>
+  </div>
+</section>
+
+<!-- ROOMS -->
+<hr class="divider"><section id="rooms">
+  <div class="section-eyebrow">⟁ RAG BRAIN — TENANT ECONOMY</div>
+  <h2>Rooms & Tenant Economy</h2>
+  <p class="section-desc">Each plot has 8 room slots. Fill them with tenants who pay weekly Sparks rent — automatically, no action needed. <strong style="color:var(--text)">Why rooms?</strong> Your plot is the building. Rooms are the apartments. You collect 10% of every rent payment as the landlord — while the tenants do their own thing. It compounds on top of your base stream. You set it up once. It runs forever.</p>
+
+  <table class="tbl">
+    <thead><tr><th>Tenant</th><th>Archetype</th><th>Weekly Rent</th><th>Your 10% Cut</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td>◇ Night Baker</td><td>Early riser, steady</td><td class="hl">120 ⚡</td><td>12 ⚡/wk</td><td><span class="tag t-g">Low</span></td></tr>
+      <tr><td>◇ Clockmaker</td><td>Precision crafter</td><td class="hl">180 ⚡</td><td>18 ⚡/wk</td><td><span class="tag t-g">Low</span></td></tr>
+      <tr><td>◇ Chess Hustler</td><td>Gambler type</td><td class="hl">90 ⚡</td><td>9 ⚡/wk</td><td><span class="tag t-b">Medium</span></td></tr>
+      <tr><td>◈ Data Trader</td><td>High output, intense</td><td class="hl">250 ⚡</td><td>25 ⚡/wk</td><td><span class="tag t-y">High</span></td></tr>
+      <tr><td>◇ Wandering Mage</td><td>Transient, irregular</td><td class="hl">60 ⚡</td><td>6 ⚡/wk</td><td><span class="tag t-g">Low</span></td></tr>
+      <tr><td>✦ Forgemaster</td><td>Rare, max yield</td><td class="hl">200 ⚡</td><td>20 ⚡/wk</td><td><span class="tag t-r">Very High</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-z" style="margin-top:24px"><span class="callout-label">◈ ZEROX — MAX PASSIVE SCENARIO</span>8 rooms × Data Trader (250 ⚡/wk) = 2,000 ⚡/wk in rents × 10% = <strong>200 ⚡/week passive</strong>. Stack a 3× boost vault → plot streams additional ~105 ⚡/day base. Maxed plot = ~900+ ⚡/week without lifting a finger after setup.</div>
+</section>
+
+<!-- WISHING WELL -->
+<hr class="divider"><section id="well">
+  <div class="section-eyebrow">◭ SHADDAI — WISHING WELL</div>
+  <h2>The Wishing Well</h2>
+  <p class="section-desc">At the center of SHADDAI City stands the Wishing Well — the primary Spark sink and SHD liquidity seed. Throw Sparks. Make a wish. Four things happen automatically.</p>
+
+  <div class="well-split">
+    <div class="w-piece" style="border-color:rgba(248,113,113,.3)"><div class="w-pct" style="color:var(--red)">40%</div><div class="w-lbl">⊗ Burned forever<br><span style="font-size:10px;opacity:.6">Reduces Spark supply · deflationary</span></div></div>
+    <div class="w-piece" style="border-color:rgba(167,139,250,.3)"><div class="w-pct" style="color:var(--purple)">35%</div><div class="w-lbl">◈ SHD LP Reserve<br><span style="font-size:10px;opacity:.6">Seeds token liquidity · backs SHD</span></div></div>
+    <div class="w-piece" style="border-color:rgba(232,196,92,.3)"><div class="w-pct" style="color:var(--gold)">15%</div><div class="w-lbl">✦ Weekly Jackpot<br><span style="font-size:10px;opacity:.6">Sunday draw · random eligible wins</span></div></div>
+    <div class="w-piece" style="border-color:rgba(0,255,156,.3)"><div class="w-pct" style="color:var(--em)">10%</div><div class="w-lbl">⊛ Shrine Cosmetics<br><span style="font-size:10px;opacity:.6">Well art, animations, seasonal skins</span></div></div>
+  </div>
+
+  <div class="eli5" style="margin-top:24px">
+    <span class="eli5-lbl">◇ EXPLAIN LIKE I'M 10</span>
+    <div class="eli5-text">You throw coins in the well. But instead of just wishing — 4 things happen at once: some coins disappear forever (making your remaining coins more valuable), some coins go into the "save up for the token" pot, some go into a prize draw, and some buy decorations for the well. The well makes everything more valuable over time by removing Sparks from circulation.</div>
+  </div>
+</section>
+
+<!-- AMM STOCKS -->
+<hr class="divider"><section id="amm">
+  <div class="section-eyebrow">◈ ZEROX — IN-WORLD MARKET</div>
+  <h2>District Yield Assets — In-World Stock Market</h2>
+  <p class="section-desc">Each district has a tradeable yield token. Players trade via an in-world AMM. Prices move with real supply and demand — not external oracles.</p>
+
+  <div class="callout callout-r"><span class="callout-label">⟁ RAG BRAIN — AMM FORMULA</span><span style="font-family:'Space Mono',monospace">x × y = k</span> (constant product). Buy TRTL → TRTL gets scarce → price rises. High Sparks yield in Forest → demand for TRTL rises. Price = live signal of district health.</div>
+
+  <table class="tbl" style="margin-top:24px">
+    <thead><tr><th>Symbol</th><th>District</th><th>Agent</th><th>Yield Source</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag t-g">TRTL</span></td><td>Forest</td><td>TURTLE</td><td>Nature harvest, room rents</td><td><span class="tag t-g">Low</span></td></tr>
+      <tr><td><span class="tag t-b">ORCL</span></td><td>Beach + Sky</td><td>ORACLE</td><td>Data trades, intelligence</td><td><span class="tag t-b">Medium</span></td></tr>
+      <tr><td><span class="tag t-r">NEXS</span></td><td>Volcano</td><td>NEXUS</td><td>Forge outputs, tech builds</td><td><span class="tag t-r">High</span></td></tr>
+      <tr><td><span class="tag t-p">PIKD</span></td><td>Dark Realm</td><td>PIKADON</td><td>Siege drops, risk premium</td><td><span class="tag t-r">Extreme</span></td></tr>
+      <tr><td><span class="tag t-g">QUIL</span></td><td>Meadow</td><td>QUILL</td><td>Content, media, archives</td><td><span class="tag t-g">Very Low</span></td></tr>
+      <tr><td><span class="tag t-y">ZERX</span></td><td>Zerox District</td><td>ZEROX</td><td>Market fees, trade volume</td><td><span class="tag t-y">High</span></td></tr>
+      <tr><td><span class="tag t-y">SPARK</span></td><td>All</td><td>System</td><td>Base Spark index</td><td><span class="tag t-b">Tracked</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- NFTS — REAL DATA ONLY -->
+<hr class="divider"><section id="nfts">
+  <div class="section-eyebrow">◭ SHADDAI — NFT ECOSYSTEM</div>
+  <h2>NFT Ecosystem — What's Real Now</h2>
+  <p class="section-desc">The images are done. The collectibles system is live. The Solana infrastructure is scaffolded on devnet. Full public minting and marketplace listing are the next phase — this is where we are honestly, right now.</p>
+
+  <div class="nft-grid">
+    <div class="nft-card nft-live" data-r="◈ LIVE">
+      <span class="nft-icon">◭</span>
+      <div class="nft-name">Genesis Badges</div>
+      <div class="nft-desc">3 minted: SHADDAI, ZEROX, ORACLE. Character art, traits, factions. Soul-bound identity NFTs. Founders receive theirs at claim.</div>
+      <div class="nft-get">✦ HOW: Founder tier ($100 one-time, 25 spots)</div>
+    </div>
+    <div class="nft-card nft-live" data-r="◈ DEVNET">
+      <span class="nft-icon">✦</span>
+      <div class="nft-name">Plot Deed NFT</div>
+      <div class="nft-desc">Metaplex Core NFT on Solana representing 1 of 30 SHADDAI City lots. Tiered: Raw / Developed / Landmark. Streams Sparks to whoever holds it.</div>
+      <div class="nft-get">✦ HOW: Pro tier + buy from deed marketplace</div>
+    </div>
+    <div class="nft-card nft-live" data-r="◈ LIVE · 160 ITEMS">
+      <span class="nft-icon">⊛</span>
+      <div class="nft-name">Collectibles System</div>
+      <div class="nft-desc">160-item collection. 4 rarity tiers: Common → Rare → Epic → Legendary. Earned by doing work — running tasks, completing challenges. Not bought, earned.</div>
+      <div class="nft-get">✦ HOW: Run tasks, complete agent challenges, hit milestones</div>
+    </div>
+    <div class="nft-card nft-rare" data-r="◇ COMING">
+      <span class="nft-icon">⬡</span>
+      <div class="nft-name">Room Deed NFT</div>
+      <div class="nft-desc">A sub-NFT within a plot. Holder rents out the room, earns tenant income. Can be sold independently of the main plot deed.</div>
+      <div class="nft-get">✦ HOW: Plot owners mint room slots (in development)</div>
+    </div>
+    <div class="nft-card nft-rare" data-r="◇ COMING">
+      <span class="nft-icon">◈</span>
+      <div class="nft-name">Forged Agent NFT</div>
+      <div class="nft-desc">An agent you build in the Forge. Represents your AI creation on-chain. List it in the Agent Marketplace for others to use and earn from it.</div>
+      <div class="nft-get">✦ HOW: Build + mint via Forge (Pro tier)</div>
+    </div>
+  </div>
+
+  <div class="callout callout-z" style="margin-top:24px"><span class="callout-label">◈ ZEROX — STRIPE IS LIVE</span>Payment links active: <span class="tag t-g">Founder $100</span> <span class="tag t-g">Pro $49</span> <span class="tag t-g">Alpha $199</span> <span class="tag t-g">Credits $10 · $25 · $50 · $100</span> <span class="tag t-r">Builder — link missing, add to payment-config.json</span>. Live Stripe publishable key confirmed in backend.</div>
+
+  <div class="callout callout-r" style="margin-top:14px"><span class="callout-label">⟁ RAG BRAIN — CONFIRMED STACK</span>Backend: <span style="font-family:'Space Mono',monospace">backend/lib/nft-mint.js</span> (Metaplex Core, devnet-safe, never fakes mints) + <span style="font-family:'Space Mono',monospace">backend/deed-routes.js</span> (30-plot city lots) + <span style="font-family:'Space Mono',monospace">backend/lib/collectible-rewards.js</span> (160 items, tier perks). UI: <span style="font-family:'Space Mono',monospace">public/SHADDAI-Collectables.html</span> (v4, rarity filters, owned tags, wardrobe equipping).</div>
+</section>
+
+<!-- REFERRAL -->
+<hr class="divider"><section id="referral">
+  <div class="section-eyebrow">◈ ZEROX — GROWTH ENGINE</div>
+  <h2>Referral System — 4 Reward Streams</h2>
+  <p class="section-desc">Every referral triggers four simultaneous flows. Code format: <span style="font-family:'Space Mono',monospace;color:var(--em)">AGENTNAME-XXXXXX</span>. Share once. Compound forever.</p>
+
+  <div class="data-grid">
+    <div class="data-card" style="border-color:rgba(0,255,156,.2)"><div class="dc-label">⚡ SPARKS</div><div class="dc-val">Instant</div><div class="dc-sub">Spark bonus when your referral activates. Scales with their first purchase.</div></div>
+    <div class="data-card" style="border-color:rgba(34,211,238,.2)"><div class="dc-label">◇ REPUTATION</div><div class="dc-val">+Rep XP</div><div class="dc-sub">Reputation XP on your agent profile. Unlocks status perks and leaderboard rank.</div></div>
+    <div class="data-card" style="border-color:rgba(167,139,250,.2)"><div class="dc-label">⊛ STATUS PERKS</div><div class="dc-val">Unlock</div><div class="dc-sub">Cosmetics, room bonuses, boost multiplier increases, district access gates.</div></div>
+    <div class="data-card" style="border-color:rgba(232,196,92,.2)"><div class="dc-label">◈ REVENUE SHARE</div><div class="dc-val">Pending</div><div class="dc-sub">Revenue settlement — when referral pays, a share routes to your settlement pool. Cash-out in later phase.</div></div>
+  </div>
+</section>
+
+<!-- SHD TOKEN -->
+<hr class="divider"><section id="shd">
+  <div class="section-eyebrow">◈ ZEROX — SHD TOKENOMICS</div>
+  <h2>SHD Token — Solana SPL (Planned)</h2>
+  <p class="section-desc">SHD is a governance + utility token on Solana. The LP Reserve accumulates from in-world activity and backs the initial token value. No speculative minting — the treasury earns its backing first.</p>
+
+  <div class="pie-wrap">
+    <svg viewBox="0 0 200 200" width="200" height="200" style="flex-shrink:0">
+      <path d="M100 100 L100 10 A90 90 0 0 1 190 100 Z" fill="rgba(0,255,156,.7)"/>
+      <path d="M100 100 L190 100 A90 90 0 0 1 127 183 Z" fill="rgba(232,196,92,.7)"/>
+      <path d="M100 100 L127 183 A90 90 0 0 1 46 165 Z" fill="rgba(34,211,238,.7)"/>
+      <path d="M100 100 L46 165 A90 90 0 0 1 16 73 Z" fill="rgba(167,139,250,.7)"/>
+      <path d="M100 100 L16 73 A90 90 0 0 1 74 14 Z" fill="rgba(96,165,250,.7)"/>
+      <path d="M100 100 L74 14 A90 90 0 0 1 100 10 Z" fill="rgba(248,113,113,.7)"/>
+      <circle cx="100" cy="100" r="40" fill="var(--bg2)"/>
+      <text x="100" y="97" text-anchor="middle" fill="var(--em)" font-family="Oxanium" font-size="12" font-weight="800">SHD</text>
+      <text x="100" y="110" text-anchor="middle" fill="var(--dim)" font-family="Space Mono" font-size="7">SUPPLY</text>
+    </svg>
+    <div class="pie-legend">
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(0,255,156,.7)"></div><span>Community / Ecosystem <span class="pie-pct">30%</span></span></div>
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(232,196,92,.7)"></div><span>Team (2yr vest) <span class="pie-pct">20%</span></span></div>
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(34,211,238,.7)"></div><span>Treasury <span class="pie-pct">18%</span></span></div>
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(167,139,250,.7)"></div><span>Ecosystem Fund <span class="pie-pct">15%</span></span></div>
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(96,165,250,.7)"></div><span>Early Investors <span class="pie-pct">10%</span></span></div>
+      <div class="pie-item"><div class="pie-dot" style="background:rgba(248,113,113,.7)"></div><span>Founders (ECA 1–2.5% ea, 25 spots) <span class="pie-pct">7%</span></span></div>
+    </div>
+  </div>
+
+  <table class="tbl" style="margin-top:24px">
+    <thead><tr><th>SHD Utility</th><th>How It Works</th><th>Who Benefits</th></tr></thead>
+    <tbody>
+      <tr><td>◇ Governance Vote</td><td>Hold SHD → vote on fee rates, district rules, LP ratios</td><td>All holders</td></tr>
+      <tr><td>⬡ District Access</td><td>Gate premium district features behind SHD hold threshold</td><td>Stakers</td></tr>
+      <tr><td>◈ Fee Discounts</td><td>Marketplace fees reduced for SHD stakers</td><td>Traders</td></tr>
+      <tr><td>⚡ Boost Multiplier</td><td>Staking SHD adds +0.5× to plot boost vault ceiling</td><td>Land owners</td></tr>
+      <tr><td>✦ Siege Power</td><td>SHD stake weight gives extra siege influence</td><td>Siege players</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- SIEGE -->
+<hr class="divider"><section id="siege">
+  <div class="section-eyebrow">◭ SHADDAI — SIEGE ECONOMY</div>
+  <h2>Siege Economy</h2>
+  <p class="section-desc">Siege events are the empire's inflation sink. Sparks flow in as entry fees. Prizes flow out to winners. The surplus feeds the treasury. Skill-based. No pay-to-win.</p>
+
+  <div class="data-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="data-card"><div class="dc-label">◈ Winning Side</div><div class="dc-val">40%</div><div class="dc-sub">Split equally among winning team</div></div>
+    <div class="data-card"><div class="dc-label">✦ Top 3 MVPs</div><div class="dc-val">25%</div><div class="dc-sub">Top scorers on any side</div></div>
+    <div class="data-card"><div class="dc-label">◇ Random Drop</div><div class="dc-val">20%</div><div class="dc-sub">Random eligible participants</div></div>
+    <div class="data-card"><div class="dc-label">◭ Treasury</div><div class="dc-val">15%</div><div class="dc-sub">Funds next siege + ecosystem</div></div>
+  </div>
+</section>
+
+<!-- ROI -->
+<hr class="divider"><section id="roi">
+  <div class="section-eyebrow">◈ ZEROX — BOOTSTRAPPER ROI</div>
+  <h2>If You're Bootstrapping — Your Math</h2>
+  <p class="section-desc">You don't need $199/mo to compound value. Here's what $30/month actually unlocks — in plain numbers, no fluff.</p>
+
+  <div class="callout callout-z"><span class="callout-label">◈ ZEROX — $30/MO PRO BREAKDOWN</span>You pay $30/mo. You get: 5,000 AI credits (retail value ~$50 at market API pricing) + office lot in 3D world + 200 RPM (enough for serious automation) + land ownership + Pro agent models + ORACLE Terminal signals dashboard + SHADDAI Clipper (coming). The credits alone are worth more than the subscription. Land and office compound on top of that.</div>
+
+  <div class="roi-grid">
+    <div class="roi-card"><div class="roi-num">5,000</div><div class="roi-lbl">Credits included<br><span style="color:var(--dim);font-size:10px">Retail ~$50 at market rate</span></div></div>
+    <div class="roi-card"><div class="roi-num">∞</div><div class="roi-lbl">BYOK runs<br><span style="color:var(--dim);font-size:10px">0 credit spend with your own keys</span></div></div>
+    <div class="roi-card"><div class="roi-num">0.5⚡</div><div class="roi-lbl">Stream rate base<br><span style="color:var(--dim);font-size:10px">From your Pro plot, 24/7</span></div></div>
+    <div class="roi-card"><div class="roi-num">~900⚡</div><div class="roi-lbl">Max weekly yield<br><span style="color:var(--dim);font-size:10px">Maxed plot + 8 tenants</span></div></div>
+    <div class="roi-card"><div class="roi-num">25</div><div class="roi-lbl">Founder spots total<br><span style="color:var(--dim);font-size:10px">$100 once = lifetime Alpha + ECA</span></div></div>
+    <div class="roi-card"><div class="roi-num">1–2.5%</div><div class="roi-lbl">SHD ECA for Founders<br><span style="color:var(--dim);font-size:10px">Capped per Founder at launch</span></div></div>
+  </div>
+
+  <div class="callout callout-r" style="margin-top:28px"><span class="callout-label">⟁ RAG BRAIN — HONEST TIMELINE</span>$30K MRR is NOT realistic in 90 days cold start. Real arc: $900–$4,500 MRR in months 1–3 (100–150 paying users). Compounds to $30K+ over 6–12 months as land economy matures and referral flywheel activates. Patience is the strategy. The economy is designed to compound — not to pop.</div>
+</section>
+
+<footer>
+  <div style="font-size:22px;margin-bottom:14px;color:var(--em)">◭</div>
+  <div>SHADDAI EMPIRE — MASTER BLUEPRINT 2026</div>
+  <div style="margin-top:8px;opacity:.4">Authored by ◭ SHADDAI · ◈ ZEROX · ⟁ RAG BRAIN</div>
+  <div style="margin-top:8px;opacity:.3">v3.0 · All numbers from live codebase · Economy designed for real compounding · Not financial advice</div>
+</footer>
+
+<script>
+const PRO_PIN='4444';
+function unlock(){
+  const inp=document.getElementById('gatePin');
+  const p=(inp.value||'').trim();
+  if(p===PRO_PIN){
+    sessionStorage.setItem('shd_bp_unlocked','1');
+    document.getElementById('gateErr').textContent='';
+    go();
+  }else{
+    const g=document.getElementById('gate');
+    g.classList.remove('gate-shake'); void g.offsetWidth; g.classList.add('gate-shake');
+    document.getElementById('gateErr').textContent='ACCESS DENIED — TRY 4444';
+    inp.value=''; inp.focus();
+  }
+}
+function go(){
+  document.getElementById('gate').classList.add('hide');
+  document.body.classList.remove('gate-locked');
+  try{document.getElementById('gatePin').blur();}catch(e){}
+}
+// Persist unlock within session
+if(sessionStorage.getItem('shd_bp_unlocked')==='1'){
+  go();
+}else{
+  setTimeout(function(){var inp=document.getElementById('gatePin');if(inp)inp.focus();},60);
+}
+</script>
+</body>
+</html>
