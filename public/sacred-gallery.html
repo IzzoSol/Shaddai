@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="esoteric">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SACRED SYMBOLS · The Geometry of the Sacred — SHADDAI Gallery</title>
+<meta name="description" content="Sacred symbols & sacred geometry: meanings, how to draw them, sigils, and brain sources. Rendered inline, saveable to the SHADDAI Media Gallery.">
+<style>
+  :root{
+    --bg:#07040f; --bg2:#0d0718; --card:#120b22; --card2:#170f2b;
+    --gold:#e8c45c; --violet:#a78bfa; --cyan:#7dd3fc; --rose:#f0abfc;
+    --text:#e9e2ff; --muted:#8f83b8; --line:#241a44; --line2:#31255e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 700px at 50% -10%,#1a1140 0%,var(--bg) 55%);color:var(--text);font-family:Georgia,'Times New Roman',serif;min-height:100vh;padding:0 18px 80px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{padding:54px 0 26px;text-align:center}
+  .kicker{font-family:'Courier New',monospace;font-size:10px;letter-spacing:.5em;color:var(--violet);text-transform:uppercase}
+  h1{font-size:clamp(28px,5vw,52px);letter-spacing:.04em;margin:14px 0 8px;background:linear-gradient(120deg,var(--gold),#fff6d8 45%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:400}
+  .sub{color:var(--muted);font-size:14px;max-width:640px;margin:0 auto;line-height:1.7}
+  .stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 4px}
+  .stat{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 16px;font-family:'Courier New',monospace;font-size:11px;color:var(--muted)}
+  .stat b{color:var(--gold);font-weight:400;font-size:15px;display:block}
+  .filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:24px 0}
+  .filters button{font-family:'Courier New',monospace;font-size:10px;letter-spacing:.12em;background:var(--card);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;transition:.15s}
+  .filters button:hover{color:var(--text);border-color:var(--line2)}
+  .filters button.on{color:#0a0618;background:var(--gold);border-color:var(--gold)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .18s,border-color .18s;position:relative}
+  .card:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .card .art{background:radial-gradient(600px 400px at 50% 0%,#16102c 0%,#0a0714 70%);padding:18px;display:flex;align-items:center;justify-content:center;min-height:300px;border-bottom:1px solid var(--line)}
+  .card .art svg{width:100%;height:auto;max-width:300px;filter:drop-shadow(0 6px 22px rgba(167,139,250,.18))}
+  .card .body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;flex:1}
+  .card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .card h2{font-size:20px;font-weight:400;letter-spacing:.03em;color:var(--text)}
+  .card .num{font-family:'Courier New',monospace;color:var(--violet);font-size:11px}
+  .tag{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.18em;color:var(--gold);border:1px solid rgba(232,196,92,.4);border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .section h3{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.3em;color:var(--cyan);text-transform:uppercase;margin:2px 0 6px;font-weight:400}
+  .meaning{font-size:13.5px;line-height:1.65;color:var(--text)}
+  .meaning em{color:var(--rose);font-style:italic}
+  .steps{list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:5px}
+  .steps li{counter-increment:st;font-size:12.5px;line-height:1.5;color:var(--muted);padding-left:22px;position:relative}
+  .steps li::before{content:counter(st);position:absolute;left:0;top:1px;font-family:'Courier New',monospace;font-size:10px;color:var(--violet);border:1px solid var(--line2);border-radius:4px;width:15px;height:15px;display:flex;align-items:center;justify-content:center}
+  .sigil{font-size:12.5px;line-height:1.55;color:#cfc4f2;background:rgba(167,139,250,.06);border-left:2px solid var(--violet);padding:8px 12px;border-radius:0 8px 8px 0}
+  .srcs{display:flex;flex-wrap:wrap;gap:6px}
+  .src{font-family:'Courier New',monospace;font-size:9px;color:var(--muted);background:rgba(125,211,252,.05);border:1px solid var(--line);padding:4px 8px;border-radius:6px}
+  .actions{display:flex;gap:8px;margin-top:auto}
+  .actions button{flex:1;font-family:'Courier New',monospace;font-size:10px;letter-spacing:.1em;padding:10px;border-radius:9px;cursor:pointer;border:1px solid var(--line2);background:var(--card);color:var(--text);transition:.15s}
+  .actions .save:hover{background:var(--gold);color:#0a0618;border-color:var(--gold)}
+  .actions .dl:hover{background:var(--violet);color:#0a0618;border-color:var(--violet)}
+  .actions .saved{background:rgba(125,211,252,.15);border-color:var(--cyan);color:var(--cyan)}
+  footer{margin-top:60px;text-align:center;color:var(--muted);font-size:11px;line-height:2;font-family:'Courier New',monospace}
+  .note{max-width:720px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:16px 20px;font-size:12.5px;line-height:1.7;color:var(--muted)}
+  .note b{color:var(--gold);font-weight:400}
+  .art .lbl{position:absolute;font-family:'Courier New',monospace;font-size:8px;letter-spacing:.2em;color:var(--muted)}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">SHADDAI · ORACLE</div>
+    <h1>SACRED SYMBOLS</h1>
+    <p class="sub">The geometry of the sacred — sixteen symbols with their meanings, step-by-step drawing instructions, sigil notes, and the brain sources they were distilled from. Every diagram is constructed live in your browser with a compass, a straight edge, and the golden ratio.</p>
+    <div class="stats">
+      <div class="stat"><b>16</b>symbols</div>
+      <div class="stat"><b>91,096</b>brain chunks</div>
+      <div class="stat"><b>ORACLE</b>keeper</div>
+      <div class="stat"><b>book:</b>sacred-symbols-guide</div>
+    </div>
+  </header>
+
+  <div class="filters" id="filters"></div>
+  <div class="note" style="margin-bottom:22px"><b>How to use:</b> every card is a complete lesson — read the meaning, follow the drawing steps with a compass, study the sigil note, then check the brain sources that anchor it. <b>Save to Gallery</b> drops the diagram into your SHADDAI Media Gallery (<code>S.media</code>); <b>Download</b> saves the raw SVG.</div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    SACRED SYMBOLS GALLERY · distilled from the esoteric layer of the SHADDAI brain<br>
+    sources include The Secret Doctrine, Rosicrucian texts, Kabbalah & Hermetic material — see per-card brain sources
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ───────────── SVG construction helpers ───────────── */
+const G = '#e8c45c', V = '#a78bfa', C = '#7dd3fc', R = '#f0abfc', DIM = 'rgba(232,196,92,0.28)';
+const c  = (x,y,r,a='')  => `<circle cx="${x}" cy="${y}" r="${r}" ${a}/>`;
+const ln = (x1,y1,x2,y2,a='') => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${a}/>`;
+const pg = (pts,a='') => `<polygon points="${pts.map(p=>p[0]+','+p[1]).join(' ')}" ${a}/>`;
+const pl = (pts,a='') => `<polyline points="${pts.map(p=>p[0]+','+p[1]).join(' ')}" ${a}/>`;
+const pt = (cx,cy,ang,r) => [cx + r*Math.cos(ang), cy + r*Math.sin(ang)];
+const circlePts = (n,cx,cy,r,rot=Math.PI/2) => Array.from({length:n},(_,k)=>pt(cx,cy,rot+2*Math.PI*k/n,r));
+const S = (str='',st='none') => `stroke="${G}" stroke-width="${str?1.4:1}" fill="${st}"`;
+const frame = (inner) => `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img"><rect width="400" height="400" fill="#0a0714"/><circle cx="200" cy="200" r="194" fill="none" stroke="#241a44" stroke-width="1"/><circle cx="200" cy="200" r="186" fill="none" stroke="#181132" stroke-width="1"/>${inner}</svg>`;
+
+/* ───────────── symbol generators ───────────── */
+const GEOM = {
+  vesica(){
+    const R=78, A=200-R*0.5, B=200+R*0.5, rn=Math.sqrt(3)*R/2;
+    return frame(
+      c(200,200,150,DIM) +
+      c(A,200,R,'fill="rgba(167,139,250,0.10)" stroke="none"') +
+      c(B,200,R,'fill="rgba(232,196,92,0.08)" stroke="none"') +
+      `<path d="M ${A} ${200-rn} A ${R} ${R} 0 0 1 ${A} ${200+rn}" stroke="${G}" stroke-width="1.6" fill="none"/><path d="M ${B} ${200-rn} A ${R} ${R} 0 0 0 ${B} ${200+rn}" stroke="${G}" stroke-width="1.6" fill="none"/>` +
+      ln(A,200-rn,B,200-rn,V) + ln(A,200+rn,B,200+rn,V) +
+      c(200,200,1.6,'fill="#f0abfc" stroke="none"') +
+      `<text x="200" y="386" text-anchor="middle" font-family="monospace" font-size="9" fill="#8f83b8">A—B : height = width × √3</text>`
+    );
+  },
+  seed(){
+    const r=64, CEN=[200,200], pts=circlePts(6,200,200,r);
+    return frame(
+      pts.map(p=>c(p[0],p[1],r,'fill="rgba(232,196,92,0.05)" stroke="none"')).join('') +
+      c(200,200,r,'fill="rgba(167,139,250,0.05)" stroke="none"') +
+      pts.map(p=>c(p[0],p[1],r)).join('') +
+      c(200,200,r) + c(200,200,1.8,'fill="#f0abfc" stroke="none"') +
+      pts.map((p,k)=>`<text x="${p[0]}" y="${p[1]+4}" text-anchor="middle" font-family="monospace" font-size="9" fill="#7dd3fc">${k+1}</text>`).join('')
+    );
+  },
+  flower(){
+    const r=62, CEN=[200,200];
+    const ring1=circlePts(6,200,200,r);
+    const ring2a=circlePts(6,200,200,2*r,Math.PI/2);
+    const ring2b=circlePts(6,200,200,Math.sqrt(3)*r,Math.PI/6+Math.PI/2);
+    const all=[CEN,...ring1,...ring2a,...ring2b];
+    return frame(
+      all.map(p=>c(p[0],p[1],r,'fill="rgba(232,196,92,0.04)" stroke="none"')).join('') +
+      all.map(p=>c(p[0],p[1],r)).join('') +
+      c(200,200,1.8,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  metatron(){
+    const r=62;
+    const ring1=circlePts(6,200,200,r);
+    const ring2=circlePts(6,200,200,Math.sqrt(3)*r,Math.PI/6+Math.PI/2);
+    const all=[[200,200],...ring1,...ring2];
+    let lines='';
+    for(let i=0;i<all.length;i++) for(let j=i+1;j<all.length;j++){
+      lines+=ln(all[i][0],all[i][1],all[j][0],all[j][1],'stroke="#3a2f66" stroke-width="0.5"');
+    }
+    const t1=[ring2[0],ring2[2],ring2[4]], t2=[ring2[1],ring2[3],ring2[5]];
+    const emph = pg(t1,'stroke="#a78bfa" stroke-width="1.8"') + pg(t2,'stroke="#a78bfa" stroke-width="1.8"');
+    return frame(
+      lines + emph +
+      all.map(p=>c(p[0],p[1],r)).join('') +
+      c(200,200,1.8,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  merkaba(){
+    const r=120, up=circlePts(3,200,200,r), dn=circlePts(3,200,200,r,0);
+    const hex=circlePts(6,200,200,r/2,Math.PI/2+Math.PI/6);
+    return frame(
+      pg(up) + pg(dn) +
+      pg(hex,'stroke="#a78bfa" stroke-width="1.6"') +
+      c(200,200,120) + c(200,200,1.6,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  pentagram(){
+    const p=circlePts(5,200,200,132);
+    return frame(
+      c(200,200,132) +
+      [0,2,4,1,3].map((k,i)=>ln(p[k][0],p[k][1],p[(i===4)?0:[0,2,4,1,3][i+1]][0],p[(i===4)?0:[0,2,4,1,3][i+1]][1])).join('') +
+      c(200,200,132,'stroke="#a78bfa" stroke-width="0.8" fill="none"')
+    );
+  },
+  hexagram(){
+    const r=125, up=circlePts(3,200,200,r), dn=circlePts(3,200,200,r,0);
+    const hex=circlePts(6,200,200,r/2,Math.PI/6+Math.PI/2);
+    return frame(
+      c(200,200,125) +
+      pg(up) + pg(dn) +
+      hex.map((p,k)=>ln(p[0],p[1],hex[(k+1)%6][0],hex[(k+1)%6][1])).join('') +
+      c(200,200,1.6,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  tree(){
+    const sef={
+      K:[200,54,'Kether','#f0abfc'], Ch:[130,100,'Chokhmah','#7dd3fc'], Bi:[270,100,'Binah','#7dd3fc'],
+      Chd:[130,170,'Chesed','#7dd3fc'], Ge:[270,170,'Geburah','#7dd3fc'], Ti:[200,205,'Tiferet','#e8c45c'],
+      Ne:[130,272,'Netzach','#7dd3fc'], Ho:[270,272,'Hod','#7dd3fc'], Ye:[200,305,'Yesod','#7dd3fc'], Ma:[200,360,'Malkuth','#e8c45c']
+    };
+    const paths=[
+      ['K','Ch'],['K','Bi'],['Ch','Bi'],['Ch','Ti'],['Bi','Ti'],['Ch','Chd'],['Bi','Ge'],
+      ['Chd','Ge'],['Chd','Ti'],['Ge','Ti'],['Chd','Ne'],['Ge','Ho'],['Ne','Ho'],
+      ['Ti','Ne'],['Ti','Ho'],['Ti','Ye'],['Ne','Ye'],['Ho','Ye'],['Ye','Ma'],['Ne','Ma'],['Ho','Ma']
+    ];
+    const nodes=Object.values(sef);
+    return frame(
+      paths.map(([a,b])=>ln(sef[a][0],sef[a][1],sef[b][0],sef[b][1],'stroke="#3a2f66" stroke-width="0.7"')).join('') +
+      nodes.map(n=>c(n[0],n[1],13,'fill="#0d0718"')+c(n[0],n[1],13,'stroke="'+n[3]+'" fill="none" stroke-width="1.2"')).join('') +
+      nodes.map(n=>`<text x="${n[0]}" y="${n[1]+3}" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#e9e2ff">${n[2].slice(0,3)}</text>`).join('') +
+      ln(200,54,200,360,'stroke="#f0abfc" stroke-width="0.6" stroke-dasharray="2 4"')
+    );
+  },
+  platonic(){
+    const sub=(x,y,inner,label)=>`<g transform="translate(${x},${y})">${inner}</g>`+`<text x="${x}" y="${y+78}" text-anchor="middle" font-family="monospace" font-size="8" fill="#8f83b8">${label}</text>`;
+    const tet = pg([[0,-30],[-26,28],[26,28]],S())+ln(-26,28,0,-4,`stroke="${G}" stroke-width="0.7"`)+ln(26,28,0,-4,`stroke="${G}" stroke-width="0.7"`);
+    const cube = `<polygon points="-30,-25 30,-25 30,25 -30,25" fill="none" stroke="${G}"/><polygon points="-14,-41 34,-41 34,9 -14,9" fill="none" stroke="${G}"/>`+ln(-30,-25,-14,-41,`stroke="${G}" stroke-width="0.7"`)+ln(30,-25,34,-41,`stroke="${G}" stroke-width="0.7"`)+ln(30,25,34,9,`stroke="${G}" stroke-width="0.7"`)+ln(-30,25,-14,9,`stroke="${G}" stroke-width="0.7"`);
+    const oct = ln(0,-46,0,46,`stroke="${G}" stroke-width="0.7"`)+ln(0,-46,-34,0,`stroke="${G}" stroke-width="0.7"`)+ln(0,-46,0,-24,`stroke="${G}" stroke-width="0.7"`)+ln(0,-46,34,0,`stroke="${G}" stroke-width="0.7"`)+ln(0,46,-34,0,`stroke="${G}" stroke-width="0.7"`)+ln(0,46,0,24,`stroke="${G}" stroke-width="0.7"`)+ln(0,46,34,0,`stroke="${G}" stroke-width="0.7"`)+`<polygon points="0,-24 -34,0 0,24 34,0" fill="none" stroke="${G}"/>`;
+    const dod = pg([[-16,-10],[0,-22],[16,-10],[9,8],[-9,8]],S('')+' stroke-width="0.8"');
+    return frame(
+      sub(100,120,tet,'TETRA · FIRE · 4') + sub(300,120,cube,'HEXA · EARTH · 6') +
+      sub(100,290,oct,'OCTA · AIR · 8') + sub(300,290,dod,'DODECA · AETHER · 12') +
+      `<text x="200" y="385" text-anchor="middle" font-family="monospace" font-size="9" fill="#8f83b8">the five Platonic solids — faces of the elements</text>`
+    );
+  },
+  phi(){
+    const b=Math.log(1.6180339887)/(Math.PI/2);
+    const pts=[];
+    const a0=40;
+    for(let t=0;t<=4.5*Math.PI;t+=0.02){ const r=a0*Math.exp(b*t); pts.push([r*Math.cos(t),r*Math.sin(t)]); }
+    let mx=Math.max(...pts.map(p=>Math.abs(p[0]))), my=Math.max(...pts.map(p=>Math.abs(p[1])));
+    const scale=150/Math.max(mx,my);
+    const mapped=pts.map(p=>[200+p[0]*scale,200+p[1]*scale]);
+    const w=238,h=147; // golden-ish rectangle
+    return frame(
+      `<rect x="${200-w/2}" y="${200-h/2}" width="${w}" height="${h}" fill="none" stroke="#3a2f66" stroke-width="0.7"/>` +
+      ln(200-w/2,200,200+w/2,200,'stroke="#3a2f66" stroke-width="0.5"') +
+      ln(200,200-h/2,200,200+h/2,'stroke="#3a2f66" stroke-width="0.5"') +
+      ln(200-w/2+w*0.618,200-h/2,200-w/2+w*0.618,200+h/2,'stroke="#a78bfa" stroke-width="0.7"') +
+      pl(mapped,'stroke="#e8c45c" stroke-width="1.8" fill="none" stroke-linejoin="round"') +
+      c(200,200,1.8,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  sri(){
+    const pts=(apexY,baseY,hw)=>[[200,apexY],[200-hw,baseY],[200+hw,baseY]];
+    const tri=[
+      [200,200,328,74], [200,72,200,74], [200,200,286,50], [200,112,246,77],
+      [200,200,258,33], [200,146,226,46], [200,200,236,21], [200,170,214,25], [200,200,220,12]
+    ];
+    const petals=(r0,rad,n,rot)=>Array.from({length:n},(_,k)=>{const a=rot+2*Math.PI*k/n;return c(200+r0*Math.cos(a),200+r0*Math.sin(a),rad,'fill="rgba(232,196,92,0.07)" stroke="none"')+c(200+r0*Math.cos(a),200+r0*Math.sin(a),rad);}).join('');
+    const gate=(x,y,w,d)=>`<path d="M ${x-w/2} ${y} L ${x-w/2-d} ${y-d*0.35} L ${x+w/2+d} ${y-d*0.35} L ${x+w/2} ${y} Z" fill="none" stroke="${G}" stroke-width="1.1"/>`;
+    return frame(
+      `<rect x="38" y="38" width="324" height="324" fill="none" stroke="${G}" stroke-width="1.4"/>` +
+      gate(200,38,50,26)+gate(200,362,50,26)+gate(38,200,50,26)+gate(362,200,50,26) +
+      c(200,200,168,'stroke="#a78bfa" stroke-width="0.7" fill="none"') +
+      petals(150,13,24,0) + petals(128,10,16,Math.PI/16) +
+      c(200,200,116,'stroke="#a78bfa" stroke-width="0.7" fill="none"') +
+      tri.map(t=>pg(pts(t[0],t[1],t[2]),S('')+' stroke-width="1.05"')).join('') +
+      c(200,200,2.4,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  mandala(){
+    const pet=(r0,rad,n,rot)=>Array.from({length:n},(_,k)=>{const a=rot+2*Math.PI*k/n;return c(200+r0*Math.cos(a),200+r0*Math.sin(a),rad,'fill="rgba(232,196,92,0.06)" stroke="none"')+c(200+r0*Math.cos(a),200+r0*Math.sin(a),rad);}).join('');
+    return frame(
+      c(200,200,170,'stroke="#a78bfa" stroke-width="0.8" fill="none"') +
+      pet(140,30,12,0) + pet(114,20,12,Math.PI/12) +
+      pet(78,11,24,0) +
+      c(200,200,58,'stroke="#a78bfa" stroke-width="0.7" fill="none"') +
+      c(200,200,34,'stroke="#e8c45c" stroke-width="1.1" fill="none"') +
+      Array.from({length:8},(_,k)=>{const a=2*Math.PI*k/8;return ln(200,200,200+56*Math.cos(a),200+56*Math.sin(a),'stroke="#3a2f66" stroke-width="0.6"');}).join('') +
+      c(200,200,6,'fill="#e8c45c"') + c(200,200,1.6,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  square(){
+    const r=118, v=circlePts(4,200,200,r,Math.PI/4);
+    const side=2*r*Math.cos(Math.PI/4);
+    return frame(
+      c(200,200,r) +
+      pg(v,'stroke="#a78bfa" stroke-width="1.4"') +
+      ln(200,200,200,82,'stroke="#3a2f66" stroke-width="0.6"') +
+      ln(200,200,318,200,'stroke="#3a2f66" stroke-width="0.6"') +
+      `<text x="200" y="386" text-anchor="middle" font-family="monospace" font-size="9" fill="#8f83b8">square perimeter = circle circumference (2πr = 4s)</text>`
+    );
+  },
+  ouro(){
+    const gap=Math.PI*0.18, r0=118;
+    const a1=-Math.PI/2+gap/2, a2=Math.PI/2*3-gap/2;
+    const x1=200+r0*Math.cos(a1), y1=200+r0*Math.sin(a1);
+    return frame(
+      `<path d="M ${x1} ${y1} A ${r0} ${r0} 0 1 0 ${200+r0*Math.cos(a2)} ${200+r0*Math.sin(a2)}" stroke="${G}" stroke-width="2.2" fill="none"/>` +
+      `<path d="M ${200+r0*Math.cos(a2)} ${200+r0*Math.sin(a2)} A ${r0} ${r0} 0 1 0 ${200+r0*Math.cos(a2+0.05)} ${200+r0*Math.sin(a2+0.05)}" stroke="${G}" stroke-width="1" fill="none"/>` +
+      pg([[x1-10,y1-2],[x1+12,y1-14],[x1+10,y1+14]],'fill="#0a0714" stroke="#e8c45c" stroke-width="1.2"') +
+      c(x1+7,y1,2.2,'fill="#f0abfc" stroke="none"') +
+      Array.from({length:16},(_,k)=>{const a=-Math.PI/2+0.25+ (k+0.5)*2*Math.PI/16; return `<path d="M ${200+(r0-14)*Math.cos(a)} ${200+(r0-14)*Math.sin(a)} l ${8*Math.cos(a+Math.PI/2)} ${8*Math.sin(a+Math.PI/2)}" stroke="${G}" stroke-width="0.8"/>`;}).join('') +
+      c(200,200,1.4,'fill="#a78bfa" stroke="none"')
+    );
+  },
+  trefoil(){
+    const pts=[];
+    for(let t=0;t<=2*Math.PI;t+=0.02){
+      const x=Math.sin(t)+2*Math.sin(2*t), y=Math.cos(t)-2*Math.cos(2*t);
+      pts.push([x,y]);
+    }
+    const mapped=pts.map(p=>[200+p[0]*44,200+p[1]*44]);
+    return frame(
+      c(200,200,132,'stroke="#3a2f66" stroke-width="0.8" fill="none"') +
+      c(200,200,44,'stroke="#3a2f66" stroke-width="0.8" fill="none"') +
+      pl(mapped,'stroke="#e8c45c" stroke-width="2.2" fill="none" stroke-linejoin="round"') +
+      c(200,200,1.8,'fill="#f0abfc" stroke="none"')
+    );
+  },
+  saturn(){
+    const cell=[['4','9','2'],['3','5','7'],['8','1','6']];
+    const gx=68, gy=120, s=80;
+    let out='';
+    for(let r=0;r<4;r++) out+=ln(gx,gy+r*s,gx+3*s,gy+r*s,'stroke="#3a2f66" stroke-width="0.8"');
+    for(let cc=0;cc<4;cc++) out+=ln(gx+cc*s,gy,gx+cc*s,gy+3*s,'stroke="#3a2f66" stroke-width="0.8"');
+    for(let r=0;r<3;r++) for(let cc=0;cc<3;cc++) out+=`<text x="${gx+cc*s+s/2}" y="${gy+r*s+s/2+4}" text-anchor="middle" font-family="monospace" font-size="13" fill="#8f83b8">${cell[r][cc]}</text>`;
+    const sig=[ [2,0],[1,1],[0,2],[2,2],[0,0],[1,2],[2,1] ]; // traced path over the kamea
+    const pts=sig.map(([r,cc])=>[gx+cc*s+s/2,gy+r*s+s/2]);
+    return frame(
+      out +
+      pl(pts,'stroke="#e8c45c" stroke-width="2" fill="none" stroke-linejoin="round"') +
+      pts.map(p=>c(p[0],p[1],3,'fill="#f0abfc" stroke="none"')).join('') +
+      c(200,200,1.6,'fill="#e8c45c" stroke="none"') +
+      `<text x="200" y="392" text-anchor="middle" font-family="monospace" font-size="9" fill="#8f83b8">kamea of Saturn · 3×3 · every line sums to 15</text>`
+    );
+  },
+};
+
+/* ───────────── symbol knowledge (mirrors the brain guide) ───────────── */
+const CATS = {start:'FIRST FORMS', cosmos:'THE WEAVE', kab:'THE MAP', star:'THE STARS', alch:'ALCHEMY & PRACTICE'};
+const SYMBOLS = [
+{id:'vesica',cat:'start',name:'Vesica Piscis',
+ tr:'Greek · Christian · Pythagorean',
+ meaning:'The first intersection — the womb of form. Two equal circles whose centers stand on each other\'s circumferences; their overlap is the gate between two worlds. Its height-to-width ratio is exactly <em>√3</em>, why sacred doorways and the fish-symbol (ichthys) carry its shape.',
+ draw:['Draw a circle, center A.','Place the compass point on its circumference (B); draw an equal circle — it passes through A.','Mark the two crossing points C and D. The lens bounded by arcs C–A–D and C–B–D is the vesica.','Measure: width A–B, height C–D. Height is always √3 × width.','Mark the rhombus A-C-B-D — its angles are 60° and 120°.'],
+ sigil:'The overlap, not the circles, is the point: the divine lives between, not inside, either center. The vesica underlies the fish, the mandorla, and every seal that divides space into equilateral triangles.',
+ srcs:['Sacred Geometry Explained Like Never Before','Every Sacred Geometry Symbol EXPLAINED','The Truth About Sacred Geometry']},
+{id:'seed',cat:'start',name:'Seed of Life',
+ tr:'Platonic · Egyptian · global',
+ meaning:'Seven circles — one center, six around it — the geometry of the first week of creation. Seven is the week, the seven directions, the seven classical planets, the seven chakras. It is the compact form from which the full Flower of Life unfolds.',
+ draw:['Draw the center circle, radius R.','Set the point on its top point; draw the next circle of radius R.','Move the point to each place a new circle meets the center circumference; repeat clockwise.','All six outer centers must sit exactly on one circle of radius R.','Every triangle formed by three centers is equilateral.'],
+ sigil:'Number the six outer circles as directions and stand in the center as the seventh. Drawn as a mandala it is the signature of the first act of separation.',
+ srcs:['Sacred Geometry Explained Like Never Before','Complete Beginner\'s Guide to Mandalas & Sacred Geometry Art','How to draw 12 Sacred Geometry Designs']},
+{id:'flower',cat:'cosmos',name:'Flower of Life',
+ tr:'Egyptian (Abydos) · esoteric Judaism · global',
+ meaning:'The Seed of Life completed — nineteen circles in the hexagonal lattice that fills the plane. Read as the blueprint of all creation: every polygon and every Platonic solid can be lifted out of its intersections. The moment the One allowed the Many.',
+ draw:['Draw the Seed of Life (seven circles).','At every outer intersection of the six ring circles, set the point and draw a circle of radius R.','This adds the ring of twelve; continue outward to the nineteen-circle flower.','Hidden polygons: join alternate centers for hexagons; vesica pairs are everywhere.','Check: touching centers always form a triangular grid — a square gap means an error.'],
+ sigil:'A protective weave and the source of Metatron\'s Cube: keep the thirteen inner circles, connect every center to every other, and the Cube appears.',
+ srcs:['How to draw the Flower of Life','The Deep Symbolism of Metatron\'s Cube','Sacred Geometry Explained Like Never Before']},
+{id:'metatron',cat:'cosmos',name:'Metatron\'s Cube',
+ tr:'Merkavah mysticism · Hermetic · Kabbalah',
+ meaning:'Thirteen circles — one, six, six — with every center connected to every other. The architect\'s grid: all five Platonic solids can be drawn inside it by selecting subsets of the connecting lines. The literal scaffolding of the physical and astral worlds.',
+ draw:['Draw the thirteen circles in the Flower-of-Life layout.','Label the centers A–M.','Draw a straight line from every center to every other (78 segments).','Lighten the web, then darken the solids: the star tetrahedron, cube, octahedron.','Verify: the cube\'s eight vertices are eight centers; the octahedron\'s six are the outer ring.'],
+ sigil:'Named for the archangel nearest the throne. Drawn over a hexagon it reads as the 3D projection — the key of heavenly architecture.',
+ srcs:['Sacred Geometry 101E: Metatron\'s Cube','Metatron\'s Cube: Exploring Sacred Geometry','What Is Metatron\'s Cube? Sacred Blueprint of Reality']},
+{id:'merkaba',cat:'cosmos',name:'Merkaba · Star Tetrahedron',
+ tr:'Merkavah mysticism · Kabbalah · light-body practice',
+ meaning:'Two interpenetrating tetrahedra — up and down — crossed into the six-pointed star with a central hexagon. Spirit rising and body falling, the light vehicle that carries consciousness. A star tetrahedron is also the diagonal skeleton of a cube.',
+ draw:['Draw an upright equilateral triangle.','Draw an inverted triangle of the same size, vertices at the first triangle\'s side-midpoints.','The crossing forms the six-pointed star; leave or shade the central hexagon.','Add short depth-lines from each outer vertex toward the center so the pyramids read as solid.','Enclose in a circle; the six outer and six inner points give twelve points on it.'],
+ sigil:'The classic meditation spins the two pyramids in opposite directions around a central axis — this drawing is the still frame of that motion.',
+ srcs:['Sacred Geometry: All About the Merkaba','Hidden Meanings of the Merkaba','Merkaba Body Meditation: Sacred Geometry Activation']},
+{id:'sri',cat:'cosmos',name:'Sri Yantra',
+ tr:'Hindu Tantra (Srividya)',
+ meaning:'Nine interlocking triangles — four up (Shiva, masculine) and five down (Shakti, feminine) — around the bindu, producing 43 sub-triangles, ringed by lotus petals inside the square with four gates (bhupura). The map of the cosmos and the body at once.',
+ draw:['Draw the outer square (bhupura) and mark the center.','Draw the bindu as a small circle at the center.','Draw the two enclosing circles.','Build the nine triangles largest-first, alternating down and up, every side passing through two existing intersections.','Check: the nine crossings must yield 43 sub-triangles and a four-petalled center.'],
+ sigil:'A yantra is an instrument for the eye, not a charm. Meditation travels from the outermost gate inward to the bindu — from matter to dissolution.',
+ srcs:['Sri Yantra Explained | Sri Chakra Meaning & Symbolism','The Deep Meaning of the Sri Yantra','Sri Yantra Explained: A Detailed Step-by-Step Guide']},
+{id:'tree',cat:'kab',name:'Tree of Life · Ten Sephiroth',
+ tr:'Kabbalah · Jewish mysticism',
+ meaning:'Ten spheres on three pillars — mercy, severity, equilibrium — joined by 22 paths for the 22 letters. A map of creation and of the soul descending from Ein Sof into manifestation. Kether crowns; Malkuth is the kingdom of form.',
+ draw:['Draw a vertical line — the center column of the tree.','Place Kether at the top, Malkuth at the bottom.','Set the three columns: Chokhmah/Binah above, Chesed/Geburah in the middle, Netzach/Hod below, Tiferet and Yesod on the center line.','Draw the ten circles (sefirot).','Join them along the 22 paths.'],
+ sigil:'Each sefira is a gate with a divine name and an archangel. Contemplate one sphere and move along its paths as between states of consciousness.',
+ srcs:['Tree of Life Unlocked - Kabbalah Explained Simply','Kabbalah - Origins of the Sefirot and Tree of Life','Kabalah: Zohar - The Tree of Life Explained Through Kabbalah']},
+{id:'platonic',cat:'star',name:'The Five Platonic Solids',
+ tr:'Platonism · Pythagorean · Hermetic',
+ meaning:'The five regular solids Plato assigned to the elements: tetrahedron = fire, cube = earth, octahedron = air, icosahedron = water, and the dodecahedron = the aether that embroiders the cosmos. They come in dual pairs — a face of one is a vertex of the other.',
+ draw:['Tetrahedron: an upright triangle with an inverted one inside for the hidden edges.','Cube: a front and a rear square, corners joined.','Octahedron: a vertical axis through a diamond — top, bottom, and four equatorial points.','Dodecahedron: a central pentagon with five pentagons sharing its edges.','Icosahedron: a central pentagon with rings of triangles above and below.'],
+ sigil:'The dual pairs encode transformation — cube to octahedron turns a face into a vertex: turning earth into air.',
+ srcs:['Sacred Geometry: The Realization of the Platonic Solids','The Platonic Solids - Sacred Geometry','The Significance of the Dodecahedron in Sacred Geometry']},
+{id:'pentagram',cat:'star',name:'Pentagram',
+ tr:'Pythagorean · ceremonial · global',
+ meaning:'The star of the golden ratio: every segment is phi times the next. To the Pythagoreans it was the badge of health; its five points map spirit above the four elements. Orientation matters in practice — one point up or two.',
+ draw:['Draw a circle; mark the top point.','Divide the circle into five 72° arcs.','Number the points 0–4.','Connect every second point in one stroke: 0–2–4–1–3–0.','Join the outer points in order to see the enclosing pentagon; measure — the star segments are golden.'],
+ sigil:'The microcosm: five senses, five limbs, five elements. Draw in one stroke, without lifting, and keep the point count exact.',
+ srcs:['Every Occult Symbol Explained in 14 Minutes','Every Sacred Geometry Symbol EXPLAINED','10 Mysterious Occult Symbols and Their Meanings']},
+{id:'hexagram',cat:'star',name:'Hexagram · Seal of Solomon',
+ tr:'Hebrew · Islamic · Hermetic · alchemical',
+ meaning:'Ascent and descent interlocked — spirit and matter, fire and water, the macrocosm and microcosm joined. In alchemy, the completed work: sulfur and mercury reconciled, the fixed and the volatile.',
+ draw:['Draw an upward equilateral triangle.','Draw a downward triangle of equal size, vertices on the first\'s side-midpoints.','The overlap is the central hexagon with six small outer triangles.','Inscribe in a circle.','Check: the six outer and six inner points lie on concentric circles; every small triangle is equilateral.'],
+ sigil:'As a seal it governs the four elements and their spirits; as a meditation it is the place where ascent meets descent — stand in the hexagon.',
+ srcs:['Every Occult Symbol EXPLAINED','Every Occult Symbol Explained in 14 Minutes','10 Mysterious Occult Symbols and Their Meanings']},
+{id:'phi',cat:'star',name:'Golden Ratio Spiral',
+ tr:'Greek mathematics · Renaissance · nature',
+ meaning:'Phi (1.618): the proportion of self-similar growth. Divide a line so the whole is to the longer as the longer is to the shorter, and the ratio is phi. The logarithmic spiral it draws is the one shells, galaxies and seed heads approximate.',
+ draw:['Draw a golden rectangle (side ratio ≈ 1.618).','Draw a square on its long side — the remainder is again a golden rectangle.','Repeat: each added square is phi times the previous.','In each square draw a quarter circle from one corner to the opposite; the arcs join into the spiral.','Check: successive square sides follow 1,1,2,3,5,8 — Fibonacci.'],
+ sigil:'The phi grid is the composition scaffold of sacred art — place the subject at a grid intersection and the eye follows the spiral.',
+ srcs:['The Golden Ratio: Is It Myth or Math?','The Golden Ratio: Nature\'s Favorite Number','What is the Fibonacci Sequence & the Golden Ratio?']},
+{id:'square',cat:'alch',name:'Squaring the Circle',
+ tr:'Hermetic · alchemical · architectural',
+ meaning:'The square is earth — four elements, four directions, the fixed. The circle is heaven — unity, eternity. Squaring the circle is the work of reconciling the two: bringing the infinite into the finite, the emblem of the completed philosopher\'s stone.',
+ draw:['Draw a circle of radius R.','Its circumference is 2πR.','Draw a square whose perimeter equals that length (side ≈ 1.5708R).','Center both on the same point.','The version with the circle touching the corners is the Renaissance quadrature emblem.'],
+ sigil:'Exact quadrature is impossible (π is transcendental) — the symbol is intent, not arithmetic. Drawn with the elements at the corners, it is the geometric formula of the Great Work.',
+ srcs:['The 7 Steps of Spiritual Alchemy','The Emerald Tablet Of Hermes Trismegistus - EXPLAINED','Alchemy - Where to Begin']},
+{id:'ouro',cat:'alch',name:'Ouroboros',
+ tr:'Egyptian · Greek · alchemical · Gnostic',
+ meaning:'The serpent that eats its tail — the cycle: the year turning, eternity consuming and renewing itself. In alchemy, the opus that begins where it ends: solve et coagula in one continuous loop. The circle is the first and final form.',
+ draw:['Draw a circle.','Mark a ~30° gap at the top — the mouth.','On the left end draw the head: a wedge pointing right with an eye.','Taper the right end into the tail, curled into the mouth.','Add scales as short arcs so the ring reads as a serpent.'],
+ sigil:'Drawn around talismans as a boundary that encloses the work and returns it to its start — a figure of cyclic time and self-renewal.',
+ srcs:['The Kybalion','Every Major Concept in Alchemy Explained','Alchemy - Where to Begin']},
+{id:'mandala',cat:'alch',name:'Mandala',
+ tr:'Hindu & Buddhist · Native American · global',
+ meaning:'"Circle" in Sanskrit — a radial diagram of concentric rings and repeated petals organized around a point. A meditation: the eye enters the outer circle, crosses the gates, and rests in the bindu, the seed of the self.',
+ draw:['Draw a large outer circle.','Draw a smaller concentric circle inside.','Set petals as circles on the outer ring at equal angles (12 petals = 30°).','Add a second petal ring offset half a step, then plain rings, then a small center circle with a dot.','Keep every ring centered; each petal must overlap its neighbor identically.'],
+ sigil:'Sand mandalas are destroyed at the end of the rite to teach impermanence — the drawing is the vehicle, not the goal.',
+ srcs:['Complete Beginner\'s Guide to Mandalas & Sacred Geometry Art','You Can Draw This MANDALA in Procreate','How to Draw an Easy Mandala']},
+{id:'trefoil',cat:'alch',name:'Torus · Torus Knot',
+ tr:'Hermetic · modern sacred-geometry practice',
+ meaning:'The shape of continuous flow — no beginning, no end; matter entering the center and spiraling out. In light-body teaching it is the universal energy field. The torus knot adds the braid: creation interwoven with itself, the eternal return.',
+ draw:['Draw the outer and inner circles of the torus.','Choose a (2,3) trefoil: two winds around the hole, three around the body.','Trace the knot as a continuous curve alternating outer and inner rim.','Use two line weights — front solid, behind thinner — so it reads as a braid.','Close the curve exactly on itself, crossing pattern intact.'],
+ sigil:'The meditation: energy rising at the center, spreading to the rim, returning. The self-closing braid is the emblem of return.',
+ srcs:['Sacred Geometry Explained Like Never Before','Merkaba Body Meditation: Sacred Geometry Activation','Hidden Meanings of the Merkaba']},
+{id:'saturn',cat:'alch',name:'Planetary Sigil · Seal of Saturn',
+ tr:'Ceremonial magic · classical astrology',
+ meaning:'A sigil is a signature — a name or intent turned into a drawing. The planetary seals come from the kamea, the magic square: Saturn\'s 3×3 grid whose rows, columns and diagonals each sum to 15. Trace the name\'s letters through the cells and the line that results is the seal.',
+ draw:['Draw the 3×3 kamea of Saturn: 4 9 2 / 3 5 7 / 8 1 6.','Map the letters of the intent to their cell numbers.','Mark the cells of the name\'s letters.','Connect them in order with one continuous line.','Close the line at the last cell and enclose the figure in a circle.'],
+ sigil:'The general method: state the intent, reduce it to one sentence, strip repeated letters, turn the remainder into a calligraphic device — drawn once, fully, then forgotten.',
+ srcs:['"THE SECRET OF MAGIC" with Faise One','Every Occult Symbol EXPLAINED','Science of the Occult with Faise One']},
+];
+
+/* ───────────── render ───────────── */
+const $ = s => document.querySelector(s);
+let curCat = 'all';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function renderFilters(){
+  const f = $('#filters');
+  f.innerHTML = '<button data-cat="all" class="on">ALL</button>' + Object.entries(CATS).map(([k,v])=>`<button data-cat="${k}">${v}</button>`).join('');
+  f.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    curCat=b.dataset.cat; f.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render();
+  });
+}
+
+function savedState(){ try{ return JSON.parse(localStorage.getItem('shaddai_sacred_gallery')||'{}'); }catch(e){ return {}; } }
+
+function saveToMediaGallery(id, svgStr){
+  const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  // Persist into the dashboard state (S.media) so it lands in the Media Gallery.
+  try{
+    const s = JSON.parse(localStorage.getItem('shaddai_v99')||'null');
+    if(s){ s.media = s.media || []; s.media.unshift({ id: Date.now(), type:'image', content: dataUri, prompt: 'sacred symbol · ' + (SYMBOLS.find(x=>x.id===id)||{}).name, time: new Date().toISOString() }); localStorage.setItem('shaddai_v99', JSON.stringify(s)); }
+  }catch(e){}
+  // Also attempt the backend persistence path used by the dashboard gallery.
+  try{ if(window.fetch) fetch('/api/media/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:dataUri,type:'image'})}).catch(()=>{}); }catch(e){}
+  const st = savedState(); st[id]=true; try{ localStorage.setItem('shaddai_sacred_gallery', JSON.stringify(st)); }catch(e){}
+}
+
+function card(sym){
+  const art = document.createElement('div'); art.className='art';
+  art.innerHTML = GEOM[sym.id]();
+  const saved = !!savedState()[sym.id];
+  const el = document.createElement('div'); el.className='card';
+  el.dataset.cat = sym.cat;
+  el.innerHTML = `
+    ${art.outerHTML}
+    <div class="body">
+      <div class="hd"><span class="num">№ ${String(SYMBOLS.indexOf(sym)+1).padStart(2,'0')}</span><span class="tag">${CATS[sym.cat]}</span></div>
+      <h2>${sym.name}</h2>
+      <div class="section"><h3>Tradition</h3><div class="meaning">${sym.tr}</div></div>
+      <div class="section"><h3>Meaning</h3><div class="meaning">${sym.meaning}</div></div>
+      <div class="section"><h3>How to draw</h3><ol class="steps">${sym.draw.map(d=>`<li>${d}</li>`).join('')}</ol></div>
+      <div class="section"><h3>Sigil & use</h3><div class="sigil">${sym.sigil}</div></div>
+      <div class="section"><h3>Brain sources</h3><div class="srcs">${sym.srcs.map(s=>`<span class="src">${esc(s)}</span>`).join('')}</div></div>
+      <div class="actions">
+        <button class="save ${saved?'saved':''}" data-id="${sym.id}">${saved?'★ SAVED TO GALLERY':'◈ SAVE TO GALLERY'}</button>
+        <button class="dl" data-id="${sym.id}">⇩ SVG</button>
+      </div>
+    </div>`;
+  el.querySelector('.save').onclick = e => {
+    const b=e.currentTarget, id=b.dataset.id;
+    saveToMediaGallery(id, GEOM[id]());
+    b.classList.add('saved'); b.textContent='★ SAVED TO GALLERY';
+    if(window.toast) toast('Saved to Media Gallery — ' + id); else alert('Saved to Media Gallery ✔');
+  };
+  el.querySelector('.dl').onclick = e => {
+    const id=e.currentTarget.dataset.id, blob=new Blob([GEOM[id]()],{type:'image/svg+xml'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sacred-'+id+'.svg'; a.click();
+  };
+  return el;
+}
+
+function render(){
+  const g=$('#grid'); g.innerHTML='';
+  SYMBOLS.filter(s=>curCat==='all'||s.cat===curCat).forEach(s=>g.appendChild(card(s)));
+}
+
+renderFilters(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI — Affiliate Program</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080b;--surface:#0c0f14;--border:#1a2030;
+  --em:#00ff9c;--gold:#e8c45c;--cyan:#38d5ff;
+  --muted:#8899aa;--text:#dce8f0;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Fraunces',serif;min-height:100vh;overflow-x:hidden}
+a{color:var(--em);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(6,8,11,.92);backdrop-filter:blur(12px)}
+.logo{font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:var(--em);letter-spacing:.08em}
+.nav-links{display:flex;gap:24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
+.nav-links a{color:var(--muted);transition:color .2s}
+.nav-links a:hover{color:var(--em)}
+
+/* HERO */
+.hero{text-align:center;padding:80px 32px 64px;max-width:860px;margin:0 auto}
+.hero-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);border:1px solid rgba(232,196,92,.35);border-radius:20px;padding:4px 14px;margin-bottom:24px;letter-spacing:.12em}
+.hero h1{font-family:'Cinzel',serif;font-size:clamp(32px,5vw,54px);font-weight:700;line-height:1.15;margin-bottom:20px;background:linear-gradient(135deg,var(--em) 0%,#00ccff 60%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--muted);max-width:560px;margin:0 auto 36px;line-height:1.7}
+.hero-note{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(0,255,156,.6);letter-spacing:.06em}
+
+/* TIER CARDS */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:880px;margin:0 auto 80px;padding:0 32px}
+.tier-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:32px 24px;text-align:center;transition:border-color .25s,transform .25s;position:relative;overflow:hidden}
+.tier-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.tier-card.l1::before{background:linear-gradient(90deg,var(--em),#00ccff)}
+.tier-card.l2::before{background:linear-gradient(90deg,var(--gold),#ffb347)}
+.tier-card.l3::before{background:linear-gradient(90deg,var(--cyan),#9b59b6)}
+.tier-card:hover{border-color:var(--em);transform:translateY(-4px)}
+.tier-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:12px}
+.tier-pct{font-family:'Cinzel',serif;font-size:48px;font-weight:700;line-height:1}
+.tier-card.l1 .tier-pct{color:var(--em)}
+.tier-card.l2 .tier-pct{color:var(--gold)}
+.tier-card.l3 .tier-pct{color:var(--cyan)}
+.tier-who{font-size:14px;color:var(--muted);margin-top:12px;line-height:1.5}
+.tier-beat{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);margin-top:8px}
+
+/* HOW IT WORKS */
+.sect{max-width:860px;margin:0 auto 80px;padding:0 32px}
+.shead{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.shead .n{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:.15em;opacity:.7}
+.shead h2{font-family:'Cinzel',serif;font-size:22px;font-weight:600;color:var(--text)}
+.shead .flag{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--em);border:1px solid rgba(0,255,156,.25);border-radius:12px;padding:3px 10px}
+
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.step-num{font-family:'Cinzel',serif;font-size:32px;font-weight:700;color:var(--em);opacity:.25;line-height:1;margin-bottom:8px}
+.step h3{font-size:15px;font-weight:400;color:var(--text);margin-bottom:8px}
+.step p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* LINK GENERATOR */
+.link-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:32px;margin-bottom:80px;max-width:860px;margin-left:auto;margin-right:auto}
+.link-row{display:flex;gap:12px;margin-top:20px}
+.link-input{flex:1;background:#0a0d12;border:1px solid var(--border);border-radius:6px;padding:12px 16px;color:var(--em);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none}
+.link-input:focus{border-color:var(--em)}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:12px 20px;border-radius:6px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-em{background:var(--em);color:#000;font-weight:600}
+.btn-em:hover{background:#00cc7a}
+.btn-ghost{background:transparent;color:var(--em);border:1px solid rgba(0,255,156,.35)}
+.btn-ghost:hover{background:rgba(0,255,156,.08)}
+.link-status{font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px;min-height:20px}
+.link-status.ok{color:var(--em)}
+.link-status.err{color:#ff5858}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center}
+.stat-val{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--em);line-height:1}
+.stat-lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
+.stat-card.earnings .stat-val{color:var(--gold)}
+
+.perks-list{list-style:none;margin-top:20px;display:flex;flex-wrap:wrap;gap:10px}
+.perk-tag{background:rgba(0,255,156,.08);border:1px solid rgba(0,255,156,.2);border-radius:20px;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--em)}
+
+/* PAYOUT */
+.payout-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.payout-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.payout-card h3{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);margin-bottom:12px}
+.payout-card p{font-size:13px;color:var(--muted);line-height:1.7}
+.payout-card ul{margin-top:8px;padding-left:18px;font-size:13px;color:var(--muted);line-height:1.8}
+
+/* FAQ */
+.faq{display:grid;gap:12px}
+.qa{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.qa b{font-size:14px;color:var(--text);display:block;margin-bottom:6px}
+.qa p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* FOOTER */
+.foot{text-align:center;padding:40px 32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:center;gap:32px;flex-wrap:wrap}
+
+/* SIGN-IN GATE */
+.gate{background:linear-gradient(135deg,rgba(0,255,156,.06),rgba(56,213,255,.04));border:1px solid rgba(0,255,156,.2);border-radius:var(--r);padding:36px;text-align:center}
+.gate h3{font-family:'Cinzel',serif;font-size:18px;margin-bottom:10px;color:var(--em)}
+.gate p{font-size:14px;color:var(--muted);margin-bottom:20px}
+
+@media(max-width:680px){
+  .tiers{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .payout-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">SHADDAI</div>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/pricing.html">Pricing</a>
+    <a href="/agents.html">Agents</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">AFFILIATE PROGRAM · OPEN NOW</div>
+  <h1>Earn Real Revenue<br>Sharing SHADDAI</h1>
+  <p>Three-tier commissions that beat the industry. Every person you bring in earns you Sparks instantly and USDC monthly — plus commissions from everyone <em>they</em> bring in.</p>
+  <div class="hero-note">↳ beats competitor 20%/8%/4% structures on every level</div>
+</section>
+
+<!-- COMMISSION TIERS -->
+<div class="tiers">
+  <div class="tier-card l1">
+    <div class="tier-label">DIRECT REFERRAL (L1)</div>
+    <div class="tier-pct">25%</div>
+    <div class="tier-who">You earn 25% of every Pro subscription paid by someone who signed up through your link.</div>
+    <div class="tier-beat">vs competitors: 20%</div>
+  </div>
+  <div class="tier-card l2">
+    <div class="tier-label">SECOND LEVEL (L2)</div>
+    <div class="tier-pct">10%</div>
+    <div class="tier-who">Your L1 referrals bring others. You earn 10% of those subscriptions too — automatically.</div>
+    <div class="tier-beat">vs competitors: 8%</div>
+  </div>
+  <div class="tier-card l3">
+    <div class="tier-label">THIRD LEVEL (L3)</div>
+    <div class="tier-pct">5%</div>
+    <div class="tier-who">The network goes deep. L3 activity earns you 5% — passive income from a growing tree.</div>
+    <div class="tier-beat">vs competitors: 4%</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="sect">
+  <div class="shead">
+    <span class="n">01</span>
+    <h2>How It Works</h2>
+    <span class="flag">Simple</span>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Get your referral link</h3>
+      <p>Sign in below and generate your unique link in one click. It's tied to your account — no setup, no forms.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Share it anywhere</h3>
+      <p>Post it on X, Reddit, YouTube, Discord — wherever your audience lives. Every click that converts is tracked forever.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Earn Sparks immediately</h3>
+      <p>The moment your referral signs up (even free), you earn Sparks. When they upgrade to Pro, the real commissions start.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Cash out monthly</h3>
+      <p>Reach the $50 threshold and collect via Stripe. Sparks can also be used in the SHADDAI world economy for goods, plots, and Siege entry.</p>
+    </div>
+  </div>
+</section>
+
+<!-- REFERRAL LINK GENERATOR -->
+<section class="sect" style="margin-bottom:80px">
+  <div class="shead">
+    <span class="n">02</span>
+    <h2>Your Referral Link</h2>
+    <span class="flag">Generate now</span>
+  </div>
+  <div class="link-box" style="margin:0">
+    <div id="linkGate" class="gate" style="display:none">
+      <h3>Sign in to generate your link</h3>
+      <p>Your referral link is tied to your account so commissions are tracked correctly.</p>
+      <button class="btn btn-em" onclick="location.href='/dashboard'">Sign in → Dashboard</button>
+    </div>
+    <div id="linkPanel">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:8px">Your personal referral link — share it anywhere:</p>
+      <div class="link-row">
+        <input id="linkInput" class="link-input" type="text" placeholder="Generating your link…" readonly>
+        <button class="btn btn-em" onclick="copyLink()">Copy</button>
+        <button class="btn btn-ghost" onclick="genLink()">Refresh</button>
+      </div>
+      <div id="linkStatus" class="link-status"></div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE STATS -->
+<section class="sect">
+  <div class="shead">
+    <span class="n">03</span>
+    <h2>Your Earnings Dashboard</h2>
+    <span class="flag">Live</span>
+  </div>
+  <div id="statsArea">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="statL1">—</div>
+        <div class="stat-lbl">L1 Referrals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statL2">—</div>
+        <div class="stat-lbl">L2 Referrals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statL3">—</div>
+        <div class="stat-lbl">L3 Referrals</div>
+      </div>
+      <div class="stat-card earnings">
+        <div class="stat-val" id="statSparks">—</div>
+        <div class="stat-lbl">Sparks Earned</div>
+      </div>
+    </div>
+
+    <div id="perksSection" style="display:none;margin-top:24px">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Status perks unlocked:</p>
+      <ul class="perks-list" id="perksList"></ul>
+    </div>
+
+    <div id="statsNote" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-top:16px;display:none">
+      Sign in to see your live stats.
+    </div>
+  </div>
+</section>
+
+<!-- PAYOUT DETAILS -->
+<section class="sect">
+  <div class="shead">
+    <span class="n">04</span>
+    <h2>Payout Details</h2>
+  </div>
+  <div class="payout-grid">
+    <div class="payout-card">
+      <h3>Sparks (Immediate)</h3>
+      <p>Earned the moment your referral signs up. Use Sparks in the 2D world economy — buy goods, enter markets, pay for Siege tickets, or upgrade plot yields.</p>
+      <ul>
+        <li>Sign-up (free): +10 Sparks</li>
+        <li>Upgrade to Pro: +150 Sparks</li>
+        <li>Forged agent bonus: +50 Sparks</li>
+        <li>L2 sign-up: +4 Sparks per referral</li>
+      </ul>
+    </div>
+    <div class="payout-card">
+      <h3>USDC / Stripe (Monthly)</h3>
+      <p>Commission percentages (25% / 10% / 5%) apply to qualifying subscription revenue. Settlements are processed monthly.</p>
+      <ul>
+        <li>Minimum payout: $50 balance</li>
+        <li>Method: Stripe (USD bank transfer)</li>
+        <li>Schedule: 1st of each month</li>
+        <li>Pending period: 14 days after sub start</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sect" style="margin-bottom:80px">
+  <div class="shead">
+    <span class="n">05</span>
+    <h2>Straight Answers</h2>
+  </div>
+  <div class="faq">
+    <div class="qa"><b>Do free referrals count?</b><p>Yes — free signups earn you Sparks immediately. USDC commissions activate when your referral upgrades to a paid plan.</p></div>
+    <div class="qa"><b>How long does tracking last?</b><p>Forever. If someone signs up free via your link and upgrades two years later, you still earn the commission.</p></div>
+    <div class="qa"><b>Can I refer myself?</b><p>No — self-referrals are blocked. The system detects same-device, same-email, and account ownership overlap.</p></div>
+    <div class="qa"><b>Does SHADDAI have a tier above L3?</b><p>Three tiers is the structure. SHADDAI's 25/10/5 already beats every major competitor. Depth compounds — a good L2 network earns more than direct referrals alone.</p></div>
+    <div class="qa"><b>What counts as a qualifying subscription?</b><p>Pro ($30/mo) and Founder ($100 one-time) both qualify. Founder is counted at $30 equivalent for commission purposes.</p></div>
+    <div class="qa"><b>How do I use my Sparks?</b><p>Log into the dashboard and open the 2D world (SHADDAI City). Sparks appear in your HUD and can be spent at markets, Siege entry, plot upgrades, and the forge.</p></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>SHADDAI · The Council, Yours</span>
+  <span>25% / 10% / 5% · Three-tier affiliate</span>
+  <span><a href="/pricing.html">View Pricing →</a></span>
+  <span><a href="/dashboard">← Dashboard</a></span>
+</footer>
+
+<script src="/shd-tier.js" defer></script>
+<script>
+(function(){
+  var uid='', base=window.location.origin;
+
+  function getUid(){
+    try{
+      uid = localStorage.getItem('shd_userid')||localStorage.getItem('shd_uid')||'';
+    }catch(e){ uid=''; }
+    return uid;
+  }
+
+  function setStatus(msg, ok){
+    var el=document.getElementById('linkStatus');
+    if(!el) return;
+    el.textContent=msg;
+    el.className='link-status '+(ok?'ok':'err');
+  }
+
+  window.genLink=async function(){
+    var u=getUid();
+    if(!u){ showGate(); return; }
+    setStatus('Generating…', true);
+    try{
+      var r=await fetch('/api/referral/code',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-user-id':u},
+        body:JSON.stringify({agentId:u, ownerUserId:u})
+      });
+      var d=await r.json();
+      if(d && d.code){
+        var slug=d.code.code||d.code;
+        var link=base+'/r/'+slug;
+        document.getElementById('linkInput').value=link;
+        setStatus('✓ Your link is ready — share it anywhere.', true);
+      } else {
+        setStatus('Could not generate link — try again.', false);
+      }
+    } catch(e){
+      setStatus('Network error — are you signed in?', false);
+    }
+  };
+
+  window.copyLink=function(){
+    var inp=document.getElementById('linkInput');
+    if(!inp||!inp.value||inp.value.includes('…')) return;
+    try{
+      navigator.clipboard.writeText(inp.value);
+      setStatus('✓ Copied to clipboard!', true);
+    } catch(e){
+      inp.select(); document.execCommand('copy');
+      setStatus('✓ Copied!', true);
+    }
+  };
+
+  function showGate(){
+    document.getElementById('linkGate').style.display='block';
+    document.getElementById('linkPanel').style.display='none';
+  }
+
+  async function loadStats(u){
+    if(!u) return;
+    try{
+      var r=await fetch('/api/referral/stats/'+encodeURIComponent(u));
+      var d=await r.json();
+      var stats=d.stats||d;
+      if(stats){
+        var setv=function(id,v){ var el=document.getElementById(id); if(el) el.textContent=(v!=null?v:'0'); };
+        setv('statL1', stats.l1||stats.direct||0);
+        setv('statL2', stats.l2||0);
+        setv('statL3', stats.l3||0);
+        setv('statSparks', stats.sparksEarned||stats.sparks||0);
+      }
+    } catch(e){}
+
+    try{
+      var pr=await fetch('/api/referral/perks/'+encodeURIComponent(u));
+      var pd=await pr.json();
+      var perks=pd.perks||pd;
+      if(perks && (Array.isArray(perks)?perks.length:Object.keys(perks).length)){
+        var list=document.getElementById('perksList');
+        var ps=document.getElementById('perksSection');
+        if(list && ps){
+          ps.style.display='block';
+          var arr=Array.isArray(perks)?perks:Object.entries(perks).filter(function(x){return x[1]}).map(function(x){return x[0]});
+          list.innerHTML=arr.map(function(p){return '<li class="perk-tag">'+p+'</li>';}).join('');
+        }
+      }
+    } catch(e){}
+  }
+
+  function init(){
+    var u=getUid();
+    if(!u){
+      showGate();
+      document.getElementById('statsNote').style.display='block';
+      return;
+    }
+    genLink();
+    loadStats(u);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+
+  if(window.SHDTier){
+    window.SHDTier.refresh().then(function(){
+      var u=getUid();
+      if(u && document.getElementById('linkInput').value.includes('…')) genLink();
+    });
+  }
+  window.addEventListener('shdTierReady', function(){ init(); });
+})();
+</script>
+</body>
+</html>
