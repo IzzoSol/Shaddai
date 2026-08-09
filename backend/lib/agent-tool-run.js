@@ -108,13 +108,21 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   const keys = groqKeyPool(opts.apiKey);
   if (!keys.length) throw new Error('No Groq key configured');
 
-  const toolNames = (Array.isArray(agent.tools) && agent.tools.length ? agent.tools : BASE)
-    .filter(n => TOOLS[n] && !DENY.has(n))
-    .slice(0, MAX_TOOLS_SHOWN);
+  // opts.tools overrides agent's built-in tool list (used for forged operatives
+  // whose tool loadout lives in operatives.json, not the AGENTS map).
+  const toolSource = Array.isArray(opts.tools) && opts.tools.length ? opts.tools
+                   : Array.isArray(agent.tools) && agent.tools.length ? agent.tools
+                   : BASE;
+  const toolNames = toolSource.filter(n => TOOLS[n] && !DENY.has(n)).slice(0, MAX_TOOLS_SHOWN);
   const oaTools = toolNames.map(n => toOpenAITool(TOOLS[n]));
 
+  // Persona: use opts.persona (from operative.brain.persona) when set,
+  // otherwise fall back to generic identity.
+  const persona = opts.persona
+    ? String(opts.persona).slice(0, 600)
+    : 'You are ' + A + ', a specialist on the SHADDAI team.';
   let sysContent =
-    'You are ' + A + ', a specialist on the SHADDAI team. Use the provided tools to actually DO the task with real data — ' +
+    persona + ' Use the provided tools to actually DO the task with real data — ' +
     'call a tool when it gives you real information, then answer concisely and concretely based on what the tools returned. ' +
     'Do not invent data a tool could fetch. No self-description, no product pitch.';
   try { const kctx = kb().contextFor(A, task); if (kctx) sysContent += '\n\n' + kctx; } catch (_) {}
@@ -161,15 +169,42 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   }
 }
 
-// Express handler — POST /api/agent/run  { agent, task | message, apiKey? }
+const COUNCIL = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+
+// Express handler — POST /api/agentic/run  { agent, task | message, apiKey?, tools? }
 async function handler(req, res) {
   try {
     const b = req.body || {};
     const task = b.task || b.message;
     if (!task) return res.status(400).json({ error: 'task (or message) required' });
+    const agentUp = String(b.agent || 'ORACLE').toUpperCase();
+
+    // For forged operatives (not council), look up their tools + persona from operatives.json.
+    let toolOverride = Array.isArray(b.tools) && b.tools.length ? b.tools : null;
+    let personaOverride = b.persona || null;
+    if (!COUNCIL.has(agentUp)) {
+      try {
+        const fs = require('fs'), path = require('path');
+        const ops = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'operatives.json'), 'utf8'));
+        const op = ops.find(o => String(o.codename || '').toUpperCase() === agentUp);
+        if (op) {
+          if (!toolOverride && Array.isArray(op.tools) && op.tools.length) toolOverride = op.tools;
+          if (!personaOverride && op.brain && op.brain.persona) personaOverride = op.brain.persona;
+          if (!personaOverride && op.codename) {
+            const toolHint = toolOverride && toolOverride.length ? ` Your tools: ${toolOverride.slice(0,8).join(', ')}.` : '';
+            personaOverride = `You are ${op.codename}, a ${op.archetype || 'specialist'} operative in the SHADDAI empire.${toolHint}`;
+          }
+        }
+      } catch (_) {}
+    }
+
     const t0 = Date.now();
-    const out = await runAgentWithTools(b.agent, task, { apiKey: b.apiKey });
-    res.json(Object.assign({ agent: String(b.agent || 'ORACLE').toUpperCase(), durationMs: Date.now() - t0 }, out));
+    const out = await runAgentWithTools(b.agent, task, {
+      apiKey: b.apiKey,
+      tools: toolOverride || undefined,
+      persona: personaOverride || undefined,
+    });
+    res.json(Object.assign({ agent: agentUp, durationMs: Date.now() - t0 }, out));
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }

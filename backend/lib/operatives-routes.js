@@ -41,9 +41,38 @@ router.post('/', express.json({ limit: '256kb' }), (req, res) => {
     const b = req.body || {};
     if (!b.codename) return res.status(400).json({ ok: false, error: 'codename required' });
     const op = store.create(b);
-    // Forge → Shaddai World: generate a full-body FLUX character (fire-and-forget) so the
-    // forged agent appears as a real character in the world. Falls back to portrait until ready.
+
+    // Forge → Character: full-body FLUX portrait (fire-and-forget)
     try { require('./char-gen').generateCharForOperative(op).catch(() => {}); } catch (e) {}
+
+    // Forge → Room: auto-create the operative's personal room so they have a home immediately.
+    // Keyed as "op_{codename}" so rooms are per-operative, not per-user.
+    try {
+      const ROOMS_FILE = path.join(__dirname, '..', 'data', 'agent-rooms.json');
+      let rooms = {};
+      try { rooms = JSON.parse(fs.readFileSync(ROOMS_FILE, 'utf8')); } catch (_) {}
+      const roomKey = 'op_' + String(op.codename).toLowerCase().replace(/[^\w]/g, '_');
+      if (!rooms[roomKey]) {
+        const THEMES = ['neon-loft','command-center','void-observatory','crystal-sanctum','matrix-vault'];
+        // Pick a default theme based on archetype
+        const archTheme = { vanguard:'command-center', oracle:'void-observatory', nexus:'command-center',
+          ghost:'matrix-vault', artisan:'crystal-sanctum', 'gaia-link':'crystal-sanctum',
+          psionic:'void-observatory', harvester:'neon-loft' };
+        const theme = archTheme[String(op.archetype||'').toLowerCase()] || THEMES[Math.floor(Math.random()*THEMES.length)];
+        rooms[roomKey] = {
+          owner: roomKey,
+          codename: op.codename,
+          operativeId: op.id,
+          theme,
+          build: { slots: {} },
+          tools: Array.isArray(op.tools) ? op.tools : [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        fs.writeFileSync(ROOMS_FILE, JSON.stringify(rooms, null, 2));
+      }
+    } catch (e) { console.warn('[operative-room] auto-create failed:', e.message); }
+
     res.json({ ok: true, operative: op });
   } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
 });

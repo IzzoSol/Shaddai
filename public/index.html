@@ -7516,6 +7516,19 @@ window.enter3DWorld=function(){
         <button onclick="location.href='game.html'" style="background:rgba(232,196,92,0.12);border:1px solid rgba(232,196,92,0.3);color:#e8c45c;padding:8px 16px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit">Walk World →</button>
       </div>
 
+      <!-- ⬡ AGENT ROOMS — forged operative rooms, auto-created on forge -->
+      <div id="agentRoomsSection" style="padding:14px 20px 4px;border-bottom:1px solid rgba(0,229,160,0.08)">
+        <div style="font-size:8px;letter-spacing:2px;color:#00e5a0;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          ⬡ AGENT ROOMS
+          <span style="font-size:8px;color:#3a6a5a;font-weight:400">— forged operatives live here · call their tools · enter world</span>
+        </div>
+        <div id="agentRoomsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px">
+          <div id="agentRoomsEmpty" style="grid-column:1/-1;padding:16px;text-align:center;color:#2a4a3a;font-size:10px;border:1px dashed rgba(0,229,160,0.1);border-radius:8px">
+            No forged operatives yet · <button onclick="showView('forgeView')" style="background:none;border:none;color:#00e5a0;cursor:pointer;font-family:inherit;font-size:10px;text-decoration:underline">Go to Forge →</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ROOM CARDS GRID -->
       <div id="roomsTabContent" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px 20px">
         <!-- populated by rmRenderRooms() -->
@@ -29780,7 +29793,7 @@ function switchOfficeTab(tab) {
   if (tab === 'command')  { try { initCommandHub(); } catch(e){} }
   if (tab === 'city')     { try { initCityTab(); } catch(e){} }
   if (tab === 'treasury') { try { initEconomyTab(); } catch(e){} }
-  if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} }
+  if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} try { renderAgentRooms(); } catch(e){} }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -29985,6 +29998,81 @@ function initEconomyTab() {
       }).join('');
     }
   } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// AGENT ROOMS — forged operative personal rooms
+// ═══════════════════════════════════════════════════════
+var _THEME_META = {
+  'neon-loft':        { label:'Neon Loft',        color:'#00f0ff', icon:'💜' },
+  'command-center':   { label:'Command Center',   color:'#00e5a0', icon:'⚡' },
+  'void-observatory': { label:'Void Observatory', color:'#a78bfa', icon:'🌌' },
+  'crystal-sanctum':  { label:'Crystal Sanctum',  color:'#5fe0ff', icon:'💎' },
+  'matrix-vault':     { label:'Matrix Vault',     color:'#00ff88', icon:'🔐' },
+};
+function renderAgentRooms() {
+  var grid  = document.getElementById('agentRoomsGrid');
+  var empty = document.getElementById('agentRoomsEmpty');
+  if (!grid) return;
+  var API = (location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://shaddai-g81x.onrender.com');
+  var uid  = localStorage.getItem('shd_signed_in') || '';
+  fetch(API + '/api/operatives' + (uid ? '?owner=' + encodeURIComponent(uid) : ''))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var ops = (data && data.operatives) || [];
+      if (!ops.length) { if (empty) empty.style.display='block'; return; }
+      if (empty) empty.style.display='none';
+      grid.innerHTML = ops.map(function(op){
+        var roomKey = 'op_' + String(op.codename||'').toLowerCase().replace(/[^\w]/g,'_');
+        var tm = _THEME_META[op.theme] || _THEME_META['command-center'];
+        var toolCount = Array.isArray(op.tools) ? op.tools.length : 0;
+        var rarity = op.rarity || 'common';
+        var rarityColor = rarity==='legendary'?'#e8c45c':rarity==='rare'?'#a78bfa':'#8a9ab0';
+        var portraitEl = op.portrait
+          ? '<img src="'+op.portrait+'" style="width:44px;height:44px;border-radius:8px;object-fit:cover;border:1.5px solid '+tm.color+'44">'
+          : '<div style="width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.04);border:1.5px solid '+tm.color+'44">'+tm.icon+'</div>';
+        return '<div style="background:rgba(0,0,0,0.25);border:1px solid '+tm.color+'22;border-radius:10px;padding:12px;font-family:\'Share Tech Mono\',monospace;min-height:110px;display:flex;flex-direction:column;gap:8px">'
+          + '<div style="display:flex;gap:10px;align-items:center">'
+          + portraitEl
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:11px;font-weight:800;color:#e2e8f0;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+op.codename+'</div>'
+          + '<div style="font-size:8px;color:'+rarityColor+';letter-spacing:1px;text-transform:uppercase">'+rarity+' · '+(op.archetype||'operative')+'</div>'
+          + '<div style="font-size:8px;color:'+tm.color+';margin-top:2px">'+tm.icon+' '+tm.label+'</div>'
+          + '</div></div>'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:auto">'
+          + '<button onclick="arEnterRoom(\''+roomKey+'\','+JSON.stringify(op).replace(/'/g,'&#39;')+')" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;padding:5px 0;border-radius:6px;cursor:pointer;font-size:8px;font-weight:700;font-family:inherit;letter-spacing:1px">ENTER ROOM</button>'
+          + '<button onclick="arRunTools(\''+op.codename+'\')" style="background:rgba(95,224,255,0.08);border:1px solid rgba(95,224,255,0.2);color:#5fe0ff;padding:5px 0;border-radius:6px;cursor:pointer;font-size:8px;font-weight:700;font-family:inherit;letter-spacing:1px">CALL TOOLS ('+(toolCount)+')</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }).catch(function(){ if(empty) empty.style.display='block'; });
+}
+
+function arEnterRoom(roomKey, op) {
+  // Show the in-dashboard room panel (reuses the rooms-command-deck if loaded, else fallback)
+  if (window.openAgentRoom) { window.openAgentRoom(op.codename, roomKey); return; }
+  // Fallback: open rooms-panel in new tab
+  var API = (location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://shaddai-g81x.onrender.com');
+  window.open(API.replace(':3000','') + '/rooms-panel.html?room=' + encodeURIComponent(roomKey) + '&agent=' + encodeURIComponent(op.codename||''), '_blank');
+}
+
+function arRunTools(codename) {
+  // Quick tool-call panel: prompt and fire via /api/agentic/run
+  var task = prompt('Task for ' + codename + ':');
+  if (!task) return;
+  var API = (location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://shaddai-g81x.onrender.com');
+  var toast = document.createElement('div');
+  toast.innerHTML = '⚡ ' + codename + ' running…';
+  toast.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:9999;background:#0a1a10;border:1px solid #00e5a0;color:#00e5a0;padding:10px 18px;border-radius:8px;font-family:Share Tech Mono,monospace;font-size:11px';
+  document.body.appendChild(toast);
+  fetch(API + '/api/agentic/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({agent: codename, task: task}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      toast.remove();
+      var resp = d.response || d.error || 'No response';
+      var tools = Array.isArray(d.toolsUsed) && d.toolsUsed.length ? '\n\nTools used: ' + d.toolsUsed.join(', ') : '';
+      alert('[' + codename + ']\n\n' + resp + tools);
+    }).catch(function(e){ toast.remove(); alert('Error: ' + e.message); });
 }
 
 // ═══════════════════════════════════════════════════════
