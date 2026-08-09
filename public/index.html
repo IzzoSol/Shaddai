@@ -4385,7 +4385,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- FORGE -->
   <div style="border-top:1px solid rgba(255,255,255,0.06);margin:6px 0"></div>
   <div style="font-size:8px;letter-spacing:1.5px;color:#3a4a5a;text-transform:uppercase;padding:4px 12px 2px">Forge</div>
-  <button class="worlds-item" onclick="window.open('pixel-forge.html','_blank');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#f0b429;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(240,180,41,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">⬡</span><span style="flex:1;text-align:left">Pixel Forge <span style="color:#7a6a2a;font-weight:400;font-size:10px">· free · 2D agents</span></span></button>
+  <button class="worlds-item" onclick="showView('worlds');switchWorldsTab('forge');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#f0b429;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(240,180,41,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">⬡</span><span style="flex:1;text-align:left">Pixel Forge <span style="color:#7a6a2a;font-weight:400;font-size:10px">· free · 2D agents</span></span></button>
   <button class="worlds-item" onclick="enter3DWorld();document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#a78bfa;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(124,58,237,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">◈</span><span style="flex:1;text-align:left">3D Realms Forge <span style="color:#6a4aaa;font-weight:400;font-size:10px">· Pro · GLB models</span></span></button>
   <!-- ECONOMY -->
   <div style="border-top:1px solid rgba(255,255,255,0.06);margin:6px 0"></div>
@@ -19700,6 +19700,7 @@ async function e5RenderForgedRows() {
   if (!ops.length) return;
   // normalize so e5AgentPanelHTML can resolve color/skills/model by name
   window._e5Operatives = ops.map(o => ({
+    id: o.id || o._id || (o.codename || o.name),
     name: o.codename || o.name || o.id,
     color: (o.look && o.look.color) || '#00E5FF',
     model: (o.brain && (o.brain.brainId || o.brain.tier)) || o.model || 'balanced',
@@ -19732,12 +19733,29 @@ async function e5RenderForgedRows() {
       <td>—</td>
       <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
         <button class="e5-deploy" onclick="chatWithAgent('${escH(op.name)}')">▶ Deploy</button>
-        <button class="e5-toolsbtn" id="e5tbtn_${escH(op.name)}" onclick="e5ToggleAgentPanel('${escH(op.name)}')">◈ Tools &amp; APIs · ${toolCount}</button>
+        <button class="e5-toolsbtn" id="e5tbtn_${escH(op.name)}" onclick="e5ToggleAgentPanel('${escH(op.name)}')">◈ Tools & APIs · ${toolCount}</button>
+        <button class="e5-delete" title="Retire this forged operative" onclick="deleteOperative('${escH(op.id||op.name)}','${escH(op.name)}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#ef4444;font-size:8px;padding:4px 9px;border-radius:5px;cursor:pointer;font-weight:700">✕</button>
       </td>`;
     tbody.appendChild(tr);
   });
 }
 window.e5RenderForgedRows = e5RenderForgedRows;
+
+async function deleteOperative(id, name){
+  if(!id){ alert('Cannot retire — missing operative id.'); return; }
+  if(!confirm('Retire the forged operative "'+name+'"? This removes them from your roster, Worlds, and Forge.')) return;
+  try{
+    const r = await fetch('/api/operatives/'+encodeURIComponent(id), { method:'DELETE', headers:{'Content-Type':'application/json'} });
+    const d = await r.json();
+    if(d && d.ok){
+      const row = document.getElementById('e5row_'+name);
+      if(row) row.remove();
+      try{ e5RenderForgedRows(); }catch(e){}
+      try{ if(typeof refreshForgeRoster==='function') refreshForgeRoster(); }catch(e){}
+    } else { alert('Retire failed: '+((d&&d.error)||'unknown')); }
+  }catch(e){ alert('Retire failed: network error'); }
+}
+window.deleteOperative = deleteOperative;
 
 async function renderAgentWallets() {
   const el = document.getElementById('agentWalletsPanel');
