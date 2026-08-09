@@ -111,10 +111,30 @@ function _boostInfo(addr) { return _boostMap.get(addr) || null; }
 const _REJECT_LOG_FILE = path.join(__dirname, 'data', 'tg-rejected.json');
 let _rejectLog = [];
 try { _rejectLog = JSON.parse(fs.readFileSync(_REJECT_LOG_FILE, 'utf8')); if (!Array.isArray(_rejectLog)) _rejectLog = []; } catch (e) { _rejectLog = []; }
-function _logReject(reason, sym, fdv, extra) {
+function _logReject(reason, sym, fdv, extra, mint) {
   _rejectLog.push({ ts: Date.now(), reason, sym: sym || '?', fdv: Math.round(fdv || 0), ...extra });
   if (_rejectLog.length > 200) _rejectLog = _rejectLog.slice(-200);
   try { fs.writeFileSync(_REJECT_LOG_FILE, JSON.stringify(_rejectLog)); } catch (e) {}
+  // Persist hard rug/scam rejects so a restart doesn't re-evaluate and re-call them.
+  if (mint && /^(rug_score|lp_not_locked|top10_bundlers_snipers|top10_bundlers_snipers_flex_fail|scam_sym|scam_name)$/.test(reason)) _markBadMint(mint);
+}
+
+// ── PERSISTED "DO-NOT-CALL" CACHE (rug/scam rejects, 48h TTL) ────────────────
+// In-memory _seen sets reset on every restart, so a rug rejected once could be
+// re-evaluated (and re-called) after each deploy. This survives restarts.
+const _BAD_MINT_FILE = path.join(__dirname, 'data', 'tg-bad-mints.json');
+const _BAD_MINT_TTL = 48 * 60 * 60 * 1000;
+let _badMints = new Map();
+try { const _raw = JSON.parse(fs.readFileSync(_BAD_MINT_FILE, 'utf8')); const _now = Date.now(); for (const [k, v] of Object.entries(_raw)) { if (_now - v < _BAD_MINT_TTL) _badMints.set(k, v); } } catch (e) { _badMints = new Map(); }
+function _markBadMint(mint) {
+  const k = String(mint == null ? '' : mint).toLowerCase(); if (!k) return;
+  _badMints.set(k, Date.now());
+  if (_badMints.size > 3000) { const f = _badMints.keys().next().value; _badMints.delete(f); }
+  try { fs.writeFileSync(_BAD_MINT_FILE, JSON.stringify(Object.fromEntries(_badMints))); } catch (e) {}
+}
+function _badMint(mint) {
+  const k = String(mint == null ? '' : mint).toLowerCase(); if (!k) return false;
+  const ts = _badMints.get(k); return !!(ts && Date.now() - ts < _BAD_MINT_TTL);
 }
 
 // ── TIME-QUALITY TIERS ────────────────────────────────────────────────────────
@@ -260,6 +280,7 @@ function _cfg() {
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
     preBonding: cc.preBonding !== false,   // pre-bonding curve feed (pump.fun tokens approaching graduation)
+    brain: cc.brain !== false,             // brain-grounded insight line on signal cards (needs BRAIN_URL reachable)
     // poll cadences (env-tunable) — balanced for free tier rate limits
     interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),      // 5 min default (DexScreener: ~60 req/min free)
     bondedInterval: Math.max(60000, parseInt(process.env.TG_BONDED_INTERVAL || '120000', 10) || 120000), // 2 min default (pump.fun: generous)
@@ -566,6 +587,68 @@ function _fmtUsd(n) {
 // escape for Telegram HTML parse mode
 function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+// ── BRAIN-GROUNDED INSIGHT ────────────────────────────────────────────────
+// Pulls ONE relevant knowledge hit from the SHADDAI brain (BRAIN_URL, default
+// http://localhost:8787) for a signal, chosen by the token's actual metrics
+// ("angle"). Renders a short attributed line on the card so subscribers get
+// on-topic context, not generic filler. FAIL-OPEN: any error, timeout, low
+// score, or off-topic hit → null (card posts normally without the line).
+const _BRAIN_TIMEOUT_MS = 4000;
+const _BRAIN_MIN_SCORE = 0.24;
+const _BRAIN_KEYWORDS = /\b(crypto|token|liquidity|risk|volume|rug|scam|market|holder|whale|pump|trade|trading|price|chart|capital|invest|fund|profit|loss|protocol|dex|pool|curve|bond|mint|supply|honeypot|momentum|breakout|signal|buy|sell|position|money|sell)\b/i;
+// auto-generated / junk titles like ". - fpN5vkPQq_k" (no real title) — not worth quoting
+const _BRAIN_BAD_TITLE = /^[\s.\-–—]*$|\.?\s*[-–—]\s*[A-Za-z0-9_-]{8,}\s*$/;
+
+function _brainAngle(ctx) {
+  if (!ctx) return 'discipline';
+  if (ctx.source === 'pre_bonding') return 'pre_bond';
+  if (ctx.boosted) return 'boost';
+  if (ctx.top10Pct != null && ctx.top10Pct >= 40) return 'concentration';
+  if (ctx.liqPct != null && ctx.liqPct > 0 && ctx.liqPct < 5) return 'liquidity';
+  if (ctx.fdv != null && ctx.fdv > 0 && ctx.fdv < 15000) return 'micro';
+  if (ctx.volAccel) return 'momentum';
+  return 'discipline';
+}
+
+const _BRAIN_ANGLES = {
+  liquidity:     'how to assess token liquidity depth, why low liquidity relative to market cap increases dump risk',
+  concentration: 'top holders whales concentrated supply whale dumps price risk token distribution',
+  momentum:      'volume momentum breakout confirmation, accelerating volume, early entry timing in trading',
+  boost:         'paid promotion of a crypto token, dexscreener boost, scam or real signal, evaluating paid marketing',
+  micro:         'micro cap token fundamental analysis, tokenomics, high risk high reward, position sizing',
+  pre_bond:      'pump fun bonding curve graduation mechanics, what happens after a token graduates',
+  discipline:    'trading discipline, position sizing, risk management, protect capital',
+};
+
+async function _brainInsight(ctx) {
+  try {
+    if (_cfg().brain === false) return null;
+    const angle = _brainAngle(ctx);
+    const q = _BRAIN_ANGLES[angle] || _BRAIN_ANGLES.discipline;
+    const r = await fetch(`${process.env.BRAIN_URL || 'http://localhost:8787'}/api/search?q=${encodeURIComponent(q)}&k=4`, { signal: AbortSignal.timeout(_BRAIN_TIMEOUT_MS) });
+    if (!r.ok) return null;
+    const d = await r.json();
+    for (const hit of (d.results || []).slice(0, 4)) {
+      if (!hit || !hit.text) continue;
+      if (Number(hit.score) < _BRAIN_MIN_SCORE) continue;
+      const snip = String(hit.text).replace(/\s+/g, ' ').trim();
+      const title = String(hit.title || '').replace(/\s+/g, ' ').trim();
+      if (!_BRAIN_KEYWORDS.test(snip + ' ' + title)) continue;   // drop vector noise (off-topic hits)
+      if (_BRAIN_BAD_TITLE.test(title)) continue;                // drop ". - videoId" junk titles
+      const cut = _sentenceCut(snip, 120);
+      return `\n🧠 <b>BRAIN</b> <i>${_esc(title.slice(0, 60))}</i> — ${_esc(cut)}${cut.length < snip.length ? '…' : ''}`;
+    }
+    return null;
+  } catch (e) { return null; }
+}
+// cut a snippet at the nearest sentence boundary within `max` chars (cleaner than a hard slice)
+function _sentenceCut(s, max) {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const b = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf(', '));
+  return b > 40 ? cut.slice(0, b + 1) : cut;
+}
+
 async function _send(cfg, html) {
   try {
     const r = await fetch(TG_API(cfg.token, 'sendMessage'), {
@@ -732,6 +815,7 @@ async function _pollOnce() {
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
+    if (_badMint(addr)) { _seen.add(addr); continue; }          // persisted rug/scam reject cache
     // TIME-QUALITY GATE: dead hours require 2x vol momentum; cap maxPer to 1 during dead windows
     const _qm = _qualityMult();
     if (_qm > 1) {
@@ -759,9 +843,9 @@ async function _pollOnce() {
     const _trendRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.6));
     const _tSym2 = pair.baseToken && pair.baseToken.symbol;
     const _tFdv2 = Number(pair.fdv || pair.marketCap || 0);
-    if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }); _seen.add(addr); continue; }
+    if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }, addr); _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _logReject('min_holders', _tSym2, _tFdv2, { holders: rs && rs.holders }); _seen.add(addr); continue; }
-    if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
+    if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}, addr); _seen.add(addr); continue; }
     // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
     let _isDexFlex = false;
     if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
@@ -773,8 +857,8 @@ async function _pollOnce() {
           maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,
         });
         if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _isDexFlex = true;
-        else { _logReject('top10_bundlers_snipers_flex_fail', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }); _seen.add(addr); continue; }
-      } else { _logReject('top10_bundlers_snipers', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }); _seen.add(addr); continue; }
+        else { _logReject('top10_bundlers_snipers_flex_fail', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }, addr); _seen.add(addr); continue; }
+      } else { _logReject('top10_bundlers_snipers', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }, addr); _seen.add(addr); continue; }
     }
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), _tFdv2)) { _logReject('liq_mismatch', _tSym2, _tFdv2, { liq: Number(pair.liquidity && pair.liquidity.usd || 0) }); _seen.add(addr); continue; }
     if (_overCap(cfg, _tFdv2, rs)) { _logReject('over_fdv_cap', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
@@ -786,8 +870,8 @@ async function _pollOnce() {
     // scam filter — symbol + name patterns + cooldown
     const _sym = pair.baseToken && pair.baseToken.symbol;
     const _tName = pair.baseToken && pair.baseToken.name;
-    if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}); _seen.add(addr); continue; }
-    if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }); _seen.add(addr); continue; }
+    if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}, addr); _seen.add(addr); continue; }
+    if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }, addr); _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
     const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
@@ -800,8 +884,9 @@ async function _pollOnce() {
     if (chain === 'solana') {
       try { const _gpT = await _goplusCheck(addr); if (_gpT && _gpT.label) _gpTrendLabel = '\n' + _gpT.label; } catch (e) {}
     }
-    const _msg = card + _detailBlock(rs, social, _extra) + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     const _boostData = _boostInfo(addr);
+    const _brainTrend = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: _tFdv2 > 0 ? (Number(pair.liquidity && pair.liquidity.usd || 0) / _tFdv2 * 100) : 0, boosted: !!_boostData, volAccel: !!_accel, fdv: _tFdv2, source: 'trending' });
+    const _msg = card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _btns = core.buildButtons(addr, chain, pair.url);
@@ -896,6 +981,7 @@ async function _pollBonded() {
     if (_seenBond.size > _SEEN_CAP) { const f = _seenBond.values().next().value; _seenBond.delete(f); }
     if (!_bondSeeded) continue;                       // first poll only seeds (no dump on restart)
     if (core.wasAlerted(mint)) continue;              // global de-dupe
+    if (_badMint(mint)) continue;                     // persisted rug/scam reject cache
     // SCAM CHECK FIRST — before any enrichment/API calls, block known scam symbol/name patterns.
     // Done early so USOX/USUR/AORP/UNITED*/OIL*/RESERVE* can't slip through downstream.
     const _earlyBondSym = c.symbol;
@@ -979,13 +1065,13 @@ async function _pollBonded() {
     const _raydLabel = raydPool && raydPool.tvl > 500 ? `\n📊 Raydium TVL <b>${_fmtUsd(raydPool.tvl)}</b>${raydPool.weekVol ? `  7d vol <b>${_fmtUsd(raydPool.weekVol)}</b>` : ''}` : '';
     let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel, buyPressure: _bp.label });
     if (cfg.rugFilter) {
-      if (rs.checked && rs.score < cfg.rugMinScore) continue;
+      if (rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(mint); continue; }
       // Bonded hard cap: $20K — corpus shows $25-75K bonded = 52% rug rate, 19% 2x (net negative).
       // <$10K bonded = 60% 2x, 5% rug. $10-25K = 31% 2x, 31% rug. Cut everything above $20K.
       if (usdMc > 20000) { _seenBond.add(mint); continue; }
       if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
-      if (!_lpLockedOk(cfg, rs)) continue;            // LP — not flexed
+      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }      // LP — not flexed
       // DEX FLEX for bonded: paid boost gets headroom on top10/bundlers/snipers
       let _bondFlex = false;
       if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
@@ -1011,8 +1097,8 @@ async function _pollBonded() {
     // scam filter — block impostor stablecoin symbol patterns + name patterns + relaunch cooldown
     const _bondSym = c.symbol || (pair.baseToken && pair.baseToken.symbol);
     const _bondName = c.name || (pair.baseToken && pair.baseToken.name);
-    if (_bondSym && _isScamSym(_bondSym)) continue;
-    if (_bondName && _isScamName(_bondName)) continue;
+    if (_bondSym && _isScamSym(_bondSym)) { _markBadMint(mint); continue; }
+    if (_bondName && _isScamName(_bondName)) { _markBadMint(mint); continue; }
     if (!_symCooldownOk(_bondSym)) continue;
     // Merge social links: DexScreener + pump.fun detail socials
     const _pumpSocials = [];
@@ -1043,7 +1129,8 @@ async function _pollBonded() {
     const _pumpCommunity = pumpDet && pumpDet.reply_count >= 10
       ? `\n💬 <b>${pumpDet.reply_count}</b> pump.fun replies — active community`
       : (pumpDet && pumpDet.reply_count >= 3 ? `\n💬 ${pumpDet.reply_count} replies` : '');
-    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _gpLabel + _raydLabel + _bondAccel + _pumpCommunity + _tierLabel + _bondHourTag + _bondDevWarn;
+    const _bondBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: usdMc > 0 ? (liq / usdMc * 100) : 0, boosted: !!_boostInfo(mint), volAccel: !!_bondAccel, fdv: usdMc, source: 'bonded' });
+    const _bondMsg = card + _detailBlock(rs, _bondSocial, _bondExtra) + _gpLabel + _raydLabel + _bondAccel + _pumpCommunity + _tierLabel + _bondHourTag + _bondDevWarn + (_bondBrain || '');
     const _bondProf = _profileMap.get(mint);
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
@@ -1145,18 +1232,21 @@ async function _pollPreBonded() {
       if (posted >= 2) break;
       const mint = c.mint;
       if (_seenPreBond.has(mint) || core.wasAlerted(mint)) continue;
+      if (_badMint(mint)) continue;   // persisted rug/scam reject cache
       _seenPreBond.add(mint);
       const sym = c.symbol || '';
       if (sym && _isScamSym(sym)) continue;
       if (!_symCooldownOk(sym)) continue;
       const card = _preBondCard(c);
+      const _preBondBrain = await _brainInsight({ fdv: Number(c.usd_market_cap) || 0, source: 'pre_bonding' });
+      const _preBondMsg = card + (_preBondBrain || '');
       // CA first so trading bots can parse the address immediately
       await core.broadcast(`<b>$${_esc(sym || c.name)}</b> — PRE-BOND ◎ SOL\n<code>${_esc(mint)}</code>`);
       const imgUrl = c.image_uri || _randomBotImg();
       const btns = core.buildButtons(mint, 'solana', 'https://pump.fun/' + mint);
       const ok = (imgUrl
-        ? await core.broadcastPhoto(imgUrl, card, btns)
-        : await core.broadcast(card, { buttons: btns })
+        ? await core.broadcastPhoto(imgUrl, _preBondMsg, btns)
+        : await core.broadcast(_preBondMsg, { buttons: btns })
       ) > 0;
       if (ok) {
         _trackSym(sym); core.markAlerted(mint); posted++;
@@ -1306,11 +1396,12 @@ async function _pollGecko() {
         const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
         const _dk = _taddr || id;   // dedupe key: token address if present, else the pool id (always present)
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
+        if (_badMint(_dk)) continue;          // persisted rug/scam reject cache
         // SCAM FILTER — extract base token symbol from pair name ("USOR / SOL" → "USOR")
         // This was missing from gecko path — USOR/USOP/USOV type tokens were slipping through here.
         const _gSym = (a.name || '').split('/')[0].trim().replace(/[^A-Z0-9]/gi, '');
         const _gName = a.name || '';
-        if (_gSym && _isScamSym(_gSym)) { _seenPool.add(id); continue; }
+        if (_gSym && _isScamSym(_gSym)) { _markBadMint(_dk); _seenPool.add(id); continue; }
         if (_isScamName(_gName)) { _seenPool.add(id); continue; }
         if (_gSym && !_symCooldownOk(_gSym)) { _seenPool.add(id); continue; }
         if (_poolSeeded) {
@@ -1339,10 +1430,10 @@ async function _pollGecko() {
           }
           let rs = null;
           if (cfg.rugFilter && net === 'solana') { const mint = _mintFromGecko(p); if (mint) rs = await _rugScore(mint); }
-          if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;   // below safety floor
+          if (rs && rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(_dk); continue; }   // below safety floor
           if (!_holdersOk(cfg, rs)) continue;                            // must have holders
           if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
-          if (!_lpLockedOk(cfg, rs)) continue;                           // LP must be locked ≥80%
+          if (!_lpLockedOk(cfg, rs)) { _markBadMint(_dk); continue; }    // LP must be locked ≥80%
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_bundlersOk(cfg, rs)) continue;                           // no BIG bundles (>maxBundlerPct)
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
@@ -1350,7 +1441,8 @@ async function _pollGecko() {
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
           // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
           if (_taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
-          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          const _geckoBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: !!_isRevival, fdv, source: kind });
+          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || ''), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
@@ -1392,6 +1484,7 @@ async function _pollBoosts() {
       if (_seenBoost.size > _SEEN_CAP) { const f = _seenBoost.values().next().value; _seenBoost.delete(f); }
       if (!_boostWatchSeeded) continue;   // first run only seeds the seen set
       if (core.wasAlerted(mint)) continue;
+      if (_badMint(mint)) continue;   // persisted rug/scam reject cache
       // Early scam/name check
       const _bSym = (t.description || '').split(' ')[0].replace(/[^A-Z0-9]/gi, '') || '';
       if (_bSym && _isScamSym(_bSym)) continue;
@@ -1452,7 +1545,8 @@ async function _pollBoosts() {
         `📊 Vol  <b>${_fmtUsd(vol24)}</b> 24h   <b>${_fmtUsd(vol1h)}</b> 1h\n` +
         (_bpLabel ? `${_bpLabel}\n` : '') +
         (social && social.label ? `${social.label}\n` : '');
-      const msg = card + _detailBlock(rs, social, _extra) + _gpLabel;
+      const _boostBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, boosted: true, volAccel: chg1h >= 10, fdv, source: 'boosted' });
+      const msg = card + _detailBlock(rs, social, _extra) + _gpLabel + (_boostBrain || '');
       const imgUrl = (t.icon) || (_profData && _profData.icon) || (pair.info && pair.info.imageUrl) || '';
       await core.broadcast(`<b>$${_esc(sym)}</b> — BOOSTED ◎ SOL\n<code>${_esc(mint)}</code>`);
       const ok = (imgUrl
@@ -1543,6 +1637,7 @@ async function _pipelineCycle(pipeline) {
     for (const c of enriched) {
       if (posted >= _pipeMaxPer) break;
       if (core.wasAlerted(c.mint)) continue;
+      if (_badMint(c.mint)) continue;   // persisted rug/scam reject cache
       // build signal card
       const socialLabel = c.sourceNames ? '📡 ' + c.sourceNames.join('+') : '';
       let card = _signalCard(c.chain, { baseToken: { symbol: c.symbol, name: c.name, address: c.mint }, priceUsd: c.metrics.price, fdv: c.metrics.fdv, marketCap: c.metrics.fdv, liquidity: { usd: c.metrics.liq }, volume: { h24: c.metrics.vol24h }, priceChange: { h24: c.metrics.change24h }, url: c.metrics.url }, socialLabel);
@@ -1558,6 +1653,8 @@ async function _pipelineCycle(pipeline) {
       if (flags.length) card += '\n' + flags.join('  ');
       if (c.confidence > 0) card += `\n🎯 Confidence: <b>+${c.confidence}</b>`;
       if (regime && regime.label) card += `\n🌐 Market: ${regime.label} (${regime.mcapChg >= 0 ? '+' : ''}${regime.mcapChg.toFixed(1)}%)`;
+      const _pipeBrain = await _brainInsight({ top10Pct: m.top10Pct, liqPct: m.fdv > 0 ? (m.liq / m.fdv * 100) : 0, boosted: false, volAccel: false, fdv: m.fdv, source: 'pipeline' });
+      if (_pipeBrain) card += _pipeBrain;
       const ok = (await core.broadcast(card, { buttons: core.buildButtons(c.mint, c.chain, c.metrics.url) })) > 0;
       if (ok) {
         core.markAlerted(c.mint);
@@ -1582,4 +1679,4 @@ async function _pipelineCycle(pipeline) {
   } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollBoosts, _socialScore, _passesSocial };
+module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollBoosts, _socialScore, _passesSocial, _brainInsight, _brainAngle };

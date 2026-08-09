@@ -1,5 +1,5 @@
 {
-  "lastRun": 1785842534705,
+  "lastRun": 1786281208482,
   "suggestions": [
     {
       "filter": "rugMinScore",
@@ -10,7 +10,7 @@
     {
       "filter": "requireLocked",
       "direction": "keep_strict",
-      "reason": "locked LP winners: 0%, no lock losers: 19%",
+      "reason": "locked LP winners: 0%, no lock losers: 20%",
       "confidence": "high"
     },
     {
@@ -22,9 +22,9 @@
     {
       "filter": "minHolders",
       "direction": "raise",
-      "reason": "100+ holders win rate: 15%, <20 holders: 3%",
+      "reason": "100+ holders win rate: 15%, <20 holders: 4%",
       "confidence": "medium"
     }
   ],
-  "timestamp": 1785842534705
+  "timestamp": 1786281208482
 }

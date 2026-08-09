@@ -1555,6 +1555,45 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     if(document.readyState!=='loading') setTimeout(_triggerDescent, 6000);
     else document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 6000); });
   }
+
+  /* ── PERF: suspend the descent WebGL iframe while it isn't doing useful work ──
+     The descent iframe (lab-molecules.html in ?bg=1 mode) renders a WebGL molecule
+     sim continuously, which is the source of the desktop lag once you scroll past
+     the hero. Suspend it whenever:
+       (a) the hero section is not in the viewport (we've scrolled past it), OR
+       (b) the page is in immersive "View" mode (iframe shows through), OR
+       (c) the tab is hidden.
+     Suspension = display:none (the browser stops running the iframe's rAF). Restoring
+     = display:'' (the iframe resumes from where it was — no reload, no jank). */
+  var _bgSuspended = false;
+  function _bgApply(){
+    var should = !document.hidden
+                 && !document.body.classList.contains('immersive')
+                 && _heroInView
+                 && loaded;
+    if(should === !_bgSuspended) return;                 /* no change */
+    _bgSuspended = !should;
+    if(should){ try{ bg.style.display=''; }catch(e){} }  /* resume rAF */
+    else       { try{ bg.style.display='none'; }catch(e){} } /* freeze rAF */
+  }
+  var _heroInView = true;
+  var _heroEl = document.getElementById('hero');
+  if('IntersectionObserver' in window && _heroEl){
+    var _hio = new IntersectionObserver(function(es){
+      es.forEach(function(e){ _heroInView = e.isIntersecting; _bgApply(); });
+    }, { rootMargin: '120px' });
+    _hio.observe(_heroEl);
+  }
+  document.addEventListener('visibilitychange', _bgApply);
+  /* also react when immersive toggles (the View button) */
+  var _bar = document.body;
+  var _mo = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      if(m.attributeName === 'class' && m.target === document.body) _bgApply();
+    });
+  });
+  _mo.observe(document.body, { attributes:true, attributeFilter:['class'] });
+  _bgApply();
 })();
 
 /* ══════════════════════════════════════════════════════════════════

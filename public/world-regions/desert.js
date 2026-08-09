@@ -25,10 +25,14 @@ window.RegionGen['desert'] = function(api){
   }
 
   // ---- CENTRAL MESA (stepped pyramid landmark) ----
-  api.building({col:23,row:23,w:6,d:6,floors:5,landmark:'pyramid',wall:'#b9a07a',roof:'#a88a5c',name:"DA'AT MESA"});
+  // Shrunk to 4×4 (was 6×6) so players can walk around it without getting pinched.
+  api.building({col:24,row:24,w:4,d:4,floors:5,landmark:'pyramid',wall:'#b9a07a',roof:'#a88a5c',name:"DA'AT MESA"});
+  // Clear 2-tile walkable ring around the mesa so players never get trapped.
+  for(var mc=21;mc<=30;mc++){ api.set(mc,22,T.PATH); api.set(mc,29,T.PATH); }
+  for(var mr=22;mr<=29;mr++){ api.set(21,mr,T.PATH); api.set(30,mr,T.PATH); }
 
-  // ---- MESA-TOP AIR PAD ----
-  api.building({col:24,row:20,w:2,d:2,floors:1,landmark:'airport',kind:'transit',wall:'#c9b389',roof:'#7fb3c8',name:'AIR PAD'});
+  // ---- MESA-TOP AIR PAD (moved slightly to stay above smaller mesa) ----
+  api.building({col:25,row:21,w:2,d:2,floors:1,landmark:'airport',kind:'transit',wall:'#c9b389',roof:'#7fb3c8',name:'AIR PAD'});
 
   // ---- WELL by the oasis ----
   api.building({col:24,row:34,w:1,d:1,floors:1,kind:'home',wall:'#cbb489',roof:'#6f4a26',name:'WELL'});

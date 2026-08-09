@@ -7488,9 +7488,9 @@
       "entryFdv": 29089,
       "entryPrice": 0.00002908,
       "ts": 1784411272630,
-      "peakMult": 2.7879610849461995,
-      "curMult": 2.7879610849461995,
-      "curFdv": 81099,
+      "peakMult": 2.9321736738973496,
+      "curMult": 2.9321736738973496,
+      "curFdv": 85294,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -63920,9 +63920,9 @@
       "entryFdv": 372103.025623085,
       "entryPrice": 0.00038717708648011896,
       "ts": 1785817356299,
-      "peakMult": 1.0400022933218298,
-      "curMult": 1.0400022933218298,
-      "curFdv": 386988,
+      "peakMult": 14.147321138238574,
+      "curMult": 14.147321138238574,
+      "curFdv": 5264261,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -63947,7 +63947,11 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2,
+        5,
+        10
+      ],
       "closed": false
     },
     {
@@ -64078,9 +64082,9 @@
       "entryFdv": 485534.9245,
       "entryPrice": 0.00048050345941326103,
       "ts": 1785817517327,
-      "peakMult": 1.135930645087921,
-      "curMult": 1.135930645087921,
-      "curFdv": 551534,
+      "peakMult": 1.2905786347816057,
+      "curMult": 1.2905786347816057,
+      "curFdv": 626621,
       "features": {
         "sourceCount": 1,
         "sources": [

@@ -730,7 +730,7 @@ app.get('/api/mcp/package', (req, res) => {
 // Post: { q: string, agent?: string, topK?: number }
 app.post('/api/mcp/search', express.json(), (req, res) => {
   try {
-    const q = String((req.body && req.body.q) || '').trim();
+    const q = String((req.body && (req.body.q || req.body.query)) || '').trim();
     if (!q) return res.status(400).json({ ok: false, error: 'q required' });
     const topK = Math.max(1, Math.min(10, parseInt(req.body.topK, 10) || 3));
     const rag = require('./rag-index');
@@ -1240,6 +1240,13 @@ try {
 }
 
 app.use('/api', apiProxyRoutes);
+// FULL RAG BRAIN — 401K-chunk corpus backing public/brain.html.
+// Exposes /api/overview, /search, /summary, /council, /ask, /synthesize,
+// /crosstalk, /books, /booksearch, /gallery, /rooms/bulk, /rooms/generate.
+// Mounted before rooms-routes + gallery-routes so brain's /rooms/bulk and
+// /gallery win those exact paths (the ONLY page calling them is brain.html).
+try { app.use('/api', require('./brain-server')); console.log('[prod] RAG brain mounted (/api overview|search|summary|council|ask|synthesize|crosstalk|books|gallery|rooms)'); }
+catch (e) { console.warn('[startup] RAG brain not mounted:', e.message); }
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
 app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals) — audited 2026-07-19
@@ -1313,15 +1320,36 @@ catch (e) { console.warn('[prod] achievements failed:', e.message); }
 app.use('/api/llm', require('./llm-proxy-routes'));
 app.post('/api/agentic/run', express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools
 app.post('/api/orchestrate', express.json(), require('./lib/orchestrate').handler);      // SHADDAI orchestrator — decompose a task & route to the right specialists
-// Mastery card RAG search — used by the MCP server, dashboards, and external clients
-app.post('/api/mastery/search', express.json(), (req, res) => {
+// Mastery card RAG search — used by the MCP server, dashboards, and external clients.
+// Merges the small mastery KB (rag-index) with the FULL 401K-chunk brain corpus
+// (brain-index) so the landing page Knowledge Base search hits ALL of the info.
+app.post('/api/mastery/search', express.json(), async (req, res) => {
   try {
     const { query, agent } = req.body || {};
     if (!query) return res.status(400).json({ error: 'query required' });
+    const q = String(query).slice(0, 300);
+    const agentId = String(agent || 'SHADDAI').toUpperCase();
+    const namespace = 'kb_' + agentId.toLowerCase();
     const rag = require('./rag-index');
-    const namespace = 'kb_' + (String(agent || 'SHADDAI').toLowerCase());
-    const results = rag.searchUser(namespace, query, 5);
-    res.json({ ok: true, results: results.map(r => ({ source: r.docName, chunk: r.chunkText.slice(0, 300), score: r.score })) });
+    const ragHits = (rag.searchUser(namespace, q, 5) || []).map(r => ({
+      source: String(r.docName || 'mastery'), chunk: String(r.chunkText || '').slice(0, 300), score: r.score, corpus: 'mastery',
+    }));
+    let brainHits = [];
+    try {
+      const bi = require('./brain-index');
+      brainHits = (bi.searchChunks(namespace, q, 5) || []).map(r => ({
+        source: String(r.title || r.doc || namespace), chunk: String(r.text || r.chunkText || '').slice(0, 300), score: r.score, corpus: 'brain',
+      }));
+    } catch (_) { /* brain corpus unavailable — mastery only */ }
+    const seen = new Set();
+    const merged = [];
+    for (const r of [...ragHits, ...brainHits]) {
+      const key = (r.source || '') + '|' + (r.chunk || '').slice(0, 60);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(r);
+    }
+    res.json({ ok: true, count: merged.length, results: merged.slice(0, 8) });
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }

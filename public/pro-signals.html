@@ -111,8 +111,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 }
 .gate-btn::before{content:'';position:absolute;inset:0;background:var(--P);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1;}
 .gate-btn:hover{color:var(--bg0);}.gate-btn:hover::before{transform:scaleX(1);}
-.gate-bypass{font-size:9px;color:rgba(232,160,32,.2);cursor:pointer;letter-spacing:1px;text-decoration:underline;text-underline-offset:3px;}
-.gate-bypass:hover{color:var(--muted);}
+
 .gate-pin{
   width:160px;padding:12px 14px;background:rgba(6,8,11,.9);border:1px solid var(--border2);
   color:var(--text);font-family:'Share Tech Mono',monospace;font-size:24px;letter-spacing:14px;text-align:center;
@@ -423,6 +422,33 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 22px;background:var(--bg2);border:1px solid var(--P);color:var(--P);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;text-shadow:var(--gP);opacity:0;transition:opacity .25s;pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:var(--gP),0 4px 24px rgba(0,0,0,.4);}
 #toast.on{opacity:1;}
 
+/* ── MODALS (ALERTS / SENTIMENT) ─────────────────── */
+.almo{position:fixed;inset:0;z-index:9950;background:rgba(2,4,8,.74);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s;}
+.almo.on{opacity:1;pointer-events:auto;}
+.almo-bx{width:min(440px,92vw);max-height:84vh;background:var(--bg1);border:1px solid var(--border2);box-shadow:0 10px 46px rgba(0,0,0,.55),var(--gP);display:flex;flex-direction:column;overflow:hidden;animation:mdIn .18s ease;}
+@keyframes mdIn{from{transform:scale(.96);opacity:0;}to{transform:none;opacity:1;}}
+.almo-h{display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(90deg,var(--bg2),var(--bg1));border-bottom:2px solid var(--border2);flex-shrink:0;}
+.almo-hd{flex:1;font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:3px;color:var(--P);text-shadow:var(--gP);}
+.almo-x{padding:2px 9px;border:1px solid var(--border);color:var(--muted);background:none;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;}
+.almo-x:hover{border-color:var(--A);color:var(--A);}
+.almo-bd{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-height:0;}
+
+/* alert count pill */
+#tbal{color:var(--P);border-color:rgba(232,160,32,.45);cursor:pointer;white-space:nowrap;}
+#tbal:hover{border-color:var(--P2);color:var(--P2);box-shadow:var(--gP);}
+#tbal.fired{color:#f4c842;border-color:rgba(244,200,66,.5);}
+
+/* search */
+.fq{flex:1;min-width:120px;max-width:200px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;letter-spacing:.5px;border-radius:3px;}
+.fq:focus{border-color:var(--P);box-shadow:var(--gP);}
+.fq::placeholder{color:var(--label);}
+
+/* sentiment */
+.sent-mood{font-family:'Syncopate',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;padding:9px 12px;border:1px solid currentColor;text-align:center;margin-bottom:8px;background:var(--bg2);}
+.sent-line{font-size:11px;line-height:1.7;color:var(--text2);border-left:2px solid var(--border2);padding:3px 8px;margin-bottom:5px;font-family:'Share Tech Mono',monospace;}
+.sent-ai{margin-top:8px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);font-size:11px;line-height:1.8;color:var(--text2);font-family:'Share Tech Mono',monospace;}
+.sent-ai-h{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:3px;color:#b07fff;margin-bottom:5px;}
+
 @media(max-width:860px){#app{grid-template-columns:1fr;}#rc{display:none;}}
 </style>
 </head>
@@ -460,6 +486,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   </div>
   <div class="tb-pill" id="tbmiro" onclick="toggleMiro()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Show / hide MiroFish">🐟 MIRO</div>
   <div class="tb-pill" onclick="window.open('/mirofish-terminal.html','_blank','width=1440,height=900,menubar=no,toolbar=no')" style="cursor:pointer;border-color:rgba(0,212,220,.3);color:rgba(0,212,220,.6);" title="Open MiroFish terminal">⧉</div>
+  <div class="tb-pill" id="tbal" onclick="openAlerts()" title="Armed price alerts">🔔 <span id="alcount"></span></div>
   <div class="tb-clk" id="clk">--:--:--</div>
   <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
 </div>
@@ -472,7 +499,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <div id="ltabs">
       <div class="ltab on"  onclick="switchTab('sig',this)">📡 SIGNALS</div>
       <div class="ltab"     onclick="switchTab('mkt',this)">📈 MARKETS</div>
-      <div class="ltab"     onclick="switchTab('al',this)">🔔 ALERTS</div>
       <div class="ltab"     onclick="switchTab('swarm',this)">🌊 SWARM</div>
     </div>
 
@@ -485,6 +511,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
           <button class="fb" data-s="trending">TREND</button>
           <button class="fb" data-s="new_pools">POOLS</button>
           <button class="fb" data-s="boosted">BOOST</button>
+          <input class="fq" id="fq" placeholder="SEARCH SYMBOL / MINT…" oninput="onFil('q',this.value)">
           <div style="flex:1"></div>
           <span class="fcnt" id="fcnt"></span>
           <button class="fb" id="ftog" onclick="togFilters()">⚙ FILTER</button>
@@ -507,23 +534,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <div class="mload">FETCHING LIVE MARKET DATA…</div>
     </div>
 
-    <!-- alerts -->
-    <div class="ltp" id="tab-al">
-      <div class="nbr">
-        <span style="flex:1">Desktop alerts for price targets</span>
-        <button id="nbtn" onclick="reqNotif()">ENABLE</button>
-      </div>
-      <div class="alf">
-        <div class="fl" style="margin-bottom:2px">NEW ALERT</div>
-        <input class="ali" id="alm" placeholder="Mint address or symbol (e.g. BONK)">
-        <div class="alrow">
-          <select class="als" id="alt" style="flex:1"><option value="mult">When mult reaches (×)</option><option value="fdv">When FDV reaches ($)</option></select>
-          <input class="ali" id="alv" type="number" placeholder="5" style="width:72px">
-        </div>
-        <button class="fb on" onclick="addAl()" style="padding:4px 14px;align-self:flex-start">+ ARM ALERT</button>
-      </div>
-      <div id="allist"><div class="empty">NO ALERTS ARMED<br><span style="font-size:8px;color:rgba(232,160,32,.12)">configure above</span></div></div>
-    </div>
+    <!-- alerts moved to modal (topbar 🔔 pill) -->
 
     <!-- swarm tab -->
     <div class="ltp" id="tab-swarm" style="position:relative;overflow:hidden;background:#010b10;">
@@ -671,6 +682,38 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 <div id="toast"></div>
 
+<!-- ALERTS MODAL -->
+<div class="almo" id="almdl" onclick="if(event.target===this)closeAlerts()">
+  <div class="almo-bx">
+    <div class="almo-h"><span class="almo-hd">🔔 ALERTS</span><button class="almo-x" onclick="closeAlerts()">✕</button></div>
+    <div class="almo-bd">
+      <div class="nbr"><span style="flex:1">Desktop alerts for price targets</span><button id="nbtn" onclick="reqNotif()">ENABLE</button></div>
+      <div class="alf">
+        <div class="fl" style="margin-bottom:2px">NEW ALERT</div>
+        <input class="ali" id="alm" placeholder="Mint address or symbol (e.g. BONK)">
+        <div class="alrow">
+          <select class="als" id="alt" style="flex:1"><option value="mult">When mult reaches (×)</option><option value="fdv">When FDV reaches ($)</option></select>
+          <input class="ali" id="alv" type="number" placeholder="5" style="width:72px">
+        </div>
+        <button class="fb on" onclick="addAl()" style="padding:4px 14px;align-self:flex-start">+ ARM ALERT</button>
+      </div>
+      <div id="allist"><div class="empty">NO ALERTS ARMED</div></div>
+      <div style="display:flex;gap:6px;margin-top:2px">
+        <button class="sa" style="flex:1" onclick="clearFired()">CLEAR FIRED</button>
+        <button class="sa g" style="flex:1" onclick="armAllUp()">ARM ALL 2×+ → NEXT LEG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SENTIMENT MODAL -->
+<div class="almo" id="sentdl" onclick="if(event.target===this)closeSent()">
+  <div class="almo-bx">
+    <div class="almo-h"><span class="almo-hd" id="sent-title">🧠 SENTIMENT</span><button class="almo-x" onclick="closeSent()">✕</button></div>
+    <div class="almo-bd"><div id="sent-body" style="padding:2px"></div></div>
+  </div>
+</div>
+
 <script>
 'use strict';
 const DEV = location.hostname==='localhost'||location.hostname==='127.0.0.1';
@@ -680,9 +723,7 @@ const MIRO = 'http://localhost:5001';
 /* AUTH */
 const PRO_PIN='4444';
 function ok(){
-  const si = localStorage.getItem('shd_signed_in')==='1';
-  const pl = (localStorage.getItem('shd_plan')||'').toLowerCase();
-  return (si&&['pro','alpha','builder'].includes(pl))||localStorage.getItem('shd_prosig')==='1'||(DEV&&localStorage.getItem('shd_prodev')==='1');
+  return localStorage.getItem('shd_prosig')==='1';
 }
 function unlock(){
   const inp=document.getElementById('gatePin');
@@ -694,13 +735,9 @@ function unlock(){
   }else{
     const g=document.getElementById('gate');
     g.classList.remove('gate-shake'); void g.offsetWidth; g.classList.add('gate-shake');
-    document.getElementById('gateErr').textContent='ACCESS DENIED — TRY 0444';
+    document.getElementById('gateErr').textContent='ACCESS DENIED — TRY 4444';
     inp.value=''; inp.focus();
   }
-}
-function devBypass(){
-  if(!DEV){toast('LOCALHOST ONLY');return;}
-  localStorage.setItem('shd_prodev','1'); go();
 }
 function go(){
   document.getElementById('gate').style.display='none';
@@ -747,6 +784,7 @@ function init(){
   setInterval(fetchTrending,900000);setInterval(fetchDexHot,120000);
   setInterval(fetchJupiter,30000);setInterval(fetchSolNet,30000);
   setupSrc();renderAlerts();restoreFil();
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAlerts();closeSent();}});
   // Restore panel state
   if(localStorage.getItem('rc_hidden')==='1') document.getElementById('app').classList.add('rc-hidden');
 }
@@ -815,11 +853,12 @@ function onFil(k,v){
   else if(k==='age')   _F.age   =parseInt(v)||0;
   else if(k==='status')_F.status=v;
   else if(k==='sort')  _F.sort  =v;
+  else if(k==='q'){ _F.q=v.trim().toLowerCase(); if(!_F.q) delete _F.q; }
   localStorage.setItem('ot_fil',JSON.stringify(_F));
   updFcnt(); renderSigs();
 }
 function updFcnt(){
-  const n=[(_F.mult||0)>0,(_F.fdv||0)>0,(_F.age||0)>0,(_F.status&&_F.status!=='all'),(_F.sort&&_F.sort!=='newest')].filter(Boolean).length;
+  const n=[(_F.mult||0)>0,(_F.fdv||0)>0,(_F.age||0)>0,(_F.status&&_F.status!=='all'),(_F.sort&&_F.sort!=='newest'),!!(_F.q||'').length].filter(Boolean).length;
   const el=document.getElementById('fcnt');el.textContent=n+' FILTER'+(n>1?'S':'');el.classList.toggle('on',n>0);
 }
 function togFilters(){
@@ -832,6 +871,7 @@ function rstFilters(){
   document.getElementById('fmult').value=0;document.getElementById('fvM').textContent='0×';
   document.getElementById('fmult').style.setProperty('--pct','0%');
   ['ffdv','fage','fst','fsrt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='fst'?'all':id==='fsrt'?'newest':'0';});
+  const fq=document.getElementById('fq'); if(fq)fq.value='';
   updFcnt();renderSigs();
 }
 function restoreFil(){
@@ -840,6 +880,7 @@ function restoreFil(){
   if(_F.age)   document.getElementById('fage').value=_F.age;
   if(_F.status)document.getElementById('fst').value=_F.status;
   if(_F.sort)  document.getElementById('fsrt').value=_F.sort;
+  if(_F.q){const fq=document.getElementById('fq');if(fq)fq.value=_F.q;}
   updFcnt();
 }
 
@@ -851,6 +892,8 @@ function renderSigs(){
   let rows=_calls.slice();
   if(_src!=='all') rows=rows.filter(c=>c.source===_src);
   const mM=parseFloat(_F.mult)||0,mF=parseInt(_F.fdv)||0,mA=parseInt(_F.age)||0,st=_F.status||'all';
+  const q=(_F.q||'').toLowerCase();
+  if(q) rows=rows.filter(c=>((c.symbol||c.name||'')+' '+(c.mint||'')).toLowerCase().includes(q));
   if(mM>0)  rows=rows.filter(c=>(c.peakMult||0)>=mM);
   if(mF>0)  rows=rows.filter(c=>(c.entryFdv||0)<=mF);
   if(mA>0)  rows=rows.filter(c=>(Date.now()-(c.ts||0))<=mA);
@@ -871,22 +914,24 @@ function renderSigs(){
 }
 
 function card(c,i){
-  const m=c.peakMult||1,cur=c.curMult||1;
-  const cls=m>=5?'moon':m>=2?'win':'';
-  const mcs=m>=5?'moon':m>=2?'up':'flat';
-  const ms=m>=2?m.toFixed(1)+'×':cur<.7?'↓'+Math.round(cur*100)+'%':'—';
-  const bw=Math.min(100,Math.round(Math.log10(Math.max(1,m))*100));
+  const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+  const cls=peak>=5?'moon':peak>=2?'win':'';
+  const mcs=peak>=2?'up':'flat';
+  const ms=peak>=2?peak.toFixed(1)+'×':cur<0.7?'↓'+Math.round(cur*100)+'%':(cur>=1?cur.toFixed(1)+'×':'↓'+Math.round((1-cur)*100)+'%');
+  const bw=Math.min(100,Math.round(Math.log10(Math.max(1,peak))*100));
   const src=c.source||'unknown';
   const col=SC[src]||'#888';
   const img=c.mint&&_img[c.mint];
-  const L=(c.symbol||c.name||'?').charAt(0).toUpperCase();
+  const L=(c.symbol||'?').charAt(0).toUpperCase();
   const ih=img
     ?`<img class="simg" src="${img}" onerror="this.outerHTML='<div class=sav style=border-color:${col}44;color:${col};background:${col}0e>${L}</div>'">`
     :`<div class="sav" style="border-color:${col}44;color:${col};background:${col}0e">${L}</div>`;
+  const nowFdv=(c.entryFdv||0)*cur;
+  const nowC=cur>=1?'var(--S)':'var(--A)';
   return `<div class="sc ${cls}" style="animation-delay:${Math.min(i*.025,1.2)}s">
     <div class="stop">
       ${ih}
-      <span class="ssym" style="color:${col};text-shadow:0 0 10px ${col}55">${esc(c.symbol||c.name||'???')}</span>
+      <span class="ssym" style="color:${col};text-shadow:0 0 10px ${col}55">${esc(c.symbol||'???')}</span>
       <span class="sp sp-${src}">${src.replace('_',' ')}</span>
       <span class="ssp"></span>
       <span class="smlt ${mcs}">${ms}</span>
@@ -894,30 +939,32 @@ function card(c,i){
     <div class="sbar"><div class="sbar-f" style="width:${bw}%"></div></div>
     <div class="smeta">
       <span>entry <b>${usd(c.entryFdv)}</b></span>
-      ${c.curFdv?`<span>now <b>${usd(c.curFdv)}</b></span>`:''}
-      <span><b>${ago(c.ts)}</b> ago</span>
-      ${c.holders?`<span>h <b>${c.holders.toLocaleString()}</b></span>`:''}
-      ${c.liq?`<span>liq <b>${usd(c.liq)}</b></span>`:''}
+      <span>now <b style="color:${nowC}">${usd(nowFdv)}</b></span>
+      <span>peak <b style="color:#f4c842">${peak.toFixed(1)}×</b></span>
+      <span>${ago(c.ts)} ago</span>
+      <span>${c.chain||'solana'}</span>
+      <span>price <b>${fmtPrice(c.entryPrice)}</b></span>
     </div>
-    ${c.milestones&&c.milestones.length?`<div class="sms">▸ ${c.milestones.join('× ▸ ')}× CONFIRMED</div>`:''}
     <div class="sacts">
       <button class="sa" onclick="window.open('https://dexscreener.com/solana/${c.mint||''}','_blank')">DEXSCREENER</button>
       <button class="sa" onclick="cca('${c.mint||''}')">COPY CA</button>
-      <button class="sa g" onclick="armCard('${c.mint||''}','${esc(c.symbol||c.name||'')}')">+ ALERT</button>
+      <button class="sa" onclick="openSent('${c.mint||''}')">🧠 READ</button>
+      <button class="sa g" onclick="armCard('${c.mint||''}','${encodeURIComponent(c.symbol||'')}')">+ ALERT</button>
     </div>
   </div>`;
 }
 function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
-function armCard(m,s){document.getElementById('alm').value=m||s;switchTab('al',document.querySelectorAll('.ltab')[2]);toast('ARMING: '+s);}
+function armCard(m,s){document.getElementById('alm').value=decodeURIComponent(s)||m;openAlerts();}
+function armSymbol(s){document.getElementById('alm').value=s;openAlerts();toast('ARMING: '+s);}
 
 /* DEMO */
 function demoData(){
   _calls=[
-    {symbol:'BONK',name:'Bonk',source:'bonded',entryFdv:3200,curFdv:22400,peakMult:7,curMult:7,ts:Date.now()-3600000,holders:850,liq:14000,milestones:[2,5],mint:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'},
-    {symbol:'WIF',name:'dogwifhat',source:'trending',entryFdv:42000,curFdv:126000,peakMult:3,curMult:3,ts:Date.now()-7200000,holders:1420,liq:42000,milestones:[2],mint:'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm'},
-    {symbol:'NOVA',name:'Nova Signal',source:'new_pools',entryFdv:7800,curFdv:7800,peakMult:1.1,curMult:1.1,ts:Date.now()-900000,holders:72,liq:5800,milestones:[],mint:''},
-    {symbol:'DOGE',name:'Dogecoin',source:'boosted',entryFdv:8500,curFdv:52000,peakMult:6.1,curMult:6.1,ts:Date.now()-10800000,holders:2100,liq:88000,milestones:[2,5],mint:''},
-    {symbol:'PEPE',name:'Pepe',source:'trending_pools',entryFdv:2900,curFdv:12000,peakMult:4.1,curMult:4.1,ts:Date.now()-5400000,holders:380,liq:9200,milestones:[2],mint:''},
+    {symbol:'BONK',name:'Bonk',source:'bonded',entryFdv:3200,currentMult:7,peakMult:7,entryPrice:0.00003992,ts:Date.now()-3600000,holders:850,liq:14000,milestones:[2,5],mint:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'},
+    {symbol:'WIF',name:'dogwifhat',source:'trending',entryFdv:42000,currentMult:3,peakMult:3,entryPrice:0.00042,ts:Date.now()-7200000,holders:1420,liq:42000,milestones:[2],mint:'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm'},
+    {symbol:'NOVA',name:'Nova Signal',source:'new_pools',entryFdv:7800,currentMult:1.1,peakMult:1.1,entryPrice:0.0000078,ts:Date.now()-900000,holders:72,liq:5800,milestones:[],mint:''},
+    {symbol:'DOGE',name:'Dogecoin',source:'boosted',entryFdv:8500,currentMult:6.1,peakMult:6.1,entryPrice:0.000085,ts:Date.now()-10800000,holders:2100,liq:88000,milestones:[2,5],mint:''},
+    {symbol:'PEPE',name:'Pepe',source:'trending_pools',entryFdv:2900,currentMult:4.1,peakMult:4.1,entryPrice:0.0000029,ts:Date.now()-5400000,holders:380,liq:9200,milestones:[2],mint:''},
   ];
   renderSigs();toast('Loading live signals…');
 }
@@ -1120,7 +1167,11 @@ function addAl(){
 function delAl(id){_alerts=_alerts.filter(a=>a.id!==id);localStorage.setItem('ot_al',JSON.stringify(_alerts));renderAlerts();}
 function renderAlerts(){
   const el=document.getElementById('allist');
-  if(!_alerts.length){el.innerHTML='<div class="empty">NO ALERTS ARMED</div>';return;}
+  const ac=document.getElementById('alcount'),tl=document.getElementById('tbal');
+  const n=_alerts.length;
+  if(ac) ac.textContent=n?('('+n+')'):'';
+  if(tl) tl.classList.toggle('fired',_alerts.some(a=>a.fired));
+  if(!n){el.innerHTML='<div class="empty">NO ALERTS ARMED<br><span style="font-size:8px;color:var(--label)">hit + ALERT on any signal</span></div>';return;}
   el.innerHTML=_alerts.map(a=>`<div class="ait">
     <div class="adot ${a.fired?'f':''}"></div>
     <div class="amet">
@@ -1130,6 +1181,75 @@ function renderAlerts(){
     <button class="adel" onclick="delAl(${a.id})">✕</button>
   </div>`).join('');
 }
+function clearFired(){
+  const b=_alerts.length;
+  _alerts=_alerts.filter(a=>!a.fired);
+  if(_alerts.length!==b){localStorage.setItem('ot_al',JSON.stringify(_alerts));renderAlerts();toast('FIRED ALERTS CLEARED');}
+  else toast('NO FIRED ALERTS');
+}
+function armAllUp(){
+  const best=_calls.filter(c=>(c.peakMult||0)>=2).slice(0,20);
+  if(!best.length){toast('NO 2×+ CALLS RIGHT NOW');return;}
+  const before=_alerts.length;
+  best.forEach(c=>{
+    if(_alerts.some(a=>a.mint===c.mint||a.mint===c.symbol)) return;
+    const v=Math.round((c.peakMult||1)*1.5*10)/10;
+    _alerts.push({id:Date.now()+Math.floor(Math.random()*1000),mint:c.symbol||c.mint,type:'mult',val:v,fired:false,ts:Date.now()});
+  });
+  localStorage.setItem('ot_al',JSON.stringify(_alerts));
+  renderAlerts();
+  toast('ARMED '+( _alerts.length-before)+' COINS @ +50% OF PEAK');
+}
+function openAlerts(){renderAlerts();document.getElementById('almdl').classList.add('on');const gi=document.getElementById('alm');if(gi)setTimeout(function(){gi.focus();},50);}
+function closeAlerts(){document.getElementById('almdl').classList.remove('on');}
+function openSent(mint){
+  const c=_calls.find(x=>x.mint===mint);
+  if(!c) return;
+  const sym=(c.symbol||'?').toUpperCase();
+  const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1),fdv=c.entryFdv||0;
+  const ageH=(Date.now()-(c.ts||0))/3600000;
+  let mood='WATCH',moodC='var(--C)';
+  const lines=[];
+  if(peak>=10){lines.push('🔥 Hit <b>'+peak.toFixed(1)+'×</b> from entry — elite pump. Most of the move is made; chase risk is high.');mood='CAUTION';moodC='var(--P2)';}
+  else if(peak>=5){lines.push('🏆 Confirmed <b>'+peak.toFixed(1)+'×</b> mover — early callers deep in profit. Momentum real but entry late.');mood='BULLISH';moodC='var(--S)';}
+  else if(peak>=2){lines.push('⚡ Proven runner at <b>'+peak.toFixed(1)+'×</b> peak — still in play.');mood='BULLISH';moodC='var(--S)';}
+  else lines.push('🐣 Fresh call — still near entry (<b>'+peak.toFixed(1)+'×</b>). High upside, high risk.');
+  if(cur>=1) lines.push('🟢 Holding <b>above entry</b> at '+cur.toFixed(2)+'× — buyers in control.');
+  else if(cur>=0.5) lines.push('🟡 Pulled back to <b>'+Math.round(cur*100)+'%</b> of entry — cooling off, not dead.');
+  else lines.push('🔴 <b>'+Math.round(cur*100)+'%</b> of entry ('+Math.round((1-cur)*100)+'% off peak) — speculative recovery.');
+  const tier=fdv<25000?'micro-cap':fdv<100000?'small-cap':fdv<1000000?'mid-cap':'large-cap';
+  lines.push('💼 Entry FDV <b>'+usd(fdv)+'</b> · '+tier+'. Lower FDV = more room, more risk.');
+  lines.push('⏱ Called <b>'+ago(c.ts)+'</b> ago'+(ageH<1?' — very fresh, decay is fast.':' — signal has aged.'));
+  lines.push('📡 Source: <b>'+srcLabel(c.source)+'</b>.');
+  if(mood==='BULLISH'&&cur<0.5) {mood='DIVERGENT';moodC='var(--P2)';}
+  document.getElementById('sent-title').textContent='🧠 '+sym+' — '+mood;
+  document.getElementById('sent-body').innerHTML=
+    '<div class="sent-mood" style="color:'+moodC+'">'+mood+'</div>'+
+    lines.map(l=>'<div class="sent-line">'+l+'</div>').join('')+
+    '<div style="display:flex;gap:6px;margin-top:10px">'+
+      '<button class="sa g" onclick="askOracle(\''+encodeURIComponent(sym)+'\',this)" style="flex:1">ASK ORACLE BRAIN</button>'+
+      '<button class="sa" onclick="window.open(\'https://dexscreener.com/solana/'+(c.mint||'')+'\',\'_blank\')">DEX</button>'+
+    '</div>'+
+    '<div id="sent-ai"></div>';
+  document.getElementById('sentdl').classList.add('on');
+}
+function srcLabel(s){const m={bonded:'ZEROX bonded engine',trending:'ORACLE trend radar',new_pools:'NEXUS pool watch',boosted:'ZEROX boosted',trending_pools:'ORACLE pool radar'};return m[s]||s||'unknown';}
+function closeSent(){document.getElementById('sentdl').classList.remove('on');}
+async function askOracle(sym,btn){
+  const box=document.getElementById('sent-ai');
+  sym=decodeURIComponent(sym);
+  if(btn){btn.disabled=true;btn.textContent='ANALYZING…';}
+  if(box) box.innerHTML='<div style="color:var(--muted);font-size:9px">consulting ORACLE brain…</div>';
+  try{
+    const r=await fetch(BASE+'/api/ask?agent=ORACLE&q='+encodeURIComponent(sym+' — Solana memecoin trade signal. Read the coin: what is it, and give a quick sentiment / risk take.'),{signal:AbortSignal.timeout(20000)});
+    const j=await r.json();
+    const ans=(j.answer||'').trim();
+    if(box) box.innerHTML='<div class="sent-ai-h">🧠 ORACLE BRAIN</div>'+(ans?esc(ans).slice(0,700):'<div style="color:var(--muted)">no grounded knowledge on this ticker</div>');
+  }catch(e){
+    if(box) box.innerHTML='<div style="color:var(--A)">oracle unreachable — check server</div>';
+  }
+  if(btn){btn.disabled=false;btn.textContent='ASK ORACLE BRAIN';}
+}
 function tickAlerts(){
   if(!_alerts.length||!_calls.length) return;
   let ch=false;
@@ -1137,7 +1257,8 @@ function tickAlerts(){
     if(a.fired) return;
     const c=_calls.find(x=>x.mint===a.mint||x.symbol===a.mint||x.name===a.mint);
     if(!c) return;
-    const hit=(a.type==='mult'&&(c.peakMult||0)>=a.val)||(a.type==='fdv'&&(c.curFdv||0)>=a.val);
+    const curFdv=(c.entryFdv||0)*(typeof c.currentMult==='number'?c.currentMult:(c.curMult||1));
+    const hit=(a.type==='mult'&&(c.peakMult||0)>=a.val)||(a.type==='fdv'&&((c.curFdv||0)||curFdv)>=a.val);
     if(hit){a.fired=true;ch=true;const msg=`SHADDAI: ${a.mint.slice(0,8)} hit ${a.type==='mult'?a.val+'×':usd(a.val)}`;toast('🚨 '+msg);if(_notif)new Notification('SHADDAI ALERT',{body:msg});}
   });
   if(ch){localStorage.setItem('ot_al',JSON.stringify(_alerts));renderAlerts();}
@@ -1146,6 +1267,7 @@ function tickAlerts(){
 /* UTILS */
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function usd(n){const v=Number(n)||0;if(v>=1e9)return'$'+(v/1e9).toFixed(2)+'B';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+v.toFixed(0);}
+function fmtPrice(n){const v=Number(n)||0;if(!v)return'—';if(v>=1)return'$'+v.toLocaleString(undefined,{maximumFractionDigits:2});if(v>=0.001)return'$'+v.toFixed(4);if(v>=1e-7)return'$'+v.toFixed(8);return'$'+v.toPrecision(2);}
 function ago(ts){const s=Math.max(0,(Date.now()-(ts||0))/1000);if(s<60)return Math.round(s)+'s';if(s<3600)return Math.round(s/60)+'m';if(s<86400)return Math.round(s/3600)+'h';return Math.round(s/86400)+'d';}
 function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2600);}
 
@@ -1290,7 +1412,7 @@ async function fetchJupiter(){
       const icon=SOL_ICONS[sym]||'🪙';
       const fmt=price>1000?'$'+price.toLocaleString(undefined,{maximumFractionDigits:0}):price>1?'$'+price.toFixed(4):'$'+price.toFixed(8);
       const chgStr=chg?`<div class="di-chg ${chg>=0?'up':'dn'}">${chg>=0?'+':''}${chg.toFixed(1)}%</div>`:'';
-      return `<div class="di" onclick="document.getElementById('alm').value='${esc(sym)}';switchTab('al',document.querySelectorAll('.ltab')[2])" title="Click to arm alert for ${esc(sym)}">
+      return `<div class="di" onclick="armSymbol('${esc(sym)}')" title="Click to arm alert for ${esc(sym)}">
         <div class="di-icon">${icon}</div>
         <div class="di-main"><div class="di-name">${esc(sym)}</div><div class="di-sub">Solana · DexScreener</div></div>
         <div class="di-val"><div class="di-prc" style="color:var(--P)">${fmt}</div>${chgStr}</div>
