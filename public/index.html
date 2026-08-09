@@ -5761,14 +5761,14 @@ window.enter3DWorld=function(){
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         PRO SIGNALS — ORACLE TERMINAL · PIN 0444 · gated
+         PRO SIGNALS — ORACLE TERMINAL · PIN 4444 · gated
     ═══════════════════════════════════════════════════════════════════ -->
     <div class="card" style="background:linear-gradient(135deg,rgba(232,160,32,0.07),rgba(0,200,255,0.05));border:1px solid rgba(232,160,32,0.35);margin-top:14px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(232,160,32,0.2);flex-wrap:wrap">
         <span style="font-size:16px">📡</span>
         <div>
           <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">PRO SIGNALS · ORACLE TERMINAL</div>
-          <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">LIVE CALLS · P&amp;L · POLYMARKET · 4 THEMES — ACCESS CODE <span style="color:#e8c45c;font-weight:800">0444</span></div>
+          <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">LIVE CALLS · P&amp;L · POLYMARKET · 4 THEMES — ACCESS CODE <span style="color:#e8c45c;font-weight:800">4444</span></div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
           <span id="sigLiveTag" style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em">○ STANDBY</span>
@@ -5830,7 +5830,7 @@ window.enter3DWorld=function(){
     (function(){
       function powerOnSignals(){
         var pin=document.getElementById('sigPin').value;
-        if(pin!=='0444'){document.getElementById('sigErr').textContent='INCORRECT CODE';document.getElementById('sigPin').value='';return;}
+        if(pin!=='4444'){document.getElementById('sigErr').textContent='INCORRECT CODE';document.getElementById('sigPin').value='';return;}
         document.getElementById('sigGate').style.display='none';
         document.getElementById('sigFrame').style.display='block';
         document.getElementById('sigIframe').src='/pro-signals.html';
