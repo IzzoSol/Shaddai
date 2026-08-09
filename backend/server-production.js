@@ -671,8 +671,9 @@ app.get('/api/mcp/status', (req, res) => {
         }
       } catch (_) {}
       totalChars += chars;
+      const chunks = docs.reduce((s, d) => s + (d.chunks || 0), 0);
       kbs.push({
-        agent: id, kb: ns, docs: docs.length, chars,
+        agent: id, kb: ns, docs: docs.length, chunks, chars,
         sources: docs.slice(0, 8).map(d => d.name),
       });
     }
@@ -699,7 +700,7 @@ app.get('/api/mcp/status', (req, res) => {
     status: bridge ? 'ready' : 'missing-bridge',
     bridge: { file: bridgePath, exists: bridge, version: bridgeVersion },
     agents: kbs,
-    totals: { kbChars: totalChars, kbMB: +(totalChars / 1048576).toFixed(2) },
+    totals: { kbChars: totalChars, kbMB: +(totalChars / 1048576).toFixed(2), kbChunks: kbs.reduce((s,a)=>s+(a.chunks||0),0), kbDocs: kbs.reduce((s,a)=>s+(a.docs||0),0) },
     mcpServers,
     mcpClientLoaded: mcpServers !== null,
     timestamp: new Date().toISOString(),

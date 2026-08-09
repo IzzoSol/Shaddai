@@ -5771,14 +5771,85 @@ window.enter3DWorld=function(){
           <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">LIVE CALLS · P&amp;L · POLYMARKET · 4 THEMES — ACCESS CODE <span style="color:#e8c45c;font-weight:800">0444</span></div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-          <span style="font-size:8px;color:#00e5a0;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em">● LIVE</span>
+          <span id="sigLiveTag" style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em">○ STANDBY</span>
           <a class="btn btn-ghost" style="font-size:9px;padding:5px 12px" href="/pro-signals.html" target="_blank">⛶ Full Terminal</a>
         </div>
       </div>
-      <div style="height:560px;position:relative;background:#05070a">
-        <iframe src="/pro-signals.html" style="width:100%;height:100%;border:0;display:block" loading="lazy" title="Pro Signals Oracle Terminal" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+      <!-- Power gate — iframe only loads after user clicks POWER ON -->
+      <div id="sigGate" style="height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#080503,#030201);border-top:1px solid rgba(232,160,32,0.1)">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.3em;color:rgba(232,160,32,0.5);text-transform:uppercase">ORACLE TERMINAL · STANDBY</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <input id="sigPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"
+            style="width:120px;padding:12px 16px;background:rgba(0,0,0,0.6);border:1.5px solid rgba(232,160,32,0.3);color:#e8c45c;font-family:'Share Tech Mono',monospace;font-size:22px;text-align:center;letter-spacing:10px;outline:none;border-radius:6px"
+            oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===4)powerOnSignals()"
+            onkeydown="if(event.key==='Enter')powerOnSignals()"
+            onfocus="this.style.borderColor='rgba(232,160,32,0.7)'" onblur="this.style.borderColor='rgba(232,160,32,0.3)'">
+          <button onclick="powerOnSignals()" style="padding:11px 32px;background:rgba(232,160,32,0.1);border:1.5px solid rgba(232,160,32,0.5);color:#e8c45c;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.25em;cursor:pointer;border-radius:6px;transition:all .2s" onmouseover="this.style.background='rgba(232,160,32,0.2)'" onmouseout="this.style.background='rgba(232,160,32,0.1)'">⚡ POWER ON</button>
+          <div id="sigErr" style="font-size:9px;color:#ff6b6b;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;min-height:14px"></div>
+        </div>
+      </div>
+      <div id="sigFrame" style="height:560px;position:relative;background:#05070a;display:none">
+        <iframe id="sigIframe" src="about:blank" style="width:100%;height:100%;border:0;display:block" title="Pro Signals Oracle Terminal" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MIROFISH — SWARM INTELLIGENCE TERMINAL · PIN 4444 · gated
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="card" style="background:linear-gradient(135deg,rgba(0,212,220,0.06),rgba(112,64,255,0.04));border:1px solid rgba(0,212,220,0.3);margin-top:14px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(0,212,220,0.18);flex-wrap:wrap">
+        <span style="font-size:16px">🐟</span>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">MIROFISH · SWARM INTELLIGENCE</div>
+          <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">MULTI-AGENT SWARM PREDICTION · CONFIGURE &amp; RUN — ACCESS CODE <span style="color:#00d4dc;font-weight:800">4444</span></div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <span id="miroLiveTag" style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em">○ STANDBY</span>
+          <a class="btn btn-ghost" style="font-size:9px;padding:5px 12px;border-color:rgba(0,212,220,0.3);color:#00d4dc" href="/mirofish-terminal.html" target="_blank">⛶ Full Terminal</a>
+        </div>
+      </div>
+      <!-- Power gate -->
+      <div id="miroGate" style="height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#010d12,#010b10);border-top:1px solid rgba(0,212,220,0.08)">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.3em;color:rgba(0,212,220,0.45);text-transform:uppercase">SWARM INTELLIGENCE · STANDBY</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <input id="miroPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"
+            style="width:120px;padding:12px 16px;background:rgba(0,0,0,0.6);border:1.5px solid rgba(0,212,220,0.3);color:#00d4dc;font-family:'Share Tech Mono',monospace;font-size:22px;text-align:center;letter-spacing:10px;outline:none;border-radius:6px"
+            oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===4)powerOnMiro()"
+            onkeydown="if(event.key==='Enter')powerOnMiro()"
+            onfocus="this.style.borderColor='rgba(0,212,220,0.7)'" onblur="this.style.borderColor='rgba(0,212,220,0.3)'">
+          <button onclick="powerOnMiro()" style="padding:11px 32px;background:rgba(0,212,220,0.08);border:1.5px solid rgba(0,212,220,0.4);color:#00d4dc;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.25em;cursor:pointer;border-radius:6px;transition:all .2s" onmouseover="this.style.background='rgba(0,212,220,0.18)'" onmouseout="this.style.background='rgba(0,212,220,0.08)'">⚡ POWER ON</button>
+          <div id="miroErr" style="font-size:9px;color:#ff6b6b;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;min-height:14px"></div>
+        </div>
+      </div>
+      <div id="miroFrame" style="height:600px;position:relative;background:#010b10;display:none">
+        <iframe id="miroIframe" src="about:blank" style="width:100%;height:100%;border:0;display:block" title="MiroFish Swarm Intelligence" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      function powerOnSignals(){
+        var pin=document.getElementById('sigPin').value;
+        if(pin!=='0444'){document.getElementById('sigErr').textContent='INCORRECT CODE';document.getElementById('sigPin').value='';return;}
+        document.getElementById('sigGate').style.display='none';
+        document.getElementById('sigFrame').style.display='block';
+        document.getElementById('sigIframe').src='/pro-signals.html';
+        document.getElementById('sigLiveTag').textContent='● LIVE';
+        document.getElementById('sigLiveTag').style.color='#00e5a0';
+      }
+      function powerOnMiro(){
+        var pin=document.getElementById('miroPin').value;
+        if(pin!=='4444'){document.getElementById('miroErr').textContent='INCORRECT CODE';document.getElementById('miroPin').value='';return;}
+        document.getElementById('miroGate').style.display='none';
+        document.getElementById('miroFrame').style.display='block';
+        document.getElementById('miroIframe').src='/mirofish-terminal.html';
+        document.getElementById('miroLiveTag').textContent='● LIVE';
+        document.getElementById('miroLiveTag').style.color='#00d4dc';
+      }
+      window.powerOnSignals=powerOnSignals;
+      window.powerOnMiro=powerOnMiro;
+    })();
+    </script>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          MARKETS — Native multi-agent analysis + free chart + free price feeds
