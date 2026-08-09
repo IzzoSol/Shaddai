@@ -1462,7 +1462,10 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   },{passive:true});
   window.addEventListener('touchmove',function(e){ if(e.touches[0]){ mx=e.touches[0].clientX; my=e.touches[0].clientY; } },{passive:true});
 
-  size(); window.addEventListener('resize', size, {passive:true});
+  window.addEventListener('resize', size, {passive:true});
+  /* defer buildStars (O(n²) bond pass) past the first paint so the page doesn't freeze */
+  if(document.readyState==='complete'){ setTimeout(size,0); }
+  else { window.addEventListener('load',function(){ setTimeout(size,0); },{once:true}); }
 
   /* IntersectionObserver: only run the hero canvas while it's on screen */
   var io=new IntersectionObserver(function(es){ es.forEach(function(e){

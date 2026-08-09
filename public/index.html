@@ -4365,7 +4365,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
-  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Model Forge & Bazaar — generate, buy, sell GLB models">⬡ Bazaar</button>
+  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
   <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="window.open('/pro-signals.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="Pro Signal Terminal — live calls, P&L, Polymarket">📡 Signals</button>
   <button class="nav-btn" onclick="window.open('/mirofish-terminal.html','_blank')" style="color:#b07fff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="MiroFish Swarm Prediction Terminal">🐟 MiroFish</button>
@@ -7944,7 +7944,7 @@ window.enter3DWorld=function(){
                   `<div class="of-ac-stat"><b>SPD</b><div class="of-ac-bar"><i style="width:${st.speed}%"></i></div></div>`+
                 `</div>`+
                 `<div class="of-ac-meta"><span>${sanitizeText(op.archetype||'operative')}</span><span class="tools">⚙ ${tools} tools</span></div>`+
-                `<div class="of-ac-tray"><button class="run">▶ RUN</button><button class="dep-office">🏢 OFFICE</button><button class="dep-market">🛒 MARKET</button><button class="dep-room">🚪 ROOM</button><button class="rm-op" style="background:rgba(255,60,60,.15);color:#ff6b6b;border:1px solid rgba(255,60,60,.35);margin-left:auto">✕ REMOVE</button></div>`+
+                `<div class="of-ac-tray"><button class="run">▶ RUN</button><button class="dep-office">🏢 OFFICE</button><button class="dep-market">🛒 MARKET</button><button class="dep-room">🚪 ROOM</button><button class="wt-btn" style="background:rgba(0,229,160,.12);color:#00e5a0;border:1px solid rgba(0,229,160,.35)">🔧 TOOLS</button><button class="rm-op" style="background:rgba(255,60,60,.15);color:#ff6b6b;border:1px solid rgba(255,60,60,.35);margin-left:auto">✕ REMOVE</button></div>`+
               `</div>`;
           }
           /* click card → load into editor */
@@ -7980,6 +7980,14 @@ window.enter3DWorld=function(){
           const mb=card.querySelector('.dep-market');if(mb)mb.onclick=e=>{e.stopPropagation();deployOperative(op,'marketplace',mb);};
           const rb=card.querySelector('.dep-room');if(rb)rb.onclick=e=>{e.stopPropagation();deployOperative(op,'room',rb);};
           const rmb=card.querySelector('.rm-op');if(rmb)rmb.onclick=async e=>{e.stopPropagation();if(!confirm('Remove "'+codename+'" permanently?'))return;rmb.textContent='…';rmb.disabled=true;try{await j('/api/operatives/'+op.id+'?user='+(op.owner||'demo'),{method:'DELETE'});$('ofConsole').textContent='✕ Removed "'+codename+'".';}catch(err){$('ofConsole').textContent='⚠ remove failed: '+err.message;}loadGallery();};
+          const wtb=card.querySelector('.wt-btn');if(wtb)wtb.onclick=e=>{
+            e.stopPropagation();
+            $('ofName').value=codename;
+            restoreSkills(codename);
+            $('ofConsole').textContent=`🔧 "${codename}" tools loaded — add/remove skills below, then hit ⬡ FORGE to save.`;
+            $('operatorForge').scrollIntoView({behavior:'smooth',block:'nearest'});
+            setTimeout(()=>{const s=$('ofSkills').querySelector('input');if(s){s.focus();s.scrollIntoView({behavior:'smooth',block:'nearest'});}},400);
+          };
           gallery.appendChild(card);
         });
       }
