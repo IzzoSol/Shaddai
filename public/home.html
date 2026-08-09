@@ -1767,7 +1767,26 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     {q:'How do I find product-market fit?',a:'ORACLE',c:16}
   ];
   function used(){ try{ return parseInt(localStorage.getItem(KEY)||'0',10)||0; }catch(e){ return 0; } }
-  function left(){ return Math.max(0, CAP-used()); }
+  // Referral-on-X: share SHADDAI on X → +3 grounded queries (granted on return).
+  var BKEY='shd_rag_bonus';
+  function bonus(){ try{ return parseInt(localStorage.getItem(BKEY)||'0',10)||0; }catch(e){ return 0; } }
+  var XKEY='shd_rag_shared';
+  function shared(){ try{ return localStorage.getItem(XKEY)==='1'; }catch(e){ return false; } }
+  function left(){ return Math.max(0, CAP+bonus()-used()); }
+  function shareOnX(){
+    var text='Just found @shaddai_ai — a sovereign AI agent empire: 7 specialist agents + a grounded RAG brain that cites its sources. Try the brain demo:';
+    var u='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(location.origin||'https://shaddai-g81x.onrender.com');
+    try{ window.open(u,'_blank','noopener,noreferrer'); }catch(e){ window.open(u,'_blank'); }
+    // Grant +3 the moment the share intent opens (trust model — no X API needed).
+    if(!shared()){
+      try{ localStorage.setItem(BKEY,String(bonus()+3)); localStorage.setItem(XKEY,'1'); }catch(e){}
+      syncLeft();
+      var m=document.getElementById('rbMeta'); if(m && left()>0){ m.style.display='block';
+        m.innerHTML='Shared! +3 grounded queries added — <b id="rbLeft">'+left()+'</b> left. Thanks for spreading the word.';
+      }
+    }
+  }
+  window.shareOnX=shareOnX;
   function asked(){ try{ return JSON.parse(localStorage.getItem(AKEY)||'[]'); }catch(e){ return []; } }
   function track(q,a){ var arr=asked(); arr.unshift({q:q,a:a,t:Date.now()}); if(arr.length>50) arr=arr.slice(0,50);
     try{ localStorage.setItem(AKEY,JSON.stringify(arr)); }catch(e){} }
