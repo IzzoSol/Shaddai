@@ -84,6 +84,17 @@ router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
     const metadata = core.forgeMetadata(build, tokenId, imageUrl, owner);
     metadata.codename = name || metadata.name;
 
+    // 3D / forge limit: non-Pro users cap at 3 forged operatives. Pro users unlimited.
+    // (Pro detection wired when auth context is plumbed into this route; for now enforce
+    // a hard cap of 3 unless ?pro=1 is passed by a Pro-authenticated caller.)
+    const isPro = !!(req.query && req.query.pro === '1') || !!(req.body && req.body.__pro);
+    const existing = (state.operatives || []).filter(o => o && o.owner === owner);
+    const FORGE_CAP_NON_PRO = 3;
+    if (!isPro && existing.length >= FORGE_CAP_NON_PRO) {
+      return res.status(402).json({ ok:false, error:'forge cap reached', limit:FORGE_CAP_NON_PRO,
+        message:'Non-Pro agents can forge up to '+FORGE_CAP_NON_PRO+' operatives. Upgrade to Pro for unlimited 3D forging.' });
+    }
+
     state.nextTokenId++;
     state.operatives.push({ tokenId, codename: metadata.codename, owner, rarity: metadata.rarity,
       archetype: build.archetype, buildHash: metadata.buildHash, build, image: imageUrl, at: Date.now() });
