@@ -64,29 +64,57 @@ function kb(agent) { return 'kb_' + String(agent || '').toLowerCase(); }
 
 // Fallback stats from the populated per-agent RAG store (backend/data/rag) so
 // /overview + /summary stay live on Render where the 95k-chunk corpus is absent.
+// Computes real WORDS / TERMS / SYSTEMS / top_terms from the per-agent
+// docs.json + idf.json so brain.html never shows zeros.
+let _ragStatsCache = null, _ragStatsAt = 0;
 function loadRagStats() {
+  if (_ragStatsCache && Date.now() - _ragStatsAt < 60000) return _ragStatsCache;
   const agents = {};
   let totalChunks = 0, totalVideos = 0, totalWords = 0;
+  const allTerms = new Set();
   for (const id of AGENT_ORDER) {
-    let docs = [], chunks = 0;
-    try {
-      docs = ragIndex.listUserDocs(kb(id));
-      chunks = docs.reduce((s, d) => s + (d.chunks || 0), 0);
-    } catch (_) {}
+    const dir = path.join(RAG_KB_DIR, kb(id));
+    let docs = [], idf = {};
+    try { docs = JSON.parse(fs.readFileSync(path.join(dir, 'docs.json'), 'utf8')); } catch (_) {}
+    try { idf = JSON.parse(fs.readFileSync(path.join(dir, 'idf.json'), 'utf8')); } catch (_) {}
+    let chunks = 0, words = 0;
+    for (const d of docs) {
+      const dc = d.chunks || [];
+      chunks += dc.length;
+      for (const c of dc) words += String(c.text || '').split(/\s+/).filter(Boolean).length;
+    }
+    const terms = Object.keys(idf);
+    terms.forEach(t => { if (t && t.length > 1) allTerms.add(t); });
+    const top_terms = terms
+      .filter(t => t && t.length > 1 && t.length <= 24)
+      .sort((a, b) => (idf[b] || 0) - (idf[a] || 0))
+      .slice(0, 25);
     agents[id] = {
       videos: docs.length,
       chunks,
-      words: 0,
+      words,
       topics: [],
-      systems: [],
+      systems: [id],
       channels: [],
-      top_terms: [],
+      top_terms,
       titles: docs.slice(0, 10).map(d => d.name || ''),
     };
     totalChunks += chunks;
     totalVideos += docs.length;
+    totalWords += words;
   }
-  return { agents, total_chunks: totalChunks, total_videos: totalVideos, total_words: totalWords, built: 'rag-store' };
+  const out = {
+    agents,
+    total_chunks: totalChunks,
+    total_videos: totalVideos,
+    total_words: totalWords,
+    total_terms: allTerms.size,
+    all_systems: AGENT_ORDER.slice(),
+    built: 'rag-store',
+  };
+  _ragStatsCache = out;
+  _ragStatsAt = Date.now();
+  return out;
 }
 
 // Search one agent's knowledge: prefer the full corpus adapter (brain-index),

@@ -999,30 +999,50 @@ app.get('/api/markets/crypto', async (req, res) => {
   } catch (e) { res.json({ ok: false, coins: [], error: String(e.message) }); }
 });
 
-// Global crypto market — CoinGecko
+// Global crypto market — CoinGecko (falls back to CoinPaprika when rate-limited)
 app.get('/api/markets/global', async (req, res) => {
   try {
     const d = await _mktFetch('https://api.coingecko.com/api/v3/global', 120000);
     res.json({ ok: true, data: d.data });
-  } catch (e) { res.json({ ok: false, data: null, error: String(e.message) }); }
+  } catch (e1) {
+    try {
+      const cp = await _mktFetch('https://api.coinpaprika.com/v1/global', 120000);
+      res.json({
+        ok: true,
+        data: {
+          total_market_cap: { usd: cp.market_cap_usd },
+          total_volume: { usd: cp.volume_24h_usd },
+          market_cap_percentage: { btc: cp.bitcoin_dominance_percentage || 0, eth: 0 },
+        },
+      });
+    } catch (e2) { res.json({ ok: false, data: null, error: String(e2.message) }); }
+  }
 });
 
 // Trending coins — CoinGecko
 app.get('/api/markets/trending', async (req, res) => {
   try {
     const d = await _mktFetch('https://api.coingecko.com/api/v3/search/trending', 120000);
-    res.json({ ok: true, coins: (d.coins || []).map(c => c.item) });
-  } catch (e) { res.json({ ok: false, coins: [], error: String(e.message) }); }
+    const coins = (d.coins || []).map(c => c.item);
+    res.json({ ok: true, data: { coins }, coins });
+  } catch (e) { res.json({ ok: false, data: { coins: [] }, coins: [], error: String(e.message) }); }
 });
 
 // Fear & Greed Index — Alternative.me (free, no key)
 app.get('/api/markets/fear-greed', async (req, res) => {
   try {
-    const d = await _mktFetch('https://api.alternative.me/fng/?limit=2&format=json', 300000);
+    const d = await _mktFetch('https://api.alternative.me/fng/?limit=8&format=json', 300000);
     const latest = d.data && d.data[0];
     const prev = d.data && d.data[1];
-    res.json({ ok: true, value: latest ? parseInt(latest.value) : null, label: latest ? latest.value_classification : null, prev: prev ? parseInt(prev.value) : null, ts: latest ? latest.timestamp : null });
-  } catch (e) { res.json({ ok: false, value: null, error: String(e.message) }); }
+    res.json({
+      ok: true,
+      value: latest ? parseInt(latest.value) : null,
+      label: latest ? latest.value_classification : null,
+      prev: prev ? parseInt(prev.value) : null,
+      ts: latest ? latest.timestamp : null,
+      data: (d.data || []).map(x => ({ value: parseInt(x.value), value_classification: x.value_classification, timestamp: x.timestamp })),
+    });
+  } catch (e) { res.json({ ok: false, value: null, data: [], error: String(e.message) }); }
 });
 
 // Forex rates — Frankfurter.app (free, no key, ECB data)
@@ -1048,47 +1068,74 @@ app.get('/api/markets/stocks', async (req, res) => {
   } catch (e) { res.json({ ok: false, quotes: [], error: String(e.message) }); }
 });
 
-// DexScreener hot pairs
+// DexScreener hot pairs — token profiles (the /boosted endpoint returns null)
 app.get('/api/markets/dex-hot', async (req, res) => {
   try {
     const chain = req.query.chain || 'solana';
-    const d = await _mktFetch(`https://api.dexscreener.com/latest/dex/pairs/${chain}/boosted`, 60000);
-    const pairs = (d.pairs || d || []).slice(0, 20).map(p => ({
-      address: p.pairAddress, baseToken: p.baseToken, quoteToken: p.quoteToken,
-      priceUsd: p.priceUsd, volume24h: p.volume && p.volume.h24, priceChange24h: p.priceChange && p.priceChange.h24,
-      liquidity: p.liquidity && p.liquidity.usd, dex: p.dexId, chain: p.chainId,
-    }));
-    res.json({ ok: true, pairs });
-  } catch (e) { res.json({ ok: false, pairs: [], error: String(e.message) }); }
+    const raw = await _mktFetch('https://api.dexscreener.com/token-profiles/latest/v1', 60000);
+    const list = Array.isArray(raw) ? raw : (raw.profiles || []);
+    const pairs = list
+      .filter(p => !chain || p.chainId === chain)
+      .slice(0, 20)
+      .map(p => ({
+        symbol: p.symbol || p.name || '',
+        tokenAddress: p.tokenAddress || '',
+        description: p.description || p.name || '',
+        icon: p.icon || p.image || '',
+        links: p.links || [],
+        url: p.url || '',
+        chain: p.chainId || chain,
+      }));
+    res.json({ ok: true, data: pairs, pairs });
+  } catch (e) { res.json({ ok: false, data: [], pairs: [], error: String(e.message) }); }
 });
 
-// Jupiter token prices (Solana DEX aggregator) — free public API
+// Jupiter token prices (Solana DEX aggregator) — free public API (v3)
+const JUP_MINTS = {
+  'SOL': 'So11111111111111111111111111111111111111112',
+  'USDC': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  'BONK': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+  'WIF': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+};
 app.get('/api/markets/jupiter', async (req, res) => {
   try {
-    const mints = (req.query.ids || 'So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v').slice(0, 500);
-    const d = await _mktFetch(`https://api.jup.ag/price/v2?ids=${mints}`, 30000);
-    res.json({ ok: true, data: d.data || {} });
-  } catch (e) { res.json({ ok: false, data: {}, error: String(e.message) }); }
+    const map = { ...JUP_MINTS };
+    const ids = (req.query.ids || '').split(',').filter(Boolean);
+    ids.forEach((m, i) => { if (!Object.values(map).includes(m)) map['T' + i] = m; });
+    const mints = Object.values(map).join(',');
+    const d = await _mktFetch(`https://api.jup.ag/price/v3?ids=${mints}`, 30000);
+    const out = {};
+    Object.entries(map).forEach(([sym, mint]) => {
+      const v = d[mint];
+      if (v) out[sym] = { price: v.usdPrice != null ? v.usdPrice : v.price, priceChange24h: v.priceChange24h || 0 };
+    });
+    res.json({ ok: true, data: { data: out } });
+  } catch (e) { res.json({ ok: false, data: { data: {} }, error: String(e.message) }); }
 });
 
 // Solana network stats — free public RPC
 app.get('/api/network/solana', async (req, res) => {
   try {
     const rpc = process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com';
-    const [perfRes, supplyRes] = await Promise.allSettled([
-      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getRecentPerformanceSamples', params: [1] }), signal: AbortSignal.timeout(8000) }),
-      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getSupply', params: [{ commitment: 'finalized' }] }), signal: AbortSignal.timeout(8000) }),
+    const body = (id, method, params) => JSON.stringify({ jsonrpc: '2.0', id, method, params });
+    const [perfRes, slotRes, supplyRes] = await Promise.allSettled([
+      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(1, 'getRecentPerformanceSamples', [1]), signal: AbortSignal.timeout(8000) }),
+      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(2, 'getSlot', []), signal: AbortSignal.timeout(8000) }),
+      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(3, 'getSupply', [{ commitment: 'finalized' }]), signal: AbortSignal.timeout(8000) }),
     ]);
-    let tps = null, supply = null;
+    let tps = null, slot = null, circulatingSupply = null;
     if (perfRes.status === 'fulfilled' && perfRes.value.ok) {
       const pj = await perfRes.value.json(); const s = pj.result && pj.result[0];
       if (s) tps = Math.round(s.numTransactions / s.samplePeriodSecs);
     }
-    if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
-      const sj = await supplyRes.value.json(); supply = sj.result && sj.result.value && sj.result.value.total;
+    if (slotRes.status === 'fulfilled' && slotRes.value.ok) {
+      const sj = await slotRes.value.json(); slot = sj.result;
     }
-    res.json({ ok: true, tps, supply });
-  } catch (e) { res.json({ ok: false, tps: null, error: String(e.message) }); }
+    if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
+      const sj = await supplyRes.value.json(); circulatingSupply = sj.result && sj.result.value && sj.result.value.circulating;
+    }
+    res.json({ ok: true, data: { tps, slot, circulatingSupply } });
+  } catch (e) { res.json({ ok: false, data: null, error: String(e.message) }); }
 });
 
 // ── MiroFish LLM swarm simulation — runs on Render when localhost:5001 unavailable ─
