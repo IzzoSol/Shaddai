@@ -5834,6 +5834,8 @@ window.enter3DWorld=function(){
       function powerOnSignals(){
         var pin=document.getElementById('sigPin').value;
         if(pin!=='4444'){document.getElementById('sigErr').textContent='INCORRECT CODE';document.getElementById('sigPin').value='';return;}
+        sessionStorage.setItem('shd_prosig','1');
+        try{sessionStorage.setItem('mf_auth','1');}catch(e){}
         document.getElementById('sigGate').style.display='none';
         document.getElementById('sigFrame').style.display='block';
         document.getElementById('sigIframe').src='/pro-signals.html';

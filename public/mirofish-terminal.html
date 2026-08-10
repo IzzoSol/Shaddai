@@ -400,7 +400,7 @@ function unlock(){
   const v = document.getElementById('lk-pw').value.trim();
   if(v === PASS){
     document.getElementById('lock').classList.add('gone');
-    localStorage.setItem('mf_auth','1');
+    sessionStorage.setItem('mf_auth','1');
     init();
   } else {
     const e = document.getElementById('lk-err');
@@ -409,8 +409,8 @@ function unlock(){
     setTimeout(()=>e.textContent='', 3000);
   }
 }
-// skip lock if already authenticated this session
-if(localStorage.getItem('mf_auth')==='1'){
+// skip lock only within this tab/session (fresh tabs must re-enter 4444)
+if(sessionStorage.getItem('mf_auth')==='1'){
   document.getElementById('lock').classList.add('gone');
 }
 
@@ -1038,8 +1038,8 @@ function init(){
   setInterval(fetchPoly,120000);
   setInterval(fetchMkts,60000);
 }
-// If lock already cleared (was already authed), init now
-if(localStorage.getItem('mf_auth')==='1'){ init(); }
+// If lock already cleared (already authed this tab/session), init now
+if(sessionStorage.getItem('mf_auth')==='1'){ init(); }
 document.addEventListener('fullscreenchange',()=>{document.getElementById('fs-btn').textContent=document.fullscreenElement?'⛶':'⛶';});
 </script>
 </body>

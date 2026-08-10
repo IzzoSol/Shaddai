@@ -538,7 +538,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
     <!-- swarm tab → live MiroFish terminal embed -->
     <div class="ltp" id="tab-swarm" style="position:relative;overflow:hidden;background:#010b10;">
-      <script>try{localStorage.setItem('mf_auth','1');}catch(e){}</script>
+      <script>try{if(sessionStorage.getItem('shd_prosig')==='1')sessionStorage.setItem('mf_auth','1');}catch(e){}</script>
       <div style="position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:8px;padding:7px 10px;background:linear-gradient(180deg,rgba(1,11,16,.96),rgba(1,11,16,.55),transparent);pointer-events:none;">
         <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH TERMINAL</span>
         <span style="flex:1"></span>
@@ -710,13 +710,14 @@ const MIRO = 'http://localhost:5001';
 /* AUTH */
 const PRO_PIN='4444';
 function ok(){
-  return localStorage.getItem('shd_prosig')==='1';
+  return sessionStorage.getItem('shd_prosig')==='1';
 }
 function unlock(){
   const inp=document.getElementById('gatePin');
   const p=(inp.value||'').trim();
   if(p===PRO_PIN){
-    localStorage.setItem('shd_prosig','1');
+    sessionStorage.setItem('shd_prosig','1');
+    try{sessionStorage.setItem('mf_auth','1');}catch(e){}
     document.getElementById('gateErr').textContent='';
     go();
   }else{
@@ -733,8 +734,9 @@ function go(){
   applyMiroPref();
   init();
 }
-if(ok()) go();
-else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){gi.focus();},300); }
+/* GATE fires after the whole script is parsed (bottom of file) so every
+   top-level declaration is initialized first — this avoids the TDZ crash
+   that previously killed init() on auto-login. */
 
 /* THEME */
 function setTheme(t){
@@ -1098,13 +1100,14 @@ function toggleMiro(){
 async function checkMiro(){
   const el=document.getElementById('mws'),sim=document.getElementById('mwsim'),btn=document.getElementById('mwrun');
   try{
-    const r=await fetch(MIRO+'/',{signal:AbortSignal.timeout(3000)});
-    if(r.ok||r.status<500){
-      el.innerHTML='<span style="color:var(--S);text-shadow:var(--gS)">● ONLINE</span> — swarm engine ready';
+    const r=await fetch(BASE+'/api/model/health',{signal:AbortSignal.timeout(8000)});
+    const j=await r.json();
+    if(j&&j.ok){
+      el.innerHTML='<span style="color:var(--S);text-shadow:var(--gS)">● ONLINE</span> — cloud swarm engine ready';
       sim.style.display='flex';sim.style.flexDirection='column';btn.style.display='inline-block';
-    }else throw new Error('HTTP '+r.status);
+    }else throw new Error('offline');
   }catch(e){
-    el.innerHTML='<span style="color:var(--A)">● STANDALONE</span> — open MiroFish Swarm ↗';
+    el.innerHTML='<span style="color:var(--A)">● CLOUD OFFLINE</span> — open MiroFish Swarm ↗';
     sim.style.display='none';btn.style.display='none';
   }
 }
@@ -1113,25 +1116,18 @@ async function runMiro(){
   const nws=document.getElementById('mwnws').value.trim();
   const res=document.getElementById('mwres');
   if(!tok||!nws){toast('ENTER TOKEN + ANNOUNCEMENT');return;}
-  res.style.display='block';res.textContent='⏳ uploading seed…';
+  res.style.display='block';res.textContent='⏳ launching cloud swarm…';
   try{
-    await fetch(MIRO+'/api/upload/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`TOKEN: ${tok}\nNEWS: ${nws}\nCONTEXT: Solana Twitter`,title:tok}),signal:AbortSignal.timeout(10000)});
-    res.textContent='⏳ launching swarm…';
-    const sv=await fetch(MIRO+'/api/simulate/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prediction_goal:`How will "${nws}" affect ${tok} in 7d?`,num_agents:50,max_rounds:5,platform:'twitter'}),signal:AbortSignal.timeout(15000)});
-    const {simulation_id:sid}=await sv.json();
-    let done=false,tries=0;
-    while(!done&&tries<24){
-      await new Promise(r=>setTimeout(r,3000));tries++;
-      const st=await fetch(MIRO+'/api/simulate/status/'+sid,{signal:AbortSignal.timeout(5000)});
-      const stj=await st.json();
-      res.textContent='⏳ '+(stj.progress||'?')+'% complete…';
-      if(stj.status==='completed'||(stj.progress||0)>=100){done=true;}
-    }
-    const rp=await fetch(MIRO+'/api/report/'+sid,{signal:AbortSignal.timeout(10000)});
-    const rpj=await rp.json();
-    const sum=rpj.summary||rpj.prediction||rpj.result||JSON.stringify(rpj).slice(0,400);
-    res.innerHTML='<span style="color:#b07fff">🐟 SWARM:</span><br>'+esc(sum);
-    toast('SIMULATION COMPLETE');
+    const r=await fetch(BASE+'/api/mirofish/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,scenario:nws,numAgents:15,rounds:3,platform:'twitter'}),signal:AbortSignal.timeout(60000)});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error||'cloud swarm failed');
+    const s=d.result||{};
+    const sum=String(s.summary||s.prediction||'').slice(0,400);
+    const up=/bull|up|buy|positive|rise|pump|moon/i.test(sum);
+    const dn=/bear|down|sell|negative|fall|dump|rug/i.test(sum);
+    const col=up?'#00ff9c':dn?'#ff3d5a':'#00d4dc';
+    res.innerHTML='<span style="color:'+col+'">'+(up?'▲ BULLISH':dn?'▼ BEARISH':'─ NEUTRAL')+' — '+esc(tok.toUpperCase())+'</span><br>'+esc(sum)+(s.confidence!=null?'<br><span style="color:#b07fff">'+(d.provider||'cloud')+' · '+Math.round(s.confidence)+'% confidence</span>':'');
+    toast('SWARM COMPLETE');
   }catch(e){res.innerHTML='<span style="color:var(--A)">ERROR: '+esc(e.message)+'</span>';}
 }
 
@@ -1629,6 +1625,10 @@ async function runSwarm(){
     if(prog){setTimeout(()=>{prog.style.display='none';if(progF)progF.style.width='0%';},3000);}
   }
 }
+
+/* GATE — require the 4444 PIN every fresh tab/session (no persistent auto-login) */
+if(ok()) go();
+else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){gi.focus();},300); }
 </script>
 </body>
 </html>

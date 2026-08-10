@@ -1175,16 +1175,29 @@ Generate exactly ${selected.length} agents with roles: ${selected.join(', ')}. B
     const llmRes = await fetch(`${req.protocol}://${req.get('host')}/api/llm/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Analyze ${tok}: ${scen}` }], agent: 'zerox', format: 'json' }),
+      body: JSON.stringify({ message: `Analyze ${tok}: ${scen}`, systemPrompt, agent: 'zerox', format: 'json' }),
       signal: AbortSignal.timeout(30000),
     });
     const llmData = await llmRes.json();
-    const text = (llmData.content || llmData.message || '').trim();
+    if (!llmRes.ok) throw new Error(llmData.error || 'LLM chat failed HTTP ' + llmRes.status);
+    const text = String(llmData.response || llmData.content || llmData.message || '').trim();
 
-    // Extract JSON from LLM response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('LLM did not return valid JSON');
-    const parsed = JSON.parse(jsonMatch[0]);
+    // Extract JSON from LLM response (handles markdown fences + trailing prose)
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const src = (fenced && fenced[1]) || text;
+    const start = src.indexOf('{');
+    if (start < 0) throw new Error('LLM did not return valid JSON');
+    let depth = 0, inStr = false, esc = false, parsed = null;
+    for (let i = start; i < src.length; i++) {
+      const ch = src[i];
+      if (esc) { esc = false; continue; }
+      if (ch === '\\') { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth === 0) { try { parsed = JSON.parse(src.slice(start, i + 1)); } catch (_) { parsed = null; } break; } }
+    }
+    if (!parsed) throw new Error('LLM did not return valid JSON');
 
     res.json({ ok: true, token: tok, scenario: scen, platform, numAgents: selected.length, result: parsed, source: 'llm-swarm', provider: llmData.provider || 'cloud' });
   } catch (e) {
