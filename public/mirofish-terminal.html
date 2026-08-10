@@ -46,7 +46,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 /* ── MINIMIZE ─────────────────────────────── */
 body.minimized #topbar{top:auto;bottom:0;border-top:2px solid var(--T);border-bottom:none;box-shadow:var(--gT);}
-body.minimized #ocean,body.minimized #sidebar,body.minimized #sim-form,body.minimized #btm-panel,body.minimized #hud,body.minimized #depth-ruler{display:none!important;}
+body.minimized #ocean{display:block!important;filter:brightness(.22) blur(3px);}
+body.minimized #sidebar,body.minimized #sim-form,body.minimized #btm-panel,body.minimized #hud,body.minimized #depth-ruler{display:none!important;}
 
 /* ── TOPBAR ───────────────────────────────── */
 #topbar{position:fixed;top:0;left:0;right:0;height:56px;z-index:200;background:linear-gradient(180deg,rgba(1,11,16,.98),rgba(1,11,16,.85));border-bottom:2px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;backdrop-filter:blur(14px);box-shadow:0 2px 32px rgba(0,0,0,.5),0 1px 0 rgba(0,212,220,.12);}
@@ -258,9 +259,8 @@ body.minimized #ocean,body.minimized #sidebar,body.minimized #sim-form,body.mini
   <div class="tb-div"></div>
   <button class="tb-icon-btn" onclick="toggleSidebar()" title="Settings">⚙</button>
   <button class="tb-icon-btn" onclick="toggleFullscreen()" title="Fullscreen" id="fs-btn">⛶</button>
-  <button class="tb-icon-btn" onclick="popOut()" title="Pop out">⧉</button>
   <button class="tb-icon-btn" onclick="toggleMinimize()" title="Minimize" id="min-btn">▁</button>
-  <a class="tb-back" href="/pro-signals.html">← ORACLE</a>
+  <a class="tb-back" href="/pro-signals.html" id="tb-back">← ORACLE</a>
 </div>
 
 <!-- HUD -->
@@ -419,6 +419,10 @@ const CLOUD = 'https://shaddai-g81x.onrender.com';
 const BASE = CLOUD;                       // live data ALWAYS via Render cloud — no localhost
 const IS_LOCAL = location.hostname==='localhost'||location.hostname==='127.0.0.1'; // display only
 const MIRO = 'http://localhost:5001';     // unused — the swarm sim runs server-side in the cloud
+const IS_EMBED = (()=>{ try{ return window.self!==window.top; }catch(e){ return true; } })();
+if(IS_EMBED){
+  ['tb-back','min-btn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
 const CFG  = { ag:50, rd:5, fc:50, spd:1, dq:'med', lbl:'on' };
 
 function cfgR(k, el, mn, mx){
@@ -453,7 +457,6 @@ function toggleFullscreen(){
   if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
   else document.exitFullscreen();
 }
-function popOut(){ window.open('/mirofish-terminal.html','_blank','width=1440,height=920,menubar=no,toolbar=no'); }
 
 const _TABS=['results','agents','markets','poly','chat','hist'];
 function bTab(name, idx){
