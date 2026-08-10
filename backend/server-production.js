@@ -363,6 +363,17 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Serve MiroFish React app
+app.use('/mirofish', express.static(path.join(__dirname, '../public/mirofish'), {
+  index: 'index.html',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
+
 app.use(express.static(path.join(__dirname, '../public'), {
   index: false,   // don't auto-serve index.html for '/' — the '/' route serves the landing (home.html); '/dashboard' serves the app
   setHeaders: (res, filePath) => {
