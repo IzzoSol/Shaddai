@@ -1,5 +1,5 @@
 {
-  "nextTokenId": 26,
+  "nextTokenId": 28,
   "operatives": {
     "op_cb564d97_1783480230467": {
       "id": "op_cb564d97_1783480230467",
@@ -327,6 +327,140 @@
       },
       "createdAt": 1784934004397,
       "updatedAt": 1784934004397
+    },
+    "op_x_1786296019872": {
+      "id": "op_x_1786296019872",
+      "tokenId": 26,
+      "owner": "7PpVWZ9hnxOYbQh0c1kC8KSXPkR2",
+      "codename": "Traveler",
+      "archetype": "pixel",
+      "model": "SHADDAI",
+      "rarity": "common",
+      "look": {
+        "archetype": "pixel",
+        "rig": {
+          "name": "Casual",
+          "shirt": "#7a3ac0",
+          "pants": "#203a5a",
+          "shoeStyle": "sneaker",
+          "shoe": "#2a3a5a",
+          "cap": null,
+          "hair": "#7a3ac0",
+          "skin": "#f2c9a0",
+          "__phase": 0.37,
+          "anim": "idle"
+        }
+      },
+      "portrait": null,
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "pixel",
+          "rig": {
+            "name": "Casual",
+            "shirt": "#7a3ac0",
+            "pants": "#203a5a",
+            "shoeStyle": "sneaker",
+            "shoe": "#2a3a5a",
+            "cap": null,
+            "hair": "#7a3ac0",
+            "skin": "#f2c9a0",
+            "__phase": 0.37,
+            "anim": "idle"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 40,
+        "power": 40,
+        "iq": 40
+      },
+      "createdAt": 1786296019872,
+      "updatedAt": 1786296019872
+    },
+    "op_x_1786296024396": {
+      "id": "op_x_1786296024396",
+      "tokenId": 27,
+      "owner": "7PpVWZ9hnxOYbQh0c1kC8KSXPkR2",
+      "codename": "Traveler",
+      "archetype": "pixel",
+      "model": "SHADDAI",
+      "rarity": "common",
+      "look": {
+        "archetype": "pixel",
+        "rig": {
+          "name": "Casual",
+          "shirt": "#7a3ac0",
+          "pants": "#203a5a",
+          "shoeStyle": "sneaker",
+          "shoe": "#2a3a5a",
+          "cap": null,
+          "hair": "#7a3ac0",
+          "skin": "#f2c9a0",
+          "__phase": 0.37,
+          "anim": "idle"
+        }
+      },
+      "portrait": null,
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "pixel",
+          "rig": {
+            "name": "Casual",
+            "shirt": "#7a3ac0",
+            "pants": "#203a5a",
+            "shoeStyle": "sneaker",
+            "shoe": "#2a3a5a",
+            "cap": null,
+            "hair": "#7a3ac0",
+            "skin": "#f2c9a0",
+            "__phase": 0.37,
+            "anim": "idle"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 40,
+        "power": 40,
+        "iq": 40
+      },
+      "createdAt": 1786296024396,
+      "updatedAt": 1786296024396
     }
   }
 }

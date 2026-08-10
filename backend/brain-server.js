@@ -21,9 +21,11 @@ const path = require('path');
 const express = require('express');
 
 const brainIndex = require('./brain-index');
+const ragIndex = require('./rag-index');
 
 const BRAIN_DIR = process.env.SHADDAI_BRAIN_DIR ||
   path.join('C:', 'Users', 'Brittany', 'Documents', 'SHADDAI-SYSTEM', 'rag');
+const RAG_KB_DIR = path.join(__dirname, 'data', 'rag');
 const GALLERY_DIR = process.env.SHADDAI_GALLERY_DIR ||
   path.join('C:', 'Users', 'Brittany', 'Documents', 'SHADDAI-SYSTEM', 'gallery');
 
@@ -60,10 +62,68 @@ function getLLM() {
 // ── helpers ──────────────────────────────────────────────────────────────────
 function kb(agent) { return 'kb_' + String(agent || '').toLowerCase(); }
 
+// Fallback stats from the populated per-agent RAG store (backend/data/rag) so
+// /overview + /summary stay live on Render where the 95k-chunk corpus is absent.
+function loadRagStats() {
+  const agents = {};
+  let totalChunks = 0, totalVideos = 0, totalWords = 0;
+  for (const id of AGENT_ORDER) {
+    let docs = [], chunks = 0;
+    try {
+      docs = ragIndex.listUserDocs(kb(id));
+      chunks = docs.reduce((s, d) => s + (d.chunks || 0), 0);
+    } catch (_) {}
+    agents[id] = {
+      videos: docs.length,
+      chunks,
+      words: 0,
+      topics: [],
+      systems: [],
+      channels: [],
+      top_terms: [],
+      titles: docs.slice(0, 10).map(d => d.name || ''),
+    };
+    totalChunks += chunks;
+    totalVideos += docs.length;
+  }
+  return { agents, total_chunks: totalChunks, total_videos: totalVideos, total_words: totalWords, built: 'rag-store' };
+}
+
+// Search one agent's knowledge: prefer the full corpus adapter (brain-index),
+// fall back to the populated per-agent RAG store (backend/data/rag/kb_*) — the
+// store that /api/mcp/status reports live on Render. Never dead-ends the council.
+function searchChunks2(agent, q, k, opts) {
+  try {
+    const hits = brainIndex.searchChunks(kb(agent), q, k, opts);
+    if (hits && hits.length) return hits;
+  } catch (_) {}
+  try {
+    return ragIndex.searchUser(kb(agent), q, Math.max(1, Math.min(k, 12))).map(h => ({
+      agent,
+      title: h.docName || '',
+      score: h.score || 0,
+      text: h.chunkText || '',
+      system: '',
+      topic: '',
+      channel: '',
+      video_id: h.docId || '',
+      words: 0,
+    }));
+  } catch (_) { return []; }
+}
+
+function listUserDocs2(agent, opts) {
+  try {
+    const hits = brainIndex.listUserDocs(kb(agent), opts);
+    if (hits && hits.length) return hits;
+  } catch (_) {}
+  try { return ragIndex.listUserDocs(kb(agent)); } catch (_) { return []; }
+}
+
 function loadStats() {
   try {
     return JSON.parse(fs.readFileSync(path.join(BRAIN_DIR, 'brain_agent_stats.json'), 'utf8'));
-  } catch (_) { return null; }
+  } catch (_) { return loadRagStats(); }
 }
 
 function agentInfo(id) {
@@ -152,10 +212,10 @@ router.get('/search', (req, res) => {
   let results = [];
 
   if (agent) {
-    results = brainIndex.searchChunks(kb(agent), q, k);
+    results = searchChunks2(agent, q, k);
   } else {
     for (const id of AGENT_ORDER) {
-      const hits = brainIndex.searchChunks(kb(id), q, Math.max(1, Math.ceil(k / AGENT_ORDER.length)));
+      const hits = searchChunks2(id, q, Math.max(1, Math.ceil(k / AGENT_ORDER.length)));
       results = results.concat(hits.map(h => ({ ...h, agent: id })));
     }
     results.sort((a, b) => b.score - a.score);
@@ -206,7 +266,7 @@ router.get('/council', async (req, res) => {
   const start = Date.now();
   const agents = AGENT_ORDER.map(id => {
     const meta = agentInfo(id);
-    const hits = brainIndex.searchChunks(kb(id), q, k);
+    const hits = searchChunks2(id, q, k);
     return {
       id,
       role: meta.role,
@@ -231,7 +291,7 @@ router.get('/ask', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'missing q' });
 
   const start = Date.now();
-  const hits = brainIndex.searchChunks(kb(agent), q, k);
+  const hits = searchChunks2(agent, q, k);
   let answer = null;
 
   if (hits.length) {
@@ -265,7 +325,7 @@ router.get('/synthesize', async (req, res) => {
   const start = Date.now();
   const results = await Promise.allSettled(AGENT_ORDER.map(async id => {
     const meta = agentInfo(id);
-    const hits = brainIndex.searchChunks(kb(id), q, 4);
+    const hits = searchChunks2(id, q, 4);
     let ans = null;
     if (hits.length) ans = await groundedLLM(id, q, hits) || ragFallback(id, q, hits);
     return {
@@ -294,7 +354,7 @@ router.get('/crosstalk', (req, res) => {
   const start = Date.now();
   const thread = AGENT_ORDER.map(id => {
     const meta = agentInfo(id);
-    const hits = brainIndex.searchChunks(kb(id), q, 3);
+    const hits = searchChunks2(id, q, 3);
     const best = hits[0] || null;
     return {
       agent: id,
@@ -405,7 +465,7 @@ const ROOM_STYLES = ['archive', 'library', 'vault', 'lab', 'observatory', 'crypt
 
 function makeRoom(agent, idx) {
   const meta = agentInfo(agent);
-  const hits = brainIndex.listUserDocs(kb(agent)).slice(0, 8);
+  const hits = listUserDocs2(agent).slice(0, 8);
   const theme = (hits[idx % hits.length] || { name: agent + ' knowledge' }).name || (agent + ' knowledge');
   const assets = hits.slice(0, 4).map(h => ({
     title: h.name,

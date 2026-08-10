@@ -982,9 +982,16 @@ async function sendChat(){
   inp.value=''; addMsg('u','YOU',msg);
   const aid=addMsg('a',agent.toUpperCase()+'…','');
   try{
-    const r=await fetch(BASE+'/api/llm/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent,message:msg}),signal:AbortSignal.timeout(30000)});
+    const agentUp=agent.toUpperCase();
+    const r=await fetch(BASE+'/api/ask?agent='+encodeURIComponent(agentUp)+'&q='+encodeURIComponent(msg),{signal:AbortSignal.timeout(30000)});
+    if(r.ok){
+      const j=await r.json();
+      const src=(j.sources&&j.sources.length)?`\n· ${j.sources.length} grounded source${j.sources.length>1?'s':''}`:'';
+      updMsg(aid,agentUp,(j.answer||'No grounded knowledge matched.').slice(0,600)+src);
+      return;
+    }
     const j=await r.json();
-    updMsg(aid,agent.toUpperCase(),(j.content||j.reply||j.text||j.message||JSON.stringify(j)).slice(0,600));
+    updMsg(aid,agentUp,(j.content||j.reply||j.text||j.message||JSON.stringify(j)).slice(0,600));
   }catch(e){updMsg(aid,agent.toUpperCase(),'Unavailable: '+e.message.slice(0,60));}
 }
 function addMsg(type,who,text){

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "shaddai": {
+      "command": "node",
+      "args": ["C:\\Users\\Brittany\\Desktop\\SHADDAI MASTER FINAL BUILD\\shaddai-mcp\\mcp-server.js"],
+      "env": {
+        "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com"
+      }
+    },
+    "shaddai-rag": {
+      "command": "node",
+      "args": ["C:\\Users\\Brittany\\Desktop\\SHADDAI MASTER FINAL BUILD\\backend\\mcp-server-rag.js"],
+      "env": {
+        "RAG_KB_DIR": "C:\\Users\\Brittany\\Desktop\\SHADDAI MASTER FINAL BUILD\\backend\\data\\rag"
+      }
+    }
+  }
+}
