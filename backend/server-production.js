@@ -45,6 +45,7 @@ const agentIntegration = require('./agent-integration');
 
 // Proxy Routes (all missing API endpoints for the dashboard)
 const apiProxyRoutes = require('./api-proxy-routes');
+const freeApis = require('./freeApis');
 
 // ============================================
 // PRODUCTION ENHANCEMENTS
@@ -302,7 +303,66 @@ class BatchJobQueue {
             job.errors.push({
               taskIndex: i,
               error: error.message
-            });
+});
+
+/* ──────────────────────────────────────────────
+   FREE-API ENDPOINTS (DexScreener, CoinGecko, Reddit, Twitter, etc.)
+   ────────────────────────────────────────────── */
+app.get('/api/free/coingecko', async (req, res) => {
+  try {
+    const coins = await freeApis.fetchCoingeckoCoins(200);
+    res.json({ ok: true, coins });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/free/boosted', async (req, res) => {
+  try {
+    const coins = await freeApis.fetchBoostedCoins(25);
+    res.json({ ok: true, assets: coins });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/free/news', async (req, res) => {
+  try {
+    const headlines = await freeApis.fetchGoogleNews();
+    res.json({ ok: true, headlines });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/free/sentiment', async (req, res) => {
+  try {
+    const posts = await freeApis.fetchRedditSentiment('crypto');
+    res.json({ ok: true, posts });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/free/twitter', async (req, res) => {
+  try {
+    const query = req.query.q?.toLowerCase() || 'crypto';
+    const tweets = await freeApis.fetchTwitterSentiment(query);
+    res.json({ ok: true, tweets });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+/* Boosted + Top-25 combined */
+app.get('/api/markets/boosted-and-top', async (req, res) => {
+  try {
+    const result = await freeApis.getBoostedAndTop();
+    res.json(result);
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
           }
           job.progress = i + 1;
         }
