@@ -36,3 +36,20 @@ services:
         sync: false         # subscriptions (lazy-loaded; unset = billing in free/credit mode)
       - key: SUNO_API_KEY
         sync: false         # real music generation (unset = lyrics-only)
+      # ── Live signals feed (24/7 pollers: DexScreener / pump.fun / Gecko / Helius) ──
+      # Set in the Render dashboard (Environment tab). The pollers are a no-op
+      # until TELEGRAM_BOT_TOKEN is set. Helius adds the fresh-mint scan source.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false         # secret — bot token from @BotFather (same as local .env)
+      - key: TELEGRAM_CHANNEL
+        sync: false         # e.g. "@ShaddaiSignals" (bot must be admin) — public feed
+      - key: HELIUS_API_KEY
+        sync: false         # secret — Helius RPC key (mainnet.helius-rpc.com/?api-key=)
+      - key: HELIUS_RPC_URL
+        sync: false         # optional — full RPC url incl. api-key (overrides HELIUS_API_KEY)
+      # ── Uptime Robot keep-alive (free) ────────────────────────────────────
+      # Run `npm run uptime` once locally with UPTIME_ROBOT_API_KEY set to create
+      # a 5-min monitor on /api/model/health. That external ping stops Render's
+      # free tier from sleeping, so the signal pollers never pause.
+      - key: RENDER_EXTERNAL_URL
+        sync: false         # auto-set by Render — used by the built-in self-ping

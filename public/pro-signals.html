@@ -536,29 +536,16 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
     <!-- alerts moved to modal (topbar 🔔 pill) -->
 
-    <!-- swarm tab -->
+    <!-- swarm tab → live MiroFish terminal embed -->
     <div class="ltp" id="tab-swarm" style="position:relative;overflow:hidden;background:#010b10;">
-      <canvas id="swarm-canvas" style="position:absolute;inset:0;"></canvas>
-      <div style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:8px;padding:7px 10px;background:linear-gradient(180deg,rgba(1,11,16,.9),transparent);pointer-events:none;">
-        <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH SWARM</span>
+      <script>try{localStorage.setItem('mf_auth','1');}catch(e){}</script>
+      <div style="position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:8px;padding:7px 10px;background:linear-gradient(180deg,rgba(1,11,16,.96),rgba(1,11,16,.55),transparent);pointer-events:none;">
+        <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH TERMINAL</span>
         <span style="flex:1"></span>
-        <span id="sw-status" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;pointer-events:auto">CHECKING…</span>
+        <span id="sw-status" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;pointer-events:auto">LIVE · REAL DATA</span>
         <a href="/mirofish-terminal.html" target="_blank" style="padding:2px 8px;border:1px solid rgba(0,212,220,.2);color:rgba(0,212,220,.6);font-family:'Syncopate',sans-serif;font-size:6px;letter-spacing:2px;text-decoration:none;pointer-events:auto;">FULL ↗</a>
       </div>
-      <div id="sw-hud" style="position:absolute;top:36px;left:10px;z-index:10;font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;line-height:1.8;pointer-events:none;"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px;background:linear-gradient(0deg,rgba(1,11,16,.95),rgba(1,11,16,.65));border-top:1px solid rgba(0,212,220,.1);">
-        <div id="sw-res" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a8a94;margin-bottom:5px;min-height:14px;line-height:1.5;"></div>
-        <div id="sw-form" style="display:none;flex-direction:column;gap:5px;">
-          <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <input id="sw-tok" placeholder="Token (e.g. BONK)" style="flex:1;min-width:80px;padding:5px 8px;background:rgba(3,22,32,.8);border:1px solid rgba(0,212,220,.2);color:#c8f0f4;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
-            <input id="sw-news" placeholder="Scenario to simulate…" style="flex:3;min-width:160px;padding:5px 8px;background:rgba(3,22,32,.8);border:1px solid rgba(0,212,220,.2);color:#c8f0f4;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
-            <button id="sw-go" onclick="runSwarm()" style="padding:5px 14px;border:1px solid #00d4dc;background:transparent;color:#00d4dc;font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:2px;cursor:pointer;white-space:nowrap;">LAUNCH</button>
-          </div>
-          <div id="sw-prog-wrap" style="display:none;height:2px;background:rgba(0,212,220,.08);">
-            <div id="sw-prog-f" style="height:100%;background:linear-gradient(90deg,#005f65,#00d4dc,#40eef6);transition:width .5s;width:0%"></div>
-          </div>
-        </div>
-      </div>
+      <iframe id="mirofish-embed" title="MiroFish Terminal" src="/mirofish-terminal.html" style="flex:1;width:100%;min-height:0;border:0;display:block;background:#010b10;" loading="lazy" allow="clipboard-read;clipboard-write"></iframe>
     </div>
   </div><!-- /left -->
 
@@ -716,8 +703,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 <script>
 'use strict';
-const DEV = location.hostname==='localhost'||location.hostname==='127.0.0.1';
-const BASE = DEV ? 'http://localhost:3000' : '';
+const CLOUD = 'https://shaddai-g81x.onrender.com';
+const BASE = CLOUD;   // live data ALWAYS via Render cloud — no localhost
 const MIRO = 'http://localhost:5001';
 
 /* AUTH */
@@ -1070,7 +1057,7 @@ async function fetchPoly(){
       const pct=raw!==null?Math.round(parseFloat(raw)*100):null;
       const barColor=pct===null?'var(--P3)':pct>=70?'var(--S)':pct>=40?'var(--P)':'var(--A)';
       const cls=pct===null?'':(pct>=70?'phi':pct>=40?'pmi':'plo');
-      return `<div class="pc" onclick="document.getElementById('sw-news').value=${JSON.stringify(esc(q))};toast('SCENARIO LOADED — switch to SWARM tab')"
+      return `<div class="pc" onclick="var _sw=document.getElementById('sw-news');if(_sw){_sw.value=${JSON.stringify(esc(q))};switchTab('swarm',document.querySelector('#ltabs .ltab[onclick*=\\"swarm\\"]'));}else{window.open('/mirofish-terminal.html','_blank');}toast('SCENARIO LOADED — switch to SWARM tab')"
         <div class="pq">${esc(q.slice(0,120))}</div>
         <div class="pc-meta">
           <div class="pc-bar"><div class="pc-fill" style="width:${pct||0}%;background:${barColor}"></div></div>
@@ -1574,24 +1561,27 @@ async function checkMiroSwarm(){
   const el=document.getElementById('sw-status');
   const form=document.getElementById('sw-form');
   try{
-    const r=await fetch(MIRO+'/',{signal:AbortSignal.timeout(3000)});
+    const r=await fetch(BASE+'/api/model/health',{signal:AbortSignal.timeout(4000)});
     _sMiroOk=r.ok||r.status<500;
   }catch(e){_sMiroOk=false;}
-  if(el) el.innerHTML=_sMiroOk?'<span style="color:#00ff9c">● ONLINE</span>':'<span style="color:#ff3d5a">● OFFLINE</span>';
+  if(el) el.innerHTML=_sMiroOk?'<span style="color:#00ff9c">● CLOUD ONLINE</span>':'<span style="color:#ff3d5a">● CLOUD OFFLINE</span>';
   if(form){ form.style.display=_sMiroOk?'flex':'none'; }
 }
 
 async function runSwarm(){
   if(_sRunning) return;
-  const tok  = (document.getElementById('sw-tok').value||'').trim();
-  const news = (document.getElementById('sw-news').value||'').trim();
-  const res  = document.getElementById('sw-res');
+  const _tok  = document.getElementById('sw-tok'), _news = document.getElementById('sw-news'), _res = document.getElementById('sw-res');
+  if(!_tok||!_news||!_res) return;
+  const tok  = (_tok.value||'').trim();
+  const news = (_news.value||'').trim();
+  const res  = _res;
   const prog = document.getElementById('sw-prog-wrap');
   const progF= document.getElementById('sw-prog-f');
   if(!tok||!news){toast('ENTER TOKEN + SCENARIO');return;}
   _sRunning=true; _sPhase='warming';
-  document.getElementById('sw-go').disabled=true;
-  prog.style.display='block'; progF.style.width='5%';
+  if(document.getElementById('sw-go')) document.getElementById('sw-go').disabled=true;
+  if(prog) prog.style.display='block';
+  if(progF) progF.style.width='5%';
   res.innerHTML='<span style="color:#00d4dc">⌛ launching swarm…</span>';
   _sInitAgents(30);
   try{
@@ -1635,8 +1625,8 @@ async function runSwarm(){
   }catch(e){
     _sPhase='idle'; res.innerHTML='<span style="color:#ff3d5a">ERROR: '+esc(e.message.slice(0,50))+'</span>';
   }finally{
-    _sRunning=false; document.getElementById('sw-go').disabled=false;
-    setTimeout(()=>{prog.style.display='none';progF.style.width='0%';},3000);
+    _sRunning=false; if(document.getElementById('sw-go')) document.getElementById('sw-go').disabled=false;
+    if(prog){setTimeout(()=>{prog.style.display='none';if(progF)progF.style.width='0%';},3000);}
   }
 }
 </script>

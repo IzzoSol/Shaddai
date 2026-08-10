@@ -101,6 +101,49 @@
   .rv{ opacity:0; transform:translateY(24px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
   .rv.in{ opacity:1; transform:none; }
   .d1{ transition-delay:.08s;} .d2{ transition-delay:.16s;} .d3{ transition-delay:.24s; }
+  /* live signals */
+  .live{ background:linear-gradient(180deg,var(--void),var(--void2)); border-top:1px solid var(--line); }
+  .lstat{ display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; }
+  .lchip{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; border:1px solid var(--line); padding:7px 12px; border-radius:2px; color:var(--mut); }
+  .lchip b{ color:var(--cy); font-weight:700; }
+  .lchip.gold b{ color:var(--electrum); }
+  .sgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:30px; }
+  @media(max-width:1100px){ .sgrid{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:560px){ .sgrid{ grid-template-columns:1fr; } }
+  .scard{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--line); border-radius:6px; padding:16px 16px 16px; position:relative; transition:.25s; overflow:hidden; }
+  .scard:hover{ transform:translateY(-3px); border-color:rgba(94,233,255,.35); box-shadow:0 14px 34px rgba(0,0,0,.45); }
+  .scard .sym{ font-family:var(--disp); font-weight:600; font-size:20px; display:flex; align-items:center; gap:8px; }
+  .scard .sym .dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .scard .src{ font-family:var(--mono); font-size:8px; letter-spacing:.14em; text-transform:uppercase; opacity:.75; margin-top:6px; }
+  .scard .mult{ font-family:var(--mono); font-size:26px; font-weight:700; margin-top:10px; line-height:1; }
+  .scard .mult small{ font-size:11px; opacity:.5; font-weight:400; }
+  .scard .meta{ display:flex; justify-content:space-between; margin-top:12px; font-size:11px; color:var(--mut); }
+  .scard .meta b{ color:var(--ink); font-weight:500; }
+  .scard .bar{ position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.05); }
+  .scard .bar i{ display:block; height:100%; background:var(--cy); box-shadow:0 0 8px currentColor; }
+  .snote{ font-family:var(--mono); font-size:9px; letter-spacing:.1em; color:var(--mut); margin-top:14px; opacity:.6; }
+  /* rag brain */
+  .brain{ background:var(--void); border-top:1px solid var(--line); }
+  .brain-shell{ display:grid; grid-template-columns:1.1fr 1.4fr; gap:26px; margin-top:44px; align-items:start; }
+  @media(max-width:900px){ .brain-shell{ grid-template-columns:1fr; } }
+  .bqwrap{ display:flex; border:1px solid var(--line); background:var(--panel); border-radius:6px; overflow:hidden; }
+  .bqwrap input{ flex:1; background:none; border:none; color:var(--ink); font-family:var(--mono); font-size:13px; padding:16px 18px; outline:none; letter-spacing:.03em; }
+  .bqwrap input::placeholder{ color:var(--mut); }
+  .bqwrap button{ font-family:var(--mono); font-size:11px; letter-spacing:.12em; background:linear-gradient(100deg,var(--electrum),var(--gold)); color:#1a1404; font-weight:700; border:none; padding:0 22px; cursor:pointer; transition:.18s; }
+  .bqwrap button:hover{ filter:brightness(1.08); }
+  .bqwrap button:disabled{ opacity:.4; cursor:default; }
+  .bstat{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--mut); margin-top:12px; min-height:16px; }
+  .bstat b{ color:var(--electrum); }
+  .bstat.on{ color:var(--cy); }
+  .agents{ display:flex; flex-direction:column; gap:8px; }
+  .agrow{ display:grid; grid-template-columns:74px 1fr 42px; gap:12px; align-items:center; padding:10px 14px; background:var(--panel); border:1px solid var(--line); border-radius:6px; transition:.2s; }
+  .agrow:hover{ border-color:currentColor; }
+  .agrow .aid{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; font-weight:700; }
+  .agrow .track{ height:5px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; }
+  .agrow .fill{ height:100%; border-radius:3px; width:0; transition:width .8s cubic-bezier(.2,.7,.2,1); }
+  .agrow .pct{ font-family:var(--mono); font-size:11px; text-align:right; }
+  .agrow .snip{ grid-column:2/4; font-size:12px; color:var(--mut); line-height:1.5; border-left:2px solid var(--line); padding-left:10px; margin-top:2px; }
+  @media(max-width:560px){ .agrow{ grid-template-columns:60px 1fr 38px; } }
 </style>
 </head>
 <body>
@@ -151,6 +194,38 @@
   <div class="marquee rv d2"><div class="track" id="track"></div></div>
 </section>
 
+<!-- LIVE PRO SIGNALS -->
+<section class="live" id="signals">
+  <div class="eyebrow rv">Live feed</div>
+  <h2 class="sec-h rv d1">Pro signals, <span class="it">running</span> now.</h2>
+  <p class="lede rv d2">Real-time calls straight from the signal engine — bonded, trending & new pools. Auto-refresh every 30s.</p>
+  <div class="lstat rv d2">
+    <span class="lchip" id="sigTotal">calls <b>–</b></span>
+    <span class="lchip gold" id="sigHit">2x+ <b>–</b></span>
+    <span class="lchip gold" id="sig5">5x <b>–</b></span>
+    <span class="lchip gold" id="sig10">10x <b>–</b></span>
+  </div>
+  <div class="sgrid rv d2" id="sigGrid"></div>
+  <div class="snote rv d2" id="sigNote">connecting to signal engine…</div>
+</section>
+
+<!-- RAG BRAIN -->
+<section class="brain" id="brain">
+  <div class="eyebrow rv">Rag brain</div>
+  <h2 class="sec-h rv d1">Ask the <span class="it">council</span>.</h2>
+  <p class="lede rv d2">Seven knowledge bases, one query. Grounded answers pulled live from the RAG brain across every agent.</p>
+  <div class="brain-shell">
+    <div class="rv d2">
+      <div class="bqwrap">
+        <input id="bq" placeholder="ask the brain — try 'AI agents and market intelligence'">
+        <button id="bqGo" onclick="askBrain()">ASK</button>
+      </div>
+      <div class="bstat" id="bstat">probing brain…</div>
+    </div>
+    <div class="agents rv d2" id="agentRows"></div>
+  </div>
+</section>
+
 <!-- PROOF -->
 <section class="proof">
   <div class="eyebrow rv">No vaporware</div>
@@ -197,9 +272,98 @@ document.getElementById('track').innerHTML = (ARCH.map(a=>card(a[0],a[1])).join(
 const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold:.15 });
 document.querySelectorAll('.rv:not(.in)').forEach(el=>io.observe(el));
 
+/* ── real data: live Render cloud API (no localhost) ── */
+const CLOUD='https://shaddai-g81x.onrender.com';
+async function apiFetch(p,o){
+  const r=await fetch(CLOUD+p,o);
+  if(!r.ok&&r.status>=500) throw new Error('HTTP '+r.status);
+  return r;
+}
+
 // live AURA savings in the proof stat
-fetch('/api/aura/stats').then(r=>r.json()).then(s=>{ const el=document.getElementById('auraNum');
+apiFetch('/api/aura/stats').then(r=>r.json()).then(s=>{ const el=document.getElementById('auraNum');
   if(el) el.textContent = '$'+(s.costSavedUsd!=null? Number(s.costSavedUsd).toFixed(4) : '0'); }).catch(()=>{});
+
+/* ── helpers ── */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function usd(n){const v=Number(n)||0;if(v>=1e9)return'$'+(v/1e9).toFixed(2)+'B';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+v.toFixed(0);}
+function ago(ts){const s=Math.max(0,(Date.now()-(ts||0))/1000);if(s<60)return Math.round(s)+'s';if(s<3600)return Math.round(s/60)+'m';if(s<86400)return Math.round(s/3600)+'h';return Math.round(s/86400)+'d';}
+
+/* ── LIVE PRO SIGNALS ── */
+const SCOL={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee'};
+let _sigBusy=false;
+async function loadSignals(){
+  if(_sigBusy)return; _sigBusy=true;
+  try{
+    const [c,s]=await Promise.all([
+      apiFetch('/api/signals/calls?limit=100&all=1').then(r=>r.json()),
+      apiFetch('/api/signals/stats').then(r=>r.json())
+    ]);
+    const calls=(c.calls||[]).slice(0,8);
+    const el=document.getElementById('sigGrid');
+    el.innerHTML=calls.map(sigCard).join('')||'<div style="color:var(--mut);padding:10px 0">no signals yet</div>';
+    if(s.ok){
+      document.getElementById('sigTotal').innerHTML='calls <b>'+s.total+'</b>';
+      document.getElementById('sigHit').innerHTML='2x+ <b>'+s.x2+'</b>';
+      document.getElementById('sig5').innerHTML='5x <b>'+s.x5+'</b>';
+      document.getElementById('sig10').innerHTML='10x <b>'+s.x10+'</b>';
+    }else{
+      document.getElementById('sigTotal').innerHTML='calls <b>'+(c.total||calls.length)+'</b>';
+    }
+    document.getElementById('sigNote').textContent='LIVE · '+calls.length+' calls · refresh 30s · '+(calls[0]?ago(calls[0].ts)+' ago':'');
+  }catch(e){
+    document.getElementById('sigNote').textContent='signal engine unreachable — live cloud offline';
+  }finally{_sigBusy=false;}
+}
+function sigCard(x){
+  const col=SCOL[x.source]||'#8b90b4';
+  const m=x.peakMult||1;
+  const ms=m>=5?'#00ff9c':m>=2?'#f0c560':'#5ee9ff';
+  const bw=Math.min(100,Math.round(Math.log10(Math.max(1,m))*100));
+  return `<div class="scard" style="border-left-color:${col}">
+    <div class="sym"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span>${esc(x.symbol||x.name||'?')}</div>
+    <div class="src" style="color:${col}">${(x.source||'unknown').replace('_',' ')}</div>
+    <div class="mult" style="color:${ms}">${m>=2?m.toFixed(1)+'×':m.toFixed(2)}<small> peak</small></div>
+    <div class="meta"><span>entry ${usd(x.entryFdv)}</span><span>${ago(x.ts)} ago</span></div>
+    ${x.mint?`<a href="https://dexscreener.com/solana/${esc(x.mint)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--cy);border:1px solid var(--line);padding:5px 10px;border-radius:2px">DEXSCREENER ↗</a>`:''}
+    <div class="bar"><i style="width:${bw}%;background:${col}"></i></div>
+  </div>`;
+}
+
+/* ── RAG BRAIN ── */
+const AGENT_COL={SHADDAI:'#e8c45c',NEXUS:'#4fc3f7',ZEROX:'#ce93d8',ORACLE:'#fff176',TURTLE:'#80cbc4',QUILL:'#ef9a9a',PIKADON:'#ff8a65'};
+async function askBrain(q){
+  if(!q){q=(document.getElementById('bq').value||'').trim();}
+  if(!q)return;
+  const go=document.getElementById('bqGo'),st=document.getElementById('bstat'),rows=document.getElementById('agentRows');
+  go.disabled=true; st.textContent='QUERYING 7 KNOWLEDGE BASES…'; st.classList.remove('on');
+  rows.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--mut);padding:12px">synchronizing council…</div>';
+  try{
+    const r=await apiFetch('/api/council?q='+encodeURIComponent(q)+'&k=1',{signal:AbortSignal.timeout(60000)});
+    if(!r.ok)throw 0;
+    const d=await r.json();
+    const max=d.agents.reduce((m,a)=>Math.max(m,a.score),0)||1;
+    rows.innerHTML=d.agents.map(a=>{
+      const col=AGENT_COL[a.id]||a.color||'#9b8cff';
+      const r0=(a.results||[])[0]||{};
+      return `<div class="agrow" style="color:${col}">
+        <div class="aid">${a.id}</div>
+        <div class="track"><div class="fill" style="background:${col};box-shadow:0 0 8px ${col}" data-w="${Math.max(4,Math.round(a.score/max*100))}"></div></div>
+        <div class="pct">${Math.round(a.score*100)}%</div>
+        ${r0.text?`<div class="snip" style="border-color:${col}33">${esc(r0.text.slice(0,150))}</div>`:''}
+      </div>`;
+    }).join('');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>rows.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%')));
+    st.innerHTML='BRAIN <b>LIVE</b> · 7 AGENTS · '+d.ms+'ms'; st.classList.add('on');
+  }catch(e){
+    st.textContent='BRAIN OFFLINE — 7 agents unreachable'; st.classList.remove('on');
+  }finally{go.disabled=false;}
+}
+document.getElementById('bq').addEventListener('keydown',e=>{if(e.key==='Enter')askBrain();});
+document.getElementById('bqGo').addEventListener('click',()=>askBrain());
+loadSignals();
+setInterval(loadSignals,30000);
+askBrain('AI agents and market intelligence');
 </script>
 </body>
 </html>

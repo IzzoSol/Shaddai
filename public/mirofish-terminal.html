@@ -236,10 +236,9 @@ body.minimized #ocean,body.minimized #sidebar,body.minimized #sim-form,body.mini
 <canvas id="ocean"></canvas>
 
 <div id="offline-banner">
-  <h3>🐟 MIROFISH — LOCAL ENGINE REQUIRED</h3>
-  <p>The MiroFish AI engine runs locally.<br>
-  Run <code>START_MIROFISH.bat</code> on your machine, then open this page locally.<br><br>
-  Markets, Council chat, and Polymarket tabs work on all connections.</p>
+  <h3>🐟 MIROFISH — CLOUD POWERED</h3>
+  <p>The swarm engine runs server-side in the cloud.<br>
+  No local install needed — works anywhere.</p>
 </div>
 
 <!-- TOPBAR -->
@@ -416,9 +415,10 @@ if(localStorage.getItem('mf_auth')==='1'){
 }
 
 /* ══ CONFIG ═════════════════════════════════════════════ */
-const IS_LOCAL = location.hostname==='localhost'||location.hostname==='127.0.0.1';
-const BASE = IS_LOCAL ? 'http://localhost:3000' : '';
-const MIRO = 'http://localhost:5001';
+const CLOUD = 'https://shaddai-g81x.onrender.com';
+const BASE = CLOUD;                       // live data ALWAYS via Render cloud — no localhost
+const IS_LOCAL = location.hostname==='localhost'||location.hostname==='127.0.0.1'; // display only
+const MIRO = 'http://localhost:5001';     // unused — the swarm sim runs server-side in the cloud
 const CFG  = { ag:50, rd:5, fc:50, spd:1, dq:'med', lbl:'on' };
 
 function cfgR(k, el, mn, mx){
@@ -788,19 +788,14 @@ function renderOcean(){
 let _miroOk=false, _running=false, _continuous=false, _contTimer=null;
 
 async function checkMiro(){
-  if(!IS_LOCAL){
-    // Cloud mode — use Render LLM swarm endpoint
-    _miroOk=true; setStatus(true);
-    const banner=document.getElementById('offline-banner'); if(banner) banner.style.display='none';
-    const el=document.getElementById('tb-status'); if(el){ el.textContent='● CLOUD'; el.className='tb-pill tp-on'; }
-    return;
-  }
-  try{ const r=await fetch(MIRO+'/',{signal:AbortSignal.timeout(3000)}); _miroOk=r.ok||r.status<500; }catch{ _miroOk=false; }
+  // Swarm sim runs server-side in the cloud — always online.
+  try{ await fetch(BASE+'/api/model/health',{signal:AbortSignal.timeout(4000)}); _miroOk=true; }catch{ _miroOk=false; }
   setStatus(_miroOk);
+  const banner=document.getElementById('offline-banner'); if(banner) banner.style.display='none';
 }
 function setStatus(ok){
   const el=document.getElementById('tb-status'), btn=document.getElementById('sf-go');
-  if(el){ el.className='tb-pill '+(ok?'tp-on':'tp-off'); el.textContent=ok?(IS_LOCAL?'● ONLINE':'● CLOUD'):'● OFFLINE'; }
+  if(el){ el.className='tb-pill '+(ok?'tp-on':'tp-off'); el.textContent=ok?'● CLOUD':'● OFFLINE'; }
   if(btn){ btn.disabled=!ok||_running; btn.textContent=ok&&!_running?'LAUNCH →':!ok?'OFFLINE':'RUNNING…'; }
 }
 function toggleContinuous(){
@@ -825,77 +820,46 @@ async function startSim(){
   setHUD('Launching swarm…',null,null,null);
   document.getElementById('tb-ag').innerHTML='agents <em>'+nAg+'</em>';
   document.getElementById('tb-round').innerHTML='round <em>0/'+rds+'</em>';
-  document.getElementById('ri').innerHTML=`<div class="res-card"><h4>🌊 SWARM LAUNCHING · ${nAg} AGENTS</h4><div class="res-body">Token: <b>${esc(tok)}</b><br>Scenario: <b>${esc(news)}</b><br>Rounds: <b>${rds}</b><br>Mode: <b>${IS_LOCAL?'Local MiroFish':'Cloud LLM Swarm'}</b></div></div>`;
+  document.getElementById('ri').innerHTML=`<div class="res-card"><h4>🌊 SWARM LAUNCHING · ${nAg} AGENTS</h4><div class="res-body">Token: <b>${esc(tok)}</b><br>Scenario: <b>${esc(news)}</b><br>Rounds: <b>${rds}</b><br>Mode: <b>Cloud LLM Swarm</b></div></div>`;
   bTab('results',0);
   try{
-    if(!IS_LOCAL){
-      // ── Cloud mode: use Render LLM swarm endpoint ──────────────────────────
-      pf.style.width='20%'; _phase='simulating';
-      setHUD('Swarm agents analyzing via cloud…',null,null,null);
-      // Animate agents while waiting
-      let animPct=20;
-      const animInt=setInterval(()=>{
-        animPct=Math.min(90,animPct+2);
-        pf.style.width=animPct+'%'; document.getElementById('depth-fill').style.height=animPct+'%';
-        _agents.forEach((a,i)=>{ if(Math.random()<0.06){ a.opinion=i<_agents.length*0.52?'bull':'bear'; a.opStr=Math.min(1,a.opStr+0.05); } });
-        const rnd=Math.round((animPct-20)/70*rds);
-        document.getElementById('tb-round').innerHTML=`round <em>${rnd}/${rds}</em>`;
-        setHUD(`Agents deliberating · round ${rnd}/${rds}`,null,null,null);
-      },800);
-      const r=await fetch('/api/mirofish/simulate',{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({token:tok, scenario:news, numAgents:nAg, rounds:rds, platform:plat}),
-        signal:AbortSignal.timeout(45000)
-      });
-      clearInterval(animInt);
-      const d=await r.json();
-      if(!d.ok) throw new Error(d.error||'Cloud swarm failed');
-      const res=d.result||{};
-      // Map LLM response to renderResult() shape
-      const rpj={
-        summary: res.summary||'', prediction: res.summary||'',
-        bullish_pct: res.consensus==='bull'?((res.confidence||70)/100).toFixed(2):(res.consensus==='neutral'?0.5:((100-(res.confidence||70))/100).toFixed(2)),
-        bearish_pct: res.consensus==='bear'?((res.confidence||70)/100).toFixed(2):(res.consensus==='neutral'?0.5:((100-(res.confidence||70))/100).toFixed(2)),
-        confidence: (res.confidence||70)/100,
-        price_trend: res.price_target||'',
-        agent_opinions: (res.agents||[]).map(a=>`[${a.role}] ${a.stance.toUpperCase()} (${a.strength}%) — ${a.reasoning}`),
-        key_factors: res.key_factors||[],
-        risk: res.risk||'medium',
-        provider: d.provider||'cloud',
-      };
-      pf.style.width='100%'; document.getElementById('depth-fill').style.height='100%'; _phase='done';
-      const sid='cloud-'+Date.now();
-      renderResult(tok,news,plat,nAg,rpj,sid);
-      toast('SWARM COMPLETE · '+d.provider+' · CLOUD MODE');
-    } else {
-      // ── Local mode: use localhost:5001 MiroFish server ─────────────────────
-      await fetch(MIRO+'/api/upload/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`TOKEN:${tok}\nSCENARIO:${news}\nPLATFORM:${plat}`,title:tok+'-'+plat}),signal:AbortSignal.timeout(12000)});
-      pf.style.width='18%'; _phase='simulating'; setHUD('Swarm active — agents analyzing…',null,null,null);
-      const sv=await fetch(MIRO+'/api/simulate/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prediction_goal:`How will "${news}" affect ${tok} price and sentiment in 7 days?`,num_agents:nAg,max_rounds:rds,platform:plat}),signal:AbortSignal.timeout(15000)});
-      const {simulation_id:sid}=await sv.json();
-      let done=false, tries=0, lastRnd=0;
-      while(!done&&tries<35){
-        await new Promise(r=>setTimeout(r,3000/Math.max(0.5,CFG.spd)));
-        tries++;
-        try{
-          const st=await fetch(MIRO+'/api/simulate/status/'+sid,{signal:AbortSignal.timeout(6000)});
-          const j=await st.json();
-          const p=Math.max(18,Math.min(90,18+(j.progress||0)*0.72));
-          pf.style.width=p+'%'; document.getElementById('depth-fill').style.height=p+'%';
-          const rnd=j.current_round||tries;
-          if(rnd!==lastRnd){ lastRnd=rnd; document.getElementById('tb-round').innerHTML=`round <em>${rnd}/${rds}</em>`; }
-          setHUD(`Round ${rnd}/${rds} · ${j.agents_active||nAg} agents`,null,null,null);
-          if((j.progress||0)>20) _agents.forEach((a,i)=>{ if(Math.random()<0.055){ a.opinion=i<_agents.length*0.52?'bull':'bear'; a.opStr=Math.min(1,a.opStr+0.04); } });
-          if(j.status==='completed'||(j.progress||0)>=100) done=true;
-        }catch{}
-      }
-      _phase='resolving'; pf.style.width='95%'; setHUD('Resolving consensus…',null,null,null);
-      const rp=await fetch(MIRO+'/api/report/'+sid,{signal:AbortSignal.timeout(12000)});
-      const rpj=await rp.json();
-      pf.style.width='100%'; document.getElementById('depth-fill').style.height='100%'; _phase='done';
-      renderResult(tok,news,plat,nAg,rpj,sid);
-      toast('SWARM SIMULATION COMPLETE');
-    }
+    // ── Cloud mode: swarm runs server-side on Render via /api/mirofish/simulate ─
+    pf.style.width='20%'; _phase='simulating';
+    setHUD('Swarm agents analyzing via cloud…',null,null,null);
+    let animPct=20;
+    const animInt=setInterval(()=>{
+      animPct=Math.min(90,animPct+2);
+      pf.style.width=animPct+'%'; document.getElementById('depth-fill').style.height=animPct+'%';
+      _agents.forEach((a,i)=>{ if(Math.random()<0.06){ a.opinion=i<_agents.length*0.52?'bull':'bear'; a.opStr=Math.min(1,a.opStr+0.05); } });
+      const rnd=Math.round((animPct-20)/70*rds);
+      document.getElementById('tb-round').innerHTML=`round <em>${rnd}/${rds}</em>`;
+      setHUD(`Agents deliberating · round ${rnd}/${rds}`,null,null,null);
+    },800);
+    const r=await fetch(BASE+'/api/mirofish/simulate',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:tok, scenario:news, numAgents:nAg, rounds:rds, platform:plat}),
+      signal:AbortSignal.timeout(45000)
+    });
+    clearInterval(animInt);
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error||'Cloud swarm failed');
+    const res=d.result||{};
+    // Map LLM response to renderResult() shape
+    const rpj={
+      summary: res.summary||'', prediction: res.summary||'',
+      bullish_pct: res.consensus==='bull'?((res.confidence||70)/100).toFixed(2):(res.consensus==='neutral'?0.5:((100-(res.confidence||70))/100).toFixed(2)),
+      bearish_pct: res.consensus==='bear'?((res.confidence||70)/100).toFixed(2):(res.consensus==='neutral'?0.5:((100-(res.confidence||70))/100).toFixed(2)),
+      confidence: (res.confidence||70)/100,
+      price_trend: res.price_target||'',
+      agent_opinions: (res.agents||[]).map(a=>`[${a.role}] ${a.stance.toUpperCase()} (${a.strength}%) — ${a.reasoning}`),
+      key_factors: res.key_factors||[],
+      risk: res.risk||'medium',
+      provider: d.provider||'cloud',
+    };
+    pf.style.width='100%'; document.getElementById('depth-fill').style.height='100%'; _phase='done';
+    const sid='cloud-'+Date.now();
+    renderResult(tok,news,plat,nAg,rpj,sid);
+    toast('SWARM COMPLETE · '+d.provider+' · CLOUD MODE');
     // Continuous mode: auto-rerun after 8s
     if(_continuous){
       _contTimer=setTimeout(()=>{ if(_continuous&&!_running) startSim(); },8000);

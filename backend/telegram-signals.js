@@ -280,6 +280,7 @@ function _cfg() {
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
     preBonding: cc.preBonding !== false,   // pre-bonding curve feed (pump.fun tokens approaching graduation)
+    helius: cc.helius !== false,           // Helius DAS fresh-mint scan (needs HELIUS_RPC_URL / HELIUS_API_KEY)
     brain: cc.brain !== false,             // brain-grounded insight line on signal cards (needs BRAIN_URL reachable)
     // poll cadences (env-tunable) — balanced for free tier rate limits
     interval: Math.max(120000, parseInt(process.env.TG_SIGNALS_INTERVAL || '300000', 10) || 300000),      // 5 min default (DexScreener: ~60 req/min free)
@@ -1460,6 +1461,153 @@ async function _pollGecko() {
   _poolSeeded = true;   // first poll only seeds — then post only NEW pools
 }
 
+// ── HELIUS SOURCE — on-chain VERIFIED fresh SPL mints (free, keyed) ──────────
+// Discovery: pump.fun's newest-coins feed (guaranteed-fresh SPL mints, sorted by
+// created_timestamp desc — Helius DAS searchAssets sorted by created returns only
+// Meteora/Sorare NFTs, and SPL mints carry no createdAt metadata, so the mint list
+// must come from an SPL-native source).
+// Verification: each candidate is checked with Helius DAS getAsset BEFORE we trust
+// it — must resolve on-chain as FungibleToken with 0 royalty, not locked, not burnt,
+// not frozen, not compressed. Then DexScreener cross-checks real price/FDV/liquidity
+// and the exact same safety pipeline runs as every other source.
+// Requires HELIUS_RPC_URL (or HELIUS_API_KEY → mainnet.helius-rpc.com/?api-key=).
+const _heliusSeen = new Set();
+let _heliusRpcUrl = null;
+let _heliusWarned = false;
+function _heliusRpc() {
+  if (_heliusRpcUrl) return _heliusRpcUrl;
+  _heliusRpcUrl = process.env.HELIUS_RPC_URL ||
+    (process.env.HELIUS_API_KEY ? 'https://mainnet.helius-rpc.com/?api-key=' + process.env.HELIUS_API_KEY : null);
+  return _heliusRpcUrl;
+}
+async function _pollHelius() {
+  const cfg = _cfg();
+  if (!cfg.token || cfg.helius === false) return;
+  const rpc = _heliusRpc();
+  if (!rpc) {
+    if (!_heliusWarned) { _heliusWarned = true; console.log('[tg-signals] helius source off — set HELIUS_RPC_URL or HELIUS_API_KEY'); }
+    return;
+  }
+  if (!cfg.chains.includes('solana')) return;   // Helius scan is Solana-native
+  // One batch per poll; keep the DexScreener cross-check well under its free cap.
+  const maxPost = _isDeadHour() ? 1 : Math.min(cfg.maxPer, 3);
+  let posted = 0;
+
+  // Fresh SPL mints straight from pump.fun (newest first). Helius then verifies
+  // each one on-chain before we consider it — that is the source's edge.
+  let coins = [];
+  try {
+    const r = await fetch(PF_COINS, { headers: PF_HEADERS, signal: AbortSignal.timeout(12000) });
+    const j = await r.json();
+    coins = Array.isArray(j) ? j : [];
+  } catch (e) { return; }
+
+  for (const c of coins) {
+    if (posted >= maxPost) break;
+    const mint = c && c.mint;
+    if (!mint || String(mint).length < 32) continue;
+    const sym = String(c.symbol || '').trim();
+    const name = String(c.name || '').trim();
+    if (!sym) continue;
+    if (_heliusSeen.has(mint) || core.wasAlerted(mint) || _badMint(mint)) continue;
+    if (_isScamSym(sym) || _isScamName(name)) { _markBadMint(mint); _heliusSeen.add(mint); continue; }
+    if (!_symCooldownOk(sym)) { _heliusSeen.add(mint); continue; }
+
+    // Helius DAS getAsset — the mint must actually exist on-chain and be a clean
+    // fungible token (0 royalty, unlocked, not burnt/frozen/compressed). Mints that
+    // fail DAS resolution or look altered are skipped without burning alert credits.
+    let asset = null;
+    try {
+      const r = await fetch(rpc, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'shaddai-helius', method: 'getAsset', params: { id: mint } }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const j = await r.json();
+      if (j.error || !j.result) { _heliusSeen.add(mint); continue; }
+      asset = j.result;
+    } catch (e) { _heliusSeen.add(mint); continue; }
+
+    if (asset.interface && asset.interface !== 'FungibleToken') { _heliusSeen.add(mint); continue; }
+    const royalty = asset.royalty || {};
+    if (royalty.basis_points > 0 || royalty.locked) { _heliusSeen.add(mint); continue; }
+    if (asset.burnt || asset.frozen || asset.compressed) { _heliusSeen.add(mint); continue; }
+
+    // Free DexScreener cross-check → real price/FDV/liquidity + chart + info.
+    let pair = null;
+    try {
+      const r = await fetch(DS_TOKEN('solana', mint), { signal: AbortSignal.timeout(12000) });
+      const j = await r.json();
+      const pairs = (j && j.pairs) || [];
+      // Prefer Raydium (pump.fun graduates) with the deepest book.
+      pair = pairs
+        .filter(p => p && p.chainId === 'solana' && p.liquidity && Number(p.liquidity.usd) > 0)
+        .sort((x, y) => {
+          const a = x.dexId === 'raydium' ? 1 : 0, b = y.dexId === 'raydium' ? 1 : 0;
+          if (a !== b) return b - a;
+          return (Number(y.liquidity.usd) || 0) - (Number(x.liquidity.usd) || 0);
+        })[0] || null;
+    } catch (e) { }
+    if (!pair) { _heliusSeen.add(mint); continue; }
+
+    const liq = Number(pair.liquidity.usd) || 0;
+    const vol = Number(pair.volume && pair.volume.h24) || 0;
+    const fdv = Number(pair.fdv) || 0;
+    const chg = Number(pair.priceChange && pair.priceChange.h24) || 0;
+    if (liq < cfg.minLiq) { _heliusSeen.add(mint); continue; }
+    // Micro-FDV relative volume gate (same rule as gecko new_pools).
+    const volOk = fdv > 0 && fdv < 15000 ? (vol / fdv) >= 1.5 : vol >= cfg.minVol24h;
+    if (!volOk || !_passesFdv(cfg, fdv)) { _heliusSeen.add(mint); continue; }
+    if (cfg.bullishOnly && isFinite(chg) && chg < -10) { _heliusSeen.add(mint); continue; }
+
+    // pump.fun origin gate — direct Raydium launches historically win far less.
+    if (_poolSeeded) {
+      const pc = await _pumpDetail(mint);
+      if (!pc || pc.is_banned || pc.nsfw) { _heliusSeen.add(mint); continue; }
+    }
+
+    // Safety + social gates shared with the other sources.
+    let social = null;
+    if (cfg.requireWebsite || cfg.requireTwitter || cfg.requireSocial || cfg.requireLocked || cfg.minSocialScore) {
+      social = await _socialScore(null, mint, pair);
+      if (!_passesSocial(cfg, social)) { _heliusSeen.add(mint); continue; }
+    }
+    let rs = null;
+    if (cfg.rugFilter) rs = await _rugScore(mint);
+    if (rs && rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(mint); _heliusSeen.add(mint); continue; }
+    if (!_holdersOk(cfg, rs) || !_top10Ok(cfg, rs)) { _heliusSeen.add(mint); continue; }
+    if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); _heliusSeen.add(mint); continue; }
+    if (!_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) { _heliusSeen.add(mint); continue; }
+    if (!_liqMatches(cfg, liq, fdv) || _overCap(cfg, fdv, rs)) { _heliusSeen.add(mint); continue; }
+
+    // Gecko-shaped card data so _poolCard/_detailBlock reuse the exact same rendering.
+    const a = {
+      name: (pair.baseToken && pair.baseToken.symbol ? pair.baseToken.symbol : sym) + ' / SOL',
+      address: pair.pairAddress || '',
+      base_token_price_usd: pair.priceUsd || '0',
+      reserve_in_usd: String(liq),
+      fdv_usd: fdv ? String(fdv) : '',
+      volume_usd: { h24: String(vol), h1: String(pair.volume && pair.volume.h1 || 0) },
+      price_change_percentage: { h24: String(chg), h1: String(pair.priceChange && pair.priceChange.h1 || 0) },
+      pool_created_at: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : null,
+    };
+    const chartUrl = pair.url || ('https://dexscreener.com/solana/' + mint);
+    // CA-first so trading bots can auto-buy before the full card lands.
+    await core.broadcast(`🧪 <b>${_esc(sym)}</b> — ${_esc(name)} ◎ SOL\n<code>${_esc(mint)}</code>`).catch(() => {});
+    const helBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: chg >= 15, fdv, source: 'helius' });
+    const card = '🔭 <b>ON-CHAIN VERIFIED</b> — Helius getAsset scan\n' + _poolCard('solana', 'helius', a, mint);
+    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
+    if (ok) {
+      core.markAlerted(mint);
+      _heliusSeen.add(mint);
+      posted++;
+      try { pnl.recordCall({ source: 'helius', chain: 'solana', mint, name: sym, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd) || 0, holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: vol, liq }); } catch (e) {}
+      _logFeatures({ mint, chain: 'solana', name: sym, symbol: sym, source: 'helius', entryFdv: fdv, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: vol, liquidity: liq, sourceCount: 1 });
+    }
+    if (_heliusSeen.size > _SEEN_CAP) { const f = _heliusSeen.values().next().value; _heliusSeen.delete(f); }
+  }
+}
+
 // ── BOOST WATCHER — DexScreener paid boosts with real volume ─────────────────
 // Catches tokens that paid for DexScreener promotion AND are actively pumping.
 // These are missed by the trending path which watches the trending endpoint, not boosts.
@@ -1623,6 +1771,12 @@ function startTelegramSignals() {
   setTimeout(() => { _pollGecko().catch(() => {}); }, 6000);
   _geckoTimer = setInterval(() => { _pollGecko().catch(() => {}); }, cfg.geckoInterval);
   if (_geckoTimer.unref) _geckoTimer.unref();
+  // Helius DAS fresh-mint scan — newly-created SPL tokens (needs HELIUS_RPC_URL / HELIUS_API_KEY)
+  if (cfg.helius && _heliusRpc()) {
+    setTimeout(() => { _pollHelius().catch(() => {}); }, 9000);
+    _heliusTimer = setInterval(() => { _pollHelius().catch(() => {}); }, cfg.geckoInterval);
+    if (_heliusTimer.unref) _heliusTimer.unref();
+  }
 }
 
 // Pipeline cycle: run 4 stages, post enriched candidates
@@ -1679,4 +1833,4 @@ async function _pipelineCycle(pipeline) {
   } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollBoosts, _socialScore, _passesSocial, _brainInsight, _brainAngle };
+module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts, _socialScore, _passesSocial, _brainInsight, _brainAngle };
