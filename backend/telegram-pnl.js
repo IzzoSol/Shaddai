@@ -117,7 +117,7 @@ function _milestoneCard(call, x) {
 }
 
 async function trackTick() {
-  if (!core.token()) return;
+  const HAS_BOT = !!core.token();
   _now = Date.now();
   const active = _state.calls.filter(c => !c.closed && (_now - c.ts) < MAX_AGE_MS);
   if (!active.length) return;
@@ -136,16 +136,18 @@ async function trackTick() {
       }
       // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
       // Never skip straight to 5x just because the token moved fast between ticks.
-      for (const m of MILESTONES) {
-        if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
-      }
-      if (hit) {
-        call.milestones.push(hit);   // record only the one being fired; next tick fires the next
-        changed = true;
-        const img = milestoneImage(hit) || _pnlImage();
-        const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
-        if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
-        else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+      if (HAS_BOT) {
+        for (const m of MILESTONES) {
+          if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
+        }
+        if (hit) {
+          call.milestones.push(hit);   // record only the one being fired; next tick fires the next
+          changed = true;
+          const img = milestoneImage(hit) || _pnlImage();
+          const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
+          if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
+          else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+        }
       }
 
       // Slow climber updates removed — channel posts wins (milestones) only.
@@ -154,6 +156,8 @@ async function trackTick() {
     // Rug alerts and round-trip alerts removed — wins only channel.
   }
   if (changed) _write(_state);
+  // Rug prune: calls whose LIVE fdv ≤ $4k for >1h disappear (only when we have a live price)
+  try { pruneRugs(4000, 1, prices); } catch (e) {}
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
   try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
 }
@@ -327,15 +331,16 @@ function seedCall(o) {
   return true;
 }
 
-let _timer = null, _digestTimer = null, _heldTimer = null;
+let _timer = null, _digestTimer = null, _heldTimer = null, _discoverTimer = null;
 function startTracker() {
-  if (!core.token()) { console.log('[tg-pnl] disabled (no token).'); return; }
   if (_timer) return;
-  if (!core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting — tracker not started here.'); return; }
-  console.log('[tg-pnl] call tracker armed — re-pricing + milestone wins.');
+  const HAS_BOT = !!core.token();
+  if (HAS_BOT && typeof core.acquireBroadcastLock === 'function' && !core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting — tracker not started here.'); return; }
+  console.log('[tg-pnl] call tracker armed — re-pricing + ' + (HAS_BOT ? 'milestone wins.' : 'no-bot live reprice + rug-prune (no broadcasting).'));
   setTimeout(() => { trackTick().catch(() => {}); }, 12000);
   _timer = setInterval(() => { trackTick().catch(() => {}); }, 8 * 60000);   // every 8 min
   if (_timer.unref) _timer.unref();
+  if (!HAS_BOT) return;   // digest + survivors only broadcast when the bot is live
   // hourly performance distribution digest (with a polished image)
   let lastD = Date.now();
   _digestTimer = setInterval(() => {
@@ -360,6 +365,53 @@ function startTracker() {
   if (_heldTimer.unref) _heldTimer.unref();
 }
 
+// Discovery — stream new Solana tokens into the public feed on Render when the bot
+// is offline. Uses DexScreener token-boosts (community-promoted new launches), filtered
+// to small/mid FDV with meaningful liquidity, deduped + capped (≤6/tick, 10-min cadence).
+async function discoverTick() {
+  _now = Date.now();
+  try {
+    const r = await fetch('https://api.dexscreener.com/token-boosts/latest/v1', { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) return 0;
+    const boosts = await r.json();
+    if (!Array.isArray(boosts)) return 0;
+    const sol = boosts.filter(b => b.chainId === 'solana' && b.tokenAddress);
+    let added = 0;
+    for (const b of sol.slice(0, 50)) {
+      if (added >= 6) break;
+      const mint = b.tokenAddress;
+      if (_state.calls.some(x => x.mint === mint)) continue;           // already tracked
+      let fdv = 0, price = 0, liq = 0, sym = b.symbol || b.token || '', nm = b.name || '';
+      try {
+        const pr = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint, { signal: AbortSignal.timeout(8000) });
+        const pj = await pr.json();
+        const p = (pj.pairs || []).find(x => x.chainId === 'solana') || (pj.pairs || [])[0];
+        if (p) {
+          fdv = Number(p.fdv || p.marketCap || 0) || 0;
+          price = Number((p.priceNative !== undefined ? p.priceNative : p.priceUsd)) || 0;
+          liq = Number((p.liquidity && p.liquidity.usd) || 0);
+          sym = (p.baseToken && p.baseToken.symbol) || sym;
+          nm = (p.baseToken && p.baseToken.name) || nm;
+        }
+      } catch (e) {}
+      if (fdv <= 2000 || fdv > 250000) continue;                        // only small/mid new launches
+      if (liq > 0 && liq < 2000) continue;                             // need real liquidity (skip proxy/zero-liq)
+      recordCall({ mint, chain: 'solana', symbol: sym, name: nm, source: 'boosted', entryFdv: fdv, entryPrice: price, liq, holders: 0 });
+      added++;
+    }
+    if (added > 0) { try { _write(_state); } catch (e) {} console.log('[tg-pnl] discovery +' + added + ' new boosted solana call(s).'); }
+    return added;
+  } catch (e) { return 0; }
+}
+function startDiscovery() {
+  if (_discoverTimer) return;
+  if ((process.env.DISCOVERY || '1') === '0') { console.log('[tg-pnl] discovery disabled (DISCOVERY=0).'); return; }
+  console.log('[tg-pnl] discovery armed — streaming new boosted Solana calls every 10m (capped 6/tick).');
+  setTimeout(() => { discoverTick().catch(() => {}); }, 30000);
+  _discoverTimer = setInterval(() => { discoverTick().catch(() => {}); }, 10 * 60000);
+  if (_discoverTimer.unref) _discoverTimer.unref();
+}
+
 function resetCalls() { _state = { calls: [] }; _write(_state); }
 
 // Remove "bad" calls — aged calls that never reached minPeak. Keeps seeds, winners,
@@ -370,6 +422,27 @@ function pruneLosers(minPeak, minAgeHours) {
   const ageMs = (Number(minAgeHours) || 6) * 3600 * 1000;
   const before = _state.calls.length;
   _state.calls = _state.calls.filter(c => c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
+  const removed = before - _state.calls.length;
+  if (removed > 0) _write(_state);
+  return removed;
+}
+
+// Rug prune — remove calls whose LIVE fdv dropped to a rug floor (eg $4k) for more than
+// a minimum age. Only pruned when we actually have a live price confirming the rug; calls
+// we could not re-price are kept (no evidence they rugged). Keeps seeds + young calls.
+function pruneRugs(maxFdv, minAgeHours, prices) {
+  _now = Date.now();
+  const mf = Number(maxFdv) || 4000;
+  const ageMs = (Number(minAgeHours) || 1) * 3600 * 1000;
+  const before = _state.calls.length;
+  _state.calls = _state.calls.filter(c => {
+    if (c.source === 'seed') return true;
+    if ((_now - c.ts) < ageMs) return true;                        // too young — give it time
+    const live = (prices && prices[c.mint] != null) ? prices[c.mint] : null;
+    if (live != null) return live > mf;                            // confirmed live price → keep if above rug floor
+    if (typeof c.curFdv === 'number' && c.curFdv > 0) return c.curFdv > mf;  // last known live price
+    return true;                                                    // no live price → can't confirm a rug → keep
+  });
   const removed = before - _state.calls.length;
   if (removed > 0) _write(_state);
   return removed;
@@ -553,4 +626,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls };
+module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls };
