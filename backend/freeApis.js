@@ -1,6 +1,6 @@
 /* ==== FREE-API HELPERS ================================================= */
 
-const fetch = (...args) => import('node-fetch');
+const fetch = require('node-fetch');
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 const COINDESK_BASE = 'https://www.coindesk.com/';
@@ -36,7 +36,7 @@ async function getBoostedCoins(limit = 6) {
     symbol: a.symbol,
     name: a.name,
     priceUsd: a.priceUsd || 0,
-  });
+  }));
 }
 
 // ---------------------------------------------------------------------
@@ -64,7 +64,7 @@ async function fetchRedditSentiment(query) {
     author: p.data.author,
     created_utc: new Date(p.data.created_utc * 1000).toLocaleString(),
     score: p.data.score,
-  });
+  }));
 }
 
 // ---------------------------------------------------------------------
@@ -84,7 +84,7 @@ async function fetchTwitterSentiment(query) {
     text: t.text,
     author_id: t.author_id,
     created_at: new Date(t.created_at).toLocaleString(),
-  });
+  }));
 }
 
 // ---------------------------------------------------------------------
