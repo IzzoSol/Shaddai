@@ -1113,29 +1113,32 @@ app.get('/api/markets/jupiter', async (req, res) => {
   } catch (e) { res.json({ ok: false, data: { data: {} }, error: String(e.message) }); }
 });
 
-// Solana network stats — free public RPC
+// Solana network stats — free public RPC (falls back across endpoints)
 app.get('/api/network/solana', async (req, res) => {
-  try {
-    const rpc = process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com';
-    const body = (id, method, params) => JSON.stringify({ jsonrpc: '2.0', id, method, params });
-    const [perfRes, slotRes, supplyRes] = await Promise.allSettled([
-      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(1, 'getRecentPerformanceSamples', [1]), signal: AbortSignal.timeout(8000) }),
-      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(2, 'getSlot', []), signal: AbortSignal.timeout(8000) }),
-      fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(3, 'getSupply', [{ commitment: 'finalized' }]), signal: AbortSignal.timeout(8000) }),
-    ]);
-    let tps = null, slot = null, circulatingSupply = null;
-    if (perfRes.status === 'fulfilled' && perfRes.value.ok) {
-      const pj = await perfRes.value.json(); const s = pj.result && pj.result[0];
-      if (s) tps = Math.round(s.numTransactions / s.samplePeriodSecs);
-    }
-    if (slotRes.status === 'fulfilled' && slotRes.value.ok) {
-      const sj = await slotRes.value.json(); slot = sj.result;
-    }
-    if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
-      const sj = await supplyRes.value.json(); circulatingSupply = sj.result && sj.result.value && sj.result.value.circulating;
-    }
-    res.json({ ok: true, data: { tps, slot, circulatingSupply } });
-  } catch (e) { res.json({ ok: false, data: null, error: String(e.message) }); }
+  const rpcs = [process.env.HELIUS_RPC_URL, 'https://api.mainnet-beta.solana.com', 'https://solana.publicnode.com'].filter(Boolean);
+  const body = (id, method, params) => JSON.stringify({ jsonrpc: '2.0', id, method, params });
+  let tps = null, slot = null, circulatingSupply = null;
+  for (const rpc of rpcs) {
+    try {
+      const [perfRes, slotRes, supplyRes] = await Promise.allSettled([
+        fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(1, 'getRecentPerformanceSamples', [1]), signal: AbortSignal.timeout(15000) }),
+        fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(2, 'getSlot', []), signal: AbortSignal.timeout(15000) }),
+        fetch(rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(3, 'getSupply', [{ commitment: 'finalized' }]), signal: AbortSignal.timeout(15000) }),
+      ]);
+      if (perfRes.status === 'fulfilled' && perfRes.value.ok) {
+        const pj = await perfRes.value.json(); const s = pj.result && pj.result[0];
+        if (s) tps = Math.round(s.numTransactions / s.samplePeriodSecs);
+      }
+      if (slotRes.status === 'fulfilled' && slotRes.value.ok) {
+        const sj = await slotRes.value.json(); slot = sj.result;
+      }
+      if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
+        const sj = await supplyRes.value.json(); circulatingSupply = sj.result && sj.result.value && sj.result.value.circulating;
+      }
+      if (tps !== null || slot !== null) break;
+    } catch (_) { continue; }
+  }
+  res.json({ ok: tps !== null || slot !== null, data: { tps, slot, circulatingSupply } });
 });
 
 // ── MiroFish LLM swarm simulation — runs on Render when localhost:5001 unavailable ─
