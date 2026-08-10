@@ -1212,7 +1212,7 @@ Generate exactly ${selected.length} agents with roles: ${selected.join(', ')}. B
 app.get('/api/signals/calls', (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
-    const limit = req.query.all === '1' ? 100 : Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const limit = req.query.all === '1' ? 2000 : Math.min(200, parseInt(req.query.limit, 10) || 100);
     const rows = pnl.callsJson({ limit, since: req.query.since, chain: req.query.chain, source: req.query.source });
     res.json({ ok: true, total: rows.length, calls: rows });
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
@@ -1224,7 +1224,7 @@ app.get('/api/signals/stats', (req, res) => {
     const period = req.query.period || 'all';
     const leaderboard = pnl.leaderboardJson({ limit: 10, period });
     // Per-source breakdown in the shape the pro-signals page renders.
-    const all = pnl.callsJson({ limit: 100 });
+    const all = pnl.callsJson({ limit: 2000 });
     const span = period === 'day' ? 1 : period === 'week' ? 7 : 0;
     const since = span ? Date.now() - span * 86400000 : 0;
     const by = {};

@@ -503,7 +503,7 @@ function _shape(c) {
     ts: c.ts || 0,
   };
 }
-function _clampLimit(v) { const n = parseInt(v, 10); return Math.min(100, Math.max(1, isFinite(n) ? n : 50)); }
+function _clampLimit(v) { const n = parseInt(v, 10); return Math.min(2000, Math.max(1, isFinite(n) ? n : 50)); }
 // Recent calls feed. opts: { limit, since(ms cursor), chain, source }
 function callsJson(opts) {
   opts = opts || {}; _now = Date.now();

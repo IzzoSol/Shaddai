@@ -932,14 +932,12 @@ async function fetchMkts(){
       fetch(BASE+'/api/markets/forex').then(r=>r.json()),
     ]);
     let h='';
-    const sd=(s.status==='fulfilled'&&s.value.ok)?s.value.data:[];
-    const eq=sd.filter(x=>x.type==='stock'), cm=sd.filter(x=>x.type==='commodity');
-    if(eq.length)h+=`<div class="mhd">EQUITIES</div>`+eq.map(mkCard).join('');
-    if(cm.length)h+=`<div class="mhd">COMMODITIES</div>`+cm.map(mkCard).join('');
-    const cd=(c.status==='fulfilled'&&c.value.ok)?c.value.data:[];
+    const sd=(s.status==='fulfilled'&&s.value.ok)?(s.value.data||s.value.quotes||[]):[];
+    if(sd.length)h+=`<div class="mhd">EQUITIES</div>`+sd.map(mkCard).join('');
+    const cd=(c.status==='fulfilled'&&c.value.ok)?(c.value.coins||c.value.data||[]):[];
     if(cd.length)h+=`<div class="mhd">CRYPTO</div>`+cd.map(x=>{const ch=x.price_change_percentage_24h||0;return`<div class="mc" onclick="simFrom('${esc(x.symbol)}')"><div class="mi">${CI[(x.symbol||'').toLowerCase()]||'🪙'}</div><div class="mn"><div class="ms">${(x.symbol||'').toUpperCase()}</div><div class="mf">${x.name}</div></div><div><div class="mpv ${ch>=0?'up':'dn'}">${usd(x.current_price||0)}</div><div class="mchg ${ch>=0?'up':'dn'}">${ch>=0?'+':''}${ch.toFixed(2)}%</div></div></div>`;}).join('');
-    const fd=(f.status==='fulfilled'&&f.value.ok)?f.value.data:[];
-    if(fd.length)h+=`<div class="mhd">FOREX</div>`+fd.map(x=>`<div class="mc"><div class="mi" style="font-size:9px;color:var(--T);font-family:'Syncopate',sans-serif">${x.quote}</div><div class="mn"><div class="ms">${x.pair}</div><div class="mf">USD/${x.quote}</div></div><div><div class="mpv" style="color:var(--T)">${x.rate?x.rate.toFixed(4):'—'}</div></div></div>`).join('');
+    const fd=(f.status==='fulfilled'&&f.value.ok)?(f.value.pairs||f.value.data||[]):[];
+    if(fd.length)h+=`<div class="mhd">FOREX</div>`+fd.map(x=>{const pair=x.pair||x.sym||'USD/?',quote=(x.quote||pair.split('/')[1]||'?');return`<div class="mc"><div class="mi" style="font-size:9px;color:var(--T);font-family:'Syncopate',sans-serif">${esc(quote)}</div><div class="mn"><div class="ms">${esc(pair)}</div><div class="mf">USD/${esc(quote)}</div></div><div><div class="mpv" style="color:var(--T)">${x.rate?x.rate.toFixed(4):'—'}</div></div></div>`;}).join('');
     document.getElementById('mi').innerHTML=h||'<div style="padding:22px;text-align:center;color:var(--R);font-family:Share Tech Mono,monospace;font-size:13px">START SERVER :3000 FOR LIVE DATA</div>';
   }catch(e){document.getElementById('mi').innerHTML='<div style="padding:22px;text-align:center;color:var(--R);font-family:Share Tech Mono,monospace;font-size:13px">'+esc(e.message)+'</div>';}
 }
@@ -957,8 +955,8 @@ async function fetchPoly(){
     const m=Array.isArray(j)?j:(j.markets||j.data||[]);
     document.getElementById('poly-cnt').textContent=m.length;
     const kw=/bitcoin|btc|eth|solana|sol|crypto|fed|rate|inflation/i;
-    let list=m.filter(x=>kw.test(x.question||x.title||'')).slice(0,25);
-    if(!list.length)list=m.slice(0,25);
+    let list=m.filter(x=>kw.test(x.question||x.title||'')).slice(0,60);
+    if(!list.length)list=m.slice(0,60);
     document.getElementById('pi').innerHTML=list.map(m=>{
       const q=m.question||m.title||'';
       const raw=m.outcomePrices?(Array.isArray(m.outcomePrices)?m.outcomePrices[0]:m.outcomePrices):(m.bestBid||m.price||null);
