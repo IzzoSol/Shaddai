@@ -1276,6 +1276,10 @@ Generate exactly ${selected.length} agents with roles: ${selected.join(', ')}. B
   }
 });
 
+// ── PNL image generator — themed ZEROX art for Shaddai Signals PNL cards ─
+try { app.use('/api/pnl', require('./pnl-image')); console.log('[prod] PNL image generator mounted'); }
+catch (e) { console.warn('[prod] pnl-image failed:', e.message); }
+
 // ── Pro trading signals — backs the pro-signals page (PIW-gated client-side).
 // Source = the live Telegram PNL tracker (backend/data/tg-calls.json). Same-origin,
 // no key (registration + access control lives on the page itself). 1s response cache
