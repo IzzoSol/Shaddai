@@ -2428,6 +2428,9 @@ if (!process.env.VERCEL_ENV) {
     // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
     try { require('./telegram-pnl').startTracker(); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
 
+    // Start DexScreener discovery loop (free, no key) → pushes new boosted tokens into signals
+    try { require('./telegram-pnl').startDiscovery(); console.log('[discovery] DexScreener boosted-token discovery armed'); } catch (e) { console.warn('[discovery] init skipped:', e && e.message); }
+
     // ── KEEP-ALIVE: Render's free plan spins the service DOWN after ~15 min idle, which stops the
     // signal pollers (no calls when nobody's visiting). Self-ping the public URL every ~10 min so the
     // instance stays awake 24/7 and the pollers keep running. (Render auto-sets RENDER_EXTERNAL_URL.)
