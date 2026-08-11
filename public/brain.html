@@ -707,6 +707,17 @@ AGENTS.forEach(a=>{const r=parseInt(a.color.slice(1,3),16),g=parseInt(a.color.sl
 // with a localhost:3000 fallback for file:// opens.
 const API=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin:'http://localhost:3000';
 const RENDER_API='https://shaddai-g81x.onrender.com';
+// Committed knowledge-base snapshot — if every live endpoint is unreachable (e.g.
+// sleeping Render free instance), show these real committed counts instead of 0s.
+const COMMITTED_KB={videos:126,chunks:2194,terms:24051,words:1062641,systems:['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'],agents:[
+  {id:'SHADDAI',docs:31,words:139717,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'NEXUS',docs:9,words:70431,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'ZEROX',docs:37,words:423502,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'ORACLE',docs:13,words:111847,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'TURTLE',docs:9,words:41364,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'QUILL',docs:20,words:249039,topics:[],systems:[],channels:[],top_terms:[],titles:[]},
+  {id:'PIKADON',docs:7,words:26741,topics:[],systems:[],channels:[],top_terms:[],titles:[]}
+]};
 const FREE_LIMIT=3;
 const IN_IFRAME=window.self!==window.top;
 
@@ -812,10 +823,9 @@ async function loadLive(){
     }catch(_e2){}
   }
   if(!d){
-    serverOnline=false;
-    setNet(false,'SERVER OFFLINE','run: python brain_server.py');
-    rebuild();
-    return;
+    // 3) committed snapshot — keep the brain populated even when every live endpoint sleeps
+    d=Object.assign({}, COMMITTED_KB, {agents:COMMITTED_KB.agents.map(a=>Object.assign({},a))});
+    from='snapshot';
   }
   serverOnline=(from==='brain');
   document.getElementById('st-vids').textContent=fmt(d.videos||0);
@@ -830,7 +840,7 @@ async function loadLive(){
     a.topics=(x.topics||[]); a.systems=(x.systems||[]); a.channels=(x.channels||[]);
     a.top_terms=(x.top_terms||[]); a.titles=(x.titles||[]);
   });
-  setNet(true, from==='render'?'CLOUD RAG':'LIVE RAG', from==='render'?(d.videos+' docs'):(d.chunks+' chunks'));
+  setNet(true, from==='render'?'CLOUD RAG':(from==='snapshot'?'SNAPSHOT KB':'LIVE RAG'), from==='render'?(d.videos+' docs'):(from==='snapshot'?(d.videos+' docs · committed'):(d.chunks+' chunks')));
   rebuild();
 }
 function setNet(ok,label,sub){

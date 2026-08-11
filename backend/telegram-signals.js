@@ -250,6 +250,10 @@ function _cfg() {
   return {
     token: process.env.TELEGRAM_BOT_TOKEN || '',
     channel: process.env.TELEGRAM_CHANNEL || '',
+    // Record-only mode: when no TELEGRAM_BOT_TOKEN is set (e.g. Render free tier),
+    // still scan the DEX feeds and log calls to tg-calls.json so the Signals tab
+    // stays live — but skip Telegram broadcasts. Force off with TG_RECORD_ONLY=0.
+    recordOnly: !!((process.env.TG_RECORD_ONLY || '1') !== '0' && !process.env.TELEGRAM_BOT_TOKEN),
     chains: String(cc.chains || 'solana').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
     minLiq: Number(cc.minLiq) || 0,
     minVol24h: Number(cc.minVol24h) || 0,
@@ -752,7 +756,7 @@ async function _refreshProfiles() {
 
 async function _pollOnce() {
   const cfg = _cfg();
-  if (!cfg.token || !cfg.signals) return;   // disabled or trending feed toggled off
+  if ((!cfg.token && !cfg.recordOnly) || !cfg.signals) return;   // disabled or trending feed toggled off
   // Refresh profiles in parallel (free data — enhances images + social data)
   _refreshProfiles().catch(() => {});
   let boosts;
@@ -893,11 +897,17 @@ async function _pollOnce() {
     const _btns = core.buildButtons(addr, chain, pair.url);
     // CA first — bare address so trading bots (Phanes etc.) catch it immediately
     const _tSym = pair.baseToken && pair.baseToken.symbol;
-    await core.broadcast(`<b>$${_esc(_tSym || '')}</b> — ◎ SOL\n<code>${_esc(addr)}</code>`);
-    const ok = (_imgUrl
-      ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
-      : (await core.broadcast(_msg, { buttons: _btns }))
-    ) > 0;
+    let ok;
+    if (cfg.recordOnly) {
+      // Record-only: no Telegram token — log the call without broadcasting.
+      ok = true;
+    } else {
+      await core.broadcast(`<b>$${_esc(_tSym || '')}</b> — ◎ SOL\n<code>${_esc(addr)}</code>`);
+      ok = (_imgUrl
+        ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
+        : (await core.broadcast(_msg, { buttons: _btns }))
+      ) > 0;
+    }
     _seen.add(addr);
     if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
@@ -1365,7 +1375,7 @@ function _detailBlock(rs, social, extra) {
 }
 async function _pollGecko() {
   const cfg = _cfg();
-  if (!cfg.token || (!cfg.newpools && !cfg.trending)) return;
+  if ((!cfg.token && !cfg.recordOnly) || (!cfg.newpools && !cfg.trending)) return;
   const kinds = []; if (cfg.newpools) kinds.push('new_pools'); if (cfg.trending) kinds.push('trending_pools');
   const _geckoMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   let posted = 0;
@@ -1441,9 +1451,10 @@ async function _pollGecko() {
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
           // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
-          if (_taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
+          if (!cfg.recordOnly && _taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
           const _geckoBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: !!_isRevival, fdv, source: kind });
-          const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || ''), { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
+          const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
+          const ok = cfg.recordOnly ? true : (await core.broadcast(card + _detail, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
@@ -1715,11 +1726,23 @@ async function _pollBoosts() {
 let _timer = null, _bondTimer = null, _geckoTimer = null, _pipelineTimer = null, _boostTimer = null;
 function startTelegramSignals() {
   const cfg = _cfg();
-  if (!cfg.token) {
+  if (!cfg.token && !cfg.recordOnly) {
     console.log('[tg-signals] disabled — set TELEGRAM_BOT_TOKEN to enable the DEX signals feed (broadcasts to the channel + every chat the bot is in).');
     return;
   }
   if (_timer) return;
+  if (cfg.recordOnly) {
+    // No Telegram token (Render free tier etc.): scan the DEX feeds and log fresh
+    // calls to tg-calls.json so the Signals tab stays populated — no broadcasts.
+    console.log(`[tg-signals] RECORD-ONLY mode — no TELEGRAM_BOT_TOKEN: scanning DEX feeds, logging calls to tg-calls.json for the Signals tab (no Telegram broadcasts). trending/${Math.round(cfg.interval / 1000)}s · gecko=${Math.round(cfg.geckoInterval / 1000)}s`);
+    setTimeout(() => { _pollOnce().catch(() => {}); }, 6000);
+    _timer = setInterval(() => { _pollOnce().catch(() => {}); }, cfg.interval);
+    if (_timer.unref) _timer.unref();
+    setTimeout(() => { _pollGecko().catch(() => {}); }, 9000);
+    _geckoTimer = setInterval(() => { _pollGecko().catch(() => {}); }, cfg.geckoInterval);
+    if (_geckoTimer.unref) _geckoTimer.unref();
+    return;
+  }
   if (!core.acquireBroadcastLock()) { console.log('[tg-signals] another instance owns broadcasting — signals not started here (prevents duplicate sends).'); return; }
   console.log(`[tg-signals] ENABLED → ${cfg.channel || '(no channel — DM chats only)'} · chains=${cfg.chains.join(',')} · trending/${Math.round(cfg.interval / 1000)}s · bonded=${cfg.bonded ? Math.round(cfg.bondedInterval / 1000) + 's' : 'off'}`);
 
