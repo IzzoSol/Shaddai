@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Twitter Thread Pack — SHADDAI</title>
+<meta name="description" content="Type a topic. QUILL writes you a full viral thread + hook variants in seconds. Free, no signup." />
+<meta property="og:title" content="Twitter Thread Pack — a full thread in seconds" />
+<meta property="og:description" content="Type a topic, get a viral thread + hooks. Free, no signup." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#07110f; --acc:#00d68f; --acc2:#5cc8ff; --gold:#e8c45c;
+    --ink:#e9fff6; --ink2:#a6c8ba; --dim:#5f7d70;
+    --line:rgba(0,214,143,.18); --lineA:rgba(92,200,255,.24);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; line-height:1.55;
+    background-image:
+      radial-gradient(900px 560px at 84% -8%, rgba(0,214,143,.20), transparent 60%),
+      radial-gradient(760px 520px at -6% 6%, rgba(92,200,255,.08), transparent 55%),
+      linear-gradient(180deg,#08130f 0%,#050d0a 100%);
+    background-attachment:fixed; overflow-x:hidden;
+  }
+  body::before{ content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image:linear-gradient(rgba(0,214,143,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,214,143,.05) 1px,transparent 1px);
+    background-size:44px 44px; -webkit-mask-image:radial-gradient(circle at 50% 12%,#000,transparent 76%); mask-image:radial-gradient(circle at 50% 12%,#000,transparent 76%); }
+  a{ color:inherit; text-decoration:none; }
+  ::selection{ background:var(--acc); color:#062018; }
+
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+    padding:13px 20px; border-bottom:1px solid var(--line); backdrop-filter:blur(9px); background:rgba(7,17,15,.72); }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Cinzel',serif; font-weight:900; letter-spacing:.28em; font-size:13px; }
+  .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--acc); box-shadow:0 0 10px var(--acc); animation:pulse 2.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  .top .tcta{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); border:1px solid var(--line); padding:8px 13px; border-radius:9px; }
+  .top .tcta:hover{ color:var(--ink); border-color:var(--ink2); }
+
+  .wrap{ position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 18px 90px; }
+  .rise{ opacity:0; transform:translateY(18px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+
+  .head{ text-align:center; padding:44px 0 14px; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--acc2); }
+  .head h1{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.02em; font-size:clamp(30px,6.5vw,50px); line-height:1.04; margin:12px 0 10px;
+    background:linear-gradient(120deg,#b6ffe6,#fff 44%,#00d68f 78%,#b6ffe6); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 28px rgba(0,214,143,.30)); }
+  .head .sub{ max-width:500px; margin:0 auto; color:var(--ink2); font-size:clamp(15px,2vw,18px); }
+  .head .sub b{ color:var(--ink); font-weight:600; }
+
+  .card{ margin-top:22px; border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    background:linear-gradient(165deg,#0c1a15,#08130f); box-shadow:0 24px 60px rgba(0,0,0,.45); }
+  .card-body{ padding:20px; }
+  label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin:0 0 6px; }
+  .row2{ display:grid; grid-template-columns:1fr 200px; gap:14px; }
+  input,textarea,select{ width:100%; background:#061410; border:1px solid var(--line); border-radius:11px; color:var(--ink);
+    padding:12px 13px; font-family:'Space Grotesk',sans-serif; font-size:15px; outline:none; transition:border-color .2s,box-shadow .2s; }
+  input:focus,textarea:focus,select:focus{ border-color:var(--acc); box-shadow:0 0 0 3px rgba(0,214,143,.1); }
+  textarea{ min-height:64px; resize:vertical; }
+  select{ appearance:none; -webkit-appearance:none; cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23a6c8ba' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat; background-position:right 13px center; padding-right:34px; }
+  .fld{ margin-bottom:14px; }
+  .go{ width:100%; margin-top:4px; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:'Cinzel',serif; font-weight:700;
+    font-size:15px; letter-spacing:.06em; text-transform:uppercase; background:linear-gradient(100deg,var(--acc),#00a86f); color:#04140e;
+    box-shadow:0 12px 30px rgba(0,214,143,.34); transition:transform .15s,filter .2s; }
+  .go:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+  .go:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .freehint{ text-align:center; margin-top:11px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); }
+  .freehint b{ color:var(--acc); }
+
+  .working{ display:none; padding:6px 2px; } .working.on{ display:block; }
+  .step{ display:flex; align-items:center; gap:10px; padding:6px 0; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); opacity:.35; transition:.3s; }
+  .step.on{ opacity:1; color:var(--acc); } .step.done{ opacity:.75; }
+  .step .b{ width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; flex-shrink:0; }
+  .step.on .b{ background:currentColor; box-shadow:0 0 9px currentColor; animation:blip .9s ease-in-out infinite; }
+  @keyframes blip{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+  .err{ display:none; margin-top:12px; border:1px solid rgba(255,120,110,.4); border-radius:11px; padding:13px 15px; background:rgba(80,20,16,.25); color:#ffb4ab; font-size:14px; } .err.on{ display:block; }
+
+  .out{ display:none; margin-top:22px; } .out.on{ display:block; }
+  .sec{ margin-bottom:22px; }
+  .sec h2{ font-family:'Cinzel',serif; font-weight:900; font-size:15px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 12px; display:flex; align-items:center; gap:9px; }
+  .sec h2 .cnt{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--dim); letter-spacing:.1em; }
+  .hired{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; border:1px solid var(--lineA); border-radius:13px; padding:13px 15px; background:rgba(92,200,255,.05); margin-bottom:22px; }
+  .hired .lbl{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  .hired .ag{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); border:1px solid var(--line); border-radius:100px; padding:5px 12px; background:rgba(0,214,143,.08); }
+  .hired .ag b{ color:var(--acc); }
+  .tweet{ position:relative; border:1px solid var(--line); border-radius:13px; padding:15px 16px 15px 44px; background:rgba(0,214,143,.05); margin-bottom:10px; white-space:pre-wrap; font-size:15px; line-height:1.5; }
+  .tweet .n{ position:absolute; left:14px; top:15px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--acc); }
+  .tweet .copy{ position:absolute; top:10px; right:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); border:1px solid var(--line); border-radius:7px; padding:4px 8px; cursor:pointer; background:rgba(7,17,15,.6); }
+  .tweet .copy:hover{ color:var(--ink); border-color:var(--acc); }
+  .hook{ border:1px solid var(--line); border-radius:11px; padding:12px 14px; background:rgba(92,200,255,.05); margin-bottom:9px; font-size:14px; }
+  .copyall{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--acc2); border:1px solid var(--lineA); border-radius:8px; padding:6px 12px; cursor:pointer; background:rgba(92,200,255,.06); }
+  .copyall:hover{ filter:brightness(1.1); }
+  .receipt{ margin-top:6px; border:1px dashed rgba(232,196,92,.4); border-radius:13px; padding:14px 16px; background:rgba(232,196,92,.04); }
+  .receipt .rt{ font-family:'Cinzel',serif; font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:11px; color:var(--gold); margin-bottom:10px; }
+  .rrow{ display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2); padding:3px 0; }
+  .rrow .ok{ color:var(--acc); } .rrow .tool{ color:var(--ink); min-width:150px; } .rrow .src{ color:var(--dim); }
+
+  .unlock{ margin-top:26px; text-align:center; border:1px solid var(--lineA); border-radius:18px; padding:28px 22px;
+    background:radial-gradient(120% 140% at 50% -20%,rgba(92,200,255,.10),transparent 55%),linear-gradient(160deg,#0c1a15,#08130f); }
+  .unlock h2{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(20px,3.4vw,28px); color:#fff; margin:0 0 6px; }
+  .unlock p{ color:var(--ink2); max-width:440px; margin:0 auto 8px; font-size:15px; }
+  .unlock .more{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0 18px; }
+  .chip{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink); border:1px solid var(--line); border-radius:100px; padding:7px 13px; background:rgba(0,214,143,.06); }
+  .chip b{ color:var(--acc); }
+  .wl{ display:flex; gap:8px; max-width:400px; margin:0 auto; }
+  .wl input{ flex:1; }
+  .wl button{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:0 18px; border-radius:11px;
+    border:1px solid var(--lineA); background:linear-gradient(100deg,var(--acc2),#2aa8e0); color:#04202e; font-weight:700; cursor:pointer; }
+  .wl button:hover{ filter:brightness(1.06); }
+  #wlMsg{ min-height:18px; margin-top:11px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--acc); }
+  .unlock .mut{ display:block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--dim); }
+  @media(max-width:560px){ .row2{ grid-template-columns:1fr; } .head{ padding:32px 0 12px; } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="brand" href="/home.html"><span class="dot"></span>SHADDAI</a>
+    <a class="tcta" href="/coin-launch.html">Coin Launch Kit →</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow rise">Hire QUILL · free preview</div>
+      <h1 class="rise" style="animation-delay:.05s">A viral thread<br>in 60 seconds</h1>
+      <p class="sub rise" style="animation-delay:.1s">Put <b>QUILL</b> to work. Type a topic — get a full <b>numbered thread</b> plus <b>hook variants</b> you can post today.</p>
+    </div>
+
+    <div class="card rise" style="animation-delay:.15s">
+      <div class="card-body">
+        <div class="fld"><label>Thread topic</label><input id="topic" maxlength="90" placeholder="How to get your first 1,000 followers" autocomplete="off"></div>
+        <div class="row2">
+          <div class="fld"><label>Angle (optional)</label><input id="angle" maxlength="120" placeholder="the non-obvious truth" autocomplete="off"></div>
+          <div class="fld"><label>Tone</label>
+            <select id="tone">
+              <option value="bold">Bold · punchy</option>
+              <option value="friendly">Friendly · warm</option>
+              <option value="contrarian">Contrarian · spicy</option>
+              <option value="expert">Calm expert</option>
+              <option value="degen">Degen · crypto</option>
+            </select></div>
+        </div>
+        <div class="fld"><label>Audience (optional)</label><input id="audience" maxlength="60" placeholder="builders & creators" autocomplete="off"></div>
+        <button class="go" id="goBtn" onclick="makeThread()">Put QUILL to work →</button>
+        <div class="freehint">Free preview · <b>no signup</b> · you only pay for the full run</div>
+
+        <div class="working" id="working" style="margin-top:14px">
+          <div class="step" data-s="0"><span class="b"></span><span>QUILL is writing your thread…</span></div>
+          <div class="step" data-s="1"><span class="b"></span><span>Drafting hook variants…</span></div>
+          <div class="step" data-s="2"><span class="b"></span><span>Sealing the tool receipt…</span></div>
+        </div>
+        <div class="err" id="err"></div>
+      </div>
+    </div>
+
+    <div class="out" id="out">
+      <div class="hired" id="hired"></div>
+      <div class="sec">
+        <h2>🧵 Your thread <span class="cnt" id="tCnt"></span>
+          <span style="margin-left:auto"><button class="copyall" onclick="copyAll()">Copy whole thread</button></span></h2>
+        <div id="thread"></div>
+      </div>
+      <div class="sec">
+        <h2>🎣 Hook variants <span class="cnt" id="hCnt"></span></h2>
+        <div id="hooks"></div>
+      </div>
+      <div class="sec"><div class="receipt"><div class="rt">✓ SHADDAI Tool Receipt</div><div id="receipt"></div></div></div>
+
+      <div class="unlock">
+        <h2>Keep QUILL on the job</h2>
+        <p>That was the free preview. The full run goes deeper:</p>
+        <div class="more">
+          <span class="chip"><b>12</b>-tweet thread</span>
+          <span class="chip"><b>8</b> hook variants</span>
+          <span class="chip"><b>3</b> repurpose formats (LinkedIn / newsletter / short)</span>
+        </div>
+        <div class="wl">
+          <input id="wlEmail" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email">
+          <button onclick="joinWaitlist()">Get it first</button>
+        </div>
+        <div id="wlMsg"></div>
+        <span class="mut">Free while in beta · early folks get it first</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var busy=false, lastThread=[];
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+  function stepOn(i){ document.querySelectorAll('#working .step').forEach(function(s,idx){ s.classList.toggle('on',idx===i); if(idx<i) s.classList.add('done'); }); }
+
+  window.makeThread = async function(){
+    if(busy) return;
+    var topic=$('topic').value.trim();
+    if(!topic){ $('topic').focus(); return; }
+    busy=true; var btn=$('goBtn'); btn.disabled=true;
+    $('out').classList.remove('on'); $('err').classList.remove('on');
+    $('working').classList.add('on'); stepOn(0);
+    var s1=setTimeout(function(){ stepOn(1); },700), s2=setTimeout(function(){ stepOn(2); },1800);
+    try{
+      var r=await fetch('/api/thread-pack/preview',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ topic:topic, angle:$('angle').value.trim(), audience:$('audience').value.trim(), tone:$('tone').value }) });
+      var d=await r.json();
+      clearTimeout(s1); clearTimeout(s2);
+      if(!d || !d.ok){ throw new Error((d&&d.error)||'No thread returned.'); }
+      render(d);
+    }catch(e){
+      clearTimeout(s1); clearTimeout(s2);
+      $('working').classList.remove('on');
+      var er=$('err'); er.classList.add('on'); er.innerHTML='The engine is warming up — <a href="#" style="color:var(--acc)" onclick="makeThread();return false;">try again</a>.';
+      busy=false; btn.disabled=false;
+    }
+  };
+
+  function render(d){
+    lastThread=d.thread||[];
+    $('working').classList.remove('on');
+    $('hired').innerHTML='<span class="lbl">You hired</span><span class="ag">✍️ <b>QUILL</b> · Writing &amp; Communication</span>'+
+      '<span class="lbl" style="margin-left:auto">'+(d.receipt?d.receipt.length:3)+' tools · '+(d.tier==='free'?'free preview':'full job')+'</span>';
+    $('tCnt').textContent = d.thread.length + (d.locked?(' of '+(d.thread.length+d.locked.tweets)):'');
+    $('thread').innerHTML = d.thread.map(function(t,i){
+      var body = t.replace(/^\s*\d+\/\s*/,'');
+      return '<div class="tweet"><span class="n">'+(i+1)+'/</span><button class="copy" onclick="cp(this)">Copy</button>'+esc(body)+'</div>';
+    }).join('');
+    $('hCnt').textContent = d.hooks.length + (d.locked?(' of '+(d.hooks.length+d.locked.hooks)):'');
+    $('hooks').innerHTML = d.hooks.map(function(h){ return '<div class="hook">'+esc(h)+'</div>'; }).join('');
+    $('receipt').innerHTML = (d.receipt||[]).map(function(x){
+      return '<div class="rrow"><span class="ok">'+(x.ok?'✓':'✕')+'</span><span class="tool">'+esc(x.tool)+'</span>'+
+        '<span class="src">'+esc(x.source||'—')+'</span><span style="margin-left:auto;color:var(--dim)">'+esc(x.ms)+'ms</span></div>';
+    }).join('');
+    $('out').classList.add('on');
+    $('out').scrollIntoView({ behavior:'smooth', block:'start' });
+    busy=false; $('goBtn').disabled=false;
+  }
+
+  window.cp = function(btn){
+    var txt = btn.parentNode.textContent.replace(/^\s*\d+\/\s*Copy/,'').trim();
+    navigator.clipboard && navigator.clipboard.writeText(txt);
+    btn.textContent='Copied ✓'; setTimeout(function(){ btn.textContent='Copy'; },1400);
+  };
+  window.copyAll = function(){
+    var full = lastThread.map(function(t,i){ return t.replace(/^\s*\d+\/\s*/,(i+1)+'/ '); }).join('\n\n');
+    navigator.clipboard && navigator.clipboard.writeText(full);
+    var b=event.target; b.textContent='Copied ✓'; setTimeout(function(){ b.textContent='Copy whole thread'; },1500);
+  };
+  window.joinWaitlist = function(){
+    var email=($('wlEmail').value||'').trim(), msg=$('wlMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.style.color='#ff9d90'; msg.textContent='Enter a valid email.'; return; }
+    msg.style.color='var(--ink2)'; msg.textContent='Saving…';
+    fetch('/api/thread-pack/checkout',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email:email }) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.enabled && res.url){ window.location.href=res.url; return; }
+        msg.style.color='var(--acc)'; msg.textContent="You're on the list ✓ — you'll get the full pack first.";
+        try{ localStorage.setItem('shd_threadpack_email', email); }catch(e){}
+      })
+      .catch(function(){ msg.style.color='var(--acc)'; msg.textContent="Saved ✓ — you'll get it first."; });
+  };
+})();
+</script>
+</body>
+</html>

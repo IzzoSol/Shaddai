@@ -5767,7 +5767,7 @@ window.enter3DWorld=function(){
     <!-- ═══════════════════════════════════════════════════════════════════
          PRO SIGNALS — ORACLE TERMINAL · PIN 4444 · gated
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(232,160,32,0.07),rgba(0,200,255,0.05));border:1px solid rgba(232,160,32,0.35);margin-top:14px;overflow:hidden">
+    <div id="proSignalsCard" class="card" style="background:linear-gradient(135deg,rgba(232,160,32,0.07),rgba(0,200,255,0.05));border:1px solid rgba(232,160,32,0.35);margin-top:14px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(232,160,32,0.2);flex-wrap:wrap">
         <span style="font-size:16px">📡</span>
         <div>
@@ -5800,11 +5800,11 @@ window.enter3DWorld=function(){
     <!-- ═══════════════════════════════════════════════════════════════════
          MIROFISH — SWARM INTELLIGENCE TERMINAL · PIN 4444 · gated
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(0,212,220,0.06),rgba(112,64,255,0.04));border:1px solid rgba(0,212,220,0.3);margin-top:14px;overflow:hidden">
+    <div id="tufishCard" class="card" style="background:linear-gradient(135deg,rgba(0,212,220,0.06),rgba(112,64,255,0.04));border:1px solid rgba(0,212,220,0.3);margin-top:14px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(0,212,220,0.18);flex-wrap:wrap">
         <span style="font-size:16px">🐟</span>
         <div>
-          <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">MIROFISH · SWARM INTELLIGENCE</div>
+          <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">TUFISH · SWARM INTELLIGENCE</div>
           <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">MULTI-AGENT SWARM PREDICTION · CONFIGURE &amp; RUN — ACCESS CODE <span style="color:#00d4dc;font-weight:800">4444</span></div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
@@ -5846,6 +5846,7 @@ window.enter3DWorld=function(){
       function powerOnMiro(){
         var pin=document.getElementById('miroPin').value;
         if(pin!=='4444'){document.getElementById('miroErr').textContent='INCORRECT CODE';document.getElementById('miroPin').value='';return;}
+        try{sessionStorage.setItem('shd_miro','1');}catch(e){}
         document.getElementById('miroGate').style.display='none';
         document.getElementById('miroFrame').style.display='block';
         document.getElementById('miroIframe').src='/mirofish-terminal.html';
@@ -5854,6 +5855,15 @@ window.enter3DWorld=function(){
       }
       window.powerOnSignals=powerOnSignals;
       window.powerOnMiro=powerOnMiro;
+      // Unlock once per session — skip re-entering 4444 on revisit.
+      try{
+        if(sessionStorage.getItem('shd_prosig')==='1' && document.getElementById('sigPin')){
+          document.getElementById('sigPin').value='4444'; powerOnSignals();
+        }
+        if(sessionStorage.getItem('shd_miro')==='1' && document.getElementById('miroPin')){
+          document.getElementById('miroPin').value='4444'; powerOnMiro();
+        }
+      }catch(e){}
     })();
     </script>
 
@@ -6612,21 +6622,28 @@ window.enter3DWorld=function(){
     <script>
     (function(){
       if(window.MK) return;
-      var MK=window.MK={mode:'immersive',cur:'chart',_inited:{}};
+      var MK=window.MK={mode:'immersive',cur:'dex',_inited:{}};
       var LS_MODE='shaddai_mk_layout', LS_STA='shaddai_mk_station';
       function el(id){return document.getElementById(id);}
       // Each station lists the EXISTING source blocks to re-house (by a known
       // inner id -> closest .card, or a direct id) plus its lazy-init call.
+      // Order = free markets first, gated Pro stations last (one cohesive rail).
       var STATIONS=[
+        {key:'dex', ic:'📊', nm:'Markets', ds:'Live coins · filters',
+          src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
+          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }},
         {key:'chart', ic:'📈', nm:'Chart', ds:'TradingView + OHLC',
           src:[{inner:'mkTicker'},{inner:'tradingViewChart'},{id:'ohlcChartCard'}],
           init:function(){ if(typeof loadTickerData==='function') loadTickerData(); }},
         {key:'council', ic:'🧠', nm:'Council', ds:'Multi-agent analysis',
           src:[{inner:'councilProvider'},{id:'moonpayAgentsCard'}],
           init:function(){ if(typeof updateCouncilModelList==='function') updateCouncilModelList(); }},
-        {key:'dex', ic:'📊', nm:'DEX', ds:'Live markets',
-          src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
-          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }}
+        {key:'prosig', ic:'📡', nm:'Pro Signals', ds:'🔒 Live calls · 4444',
+          src:[{id:'proSignalsCard'}],
+          init:function(){}},
+        {key:'tufish', ic:'🐟', nm:'TUFISH', ds:'🔒 Swarm intel · 4444',
+          src:[{id:'tufishCard'}],
+          init:function(){}}
         /* Wallet station removed per owner: wallet widget stays in pipeline view below the room */
       ];
       function grab(src){
@@ -6638,8 +6655,8 @@ window.enter3DWorld=function(){
       function build(){
         var pv=el('pipelineView'); if(!pv || el('mkStationRoom')) return;
         var tb=document.createElement('div'); tb.id='mkToolbar';
-        tb.innerHTML='<span class="mk-title">◧ TRADING ROOM</span>'+
-          '<span class="mk-sub">stations · one focused at a time · widgets load on focus</span>'+
+        tb.innerHTML='<span class="mk-title">◧ MARKETS · SIGNALS</span>'+
+          '<span class="mk-sub">free markets + gated pro signals · pick a station</span>'+
           '<div class="mk-toggle"><button id="mkTgImm" onclick="MK.setMode(\'immersive\')">🎛 Immersive</button>'+
           '<button id="mkTgCls" onclick="MK.setMode(\'classic\')">▤ Classic</button></div>';
         var room=document.createElement('div'); room.id='mkStationRoom';
@@ -6662,7 +6679,7 @@ window.enter3DWorld=function(){
           rail.appendChild(rb);
         });
         MK.mode=localStorage.getItem(LS_MODE)||'immersive';
-        MK.cur=localStorage.getItem(LS_STA)||'chart';
+        MK.cur=localStorage.getItem(LS_STA)||'dex';
         applyMode(); focusOnly(MK.cur);
       }
       function applyMode(){
@@ -6913,7 +6930,7 @@ window.enter3DWorld=function(){
         <span class="ocmd-div"></span>
         <button class="ocmd run" onclick="window.openPixelForge&&openPixelForge()" title="Pixel Forge — pick color, body skin, name & tools, drip a custom pixel agent into this office" style="background:linear-gradient(180deg,rgba(39,224,255,.16),rgba(39,224,255,.03));border-color:rgba(39,224,255,.45);color:#27e0ff">⬡ Pixel Forge</button>
         <button class="ocmd run" onclick="try{if(window.Shop&&Shop.open){Shop.open();}else{window.open('marketplace-shop-v2.html','_blank');}}catch(e){window.open('marketplace-shop-v2.html','_blank');}" title="Open the Bazaar — hire agents, sell content & agent work (x402 Sparks)" style="background:linear-gradient(180deg,rgba(232,184,75,.16),rgba(232,184,75,.03));border-color:rgba(232,184,75,.5);color:#e8b84b">🏪 Bazaar</button>
-        <button class="ocmd run" onclick="showView('social');setTimeout(function(){try{switchSocTab('telegram')}catch(e){}},60)" title="Telegram Signals Command Center (in the Social tab)" style="background:linear-gradient(180deg,rgba(34,158,217,.16),rgba(34,158,217,.03));border-color:rgba(34,158,217,.5);color:#5cc8ff">📡 Signals</button>
+        <button class="ocmd run" onclick="showView('pipeline');setTimeout(function(){try{MK.setMode('immersive');MK.focus('prosig')}catch(e){}},80)" title="Pro Signals — Markets tab" style="background:linear-gradient(180deg,rgba(34,158,217,.16),rgba(34,158,217,.03));border-color:rgba(34,158,217,.5);color:#5cc8ff">📡 Signals</button>
       </div>
 
       <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
@@ -7570,66 +7587,29 @@ window.enter3DWorld=function(){
   <!-- Chat -->
   
   <!-- Skills View with 3D Agent Model Revolver -->
-  <!-- ═══════════ THE FORGE — its own full page (was crammed into Skills) ═══════════ -->
+<!-- ═══════════ THE FORGE — consolidated: 2D · 3D · Marketplace ═══════════ -->
   <div id="forgeView" class="view">
-
-    <!-- ════════ THE FORGE (forge.html) embedded as the Forge tab ════════ -->
-    <div id="forgeEmbedWrap" style="width:100%;height:calc(100vh - 132px);min-height:620px;border:1px solid rgba(0,255,136,0.2);border-radius:8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-      <iframe id="forgeFrame" src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Forge" loading="lazy"></iframe>
+    <div class="forge-tabs" style="display:flex;gap:4px;padding:8px 8px 0;border-bottom:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.03);border-radius:8px 8px 0 0">
+      <button class="forge-tab active" data-forge-tab="2d" onclick="switchForgeTab('2d')" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.15);color:#00ff88;border:none;border-bottom:2px solid #00ff88;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">2D Forge</button>
+      <button class="forge-tab" data-forge-tab="3d" onclick="switchForgeTab('3d')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">3D Forge</button>
+      <button class="forge-tab" data-forge-tab="market" onclick="switchForgeTab('market')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">Marketplace</button>
     </div>
-    <style id="forgeEmbedHide">#forgeView > *:not(#forgeEmbedWrap):not(#forgeEmbedHide){display:none !important}#forgeView{padding:6px !important}</style>
-
-    <!-- ════════ OPERATOR FORGE — build-your-own-agent (frontend-design) ════════ -->
-    <style>
-      #operatorForge{--of-cy:#22d3ee;--of-am:#ffb020;font-family:'Share Tech Mono',monospace;position:relative;margin-bottom:16px;border:1px solid rgba(34,211,238,0.18);border-radius:16px;overflow:hidden;background:radial-gradient(120% 80% at 20% -10%,rgba(34,211,238,0.10),transparent 55%),linear-gradient(160deg,#06080d,#0a1020 70%,#06080d)}
-      #operatorForge .of-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(34,211,238,0.15);letter-spacing:3px;font-size:12px;color:var(--of-cy);text-shadow:0 0 10px rgba(34,211,238,0.5)}
-      #operatorForge .of-head b{color:#fff}#operatorForge .of-head .tag{font-size:8px;color:var(--of-am);border:1px solid rgba(255,176,32,0.4);padding:3px 8px;border-radius:4px;letter-spacing:2px}
-      #operatorForge .of-grid{display:grid;grid-template-columns:300px 1fr;gap:0}
-      @media(max-width:820px){#operatorForge .of-grid{grid-template-columns:1fr}}
-      /* swivel stage */
-      #operatorForge .of-stage{padding:18px;border-right:1px solid rgba(34,211,238,0.12);display:flex;flex-direction:column;align-items:center;background:radial-gradient(80% 60% at 50% 30%,rgba(34,211,238,0.06),transparent)}
-      #operatorForge .of-scene{perspective:700px;width:200px;height:210px;cursor:grab;position:relative}
-      #operatorForge .of-scene:active{cursor:grabbing}
-      #operatorForge .of-rotor{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(8deg) rotateY(0deg);animation:none}
-      /* FIX: the global "cursor:none" custom-cursor hides the mouse — restore it in the forge */
-      body #operatorForge, body #operatorForge *{cursor:auto!important}
-      body #operatorForge button,body #operatorForge .of-preset,body #operatorForge .of-chip,body #operatorForge .of-tiers button,body #operatorForge .of-slot button{cursor:pointer!important}
-      body #operatorForge .of-input,body #operatorForge .of-ta{cursor:text!important}
-      body #operatorForge .of-scene{cursor:grab!important}
-      #operatorForge .of-art{width:100%;height:100%;object-fit:cover;border-radius:16px;border:1px solid rgba(34,211,238,.45);box-shadow:0 0 34px var(--of-glow,#22d3ee),inset 0 0 30px rgba(0,0,0,.4);background:#06080d;transition:opacity .25s}
-      /* live SVG part-compositor — updates instantly on every carousel swap (free, no AI). */
-      #operatorForge .of-composite{position:absolute;inset:0;z-index:1;border-radius:16px;overflow:hidden;border:1px solid rgba(34,211,238,.45);box-shadow:0 0 34px var(--of-glow,#22d3ee),inset 0 0 30px rgba(0,0,0,.5);transition:opacity .3s}
-      #operatorForge .of-composite svg{width:100%;height:100%;display:block}
-      #operatorForge .of-composite .of-swap{animation:ofSwapPulse .35s ease-out}
-      @keyframes ofSwapPulse{0%{filter:brightness(1.7) drop-shadow(0 0 10px var(--of-glow,#22d3ee))}100%{filter:none}}
-      #operatorForge .of-buildhint{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:4;text-align:center;font:700 11px/1.5 'Share Tech Mono',monospace;letter-spacing:2px;color:#ffce63;background:linear-gradient(180deg,transparent,rgba(6,8,13,.78),transparent);padding:14px 0;pointer-events:none}
-      #operatorForge .of-buildhint span{display:block;font-size:8px;letter-spacing:1px;color:#9fb0e0;margin-top:3px}
-      #operatorForge .of-slots{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px}
-      #operatorForge .of-slot{display:flex;align-items:center;gap:5px;background:rgba(10,16,32,.6);border:1px solid rgba(34,211,238,.12);border-radius:8px;padding:4px 6px}
-      #operatorForge .of-slot label{flex:0 0 50px;font-size:7px;letter-spacing:1px;color:#7fbfd6;text-transform:uppercase;margin:0}
-      #operatorForge .of-slot .ov{flex:1;text-align:center;font-size:8.5px;color:#eaf6ff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-      #operatorForge .of-slot button{background:#13203c;color:#cfe9ff;border:none;border-radius:4px;width:19px;height:19px;cursor:pointer;font-size:11px;line-height:1;padding:0}
-      #operatorForge .of-slot button:hover{background:#1b2e54}
-      /* ── swivel body-part picker: slot rail + cover-flow options (each previews the full character) ── */
-      #operatorForge .of-rail{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-      #operatorForge .of-rail-chip{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:54px;padding:5px 6px;background:rgba(10,16,32,.6);border:1px solid rgba(34,211,238,.14);border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s}
-      #operatorForge .of-rail-chip .ic{font-size:13px;color:#7fbfd6;line-height:1}
-      #operatorForge .of-rail-chip .nm{font-size:6.5px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase}
-      #operatorForge .of-rail-chip .cur{font-size:7px;color:#cfe9ff;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-      #operatorForge .of-rail-chip.on{border-color:var(--of-cy);background:rgba(34,211,238,.12);box-shadow:0 0 12px rgba(34,211,238,.2)}
-      #operatorForge .of-rail-chip.on .ic{color:var(--of-cy)}
-      #operatorForge .of-flow-wrap{display:flex;align-items:center;gap:6px}
-      #operatorForge .of-flow-nav{flex:0 0 26px;height:26px;border-radius:50%;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);color:var(--of-cy);cursor:pointer;font-size:13px;line-height:1;padding:0}
-      #operatorForge .of-flow-nav:hover{background:rgba(34,211,238,.25)}
-      #operatorForge .of-flow{flex:1;display:flex;gap:7px;justify-content:center;align-items:flex-end;perspective:600px;padding:4px 0;flex-wrap:wrap}
-      #operatorForge .of-opt{--oc:#9fb0e0;flex:0 0 auto;width:82px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 5px 5px;background:rgba(6,8,13,.6);border:1px solid color-mix(in srgb,var(--oc) 30%,transparent);border-radius:10px;cursor:pointer;font-family:inherit;transition:all .18s;opacity:.72;transform:scale(.92)}
-      #operatorForge .of-opt[data-rarity="legendary"]{--oc:#d4af37}#operatorForge .of-opt[data-rarity="epic"]{--oc:#c084fc}#operatorForge .of-opt[data-rarity="rare"]{--oc:#22d3ee}#operatorForge .of-opt[data-rarity="common"]{--oc:#9fb0e0}
-      #operatorForge .of-opt:hover{opacity:1;transform:scale(1)}
-      #operatorForge .of-opt.on{opacity:1;transform:scale(1.07);border-color:var(--oc);box-shadow:0 0 16px color-mix(in srgb,var(--oc) 45%,transparent)}
-      #operatorForge .of-opt-art{width:72px;height:72px;border-radius:8px;overflow:hidden;background:#06080d;pointer-events:none;display:flex;align-items:center;justify-content:center}
-      #operatorForge .of-opt-art svg,#operatorForge .of-opt-art img{width:100%;height:100%;display:block;object-fit:cover}
-      #operatorForge .of-opt-swatch{box-shadow:inset 0 0 18px rgba(0,0,0,.55)}
-      #operatorForge .of-opt-nm{font-size:7px;letter-spacing:.5px;color:#cfe9ff;text-align:center;max-width:76px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
+    <div id="forge2dPanel" class="forge-panel" style="display:block;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(0,255,136,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrame2d" src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 2D Forge" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="forge3dPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(124,58,237,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrame3d" src="/forge-3d.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="forgeMarketPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(232,196,92,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrameMarket" src="/pixel-forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Marketplace" loading="lazy"></iframe>
+      </div>
+    </div>
+    <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
       #operatorForge .of-rarity-badge{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 12px/1 'Share Tech Mono',monospace;letter-spacing:3px;z-index:3;text-shadow:0 1px 5px #000;pointer-events:none}
       #operatorForge .of-rarity-badge.legendary{color:#d4af37}#operatorForge .of-rarity-badge.epic{color:#c084fc}#operatorForge .of-rarity-badge.rare{color:#22d3ee}#operatorForge .of-rarity-badge.common{color:#9fb0e0}
       #operatorForge.dragging .of-rotor{animation:none}
@@ -7763,6 +7743,16 @@ window.enter3DWorld=function(){
             </div>
           </div>
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
+          <div><label>TOOL LOADOUT</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <select id="ofToolSelect" class="of-select" style="flex:1;padding:8px 12px;background:#0c0805;border:1px solid var(--bd);border-radius:4px;color:var(--parch);font-family:var(--body);font-size:13px">
+                <option value="">— add a tool —</option>
+              </select>
+              <button id="ofAddTool" class="of-btn" style="padding:8px 14px;background:var(--gold);color:#06080b;border:none;border-radius:4px;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Add</button>
+            </div>
+            <div id="ofSelectedTools" style="display:flex;gap:6px;flex-wrap:wrap;min-height:28px"></div>
+            <div style="font-size:10px;color:var(--ash);margin-top:4px">Selected tools determine what the agent can DO. Each adds compute load.</div>
+          </div>
           <div><label>SKILL LOADOUT — <span id="ofSkillCount">0</span> equipped (each adds compute load)</label><div class="of-skills" id="ofSkills">loading tools…</div></div>
           <!-- TEST RUN removed: forging must ONLY create + deploy the agent to the dashboard, never run a
                tool loop inside the forge (that was the glitch). Tools run when you chat with the agent.
@@ -8027,6 +8017,23 @@ window.enter3DWorld=function(){
         const toolDesc={}; toolList.forEach(x=>{ toolDesc[x.name||x.id]=x.description||''; });
         const names=toolList.map(x=>x.name||x.id).filter(Boolean);
         allToolNames=names.length?names:['fetch_price','search_web','generate_image','whale_scan','schedule_task','run_python','dex_scan','run_workflow','send_email','post_social'];
+        // Populate tool select dropdown
+        const toolSel=$('ofToolSelect');
+        if(toolSel){
+          toolSel.innerHTML='<option value="">— add a tool —</option>';
+          allToolNames.forEach(n=>{ const opt=document.createElement('option'); opt.value=n; opt.textContent=n+(toolDesc[n]?' — '+toolDesc[n].slice(0,60):''); toolSel.appendChild(opt); });
+        }
+        const addToolBtn=$('ofAddTool');
+        if(addToolBtn){
+          addToolBtn.onclick=()=>{ const val=toolSel.value; if(val && !skills.has(val)){ skills.add(val); saveSkills($('ofName').value); paint(); toolSel.value=''; } };
+        }
+        function renderSelectedTools(){
+          const wrap=$('ofSelectedTools'); if(!wrap) return;
+          wrap.innerHTML='';
+          skills.forEach(n=>{ const tag=document.createElement('span'); tag.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(240,180,41,.15);border:1px solid rgba(240,180,41,.4);border-radius:20px;font-size:9px;color:var(--gold)'; tag.innerHTML=n+' <button onclick="skills.delete(\''+n.replace(/'/g,"\\'")+'\');saveSkills($(\'ofName\').value);renderSelectedTools();paint();" style="background:none;border:none;color:var(--gold);font-size:11px;cursor:pointer;line-height:1">×</button>'; wrap.appendChild(tag); });
+        }
+        const oldPaint=paint;
+        paint=function(){ if(typeof oldPaint==='function') oldPaint(); renderSelectedTools(); };
         // Live search box so all 182 real skills are discoverable (not just first 60).
         const box=$('ofSkills'); box.innerHTML='';
         const search=document.createElement('input');
@@ -10400,7 +10407,8 @@ window.enter3DWorld=function(){
       <button class="soc-vtab" id="svtab-queue" onclick="switchSocTab('queue')">📋 QUEUE</button>
       <button class="soc-vtab" id="svtab-analytics" onclick="switchSocTab('analytics')">📊 ANALYTICS</button>
       <button class="soc-vtab" id="svtab-connect" onclick="switchSocTab('connect')">🔗 CONNECT</button>
-      <button class="soc-vtab" id="svtab-telegram" onclick="switchSocTab('telegram')" style="color:#5cc8ff">📡 SIGNALS</button>
+      <!-- SIGNALS moved to Markets → Pro Signals (Signal Setup). Hidden here to keep Social focused on social. -->
+      <button class="soc-vtab" id="svtab-telegram" onclick="switchSocTab('telegram')" style="color:#5cc8ff;display:none">📡 SIGNALS</button>
     </div>
 
     <!-- TELEGRAM / SIGNALS TAB — the Command Center -->
@@ -10986,6 +10994,40 @@ window.enter3DWorld=function(){
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-ghost" style="font-size:9px;border-color:rgba(0,229,160,0.3);color:var(--accent)" onclick="toggleMediaClassic()">☰ Classic View</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══ HIRE THE COUNCIL · CONTENT PACKS — productized offers (open standalone pages) ═══ -->
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);margin-bottom:10px">🪙 HIRE THE COUNCIL — content packs · <span style="color:#00e5a0">free preview, no signup</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+
+        <div onclick="window.open('/coin-launch.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(177,108,255,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(177,108,255,0.10),rgba(20,10,36,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(177,108,255,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            <span style="font-size:22px">🪙</span>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">COIN LAUNCH KIT</div>
+              <div style="font-size:8px;color:rgba(177,108,255,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL + TURTLE</div>
+            </div>
+            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#b16cff;border:1px solid rgba(177,108,255,0.4);border-radius:100px;padding:3px 9px">FREE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">Launch posts · meme concepts · a ready-to-post banner — from one coin idea.</div>
+          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#b16cff;letter-spacing:0.08em">OPEN KIT →</div>
+        </div>
+
+        <div onclick="window.open('/thread-pack.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(0,214,143,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(0,214,143,0.10),rgba(8,19,15,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,214,143,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            <span style="font-size:22px">🧵</span>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">TWITTER THREAD PACK</div>
+              <div style="font-size:8px;color:rgba(0,214,143,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL</div>
+            </div>
+            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#00d68f;border:1px solid rgba(0,214,143,0.4);border-radius:100px;padding:3px 9px">FREE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">A full numbered thread + hook variants you can post today — from one topic.</div>
+          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#00d68f;letter-spacing:0.08em">OPEN PACK →</div>
+        </div>
+
       </div>
     </div>
 
@@ -29335,6 +29377,14 @@ function switchWorldsTab(tab) {
   if (tab === 'rooms')   _whLoadRooms();
   if (tab === 'economy') _whLoadEconomy();
   if (tab === 'forge')   { _whLoadForge(); _whLoadModelMarket(); }
+}
+function switchForgeTab(tab) {
+  document.querySelectorAll('#forgeView .forge-panel').forEach(function(p){ p.style.display='none'; });
+  document.querySelectorAll('#forgeView .forge-tab').forEach(function(b){ b.classList.remove('active'); b.style.background='transparent'; b.style.color='rgba(255,255,255,.5)'; b.style.borderBottomColor='transparent'; });
+  var panel = document.getElementById('forge'+tab+'Panel');
+  if (panel) panel.style.display='block';
+  var btn = document.querySelector('#forgeView .forge-tab[data-forge-tab="'+tab+'"]');
+  if (btn) { btn.classList.add('active'); btn.style.background='rgba(0,255,136,0.15)'; btn.style.color='#00ff88'; btn.style.borderBottomColor='#00ff88'; }
 }
 function _whLoadKpis() {
   var uid = localStorage.getItem('shd_signed_in') || '';
@@ -54411,6 +54461,59 @@ var MEDIA_MODULES={
   gallery:{title:'🖼 MEDIA GALLERY',color:'#ffd700',cardId:'mediaCard_mediaGallery'},
   content:{title:'✍️ AI WRITER',color:'#ff4070',cardId:null}
 };
+/* ══ OV2 — shared "step-by-step, bold, simple" overlay design system ══
+   Refines the dashboard HUD DNA into a guided flow: numbered steps, one big
+   question each, tap-chips instead of tiny dropdowns, large inputs, one CTA.
+   Every module drives its accent off --ov-acc, so it stays cohesive. */
+(function(){
+  if(window.ov2Ensure) return;
+  window.ov2Ensure=function(){
+    if(document.getElementById('ov2-css')) return;
+    var s=document.createElement('style'); s.id='ov2-css';
+    s.textContent=
+    ".ov2{display:flex;flex-direction:column;gap:20px;--ov-acc:#00e5a0}"+
+    ".ov2-intro{font-size:13px;line-height:1.6;color:rgba(255,255,255,.62)}"+
+    ".ov2-intro b{color:#fff;font-weight:600}"+
+    ".ov2-step{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start}"+
+    ".ov2-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:#05100c;background:var(--ov-acc);box-shadow:0 0 18px color-mix(in srgb,var(--ov-acc) 45%,transparent)}"+
+    ".ov2-body{display:flex;flex-direction:column;gap:9px;padding-top:2px;min-width:0}"+
+    ".ov2-q{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:.02em;color:#fff;line-height:1.2}"+
+    ".ov2-hint{font-size:11px;color:rgba(255,255,255,.4);margin-top:-4px}"+
+    ".ov2-field input,.ov2-field textarea,.ov2-field select,.ov2 textarea.ov2-ta{width:100%;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.1);border-radius:11px;color:#fff;padding:13px 15px;font-size:15px;font-family:inherit;outline:none;transition:border-color .18s,box-shadow .18s}"+
+    ".ov2 textarea.ov2-ta{min-height:96px;resize:vertical;line-height:1.55}"+
+    ".ov2 :is(input,textarea,select):focus{border-color:var(--ov-acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--ov-acc) 16%,transparent)}"+
+    ".ov2-chips{display:flex;flex-wrap:wrap;gap:8px}"+
+    ".ov2-chip{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.02em;color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.02);border-radius:100px;padding:9px 15px;cursor:pointer;transition:.15s;user-select:none}"+
+    ".ov2-chip:hover{color:#fff;border-color:rgba(255,255,255,.3)}"+
+    ".ov2-chip.on{color:#05100c;background:var(--ov-acc);border-color:transparent;font-weight:700}"+
+    ".ov2-cta{width:100%;margin-top:4px;border:none;border-radius:13px;padding:16px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#05100c;background:var(--ov-acc);cursor:pointer;box-shadow:0 12px 30px color-mix(in srgb,var(--ov-acc) 30%,transparent);transition:transform .15s,filter .2s}"+
+    ".ov2-cta:hover{transform:translateY(-2px);filter:brightness(1.06)}"+
+    ".ov2-cta:disabled{opacity:.55;cursor:not-allowed;transform:none}"+
+    ".ov2-mini{display:flex;gap:8px;flex-wrap:wrap}"+
+    ".ov2-out{display:none;background:rgba(0,0,0,.42);border:1.5px solid color-mix(in srgb,var(--ov-acc) 30%,transparent);border-radius:12px;padding:16px 18px;font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:360px;overflow-y:auto;color:#eee}"+
+    ".ov2-out.on{display:block}";
+    document.head.appendChild(s);
+  };
+  // Selectable chip group backed by a hidden <input id> (so existing handlers reading .value keep working).
+  window.ovChips=function(id,opts,def){
+    var cur=(def!=null)?def:((typeof opts[0]==='object')?opts[0].v:opts[0]);
+    var chips=opts.map(function(o){var v=(typeof o==='object')?o.v:o;var l=(typeof o==='object')?o.l:o;
+      return '<span class="ov2-chip'+(v===cur?' on':'')+'" data-v="'+String(v).replace(/"/g,'&quot;')+'" onclick="ovPick(\''+id+'\',this)">'+l+'</span>';}).join('');
+    return '<input type="hidden" id="'+id+'" value="'+String(cur).replace(/"/g,'&quot;')+'"><div class="ov2-chips" id="'+id+'_g">'+chips+'</div>';
+  };
+  window.ovPick=function(id,el){
+    var g=document.getElementById(id+'_g'); if(!g)return;
+    g.querySelectorAll('.ov2-chip').forEach(function(c){c.classList.remove('on');});
+    el.classList.add('on');
+    var h=document.getElementById(id); if(h)h.value=el.getAttribute('data-v');
+  };
+  window.ovStep=function(n,q,hint,body){
+    return '<div class="ov2-step"><div class="ov2-num">'+n+'</div><div class="ov2-body">'+
+      '<div class="ov2-q">'+q+'</div>'+(hint?'<div class="ov2-hint">'+hint+'</div>':'')+
+      '<div class="ov2-field">'+body+'</div></div></div>';
+  };
+})();
+
 function launchMediaModule(key){
   var mod=MEDIA_MODULES[key];
   // signal / series / clipper are overlay-only modules (not in MEDIA_MODULES) — route them below, don't block here.
@@ -54419,26 +54522,22 @@ function launchMediaModule(key){
 
   // ── AI WRITER overlay ─────────────────────────────────────────
   if(key==='content'){
+    ov2Ensure();
     expandModule({title:'✍️ AI WRITER — QUILL',accentColor:'#ff4070',content:
-      '<div style="display:flex;flex-direction:column;gap:12px">'+
-      '<div style="font-size:10px;color:rgba(255,255,255,0.6)">QUILL writes platform-native content. Be specific — include your angle, audience, and key points.</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-      '<div><label style="font-size:9px;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px">PLATFORM</label>'+
-      '<select id="ov_writerPlatform" class="select" style="font-size:10px;width:100%">'+
-      '<option>Twitter/X Thread</option><option>Instagram Caption</option><option>LinkedIn Post</option>'+
-      '<option>Blog Post Intro</option><option>Email Newsletter</option><option>YouTube Description</option>'+
-      '<option>TikTok Hook</option><option>Discord Announcement</option></select></div>'+
-      '<div><label style="font-size:9px;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px">TONE</label>'+
-      '<select id="ov_writerTone" class="select" style="font-size:10px;width:100%">'+
-      '<option>Professional</option><option>Casual & Conversational</option><option>Motivational</option>'+
-      '<option>Humorous</option><option>Technical</option><option>Bold & Direct</option></select></div></div>'+
-      '<textarea id="ov_writerTopic" class="input" rows="4" placeholder="What are you writing about? E.g.: My AI trading tool just hit 50% ROI this month. Target: crypto Twitter. Angle: show the strategy, not the hype."></textarea>'+
-      '<div style="display:flex;gap:8px">'+
-      '<button class="btn btn-accent" style="flex:1;background:#ff4070;border:none;font-weight:700;font-size:11px" onclick="runWriterOverlay()">✍️ Write with QUILL</button>'+
-      '<button class="btn btn-ghost" style="font-size:9px" onclick="(function(){var t=document.getElementById(\'ov_writerOut\');var text=t?(t.innerText||t.textContent):\'\';navigator.clipboard&&navigator.clipboard.writeText(text);notify(\'Copied\')})()">Copy</button>'+
-      '<button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveTextToGallery(\'ov_writerOut\',\'content\',\'QUILL Writing\')">💾 Save</button>'+
+      '<div class="ov2" style="--ov-acc:#ff4070">'+
+      '<div class="ov2-intro">QUILL writes <b>platform-native</b> content. Three quick steps — the more specific you are, the harder it hits.</div>'+
+      ovStep(1,'Where is this going?','',
+        ovChips('ov_writerPlatform',['Twitter/X Thread','Instagram Caption','LinkedIn Post','Blog Intro','Email Newsletter','YouTube Description','TikTok Hook','Discord Announcement'],'Twitter/X Thread'))+
+      ovStep(2,'What tone?','',
+        ovChips('ov_writerTone',['Bold & Direct','Professional','Casual & Conversational','Motivational','Humorous','Technical'],'Bold & Direct'))+
+      ovStep(3,'What are you writing about?','Include your angle, audience and the one key point.',
+        '<textarea id="ov_writerTopic" class="ov2-ta" placeholder="e.g. My AI trading tool just hit 50% ROI this month. Audience: crypto Twitter. Angle: show the strategy, not the hype."></textarea>')+
+      '<button class="ov2-cta" onclick="runWriterOverlay()">✍️ Write with QUILL</button>'+
+      '<div class="ov2-mini">'+
+      '<button class="btn btn-ghost" style="font-size:10px" onclick="(function(){var t=document.getElementById(\'ov_writerOut\');var text=t?(t.innerText||t.textContent):\'\';navigator.clipboard&&navigator.clipboard.writeText(text);notify(\'Copied\')})()">Copy</button>'+
+      '<button class="btn btn-ghost" style="font-size:10px" onclick="ovSaveTextToGallery(\'ov_writerOut\',\'content\',\'QUILL Writing\')">💾 Save</button>'+
       '</div>'+
-      '<div id="ov_writerOut" style="display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(255,70,112,0.3);border-radius:8px;padding:14px;font-size:11px;line-height:1.7;white-space:pre-wrap;max-height:350px;overflow-y:auto"></div>'+
+      '<div id="ov_writerOut" class="ov2-out"></div>'+
       '<div id="ov_writerPublish" style="display:none"></div>'+
       '</div>'
     });
