@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Turtle Music Bot — ShaddaiLabs</title>
+<meta name="description" content="Generate original music in your browser — free, no signup. Turtle Music Bot by ShaddaiLabs." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#06120e; --acc:#00e5a0; --acc2:#22d3ee; --gold:#e8c45c;
+    --ink:#e7fff6; --ink2:#9dc4b6; --dim:#5a7a6d;
+    --line:rgba(0,229,160,.18); --lineA:rgba(34,211,238,.24);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; line-height:1.5;
+    background-image:
+      radial-gradient(900px 560px at 82% -8%, rgba(0,229,160,.20), transparent 60%),
+      radial-gradient(760px 520px at -6% 6%, rgba(34,211,238,.08), transparent 55%),
+      linear-gradient(180deg,#07140f 0%,#050d0a 100%);
+    background-attachment:fixed; overflow-x:hidden;
+  }
+  a{ color:inherit; text-decoration:none; }
+  ::selection{ background:var(--acc); color:#04140e; }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+    padding:13px 20px; border-bottom:1px solid var(--line); backdrop-filter:blur(9px); background:rgba(6,18,14,.72); }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Cinzel',serif; font-weight:900; letter-spacing:.24em; font-size:13px; }
+  .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--acc); box-shadow:0 0 10px var(--acc); animation:pulse 2.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  .top .lab{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); }
+
+  .wrap{ max-width:820px; margin:0 auto; padding:0 18px 90px; }
+  .head{ text-align:center; padding:38px 0 12px; }
+  .head .eye{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--acc2); }
+  .head h1{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(30px,6.4vw,52px); line-height:1.03; margin:10px 0 8px;
+    background:linear-gradient(120deg,#9dffe3,#fff 44%,#00e5a0 78%,#9dffe3); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 26px rgba(0,229,160,.30)); }
+  .head p{ max-width:520px; margin:0 auto; color:var(--ink2); font-size:15px; }
+  .head p b{ color:var(--ink); }
+
+  .card{ margin-top:20px; border:1px solid var(--line); border-radius:18px; background:linear-gradient(165deg,#0b1a15,#08130f); box-shadow:0 24px 60px rgba(0,0,0,.45); padding:20px; }
+  .grp{ margin-bottom:18px; }
+  .lbl{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-bottom:9px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2); border:1.5px solid var(--line); background:rgba(255,255,255,.02);
+    border-radius:100px; padding:9px 15px; cursor:pointer; transition:.15s; user-select:none; }
+  .chip:hover{ color:#fff; border-color:rgba(0,229,160,.5); }
+  .chip.on{ color:#04140e; background:var(--acc); border-color:transparent; font-weight:700; }
+  .rowg{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .sld{ display:flex; flex-direction:column; gap:6px; }
+  .sld .v{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--acc2); }
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:5px; background:rgba(255,255,255,.12); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--acc); cursor:pointer; box-shadow:0 0 10px rgba(0,229,160,.5); }
+  input[type=range]::-moz-range-thumb{ width:18px; height:18px; border:none; border-radius:50%; background:var(--acc); cursor:pointer; }
+  .toggles{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  .transport{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+  .btn{ border:none; border-radius:12px; padding:15px 22px; font-family:'Cinzel',serif; font-weight:700; font-size:14px; letter-spacing:.05em; text-transform:uppercase; cursor:pointer; transition:.15s; }
+  .btn.primary{ flex:1; min-width:180px; color:#04140e; background:linear-gradient(100deg,var(--acc),#00b57e); box-shadow:0 12px 30px rgba(0,229,160,.3); }
+  .btn.primary:hover{ transform:translateY(-2px); filter:brightness(1.07); }
+  .btn.ghost{ background:transparent; border:1.5px solid var(--line); color:var(--ink2); }
+  .btn.ghost:hover{ color:#fff; border-color:var(--acc); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+
+  .viz{ height:90px; margin-top:16px; border:1px solid var(--line); border-radius:12px; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; gap:2px; padding:8px; overflow:hidden; }
+  .viz .bar{ flex:1; background:linear-gradient(180deg,var(--acc),var(--acc2)); border-radius:2px 2px 0 0; height:4px; transition:height .06s linear; opacity:.85; }
+  .status{ margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); text-align:center; letter-spacing:.06em; }
+  .status b{ color:var(--acc2); }
+  .up{ margin-top:24px; text-align:center; border:1px dashed var(--lineA); border-radius:14px; padding:16px 18px; }
+  .up .t{ font-family:'Cinzel',serif; font-weight:700; color:#fff; font-size:15px; margin-bottom:6px; }
+  .up p{ color:var(--ink2); font-size:13px; margin:0 auto; max-width:440px; }
+  @media(max-width:560px){ .rowg{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="brand" href="/home.html"><span class="dot"></span>SHADDAI</a>
+    <span class="lab">🐢 Turtle Music Bot · ShaddaiLabs</span>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eye">Turtle Music Bot · free, in-browser</div>
+      <h1>Make a track<br>in one tap</h1>
+      <p>Pick a vibe, tweak the settings, and <b>TURTLE composes an original track</b> — drums, bass, chords &amp; melody — right in your browser. No signup, no keys.</p>
+    </div>
+
+    <div class="card">
+      <div class="grp">
+        <div class="lbl">① Genre</div>
+        <div class="chips" id="genreChips"></div>
+      </div>
+      <div class="grp">
+        <div class="lbl">② Mood</div>
+        <div class="chips" id="moodChips"></div>
+      </div>
+      <div class="grp">
+        <div class="rowg">
+          <div class="sld"><div class="lbl">Tempo · <span class="v" id="bpmV">92 BPM</span></div><input type="range" id="bpm" min="60" max="160" value="92"></div>
+          <div class="sld"><div class="lbl">Length · <span class="v" id="barsV">8 bars</span></div><input type="range" id="bars" min="4" max="16" step="2" value="8"></div>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="lbl">③ Layers</div>
+        <div class="toggles" id="layerChips"></div>
+      </div>
+
+      <div class="transport">
+        <button class="btn primary" id="genBtn" onclick="TMB.generate()">🎼 Compose &amp; Play</button>
+        <button class="btn ghost" id="stopBtn" onclick="TMB.stop()" disabled>■ Stop</button>
+        <button class="btn ghost" id="dlBtn" onclick="TMB.export()" disabled>⤓ WAV</button>
+      </div>
+      <div class="viz" id="viz"></div>
+      <div class="status" id="status">Ready — pick a vibe and hit compose.</div>
+    </div>
+
+    <div class="up">
+      <div class="t">Want AI vocals &amp; full songs?</div>
+      <p>This free engine composes instrumentals in your browser. Studio-quality AI songs with lyrics &amp; vocals (Suno / Producer) are a <b>bring-your-own-key</b> upgrade — coming to the bot.</p>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var GENRES={
+    lofi:    { name:'Lo-Fi',     scale:'minPent', prog:[0,3,4,3],   bpm:82,  kick:[0,8],       snare:[4,12], hat:2, wave:'sine',     bass:'triangle', swing:.12 },
+    synthwave:{name:'Synthwave', scale:'minor',   prog:[0,5,3,4],   bpm:100, kick:[0,4,8,12],  snare:[4,12], hat:2, wave:'sawtooth', bass:'sawtooth', swing:0   },
+    trap:    { name:'Trap',      scale:'minor',   prog:[0,0,5,3],   bpm:140, kick:[0,6,10],    snare:[8],    hat:1, wave:'square',   bass:'square',   swing:0   },
+    ambient: { name:'Ambient',   scale:'major',   prog:[0,4,5,4],   bpm:68,  kick:[],          snare:[],     hat:0, wave:'sine',     bass:'sine',     swing:0   },
+    house:   { name:'House',     scale:'minPent', prog:[0,3,5,4],   bpm:124, kick:[0,4,8,12],  snare:[4,12], hat:2, wave:'sawtooth', bass:'sawtooth', swing:0   },
+    chip:    { name:'8-Bit',     scale:'major',   prog:[0,4,5,3],   bpm:132, kick:[0,8],       snare:[4,12], hat:2, wave:'square',   bass:'square',   swing:0   }
+  };
+  var MOODS={ chill:{name:'Chill',oct:0,lead:.7}, bright:{name:'Bright',oct:1,lead:1}, dark:{name:'Dark',oct:-1,lead:.8}, dreamy:{name:'Dreamy',oct:0,lead:.55}, hype:{name:'Hype',oct:0,lead:1.2} };
+  var SCALES={ major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10], minPent:[0,3,5,7,10], dorian:[0,2,3,5,7,9,10] };
+  var LAYERS=['drums','bass','chords','melody'];
+  var state={ genre:'lofi', mood:'chill', layers:{drums:true,bass:true,chords:true,melody:true} };
+  var ac=null, nodes=[], playing=false, vizRAF=0, lastCfg=null;
+
+  function $(id){return document.getElementById(id);}
+  function chip(txt,on){ return '<span class="chip'+(on?' on':'')+'">'+txt+'</span>'; }
+
+  function build(){
+    $('genreChips').innerHTML=Object.keys(GENRES).map(function(k){return '<span class="chip'+(k===state.genre?' on':'')+'" data-g="'+k+'">'+GENRES[k].name+'</span>';}).join('');
+    $('moodChips').innerHTML=Object.keys(MOODS).map(function(k){return '<span class="chip'+(k===state.mood?' on':'')+'" data-m="'+k+'">'+MOODS[k].name+'</span>';}).join('');
+    $('layerChips').innerHTML=LAYERS.map(function(k){return '<span class="chip'+(state.layers[k]?' on':'')+'" data-l="'+k+'">'+(k==='drums'?'🥁':k==='bass'?'🎸':k==='chords'?'🎹':'🎵')+' '+k+'</span>';}).join('');
+    $('genreChips').onclick=function(e){var c=e.target.closest('[data-g]');if(!c)return;state.genre=c.dataset.g;var g=GENRES[state.genre];$('bpm').value=g.bpm;$('bpmV').textContent=g.bpm+' BPM';build();};
+    $('moodChips').onclick=function(e){var c=e.target.closest('[data-m]');if(!c)return;state.mood=c.dataset.m;build();};
+    $('layerChips').onclick=function(e){var c=e.target.closest('[data-l]');if(!c)return;state.layers[c.dataset.l]=!state.layers[c.dataset.l];build();};
+  }
+  $('bpm').oninput=function(){$('bpmV').textContent=this.value+' BPM';};
+  $('bars').oninput=function(){$('barsV').textContent=this.value+' bars';};
+
+  // build a viz
+  (function(){ var v=$('viz'); for(var i=0;i<64;i++){ var b=document.createElement('div'); b.className='bar'; v.appendChild(b); } })();
+
+  function noteFreq(semi){ return 261.63*Math.pow(2, semi/12); } // C4 base
+
+  function scaleNotes(){
+    var sc=SCALES[GENRES[state.genre].scale]||SCALES.minor;
+    return sc;
+  }
+
+  // Schedule the whole arrangement into a given AudioContext (online or offline).
+  function render(ctx, cfg){
+    var g=GENRES[cfg.genre], mood=MOODS[cfg.mood], sc=SCALES[g.scale];
+    var spb=60/cfg.bpm, stepDur=spb/4; // 16th steps
+    var master=ctx.createGain(); master.gain.value=0.9; master.connect(ctx.destination);
+    // simple feedback-delay "reverb"
+    var dly=ctx.createDelay(); dly.delayTime.value=stepDur*2; var fb=ctx.createGain(); fb.gain.value=0.22; var wet=ctx.createGain(); wet.gain.value=0.16;
+    dly.connect(fb); fb.connect(dly); dly.connect(wet); wet.connect(master);
+    var t0=ctx.currentTime+0.06;
+
+    function osc(type,freq,t,dur,gain,dest){
+      var o=ctx.createOscillator(), a=ctx.createGain(); o.type=type; o.frequency.value=freq;
+      a.gain.setValueAtTime(0.0001,t); a.gain.exponentialRampToValueAtTime(gain,t+0.012);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(a); a.connect(dest); a.connect(dly); o.start(t); o.stop(t+dur+0.02);
+    }
+    function noise(t,dur,gain,hp){
+      var n=ctx.createBufferSource(), buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate), d=buf.getChannelData(0);
+      for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+      n.buffer=buf; var f=ctx.createBiquadFilter(); f.type=hp?'highpass':'bandpass'; f.frequency.value=hp?7000:1800;
+      var a=ctx.createGain(); a.gain.setValueAtTime(gain,t); a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      n.connect(f); f.connect(a); a.connect(master); n.start(t); n.stop(t+dur);
+    }
+    function kick(t){ var o=ctx.createOscillator(),a=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
+      a.gain.setValueAtTime(1,t); a.gain.exponentialRampToValueAtTime(0.0001,t+0.28); o.connect(a); a.connect(master); o.start(t); o.stop(t+0.3); }
+
+    var bars=cfg.bars, prog=g.prog, root=-12+ (mood.oct*12);
+    for(var bar=0; bar<bars; bar++){
+      var deg=prog[bar%prog.length];
+      var chordRoot=root+sc[deg%sc.length];
+      var barT=t0+bar*spb*4;
+      // chords (held) — triad
+      if(cfg.layers.chords){
+        [0,2,4].forEach(function(iv){ var s=sc[(deg+iv)%sc.length]+(iv>=sc.length?12:0);
+          osc(g.wave, noteFreq(chordRoot+ (sc[(deg+iv)%sc.length]-sc[deg%sc.length]) +12), barT, spb*4*0.96, 0.05, master); });
+      }
+      for(var step=0; step<16; step++){
+        var sw=(step%2===1? (g.swing*stepDur):0);
+        var t=barT+step*stepDur+sw;
+        // drums
+        if(cfg.layers.drums){
+          if(g.kick.indexOf(step)>=0) kick(t);
+          if(g.snare.indexOf(step)>=0) noise(t,0.18,0.5,false);
+          if(g.hat && step%g.hat===0) noise(t,0.03,0.14,true);
+        }
+        // bass — root on downbeats
+        if(cfg.layers.bass && step%4===0){
+          osc(g.bass, noteFreq(chordRoot-12), t, stepDur*3.6, 0.16, master);
+        }
+        // melody — sparse notes from scale
+        if(cfg.layers.melody){
+          var hit = (step%2===0) && (Math.random() < 0.45*mood.lead);
+          if(hit){ var mi=sc[(deg+ (Math.floor(Math.random()*sc.length)))%sc.length];
+            osc(g.wave, noteFreq(root+mi+12), t, stepDur*1.6, 0.10*mood.lead, master); }
+        }
+      }
+    }
+    return { master:master, endTime:t0+bars*spb*4+0.5 };
+  }
+
+  function cfgFromUI(){ return { genre:state.genre, mood:state.mood, bpm:+$('bpm').value, bars:+$('bars').value, layers:JSON.parse(JSON.stringify(state.layers)) }; }
+
+  function runViz(analyser){
+    var bars=$('viz').children, data=new Uint8Array(analyser.frequencyBinCount);
+    function tick(){ analyser.getByteFrequencyData(data);
+      for(var i=0;i<bars.length;i++){ var v=data[Math.floor(i/bars.length*data.length)]/255; bars[i].style.height=(4+v*78)+'px'; }
+      vizRAF=requestAnimationFrame(tick);
+    } tick();
+  }
+
+  window.TMB={
+    generate:function(){
+      TMB.stop();
+      ac=new (window.AudioContext||window.webkitAudioContext)();
+      lastCfg=cfgFromUI();
+      var an=ac.createAnalyser(); an.fftSize=128;
+      var r=render(ac, lastCfg); r.master.connect(an);
+      runViz(an);
+      playing=true; $('stopBtn').disabled=false; $('dlBtn').disabled=false; $('genBtn').textContent='🎼 Recompose';
+      $('status').innerHTML='Playing <b>'+GENRES[lastCfg.genre].name+'</b> · '+MOODS[lastCfg.mood].name+' · '+lastCfg.bpm+' BPM · '+lastCfg.bars+' bars';
+      setTimeout(function(){ if(playing && ac && ac.currentTime>=r.endTime-0.2){ TMB.stop(); } }, (r.endTime-ac.currentTime)*1000+200);
+    },
+    stop:function(){ playing=false; if(vizRAF)cancelAnimationFrame(vizRAF); if(ac){ try{ac.close();}catch(e){} ac=null; }
+      var bars=$('viz').children; for(var i=0;i<bars.length;i++) bars[i].style.height='4px';
+      $('stopBtn').disabled=true; $('genBtn').textContent='🎼 Compose & Play'; },
+    export:async function(){
+      var cfg=lastCfg||cfgFromUI(); var spb=60/cfg.bpm; var dur=cfg.bars*spb*4+0.6;
+      var off=new OfflineAudioContext(2, Math.ceil(44100*dur), 44100);
+      var r=render(off, cfg);
+      $('status').textContent='Rendering WAV…';
+      var buf=await off.startRendering();
+      var wav=encodeWAV(buf); var url=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+      var a=document.createElement('a'); a.href=url; a.download='turtle-music-'+cfg.genre+'-'+cfg.bpm+'bpm.wav'; a.click();
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+      $('status').innerHTML='Exported <b>'+cfg.genre+'</b> WAV ✓';
+    }
+  };
+
+  function encodeWAV(buf){
+    var n=buf.numberOfChannels, len=buf.length*n*2+44, ab=new ArrayBuffer(len), v=new DataView(ab), ch=[], off=0, p=0;
+    function ws(s){for(var i=0;i<s.length;i++)v.setUint8(p++,s.charCodeAt(i));}
+    function u32(d){v.setUint32(p,d,true);p+=4;} function u16(d){v.setUint16(p,d,true);p+=2;}
+    ws('RIFF');u32(len-8);ws('WAVE');ws('fmt ');u32(16);u16(1);u16(n);u32(44100);u32(44100*n*2);u16(n*2);u16(16);ws('data');u32(buf.length*n*2);
+    for(var i=0;i<n;i++)ch.push(buf.getChannelData(i));
+    for(var s=0;s<buf.length;s++){ for(var c=0;c<n;c++){ var x=Math.max(-1,Math.min(1,ch[c][s])); v.setInt16(p, x<0?x*0x8000:x*0x7FFF, true); p+=2; } }
+    return ab;
+  }
+
+  build();
+})();
+</script>
+</body>
+</html>
