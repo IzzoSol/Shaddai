@@ -4349,6 +4349,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('social')" style="--nav-img:url(/assets/nav/social.jpg)">📡 Social</button>
   <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
   <!-- E3 REMOVED: ⚡ Skills nav — now lives inside Office ▸ Skills sub-tab -->
+  <button class="nav-btn" onclick="showView('brain');try{brainInit()}catch(e){}" style="color:#b16cff;font-weight:700" title="The Brain — search & ask the council's RAG knowledge">🧠 Brain</button>
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
@@ -6723,6 +6724,124 @@ window.enter3DWorld=function(){
     })();
     </script>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       THE BRAIN — search & ask the council's RAG knowledge (wired to the
+       already-built brain: /api/overview · /api/search · /api/ask · /api/council).
+       Same kb_<agent> stores agent-engine recalls, so this shows what agents know.
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div id="brainView" class="view">
+    <style>
+      #brainView .brn-hero{background:radial-gradient(120% 140% at 80% -20%,rgba(177,108,255,0.14),transparent 55%),linear-gradient(135deg,rgba(0,0,0,0.5),rgba(177,108,255,0.05));border:1px solid rgba(177,108,255,0.28);border-radius:14px;padding:20px 22px;margin-bottom:14px}
+      #brainView .brn-title{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#fff;letter-spacing:0.08em}
+      #brainView .brn-sub{font-size:10px;color:rgba(177,108,255,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:4px;font-family:'Share Tech Mono',monospace}
+      #brainView .brn-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+      #brainView .brn-chip{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.02);border-radius:100px;padding:8px 14px;cursor:pointer;transition:.15s;user-select:none}
+      #brainView .brn-chip:hover{color:#fff;border-color:rgba(177,108,255,0.5)}
+      #brainView .brn-chip.on{color:#12061f;background:#b16cff;border-color:transparent;font-weight:700}
+      #brainView .brn-modes{display:flex;gap:6px;margin-bottom:12px}
+      #brainView .brn-mode{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--text-muted);cursor:pointer;transition:.15s}
+      #brainView .brn-mode.on{color:#12061f;background:linear-gradient(100deg,#b16cff,#7c4bd8);border-color:transparent}
+      #brainView textarea.brn-q{width:100%;min-height:70px;resize:vertical;background:rgba(0,0,0,0.4);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;padding:13px 15px;font-size:15px;font-family:inherit;outline:none;transition:.18s}
+      #brainView textarea.brn-q:focus{border-color:#b16cff;box-shadow:0 0 0 3px rgba(177,108,255,0.14)}
+      #brainView .brn-go{width:100%;margin-top:10px;border:none;border-radius:12px;padding:14px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#12061f;background:linear-gradient(100deg,#b16cff,#7c4bd8);cursor:pointer;transition:.15s}
+      #brainView .brn-go:hover{filter:brightness(1.08);transform:translateY(-1px)}
+      #brainView .brn-go:disabled{opacity:.55;cursor:not-allowed;transform:none}
+      #brainView .brn-ans{margin-top:14px;border:1px solid rgba(177,108,255,0.25);border-radius:12px;padding:16px 18px;background:rgba(177,108,255,0.04);font-size:14px;line-height:1.7;color:#eee;white-space:pre-wrap}
+      #brainView .brn-src{margin-top:10px;border:1px dashed rgba(177,108,255,0.3);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,0.25)}
+      #brainView .brn-srchd{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+      #brainView .brn-srcrow{font-size:12px;color:rgba(255,255,255,0.75);padding:5px 0;border-top:1px solid rgba(255,255,255,0.05)}
+      #brainView .brn-srcrow b{color:#c79bff}
+      #brainView .brn-hit{border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:9px;background:rgba(255,255,255,0.015)}
+      #brainView .brn-hit .h{display:flex;gap:8px;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:6px}
+      #brainView .brn-hit .h .ag{color:#c79bff;font-weight:700}
+      #brainView .brn-hit .t{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.82)}
+      #brainView .brn-muted{color:var(--text-muted);font-size:12px;font-family:'Share Tech Mono',monospace}
+    </style>
+    <div class="brn-hero">
+      <div class="brn-title">🧠 THE BRAIN</div>
+      <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="brn-chips" id="brainAgents"></div>
+      <div class="brn-modes">
+        <button class="brn-mode on" data-m="ask" onclick="brainSetMode('ask')">💬 Ask (grounded)</button>
+        <button class="brn-mode" data-m="search" onclick="brainSetMode('search')">🔎 Search chunks</button>
+        <button class="brn-mode" data-m="council" onclick="brainSetMode('council')">🏛 Council</button>
+      </div>
+      <textarea id="brainQ" class="brn-q" placeholder="Ask the brain… e.g. How do I maximize reach on X in 2026?" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))brainRun()"></textarea>
+      <button class="brn-go" id="brainGo" onclick="brainRun()">Ask the Brain →</button>
+      <div id="brainOut" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var API=(typeof PROXY!=='undefined'&&PROXY)?PROXY:'';
+    var AGENTS=['ALL','SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
+    var COLORS={ALL:'#b16cff',SHADDAI:'#ffd700',NEXUS:'#00ff88',ZEROX:'#00f0ff',ORACLE:'#b06aff',TURTLE:'#ff7b3d',QUILL:'#ffb020',PIKADON:'#ff4070'};
+    var cur='ALL', mode='ask', busy=false, built=false;
+    function $(id){return document.getElementById(id);}
+    function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];});}
+
+    function buildChips(){
+      if(built) return; built=true;
+      $('brainAgents').innerHTML=AGENTS.map(function(a){
+        return '<span class="brn-chip'+(a===cur?' on':'')+'" data-a="'+a+'" onclick="brainPick(\''+a+'\')" style="'+(a===cur?'':'')+'">'+(a==='ALL'?'🧠 All':esc(a))+'</span>';
+      }).join('');
+      loadOverview();
+    }
+    function loadOverview(){
+      fetch(API+'/api/overview').then(function(r){return r.json();}).then(function(d){
+        if(!d||!d.ok){ $('brainStats').textContent='knowledge base offline'; return; }
+        $('brainStats').textContent=(d.chunks||0).toLocaleString()+' chunks · '+(d.videos||0)+' sources · '+((d.agents||[]).length)+' agents · grounded recall';
+      }).catch(function(){ $('brainStats').textContent='knowledge base unreachable'; });
+    }
+    window.brainPick=function(a){ cur=a; document.querySelectorAll('#brainAgents .brn-chip').forEach(function(c){c.classList.toggle('on',c.dataset.a===a);}); };
+    window.brainSetMode=function(m){ mode=m; document.querySelectorAll('#brainView .brn-mode').forEach(function(b){b.classList.toggle('on',b.dataset.m===m);});
+      $('brainGo').textContent=(m==='ask'?'Ask the Brain →':m==='search'?'Search the Brain →':'Convene the Council →'); };
+
+    window.brainRun=async function(){
+      if(busy) return;
+      var q=($('brainQ').value||'').trim(); if(!q){ $('brainQ').focus(); return; }
+      busy=true; var go=$('brainGo'); go.disabled=true;
+      $('brainOut').innerHTML='<div class="brn-muted" style="padding:12px 2px">🧠 consulting '+(cur==='ALL'?'the council':cur)+'…</div>';
+      try{
+        if(mode==='ask'){
+          var ag=(cur==='ALL')?'SHADDAI':cur;
+          var d=await (await fetch(API+'/api/ask?agent='+ag+'&k=6&q='+encodeURIComponent(q))).json();
+          var src=(d.sources||[]).map(function(s){return '<div class="brn-srcrow"><b>'+esc(s.agent||ag)+'</b> · '+esc(s.title||'untitled')+' <span class="brn-muted">('+(s.score||0).toFixed(2)+')</span><br>'+esc((s.snippet||'').slice(0,160))+'…</div>';}).join('');
+          $('brainOut').innerHTML='<div class="brn-ans">'+esc(d.answer||'No grounded answer.')+'</div>'+
+            (src?'<div class="brn-src"><div class="brn-srchd">📚 Sources · '+esc(ag)+' · '+(d.provider||'rag')+(d.llm_powered?' (LLM-grounded)':'')+'</div>'+src+'</div>':'');
+        } else if(mode==='search'){
+          var url=API+'/api/search?k=8&q='+encodeURIComponent(q)+(cur==='ALL'?'':'&agent='+cur);
+          var d=await (await fetch(url)).json();
+          var hits=(d.results||[]);
+          $('brainOut').innerHTML=hits.length? hits.map(function(h){
+            return '<div class="brn-hit"><div class="h"><span class="ag">'+esc(h.agent||cur)+'</span>·<span>'+esc(h.title||'untitled')+'</span>·<span>score '+(h.score||0).toFixed(2)+'</span></div><div class="t">'+esc((h.text||'').slice(0,320))+'…</div></div>';
+          }).join('') : '<div class="brn-muted" style="padding:10px 2px">No chunks matched.</div>';
+        } else {
+          var d=await (await fetch(API+'/api/council?k=2&q='+encodeURIComponent(q))).json();
+          var ags=(d.agents||[]).filter(function(a){return a.chunks>0;}).sort(function(a,b){return b.score-a.score;});
+          $('brainOut').innerHTML=ags.length? ags.map(function(a){
+            var top=(a.results&&a.results[0])||{};
+            return '<div class="brn-hit" style="border-left:3px solid '+(COLORS[a.id]||'#b16cff')+'"><div class="h"><span class="ag" style="color:'+(COLORS[a.id]||'#c79bff')+'">'+esc(a.id)+'</span>·<span>'+esc(a.role||'')+'</span>·<span>score '+(a.score||0).toFixed(2)+'</span></div><div class="t">'+esc((top.text||'').slice(0,260))+'…</div></div>';
+          }).join('') : '<div class="brn-muted" style="padding:10px 2px">The council had nothing grounded on that.</div>';
+        }
+      }catch(e){
+        $('brainOut').innerHTML='<div class="brn-muted" style="padding:10px 2px;color:#ff9d90">Brain unreachable — '+esc(e.message)+'</div>';
+      }
+      busy=false; go.disabled=false;
+    };
+
+    // The nav button calls brainInit() directly — survives later showView re-wrapping.
+    window.brainInit=buildChips;
+    // Fallback: build once if the Brain view becomes active by any path.
+    var _bt=0,_bi=setInterval(function(){_bt++;var v=document.getElementById('brainView');
+      if(v&&v.classList.contains('active')){try{buildChips();}catch(e){}clearInterval(_bi);}
+      if(_bt>240)clearInterval(_bi);},400);
+  })();
+  </script>
 
   <!-- Office / Pixel Office — TOP TIER VISUAL UPGRADE -->
   <style>
