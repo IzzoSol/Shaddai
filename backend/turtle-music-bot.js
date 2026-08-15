@@ -65,23 +65,24 @@ const GENRE_KEYS = Object.keys(mg.GENRES);
 const MOOD_KEYS = Object.keys(mg.MOODS);
 function startText() {
   return '🐢 <b>Turtle Music Bot</b> — <i>by ShaddaiLabs</i>\n\n' +
-    'I make music, free, right here in chat.\n\n' +
-    '🎼 <b>/music</b> — compose an original track\n' +
-    '   e.g. <code>/music synthwave hype</code>\n' +
-    '🔎 <b>/find</b> &lt;song&gt; — look up real songs\n' +
-    '▶️ <b>/play</b> &lt;song&gt; — play a track instantly\n' +
-    '🎛 <b>/genres</b> — all styles &amp; moods\n\n' +
-    'Tap a style to start 👇';
+    'Free music, right here in chat. No ads, no keys.\n\n' +
+    '▶️ <b>/play</b> &lt;song&gt; — play any song instantly\n' +
+    '🎧 <b>/full</b> &lt;vibe&gt; — full free tracks\n' +
+    '🔎 <b>/find</b> &lt;song&gt; — search &amp; pick\n' +
+    '🎼 <b>/music</b> &lt;genre&gt; — compose an original\n' +
+    '📝 <b>/lyrics</b> artist - title\n\n' +
+    'Or just type a song name. Tap a style to start 👇';
 }
 function helpText() {
   return '🐢 <b>Turtle Music Bot — commands</b>\n\n' +
+    '<b>/play</b> &lt;query&gt;\n   Instantly play the top match — full track if available, else preview.\n' +
+    '<b>/full</b> &lt;query&gt;\n   Full free tracks only (Audius). e.g. <code>/full lofi study</code>\n' +
+    '<b>/find</b> &lt;query&gt;\n   Search all sources → tap 🎧/▶ to play.\n' +
     '<b>/music</b> [genre] [mood] [bars]\n   Original procedural track. e.g. <code>/music lofi chill 12</code>\n' +
-    '<b>/find</b> &lt;query&gt;\n   Search real songs (title/artist) → tap ▶ to play.\n' +
-    '<b>/play</b> &lt;query&gt;\n   Instantly play the top match (30-sec preview).\n' +
-    '<b>/genres</b> — list styles &amp; moods\n' +
-    '<b>/help</b> — this list\n\n' +
-    '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n' +
-    '🎨 Moods: ' + MOOD_KEYS.join(', ');
+    '<b>/lyrics</b> artist - title\n   Song lyrics. e.g. <code>/lyrics daft punk - get lucky</code>\n' +
+    '<b>/genres</b> — styles &amp; moods · <b>/help</b> — this list\n\n' +
+    'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews) · 📝 lyrics.ovh\n' +
+    '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n🎨 Moods: ' + MOOD_KEYS.join(', ');
 }
 function genreButtons() {
   const row = (arr) => arr.map((g) => ({ text: mg.GENRES[g].name, callback_data: 'g:' + g }));
@@ -104,39 +105,70 @@ async function doMusic(chatId, arg) {
   } catch (e) { await send(chatId, '⚠️ Music engine hiccup — try <code>/music lofi</code>'); }
 }
 
-// ── real-song lookup via iTunes (free, no key; 30s previews) ──────────────────
-const lastResults = new Map(); // chatId -> [{name,artist,album,url}]
-async function searchITunes(term, limit) {
-  const r = await fetch('https://itunes.apple.com/search?media=music&limit=' + (limit || 6) + '&term=' + encodeURIComponent(term), { signal: AbortSignal.timeout(12000) });
-  const j = await r.json();
-  return (j.results || []).filter((x) => x.previewUrl).map((x) => ({ name: x.trackName, artist: x.artistName, album: x.collectionName, url: x.previewUrl }));
-}
+// ── real-song lookup — multi-source, all FREE/no-key ──────────────────────────
+// Audius (full tracks) + Deezer/iTunes (previews) + lyrics.ovh. See lib/music-sources.
+const src = require('./lib/music-sources');
+const lastResults = new Map(); // chatId -> unified track[]
+const TG_AUDIO_MAX = 48 * 1024 * 1024; // Telegram bot audio ~50MB; keep headroom
+
+const trackLabel = (tr) => (tr.name + ' — ' + tr.artist).trim();
+const srcTag = (tr) => tr.source === 'audius' ? '🎧 full track · Audius' : tr.source === 'deezer' ? '🎵 preview · Deezer' : '🎵 preview · iTunes';
+const ext = (tr) => tr.source === 'itunes' ? '.m4a' : '.mp3';
+
 async function playTrack(chatId, tr) {
   await chatAction(chatId, 'upload_voice');
   try {
-    const r = await fetch(tr.url, { signal: AbortSignal.timeout(20000) });
-    if (!r.ok) return send(chatId, '⚠️ Could not fetch that preview.');
+    const r = await fetch(tr.stream, { redirect: 'follow', signal: AbortSignal.timeout(30000) });
+    if (!r.ok) return send(chatId, '⚠️ Could not fetch that track.');
+    const clen = parseInt(r.headers.get('content-length') || '0', 10);
+    if (clen && clen > TG_AUDIO_MAX) return send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>');
     const buf = Buffer.from(await r.arrayBuffer());
-    const fn = (tr.name || 'track').replace(/[^\w]+/g, '_').slice(0, 40) + '.m4a';
-    const cap = '🎵 <b>' + esc(tr.name) + '</b>\n' + esc(tr.artist) + (tr.album ? ' · ' + esc(tr.album) : '') + '\n<i>30-sec preview · iTunes</i>';
-    await sendAudio(chatId, buf, fn, cap, (tr.name || 'Track') + ' — ' + (tr.artist || ''));
+    if (buf.length > TG_AUDIO_MAX) return send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>');
+    const fn = (tr.name || 'track').replace(/[^\w]+/g, '_').slice(0, 40) + ext(tr);
+    const dur = tr.duration ? ' · ' + Math.floor(tr.duration / 60) + ':' + String(tr.duration % 60).padStart(2, '0') : '';
+    const cap = '🎵 <b>' + esc(tr.name) + '</b>\n' + esc(tr.artist) + (tr.album ? ' · ' + esc(tr.album) : '') + '\n<i>' + srcTag(tr) + dur + '</i>';
+    const ok = await sendAudio(chatId, buf, fn, cap, trackLabel(tr));
+    if (!ok) await send(chatId, '⚠️ Telegram rejected that file. <a href="' + tr.stream + '">▶ Stream it</a>');
   } catch (e) { await send(chatId, '⚠️ Playback failed — try /play again.'); }
 }
 async function doFind(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/find &lt;song or artist&gt;</code>  e.g. <code>/find daft punk</code>');
   await chatAction(chatId, 'typing');
-  const res = await searchITunes(arg, 6);
+  const res = await src.search(arg);
   if (!res.length) return send(chatId, 'No tracks found for <b>' + esc(arg) + '</b>.');
   lastResults.set(String(chatId), res);
-  const btns = res.map((tr, i) => [{ text: '▶ ' + (tr.name + ' — ' + tr.artist).slice(0, 55), callback_data: 'p:' + i }]);
-  return send(chatId, '🔎 Results for <b>' + esc(arg) + '</b> — tap to play:', { inline_keyboard: btns });
+  const btns = res.map((tr, i) => [{ text: (tr.full ? '🎧 ' : '▶ ') + trackLabel(tr).slice(0, 52), callback_data: 'p:' + i }]);
+  return send(chatId, '🔎 <b>' + esc(arg) + '</b> — 🎧 full track · ▶ preview:', { inline_keyboard: btns });
 }
 async function doPlay(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/play &lt;song&gt;</code>  e.g. <code>/play blinding lights</code>');
   await chatAction(chatId, 'typing');
-  const res = await searchITunes(arg, 1);
+  const res = await src.search(arg, { full: true });
   if (!res.length) return send(chatId, 'No playable match for <b>' + esc(arg) + '</b>. Try /find.');
   return playTrack(chatId, res[0]);
+}
+async function doFull(chatId, arg) {
+  if (!arg) return send(chatId, 'Usage: <code>/full &lt;song or vibe&gt;</code> — full free tracks (Audius). e.g. <code>/full lofi study</code>');
+  await chatAction(chatId, 'typing');
+  const res = await src.audiusSearch(arg, 8);
+  if (!res.length) return send(chatId, 'No full tracks for <b>' + esc(arg) + '</b>. Try /play for previews.');
+  lastResults.set(String(chatId), res);
+  const btns = res.map((tr, i) => [{ text: '🎧 ' + trackLabel(tr).slice(0, 52), callback_data: 'p:' + i }]);
+  return send(chatId, '🎧 Full free tracks for <b>' + esc(arg) + '</b>:', { inline_keyboard: btns });
+}
+async function doLyrics(chatId, arg) {
+  if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
+  await chatAction(chatId, 'typing');
+  let artist, title;
+  const dash = arg.split(/\s+[-–]\s+/);
+  if (dash.length >= 2) { artist = dash[0].trim(); title = dash.slice(1).join(' - ').trim(); }
+  else { const res = await src.deezerSearch(arg, 1); const t = res[0];
+    if (!t) return send(chatId, 'Add an artist: <code>/lyrics &lt;artist&gt; - &lt;title&gt;</code>');
+    artist = t.artist; title = t.name; }
+  const ly = await src.getLyrics(artist, title);
+  if (!ly) return send(chatId, 'No lyrics found for <b>' + esc(artist) + ' — ' + esc(title) + '</b>.');
+  const body = ly.length > 3500 ? ly.slice(0, 3500) + '\n…' : ly;
+  return send(chatId, '📝 <b>' + esc(title) + '</b> — ' + esc(artist) + '\n\n' + esc(body));
 }
 
 // ── router ───────────────────────────────────────────────────────────────────
@@ -168,6 +200,8 @@ async function handle(update) {
         '\n🎨 <b>Moods</b>: ' + MOOD_KEYS.join(', ') + '\n\nUse: <code>/music &lt;genre&gt; &lt;mood&gt; [bars]</code>');
     case 'find': case 'search': case 'lookup': return doFind(chatId, arg);
     case 'play': case 'p': return doPlay(chatId, arg);
+    case 'full': case 'song2': return doFull(chatId, arg);
+    case 'lyrics': case 'words': return doLyrics(chatId, arg);
     default: return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
   }
 }
@@ -175,9 +209,11 @@ async function handle(update) {
 // ── command menu + polling loop ──────────────────────────────────────────────
 async function registerCommands() {
   const commands = [
-    { command: 'music', description: 'Compose an original track  e.g. /music synthwave hype' },
     { command: 'play', description: 'Play a song instantly  e.g. /play blinding lights' },
+    { command: 'full', description: 'Full free tracks  e.g. /full lofi study' },
     { command: 'find', description: 'Search real songs → tap to play' },
+    { command: 'music', description: 'Compose an original track  e.g. /music synthwave hype' },
+    { command: 'lyrics', description: 'Get lyrics  e.g. /lyrics coldplay - yellow' },
     { command: 'genres', description: 'All styles & moods' },
     { command: 'help', description: 'All commands' },
     { command: 'start', description: 'Welcome' },
