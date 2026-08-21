@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADDAI Tools Marketplace</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; background: #06080b; color: #e8f4ff; font-family: 'Exo 2', 'Rajdhani', sans-serif; }
+
+    .toolbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 50px; background: linear-gradient(90deg, #0a1120, #070c16);
+      border-bottom: 2px solid rgba(39, 224, 255, 0.2); display: flex; align-items: center; padding: 0 16px; gap: 16px;
+      z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    }
+    .toolbar .logo { font-weight: 900; letter-spacing: 3px; color: #27e0ff; text-shadow: 0 0 12px rgba(39,224,255,0.6); }
+    .toolbar .sep { width: 1px; height: 24px; background: rgba(39, 224, 255, 0.2); }
+    .toolbar .title { font-size: 13px; letter-spacing: 2px; color: #a0b8ff; }
+    .toolbar .spacer { flex: 1; }
+    .toolbar .stat { font-size: 11px; color: #7d94a0; font-family: 'Share Tech Mono', monospace; }
+
+    .container {
+      margin-top: 50px; padding: 20px; display: grid; grid-template-columns: 250px 1fr; gap: 20px; height: calc(100vh - 50px);
+    }
+
+    .sidebar {
+      background: rgba(4, 9, 18, 0.8); border: 1px solid rgba(39, 224, 255, 0.15); border-radius: 2px;
+      padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+    }
+    .sidebar h3 { font-size: 11px; letter-spacing: 2px; color: #27e0ff; text-transform: uppercase; margin: 8px 0; }
+    .sidebar-btn {
+      padding: 10px 12px; background: rgba(39, 224, 255, 0.08); border: 1px solid rgba(39, 224, 255, 0.2);
+      color: #8fefff; cursor: pointer; font-size: 12px; border-radius: 2px; transition: all 0.2s;
+    }
+    .sidebar-btn:hover { background: rgba(39, 224, 255, 0.15); border-color: rgba(39, 224, 255, 0.4); }
+    .sidebar-btn.active { background: rgba(39, 224, 255, 0.25); border-color: #27e0ff; color: #fff; }
+
+    .main {
+      background: rgba(4, 9, 18, 0.6); border: 1px solid rgba(39, 224, 255, 0.15); border-radius: 2px;
+      overflow-y: auto; padding: 20px;
+    }
+
+    .tool-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+    }
+
+    .tool-card {
+      background: linear-gradient(135deg, rgba(39, 224, 255, 0.06), rgba(192, 140, 255, 0.03));
+      border: 1px solid rgba(39, 224, 255, 0.2); border-radius: 2px; padding: 16px;
+      transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden;
+    }
+    .tool-card:hover {
+      border-color: rgba(39, 224, 255, 0.5); box-shadow: 0 0 20px rgba(39, 224, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    .tool-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, #27e0ff, transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .tool-card:hover::before { opacity: 1; }
+
+    .tool-icon { font-size: 28px; margin-bottom: 8px; }
+    .tool-name { font-size: 14px; font-weight: 700; color: #e8f4ff; margin-bottom: 4px; }
+    .tool-category { font-size: 9px; letter-spacing: 1px; color: #7d94a0; text-transform: uppercase; margin-bottom: 8px; }
+    .tool-desc { font-size: 11px; color: #a0b8ff; line-height: 1.4; margin-bottom: 12px; }
+
+    .tool-meta {
+      display: flex; gap: 8px; font-size: 9px; color: #5f7c86; margin-bottom: 12px;
+      border-top: 1px solid rgba(39, 224, 255, 0.1); padding-top: 8px;
+    }
+    .tool-meta-item { display: flex; align-items: center; gap: 3px; }
+
+    .tool-actions {
+      display: flex; gap: 6px;
+    }
+    .tool-btn {
+      flex: 1; padding: 8px; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      border: none; border-radius: 2px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    }
+    .btn-use {
+      background: linear-gradient(135deg, #27e0ff, #8fefff); color: #06080b;
+      box-shadow: 0 0 12px rgba(39, 224, 255, 0.3);
+    }
+    .btn-use:hover { box-shadow: 0 0 20px rgba(39, 224, 255, 0.5); }
+    .btn-pay {
+      background: rgba(232, 196, 92, 0.15); color: #ffcf4a; border: 1px solid rgba(232, 196, 92, 0.3);
+    }
+    .btn-pay:hover { background: rgba(232, 196, 92, 0.25); border-color: #ffcf4a; }
+
+    .tool-detail {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 200;
+      background: linear-gradient(135deg, #0a1120, #070c16); border: 2px solid #27e0ff;
+      border-radius: 4px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 0 40px rgba(39, 224, 255, 0.3);
+      display: none;
+    }
+    .tool-detail.on { display: block; }
+    .tool-detail::backdrop { background: rgba(0, 0, 0, 0.8); }
+    .detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .detail-hd .icon { font-size: 32px; }
+    .detail-hd .txt { flex: 1; }
+    .detail-hd .close { cursor: pointer; font-size: 20px; color: #ff6b6b; }
+    .detail-name { font-size: 18px; font-weight: 700; color: #e8f4ff; }
+    .detail-cat { font-size: 10px; color: #7d94a0; text-transform: uppercase; letter-spacing: 1px; }
+    .detail-sec { margin: 16px 0; }
+    .detail-sec h4 { font-size: 11px; letter-spacing: 2px; color: #27e0ff; text-transform: uppercase; margin-bottom: 8px; }
+    .detail-sec p { font-size: 12px; color: #a0b8ff; line-height: 1.6; }
+    .detail-sec ul { margin-left: 16px; color: #a0b8ff; font-size: 12px; }
+    .detail-sec li { margin: 4px 0; }
+
+    .payment-form {
+      background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(39, 224, 255, 0.2); padding: 12px; border-radius: 2px;
+      margin: 12px 0; font-size: 12px;
+    }
+    .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .form-input {
+      flex: 1; padding: 8px; background: rgba(6, 8, 11, 0.9); border: 1px solid rgba(39, 224, 255, 0.2);
+      color: #e8f4ff; border-radius: 2px; font-size: 12px;
+    }
+    .form-input::placeholder { color: rgba(160, 184, 255, 0.4); }
+    .form-input:focus { outline: none; border-color: #27e0ff; box-shadow: 0 0 8px rgba(39, 224, 255, 0.2); }
+
+    .btn-run {
+      width: 100%; padding: 12px; background: linear-gradient(135deg, #27e0ff, #8fefff); color: #06080b;
+      font-weight: 700; border: none; border-radius: 2px; cursor: pointer; font-size: 12px; letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .btn-run:hover { box-shadow: 0 0 20px rgba(39, 224, 255, 0.4); transform: scale(1.02); }
+    .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .output-box {
+      background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 156, 0.3); padding: 12px; border-radius: 2px;
+      font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #00ff9c; max-height: 200px;
+      overflow-y: auto; margin: 12px 0; white-space: pre-wrap; word-break: break-word;
+    }
+
+    .filter-bar {
+      display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 12px; background: rgba(39, 224, 255, 0.1); border: 1px solid rgba(39, 224, 255, 0.2);
+      color: #8fefff; cursor: pointer; font-size: 11px; border-radius: 2px; transition: all 0.2s;
+    }
+    .filter-btn.active { background: rgba(39, 224, 255, 0.3); border-color: #27e0ff; }
+    .filter-btn:hover { background: rgba(39, 224, 255, 0.2); }
+
+    .search-box {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1; padding: 10px; background: rgba(6, 8, 11, 0.9); border: 1px solid rgba(39, 224, 255, 0.2);
+      color: #e8f4ff; border-radius: 2px; font-size: 12px;
+    }
+    .search-input::placeholder { color: rgba(160, 184, 255, 0.4); }
+    .search-input:focus { outline: none; border-color: #27e0ff; box-shadow: 0 0 8px rgba(39, 224, 255, 0.2); }
+
+    .empty { text-align: center; color: #5f7c86; padding: 40px 20px; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(39, 224, 255, 0.05); }
+    ::-webkit-scrollbar-thumb { background: rgba(39, 224, 255, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(39, 224, 255, 0.4); }
+  </style>
+</head>
+<body>
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="logo">⚡ SHADDAI</div>
+    <div class="sep"></div>
+    <div class="title">TOOLS MARKETPLACE</div>
+    <div class="spacer"></div>
+    <div class="stat">TOOLS: <span id="toolCount">0</span></div>
+    <div class="stat">USED: <span id="usedCount">0</span></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h3>🔍 FILTER</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search tools...">
+
+      <h3 style="margin-top: 16px;">📂 CATEGORY</h3>
+      <button class="sidebar-btn active" onclick="filterByCategory('all')">All Tools</button>
+      <button class="sidebar-btn" onclick="filterByCategory('data')">📊 Data</button>
+      <button class="sidebar-btn" onclick="filterByCategory('crypto')">🪙 Crypto</button>
+      <button class="sidebar-btn" onclick="filterByCategory('web')">🌐 Web</button>
+      <button class="sidebar-btn" onclick="filterByCategory('ai')">🤖 AI</button>
+      <button class="sidebar-btn" onclick="filterByCategory('content')">✍️ Content</button>
+      <button class="sidebar-btn" onclick="filterByCategory('finance')">💰 Finance</button>
+
+      <h3 style="margin-top: 16px;">💳 COST</h3>
+      <button class="sidebar-btn" onclick="filterByCost('free')">Free</button>
+      <button class="sidebar-btn" onclick="filterByCost('paid')">Paid</button>
+
+      <h3 style="margin-top: 16px;">⭐ YOUR TOOLS</h3>
+      <button class="sidebar-btn" onclick="filterByUsed('used')">Recently Used</button>
+      <button class="sidebar-btn" onclick="filterByUsed('favorite')">⭐ Favorites</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+      <h2 style="margin-bottom: 16px; font-size: 16px; letter-spacing: 1px;">🛠️ AVAILABLE TOOLS</h2>
+      <div id="toolGrid" class="tool-grid"></div>
+      <div id="empty" class="empty" style="display:none;">
+        <div class="empty-icon">∅</div>
+        <div>No tools match your filters</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL DETAIL MODAL -->
+  <div id="toolDetail" class="tool-detail">
+    <div class="detail-hd">
+      <div class="icon" id="detailIcon">⚡</div>
+      <div class="txt">
+        <div class="detail-name" id="detailName">Tool Name</div>
+        <div class="detail-cat" id="detailCat">CATEGORY</div>
+      </div>
+      <div class="close" onclick="closeDetail()">&times;</div>
+    </div>
+
+    <div class="detail-sec">
+      <h4>Description</h4>
+      <p id="detailDesc">Tool description goes here</p>
+    </div>
+
+    <div class="detail-sec">
+      <h4>Parameters</h4>
+      <ul id="detailParams"></ul>
+    </div>
+
+    <div class="detail-sec">
+      <h4>Cost</h4>
+      <p id="detailCost">Free</p>
+    </div>
+
+    <div class="detail-sec">
+      <h4>Input</h4>
+      <div id="detailInputs"></div>
+    </div>
+
+    <div class="detail-sec">
+      <h4>Payment</h4>
+      <div class="payment-form">
+        <div class="form-row">
+          <select id="payProvider" class="form-input">
+            <option value="">Select payment method...</option>
+            <option value="credits">Use Credits</option>
+            <option value="stripe">Stripe</option>
+            <option value="paybox">Paybox</option>
+            <option value="cashapp">Cash App</option>
+          </select>
+        </div>
+        <div id="paymentStatus" style="font-size: 11px; color: #7d94a0; margin-bottom: 8px;"></div>
+      </div>
+    </div>
+
+    <button id="runBtn" class="btn-run" onclick="runTool()">▶ RUN TOOL</button>
+
+    <div id="output" class="output-box" style="display:none;">
+      <div id="outputText"></div>
+    </div>
+  </div>
+
+  <script>
+    // Tool Registry (from agent-engine)
+    const TOOLS = [
+      {
+        id: 'fetch_price',
+        name: 'Fetch Token Price',
+        icon: '📊',
+        category: 'crypto',
+        description: 'Get real-time price for any crypto token on Solana/Ethereum',
+        params: ['address (token address)', 'chain (solana/ethereum)'],
+        cost: 0,
+        apiEndpoint: '/api/llm/tools/fetch_price'
+      },
+      {
+        id: 'fetch_url',
+        name: 'Fetch URL',
+        icon: '🌐',
+        category: 'web',
+        description: 'Fetch and parse content from any URL',
+        params: ['url', 'method (GET/POST)'],
+        cost: 0,
+        apiEndpoint: '/api/llm/tools/fetch_url'
+      },
+      {
+        id: 'search_web',
+        name: 'Search Web',
+        icon: '🔍',
+        category: 'web',
+        description: 'Search the web for any topic using SerpAPI',
+        params: ['query', 'limit (1-100)'],
+        cost: 0.01,
+        apiEndpoint: '/api/llm/tools/search_web'
+      },
+      {
+        id: 'generate_image',
+        name: 'Generate Image',
+        icon: '🎨',
+        category: 'content',
+        description: 'Generate images via FLUX / Midjourney',
+        params: ['prompt', 'style (photorealistic/anime/art)'],
+        cost: 0.05,
+        apiEndpoint: '/api/llm/tools/generate_image'
+      },
+      {
+        id: 'write_file',
+        name: 'Write File',
+        icon: '📝',
+        category: 'content',
+        description: 'Save content to a file (CSV/JSON/TXT)',
+        params: ['filename', 'content', 'format'],
+        cost: 0,
+        apiEndpoint: '/api/llm/tools/write_file'
+      },
+      {
+        id: 'analyze_sentiment',
+        name: 'Analyze Sentiment',
+        icon: '💭',
+        category: 'data',
+        description: 'NLP sentiment analysis on text',
+        params: ['text'],
+        cost: 0.02,
+        apiEndpoint: '/api/llm/tools/analyze_sentiment'
+      },
+      {
+        id: 'translate_text',
+        name: 'Translate Text',
+        icon: '🌍',
+        category: 'content',
+        description: 'Translate text to any language',
+        params: ['text', 'targetLang (es/fr/de/zh...)'],
+        cost: 0.01,
+        apiEndpoint: '/api/llm/tools/translate_text'
+      },
+      {
+        id: 'run_js',
+        name: 'Run JavaScript',
+        icon: '⚙️',
+        category: 'data',
+        description: 'Execute JavaScript code in a sandbox',
+        params: ['code', 'timeout (ms)'],
+        cost: 0,
+        apiEndpoint: '/api/llm/tools/run_js'
+      },
+      {
+        id: 'whale_scan',
+        name: 'Whale Transaction Scan',
+        icon: '🐋',
+        category: 'crypto',
+        description: 'Track large crypto transactions (whale wallets)',
+        params: ['minAmount (USD)', 'chain'],
+        cost: 0.02,
+        apiEndpoint: '/api/llm/tools/whale_scan'
+      },
+      {
+        id: 'mint_collectible',
+        name: 'Mint Collectible',
+        icon: '🎁',
+        category: 'content',
+        description: 'Create & mint an NFT collectible',
+        params: ['name', 'image (URL)', 'metadata (JSON)'],
+        cost: 0.10,
+        apiEndpoint: '/api/llm/tools/mint_collectible'
+      }
+    ];
+
+    let currentTool = null;
+    let filteredTools = [...TOOLS];
+    let usedTools = JSON.parse(localStorage.getItem('usedTools') || '{}');
+
+    // Initialize
+    function init() {
+      renderTools();
+      document.getElementById('toolCount').textContent = TOOLS.length;
+      document.getElementById('usedCount').textContent = Object.keys(usedTools).length;
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        filteredTools = TOOLS.filter(t =>
+          t.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+          t.description.toLowerCase().includes(e.target.value.toLowerCase())
+        );
+        renderTools();
+      });
+    }
+
+    function renderTools() {
+      const grid = document.getElementById('toolGrid');
+      const empty = document.getElementById('empty');
+
+      if (filteredTools.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      grid.innerHTML = filteredTools.map(tool => `
+        <div class="tool-card" onclick="openDetail('${tool.id}')">
+          <div class="tool-icon">${tool.icon}</div>
+          <div class="tool-name">${tool.name}</div>
+          <div class="tool-category">${tool.category}</div>
+          <div class="tool-desc">${tool.description}</div>
+          <div class="tool-meta">
+            <div class="tool-meta-item">💵 $${tool.cost.toFixed(3)}</div>
+            <div class="tool-meta-item">${usedTools[tool.id] ? '✓ Used' : 'New'}</div>
+          </div>
+          <div class="tool-actions">
+            <button class="tool-btn btn-use" onclick="event.stopPropagation(); openDetail('${tool.id}')">▶ USE</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterByCategory(cat) {
+      if (cat === 'all') {
+        filteredTools = [...TOOLS];
+      } else {
+        filteredTools = TOOLS.filter(t => t.category === cat);
+      }
+      renderTools();
+    }
+
+    function filterByCost(type) {
+      if (type === 'free') {
+        filteredTools = TOOLS.filter(t => t.cost === 0);
+      } else {
+        filteredTools = TOOLS.filter(t => t.cost > 0);
+      }
+      renderTools();
+    }
+
+    function filterByUsed(type) {
+      if (type === 'used') {
+        filteredTools = TOOLS.filter(t => usedTools[t.id]);
+      }
+      renderTools();
+    }
+
+    function openDetail(toolId) {
+      currentTool = TOOLS.find(t => t.id === toolId);
+      if (!currentTool) return;
+
+      document.getElementById('detailIcon').textContent = currentTool.icon;
+      document.getElementById('detailName').textContent = currentTool.name;
+      document.getElementById('detailCat').textContent = currentTool.category.toUpperCase();
+      document.getElementById('detailDesc').textContent = currentTool.description;
+      document.getElementById('detailCost').textContent = `$${currentTool.cost.toFixed(3)}`;
+      document.getElementById('detailParams').innerHTML = currentTool.params.map(p => `<li>${p}</li>`).join('');
+
+      // Build dynamic input form
+      document.getElementById('detailInputs').innerHTML = currentTool.params.map((p, i) => {
+        const paramName = p.split(' (')[0];
+        return `<input type="text" class="form-input" id="param_${i}" placeholder="${p}" style="width: 100%; margin-bottom: 8px;">`;
+      }).join('');
+
+      document.getElementById('toolDetail').classList.add('on');
+    }
+
+    function closeDetail() {
+      document.getElementById('toolDetail').classList.remove('on');
+      document.getElementById('output').style.display = 'none';
+      currentTool = null;
+    }
+
+    async function runTool() {
+      if (!currentTool) return;
+
+      const runBtn = document.getElementById('runBtn');
+      runBtn.disabled = true;
+      runBtn.textContent = '⏳ RUNNING...';
+
+      const params = {};
+      currentTool.params.forEach((p, i) => {
+        const paramName = p.split(' (')[0];
+        params[paramName] = document.getElementById(`param_${i}`)?.value || '';
+      });
+
+      try {
+        const payProvider = document.getElementById('payProvider').value;
+
+        // Call tool via API
+        const response = await fetch(currentTool.apiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            params,
+            payProvider: payProvider || undefined,
+            cost: currentTool.cost
+          })
+        });
+
+        const result = await response.json();
+
+        // Display output
+        document.getElementById('outputText').textContent = JSON.stringify(result, null, 2);
+        document.getElementById('output').style.display = 'block';
+
+        // Track usage
+        usedTools[currentTool.id] = Date.now();
+        localStorage.setItem('usedTools', JSON.stringify(usedTools));
+
+        // Update UI
+        document.getElementById('usedCount').textContent = Object.keys(usedTools).length;
+
+      } catch (e) {
+        document.getElementById('outputText').textContent = `ERROR: ${e.message}`;
+        document.getElementById('output').style.display = 'block';
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = '▶ RUN TOOL';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
