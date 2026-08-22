@@ -123,6 +123,22 @@ const trackLabel = (tr) => (tr.name + ' — ' + tr.artist).trim();
 const srcTag = (tr) => tr.source === 'audius' ? '🎧 full track · Audius' : tr.source === 'deezer' ? '🎵 preview · Deezer' : '🎵 preview · iTunes';
 const ext = (tr) => tr.source === 'itunes' ? '.m4a' : '.mp3';
 
+async function sendArt(chatId, tr) {
+  if (!tr.art) return;
+  try {
+    await fetch(API('sendPhoto'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, photo: tr.art }) });
+  } catch (_) {} // best-effort only, never affects playback
+}
+
+function resultRow(tr, rid, i) {
+  return [
+    { text: '▶ ' + trackLabel(tr).slice(0, 30), callback_data: 'p:' + rid + ':' + i },
+    { text: '➕', callback_data: 'q:' + rid + ':' + i },
+    { text: '📃', callback_data: 'pl:' + rid + ':' + i },
+  ];
+}
+
 async function playTrack(chatId, tr) {
   await chatAction(chatId, 'upload_voice');
   try {
@@ -135,6 +151,7 @@ async function playTrack(chatId, tr) {
     const fn = (tr.name || 'track').replace(/[^\w]+/g, '_').slice(0, 40) + ext(tr);
     const dur = tr.duration ? ' · ' + Math.floor(tr.duration / 60) + ':' + String(tr.duration % 60).padStart(2, '0') : '';
     const cap = '🎵 <b>' + esc(tr.name) + '</b>\n' + esc(tr.artist) + (tr.album ? ' · ' + esc(tr.album) : '') + '\n<i>' + srcTag(tr) + dur + '</i>';
+    await sendArt(chatId, tr);
     const ok = await sendAudio(chatId, buf, fn, cap, trackLabel(tr));
     if (!ok) { await send(chatId, '⚠️ Telegram rejected that file. <a href="' + tr.stream + '">▶ Stream it</a>'); return false; }
     return true;
@@ -174,10 +191,7 @@ async function doFind(chatId, arg) {
   const res = await src.search(arg);
   if (!res.length) return send(chatId, 'No tracks found for <b>' + esc(arg) + '</b>.');
   const rid = results.create(chatId, res);
-  const btns = res.map((tr, i) => [
-    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
-    { text: '➕', callback_data: 'q:' + rid + ':' + i },
-  ]);
+  const btns = res.map((tr, i) => resultRow(tr, rid, i));
   return send(chatId, '🔎 <b>' + esc(arg) + '</b> — 🎧 full · ▶ play now · ➕ queue:', { inline_keyboard: btns });
 }
 async function doPlay(chatId, arg, userId) {
@@ -196,10 +210,7 @@ async function doFull(chatId, arg) {
   const res = await src.audiusSearch(arg, 8);
   if (!res.length) return send(chatId, 'No full tracks for <b>' + esc(arg) + '</b>. Try /play for previews.');
   const rid = results.create(chatId, res);
-  const btns = res.map((tr, i) => [
-    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
-    { text: '➕', callback_data: 'q:' + rid + ':' + i },
-  ]);
+  const btns = res.map((tr, i) => resultRow(tr, rid, i));
   return send(chatId, '🎧 Full free tracks for <b>' + esc(arg) + '</b>:', { inline_keyboard: btns });
 }
 
@@ -255,11 +266,25 @@ async function doBrowseGenre(chatId, genreId) {
   const tracks = await src.genreChart(genreId, 10);
   if (!tracks.length) return send(chatId, 'No chart tracks for that genre right now.');
   const rid = results.create(chatId, tracks);
-  const btns = tracks.map((tr, i) => [
-    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
-    { text: '➕', callback_data: 'q:' + rid + ':' + i },
-  ]);
+  const btns = tracks.map((tr, i) => resultRow(tr, rid, i));
   return send(chatId, '📚 Top tracks:', { inline_keyboard: btns });
+}
+
+async function doPlaylistPicker(chatId, userId, rid, idx) {
+  const tracks = results.get(rid, chatId);
+  const tr = tracks && tracks[idx];
+  if (!tr) return send(chatId, 'That result expired — search again.');
+  const names = await profiles.listPlaylists(userId);
+  const rows = names.map((n) => [{ text: '📃 ' + n, callback_data: 'pa:' + rid + ':' + idx + ':' + encodeURIComponent(n) }]);
+  rows.push([{ text: '＋ New playlist…', callback_data: 'pn:' + rid + ':' + idx }]);
+  return send(chatId, 'Add <b>' + esc(trackLabel(tr)) + '</b> to which playlist?', { inline_keyboard: rows });
+}
+async function doPlaylistAdd(chatId, userId, rid, idx, name) {
+  const tracks = results.get(rid, chatId);
+  const tr = tracks && tracks[idx];
+  if (!tr) return send(chatId, 'That result expired — search again.');
+  const r = await profiles.addToPlaylist(userId, name, tr);
+  return send(chatId, r.ok ? '✅ Added to <b>' + esc(name) + '</b>.' : r.reason === 'missing' ? 'No playlist named that anymore.' : '⚠️ That playlist is full (200 tracks max).');
 }
 
 async function doLike(chatId, userId) {
@@ -365,6 +390,21 @@ async function handle(update) {
       if (!tr) { await answerCb(cq.id, 'expired'); return send(chatId, 'That result expired — search again.'); }
       await answerCb(cq.id, (mode === 'p' ? '▶ ' : '➕ ') + tr.name);
       return mode === 'p' ? playNow(chatId, tr, userId) : queueTrack(chatId, tr, userId);
+    }
+    if (data.startsWith('pl:')) {
+      const [rid, idxStr] = data.slice(3).split(':');
+      await answerCb(cq.id);
+      return doPlaylistPicker(chatId, userId, rid, parseInt(idxStr, 10));
+    }
+    if (data.startsWith('pa:')) {
+      const parts = data.slice(3).split(':');
+      const rid = parts[0], idx = parseInt(parts[1], 10), name = decodeURIComponent(parts.slice(2).join(':'));
+      await answerCb(cq.id, '✅');
+      return doPlaylistAdd(chatId, userId, rid, idx, name);
+    }
+    if (data.startsWith('pn:')) {
+      await answerCb(cq.id);
+      return send(chatId, 'Create it first: <code>/playlist new &amp;lt;name&amp;gt;</code>, then tap 📃 on this track again.');
     }
     return answerCb(cq.id);
   }
