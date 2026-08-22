@@ -154,14 +154,16 @@ function scheduleNext(chatId) {
 }
 
 async function playNow(chatId, tr, userId) {
+  const hadUpcoming = session.upcoming(chatId).length > 0; // about to be discarded by startSession
   session.startSession(chatId, [tr], userId);
   const ok = await playTrack(chatId, tr);
   if (ok) { await profiles.pushHistory(userId, tr); scheduleNext(chatId); }
+  if (hadUpcoming) await send(chatId, 'ℹ️ Started a new queue — your previous queue was cleared.');
 }
 
 async function queueTrack(chatId, tr, userId) {
-  const s = session.getSession(chatId);
-  if (!s) return playNow(chatId, tr, userId);
+  const cur = session.current(chatId);
+  if (!cur) return playNow(chatId, tr, userId);
   session.enqueue(chatId, tr);
   return send(chatId, '➕ Queued: <b>' + esc(trackLabel(tr)) + '</b>');
 }
@@ -303,7 +305,7 @@ async function doPlaylist(chatId, userId, argRaw) {
     }
     case 'list': {
       const names = await profiles.listPlaylists(userId);
-      return send(chatId, names.length ? '📃 <b>Your playlists</b>:\n' + names.map((n) => '• ' + esc(n)).join('\n') : 'No playlists yet — /playlist new <name>');
+      return send(chatId, names.length ? '📃 <b>Your playlists</b>:\n' + names.map((n) => '• ' + esc(n)).join('\n') : 'No playlists yet — <code>/playlist new &lt;name&gt;</code>');
     }
     case 'view': {
       if (!rest) return send(chatId, 'Usage: <code>/playlist view &lt;name&gt;</code>');

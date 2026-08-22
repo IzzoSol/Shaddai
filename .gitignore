@@ -8,6 +8,8 @@ backend/data/social-keys.json
 backend/data/pay-config.json
 backend/data/pay-ledger.json
 backend/data/pay-pending.json
+backend/data/turtle-music-profiles.json
+backend/data/turtle-music-profiles.json.tmp
 
 # ── Dependencies (regenerated with npm install) ────────────
 node_modules/

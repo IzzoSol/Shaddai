@@ -58,6 +58,19 @@ describe('turtle-music-session', () => {
     expect(session.upcoming('c2')).toEqual([{ name: 'B' }]);
   });
 
+  test('current is null once a session\'s queue is fully drained via advance()', () => {
+    const tracks = [{ name: 'A', duration: 10 }, { name: 'B', duration: 10 }];
+    session.startSession('c1', tracks, 'u1');
+    expect(session.advance('c1')).toEqual(tracks[1]);
+    expect(session.advance('c1')).toBeNull(); // queue exhausted
+    // The session object itself still exists (getSession is non-null) —
+    // but current() must report nothing is actively playing. Bot-level
+    // callers (e.g. queueTrack) rely on this to distinguish "genuinely
+    // playing" from "exhausted session sitting idle".
+    expect(session.getSession('c1')).not.toBeNull();
+    expect(session.current('c1')).toBeNull();
+  });
+
   test('clearSession removes the session and cancels any timer', () => {
     jest.useFakeTimers();
     session.startSession('c1', [{ name: 'A', duration: 10 }], 'u1');
