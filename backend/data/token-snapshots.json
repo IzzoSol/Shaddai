@@ -137,12 +137,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1784268070787,
-    "lastSeen": 1787390687518,
+    "lastSeen": 1787397068249,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687518,
+        "lastSeen": 1787397068249,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -297,28 +297,6 @@
     "sources": {
       "dexscreener": {
         "lastSeen": 1784985583636,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "CVhWiQ2SBhpTJ3xAR3ekf3uf8Ns2tNzj3mEtzKSpump": {
-    "mint": "CVhWiQ2SBhpTJ3xAR3ekf3uf8Ns2tNzj3mEtzKSpump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784381377424,
-    "lastSeen": 1784810372431,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784810372431,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -1011,28 +989,6 @@
     "validated": false,
     "enriched": false
   },
-  "u5FmqbZ2wZRJSxi4SNvSKkCxSjTTxTXtnzm9sWBpump": {
-    "mint": "u5FmqbZ2wZRJSxi4SNvSKkCxSjTTxTXtnzm9sWBpump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784773135830,
-    "lastSeen": 1784811572911,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784811572911,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
   "45DfqRjBGMeDMFSggLJE9MoQxkSSt5mwwgp5zJGdpump": {
     "mint": "45DfqRjBGMeDMFSggLJE9MoQxkSSt5mwwgp5zJGdpump",
     "chain": "solana",
@@ -1045,28 +1001,6 @@
     "sources": {
       "dexscreener": {
         "lastSeen": 1784819396126,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "qnPzgfxz41em1i8jK2g8pgs1ejuntoSxLf1mDUgpump": {
-    "mint": "qnPzgfxz41em1i8jK2g8pgs1ejuntoSxLf1mDUgpump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070406,
-    "lastSeen": 1784816054770,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784816054770,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -1121,94 +1055,6 @@
     "validated": false,
     "enriched": false
   },
-  "5pVQnFwVxrpS81bXCPxFfh1LHHbv3AcymbpazZnhpump": {
-    "mint": "5pVQnFwVxrpS81bXCPxFfh1LHHbv3AcymbpazZnhpump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070407,
-    "lastSeen": 1784814894279,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784814894279,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "BprPz3BbG5dDqLoY1qYqnSadTEas54E5bi5MbyLAZr1x": {
-    "mint": "BprPz3BbG5dDqLoY1qYqnSadTEas54E5bi5MbyLAZr1x",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070407,
-    "lastSeen": 1784814774251,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784814774251,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "EViLUM6LfoDxfg6jyyvV9WyPGnimNkmLUWcMnu3NvCUU": {
-    "mint": "EViLUM6LfoDxfg6jyyvV9WyPGnimNkmLUWcMnu3NvCUU",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070408,
-    "lastSeen": 1784811532903,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784811532903,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "4gFygZKZ5Zq8EdDe35U5BZ9BtgTHzPd9ovWiUtt4pump": {
-    "mint": "4gFygZKZ5Zq8EdDe35U5BZ9BtgTHzPd9ovWiUtt4pump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070408,
-    "lastSeen": 1784811232791,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784811232791,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
   "73jj6SFe9FKn6qqpaGwbSd7TL1sHheh3HqDo9RwA7BHB": {
     "mint": "73jj6SFe9FKn6qqpaGwbSd7TL1sHheh3HqDo9RwA7BHB",
     "chain": "solana",
@@ -1221,50 +1067,6 @@
     "sources": {
       "dexscreener": {
         "lastSeen": 1786730320077,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "4W9nkDkmhVokuv84yeNkSMHQxh1Ta35GMkYMsACbpump": {
-    "mint": "4W9nkDkmhVokuv84yeNkSMHQxh1Ta35GMkYMsACbpump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070410,
-    "lastSeen": 1784806571045,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784806571045,
-        "fdv": 0,
-        "price": 0,
-        "raw": null
-      }
-    },
-    "metrics": {},
-    "confirmed": false,
-    "validated": false,
-    "enriched": false
-  },
-  "BahBSeX57kiZY47knRDLSa5unDHiucWygyS1A1C6pump": {
-    "mint": "BahBSeX57kiZY47knRDLSa5unDHiucWygyS1A1C6pump",
-    "chain": "solana",
-    "name": "",
-    "symbol": "",
-    "firstSeen": 1784805070410,
-    "lastSeen": 1784805170380,
-    "entryFdv": 0,
-    "entryPrice": 0,
-    "sources": {
-      "dexscreener": {
-        "lastSeen": 1784805170380,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -5835,12 +5637,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1785077091261,
-    "lastSeen": 1785791585696,
+    "lastSeen": 1787410123728,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1785791585696,
+        "lastSeen": 1787410123728,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -9333,12 +9135,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1785694188192,
-    "lastSeen": 1785695758682,
+    "lastSeen": 1787410123729,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1785695758682,
+        "lastSeen": 1787410123729,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -12457,12 +12259,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1785837569774,
-    "lastSeen": 1786327001042,
+    "lastSeen": 1787408142804,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1786327001042,
+        "lastSeen": 1787408142804,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -16857,12 +16659,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1786730320023,
-    "lastSeen": 1786832602711,
+    "lastSeen": 1787410123737,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1786832602711,
+        "lastSeen": 1787410123737,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -17759,12 +17561,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1786774583533,
-    "lastSeen": 1786821917022,
+    "lastSeen": 1787410123734,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1786821917022,
+        "lastSeen": 1787410123734,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18859,12 +18661,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037788,
-    "lastSeen": 1787390687487,
+    "lastSeen": 1787397068229,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687487,
+        "lastSeen": 1787397068229,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18881,12 +18683,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037792,
-    "lastSeen": 1787390687489,
+    "lastSeen": 1787397068230,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687489,
+        "lastSeen": 1787397068230,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18903,12 +18705,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037793,
-    "lastSeen": 1787390687491,
+    "lastSeen": 1787397068231,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687491,
+        "lastSeen": 1787397068231,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18925,12 +18727,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037795,
-    "lastSeen": 1787390687493,
+    "lastSeen": 1787397068232,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687493,
+        "lastSeen": 1787397068232,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18947,12 +18749,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037797,
-    "lastSeen": 1787390687495,
+    "lastSeen": 1787397068233,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687495,
+        "lastSeen": 1787397068233,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18969,12 +18771,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037799,
-    "lastSeen": 1787390687496,
+    "lastSeen": 1787397068234,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687496,
+        "lastSeen": 1787397068234,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -18991,12 +18793,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037801,
-    "lastSeen": 1787390687500,
+    "lastSeen": 1787397068236,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687500,
+        "lastSeen": 1787397068236,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19013,12 +18815,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037802,
-    "lastSeen": 1787390687501,
+    "lastSeen": 1787397068237,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687501,
+        "lastSeen": 1787397068237,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19035,12 +18837,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037804,
-    "lastSeen": 1787390687502,
+    "lastSeen": 1787397068239,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687502,
+        "lastSeen": 1787397068239,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19057,12 +18859,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037805,
-    "lastSeen": 1787390687503,
+    "lastSeen": 1787397068241,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687503,
+        "lastSeen": 1787397068241,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19079,12 +18881,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037806,
-    "lastSeen": 1787390687504,
+    "lastSeen": 1787397068242,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687504,
+        "lastSeen": 1787397068242,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19101,12 +18903,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037807,
-    "lastSeen": 1787390687506,
+    "lastSeen": 1787397068243,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687506,
+        "lastSeen": 1787397068243,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19123,12 +18925,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037808,
-    "lastSeen": 1787390687513,
+    "lastSeen": 1787397068244,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687513,
+        "lastSeen": 1787397068244,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19145,12 +18947,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037809,
-    "lastSeen": 1787390687515,
+    "lastSeen": 1787397068245,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687515,
+        "lastSeen": 1787397068245,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19167,12 +18969,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037811,
-    "lastSeen": 1787390687517,
+    "lastSeen": 1787397068247,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687517,
+        "lastSeen": 1787397068247,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19189,12 +18991,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037813,
-    "lastSeen": 1787390687520,
+    "lastSeen": 1787397068251,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687520,
+        "lastSeen": 1787397068251,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19211,12 +19013,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037815,
-    "lastSeen": 1787390687522,
+    "lastSeen": 1787396267753,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687522,
+        "lastSeen": 1787396267753,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19233,12 +19035,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037816,
-    "lastSeen": 1787390687524,
+    "lastSeen": 1787394867041,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687524,
+        "lastSeen": 1787394867041,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19255,12 +19057,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037818,
-    "lastSeen": 1787390687526,
+    "lastSeen": 1787394706971,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687526,
+        "lastSeen": 1787394706971,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19277,12 +19079,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037819,
-    "lastSeen": 1787390687528,
+    "lastSeen": 1787393726530,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687528,
+        "lastSeen": 1787393726530,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19299,12 +19101,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037820,
-    "lastSeen": 1787390687531,
+    "lastSeen": 1787392466061,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687531,
+        "lastSeen": 1787392466061,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19321,12 +19123,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384037822,
-    "lastSeen": 1787390687532,
+    "lastSeen": 1787391805786,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687532,
+        "lastSeen": 1787391805786,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19365,12 +19167,12 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787384488185,
-    "lastSeen": 1787390687485,
+    "lastSeen": 1787410123737,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687485,
+        "lastSeen": 1787410123737,
         "fdv": 0,
         "price": 0,
         "raw": null
@@ -19387,12 +19189,386 @@
     "name": "",
     "symbol": "",
     "firstSeen": 1787390117226,
-    "lastSeen": 1787390687483,
+    "lastSeen": 1787397068224,
     "entryFdv": 0,
     "entryPrice": 0,
     "sources": {
       "dexscreener": {
-        "lastSeen": 1787390687483,
+        "lastSeen": 1787397068224,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "7bQQgwnNf1qPBdTcuouKtYthsHaGLxxs2X38fgzBTq2w": {
+    "mint": "7bQQgwnNf1qPBdTcuouKtYthsHaGLxxs2X38fgzBTq2w",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787391695798,
+    "lastSeen": 1787397068223,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787397068223,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "9vciqoMDquKyjEEtLkenQ4TxSjDEUNxcQdjhHXNHpump": {
+    "mint": "9vciqoMDquKyjEEtLkenQ4TxSjDEUNxcQdjhHXNHpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787392566151,
+    "lastSeen": 1787408923208,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787408923208,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "Fh7mLxtPAysdvHcMcJ37A3vc6WvBVh7JVDwxmwk6pump": {
+    "mint": "Fh7mLxtPAysdvHcMcJ37A3vc6WvBVh7JVDwxmwk6pump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787392806261,
+    "lastSeen": 1787409303318,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787409303318,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "AX2QTrujcWri5cP87QK2nQChfFeCSFzcTa7n2AwRpump": {
+    "mint": "AX2QTrujcWri5cP87QK2nQChfFeCSFzcTa7n2AwRpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787393826648,
+    "lastSeen": 1787409303317,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787409303317,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "897wEhKQtCKXuxxoDA8BH9LWnSpdTKLVzqh1J8xFpump": {
+    "mint": "897wEhKQtCKXuxxoDA8BH9LWnSpdTKLVzqh1J8xFpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787394426851,
+    "lastSeen": 1787409383351,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787409383351,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "CGEDT9QZDvvH5GmVkWJH2BXiMJqMJySC9ihWyr7Spump": {
+    "mint": "CGEDT9QZDvvH5GmVkWJH2BXiMJqMJySC9ihWyr7Spump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787394767061,
+    "lastSeen": 1787409483401,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787409483401,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "S78t3tTkXk78xPsMDb8Z1j4zd2RXwacwUzrP7FHpump": {
+    "mint": "S78t3tTkXk78xPsMDb8Z1j4zd2RXwacwUzrP7FHpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787394887123,
+    "lastSeen": 1787410123738,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123738,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "E5iDD4kt9gDxTaAeoCNeN3CcZAWB7FvbPXwqJuuHpump": {
+    "mint": "E5iDD4kt9gDxTaAeoCNeN3CcZAWB7FvbPXwqJuuHpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746151,
+    "lastSeen": 1787410123724,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123724,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "DXegC3FPpjBmXpKTt8d8z81u1UREha44BsD1jUFCpump": {
+    "mint": "DXegC3FPpjBmXpKTt8d8z81u1UREha44BsD1jUFCpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746151,
+    "lastSeen": 1787410123727,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123727,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "5GqrNZdY3cLFDKxU6yStPwZmFrHyQ27fXiA9u4Nfpump": {
+    "mint": "5GqrNZdY3cLFDKxU6yStPwZmFrHyQ27fXiA9u4Nfpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746153,
+    "lastSeen": 1787410123728,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123728,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "7oZ2V1p8Mvmc6FPCF7S7NqYWr8cntWLW2kmDBLuSpump": {
+    "mint": "7oZ2V1p8Mvmc6FPCF7S7NqYWr8cntWLW2kmDBLuSpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746394,
+    "lastSeen": 1787410123729,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123729,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "654ZBNYZ2oFgvvwkdQYa9e5s1jeQNHRjSvocEy1Dpump": {
+    "mint": "654ZBNYZ2oFgvvwkdQYa9e5s1jeQNHRjSvocEy1Dpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746416,
+    "lastSeen": 1787410123730,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123730,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "9Ea8LgghrAw4HhRDWoj2QMrYwwpsg16QeinDYd2Cpump": {
+    "mint": "9Ea8LgghrAw4HhRDWoj2QMrYwwpsg16QeinDYd2Cpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746424,
+    "lastSeen": 1787410123731,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123731,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "5Eq2WQs8D9oz3qH8R4AaeAftafM1wLEgJ1bM98bXpump": {
+    "mint": "5Eq2WQs8D9oz3qH8R4AaeAftafM1wLEgJ1bM98bXpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746441,
+    "lastSeen": 1787410123734,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123734,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "AtifcdqN2LutV5pkwjbtZtrxmu7wRqYfwrx1r3e7pump": {
+    "mint": "AtifcdqN2LutV5pkwjbtZtrxmu7wRqYfwrx1r3e7pump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746443,
+    "lastSeen": 1787410123735,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123735,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "5AbfQ5tGU4YT1v5r43v8z9UeKmUZcXvMxGrCfsMXpump": {
+    "mint": "5AbfQ5tGU4YT1v5r43v8z9UeKmUZcXvMxGrCfsMXpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787407746448,
+    "lastSeen": 1787410123736,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123736,
+        "fdv": 0,
+        "price": 0,
+        "raw": null
+      }
+    },
+    "metrics": {},
+    "confirmed": false,
+    "validated": false,
+    "enriched": false
+  },
+  "1EaGq2PtdsxhZicYsrMXcVMLXMdyqpbUNQJjfZBpump": {
+    "mint": "1EaGq2PtdsxhZicYsrMXcVMLXMdyqpbUNQJjfZBpump",
+    "chain": "solana",
+    "name": "",
+    "symbol": "",
+    "firstSeen": 1787409503468,
+    "lastSeen": 1787410123723,
+    "entryFdv": 0,
+    "entryPrice": 0,
+    "sources": {
+      "dexscreener": {
+        "lastSeen": 1787410123723,
         "fdv": 0,
         "price": 0,
         "raw": null

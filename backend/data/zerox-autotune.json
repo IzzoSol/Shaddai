@@ -1,30 +1,36 @@
 {
-  "lastRun": 1787385827825,
+  "lastRun": 1787409542276,
   "suggestions": [
     {
       "filter": "rugMinScore",
       "direction": "tighten",
-      "reason": "safe rug: 0% vs risky: 20%",
+      "reason": "safe rug: 0% vs risky: 19%",
       "confidence": "medium"
     },
     {
       "filter": "requireLocked",
       "direction": "keep_strict",
-      "reason": "locked LP winners: 0%, no lock losers: 20%",
+      "reason": "locked LP winners: 0%, no lock losers: 19%",
       "confidence": "high"
     },
     {
       "filter": "new_pools_enabled",
       "direction": "deprioritize",
-      "reason": "new_pools hit rate only 6% (752 calls)",
+      "reason": "new_pools hit rate only 6% (750 calls)",
+      "confidence": "medium"
+    },
+    {
+      "filter": "boosted_enabled",
+      "direction": "deprioritize",
+      "reason": "boosted hit rate only 7% (28 calls)",
       "confidence": "medium"
     },
     {
       "filter": "minHolders",
       "direction": "raise",
-      "reason": "100+ holders win rate: 15%, <20 holders: 11%",
+      "reason": "100+ holders win rate: 15%, <20 holders: 4%",
       "confidence": "medium"
     }
   ],
-  "timestamp": 1787385827825
+  "timestamp": 1787409542276
 }
