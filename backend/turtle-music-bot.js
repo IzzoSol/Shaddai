@@ -14,6 +14,7 @@ const mg = require('./lib/music-gen-node');
 const results = require('./lib/turtle-music-results');
 const session = require('./lib/turtle-music-session');
 const profiles = require('./lib/turtle-music-profiles');
+const lastfm = require('./lib/lastfm');
 
 const TOKEN = () => process.env.TURTLE_MUSIC_BOT_TOKEN || '';
 const API = (m) => `https://api.telegram.org/bot${TOKEN()}/${m}`;
@@ -139,6 +140,25 @@ function resultRow(tr, rid, i) {
   ];
 }
 
+// Resolve abstract (artist,name) candidates (from Last.fm similarity or tag
+// browse — neither carries a stream URL) into real playable tracks via the
+// existing multi-source search. Stops once `limit` resolve, so a long
+// candidate list doesn't hammer three search APIs for hits we'll discard.
+async function resolveCandidates(candidates, limit) {
+  const out = [];
+  for (const c of candidates) {
+    if (out.length >= limit) break;
+    const hits = await src.search(c.artist + ' ' + c.name, { full: false });
+    if (hits[0]) out.push(hits[0]);
+  }
+  return out;
+}
+
+async function resolveSimilar(seedArtist, seedTitle, limit = 6) {
+  const candidates = await lastfm.similarTracks(seedArtist, seedTitle, limit * 2);
+  return resolveCandidates(candidates, limit);
+}
+
 async function playTrack(chatId, tr) {
   await chatAction(chatId, 'upload_voice');
   try {
@@ -161,13 +181,24 @@ async function playTrack(chatId, tr) {
 // ── queue engine — auto-advance via turtle-music-session ──────────────────
 function scheduleNext(chatId) {
   session.armTimer(chatId, async () => {
-    const track = session.advance(chatId);
-    if (!track) return; // queue exhausted; session stays idle at its last position
+    let track = session.advance(chatId);
+    if (!track) {
+      if (session.isRadio(chatId)) track = await extendRadio(chatId);
+      if (!track) return; // radio off, or nothing similar resolved — go idle
+    }
     const s = session.getSession(chatId);
     const ok = await playTrack(chatId, track);
     if (ok && s) await profiles.pushHistory(s.ownerId, track);
     scheduleNext(chatId);
   });
+}
+
+async function extendRadio(chatId) {
+  const last = session.lastPlayed(chatId);
+  if (!last) return null;
+  const more = await resolveSimilar(last.artist, last.name, 5);
+  if (!more.length) return null;
+  return session.appendAndAdvance(chatId, more);
 }
 
 async function playNow(chatId, tr, userId) {
@@ -226,7 +257,8 @@ async function doResume(chatId) {
 async function doSkip(chatId, userId) {
   const s = session.getSession(chatId);
   if (!s) return send(chatId, 'Nothing queued — try /play.');
-  const track = session.advance(chatId);
+  let track = session.advance(chatId);
+  if (!track && session.isRadio(chatId)) track = await extendRadio(chatId);
   if (!track) return send(chatId, '⏭ Queue finished.');
   const ok = await playTrack(chatId, track);
   if (ok) { await profiles.pushHistory(userId, track); scheduleNext(chatId); }
@@ -247,6 +279,30 @@ async function doNowPlaying(chatId) {
 async function doClear(chatId) {
   session.clearSession(chatId);
   return send(chatId, '🧹 Queue cleared.');
+}
+
+async function doRadio(chatId, arg) {
+  const a = (arg || '').trim().toLowerCase();
+  if (a === 'off') { session.setRadio(chatId, false); return send(chatId, '📻 Radio mode off — playback will stop when the queue ends.'); }
+  if (a === 'on') { session.setRadio(chatId, true); return send(chatId, "📻 Radio mode on — I'll keep going with similar tracks."); }
+  return send(chatId, '📻 Radio mode is currently ' + (session.isRadio(chatId) ? '<b>on</b>' : '<b>off</b>') + '. Use <code>/radio on</code> or <code>/radio off</code>.');
+}
+async function doSimilar(chatId, arg) {
+  await chatAction(chatId, 'typing');
+  let seed;
+  if (arg) {
+    const hits = await src.search(arg, { full: false });
+    seed = hits[0];
+    if (!seed) return send(chatId, 'No match for <b>' + esc(arg) + '</b> to find similar tracks from.');
+  } else {
+    seed = session.current(chatId);
+    if (!seed) return send(chatId, 'Nothing playing — <code>/similar &lt;song&gt;</code> or start something with /play first.');
+  }
+  const similar = await resolveSimilar(seed.artist, seed.name, 8);
+  if (!similar.length) return send(chatId, 'No similar tracks found for <b>' + esc(trackLabel(seed)) + '</b> right now.');
+  const rid = results.create(chatId, similar);
+  const btns = similar.map((tr, i) => resultRow(tr, rid, i));
+  return send(chatId, '🎯 Similar to <b>' + esc(trackLabel(seed)) + '</b>:', { inline_keyboard: btns });
 }
 
 async function doBrowse(chatId, page) {
@@ -436,6 +492,8 @@ async function handle(update) {
     case 'queue': return doQueueList(chatId);
     case 'np': case 'nowplaying': return doNowPlaying(chatId);
     case 'clear': case 'stop': return doClear(chatId);
+    case 'radio': return doRadio(chatId, arg);
+    case 'similar': case 'like2': return doSimilar(chatId, arg);
     case 'browse': case 'library': return doBrowse(chatId, 0);
     case 'like': case 'fav': return doLike(chatId, userId);
     case 'favorites': case 'likes': return doFavorites(chatId, userId);
