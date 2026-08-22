@@ -5566,7 +5566,20 @@ router.post('/agents/route', async (req, res) => {
 
   const intent = detectIntent(message);
   const template = INTENT_SYSTEM_PROMPTS[intent] || INTENT_SYSTEM_PROMPTS.default;
-  const systemPrompt = template.replace(/{agent}/g, agentName);
+  let systemPrompt = template.replace(/{agent}/g, agentName);
+
+  // RAG grounding — inject the same kb_<agent> knowledge agent-engine recalls, so
+  // every dashboard agent reply is grounded in the council's brain (not pure-LLM).
+  // Wrapped + capped + fast (local TF-IDF ~<200ms); never breaks the response.
+  let ragSources = [];
+  try {
+    const hits = ragIndex.searchUser('kb_' + String(agentName).toLowerCase(), message, 3) || [];
+    if (hits.length) {
+      systemPrompt += '\n\nGROUNDING — relevant knowledge from your training (use it, weave it in naturally, do not fabricate beyond it):\n' +
+        hits.map(h => '• ' + (h.chunkText || '').slice(0, 600)).join('\n').slice(0, 1800);
+      ragSources = hits.map(h => ({ title: h.docName || '', score: Number((h.score || 0).toFixed(3)) }));
+    }
+  } catch (_) {}
 
   let response = '', usedModel = '';
 
@@ -5598,7 +5611,7 @@ router.post('/agents/route', async (req, res) => {
     }
   }
 
-  res.json({ response, responseType: intent, intent, agentName, model: usedModel });
+  res.json({ response, responseType: intent, intent, agentName, model: usedModel, grounded: ragSources.length > 0, sources: ragSources });
 });
 
 // GET/POST /api/agents/layout — save and restore agent grid positions

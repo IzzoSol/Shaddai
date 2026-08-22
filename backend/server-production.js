@@ -1426,7 +1426,7 @@ app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish 
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
-app.use('/api/economy', require('./economy-routes'));                 // Sparks ledger (append-only, idempotent; Postgres or atomic dev store)
+app.use('/api/economy', require('./economy-routes')());               // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED
 // Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
@@ -2307,6 +2307,10 @@ try { app.use(require('./hire-routes')); console.log('[prod] agent hire mounted'
 catch (e) { console.warn('[prod] hire failed:', e.message); }
 try { app.use(require('./analytics-routes')); console.log('[prod] analytics mounted'); }
 catch (e) { console.warn('[prod] analytics failed:', e.message); }
+try { app.use('/api/coin-launch', require('./coin-launch-routes')); console.log('[prod] coin launch kit mounted'); }
+catch (e) { console.warn('[prod] coin-launch failed:', e.message); }
+try { app.use('/api/thread-pack', require('./thread-pack-routes')); console.log('[prod] thread pack mounted'); }
+catch (e) { console.warn('[prod] thread-pack failed:', e.message); }
 app.use('/games', express.static(path.join(__dirname, '..', 'games')));
 
 // ── Shaddai Realms — 2.5D isometric RPG (Vite/Phaser SPA), served static (MUST be before the catch-all) ──
@@ -2427,6 +2431,8 @@ if (!process.env.VERCEL_ENV) {
     try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
     // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
     try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+    // @TurtleMusicBot — dedicated music bot (no-op unless TURTLE_MUSIC_BOT_TOKEN set).
+    try { require('./turtle-music-bot').start(); } catch (e) { console.warn('[turtle-music-bot] init skipped:', e && e.message); }
     // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
     try { require('./telegram-news').startNewsPoster(); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
     // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
