@@ -230,6 +230,30 @@ async function doClear(chatId) {
   return send(chatId, '🧹 Queue cleared.');
 }
 
+async function doBrowse(chatId, page) {
+  page = page || 0;
+  await chatAction(chatId, 'typing');
+  const genres = await src.genreList();
+  if (!genres.length) return send(chatId, '⚠️ Could not load genres right now — try again shortly.');
+  const perPage = 8;
+  const slice = genres.slice(page * perPage, page * perPage + perPage);
+  const rows = [];
+  for (let i = 0; i < slice.length; i += 2) rows.push(slice.slice(i, i + 2).map((g) => ({ text: g.name, callback_data: 'br:' + g.id })));
+  if ((page + 1) * perPage < genres.length) rows.push([{ text: 'More ▶', callback_data: 'bp:' + (page + 1) }]);
+  return send(chatId, '📚 <b>Browse by genre</b> — tap a genre:', { inline_keyboard: rows });
+}
+async function doBrowseGenre(chatId, genreId) {
+  await chatAction(chatId, 'typing');
+  const tracks = await src.genreChart(genreId, 10);
+  if (!tracks.length) return send(chatId, 'No chart tracks for that genre right now.');
+  const rid = results.create(chatId, tracks);
+  const btns = tracks.map((tr, i) => [
+    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
+    { text: '➕', callback_data: 'q:' + rid + ':' + i },
+  ]);
+  return send(chatId, '📚 Top tracks:', { inline_keyboard: btns });
+}
+
 async function doLyrics(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
   await chatAction(chatId, 'typing');
@@ -250,6 +274,8 @@ async function handle(update) {
   if (update.callback_query) {
     const cq = update.callback_query, chatId = cq.message && cq.message.chat && cq.message.chat.id, userId = cq.from && cq.from.id, data = String(cq.data || '');
     if (data.startsWith('g:')) { await answerCb(cq.id, '🎼 composing…'); return doMusic(chatId, data.slice(2)); }
+    if (data.startsWith('br:')) { await answerCb(cq.id); return doBrowseGenre(chatId, data.slice(3)); }
+    if (data.startsWith('bp:')) { await answerCb(cq.id); return doBrowse(chatId, parseInt(data.slice(3), 10) || 0); }
     if (data.startsWith('p:') || data.startsWith('q:')) {
       const mode = data[0];
       const [rid, idxStr] = data.slice(2).split(':');
@@ -288,6 +314,7 @@ async function handle(update) {
     case 'queue': return doQueueList(chatId);
     case 'np': case 'nowplaying': return doNowPlaying(chatId);
     case 'clear': case 'stop': return doClear(chatId);
+    case 'browse': case 'library': return doBrowse(chatId, 0);
     default: return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
   }
 }
