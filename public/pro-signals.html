@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZEROX Pro Signals Terminal</title>
+<title>ZEROX Trading Terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;background:#0a0e27;color:#e8eef7;font-family:'Inter',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased;}
 
 :root{
   --bg1:#0a0e27;
@@ -21,464 +21,405 @@ html,body{height:100%;background:#0a0e27;color:#e8eef7;font-family:'Inter',sans-
   --warning:#ffc030;
   --danger:#ff3c3c;
   --border:rgba(100,200,255,0.15);
-  --border-bright:rgba(100,200,255,0.3);
   --text1:#e8eef7;
   --text2:#9ca3af;
   --text3:#6b7280;
   --depth1:0 2px 8px rgba(0,0,0,0.3);
-  --depth2:0 8px 24px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08);
-  --depth3:0 16px 48px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);
-  --glow-cyan:0 0 20px rgba(0,212,255,0.3);
-  --glow-pink:0 0 20px rgba(255,0,128,0.3);
+  --depth2:0 8px 24px rgba(0,0,0,0.4);
 }
 
-body::before{
-  content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px);
-  pointer-events:none;z-index:9990;
-}
+body{background:var(--bg1);color:var(--text1);font-family:'Inter',sans-serif;}
 
+/* HEADER */
 #header{
   height:70px;background:linear-gradient(180deg,var(--bg2),var(--bg3));
-  border-bottom:1px solid var(--border-bright);
-  display:flex;align-items:center;padding:0 28px;gap:40px;
-  box-shadow:var(--depth1);z-index:100;backdrop-filter:blur(4px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 28px;gap:40px;box-shadow:var(--depth1);z-index:100;
 }
 
-.logo{
-  font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;
-  letter-spacing:4px;color:var(--accent);
-  text-shadow:var(--glow-cyan);
-  display:flex;align-items:center;gap:8px;
-}
+.logo{font-size:20px;font-weight:800;font-family:'JetBrains Mono';letter-spacing:4px;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,0.3);}
 
-.logo::before{
-  content:'⚡';font-size:24px;
-}
+.main-nav{display:flex;gap:2px;flex:1;border-left:1px solid var(--border);padding-left:32px;}
 
-.nav{
-  display:flex;gap:2px;flex:1;border-left:1px solid var(--border);padding-left:32px;
-}
-
-.nav-btn{
-  padding:10px 18px;font-size:11px;font-weight:600;cursor:pointer;
+.main-tab{
+  padding:10px 20px;font-size:11px;font-weight:600;cursor:pointer;
   color:var(--text2);border:none;background:transparent;
   border-bottom:3px solid transparent;text-transform:uppercase;letter-spacing:1.2px;
-  transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);position:relative;
+  transition:all 0.25s;
 }
 
-.nav-btn:hover{color:var(--accent);}
-
-.nav-btn.active{
-  color:var(--accent);border-bottom-color:var(--accent);
-  text-shadow:var(--glow-cyan);
-}
+.main-tab:hover{color:var(--accent);}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 12px rgba(0,212,255,0.3);}
 
 .spacer{flex:1;}
 
-.status-pill{
-  display:flex;align-items:center;gap:8px;padding:8px 16px;
-  background:rgba(0,255,65,0.1);border:1px solid rgba(0,255,65,0.3);
-  border-radius:20px;font-size:11px;font-weight:600;color:var(--success);
-  font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
-}
+.theme-selector{display:flex;gap:8px;padding:0 16px;border-left:1px solid var(--border);}
+.theme-btn{width:28px;height:28px;border-radius:4px;border:2px solid var(--border);cursor:pointer;transition:all 0.2s;}
+.theme-btn:hover{transform:scale(1.15);}
+.theme-btn.active{border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.3);}
 
-.status-dot{
-  width:8px;height:8px;background:var(--success);border-radius:50%;
-  box-shadow:0 0 8px var(--success);animation:pulse 2s ease-in-out infinite;
-}
+.theme-cyan{background:linear-gradient(135deg,#00d4ff,#0099cc);}
+.theme-pink{background:linear-gradient(135deg,#ff0080,#ff66b2);}
+.theme-gold{background:linear-gradient(135deg,#ffc030,#ff9500);}
+.theme-green{background:linear-gradient(135deg,#00ff41,#00cc33);}
+.theme-purple{background:linear-gradient(135deg,#b07fff,#7d3ba0);}
 
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+/* CONTAINER */
+.container{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 70px);gap:14px;padding:14px;overflow:hidden;}
 
-.container{
-  display:grid;grid-template-columns:280px 1fr 340px;
-  height:calc(100vh - 70px);overflow:hidden;gap:14px;padding:14px;
-}
+.panel{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--depth2);}
 
-.panel{
-  background:linear-gradient(135deg,var(--bg2),var(--bg3));
-  border:1px solid var(--border);border-radius:12px;
-  overflow:hidden;display:flex;flex-direction:column;
-  box-shadow:var(--depth2);
-}
+.panel-header{padding:16px;border-bottom:1px solid var(--border);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);}
 
-.panel-header{
-  padding:18px;border-bottom:1px solid var(--border);
-  font-weight:700;font-size:12px;text-transform:uppercase;
-  letter-spacing:2px;color:var(--accent);
-  background:linear-gradient(90deg,rgba(0,212,255,0.08),transparent);
-}
+.panel-content{flex:1;overflow-y:auto;padding:16px;}
 
-.panel-content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;}
-
-.panel-content::-webkit-scrollbar{width:6px;}
-.panel-content::-webkit-scrollbar-track{background:transparent;}
-.panel-content::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.2);border-radius:3px;}
-.panel-content::-webkit-scrollbar-thumb:hover{background:rgba(0,212,255,0.4);}
+/* SIDEBAR */
+.sidebar{width:280px;display:flex;flex-direction:column;gap:12px;}
 
 .category-list{display:flex;flex-direction:column;gap:8px;}
 
-.category-btn{
+.cat-btn{
   padding:12px 14px;background:transparent;border:1px solid var(--border);
   border-radius:8px;color:var(--text2);cursor:pointer;font-size:12px;
   font-weight:500;text-align:left;transition:all 0.2s;
-  position:relative;overflow:hidden;
 }
 
-.category-btn::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:var(--accent);transform:scaleY(0);transform-origin:top;
-  transition:transform 0.2s;
-}
+.cat-btn:hover{background:rgba(0,212,255,0.05);border-color:var(--accent);color:var(--accent);}
+.cat-btn.active{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.2);}
 
-.category-btn:hover{
-  background:rgba(0,212,255,0.05);border-color:var(--accent);
-  color:var(--accent);
-}
+/* CENTER */
+.center{flex:1;display:flex;flex-direction:column;gap:14px;}
 
-.category-btn.active{
-  background:rgba(0,212,255,0.1);border-color:var(--accent);
-  color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.2);
-}
+.top-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
-.category-btn.active::before{transform:scaleY(1);}
+.signal-panel{flex:1;display:flex;flex-direction:column;}
+.detail-panel{flex:1;display:flex;flex-direction:column;}
 
-.center{display:flex;flex-direction:column;gap:14px;grid-column:2;}
-
-.signals-feed{
-  flex:1;display:flex;flex-direction:column;gap:10px;
-  overflow-y:auto;overflow-x:hidden;padding-right:4px;
-}
+.signals-feed{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
 
 .signal-card{
-  padding:14px;background:linear-gradient(135deg,var(--bg3),var(--bg4));
-  border:1px solid var(--border);border-radius:10px;
-  cursor:pointer;transition:all 0.25s;
-  display:flex;gap:14px;align-items:center;position:relative;overflow:hidden;
+  padding:12px;background:linear-gradient(135deg,var(--bg3),var(--bg4));
+  border:1px solid var(--border);border-radius:8px;cursor:pointer;
+  transition:all 0.25s;display:flex;gap:12px;align-items:center;
 }
 
-.signal-card::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(0,212,255,0.1),transparent);
-  opacity:0;transition:opacity 0.3s;pointer-events:none;
+.signal-card:hover{border-color:var(--accent);background:rgba(0,212,255,0.05);box-shadow:0 8px 20px rgba(0,212,255,0.15);transform:translateY(-2px);}
+
+.signal-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+
+.signal-body{flex:1;}
+.signal-name{font-weight:700;font-size:13px;color:var(--text1);font-family:'JetBrains Mono';}
+.signal-meta{font-size:10px;color:var(--text2);display:flex;gap:10px;margin-top:4px;}
+.signal-mult{font-weight:800;font-size:14px;color:var(--success);min-width:45px;text-align:right;}
+
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+.data-item{background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:10px;}
+.data-label{color:var(--text2);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;}
+.data-value{color:var(--accent);font-weight:700;font-family:'JetBrains Mono';font-size:12px;margin-top:4px;}
+
+.dex-section{display:flex;flex-direction:column;gap:8px;}
+.dex-input{width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:'JetBrains Mono';font-size:11px;outline:none;transition:all 0.2s;}
+.dex-input:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.2);}
+
+.chart-area{width:100%;height:180px;background:linear-gradient(135deg,rgba(0,212,255,0.05),rgba(255,0,128,0.05));border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:11px;}
+
+/* RIGHT SIDEBAR */
+.sidebar-right{width:320px;display:flex;flex-direction:column;gap:12px;}
+
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+.metric-card{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);
+  border-radius:8px;padding:12px;font-size:10px;
 }
 
-.signal-card:hover{
-  border-color:var(--accent);background:linear-gradient(135deg,var(--bg3),rgba(0,212,255,0.05));
-  box-shadow:0 12px 32px rgba(0,212,255,0.15);
-  transform:translateY(-2px);
+.metric-label{color:var(--text2);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;}
+.metric-value{color:var(--text1);font-weight:700;font-family:'JetBrains Mono';font-size:13px;margin-top:4px;}
+
+/* FULL-SCREEN TAB VIEW */
+.fullscreen-tab{position:fixed;inset:0;z-index:1000;background:var(--bg1);display:none;flex-direction:column;}
+.fullscreen-tab.active{display:flex;}
+
+.fullscreen-header{
+  height:70px;background:linear-gradient(180deg,var(--bg2),var(--bg3));
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 28px;gap:20px;
 }
 
-.signal-card:hover::before{opacity:1;}
+.back-btn{padding:8px 16px;background:var(--accent);color:var(--bg1);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:11px;transition:all 0.2s;}
+.back-btn:hover{box-shadow:0 0 12px rgba(0,212,255,0.3);transform:translateY(-2px);}
 
-.signal-icon{
-  width:44px;height:44px;border-radius:8px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:13px;flex-shrink:0;
-  box-shadow:0 0 16px rgba(0,212,255,0.2);font-family:'JetBrains Mono',monospace;
-}
+.fullscreen-title{font-size:18px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono';letter-spacing:2px;}
 
-.signal-body{flex:1;min-width:0;}
+.sub-tabs{display:flex;gap:2px;margin-left:auto;}
+.sub-tab{padding:8px 16px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;text-transform:uppercase;transition:all 0.2s;}
+.sub-tab:hover{color:var(--accent);}
+.sub-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-.signal-name{
-  font-weight:700;font-size:13px;color:var(--text1);
-  font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
-}
-
-.signal-meta{
-  font-size:11px;color:var(--text2);display:flex;gap:12px;margin-top:6px;
-  font-family:'JetBrains Mono',monospace;
-}
-
-.meta-item{display:flex;gap:4px;}
-.meta-label{color:var(--text3);}
-.meta-value{color:var(--accent);font-weight:600;}
-
-.signal-mult{
-  font-weight:800;font-size:16px;color:var(--success);
-  min-width:60px;text-align:right;font-family:'JetBrains Mono',monospace;
-  text-shadow:0 0 12px rgba(0,255,65,0.3);
-}
-
-.dex-panel{
-  flex:0 0 auto;background:linear-gradient(135deg,var(--bg3),var(--bg4));
-  border:1px solid var(--border);border-radius:10px;
-  padding:16px;display:flex;flex-direction:column;gap:10px;
-}
-
-.dex-input{
-  width:100%;padding:11px 14px;background:var(--bg4);
-  border:1px solid var(--border);border-radius:8px;
-  color:var(--text1);font-family:'JetBrains Mono',monospace;
-  font-size:12px;outline:none;transition:all 0.2s;
-}
-
-.dex-input::placeholder{color:var(--text3);}
-
-.dex-input:focus{
-  border-color:var(--accent);box-shadow:0 0 16px rgba(0,212,255,0.2);
-  background:rgba(0,212,255,0.02);
-}
-
-.dex-chart{
-  width:100%;height:220px;
-  background:linear-gradient(135deg,rgba(0,212,255,0.05),rgba(255,0,128,0.05));
-  border:1px dashed var(--border);border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text2);font-size:12px;
-}
-
-.sidebar-right{display:grid;grid-template-rows:auto auto 1fr;gap:14px;grid-column:3;}
-
-.data-panel{
-  background:linear-gradient(135deg,var(--bg2),var(--bg3));
-  border:1px solid var(--border);border-radius:10px;
-  padding:16px;font-size:11px;box-shadow:var(--depth2);
-}
-
-.data-row{
-  display:flex;justify-content:space-between;padding:10px 0;
-  border-bottom:1px solid rgba(100,200,255,0.08);
-}
-
-.data-row:last-child{border-bottom:none;}
-
-.data-label{
-  color:var(--text2);font-weight:500;
-  text-transform:uppercase;letter-spacing:0.5px;
-}
-
-.data-value{
-  color:var(--text1);font-weight:700;
-  font-family:'JetBrains Mono',monospace;font-size:12px;
-}
-
-.data-value.up{color:var(--success);}
-.data-value.down{color:var(--danger);}
-
-.pnl-section{
-  background:linear-gradient(135deg,var(--bg2),var(--bg3));
-  border:1px solid var(--border);border-radius:10px;
-  padding:16px;display:flex;flex-direction:column;gap:12px;
-  box-shadow:var(--depth2);
-}
-
-.pnl-chart{
-  width:100%;height:140px;
-  background:linear-gradient(135deg,rgba(0,255,65,0.05),rgba(0,212,255,0.05));
-  border:1px dashed var(--border);border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text2);font-size:11px;
-}
+.fullscreen-content{flex:1;overflow-y:auto;padding:28px;}
 
 .zerox-btn{
-  position:fixed;bottom:30px;right:30px;
-  width:72px;height:72px;
+  position:fixed;bottom:30px;right:30px;width:70px;height:70px;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   border:2px solid var(--accent);border-radius:50%;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   font-size:32px;z-index:2000;font-weight:800;
-  box-shadow:0 20px 60px rgba(0,212,255,0.3);
-  transition:all 0.3s;
+  box-shadow:0 20px 60px rgba(0,212,255,0.3);transition:all 0.3s;
 }
 
 .zerox-btn:hover{transform:scale(1.12);box-shadow:0 30px 80px rgba(0,212,255,0.4);}
-.zerox-btn:active{transform:scale(0.95);}
 
 .zerox-modal{
   position:fixed;bottom:120px;right:30px;width:400px;max-height:500px;
   background:var(--bg2);border:1px solid var(--border);
   border-radius:14px;padding:20px;z-index:1999;
   display:none;flex-direction:column;gap:16px;
-  box-shadow:var(--depth3);overflow-y:auto;
+  box-shadow:var(--depth2);overflow-y:auto;
 }
 
-.zerox-modal.active{display:flex;animation:slideUp 0.3s ease;}
+.zerox-modal.active{display:flex;}
 
-@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-
-.modal-title{
-  font-size:14px;font-weight:800;color:var(--accent);
-  text-transform:uppercase;letter-spacing:2px;
-}
-
-.modal-content{font-size:12px;line-height:1.7;color:var(--text2);}
+.modal-title{font-size:14px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:2px;}
+.modal-content{font-size:11px;line-height:1.6;color:var(--text2);}
 
 .btn-primary{
-  padding:11px 16px;background:var(--accent);color:var(--bg1);
-  border:none;border-radius:8px;cursor:pointer;font-weight:700;
-  font-size:11px;text-transform:uppercase;letter-spacing:1px;
-  transition:all 0.2s;font-family:'JetBrains Mono',monospace;
+  padding:10px 16px;background:var(--accent);color:var(--bg1);
+  border:none;border-radius:6px;cursor:pointer;font-weight:700;
+  font-size:11px;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;
 }
 
 .btn-primary:hover{box-shadow:0 0 20px rgba(0,212,255,0.4);transform:translateY(-2px);}
-.btn-primary:active{transform:translateY(0);}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,212,255,0.4);}
 
 @media(max-width:1400px){.sidebar-right{display:none;}.container{grid-template-columns:260px 1fr;}}
-@media(max-width:900px){.container{grid-template-columns:1fr;}.sidebar{display:none;}}
 </style>
 </head>
 <body>
 
 <div id="header">
-  <div class="logo">ZEROX</div>
-  <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('solana')">Solana</button>
-    <button class="nav-btn" onclick="switchTab('swarm')">Swarm</button>
-    <button class="nav-btn" onclick="switchTab('miro')">MiroFish</button>
-    <button class="nav-btn" onclick="switchTab('poly')">Polymarket</button>
+  <div class="logo">Z</div>
+  <div class="main-nav">
+    <button class="main-tab active" onclick="openTab('solana')">Solana</button>
+    <button class="main-tab" onclick="openTab('swarm')">Swarm</button>
+    <button class="main-tab" onclick="openTab('altcoins')">Alt Coins</button>
+    <button class="main-tab" onclick="openTab('stocks')">Stocks</button>
+    <button class="main-tab" onclick="openTab('forex')">Forex</button>
   </div>
   <div class="spacer"></div>
-  <div class="status-pill">
-    <div class="status-dot"></div>
-    LIVE
+  <div class="theme-selector">
+    <button class="theme-btn theme-cyan active" onclick="setTheme('cyan')" title="Cyan"></button>
+    <button class="theme-btn theme-pink" onclick="setTheme('pink')" title="Pink"></button>
+    <button class="theme-btn theme-gold" onclick="setTheme('gold')" title="Gold"></button>
+    <button class="theme-btn theme-green" onclick="setTheme('green')" title="Green"></button>
+    <button class="theme-btn theme-purple" onclick="setTheme('purple')" title="Purple"></button>
   </div>
 </div>
 
-<div class="container">
-  <div class="panel">
-    <div class="panel-header">Signal Filter</div>
-    <div class="panel-content">
-      <div class="category-list">
-        <button class="category-btn active" onclick="switchCat('all')">All Signals</button>
-        <button class="category-btn" onclick="switchCat('hot')">Hot (3x+)</button>
-        <button class="category-btn" onclick="switchCat('pre')">Pre-Bond</button>
-        <button class="category-btn" onclick="switchCat('boost')">Boosted</button>
-        <button class="category-btn" onclick="switchCat('trend')">Trending</button>
-        <button class="category-btn" onclick="switchCat('win')">Winners</button>
+<!-- MAIN LAYOUT -->
+<div class="container" id="mainContainer">
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="panel">
+      <div class="panel-header">Categories</div>
+      <div class="panel-content">
+        <div class="category-list">
+          <button class="cat-btn active" onclick="switchCat('all')">All Signals</button>
+          <button class="cat-btn" onclick="switchCat('hot')">Hot (3x+)</button>
+          <button class="cat-btn" onclick="switchCat('bonded')">Bonded</button>
+          <button class="cat-btn" onclick="switchCat('boosted')">Boosted</button>
+          <button class="cat-btn" onclick="switchCat('trending')">Trending</button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- CENTER -->
   <div class="center">
-    <div class="panel">
-      <div class="panel-header">Live Signal Feed</div>
-      <div class="panel-content">
-        <div class="signals-feed" id="feed">
-          <div style="text-align:center;color:var(--text3);padding:40px 20px;font-size:12px;">
-            Fetching live signals...
+    <div class="top-row">
+      <!-- SIGNALS PANEL -->
+      <div class="panel signal-panel">
+        <div class="panel-header">Live Signals</div>
+        <div class="panel-content">
+          <div class="signals-feed" id="signalsFeed">
+            <div style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">Loading signals...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL PANEL -->
+      <div class="panel detail-panel">
+        <div class="panel-header">Entry & Targets</div>
+        <div class="panel-content">
+          <div class="data-grid">
+            <div class="data-item"><span class="data-label">Entry</span><span class="data-value" id="entry">—</span></div>
+            <div class="data-item"><span class="data-label">1TP (50%)</span><span class="data-value" id="tp1">—</span></div>
+            <div class="data-item"><span class="data-label">2TP (200%)</span><span class="data-value" id="tp2">—</span></div>
+            <div class="data-item"><span class="data-label">3TP (500%)</span><span class="data-value" id="tp3">—</span></div>
+            <div class="data-item"><span class="data-label">Stop</span><span class="data-value" id="sl" style="color:var(--danger);">—</span></div>
+            <div class="data-item"><span class="data-label">Mult</span><span class="data-value" id="mult">—</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="dex-panel">
-      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);">Quick Lookup</div>
-      <input type="text" class="dex-input" id="dexInput" placeholder="Token address or symbol (e.g. BONK)...">
-      <div class="dex-chart">DexScreener chart loads here</div>
+    <!-- DEX & CHART -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-header">DexScreener Lookup</div>
+      <div class="panel-content">
+        <div class="dex-section">
+          <input type="text" class="dex-input" placeholder="Token address or symbol...">
+          <div class="chart-area">Live chart loads here</div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- RIGHT SIDEBAR -->
   <div class="sidebar-right">
-    <div class="data-panel">
-      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px;">Entry & Targets</div>
-      <div class="data-row">
-        <span class="data-label">Entry</span>
-        <span class="data-value" id="entry">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">1TP (50%)</span>
-        <span class="data-value" id="tp1">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">2TP (200%)</span>
-        <span class="data-value" id="tp2">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">3TP (500%)</span>
-        <span class="data-value" id="tp3">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">Stop</span>
-        <span class="data-value down" id="sl">—</span>
+    <div class="panel">
+      <div class="panel-header">Risk Metrics</div>
+      <div class="panel-content">
+        <div class="metrics-grid">
+          <div class="metric-card"><span class="metric-label">Bundle</span><span class="metric-value">—</span></div>
+          <div class="metric-card"><span class="metric-label">Liquidity</span><span class="metric-value">—</span></div>
+          <div class="metric-card"><span class="metric-label">Holders</span><span class="metric-value">—</span></div>
+          <div class="metric-card"><span class="metric-label">Score</span><span class="metric-value">—</span></div>
+        </div>
       </div>
     </div>
 
-    <div class="data-panel">
-      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px;">Risk</div>
-      <div class="data-row">
-        <span class="data-label">Bundle</span>
-        <span class="data-value">—</span>
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">PnL Projection</div>
+      <div class="panel-content" style="display:flex;align-items:center;justify-content:center;">
+        <div style="color:var(--text2);font-size:11px;">HF generated imagery</div>
       </div>
-      <div class="data-row">
-        <span class="data-label">Liquidity</span>
-        <span class="data-value">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">Holders</span>
-        <span class="data-value">—</span>
-      </div>
-      <div class="data-row">
-        <span class="data-label">Multiplier</span>
-        <span class="data-value up" id="mult">—</span>
-      </div>
-    </div>
-
-    <div class="pnl-section">
-      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);">PnL Projection</div>
-      <div class="pnl-chart">HuggingFace generated imagery</div>
     </div>
   </div>
 </div>
 
+<!-- FULLSCREEN TABS -->
+<div class="fullscreen-tab" id="swarmTab">
+  <div class="fullscreen-header">
+    <button class="back-btn" onclick="closeFullscreen()">← Back</button>
+    <div class="fullscreen-title">Swarm Analysis</div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('overview')">Overview</button>
+      <button class="sub-tab" onclick="switchSubTab('metrics')">Metrics</button>
+      <button class="sub-tab" onclick="switchSubTab('wallets')">Wallets</button>
+    </div>
+  </div>
+  <div class="fullscreen-content">
+    <div style="color:var(--text2);font-size:12px;">Swarm market analysis and smart money tracking</div>
+  </div>
+</div>
+
+<div class="fullscreen-tab" id="altcoinsTab">
+  <div class="fullscreen-header">
+    <button class="back-btn" onclick="closeFullscreen()">← Back</button>
+    <div class="fullscreen-title">Alt Coins</div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('trending')">Trending</button>
+      <button class="sub-tab" onclick="switchSubTab('gainers')">Gainers</button>
+      <button class="sub-tab" onclick="switchSubTab('losers')">Losers</button>
+    </div>
+  </div>
+  <div class="fullscreen-content">
+    <div style="color:var(--text2);font-size:12px;">Alternative coin analysis and opportunities</div>
+  </div>
+</div>
+
+<div class="fullscreen-tab" id="stocksTab">
+  <div class="fullscreen-header">
+    <button class="back-btn" onclick="closeFullscreen()">← Back</button>
+    <div class="fullscreen-title">Stocks</div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('tech')">Tech</button>
+      <button class="sub-tab" onclick="switchSubTab('energy')">Energy</button>
+      <button class="sub-tab" onclick="switchSubTab('finance')">Finance</button>
+    </div>
+  </div>
+  <div class="fullscreen-content">
+    <div style="color:var(--text2);font-size:12px;">Stock market analysis and opportunities</div>
+  </div>
+</div>
+
+<!-- ZEROX -->
 <button class="zerox-btn" onclick="toggleZerox()">Z</button>
-<div class="zerox-modal" id="zm">
+<div class="zerox-modal" id="zeroxModal">
   <div class="modal-title">ZEROX Brain</div>
-  <div class="modal-content" id="zc">AI analyzing signals. Ask for strategy, thesis, or entry guidance.</div>
-  <button class="btn-primary" onclick="askZ('strat')">Strategy</button>
-  <button class="btn-primary" onclick="askZ('thesis')">Thesis</button>
-  <button class="btn-primary" onclick="askZ('entry')">Entry</button>
+  <div class="modal-content" id="modalContent">AI analyzing signals. Ask for strategy, thesis, or entry guidance.</div>
+  <button class="btn-primary" onclick="askZerox('strat')">Strategy</button>
+  <button class="btn-primary" onclick="askZerox('thesis')">Thesis</button>
+  <button class="btn-primary" onclick="askZerox('entry')">Entry</button>
 </div>
 
 <script>
 const API='https://shaddai-g81x.onrender.com';
-let currentTab='solana',currentCat='all';
 
-function switchTab(t){
-  currentTab=t;
-  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+function openTab(tab){
+  if(tab==='solana') return;
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
   event.target.classList.add('active');
-  load();
+
+  document.getElementById('mainContainer').style.display='none';
+  document.getElementById(tab+'Tab').classList.add('active');
 }
 
-function switchCat(c){
-  currentCat=c;
-  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+function closeFullscreen(){
+  document.querySelectorAll('.fullscreen-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('mainContainer').style.display='grid';
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.main-tab').classList.add('active');
+}
+
+function switchCat(cat){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
-  load();
+}
+
+function switchSubTab(tab){
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function setTheme(t){
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  if(t==='cyan')event.target.classList.add('active');
 }
 
 function toggleZerox(){
-  document.getElementById('zm').classList.toggle('active');
+  document.getElementById('zeroxModal').classList.toggle('active');
 }
 
-async function askZ(type){
-  const el=document.getElementById('zc');
+async function askZerox(type){
+  const el=document.getElementById('modalContent');
   el.innerHTML='Analyzing...';
   const r={
-    strat:'Position 2-3% with tight stops. Scale 1TP (50%), hold to 2TP (200%). Stop at -15%. Take profits incrementally at each level.',
-    thesis:'Organic growth tokens with clean distribution (<10% bundle). Early-stage micro-caps before institutional interest. Smart money accumulation visible.',
-    entry:'Scale 25% now, 50% at -5% pullback, 25% at -10%. Risk/reward 1:4+ with proper sizing. Current FDV is early-stage sweet spot.'
+    strat:'Position 2-3% with tight stops. Scale into 1TP (50%), hold to 2TP (200%). Stop at -15%.',
+    thesis:'Organic growth tokens with clean distribution. Early-stage micro-caps before institutional interest.',
+    entry:'Scale 25% now, 50% at -5% pullback, 25% at -10%. Risk/reward 1:4+ with proper sizing.'
   };
   el.innerHTML=r[type]||'Pending...';
 }
 
-async function load(){
+async function loadSignals(){
   try{
     const res=await fetch(`${API}/api/signal-engine/recent-calls`);
     const data=await res.json();
     if(data.recent){
-      const feed=document.getElementById('feed');
-      feed.innerHTML=data.recent.slice(0,25).map(s=>`
+      const feed=document.getElementById('signalsFeed');
+      feed.innerHTML=data.recent.slice(0,15).map(s=>`
         <div class="signal-card">
           <div class="signal-icon">${(s.symbol||'?').substring(0,2)}</div>
           <div class="signal-body">
             <div class="signal-name">$${s.symbol}</div>
             <div class="signal-meta">
-              <div class="meta-item"><span class="meta-label">Score:</span><span class="meta-value">${s.score||'—'}</span></div>
-              <div class="meta-item"><span class="meta-label">Bundle:</span><span class="meta-value">${(s.bundleSize||0).toFixed(1)}%</span></div>
-              <div class="meta-item"><span class="meta-label">Holders:</span><span class="meta-value">${s.holders||'—'}</span></div>
+              <div>Score: ${s.score||'—'}</div>
+              <div>Bundle: ${(s.bundleSize||0).toFixed(1)}%</div>
             </div>
           </div>
           <div class="signal-mult">${s.curMult||1}x</div>
@@ -488,195 +429,8 @@ async function load(){
   }catch(e){console.error(e);}
 }
 
-load();
-setInterval(load,12000);
-</script>
-</body>
-</html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZEROX Pro Signals</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;background:#0a0e27;color:#e8eef7;font-family:Inter,sans-serif;overflow:hidden;}
-:root{--bg1:#0a0e27;--bg2:#111729;--bg3:#1a1f3a;--accent:#00d4ff;--border:rgba(100,200,255,0.15);--text1:#e8eef7;--text2:#9ca3af;--success:#00ff41;--depth2:0 8px 24px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08);}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9990;}
-#header{height:60px;background:linear-gradient(180deg,var(--bg2),var(--bg3));border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:32px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:100;}
-.logo{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,0.3);}
-.nav{display:flex;gap:24px;flex:1;border-left:1px solid var(--border);padding-left:24px;}
-.nav-btn{padding:8px 0;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border:none;background:transparent;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;}
-.nav-btn:hover{color:var(--accent);}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.spacer{flex:1;}
-.btn-icon{width:36px;height:36px;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s;}
-.btn-icon:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.2);}
-.container{display:flex;height:calc(100vh - 60px);overflow:hidden;gap:12px;padding:12px;}
-.panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--depth2);}
-.panel-header{padding:16px;border-bottom:1px solid var(--border);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);background:linear-gradient(90deg,rgba(0,212,255,0.05),transparent);}
-.panel-content{flex:1;overflow-y:auto;padding:16px;}
-.sidebar{width:280px;display:flex;flex-direction:column;gap:12px;}
-.category-btn{padding:12px 16px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;font-size:11px;font-weight:500;text-align:left;transition:all 0.2s;}
-.category-btn:hover{background:rgba(0,212,255,0.05);border-color:var(--accent);color:var(--accent);}
-.category-btn.active{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.15);}
-.center{flex:1;display:flex;flex-direction:column;gap:12px;}
-.signal-feed{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
-.signal-card{padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s;display:flex;gap:12px;align-items:center;}
-.signal-card:hover{border-color:var(--accent);background:rgba(0,212,255,0.05);box-shadow:0 8px 24px rgba(0,212,255,0.15);}
-.signal-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#ff0080);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;box-shadow:inset 0 1px 2px rgba(255,255,255,0.1);}
-.signal-body{flex:1;}
-.signal-name{font-weight:600;font-size:13px;color:var(--text1);}
-.signal-meta{font-size:11px;color:var(--text2);display:flex;gap:12px;margin-top:4px;}
-.signal-mult{font-weight:700;font-size:14px;color:var(--success);min-width:50px;text-align:right;}
-.dex-lookup{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px;}
-.dex-input{width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;}
-.dex-input:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.2);}
-.dex-chart{width:100%;height:200px;background:linear-gradient(135deg,rgba(0,212,255,0.05),rgba(255,0,128,0.05));border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:11px;}
-.sidebar-right{width:340px;display:flex;flex-direction:column;gap:12px;}
-.data-panel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;}
-.data-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(100,200,255,0.08);}
-.data-row:last-child{border-bottom:none;}
-.data-label{color:var(--text2);}
-.data-value{color:var(--text1);font-weight:600;font-family:'JetBrains Mono',monospace;}
-.zerox-btn{position:fixed;bottom:30px;right:30px;width:70px;height:70px;background:linear-gradient(135deg,var(--accent),#ff0080);border:2px solid var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:32px;z-index:2000;box-shadow:0 20px 60px rgba(0,212,255,0.3),inset 0 1px 0 rgba(255,255,255,0.1);transition:all 0.3s;font-weight:700;}
-.zerox-btn:hover{transform:scale(1.1);box-shadow:0 30px 80px rgba(0,212,255,0.4),inset 0 1px 0 rgba(255,255,255,0.2);}
-.zerox-modal{position:fixed;bottom:120px;right:30px;width:380px;max-height:500px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;z-index:1999;display:none;flex-direction:column;gap:16px;box-shadow:0 12px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);overflow-y:auto;}
-.zerox-modal.active{display:flex;}
-.modal-title{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;}
-.modal-content{font-size:11px;line-height:1.6;color:var(--text2);}
-.btn-primary{padding:10px 16px;background:var(--accent);color:var(--bg1);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;}
-.btn-primary:hover{box-shadow:0 0 20px rgba(0,212,255,0.4);transform:translateY(-2px);}
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.2);border-radius:3px;}
-::-webkit-scrollbar-thumb:hover{background:rgba(0,212,255,0.4);}
-@media(max-width:1200px){.sidebar-right{display:none;}.container{grid-template-columns:1fr;}}
-</style>
-</head>
-<body>
-
-<div id="header">
-  <div class="logo">Z</div>
-  <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('solana')">Solana</button>
-    <button class="nav-btn" onclick="switchTab('swarm')">Swarm</button>
-    <button class="nav-btn" onclick="switchTab('miro')">MiroFish</button>
-    <button class="nav-btn" onclick="switchTab('poly')">Polymarket</button>
-  </div>
-  <div class="spacer"></div>
-  <div style="display:flex;gap:12px;">
-    <button class="btn-icon">Settings</button>
-    <button class="btn-icon">Bell</button>
-  </div>
-</div>
-
-<div class="container">
-  <div class="sidebar">
-    <div class="panel">
-      <div class="panel-header">Categories</div>
-      <div class="panel-content" style="display:flex;flex-direction:column;gap:6px;">
-        <button class="category-btn active" onclick="switchCat('all')">All Signals</button>
-        <button class="category-btn" onclick="switchCat('pre')">Pre-Bond</button>
-        <button class="category-btn" onclick="switchCat('boost')">Boosted</button>
-        <button class="category-btn" onclick="switchCat('trend')">Trending</button>
-        <button class="category-btn" onclick="switchCat('win')">Winners</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="center">
-    <div class="panel">
-      <div class="panel-header">Live Signals</div>
-      <div class="panel-content">
-        <div class="signal-feed" id="feed">
-          <div style="padding:20px;text-align:center;color:var(--text2);font-size:12px;">Loading...</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel" style="flex:0 0 auto;">
-      <div class="panel-header">DexScreener</div>
-      <div class="panel-content">
-        <input type="text" class="dex-input" placeholder="Token address or symbol...">
-        <div class="dex-chart">Chart embeds here</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sidebar-right">
-    <div class="panel">
-      <div class="panel-header">Metrics</div>
-      <div class="panel-content">
-        <div class="data-panel">
-          <div class="data-row"><span class="data-label">Entry FDV</span><span class="data-value">$45.2K</span></div>
-          <div class="data-row"><span class="data-label">Current FDV</span><span class="data-value">$112.8K</span></div>
-          <div class="data-row"><span class="data-label">1TP</span><span class="data-value">$67.8K</span></div>
-          <div class="data-row"><span class="data-label">2TP</span><span class="data-value">$135.6K</span></div>
-          <div class="data-row"><span class="data-label">3TP</span><span class="data-value">$226K</span></div>
-          <div class="data-row"><span class="data-label">Stop Loss</span><span class="data-value">$38.4K</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">Risk</div>
-      <div class="panel-content">
-        <div class="data-panel">
-          <div class="data-row"><span class="data-label">Bundle</span><span class="data-value">8.2%</span></div>
-          <div class="data-row"><span class="data-label">Snipers</span><span class="data-value">12</span></div>
-          <div class="data-row"><span class="data-label">Liquidity</span><span class="data-value">$1.2M</span></div>
-          <div class="data-row"><span class="data-label">Tier</span><span class="data-value">Medium</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">PnL</div>
-      <div class="panel-content" style="min-height:200px;display:flex;align-items:center;justify-content:center;"><div style="color:var(--text2);font-size:11px;">HF imagery</div></div>
-    </div>
-  </div>
-</div>
-
-<button class="zerox-btn" onclick="toggleZ()">Z</button>
-<div class="zerox-modal" id="zm">
-  <div class="modal-title">ZEROX Brain</div>
-  <div class="modal-content" id="zc">Click for trading strategies, thesis, or entry guidance.</div>
-  <button class="btn-primary" onclick="askZ('strat')">Trading Strategy</button>
-  <button class="btn-primary" onclick="askZ('thesis')">Thesis</button>
-  <button class="btn-primary" onclick="askZ('entry')">Entry</button>
-</div>
-
-<script>
-const API='https://shaddai-g81x.onrender.com';
-let tab='solana',cat='all';
-function switchTab(t){tab=t;document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));event.target.classList.add('active');load();}
-function switchCat(c){cat=c;document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');load();}
-function toggleZ(){document.getElementById('zm').classList.toggle('active');}
-async function askZ(type){
-  const el=document.getElementById('zc');
-  el.innerHTML='Analyzing...';
-  const r={
-    strat:'Risk Management: 2-3% position, tight stops. Entry now, scale 1TP (50%), hold to 2TP (200%). SL at -15%.',
-    thesis:'Organic Growth: Bundle 8.2% natural. 12 smart wallets active. Pre-bond with $1.2M liquidity. Likely sustained upside.',
-    entry:'Entry Zone: $45.2K FDV early-stage. Enter 25% now + 50% at -5% + 25% at -10%. Risk/reward 1:4.'
-  };
-  el.innerHTML=r[type]||'Pending...';
-}
-async function load(){
-  try{
-    const res=await fetch(`${API}/api/signal-engine/recent-calls`);
-    const data=await res.json();
-    if(data.recent){
-      const feed=document.getElementById('feed');
-      feed.innerHTML=data.recent.slice(0,20).map(s=>`<div class="signal-card"><div class="signal-icon">${(s.symbol||'?').substring(0,2)}</div><div class="signal-body"><div class="signal-name">${s.symbol||'Unknown'}</div><div class="signal-meta"><div style="display:flex;gap:4px;"><span style="color:var(--text2);">Score:</span><span style="color:var(--accent);">${s.score||'—'}</span></div><div style="display:flex;gap:4px;"><span style="color:var(--text2);">Bundle:</span><span style="color:var(--accent);">${(s.bundleSize||0).toFixed(1)}%</span></div></div></div><div class="signal-mult">${s.curMult||1}x</div></div>`).join('');
-    }
-  }catch(e){console.error(e);}
-}
-load();
-setInterval(load,15000);
+loadSignals();
+setInterval(loadSignals,12000);
 </script>
 </body>
 </html>
