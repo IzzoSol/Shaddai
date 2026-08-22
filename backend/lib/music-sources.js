@@ -108,8 +108,8 @@ function filterKnockoffs(tracks, query) {
 function boostCanonicalArtist(tracks, query) {
   const q = (query || '').toLowerCase();
   return [...tracks].sort((a, b) => {
-    const am = q.includes(String(a.artist || '').toLowerCase()) ? 0 : 1;
-    const bm = q.includes(String(b.artist || '').toLowerCase()) ? 0 : 1;
+    const am = a.artist && q.includes(String(a.artist).toLowerCase()) ? 0 : 1;
+    const bm = b.artist && q.includes(String(b.artist).toLowerCase()) ? 0 : 1;
     return am - bm;
   });
 }

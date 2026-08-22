@@ -185,25 +185,38 @@ async function playTrack(chatId, tr) {
 
 // ── queue engine — auto-advance via turtle-music-session ──────────────────
 function scheduleNext(chatId) {
+  const s0 = session.getSession(chatId); // identity snapshot — a later startSession() swaps this out for a new object
   session.armTimer(chatId, async () => {
-    let track = session.advance(chatId);
+    let track = session.advance(chatId); // sync/fast — always safe to run against whatever session is current
     if (!track) {
-      if (session.isRadio(chatId)) track = await extendRadio(chatId);
+      if (session.isRadio(chatId)) track = await extendRadio(chatId); // slow (multi-search loop) — session may get replaced mid-await
+      if (session.getSession(chatId) !== s0) return; // a fresh /play started a new session while we were awaiting — abandon, don't mutate it
       if (!track) return; // radio off, or nothing similar resolved — go idle
     }
     const s = session.getSession(chatId);
-    const ok = await playTrack(chatId, track);
+    const ok = await playTrack(chatId, track); // also slow (network fetch+send) — re-check after
+    if (session.getSession(chatId) !== s0) return; // session was replaced while we were sending — don't push history/reschedule against it
     if (ok && s) await profiles.pushHistory(s.ownerId, track);
     scheduleNext(chatId);
   });
 }
+
+const QUEUE_MAX = 200; // cap total queue growth for a long-lived radio session
+const QUEUE_KEEP_BUFFER = 20; // played tracks kept before pos when trimming, for /queue-ish context
 
 async function extendRadio(chatId) {
   const last = session.lastPlayed(chatId);
   if (!last) return null;
   const more = await resolveSimilar(last.artist, last.name, 5);
   if (!more.length) return null;
-  return session.appendAndAdvance(chatId, more);
+  // Last.fm similarity is largely symmetric (A recommends B, B recommends A)
+  // — drop anything already sitting in the queue so radio mode doesn't loop.
+  const already = session.queueKeys(chatId);
+  const fresh = more.filter((t) => !already.has((String(t.name) + '|' + String(t.artist)).toLowerCase()));
+  if (!fresh.length) return null;
+  const next = session.appendAndAdvance(chatId, fresh);
+  session.trimPlayed(chatId, QUEUE_MAX, QUEUE_KEEP_BUFFER);
+  return next;
 }
 
 async function playNow(chatId, tr, userId) {
@@ -260,12 +273,14 @@ async function doResume(chatId) {
   return send(chatId, ok ? '▶️ Resumed.' : 'Nothing to resume — try /play.');
 }
 async function doSkip(chatId, userId) {
-  const s = session.getSession(chatId);
-  if (!s) return send(chatId, 'Nothing queued — try /play.');
-  let track = session.advance(chatId);
-  if (!track && session.isRadio(chatId)) track = await extendRadio(chatId);
+  const s0 = session.getSession(chatId); // identity snapshot — see scheduleNext for why
+  if (!s0) return send(chatId, 'Nothing queued — try /play.');
+  let track = session.advance(chatId); // sync/fast
+  if (!track && session.isRadio(chatId)) track = await extendRadio(chatId); // slow — session may get replaced mid-await
+  if (session.getSession(chatId) !== s0) return; // a fresh /play (or another /skip) replaced the session while we awaited
   if (!track) return send(chatId, '⏭ Queue finished.');
-  const ok = await playTrack(chatId, track);
+  const ok = await playTrack(chatId, track); // also slow
+  if (session.getSession(chatId) !== s0) return; // replaced while sending — don't push history/reschedule against it
   if (ok) { await profiles.pushHistory(userId, track); scheduleNext(chatId); }
 }
 async function doQueueList(chatId) {
@@ -423,7 +438,7 @@ async function doPlaylist(chatId, userId, argRaw) {
     case 'new': {
       if (!rest) return send(chatId, 'Usage: <code>/playlist new &lt;name&gt;</code>');
       const r = await profiles.createPlaylist(userId, rest);
-      return send(chatId, r.ok ? '✅ Created playlist <b>' + esc(rest) + '</b>.' : r.reason === 'exists' ? 'You already have a playlist named that.' : '⚠️ Playlist limit reached (30 max).');
+      return send(chatId, r.ok ? '✅ Created playlist <b>' + esc(rest) + '</b>.' : r.reason === 'exists' ? 'You already have a playlist named that.' : r.reason === 'toolong' ? 'Playlist names must be 24 characters or less.' : '⚠️ Playlist limit reached (30 max).');
     }
     case 'add': {
       if (!rest) return send(chatId, 'Usage: <code>/playlist add &lt;name&gt;</code> (adds the currently playing track)');

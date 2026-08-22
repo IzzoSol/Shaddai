@@ -46,7 +46,10 @@ async function listFavorites(userId) {
   return p.favorites;
 }
 
+const PLAYLIST_NAME_MAX = 24; // keeps 'pa:'+rid(8)+':'+idx+':'+encodeURIComponent(name) under Telegram's 64-byte callback_data limit
+
 async function createPlaylist(userId, name) {
+  if (String(name).length > PLAYLIST_NAME_MAX) return { ok: false, reason: 'toolong' };
   return store.withLock(async (db) => {
     const u = db.users[String(userId)] || (db.users[String(userId)] = emptyUser());
     if (u.playlists[name]) return { ok: false, reason: 'exists' };
@@ -113,5 +116,5 @@ async function profileSummary(userId) {
 module.exports = {
   getProfile, addFavorite, listFavorites, createPlaylist, addToPlaylist,
   getPlaylist, listPlaylists, deletePlaylist, pushHistory, getHistory, profileSummary,
-  makeStore, _useStore, FAV_CAP, PLAYLIST_CAP, PLAYLIST_TRACK_CAP, HISTORY_CAP,
+  makeStore, _useStore, FAV_CAP, PLAYLIST_CAP, PLAYLIST_TRACK_CAP, HISTORY_CAP, PLAYLIST_NAME_MAX,
 };

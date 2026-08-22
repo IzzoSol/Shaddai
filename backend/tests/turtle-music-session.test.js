@@ -115,4 +115,34 @@ describe('turtle-music-session', () => {
     expect(session.current('c5')).toEqual({ name: 'B', duration: 10 });
     expect(session.upcoming('c5')).toEqual([{ name: 'C', duration: 10 }]);
   });
+
+  test('queueKeys returns lowercase name|artist keys for every track in the queue', () => {
+    const tracks = [{ name: 'Yellow', artist: 'Coldplay' }, { name: 'Get Lucky', artist: 'Daft Punk' }];
+    session.startSession('c6', tracks, 'u1');
+    const keys = session.queueKeys('c6');
+    expect(keys.has('yellow|coldplay')).toBe(true);
+    expect(keys.has('get lucky|daft punk')).toBe(true);
+    expect(keys.size).toBe(2);
+  });
+
+  test('queueKeys returns an empty set when there is no session', () => {
+    expect(session.queueKeys('never-started').size).toBe(0);
+  });
+
+  test('trimPlayed drops already-played tracks off the front once the queue exceeds maxLen, keeping pos consistent', () => {
+    const tracks = Array.from({ length: 10 }, (_, i) => ({ name: 'T' + i, duration: 10 }));
+    session.startSession('c7', tracks, 'u1');
+    for (let i = 0; i < 8; i++) session.advance('c7'); // pos = 8
+    expect(session.current('c7')).toEqual({ name: 'T8', duration: 10 });
+    const trimmed = session.trimPlayed('c7', 5, 2); // maxLen=5 < queue.length=10 → trims, keeping 2 before pos
+    expect(trimmed).toBe(true);
+    expect(session.getSession('c7').queue.length).toBe(4); // [T6,T7,T8,T9]
+    expect(session.current('c7')).toEqual({ name: 'T8', duration: 10 }); // pos re-aligned to the same track
+  });
+
+  test('trimPlayed is a no-op when the queue is not over maxLen', () => {
+    session.startSession('c8', [{ name: 'A', duration: 10 }, { name: 'B', duration: 10 }], 'u1');
+    expect(session.trimPlayed('c8', 200, 20)).toBe(false);
+    expect(session.getSession('c8').queue.length).toBe(2);
+  });
 });

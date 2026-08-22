@@ -39,4 +39,22 @@ describe('boostCanonicalArtist', () => {
     const out = src.boostCanonicalArtist(tracks, 'yellow');
     expect(out.map((t) => t.artist)).toEqual(['Coldplay', 'Someone Else']);
   });
+
+  test('does not promote a track with an empty artist ahead of a real query-matched artist', () => {
+    const tracks = [
+      { name: 'Yellow', artist: '' },
+      { name: 'Yellow', artist: 'Coldplay' },
+    ];
+    const out = src.boostCanonicalArtist(tracks, 'yellow coldplay');
+    expect(out[0].artist).toBe('Coldplay');
+  });
+
+  test('an empty-artist track and a genuinely non-matching artist keep their original relative order', () => {
+    const tracks = [
+      { name: 'Yellow', artist: '' },
+      { name: 'Yellow', artist: 'Some Other Band' },
+    ];
+    const out = src.boostCanonicalArtist(tracks, 'yellow');
+    expect(out.map((t) => t.artist)).toEqual(['', 'Some Other Band']);
+  });
 });

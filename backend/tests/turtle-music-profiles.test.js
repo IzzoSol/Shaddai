@@ -43,6 +43,14 @@ describe('turtle-music-profiles', () => {
     expect(r).toEqual({ ok: false, reason: 'cap' });
   });
 
+  test('createPlaylist rejects a name over 24 characters and accepts one exactly 24', async () => {
+    const tooLong = 'a'.repeat(25);
+    const exact = 'b'.repeat(24);
+    expect(await profiles.createPlaylist('u1', tooLong)).toEqual({ ok: false, reason: 'toolong' });
+    expect(await profiles.createPlaylist('u1', exact)).toEqual({ ok: true });
+    expect(await profiles.listPlaylists('u1')).toEqual([exact]);
+  });
+
   test('playlist create/add/get/list/delete round-trip', async () => {
     expect(await profiles.createPlaylist('u1', 'Chill')).toEqual({ ok: true });
     expect(await profiles.createPlaylist('u1', 'Chill')).toEqual({ ok: false, reason: 'exists' });

@@ -63,6 +63,31 @@ function appendAndAdvance(chatId, tracks) {
   return s.queue[s.pos] || null;
 }
 
+// Lowercase 'name|artist' keys for every track currently in the queue —
+// callers (radio auto-extend) use this to avoid re-queuing a track that's
+// already sitting in the queue. Mirrors the dedupe key music-sources.js's
+// own search() uses.
+function queueKeys(chatId) {
+  const s = getSession(chatId);
+  if (!s) return new Set();
+  return new Set(s.queue.map((t) => (String(t.name) + '|' + String(t.artist)).toLowerCase()));
+}
+
+// Caps unbounded queue growth on a long-lived radio session: once the queue
+// exceeds maxLen, drops already-played tracks off the front (keeping
+// `keepBuffer` played tracks right before the current position for context),
+// adjusting pos to stay consistent with the shorter queue. No-op if the
+// queue isn't over maxLen, or if there's nothing safe to drop.
+function trimPlayed(chatId, maxLen, keepBuffer) {
+  const s = getSession(chatId);
+  if (!s || s.queue.length <= maxLen) return false;
+  const keepFrom = Math.max(0, s.pos - (keepBuffer || 0));
+  if (keepFrom <= 0) return false;
+  s.queue = s.queue.slice(keepFrom);
+  s.pos -= keepFrom;
+  return true;
+}
+
 function armTimer(chatId, cb) {
   const s = getSession(chatId);
   if (!s || s.paused) return false;
@@ -110,5 +135,5 @@ function _clearAll() {
 module.exports = {
   startSession, getSession, current, upcoming, advance, armTimer,
   pause, resume, enqueue, clearSession, _clearAll,
-  setRadio, isRadio, lastPlayed, appendAndAdvance,
+  setRadio, isRadio, lastPlayed, appendAndAdvance, queueKeys, trimPlayed,
 };
