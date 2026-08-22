@@ -371,9 +371,11 @@ async function handle(update) {
   const msg = update.message; if (!msg) return;
   const chatId = msg.chat && msg.chat.id, userId = msg.from && msg.from.id, text = (msg.text || '').trim();
   if (!chatId || !text) return;
+  const isPrivate = !msg.chat || msg.chat.type === 'private';
   const m = text.match(/^\/([a-z0-9_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i);
-  if (!m) { // bare text → treat as a play query for convenience
-    return doPlay(chatId, text, userId);
+  if (!m) { // bare text → treat as a play query, but only in a 1:1 DM
+    if (isPrivate) return doPlay(chatId, text, userId);
+    return; // groups/supergroups/channels: never react to plain chat text
   }
   const cmd = m[1].toLowerCase(), arg = (m[2] || '').trim();
   switch (cmd) {
@@ -400,7 +402,10 @@ async function handle(update) {
     case 'playlist': case 'pl': return doPlaylist(chatId, userId, arg);
     case 'profile': case 'me': return doProfile(chatId, userId);
     case 'history': return doHistory(chatId, userId);
-    default: return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
+    default:
+      // Groups are full of other bots' commands — stay quiet unless it's ours.
+      if (!isPrivate) return;
+      return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
   }
 }
 
