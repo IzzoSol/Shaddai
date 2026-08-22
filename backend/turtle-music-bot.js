@@ -415,6 +415,18 @@ async function doHistory(chatId, userId) {
   return send(chatId, '🕓 <b>Recent plays</b>:\n' + recent.map((t) => '• ' + esc(t.name) + ' — ' + esc(t.artist)).join('\n'));
 }
 
+async function doAbout(chatId) {
+  const cur = session.current(chatId);
+  if (!cur) return send(chatId, 'Nothing playing — /play something first, then /about.');
+  const info = await lastfm.artistInfo(cur.artist);
+  if (!info) return send(chatId, 'No artist info available for <b>' + esc(cur.artist) + '</b> right now.');
+  let txt = '🎤 <b>' + esc(info.name) + '</b>\n';
+  if (info.tags.length) txt += '<i>' + info.tags.map(esc).join(', ') + '</i>\n';
+  if (info.listeners) txt += Number(info.listeners).toLocaleString() + ' Last.fm listeners\n';
+  txt += '\n' + esc(info.bio || 'No bio available.').slice(0, 800);
+  return send(chatId, txt);
+}
+
 async function doLyrics(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
   await chatAction(chatId, 'typing');
@@ -500,6 +512,7 @@ async function handle(update) {
     case 'playlist': case 'pl': return doPlaylist(chatId, userId, arg);
     case 'profile': case 'me': return doProfile(chatId, userId);
     case 'history': return doHistory(chatId, userId);
+    case 'about': return doAbout(chatId);
     default:
       // Groups are full of other bots' commands — stay quiet unless it's ours.
       if (!isPrivate) return;
