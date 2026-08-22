@@ -69,22 +69,28 @@ const MOOD_KEYS = Object.keys(mg.MOODS);
 function startText() {
   return '🐢 <b>Turtle Music Bot</b> — <i>by ShaddaiLabs</i>\n\n' +
     'Free music, right here in chat. No ads, no keys.\n\n' +
-    '▶️ <b>/play</b> &lt;song&gt; — play any song instantly\n' +
-    '🎧 <b>/full</b> &lt;vibe&gt; — full free tracks\n' +
+    '▶️ <b>/play</b> &lt;song&gt; — play instantly, auto-advances to more\n' +
+    '📚 <b>/browse</b> — explore by genre\n' +
     '🔎 <b>/find</b> &lt;song&gt; — search &amp; pick\n' +
-    '🎼 <b>/music</b> &lt;genre&gt; — compose an original\n' +
-    '📝 <b>/lyrics</b> artist - title\n\n' +
+    '⏯️ <b>/pause /resume /skip /queue</b> — control what\'s playing\n' +
+    '💛 <b>/like</b> · 📃 <b>/playlist</b> · 👤 <b>/profile</b>\n' +
+    '🎼 <b>/music</b> &lt;genre&gt; — compose an original\n\n' +
     'Or just type a song name. Tap a style to start 👇';
 }
 function helpText() {
   return '🐢 <b>Turtle Music Bot — commands</b>\n\n' +
-    '<b>/play</b> &lt;query&gt;\n   Instantly play the top match — full track if available, else preview.\n' +
-    '<b>/full</b> &lt;query&gt;\n   Full free tracks only (Audius). e.g. <code>/full lofi study</code>\n' +
-    '<b>/find</b> &lt;query&gt;\n   Search all sources → tap 🎧/▶ to play.\n' +
+    '<b>/play</b> &lt;query&gt;\n   Play the top match and auto-advance through more like it.\n' +
+    '<b>/browse</b>\n   Explore real charts by genre.\n' +
+    '<b>/find</b> &lt;query&gt;\n   Search all sources → ▶ play now or ➕ queue.\n' +
+    '<b>/full</b> &lt;query&gt;\n   Full free tracks only (Audius).\n' +
+    '<b>/pause</b> / <b>/resume</b> / <b>/skip</b> / <b>/queue</b> / <b>/np</b> / <b>/clear</b>\n   Control the current session.\n' +
+    '<b>/like</b> — favorite what\'s playing · <b>/favorites</b> — list them\n' +
+    '<b>/playlist</b> new|add|play|list|view|del &lt;name&gt;\n' +
+    '<b>/profile</b> — your stats · <b>/history</b> — recent plays\n' +
     '<b>/music</b> [genre] [mood] [bars]\n   Original procedural track. e.g. <code>/music lofi chill 12</code>\n' +
     '<b>/lyrics</b> artist - title\n   Song lyrics. e.g. <code>/lyrics daft punk - get lucky</code>\n' +
     '<b>/genres</b> — styles &amp; moods · <b>/help</b> — this list\n\n' +
-    'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews) · 📝 lyrics.ovh\n' +
+    'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews &amp; charts) · 📝 lyrics.ovh\n' +
     '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n🎨 Moods: ' + MOOD_KEYS.join(', ');
 }
 function genreButtons() {
@@ -399,9 +405,19 @@ async function handle(update) {
 // ── command menu + polling loop ──────────────────────────────────────────────
 async function registerCommands() {
   const commands = [
-    { command: 'play', description: 'Play a song instantly  e.g. /play blinding lights' },
+    { command: 'play', description: 'Play a song, auto-advance queue  e.g. /play blinding lights' },
+    { command: 'browse', description: 'Explore music by genre chart' },
+    { command: 'find', description: 'Search real songs → tap to play or queue' },
     { command: 'full', description: 'Full free tracks  e.g. /full lofi study' },
-    { command: 'find', description: 'Search real songs → tap to play' },
+    { command: 'pause', description: 'Stop auto-advance' },
+    { command: 'resume', description: 'Continue auto-advance' },
+    { command: 'skip', description: 'Skip to the next queued track' },
+    { command: 'queue', description: 'Show what\'s playing and up next' },
+    { command: 'like', description: 'Favorite the current track' },
+    { command: 'favorites', description: 'List your favorites' },
+    { command: 'playlist', description: 'new|add|play|list|view|del <name>' },
+    { command: 'profile', description: 'Your stats' },
+    { command: 'history', description: 'Recent plays' },
     { command: 'music', description: 'Compose an original track  e.g. /music synthwave hype' },
     { command: 'lyrics', description: 'Get lyrics  e.g. /lyrics coldplay - yellow' },
     { command: 'genres', description: 'All styles & moods' },
