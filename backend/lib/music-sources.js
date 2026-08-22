@@ -30,6 +30,7 @@ async function audiusSearch(term, limit = 8) {
       .filter((t) => t.is_streamable !== false && t.duration > 20 && t.duration <= 900)
       .slice(0, limit)
       .map((t) => ({ source: 'audius', full: true, name: t.title, artist: (t.user && t.user.name) || '', duration: t.duration,
+        art: (t.artwork && (t.artwork['480x480'] || t.artwork['150x150'])) || null,
         stream: host + '/v1/tracks/' + t.id + '/stream?app_name=TurtleMusicBot' }));
   } catch (_) { return []; }
 }
@@ -38,7 +39,8 @@ async function deezerSearch(term, limit = 8) {
   try {
     const j = await (await fetch('https://api.deezer.com/search?limit=' + limit + '&q=' + encodeURIComponent(term), { signal: TO(10000) })).json();
     return (j.data || []).filter((x) => x.preview).map((x) => ({ source: 'deezer', full: false, name: x.title,
-      artist: (x.artist && x.artist.name) || '', album: (x.album && x.album.title) || '', duration: 30, stream: x.preview }));
+      artist: (x.artist && x.artist.name) || '', album: (x.album && x.album.title) || '',
+      art: (x.album && x.album.cover_medium) || null, duration: 30, stream: x.preview }));
   } catch (_) { return []; }
 }
 
@@ -46,7 +48,7 @@ async function itunesSearch(term, limit = 6) {
   try {
     const j = await (await fetch('https://itunes.apple.com/search?media=music&limit=' + limit + '&term=' + encodeURIComponent(term), { signal: TO(10000) })).json();
     return (j.results || []).filter((x) => x.previewUrl).map((x) => ({ source: 'itunes', full: false, name: x.trackName,
-      artist: x.artistName, album: x.collectionName, duration: 30, stream: x.previewUrl }));
+      artist: x.artistName, album: x.collectionName, art: x.artworkUrl100 || null, duration: 30, stream: x.previewUrl }));
   } catch (_) { return []; }
 }
 
@@ -66,9 +68,50 @@ async function genreChart(genreId, limit = 10) {
   try {
     const j = await (await fetch('https://api.deezer.com/chart/' + encodeURIComponent(genreId) + '?limit=' + limit, { signal: TO(10000) })).json();
     const tracks = (j.tracks && j.tracks.data) || [];
-    return tracks.filter((x) => x.preview).map((x) => ({ source: 'deezer', full: false, name: x.title,
-      artist: (x.artist && x.artist.name) || '', album: (x.album && x.album.title) || '', duration: x.duration || 30, stream: x.preview }));
+    const mapped = tracks.filter((x) => x.preview).map((x) => ({ source: 'deezer', full: false, name: x.title,
+      artist: (x.artist && x.artist.name) || '', album: (x.album && x.album.title) || '',
+      art: (x.album && x.album.cover_medium) || null, duration: x.duration || 30, stream: x.preview }));
+    return filterKnockoffs(mapped, '');
   } catch (_) { return []; }
+}
+
+// ── Deezer album search & browse (free, no key) ─────────────────────────────
+async function albumSearch(term, limit = 6) {
+  try {
+    const j = await (await fetch('https://api.deezer.com/search/album?limit=' + limit + '&q=' + encodeURIComponent(term), { signal: TO(10000) })).json();
+    return (j.data || []).map((a) => ({ id: a.id, title: a.title, artist: (a.artist && a.artist.name) || '', cover: a.cover_medium || null, trackCount: a.nb_tracks || 0 }));
+  } catch (_) { return []; }
+}
+
+async function albumTracks(albumId) {
+  try {
+    const j = await (await fetch('https://api.deezer.com/album/' + encodeURIComponent(albumId), { signal: TO(10000) })).json();
+    const tracks = (j.tracks && j.tracks.data) || [];
+    return tracks.filter((x) => x.preview).map((x) => ({ source: 'deezer', full: false, name: x.title,
+      artist: (x.artist && x.artist.name) || (j.artist && j.artist.name) || '', album: j.title || '',
+      art: j.cover_medium || null, duration: x.duration || 30, stream: x.preview }));
+  } catch (_) { return []; }
+}
+
+// ── search-quality: filter knockoffs, prefer the canonical artist ──────────
+const KNOCKOFF_RE = /\b(cover|tribute|karaoke|instrumental|made famous by|in the style of|originally performed by)\b/i;
+
+// Drop cover/tribute/karaoke-style results UNLESS the user's own query
+// already contains one of those words (so /find "yellow cover" still works).
+function filterKnockoffs(tracks, query) {
+  if (KNOCKOFF_RE.test(query || '')) return tracks;
+  return tracks.filter((t) => !KNOCKOFF_RE.test(t.name) && !KNOCKOFF_RE.test(t.album || ''));
+}
+
+// Soft reorder (never drops anything): a track whose artist is named in the
+// query sorts ahead of one that isn't. Stable — ties keep their prior order.
+function boostCanonicalArtist(tracks, query) {
+  const q = (query || '').toLowerCase();
+  return [...tracks].sort((a, b) => {
+    const am = q.includes(String(a.artist || '').toLowerCase()) ? 0 : 1;
+    const bm = q.includes(String(b.artist || '').toLowerCase()) ? 0 : 1;
+    return am - bm;
+  });
 }
 
 async function getLyrics(artist, title) {
@@ -84,10 +127,13 @@ async function search(term, opts) {
   opts = opts || {};
   if (opts.full) { const a = await audiusSearch(term, 8); if (a.length) return a; }
   const [a, d] = await Promise.all([audiusSearch(term, 6), deezerSearch(term, 6)]);
-  let out = [...a, ...d];
+  let out = [...d, ...a];
   if (!out.length) out = await itunesSearch(term, 6);
   const seen = new Set();
-  return out.filter((t) => { const k = (t.name + '|' + t.artist).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
+  out = out.filter((t) => { const k = (t.name + '|' + t.artist).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  out = filterKnockoffs(out, term);
+  out = boostCanonicalArtist(out, term);
+  return out.slice(0, 8);
 }
 
-module.exports = { search, audiusSearch, deezerSearch, itunesSearch, getLyrics, audiusHost, genreList, genreChart };
+module.exports = { search, audiusSearch, deezerSearch, itunesSearch, getLyrics, audiusHost, genreList, genreChart, filterKnockoffs, boostCanonicalArtist, albumSearch, albumTracks };
