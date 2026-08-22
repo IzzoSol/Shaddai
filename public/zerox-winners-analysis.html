@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX Winners Analysis — Maximize Your Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Exo+2:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --signal-strong: #00ff9c;
+  --signal-warn: #ffc84a;
+  --signal-risk: #ff6b35;
+  --bg-dark: #030201;
+  --bg-card: #0f0d08;
+  --bg-panel: #080605;
+  --text-primary: #f8eece;
+  --text-secondary: #d4ae78;
+  --text-muted: rgba(248,238,206,0.6);
+  --accent-data: #22d3ee;
+  --border-soft: rgba(232,160,32,0.12);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;background:var(--bg-dark);color:var(--text-primary);font-family:'Exo 2',sans-serif;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9998;}
+
+#app{display:flex;flex-direction:column;height:100vh;}
+#header{background:linear-gradient(90deg,var(--bg-panel),var(--bg-dark));border-bottom:1px solid var(--border-soft);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;z-index:100;}
+.logo{font-family:Syncopate;font-size:20px;font-weight:700;letter-spacing:2px;color:var(--signal-strong);text-transform:uppercase;}
+
+#content{flex:1;overflow-y:auto;padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;background:var(--bg-dark);}
+
+.card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.card-title{font-family:Syncopate;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--signal-strong);text-transform:uppercase;border-bottom:1px solid var(--border-soft);padding-bottom:12px;}
+
+.stat{display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(0,255,156,0.08);border-radius:6px;border-left:2px solid var(--signal-strong);}
+.stat-label{font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
+.stat-value{font-family:'Share Tech Mono';font-size:18px;font-weight:700;color:var(--signal-warn);}
+
+.winner{background:linear-gradient(135deg,rgba(0,255,156,0.08),rgba(0,255,156,0.01));border:1px solid rgba(0,255,156,0.2);padding:12px;border-radius:6px;margin-bottom:8px;}
+.winner-symbol{font-family:Syncopate;font-weight:700;color:var(--text-primary);}
+.winner-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:6px;}
+.winner-mult{font-family:'Share Tech Mono';font-weight:700;color:var(--signal-warn);}
+
+.recommendation{background:linear-gradient(135deg,rgba(255,200,74,0.08),rgba(255,200,74,0.01));border-left:3px solid var(--signal-warn);padding:12px;border-radius:6px;margin-bottom:12px;}
+.rec-title{font-weight:700;color:var(--text-primary);margin-bottom:4px;}
+.rec-reason{font-size:9px;color:var(--text-muted);}
+.rec-action{font-size:10px;color:var(--signal-warn);font-weight:700;margin-top:6px;}
+
+.full-width{grid-column:1/-1;}
+.tab-nav{display:flex;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
+.tab{padding:8px 14px;background:transparent;border:1px solid transparent;color:var(--text-muted);font-size:10px;font-weight:700;cursor:pointer;border-radius:4px;transition:all .2s;text-transform:uppercase;letter-spacing:0.5px;}
+.tab.active{background:rgba(0,255,156,0.15);border-color:var(--signal-strong);color:var(--signal-strong);}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <div class="logo">⚡ ZEROX Winners Analysis</div>
+    <div style="font-size:11px;color:var(--text-muted);">Learn from 100+ historical signals</div>
+  </div>
+
+  <div id="content">
+    <!-- OVERVIEW STATS -->
+    <div class="card full-width">
+      <div class="card-title">📊 Overall Performance</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+        <div class="stat">
+          <div><div class="stat-label">Total Calls</div></div>
+          <div class="stat-value" id="total-calls">—</div>
+        </div>
+        <div class="stat">
+          <div><div class="stat-label">Win Rate</div></div>
+          <div class="stat-value" id="win-rate">—</div>
+        </div>
+        <div class="stat">
+          <div><div class="stat-label">Big Wins (10x+)</div></div>
+          <div class="stat-value" id="big-wins">—</div>
+        </div>
+        <div class="stat">
+          <div><div class="stat-label">Avg Win</div></div>
+          <div class="stat-value" id="avg-win">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECOMMENDATIONS -->
+    <div class="card full-width">
+      <div class="card-title">🎯 Top Recommendations</div>
+      <div id="recommendations"></div>
+    </div>
+
+    <!-- TOP WINNERS -->
+    <div class="card">
+      <div class="card-title">🏆 Top 10 Winners</div>
+      <div id="top-winners"></div>
+    </div>
+
+    <!-- BY SOURCE -->
+    <div class="card">
+      <div class="card-title">📡 Best Sources</div>
+      <div id="by-source"></div>
+    </div>
+
+    <!-- PATTERNS -->
+    <div class="card">
+      <div class="card-title">🔍 Winning Patterns</div>
+      <div id="patterns"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// PIN check
+if (!localStorage.getItem('zerox_winners')) {
+  const pin = prompt('ZEROX Winners Analysis — Enter PIN:');
+  if (pin === '4444') {
+    localStorage.setItem('zerox_winners', 'true');
+  } else {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#030201;color:#ff6b35;font-family:Syncopate">❌ ACCESS DENIED</div>';
+  }
+}
+
+async function loadAnalysis() {
+  try {
+    // Get overall analysis
+    const analysisRes = await fetch('/api/signal-analysis');
+    const analysis = await analysisRes.json();
+
+    // Get winners
+    const winnersRes = await fetch('/api/signal-analysis/winners');
+    const winnersData = await winnersRes.json();
+
+    // Get by source
+    const sourceRes = await fetch('/api/signal-analysis/by-source');
+    const sourceData = await sourceRes.json();
+
+    // Get patterns
+    const patternsRes = await fetch('/api/signal-analysis/patterns');
+    const patternsData = await patternsRes.json();
+
+    // Render stats
+    document.getElementById('total-calls').textContent = analysis.totalCalls;
+    document.getElementById('win-rate').textContent = analysis.stats.winRate + '%';
+    document.getElementById('big-wins').textContent = analysis.stats.bigWinners;
+
+    // Average win calculation
+    const avgMult = analysis.stats.winners > 0 ?
+      (analysis.homeRuns.reduce((s, w) => s + w.peakMult, 0) / analysis.homeRuns.length).toFixed(2) :
+      '—';
+    document.getElementById('avg-win').textContent = avgMult + '×';
+
+    // Render recommendations
+    const recHtml = (analysis.recommendations || [])
+      .slice(0, 3)
+      .map(r => `
+        <div class="recommendation">
+          <div class="rec-title">${r.priority}. ${r.title}</div>
+          <div class="rec-reason">${r.reason}</div>
+          <div class="rec-action">→ ${r.action}</div>
+        </div>
+      `).join('');
+    document.getElementById('recommendations').innerHTML = recHtml || '<div style="color:var(--text-muted);font-size:10px;">Loading analysis...</div>';
+
+    // Render top winners
+    const winnersHtml = (winnersData.topWinners || [])
+      .slice(0, 10)
+      .map(w => `
+        <div class="winner">
+          <div class="winner-symbol">${w.symbol || 'Unknown'}</div>
+          <div class="winner-meta">
+            <span>${w.source}</span>
+            <span class="winner-mult">${w.peakMult.toFixed(1)}×</span>
+          </div>
+          <div style="font-size:8px;color:var(--text-muted);margin-top:4px;">
+            Entry: $${(w.entryFdv/1000).toFixed(0)}K | Holders: ${w.holders || '—'} | Milestones: ${w.milestones || 0}
+          </div>
+        </div>
+      `).join('');
+    document.getElementById('top-winners').innerHTML = winnersHtml;
+
+    // Render by source
+    const sourceHtml = (sourceData.bySource || [])
+      .slice(0, 5)
+      .map(s => `
+        <div class="winner" style="border-left:2px solid #22d3ee;">
+          <div class="winner-symbol">${s.source.toUpperCase()}</div>
+          <div class="winner-meta">
+            <span>Win Rate: ${s.winRate}%</span>
+            <span class="winner-mult">${s.avgMult}× avg</span>
+          </div>
+          <div style="font-size:8px;color:var(--text-muted);margin-top:4px;">
+            ${s.count} calls | Examples: ${s.examples.join(', ') || '—'}
+          </div>
+        </div>
+      `).join('');
+    document.getElementById('by-source').innerHTML = sourceHtml;
+
+    // Render patterns
+    const patternsHtml = Object.values(patternsData.patterns || {})
+      .map(p => `
+        <div class="winner" style="border-left:2px solid #ffc84a;">
+          <div class="winner-symbol">${p.name}</div>
+          <div class="winner-meta">
+            <span>${p.winRate}% win rate</span>
+            <span class="winner-mult">${p.avgMult}× avg</span>
+          </div>
+          <div style="font-size:8px;color:var(--text-muted);margin-top:4px;">
+            ${p.description} | ${p.count} winners
+          </div>
+        </div>
+      `).join('');
+    document.getElementById('patterns').innerHTML = patternsHtml;
+
+  } catch (e) {
+    console.error('Load error:', e);
+    alert('Error loading analysis: ' + e.message);
+  }
+}
+
+// Load on page load
+loadAnalysis();
+
+// Refresh every 5 minutes
+setInterval(loadAnalysis, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>

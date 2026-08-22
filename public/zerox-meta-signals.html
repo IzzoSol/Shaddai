@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX Meta Signals — Category-Based Trading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Exo+2:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --signal-strong: #00ff9c;
+  --signal-warn: #ffc84a;
+  --signal-risk: #ff6b35;
+  --bg-dark: #030201;
+  --bg-card: #0f0d08;
+  --bg-panel: #080605;
+  --text-primary: #f8eece;
+  --text-secondary: #d4ae78;
+  --text-muted: rgba(248,238,206,0.6);
+  --accent-data: #22d3ee;
+  --border-soft: rgba(232,160,32,0.12);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;background:var(--bg-dark);color:var(--text-primary);font-family:'Exo 2',sans-serif;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9998;}
+
+#app{display:flex;flex-direction:column;height:100vh;}
+#header{background:linear-gradient(90deg,var(--bg-panel),var(--bg-dark));border-bottom:1px solid var(--border-soft);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;z-index:100;}
+.logo{font-family:Syncopate;font-size:20px;font-weight:700;letter-spacing:2px;color:var(--signal-strong);text-transform:uppercase;}
+
+.category-nav{display:flex;gap:8px;padding:12px 24px;background:var(--bg-panel);border-bottom:1px solid var(--border-soft);overflow-x:auto;flex-wrap:wrap;}
+.cat-btn{padding:8px 16px;background:transparent;border:1px solid transparent;color:var(--text-muted);font-family:Exo 2;font-size:11px;font-weight:700;letter-spacing:0.5px;cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;text-transform:uppercase;}
+.cat-btn.active{background:rgba(0,255,156,0.15);border-color:var(--signal-strong);color:var(--signal-strong);}
+
+#content{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;padding:16px 24px;flex:1;overflow-y:auto;background:var(--bg-dark);}
+
+.category-card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.category-header{font-family:Syncopate;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--signal-strong);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.category-desc{font-size:10px;color:var(--text-muted);line-height:1.4;}
+.coin-list{display:flex;flex-direction:column;gap:8px;}
+.coin-item{background:linear-gradient(135deg,rgba(0,255,156,0.06),rgba(0,255,156,0.01));border:1px solid rgba(0,255,156,0.2);border-radius:6px;padding:12px;cursor:pointer;transition:all .2s;}
+.coin-item:hover{background:linear-gradient(135deg,rgba(0,255,156,0.12),rgba(0,255,156,0.05));border-color:rgba(0,255,156,0.4);transform:translateY(-2px);}
+.coin-symbol{font-family:Syncopate;font-size:14px;font-weight:700;color:var(--text-primary);}
+.coin-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:6px;}
+.coin-score{font-family:'Share Tech Mono';font-weight:700;color:var(--signal-warn);}
+
+/* Recent Calls Panel */
+#recent-calls{grid-column:1/-1;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;padding:20px;}
+.call-item{background:linear-gradient(135deg,rgba(255,107,53,0.08),rgba(255,107,53,0.01));border:1px solid rgba(255,107,53,0.2);padding:12px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.call-symbol{font-family:Syncopate;font-weight:700;color:var(--text-primary);}
+.call-score{font-family:'Share Tech Mono';font-weight:700;color:var(--signal-warn);}
+.call-time{font-size:9px;color:var(--text-muted);}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <div class="logo">⚡ ZEROX Meta Signals</div>
+    <div style="font-size:11px;color:var(--text-muted);">Category-Based | Real-Time Calling</div>
+  </div>
+
+  <!-- CATEGORY BUTTONS -->
+  <div class="category-nav">
+    <button class="cat-btn active" onclick="switchCategory('all')">📊 ALL</button>
+    <button class="cat-btn" onclick="switchCategory('og')">👑 OG COINS</button>
+    <button class="cat-btn" onclick="switchCategory('most_held')">🏆 MOST HELD</button>
+    <button class="cat-btn" onclick="switchCategory('whale_accumulation')">🐋 WHALE ACCUMULATION</button>
+    <button class="cat-btn" onclick="switchCategory('boosted')">🚀 BOOSTED</button>
+    <button class="cat-btn" onclick="switchCategory('top_25_dex')">📈 TOP 25 DEX</button>
+  </div>
+
+  <!-- CONTENT: Category Columns -->
+  <div id="content"></div>
+</div>
+
+<script>
+// PIN check
+if (!localStorage.getItem('zerox_meta')) {
+  const pin = prompt('ZEROX Meta Signals — Enter PIN:');
+  if (pin === '4444') {
+    localStorage.setItem('zerox_meta', 'true');
+  } else {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#030201;color:#ff6b35;font-family:Syncopate">❌ ACCESS DENIED</div>';
+  }
+}
+
+let currentCategory = 'all';
+
+const CATEGORIES = {
+  'og': {
+    emoji: '👑',
+    name: 'OG Coins',
+    desc: 'Proven winners: Troll, Buttcoin, Motion, UFD, KNIGHTCORE',
+  },
+  'most_held': {
+    emoji: '🏆',
+    name: 'Most Held',
+    desc: 'Top 100+ holder coins, 50K+ communities',
+  },
+  'whale_accumulation': {
+    emoji: '🐋',
+    name: 'Whale Accumulation',
+    desc: 'Smart money tracking, $100K+ buys',
+  },
+  'boosted': {
+    emoji: '🚀',
+    name: 'Boosted',
+    desc: 'Volume spike >200%, momentum plays',
+  },
+  'top_25_dex': {
+    emoji: '📈',
+    name: 'Top 25 DEX',
+    desc: 'Highest liquidity on Solana DEX',
+  },
+};
+
+const MOCK_COINS = {
+  'og': [
+    { symbol: 'Troll', holders: '125K', liquidity: '$2.5M', score: 92, time: 'Now', trend: '↑' },
+    { symbol: 'Buttcoin', holders: '89K', liquidity: '$1.85M', score: 88, time: '2m ago', trend: '↑' },
+    { symbol: 'Motion', holders: '76K', liquidity: '$1.62M', score: 85, time: '5m ago', trend: '→' },
+    { symbol: 'UFD', holders: '92K', liquidity: '$1.95M', score: 89, time: '8m ago', trend: '↑' },
+    { symbol: 'KNIGHTCORE', holders: '71K', liquidity: '$1.5M', score: 84, time: '12m ago', trend: '↑' },
+  ],
+  'most_held': [
+    { symbol: 'SOL', holders: '18.5M', liquidity: '$250M', score: 99, time: 'Live', trend: '↑' },
+    { symbol: 'USDC', holders: '12M', liquidity: '$180M', score: 98, time: 'Live', trend: '→' },
+    { symbol: 'BONK', holders: '8.5M', liquidity: '$95M', score: 92, time: '1h ago', trend: '↑' },
+  ],
+  'whale_accumulation': [
+    { symbol: 'COPE', holders: '125K', tracked: '12 whales', score: 87, time: '3h ago', trend: '↑' },
+    { symbol: 'Magic Eden', holders: '45K', tracked: '8 whales', score: 85, time: '6h ago', trend: '→' },
+    { symbol: 'Phantom', holders: '52K', tracked: '15 whales', score: 89, time: '4h ago', trend: '↑' },
+  ],
+  'boosted': [
+    { symbol: 'JTO', volume: '$850M', spike: '3.2×', score: 91, time: '2h ago', trend: '↑' },
+    { symbol: 'COPE', volume: '$120M', spike: '2.8×', score: 84, time: '4h ago', trend: '↑' },
+    { symbol: 'BONK', volume: '$85M', spike: '2.1×', score: 82, time: '6h ago', trend: '↑' },
+  ],
+  'top_25_dex': [
+    { symbol: 'COPE', liquidity: '$125M', rank: '#1', score: 88, time: 'Live', trend: '↑' },
+    { symbol: 'JTO', liquidity: '$98M', rank: '#2', score: 87, time: 'Live', trend: '↑' },
+    { symbol: 'BONK', liquidity: '$95M', rank: '#3', score: 86, time: 'Live', trend: '→' },
+    { symbol: 'RNDR', liquidity: '$82M', rank: '#4', score: 84, time: 'Live', trend: '↑' },
+  ],
+};
+
+function renderCategories() {
+  const content = document.getElementById('content');
+  let html = '';
+
+  if (currentCategory === 'all') {
+    // Show all categories
+    for (const [key, def] of Object.entries(CATEGORIES)) {
+      html += renderCategoryCard(key, def, MOCK_COINS[key]);
+    }
+  } else {
+    // Show single category
+    const def = CATEGORIES[currentCategory];
+    html += renderCategoryCard(currentCategory, def, MOCK_COINS[currentCategory]);
+  }
+
+  // Add recent calls panel
+  html += `
+    <div id="recent-calls">
+      <div style="font-family:Syncopate;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--signal-strong);margin-bottom:12px;text-transform:uppercase;">🔥 Recent Calls (Real-Time)</div>
+      <div id="recent-list"></div>
+    </div>
+  `;
+
+  content.innerHTML = html;
+  loadRecentCalls();
+}
+
+function renderCategoryCard(key, def, coins) {
+  const coinHtml = (coins || []).map(c => `
+    <div class="coin-item" onclick="selectCoin('${c.symbol}')">
+      <div class="coin-symbol">${c.symbol}</div>
+      <div class="coin-meta">
+        <span>${c.holders || c.volume || c.rank || '—'}</span>
+        <span class="coin-score">${c.score}</span>
+      </div>
+      <div style="font-size:8px;color:var(--text-muted);margin-top:4px;">${c.trend} ${c.time}</div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="category-card">
+      <div class="category-header">
+        ${def.emoji} ${def.name}
+      </div>
+      <div class="category-desc">${def.desc}</div>
+      <div class="coin-list">${coinHtml}</div>
+    </div>
+  `;
+}
+
+async function loadRecentCalls() {
+  try {
+    const res = await fetch('/api/signal-engine/recent-calls');
+    const data = await res.json();
+
+    const html = (data.recent || []).slice(0, 8).map(c => `
+      <div class="call-item">
+        <div>
+          <div class="call-symbol">${c.symbol}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">${c.category || 'meta'} • ${c.timing || 'mid'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="call-score">${c.score}</div>
+          <div class="call-time">${new Date(c.ts).toLocaleTimeString()}</div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('recent-list').innerHTML = html || '<div style="color:var(--text-muted);font-size:10px;">No recent calls yet</div>';
+  } catch (e) {
+    console.error('Load recent calls error:', e);
+  }
+}
+
+function switchCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderCategories();
+}
+
+function selectCoin(symbol) {
+  alert(`📊 ${symbol} — Opening analysis...`);
+  // Would open detailed view
+}
+
+// Initial render
+renderCategories();
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+  if (currentCategory === 'all') renderCategories();
+  loadRecentCalls();
+}, 30000);
+</script>
+
+</body>
+</html>

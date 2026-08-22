@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const core = require('./telegram-core');
+let pnlImages; try { pnlImages = require('./lib/pnl-images'); } catch (e) { pnlImages = null; }
 
 const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'tg-calls.json');
@@ -104,14 +105,17 @@ async function _priceMap(mints) {
 }
 
 function _milestoneCard(call, x) {
-  // 5x is the 2nd milestone (2x → 5x). Data: every token that hits 2+ milestones goes further.
   const confirmedRunner = x === 5 && call.milestones && call.milestones.includes(2)
     ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
+  const laterMilestones = call.milestones && call.milestones.length > 1
+    ? `\n🎯 Hit milestones: ${call.milestones.map(m => m + 'x').join(' → ')}` : '';
   return (
-    `🎯 <b>CALL UPDATE — ${x}x</b> 🚀\n` +
-    `<b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> is up <b>${x}x</b> since our call (${_ago(call.ts)} ago)\n` +
-    `Entry: <b>${_usd(call.entryFdv)}</b> → Now: <b>${_usd(call.curFdv)}</b>` +
-    confirmedRunner +
+    `🎯 <b>${x}x WIN</b> 🚀\n` +
+    `<b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> is up <b>${x}x</b> since our CALL (${_ago(call.ts)} ago)\n\n` +
+    `━━ 📊 PNL ━━\n` +
+    `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
+    `Now:   <b>${_usd(call.curFdv)}</b>\n` +
+    `Peak:  <b>${x}x</b>` + laterMilestones + confirmedRunner +
     `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
@@ -626,4 +630,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls };
+module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages };

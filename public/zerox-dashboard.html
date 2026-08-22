@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX — Market Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Exo+2:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════
+   ZEROX DASHBOARD — PROFESSIONAL TRADING INTELLIGENCE
+   Multi-panel layout, risk-filtered signals, no noise
+   ════════════════════════════════════════════════════════ */
+
+:root {
+  --signal-strong: #00ff9c;
+  --signal-warn: #ffc84a;
+  --signal-risk: #ff6b35;
+  --signal-safe: #00ff9c;
+  --bg-dark: #030201;
+  --bg-card: #0f0d08;
+  --bg-panel: #080605;
+  --text-primary: #f8eece;
+  --text-secondary: #d4ae78;
+  --text-muted: rgba(248,238,206,0.6);
+  --accent-data: #22d3ee;
+  --border-soft: rgba(232,160,32,0.12);
+  --border-hard: rgba(232,160,32,0.28);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;background:var(--bg-dark);color:var(--text-primary);font-family:'Exo 2',sans-serif;overflow:hidden;}
+
+/* Scanline effect (optional, subtle) */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9999;}
+
+/* ──────────────────────────────────────────────────────
+   MAIN LAYOUT: Header + 3-Column Grid
+   ────────────────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100vh;}
+#header{background:linear-gradient(90deg,var(--bg-panel),var(--bg-dark));border-bottom:1px solid var(--border-soft);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:20px;z-index:100;}
+
+.header-left{display:flex;align-items:center;gap:16px;}
+.logo{font-family:Syncopate;font-size:20px;font-weight:700;letter-spacing:2px;color:var(--signal-strong);text-transform:uppercase;}
+
+.clarity-index{background:rgba(0,255,156,0.08);border:1px solid rgba(0,255,156,0.2);padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .3s;}
+.clarity-index:hover{background:rgba(0,255,156,0.15);border-color:rgba(0,255,156,0.4);}
+.clarity-pulse{display:inline-block;width:6px;height:6px;background:var(--signal-strong);border-radius:50%;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.6;transform:scale(1.2);}}
+
+.header-right{display:flex;align-items:center;gap:12px;}
+.theme-switch{width:36px;height:36px;background:rgba(255,255,255,0.1);border:1px solid var(--border-soft);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s;}
+.theme-switch:hover{background:rgba(255,255,255,0.15);border-color:var(--border-hard);}
+
+/* ──────────────────────────────────────────────────────
+   TAB SYSTEM
+   ────────────────────────────────────────────────────── */
+#tab-nav{display:flex;gap:8px;padding:12px 24px;background:var(--bg-panel);border-bottom:1px solid var(--border-soft);overflow-x:auto;}
+.tab-btn{padding:8px 16px;background:transparent;border:1px solid transparent;color:var(--text-muted);font-family:Exo 2;font-size:12px;font-weight:600;letter-spacing:0.5px;cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;text-transform:uppercase;}
+.tab-btn:hover{color:var(--text-primary);}
+.tab-btn.active{background:rgba(0,255,156,0.15);border-color:var(--signal-strong);color:var(--signal-strong);}
+
+/* ──────────────────────────────────────────────────────
+   MAIN CONTENT: 3-Column Flex Layout
+   ────────────────────────────────────────────────────── */
+#content{display:flex;flex:1;overflow:hidden;gap:12px;padding:12px;background:var(--bg-dark);}
+
+.panel{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+.panel-header{background:linear-gradient(90deg,rgba(0,255,156,0.08),transparent);border-bottom:1px solid var(--border-soft);padding:16px;font-family:Syncopate;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--signal-strong);}
+.panel-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+
+/* Left Panel: Signal Feed */
+#left-panel{flex:0 0 35%;display:flex;flex-direction:column;}
+.signal-card{background:linear-gradient(135deg,rgba(0,255,156,0.06),rgba(0,255,156,0.01));border:1px solid rgba(0,255,156,0.2);border-radius:6px;padding:14px;cursor:pointer;transition:all .2s;}
+.signal-card:hover{background:linear-gradient(135deg,rgba(0,255,156,0.12),rgba(0,255,156,0.05));border-color:rgba(0,255,156,0.4);transform:translateY(-2px);}
+.signal-card-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.signal-symbol{font-family:Syncopate;font-size:18px;font-weight:700;color:var(--text-primary);letter-spacing:0.5px;}
+.signal-score{font-family:'Share Tech Mono';font-size:14px;font-weight:700;color:var(--signal-warn);text-shadow:0 0 8px rgba(255,200,74,0.3);}
+.signal-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px;}
+.meta-item{background:rgba(0,0,0,0.3);padding:6px;border-radius:4px;border-left:2px solid var(--signal-strong);}
+.meta-label{color:var(--text-muted);font-weight:700;margin-bottom:2px;}
+.meta-value{color:var(--signal-strong);font-family:'Share Tech Mono';font-weight:700;}
+
+/* Center Panel: Charts (hidden by default, shown when tab is active) */
+#center-panel{flex:1;display:none;flex-direction:column;}
+#center-panel.active{display:flex;}
+.chart-container{flex:1;background:rgba(0,0,0,0.2);border-radius:6px;padding:16px;display:flex;align-items:center;justify-content:center;}
+.chart-placeholder{text-align:center;color:var(--text-muted);font-size:12px;}
+
+/* Right Panel: Portfolio/Details */
+#right-panel{flex:0 0 32%;display:flex;flex-direction:column;}
+.pnl-card{background:linear-gradient(135deg,rgba(34,211,238,0.08),rgba(34,211,238,0.01));border:1px solid rgba(34,211,238,0.2);border-radius:6px;padding:14px;}
+.pnl-card-title{font-family:Syncopate;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent-data);margin-bottom:8px;}
+.pnl-value{font-family:'Share Tech Mono';font-size:24px;font-weight:700;color:var(--signal-strong);margin-bottom:4px;}
+.pnl-meta{font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between;}
+
+.trade-row{background:rgba(0,0,0,0.2);padding:10px;border-radius:4px;border-left:2px solid var(--signal-warn);font-size:10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.trade-symbol{color:var(--text-primary);font-family:Syncopate;font-weight:700;}
+.trade-result{font-family:'Share Tech Mono';font-weight:700;padding:2px 8px;background:rgba(0,255,156,0.15);border-radius:3px;color:var(--signal-strong);}
+
+/* ──────────────────────────────────────────────────────
+   FILTERS & CONTROLS
+   ────────────────────────────────────────────────────── */
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;}
+.filter-btn{padding:6px 12px;background:rgba(0,255,156,0.1);border:1px solid rgba(0,255,156,0.2);color:var(--signal-strong);font-size:10px;font-weight:700;border-radius:4px;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:0.5px;}
+.filter-btn.active{background:rgba(0,255,156,0.25);border-color:var(--signal-strong);}
+.filter-btn:hover{background:rgba(0,255,156,0.2);}
+
+/* ──────────────────────────────────────────────────────
+   HIDDEN TABS (Swarm, Analysis)
+   ────────────────────────────────────────────────────── */
+.tab-content{display:none;}
+.tab-content.active{display:flex;flex:1;}
+
+#swarm-tab{flex-direction:column;gap:12px;}
+#analysis-tab{flex-direction:column;gap:12px;}
+
+.swarm-wallet{background:linear-gradient(135deg,rgba(176,127,255,0.08),rgba(176,127,255,0.01));border:1px solid rgba(176,127,255,0.2);padding:12px;border-radius:6px;}
+.wallet-addr{font-family:'Share Tech Mono';font-size:9px;color:var(--text-muted);margin-bottom:4px;word-break:break-all;}
+.wallet-activity{font-size:10px;color:var(--text-primary);margin-bottom:4px;}
+.wallet-holdings{font-size:9px;color:var(--text-secondary);}
+
+/* ──────────────────────────────────────────────────────
+   MODAL (for Clarity Index details)
+   ────────────────────────────────────────────────────── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;}
+.modal.active{opacity:1;pointer-events:all;}
+.modal-content{background:var(--bg-card);border:1px solid var(--border-hard);border-radius:8px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;background:transparent;border:1px solid var(--border-soft);color:var(--text-muted);cursor:pointer;border-radius:4px;font-size:16px;transition:all .2s;}
+.modal-close:hover{background:rgba(255,255,255,0.1);color:var(--text-primary);}
+
+/* ──────────────────────────────────────────────────────
+   RESPONSIVE
+   ────────────────────────────────────────────────────── */
+@media (max-width:1200px){
+  #left-panel{flex:0 0 40%;}
+  #right-panel{flex:0 0 35%;}
+}
+@media (max-width:768px){
+  #content{flex-direction:column;gap:8px;padding:8px;}
+  #left-panel,#center-panel,#right-panel{flex:1 0 auto;min-height:300px;}
+  .panel-header{font-size:12px;padding:12px;}
+  .panel-body{padding:12px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER with Clarity Index -->
+  <div id="header">
+    <div class="header-left">
+      <div class="logo">⚡ ZEROX</div>
+      <div class="clarity-index" onclick="showClarityModal()">
+        <span class="clarity-pulse"></span>
+        <span id="clarity-text">Clarity: 87%</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="theme-switch" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+
+  <!-- TAB NAVIGATION -->
+  <div id="tab-nav">
+    <button class="tab-btn active" onclick="switchView('signals')">🔥 SIGNALS</button>
+    <button class="tab-btn" onclick="switchView('portfolio')">📊 PORTFOLIO</button>
+    <button class="tab-btn" onclick="switchView('charts')">📈 CHARTS</button>
+    <button class="tab-btn" onclick="switchView('swarm')">🐝 SWARM</button>
+    <button class="tab-btn" onclick="switchView('analysis')">🔬 ANALYSIS</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="content">
+    <!-- LEFT: Signal Feed (Signals Tab) -->
+    <div id="left-panel" class="panel">
+      <div class="panel-header">Live Signals</div>
+      <div class="panel-body">
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterRisk('all')">ALL</button>
+          <button class="filter-btn" onclick="filterRisk('pre-bond')">Pre-Bond</button>
+          <button class="filter-btn" onclick="filterRisk('almost-bond')">Almost Bond</button>
+          <button class="filter-btn" onclick="filterRisk('migrated')">Migrated</button>
+        </div>
+        <div id="signal-list" style="display:flex;flex-direction:column;gap:12px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Charts (Charts Tab) -->
+    <div id="center-panel" class="panel tab-content">
+      <div class="panel-header">Chart Analysis</div>
+      <div class="chart-container">
+        <div class="chart-placeholder">Select a signal to view live chart</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Portfolio (Signals & Portfolio Tabs) -->
+    <div id="right-panel" class="panel">
+      <div class="panel-header">Your Portfolio</div>
+      <div class="panel-body">
+        <div class="pnl-card">
+          <div class="pnl-card-title">Win Rate</div>
+          <div class="pnl-value" id="win-rate">76%</div>
+          <div class="pnl-meta">
+            <span>12 / 16 trades</span>
+            <span id="pnl-total">+$2,847</span>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <div style="font-size:10px;color:var(--text-muted);font-weight:700;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;">Recent Trades</div>
+          <div id="trade-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWARM TAB (hidden) -->
+    <div id="swarm-tab" class="tab-content">
+      <div class="panel" style="flex:1;">
+        <div class="panel-header">Smart Money Tracking</div>
+        <div class="panel-body">
+          <div id="swarm-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS TAB (hidden) -->
+    <div id="analysis-tab" class="tab-content">
+      <div class="panel" style="flex:1;">
+        <div class="panel-header">Market Analysis</div>
+        <div class="panel-body">
+          <div id="analysis-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLARITY MODAL -->
+<div class="modal" id="clarity-modal" onclick="closeClarityModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeClarityModal()">✕</button>
+    <h2 style="font-family:Syncopate;font-size:18px;margin-bottom:16px;color:var(--signal-strong);">ZEROX CLARITY INDEX</h2>
+    <p style="color:var(--text-secondary);font-size:12px;line-height:1.6;margin-bottom:20px;">
+      The Clarity Index measures the quality of ZEROX signals by tracking win rate, entry accuracy, and false-signal rate. Higher clarity = fewer bad calls, better timing.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="pnl-card">
+        <div class="pnl-card-title">Win Rate</div>
+        <div class="pnl-value">87%</div>
+      </div>
+      <div class="pnl-card">
+        <div class="pnl-card-title">False Signals</div>
+        <div class="pnl-value" style="color:var(--signal-risk);">13%</div>
+      </div>
+      <div class="pnl-card">
+        <div class="pnl-card-title">Avg. Accuracy</div>
+        <div class="pnl-value">+4.2x</div>
+      </div>
+      <div class="pnl-card">
+        <div class="pnl-card-title">Last 7 Days</div>
+        <div class="pnl-value" style="color:var(--signal-warn);">91%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// PIN check (4444 required)
+if (!localStorage.getItem('zerox_access') || localStorage.getItem('zerox_pin') !== '4444') {
+  const pin = prompt('Enter PIN to access ZEROX:');
+  if (pin === '4444') {
+    localStorage.setItem('zerox_access', 'true');
+    localStorage.setItem('zerox_pin', pin);
+  } else {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#ff6b35;font-size:18px;">❌ ACCESS DENIED</div>';
+  }
+}
+
+let currentView = 'signals';
+let currentRiskFilter = 'all';
+
+// Mock signal data
+const MOCK_SIGNALS = [
+  { symbol: 'SOL', score: 92, current: 2.3, peak: 5.1, risk: 'pre-bond', holders: 12400, liquidity: 145000 },
+  { symbol: 'LUNA', score: 78, current: 1.8, peak: 4.2, risk: 'almost-bond', holders: 28500, liquidity: 520000 },
+  { symbol: 'RNDR', score: 65, current: 1.1, peak: 2.8, risk: 'migrated', holders: 95000, liquidity: 2100000 },
+  { symbol: 'PEPE', score: 55, current: 0.9, peak: 2.1, risk: 'pre-bond', holders: 5200, liquidity: 87000 },
+  { symbol: 'DOGE', score: 42, current: 0.8, peak: 1.5, risk: 'migrated', holders: 450000, liquidity: 8500000 },
+];
+
+const MOCK_TRADES = [
+  { symbol: 'SOL', entry: 142, exit: 298, pnl: '+110%', date: '2h ago' },
+  { symbol: 'LUNA', entry: 0.52, exit: 0.91, pnl: '+75%', date: '4h ago' },
+  { symbol: 'RNDR', entry: 8.2, exit: 7.5, pnl: '-8%', date: '6h ago' },
+  { symbol: 'PEPE', entry: 0.00000051, exit: 0.00000089, pnl: '+73%', date: '12h ago' },
+];
+
+const MOCK_WALLETS = [
+  { addr: '0x123abc...', activity: 'Bought 5.2M tokens', holdings: '$124K SOL position', time: '14 min ago' },
+  { addr: '0x456def...', activity: 'Sold 8.9M tokens', holdings: '$890K LUNA position', time: '32 min ago' },
+  { addr: '0x789ghi...', activity: 'Added liquidity', holdings: 'LP provider, $500K TVL', time: '1h ago' },
+];
+
+function renderSignals() {
+  const filtered = currentRiskFilter === 'all'
+    ? MOCK_SIGNALS
+    : MOCK_SIGNALS.filter(s => s.risk === currentRiskFilter);
+
+  document.getElementById('signal-list').innerHTML = filtered
+    .sort((a, b) => b.score - a.score)
+    .map(s => `
+      <div class="signal-card" onclick="selectSignal('${s.symbol}')">
+        <div class="signal-card-row">
+          <div class="signal-symbol">${s.symbol}</div>
+          <div class="signal-score">${s.score}</div>
+        </div>
+        <div class="signal-meta">
+          <div class="meta-item">
+            <div class="meta-label">CURRENT</div>
+            <div class="meta-value">${s.current.toFixed(2)}×</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">PEAK</div>
+            <div class="meta-value">${s.peak.toFixed(2)}×</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+}
+
+function renderTrades() {
+  document.getElementById('trade-list').innerHTML = MOCK_TRADES
+    .map(t => `
+      <div class="trade-row">
+        <div class="trade-symbol">${t.symbol}</div>
+        <div style="flex:1;text-align:center;color:var(--text-muted);">${t.date}</div>
+        <div class="trade-result">${t.pnl}</div>
+      </div>
+    `).join('');
+}
+
+function renderSwarm() {
+  document.getElementById('swarm-list').innerHTML = MOCK_WALLETS
+    .map(w => `
+      <div class="swarm-wallet">
+        <div class="wallet-addr">Wallet: ${w.addr}</div>
+        <div class="wallet-activity">${w.activity}</div>
+        <div class="wallet-holdings">${w.holdings}</div>
+        <div style="font-size:8px;color:var(--text-muted);margin-top:4px;">${w.time}</div>
+      </div>
+    `).join('');
+}
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // Hide all main panels
+  document.getElementById('left-panel').style.display = 'none';
+  document.getElementById('right-panel').style.display = 'none';
+  document.getElementById('center-panel').classList.remove('active');
+  document.getElementById('swarm-tab').classList.remove('active');
+  document.getElementById('analysis-tab').classList.remove('active');
+
+  // Show selected view
+  if (view === 'signals') {
+    document.getElementById('left-panel').style.display = 'flex';
+    document.getElementById('right-panel').style.display = 'flex';
+    renderSignals();
+    renderTrades();
+  } else if (view === 'portfolio') {
+    document.getElementById('right-panel').style.display = 'flex';
+    renderTrades();
+  } else if (view === 'charts') {
+    document.getElementById('center-panel').classList.add('active');
+  } else if (view === 'swarm') {
+    document.getElementById('swarm-tab').classList.add('active');
+    renderSwarm();
+  } else if (view === 'analysis') {
+    document.getElementById('analysis-tab').classList.add('active');
+  }
+}
+
+function filterRisk(risk) {
+  currentRiskFilter = risk;
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  renderSignals();
+}
+
+function selectSignal(symbol) {
+  alert(`Selected: ${symbol}`);
+  // Load chart and strategy for this signal
+}
+
+function showClarityModal() {
+  document.getElementById('clarity-modal').classList.add('active');
+}
+
+function closeClarityModal() {
+  document.getElementById('clarity-modal').classList.remove('active');
+}
+
+function toggleTheme() {
+  // Theme toggle placeholder
+  alert('Theme switching coming soon');
+}
+
+// Initial render
+renderSignals();
+renderTrades();
+</script>
+
+</body>
+</html>

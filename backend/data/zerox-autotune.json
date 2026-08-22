@@ -1,5 +1,5 @@
 {
-  "lastRun": 1786281208482,
+  "lastRun": 1787385827825,
   "suggestions": [
     {
       "filter": "rugMinScore",
@@ -16,15 +16,15 @@
     {
       "filter": "new_pools_enabled",
       "direction": "deprioritize",
-      "reason": "new_pools hit rate only 6% (750 calls)",
+      "reason": "new_pools hit rate only 6% (752 calls)",
       "confidence": "medium"
     },
     {
       "filter": "minHolders",
       "direction": "raise",
-      "reason": "100+ holders win rate: 15%, <20 holders: 4%",
+      "reason": "100+ holders win rate: 15%, <20 holders: 11%",
       "confidence": "medium"
     }
   ],
-  "timestamp": 1786281208482
+  "timestamp": 1787385827825
 }

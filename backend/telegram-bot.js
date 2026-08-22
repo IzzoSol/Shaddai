@@ -149,9 +149,13 @@ async function _handleCallback(cfg, cq) {
       const key = data.slice(4);
       const cap = _pnl.pnlForToken(key) || 'No tracked call found for that token.';
       const call = _pnl._findCall ? _pnl._findCall(key) : null;
-      const img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
       const btns = _core.buildButtons(key, (call && call.chain) || 'solana', null);
-      await answer('📸 PNL card below');
+      await answer('📸 Generating PNL card…');
+      // AI-generated PNL image first (HF keys + Pollinations fallback)
+      let img = null;
+      try { if (_pnl.pnlImages) img = await _pnl.pnlImages.generatePnlImage(call || { symbol: key, peakMult: 1, curMult: 1 }); } catch (e) {}
+      // Fall back to milestone image, then random static pnl image
+      if (!img) img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
       if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
       return _send(t, chatId, cap);
     }

@@ -42557,10 +42557,35 @@ function renderTradeSignalsPanel() {
 // ── Trade signal actions ──
 let _tradeSignalsTimer = null;
 function startTradeSignals() {
-  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; notify('Trade signals stopped'); return; }
+  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; notify('Trade signals stopped');
+    document.getElementById('signalStartBtn').style.display = 'block';
+    document.getElementById('signalStopBtn').style.display = 'none';
+    document.getElementById('signalStatus').textContent = 'Monitoring stopped';
+    return;
+  }
   generateSignalNow();
   _tradeSignalsTimer = setInterval(generateSignalNow, 5 * 60 * 1000);
+  document.getElementById('signalStartBtn').style.display = 'none';
+  document.getElementById('signalStopBtn').style.display = 'block';
+  document.getElementById('signalStatus').textContent = '● Monitoring active (5 min interval)';
   notify('✓ Trade signals started — scanning every 5 min');
+}
+function stopTradeSignals() {
+  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; }
+  document.getElementById('signalStartBtn').style.display = 'block';
+  document.getElementById('signalStopBtn').style.display = 'none';
+  document.getElementById('signalStatus').textContent = 'Monitoring stopped';
+  notify('⏹ Trade signals stopped');
+}
+function clearSignals() {
+  const board = document.getElementById('signalBoard');
+  if (board) board.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;font-size:10px"><div>⚡ Signals cleared</div></div>';
+  const count = document.getElementById('signalCount');
+  if (count) count.textContent = '0';
+  notify('✓ Signal board cleared');
+}
+function openProSignals() {
+  window.open('/pro-signals.html', '_blank');
 }
 async function generateSignalNow() {
   const board = document.getElementById('signalBoardCC') || document.getElementById('signalBoard');
@@ -44213,7 +44238,6 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   <div id="commandCenterView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);padding-top:12px;padding-bottom:12px">
     <div style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:12px;overflow-x:auto;align-items:center;height:40px;min-height:40px">
       <button class="nav-btn" onclick="switchCommandTab('agents')" id="cmdtab-agents" style="border:none;border-bottom:2px solid var(--accent);padding:8px 14px;background:linear-gradient(180deg,rgba(0,229,160,0.08) 0%,transparent);font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;flex-shrink:0"><img src="/assets/hub/agents.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">AGENTS</button>
-      <button class="nav-btn" onclick="switchCommandTab('trades')" id="cmdtab-trades" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/trades.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">TRADE SIGNALS</button>
       <button class="nav-btn" onclick="switchCommandTab('jobs')" id="cmdtab-jobs" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/jobs.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">JOB BOARD</button>
       <button class="nav-btn" onclick="switchCommandTab('earnings')" id="cmdtab-earnings" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/earnings.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">EARNINGS</button>
       <button class="nav-btn" onclick="switchCommandTab('wallet')" id="cmdtab-wallet" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/wallet.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">WALLET</button>
@@ -44372,50 +44396,63 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   </div>
 
   <!-- ════════════════════════════════════════════════════════════════
-       TRADE SIGNALS & SMART ALERTS (HIDDEN - INTEGRATED INTO COMMAND CENTER)
+       TRADE SIGNALS & SMART ALERTS (MOVED TO PRO SIGNALS - HIDDEN)
   ═══════════════════════════════════════════════════════════════════ -->
 
-  <div id="tradeSignalsView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);display:none">
+  <div id="tradeSignalsView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);display:none!important">
     <div class="card" style="border:2px solid var(--secondary);background:linear-gradient(135deg, rgba(255,123,61,0.08), rgba(255,176,59,0.04))">
       <div class="card-head" style="border-bottom:2px solid var(--secondary)">
         <span class="card-title" style="font-size:18px;font-weight:900;color:var(--secondary)">⚡ TRADE SIGNALS AUTOPILOT</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-accent" onclick="startTradeSignals()" style="background:var(--secondary);color:#000;border:none;font-weight:700;padding:8px 14px;font-size:9px">START</button>
-          <button class="btn btn-ghost" onclick="generateSignalNow()" style="font-size:9px">Generate Now</button>
+          <button class="btn btn-accent" id="signalStartBtn" onclick="startTradeSignals()" style="background:var(--secondary);color:#000;border:none;font-weight:700;padding:8px 14px;font-size:9px">▶ START</button>
+          <button class="btn btn-ghost" id="signalStopBtn" onclick="stopTradeSignals()" style="display:none;font-size:9px;color:var(--danger);border-color:var(--danger)">⏹ STOP</button>
+          <button class="btn btn-ghost" onclick="generateSignalNow()" style="font-size:9px">⚡ Generate Now</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">ACTIVE</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">ACTIVE</div>
           <div id="signalCount" style="font-size:16px;font-weight:900;color:var(--text-primary)">0</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">WIN RATE</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">WIN RATE</div>
           <div id="signalWinRate" style="font-size:14px;font-weight:900;color:var(--accent)">—</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">ROI</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">ROI</div>
           <div id="signalROI" style="font-size:14px;font-weight:900;color:var(--success)">—</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">INTERVAL</div>
-          <select id="signalInterval" class="select" style="font-size:8px;padding:2px 4px">
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">INTERVAL</div>
+          <select id="signalInterval" class="select" style="font-size:8px;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,123,61,0.3)">
             <option value="1">1 min</option>
             <option value="5" selected>5 min</option>
             <option value="15">15 min</option>
+            <option value="30">30 min</option>
           </select>
         </div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input type="text" id="signalWatchlist" class="input" style="flex:1;font-size:10px;margin:0;padding:8px;min-width:200px" placeholder="Watch: SOL,BTC,ETH,BONK..." title="Comma-separated token symbols or mints to monitor">
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input type="text" id="signalWatchlist" class="input" style="flex:1;font-size:10px;margin:0;padding:8px" placeholder="Tokens: SOL,BTC,ETH,custom...">
-        <button class="btn btn-ghost" style="font-size:9px" onclick="postSignalToTelegram()">📱 Telegram</button>
-        <button class="btn btn-ghost" style="font-size:9px" onclick="postSignalToDiscord()">💬 Discord</button>
+        <button class="btn btn-accent" onclick="postSignalToTelegram()" style="background:linear-gradient(135deg,#0088cc,#0066aa);border:none;font-weight:700;font-size:9px;padding:8px 12px">📱 Post to Telegram</button>
+        <button class="btn btn-ghost" onclick="postSignalToDiscord()" style="font-size:9px;border-color:rgba(88,101,242,0.4);color:#5865f2">💬 Post to Discord</button>
+        <button class="btn btn-ghost" onclick="openProSignals()" style="font-size:9px">🎯 Pro Signals Dashboard →</button>
+        <div style="flex:1"></div>
+        <span id="signalStatus" style="font-size:9px;color:var(--text-muted);padding:8px;border-left:2px solid rgba(255,123,61,0.3)">Ready to monitor...</span>
       </div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">📈 Signal Board</span></div>
+      <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span class="card-title">📊 SIGNAL BOARD</span>
+        <button class="btn btn-ghost" onclick="clearSignals()" style="font-size:8px;padding:3px 6px">✕ Clear</button>
+      </div>
       <div id="signalBoard" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;font-size:10px">
-        <div style="text-align:center;color:var(--text-muted);padding:20px">Start monitoring to see signals...</div>
+        <div style="text-align:center;color:var(--text-muted);padding:30px;font-size:10px">
+          <div>⚡ Click <strong>Generate Now</strong> or turn on <strong>START</strong> to monitor signals</div>
+          <div style="margin-top:8px;font-size:9px;color:rgba(255,123,61,0.6)">Live signals will appear here · Posted to Telegram · Tracked in Pro Signals</div>
+        </div>
       </div>
     </div>
   </div>
