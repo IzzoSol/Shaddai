@@ -305,18 +305,71 @@ async function doSimilar(chatId, arg) {
   return send(chatId, '🎯 Similar to <b>' + esc(trackLabel(seed)) + '</b>:', { inline_keyboard: btns });
 }
 
+const PINNED_GENRES = ['Rap/Hip Hop', 'Jazz'];
 async function doBrowse(chatId, page) {
   page = page || 0;
   await chatAction(chatId, 'typing');
   const genres = await src.genreList();
   if (!genres.length) return send(chatId, '⚠️ Could not load genres right now — try again shortly.');
+  const pinned = PINNED_GENRES.map((n) => genres.find((g) => g.name === n)).filter(Boolean);
+  const rest = genres.filter((g) => !pinned.includes(g));
   const perPage = 8;
-  const slice = genres.slice(page * perPage, page * perPage + perPage);
+  let slice, hasMore;
+  if (page === 0) {
+    const jjf = { id: 'jjf', name: '🎌 Japanese Jazz Fusion' };
+    const room = Math.max(0, perPage - 1 - pinned.length);
+    slice = [jjf, ...pinned, ...rest.slice(0, room)];
+    hasMore = rest.length > room;
+  } else {
+    const room = Math.max(0, perPage - 1 - pinned.length);
+    const idx = room + (page - 1) * perPage;
+    slice = rest.slice(idx, idx + perPage);
+    hasMore = rest.length > idx + perPage;
+  }
   const rows = [];
-  for (let i = 0; i < slice.length; i += 2) rows.push(slice.slice(i, i + 2).map((g) => ({ text: g.name, callback_data: 'br:' + g.id })));
-  if ((page + 1) * perPage < genres.length) rows.push([{ text: 'More ▶', callback_data: 'bp:' + (page + 1) }]);
+  for (let i = 0; i < slice.length; i += 2) {
+    rows.push(slice.slice(i, i + 2).map((g) => g.id === 'jjf'
+      ? { text: g.name, callback_data: 'jjt:jjf' }
+      : { text: g.name, callback_data: 'br:' + g.id }));
+  }
+  if (hasMore) rows.push([{ text: 'More ▶', callback_data: 'bp:' + (page + 1) }]);
   return send(chatId, '📚 <b>Browse by genre</b> — tap a genre:', { inline_keyboard: rows });
 }
+
+async function doTagBrowse(chatId, tag) {
+  await chatAction(chatId, 'typing');
+  const candidates = await lastfm.tagTopTracks(tag, 16);
+  if (!candidates.length) return send(chatId, 'No tracks found for that right now — try again shortly.');
+  const tracks = await resolveCandidates(candidates, 10);
+  if (!tracks.length) return send(chatId, 'No playable matches found for that right now.');
+  const rid = results.create(chatId, tracks);
+  const btns = tracks.map((tr, i) => resultRow(tr, rid, i));
+  return send(chatId, '🎌 <b>Japanese Jazz Fusion</b>:', { inline_keyboard: btns });
+}
+
+const FEATURED_ARTISTS = [
+  'Mac Miller', 'Nipsey Hussle', 'Drake', 'Stevie Wonder', 'André 3000',
+  'A Boogie Wit da Hoodie', 'Tory Lanez', 'T-Pain',
+  'Tyler, The Creator', 'SZA', 'Fleetwood Mac', 'Nujabes',
+];
+async function doArtists(chatId, page) {
+  page = page || 0;
+  const perPage = 8;
+  const slice = FEATURED_ARTISTS.slice(page * perPage, page * perPage + perPage);
+  const rows = [];
+  for (let i = 0; i < slice.length; i += 2) rows.push(slice.slice(i, i + 2).map((n) => ({ text: n, callback_data: 'ar:' + encodeURIComponent(n) })));
+  if ((page + 1) * perPage < FEATURED_ARTISTS.length) rows.push([{ text: 'More ▶', callback_data: 'ap:' + (page + 1) }]);
+  return send(chatId, '🎤 <b>Featured artists</b> — tap one to explore:', { inline_keyboard: rows });
+}
+async function doArtistTracks(chatId, name) {
+  await chatAction(chatId, 'typing');
+  const res = await src.search(name);
+  if (!res.length) return send(chatId, 'No tracks found for <b>' + esc(name) + '</b>.');
+  const rid = results.create(chatId, res);
+  const btns = res.map((tr, i) => resultRow(tr, rid, i));
+  return send(chatId, '🎤 <b>' + esc(name) + '</b>:', { inline_keyboard: btns });
+}
+
 async function doBrowseGenre(chatId, genreId) {
   await chatAction(chatId, 'typing');
   const tracks = await src.genreChart(genreId, 10);
@@ -467,6 +520,9 @@ async function handle(update) {
     if (data.startsWith('br:')) { await answerCb(cq.id); return doBrowseGenre(chatId, data.slice(3)); }
     if (data.startsWith('bp:')) { await answerCb(cq.id); return doBrowse(chatId, parseInt(data.slice(3), 10) || 0); }
     if (data.startsWith('al:')) { await answerCb(cq.id); return doAlbumTracks(chatId, data.slice(3)); }
+    if (data.startsWith('jjt:')) { await answerCb(cq.id); return doTagBrowse(chatId, 'japanese jazz fusion'); }
+    if (data.startsWith('ar:')) { await answerCb(cq.id); return doArtistTracks(chatId, decodeURIComponent(data.slice(3))); }
+    if (data.startsWith('ap:')) { await answerCb(cq.id); return doArtists(chatId, parseInt(data.slice(3), 10) || 0); }
     if (data.startsWith('p:') || data.startsWith('q:')) {
       const mode = data[0];
       const [rid, idxStr] = data.slice(2).split(':');
@@ -525,6 +581,7 @@ async function handle(update) {
     case 'radio': return doRadio(chatId, arg);
     case 'similar': case 'like2': return doSimilar(chatId, arg);
     case 'browse': case 'library': return doBrowse(chatId, 0);
+    case 'artists': return doArtists(chatId, 0);
     case 'like': case 'fav': return doLike(chatId, userId);
     case 'favorites': case 'likes': return doFavorites(chatId, userId);
     case 'playlist': case 'pl': return doPlaylist(chatId, userId, arg);
