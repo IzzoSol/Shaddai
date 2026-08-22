@@ -295,8 +295,9 @@ function _cfg() {
 // FDV gate — weekend/weekday-aware min, hard max cap
 // Weekend: floor drops to $1K (post-grad dip recoveries win at 45% on weekends)
 // Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
-// HARD CAP at $5M — reject established coins that have already multiplied heavily
+// HARD CAP at $2M for trending (tighter than bonded); reject pump-bait coins
 const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
+const HARD_FDV_CAP_TRENDING = 2000000;  // $2M for trending (tighter filter)
 function _passesFdv(cfg, fdv) {
   if (fdv >= HARD_FDV_CAP) return false;  // reject established coins >= $5M
   const effMin = _effectiveMinFdv(cfg);
@@ -829,6 +830,7 @@ async function _pollOnce() {
       pair = pairs.filter(p => (p.liquidity && p.liquidity.usd || 0) >= cfg.minLiq
                             && (p.volume && p.volume.h24 || 0) >= cfg.minVol24h
                             && _passesFdv(cfg, p.fdv || p.marketCap || 0)
+                            && (Number(p.fdv || p.marketCap || 0) <= HARD_FDV_CAP_TRENDING)
                             && !_BAD_VENUES.has(p.dexId)
                             && (!cfg.minVolM5 || (p.volume && p.volume.m5 || 0) >= cfg.minVolM5))
                   .sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
@@ -837,6 +839,7 @@ async function _pollOnce() {
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
     if (_badMint(addr)) { _seen.add(addr); continue; }          // persisted rug/scam reject cache
+    if (!_passesAgeGate(pair.pairCreatedAt)) { _logReject('too_fresh', _tSym2, _tFdv2, { age: Date.now() - pair.pairCreatedAt }); _seen.add(addr); continue; }
     // TIME-QUALITY GATE: dead hours require 2x vol momentum; cap maxPer to 1 during dead windows
     const _qm = _qualityMult();
     if (_qm > 1) {
@@ -859,23 +862,22 @@ async function _pollOnce() {
     let card = _signalCard(chain, pair, social ? social.label : '');
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
-    // Trending tokens get a LOWER rug bar: ZEROX corpus shows trending+rug:bad = 50% win rate.
-    // These are already DexScreener-boosted (paid) so they have social proof. Use half the threshold.
-    const _trendRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.6));
+    // STRICT rug bar for trending: no half-off bonus. Trending often has worse fundamentals.
+    const _trendRugMin = Math.max(50, cfg.rugMinScore);
     const _tSym2 = pair.baseToken && pair.baseToken.symbol;
     const _tFdv2 = Number(pair.fdv || pair.marketCap || 0);
     if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }, addr); _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _logReject('min_holders', _tSym2, _tFdv2, { holders: rs && rs.holders }); _seen.add(addr); continue; }
     if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}, addr); _seen.add(addr); continue; }
-    // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
+    // REJECT paid boosts that don't meet core gates (no flex bonus for poor holders/distribution)
     let _isDexFlex = false;
     if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
       const _boost = _boostInfo(addr);
       if (_boost && _boost.amount > 0) {
         const _fc = Object.assign({}, cfg, {
-          maxTop10Pct:   (cfg.maxTop10Pct   || 55) + 5,
-          maxBundlerPct: (cfg.maxBundlerPct  || 3)  + 7,
-          maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,
+          maxTop10Pct:   (cfg.maxTop10Pct   || 55) - 10,
+          maxBundlerPct: (cfg.maxBundlerPct  || 3)  - 2,
+          maxSnipersPct: (cfg.maxSnipersPct  || 5)  - 3,
         });
         if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _isDexFlex = true;
         else { _logReject('top10_bundlers_snipers_flex_fail', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }, addr); _seen.add(addr); continue; }
