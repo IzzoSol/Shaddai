@@ -894,7 +894,7 @@ async function _pollOnce() {
     if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}, addr); _seen.add(addr); continue; }
     if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }, addr); _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
-    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
@@ -1132,7 +1132,7 @@ async function _pollBonded() {
     if (pumpDet && pumpDet.twitter && !_bondSocial.has.twitter) _pumpSocials.push({ type: 'twitter', url: pumpDet.twitter });
     if (pumpDet && pumpDet.website && !_bondSocial.has.website) _pumpSocials.push({ type: 'website', url: pumpDet.website });
     const _bondExtra = {
-      liq, fdv: usdMc, mint, url: pair.url || '',
+      liq, fdv: usdMc, mint, url: pair.url || '', entryPrice: Number(pair.priceUsd || 0),
       createdAt: (pumpDet && pumpDet.created_timestamp) || pair.pairCreatedAt || 0,
       vol24: Number(pair.volume && pair.volume.h24) || 0,
       vol1h: Number(pair.volume && pair.volume.h1) || 0,
@@ -1322,6 +1322,22 @@ function _detailBlock(rs, social, extra) {
   const e = extra || {};
   const parts = [];
 
+  // ── ENTRY / EXIT / STOP LOSS BLOCK ────────────────────────────────────
+  // Calculate TP targets from entry price at call time
+  if (e.entryPrice && typeof e.entryPrice === 'number' && e.entryPrice > 0) {
+    const entry = e.entryPrice;
+    const tp1 = entry * 1.5;
+    const tp2 = entry * 3;
+    const tp3 = entry * 5;
+    const sl = entry * 0.85;  // 15% stop loss
+    parts.push('\n━━ 🎯 ENTRY / EXIT ━━');
+    parts.push(`📍 ENTRY   <b>${_fmtPrice(entry)}</b>`);
+    parts.push(`✅ 1TP (50%)   <b>${_fmtPrice(tp1)}</b>`);
+    parts.push(`✅ 2TP (200%)  <b>${_fmtPrice(tp2)}</b>`);
+    parts.push(`✅ 3TP (400%)  <b>${_fmtPrice(tp3)}</b>`);
+    parts.push(`⛔ STOP     <b>${_fmtPrice(sl)}</b>  (-15%)`);
+  }
+
   // ── SAFETY BLOCK ──────────────────────────────────────────────────────
   if (rs && rs.checked) {
     parts.push('\n━━ 🛡 SAFETY ━━');
@@ -1472,7 +1488,7 @@ async function _pollGecko() {
           // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
           if (!cfg.recordOnly && _taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
           const _geckoBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: !!_isRevival, fdv, source: kind });
-          const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
+          const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, entryPrice: Number(a.base_token_price_usd || 0), createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
           const ok = cfg.recordOnly ? true : (await core.broadcast(card + _detail, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
@@ -1626,7 +1642,7 @@ async function _pollHelius() {
     await core.broadcast(`🧪 <b>${_esc(sym)}</b> — ${_esc(name)} ◎ SOL\n<code>${_esc(mint)}</code>`).catch(() => {});
     const helBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: chg >= 15, fdv, source: 'helius' });
     const card = '🔭 <b>ON-CHAIN VERIFIED</b> — Helius getAsset scan\n' + _poolCard('solana', 'helius', a, mint);
-    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
     if (ok) {
       core.markAlerted(mint);
       _heliusSeen.add(mint);
@@ -1714,7 +1730,7 @@ async function _pollBoosts() {
       const _gpLabel  = gp && gp.label ? '\n' + gp.label : '';
       const _bpLabel  = _bp.label || '';
       const _boostAmt = Number(t.totalAmount || t.amount || 0);
-      const _extra = { liq, fdv, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+      const _extra = { liq, fdv, mint, url: pair.url || '', entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
       const card =
         `🚀 <b>$${_esc(sym)}</b>${name && name !== sym ? ` — ${_esc(name)}` : ''}\n` +
         `DEX Boosted · ${_esc(String(chg1h.toFixed(0)))}% last hour\n` +
