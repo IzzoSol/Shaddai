@@ -295,7 +295,10 @@ function _cfg() {
 // FDV gate — weekend/weekday-aware min, hard max cap
 // Weekend: floor drops to $1K (post-grad dip recoveries win at 45% on weekends)
 // Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
+// HARD CAP at $5M — reject established coins that have already multiplied heavily
+const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
 function _passesFdv(cfg, fdv) {
+  if (fdv >= HARD_FDV_CAP) return false;  // reject established coins >= $5M
   const effMin = _effectiveMinFdv(cfg);
   if (effMin && fdv < effMin) return false;
   if (cfg.maxFdv && fdv > cfg.maxFdv) return false;
@@ -305,6 +308,19 @@ function _passesFdv(cfg, fdv) {
 function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs && rs.checked && rs.score >= 80); }
 // liquidity must "match" the token — at least minLiqPct% of mcap (thin book vs big mcap = red flag)
 function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; return (Number(liq) || 0) >= (cfg.minLiqPct / 100) * fdv; }
+// Multiplier gate — reject coins that have already gone 3x+ from discovery (prevents NEMNEM/trumpcat/cats rug-bait)
+// Uses coin-tracker baseline: if curFdv / entryFdv > 3, the coin has already pumped significantly
+function _passesMultiplierGate(curFdv, entryFdv) {
+  if (!curFdv || !entryFdv || curFdv <= 0 || entryFdv <= 0) return true;  // no data = allow
+  const mult = curFdv / entryFdv;
+  return mult <= 3;  // reject if already 3x+
+}
+// Age gate — reject tokens created < 30 seconds ago (too fresh to trade safely)
+function _passesAgeGate(createdAtMs) {
+  if (!createdAtMs || createdAtMs <= 0) return true;  // no timestamp = allow
+  const ageMs = Date.now() - createdAtMs;
+  return ageMs >= 30000;  // require at least 30 seconds old
+}
 // holders gate — must clear the minimum when we have the data
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
 // top10 concentration gate — must be under the max
@@ -1395,6 +1411,9 @@ async function _pollGecko() {
         // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
         if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
         if (kind === 'new_pools' && fdv > 10000) { _seenPool.add(id); continue; }
+        // Age gate: reject tokens < 30 seconds old (too fresh for safe entry)
+        const createdAtMs = a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0;
+        if (createdAtMs > 0 && !_passesAgeGate(createdAtMs)) { _seenPool.add(id); continue; }
         // Micro-FDV relative volume gate: tokens under $15K FDV cannot have $15K+ 24h vol by definition.
         // Use vol/fdv ratio instead — Debt($7K,36x), speedun($9K,10x) had ~3-5x daily turnover.
         const _volOk = fdv > 0 && fdv < 15000
