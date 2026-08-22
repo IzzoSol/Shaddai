@@ -515,6 +515,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="left-col">
     <div id="ltabs">
       <div class="ltab on"  onclick="switchTab('sig',this)">📡 SIGNALS</div>
+      <div class="ltab"     onclick="switchTab('miro',this)">🐟 MIROFISH</div>
       <div class="ltab"     onclick="switchTab('swarm',this)">🌊 SWARM</div>
     </div>
 
@@ -1999,8 +2000,10 @@ function switchSubtab(name,btn) {
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.ltab').forEach(tab=>{
     tab.addEventListener('click',function(e){
-      if(e.target.textContent.includes('SIGNALS')) openFullscreen('signals','📡 SIGNALS',['all','trending','bonded','boosted']);
-      else if(e.target.textContent.includes('SWARM')) openFullscreen('swarm','🌊 SWARM',['overview','results','agents']);
+      const txt=e.target.textContent;
+      if(txt.includes('SIGNALS')) openFullscreen('signals','📡 SIGNALS',['all','trending','bonded','pre-bond','boosted','pools','majors']);
+      else if(txt.includes('MIROFISH')) openFullscreen('miro','🐟 MIROFISH',['swarm','sim','analysis','results']);
+      else if(txt.includes('SWARM')) openFullscreen('swarm','🌊 SWARM',['overview','agents','consensus','risks']);
     });
   });
 });
