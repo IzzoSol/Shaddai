@@ -427,6 +427,23 @@ async function doAbout(chatId) {
   return send(chatId, txt);
 }
 
+async function doAlbum(chatId, arg) {
+  if (!arg) return send(chatId, 'Usage: <code>/album &lt;name or artist&gt;</code>  e.g. <code>/album random access memories</code>');
+  await chatAction(chatId, 'typing');
+  const albums = await src.albumSearch(arg, 6);
+  if (!albums.length) return send(chatId, 'No albums found for <b>' + esc(arg) + '</b>.');
+  const btns = albums.map((al) => [{ text: '💿 ' + al.title + ' — ' + al.artist, callback_data: 'al:' + al.id }]);
+  return send(chatId, '💿 Albums matching <b>' + esc(arg) + '</b>:', { inline_keyboard: btns });
+}
+async function doAlbumTracks(chatId, albumId) {
+  await chatAction(chatId, 'typing');
+  const tracks = await src.albumTracks(albumId);
+  if (!tracks.length) return send(chatId, 'Could not load that album right now.');
+  const rid = results.create(chatId, tracks);
+  const btns = tracks.map((tr, i) => resultRow(tr, rid, i));
+  return send(chatId, '💿 <b>' + esc(tracks[0].album) + '</b> — ' + esc(tracks[0].artist) + ':', { inline_keyboard: btns });
+}
+
 async function doLyrics(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
   await chatAction(chatId, 'typing');
@@ -449,6 +466,7 @@ async function handle(update) {
     if (data.startsWith('g:')) { await answerCb(cq.id, '🎼 composing…'); return doMusic(chatId, data.slice(2)); }
     if (data.startsWith('br:')) { await answerCb(cq.id); return doBrowseGenre(chatId, data.slice(3)); }
     if (data.startsWith('bp:')) { await answerCb(cq.id); return doBrowse(chatId, parseInt(data.slice(3), 10) || 0); }
+    if (data.startsWith('al:')) { await answerCb(cq.id); return doAlbumTracks(chatId, data.slice(3)); }
     if (data.startsWith('p:') || data.startsWith('q:')) {
       const mode = data[0];
       const [rid, idxStr] = data.slice(2).split(':');
@@ -513,6 +531,7 @@ async function handle(update) {
     case 'profile': case 'me': return doProfile(chatId, userId);
     case 'history': return doHistory(chatId, userId);
     case 'about': return doAbout(chatId);
+    case 'album': return doAlbum(chatId, arg);
     default:
       // Groups are full of other bots' commands — stay quiet unless it's ours.
       if (!isPrivate) return;
