@@ -11,6 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 const mg = require('./lib/music-gen-node');
+const results = require('./lib/turtle-music-results');
+const session = require('./lib/turtle-music-session');
+const profiles = require('./lib/turtle-music-profiles');
 
 const TOKEN = () => process.env.TURTLE_MUSIC_BOT_TOKEN || '';
 const API = (m) => `https://api.telegram.org/bot${TOKEN()}/${m}`;
@@ -108,7 +111,6 @@ async function doMusic(chatId, arg) {
 // ── real-song lookup — multi-source, all FREE/no-key ──────────────────────────
 // Audius (full tracks) + Deezer/iTunes (previews) + lyrics.ovh. See lib/music-sources.
 const src = require('./lib/music-sources');
-const lastResults = new Map(); // chatId -> unified track[]
 const TG_AUDIO_MAX = 48 * 1024 * 1024; // Telegram bot audio ~50MB; keep headroom
 
 const trackLabel = (tr) => (tr.name + ' — ' + tr.artist).trim();
@@ -119,43 +121,115 @@ async function playTrack(chatId, tr) {
   await chatAction(chatId, 'upload_voice');
   try {
     const r = await fetch(tr.stream, { redirect: 'follow', signal: AbortSignal.timeout(30000) });
-    if (!r.ok) return send(chatId, '⚠️ Could not fetch that track.');
+    if (!r.ok) { await send(chatId, '⚠️ Could not fetch that track.'); return false; }
     const clen = parseInt(r.headers.get('content-length') || '0', 10);
-    if (clen && clen > TG_AUDIO_MAX) return send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>');
+    if (clen && clen > TG_AUDIO_MAX) { await send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>'); return false; }
     const buf = Buffer.from(await r.arrayBuffer());
-    if (buf.length > TG_AUDIO_MAX) return send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>');
+    if (buf.length > TG_AUDIO_MAX) { await send(chatId, '🎧 <b>' + esc(tr.name) + '</b> is too long to send here.\n<a href="' + tr.stream + '">▶ Stream it</a>'); return false; }
     const fn = (tr.name || 'track').replace(/[^\w]+/g, '_').slice(0, 40) + ext(tr);
     const dur = tr.duration ? ' · ' + Math.floor(tr.duration / 60) + ':' + String(tr.duration % 60).padStart(2, '0') : '';
     const cap = '🎵 <b>' + esc(tr.name) + '</b>\n' + esc(tr.artist) + (tr.album ? ' · ' + esc(tr.album) : '') + '\n<i>' + srcTag(tr) + dur + '</i>';
     const ok = await sendAudio(chatId, buf, fn, cap, trackLabel(tr));
-    if (!ok) await send(chatId, '⚠️ Telegram rejected that file. <a href="' + tr.stream + '">▶ Stream it</a>');
-  } catch (e) { await send(chatId, '⚠️ Playback failed — try /play again.'); }
+    if (!ok) { await send(chatId, '⚠️ Telegram rejected that file. <a href="' + tr.stream + '">▶ Stream it</a>'); return false; }
+    return true;
+  } catch (e) { await send(chatId, '⚠️ Playback failed — try /play again.'); return false; }
 }
+
+// ── queue engine — auto-advance via turtle-music-session ──────────────────
+function scheduleNext(chatId) {
+  session.armTimer(chatId, async () => {
+    const track = session.advance(chatId);
+    if (!track) return; // queue exhausted; session stays idle at its last position
+    const s = session.getSession(chatId);
+    const ok = await playTrack(chatId, track);
+    if (ok && s) await profiles.pushHistory(s.ownerId, track);
+    scheduleNext(chatId);
+  });
+}
+
+async function playNow(chatId, tr, userId) {
+  session.startSession(chatId, [tr], userId);
+  const ok = await playTrack(chatId, tr);
+  if (ok) { await profiles.pushHistory(userId, tr); scheduleNext(chatId); }
+}
+
+async function queueTrack(chatId, tr, userId) {
+  const s = session.getSession(chatId);
+  if (!s) return playNow(chatId, tr, userId);
+  session.enqueue(chatId, tr);
+  return send(chatId, '➕ Queued: <b>' + esc(trackLabel(tr)) + '</b>');
+}
+
 async function doFind(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/find &lt;song or artist&gt;</code>  e.g. <code>/find daft punk</code>');
   await chatAction(chatId, 'typing');
   const res = await src.search(arg);
   if (!res.length) return send(chatId, 'No tracks found for <b>' + esc(arg) + '</b>.');
-  lastResults.set(String(chatId), res);
-  const btns = res.map((tr, i) => [{ text: (tr.full ? '🎧 ' : '▶ ') + trackLabel(tr).slice(0, 52), callback_data: 'p:' + i }]);
-  return send(chatId, '🔎 <b>' + esc(arg) + '</b> — 🎧 full track · ▶ preview:', { inline_keyboard: btns });
+  const rid = results.create(chatId, res);
+  const btns = res.map((tr, i) => [
+    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
+    { text: '➕', callback_data: 'q:' + rid + ':' + i },
+  ]);
+  return send(chatId, '🔎 <b>' + esc(arg) + '</b> — 🎧 full · ▶ play now · ➕ queue:', { inline_keyboard: btns });
 }
-async function doPlay(chatId, arg) {
+async function doPlay(chatId, arg, userId) {
   if (!arg) return send(chatId, 'Usage: <code>/play &lt;song&gt;</code>  e.g. <code>/play blinding lights</code>');
   await chatAction(chatId, 'typing');
   const res = await src.search(arg, { full: true });
   if (!res.length) return send(chatId, 'No playable match for <b>' + esc(arg) + '</b>. Try /find.');
-  return playTrack(chatId, res[0]);
+  session.startSession(chatId, res.slice(0, 5), userId);
+  const track = session.current(chatId);
+  const ok = await playTrack(chatId, track);
+  if (ok) { await profiles.pushHistory(userId, track); scheduleNext(chatId); }
 }
 async function doFull(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/full &lt;song or vibe&gt;</code> — full free tracks (Audius). e.g. <code>/full lofi study</code>');
   await chatAction(chatId, 'typing');
   const res = await src.audiusSearch(arg, 8);
   if (!res.length) return send(chatId, 'No full tracks for <b>' + esc(arg) + '</b>. Try /play for previews.');
-  lastResults.set(String(chatId), res);
-  const btns = res.map((tr, i) => [{ text: '🎧 ' + trackLabel(tr).slice(0, 52), callback_data: 'p:' + i }]);
+  const rid = results.create(chatId, res);
+  const btns = res.map((tr, i) => [
+    { text: '▶ ' + trackLabel(tr).slice(0, 40), callback_data: 'p:' + rid + ':' + i },
+    { text: '➕', callback_data: 'q:' + rid + ':' + i },
+  ]);
   return send(chatId, '🎧 Full free tracks for <b>' + esc(arg) + '</b>:', { inline_keyboard: btns });
 }
+
+async function doPause(chatId) {
+  const ok = session.pause(chatId);
+  return send(chatId, ok ? '⏸ Paused — auto-advance stopped. /resume to continue.' : 'Nothing playing right now.');
+}
+async function doResume(chatId) {
+  const ok = session.resume(chatId);
+  if (ok) scheduleNext(chatId);
+  return send(chatId, ok ? '▶️ Resumed.' : 'Nothing to resume — try /play.');
+}
+async function doSkip(chatId, userId) {
+  const s = session.getSession(chatId);
+  if (!s) return send(chatId, 'Nothing queued — try /play.');
+  const track = session.advance(chatId);
+  if (!track) return send(chatId, '⏭ Queue finished.');
+  const ok = await playTrack(chatId, track);
+  if (ok) { await profiles.pushHistory(userId, track); scheduleNext(chatId); }
+}
+async function doQueueList(chatId) {
+  const s = session.getSession(chatId);
+  if (!s) return send(chatId, 'Nothing queued — try /play.');
+  const cur = session.current(chatId);
+  const up = session.upcoming(chatId);
+  let txt = '🎵 <b>Now playing:</b> ' + (cur ? esc(trackLabel(cur)) : '—') + '\n';
+  txt += up.length ? '\n<b>Up next:</b>\n' + up.map((t, i) => (i + 1) + '. ' + esc(trackLabel(t))).join('\n') : '\n<i>Queue is empty after this.</i>';
+  return send(chatId, txt);
+}
+async function doNowPlaying(chatId) {
+  const cur = session.current(chatId);
+  return send(chatId, cur ? '🎵 Now playing: <b>' + esc(trackLabel(cur)) + '</b>' : 'Nothing playing — try /play.');
+}
+async function doClear(chatId) {
+  session.clearSession(chatId);
+  return send(chatId, '🧹 Queue cleared.');
+}
+
 async function doLyrics(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
   await chatAction(chatId, 'typing');
@@ -174,20 +248,26 @@ async function doLyrics(chatId, arg) {
 // ── router ───────────────────────────────────────────────────────────────────
 async function handle(update) {
   if (update.callback_query) {
-    const cq = update.callback_query, chatId = cq.message && cq.message.chat && cq.message.chat.id, data = String(cq.data || '');
+    const cq = update.callback_query, chatId = cq.message && cq.message.chat && cq.message.chat.id, userId = cq.from && cq.from.id, data = String(cq.data || '');
     if (data.startsWith('g:')) { await answerCb(cq.id, '🎼 composing…'); return doMusic(chatId, data.slice(2)); }
-    if (data.startsWith('p:')) {
-      const arr = lastResults.get(String(chatId)) || []; const tr = arr[parseInt(data.slice(2), 10)];
-      await answerCb(cq.id, tr ? '▶ ' + tr.name : 'expired'); return tr ? playTrack(chatId, tr) : send(chatId, 'That result expired — search again with /find.');
+    if (data.startsWith('p:') || data.startsWith('q:')) {
+      const mode = data[0];
+      const [rid, idxStr] = data.slice(2).split(':');
+      const idx = parseInt(idxStr, 10);
+      const tracks = results.get(rid, chatId);
+      const tr = tracks && tracks[idx];
+      if (!tr) { await answerCb(cq.id, 'expired'); return send(chatId, 'That result expired — search again.'); }
+      await answerCb(cq.id, (mode === 'p' ? '▶ ' : '➕ ') + tr.name);
+      return mode === 'p' ? playNow(chatId, tr, userId) : queueTrack(chatId, tr, userId);
     }
     return answerCb(cq.id);
   }
   const msg = update.message; if (!msg) return;
-  const chatId = msg.chat && msg.chat.id, text = (msg.text || '').trim();
+  const chatId = msg.chat && msg.chat.id, userId = msg.from && msg.from.id, text = (msg.text || '').trim();
   if (!chatId || !text) return;
   const m = text.match(/^\/([a-z0-9_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i);
   if (!m) { // bare text → treat as a play query for convenience
-    return doPlay(chatId, text);
+    return doPlay(chatId, text, userId);
   }
   const cmd = m[1].toLowerCase(), arg = (m[2] || '').trim();
   switch (cmd) {
@@ -199,9 +279,15 @@ async function handle(update) {
       return send(chatId, '🎵 <b>Genres</b>: ' + GENRE_KEYS.map((g) => mg.GENRES[g].name).join(', ') +
         '\n🎨 <b>Moods</b>: ' + MOOD_KEYS.join(', ') + '\n\nUse: <code>/music &lt;genre&gt; &lt;mood&gt; [bars]</code>');
     case 'find': case 'search': case 'lookup': return doFind(chatId, arg);
-    case 'play': case 'p': return doPlay(chatId, arg);
+    case 'play': case 'p': return doPlay(chatId, arg, userId);
     case 'full': case 'song2': return doFull(chatId, arg);
     case 'lyrics': case 'words': return doLyrics(chatId, arg);
+    case 'pause': return doPause(chatId);
+    case 'resume': return doResume(chatId);
+    case 'skip': case 'next': return doSkip(chatId, userId);
+    case 'queue': return doQueueList(chatId);
+    case 'np': case 'nowplaying': return doNowPlaying(chatId);
+    case 'clear': case 'stop': return doClear(chatId);
     default: return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
   }
 }
