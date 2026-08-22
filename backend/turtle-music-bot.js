@@ -70,28 +70,33 @@ const MOOD_KEYS = Object.keys(mg.MOODS);
 function startText() {
   return '🐢 <b>Turtle Music Bot</b> — <i>by ShaddaiLabs</i>\n\n' +
     'Free music, right here in chat. No ads, no keys.\n\n' +
-    '▶️ <b>/play</b> &lt;song&gt; — play instantly, auto-advances to more\n' +
-    '📚 <b>/browse</b> — explore by genre\n' +
+    '▶️ <b>/play</b> &lt;song&gt; — play instantly, radio-mode keeps it going\n' +
+    '🎯 <b>/similar</b> · 💿 <b>/album</b> · 🎤 <b>/artists</b> · 📚 <b>/browse</b>\n' +
     '🔎 <b>/find</b> &lt;song&gt; — search &amp; pick\n' +
-    '⏯️ <b>/pause /resume /skip /queue</b> — control what\'s playing\n' +
+    '⏯️ <b>/pause /resume /skip /queue /radio</b> — control what\'s playing\n' +
     '💛 <b>/like</b> · 📃 <b>/playlist</b> · 👤 <b>/profile</b>\n' +
     '🎼 <b>/music</b> &lt;genre&gt; — compose an original\n\n' +
-    'Or just type a song name. Tap a style to start 👇';
+    'Or just type a song name (in our DM). Tap a style to start 👇';
 }
 function helpText() {
   return '🐢 <b>Turtle Music Bot — commands</b>\n\n' +
-    '<b>/play</b> &lt;query&gt;\n   Play the top match and auto-advance through more like it.\n' +
-    '<b>/browse</b>\n   Explore real charts by genre.\n' +
-    '<b>/find</b> &lt;query&gt;\n   Search all sources → ▶ play now or ➕ queue.\n' +
+    '<b>/play</b> &lt;query&gt;\n   Play the top match — radio mode keeps going with similar tracks after.\n' +
+    '<b>/similar</b> [song]\n   Find tracks like the given song, or what\'s playing now.\n' +
+    '<b>/radio</b> [on|off]\n   Toggle whether the queue auto-continues with similar tracks.\n' +
+    '<b>/album</b> &lt;name&gt;\n   Search and browse full albums.\n' +
+    '<b>/artists</b>\n   Tap a featured artist to explore their tracks.\n' +
+    '<b>/browse</b>\n   Explore real charts by genre — includes Japanese Jazz Fusion.\n' +
+    '<b>/find</b> &lt;query&gt;\n   Search all sources → ▶ play now, ➕ queue, or 📃 add to a playlist.\n' +
     '<b>/full</b> &lt;query&gt;\n   Full free tracks only (Audius).\n' +
     '<b>/pause</b> / <b>/resume</b> / <b>/skip</b> / <b>/queue</b> / <b>/np</b> / <b>/clear</b>\n   Control the current session.\n' +
+    '<b>/about</b>\n   Artist bio + tags for what\'s playing now.\n' +
     '<b>/like</b> — favorite what\'s playing · <b>/favorites</b> — list them\n' +
     '<b>/playlist</b> new|add|play|list|view|del &lt;name&gt;\n' +
     '<b>/profile</b> — your stats · <b>/history</b> — recent plays\n' +
     '<b>/music</b> [genre] [mood] [bars]\n   Original procedural track. e.g. <code>/music lofi chill 12</code>\n' +
     '<b>/lyrics</b> artist - title\n   Song lyrics. e.g. <code>/lyrics daft punk - get lucky</code>\n' +
     '<b>/genres</b> — styles &amp; moods · <b>/help</b> — this list\n\n' +
-    'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews &amp; charts) · 📝 lyrics.ovh\n' +
+    'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews, charts &amp; albums) · 🎯 Last.fm (similarity &amp; artist info) · 📝 lyrics.ovh\n' +
     '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n🎨 Moods: ' + MOOD_KEYS.join(', ');
 }
 function genreButtons() {
@@ -228,7 +233,7 @@ async function doFind(chatId, arg) {
 async function doPlay(chatId, arg, userId) {
   if (!arg) return send(chatId, 'Usage: <code>/play &lt;song&gt;</code>  e.g. <code>/play blinding lights</code>');
   await chatAction(chatId, 'typing');
-  const res = await src.search(arg, { full: true });
+  const res = await src.search(arg);
   if (!res.length) return send(chatId, 'No playable match for <b>' + esc(arg) + '</b>. Try /find.');
   session.startSession(chatId, res.slice(0, 5), userId);
   const track = session.current(chatId);
@@ -599,14 +604,19 @@ async function handle(update) {
 // ── command menu + polling loop ──────────────────────────────────────────────
 async function registerCommands() {
   const commands = [
-    { command: 'play', description: 'Play a song, auto-advance queue  e.g. /play blinding lights' },
-    { command: 'browse', description: 'Explore music by genre chart' },
-    { command: 'find', description: 'Search real songs → tap to play or queue' },
+    { command: 'play', description: 'Play a song, radio mode keeps it going' },
+    { command: 'similar', description: 'Find tracks like a song or what\'s playing' },
+    { command: 'radio', description: 'on|off — toggle auto-continue with similar tracks' },
+    { command: 'browse', description: 'Explore music by genre, incl. Japanese Jazz Fusion' },
+    { command: 'artists', description: 'Tap a featured artist to explore' },
+    { command: 'album', description: 'Search and browse full albums' },
+    { command: 'find', description: 'Search real songs → tap to play, queue, or save' },
     { command: 'full', description: 'Full free tracks  e.g. /full lofi study' },
     { command: 'pause', description: 'Stop auto-advance' },
     { command: 'resume', description: 'Continue auto-advance' },
     { command: 'skip', description: 'Skip to the next queued track' },
     { command: 'queue', description: 'Show what\'s playing and up next' },
+    { command: 'about', description: 'Artist bio + tags for what\'s playing' },
     { command: 'like', description: 'Favorite the current track' },
     { command: 'favorites', description: 'List your favorites' },
     { command: 'playlist', description: 'new|add|play|list|view|del <name>' },
