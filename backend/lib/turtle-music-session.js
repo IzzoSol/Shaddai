@@ -11,12 +11,23 @@ function key(chatId) { return String(chatId); }
 
 function startSession(chatId, tracks, ownerId) {
   clearSession(chatId);
-  const s = { queue: (tracks || []).slice(), pos: 0, paused: false, timer: null, ownerId };
+  const s = { queue: (tracks || []).slice(), pos: 0, paused: false, timer: null, ownerId, radio: true };
   sessions.set(key(chatId), s);
   return s;
 }
 
 function getSession(chatId) { return sessions.get(key(chatId)) || null; }
+
+function setRadio(chatId, on) {
+  const s = getSession(chatId);
+  if (s) s.radio = !!on;
+  return !!on;
+}
+
+function isRadio(chatId) {
+  const s = getSession(chatId);
+  return s ? s.radio !== false : true; // no session yet → the next one will default to radio-on
+}
 
 function current(chatId) {
   const s = getSession(chatId);
@@ -28,11 +39,27 @@ function upcoming(chatId) {
   return s ? s.queue.slice(s.pos + 1) : [];
 }
 
+function lastPlayed(chatId) {
+  const s = getSession(chatId);
+  if (!s || !s.queue.length) return null;
+  return s.queue[s.queue.length - 1];
+}
+
 function advance(chatId) {
   const s = getSession(chatId);
   if (!s) return null;
   if (s.timer) { clearTimeout(s.timer); s.timer = null; }
   s.pos += 1;
+  return s.queue[s.pos] || null;
+}
+
+function appendAndAdvance(chatId, tracks) {
+  const s = getSession(chatId);
+  if (!s || !tracks || !tracks.length) return null;
+  if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+  const startIndex = s.queue.length;
+  s.queue.push(...tracks);
+  s.pos = startIndex; // position at the first newly-appended track
   return s.queue[s.pos] || null;
 }
 
@@ -83,4 +110,5 @@ function _clearAll() {
 module.exports = {
   startSession, getSession, current, upcoming, advance, armTimer,
   pause, resume, enqueue, clearSession, _clearAll,
+  setRadio, isRadio, lastPlayed, appendAndAdvance,
 };
