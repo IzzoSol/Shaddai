@@ -271,6 +271,14 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);background:rgba(0,255,156,.07);}
 .sa:hover{border-color:var(--P);color:var(--P);box-shadow:var(--gP);}
 .sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);}
+.sa.p:hover{border-color:#f0c060;color:#f0c060;box-shadow:0 0 10px rgba(240,192,96,.35);background:rgba(240,192,96,.07);}
+.almo-f{display:flex;gap:8px;padding:10px 14px;border-top:2px solid var(--border2);flex-shrink:0;flex-wrap:wrap;justify-content:center;}
+.pgl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:2px;}
+.pgl-item{border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--bg2);position:relative;}
+.pgl-item img{width:100%;display:block;border-bottom:1px solid var(--border2);}
+.pgl-meta{display:flex;flex-direction:column;gap:5px;padding:7px 9px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);}
+.pgl-acts{display:flex;gap:5px;margin-top:2px;}
+.pgl-acts .sa{padding:4px 9px;font-size:9px;}
 
 .sp{padding:2px 7px;font-size:8px;letter-spacing:1px;font-family:'Syncopate',sans-serif;flex-shrink:0;}
 .sp-bonded{color:#f4c842;border:1px solid rgba(244,200,66,.25);background:rgba(244,200,66,.07);}
@@ -317,6 +325,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .amet{flex:1;font-size:9px;color:var(--text2);font-family:'Share Tech Mono',monospace;line-height:1.5;}
 .adel{color:var(--A);border:none;background:none;cursor:pointer;font-size:11px;padding:0 3px;}
 .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:10px;font-family:'Share Tech Mono',monospace;line-height:2.2;}
+.eret{margin-top:8px;padding:7px 14px;border:1px solid rgba(232,160,32,.45);color:#e8a020;background:rgba(232,160,32,.08);font:700 9px 'Share Tech Mono',monospace;letter-spacing:.12em;cursor:pointer;}
+.eret:hover{background:rgba(232,160,32,.18);box-shadow:0 0 12px rgba(232,160,32,.35);}
 
 /* ── RIGHT COL ────────────────────────────────────── */
 #rc{background:var(--bg1);display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);transition:opacity .22s ease;box-shadow:-3px 0 18px rgba(0,0,0,.3);}
@@ -492,6 +502,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   </div>
   <div class="tb-pill" id="tbmiro" onclick="openMiroTab()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Open the MiroFish swarm terminal (embedded)">🐟 MIRO</div>
   <div class="tb-pill" onclick="openSimPanel()" style="cursor:pointer;border-color:rgba(176,127,255,.45);color:rgba(176,127,255,.9);" title="Open MiroFish quick-sim panel">🐟 SIM</div>
+  <div class="tb-pill" id="tbpgl" onclick="openGallery()" style="cursor:pointer;border-color:rgba(244,200,66,.45);color:rgba(244,200,66,.9);" title="PNL image gallery">🖼 PNL <span id="pgcnt" style="font-size:8px;opacity:.8"></span></div>
   <div class="tb-pill" id="tbal" onclick="openAlerts()" title="Armed price alerts">🔔 <span id="alcount"></span></div>
   <div class="tb-clk" id="clk">--:--:--</div>
   <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
@@ -541,18 +552,25 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
     <!-- alerts moved to modal (topbar 🔔 pill) -->
 
-    <!-- swarm tab → live MiroFish terminal embed -->
+    <!-- swarm tab → live cloud swarm terminal (no localhost dependency) -->
     <div class="ltp" id="tab-swarm" style="position:relative;overflow:hidden;background:#010b10;">
       <script>try{if(sessionStorage.getItem('shd_prosig')==='1')sessionStorage.setItem('mf_auth','1');}catch(e){}</script>
       <div style="position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:8px;padding:7px 10px;background:linear-gradient(180deg,rgba(1,11,16,.96),rgba(1,11,16,.55),transparent);pointer-events:none;">
-        <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH TERMINAL</span>
+        <span style="font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:3px;color:#00d4dc;text-shadow:0 0 10px rgba(0,212,220,.5)">🐟 MIROFISH SWARM</span>
         <span style="flex:1"></span>
-        <span id="sw-status" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;pointer-events:auto">LIVE · REAL DATA</span>
-        <span style="padding:2px 8px;border:1px solid rgba(0,212,220,.2);color:rgba(0,212,220,.6);font-family:'Syncopate',sans-serif;font-size:6px;letter-spacing:2px;pointer-events:auto;">EMBEDDED</span>
+        <span id="sw-status" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a94;pointer-events:auto">CONNECTING…</span>
       </div>
-<iframe id="mirofish-embed" title="MiroFish Terminal" src="/mirofish" 
-style="flex:1;width:100%;min-height:0;border:0;display:block;background:#010b10;" loading="lazy" 
-allow="clipboard-read;clipboard-write"></iframe>
+      <div id="sw-body" style="display:flex;flex-direction:column;gap:10px;padding:46px 14px 14px;height:100%;overflow-y:auto;">
+        <div id="sw-form" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="sw-tok" class="mwinp" style="flex:1;min-width:130px" placeholder="TOKEN — e.g. BONK" onkeydown="if(event.key==='Enter')runSwarm()">
+          <input id="sw-news" class="mwinp" style="flex:2;min-width:230px" placeholder="Scenario / announcement to simulate…" onkeydown="if(event.key==='Enter')runSwarm()">
+          <button id="sw-go" class="mwb" style="border-color:#00d4dc;color:#00d4dc" onclick="runSwarm()">▶ RUN SWARM</button>
+          <button class="mwb" style="border-color:#b07fff;color:#c090ff" onclick="randScenario()">🎲 RANDOM</button>
+        </div>
+        <div id="sw-prog-wrap" style="display:none;height:4px;background:rgba(0,212,220,.15);border-radius:2px;overflow:hidden"><div id="sw-prog-f" style="height:100%;width:0%;background:linear-gradient(90deg,#00d4dc,#b07fff);transition:width .4s"></div></div>
+        <div id="sw-res" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#9fb7bd;min-height:26px;line-height:1.9"></div>
+        <div id="sw-agents" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px"></div>
+      </div>
     </div>
   </div><!-- /left -->
 
@@ -705,6 +723,38 @@ allow="clipboard-read;clipboard-write"></iframe>
   <div class="almo-bx">
     <div class="almo-h"><span class="almo-hd" id="sent-title">🧠 SENTIMENT</span><button class="almo-x" onclick="closeSent()">✕</button></div>
     <div class="almo-bd"><div id="sent-body" style="padding:2px"></div></div>
+  </div>
+</div>
+
+<!-- PNL MODAL -->
+<div class="almo" id="pnlmodal" onclick="if(event.target===this)closePnl()">
+  <div class="almo-bx" style="width:min(960px,94vw);max-width:96vw;background:#05080c;border:1px solid rgba(240,192,96,.35);">
+    <div class="almo-h" style="background:linear-gradient(90deg,#0a0a06,#05080c);border-bottom:2px solid rgba(240,192,96,.3);">
+      <span class="almo-hd" style="color:#f0c060;text-shadow:0 0 12px rgba(240,192,96,.4)">💰 SHADDAI PNL</span>
+      <button class="almo-x" onclick="closePnl()">✕</button>
+    </div>
+    <div style="position:relative;min-height:320px;text-align:center;">
+      <div id="pnlspin" style="padding:70px 20px;color:#f0c060;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px">⏳ GENERATING PNL IMAGE…<br><span style="font-size:8px;color:rgba(240,192,96,.5)">composing ZEROX action art + market stats</span></div>
+      <canvas id="pnlcanv" style="display:none"></canvas>
+      <img id="pnlimg" alt="Shaddai PNL" style="display:none;width:100%;max-height:68vh;object-fit:contain;border:1px solid rgba(240,192,96,.22)"/>
+    </div>
+    <div class="almo-f">
+      <button class="mwb" id="pnlnew" onclick="newTheme()" style="border-color:rgba(232,160,32,.5);color:#f0c060">🎲 NEW THEME</button>
+      <button class="mwb" onclick="savePnl()" style="border-color:rgba(0,255,156,.45);color:#00ff9c">💾 SAVE TO GALLERY</button>
+      <button class="mwb" onclick="dlPnl()" style="border-color:rgba(0,212,220,.45);color:#00d4dc">⬇ DOWNLOAD</button>
+      <button class="mwb" onclick="sharePnl()" style="border-color:rgba(29,155,240,.55);color:#4aa3f0">🐦 SHARE ON X</button>
+    </div>
+  </div>
+</div>
+
+<!-- PNL GALLERY MODAL -->
+<div class="almo" id="gallerymodal" onclick="if(event.target===this)closeGallery()">
+  <div class="almo-bx" style="width:min(880px,94vw);max-width:96vw;">
+    <div class="almo-h">
+      <span class="almo-hd">🖼 PNL GALLERY</span>
+      <button class="almo-x" onclick="closeGallery()">✕</button>
+    </div>
+    <div class="almo-bd"><div id="gallery-list"><div class="empty">NO PNL IMAGES SAVED YET</div></div></div>
   </div>
 </div>
 
@@ -864,9 +914,13 @@ function togFilters(){
 function rstFilters(){
   Object.keys(_F).forEach(k=>delete _F[k]);
   localStorage.removeItem('ot_fil');
+  _src='all';
+  document.querySelectorAll('.fb[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s==='all'));
   document.getElementById('fmult').value=0;document.getElementById('fvM').textContent='0×';
   document.getElementById('fmult').style.setProperty('--pct','0%');
-  ['ffdv','fage','fst','fsrt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='fst'?'all':id==='fsrt'?'newest':'0';});
+  document.getElementById('ffdv').value=200000;document.getElementById('fvF').textContent='$200K';
+  document.getElementById('fage').value=72;document.getElementById('fvA').textContent='72h';
+  ['fst','fsrt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='fst'?'all':'newest';});
   const fq=document.getElementById('fq'); if(fq)fq.value='';
   updFcnt();renderSigs();
 }
@@ -881,14 +935,13 @@ function restoreFil(){
 }
 
 /* RENDER SIGNALS */
-const SC={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee'};
+const SC={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee',pre_bonding:'#b07fff',pipeline:'#5fe0ff',helius:'#ff6f6f'};
 
 function renderSigs(){
   const el=document.getElementById('slist');
   let rows=_calls.slice();
   if(_src!=='all'){
-    if(_src==='pre_bond') rows=rows.filter(c=>(c.entryFdv||0)<60000);
-    else if(_src==='bonded') rows=rows.filter(c=>(c.entryFdv||0)>=60000);
+    if(_src==='pre_bond') rows=rows.filter(c=>(c.source||'').startsWith('pre_bond'));
     else rows=rows.filter(c=>c.source===_src);
   }
   const mM=parseFloat(_F.mult)||0,mF=parseInt(_F.fdv)||0,mA=parseInt(_F.age)||0,st=_F.status||'all';
@@ -909,7 +962,15 @@ function renderSigs(){
   document.getElementById('scnt').textContent=rows.length;
   const hits=rows.filter(c=>(c.peakMult||0)>=2).length;
   document.getElementById('tbhr').innerHTML='rate <em>'+(rows.length?Math.round(hits/rows.length*100):0)+'%</em>';
-  if(!rows.length){el.innerHTML='<div class="empty">NO CALLS MATCH<br><span style="font-size:8px;color:rgba(232,160,32,.12)">relax filters</span></div>';return;}
+  if(!rows.length){
+    if(!_calls.length){
+      el.innerHTML='<div class="empty">OFFLINE — NO CALLS LOADED<br><span style="font-size:8px;color:rgba(232,160,32,.4)">check server /api/signals/calls</span><br><button class="eret" onclick="fetchCalls()">RETRY CONNECTION</button></div>';
+    }else{
+      const fcnt=(document.getElementById('fcnt')||{}).textContent||'';
+      el.innerHTML='<div class="empty">0 MATCH — '+_calls.length+' CALLS IN FEED · '+fcnt+'<br><span style="font-size:8px;color:rgba(232,160,32,.4)">'+(_src!=='all'?'source: '+_src+(_F.mult||_F.fdv||_F.age||_F.status||_F.q?' · ':''):'')+'</span><br><button class="eret" onclick="rstFilters()">✕ RESET FILTERS</button></div>';
+    }
+    return;
+  }
   el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
 }
 
@@ -953,6 +1014,7 @@ function card(c,i){
       <button class="sa" onclick="openSent('${c.mint||''}')">🧠 READ</button>
       <button class="sa g" onclick="armCard('${c.mint||''}','${encodeURIComponent(c.symbol||'')}')">+ ALERT</button>
       <button class="sa v" onclick="swarmCall('${c.mint||''}')">🐟 SWARM</button>
+      <button class="sa p" onclick="makePnl('${c.mint||''}')">💰 PNL</button>
     </div>
   </div>`;
 }
@@ -960,21 +1022,224 @@ function swarmCall(mint){
   const c=_calls.find(x=>x.mint===mint)||{};
   const sym=c.symbol||'';
   switchTab('swarm',document.querySelectorAll('.ltab')[1]);
-  const f=document.getElementById('mirofish-embed');
-  const fill=()=>{
-    try{
-      const w=f.contentWindow;
-      if(!w||!w.document||!w.document.getElementById('si-tok')) return false;
-      w.document.getElementById('si-tok').value=sym;
-      w.document.getElementById('si-news').value=(sym?sym+' — ':'')+'live signal call — pump or dump in 7 days?';
-      if(w.startSim) w.startSim();
-      toast('SWARM LAUNCHED ON '+sym);
-      return true;
-    }catch(e){ return false; }
-  };
-  if(!fill()){ f.addEventListener('load',function h(){ if(fill()) f.removeEventListener('load',h); }); }
+  const t=document.getElementById('sw-tok'),n=document.getElementById('sw-news');
+  if(t) t.value=sym;
+  if(n) n.value=(sym?sym+' — ':'')+'live signal call — pump or dump in 7 days?';
+  toast('SWARM LAUNCHED ON '+(sym||mint).toUpperCase());
+  setTimeout(runSwarm,400);
 }
 function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
+
+/* ══════════════════════════════════════════════════════
+   PNL IMAGE GENERATOR — themed ZEROX art + market stats
+   ══════════════════════════════════════════════════════ */
+let _pnl={c:null,art:null,dataUrl:null};
+
+async function makePnl(mint){
+  const c=_calls.find(x=>x.mint===mint)||{}; if(!c) return;
+  _pnl={c,art:null,dataUrl:null};
+  const m=document.getElementById('pnlmodal');
+  if(m) m.classList.add('on');
+  const spin=document.getElementById('pnlspin'),img=document.getElementById('pnlimg'),cv=document.getElementById('pnlcanv');
+  if(spin){spin.style.display='block';spin.textContent='⏳ GENERATING PNL IMAGE…';}
+  if(img) img.style.display='none';
+  if(cv) cv.style.display='none';
+  try{
+    const body={symbol:c.symbol,name:c.name,mint:c.mint,entryFdv:c.entryFdv,entryPrice:c.entryPrice,
+      peakMult:c.peakMult,currentMult:typeof c.currentMult==='number'?c.currentMult:c.curMult,ts:c.ts,source:c.source};
+    if(_pnl.art&&_pnl.art.theme) body.theme=_pnl.art.theme;
+    const r=await fetch(BASE+'/api/pnl/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'generate failed');
+    _pnl.art=j;
+    const im=new Image();
+    im.crossOrigin='anonymous';
+    im.onload=()=>{ _pnl._img=im; composePnl(); };
+    im.onerror=()=>{ if(spin){spin.innerHTML='<span style="color:#ff3d5a">IMAGE LOAD FAILED</span>';} };
+    im.src=j.art;
+  }catch(e){
+    if(spin) spin.innerHTML='<span style="color:#ff3d5a">ERROR: '+esc(e.message.slice(0,80))+'</span>';
+  }
+}
+
+function composePnl(){
+  document.fonts.ready.then(()=>_drawPnl());
+}
+function _drawPnl(){
+  const cv=document.getElementById('pnlcanv'),img=document.getElementById('pnlimg');
+  if(!cv||!_pnl.c||!_pnl._img) return;
+  const W=1600,H=900,LW=960;
+  cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+  const im=_pnl._img,j=_pnl.art,c=_pnl.c;
+  const sc=Math.max(LW/im.width,H/im.height);
+  const dw=im.width*sc,dh=im.height*sc;
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.drawImage(im,(LW-dw)/2,(H-dh)/2,dw,dh);
+  // theme tag on art
+  x.save();
+  x.font='700 22px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(0,0,0,.5)';
+  x.fillRect(12,12,x.measureText('THEME · '+j.themeLabel).width+26,34);
+  x.fillStyle='#f0c060';x.fillText('THEME · '+j.themeLabel,25,35);
+  x.restore();
+  // right panel
+  const g=x.createLinearGradient(LW,0,W,0);
+  g.addColorStop(0,'#0d1317');g.addColorStop(1,'#04070a');
+  x.fillStyle=g;x.fillRect(LW,0,640,H);
+  x.fillStyle='#f0c060';x.fillRect(LW,0,2,H);
+  x.save();
+  x.textAlign='center';
+  // brand
+  x.fillStyle='rgba(240,192,96,.06)';x.fillRect(LW,0,640,170);
+  x.font='700 40px "Syncopate",sans-serif';
+  x.fillStyle='#f0c060';x.fillText('SHADDAI SIGNALS',LW+320,74);
+  x.fillStyle='rgba(240,192,96,.4)';
+  x.fillRect(LW+150,92,340,2);
+  // ticker
+  x.font='800 92px "Exo 2",sans-serif';
+  x.fillStyle='#ffe9a8';
+  x.shadowColor='rgba(240,192,96,.55)';x.shadowBlur=24;
+  x.fillText('$'+(c.symbol||'???'),LW+320,205);
+  x.shadowBlur=0;
+  if(c.name){x.font='400 22px "Exo 2",sans-serif';x.fillStyle='rgba(200,210,215,.6)';x.fillText(c.name.slice(0,26),LW+320,238);}
+  // date + source
+  x.font='16px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(200,210,215,.5)';
+  x.fillText(pnlDate(c.ts)+'  ·  '+String(j.data.source||c.source||'signals').replace('_',' '),LW+320,268);
+  // stats panel
+  const cur=typeof c.currentMult==='number'?c.currentMult:c.curMult||1;
+  const peak=c.peakMult||1;
+  const box={x:LW+36,y:300,w:568,h:250};
+  x.fillStyle='rgba(0,0,0,.35)';
+  x.fillRect(box.x,box.y,box.w,box.h);
+  x.strokeStyle='rgba(240,192,96,.22)';x.strokeRect(box.x,box.y,box.w,box.h);
+  const rows=[
+    ['ENTRY MC',usd(c.entryFdv),'rgba(200,210,215,.85)'],
+    ['ATH AT PNL',peak.toFixed(1)+'× · '+usd((c.entryFdv||0)*peak),'#00ff9c'],
+    ['NOW',(cur>=1?cur.toFixed(1)+'×':'↓'+Math.round((1-cur)*100)+'%')+' · '+usd((c.entryFdv||0)*cur),cur>=1?'#00ff9c':'#ff3d5a'],
+    ['ENTRY PRICE',fmtPrice(c.entryPrice),'rgba(200,210,215,.85)'],
+  ];
+  x.textAlign='left';
+  rows.forEach((r,i)=>{
+    const y=box.y+54+i*52;
+    x.font='15px "Share Tech Mono",monospace';
+    x.fillStyle='rgba(148,163,172,.7)';x.fillText(r[0],box.x+24,y);
+    x.textAlign='right';
+    x.font='700 24px "Share Tech Mono",monospace';
+    x.fillStyle=r[2];x.fillText(r[1],box.x+box.w-24,y);
+    x.textAlign='left';
+  });
+  // giant mult
+  x.textAlign='center';
+  x.font='800 120px "Exo 2",sans-serif';
+  x.fillStyle='rgba(240,192,96,.9)';
+  x.shadowColor='rgba(240,192,96,.4)';x.shadowBlur=40;
+  x.fillText(peak.toFixed(1)+'×',LW+320,648);
+  x.shadowBlur=0;
+  x.font='14px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(240,192,96,.55)';x.fillText('PEAK MULTIPLE',LW+320,672);
+  // footer
+  x.fillStyle='rgba(148,163,172,.35)';
+  x.font='14px "Share Tech Mono",monospace';
+  x.fillText('GENERATED · '+pnlDate(Date.now()),LW+320,H-26);
+  x.textAlign='right';
+  x.font='700 18px "Exo 2",sans-serif';
+  x.fillStyle='rgba(240,192,96,.7)';
+  x.fillText('ShaddaiAI',W-28,H-24);
+  x.restore();
+  // show
+  const spin=document.getElementById('pnlspin');
+  _pnl.dataUrl=cv.toDataURL('image/png');
+  if(img){img.src=_pnl.dataUrl;img.style.display='block';cv.style.display='none';}
+  if(spin) spin.style.display='none';
+}
+function pnlDate(ts){
+  const d=new Date(ts);
+  const mo=('JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split(' '))[d.getMonth()];
+  return mo+' '+d.getDate()+' '+d.getFullYear();
+}
+function newTheme(){
+  if(_pnl.c) makePnl(_pnl.c.mint);
+}
+function savePnl(){
+  if(!_pnl.dataUrl) return;
+  let gal=[];
+  try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  gal.unshift({dataUrl:_pnl.dataUrl,symbol:_pnl.c&&_pnl.c.symbol||'?',theme:_pnl.art&&_pnl.art.themeLabel||'',mult:_pnl.c?(_pnl.c.peakMult||1).toFixed(1)+'×':'',ts:Date.now()});
+  gal=gal.slice(0,24);
+  try{localStorage.setItem('ot_pnl_gal',JSON.stringify(gal));}catch(e){toast('GALLERY FULL — DELETE SOME');return;}
+  const pg=document.getElementById('pgcnt');if(pg)pg.textContent=gal.length;
+  toast('SAVED TO GALLERY 💾');
+}
+function dlPnl(){
+  if(!_pnl.dataUrl){toast('NO IMAGE YET');return;}
+  const a=document.createElement('a');
+  a.href=_pnl.dataUrl;a.download='shaddai-pnl-'+(Date.now())+'.png';
+  document.body.appendChild(a);a.click();a.remove();
+}
+function sharePnl(){
+  if(!_pnl.dataUrl){toast('NO IMAGE YET');return;}
+  const c=_pnl.c||{},mult=(c.peakMult||1).toFixed(1)+'×';
+  const txt='$'+(c.symbol||'?')+' '+mult+' ATH 🚀 — Shaddai Signals';
+  if(navigator.share&&navigator.canShare){
+    const f=fileFromDataUrl(_pnl.dataUrl,'shaddai-pnl.png');
+    if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Shaddai PNL',text:txt}).catch(()=>{});return;}
+  }
+  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-g81x.onrender.com/pro-signals.html');
+  window.open(u,'_blank');
+}
+function fileFromDataUrl(dataUrl,name){
+  const b=atob(dataUrl.split(',')[1]);const arr=new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++)arr[i]=b.charCodeAt(i);
+  return new File([arr],name,{type:'image/png'});
+}
+function openGallery(){
+  const m=document.getElementById('gallerymodal');if(!m)return;
+  m.classList.add('on');
+  const list=document.getElementById('gallery-list');
+  let gal=[];
+  try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  if(!gal.length){list.innerHTML='<div class="empty">NO PNL IMAGES SAVED YET — HIT 💰 PNL ON A SIGNAL</div>';return;}
+  list.innerHTML='<div class="pgl-grid">'+gal.map((g,i)=>(
+    '<div class="pgl-item">'+
+      '<img src="'+g.dataUrl+'" alt="PNL"/>'+
+      '<div class="pgl-meta">'+
+        '<span style="color:#f0c060">$'+(g.symbol||'?')+' · '+g.mult+' · '+(g.theme||'')+'</span>'+
+        '<span style="color:rgba(148,163,172,.6)">'+pnlDate(g.ts)+'</span>'+
+        '<div class="pgl-acts">'+
+          '<button class="sa" onclick="gdl('+i+')">⬇ DL</button>'+
+          '<button class="sa" style="border-color:rgba(29,155,240,.4);color:#4aa3f0" onclick="gshare('+i+')">🐦 X</button>'+
+          '<button class="sa" style="border-color:rgba(255,61,90,.4);color:#ff3d5a" onclick="gdel('+i+')">✕</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'
+  )).join('')+'</div>';
+}
+function gdl(i){
+  let gal=[];try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  if(!gal[i])return;
+  const a=document.createElement('a');a.href=gal[i].dataUrl;a.download='shaddai-pnl-'+gal[i].symbol+'-'+i+'.png';
+  document.body.appendChild(a);a.click();a.remove();
+}
+function gshare(i){
+  let gal=[];try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  const g=gal[i];if(!g)return;
+  const txt='$'+g.symbol+' '+g.mult+' ATH 🚀 — Shaddai Signals';
+  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-g81x.onrender.com/pro-signals.html');
+  window.open(u,'_blank');
+}
+function gdel(i){
+  let gal=[];try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  gal.splice(i,1);localStorage.setItem('ot_pnl_gal',JSON.stringify(gal));
+  const pg=document.getElementById('pgcnt');if(pg)pg.textContent=gal.length;
+  openGallery();
+}
+function closePnl(){const m=document.getElementById('pnlmodal');if(m)m.classList.remove('on');}
+function closeGallery(){const m=document.getElementById('gallerymodal');if(m)m.classList.remove('on');}
+(function(){let g=[];try{g=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
+  const pg=document.getElementById('pgcnt');if(pg&&g.length)pg.textContent=g.length;})();
+
 function armCard(m,s){document.getElementById('alm').value=decodeURIComponent(s)||m;openAlerts();}
 function armSymbol(s){document.getElementById('alm').value=s;openAlerts();toast('ARMING: '+s);}
 
@@ -1120,7 +1385,7 @@ function toggleMiro(){
   else { openSimPanel(); toast('MIRO PANEL SHOWN'); }
 }
 function openMiroTab(){ switchTab('swarm',document.querySelectorAll('.ltab')[1]); }
-function openSimPanel(){ const t=document.querySelector('#rc-tabs .rtab'); if(t) rTab('miro',t); }
+function openSimPanel(){ const t=document.querySelector('#rc-tabs .rtab'); if(t) rTab('miro',t); checkMiro(); }
 function loadScenario(q){
   document.getElementById('mwtok').value='';
   document.getElementById('mwnws').value=q;
@@ -1633,64 +1898,58 @@ async function checkMiroSwarm(){
 
 async function runSwarm(){
   if(_sRunning) return;
-  const _tok  = document.getElementById('sw-tok'), _news = document.getElementById('sw-news'), _res = document.getElementById('sw-res');
+  const _tok=document.getElementById('sw-tok'),_news=document.getElementById('sw-news'),_res=document.getElementById('sw-res');
   if(!_tok||!_news||!_res) return;
-  const tok  = (_tok.value||'').trim();
-  const news = (_news.value||'').trim();
-  const res  = _res;
-  const prog = document.getElementById('sw-prog-wrap');
-  const progF= document.getElementById('sw-prog-f');
-  if(!tok||!news){toast('ENTER TOKEN + SCENARIO');return;}
-  _sRunning=true; _sPhase='warming';
-  if(document.getElementById('sw-go')) document.getElementById('sw-go').disabled=true;
-  if(prog) prog.style.display='block';
-  if(progF) progF.style.width='5%';
-  res.innerHTML='<span style="color:#00d4dc">⌛ launching swarm…</span>';
-  _sInitAgents(30);
+  const tok=(_tok.value||'').trim(),news=(_news.value||'').trim();
+  if(!tok){toast('ENTER TOKEN');return;}
+  if(!news){toast('ENTER SCENARIO');return;}
+  _sRunning=true; _sPhase='simulating';
+  const prog=document.getElementById('sw-prog-wrap'),progF=document.getElementById('sw-prog-f');
+  const ags=document.getElementById('sw-agents');
+  if(prog)prog.style.display='block';
+  if(progF)progF.style.width='10%';
+  if(document.getElementById('sw-go'))document.getElementById('sw-go').disabled=true;
+  _res.innerHTML='<span style="color:#00d4dc">⌛ launching cloud swarm on '+esc(tok.toUpperCase())+'…</span>';
+  if(ags)ags.innerHTML='';
   try{
-    await fetch(MIRO+'/api/upload/text',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:`TOKEN:${tok}\nSCENARIO:${news}\nCONTEXT:Solana crypto`,title:tok}),signal:AbortSignal.timeout(12000)});
-    progF.style.width='20%'; _sPhase='simulating';
-    const sv=await fetch(MIRO+'/api/simulate/start',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prediction_goal:`How will "${news}" impact ${tok} in 7 days? Bull or bear?`,num_agents:30,max_rounds:5,platform:'twitter'}),
-      signal:AbortSignal.timeout(15000)});
-    const {simulation_id:sid}=await sv.json();
-    let done=false,tries=0;
-    while(!done&&tries<24){
-      await new Promise(r=>setTimeout(r,3000)); tries++;
-      try{
-        const st=await fetch(MIRO+'/api/simulate/status/'+sid,{signal:AbortSignal.timeout(5000)});
-        const stj=await st.json();
-        const p=Math.min(88,20+(stj.progress||0)*0.68);
-        progF.style.width=p+'%';
-        res.innerHTML=`<span style="color:#00d4dc">⌛ round ${stj.current_round||tries} · ${stj.agents_active||30} agents</span>`;
-        const pp=(stj.progress||0)/100;
-        if(pp>0.3) _sAgents.forEach((a,i)=>{
-          if(Math.random()<0.08){ a.opinion=i<_sAgents.length*(_sBull||0.5)?'bull':'bear'; a.opStr=Math.min(1,a.opStr+0.06);}
-        });
-        if(stj.status==='completed'||(stj.progress||0)>=100){done=true;}
-      }catch(e){}
-    }
-    progF.style.width='95%'; _sPhase='resolving';
-    const rp=await fetch(MIRO+'/api/report/'+sid,{signal:AbortSignal.timeout(12000)});
-    const rpj=await rp.json();
-    progF.style.width='100%';
-    const sum=(rpj.summary||rpj.prediction||rpj.result||'').slice(0,250);
-    const isUp=/bull|up|buy|positive|rise|pump/i.test(sum);
-    const isDn=/bear|down|sell|negative|fall|dump/i.test(sum);
-    _sBull=rpj.bullish_pct||rpj.bull_pct||(isUp?0.65:0.35);
-    _sBear=1-_sBull;
-    _sAgents.forEach((a,i)=>{ a.opinion=i<_sAgents.length*_sBull?'bull':'bear'; a.opStr=1; });
-    _sAgents.sort(()=>Math.random()-0.5);
-    _sPhase='done';
-    res.innerHTML=`<span style="color:${isUp?'#00ff9c':isDn?'#ff3d5a':'#00d4dc'}">${isUp?'▲ BULLISH':isDn?'▼ BEARISH':'─ NEUTRAL'} — ${esc(tok.toUpperCase())}</span><br><span style="color:rgba(200,240,244,.4)">${esc(sum)}</span>`;
-    toast('SWARM: '+(isUp?'BULLISH':isDn?'BEARISH':'NEUTRAL')+' on '+tok);
+    const r=await fetch(BASE+'/api/mirofish/simulate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:tok,scenario:news,numAgents:7,rounds:3,platform:'twitter'}),
+      signal:AbortSignal.timeout(60000)});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error||'swarm failed');
+    if(progF)progF.style.width='100%';
+    const s=d.result||{};
+    const up=s.consensus==='bull',dn=s.consensus==='bear';
+    const col=up?'#00ff9c':dn?'#ff3d5a':'#00d4dc';
+    const conf=s.confidence!=null?Math.round(s.confidence):0;
+    const agents=s.agents||[];
+    _res.innerHTML='<div style="font-size:13px;color:'+col+';text-shadow:0 0 10px '+col+'66">'+(up?'▲ BULLISH':dn?'▼ BEARISH':'─ NEUTRAL')+' — '+esc(tok.toUpperCase())+' · '+conf+'% CONFIDENCE</div>'+
+      (s.summary?'<div style="color:#8fa5ab;margin-top:6px">'+esc(String(s.summary).slice(0,320))+'</div>':'')+
+      (s.price_target?'<div style="color:#f0c060;margin-top:4px">🎯 '+esc(s.price_target)+'</div>':'')+
+      (s.risk?'<div style="color:'+(s.risk==='low'?'#00ff9c':s.risk==='high'?'#ff3d5a':'#f0c060')+';margin-top:4px">RISK: '+esc(String(s.risk).toUpperCase())+'</div>':'');
+    if(ags) ags.innerHTML=agents.map(a=>{
+      const ac2=a.stance==='bull'?'#00ff9c':a.stance==='bear'?'#ff3d5a':'#00d4dc';
+      return '<div style="border:1px solid '+ac2+'33;background:'+ac2+'0a;border-radius:4px;padding:8px 10px;font-family:\'Share Tech Mono\',monospace">'+
+        '<div style="font-size:9px;color:'+ac2+'">'+(a.stance==='bull'?'▲':a.stance==='bear'?'▼':'─')+' '+esc(a.role||'AGENT').toUpperCase()+'</div>'+
+        '<div style="font-size:8px;color:#6f8a92;margin-top:4px;line-height:1.5">'+esc(String(a.reasoning||'').slice(0,140))+'</div>'+
+        '<div style="font-size:8px;color:#9fb7bd;margin-top:4px">STRENGTH '+Math.round(Number(a.strength)||0)+'%</div>'+
+      '</div>';
+    }).join('');
+    toast('SWARM: '+(up?'BULLISH':dn?'BEARISH':'NEUTRAL')+' on '+tok.toUpperCase());
   }catch(e){
-    _sPhase='idle'; res.innerHTML='<span style="color:#ff3d5a">ERROR: '+esc(e.message.slice(0,50))+'</span>';
+    _res.innerHTML='<span style="color:#ff3d5a">ERROR: '+esc(e.message.slice(0,90))+'</span>';
   }finally{
-    _sRunning=false; if(document.getElementById('sw-go')) document.getElementById('sw-go').disabled=false;
-    if(prog){setTimeout(()=>{prog.style.display='none';if(progF)progF.style.width='0%';},3000);}
+    _sRunning=false;
+    if(document.getElementById('sw-go'))document.getElementById('sw-go').disabled=false;
+    if(prog){setTimeout(()=>{prog.style.display='none';if(progF)progF.style.width='0%';},2500);}
   }
+}
+function randScenario(){
+  const t=document.getElementById('sw-tok'),n=document.getElementById('sw-news');
+  const toks=['BONK','WIF','POPCAT','PEPE','DOGE','SOL','JUP','JTO','FARTCOIN','MOODENG','PNUT','BRETT'];
+  const scen=['Whale wallet just bought 2% of supply','New Coinbase listing rumors','Dev team doxxed — community pumped','Massive unlock in 48 hours','CEX announces perpetuals listing','CTO announced by the team','Volume up 10x in the last hour','KOL shill thread going viral','Rug-proof audit just released','Funding rate extreme — long squeeze incoming','Meme campaign on X trending worldwide','Big airdrop announced for holders'];
+  if(t) t.value=toks[Math.floor(Math.random()*toks.length)];
+  if(n) n.value=scen[Math.floor(Math.random()*scen.length)];
 }
 
 /* GATE — require the 4444 PIN every fresh tab/session (no persistent auto-login) */
