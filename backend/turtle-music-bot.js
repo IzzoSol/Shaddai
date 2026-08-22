@@ -254,6 +254,78 @@ async function doBrowseGenre(chatId, genreId) {
   return send(chatId, '📚 Top tracks:', { inline_keyboard: btns });
 }
 
+async function doLike(chatId, userId) {
+  const cur = session.current(chatId);
+  if (!cur) return send(chatId, 'Nothing playing to like — /play something first.');
+  const r = await profiles.addFavorite(userId, cur);
+  if (!r.ok) return send(chatId, r.reason === 'cap' ? '⚠️ Favorites list is full (200 max).' : '⚠️ Could not save that.');
+  return send(chatId, r.dup ? '💛 Already in your favorites.' : '💛 Added to favorites: <b>' + esc(trackLabel(cur)) + '</b>');
+}
+async function doFavorites(chatId, userId) {
+  const favs = await profiles.listFavorites(userId);
+  if (!favs.length) return send(chatId, "No favorites yet — /like a track while it's playing.");
+  const rid = results.create(chatId, favs);
+  const btns = favs.map((tr, i) => [{ text: '▶ ' + trackLabel(tr).slice(0, 50), callback_data: 'p:' + rid + ':' + i }]);
+  return send(chatId, '💛 <b>Your favorites</b>:', { inline_keyboard: btns });
+}
+async function doPlaylist(chatId, userId, argRaw) {
+  const parts = (argRaw || '').trim().split(/\s+/);
+  const sub = (parts.shift() || '').toLowerCase();
+  const rest = parts.join(' ').trim();
+  switch (sub) {
+    case 'new': {
+      if (!rest) return send(chatId, 'Usage: <code>/playlist new &lt;name&gt;</code>');
+      const r = await profiles.createPlaylist(userId, rest);
+      return send(chatId, r.ok ? '✅ Created playlist <b>' + esc(rest) + '</b>.' : r.reason === 'exists' ? 'You already have a playlist named that.' : '⚠️ Playlist limit reached (30 max).');
+    }
+    case 'add': {
+      if (!rest) return send(chatId, 'Usage: <code>/playlist add &lt;name&gt;</code> (adds the currently playing track)');
+      const cur = session.current(chatId);
+      if (!cur) return send(chatId, 'Nothing playing to add — /play something first.');
+      const r = await profiles.addToPlaylist(userId, rest, cur);
+      return send(chatId, r.ok ? '✅ Added to <b>' + esc(rest) + '</b>.' : r.reason === 'missing' ? 'No playlist named that — /playlist new first.' : '⚠️ That playlist is full (200 tracks max).');
+    }
+    case 'play': {
+      if (!rest) return send(chatId, 'Usage: <code>/playlist play &lt;name&gt;</code>');
+      const tracks = await profiles.getPlaylist(userId, rest);
+      if (!tracks || !tracks.length) return send(chatId, "No playlist named that (or it's empty).");
+      session.startSession(chatId, tracks, userId);
+      const track = session.current(chatId);
+      const ok = await playTrack(chatId, track);
+      if (ok) { await profiles.pushHistory(userId, track); scheduleNext(chatId); }
+      return;
+    }
+    case 'list': {
+      const names = await profiles.listPlaylists(userId);
+      return send(chatId, names.length ? '📃 <b>Your playlists</b>:\n' + names.map((n) => '• ' + esc(n)).join('\n') : 'No playlists yet — /playlist new <name>');
+    }
+    case 'view': {
+      if (!rest) return send(chatId, 'Usage: <code>/playlist view &lt;name&gt;</code>');
+      const tracks = await profiles.getPlaylist(userId, rest);
+      if (!tracks) return send(chatId, 'No playlist named that.');
+      return send(chatId, '📃 <b>' + esc(rest) + '</b> (' + tracks.length + ' tracks):\n' + tracks.map((t, i) => (i + 1) + '. ' + esc(trackLabel(t))).join('\n'));
+    }
+    case 'del': case 'delete': case 'remove': {
+      if (!rest) return send(chatId, 'Usage: <code>/playlist del &lt;name&gt;</code>');
+      const r = await profiles.deletePlaylist(userId, rest);
+      return send(chatId, r.ok ? '🗑️ Deleted <b>' + esc(rest) + '</b>.' : 'No playlist named that.');
+    }
+    default:
+      return send(chatId, 'Usage: <code>/playlist new|add|play|list|view|del &lt;name&gt;</code>');
+  }
+}
+async function doProfile(chatId, userId) {
+  const s = await profiles.profileSummary(userId);
+  const since = new Date(s.joinedAt).toISOString().slice(0, 10);
+  return send(chatId, '👤 <b>Your profile</b>\n\nPlays: ' + s.totalPlays + '\nFavorites: ' + s.favorites + '\nPlaylists: ' + s.playlists + '\nMember since: ' + since);
+}
+async function doHistory(chatId, userId) {
+  const h = await profiles.getHistory(userId);
+  if (!h.length) return send(chatId, 'No plays yet — /play something!');
+  const recent = h.slice(-15).reverse();
+  return send(chatId, '🕓 <b>Recent plays</b>:\n' + recent.map((t) => '• ' + esc(t.name) + ' — ' + esc(t.artist)).join('\n'));
+}
+
 async function doLyrics(chatId, arg) {
   if (!arg) return send(chatId, 'Usage: <code>/lyrics artist - title</code>  e.g. <code>/lyrics coldplay - yellow</code>');
   await chatAction(chatId, 'typing');
@@ -315,6 +387,11 @@ async function handle(update) {
     case 'np': case 'nowplaying': return doNowPlaying(chatId);
     case 'clear': case 'stop': return doClear(chatId);
     case 'browse': case 'library': return doBrowse(chatId, 0);
+    case 'like': case 'fav': return doLike(chatId, userId);
+    case 'favorites': case 'likes': return doFavorites(chatId, userId);
+    case 'playlist': case 'pl': return doPlaylist(chatId, userId, arg);
+    case 'profile': case 'me': return doProfile(chatId, userId);
+    case 'history': return doHistory(chatId, userId);
     default: return send(chatId, "Unknown command. Try /help — or just type a song name and I'll play it.");
   }
 }
