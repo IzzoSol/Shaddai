@@ -48,6 +48,102 @@ let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of ex
 let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
 
+// ── PRE-POSTING CALL VALIDATOR ─────────────────────────────────────────────
+// Comprehensive validation before signal is posted. Returns { pass, reason, riskScore, viabilityScore }
+function _validateCall(callData, cfg) {
+  const reasons = [];
+  let riskOk = true;
+
+  // Must have minimum data
+  if (!callData.mint || !callData.entryFdv || callData.entryFdv <= 0) {
+    return { pass: false, reason: 'insufficient_data', data: {} };
+  }
+
+  // FDV gates
+  if (callData.entryFdv < (cfg.minFdv || 0)) {
+    reasons.push(`FDV ${callData.entryFdv} below min ${cfg.minFdv}`);
+  }
+  if (callData.entryFdv > HARD_FDV_CAP_MAX) {
+    reasons.push(`FDV ${callData.entryFdv} exceeds hard cap ${HARD_FDV_CAP_MAX}`);
+  }
+
+  // Rug score minimum
+  if (callData.rugScore != null && callData.rugScore < RUG_MIN_SCORE) {
+    reasons.push(`Rug score ${callData.rugScore} below ${RUG_MIN_SCORE}`);
+  }
+
+  // Top 10 concentration
+  const top10 = callData.top10Pct || 0;
+  if (cfg.maxTop10Pct && top10 > cfg.maxTop10Pct) {
+    reasons.push(`Top 10 ${top10}% exceeds max ${cfg.maxTop10Pct}%`);
+  }
+
+  // Holder requirements
+  const holders = callData.holders || 0;
+  if (cfg.minHolders && holders < cfg.minHolders) {
+    reasons.push(`${holders} holders below min ${cfg.minHolders}`);
+  }
+
+  // LP lock requirement
+  const lpPct = callData.lpPct || 0;
+  if (cfg.requireLocked && lpPct < 80) {
+    reasons.push(`LP only ${lpPct}% locked, need 80%+`);
+  }
+
+  // Liquidity ratio
+  const liqRatio = callData.liq > 0 && callData.entryFdv > 0 ? (callData.liq / callData.entryFdv * 100) : 0;
+  if (cfg.minLiqRatio && liqRatio < cfg.minLiqRatio) {
+    reasons.push(`Liq ratio ${liqRatio.toFixed(1)}% below ${cfg.minLiqRatio}%`);
+  }
+
+  // Insider/sniper/bundler checks
+  if (cfg.rejectInsiders && callData.insiders > 0) {
+    reasons.push(`${callData.insiders} insiders detected`);
+  }
+  if (cfg.rejectSnipers && callData.snipers) {
+    reasons.push(`Snipers detected`);
+  }
+  if (cfg.rejectBundlers && callData.bundlers) {
+    reasons.push(`Bundlers detected`);
+  }
+
+  // Age gate
+  if (callData.ts && !_passesAgeGate(callData.ts)) {
+    reasons.push(`Token too fresh: ${(Date.now() - callData.ts) / 1000}s old`);
+  }
+
+  // Calculate scores
+  const pnl = require('./telegram-pnl');
+  const riskScore = pnl._calcRiskScore ? pnl._calcRiskScore(callData) : 50;
+  const viabilityScore = pnl._calcViabilityScore ? pnl._calcViabilityScore(callData) : 50;
+
+  // Risk score gate
+  if (cfg.maxRiskScore && riskScore > cfg.maxRiskScore) {
+    reasons.push(`Risk score ${riskScore} exceeds max ${cfg.maxRiskScore}`);
+  }
+
+  const pass = reasons.length === 0;
+
+  return {
+    pass,
+    reason: pass ? 'approved' : reasons[0],
+    reasons,
+    riskScore,
+    viabilityScore,
+    metrics: {
+      fdv: callData.entryFdv,
+      holders,
+      lpPct,
+      liqRatio: liqRatio.toFixed(2),
+      top10Pct: top10,
+      rugScore: callData.rugScore || 'unchecked',
+      insiders: callData.insiders || 0,
+      bundlers: callData.bundlers || false,
+      snipers: callData.snipers || false
+    }
+  };
+}
+
 // ── CALL TRACKING & VALIDATION ──────────────────────────────────────────
 // Tracks all called signals for performance analysis and call-quality improvement
 const _CALL_HISTORY_FILE = path.join(__dirname, 'data', 'signal-calls-history.json');
@@ -2146,6 +2242,8 @@ module.exports = {
   _loadCallHistory,
   _recordCallHistory,
   _sourceScore,
+  // Validation exports for /api/signals/validate endpoint
+  _validateCall,
   // Config exports for /api/signals/audit endpoint
   HARD_FDV_CAP_TRENDING,
   HARD_FDV_CAP_MAX,

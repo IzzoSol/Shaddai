@@ -1464,6 +1464,43 @@ app.get('/api/signals/audit', (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
+// ── SIGNAL VALIDATION & RISK SCORING ────────────────────────────────────────
+// POST /api/signals/validate — validate a proposed call + calculate risk/viability scores
+// Body: { mint, entryFdv, holders, rugScore, lpPct, liq, vol24, vol1h, insiders, bundlers, snipers, top10Pct, source }
+app.post('/api/signals/validate', (req, res) => {
+  try {
+    const siggen = require('./telegram-signals');
+    const pnl = require('./telegram-pnl');
+    const callData = req.body || {};
+
+    // Default validation config
+    const config = {
+      minFdv: 1000,
+      minHolders: 100,
+      maxTop10Pct: 55,
+      minSocialScore: 0,
+      requireWebsite: false,
+      requireTwitter: false,
+      requireLocked: false,
+      minLiqRatio: 1,
+      rejectInsiders: false,
+      rejectSnipers: false,
+      rejectBundlers: false,
+      maxRiskScore: 85,
+      rugMinScore: siggen.RUG_MIN_SCORE
+    };
+
+    const validation = siggen._validateCall(callData, config);
+
+    res.json({
+      ok: true,
+      mint: callData.mint,
+      validation,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
 // ============================================
 // PROXY ROUTES — mounted BEFORE agent wildcard so /api/agents/custom
 // is handled by proxy instead of being caught by /api/agents/:name
