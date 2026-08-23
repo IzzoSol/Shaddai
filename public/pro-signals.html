@@ -84,6 +84,14 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Exo 2
 /* scanline */
 body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-events:none;z-index:9990;}
 
+/* ── MOVEABLE WINDOWS ─────────────────────────────── */
+.window{position:fixed;background:var(--bg2);border:2px solid var(--border2);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;flex-direction:column;min-width:300px;min-height:200px;z-index:100;cursor:default}
+.window-header{padding:10px 14px;background:var(--hdrgrd);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:move;user-select:none;font-weight:700;font-size:11px;color:var(--P);letter-spacing:1px}
+.window-header::after{content:'';flex:1}
+.window-close{width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);hover:color:var(--A);border:1px solid transparent;border-radius:4px}
+.window-close:hover{background:rgba(255,60,42,.1);border-color:var(--A)}
+.window-content{flex:1;overflow:auto;padding:12px;font-size:11px}
+
 /* ── GATE ─────────────────────────────────────────── */
 #gate{
   position:fixed;inset:0;z-index:9999;
@@ -581,6 +589,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <button onclick="closeFullscreen()" style="padding:6px 12px;border:1px solid var(--P);color:var(--P);background:transparent;cursor:pointer;font-size:9px;letter-spacing:2px">← BACK</button>
       <div style="flex:1;font-family:'Syncopate';font-size:14px;color:var(--P);font-weight:700;letter-spacing:2px" id="fs-title">—</div>
       <div id="fs-subtabs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <button onclick="openWindow('dex','📊 DEX CHART',100,100,600,400)" style="padding:6px 10px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">📊 CHART</button>
+      <button onclick="openWindow('sentiment','💭 SENTIMENT',750,100,400,400)" style="padding:6px 10px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">💭 SENTIMENT</button>
       <button onclick="cycleTheme()" style="padding:6px 12px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">🎨 THEME</button>
     </div>
     <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)">
@@ -2030,12 +2040,65 @@ function renderFS() {
   }
 }
 
+// WINDOW MANAGER
+class Window{constructor(id,title,x,y,w,h){this.id=id;this.title=title;this.el=null;this.dragging=false;this.dragX=0;this.dragY=0;this.create(x,y,w,h)}
+create(x,y,w,h){const el=document.createElement('div');el.className='window';el.id=this.id;el.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+el.innerHTML=`<div class="window-header"><span>${this.title}</span><div class="window-close" onclick="closeWindow('${this.id}')">✕</div></div><div class="window-content" id="${this.id}-body"></div>`;
+el.querySelector('.window-header').addEventListener('mousedown',e=>this.startDrag(e));document.body.appendChild(el);this.el=el}
+startDrag(e){this.dragging=true;this.dragX=e.clientX-this.el.offsetLeft;this.dragY=e.clientY-this.el.offsetTop;document.addEventListener('mousemove',e=>this.drag(e));document.addEventListener('mouseup',()=>this.stopDrag())}
+drag(e){if(!this.dragging)return;this.el.style.left=(e.clientX-this.dragX)+'px';this.el.style.top=(e.clientY-this.dragY)+'px'}
+stopDrag(){this.dragging=false}
+close(){if(this.el)this.el.remove()}}
+let windows={};
+function openWindow(id,title,x,y,w,h){
+  if(windows[id]){windows[id].el.style.zIndex=1001;return}
+  windows[id]=new Window(id,title,x,y,w,h);
+  setTimeout(()=>loadWindowContent(id),50);
+}
+function closeWindow(id){if(windows[id]){windows[id].close();delete windows[id]}}
+
 // THEME CYCLING
 const themes=['phosphor','neon-noir','blood','ice'];let _themeIdx=0;
 function cycleTheme() {
   _themeIdx=(_themeIdx+1)%themes.length;
   document.documentElement.setAttribute('data-theme',themes[_themeIdx]);
   localStorage.setItem('oracle-theme',themes[_themeIdx]);
+}
+
+// Window content loaders
+function loadWindowContent(id) {
+  const body=document.getElementById(id+'-body');
+  if(id==='dex') {
+    body.innerHTML=`<canvas id="dex-chart-canvas" style="width:100%;height:100%"></canvas>`;
+    setTimeout(()=>initDexChart(),100);
+  } else if(id==='sentiment') {
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--S)">
+        <div style="font-weight:700;color:var(--S)">🟢 BULLISH</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Sentiment: 68% positive (1,240 mentions)</div>
+      </div>
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--P)">
+        <div style="font-weight:700;color:var(--P)">⚡ TRENDING</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Volume spike: +340% last hour</div>
+      </div>
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--C)">
+        <div style="font-weight:700;color:var(--C)">🔗 SOCIAL</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Twitter mentions: 2.1K | Discord: Active</div>
+      </div>
+    </div>`;
+  }
+}
+
+function initDexChart() {
+  const container=document.getElementById('dex-chart-canvas');
+  if(!container||!window.LightweightCharts)return;
+  const chart=LightweightCharts.createChart(container,{width:600,height:350,layout:{background:{color:'#030201'},textColor:'#f8eece'}});
+  const lineSeries=chart.addLineSeries({color:'#e8a020'});
+  lineSeries.setData([
+    {time:'2026-01-01',value:0.0001},{time:'2026-01-02',value:0.00015},{time:'2026-01-03',value:0.0002},
+    {time:'2026-01-04',value:0.00035},{time:'2026-01-05',value:0.0005},{time:'2026-01-06',value:0.00045}
+  ]);
+  chart.timeScale().fitContent();
 }
 window.addEventListener('DOMContentLoaded',()=>{
   const saved=localStorage.getItem('oracle-theme');
