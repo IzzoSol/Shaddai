@@ -2063,21 +2063,38 @@ else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){
 
 // FULL-SCREEN TAB SYSTEM
 function openFullscreen(tabName,title,subtabs=[]) {
+  console.log('[openFullscreen] starting',tabName,title);
   _fsTab=tabName;_fsSubTab=subtabs[0]||'all';
+
   const fsv=document.getElementById('fullscreen-view');
   const fst=document.getElementById('fs-title');
   const fsst=document.getElementById('fs-subtabs');
   const app=document.getElementById('app');
+  const fsc=document.getElementById('fs-content');
 
-  if(!fsv||!fst||!fsst||!app){console.error('[openFullscreen] elements not found');return;}
+  console.log('[openFullscreen] elements:',{fsv:!!fsv, fst:!!fst, fsst:!!fsst, app:!!app, fsc:!!fsc});
 
-  fst.textContent=title;
-  fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
+  if(!fsv||!fst||!fsst||!app||!fsc){
+    console.error('[openFullscreen] MISSING elements!');
+    return;
+  }
 
-  setTimeout(()=>{renderFS();},0);
+  try {
+    fst.textContent=title;
+    fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
 
-  fsv.style.display='flex';
-  app.style.display='none';
+    console.log('[openFullscreen] calling renderFS');
+    renderFS();
+
+    console.log('[openFullscreen] showing fullscreen-view, hiding app');
+    fsv.style.display='flex';
+    fsv.style.zIndex='9999';
+    app.style.display='none';
+
+    console.log('[openFullscreen] SUCCESS - fsv visible:', getComputedStyle(fsv).display);
+  } catch(e) {
+    console.error('[openFullscreen] error:',e.message,e.stack);
+  }
 }
 
 function closeFullscreen() {
@@ -2397,18 +2414,24 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 
 // Wire tab clicks to full-screen
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.ltab').forEach(tab=>{
+function setupTabHandlers(){
+  const tabs=document.querySelectorAll('.ltab');
+  console.log('[tab handler] found',tabs.length,'tabs');
+  tabs.forEach((tab,i)=>{
     tab.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
       const txt=e.target.textContent;
-      if(txt.includes('MEMES')) openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);
-      else if(txt.includes('FINANCE')) openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);
-      else if(txt.includes('NEWS')) openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);
-      else if(txt.includes('STOCKS')) openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);
-      else if(txt.includes('POLYMARKET')) openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);
+      console.log('[tab click]',i,'text:',txt);
+      if(txt.includes('MEMES')){console.log('[opening] memes');openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);}
+      else if(txt.includes('FINANCE')){console.log('[opening] finance');openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);}
+      else if(txt.includes('NEWS')){console.log('[opening] news');openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);}
+      else if(txt.includes('STOCKS')){console.log('[opening] stocks');openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);}
+      else if(txt.includes('POLYMARKET')){console.log('[opening] poly');openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);}
     });
   });
-});
+}
+document.addEventListener('DOMContentLoaded',setupTabHandlers);
+setTimeout(setupTabHandlers,500);
 </script>
 </body>
 </html>
