@@ -229,6 +229,19 @@ function _isDeadHour() {
   // Corpus: 09h=0%, 13h=0%, 15h=0%, 22h=3% — confirmed dead on 20+ call samples
   return h === 9 || h === 13 || h === 15 || h === 22;
 }
+function _sourceScore(source) {
+  // Calculates 0-100 source quality score from call history
+  const hist = _loadCallHistory() || [];
+  const sourceCalls = hist.filter(c => (c.source || '').toLowerCase() === (source || '').toLowerCase());
+  if (sourceCalls.length < 3) return 50;  // Need minimum calls to score
+
+  const winners = sourceCalls.filter(c => c.multiplier >= 2).length;
+  const rate = (winners / sourceCalls.length) * 100;
+
+  // Score = win rate % (0-100) with min/max bounds
+  return Math.max(15, Math.min(95, Math.round(rate)));
+}
+
 function _qualityMult() {
   // Use analytics to improve quality multiplier based on historical performance
   const analysis = _analyzeDeadCoins();
@@ -2132,6 +2145,7 @@ module.exports = {
   _analyzeDeadCoins,
   _loadCallHistory,
   _recordCallHistory,
+  _sourceScore,
   // Config exports for /api/signals/audit endpoint
   HARD_FDV_CAP_TRENDING,
   HARD_FDV_CAP_MAX,

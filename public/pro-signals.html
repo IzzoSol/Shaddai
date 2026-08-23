@@ -2281,6 +2281,7 @@ async function loadAnalytics(){
 
     const analysis=data.analysis||{};
     const metrics=data.metrics||{};
+    const scores=data.sourceScores||{};
 
     let html=`<div style="display:flex;flex-direction:column;gap:10px;font-size:11px">`;
 
@@ -2306,22 +2307,32 @@ async function loadAnalytics(){
       </div>`;
     }
 
-    // Top Fail Patterns
-    if(analysis.topFailPatterns && analysis.topFailPatterns.length){
-      html+=`<div style="padding:10px;background:rgba(255,60,42,.05);border:1px solid rgba(255,60,42,.2);border-radius:4px">
-        <div style="color:var(--A);font-weight:700;margin-bottom:4px">⚠️ WORST SOURCES</div>
-        <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
-          ${analysis.topFailPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+    // Source Scores
+    if(Object.keys(scores).length > 0){
+      const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+      html+=`<div style="padding:10px;background:rgba(232,160,32,.05);border:1px solid rgba(232,160,32,.15);border-radius:4px">
+        <div style="color:var(--P);font-weight:700;margin-bottom:6px">⭐ SOURCE QUALITY SCORES</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${sorted.slice(0,5).map(([src,score])=>{
+            const color=score>=70?'var(--S)':score>=50?'var(--P)':'var(--A)';
+            return `<div style="display:flex;align-items:center;gap:6px;color:var(--text2)">
+              <span style="flex:1">${src.slice(0,15)}</span>
+              <div style="width:40px;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${Math.min(score,100)}%;background:${color}"></div>
+              </div>
+              <span style="color:${color};font-weight:600;min-width:28px;text-align:right">${score}</span>
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
     }
 
-    // Top Win Patterns
-    if(analysis.topWinPatterns && analysis.topWinPatterns.length){
-      html+=`<div style="padding:10px;background:rgba(0,255,156,.05);border:1px solid rgba(0,255,156,.2);border-radius:4px">
-        <div style="color:var(--S);font-weight:700;margin-bottom:4px">⭐ BEST SOURCES</div>
+    // Top Fail Patterns
+    if(analysis.topFailPatterns && analysis.topFailPatterns.length){
+      html+=`<div style="padding:10px;background:rgba(255,60,42,.05);border:1px solid rgba(255,60,42,.2);border-radius:4px">
+        <div style="color:var(--A);font-weight:700;margin-bottom:4px">⚠️ WATCH OUT</div>
         <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
-          ${analysis.topWinPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+          ${analysis.topFailPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
         </div>
       </div>`;
     }

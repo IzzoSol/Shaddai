@@ -1422,6 +1422,13 @@ app.get('/api/signals/analytics', (req, res) => {
     const recent2x = recent.filter(c => c.multiplier >= 2).length;
     const recent5x = recent.filter(c => c.multiplier >= 5).length;
 
+    // Score each source by win rate
+    const sourceScores = {};
+    const sources = new Set(all.map(c => c.source).filter(Boolean));
+    for (const src of sources) {
+      sourceScores[src] = siggen._sourceScore(src);
+    }
+
     res.json({
       ok: true,
       analysis,
@@ -1433,6 +1440,7 @@ app.get('/api/signals/analytics', (req, res) => {
         recent2xRate: recent.length ? ((recent2x / recent.length) * 100).toFixed(1) : 0,
         recent5xRate: recent.length ? ((recent5x / recent.length) * 100).toFixed(1) : 0
       },
+      sourceScores,
       generatedAt: new Date().toISOString()
     });
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
