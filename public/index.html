@@ -4349,6 +4349,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('social')" style="--nav-img:url(/assets/nav/social.jpg)">📡 Social</button>
   <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
   <!-- E3 REMOVED: ⚡ Skills nav — now lives inside Office ▸ Skills sub-tab -->
+  <button class="nav-btn" onclick="showView('brain');try{brainInit()}catch(e){}" style="color:#b16cff;font-weight:700" title="The Brain — search & ask the council's RAG knowledge">🧠 Brain</button>
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
@@ -5469,7 +5470,8 @@ window.enter3DWorld=function(){
 
     <!-- ── E4: "⚡ Workflow Runner / Research → Build" box REMOVED per owner —
          its features are superseded by the consolidated WORKFLOW CENTER below.
-         (Legacy runWorkflowFromUI()/WF_AGENTS JS kept as dead code; no other caller.) -->
+         (Legacy runWorkflowFromUI()/_runWorkflowClientSide()/WF_AGENTS/clearWorkflowOutput()
+         JS confirmed to have zero remaining callers and fully deleted 2026-08-22.) -->
 
     <!-- ══════════════════════════════════════════════════════════════════════
          E4: WORKFLOW CENTER — consolidated Chains + Scheduled + Webhooks.
@@ -5644,6 +5646,50 @@ window.enter3DWorld=function(){
                   <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🔐 Site Security Audit</div>
                     <button onclick="runSavedWorkflow('site-security-audit')" style="font-size:7px;padding:2px 7px;background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:3px;cursor:pointer">▶ RUN</button></div>
                   <div style="font-size:7px;color:var(--text-muted);margin-top:3px">ssl_check · security_headers · dns_lookup</div></div>
+                <!-- 7-agent council chains -->
+                <div style="font-size:8px;font-family:'Share Tech Mono',monospace;color:rgba(0,229,160,0.55);letter-spacing:1px;margin:4px 0 2px">🏛️ COUNCIL CHAINS</div>
+                <div class="card" style="padding:10px;border-color:rgba(0,196,255,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">📣 Social Content</div>
+                    <button onclick="runSavedWorkflow('social-content')" style="font-size:7px;padding:2px 7px;background:rgba(0,196,255,0.1);border:1px solid #00c4ff;color:#00c4ff;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(0,196,255,0.5)">ORACLE → QUILL → PIKADON → TURTLE</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(255,176,32,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🎙️ Voiceover Production</div>
+                    <button onclick="runSavedWorkflow('voiceover-production')" style="font-size:7px;padding:2px 7px;background:rgba(255,176,32,0.1);border:1px solid #ffb020;color:#ffb020;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(255,176,32,0.5)">QUILL → TURTLE → NEXUS</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(139,92,246,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🔐 Security Review (Council)</div>
+                    <button onclick="runSavedWorkflow('security-review')" style="font-size:7px;padding:2px 7px;background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(139,92,246,0.5)">PIKADON → ORACLE → QUILL</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(0,229,160,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">💵 Financial Modeling</div>
+                    <button onclick="runSavedWorkflow('financial-modeling')" style="font-size:7px;padding:2px 7px;background:rgba(0,229,160,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(0,229,160,0.5)">ZEROX → ORACLE → SHADDAI</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(244,63,94,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🏗️ API Design</div>
+                    <button onclick="runSavedWorkflow('api-design')" style="font-size:7px;padding:2px 7px;background:rgba(244,63,94,0.12);border:1px solid #f43f5e;color:#f43f5e;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(244,63,94,0.5)">NEXUS → PIKADON → QUILL</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(255,215,0,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">📊 Quarterly Business Review</div>
+                    <button onclick="runSavedWorkflow('qbr')" style="font-size:7px;padding:2px 7px;background:rgba(255,215,0,0.1);border:1px solid #ffd700;color:#ffd700;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(255,215,0,0.5)">ZEROX → ORACLE → SHADDAI → QUILL</div>
+                </div>
                 <div id="userWorkflowsList"></div>
               </div>
             </div>
@@ -5767,7 +5813,7 @@ window.enter3DWorld=function(){
     <!-- ═══════════════════════════════════════════════════════════════════
          PRO SIGNALS — ORACLE TERMINAL · PIN 4444 · gated
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(232,160,32,0.07),rgba(0,200,255,0.05));border:1px solid rgba(232,160,32,0.35);margin-top:14px;overflow:hidden">
+    <div id="proSignalsCard" class="card" style="background:linear-gradient(135deg,rgba(232,160,32,0.07),rgba(0,200,255,0.05));border:1px solid rgba(232,160,32,0.35);margin-top:14px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(232,160,32,0.2);flex-wrap:wrap">
         <span style="font-size:16px">📡</span>
         <div>
@@ -5800,11 +5846,11 @@ window.enter3DWorld=function(){
     <!-- ═══════════════════════════════════════════════════════════════════
          MIROFISH — SWARM INTELLIGENCE TERMINAL · PIN 4444 · gated
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(0,212,220,0.06),rgba(112,64,255,0.04));border:1px solid rgba(0,212,220,0.3);margin-top:14px;overflow:hidden">
+    <div id="tufishCard" class="card" style="background:linear-gradient(135deg,rgba(0,212,220,0.06),rgba(112,64,255,0.04));border:1px solid rgba(0,212,220,0.3);margin-top:14px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(0,212,220,0.18);flex-wrap:wrap">
         <span style="font-size:16px">🐟</span>
         <div>
-          <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">MIROFISH · SWARM INTELLIGENCE</div>
+          <div style="font-size:12px;font-weight:800;color:var(--text);letter-spacing:0.06em">TUFISH · SWARM INTELLIGENCE</div>
           <div style="font-size:8px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-top:2px">MULTI-AGENT SWARM PREDICTION · CONFIGURE &amp; RUN — ACCESS CODE <span style="color:#00d4dc;font-weight:800">4444</span></div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
@@ -5846,6 +5892,7 @@ window.enter3DWorld=function(){
       function powerOnMiro(){
         var pin=document.getElementById('miroPin').value;
         if(pin!=='4444'){document.getElementById('miroErr').textContent='INCORRECT CODE';document.getElementById('miroPin').value='';return;}
+        try{sessionStorage.setItem('shd_miro','1');}catch(e){}
         document.getElementById('miroGate').style.display='none';
         document.getElementById('miroFrame').style.display='block';
         document.getElementById('miroIframe').src='/mirofish-terminal.html';
@@ -5854,6 +5901,15 @@ window.enter3DWorld=function(){
       }
       window.powerOnSignals=powerOnSignals;
       window.powerOnMiro=powerOnMiro;
+      // Unlock once per session — skip re-entering 4444 on revisit.
+      try{
+        if(sessionStorage.getItem('shd_prosig')==='1' && document.getElementById('sigPin')){
+          document.getElementById('sigPin').value='4444'; powerOnSignals();
+        }
+        if(sessionStorage.getItem('shd_miro')==='1' && document.getElementById('miroPin')){
+          document.getElementById('miroPin').value='4444'; powerOnMiro();
+        }
+      }catch(e){}
     })();
     </script>
 
@@ -6612,21 +6668,28 @@ window.enter3DWorld=function(){
     <script>
     (function(){
       if(window.MK) return;
-      var MK=window.MK={mode:'immersive',cur:'chart',_inited:{}};
+      var MK=window.MK={mode:'immersive',cur:'dex',_inited:{}};
       var LS_MODE='shaddai_mk_layout', LS_STA='shaddai_mk_station';
       function el(id){return document.getElementById(id);}
       // Each station lists the EXISTING source blocks to re-house (by a known
       // inner id -> closest .card, or a direct id) plus its lazy-init call.
+      // Order = free markets first, gated Pro stations last (one cohesive rail).
       var STATIONS=[
+        {key:'dex', ic:'📊', nm:'Markets', ds:'Live coins · filters',
+          src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
+          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }},
         {key:'chart', ic:'📈', nm:'Chart', ds:'TradingView + OHLC',
           src:[{inner:'mkTicker'},{inner:'tradingViewChart'},{id:'ohlcChartCard'}],
           init:function(){ if(typeof loadTickerData==='function') loadTickerData(); }},
         {key:'council', ic:'🧠', nm:'Council', ds:'Multi-agent analysis',
           src:[{inner:'councilProvider'},{id:'moonpayAgentsCard'}],
           init:function(){ if(typeof updateCouncilModelList==='function') updateCouncilModelList(); }},
-        {key:'dex', ic:'📊', nm:'DEX', ds:'Live markets',
-          src:[{inner:'dexFeedGrid'},{id:'dexAnalysisPanel'},{id:'signalMonitorWidget'},{id:'webhookConfigPanel'}],
-          init:function(){ if(typeof dexSetMode==='function') dexSetMode('trending'); }}
+        {key:'prosig', ic:'📡', nm:'Pro Signals', ds:'🔒 Live calls · 4444',
+          src:[{id:'proSignalsCard'}],
+          init:function(){}},
+        {key:'tufish', ic:'🐟', nm:'TUFISH', ds:'🔒 Swarm intel · 4444',
+          src:[{id:'tufishCard'}],
+          init:function(){}}
         /* Wallet station removed per owner: wallet widget stays in pipeline view below the room */
       ];
       function grab(src){
@@ -6638,8 +6701,8 @@ window.enter3DWorld=function(){
       function build(){
         var pv=el('pipelineView'); if(!pv || el('mkStationRoom')) return;
         var tb=document.createElement('div'); tb.id='mkToolbar';
-        tb.innerHTML='<span class="mk-title">◧ TRADING ROOM</span>'+
-          '<span class="mk-sub">stations · one focused at a time · widgets load on focus</span>'+
+        tb.innerHTML='<span class="mk-title">◧ MARKETS · SIGNALS</span>'+
+          '<span class="mk-sub">free markets + gated pro signals · pick a station</span>'+
           '<div class="mk-toggle"><button id="mkTgImm" onclick="MK.setMode(\'immersive\')">🎛 Immersive</button>'+
           '<button id="mkTgCls" onclick="MK.setMode(\'classic\')">▤ Classic</button></div>';
         var room=document.createElement('div'); room.id='mkStationRoom';
@@ -6662,7 +6725,7 @@ window.enter3DWorld=function(){
           rail.appendChild(rb);
         });
         MK.mode=localStorage.getItem(LS_MODE)||'immersive';
-        MK.cur=localStorage.getItem(LS_STA)||'chart';
+        MK.cur=localStorage.getItem(LS_STA)||'dex';
         applyMode(); focusOnly(MK.cur);
       }
       function applyMode(){
@@ -6706,6 +6769,124 @@ window.enter3DWorld=function(){
     })();
     </script>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       THE BRAIN — search & ask the council's RAG knowledge (wired to the
+       already-built brain: /api/overview · /api/search · /api/ask · /api/council).
+       Same kb_<agent> stores agent-engine recalls, so this shows what agents know.
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div id="brainView" class="view">
+    <style>
+      #brainView .brn-hero{background:radial-gradient(120% 140% at 80% -20%,rgba(177,108,255,0.14),transparent 55%),linear-gradient(135deg,rgba(0,0,0,0.5),rgba(177,108,255,0.05));border:1px solid rgba(177,108,255,0.28);border-radius:14px;padding:20px 22px;margin-bottom:14px}
+      #brainView .brn-title{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#fff;letter-spacing:0.08em}
+      #brainView .brn-sub{font-size:10px;color:rgba(177,108,255,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:4px;font-family:'Share Tech Mono',monospace}
+      #brainView .brn-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+      #brainView .brn-chip{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.02);border-radius:100px;padding:8px 14px;cursor:pointer;transition:.15s;user-select:none}
+      #brainView .brn-chip:hover{color:#fff;border-color:rgba(177,108,255,0.5)}
+      #brainView .brn-chip.on{color:#12061f;background:#b16cff;border-color:transparent;font-weight:700}
+      #brainView .brn-modes{display:flex;gap:6px;margin-bottom:12px}
+      #brainView .brn-mode{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--text-muted);cursor:pointer;transition:.15s}
+      #brainView .brn-mode.on{color:#12061f;background:linear-gradient(100deg,#b16cff,#7c4bd8);border-color:transparent}
+      #brainView textarea.brn-q{width:100%;min-height:70px;resize:vertical;background:rgba(0,0,0,0.4);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;padding:13px 15px;font-size:15px;font-family:inherit;outline:none;transition:.18s}
+      #brainView textarea.brn-q:focus{border-color:#b16cff;box-shadow:0 0 0 3px rgba(177,108,255,0.14)}
+      #brainView .brn-go{width:100%;margin-top:10px;border:none;border-radius:12px;padding:14px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#12061f;background:linear-gradient(100deg,#b16cff,#7c4bd8);cursor:pointer;transition:.15s}
+      #brainView .brn-go:hover{filter:brightness(1.08);transform:translateY(-1px)}
+      #brainView .brn-go:disabled{opacity:.55;cursor:not-allowed;transform:none}
+      #brainView .brn-ans{margin-top:14px;border:1px solid rgba(177,108,255,0.25);border-radius:12px;padding:16px 18px;background:rgba(177,108,255,0.04);font-size:14px;line-height:1.7;color:#eee;white-space:pre-wrap}
+      #brainView .brn-src{margin-top:10px;border:1px dashed rgba(177,108,255,0.3);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,0.25)}
+      #brainView .brn-srchd{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+      #brainView .brn-srcrow{font-size:12px;color:rgba(255,255,255,0.75);padding:5px 0;border-top:1px solid rgba(255,255,255,0.05)}
+      #brainView .brn-srcrow b{color:#c79bff}
+      #brainView .brn-hit{border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:9px;background:rgba(255,255,255,0.015)}
+      #brainView .brn-hit .h{display:flex;gap:8px;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:6px}
+      #brainView .brn-hit .h .ag{color:#c79bff;font-weight:700}
+      #brainView .brn-hit .t{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.82)}
+      #brainView .brn-muted{color:var(--text-muted);font-size:12px;font-family:'Share Tech Mono',monospace}
+    </style>
+    <div class="brn-hero">
+      <div class="brn-title">🧠 THE BRAIN</div>
+      <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="brn-chips" id="brainAgents"></div>
+      <div class="brn-modes">
+        <button class="brn-mode on" data-m="ask" onclick="brainSetMode('ask')">💬 Ask (grounded)</button>
+        <button class="brn-mode" data-m="search" onclick="brainSetMode('search')">🔎 Search chunks</button>
+        <button class="brn-mode" data-m="council" onclick="brainSetMode('council')">🏛 Council</button>
+      </div>
+      <textarea id="brainQ" class="brn-q" placeholder="Ask the brain… e.g. How do I maximize reach on X in 2026?" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))brainRun()"></textarea>
+      <button class="brn-go" id="brainGo" onclick="brainRun()">Ask the Brain →</button>
+      <div id="brainOut" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var API=(typeof PROXY!=='undefined'&&PROXY)?PROXY:'';
+    var AGENTS=['ALL','SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'];
+    var COLORS={ALL:'#b16cff',SHADDAI:'#ffd700',NEXUS:'#00ff88',ZEROX:'#00f0ff',ORACLE:'#b06aff',TURTLE:'#ff7b3d',QUILL:'#ffb020',PIKADON:'#ff4070'};
+    var cur='ALL', mode='ask', busy=false, built=false;
+    function $(id){return document.getElementById(id);}
+    function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];});}
+
+    function buildChips(){
+      if(built) return; built=true;
+      $('brainAgents').innerHTML=AGENTS.map(function(a){
+        return '<span class="brn-chip'+(a===cur?' on':'')+'" data-a="'+a+'" onclick="brainPick(\''+a+'\')" style="'+(a===cur?'':'')+'">'+(a==='ALL'?'🧠 All':esc(a))+'</span>';
+      }).join('');
+      loadOverview();
+    }
+    function loadOverview(){
+      fetch(API+'/api/overview').then(function(r){return r.json();}).then(function(d){
+        if(!d||!d.ok){ $('brainStats').textContent='knowledge base offline'; return; }
+        $('brainStats').textContent=(d.chunks||0).toLocaleString()+' chunks · '+(d.videos||0)+' sources · '+((d.agents||[]).length)+' agents · grounded recall';
+      }).catch(function(){ $('brainStats').textContent='knowledge base unreachable'; });
+    }
+    window.brainPick=function(a){ cur=a; document.querySelectorAll('#brainAgents .brn-chip').forEach(function(c){c.classList.toggle('on',c.dataset.a===a);}); };
+    window.brainSetMode=function(m){ mode=m; document.querySelectorAll('#brainView .brn-mode').forEach(function(b){b.classList.toggle('on',b.dataset.m===m);});
+      $('brainGo').textContent=(m==='ask'?'Ask the Brain →':m==='search'?'Search the Brain →':'Convene the Council →'); };
+
+    window.brainRun=async function(){
+      if(busy) return;
+      var q=($('brainQ').value||'').trim(); if(!q){ $('brainQ').focus(); return; }
+      busy=true; var go=$('brainGo'); go.disabled=true;
+      $('brainOut').innerHTML='<div class="brn-muted" style="padding:12px 2px">🧠 consulting '+(cur==='ALL'?'the council':cur)+'…</div>';
+      try{
+        if(mode==='ask'){
+          var ag=(cur==='ALL')?'SHADDAI':cur;
+          var d=await (await fetch(API+'/api/ask?agent='+ag+'&k=6&q='+encodeURIComponent(q))).json();
+          var src=(d.sources||[]).map(function(s){return '<div class="brn-srcrow"><b>'+esc(s.agent||ag)+'</b> · '+esc(s.title||'untitled')+' <span class="brn-muted">('+(s.score||0).toFixed(2)+')</span><br>'+esc((s.snippet||'').slice(0,160))+'…</div>';}).join('');
+          $('brainOut').innerHTML='<div class="brn-ans">'+esc(d.answer||'No grounded answer.')+'</div>'+
+            (src?'<div class="brn-src"><div class="brn-srchd">📚 Sources · '+esc(ag)+' · '+(d.provider||'rag')+(d.llm_powered?' (LLM-grounded)':'')+'</div>'+src+'</div>':'');
+        } else if(mode==='search'){
+          var url=API+'/api/search?k=8&q='+encodeURIComponent(q)+(cur==='ALL'?'':'&agent='+cur);
+          var d=await (await fetch(url)).json();
+          var hits=(d.results||[]);
+          $('brainOut').innerHTML=hits.length? hits.map(function(h){
+            return '<div class="brn-hit"><div class="h"><span class="ag">'+esc(h.agent||cur)+'</span>·<span>'+esc(h.title||'untitled')+'</span>·<span>score '+(h.score||0).toFixed(2)+'</span></div><div class="t">'+esc((h.text||'').slice(0,320))+'…</div></div>';
+          }).join('') : '<div class="brn-muted" style="padding:10px 2px">No chunks matched.</div>';
+        } else {
+          var d=await (await fetch(API+'/api/council?k=2&q='+encodeURIComponent(q))).json();
+          var ags=(d.agents||[]).filter(function(a){return a.chunks>0;}).sort(function(a,b){return b.score-a.score;});
+          $('brainOut').innerHTML=ags.length? ags.map(function(a){
+            var top=(a.results&&a.results[0])||{};
+            return '<div class="brn-hit" style="border-left:3px solid '+(COLORS[a.id]||'#b16cff')+'"><div class="h"><span class="ag" style="color:'+(COLORS[a.id]||'#c79bff')+'">'+esc(a.id)+'</span>·<span>'+esc(a.role||'')+'</span>·<span>score '+(a.score||0).toFixed(2)+'</span></div><div class="t">'+esc((top.text||'').slice(0,260))+'…</div></div>';
+          }).join('') : '<div class="brn-muted" style="padding:10px 2px">The council had nothing grounded on that.</div>';
+        }
+      }catch(e){
+        $('brainOut').innerHTML='<div class="brn-muted" style="padding:10px 2px;color:#ff9d90">Brain unreachable — '+esc(e.message)+'</div>';
+      }
+      busy=false; go.disabled=false;
+    };
+
+    // The nav button calls brainInit() directly — survives later showView re-wrapping.
+    window.brainInit=buildChips;
+    // Fallback: build once if the Brain view becomes active by any path.
+    var _bt=0,_bi=setInterval(function(){_bt++;var v=document.getElementById('brainView');
+      if(v&&v.classList.contains('active')){try{buildChips();}catch(e){}clearInterval(_bi);}
+      if(_bt>240)clearInterval(_bi);},400);
+  })();
+  </script>
 
   <!-- Office / Pixel Office — TOP TIER VISUAL UPGRADE -->
   <style>
@@ -6913,7 +7094,7 @@ window.enter3DWorld=function(){
         <span class="ocmd-div"></span>
         <button class="ocmd run" onclick="window.openPixelForge&&openPixelForge()" title="Pixel Forge — pick color, body skin, name & tools, drip a custom pixel agent into this office" style="background:linear-gradient(180deg,rgba(39,224,255,.16),rgba(39,224,255,.03));border-color:rgba(39,224,255,.45);color:#27e0ff">⬡ Pixel Forge</button>
         <button class="ocmd run" onclick="try{if(window.Shop&&Shop.open){Shop.open();}else{window.open('marketplace-shop-v2.html','_blank');}}catch(e){window.open('marketplace-shop-v2.html','_blank');}" title="Open the Bazaar — hire agents, sell content & agent work (x402 Sparks)" style="background:linear-gradient(180deg,rgba(232,184,75,.16),rgba(232,184,75,.03));border-color:rgba(232,184,75,.5);color:#e8b84b">🏪 Bazaar</button>
-        <button class="ocmd run" onclick="showView('social');setTimeout(function(){try{switchSocTab('telegram')}catch(e){}},60)" title="Telegram Signals Command Center (in the Social tab)" style="background:linear-gradient(180deg,rgba(34,158,217,.16),rgba(34,158,217,.03));border-color:rgba(34,158,217,.5);color:#5cc8ff">📡 Signals</button>
+        <button class="ocmd run" onclick="showView('pipeline');setTimeout(function(){try{MK.setMode('immersive');MK.focus('prosig')}catch(e){}},80)" title="Pro Signals — Markets tab" style="background:linear-gradient(180deg,rgba(34,158,217,.16),rgba(34,158,217,.03));border-color:rgba(34,158,217,.5);color:#5cc8ff">📡 Signals</button>
       </div>
 
       <!-- ── CANVAS — camera feed with corner brackets (height capped so the bottom operative buttons stay visible) ── -->
@@ -7570,66 +7751,29 @@ window.enter3DWorld=function(){
   <!-- Chat -->
   
   <!-- Skills View with 3D Agent Model Revolver -->
-  <!-- ═══════════ THE FORGE — its own full page (was crammed into Skills) ═══════════ -->
+<!-- ═══════════ THE FORGE — consolidated: 2D · 3D · Marketplace ═══════════ -->
   <div id="forgeView" class="view">
-
-    <!-- ════════ THE FORGE (forge.html) embedded as the Forge tab ════════ -->
-    <div id="forgeEmbedWrap" style="width:100%;height:calc(100vh - 132px);min-height:620px;border:1px solid rgba(0,255,136,0.2);border-radius:8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-      <iframe id="forgeFrame" src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Forge" loading="lazy"></iframe>
+    <div class="forge-tabs" style="display:flex;gap:4px;padding:8px 8px 0;border-bottom:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.03);border-radius:8px 8px 0 0">
+      <button class="forge-tab active" data-forge-tab="2d" onclick="switchForgeTab('2d')" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.15);color:#00ff88;border:none;border-bottom:2px solid #00ff88;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">2D Forge</button>
+      <button class="forge-tab" data-forge-tab="3d" onclick="switchForgeTab('3d')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">3D Forge</button>
+      <button class="forge-tab" data-forge-tab="market" onclick="switchForgeTab('market')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">Marketplace</button>
     </div>
-    <style id="forgeEmbedHide">#forgeView > *:not(#forgeEmbedWrap):not(#forgeEmbedHide){display:none !important}#forgeView{padding:6px !important}</style>
-
-    <!-- ════════ OPERATOR FORGE — build-your-own-agent (frontend-design) ════════ -->
-    <style>
-      #operatorForge{--of-cy:#22d3ee;--of-am:#ffb020;font-family:'Share Tech Mono',monospace;position:relative;margin-bottom:16px;border:1px solid rgba(34,211,238,0.18);border-radius:16px;overflow:hidden;background:radial-gradient(120% 80% at 20% -10%,rgba(34,211,238,0.10),transparent 55%),linear-gradient(160deg,#06080d,#0a1020 70%,#06080d)}
-      #operatorForge .of-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(34,211,238,0.15);letter-spacing:3px;font-size:12px;color:var(--of-cy);text-shadow:0 0 10px rgba(34,211,238,0.5)}
-      #operatorForge .of-head b{color:#fff}#operatorForge .of-head .tag{font-size:8px;color:var(--of-am);border:1px solid rgba(255,176,32,0.4);padding:3px 8px;border-radius:4px;letter-spacing:2px}
-      #operatorForge .of-grid{display:grid;grid-template-columns:300px 1fr;gap:0}
-      @media(max-width:820px){#operatorForge .of-grid{grid-template-columns:1fr}}
-      /* swivel stage */
-      #operatorForge .of-stage{padding:18px;border-right:1px solid rgba(34,211,238,0.12);display:flex;flex-direction:column;align-items:center;background:radial-gradient(80% 60% at 50% 30%,rgba(34,211,238,0.06),transparent)}
-      #operatorForge .of-scene{perspective:700px;width:200px;height:210px;cursor:grab;position:relative}
-      #operatorForge .of-scene:active{cursor:grabbing}
-      #operatorForge .of-rotor{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(8deg) rotateY(0deg);animation:none}
-      /* FIX: the global "cursor:none" custom-cursor hides the mouse — restore it in the forge */
-      body #operatorForge, body #operatorForge *{cursor:auto!important}
-      body #operatorForge button,body #operatorForge .of-preset,body #operatorForge .of-chip,body #operatorForge .of-tiers button,body #operatorForge .of-slot button{cursor:pointer!important}
-      body #operatorForge .of-input,body #operatorForge .of-ta{cursor:text!important}
-      body #operatorForge .of-scene{cursor:grab!important}
-      #operatorForge .of-art{width:100%;height:100%;object-fit:cover;border-radius:16px;border:1px solid rgba(34,211,238,.45);box-shadow:0 0 34px var(--of-glow,#22d3ee),inset 0 0 30px rgba(0,0,0,.4);background:#06080d;transition:opacity .25s}
-      /* live SVG part-compositor — updates instantly on every carousel swap (free, no AI). */
-      #operatorForge .of-composite{position:absolute;inset:0;z-index:1;border-radius:16px;overflow:hidden;border:1px solid rgba(34,211,238,.45);box-shadow:0 0 34px var(--of-glow,#22d3ee),inset 0 0 30px rgba(0,0,0,.5);transition:opacity .3s}
-      #operatorForge .of-composite svg{width:100%;height:100%;display:block}
-      #operatorForge .of-composite .of-swap{animation:ofSwapPulse .35s ease-out}
-      @keyframes ofSwapPulse{0%{filter:brightness(1.7) drop-shadow(0 0 10px var(--of-glow,#22d3ee))}100%{filter:none}}
-      #operatorForge .of-buildhint{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:4;text-align:center;font:700 11px/1.5 'Share Tech Mono',monospace;letter-spacing:2px;color:#ffce63;background:linear-gradient(180deg,transparent,rgba(6,8,13,.78),transparent);padding:14px 0;pointer-events:none}
-      #operatorForge .of-buildhint span{display:block;font-size:8px;letter-spacing:1px;color:#9fb0e0;margin-top:3px}
-      #operatorForge .of-slots{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px}
-      #operatorForge .of-slot{display:flex;align-items:center;gap:5px;background:rgba(10,16,32,.6);border:1px solid rgba(34,211,238,.12);border-radius:8px;padding:4px 6px}
-      #operatorForge .of-slot label{flex:0 0 50px;font-size:7px;letter-spacing:1px;color:#7fbfd6;text-transform:uppercase;margin:0}
-      #operatorForge .of-slot .ov{flex:1;text-align:center;font-size:8.5px;color:#eaf6ff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-      #operatorForge .of-slot button{background:#13203c;color:#cfe9ff;border:none;border-radius:4px;width:19px;height:19px;cursor:pointer;font-size:11px;line-height:1;padding:0}
-      #operatorForge .of-slot button:hover{background:#1b2e54}
-      /* ── swivel body-part picker: slot rail + cover-flow options (each previews the full character) ── */
-      #operatorForge .of-rail{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-      #operatorForge .of-rail-chip{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:54px;padding:5px 6px;background:rgba(10,16,32,.6);border:1px solid rgba(34,211,238,.14);border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s}
-      #operatorForge .of-rail-chip .ic{font-size:13px;color:#7fbfd6;line-height:1}
-      #operatorForge .of-rail-chip .nm{font-size:6.5px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase}
-      #operatorForge .of-rail-chip .cur{font-size:7px;color:#cfe9ff;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-      #operatorForge .of-rail-chip.on{border-color:var(--of-cy);background:rgba(34,211,238,.12);box-shadow:0 0 12px rgba(34,211,238,.2)}
-      #operatorForge .of-rail-chip.on .ic{color:var(--of-cy)}
-      #operatorForge .of-flow-wrap{display:flex;align-items:center;gap:6px}
-      #operatorForge .of-flow-nav{flex:0 0 26px;height:26px;border-radius:50%;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);color:var(--of-cy);cursor:pointer;font-size:13px;line-height:1;padding:0}
-      #operatorForge .of-flow-nav:hover{background:rgba(34,211,238,.25)}
-      #operatorForge .of-flow{flex:1;display:flex;gap:7px;justify-content:center;align-items:flex-end;perspective:600px;padding:4px 0;flex-wrap:wrap}
-      #operatorForge .of-opt{--oc:#9fb0e0;flex:0 0 auto;width:82px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 5px 5px;background:rgba(6,8,13,.6);border:1px solid color-mix(in srgb,var(--oc) 30%,transparent);border-radius:10px;cursor:pointer;font-family:inherit;transition:all .18s;opacity:.72;transform:scale(.92)}
-      #operatorForge .of-opt[data-rarity="legendary"]{--oc:#d4af37}#operatorForge .of-opt[data-rarity="epic"]{--oc:#c084fc}#operatorForge .of-opt[data-rarity="rare"]{--oc:#22d3ee}#operatorForge .of-opt[data-rarity="common"]{--oc:#9fb0e0}
-      #operatorForge .of-opt:hover{opacity:1;transform:scale(1)}
-      #operatorForge .of-opt.on{opacity:1;transform:scale(1.07);border-color:var(--oc);box-shadow:0 0 16px color-mix(in srgb,var(--oc) 45%,transparent)}
-      #operatorForge .of-opt-art{width:72px;height:72px;border-radius:8px;overflow:hidden;background:#06080d;pointer-events:none;display:flex;align-items:center;justify-content:center}
-      #operatorForge .of-opt-art svg,#operatorForge .of-opt-art img{width:100%;height:100%;display:block;object-fit:cover}
-      #operatorForge .of-opt-swatch{box-shadow:inset 0 0 18px rgba(0,0,0,.55)}
-      #operatorForge .of-opt-nm{font-size:7px;letter-spacing:.5px;color:#cfe9ff;text-align:center;max-width:76px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
+    <div id="forge2dPanel" class="forge-panel" style="display:block;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(0,255,136,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrame2d" src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 2D Forge" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="forge3dPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(124,58,237,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrame3d" src="/forge-3d.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="forgeMarketPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(232,196,92,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrameMarket" src="/pixel-forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Marketplace" loading="lazy"></iframe>
+      </div>
+    </div>
+    <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
       #operatorForge .of-rarity-badge{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 12px/1 'Share Tech Mono',monospace;letter-spacing:3px;z-index:3;text-shadow:0 1px 5px #000;pointer-events:none}
       #operatorForge .of-rarity-badge.legendary{color:#d4af37}#operatorForge .of-rarity-badge.epic{color:#c084fc}#operatorForge .of-rarity-badge.rare{color:#22d3ee}#operatorForge .of-rarity-badge.common{color:#9fb0e0}
       #operatorForge.dragging .of-rotor{animation:none}
@@ -7763,6 +7907,16 @@ window.enter3DWorld=function(){
             </div>
           </div>
           <div><label>PERSONALITY CORE</label><textarea id="ofPersona" class="of-ta" placeholder="Who is this agent? Tone, mission, rules…"></textarea></div>
+          <div><label>TOOL LOADOUT</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <select id="ofToolSelect" class="of-select" style="flex:1;padding:8px 12px;background:#0c0805;border:1px solid var(--bd);border-radius:4px;color:var(--parch);font-family:var(--body);font-size:13px">
+                <option value="">— add a tool —</option>
+              </select>
+              <button id="ofAddTool" class="of-btn" style="padding:8px 14px;background:var(--gold);color:#06080b;border:none;border-radius:4px;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Add</button>
+            </div>
+            <div id="ofSelectedTools" style="display:flex;gap:6px;flex-wrap:wrap;min-height:28px"></div>
+            <div style="font-size:10px;color:var(--ash);margin-top:4px">Selected tools determine what the agent can DO. Each adds compute load.</div>
+          </div>
           <div><label>SKILL LOADOUT — <span id="ofSkillCount">0</span> equipped (each adds compute load)</label><div class="of-skills" id="ofSkills">loading tools…</div></div>
           <!-- TEST RUN removed: forging must ONLY create + deploy the agent to the dashboard, never run a
                tool loop inside the forge (that was the glitch). Tools run when you chat with the agent.
@@ -8027,6 +8181,23 @@ window.enter3DWorld=function(){
         const toolDesc={}; toolList.forEach(x=>{ toolDesc[x.name||x.id]=x.description||''; });
         const names=toolList.map(x=>x.name||x.id).filter(Boolean);
         allToolNames=names.length?names:['fetch_price','search_web','generate_image','whale_scan','schedule_task','run_python','dex_scan','run_workflow','send_email','post_social'];
+        // Populate tool select dropdown
+        const toolSel=$('ofToolSelect');
+        if(toolSel){
+          toolSel.innerHTML='<option value="">— add a tool —</option>';
+          allToolNames.forEach(n=>{ const opt=document.createElement('option'); opt.value=n; opt.textContent=n+(toolDesc[n]?' — '+toolDesc[n].slice(0,60):''); toolSel.appendChild(opt); });
+        }
+        const addToolBtn=$('ofAddTool');
+        if(addToolBtn){
+          addToolBtn.onclick=()=>{ const val=toolSel.value; if(val && !skills.has(val)){ skills.add(val); saveSkills($('ofName').value); paint(); toolSel.value=''; } };
+        }
+        function renderSelectedTools(){
+          const wrap=$('ofSelectedTools'); if(!wrap) return;
+          wrap.innerHTML='';
+          skills.forEach(n=>{ const tag=document.createElement('span'); tag.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(240,180,41,.15);border:1px solid rgba(240,180,41,.4);border-radius:20px;font-size:9px;color:var(--gold)'; tag.innerHTML=n+' <button onclick="skills.delete(\''+n.replace(/'/g,"\\'")+'\');saveSkills($(\'ofName\').value);renderSelectedTools();paint();" style="background:none;border:none;color:var(--gold);font-size:11px;cursor:pointer;line-height:1">×</button>'; wrap.appendChild(tag); });
+        }
+        const oldPaint=paint;
+        paint=function(){ if(typeof oldPaint==='function') oldPaint(); renderSelectedTools(); };
         // Live search box so all 182 real skills are discoverable (not just first 60).
         const box=$('ofSkills'); box.innerHTML='';
         const search=document.createElement('input');
@@ -10400,7 +10571,8 @@ window.enter3DWorld=function(){
       <button class="soc-vtab" id="svtab-queue" onclick="switchSocTab('queue')">📋 QUEUE</button>
       <button class="soc-vtab" id="svtab-analytics" onclick="switchSocTab('analytics')">📊 ANALYTICS</button>
       <button class="soc-vtab" id="svtab-connect" onclick="switchSocTab('connect')">🔗 CONNECT</button>
-      <button class="soc-vtab" id="svtab-telegram" onclick="switchSocTab('telegram')" style="color:#5cc8ff">📡 SIGNALS</button>
+      <!-- SIGNALS moved to Markets → Pro Signals (Signal Setup). Hidden here to keep Social focused on social. -->
+      <button class="soc-vtab" id="svtab-telegram" onclick="switchSocTab('telegram')" style="color:#5cc8ff;display:none">📡 SIGNALS</button>
     </div>
 
     <!-- TELEGRAM / SIGNALS TAB — the Command Center -->
@@ -10986,6 +11158,53 @@ window.enter3DWorld=function(){
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-ghost" style="font-size:9px;border-color:rgba(0,229,160,0.3);color:var(--accent)" onclick="toggleMediaClassic()">☰ Classic View</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══ HIRE THE COUNCIL · CONTENT PACKS — productized offers (open standalone pages) ═══ -->
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);margin-bottom:10px">🪙 HIRE THE COUNCIL — content packs · <span style="color:#00e5a0">free preview, no signup</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+
+        <div onclick="window.open('/coin-launch.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(177,108,255,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(177,108,255,0.10),rgba(20,10,36,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(177,108,255,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            <span style="font-size:22px">🪙</span>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">COIN LAUNCH KIT</div>
+              <div style="font-size:8px;color:rgba(177,108,255,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL + TURTLE</div>
+            </div>
+            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#b16cff;border:1px solid rgba(177,108,255,0.4);border-radius:100px;padding:3px 9px">FREE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">Launch posts · meme concepts · a ready-to-post banner — from one coin idea.</div>
+          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#b16cff;letter-spacing:0.08em">OPEN KIT →</div>
+        </div>
+
+        <div onclick="window.open('/thread-pack.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(0,214,143,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(0,214,143,0.10),rgba(8,19,15,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,214,143,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            <span style="font-size:22px">🧵</span>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">TWITTER THREAD PACK</div>
+              <div style="font-size:8px;color:rgba(0,214,143,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL</div>
+            </div>
+            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#00d68f;border:1px solid rgba(0,214,143,0.4);border-radius:100px;padding:3px 9px">FREE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">A full numbered thread + hook variants you can post today — from one topic.</div>
+          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#00d68f;letter-spacing:0.08em">OPEN PACK →</div>
+        </div>
+
+        <div onclick="window.open('/turtle-music-bot.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(0,229,160,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(0,229,160,0.10),rgba(6,18,14,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,229,160,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            <span style="font-size:22px">🐢</span>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">TURTLE MUSIC BOT</div>
+              <div style="font-size:8px;color:rgba(0,229,160,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">ShaddaiLabs · in-browser</div>
+            </div>
+            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#00e5a0;border:1px solid rgba(0,229,160,0.4);border-radius:100px;padding:3px 9px">FREE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">Compose an original track — drums, bass, chords &amp; melody — right in your browser. No keys.</div>
+          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#00e5a0;letter-spacing:0.08em">OPEN STUDIO →</div>
+        </div>
+
       </div>
     </div>
 
@@ -14680,6 +14899,12 @@ function setAgentRole(agentName, role) {
 const _msgStore = {};
 
 // Workflow templates
+// NOTE: this is a LIVE parallel workflow-chain system (not dead) — powers the
+// "Workflow Chains" buttons + #workflowList under Office ▸ Task Scheduler
+// (runWorkflow()/runWorkflowChain()/renderWorkflows()/deleteWorkflow()), separate
+// from the confirmed-live Workflow Center (runSavedWorkflow's `prebuilt` dict,
+// #workflowCenter). Flagged 2026-08-22 for future consolidation into that
+// `prebuilt` dict — do not delete without re-verifying callers first.
 const WORKFLOW_TEMPLATES = {
   'research-to-build': [
     { agent: 'ORACLE', prompt: 'Research this topic comprehensively: {input}', extract: 'full' },
@@ -14696,8 +14921,8 @@ const WORKFLOW_TEMPLATES = {
     { agent: 'ZEROX', prompt: 'Financial analysis based on forecast: {prev}', extract: 'full' },
     { agent: 'SHADDAI', prompt: 'Strategic recommendation based on analysis: {prev}', extract: 'full' }
   ],
-  // Aligned with the canonical WF_AGENTS['idea-to-product'] chain (SHADDAI→NEXUS→TURTLE→ZEROX)
-  // so the two agent-based definitions no longer disagree on steps/order.
+  // Was aligned with the now-deleted legacy WF_AGENTS['idea-to-product'] chain
+  // (SHADDAI→NEXUS→TURTLE→ZEROX); that dead code was removed 2026-08-22.
   'idea-to-product': [
     { agent: 'SHADDAI', prompt: 'Break down this product idea into a clear MVP feature set — what to build first and why: {input}', extract: 'full' },
     { agent: 'NEXUS', prompt: 'Architecture and tech stack for this MVP: {prev}', extract: 'full' },
@@ -15502,187 +15727,6 @@ const PERMISSIONS_ENGINE = {
 
 // Initialize permissions engine in state
 S.permissions = PERMISSIONS_ENGINE;
-
-// ================== WORKFLOW ENGINE ==================
-// Deterministic pipelines with queues, retries, human approvals
-const WORKFLOW_ENGINE = {
-  workflows: {},
-  activeWorkflows: [],
-  workflowHistory: [],
-  maxHistory: 500,
-
-  // Define a workflow
-  define(name, steps) {
-    this.workflows[name] = {
-      name,
-      steps: steps.map((s, i) => ({
-        ...s,
-        id: i,
-        status: 'pending',
-        retries: 0,
-        maxRetries: s.maxRetries || 3
-      })),
-      createdAt: new Date().toISOString()
-    };
-    log(`Workflow defined: ${name} (${steps.length} steps)`, 'ok', 'WORKFLOW');
-  },
-
-  // Execute a workflow
-  async execute(name, input, options = {}) {
-    const workflow = this.workflows[name];
-    if (!workflow) throw new Error(`Workflow not found: ${name}`);
-
-    const execution = {
-      id: Date.now(),
-      name,
-      input,
-      status: 'running',
-      currentStep: 0,
-      steps: workflow.steps.map(s => ({ ...s, status: 'pending', output: null, error: null })),
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      totalCost: 0,
-      agent: options.agent || 'NEXUS'
-    };
-
-    this.activeWorkflows.push(execution);
-
-    try {
-      let prevOutput = input;
-
-      for (let i = 0; i < workflow.steps.length; i++) {
-        const step = workflow.steps[i];
-        execution.currentStep = i;
-        execution.steps[i].status = 'running';
-
-        // Check if step requires approval
-        if (step.requiresApproval) {
-          const approval = PERMISSIONS_ENGINE.requiresApproval(step.agent, step.action || 'workflow:execute', { cost: step.cost || 0 });
-          if (approval.required) {
-            await PERMISSIONS_ENGINE.requestApproval(step.agent, step.action || 'workflow:execute', { workflow: name, step: step.name }, (approved) => {
-              log(`Step ${step.name} approved`, 'ok', 'WORKFLOW');
-            });
-          }
-        }
-
-        // Build prompt with previous output
-        const prompt = step.extract === 'full' ? prevOutput : (step.prompt.replace('{prev}', prevOutput).replace('{input}', input));
-
-        // Execute step via agent
-        const result = await this._executeStep(step, prompt, options);
-        execution.steps[i].status = 'completed';
-        execution.steps[i].output = result;
-        execution.steps[i].duration = result.duration || 0;
-        execution.totalCost += step.cost || 0;
-
-        prevOutput = result.response || result;
-
-        // Track usage
-        if (step.cost) {
-          PERMISSIONS_ENGINE.trackUsage(step.agent, step.cost);
-        }
-      }
-
-      execution.status = 'completed';
-      execution.completedAt = new Date().toISOString();
-
-    } catch (error) {
-      execution.status = 'failed';
-      execution.error = error.message;
-      execution.completedAt = new Date().toISOString();
-    }
-
-    // Move to history
-    this.activeWorkflows = this.activeWorkflows.filter(w => w.id !== execution.id);
-    this.workflowHistory.unshift(execution);
-    if (this.workflowHistory.length > this.maxHistory) {
-      this.workflowHistory = this.workflowHistory.slice(0, this.maxHistory);
-    }
-
-    return execution;
-  },
-
-  // Execute individual step via agent
-  async _executeStep(step, prompt, options) {
-    const startTime = Date.now();
-
-    try {
-      // Use the appropriate agent
-      const agentName = step.agent || options.agent || 'SHADDAI';
-
-      // This would call the actual agent system
-      const response = await sendToAgent(agentName, prompt);
-
-      return {
-        response,
-        duration: Date.now() - startTime,
-        agent: agentName
-      };
-    } catch (error) {
-      // Handle retry
-      if (step.retries < step.maxRetries) {
-        step.retries++;
-        log(`Step ${step.name} failed, retry ${step.retries}/${step.maxRetries}`, 'warn', 'WORKFLOW');
-        return this._executeStep(step, prompt, options);
-      }
-      throw error;
-    }
-  },
-
-  // Get workflow status
-  getStatus(workflowId) {
-    return this.activeWorkflows.find(w => w.id === workflowId) || this.workflowHistory.find(w => w.id === workflowId);
-  },
-
-  // Get all active workflows
-  getActive() {
-    return this.activeWorkflows;
-  },
-
-  // Get workflow history
-  getHistory(filters = {}) {
-    let history = [...this.workflowHistory];
-    if (filters.name) history = history.filter(w => w.name === filters.name);
-    if (filters.status) history = history.filter(w => w.status === filters.status);
-    return history;
-  },
-
-  // Cancel workflow
-  cancel(workflowId) {
-    const workflow = this.activeWorkflows.find(w => w.id === workflowId);
-    if (workflow) {
-      workflow.status = 'cancelled';
-      workflow.completedAt = new Date().toISOString();
-      this.activeWorkflows = this.activeWorkflows.filter(w => w.id !== workflowId);
-      this.workflowHistory.unshift(workflow);
-      log(`Workflow cancelled: ${workflow.name}`, 'warn', 'WORKFLOW');
-      return true;
-    }
-    return false;
-  }
-};
-
-// Define built-in workflows
-WORKFLOW_ENGINE.define('research-to-build', [
-  { name: 'Research', agent: 'ORACLE', prompt: 'Research this topic comprehensively: {input}', cost: 0.01 },
-  { name: 'Design', agent: 'TURTLE', prompt: 'Based on this research, design a solution: {prev}', cost: 0.01 },
-  { name: 'Plan', agent: 'NEXUS', prompt: 'Create a technical implementation plan for: {prev}', cost: 0.01 }
-]);
-
-WORKFLOW_ENGINE.define('market-analysis', [
-  { name: 'Forecast', agent: 'ORACLE', prompt: 'Trend forecast for: {input}', cost: 0.01 },
-  { name: 'Analyze', agent: 'ZEROX', prompt: 'Financial analysis based on forecast: {prev}', cost: 0.01 },
-  { name: 'Recommend', agent: 'SHADDAI', prompt: 'Strategic recommendation based on analysis: {prev}', cost: 0.01 }
-]);
-
-WORKFLOW_ENGINE.define('content-pipeline', [
-  { name: 'Research', agent: 'ORACLE', prompt: 'Research trending topics for: {input}', cost: 0.005 },
-  { name: 'Write', agent: 'QUILL', prompt: 'Write content based on research: {prev}', cost: 0.005 },
-  { name: 'Review', agent: 'SHADDAI', prompt: 'Review and enhance content: {prev}', cost: 0.005 }
-]);
-
-// Initialize workflow engine in state
-S.workflowEngine = WORKFLOW_ENGINE;
 
 // ================== DURABLE MEMORY ==================
 // Structured storage for customers, projects, wallets, permissions
@@ -29336,6 +29380,14 @@ function switchWorldsTab(tab) {
   if (tab === 'economy') _whLoadEconomy();
   if (tab === 'forge')   { _whLoadForge(); _whLoadModelMarket(); }
 }
+function switchForgeTab(tab) {
+  document.querySelectorAll('#forgeView .forge-panel').forEach(function(p){ p.style.display='none'; });
+  document.querySelectorAll('#forgeView .forge-tab').forEach(function(b){ b.classList.remove('active'); b.style.background='transparent'; b.style.color='rgba(255,255,255,.5)'; b.style.borderBottomColor='transparent'; });
+  var panel = document.getElementById('forge'+tab+'Panel');
+  if (panel) panel.style.display='block';
+  var btn = document.querySelector('#forgeView .forge-tab[data-forge-tab="'+tab+'"]');
+  if (btn) { btn.classList.add('active'); btn.style.background='rgba(0,255,136,0.15)'; btn.style.color='#00ff88'; btn.style.borderBottomColor='#00ff88'; }
+}
 function _whLoadKpis() {
   var uid = localStorage.getItem('shd_signed_in') || '';
   var sparks = 0;
@@ -30690,6 +30742,57 @@ async function runSavedWorkflow(id) {
         {step:1, agent:'pikadon', prompt:'Audit github.com: check its TLS certificate (use the ssl_check tool), grade its security headers (use the security_headers tool), and resolve its DNS (use the dns_lookup tool).'},
         {step:2, agent:'nexus', prompt:'From this security scan: {step1}\nWhat are the top 3 concrete hardening recommendations?'},
         {step:3, agent:'quill', prompt:'Write a brief executive security report with action items from: {step2}'}
+      ]
+    },
+    // ── 7-agent council chains (2026-08-22) ──
+    'social-content': {
+      name:'Social Content', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'oracle', prompt:'Find the top 3 trending angles, stats, and hooks worth posting about for SHADDAI right now.'},
+        {step:2, agent:'quill', prompt:'From these angles: {step1}\nWrite platform-optimized posts: a Twitter thread, a LinkedIn post, and a short-form caption.'},
+        {step:3, agent:'pikadon', prompt:'Review this content for compliance/brand-safety issues — false claims, risky wording, anything to soften: {step2}'},
+        {step:4, agent:'turtle', prompt:'Given this content and PIKADON\'s review: {step2}\n{step3}\nDescribe the visual direction — hero image concept, layout, and style for each post.'}
+      ]
+    },
+    'voiceover-production': {
+      name:'Voiceover Production', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'quill', prompt:'Write a tight ~60-second voiceover script broken into segments for a SHADDAI feature explainer.'},
+        {step:2, agent:'turtle', prompt:'From this script: {step1}\nDescribe the visual storyboard — one shot per segment, style and mood.'},
+        {step:3, agent:'nexus', prompt:'Given the script and storyboard: {step1}\n{step2}\nLay out the technical production plan — which tools/APIs handle TTS, video assembly, and export.'}
+      ]
+    },
+    'security-review': {
+      name:'Security Review (Council)', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'pikadon', prompt:'Audit the SHADDAI backend for vulnerabilities, risks, and attack vectors. Be specific with severities.'},
+        {step:2, agent:'oracle', prompt:'For the issues found: {step1}\nResearch known CVEs, industry best practices, and precedent fixes for each.'},
+        {step:3, agent:'quill', prompt:'Write a clean security report combining the audit and research: {step1}\n{step2}\nFormat as markdown with severity badges.'}
+      ]
+    },
+    'financial-modeling': {
+      name:'Financial Modeling', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'zerox', prompt:'Build a pricing and unit-economics model for the SHADDAI Pro tier — costs, margins, break-even.'},
+        {step:2, agent:'oracle', prompt:'Given this model: {step1}\nResearch how 2-3 comparable products price and package similar tiers.'},
+        {step:3, agent:'shaddai', prompt:'Given the model and competitor research: {step1}\n{step2}\nMake a final pricing recommendation with reasoning.'}
+      ]
+    },
+    'api-design': {
+      name:'API Design', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'nexus', prompt:'Design a REST API for a new SHADDAI feature — endpoints, request/response shapes, auth.'},
+        {step:2, agent:'pikadon', prompt:'Security-review this API design: {step1}\nFlag auth gaps, injection risks, rate-limit needs.'},
+        {step:3, agent:'quill', prompt:'Write clean API documentation from the design and security notes: {step1}\n{step2}'}
+      ]
+    },
+    'qbr': {
+      name:'Quarterly Business Review', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'zerox', prompt:'Summarize this quarter\'s financial performance for SHADDAI — revenue, costs, unit economics trend.'},
+        {step:2, agent:'oracle', prompt:'Given this financial picture: {step1}\nResearch the competitive/market landscape shifts this quarter.'},
+        {step:3, agent:'shaddai', prompt:'Given the financials and market research: {step1}\n{step2}\nMake the key strategic calls for next quarter.'},
+        {step:4, agent:'quill', prompt:'Write the final QBR document combining all of the above: {step1}\n{step2}\n{step3}'}
       ]
     }
   };
@@ -33099,44 +33202,6 @@ async function _dexPipe(tokenAddress) {
   } catch(e) { return 'DEX error: ' + e.message; }
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PRESET WORKFLOWS + IMPORT/CREATE — v43.33
-// ═══════════════════════════════════════════════════════════════════════════
-
-const PRESET_WORKFLOWS = {
-  'research-to-build': [
-    { type:'coingecko', config:{value:'solana'} },
-    { type:'dexscreener', config:{value:''} },
-    { type:'ollama', config:{value:'Summarize the market research above and suggest a build strategy'} },
-    { type:'telegraph', config:{value:'Research Report'} }
-  ],
-  'full-audit': [
-    { type:'coingecko', config:{value:''} },
-    { type:'dexscreener', config:{value:''} },
-    { type:'ollama', config:{value:'Audit this data: check for red flags, rug pull indicators, and provide a safety score 1-10'} }
-  ],
-  'market-analysis': [
-    { type:'coingecko', config:{value:'solana'} },
-    { type:'jupiter', config:{value:'SOL'} },
-    { type:'dexscreener', config:{value:'solana'} },
-    { type:'ollama', config:{value:'Provide a comprehensive market analysis with price predictions, support/resistance levels, and trading recommendations'} }
-  ],
-  'idea-to-product': [
-    { type:'ollama', config:{value:'Break this idea into an MVP spec: features, tech stack, timeline, monetization strategy'} },
-    { type:'ollama', config:{value:'Generate a marketing plan and launch strategy for the product above'} },
-    { type:'telegraph', config:{value:'Product Launch Plan'} }
-  ]
-};
-
-function loadPresetWorkflow(name) {
-  const preset = PRESET_WORKFLOWS[name];
-  if(!preset) { notify('Preset not found'); return; }
-  S.pipeline = preset.map(s => ({ ...s, id: Date.now() + Math.random()*1000|0, result: null }));
-  renderPipeline();
-  notify('Loaded preset: ' + name);
-  log('Preset workflow loaded: ' + name, 'ok', 'PIPELINE');
-}
 
 function importWorkflowJSON() {
   const json = prompt('Paste workflow JSON:');
@@ -42375,10 +42440,35 @@ function renderTradeSignalsPanel() {
 // ── Trade signal actions ──
 let _tradeSignalsTimer = null;
 function startTradeSignals() {
-  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; notify('Trade signals stopped'); return; }
+  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; notify('Trade signals stopped');
+    document.getElementById('signalStartBtn').style.display = 'block';
+    document.getElementById('signalStopBtn').style.display = 'none';
+    document.getElementById('signalStatus').textContent = 'Monitoring stopped';
+    return;
+  }
   generateSignalNow();
   _tradeSignalsTimer = setInterval(generateSignalNow, 5 * 60 * 1000);
+  document.getElementById('signalStartBtn').style.display = 'none';
+  document.getElementById('signalStopBtn').style.display = 'block';
+  document.getElementById('signalStatus').textContent = '● Monitoring active (5 min interval)';
   notify('✓ Trade signals started — scanning every 5 min');
+}
+function stopTradeSignals() {
+  if (_tradeSignalsTimer) { clearInterval(_tradeSignalsTimer); _tradeSignalsTimer = null; }
+  document.getElementById('signalStartBtn').style.display = 'block';
+  document.getElementById('signalStopBtn').style.display = 'none';
+  document.getElementById('signalStatus').textContent = 'Monitoring stopped';
+  notify('⏹ Trade signals stopped');
+}
+function clearSignals() {
+  const board = document.getElementById('signalBoard');
+  if (board) board.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;font-size:10px"><div>⚡ Signals cleared</div></div>';
+  const count = document.getElementById('signalCount');
+  if (count) count.textContent = '0';
+  notify('✓ Signal board cleared');
+}
+function openProSignals() {
+  window.open('/pro-signals.html', '_blank');
 }
 async function generateSignalNow() {
   const board = document.getElementById('signalBoardCC') || document.getElementById('signalBoard');
@@ -44031,7 +44121,6 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   <div id="commandCenterView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);padding-top:12px;padding-bottom:12px">
     <div style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:12px;overflow-x:auto;align-items:center;height:40px;min-height:40px">
       <button class="nav-btn" onclick="switchCommandTab('agents')" id="cmdtab-agents" style="border:none;border-bottom:2px solid var(--accent);padding:8px 14px;background:linear-gradient(180deg,rgba(0,229,160,0.08) 0%,transparent);font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;flex-shrink:0"><img src="/assets/hub/agents.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">AGENTS</button>
-      <button class="nav-btn" onclick="switchCommandTab('trades')" id="cmdtab-trades" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/trades.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">TRADE SIGNALS</button>
       <button class="nav-btn" onclick="switchCommandTab('jobs')" id="cmdtab-jobs" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/jobs.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">JOB BOARD</button>
       <button class="nav-btn" onclick="switchCommandTab('earnings')" id="cmdtab-earnings" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/earnings.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">EARNINGS</button>
       <button class="nav-btn" onclick="switchCommandTab('wallet')" id="cmdtab-wallet" style="border:none;border-bottom:2px solid transparent;padding:8px 14px;background:none;font-size:11px;font-weight:700;white-space:nowrap;transition:all 0.2s;color:var(--text-muted);flex-shrink:0"><img src="/assets/hub/wallet.png" alt="" style="width:17px;height:17px;vertical-align:-4px;margin-right:5px;border-radius:50%">WALLET</button>
@@ -44190,50 +44279,63 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
   </div>
 
   <!-- ════════════════════════════════════════════════════════════════
-       TRADE SIGNALS & SMART ALERTS (HIDDEN - INTEGRATED INTO COMMAND CENTER)
+       TRADE SIGNALS & SMART ALERTS (MOVED TO PRO SIGNALS - HIDDEN)
   ═══════════════════════════════════════════════════════════════════ -->
 
-  <div id="tradeSignalsView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);display:none">
+  <div id="tradeSignalsView" class="view" style="overflow-y:auto;max-height:calc(100vh - 170px);display:none!important">
     <div class="card" style="border:2px solid var(--secondary);background:linear-gradient(135deg, rgba(255,123,61,0.08), rgba(255,176,59,0.04))">
       <div class="card-head" style="border-bottom:2px solid var(--secondary)">
         <span class="card-title" style="font-size:18px;font-weight:900;color:var(--secondary)">⚡ TRADE SIGNALS AUTOPILOT</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-accent" onclick="startTradeSignals()" style="background:var(--secondary);color:#000;border:none;font-weight:700;padding:8px 14px;font-size:9px">START</button>
-          <button class="btn btn-ghost" onclick="generateSignalNow()" style="font-size:9px">Generate Now</button>
+          <button class="btn btn-accent" id="signalStartBtn" onclick="startTradeSignals()" style="background:var(--secondary);color:#000;border:none;font-weight:700;padding:8px 14px;font-size:9px">▶ START</button>
+          <button class="btn btn-ghost" id="signalStopBtn" onclick="stopTradeSignals()" style="display:none;font-size:9px;color:var(--danger);border-color:var(--danger)">⏹ STOP</button>
+          <button class="btn btn-ghost" onclick="generateSignalNow()" style="font-size:9px">⚡ Generate Now</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">ACTIVE</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">ACTIVE</div>
           <div id="signalCount" style="font-size:16px;font-weight:900;color:var(--text-primary)">0</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">WIN RATE</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">WIN RATE</div>
           <div id="signalWinRate" style="font-size:14px;font-weight:900;color:var(--accent)">—</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">ROI</div>
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">ROI</div>
           <div id="signalROI" style="font-size:14px;font-weight:900;color:var(--success)">—</div>
         </div>
-        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:0">
-          <div style="font-size:8px;color:var(--secondary);font-weight:700">INTERVAL</div>
-          <select id="signalInterval" class="select" style="font-size:8px;padding:2px 4px">
+        <div style="background:rgba(255,123,61,0.06);border:1px solid rgba(255,123,61,0.2);padding:10px;text-align:center;border-radius:6px">
+          <div style="font-size:8px;color:var(--secondary);font-weight:700;letter-spacing:0.05em">INTERVAL</div>
+          <select id="signalInterval" class="select" style="font-size:8px;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,123,61,0.3)">
             <option value="1">1 min</option>
             <option value="5" selected>5 min</option>
             <option value="15">15 min</option>
+            <option value="30">30 min</option>
           </select>
         </div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input type="text" id="signalWatchlist" class="input" style="flex:1;font-size:10px;margin:0;padding:8px;min-width:200px" placeholder="Watch: SOL,BTC,ETH,BONK..." title="Comma-separated token symbols or mints to monitor">
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input type="text" id="signalWatchlist" class="input" style="flex:1;font-size:10px;margin:0;padding:8px" placeholder="Tokens: SOL,BTC,ETH,custom...">
-        <button class="btn btn-ghost" style="font-size:9px" onclick="postSignalToTelegram()">📱 Telegram</button>
-        <button class="btn btn-ghost" style="font-size:9px" onclick="postSignalToDiscord()">💬 Discord</button>
+        <button class="btn btn-accent" onclick="postSignalToTelegram()" style="background:linear-gradient(135deg,#0088cc,#0066aa);border:none;font-weight:700;font-size:9px;padding:8px 12px">📱 Post to Telegram</button>
+        <button class="btn btn-ghost" onclick="postSignalToDiscord()" style="font-size:9px;border-color:rgba(88,101,242,0.4);color:#5865f2">💬 Post to Discord</button>
+        <button class="btn btn-ghost" onclick="openProSignals()" style="font-size:9px">🎯 Pro Signals Dashboard →</button>
+        <div style="flex:1"></div>
+        <span id="signalStatus" style="font-size:9px;color:var(--text-muted);padding:8px;border-left:2px solid rgba(255,123,61,0.3)">Ready to monitor...</span>
       </div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">📈 Signal Board</span></div>
+      <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span class="card-title">📊 SIGNAL BOARD</span>
+        <button class="btn btn-ghost" onclick="clearSignals()" style="font-size:8px;padding:3px 6px">✕ Clear</button>
+      </div>
       <div id="signalBoard" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;font-size:10px">
-        <div style="text-align:center;color:var(--text-muted);padding:20px">Start monitoring to see signals...</div>
+        <div style="text-align:center;color:var(--text-muted);padding:30px;font-size:10px">
+          <div>⚡ Click <strong>Generate Now</strong> or turn on <strong>START</strong> to monitor signals</div>
+          <div style="margin-top:8px;font-size:9px;color:rgba(255,123,61,0.6)">Live signals will appear here · Posted to Telegram · Tracked in Pro Signals</div>
+        </div>
       </div>
     </div>
   </div>
@@ -54067,118 +54169,6 @@ window.pushStandbyNotif = pushStandbyNotif;
 // `var PROXY` threw "Identifier 'PROXY' has already been declared", killing this whole block
 // (workflow runner + 3 more systems). Removed — this block now uses the existing global PROXY.
 
-// ── 1. WORKFLOW RUNNER ───────────────────────────────────────────────
-async function runWorkflowFromUI() {
-  var wf = document.getElementById('wfSelect')?.value || 'research-to-build';
-  var input = document.getElementById('wfInput')?.value?.trim() || '';
-  var stepsEl = document.getElementById('wfSteps');
-  var statusEl = document.getElementById('wfRunStatus');
-  var finalEl = document.getElementById('wfFinalOutput');
-  if (!input) { notify('Enter a topic/input for the workflow'); return; }
-  if (stepsEl) stepsEl.innerHTML = '';
-  if (finalEl) { finalEl.style.display='none'; finalEl.innerHTML=''; }
-  if (statusEl) { statusEl.textContent='RUNNING'; statusEl.style.color='#00f0ff'; }
-
-  // Always run the verified client-side chain. Each step calls getResp(taskText, agent)
-  // through the /api/model/chat gateway with its OWN distinct, on-topic prompt and the
-  // PREVIOUS step's output chained forward. The old backend SSE path (/api/workflows/run)
-  // was removed here because it emitted identical output per step and leaked the
-  // stock/market-analysis template regardless of the task. See _runWorkflowClientSide.
-  _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl);
-}
-
-async function _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl) {
-  if (statusEl) { statusEl.textContent='RUNNING (AI)'; statusEl.style.color='#ffd700'; }
-  notify('⚡ Running workflow client-side via AI chain...');
-  // ── SINGLE SOURCE OF TRUTH for the Workflow Runner ──────────────────────────
-  // These are the canonical multi-agent chains. Each step's task is distinct and
-  // on-topic; {input} = raw user input (step 1), {prev} = previous step's output
-  // (chained forward). Do NOT reintroduce the market/stock-analysis template here.
-  const WF_AGENTS = {
-    'research-to-build': [
-      {agent:'ORACLE', task:'Research and analyze this topic thoroughly, covering background, current state, key insights, and opportunities: {input}'},
-      {agent:'NEXUS',  task:'Based on this research, architect a technical solution — stack, structure, key components:\n\n{prev}'},
-      {agent:'TURTLE', task:'Design the user interface and experience for this solution. Describe layout, flow, and visual style:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Final strategic review. What is the highest-leverage action to take right now?\n\n{prev}'}
-    ],
-    'content-pipeline': [
-      {agent:'ORACLE', task:'Research trending angles, stats, and viral hooks for this topic: {input}'},
-      {agent:'QUILL',  task:'Write platform-optimized content (Twitter thread + LinkedIn post + short-form caption) using this research:\n\n{prev}'},
-      {agent:'TURTLE', task:'Suggest visual formats, layout ideas, and design tips to make this content pop:\n\n{prev}'}
-    ],
-    'market-analysis': [
-      {agent:'ORACLE', task:'Analyze current market data, trends, and signals for: {input}'},
-      {agent:'ZEROX',  task:'Identify the top 3 revenue opportunities from this market analysis:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Give the single most important strategic action to take based on all of this:\n\n{prev}'}
-    ],
-    'security-audit': [
-      {agent:'NEXUS',  task:'Review code architecture and surface-level risks for: {input}'},
-      {agent:'PIKADON',task:'Deep security audit — find vulnerabilities, attack vectors, and critical risks based on:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Executive risk summary and ordered priority fixes from this audit:\n\n{prev}'}
-    ],
-    'agent-council': [
-      {agent:'NEXUS',  task:'Technical assessment of: {input}'},
-      {agent:'ZEROX',  task:'Business case and revenue model for:\n{prev}'},
-      {agent:'ORACLE', task:'Market validation and competitive landscape for:\n{prev}'},
-      {agent:'TURTLE', task:'UX, design, and user experience angle for:\n{prev}'},
-      {agent:'SHADDAI',task:'Council decision — synthesize all agent inputs into a single clear recommendation and action plan:\n\n{prev}'}
-    ],
-    'market-brief': [
-      {agent:'ORACLE', task:'Give a detailed crypto market brief right now. Cover BTC, ETH, SOL price levels, trends, fear/greed, and top movers. Topic focus: {input}'},
-      {agent:'ZEROX',  task:'From this market brief, identify the top 2 actionable opportunities for traders or builders:\n\n{prev}'},
-      {agent:'QUILL',  task:'Write a punchy 5-tweet thread from these insights that would get engagement:\n\n{prev}'}
-    ],
-    'revenue-intel': [
-      {agent:'ZEROX',  task:'Build a concrete $0 to $1,000/month roadmap for an AI agent marketplace. Topic: {input}'},
-      {agent:'ORACLE', task:'What are 3 specific things competitors are doing better, based on:\n{prev}'},
-      {agent:'SHADDAI',task:'The single most important strategic decision to make this week, given:\n{prev}'}
-    ],
-    'idea-to-product': [
-      {agent:'SHADDAI',task:'Break down this product idea into a clear MVP feature set — what to build first and why: {input}'},
-      {agent:'NEXUS',  task:'Architecture and tech stack for this MVP:\n\n{prev}'},
-      {agent:'TURTLE', task:'User flow and UI sketch — describe screens, interactions, visual direction:\n\n{prev}'},
-      {agent:'ZEROX',  task:'Monetization model, pricing tiers, and path to first $1K MRR:\n\n{prev}'}
-    ]
-  };
-  const steps = WF_AGENTS[wf] || WF_AGENTS['research-to-build'];
-  let prevOutput = '';
-  for (var i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    // Build the prompt: replace {input} with user input, {prev} with last step's output
-    let taskText = step.task
-      .replace(/\{input\}/g, input)
-      .replace(/\{prev\}/g, prevOutput.slice(0, 800) || input);
-    if (stepsEl) {
-      var div = document.createElement('div');
-      div.id = 'wf-step-cs-'+i;
-      div.style.cssText = 'background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);border-radius:6px;padding:10px;font-size:9px;margin-bottom:6px;transition:border-color 0.3s';
-      div.innerHTML = '<div style="font-weight:700;color:#00f0ff;margin-bottom:4px">▶ Step '+(i+1)+'/'+steps.length+': '+escH(step.agent)+'</div><div style="color:var(--text-muted);font-size:8.5px">'+escH(taskText.slice(0,120))+(taskText.length>120?'…':'')+'</div><div style="color:rgba(255,200,0,0.6);font-size:8px;margin-top:4px;font-style:italic">Processing…</div>';
-      stepsEl.appendChild(div); stepsEl.scrollTop = stepsEl.scrollHeight;
-    }
-    var output = '';
-    try { output = await getResp(taskText, step.agent); } catch(e) { output = '['+step.agent+' error: '+e.message+']'; }
-    prevOutput = output;
-    var stepDiv = document.getElementById('wf-step-cs-'+i);
-    if (stepDiv) {
-      stepDiv.style.borderColor='rgba(0,229,160,0.35)';
-      stepDiv.innerHTML='<div style="font-weight:700;color:#00ff88;margin-bottom:4px">✓ Step '+(i+1)+': '+escH(step.agent)+'</div><div style="color:var(--text-secondary);font-size:9px;line-height:1.6;white-space:pre-wrap;max-height:120px;overflow-y:auto">'+escH(output.slice(0,400))+(output.length>400?'…':'')+'</div>';
-    }
-  }
-  if (statusEl) { statusEl.textContent='DONE'; statusEl.style.color='#00ff88'; }
-  if (finalEl) {
-    finalEl.style.display='block';
-    finalEl.innerHTML='<div style="font-weight:700;color:#00f0ff;margin-bottom:8px;font-size:11px">✅ Workflow Complete — '+escH(wf)+'</div><div style="white-space:pre-wrap;font-size:10px;line-height:1.7;color:var(--text-primary)">'+escH(prevOutput)+'</div>';
-  }
-  if (typeof pushStandbyNotif==='function') pushStandbyNotif('WORKFLOW','Workflow "'+wf+'" complete');
-  checkCollectibleUnlocks();
-  notify('✅ Workflow "'+wf+'" complete!');
-}
-function clearWorkflowOutput() {
-  var el=document.getElementById('wfSteps'); if(el) el.innerHTML='';
-  var fo=document.getElementById('wfFinalOutput'); if(fo){fo.style.display='none';fo.innerHTML='';}
-  var st=document.getElementById('wfRunStatus'); if(st){st.textContent='IDLE';st.style.color='var(--text-muted)';}
-}
-
 // ── 2. CHART ANALYSIS (ORACLE) ────────────────────────────────────────
 async function runChartAnalysis() {
   var sym = (document.getElementById('chartSymbol')?.value||'SOL').toUpperCase().trim();
@@ -54411,6 +54401,59 @@ var MEDIA_MODULES={
   gallery:{title:'🖼 MEDIA GALLERY',color:'#ffd700',cardId:'mediaCard_mediaGallery'},
   content:{title:'✍️ AI WRITER',color:'#ff4070',cardId:null}
 };
+/* ══ OV2 — shared "step-by-step, bold, simple" overlay design system ══
+   Refines the dashboard HUD DNA into a guided flow: numbered steps, one big
+   question each, tap-chips instead of tiny dropdowns, large inputs, one CTA.
+   Every module drives its accent off --ov-acc, so it stays cohesive. */
+(function(){
+  if(window.ov2Ensure) return;
+  window.ov2Ensure=function(){
+    if(document.getElementById('ov2-css')) return;
+    var s=document.createElement('style'); s.id='ov2-css';
+    s.textContent=
+    ".ov2{display:flex;flex-direction:column;gap:20px;--ov-acc:#00e5a0}"+
+    ".ov2-intro{font-size:13px;line-height:1.6;color:rgba(255,255,255,.62)}"+
+    ".ov2-intro b{color:#fff;font-weight:600}"+
+    ".ov2-step{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start}"+
+    ".ov2-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:#05100c;background:var(--ov-acc);box-shadow:0 0 18px color-mix(in srgb,var(--ov-acc) 45%,transparent)}"+
+    ".ov2-body{display:flex;flex-direction:column;gap:9px;padding-top:2px;min-width:0}"+
+    ".ov2-q{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:.02em;color:#fff;line-height:1.2}"+
+    ".ov2-hint{font-size:11px;color:rgba(255,255,255,.4);margin-top:-4px}"+
+    ".ov2-field input,.ov2-field textarea,.ov2-field select,.ov2 textarea.ov2-ta{width:100%;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.1);border-radius:11px;color:#fff;padding:13px 15px;font-size:15px;font-family:inherit;outline:none;transition:border-color .18s,box-shadow .18s}"+
+    ".ov2 textarea.ov2-ta{min-height:96px;resize:vertical;line-height:1.55}"+
+    ".ov2 :is(input,textarea,select):focus{border-color:var(--ov-acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--ov-acc) 16%,transparent)}"+
+    ".ov2-chips{display:flex;flex-wrap:wrap;gap:8px}"+
+    ".ov2-chip{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.02em;color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.02);border-radius:100px;padding:9px 15px;cursor:pointer;transition:.15s;user-select:none}"+
+    ".ov2-chip:hover{color:#fff;border-color:rgba(255,255,255,.3)}"+
+    ".ov2-chip.on{color:#05100c;background:var(--ov-acc);border-color:transparent;font-weight:700}"+
+    ".ov2-cta{width:100%;margin-top:4px;border:none;border-radius:13px;padding:16px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#05100c;background:var(--ov-acc);cursor:pointer;box-shadow:0 12px 30px color-mix(in srgb,var(--ov-acc) 30%,transparent);transition:transform .15s,filter .2s}"+
+    ".ov2-cta:hover{transform:translateY(-2px);filter:brightness(1.06)}"+
+    ".ov2-cta:disabled{opacity:.55;cursor:not-allowed;transform:none}"+
+    ".ov2-mini{display:flex;gap:8px;flex-wrap:wrap}"+
+    ".ov2-out{display:none;background:rgba(0,0,0,.42);border:1.5px solid color-mix(in srgb,var(--ov-acc) 30%,transparent);border-radius:12px;padding:16px 18px;font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:360px;overflow-y:auto;color:#eee}"+
+    ".ov2-out.on{display:block}";
+    document.head.appendChild(s);
+  };
+  // Selectable chip group backed by a hidden <input id> (so existing handlers reading .value keep working).
+  window.ovChips=function(id,opts,def){
+    var cur=(def!=null)?def:((typeof opts[0]==='object')?opts[0].v:opts[0]);
+    var chips=opts.map(function(o){var v=(typeof o==='object')?o.v:o;var l=(typeof o==='object')?o.l:o;
+      return '<span class="ov2-chip'+(v===cur?' on':'')+'" data-v="'+String(v).replace(/"/g,'&quot;')+'" onclick="ovPick(\''+id+'\',this)">'+l+'</span>';}).join('');
+    return '<input type="hidden" id="'+id+'" value="'+String(cur).replace(/"/g,'&quot;')+'"><div class="ov2-chips" id="'+id+'_g">'+chips+'</div>';
+  };
+  window.ovPick=function(id,el){
+    var g=document.getElementById(id+'_g'); if(!g)return;
+    g.querySelectorAll('.ov2-chip').forEach(function(c){c.classList.remove('on');});
+    el.classList.add('on');
+    var h=document.getElementById(id); if(h)h.value=el.getAttribute('data-v');
+  };
+  window.ovStep=function(n,q,hint,body){
+    return '<div class="ov2-step"><div class="ov2-num">'+n+'</div><div class="ov2-body">'+
+      '<div class="ov2-q">'+q+'</div>'+(hint?'<div class="ov2-hint">'+hint+'</div>':'')+
+      '<div class="ov2-field">'+body+'</div></div></div>';
+  };
+})();
+
 function launchMediaModule(key){
   var mod=MEDIA_MODULES[key];
   // signal / series / clipper are overlay-only modules (not in MEDIA_MODULES) — route them below, don't block here.
@@ -54419,26 +54462,22 @@ function launchMediaModule(key){
 
   // ── AI WRITER overlay ─────────────────────────────────────────
   if(key==='content'){
+    ov2Ensure();
     expandModule({title:'✍️ AI WRITER — QUILL',accentColor:'#ff4070',content:
-      '<div style="display:flex;flex-direction:column;gap:12px">'+
-      '<div style="font-size:10px;color:rgba(255,255,255,0.6)">QUILL writes platform-native content. Be specific — include your angle, audience, and key points.</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-      '<div><label style="font-size:9px;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px">PLATFORM</label>'+
-      '<select id="ov_writerPlatform" class="select" style="font-size:10px;width:100%">'+
-      '<option>Twitter/X Thread</option><option>Instagram Caption</option><option>LinkedIn Post</option>'+
-      '<option>Blog Post Intro</option><option>Email Newsletter</option><option>YouTube Description</option>'+
-      '<option>TikTok Hook</option><option>Discord Announcement</option></select></div>'+
-      '<div><label style="font-size:9px;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px">TONE</label>'+
-      '<select id="ov_writerTone" class="select" style="font-size:10px;width:100%">'+
-      '<option>Professional</option><option>Casual & Conversational</option><option>Motivational</option>'+
-      '<option>Humorous</option><option>Technical</option><option>Bold & Direct</option></select></div></div>'+
-      '<textarea id="ov_writerTopic" class="input" rows="4" placeholder="What are you writing about? E.g.: My AI trading tool just hit 50% ROI this month. Target: crypto Twitter. Angle: show the strategy, not the hype."></textarea>'+
-      '<div style="display:flex;gap:8px">'+
-      '<button class="btn btn-accent" style="flex:1;background:#ff4070;border:none;font-weight:700;font-size:11px" onclick="runWriterOverlay()">✍️ Write with QUILL</button>'+
-      '<button class="btn btn-ghost" style="font-size:9px" onclick="(function(){var t=document.getElementById(\'ov_writerOut\');var text=t?(t.innerText||t.textContent):\'\';navigator.clipboard&&navigator.clipboard.writeText(text);notify(\'Copied\')})()">Copy</button>'+
-      '<button class="btn btn-ghost" style="font-size:9px" onclick="ovSaveTextToGallery(\'ov_writerOut\',\'content\',\'QUILL Writing\')">💾 Save</button>'+
+      '<div class="ov2" style="--ov-acc:#ff4070">'+
+      '<div class="ov2-intro">QUILL writes <b>platform-native</b> content. Three quick steps — the more specific you are, the harder it hits.</div>'+
+      ovStep(1,'Where is this going?','',
+        ovChips('ov_writerPlatform',['Twitter/X Thread','Instagram Caption','LinkedIn Post','Blog Intro','Email Newsletter','YouTube Description','TikTok Hook','Discord Announcement'],'Twitter/X Thread'))+
+      ovStep(2,'What tone?','',
+        ovChips('ov_writerTone',['Bold & Direct','Professional','Casual & Conversational','Motivational','Humorous','Technical'],'Bold & Direct'))+
+      ovStep(3,'What are you writing about?','Include your angle, audience and the one key point.',
+        '<textarea id="ov_writerTopic" class="ov2-ta" placeholder="e.g. My AI trading tool just hit 50% ROI this month. Audience: crypto Twitter. Angle: show the strategy, not the hype."></textarea>')+
+      '<button class="ov2-cta" onclick="runWriterOverlay()">✍️ Write with QUILL</button>'+
+      '<div class="ov2-mini">'+
+      '<button class="btn btn-ghost" style="font-size:10px" onclick="(function(){var t=document.getElementById(\'ov_writerOut\');var text=t?(t.innerText||t.textContent):\'\';navigator.clipboard&&navigator.clipboard.writeText(text);notify(\'Copied\')})()">Copy</button>'+
+      '<button class="btn btn-ghost" style="font-size:10px" onclick="ovSaveTextToGallery(\'ov_writerOut\',\'content\',\'QUILL Writing\')">💾 Save</button>'+
       '</div>'+
-      '<div id="ov_writerOut" style="display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(255,70,112,0.3);border-radius:8px;padding:14px;font-size:11px;line-height:1.7;white-space:pre-wrap;max-height:350px;overflow-y:auto"></div>'+
+      '<div id="ov_writerOut" class="ov2-out"></div>'+
       '<div id="ov_writerPublish" style="display:none"></div>'+
       '</div>'
     });
