@@ -41,7 +41,7 @@ Two new capabilities, both gated behind the perf governor from day one (not bolt
 - Graph view: dry-run with one agent's topic/digest count first (smallest: PIKADON per earlier corpus sizing), confirm layout settles and stays interactive before wiring the full 7-agent graph.
 - Perf governor: unit-testable in isolation (pure EMA/threshold math, no DOM/three.js needed for the core algorithm) — write it with tests before wiring it to any renderer.
 
-## Open items before implementation
-- Confirm actual Draco compression status of the existing agent GLBs (blocks loader choice).
-- Decide `d3-force` (CDN, MIT) vs. a from-scratch minimal force layout — `d3-force` is recommended (well-tested physics, small enough footprint, avoids re-deriving force-directed layout math) but this is the owner's call to confirm before adding a new dependency.
-- This spec deliberately excludes any Meshy/fal.ai asset generation — the disintegration effect reuses existing GLBs and procedural particles, spending no image/3D-generation credits. If the owner wants generated textures on top of this (e.g., a custom shard material), that's an additive follow-up, not required for this build to work.
+## Resolved before implementation
+- **Draco compression: confirmed absent.** Checked `public/assets/agents/NEXUS.glb`'s JSON chunk directly (no `KHR_draco_mesh_compression` in `extensionsUsed`/`extensionsRequired`) — the GLBs are plain glTF. Loader uses plain `GLTFLoader`, no `DRACOLoader`, matching `agents.html`'s existing pattern.
+- **Graph layout: `d3-force` (CDN, MIT)** — approved by owner via "let's get this done" direction, proceeding with the recommended choice rather than blocking on a re-ask.
+- This spec deliberately excludes any Meshy/fal.ai asset generation — the disintegration effect reuses existing GLBs and procedural particles, spending no image/3D-generation credits. Generated textures on top of this remain an additive follow-up, not required for this build to work.
