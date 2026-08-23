@@ -522,9 +522,11 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="switchTab('sig',this)">📡 SIGNALS</div>
-      <div class="ltab"     onclick="switchTab('miro',this)">🐟 MIROFISH</div>
-      <div class="ltab"     onclick="switchTab('swarm',this)">🌊 SWARM</div>
+      <div class="ltab on"  onclick="switchTab('memes',this)">🍌 MEMES</div>
+      <div class="ltab"     onclick="switchTab('finance',this)">📈 FINANCE</div>
+      <div class="ltab"     onclick="switchTab('news',this)">📰 NEWS</div>
+      <div class="ltab"     onclick="switchTab('stocks',this)">📊 STOCKS</div>
+      <div class="ltab"     onclick="switchTab('poly',this)">🎯 POLYMARKET</div>
     </div>
 
     <!-- signals -->
@@ -2038,27 +2040,34 @@ function switchSubtab(name,btn) {
 }
 function renderFS() {
   const fsc=document.getElementById('fs-content');
-  if(_fsTab==='signals') {
-    let filtered=(sig||[]).filter(s=>_fsSubTab==='all'||s.source===_fsSubTab);
-    const search=(document.getElementById('fs-search')?.value||'').toUpperCase();
-    if(search) filtered=filtered.filter(s=>String(s.symbol||'').includes(search));
-    const sort=document.getElementById('fs-sort')?.value||'newest';
-    if(sort==='mult') filtered.sort((a,b)=>(b.curMult||1)-(a.curMult||1));
-    else if(sort==='score') filtered.sort((a,b)=>(b.score||0)-(a.score||0));
-    fsc.innerHTML=filtered.length?filtered.map(s=>{
-      const mult=s.curMult||1;const mulCol=mult>=5?'var(--S)':mult>=3?'var(--P)':mult>=2?'#ffc84a':'var(--C)';
-      return `<div style="padding:14px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:10px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 0 16px rgba(232,160,32,.3)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><div style="color:var(--P);font-weight:700;font-size:13px;font-family:'Syncopate'">${s.symbol||'?'}</div><div style="font-size:9px;color:var(--text2);margin-top:2px">${s.source||'feed'}</div></div>
-          <div style="text-align:right"><div style="color:${mulCol};font-weight:800;font-size:16px;text-shadow:0 0 8px ${mulCol}66">${mult}×</div><div style="font-size:8px;color:var(--text2)">mult</div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:9px">
-          <div><span style="color:var(--text2)">Entry:</span> <span style="color:var(--P)">$${s.entryPrice?.toFixed(4)||'?'}</span></div>
-          <div><span style="color:var(--text2)">Score:</span> <span style="color:var(--text)">${s.score||'—'}</span></div>
-        </div>
-      </div>`;
-    }).join(''):`<div style="color:var(--muted);padding:40px;text-align:center">${search?'No matches':'No '+_fsSubTab+' signals'}</div>`;
+  let html='';
+
+  if(_fsTab==='memes') {
+    const mockCoins=[{symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600},{symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700}];
+    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px"><div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${c.symbol}</span><span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span></div><div style="font-size:9px;color:var(--text2);margin-top:4px">Holders: ${c.holders} | Vol: $${c.vol24}K</div></div>`).join('');
+  } else if(_fsTab==='finance') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="color:var(--P);font-weight:700">SPY</div>
+      <div style="font-size:9px;color:var(--S)">$${(450+Math.random()*5).toFixed(2)} +1.2%</div>
+    </div>`;
+  } else if(_fsTab==='news') {
+    html=`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">🚀 Major Exchange Listing</div>
+      <div style="font-size:8px;color:var(--text2);margin-top:4px">2 hours ago • 1.2K mentions</div>
+    </div>`;
+  } else if(_fsTab==='stocks') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">NVDA</span><span style="color:var(--S)">+3.2%</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: 52M | Volatility: High</div>
+    </div>`;
+  } else if(_fsTab==='poly') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">2024 Election Winner</div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: 62% | No: 38% | $2.3M pooled</div>
+    </div>`;
   }
+
+  fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px">Loading '+_fsTab+'...</div>';
 }
 
 // WINDOW MANAGER
@@ -2134,9 +2143,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.ltab').forEach(tab=>{
     tab.addEventListener('click',function(e){
       const txt=e.target.textContent;
-      if(txt.includes('SIGNALS')) openFullscreen('signals','📡 SIGNALS',['all','trending','bonded','pre-bond','boosted','pools','majors']);
-      else if(txt.includes('MIROFISH')) openFullscreen('miro','🐟 MIROFISH',['swarm','sim','analysis','results']);
-      else if(txt.includes('SWARM')) openFullscreen('swarm','🌊 SWARM',['overview','agents','consensus','risks']);
+      if(txt.includes('MEMES')) openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);
+      else if(txt.includes('FINANCE')) openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);
+      else if(txt.includes('NEWS')) openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);
+      else if(txt.includes('STOCKS')) openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);
+      else if(txt.includes('POLYMARKET')) openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);
     });
   });
 });
