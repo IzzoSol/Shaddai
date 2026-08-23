@@ -601,7 +601,28 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
         <option value="score">Score</option>
       </select>
     </div>
-    <div id="fs-content" style="flex:1;overflow-y:auto;padding:14px"><!-- content --></div>
+    <div style="display:flex;gap:12px;flex:1;overflow:hidden">
+      <div id="fs-content" style="flex:1;overflow-y:auto;padding:14px"><!-- signals --></div>
+      <div id="fs-sentiment" style="width:280px;border-left:1px solid var(--border);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+        <div style="font-weight:700;color:var(--P);font-size:10px;letter-spacing:1px">💭 SENTIMENT</div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--S);font-weight:700">🟢 BULLISH 68%</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">1,240 mentions</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--P);font-weight:700">⚡ VOLUME +340%</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">Last 1 hour spike</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--C);font-weight:700">🔗 SOCIAL ACTIVE</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">Twitter: 2.1K mentions</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:#ffc84a;font-weight:700">📰 NEWS</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">5 articles last 24h</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- RIGHT PANEL -->
