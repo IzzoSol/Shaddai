@@ -145,4 +145,39 @@ describe('turtle-music-session', () => {
     expect(session.trimPlayed('c8', 200, 20)).toBe(false);
     expect(session.getSession('c8').queue.length).toBe(2);
   });
+
+  test('appendAndAdvance no-ops against a stale session snapshot replaced by a fresh startSession', () => {
+    session.startSession('c9', [{ name: 'A', duration: 10 }], 'u1');
+    const stale = session.getSession('c9'); // simulates a caller snapshotting before a slow await
+    // A fresh /play (or anything else calling startSession) replaces the session mid-await.
+    session.startSession('c9', [{ name: 'New', duration: 10 }], 'u2');
+    const result = session.appendAndAdvance('c9', [{ name: 'Stale-radio-track', duration: 10 }], stale);
+    expect(result).toBeNull();
+    // The new session must be completely untouched by the stale mutation attempt.
+    expect(session.current('c9')).toEqual({ name: 'New', duration: 10 });
+    expect(session.upcoming('c9')).toEqual([]);
+    expect(session.getSession('c9').ownerId).toBe('u2');
+  });
+
+  test('appendAndAdvance still mutates normally when the snapshot matches the current session', () => {
+    session.startSession('c10', [{ name: 'A', duration: 10 }], 'u1');
+    const s0 = session.getSession('c10');
+    session.advance('c10'); // drain, still the same session object
+    const result = session.appendAndAdvance('c10', [{ name: 'B', duration: 10 }], s0);
+    expect(result).toEqual({ name: 'B', duration: 10 });
+    expect(session.current('c10')).toEqual({ name: 'B', duration: 10 });
+  });
+
+  test('trimPlayed no-ops against a stale session snapshot replaced by a fresh startSession', () => {
+    const tracks = Array.from({ length: 10 }, (_, i) => ({ name: 'T' + i, duration: 10 }));
+    session.startSession('c11', tracks, 'u1');
+    const stale = session.getSession('c11');
+    for (let i = 0; i < 8; i++) session.advance('c11');
+    session.startSession('c11', [{ name: 'New', duration: 10 }], 'u2'); // replaces mid-flight
+    const trimmed = session.trimPlayed('c11', 5, 2, stale);
+    expect(trimmed).toBe(false);
+    // The new session's short queue must be untouched.
+    expect(session.getSession('c11').queue.length).toBe(1);
+    expect(session.current('c11')).toEqual({ name: 'New', duration: 10 });
+  });
 });

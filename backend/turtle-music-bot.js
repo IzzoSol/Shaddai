@@ -189,7 +189,7 @@ function scheduleNext(chatId) {
   session.armTimer(chatId, async () => {
     let track = session.advance(chatId); // sync/fast — always safe to run against whatever session is current
     if (!track) {
-      if (session.isRadio(chatId)) track = await extendRadio(chatId); // slow (multi-search loop) — session may get replaced mid-await
+      if (session.isRadio(chatId)) track = await extendRadio(chatId, s0); // slow (multi-search loop) — session may get replaced mid-await
       if (session.getSession(chatId) !== s0) return; // a fresh /play started a new session while we were awaiting — abandon, don't mutate it
       if (!track) return; // radio off, or nothing similar resolved — go idle
     }
@@ -204,7 +204,13 @@ function scheduleNext(chatId) {
 const QUEUE_MAX = 200; // cap total queue growth for a long-lived radio session
 const QUEUE_KEEP_BUFFER = 20; // played tracks kept before pos when trimming, for /queue-ish context
 
-async function extendRadio(chatId) {
+// `expected`, when passed, is the session object the caller snapshotted
+// before dispatching this (slow — multi-search) call. If a fresh /play (or
+// anything else that calls session.startSession) replaces the session while
+// resolveSimilar is in flight, appendAndAdvance/trimPlayed below become
+// no-ops against the stale snapshot instead of corrupting the new session's
+// queue/pos.
+async function extendRadio(chatId, expected) {
   const last = session.lastPlayed(chatId);
   if (!last) return null;
   const more = await resolveSimilar(last.artist, last.name, 5);
@@ -214,8 +220,8 @@ async function extendRadio(chatId) {
   const already = session.queueKeys(chatId);
   const fresh = more.filter((t) => !already.has((String(t.name) + '|' + String(t.artist)).toLowerCase()));
   if (!fresh.length) return null;
-  const next = session.appendAndAdvance(chatId, fresh);
-  session.trimPlayed(chatId, QUEUE_MAX, QUEUE_KEEP_BUFFER);
+  const next = session.appendAndAdvance(chatId, fresh, expected);
+  if (next) session.trimPlayed(chatId, QUEUE_MAX, QUEUE_KEEP_BUFFER, expected);
   return next;
 }
 
@@ -276,7 +282,7 @@ async function doSkip(chatId, userId) {
   const s0 = session.getSession(chatId); // identity snapshot — see scheduleNext for why
   if (!s0) return send(chatId, 'Nothing queued — try /play.');
   let track = session.advance(chatId); // sync/fast
-  if (!track && session.isRadio(chatId)) track = await extendRadio(chatId); // slow — session may get replaced mid-await
+  if (!track && session.isRadio(chatId)) track = await extendRadio(chatId, s0); // slow — session may get replaced mid-await
   if (session.getSession(chatId) !== s0) return; // a fresh /play (or another /skip) replaced the session while we awaited
   if (!track) return send(chatId, '⏭ Queue finished.');
   const ok = await playTrack(chatId, track); // also slow

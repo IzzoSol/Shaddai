@@ -53,9 +53,14 @@ function advance(chatId) {
   return s.queue[s.pos] || null;
 }
 
-function appendAndAdvance(chatId, tracks) {
+// `expected`, when passed, must be the exact session object a caller snapshotted
+// before an earlier await — if the session has since been replaced (a new
+// startSession() call installs a new object), this is a no-op instead of
+// mutating whatever session now happens to occupy this chatId.
+function appendAndAdvance(chatId, tracks, expected) {
   const s = getSession(chatId);
   if (!s || !tracks || !tracks.length) return null;
+  if (expected !== undefined && s !== expected) return null;
   if (s.timer) { clearTimeout(s.timer); s.timer = null; }
   const startIndex = s.queue.length;
   s.queue.push(...tracks);
@@ -78,9 +83,10 @@ function queueKeys(chatId) {
 // `keepBuffer` played tracks right before the current position for context),
 // adjusting pos to stay consistent with the shorter queue. No-op if the
 // queue isn't over maxLen, or if there's nothing safe to drop.
-function trimPlayed(chatId, maxLen, keepBuffer) {
+function trimPlayed(chatId, maxLen, keepBuffer, expected) {
   const s = getSession(chatId);
   if (!s || s.queue.length <= maxLen) return false;
+  if (expected !== undefined && s !== expected) return false;
   const keepFrom = Math.max(0, s.pos - (keepBuffer || 0));
   if (keepFrom <= 0) return false;
   s.queue = s.queue.slice(keepFrom);
