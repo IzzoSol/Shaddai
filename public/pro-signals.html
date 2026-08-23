@@ -2067,13 +2067,17 @@ function openFullscreen(tabName,title,subtabs=[]) {
   const fsv=document.getElementById('fullscreen-view');
   const fst=document.getElementById('fs-title');
   const fsst=document.getElementById('fs-subtabs');
+  const app=document.getElementById('app');
+
+  if(!fsv||!fst||!fsst||!app){console.error('[openFullscreen] elements not found');return;}
 
   fst.textContent=title;
   fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
-  renderFS();
+
+  setTimeout(()=>{renderFS();},0);
 
   fsv.style.display='flex';
-  document.getElementById('app').style.display='none';
+  app.style.display='none';
 }
 
 function closeFullscreen() {
@@ -2095,6 +2099,7 @@ function switchSubtab(name,btn) {
 }
 function renderFS() {
   const fsc=document.getElementById('fs-content');
+  if(!fsc){console.error('[renderFS] fs-content not found');return;}
   let html='';
 
   if(_fsTab==='memes') {
@@ -2163,7 +2168,11 @@ function renderFS() {
     </div>`).join('');
   }
 
-  fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px">Loading '+_fsTab+'...</div>';
+  if(fsc){
+    fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px;text-align:center;font-weight:700">Loading '+_fsTab+'...<br><span style="font-size:9px;margin-top:10px">Tab: '+_fsTab+'</span></div>';
+  }else{
+    console.error('[renderFS] fs-content still null after check');
+  }
 }
 
 // WINDOW MANAGER
