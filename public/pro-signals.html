@@ -571,11 +571,11 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="switchTab('memes',this)">🍌 MEMES</div>
-      <div class="ltab"     onclick="switchTab('finance',this)">📈 FINANCE</div>
-      <div class="ltab"     onclick="switchTab('news',this)">📰 NEWS</div>
-      <div class="ltab"     onclick="switchTab('stocks',this)">📊 STOCKS</div>
-      <div class="ltab"     onclick="switchTab('poly',this)">🎯 POLYMARKET</div>
+      <div class="ltab on"  onclick="openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana'])">🍌 MEMES</div>
+      <div class="ltab"     onclick="openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities'])">📈 FINANCE</div>
+      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro'])">📰 NEWS</div>
+      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance'])">📊 STOCKS</div>
+      <div class="ltab"     onclick="openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy'])">🎯 POLYMARKET</div>
     </div>
 
     <!-- signals -->
