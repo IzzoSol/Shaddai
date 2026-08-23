@@ -2160,46 +2160,151 @@ function renderFS() {
       ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
     </div>`).join('');
   } else if(_fsTab==='finance') {
-    const stocks=['SPY','QQQ','IWM','GLD','TLT','USO','DXY','EEM','BND','VNQ'];
-    html=stocks.map(sym=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${sym}</span><span style="color:var(--S)">+${(Math.random()*4).toFixed(1)}%</span></div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">$${(200+Math.random()*300).toFixed(2)} | Vol: ${Math.floor(Math.random()*100)}M</div>
+    let stocks=[
+      {sym:'SPY',price:450.25,chg:1.2,vol:85,category:'etf'},
+      {sym:'QQQ',price:385.10,chg:2.1,vol:72,category:'etf'},
+      {sym:'IWM',price:198.50,chg:0.8,vol:45,category:'etf'},
+      {sym:'GLD',price:201.20,chg:1.5,vol:38,category:'commodity'},
+      {sym:'TLT',price:92.80,chg:-0.5,vol:62,category:'bond'},
+      {sym:'USO',price:76.30,chg:2.3,vol:41,category:'commodity'},
+      {sym:'DXY',price:107.15,chg:0.3,vol:29,category:'forex'},
+      {sym:'EEM',price:42.10,chg:1.8,vol:55,category:'etf'},
+      {sym:'BND',price:75.50,chg:-0.2,vol:48,category:'bond'},
+      {sym:'VNQ',price:88.90,chg:1.1,vol:36,category:'etf'}
+    ];
+
+    // Filter by search
+    if(searchVal) stocks=stocks.filter(s=>s.sym.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='crypto') stocks=stocks.filter(s=>false); // placeholder
+    else if(_fsSubTab==='commodity') stocks=stocks.filter(s=>s.category==='commodity');
+    else if(_fsSubTab==='bonds') stocks=stocks.filter(s=>s.category==='bond');
+
+    // Sort
+    if(sortVal==='mult') stocks=[...stocks].sort((a,b)=>b.chg-a.chg);
+    else if(sortVal==='score') stocks=[...stocks].sort((a,b)=>b.vol-a.vol);
+
+    html=stocks.map(s=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--P);font-weight:700;font-size:13px">${s.sym}</span>
+        <span style="color:${s.chg>0?'var(--S)':'var(--A)'};font-weight:700">$${s.price.toFixed(2)} ${s.chg>0?'+':''}${s.chg}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:flex;justify-content:space-between">
+        <div>Vol: <span style="color:var(--P)">${s.vol}M</span></div>
+        <div>Type: <span style="color:var(--P)">${s.category}</span></div>
+      </div>
     </div>`).join('');
   } else if(_fsTab==='news') {
-    const news=[
-      {title:'🚀 Major Exchange Listing',time:'2h ago',mentions:'1.2K'},
-      {title:'📊 Earnings Beat Expectations',time:'4h ago',mentions:'856'},
-      {title:'⚡ Partnership Announced',time:'6h ago',mentions:'2.3K'},
-      {title:'🔴 SEC Investigation Update',time:'8h ago',mentions:'1.9K'},
-      {title:'💰 Fund Raise Milestone Hit',time:'10h ago',mentions:'742'},
-      {title:'📈 Price Target Raised',time:'12h ago',mentions:'1.1K'},
-      {title:'🎯 Expansion into New Market',time:'14h ago',mentions:'890'},
-      {title:'💼 Executive Leadership Change',time:'16h ago',mentions:'1.5K'}
+    let news=[
+      {title:'🚀 Major Exchange Listing',time:'2h',mentions:1200,sentiment:'bullish',score:92},
+      {title:'📊 Earnings Beat Expectations',time:'4h',mentions:856,sentiment:'bullish',score:88},
+      {title:'⚡ Partnership Announced',time:'6h',mentions:2300,sentiment:'bullish',score:95},
+      {title:'🔴 SEC Investigation Update',time:'8h',mentions:1900,sentiment:'bearish',score:45},
+      {title:'💰 Fund Raise Milestone Hit',time:'10h',mentions:742,sentiment:'bullish',score:85},
+      {title:'📈 Price Target Raised',time:'12h',mentions:1100,sentiment:'bullish',score:89},
+      {title:'🎯 Expansion into New Market',time:'14h',mentions:890,sentiment:'bullish',score:87},
+      {title:'💼 Executive Leadership Change',time:'16h',mentions:1500,sentiment:'neutral',score:72}
     ];
-    html=news.map(n=>`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">${n.title}</div>
-      <div style="font-size:8px;color:var(--text2);margin-top:4px">${n.time} • ${n.mentions} mentions</div>
+
+    // Filter by search
+    if(searchVal) news=news.filter(n=>n.title.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='sentiment') news=news.filter(n=>n.sentiment==='bullish');
+    else if(_fsSubTab==='technical') news=news.slice(0,4);
+    else if(_fsSubTab==='macro') news=news.slice(0,3);
+
+    // Sort
+    if(sortVal==='mult') news=[...news].sort((a,b)=>b.score-a.score);
+    else if(sortVal==='score') news=[...news].sort((a,b)=>b.mentions-a.mentions);
+
+    html=news.map(n=>`<div style="padding:12px;border-left:4px solid var(--P);background:var(--cgrd);margin-bottom:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div style="flex:1">
+          <div style="color:var(--P);font-weight:700;font-size:11px">${n.title}</div>
+          <div style="font-size:9px;color:var(--text2);margin-top:4px">${n.time} ago • <span style="color:var(--S)">${n.mentions.toLocaleString()}</span> mentions</div>
+        </div>
+        <span style="background:${n.sentiment==='bullish'?'rgba(0,255,156,.15)':n.sentiment==='bearish'?'rgba(255,60,42,.15)':'rgba(200,200,200,.1)'};color:${n.sentiment==='bullish'?'var(--S)':n.sentiment==='bearish'?'var(--A)':'var(--text2)'};font-size:9px;padding:4px 8px;border-radius:3px;font-weight:600">${n.sentiment}</span>
+      </div>
     </div>`).join('');
   } else if(_fsTab==='stocks') {
-    const gainers=['NVDA','TSLA','AMZN','MSFT','GOOGL','META','NFLX','UBER','AMD','PLTR'];
-    html=gainers.map(sym=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${sym}</span><span style="color:var(--S)">+${(Math.random()*6).toFixed(1)}%</span></div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: ${Math.floor(Math.random()*100)}M | Volatility: ${['Low','Medium','High'][Math.floor(Math.random()*3)]}</div>
+    let gainers=[
+      {sym:'NVDA',price:135.42,chg:3.2,vol:92,volatility:'High',pe:65},
+      {sym:'TSLA',price:242.80,chg:2.8,vol:115,volatility:'High',pe:72},
+      {sym:'AMZN',price:195.50,chg:1.9,vol:78,volatility:'Medium',pe:58},
+      {sym:'MSFT',price:428.15,chg:1.5,vol:65,volatility:'Low',pe:42},
+      {sym:'GOOGL',price:156.30,chg:2.1,vol:71,volatility:'Medium',pe:48},
+      {sym:'META',price:512.40,chg:4.2,vol:88,volatility:'High',pe:38},
+      {sym:'NFLX',price:598.20,chg:2.5,vol:52,volatility:'Medium',pe:28},
+      {sym:'UBER',price:72.85,chg:1.7,vol:68,volatility:'Medium',pe:-15},
+      {sym:'AMD',price:168.90,chg:3.6,vol:84,volatility:'High',pe:52},
+      {sym:'PLTR',price:45.30,chg:2.2,vol:156,volatility:'High',pe:198}
+    ];
+
+    // Filter by search
+    if(searchVal) gainers=gainers.filter(g=>g.sym.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='tech') gainers=gainers.filter(g=>['NVDA','TSLA','AMZN','MSFT','GOOGL','META'].includes(g.sym));
+    else if(_fsSubTab==='top-vol') gainers=[...gainers].sort((a,b)=>b.vol-a.vol).slice(0,5);
+    else if(_fsSubTab==='gainers') gainers=[...gainers].sort((a,b)=>b.chg-a.chg).slice(0,5);
+
+    // Sort
+    if(sortVal==='mult') gainers=[...gainers].sort((a,b)=>b.chg-a.chg);
+    else if(sortVal==='score') gainers=[...gainers].sort((a,b)=>b.vol-a.vol);
+
+    html=gainers.map(g=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--P);font-weight:700;font-size:13px">${g.sym}</span>
+        <span style="color:var(--S);font-weight:700">+${g.chg}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>$${g.price.toFixed(2)}</div>
+        <div>Vol: <span style="color:var(--P)">${g.vol}M</span></div>
+        <div>P/E: <span style="color:${g.pe>50?'var(--A)':'var(--S)'}">${g.pe}</span></div>
+      </div>
     </div>`).join('');
   } else if(_fsTab==='poly') {
-    const markets=[
-      {q:'2024 Election Winner',yes:62,pooled:'$2.3M'},
-      {q:'Bitcoin $100K by EOY',yes:75,pooled:'$1.8M'},
-      {q:'AI Regulation Bill Passes',yes:48,pooled:'$890K'},
-      {q:'Tech IPO Market Recovers',yes:71,pooled:'$1.2M'},
-      {q:'Gold Hits $3K',yes:58,pooled:'$650K'},
-      {q:'Fed Rate Cut Next Meeting',yes:65,pooled:'$1.5M'},
-      {q:'Crypto Adoption in Banks',yes:72,pooled:'$980K'},
-      {q:'US Inflation Under 3%',yes:52,pooled:'$1.1M'}
+    let markets=[
+      {q:'2024 Election Winner',yes:62,no:38,pooled:2.3,category:'politics',volume:8400},
+      {q:'Bitcoin $100K by EOY',yes:75,no:25,pooled:1.8,category:'crypto',volume:12500},
+      {q:'AI Regulation Bill Passes',yes:48,no:52,pooled:0.89,category:'policy',volume:3200},
+      {q:'Tech IPO Market Recovers',yes:71,no:29,pooled:1.2,category:'tech',volume:5800},
+      {q:'Gold Hits $3K',yes:58,no:42,pooled:0.65,category:'commodity',volume:2100},
+      {q:'Fed Rate Cut Next Meeting',yes:65,no:35,pooled:1.5,category:'economy',volume:7600},
+      {q:'Crypto Adoption in Banks',yes:72,no:28,pooled:0.98,category:'crypto',volume:4200},
+      {q:'US Inflation Under 3%',yes:52,no:48,pooled:1.1,category:'economy',volume:6300}
     ];
-    html=markets.map(m=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">${m.q}</div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: ${m.yes}% | No: ${100-m.yes}% | ${m.pooled} pooled</div>
+
+    // Filter by search
+    if(searchVal) markets=markets.filter(m=>m.q.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='crypto') markets=markets.filter(m=>m.category==='crypto');
+    else if(_fsSubTab==='politics') markets=markets.filter(m=>m.category==='politics');
+    else if(_fsSubTab==='economy') markets=markets.filter(m=>m.category==='economy');
+
+    // Sort
+    if(sortVal==='mult') markets=[...markets].sort((a,b)=>b.yes-a.yes);
+    else if(sortVal==='score') markets=[...markets].sort((a,b)=>b.volume-a.volume);
+
+    html=markets.map(m=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="color:var(--P);font-weight:700;font-size:11px;margin-bottom:8px">${m.q}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+        <div style="border-radius:4px;padding:8px;background:var(--bg3);text-align:center">
+          <div style="color:var(--S);font-weight:700;font-size:14px">YES</div>
+          <div style="color:var(--text2);font-size:10px">${m.yes}%</div>
+        </div>
+        <div style="border-radius:4px;padding:8px;background:var(--bg3);text-align:center">
+          <div style="color:var(--A);font-weight:700;font-size:14px">NO</div>
+          <div style="color:var(--text2);font-size:10px">${m.no}%</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text2);display:flex;justify-content:space-between">
+        <div>💰 <span style="color:var(--P)">$${m.pooled}M</span></div>
+        <div>📊 <span style="color:var(--P)">${m.volume.toLocaleString()}</span> vol</div>
+      </div>
     </div>`).join('');
   }
 
