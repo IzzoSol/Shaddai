@@ -1969,14 +1969,14 @@ else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){
 
 // FULL-SCREEN TAB SYSTEM
 function openFullscreen(tabName,title,subtabs=[]) {
+  _fsTab=tabName;_fsSubTab=subtabs[0]||'all';
   const fsv=document.getElementById('fullscreen-view');
   const fst=document.getElementById('fs-title');
   const fsst=document.getElementById('fs-subtabs');
-  const fsc=document.getElementById('fs-content');
 
   fst.textContent=title;
   fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
-  fsc.innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px">Loading ${title}…</div>`;
+  renderFS();
 
   fsv.style.display='flex';
   document.getElementById('app').style.display='none';
@@ -1987,13 +1987,21 @@ function closeFullscreen() {
   document.getElementById('app').style.display='flex';
 }
 
+let _fsTab='signals',_fsSubTab='all';
 function switchSubtab(name,btn) {
+  _fsSubTab=name;
   document.querySelectorAll('#fs-subtabs button').forEach(b=>{
     b.style.borderColor=b===btn?'var(--P)':'var(--border2)';
     b.style.color=b===btn?'var(--P)':'var(--text)';
   });
+  renderFS();
+}
+function renderFS() {
   const fsc=document.getElementById('fs-content');
-  fsc.innerHTML=`<div style="color:var(--text2)">${name}: content loading…</div>`;
+  if(_fsTab==='signals') {
+    const filtered=(sig||[]).filter(s=>_fsSubTab==='all'||s.source===_fsSubTab);
+    fsc.innerHTML=filtered.length?filtered.map(s=>`<div style="padding:10px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:6px;border-radius:4px"><div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${s.symbol}</span><span style="color:var(--S);font-weight:800">${s.curMult}×</span></div><div style="font-size:9px;color:var(--text2);margin-top:3px">$${s.entryPrice?.toFixed(4)||'?'} | ${s.score}</div></div>`).join(''):`<div style="color:var(--muted);padding:20px">No ${_fsSubTab} signals</div>`;
+  }
 }
 
 // Wire tab clicks to full-screen
