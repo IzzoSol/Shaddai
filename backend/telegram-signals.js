@@ -47,6 +47,42 @@ const _boostMap = new Map();      // tokenAddress → { amount, totalAmount, des
 let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of existing graduates)
 let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
+
+// ── CALL TRACKING & VALIDATION ──────────────────────────────────────────
+// Tracks all called signals for performance analysis and call-quality improvement
+const _CALL_HISTORY_FILE = path.join(__dirname, 'data', 'signal-calls-history.json');
+let _callHistory = [];
+function _loadCallHistory() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(_CALL_HISTORY_FILE, 'utf8'));
+    if (Array.isArray(raw)) _callHistory = raw.slice(-500); // keep last 500
+  } catch (e) { _callHistory = []; }
+}
+function _recordCallHistory(mint, symbol, entryFdv, entryPrice, source) {
+  _callHistory.push({
+    mint, symbol, entryFdv, entryPrice, source,
+    calledAt: Date.now(),
+    lastChecked: Date.now(),
+    currentFdv: null,
+    currentPrice: null,
+    multiplier: 1,
+    status: 'active' // active, hit2x, hit5x, dead
+  });
+  if (_callHistory.length > 500) _callHistory.shift();
+  try { fs.writeFileSync(_CALL_HISTORY_FILE, JSON.stringify(_callHistory)); } catch (e) {}
+}
+function _updateCallPerformance(mint, currentFdv, currentPrice) {
+  const call = _callHistory.find(c => c.mint === mint);
+  if (!call) return;
+  call.currentFdv = currentFdv;
+  call.currentPrice = currentPrice;
+  call.multiplier = currentPrice / call.entryPrice;
+  call.lastChecked = Date.now();
+  if (call.multiplier >= 5) call.status = 'hit5x';
+  else if (call.multiplier >= 2) call.status = 'hit2x';
+  else if (call.multiplier < 0.5) call.status = 'dead';
+}
+_loadCallHistory();
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
 const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (DexScreener 300 req/min, well within limit)
