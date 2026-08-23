@@ -2124,4 +2124,20 @@ async function _pipelineCycle(pipeline) {
   } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts, _socialScore, _passesSocial, _brainInsight, _brainAngle };
+module.exports = {
+  startTelegramSignals,
+  _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts,
+  _socialScore, _passesSocial, _brainInsight, _brainAngle,
+  // Analytics exports for /api/signals/analytics endpoint
+  _analyzeDeadCoins,
+  _loadCallHistory,
+  _recordCallHistory,
+  // Config exports for /api/signals/audit endpoint
+  HARD_FDV_CAP_TRENDING,
+  HARD_FDV_CAP_MAX,
+  RUG_MIN_SCORE,
+  AGE_GATE_SECONDS,
+  MULTIPLIER_CAP_DISCOVERY,
+  LP_LOCK_PERCENT_MINIMUM,
+  BUNDLE_MAX_PERCENT
+};

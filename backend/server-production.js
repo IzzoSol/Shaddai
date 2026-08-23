@@ -1408,6 +1408,54 @@ app.get('/api/signals/token/:q', (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
+// ── SIGNAL ANALYTICS & QUALITY METRICS ──────────────────────────────────────
+// GET /api/signals/analytics — returns dead coin analysis + signal quality metrics
+// Helps ZEROX improve calling system by tracking which sources produce winners
+app.get('/api/signals/analytics', (req, res) => {
+  try {
+    const siggen = require('./telegram-signals');
+    const analysis = siggen._analyzeDeadCoins();
+
+    // Calculate overall metrics
+    const all = siggen._loadCallHistory() || [];
+    const recent = all.slice(-100);  // Last 100 calls
+    const recent2x = recent.filter(c => c.multiplier >= 2).length;
+    const recent5x = recent.filter(c => c.multiplier >= 5).length;
+
+    res.json({
+      ok: true,
+      analysis,
+      metrics: {
+        totalCalls: all.length,
+        recentCalls: recent.length,
+        recent2xCount: recent2x,
+        recent5xCount: recent5x,
+        recent2xRate: recent.length ? ((recent2x / recent.length) * 100).toFixed(1) : 0,
+        recent5xRate: recent.length ? ((recent5x / recent.length) * 100).toFixed(1) : 0
+      },
+      generatedAt: new Date().toISOString()
+    });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+// ── SIGNAL QUALITY AUDIT ────────────────────────────────────────────────────
+// GET /api/signals/audit — detailed breakdown of quality gates and rug filters
+app.get('/api/signals/audit', (req, res) => {
+  try {
+    const siggen = require('./telegram-signals');
+    const config = {
+      hardFdvCapTrending: siggen.HARD_FDV_CAP_TRENDING,
+      hardFdvCapMax: siggen.HARD_FDV_CAP_MAX,
+      rugMinScore: siggen.RUG_MIN_SCORE,
+      ageGateSeconds: siggen.AGE_GATE_SECONDS,
+      multiplierCapFromDiscovery: siggen.MULTIPLIER_CAP_DISCOVERY,
+      lpLockPercentMinimum: siggen.LP_LOCK_PERCENT_MINIMUM,
+      bundleMaxPercent: siggen.BUNDLE_MAX_PERCENT
+    };
+    res.json({ ok: true, config });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
 // ============================================
 // PROXY ROUTES — mounted BEFORE agent wildcard so /api/agents/custom
 // is handled by proxy instead of being caught by /api/agents/:name
