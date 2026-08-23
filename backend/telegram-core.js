@@ -245,6 +245,22 @@ async function sendPhoto(chatId, photo, caption, buttons) {
     return r.ok;
   } catch (e) { return false; }
 }
+
+// Send an audio track (Buffer of WAV/MP3 bytes) with an HTML caption. Used by /music.
+async function sendAudio(chatId, audio, filename, caption, title) {
+  const t = token(); if (!t || chatId == null || !audio) return false;
+  try {
+    const fd = new FormData();
+    fd.append('chat_id', String(chatId));
+    if (caption) { fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML'); }
+    if (title) fd.append('title', String(title).slice(0, 64));
+    const mime = /\.mp3$/i.test(filename || '') ? 'audio/mpeg' : 'audio/wav';
+    fd.append('audio', new Blob([audio], { type: mime }), filename || 'track.wav');
+    const r = await fetch(TG(t, 'sendAudio'), { method: 'POST', body: fd });
+    if (r.status === 403) removeChat(chatId);
+    return r.ok;
+  } catch (e) { return false; }
+}
 async function broadcastPhoto(photo, caption, buttons) {
   const t = token(); if (!t) return 0;
   const targets = new Set(); const ch = channel(); if (ch) targets.add(ch);
@@ -282,4 +298,4 @@ function buildButtons(mint, chain, chartUrl, opts) {
   return { inline_keyboard: rows };
 }
 
-module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, broadcastPhoto, buildButtons, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset, getPreset, activePresetKey };
+module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, sendAudio, broadcastPhoto, buildButtons, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset, getPreset, activePresetKey };

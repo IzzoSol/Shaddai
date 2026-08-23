@@ -149,14 +149,42 @@ async function _handleCallback(cfg, cq) {
       const key = data.slice(4);
       const cap = _pnl.pnlForToken(key) || 'No tracked call found for that token.';
       const call = _pnl._findCall ? _pnl._findCall(key) : null;
-      const img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
       const btns = _core.buildButtons(key, (call && call.chain) || 'solana', null);
-      await answer('📸 PNL card below');
+      await answer('📸 Generating PNL card…');
+      // AI-generated PNL image first (HF keys + Pollinations fallback)
+      let img = null;
+      try { if (_pnl.pnlImages) img = await _pnl.pnlImages.generatePnlImage(call || { symbol: key, peakMult: 1, curMult: 1 }); } catch (e) {}
+      // Fall back to milestone image, then random static pnl image
+      if (!img) img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
       if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
       return _send(t, chatId, cap);
     }
     return answer();
   } catch (e) { return answer(); }
+}
+
+// /music — compose a free procedural track (Turtle Music Bot) and send it as audio.
+// Args (any order, all optional): genre (lofi/synthwave/trap/ambient/house/8bit),
+// mood (chill/bright/dark/dreamy/hype), and a bar count 4-16.
+async function _music(t, chatId, arg) {
+  const mg = require('./lib/music-gen-node');
+  let genre = null, mood = null, bars = 8;
+  String(arg || '').toLowerCase().split(/\s+/).filter(Boolean).forEach((w) => {
+    const gk = mg.pickGenre(w), mk = mg.pickMood(w);
+    if (!genre && gk) genre = gk;
+    else if (!mood && mk) mood = mk;
+    else if (/^\d+$/.test(w)) bars = Math.max(4, Math.min(16, parseInt(w, 10)));
+  });
+  await _send(t, chatId, '🐢 <b>Turtle Music Bot</b> is composing a <b>' + (genre || 'lofi') + '</b> track…');
+  try {
+    const { wav, meta } = mg.generate({ genre, mood, bars });
+    const cap = '🐢 <b>Turtle Music Bot</b> · ' + meta.genreName + ' · ' + meta.bpm + ' BPM · ' + meta.seconds + 's\n' +
+      '<i>Free procedural track · ShaddaiLabs</i>\nTry: <code>/music synthwave hype</code>';
+    const ok = await _core.sendAudio(chatId, wav, 'turtle-' + meta.genre + '.wav', cap, meta.genreName + ' — Turtle Music Bot');
+    if (!ok) return _send(t, chatId, '⚠️ Could not send the track. Try again in a moment.');
+  } catch (e) {
+    return _send(t, chatId, '⚠️ Music engine hiccup — try <code>/music lofi</code>');
+  }
 }
 
 async function _handle(cfg, update) {
@@ -176,6 +204,9 @@ async function _handle(cfg, update) {
     case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
     case 'zerox': case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
     case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable.'); }
+
+    // /music [genre] [mood] [bars] — free procedural track by Turtle Music Bot (ShaddaiLabs)
+    case 'music': case 'song': case 'beat': case 'track': return _music(t, chatId, arg);
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
 
     // /lb — leaderboard (text only, no image, no HF)
@@ -323,6 +354,7 @@ async function _registerCommands(token) {
     { command: 'rug',     description: 'Rug-check a Solana mint' },
     { command: 'preset',  description: 'View/switch signal filter presets' },
     { command: 'ask',     description: 'Ask a SHADDAI agent anything' },
+    { command: 'music',   description: 'Free music track  e.g. /music synthwave hype' },
     { command: 'zerox',   description: 'ZEROX market analysis + sentiment' },
     { command: 'news',    description: 'Live market pulse' },
     { command: 'signals', description: 'Free live signals channel link' },

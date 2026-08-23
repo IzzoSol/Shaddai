@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coin Launch Kit — SHADDAI</title>
+<meta name="description" content="Type your coin idea. Get launch posts, meme concepts and a banner in seconds — free, no signup. Powered by the SHADDAI council." />
+<meta property="og:title" content="Coin Launch Kit — posts, memes + a banner in seconds" />
+<meta property="og:description" content="Type a coin idea, get a launch pack. Free, no signup." />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0713; --void2:#140a24; --panel:#160e2a; --panel2:#1c1236;
+    --acc:#b16cff; --acc2:#00ffd0; --gold:#e8c45c;
+    --ink:#f3e9ff; --ink2:#b6a9d6; --dim:#6f6390;
+    --line:rgba(177,108,255,.18); --lineA:rgba(0,255,208,.24);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--void); color:var(--ink); }
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; line-height:1.55;
+    background-image:
+      radial-gradient(900px 560px at 84% -8%, rgba(177,108,255,.22), transparent 60%),
+      radial-gradient(760px 520px at -6% 6%, rgba(0,255,208,.08), transparent 55%),
+      linear-gradient(180deg,#0b0716 0%,#080510 100%);
+    background-attachment:fixed; overflow-x:hidden;
+  }
+  body::before{ content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image:linear-gradient(rgba(177,108,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(177,108,255,.05) 1px,transparent 1px);
+    background-size:44px 44px; -webkit-mask-image:radial-gradient(circle at 50% 12%,#000,transparent 76%); mask-image:radial-gradient(circle at 50% 12%,#000,transparent 76%); }
+  a{ color:inherit; text-decoration:none; }
+  ::selection{ background:var(--acc); color:#0a0713; }
+
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+    padding:13px 20px; border-bottom:1px solid var(--line); backdrop-filter:blur(9px); background:rgba(10,7,19,.72); }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Cinzel',serif; font-weight:900; letter-spacing:.28em; font-size:13px; }
+  .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--acc2); box-shadow:0 0 10px var(--acc2); animation:pulse 2.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  .top .tcta{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); border:1px solid var(--line); padding:8px 13px; border-radius:9px; }
+  .top .tcta:hover{ color:var(--ink); border-color:var(--ink2); }
+
+  .wrap{ position:relative; z-index:2; max-width:760px; margin:0 auto; padding:0 18px 90px; }
+  .rise{ opacity:0; transform:translateY(18px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+
+  .head{ text-align:center; padding:44px 0 14px; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--acc2); }
+  .head h1{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.02em; font-size:clamp(30px,6.5vw,52px); line-height:1.04; margin:12px 0 10px;
+    background:linear-gradient(120deg,#d7b3ff,#fff 44%,#b16cff 78%,#d7b3ff); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 28px rgba(177,108,255,.32)); }
+  .head .sub{ max-width:500px; margin:0 auto; color:var(--ink2); font-size:clamp(15px,2vw,18px); }
+  .head .sub b{ color:var(--ink); font-weight:600; }
+
+  .card{ margin-top:22px; border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    background:linear-gradient(165deg,#170e2c,#100a20); box-shadow:0 24px 60px rgba(0,0,0,.45); }
+  .card-body{ padding:20px; }
+  label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin:0 0 6px; }
+  .row2{ display:grid; grid-template-columns:1fr 200px; gap:14px; }
+  input,textarea,select{ width:100%; background:#0a0714; border:1px solid var(--line); border-radius:11px; color:var(--ink);
+    padding:12px 13px; font-family:'Space Grotesk',sans-serif; font-size:15px; outline:none; transition:border-color .2s,box-shadow .2s; }
+  input:focus,textarea:focus,select:focus{ border-color:var(--acc2); box-shadow:0 0 0 3px rgba(0,255,208,.1); }
+  textarea{ min-height:74px; resize:vertical; }
+  select{ appearance:none; -webkit-appearance:none; cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23b6a9d6' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat; background-position:right 13px center; padding-right:34px; }
+  .fld{ margin-bottom:14px; }
+  .go{ width:100%; margin-top:4px; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:'Cinzel',serif; font-weight:700;
+    font-size:15px; letter-spacing:.06em; text-transform:uppercase; background:linear-gradient(100deg,var(--acc),#7c4bd8); color:#fff;
+    box-shadow:0 12px 30px rgba(177,108,255,.34); transition:transform .15s,filter .2s; }
+  .go:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+  .go:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .freehint{ text-align:center; margin-top:11px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); }
+  .freehint b{ color:var(--acc2); }
+
+  /* working */
+  .working{ display:none; padding:6px 2px; } .working.on{ display:block; }
+  .step{ display:flex; align-items:center; gap:10px; padding:6px 0; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); opacity:.35; transition:.3s; }
+  .step.on{ opacity:1; color:var(--acc2); } .step.done{ opacity:.75; }
+  .step .b{ width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; flex-shrink:0; }
+  .step.on .b{ background:currentColor; box-shadow:0 0 9px currentColor; animation:blip .9s ease-in-out infinite; }
+  @keyframes blip{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+
+  .err{ display:none; margin-top:12px; border:1px solid rgba(255,120,110,.4); border-radius:11px; padding:13px 15px; background:rgba(80,20,16,.25); color:#ffb4ab; font-size:14px; } .err.on{ display:block; }
+
+  /* results */
+  .out{ display:none; margin-top:22px; } .out.on{ display:block; }
+  .sec{ margin-bottom:22px; }
+  .sec h2{ font-family:'Cinzel',serif; font-weight:900; font-size:15px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 12px; display:flex; align-items:center; gap:9px; }
+  .sec h2 .cnt{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--dim); letter-spacing:.1em; }
+  .banner img,.banner svg{ width:100%; border-radius:13px; display:block; border:1px solid var(--line); }
+  .post{ position:relative; border:1px solid var(--line); border-radius:13px; padding:15px 16px; background:rgba(177,108,255,.05); margin-bottom:10px; white-space:pre-wrap; font-size:15px; line-height:1.5; }
+  .post .copy{ position:absolute; top:10px; right:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); border:1px solid var(--line); border-radius:7px; padding:4px 8px; cursor:pointer; background:rgba(10,7,19,.6); }
+  .post .copy:hover{ color:var(--ink); border-color:var(--acc2); }
+  .meme{ border:1px solid var(--line); border-radius:11px; padding:12px 14px; background:rgba(0,255,208,.04); margin-bottom:9px; font-size:14px; color:var(--ink); }
+  .meme b{ color:var(--acc2); }
+  .hired{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; border:1px solid var(--lineA); border-radius:13px; padding:13px 15px; background:rgba(0,255,208,.05); }
+  .hired .lbl{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  .hired .ag{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); border:1px solid var(--line); border-radius:100px; padding:5px 12px; background:rgba(177,108,255,.08); }
+  .hired .ag b{ color:var(--acc2); }
+
+  /* receipt */
+  .receipt{ margin-top:6px; border:1px dashed rgba(232,196,92,.4); border-radius:13px; padding:14px 16px; background:rgba(232,196,92,.04); }
+  .receipt .rt{ font-family:'Cinzel',serif; font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:11px; color:var(--gold); margin-bottom:10px; }
+  .rrow{ display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2); padding:3px 0; }
+  .rrow .ok{ color:var(--acc2); } .rrow .tool{ color:var(--ink); min-width:170px; } .rrow .src{ color:var(--dim); }
+
+  /* unlock band — waitlist, no hard price */
+  .unlock{ margin-top:26px; text-align:center; border:1px solid var(--lineA); border-radius:18px; padding:28px 22px;
+    background:radial-gradient(120% 140% at 50% -20%,rgba(0,255,208,.10),transparent 55%),linear-gradient(160deg,#170e2c,#100a20); }
+  .unlock h2{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(20px,3.4vw,28px); color:#fff; margin:0 0 6px; }
+  .unlock p{ color:var(--ink2); max-width:440px; margin:0 auto 8px; font-size:15px; }
+  .unlock .more{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0 18px; }
+  .chip{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.04em; color:var(--ink); border:1px solid var(--line); border-radius:100px; padding:7px 13px; background:rgba(177,108,255,.06); }
+  .chip b{ color:var(--acc2); }
+  .wl{ display:flex; gap:8px; max-width:400px; margin:0 auto; }
+  .wl input{ flex:1; }
+  .wl button{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:0 18px; border-radius:11px;
+    border:1px solid var(--lineA); background:linear-gradient(100deg,var(--acc2),#00c6a4); color:#04241d; font-weight:700; cursor:pointer; }
+  .wl button:hover{ filter:brightness(1.06); }
+  #wlMsg{ min-height:18px; margin-top:11px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--acc2); }
+  .unlock .mut{ display:block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--dim); }
+
+  @media(max-width:560px){ .row2{ grid-template-columns:1fr; } .head{ padding:32px 0 12px; } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="brand" href="/home.html"><span class="dot"></span>SHADDAI</a>
+    <a class="tcta" href="/prove.html">See the Council →</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow rise">Hire the SHADDAI Council · free preview</div>
+      <h1 class="rise" style="animation-delay:.05s">Launch your coin<br>in 60 seconds</h1>
+      <p class="sub rise" style="animation-delay:.1s">Put the Council to work. <b>QUILL</b> writes your launch posts, <b>TURTLE</b> designs your memes and banner — you just hired a team of agents for the job.</p>
+    </div>
+
+    <div class="card rise" style="animation-delay:.15s">
+      <div class="card-body">
+        <div class="row2">
+          <div class="fld"><label>Coin / project name</label><input id="name" maxlength="48" placeholder="MoonCat" autocomplete="off"></div>
+          <div class="fld"><label>Ticker</label><input id="ticker" maxlength="10" placeholder="MCAT" autocomplete="off"></div>
+        </div>
+        <div class="fld"><label>Describe it (the vibe / the joke)</label>
+          <textarea id="desc" maxlength="200" placeholder="A funny pixel cat coin for crypto Twitter — chaotic, comfy, degen."></textarea></div>
+        <div class="fld"><label>Visual style</label>
+          <select id="style">
+            <option value="purple_retro_degen">Purple · Retro · Degen</option>
+            <option value="neon_cyber">Neon · Cyber</option>
+            <option value="meme_green">Meme · Green</option>
+            <option value="vapor_pink">Vaporwave · Pink</option>
+            <option value="gold_lux">Gold · Luxury</option>
+            <option value="minimal_dark">Minimal · Dark</option>
+          </select></div>
+        <button class="go" id="goBtn" onclick="makeKit()">Put the Council to work →</button>
+        <div class="freehint">Free preview · <b>no signup</b> · you only pay agents for the full job</div>
+
+        <div class="working" id="working" style="margin-top:14px">
+          <div class="step" data-s="0"><span class="b"></span><span>QUILL is writing your launch posts…</span></div>
+          <div class="step" data-s="1"><span class="b"></span><span>TURTLE is sketching meme concepts…</span></div>
+          <div class="step" data-s="2"><span class="b"></span><span>Rendering your banner (pure SVG)…</span></div>
+          <div class="step" data-s="3"><span class="b"></span><span>Sealing the tool receipt…</span></div>
+        </div>
+        <div class="err" id="err"></div>
+      </div>
+    </div>
+
+    <div class="out" id="out">
+      <div class="sec" id="hiredSec">
+        <div class="hired" id="hired"></div>
+      </div>
+      <div class="sec banner">
+        <h2>🎨 Your banner</h2>
+        <div id="bannerBox"></div>
+      </div>
+      <div class="sec">
+        <h2>🐦 Launch posts <span class="cnt" id="postCnt"></span></h2>
+        <div id="posts"></div>
+      </div>
+      <div class="sec">
+        <h2>😂 Meme concepts <span class="cnt" id="memeCnt"></span></h2>
+        <div id="memes"></div>
+      </div>
+      <div class="sec">
+        <div class="receipt">
+          <div class="rt">✓ SHADDAI Tool Receipt</div>
+          <div id="receipt"></div>
+        </div>
+      </div>
+
+      <div class="unlock">
+        <h2>Keep the Council on the job</h2>
+        <p>That was the free preview. Hire them for the full run and they go deeper:</p>
+        <div class="more">
+          <span class="chip"><b>10</b> posts</span>
+          <span class="chip"><b>8</b> meme concepts</span>
+          <span class="chip"><b>4</b> banner variants (no watermark)</span>
+          <span class="chip"><b>7-day</b> post calendar</span>
+        </div>
+        <div class="wl">
+          <input id="wlEmail" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email">
+          <button onclick="joinWaitlist()">Get it first</button>
+        </div>
+        <div id="wlMsg"></div>
+        <span class="mut">Free while in beta · early folks get it first</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var busy=false, lastCoin=null;
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+  function stepOn(i){ document.querySelectorAll('#working .step').forEach(function(s,idx){ s.classList.toggle('on',idx===i); if(idx<i) s.classList.add('done'); }); }
+
+  window.makeKit = async function(){
+    if(busy) return;
+    var name=$('name').value.trim(), ticker=$('ticker').value.trim(), desc=$('desc').value.trim(), style=$('style').value;
+    if(!name && !ticker){ $('name').focus(); return; }
+    busy=true; var btn=$('goBtn'); btn.disabled=true;
+    $('out').classList.remove('on'); $('err').classList.remove('on');
+    $('working').classList.add('on'); stepOn(0);
+    var s1=setTimeout(function(){ stepOn(1); },600), s2=setTimeout(function(){ stepOn(2); },1500), s3=setTimeout(function(){ stepOn(3); },2400);
+    try{
+      var r=await fetch('/api/coin-launch/preview',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name:name, ticker:ticker, desc:desc, style:style }) });
+      var d=await r.json();
+      clearTimeout(s1); clearTimeout(s2); clearTimeout(s3);
+      if(!d || !d.ok){ throw new Error((d&&d.error)||'No pack returned.'); }
+      render(d);
+    }catch(e){
+      clearTimeout(s1); clearTimeout(s2); clearTimeout(s3);
+      $('working').classList.remove('on');
+      var er=$('err'); er.classList.add('on'); er.innerHTML='The kit engine is warming up — <a href="#" style="color:var(--acc2)" onclick="makeKit();return false;">try again</a>.';
+      busy=false; btn.disabled=false;
+    }
+  };
+
+  function render(d){
+    lastCoin=d.coin;
+    $('working').classList.remove('on');
+    // who you hired
+    $('hired').innerHTML = '<span class="lbl">You hired</span>'+
+      '<span class="ag">✍️ <b>QUILL</b> · posts</span>'+
+      '<span class="ag">🐢 <b>TURTLE</b> · memes + banner</span>'+
+      '<span class="lbl" style="margin-left:auto">'+(d.receipt?d.receipt.length:4)+' tools · '+(d.tier==='free'?'free preview':'full job')+'</span>';
+    // banner (SVG is safe, server-built from escaped fields)
+    $('bannerBox').innerHTML = d.banner && d.banner.svg ? d.banner.svg : '';
+    // posts
+    $('postCnt').textContent = d.posts.length + (d.locked?(' of '+(d.posts.length+d.locked.posts)):'');
+    $('posts').innerHTML = d.posts.map(function(p){
+      return '<div class="post"><button class="copy" onclick="cp(this)">Copy</button>'+esc(p)+'</div>';
+    }).join('');
+    // memes
+    $('memeCnt').textContent = d.memes.length + (d.locked?(' of '+(d.memes.length+d.locked.memes)):'');
+    $('memes').innerHTML = d.memes.map(function(m){ return '<div class="meme">'+esc(m)+'</div>'; }).join('');
+    // receipt
+    $('receipt').innerHTML = (d.receipt||[]).map(function(x){
+      return '<div class="rrow"><span class="ok">'+(x.ok?'✓':'✕')+'</span>'+
+        '<span class="tool">'+esc(x.tool)+'</span>'+
+        '<span class="src">'+esc(x.source||'—')+'</span>'+
+        '<span style="margin-left:auto;color:var(--dim)">'+esc(x.ms)+'ms</span></div>';
+    }).join('');
+    $('out').classList.add('on');
+    $('out').scrollIntoView({ behavior:'smooth', block:'start' });
+    busy=false; $('goBtn').disabled=false;
+  }
+
+  window.cp = function(btn){
+    var txt = btn.parentNode.textContent.replace(/^Copy/,'').trim();
+    navigator.clipboard && navigator.clipboard.writeText(txt);
+    btn.textContent='Copied ✓'; setTimeout(function(){ btn.textContent='Copy'; },1400);
+  };
+
+  window.joinWaitlist = function(){
+    var email=($('wlEmail').value||'').trim(), msg=$('wlMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.style.color='#ff9d90'; msg.textContent='Enter a valid email.'; return; }
+    msg.style.color='var(--ink2)'; msg.textContent='Saving…';
+    fetch('/api/coin-launch/checkout',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email:email, coin:lastCoin }) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.enabled && res.url){ window.location.href=res.url; return; }
+        msg.style.color='var(--acc2)'; msg.textContent="You're on the list ✓ — you'll get the full pack first.";
+        try{ localStorage.setItem('shd_coinlaunch_email', email); }catch(e){}
+      })
+      .catch(function(){ msg.style.color='var(--acc2)'; msg.textContent="Saved ✓ — you'll get it first."; });
+  };
+})();
+</script>
+</body>
+</html>

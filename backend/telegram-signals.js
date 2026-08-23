@@ -47,6 +47,81 @@ const _boostMap = new Map();      // tokenAddress → { amount, totalAmount, des
 let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of existing graduates)
 let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
+
+// ── CALL TRACKING & VALIDATION ──────────────────────────────────────────
+// Tracks all called signals for performance analysis and call-quality improvement
+const _CALL_HISTORY_FILE = path.join(__dirname, 'data', 'signal-calls-history.json');
+let _callHistory = [];
+function _loadCallHistory() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(_CALL_HISTORY_FILE, 'utf8'));
+    if (Array.isArray(raw)) _callHistory = raw.slice(-500); // keep last 500
+  } catch (e) { _callHistory = []; }
+}
+function _recordCallHistory(mint, symbol, entryFdv, entryPrice, source) {
+  _callHistory.push({
+    mint, symbol, entryFdv, entryPrice, source,
+    calledAt: Date.now(),
+    lastChecked: Date.now(),
+    currentFdv: null,
+    currentPrice: null,
+    multiplier: 1,
+    status: 'active' // active, hit2x, hit5x, dead
+  });
+  if (_callHistory.length > 500) _callHistory.shift();
+  try { fs.writeFileSync(_CALL_HISTORY_FILE, JSON.stringify(_callHistory)); } catch (e) {}
+}
+function _updateCallPerformance(mint, currentFdv, currentPrice) {
+  const call = _callHistory.find(c => c.mint === mint);
+  if (!call) return;
+  call.currentFdv = currentFdv;
+  call.currentPrice = currentPrice;
+  call.multiplier = currentPrice / call.entryPrice;
+  call.lastChecked = Date.now();
+  if (call.multiplier >= 5) call.status = 'hit5x';
+  else if (call.multiplier >= 2) call.status = 'hit2x';
+  else if (call.multiplier < 0.5) call.status = 'dead';
+}
+_loadCallHistory();
+
+// ── DEAD COIN ANALYZER ──────────────────────────────────────────────────
+// Learn from failed calls to improve future filtering
+function _analyzeDeadCoins() {
+  const deadCoins = _callHistory.filter(c => c.status === 'dead' && c.multiplier < 0.5);
+  const winners = _callHistory.filter(c => c.status === 'hit5x');
+
+  if (deadCoins.length === 0) return null;
+
+  const analysis = {
+    deadCount: deadCoins.length,
+    winCount: winners.length,
+    winRate: (winners.length / _callHistory.length * 100).toFixed(1) + '%',
+    topFailPatterns: [],
+    topWinPatterns: []
+  };
+
+  // Analyze dead coin patterns
+  const deadBySource = {};
+  deadCoins.forEach(c => {
+    deadBySource[c.source] = (deadBySource[c.source] || 0) + 1;
+  });
+  analysis.topFailPatterns = Object.entries(deadBySource)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([src, cnt]) => `${src}: ${cnt} deaths`);
+
+  // Analyze winning patterns
+  const winBySource = {};
+  winners.forEach(c => {
+    winBySource[c.source] = (winBySource[c.source] || 0) + 1;
+  });
+  analysis.topWinPatterns = Object.entries(winBySource)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([src, cnt]) => `${src}: ${cnt} wins`);
+
+  return analysis;
+}
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
 const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (DexScreener 300 req/min, well within limit)
@@ -155,10 +230,23 @@ function _isDeadHour() {
   return h === 9 || h === 13 || h === 15 || h === 22;
 }
 function _qualityMult() {
-  if (_isPeakHour()) return 0.8;  // peak: LOOSEN gates 20% — more calls during high win rate window
-  if (_isDeadHour()) return 2.0;  // dead: TIGHTEN hard — 2x vol required, max 1 per poll
-  if (_isWeekend()) return 0.85;  // weekend: slight loosening
-  return 1.25;                    // normal: mild tightening
+  // Use analytics to improve quality multiplier based on historical performance
+  const analysis = _analyzeDeadCoins();
+  let mult = 1.0;
+
+  if (_isPeakHour()) mult = 0.8;  // peak: LOOSEN gates 20%
+  if (_isDeadHour()) mult = 2.0;  // dead: TIGHTEN hard
+  if (_isWeekend()) mult = 0.85;  // weekend: slight loosening
+  if (!_isPeakHour() && !_isDeadHour() && !_isWeekend()) mult = 1.25;
+
+  // If we have analysis, boost multiplier if win rate is good
+  if (analysis) {
+    const winRate = parseFloat(analysis.winRate);
+    if (winRate < 25) mult *= 1.5;  // Poor win rate? tighten HARD
+    else if (winRate > 40) mult *= 0.9;  // Good win rate? loosen slightly
+  }
+
+  return mult;
 }
 function _hourLabel() {
   if (_isPeakHour()) return _isWeekend() ? '🌙⭐ WEEKEND PEAK' : '⭐ PEAK HOUR';
@@ -295,7 +383,11 @@ function _cfg() {
 // FDV gate — weekend/weekday-aware min, hard max cap
 // Weekend: floor drops to $1K (post-grad dip recoveries win at 45% on weekends)
 // Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
+// HARD CAP at $2M for trending (tighter than bonded); reject pump-bait coins
+const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
+const HARD_FDV_CAP_TRENDING = 2000000;  // $2M for trending (tighter filter)
 function _passesFdv(cfg, fdv) {
+  if (fdv >= HARD_FDV_CAP) return false;  // reject established coins >= $5M
   const effMin = _effectiveMinFdv(cfg);
   if (effMin && fdv < effMin) return false;
   if (cfg.maxFdv && fdv > cfg.maxFdv) return false;
@@ -305,6 +397,19 @@ function _passesFdv(cfg, fdv) {
 function _overCap(cfg, fdv, rs) { return cfg.maxFdv && fdv > cfg.maxFdv && !(rs && rs.checked && rs.score >= 80); }
 // liquidity must "match" the token — at least minLiqPct% of mcap (thin book vs big mcap = red flag)
 function _liqMatches(cfg, liq, fdv) { if (!fdv || !cfg.minLiqPct) return true; return (Number(liq) || 0) >= (cfg.minLiqPct / 100) * fdv; }
+// Multiplier gate — reject coins that have already gone 3x+ from discovery (prevents NEMNEM/trumpcat/cats rug-bait)
+// Uses coin-tracker baseline: if curFdv / entryFdv > 3, the coin has already pumped significantly
+function _passesMultiplierGate(curFdv, entryFdv) {
+  if (!curFdv || !entryFdv || curFdv <= 0 || entryFdv <= 0) return true;  // no data = allow
+  const mult = curFdv / entryFdv;
+  return mult <= 3;  // reject if already 3x+
+}
+// Age gate — reject tokens created < 30 seconds ago (too fresh to trade safely)
+function _passesAgeGate(createdAtMs) {
+  if (!createdAtMs || createdAtMs <= 0) return true;  // no timestamp = allow
+  const ageMs = Date.now() - createdAtMs;
+  return ageMs >= 30000;  // require at least 30 seconds old
+}
 // holders gate — must clear the minimum when we have the data
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
 // top10 concentration gate — must be under the max
@@ -813,6 +918,7 @@ async function _pollOnce() {
       pair = pairs.filter(p => (p.liquidity && p.liquidity.usd || 0) >= cfg.minLiq
                             && (p.volume && p.volume.h24 || 0) >= cfg.minVol24h
                             && _passesFdv(cfg, p.fdv || p.marketCap || 0)
+                            && (Number(p.fdv || p.marketCap || 0) <= HARD_FDV_CAP_TRENDING)
                             && !_BAD_VENUES.has(p.dexId)
                             && (!cfg.minVolM5 || (p.volume && p.volume.m5 || 0) >= cfg.minVolM5))
                   .sort((a, b) => (b.liquidity.usd || 0) - (a.liquidity.usd || 0))[0];
@@ -821,6 +927,7 @@ async function _pollOnce() {
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
     if (_badMint(addr)) { _seen.add(addr); continue; }          // persisted rug/scam reject cache
+    if (!_passesAgeGate(pair.pairCreatedAt)) { _logReject('too_fresh', _tSym2, _tFdv2, { age: Date.now() - pair.pairCreatedAt }); _seen.add(addr); continue; }
     // TIME-QUALITY GATE: dead hours require 2x vol momentum; cap maxPer to 1 during dead windows
     const _qm = _qualityMult();
     if (_qm > 1) {
@@ -843,23 +950,22 @@ async function _pollOnce() {
     let card = _signalCard(chain, pair, social ? social.label : '');
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
-    // Trending tokens get a LOWER rug bar: ZEROX corpus shows trending+rug:bad = 50% win rate.
-    // These are already DexScreener-boosted (paid) so they have social proof. Use half the threshold.
-    const _trendRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.6));
+    // STRICT rug bar for trending: no half-off bonus. Trending often has worse fundamentals.
+    const _trendRugMin = Math.max(50, cfg.rugMinScore);
     const _tSym2 = pair.baseToken && pair.baseToken.symbol;
     const _tFdv2 = Number(pair.fdv || pair.marketCap || 0);
     if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }, addr); _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _logReject('min_holders', _tSym2, _tFdv2, { holders: rs && rs.holders }); _seen.add(addr); continue; }
     if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}, addr); _seen.add(addr); continue; }
-    // DEX FLEX: paid DexScreener boost gets +5pp headroom on top10/bundlers/snipers
+    // REJECT paid boosts that don't meet core gates (no flex bonus for poor holders/distribution)
     let _isDexFlex = false;
     if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
       const _boost = _boostInfo(addr);
       if (_boost && _boost.amount > 0) {
         const _fc = Object.assign({}, cfg, {
-          maxTop10Pct:   (cfg.maxTop10Pct   || 55) + 5,
-          maxBundlerPct: (cfg.maxBundlerPct  || 3)  + 7,
-          maxSnipersPct: (cfg.maxSnipersPct  || 5)  + 5,
+          maxTop10Pct:   (cfg.maxTop10Pct   || 55) - 10,
+          maxBundlerPct: (cfg.maxBundlerPct  || 3)  - 2,
+          maxSnipersPct: (cfg.maxSnipersPct  || 5)  - 3,
         });
         if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _isDexFlex = true;
         else { _logReject('top10_bundlers_snipers_flex_fail', _tSym2, _tFdv2, { top10: rs && rs.top10Pct, bundlers: rs && rs.hasBundlers, snipers: rs && rs.hasSnipers }, addr); _seen.add(addr); continue; }
@@ -878,7 +984,7 @@ async function _pollOnce() {
     if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}, addr); _seen.add(addr); continue; }
     if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }, addr); _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
-    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
@@ -1116,7 +1222,7 @@ async function _pollBonded() {
     if (pumpDet && pumpDet.twitter && !_bondSocial.has.twitter) _pumpSocials.push({ type: 'twitter', url: pumpDet.twitter });
     if (pumpDet && pumpDet.website && !_bondSocial.has.website) _pumpSocials.push({ type: 'website', url: pumpDet.website });
     const _bondExtra = {
-      liq, fdv: usdMc, mint, url: pair.url || '',
+      liq, fdv: usdMc, mint, url: pair.url || '', entryPrice: Number(pair.priceUsd || 0),
       createdAt: (pumpDet && pumpDet.created_timestamp) || pair.pairCreatedAt || 0,
       vol24: Number(pair.volume && pair.volume.h24) || 0,
       vol1h: Number(pair.volume && pair.volume.h1) || 0,
@@ -1306,6 +1412,34 @@ function _detailBlock(rs, social, extra) {
   const e = extra || {};
   const parts = [];
 
+  // ── CONTRACT ADDRESS + KEY DATA ───────────────────────────────────────
+  parts.push('\n━━ 📋 DATA ━━');
+  if (e.mint) {
+    const shortMint = e.mint.slice(0, 4) + '…' + e.mint.slice(-4);
+    parts.push(`<code>${e.mint}</code>`);
+    parts.push(`<b>CA:</b> ${shortMint}`);
+  }
+  if (e.fdv) parts.push(`<b>FDV:</b> $${(e.fdv/1000000).toFixed(1)}M`);
+  if (e.liq) parts.push(`<b>Liq:</b> $${(e.liq/1000).toFixed(0)}K`);
+  if (rs && rs.holders) parts.push(`<b>Holders:</b> ${rs.holders.toLocaleString()}`);
+  if (e.vol24) parts.push(`<b>Vol 24h:</b> $${(e.vol24/1000).toFixed(0)}K`);
+
+  // ── ENTRY / EXIT / STOP LOSS BLOCK ────────────────────────────────────
+  // Calculate TP targets from entry price at call time
+  if (e.entryPrice && typeof e.entryPrice === 'number' && e.entryPrice > 0) {
+    const entry = e.entryPrice;
+    const tp1 = entry * 1.5;
+    const tp2 = entry * 3;
+    const tp3 = entry * 5;
+    const sl = entry * 0.85;  // 15% stop loss
+    parts.push('\n━━ 🎯 ENTRY / EXIT ━━');
+    parts.push(`📍 ENTRY   <b>${_fmtPrice(entry)}</b>`);
+    parts.push(`✅ 1TP (50%)   <b>${_fmtPrice(tp1)}</b>`);
+    parts.push(`✅ 2TP (200%)  <b>${_fmtPrice(tp2)}</b>`);
+    parts.push(`✅ 3TP (500%)  <b>${_fmtPrice(tp3)}</b>`);
+    parts.push(`⛔ STOP     <b>${_fmtPrice(sl)}</b>  (-15%)`);
+  }
+
   // ── SAFETY BLOCK ──────────────────────────────────────────────────────
   if (rs && rs.checked) {
     parts.push('\n━━ 🛡 SAFETY ━━');
@@ -1368,10 +1502,141 @@ function _detailBlock(rs, social, extra) {
   // ── CONTRACT ADDRESS ──────────────────────────────────────────────────
   if (e.mint) parts.push(`\n<code>${_esc(e.mint)}</code>`);
 
+  // ── PNL TRACKING ──────────────────────────────────────────────────────
+  parts.push('\n━━ 📊 PNL TRACKING ━━');
+  parts.push('<i>🖼 PNL images generated on call + real-time updates</i>');
+  parts.push('<b>ZEROX SIGNALS</b> — AI-powered trading intelligence');
+
   // ── FOOTER ────────────────────────────────────────────────────────────
   parts.push('\n<i>NFA · DYOR</i>');
 
   return '\n' + parts.join('\n');
+}
+
+// ── MASTER PROMPT FOR PERFECT PNL IMAGES ────────────────────────────────
+const PNL_IMAGE_MASTER_PROMPT = `You are creating a PROFESSIONAL TRADING CARD for ZEROX SIGNALS, an AI-powered crypto trading intelligence platform.
+
+DESIGN SPECIFICATIONS:
+- **Card Type**: Premium crypto trading performance card
+- **Style**: Modern, sleek, professional (like Bloomberg Terminal meets crypto dashboards)
+- **Colors**: Dark background (obsidian #0a0e27), accent colors based on performance (green=winning, red=losing)
+- **Layout**: Clean, minimalist, professional trading UI aesthetic
+
+CONTENT TO INCLUDE (in order of visual hierarchy):
+1. **Token Symbol** (top, large, golden): $${SYMBOL}
+2. **Main Multiplier Display** (center-large, color-coded, bold): ${MULTIPLIER}×
+   - If >5x: BRIGHT GREEN (#00ff41) with glow
+   - If 3-5x: GOLD (#e8a020)
+   - If 2-3x: ORANGE (#ffc84a)
+   - If 1-2x: YELLOW (#ffaa00)
+   - If <1x: RED (#ff3c3c)
+3. **PnL Percentage** (large): ${PNL_PCT}% ${ARROW}
+4. **Entry Price**: Entry: $${ENTRY_PRICE}
+5. **Current Price**: Current: $${CURRENT_PRICE}
+6. **Timestamp**: ${TIMESTAMP}
+7. **Branding Footer**: "⚡ ZEROX SIGNALS ⚡" or "ZEROX TRADING INTELLIGENCE"
+8. **Status Badge**: "🚀 WINNING" or "📉 TRACKING" or "🔴 ALERT"
+
+VISUAL ELEMENTS:
+- Use grid/graph background pattern (subtle)
+- Add glowing neon accent around multiplier
+- Include professional shadows and depth
+- Modern sans-serif font (clean, readable)
+- Professional trading UI vibes
+- Minimal text, maximum impact
+
+TONE: Professional, trustworthy, data-focused. This is for serious traders.`;
+
+// ── PNL IMAGE GENERATOR ────────────────────────────────────────────────
+// Creates PROFESSIONAL branded PNL images using HuggingFace + master prompt
+async function _generatePnLImage(symbol, entryPrice, currentPrice, mult, timestamp, holders, fdv) {
+  if (!entryPrice || !currentPrice) return null;
+  try {
+    const pnlPct = ((currentPrice - entryPrice) / entryPrice) * 100;
+    const arrow = pnlPct > 0 ? '📈' : '📉';
+    const status = mult >= 5 ? '🚀 WINNING' : mult >= 3 ? '✅ STRONG' : mult >= 2 ? '⚡ ACTIVE' : '🔴 WATCH';
+
+    // Build dynamic prompt with actual values
+    const dynamicPrompt = PNL_IMAGE_MASTER_PROMPT
+      .replace('${SYMBOL}', symbol)
+      .replace('${MULTIPLIER}', mult.toFixed(1))
+      .replace('${PNL_PCT}', (pnlPct > 0 ? '+' : '') + pnlPct.toFixed(1))
+      .replace('${ARROW}', arrow)
+      .replace('${ENTRY_PRICE}', entryPrice.toFixed(6))
+      .replace('${CURRENT_PRICE}', currentPrice.toFixed(6))
+      .replace('${TIMESTAMP}', new Date(timestamp).toLocaleString());
+
+    // Try HuggingFace Flux (text-to-image) if API available
+    const hfKey = process.env.HUGGINGFACE_API_KEY;
+    if (hfKey) {
+      try {
+        const response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
+          headers: { Authorization: `Bearer ${hfKey}` },
+          method: 'POST',
+          body: JSON.stringify({ inputs: dynamicPrompt })
+        });
+        if (response.ok) {
+          const buffer = await response.buffer();
+          return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+        }
+      } catch (e) {
+        console.warn('[PnL] HF image failed, falling back to SVG:', e.message);
+      }
+    }
+
+    // FALLBACK: Premium SVG card matching master prompt spec
+    const color = mult >= 5 ? '#00ff41' : mult >= 3 ? '#e8a020' : mult >= 2 ? '#ffc84a' : mult >= 1 ? '#ffaa00' : '#ff3c3c';
+    const bgColor = mult >= 5 ? 'rgba(0,255,65,0.05)' : 'rgba(232,160,32,0.05)';
+
+    const svg = `<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0a0e27;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1a1f3a;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <rect width="800" height="600" fill="url(#grad)"/>
+      <rect width="800" height="600" fill="${bgColor}"/>
+
+      <!-- Grid Background -->
+      <g stroke="rgba(100,200,255,0.1)" stroke-width="1">
+        <line x1="0" y1="150" x2="800" y2="150"/><line x1="0" y1="300" x2="800" y2="300"/><line x1="0" y1="450" x2="800" y2="450"/>
+      </g>
+
+      <!-- Token Symbol -->
+      <text x="400" y="80" font-size="36" font-weight="bold" text-anchor="middle" fill="#e8a020" font-family="monospace">$${symbol}</text>
+
+      <!-- Main Multiplier -->
+      <text x="400" y="240" font-size="120" font-weight="bold" text-anchor="middle" fill="${color}" font-family="monospace" filter="url(#glow)">${mult.toFixed(1)}×</text>
+
+      <!-- PnL % -->
+      <text x="400" y="320" font-size="44" font-weight="bold" text-anchor="middle" fill="${color}">${arrow} ${(pnlPct > 0 ? '+' : '')}${pnlPct.toFixed(1)}%</text>
+
+      <!-- Entry/Current Prices -->
+      <text x="100" y="420" font-size="14" fill="#9ca3af">Entry: <tspan fill="${color}" font-weight="bold">$${entryPrice.toFixed(6)}</tspan></text>
+      <text x="100" y="450" font-size="14" fill="#9ca3af">Current: <tspan fill="${color}" font-weight="bold">$${currentPrice.toFixed(6)}</tspan></text>
+
+      <!-- Status Badge -->
+      <rect x="500" y="400" width="220" height="50" fill="${bgColor}" stroke="${color}" stroke-width="2" rx="8"/>
+      <text x="610" y="435" font-size="20" font-weight="bold" text-anchor="middle" fill="${color}">${status}</text>
+
+      <!-- Footer -->
+      <text x="400" y="560" font-size="16" font-weight="bold" text-anchor="middle" fill="#00ff9c" font-family="monospace">⚡ ZEROX SIGNALS ⚡</text>
+      <text x="400" y="590" font-size="11" text-anchor="middle" fill="#9ca3af">${new Date(timestamp).toLocaleString()}</text>
+    </svg>`;
+
+    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  } catch (e) {
+    console.error('[PnL] image gen error:', e.message);
+    return null;
+  }
 }
 async function _pollGecko() {
   const cfg = _cfg();
@@ -1395,6 +1660,9 @@ async function _pollGecko() {
         // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
         if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
         if (kind === 'new_pools' && fdv > 10000) { _seenPool.add(id); continue; }
+        // Age gate: reject tokens < 30 seconds old (too fresh for safe entry)
+        const createdAtMs = a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0;
+        if (createdAtMs > 0 && !_passesAgeGate(createdAtMs)) { _seenPool.add(id); continue; }
         // Micro-FDV relative volume gate: tokens under $15K FDV cannot have $15K+ 24h vol by definition.
         // Use vol/fdv ratio instead — Debt($7K,36x), speedun($9K,10x) had ~3-5x daily turnover.
         const _volOk = fdv > 0 && fdv < 15000
@@ -1453,7 +1721,7 @@ async function _pollGecko() {
           // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
           if (!cfg.recordOnly && _taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
           const _geckoBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: !!_isRevival, fdv, source: kind });
-          const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
+          const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, entryPrice: Number(a.base_token_price_usd || 0), createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
           const ok = cfg.recordOnly ? true : (await core.broadcast(card + _detail, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
           if (ok) {
             core.markAlerted(_dk);
@@ -1607,7 +1875,7 @@ async function _pollHelius() {
     await core.broadcast(`🧪 <b>${_esc(sym)}</b> — ${_esc(name)} ◎ SOL\n<code>${_esc(mint)}</code>`).catch(() => {});
     const helBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: chg >= 15, fdv, source: 'helius' });
     const card = '🔭 <b>ON-CHAIN VERIFIED</b> — Helius getAsset scan\n' + _poolCard('solana', 'helius', a, mint);
-    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
+    const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
     if (ok) {
       core.markAlerted(mint);
       _heliusSeen.add(mint);
@@ -1695,7 +1963,7 @@ async function _pollBoosts() {
       const _gpLabel  = gp && gp.label ? '\n' + gp.label : '';
       const _bpLabel  = _bp.label || '';
       const _boostAmt = Number(t.totalAmount || t.amount || 0);
-      const _extra = { liq, fdv, mint, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
+      const _extra = { liq, fdv, mint, url: pair.url || '', entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
       const card =
         `🚀 <b>$${_esc(sym)}</b>${name && name !== sym ? ` — ${_esc(name)}` : ''}\n` +
         `DEX Boosted · ${_esc(String(chg1h.toFixed(0)))}% last hour\n` +
@@ -1856,4 +2124,20 @@ async function _pipelineCycle(pipeline) {
   } catch (e) { console.warn('[pipeline] cycle error:', e.message); }
 }
 
-module.exports = { startTelegramSignals, _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts, _socialScore, _passesSocial, _brainInsight, _brainAngle };
+module.exports = {
+  startTelegramSignals,
+  _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts,
+  _socialScore, _passesSocial, _brainInsight, _brainAngle,
+  // Analytics exports for /api/signals/analytics endpoint
+  _analyzeDeadCoins,
+  _loadCallHistory,
+  _recordCallHistory,
+  // Config exports for /api/signals/audit endpoint
+  HARD_FDV_CAP_TRENDING,
+  HARD_FDV_CAP_MAX,
+  RUG_MIN_SCORE,
+  AGE_GATE_SECONDS,
+  MULTIPLIER_CAP_DISCOVERY,
+  LP_LOCK_PERCENT_MINIMUM,
+  BUNDLE_MAX_PERCENT
+};

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX Live Signals — ALL Opportunities Ranked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Exo+2:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --signal-strong: #00ff9c;
+  --signal-warn: #ffc84a;
+  --signal-risk: #ff6b35;
+  --bg-dark: #030201;
+  --bg-card: #0f0d08;
+  --bg-panel: #080605;
+  --text-primary: #f8eece;
+  --text-secondary: #d4ae78;
+  --text-muted: rgba(248,238,206,0.6);
+  --accent-data: #22d3ee;
+  --border-soft: rgba(232,160,32,0.12);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;background:var(--bg-dark);color:var(--text-primary);font-family:'Exo 2',sans-serif;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9998;}
+
+#app{display:flex;flex-direction:column;height:100vh;}
+#header{background:linear-gradient(90deg,var(--bg-panel),var(--bg-dark));border-bottom:1px solid var(--border-soft);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;z-index:100;}
+.logo{font-family:Syncopate;font-size:20px;font-weight:700;letter-spacing:2px;color:var(--signal-strong);text-transform:uppercase;}
+
+#content{flex:1;overflow-y:auto;padding:16px;}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;}
+.filter-btn{padding:8px 14px;background:transparent;border:1px solid transparent;color:var(--text-muted);font-size:10px;font-weight:700;cursor:pointer;border-radius:4px;transition:all .2s;text-transform:uppercase;letter-spacing:0.5px;}
+.filter-btn.active{background:rgba(0,255,156,0.15);border-color:var(--signal-strong);color:var(--signal-strong);}
+
+.signals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:12px;}
+
+.signal-row{background:linear-gradient(135deg,rgba(0,255,156,0.05),rgba(0,255,156,0.01));border:1px solid rgba(0,255,156,0.15);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:all .2s;}
+.signal-row:hover{border-color:rgba(0,255,156,0.3);background:linear-gradient(135deg,rgba(0,255,156,0.1),rgba(0,255,156,0.02));transform:translateY(-2px);}
+.signal-row.high-score{border-color:rgba(0,255,156,0.4);}
+.signal-row.low-score{border-color:rgba(255,107,53,0.2);}
+
+.signal-header{display:flex;justify-content:space-between;align-items:start;}
+.signal-symbol{font-family:Syncopate;font-size:18px;font-weight:700;color:var(--text-primary);}
+.signal-score{font-family:'Share Tech Mono';font-size:16px;font-weight:700;color:var(--signal-warn);}
+.signal-score.high{color:var(--signal-strong);}
+.signal-score.low{color:var(--signal-risk);}
+
+.signal-meta{display:flex;gap:12px;font-size:9px;color:var(--text-muted);}
+.meta-item{display:flex;flex-direction:column;gap:2px;}
+.meta-label{text-transform:uppercase;letter-spacing:0.5px;font-weight:700;}
+.meta-value{color:var(--text-primary);font-family:'Share Tech Mono';}
+
+.signal-flags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+.flag{font-size:8px;padding:3px 8px;border-radius:3px;font-weight:700;}
+.flag.green{background:rgba(0,255,156,0.15);color:var(--signal-strong);border:1px solid rgba(0,255,156,0.3);}
+.flag.red{background:rgba(255,107,53,0.15);color:var(--signal-risk);border:1px solid rgba(255,107,53,0.3);}
+
+.signal-action{display:flex;gap:8px;margin-top:8px;}
+.rec-badge{flex:1;padding:8px;background:rgba(0,255,156,0.1);border:1px solid rgba(0,255,156,0.2);border-radius:4px;font-size:10px;font-weight:700;text-align:center;color:var(--signal-strong);}
+.rec-badge.buy{background:rgba(0,255,156,0.15);border-color:rgba(0,255,156,0.4);}
+.rec-badge.watch{background:rgba(255,200,74,0.15);border-color:rgba(255,200,74,0.4);color:var(--signal-warn);}
+.rec-badge.skip{background:rgba(255,107,53,0.15);border-color:rgba(255,107,53,0.4);color:var(--signal-risk);}
+
+.analyze-btn{flex:1;padding:8px;background:rgba(34,211,238,0.15);border:1px solid rgba(34,211,238,0.4);color:var(--accent-data);border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:0.5px;}
+.analyze-btn:hover{background:rgba(34,211,238,0.25);border-color:rgba(34,211,238,0.6);}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal.active{opacity:1;pointer-events:all;}
+.modal-content{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;padding:20px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;font-size:12px;}
+.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:1px solid var(--border-soft);color:var(--text-muted);cursor:pointer;width:28px;height:28px;border-radius:4px;font-size:14px;transition:all .2s;}
+.modal-close:hover{background:rgba(255,255,255,0.1);}
+
+.analysis-section{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
+.analysis-title{font-family:Syncopate;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--signal-strong);text-transform:uppercase;margin-bottom:8px;}
+.analysis-item{font-size:10px;color:var(--text-secondary);line-height:1.5;margin-bottom:6px;}
+.analysis-good{color:var(--signal-strong);}
+.analysis-bad{color:var(--signal-risk);}
+
+.strategy-box{background:rgba(0,255,156,0.08);border:1px solid rgba(0,255,156,0.2);border-radius:6px;padding:12px;margin-bottom:12px;}
+.strategy-title{font-weight:700;color:var(--signal-strong);margin-bottom:6px;}
+.strategy-item{font-size:9px;color:var(--text-secondary);margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <div class="logo">⚡ ZEROX Live Signals</div>
+    <div style="font-size:11px;color:var(--text-muted);">ALL opportunities ranked by score</div>
+  </div>
+
+  <div id="content">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterByScore('all')">ALL</button>
+      <button class="filter-btn" onclick="filterByScore('high')">🚀 HIGH (80+)</button>
+      <button class="filter-btn" onclick="filterByScore('medium')">💚 MEDIUM (50-80)</button>
+      <button class="filter-btn" onclick="filterByScore('low')">⚠️ LOW (<50)</button>
+    </div>
+
+    <div class="signals-grid" id="signals-list"></div>
+  </div>
+</div>
+
+<!-- ANALYSIS MODAL -->
+<div class="modal" id="analysis-modal" onclick="closeModal()">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="font-family:Syncopate;font-size:16px;margin-bottom:16px;color:var(--signal-strong);">📊 SIGNAL ANALYSIS</h2>
+
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// PIN check
+if (!localStorage.getItem('zerox_live')) {
+  const pin = prompt('ZEROX Live Signals — Enter PIN:');
+  if (pin === '4444') {
+    localStorage.setItem('zerox_live', 'true');
+  } else {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#030201;color:#ff6b35;font-family:Syncopate">❌ ACCESS DENIED</div>';
+  }
+}
+
+// Mock live signals (in production would fetch from /api/pro-signals/feed)
+const MOCK_SIGNALS = [
+  { symbol: 'SOL', score: 92, bundleSize: 8, bundleLocked: true, sniperCount: 12, liquidity: 450000, greenFlags: ['✅ Small bundle', '✅ Locked', '✅ Good liquidity', '✅ Early entry'], redFlags: [], recommendation: '🚀 STRONG BUY' },
+  { symbol: 'LUNA', score: 78, bundleSize: 22, bundleLocked: false, sniperCount: 8, liquidity: 280000, greenFlags: ['✅ Medium bundle', '✅ Snipers active', '✅ Good liquidity'], redFlags: ['⚠️ Unlocked bundle'], recommendation: '💚 BUY' },
+  { symbol: 'RNDR', score: 65, bundleSize: 35, bundleLocked: false, sniperCount: 5, liquidity: 150000, greenFlags: ['✅ Few snipers'], redFlags: ['⚠️ Large bundle', '⚠️ Low liquidity'], recommendation: '⏰ WATCH' },
+  { symbol: 'PEPE', score: 45, bundleSize: 55, bundleLocked: false, sniperCount: 2, liquidity: 85000, greenFlags: [], redFlags: ['❌ Huge bundle', '❌ Very low liquidity', '❌ No sniper interest'], recommendation: '⚠️ CAUTION' },
+  { symbol: 'DOGE', score: 88, bundleSize: 5, bundleLocked: true, sniperCount: 18, liquidity: 520000, greenFlags: ['✅ Tiny bundle', '✅ Locked', '✅ Great liquidity', '✅ High sniper interest'], redFlags: [], recommendation: '🚀 STRONG BUY' },
+  { symbol: 'JTO', score: 72, bundleSize: 28, bundleLocked: true, sniperCount: 10, liquidity: 380000, greenFlags: ['✅ Medium bundle', '✅ Locked (safe)', '✅ Good liquidity'], redFlags: [], recommendation: '💚 BUY' },
+];
+
+let currentFilter = 'all';
+
+function filterByScore(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderSignals();
+}
+
+function renderSignals() {
+  let filtered = MOCK_SIGNALS;
+
+  if (currentFilter === 'high') {
+    filtered = MOCK_SIGNALS.filter(s => s.score >= 80);
+  } else if (currentFilter === 'medium') {
+    filtered = MOCK_SIGNALS.filter(s => s.score >= 50 && s.score < 80);
+  } else if (currentFilter === 'low') {
+    filtered = MOCK_SIGNALS.filter(s => s.score < 50);
+  }
+
+  const html = filtered
+    .sort((a, b) => b.score - a.score)
+    .map(signal => `
+      <div class="signal-row ${signal.score >= 80 ? 'high-score' : signal.score < 50 ? 'low-score' : ''}">
+        <div class="signal-header">
+          <div class="signal-symbol">${signal.symbol}</div>
+          <div class="signal-score ${signal.score >= 80 ? 'high' : signal.score < 50 ? 'low' : ''}">${signal.score}</div>
+        </div>
+
+        <div class="signal-meta">
+          <div class="meta-item">
+            <div class="meta-label">Bundle</div>
+            <div class="meta-value">${signal.bundleSize}% ${signal.bundleLocked ? '🔒' : '🔓'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Snipers</div>
+            <div class="meta-value">${signal.sniperCount}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Liquidity</div>
+            <div class="meta-value">$${Math.round(signal.liquidity / 1000)}K</div>
+          </div>
+        </div>
+
+        <div class="signal-flags">
+          ${signal.greenFlags.map(f => `<span class="flag green">${f}</span>`).join('')}
+          ${signal.redFlags.map(f => `<span class="flag red">${f}</span>`).join('')}
+        </div>
+
+        <div class="signal-action">
+          <div class="rec-badge ${signal.recommendation.includes('BUY') ? 'buy' : signal.recommendation.includes('WATCH') ? 'watch' : 'skip'}">
+            ${signal.recommendation}
+          </div>
+          <button class="analyze-btn" onclick="openAnalysis('${signal.symbol}', ${signal.score}, ${signal.bundleSize}, ${signal.bundleLocked})">
+            📊 ANALYZE
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+  document.getElementById('signals-list').innerHTML = html;
+}
+
+async function openAnalysis(symbol, score, bundleSize, bundleLocked) {
+  event.stopPropagation();
+
+  try {
+    const res = await fetch(`/api/signal-scoring/analysis/${symbol}`);
+    const data = await res.json();
+
+    const modalBody = `
+      <div class="analysis-section">
+        <div class="analysis-title">📊 Overall</div>
+        <div class="analysis-item"><strong>Score:</strong> ${data.overallScore}/100</div>
+        <div class="analysis-item"><strong>Verdict:</strong> <span style="color:var(--signal-strong);font-weight:700">${data.verdict}</span></div>
+      </div>
+
+      <div class="analysis-section">
+        <div class="analysis-title">📦 Bundle Status</div>
+        <div class="analysis-item"><strong>Size:</strong> ${data.bundle.size}%</div>
+        <div class="analysis-item"><strong>Status:</strong> <span class="${data.bundle.status === 'excellent' ? 'analysis-good' : data.bundle.status === 'danger' ? 'analysis-bad' : ''}">${data.bundle.status.toUpperCase()}</span></div>
+        <div class="analysis-item"><strong>Risk:</strong> ${data.bundle.risk}</div>
+        <div class="analysis-item" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft);"><strong>Action:</strong> ${data.bundle.action}</div>
+      </div>
+
+      <div class="analysis-section">
+        <div class="analysis-title">📍 Entry Strategy</div>
+        <div class="analysis-item"><strong>${data.entry.recommendation}</strong></div>
+        <div class="analysis-item" style="margin-top:6px;">${data.entry.reason}</div>
+        <div class="analysis-item" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft);">${data.entry.detailed}</div>
+      </div>
+
+      <div class="analysis-section">
+        <div class="analysis-title">🎯 Trading Plan</div>
+        ${data.score >= 80 ? `
+          <div class="strategy-box">
+            <div class="strategy-title">If Score is HIGH (${data.overallScore}+)</div>
+            <div class="strategy-item">✓ Action: ${data.strategy.if_score_high.action}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_high.tp1}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_high.tp2}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_high.tp3}</div>
+          </div>
+        ` : data.score >= 50 ? `
+          <div class="strategy-box">
+            <div class="strategy-title">If Score is MEDIUM (${data.overallScore})</div>
+            <div class="strategy-item">✓ Action: ${data.strategy.if_score_medium.action}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_medium.tp1}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_medium.tp2}</div>
+            <div class="strategy-item">✓ ${data.strategy.if_score_medium.tp3}</div>
+          </div>
+        ` : `
+          <div class="strategy-box">
+            <div class="strategy-title">If Score is LOW (${data.overallScore})</div>
+            <div class="strategy-item">✗ ${data.strategy.if_score_low.action}</div>
+            <div class="strategy-item">✗ Reason: ${data.strategy.if_score_low.reason}</div>
+          </div>
+        `}
+      </div>
+
+      <div class="analysis-section">
+        <div class="analysis-title">✅ Green Flags</div>
+        ${data.metrics.greenFlags.map(f => `<div class="analysis-item analysis-good">✓ ${f}</div>`).join('') || '<div class="analysis-item">None detected</div>'}
+      </div>
+
+      <div class="analysis-section" style="border-bottom:none;">
+        <div class="analysis-title">⚠️ Red Flags</div>
+        ${data.metrics.redFlags.map(f => `<div class="analysis-item analysis-bad">✗ ${f}</div>`).join('') || '<div class="analysis-item">None detected</div>'}
+      </div>
+    `;
+
+    document.getElementById('modal-body').innerHTML = modalBody;
+    document.getElementById('analysis-modal').classList.add('active');
+  } catch (e) {
+    alert('Error loading analysis: ' + e.message);
+  }
+}
+
+function closeModal() {
+  document.getElementById('analysis-modal').classList.remove('active');
+}
+
+// Initial render
+renderSignals();
+
+// Auto-refresh every 30 seconds
+setInterval(renderSignals, 30000);
+</script>
+
+</body>
+</html>

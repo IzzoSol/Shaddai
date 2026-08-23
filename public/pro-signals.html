@@ -77,12 +77,68 @@
   --hdrgrd:linear-gradient(90deg,#dce6f4,#e6eef8);
   --card-border:rgba(30,60,160,0.14);
 }
+[data-theme="synthwave"] {
+  --bg0:#0d0221;--bg1:#1a034d;--bg2:#2d0a6d;--bg3:#3d1d7d;--bg4:#4d2d8d;
+  --border:rgba(255,0,127,.15);--border2:rgba(255,0,127,.3);
+  --P:#ff007f;--P2:#ff4da9;--P3:#cc0066;--S:#00ffff;--A:#ff0055;--C:#00e6e6;
+  --text:#ffccee;--text2:#ff99dd;--label:#ff66cc;--muted:rgba(255,200,220,.7);
+  --cgrd:linear-gradient(135deg,rgba(255,0,127,.1),rgba(255,0,127,.02));
+  --ctop:linear-gradient(90deg,rgba(255,0,127,.2),transparent);
+  --gP:0 0 20px rgba(255,0,127,.5);--gS:0 0 16px rgba(0,255,255,.4);--gA:0 0 12px rgba(255,0,85,.4);
+  --bgrd:linear-gradient(90deg,#ff007f,#ff4da9,#ff00ff);
+  --hdrgrd:linear-gradient(90deg,#1a034d,#2d0a6d);
+  --card-border:rgba(255,0,127,0.2);
+}
+[data-theme="aurora"] {
+  --bg0:#0a1428;--bg1:#111f35;--bg2:#1a2d42;--bg3:#233d52;--bg4:#2d4d62;
+  --border:rgba(0,255,200,.12);--border2:rgba(0,255,200,.25);
+  --P:#00ffc8;--P2:#33ffdd;--P3:#00cc99;--S:#ffaa00;--A:#ff4466;--C:#00eeff;
+  --text:#e0ffff;--text2:#99ffdd;--label:#66ffcc;--muted:rgba(0,255,200,.65);
+  --cgrd:linear-gradient(135deg,rgba(0,255,200,.08),rgba(0,255,200,.01));
+  --ctop:linear-gradient(90deg,rgba(0,255,200,.18),transparent);
+  --gP:0 0 18px rgba(0,255,200,.4);--gS:0 0 14px rgba(255,170,0,.35);--gA:0 0 12px rgba(255,68,102,.35);
+  --bgrd:linear-gradient(90deg,#00ffc8,#33ffdd,#00eeff);
+  --hdrgrd:linear-gradient(90deg,#111f35,#1a2d42);
+  --card-border:rgba(0,255,200,0.15);
+}
+[data-theme="cyberpunk"] {
+  --bg0:#000000;--bg1:#0d0014;--bg2:#1a0033;--bg3:#260052;--bg4:#330066;
+  --border:rgba(255,0,200,.2);--border2:rgba(255,0,200,.4);
+  --P:#ff00ff;--P2:#ff33ff;--P3:#cc00cc;--S:#00ff00;--A:#ffff00;--C:#00ffff;
+  --text:#ffffff;--text2:#ffddff;--label:#ff99ff;--muted:rgba(255,255,255,.6);
+  --cgrd:linear-gradient(135deg,rgba(255,0,255,.12),rgba(255,0,200,.04));
+  --ctop:linear-gradient(90deg,rgba(255,0,255,.25),transparent);
+  --gP:0 0 24px rgba(255,0,255,.6);--gS:0 0 18px rgba(0,255,0,.5);--gA:0 0 14px rgba(255,255,0,.4);
+  --bgrd:linear-gradient(90deg,#ff00ff,#ff0080,#00ffff);
+  --hdrgrd:linear-gradient(90deg,#0d0014,#1a0033);
+  --card-border:rgba(255,0,200,0.25);
+}
+[data-theme="matrix"] {
+  --bg0:#001a00;--bg1:#001f00;--bg2:#002600;--bg3:#003300;--bg4:#004000;
+  --border:rgba(0,255,0,.15);--border2:rgba(0,255,0,.3);
+  --P:#00ff00;--P2:#66ff66;--P3:#00cc00;--S:#00ff99;--A:#ff3333;--C:#00ffcc;
+  --text:#00ff00;--text2:#66ff66;--label:#33ff33;--muted:rgba(0,255,0,.6);
+  --cgrd:linear-gradient(135deg,rgba(0,255,0,.08),rgba(0,255,0,.01));
+  --ctop:linear-gradient(90deg,rgba(0,255,0,.15),transparent);
+  --gP:0 0 16px rgba(0,255,0,.4);--gS:0 0 12px rgba(0,255,153,.3);--gA:0 0 10px rgba(255,51,51,.3);
+  --bgrd:linear-gradient(90deg,#00ff00,#66ff66,#00ffcc);
+  --hdrgrd:linear-gradient(90deg,#001f00,#002600);
+  --card-border:rgba(0,255,0,0.15);
+}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Exo 2',sans-serif;overflow:hidden;}
 
 /* scanline */
 body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-events:none;z-index:9990;}
+
+/* ── MOVEABLE WINDOWS ─────────────────────────────── */
+.window{position:fixed;background:var(--bg2);border:2px solid var(--border2);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;flex-direction:column;min-width:300px;min-height:200px;z-index:100;cursor:default}
+.window-header{padding:10px 14px;background:var(--hdrgrd);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:move;user-select:none;font-weight:700;font-size:11px;color:var(--P);letter-spacing:1px}
+.window-header::after{content:'';flex:1}
+.window-close{width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);hover:color:var(--A);border:1px solid transparent;border-radius:4px}
+.window-close:hover{background:rgba(255,60,42,.1);border-color:var(--A)}
+.window-content{flex:1;overflow:auto;padding:12px;font-size:11px}
 
 /* ── GATE ─────────────────────────────────────────── */
 #gate{
@@ -503,6 +559,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="tb-pill" id="tbmiro" onclick="openMiroTab()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Open the MiroFish swarm terminal (embedded)">🐟 MIRO</div>
   <div class="tb-pill" onclick="openSimPanel()" style="cursor:pointer;border-color:rgba(176,127,255,.45);color:rgba(176,127,255,.9);" title="Open MiroFish quick-sim panel">🐟 SIM</div>
   <div class="tb-pill" id="tbpgl" onclick="openGallery()" style="cursor:pointer;border-color:rgba(244,200,66,.45);color:rgba(244,200,66,.9);" title="PNL image gallery">🖼 PNL <span id="pgcnt" style="font-size:8px;opacity:.8"></span></div>
+  <div class="tb-pill" id="tbana" onclick="openAnalyticsWindow()" style="cursor:pointer;border-color:rgba(0,255,156,.45);color:rgba(0,255,156,.9);" title="Signal quality metrics & dead coin analysis">📈 QUALITY</div>
   <div class="tb-pill" id="tbal" onclick="openAlerts()" title="Armed price alerts">🔔 <span id="alcount"></span></div>
   <div class="tb-clk" id="clk">--:--:--</div>
   <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
@@ -514,8 +571,11 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="switchTab('sig',this)">📡 SIGNALS</div>
-      <div class="ltab"     onclick="switchTab('swarm',this)">🌊 SWARM</div>
+      <div class="ltab on"  onclick="switchTab('memes',this)">🍌 MEMES</div>
+      <div class="ltab"     onclick="switchTab('finance',this)">📈 FINANCE</div>
+      <div class="ltab"     onclick="switchTab('news',this)">📰 NEWS</div>
+      <div class="ltab"     onclick="switchTab('stocks',this)">📊 STOCKS</div>
+      <div class="ltab"     onclick="switchTab('poly',this)">🎯 POLYMARKET</div>
     </div>
 
     <!-- signals -->
@@ -573,6 +633,51 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       </div>
     </div>
   </div><!-- /left -->
+
+  <!-- FULL-SCREEN TAB VIEWS -->
+  <div id="fullscreen-view" style="position:fixed;inset:0;background:var(--bg0);z-index:500;display:none;flex-direction:column;overflow:hidden">
+    <div style="height:50px;background:var(--hdrgrd);border-bottom:2px solid var(--border2);display:flex;align-items:center;padding:0 14px;gap:12px">
+      <button onclick="closeFullscreen()" style="padding:6px 12px;border:1px solid var(--P);color:var(--P);background:transparent;cursor:pointer;font-size:9px;letter-spacing:2px">← BACK</button>
+      <div style="flex:1;font-family:'Syncopate';font-size:14px;color:var(--P);font-weight:700;letter-spacing:2px" id="fs-title">—</div>
+      <div id="fs-subtabs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <button onclick="openWindow('dex','📊 DEX CHART',100,100,600,400)" style="padding:6px 10px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">📊 CHART</button>
+      <button onclick="openWindow('sentiment','💭 SENTIMENT',750,100,400,400)" style="padding:6px 10px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">💭 SENTIMENT</button>
+      <button onclick="cycleTheme()" style="padding:6px 12px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">🎨 THEME</button>
+    </div>
+    <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap">
+      <input id="fs-search" type="text" placeholder="Search…" oninput="renderFS()" style="flex:1;min-width:120px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;border-radius:4px;outline:none">
+      <select id="fs-sort" onchange="renderFS()" style="padding:6px 8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;border-radius:4px">
+        <option value="newest">Newest</option>
+        <option value="mult">Mult</option>
+        <option value="score">Score</option>
+      </select>
+      <button onclick="openWindow('mirofish','🐟 MIROFISH',200,200,700,450)" style="padding:6px 10px;border:1px solid var(--C);color:var(--C);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px;font-weight:600">🐟 MIROFISH</button>
+      <button onclick="openDexImageWindow()" style="padding:6px 10px;border:1px solid var(--border);color:var(--text);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px">🖼 DEX IMG</button>
+      <button onclick="toggleSentimentPanel()" style="padding:6px 10px;border:1px solid var(--border);color:var(--text);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px">💭 SENTIMENT</button>
+    </div>
+    <div style="display:flex;gap:12px;flex:1;overflow:hidden">
+      <div id="fs-content" style="flex:1;overflow-y:auto;padding:14px"><!-- signals --></div>
+      <div id="fs-sentiment" style="width:280px;border-left:1px solid var(--border);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+        <div style="font-weight:700;color:var(--P);font-size:10px;letter-spacing:1px">💭 SENTIMENT</div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--S);font-weight:700">🟢 BULLISH 68%</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">1,240 mentions</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--P);font-weight:700">⚡ VOLUME +340%</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">Last 1 hour spike</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:var(--C);font-weight:700">🔗 SOCIAL ACTIVE</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">Twitter: 2.1K mentions</div>
+        </div>
+        <div style="padding:10px;background:var(--cgrd);border:1px solid var(--border);border-radius:6px;font-size:9px">
+          <div style="color:#ffc84a;font-weight:700">📰 NEWS</div>
+          <div style="color:var(--text2);font-size:8px;margin-top:4px">5 articles last 24h</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- RIGHT PANEL -->
   <div id="rc">
@@ -1955,6 +2060,308 @@ function randScenario(){
 /* GATE — require the 4444 PIN every fresh tab/session (no persistent auto-login) */
 if(ok()) go();
 else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){gi.focus();},300); }
+
+// FULL-SCREEN TAB SYSTEM
+function openFullscreen(tabName,title,subtabs=[]) {
+  _fsTab=tabName;_fsSubTab=subtabs[0]||'all';
+  const fsv=document.getElementById('fullscreen-view');
+  const fst=document.getElementById('fs-title');
+  const fsst=document.getElementById('fs-subtabs');
+
+  fst.textContent=title;
+  fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
+  renderFS();
+
+  fsv.style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+function closeFullscreen() {
+  const fsv=document.getElementById('fullscreen-view');
+  const app=document.getElementById('app');
+  if(fsv)fsv.style.display='none';
+  if(app)app.style.display='flex';
+  _fsTab=null;_fsSubTab=null;
+}
+
+let _fsTab='signals',_fsSubTab='all';
+function switchSubtab(name,btn) {
+  _fsSubTab=name;
+  document.querySelectorAll('#fs-subtabs button').forEach(b=>{
+    b.style.borderColor=b===btn?'var(--P)':'var(--border2)';
+    b.style.color=b===btn?'var(--P)':'var(--text)';
+  });
+  renderFS();
+}
+function renderFS() {
+  const fsc=document.getElementById('fs-content');
+  let html='';
+
+  if(_fsTab==='memes') {
+    const mockCoins=[
+      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true},
+      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false},
+      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true}
+    ];
+    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--P)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span style="color:var(--P);font-weight:700">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P)">⭐ PAID</span>':''}</div>
+        <span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>Holders: <span style="color:var(--P)">${c.holders.toLocaleString()}</span></div>
+        <div>Vol: <span style="color:var(--P)">$${(c.vol24/1000).toFixed(1)}K</span></div>
+      </div>
+      ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
+    </div>`).join('');
+  } else if(_fsTab==='finance') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="color:var(--P);font-weight:700">SPY</div>
+      <div style="font-size:9px;color:var(--S)">$${(450+Math.random()*5).toFixed(2)} +1.2%</div>
+    </div>`;
+  } else if(_fsTab==='news') {
+    html=`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">🚀 Major Exchange Listing</div>
+      <div style="font-size:8px;color:var(--text2);margin-top:4px">2 hours ago • 1.2K mentions</div>
+    </div>`;
+  } else if(_fsTab==='stocks') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">NVDA</span><span style="color:var(--S)">+3.2%</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: 52M | Volatility: High</div>
+    </div>`;
+  } else if(_fsTab==='poly') {
+    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">2024 Election Winner</div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: 62% | No: 38% | $2.3M pooled</div>
+    </div>`;
+  }
+
+  fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px">Loading '+_fsTab+'...</div>';
+}
+
+// WINDOW MANAGER
+class Window{
+  constructor(id,title,x,y,w,h){
+    this.id=id;this.title=title;this.el=null;
+    this.dragging=false;this.dragX=0;this.dragY=0;
+    this.dragHandler=null;this.dragUpHandler=null;
+    this.create(x,y,w,h);
+  }
+  create(x,y,w,h){
+    const el=document.createElement('div');
+    el.className='window';el.id=this.id;
+    el.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    el.innerHTML=`<div class="window-header"><span>${this.title}</span><div class="window-close" onclick="closeWindow('${this.id}')">✕</div></div><div class="window-content" id="${this.id}-body"></div>`;
+    el.querySelector('.window-header').addEventListener('mousedown',(e)=>this.startDrag(e));
+    document.body.appendChild(el);
+    this.el=el;
+  }
+  startDrag(e){
+    if(e.target.classList.contains('window-close'))return;
+    this.dragging=true;
+    this.dragX=e.clientX-this.el.offsetLeft;
+    this.dragY=e.clientY-this.el.offsetTop;
+    this.dragHandler=(e)=>this.drag(e);
+    this.dragUpHandler=()=>this.stopDrag();
+    document.addEventListener('mousemove',this.dragHandler);
+    document.addEventListener('mouseup',this.dragUpHandler);
+  }
+  drag(e){
+    if(!this.dragging)return;
+    this.el.style.left=(e.clientX-this.dragX)+'px';
+    this.el.style.top=(e.clientY-this.dragY)+'px';
+  }
+  stopDrag(){
+    this.dragging=false;
+    document.removeEventListener('mousemove',this.dragHandler);
+    document.removeEventListener('mouseup',this.dragUpHandler);
+  }
+  close(){
+    if(this.el)this.el.remove();
+    if(this.dragHandler)document.removeEventListener('mousemove',this.dragHandler);
+    if(this.dragUpHandler)document.removeEventListener('mouseup',this.dragUpHandler);
+  }
+}
+let windows={};
+function openWindow(id,title,x,y,w,h){
+  if(windows[id]){windows[id].el.style.zIndex=1001;return}
+  windows[id]=new Window(id,title,x,y,w,h);
+  setTimeout(()=>loadWindowContent(id),50);
+}
+function closeWindow(id){if(windows[id]){windows[id].close();delete windows[id]}}
+
+// THEME CYCLING (9 premium themes)
+const themes=['phosphor','neon-noir','blood','ice','synthwave','aurora','cyberpunk','matrix'];let _themeIdx=0;
+function cycleTheme() {
+  _themeIdx=(_themeIdx+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[_themeIdx]);
+  localStorage.setItem('oracle-theme',themes[_themeIdx]);
+}
+
+// DEX Image window
+function openDexImageWindow() {
+  openWindow('dex-img','📊 DEX SCREENER',100,150,550,450);
+}
+
+// Sentiment panel toggle
+function toggleSentimentPanel() {
+  const panel=document.getElementById('fs-sentiment');
+  if(panel) panel.style.display=panel.style.display==='none'?'flex':'none';
+}
+
+// MiroFish loader
+function loadMiroFish() {
+  openWindow('mirofish','🐟 MIROFISH SWARM',200,200,700,450);
+}
+
+// Window content loaders
+function loadWindowContent(id) {
+  const body=document.getElementById(id+'-body');
+  if(id==='analytics') {
+    body.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2);font-size:10px">LOADING QUALITY METRICS…</div>`;
+    loadAnalytics();
+  } else if(id==='dex-img') {
+    body.innerHTML=`<div style="text-align:center;padding:20px"><img src="https://dexscreener.com/api/charts/solana/placeholder" style="max-width:100%;border-radius:8px;margin-bottom:10px" onerror="this.innerHTML='📊 DEX chart image'"><div style="color:var(--text2);font-size:10px">DexScreener chart data live</div></div>`;
+  } else if(id==='mirofish') {
+    body.innerHTML=`<div style="padding:15px">
+      <div style="margin-bottom:10px"><input type="text" placeholder="Token symbol (e.g., BONK)" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:10px"></div>
+      <div style="margin-bottom:10px"><input type="text" placeholder="Scenario/announcement…" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:10px"></div>
+      <button style="width:100%;padding:8px;background:var(--C);color:var(--bg0);border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:10px">▶ RUN SWARM</button>
+      <div id="miro-results" style="margin-top:12px;font-size:9px;color:var(--text2)">Results will appear here...</div>
+    </div>`;
+  } else if(id==='dex') {
+    body.innerHTML=`<canvas id="dex-chart-canvas" style="width:100%;height:100%"></canvas>`;
+    setTimeout(()=>initDexChart(),100);
+  } else if(id==='sentiment') {
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--S)">
+        <div style="font-weight:700;color:var(--S)">🟢 BULLISH</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Sentiment: 68% positive (1,240 mentions)</div>
+      </div>
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--P)">
+        <div style="font-weight:700;color:var(--P)">⚡ TRENDING</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Volume spike: +340% last hour</div>
+      </div>
+      <div style="padding:8px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--C)">
+        <div style="font-weight:700;color:var(--C)">🔗 SOCIAL</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:2px">Twitter mentions: 2.1K | Discord: Active</div>
+      </div>
+    </div>`;
+  }
+}
+
+function initDexChart() {
+  const canvas=document.getElementById('dex-chart-canvas');
+  if(!canvas)return;
+
+  // Use canvas for chart or fallback to SVG
+  if(window.LightweightCharts) {
+    try {
+      const chart=LightweightCharts.createChart(canvas.parentElement,{width:580,height:350,layout:{background:{color:'#030201'},textColor:'#f8eece'},timeScale:{timeVisible:true}});
+      const lineSeries=chart.addLineSeries({color:'#e8a020',lineWidth:2});
+      lineSeries.setData([
+        {time:'2026-01-01',value:0.0001},{time:'2026-01-02',value:0.00015},{time:'2026-01-03',value:0.0002},
+        {time:'2026-01-04',value:0.00035},{time:'2026-01-05',value:0.0005},{time:'2026-01-06',value:0.00045}
+      ]);
+      chart.timeScale().fitContent();
+    }catch(e){
+      canvas.parentElement.innerHTML='<div style="padding:20px;color:#9ca3af">Chart unavailable</div>';
+    }
+  } else {
+    // Fallback: simple SVG chart
+    canvas.parentElement.innerHTML=`<svg width="100%" height="350" style="background:#030201"><polyline points="0,300 50,250 100,200 150,100 200,50 250,75" stroke="#e8a020" stroke-width="2" fill="none"/><text x="10" y="330" fill="#f8eece" font-size="10">Price Chart (Sample)</text></svg>`;
+  }
+}
+// ── ANALYTICS LOADER ────────────────────────────────────────────
+async function loadAnalytics(){
+  try{
+    const res=await fetch('/api/signals/analytics');
+    const data=await res.json();
+    if(!data.ok)return;
+
+    const analysis=data.analysis||{};
+    const metrics=data.metrics||{};
+
+    let html=`<div style="display:flex;flex-direction:column;gap:10px;font-size:11px">`;
+
+    // Win Rate Metrics
+    html+=`<div style="padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px">
+      <div style="color:var(--P);font-weight:700;margin-bottom:4px">📊 RECENT WIN RATE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;color:var(--text2)">
+        <div>2x Hits: <span style="color:var(--S)">${metrics.recent2xRate}%</span></div>
+        <div>5x Hits: <span style="color:var(--C)">${metrics.recent5xRate}%</span></div>
+        <div style="grid-column:1/-1">Total: ${metrics.recentCalls} calls</div>
+      </div>
+    </div>`;
+
+    // Dead Coin Analysis
+    if(analysis.deadCount || analysis.winCount){
+      html+=`<div style="padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px">
+        <div style="color:var(--C);font-weight:700;margin-bottom:4px">💀 DEAD COIN ANALYSIS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;color:var(--text2)">
+          <div>Dead: <span style="color:var(--A)">${analysis.deadCount||0}</span></div>
+          <div>Winners: <span style="color:var(--S)">${analysis.winCount||0}</span></div>
+          <div style="grid-column:1/-1">Win Rate: ${analysis.winRate||'0'}%</div>
+        </div>
+      </div>`;
+    }
+
+    // Top Fail Patterns
+    if(analysis.topFailPatterns && analysis.topFailPatterns.length){
+      html+=`<div style="padding:10px;background:rgba(255,60,42,.05);border:1px solid rgba(255,60,42,.2);border-radius:4px">
+        <div style="color:var(--A);font-weight:700;margin-bottom:4px">⚠️ WORST SOURCES</div>
+        <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
+          ${analysis.topFailPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Top Win Patterns
+    if(analysis.topWinPatterns && analysis.topWinPatterns.length){
+      html+=`<div style="padding:10px;background:rgba(0,255,156,.05);border:1px solid rgba(0,255,156,.2);border-radius:4px">
+        <div style="color:var(--S);font-weight:700;margin-bottom:4px">⭐ BEST SOURCES</div>
+        <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
+          ${analysis.topWinPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    html+=`</div>`;
+
+    const body=document.getElementById('analytics-body');
+    if(body)body.innerHTML=html;
+  }catch(e){
+    console.error('[analytics]',e);
+  }
+}
+
+// Analytics window opener
+function openAnalyticsWindow(){
+  openWindow('analytics','📈 SIGNAL QUALITY',50,80,340,450);
+  setTimeout(loadAnalytics,100);
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved=localStorage.getItem('oracle-theme');
+  if(saved) {
+    _themeIdx=themes.indexOf(saved);
+    if(_themeIdx>=0) document.documentElement.setAttribute('data-theme',saved);
+  }
+});
+
+// Wire tab clicks to full-screen
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.ltab').forEach(tab=>{
+    tab.addEventListener('click',function(e){
+      const txt=e.target.textContent;
+      if(txt.includes('MEMES')) openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);
+      else if(txt.includes('FINANCE')) openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);
+      else if(txt.includes('NEWS')) openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);
+      else if(txt.includes('STOCKS')) openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);
+      else if(txt.includes('POLYMARKET')) openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);
+    });
+  });
+});
 </script>
 </body>
 </html>

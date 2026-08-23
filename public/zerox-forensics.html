@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEROX Deep Forensics — What Made Winners Win</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Exo+2:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --signal-strong: #00ff9c;
+  --signal-warn: #ffc84a;
+  --signal-risk: #ff6b35;
+  --bg-dark: #030201;
+  --bg-card: #0f0d08;
+  --bg-panel: #080605;
+  --text-primary: #f8eece;
+  --text-secondary: #d4ae78;
+  --text-muted: rgba(248,238,206,0.6);
+  --accent-data: #22d3ee;
+  --border-soft: rgba(232,160,32,0.12);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;background:var(--bg-dark);color:var(--text-primary);font-family:'Exo 2',sans-serif;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9998;}
+
+#app{display:flex;flex-direction:column;height:100vh;}
+#header{background:linear-gradient(90deg,var(--bg-panel),var(--bg-dark));border-bottom:1px solid var(--border-soft);padding:16px 24px;z-index:100;}
+.logo{font-family:Syncopate;font-size:20px;font-weight:700;letter-spacing:2px;color:var(--signal-strong);text-transform:uppercase;}
+
+#content{flex:1;overflow-y:auto;padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;background:var(--bg-dark);}
+
+.card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.card-title{font-family:Syncopate;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--signal-strong);text-transform:uppercase;border-bottom:1px solid var(--border-soft);padding-bottom:12px;}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stat-box{background:rgba(0,255,156,0.08);border:1px solid rgba(0,255,156,0.15);padding:12px;border-radius:6px;}
+.stat-label{font-size:9px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.stat-value{font-family:'Share Tech Mono';font-size:18px;font-weight:700;color:var(--signal-strong);}
+.stat-value.warning{color:var(--signal-warn);}
+.stat-value.danger{color:var(--signal-risk);}
+
+.insight{background:linear-gradient(135deg,rgba(255,200,74,0.08),rgba(255,200,74,0.01));border-left:3px solid var(--signal-warn);padding:14px;margin-bottom:12px;border-radius:6px;}
+.insight-title{font-weight:700;color:var(--signal-strong);margin-bottom:6px;}
+.insight-finding{font-size:10px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5;}
+.insight-action{font-size:9px;color:var(--signal-warn);font-weight:700;}
+.insight-impact{font-size:9px;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-soft);}
+
+.strategy{background:linear-gradient(135deg,rgba(34,211,238,0.08),rgba(34,211,238,0.01));border:1px solid rgba(34,211,238,0.15);border-radius:6px;padding:14px;margin-bottom:12px;}
+.strategy-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;}
+.strategy-name{font-weight:700;color:var(--accent-data);}
+.strategy-priority{font-family:'Share Tech Mono';font-size:10px;background:rgba(34,211,238,0.15);padding:2px 6px;border-radius:2px;color:var(--accent-data);}
+.strategy-basis{font-size:9px;color:var(--text-muted);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(34,211,238,0.1);}
+.strategy-rule{font-size:9px;color:var(--text-secondary);margin-bottom:4px;}
+.strategy-result{font-size:9px;color:var(--signal-strong);font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid rgba(34,211,238,0.1);}
+
+.full-width{grid-column:1/-1;}
+
+.coin-row{background:rgba(0,0,0,0.2);padding:10px;border-radius:4px;border-left:2px solid var(--signal-strong);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:9px;}
+.coin-symbol{font-family:Syncopate;font-weight:700;}
+.coin-mult{font-family:'Share Tech Mono';color:var(--signal-warn);font-weight:700;}
+.coin-meta{color:var(--text-muted);font-size:8px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <div class="logo">⚡ ZEROX Deep Forensics</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Analysis of 100+ historical signals — What made winners win?</div>
+  </div>
+
+  <div id="content">
+    <!-- SUMMARY STATS -->
+    <div class="card full-width">
+      <div class="card-title">📊 Overall Summary</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">Total Analyzed</div>
+          <div class="stat-value" id="total-calls">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Winners (3x+)</div>
+          <div class="stat-value" id="winners-count">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Losers (<1.5x)</div>
+          <div class="stat-value danger" id="losers-count">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value warning" id="win-rate">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEY INSIGHTS -->
+    <div class="card full-width">
+      <div class="card-title">🎯 Critical Findings</div>
+      <div id="insights"></div>
+    </div>
+
+    <!-- PATTERN COMPARISON -->
+    <div class="card">
+      <div class="card-title">📈 Winners Pattern</div>
+      <div id="winner-pattern"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📉 Losers Pattern</div>
+      <div id="loser-pattern"></div>
+    </div>
+
+    <!-- DIRECT COMPARISON -->
+    <div class="card full-width">
+      <div class="card-title">⚖️ Winners vs Losers</div>
+      <div id="comparison"></div>
+    </div>
+
+    <!-- STRATEGIES -->
+    <div class="card full-width">
+      <div class="card-title">🚀 5 Proven Strategies</div>
+      <div id="strategies"></div>
+    </div>
+
+    <!-- TOP WINNERS -->
+    <div class="card">
+      <div class="card-title">🏆 Top 10 Winners</div>
+      <div id="top-winners"></div>
+    </div>
+
+    <!-- TOP LOSERS -->
+    <div class="card">
+      <div class="card-title">❌ Top 10 Losers (Learn What NOT to Do)</div>
+      <div id="top-losers"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// PIN check
+if (!localStorage.getItem('zerox_forensics')) {
+  const pin = prompt('ZEROX Forensics — Enter PIN:');
+  if (pin === '4444') {
+    localStorage.setItem('zerox_forensics', 'true');
+  } else {
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#030201;color:#ff6b35;font-family:Syncopate">❌ ACCESS DENIED</div>';
+  }
+}
+
+async function loadForensics() {
+  try {
+    const res = await fetch('/api/signal-forensics');
+    const data = await res.json();
+
+    // Summary stats
+    document.getElementById('total-calls').textContent = data.summary.totalAnalyzed;
+    document.getElementById('winners-count').textContent = data.summary.winners;
+    document.getElementById('losers-count').textContent = data.summary.losers;
+    document.getElementById('win-rate').textContent = data.summary.winRate + '%';
+
+    // Insights
+    const insightsRes = await fetch('/api/signal-forensics/winners-vs-losers');
+    const insightsData = await insightsRes.json();
+
+    const insightsHtml = (insightsData.insights || [])
+      .map(insight => `
+        <div class="insight">
+          <div class="insight-title">${insight.title}</div>
+          <div class="insight-finding">${insight.finding}</div>
+          <div class="insight-action">→ ${insight.action}</div>
+          <div class="insight-impact">💡 ${insight.impact}</div>
+        </div>
+      `).join('');
+    document.getElementById('insights').innerHTML = insightsHtml;
+
+    // Winner pattern
+    if (data.patterns.winners) {
+      const winnerHtml = `
+        <div class="stat-box" style="grid-column:1/-1;">
+          <div class="stat-label">Avg Multiplier</div>
+          <div class="stat-value">${data.patterns.winners.avgMultiplier}×</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Holders</div>
+          <div class="stat-value">${data.patterns.winners.avgHolders}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Bundle</div>
+          <div class="stat-value">${data.patterns.winners.avgBundleSize}%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Liquidity</div>
+          <div class="stat-value">$${Math.round(data.patterns.winners.avgLiquidity / 1000)}K</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Entry FDV</div>
+          <div class="stat-value">$${Math.round(data.patterns.winners.avgEntryFdv / 1000)}K</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Best Source</div>
+          <div class="stat-value">${data.patterns.winners.bestSource?.source || '—'}</div>
+        </div>
+      `;
+      document.getElementById('winner-pattern').innerHTML = winnerHtml;
+    }
+
+    // Loser pattern
+    if (data.patterns.losers) {
+      const loserHtml = `
+        <div class="stat-box" style="grid-column:1/-1;">
+          <div class="stat-label">Avg Multiplier</div>
+          <div class="stat-value danger">${data.patterns.losers.avgMultiplier}×</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Holders</div>
+          <div class="stat-value">${data.patterns.losers.avgHolders}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Bundle</div>
+          <div class="stat-value danger">${data.patterns.losers.avgBundleSize}%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Liquidity</div>
+          <div class="stat-value">$${Math.round(data.patterns.losers.avgLiquidity / 1000)}K</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Entry FDV</div>
+          <div class="stat-value">${Math.round(data.patterns.losers.avgEntryFdv / 1000)}K</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Best Source</div>
+          <div class="stat-value">${data.patterns.losers.bestSource?.source || '—'}</div>
+        </div>
+      `;
+      document.getElementById('loser-pattern').innerHTML = loserHtml;
+    }
+
+    // Comparison
+    if (data.comparison) {
+      const compHtml = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:10px;">
+          <div>
+            <strong>Multiplier:</strong> <span style="color:var(--signal-strong);font-family:'Share Tech Mono';">${data.comparison.multiplier.winners}×</span> vs <span style="color:var(--signal-risk);">${data.comparison.multiplier.losers}×</span>
+            <br><small style="color:var(--text-muted);">+${data.comparison.multiplier.difference}× difference</small>
+          </div>
+          <div>
+            <strong>Bundle Size:</strong> <span style="color:var(--signal-strong);">${data.comparison.bundleSize.winners}%</span> vs <span style="color:var(--signal-risk);">${data.comparison.bundleSize.losers}%</span>
+            <br><small style="color:var(--text-muted);">🎯 ${data.comparison.bundleSize.insight}</small>
+          </div>
+          <div>
+            <strong>Entry FDV:</strong> <span style="color:var(--signal-strong);">$${Math.round(data.comparison.entryFdv.winners / 1000)}K</span> vs <span style="color:var(--signal-risk);">$${Math.round(data.comparison.entryFdv.losers / 1000)}K</span>
+            <br><small style="color:var(--text-muted);">⏰ ${data.comparison.entryFdv.insight}</small>
+          </div>
+          <div>
+            <strong>Liquidity:</strong> <span style="color:var(--signal-strong);">$${Math.round(data.comparison.liquidity.winners / 1000)}K</span> vs <span style="color:var(--signal-risk);">$${Math.round(data.comparison.liquidity.losers / 1000)}K</span>
+            <br><small style="color:var(--text-muted);">💧 ${data.comparison.liquidity.insight}</small>
+          </div>
+        </div>
+      `;
+      document.getElementById('comparison').innerHTML = compHtml;
+    }
+
+    // Strategies
+    const strategiesHtml = (data.strategies || [])
+      .map(s => `
+        <div class="strategy">
+          <div class="strategy-header">
+            <div class="strategy-name">${s.name}</div>
+            <div class="strategy-priority">P${s.priority}</div>
+          </div>
+          <div class="strategy-basis">📊 Basis: ${s.basis}</div>
+          ${s.rules.map(r => `<div class="strategy-rule">✓ ${r}</div>`).join('')}
+          <div class="strategy-result">💡 ${s.expectedResult}</div>
+        </div>
+      `).join('');
+    document.getElementById('strategies').innerHTML = strategiesHtml;
+
+    // Top winners
+    const winnersHtml = (insightsData.topWinners || [])
+      .map(w => `
+        <div class="coin-row">
+          <div>
+            <div class="coin-symbol">${w.symbol}</div>
+            <div class="coin-meta">Bundle: ${w.bundleSize || '?'}% | Holders: ${w.holders || '?'} | ${w.source}</div>
+          </div>
+          <div class="coin-mult">${w.peakMult.toFixed(1)}×</div>
+        </div>
+      `).join('');
+    document.getElementById('top-winners').innerHTML = winnersHtml;
+
+    // Top losers
+    const losersHtml = (insightsData.topLosers || [])
+      .map(l => `
+        <div class="coin-row" style="border-left-color:var(--signal-risk);">
+          <div>
+            <div class="coin-symbol">${l.symbol}</div>
+            <div class="coin-meta">Bundle: ${l.bundleSize || '?'}% | Holders: ${l.holders || '?'} | ${l.source}</div>
+          </div>
+          <div style="font-family:'Share Tech Mono';color:var(--signal-risk);font-weight:700;">${l.peakMult.toFixed(2)}×</div>
+        </div>
+      `).join('');
+    document.getElementById('top-losers').innerHTML = losersHtml;
+
+  } catch (e) {
+    console.error('Load error:', e);
+    alert('Error loading forensics: ' + e.message);
+  }
+}
+
+loadForensics();
+setInterval(loadForensics, 5 * 60 * 1000); // Refresh every 5 min
+</script>
+
+</body>
+</html>

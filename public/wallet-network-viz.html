@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tracked Wallet Network</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: #0a0e27;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(10,14,39,0.95) 0%, transparent 100%);
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #00ff9c;
+      text-shadow: 0 0 20px rgba(0,255,156,0.5);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: rgba(0,255,156,0.05);
+      border: 1px solid rgba(0,255,156,0.2);
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .stat-label {
+      color: #888;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00ff9c;
+      margin-top: 5px;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10,14,39,0.9);
+      border: 1px solid rgba(0,255,156,0.2);
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 10;
+    }
+
+    .control-item {
+      margin: 8px 0;
+      color: #aaa;
+    }
+
+    .control-item strong { color: #00ff9c; }
+
+    .info-panel {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      max-width: 350px;
+      max-height: 400px;
+      background: rgba(10,14,39,0.95);
+      border: 1px solid rgba(0,255,156,0.3);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .info-panel.active {
+      display: block;
+    }
+
+    .info-panel h3 {
+      color: #00ff9c;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(0,255,156,0.1);
+      padding-bottom: 6px;
+    }
+
+    .info-label { color: #666; }
+    .info-value { color: #00ff9c; font-weight: bold; }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,100,100,0.3);
+      border: 1px solid rgba(255,100,100,0.5);
+      color: #ff6464;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .close-btn:hover {
+      background: rgba(255,100,100,0.5);
+    }
+
+    .scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,156,0.3) transparent;
+    }
+
+    .scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0,255,156,0.3);
+      border-radius: 3px;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,255,156,0.5);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="hud">
+    <div class="title">🕸️ Tracked Wallet Network</div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Wallets</div>
+        <div class="stat-value" id="walletCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Coins</div>
+        <div class="stat-value" id="coinCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Holdings</div>
+        <div class="stat-value" id="holdingCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Avg/Wallet</div>
+        <div class="stat-value" id="avgHoldings">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-item"><strong>🖱️ Controls</strong></div>
+    <div class="control-item">Drag to rotate</div>
+    <div class="control-item">Scroll to zoom</div>
+    <div class="control-item">Click nodes to inspect</div>
+    <div class="control-item" style="margin-top:10px"><strong>Color Legend</strong></div>
+    <div class="control-item">🎯 Wallet nodes</div>
+    <div class="control-item">💎 Coin nodes</div>
+  </div>
+
+  <div class="info-panel scrollbar" id="infoPanel">
+    <button class="close-btn" onclick="document.getElementById('infoPanel').classList.remove('active')">×</button>
+    <div id="infoContent"></div>
+  </div>
+
+  <script>
+    // Three.js scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0a0e27);
+    camera.position.z = 150;
+
+    let networkData = null;
+    let nodes3d = [];
+    let edges3d = [];
+    let selectedNode = null;
+
+    // Fetch network data
+    async function loadNetwork() {
+      try {
+        const res = await fetch('/api/wallet-network');
+        networkData = await res.json();
+
+        // Update HUD
+        document.getElementById('walletCount').textContent = networkData.summary.totalWallets;
+        document.getElementById('coinCount').textContent = networkData.summary.totalCoins;
+        document.getElementById('holdingCount').textContent = networkData.summary.totalEdges;
+        document.getElementById('avgHoldings').textContent = networkData.summary.avgHoldingsPerWallet;
+
+        createVisualization();
+      } catch (e) {
+        console.error('Failed to load network:', e);
+      }
+    }
+
+    // Create 3D visualization
+    function createVisualization() {
+      if (!networkData) return;
+
+      // Clear existing
+      nodes3d = [];
+      edges3d = [];
+
+      const positions = {};
+      const nodes = networkData.nodes.wallets.concat(networkData.nodes.coins);
+
+      // Simple force-directed layout with random initial positions
+      nodes.forEach((node, i) => {
+        const angle = (i / nodes.length) * Math.PI * 2;
+        const radius = 50 + Math.random() * 50;
+        positions[node.id] = {
+          x: Math.cos(angle) * radius + (Math.random() - 0.5) * 20,
+          y: (Math.random() - 0.5) * 50,
+          z: Math.sin(angle) * radius + (Math.random() - 0.5) * 20,
+        };
+      });
+
+      // Create wallet nodes (cyan/green)
+      networkData.nodes.wallets.forEach(wallet => {
+        const pos = positions[wallet.id];
+        const geometry = new THREE.OctahedronGeometry(2.5);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff9c });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(pos.x, pos.y, pos.z);
+        mesh.userData = { id: wallet.id, type: 'wallet', data: wallet };
+        scene.add(mesh);
+        nodes3d.push(mesh);
+      });
+
+      // Create coin nodes (purple/gold)
+      networkData.nodes.coins.forEach(coin => {
+        const pos = positions[coin.id];
+        const geometry = new THREE.SphereGeometry(1.5, 16, 16);
+        const material = new THREE.MeshBasicMaterial({ color: 0xe8c45c });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(pos.x, pos.y, pos.z);
+        mesh.userData = { id: coin.id, type: 'coin', data: coin };
+        scene.add(mesh);
+        nodes3d.push(mesh);
+      });
+
+      // Create edge lines (holdings)
+      const material = new THREE.LineBasicMaterial({ color: 0x00ff9c, transparent: true, opacity: 0.3 });
+      networkData.edges.forEach(edge => {
+        const srcPos = positions[edge.source];
+        const tgtPos = positions[edge.target];
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(
+          new Float32Array([
+            srcPos.x, srcPos.y, srcPos.z,
+            tgtPos.x, tgtPos.y, tgtPos.z
+          ]), 3
+        ));
+
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+        edges3d.push(line);
+      });
+    }
+
+    // Mouse interaction
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onMouseClick(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(nodes3d);
+
+      if (intersects.length > 0) {
+        selectedNode = intersects[0].object;
+        showNodeInfo(selectedNode.userData);
+      }
+    }
+
+    function showNodeInfo(nodeData) {
+      const panel = document.getElementById('infoPanel');
+      const content = document.getElementById('infoContent');
+
+      if (nodeData.type === 'wallet') {
+        content.innerHTML = `
+          <h3>👤 ${nodeData.data.label}</h3>
+          <div class="info-row">
+            <span class="info-label">Type</span>
+            <span class="info-value">${nodeData.data.emoji} ${nodeData.data.walletType}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Wins</span>
+            <span class="info-value">${nodeData.data.wins || 0}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Hit Count</span>
+            <span class="info-value">${nodeData.data.hitCount || 0}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Win Rate</span>
+            <span class="info-value">${nodeData.data.winRate}%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Added</span>
+            <span class="info-value">${new Date(nodeData.data.addedAt).toLocaleDateString()}</span>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <h3>💎 ${nodeData.data.symbol}</h3>
+          <div class="info-row">
+            <span class="info-label">Holders</span>
+            <span class="info-value">${(nodeData.data.holders || 0).toLocaleString()}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">FDV</span>
+            <span class="info-value">$${(nodeData.data.fdv / 1000000).toFixed(1)}M</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Liquidity</span>
+            <span class="info-value">$${(nodeData.data.liquidity / 1000).toFixed(0)}K</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tracked By</span>
+            <span class="info-value">${nodeData.data.holderCount || 0} wallet(s)</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Multiplier</span>
+            <span class="info-value">${nodeData.data.multiplier || '—'}x</span>
+          </div>
+        `;
+      }
+
+      panel.classList.add('active');
+    }
+
+    window.addEventListener('click', onMouseClick);
+
+    // Camera controls (mouse drag to rotate)
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    window.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * 0.01);
+        camera.position.applyAxisAngle(new THREE.Vector3(1, 0, 0), deltaY * 0.01);
+        camera.lookAt(0, 0, 0);
+      }
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Zoom with scroll
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      camera.position.z += e.deltaY * 0.1;
+      camera.position.z = Math.max(50, Math.min(500, camera.position.z));
+    }, { passive: false });
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Gentle auto-rotation when not dragging
+      if (!isDragging && networkData) {
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.001);
+      }
+
+      // Highlight selected node
+      nodes3d.forEach(node => {
+        if (selectedNode && node === selectedNode) {
+          node.material.emissive.setHex(0x00ff9c);
+        } else {
+          node.material.emissive.setHex(0x000000);
+        }
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start
+    loadNetwork();
+    animate();
+  </script>
+</body>
+</html>

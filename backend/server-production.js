@@ -1328,10 +1328,131 @@ app.get('/api/signals/leaderboard', (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
+// ── AI PNL IMAGE ENDPOINT ────────────────────────────────────────────────
+// GET /api/pnl-image/:mint?mult=5&symbol=SOLANDIER
+// Generates a themed AI PNL celebration image using HF keys (auto-rotating).
+// Returns PNG with proper headers. Caches to public/assets/bot/pnl-generated/.
+app.get('/api/pnl-image/:mint', async (req, res) => {
+  try {
+    const pnlImages = require('./lib/pnl-images');
+    const pnl = require('./telegram-pnl');
+    const mint = req.params.mint;
+    const symbol = req.query.symbol || '';
+    const mult = parseFloat(req.query.mult) || 1;
+    // Try to find the call in the tracker first
+    const call = pnl.findTokenJson(mint);
+    const callData = call.called
+      ? { mint, symbol: call.symbol || symbol, peakMult: call.peakMult, curMult: call.currentMult, entryFdv: call.entryFdv }
+      : { mint, symbol: symbol || mint.slice(0, 8), peakMult: mult, curMult: mult, entryFdv: 0 };
+    const imgPath = await pnlImages.generatePnlImage(callData);
+    if (imgPath) {
+      const fs = require('fs');
+      const buf = fs.readFileSync(imgPath);
+      res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=3600' });
+      return res.send(buf);
+    }
+    // Fallback: return 404 so client uses static image
+    res.status(404).json({ ok: false, error: 'generation failed' });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+// ── PNL PRESET IMAGES (instant, no AI) ─────────────────────────────────────
+// GET /api/pnl-preset/:tier — returns a pre-generated tier image or generates one on first hit.
+const _pnlPresetCache = {};
+app.get('/api/pnl-preset/:tier', async (req, res) => {
+  try {
+    const tier = parseInt(req.params.tier, 10) || 2;
+    const pnlImages = require('./lib/pnl-images');
+    const theme = pnlImages.TIER_THEMES[tier] || pnlImages.TIER_THEMES[2];
+    // Check if we have a cached preset
+    const presetPath = require('path').join(pnlImages.GENERATED_DIR, `_preset_${tier}x.png`);
+    const _fs = require('fs');
+    if (_fs.existsSync(presetPath) && (Date.now() - _fs.statSync(presetPath).mtimeMs) < 86400000) {
+      const buf = _fs.readFileSync(presetPath);
+      res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
+      return res.send(buf);
+    }
+    // Generate a preset for this tier using the theme prompt
+    try {
+      const hf = require('./lib/hf-keys');
+      const result = await hf.generateSafe(theme.prompt, { width: 1024, height: 1024 });
+      if (result.buffer) {
+        _fs.writeFileSync(presetPath, result.buffer);
+        console.log(`[pnl-preset] generated tier ${tier}: ${theme.label}`);
+        res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
+        return res.send(result.buffer);
+      }
+      if (result.fallbackUrl) {
+        const r = await fetch(result.fallbackUrl, { signal: AbortSignal.timeout(45000) });
+        if (r.ok) {
+          const buf = Buffer.from(await r.arrayBuffer());
+          _fs.writeFileSync(presetPath, buf);
+          res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
+          return res.send(buf);
+        }
+      }
+    } catch (e2) { console.warn('[pnl-preset] gen failed:', e2.message); }
+    // Last resort: return a simple colored placeholder SVG
+    const colors = { 1:'#0a4a6e', 2:'#00ff9c', 5:'#22d3ee', 10:'#f4c842', 15:'#c090ff', 20:'#ffd700', 25:'#ff69b4', 30:'#00bfff', 35:'#ff4500', 40:'#ff1493', 50:'#ffffff' };
+    const c = colors[tier] || '#888';
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024'><defs><radialGradient id='g'><stop offset='0%' stop-color='${c}' stop-opacity='0.9'/><stop offset='100%' stop-color='#0a0a14' stop-opacity='1'/></radialGradient></defs><rect width='1024' height='1024' fill='url(#g)'/><text x='512' y='540' text-anchor='middle' font-family='sans-serif' font-size='96' font-weight='bold' fill='${c}'>${theme.label}</text><text x='512' y='600' text-anchor='middle' font-family='sans-serif' font-size='48' fill='#ffffff88'>${tier}x TIER</text></svg>`;
+    res.set({ 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' });
+    return res.send(svg);
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
 app.get('/api/signals/token/:q', (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
     res.json({ ok: true, token: pnl.findTokenJson(String(req.params.q || '').slice(0, 64)) });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+// ── SIGNAL ANALYTICS & QUALITY METRICS ──────────────────────────────────────
+// GET /api/signals/analytics — returns dead coin analysis + signal quality metrics
+// Helps ZEROX improve calling system by tracking which sources produce winners
+app.get('/api/signals/analytics', (req, res) => {
+  try {
+    const siggen = require('./telegram-signals');
+    const analysis = siggen._analyzeDeadCoins();
+
+    // Calculate overall metrics
+    const all = siggen._loadCallHistory() || [];
+    const recent = all.slice(-100);  // Last 100 calls
+    const recent2x = recent.filter(c => c.multiplier >= 2).length;
+    const recent5x = recent.filter(c => c.multiplier >= 5).length;
+
+    res.json({
+      ok: true,
+      analysis,
+      metrics: {
+        totalCalls: all.length,
+        recentCalls: recent.length,
+        recent2xCount: recent2x,
+        recent5xCount: recent5x,
+        recent2xRate: recent.length ? ((recent2x / recent.length) * 100).toFixed(1) : 0,
+        recent5xRate: recent.length ? ((recent5x / recent.length) * 100).toFixed(1) : 0
+      },
+      generatedAt: new Date().toISOString()
+    });
+  } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
+});
+
+// ── SIGNAL QUALITY AUDIT ────────────────────────────────────────────────────
+// GET /api/signals/audit — detailed breakdown of quality gates and rug filters
+app.get('/api/signals/audit', (req, res) => {
+  try {
+    const siggen = require('./telegram-signals');
+    const config = {
+      hardFdvCapTrending: siggen.HARD_FDV_CAP_TRENDING,
+      hardFdvCapMax: siggen.HARD_FDV_CAP_MAX,
+      rugMinScore: siggen.RUG_MIN_SCORE,
+      ageGateSeconds: siggen.AGE_GATE_SECONDS,
+      multiplierCapFromDiscovery: siggen.MULTIPLIER_CAP_DISCOVERY,
+      lpLockPercentMinimum: siggen.LP_LOCK_PERCENT_MINIMUM,
+      bundleMaxPercent: siggen.BUNDLE_MAX_PERCENT
+    };
+    res.json({ ok: true, config });
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
@@ -1387,6 +1508,17 @@ try { app.use('/api', require('./brain-server')); console.log('[prod] RAG brain 
 catch (e) { console.warn('[startup] RAG brain not mounted:', e.message); }
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
+app.use('/api/social', require('./routes/social-routes'));      // Social media posting (Telegram, Discord)
+app.use('/api/pro-signals', require('./routes/pro-signals')); // PRO signals dashboard — live feed, filtering, bid recommendations
+app.use('/api/signal-engine', require('./routes/signal-engine-v2')); // ZEROX Signal Engine v2 — meta-based calling, real-time evaluation
+app.use('/api/signal-analysis', require('./routes/signal-analysis')); // Signal history analysis — winners, patterns, recommendations
+app.use('/api/signal-levels', require('./routes/signal-levels')); // Entry/Exit/SL calculator — real-time levels from DexScreener
+app.use('/api/signal-scoring', require('./routes/signal-scoring-v3')); // Bundle-focused scoring v3 + deep analysis button
+app.use('/api/signal-forensics', require('./routes/signal-forensics')); // Deep forensic analysis of winners vs losers + strategies
+app.use('/api/signal-meta-forensics', require('./routes/signal-meta-forensics')); // Meta themes, psychology, thesis, naming patterns
+app.use('/api/signal-discovery', require('./routes/signal-discovery').router); // Real-time early detection of new coin launches (<5m old)
+app.use('/api/wallet-network', require('./routes/wallet-network')); // Tracked wallet network visualization + holdings
+app.use('/api/pnl-imagery', require('./routes/pnl-imagery')); // HF FLUX PnL image generator (market cap, multiplier, thesis)
 app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals) — audited 2026-07-19
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
@@ -1426,7 +1558,7 @@ app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish 
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
-app.use('/api/economy', require('./economy-routes'));                 // Sparks ledger (append-only, idempotent; Postgres or atomic dev store)
+app.use('/api/economy', require('./economy-routes')());               // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED
 // Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
@@ -2307,6 +2439,10 @@ try { app.use(require('./hire-routes')); console.log('[prod] agent hire mounted'
 catch (e) { console.warn('[prod] hire failed:', e.message); }
 try { app.use(require('./analytics-routes')); console.log('[prod] analytics mounted'); }
 catch (e) { console.warn('[prod] analytics failed:', e.message); }
+try { app.use('/api/coin-launch', require('./coin-launch-routes')); console.log('[prod] coin launch kit mounted'); }
+catch (e) { console.warn('[prod] coin-launch failed:', e.message); }
+try { app.use('/api/thread-pack', require('./thread-pack-routes')); console.log('[prod] thread pack mounted'); }
+catch (e) { console.warn('[prod] thread-pack failed:', e.message); }
 app.use('/games', express.static(path.join(__dirname, '..', 'games')));
 
 // ── Shaddai Realms — 2.5D isometric RPG (Vite/Phaser SPA), served static (MUST be before the catch-all) ──
@@ -2427,6 +2563,8 @@ if (!process.env.VERCEL_ENV) {
     try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
     // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
     try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+    // @TurtleMusicBot — dedicated music bot (no-op unless TURTLE_MUSIC_BOT_TOKEN set).
+    try { require('./turtle-music-bot').start(); } catch (e) { console.warn('[turtle-music-bot] init skipped:', e && e.message); }
     // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
     try { require('./telegram-news').startNewsPoster(); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
     // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
