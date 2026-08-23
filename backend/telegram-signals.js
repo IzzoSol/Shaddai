@@ -1324,6 +1324,18 @@ function _detailBlock(rs, social, extra) {
   const e = extra || {};
   const parts = [];
 
+  // ── CONTRACT ADDRESS + KEY DATA ───────────────────────────────────────
+  parts.push('\n━━ 📋 DATA ━━');
+  if (e.mint) {
+    const shortMint = e.mint.slice(0, 4) + '…' + e.mint.slice(-4);
+    parts.push(`<code>${e.mint}</code>`);
+    parts.push(`<b>CA:</b> ${shortMint}`);
+  }
+  if (e.fdv) parts.push(`<b>FDV:</b> $${(e.fdv/1000000).toFixed(1)}M`);
+  if (e.liq) parts.push(`<b>Liq:</b> $${(e.liq/1000).toFixed(0)}K`);
+  if (rs && rs.holders) parts.push(`<b>Holders:</b> ${rs.holders.toLocaleString()}`);
+  if (e.vol24) parts.push(`<b>Vol 24h:</b> $${(e.vol24/1000).toFixed(0)}K`);
+
   // ── ENTRY / EXIT / STOP LOSS BLOCK ────────────────────────────────────
   // Calculate TP targets from entry price at call time
   if (e.entryPrice && typeof e.entryPrice === 'number' && e.entryPrice > 0) {
@@ -1336,7 +1348,7 @@ function _detailBlock(rs, social, extra) {
     parts.push(`📍 ENTRY   <b>${_fmtPrice(entry)}</b>`);
     parts.push(`✅ 1TP (50%)   <b>${_fmtPrice(tp1)}</b>`);
     parts.push(`✅ 2TP (200%)  <b>${_fmtPrice(tp2)}</b>`);
-    parts.push(`✅ 3TP (400%)  <b>${_fmtPrice(tp3)}</b>`);
+    parts.push(`✅ 3TP (500%)  <b>${_fmtPrice(tp3)}</b>`);
     parts.push(`⛔ STOP     <b>${_fmtPrice(sl)}</b>  (-15%)`);
   }
 
@@ -1402,10 +1414,50 @@ function _detailBlock(rs, social, extra) {
   // ── CONTRACT ADDRESS ──────────────────────────────────────────────────
   if (e.mint) parts.push(`\n<code>${_esc(e.mint)}</code>`);
 
+  // ── PNL TRACKING ──────────────────────────────────────────────────────
+  parts.push('\n━━ 📊 PNL TRACKING ━━');
+  parts.push('<i>🖼 PNL images generated on call + real-time updates</i>');
+  parts.push('<b>ZEROX SIGNALS</b> — AI-powered trading intelligence');
+
   // ── FOOTER ────────────────────────────────────────────────────────────
   parts.push('\n<i>NFA · DYOR</i>');
 
   return '\n' + parts.join('\n');
+}
+
+// ── PNL IMAGE GENERATOR ────────────────────────────────────────────────
+// Creates branded PNL images showing multiplier with SHADDAI branding
+async function _generatePnLImage(symbol, entryPrice, currentPrice, mult, timestamp) {
+  if (!entryPrice || !currentPrice) return null;
+  try {
+    // Calculate PnL%
+    const pnlPct = ((currentPrice - entryPrice) / entryPrice) * 100;
+    const color = mult >= 5 ? '#00ff41' : mult >= 3 ? '#e8a020' : mult >= 2 ? '#ffc84a' : '#ff3c2a';
+
+    // Use HuggingFace text-to-image or return data URL placeholder
+    // Fallback: create SVG PNL card with multiplier
+    const svg = `<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#030201;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0d0a20;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="600" height="400" fill="url(#grad)"/>
+      <text x="300" y="60" font-size="28" font-weight="bold" text-anchor="middle" fill="#e8a020" font-family="monospace">$${symbol}</text>
+      <text x="300" y="120" font-size="64" font-weight="bold" text-anchor="middle" fill="${color}" font-family="monospace">${mult.toFixed(1)}×</text>
+      <text x="300" y="180" font-size="18" text-anchor="middle" fill="#9ca3af">Entry: $${entryPrice.toFixed(6)}</text>
+      <text x="300" y="210" font-size="18" text-anchor="middle" fill="#9ca3af">Current: $${currentPrice.toFixed(6)}</text>
+      <text x="300" y="270" font-size="32" font-weight="bold" text-anchor="middle" fill="${color}">${pnlPct > 0 ? '+' : ''}${pnlPct.toFixed(1)}%</text>
+      <text x="300" y="350" font-size="16" text-anchor="middle" fill="#00ff9c" font-family="monospace" font-weight="bold">⚡ ZEROX SIGNALS ⚡</text>
+      <text x="300" y="380" font-size="12" text-anchor="middle" fill="#9ca3af">${new Date(timestamp).toLocaleString()}</text>
+    </svg>`;
+
+    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  } catch (e) {
+    console.error('[PnL] image gen error:', e.message);
+    return null;
+  }
 }
 async function _pollGecko() {
   const cfg = _cfg();
