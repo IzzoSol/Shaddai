@@ -2117,27 +2117,45 @@ function switchSubtab(name,btn) {
 function renderFS() {
   const fsc=document.getElementById('fs-content');
   if(!fsc){console.error('[renderFS] fs-content not found');return;}
+
+  const searchVal=(document.getElementById('fs-search')?.value||'').toLowerCase();
+  const sortVal=document.getElementById('fs-sort')?.value||'newest';
+
   let html='';
 
   if(_fsTab==='memes') {
-    const mockCoins=[
-      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true},
-      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false},
-      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true},
-      {symbol:'COPE',holders:9800,vol24:28000,fdv:95000,holders24h:9600,dex:true,paid:false},
-      {symbol:'BODEN',holders:18900,vol24:72000,fdv:280000,holders24h:19200,dex:true,paid:true},
-      {symbol:'TRUMP',holders:22100,vol24:95000,fdv:350000,holders24h:22400,dex:true,paid:true},
-      {symbol:'RENDER',holders:10500,vol24:35000,fdv:125000,holders24h:10800,dex:true,paid:false},
-      {symbol:'ORCA',holders:14200,vol24:52000,fdv:180000,holders24h:14500,dex:true,paid:false}
+    let mockCoins=[
+      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true,mult:2.3},
+      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false,mult:1.8},
+      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true,mult:5.2},
+      {symbol:'COPE',holders:9800,vol24:28000,fdv:95000,holders24h:9600,dex:true,paid:false,mult:0.9},
+      {symbol:'BODEN',holders:18900,vol24:72000,fdv:280000,holders24h:19200,dex:true,paid:true,mult:3.1},
+      {symbol:'TRUMP',holders:22100,vol24:95000,fdv:350000,holders24h:22400,dex:true,paid:true,mult:4.7},
+      {symbol:'RENDER',holders:10500,vol24:35000,fdv:125000,holders24h:10800,dex:true,paid:false,mult:1.5},
+      {symbol:'ORCA',holders:14200,vol24:52000,fdv:180000,holders24h:14500,dex:true,paid:false,mult:2.1}
     ];
-    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--P)'" onmouseout="this.style.borderColor='var(--border)'">
+
+    // Filter by search
+    if(searchVal) mockCoins=mockCoins.filter(c=>c.symbol.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='top-25') mockCoins=mockCoins.slice(0,3);
+    else if(_fsSubTab==='hot-new') mockCoins=mockCoins.filter(c=>c.holders<15000);
+    else if(_fsSubTab==='top-24h') mockCoins=[...mockCoins].sort((a,b)=>b.vol24-a.vol24).slice(0,5);
+
+    // Sort
+    if(sortVal==='mult') mockCoins=[...mockCoins].sort((a,b)=>b.mult-a.mult);
+    else if(sortVal==='score') mockCoins=[...mockCoins].sort((a,b)=>b.holders-a.holders);
+
+    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><span style="color:var(--P);font-weight:700">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P)">⭐ PAID</span>':''}</div>
-        <span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span>
+        <div><span style="color:var(--P);font-weight:700;font-size:13px">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P);background:rgba(232,160,32,.2);padding:2px 4px;border-radius:3px">⭐ PAID</span>':''}</div>
+        <span style="color:${c.mult>=2?'var(--S)':'var(--A)'};font-weight:800;font-size:12px">${c.mult>=1?'+':''}${(c.mult-1).toFixed(1)}x</span>
       </div>
-      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>Holders: <span style="color:var(--P)">${c.holders.toLocaleString()}</span></div>
-        <div>Vol: <span style="color:var(--P)">$${(c.vol24/1000).toFixed(1)}K</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>💰 <span style="color:var(--P)">${c.holders.toLocaleString()}</span>h</div>
+        <div>📊 <span style="color:var(--P)">$${(c.vol24/1000).toFixed(0)}K</span></div>
+        <div>📈 <span style="color:var(--P)">${(c.fdv/1000).toFixed(0)}K</span> FDV</div>
       </div>
       ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
     </div>`).join('');
