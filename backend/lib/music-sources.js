@@ -96,11 +96,24 @@ async function albumTracks(albumId) {
 // ── search-quality: filter knockoffs, prefer the canonical artist ──────────
 const KNOCKOFF_RE = /\b(cover|tribute|karaoke|instrumental|made famous by|in the style of|originally performed by)\b/i;
 
+// Audius is a free, anyone-can-upload platform — for a mainstream song search
+// it essentially never has the original artist's own upload, only fan
+// remixes/mashups/DJ mixes/boots/covers credited to the uploader, not the
+// artist. Applied ONLY to source:'audius' results, on top of KNOCKOFF_RE.
+const AUDIUS_KNOCKOFF_RE = /\b(remix|mashup|mix|bootleg|boot|rework|flip|edit|dj|blend|vip|live)\b/i;
+
 // Drop cover/tribute/karaoke-style results UNLESS the user's own query
 // already contains one of those words (so /find "yellow cover" still works).
+// Audius results get the extra AUDIUS_KNOCKOFF_RE pass, exempted the same way.
 function filterKnockoffs(tracks, query) {
-  if (KNOCKOFF_RE.test(query || '')) return tracks;
-  return tracks.filter((t) => !KNOCKOFF_RE.test(t.name) && !KNOCKOFF_RE.test(t.album || ''));
+  const q = query || '';
+  const askedForKnockoff = KNOCKOFF_RE.test(q);
+  const askedForAudiusStyle = AUDIUS_KNOCKOFF_RE.test(q);
+  return tracks.filter((t) => {
+    if (!askedForKnockoff && (KNOCKOFF_RE.test(t.name) || KNOCKOFF_RE.test(t.album || ''))) return false;
+    if (t.source === 'audius' && !askedForAudiusStyle && (AUDIUS_KNOCKOFF_RE.test(t.name) || AUDIUS_KNOCKOFF_RE.test(t.album || ''))) return false;
+    return true;
+  });
 }
 
 // Soft reorder (never drops anything): a track whose artist is named in the
