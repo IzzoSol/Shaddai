@@ -2001,7 +2001,19 @@ function renderFS() {
   const fsc=document.getElementById('fs-content');
   if(_fsTab==='signals') {
     const filtered=(sig||[]).filter(s=>_fsSubTab==='all'||s.source===_fsSubTab);
-    fsc.innerHTML=filtered.length?filtered.map(s=>`<div style="padding:10px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:6px;border-radius:4px"><div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${s.symbol}</span><span style="color:var(--S);font-weight:800">${s.curMult}×</span></div><div style="font-size:9px;color:var(--text2);margin-top:3px">$${s.entryPrice?.toFixed(4)||'?'} | ${s.score}</div></div>`).join(''):`<div style="color:var(--muted);padding:20px">No ${_fsSubTab} signals</div>`;
+    fsc.innerHTML=filtered.length?filtered.map(s=>{
+      const mult=s.curMult||1;const mulCol=mult>=5?'var(--S)':mult>=3?'var(--P)':mult>=2?'#ffc84a':'var(--C)';
+      return `<div style="padding:14px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:10px;border-radius:6px;cursor:pointer;transition:all .2s;hover:border-color:var(--P)" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 0 16px rgba(232,160,32,.3)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="color:var(--P);font-weight:700;font-size:13px;font-family:'Syncopate'">${s.symbol||'?'}</div><div style="font-size:9px;color:var(--text2);margin-top:2px">${s.source||'feed'}</div></div>
+          <div style="text-align:right"><div style="color:${mulCol};font-weight:800;font-size:16px;text-shadow:0 0 8px ${mulCol}66">${mult}×</div><div style="font-size:8px;color:var(--text2)">mult</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:9px">
+          <div><span style="color:var(--text2)">Entry:</span> <span style="color:var(--P)">$${s.entryPrice?.toFixed(4)||'?'}</span></div>
+          <div><span style="color:var(--text2)">Score:</span> <span style="color:var(--text)">${s.score||'—'}</span></div>
+        </div>
+      </div>`;
+    }).join(''):`<div style="color:var(--muted);padding:40px;text-align:center">No ${_fsSubTab} signals in feed</div>`;
   }
 }
 
