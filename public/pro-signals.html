@@ -2101,7 +2101,12 @@ function renderFS() {
     const mockCoins=[
       {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true},
       {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false},
-      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true}
+      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true},
+      {symbol:'COPE',holders:9800,vol24:28000,fdv:95000,holders24h:9600,dex:true,paid:false},
+      {symbol:'BODEN',holders:18900,vol24:72000,fdv:280000,holders24h:19200,dex:true,paid:true},
+      {symbol:'TRUMP',holders:22100,vol24:95000,fdv:350000,holders24h:22400,dex:true,paid:true},
+      {symbol:'RENDER',holders:10500,vol24:35000,fdv:125000,holders24h:10800,dex:true,paid:false},
+      {symbol:'ORCA',holders:14200,vol24:52000,fdv:180000,holders24h:14500,dex:true,paid:false}
     ];
     html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--P)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -2115,25 +2120,47 @@ function renderFS() {
       ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
     </div>`).join('');
   } else if(_fsTab==='finance') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="color:var(--P);font-weight:700">SPY</div>
-      <div style="font-size:9px;color:var(--S)">$${(450+Math.random()*5).toFixed(2)} +1.2%</div>
-    </div>`;
+    const stocks=['SPY','QQQ','IWM','GLD','TLT','USO','DXY','EEM','BND','VNQ'];
+    html=stocks.map(sym=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${sym}</span><span style="color:var(--S)">+${(Math.random()*4).toFixed(1)}%</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">$${(200+Math.random()*300).toFixed(2)} | Vol: ${Math.floor(Math.random()*100)}M</div>
+    </div>`).join('');
   } else if(_fsTab==='news') {
-    html=`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">🚀 Major Exchange Listing</div>
-      <div style="font-size:8px;color:var(--text2);margin-top:4px">2 hours ago • 1.2K mentions</div>
-    </div>`;
+    const news=[
+      {title:'🚀 Major Exchange Listing',time:'2h ago',mentions:'1.2K'},
+      {title:'📊 Earnings Beat Expectations',time:'4h ago',mentions:'856'},
+      {title:'⚡ Partnership Announced',time:'6h ago',mentions:'2.3K'},
+      {title:'🔴 SEC Investigation Update',time:'8h ago',mentions:'1.9K'},
+      {title:'💰 Fund Raise Milestone Hit',time:'10h ago',mentions:'742'},
+      {title:'📈 Price Target Raised',time:'12h ago',mentions:'1.1K'},
+      {title:'🎯 Expansion into New Market',time:'14h ago',mentions:'890'},
+      {title:'💼 Executive Leadership Change',time:'16h ago',mentions:'1.5K'}
+    ];
+    html=news.map(n=>`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">${n.title}</div>
+      <div style="font-size:8px;color:var(--text2);margin-top:4px">${n.time} • ${n.mentions} mentions</div>
+    </div>`).join('');
   } else if(_fsTab==='stocks') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">NVDA</span><span style="color:var(--S)">+3.2%</span></div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: 52M | Volatility: High</div>
-    </div>`;
+    const gainers=['NVDA','TSLA','AMZN','MSFT','GOOGL','META','NFLX','UBER','AMD','PLTR'];
+    html=gainers.map(sym=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${sym}</span><span style="color:var(--S)">+${(Math.random()*6).toFixed(1)}%</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: ${Math.floor(Math.random()*100)}M | Volatility: ${['Low','Medium','High'][Math.floor(Math.random()*3)]}</div>
+    </div>`).join('');
   } else if(_fsTab==='poly') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">2024 Election Winner</div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: 62% | No: 38% | $2.3M pooled</div>
-    </div>`;
+    const markets=[
+      {q:'2024 Election Winner',yes:62,pooled:'$2.3M'},
+      {q:'Bitcoin $100K by EOY',yes:75,pooled:'$1.8M'},
+      {q:'AI Regulation Bill Passes',yes:48,pooled:'$890K'},
+      {q:'Tech IPO Market Recovers',yes:71,pooled:'$1.2M'},
+      {q:'Gold Hits $3K',yes:58,pooled:'$650K'},
+      {q:'Fed Rate Cut Next Meeting',yes:65,pooled:'$1.5M'},
+      {q:'Crypto Adoption in Banks',yes:72,pooled:'$980K'},
+      {q:'US Inflation Under 3%',yes:52,pooled:'$1.1M'}
+    ];
+    html=markets.map(m=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
+      <div style="color:var(--P);font-weight:700;font-size:10px">${m.q}</div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: ${m.yes}% | No: ${100-m.yes}% | ${m.pooled} pooled</div>
+    </div>`).join('');
   }
 
   fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px">Loading '+_fsTab+'...</div>';
