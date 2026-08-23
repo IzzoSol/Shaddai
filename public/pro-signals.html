@@ -595,13 +595,16 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <button onclick="openWindow('sentiment','💭 SENTIMENT',750,100,400,400)" style="padding:6px 10px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">💭 SENTIMENT</button>
       <button onclick="cycleTheme()" style="padding:6px 12px;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">🎨 THEME</button>
     </div>
-    <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)">
-      <input id="fs-search" type="text" placeholder="Search symbol…" oninput="renderFS()" style="flex:1;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;border-radius:4px;outline:none">
-      <select id="fs-sort" onchange="renderFS()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;border-radius:4px">
+    <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap">
+      <input id="fs-search" type="text" placeholder="Search…" oninput="renderFS()" style="flex:1;min-width:120px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;border-radius:4px;outline:none">
+      <select id="fs-sort" onchange="renderFS()" style="padding:6px 8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;border-radius:4px">
         <option value="newest">Newest</option>
-        <option value="mult">Highest ×</option>
+        <option value="mult">Mult</option>
         <option value="score">Score</option>
       </select>
+      <button onclick="openWindow('mirofish','🐟 MIROFISH',200,200,700,450)" style="padding:6px 10px;border:1px solid var(--C);color:var(--C);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px;font-weight:600">🐟 MIROFISH</button>
+      <button onclick="openDexImageWindow()" style="padding:6px 10px;border:1px solid var(--border);color:var(--text);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px">🖼 DEX IMG</button>
+      <button onclick="toggleSentimentPanel()" style="padding:6px 10px;border:1px solid var(--border);color:var(--text);background:transparent;cursor:pointer;font-size:9px;letter-spacing:1px">💭 SENTIMENT</button>
     </div>
     <div style="display:flex;gap:12px;flex:1;overflow:hidden">
       <div id="fs-content" style="flex:1;overflow-y:auto;padding:14px"><!-- signals --></div>
@@ -2046,8 +2049,22 @@ function renderFS() {
   let html='';
 
   if(_fsTab==='memes') {
-    const mockCoins=[{symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600},{symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700}];
-    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px"><div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">${c.symbol}</span><span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span></div><div style="font-size:9px;color:var(--text2);margin-top:4px">Holders: ${c.holders} | Vol: $${c.vol24}K</div></div>`).join('');
+    const mockCoins=[
+      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true},
+      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false},
+      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true}
+    ];
+    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--P)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span style="color:var(--P);font-weight:700">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P)">⭐ PAID</span>':''}</div>
+        <span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>Holders: <span style="color:var(--P)">${c.holders.toLocaleString()}</span></div>
+        <div>Vol: <span style="color:var(--P)">$${(c.vol24/1000).toFixed(1)}K</span></div>
+      </div>
+      ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
+    </div>`).join('');
   } else if(_fsTab==='finance') {
     html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
       <div style="color:var(--P);font-weight:700">SPY</div>
@@ -2132,10 +2149,35 @@ function cycleTheme() {
   localStorage.setItem('oracle-theme',themes[_themeIdx]);
 }
 
+// DEX Image window
+function openDexImageWindow() {
+  openWindow('dex-img','📊 DEX SCREENER',100,150,550,450);
+}
+
+// Sentiment panel toggle
+function toggleSentimentPanel() {
+  const panel=document.getElementById('fs-sentiment');
+  if(panel) panel.style.display=panel.style.display==='none'?'flex':'none';
+}
+
+// MiroFish loader
+function loadMiroFish() {
+  openWindow('mirofish','🐟 MIROFISH SWARM',200,200,700,450);
+}
+
 // Window content loaders
 function loadWindowContent(id) {
   const body=document.getElementById(id+'-body');
-  if(id==='dex') {
+  if(id==='dex-img') {
+    body.innerHTML=`<div style="text-align:center;padding:20px"><img src="https://dexscreener.com/api/charts/solana/placeholder" style="max-width:100%;border-radius:8px;margin-bottom:10px" onerror="this.innerHTML='📊 DEX chart image'"><div style="color:var(--text2);font-size:10px">DexScreener chart data live</div></div>`;
+  } else if(id==='mirofish') {
+    body.innerHTML=`<div style="padding:15px">
+      <div style="margin-bottom:10px"><input type="text" placeholder="Token symbol (e.g., BONK)" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:10px"></div>
+      <div style="margin-bottom:10px"><input type="text" placeholder="Scenario/announcement…" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:10px"></div>
+      <button style="width:100%;padding:8px;background:var(--C);color:var(--bg0);border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:10px">▶ RUN SWARM</button>
+      <div id="miro-results" style="margin-top:12px;font-size:9px;color:var(--text2)">Results will appear here...</div>
+    </div>`;
+  } else if(id==='dex') {
     body.innerHTML=`<canvas id="dex-chart-canvas" style="width:100%;height:100%"></canvas>`;
     setTimeout(()=>initDexChart(),100);
   } else if(id==='sentiment') {
