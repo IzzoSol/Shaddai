@@ -83,6 +83,45 @@ function _updateCallPerformance(mint, currentFdv, currentPrice) {
   else if (call.multiplier < 0.5) call.status = 'dead';
 }
 _loadCallHistory();
+
+// ── DEAD COIN ANALYZER ──────────────────────────────────────────────────
+// Learn from failed calls to improve future filtering
+function _analyzeDeadCoins() {
+  const deadCoins = _callHistory.filter(c => c.status === 'dead' && c.multiplier < 0.5);
+  const winners = _callHistory.filter(c => c.status === 'hit5x');
+
+  if (deadCoins.length === 0) return null;
+
+  const analysis = {
+    deadCount: deadCoins.length,
+    winCount: winners.length,
+    winRate: (winners.length / _callHistory.length * 100).toFixed(1) + '%',
+    topFailPatterns: [],
+    topWinPatterns: []
+  };
+
+  // Analyze dead coin patterns
+  const deadBySource = {};
+  deadCoins.forEach(c => {
+    deadBySource[c.source] = (deadBySource[c.source] || 0) + 1;
+  });
+  analysis.topFailPatterns = Object.entries(deadBySource)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([src, cnt]) => `${src}: ${cnt} deaths`);
+
+  // Analyze winning patterns
+  const winBySource = {};
+  winners.forEach(c => {
+    winBySource[c.source] = (winBySource[c.source] || 0) + 1;
+  });
+  analysis.topWinPatterns = Object.entries(winBySource)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([src, cnt]) => `${src}: ${cnt} wins`);
+
+  return analysis;
+}
 // DexScreener free tiers: ~60 req/min (boosts/profiles), ~300 req/min (tokens/pairs).
 // Stay FAR under: 1 boosts call + a capped number of token lookups per poll.
 const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll (DexScreener 300 req/min, well within limit)
@@ -191,10 +230,23 @@ function _isDeadHour() {
   return h === 9 || h === 13 || h === 15 || h === 22;
 }
 function _qualityMult() {
-  if (_isPeakHour()) return 0.8;  // peak: LOOSEN gates 20% — more calls during high win rate window
-  if (_isDeadHour()) return 2.0;  // dead: TIGHTEN hard — 2x vol required, max 1 per poll
-  if (_isWeekend()) return 0.85;  // weekend: slight loosening
-  return 1.25;                    // normal: mild tightening
+  // Use analytics to improve quality multiplier based on historical performance
+  const analysis = _analyzeDeadCoins();
+  let mult = 1.0;
+
+  if (_isPeakHour()) mult = 0.8;  // peak: LOOSEN gates 20%
+  if (_isDeadHour()) mult = 2.0;  // dead: TIGHTEN hard
+  if (_isWeekend()) mult = 0.85;  // weekend: slight loosening
+  if (!_isPeakHour() && !_isDeadHour() && !_isWeekend()) mult = 1.25;
+
+  // If we have analysis, boost multiplier if win rate is good
+  if (analysis) {
+    const winRate = parseFloat(analysis.winRate);
+    if (winRate < 25) mult *= 1.5;  // Poor win rate? tighten HARD
+    else if (winRate > 40) mult *= 0.9;  // Good win rate? loosen slightly
+  }
+
+  return mult;
 }
 function _hourLabel() {
   if (_isPeakHour()) return _isWeekend() ? '🌙⭐ WEEKEND PEAK' : '⭐ PEAK HOUR';
@@ -1461,32 +1513,123 @@ function _detailBlock(rs, social, extra) {
   return '\n' + parts.join('\n');
 }
 
+// ── MASTER PROMPT FOR PERFECT PNL IMAGES ────────────────────────────────
+const PNL_IMAGE_MASTER_PROMPT = `You are creating a PROFESSIONAL TRADING CARD for ZEROX SIGNALS, an AI-powered crypto trading intelligence platform.
+
+DESIGN SPECIFICATIONS:
+- **Card Type**: Premium crypto trading performance card
+- **Style**: Modern, sleek, professional (like Bloomberg Terminal meets crypto dashboards)
+- **Colors**: Dark background (obsidian #0a0e27), accent colors based on performance (green=winning, red=losing)
+- **Layout**: Clean, minimalist, professional trading UI aesthetic
+
+CONTENT TO INCLUDE (in order of visual hierarchy):
+1. **Token Symbol** (top, large, golden): $${SYMBOL}
+2. **Main Multiplier Display** (center-large, color-coded, bold): ${MULTIPLIER}×
+   - If >5x: BRIGHT GREEN (#00ff41) with glow
+   - If 3-5x: GOLD (#e8a020)
+   - If 2-3x: ORANGE (#ffc84a)
+   - If 1-2x: YELLOW (#ffaa00)
+   - If <1x: RED (#ff3c3c)
+3. **PnL Percentage** (large): ${PNL_PCT}% ${ARROW}
+4. **Entry Price**: Entry: $${ENTRY_PRICE}
+5. **Current Price**: Current: $${CURRENT_PRICE}
+6. **Timestamp**: ${TIMESTAMP}
+7. **Branding Footer**: "⚡ ZEROX SIGNALS ⚡" or "ZEROX TRADING INTELLIGENCE"
+8. **Status Badge**: "🚀 WINNING" or "📉 TRACKING" or "🔴 ALERT"
+
+VISUAL ELEMENTS:
+- Use grid/graph background pattern (subtle)
+- Add glowing neon accent around multiplier
+- Include professional shadows and depth
+- Modern sans-serif font (clean, readable)
+- Professional trading UI vibes
+- Minimal text, maximum impact
+
+TONE: Professional, trustworthy, data-focused. This is for serious traders.`;
+
 // ── PNL IMAGE GENERATOR ────────────────────────────────────────────────
-// Creates branded PNL images showing multiplier with SHADDAI branding
-async function _generatePnLImage(symbol, entryPrice, currentPrice, mult, timestamp) {
+// Creates PROFESSIONAL branded PNL images using HuggingFace + master prompt
+async function _generatePnLImage(symbol, entryPrice, currentPrice, mult, timestamp, holders, fdv) {
   if (!entryPrice || !currentPrice) return null;
   try {
-    // Calculate PnL%
     const pnlPct = ((currentPrice - entryPrice) / entryPrice) * 100;
-    const color = mult >= 5 ? '#00ff41' : mult >= 3 ? '#e8a020' : mult >= 2 ? '#ffc84a' : '#ff3c2a';
+    const arrow = pnlPct > 0 ? '📈' : '📉';
+    const status = mult >= 5 ? '🚀 WINNING' : mult >= 3 ? '✅ STRONG' : mult >= 2 ? '⚡ ACTIVE' : '🔴 WATCH';
 
-    // Use HuggingFace text-to-image or return data URL placeholder
-    // Fallback: create SVG PNL card with multiplier
-    const svg = `<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+    // Build dynamic prompt with actual values
+    const dynamicPrompt = PNL_IMAGE_MASTER_PROMPT
+      .replace('${SYMBOL}', symbol)
+      .replace('${MULTIPLIER}', mult.toFixed(1))
+      .replace('${PNL_PCT}', (pnlPct > 0 ? '+' : '') + pnlPct.toFixed(1))
+      .replace('${ARROW}', arrow)
+      .replace('${ENTRY_PRICE}', entryPrice.toFixed(6))
+      .replace('${CURRENT_PRICE}', currentPrice.toFixed(6))
+      .replace('${TIMESTAMP}', new Date(timestamp).toLocaleString());
+
+    // Try HuggingFace Flux (text-to-image) if API available
+    const hfKey = process.env.HUGGINGFACE_API_KEY;
+    if (hfKey) {
+      try {
+        const response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
+          headers: { Authorization: `Bearer ${hfKey}` },
+          method: 'POST',
+          body: JSON.stringify({ inputs: dynamicPrompt })
+        });
+        if (response.ok) {
+          const buffer = await response.buffer();
+          return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+        }
+      } catch (e) {
+        console.warn('[PnL] HF image failed, falling back to SVG:', e.message);
+      }
+    }
+
+    // FALLBACK: Premium SVG card matching master prompt spec
+    const color = mult >= 5 ? '#00ff41' : mult >= 3 ? '#e8a020' : mult >= 2 ? '#ffc84a' : mult >= 1 ? '#ffaa00' : '#ff3c3c';
+    const bgColor = mult >= 5 ? 'rgba(0,255,65,0.05)' : 'rgba(232,160,32,0.05)';
+
+    const svg = `<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#030201;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#0d0a20;stop-opacity:1" />
+          <stop offset="0%" style="stop-color:#0a0e27;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1a1f3a;stop-opacity:1" />
         </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
-      <rect width="600" height="400" fill="url(#grad)"/>
-      <text x="300" y="60" font-size="28" font-weight="bold" text-anchor="middle" fill="#e8a020" font-family="monospace">$${symbol}</text>
-      <text x="300" y="120" font-size="64" font-weight="bold" text-anchor="middle" fill="${color}" font-family="monospace">${mult.toFixed(1)}×</text>
-      <text x="300" y="180" font-size="18" text-anchor="middle" fill="#9ca3af">Entry: $${entryPrice.toFixed(6)}</text>
-      <text x="300" y="210" font-size="18" text-anchor="middle" fill="#9ca3af">Current: $${currentPrice.toFixed(6)}</text>
-      <text x="300" y="270" font-size="32" font-weight="bold" text-anchor="middle" fill="${color}">${pnlPct > 0 ? '+' : ''}${pnlPct.toFixed(1)}%</text>
-      <text x="300" y="350" font-size="16" text-anchor="middle" fill="#00ff9c" font-family="monospace" font-weight="bold">⚡ ZEROX SIGNALS ⚡</text>
-      <text x="300" y="380" font-size="12" text-anchor="middle" fill="#9ca3af">${new Date(timestamp).toLocaleString()}</text>
+      <rect width="800" height="600" fill="url(#grad)"/>
+      <rect width="800" height="600" fill="${bgColor}"/>
+
+      <!-- Grid Background -->
+      <g stroke="rgba(100,200,255,0.1)" stroke-width="1">
+        <line x1="0" y1="150" x2="800" y2="150"/><line x1="0" y1="300" x2="800" y2="300"/><line x1="0" y1="450" x2="800" y2="450"/>
+      </g>
+
+      <!-- Token Symbol -->
+      <text x="400" y="80" font-size="36" font-weight="bold" text-anchor="middle" fill="#e8a020" font-family="monospace">$${symbol}</text>
+
+      <!-- Main Multiplier -->
+      <text x="400" y="240" font-size="120" font-weight="bold" text-anchor="middle" fill="${color}" font-family="monospace" filter="url(#glow)">${mult.toFixed(1)}×</text>
+
+      <!-- PnL % -->
+      <text x="400" y="320" font-size="44" font-weight="bold" text-anchor="middle" fill="${color}">${arrow} ${(pnlPct > 0 ? '+' : '')}${pnlPct.toFixed(1)}%</text>
+
+      <!-- Entry/Current Prices -->
+      <text x="100" y="420" font-size="14" fill="#9ca3af">Entry: <tspan fill="${color}" font-weight="bold">$${entryPrice.toFixed(6)}</tspan></text>
+      <text x="100" y="450" font-size="14" fill="#9ca3af">Current: <tspan fill="${color}" font-weight="bold">$${currentPrice.toFixed(6)}</tspan></text>
+
+      <!-- Status Badge -->
+      <rect x="500" y="400" width="220" height="50" fill="${bgColor}" stroke="${color}" stroke-width="2" rx="8"/>
+      <text x="610" y="435" font-size="20" font-weight="bold" text-anchor="middle" fill="${color}">${status}</text>
+
+      <!-- Footer -->
+      <text x="400" y="560" font-size="16" font-weight="bold" text-anchor="middle" fill="#00ff9c" font-family="monospace">⚡ ZEROX SIGNALS ⚡</text>
+      <text x="400" y="590" font-size="11" text-anchor="middle" fill="#9ca3af">${new Date(timestamp).toLocaleString()}</text>
     </svg>`;
 
     return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
